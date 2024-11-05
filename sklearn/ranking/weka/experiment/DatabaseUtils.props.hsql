@@ -1,0 +1,196 @@
+# Database settings for HSQLDB 1.8.x
+#
+# General information on database access can be found here:
+# http://weka.wikispaces.com/Databases
+#
+# url:     http://hsqldb.sourceforge.net/
+# jdbc:    http://sourceforge.net/projects/hsqldb/
+# howto:   http://hsqldb.sourceforge.net/doc/guide/ch01.html
+# author:  Dale Fletcher (dale at cs dot waikato dot ac dot nz)
+# version: $Revision: 5837 $
+
+# JDBC driver (comma-separated list)
+jdbcDriver=org.hsqldb.jdbcDriver
+
+# database URL
+jdbcURL=jdbc:hsqldb:hsql://server_name/database_name
+
+# specific data types
+# string, getString() = 0;    --> nominal
+# boolean, getBoolean() = 1;  --> nominal
+# double, getDouble() = 2;    --> numeric
+# byte, getByte() = 3;        --> numeric
+# short, getByte()= 4;        --> numeric
+# int, getInteger() = 5;      --> numeric
+# long, getLong() = 6;        --> numeric
+# float, getFloat() = 7;      --> numeric
+# date, getDate() = 8;        --> date
+# text, getString() = 9;      --> string
+# time, getTime() = 10;       --> date
+
+# other options
+CREATE_INT=INT
+CREATE_DOUBLE=DOUBLE
+CREATE_STRING=LONGVARCHAR
+CREATE_DATE=DATETIME
+DateFormat=yyyy-MM-dd HH:mm:ss
+checkUpperCaseNames=true
+checkLowerCaseNames=false
+checkForTable=true
+
+# All the reserved keywords for this database
+# Based on the keywords listed at the following URL (2009-04-13):
+# http://hsqldb.org/doc/guide/ch09.html
+Keywords=\
+  ABS,\
+  ACOS,\
+  ALIAS,\
+  ALL,\
+  ALTER,\
+  ASCII,\
+  ASIN,\
+  ATAN,\
+  ATAN2,\
+  AUTOCOMMIT,\
+  BITAND,\
+  BIT_LENGTH,\
+  BITOR,\
+  CACHED,\
+  CALL,\
+  CASEWHEN,\
+  CEILING,\
+  CHAR,\
+  CHAR_LENGTH,\
+  CHECKPOINT,\
+  COALESCE,\
+  COLLATION,\
+  COMMIT,\
+  CONCAT,\
+  CONNECT,\
+  CONVERT,\
+  COS,\
+  COT,\
+  CREATE,\
+  CURDATE,\
+  CURRENT_DATE,\
+  CURRENT_TIME,\
+  CURRENT_TIMESTAMP,\
+  CURRENT_USER,\
+  CURTIME,\
+  DATABASE,\
+  DAYNAME,\
+  DAYOFMONTH,\
+  DAYOFWEEK,\
+  DAYOFYEAR,\
+  DEFRAG,\
+  DEGREES,\
+  DELAY,\
+  DELETE,\
+  DIFFERENCE,\
+  DISCONNECT,\
+  DISTINCT,\
+  DROP,\
+  EXCEPT,\
+  EXP,\
+  EXPLAIN,\
+  EXTRACT,\
+  FLOOR,\
+  FROM,\
+  GRANT,\
+  GROUPBY,\
+  HAVING,\
+  HEXTORAW,\
+  HOUR,\
+  IDENTITY,\
+  IFNULL,\
+  IGNORECASE,\
+  INDEX,\
+  INITIAL,\
+  INSERT,\
+  INTEGRITY,\
+  INTERSECT,\
+  INTO,\
+  LCASE,\
+  LEFT,\
+  LENGTH,\
+  LIMIT,\
+  LOCATE,\
+  LOG,\
+  LOG10,\
+  LOGSIZE,\
+  LOWER,\
+  LTRIM,\
+  MAXROWS,\
+  MINUS,\
+  MINUTE,\
+  MOD,\
+  MONTH,\
+  MONTHNAME,\
+  NOW,\
+  NULLIF,\
+  OCTET_LENGTH,\
+  OFFSET,\
+  ORDERBY,\
+  PASSWORD,\
+  PI,\
+  PLAN,\
+  POWER,\
+  PROPERTY,\
+  QUARTER,\
+  RADIANS,\
+  RAND,\
+  RAWTOHEX,\
+  READONLY,\
+  REFERENTIAL,\
+  REPEAT,\
+  REPLACE,\
+  REVOKE,\
+  RIGHT,\
+  ROLE,\
+  ROLLBACK,\
+  ROUND,\
+  ROUNDMAGIC,\
+  RTRIM,\
+  SAVEPOINT,\
+  SCHEMA,\
+  SCRIPT,\
+  SCRIPTFORMAT,\
+  SECOND,\
+  SELECT,\
+  SEQUENCE,\
+  SET,\
+  SHUTDOWN,\
+  SIGN,\
+  SIN,\
+  SOUNDEX,\
+  SOURCE,\
+  SPACE,\
+  SQRT,\
+  SUBSTR,\
+  SUBSTRING,\
+  TABLE,\
+  TAN,\
+  TEMP,\
+  TEXT,\
+  TOP,\
+  TRIGGER,\
+  TRUNCATE,\
+  UCASE,\
+  UNION,\
+  UPDATE,\
+  UPPER,\
+  USER,\
+  VIEW,\
+  WEEK,\
+  WHERE,\
+  WRITE,\
+  YEAR
+
+# The character to append to attribute names to avoid exceptions due to
+# clashes between keywords and attribute names
+KeywordsMaskChar=_
+
+# flags for loading and saving instances using DatabaseLoader/Saver
+nominalToStringLimit=50
+idColumn=auto_generated_id
+

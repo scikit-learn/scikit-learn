@@ -1,0 +1,204 @@
+# Customises the list of options given by the GenericObjectEditor
+# for various superclasses.
+#
+# Version: $Revision: 6624 $
+
+# Whether to use the dynamic approach or not (true|false). In case of
+# "false" the old GenericObjectEditor.props file is used:
+UseDynamic=true
+
+# Lists the ResultProducers-Packages I want to choose from
+weka.experiment.ResultProducer=\
+  weka.experiment
+
+# Lists the ResultListeners-Packages I want to choose from
+weka.experiment.ResultListener=\
+  weka.experiment
+
+# Lists the SplitEvaluators-Packages I want to choose from
+weka.experiment.SplitEvaluator=\
+  weka.experiment
+
+# Lists the Classifiers-Packages I want to choose from
+weka.classifiers.Classifier=\
+ weka.classifiers.bayes,\
+ weka.classifiers.functions,\
+ weka.classifiers.lazy,\
+ weka.classifiers.meta,\
+ weka.classifiers.meta.nestedDichotomies,\
+ weka.classifiers.mi,\
+ weka.classifiers.misc,\
+ weka.classifiers.labelranking,\
+ weka.classifiers.scripting,\
+ weka.classifiers.trees,\
+ weka.classifiers.rules
+
+# Lists the AbstractClassificationOutput-packages I want to choose from
+weka.classifiers.evaluation.output.prediction.AbstractOutput=\
+  weka.classifiers.evaluation.output.prediction
+
+# Lists the Filters-Packages I want to choose from
+weka.filters.Filter= \
+ weka.filters, \
+ weka.filters.supervised.attribute, \
+ weka.filters.supervised.instance, \
+ weka.filters.unsupervised.attribute, \
+ weka.filters.unsupervised.instance
+
+# Lists the UnsupervisedFilters-Packages I want to choose from
+weka.filters.UnsupervisedFilter = \
+ weka.filters.unsupervised.attribute, \
+ weka.filters.unsupervised.instance
+
+# Lists the Attribute Selection Evaluators-Packages I want to choose from
+weka.attributeSelection.ASEvaluation = \
+ weka.attributeSelection
+
+# Lists the Attribute Selection Search methods-Packages I want to choose from
+weka.attributeSelection.ASSearch = \
+ weka.attributeSelection
+
+# Lists the Associators-Packages I want to choose from
+weka.associations.Associator=\
+ weka.associations
+
+# Lists the Clusterers-Packages I want to choose from
+weka.clusterers.Clusterer=\
+ weka.clusterers
+
+# Lists the DensityBasedClusterers I want to choose from
+weka.clusterers.DensityBasedClusterer=\
+ weka.clusterers
+
+# Lists the Loaders-Packages I want to choose from
+weka.core.converters.Loader=\
+ weka.core.converters
+
+# Lists the Savers-Packages I want to choose from
+weka.core.converters.Saver=\
+ weka.core.converters
+
+# Lists the search algorithms for nearest neighbour search
+weka.core.neighboursearch.NearestNeighbourSearch =\
+ weka.core.neighboursearch
+
+# Lists the ball tree constructors
+weka.core.neighboursearch.balltrees.BallTreeConstructor =\
+ weka.core.neighboursearch.balltrees
+
+# Lists the ball splitters
+weka.core.neighboursearch.balltrees.BallSplitter =\
+ weka.core.neighboursearch.balltrees
+ 
+# Lists the kd tree splitters
+weka.core.neighboursearch.kdtrees.KDTreeNodeSplitter =\
+ weka.core.neighboursearch.kdtrees
+
+# Lists the distance functions for use nearest neighbour search
+weka.core.DistanceFunction =\
+ weka.core 
+
+# Lists the Search algorithm for Bayes net structure learning-Packages I want to choose from
+weka.classifiers.bayes.net.search.SearchAlgorithm=\
+ weka.classifiers.bayes.net.search.local, \
+ weka.classifiers.bayes.net.search.ci, \
+ weka.classifiers.bayes.net.search.global, \
+ weka.classifiers.bayes.net.search.fixed
+
+weka.classifiers.bayes.net.estimate.BayesNetEstimator =\
+ weka.classifiers.bayes.net.estimate
+
+# Lists the DataGenerator Algorithms-Packages
+weka.datagenerators.DataGenerator=\
+ weka.datagenerators.classifiers.classification,\
+ weka.datagenerators.classifiers.regression,\
+ weka.datagenerators.clusterers
+
+# Lists the packages where to find ClusterDefinition
+weka.datagenerators.ClusterDefinition=\
+ weka.datagenerators,\
+ weka.datagenerators.clusterers
+
+# List of stemmers
+weka.core.stemmers.Stemmer=\
+ weka.core.stemmers
+
+# Lists the Estimator-Packages I want to choose from
+weka.estimators.Estimator= \
+ weka.estimators
+
+# Lists of Kernels I want to choose from
+weka.classifiers.functions.supportVector.Kernel=\
+ weka.classifiers.functions.supportVector,\
+ weka.classifiers.mi.supportVector
+
+# List of SVMreg learning algorithms
+weka.classifiers.functions.supportVector.RegOptimizer=\
+ weka.classifiers.functions.supportVector
+
+# List of tokenizers
+weka.core.tokenizers.Tokenizer=\
+ weka.core.tokenizers
+
+# List of extensions for the main GUI, package "weka.gui" is not allowed
+weka.gui.MainMenuExtension=
+
+# List of Explorer visualization plugins (classification panel)
+weka.gui.visualize.plugins.VisualizePlugin=\
+ weka.gui.visualize.plugins
+
+# List of Explorer tree visualization plugins (classification panel)
+weka.gui.visualize.plugins.TreeVisualizePlugin=\
+ weka.gui.visualize.plugins
+
+# List of Explorer graph visualization plugins (classification panel)
+weka.gui.visualize.plugins.GraphVisualizePlugin=\
+ weka.gui.visualize.plugins
+
+# List of Explorer error visualization plugins (classification panel)
+weka.gui.visualize.plugins.ErrorVisualizePlugin=\
+ weka.gui.visualize.plugins
+ 
+#List of Explorer association rule visualization plugins (associations panel)
+weka.gui.visualize.plugins.AssociationRuleVisualizePlugin=\
+ weka.gui.visualize.plugins
+
+# List of writers for outputting graphics
+weka.gui.visualize.JComponentWriter=\
+ weka.gui.visualize
+
+# List of Experimenter result matrices
+weka.experiment.ResultMatrix=\
+ weka.experiment
+
+# List of Tester algorithms in the Experimenter
+weka.experiment.Tester=\
+ weka.experiment
+
+# List of file loaders
+weka.core.converters.AbstractFileLoader=\
+ weka.core.converters
+
+# List of file savers
+weka.core.converters.AbstractFileSaver=\
+ weka.core.converters
+
+# List of snowball stemmers.
+#
+# Note: the snowball jar needs to be in the CLASSPATH to make these stemmers
+#       available. See the following links for more information:
+#       http://weka.wikispaces.com/Stemmers
+#       http://snowball.tartarus.org/
+#
+#org.tartarus.snowball.SnowballProgram=\
+# org.tartarus.snowball.ext
+
+# List of generators
+#weka.classifiers.meta.generators.Generator=\
+# weka.classifiers.meta.generators
+
+#weka.classifiers.meta.generators.NumericAttributeGenerator=\
+# weka.classifiers.meta.generators
+
+#weka.classifiers.meta.generators.NominalAttributeGenerator=\
+# weka.classifiers.meta.generators

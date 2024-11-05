@@ -1,0 +1,31 @@
+# Corresponds to GenericPropertiesCreator.props, but lists classes
+# that shouldn't appear in the GUI.
+#
+# Format:
+# <key>=<prefix>:<class>[,<prefix>:<class>]
+#
+# <key>     the key from GenericPropertiesCreator.props (class or interface)
+# <prefix>  S ("Superclass"): any class derived from this one will be
+#                             excluded
+#           I ("Interface"):  any class implementing this interface will be
+#                             excluded
+#           C ("Class"):      exactly this class will be excluded
+# <class>   the classname
+#
+# Author : fracpete (fracpete at waikato dot ac dot nz)
+# Version: $Revision: 1.3 $
+
+# ResultListeners
+weka.experiment.ResultListener=\
+  I:weka.experiment.ResultProducer
+
+# Search algorithms of the Bayes net package
+weka.classifiers.bayes.net.search.SearchAlgorithm=\
+  C:weka.classifiers.bayes.net.search.local.LocalScoreSearchAlgorithm,\
+  C:weka.classifiers.bayes.net.search.global.GlobalScoreSearchAlgorithm,\
+  C:weka.classifiers.bayes.net.search.ci.CIScoreSearchAlgorithm
+
+# SVMreg learning algorithms
+weka.classifiers.functions.supportVector.RegOptimizer=\
+ C:weka.classifiers.functions.supportVector.RegOptimizer
+

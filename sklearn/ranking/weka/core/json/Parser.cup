@@ -1,0 +1,280 @@
+/*
+ * STANDARD ML OF NEW JERSEY COPYRIGHT NOTICE, LICENSE AND DISCLAIMER.
+ * 
+ * Copyright (c) 1989-1998 by Lucent Technologies
+ * 
+ * Permission to use, copy, modify, and distribute this software and its
+ * documentation for any purpose and without fee is hereby granted, provided
+ * that the above copyright notice appear in all copies and that both the
+ * copyright notice and this permission notice and warranty disclaimer appear
+ * in supporting documentation, and that the name of Lucent Technologies, Bell
+ * Labs or any Lucent entity not be used in advertising or publicity pertaining
+ * to distribution of the software without specific, written prior permission.
+ *
+ * Lucent disclaims all warranties with regard to this software, including all
+ * implied warranties of merchantability and fitness. In no event shall Lucent
+ * be liable for any special, indirect or consequential damages or any damages
+ * whatsoever resulting from loss of use, data or profits, whether in an action
+ * of contract, negligence or other tortious action, arising out of or in
+ * connection with the use or performance of this software. 
+ *
+ * Taken from this URL:
+ * http://www.smlnj.org/license.html
+ * 
+ * This license is compatible with the GNU GPL (see section "Standard ML of New
+ * Jersey Copyright License"):
+ * http://www.gnu.org/licenses/license-list.html#StandardMLofNJ
+ */
+
+/*
+ * Copyright 1996-1999 by Scott Hudson, Frank Flannery, C. Scott Ananian
+ */
+
+package weka.core.json;
+
+import java_cup.runtime.*;
+
+import java.io.*;
+import java.util.*;
+
+/**
+ * A parser for parsing JSON files.
+ *
+ * @author FracPete (fracpete at waikato dot ac dot nz)
+ * @version $Revision: 5785 $
+ */
+
+parser code {:
+  /** variable - value relation. */
+  protected HashMap m_Symbols;
+
+  /** for storing the parsed JSON data structure. */
+  protected JSONNode m_Result;
+  
+  /** the stack for keeping track of the current parent node. */
+  protected Stack<JSONNode> m_Stack;
+
+  /**
+   * Returns the JSON data structure.
+   * 
+   * @return the result
+   */
+  public JSONNode getResult() {
+    return m_Result;
+  }
+  
+  /**
+   * Returns the stack used internally for keeping track of the current
+   * parent node.
+   * 
+   * @return the stack
+   */
+  protected Stack<JSONNode> getStack() {
+    return m_Stack;
+  }
+
+  /**
+   * Runs the parser from commandline. Expects a filename as first parameter,
+   * pointing to a JSON file.
+   * 
+   * @param args the commandline arguments
+   * @throws Exception if something goes wrong
+   */
+  public static void main(String args[]) throws Exception {
+    if (args.length != 1) {
+      System.err.println("No JSON file specified!");
+      System.exit(1);
+    }
+    
+    FileInputStream stream = new FileInputStream(args[0]);
+    SymbolFactory sf = new DefaultSymbolFactory();
+    Parser parser = new Parser(new Scanner(stream, sf), sf);
+    parser.parse();
+    StringBuffer buffer = new StringBuffer();
+    parser.getResult().toString(buffer);
+    System.out.println(buffer.toString());
+  }
+:}
+
+init with {:
+  m_Symbols = new HashMap();
+  m_Result  = new JSONNode();
+  m_Stack   = new Stack<JSONNode>();
+  m_Stack.push(m_Result);
+:}
+
+terminal COMMA;
+terminal LSQUARE;
+terminal RSQUARE;
+terminal LCURLY;
+terminal RCURLY;
+terminal COLON;
+terminal NULL;
+terminal Boolean BOOLEAN;
+terminal Integer INTEGER;
+terminal Double DOUBLE;
+terminal String STRING;
+
+non terminal json;
+non terminal pairs;
+non terminal pair;
+non terminal primitive;
+non terminal null;
+non terminal Boolean boolean;
+non terminal Integer integer;
+non terminal Double double;
+non terminal String string;
+non terminal anon_object;
+non terminal named_object;
+non terminal named_object_start;
+non terminal anon_object_start;
+non terminal object_content;
+non terminal object_end;
+non terminal anon_array;
+non terminal named_array;
+non terminal named_array_start;
+non terminal anon_array_start;
+non terminal array_content;
+non terminal array_end;
+non terminal elements;
+non terminal element;
+
+json               ::=   LCURLY RCURLY
+                       | LCURLY pairs RCURLY
+                       ;
+
+pairs              ::=   pairs COMMA pair 
+                       | pair
+                       ; 
+
+pair               ::=   primitive 
+                       | named_object 
+                       | named_array
+                       ;
+
+primitive          ::=   null
+                       | boolean
+                       | integer
+                       | double
+                       | string
+                       ;
+                    
+null               ::= STRING:name COLON NULL
+                       {: 
+                          parser.getStack().peek().addNull(name);
+                       :}
+                       ;
+                    
+boolean            ::= STRING:name COLON BOOLEAN:b
+                       {:
+                          parser.getStack().peek().addPrimitive(name, b);
+                       :}
+                       ;
+                    
+integer            ::= STRING:name COLON INTEGER:i
+                       {:
+                          parser.getStack().peek().addPrimitive(name, i);
+                       :}
+                       ;
+                    
+double             ::= STRING:name COLON DOUBLE:d
+                       {:
+                          parser.getStack().peek().addPrimitive(name, d);
+                       :}
+                       ;
+                    
+string             ::= STRING:name COLON STRING:s
+                       {: 
+                          parser.getStack().peek().addPrimitive(name, s);
+                       :}
+                       ;
+                    
+named_object       ::=   named_object_start object_end
+                       | named_object_start object_content object_end
+                       ;
+                    
+named_object_start ::= STRING:name COLON LCURLY
+                       {:
+                          JSONNode node = parser.getStack().peek().addObject(name);
+                          parser.getStack().push(node);
+                       :}
+                       ;
+                    
+anon_object        ::=   anon_object_start object_end
+                       | anon_object_start object_content object_end
+                       ;
+                    
+anon_object_start  ::= LCURLY
+                       {:
+                          JSONNode node = parser.getStack().peek().addObject(null);
+                          parser.getStack().push(node);
+                       :}
+                       ;
+                    
+object_content     ::= pairs
+                       ;
+                    
+object_end         ::= RCURLY
+                       {:
+                          parser.getStack().pop();
+                       :}
+                       ;
+                    
+named_array        ::=   named_array_start array_end
+                       | named_array_start array_content array_end
+                       ;
+                    
+named_array_start  ::= STRING:name COLON LSQUARE
+                       {:
+                          JSONNode node = parser.getStack().peek().addArray(name);
+                          parser.getStack().push(node);
+                       :}
+                       ;
+                    
+anon_array         ::=   anon_array_start array_end
+                       | anon_array_start array_content array_end
+                       ;
+                    
+anon_array_start   ::= LSQUARE
+                       {:
+                          JSONNode node = parser.getStack().peek().addArray(null);
+                          parser.getStack().push(node);
+                       :}
+                       ;
+                    
+array_content      ::= elements
+                       ;
+                    
+array_end          ::= RSQUARE
+                       {:
+                          parser.getStack().pop();
+                       :}
+                       ;
+                    
+elements           ::=   elements COMMA element 
+                       | element
+                       ;
+                    
+element            ::=   NULL 
+                         {: 
+                            parser.getStack().peek().addArrayElement(null);
+                         :}
+                       | BOOLEAN:b 
+                         {: 
+                            parser.getStack().peek().addArrayElement(b);
+                         :}
+                       | INTEGER:i 
+                         {:
+                            parser.getStack().peek().addArrayElement(i);
+                         :}
+                       | DOUBLE:d 
+                         {:
+                            parser.getStack().peek().addArrayElement(d);
+                         :}
+                       | STRING:s
+                         {: 
+                            parser.getStack().peek().addArrayElement(s);
+                         :}
+                       | anon_object
+                       | anon_array
+                       ;

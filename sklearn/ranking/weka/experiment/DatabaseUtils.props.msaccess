@@ -1,0 +1,264 @@
+# Database settings for ODBC in conjunction with MS Access 2000
+#
+# General information on database access can be found here:
+# http://weka.wikispaces.com/Databases
+#
+# url:     http://weka.wikispaces.com/Windows+Databases
+# author:  Fracpete (fracpete at waikato dot ac dot nz)
+# version: $Revision: 5837 $
+
+# JDBC driver (comma-separated list)
+jdbcDriver=sun.jdbc.odbc.JdbcOdbcDriver
+
+# database URL
+jdbcURL=jdbc:odbc:DSN_Name
+
+# specific data types
+# string, getString() = 0;    --> nominal
+# boolean, getBoolean() = 1;  --> nominal
+# double, getDouble() = 2;    --> numeric
+# byte, getByte() = 3;        --> numeric
+# short, getByte()= 4;        --> numeric
+# int, getInteger() = 5;      --> numeric
+# long, getLong() = 6;        --> numeric
+# float, getFloat() = 7;      --> numeric
+# date, getDate() = 8;        --> date
+# text, getString() = 9;      --> string
+# time, getTime() = 10;       --> date
+
+varchar=0
+float=2
+tinyint=3
+int=5
+text=0
+
+# other options
+CREATE_DOUBLE=DOUBLE
+CREATE_STRING=TEXT
+CREATE_INT=INT
+CREATE_DATE=DATETIME
+DateFormat=yyyy-MM-dd HH:mm:ss
+checkUpperCaseNames=false
+checkLowerCaseNames=false
+checkForTable=true
+
+# All the reserved keywords for this database
+# Based on the keywords listed at the following URL (2009-04-13):
+# http://support.microsoft.com/default.aspx?scid=kb;en-us;286335
+Keywords=\
+  ADD,\
+  ALL,\
+  ALTER,\
+  AND,\
+  ANY,\
+  AS,\
+  ASC,\
+  AUTOINCREMENT,\
+  Alphanumeric,\
+  Application,\
+  Assistant,\
+  Avg,\
+  BETWEEN,\
+  BINARY,\
+  BIT,\
+  BOOLEAN,\
+  BY,\
+  BYTE,\
+  CHAR,\
+  CHARACTER,\
+  COLUMN,\
+  CONSTRAINT,\
+  COUNTER,\
+  CREATE,\
+  CURRENCY,\
+  CompactDatabase,\
+  Container,\
+  Count,\
+  CreateDatabase,\
+  CreateField,\
+  CreateGroup,\
+  CreateIndex,\
+  CreateObject,\
+  CreateProperty,\
+  CreateRelation,\
+  CreateTableDef,\
+  CreateUser,\
+  CreateWorkspace,\
+  CurrentUser,\
+  DATABASE,\
+  DATE,\
+  DATETIME,\
+  DELETE,\
+  DESC,\
+  DISALLOW,\
+  DISTINCT,\
+  DISTINCTROW,\
+  DOUBLE,\
+  DROP,\
+  Description,\
+  Document,\
+  EXISTS,\
+  Echo,\
+  Else,\
+  End,\
+  Eqv,\
+  Error,\
+  Exit,\
+  FALSE,\
+  FLOAT,\
+  FLOAT4,\
+  FLOAT8,\
+  FOREIGN,\
+  FROM,\
+  FUNCTION,\
+  Field,\
+  Fields,\
+  FillCache,\
+  Form,\
+  Forms,\
+  Full,\
+  GENERAL,\
+  GROUP,\
+  GROUPBY,\
+  GUID,\
+  GetObject,\
+  GetOption,\
+  GotoPage,\
+  HAVING,\
+  IEEEDOUBLE,\
+  IEEESINGLE,\
+  IGNORE,\
+  IN,\
+  INDEX,\
+  INNER,\
+  INSERT,\
+  INT,\
+  INTEGER,\
+  INTEGER1,\
+  INTEGER2,\
+  INTEGER4,\
+  INTO,\
+  IS,\
+  Idle,\
+  If,\
+  Imp,\
+  Index,\
+  Indexes,\
+  InsertText,\
+  JOIN,\
+  KEY,\
+  LEFT,\
+  LOGICAL,\
+  LOGICAL1,\
+  LONG,\
+  LONGBINARY,\
+  LONGTEXT,\
+  LastModified,\
+  Level,\
+  Like,\
+  MEMO,\
+  MONEY,\
+  Macro,\
+  Match,\
+  Max,\
+  Min,\
+  Mod,\
+  Module,\
+  Move,\
+  NAME,\
+  NO,\
+  NULL,\
+  NUMBER,\
+  NUMERIC,\
+  NewPassword,\
+  Not,\
+  Note,\
+  OFF,\
+  OLEOBJECT,\
+  ON,\
+  OPTION,\
+  OR,\
+  ORDER,\
+  OWNERACCESS,\
+  Object,\
+  OpenRecordset,\
+  Orientation,\
+  Outer,\
+  PARAMETERS,\
+  PERCENT,\
+  PIVOT,\
+  PRIMARY,\
+  PROCEDURE,\
+  Parameter,\
+  Partial,\
+  Property,\
+  Queries,\
+  Query,\
+  Quit,\
+  REAL,\
+  REFERENCES,\
+  RIGHT,\
+  Recalc,\
+  Recordset,\
+  Refresh,\
+  RefreshLink,\
+  RegisterDatabase,\
+  Relation,\
+  Repaint,\
+  RepairDatabase,\
+  Report,\
+  Reports,\
+  Requery,\
+  SCREEN,\
+  SECTION,\
+  SELECT,\
+  SET,\
+  SHORT,\
+  SINGLE,\
+  SMALLINT,\
+  SOME,\
+  SQL,\
+  STRING,\
+  SetFocus,\
+  SetOption,\
+  StDev,\
+  StDevP,\
+  Sum,\
+  TABLE,\
+  TEXT,\
+  TIME,\
+  TIMESTAMP,\
+  TOP,\
+  TRANSFORM,\
+  TRUE,\
+  TableDef,\
+  TableDefs,\
+  TableID,\
+  Type,\
+  UNION,\
+  UNIQUE,\
+  UPDATE,\
+  USER,\
+  VALUE,\
+  VALUES,\
+  VARBINARY,\
+  VARCHAR,\
+  VERSION,\
+  Var,\
+  VarP,\
+  WHERE,\
+  WITH,\
+  Workspace,\
+  Xor,\
+  YES,\
+  YESNO,\
+  Year
+
+# The character to append to attribute names to avoid exceptions due to
+# clashes between keywords and attribute names
+KeywordsMaskChar=_
+
+#flags for loading and saving instances using DatabaseLoader/Saver
+nominalToStringLimit=50
+idColumn=auto_generated_id
+

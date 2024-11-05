@@ -1,0 +1,10 @@
+# Look'n'Feel configuration file
+# $Revision: 1.1 $
+
+# the theme to use, none specified or empty means the system default one
+#Theme=javax.swing.plaf.metal.MetalLookAndFeel
+#Theme=com.sun.java.swing.plaf.gtk.GTKLookAndFeel
+#Theme=com.sun.java.swing.plaf.motif.MotifLookAndFeel
+#Theme=com.sun.java.swing.plaf.windows.WindowsLookAndFeel
+#Theme=com.sun.java.swing.plaf.windows.WindowsClassicLookAndFeel
+

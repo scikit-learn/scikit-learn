@@ -1,0 +1,78 @@
+# Mappings for classes to be handled in the GenericObjectEditor
+#
+# Format:
+#   <class to be handled>=<class to handle it>
+#
+# Notes: 
+# - array classes have to be suffixed with "[]"
+# - full classname has to be provided
+#
+# author:  FracPete (fracpete at waikato dot ac dot nz)
+# version: $Revision: 6624 $
+
+# general
+java.lang.Object[]=weka.gui.GenericArrayEditor
+java.io.File=weka.gui.FileEditor
+java.text.SimpleDateFormat=weka.gui.SimpleDateFormatEditor
+
+# core
+weka.core.SelectedTag=weka.gui.SelectedTagEditor
+weka.core.DistanceFunction=weka.gui.GenericObjectEditor
+weka.core.Range=weka.gui.GenericObjectEditor
+weka.core.Range[]=weka.gui.GenericArrayEditor
+weka.core.converters.Loader=weka.gui.GenericObjectEditor
+weka.core.converters.Saver=weka.gui.GenericObjectEditor
+weka.core.neighboursearch.NearestNeighbourSearch=weka.gui.GenericObjectEditor
+weka.core.neighboursearch.balltrees.BallTreeConstructor=weka.gui.GenericObjectEditor
+weka.core.neighboursearch.balltrees.BallSplitter=weka.gui.GenericObjectEditor
+weka.core.neighboursearch.kdtrees.KDTreeNodeSplitter=weka.gui.GenericObjectEditor
+weka.core.stemmers.Stemmer=weka.gui.GenericObjectEditor
+weka.core.tokenizers.Tokenizer=weka.gui.GenericObjectEditor
+
+# estimators
+weka.estimators.Estimator=weka.gui.GenericObjectEditor
+weka.estimators.Estimator[]=weka.gui.GenericArrayEditor
+
+# filters
+weka.filters.Filter=weka.gui.GenericObjectEditor
+weka.filters.Filter[]=weka.gui.GenericArrayEditor
+
+# classifiers
+weka.classifiers.Classifier=weka.gui.GenericObjectEditor
+weka.classifiers.Classifier[]=weka.gui.GenericArrayEditor
+weka.classifiers.CostMatrix=weka.gui.CostMatrixEditor
+weka.classifiers.bayes.net.search.SearchAlgorithm=weka.gui.GenericObjectEditor
+weka.classifiers.bayes.net.estimate.BayesNetEstimator=weka.gui.GenericObjectEditor
+weka.classifiers.evaluation.output.prediction.AbstractOutput=weka.gui.GenericObjectEditor
+weka.classifiers.functions.supportVector.Kernel=weka.gui.GenericObjectEditor
+weka.classifiers.functions.supportVector.RegOptimizer=weka.gui.GenericObjectEditor
+#weka.classifiers.meta.generators.Generator=weka.gui.GenericObjectEditor
+#weka.classifiers.meta.ensembleSelection.EnsembleSelectionLibrary=weka.gui.EnsembleSelectionLibraryEditor
+
+# experiment
+weka.experiment.ResultListener=weka.gui.GenericObjectEditor
+weka.experiment.ResultProducer=weka.gui.GenericObjectEditor
+weka.experiment.SplitEvaluator=weka.gui.GenericObjectEditor
+weka.experiment.ResultMatrix=weka.gui.GenericObjectEditor
+weka.experiment.Tester=weka.gui.GenericObjectEditor
+
+# datagenerators
+weka.datagenerators.DataGenerator=weka.gui.GenericObjectEditor
+weka.datagenerators.ClusterDefinition=weka.gui.GenericObjectEditor
+weka.datagenerators.ClusterDefinition[]=weka.gui.GenericArrayEditor
+
+# associations
+weka.associations.Associator=weka.gui.GenericObjectEditor
+
+# clusterers
+weka.clusterers.Clusterer=weka.gui.GenericObjectEditor
+weka.clusterers.DensityBasedClusterer=weka.gui.GenericObjectEditor
+
+# attribute selection
+weka.attributeSelection.ASEvaluation=weka.gui.GenericObjectEditor
+weka.attributeSelection.ASSearch=weka.gui.GenericObjectEditor
+weka.attributeSelection.UnsupervisedSubsetEvaluator=weka.gui.GenericObjectEditor
+
+#generators
+#weka.classifiers.meta.generators.NominalAttributeGenerator=weka.gui.GenericObjectEditor
+#weka.classifiers.meta.generators.NumericAttributeGenerator=weka.gui.GenericObjectEditor

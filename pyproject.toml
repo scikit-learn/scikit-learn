@@ -93,6 +93,10 @@ tests = [
 ]
 maintenance = ["conda-lock==2.5.6"]
 
+ranking = [
+    "JPype1",  # Required for Java integration
+]
+
 [build-system]
 build-backend = "mesonpy"
 # Minimum requirements for the build system to execute.

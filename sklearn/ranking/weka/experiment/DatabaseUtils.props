@@ -1,0 +1,109 @@
+# General information on database access can be found here:
+# http://weka.wikispaces.com/Databases
+#
+# Version: $Revision: 5837 $
+
+# The comma-separated list of jdbc drivers to use
+#jdbcDriver=RmiJdbc.RJDriver,jdbc.idbDriver
+#jdbcDriver=jdbc.idbDriver
+jdbcDriver=RmiJdbc.RJDriver,jdbc.idbDriver,org.gjt.mm.mysql.Driver,com.mckoi.JDBCDriver,org.hsqldb.jdbcDriver
+#jdbcDriver=org.gjt.mm.mysql.Driver
+
+# The url to the experiment database
+#jdbcURL=jdbc:rmi://expserver/jdbc:idb=experiments.prp
+jdbcURL=jdbc:idb=experiments.prp
+#jdbcURL=jdbc:mysql://mysqlserver/username
+
+# the method that is used to retrieve values from the db 
+# (java datatype + RecordSet.<method>)
+# string, getString() = 0;    --> nominal
+# boolean, getBoolean() = 1;  --> nominal
+# double, getDouble() = 2;    --> numeric
+# byte, getByte() = 3;        --> numeric
+# short, getByte()= 4;        --> numeric
+# int, getInteger() = 5;      --> numeric
+# long, getLong() = 6;        --> numeric
+# float, getFloat() = 7;      --> numeric
+# date, getDate() = 8;        --> date
+# text, getString() = 9;      --> string
+# time, getTime() = 10;       --> date
+# the original conversion: <column type>=<conversion>
+#char=0
+#varchar=0
+#longvarchar=0
+#binary=0
+#varbinary=0
+#longvarbinary=0
+#bit=1
+#numeric=2
+#decimal=2
+#tinyint=3
+#smallint=4
+#integer=5
+#bigint=6
+#real=7
+#float=2
+#double=2
+#date=8
+#time=10
+#timestamp=8
+#mysql-conversion
+CHAR=0
+TEXT=0
+VARCHAR=0
+LONGVARCHAR=9
+BINARY=0
+VARBINARY=0
+LONGVARBINARY=9
+BIT=1
+NUMERIC=2
+DECIMAL=2
+FLOAT=2
+DOUBLE=2
+TINYINT=3
+SMALLINT=4
+#SHORT=4
+SHORT=5
+INTEGER=5
+BIGINT=6
+LONG=6
+REAL=7
+DATE=8
+TIME=10
+TIMESTAMP=8 
+
+#mappings for table creation
+CREATE_STRING=TEXT
+CREATE_INT=INT
+CREATE_DOUBLE=DOUBLE
+CREATE_DATE=DATETIME
+DateFormat=yyyy-MM-dd HH:mm:ss
+
+#database flags
+checkUpperCaseNames=false
+checkLowerCaseNames=false
+checkForTable=true
+setAutoCommit=true
+createIndex=false
+
+# All the reserved keywords for this database
+Keywords=\
+  AND,\
+  ASC,\
+  BY,\
+  DESC,\
+  FROM,\
+  GROUP,\
+  INSERT,\
+  ORDER,\
+  SELECT,\
+  UPDATE,\
+  WHERE
+
+# The character to append to attribute names to avoid exceptions due to
+# clashes between keywords and attribute names
+KeywordsMaskChar=_
+
+#flags for loading and saving instances using DatabaseLoader/Saver
+nominalToStringLimit=50
+idColumn=auto_generated_id

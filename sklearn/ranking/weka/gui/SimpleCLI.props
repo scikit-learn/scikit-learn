@@ -1,0 +1,8 @@
+# Contains properties for the SimpleCLI
+#
+# Author:  FracPete (fracpete at waikato dot ac dot nz)
+# Version: $Revision: 1.1 $
+
+# the maximum number of history commands to save (most recent ones)
+HistorySize=50
+

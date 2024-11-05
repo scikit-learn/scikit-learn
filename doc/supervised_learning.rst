@@ -22,4 +22,5 @@ Supervised learning
     modules/semi_supervised.rst
     modules/isotonic.rst
     modules/calibration.rst
+    modules/boostLR.rst
     modules/neural_networks_supervised

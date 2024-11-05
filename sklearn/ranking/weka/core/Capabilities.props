@@ -1,0 +1,28 @@
+# The processing of Capabilities is managed with the properties stored
+# in this file.
+#
+# author:  Fracpete (fracpete at waikato dot ac dot nz)
+# version: $Revision: 5953 $
+
+# are Capabilities tests enabled at all?
+Test=true
+
+# enable tests that are based on the data 
+# see weka.core.Capabilities.test(Instances,int,int)
+InstancesTest=true
+
+# enable tests that work only on the type of attribute, not the data
+# see weka.core.Capabilities.test(Attribute,boolean)
+AttributeTest=true
+
+# test for missing values
+# see weka.core.Capabilities.test(Instances,int,int)
+MissingValuesTest=true
+
+# test for missing class values
+# see weka.core.Capabilities.test(Instances,int,int)
+MissingClassValuesTest=true
+
+# test for minimum number of instances
+# see weka.core.Capabilities.test(Instances,int,int)
+MinimumNumberInstancesTest=true

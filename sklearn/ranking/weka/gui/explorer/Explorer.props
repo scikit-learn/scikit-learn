@@ -1,0 +1,182 @@
+# This props file contains default values for the Weka Explorer.
+#
+# Notes:
+# - backslashes within options, e.g., for the default "Classifier", need
+#   to be doubled (the backslashes get interpreted already when a property
+#   is read).
+#
+# Author  FracPete (fracpete at waikato dot ac dot nz)
+# Version $Revision: 6103 $
+
+# if set to true the Capabilities filters in the GOE will be initialized
+# based on the full dataset that has been loaded into the Explorer 
+# otherwise only the header (true|false)
+# Note: The tabs in the Explorer have their own class combobox, which means 
+#       that the data has to be inspected several times (changing the class
+#       combobox only leads to an inspection of the data in the current tab), 
+#       which can be slow on big datasets.
+InitGenericObjectEditorFilter=True
+
+# The tabs to display apart from the PreprocessPanel.
+#
+# The classes listed here must import the weka.gui.explorer.Explorer.ExplorerPanel
+# interface. Optionally, they can also import the 
+# weka.gui.explorer.Explorer.LogHandler interface if they want to use the logging
+# functionality of the Explorer and the 
+# weka.gui.exporer.Explorer.CapabilitiesFilterChangeListener interface 
+# in case they need to know when the Capabilities have changed, e.g., when a 
+# new dataset has been loaded into the Explorer.
+#
+# Additional options follow the classname after a colon.
+# Currently supported options are:
+#   standalone - the tab does not depend on the PreprocessPanel to load the data first
+#
+Tabs=weka.gui.explorer.ClassifierPanel,\
+     weka.gui.explorer.ClustererPanel,\
+     weka.gui.explorer.AssociationsPanel,\
+     weka.gui.explorer.AttributeSelectionPanel,\
+     weka.gui.explorer.VisualizePanel
+
+# the initial directory for opening datasets.
+# the following placeholders are recognized
+#   %t - the temp directory
+#   %h - the user's home directory
+#   %c - the current directory
+#   %% - gets replaced by a single percentage sign
+InitialDirectory=%c
+
+# the default filter, including options (can be left empty)
+Filter=
+
+# the default classifier in the classify tab, including options
+# (default is ZeroR)
+Classifier=weka.classifiers.rules.ZeroR
+
+# the default test mode in the classify tab 
+# (according to "testMode" variable in startClassifier method)
+# 1 - cross-validation
+# 2 - percentage split
+# 3 - use training set
+# 4 - supplied test set
+# (default is 1 - CV)
+ClassifierTestMode=1
+
+# the default number of folds for CV in the classify tab 
+# (default is 10)
+ClassifierCrossvalidationFolds=10
+
+# the default percentage split % in the classify tab (integer: 1-99)
+# (default is 66)
+ClassifierPercentageSplit=66
+
+# whether the classifier model is output (true|false)
+# (default is true)
+ClassifierOutputModel=true
+
+# whether additional per-class stats of the classifier model are 
+# output (true|false)
+# (default is true)
+ClassifierOutputPerClassStats=true
+
+# whether the entropy based evaluation measures of the classifier model are 
+# output (true|false)
+# (default is false)
+ClassifierOutputEntropyEvalMeasures=false
+
+# whether the confusion matrix is output for the classifier (true|false)
+# (default is true)
+ClassifierOutputConfusionMatrix=true
+
+# whether the predictions of the classifier are stored for visulization 
+# purposes (true|false)
+# (default is true)
+ClassifierStorePredictionsForVis=true
+
+# whether the predictions of the classifier output as well (true|false)
+# (default is false)
+ClassifierOutputPredictions=false
+
+# lists the attributes indices to output in addition to the predictions
+# (default is "")
+ClassifierOutputAdditionalAttributes=
+
+# whether the evaluation of the classifier is done cost-sensitively (true|false)
+# (default is false)
+# Note: a cost matrix still has to be provided!
+ClassifierCostSensitiveEval=false
+
+# the default random seed in the classify tab
+# (default is 1)
+ClassifierRandomSeed=1
+
+# whether the order is preserved in case of percentage split in the classifier 
+# tab 
+# (default is false)
+ClassifierPreserveOrder=false
+
+# whether the source code of a Sourcable classifier is output as well in the 
+# classifier tab 
+# (default is false)
+ClassifierOutputSourceCode=false
+
+# the default classname of a Sourcable classifier in the classifier tab 
+# (default is Foobar)
+ClassifierSourceCodeClass=WekaClassifier
+
+# the class (incl. options) for collecting the predictions and turning them 
+# into plotable instances for displaying the classifier errors.
+ClassifierErrorsPlotInstances=weka.gui.explorer.ClassifierErrorsPlotInstances
+
+# The minimum plot size for numeric attributes (when visualizing classifier errors)
+ClassifierErrorsMinimumPlotSizeNumeric=1
+
+# The maximum plot size for numeric attributes (when visualizing classifier errors)
+ClassifierErrorsMaximumPlotSizeNumeric=20
+
+# the default clusterer, including options
+# (default is EM)
+Clusterer=weka.clusterers.EM
+
+# the default test mode in the cluster tab 
+# (according to "testMode" variable in startClusterer method)
+# 2 - percentage split
+# 3 - use training set
+# 4 - supplied test set
+# 5 - classes to clusters evaluation
+# (default is 3 - training set)
+ClustererTestMode=3
+
+# whether the clusters are stored for visualization purposes (true|false)
+# (default is true)
+ClustererStoreClustersForVis=true
+
+# the class (incl. options) for collecting the predictions and turning them 
+# into plotable instances for displaying the cluster assignments.
+ClustererAssignmentsPlotInstances=weka.gui.explorer.ClustererAssignmentsPlotInstances
+
+# the default associator, including options
+# (default is Apriori)
+Associator=weka.associations.Apriori
+
+# the default attribute evaluator, including options
+# (default is CfsSubsetEval)
+ASEvaluation=weka.attributeSelection.CfsSubsetEval
+
+# the default attribute selection search scheme, including options
+# (default is BestFirst)
+ASSearch=weka.attributeSelection.BestFirst
+
+# the default test mode in the attribute selection tab 
+# (according to "testMode" variable in startAttributeSelection method)
+# 0 - use full training set
+# 1 - cross-validation
+# (default is 0 - full training set)
+ASTestMode=0
+
+# the default number of folds for CV in the attribute selection tab 
+# (default is 10)
+ASCrossvalidationFolds=10
+
+# the default random seed in the attribute selection tab
+# (default is 1)
+ASRandomSeed=1

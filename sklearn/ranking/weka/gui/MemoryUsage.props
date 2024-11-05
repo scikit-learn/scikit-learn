@@ -1,0 +1,36 @@
+# Properties file for customizing the memory usage panel.
+#
+# author:  FracPete (fracpete at waikato dot ac dot nz)
+# version: $Revision: 1.1 $
+
+# The dimensions of the dialog, width and height.
+Width=400
+# Uncomment the following property if you don't want the height to be based on 
+# the height of the "garbage collector" button.
+#Height=20
+
+# The position of the frame. If at least one equals "-1", then the position 
+# will be ignored.
+Left=-1
+Top=-1
+
+# The background color for the graph.
+BackgroundColor=white
+
+# The refresh interval in milliseconds
+Interval=1000
+
+# The percentage thresholds at which to change color. comma-separated list.
+# Percentages listed here must have a corresponding color entry, i.e., 
+# if "70" is in the list, then an entry like "70=somecolor" must be listed in 
+# the properties file as well.
+Percentages=70,80,90
+
+# The default color, i.e., the color for memory usage below the smallest 
+# threshold listed in "Percentages".
+DefaultColor=green
+
+# The colors for the thresholds (can use R,G,B format)
+70=yellow
+80=orange
+90=red

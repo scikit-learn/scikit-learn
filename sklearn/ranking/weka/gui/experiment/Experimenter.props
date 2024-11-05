@@ -1,0 +1,92 @@
+# This props file contains default values for the Weka Experimenter.
+# "simple" indicates that this property is only available for simple
+# experiments.
+#
+# $Revision: 5367 $
+
+# the default extension in the file-dialog
+# possible values: 
+#   .exp 
+#   .xml 
+#   .koml (if available)
+Extension=.exp
+
+# the default destination ("simple")
+# possible values:
+#   ARFF file
+#   CSV file
+#   JDBC database
+Destination=ARFF file
+
+# the experiment type ("simple")
+# possible values:
+#   Cross-validation
+#   Train/Test Percentage Split (data randomized)
+#   Train/Test Percentage Split (order preserved)
+ExperimentType=Cross-validation
+
+# whether classification is the default ("simple")
+UseClassification=true
+
+# the default number of CV folds ("simple")
+Folds=10
+
+# the default percentage for training ("simple")
+TrainPercentage=66
+
+# the default number of repetitions ("simple")
+Repetitions=10
+
+# whether datasets are first iterated ("simple")
+DatasetsFirst=true
+
+# the initial datasets directory
+# Note for Win32: the path backslashes have to written as "\\"
+InitialDatasetsDirectory=
+
+# whether to use relative paths
+UseRelativePaths=false
+
+# the default tester to use
+# possible values (at least):
+#   Paired T-Tester (corrected)
+#   Paired T-Tester
+Tester=Paired T-Tester (corrected)
+
+# the row selection
+Row=Key_Dataset
+
+# the column selection
+Column=Key_Scheme,Key_Scheme_options,Key_Scheme_version_ID
+
+# the default comparison field (lower case!)
+# see ComboBox in Experimenter
+ComparisonField=percent_correct
+
+# the default significance
+Significance=0.05
+
+# the default sorting
+Sorting=
+
+# whether stddevs are displayed by default
+ShowStdDev=false
+
+# whether the Average is displayed by default
+ShowAverage=false
+
+# the default precision for the mean
+MeanPrecision=2
+
+# the default precision for the stdev
+StdDevPrecision=2
+
+# the classname and options of the ResultMatrix, reponsible for the default 
+# output format.
+# NB: The other defaults listed in this props file override the "advanced" 
+#     options specified in this property.
+OutputFormat=weka.experiment.ResultMatrixPlainText -col-name-width 0 -row-name-width 25 -mean-width 0 -stddev-width 0 -sig-width 0 -count-width 5 -print-col-names -print-row-names -enum-col-names
+
+# whether filter classnames are removed by default
+RemoveFilterClassnames=false
+

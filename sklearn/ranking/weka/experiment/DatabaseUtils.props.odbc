@@ -1,0 +1,65 @@
+# Database settings for ODBC in conjunction with MS SQL Server 2000
+#
+# General information on database access can be found here:
+# http://weka.wikispaces.com/Databases
+#
+# url:     http://weka.wikispaces.com/Windows+Databases
+# author:  Fracpete (fracpete at waikato dot ac dot nz)
+# version: $Revision: 5837 $
+
+# JDBC driver (comma-separated list)
+jdbcDriver=sun.jdbc.odbc.JdbcOdbcDriver
+
+# database URL
+jdbcURL=jdbc:odbc:DSN_name
+
+# specific data types
+# string, getString() = 0;    --> nominal
+# boolean, getBoolean() = 1;  --> nominal
+# double, getDouble() = 2;    --> numeric
+# byte, getByte() = 3;        --> numeric
+# short, getByte()= 4;        --> numeric
+# int, getInteger() = 5;      --> numeric
+# long, getLong() = 6;        --> numeric
+# float, getFloat() = 7;      --> numeric
+# date, getDate() = 8;        --> date
+# text, getString() = 9;      --> string
+# time, getTime() = 10;       --> date
+
+varchar=0
+float=2
+tinyint=3
+int=5
+
+# other options
+CREATE_DOUBLE=DOUBLE PRECISION
+CREATE_STRING=VARCHAR(8000)
+CREATE_INT=INT
+CREATE_DATE=DATETIME
+DateFormat=yyyy-MM-dd HH:mm:ss
+checkUpperCaseNames=false
+checkLowerCaseNames=false
+checkForTable=true
+
+# All the reserved keywords for this database
+Keywords=\
+  AND,\
+  ASC,\
+  BY,\
+  DESC,\
+  FROM,\
+  GROUP,\
+  INSERT,\
+  ORDER,\
+  SELECT,\
+  UPDATE,\
+  WHERE
+
+# The character to append to attribute names to avoid exceptions due to
+# clashes between keywords and attribute names
+KeywordsMaskChar=_
+
+#flags for loading and saving instances using DatabaseLoader/Saver
+nominalToStringLimit=50
+idColumn=auto_generated_id
+

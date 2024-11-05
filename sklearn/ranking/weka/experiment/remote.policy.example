@@ -1,0 +1,76 @@
+/* 
+ * Necessary permissions for remote engines
+ *
+ * Example setup for user John Doe:
+ * - home directory:
+ *   /home/johndoe
+ * - location of datasets:
+ *   /home/johndoe/datasets/
+ * - location of weka.jar:
+ *   /home/johndoe/weka/weka.jar
+ * - location of additional jars (e.g., for database access):
+ *   /home/johndoe/jars
+ * - remote engine directory (policy, start scripts, etc.):
+ *   /home/johndoe/remote_engine
+ *
+ * Start Experimenter in directory /home/johndoe/remote_engine:
+ *   java \
+ *     -classpath /home/johndoe/jars/<db.jar>:/home/johndoe/weka/weka.jar \
+ *     -Djava.rmi.server.codebase=file:/home/johndoe/weka/weka.jar \
+ *     weka.gui.experiment.Experimenter
+ *
+ * Start remote engine on remote machine:
+ * - cd to /home/johndoe/remote_engine
+ * - start engine
+ *   java -Xmx256m \
+ *     -classpath remoteEngine.jar:/home/johndoe/jars/<db.jar> \
+ *     -Djava.security.policy=remote.policy \
+ *     weka.experiment.RemoteEngine &
+ *
+ * Note:
+ * replace <db.jar> with actual jar filename, e.g., mysql.jar
+ *
+ * Version: $Revision: 1.3 $
+ */
+
+grant {
+
+  // allow the remote engine to replace the context class loader.
+  // This enables the unloading of types from the remote engine
+  permission java.lang.RuntimePermission
+    "setContextClassLoader";
+
+  // allow the remote engine access to environment variables
+  permission java.lang.RuntimePermission
+    "getenv.*";
+
+  // file permission for data sets
+  permission java.io.FilePermission
+    "/home/johndoe/datasets/-", "read";
+
+  // file permissions for downloading classes from client file url's
+  permission java.io.FilePermission
+    "/home/johndoe/-", "read";
+  permission java.io.FilePermission
+    "/home/johndoe/weka/weka.jar", "read";
+
+  // connect to or accept connections from unprivaleged ports and the http port
+  permission java.net.SocketPermission 
+    "*:1024-65535", "connect,accept";
+  permission java.net.SocketPermission
+    "*:80", "connect";
+
+  // file permission to load server classes from remoteEngine.jar.
+  // only needed if RemoteEngine_Skel.class/_Stub.class are going to
+  // be downloaded by clients (ie, if these files are not already in the
+  // client's classpath). Normally this doesn't need to be changed.
+  permission java.io.FilePermission
+    "/home/johndoe/remote_engine/-", "read";
+
+  // read write for properties
+  permission java.util.PropertyPermission 
+    "*", "read,write";
+
+};
+
+

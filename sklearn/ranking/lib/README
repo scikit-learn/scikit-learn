@@ -1,0 +1,22 @@
+README
+======
+
+An overview of the libraries used in Weka:
+
+- junit.jar
+  Version:  3.8.2
+  URL:      http://junit.org/
+  Download: http://sourceforge.net/project/showfiles.php?group_id=15278&package_id=12472&release_id=398352
+  
+- java-cup.jar
+  Version:  11a beta
+  URL:      http://www2.cs.tum.edu/projects/cup/
+  Download: https://www2.in.tum.de/WebSVN/dl.php?repname=CUP&path=/develop/&rev=0&isdir=1
+  
+- JFlex.jar
+  Version:  1.4.2
+  URL:      http://jflex.de/
+  Download: http://jflex.de/jflex-1.4.2.tar.gz
+  
+
+Version: $Revision: 4946 $

@@ -1,0 +1,65 @@
+/* 
+ * Necessary permissions for remote engines 
+ *
+ * Start Experimenter in directory /home/johndoe/remote_engine:
+ *
+ * java \
+ *   -classpath /path to weka jar/weka.jar:/path to database jar/<db.jar> \
+ *   -Djava.rmi.server.codebase=file:/path to weka jar/weka.jar \
+ *   weka.gui.experiment.Experimenter
+ *
+ * Start remote engine on remote machine: 
+ * - cd to /path to dir containing remoteEngine.jar
+ * - start engine
+ *   java -Xmx256m \
+ *     -classpath remoteEngine.jar:/path to database jar/<db.jar> \
+ *     -Djava.security.policy=remote.policy \
+ *      weka.experiment.RemoteEngine &
+ *
+ * Note:
+ * replace <db.jar> with actual jar filename, e.g., mysql.jar
+ *
+ * Version: $Revision: 1.8 $
+ */
+
+grant {
+
+  // allow the remote engine to replace the context class loader.
+  // This enables the unloading of types from the remote engine
+  permission java.lang.RuntimePermission
+    "setContextClassLoader";
+
+  // allow the remote engine access to environment variables
+  permission java.lang.RuntimePermission
+    "getenv.*";
+
+  // file permission for data sets
+  permission java.io.FilePermission
+    "/path_to_data_sets/-", "read";
+
+  // file permissions for downloading classes from client file url's
+  //  permission java.io.FilePermission
+  //	     "/joe user's path to weka classes/-", "read";
+  //  permission java.io.FilePermission
+  //	     "/jill user's path to weka classes/-", "read";
+
+  // connect to or accept connections from unprivaleged ports and the http port
+  permission java.net.SocketPermission 
+    "*:1024-65535", "connect,accept";
+  permission java.net.SocketPermission 
+    "*:80", "connect";
+
+  // file permission to load server classes from remoteEngine.jar.
+  // only needed if RemoteEngine_Skel.class/_Stub.class are going to
+  // be downloaded by clients (ie, if these files are not already in the
+  // client's classpath). Normally this doesn't need to be changed.
+  permission java.io.FilePermission
+    "/path_to_dir_containing_remoteEngine.jar/-", "read";
+
+  // read write for properties
+  permission java.util.PropertyPermission 
+    "*", "read,write";
+
+};
+
+

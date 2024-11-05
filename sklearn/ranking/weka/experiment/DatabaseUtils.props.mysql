@@ -1,0 +1,279 @@
+# Database settings for MySQL 3.23.x, 4.x
+#
+# General information on database access can be found here:
+# http://weka.wikispaces.com/Databases
+#
+# url:     http://www.mysql.com/
+# jdbc:    http://www.mysql.com/products/connector/j/
+# author:  Fracpete (fracpete at waikato dot ac dot nz)
+# version: $Revision: 5837 $
+
+# JDBC driver (comma-separated list)
+jdbcDriver=org.gjt.mm.mysql.Driver
+
+# database URL
+jdbcURL=jdbc:mysql://server_name:3306/database_name
+
+# specific data types
+# string, getString() = 0;    --> nominal
+# boolean, getBoolean() = 1;  --> nominal
+# double, getDouble() = 2;    --> numeric
+# byte, getByte() = 3;        --> numeric
+# short, getByte()= 4;        --> numeric
+# int, getInteger() = 5;      --> numeric
+# long, getLong() = 6;        --> numeric
+# float, getFloat() = 7;      --> numeric
+# date, getDate() = 8;        --> date
+# text, getString() = 9;      --> string
+# time, getTime() = 10;       --> date
+
+# other options
+CREATE_DOUBLE=DOUBLE
+CREATE_STRING=TEXT
+CREATE_INT=INT
+CREATE_DATE=DATETIME
+DateFormat=yyyy-MM-dd HH:mm:ss
+checkUpperCaseNames=false
+checkLowerCaseNames=false
+checkForTable=true
+
+# All the reserved keywords for this database
+# Based on the keywords listed at the following URL (2009-04-13):
+# http://dev.mysql.com/doc/mysqld-version-reference/en/mysqld-version-reference-reservedwords-5-0.html
+Keywords=\
+  ADD,\
+  ALL,\
+  ALTER,\
+  ANALYZE,\
+  AND,\
+  AS,\
+  ASC,\
+  ASENSITIVE,\
+  BEFORE,\
+  BETWEEN,\
+  BIGINT,\
+  BINARY,\
+  BLOB,\
+  BOTH,\
+  BY,\
+  CALL,\
+  CASCADE,\
+  CASE,\
+  CHANGE,\
+  CHAR,\
+  CHARACTER,\
+  CHECK,\
+  COLLATE,\
+  COLUMN,\
+  COLUMNS,\
+  CONDITION,\
+  CONNECTION,\
+  CONSTRAINT,\
+  CONTINUE,\
+  CONVERT,\
+  CREATE,\
+  CROSS,\
+  CURRENT_DATE,\
+  CURRENT_TIME,\
+  CURRENT_TIMESTAMP,\
+  CURRENT_USER,\
+  CURSOR,\
+  DATABASE,\
+  DATABASES,\
+  DAY_HOUR,\
+  DAY_MICROSECOND,\
+  DAY_MINUTE,\
+  DAY_SECOND,\
+  DEC,\
+  DECIMAL,\
+  DECLARE,\
+  DEFAULT,\
+  DELAYED,\
+  DELETE,\
+  DESC,\
+  DESCRIBE,\
+  DETERMINISTIC,\
+  DISTINCT,\
+  DISTINCTROW,\
+  DIV,\
+  DOUBLE,\
+  DROP,\
+  DUAL,\
+  EACH,\
+  ELSE,\
+  ELSEIF,\
+  ENCLOSED,\
+  ESCAPED,\
+  EXISTS,\
+  EXIT,\
+  EXPLAIN,\
+  FALSE,\
+  FETCH,\
+  FIELDS,\
+  FLOAT,\
+  FLOAT4,\
+  FLOAT8,\
+  FOR,\
+  FORCE,\
+  FOREIGN,\
+  FROM,\
+  FULLTEXT,\
+  GOTO,\
+  GRANT,\
+  GROUP,\
+  HAVING,\
+  HIGH_PRIORITY,\
+  HOUR_MICROSECOND,\
+  HOUR_MINUTE,\
+  HOUR_SECOND,\
+  IF,\
+  IGNORE,\
+  IN,\
+  INDEX,\
+  INFILE,\
+  INNER,\
+  INOUT,\
+  INSENSITIVE,\
+  INSERT,\
+  INT,\
+  INT1,\
+  INT2,\
+  INT3,\
+  INT4,\
+  INT8,\
+  INTEGER,\
+  INTERVAL,\
+  INTO,\
+  IS,\
+  ITERATE,\
+  JOIN,\
+  KEY,\
+  KEYS,\
+  KILL,\
+  LABEL,\
+  LEADING,\
+  LEAVE,\
+  LEFT,\
+  LIKE,\
+  LIMIT,\
+  LINES,\
+  LOAD,\
+  LOCALTIME,\
+  LOCALTIMESTAMP,\
+  LOCK,\
+  LONG,\
+  LONGBLOB,\
+  LONGTEXT,\
+  LOOP,\
+  LOW_PRIORITY,\
+  MATCH,\
+  MEDIUMBLOB,\
+  MEDIUMINT,\
+  MEDIUMTEXT,\
+  MIDDLEINT,\
+  MINUTE_MICROSECOND,\
+  MINUTE_SECOND,\
+  MOD,\
+  MODIFIES,\
+  NATURAL,\
+  NOT,\
+  NO_WRITE_TO_BINLOG,\
+  NULL,\
+  NUMERIC,\
+  ON,\
+  OPTIMIZE,\
+  OPTION,\
+  OPTIONALLY,\
+  OR,\
+  ORDER,\
+  OUT,\
+  OUTER,\
+  OUTFILE,\
+  PRECISION,\
+  PRIMARY,\
+  PRIVILEGES,\
+  PROCEDURE,\
+  PURGE,\
+  READ,\
+  READS,\
+  REAL,\
+  REFERENCES,\
+  REGEXP,\
+  RELEASE,\
+  RENAME,\
+  REPEAT,\
+  REPLACE,\
+  REQUIRE,\
+  RESTRICT,\
+  RETURN,\
+  REVOKE,\
+  RIGHT,\
+  RLIKE,\
+  SCHEMA,\
+  SCHEMAS,\
+  SECOND_MICROSECOND,\
+  SELECT,\
+  SENSITIVE,\
+  SEPARATOR,\
+  SET,\
+  SHOW,\
+  SMALLINT,\
+  SONAME,\
+  SPATIAL,\
+  SPECIFIC,\
+  SQL,\
+  SQLEXCEPTION,\
+  SQLSTATE,\
+  SQLWARNING,\
+  SQL_BIG_RESULT,\
+  SQL_CALC_FOUND_ROWS,\
+  SQL_SMALL_RESULT,\
+  SSL,\
+  STARTING,\
+  STRAIGHT_JOIN,\
+  TABLE,\
+  TABLES,\
+  TERMINATED,\
+  THEN,\
+  TINYBLOB,\
+  TINYINT,\
+  TINYTEXT,\
+  TO,\
+  TRAILING,\
+  TRIGGER,\
+  TRUE,\
+  UNDO,\
+  UNION,\
+  UNIQUE,\
+  UNLOCK,\
+  UNSIGNED,\
+  UPDATE,\
+  UPGRADE,\
+  USAGE,\
+  USE,\
+  USING,\
+  UTC_DATE,\
+  UTC_TIME,\
+  UTC_TIMESTAMP,\
+  VALUES,\
+  VARBINARY,\
+  VARCHAR,\
+  VARCHARACTER,\
+  VARYING,\
+  WHEN,\
+  WHERE,\
+  WHILE,\
+  WITH,\
+  WRITE,\
+  XOR,\
+  YEAR_MONTH,\
+  ZEROFILL
+
+# The character to append to attribute names to avoid exceptions due to
+# clashes between keywords and attribute names
+KeywordsMaskChar=_
+
+#flags for loading and saving instances using DatabaseLoader/Saver
+nominalToStringLimit=50
+idColumn=auto_generated_id
+

@@ -1,0 +1,165 @@
+# Database settings for Oracle 10g Express Edition
+#
+# General information on database access can be found here:
+# http://weka.wikispaces.com/Databases
+#
+# url:     http://www.oracle.com/
+# jdbc:    http://www.oracle.com/technology/software/tech/java/sqlj_jdbc/
+# author:  Fracpete (fracpete at waikato dot ac dot nz)
+# version: $Revision: 5837 $
+
+# JDBC driver (comma-separated list)
+jdbcDriver=oracle.jdbc.driver.OracleDriver
+
+# database URL
+jdbcURL=jdbc:oracle:thin:@server_name:1521:XE
+
+# specific data types
+# string, getString() = 0;    --> nominal
+# boolean, getBoolean() = 1;  --> nominal
+# double, getDouble() = 2;    --> numeric
+# byte, getByte() = 3;        --> numeric
+# short, getByte()= 4;        --> numeric
+# int, getInteger() = 5;      --> numeric
+# long, getLong() = 6;        --> numeric
+# float, getFloat() = 7;      --> numeric
+# date, getDate() = 8;        --> date
+# text, getString() = 9;      --> string
+# time, getTime() = 10;       --> date
+
+VARCHAR2=0
+NUMBER=2
+DOUBLE_PRECISION=2
+TIMESTAMP=8
+
+# other options
+CREATE_INT=INTEGER
+CREATE_STRING=VARCHAR2(4000)
+CREATE_DOUBLE=NUMBER
+CREATE_DATE=TIMESTAMP
+DateFormat=yyyy-MM-dd HH:mm:ss
+checkUpperCaseNames=true
+checkForTable=true
+
+# All the reserved keywords for this database
+# Based on the keywords listed at the following URL (2009-04-13):
+# http://download.oracle.com/docs/cd/B19306_01/server.102/b14200/ap_keywd.htm
+Keywords=\
+  ACCESS,\
+  ADD,\
+  ALL,\
+  ALTER,\
+  AND,\
+  ANY,\
+  AS,\
+  ASC,\
+  AUDIT,\
+  BETWEEN,\
+  BY,\
+  CHAR,\
+  CHECK,\
+  CLUSTER,\
+  COLUMN,\
+  COMMENT,\
+  COMPRESS,\
+  CONNECT,\
+  CREATE,\
+  CURRENT,\
+  DATE,\
+  DECIMAL,\
+  DEFAULT,\
+  DELETE,\
+  DESC,\
+  DISTINCT,\
+  DROP,\
+  ELSE,\
+  EXCLUSIVE,\
+  EXISTS,\
+  FILE,\
+  FLOAT,\
+  FOR,\
+  FROM,\
+  GRANT,\
+  GROUP,\
+  HAVING,\
+  IDENTIFIED,\
+  IMMEDIATE,\
+  IN,\
+  INCREMENT,\
+  INDEX,\
+  INITIAL,\
+  INSERT,\
+  INTEGER,\
+  INTERSECT,\
+  INTO,\
+  IS,\
+  LEVEL,\
+  LIKE,\
+  LOCK,\
+  LONG,\
+  MAXEXTENTS,\
+  MINUS,\
+  MLSLABEL,\
+  MODE,\
+  MODIFY,\
+  NOAUDIT,\
+  NOCOMPRESS,\
+  NOT,\
+  NOWAIT,\
+  NULL,\
+  NUMBER,\
+  OF,\
+  OFFLINE,\
+  ON,\
+  ONLINE,\
+  OPTION,\
+  OR,\
+  ORDER,\
+  PCTFREE,\
+  PRIOR,\
+  PRIVILEGES,\
+  PUBLIC,\
+  RAW,\
+  RENAME,\
+  RESOURCE,\
+  REVOKE,\
+  ROW,\
+  ROWID,\
+  ROWNUM,\
+  ROWS,\
+  SELECT,\
+  SESSION,\
+  SET,\
+  SHARE,\
+  SIZE,\
+  SMALLINT,\
+  START,\
+  SUCCESSFUL,\
+  SYNONYM,\
+  SYSDATE,\
+  TABLE,\
+  THEN,\
+  TO,\
+  TRIGGER,\
+  UID,\
+  UNION,\
+  UNIQUE,\
+  UPDATE,\
+  USER,\
+  VALIDATE,\
+  VALUES,\
+  VARCHAR,\
+  VARCHAR2,\
+  VIEW,\
+  WHENEVER,\
+  WHERE,\
+  WITH
+
+# The character to append to attribute names to avoid exceptions due to
+# clashes between keywords and attribute names
+KeywordsMaskChar=_
+
+#flags for loading and saving instances using DatabaseLoader/Saver
+nominalToStringLimit=50
+idColumn=auto_generated_id
+

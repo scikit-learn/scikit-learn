@@ -1,0 +1,171 @@
+# Database settings for sqlite 3.x
+#
+# General information on database access can be found here:
+# http://weka.wikispaces.com/Databases
+#
+# url:     http://www.sqlite.org/
+# jdbc:    http://www.zentus.com/sqlitejdbc/
+# author:  Fracpete (fracpete at waikato dot ac dot nz)
+# version: $Revision: 5837 $
+
+# JDBC driver (comma-separated list)
+jdbcDriver=org.sqlite.JDBC
+
+# database URL
+jdbcURL=jdbc:sqlite:/path/to/database.db
+
+# specific data types
+# string, getString() = 0;    --> nominal
+# boolean, getBoolean() = 1;  --> nominal
+# double, getDouble() = 2;    --> numeric
+# byte, getByte() = 3;        --> numeric
+# short, getByte()= 4;        --> numeric
+# int, getInteger() = 5;      --> numeric
+# long, getLong() = 6;        --> numeric
+# float, getFloat() = 7;      --> numeric
+# date, getDate() = 8;        --> date
+# text, getString() = 9;      --> string
+# time, getTime() = 10;       --> date
+
+# other options
+CREATE_DOUBLE=DOUBLE
+CREATE_STRING=TEXT
+CREATE_INT=INT
+CREATE_DATE=DATETIME
+DateFormat=yyyy-MM-dd HH:mm:ss
+checkUpperCaseNames=false
+checkLowerCaseNames=false
+checkForTable=true
+
+# All the reserved keywords for this database
+# Based on the keywords listed at the following URL (2009-04-13):
+# http://www.sqlite.org/lang_keywords.html
+Keywords=\
+  ABORT,\
+  ADD,\
+  AFTER,\
+  ALL,\
+  ALTER,\
+  ANALYZE,\
+  AND,\
+  AS,\
+  ASC,\
+  ATTACH,\
+  AUTOINCREMENT,\
+  BEFORE,\
+  BEGIN,\
+  BETWEEN,\
+  BY,\
+  CASCADE,\
+  CASE,\
+  CAST,\
+  CHECK,\
+  COLLATE,\
+  COLUMN,\
+  COMMIT,\
+  CONFLICT,\
+  CONSTRAINT,\
+  CREATE,\
+  CROSS,\
+  CURRENT_DATE,\
+  CURRENT_TIME,\
+  CURRENT_TIMESTAMP,\
+  DATABASE,\
+  DEFAULT,\
+  DEFERRABLE,\
+  DEFERRED,\
+  DELETE,\
+  DESC,\
+  DETACH,\
+  DISTINCT,\
+  DROP,\
+  EACH,\
+  ELSE,\
+  END,\
+  ESCAPE,\
+  EXCEPT,\
+  EXCLUSIVE,\
+  EXISTS,\
+  EXPLAIN,\
+  FAIL,\
+  FOR,\
+  FOREIGN,\
+  FROM,\
+  FULL,\
+  GLOB,\
+  GROUP,\
+  HAVING,\
+  IF,\
+  IGNORE,\
+  IMMEDIATE,\
+  IN,\
+  INDEX,\
+  INDEXED,\
+  INITIALLY,\
+  INNER,\
+  INSERT,\
+  INSTEAD,\
+  INTERSECT,\
+  INTO,\
+  IS,\
+  ISNULL,\
+  JOIN,\
+  KEY,\
+  LEFT,\
+  LIKE,\
+  LIMIT,\
+  MATCH,\
+  NATURAL,\
+  NOT,\
+  NOTNULL,\
+  NULL,\
+  OF,\
+  OFFSET,\
+  ON,\
+  OR,\
+  ORDER,\
+  OUTER,\
+  PLAN,\
+  PRAGMA,\
+  PRIMARY,\
+  QUERY,\
+  RAISE,\
+  REFERENCES,\
+  REGEXP,\
+  REINDEX,\
+  RELEASE,\
+  RENAME,\
+  REPLACE,\
+  RESTRICT,\
+  RIGHT,\
+  ROLLBACK,\
+  ROW,\
+  SAVEPOINT,\
+  SELECT,\
+  SET,\
+  TABLE,\
+  TEMP,\
+  TEMPORARY,\
+  THEN,\
+  TO,\
+  TRANSACTION,\
+  TRIGGER,\
+  UNION,\
+  UNIQUE,\
+  UPDATE,\
+  USING,\
+  VACUUM,\
+  VALUES,\
+  VIEW,\
+  VIRTUAL,\
+  WHEN,\
+  WHERE
+
+# The character to append to attribute names to avoid exceptions due to
+# clashes between keywords and attribute names
+KeywordsMaskChar=_
+
+#flags for loading and saving instances using DatabaseLoader/Saver
+nominalToStringLimit=50
+idColumn=auto_generated_id
+

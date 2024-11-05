@@ -1,0 +1,29 @@
+# A properties file for customizing the Weka's TreeVisualizer.
+#
+# Author: FracPete (fracpete at waikato dot ac dot nz)
+# Version: $Revision: 4960 $
+
+# the font color (can use R,G,B format)
+FontColor=black
+
+# the background color (can use R,G,B format)
+# leaving this empty uses the platform's default background
+# Note: on Mac OS X, using the default background results in a black background when
+#       saving the tree to a file! See the following thread on the Weka mailing list:
+#       https://list.scms.waikato.ac.nz/mailman/htdig/wekalist/2009-January/015661.html
+BackgroundColor=
+
+# the node color (can use R,G,B format)
+NodeColor=gray
+
+# the line color (can use R,G,B format)
+LineColor=black
+
+# the color of the zoombox (can use R,G,B format)
+ZoomBoxColor=black
+
+# the XOR mode color for the zoombox (can use R,G,B format)
+ZoomBoxXORColor=white
+
+# whether to show the border or not
+ShowBorder=true

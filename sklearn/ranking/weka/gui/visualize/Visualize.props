@@ -1,0 +1,48 @@
+# Properties for visualization
+#
+# Version: $Revision: 5015 $
+
+# Maximum precision for numeric values
+weka.gui.visualize.precision=10
+
+# Colour for the axis in the 2D plot (can use R,G,B format)
+weka.gui.visualize.Plot2D.axisColour=green
+
+# Colour for the background of the 2D plot (can use R,G,B format)
+weka.gui.visualize.Plot2D.backgroundColour=white
+
+# The JFrame (needs to implement the interface weka.gui.visualize.InstanceInfo) 
+# for displaying Instance information.
+weka.gui.visualize.Plot2D.instanceInfoFrame=weka.gui.visualize.InstanceInfoFrame
+
+# Display the list of one dimensional attribute visualizations
+weka.gui.visualize.VisualizePanel.displayAttributeBars=true
+
+# Colour for the background of the attribute bars in the
+# AttributePanel (can use R,G,B format)
+weka.gui.visualize.AttributePanel.barColour=white
+
+# If you regularly visualize certain datasets with the same structure
+# you might want to define default x, y and colour dimensions (attributes)
+# to visualize on.
+# Just uncomment and set up the following
+# weka.gui.visualize.VisualizePanel.<relation name>.XDimension=<attribute name>
+# weka.gui.visualize.VisualizePanel.<relation name>.YDimension=<attribute name>
+# weka.gui.visualize.VisualizePanel.<relation name>.ColourDimension=<attribute name>
+# NOTE: spaces in relation names can be handled by using 
+# escape characters (java 1.2), eg. my\ first\ relation\ name
+
+# Defaults for threshold curve plots
+weka.gui.visualize.ThresholdVisualizePanel.ThresholdCurve.XDimension=False\ Positive\ Rate
+weka.gui.visualize.ThresholdVisualizePanel.ThresholdCurve.YDimension=True\ Positive\ Rate
+weka.gui.visualize.ThresholdVisualizePanel.ThresholdCurve.ColourDimension=Threshold
+
+#Defaults for cost curve plots
+weka.gui.visualize.VisualizePanel.CostCurve.XDimension=Probability\ Cost\ Function
+weka.gui.visualize.VisualizePanel.CostCurve.YDimension=Normalized\ Expected\ Cost
+weka.gui.visualize.VisualizePanel.CostCurve.ColourDimension=Threshold
+
+# Defaults for margin curve plots
+weka.gui.visualize.VisualizePanel.MarginCurve.XDimension=Margin
+weka.gui.visualize.VisualizePanel.MarginCurve.YDimension=Cumulative
+weka.gui.visualize.VisualizePanel.MarginCurve.ColourDimension=Margin

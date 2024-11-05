@@ -1,0 +1,69 @@
+# list of standard toolbars (containing bean tools that do not wrap weka
+# base class types)
+weka.gui.beans.KnowledgeFlow.standardToolBars=\
+ Evaluation,\
+ Visualization
+
+# Specifies the tools for each standard toolbar
+weka.gui.beans.KnowledgeFlow.Evaluation=weka.gui.beans.TrainingSetMaker,\
+ weka.gui.beans.TestSetMaker,\
+ weka.gui.beans.CrossValidationFoldMaker,\
+ weka.gui.beans.TrainTestSplitMaker,\
+ weka.gui.beans.InstanceStreamToBatchMaker,\
+ weka.gui.beans.ClassAssigner,\
+ weka.gui.beans.ClassValuePicker,\
+ weka.gui.beans.ClassifierPerformanceEvaluator,\
+ weka.gui.beans.IncrementalClassifierEvaluator,\
+ weka.gui.beans.ClustererPerformanceEvaluator,\
+ weka.gui.beans.PredictionAppender,\
+ weka.gui.beans.SerializedModelSaver
+weka.gui.beans.KnowledgeFlow.Visualization=weka.gui.beans.DataVisualizer,\
+ weka.gui.beans.ScatterPlotMatrix,\
+ weka.gui.beans.AttributeSummarizer,\
+ weka.gui.beans.ModelPerformanceChart,\
+  weka.gui.beans.CostBenefitAnalysis,\
+ weka.gui.beans.TextViewer,\
+ weka.gui.beans.GraphViewer,\
+ weka.gui.beans.StripChart
+
+# the bean panel processes keys in the generic object editor properties file.
+# If there is a corresponding entry here, then a toolbar is constructed using
+# the specified wrapper bean
+weka.core.converters.Loader=weka.gui.beans.Loader
+weka.core.converters.Saver=weka.gui.beans.Saver
+weka.classifiers.Classifier=weka.gui.beans.Classifier
+weka.filters.Filter=weka.gui.beans.Filter
+weka.clusterers.Clusterer=weka.gui.beans.Clusterer
+weka.associations.Associator=weka.gui.beans.Associator
+# weka.attributeSelection.ASEvaluation=weka.gui.beans.AttributeSelector
+
+# toolbar ordering information for wrapper types
+weka.core.converters.Loader.order=0
+weka.core.converters.Saver.order=1
+weka.filters.Filter.order=3
+weka.classifiers.Classifier.order=4
+weka.clusterers.Clusterer.order=5
+weka.associations.Associator.order=6
+# weka.attributeSelection.ASEvaluation.order=6
+
+# toolbar naming aliases for weka algorithm classes
+weka.core.converters.Loader.alias=DataSources
+weka.core.converters.Saver.alias=DataSinks
+weka.classifiers.Classifier.alias=Classifiers
+weka.clusterers.Clusterer.alias=Clusterers
+weka.filters.Filter.alias=Filters
+weka.associations.Associator.alias=Associations
+
+# GUI behaviour
+ScrollBarIncrementLayout=20
+ScrollBarIncrementComponents=50
+FlowWidth=1024
+FlowHeight=768
+PreferredExtension=.kf
+UserComponentsInXML=false
+
+# colours
+weka.gui.beans.StripChart.backgroundColour=black
+weka.gui.beans.StripChart$LegendPanel.borderColour=blue
+#weka.gui.beans.StripChart.backgroundColour=white
+#weka.gui.beans.StripChart$LegendPanel.borderColour=black

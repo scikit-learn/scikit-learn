@@ -1,0 +1,113 @@
+# Defines the syntax highlighting for Jython
+#
+# Author:  FracPete (fracpete at waikato dot ac dot nz)
+# Version: $Revision: 5293 $
+
+########
+# Font #
+########
+
+# the font name
+FontName=monospaced
+
+# the font size
+FontSize=12
+
+#############################################
+# Colors (R,G,B format can be used as well) #
+#############################################
+
+# the font color
+ForegroundColor=black
+
+# the background color
+BackgroundColor=white
+
+# the color for keywords
+KeywordColor=blue
+
+# the color for comments
+CommentColor=gray
+
+# the color for strings
+StringColor=red
+
+##########
+# Syntax #
+##########
+
+# whether the syntax highlighting etc is on or not (true|false)
+Syntax=true
+
+# the number of spaces to use for indentation instead of TAB
+Indentation=4
+
+# the number of characters that a single tab represents
+Tabs=4
+
+# whether to use blanks instead of tabs (true|false)
+UseBlanks=true
+
+# word delimiters
+Delimiters=;:{}()[]+-/%<=>!&|^~*
+
+# delimiter for quoted strings/characters
+QuoteDelimiters="'
+
+# the character to escape quotes
+QuoteEscape=\\
+
+# whether multi-line comments are enabled (true|false)
+MultiLineComment=true
+
+# the start delimiter of a multi-line comment
+MultiLineCommentStart="""
+
+# the end delimiter of a multi-line comment
+MultiLineCommentEnd="""
+
+# the start delimiter of a single-line comment
+SingleLineCommentStart=#
+
+# whether to add matching block end (true|false)
+AddMatchingBlockEnd=false
+
+# the start of a block (e.g., "opening bracket")
+BlockStart=
+
+# the end of a block (e.g., "closing bracket")
+BlockEnd=
+
+# whether the keywords are case-sensitive (true|false)
+CaseSensitive=true
+
+# the keywords
+Keywords=\
+	and,\
+	assert,\
+	break,\
+	class,\
+	continue,\
+	def,\
+	del,\
+	elif,\
+	else,\
+	except,\
+	exec,\
+	finally,\
+	for,\
+	from,\
+	global,\
+	if,\
+	import,\
+	in,\
+	is,\
+	lambda,\
+	not,\
+	or,\
+	pass,\
+	print,\
+	raise,\
+	return,\
+	try,\
+	while,\

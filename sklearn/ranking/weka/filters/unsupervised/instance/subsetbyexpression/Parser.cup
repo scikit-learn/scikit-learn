@@ -1,0 +1,333 @@
+/*
+ * STANDARD ML OF NEW JERSEY COPYRIGHT NOTICE, LICENSE AND DISCLAIMER.
+ * 
+ * Copyright (c) 1989-1998 by Lucent Technologies
+ * 
+ * Permission to use, copy, modify, and distribute this software and its
+ * documentation for any purpose and without fee is hereby granted, provided
+ * that the above copyright notice appear in all copies and that both the
+ * copyright notice and this permission notice and warranty disclaimer appear
+ * in supporting documentation, and that the name of Lucent Technologies, Bell
+ * Labs or any Lucent entity not be used in advertising or publicity pertaining
+ * to distribution of the software without specific, written prior permission.
+ *
+ * Lucent disclaims all warranties with regard to this software, including all
+ * implied warranties of merchantability and fitness. In no event shall Lucent
+ * be liable for any special, indirect or consequential damages or any damages
+ * whatsoever resulting from loss of use, data or profits, whether in an action
+ * of contract, negligence or other tortious action, arising out of or in
+ * connection with the use or performance of this software. 
+ *
+ * Taken from this URL:
+ * http://www.smlnj.org/license.html
+ * 
+ * This license is compatible with the GNU GPL (see section "Standard ML of New
+ * Jersey Copyright License"):
+ * http://www.gnu.org/licenses/license-list.html#StandardMLofNJ
+ */
+
+/*
+ * Copyright 1996-1999 by Scott Hudson, Frank Flannery, C. Scott Ananian
+ */
+
+package weka.filters.unsupervised.instance.subsetbyexpression;
+
+import weka.core.*;
+import java_cup.runtime.*;
+
+import java.io.*;
+import java.util.*;
+
+/**
+ * A parser for evaluating whether an Instance complies to a boolean expression 
+ * or not.
+ *
+ * @author FracPete (fracpete at waikato dot ac dot nz)
+ * @version $Revision: 6479 $
+ */
+
+parser code {:
+  /** variable - value relation. */
+  protected HashMap m_Symbols = new HashMap();
+
+  /** attribute - attribute-type (constants from weka.core.Attribute) relation. */
+  protected Hashtable<String,Integer> m_AttributeTypes = new Hashtable<String,Integer>();
+
+  /** for storing the result of the expression. */
+  protected Boolean m_Result = null;
+
+  /**
+   * Sets the variable - value relation to use.
+   * 
+   * @param value the variable-value relation
+   */
+  public void setSymbols(HashMap value) {
+    m_Symbols = value;
+  }
+
+  /**
+   * Returns the current variable - value relation in use.
+   * 
+   * @return the variable-value relation
+   */
+  public HashMap getSymbols() {
+    return m_Symbols;
+  }
+
+  /**
+   * Sets the attribute - attribute-type relation to use.
+   * 
+   * @param value the att - att-type relation
+   */
+  public void setAttributeTypes(Hashtable value) {
+    m_AttributeTypes = value;
+  }
+
+  /**
+   * Returns the current attribute - attribute-type relation in use.
+   * 
+   * @return the att - att-type relation
+   */
+  public Hashtable getAttributeTypes() {
+    return m_AttributeTypes;
+  }
+
+  /**
+   * Sets the result of the evaluation.
+   * 
+   * @param value the result
+   */
+  public void setResult(Boolean value) {
+    m_Result = value;
+  }
+
+  /**
+   * Returns the result of the evaluation.
+   * 
+   * @return the result
+   */
+  public Boolean getResult() {
+    return m_Result;
+  }
+
+  /**
+   * Returns either a String object for nominal attributes or a Double for numeric
+   * ones. For all other attribute types this method throws an Exception.
+   * It also returns a Double object in case of a missing value (for all
+   * attribute types!).
+   * 
+   * @param instance the instance to work on
+   * @param index the index of the attribute to return
+   * @return the converted value
+   */
+  public static Object getValue(Instance instance, int index) {
+    if (instance.isMissing(index))
+      return new Double(Utils.missingValue());
+    else if (instance.attribute(index).isNominal() || instance.attribute(index).isRanking())
+      return new String(instance.stringValue(index));
+    else if (instance.attribute(index).isNumeric())
+      return new Double(instance.value(index));
+    else
+      throw new IllegalArgumentException(
+          "Unhandled attribute type '" + instance.attribute(index).type() + "'!");
+  }
+
+  /**
+   * Filters the input dataset against the provided expression.
+   *
+   * @param expression the expression used for filtering
+   * @param input the input data
+   * @return the filtered data
+   * @throws Exception if parsing fails
+   */
+  public static Instances filter(String expression, Instances input) throws Exception {
+    // setup output
+    Instances output = new Instances(input, 0);
+    
+    // setup attribute - attribute-type relation
+    Hashtable<String,Integer> attTypes = new Hashtable<String,Integer>();
+    for (int i = 0; i < input.numAttributes(); i++)
+       attTypes.put("ATT" + (i+1), input.attribute(i).type());
+    if (input.classIndex() > -1)
+      attTypes.put("CLASS", input.classAttribute().type());
+    
+    // filter dataset
+    SymbolFactory sf = new DefaultSymbolFactory();
+    HashMap symbols = new HashMap();
+    ByteArrayInputStream parserInput = new ByteArrayInputStream(expression.getBytes());
+    for (int i = 0; i < input.numInstances(); i++) {
+      Instance instance = input.instance(i);
+
+      // setup symbols
+      for (int n = 0; n < instance.numAttributes(); n++) {
+        if (n == instance.classIndex())
+          symbols.put("CLASS", getValue(instance, n));
+        symbols.put("ATT" + (n+1), getValue(instance, n));
+      }
+
+      // evaluate expression
+      parserInput.reset();
+      Parser parser = new Parser(new Scanner(parserInput,sf), sf);
+      parser.setSymbols(symbols);
+      parser.parse();
+      if (parser.getResult())
+        output.add((Instance) instance.copy());
+    }
+
+    return output;
+  }
+
+  /**
+   * Runs the parser from commandline. Takes the following arguments:
+   * <ol>
+   *   <li>expression</li>
+   *   <li>input file</li>
+   *   <li>class index (first|last|num), use 0 to ignore</li>
+   *   <li>output file</li>
+   * </ol>
+   * 
+   * @param args the commandline arguments
+   * @throws Exception if something goes wrong
+   */
+  public static void main(String args[]) throws Exception {
+    // get expression
+    String expression = args[0];
+
+    // read input data
+    BufferedReader reader = new BufferedReader(new FileReader(args[1]));
+    Instances input = new Instances(reader);
+    reader.close();
+    if (args[2].equals("first"))
+      input.setClassIndex(0);
+    else if (args[2].equals("last"))
+      input.setClassIndex(input.numAttributes() - 1);
+    else
+      input.setClassIndex(Integer.parseInt(args[2]) - 1);
+
+    // process dataset
+    Instances output = filter(expression, input);
+
+    // save output file
+    BufferedWriter writer = new BufferedWriter(new FileWriter(args[3]));
+    writer.write(new Instances(output, 0).toString());
+    writer.newLine();
+    for (int i = 0; i < output.numInstances(); i++) {
+      writer.write(output.instance(i).toString());
+      writer.newLine();
+    }
+    writer.flush();
+    writer.close();
+  }
+:}
+
+terminal COMMA, LPAREN, RPAREN, ISMISSING;
+terminal MINUS, PLUS, TIMES, DIVISION;
+terminal ABS, SQRT, LOG, EXP, SIN, COS, TAN, RINT, FLOOR, POW, CEIL;
+terminal TRUE, FALSE, LT, LE, GT, GE, EQ, NOT, AND, OR, IS;
+terminal Double NUMBER;
+terminal Boolean BOOLEAN;
+terminal String ATTRIBUTE, STRING;
+
+non terminal boolexpr_list, boolexpr_part;
+non terminal Double expr;
+non terminal Double opexpr;
+non terminal Double funcexpr;
+non terminal Boolean boolexpr;
+
+precedence left PLUS, MINUS;
+precedence left TIMES, DIVISION;
+precedence left LPAREN, RPAREN;
+precedence left ABS, SQRT, LOG, EXP, SIN, COS, TAN, RINT, FLOOR, POW, CEIL;
+precedence left AND, OR;
+precedence left NOT;
+
+boolexpr_list ::= boolexpr_list boolexpr_part | boolexpr_part;
+boolexpr_part ::= boolexpr:e {: parser.setResult(e); :} ;
+boolexpr ::=    BOOLEAN:b 
+                {: RESULT = b; :}
+              | TRUE
+                {: RESULT = new Boolean(true); :}
+              | FALSE
+                {: RESULT = new Boolean(false); :}
+              | expr:l LT expr:r
+                {: RESULT = new Boolean(l.doubleValue() < r.doubleValue()); :}
+              | expr:l LE expr:r
+                {: RESULT = new Boolean(l.doubleValue() <= r.doubleValue()); :}
+              | expr:l GT expr:r
+                {: RESULT = new Boolean(l.doubleValue() > r.doubleValue()); :}
+              | expr:l GE expr:r
+                {: RESULT = new Boolean(l.doubleValue() >= r.doubleValue()); :}
+              | expr:l EQ expr:r
+                {: RESULT = new Boolean(l.doubleValue() == r.doubleValue()); :}
+              | LPAREN boolexpr:b RPAREN
+                {: RESULT = b; :}
+              | NOT boolexpr:b
+                {: RESULT = !b; :}
+              | boolexpr:l AND boolexpr:r
+                {: RESULT = l && r; :}
+              | boolexpr:l OR boolexpr:r
+                {: RESULT = l || r; :}
+              | ATTRIBUTE:a IS STRING:s
+                {: if (parser.getSymbols().containsKey(a)) 
+                     RESULT = (parser.getSymbols().get(a) instanceof String) && ((String) parser.getSymbols().get(a)).equals(s);
+                   else 
+                     throw new IllegalStateException("Unknown symbol '" + a + "'!"); 
+                :}
+              | ISMISSING LPAREN ATTRIBUTE:a RPAREN
+                {: if (parser.getSymbols().containsKey(a)) 
+                     RESULT = (parser.getSymbols().get(a) instanceof Double) && Instance.isMissingValue((Double) parser.getSymbols().get(a));
+                   else 
+                     throw new IllegalStateException("Unknown symbol '" + a + "'!"); 
+                :}
+              ;
+
+expr      ::=   NUMBER:n
+                {: RESULT = n; :}
+              | ATTRIBUTE:a
+                {: if (parser.getSymbols().containsKey(a)) 
+                     RESULT = (Double) parser.getSymbols().get(a); 
+                   else 
+                     throw new IllegalStateException("Unknown symbol '" + a + "'!"); 
+                :}
+              | LPAREN expr:e RPAREN
+                {: RESULT = e; :}
+              | opexpr:o
+                {: RESULT = o; :}
+              | funcexpr:f
+                {: RESULT = f; :}
+              ;
+
+opexpr    ::=   expr:l PLUS expr:r
+                {: RESULT = new Double(l.doubleValue() + r.doubleValue()); :}
+              | expr:l MINUS expr:r
+                {: RESULT = new Double(l.doubleValue() - r.doubleValue()); :}
+              | expr:l TIMES expr:r
+                {: RESULT = new Double(l.doubleValue() * r.doubleValue()); :}
+              | expr:l DIVISION expr:r
+                {: RESULT = new Double(l.doubleValue() / r.doubleValue()); :}
+              ;
+
+funcexpr ::=    ABS LPAREN expr:e RPAREN
+                {: RESULT = new Double(Math.abs(e)); :}
+              | SQRT LPAREN expr:e RPAREN
+                {: RESULT = new Double(Math.sqrt(e)); :}
+              | LOG LPAREN expr:e RPAREN
+                {: RESULT = new Double(Math.log(e)); :}
+              | EXP LPAREN expr:e RPAREN
+                {: RESULT = new Double(Math.exp(e)); :}
+              | SIN LPAREN expr:e RPAREN
+                {: RESULT = new Double(Math.sin(e)); :}
+              | COS LPAREN expr:e RPAREN
+                {: RESULT = new Double(Math.cos(e)); :}
+              | TAN LPAREN expr:e RPAREN
+                {: RESULT = new Double(Math.tan(e)); :}
+              | RINT LPAREN expr:e RPAREN
+                {: RESULT = new Double(Math.rint(e)); :}
+              | FLOOR LPAREN expr:e RPAREN
+                {: RESULT = new Double(Math.floor(e)); :}
+              | POW LPAREN expr:base COMMA expr:exponent RPAREN
+                {: RESULT = new Double(Math.pow(base, exponent)); :}
+              | CEIL LPAREN expr:e RPAREN
+                {: RESULT = new Double(Math.ceil(e)); :}
+              ;
+

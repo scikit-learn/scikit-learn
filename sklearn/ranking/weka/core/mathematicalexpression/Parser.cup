@@ -1,0 +1,261 @@
+/*
+ * STANDARD ML OF NEW JERSEY COPYRIGHT NOTICE, LICENSE AND DISCLAIMER.
+ * 
+ * Copyright (c) 1989-1998 by Lucent Technologies
+ * 
+ * Permission to use, copy, modify, and distribute this software and its
+ * documentation for any purpose and without fee is hereby granted, provided
+ * that the above copyright notice appear in all copies and that both the
+ * copyright notice and this permission notice and warranty disclaimer appear
+ * in supporting documentation, and that the name of Lucent Technologies, Bell
+ * Labs or any Lucent entity not be used in advertising or publicity pertaining
+ * to distribution of the software without specific, written prior permission.
+ *
+ * Lucent disclaims all warranties with regard to this software, including all
+ * implied warranties of merchantability and fitness. In no event shall Lucent
+ * be liable for any special, indirect or consequential damages or any damages
+ * whatsoever resulting from loss of use, data or profits, whether in an action
+ * of contract, negligence or other tortious action, arising out of or in
+ * connection with the use or performance of this software. 
+ *
+ * Taken from this URL:
+ * http://www.smlnj.org/license.html
+ * 
+ * This license is compatible with the GNU GPL (see section "Standard ML of New
+ * Jersey Copyright License"):
+ * http://www.gnu.org/licenses/license-list.html#StandardMLofNJ
+ */
+
+/*
+ * Copyright 1996-1999 by Scott Hudson, Frank Flannery, C. Scott Ananian
+ */
+
+package weka.core.mathematicalexpression;
+
+import java_cup.runtime.*;
+
+import java.io.*;
+import java.util.*;
+
+/**
+ * A parser for parsing mathematical expressions.
+ *
+ * @author FracPete (fracpete at waikato dot ac dot nz)
+ * @version $Revision: 4939 $
+ */
+
+parser code {:
+  /** variable - value relation. */
+  protected HashMap m_Symbols = new HashMap();
+
+  /** for storing the result of the expresion. */
+  protected Double m_Result = null;
+
+  /**
+   * Sets the variable - value relation to use.
+   * 
+   * @param value the variable-value relation
+   */
+  public void setSymbols(HashMap value) {
+    m_Symbols = value;
+  }
+
+  /**
+   * Returns the current variable - value relation in use.
+   * 
+   * @return the variable-value relation
+   */
+  public HashMap getSymbols() {
+    return m_Symbols;
+  }
+
+  /**
+   * Sets the result of the evaluation.
+   * 
+   * @param value the result
+   */
+  public void setResult(Double value) {
+    m_Result = value;
+  }
+
+  /**
+   * Returns the result of the evaluation.
+   * 
+   * @return the result
+   */
+  public Double getResult() {
+    return m_Result;
+  }
+
+  /**
+   * Runs the parser from commandline. Either reads lines from System.in
+   * or from a provided file (line by line). With 
+   * <code>-symbols <semi-colon separated list of variable/value pairs></code>
+   * as first parameter one can provide predefined variable values. E.g.:
+   * <code>-symbols "Y=10;X=3" "X+Y"</code>
+   * 
+   * @param args the commandline arguments
+   * @throws Exception if something goes wrong
+   */
+  public static void main(String args[]) throws Exception {
+    // read symbols, if present
+    HashMap symbols = new HashMap();
+    if (args.length > 0) {
+      if (args[0].equals("-symbols")) {
+        // parse symbols
+        String[] pairs = args[1].replaceAll(" ", "").split(";");
+        for (int i = 0; i < pairs.length; i++) {
+          String[] parts = pairs[i].split("=");
+          symbols.put(parts[0], new Double(parts[1]));
+        }
+        // print symbols
+        System.out.println("\nSymbols provided:");
+        Iterator iter = symbols.keySet().iterator();
+        while (iter.hasNext()) {
+          String key = (String) iter.next();
+          System.out.println(key + "=" + symbols.get(key));
+        }
+        // remove symbols from commandline
+        String[] argsNew = new String[args.length - 2];
+        System.arraycopy(args, 2, argsNew, 0, argsNew.length);
+        args = argsNew;
+      }
+    }
+
+    // setup input stream
+    int index = -1;
+    if (args.length == 1)
+      index = 0;
+    BufferedReader input = null;
+    if (index == -1) {
+      System.out.println("\nPlease type in expressions (and press <Enter>), exit with <Ctrl+D>:");
+      input = new BufferedReader(new InputStreamReader(System.in));
+    }
+    else {
+      System.out.println("\nReading expressions from file '" + args[index] + "':");
+      input = new BufferedReader(new FileReader(args[index]));
+    }
+
+    // process stream
+    SymbolFactory sf = new DefaultSymbolFactory();
+    String line;
+    while ((line = input.readLine()) != null) {
+      ByteArrayInputStream parserInput = new ByteArrayInputStream(line.getBytes());
+      Parser parser = new Parser(new Scanner(parserInput,sf), sf);
+      parser.setSymbols(symbols);
+      parser.parse();
+      System.out.println(line + " = " + parser.getResult());
+    }
+  }
+:}
+
+terminal COMMA, LPAREN, RPAREN;
+terminal MINUS, PLUS, TIMES, DIVISION;
+terminal ABS, SQRT, LOG, EXP, SIN, COS, TAN, RINT, FLOOR, POW, CEIL, IFELSE;
+terminal TRUE, FALSE, LT, LE, GT, GE, EQ, NOT, AND, OR;
+terminal Double NUMBER;
+terminal Boolean BOOLEAN;
+terminal String VARIABLE;
+
+non terminal expr_list, expr_part;
+non terminal Double expr;
+non terminal Double opexpr;
+non terminal Double varexpr;
+non terminal Double funcexpr;
+non terminal Boolean boolexpr;
+
+precedence left PLUS, MINUS;
+precedence left TIMES, DIVISION;
+precedence left LPAREN, RPAREN;
+precedence left ABS, SQRT, LOG, EXP, SIN, COS, TAN, RINT, FLOOR, POW, CEIL;
+precedence left AND, OR;
+precedence left NOT;
+
+expr_list ::= expr_list expr_part | expr_part;
+expr_part ::= expr:e {: parser.setResult(e); :} ;
+expr      ::=   NUMBER:n
+                {: RESULT = n; :}
+              | LPAREN expr:e RPAREN
+                {: RESULT = e; :}
+              | opexpr:o
+                {: RESULT = o; :}
+              | varexpr:v
+                {: RESULT = v; :}
+              | funcexpr:f
+                {: RESULT = f; :}
+              ;
+
+opexpr    ::=   expr:l PLUS expr:r
+                {: RESULT = new Double(l.doubleValue() + r.doubleValue()); :}
+              | expr:l MINUS expr:r
+                {: RESULT = new Double(l.doubleValue() - r.doubleValue()); :}
+              | expr:l TIMES expr:r
+                {: RESULT = new Double(l.doubleValue() * r.doubleValue()); :}
+              | expr:l DIVISION expr:r
+                {: RESULT = new Double(l.doubleValue() / r.doubleValue()); :}
+              ;
+
+varexpr  ::=    VARIABLE:v
+                {: if (parser.getSymbols().containsKey(v)) 
+                     RESULT = (Double) parser.getSymbols().get(v); 
+                   else 
+                     throw new IllegalStateException("Unknown symbol '" + v + "'!"); 
+                :}
+              ;
+
+funcexpr ::=    ABS LPAREN expr:e RPAREN
+                {: RESULT = new Double(Math.abs(e)); :}
+              | SQRT LPAREN expr:e RPAREN
+                {: RESULT = new Double(Math.sqrt(e)); :}
+              | LOG LPAREN expr:e RPAREN
+                {: RESULT = new Double(Math.log(e)); :}
+              | EXP LPAREN expr:e RPAREN
+                {: RESULT = new Double(Math.exp(e)); :}
+              | SIN LPAREN expr:e RPAREN
+                {: RESULT = new Double(Math.sin(e)); :}
+              | COS LPAREN expr:e RPAREN
+                {: RESULT = new Double(Math.cos(e)); :}
+              | TAN LPAREN expr:e RPAREN
+                {: RESULT = new Double(Math.tan(e)); :}
+              | RINT LPAREN expr:e RPAREN
+                {: RESULT = new Double(Math.rint(e)); :}
+              | FLOOR LPAREN expr:e RPAREN
+                {: RESULT = new Double(Math.floor(e)); :}
+              | POW LPAREN expr:base COMMA expr:exponent RPAREN
+                {: RESULT = new Double(Math.pow(base, exponent)); :}
+              | CEIL LPAREN expr:e RPAREN
+                {: RESULT = new Double(Math.ceil(e)); :}
+              | IFELSE LPAREN boolexpr:b COMMA expr:e_true COMMA expr:e_false RPAREN
+                {: if (b) 
+                     RESULT = e_true; 
+                   else
+                     RESULT = e_false; 
+                :}
+              ;
+
+boolexpr ::=    BOOLEAN:b 
+                {: RESULT = b; :}
+              | TRUE
+                {: RESULT = new Boolean(true); :}
+              | FALSE
+                {: RESULT = new Boolean(false); :}
+              | expr:l LT expr:r
+                {: RESULT = new Boolean(l.doubleValue() < r.doubleValue()); :}
+              | expr:l LE expr:r
+                {: RESULT = new Boolean(l.doubleValue() <= r.doubleValue()); :}
+              | expr:l GT expr:r
+                {: RESULT = new Boolean(l.doubleValue() > r.doubleValue()); :}
+              | expr:l GE expr:r
+                {: RESULT = new Boolean(l.doubleValue() >= r.doubleValue()); :}
+              | expr:l EQ expr:r
+                {: RESULT = new Boolean(l.doubleValue() == r.doubleValue()); :}
+              | LPAREN boolexpr:b RPAREN
+                {: RESULT = b; :}
+              | NOT boolexpr:b
+                {: RESULT = !b; :}
+              | boolexpr:l AND boolexpr:r
+                {: RESULT = l && r; :}
+              | boolexpr:l OR boolexpr:r
+                {: RESULT = l || r; :}
+              ;
+
