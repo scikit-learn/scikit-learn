@@ -317,21 +317,21 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         if self.kernel == "linear":
             if self.gamma != "scale":
                 warnings.warn(
-                    "The 'gamma' parameter has been set but is not relevant "
-                    "for the 'linear' kernel. It will be ignored.",
-                    UserWarning,
+                    "Setting 'gamma' when using 'linear' kernel is irrelevant"
+                    " in 1.6 and will raise an error in 1.8.",
+                    FutureWarning,
                 )
             if self.coef0 != 0:
                 warnings.warn(
-                    "The 'coef0' parameter has been set but is not relevant"
-                    "for the 'linear' kernel. It will be ignored.",
-                    UserWarning,
+                    "Setting 'coef0' when using 'linear' kernel is irrelevant"
+                    " in 1.6 and will raise an error in 1.8.",
+                    FutureWarning,
                 )
             if self.degree != 3:
                 warnings.warn(
-                    "The 'degree' parameter has been set but is not relevant"
-                    "for the 'linear' kernel. It will be ignored.",
-                    UserWarning,
+                    "Setting 'degree' when using 'linear' kernel is irrelevant"
+                    " in 1.6 and will raise an error in 1.8.",
+                    FutureWarning,
                 )
 
         _dual = _validate_dual_parameter(
