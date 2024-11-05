@@ -1,3 +1,0 @@
-_ast27
-_ast3
-typed_ast
