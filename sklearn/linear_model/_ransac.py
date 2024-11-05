@@ -192,7 +192,7 @@ class RANSACRegressor(
     Attributes
     ----------
     estimator_ : object
-        Final model fitted on the inliers predicted by the "best" model found 
+        Final model fitted on the inliers predicted by the "best" model found
         during RANSAC sampling (copy of the `estimator` object).
 
     n_trials_ : int
@@ -586,12 +586,10 @@ class RANSACRegressor(
                 + self.n_skips_invalid_model_
             ) > self.max_skips:
                 warnings.warn(
-                    (
-                        "RANSAC found a valid consensus set but exited"
-                        " early due to skipping more iterations than"
-                        " `max_skips`. See estimator attributes for"
-                        " diagnostics (n_skips*)."
-                    ),
+                    "RANSAC found a valid consensus set but exited"
+                    " early due to skipping more iterations than"
+                    " `max_skips`. See estimator attributes for"
+                    " diagnostics (n_skips*).",
                     ConvergenceWarning,
                 )
 
