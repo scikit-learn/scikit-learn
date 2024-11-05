@@ -439,51 +439,6 @@ R² gives the same ranking as squared loss.
 Furthermore, the Brier score is just a different name for the squared error
 in case of classification.
 
-An example with binary classification
--------------------------------------
-
-Suppose you want to predict whether an apple blossom in spring becomes an
-eatable apple fruit in autumn.
-This is a binary classification problem with :math:`Y = \text{fruit} = 1` or
-:math:`Y = \text{no fruit} = 0`.
-
-Binary classification is very special in that the mean of :math:`Y` is also
-the full probability distribution, i.e.
-:math:`\mathbb{E}[Y] = p = \operatorname{P}(Y=\text{fruit}) = F(Y=\text{fruit})`
-(a result of setting the values of :math:`Y` to 0 and 1). This means that
-point predicting the mean is the same as probabilistic prediction of the class
-probability :math:`p`.
-Therefore, a good scoring function is one that is strictly consistent for the
-mean, e.g. log loss or Brier score.
-They are also called *proper scoring rules*, as they assess predicting the
-whole probability distribution, [Gneiting2007]_.
-Note that for binary classification, the mode---the most probable outcome
-(:math:`\text{fruit}` if :math:`p>0.5`)---is much less informative than the
-mean: To say that we expect a fruit is less informative than to say that we
-expect a fruit with probability :math:`p`.
-
-Let's have a look on different purposes of your prediction:
-
-* If you want to optimize the conditions for good blossoms and you therefore
-  cut off blossoms for which you predict :math:`\text{no fruit}`, you might
-  want to minimize the false negative rate (predicting :math:`\text{no fruit}`
-  when it actually gives a fruit) in order to avoid cutting off too many.
-  If you have calibrated predictions for the probability :math:`p`, this helps
-  a lot. You can start cutting off the blossoms with lowest predicted
-  :math:`p`, which serves as prediction of the (expected) false negative rate.
-* If you sell your apples in advance based on the predicted number of fruits,
-  you might want to avoid selling too many and control your false positive
-  rate (predicting :math:`\text{fruit}` when it actually does not give a
-  fruit). Again, having a calibrated prediction for :math:`p` available, one
-  immediately has an estimate of the false positives by :math:`1-p`.
-* Treating the target variable :math:`y` as a random variable may just be an
-  approximation, but the true nature might be deterministic. For example, if
-  there was no bee to pollinate the blossoms, there won't be any fruit---with
-  certainty! Some scoring functions like the log loss have problems at the
-  boundaries :math:`\hat{y}=0` or :math:`\hat{y}=1` (the same might be
-  true for an estimator).
-* Your own use case...
-
 .. topic:: References:
 
   .. [Gneiting2007] T. Gneiting and A. E. Raftery. :doi:`Strictly Proper
