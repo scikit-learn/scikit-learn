@@ -831,7 +831,7 @@ def test_likelihood_ratios_zero_division_warn():
 def test_likelihood_ratios_zero_division_0_fp(zero_division, expected):
     """Test that the `zero_division` param returns the right value for the
     positive_likelihood_ratio as defined by the user."""
-    # this data causes fp=0 (0 false positives) in the confusion_matrix and a division
+    # This data causes fp=0 (0 false positives) in the confusion_matrix and a division
     # by zero that affects the positive_likelihood_ratio:
     y_true = np.array([1, 1, 0])
     y_pred = np.array([1, 0, 0])
@@ -860,7 +860,7 @@ def test_likelihood_ratios_zero_division_0_fp(zero_division, expected):
 def test_likelihood_ratios_zero_division_0_tn(zero_division, expected):
     """Test that the `zero_division` param returns the right value for the
     negative_likelihood_ratio as defined by the user."""
-    # this data causes tn=0 (0 true negatives) in the confusion_matrix and a division
+    # This data causes tn=0 (0 true negatives) in the confusion_matrix and a division
     # by zero that affects the negative_likelihood_ratio:
     y_true = np.array([1, 0, 0])
     y_pred = np.array([1, 1, 1])

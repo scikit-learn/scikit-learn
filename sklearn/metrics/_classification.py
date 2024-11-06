@@ -1998,18 +1998,18 @@ def class_likelihood_ratios(
     `fn` the number of false negatives. Both class likelihood ratios can be used
     to obtain post-test probabilities given a pre-test probability.
 
-    `LR+` ranges from 1.0 to infinity. A `LR+` of 1 indicates that the probability
+    `LR+` ranges from 1.0 to infinity. A `LR+` of 1.0 indicates that the probability
     of predicting the positive class is the same for samples belonging to either
     class; therefore, the test is useless. The greater `LR+` is, the more a
     positive prediction is likely to be a true positive when compared with the
-    pre-test probability. A value of `LR+` lower than 1 is invalid as it would
+    pre-test probability. A value of `LR+` lower than 1.0 is invalid as it would
     indicate that the odds of a sample being a true positive decrease with
     respect to the pre-test odds.
 
-    `LR-` ranges from 0.0 to 1.0. The closer it is to 0, the lower the probability
-    of a given sample to be a false negative. A `LR-` of 1 means the test is
+    `LR-` ranges from 0.0 to 1.0. The closer it is to 0.0, the lower the probability
+    of a given sample to be a false negative. A `LR-` of 1.0 means the test is
     useless because the odds of having the condition did not change after the
-    test. A value of `LR-` greater than 1 invalidates the classifier as it
+    test. A value of `LR-` greater than 1.0 invalidates the classifier as it
     indicates an increase in the odds of a sample belonging to the positive
     class after being classified as negative. This is the case when the
     classifier systematically predicts the opposite of the true label.

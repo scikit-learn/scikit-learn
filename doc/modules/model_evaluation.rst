@@ -1919,24 +1919,25 @@ the actual formulas).
 
 .. dropdown:: Mathematical divergences
 
-  The positive likelihood ratio is undefined when :math:`fp = 0`, which can be
-  interpreted as the classifier never wrongly identifying negative cases as positives.
-  This happens, for instance, when using a `DummyClassifier` that always predicts the
-  negative class and therefore the interpretation as a perfect classifier is lost.
+  The positive likelihood ratio (`LR+`) is undefined when :math:`fp = 0`, meaning the
+  classifier does not misclassify any negatives as positives. This condition can either
+  indicate a perfect identification of all positive cases or, in cases where there are
+  no true positives (tp = 0), that the classifier does not predict the positive class at
+  all. In the first case we interpret `LR+` as `np.inf`, in the second case (for
+  instance, with highly imbalanced data) we interpret it is `np.nan`.
 
-  Both class likelihood ratios are undefined when :math:`tp=fn=0`, leading to a
-  zero/zero division, which means that no samples of the positive class were present in
-  the testing set. This can happen when cross-validating highly imbalanced data.
+  The negative likelihood ratio (`LR-`) is undefined when :math:`tn = 0`. Such
+  divergence is invalid, as :math:`LR_- > 1.0` would indicate an increase in the odds of
+  a sample belonging to the positive class after being classified as negative, as if the
+  act of classifying caused the positive condition. This includes the case of a
+  `DummyClassifier` that always predicts the positive class (i.e. when :math:`tn=fn=0`).
 
-  The negative likelihood ratio is undefined when :math:`tn = 0`. Such divergence
-  is invalid, as :math:`LR_- > 1` would indicate an increase in the odds of a
-  sample belonging to the positive class after being classified as negative, as if
-  the act of classifying caused the positive condition. This includes the case of
-  a `DummyClassifier` that always predicts the positive class (i.e. when
-  :math:`tn=fn=0`).
+  Both class likelihood ratios are undefined when :math:`tp=fn=0`, which means that no
+  samples of the positive class were present in the test set. This can happen when
+  cross-validating on highly imbalanced data and also leads to a division by zero.
 
   In all of these cases :func:`class_likelihood_ratios` by default raises an appropriate
-  warning message and returns `nan` to avoid pollution when averaging over
+  warning message and returns `np.nan` to avoid pollution when averaging over
   cross-validation folds. Users can control the warning behaviour and set return values
   in case of a division by zero with the `zero_division` param.
 
@@ -1950,8 +1951,7 @@ the actual formulas).
 
   * Brenner, H., & Gefeller, O. (1997).
     Variation of sensitivity, specificity, likelihood ratios and predictive
-    values with disease prevalence.
-    Statistics in medicine, 16(9), 981-991.
+    values with disease prevalence. Statistics in medicine, 16(9), 981-991.
 
 
 .. _d2_score_classification:
