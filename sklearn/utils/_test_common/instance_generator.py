@@ -541,6 +541,14 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             dict(solver="liblinear"),
             dict(solver="newton-cg"),
             dict(solver="newton-cholesky"),
+            dict(solver="newton-cholesky", class_weight="balanced"),
+        ]
+    },
+    LogisticRegressionCV: {
+        "check_sample_weight_equivalence": [
+            dict(solver="lbfgs"),
+            dict(solver="newton-cholesky"),
+            dict(solver="newton-cholesky", class_weight="balanced"),
         ]
     },
     MDS: {"check_dict_unchanged": dict(max_iter=5, n_components=1, n_init=2)},
