@@ -899,8 +899,7 @@ def test_non_estimator_last_step():
     )
 
     # last step of the pipeline is not an estimator
-    with pytest.raises(AttributeError):
-        _ = pipeline._estimator_type
+    assert get_tags(pipeline).estimator_type == ""
 
 
 def test_empty_pipeline_estimator_type():
