@@ -669,6 +669,33 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         self.random_state = random_state
         self.verbose = verbose
 
+    def _validate_estimator(self, default=None):
+        """Check the base estimator.
+        
+        Set the `_estimator` attribute.
+        """
+        # TODO(1.8): Remove the self.base_estimator condition when
+        # base_estimator is removed
+        if self.estimator is not None and (
+            self.base_estimator not in [None, "deprecated"]
+        ):
+            raise ValueError(
+                "Both `estimator` and `base_estimator` were set. Only set `estimator`."
+            )
+
+        if self.base_estimator not in [None, "deprecated"]:
+
+            warning_text = (
+                "`base_estimator` was renamed to `estimator` in 1.6 "
+                "and will be removed in 1.8."
+            )
+            warnings.warn(warning_text, FutureWarning)
+            self._estimator = self.base_estimator
+        elif self.estimator is not None:
+            self._estimator = self.estimator
+        else:
+            self._estimator = default
+
     def _log_message(self, *, estimator_idx, n_estimators, processing_msg):
         if not self.verbose:
             return None
@@ -736,24 +763,6 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         self : object
             Returns a fitted instance.
         """
-        # TODO(1.8): Remove when base_estimator is removed
-        if self.estimator is not None and (
-            self.base_estimator not in [None, "deprecated"]
-        ):
-            raise ValueError(
-                "Both `estimator` and `base_estimator` were set. Only set `estimator`."
-            )
-
-        if self.base_estimator != "deprecated":
-
-            warning_text = (
-                "`base_estimator` was renamed to `estimator` in 1.6 "
-                "and will be removed in 1.8."
-            )
-            warnings.warn(warning_text, FutureWarning)
-            self._estimator = self.base_estimator
-        else:
-            self._estimator = self.estimator
         X, Y = validate_data(self, X, Y, multi_output=True, accept_sparse=True)
 
         random_state = check_random_state(self.random_state)
@@ -768,6 +777,8 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
                 self.order_ = random_state.permutation(Y.shape[1])
         elif sorted(self.order_) != list(range(Y.shape[1])):
             raise ValueError("invalid order")
+
+        self._validate_estimator()
 
         self.estimators_ = [clone(self._estimator) for _ in range(Y.shape[1])]
 
@@ -1138,6 +1149,9 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
+
+        self._validate_estimator()
+
         router = MetadataRouter(owner=self.__class__.__name__).add(
             estimator=self._estimator,
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),
@@ -1298,6 +1312,9 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
+
+        self._validate_estimator()
+
         router = MetadataRouter(owner=self.__class__.__name__).add(
             estimator=self._estimator,
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),
