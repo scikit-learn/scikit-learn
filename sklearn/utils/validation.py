@@ -1413,7 +1413,7 @@ def _check_y(y, multi_output=False, y_numeric=False, estimator=None):
     return y
 
 
-def column_or_1d(y, *, dtype=None, warn=False):
+def column_or_1d(y, *, dtype=None, warn=False, device=None):
     """Ravel column or 1d numpy array, else raises an error.
 
     Parameters
@@ -1457,7 +1457,9 @@ def column_or_1d(y, *, dtype=None, warn=False):
 
     shape = y.shape
     if len(shape) == 1:
-        return _asarray_with_order(xp.reshape(y, (-1,)), order="C", xp=xp)
+        return _asarray_with_order(
+            xp.reshape(y, (-1,)), order="C", xp=xp, device=device
+        )
     if len(shape) == 2 and shape[1] == 1:
         if warn:
             warnings.warn(
@@ -1469,7 +1471,9 @@ def column_or_1d(y, *, dtype=None, warn=False):
                 DataConversionWarning,
                 stacklevel=2,
             )
-        return _asarray_with_order(xp.reshape(y, (-1,)), order="C", xp=xp)
+        return _asarray_with_order(
+            xp.reshape(y, (-1,)), order="C", xp=xp, device=device
+        )
 
     raise ValueError(
         "y should be a 1d array, got an array of shape {} instead.".format(shape)

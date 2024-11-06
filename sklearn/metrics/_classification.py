@@ -552,7 +552,7 @@ def multilabel_confusion_matrix(
     device_ = device(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if sample_weight is not None:
-        sample_weight = xp.asarray(column_or_1d(sample_weight), device=device_)
+        sample_weight = column_or_1d(sample_weight, device=device_)
     check_consistent_length(y_true, y_pred, sample_weight)
 
     if y_type not in ("binary", "multiclass", "multilabel-indicator"):
@@ -638,37 +638,33 @@ def multilabel_confusion_matrix(
             y_true = y_true[:, labels[:n_labels]]
             y_pred = y_pred[:, labels[:n_labels]]
 
-        # calculate weighted counts
         if _is_numpy_namespace(xp=xp):
             true_and_pred = y_true.multiply(y_pred)
-            tp_sum = count_nonzero(
-                true_and_pred, axis=sum_axis, sample_weight=sample_weight
-            )
-            pred_sum = count_nonzero(y_pred, axis=sum_axis, sample_weight=sample_weight)
-            true_sum = count_nonzero(y_true, axis=sum_axis, sample_weight=sample_weight)
         else:
             true_and_pred = xp.multiply(y_true, y_pred)
-            tp_sum = _count_nonzero(
-                true_and_pred,
-                xp=xp,
-                device=device_,
-                axis=sum_axis,
-                sample_weight=sample_weight,
-            )
-            pred_sum = _count_nonzero(
-                y_pred,
-                xp=xp,
-                device=device_,
-                axis=sum_axis,
-                sample_weight=sample_weight,
-            )
-            true_sum = _count_nonzero(
-                y_true,
-                xp=xp,
-                device=device_,
-                axis=sum_axis,
-                sample_weight=sample_weight,
-            )
+
+        # calculate weighted counts
+        tp_sum = _count_nonzero(
+            true_and_pred,
+            xp=xp,
+            device=device_,
+            axis=sum_axis,
+            sample_weight=sample_weight,
+        )
+        pred_sum = _count_nonzero(
+            y_pred,
+            xp=xp,
+            device=device_,
+            axis=sum_axis,
+            sample_weight=sample_weight,
+        )
+        true_sum = _count_nonzero(
+            y_true,
+            xp=xp,
+            device=device_,
+            axis=sum_axis,
+            sample_weight=sample_weight,
+        )
 
     fp = pred_sum - tp_sum
     fn = true_sum - tp_sum
