@@ -29,6 +29,7 @@ from .utils import Bunch, check_random_state
 from .utils._param_validation import HasMethods, StrOptions
 from .utils._response import _get_response_values
 from .utils._user_interface import _print_elapsed_time
+from .utils._tags import get_tags
 from .utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -615,8 +616,9 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # FIXME
-        tags._skip_test = True
+        tags.input_tags.pairwise = get_tags(self.estimator).input_tags.pairwise
+        tags.target_tags.single_output = False
+        tags.target_tags.multi_output = True
         return tags
 
 
