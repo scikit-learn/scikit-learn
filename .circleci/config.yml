@@ -37,7 +37,6 @@ jobs:
           keys:
             - doc-min-deps-ccache-{{ .Branch }}
             - doc-min-deps-ccache
-      - run: towncrier build --yes  # create the changelog from current fragments
       - run: ./build_tools/circle/build_doc.sh
       - save_cache:
           key: doc-min-deps-ccache-{{ .Branch }}-{{ .BuildNum }}
@@ -75,7 +74,6 @@ jobs:
           keys:
             - doc-ccache-{{ .Branch }}
             - doc-ccache
-      - run: towncrier build --yes  # create the changelog from current fragments
       - run: ./build_tools/circle/build_doc.sh
       - save_cache:
           key: doc-ccache-{{ .Branch }}-{{ .BuildNum }}
