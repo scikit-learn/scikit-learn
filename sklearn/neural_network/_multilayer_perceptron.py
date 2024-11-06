@@ -828,6 +828,8 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
+            .. versionadded:: 1.6
+
         Returns
         -------
         self : object
@@ -1287,6 +1289,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
+
+            .. versionadded:: 1.6
 
         classes : array of shape (n_classes,), default=None
             Classes across all calls to partial_fit.
@@ -1749,6 +1753,8 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
+
+            .. versionadded:: 1.6
 
         Returns
         -------
