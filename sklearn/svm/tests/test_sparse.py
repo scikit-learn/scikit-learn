@@ -92,6 +92,8 @@ def check_svm_model_equal(dense_svm, X_train, y_train, X_test):
 
 
 @skip_if_32bit
+# TODO(1.8): remove warning filter when setting gamma raises an error
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "X_train, y_train, X_test",
     [
@@ -323,6 +325,8 @@ def test_sparse_liblinear_intercept_handling():
     test_svm.test_dense_liblinear_intercept_handling(svm.LinearSVC)
 
 
+# TODO(1.8): remove warning filter when setting gamma raises an error
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "X_train, y_train, X_test",
     [
