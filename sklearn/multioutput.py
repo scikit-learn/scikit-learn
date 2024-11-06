@@ -671,7 +671,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
 
     def _validate_estimator(self, default=None):
         """Check the base estimator.
-        
+
         Set the `_estimator` attribute.
         """
         # TODO(1.8): Remove the self.base_estimator condition when
@@ -1087,7 +1087,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         self.classes_ = [estimator.classes_ for estimator in self.estimators_]
         return self
 
-    @_available_if_base_estimator_has("predict_proba")
+    @_available_if_estimator_has("predict_proba")
     def predict_proba(self, X):
         """Predict probability estimates.
 
@@ -1118,7 +1118,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         """
         return np.log(self.predict_proba(X))
 
-    @_available_if_base_estimator_has("decision_function")
+    @_available_if_estimator_has("decision_function")
     def decision_function(self, X):
         """Evaluate the decision_function of the models in the chain.
 
