@@ -2234,10 +2234,10 @@ def class_likelihood_ratios(
             positive_likelihood_ratio = np.nan
         elif zero_division == "nan":
             positive_likelihood_ratio = np.nan
-        elif isinstance(zero_division.get("LR+", None), Real):  # this includes `np.inf`
+        else:
+            # isinstance(zero_division.get("LR+", None), Real); this includes `np.inf`
+            # and `np.nan`
             positive_likelihood_ratio = np.float64(zero_division["LR+"])
-        else:  # np.isnan(zero_division["LR+"])
-            positive_likelihood_ratio = np.nan
     else:
         positive_likelihood_ratio = pos_num / pos_denom
 
@@ -2252,10 +2252,9 @@ def class_likelihood_ratios(
             negative_likelihood_ratio = np.nan
         elif zero_division == "nan":
             negative_likelihood_ratio = np.nan
-        elif isinstance(zero_division.get("LR-", None), Real):
+        else:
+            # isinstance(zero_division.get("LR-", None), Real); this includes `np.nan`
             negative_likelihood_ratio = np.float64(zero_division["LR-"])
-        else:  # np.isnan(zero_division["LR-"])
-            negative_likelihood_ratio = np.nan
     else:
         negative_likelihood_ratio = neg_num / neg_denom
 
