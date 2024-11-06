@@ -34,6 +34,7 @@ from ..utils._array_api import (
     _is_numpy_namespace,
     _searchsorted,
     _setdiff1d,
+    _tolist,
     _union1d,
     device,
     get_namespace,
@@ -1699,18 +1700,14 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     # Convert to Python primitive type to avoid NumPy type / Python str
     # comparison. See https://github.com/numpy/numpy/issues/6784
-    present_labels = list(unique_labels(y_true, y_pred))
+    present_labels = _tolist(unique_labels(y_true, y_pred))
     if average == "binary":
         if y_type == "binary":
             if pos_label not in present_labels:
                 if len(present_labels) >= 2:
-                    if isinstance(present_labels[0], np.generic):
-                        valid_labels = [lab.item() for lab in present_labels]
-                    else:
-                        valid_labels = present_labels
                     raise ValueError(
                         f"pos_label={pos_label} is not a valid label. It "
-                        f"should be one of {valid_labels}"
+                        f"should be one of {present_labels}"
                     )
             labels = [pos_label]
         else:

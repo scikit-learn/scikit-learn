@@ -1429,6 +1429,11 @@ def column_or_1d(y, *, dtype=None, warn=False, device=None):
     warn : bool, default=False
        To control display of warnings.
 
+    device : device, default=None
+        `device` object (see the "Device Support" section of the array API spec).
+
+        .. versionadded:: 1.6
+
     Returns
     -------
     y : ndarray

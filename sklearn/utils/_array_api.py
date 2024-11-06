@@ -1089,3 +1089,10 @@ def _bincount(array, xp, weights=None, minlength=None):
         weights_np = None
     bin_out = numpy.bincount(array_np, weights=weights_np, minlength=minlength)
     return xp.asarray(bin_out, device=device(array))
+
+
+def _tolist(array, xp=None):
+    xp, _ = get_namespace(array, xp=xp)
+    if _is_numpy_namespace(xp):
+        return array.tolist()
+    return [element.item() for element in array]
