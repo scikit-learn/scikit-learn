@@ -761,7 +761,7 @@ def test_likelihood_ratios():
 
 @pytest.mark.parametrize("raise_warning", [True, False])
 def test_likelihood_ratios_raise_warning_deprecation(raise_warning):
-    """Test that class_likelihood_ratios raises a FutureWarning when `raise_warning`
+    """Test that class_likelihood_ratios raises a `FutureWarning` when `raise_warning`
     param is set."""
     y_true = np.array([1, 0])
     y_pred = np.array([1, 0])
@@ -796,19 +796,18 @@ def test_likelihood_ratios_raises_when_raise_warning_and_zero_division():
     ],
 )
 def test_likelihood_ratios_wrong_dict_zero_division(zero_division):
-    """Test that class_likelihood_ratios raises a ValueError if the input dict for
+    """Test that class_likelihood_ratios raises a `ValueError` if the input dict for
     `zero_division` is in the wrong format or contains impossible values."""
     y_true = np.array([1, 0])
     y_pred = np.array([1, 0])
 
     msg = "The dictionary passed as `zero_division` needs come in the format"
-
     with pytest.raises(ValueError, match=msg):
         class_likelihood_ratios(y_true, y_pred, zero_division=zero_division)
 
 
 def test_likelihood_ratios_zero_division_warn():
-    """Test that the correct warning is raised if zero_division is set to 'warn'."""
+    """Test that the correct warning is raised if `zero_division` is set to 'warn'."""
     y_true = np.array([1, 0])
     y_pred = np.array([1, 1])
 

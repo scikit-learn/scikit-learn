@@ -1998,7 +1998,7 @@ def class_likelihood_ratios(
     `fn` the number of false negatives. Both class likelihood ratios can be used
     to obtain post-test probabilities given a pre-test probability.
 
-    `LR+` ranges from 1 to infinity. A `LR+` of 1 indicates that the probability
+    `LR+` ranges from 1.0 to infinity. A `LR+` of 1 indicates that the probability
     of predicting the positive class is the same for samples belonging to either
     class; therefore, the test is useless. The greater `LR+` is, the more a
     positive prediction is likely to be a true positive when compared with the
@@ -2006,7 +2006,7 @@ def class_likelihood_ratios(
     indicate that the odds of a sample being a true positive decrease with
     respect to the pre-test odds.
 
-    `LR-` ranges from 0 to 1. The closer it is to 0, the lower the probability
+    `LR-` ranges from 0.0 to 1.0. The closer it is to 0, the lower the probability
     of a given sample to be a false negative. A `LR-` of 1 means the test is
     useless because the odds of having the condition did not change after the
     test. A value of `LR-` greater than 1 invalidates the classifier as it
@@ -2161,8 +2161,9 @@ def class_likelihood_ratios(
     if isinstance(zero_division, dict):
         msg = (
             "The dictionary passed as `zero_division` needs come in the format "
-            "`{'LR+': `value_1`, 'LR-': `value_02`}` where the values can be "
-            f"non-negative floats, `np.inf` or `np.nan`, got `{zero_division}`."
+            "`{'LR+': `value_1`, 'LR-': `value_2`}` where the value for `LR+` ranges "
+            "from `1.0` to `np.inf` or is `np.nan` and the value for `LR-` ranges from "
+            f"`0.0` to `1.0` or is `np.nan`; got `{zero_division}`."
         )
         if ("LR+" in zero_division) and ("LR-" in zero_division):
             desired_positive_likelihood_ratio = zero_division.get("LR+", None)
