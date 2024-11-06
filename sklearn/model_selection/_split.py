@@ -1292,7 +1292,7 @@ class TimeSeriesSplit(_BaseKFold):
         """
         (X,) = indexable(X)
         n_samples = _num_samples(X)
-        n_splits = self.get_n_splits(X, y, groups)
+        n_splits = self.get_n_splits(X)
         n_folds = n_splits + 1
         gap = self.gap
         test_size = (
