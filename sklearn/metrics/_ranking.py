@@ -774,6 +774,15 @@ def _multiclass_roc_auc_score(
         )
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_score": ["array-like"],
+        "pos_label": [Real, str, "boolean", None],
+        "sample_weight": ["array-like", None],
+    },
+    prefer_skip_nested_validation=True,
+)
 def binary_classification_curve(y_true, y_score, pos_label=None, sample_weight=None):
     """Calculate true and false positives per binary classification threshold.
 
