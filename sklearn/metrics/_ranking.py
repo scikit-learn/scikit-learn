@@ -815,7 +815,7 @@ def binary_classification_curve(y_true, y_score, pos_label=None, sample_weight=N
     >>> from sklearn.metrics import binary_classification_curve
     >>> y_true = np.array([0,0,1,1])
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> fps, fns, thresholds = binary_classifaction_curve(y_true, y_scores)
+    >>> fps, tps, thresholds = binary_classification_curve(y_true, y_scores)
     >>> fps
     array([0, 1, 1, 2])
     >>> tps
