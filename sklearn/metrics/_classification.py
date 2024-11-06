@@ -2529,8 +2529,8 @@ def balanced_accuracy_score(
 
     zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
         Sets the value to return when there is a zero division. Since the balanced
-        accuracy is the average of the recall of each class, a zero division can be
-        raised when computing the recall of a class that is not present in
+        accuracy is the average of the recall of each class, zero division can
+        occur when computing the recall of a class that is not present in
         `y_true`.
 
         Notes:
