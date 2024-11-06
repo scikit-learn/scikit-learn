@@ -38,10 +38,10 @@ response variable :math:`Y` (conditionally on :math:`X`).
 
 Once that is settled, use a **strictly consistent** scoring function for that
 target functional, see [Gneiting2009]_.
-For classification
-`**strictly proper scoring rules** <https://en.wikipedia.org/wiki/Scoring_rule>`_,
-see [Gneiting2007]_, coincide with strictly consistent scoring functions.
-See the table further below for examples.
+For classification **strictly proper scoring rules**, see
+`wikipedia <https://en.wikipedia.org/wiki/Scoring_rule>`_ and [Gneiting2007]_, coincide
+with strictly consistent scoring functions.
+The table further below provides examples.
 One could say that consistent scoring functions act as *truth serum* in that
 they guarantee *"that truth telling [. . .] is an optimal strategy in
 expectation"* [Gneiting2014]_.
