@@ -2698,15 +2698,15 @@ def test_log_loss():
     y_pred = [[0.2, 0.8], [0.6, 0.4]]
     y_score = np.array([[0.1, 0.9], [0.1, 0.9]])
     error_str = (
-        r"y_true contains only one label: 2. Please provide "
-        r"the true labels explicitly through the labels argument."
+        "y_true contains only one label (2). Please provide "
+        "the true labels explicitly through the labels argument."
     )
-    with pytest.raises(ValueError, match=error_str):
+    with pytest.raises(ValueError, match=re.escape(error_str)):
         log_loss(y_true, y_pred)
 
     y_pred = [[0.2, 0.8], [0.6, 0.4], [0.7, 0.3]]
-    error_str = r"Found input variables with inconsistent numbers of samples: \[3, 2\]"
-    with pytest.raises(ValueError, match=error_str):
+    error_str = "Found input variables with inconsistent numbers of samples: [3, 2]"
+    with pytest.raises(ValueError, match=re.escape(error_str)):
         log_loss(y_true, y_pred)
 
     # works when the labels argument is used
@@ -2742,7 +2742,7 @@ def test_log_loss_not_probabilities_warning(dtype):
     y_true = np.array([0, 1, 1, 0])
     y_pred = np.array([[0.2, 0.7], [0.6, 0.3], [0.4, 0.7], [0.8, 0.3]], dtype=dtype)
 
-    with pytest.warns(UserWarning, match="The y_pred values do not sum to one."):
+    with pytest.warns(UserWarning, match="The y_prob values do not sum to one."):
         log_loss(y_true, y_pred)
 
 
@@ -2927,7 +2927,7 @@ def test_multiclass_brier_score_loss_invalid_inputs():
     y_true = ["eggs"]
     y_pred = [0.1]
     error_message = (
-        f"y_true contains only one label: {y_true[0]}. Please "
+        "y_true contains only one label (eggs). Please "
         "provide the true labels explicitly through the "
         "labels argument."
     )

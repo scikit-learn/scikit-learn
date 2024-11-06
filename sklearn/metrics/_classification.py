@@ -3614,11 +3614,11 @@ def multiclass_brier_score_loss(y_true, y_prob, sample_weight=None, labels=None)
     >>> from sklearn.metrics import multiclass_brier_score_loss
     >>> multiclass_brier_score_loss([0, 1, 1, 0],
     ...                             [0.1, 0.9, 0.8, 0.3])
-    0.074...
+    np.float64(0.074...)
     >>> multiclass_brier_score_loss(['eggs', 'ham', 'spam'], [[.8, .1, .1],
     ...                                                       [.2, .7, .1],
     ...                                                       [.2, .2, .6]])
-    0.146...
+    np.float64(0.146...)
     """
     y_true = column_or_1d(y_true)
 
