@@ -106,6 +106,10 @@ the document up to date as we work on these issues.
 
    * More self-sufficient running of scikit-learn-contrib or a similar resource
 
+#. Support resampling and sample reduction
+
+   * Allow subsampling of majority classes (in a pipeline?) :issue:`3855`
+
 #. Better interfaces for interactive development
 
    * Improve the HTML visualisations of estimators via the `estimator_html_repr`.
