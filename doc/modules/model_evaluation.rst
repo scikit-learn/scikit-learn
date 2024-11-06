@@ -351,11 +351,12 @@ Once that is settled, use a **strictly consistent** scoring function for that
 target functional, see [Gneiting2009]_.
 For classification **stricly proper scoring rules**, see [Gneiting2007]_, conincide
 with strictly consistent scoring functions.
+See the table further below for examples.
 One could say that consistent scoring functions act as *truth serum* in that
 they guarantee "that truth telling [. . .] is an optimal strategy in
 expectation" [Gneiting2014]_.
 
-Note that for regressors, the prediction ist done with :term:`predict` while for
+Note that for regressors, the prediction is done with :term:`predict` while for
 classifiers it is usually :term:`predict_proba`.
 
 **Decision Making:**
