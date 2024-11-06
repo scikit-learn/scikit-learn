@@ -230,10 +230,7 @@ NodeData = np.asarray(<NodeData_t[:1]>(&nd_tmp)).dtype
 ######################################################################
 # Define doc strings, substituting the appropriate class name using
 # the DOC_DICT variable defined in the pyx files.
-CLASS_DOC = """
-{BinaryTree}(X, leaf_size=40, metric='minkowski', **kwargs)
-
-{BinaryTree} for fast generalized N-point problems
+CLASS_DOC = """{BinaryTree} for fast generalized N-point problems
 
 Read more in the :ref:`User Guide <unsupervised_neighbors>`.
 
@@ -1482,7 +1479,7 @@ cdef class BinaryTree{{name_suffix}}:
             raise ValueError("query data dimension must "
                              "match training data dimension")
         Xarr_np = X.reshape((-1, n_features))
-        cdef {{INPUT_DTYPE_t}}[:, ::1] Xarr = Xarr_np
+        cdef const {{INPUT_DTYPE_t}}[:, ::1] Xarr = Xarr_np
 
         log_density_arr = np.zeros(Xarr.shape[0], dtype={{INPUT_DTYPE}})
         cdef {{INPUT_DTYPE_t}}[::1] log_density = log_density_arr

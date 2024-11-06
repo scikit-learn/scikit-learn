@@ -11,16 +11,17 @@ tackle a diabetes regression task. We will obtain the results from
 and 500 regression trees of depth 4.
 
 Note: For larger datasets (n_samples >= 10000), please refer to
-:class:`~sklearn.ensemble.HistGradientBoostingRegressor`.
+:class:`~sklearn.ensemble.HistGradientBoostingRegressor`. See
+:ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py` for an example
+showcasing some other advantages of
+:class:`~ensemble.HistGradientBoostingRegressor`.
 
 """
 
-# Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#         Maria Telenczuk <https://github.com/maikia>
-#         Katrina Ni <https://github.com/nilichen>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -28,6 +29,7 @@ from sklearn import datasets, ensemble
 from sklearn.inspection import permutation_importance
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
+from sklearn.utils.fixes import parse_version
 
 # %%
 # Load the data
@@ -145,11 +147,20 @@ result = permutation_importance(
 )
 sorted_idx = result.importances_mean.argsort()
 plt.subplot(1, 2, 2)
-plt.boxplot(
-    result.importances[sorted_idx].T,
-    vert=False,
-    labels=np.array(diabetes.feature_names)[sorted_idx],
+
+# `labels` argument in boxplot is deprecated in matplotlib 3.9 and has been
+# renamed to `tick_labels`. The following code handles this, but as a
+# scikit-learn user you probably can write simpler code by using `labels=...`
+# (matplotlib < 3.9) or `tick_labels=...` (matplotlib >= 3.9).
+tick_labels_parameter_name = (
+    "tick_labels"
+    if parse_version(matplotlib.__version__) >= parse_version("3.9")
+    else "labels"
 )
+tick_labels_dict = {
+    tick_labels_parameter_name: np.array(diabetes.feature_names)[sorted_idx]
+}
+plt.boxplot(result.importances[sorted_idx].T, vert=False, **tick_labels_dict)
 plt.title("Permutation Importance (test set)")
 fig.tight_layout()
 plt.show()

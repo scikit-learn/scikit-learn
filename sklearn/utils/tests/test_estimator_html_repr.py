@@ -1,10 +1,13 @@
 import html
 import locale
 import re
+import types
 from contextlib import closing
+from functools import partial
 from io import StringIO
 from unittest.mock import patch
 
+import numpy as np
 import pytest
 
 from sklearn import config_context
@@ -23,7 +26,7 @@ from sklearn.model_selection import RandomizedSearchCV
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import FeatureUnion, Pipeline, make_pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.preprocessing import FunctionTransformer, OneHotEncoder, StandardScaler
 from sklearn.svm import LinearSVC, LinearSVR
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._estimator_html_repr import (
@@ -34,6 +37,10 @@ from sklearn.utils._estimator_html_repr import (
     estimator_html_repr,
 )
 from sklearn.utils.fixes import parse_version
+
+
+def dummy_function(x, y):
+    return x + y  # pragma: nocover
 
 
 @pytest.mark.parametrize("checked", [True, False])
@@ -48,8 +55,8 @@ def test_write_label_html(checked):
 
         p = (
             r'<label for="sk-estimator-id-[0-9]*"'
-            r' class="sk-toggleable__label (fitted)? sk-toggleable__label-arrow ">'
-            r"LogisticRegression"
+            r' class="sk-toggleable__label (fitted)? sk-toggleable__label-arrow">'
+            r"<div><div>LogisticRegression</div></div>"
         )
         re_compiled = re.compile(p)
         assert re_compiled.search(html_label)
@@ -189,7 +196,7 @@ def test_estimator_html_repr_pipeline():
     # low level estimators do not show changes
     with config_context(print_changed_only=True):
         assert html.escape(str(num_trans["pass"])) in html_output
-        assert "passthrough</label>" in html_output
+        assert "<div><div>passthrough</div></div></label>" in html_output
         assert html.escape(str(num_trans["imputer"])) in html_output
 
         for _, _, cols in preprocess.transformers:
@@ -246,8 +253,8 @@ def test_stacking_regressor(final_estimator):
     assert html.escape(str(reg.estimators[0][0])) in html_output
     p = (
         r'<label for="sk-estimator-id-[0-9]*"'
-        r' class="sk-toggleable__label (fitted)? sk-toggleable__label-arrow ">'
-        r"&nbsp;LinearSVR"
+        r' class="sk-toggleable__label (fitted)? sk-toggleable__label-arrow">'
+        r"<div><div>LinearSVR</div></div>"
     )
     re_compiled = re.compile(p)
     assert re_compiled.search(html_output)
@@ -255,8 +262,8 @@ def test_stacking_regressor(final_estimator):
     if final_estimator is None:
         p = (
             r'<label for="sk-estimator-id-[0-9]*"'
-            r' class="sk-toggleable__label (fitted)? sk-toggleable__label-arrow ">'
-            r"&nbsp;RidgeCV"
+            r' class="sk-toggleable__label (fitted)? sk-toggleable__label-arrow">'
+            r"<div><div>RidgeCV</div></div>"
         )
         re_compiled = re.compile(p)
         assert re_compiled.search(html_output)
@@ -272,7 +279,10 @@ def test_birch_duck_typing_meta():
     # inner estimators do not show changes
     with config_context(print_changed_only=True):
         assert f"<pre>{html.escape(str(birch.n_clusters))}" in html_output
-        assert "AgglomerativeClustering</label>" in html_output
+
+        p = r"<div><div>AgglomerativeClustering</div></div><div>.+</div></label>"
+        re_compiled = re.compile(p)
+        assert re_compiled.search(html_output)
 
     # outer estimator contains all changes
     assert f"<pre>{html.escape(str(birch))}" in html_output
@@ -289,7 +299,8 @@ def test_ovo_classifier_duck_typing_meta():
         # regex to match the start of the tag
         p = (
             r'<label for="sk-estimator-id-[0-9]*" '
-            r'class="sk-toggleable__label  sk-toggleable__label-arrow ">&nbsp;LinearSVC'
+            r'class="sk-toggleable__label  sk-toggleable__label-arrow">'
+            r"<div><div>LinearSVC</div></div>"
         )
         re_compiled = re.compile(p)
         assert re_compiled.search(html_output)
@@ -308,7 +319,7 @@ def test_duck_typing_nested_estimator():
         param_distributions=param_distributions,
     )
     html_output = estimator_html_repr(kernel_ridge_tuned)
-    assert "estimator: KernelRidge</label>" in html_output
+    assert "<div><div>estimator: KernelRidge</div></div></label>" in html_output
 
 
 @pytest.mark.parametrize("print_changed_only", [True, False])
@@ -338,8 +349,8 @@ def test_show_arrow_pipeline():
 
     html_output = estimator_html_repr(pipe)
     assert (
-        'class="sk-toggleable__label  sk-toggleable__label-arrow ">&nbsp;&nbsp;Pipeline'
-        in html_output
+        'class="sk-toggleable__label  sk-toggleable__label-arrow">'
+        "<div><div>Pipeline</div></div>" in html_output
     )
 
 
@@ -433,7 +444,61 @@ def test_html_documentation_link_mixin_sklearn(mock_version):
         )
 
 
-def test_html_documentation_link_mixin_get_doc_link():
+@pytest.mark.parametrize(
+    "module_path,expected_module",
+    [
+        ("prefix.mymodule", "prefix.mymodule"),
+        ("prefix._mymodule", "prefix"),
+        ("prefix.mypackage._mymodule", "prefix.mypackage"),
+        ("prefix.mypackage._mymodule.submodule", "prefix.mypackage"),
+        ("prefix.mypackage.mymodule.submodule", "prefix.mypackage.mymodule.submodule"),
+    ],
+)
+def test_html_documentation_link_mixin_get_doc_link_instance(
+    module_path, expected_module
+):
+    """Check the behaviour of the `_get_doc_link` with various parameter."""
+
+    class FooBar(_HTMLDocumentationLinkMixin):
+        pass
+
+    FooBar.__module__ = module_path
+    est = FooBar()
+    # if we set `_doc_link`, then we expect to infer a module and name for the estimator
+    est._doc_link_module = "prefix"
+    est._doc_link_template = (
+        "https://website.com/{estimator_module}.{estimator_name}.html"
+    )
+    assert est._get_doc_link() == f"https://website.com/{expected_module}.FooBar.html"
+
+
+@pytest.mark.parametrize(
+    "module_path,expected_module",
+    [
+        ("prefix.mymodule", "prefix.mymodule"),
+        ("prefix._mymodule", "prefix"),
+        ("prefix.mypackage._mymodule", "prefix.mypackage"),
+        ("prefix.mypackage._mymodule.submodule", "prefix.mypackage"),
+        ("prefix.mypackage.mymodule.submodule", "prefix.mypackage.mymodule.submodule"),
+    ],
+)
+def test_html_documentation_link_mixin_get_doc_link_class(module_path, expected_module):
+    """Check the behaviour of the `_get_doc_link` when `_doc_link_module` and
+    `_doc_link_template` are defined at the class level and not at the instance
+    level."""
+
+    class FooBar(_HTMLDocumentationLinkMixin):
+        _doc_link_module = "prefix"
+        _doc_link_template = (
+            "https://website.com/{estimator_module}.{estimator_name}.html"
+        )
+
+    FooBar.__module__ = module_path
+    est = FooBar()
+    assert est._get_doc_link() == f"https://website.com/{expected_module}.FooBar.html"
+
+
+def test_html_documentation_link_mixin_get_doc_link_out_of_library():
     """Check the behaviour of the `_get_doc_link` with various parameter."""
     mixin = _HTMLDocumentationLinkMixin()
 
@@ -442,16 +507,9 @@ def test_html_documentation_link_mixin_get_doc_link():
     mixin._doc_link_module = "xxx"
     assert mixin._get_doc_link() == ""
 
-    # if we set `_doc_link`, then we expect to infer a module and name for the estimator
-    mixin._doc_link_module = "sklearn"
-    mixin._doc_link_template = (
-        "https://website.com/{estimator_module}.{estimator_name}.html"
-    )
-    assert (
-        mixin._get_doc_link()
-        == "https://website.com/sklearn.utils._HTMLDocumentationLinkMixin.html"
-    )
 
+def test_html_documentation_link_mixin_doc_link_url_param_generator_instance():
+    mixin = _HTMLDocumentationLinkMixin()
     # we can bypass the generation by providing our own callable
     mixin._doc_link_template = (
         "https://website.com/{my_own_variable}.{another_variable}.html"
@@ -463,9 +521,28 @@ def test_html_documentation_link_mixin_get_doc_link():
             "another_variable": "value_2",
         }
 
-    mixin._doc_link_url_param_generator = url_param_generator
+    mixin._doc_link_url_param_generator = types.MethodType(url_param_generator, mixin)
 
     assert mixin._get_doc_link() == "https://website.com/value_1.value_2.html"
+
+
+def test_html_documentation_link_mixin_doc_link_url_param_generator_class():
+    # we can bypass the generation by providing our own callable
+
+    def url_param_generator(estimator):
+        return {
+            "my_own_variable": "value_1",
+            "another_variable": "value_2",
+        }
+
+    class FooBar(_HTMLDocumentationLinkMixin):
+        _doc_link_template = (
+            "https://website.com/{my_own_variable}.{another_variable}.html"
+        )
+        _doc_link_url_param_generator = url_param_generator
+
+    estimator = FooBar()
+    assert estimator._get_doc_link() == "https://website.com/value_1.value_2.html"
 
 
 @pytest.fixture
@@ -497,3 +574,27 @@ def test_non_utf8_locale(set_non_utf8_locale):
     Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/27725
     """
     _get_css_style()
+
+
+@pytest.mark.parametrize(
+    "func, expected_name",
+    [
+        (lambda x: x + 1, html.escape("<lambda>")),
+        (dummy_function, "dummy_function"),
+        (partial(dummy_function, y=1), "dummy_function"),
+        (np.vectorize(partial(dummy_function, y=1)), re.escape("vectorize(...)")),
+    ],
+)
+def test_function_transformer_show_caption(func, expected_name):
+    # Test that function name is shown as the name and "FunctionTransformer" is shown
+    # in the caption
+    ft = FunctionTransformer(func)
+    html_output = estimator_html_repr(ft)
+
+    p = (
+        r'<label for="sk-estimator-id-[0-9]*" class="sk-toggleable__label fitted '
+        rf'sk-toggleable__label-arrow"><div><div>{expected_name}</div>'
+        r'<div class="caption">FunctionTransformer</div></div>'
+    )
+    re_compiled = re.compile(p)
+    assert re_compiled.search(html_output)

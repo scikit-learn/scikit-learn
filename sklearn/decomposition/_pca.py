@@ -1,14 +1,7 @@
-""" Principal Component Analysis.
-"""
+"""Principal Component Analysis."""
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Mathieu Blondel <mathieu@mblondel.org>
-#         Denis A. Engemann <denis-alexander.engemann@inria.fr>
-#         Michael Eickenberg <michael.eickenberg@inria.fr>
-#         Giorgio Patrini <giorgio.patrini@anu.edu.au>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from math import log, sqrt
 from numbers import Integral, Real
@@ -26,7 +19,7 @@ from ..utils._array_api import _convert_to_numpy, get_namespace
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
 from ..utils.extmath import fast_logdet, randomized_svd, stable_cumsum, svd_flip
 from ..utils.sparsefuncs import _implicit_column_offset, mean_variance_axis
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 from ._base import _BasePCA
 
 
@@ -130,11 +123,16 @@ class PCA(_BasePCA):
     SVD by the method of Halko et al. 2009, depending on the shape of the input
     data and the number of components to extract.
 
-    It can also use the scipy.sparse.linalg ARPACK implementation of the
-    truncated SVD.
+    With sparse inputs, the ARPACK implementation of the truncated SVD can be
+    used (i.e. through :func:`scipy.sparse.linalg.svds`). Alternatively, one
+    may consider :class:`TruncatedSVD` where the data are not centered.
 
-    Notice that this class does not support sparse input. See
-    :class:`TruncatedSVD` for an alternative with sparse data.
+    Notice that this class only supports sparse inputs for some solvers such as
+    "arpack" and "covariance_eigh". See :class:`TruncatedSVD` for an
+    alternative with sparse data.
+
+    For a usage example, see
+    :ref:`sphx_glr_auto_examples_decomposition_plot_pca_iris.py`
 
     Read more in the :ref:`User Guide <PCA>`.
 
@@ -176,25 +174,42 @@ class PCA(_BasePCA):
         improve the predictive accuracy of the downstream estimators by
         making their data respect some hard-wired assumptions.
 
-    svd_solver : {'auto', 'full', 'arpack', 'randomized'}, default='auto'
-        If auto :
-            The solver is selected by a default policy based on `X.shape` and
-            `n_components`: if the input data is larger than 500x500 and the
-            number of components to extract is lower than 80% of the smallest
-            dimension of the data, then the more efficient 'randomized'
-            method is enabled. Otherwise the exact full SVD is computed and
-            optionally truncated afterwards.
-        If full :
-            run exact full SVD calling the standard LAPACK solver via
+    svd_solver : {'auto', 'full', 'covariance_eigh', 'arpack', 'randomized'},\
+            default='auto'
+        "auto" :
+            The solver is selected by a default 'auto' policy is based on `X.shape` and
+            `n_components`: if the input data has fewer than 1000 features and
+            more than 10 times as many samples, then the "covariance_eigh"
+            solver is used. Otherwise, if the input data is larger than 500x500
+            and the number of components to extract is lower than 80% of the
+            smallest dimension of the data, then the more efficient
+            "randomized" method is selected. Otherwise the exact "full" SVD is
+            computed and optionally truncated afterwards.
+        "full" :
+            Run exact full SVD calling the standard LAPACK solver via
             `scipy.linalg.svd` and select the components by postprocessing
-        If arpack :
-            run SVD truncated to n_components calling ARPACK solver via
+        "covariance_eigh" :
+            Precompute the covariance matrix (on centered data), run a
+            classical eigenvalue decomposition on the covariance matrix
+            typically using LAPACK and select the components by postprocessing.
+            This solver is very efficient for n_samples >> n_features and small
+            n_features. It is, however, not tractable otherwise for large
+            n_features (large memory footprint required to materialize the
+            covariance matrix). Also note that compared to the "full" solver,
+            this solver effectively doubles the condition number and is
+            therefore less numerical stable (e.g. on input data with a large
+            range of singular values).
+        "arpack" :
+            Run SVD truncated to `n_components` calling ARPACK solver via
             `scipy.sparse.linalg.svds`. It requires strictly
-            0 < n_components < min(X.shape)
-        If randomized :
-            run randomized SVD by the method of Halko et al.
+            `0 < n_components < min(X.shape)`
+        "randomized" :
+            Run randomized SVD by the method of Halko et al.
 
         .. versionadded:: 0.18.0
+
+        .. versionchanged:: 1.5
+            Added the 'covariance_eigh' solver.
 
     tol : float, default=0.0
         Tolerance for singular values computed by svd_solver == 'arpack'.
@@ -370,7 +385,9 @@ class PCA(_BasePCA):
         ],
         "copy": ["boolean"],
         "whiten": ["boolean"],
-        "svd_solver": [StrOptions({"auto", "full", "arpack", "randomized"})],
+        "svd_solver": [
+            StrOptions({"auto", "full", "covariance_eigh", "arpack", "randomized"})
+        ],
         "tol": [Interval(Real, 0, None, closed="left")],
         "iterated_power": [
             StrOptions({"auto"}),
@@ -448,74 +465,86 @@ class PCA(_BasePCA):
         This method returns a Fortran-ordered array. To convert it to a
         C-ordered array, use 'np.ascontiguousarray'.
         """
-        U, S, Vt = self._fit(X)
-        U = U[:, : self.n_components_]
+        U, S, _, X, x_is_centered, xp = self._fit(X)
+        if U is not None:
+            U = U[:, : self.n_components_]
 
-        if self.whiten:
-            # X_new = X * V / S * sqrt(n_samples) = U * sqrt(n_samples)
-            U *= sqrt(X.shape[0] - 1)
-        else:
-            # X_new = X * V = U * S * Vt * V = U * S
-            U *= S[: self.n_components_]
+            if self.whiten:
+                # X_new = X * V / S * sqrt(n_samples) = U * sqrt(n_samples)
+                U *= sqrt(X.shape[0] - 1)
+            else:
+                # X_new = X * V = U * S * Vt * V = U * S
+                U *= S[: self.n_components_]
 
-        return U
+            return U
+        else:  # solver="covariance_eigh" does not compute U at fit time.
+            return self._transform(X, xp, x_is_centered=x_is_centered)
 
     def _fit(self, X):
         """Dispatch to the right submethod depending on the chosen solver."""
         xp, is_array_api_compliant = get_namespace(X)
 
         # Raise an error for sparse input and unsupported svd_solver
-        if issparse(X) and self.svd_solver != "arpack":
+        if issparse(X) and self.svd_solver not in ["auto", "arpack", "covariance_eigh"]:
             raise TypeError(
-                'PCA only support sparse inputs with the "arpack" solver, while '
-                f'"{self.svd_solver}" was passed. See TruncatedSVD for a possible'
-                " alternative."
+                'PCA only support sparse inputs with the "arpack" and'
+                f' "covariance_eigh" solvers, while "{self.svd_solver}" was passed. See'
+                " TruncatedSVD for a possible alternative."
             )
-        # Raise an error for non-Numpy input and arpack solver.
         if self.svd_solver == "arpack" and is_array_api_compliant:
             raise ValueError(
                 "PCA with svd_solver='arpack' is not supported for Array API inputs."
             )
 
-        X = self._validate_data(
+        # Validate the data, without ever forcing a copy as any solver that
+        # supports sparse input data and the `covariance_eigh` solver are
+        # written in a way to avoid the need for any inplace modification of
+        # the input data contrary to the other solvers.
+        # The copy will happen
+        # later, only if needed, once the solver negotiation below is done.
+        X = validate_data(
+            self,
             X,
             dtype=[xp.float64, xp.float32],
+            force_writeable=True,
             accept_sparse=("csr", "csc"),
             ensure_2d=True,
-            copy=self.copy,
+            copy=False,
         )
+        self._fit_svd_solver = self.svd_solver
+        if self._fit_svd_solver == "auto" and issparse(X):
+            self._fit_svd_solver = "arpack"
 
-        # Handle n_components==None
         if self.n_components is None:
-            if self.svd_solver != "arpack":
+            if self._fit_svd_solver != "arpack":
                 n_components = min(X.shape)
             else:
                 n_components = min(X.shape) - 1
         else:
             n_components = self.n_components
 
-        # Handle svd_solver
-        self._fit_svd_solver = self.svd_solver
         if self._fit_svd_solver == "auto":
+            # Tall and skinny problems are best handled by precomputing the
+            # covariance matrix.
+            if X.shape[1] <= 1_000 and X.shape[0] >= 10 * X.shape[1]:
+                self._fit_svd_solver = "covariance_eigh"
             # Small problem or n_components == 'mle', just call full PCA
-            if max(X.shape) <= 500 or n_components == "mle":
+            elif max(X.shape) <= 500 or n_components == "mle":
                 self._fit_svd_solver = "full"
             elif 1 <= n_components < 0.8 * min(X.shape):
                 self._fit_svd_solver = "randomized"
-            # This is also the case of n_components in (0,1)
+            # This is also the case of n_components in (0, 1)
             else:
                 self._fit_svd_solver = "full"
 
         # Call different fits for either full or truncated SVD
-        if self._fit_svd_solver == "full":
-            return self._fit_full(X, n_components)
+        if self._fit_svd_solver in ("full", "covariance_eigh"):
+            return self._fit_full(X, n_components, xp, is_array_api_compliant)
         elif self._fit_svd_solver in ["arpack", "randomized"]:
-            return self._fit_truncated(X, n_components, self._fit_svd_solver)
+            return self._fit_truncated(X, n_components, xp)
 
-    def _fit_full(self, X, n_components):
+    def _fit_full(self, X, n_components, xp, is_array_api_compliant):
         """Fit the model by computing full SVD on X."""
-        xp, is_array_api_compliant = get_namespace(X)
-
         n_samples, n_features = X.shape
 
         if n_components == "mle":
@@ -525,33 +554,96 @@ class PCA(_BasePCA):
                 )
         elif not 0 <= n_components <= min(n_samples, n_features):
             raise ValueError(
-                "n_components=%r must be between 0 and "
-                "min(n_samples, n_features)=%r with "
-                "svd_solver='full'" % (n_components, min(n_samples, n_features))
+                f"n_components={n_components} must be between 0 and "
+                f"min(n_samples, n_features)={min(n_samples, n_features)} with "
+                f"svd_solver={self._fit_svd_solver!r}"
             )
 
-        # Center data
         self.mean_ = xp.mean(X, axis=0)
-        X -= self.mean_
+        # When X is a scipy sparse matrix, self.mean_ is a numpy matrix, so we need
+        # to transform it to a 1D array. Note that this is not the case when X
+        # is a scipy sparse array.
+        # TODO: remove the following two lines when scikit-learn only depends
+        # on scipy versions that no longer support scipy.sparse matrices.
+        self.mean_ = xp.reshape(xp.asarray(self.mean_), (-1,))
 
-        if not is_array_api_compliant:
-            # Use scipy.linalg with NumPy/SciPy inputs for the sake of not
-            # introducing unanticipated behavior changes. In the long run we
-            # could instead decide to always use xp.linalg.svd for all inputs,
-            # but that would make this code rely on numpy's SVD instead of
-            # scipy's. It's not 100% clear whether they use the same LAPACK
-            # solver by default though (assuming both are built against the
-            # same BLAS).
-            U, S, Vt = linalg.svd(X, full_matrices=False)
+        if self._fit_svd_solver == "full":
+            X_centered = xp.asarray(X, copy=True) if self.copy else X
+            X_centered -= self.mean_
+            x_is_centered = not self.copy
+
+            if not is_array_api_compliant:
+                # Use scipy.linalg with NumPy/SciPy inputs for the sake of not
+                # introducing unanticipated behavior changes. In the long run we
+                # could instead decide to always use xp.linalg.svd for all inputs,
+                # but that would make this code rely on numpy's SVD instead of
+                # scipy's. It's not 100% clear whether they use the same LAPACK
+                # solver by default though (assuming both are built against the
+                # same BLAS).
+                U, S, Vt = linalg.svd(X_centered, full_matrices=False)
+            else:
+                U, S, Vt = xp.linalg.svd(X_centered, full_matrices=False)
+            explained_variance_ = (S**2) / (n_samples - 1)
+
         else:
-            U, S, Vt = xp.linalg.svd(X, full_matrices=False)
+            assert self._fit_svd_solver == "covariance_eigh"
+            # In the following, we center the covariance matrix C afterwards
+            # (without centering the data X first) to avoid an unnecessary copy
+            # of X. Note that the mean_ attribute is still needed to center
+            # test data in the transform method.
+            #
+            # Note: at the time of writing, `xp.cov` does not exist in the
+            # Array API standard:
+            # https://github.com/data-apis/array-api/issues/43
+            #
+            # Besides, using `numpy.cov`, as of numpy 1.26.0, would not be
+            # memory efficient for our use case when `n_samples >> n_features`:
+            # `numpy.cov` centers a copy of the data before computing the
+            # matrix product instead of subtracting a small `(n_features,
+            # n_features)` square matrix from the gram matrix X.T @ X, as we do
+            # below.
+            x_is_centered = False
+            C = X.T @ X
+            C -= (
+                n_samples
+                * xp.reshape(self.mean_, (-1, 1))
+                * xp.reshape(self.mean_, (1, -1))
+            )
+            C /= n_samples - 1
+            eigenvals, eigenvecs = xp.linalg.eigh(C)
+
+            # When X is a scipy sparse matrix, the following two datastructures
+            # are returned as instances of the soft-deprecated numpy.matrix
+            # class. Note that this problem does not occur when X is a scipy
+            # sparse array (or another other kind of supported array).
+            # TODO: remove the following two lines when scikit-learn only
+            # depends on scipy versions that no longer support scipy.sparse
+            # matrices.
+            eigenvals = xp.reshape(xp.asarray(eigenvals), (-1,))
+            eigenvecs = xp.asarray(eigenvecs)
+
+            eigenvals = xp.flip(eigenvals, axis=0)
+            eigenvecs = xp.flip(eigenvecs, axis=1)
+
+            # The covariance matrix C is positive semi-definite by
+            # construction. However, the eigenvalues returned by xp.linalg.eigh
+            # can be slightly negative due to numerical errors. This would be
+            # an issue for the subsequent sqrt, hence the manual clipping.
+            eigenvals[eigenvals < 0.0] = 0.0
+            explained_variance_ = eigenvals
+
+            # Re-construct SVD of centered X indirectly and make it consistent
+            # with the other solvers.
+            S = xp.sqrt(eigenvals * (n_samples - 1))
+            Vt = eigenvecs.T
+            U = None
+
         # flip eigenvectors' sign to enforce deterministic output
-        U, Vt = svd_flip(U, Vt)
+        U, Vt = svd_flip(U, Vt, u_based_decision=False)
 
         components_ = Vt
 
         # Get variance explained by singular values
-        explained_variance_ = (S**2) / (n_samples - 1)
         total_var = xp.sum(explained_variance_)
         explained_variance_ratio_ = explained_variance_ / total_var
         singular_values_ = xp.asarray(S, copy=True)  # Store the singular values.
@@ -591,22 +683,33 @@ class PCA(_BasePCA):
             self.noise_variance_ = 0.0
 
         self.n_samples_ = n_samples
-        self.components_ = components_[:n_components, :]
         self.n_components_ = n_components
-        self.explained_variance_ = explained_variance_[:n_components]
-        self.explained_variance_ratio_ = explained_variance_ratio_[:n_components]
-        self.singular_values_ = singular_values_[:n_components]
+        # Assign a copy of the result of the truncation of the components in
+        # order to:
+        # - release the memory used by the discarded components,
+        # - ensure that the kept components are allocated contiguously in
+        #   memory to make the transform method faster by leveraging cache
+        #   locality.
+        self.components_ = xp.asarray(components_[:n_components, :], copy=True)
 
-        return U, S, Vt
+        # We do the same for the other arrays for the sake of consistency.
+        self.explained_variance_ = xp.asarray(
+            explained_variance_[:n_components], copy=True
+        )
+        self.explained_variance_ratio_ = xp.asarray(
+            explained_variance_ratio_[:n_components], copy=True
+        )
+        self.singular_values_ = xp.asarray(singular_values_[:n_components], copy=True)
 
-    def _fit_truncated(self, X, n_components, svd_solver):
+        return U, S, Vt, X, x_is_centered, xp
+
+    def _fit_truncated(self, X, n_components, xp):
         """Fit the model by computing truncated SVD (by ARPACK or randomized)
         on X.
         """
-        xp, _ = get_namespace(X)
-
         n_samples, n_features = X.shape
 
+        svd_solver = self._fit_svd_solver
         if isinstance(n_components, str):
             raise ValueError(
                 "n_components=%r cannot be a string with svd_solver='%s'"
@@ -634,31 +737,35 @@ class PCA(_BasePCA):
         if issparse(X):
             self.mean_, var = mean_variance_axis(X, axis=0)
             total_var = var.sum() * n_samples / (n_samples - 1)  # ddof=1
-            X = _implicit_column_offset(X, self.mean_)
+            X_centered = _implicit_column_offset(X, self.mean_)
+            x_is_centered = False
         else:
             self.mean_ = xp.mean(X, axis=0)
-            X -= self.mean_
+            X_centered = xp.asarray(X, copy=True) if self.copy else X
+            X_centered -= self.mean_
+            x_is_centered = not self.copy
 
         if svd_solver == "arpack":
             v0 = _init_arpack_v0(min(X.shape), random_state)
-            U, S, Vt = svds(X, k=n_components, tol=self.tol, v0=v0)
+            U, S, Vt = svds(X_centered, k=n_components, tol=self.tol, v0=v0)
             # svds doesn't abide by scipy.linalg.svd/randomized_svd
             # conventions, so reverse its outputs.
             S = S[::-1]
             # flip eigenvectors' sign to enforce deterministic output
-            U, Vt = svd_flip(U[:, ::-1], Vt[::-1])
+            U, Vt = svd_flip(U[:, ::-1], Vt[::-1], u_based_decision=False)
 
         elif svd_solver == "randomized":
             # sign flipping is done inside
             U, S, Vt = randomized_svd(
-                X,
+                X_centered,
                 n_components=n_components,
                 n_oversamples=self.n_oversamples,
                 n_iter=self.iterated_power,
                 power_iteration_normalizer=self.power_iteration_normalizer,
-                flip_sign=True,
+                flip_sign=False,
                 random_state=random_state,
             )
+            U, Vt = svd_flip(U, Vt, u_based_decision=False)
 
         self.n_samples_ = n_samples
         self.components_ = Vt
@@ -676,8 +783,8 @@ class PCA(_BasePCA):
         # See: https://github.com/scikit-learn/scikit-learn/pull/18689#discussion_r1335540991
         if total_var is None:
             N = X.shape[0] - 1
-            X **= 2
-            total_var = xp.sum(X) / N
+            X_centered **= 2
+            total_var = xp.sum(X_centered) / N
 
         self.explained_variance_ratio_ = self.explained_variance_ / total_var
         self.singular_values_ = xp.asarray(S, copy=True)  # Store the singular values.
@@ -688,7 +795,7 @@ class PCA(_BasePCA):
         else:
             self.noise_variance_ = 0.0
 
-        return U, S, Vt
+        return U, S, Vt, X, x_is_centered, xp
 
     def score_samples(self, X):
         """Return the log-likelihood of each sample.
@@ -709,7 +816,7 @@ class PCA(_BasePCA):
         """
         check_is_fitted(self)
         xp, _ = get_namespace(X)
-        X = self._validate_data(X, dtype=[xp.float64, xp.float32], reset=False)
+        X = validate_data(self, X, dtype=[xp.float64, xp.float32], reset=False)
         Xr = X - self.mean_
         n_features = X.shape[1]
         precision = self.get_precision()
@@ -740,5 +847,8 @@ class PCA(_BasePCA):
         xp, _ = get_namespace(X)
         return float(xp.mean(self.score_samples(X)))
 
-    def _more_tags(self):
-        return {"preserves_dtype": [np.float64, np.float32], "array_api_support": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        tags.array_api_support = True
+        return tags

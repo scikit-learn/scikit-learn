@@ -2,7 +2,7 @@
 #
 
 # You can set these variables from the command line.
-SPHINXOPTS    = -T
+SPHINXOPTS   ?= -T
 SPHINXBUILD  ?= sphinx-build
 PAPER         =
 BUILDDIR      = _build
@@ -47,9 +47,17 @@ help:
 
 clean:
 	-rm -rf $(BUILDDIR)/*
+	@echo "Removed $(BUILDDIR)/*"
 	-rm -rf auto_examples/
+	@echo "Removed auto_examples/"
 	-rm -rf generated/*
+	@echo "Removed generated/"
 	-rm -rf modules/generated/
+	@echo "Removed modules/generated/"
+	-rm -rf css/styles/
+	@echo "Removed css/styles/"
+	-rm -rf api/*.rst
+	@echo "Removed api/*.rst"
 
 # Default to SPHINX_NUMJOBS=1 for full documentation build. Using
 # SPHINX_NUMJOBS!=1 may actually slow down the build, or cause weird issues in
@@ -58,6 +66,7 @@ clean:
 # https://github.com/scikit-learn/scikit-learn/pull/25809
 html: SPHINX_NUMJOBS ?= 1
 html:
+	@echo $(ALLSPHINXOPTS)
 	# These two lines make the build a bit more lengthy, and the
 	# the embedding of images more robust
 	rm -rf $(BUILDDIR)/html/_images

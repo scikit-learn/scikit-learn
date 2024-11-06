@@ -19,10 +19,8 @@ set.
 
 """
 
-# Code source: Gaël Varoquaux
-#              Andreas Müller
-# Modified for documentation by Jaques Grobler
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -66,7 +64,7 @@ classifiers = [
         max_depth=5, n_estimators=10, max_features=1, random_state=42
     ),
     MLPClassifier(alpha=1, max_iter=1000, random_state=42),
-    AdaBoostClassifier(algorithm="SAMME", random_state=42),
+    AdaBoostClassifier(random_state=42),
     GaussianNB(),
     QuadraticDiscriminantAnalysis(),
 ]

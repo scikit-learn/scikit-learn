@@ -1,5 +1,3 @@
-﻿.. _roadmap:
-
 .. |ss| raw:: html
 
    <strike>
@@ -7,6 +5,8 @@
 .. |se| raw:: html
 
    </strike>
+
+.. _roadmap:
 
 Roadmap
 =======
@@ -69,29 +69,17 @@ the document up to date as we work on these issues.
 #. Improved handling of Pandas DataFrames
 
    * document current handling
-   * column reordering issue :issue:`7242`
-   * avoiding unnecessary conversion to ndarray |ss| :issue:`12147` |se|
-   * returning DataFrames from transformers :issue:`5523`
-   * getting DataFrames from dataset loaders |ss| :issue:`10733` |se|,
-     |ss| :issue:`13902` |se|
-   * Sparse currently not considered |ss| :issue:`12800` |se|
 
 #. Improved handling of categorical features
 
    * Tree-based models should be able to handle both continuous and categorical
-     features :issue:`12866` and |ss| :issue:`15550` |se|.
-   * |ss| In dataset loaders :issue:`13902` |se|
-   * As generic transformers to be used with ColumnTransforms (e.g. ordinal
-     encoding supervised by correlation with target variable) :issue:`5853`,
-     :issue:`11805`
+     features :issue:`29437`.
    * Handling mixtures of categorical and continuous variables
 
 #. Improved handling of missing data
 
-   * Making sure meta-estimators are lenient towards missing data,
-     |ss| :issue:`15319` |se|
-   * Non-trivial imputers |ss| :issue:`11977`, :issue:`12852` |se|
-   * Learners directly handling missing data |ss| :issue:`13911` |se|
+   * Making sure meta-estimators are lenient towards missing data by implementing
+     a common test.
    * An amputation sample generator to make parts of a dataset go missing
      :issue:`6284`
 
@@ -101,16 +89,8 @@ the document up to date as we work on these issues.
      documentation is crowded which makes it hard for beginners to get the big
      picture. Some work could be done in prioritizing the information.
 
-#. Passing around information that is not (X, y): Sample properties
-
-   * We need to be able to pass sample weights to scorers in cross validation.
-   * We should have standard/generalised ways of passing sample-wise properties
-     around in meta-estimators. :issue:`4497` :issue:`7646`
-
 #. Passing around information that is not (X, y): Feature properties
 
-   * Feature names or descriptions should ideally be available to fit for, e.g.
-     . :issue:`6425` :issue:`6424`
    * Per-feature handling (e.g. "is this a nominal / ordinal / English language
      text?") should also not need to be provided to estimator constructors,
      ideally, but should be available as metadata alongside X. :issue:`8480`
@@ -124,28 +104,21 @@ the document up to date as we work on these issues.
 #. Make it easier for external users to write Scikit-learn-compatible
    components
 
-   * More flexible estimator checks that do not select by estimator name
-     |ss| :issue:`6599` |se| :issue:`6715`
-   * Example of how to develop an estimator or a meta-estimator,
-     |ss| :issue:`14582` |se|
    * More self-sufficient running of scikit-learn-contrib or a similar resource
 
 #. Support resampling and sample reduction
 
    * Allow subsampling of majority classes (in a pipeline?) :issue:`3855`
-   * Implement random forests with resampling :issue:`13227`
 
 #. Better interfaces for interactive development
 
-   * |ss| __repr__ and HTML visualisations of estimators
-     :issue:`6323` and :pr:`14180` |se|.
-   * Include plotting tools, not just as examples. :issue:`9173`
+   * Improve the HTML visualisations of estimators via the `estimator_html_repr`.
+   * Include more plotting tools, not just as examples.
 
 #. Improved tools for model diagnostics and basic inference
 
-   * |ss| alternative feature importances implementations, :issue:`13146` |se|
+   * work on a unified interface for "feature importance"
    * better ways to handle validation sets when fitting
-   * better ways to find thresholds / create decision rules :issue:`8614`
 
 #. Better tools for selecting hyperparameters with transductive estimators
 
@@ -176,11 +149,6 @@ the document up to date as we work on these issues.
      learning is on smaller data than ETL, hence we can maybe adapt to very
      large scale while supporting only a fraction of the patterns.
 
-#. Support for working with pre-trained models
-
-   * Estimator "freezing". In particular, right now it's impossible to clone a
-     `CalibratedClassifierCV` with prefit. :issue:`8370`. :issue:`6451`
-
 #. Backwards-compatible de/serialization of some estimators
 
    * Currently serialization (with pickle) breaks across versions. While we may
@@ -210,7 +178,7 @@ the document up to date as we work on these issues.
        recover the previous predictive performance: if this is not the case
        there is probably a bug in scikit-learn that needs to be reported.
 
-#. Everything in Scikit-learn should probably conform to our API contract.
+#. Everything in scikit-learn should probably conform to our API contract.
    We are still in the process of making decisions on some of these related
    issues.
 
@@ -230,43 +198,3 @@ the document up to date as we work on these issues.
    * Document good practices to detect temporal distribution drift for deployed
      model and good practices for re-training on fresh data without causing
      catastrophic predictive performance regressions.
-
-
-Subpackage-specific goals
--------------------------
-
-:mod:`sklearn.ensemble`
-
-* |ss| a stacking implementation, :issue:`11047` |se|
-
-:mod:`sklearn.cluster`
-
-* kmeans variants for non-Euclidean distances, if we can show these have
-  benefits beyond hierarchical clustering.
-
-:mod:`sklearn.model_selection`
-
-* |ss| multi-metric scoring is slow :issue:`9326` |se|
-* perhaps we want to be able to get back more than multiple metrics
-* the handling of random states in CV splitters is a poor design and
-  contradicts the validation of similar parameters in estimators,
-  `SLEP011 <https://github.com/scikit-learn/enhancement_proposals/pull/24>`_
-* exploit warm-starting and path algorithms so the benefits of `EstimatorCV`
-  objects can be accessed via `GridSearchCV` and used in Pipelines.
-  :issue:`1626`
-* Cross-validation should be able to be replaced by OOB estimates whenever a
-  cross-validation iterator is used.
-* Redundant computations in pipelines should be avoided (related to point
-  above) cf `dask-ml
-  <https://ml.dask.org/hyper-parameter-search.html#avoid-repeated-work>`_
-
-:mod:`sklearn.neighbors`
-
-* |ss| Ability to substitute a custom/approximate/precomputed nearest neighbors
-  implementation for ours in all/most contexts that nearest neighbors are used
-  for learning. :issue:`10463` |se|
-
-:mod:`sklearn.pipeline`
-
-* Performance issues with `Pipeline.memory`
-* see "Everything in Scikit-learn should conform to our API contract" above

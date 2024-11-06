@@ -10,58 +10,55 @@ and can be found here:
   https://code.google.com/p/smhasher/
 
 """
-# Author: Olivier Grisel <olivier.grisel@ensta.org>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
+from ..utils._typedefs cimport int32_t, uint32_t
 
-cimport numpy as cnp
 import numpy as np
 
 cdef extern from "src/MurmurHash3.h":
-    void MurmurHash3_x86_32(void *key, int len, cnp.uint32_t seed, void *out)
-    void MurmurHash3_x86_128(void *key, int len, cnp.uint32_t seed, void *out)
-    void MurmurHash3_x64_128 (void *key, int len, cnp.uint32_t seed, void *out)
-
-cnp.import_array()
+    void MurmurHash3_x86_32(void *key, int len, uint32_t seed, void *out)
+    void MurmurHash3_x86_128(void *key, int len, uint32_t seed, void *out)
+    void MurmurHash3_x64_128 (void *key, int len, uint32_t seed, void *out)
 
 
-cpdef cnp.uint32_t murmurhash3_int_u32(int key, unsigned int seed):
+cpdef uint32_t murmurhash3_int_u32(int key, unsigned int seed):
     """Compute the 32bit murmurhash3 of a int key at seed."""
-    cdef cnp.uint32_t out
+    cdef uint32_t out
     MurmurHash3_x86_32(&key, sizeof(int), seed, &out)
     return out
 
 
-cpdef cnp.int32_t murmurhash3_int_s32(int key, unsigned int seed):
+cpdef int32_t murmurhash3_int_s32(int key, unsigned int seed):
     """Compute the 32bit murmurhash3 of a int key at seed."""
-    cdef cnp.int32_t out
+    cdef int32_t out
     MurmurHash3_x86_32(&key, sizeof(int), seed, &out)
     return out
 
 
-cpdef cnp.uint32_t murmurhash3_bytes_u32(bytes key, unsigned int seed):
+cpdef uint32_t murmurhash3_bytes_u32(bytes key, unsigned int seed):
     """Compute the 32bit murmurhash3 of a bytes key at seed."""
-    cdef cnp.uint32_t out
+    cdef uint32_t out
     MurmurHash3_x86_32(<char*> key, len(key), seed, &out)
     return out
 
 
-cpdef cnp.int32_t murmurhash3_bytes_s32(bytes key, unsigned int seed):
+cpdef int32_t murmurhash3_bytes_s32(bytes key, unsigned int seed):
     """Compute the 32bit murmurhash3 of a bytes key at seed."""
-    cdef cnp.int32_t out
+    cdef int32_t out
     MurmurHash3_x86_32(<char*> key, len(key), seed, &out)
     return out
 
 
 def _murmurhash3_bytes_array_u32(
-    const cnp.int32_t[:] key,
+    const int32_t[:] key,
     unsigned int seed,
 ):
     """Compute 32bit murmurhash3 hashes of a key int array at seed."""
     # TODO make it possible to pass preallocated output array
     cdef:
-        cnp.uint32_t[:] out = np.zeros(key.size, np.uint32)
+        uint32_t[:] out = np.zeros(key.size, np.uint32)
         Py_ssize_t i
     for i in range(key.shape[0]):
         out[i] = murmurhash3_int_u32(key[i], seed)
@@ -69,13 +66,13 @@ def _murmurhash3_bytes_array_u32(
 
 
 def _murmurhash3_bytes_array_s32(
-    const cnp.int32_t[:] key,
+    const int32_t[:] key,
     unsigned int seed,
 ):
     """Compute 32bit murmurhash3 hashes of a key int array at seed."""
     # TODO make it possible to pass preallocated output array
     cdef:
-        cnp.int32_t[:] out = np.zeros(key.size, np.int32)
+        int32_t[:] out = np.zeros(key.size, np.int32)
         Py_ssize_t i
     for i in range(key.shape[0]):
         out[i] = murmurhash3_int_s32(key[i], seed)
@@ -103,6 +100,11 @@ def murmurhash3_32(key, seed=0, positive=False):
         False: the results is casted to a signed int
           from -(2 ** 31) to 2 ** 31 - 1
 
+    Examples
+    --------
+    >>> from sklearn.utils import murmurhash3_32
+    >>> murmurhash3_32(b"Hello World!", seed=42)
+    3565178
     """
     if isinstance(key, bytes):
         if positive:
@@ -116,9 +118,9 @@ def murmurhash3_32(key, seed=0, positive=False):
             return murmurhash3_bytes_s32(key.encode('utf-8'), seed)
     elif isinstance(key, int) or isinstance(key, np.int32):
         if positive:
-            return murmurhash3_int_u32(<cnp.int32_t>key, seed)
+            return murmurhash3_int_u32(<int32_t>key, seed)
         else:
-            return murmurhash3_int_s32(<cnp.int32_t>key, seed)
+            return murmurhash3_int_s32(<int32_t>key, seed)
     elif isinstance(key, np.ndarray):
         if key.dtype != np.int32:
             raise TypeError(

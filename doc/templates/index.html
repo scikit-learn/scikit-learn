@@ -1,25 +1,27 @@
 {% extends "layout.html" %}
 {% set title = 'scikit-learn: machine learning in Python' %}
 
-{% if theme_link_to_live_contributing_page|tobool %}
+{% if is_devrelease|tobool %}
+  {%- set contributing_link = pathto("developers/contributing") %}
+  {%- set contributing_attrs = "" %}
+{%- else %}
   {%- set contributing_link = "https://scikit-learn.org/dev/developers/contributing.html" %}
   {%- set contributing_attrs = 'target="_blank" rel="noopener noreferrer"' %}
-{%- else %}
-  {%- set contributing_link = pathto('developers/contributing') %}
-  {%- set contributing_attrs = '' %}
 {%- endif %}
 
+{%- import "static/webpack-macros.html" as _webpack with context %}
 
-{% block content %}
-<div class="container-fluid sk-landing-bg py-3">
+{% block docs_navbar %}
+{{ super() }}
+
+<div class="container-fluid sk-landing-top-bar py-4">
   <div class="container sk-landing-container">
     <div class="row">
       <div class="col-md-6 mb-3 mb-md-0">
-        <h1 class="sk-landing-header text-white text-monospace">scikit-learn</h1>
-        <h4 class="sk-landing-subheader text-white font-italic mb-3">Machine Learning in Python</h4>
-        <a class="btn sk-landing-btn mb-1" href="{{ pathto('getting_started') }}" role="button">Getting Started</a>
-        <a class="btn sk-landing-btn mb-1" href="{{ pathto(release_highlights) }}" role="button">Release Highlights for {{ release_highlights_version }}</a>
-        <a class="btn sk-landing-btn mb-1" href="https://github.com/scikit-learn/scikit-learn" role="button">GitHub</a>
+        <h1 class="sk-landing-header font-monospace">scikit-learn</h1>
+        <h4 class="sk-landing-subheader fst-italic mb-3">Machine Learning in Python</h4>
+        <a class="btn sk-btn-orange mb-1" href="{{ pathto('getting_started') }}" role="button">Getting Started</a>
+        <a class="btn sk-btn-orange mb-1" href="{{ pathto(release_highlights) }}" role="button">Release Highlights for {{ release_highlights_version }}</a>
       </div>
       <div class="col-md-6 d-flex">
         <ul class="sk-landing-header-body">
@@ -33,234 +35,282 @@
   </div>
 </div>
 
-<div class="container sk-landing-container pt-3 body" role="main">
+{% endblock docs_navbar %}
+
+{% block docs_main %}
+
+<div class="container sk-landing-container pt-3 sk-landing-body" role="main">
   <div class="row no-gutters">
+    <!-- Classification -->
     <div class="col-md-4 mb-3 px-md-2 sk-px-xl-4">
-      <div class="card h-100">
+      <div class="card h-100" sk-align-group="1">
         <div class="card-body">
-          <a href="supervised_learning.html#supervised-learning"><h4 class="sk-card-title card-title">Classification</h4></a>
-          <p class="card-text">Identifying which category an object belongs to.</p>
-          <p class="card-text"><strong>Applications:</strong> Spam detection, image recognition.</br>
-          <strong>Algorithms:</strong>
-          <a href="modules/ensemble.html#histogram-based-gradient-boosting">Gradient boosting</a>,
-          <a href="modules/neighbors.html#classification">nearest neighbors</a>,
-          <a href="modules/ensemble.html#forest">random forest</a>,
-          <a href="modules/linear_model.html#logistic-regression">logistic regression</a>,
-          and <a href="supervised_learning.html#supervised-learning">more...</a></p>
+          <h4 class="sk-card-title card-title sk-vert-align" sk-align-name="title">
+            <a href="supervised_learning.html">Classification</a>
+          </h4>
+          <p class="sk-vert-align" sk-align-name="desc">Identifying which category an object belongs to.</p>
+          <p>
+            <strong>Applications:</strong> Spam detection, image recognition.</br>
+            <strong>Algorithms:</strong>
+            <a href="modules/ensemble.html#histogram-based-gradient-boosting">Gradient boosting</a>,
+            <a href="modules/neighbors.html#classification">nearest neighbors</a>,
+            <a href="modules/ensemble.html#forest">random forest</a>,
+            <a href="modules/linear_model.html#logistic-regression">logistic regression</a>,
+            and <a href="supervised_learning.html">more...</a>
+          </p>
         </div>
-        <div class="overflow-hidden mx-2 text-center flex-fill">
-          <a href="auto_examples/classification/plot_classifier_comparison.html"  aria-label="Classification">
-          <img src="_images/sphx_glr_plot_classifier_comparison_001_carousel.png" class="sk-index-img" style="width:initial;max-width:initial" alt="Classifier comparison">
+        <div class="sk-card-img-container overflow-hidden mx-2 flex-fill">
+          <a href="auto_examples/classification/plot_classifier_comparison.html" aria-label="Classification">
+            <img src="_images/sphx_glr_plot_classifier_comparison_001_carousel.png" alt="Classifier comparison">
           </a>
         </div>
-          <a href="auto_examples/index.html#classification" class="sk-btn-primary btn text-white btn-block" role="button">Examples</a>
+        <a href="auto_examples/classification/index.html" class="sk-btn-cyan btn" role="button">Examples</a>
       </div>
     </div>
+    <!-- Regression -->
     <div class="col-md-4 mb-3 px-md-2 sk-px-xl-4">
-      <div class="card h-100">
+      <div class="card h-100" sk-align-group="1">
         <div class="card-body">
-          <a href="supervised_learning.html#supervised-learning"><h4 class="sk-card-title card-title">Regression</h4></a>
-          <p class="card-text">Predicting a continuous-valued attribute associated with an object.</p>
-          <p class="card-text"><strong>Applications:</strong> Drug response, Stock prices.</br>
-          <strong>Algorithms:</strong>
-          <a href="modules/ensemble.html#histogram-based-gradient-boosting">Gradient boosting</a>,
-          <a href="modules/neighbors.html#regression">nearest neighbors</a>,
-          <a href="modules/ensemble.html#forest">random forest</a>,
-          <a href="modules/linear_model.html#ridge-regression-and-classification">ridge</a>,
-          and <a href="supervised_learning.html#supervised-learning">more...</a></p>
+          <h4 class="sk-card-title card-title sk-vert-align" sk-align-name="title">
+            <a href="supervised_learning.html">Regression</a>
+          </h4>
+          <p class="sk-vert-align" sk-align-name="desc">Predicting a continuous-valued attribute associated with an object.</p>
+          <p>
+            <strong>Applications:</strong> Drug response, stock prices.</br>
+            <strong>Algorithms:</strong>
+            <a href="modules/ensemble.html#histogram-based-gradient-boosting">Gradient boosting</a>,
+            <a href="modules/neighbors.html#regression">nearest neighbors</a>,
+            <a href="modules/ensemble.html#forest">random forest</a>,
+            <a href="modules/linear_model.html#ridge-regression-and-classification">ridge</a>,
+            and <a href="supervised_learning.html">more...</a>
+          </p>
         </div>
-        <div class="overflow-hidden mx-2 text-center flex-fill">
-          <a href="auto_examples/ensemble/plot_adaboost_regression.html"  aria-label="Regression">
-          <img src="_images/sphx_glr_plot_adaboost_regression_thumb.png" class="sk-index-img" alt="Decision Tree Regression with AdaBoost">
+        <div class="sk-card-img-container overflow-hidden mx-2 flex-fill">
+          <a href="auto_examples/ensemble/plot_hgbt_regression.html" aria-label="Regression">
+            <img src="_images/sphx_glr_plot_hgbt_regression_002.png" alt="Decision Tree Regression with HGBT">
           </a>
         </div>
-          <a href="auto_examples/index.html#examples" class="sk-btn-primary btn text-white btn-block" role="button">Examples</a>
+        <a href="auto_examples/index.html" class="sk-btn-cyan btn" role="button">Examples</a>
       </div>
     </div>
+    <!-- Clustering -->
     <div class="col-md-4 mb-3 px-md-2 sk-px-xl-4">
-      <div class="card h-100">
+      <div class="card h-100" sk-align-group="1">
         <div class="card-body">
-          <a href="modules/clustering.html#clustering"><h4 class="sk-card-title card-title">Clustering</h4></a>
-          <p class="card-text">Automatic grouping of similar objects into sets.</p>
-          <p class="card-text"><strong>Applications:</strong> Customer segmentation, Grouping experiment outcomes</br>
-          <strong>Algorithms:</strong>
-          <a href="modules/clustering.html#k-means">k-Means</a>,
-          <a href="modules/clustering.html#hdbscan">HDBSCAN</a>,
-          <a href="modules/clustering.html#hierarchical-clustering">hierarchical
-	  clustering</a>,
-          and <a href="modules/clustering.html#clustering">more...</a></p>
+          <h4 class="sk-card-title card-title sk-vert-align" sk-align-name="title">
+            <a href="modules/clustering.html">Clustering</a>
+          </h4>
+          <p class="sk-vert-align" sk-align-name="desc">Automatic grouping of similar objects into sets.</p>
+          <p>
+            <strong>Applications:</strong> Customer segmentation, grouping experiment outcomes.</br>
+            <strong>Algorithms:</strong>
+            <a href="modules/clustering.html#k-means">k-Means</a>,
+            <a href="modules/clustering.html#hdbscan">HDBSCAN</a>,
+            <a href="modules/clustering.html#hierarchical-clustering">hierarchical clustering</a>,
+            and <a href="modules/clustering.html">more...</a>
+          </p>
         </div>
-        <div class="overflow-hidden mx-2 text-center flex-fill">
-          <a href="auto_examples/cluster/plot_kmeans_digits.html"  aria-label="Clustering">
-          <img src="_images/sphx_glr_plot_kmeans_digits_thumb.png" class="sk-index-img" alt="A demo of K-Means clustering on the handwritten digits data">
+        <div class="sk-card-img-container overflow-hidden mx-2 flex-fill">
+          <a href="auto_examples/cluster/plot_kmeans_digits.html" aria-label="Clustering">
+            <img src="_images/sphx_glr_plot_kmeans_digits_thumb.png" alt="A demo of K-Means clustering on the handwritten digits data">
           </a>
         </div>
-          <a href="auto_examples/index.html#cluster-examples" class="sk-btn-primary btn text-white btn-block" role="button">Examples</a>
+        <a href="auto_examples/cluster/index.html" class="sk-btn-cyan btn" role="button">Examples</a>
       </div>
     </div>
+    <!-- Dimensionality reduction -->
     <div class="col-md-4 mb-3 px-md-2 sk-px-xl-4">
-      <div class="card h-100">
+      <div class="card h-100" sk-align-group="2">
         <div class="card-body">
-          <a href="modules/decomposition.html#decompositions"><h4 class="sk-card-title card-title">Dimensionality reduction</h4></a>
-          <p class="card-text">Reducing the number of random variables to consider.</p>
-          <p class="card-text"><strong>Applications:</strong> Visualization, Increased efficiency</br>
-          <strong>Algorithms:</strong>
-          <a href="modules/decomposition.html#pca">PCA</a>,
-          <a href="modules/feature_selection.html#feature-selection">feature selection</a>,
-          <a href="modules/decomposition.html#nmf">non-negative matrix factorization</a>,
-          and <a href="modules/decomposition.html#decompositions">more...</a></p>
+          <h4 class="sk-card-title card-title sk-vert-align" sk-align-name="title">
+            <a href="modules/decomposition.html">Dimensionality reduction</a>
+          </h4>
+          <p class="sk-vert-align" sk-align-name="desc">Reducing the number of random variables to consider.</p>
+          <p>
+            <strong>Applications:</strong> Visualization, increased efficiency.</br>
+            <strong>Algorithms:</strong>
+            <a href="modules/decomposition.html#pca">PCA</a>,
+            <a href="modules/feature_selection.html#feature-selection">feature selection</a>,
+            <a href="modules/decomposition.html#nmf">non-negative matrix factorization</a>,
+            and <a href="modules/decomposition.html">more...</a>
+          </p>
         </div>
-        <div class="overflow-hidden mx-2 text-center flex-fill">
-          <a href="auto_examples/decomposition/plot_pca_iris.html"  aria-label="Dimensionality reduction">
-          <img src="_images/sphx_glr_plot_pca_iris_thumb.png" class="sk-index-img" alt="PCA example with Iris Data-set">
+        <div class="sk-card-img-container overflow-hidden mx-2 flex-fill">
+          <a href="auto_examples/decomposition/plot_pca_iris.html" aria-label="Dimensionality reduction">
+            <img src="_images/sphx_glr_plot_pca_iris_thumb.png" alt="PCA example with Iris Data-set">
           </a>
         </div>
-          <a href="auto_examples/index.html#decomposition-examples" class="sk-btn-primary btn text-white btn-block" role="button">Examples</a>
+        <a href="auto_examples/decomposition/index.html" class="sk-btn-cyan btn" role="button">Examples</a>
       </div>
     </div>
+    <!-- Model selection -->
     <div class="col-md-4 mb-3 px-md-2 sk-px-xl-4">
-      <div class="card h-100">
+      <div class="card h-100" sk-align-group="2">
         <div class="card-body">
-          <a href="model_selection.html#model-selection"><h4 class="sk-card-title card-title">Model selection</h4></a>
-          <p class="card-text">Comparing, validating and choosing parameters and models.</p>
-          <p class="card-text"><strong>Applications:</strong> Improved accuracy via parameter tuning</br>
-          <strong>Algorithms:</strong>
-          <a href="modules/grid_search.html#grid-search">grid search</a>,
-          <a href="modules/cross_validation.html#cross-validation">cross validation</a>,
-          <a href="modules/model_evaluation.html#model-evaluation">metrics</a>,
-          and <a href="model_selection.html">more...</a></p>
+          <h4 class="sk-card-title card-title sk-vert-align" sk-align-name="title">
+            <a href="model_selection.html">Model selection</a>
+          </h4>
+          <p class="sk-vert-align" sk-align-name="desc">Comparing, validating and choosing parameters and models.</p>
+          <p>
+            <strong>Applications:</strong> Improved accuracy via parameter tuning.</br>
+            <strong>Algorithms:</strong>
+            <a href="modules/grid_search.html">Grid search</a>,
+            <a href="modules/cross_validation.html">cross validation</a>,
+            <a href="modules/model_evaluation.html">metrics</a>,
+            and <a href="model_selection.html">more...</a>
+          </p>
         </div>
-        <div class="overflow-hidden mx-2 text-center flex-fill">
-          <a href="auto_examples/model_selection/plot_multi_metric_evaluation.html"  aria-label="Model selection">
-            <img src="_images/sphx_glr_plot_multi_metric_evaluation_thumb.png" class="sk-index-img" alt="Demonstration of multi-metric evaluation on cross_val_score and GridSearchCV">
+        <div class="sk-card-img-container overflow-hidden mx-2 flex-fill">
+          <a href="auto_examples/model_selection/plot_multi_metric_evaluation.html" aria-label="Model selection">
+            <img src="_images/sphx_glr_plot_multi_metric_evaluation_thumb.png" alt="Demonstration of multi-metric evaluation on cross_val_score and GridSearchCV">
           </a>
         </div>
-          <a href="auto_examples/index.html#model-selection" class="sk-btn-primary btn text-white btn-block" role="button">Examples</a>
+        <a href="auto_examples/model_selection/index.html" class="sk-btn-cyan btn" role="button">Examples</a>
       </div>
     </div>
+    <!-- Preprocessing -->
     <div class="col-md-4 mb-3 px-md-2 sk-px-xl-4">
-      <div class="card h-100">
+      <div class="card h-100" sk-align-group="2">
         <div class="card-body">
-          <a href="modules/preprocessing.html#preprocessing"><h4 class="sk-card-title card-title">Preprocessing</h4></a>
-          <p class="card-text">Feature extraction and normalization.</p>
-          <p class="card-text"><strong>Applications:</strong>  Transforming input data such as text for use with machine learning algorithms.</br>
-          <strong>Algorithms:</strong>
-          <a href="modules/preprocessing.html#preprocessing">preprocessing</a>,
-          <a href="modules/feature_extraction.html#feature-extraction">feature extraction</a>,
-          and <a href="modules/preprocessing.html#preprocessing">more...</a></p>
+          <h4 class="sk-card-title card-title sk-vert-align" sk-align-name="title">
+            <a href="modules/preprocessing.html">Preprocessing</a>
+          </h4>
+          <p class="sk-vert-align" sk-align-name="desc">Feature extraction and normalization.</p>
+          <p>
+            <strong>Applications:</strong> Transforming input data such as text for use with machine learning algorithms.</br>
+            <strong>Algorithms:</strong>
+            <a href="modules/preprocessing.html">Preprocessing</a>,
+            <a href="modules/feature_extraction.html">feature extraction</a>,
+            and <a href="modules/preprocessing.html">more...</a>
+          </p>
         </div>
-        <div class="overflow-hidden mx-2 text-center flex-fill">
-          <a href="auto_examples/preprocessing/plot_discretization_strategies.html"  aria-label="Preprocessing">
-          <img src="_images/sphx_glr_plot_discretization_strategies_thumb.png" class="sk-index-img" alt="Demonstrating the different strategies of KBinsDiscretizer">
+        <div class="sk-card-img-container overflow-hidden mx-2 flex-fill">
+          <a href="auto_examples/preprocessing/plot_discretization_strategies.html" aria-label="Preprocessing">
+            <img src="_images/sphx_glr_plot_discretization_strategies_thumb.png" alt="Demonstrating the different strategies of KBinsDiscretizer">
           </a>
         </div>
-          <a href="auto_examples/index.html#preprocessing" class="sk-btn-primary btn text-white btn-block" role="button">Examples</a>
+        <a href="auto_examples/preprocessing/index.html" class="sk-btn-cyan btn" role="button">Examples</a>
       </div>
     </div>
   </div>
 </div>
 
-<div class="container-fluid sk-landing-bg-more-info py-3">
-  <div class="container sk-landing-container">
+{% endblock docs_main %}
+
+{% block footer %}
+
+<div class="container-fluid sk-landing-more-info py-3">
+  <div class="container sk-landing-container bd-page-width">
     <div class="row">
+      <!-- News -->
       <div class="col-md-4">
         <h4 class="sk-landing-call-header">News</h4>
         <ul class="sk-landing-call-list list-unstyled">
-        <li><strong>On-going development:</strong>
-        <a href="https://scikit-learn.org/dev/whats_new.html"><strong>What's new</strong> (Changelog)</a>
-        </li>
-        <li><strong>October 2023.</strong> scikit-learn 1.3.2 is available for download (<a href="whats_new/v1.3.html#version-1-3-2">Changelog</a>).
-        </li>
-	      <li><strong>September 2023.</strong> scikit-learn 1.3.1 is available for download (<a href="whats_new/v1.3.html#version-1-3-1">Changelog</a>).
-        </li>
-        <li><strong>June 2023.</strong> scikit-learn 1.3.0 is available for download (<a href="whats_new/v1.3.html#version-1-3-0">Changelog</a>).
-        </li>
-        <li><strong>March 2023.</strong> scikit-learn 1.2.2 is available for download (<a href="whats_new/v1.2.html#version-1-2-2">Changelog</a>).
-        </li>
-        <li><strong>January 2023.</strong> scikit-learn 1.2.1 is available for download (<a href="whats_new/v1.2.html#version-1-2-1">Changelog</a>).
-        </li>
-        <li><strong>December 2022.</strong> scikit-learn 1.2.0 is available for download (<a href="whats_new/v1.2.html#version-1-2-0">Changelog</a>).
-	</li>
+          <li><strong>On-going development:</strong> <a href="whats_new/v1.6.html#version-1-6-0">scikit-learn 1.6 (Changelog)</a>.</li>
+          <li><strong>September 2024.</strong> scikit-learn 1.5.2 is available for download (<a href="whats_new/v1.5.html#version-1-5-2">Changelog</a>).</li>
+          <li><strong>July 2024.</strong> scikit-learn 1.5.1 is available for download (<a href="whats_new/v1.5.html#version-1-5-1">Changelog</a>).</li>
+          <li><strong>May 2024.</strong> scikit-learn 1.5.0 is available for download (<a href="whats_new/v1.5.html#version-1-5-0">Changelog</a>).</li>
+          <li><strong>April 2024.</strong> scikit-learn 1.4.2 is available for download (<a href="whats_new/v1.4.html#version-1-4-2">Changelog</a>).</li>
+          <li><strong>February 2024.</strong> scikit-learn 1.4.1.post1 is available for download (<a href="whats_new/v1.4.html#version-1-4-1-post1">Changelog</a>).</li>
+          <li><strong>January 2024.</strong> scikit-learn 1.4.0 is available for download (<a href="whats_new/v1.4.html#version-1-4-0">Changelog</a>).</li>
+          <li><strong>October 2023.</strong> scikit-learn 1.3.2 is available for download (<a href="whats_new/v1.3.html#version-1-3-2">Changelog</a>).</li>
+          <li><strong>September 2023.</strong> scikit-learn 1.3.1 is available for download (<a href="whats_new/v1.3.html#version-1-3-1">Changelog</a>).</li>
+          <li><strong>June 2023.</strong> scikit-learn 1.3.0 is available for download (<a href="whats_new/v1.3.html#version-1-3-0">Changelog</a>).</li>
+          <li><strong>All releases:</strong> <a href="https://scikit-learn.org/dev/whats_new.html"><strong>What's new</strong> (Changelog)</a>.</li>
         </ul>
       </div>
+      <!-- Community -->
       <div class="col-md-4">
         <h4 class="sk-landing-call-header">Community</h4>
         <ul class="sk-landing-call-list list-unstyled">
-        <li><strong>About us:</strong> See <a href="about.html#people">authors</a> and <a href="{{ contributing_link }}" {{ contributing_attrs }}>contributing</a></li>
-        <li><strong>More Machine Learning:</strong> Find <a href="related_projects.html">related projects</a></li>
-        <li><strong>Questions?</strong> See <a href="faq.html">FAQ</a> and <a href="https://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a></li>
-        <li><strong>Subscribe to the</strong> <a href="https://mail.python.org/mailman/listinfo/scikit-learn">mailing list</a></li>
-        <li><strong>Gitter:</strong> <a href="https://gitter.im/scikit-learn/scikit-learn">gitter.im/scikit-learn</a></li>
-        <li><strong>Blog:</strong> <a href="https://blog.scikit-learn.org">blog.scikit-learn.org</a></li>
-        <li><strong>Logos & Branding:</strong> <a href="https://github.com/scikit-learn/scikit-learn/tree/main/doc/logos">logos and branding</a></li>
-        <li><strong>Calendar:</strong> <a href="https://blog.scikit-learn.org/calendar/">calendar</a></li>
-        <li><strong>Twitter:</strong> <a href="https://twitter.com/scikit_learn">@scikit_learn</a></li>
-        <li><strong>LinkedIn:</strong> <a href="https://www.linkedin.com/company/scikit-learn">linkedin/scikit-learn</a></li>
-        <li><strong>YouTube:</strong> <a href="https://www.youtube.com/channel/UCJosFjYm0ZYVUARxuOZqnnw/playlists">youtube.com/scikit-learn</a></li>
-        <li><strong>Facebook:</strong> <a href="https://www.facebook.com/scikitlearnofficial/">@scikitlearnofficial</a></li>
-        <li><strong>Instagram:</strong> <a href="https://www.instagram.com/scikitlearnofficial/">@scikitlearnofficial</a></li>
-        <li><strong>TikTok:</strong> <a href="https://www.tiktok.com/@scikit.learn">@scikit.learn</a></li>
-        <li>Communication on all channels should respect <a href="https://www.python.org/psf/conduct/">PSF's code of conduct.</a></li>
+          <li><strong>About us:</strong> See <a href="about.html#the-people-behind-scikit-learn">people</a> and <a href="{{ contributing_link }}" {{ contributing_attrs }}>contributing</a></li>
+          <li><strong>More Machine Learning:</strong> Find <a href="related_projects.html">related projects</a></li>
+          <li><strong>Questions?</strong> See <a href="faq.html">FAQ</a>, <a href="support.html">support</a>, and <a href="https://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a></li>
+          <li><strong>Subscribe to the</strong> <a href="https://mail.python.org/mailman/listinfo/scikit-learn">mailing list</a></li>
+          <li><strong>Blog:</strong> <a href="https://blog.scikit-learn.org">blog.scikit-learn.org</a></li>
+          <li><strong>Logos & Branding:</strong> <a href="https://github.com/scikit-learn/scikit-learn/tree/main/doc/logos">logos and branding</a></li>
+          <li><strong>Calendar:</strong> <a href="https://blog.scikit-learn.org/calendar/">calendar</a></li>
+          <li><strong>Twitter:</strong> <a href="https://twitter.com/scikit_learn">@scikit_learn</a></li>
+          <li><strong>LinkedIn:</strong> <a href="https://www.linkedin.com/company/scikit-learn">linkedin/scikit-learn</a></li>
+          <li><strong>YouTube:</strong> <a href="https://www.youtube.com/channel/UCJosFjYm0ZYVUARxuOZqnnw/playlists">youtube.com/scikit-learn</a></li>
+          <li><strong>Facebook:</strong> <a href="https://www.facebook.com/scikitlearnofficial/">@scikitlearnofficial</a></li>
+          <li><strong>Instagram:</strong> <a href="https://www.instagram.com/scikitlearnofficial/">@scikitlearnofficial</a></li>
+          <li><strong>TikTok:</strong> <a href="https://www.tiktok.com/@scikit.learn">@scikit.learn</a></li>
+          <li><strong>Mastodon:</strong> <a href="https://mastodon.social/@sklearn@fosstodon.org">@sklearn</a></li>
+          <li><strong>Discord:</strong> <a href="https://discord.gg/h9qyrK8Jc8">@scikit-learn</a></li>
+          <li>Communication on all channels should respect <a href="https://www.python.org/psf/conduct/">PSF's code of conduct.</a></li>
         </ul>
-
-        <a class="btn btn-warning btn-big sk-donate-btn mb-1" href="https://numfocus.org/donate-to-scikit-learn">Help us, <strong>donate!</strong></a>
-        <a class="btn btn-warning btn-big mb-1" href="about.html#citing-scikit-learn"><strong>Cite us!</strong></a>
+        <p>
+          <a class="btn sk-btn-orange mb-1" href="https://numfocus.org/donate-to-scikit-learn">Help us, <strong>donate!</strong></a>
+          <a class="btn sk-btn-orange mb-1" href="about.html#citing-scikit-learn"><strong>Cite us!</strong></a>
+        </p>
       </div>
+      <!--Testimonials -->
       <div class="col-md-4">
         <h4 class="sk-landing-call-header">Who uses scikit-learn?</h4>
-        <div id="carouselExampleSlidesOnly" class="carousel slide" data-ride="carousel">
-        <div class="carousel-inner">
+        <div id="skWhoUsesCarousel" class="carousel slide sk-who-uses-carousel" data-bs-ride="carousel" data-bs-interval="5000">
+          <div class="carousel-inner">
             <div class="carousel-item active">
-            <img class="d-block mx-auto sk-who-uses-carousel-img img-thumbnail" src="_images/inria.png" alt="inria">
-            <em>"We use scikit-learn to support leading-edge basic research [...]"</em>
+              <img class="d-block mx-auto img-thumbnail" src="_images/inria.png" alt="inria">
+              <em>"We use scikit-learn to support leading-edge basic research [...]"</em>
             </div>
             <div class="carousel-item">
-            <img class="d-block mx-auto sk-who-uses-carousel-img img-thumbnail" src="_images/spotify.png" alt="spotify">
-            <em>"I think it's the most well-designed ML package I've seen so far."</em>
+              <img class="d-block mx-auto img-thumbnail" src="_images/spotify.png" alt="spotify">
+              <em>"I think it's the most well-designed ML package I've seen so far."</em>
             </div>
             <div class="carousel-item">
-            <img class="d-block mx-auto sk-who-uses-carousel-img img-thumbnail" src="_images/change-logo.png" alt="change-logo">
-            <em>"scikit-learn's ease-of-use, performance and overall variety of algorithms implemented has proved invaluable [...]."</em>
+              <img class="d-block mx-auto img-thumbnail" src="_images/change-logo.png" alt="change-logo">
+              <em>"scikit-learn's ease-of-use, performance and overall variety of algorithms implemented has proved invaluable [...]"</em>
             </div>
             <div class="carousel-item">
-            <img class="d-block mx-auto sk-who-uses-carousel-img img-thumbnail" src="_images/telecomparistech.jpg" alt="telecomparistech">
-            <em>"The great benefit of scikit-learn is its fast learning curve [...]"</em>
+              <img class="d-block mx-auto img-thumbnail" src="_images/telecomparistech.jpg" alt="telecomparistech">
+              <em>"The great benefit of scikit-learn is its fast learning curve [...]"</em>
             </div>
             <div class="carousel-item">
-            <img class="d-block mx-auto sk-who-uses-carousel-img img-thumbnail" src="_images/aweber.png" alt="aweber">
-            <em>"It allows us to do AWesome stuff we would not otherwise accomplish"</em>
+              <img class="d-block mx-auto img-thumbnail" src="_images/aweber.png" alt="aweber">
+              <em>"It allows us to do AWesome stuff we would not otherwise accomplish."</em>
             </div>
             <div class="carousel-item">
-            <img class="d-block mx-auto sk-who-uses-carousel-img img-thumbnail" src="_images/yhat.png" alt="yhat">
-            <em>"scikit-learn makes doing advanced analysis in Python accessible to anyone."</em>
+              <img class="d-block mx-auto img-thumbnail" src="_images/yhat.png" alt="yhat">
+              <em>"scikit-learn makes doing advanced analysis in Python accessible to anyone."</em>
             </div>
           </div>
         </div>
-        <p class="text-right">
-            <a href="testimonials/testimonials.html">More testimonials</a>
+        <p class="sk-more-testimonials">
+          <a href="testimonials/testimonials.html">More testimonials...</a>
         </p>
       </div>
     </div>
   </div>
 </div>
-<div class="container-fluid py-3">
+
+<div class="container-fluid sk-landing-footer py-3">
   <div class="container sk-landing-container">
-        <a class="sk-footer-funding-link" href="about.html#funding">
-        <div class="text-center">
-                <p class="mt-2">
-                  scikit-learn development and maintenance are financially supported by
-                </p>
-                <img class="sk-footer-funding-logo" src="_static/inria-small.png" title="INRIA">
-                <img class="sk-footer-funding-logo" src="_static/chanel-small.png" title="Chanel" >
-                <img class="sk-footer-funding-logo" src="_static/axa-small.png" title="AXA Assurances" >
-                <img class="sk-footer-funding-logo" src="_static/bnp-small.png" title="BNP Paris Bas Cardif" >
-                <img class="sk-footer-funding-logo" src="_static/microsoft-small.png" title="Microsoft" >
-                <img class="sk-footer-funding-logo" src="_static/dataiku-small.png" title="Dataiku" >
-                <img class="sk-footer-funding-logo" src="_static/huggingface_logo-noborder.png" title="Hugging Face" >
-                <img class="sk-footer-funding-logo" src="_static/nvidia-small.png" title="Nvidia" >
-                <img class="sk-footer-funding-logo" src="_static/quansight-labs-small.png" title="Quansight Labs" >
+    <a class="sk-footer-funding-link" href="about.html#funding">
+      <div class="text-center">
+        <p class="mt-2 sk-footer-funding-text">
+          scikit-learn development and maintenance are financially supported by
+        </p>
+        <div class="sk-footer-funding-logos">
+          <img src="_static/probabl.png" title="Probabl">
+          <img src="_static/inria-small.png" title="INRIA">
+          <img src="_static/chanel-small.png" title="Chanel">
+          <img src="_static/axa-small.png" title="AXA Assurances">
+          <img src="_static/bnp-small.png" title="BNP Paris Bas Cardif">
+          <img src="_static/microsoft-small.png" title="Microsoft">
+          <img src="_static/dataiku-small.png" title="Dataiku">
+          <img src="_static/nvidia-small.png" title="Nvidia">
+          <img src="_static/quansight-labs-small.png" title="Quansight Labs">
+          <img src="_static/czi-small.png" title="Chan Zuckerberg Initiative">
+          <img src="_static/wellcome-trust-small.png" title="Wellcome Trust">
         </div>
-        </a>
+      </div>
+    </a>
   </div>
 </div>
-{% endblock %}
+
+{% endblock footer %}
+
+{%- block scripts_end %}
+{{ _webpack.body_post() }}
+{%- endblock scripts_end %}

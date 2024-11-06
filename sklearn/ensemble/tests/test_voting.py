@@ -5,7 +5,7 @@ import re
 import numpy as np
 import pytest
 
-from sklearn import datasets
+from sklearn import config_context, datasets
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.datasets import make_multilabel_classification
 from sklearn.dummy import DummyRegressor
@@ -23,6 +23,12 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
+from sklearn.tests.metadata_routing_common import (
+    ConsumingClassifier,
+    ConsumingRegressor,
+    _Registry,
+    check_recorded_metadata,
+)
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._testing import (
     assert_almost_equal,
@@ -63,9 +69,13 @@ def test_predictproba_hardvoting():
         estimators=[("lr1", LogisticRegression()), ("lr2", LogisticRegression())],
         voting="hard",
     )
-    msg = "predict_proba is not available when voting='hard'"
-    with pytest.raises(AttributeError, match=msg):
+
+    inner_msg = "predict_proba is not available when voting='hard'"
+    outer_msg = "'VotingClassifier' has no attribute 'predict_proba'"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
         eclf.predict_proba
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg in str(exec_info.value.__cause__)
 
     assert not hasattr(eclf, "predict_proba")
     eclf.fit(X_scaled, y)
@@ -238,13 +248,16 @@ def test_predict_proba_on_toy_problem():
     assert_almost_equal(t21, eclf_res[2][1], decimal=1)
     assert_almost_equal(t31, eclf_res[3][1], decimal=1)
 
-    with pytest.raises(
-        AttributeError, match="predict_proba is not available when voting='hard'"
-    ):
+    inner_msg = "predict_proba is not available when voting='hard'"
+    outer_msg = "'VotingClassifier' has no attribute 'predict_proba'"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
         eclf = VotingClassifier(
             estimators=[("lr", clf1), ("rf", clf2), ("gnb", clf3)], voting="hard"
         )
         eclf.fit(X, y).predict_proba(X)
+
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg in str(exec_info.value.__cause__)
 
 
 def test_multilabel():
@@ -300,6 +313,8 @@ def test_parallel_fit(global_random_seed):
     assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
 
 
+# TODO(1.7): remove warning filter when sample_weight is kwarg only
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_sample_weight(global_random_seed):
     """Tests sample_weight parameter of VotingClassifier"""
     clf1 = LogisticRegression(random_state=global_random_seed)
@@ -591,8 +606,7 @@ def test_voting_verbose(estimator, capsys):
         r"\[Voting\].*\(1 of 2\) Processing lr, total=.*\n"
         r"\[Voting\].*\(2 of 2\) Processing rf, total=.*\n$"
     )
-
-    estimator.fit(X, y)
+    clone(estimator).fit(X, y)
     assert re.match(pattern, capsys.readouterr()[0])
 
 
@@ -674,3 +688,100 @@ def test_get_features_names_out_classifier_error():
     )
     with pytest.raises(ValueError, match=msg):
         voting.get_feature_names_out()
+
+
+# Metadata Routing Tests
+# ======================
+
+
+@pytest.mark.parametrize(
+    "Estimator, Child",
+    [(VotingClassifier, ConsumingClassifier), (VotingRegressor, ConsumingRegressor)],
+)
+def test_routing_passed_metadata_not_supported(Estimator, Child):
+    """Test that the right error message is raised when metadata is passed while
+    not supported when `enable_metadata_routing=False`."""
+
+    X = np.array([[0, 1], [2, 2], [4, 6]])
+    y = [1, 2, 3]
+
+    with pytest.raises(
+        ValueError, match="is only supported if enable_metadata_routing=True"
+    ):
+        Estimator(["clf", Child()]).fit(X, y, sample_weight=[1, 1, 1], metadata="a")
+
+
+@pytest.mark.parametrize(
+    "Estimator, Child",
+    [(VotingClassifier, ConsumingClassifier), (VotingRegressor, ConsumingRegressor)],
+)
+@config_context(enable_metadata_routing=True)
+def test_get_metadata_routing_without_fit(Estimator, Child):
+    # Test that metadata_routing() doesn't raise when called before fit.
+    est = Estimator([("sub_est", Child())])
+    est.get_metadata_routing()
+
+
+@pytest.mark.parametrize(
+    "Estimator, Child",
+    [(VotingClassifier, ConsumingClassifier), (VotingRegressor, ConsumingRegressor)],
+)
+@pytest.mark.parametrize("prop", ["sample_weight", "metadata"])
+@config_context(enable_metadata_routing=True)
+def test_metadata_routing_for_voting_estimators(Estimator, Child, prop):
+    """Test that metadata is routed correctly for Voting*."""
+    X = np.array([[0, 1], [2, 2], [4, 6]])
+    y = [1, 2, 3]
+    sample_weight, metadata = [1, 1, 1], "a"
+
+    est = Estimator(
+        [
+            (
+                "sub_est1",
+                Child(registry=_Registry()).set_fit_request(**{prop: True}),
+            ),
+            (
+                "sub_est2",
+                Child(registry=_Registry()).set_fit_request(**{prop: True}),
+            ),
+        ]
+    )
+
+    est.fit(X, y, **{prop: sample_weight if prop == "sample_weight" else metadata})
+
+    for estimator in est.estimators:
+        if prop == "sample_weight":
+            kwargs = {prop: sample_weight}
+        else:
+            kwargs = {prop: metadata}
+        # access sub-estimator in (name, est) with estimator[1]
+        registry = estimator[1].registry
+        assert len(registry)
+        for sub_est in registry:
+            check_recorded_metadata(obj=sub_est, method="fit", parent="fit", **kwargs)
+
+
+@pytest.mark.parametrize(
+    "Estimator, Child",
+    [(VotingClassifier, ConsumingClassifier), (VotingRegressor, ConsumingRegressor)],
+)
+@config_context(enable_metadata_routing=True)
+def test_metadata_routing_error_for_voting_estimators(Estimator, Child):
+    """Test that the right error is raised when metadata is not requested."""
+    X = np.array([[0, 1], [2, 2], [4, 6]])
+    y = [1, 2, 3]
+    sample_weight, metadata = [1, 1, 1], "a"
+
+    est = Estimator([("sub_est", Child())])
+
+    error_message = (
+        "[sample_weight, metadata] are passed but are not explicitly set as requested"
+        f" or not requested for {Child.__name__}.fit"
+    )
+
+    with pytest.raises(ValueError, match=re.escape(error_message)):
+        est.fit(X, y, sample_weight=sample_weight, metadata=metadata)
+
+
+# End of Metadata Routing Tests
+# =============================

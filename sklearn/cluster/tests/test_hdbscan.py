@@ -2,6 +2,7 @@
 Tests for HDBSCAN clustering algorithm
 Based on the DBSCAN test code
 """
+
 import numpy as np
 import pytest
 from scipy import stats
@@ -304,7 +305,7 @@ def test_hdbscan_centers(algorithm):
     accurate to the data.
     """
     centers = [(0.0, 0.0), (3.0, 3.0)]
-    H, _ = make_blobs(n_samples=1000, random_state=0, centers=centers, cluster_std=0.5)
+    H, _ = make_blobs(n_samples=2000, random_state=0, centers=centers, cluster_std=0.5)
     hdb = HDBSCAN(store_centers="both").fit(H)
 
     for center, centroid, medoid in zip(centers, hdb.centroids_, hdb.medoids_):
@@ -545,26 +546,6 @@ def test_labelling_thresholding():
     assert sum(num_noise) == sum(labels == -1)
 
 
-# TODO(1.6): Remove
-def test_hdbscan_warning_on_deprecated_algorithm_name():
-    # Test that warning message is shown when algorithm='kdtree'
-    msg = (
-        "`algorithm='kdtree'`has been deprecated in 1.4 and will be renamed"
-        " to'kd_tree'`in 1.6. To keep the past behaviour, set `algorithm='kd_tree'`."
-    )
-    with pytest.warns(FutureWarning, match=msg):
-        HDBSCAN(algorithm="kdtree").fit(X)
-
-    # Test that warning message is shown when algorithm='balltree'
-    msg = (
-        "`algorithm='balltree'`has been deprecated in 1.4 and will be renamed"
-        " to'ball_tree'`in 1.6. To keep the past behaviour, set"
-        " `algorithm='ball_tree'`."
-    )
-    with pytest.warns(FutureWarning, match=msg):
-        HDBSCAN(algorithm="balltree").fit(X)
-
-
 @pytest.mark.parametrize("store_centers", ["centroid", "medoid"])
 def test_hdbscan_error_precomputed_and_store_centers(store_centers):
     """Check that we raise an error if the centers are requested together with
@@ -579,3 +560,23 @@ def test_hdbscan_error_precomputed_and_store_centers(store_centers):
     err_msg = "Cannot store centers when using a precomputed distance matrix."
     with pytest.raises(ValueError, match=err_msg):
         HDBSCAN(metric="precomputed", store_centers=store_centers).fit(X_dist)
+
+
+@pytest.mark.parametrize("valid_algo", ["auto", "brute"])
+def test_hdbscan_cosine_metric_valid_algorithm(valid_algo):
+    """Test that HDBSCAN works with the "cosine" metric when the algorithm is set
+    to "brute" or "auto".
+
+    Non-regression test for issue #28631
+    """
+    HDBSCAN(metric="cosine", algorithm=valid_algo).fit_predict(X)
+
+
+@pytest.mark.parametrize("invalid_algo", ["kd_tree", "ball_tree"])
+def test_hdbscan_cosine_metric_invalid_algorithm(invalid_algo):
+    """Test that HDBSCAN raises an informative error is raised when an unsupported
+    algorithm is used with the "cosine" metric.
+    """
+    hdbscan = HDBSCAN(metric="cosine", algorithm=invalid_algo)
+    with pytest.raises(ValueError, match="cosine is not a valid metric"):
+        hdbscan.fit_predict(X)

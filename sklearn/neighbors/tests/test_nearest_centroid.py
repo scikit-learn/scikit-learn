@@ -1,12 +1,17 @@
 """
 Testing for the nearest centroid module.
 """
+
 import numpy as np
 import pytest
-from numpy.testing import assert_array_equal
 
 from sklearn import datasets
 from sklearn.neighbors import NearestCentroid
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 from sklearn.utils.fixes import CSR_CONTAINERS
 
 # toy sample
@@ -14,6 +19,11 @@ X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 y = [-1, -1, -1, 1, 1, 1]
 T = [[-1, -1], [2, 2], [3, 2]]
 true_result = [-1, 1, 1]
+true_result_prior1 = [-1, 1, 1]
+
+true_discriminant_scores = [-32, 64, 80]
+true_proba = [[1, 1.26642e-14], [1.60381e-28, 1], [1.80485e-35, 1]]
+
 
 # also load the iris dataset
 # and randomly permute it
@@ -30,9 +40,30 @@ def test_classification_toy(csr_container):
     X_csr = csr_container(X)
     T_csr = csr_container(T)
 
+    # Check classification on a toy dataset, including sparse versions.
     clf = NearestCentroid()
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
+    assert_array_almost_equal(clf.decision_function(T), true_discriminant_scores)
+    assert_array_almost_equal(clf.predict_proba(T), true_proba)
+
+    # Test uniform priors
+    clf = NearestCentroid(priors="uniform")
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result)
+    assert_array_almost_equal(clf.decision_function(T), true_discriminant_scores)
+    assert_array_almost_equal(clf.predict_proba(T), true_proba)
+
+    clf = NearestCentroid(priors="empirical")
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result)
+    assert_array_almost_equal(clf.decision_function(T), true_discriminant_scores)
+    assert_array_almost_equal(clf.predict_proba(T), true_proba)
+
+    # Test custom priors
+    clf = NearestCentroid(priors=[0.25, 0.75])
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result_prior1)
 
     # Same test, but with a sparse matrix to fit and test.
     clf = NearestCentroid()
@@ -55,21 +86,17 @@ def test_classification_toy(csr_container):
     assert_array_equal(clf.predict(T_csr.tolil()), true_result)
 
 
-# TODO(1.5): Remove filterwarnings when support for some metrics is removed
-@pytest.mark.filterwarnings("ignore:Support for distance metrics:FutureWarning:sklearn")
 def test_iris():
     # Check consistency on dataset iris.
-    for metric in ("euclidean", "cosine"):
+    for metric in ("euclidean", "manhattan"):
         clf = NearestCentroid(metric=metric).fit(iris.data, iris.target)
         score = np.mean(clf.predict(iris.data) == iris.target)
         assert score > 0.9, "Failed with score = " + str(score)
 
 
-# TODO(1.5): Remove filterwarnings when support for some metrics is removed
-@pytest.mark.filterwarnings("ignore:Support for distance metrics:FutureWarning:sklearn")
 def test_iris_shrinkage():
     # Check consistency on dataset iris, when using shrinkage.
-    for metric in ("euclidean", "cosine"):
+    for metric in ("euclidean", "manhattan"):
         for shrink_threshold in [None, 0.1, 0.5]:
             clf = NearestCentroid(metric=metric, shrink_threshold=shrink_threshold)
             clf = clf.fit(iris.data, iris.target)
@@ -150,20 +177,6 @@ def test_manhattan_metric(csr_container):
     assert_array_equal(dense_centroid, [[-1, -1], [1, 1]])
 
 
-# TODO(1.5): remove this test
-@pytest.mark.parametrize(
-    "metric", sorted(list(NearestCentroid._valid_metrics - {"manhattan", "euclidean"}))
-)
-def test_deprecated_distance_metric_supports(metric):
-    # Check that a warning is raised for all deprecated distance metric supports
-    clf = NearestCentroid(metric=metric)
-    with pytest.warns(
-        FutureWarning,
-        match="Support for distance metrics other than euclidean and manhattan",
-    ):
-        clf.fit(X, y)
-
-
 def test_features_zero_var():
     # Test that features with 0 variance throw error
 
@@ -175,4 +188,50 @@ def test_features_zero_var():
 
     clf = NearestCentroid(shrink_threshold=0.1)
     with pytest.raises(ValueError):
+        clf.fit(X, y)
+
+
+def test_negative_priors_error():
+    """Check that we raise an error when the user-defined priors are negative."""
+    clf = NearestCentroid(priors=[-2, 4])
+    with pytest.raises(ValueError, match="priors must be non-negative"):
+        clf.fit(X, y)
+
+
+def test_warn_non_normalized_priors():
+    """Check that we raise a warning and normalize the user-defined priors when they
+    don't sum to 1.
+    """
+    priors = [2, 4]
+    clf = NearestCentroid(priors=priors)
+    with pytest.warns(
+        UserWarning,
+        match="The priors do not sum to 1. Normalizing such that it sums to one.",
+    ):
+        clf.fit(X, y)
+
+    assert_allclose(clf.class_prior_, np.asarray(priors) / np.asarray(priors).sum())
+
+
+@pytest.mark.parametrize(
+    "response_method", ["decision_function", "predict_proba", "predict_log_proba"]
+)
+def test_method_not_available_with_manhattan(response_method):
+    """Check that we raise an AttributeError with Manhattan metric when trying
+    to call a non-thresholded response method.
+    """
+    clf = NearestCentroid(metric="manhattan").fit(X, y)
+    with pytest.raises(AttributeError):
+        getattr(clf, response_method)(T)
+
+
+@pytest.mark.parametrize("array_constructor", [np.array] + CSR_CONTAINERS)
+def test_error_zero_variances(array_constructor):
+    """Check that we raise an error when the variance for all features is zero."""
+    X = np.ones((len(y), 2))
+    X[:, 1] *= 2
+    X = array_constructor(X)
+
+    clf = NearestCentroid()
+    with pytest.raises(ValueError, match="All features have zero variance"):
         clf.fit(X, y)

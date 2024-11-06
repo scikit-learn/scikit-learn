@@ -4,9 +4,14 @@ Prediction Intervals for Gradient Boosting Regression
 =====================================================
 
 This example shows how quantile regression can be used to create prediction
-intervals.
+intervals. See :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py`
+for an example showcasing some other features of
+:class:`~ensemble.HistGradientBoostingRegressor`.
 
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Generate some data for a synthetic regression problem by applying the
@@ -191,6 +196,7 @@ pd.DataFrame(results).set_index("model").style.apply(highlight_min)
 # outliers and overfits less.
 #
 # .. _calibration-section:
+#
 # Calibration of the confidence interval
 # --------------------------------------
 #

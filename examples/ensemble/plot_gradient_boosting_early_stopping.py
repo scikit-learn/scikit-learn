@@ -31,6 +31,10 @@ efficiency in gradient boosting.
 License: BSD 3 clause
 
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Data Preparation
 # ----------------
@@ -112,13 +116,15 @@ for i, (train_pred, val_pred) in enumerate(
     val_errors_with.append(mean_squared_error(y_val, val_pred))
 
 # %%
-# Visualize Comparision
-# ---------------------
+# Visualize Comparison
+# --------------------
 # It includes three subplots:
+#
 # 1. Plotting training errors of both models over boosting iterations.
 # 2. Plotting validation errors of both models over boosting iterations.
 # 3. Creating a bar chart to compare the training times and the estimator used
-# of the models with and without early stopping.
+#    of the models with and without early stopping.
+#
 
 fig, axes = plt.subplots(ncols=3, figsize=(12, 4))
 
@@ -170,11 +176,10 @@ plt.show()
 # practical benefits of early stopping:
 #
 # - **Preventing Overfitting:** We showed how the validation error stabilizes
-# or starts to increase after a certain point, indicating that the model
-# generalizes better to unseen data. This is achieved by stopping the training
-# process before overfitting occurs.
-#
+#   or starts to increase after a certain point, indicating that the model
+#   generalizes better to unseen data. This is achieved by stopping the training
+#   process before overfitting occurs.
 # - **Improving Training Efficiency:** We compared training times between
-# models with and without early stopping. The model with early stopping
-# achieved comparable accuracy while requiring significantly fewer
-# estimators, resulting in faster training.
+#   models with and without early stopping. The model with early stopping
+#   achieved comparable accuracy while requiring significantly fewer
+#   estimators, resulting in faster training.

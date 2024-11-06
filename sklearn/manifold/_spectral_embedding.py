@@ -1,8 +1,7 @@
 """Spectral Embedding."""
 
-# Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Wei LI <kuantkid@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import warnings
@@ -23,10 +22,11 @@ from ..utils import (
     check_symmetric,
 )
 from ..utils._arpack import _init_arpack_v0
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import _deterministic_vector_sign_flip
 from ..utils.fixes import laplacian as csgraph_laplacian
 from ..utils.fixes import parse_version, sp_version
+from ..utils.validation import validate_data
 
 
 def _graph_connected_component(graph, node_id):
@@ -152,6 +152,18 @@ def _set_diag(laplacian, value, norm_laplacian):
     return laplacian
 
 
+@validate_params(
+    {
+        "adjacency": ["array-like", "sparse matrix"],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "eigen_solver": [StrOptions({"arpack", "lobpcg", "amg"}), None],
+        "random_state": ["random_state"],
+        "eigen_tol": [Interval(Real, 0, None, closed="left"), StrOptions({"auto"})],
+        "norm_laplacian": ["boolean"],
+        "drop_first": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def spectral_embedding(
     adjacency,
     *,
@@ -255,7 +267,46 @@ def spectral_embedding(
       Block Preconditioned Conjugate Gradient Method",
       Andrew V. Knyazev
       <10.1137/S1064827500366124>`
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.neighbors import kneighbors_graph
+    >>> from sklearn.manifold import spectral_embedding
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> X = X[:100]
+    >>> affinity_matrix = kneighbors_graph(
+    ...     X, n_neighbors=int(X.shape[0] / 10), include_self=True
+    ... )
+    >>> # make the matrix symmetric
+    >>> affinity_matrix = 0.5 * (affinity_matrix + affinity_matrix.T)
+    >>> embedding = spectral_embedding(affinity_matrix, n_components=2, random_state=42)
+    >>> embedding.shape
+    (100, 2)
     """
+    random_state = check_random_state(random_state)
+
+    return _spectral_embedding(
+        adjacency,
+        n_components=n_components,
+        eigen_solver=eigen_solver,
+        random_state=random_state,
+        eigen_tol=eigen_tol,
+        norm_laplacian=norm_laplacian,
+        drop_first=drop_first,
+    )
+
+
+def _spectral_embedding(
+    adjacency,
+    *,
+    n_components=8,
+    eigen_solver=None,
+    random_state=None,
+    eigen_tol="auto",
+    norm_laplacian=True,
+    drop_first=True,
+):
     adjacency = check_symmetric(adjacency)
 
     if eigen_solver == "amg":
@@ -268,13 +319,6 @@ def spectral_embedding(
 
     if eigen_solver is None:
         eigen_solver = "arpack"
-    elif eigen_solver not in ("arpack", "lobpcg", "amg"):
-        raise ValueError(
-            "Unknown value for eigen_solver: '%s'."
-            "Should be 'amg', 'arpack', or 'lobpcg'" % eigen_solver
-        )
-
-    random_state = check_random_state(random_state)
 
     n_nodes = adjacency.shape[0]
     # Whether to drop the first eigenvector
@@ -604,13 +648,13 @@ class SpectralEmbedding(BaseEstimator):
         self.n_neighbors = n_neighbors
         self.n_jobs = n_jobs
 
-    def _more_tags(self):
-        return {
-            "pairwise": self.affinity in [
-                "precomputed",
-                "precomputed_nearest_neighbors",
-            ]
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.pairwise = self.affinity in [
+            "precomputed",
+            "precomputed_nearest_neighbors",
+        ]
+        return tags
 
     def _get_affinity_matrix(self, X, Y=None):
         """Calculate the affinity matrix from data
@@ -693,12 +737,12 @@ class SpectralEmbedding(BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X, accept_sparse="csr", ensure_min_samples=2)
+        X = validate_data(self, X, accept_sparse="csr", ensure_min_samples=2)
 
         random_state = check_random_state(self.random_state)
 
         affinity_matrix = self._get_affinity_matrix(X)
-        self.embedding_ = spectral_embedding(
+        self.embedding_ = _spectral_embedding(
             affinity_matrix,
             n_components=self.n_components,
             eigen_solver=self.eigen_solver,

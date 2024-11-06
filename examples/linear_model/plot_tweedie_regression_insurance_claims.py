@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
 ======================================
 Tweedie regression on insurance claims
@@ -37,11 +40,6 @@ helper functions for loading the data and visualizing results.
     <https://doi.org/10.2139/ssrn.3164764>`_
 """
 
-# Authors: Christian Lorentzen <lorentzen.ch@gmail.com>
-#          Roman Yurchak <rth.yurchak@gmail.com>
-#          Olivier Grisel <olivier.grisel@ensta.org>
-# License: BSD 3 clause
-
 # %%
 
 from functools import partial
@@ -79,10 +77,10 @@ def load_mtpl2(n_samples=None):
     df_sev = df_sev.groupby("IDpol").sum()
 
     df = df_freq.join(df_sev, how="left")
-    df["ClaimAmount"].fillna(0, inplace=True)
+    df["ClaimAmount"] = df["ClaimAmount"].fillna(0)
 
     # unquote string fields
-    for column_name in df.columns[df.dtypes.values == object]:
+    for column_name in df.columns[[t is object for t in df.dtypes.values]]:
         df[column_name] = df[column_name].str.strip("'")
     return df.iloc[:n_samples]
 
@@ -241,7 +239,7 @@ column_trans = ColumnTransformer(
     [
         (
             "binned_numeric",
-            KBinsDiscretizer(n_bins=10, subsample=int(2e5), random_state=0),
+            KBinsDiscretizer(n_bins=10, random_state=0),
             ["VehAge", "DrivAge"],
         ),
         (

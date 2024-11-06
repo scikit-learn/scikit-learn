@@ -1,8 +1,7 @@
-"""
-The :mod:`sklearn.metrics` module includes score functions, performance metrics
-and pairwise metrics and distance computations.
-"""
+"""Score functions, performance metrics, pairwise metrics and distance computations."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from . import cluster
 from ._classification import (
@@ -13,6 +12,7 @@ from ._classification import (
     classification_report,
     cohen_kappa_score,
     confusion_matrix,
+    d2_log_loss_score,
     f1_score,
     fbeta_score,
     hamming_loss,
@@ -114,6 +114,7 @@ __all__ = [
     "coverage_error",
     "d2_tweedie_score",
     "d2_absolute_error_score",
+    "d2_log_loss_score",
     "d2_pinball_score",
     "dcg_score",
     "davies_bouldin_score",

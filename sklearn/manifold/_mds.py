@@ -2,8 +2,8 @@
 Multi-dimensional Scaling (MDS).
 """
 
-# author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
-# License: BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Integral, Real
@@ -17,6 +17,7 @@ from ..metrics import euclidean_distances
 from ..utils import check_array, check_random_state, check_symmetric
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.parallel import Parallel, delayed
+from ..utils.validation import validate_data
 
 
 def _smacof_single(
@@ -308,6 +309,21 @@ def smacof(
 
     .. [3] "Modern Multidimensional Scaling - Theory and Applications" Borg, I.;
            Groenen P. Springer Series in Statistics (1997)
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.manifold import smacof
+    >>> from sklearn.metrics import euclidean_distances
+    >>> X = np.array([[0, 1, 2], [1, 0, 3],[2, 3, 0]])
+    >>> dissimilarities = euclidean_distances(X)
+    >>> mds_result, stress = smacof(dissimilarities, n_components=2, random_state=42)
+    >>> mds_result
+    array([[ 0.05... -1.07... ],
+           [ 1.74..., -0.75...],
+           [-1.79...,  1.83...]])
+    >>> stress
+    np.float64(0.0012...)
     """
 
     dissimilarities = check_array(dissimilarities)
@@ -509,8 +525,11 @@ class MDS(BaseEstimator):
     >>> X_transformed.shape
     (100, 2)
 
-    For a more detailed example of usage, see:
-    :ref:`sphx_glr_auto_examples_manifold_plot_mds.py`
+    For a more detailed example of usage, see
+    :ref:`sphx_glr_auto_examples_manifold_plot_mds.py`.
+
+    For a comparison of manifold learning techniques, see
+    :ref:`sphx_glr_auto_examples_manifold_plot_compare_methods.py`.
     """
 
     _parameter_constraints: dict = {
@@ -551,8 +570,10 @@ class MDS(BaseEstimator):
         self.random_state = random_state
         self.normalized_stress = normalized_stress
 
-    def _more_tags(self):
-        return {"pairwise": self.dissimilarity == "precomputed"}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.pairwise = self.dissimilarity == "precomputed"
+        return tags
 
     def fit(self, X, y=None, init=None):
         """
@@ -606,7 +627,7 @@ class MDS(BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             X transformed in the new space.
         """
-        X = self._validate_data(X)
+        X = validate_data(self, X)
         if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
             warnings.warn(
                 "The MDS API has changed. ``fit`` now constructs an"

@@ -20,7 +20,8 @@ traditional (l2-penalised) logistic regression model.
 
 """
 
-# Author: Arthur Mensch
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import timeit
 import warnings
@@ -32,6 +33,7 @@ from sklearn.datasets import fetch_20newsgroups_vectorized
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
+from sklearn.multiclass import OneVsRestClassifier
 
 warnings.filterwarnings("ignore", category=ConvergenceWarning, module="sklearn")
 t0 = timeit.default_timer()
@@ -76,20 +78,25 @@ for model in models:
             "[model=%s, solver=%s] Number of epochs: %s"
             % (model_params["name"], solver, this_max_iter)
         )
-        lr = LogisticRegression(
+        clf = LogisticRegression(
             solver=solver,
-            multi_class=model,
             penalty="l1",
             max_iter=this_max_iter,
             random_state=42,
         )
+        if model == "ovr":
+            clf = OneVsRestClassifier(clf)
         t1 = timeit.default_timer()
-        lr.fit(X_train, y_train)
+        clf.fit(X_train, y_train)
         train_time = timeit.default_timer() - t1
 
-        y_pred = lr.predict(X_test)
+        y_pred = clf.predict(X_test)
         accuracy = np.sum(y_pred == y_test) / y_test.shape[0]
-        density = np.mean(lr.coef_ != 0, axis=1) * 100
+        if model == "ovr":
+            coef = np.concatenate([est.coef_ for est in clf.estimators_])
+        else:
+            coef = clf.coef_
+        density = np.mean(coef != 0, axis=1) * 100
         accuracies.append(accuracy)
         densities.append(density)
         times.append(train_time)

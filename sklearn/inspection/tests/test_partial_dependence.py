@@ -1,7 +1,6 @@
 """
 Testing for the partial dependence module.
 """
-import warnings
 
 import numpy as np
 import pytest
@@ -37,8 +36,8 @@ from sklearn.preprocessing import (
 )
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree.tests.test_tree import assert_is_subtree
-from sklearn.utils import _IS_32BIT
 from sklearn.utils._testing import assert_allclose, assert_array_equal
+from sklearn.utils.fixes import _IS_32BIT
 from sklearn.utils.validation import check_random_state
 
 # toy sample
@@ -269,10 +268,12 @@ def test_partial_dependence_helpers(est, method, target_feature):
     # into account with the recursion method, for technical reasons. We set
     # the mean to 0 to that this 'bug' doesn't have any effect.
     y = y - y.mean()
-    est.fit(X, y)
+
+    # Clone is necessary to make the test thread-safe.
+    est = clone(est).fit(X, y)
 
     # target feature will be set to .5 and then to 123
-    features = np.array([target_feature], dtype=np.int32)
+    features = np.array([target_feature], dtype=np.intp)
     grid = np.array([[0.5], [123]])
 
     if method == "brute":
@@ -356,7 +357,7 @@ def test_recursion_decision_tree_vs_forest_and_gbdt(seed):
 
     grid = rng.randn(50).reshape(-1, 1)
     for f in range(n_features):
-        features = np.array([f], dtype=np.int32)
+        features = np.array([f], dtype=np.intp)
 
         pdp_forest = _partial_dependence_recursion(forest, grid, features)
         pdp_gbdt = _partial_dependence_recursion(gbdt, grid, features)
@@ -382,7 +383,7 @@ def test_recursion_decision_function(est, target_feature):
     X, y = make_classification(n_classes=2, n_clusters_per_class=1, random_state=1)
     assert np.mean(y) == 0.5  # make sure the init estimator predicts 0 anyway
 
-    est.fit(X, y)
+    est = clone(est).fit(X, y)
 
     preds_1 = partial_dependence(
         est,
@@ -430,7 +431,7 @@ def test_partial_dependence_easy_target(est, power):
     X = rng.normal(size=(n_samples, 5))
     y = X[:, target_variable] ** power
 
-    est.fit(X, y)
+    est = clone(est).fit(X, y)
 
     pdp = partial_dependence(
         est, features=[target_variable], X=X, grid_resolution=1000, kind="average"
@@ -481,7 +482,6 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
         return self
 
 
-@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
     "estimator, params, err_msg",
     [
@@ -528,7 +528,7 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
 )
 def test_partial_dependence_error(estimator, params, err_msg):
     X, y = make_classification(random_state=0)
-    estimator.fit(X, y)
+    estimator = clone(estimator).fit(X, y)
 
     with pytest.raises(ValueError, match=err_msg):
         partial_dependence(estimator, X, **params)
@@ -540,7 +540,7 @@ def test_partial_dependence_error(estimator, params, err_msg):
 @pytest.mark.parametrize("features", [-1, 10000])
 def test_partial_dependence_unknown_feature_indices(estimator, features):
     X, y = make_classification(random_state=0)
-    estimator.fit(X, y)
+    estimator = clone(estimator).fit(X, y)
 
     err_msg = "all features must be in"
     with pytest.raises(ValueError, match=err_msg):
@@ -554,7 +554,7 @@ def test_partial_dependence_unknown_feature_string(estimator):
     pd = pytest.importorskip("pandas")
     X, y = make_classification(random_state=0)
     df = pd.DataFrame(X)
-    estimator.fit(df, y)
+    estimator = clone(estimator).fit(df, y)
 
     features = ["random"]
     err_msg = "A given column is not a column of the dataframe"
@@ -568,7 +568,7 @@ def test_partial_dependence_unknown_feature_string(estimator):
 def test_partial_dependence_X_list(estimator):
     # check that array-like objects are accepted
     X, y = make_classification(random_state=0)
-    estimator.fit(X, y)
+    estimator = clone(estimator).fit(X, y)
     partial_dependence(estimator, list(X), [0], kind="average")
 
 
@@ -690,7 +690,7 @@ def test_partial_dependence_dataframe(estimator, preprocessor, features):
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame(scale(iris.data), columns=iris.feature_names)
 
-    pipe = make_pipeline(preprocessor, estimator)
+    pipe = make_pipeline(preprocessor, clone(estimator))
     pipe.fit(df, iris.target)
     pdp_pipe = partial_dependence(
         pipe, df, features=features, grid_resolution=10, kind="average"
@@ -839,7 +839,7 @@ def test_partial_dependence_non_null_weight_idx(estimator, non_null_weight_idx):
     preprocessor = make_column_transformer(
         (StandardScaler(), [0, 2]), (RobustScaler(), [1, 3])
     )
-    pipe = make_pipeline(preprocessor, estimator).fit(X, y)
+    pipe = make_pipeline(preprocessor, clone(estimator)).fit(X, y)
 
     sample_weight = np.zeros_like(y)
     sample_weight[non_null_weight_idx] = 1
@@ -912,34 +912,6 @@ def test_partial_dependence_sample_weight_with_recursion():
         partial_dependence(
             est, X, features=[0], method="recursion", sample_weight=sample_weight
         )
-
-
-# TODO(1.5): Remove when bunch values is deprecated in 1.5
-def test_partial_dependence_bunch_values_deprecated():
-    """Test that deprecation warning is raised when values is accessed."""
-
-    est = LogisticRegression()
-    (X, y), _ = binary_classification_data
-    est.fit(X, y)
-
-    pdp_avg = partial_dependence(est, X=X, features=[1, 2], kind="average")
-
-    msg = (
-        "Key: 'values', is deprecated in 1.3 and will be "
-        "removed in 1.5. Please use 'grid_values' instead"
-    )
-
-    with warnings.catch_warnings():
-        # Does not raise warnings with "grid_values"
-        warnings.simplefilter("error", FutureWarning)
-        grid_values = pdp_avg["grid_values"]
-
-    with pytest.warns(FutureWarning, match=msg):
-        # Warns for "values"
-        values = pdp_avg["values"]
-
-    # "values" and "grid_values" are the same object
-    assert values is grid_values
 
 
 def test_mixed_type_categorical():

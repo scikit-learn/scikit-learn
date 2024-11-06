@@ -1,4 +1,8 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import html
+import itertools
 from contextlib import closing
 from inspect import isclass
 from io import StringIO
@@ -53,17 +57,36 @@ class _VisualBlock:
         If kind == 'single', then `name_details` is a single string
         corresponding to the single estimator.
 
+    name_caption : str, default=None
+        The caption below the name. `None` stands for no caption.
+        Only active when kind == 'single'.
+
+    doc_link_label : str, default=None
+        The label for the documentation link. If provided, the label would be
+        "Documentation for {doc_link_label}". Otherwise it will look for `names`.
+        Only active when kind == 'single'.
+
     dash_wrapped : bool, default=True
         If true, wrapped HTML element will be wrapped with a dashed border.
         Only active when kind != 'single'.
     """
 
     def __init__(
-        self, kind, estimators, *, names=None, name_details=None, dash_wrapped=True
+        self,
+        kind,
+        estimators,
+        *,
+        names=None,
+        name_details=None,
+        name_caption=None,
+        doc_link_label=None,
+        dash_wrapped=True,
     ):
         self.kind = kind
         self.estimators = estimators
         self.dash_wrapped = dash_wrapped
+        self.name_caption = name_caption
+        self.doc_link_label = doc_link_label
 
         if self.kind in ("parallel", "serial"):
             if names is None:
@@ -82,6 +105,8 @@ def _write_label_html(
     out,
     name,
     name_details,
+    name_caption=None,
+    doc_link_label=None,
     outer_class="sk-label-container",
     inner_class="sk-label",
     checked=False,
@@ -103,6 +128,11 @@ def _write_label_html(
         The details to show as content in the dropdown part of the toggleable label. It
         can contain information such as non-default parameters or column information for
         `ColumnTransformer`.
+    name_caption : str, default=None
+        The caption below the name. If `None`, no caption will be created.
+    doc_link_label : str, default=None
+        The label for the documentation link. If provided, the label would be
+        "Documentation for {doc_link_label}". Otherwise it will look for `name`.
     outer_class : {"sk-label-container", "sk-item"}, default="sk-label-container"
         The CSS class for the outer container.
     inner_class : {"sk-label", "sk-estimator"}, default="sk-label"
@@ -122,9 +152,6 @@ def _write_label_html(
         The HTML representation to show the fitted information in the diagram. An empty
         string means that no information is shown.
     """
-    # we need to add some padding to the left of the label to be sure it is centered
-    padding_label = "&nbsp;" if is_fitted_icon else ""  # add padding for the "i" char
-
     out.write(
         f'<div class="{outer_class}"><div'
         f' class="{inner_class} {is_fitted_css_class} sk-toggleable">'
@@ -133,31 +160,42 @@ def _write_label_html(
 
     if name_details is not None:
         name_details = html.escape(str(name_details))
-        label_class = (
-            f"sk-toggleable__label {is_fitted_css_class} sk-toggleable__label-arrow"
-        )
-
         checked_str = "checked" if checked else ""
         est_id = _ESTIMATOR_ID_COUNTER.get_id()
 
         if doc_link:
             doc_label = "<span>Online documentation</span>"
-            if name is not None:
+            if doc_link_label is not None:
+                doc_label = f"<span>Documentation for {doc_link_label}</span>"
+            elif name is not None:
                 doc_label = f"<span>Documentation for {name}</span>"
             doc_link = (
                 f'<a class="sk-estimator-doc-link {is_fitted_css_class}"'
                 f' rel="noreferrer" target="_blank" href="{doc_link}">?{doc_label}</a>'
             )
-            padding_label += "&nbsp;"  # add additional padding for the "?" char
+
+        name_caption_div = (
+            ""
+            if name_caption is None
+            else f'<div class="caption">{html.escape(name_caption)}</div>'
+        )
+        name_caption_div = f"<div><div>{name}</div>{name_caption_div}</div>"
+        links_div = (
+            f"<div>{doc_link}{is_fitted_icon}</div>"
+            if doc_link or is_fitted_icon
+            else ""
+        )
+
+        label_html = (
+            f'<label for="{est_id}" class="sk-toggleable__label {is_fitted_css_class} '
+            f'sk-toggleable__label-arrow">{name_caption_div}{links_div}</label>'
+        )
 
         fmt_str = (
-            '<input class="sk-toggleable__control sk-hidden--visually"'
-            f' id="{est_id}" '
-            f'type="checkbox" {checked_str}><label for="{est_id}" '
-            f'class="{label_class} {is_fitted_css_class}">{padding_label}{name}'
-            f"{doc_link}{is_fitted_icon}</label><div "
-            f'class="sk-toggleable__content {is_fitted_css_class}">'
-            f"<pre>{name_details}</pre></div> "
+            f'<input class="sk-toggleable__control sk-hidden--visually" id="{est_id}" '
+            f'type="checkbox" {checked_str}>{label_html}<div '
+            f'class="sk-toggleable__content {is_fitted_css_class}"><pre>{name_details}'
+            "</pre></div> "
         )
         out.write(fmt_str)
     else:
@@ -305,6 +343,8 @@ def _write_estimator_html(
             out,
             est_block.names,
             est_block.name_details,
+            est_block.name_caption,
+            est_block.doc_link_label,
             outer_class="sk-item",
             inner_class="sk-estimator",
             checked=first_call,
@@ -328,6 +368,13 @@ def estimator_html_repr(estimator):
     -------
     html: str
         HTML representation of estimator.
+
+    Examples
+    --------
+    >>> from sklearn.utils._estimator_html_repr import estimator_html_repr
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> estimator_html_repr(LogisticRegression())
+    '<style>...</div>'
     """
     from sklearn.exceptions import NotFittedError
     from sklearn.utils.validation import check_is_fitted
@@ -419,15 +466,31 @@ class _HTMLDocumentationLinkMixin:
     Examples
     --------
     If the default values for `_doc_link_module`, `_doc_link_template` are not suitable,
-    then you can override them:
+    then you can override them and provide a method to generate the URL parameters:
     >>> from sklearn.base import BaseEstimator
-    >>> estimator = BaseEstimator()
-    >>> estimator._doc_link_template = "https://website.com/{single_param}.html"
+    >>> doc_link_template = "https://address.local/{single_param}.html"
     >>> def url_param_generator(estimator):
     ...     return {"single_param": estimator.__class__.__name__}
-    >>> estimator._doc_link_url_param_generator = url_param_generator
+    >>> class MyEstimator(BaseEstimator):
+    ...     # use "builtins" since it is the associated module when declaring
+    ...     # the class in a docstring
+    ...     _doc_link_module = "builtins"
+    ...     _doc_link_template = doc_link_template
+    ...     _doc_link_url_param_generator = url_param_generator
+    >>> estimator = MyEstimator()
     >>> estimator._get_doc_link()
-    'https://website.com/BaseEstimator.html'
+    'https://address.local/MyEstimator.html'
+
+    If instead of overriding the attributes inside the class definition, you want to
+    override a class instance, you can use `types.MethodType` to bind the method to the
+    instance:
+    >>> import types
+    >>> estimator = BaseEstimator()
+    >>> estimator._doc_link_template = doc_link_template
+    >>> estimator._doc_link_url_param_generator = types.MethodType(
+    ...     url_param_generator, estimator)
+    >>> estimator._get_doc_link()
+    'https://address.local/BaseEstimator.html'
     """
 
     _doc_link_module = "sklearn"
@@ -471,16 +534,16 @@ class _HTMLDocumentationLinkMixin:
 
         if self._doc_link_url_param_generator is None:
             estimator_name = self.__class__.__name__
+            # Construct the estimator's module name, up to the first private submodule.
+            # This works because in scikit-learn all public estimators are exposed at
+            # that level, even if they actually live in a private sub-module.
             estimator_module = ".".join(
-                [
-                    _
-                    for _ in self.__class__.__module__.split(".")
-                    if not _.startswith("_")
-                ]
+                itertools.takewhile(
+                    lambda part: not part.startswith("_"),
+                    self.__class__.__module__.split("."),
+                )
             )
             return self._doc_link_template.format(
                 estimator_module=estimator_module, estimator_name=estimator_name
             )
-        return self._doc_link_template.format(
-            **self._doc_link_url_param_generator(self)
-        )
+        return self._doc_link_template.format(**self._doc_link_url_param_generator())

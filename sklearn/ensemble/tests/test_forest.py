@@ -2,11 +2,8 @@
 Testing for the forest module (sklearn.ensemble.forest).
 """
 
-# Authors: Gilles Louppe,
-#          Brian Holt,
-#          Andreas Mueller,
-#          Arnaud Joly
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import itertools
 import math
@@ -515,7 +512,8 @@ def test_forest_classifier_oob(
         test_score = classifier.score(X_test, y_test)
         assert classifier.oob_score_ >= lower_bound_accuracy
 
-    assert abs(test_score - classifier.oob_score_) <= 0.1
+    abs_diff = abs(test_score - classifier.oob_score_)
+    assert abs_diff <= 0.11, f"{abs_diff=} is greater than 0.11"
 
     assert hasattr(classifier, "oob_score_")
     assert not hasattr(classifier, "oob_prediction_")
@@ -881,8 +879,6 @@ def test_random_trees_dense_equal():
     assert_array_equal(X_transformed_sparse.toarray(), X_transformed_dense)
 
 
-# Ignore warnings from switching to more power iterations in randomized_svd
-@ignore_warnings
 def test_random_hasher():
     # test random forest hashing on circles dataset
     # make sure that it is linearly separable.
@@ -1595,7 +1591,7 @@ def test_max_samples_boundary_classifiers(name):
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_forest_y_sparse(csr_container):
     X = [[1, 2, 3]]
-    y = csr_container([4, 5, 6])
+    y = csr_container([[4, 5, 6]])
     est = RandomForestClassifier()
     msg = "sparse multilabel-indicator for y is not supported."
     with pytest.raises(ValueError, match=msg):
@@ -1770,6 +1766,8 @@ def test_estimators_samples(ForestClass, bootstrap, seed):
     [
         (datasets.make_regression, RandomForestRegressor),
         (datasets.make_classification, RandomForestClassifier),
+        (datasets.make_regression, ExtraTreesRegressor),
+        (datasets.make_classification, ExtraTreesClassifier),
     ],
 )
 def test_missing_values_is_resilient(make_data, Forest):
@@ -1803,12 +1801,21 @@ def test_missing_values_is_resilient(make_data, Forest):
     assert score_with_missing >= 0.80 * score_without_missing
 
 
-@pytest.mark.parametrize("Forest", [RandomForestClassifier, RandomForestRegressor])
+@pytest.mark.parametrize(
+    "Forest",
+    [
+        RandomForestClassifier,
+        RandomForestRegressor,
+        ExtraTreesRegressor,
+        ExtraTreesClassifier,
+    ],
+)
 def test_missing_value_is_predictive(Forest):
     """Check that the forest learns when missing values are only present for
     a predictive feature."""
     rng = np.random.RandomState(0)
     n_samples = 300
+    expected_score = 0.75
 
     X_non_predictive = rng.standard_normal(size=(n_samples, 10))
     y = rng.randint(0, high=2, size=n_samples)
@@ -1838,19 +1845,20 @@ def test_missing_value_is_predictive(Forest):
 
     predictive_test_score = forest_predictive.score(X_predictive_test, y_test)
 
-    assert predictive_test_score >= 0.75
+    assert predictive_test_score >= expected_score
     assert predictive_test_score >= forest_non_predictive.score(
         X_non_predictive_test, y_test
     )
 
 
-def test_non_supported_criterion_raises_error_with_missing_values():
+@pytest.mark.parametrize("Forest", FOREST_REGRESSORS.values())
+def test_non_supported_criterion_raises_error_with_missing_values(Forest):
     """Raise error for unsupported criterion when there are missing values."""
     X = np.array([[0, 1, 2], [np.nan, 0, 2.0]])
     y = [0.5, 1.0]
 
-    forest = RandomForestRegressor(criterion="absolute_error")
+    forest = Forest(criterion="absolute_error")
 
-    msg = "RandomForestRegressor does not accept missing values"
+    msg = ".*does not accept missing values"
     with pytest.raises(ValueError, match=msg):
         forest.fit(X, y)

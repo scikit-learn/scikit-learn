@@ -5,9 +5,8 @@ Reference: Tables 8.3 and 8.4 page 196 in the book:
 Independent Component Analysis, by  Hyvarinen et al.
 """
 
-# Authors: Pierre Lafaye de Micheaux, Stefan van der Walt, Gael Varoquaux,
-#          Bertrand Thirion, Alexandre Gramfort, Denis A. Engemann
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Integral, Real
@@ -24,7 +23,7 @@ from ..base import (
 from ..exceptions import ConvergenceWarning
 from ..utils import as_float_array, check_array, check_random_state
 from ..utils._param_validation import Interval, Options, StrOptions, validate_params
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 
 __all__ = ["fastica", "FastICA"]
 
@@ -320,6 +319,19 @@ def fastica(
     .. [1] A. Hyvarinen and E. Oja, "Fast Independent Component Analysis",
            Algorithms and Applications, Neural Networks, 13(4-5), 2000,
            pp. 411-430.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.decomposition import fastica
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> K, W, S = fastica(X, n_components=7, random_state=0, whiten='unit-variance')
+    >>> K.shape
+    (7, 64)
+    >>> W.shape
+    (7, 7)
+    >>> S.shape
+    (1797, 7)
     """
     est = FastICA(
         n_components=n_components,
@@ -548,8 +560,12 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         S : ndarray of shape (n_samples, n_components) or None
             Sources matrix. `None` if `compute_sources` is `False`.
         """
-        XT = self._validate_data(
-            X, copy=self.whiten, dtype=[np.float64, np.float32], ensure_min_samples=2
+        XT = validate_data(
+            self,
+            X,
+            copy=self.whiten,
+            dtype=[np.float64, np.float32],
+            ensure_min_samples=2,
         ).T
         fun_args = {} if self.fun_args is None else self.fun_args
         random_state = check_random_state(self.random_state)
@@ -593,7 +609,7 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
                 # Faster when num_samples >> n_features
                 d, u = linalg.eigh(XT.dot(X))
                 sort_indices = np.argsort(d)[::-1]
-                eps = np.finfo(d.dtype).eps
+                eps = np.finfo(d.dtype).eps * 10
                 degenerate_idx = d < eps
                 if np.any(degenerate_idx):
                     warnings.warn(
@@ -740,8 +756,12 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = self._validate_data(
-            X, copy=(copy and self.whiten), dtype=[np.float64, np.float32], reset=False
+        X = validate_data(
+            self,
+            X,
+            copy=(copy and self.whiten),
+            dtype=[np.float64, np.float32],
+            reset=False,
         )
         if self.whiten:
             X -= self.mean_
@@ -778,5 +798,7 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         """Number of transformed output features."""
         return self.components_.shape[0]
 
-    def _more_tags(self):
-        return {"preserves_dtype": [np.float32, np.float64]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags

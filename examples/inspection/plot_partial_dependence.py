@@ -34,6 +34,9 @@ bike sharing dataset. The example is inspired by [1]_.
        Graphical Statistics, 24(1): 44-65 <1309.6392>`
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Bike sharing dataset preprocessing
 # ----------------------------------
@@ -57,7 +60,12 @@ X["weather"].value_counts()
 
 # %%
 # Because of this rare category, we collapse it into `"rain"`.
-X["weather"].replace(to_replace="heavy_rain", value="rain", inplace=True)
+X["weather"] = (
+    X["weather"]
+    .astype(object)
+    .replace(to_replace="heavy_rain", value="rain")
+    .astype("category")
+)
 
 # %%
 # We now have a closer look at the `"year"` feature:
