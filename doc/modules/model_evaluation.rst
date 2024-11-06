@@ -65,21 +65,21 @@ stritcly consistent scoring functions. Note that the list is not complete and th
 there are more of them.
 For further criteria on how to select a specific one, see [Fissler2022]_.
 
-==================  ===============================================  ==================  ==============================
-functional          scoring or loss function                         response :math:`y`  prediction
-==================  ===============================================  ==================  ==============================
+==================  ===============================================  ===================  ==============================
+functional          scoring or loss function                         response :math:`y`   prediction
+==================  ===============================================  ===================  ==============================
 **Classification**
-mean                :ref:`Brier score <brier_score_loss>`            multi-class         ``predict_proba``
-mean                :ref:`log loss <log_loss>`                       multi-class         ``predict_proba``
-mode                :ref:`zero-one loss <zero_one_loss>` :sup:`1`    multi-class         ``predict``, categorical
-**Regression  **
-mean                :ref:`squared error <mean_squared_error>`        all reals           ``predict``, all reals
-mean                :ref:`Poisson deviance <mean_tweedie_deviance>`  non-negative        ``predict``, strictly positive
-mean                :ref:`Gamma deviance <mean_tweedie_deviance>`    strictly positive   ``predict``, strictly positive
-median              :ref:`absolute error <mean_absolute_error>`      all reals           ``predict``, all reals
-quantile            :ref:`pinball loss <pinball_loss>`               all reals           ``predict``, all reals
+mean                :ref:`Brier score <brier_score_loss>`            multi-class          ``predict_proba``
+mean                :ref:`log loss <log_loss>`                       multi-class          ``predict_proba``
+mode                :ref:`zero-one loss <zero_one_loss>` :sup:`1`    multi-class          ``predict``, categorical
+**Regression**
+mean                :ref:`squared error <mean_squared_error>`        all reals             ``predict``, all reals
+mean                :ref:`Poisson deviance <mean_tweedie_deviance>`  non-negative          ``predict``, strictly positive
+mean                :ref:`Gamma deviance <mean_tweedie_deviance>`    strictly positive     ``predict``, strictly positive
+median              :ref:`absolute error <mean_absolute_error>`      all reals             ``predict``, all reals
+quantile            :ref:`pinball loss <pinball_loss>`               all reals             ``predict``, all reals
 mode                no consistent one exists                         reals
-==================  ===============================================  ==================  ==============================
+==================  ===============================================  ===================  ==============================
 
 :sup:`1` The zero-one loss is only consistent but not strictly consistent for the mode.
 
