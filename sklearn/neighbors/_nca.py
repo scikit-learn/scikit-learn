@@ -1,30 +1,38 @@
-# coding: utf-8
 """
 Neighborhood Component Analysis
 """
 
-# Authors: William de Vazelhes <wdevazelhes@gmail.com>
-#          John Chiotellis <ioannis.chiotellis@in.tum.de>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-from warnings import warn
-import numpy as np
 import sys
 import time
-import numbers
+from numbers import Integral, Real
+from warnings import warn
+
+import numpy as np
 from scipy.optimize import minimize
-from ..utils.extmath import softmax
-from ..metrics import pairwise_distances
-from ..base import BaseEstimator, TransformerMixin
-from ..preprocessing import LabelEncoder
+
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
 from ..decomposition import PCA
+from ..exceptions import ConvergenceWarning
+from ..metrics import pairwise_distances
+from ..preprocessing import LabelEncoder
+from ..utils._param_validation import Interval, StrOptions
+from ..utils.extmath import softmax
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import check_random_state
-from ..utils.validation import check_is_fitted, check_array, check_scalar
-from ..exceptions import ConvergenceWarning
+from ..utils.validation import check_array, check_is_fitted, validate_data
 
 
-class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
+class NeighborhoodComponentsAnalysis(
+    ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
+):
     """Neighborhood Components Analysis.
 
     Neighborhood Component Analysis (NCA) is a machine learning algorithm for
@@ -48,8 +56,8 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
 
         - `'auto'`
             Depending on `n_components`, the most reasonable initialization
-            will be chosen. If `n_components <= n_classes` we use `'lda'`, as
-            it uses labels information. If not, but
+            is chosen. If `n_components <= min(n_features, n_classes - 1)`
+            we use `'lda'`, as it uses labels information. If not, but
             `n_components < min(n_features, n_samples)`, we use `'pca'`, as
             it projects data in meaningful directions (those of higher
             variance). Otherwise, we just use `'identity'`.
@@ -175,6 +183,23 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
     0.961904...
     """
 
+    _parameter_constraints: dict = {
+        "n_components": [
+            Interval(Integral, 1, None, closed="left"),
+            None,
+        ],
+        "init": [
+            StrOptions({"auto", "pca", "lda", "identity", "random"}),
+            np.ndarray,
+        ],
+        "warm_start": ["boolean"],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "callback": [callable, None],
+        "verbose": ["verbose"],
+        "random_state": ["random_state"],
+    }
+
     def __init__(
         self,
         n_components=None,
@@ -196,6 +221,7 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
         self.verbose = verbose
         self.random_state = random_state
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the model according to the given training data.
 
@@ -212,10 +238,57 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
+        # Validate the inputs X and y, and converts y to numerical classes.
+        X, y = validate_data(self, X, y, ensure_min_samples=2)
+        check_classification_targets(y)
+        y = LabelEncoder().fit_transform(y)
 
-        # Verify inputs X and y and NCA parameters, and transform a copy if
-        # needed
-        X, y, init = self._validate_params(X, y)
+        # Check the preferred dimensionality of the projected space
+        if self.n_components is not None and self.n_components > X.shape[1]:
+            raise ValueError(
+                "The preferred dimensionality of the "
+                f"projected space `n_components` ({self.n_components}) cannot "
+                "be greater than the given data "
+                f"dimensionality ({X.shape[1]})!"
+            )
+        # If warm_start is enabled, check that the inputs are consistent
+        if (
+            self.warm_start
+            and hasattr(self, "components_")
+            and self.components_.shape[1] != X.shape[1]
+        ):
+            raise ValueError(
+                f"The new inputs dimensionality ({X.shape[1]}) does not "
+                "match the input dimensionality of the "
+                f"previously learned transformation ({self.components_.shape[1]})."
+            )
+        # Check how the linear transformation should be initialized
+        init = self.init
+        if isinstance(init, np.ndarray):
+            init = check_array(init)
+            # Assert that init.shape[1] = X.shape[1]
+            if init.shape[1] != X.shape[1]:
+                raise ValueError(
+                    f"The input dimensionality ({init.shape[1]}) of the given "
+                    "linear transformation `init` must match the "
+                    f"dimensionality of the given inputs `X` ({X.shape[1]})."
+                )
+            # Assert that init.shape[0] <= init.shape[1]
+            if init.shape[0] > init.shape[1]:
+                raise ValueError(
+                    f"The output dimensionality ({init.shape[0]}) of the given "
+                    "linear transformation `init` cannot be "
+                    f"greater than its input dimensionality ({init.shape[1]})."
+                )
+            # Assert that self.n_components = init.shape[0]
+            if self.n_components is not None and self.n_components != init.shape[0]:
+                raise ValueError(
+                    "The preferred dimensionality of the "
+                    f"projected space `n_components` ({self.n_components}) does"
+                    " not match the output dimensionality of "
+                    "the given linear transformation "
+                    f"`init` ({init.shape[0]})!"
+                )
 
         # Initialize the random generator
         self.random_state_ = check_random_state(self.random_state)
@@ -228,7 +301,7 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
         # (n_samples, n_samples)
 
         # Initialize the transformation
-        transformation = self._initialize(X, y, init)
+        transformation = np.ravel(self._initialize(X, y, init))
 
         # Create a dictionary of parameters to be passed to the optimizer
         disp = self.verbose - 2 if self.verbose > 1 else -1
@@ -288,125 +361,9 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
         """
 
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
 
         return np.dot(X, self.components_.T)
-
-    def _validate_params(self, X, y):
-        """Validate parameters as soon as :meth:`fit` is called.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            The training samples.
-
-        y : array-like of shape (n_samples,)
-            The corresponding training labels.
-
-        Returns
-        -------
-        X : ndarray of shape (n_samples, n_features)
-            The validated training samples.
-
-        y : ndarray of shape (n_samples,)
-            The validated training labels, encoded to be integers in
-            the `range(0, n_classes)`.
-
-        init : str or ndarray of shape (n_features_a, n_features_b)
-            The validated initialization of the linear transformation.
-
-        Raises
-        -------
-        TypeError
-            If a parameter is not an instance of the desired type.
-
-        ValueError
-            If a parameter's value violates its legal value range or if the
-            combination of two or more given parameters is incompatible.
-        """
-
-        # Validate the inputs X and y, and converts y to numerical classes.
-        X, y = self._validate_data(X, y, ensure_min_samples=2)
-        check_classification_targets(y)
-        y = LabelEncoder().fit_transform(y)
-
-        # Check the preferred dimensionality of the projected space
-        if self.n_components is not None:
-            check_scalar(self.n_components, "n_components", numbers.Integral, min_val=1)
-
-            if self.n_components > X.shape[1]:
-                raise ValueError(
-                    "The preferred dimensionality of the "
-                    "projected space `n_components` ({}) cannot "
-                    "be greater than the given data "
-                    "dimensionality ({})!".format(self.n_components, X.shape[1])
-                )
-
-        # If warm_start is enabled, check that the inputs are consistent
-        check_scalar(self.warm_start, "warm_start", bool)
-        if self.warm_start and hasattr(self, "components_"):
-            if self.components_.shape[1] != X.shape[1]:
-                raise ValueError(
-                    "The new inputs dimensionality ({}) does not "
-                    "match the input dimensionality of the "
-                    "previously learned transformation ({}).".format(
-                        X.shape[1], self.components_.shape[1]
-                    )
-                )
-
-        check_scalar(self.max_iter, "max_iter", numbers.Integral, min_val=1)
-        check_scalar(self.tol, "tol", numbers.Real, min_val=0.0)
-        check_scalar(self.verbose, "verbose", numbers.Integral, min_val=0)
-
-        if self.callback is not None:
-            if not callable(self.callback):
-                raise ValueError("`callback` is not callable.")
-
-        # Check how the linear transformation should be initialized
-        init = self.init
-
-        if isinstance(init, np.ndarray):
-            init = check_array(init)
-
-            # Assert that init.shape[1] = X.shape[1]
-            if init.shape[1] != X.shape[1]:
-                raise ValueError(
-                    "The input dimensionality ({}) of the given "
-                    "linear transformation `init` must match the "
-                    "dimensionality of the given inputs `X` ({}).".format(
-                        init.shape[1], X.shape[1]
-                    )
-                )
-
-            # Assert that init.shape[0] <= init.shape[1]
-            if init.shape[0] > init.shape[1]:
-                raise ValueError(
-                    "The output dimensionality ({}) of the given "
-                    "linear transformation `init` cannot be "
-                    "greater than its input dimensionality ({}).".format(
-                        init.shape[0], init.shape[1]
-                    )
-                )
-
-            if self.n_components is not None:
-                # Assert that self.n_components = init.shape[0]
-                if self.n_components != init.shape[0]:
-                    raise ValueError(
-                        "The preferred dimensionality of the "
-                        "projected space `n_components` ({}) does"
-                        " not match the output dimensionality of "
-                        "the given linear transformation "
-                        "`init` ({})!".format(self.n_components, init.shape[0])
-                    )
-        elif init in ["auto", "pca", "lda", "identity", "random"]:
-            pass
-        else:
-            raise ValueError(
-                "`init` must be 'auto', 'pca', 'lda', 'identity', 'random' "
-                "or a numpy array of shape (n_components, n_features)."
-            )
-
-        return X, y, init
 
     def _initialize(self, X, y, init):
         """Initialize the transformation.
@@ -448,7 +405,9 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
             if init == "identity":
                 transformation = np.eye(n_components, X.shape[1])
             elif init == "random":
-                transformation = self.random_state_.randn(n_components, X.shape[1])
+                transformation = self.random_state_.standard_normal(
+                    size=(n_components, X.shape[1])
+                )
             elif init in {"pca", "lda"}:
                 init_time = time.time()
                 if init == "pca":
@@ -560,5 +519,12 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
 
         return sign * loss, sign * gradient.ravel()
 
-    def _more_tags(self):
-        return {"requires_y": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.required = True
+        return tags
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]

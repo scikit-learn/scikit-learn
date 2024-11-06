@@ -3,23 +3,18 @@ Tests for DBSCAN clustering algorithm
 """
 
 import pickle
-
-import numpy as np
-
 import warnings
 
-from scipy.spatial import distance
-from scipy import sparse
-
+import numpy as np
 import pytest
+from scipy.spatial import distance
 
-from sklearn.utils._testing import assert_array_equal
-from sklearn.neighbors import NearestNeighbors
-from sklearn.cluster import DBSCAN
-from sklearn.cluster import dbscan
+from sklearn.cluster import DBSCAN, dbscan
 from sklearn.cluster.tests.common import generate_clustered_data
 from sklearn.metrics.pairwise import pairwise_distances
-
+from sklearn.neighbors import NearestNeighbors
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils.fixes import CSR_CONTAINERS, LIL_CONTAINERS
 
 n_clusters = 3
 X = generate_clustered_data(n_clusters=n_clusters)
@@ -71,8 +66,9 @@ def test_dbscan_feature():
     assert n_clusters_2 == n_clusters
 
 
-def test_dbscan_sparse():
-    core_sparse, labels_sparse = dbscan(sparse.lil_matrix(X), eps=0.8, min_samples=10)
+@pytest.mark.parametrize("lil_container", LIL_CONTAINERS)
+def test_dbscan_sparse(lil_container):
+    core_sparse, labels_sparse = dbscan(lil_container(X), eps=0.8, min_samples=10)
     core_dense, labels_dense = dbscan(X, eps=0.8, min_samples=10)
     assert_array_equal(core_dense, core_sparse)
     assert_array_equal(labels_dense, labels_sparse)
@@ -111,27 +107,50 @@ def test_dbscan_sparse_precomputed_different_eps():
     assert_array_equal(dbscan_lower[1], dbscan_higher[1])
 
 
-@pytest.mark.parametrize("use_sparse", [True, False])
 @pytest.mark.parametrize("metric", ["precomputed", "minkowski"])
-def test_dbscan_input_not_modified(use_sparse, metric):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS + [None])
+def test_dbscan_input_not_modified(metric, csr_container):
     # test that the input is not modified by dbscan
     X = np.random.RandomState(0).rand(10, 10)
-    X = sparse.csr_matrix(X) if use_sparse else X
+    X = csr_container(X) if csr_container is not None else X
     X_copy = X.copy()
     dbscan(X, metric=metric)
 
-    if use_sparse:
+    if csr_container is not None:
         assert_array_equal(X.toarray(), X_copy.toarray())
     else:
         assert_array_equal(X, X_copy)
 
 
-def test_dbscan_no_core_samples():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_dbscan_input_not_modified_precomputed_sparse_nodiag(csr_container):
+    """Check that we don't modify in-place the pre-computed sparse matrix.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27508
+    """
+    X = np.random.RandomState(0).rand(10, 10)
+    # Add zeros on the diagonal that will be implicit when creating
+    # the sparse matrix. If `X` is modified in-place, the zeros from
+    # the diagonal will be made explicit.
+    np.fill_diagonal(X, 0)
+    X = csr_container(X)
+    assert all(row != col for row, col in zip(*X.nonzero()))
+    X_copy = X.copy()
+    dbscan(X, metric="precomputed")
+    # Make sure that we did not modify `X` in-place even by creating
+    # explicit 0s values.
+    assert X.nnz == X_copy.nnz
+    assert_array_equal(X.toarray(), X_copy.toarray())
+
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_dbscan_no_core_samples(csr_container):
     rng = np.random.RandomState(0)
     X = rng.rand(40, 10)
     X[X < 0.8] = 0
 
-    for X_ in [X, sparse.csr_matrix(X)]:
+    for X_ in [X, csr_container(X)]:
         db = DBSCAN(min_samples=6).fit(X_)
         assert_array_equal(db.components_, np.empty((0, X_.shape[1])))
         assert_array_equal(db.labels_, -1)
@@ -269,23 +288,10 @@ def test_input_validation():
     DBSCAN().fit(X)  # must not raise exception
 
 
-@pytest.mark.parametrize(
-    "args",
-    [
-        {"algorithm": "blah"},
-        {"metric": "blah"},
-    ],
-)
-def test_dbscan_badargs(args):
-    # Test bad argument values: these should all raise ValueErrors
-    with pytest.raises(ValueError):
-        dbscan(X, **args)
-
-
 def test_pickle():
     obj = DBSCAN()
     s = pickle.dumps(obj)
-    assert type(pickle.loads(s)) == obj.__class__
+    assert type(pickle.loads(s)) is obj.__class__
 
 
 def test_boundaries():
@@ -299,7 +305,7 @@ def test_boundaries():
     assert 0 not in core
 
 
-def test_weighted_dbscan():
+def test_weighted_dbscan(global_random_seed):
     # ensure sample_weight is validated
     with pytest.raises(ValueError):
         dbscan([[0], [1]], sample_weight=[2])
@@ -333,7 +339,7 @@ def test_weighted_dbscan():
     )
 
     # for non-negative sample_weight, cores should be identical to repetition
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     sample_weight = rng.randint(0, 5, X.shape[0])
     core1, label1 = dbscan(X, sample_weight=sample_weight)
     assert len(label1) == len(X)
@@ -409,7 +415,8 @@ def test_dbscan_precomputed_metric_with_degenerate_input_arrays():
     assert len(set(labels)) == 1
 
 
-def test_dbscan_precomputed_metric_with_initial_rows_zero():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_dbscan_precomputed_metric_with_initial_rows_zero(csr_container):
     # sample matrix with initial two row all zero
     ar = np.array(
         [
@@ -422,42 +429,6 @@ def test_dbscan_precomputed_metric_with_initial_rows_zero():
             [0.0, 0.0, 0.0, 0.0, 0.3, 0.1, 0.0],
         ]
     )
-    matrix = sparse.csr_matrix(ar)
+    matrix = csr_container(ar)
     labels = DBSCAN(eps=0.2, metric="precomputed", min_samples=2).fit(matrix).labels_
     assert_array_equal(labels, [-1, -1, 0, 0, 0, 1, 1])
-
-
-@pytest.mark.parametrize(
-    "params, err_type, err_msg",
-    [
-        ({"eps": -1.0}, ValueError, "eps == -1.0, must be > 0.0."),
-        ({"eps": 0.0}, ValueError, "eps == 0.0, must be > 0.0."),
-        ({"min_samples": 0}, ValueError, "min_samples == 0, must be >= 1."),
-        (
-            {"min_samples": 1.5},
-            TypeError,
-            "min_samples must be an instance of <class 'numbers.Integral'>, not <class"
-            " 'float'>.",
-        ),
-        ({"min_samples": -2}, ValueError, "min_samples == -2, must be >= 1."),
-        ({"leaf_size": 0}, ValueError, "leaf_size == 0, must be >= 1."),
-        (
-            {"leaf_size": 2.5},
-            TypeError,
-            "leaf_size must be an instance of <class 'numbers.Integral'>, not <class"
-            " 'float'>.",
-        ),
-        ({"leaf_size": -3}, ValueError, "leaf_size == -3, must be >= 1."),
-        ({"p": -2}, ValueError, "p == -2, must be >= 0.0."),
-        (
-            {"n_jobs": 2.5},
-            TypeError,
-            "n_jobs must be an instance of <class 'numbers.Integral'>, not <class"
-            " 'float'>.",
-        ),
-    ],
-)
-def test_dbscan_params_validation(params, err_type, err_msg):
-    """Check the parameters validation in `DBSCAN`."""
-    with pytest.raises(err_type, match=err_msg):
-        DBSCAN(**params).fit(X)

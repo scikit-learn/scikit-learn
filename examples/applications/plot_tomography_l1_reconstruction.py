@@ -36,15 +36,14 @@ contributed to fewer projections than the central disk.
 
 """
 
-# Author: Emmanuelle Gouillart <emmanuelle.gouillart@nsup.org>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
-from scipy import sparse
-from scipy import ndimage
-from sklearn.linear_model import Lasso
-from sklearn.linear_model import Ridge
 import matplotlib.pyplot as plt
+import numpy as np
+from scipy import ndimage, sparse
+
+from sklearn.linear_model import Lasso, Ridge
 
 
 def _weights(x, dx=1, orig=0):
@@ -81,7 +80,7 @@ def build_projection_operator(l_x, n_dir):
     X, Y = _generate_center_coordinates(l_x)
     angles = np.linspace(0, np.pi, n_dir, endpoint=False)
     data_inds, weights, camera_inds = [], [], []
-    data_unravel_indices = np.arange(l_x ** 2)
+    data_unravel_indices = np.arange(l_x**2)
     data_unravel_indices = np.hstack((data_unravel_indices, data_unravel_indices))
     for i, angle in enumerate(angles):
         Xrot = np.cos(angle) * X - np.sin(angle) * Y

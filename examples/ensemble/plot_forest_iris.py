@@ -42,15 +42,18 @@ samples are built sequentially and so do not use multiple cores.
 
 """
 
-import numpy as np
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.colors import ListedColormap
 
 from sklearn.datasets import load_iris
 from sklearn.ensemble import (
-    RandomForestClassifier,
-    ExtraTreesClassifier,
     AdaBoostClassifier,
+    ExtraTreesClassifier,
+    RandomForestClassifier,
 )
 from sklearn.tree import DecisionTreeClassifier
 

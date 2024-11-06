@@ -28,12 +28,12 @@ missing values imputed using different techniques.
 
 """
 
-# Authors: Maria Telenczuk  <https://github.com/maikia>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Download the data and make missing values sets
-################################################
+# ##############################################
 #
 # First we download the two datasets. Diabetes dataset is shipped with
 # scikit-learn. It has 442 entries, each with 10 features. California Housing
@@ -44,16 +44,16 @@ missing values imputed using different techniques.
 
 import numpy as np
 
-from sklearn.datasets import fetch_california_housing
-from sklearn.datasets import load_diabetes
-
+from sklearn.datasets import fetch_california_housing, load_diabetes
 
 rng = np.random.RandomState(42)
 
 X_diabetes, y_diabetes = load_diabetes(return_X_y=True)
 X_california, y_california = fetch_california_housing(return_X_y=True)
-X_california = X_california[:400]
-y_california = y_california[:400]
+X_california = X_california[:300]
+y_california = y_california[:300]
+X_diabetes = X_diabetes[:300]
+y_diabetes = y_diabetes[:300]
 
 
 def add_missing_values(X_full, y_full):
@@ -93,12 +93,11 @@ from sklearn.ensemble import RandomForestRegressor
 
 # To use the experimental IterativeImputer, we need to explicitly ask for it:
 from sklearn.experimental import enable_iterative_imputer  # noqa
-from sklearn.impute import SimpleImputer, KNNImputer, IterativeImputer
+from sklearn.impute import IterativeImputer, KNNImputer, SimpleImputer
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import make_pipeline
 
-
-N_SPLITS = 5
+N_SPLITS = 4
 regressor = RandomForestRegressor(random_state=0)
 
 # %%
@@ -154,7 +153,6 @@ x_labels.append("Full data")
 
 
 def get_impute_zero_score(X_missing, y_missing):
-
     imputer = SimpleImputer(
         missing_values=np.nan, add_indicator=True, strategy="constant", fill_value=0
     )
@@ -231,7 +229,8 @@ def get_impute_iterative(X_missing, y_missing):
         missing_values=np.nan,
         add_indicator=True,
         random_state=0,
-        n_nearest_features=5,
+        n_nearest_features=3,
+        max_iter=1,
         sample_posterior=True,
     )
     iterative_impute_scores = get_scores_for_imputer(imputer, X_missing, y_missing)
@@ -257,7 +256,6 @@ mses_california = mses_california * -1
 #
 
 import matplotlib.pyplot as plt
-
 
 n_bars = len(mses_diabetes)
 xval = np.arange(n_bars)

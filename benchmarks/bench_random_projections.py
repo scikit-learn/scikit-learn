@@ -6,19 +6,20 @@ Random projection benchmark
 Benchmarks for random projections.
 
 """
-import gc
-import sys
-import optparse
-from datetime import datetime
+
 import collections
+import gc
+import optparse
+import sys
+from datetime import datetime
 
 import numpy as np
 import scipy.sparse as sp
 
 from sklearn import clone
 from sklearn.random_projection import (
-    SparseRandomProjection,
     GaussianRandomProjection,
+    SparseRandomProjection,
     johnson_lindenstrauss_min_dim,
 )
 
@@ -38,7 +39,7 @@ def type_auto_or_int(val):
 
 
 def compute_time(t_start, delta):
-    mu_second = 0.0 + 10 ** 6  # number of microseconds in a second
+    mu_second = 0.0 + 10**6  # number of microseconds in a second
 
     return delta.seconds + delta.microseconds / mu_second
 
@@ -109,7 +110,7 @@ if __name__ == "__main__":
     op.add_option(
         "--n-features",
         dest="n_features",
-        default=10 ** 4,
+        default=10**4,
         type=int,
         help="Number of features in the benchmarks",
     )
@@ -124,7 +125,7 @@ if __name__ == "__main__":
     op.add_option(
         "--ratio-nonzeros",
         dest="ratio_nonzeros",
-        default=10 ** -3,
+        default=10**-3,
         type=float,
         help="Number of features in the benchmarks",
     )

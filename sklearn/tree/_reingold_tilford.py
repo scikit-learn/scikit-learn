@@ -1,5 +1,5 @@
-# Authors: William Mill (bill@billmill.org)
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 
@@ -158,7 +158,7 @@ def ancestor(vil, v, default_ancestor):
     # the relevant text is at the bottom of page 7 of
     # "Improving Walker's Algorithm to Run in Linear Time" by Buchheim et al,
     # (2002)
-    # http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.16.8757&rep=rep1&type=pdf
+    # https://citeseerx.ist.psu.edu/doc_view/pid/1f41c3c2a4880dc49238e46d555f16d28da2940d
     if vil.ancestor in v.parent.children:
         return vil.ancestor
     else:

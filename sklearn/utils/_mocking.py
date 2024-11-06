@@ -1,8 +1,18 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numpy as np
 
 from ..base import BaseEstimator, ClassifierMixin
-from .validation import _check_sample_weight, _num_samples, check_array
-from .validation import check_is_fitted
+from ..utils._metadata_requests import RequestMethod
+from .metaestimators import available_if
+from .validation import (
+    _check_sample_weight,
+    _num_samples,
+    check_array,
+    check_is_fitted,
+    check_random_state,
+)
 
 
 class ArraySlicingWrapper:
@@ -69,10 +79,12 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
     ----------
     check_y, check_X : callable, default=None
         The callable used to validate `X` and `y`. These callable should return
-        a bool where `False` will trigger an `AssertionError`.
+        a bool where `False` will trigger an `AssertionError`. If `None`, the
+        data is not validated. Default is `None`.
 
     check_y_params, check_X_params : dict, default=None
-        The optional parameters to pass to `check_X` and `check_y`.
+        The optional parameters to pass to `check_X` and `check_y`. If `None`,
+        then no parameters are passed in.
 
     methods_to_check : "all" or list of str, default="all"
         The methods in which the checks should be applied. By default,
@@ -130,6 +142,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         foo_param=0,
         expected_sample_weight=None,
         expected_fit_params=None,
+        random_state=None,
     ):
         self.check_y = check_y
         self.check_y_params = check_y_params
@@ -139,6 +152,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         self.foo_param = foo_param
         self.expected_sample_weight = expected_sample_weight
         self.expected_fit_params = expected_fit_params
+        self.random_state = random_state
 
     def _check_X_y(self, X, y=None, should_be_fitted=True):
         """Validate X and y and make extra check.
@@ -147,8 +161,10 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         ----------
         X : array-like of shape (n_samples, n_features)
             The data set.
+            `X` is checked only if `check_X` is not `None` (default is None).
         y : array-like of shape (n_samples), default=None
-            The corresponding target, by default None.
+            The corresponding target, by default `None`.
+            `y` is checked only if `check_y` is not `None` (default is None).
         should_be_fitted : bool, default=True
             Whether or not the classifier should be already fitted.
             By default True.
@@ -238,7 +254,8 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         """
         if self.methods_to_check == "all" or "predict" in self.methods_to_check:
             X, y = self._check_X_y(X)
-        return self.classes_[np.zeros(_num_samples(X), dtype=int)]
+        rng = check_random_state(self.random_state)
+        return rng.choice(self.classes_, size=_num_samples(X))
 
     def predict_proba(self, X):
         """Predict probabilities for each class.
@@ -258,8 +275,10 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         """
         if self.methods_to_check == "all" or "predict_proba" in self.methods_to_check:
             X, y = self._check_X_y(X)
-        proba = np.zeros((_num_samples(X), len(self.classes_)))
-        proba[:, 0] = 1
+        rng = check_random_state(self.random_state)
+        proba = rng.randn(_num_samples(X), len(self.classes_))
+        proba = np.abs(proba, out=proba)
+        proba /= np.sum(proba, axis=1)[:, np.newaxis]
         return proba
 
     def decision_function(self, X):
@@ -281,14 +300,13 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
             or "decision_function" in self.methods_to_check
         ):
             X, y = self._check_X_y(X)
+        rng = check_random_state(self.random_state)
         if len(self.classes_) == 2:
             # for binary classifier, the confidence score is related to
             # classes_[1] and therefore should be null.
-            return np.zeros(_num_samples(X))
+            return rng.randn(_num_samples(X))
         else:
-            decision = np.zeros((_num_samples(X), len(self.classes_)))
-            decision[:, 0] = 1
-            return decision
+            return rng.randn(_num_samples(X), len(self.classes_))
 
     def score(self, X=None, Y=None):
         """Fake score.
@@ -317,8 +335,20 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
             score = 0.0
         return score
 
-    def _more_tags(self):
-        return {"_skip_test": True, "X_types": ["1dlabel"]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._skip_test = True
+        tags.input_tags.two_d_array = False
+        tags.target_tags.one_d_labels = True
+        return tags
+
+
+# Deactivate key validation for CheckingClassifier because we want to be able to
+# call fit with arbitrary fit_params and record them. Without this change, we
+# would get an error because those arbitrary params are not expected.
+CheckingClassifier.set_fit_request = RequestMethod(  # type: ignore
+    name="fit", keys=[], validate_keys=False
+)
 
 
 class NoSampleWeightWrapper(BaseEstimator):
@@ -342,5 +372,48 @@ class NoSampleWeightWrapper(BaseEstimator):
     def predict_proba(self, X):
         return self.est.predict_proba(X)
 
-    def _more_tags(self):
-        return {"_skip_test": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._skip_test = True
+        return tags
+
+
+def _check_response(method):
+    def check(self):
+        return self.response_methods is not None and method in self.response_methods
+
+    return check
+
+
+class _MockEstimatorOnOffPrediction(BaseEstimator):
+    """Estimator for which we can turn on/off the prediction methods.
+
+    Parameters
+    ----------
+    response_methods: list of \
+            {"predict", "predict_proba", "decision_function"}, default=None
+        List containing the response implemented by the estimator. When, the
+        response is in the list, it will return the name of the response method
+        when called. Otherwise, an `AttributeError` is raised. It allows to
+        use `getattr` as any conventional estimator. By default, no response
+        methods are mocked.
+    """
+
+    def __init__(self, response_methods=None):
+        self.response_methods = response_methods
+
+    def fit(self, X, y):
+        self.classes_ = np.unique(y)
+        return self
+
+    @available_if(_check_response("predict"))
+    def predict(self, X):
+        return "predict"
+
+    @available_if(_check_response("predict_proba"))
+    def predict_proba(self, X):
+        return "predict_proba"
+
+    @available_if(_check_response("decision_function"))
+    def decision_function(self, X):
+        return "decision_function"

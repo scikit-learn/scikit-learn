@@ -1,53 +1,11 @@
-# Authors: Gael Varoquaux <gael.varoquaux@normalesup.org>
-#          Justin Vincent
-#          Lars Buitinck
-# License: BSD 3 clause
-
-import math
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 import pytest
-import scipy.stats
 
 from sklearn.utils._testing import assert_array_equal
-
-from sklearn.utils.fixes import _joblib_parallel_args
-from sklearn.utils.fixes import _object_dtype_isnan
-from sklearn.utils.fixes import loguniform
-from sklearn.utils.fixes import linspace, parse_version, np_version
-
-
-@pytest.mark.parametrize("joblib_version", ("0.11", "0.12.0"))
-def test_joblib_parallel_args(monkeypatch, joblib_version):
-    import joblib
-
-    monkeypatch.setattr(joblib, "__version__", joblib_version)
-
-    if joblib_version == "0.12.0":
-        # arguments are simply passed through
-        assert _joblib_parallel_args(prefer="threads") == {"prefer": "threads"}
-        assert _joblib_parallel_args(prefer="processes", require=None) == {
-            "prefer": "processes",
-            "require": None,
-        }
-        assert _joblib_parallel_args(non_existing=1) == {"non_existing": 1}
-    elif joblib_version == "0.11":
-        # arguments are mapped to the corresponding backend
-        assert _joblib_parallel_args(prefer="threads") == {"backend": "threading"}
-        assert _joblib_parallel_args(prefer="processes") == {
-            "backend": "multiprocessing"
-        }
-        with pytest.raises(ValueError):
-            _joblib_parallel_args(prefer="invalid")
-        assert _joblib_parallel_args(prefer="processes", require="sharedmem") == {
-            "backend": "threading"
-        }
-        with pytest.raises(ValueError):
-            _joblib_parallel_args(require="invalid")
-        with pytest.raises(NotImplementedError):
-            _joblib_parallel_args(verbose=True)
-    else:
-        raise ValueError
+from sklearn.utils.fixes import _object_dtype_isnan, _smallest_admissible_index_dtype
 
 
 @pytest.mark.parametrize("dtype, val", ([object, 1], [object, "a"], [float, 1]))
@@ -61,56 +19,142 @@ def test_object_dtype_isnan(dtype, val):
     assert_array_equal(mask, expected_mask)
 
 
-@pytest.mark.parametrize("low,high,base", [(-1, 0, 10), (0, 2, np.exp(1)), (-1, 1, 2)])
-def test_loguniform(low, high, base):
-    rv = loguniform(base ** low, base ** high)
-    assert isinstance(rv, scipy.stats._distn_infrastructure.rv_frozen)
-    rvs = rv.rvs(size=2000, random_state=0)
-
-    # Test the basics; right bounds, right size
-    assert (base ** low <= rvs).all() and (rvs <= base ** high).all()
-    assert len(rvs) == 2000
-
-    # Test that it's actually (fairly) uniform
-    log_rvs = np.array([math.log(x, base) for x in rvs])
-    counts, _ = np.histogram(log_rvs)
-    assert counts.mean() == 200
-    assert np.abs(counts - counts.mean()).max() <= 40
-
-    # Test that random_state works
-    assert loguniform(base ** low, base ** high).rvs(random_state=0) == loguniform(
-        base ** low, base ** high
-    ).rvs(random_state=0)
+@pytest.mark.parametrize(
+    "params, expected_dtype",
+    [
+        ({}, np.int32),  # default behaviour
+        ({"maxval": np.iinfo(np.int32).max}, np.int32),
+        ({"maxval": np.iinfo(np.int32).max + 1}, np.int64),
+    ],
+)
+def test_smallest_admissible_index_dtype_max_val(params, expected_dtype):
+    """Check the behaviour of `smallest_admissible_index_dtype` depending only on the
+    `max_val` parameter.
+    """
+    assert _smallest_admissible_index_dtype(**params) == expected_dtype
 
 
-def test_linspace():
-    """Test that linespace works like np.linespace as of numpy version 1.16."""
-    start, stop = 0, 10
-    num = 6
-    out = linspace(start=start, stop=stop, num=num, endpoint=True)
-    assert_array_equal(out, np.array([0.0, 2, 4, 6, 8, 10]))
+@pytest.mark.parametrize(
+    "params, expected_dtype",
+    [
+        # Arrays dtype is int64 and thus should not be downcasted to int32 without
+        # checking the content of providing maxval.
+        ({"arrays": np.array([1, 2], dtype=np.int64)}, np.int64),
+        # One of the array is int64 and should not be downcasted to int32
+        # for the same reasons.
+        (
+            {
+                "arrays": (
+                    np.array([1, 2], dtype=np.int32),
+                    np.array([1, 2], dtype=np.int64),
+                )
+            },
+            np.int64,
+        ),
+        # Both arrays are already int32: we can just keep this dtype.
+        (
+            {
+                "arrays": (
+                    np.array([1, 2], dtype=np.int32),
+                    np.array([1, 2], dtype=np.int32),
+                )
+            },
+            np.int32,
+        ),
+        # Arrays should be upcasted to at least int32 precision.
+        ({"arrays": np.array([1, 2], dtype=np.int8)}, np.int32),
+        # Check that `maxval` takes precedence over the arrays and thus upcast to
+        # int64.
+        (
+            {
+                "arrays": np.array([1, 2], dtype=np.int32),
+                "maxval": np.iinfo(np.int32).max + 1,
+            },
+            np.int64,
+        ),
+    ],
+)
+def test_smallest_admissible_index_dtype_without_checking_contents(
+    params, expected_dtype
+):
+    """Check the behaviour of `smallest_admissible_index_dtype` using the passed
+    arrays but without checking the contents of the arrays.
+    """
+    assert _smallest_admissible_index_dtype(**params) == expected_dtype
 
-    start, stop = [0, 100], [10, 1100]
-    num = 6
-    out = linspace(start=start, stop=stop, num=num, endpoint=True)
-    res = np.c_[[0.0, 2, 4, 6, 8, 10], [100, 300, 500, 700, 900, 1100]]
-    assert_array_equal(out, res)
 
-    out2 = linspace(start=start, stop=stop, num=num, endpoint=True, axis=1)
-    assert_array_equal(out2, out.T)
+@pytest.mark.parametrize(
+    "params, expected_dtype",
+    [
+        # empty arrays should always be converted to int32 indices
+        (
+            {
+                "arrays": (np.array([], dtype=np.int64), np.array([], dtype=np.int64)),
+                "check_contents": True,
+            },
+            np.int32,
+        ),
+        # arrays respecting np.iinfo(np.int32).min < x < np.iinfo(np.int32).max should
+        # be converted to int32,
+        (
+            {"arrays": np.array([1], dtype=np.int64), "check_contents": True},
+            np.int32,
+        ),
+        # otherwise, it should be converted to int64. We need to create a uint32
+        # arrays to accommodate a value > np.iinfo(np.int32).max
+        (
+            {
+                "arrays": np.array([np.iinfo(np.int32).max + 1], dtype=np.uint32),
+                "check_contents": True,
+            },
+            np.int64,
+        ),
+        # maxval should take precedence over the arrays contents and thus upcast to
+        # int64.
+        (
+            {
+                "arrays": np.array([1], dtype=np.int32),
+                "check_contents": True,
+                "maxval": np.iinfo(np.int32).max + 1,
+            },
+            np.int64,
+        ),
+        # when maxval is small, but check_contents is True and the contents
+        # require np.int64, we still require np.int64 indexing in the end.
+        (
+            {
+                "arrays": np.array([np.iinfo(np.int32).max + 1], dtype=np.uint32),
+                "check_contents": True,
+                "maxval": 1,
+            },
+            np.int64,
+        ),
+    ],
+)
+def test_smallest_admissible_index_dtype_by_checking_contents(params, expected_dtype):
+    """Check the behaviour of `smallest_admissible_index_dtype` using the dtype of the
+    arrays but as well the contents.
+    """
+    assert _smallest_admissible_index_dtype(**params) == expected_dtype
 
-    out, step = linspace(
-        start=start,
-        stop=stop,
-        num=num,
-        endpoint=True,
-        retstep=True,
-    )
-    assert_array_equal(out, res)
-    assert_array_equal(step, [2, 200])
 
-    if np_version < parse_version("1.16"):
-        with pytest.raises(ValueError):
-            linspace(start=[0, 1], stop=10)
-    else:
-        linspace(start=[0, 1], stop=10)
+@pytest.mark.parametrize(
+    "params, err_type, err_msg",
+    [
+        (
+            {"maxval": np.iinfo(np.int64).max + 1},
+            ValueError,
+            "is to large to be represented as np.int64",
+        ),
+        (
+            {"arrays": np.array([1, 2], dtype=np.float64)},
+            ValueError,
+            "Array dtype float64 is not supported",
+        ),
+        ({"arrays": [1, 2]}, TypeError, "Arrays should be of type np.ndarray"),
+    ],
+)
+def test_smallest_admissible_index_dtype_error(params, err_type, err_msg):
+    """Check that we raise the proper error message."""
+    with pytest.raises(err_type, match=err_msg):
+        _smallest_admissible_index_dtype(**params)

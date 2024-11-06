@@ -1,14 +1,15 @@
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from .glm import (
-    GeneralizedLinearRegressor,
-    PoissonRegressor,
     GammaRegressor,
+    PoissonRegressor,
     TweedieRegressor,
+    _GeneralizedLinearRegressor,
 )
 
 __all__ = [
-    "GeneralizedLinearRegressor",
+    "_GeneralizedLinearRegressor",
     "PoissonRegressor",
     "GammaRegressor",
     "TweedieRegressor",

@@ -29,16 +29,16 @@ identify the directions of largest non-Gaussianity (lower right).
 
 """
 
-# Authors: Alexandre Gramfort, Gael Varoquaux
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
+# %%
+# Generate sample data
+# --------------------
 import numpy as np
-import matplotlib.pyplot as plt
 
 from sklearn.decomposition import PCA, FastICA
 
-# #############################################################################
-# Generate sample data
 rng = np.random.RandomState(42)
 S = rng.standard_t(1.5, size=(20000, 2))
 S[:, 0] *= 2.0
@@ -51,14 +51,14 @@ X = np.dot(S, A.T)  # Generate observations
 pca = PCA()
 S_pca_ = pca.fit(X).transform(X)
 
-ica = FastICA(random_state=rng)
+ica = FastICA(random_state=rng, whiten="arbitrary-variance")
 S_ica_ = ica.fit(X).transform(X)  # Estimate the sources
 
-S_ica_ /= S_ica_.std(axis=0)
 
-
-# #############################################################################
+# %%
 # Plot results
+# ------------
+import matplotlib.pyplot as plt
 
 
 def plot_samples(S, axis_list=None):
@@ -66,12 +66,8 @@ def plot_samples(S, axis_list=None):
         S[:, 0], S[:, 1], s=2, marker="o", zorder=10, color="steelblue", alpha=0.5
     )
     if axis_list is not None:
-        colors = ["orange", "red"]
-        for color, axis in zip(colors, axis_list):
-            axis /= axis.std()
-            x_axis, y_axis = axis
-            # Trick to get legend to work
-            plt.plot(0.1 * x_axis, 0.1 * y_axis, linewidth=2, color=color)
+        for axis, color, label in axis_list:
+            x_axis, y_axis = axis / axis.std()
             plt.quiver(
                 (0, 0),
                 (0, 0),
@@ -81,12 +77,14 @@ def plot_samples(S, axis_list=None):
                 width=0.01,
                 scale=6,
                 color=color,
+                label=label,
             )
 
-    plt.hlines(0, -3, 3)
-    plt.vlines(0, -3, 3)
-    plt.xlim(-3, 3)
+    plt.hlines(0, -5, 5, color="black", linewidth=0.5)
+    plt.vlines(0, -3, 3, color="black", linewidth=0.5)
+    plt.xlim(-5, 5)
     plt.ylim(-3, 3)
+    plt.gca().set_aspect("equal")
     plt.xlabel("x")
     plt.ylabel("y")
 
@@ -96,16 +94,16 @@ plt.subplot(2, 2, 1)
 plot_samples(S / S.std())
 plt.title("True Independent Sources")
 
-axis_list = [pca.components_.T, ica.mixing_]
+axis_list = [(pca.components_.T, "orange", "PCA"), (ica.mixing_, "red", "ICA")]
 plt.subplot(2, 2, 2)
 plot_samples(X / np.std(X), axis_list=axis_list)
-legend = plt.legend(["PCA", "ICA"], loc="upper right")
+legend = plt.legend(loc="upper left")
 legend.set_zorder(100)
 
 plt.title("Observations")
 
 plt.subplot(2, 2, 3)
-plot_samples(S_pca_ / np.std(S_pca_, axis=0))
+plot_samples(S_pca_ / np.std(S_pca_))
 plt.title("PCA recovered signals")
 
 plt.subplot(2, 2, 4)
@@ -113,4 +111,5 @@ plot_samples(S_ica_ / np.std(S_ica_))
 plt.title("ICA recovered signals")
 
 plt.subplots_adjust(0.09, 0.04, 0.94, 0.94, 0.26, 0.36)
+plt.tight_layout()
 plt.show()

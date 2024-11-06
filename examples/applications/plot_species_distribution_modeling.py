@@ -4,8 +4,8 @@ Species distribution modeling
 =============================
 
 Modeling species' geographic distributions is an important
-problem in conservation biology. In this example we
-model the geographic distribution of two south american
+problem in conservation biology. In this example, we
+model the geographic distribution of two South American
 mammals given past observations and 14 environmental
 variables. Since we have only positive examples (there are
 no unsuccessful observations), we cast this problem as a
@@ -17,38 +17,36 @@ to plot the coast lines and national boundaries of South America.
 
 The two species are:
 
- - `"Bradypus variegatus"
-   <http://www.iucnredlist.org/details/3038/0>`_ ,
-   the Brown-throated Sloth.
+- `Bradypus variegatus
+  <http://www.iucnredlist.org/details/3038/0>`_,
+  the brown-throated sloth.
 
- - `"Microryzomys minutus"
-   <http://www.iucnredlist.org/details/13408/0>`_ ,
-   also known as the Forest Small Rice Rat, a rodent that lives in Peru,
-   Colombia, Ecuador, Peru, and Venezuela.
+- `Microryzomys minutus
+  <http://www.iucnredlist.org/details/13408/0>`_,
+  also known as the forest small rice rat, a rodent that lives in Peru,
+  Colombia, Ecuador, Peru, and Venezuela.
 
 References
 ----------
 
- * `"Maximum entropy modeling of species geographic distributions"
-   <http://rob.schapire.net/papers/ecolmod.pdf>`_
-   S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
-   190:231-259, 2006.
+- `"Maximum entropy modeling of species geographic distributions"
+  <http://rob.schapire.net/papers/ecolmod.pdf>`_
+  S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
+  190:231-259, 2006.
 
 """
 
-# Authors: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#          Jake Vanderplas <vanderplas@astro.washington.edu>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from time import time
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from sklearn.utils import Bunch
+from sklearn import metrics, svm
 from sklearn.datasets import fetch_species_distributions
-from sklearn import svm, metrics
+from sklearn.utils import Bunch
 
 # if basemap is available, we'll use it.
 # otherwise, we'll improvise later...
@@ -214,7 +212,7 @@ def plot_species_distribution(
         plt.scatter(
             species.pts_train["dd long"],
             species.pts_train["dd lat"],
-            s=2 ** 2,
+            s=2**2,
             c="black",
             marker="^",
             label="train",
@@ -222,7 +220,7 @@ def plot_species_distribution(
         plt.scatter(
             species.pts_test["dd long"],
             species.pts_test["dd lat"],
-            s=2 ** 2,
+            s=2**2,
             c="black",
             marker="x",
             label="test",

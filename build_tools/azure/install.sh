@@ -3,190 +3,160 @@
 set -e
 set -x
 
-UNAMESTR=`uname`
-
-if [[ "$DISTRIB" == "conda-mamba-pypy3" ]]; then
-    # condaforge/mambaforge-pypy3 needs compilers
-    apt-get -yq update
-    apt-get -yq install build-essential
-fi
-
-make_conda() {
-    TO_INSTALL="$@"
-    if [[ "$DISTRIB" == *"mamba"* ]]; then
-        mamba create -n $VIRTUALENV --yes $TO_INSTALL
-    else
-        conda config --show
-        conda create -n $VIRTUALENV --yes $TO_INSTALL
-    fi
-    source activate $VIRTUALENV
-}
-
-setup_ccache() {
-    echo "Setting up ccache"
-    mkdir /tmp/ccache/
-    which ccache
-    for name in gcc g++ cc c++ x86_64-linux-gnu-gcc x86_64-linux-gnu-c++; do
-      ln -s $(which ccache) "/tmp/ccache/${name}"
-    done
-    export PATH="/tmp/ccache/:${PATH}"
-    ccache -M 256M
-}
-
-# imports get_dep
+# defines the get_dep and show_installed_libraries functions
 source build_tools/shared.sh
 
-if [[ "$DISTRIB" == "conda" || "$DISTRIB" == *"mamba"* ]]; then
+UNAMESTR=`uname`
+CCACHE_LINKS_DIR="/tmp/ccache"
 
-    if [[ "$CONDA_CHANNEL" != "" ]]; then
-        TO_INSTALL="--override-channels -c $CONDA_CHANNEL"
+setup_ccache() {
+    CCACHE_BIN=`which ccache || echo ""`
+    if [[ "${CCACHE_BIN}" == "" ]]; then
+        echo "ccache not found, skipping..."
+    elif [[ -d "${CCACHE_LINKS_DIR}" ]]; then
+        echo "ccache already configured, skipping..."
     else
-        TO_INSTALL=""
+        echo "Setting up ccache with CCACHE_DIR=${CCACHE_DIR}"
+        mkdir ${CCACHE_LINKS_DIR}
+        which ccache
+        for name in gcc g++ cc c++ clang clang++ i686-linux-gnu-gcc i686-linux-gnu-c++ x86_64-linux-gnu-gcc x86_64-linux-gnu-c++ x86_64-apple-darwin13.4.0-clang x86_64-apple-darwin13.4.0-clang++; do
+        ln -s ${CCACHE_BIN} "${CCACHE_LINKS_DIR}/${name}"
+        done
+        export PATH="${CCACHE_LINKS_DIR}:${PATH}"
+        ccache -M 256M
+
+        # Zeroing statistics so that ccache statistics are shown only for this build
+        ccache -z
     fi
+}
 
-    if [[ "$DISTRIB" == *"pypy"* ]]; then
-        TO_INSTALL="$TO_INSTALL pypy"
-    else
-        TO_INSTALL="$TO_INSTALL python=$PYTHON_VERSION"
+pre_python_environment_install() {
+    if [[ "$DISTRIB" == "ubuntu" ]]; then
+        sudo apt-get update
+        sudo apt-get install python3-scipy python3-matplotlib \
+             libatlas3-base libatlas-base-dev python3-virtualenv ccache
+
+    elif [[ "$DISTRIB" == "debian-32" ]]; then
+        apt-get update
+        apt-get install -y python3-dev python3-numpy python3-scipy \
+                python3-matplotlib libopenblas-dev \
+                python3-virtualenv python3-pandas ccache git
+
+    # TODO for now we use CPython 3.13 from Ubuntu deadsnakes PPA. When CPython
+    # 3.13 is released (scheduled October 2024) we can use something more
+    # similar to other conda+pip based builds
+    elif [[ "$DISTRIB" == "pip-free-threaded" ]]; then
+        sudo apt-get -yq update
+        sudo apt-get install -yq ccache
+        sudo apt-get install -yq software-properties-common
+        sudo add-apt-repository --yes ppa:deadsnakes/nightly
+        sudo apt-get update -yq
+        sudo apt-get install -yq --no-install-recommends python3.13-dev python3.13-venv python3.13-nogil
     fi
+}
 
-    TO_INSTALL="$TO_INSTALL ccache pip blas[build=$BLAS]"
-
-    TO_INSTALL="$TO_INSTALL $(get_dep numpy $NUMPY_VERSION)"
-    TO_INSTALL="$TO_INSTALL $(get_dep scipy $SCIPY_VERSION)"
-    TO_INSTALL="$TO_INSTALL $(get_dep cython $CYTHON_VERSION)"
-    TO_INSTALL="$TO_INSTALL $(get_dep joblib $JOBLIB_VERSION)"
-    TO_INSTALL="$TO_INSTALL $(get_dep pandas $PANDAS_VERSION)"
-    TO_INSTALL="$TO_INSTALL $(get_dep pyamg $PYAMG_VERSION)"
-    TO_INSTALL="$TO_INSTALL $(get_dep Pillow $PILLOW_VERSION)"
-    TO_INSTALL="$TO_INSTALL $(get_dep matplotlib $MATPLOTLIB_VERSION)"
-
-    if [[ "$UNAMESTR" == "Darwin" ]]; then
-        if [[ "$SKLEARN_TEST_NO_OPENMP" != "true" ]]; then
-            # on macOS, install an OpenMP-enabled clang/llvm from conda-forge.
-            # TODO: Remove !=1.1.0 when the following is fixed:
-            # sklearn/svm/_libsvm.cpython-38-darwin.so,
-            # 2): Symbol not found: _svm_check_parameter error
-            TO_INSTALL="$TO_INSTALL compilers>=1.0.4,!=1.1.0 llvm-openmp"
-        else
-            # Without openmp, we use the system clang. Here we use /usr/bin/ar
-            # instead because llvm-ar errors
-            export AR=/usr/bin/ar
+check_packages_dev_version() {
+    for package in $@; do
+        package_version=$(python -c "import $package; print($package.__version__)")
+        if [[ $package_version =~ "^[.0-9]+$" ]]; then
+            echo "$package is not a development version: $package_version"
+            exit 1
         fi
-    else
+    done
+}
+
+python_environment_install_and_activate() {
+    if [[ "$DISTRIB" == "conda"* ]]; then
+        create_conda_environment_from_lock_file $VIRTUALENV $LOCK_FILE
+        source activate $VIRTUALENV
+
+    elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
+        python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
+        source $VIRTUALENV/bin/activate
+        pip install -r "${LOCK_FILE}"
+
+    elif [[ "$DISTRIB" == "pip-free-threaded" ]]; then
+        python3.13t -m venv $VIRTUALENV
+        source $VIRTUALENV/bin/activate
+        pip install -r "${LOCK_FILE}"
+        # TODO you need pip>=24.1 to find free-threaded wheels. This may be
+        # removed when the underlying Ubuntu image has pip>=24.1.
+        pip install 'pip>=24.1'
+        # TODO When there are CPython 3.13 free-threaded wheels for numpy,
+        # scipy and cython move them to
+        # build_tools/azure/cpython_free_threaded_requirements.txt. For now we
+        # install them from scientific-python-nightly-wheels
+        dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
+        dev_packages="numpy scipy Cython"
+        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages --only-binary :all:
+    fi
+
+    if [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
+        echo "Installing development dependency wheels"
+        dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
+        dev_packages="numpy scipy pandas Cython"
+        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages --only-binary :all:
+
+        check_packages_dev_version $dev_packages
+
+        echo "Installing joblib from latest sources"
+        pip install https://github.com/joblib/joblib/archive/master.zip
+        echo "Installing pillow from latest sources"
+        pip install https://github.com/python-pillow/Pillow/archive/main.zip
+    fi
+}
+
+scikit_learn_install() {
+    setup_ccache
+    show_installed_libraries
+
+    if [[ "$UNAMESTR" == "Darwin" && "$SKLEARN_TEST_NO_OPENMP" == "true" ]]; then
+        # Without openmp, we use the system clang. Here we use /usr/bin/ar
+        # instead because llvm-ar errors
+        export AR=/usr/bin/ar
+        # Make sure omp.h is not present in the conda environment, so that
+        # using an unprotected "cimport openmp" will make this build fail. At
+        # the time of writing (2023-01-13), on OSX, blas (mkl or openblas)
+        # brings in openmp so that you end up having the omp.h include inside
+        # the conda environment.
+        find $CONDA_PREFIX -name omp.h -delete -print
+        # meson >= 1.5 detects OpenMP installed with brew and OpenMP may be installed
+        # with brew in CI runner. OpenMP was installed with brew in macOS-12 CI
+        # runners which doesn't seem to be the case in macOS-13 runners anymore,
+        # but we keep the next line just to be safe ...
+        brew uninstall --ignore-dependencies --force libomp
+    fi
+
+    if [[ "$UNAMESTR" == "Linux" ]]; then
         # FIXME: temporary fix to link against system libraries on linux
+        # https://github.com/scikit-learn/scikit-learn/issues/20640
         export LDFLAGS="$LDFLAGS -Wl,--sysroot=/"
     fi
-	make_conda $TO_INSTALL
-    setup_ccache
 
-elif [[ "$DISTRIB" == "ubuntu" ]]; then
-    sudo add-apt-repository --remove ppa:ubuntu-toolchain-r/test
-    sudo apt-get update
-    sudo apt-get install python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev python3-virtualenv ccache
-    python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
-    source $VIRTUALENV/bin/activate
-    setup_ccache
-    python -m pip install $(get_dep cython $CYTHON_VERSION) \
-                          $(get_dep joblib $JOBLIB_VERSION)
-
-elif [[ "$DISTRIB" == "debian-32" ]]; then
-    apt-get update
-    apt-get install -y python3-dev python3-numpy python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev python3-virtualenv python3-pandas ccache
-
-    python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
-    source $VIRTUALENV/bin/activate
-    setup_ccache
-    python -m pip install $(get_dep cython $CYTHON_VERSION) \
-                          $(get_dep joblib $JOBLIB_VERSION)
-
-elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
-    # FIXME: temporary fix to link against system libraries on linux
-    export LDFLAGS="$LDFLAGS -Wl,--sysroot=/"
-    # Since conda main channel usually lacks behind on the latest releases,
-    # we use pypi to test against the latest releases of the dependencies.
-    # conda is still used as a convenient way to install Python and pip.
-    make_conda "ccache python=$PYTHON_VERSION"
-    setup_ccache
-    python -m pip install -U pip
-
-    # Do not build scikit-image from source because it is an optional dependency
-    python -m pip install --only-binary :all: scikit-image || true
-
-    python -m pip install pandas matplotlib pyamg
-    # do not install dependencies for lightgbm since it requires scikit-learn.
-    python -m pip install "lightgbm>=3.0.0" --no-deps
-elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
-    # FIXME: temporary fix to link against system libraries on linux
-    export LDFLAGS="$LDFLAGS -Wl,--sysroot=/"
-    make_conda "ccache python=$PYTHON_VERSION"
-    python -m pip install -U pip
-    echo "Installing numpy and scipy master wheels"
-    dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
-    pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy pandas scipy
-    pip install --pre cython
-    setup_ccache
-    echo "Installing joblib master"
-    pip install https://github.com/joblib/joblib/archive/master.zip
-    echo "Installing pillow master"
-    pip install https://github.com/python-pillow/Pillow/archive/main.zip
-fi
-
-python -m pip install $(get_dep threadpoolctl $THREADPOOLCTL_VERSION) \
-                      $(get_dep pytest $PYTEST_VERSION) \
-                      $(get_dep pytest-xdist $PYTEST_XDIST_VERSION)
-
-if [[ "$COVERAGE" == "true" ]]; then
-    python -m pip install codecov pytest-cov
-fi
-
-if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
-    python -m pip install pytest-xdist
-fi
-
-if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
-    # numpydoc requires sphinx
-    python -m pip install sphinx
-    python -m pip install numpydoc
-fi
-
-python --version
-python -c "import numpy; print('numpy %s' % numpy.__version__)"
-python -c "import scipy; print('scipy %s' % scipy.__version__)"
-python -c "\
-try:
-    import pandas
-    print('pandas %s' % pandas.__version__)
-except ImportError:
-    print('pandas not installed')
-"
-# Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
-# workers with 2 cores when building the compiled extensions of scikit-learn.
-export SKLEARN_BUILD_PARALLEL=3
-
-python -m pip list
-if [[ "$DISTRIB" == "conda-pip-latest" ]]; then
-    # Check that pip can automatically build scikit-learn with the build
-    # dependencies specified in pyproject.toml using an isolated build
-    # environment:
-    pip install --verbose --editable .
-else
-    if [[ "$BUILD_WITH_ICC" == "true" ]]; then
-        wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-        sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-        rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-        sudo add-apt-repository "deb https://apt.repos.intel.com/oneapi all main"
-        sudo apt-get update
-        sudo apt-get install intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
-        source /opt/intel/oneapi/setvars.sh
-
-        # The "build_clib" command is implicitly used to build "libsvm-skl".
-        # To compile with a different compiler, we also need to specify the
-        # compiler for this command
-        python setup.py build_ext --compiler=intelem -i build_clib --compiler=intelem
+    if [[ "$PIP_BUILD_ISOLATION" == "true" ]]; then
+        # Check that pip can automatically build scikit-learn with the build
+        # dependencies specified in pyproject.toml using an isolated build
+        # environment:
+        pip install --verbose .
+    else
+        if [[ "$UNAMESTR" == "MINGW64"* ]]; then
+           # Needed on Windows CI to compile with Visual Studio compiler
+           # otherwise Meson detects a MINGW64 platform and use MINGW64
+           # toolchain
+           ADDITIONAL_PIP_OPTIONS='-Csetup-args=--vsenv'
+        fi
+        # Use the pre-installed build dependencies and build directly in the
+        # current environment.
+        pip install --verbose --no-build-isolation --editable . $ADDITIONAL_PIP_OPTIONS
     fi
-    # Use the pre-installed build dependencies and build directly in the
-    # current environment.
-    python setup.py develop
-fi
-ccache -s
+
+    ccache -s || echo "ccache not installed, skipping ccache statistics"
+}
+
+main() {
+    pre_python_environment_install
+    python_environment_install_and_activate
+    scikit_learn_install
+}
+
+main

@@ -1,34 +1,36 @@
-"""
-The :mod:`sklearn.kernel_approximation` module implements several
-approximate kernel feature maps based on Fourier transforms and Count Sketches.
-"""
+"""Approximate kernel feature maps based on Fourier transforms and count sketches."""
 
-# Author: Andreas Mueller <amueller@ais.uni-bonn.de>
-#         Daniel Lopez-Sanchez (TensorSketch) <lope@usal.es>
-
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
+from numbers import Integral, Real
 
 import numpy as np
 import scipy.sparse as sp
+from scipy.fft import fft, ifft
 from scipy.linalg import svd
 
-try:
-    from scipy.fft import fft, ifft
-except ImportError:  # scipy < 1.4
-    from scipy.fftpack import fft, ifft
-
-from .base import BaseEstimator
-from .base import TransformerMixin
+from .base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
+from .metrics.pairwise import KERNEL_PARAMS, PAIRWISE_KERNEL_FUNCTIONS, pairwise_kernels
 from .utils import check_random_state
+from .utils._param_validation import Interval, StrOptions
 from .utils.extmath import safe_sparse_dot
-from .utils.validation import check_is_fitted
-from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
-from .utils.validation import check_non_negative
+from .utils.validation import (
+    _check_feature_names_in,
+    check_is_fitted,
+    validate_data,
+)
 
 
-class PolynomialCountSketch(BaseEstimator, TransformerMixin):
+class PolynomialCountSketch(
+    ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
+):
     """Polynomial kernel approximation via Tensor Sketch.
 
     Implements Tensor Sketch, which approximates the feature map
@@ -111,7 +113,18 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
     SGDClassifier(max_iter=10)
     >>> clf.score(X_features, y)
     1.0
+
+    For a more detailed example of usage, see
+    :ref:`sphx_glr_auto_examples_kernel_approximation_plot_scalable_poly_kernels.py`
     """
+
+    _parameter_constraints: dict = {
+        "gamma": [Interval(Real, 0, None, closed="left")],
+        "degree": [Interval(Integral, 1, None, closed="left")],
+        "coef0": [Interval(Real, None, None, closed="neither")],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+    }
 
     def __init__(
         self, *, gamma=1.0, degree=2, coef0=0, n_components=100, random_state=None
@@ -122,6 +135,7 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
         self.n_components = n_components
         self.random_state = random_state
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the model with X.
 
@@ -143,10 +157,7 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
         self : object
             Returns the instance itself.
         """
-        if not self.degree >= 1:
-            raise ValueError(f"degree={self.degree} should be >=1.")
-
-        X = self._validate_data(X, accept_sparse="csc")
+        X = validate_data(self, X, accept_sparse="csc")
         random_state = check_random_state(self.random_state)
 
         n_features = X.shape[1]
@@ -158,6 +169,7 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
         )
 
         self.bitHash_ = random_state.choice(a=[-1, 1], size=(self.degree, n_features))
+        self._n_features_out = self.n_components
         return self
 
     def transform(self, X):
@@ -176,7 +188,7 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
         """
 
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse="csc", reset=False)
+        X = validate_data(self, X, accept_sparse="csc", reset=False)
 
         X_gamma = np.sqrt(self.gamma) * X
 
@@ -205,7 +217,7 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
                     iHashIndex = self.indexHash_[d, j]
                     iHashBit = self.bitHash_[d, j]
                     count_sketches[:, d, iHashIndex] += (
-                        (iHashBit * X_gamma[:, j]).toarray().ravel()
+                        (iHashBit * X_gamma[:, [j]]).toarray().ravel()
                     )
 
         else:
@@ -224,7 +236,7 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
         return data_sketch
 
 
-class RBFSampler(TransformerMixin, BaseEstimator):
+class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Approximate a RBF kernel feature map using random Fourier features.
 
     It implements a variant of Random Kitchen Sinks.[1]
@@ -233,8 +245,13 @@ class RBFSampler(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    gamma : float, default=1.0
+    gamma : 'scale' or float, default=1.0
         Parameter of RBF kernel: exp(-gamma * x^2).
+        If ``gamma='scale'`` is passed then it uses
+        1 / (n_features * X.var()) as value of gamma.
+
+        .. versionadded:: 1.2
+           The option `"scale"` was added in 1.2.
 
     n_components : int, default=100
         Number of Monte Carlo samples per original feature.
@@ -248,12 +265,12 @@ class RBFSampler(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    random_offset_ : ndarray of shape (n_components,), dtype=float64
+    random_offset_ : ndarray of shape (n_components,), dtype={np.float64, np.float32}
         Random offset used to compute the projection in the `n_components`
         dimensions of the feature space.
 
     random_weights_ : ndarray of shape (n_features, n_components),\
-        dtype=float64
+        dtype={np.float64, np.float32}
         Random projection directions drawn from the Fourier transform
         of the RBF kernel.
 
@@ -302,11 +319,21 @@ class RBFSampler(TransformerMixin, BaseEstimator):
     1.0
     """
 
+    _parameter_constraints: dict = {
+        "gamma": [
+            StrOptions({"scale"}),
+            Interval(Real, 0.0, None, closed="left"),
+        ],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+    }
+
     def __init__(self, *, gamma=1.0, n_components=100, random_state=None):
         self.gamma = gamma
         self.n_components = n_components
         self.random_state = random_state
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the model with X.
 
@@ -327,16 +354,29 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-
-        X = self._validate_data(X, accept_sparse="csr")
+        X = validate_data(self, X, accept_sparse="csr")
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
-
-        self.random_weights_ = np.sqrt(2 * self.gamma) * random_state.normal(
+        sparse = sp.issparse(X)
+        if self.gamma == "scale":
+            # var = E[X^2] - E[X]^2 if sparse
+            X_var = (X.multiply(X)).mean() - (X.mean()) ** 2 if sparse else X.var()
+            self._gamma = 1.0 / (n_features * X_var) if X_var != 0 else 1.0
+        else:
+            self._gamma = self.gamma
+        self.random_weights_ = (2.0 * self._gamma) ** 0.5 * random_state.normal(
             size=(n_features, self.n_components)
         )
 
         self.random_offset_ = random_state.uniform(0, 2 * np.pi, size=self.n_components)
+
+        if X.dtype == np.float32:
+            # Setting the data type of the fitted attribute will ensure the
+            # output data type during `transform`.
+            self.random_weights_ = self.random_weights_.astype(X.dtype, copy=False)
+            self.random_offset_ = self.random_offset_.astype(X.dtype, copy=False)
+
+        self._n_features_out = self.n_components
         return self
 
     def transform(self, X):
@@ -355,15 +395,22 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
+        X = validate_data(self, X, accept_sparse="csr", reset=False)
         projection = safe_sparse_dot(X, self.random_weights_)
         projection += self.random_offset_
         np.cos(projection, projection)
-        projection *= np.sqrt(2.0) / np.sqrt(self.n_components)
+        projection *= (2.0 / self.n_components) ** 0.5
         return projection
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
-class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
+
+class SkewedChi2Sampler(
+    ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
+):
     """Approximate feature map for "skewed chi-squared" kernel.
 
     Read more in the :ref:`User Guide <skewed_chi_kernel_approx>`.
@@ -436,11 +483,18 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
     1.0
     """
 
+    _parameter_constraints: dict = {
+        "skewedness": [Interval(Real, None, None, closed="neither")],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+    }
+
     def __init__(self, *, skewedness=1.0, n_components=100, random_state=None):
         self.skewedness = skewedness
         self.n_components = n_components
         self.random_state = random_state
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the model with X.
 
@@ -461,14 +515,21 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-
-        X = self._validate_data(X)
+        X = validate_data(self, X)
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
         uniform = random_state.uniform(size=(n_features, self.n_components))
         # transform by inverse CDF of sech
         self.random_weights_ = 1.0 / np.pi * np.log(np.tan(np.pi / 2.0 * uniform))
         self.random_offset_ = random_state.uniform(0, 2 * np.pi, size=self.n_components)
+
+        if X.dtype == np.float32:
+            # Setting the data type of the fitted attribute will ensure the
+            # output data type during `transform`.
+            self.random_weights_ = self.random_weights_.astype(X.dtype, copy=False)
+            self.random_offset_ = self.random_offset_.astype(X.dtype, copy=False)
+
+        self._n_features_out = self.n_components
         return self
 
     def transform(self, X):
@@ -487,8 +548,8 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
             Returns the instance itself.
         """
         check_is_fitted(self)
-        X = self._validate_data(
-            X, copy=True, dtype=[np.float64, np.float32], reset=False
+        X = validate_data(
+            self, X, copy=True, dtype=[np.float64, np.float32], reset=False
         )
         if (X <= -self.skewedness).any():
             raise ValueError("X may not contain entries smaller than -skewedness.")
@@ -501,6 +562,11 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         projection *= np.sqrt(2.0) / np.sqrt(self.n_components)
         return projection
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
+
 
 class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
     """Approximate feature map for additive chi2 kernel.
@@ -510,7 +576,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
 
     Since the kernel that is to be approximated is additive, the components of
     the input vectors can be treated separately.  Each entry in the original
-    space is transformed into 2*sample_steps+1 features, where sample_steps is
+    space is transformed into 2*sample_steps-1 features, where sample_steps is
     a parameter of the method. Typical values of sample_steps include 1, 2 and
     3.
 
@@ -529,10 +595,6 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    sample_interval_ : float
-        Stored sampling interval. Specified as a parameter if `sample_steps`
-        not in {1,2,3}.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -559,6 +621,10 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
     This estimator approximates a slightly different version of the additive
     chi squared kernel then ``metric.additive_chi2`` computes.
 
+    This estimator is stateless and does not need to be fitted. However, we
+    recommend to call :meth:`fit_transform` instead of :meth:`transform`, as
+    parameter validation is only performed in :meth:`fit`.
+
     References
     ----------
     See `"Efficient additive kernels via explicit feature maps"
@@ -581,12 +647,21 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
     0.9499...
     """
 
+    _parameter_constraints: dict = {
+        "sample_steps": [Interval(Integral, 1, None, closed="left")],
+        "sample_interval": [Interval(Real, 0, None, closed="left"), None],
+    }
+
     def __init__(self, *, sample_steps=2, sample_interval=None):
         self.sample_steps = sample_steps
         self.sample_interval = sample_interval
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
-        """Set the parameters.
+        """Only validates estimator's parameters.
+
+        This method allows to: (i) validate the estimator's parameters and
+        (ii) be consistent with the scikit-learn transformer API.
 
         Parameters
         ----------
@@ -603,24 +678,14 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         self : object
             Returns the transformer.
         """
-        X = self._validate_data(X, accept_sparse="csr")
-        check_non_negative(X, "X in AdditiveChi2Sampler.fit")
+        X = validate_data(self, X, accept_sparse="csr", ensure_non_negative=True)
 
-        if self.sample_interval is None:
-            # See reference, figure 2 c)
-            if self.sample_steps == 1:
-                self.sample_interval_ = 0.8
-            elif self.sample_steps == 2:
-                self.sample_interval_ = 0.5
-            elif self.sample_steps == 3:
-                self.sample_interval_ = 0.4
-            else:
-                raise ValueError(
-                    "If sample_steps is not in [1, 2, 3],"
-                    " you need to provide sample_interval"
-                )
-        else:
-            self.sample_interval_ = self.sample_interval
+        if self.sample_interval is None and self.sample_steps not in (1, 2, 3):
+            raise ValueError(
+                "If sample_steps is not in [1, 2, 3],"
+                " you need to provide sample_interval"
+            )
+
         return self
 
     def transform(self, X):
@@ -635,41 +700,86 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         Returns
         -------
         X_new : {ndarray, sparse matrix}, \
-               shape = (n_samples, n_features * (2*sample_steps + 1))
+               shape = (n_samples, n_features * (2*sample_steps - 1))
             Whether the return value is an array or sparse matrix depends on
             the type of the input X.
         """
-        msg = (
-            "%(name)s is not fitted. Call fit to set the parameters before"
-            " calling transform"
+        X = validate_data(
+            self, X, accept_sparse="csr", reset=False, ensure_non_negative=True
         )
-        check_is_fitted(self, msg=msg)
-
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
-        check_non_negative(X, "X in AdditiveChi2Sampler.transform")
         sparse = sp.issparse(X)
+
+        if self.sample_interval is None:
+            # See figure 2 c) of "Efficient additive kernels via explicit feature maps" # noqa
+            # <http://www.robots.ox.ac.uk/~vedaldi/assets/pubs/vedaldi11efficient.pdf>
+            # A. Vedaldi and A. Zisserman, Pattern Analysis and Machine Intelligence, # noqa
+            # 2011
+            if self.sample_steps == 1:
+                sample_interval = 0.8
+            elif self.sample_steps == 2:
+                sample_interval = 0.5
+            elif self.sample_steps == 3:
+                sample_interval = 0.4
+            else:
+                raise ValueError(
+                    "If sample_steps is not in [1, 2, 3],"
+                    " you need to provide sample_interval"
+                )
+        else:
+            sample_interval = self.sample_interval
 
         # zeroth component
         # 1/cosh = sech
         # cosh(0) = 1.0
-
         transf = self._transform_sparse if sparse else self._transform_dense
-        return transf(X)
+        return transf(X, self.sample_steps, sample_interval)
 
-    def _transform_dense(self, X):
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Only used to validate feature names with the names seen in :meth:`fit`.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        # Note that passing attributes="n_features_in_" forces check_is_fitted
+        # to check if the attribute is present. Otherwise it will pass on this
+        # stateless estimator (requires_fit=False)
+        check_is_fitted(self, attributes="n_features_in_")
+        input_features = _check_feature_names_in(
+            self, input_features, generate_names=True
+        )
+        est_name = self.__class__.__name__.lower()
+
+        names_list = [f"{est_name}_{name}_sqrt" for name in input_features]
+
+        for j in range(1, self.sample_steps):
+            cos_names = [f"{est_name}_{name}_cos{j}" for name in input_features]
+            sin_names = [f"{est_name}_{name}_sin{j}" for name in input_features]
+            names_list.extend(cos_names + sin_names)
+
+        return np.asarray(names_list, dtype=object)
+
+    @staticmethod
+    def _transform_dense(X, sample_steps, sample_interval):
         non_zero = X != 0.0
         X_nz = X[non_zero]
 
         X_step = np.zeros_like(X)
-        X_step[non_zero] = np.sqrt(X_nz * self.sample_interval_)
+        X_step[non_zero] = np.sqrt(X_nz * sample_interval)
 
         X_new = [X_step]
 
-        log_step_nz = self.sample_interval_ * np.log(X_nz)
-        step_nz = 2 * X_nz * self.sample_interval_
+        log_step_nz = sample_interval * np.log(X_nz)
+        step_nz = 2 * X_nz * sample_interval
 
-        for j in range(1, self.sample_steps):
-            factor_nz = np.sqrt(step_nz / np.cosh(np.pi * j * self.sample_interval_))
+        for j in range(1, sample_steps):
+            factor_nz = np.sqrt(step_nz / np.cosh(np.pi * j * sample_interval))
 
             X_step = np.zeros_like(X)
             X_step[non_zero] = factor_nz * np.cos(j * log_step_nz)
@@ -681,21 +791,22 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
 
         return np.hstack(X_new)
 
-    def _transform_sparse(self, X):
+    @staticmethod
+    def _transform_sparse(X, sample_steps, sample_interval):
         indices = X.indices.copy()
         indptr = X.indptr.copy()
 
-        data_step = np.sqrt(X.data * self.sample_interval_)
+        data_step = np.sqrt(X.data * sample_interval)
         X_step = sp.csr_matrix(
             (data_step, indices, indptr), shape=X.shape, dtype=X.dtype, copy=False
         )
         X_new = [X_step]
 
-        log_step_nz = self.sample_interval_ * np.log(X.data)
-        step_nz = 2 * X.data * self.sample_interval_
+        log_step_nz = sample_interval * np.log(X.data)
+        step_nz = 2 * X.data * sample_interval
 
-        for j in range(1, self.sample_steps):
-            factor_nz = np.sqrt(step_nz / np.cosh(np.pi * j * self.sample_interval_))
+        for j in range(1, sample_steps):
+            factor_nz = np.sqrt(step_nz / np.cosh(np.pi * j * sample_interval))
 
             data_step = factor_nz * np.cos(j * log_step_nz)
             X_step = sp.csr_matrix(
@@ -711,11 +822,14 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
 
         return sp.hstack(X_new)
 
-    def _more_tags(self):
-        return {"stateless": True, "requires_positive_X": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.requires_fit = False
+        tags.input_tags.positive_only = True
+        return tags
 
 
-class Nystroem(TransformerMixin, BaseEstimator):
+class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Approximate a kernel map using a subset of the training data.
 
     Constructs an approximate feature map for an arbitrary kernel
@@ -831,6 +945,20 @@ class Nystroem(TransformerMixin, BaseEstimator):
     0.9987...
     """
 
+    _parameter_constraints: dict = {
+        "kernel": [
+            StrOptions(set(PAIRWISE_KERNEL_FUNCTIONS.keys()) | {"precomputed"}),
+            callable,
+        ],
+        "gamma": [Interval(Real, 0, None, closed="left"), None],
+        "coef0": [Interval(Real, None, None, closed="neither"), None],
+        "degree": [Interval(Real, 1, None, closed="left"), None],
+        "kernel_params": [dict, None],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+        "n_jobs": [Integral, None],
+    }
+
     def __init__(
         self,
         kernel="rbf",
@@ -843,7 +971,6 @@ class Nystroem(TransformerMixin, BaseEstimator):
         random_state=None,
         n_jobs=None,
     ):
-
         self.kernel = kernel
         self.gamma = gamma
         self.coef0 = coef0
@@ -853,6 +980,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
         self.random_state = random_state
         self.n_jobs = n_jobs
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit estimator to data.
 
@@ -874,7 +1002,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X, accept_sparse="csr")
+        X = validate_data(self, X, accept_sparse="csr")
         rnd = check_random_state(self.random_state)
         n_samples = X.shape[0]
 
@@ -909,6 +1037,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
         self.normalization_ = np.dot(U / np.sqrt(S), V)
         self.components_ = basis
         self.component_indices_ = basis_inds
+        self._n_features_out = n_components
         return self
 
     def transform(self, X):
@@ -928,7 +1057,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
             Transformed data.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
+        X = validate_data(self, X, accept_sparse="csr", reset=False)
 
         kernel_params = self._get_kernel_params()
         embedded = pairwise_kernels(
@@ -963,12 +1092,12 @@ class Nystroem(TransformerMixin, BaseEstimator):
 
         return params
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_transformer_preserve_dtypes": (
-                    "dtypes are preserved but not at a close enough precision"
-                )
-            },
-            "preserves_dtype": [np.float64, np.float32],
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_transformer_preserves_dtypes": (
+                "dtypes are preserved but not at a close enough precision"
+            )
         }
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags

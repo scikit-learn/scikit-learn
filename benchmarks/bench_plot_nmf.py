@@ -1,32 +1,28 @@
 """
 Benchmarks of Non-Negative Matrix Factorization
 """
-# Authors: Tom Dupre la Tour (benchmark)
-#          Chih-Jen Linn (original projected gradient NMF implementation)
-#          Anthony Di Franco (projected gradient, Python and NumPy port)
-# License: BSD 3 clause
 
-from time import time
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+import numbers
 import sys
 import warnings
-import numbers
+from time import time
 
-import numpy as np
 import matplotlib.pyplot as plt
-from joblib import Memory
+import numpy as np
 import pandas
+from joblib import Memory
 
-from sklearn.utils._testing import ignore_warnings
-from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import NMF
-from sklearn.decomposition._nmf import _initialize_nmf
-from sklearn.decomposition._nmf import _beta_divergence
-from sklearn.decomposition._nmf import _check_init
+from sklearn.decomposition._nmf import _beta_divergence, _check_init, _initialize_nmf
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils.extmath import safe_sparse_dot, squared_norm
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.utils import check_array
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils.extmath import safe_sparse_dot, squared_norm
 from sklearn.utils.validation import check_is_fitted, check_non_negative
-
 
 mem = Memory(cachedir=".", verbose=0)
 
@@ -41,7 +37,7 @@ mem = Memory(cachedir=".", verbose=0)
 
 def _norm(x):
     """Dot product-based Euclidean norm implementation
-    See: http://fseoane.net/blog/2011/computing-the-vector-norm/
+    See: https://fa.bianp.net/blog/2011/computing-the-vector-norm/
     """
     return np.sqrt(squared_norm(x))
 
@@ -162,7 +158,7 @@ def _fit_projected_gradient(X, W, H, tol, max_iter, nls_max_iter, alpha, l1_rati
         proj_grad_W = squared_norm(gradW * np.logical_or(gradW < 0, W > 0))
         proj_grad_H = squared_norm(gradH * np.logical_or(gradH < 0, H > 0))
 
-        if (proj_grad_W + proj_grad_H) / init_grad < tol ** 2:
+        if (proj_grad_W + proj_grad_H) / init_grad < tol**2:
             break
 
         # update W
@@ -219,7 +215,8 @@ class _PGNMF(NMF):
             tol=tol,
             max_iter=max_iter,
             random_state=random_state,
-            alpha=alpha,
+            alpha_W=alpha,
+            alpha_H=alpha,
             l1_ratio=l1_ratio,
         )
         self.nls_max_iter = nls_max_iter
@@ -260,8 +257,7 @@ class _PGNMF(NMF):
         if not isinstance(self.max_iter, numbers.Integral) or self.max_iter < 0:
             raise ValueError(
                 "Maximum number of iterations must be a positive "
-                "integer; got (max_iter=%r)"
-                % self.max_iter
+                "integer; got (max_iter=%r)" % self.max_iter
             )
         if not isinstance(self.tol, numbers.Number) or self.tol < 0:
             raise ValueError(
@@ -307,8 +303,7 @@ class _PGNMF(NMF):
         if n_iter == self.max_iter and self.tol > 0:
             warnings.warn(
                 "Maximum number of iteration %d reached. Increase it"
-                " to improve convergence."
-                % self.max_iter,
+                " to improve convergence." % self.max_iter,
                 ConvergenceWarning,
             )
 

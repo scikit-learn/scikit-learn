@@ -1,11 +1,10 @@
-# Author: Guillaume Lemaitre <g.lemaitre58@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import pytest
 import numpy as np
+import pytest
 
-from sklearn.mixture import GaussianMixture
-from sklearn.mixture import BayesianGaussianMixture
+from sklearn.mixture import BayesianGaussianMixture, GaussianMixture
 
 
 @pytest.mark.parametrize("estimator", [GaussianMixture(), BayesianGaussianMixture()])

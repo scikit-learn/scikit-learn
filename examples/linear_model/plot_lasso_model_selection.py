@@ -13,16 +13,8 @@ criterion, namely AIC or BIC.
 In what follows, we will discuss in details the different strategies.
 """
 
-# Author: Olivier Grisel
-#         Gael Varoquaux
-#         Alexandre Gramfort
-#         Guillaume Lemaitre
-# License: BSD 3 clause
-
-# %%
-import sklearn
-
-sklearn.set_config(display="diagram")
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Dataset
@@ -64,14 +56,13 @@ X[X.columns[::3]].head()
 #
 # We will first fit a Lasso model with the AIC criterion.
 import time
-from sklearn.preprocessing import StandardScaler
+
 from sklearn.linear_model import LassoLarsIC
 from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 
 start_time = time.time()
-lasso_lars_ic = make_pipeline(
-    StandardScaler(), LassoLarsIC(criterion="aic", normalize=False)
-).fit(X, y)
+lasso_lars_ic = make_pipeline(StandardScaler(), LassoLarsIC(criterion="aic")).fit(X, y)
 fit_time = time.time() - start_time
 
 # %%
@@ -198,7 +189,7 @@ _ = plt.title(
 from sklearn.linear_model import LassoLarsCV
 
 start_time = time.time()
-model = make_pipeline(StandardScaler(), LassoLarsCV(cv=20, normalize=False)).fit(X, y)
+model = make_pipeline(StandardScaler(), LassoLarsCV(cv=20)).fit(X, y)
 fit_time = time.time() - start_time
 
 # %%

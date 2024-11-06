@@ -2,60 +2,59 @@
 Several basic tests for hierarchical clustering procedures
 
 """
-# Authors: Vincent Michel, 2010, Gael Varoquaux 2012,
-#          Matteo Visconti di Oleggio Castello 2014
-# License: BSD 3 clause
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import itertools
-from tempfile import mkdtemp
 import shutil
-import pytest
 from functools import partial
+from tempfile import mkdtemp
 
 import numpy as np
-from scipy import sparse
+import pytest
 from scipy.cluster import hierarchy
 from scipy.sparse.csgraph import connected_components
 
-from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.metrics.tests.test_dist_metrics import METRICS_DEFAULT_PARAMS
-from sklearn.utils._testing import assert_almost_equal, create_memmap_backed_data
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import ignore_warnings
-
-from sklearn.cluster import ward_tree
-from sklearn.cluster import AgglomerativeClustering, FeatureAgglomeration
+from sklearn.cluster import AgglomerativeClustering, FeatureAgglomeration, ward_tree
 from sklearn.cluster._agglomerative import (
-    _hc_cut,
     _TREE_BUILDERS,
-    linkage_tree,
     _fix_connectivity,
+    _hc_cut,
+    linkage_tree,
 )
+from sklearn.cluster._hierarchical_fast import (
+    average_merge,
+    max_merge,
+    mst_linkage_core,
+)
+from sklearn.datasets import make_circles, make_moons
 from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.metrics import DistanceMetric
+from sklearn.metrics.cluster import adjusted_rand_score, normalized_mutual_info_score
 from sklearn.metrics.pairwise import (
     PAIRED_DISTANCES,
     cosine_distances,
     manhattan_distances,
     pairwise_distances,
 )
-from sklearn.metrics.cluster import normalized_mutual_info_score
+from sklearn.metrics.tests.test_dist_metrics import METRICS_DEFAULT_PARAMS
 from sklearn.neighbors import kneighbors_graph
-from sklearn.cluster._hierarchical_fast import (
-    average_merge,
-    max_merge,
-    mst_linkage_core,
-)
 from sklearn.utils._fast_dict import IntFloatDict
-from sklearn.utils._testing import assert_array_equal
-from sklearn.datasets import make_moons, make_circles
+from sklearn.utils._testing import (
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    create_memmap_backed_data,
+    ignore_warnings,
+)
+from sklearn.utils.fixes import LIL_CONTAINERS
 
 
 def test_linkage_misc():
     # Misc tests on linkage
     rng = np.random.RandomState(42)
     X = rng.normal(size=(5, 5))
-    with pytest.raises(ValueError):
-        AgglomerativeClustering(linkage="foo").fit(X)
 
     with pytest.raises(ValueError):
         linkage_tree(X, linkage="foo")
@@ -138,18 +137,6 @@ def test_height_linkage_tree():
         assert len(children) + n_leaves == n_nodes
 
 
-def test_agglomerative_clustering_wrong_arg_memory():
-    # Test either if an error is raised when memory is not
-    # either a str or a joblib.Memory instance
-    rng = np.random.RandomState(0)
-    n_samples = 100
-    X = rng.randn(n_samples, 50)
-    memory = 5
-    clustering = AgglomerativeClustering(memory=memory)
-    with pytest.raises(ValueError):
-        clustering.fit(X)
-
-
 def test_zero_cosine_linkage_tree():
     # Check that zero vectors in X produce an error when
     # 'cosine' affinity is used
@@ -190,10 +177,11 @@ def test_agglomerative_clustering_distances(
         assert not hasattr(clustering, "distances_")
 
 
-def test_agglomerative_clustering():
+@pytest.mark.parametrize("lil_container", LIL_CONTAINERS)
+def test_agglomerative_clustering(global_random_seed, lil_container):
     # Check that we obtain the correct number of clusters with
     # agglomerative clustering.
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     mask = np.ones([10, 10], dtype=bool)
     n_samples = 100
     X = rng.randn(n_samples, 50)
@@ -232,7 +220,7 @@ def test_agglomerative_clustering():
         # Check that we raise a TypeError on dense matrices
         clustering = AgglomerativeClustering(
             n_clusters=10,
-            connectivity=sparse.lil_matrix(connectivity.toarray()[:10, :10]),
+            connectivity=lil_container(connectivity.toarray()[:10, :10]),
             linkage=linkage,
         )
         with pytest.raises(ValueError):
@@ -243,24 +231,24 @@ def test_agglomerative_clustering():
     clustering = AgglomerativeClustering(
         n_clusters=10,
         connectivity=connectivity.toarray(),
-        affinity="manhattan",
+        metric="manhattan",
         linkage="ward",
     )
     with pytest.raises(ValueError):
         clustering.fit(X)
 
     # Test using another metric than euclidean works with linkage complete
-    for affinity in PAIRED_DISTANCES.keys():
+    for metric in PAIRED_DISTANCES.keys():
         # Compare our (structured) implementation to scipy
         clustering = AgglomerativeClustering(
             n_clusters=10,
             connectivity=np.ones((n_samples, n_samples)),
-            affinity=affinity,
+            metric=metric,
             linkage="complete",
         )
         clustering.fit(X)
         clustering2 = AgglomerativeClustering(
-            n_clusters=10, connectivity=None, affinity=affinity, linkage="complete"
+            n_clusters=10, connectivity=None, metric=metric, linkage="complete"
         )
         clustering2.fit(X)
         assert_almost_equal(
@@ -277,7 +265,7 @@ def test_agglomerative_clustering():
     clustering2 = AgglomerativeClustering(
         n_clusters=10,
         connectivity=connectivity,
-        affinity="precomputed",
+        metric="precomputed",
         linkage="complete",
     )
     clustering2.fit(X_dist)
@@ -291,12 +279,12 @@ def test_agglomerative_clustering_memory_mapped():
     """
     rng = np.random.RandomState(0)
     Xmm = create_memmap_backed_data(rng.randn(50, 100))
-    AgglomerativeClustering(affinity="euclidean", linkage="single").fit(Xmm)
+    AgglomerativeClustering(metric="euclidean", linkage="single").fit(Xmm)
 
 
-def test_ward_agglomeration():
+def test_ward_agglomeration(global_random_seed):
     # Check that we obtain the correct solution in a simplistic case
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     mask = np.ones([10, 10], dtype=bool)
     X = rng.randn(50, 100)
     connectivity = grid_to_graph(*mask.shape)
@@ -344,10 +332,10 @@ def assess_same_labelling(cut1, cut2):
     assert (co_clust[0] == co_clust[1]).all()
 
 
-def test_sparse_scikit_vs_scipy():
+def test_sparse_scikit_vs_scipy(global_random_seed):
     # Test scikit linkage with full connectivity (i.e. unstructured) vs scipy
     n, p, k = 10, 5, 3
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
 
     # Not using a lil_matrix here, just to check that non sparse
     # matrices are well handled
@@ -384,10 +372,9 @@ def test_sparse_scikit_vs_scipy():
 
 # Make sure our custom mst_linkage_core gives
 # the same results as scipy's builtin
-@pytest.mark.parametrize("seed", range(5))
-def test_vector_scikit_single_vs_scipy_single(seed):
+def test_vector_scikit_single_vs_scipy_single(global_random_seed):
     n_samples, n_features, n_clusters = 10, 5, 3
-    rng = np.random.RandomState(seed)
+    rng = np.random.RandomState(global_random_seed)
     X = 0.1 * rng.normal(size=(n_samples, n_features))
     X -= 4.0 * np.arange(n_samples)[:, np.newaxis]
     X -= X.mean(axis=1)[:, np.newaxis]
@@ -480,13 +467,13 @@ def test_connectivity_propagation():
     ward.fit(X)
 
 
-def test_ward_tree_children_order():
+def test_ward_tree_children_order(global_random_seed):
     # Check that children are ordered in the same way for both structured and
     # unstructured versions of ward_tree.
 
     # test on five random datasets
     n, p = 10, 5
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
 
     connectivity = np.ones((n, n))
     for i in range(5):
@@ -500,13 +487,13 @@ def test_ward_tree_children_order():
         assert_array_equal(out_unstructured[0], out_structured[0])
 
 
-def test_ward_linkage_tree_return_distance():
+def test_ward_linkage_tree_return_distance(global_random_seed):
     # Test return_distance option on linkage and ward trees
 
     # test that return_distance when set true, gives same
     # output on both structured and unstructured clustering.
     n, p = 10, 5
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
 
     connectivity = np.ones((n, n))
     for i in range(5):
@@ -603,7 +590,7 @@ def test_ward_linkage_tree_return_distance():
 
     linkage_options = ["complete", "average", "single"]
     X_linkage_truth = [linkage_X_complete, linkage_X_average]
-    for (linkage, X_truth) in zip(linkage_options, X_linkage_truth):
+    for linkage, X_truth in zip(linkage_options, X_linkage_truth):
         out_X_unstructured = linkage_tree(X, return_distance=True, linkage=linkage)
         out_X_structured = linkage_tree(
             X, connectivity=connectivity_X, linkage=linkage, return_distance=True
@@ -711,20 +698,6 @@ def test_n_components():
         assert ignore_warnings(linkage_func)(X, connectivity=connectivity)[1] == 5
 
 
-def test_agg_n_clusters():
-    # Test that an error is raised when n_clusters <= 0
-
-    rng = np.random.RandomState(0)
-    X = rng.rand(20, 10)
-    for n_clus in [-1, 0]:
-        agc = AgglomerativeClustering(n_clusters=n_clus)
-        msg = "n_clusters should be an integer greater than 0. %s was provided." % str(
-            agc.n_clusters
-        )
-        with pytest.raises(ValueError, match=msg):
-            agc.fit(X)
-
-
 def test_affinity_passed_to_fix_connectivity():
     # Test that the affinity parameter is actually passed to the pairwise
     # function
@@ -752,10 +725,10 @@ def test_affinity_passed_to_fix_connectivity():
 
 
 @pytest.mark.parametrize("linkage", ["ward", "complete", "average"])
-def test_agglomerative_clustering_with_distance_threshold(linkage):
+def test_agglomerative_clustering_with_distance_threshold(linkage, global_random_seed):
     # Check that we obtain the correct number of clusters with
     # agglomerative clustering with distance_threshold.
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     mask = np.ones([10, 10], dtype=bool)
     n_samples = 100
     X = rng.randn(n_samples, 50)
@@ -790,8 +763,8 @@ def test_agglomerative_clustering_with_distance_threshold(linkage):
         assert np.array_equiv(clusters_produced, clusters_at_threshold)
 
 
-def test_small_distance_threshold():
-    rng = np.random.RandomState(0)
+def test_small_distance_threshold(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 10
     X = rng.randint(-300, 300, size=(n_samples, 3))
     # this should result in all data in their own clusters, given that
@@ -807,8 +780,8 @@ def test_small_distance_threshold():
     assert clustering.n_clusters_ == n_samples
 
 
-def test_cluster_distances_with_distance_threshold():
-    rng = np.random.RandomState(0)
+def test_cluster_distances_with_distance_threshold(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 100
     X = rng.randint(-10, 10, size=(n_samples, 3))
     # check the distances within the clusters and with other clusters
@@ -874,10 +847,10 @@ def test_invalid_shape_precomputed_dist_matrix():
         ValueError,
         match=r"Distance matrix should be square, got matrix of shape \(5, 3\)",
     ):
-        AgglomerativeClustering(affinity="precomputed", linkage="complete").fit(X)
+        AgglomerativeClustering(metric="precomputed", linkage="complete").fit(X)
 
 
-def test_precomputed_connectivity_affinity_with_2_connected_components():
+def test_precomputed_connectivity_metric_with_2_connected_components():
     """Check that connecting components works when connectivity and
     affinity are both precomputed and the number of connected components is
     greater than 1. Non-regression test for #16151.
@@ -900,7 +873,7 @@ def test_precomputed_connectivity_affinity_with_2_connected_components():
 
     X_dist = pairwise_distances(X)
     clusterer_precomputed = AgglomerativeClustering(
-        affinity="precomputed", connectivity=connectivity_matrix, linkage="complete"
+        metric="precomputed", connectivity=connectivity_matrix, linkage="complete"
     )
     msg = "Completing it to avoid stopping the tree early"
     with pytest.warns(UserWarning, match=msg):

@@ -6,8 +6,8 @@ This example shows the effect of imposing a connectivity graph to capture
 local structure in the data. The graph is simply the graph of 20 nearest
 neighbors.
 
-Two consequences of imposing a connectivity can be seen. First, clustering
-without a connectivity matrix is much faster.
+There are two advantages of imposing a connectivity. First, clustering
+with sparse connectivity matrices is faster in general.
 
 Second, when using a connectivity matrix, single, average and complete
 linkage are unstable and tend to create a few clusters that grow very
@@ -24,10 +24,11 @@ which is well known to have this percolation instability.
 
 """
 
-# Authors: Gael Varoquaux, Nelle Varoquaux
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import time
+
 import matplotlib.pyplot as plt
 import numpy as np
 

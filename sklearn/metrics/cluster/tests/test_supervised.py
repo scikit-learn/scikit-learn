@@ -1,27 +1,30 @@
+import warnings
+
 import numpy as np
 import pytest
+from numpy.testing import assert_allclose, assert_array_almost_equal, assert_array_equal
 
-from sklearn.metrics.cluster import adjusted_mutual_info_score
-from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.metrics.cluster import rand_score
-from sklearn.metrics.cluster import completeness_score
-from sklearn.metrics.cluster import contingency_matrix
-from sklearn.metrics.cluster import pair_confusion_matrix
-from sklearn.metrics.cluster import entropy
-from sklearn.metrics.cluster import expected_mutual_information
-from sklearn.metrics.cluster import fowlkes_mallows_score
-from sklearn.metrics.cluster import homogeneity_completeness_v_measure
-from sklearn.metrics.cluster import homogeneity_score
-from sklearn.metrics.cluster import mutual_info_score
-from sklearn.metrics.cluster import normalized_mutual_info_score
-from sklearn.metrics.cluster import v_measure_score
-from sklearn.metrics.cluster._supervised import _generalized_average
-from sklearn.metrics.cluster._supervised import check_clusterings
-
+from sklearn.base import config_context
+from sklearn.metrics.cluster import (
+    adjusted_mutual_info_score,
+    adjusted_rand_score,
+    completeness_score,
+    contingency_matrix,
+    entropy,
+    expected_mutual_information,
+    fowlkes_mallows_score,
+    homogeneity_completeness_v_measure,
+    homogeneity_score,
+    mutual_info_score,
+    normalized_mutual_info_score,
+    pair_confusion_matrix,
+    rand_score,
+    v_measure_score,
+)
+from sklearn.metrics.cluster._supervised import _generalized_average, check_clusterings
 from sklearn.utils import assert_all_finite
-from sklearn.utils._testing import assert_almost_equal, ignore_warnings
-from numpy.testing import assert_array_equal, assert_array_almost_equal, assert_allclose
-
+from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
+from sklearn.utils._testing import _array_api_for_tests, assert_almost_equal
 
 score_funcs = [
     adjusted_rand_score,
@@ -34,7 +37,6 @@ score_funcs = [
 ]
 
 
-@ignore_warnings(category=FutureWarning)
 def test_error_messages_on_wrong_input():
     for score_func in score_funcs:
         expected = (
@@ -62,7 +64,6 @@ def test_generalized_average():
     assert means[0] == means[1] == means[2] == means[3]
 
 
-@ignore_warnings(category=FutureWarning)
 def test_perfect_matches():
     for score_func in score_funcs:
         assert score_func([], []) == pytest.approx(1.0)
@@ -165,7 +166,6 @@ def test_non_consecutive_labels():
     assert_almost_equal(ri_2, 0.66, 2)
 
 
-@ignore_warnings(category=FutureWarning)
 def uniform_labelings_scores(score_func, n_samples, k_range, n_runs=10, seed=42):
     # Compute score for random uniform cluster labelings
     random_labels = np.random.RandomState(seed).randint
@@ -178,7 +178,6 @@ def uniform_labelings_scores(score_func, n_samples, k_range, n_runs=10, seed=42)
     return scores
 
 
-@ignore_warnings(category=FutureWarning)
 def test_adjustment_for_chance():
     # Check that adjusted scores are almost zero on random labels
     n_clusters_range = [2, 10, 50, 90]
@@ -257,9 +256,23 @@ def test_int_overflow_mutual_info_fowlkes_mallows_score():
 
 
 def test_entropy():
-    ent = entropy([0, 0, 42.0])
-    assert_almost_equal(ent, 0.6365141, 5)
+    assert_almost_equal(entropy([0, 0, 42.0]), 0.6365141, 5)
     assert_almost_equal(entropy([]), 1)
+    assert entropy([1, 1, 1, 1]) == 0
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_entropy_array_api(array_namespace, device, dtype_name):
+    xp = _array_api_for_tests(array_namespace, device)
+    float_labels = xp.asarray(np.asarray([0, 0, 42.0], dtype=dtype_name), device=device)
+    empty_int32_labels = xp.asarray([], dtype=xp.int32, device=device)
+    int_labels = xp.asarray([1, 1, 1, 1], device=device)
+    with config_context(array_api_dispatch=True):
+        assert entropy(float_labels) == pytest.approx(0.6365141, abs=1e-5)
+        assert entropy(empty_int32_labels) == 1
+        assert entropy(int_labels) == 0
 
 
 def test_contingency_matrix():
@@ -282,7 +295,6 @@ def test_contingency_matrix_sparse():
         contingency_matrix(labels_a, labels_b, eps=1e-10, sparse=True)
 
 
-@ignore_warnings(category=FutureWarning)
 def test_exactly_zero_info_score():
     # Check numerical stability when information is exactly zero
     for i in np.logspace(1, 4, 4).astype(int):
@@ -366,11 +378,13 @@ def test_fowlkes_mallows_score_properties():
         ([1] * 6, [1, 1, 0, 0, 1, 1]),
         ([1, 1, 0, 0, 1, 1], ["a"] * 6),
         ([1, 1, 0, 0, 1, 1], [1] * 6),
+        (["a"] * 6, ["a"] * 6),
     ],
 )
 def test_mutual_info_score_positive_constant_label(labels_true, labels_pred):
+    # Check that MI = 0 when one or both labelling are constant
     # non-regression test for #16355
-    assert mutual_info_score(labels_true, labels_pred) >= 0
+    assert mutual_info_score(labels_true, labels_pred) == 0
 
 
 def test_check_clustering_error():
@@ -409,7 +423,7 @@ def test_pair_confusion_matrix_single_cluster():
 def test_pair_confusion_matrix():
     # regular case: different non-trivial clusterings
     n = 10
-    N = n ** 2
+    N = n**2
     clustering1 = np.hstack([[i + 1] * n for i in range(n)])
     clustering2 = np.hstack([[i + 1] * (n + 1) for i in range(n)])[:N]
     # basic quadratic implementation
@@ -458,6 +472,26 @@ def test_adjusted_rand_score_overflow():
     rng = np.random.RandomState(0)
     y_true = rng.randint(0, 2, 100_000, dtype=np.int8)
     y_pred = rng.randint(0, 2, 100_000, dtype=np.int8)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
         adjusted_rand_score(y_true, y_pred)
-    assert len(record) == 0
+
+
+@pytest.mark.parametrize("average_method", ["min", "arithmetic", "geometric", "max"])
+def test_normalized_mutual_info_score_bounded(average_method):
+    """Check that nmi returns a score between 0 (included) and 1 (excluded
+    for non-perfect match)
+
+    Non-regression test for issue #13836
+    """
+    labels1 = [0] * 469
+    labels2 = [1] + labels1[1:]
+    labels3 = [0, 1] + labels1[2:]
+
+    # labels1 is constant. The mutual info between labels1 and any other labelling is 0.
+    nmi = normalized_mutual_info_score(labels1, labels2, average_method=average_method)
+    assert nmi == 0
+
+    # non constant, non perfect matching labels
+    nmi = normalized_mutual_info_score(labels2, labels3, average_method=average_method)
+    assert 0 <= nmi < 1

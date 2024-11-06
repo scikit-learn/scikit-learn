@@ -1,11 +1,9 @@
 import numpy as np
-from numpy.testing import assert_array_equal
 import pytest
+from numpy.testing import assert_array_equal
 
 from sklearn.feature_extraction import FeatureHasher
-from sklearn.utils._testing import ignore_warnings, fails_if_pypy
-
-pytestmark = fails_if_pypy
+from sklearn.feature_extraction._hashing_fast import transform as _hashing_transform
 
 
 def test_feature_hasher_dicts():
@@ -27,7 +25,7 @@ def test_feature_hasher_strings():
     ]
 
     for lg_n_features in (7, 9, 11, 16, 22):
-        n_features = 2 ** lg_n_features
+        n_features = 2**lg_n_features
 
         it = (x for x in raw_X)  # iterable
 
@@ -45,26 +43,43 @@ def test_feature_hasher_strings():
         assert X.nnz == 6
 
 
+@pytest.mark.parametrize(
+    "raw_X",
+    [
+        ["my_string", "another_string"],
+        (x for x in ["my_string", "another_string"]),
+    ],
+    ids=["list", "generator"],
+)
+def test_feature_hasher_single_string(raw_X):
+    """FeatureHasher raises error when a sample is a single string.
+
+    Non-regression test for gh-13199.
+    """
+    msg = "Samples can not be a single string"
+
+    feature_hasher = FeatureHasher(n_features=10, input_type="string")
+    with pytest.raises(ValueError, match=msg):
+        feature_hasher.transform(raw_X)
+
+
 def test_hashing_transform_seed():
     # check the influence of the seed when computing the hashes
-    # import is here to avoid importing on pypy
-    from sklearn.feature_extraction._hashing_fast import transform as _hashing_transform
-
     raw_X = [
         ["foo", "bar", "baz", "foo".encode("ascii")],
         ["bar".encode("ascii"), "baz", "quux"],
     ]
 
     raw_X_ = (((f, 1) for f in x) for x in raw_X)
-    indices, indptr, _ = _hashing_transform(raw_X_, 2 ** 7, str, False)
+    indices, indptr, _ = _hashing_transform(raw_X_, 2**7, str, False)
 
     raw_X_ = (((f, 1) for f in x) for x in raw_X)
-    indices_0, indptr_0, _ = _hashing_transform(raw_X_, 2 ** 7, str, False, seed=0)
+    indices_0, indptr_0, _ = _hashing_transform(raw_X_, 2**7, str, False, seed=0)
     assert_array_equal(indices, indices_0)
     assert_array_equal(indptr, indptr_0)
 
     raw_X_ = (((f, 1) for f in x) for x in raw_X)
-    indices_1, _, _ = _hashing_transform(raw_X_, 2 ** 7, str, False, seed=1)
+    indices_1, _, _ = _hashing_transform(raw_X_, 2**7, str, False, seed=1)
     with pytest.raises(AssertionError):
         assert_array_equal(indices, indices_1)
 
@@ -110,40 +125,7 @@ def test_hash_empty_input():
     feature_hasher = FeatureHasher(n_features=n_features, input_type="string")
     X = feature_hasher.transform(raw_X)
 
-    assert_array_equal(X.A, np.zeros((len(raw_X), n_features)))
-
-
-def test_hasher_invalid_input():
-    raw_X = [[], (), iter(range(0))]
-
-    feature_hasher = FeatureHasher(input_type="gobbledygook")
-    with pytest.raises(ValueError):
-        feature_hasher.transform(raw_X)
-    feature_hasher = FeatureHasher(n_features=-1)
-    with pytest.raises(ValueError):
-        feature_hasher.transform(raw_X)
-    feature_hasher = FeatureHasher(n_features=0)
-    with pytest.raises(ValueError):
-        feature_hasher.transform(raw_X)
-    feature_hasher = FeatureHasher(n_features="ham")
-    with pytest.raises(TypeError):
-        feature_hasher.transform(raw_X)
-
-    feature_hasher = FeatureHasher(n_features=np.uint16(2 ** 6))
-    with pytest.raises(ValueError):
-        feature_hasher.transform([])
-    with pytest.raises(Exception):
-        feature_hasher.transform([[5.5]])
-    with pytest.raises(Exception):
-        feature_hasher.transform([[None]])
-
-
-def test_hasher_set_params():
-    # Test delayed input validation in fit (useful for grid search).
-    hasher = FeatureHasher()
-    hasher.set_params(n_features=np.inf)
-    with pytest.raises(TypeError):
-        hasher.fit()
+    assert_array_equal(X.toarray(), np.zeros((len(raw_X), n_features)))
 
 
 def test_hasher_zeros():
@@ -152,7 +134,6 @@ def test_hasher_zeros():
     assert X.data.shape == (0,)
 
 
-@ignore_warnings(category=FutureWarning)
 def test_hasher_alternate_sign():
     X = [list("Thequickbrownfoxjumped")]
 

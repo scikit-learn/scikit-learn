@@ -13,22 +13,21 @@ The plots represent the distribution of the prediction latency as a boxplot.
 
 """
 
-# Authors: Eustache Diemert <eustache@diemert.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
+import gc
+import time
 from collections import defaultdict
 
-import time
-import gc
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_regression
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.linear_model import Ridge
-from sklearn.linear_model import SGDRegressor
+from sklearn.linear_model import Ridge, SGDRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR
 from sklearn.utils import shuffle
 
@@ -36,6 +35,11 @@ from sklearn.utils import shuffle
 def _not_in_sphinx():
     # Hack to detect whether we are running by the sphinx builder
     return "__file__" in globals()
+
+
+# %%
+# Benchmark and plot helper functions
+# -----------------------------------
 
 
 def atomic_benchmark_estimator(estimator, X_test, verbose=False):
@@ -228,7 +232,7 @@ def plot_n_features_influence(percentiles, percentile):
     fig, ax1 = plt.subplots(figsize=(10, 6))
     colors = ["r", "g", "b"]
     for i, cls_name in enumerate(percentiles.keys()):
-        x = np.array(sorted([n for n in percentiles[cls_name].keys()]))
+        x = np.array(sorted(percentiles[cls_name].keys()))
         y = np.array([percentiles[cls_name][n] for n in x])
         plt.plot(
             x,
@@ -289,13 +293,10 @@ def plot_benchmark_throughput(throughputs, configuration):
     plt.show()
 
 
-# #############################################################################
-# Main code
-
-start_time = time.time()
-
-# #############################################################################
+# %%
 # Benchmark bulk/atomic prediction speed for various regressors
+# -------------------------------------------------------------
+
 configuration = {
     "n_train": int(1e3),
     "n_test": int(1e2),
@@ -325,7 +326,10 @@ configuration = {
 }
 benchmark(configuration)
 
-# benchmark n_features influence on prediction speed
+# %%
+# Benchmark n_features influence on prediction speed
+# --------------------------------------------------
+
 percentile = 90
 percentiles = n_feature_influence(
     {"ridge": Ridge()},
@@ -336,9 +340,9 @@ percentiles = n_feature_influence(
 )
 plot_n_features_influence(percentiles, percentile)
 
-# benchmark throughput
+# %%
+# Benchmark throughput
+# --------------------
+
 throughputs = benchmark_throughputs(configuration)
 plot_benchmark_throughput(throughputs, configuration)
-
-stop_time = time.time()
-print("example run in %.2fs" % (stop_time - start_time))

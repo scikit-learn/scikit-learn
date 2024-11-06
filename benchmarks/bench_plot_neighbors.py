@@ -1,13 +1,14 @@
 """
 Plot the scaling of the nearest neighbors algorithms with k, D, and N
 """
+
 from time import time
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib import ticker
 
-from sklearn import neighbors, datasets
+from sklearn import datasets, neighbors
 
 
 def get_data(N, D, dataset="dense"):
@@ -102,7 +103,7 @@ def barplot_neighbors(
 
     plt.figure(figsize=(8, 11))
 
-    for (sbplt, vals, quantity, build_time, query_time) in [
+    for sbplt, vals, quantity, build_time, query_time in [
         (311, Nrange, "N", N_results_build, N_results_query),
         (312, Drange, "D", D_results_build, D_results_query),
         (313, krange, "k", k_results_build, k_results_query),

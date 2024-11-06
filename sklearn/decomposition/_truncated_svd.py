@@ -1,27 +1,31 @@
-"""Truncated SVD for sparse matrices, aka latent semantic analysis (LSA).
-"""
+"""Truncated SVD for sparse matrices, aka latent semantic analysis (LSA)."""
 
-# Author: Lars Buitinck
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Michael Becker <mike@beckerfuffle.com>
-# License: 3-clause BSD.
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+from numbers import Integral, Real
 
 import numpy as np
 import scipy.sparse as sp
 from scipy.sparse.linalg import svds
 
-from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
 from ..utils import check_array, check_random_state
 from ..utils._arpack import _init_arpack_v0
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
 from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.validation import check_is_fitted
-
+from ..utils.validation import check_is_fitted, validate_data
 
 __all__ = ["TruncatedSVD"]
 
 
-class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
+class TruncatedSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Dimensionality reduction using truncated SVD (aka LSA).
 
     This transformer performs linear dimensionality reduction by means of
@@ -44,7 +48,8 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
     ----------
     n_components : int, default=2
         Desired dimensionality of output data.
-        Must be strictly less than the number of features.
+        If algorithm='arpack', must be strictly less than the number of features.
+        If algorithm='randomized', must be less than or equal to the number of features.
         The default value is useful for visualisation. For LSA, a value of
         100 is recommended.
 
@@ -58,6 +63,20 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
         default is larger than the default in
         :func:`~sklearn.utils.extmath.randomized_svd` to handle sparse
         matrices that may have large slowly decaying spectrum.
+
+    n_oversamples : int, default=10
+        Number of oversamples for randomized SVD solver. Not used by ARPACK.
+        See :func:`~sklearn.utils.extmath.randomized_svd` for a complete
+        description.
+
+        .. versionadded:: 1.1
+
+    power_iteration_normalizer : {'auto', 'QR', 'LU', 'none'}, default='auto'
+        Power iteration normalizer for randomized SVD solver.
+        Not used by ARPACK. See :func:`~sklearn.utils.extmath.randomized_svd`
+        for more details.
+
+        .. versionadded:: 1.1
 
     random_state : int, RandomState instance or None, default=None
         Used during randomized svd. Pass an int for reproducible results across
@@ -80,7 +99,7 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
     explained_variance_ratio_ : ndarray of shape (n_components,)
         Percentage of variance explained by each of the selected components.
 
-    singular_values_ : ndarray od shape (n_components,)
+    singular_values_ : ndarray of shape (n_components,)
         The singular values corresponding to each of the selected components.
         The singular values are equal to the 2-norms of the ``n_components``
         variables in the lower-dimensional space.
@@ -115,9 +134,9 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
 
     References
     ----------
-    Finding structure with randomness: Stochastic algorithms for constructing
-    approximate matrix decompositions
-    Halko, et al., 2009 (arXiv:909) https://arxiv.org/pdf/0909.4061.pdf
+    :arxiv:`Halko, et al. (2009). "Finding structure with randomness:
+    Stochastic algorithms for constructing approximate matrix decompositions"
+    <0909.4061>`
 
     Examples
     --------
@@ -139,18 +158,32 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
     [35.2410...  4.5981...   4.5420...  4.4486...  4.3288...]
     """
 
+    _parameter_constraints: dict = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "algorithm": [StrOptions({"arpack", "randomized"})],
+        "n_iter": [Interval(Integral, 0, None, closed="left")],
+        "n_oversamples": [Interval(Integral, 1, None, closed="left")],
+        "power_iteration_normalizer": [StrOptions({"auto", "OR", "LU", "none"})],
+        "random_state": ["random_state"],
+        "tol": [Interval(Real, 0, None, closed="left")],
+    }
+
     def __init__(
         self,
         n_components=2,
         *,
         algorithm="randomized",
         n_iter=5,
+        n_oversamples=10,
+        power_iteration_normalizer="auto",
         random_state=None,
         tol=0.0,
     ):
         self.algorithm = algorithm
         self.n_components = n_components
         self.n_iter = n_iter
+        self.n_oversamples = n_oversamples
+        self.power_iteration_normalizer = power_iteration_normalizer
         self.random_state = random_state
         self.tol = tol
 
@@ -173,6 +206,7 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
         self.fit_transform(X)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None):
         """Fit model to X and perform dimensionality reduction on X.
 
@@ -189,7 +223,7 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
         X_new : ndarray of shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
-        X = self._validate_data(X, accept_sparse=["csr", "csc"], ensure_min_features=2)
+        X = validate_data(self, X, accept_sparse=["csr", "csc"], ensure_min_features=2)
         random_state = check_random_state(self.random_state)
 
         if self.algorithm == "arpack":
@@ -198,20 +232,25 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
             # svds doesn't abide by scipy.linalg.svd/randomized_svd
             # conventions, so reverse its outputs.
             Sigma = Sigma[::-1]
-            U, VT = svd_flip(U[:, ::-1], VT[::-1])
+            # u_based_decision=False is needed to be consistent with PCA.
+            U, VT = svd_flip(U[:, ::-1], VT[::-1], u_based_decision=False)
 
         elif self.algorithm == "randomized":
-            k = self.n_components
-            n_features = X.shape[1]
-            if k >= n_features:
+            if self.n_components > X.shape[1]:
                 raise ValueError(
-                    "n_components must be < n_features; got %d >= %d" % (k, n_features)
+                    f"n_components({self.n_components}) must be <="
+                    f" n_features({X.shape[1]})."
                 )
             U, Sigma, VT = randomized_svd(
-                X, self.n_components, n_iter=self.n_iter, random_state=random_state
+                X,
+                self.n_components,
+                n_iter=self.n_iter,
+                n_oversamples=self.n_oversamples,
+                power_iteration_normalizer=self.power_iteration_normalizer,
+                random_state=random_state,
+                flip_sign=False,
             )
-        else:
-            raise ValueError("unknown algorithm %r" % self.algorithm)
+            U, VT = svd_flip(U, VT, u_based_decision=False)
 
         self.components_ = VT
 
@@ -250,7 +289,7 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
             Reduced version of X. This will always be a dense array.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse=["csr", "csc"], reset=False)
+        X = validate_data(self, X, accept_sparse=["csr", "csc"], reset=False)
         return safe_sparse_dot(X, self.components_.T)
 
     def inverse_transform(self, X):
@@ -271,8 +310,10 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
         X = check_array(X)
         return np.dot(X, self.components_)
 
-    def _more_tags(self):
-        return {"preserves_dtype": [np.float64, np.float32]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
     @property
     def _n_features_out(self):

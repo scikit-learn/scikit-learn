@@ -1,14 +1,10 @@
 # Author: Nicolas Hug
 
-cimport cython
 from cython.parallel import prange
 import numpy as np
-cimport numpy as np
 
 from .common import Y_DTYPE
 from .common cimport Y_DTYPE_C
-
-np.import_array()
 
 
 def _update_raw_predictions(

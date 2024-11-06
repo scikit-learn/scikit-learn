@@ -1,23 +1,35 @@
-# Authors: Fabian Pedregosa <fabian@fseoane.net>
-#          Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Nelle Varoquaux <nelle.varoquaux@gmail.com>
-# License: BSD 3 clause
+"""Isotonic regression for obtaining monotonic fit to data."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+import math
+import warnings
+from numbers import Real
 
 import numpy as np
-from scipy import interpolate
+from scipy import interpolate, optimize
 from scipy.stats import spearmanr
-import warnings
-import math
 
-from .base import BaseEstimator, TransformerMixin, RegressorMixin
-from .utils import check_array, check_consistent_length
-from .utils.validation import _check_sample_weight
+from sklearn.utils import metadata_routing
+
 from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
-
+from .base import BaseEstimator, RegressorMixin, TransformerMixin, _fit_context
+from .utils import check_array, check_consistent_length
+from .utils._param_validation import Interval, StrOptions, validate_params
+from .utils.fixes import parse_version, sp_base_version
+from .utils.validation import _check_sample_weight, check_is_fitted
 
 __all__ = ["check_increasing", "isotonic_regression", "IsotonicRegression"]
 
 
+@validate_params(
+    {
+        "x": ["array-like"],
+        "y": ["array-like"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def check_increasing(x, y):
     """Determine whether y is monotonically correlated with x.
 
@@ -49,6 +61,16 @@ def check_increasing(x, y):
     ----------
     Fisher transformation. Wikipedia.
     https://en.wikipedia.org/wiki/Fisher_transformation
+
+    Examples
+    --------
+    >>> from sklearn.isotonic import check_increasing
+    >>> x, y = [1, 2, 3, 4, 5], [2, 4, 6, 8, 10]
+    >>> check_increasing(x, y)
+    np.True_
+    >>> y = [10, 8, 6, 4, 2]
+    >>> check_increasing(x, y)
+    np.False_
     """
 
     # Calculate Spearman rho estimate and set return accordingly.
@@ -77,6 +99,16 @@ def check_increasing(x, y):
     return increasing_bool
 
 
+@validate_params(
+    {
+        "y": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "y_min": [Interval(Real, None, None, closed="both"), None],
+        "y_max": [Interval(Real, None, None, closed="both"), None],
+        "increasing": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def isotonic_regression(
     y, *, sample_weight=None, y_min=None, y_max=None, increasing=True
 ):
@@ -103,25 +135,41 @@ def isotonic_regression(
 
     increasing : bool, default=True
         Whether to compute ``y_`` is increasing (if set to True) or decreasing
-        (if set to False)
+        (if set to False).
 
     Returns
     -------
-    y_ : list of floats
+    y_ : ndarray of shape (n_samples,)
         Isotonic fit of y.
 
     References
     ----------
     "Active set algorithms for isotonic regression; A unifying framework"
     by Michael J. Best and Nilotpal Chakravarti, section 3.
-    """
-    order = np.s_[:] if increasing else np.s_[::-1]
-    y = check_array(y, ensure_2d=False, input_name="y", dtype=[np.float64, np.float32])
-    y = np.array(y[order], dtype=y.dtype)
-    sample_weight = _check_sample_weight(sample_weight, y, dtype=y.dtype, copy=True)
-    sample_weight = np.ascontiguousarray(sample_weight[order])
 
-    _inplace_contiguous_isotonic_regression(y, sample_weight)
+    Examples
+    --------
+    >>> from sklearn.isotonic import isotonic_regression
+    >>> isotonic_regression([5, 3, 1, 2, 8, 10, 7, 9, 6, 4])
+    array([2.75   , 2.75   , 2.75   , 2.75   , 7.33...,
+           7.33..., 7.33..., 7.33..., 7.33..., 7.33...])
+    """
+    y = check_array(y, ensure_2d=False, input_name="y", dtype=[np.float64, np.float32])
+    if sp_base_version >= parse_version("1.12.0"):
+        res = optimize.isotonic_regression(
+            y=y, weights=sample_weight, increasing=increasing
+        )
+        y = np.asarray(res.x, dtype=y.dtype)
+    else:
+        # TODO: remove this branch when Scipy 1.12 is the minimum supported version
+        # Also remove _inplace_contiguous_isotonic_regression.
+        order = np.s_[:] if increasing else np.s_[::-1]
+        y = np.array(y[order], dtype=y.dtype)
+        sample_weight = _check_sample_weight(sample_weight, y, dtype=y.dtype, copy=True)
+        sample_weight = np.ascontiguousarray(sample_weight[order])
+        _inplace_contiguous_isotonic_regression(y, sample_weight)
+        y = y[order]
+
     if y_min is not None or y_max is not None:
         # Older versions of np.clip don't accept None as a bound, so use np.inf
         if y_min is None:
@@ -129,7 +177,7 @@ def isotonic_regression(
         if y_max is None:
             y_max = np.inf
         np.clip(y, y_min, y_max, y)
-    return y[order]
+    return y
 
 
 class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
@@ -226,6 +274,17 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     array([1.8628..., 3.7256...])
     """
 
+    # T should have been called X
+    __metadata_request__predict = {"T": metadata_routing.UNUSED}
+    __metadata_request__transform = {"T": metadata_routing.UNUSED}
+
+    _parameter_constraints: dict = {
+        "y_min": [Interval(Real, None, None, closed="both"), None],
+        "y_max": [Interval(Real, None, None, closed="both"), None],
+        "increasing": ["boolean", StrOptions({"auto"})],
+        "out_of_bounds": [StrOptions({"nan", "clip", "raise"})],
+    }
+
     def __init__(self, *, y_min=None, y_max=None, increasing=True, out_of_bounds="nan"):
         self.y_min = y_min
         self.y_max = y_max
@@ -242,13 +301,6 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
     def _build_f(self, X, y):
         """Build the f_ interp1d function."""
-
-        # Handle the out_of_bounds argument by setting bounds_error
-        if self.out_of_bounds not in ["raise", "nan", "clip"]:
-            raise ValueError(
-                "The argument ``out_of_bounds`` must be in "
-                "'nan', 'clip', 'raise'; got {0}".format(self.out_of_bounds)
-            )
 
         bounds_error = self.out_of_bounds == "raise"
         if len(y) == 1:
@@ -308,6 +360,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
             # prediction speed).
             return X, y
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the model using X, y as training data.
 
@@ -357,6 +410,36 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         self._build_f(X, y)
         return self
 
+    def _transform(self, T):
+        """`_transform` is called by both `transform` and `predict` methods.
+
+        Since `transform` is wrapped to output arrays of specific types (e.g.
+        NumPy arrays, pandas DataFrame), we cannot make `predict` call `transform`
+        directly.
+
+        The above behaviour could be changed in the future, if we decide to output
+        other type of arrays when calling `predict`.
+        """
+        if hasattr(self, "X_thresholds_"):
+            dtype = self.X_thresholds_.dtype
+        else:
+            dtype = np.float64
+
+        T = check_array(T, dtype=dtype, ensure_2d=False)
+
+        self._check_input_data_shape(T)
+        T = T.reshape(-1)  # use 1d view
+
+        if self.out_of_bounds == "clip":
+            T = np.clip(T, self.X_min_, self.X_max_)
+
+        res = self.f_(T)
+
+        # on scipy 0.17, interp1d up-casts to float64, so we cast back
+        res = res.astype(T.dtype)
+
+        return res
+
     def transform(self, T):
         """Transform new data by linear interpolation.
 
@@ -373,33 +456,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         y_pred : ndarray of shape (n_samples,)
             The transformed data.
         """
-
-        if hasattr(self, "X_thresholds_"):
-            dtype = self.X_thresholds_.dtype
-        else:
-            dtype = np.float64
-
-        T = check_array(T, dtype=dtype, ensure_2d=False)
-
-        self._check_input_data_shape(T)
-        T = T.reshape(-1)  # use 1d view
-
-        # Handle the out_of_bounds argument by clipping if needed
-        if self.out_of_bounds not in ["raise", "nan", "clip"]:
-            raise ValueError(
-                "The argument ``out_of_bounds`` must be in "
-                "'nan', 'clip', 'raise'; got {0}".format(self.out_of_bounds)
-            )
-
-        if self.out_of_bounds == "clip":
-            T = np.clip(T, self.X_min_, self.X_max_)
-
-        res = self.f_(T)
-
-        # on scipy 0.17, interp1d up-casts to float64, so we cast back
-        res = res.astype(T.dtype)
-
-        return res
+        return self._transform(T)
 
     def predict(self, T):
         """Predict new data by linear interpolation.
@@ -414,7 +471,28 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         y_pred : ndarray of shape (n_samples,)
             Transformed data.
         """
-        return self.transform(T)
+        return self._transform(T)
+
+    # We implement get_feature_names_out here instead of using
+    # `ClassNamePrefixFeaturesOutMixin`` because `input_features` are ignored.
+    # `input_features` are ignored because `IsotonicRegression` accepts 1d
+    # arrays and the semantics of `feature_names_in_` are not clear for 1d arrays.
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Ignored.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            An ndarray with one string i.e. ["isotonicregression0"].
+        """
+        check_is_fitted(self, "f_")
+        class_name = self.__class__.__name__.lower()
+        return np.asarray([f"{class_name}0"], dtype=object)
 
     def __getstate__(self):
         """Pickle-protocol - return state of the estimator."""
@@ -432,5 +510,8 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         if hasattr(self, "X_thresholds_") and hasattr(self, "y_thresholds_"):
             self._build_f(self.X_thresholds_, self.y_thresholds_)
 
-    def _more_tags(self):
-        return {"X_types": ["1darray"]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.one_d_array = True
+        tags.input_tags.two_d_array = False
+        return tags

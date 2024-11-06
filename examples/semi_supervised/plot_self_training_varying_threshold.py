@@ -29,16 +29,17 @@ around 0.7.
 
 """
 
-# Authors: Oliver Rausch <rauscho@ethz.ch>
-# License: BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn import datasets
-from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score
 from sklearn.model_selection import StratifiedKFold
 from sklearn.semi_supervised import SelfTrainingClassifier
-from sklearn.metrics import accuracy_score
+from sklearn.svm import SVC
 from sklearn.utils import shuffle
 
 n_splits = 3
@@ -57,7 +58,7 @@ scores = np.empty((x_values.shape[0], n_splits))
 amount_labeled = np.empty((x_values.shape[0], n_splits))
 amount_iterations = np.empty((x_values.shape[0], n_splits))
 
-for (i, threshold) in enumerate(x_values):
+for i, threshold in enumerate(x_values):
     self_training_clf = SelfTrainingClassifier(base_classifier, threshold=threshold)
 
     # We need manual cross validation so that we don't treat -1 as a separate

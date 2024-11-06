@@ -27,10 +27,11 @@ class of an instance (red: class 1, green: class 2, blue: class 3).
 # of both the train and valid subsets. This is used when we only want to train
 # the classifier but not calibrate the predicted probabilities.
 
-# Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# License: BSD Style.
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
+
 from sklearn.datasets import make_blobs
 
 np.random.seed(0)
@@ -63,10 +64,11 @@ clf.fit(X_train_valid, y_train_valid)
 # using the valid data subset (400 samples) in a 2-stage process.
 
 from sklearn.calibration import CalibratedClassifierCV
+from sklearn.frozen import FrozenEstimator
 
 clf = RandomForestClassifier(n_estimators=25)
 clf.fit(X_train, y_train)
-cal_clf = CalibratedClassifierCV(clf, method="sigmoid", cv="prefit")
+cal_clf = CalibratedClassifierCV(FrozenEstimator(clf), method="sigmoid")
 cal_clf.fit(X_valid, y_valid)
 
 # %%
@@ -197,8 +199,8 @@ _ = plt.legend(loc="best")
 # of the arrows point towards the true class, e.g., green arrows (samples where
 # the true class is 'green') generally point towards the green vertex. This
 # results in fewer over-confident, 0 predicted probabilities and at the same
-# time an increase in the the predicted probabilities of the correct class.
-# Thus, the calibrated classifier produces more accurate predicted probablities
+# time an increase in the predicted probabilities of the correct class.
+# Thus, the calibrated classifier produces more accurate predicted probabilities
 # that incur a lower :ref:`log loss <log_loss>`
 #
 # We can show this objectively by comparing the :ref:`log loss <log_loss>` of

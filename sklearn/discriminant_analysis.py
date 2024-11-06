@@ -1,28 +1,30 @@
-"""
-Linear Discriminant Analysis and Quadratic Discriminant Analysis
-"""
+"""Linear and quadratic discriminant analysis."""
 
-# Authors: Clemens Brunner
-#          Martin Billinger
-#          Matthieu Perrot
-#          Mathieu Blondel
-
-# License: BSD 3-Clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
+from numbers import Integral, Real
+
 import numpy as np
+import scipy.linalg
 from scipy import linalg
-from scipy.special import expit
 
-from .base import BaseEstimator, TransformerMixin, ClassifierMixin
+from .base import (
+    BaseEstimator,
+    ClassifierMixin,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
+from .covariance import empirical_covariance, ledoit_wolf, shrunk_covariance
 from .linear_model._base import LinearClassifierMixin
-from .covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
-from .utils.multiclass import unique_labels
-from .utils.validation import check_is_fitted
-from .utils.multiclass import check_classification_targets
-from .utils.extmath import softmax
 from .preprocessing import StandardScaler
-
+from .utils._array_api import _expit, device, get_namespace, size
+from .utils._param_validation import HasMethods, Interval, StrOptions
+from .utils.extmath import softmax
+from .utils.multiclass import check_classification_targets, unique_labels
+from .utils.validation import check_is_fitted, validate_data
 
 __all__ = ["LinearDiscriminantAnalysis", "QuadraticDiscriminantAnalysis"]
 
@@ -69,14 +71,8 @@ def _cov(X, shrinkage=None, covariance_estimator=None):
                 s = sc.scale_[:, np.newaxis] * s * sc.scale_[np.newaxis, :]
             elif shrinkage == "empirical":
                 s = empirical_covariance(X)
-            else:
-                raise ValueError("unknown shrinkage parameter")
-        elif isinstance(shrinkage, float) or isinstance(shrinkage, int):
-            if shrinkage < 0 or shrinkage > 1:
-                raise ValueError("shrinkage parameter must be between 0 and 1")
+        elif isinstance(shrinkage, Real):
             s = shrunk_covariance(empirical_covariance(X), shrinkage)
-        else:
-            raise TypeError("shrinkage must be a float or a string")
     else:
         if shrinkage is not None and shrinkage != 0:
             raise ValueError(
@@ -109,11 +105,19 @@ def _class_means(X, y):
     means : array-like of shape (n_classes, n_features)
         Class means.
     """
-    classes, y = np.unique(y, return_inverse=True)
-    cnt = np.bincount(y)
-    means = np.zeros(shape=(len(classes), X.shape[1]))
-    np.add.at(means, y, X)
-    means /= cnt[:, None]
+    xp, is_array_api_compliant = get_namespace(X)
+    classes, y = xp.unique_inverse(y)
+    means = xp.zeros((classes.shape[0], X.shape[1]), device=device(X), dtype=X.dtype)
+
+    if is_array_api_compliant:
+        for i in range(classes.shape[0]):
+            means[i, :] = xp.mean(X[y == i], axis=0)
+    else:
+        # TODO: Explore the choice of using bincount + add.at as it seems sub optimal
+        # from a performance-wise
+        cnt = np.bincount(y)
+        np.add.at(means, y, X)
+        means /= cnt[:, None]
     return means
 
 
@@ -164,8 +168,89 @@ def _class_cov(X, y, priors, shrinkage=None, covariance_estimator=None):
     return cov
 
 
+class DiscriminantAnalysisPredictionMixin:
+    """Mixin class for QuadraticDiscriminantAnalysis and NearestCentroid."""
+
+    def decision_function(self, X):
+        """Apply decision function to an array of samples.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Array of samples (test vectors).
+
+        Returns
+        -------
+        y_scores : ndarray of shape (n_samples,) or (n_samples, n_classes)
+            Decision function values related to each class, per sample.
+            In the two-class case, the shape is `(n_samples,)`, giving the
+            log likelihood ratio of the positive class.
+        """
+        y_scores = self._decision_function(X)
+        if len(self.classes_) == 2:
+            return y_scores[:, 1] - y_scores[:, 0]
+        return y_scores
+
+    def predict(self, X):
+        """Perform classification on an array of vectors `X`.
+
+        Returns the class label for each sample.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Input vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        Returns
+        -------
+        y_pred : ndarray of shape (n_samples,)
+            Class label for each sample.
+        """
+        scores = self._decision_function(X)
+        return self.classes_.take(scores.argmax(axis=1))
+
+    def predict_proba(self, X):
+        """Estimate class probabilities.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Input data.
+
+        Returns
+        -------
+        y_proba : ndarray of shape (n_samples, n_classes)
+            Probability estimate of the sample for each class in the
+            model, where classes are ordered as they are in `self.classes_`.
+        """
+        return np.exp(self.predict_log_proba(X))
+
+    def predict_log_proba(self, X):
+        """Estimate log class probabilities.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Input data.
+
+        Returns
+        -------
+        y_log_proba : ndarray of shape (n_samples, n_classes)
+            Estimated log probabilities.
+        """
+        scores = self._decision_function(X)
+        log_likelihood = scores - scores.max(axis=1)[:, np.newaxis]
+        return log_likelihood - np.log(
+            np.exp(log_likelihood).sum(axis=1)[:, np.newaxis]
+        )
+
+
 class LinearDiscriminantAnalysis(
-    LinearClassifierMixin, TransformerMixin, BaseEstimator
+    ClassNamePrefixFeaturesOutMixin,
+    LinearClassifierMixin,
+    TransformerMixin,
+    BaseEstimator,
 ):
     """Linear Discriminant Analysis.
 
@@ -180,7 +265,11 @@ class LinearDiscriminantAnalysis(
     `transform` method.
 
     .. versionadded:: 0.17
-       *LinearDiscriminantAnalysis*.
+
+    For a comparison between
+    :class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis`
+    and :class:`~sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`, see
+    :ref:`sphx_glr_auto_examples_classification_plot_lda_qda.py`.
 
     Read more in the :ref:`User Guide <lda_qda>`.
 
@@ -196,6 +285,10 @@ class LinearDiscriminantAnalysis(
           - 'eigen': Eigenvalue decomposition.
             Can be combined with shrinkage or custom covariance estimator.
 
+        .. versionchanged:: 1.2
+            `solver="svd"` now has experimental Array API support. See the
+            :ref:`Array API User Guide <array_api>` for more details.
+
     shrinkage : 'auto' or float, default=None
         Shrinkage parameter, possible values:
           - None: no shrinkage (default).
@@ -204,6 +297,9 @@ class LinearDiscriminantAnalysis(
 
         This should be left to None if `covariance_estimator` is used.
         Note that shrinkage works only with 'lsqr' and 'eigen' solvers.
+
+        For a usage example, see
+        :ref:`sphx_glr_auto_examples_classification_plot_lda.py`.
 
     priors : array-like of shape (n_classes,), default=None
         The class prior probabilities. By default, the class proportions are
@@ -214,6 +310,9 @@ class LinearDiscriminantAnalysis(
         dimensionality reduction. If None, will be set to
         min(n_classes - 1, n_features). This parameter only affects the
         `transform` method.
+
+        For a usage example, see
+        :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_lda.py`.
 
     store_covariance : bool, default=False
         If True, explicitly compute the weighted within-class covariance
@@ -309,6 +408,16 @@ class LinearDiscriminantAnalysis(
     [1]
     """
 
+    _parameter_constraints: dict = {
+        "solver": [StrOptions({"svd", "lsqr", "eigen"})],
+        "shrinkage": [StrOptions({"auto"}), Interval(Real, 0, 1, closed="both"), None],
+        "n_components": [Interval(Integral, 1, None, closed="left"), None],
+        "priors": ["array-like", None],
+        "store_covariance": ["boolean"],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "covariance_estimator": [HasMethods("fit"), None],
+    }
+
     def __init__(
         self,
         solver="svd",
@@ -327,7 +436,7 @@ class LinearDiscriminantAnalysis(
         self.tol = tol  # used only in svd solver
         self.covariance_estimator = covariance_estimator
 
-    def _solve_lsqr(self, X, y, shrinkage, covariance_estimator):
+    def _solve_lstsq(self, X, y, shrinkage, covariance_estimator):
         """Least squares solver.
 
         The least squares solver computes a straightforward solution of the
@@ -460,8 +569,15 @@ class LinearDiscriminantAnalysis(
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values.
         """
+        xp, is_array_api_compliant = get_namespace(X)
+
+        if is_array_api_compliant:
+            svd = xp.linalg.svd
+        else:
+            svd = scipy.linalg.svd
+
         n_samples, n_features = X.shape
-        n_classes = len(self.classes_)
+        n_classes = self.classes_.shape[0]
 
         self.means_ = _class_means(X, y)
         if self.store_covariance:
@@ -469,64 +585,62 @@ class LinearDiscriminantAnalysis(
 
         Xc = []
         for idx, group in enumerate(self.classes_):
-            Xg = X[y == group, :]
-            Xc.append(Xg - self.means_[idx])
+            Xg = X[y == group]
+            Xc.append(Xg - self.means_[idx, :])
 
-        self.xbar_ = np.dot(self.priors_, self.means_)
+        self.xbar_ = self.priors_ @ self.means_
 
-        Xc = np.concatenate(Xc, axis=0)
+        Xc = xp.concat(Xc, axis=0)
 
         # 1) within (univariate) scaling by with classes std-dev
-        std = Xc.std(axis=0)
+        std = xp.std(Xc, axis=0)
         # avoid division by zero in normalization
         std[std == 0] = 1.0
-        fac = 1.0 / (n_samples - n_classes)
+        fac = xp.asarray(1.0 / (n_samples - n_classes), dtype=X.dtype)
 
         # 2) Within variance scaling
-        X = np.sqrt(fac) * (Xc / std)
+        X = xp.sqrt(fac) * (Xc / std)
         # SVD of centered (within)scaled data
-        U, S, Vt = linalg.svd(X, full_matrices=False)
+        U, S, Vt = svd(X, full_matrices=False)
 
-        rank = np.sum(S > self.tol)
+        rank = xp.sum(xp.astype(S > self.tol, xp.int32))
         # Scaling of within covariance is: V' 1/S
-        scalings = (Vt[:rank] / std).T / S[:rank]
+        scalings = (Vt[:rank, :] / std).T / S[:rank]
+        fac = 1.0 if n_classes == 1 else 1.0 / (n_classes - 1)
 
         # 3) Between variance scaling
         # Scale weighted centers
-        X = np.dot(
-            (
-                (np.sqrt((n_samples * self.priors_) * fac))
-                * (self.means_ - self.xbar_).T
-            ).T,
-            scalings,
-        )
+        X = (
+            (xp.sqrt((n_samples * self.priors_) * fac)) * (self.means_ - self.xbar_).T
+        ).T @ scalings
         # Centers are living in a space with n_classes-1 dim (maximum)
         # Use SVD to find projection in the space spanned by the
         # (n_classes) centers
-        _, S, Vt = linalg.svd(X, full_matrices=0)
+        _, S, Vt = svd(X, full_matrices=False)
 
         if self._max_components == 0:
-            self.explained_variance_ratio_ = np.empty((0,), dtype=S.dtype)
+            self.explained_variance_ratio_ = xp.empty((0,), dtype=S.dtype)
         else:
-            self.explained_variance_ratio_ = (S ** 2 / np.sum(S ** 2))[
+            self.explained_variance_ratio_ = (S**2 / xp.sum(S**2))[
                 : self._max_components
             ]
 
-        rank = np.sum(S > self.tol * S[0])
-        self.scalings_ = np.dot(scalings, Vt.T[:, :rank])
-        coef = np.dot(self.means_ - self.xbar_, self.scalings_)
-        self.intercept_ = -0.5 * np.sum(coef ** 2, axis=1) + np.log(self.priors_)
-        self.coef_ = np.dot(coef, self.scalings_.T)
-        self.intercept_ -= np.dot(self.xbar_, self.coef_.T)
+        rank = xp.sum(xp.astype(S > self.tol * S[0], xp.int32))
+        self.scalings_ = scalings @ Vt.T[:, :rank]
+        coef = (self.means_ - self.xbar_) @ self.scalings_
+        self.intercept_ = -0.5 * xp.sum(coef**2, axis=1) + xp.log(self.priors_)
+        self.coef_ = coef @ self.scalings_.T
+        self.intercept_ -= self.xbar_ @ self.coef_.T
 
+    @_fit_context(
+        # LinearDiscriminantAnalysis.covariance_estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y):
         """Fit the Linear Discriminant Analysis model.
 
-           .. versionchanged:: 0.19
-              *store_covariance* has been moved to main constructor.
-
-           .. versionchanged:: 0.19
-              *tol* has been moved to main constructor.
+        .. versionchanged:: 0.19
+            `store_covariance` and `tol` has been moved to main constructor.
 
         Parameters
         ----------
@@ -541,12 +655,14 @@ class LinearDiscriminantAnalysis(
         self : object
             Fitted estimator.
         """
-        X, y = self._validate_data(
-            X, y, ensure_min_samples=2, dtype=[np.float64, np.float32]
+        xp, _ = get_namespace(X)
+
+        X, y = validate_data(
+            self, X, y, ensure_min_samples=2, dtype=[xp.float64, xp.float32]
         )
         self.classes_ = unique_labels(y)
         n_samples, _ = X.shape
-        n_classes = len(self.classes_)
+        n_classes = self.classes_.shape[0]
 
         if n_samples == n_classes:
             raise ValueError(
@@ -554,20 +670,21 @@ class LinearDiscriminantAnalysis(
             )
 
         if self.priors is None:  # estimate priors from sample
-            _, y_t = np.unique(y, return_inverse=True)  # non-negative ints
-            self.priors_ = np.bincount(y_t) / float(len(y))
+            _, cnts = xp.unique_counts(y)  # non-negative ints
+            self.priors_ = xp.astype(cnts, X.dtype) / float(y.shape[0])
         else:
-            self.priors_ = np.asarray(self.priors)
+            self.priors_ = xp.asarray(self.priors, dtype=X.dtype)
 
-        if (self.priors_ < 0).any():
+        if xp.any(self.priors_ < 0):
             raise ValueError("priors must be non-negative")
-        if not np.isclose(self.priors_.sum(), 1.0):
+
+        if xp.abs(xp.sum(self.priors_) - 1.0) > 1e-5:
             warnings.warn("The priors do not sum to 1. Renormalizing", UserWarning)
             self.priors_ = self.priors_ / self.priors_.sum()
 
         # Maximum number of components no matter what n_components is
         # specified:
-        max_components = min(len(self.classes_) - 1, X.shape[1])
+        max_components = min(n_classes - 1, X.shape[1])
 
         if self.n_components is None:
             self._max_components = max_components
@@ -580,7 +697,7 @@ class LinearDiscriminantAnalysis(
 
         if self.solver == "svd":
             if self.shrinkage is not None:
-                raise NotImplementedError("shrinkage not supported")
+                raise NotImplementedError("shrinkage not supported with 'svd' solver.")
             if self.covariance_estimator is not None:
                 raise ValueError(
                     "covariance estimator "
@@ -589,7 +706,7 @@ class LinearDiscriminantAnalysis(
                 )
             self._solve_svd(X, y)
         elif self.solver == "lsqr":
-            self._solve_lsqr(
+            self._solve_lstsq(
                 X,
                 y,
                 shrinkage=self.shrinkage,
@@ -602,18 +719,14 @@ class LinearDiscriminantAnalysis(
                 shrinkage=self.shrinkage,
                 covariance_estimator=self.covariance_estimator,
             )
-        else:
-            raise ValueError(
-                "unknown solver {} (valid solvers are 'svd', "
-                "'lsqr', and 'eigen').".format(self.solver)
+        if size(self.classes_) == 2:  # treat binary case as a special case
+            coef_ = xp.asarray(self.coef_[1, :] - self.coef_[0, :], dtype=X.dtype)
+            self.coef_ = xp.reshape(coef_, (1, -1))
+            intercept_ = xp.asarray(
+                self.intercept_[1] - self.intercept_[0], dtype=X.dtype
             )
-        if self.classes_.size == 2:  # treat binary case as a special case
-            self.coef_ = np.array(
-                self.coef_[1, :] - self.coef_[0, :], ndmin=2, dtype=X.dtype
-            )
-            self.intercept_ = np.array(
-                self.intercept_[1] - self.intercept_[0], ndmin=1, dtype=X.dtype
-            )
+            self.intercept_ = xp.reshape(intercept_, (1,))
+        self._n_features_out = self._max_components
         return self
 
     def transform(self, X):
@@ -626,20 +739,23 @@ class LinearDiscriminantAnalysis(
 
         Returns
         -------
-        X_new : ndarray of shape (n_samples, n_components)
-            Transformed data.
+        X_new : ndarray of shape (n_samples, n_components) or \
+            (n_samples, min(rank, n_components))
+            Transformed data. In the case of the 'svd' solver, the shape
+            is (n_samples, min(rank, n_components)).
         """
         if self.solver == "lsqr":
             raise NotImplementedError(
                 "transform not implemented for 'lsqr' solver (use 'svd' or 'eigen')."
             )
         check_is_fitted(self)
+        xp, _ = get_namespace(X)
+        X = validate_data(self, X, reset=False)
 
-        X = self._validate_data(X, reset=False)
         if self.solver == "svd":
-            X_new = np.dot(X - self.xbar_, self.scalings_)
+            X_new = (X - self.xbar_) @ self.scalings_
         elif self.solver == "eigen":
-            X_new = np.dot(X, self.scalings_)
+            X_new = X @ self.scalings_
 
         return X_new[:, : self._max_components]
 
@@ -657,11 +773,11 @@ class LinearDiscriminantAnalysis(
             Estimated probabilities.
         """
         check_is_fitted(self)
-
+        xp, is_array_api_compliant = get_namespace(X)
         decision = self.decision_function(X)
-        if self.classes_.size == 2:
-            proba = expit(decision)
-            return np.vstack([1 - proba, proba]).T
+        if size(self.classes_) == 2:
+            proba = _expit(decision, xp)
+            return xp.stack([1 - proba, proba], axis=1)
         else:
             return softmax(decision)
 
@@ -678,9 +794,18 @@ class LinearDiscriminantAnalysis(
         C : ndarray of shape (n_samples, n_classes)
             Estimated log probabilities.
         """
+        xp, _ = get_namespace(X)
         prediction = self.predict_proba(X)
-        prediction[prediction == 0.0] += np.finfo(prediction.dtype).tiny
-        return np.log(prediction)
+
+        info = xp.finfo(prediction.dtype)
+        if hasattr(info, "smallest_normal"):
+            smallest_normal = info.smallest_normal
+        else:
+            # smallest_normal was introduced in NumPy 1.22
+            smallest_normal = info.tiny
+
+        prediction[prediction == 0.0] += smallest_normal
+        return xp.log(prediction)
 
     def decision_function(self, X):
         """Apply decision function to an array of samples.
@@ -697,16 +822,23 @@ class LinearDiscriminantAnalysis(
 
         Returns
         -------
-        C : ndarray of shape (n_samples,) or (n_samples, n_classes)
+        y_scores : ndarray of shape (n_samples,) or (n_samples, n_classes)
             Decision function values related to each class, per sample.
-            In the two-class case, the shape is (n_samples,), giving the
+            In the two-class case, the shape is `(n_samples,)`, giving the
             log likelihood ratio of the positive class.
         """
         # Only override for the doc
         return super().decision_function(X)
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.array_api_support = True
+        return tags
 
-class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
+
+class QuadraticDiscriminantAnalysis(
+    DiscriminantAnalysisPredictionMixin, ClassifierMixin, BaseEstimator
+):
     """Quadratic Discriminant Analysis.
 
     A classifier with a quadratic decision boundary, generated
@@ -716,13 +848,17 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     The model fits a Gaussian density to each class.
 
     .. versionadded:: 0.17
-       *QuadraticDiscriminantAnalysis*
+
+    For a comparison between
+    :class:`~sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`
+    and :class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis`, see
+    :ref:`sphx_glr_auto_examples_classification_plot_lda_qda.py`.
 
     Read more in the :ref:`User Guide <lda_qda>`.
 
     Parameters
     ----------
-    priors : ndarray of shape (n_classes,), default=None
+    priors : array-like of shape (n_classes,), default=None
         Class priors. By default, the class proportions are inferred from the
         training data.
 
@@ -738,11 +874,11 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         .. versionadded:: 0.17
 
     tol : float, default=1.0e-4
-        Absolute threshold for a singular value to be considered significant,
-        used to estimate the rank of `Xk` where `Xk` is the centered matrix
-        of samples in class k. This parameter does not affect the
-        predictions. It only controls a warning that is raised when features
-        are considered to be colinear.
+        Absolute threshold for the covariance matrix to be considered rank
+        deficient after applying some regularization (see `reg_param`) to each
+        `Sk` where `Sk` represents covariance matrix for k-th class. This
+        parameter does not affect the predictions. It controls when a warning
+        is raised if the covariance matrix is not full rank.
 
         .. versionadded:: 0.17
 
@@ -807,23 +943,31 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     [1]
     """
 
+    _parameter_constraints: dict = {
+        "priors": ["array-like", None],
+        "reg_param": [Interval(Real, 0, 1, closed="both")],
+        "store_covariance": ["boolean"],
+        "tol": [Interval(Real, 0, None, closed="left")],
+    }
+
     def __init__(
         self, *, priors=None, reg_param=0.0, store_covariance=False, tol=1.0e-4
     ):
-        self.priors = np.asarray(priors) if priors is not None else None
+        self.priors = priors
         self.reg_param = reg_param
         self.store_covariance = store_covariance
         self.tol = tol
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the model according to the given training data and parameters.
 
-            .. versionchanged:: 0.19
-               ``store_covariances`` has been moved to main constructor as
-               ``store_covariance``
+        .. versionchanged:: 0.19
+            ``store_covariances`` has been moved to main constructor as
+            ``store_covariance``.
 
-            .. versionchanged:: 0.19
-               ``tol`` has been moved to main constructor.
+        .. versionchanged:: 0.19
+            ``tol`` has been moved to main constructor.
 
         Parameters
         ----------
@@ -839,7 +983,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        X, y = self._validate_data(X, y)
+        X, y = validate_data(self, X, y)
         check_classification_targets(y)
         self.classes_, y = np.unique(y, return_inverse=True)
         n_samples, n_features = X.shape
@@ -852,7 +996,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         if self.priors is None:
             self.priors_ = np.bincount(y) / float(n_samples)
         else:
-            self.priors_ = self.priors
+            self.priors_ = np.array(self.priors)
 
         cov = None
         store_covariance = self.store_covariance
@@ -873,11 +1017,16 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
             Xgc = Xg - meang
             # Xgc = U * S * V.T
             _, S, Vt = np.linalg.svd(Xgc, full_matrices=False)
-            rank = np.sum(S > self.tol)
-            if rank < n_features:
-                warnings.warn("Variables are collinear")
-            S2 = (S ** 2) / (len(Xg) - 1)
+            S2 = (S**2) / (len(Xg) - 1)
             S2 = ((1 - self.reg_param) * S2) + self.reg_param
+            rank = np.sum(S2 > self.tol)
+            if rank < n_features:
+                warnings.warn(
+                    f"The covariance matrix of class {ind} is not full rank. "
+                    "Increasing the value of parameter `reg_param` might help"
+                    " reducing the collinearity.",
+                    linalg.LinAlgWarning,
+                )
             if self.store_covariance or store_covariance:
                 # cov = V * (S^2 / (n-1)) * V.T
                 cov.append(np.dot(S2 * Vt.T, Vt))
@@ -894,14 +1043,14 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         # return log posterior, see eq (4.12) p. 110 of the ESL.
         check_is_fitted(self)
 
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
         norm2 = []
         for i in range(len(self.classes_)):
             R = self.rotations_[i]
             S = self.scalings_[i]
             Xm = X - self.means_[i]
             X2 = np.dot(Xm, R * (S ** (-0.5)))
-            norm2.append(np.sum(X2 ** 2, axis=1))
+            norm2.append(np.sum(X2**2, axis=1))
         norm2 = np.array(norm2).T  # shape = [len(X), n_classes]
         u = np.asarray([np.sum(np.log(s)) for s in self.scalings_])
         return -0.5 * (norm2 + u) + np.log(self.priors_)
@@ -923,14 +1072,10 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         -------
         C : ndarray of shape (n_samples,) or (n_samples, n_classes)
             Decision function values related to each class, per sample.
-            In the two-class case, the shape is (n_samples,), giving the
+            In the two-class case, the shape is `(n_samples,)`, giving the
             log likelihood ratio of the positive class.
         """
-        dec_func = self._decision_function(X)
-        # handle special case of two classes
-        if len(self.classes_) == 2:
-            return dec_func[:, 1] - dec_func[:, 0]
-        return dec_func
+        return super().decision_function(X)
 
     def predict(self, X):
         """Perform classification on an array of test vectors X.
@@ -948,9 +1093,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         C : ndarray of shape (n_samples,)
             Estimated probabilities.
         """
-        d = self._decision_function(X)
-        y_pred = self.classes_.take(d.argmax(1))
-        return y_pred
+        return super().predict(X)
 
     def predict_proba(self, X):
         """Return posterior probabilities of classification.
@@ -965,12 +1108,9 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         C : ndarray of shape (n_samples, n_classes)
             Posterior probabilities of classification per class.
         """
-        values = self._decision_function(X)
         # compute the likelihood of the underlying gaussian models
         # up to a multiplicative constant.
-        likelihood = np.exp(values - values.max(axis=1)[:, np.newaxis])
-        # compute posterior probabilities
-        return likelihood / likelihood.sum(axis=1)[:, np.newaxis]
+        return super().predict_proba(X)
 
     def predict_log_proba(self, X):
         """Return log of posterior probabilities of classification.
@@ -986,5 +1126,4 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
             Posterior log-probabilities of classification per class.
         """
         # XXX : can do better to avoid precision overflows
-        probas_ = self.predict_proba(X)
-        return np.log(probas_)
+        return super().predict_log_proba(X)

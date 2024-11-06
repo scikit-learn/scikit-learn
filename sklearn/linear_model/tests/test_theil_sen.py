@@ -2,21 +2,31 @@
 Testing for Theil-Sen module (sklearn.linear_model.theil_sen)
 """
 
-# Author: Florian Wilhelm <florian.wilhelm@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import os
+import re
 import sys
 from contextlib import contextmanager
+
 import numpy as np
 import pytest
-from numpy.testing import assert_array_equal, assert_array_less
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import (
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_array_less,
+)
 from scipy.linalg import norm
 from scipy.optimize import fmin_bfgs
+
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LinearRegression, TheilSenRegressor
-from sklearn.linear_model._theil_sen import _spatial_median, _breakdown_point
-from sklearn.linear_model._theil_sen import _modified_weiszfeld_step
+from sklearn.linear_model._theil_sen import (
+    _breakdown_point,
+    _modified_weiszfeld_step,
+    _spatial_median,
+)
 from sklearn.utils._testing import assert_almost_equal
 
 
@@ -111,9 +121,7 @@ def test_modweiszfeld_step_1d():
     assert_array_less(new_y, y)
     # Check that a single vector is identity
     X = np.array([1.0, 2.0, 3.0]).reshape(1, 3)
-    y = X[
-        0,
-    ]
+    y = X[0]
     new_y = _modified_weiszfeld_step(X, y)
     assert_array_equal(y, new_y)
 
@@ -203,25 +211,25 @@ def test_calc_breakdown_point():
     assert np.abs(bp - 1 + 1 / (np.sqrt(2))) < 1.0e-6
 
 
-def test_checksubparams_negative_subpopulation():
+@pytest.mark.parametrize(
+    "param, ExceptionCls, match",
+    [
+        (
+            {"n_subsamples": 1},
+            ValueError,
+            re.escape("Invalid parameter since n_features+1 > n_subsamples (2 > 1)"),
+        ),
+        (
+            {"n_subsamples": 101},
+            ValueError,
+            re.escape("Invalid parameter since n_subsamples > n_samples (101 > 50)"),
+        ),
+    ],
+)
+def test_checksubparams_invalid_input(param, ExceptionCls, match):
     X, y, w, c = gen_toy_problem_1d()
-    theil_sen = TheilSenRegressor(max_subpopulation=-1, random_state=0)
-
-    with pytest.raises(ValueError):
-        theil_sen.fit(X, y)
-
-
-def test_checksubparams_too_few_subsamples():
-    X, y, w, c = gen_toy_problem_1d()
-    theil_sen = TheilSenRegressor(n_subsamples=1, random_state=0)
-    with pytest.raises(ValueError):
-        theil_sen.fit(X, y)
-
-
-def test_checksubparams_too_many_subsamples():
-    X, y, w, c = gen_toy_problem_1d()
-    theil_sen = TheilSenRegressor(n_subsamples=101, random_state=0)
-    with pytest.raises(ValueError):
+    theil_sen = TheilSenRegressor(**param, random_state=0)
+    with pytest.raises(ExceptionCls, match=match):
         theil_sen.fit(X, y)
 
 
@@ -285,3 +293,11 @@ def test_less_samples_than_features():
     theil_sen = TheilSenRegressor(fit_intercept=True, random_state=0).fit(X, y)
     y_pred = theil_sen.predict(X)
     assert_array_almost_equal(y_pred, y, 12)
+
+
+# TODO(1.8): Remove
+def test_copy_X_deprecated():
+    X, y, _, _ = gen_toy_problem_1d()
+    theil_sen = TheilSenRegressor(copy_X=True, random_state=0)
+    with pytest.warns(FutureWarning, match="`copy_X` was deprecated"):
+        theil_sen.fit(X, y)

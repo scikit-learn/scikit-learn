@@ -14,10 +14,8 @@ namely the Pareto distribution.
 
 """
 
-# Authors: David Dale <dale.david@mail.ru>
-#          Christian Lorentzen <lorentzen.ch@gmail.com>
-#          Guillaume Lemaitre <glemaitre58@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Dataset generation
@@ -93,7 +91,7 @@ _ = axs[1, 1].set_xlabel("Residuals")
 # In this asymmetric setting, the median or different quantiles give additional
 # insights. On top of that, median estimation is much more robust to outliers
 # and heavy tailed distributions. But note that extreme quantiles are estimated
-# by very view data points. 95% quantile are more or less estimated by the 5%
+# by very few data points. 95% quantile are more or less estimated by the 5%
 # largest values and thus also a bit sensitive outliers.
 #
 # In the remainder of this tutorial, we will show how
@@ -111,6 +109,8 @@ _ = axs[1, 1].set_xlabel("Residuals")
 #
 # We will use the quantiles at 5% and 95% to find the outliers in the training
 # sample beyond the central 90% interval.
+
+# %%
 from sklearn.linear_model import QuantileRegressor
 
 quantiles = [0.05, 0.5, 0.95]
@@ -246,8 +246,7 @@ _ = plt.title("Quantiles of asymmetric Pareto distributed target")
 # distributed target to make it more interesting as mean and median are not
 # equal.
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_absolute_error
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 linear_regression = LinearRegression()
 quantile_regression = QuantileRegressor(quantile=0.5, alpha=0)
@@ -276,7 +275,7 @@ print(
 # while MSE is the loss minimized
 # :class:`~sklearn.linear_model.LinearRegression`.
 #
-# We can make a similar evaluation but looking a the test error obtained by
+# We can make a similar evaluation by looking at the test error obtained by
 # cross-validation.
 from sklearn.model_selection import cross_validate
 

@@ -13,9 +13,8 @@ refer to the :ref:`User Guide <gp_kernels>`.
 
 """
 
-# Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-#          Guillaume Lemaitre <g.lemaitre58@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Helper function
@@ -127,8 +126,8 @@ print(
 )
 
 # %%
-# Rational Quadradtic kernel
-# ..........................
+# Rational Quadratic kernel
+# .........................
 from sklearn.gaussian_process.kernels import RationalQuadratic
 
 kernel = 1.0 * RationalQuadratic(length_scale=1.0, alpha=0.1, alpha_bounds=(1e-5, 1e15))
@@ -158,8 +157,8 @@ print(
 )
 
 # %%
-# Periodic kernel
-# ...............
+# Exp-Sine-Squared kernel
+# .......................
 from sklearn.gaussian_process.kernels import ExpSineSquared
 
 kernel = 1.0 * ExpSineSquared(
@@ -183,7 +182,7 @@ axs[1].scatter(X_train[:, 0], y_train, color="red", zorder=10, label="Observatio
 axs[1].legend(bbox_to_anchor=(1.05, 1.5), loc="upper left")
 axs[1].set_title("Samples from posterior distribution")
 
-fig.suptitle("Periodic kernel", fontsize=18)
+fig.suptitle("Exp-Sine-Squared kernel", fontsize=18)
 plt.tight_layout()
 
 # %%
@@ -194,14 +193,14 @@ print(
 )
 
 # %%
-# Dot product kernel
+# Dot-product kernel
 # ..................
 from sklearn.gaussian_process.kernels import ConstantKernel, DotProduct
 
 kernel = ConstantKernel(0.1, (0.01, 10.0)) * (
     DotProduct(sigma_0=1.0, sigma_0_bounds=(0.1, 10.0)) ** 2
 )
-gpr = GaussianProcessRegressor(kernel=kernel, random_state=0)
+gpr = GaussianProcessRegressor(kernel=kernel, random_state=0, normalize_y=True)
 
 fig, axs = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(10, 8))
 
@@ -216,7 +215,7 @@ axs[1].scatter(X_train[:, 0], y_train, color="red", zorder=10, label="Observatio
 axs[1].legend(bbox_to_anchor=(1.05, 1.5), loc="upper left")
 axs[1].set_title("Samples from posterior distribution")
 
-fig.suptitle("Dot product kernel", fontsize=18)
+fig.suptitle("Dot-product kernel", fontsize=18)
 plt.tight_layout()
 
 # %%
@@ -227,7 +226,7 @@ print(
 )
 
 # %%
-# Mattern kernel
+# Matérn kernel
 # ..............
 from sklearn.gaussian_process.kernels import Matern
 
@@ -247,7 +246,7 @@ axs[1].scatter(X_train[:, 0], y_train, color="red", zorder=10, label="Observatio
 axs[1].legend(bbox_to_anchor=(1.05, 1.5), loc="upper left")
 axs[1].set_title("Samples from posterior distribution")
 
-fig.suptitle("Mattern kernel", fontsize=18)
+fig.suptitle("Matérn kernel", fontsize=18)
 plt.tight_layout()
 
 # %%

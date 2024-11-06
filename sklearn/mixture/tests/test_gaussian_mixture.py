@@ -1,39 +1,41 @@
-# Author: Wei Xue <xuewei4d@gmail.com>
-#         Thierry Guillemot <thierry.guillemot.work@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
+import copy
+import itertools
 import re
 import sys
-import copy
 import warnings
-import pytest
+from io import StringIO
+from unittest.mock import Mock
 
 import numpy as np
-from scipy import stats, linalg
+import pytest
+from scipy import linalg, stats
 
+import sklearn
 from sklearn.cluster import KMeans
 from sklearn.covariance import EmpiricalCovariance
 from sklearn.datasets import make_spd_matrix
-from io import StringIO
+from sklearn.exceptions import ConvergenceWarning, NotFittedError
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.mixture import GaussianMixture
 from sklearn.mixture._gaussian_mixture import (
-    _estimate_gaussian_covariances_full,
-    _estimate_gaussian_covariances_tied,
-    _estimate_gaussian_covariances_diag,
-    _estimate_gaussian_covariances_spherical,
-    _estimate_gaussian_parameters,
-    _compute_precision_cholesky,
     _compute_log_det_cholesky,
+    _compute_precision_cholesky,
+    _estimate_gaussian_covariances_diag,
+    _estimate_gaussian_covariances_full,
+    _estimate_gaussian_covariances_spherical,
+    _estimate_gaussian_covariances_tied,
+    _estimate_gaussian_parameters,
 )
-from sklearn.exceptions import ConvergenceWarning, NotFittedError
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 from sklearn.utils.extmath import fast_logdet
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import ignore_warnings
-
 
 COVARIANCE_TYPE = ["full", "tied", "diag", "spherical"]
 
@@ -126,66 +128,6 @@ def test_gaussian_mixture_attributes():
     # test bad parameters
     rng = np.random.RandomState(0)
     X = rng.rand(10, 2)
-
-    n_components_bad = 0
-    gmm = GaussianMixture(n_components=n_components_bad)
-    msg = (
-        f"Invalid value for 'n_components': {n_components_bad} "
-        "Estimation requires at least one component"
-    )
-    with pytest.raises(ValueError, match=msg):
-        gmm.fit(X)
-
-    # covariance_type should be in [spherical, diag, tied, full]
-    covariance_type_bad = "bad_covariance_type"
-    gmm = GaussianMixture(covariance_type=covariance_type_bad)
-    msg = (
-        f"Invalid value for 'covariance_type': {covariance_type_bad} "
-        "'covariance_type' should be in ['spherical', 'tied', 'diag', 'full']"
-    )
-    with pytest.raises(ValueError):
-        gmm.fit(X)
-
-    tol_bad = -1
-    gmm = GaussianMixture(tol=tol_bad)
-    msg = (
-        f"Invalid value for 'tol': {tol_bad:.5f} "
-        "Tolerance used by the EM must be non-negative"
-    )
-    with pytest.raises(ValueError, match=msg):
-        gmm.fit(X)
-
-    reg_covar_bad = -1
-    gmm = GaussianMixture(reg_covar=reg_covar_bad)
-    msg = (
-        f"Invalid value for 'reg_covar': {reg_covar_bad:.5f} "
-        "regularization on covariance must be non-negative"
-    )
-    with pytest.raises(ValueError, match=msg):
-        gmm.fit(X)
-
-    max_iter_bad = 0
-    gmm = GaussianMixture(max_iter=max_iter_bad)
-    msg = (
-        f"Invalid value for 'max_iter': {max_iter_bad} "
-        "Estimation requires at least one iteration"
-    )
-    with pytest.raises(ValueError, match=msg):
-        gmm.fit(X)
-
-    n_init_bad = 0
-    gmm = GaussianMixture(n_init=n_init_bad)
-    msg = (
-        f"Invalid value for 'n_init': {n_init_bad} Estimation requires at least one run"
-    )
-    with pytest.raises(ValueError, match=msg):
-        gmm.fit(X)
-
-    init_params_bad = "bad_method"
-    gmm = GaussianMixture(init_params=init_params_bad)
-    msg = f"Unimplemented initialization method '{init_params_bad}'"
-    with pytest.raises(ValueError, match=msg):
-        gmm.fit(X)
 
     # test good parameters
     n_components, tol, n_init, max_iter, reg_covar = 2, 1e-4, 3, 30, 1e-1
@@ -423,7 +365,7 @@ def test_suffstat_sk_diag():
     covars_pred_diag = _estimate_gaussian_covariances_diag(resp, X, nk, xk, 0)
 
     ecov = EmpiricalCovariance()
-    for (cov_full, cov_diag) in zip(covars_pred_full, covars_pred_diag):
+    for cov_full, cov_diag in zip(covars_pred_full, covars_pred_diag):
         ecov.covariance_ = np.diag(np.diag(cov_full))
         cov_diag = np.diag(cov_diag)
         assert_almost_equal(ecov.error_norm(cov_diag, norm="frobenius"), 0)
@@ -431,7 +373,7 @@ def test_suffstat_sk_diag():
 
     # check the precision computation
     precs_chol_pred = _compute_precision_cholesky(covars_pred_diag, "diag")
-    assert_almost_equal(covars_pred_diag, 1.0 / precs_chol_pred ** 2)
+    assert_almost_equal(covars_pred_diag, 1.0 / precs_chol_pred**2)
 
 
 def test_gaussian_suffstat_sk_spherical():
@@ -453,7 +395,7 @@ def test_gaussian_suffstat_sk_spherical():
 
     # check the precision computation
     precs_chol_pred = _compute_precision_cholesky(covars_pred_spherical, "spherical")
-    assert_almost_equal(covars_pred_spherical, 1.0 / precs_chol_pred ** 2)
+    assert_almost_equal(covars_pred_spherical, 1.0 / precs_chol_pred**2)
 
 
 def test_compute_log_det_cholesky():
@@ -470,7 +412,7 @@ def test_compute_log_det_cholesky():
         elif covar_type == "diag":
             predected_det = np.array([np.prod(cov) for cov in covariance])
         elif covar_type == "spherical":
-            predected_det = covariance ** n_features
+            predected_det = covariance**n_features
 
         # We compute the cholesky decomposition of the covariance matrix
         expected_det = _compute_log_det_cholesky(
@@ -739,9 +681,9 @@ def test_gaussian_mixture_fit_convergence_warning():
             covariance_type=covar_type,
         )
         msg = (
-            f"Initialization {max_iter} did not converge. Try different init "
-            "parameters, or increase max_iter, tol or check for degenerate"
-            " data."
+            "Best performing initialization did not converge. "
+            "Try different init parameters, or increase max_iter, "
+            "tol, or check for degenerate data."
         )
         with pytest.warns(ConvergenceWarning, match=msg):
             g.fit(X)
@@ -936,7 +878,7 @@ def test_warm_start(seed):
     assert h.converged_
 
 
-@ignore_warnings(category=ConvergenceWarning)
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_convergence_detected_with_warm_start():
     # We check that convergence is detected when warm_start=True
     rng = np.random.RandomState(0)
@@ -1045,7 +987,7 @@ def test_monotonic_likelihood():
             random_state=rng,
             tol=1e-7,
         )
-        current_log_likelihood = -np.infty
+        current_log_likelihood = -np.inf
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", ConvergenceWarning)
             # Do one training iteration at a time so we can make sure that the
@@ -1109,7 +1051,6 @@ def test_property():
         gmm.fit(X)
         if covar_type == "full":
             for prec, covar in zip(gmm.precisions_, gmm.covariances_):
-
                 assert_array_almost_equal(linalg.inv(prec), covar)
         elif covar_type == "tied":
             assert_array_almost_equal(linalg.inv(gmm.precisions_), gmm.covariances_)
@@ -1174,7 +1115,7 @@ def test_sample():
             assert X_s.shape == (sample_size, n_features)
 
 
-@ignore_warnings(category=ConvergenceWarning)
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_init():
     # We check that by increasing the n_init number we have a better solution
     for random_state in range(15):
@@ -1263,6 +1204,67 @@ def test_gaussian_mixture_setting_best_params():
         assert hasattr(gmm, attr)
 
 
+@pytest.mark.parametrize(
+    "init_params", ["random", "random_from_data", "k-means++", "kmeans"]
+)
+def test_init_means_not_duplicated(init_params, global_random_seed):
+    # Check that all initialisations provide not duplicated starting means
+    rng = np.random.RandomState(global_random_seed)
+    rand_data = RandomData(rng, scale=5)
+    n_components = rand_data.n_components
+    X = rand_data.X["full"]
+
+    gmm = GaussianMixture(
+        n_components=n_components, init_params=init_params, random_state=rng, max_iter=0
+    )
+    gmm.fit(X)
+
+    means = gmm.means_
+    for i_mean, j_mean in itertools.combinations(means, r=2):
+        assert not np.allclose(i_mean, j_mean)
+
+
+@pytest.mark.parametrize(
+    "init_params", ["random", "random_from_data", "k-means++", "kmeans"]
+)
+def test_means_for_all_inits(init_params, global_random_seed):
+    # Check fitted means properties for all initializations
+    rng = np.random.RandomState(global_random_seed)
+    rand_data = RandomData(rng, scale=5)
+    n_components = rand_data.n_components
+    X = rand_data.X["full"]
+
+    gmm = GaussianMixture(
+        n_components=n_components, init_params=init_params, random_state=rng
+    )
+    gmm.fit(X)
+
+    assert gmm.means_.shape == (n_components, X.shape[1])
+    assert np.all(X.min(axis=0) <= gmm.means_)
+    assert np.all(gmm.means_ <= X.max(axis=0))
+    assert gmm.converged_
+
+
+def test_max_iter_zero():
+    # Check that max_iter=0 returns initialisation as expected
+    # Pick arbitrary initial means and check equal to max_iter=0
+    rng = np.random.RandomState(0)
+    rand_data = RandomData(rng, scale=5)
+    n_components = rand_data.n_components
+    X = rand_data.X["full"]
+    means_init = [[20, 30], [30, 25]]
+    gmm = GaussianMixture(
+        n_components=n_components,
+        random_state=rng,
+        means_init=means_init,
+        tol=1e-06,
+        max_iter=0,
+    )
+    gmm.fit(X)
+
+    assert_allclose(gmm.means_, means_init)
+
+
 def test_gaussian_mixture_precisions_init_diag():
     """Check that we properly initialize `precision_cholesky_` when we manually
     provide the precision matrix.
@@ -1322,3 +1324,97 @@ def test_gaussian_mixture_precisions_init_diag():
     assert_allclose(
         gm_with_init.precisions_cholesky_, gm_without_init.precisions_cholesky_
     )
+
+
+def _generate_data(seed, n_samples, n_features, n_components):
+    """Randomly generate samples and responsibilities."""
+    rs = np.random.RandomState(seed)
+    X = rs.random_sample((n_samples, n_features))
+    resp = rs.random_sample((n_samples, n_components))
+    resp /= resp.sum(axis=1)[:, np.newaxis]
+    return X, resp
+
+
+def _calculate_precisions(X, resp, covariance_type):
+    """Calculate precision matrix of X and its Cholesky decomposition
+    for the given covariance type.
+    """
+    reg_covar = 1e-6
+    weights, means, covariances = _estimate_gaussian_parameters(
+        X, resp, reg_covar, covariance_type
+    )
+    precisions_cholesky = _compute_precision_cholesky(covariances, covariance_type)
+
+    _, n_components = resp.shape
+    # Instantiate a `GaussianMixture` model in order to use its
+    # `_set_parameters` method to return the `precisions_` and
+    #  `precisions_cholesky_` from matching the `covariance_type`
+    # provided.
+    gmm = GaussianMixture(n_components=n_components, covariance_type=covariance_type)
+    params = (weights, means, covariances, precisions_cholesky)
+    gmm._set_parameters(params)
+    return gmm.precisions_, gmm.precisions_cholesky_
+
+
+@pytest.mark.parametrize("covariance_type", COVARIANCE_TYPE)
+def test_gaussian_mixture_precisions_init(covariance_type, global_random_seed):
+    """Non-regression test for #26415."""
+
+    X, resp = _generate_data(
+        seed=global_random_seed,
+        n_samples=100,
+        n_features=3,
+        n_components=4,
+    )
+
+    precisions_init, desired_precisions_cholesky = _calculate_precisions(
+        X, resp, covariance_type
+    )
+    gmm = GaussianMixture(
+        covariance_type=covariance_type, precisions_init=precisions_init
+    )
+    gmm._initialize(X, resp)
+    actual_precisions_cholesky = gmm.precisions_cholesky_
+    assert_allclose(actual_precisions_cholesky, desired_precisions_cholesky)
+
+
+def test_gaussian_mixture_single_component_stable():
+    """
+    Non-regression test for #23032 ensuring 1-component GM works on only a
+    few samples.
+    """
+    rng = np.random.RandomState(0)
+    X = rng.multivariate_normal(np.zeros(2), np.identity(2), size=3)
+    gm = GaussianMixture(n_components=1)
+    gm.fit(X).sample()
+
+
+def test_gaussian_mixture_all_init_does_not_estimate_gaussian_parameters(
+    monkeypatch,
+    global_random_seed,
+):
+    """When all init parameters are provided, the Gaussian parameters
+    are not estimated.
+
+    Non-regression test for gh-26015.
+    """
+
+    mock = Mock(side_effect=_estimate_gaussian_parameters)
+    monkeypatch.setattr(
+        sklearn.mixture._gaussian_mixture, "_estimate_gaussian_parameters", mock
+    )
+
+    rng = np.random.RandomState(global_random_seed)
+    rand_data = RandomData(rng)
+
+    gm = GaussianMixture(
+        n_components=rand_data.n_components,
+        weights_init=rand_data.weights,
+        means_init=rand_data.means,
+        precisions_init=rand_data.precisions["full"],
+        random_state=rng,
+    )
+    gm.fit(rand_data.X["full"])
+    # The initial gaussian parameters are not estimated. They are estimated for every
+    # m_step.
+    assert mock.call_count == gm.n_iter_

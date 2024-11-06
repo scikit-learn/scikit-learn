@@ -8,13 +8,16 @@ It will plot the decision boundaries for each class.
 
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap
-from sklearn import datasets
-from sklearn.neighbors import NearestCentroid
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-n_neighbors = 15
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.colors import ListedColormap
+
+from sklearn import datasets
+from sklearn.inspection import DecisionBoundaryDisplay
+from sklearn.neighbors import NearestCentroid
 
 # import some data to play with
 iris = datasets.load_iris()
@@ -23,29 +26,21 @@ iris = datasets.load_iris()
 X = iris.data[:, :2]
 y = iris.target
 
-h = 0.02  # step size in the mesh
-
 # Create color maps
 cmap_light = ListedColormap(["orange", "cyan", "cornflowerblue"])
 cmap_bold = ListedColormap(["darkorange", "c", "darkblue"])
 
 for shrinkage in [None, 0.2]:
-    # we create an instance of Neighbours Classifier and fit the data.
+    # we create an instance of Nearest Centroid Classifier and fit the data.
     clf = NearestCentroid(shrink_threshold=shrinkage)
     clf.fit(X, y)
     y_pred = clf.predict(X)
     print(shrinkage, np.mean(y == y_pred))
-    # Plot the decision boundary. For that, we will assign a color to each
-    # point in the mesh [x_min, x_max]x[y_min, y_max].
-    x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
-    y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
-    xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
-    Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
 
-    # Put the result into a color plot
-    Z = Z.reshape(xx.shape)
-    plt.figure()
-    plt.pcolormesh(xx, yy, Z, cmap=cmap_light)
+    _, ax = plt.subplots()
+    DecisionBoundaryDisplay.from_estimator(
+        clf, X, cmap=cmap_light, ax=ax, response_method="predict"
+    )
 
     # Plot also the training points
     plt.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap_bold, edgecolor="k", s=20)

@@ -1,0 +1,28 @@
+# DO NOT EDIT: this file is generated from the specification found in the
+# following script to centralize the configuration for CI builds:
+# build_tools/update_environments_and_lock_files.py
+channels:
+  - defaults
+dependencies:
+  - python
+  - numpy
+  - blas[build=mkl]
+  - scipy<1.12
+  - joblib
+  - matplotlib
+  - pandas
+  - pyamg
+  - pytest
+  - pytest-xdist
+  - pillow
+  - pip
+  - ninja
+  - pytest-cov
+  - coverage
+  - ccache
+  - pip
+  - pip:
+    - cython
+    - threadpoolctl
+    - meson-python
+    - meson

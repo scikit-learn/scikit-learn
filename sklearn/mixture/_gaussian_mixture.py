@@ -1,17 +1,15 @@
 """Gaussian Mixture Model."""
 
-# Author: Wei Xue <xuewei4d@gmail.com>
-# Modified by Thierry Guillemot <thierry.guillemot.work@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
-
 from scipy import linalg
 
-from ._base import BaseMixture, _check_shape
 from ..utils import check_array
+from ..utils._param_validation import StrOptions
 from ..utils.extmath import row_norms
-
+from ._base import BaseMixture, _check_shape
 
 ###############################################################################
 # Gaussian mixture shape checkers used by the GaussianMixture class
@@ -229,7 +227,7 @@ def _estimate_gaussian_covariances_diag(resp, X, nk, means, reg_covar):
         The covariance vector of the current components.
     """
     avg_X2 = np.dot(resp.T, X * X) / nk[:, np.newaxis]
-    avg_means2 = means ** 2
+    avg_means2 = means**2
     avg_X_means = means * np.dot(resp.T, X) / nk[:, np.newaxis]
     return avg_X2 - 2 * avg_X_means + avg_means2 + reg_covar
 
@@ -349,6 +347,61 @@ def _compute_precision_cholesky(covariances, covariance_type):
     return precisions_chol
 
 
+def _flipudlr(array):
+    """Reverse the rows and columns of an array."""
+    return np.flipud(np.fliplr(array))
+
+
+def _compute_precision_cholesky_from_precisions(precisions, covariance_type):
+    r"""Compute the Cholesky decomposition of precisions using precisions themselves.
+
+    As implemented in :func:`_compute_precision_cholesky`, the `precisions_cholesky_` is
+    an upper-triangular matrix for each Gaussian component, which can be expressed as
+    the $UU^T$ factorization of the precision matrix for each Gaussian component, where
+    $U$ is an upper-triangular matrix.
+
+    In order to use the Cholesky decomposition to get $UU^T$, the precision matrix
+    $\Lambda$ needs to be permutated such that its rows and columns are reversed, which
+    can be done by applying a similarity transformation with an exchange matrix $J$,
+    where the 1 elements reside on the anti-diagonal and all other elements are 0. In
+    particular, the Cholesky decomposition of the transformed precision matrix is
+    $J\Lambda J=LL^T$, where $L$ is a lower-triangular matrix. Because $\Lambda=UU^T$
+    and $J=J^{-1}=J^T$, the `precisions_cholesky_` for each Gaussian component can be
+    expressed as $JLJ$.
+
+    Refer to #26415 for details.
+
+    Parameters
+    ----------
+    precisions : array-like
+        The precision matrix of the current components.
+        The shape depends on the covariance_type.
+
+    covariance_type : {'full', 'tied', 'diag', 'spherical'}
+        The type of precision matrices.
+
+    Returns
+    -------
+    precisions_cholesky : array-like
+        The cholesky decomposition of sample precisions of the current
+        components. The shape depends on the covariance_type.
+    """
+    if covariance_type == "full":
+        precisions_cholesky = np.array(
+            [
+                _flipudlr(linalg.cholesky(_flipudlr(precision), lower=True))
+                for precision in precisions
+            ]
+        )
+    elif covariance_type == "tied":
+        precisions_cholesky = _flipudlr(
+            linalg.cholesky(_flipudlr(precisions), lower=True)
+        )
+    else:
+        precisions_cholesky = np.sqrt(precisions)
+    return precisions_cholesky
+
+
 ###############################################################################
 # Gaussian mixture probability estimators
 def _compute_log_det_cholesky(matrix_chol, covariance_type, n_features):
@@ -434,17 +487,17 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
             log_prob[:, k] = np.sum(np.square(y), axis=1)
 
     elif covariance_type == "diag":
-        precisions = precisions_chol ** 2
+        precisions = precisions_chol**2
         log_prob = (
-            np.sum((means ** 2 * precisions), 1)
+            np.sum((means**2 * precisions), 1)
             - 2.0 * np.dot(X, (means * precisions).T)
-            + np.dot(X ** 2, precisions.T)
+            + np.dot(X**2, precisions.T)
         )
 
     elif covariance_type == "spherical":
-        precisions = precisions_chol ** 2
+        precisions = precisions_chol**2
         log_prob = (
-            np.sum(means ** 2, 1) * precisions
+            np.sum(means**2, 1) * precisions
             - 2 * np.dot(X, means.T * precisions)
             + np.outer(row_norms(X, squared=True), precisions)
         )
@@ -492,13 +545,20 @@ class GaussianMixture(BaseMixture):
     n_init : int, default=1
         The number of initializations to perform. The best results are kept.
 
-    init_params : {'kmeans', 'random'}, default='kmeans'
+    init_params : {'kmeans', 'k-means++', 'random', 'random_from_data'}, \
+    default='kmeans'
         The method used to initialize the weights, the means and the
         precisions.
-        Must be one of::
+        String must be one of:
 
-            'kmeans' : responsibilities are initialized using kmeans.
-            'random' : responsibilities are initialized randomly.
+        - 'kmeans' : responsibilities are initialized using kmeans.
+        - 'k-means++' : use the k-means++ method to initialize.
+        - 'random' : responsibilities are initialized randomly.
+        - 'random_from_data' : initial means are randomly selected data points.
+
+        .. versionchanged:: v1.1
+            `init_params` now accepts 'random_from_data' and 'k-means++' as
+            initialization methods.
 
     weights_init : array-like of shape (n_components, ), default=None
         The user-provided initial weights.
@@ -591,7 +651,7 @@ class GaussianMixture(BaseMixture):
             (n_components, n_features, n_features) if 'full'
 
     converged_ : bool
-        True when convergence was reached in fit(), False otherwise.
+        True when convergence of the best fit of EM was reached, False otherwise.
 
     n_iter_ : int
         Number of step used by the best fit of EM to reach the convergence.
@@ -628,6 +688,14 @@ class GaussianMixture(BaseMixture):
     >>> gm.predict([[0, 0], [12, 3]])
     array([1, 0])
     """
+
+    _parameter_constraints: dict = {
+        **BaseMixture._parameter_constraints,
+        "covariance_type": [StrOptions({"full", "tied", "diag", "spherical"})],
+        "weights_init": ["array-like", None],
+        "means_init": ["array-like", None],
+        "precisions_init": ["array-like", None],
+    }
 
     def __init__(
         self,
@@ -668,13 +736,6 @@ class GaussianMixture(BaseMixture):
     def _check_parameters(self, X):
         """Check the Gaussian mixture parameters are well defined."""
         _, n_features = X.shape
-        if self.covariance_type not in ["spherical", "tied", "diag", "full"]:
-            raise ValueError(
-                "Invalid value for 'covariance_type': %s "
-                "'covariance_type' should be in "
-                "['spherical', 'tied', 'diag', 'full']"
-                % self.covariance_type
-            )
 
         if self.weights_init is not None:
             self.weights_init = _check_weights(self.weights_init, self.n_components)
@@ -692,6 +753,19 @@ class GaussianMixture(BaseMixture):
                 n_features,
             )
 
+    def _initialize_parameters(self, X, random_state):
+        # If all the initial parameters are all provided, then there is no need to run
+        # the initialization.
+        compute_resp = (
+            self.weights_init is None
+            or self.means_init is None
+            or self.precisions_init is None
+        )
+        if compute_resp:
+            super()._initialize_parameters(X, random_state)
+        else:
+            self._initialize(X, None)
+
     def _initialize(self, X, resp):
         """Initialization of the Gaussian mixture parameters.
 
@@ -702,11 +776,13 @@ class GaussianMixture(BaseMixture):
         resp : array-like of shape (n_samples, n_components)
         """
         n_samples, _ = X.shape
-
-        weights, means, covariances = _estimate_gaussian_parameters(
-            X, resp, self.reg_covar, self.covariance_type
-        )
-        weights /= n_samples
+        weights, means, covariances = None, None, None
+        if resp is not None:
+            weights, means, covariances = _estimate_gaussian_parameters(
+                X, resp, self.reg_covar, self.covariance_type
+            )
+            if self.weights_init is None:
+                weights /= n_samples
 
         self.weights_ = weights if self.weights_init is None else self.weights_init
         self.means_ = means if self.means_init is None else self.means_init
@@ -716,19 +792,10 @@ class GaussianMixture(BaseMixture):
             self.precisions_cholesky_ = _compute_precision_cholesky(
                 covariances, self.covariance_type
             )
-        elif self.covariance_type == "full":
-            self.precisions_cholesky_ = np.array(
-                [
-                    linalg.cholesky(prec_init, lower=True)
-                    for prec_init in self.precisions_init
-                ]
-            )
-        elif self.covariance_type == "tied":
-            self.precisions_cholesky_ = linalg.cholesky(
-                self.precisions_init, lower=True
-            )
         else:
-            self.precisions_cholesky_ = np.sqrt(self.precisions_init)
+            self.precisions_cholesky_ = _compute_precision_cholesky_from_precisions(
+                self.precisions_init, self.covariance_type
+            )
 
     def _m_step(self, X, log_resp):
         """M step.
@@ -741,11 +808,10 @@ class GaussianMixture(BaseMixture):
             Logarithm of the posterior probabilities (or responsibilities) of
             the point of each sample in X.
         """
-        n_samples, _ = X.shape
         self.weights_, self.means_, self.covariances_ = _estimate_gaussian_parameters(
             X, np.exp(log_resp), self.reg_covar, self.covariance_type
         )
-        self.weights_ /= n_samples
+        self.weights_ /= self.weights_.sum()
         self.precisions_cholesky_ = _compute_precision_cholesky(
             self.covariances_, self.covariance_type
         )
@@ -790,7 +856,7 @@ class GaussianMixture(BaseMixture):
                 self.precisions_cholesky_, self.precisions_cholesky_.T
             )
         else:
-            self.precisions_ = self.precisions_cholesky_ ** 2
+            self.precisions_ = self.precisions_cholesky_**2
 
     def _n_parameters(self):
         """Return the number of free parameters in the model."""

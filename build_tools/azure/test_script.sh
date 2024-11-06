@@ -2,29 +2,42 @@
 
 set -e
 
-if [[ "$DISTRIB" =~ ^conda.* ]]; then
-    source activate $VIRTUALENV
-elif [[ "$DISTRIB" == "ubuntu" ]] || [[ "$DISTRIB" == "debian-32" ]]; then
-    source $VIRTUALENV/bin/activate
+# Defines the show_installed_libraries and activate_environment functions.
+source build_tools/shared.sh
+
+activate_environment
+
+if [[ "$BUILD_REASON" == "Schedule" ]]; then
+    # Enable global random seed randomization to discover seed-sensitive tests
+    # only on nightly builds.
+    # https://scikit-learn.org/stable/computing/parallelism.html#environment-variables
+    export SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$(($RANDOM % 100))
+    echo "To reproduce this test run, set the following environment variable:"
+    echo "    SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$SKLEARN_TESTS_GLOBAL_RANDOM_SEED",
+    echo "See: https://scikit-learn.org/dev/computing/parallelism.html#sklearn-tests-global-random-seed"
+
+    # Enable global dtype fixture for all nightly builds to discover
+    # numerical-sensitive tests.
+    # https://scikit-learn.org/stable/computing/parallelism.html#environment-variables
+    export SKLEARN_RUN_FLOAT32_TESTS=1
 fi
 
-if [[ "$BUILD_WITH_ICC" == "true" ]]; then
-    source /opt/intel/oneapi/setvars.sh
+COMMIT_MESSAGE=$(python build_tools/azure/get_commit_message.py --only-show-message)
+
+if [[ "$COMMIT_MESSAGE" =~ \[float32\] ]]; then
+    echo "float32 tests will be run due to commit message"
+    export SKLEARN_RUN_FLOAT32_TESTS=1
 fi
 
 mkdir -p $TEST_DIR
 cp setup.cfg $TEST_DIR
 cd $TEST_DIR
 
+python -c "import joblib; print(f'Number of cores (physical): \
+{joblib.cpu_count()} ({joblib.cpu_count(only_physical_cores=True)})')"
 python -c "import sklearn; sklearn.show_versions()"
 
-if ! command -v conda &> /dev/null
-then
-    pip list
-else
-    # conda list provides more info than pip list (when available)
-    conda list
-fi
+show_installed_libraries
 
 TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML"
 
@@ -38,22 +51,26 @@ if [[ "$COVERAGE" == "true" ]]; then
     TEST_CMD="$TEST_CMD --cov-config='$COVERAGE_PROCESS_START' --cov sklearn --cov-report="
 fi
 
-if [[ -n "$CHECK_WARNINGS" ]]; then
-    # numpy's 1.19.0's tostring() deprecation is ignored until scipy and joblib removes its usage
-    TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning -Wignore:tostring:DeprecationWarning"
-
-    # Python 3.10 deprecates disutils and is imported by numpy interally during import time
-    TEST_CMD="$TEST_CMD -Wignore:The\ distutils:DeprecationWarning"
-fi
-
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
-    TEST_CMD="$TEST_CMD -n$CPU_COUNT"
+    XDIST_WORKERS=$(python -c "import joblib; print(joblib.cpu_count(only_physical_cores=True))")
+    TEST_CMD="$TEST_CMD -n$XDIST_WORKERS"
 fi
 
-if [[ "$SHOW_SHORT_SUMMARY" == "true" ]]; then
-    TEST_CMD="$TEST_CMD -ra"
+if [[ -n "$SELECTED_TESTS" ]]; then
+    TEST_CMD="$TEST_CMD -k $SELECTED_TESTS"
+
+    # Override to make selected tests run on all random seeds
+    export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
 fi
+
+if which lscpu ; then
+    lscpu
+else
+    echo "Could not inspect CPU architecture."
+fi
+
+TEST_CMD="$TEST_CMD --pyargs sklearn"
 
 set -x
-eval "$TEST_CMD --pyargs sklearn"
+eval "$TEST_CMD"
 set +x

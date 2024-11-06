@@ -1,15 +1,16 @@
-from time import time
 import argparse
+from time import time
 
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.datasets import make_classification
-from sklearn.datasets import make_regression
-from sklearn.ensemble._hist_gradient_boosting.utils import get_equivalent_estimator
 
+from sklearn.datasets import make_classification, make_regression
+from sklearn.ensemble import (
+    HistGradientBoostingClassifier,
+    HistGradientBoostingRegressor,
+)
+from sklearn.ensemble._hist_gradient_boosting.utils import get_equivalent_estimator
+from sklearn.model_selection import train_test_split
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--n-leaf-nodes", type=int, default=31)
@@ -115,12 +116,7 @@ def one_run(n_samples):
     loss = args.loss
     if args.problem == "classification":
         if loss == "default":
-            # loss='auto' does not work with get_equivalent_estimator()
-            loss = (
-                "binary_crossentropy"
-                if args.n_classes == 2
-                else "categorical_crossentropy"
-            )
+            loss = "log_loss"
     else:
         # regression
         if loss == "default":
@@ -159,7 +155,7 @@ def one_run(n_samples):
     xgb_score_duration = None
     if args.xgboost:
         print("Fitting an XGBoost model...")
-        xgb_est = get_equivalent_estimator(est, lib="xgboost")
+        xgb_est = get_equivalent_estimator(est, lib="xgboost", n_classes=args.n_classes)
 
         tic = time()
         xgb_est.fit(X_train, y_train, sample_weight=sample_weight_train)
@@ -176,7 +172,9 @@ def one_run(n_samples):
     cat_score_duration = None
     if args.catboost:
         print("Fitting a CatBoost model...")
-        cat_est = get_equivalent_estimator(est, lib="catboost")
+        cat_est = get_equivalent_estimator(
+            est, lib="catboost", n_classes=args.n_classes
+        )
 
         tic = time()
         cat_est.fit(X_train, y_train, sample_weight=sample_weight_train)

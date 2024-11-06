@@ -19,11 +19,8 @@ Note that `alpha` is a parameter to control the strength of the Tikhonov
 regularization on the assumed training points' covariance matrix.
 """
 
-# Author: Vincent Dubourg <vincent.dubourg@gmail.com>
-#         Jake Vanderplas <vanderplas@astro.washington.edu>
-#         Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-#         Guillaume Lemaitre <g.lemaitre58@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Dataset generation
@@ -114,7 +111,7 @@ y_train_noisy = y_train + rng.normal(loc=0.0, scale=noise_std, size=y_train.shap
 # time, we specify the parameter `alpha` which can be interpreted as the
 # variance of a Gaussian noise.
 gaussian_process = GaussianProcessRegressor(
-    kernel=kernel, alpha=noise_std ** 2, n_restarts_optimizer=9
+    kernel=kernel, alpha=noise_std**2, n_restarts_optimizer=9
 )
 gaussian_process.fit(X_train, y_train_noisy)
 mean_prediction, std_prediction = gaussian_process.predict(X, return_std=True)

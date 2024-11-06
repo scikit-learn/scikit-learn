@@ -4,26 +4,28 @@ This module contains the TreeGrower class.
 TreeGrower builds a regression tree fitting a Newton-Raphson step, based on
 the gradients and hessians of the training data.
 """
-# Author: Nicolas Hug
 
-from heapq import heappush, heappop
-import numpy as np
-from timeit import default_timer as time
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numbers
+from heapq import heappop, heappush
+from timeit import default_timer as time
 
-from .splitting import Splitter
-from .histogram import HistogramBuilder
-from .predictor import TreePredictor
-from .utils import sum_parallel
-from .common import PREDICTOR_RECORD_DTYPE
-from .common import X_BITSET_INNER_DTYPE
-from .common import Y_DTYPE
-from .common import MonotonicConstraint
-from ._bitset import set_raw_bitset_from_binned_bitset
+import numpy as np
+
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 
-
-EPS = np.finfo(Y_DTYPE).eps  # to avoid zero division errors
+from ...utils.arrayfuncs import sum_parallel
+from ._bitset import set_raw_bitset_from_binned_bitset
+from .common import (
+    PREDICTOR_RECORD_DTYPE,
+    X_BITSET_INNER_DTYPE,
+    MonotonicConstraint,
+)
+from .histogram import HistogramBuilder
+from .predictor import TreePredictor
+from .splitting import Splitter
 
 
 class TreeNode:
@@ -36,8 +38,12 @@ class TreeNode:
     ----------
     depth : int
         The depth of the node, i.e. its distance from the root.
-    sample_indices : ndarray of shape (n_samples_at_node,), dtype=np.uint
+    sample_indices : ndarray of shape (n_samples_at_node,), dtype=np.uint32
         The indices of the samples at the node.
+    partition_start : int
+        start position of the node's sample_indices in splitter.partition.
+    partition_stop : int
+        stop position of the node's sample_indices in splitter.partition.
     sum_gradients : float
         The sum of the gradients of the samples at the node.
     sum_hessians : float
@@ -47,7 +53,7 @@ class TreeNode:
     ----------
     depth : int
         The depth of the node, i.e. its distance from the root.
-    sample_indices : ndarray of shape (n_samples_at_node,), dtype=np.uint
+    sample_indices : ndarray of shape (n_samples_at_node,), dtype=np.uint32
         The indices of the samples at the node.
     sum_gradients : float
         The sum of the gradients of the samples at the node.
@@ -55,6 +61,8 @@ class TreeNode:
         The sum of the hessians of the samples at the node.
     split_info : SplitInfo or None
         The result of the split evaluation.
+    is_leaf : bool
+        True if node is a leaf
     left_child : TreeNode or None
         The left child of the node. None for leaves.
     right_child : TreeNode or None
@@ -66,25 +74,27 @@ class TreeNode:
         start position of the node's sample_indices in splitter.partition.
     partition_stop : int
         stop position of the node's sample_indices in splitter.partition.
+    allowed_features : None or ndarray, dtype=int
+        Indices of features allowed to split for children.
+    interaction_cst_indices : None or list of ints
+        Indices of the interaction sets that have to be applied on splits of
+        child nodes. The fewer sets the stronger the constraint as fewer sets
+        contain fewer features.
+    children_lower_bound : float
+    children_upper_bound : float
     """
 
-    split_info = None
-    left_child = None
-    right_child = None
-    histograms = None
-
-    # start and stop indices of the node in the splitter.partition
-    # array. Concretely,
-    # self.sample_indices = view(self.splitter.partition[start:stop])
-    # Please see the comments about splitter.partition and
-    # splitter.split_indices for more info about this design.
-    # These 2 attributes are only used in _update_raw_prediction, because we
-    # need to iterate over the leaves and I don't know how to efficiently
-    # store the sample_indices views because they're all of different sizes.
-    partition_start = 0
-    partition_stop = 0
-
-    def __init__(self, depth, sample_indices, sum_gradients, sum_hessians, value=None):
+    def __init__(
+        self,
+        *,
+        depth,
+        sample_indices,
+        partition_start,
+        partition_stop,
+        sum_gradients,
+        sum_hessians,
+        value=None,
+    ):
         self.depth = depth
         self.sample_indices = sample_indices
         self.n_samples = sample_indices.shape[0]
@@ -92,7 +102,23 @@ class TreeNode:
         self.sum_hessians = sum_hessians
         self.value = value
         self.is_leaf = False
+        self.allowed_features = None
+        self.interaction_cst_indices = None
         self.set_children_bounds(float("-inf"), float("+inf"))
+        self.split_info = None
+        self.left_child = None
+        self.right_child = None
+        self.histograms = None
+        # start and stop indices of the node in the splitter.partition
+        # array. Concretely,
+        # self.sample_indices = view(self.splitter.partition[start:stop])
+        # Please see the comments about splitter.partition and
+        # splitter.split_indices for more info about this design.
+        # These 2 attributes are only used in _update_raw_prediction, because we
+        # need to iterate over the leaves and I don't know how to efficiently
+        # store the sample_indices views because they're all of different sizes.
+        self.partition_start = partition_start
+        self.partition_stop = partition_stop
 
     def set_children_bounds(self, lower, upper):
         """Set children values bounds to respect monotonic constraints."""
@@ -149,6 +175,10 @@ class TreeGrower:
     min_gain_to_split : float, default=0.
         The minimum gain needed to split a node. Splits with lower gain will
         be ignored.
+    min_hessian_to_split : float, default=1e-3
+        The minimum sum of hessians needed in each node. Splits that result in
+        at least one child having a sum of hessians less than
+        ``min_hessian_to_split`` are discarded.
     n_bins : int, default=256
         The total number of bins, including the bin for missing values. Used
         to define the shape of the histograms.
@@ -163,17 +193,24 @@ class TreeGrower:
         If it's a bool, the same value is used for all features.
     is_categorical : ndarray of bool of shape (n_features,), default=None
         Indicates categorical features.
-    monotonic_cst : array-like of shape (n_features,), dtype=int, default=None
-        Indicates the monotonic constraint to enforce on each feature. -1, 1
-        and 0 respectively correspond to a positive constraint, negative
-        constraint and no constraint. Read more in the :ref:`User Guide
-        <monotonic_cst_gbdt>`.
+    monotonic_cst : array-like of int of shape (n_features,), dtype=int, default=None
+        Indicates the monotonic constraint to enforce on each feature.
+          - 1: monotonic increase
+          - 0: no constraint
+          - -1: monotonic decrease
+
+        Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
+    interaction_cst : list of sets of integers, default=None
+        List of interaction constraints.
     l2_regularization : float, default=0.
-        The L2 regularization parameter.
-    min_hessian_to_split : float, default=1e-3
-        The minimum sum of hessians needed in each node. Splits that result in
-        at least one child having a sum of hessians less than
-        ``min_hessian_to_split`` are discarded.
+        The L2 regularization parameter penalizing leaves with small hessians.
+        Use ``0`` for no regularization (default).
+    feature_fraction_per_split : float, default=1
+        Proportion of randomly chosen features in each and every node split.
+        This is a form of regularization, smaller values make the trees weaker
+        learners and might prevent overfitting.
+    rng : Generator
+        Numpy random Generator used for feature subsampling.
     shrinkage : float, default=1.
         The shrinkage parameter to apply to the leaves values, also known as
         learning rate.
@@ -182,6 +219,28 @@ class TreeGrower:
         to determine the effective number of threads use, which takes cgroups CPU
         quotes into account. See the docstring of `_openmp_effective_n_threads`
         for details.
+
+    Attributes
+    ----------
+    histogram_builder : HistogramBuilder
+    splitter : Splitter
+    root : TreeNode
+    finalized_leaves : list of TreeNode
+    splittable_nodes : list of TreeNode
+    missing_values_bin_idx : int
+        Equals n_bins - 1
+    n_categorical_splits : int
+    n_features : int
+    n_nodes : int
+    total_find_split_time : float
+        Time spent finding the best splits
+    total_compute_hist_time : float
+        Time spent computing histograms
+    total_apply_split_time : float
+        Time spent splitting nodes
+    with_monotonic_cst : bool
+        Whether there are monotonic constraints that apply. False iff monotonic_cst is
+        None.
     """
 
     def __init__(
@@ -193,24 +252,22 @@ class TreeGrower:
         max_depth=None,
         min_samples_leaf=20,
         min_gain_to_split=0.0,
+        min_hessian_to_split=1e-3,
         n_bins=256,
         n_bins_non_missing=None,
         has_missing_values=False,
         is_categorical=None,
         monotonic_cst=None,
+        interaction_cst=None,
         l2_regularization=0.0,
-        min_hessian_to_split=1e-3,
+        feature_fraction_per_split=1.0,
+        rng=np.random.default_rng(),
         shrinkage=1.0,
         n_threads=None,
     ):
-
         self._validate_parameters(
             X_binned,
-            max_leaf_nodes,
-            max_depth,
-            min_samples_leaf,
             min_gain_to_split,
-            l2_regularization,
             min_hessian_to_split,
         )
         n_threads = _openmp_effective_n_threads(n_threads)
@@ -229,28 +286,18 @@ class TreeGrower:
             has_missing_values = [has_missing_values] * X_binned.shape[1]
         has_missing_values = np.asarray(has_missing_values, dtype=np.uint8)
 
+        # `monotonic_cst` validation is done in _validate_monotonic_cst
+        # at the estimator level and therefore the following should not be
+        # needed when using the public API.
         if monotonic_cst is None:
-            self.with_monotonic_cst = False
             monotonic_cst = np.full(
                 shape=X_binned.shape[1],
                 fill_value=MonotonicConstraint.NO_CST,
                 dtype=np.int8,
             )
         else:
-            self.with_monotonic_cst = True
             monotonic_cst = np.asarray(monotonic_cst, dtype=np.int8)
-
-            if monotonic_cst.shape[0] != X_binned.shape[1]:
-                raise ValueError(
-                    "monotonic_cst has shape {} but the input data "
-                    "X has {} features.".format(
-                        monotonic_cst.shape[0], X_binned.shape[1]
-                    )
-                )
-            if np.any(monotonic_cst < -1) or np.any(monotonic_cst > 1):
-                raise ValueError(
-                    "monotonic_cst must be None or an array-like of -1, 0 or 1."
-                )
+        self.with_monotonic_cst = np.any(monotonic_cst != MonotonicConstraint.NO_CST)
 
         if is_categorical is None:
             is_categorical = np.zeros(shape=X_binned.shape[1], dtype=np.uint8)
@@ -270,32 +317,35 @@ class TreeGrower:
         )
         missing_values_bin_idx = n_bins - 1
         self.splitter = Splitter(
-            X_binned,
-            n_bins_non_missing,
-            missing_values_bin_idx,
-            has_missing_values,
-            is_categorical,
-            monotonic_cst,
-            l2_regularization,
-            min_hessian_to_split,
-            min_samples_leaf,
-            min_gain_to_split,
-            hessians_are_constant,
-            n_threads,
+            X_binned=X_binned,
+            n_bins_non_missing=n_bins_non_missing,
+            missing_values_bin_idx=missing_values_bin_idx,
+            has_missing_values=has_missing_values,
+            is_categorical=is_categorical,
+            monotonic_cst=monotonic_cst,
+            l2_regularization=l2_regularization,
+            min_hessian_to_split=min_hessian_to_split,
+            min_samples_leaf=min_samples_leaf,
+            min_gain_to_split=min_gain_to_split,
+            hessians_are_constant=hessians_are_constant,
+            feature_fraction_per_split=feature_fraction_per_split,
+            rng=rng,
+            n_threads=n_threads,
         )
-        self.n_bins_non_missing = n_bins_non_missing
-        self.missing_values_bin_idx = missing_values_bin_idx
+        self.X_binned = X_binned
         self.max_leaf_nodes = max_leaf_nodes
-        self.has_missing_values = has_missing_values
-        self.monotonic_cst = monotonic_cst
-        self.is_categorical = is_categorical
-        self.l2_regularization = l2_regularization
-        self.n_features = X_binned.shape[1]
         self.max_depth = max_depth
         self.min_samples_leaf = min_samples_leaf
-        self.X_binned = X_binned
         self.min_gain_to_split = min_gain_to_split
+        self.n_bins_non_missing = n_bins_non_missing
+        self.missing_values_bin_idx = missing_values_bin_idx
+        self.has_missing_values = has_missing_values
+        self.is_categorical = is_categorical
+        self.monotonic_cst = monotonic_cst
+        self.interaction_cst = interaction_cst
+        self.l2_regularization = l2_regularization
         self.shrinkage = shrinkage
+        self.n_features = X_binned.shape[1]
         self.n_threads = n_threads
         self.splittable_nodes = []
         self.finalized_leaves = []
@@ -303,17 +353,13 @@ class TreeGrower:
         self.total_compute_hist_time = 0.0  # time spent computing histograms
         self.total_apply_split_time = 0.0  # time spent splitting nodes
         self.n_categorical_splits = 0
-        self._intilialize_root(gradients, hessians, hessians_are_constant)
+        self._initialize_root(gradients, hessians)
         self.n_nodes = 1
 
     def _validate_parameters(
         self,
         X_binned,
-        max_leaf_nodes,
-        max_depth,
-        min_samples_leaf,
         min_gain_to_split,
-        l2_regularization,
         min_hessian_to_split,
     ):
         """Validate parameters passed to __init__.
@@ -327,27 +373,9 @@ class TreeGrower:
                 "X_binned should be passed as Fortran contiguous "
                 "array for maximum efficiency."
             )
-        if max_leaf_nodes is not None and max_leaf_nodes <= 1:
-            raise ValueError(
-                "max_leaf_nodes={} should not be smaller than 2".format(max_leaf_nodes)
-            )
-        if max_depth is not None and max_depth < 1:
-            raise ValueError(
-                "max_depth={} should not be smaller than 1".format(max_depth)
-            )
-        if min_samples_leaf < 1:
-            raise ValueError(
-                "min_samples_leaf={} should not be smaller than 1".format(
-                    min_samples_leaf
-                )
-            )
         if min_gain_to_split < 0:
             raise ValueError(
                 "min_gain_to_split={} must be positive.".format(min_gain_to_split)
-            )
-        if l2_regularization < 0:
-            raise ValueError(
-                "l2_regularization={} must be positive.".format(l2_regularization)
             )
         if min_hessian_to_split < 0:
             raise ValueError(
@@ -373,7 +401,7 @@ class TreeGrower:
         for leaf in self.finalized_leaves:
             leaf.value *= self.shrinkage
 
-    def _intilialize_root(self, gradients, hessians, hessians_are_constant):
+    def _initialize_root(self, gradients, hessians):
         """Initialize root node and finalize it if needed."""
         n_samples = self.X_binned.shape[0]
         depth = 0
@@ -385,13 +413,12 @@ class TreeGrower:
         self.root = TreeNode(
             depth=depth,
             sample_indices=self.splitter.partition,
+            partition_start=0,
+            partition_stop=n_samples,
             sum_gradients=sum_gradients,
             sum_hessians=sum_hessians,
             value=0,
         )
-
-        self.root.partition_start = 0
-        self.root.partition_stop = n_samples
 
         if self.root.n_samples < 2 * self.min_samples_leaf:
             # Do not even bother computing any splitting statistics.
@@ -401,10 +428,22 @@ class TreeGrower:
             self._finalize_leaf(self.root)
             return
 
+        if self.interaction_cst is not None:
+            self.root.interaction_cst_indices = range(len(self.interaction_cst))
+            allowed_features = set().union(*self.interaction_cst)
+            self.root.allowed_features = np.fromiter(
+                allowed_features, dtype=np.uint32, count=len(allowed_features)
+            )
+
+        tic = time()
         self.root.histograms = self.histogram_builder.compute_histograms_brute(
-            self.root.sample_indices
+            self.root.sample_indices, self.root.allowed_features
         )
+        self.total_compute_hist_time += time() - tic
+
+        tic = time()
         self._compute_best_split_and_push(self.root)
+        self.total_find_split_time += time() - tic
 
     def _compute_best_split_and_push(self, node):
         """Compute the best possible split (SplitInfo) of a given node.
@@ -416,13 +455,14 @@ class TreeGrower:
         """
 
         node.split_info = self.splitter.find_node_split(
-            node.n_samples,
-            node.histograms,
-            node.sum_gradients,
-            node.sum_hessians,
-            node.value,
-            node.children_lower_bound,
-            node.children_upper_bound,
+            n_samples=node.n_samples,
+            histograms=node.histograms,
+            sum_gradients=node.sum_gradients,
+            sum_hessians=node.sum_hessians,
+            value=node.value,
+            lower_bound=node.children_lower_bound,
+            upper_bound=node.children_upper_bound,
+            allowed_features=node.allowed_features,
         )
 
         if node.split_info.gain <= 0:  # no valid split
@@ -456,28 +496,39 @@ class TreeGrower:
         n_leaf_nodes += 2
 
         left_child_node = TreeNode(
-            depth,
-            sample_indices_left,
-            node.split_info.sum_gradient_left,
-            node.split_info.sum_hessian_left,
+            depth=depth,
+            sample_indices=sample_indices_left,
+            partition_start=node.partition_start,
+            partition_stop=node.partition_start + right_child_pos,
+            sum_gradients=node.split_info.sum_gradient_left,
+            sum_hessians=node.split_info.sum_hessian_left,
             value=node.split_info.value_left,
         )
         right_child_node = TreeNode(
-            depth,
-            sample_indices_right,
-            node.split_info.sum_gradient_right,
-            node.split_info.sum_hessian_right,
+            depth=depth,
+            sample_indices=sample_indices_right,
+            partition_start=left_child_node.partition_stop,
+            partition_stop=node.partition_stop,
+            sum_gradients=node.split_info.sum_gradient_right,
+            sum_hessians=node.split_info.sum_hessian_right,
             value=node.split_info.value_right,
         )
 
         node.right_child = right_child_node
         node.left_child = left_child_node
 
-        # set start and stop indices
-        left_child_node.partition_start = node.partition_start
-        left_child_node.partition_stop = node.partition_start + right_child_pos
-        right_child_node.partition_start = left_child_node.partition_stop
-        right_child_node.partition_stop = node.partition_stop
+        # set interaction constraints (the indices of the constraints sets)
+        if self.interaction_cst is not None:
+            # Calculate allowed_features and interaction_cst_indices only once. Child
+            # nodes inherit them before they get split.
+            (
+                left_child_node.allowed_features,
+                left_child_node.interaction_cst_indices,
+            ) = self._compute_interactions(node)
+            right_child_node.interaction_cst_indices = (
+                left_child_node.interaction_cst_indices
+            )
+            right_child_node.allowed_features = left_child_node.allowed_features
 
         if not self.has_missing_values[node.split_info.feature_idx]:
             # If no missing values are encountered at fit time, then samples
@@ -534,7 +585,6 @@ class TreeGrower:
         should_split_left = not left_child_node.is_leaf
         should_split_right = not right_child_node.is_leaf
         if should_split_left or should_split_right:
-
             # We will compute the histograms of both nodes even if one of them
             # is a leaf, since computing the second histogram is very cheap
             # (using histogram subtraction).
@@ -550,15 +600,21 @@ class TreeGrower:
             # We use the brute O(n_samples) method on the child that has the
             # smallest number of samples, and the subtraction trick O(n_bins)
             # on the other one.
+            # Note that both left and right child have the same allowed_features.
             tic = time()
             smallest_child.histograms = self.histogram_builder.compute_histograms_brute(
-                smallest_child.sample_indices
+                smallest_child.sample_indices, smallest_child.allowed_features
             )
             largest_child.histograms = (
                 self.histogram_builder.compute_histograms_subtraction(
-                    node.histograms, smallest_child.histograms
+                    node.histograms,
+                    smallest_child.histograms,
+                    smallest_child.allowed_features,
                 )
             )
+            # node.histograms is reused in largest_child.histograms. To break cyclic
+            # memory references and help garbage collection, we set it to None.
+            node.histograms = None
             self.total_compute_hist_time += time() - tic
 
             tic = time()
@@ -579,6 +635,48 @@ class TreeGrower:
         del node.histograms
 
         return left_child_node, right_child_node
+
+    def _compute_interactions(self, node):
+        r"""Compute features allowed by interactions to be inherited by child nodes.
+
+        Example: Assume constraints [{0, 1}, {1, 2}].
+           1      <- Both constraint groups could be applied from now on
+          / \
+         1   2    <- Left split still fulfills both constraint groups.
+        / \ / \      Right split at feature 2 has only group {1, 2} from now on.
+
+        LightGBM uses the same logic for overlapping groups. See
+        https://github.com/microsoft/LightGBM/issues/4481 for details.
+
+        Parameters:
+        ----------
+        node : TreeNode
+            A node that might have children. Based on its feature_idx, the interaction
+            constraints for possible child nodes are computed.
+
+        Returns
+        -------
+        allowed_features : ndarray, dtype=uint32
+            Indices of features allowed to split for children.
+        interaction_cst_indices : list of ints
+            Indices of the interaction sets that have to be applied on splits of
+            child nodes. The fewer sets the stronger the constraint as fewer sets
+            contain fewer features.
+        """
+        # Note:
+        #  - Case of no interactions is already captured before function call.
+        #  - This is for nodes that are already split and have a
+        #    node.split_info.feature_idx.
+        allowed_features = set()
+        interaction_cst_indices = []
+        for i in node.interaction_cst_indices:
+            if node.split_info.feature_idx in self.interaction_cst[i]:
+                interaction_cst_indices.append(i)
+                allowed_features.update(self.interaction_cst[i])
+        return (
+            np.fromiter(allowed_features, dtype=np.uint32, count=len(allowed_features)),
+            interaction_cst_indices,
+        )
 
     def _finalize_leaf(self, node):
         """Make node a leaf of the tree being grown."""

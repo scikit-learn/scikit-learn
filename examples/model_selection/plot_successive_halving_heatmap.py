@@ -8,18 +8,19 @@ This example compares the parameter search performed by
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from time import time
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from sklearn.svm import SVC
 from sklearn import datasets
-from sklearn.model_selection import GridSearchCV
 from sklearn.experimental import enable_halving_search_cv  # noqa
-from sklearn.model_selection import HalvingGridSearchCV
-
+from sklearn.model_selection import GridSearchCV, HalvingGridSearchCV
+from sklearn.svm import SVC
 
 # %%
 # We first define the parameter space for an :class:`~sklearn.svm.SVC`
@@ -54,8 +55,10 @@ gs_time = time() - tic
 
 def make_heatmap(ax, gs, is_sh=False, make_cbar=False):
     """Helper to make a heatmap."""
-    results = pd.DataFrame.from_dict(gs.cv_results_)
-    results["params_str"] = results.params.apply(str)
+    results = pd.DataFrame(gs.cv_results_)
+    results[["param_C", "param_gamma"]] = results[["param_C", "param_gamma"]].astype(
+        np.float64
+    )
     if is_sh:
         # SH dataframe: get mean_test_score values for the highest iter
         scores_matrix = results.sort_values("iter").pivot_table(

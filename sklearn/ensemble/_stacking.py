@@ -1,42 +1,81 @@
 """Stacking classifier and regressor."""
 
-# Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from abc import ABCMeta, abstractmethod
 from copy import deepcopy
+from numbers import Integral
 
 import numpy as np
-from joblib import Parallel
 import scipy.sparse as sparse
 
-from ..base import clone
-from ..base import ClassifierMixin, RegressorMixin, TransformerMixin
-from ..base import is_classifier, is_regressor
+from ..base import (
+    ClassifierMixin,
+    RegressorMixin,
+    TransformerMixin,
+    _fit_context,
+    clone,
+    is_classifier,
+    is_regressor,
+)
 from ..exceptions import NotFittedError
-from ..utils._estimator_html_repr import _VisualBlock
-
-from ._base import _fit_single_estimator
-from ._base import _BaseHeterogeneousEnsemble
-
-from ..linear_model import LogisticRegression
-from ..linear_model import RidgeCV
-
-from ..model_selection import cross_val_predict
-from ..model_selection import check_cv
-
+from ..linear_model import LogisticRegression, RidgeCV
+from ..model_selection import check_cv, cross_val_predict
 from ..preprocessing import LabelEncoder
-
 from ..utils import Bunch
-from ..utils.metaestimators import if_delegate_has_method
-from ..utils.multiclass import check_classification_targets
-from ..utils.validation import check_is_fitted
-from ..utils.validation import column_or_1d
-from ..utils.fixes import delayed
+from ..utils._estimator_html_repr import _VisualBlock
+from ..utils._param_validation import HasMethods, StrOptions
+from ..utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
+    _routing_enabled,
+    process_routing,
+)
+from ..utils.metaestimators import available_if
+from ..utils.multiclass import check_classification_targets, type_of_target
+from ..utils.parallel import Parallel, delayed
+from ..utils.validation import (
+    _check_feature_names_in,
+    _check_response_method,
+    _deprecate_positional_args,
+    check_is_fitted,
+    column_or_1d,
+)
+from ._base import _BaseHeterogeneousEnsemble, _fit_single_estimator
+
+
+def _estimator_has(attr):
+    """Check if we can delegate a method to the underlying estimator.
+
+    First, we check the fitted `final_estimator_` if available, otherwise we check the
+    unfitted `final_estimator`. We raise the original `AttributeError` if `attr` does
+    not exist. This function is used together with `available_if`.
+    """
+
+    def check(self):
+        if hasattr(self, "final_estimator_"):
+            getattr(self.final_estimator_, attr)
+        else:
+            getattr(self.final_estimator, attr)
+
+        return True
+
+    return check
 
 
 class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCMeta):
     """Base class for stacking method."""
+
+    _parameter_constraints: dict = {
+        "estimators": [list],
+        "final_estimator": [None, HasMethods("fit")],
+        "cv": ["cv_object", StrOptions({"prefit"})],
+        "n_jobs": [None, Integral],
+        "passthrough": ["boolean"],
+        "verbose": ["verbose"],
+    }
 
     @abstractmethod
     def __init__(
@@ -76,23 +115,40 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         This helper is in charge of ensuring the predictions are 2D arrays and
         it will drop one of the probability column when using probabilities
         in the binary case. Indeed, the p(y|c=0) = 1 - p(y|c=1)
+
+        When `y` type is `"multilabel-indicator"`` and the method used is
+        `predict_proba`, `preds` can be either a `ndarray` of shape
+        `(n_samples, n_class)` or for some estimators a list of `ndarray`.
+        This function will drop one of the probability column in this situation as well.
         """
         X_meta = []
         for est_idx, preds in enumerate(predictions):
-            # case where the the estimator returned a 1D array
-            if preds.ndim == 1:
+            if isinstance(preds, list):
+                # `preds` is here a list of `n_targets` 2D ndarrays of
+                # `n_classes` columns. The k-th column contains the
+                # probabilities of the samples belonging the k-th class.
+                #
+                # Since those probabilities must sum to one for each sample,
+                # we can work with probabilities of `n_classes - 1` classes.
+                # Hence we drop the first column.
+                for pred in preds:
+                    X_meta.append(pred[:, 1:])
+            elif preds.ndim == 1:
+                # Some estimator return a 1D array for predictions
+                # which must be 2-dimensional arrays.
                 X_meta.append(preds.reshape(-1, 1))
+            elif (
+                self.stack_method_[est_idx] == "predict_proba"
+                and len(self.classes_) == 2
+            ):
+                # Remove the first column when using probabilities in
+                # binary classification because both features `preds` are perfectly
+                # collinear.
+                X_meta.append(preds[:, 1:])
             else:
-                if (
-                    self.stack_method_[est_idx] == "predict_proba"
-                    and len(self.classes_) == 2
-                ):
-                    # Remove the first column when using probabilities in
-                    # binary classification because both features are perfectly
-                    # collinear.
-                    X_meta.append(preds[:, 1:])
-                else:
-                    X_meta.append(preds)
+                X_meta.append(preds)
+
+        self._n_feature_outs = [pred.shape[1] for pred in X_meta]
         if self.passthrough:
             X_meta.append(X)
             if sparse.issparse(X):
@@ -105,22 +161,21 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         if estimator == "drop":
             return None
         if method == "auto":
-            if getattr(estimator, "predict_proba", None):
-                return "predict_proba"
-            elif getattr(estimator, "decision_function", None):
-                return "decision_function"
-            else:
-                return "predict"
-        else:
-            if not hasattr(estimator, method):
-                raise ValueError(
-                    "Underlying estimator {} does not implement the method {}.".format(
-                        name, method
-                    )
-                )
-            return method
+            method = ["predict_proba", "decision_function", "predict"]
+        try:
+            method_name = _check_response_method(estimator, method).__name__
+        except AttributeError as e:
+            raise ValueError(
+                f"Underlying estimator {name} does not implement the method {method}."
+            ) from e
 
-    def fit(self, X, y, sample_weight=None):
+        return method_name
+
+    @_fit_context(
+        # estimators in Stacking*.estimators are not validated yet
+        prefer_skip_nested_validation=False
+    )
+    def fit(self, X, y, **fit_params):
         """Fit the estimators.
 
         Parameters
@@ -132,14 +187,13 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         y : array-like of shape (n_samples,)
             Target values.
 
-        sample_weight : array-like of shape (n_samples,) or default=None
-            Sample weights. If None, then samples are equally weighted.
-            Note that this is supported only if all underlying estimators
-            support sample weights.
+        **fit_params : dict
+            Dict of metadata, potentially containing sample_weight as a
+            key-value pair. If sample_weight is not present, then samples are
+            equally weighted. Note that sample_weight is supported only if all
+            underlying estimators support sample weights.
 
-            .. versionchanged:: 0.23
-               when not None, `sample_weight` is passed to all underlying
-               estimators
+            .. versionadded:: 1.6
 
         Returns
         -------
@@ -152,14 +206,34 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
 
         stack_method = [self.stack_method] * len(all_estimators)
 
-        # Fit the base estimators on the whole training data. Those
-        # base estimators will be used in transform, predict, and
-        # predict_proba. They are exposed publicly.
-        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_single_estimator)(clone(est), X, y, sample_weight)
-            for est in all_estimators
-            if est != "drop"
-        )
+        if _routing_enabled():
+            routed_params = process_routing(self, "fit", **fit_params)
+        else:
+            routed_params = Bunch()
+            for name in names:
+                routed_params[name] = Bunch(fit={})
+                if "sample_weight" in fit_params:
+                    routed_params[name].fit["sample_weight"] = fit_params[
+                        "sample_weight"
+                    ]
+
+        if self.cv == "prefit":
+            self.estimators_ = []
+            for estimator in all_estimators:
+                if estimator != "drop":
+                    check_is_fitted(estimator)
+                    self.estimators_.append(estimator)
+        else:
+            # Fit the base estimators on the whole training data. Those
+            # base estimators will be used in transform, predict, and
+            # predict_proba. They are exposed publicly.
+            self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+                delayed(_fit_single_estimator)(
+                    clone(est), X, y, routed_params[name]["fit"]
+                )
+                for name, est in zip(names, all_estimators)
+                if est != "drop"
+            )
 
         self.named_estimators_ = Bunch()
         est_fitted_idx = 0
@@ -173,37 +247,42 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
             else:
                 self.named_estimators_[name_est] = "drop"
 
-        # To train the meta-classifier using the most data as possible, we use
-        # a cross-validation to obtain the output of the stacked estimators.
-
-        # To ensure that the data provided to each estimator are the same, we
-        # need to set the random state of the cv if there is one and we need to
-        # take a copy.
-        cv = check_cv(self.cv, y=y, classifier=is_classifier(self))
-        if hasattr(cv, "random_state") and cv.random_state is None:
-            cv.random_state = np.random.RandomState()
-
         self.stack_method_ = [
             self._method_name(name, est, meth)
             for name, est, meth in zip(names, all_estimators, stack_method)
         ]
-        fit_params = (
-            {"sample_weight": sample_weight} if sample_weight is not None else None
-        )
-        predictions = Parallel(n_jobs=self.n_jobs)(
-            delayed(cross_val_predict)(
-                clone(est),
-                X,
-                y,
-                cv=deepcopy(cv),
-                method=meth,
-                n_jobs=self.n_jobs,
-                fit_params=fit_params,
-                verbose=self.verbose,
+
+        if self.cv == "prefit":
+            # Generate predictions from prefit models
+            predictions = [
+                getattr(estimator, predict_method)(X)
+                for estimator, predict_method in zip(all_estimators, self.stack_method_)
+                if estimator != "drop"
+            ]
+        else:
+            # To train the meta-classifier using the most data as possible, we use
+            # a cross-validation to obtain the output of the stacked estimators.
+            # To ensure that the data provided to each estimator are the same,
+            # we need to set the random state of the cv if there is one and we
+            # need to take a copy.
+            cv = check_cv(self.cv, y=y, classifier=is_classifier(self))
+            if hasattr(cv, "random_state") and cv.random_state is None:
+                cv.random_state = np.random.RandomState()
+
+            predictions = Parallel(n_jobs=self.n_jobs)(
+                delayed(cross_val_predict)(
+                    clone(est),
+                    X,
+                    y,
+                    cv=deepcopy(cv),
+                    method=meth,
+                    n_jobs=self.n_jobs,
+                    params=routed_params[name]["fit"],
+                    verbose=self.verbose,
+                )
+                for name, est, meth in zip(names, all_estimators, self.stack_method_)
+                if est != "drop"
             )
-            for est, meth in zip(all_estimators, self.stack_method_)
-            if est != "drop"
-        )
 
         # Only not None or not 'drop' estimators will be used in transform.
         # Remove the None from the method as well.
@@ -214,9 +293,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         ]
 
         X_meta = self._concatenate_predictions(X, predictions)
-        _fit_single_estimator(
-            self.final_estimator_, X_meta, y, sample_weight=sample_weight
-        )
+        _fit_single_estimator(self.final_estimator_, X_meta, y, fit_params=fit_params)
 
         return self
 
@@ -241,7 +318,53 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         ]
         return self._concatenate_predictions(X, predictions)
 
-    @if_delegate_has_method(delegate="final_estimator_")
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Input features. The input feature names are only used when `passthrough` is
+            `True`.
+
+            - If `input_features` is `None`, then `feature_names_in_` is
+              used as feature names in. If `feature_names_in_` is not defined,
+              then names are generated: `[x0, x1, ..., x(n_features_in_ - 1)]`.
+            - If `input_features` is an array-like, then `input_features` must
+              match `feature_names_in_` if `feature_names_in_` is defined.
+
+            If `passthrough` is `False`, then only the names of `estimators` are used
+            to generate the output feature names.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        check_is_fitted(self, "n_features_in_")
+        input_features = _check_feature_names_in(
+            self, input_features, generate_names=self.passthrough
+        )
+
+        class_name = self.__class__.__name__.lower()
+        non_dropped_estimators = (
+            name for name, est in self.estimators if est != "drop"
+        )
+        meta_names = []
+        for est, n_features_out in zip(non_dropped_estimators, self._n_feature_outs):
+            if n_features_out == 1:
+                meta_names.append(f"{class_name}_{est}")
+            else:
+                meta_names.extend(
+                    f"{class_name}_{est}{i}" for i in range(n_features_out)
+                )
+
+        if self.passthrough:
+            return np.concatenate((meta_names, input_features))
+
+        return np.asarray(meta_names, dtype=object)
+
+    @available_if(_estimator_has("predict"))
     def predict(self, X, **predict_params):
         """Predict target for X.
 
@@ -255,7 +378,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
             Parameters to the `predict` called by the `final_estimator`. Note
             that this may be used to return uncertainties from some estimators
             with `return_std` or `return_cov`. Be aware that it will only
-            accounts for uncertainty in the final estimator.
+            account for uncertainty in the final estimator.
 
         Returns
         -------
@@ -266,7 +389,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         check_is_fitted(self)
         return self.final_estimator_.predict(self.transform(X), **predict_params)
 
-    def _sk_visual_block_(self, final_estimator):
+    def _sk_visual_block_with_final_estimator(self, final_estimator):
         names, estimators = zip(*self.estimators)
         parallel = _VisualBlock("parallel", estimators, names=names, dash_wrapped=False)
 
@@ -276,6 +399,41 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
             "parallel", [final_estimator], names=["final_estimator"], dash_wrapped=False
         )
         return _VisualBlock("serial", (parallel, final_block), dash_wrapped=False)
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.6
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self.__class__.__name__)
+
+        # `self.estimators` is a list of (name, est) tuples
+        for name, estimator in self.estimators:
+            router.add(
+                **{name: estimator},
+                method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+            )
+
+        try:
+            final_estimator_ = self.final_estimator_
+        except AttributeError:
+            final_estimator_ = self.final_estimator
+
+        router.add(
+            final_estimator_=final_estimator_,
+            method_mapping=MethodMapping().add(caller="predict", callee="predict"),
+        )
+
+        return router
 
 
 class StackingClassifier(ClassifierMixin, _BaseStacking):
@@ -301,12 +459,16 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         list is defined as a tuple of string (i.e. name) and an estimator
         instance. An estimator can be set to 'drop' using `set_params`.
 
+        The type of estimator is generally expected to be a classifier.
+        However, one can pass a regressor for some use case (e.g. ordinal
+        regression).
+
     final_estimator : estimator, default=None
         A classifier which will be used to combine the base estimators.
         The default classifier is a
         :class:`~sklearn.linear_model.LogisticRegression`.
 
-    cv : int, cross-validation generator or an iterable, default=None
+    cv : int, cross-validation generator, iterable, or "prefit", default=None
         Determines the cross-validation splitting strategy used in
         `cross_val_predict` to train `final_estimator`. Possible inputs for
         cv are:
@@ -314,7 +476,9 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         * None, to use the default 5-fold cross validation,
         * integer, to specify the number of folds in a (Stratified) KFold,
         * An object to be used as a cross-validation generator,
-        * An iterable yielding train, test splits.
+        * An iterable yielding train, test splits,
+        * `"prefit"`, to assume the `estimators` are prefit. In this case, the
+          estimators will not be refitted.
 
         For integer/None inputs, if the estimator is a classifier and y is
         either binary or multiclass,
@@ -325,6 +489,15 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        If "prefit" is passed, it is assumed that all `estimators` have
+        been fitted already. The `final_estimator_` is trained on the `estimators`
+        predictions on the full training set and are **not** cross validated
+        predictions. Please note that if the models have been trained on the same
+        data to train the stacking model, there is a very high risk of overfitting.
+
+        .. versionadded:: 1.1
+            The 'prefit' option was added in 1.1
 
         .. note::
            A larger number of split will provide no benefits if the number
@@ -344,9 +517,9 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
           will raise an error.
 
     n_jobs : int, default=None
-        The number of jobs to run in parallel all `estimators` `fit`.
+        The number of jobs to run in parallel for `fit` of all `estimators`.
         `None` means 1 unless in a `joblib.parallel_backend` context. -1 means
-        using all processors. See Glossary for more details.
+        using all processors. See :term:`Glossary <n_jobs>` for more details.
 
     passthrough : bool, default=False
         When False, only the predictions of estimators will be used as
@@ -359,30 +532,34 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
     Attributes
     ----------
-    classes_ : ndarray of shape (n_classes,)
+    classes_ : ndarray of shape (n_classes,) or list of ndarray if `y` \
+        is of type `"multilabel-indicator"`.
         Class labels.
 
     estimators_ : list of estimators
-        The elements of the estimators parameter, having been fitted on the
+        The elements of the `estimators` parameter, having been fitted on the
         training data. If an estimator has been set to `'drop'`, it
-        will not appear in `estimators_`.
+        will not appear in `estimators_`. When `cv="prefit"`, `estimators_`
+        is set to `estimators` and is not fitted again.
 
     named_estimators_ : :class:`~sklearn.utils.Bunch`
         Attribute to access any fitted sub-estimators by name.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
-        underlying classifier exposes such an attribute when fit.
+        underlying estimator exposes such an attribute when fit.
 
         .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
         underlying estimators expose such an attribute when fit.
+
         .. versionadded:: 1.0
 
     final_estimator_ : estimator
-        The classifier which predicts given the output of `estimators_`.
+        The classifier fit on the output of `estimators_` and responsible for
+        final predictions.
 
     stack_method_ : list of str
         The method used by each base estimator.
@@ -395,9 +572,15 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     -----
     When `predict_proba` is used by each estimator (i.e. most of the time for
     `stack_method='auto'` or specifically for `stack_method='predict_proba'`),
-    The first column predicted by each estimator will be dropped in the case
+    the first column predicted by each estimator will be dropped in the case
     of a binary classification problem. Indeed, both feature will be perfectly
     collinear.
+
+    In some cases (e.g. ordinal regression), one can pass regressors as the
+    first layer of the :class:`StackingClassifier`. However, note that `y` will
+    be internally encoded in a numerically increasing order or lexicographic
+    order. If this ordering is not adequate, one should manually numerically
+    encode the classes in the desired order.
 
     References
     ----------
@@ -430,6 +613,13 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     0.9...
     """
 
+    _parameter_constraints: dict = {
+        **_BaseStacking._parameter_constraints,
+        "stack_method": [
+            StrOptions({"auto", "predict_proba", "decision_function", "predict"})
+        ],
+    }
+
     def __init__(
         self,
         estimators,
@@ -460,7 +650,34 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
                 )
             )
 
-    def fit(self, X, y, sample_weight=None):
+    def _validate_estimators(self):
+        """Overload the method of `_BaseHeterogeneousEnsemble` to be more
+        lenient towards the type of `estimators`.
+
+        Regressors can be accepted for some cases such as ordinal regression.
+        """
+        if len(self.estimators) == 0:
+            raise ValueError(
+                "Invalid 'estimators' attribute, 'estimators' should be a "
+                "non-empty list of (string, estimator) tuples."
+            )
+        names, estimators = zip(*self.estimators)
+        self._validate_names(names)
+
+        has_estimator = any(est != "drop" for est in estimators)
+        if not has_estimator:
+            raise ValueError(
+                "All estimators are dropped. At least one is required "
+                "to be an estimator."
+            )
+
+        return names, estimators
+
+    # TODO(1.7): remove `sample_weight` from the signature after deprecation
+    # cycle; pop it from `fit_params` before the `_raise_for_params` check and
+    # reinsert afterwards, for backwards compatibility
+    @_deprecate_positional_args(version="1.7")
+    def fit(self, X, y, *, sample_weight=None, **fit_params):
         """Fit the estimators.
 
         Parameters
@@ -470,24 +687,52 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
-            Target values.
+            Target values. Note that `y` will be internally encoded in
+            numerically increasing order or lexicographic order. If the order
+            matter (e.g. for ordinal regression), one should numerically encode
+            the target `y` before calling :term:`fit`.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
             Note that this is supported only if all underlying estimators
             support sample weights.
 
+        **fit_params : dict
+            Parameters to pass to the underlying estimators.
+
+            .. versionadded:: 1.6
+
+                Only available if `enable_metadata_routing=True`, which can be
+                set by using ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
         Returns
         -------
         self : object
             Returns a fitted instance of estimator.
         """
+        _raise_for_params(fit_params, self, "fit")
         check_classification_targets(y)
-        self._le = LabelEncoder().fit(y)
-        self.classes_ = self._le.classes_
-        return super().fit(X, self._le.transform(y), sample_weight)
+        if type_of_target(y) == "multilabel-indicator":
+            self._label_encoder = [LabelEncoder().fit(yk) for yk in y.T]
+            self.classes_ = [le.classes_ for le in self._label_encoder]
+            y_encoded = np.array(
+                [
+                    self._label_encoder[target_idx].transform(target)
+                    for target_idx, target in enumerate(y.T)
+                ]
+            ).T
+        else:
+            self._label_encoder = LabelEncoder().fit(y)
+            self.classes_ = self._label_encoder.classes_
+            y_encoded = self._label_encoder.transform(y)
 
-    @if_delegate_has_method(delegate="final_estimator_")
+        if sample_weight is not None:
+            fit_params["sample_weight"] = sample_weight
+        return super().fit(X, y_encoded, **fit_params)
+
+    @available_if(_estimator_has("predict"))
     def predict(self, X, **predict_params):
         """Predict target for X.
 
@@ -501,17 +746,46 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             Parameters to the `predict` called by the `final_estimator`. Note
             that this may be used to return uncertainties from some estimators
             with `return_std` or `return_cov`. Be aware that it will only
-            accounts for uncertainty in the final estimator.
+            account for uncertainty in the final estimator.
+
+            - If `enable_metadata_routing=False` (default):
+              Parameters directly passed to the `predict` method of the
+              `final_estimator`.
+
+            - If `enable_metadata_routing=True`: Parameters safely routed to
+              the `predict` method of the `final_estimator`. See :ref:`Metadata
+              Routing User Guide <metadata_routing>` for more details.
+
+            .. versionchanged:: 1.6
+                `**predict_params` can be routed via metadata routing API.
 
         Returns
         -------
         y_pred : ndarray of shape (n_samples,) or (n_samples, n_output)
             Predicted targets.
         """
-        y_pred = super().predict(X, **predict_params)
-        return self._le.inverse_transform(y_pred)
+        if _routing_enabled():
+            routed_params = process_routing(self, "predict", **predict_params)
+        else:
+            # TODO(SLEP6): remove when metadata routing cannot be disabled.
+            routed_params = Bunch()
+            routed_params.final_estimator_ = Bunch(predict={})
+            routed_params.final_estimator_.predict = predict_params
 
-    @if_delegate_has_method(delegate="final_estimator_")
+        y_pred = super().predict(X, **routed_params.final_estimator_["predict"])
+        if isinstance(self._label_encoder, list):
+            # Handle the multilabel-indicator case
+            y_pred = np.array(
+                [
+                    self._label_encoder[target_idx].inverse_transform(target)
+                    for target_idx, target in enumerate(y_pred.T)
+                ]
+            ).T
+        else:
+            y_pred = self._label_encoder.inverse_transform(y_pred)
+        return y_pred
+
+    @available_if(_estimator_has("predict_proba"))
     def predict_proba(self, X):
         """Predict class probabilities for `X` using the final estimator.
 
@@ -528,9 +802,14 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             The class probabilities of the input samples.
         """
         check_is_fitted(self)
-        return self.final_estimator_.predict_proba(self.transform(X))
+        y_pred = self.final_estimator_.predict_proba(self.transform(X))
 
-    @if_delegate_has_method(delegate="final_estimator_")
+        if isinstance(self._label_encoder, list):
+            # Handle the multilabel-indicator cases
+            y_pred = np.array([preds[:, 0] for preds in y_pred]).T
+        return y_pred
+
+    @available_if(_estimator_has("decision_function"))
     def decision_function(self, X):
         """Decision function for samples in `X` using the final estimator.
 
@@ -573,7 +852,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             final_estimator = LogisticRegression()
         else:
             final_estimator = self.final_estimator
-        return super()._sk_visual_block_(final_estimator)
+        return super()._sk_visual_block_with_final_estimator(final_estimator)
 
 
 class StackingRegressor(RegressorMixin, _BaseStacking):
@@ -603,7 +882,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         A regressor which will be used to combine the base estimators.
         The default regressor is a :class:`~sklearn.linear_model.RidgeCV`.
 
-    cv : int, cross-validation generator or an iterable, default=None
+    cv : int, cross-validation generator, iterable, or "prefit", default=None
         Determines the cross-validation splitting strategy used in
         `cross_val_predict` to train `final_estimator`. Possible inputs for
         cv are:
@@ -611,7 +890,9 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         * None, to use the default 5-fold cross validation,
         * integer, to specify the number of folds in a (Stratified) KFold,
         * An object to be used as a cross-validation generator,
-        * An iterable yielding train, test splits.
+        * An iterable yielding train, test splits,
+        * `"prefit"`, to assume the `estimators` are prefit. In this case, the
+          estimators will not be refitted.
 
         For integer/None inputs, if the estimator is a classifier and y is
         either binary or multiclass,
@@ -623,6 +904,15 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+        If "prefit" is passed, it is assumed that all `estimators` have
+        been fitted already. The `final_estimator_` is trained on the `estimators`
+        predictions on the full training set and are **not** cross validated
+        predictions. Please note that if the models have been trained on the same
+        data to train the stacking model, there is a very high risk of overfitting.
+
+        .. versionadded:: 1.1
+            The 'prefit' option was added in 1.1
+
         .. note::
            A larger number of split will provide no benefits if the number
            of training samples is large enough. Indeed, the training time
@@ -632,7 +922,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     n_jobs : int, default=None
         The number of jobs to run in parallel for `fit` of all `estimators`.
         `None` means 1 unless in a `joblib.parallel_backend` context. -1 means
-        using all processors. See Glossary for more details.
+        using all processors. See :term:`Glossary <n_jobs>` for more details.
 
     passthrough : bool, default=False
         When False, only the predictions of estimators will be used as
@@ -645,27 +935,30 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
 
     Attributes
     ----------
-    estimators_ : list of estimator
-        The elements of the estimators parameter, having been fitted on the
+    estimators_ : list of estimators
+        The elements of the `estimators` parameter, having been fitted on the
         training data. If an estimator has been set to `'drop'`, it
-        will not appear in `estimators_`.
+        will not appear in `estimators_`. When `cv="prefit"`, `estimators_`
+        is set to `estimators` and is not fitted again.
 
     named_estimators_ : :class:`~sklearn.utils.Bunch`
         Attribute to access any fitted sub-estimators by name.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
-        underlying regressor exposes such an attribute when fit.
+        underlying estimator exposes such an attribute when fit.
 
         .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
         underlying estimators expose such an attribute when fit.
+
         .. versionadded:: 1.0
 
     final_estimator_ : estimator
-        The regressor to stacked the base estimators fitted.
+        The regressor fit on the output of `estimators_` and responsible for
+        final predictions.
 
     stack_method_ : list of str
         The method used by each base estimator.
@@ -733,7 +1026,11 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
                 )
             )
 
-    def fit(self, X, y, sample_weight=None):
+    # TODO(1.7): remove `sample_weight` from the signature after deprecation
+    # cycle; pop it from `fit_params` before the `_raise_for_params` check and
+    # reinsert afterwards, for backwards compatibility
+    @_deprecate_positional_args(version="1.7")
+    def fit(self, X, y, *, sample_weight=None, **fit_params):
         """Fit the estimators.
 
         Parameters
@@ -750,13 +1047,26 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
             Note that this is supported only if all underlying estimators
             support sample weights.
 
+        **fit_params : dict
+            Parameters to pass to the underlying estimators.
+
+            .. versionadded:: 1.6
+
+                Only available if `enable_metadata_routing=True`, which can be
+                set by using ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
         Returns
         -------
         self : object
             Returns a fitted instance.
         """
+        _raise_for_params(fit_params, self, "fit")
         y = column_or_1d(y, warn=True)
-        return super().fit(X, y, sample_weight)
+        if sample_weight is not None:
+            fit_params["sample_weight"] = sample_weight
+        return super().fit(X, y, **fit_params)
 
     def transform(self, X):
         """Return the predictions for X for each estimator.
@@ -774,6 +1084,91 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         """
         return self._transform(X)
 
+    # TODO(1.7): remove `sample_weight` from the signature after deprecation
+    # cycle; pop it from `fit_params` before the `_raise_for_params` check and
+    # reinsert afterwards, for backwards compatibility
+    @_deprecate_positional_args(version="1.7")
+    def fit_transform(self, X, y, *, sample_weight=None, **fit_params):
+        """Fit the estimators and return the predictions for X for each estimator.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        y : array-like of shape (n_samples,)
+            Target values.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then samples are equally weighted.
+            Note that this is supported only if all underlying estimators
+            support sample weights.
+
+        **fit_params : dict
+            Parameters to pass to the underlying estimators.
+
+            .. versionadded:: 1.6
+
+                Only available if `enable_metadata_routing=True`, which can be
+                set by using ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
+        Returns
+        -------
+        y_preds : ndarray of shape (n_samples, n_estimators)
+            Prediction outputs for each estimator.
+        """
+        _raise_for_params(fit_params, self, "fit")
+        if sample_weight is not None:
+            fit_params["sample_weight"] = sample_weight
+        return super().fit_transform(X, y, **fit_params)
+
+    @available_if(_estimator_has("predict"))
+    def predict(self, X, **predict_params):
+        """Predict target for X.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        **predict_params : dict of str -> obj
+            Parameters to the `predict` called by the `final_estimator`. Note
+            that this may be used to return uncertainties from some estimators
+            with `return_std` or `return_cov`. Be aware that it will only
+            account for uncertainty in the final estimator.
+
+            - If `enable_metadata_routing=False` (default):
+              Parameters directly passed to the `predict` method of the
+              `final_estimator`.
+
+            - If `enable_metadata_routing=True`: Parameters safely routed to
+              the `predict` method of the `final_estimator`. See :ref:`Metadata
+              Routing User Guide <metadata_routing>` for more details.
+
+            .. versionchanged:: 1.6
+                `**predict_params` can be routed via metadata routing API.
+
+        Returns
+        -------
+        y_pred : ndarray of shape (n_samples,) or (n_samples, n_output)
+            Predicted targets.
+        """
+        if _routing_enabled():
+            routed_params = process_routing(self, "predict", **predict_params)
+        else:
+            # TODO(SLEP6): remove when metadata routing cannot be disabled.
+            routed_params = Bunch()
+            routed_params.final_estimator_ = Bunch(predict={})
+            routed_params.final_estimator_.predict = predict_params
+
+        y_pred = super().predict(X, **routed_params.final_estimator_["predict"])
+
+        return y_pred
+
     def _sk_visual_block_(self):
         # If final_estimator's default changes then this should be
         # updated.
@@ -781,4 +1176,4 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
             final_estimator = RidgeCV()
         else:
             final_estimator = self.final_estimator
-        return super()._sk_visual_block_(final_estimator)
+        return super()._sk_visual_block_with_final_estimator(final_estimator)

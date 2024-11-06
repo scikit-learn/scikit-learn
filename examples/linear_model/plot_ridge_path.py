@@ -27,19 +27,21 @@ in such a way that a balance is maintained between both.
 
 """
 
-# Author: Fabian Pedregosa -- <fabian.pedregosa@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn import linear_model
 
 # X is the 10x10 Hilbert matrix
 X = 1.0 / (np.arange(1, 11) + np.arange(0, 10)[:, np.newaxis])
 y = np.ones(10)
 
-# #############################################################################
+# %%
 # Compute paths
+# -------------
 
 n_alphas = 200
 alphas = np.logspace(-10, -2, n_alphas)
@@ -50,8 +52,9 @@ for a in alphas:
     ridge.fit(X, y)
     coefs.append(ridge.coef_)
 
-# #############################################################################
+# %%
 # Display results
+# ---------------
 
 ax = plt.gca()
 

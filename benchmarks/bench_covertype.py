@@ -25,13 +25,13 @@ magnitude faster to train::
 
 The same task has been used in a number of papers including:
 
- * `"SVM Optimization: Inverse Dependence on Training Set Size"
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.139.2112>`_
+ * :doi:`"SVM Optimization: Inverse Dependence on Training Set Size"
    S. Shalev-Shwartz, N. Srebro - In Proceedings of ICML '08.
+   <10.1145/1390156.1390273>`
 
- * `"Pegasos: Primal estimated sub-gradient solver for svm"
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.74.8513>`_
+ * :doi:`"Pegasos: Primal estimated sub-gradient solver for svm"
    S. Shalev-Shwartz, Y. Singer, N. Srebro - In Proceedings of ICML '07.
+   <10.1145/1273496.1273598>`
 
  * `"Training Linear SVMs in Linear Time"
    <https://www.cs.cornell.edu/people/tj/publications/joachims_06a.pdf>`_
@@ -41,24 +41,27 @@ The same task has been used in a number of papers including:
 
 """
 
-# Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#         Arnaud Joly <arnaud.v.joly@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
+import argparse
 import os
 from time import time
-import argparse
+
 import numpy as np
 from joblib import Memory
 
 from sklearn.datasets import fetch_covtype, get_data_home
-from sklearn.svm import LinearSVC
-from sklearn.linear_model import SGDClassifier, LogisticRegression
-from sklearn.naive_bayes import GaussianNB
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
-from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.ensemble import (
+    ExtraTreesClassifier,
+    GradientBoostingClassifier,
+    RandomForestClassifier,
+)
+from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.metrics import zero_one_loss
+from sklearn.naive_bayes import GaussianNB
+from sklearn.svm import LinearSVC
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_array
 
 # Memoize the data extraction and memory map the resulting

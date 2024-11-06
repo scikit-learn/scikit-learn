@@ -9,17 +9,17 @@ total), which are differently distributed in each of two classes.
 
 Points are labeled as follows, where Y means the class is present:
 
-    =====  =====  =====  ======
-      1      2      3    Color
-    =====  =====  =====  ======
-      Y      N      N    Red
-      N      Y      N    Blue
-      N      N      Y    Yellow
-      Y      Y      N    Purple
-      Y      N      Y    Orange
-      Y      Y      N    Green
-      Y      Y      Y    Brown
-    =====  =====  =====  ======
+=====  =====  =====  ======
+  1      2      3    Color
+=====  =====  =====  ======
+  Y      N      N    Red
+  N      Y      N    Blue
+  N      N      Y    Yellow
+  Y      Y      N    Purple
+  Y      N      Y    Orange
+  Y      Y      N    Green
+  Y      Y      Y    Brown
+=====  =====  =====  ======
 
 A star marks the expected sample for each class; its size reflects the
 probability of selecting that class label.
@@ -35,8 +35,11 @@ feature distinguishes a particular class.
 
 """
 
-import numpy as np
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.datasets import make_multilabel_classification as make_ml_clf
 
@@ -55,7 +58,7 @@ COLORS = np.array(
 
 # Use same random seed for multiple calls to make_multilabel_classification to
 # ensure same distributions
-RANDOM_SEED = np.random.randint(2 ** 10)
+RANDOM_SEED = np.random.randint(2**10)
 
 
 def plot_2d(ax, n_labels=1, n_classes=3, length=50):
@@ -79,7 +82,7 @@ def plot_2d(ax, n_labels=1, n_classes=3, length=50):
         marker="*",
         linewidth=0.5,
         edgecolor="black",
-        s=20 + 1500 * p_c ** 2,
+        s=20 + 1500 * p_c**2,
         color=COLORS.take([1, 2, 4]),
     )
     ax.set_xlabel("Feature 0 count")

@@ -1,4 +1,8 @@
-"""Transformers for missing value imputation"""
+"""Transformers for missing value imputation."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import typing
 
 from ._base import MissingIndicator, SimpleImputer
@@ -10,3 +14,15 @@ if typing.TYPE_CHECKING:
     from ._iterative import IterativeImputer  # noqa
 
 __all__ = ["MissingIndicator", "SimpleImputer", "KNNImputer"]
+
+
+# TODO: remove this check once the estimator is no longer experimental.
+def __getattr__(name):
+    if name == "IterativeImputer":
+        raise ImportError(
+            f"{name} is experimental and the API might change without any "
+            "deprecation cycle. To use it, you need to explicitly import "
+            "enable_iterative_imputer:\n"
+            "from sklearn.experimental import enable_iterative_imputer"
+        )
+    raise AttributeError(f"module {__name__} has no attribute {name}")

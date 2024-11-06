@@ -1,6 +1,10 @@
-""" Module to give helpful messages to the user that did not
+"""Module to give helpful messages to the user that did not
 compile scikit-learn properly.
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import os
 
 INPLACE_MSG = """
@@ -37,8 +41,8 @@ ___________________________________________________________________________
 It seems that scikit-learn has not been built correctly.
 
 If you have installed scikit-learn from source, please do not forget
-to build the package before using it: run `python setup.py install` or
-`make` in the source directory.
+to build the package before using it. For detailed instructions, see:
+https://scikit-learn.org/dev/developers/advanced_installation.html#building-from-source
 %s"""
         % (e, local_dir, "".join(dir_content).strip(), msg)
     )

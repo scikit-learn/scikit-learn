@@ -18,10 +18,17 @@ particular, we will evaluate:
   category support <categorical_support_gbdt>` of the
   :class:`~ensemble.HistGradientBoostingRegressor` estimator.
 
-We will work with the Ames Lowa Housing dataset which consists of numerical
+We will work with the Ames Iowa Housing dataset which consists of numerical
 and categorical features, where the houses' sales prices is the target.
 
+See :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py` for an
+example showcasing some other features of
+:class:`~ensemble.HistGradientBoostingRegressor`.
+
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Load Ames Housing dataset
@@ -62,7 +69,8 @@ numerical_columns_subset = [
 X = X[categorical_columns_subset + numerical_columns_subset]
 X[categorical_columns_subset] = X[categorical_columns_subset].astype("category")
 
-n_categorical_features = X.select_dtypes(include="category").shape[1]
+categorical_columns = X.select_dtypes(include="category").columns
+n_categorical_features = len(categorical_columns)
 n_numerical_features = X.select_dtypes(include="number").shape[1]
 
 print(f"Number of samples: {X.shape[0]}")
@@ -76,10 +84,9 @@ print(f"Number of numerical features: {n_numerical_features}")
 # As a baseline, we create an estimator where the categorical features are
 # dropped:
 
+from sklearn.compose import make_column_selector, make_column_transformer
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.pipeline import make_pipeline
-from sklearn.compose import make_column_transformer
-from sklearn.compose import make_column_selector
 
 dropper = make_column_transformer(
     ("drop", make_column_selector(dtype_include="category")), remainder="passthrough"
@@ -96,7 +103,7 @@ from sklearn.preprocessing import OneHotEncoder
 
 one_hot_encoder = make_column_transformer(
     (
-        OneHotEncoder(sparse=False, handle_unknown="ignore"),
+        OneHotEncoder(sparse_output=False, handle_unknown="ignore"),
         make_column_selector(dtype_include="category"),
     ),
     remainder="passthrough",
@@ -113,8 +120,9 @@ hist_one_hot = make_pipeline(
 # were ordered quantities, i.e. the categories will be encoded as 0, 1, 2,
 # etc., and treated as continuous features.
 
-from sklearn.preprocessing import OrdinalEncoder
 import numpy as np
+
+from sklearn.preprocessing import OrdinalEncoder
 
 ordinal_encoder = make_column_transformer(
     (
@@ -122,6 +130,10 @@ ordinal_encoder = make_column_transformer(
         make_column_selector(dtype_include="category"),
     ),
     remainder="passthrough",
+    # Use short feature names to make it easier to specify the categorical
+    # variables in the HistGradientBoostingRegressor in the next step
+    # of the pipeline.
+    verbose_feature_names_out=False,
 )
 
 hist_ordinal = make_pipeline(
@@ -133,25 +145,16 @@ hist_ordinal = make_pipeline(
 # -----------------------------------------------------------
 # We now create a :class:`~ensemble.HistGradientBoostingRegressor` estimator
 # that will natively handle categorical features. This estimator will not treat
-# categorical features as ordered quantities.
+# categorical features as ordered quantities. We set
+# `categorical_features="from_dtype"` such that features with categorical dtype
+# are considered categorical features.
 #
-# Since the :class:`~ensemble.HistGradientBoostingRegressor` requires category
-# values to be encoded in `[0, n_unique_categories - 1]`, we still rely on an
-# :class:`~preprocessing.OrdinalEncoder` to pre-process the data.
-#
-# The main difference between this pipeline and the previous one is that in
-# this one, we let the :class:`~ensemble.HistGradientBoostingRegressor` know
-# which features are categorical.
+# The main difference between this estimator and the previous one is that in
+# this one, we let the :class:`~ensemble.HistGradientBoostingRegressor` detect
+# which features are categorical from the DataFrame columns' dtypes.
 
-# The ordinal encoder will first output the categorical features, and then the
-# continuous (passed-through) features
-
-categorical_mask = [True] * n_categorical_features + [False] * n_numerical_features
-hist_native = make_pipeline(
-    ordinal_encoder,
-    HistGradientBoostingRegressor(
-        random_state=42, categorical_features=categorical_mask
-    ),
+hist_native = HistGradientBoostingRegressor(
+    random_state=42, categorical_features="from_dtype"
 )
 
 # %%
@@ -161,8 +164,9 @@ hist_native = make_pipeline(
 # models performance in terms of
 # :func:`~metrics.mean_absolute_percentage_error` and fit times.
 
-from sklearn.model_selection import cross_validate
 import matplotlib.pyplot as plt
+
+from sklearn.model_selection import cross_validate
 
 scoring = "neg_mean_absolute_percentage_error"
 n_cv_folds = 3
@@ -228,8 +232,8 @@ plot_results("Gradient Boosting on Ames Housing")
 # comparable error rates, with a slight edge for the native handling.
 
 # %%
-# Limitting the number of splits
-# ------------------------------
+# Limiting the number of splits
+# -----------------------------
 # In general, one can expect poorer predictions from one-hot-encoded data,
 # especially when the tree depths or the number of nodes are limited: with
 # one-hot-encoded data, one needs more split points, i.e. more depth, in order
@@ -246,14 +250,19 @@ plot_results("Gradient Boosting on Ames Housing")
 # dataset and on the flexibility of the trees.
 #
 # To see this, let us re-run the same analysis with under-fitting models where
-# we artificially limit the total number of splits by both limitting the number
+# we artificially limit the total number of splits by both limiting the number
 # of trees and the depth of each tree.
 
 for pipe in (hist_dropped, hist_one_hot, hist_ordinal, hist_native):
-    pipe.set_params(
-        histgradientboostingregressor__max_depth=3,
-        histgradientboostingregressor__max_iter=15,
-    )
+    if pipe is hist_native:
+        # The native model does not use a pipeline so, we can set the parameters
+        # directly.
+        pipe.set_params(max_depth=3, max_iter=15)
+    else:
+        pipe.set_params(
+            histgradientboostingregressor__max_depth=3,
+            histgradientboostingregressor__max_iter=15,
+        )
 
 dropped_result = cross_validate(hist_dropped, X, y, cv=n_cv_folds, scoring=scoring)
 one_hot_result = cross_validate(hist_one_hot, X, y, cv=n_cv_folds, scoring=scoring)

@@ -9,7 +9,7 @@ if NOT "%PAPER%" == "" (
 	set ALLSPHINXOPTS=-D latex_paper_size=%PAPER% %ALLSPHINXOPTS%
 )
 
-if "%1" == "" goto help
+if "%1" == "" goto html-noplot
 
 if "%1" == "help" (
 	:help
@@ -29,8 +29,30 @@ if "%1" == "help" (
 )
 
 if "%1" == "clean" (
-	for /d %%i in (%BUILDDIR%\*) do rmdir /q /s %%i
-	del /q /s %BUILDDIR%\*
+	if exist %BUILDDIR%\ (
+		for /d %%i in (%BUILDDIR%\*) do rmdir /q /s "%%i"
+		del /q /s %BUILDDIR%\*
+		echo. Removed %BUILDDIR%\*
+	)
+	if exist auto_examples\ (
+		rmdir /q /s auto_examples
+		echo. Removed auto_examples\
+	)
+	if exist generated\ (
+		for /d %%i in (generated\*) do rmdir /q /s "%%i"
+		del /q /s generated\*
+		echo. Removed generated\*
+	)
+	if exist modules\generated\ (
+		rmdir /q /s modules\generated
+		echo. Removed modules\generated\
+	)
+	if exist css\styles\ (
+		rmdir /q /s css\styles
+		echo. Removed css\styles\
+	)
+	for %%i in (api\*.rst) do del /q "%%i"
+	echo. Removed api\*.rst
 	goto end
 )
 
@@ -42,9 +64,11 @@ if "%1" == "html" (
 )
 
 if "%1" == "html-noplot" (
+	:html-noplot
 	%SPHINXBUILD% -D plot_gallery=0 -b html %ALLSPHINXOPTS% %BUILDDIR%/html
 	echo.
 	echo.Build finished. The HTML pages are in %BUILDDIR%/html
+	goto end
 )
 
 if "%1" == "dirhtml" (

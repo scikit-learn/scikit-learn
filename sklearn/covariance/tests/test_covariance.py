@@ -1,28 +1,30 @@
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Virgile Fritsch <virgile.fritsch@inria.fr>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 import pytest
 
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
-
 from sklearn import datasets
 from sklearn.covariance import (
-    empirical_covariance,
+    OAS,
     EmpiricalCovariance,
-    ShrunkCovariance,
-    shrunk_covariance,
     LedoitWolf,
+    ShrunkCovariance,
+    empirical_covariance,
     ledoit_wolf,
     ledoit_wolf_shrinkage,
-    OAS,
     oas,
+    shrunk_covariance,
 )
+from sklearn.covariance._shrunk_covariance import _ledoit_wolf
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
+
+from .._shrunk_covariance import _oas
 
 X, _ = datasets.load_diabetes(return_X_y=True)
 X_1d = X[:, 0]
@@ -76,7 +78,25 @@ def test_covariance():
     assert_array_equal(cov.location_, np.zeros(X.shape[1]))
 
 
+@pytest.mark.parametrize("n_matrices", [1, 3])
+def test_shrunk_covariance_func(n_matrices):
+    """Check `shrunk_covariance` function."""
+
+    n_features = 2
+    cov = np.ones((n_features, n_features))
+    cov_target = np.array([[1, 0.5], [0.5, 1]])
+
+    if n_matrices > 1:
+        cov = np.repeat(cov[np.newaxis, ...], n_matrices, axis=0)
+        cov_target = np.repeat(cov_target[np.newaxis, ...], n_matrices, axis=0)
+
+    cov_shrunk = shrunk_covariance(cov, 0.5)
+    assert_allclose(cov_shrunk, cov_target)
+
+
 def test_shrunk_covariance():
+    """Check consistency between `ShrunkCovariance` and `shrunk_covariance`."""
+
     # Tests ShrunkCovariance module on a simple dataset.
     # compare shrunk covariance obtained from data and from MLE estimate
     cov = ShrunkCovariance(shrinkage=0.5)
@@ -143,7 +163,7 @@ def test_ledoit_wolf():
     lw_cov_from_mle, lw_shrinkage_from_mle = ledoit_wolf(X_1d, assume_centered=True)
     assert_array_almost_equal(lw_cov_from_mle, lw.covariance_, 4)
     assert_almost_equal(lw_shrinkage_from_mle, lw.shrinkage_)
-    assert_array_almost_equal((X_1d ** 2).sum() / n_samples, lw.covariance_, 4)
+    assert_array_almost_equal((X_1d**2).sum() / n_samples, lw.covariance_, 4)
 
     # test shrinkage coeff on a simple data set (without saving precision)
     lw = LedoitWolf(store_precision=False, assume_centered=True)
@@ -158,6 +178,9 @@ def test_ledoit_wolf():
     assert_almost_equal(lw.shrinkage_, shrinkage_, 4)
     assert_almost_equal(lw.shrinkage_, ledoit_wolf_shrinkage(X))
     assert_almost_equal(lw.shrinkage_, ledoit_wolf(X)[1])
+    assert_almost_equal(
+        lw.shrinkage_, _ledoit_wolf(X=X, assume_centered=False, block_size=10000)[1]
+    )
     assert_almost_equal(lw.score(X), score_, 4)
     # compare shrunk covariance obtained from data and from MLE estimate
     lw_cov_from_mle, lw_shrinkage_from_mle = ledoit_wolf(X)
@@ -172,6 +195,10 @@ def test_ledoit_wolf():
     X_1d = X[:, 0].reshape((-1, 1))
     lw = LedoitWolf()
     lw.fit(X_1d)
+    assert_allclose(
+        X_1d.var(ddof=0),
+        _ledoit_wolf(X=X_1d, assume_centered=False, block_size=10000)[0],
+    )
     lw_cov_from_mle, lw_shrinkage_from_mle = ledoit_wolf(X_1d)
     assert_array_almost_equal(lw_cov_from_mle, lw.covariance_, 4)
     assert_almost_equal(lw_shrinkage_from_mle, lw.shrinkage_)
@@ -207,12 +234,12 @@ def _naive_ledoit_wolf_shrinkage(X):
     mu = np.trace(emp_cov) / n_features
     delta_ = emp_cov.copy()
     delta_.flat[:: n_features + 1] -= mu
-    delta = (delta_ ** 2).sum() / n_features
-    X2 = X ** 2
+    delta = (delta_**2).sum() / n_features
+    X2 = X**2
     beta_ = (
         1.0
         / (n_features * n_samples)
-        * np.sum(np.dot(X2.T, X2) / n_samples - emp_cov ** 2)
+        * np.sum(np.dot(X2.T, X2) / n_samples - emp_cov**2)
     )
 
     beta = min(beta_, delta)
@@ -279,7 +306,7 @@ def test_oas():
     oa_cov_from_mle, oa_shrinkage_from_mle = oas(X_1d, assume_centered=True)
     assert_array_almost_equal(oa_cov_from_mle, oa.covariance_, 4)
     assert_almost_equal(oa_shrinkage_from_mle, oa.shrinkage_)
-    assert_array_almost_equal((X_1d ** 2).sum() / n_samples, oa.covariance_, 4)
+    assert_array_almost_equal((X_1d**2).sum() / n_samples, oa.covariance_, 4)
 
     # test shrinkage coeff on a simple data set (without saving precision)
     oa = OAS(store_precision=False, assume_centered=True)
@@ -326,6 +353,16 @@ def test_oas():
     oa.fit(X)
     assert_almost_equal(oa.score(X), score_, 4)
     assert oa.precision_ is None
+
+    # test function _oas without assuming centered data
+    X_1f = X[:, 0:1]
+    oa = OAS()
+    oa.fit(X_1f)
+    # compare shrunk covariance obtained from data and from MLE estimate
+    _oa_cov_from_mle, _oa_shrinkage_from_mle = _oas(X_1f)
+    assert_array_almost_equal(_oa_cov_from_mle, oa.covariance_, 4)
+    assert_almost_equal(_oa_shrinkage_from_mle, oa.shrinkage_)
+    assert_array_almost_equal((X_1f**2).sum() / n_samples, oa.covariance_, 4)
 
 
 def test_EmpiricalCovariance_validates_mahalanobis():

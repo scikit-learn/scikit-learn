@@ -1,33 +1,35 @@
 import pickle
 
 import numpy as np
-from numpy.testing import assert_allclose, assert_array_equal
 import pytest
+from numpy.testing import assert_allclose, assert_array_equal
 from pytest import approx
 from scipy.optimize import (
+    LinearConstraint,
     minimize,
     minimize_scalar,
     newton,
 )
 from scipy.special import logsumexp
 
-from sklearn._loss.link import _inclusive_low_high, IdentityLink
+from sklearn._loss.link import IdentityLink, _inclusive_low_high
 from sklearn._loss.loss import (
     _LOSSES,
-    BaseLoss,
     AbsoluteError,
+    BaseLoss,
     HalfBinomialLoss,
     HalfGammaLoss,
     HalfMultinomialLoss,
     HalfPoissonLoss,
     HalfSquaredError,
     HalfTweedieLoss,
+    HalfTweedieLossIdentity,
+    HuberLoss,
     PinballLoss,
 )
 from sklearn.utils import assert_all_finite
 from sklearn.utils._testing import create_memmap_backed_data, skip_if_32bit
-from sklearn.utils.fixes import sp_version, parse_version
-
+from sklearn.utils.fixes import _IS_WASM
 
 ALL_LOSSES = list(_LOSSES.values())
 
@@ -35,11 +37,16 @@ LOSS_INSTANCES = [loss() for loss in ALL_LOSSES]
 # HalfTweedieLoss(power=1.5) is already there as default
 LOSS_INSTANCES += [
     PinballLoss(quantile=0.25),
+    HuberLoss(quantile=0.75),
     HalfTweedieLoss(power=-1.5),
     HalfTweedieLoss(power=0),
     HalfTweedieLoss(power=1),
     HalfTweedieLoss(power=2),
     HalfTweedieLoss(power=3.0),
+    HalfTweedieLossIdentity(power=0),
+    HalfTweedieLossIdentity(power=1),
+    HalfTweedieLossIdentity(power=2),
+    HalfTweedieLossIdentity(power=3.0),
 ]
 
 
@@ -47,9 +54,11 @@ def loss_instance_name(param):
     if isinstance(param, BaseLoss):
         loss = param
         name = loss.__class__.__name__
-        if hasattr(loss, "quantile"):
+        if isinstance(loss, PinballLoss):
             name += f"(quantile={loss.closs.quantile})"
-        elif hasattr(loss, "power"):
+        elif isinstance(loss, HuberLoss):
+            name += f"(quantile={loss.quantile}"
+        elif hasattr(loss, "closs") and hasattr(loss.closs, "power"):
             name += f"(power={loss.closs.power})"
         return name
     else:
@@ -70,8 +79,14 @@ def random_y_true_raw_prediction(
         )
         y_true = np.arange(n_samples).astype(float) % loss.n_classes
     else:
+        # If link is identity, we must respect the interval of y_pred:
+        if isinstance(loss.link, IdentityLink):
+            low, high = _inclusive_low_high(loss.interval_y_pred)
+            low = np.amax([low, raw_bound[0]])
+            high = np.amin([high, raw_bound[1]])
+            raw_bound = (low, high)
         raw_prediction = rng.uniform(
-            low=raw_bound[0], high=raw_bound[0], size=n_samples
+            low=raw_bound[0], high=raw_bound[1], size=n_samples
         )
         # generate a y_true in valid range
         low, high = _inclusive_low_high(loss.interval_y_true)
@@ -106,7 +121,8 @@ def test_loss_boundary(loss):
     """Test interval ranges of y_true and y_pred in losses."""
     # make sure low and high are always within the interval, used for linspace
     if loss.is_multiclass:
-        y_true = np.linspace(0, 9, num=10)
+        n_classes = 3  # default value
+        y_true = np.tile(np.linspace(0, n_classes - 1, num=n_classes), 3)
     else:
         low, high = _inclusive_low_high(loss.interval_y_true)
         y_true = np.linspace(low, high, num=10)
@@ -122,7 +138,7 @@ def test_loss_boundary(loss):
     n = y_true.shape[0]
     low, high = _inclusive_low_high(loss.interval_y_pred)
     if loss.is_multiclass:
-        y_pred = np.empty((n, 3))
+        y_pred = np.empty((n, n_classes))
         y_pred[:, 0] = np.linspace(low, high, num=n)
         y_pred[:, 1] = 0.5 * (1 - y_pred[:, 0])
         y_pred[:, 2] = 0.5 * (1 - y_pred[:, 0])
@@ -142,6 +158,7 @@ Y_COMMON_PARAMS = [
     (HalfSquaredError(), [-100, 0, 0.1, 100], [-np.inf, np.inf]),
     (AbsoluteError(), [-100, 0, 0.1, 100], [-np.inf, np.inf]),
     (PinballLoss(), [-100, 0, 0.1, 100], [-np.inf, np.inf]),
+    (HuberLoss(), [-100, 0, 0.1, 100], [-np.inf, np.inf]),
     (HalfPoissonLoss(), [0.1, 100], [-np.inf, -3, -0.1, np.inf]),
     (HalfGammaLoss(), [0.1, 100], [-np.inf, -3, -0.1, 0, np.inf]),
     (HalfTweedieLoss(power=-3), [0.1, 100], [-np.inf, np.inf]),
@@ -149,6 +166,11 @@ Y_COMMON_PARAMS = [
     (HalfTweedieLoss(power=1.5), [0.1, 100], [-np.inf, -3, -0.1, np.inf]),
     (HalfTweedieLoss(power=2), [0.1, 100], [-np.inf, -3, -0.1, 0, np.inf]),
     (HalfTweedieLoss(power=3), [0.1, 100], [-np.inf, -3, -0.1, 0, np.inf]),
+    (HalfTweedieLossIdentity(power=-3), [0.1, 100], [-np.inf, np.inf]),
+    (HalfTweedieLossIdentity(power=0), [-3, -0.1, 0, 0.1, 100], [-np.inf, np.inf]),
+    (HalfTweedieLossIdentity(power=1.5), [0.1, 100], [-np.inf, -3, -0.1, np.inf]),
+    (HalfTweedieLossIdentity(power=2), [0.1, 100], [-np.inf, -3, -0.1, 0, np.inf]),
+    (HalfTweedieLossIdentity(power=3), [0.1, 100], [-np.inf, -3, -0.1, 0, np.inf]),
     (HalfBinomialLoss(), [0.1, 0.5, 0.9], [-np.inf, -1, 2, np.inf]),
     (HalfMultinomialLoss(), [], [-np.inf, -1, 1.1, np.inf]),
 ]
@@ -157,9 +179,13 @@ Y_COMMON_PARAMS = [
 Y_TRUE_PARAMS = [  # type: ignore
     # (loss, [y success], [y fail])
     (HalfPoissonLoss(), [0], []),
+    (HuberLoss(), [0], []),
     (HalfTweedieLoss(power=-3), [-100, -0.1, 0], []),
     (HalfTweedieLoss(power=0), [-100, 0], []),
     (HalfTweedieLoss(power=1.5), [0], []),
+    (HalfTweedieLossIdentity(power=-3), [-100, -0.1, 0], []),
+    (HalfTweedieLossIdentity(power=0), [-100, 0], []),
+    (HalfTweedieLossIdentity(power=1.5), [0], []),
     (HalfBinomialLoss(), [0, 1], []),
     (HalfMultinomialLoss(), [0.0, 1.0, 2], []),
 ]
@@ -169,6 +195,9 @@ Y_PRED_PARAMS = [
     (HalfTweedieLoss(power=-3), [], [-3, -0.1, 0]),
     (HalfTweedieLoss(power=0), [], [-3, -0.1, 0]),
     (HalfTweedieLoss(power=1.5), [], [0]),
+    (HalfTweedieLossIdentity(power=-3), [], [-3, -0.1, 0]),
+    (HalfTweedieLossIdentity(power=0), [-3, -0.1, 0], []),
+    (HalfTweedieLossIdentity(power=1.5), [], [0]),
     (HalfBinomialLoss(), [], [0, 1]),
     (HalfMultinomialLoss(), [0.1, 0.5], [0, 1]),
 ]
@@ -197,43 +226,150 @@ def test_loss_boundary_y_pred(loss, y_pred_success, y_pred_fail):
 
 
 @pytest.mark.parametrize(
-    "loss, y_true, raw_prediction, loss_true",
+    "loss, y_true, raw_prediction, loss_true, gradient_true, hessian_true",
     [
-        (HalfSquaredError(), 1.0, 5.0, 8),
-        (AbsoluteError(), 1.0, 5.0, 4),
-        (PinballLoss(quantile=0.5), 1.0, 5.0, 2),
-        (PinballLoss(quantile=0.25), 1.0, 5.0, 4 * (1 - 0.25)),
-        (PinballLoss(quantile=0.25), 5.0, 1.0, 4 * 0.25),
-        (HalfPoissonLoss(), 2.0, np.log(4), 4 - 2 * np.log(4)),
-        (HalfGammaLoss(), 2.0, np.log(4), np.log(4) + 2 / 4),
-        (HalfTweedieLoss(power=3), 2.0, np.log(4), -1 / 4 + 1 / 4 ** 2),
-        (HalfBinomialLoss(), 0.25, np.log(4), np.log(5) - 0.25 * np.log(4)),
+        (HalfSquaredError(), 1.0, 5.0, 8, 4, 1),
+        (AbsoluteError(), 1.0, 5.0, 4.0, 1.0, None),
+        (PinballLoss(quantile=0.5), 1.0, 5.0, 2, 0.5, None),
+        (PinballLoss(quantile=0.25), 1.0, 5.0, 4 * (1 - 0.25), 1 - 0.25, None),
+        (PinballLoss(quantile=0.25), 5.0, 1.0, 4 * 0.25, -0.25, None),
+        (HuberLoss(quantile=0.5, delta=3), 1.0, 5.0, 3 * (4 - 3 / 2), None, None),
+        (HuberLoss(quantile=0.5, delta=3), 1.0, 3.0, 0.5 * 2**2, None, None),
+        (HalfPoissonLoss(), 2.0, np.log(4), 4 - 2 * np.log(4), 4 - 2, 4),
+        (HalfGammaLoss(), 2.0, np.log(4), np.log(4) + 2 / 4, 1 - 2 / 4, 2 / 4),
+        (HalfTweedieLoss(power=3), 2.0, np.log(4), -1 / 4 + 1 / 4**2, None, None),
+        (HalfTweedieLossIdentity(power=1), 2.0, 4.0, 2 - 2 * np.log(2), None, None),
+        (HalfTweedieLossIdentity(power=2), 2.0, 4.0, np.log(2) - 1 / 2, None, None),
+        (
+            HalfTweedieLossIdentity(power=3),
+            2.0,
+            4.0,
+            -1 / 4 + 1 / 4**2 + 1 / 2 / 2,
+            None,
+            None,
+        ),
+        (
+            HalfBinomialLoss(),
+            0.25,
+            np.log(4),
+            np.log1p(4) - 0.25 * np.log(4),
+            None,
+            None,
+        ),
+        # Extreme log loss cases, checked with mpmath:
+        # import mpmath as mp
+        #
+        # # Stolen from scipy
+        # def mpf2float(x):
+        #     return float(mp.nstr(x, 17, min_fixed=0, max_fixed=0))
+        #
+        # def mp_logloss(y_true, raw):
+        #     with mp.workdps(100):
+        #         y_true, raw = mp.mpf(float(y_true)), mp.mpf(float(raw))
+        #         out = mp.log1p(mp.exp(raw)) - y_true * raw
+        #     return mpf2float(out)
+        #
+        # def mp_gradient(y_true, raw):
+        #     with mp.workdps(100):
+        #         y_true, raw = mp.mpf(float(y_true)), mp.mpf(float(raw))
+        #         out = mp.mpf(1) / (mp.mpf(1) + mp.exp(-raw)) - y_true
+        #     return mpf2float(out)
+        #
+        # def mp_hessian(y_true, raw):
+        #     with mp.workdps(100):
+        #         y_true, raw = mp.mpf(float(y_true)), mp.mpf(float(raw))
+        #         p = mp.mpf(1) / (mp.mpf(1) + mp.exp(-raw))
+        #         out = p * (mp.mpf(1) - p)
+        #     return mpf2float(out)
+        #
+        # y, raw = 0.0, 37.
+        # mp_logloss(y, raw), mp_gradient(y, raw), mp_hessian(y, raw)
+        (HalfBinomialLoss(), 0.0, -1e20, 0, 0, 0),
+        (HalfBinomialLoss(), 1.0, -1e20, 1e20, -1, 0),
+        (HalfBinomialLoss(), 0.0, -1e3, 0, 0, 0),
+        (HalfBinomialLoss(), 1.0, -1e3, 1e3, -1, 0),
+        (HalfBinomialLoss(), 1.0, -37.5, 37.5, -1, 0),
+        (HalfBinomialLoss(), 1.0, -37.0, 37, 1e-16 - 1, 8.533047625744065e-17),
+        (HalfBinomialLoss(), 0.0, -37.0, *[8.533047625744065e-17] * 3),
+        (HalfBinomialLoss(), 1.0, -36.9, 36.9, 1e-16 - 1, 9.430476078526806e-17),
+        (HalfBinomialLoss(), 0.0, -36.9, *[9.430476078526806e-17] * 3),
+        (HalfBinomialLoss(), 0.0, 37.0, 37, 1 - 1e-16, 8.533047625744065e-17),
+        (HalfBinomialLoss(), 1.0, 37.0, *[8.533047625744066e-17] * 3),
+        (HalfBinomialLoss(), 0.0, 37.5, 37.5, 1, 5.175555005801868e-17),
+        (HalfBinomialLoss(), 0.0, 232.8, 232.8, 1, 1.4287342391028437e-101),
+        (HalfBinomialLoss(), 1.0, 1e20, 0, 0, 0),
+        (HalfBinomialLoss(), 0.0, 1e20, 1e20, 1, 0),
+        (
+            HalfBinomialLoss(),
+            1.0,
+            232.8,
+            0,
+            -1.4287342391028437e-101,
+            1.4287342391028437e-101,
+        ),
+        (HalfBinomialLoss(), 1.0, 232.9, 0, 0, 0),
+        (HalfBinomialLoss(), 1.0, 1e3, 0, 0, 0),
+        (HalfBinomialLoss(), 0.0, 1e3, 1e3, 1, 0),
         (
             HalfMultinomialLoss(n_classes=3),
             0.0,
             [0.2, 0.5, 0.3],
             logsumexp([0.2, 0.5, 0.3]) - 0.2,
+            None,
+            None,
         ),
         (
             HalfMultinomialLoss(n_classes=3),
             1.0,
             [0.2, 0.5, 0.3],
             logsumexp([0.2, 0.5, 0.3]) - 0.5,
+            None,
+            None,
         ),
         (
             HalfMultinomialLoss(n_classes=3),
             2.0,
             [0.2, 0.5, 0.3],
             logsumexp([0.2, 0.5, 0.3]) - 0.3,
+            None,
+            None,
+        ),
+        (
+            HalfMultinomialLoss(n_classes=3),
+            2.0,
+            [1e4, 0, 7e-7],
+            logsumexp([1e4, 0, 7e-7]) - (7e-7),
+            None,
+            None,
         ),
     ],
     ids=loss_instance_name,
 )
-def test_loss_on_specific_values(loss, y_true, raw_prediction, loss_true):
-    """Test losses at specific values."""
-    assert loss(
+def test_loss_on_specific_values(
+    loss, y_true, raw_prediction, loss_true, gradient_true, hessian_true
+):
+    """Test losses, gradients and hessians at specific values."""
+    loss1 = loss(y_true=np.array([y_true]), raw_prediction=np.array([raw_prediction]))
+    grad1 = loss.gradient(
         y_true=np.array([y_true]), raw_prediction=np.array([raw_prediction])
-    ) == approx(loss_true, rel=1e-11, abs=1e-12)
+    )
+    loss2, grad2 = loss.loss_gradient(
+        y_true=np.array([y_true]), raw_prediction=np.array([raw_prediction])
+    )
+    grad3, hess = loss.gradient_hessian(
+        y_true=np.array([y_true]), raw_prediction=np.array([raw_prediction])
+    )
+
+    assert loss1 == approx(loss_true, rel=1e-15, abs=1e-15)
+    assert loss2 == approx(loss_true, rel=1e-15, abs=1e-15)
+
+    if gradient_true is not None:
+        assert grad1 == approx(gradient_true, rel=1e-15, abs=1e-15)
+        assert grad2 == approx(gradient_true, rel=1e-15, abs=1e-15)
+        assert grad3 == approx(gradient_true, rel=1e-15, abs=1e-15)
+
+    if hessian_true is not None:
+        assert hess == approx(hessian_true, rel=1e-15, abs=1e-15)
 
 
 @pytest.mark.parametrize("loss", ALL_LOSSES)
@@ -254,6 +390,9 @@ def test_loss_dtype(
 
     Also check that input arrays can be readonly, e.g. memory mapped.
     """
+    if _IS_WASM and readonly_memmap:  # pragma: nocover
+        pytest.xfail(reason="memmap not fully supported")
+
     loss = loss()
     # generate a y_true and raw_prediction in valid range
     n_samples = 5
@@ -275,26 +414,28 @@ def test_loss_dtype(
         out2 = np.empty_like(raw_prediction, dtype=dtype_out)
 
     if readonly_memmap:
-        y_true = create_memmap_backed_data(y_true, aligned=True)
-        raw_prediction = create_memmap_backed_data(raw_prediction, aligned=True)
+        y_true = create_memmap_backed_data(y_true)
+        raw_prediction = create_memmap_backed_data(raw_prediction)
         if sample_weight is not None:
-            sample_weight = create_memmap_backed_data(sample_weight, aligned=True)
+            sample_weight = create_memmap_backed_data(sample_weight)
 
-    loss.loss(
+    l = loss.loss(
         y_true=y_true,
         raw_prediction=raw_prediction,
         sample_weight=sample_weight,
         loss_out=out1,
         n_threads=n_threads,
     )
-    loss.gradient(
+    assert l is out1 if out1 is not None else True
+    g = loss.gradient(
         y_true=y_true,
         raw_prediction=raw_prediction,
         sample_weight=sample_weight,
         gradient_out=out2,
         n_threads=n_threads,
     )
-    loss.loss_gradient(
+    assert g is out2 if out2 is not None else True
+    l, g = loss.loss_gradient(
         y_true=y_true,
         raw_prediction=raw_prediction,
         sample_weight=sample_weight,
@@ -302,9 +443,11 @@ def test_loss_dtype(
         gradient_out=out2,
         n_threads=n_threads,
     )
+    assert l is out1 if out1 is not None else True
+    assert g is out2 if out2 is not None else True
     if out1 is not None and loss.is_multiclass:
         out1 = np.empty_like(raw_prediction, dtype=dtype_out)
-    loss.gradient_hessian(
+    g, h = loss.gradient_hessian(
         y_true=y_true,
         raw_prediction=raw_prediction,
         sample_weight=sample_weight,
@@ -312,13 +455,15 @@ def test_loss_dtype(
         hessian_out=out2,
         n_threads=n_threads,
     )
+    assert g is out1 if out1 is not None else True
+    assert h is out2 if out2 is not None else True
     loss(y_true=y_true, raw_prediction=raw_prediction, sample_weight=sample_weight)
     loss.fit_intercept_only(y_true=y_true, sample_weight=sample_weight)
     loss.constant_to_optimal_zero(y_true=y_true, sample_weight=sample_weight)
     if hasattr(loss, "predict_proba"):
         loss.predict_proba(raw_prediction=raw_prediction)
     if hasattr(loss, "gradient_proba"):
-        loss.gradient_proba(
+        g, p = loss.gradient_proba(
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
@@ -326,6 +471,8 @@ def test_loss_dtype(
             proba_out=out2,
             n_threads=n_threads,
         )
+        assert g is out1 if out1 is not None else True
+        assert p is out2 if out2 is not None else True
 
 
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
@@ -348,34 +495,32 @@ def test_loss_same_as_C_functions(loss, sample_weight):
     out_g2 = np.empty_like(raw_prediction)
     out_h1 = np.empty_like(raw_prediction)
     out_h2 = np.empty_like(raw_prediction)
-    assert_allclose(
-        loss.loss(
-            y_true=y_true,
-            raw_prediction=raw_prediction,
-            sample_weight=sample_weight,
-            loss_out=out_l1,
-        ),
-        loss.closs.loss(
-            y_true=y_true,
-            raw_prediction=raw_prediction,
-            sample_weight=sample_weight,
-            loss_out=out_l2,
-        ),
+    loss.loss(
+        y_true=y_true,
+        raw_prediction=raw_prediction,
+        sample_weight=sample_weight,
+        loss_out=out_l1,
     )
-    assert_allclose(
-        loss.gradient(
-            y_true=y_true,
-            raw_prediction=raw_prediction,
-            sample_weight=sample_weight,
-            gradient_out=out_g1,
-        ),
-        loss.closs.gradient(
-            y_true=y_true,
-            raw_prediction=raw_prediction,
-            sample_weight=sample_weight,
-            gradient_out=out_g2,
-        ),
+    loss.closs.loss(
+        y_true=y_true,
+        raw_prediction=raw_prediction,
+        sample_weight=sample_weight,
+        loss_out=out_l2,
+    ),
+    assert_allclose(out_l1, out_l2)
+    loss.gradient(
+        y_true=y_true,
+        raw_prediction=raw_prediction,
+        sample_weight=sample_weight,
+        gradient_out=out_g1,
     )
+    loss.closs.gradient(
+        y_true=y_true,
+        raw_prediction=raw_prediction,
+        sample_weight=sample_weight,
+        gradient_out=out_g2,
+    )
+    assert_allclose(out_g1, out_g2)
     loss.closs.loss_gradient(
         y_true=y_true,
         raw_prediction=raw_prediction,
@@ -412,7 +557,7 @@ def test_loss_same_as_C_functions(loss, sample_weight):
 
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
 @pytest.mark.parametrize("sample_weight", [None, "range"])
-def test_loss_gradients_are_the_same(loss, sample_weight):
+def test_loss_gradients_are_the_same(loss, sample_weight, global_random_seed):
     """Test that loss and gradient are the same across different functions.
 
     Also test that output arguments contain correct results.
@@ -422,7 +567,7 @@ def test_loss_gradients_are_the_same(loss, sample_weight):
         n_samples=20,
         y_bound=(-100, 100),
         raw_bound=(-10, 10),
-        seed=42,
+        seed=global_random_seed,
     )
     if sample_weight == "range":
         sample_weight = np.linspace(1, y_true.shape[0], num=y_true.shape[0])
@@ -493,7 +638,7 @@ def test_loss_gradients_are_the_same(loss, sample_weight):
 
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
 @pytest.mark.parametrize("sample_weight", ["ones", "random"])
-def test_sample_weight_multiplies(loss, sample_weight):
+def test_sample_weight_multiplies(loss, sample_weight, global_random_seed):
     """Test sample weights in loss, gradients and hessians.
 
     Make sure that passing sample weights to loss, gradient and hessian
@@ -505,13 +650,13 @@ def test_sample_weight_multiplies(loss, sample_weight):
         n_samples=n_samples,
         y_bound=(-100, 100),
         raw_bound=(-5, 5),
-        seed=42,
+        seed=global_random_seed,
     )
 
     if sample_weight == "ones":
         sample_weight = np.ones(shape=n_samples, dtype=np.float64)
     else:
-        rng = np.random.RandomState(42)
+        rng = np.random.RandomState(global_random_seed)
         sample_weight = rng.normal(size=n_samples).astype(np.float64)
 
     assert_allclose(
@@ -604,6 +749,16 @@ def test_loss_of_perfect_prediction(loss, sample_weight):
     if not loss.is_multiclass:
         # Use small values such that exp(value) is not nan.
         raw_prediction = np.array([-10, -0.1, 0, 0.1, 3, 10])
+        # If link is identity, we must respect the interval of y_pred:
+        if isinstance(loss.link, IdentityLink):
+            eps = 1e-10
+            low = loss.interval_y_pred.low
+            if not loss.interval_y_pred.low_inclusive:
+                low = low + eps
+            high = loss.interval_y_pred.high
+            if not loss.interval_y_pred.high_inclusive:
+                high = high - eps
+            raw_prediction = np.clip(raw_prediction, low, high)
         y_true = loss.link.inverse(raw_prediction)
     else:
         # HalfMultinomialLoss
@@ -635,7 +790,7 @@ def test_loss_of_perfect_prediction(loss, sample_weight):
 
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
 @pytest.mark.parametrize("sample_weight", [None, "range"])
-def test_gradients_hessians_numerically(loss, sample_weight):
+def test_gradients_hessians_numerically(loss, sample_weight, global_random_seed):
     """Test gradients and hessians with numerical derivatives.
 
     Gradient should equal the numerical derivatives of the loss function.
@@ -647,7 +802,7 @@ def test_gradients_hessians_numerically(loss, sample_weight):
         n_samples=n_samples,
         y_bound=(-100, 100),
         raw_bound=(-5, 5),
-        seed=42,
+        seed=global_random_seed,
     )
 
     if sample_weight == "range":
@@ -741,10 +896,6 @@ def test_gradients_hessians_numerically(loss, sample_weight):
         ("poisson_loss", -22.0, 10.0),
     ],
 )
-@pytest.mark.skipif(
-    sp_version == parse_version("1.2.0"),
-    reason="bug in scipy 1.2.0, see scipy issue #9608",
-)
 @skip_if_32bit
 def test_derivatives(loss, x0, y_true):
     """Test that gradients are zero at the minimum of the loss.
@@ -803,7 +954,7 @@ def test_loss_intercept_only(loss, sample_weight):
     if not loss.is_multiclass:
         y_true = loss.link.inverse(np.linspace(-4, 4, num=n_samples))
     else:
-        y_true = np.arange(n_samples).astype(float) % loss.n_classes
+        y_true = np.arange(n_samples).astype(np.float64) % loss.n_classes
         y_true[::5] = 0  # exceedance of class 0
 
     if sample_weight == "range":
@@ -840,18 +991,13 @@ def test_loss_intercept_only(loss, sample_weight):
     else:
         # The constraint corresponds to sum(raw_prediction) = 0. Without it, we would
         # need to apply loss.symmetrize_raw_prediction to opt.x before comparing.
-        # TODO: With scipy 1.1.0, one could use
-        # LinearConstraint(np.ones((1, loss.n_classes)), 0, 0)
         opt = minimize(
             fun,
             np.zeros((loss.n_classes)),
             tol=1e-13,
             options={"maxiter": 100},
             method="SLSQP",
-            constraints={
-                "type": "eq",
-                "fun": lambda x: np.ones((1, loss.n_classes)) @ x,
-            },
+            constraints=LinearConstraint(np.ones((1, loss.n_classes)), 0, 0),
         )
         grad = loss.gradient(
             y_true=y_true,
@@ -876,13 +1022,13 @@ def test_loss_intercept_only(loss, sample_weight):
         (HalfBinomialLoss(), np.mean, "binomial"),
     ],
 )
-def test_specific_fit_intercept_only(loss, func, random_dist):
+def test_specific_fit_intercept_only(loss, func, random_dist, global_random_seed):
     """Test that fit_intercept_only returns the correct functional.
 
     We test the functional for specific, meaningful distributions, e.g.
     squared error estimates the expectation of a probability distribution.
     """
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     if random_dist == "binomial":
         y_train = rng.binomial(1, 0.5, size=100)
     else:
@@ -930,9 +1076,39 @@ def test_multinomial_loss_fit_intercept_only():
         assert_all_finite(baseline_prediction)
 
 
-def test_binomial_and_multinomial_loss():
+def test_multinomial_cy_gradient(global_random_seed):
+    """Test that Multinomial cy_gradient gives the same result as gradient.
+
+    CyHalfMultinomialLoss does not inherit from CyLossFunction and has a different API.
+    As a consequence, the functions like `loss` and `gradient` do not rely on `cy_loss`
+    and `cy_gradient`.
+    """
+    n_samples = 100
+    n_classes = 5
+    loss = HalfMultinomialLoss(n_classes=n_classes)
+    y_true, raw_prediction = random_y_true_raw_prediction(
+        loss=loss,
+        n_samples=n_samples,
+        seed=global_random_seed,
+    )
+    sample_weight = np.linspace(0.1, 2, num=n_samples)
+
+    grad1 = loss.closs._test_cy_gradient(
+        y_true=y_true,
+        raw_prediction=raw_prediction,  # needs to be C-contiguous
+        sample_weight=sample_weight,
+    )
+    grad2 = loss.gradient(
+        y_true=y_true,
+        raw_prediction=raw_prediction,
+        sample_weight=sample_weight,
+    )
+    assert_allclose(grad1, grad2)
+
+
+def test_binomial_and_multinomial_loss(global_random_seed):
     """Test that multinomial loss with n_classes = 2 is the same as binomial loss."""
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 20
     binom = HalfBinomialLoss()
     multinom = HalfMultinomialLoss(n_classes=2)
@@ -947,8 +1123,44 @@ def test_binomial_and_multinomial_loss():
     )
 
 
+@pytest.mark.parametrize("y_true", (np.array([0.0, 0, 0]), np.array([1.0, 1, 1])))
+@pytest.mark.parametrize("y_pred", (np.array([-5.0, -5, -5]), np.array([3.0, 3, 3])))
+def test_binomial_vs_alternative_formulation(y_true, y_pred, global_dtype):
+    """Test that both formulations of the binomial deviance agree.
+
+    Often, the binomial deviance or log loss is written in terms of a variable
+    z in {-1, +1}, but we use y in {0, 1}, hence z = 2 * y - 1.
+    ESL II Eq. (10.18):
+
+        -loglike(z, f) = log(1 + exp(-2 * z * f))
+
+    Note:
+        - ESL 2*f = raw_prediction, hence the factor 2 of ESL disappears.
+        - Deviance = -2*loglike + .., but HalfBinomialLoss is half of the
+          deviance, hence the factor of 2 cancels in the comparison.
+    """
+
+    def alt_loss(y, raw_pred):
+        z = 2 * y - 1
+        return np.mean(np.log(1 + np.exp(-z * raw_pred)))
+
+    def alt_gradient(y, raw_pred):
+        # alternative gradient formula according to ESL
+        z = 2 * y - 1
+        return -z / (1 + np.exp(z * raw_pred))
+
+    bin_loss = HalfBinomialLoss()
+
+    y_true = y_true.astype(global_dtype)
+    y_pred = y_pred.astype(global_dtype)
+    datum = (y_true, y_pred)
+
+    assert bin_loss(*datum) == approx(alt_loss(*datum))
+    assert_allclose(bin_loss.gradient(*datum), alt_gradient(*datum))
+
+
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
-def test_predict_proba(loss):
+def test_predict_proba(loss, global_random_seed):
     """Test that predict_proba and gradient_proba work as expected."""
     n_samples = 20
     y_true, raw_prediction = random_y_true_raw_prediction(
@@ -956,7 +1168,7 @@ def test_predict_proba(loss):
         n_samples=n_samples,
         y_bound=(-100, 100),
         raw_bound=(-5, 5),
-        seed=42,
+        seed=global_random_seed,
     )
 
     if hasattr(loss, "predict_proba"):
@@ -991,6 +1203,100 @@ def test_predict_proba(loss):
             )
 
 
+@pytest.mark.parametrize("loss", ALL_LOSSES)
+@pytest.mark.parametrize("sample_weight", [None, "range"])
+@pytest.mark.parametrize("dtype", (np.float32, np.float64))
+@pytest.mark.parametrize("order", ("C", "F"))
+def test_init_gradient_and_hessians(loss, sample_weight, dtype, order):
+    """Test that init_gradient_and_hessian works as expected.
+
+    passing sample_weight to a loss correctly influences the constant_hessian
+    attribute, and consequently the shape of the hessian array.
+    """
+    n_samples = 5
+    if sample_weight == "range":
+        sample_weight = np.ones(n_samples)
+    loss = loss(sample_weight=sample_weight)
+    gradient, hessian = loss.init_gradient_and_hessian(
+        n_samples=n_samples,
+        dtype=dtype,
+        order=order,
+    )
+    if loss.constant_hessian:
+        assert gradient.shape == (n_samples,)
+        assert hessian.shape == (1,)
+    elif loss.is_multiclass:
+        assert gradient.shape == (n_samples, loss.n_classes)
+        assert hessian.shape == (n_samples, loss.n_classes)
+    else:
+        assert hessian.shape == (n_samples,)
+        assert hessian.shape == (n_samples,)
+
+    assert gradient.dtype == dtype
+    assert hessian.dtype == dtype
+
+    if order == "C":
+        assert gradient.flags.c_contiguous
+        assert hessian.flags.c_contiguous
+    else:
+        assert gradient.flags.f_contiguous
+        assert hessian.flags.f_contiguous
+
+
+@pytest.mark.parametrize("loss", ALL_LOSSES)
+@pytest.mark.parametrize(
+    "params, err_msg",
+    [
+        (
+            {"dtype": np.int64},
+            f"Valid options for 'dtype' are .* Got dtype={np.int64} instead.",
+        ),
+    ],
+)
+def test_init_gradient_and_hessian_raises(loss, params, err_msg):
+    """Test that init_gradient_and_hessian raises errors for invalid input."""
+    loss = loss()
+    with pytest.raises((ValueError, TypeError), match=err_msg):
+        gradient, hessian = loss.init_gradient_and_hessian(n_samples=5, **params)
+
+
+@pytest.mark.parametrize(
+    "loss, params, err_type, err_msg",
+    [
+        (
+            PinballLoss,
+            {"quantile": None},
+            TypeError,
+            "quantile must be an instance of float, not NoneType.",
+        ),
+        (
+            PinballLoss,
+            {"quantile": 0},
+            ValueError,
+            "quantile == 0, must be > 0.",
+        ),
+        (PinballLoss, {"quantile": 1.1}, ValueError, "quantile == 1.1, must be < 1."),
+        (
+            HuberLoss,
+            {"quantile": None},
+            TypeError,
+            "quantile must be an instance of float, not NoneType.",
+        ),
+        (
+            HuberLoss,
+            {"quantile": 0},
+            ValueError,
+            "quantile == 0, must be > 0.",
+        ),
+        (HuberLoss, {"quantile": 1.1}, ValueError, "quantile == 1.1, must be < 1."),
+    ],
+)
+def test_loss_init_parameter_validation(loss, params, err_type, err_msg):
+    """Test that loss raises errors for invalid input."""
+    with pytest.raises(err_type, match=err_msg):
+        loss(**params)
+
+
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
 def test_loss_pickle(loss):
     """Test that losses can be pickled."""
@@ -1006,4 +1312,49 @@ def test_loss_pickle(loss):
     unpickled_loss = pickle.loads(pickled_loss)
     assert loss(y_true=y_true, raw_prediction=raw_prediction) == approx(
         unpickled_loss(y_true=y_true, raw_prediction=raw_prediction)
+    )
+
+
+@pytest.mark.parametrize("p", [-1.5, 0, 1, 1.5, 2, 3])
+def test_tweedie_log_identity_consistency(p):
+    """Test for identical losses when only the link function is different."""
+    half_tweedie_log = HalfTweedieLoss(power=p)
+    half_tweedie_identity = HalfTweedieLossIdentity(power=p)
+    n_samples = 10
+    y_true, raw_prediction = random_y_true_raw_prediction(
+        loss=half_tweedie_log, n_samples=n_samples, seed=42
+    )
+    y_pred = half_tweedie_log.link.inverse(raw_prediction)  # exp(raw_prediction)
+
+    # Let's compare the loss values, up to some constant term that is dropped
+    # in HalfTweedieLoss but not in HalfTweedieLossIdentity.
+    loss_log = half_tweedie_log.loss(
+        y_true=y_true, raw_prediction=raw_prediction
+    ) + half_tweedie_log.constant_to_optimal_zero(y_true)
+    loss_identity = half_tweedie_identity.loss(
+        y_true=y_true, raw_prediction=y_pred
+    ) + half_tweedie_identity.constant_to_optimal_zero(y_true)
+    # Note that HalfTweedieLoss ignores different constant terms than
+    # HalfTweedieLossIdentity. Constant terms means terms not depending on
+    # raw_prediction. By adding these terms, `constant_to_optimal_zero`, both losses
+    # give the same values.
+    assert_allclose(loss_log, loss_identity)
+
+    # For gradients and hessians, the constant terms do not matter. We have, however,
+    # to account for the chain rule, i.e. with x=raw_prediction
+    #     gradient_log(x) = d/dx loss_log(x)
+    #                     = d/dx loss_identity(exp(x))
+    #                     = exp(x) * gradient_identity(exp(x))
+    # Similarly,
+    #     hessian_log(x) = exp(x) * gradient_identity(exp(x))
+    #                    + exp(x)**2 * hessian_identity(x)
+    gradient_log, hessian_log = half_tweedie_log.gradient_hessian(
+        y_true=y_true, raw_prediction=raw_prediction
+    )
+    gradient_identity, hessian_identity = half_tweedie_identity.gradient_hessian(
+        y_true=y_true, raw_prediction=y_pred
+    )
+    assert_allclose(gradient_log, y_pred * gradient_identity)
+    assert_allclose(
+        hessian_log, y_pred * gradient_identity + y_pred**2 * hessian_identity
     )

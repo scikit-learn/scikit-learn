@@ -1,43 +1,43 @@
 import sys
+from io import StringIO
 
 import numpy as np
-from scipy.linalg import block_diag
-from scipy.sparse import csr_matrix
-from scipy.special import psi
-from numpy.testing import assert_array_equal
-
 import pytest
+from numpy.testing import assert_array_equal
+from scipy.linalg import block_diag
+from scipy.special import psi
 
 from sklearn.decomposition import LatentDirichletAllocation
-from sklearn.decomposition._lda import (
+from sklearn.decomposition._online_lda_fast import (
     _dirichlet_expectation_1d,
     _dirichlet_expectation_2d,
 )
-
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import if_safe_multiprocessing_with_blas
-
 from sklearn.exceptions import NotFittedError
-from io import StringIO
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    if_safe_multiprocessing_with_blas,
+)
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 
-def _build_sparse_mtx():
+def _build_sparse_array(csr_container):
     # Create 3 topics and each topic has 3 distinct words.
     # (Each word only belongs to a single topic.)
     n_components = 3
     block = np.full((3, 3), n_components, dtype=int)
     blocks = [block] * n_components
     X = block_diag(*blocks)
-    X = csr_matrix(X)
+    X = csr_container(X)
     return (n_components, X)
 
 
-def test_lda_default_prior_params():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_lda_default_prior_params(csr_container):
     # default prior parameter should be `1 / topics`
     # and verbose params should not affect result
-    n_components, X = _build_sparse_mtx()
+    n_components, X = _build_sparse_array(csr_container)
     prior = 1.0 / n_components
     lda_1 = LatentDirichletAllocation(
         n_components=n_components,
@@ -51,10 +51,11 @@ def test_lda_default_prior_params():
     assert_almost_equal(topic_distr_1, topic_distr_2)
 
 
-def test_lda_fit_batch():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_lda_fit_batch(csr_container):
     # Test LDA batch learning_offset (`fit` method with 'batch' learning)
     rng = np.random.RandomState(0)
-    n_components, X = _build_sparse_mtx()
+    n_components, X = _build_sparse_array(csr_container)
     lda = LatentDirichletAllocation(
         n_components=n_components,
         evaluate_every=1,
@@ -70,10 +71,11 @@ def test_lda_fit_batch():
         assert tuple(sorted(top_idx)) in correct_idx_grps
 
 
-def test_lda_fit_online():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_lda_fit_online(csr_container):
     # Test LDA online learning (`fit` method with 'online' learning)
     rng = np.random.RandomState(0)
-    n_components, X = _build_sparse_mtx()
+    n_components, X = _build_sparse_array(csr_container)
     lda = LatentDirichletAllocation(
         n_components=n_components,
         learning_offset=10.0,
@@ -90,11 +92,12 @@ def test_lda_fit_online():
         assert tuple(sorted(top_idx)) in correct_idx_grps
 
 
-def test_lda_partial_fit():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_lda_partial_fit(csr_container):
     # Test LDA online learning (`partial_fit` method)
     # (same as test_lda_batch)
     rng = np.random.RandomState(0)
-    n_components, X = _build_sparse_mtx()
+    n_components, X = _build_sparse_array(csr_container)
     lda = LatentDirichletAllocation(
         n_components=n_components,
         learning_offset=10.0,
@@ -110,10 +113,11 @@ def test_lda_partial_fit():
         assert tuple(sorted(top_idx)) in correct_idx_grps
 
 
-def test_lda_dense_input():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_lda_dense_input(csr_container):
     # Test LDA with dense input.
     rng = np.random.RandomState(0)
-    n_components, X = _build_sparse_mtx()
+    n_components, X = _build_sparse_array(csr_container)
     lda = LatentDirichletAllocation(
         n_components=n_components, learning_method="batch", random_state=rng
     )
@@ -128,7 +132,7 @@ def test_lda_dense_input():
 
 def test_lda_transform():
     # Test LDA transform.
-    # Transform result cannot be negative and should be normalized
+    # Transform result cannot be negative and should be normalized by default
     rng = np.random.RandomState(0)
     X = rng.randint(5, size=(20, 10))
     n_components = 3
@@ -136,6 +140,11 @@ def test_lda_transform():
     X_trans = lda.fit_transform(X)
     assert (X_trans > 0.0).any()
     assert_array_almost_equal(np.sum(X_trans, axis=1), np.ones(X_trans.shape[0]))
+
+    X_trans_unnormalized = lda.transform(X, normalize=False)
+    assert_array_almost_equal(
+        X_trans, X_trans_unnormalized / X_trans_unnormalized.sum(axis=1)[:, np.newaxis]
+    )
 
 
 @pytest.mark.parametrize("method", ("online", "batch"))
@@ -150,22 +159,6 @@ def test_lda_fit_transform(method):
     X_fit = lda.fit_transform(X)
     X_trans = lda.transform(X)
     assert_array_almost_equal(X_fit, X_trans, 4)
-
-
-def test_invalid_params():
-    # test `_check_params` method
-    X = np.ones((5, 10))
-
-    invalid_models = (
-        ("n_components", LatentDirichletAllocation(n_components=0)),
-        ("learning_method", LatentDirichletAllocation(learning_method="unknown")),
-        ("total_samples", LatentDirichletAllocation(total_samples=0)),
-        ("learning_offset", LatentDirichletAllocation(learning_offset=-1)),
-    )
-    for param, model in invalid_models:
-        regex = r"^Invalid %r parameter" % param
-        with pytest.raises(ValueError, match=regex):
-            model.fit(X)
 
 
 def test_lda_negative_input():
@@ -192,9 +185,10 @@ def test_lda_no_component_error():
 
 
 @if_safe_multiprocessing_with_blas
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 @pytest.mark.parametrize("method", ("online", "batch"))
-def test_lda_multi_jobs(method):
-    n_components, X = _build_sparse_mtx()
+def test_lda_multi_jobs(method, csr_container):
+    n_components, X = _build_sparse_array(csr_container)
     # Test LDA batch training with multi CPU
     rng = np.random.RandomState(0)
     lda = LatentDirichletAllocation(
@@ -213,10 +207,11 @@ def test_lda_multi_jobs(method):
 
 
 @if_safe_multiprocessing_with_blas
-def test_lda_partial_fit_multi_jobs():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_lda_partial_fit_multi_jobs(csr_container):
     # Test LDA online training with multi CPU
     rng = np.random.RandomState(0)
-    n_components, X = _build_sparse_mtx()
+    n_components, X = _build_sparse_array(csr_container)
     lda = LatentDirichletAllocation(
         n_components=n_components,
         n_jobs=2,
@@ -257,10 +252,11 @@ def test_lda_preplexity_mismatch():
 
 
 @pytest.mark.parametrize("method", ("online", "batch"))
-def test_lda_perplexity(method):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_lda_perplexity(method, csr_container):
     # Test LDA perplexity for batch training
     # perplexity should be lower after each iteration
-    n_components, X = _build_sparse_mtx()
+    n_components, X = _build_sparse_array(csr_container)
     lda_1 = LatentDirichletAllocation(
         n_components=n_components,
         max_iter=1,
@@ -288,10 +284,11 @@ def test_lda_perplexity(method):
 
 
 @pytest.mark.parametrize("method", ("online", "batch"))
-def test_lda_score(method):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_lda_score(method, csr_container):
     # Test LDA score for batch training
     # score should be higher after each iteration
-    n_components, X = _build_sparse_mtx()
+    n_components, X = _build_sparse_array(csr_container)
     lda_1 = LatentDirichletAllocation(
         n_components=n_components,
         max_iter=1,
@@ -314,10 +311,11 @@ def test_lda_score(method):
     assert score_2 >= score_1
 
 
-def test_perplexity_input_format():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_perplexity_input_format(csr_container):
     # Test LDA perplexity for sparse and dense input
     # score should be the same for both dense and sparse input
-    n_components, X = _build_sparse_mtx()
+    n_components, X = _build_sparse_array(csr_container)
     lda = LatentDirichletAllocation(
         n_components=n_components,
         max_iter=1,
@@ -331,9 +329,10 @@ def test_perplexity_input_format():
     assert_almost_equal(perp_1, perp_2)
 
 
-def test_lda_score_perplexity():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_lda_score_perplexity(csr_container):
     # Test the relationship between LDA score and perplexity
-    n_components, X = _build_sparse_mtx()
+    n_components, X = _build_sparse_array(csr_container)
     lda = LatentDirichletAllocation(
         n_components=n_components, max_iter=10, random_state=0
     )
@@ -345,10 +344,11 @@ def test_lda_score_perplexity():
     assert_almost_equal(perplexity_1, perplexity_2)
 
 
-def test_lda_fit_perplexity():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_lda_fit_perplexity(csr_container):
     # Test that the perplexity computed during fit is consistent with what is
     # returned by the perplexity method
-    n_components, X = _build_sparse_mtx()
+    n_components, X = _build_sparse_array(csr_container)
     lda = LatentDirichletAllocation(
         n_components=n_components,
         max_iter=1,
@@ -367,10 +367,11 @@ def test_lda_fit_perplexity():
     assert_almost_equal(perplexity1, perplexity2)
 
 
-def test_lda_empty_docs():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_lda_empty_docs(csr_container):
     """Test LDA on empty document (all-zero rows)."""
     Z = np.zeros((5, 4))
-    for X in [Z, csr_matrix(Z)]:
+    for X in [Z, csr_container(Z)]:
         lda = LatentDirichletAllocation(max_iter=750).fit(X)
         assert_almost_equal(
             lda.components_.sum(axis=0), np.ones(lda.components_.shape[1])
@@ -393,8 +394,10 @@ def test_dirichlet_expectation():
     )
 
 
-def check_verbosity(verbose, evaluate_every, expected_lines, expected_perplexities):
-    n_components, X = _build_sparse_mtx()
+def check_verbosity(
+    verbose, evaluate_every, expected_lines, expected_perplexities, csr_container
+):
+    n_components, X = _build_sparse_array(csr_container)
     lda = LatentDirichletAllocation(
         n_components=n_components,
         max_iter=3,
@@ -426,16 +429,54 @@ def check_verbosity(verbose, evaluate_every, expected_lines, expected_perplexiti
         (True, 2, 3, 1),
     ],
 )
-def test_verbosity(verbose, evaluate_every, expected_lines, expected_perplexities):
-    check_verbosity(verbose, evaluate_every, expected_lines, expected_perplexities)
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_verbosity(
+    verbose, evaluate_every, expected_lines, expected_perplexities, csr_container
+):
+    check_verbosity(
+        verbose, evaluate_every, expected_lines, expected_perplexities, csr_container
+    )
 
 
-def test_lda_feature_names_out():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_lda_feature_names_out(csr_container):
     """Check feature names out for LatentDirichletAllocation."""
-    n_components, X = _build_sparse_mtx()
+    n_components, X = _build_sparse_array(csr_container)
     lda = LatentDirichletAllocation(n_components=n_components).fit(X)
 
     names = lda.get_feature_names_out()
     assert_array_equal(
         [f"latentdirichletallocation{i}" for i in range(n_components)], names
     )
+
+
+@pytest.mark.parametrize("learning_method", ("batch", "online"))
+def test_lda_dtype_match(learning_method, global_dtype):
+    """Check data type preservation of fitted attributes."""
+    rng = np.random.RandomState(0)
+    X = rng.uniform(size=(20, 10)).astype(global_dtype, copy=False)
+
+    lda = LatentDirichletAllocation(
+        n_components=5, random_state=0, learning_method=learning_method
+    )
+    lda.fit(X)
+    assert lda.components_.dtype == global_dtype
+    assert lda.exp_dirichlet_component_.dtype == global_dtype
+
+
+@pytest.mark.parametrize("learning_method", ("batch", "online"))
+def test_lda_numerical_consistency(learning_method, global_random_seed):
+    """Check numerical consistency between np.float32 and np.float64."""
+    rng = np.random.RandomState(global_random_seed)
+    X64 = rng.uniform(size=(20, 10))
+    X32 = X64.astype(np.float32)
+
+    lda_64 = LatentDirichletAllocation(
+        n_components=5, random_state=global_random_seed, learning_method=learning_method
+    ).fit(X64)
+    lda_32 = LatentDirichletAllocation(
+        n_components=5, random_state=global_random_seed, learning_method=learning_method
+    ).fit(X32)
+
+    assert_allclose(lda_32.components_, lda_64.components_)
+    assert_allclose(lda_32.transform(X32), lda_64.transform(X64))

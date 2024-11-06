@@ -12,21 +12,25 @@ for comparison.
 
 """
 
-from sklearn.model_selection import (
-    TimeSeriesSplit,
-    KFold,
-    ShuffleSplit,
-    StratifiedKFold,
-    GroupShuffleSplit,
-    GroupKFold,
-    StratifiedShuffleSplit,
-    StratifiedGroupKFold,
-)
-import numpy as np
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.patches import Patch
 
-np.random.seed(1338)
+from sklearn.model_selection import (
+    GroupKFold,
+    GroupShuffleSplit,
+    KFold,
+    ShuffleSplit,
+    StratifiedGroupKFold,
+    StratifiedKFold,
+    StratifiedShuffleSplit,
+    TimeSeriesSplit,
+)
+
+rng = np.random.RandomState(1338)
 cmap_data = plt.cm.Paired
 cmap_cv = plt.cm.coolwarm
 n_splits = 4
@@ -47,13 +51,14 @@ n_splits = 4
 
 # Generate the class/group data
 n_points = 100
-X = np.random.randn(100, 10)
+X = rng.randn(100, 10)
 
 percentiles_classes = [0.1, 0.3, 0.6]
 y = np.hstack([[ii] * int(100 * perc) for ii, perc in enumerate(percentiles_classes)])
 
-# Evenly spaced groups repeated once
-groups = np.hstack([[ii] * 10 for ii in range(10)])
+# Generate uneven groups
+group_prior = rng.dirichlet([2] * 10)
+groups = np.repeat(np.arange(10), rng.multinomial(100, group_prior))
 
 
 def visualize_groups(classes, groups, name):
@@ -97,9 +102,10 @@ visualize_groups(y, groups, "no groups")
 
 def plot_cv_indices(cv, X, y, group, ax, n_splits, lw=10):
     """Create a sample plot for indices of a cross-validation object."""
-
+    use_groups = "Group" in type(cv).__name__
+    groups = group if use_groups else None
     # Generate the training/testing visualizations for each CV split
-    for ii, (tr, tt) in enumerate(cv.split(X=X, y=y, groups=group)):
+    for ii, (tr, tt) in enumerate(cv.split(X=X, y=y, groups=groups)):
         # Fill in indices with the training/test groups
         indices = np.array([np.nan] * len(X))
         indices[tt] = 1
@@ -158,17 +164,11 @@ plot_cv_indices(cv, X, y, groups, ax, n_splits)
 #   different folds.
 # - ``StratifiedGroupKFold`` to keep the constraint of ``GroupKFold`` while
 #   attempting to return stratified folds.
-
-# To better demonstrate the difference, we will assign samples to groups
-# unevenly:
-
-uneven_groups = np.sort(np.random.randint(0, 10, n_points))
-
 cvs = [StratifiedKFold, GroupKFold, StratifiedGroupKFold]
 
 for cv in cvs:
     fig, ax = plt.subplots(figsize=(6, 3))
-    plot_cv_indices(cv(n_splits), X, y, uneven_groups, ax, n_splits)
+    plot_cv_indices(cv(n_splits), X, y, groups, ax, n_splits)
     ax.legend(
         [Patch(color=cmap_cv(0.8)), Patch(color=cmap_cv(0.02))],
         ["Testing set", "Training set"],

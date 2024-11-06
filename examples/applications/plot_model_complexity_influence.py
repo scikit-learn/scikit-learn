@@ -21,8 +21,12 @@ We will model the complexity influence on three different estimators:
     - :class:`~sklearn.svm.NuSVR` (for regression data) which implements
       Nu support vector regression;
 
-    - :class:`~sklearn.ensemble.GradientBoostingRegressor` (for regression
-      data) which builds an additive model in a forward stage-wise fashion.
+    - :class:`~sklearn.ensemble.GradientBoostingRegressor` builds an additive
+      model in a forward stage-wise fashion. Notice that
+      :class:`~sklearn.ensemble.HistGradientBoostingRegressor` is much faster
+      than :class:`~sklearn.ensemble.GradientBoostingRegressor` starting with
+      intermediate datasets (`n_samples >= 10_000`), which is not the case for
+      this example.
 
 
 We make the model complexity vary through the choice of relevant model
@@ -32,22 +36,20 @@ Hamming Loss).
 
 """
 
-# Authors: Eustache Diemert <eustache@diemert.fr>
-#          Maria Telenczuk <https://github.com/maikia>
-#          Guillaume Lemaitre <g.lemaitre58@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import time
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn import datasets
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error
-from sklearn.svm import NuSVR
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.linear_model import SGDClassifier
-from sklearn.metrics import hamming_loss
+from sklearn.metrics import hamming_loss, mean_squared_error
+from sklearn.model_selection import train_test_split
+from sklearn.svm import NuSVR
 
 # Initialize random generator
 np.random.seed(0)
@@ -165,7 +167,8 @@ configurations = [
             "alpha": 0.001,
             "loss": "modified_huber",
             "fit_intercept": True,
-            "tol": 1e-3,
+            "tol": 1e-1,
+            "n_iter_no_change": 2,
         },
         "changing_param": "l1_ratio",
         "changing_param_values": [0.25, 0.5, 0.75, 0.9],
@@ -179,7 +182,7 @@ configurations = [
     },
     {
         "estimator": NuSVR,
-        "tuned_params": {"C": 1e3, "gamma": 2 ** -15},
+        "tuned_params": {"C": 1e3, "gamma": 2**-15},
         "changing_param": "nu",
         "changing_param_values": [0.05, 0.1, 0.2, 0.35, 0.5],
         "complexity_label": "n_support_vectors",
@@ -261,7 +264,7 @@ def plot_influence(conf, mse_values, prediction_times, complexities):
     ax2.tick_params(axis="y", colors=line2.get_color())
 
     plt.legend(
-        (line1, line2), ("prediction error", "prediction latency"), loc="upper right"
+        (line1, line2), ("prediction error", "prediction latency"), loc="upper center"
     )
 
     plt.title(

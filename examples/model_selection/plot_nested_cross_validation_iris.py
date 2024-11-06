@@ -30,25 +30,29 @@ build a model with optimized hyperparameters by grid search. We compare the
 performance of non-nested and nested CV strategies by taking the difference
 between their scores.
 
-.. topic:: See Also:
+.. seealso::
 
     - :ref:`cross_validation`
     - :ref:`grid_search`
 
-.. topic:: References:
+.. rubric:: References
 
-    .. [1] `Cawley, G.C.; Talbot, N.L.C. On over-fitting in model selection and
-     subsequent selection bias in performance evaluation.
-     J. Mach. Learn. Res 2010,11, 2079-2107.
-     <http://jmlr.csail.mit.edu/papers/volume11/cawley10a/cawley10a.pdf>`_
+.. [1] `Cawley, G.C.; Talbot, N.L.C. On over-fitting in model selection and
+    subsequent selection bias in performance evaluation.
+    J. Mach. Learn. Res 2010,11, 2079-2107.
+    <http://jmlr.csail.mit.edu/papers/volume11/cawley10a/cawley10a.pdf>`_
 
 """
 
-from sklearn.datasets import load_iris
-from matplotlib import pyplot as plt
-from sklearn.svm import SVC
-from sklearn.model_selection import GridSearchCV, cross_val_score, KFold
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numpy as np
+from matplotlib import pyplot as plt
+
+from sklearn.datasets import load_iris
+from sklearn.model_selection import GridSearchCV, KFold, cross_val_score
+from sklearn.svm import SVC
 
 # Number of random trials
 NUM_TRIALS = 30
@@ -70,7 +74,6 @@ nested_scores = np.zeros(NUM_TRIALS)
 
 # Loop for each trial
 for i in range(NUM_TRIALS):
-
     # Choose cross-validation techniques for the inner and outer loops,
     # independently of the dataset.
     # E.g "GroupKFold", "LeaveOneOut", "LeaveOneGroupOut", etc.

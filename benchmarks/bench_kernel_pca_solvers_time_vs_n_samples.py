@@ -37,17 +37,17 @@ Finally you can have a look at the second example of this series, "Kernel PCA
 Solvers comparison benchmark: time vs n_components", where this time the number
 of examples is fixed, and the desired number of components varies.
 """
+
 # Author: Sylvain MARIE, Schneider Electric
 
 import time
 
-import numpy as np
 import matplotlib.pyplot as plt
-
+import numpy as np
 from numpy.testing import assert_array_almost_equal
-from sklearn.decomposition import KernelPCA
-from sklearn.datasets import make_circles
 
+from sklearn.datasets import make_circles
+from sklearn.decomposition import KernelPCA
 
 print(__doc__)
 
@@ -83,7 +83,6 @@ r_time = np.empty((len(n_samples_range), n_iter)) * np.nan
 
 # loop
 for j, n_samples in enumerate(n_samples_range):
-
     n_samples = int(n_samples)
     print("Performing kPCA with n_samples = %i" % n_samples)
 

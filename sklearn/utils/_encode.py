@@ -1,10 +1,23 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+from collections import Counter
+from contextlib import suppress
 from typing import NamedTuple
 
 import numpy as np
-from . import is_scalar_nan
+
+from ._array_api import (
+    _isin,
+    _searchsorted,
+    _setdiff1d,
+    device,
+    get_namespace,
+)
+from ._missing import is_scalar_nan
 
 
-def _unique(values, *, return_inverse=False):
+def _unique(values, *, return_inverse=False, return_counts=False):
     """Helper function to find unique values with support for python objects.
 
     Uses pure python method for object dtype, and numpy method for
@@ -18,6 +31,10 @@ def _unique(values, *, return_inverse=False):
     return_inverse : bool, default=False
         If True, also return the indices of the unique values.
 
+    return_counts : bool, default=False
+        If True, also return the number of times each unique item appears in
+        values.
+
     Returns
     -------
     unique : ndarray
@@ -26,28 +43,58 @@ def _unique(values, *, return_inverse=False):
     unique_inverse : ndarray
         The indices to reconstruct the original array from the unique array.
         Only provided if `return_inverse` is True.
+
+    unique_counts : ndarray
+        The number of times each of the unique values comes up in the original
+        array. Only provided if `return_counts` is True.
     """
     if values.dtype == object:
-        return _unique_python(values, return_inverse=return_inverse)
+        return _unique_python(
+            values, return_inverse=return_inverse, return_counts=return_counts
+        )
     # numerical
-    out = np.unique(values, return_inverse=return_inverse)
+    return _unique_np(
+        values, return_inverse=return_inverse, return_counts=return_counts
+    )
 
-    if return_inverse:
-        uniques, inverse = out
+
+def _unique_np(values, return_inverse=False, return_counts=False):
+    """Helper function to find unique values for numpy arrays that correctly
+    accounts for nans. See `_unique` documentation for details."""
+    xp, _ = get_namespace(values)
+
+    inverse, counts = None, None
+
+    if return_inverse and return_counts:
+        uniques, _, inverse, counts = xp.unique_all(values)
+    elif return_inverse:
+        uniques, inverse = xp.unique_inverse(values)
+    elif return_counts:
+        uniques, counts = xp.unique_counts(values)
     else:
-        uniques = out
+        uniques = xp.unique_values(values)
 
     # np.unique will have duplicate missing values at the end of `uniques`
     # here we clip the nans and remove it from uniques
     if uniques.size and is_scalar_nan(uniques[-1]):
-        nan_idx = np.searchsorted(uniques, np.nan)
+        nan_idx = _searchsorted(xp, uniques, xp.nan)
         uniques = uniques[: nan_idx + 1]
         if return_inverse:
             inverse[inverse > nan_idx] = nan_idx
 
+        if return_counts:
+            counts[nan_idx] = xp.sum(counts[nan_idx:])
+            counts = counts[: nan_idx + 1]
+
+    ret = (uniques,)
+
     if return_inverse:
-        return uniques, inverse
-    return uniques
+        ret += (inverse,)
+
+    if return_counts:
+        ret += (counts,)
+
+    return ret[0] if len(ret) == 1 else ret
 
 
 class MissingValues(NamedTuple):
@@ -122,11 +169,12 @@ class _nandict(dict):
 
 def _map_to_integer(values, uniques):
     """Map values based on its position in uniques."""
+    xp, _ = get_namespace(values, uniques)
     table = _nandict({val: i for i, val in enumerate(uniques)})
-    return np.array([table[v] for v in values])
+    return xp.asarray([table[v] for v in values], device=device(values))
 
 
-def _unique_python(values, *, return_inverse):
+def _unique_python(values, *, return_inverse, return_counts):
     # Only used in `_uniques`, see docstring there for details
     try:
         uniques_set = set(values)
@@ -138,14 +186,18 @@ def _unique_python(values, *, return_inverse):
     except TypeError:
         types = sorted(t.__qualname__ for t in set(type(v) for v in values))
         raise TypeError(
-            "Encoders require their input to be uniformly "
+            "Encoders require their input argument must be uniformly "
             f"strings or numbers. Got {types}"
         )
+    ret = (uniques,)
 
     if return_inverse:
-        return uniques, _map_to_integer(values, uniques)
+        ret += (_map_to_integer(values, uniques),)
 
-    return uniques
+    if return_counts:
+        ret += (_get_counts(values, uniques),)
+
+    return ret[0] if len(ret) == 1 else ret
 
 
 def _encode(values, *, uniques, check_unknown=True):
@@ -177,7 +229,8 @@ def _encode(values, *, uniques, check_unknown=True):
     encoded : ndarray
         Encoded values
     """
-    if values.dtype.kind in "OUS":
+    xp, _ = get_namespace(values, uniques)
+    if not xp.isdtype(values.dtype, "numeric"):
         try:
             return _map_to_integer(values, uniques)
         except KeyError as e:
@@ -187,7 +240,7 @@ def _encode(values, *, uniques, check_unknown=True):
             diff = _check_unknown(values, uniques)
             if diff:
                 raise ValueError(f"y contains previously unseen labels: {str(diff)}")
-        return np.searchsorted(uniques, values)
+        return _searchsorted(xp, uniques, values)
 
 
 def _check_unknown(values, known_values, return_mask=False):
@@ -215,9 +268,10 @@ def _check_unknown(values, known_values, return_mask=False):
         Additionally returned if ``return_mask=True``.
 
     """
+    xp, _ = get_namespace(values, known_values)
     valid_mask = None
 
-    if values.dtype.kind in "OUS":
+    if not xp.isdtype(values.dtype, "numeric"):
         values_set = set(values)
         values_set, missing_in_values = _extract_missing(values_set)
 
@@ -239,9 +293,9 @@ def _check_unknown(values, known_values, return_mask=False):
 
         if return_mask:
             if diff or nan_in_diff or none_in_diff:
-                valid_mask = np.array([is_valid(value) for value in values])
+                valid_mask = xp.array([is_valid(value) for value in values])
             else:
-                valid_mask = np.ones(len(values), dtype=bool)
+                valid_mask = xp.ones(len(values), dtype=xp.bool)
 
         diff = list(diff)
         if none_in_diff:
@@ -249,21 +303,21 @@ def _check_unknown(values, known_values, return_mask=False):
         if nan_in_diff:
             diff.append(np.nan)
     else:
-        unique_values = np.unique(values)
-        diff = np.setdiff1d(unique_values, known_values, assume_unique=True)
+        unique_values = xp.unique_values(values)
+        diff = _setdiff1d(unique_values, known_values, xp, assume_unique=True)
         if return_mask:
             if diff.size:
-                valid_mask = np.in1d(values, known_values)
+                valid_mask = _isin(values, known_values, xp)
             else:
-                valid_mask = np.ones(len(values), dtype=bool)
+                valid_mask = xp.ones(len(values), dtype=xp.bool)
 
         # check for nans in the known_values
-        if np.isnan(known_values).any():
-            diff_is_nan = np.isnan(diff)
-            if diff_is_nan.any():
+        if xp.any(xp.isnan(known_values)):
+            diff_is_nan = xp.isnan(diff)
+            if xp.any(diff_is_nan):
                 # removes nan from valid_mask
                 if diff.size and return_mask:
-                    is_nan = np.isnan(values)
+                    is_nan = xp.isnan(values)
                     valid_mask[is_nan] = 1
 
                 # remove nan from diff
@@ -273,3 +327,52 @@ def _check_unknown(values, known_values, return_mask=False):
     if return_mask:
         return diff, valid_mask
     return diff
+
+
+class _NaNCounter(Counter):
+    """Counter with support for nan values."""
+
+    def __init__(self, items):
+        super().__init__(self._generate_items(items))
+
+    def _generate_items(self, items):
+        """Generate items without nans. Stores the nan counts separately."""
+        for item in items:
+            if not is_scalar_nan(item):
+                yield item
+                continue
+            if not hasattr(self, "nan_count"):
+                self.nan_count = 0
+            self.nan_count += 1
+
+    def __missing__(self, key):
+        if hasattr(self, "nan_count") and is_scalar_nan(key):
+            return self.nan_count
+        raise KeyError(key)
+
+
+def _get_counts(values, uniques):
+    """Get the count of each of the `uniques` in `values`.
+
+    The counts will use the order passed in by `uniques`. For non-object dtypes,
+    `uniques` is assumed to be sorted and `np.nan` is at the end.
+    """
+    if values.dtype.kind in "OU":
+        counter = _NaNCounter(values)
+        output = np.zeros(len(uniques), dtype=np.int64)
+        for i, item in enumerate(uniques):
+            with suppress(KeyError):
+                output[i] = counter[item]
+        return output
+
+    unique_values, counts = _unique_np(values, return_counts=True)
+
+    # Recorder unique_values based on input: `uniques`
+    uniques_in_values = np.isin(uniques, unique_values, assume_unique=True)
+    if np.isnan(unique_values[-1]) and np.isnan(uniques[-1]):
+        uniques_in_values[-1] = True
+
+    unique_valid_indices = np.searchsorted(unique_values, uniques[uniques_in_values])
+    output = np.zeros_like(uniques, dtype=np.int64)
+    output[uniques_in_values] = counts[unique_valid_indices]
+    return output

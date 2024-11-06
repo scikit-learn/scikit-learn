@@ -1,20 +1,25 @@
-"""Testing for Gaussian process classification """
+"""Testing for Gaussian process classification"""
 
-# Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
-import numpy as np
 
+import numpy as np
+import pytest
 from scipy.optimize import approx_fprime
 
-import pytest
-
-from sklearn.gaussian_process import GaussianProcessClassifier
-from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C, WhiteKernel
-from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
 from sklearn.exceptions import ConvergenceWarning
-
+from sklearn.gaussian_process import GaussianProcessClassifier
+from sklearn.gaussian_process.kernels import (
+    RBF,
+    CompoundKernel,
+    WhiteKernel,
+)
+from sklearn.gaussian_process.kernels import (
+    ConstantKernel as C,
+)
+from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
 from sklearn.utils._testing import assert_almost_equal, assert_array_equal
 
 
@@ -113,11 +118,11 @@ def test_lml_gradient(kernel):
     assert_almost_equal(lml_gradient, lml_gradient_approx, 3)
 
 
-def test_random_starts():
+def test_random_starts(global_random_seed):
     # Test that an increasing number of random-starts of GP fitting only
     # increases the log marginal likelihood of the chosen theta.
     n_samples, n_features = 25, 2
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.randn(n_samples, n_features) * 2 - 1
     y = (np.sin(X).sum(axis=1) + np.sin(3 * X).sum(axis=1)) > 0
 
@@ -127,7 +132,9 @@ def test_random_starts():
     last_lml = -np.inf
     for n_restarts_optimizer in range(5):
         gp = GaussianProcessClassifier(
-            kernel=kernel, n_restarts_optimizer=n_restarts_optimizer, random_state=0
+            kernel=kernel,
+            n_restarts_optimizer=n_restarts_optimizer,
+            random_state=global_random_seed,
         ).fit(X, y)
         lml = gp.log_marginal_likelihood(gp.kernel_.theta)
         assert lml > last_lml - np.finfo(np.float32).eps
@@ -135,11 +142,11 @@ def test_random_starts():
 
 
 @pytest.mark.parametrize("kernel", non_fixed_kernels)
-def test_custom_optimizer(kernel):
+def test_custom_optimizer(kernel, global_random_seed):
     # Test that GPC can use externally defined optimizers.
     # Define a dummy optimizer that simply tests 10 random hyperparameters
     def optimizer(obj_func, initial_theta, bounds):
-        rng = np.random.RandomState(0)
+        rng = np.random.RandomState(global_random_seed)
         theta_opt, func_min = initial_theta, obj_func(
             initial_theta, eval_gradient=False
         )
@@ -155,9 +162,9 @@ def test_custom_optimizer(kernel):
     gpc = GaussianProcessClassifier(kernel=kernel, optimizer=optimizer)
     gpc.fit(X, y_mc)
     # Checks that optimizer improved marginal likelihood
-    assert gpc.log_marginal_likelihood(gpc.kernel_.theta) > gpc.log_marginal_likelihood(
-        kernel.theta
-    )
+    assert gpc.log_marginal_likelihood(
+        gpc.kernel_.theta
+    ) >= gpc.log_marginal_likelihood(kernel.theta)
 
 
 @pytest.mark.parametrize("kernel", kernels)
@@ -203,60 +210,75 @@ def test_warning_bounds():
         length_scale_bounds=[1e3, 1e5]
     )
     gpc_sum = GaussianProcessClassifier(kernel=kernel_sum)
-    with pytest.warns(None) as record:
-        with warnings.catch_warnings():
-            # scipy 1.3.0 uses tostring which is deprecated in numpy
-            warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
-            gpc_sum.fit(X, y)
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        gpc_sum.fit(X, y)
 
-    assert len(record) == 2
-    assert (
-        record[0].message.args[0]
-        == "The optimal value found for "
-        "dimension 0 of parameter "
-        "k1__noise_level is close to the "
-        "specified upper bound 0.001. "
-        "Increasing the bound and calling "
-        "fit again may find a better value."
-    )
+        assert len(record) == 2
 
-    assert (
-        record[1].message.args[0]
-        == "The optimal value found for "
-        "dimension 0 of parameter "
-        "k2__length_scale is close to the "
-        "specified lower bound 1000.0. "
-        "Decreasing the bound and calling "
-        "fit again may find a better value."
-    )
+        assert issubclass(record[0].category, ConvergenceWarning)
+        assert (
+            record[0].message.args[0] == "The optimal value found for "
+            "dimension 0 of parameter "
+            "k1__noise_level is close to the "
+            "specified upper bound 0.001. "
+            "Increasing the bound and calling "
+            "fit again may find a better value."
+        )
+
+        assert issubclass(record[1].category, ConvergenceWarning)
+        assert (
+            record[1].message.args[0] == "The optimal value found for "
+            "dimension 0 of parameter "
+            "k2__length_scale is close to the "
+            "specified lower bound 1000.0. "
+            "Decreasing the bound and calling "
+            "fit again may find a better value."
+        )
 
     X_tile = np.tile(X, 2)
     kernel_dims = RBF(length_scale=[1.0, 2.0], length_scale_bounds=[1e1, 1e2])
     gpc_dims = GaussianProcessClassifier(kernel=kernel_dims)
 
-    with pytest.warns(None) as record:
-        with warnings.catch_warnings():
-            # scipy 1.3.0 uses tostring which is deprecated in numpy
-            warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
-            gpc_dims.fit(X_tile, y)
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        gpc_dims.fit(X_tile, y)
 
-    assert len(record) == 2
-    assert (
-        record[0].message.args[0]
-        == "The optimal value found for "
-        "dimension 0 of parameter "
-        "length_scale is close to the "
-        "specified upper bound 100.0. "
-        "Increasing the bound and calling "
-        "fit again may find a better value."
-    )
+        assert len(record) == 2
 
-    assert (
-        record[1].message.args[0]
-        == "The optimal value found for "
-        "dimension 1 of parameter "
-        "length_scale is close to the "
-        "specified upper bound 100.0. "
-        "Increasing the bound and calling "
-        "fit again may find a better value."
-    )
+        assert issubclass(record[0].category, ConvergenceWarning)
+        assert (
+            record[0].message.args[0] == "The optimal value found for "
+            "dimension 0 of parameter "
+            "length_scale is close to the "
+            "specified upper bound 100.0. "
+            "Increasing the bound and calling "
+            "fit again may find a better value."
+        )
+
+        assert issubclass(record[1].category, ConvergenceWarning)
+        assert (
+            record[1].message.args[0] == "The optimal value found for "
+            "dimension 1 of parameter "
+            "length_scale is close to the "
+            "specified upper bound 100.0. "
+            "Increasing the bound and calling "
+            "fit again may find a better value."
+        )
+
+
+@pytest.mark.parametrize(
+    "params, error_type, err_msg",
+    [
+        (
+            {"kernel": CompoundKernel(0)},
+            ValueError,
+            "kernel cannot be a CompoundKernel",
+        )
+    ],
+)
+def test_gpc_fit_error(params, error_type, err_msg):
+    """Check that expected error are raised during fit."""
+    gpc = GaussianProcessClassifier(**params)
+    with pytest.raises(error_type, match=err_msg):
+        gpc.fit(X, y)

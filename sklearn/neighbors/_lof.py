@@ -1,17 +1,17 @@
-# Authors: Nicolas Goix <nicolas.goix@telecom-paristech.fr>
-#          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+import warnings
+from numbers import Real
 
 import numpy as np
-import warnings
 
-from ._base import NeighborsBase
-from ._base import KNeighborsMixin
-from ..base import OutlierMixin
-
+from ..base import OutlierMixin, _fit_context
+from ..utils import check_array
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.metaestimators import available_if
 from ..utils.validation import check_is_fitted
-from ..utils import check_array
+from ._base import KNeighborsMixin, NeighborsBase
 
 __all__ = ["LocalOutlierFactor"]
 
@@ -58,37 +58,26 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         nature of the problem.
 
     metric : str or callable, default='minkowski'
-        The metric is used for distance computation. Any metric from scikit-learn
-        or scipy.spatial.distance can be used.
+        Metric to use for distance computation. Default is "minkowski", which
+        results in the standard Euclidean distance when p = 2. See the
+        documentation of `scipy.spatial.distance
+        <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>`_ and
+        the metrics listed in
+        :class:`~sklearn.metrics.pairwise.distance_metrics` for valid metric
+        values.
 
         If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square. X may be a sparse matrix, in which case only "nonzero"
-        elements may be considered neighbors.
+        must be square during fit. X may be a :term:`sparse graph`, in which
+        case only "nonzero" elements may be considered neighbors.
 
-        If metric is a callable function, it is called on each
-        pair of instances (rows) and the resulting value recorded. The callable
-        should take two arrays as input and return one value indicating the
-        distance between them. This works for Scipy's metrics, but is less
+        If metric is a callable function, it takes two arrays representing 1D
+        vectors as inputs and must return one value indicating the distance
+        between those vectors. This works for Scipy's metrics, but is less
         efficient than passing the metric name as a string.
 
-        Valid values for metric are:
-
-        - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-          'manhattan']
-
-        - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
-          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-          'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
-          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
-          'yule']
-
-        See the documentation for scipy.spatial.distance for details on these
-        metrics:
-        https://docs.scipy.org/doc/scipy/reference/spatial.distance.html.
-
-    p : int, default=2
+    p : float, default=2
         Parameter for the Minkowski metric from
-        :func:`sklearn.metrics.pairwise.pairwise_distances`. When p = 1, this
+        :func:`sklearn.metrics.pairwise_distances`. When p = 1, this
         is equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
@@ -113,7 +102,8 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         detection (novelty=False). Set novelty to True if you want to use
         LocalOutlierFactor for novelty detection. In this case be aware that
         you should only use predict, decision_function and score_samples
-        on new unseen data and not on the training set.
+        on new unseen data and not on the training set; and note that the
+        results obtained this way may differ from the standard LOF results.
 
         .. versionadded:: 0.20
 
@@ -170,8 +160,8 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
     n_samples_fit_ : int
         It is the number of samples in the fitted data.
 
-    See also
-    ----------
+    See Also
+    --------
     sklearn.svm.OneClassSVM: Unsupervised Outlier Detection using
         Support Vector Machine.
 
@@ -191,6 +181,16 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
     >>> clf.negative_outlier_factor_
     array([ -0.9821...,  -1.0370..., -73.3697...,  -0.9821...])
     """
+
+    _parameter_constraints: dict = {
+        **NeighborsBase._parameter_constraints,
+        "contamination": [
+            StrOptions({"auto"}),
+            Interval(Real, 0, 0.5, closed="right"),
+        ],
+        "novelty": ["boolean"],
+    }
+    _parameter_constraints.pop("radius")
 
     def __init__(
         self,
@@ -236,9 +236,9 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features), default=None
+        X : {array-like, sparse matrix} of shape (n_samples, n_features), default=None
             The query sample or samples to compute the Local Outlier Factor
-            w.r.t. to the training samples.
+            w.r.t. the training samples.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -254,6 +254,10 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
 
         return self.fit(X)._predict()
 
+    @_fit_context(
+        # LocalOutlierFactor.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Fit the local outlier factor detector from the training dataset.
 
@@ -273,12 +277,6 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         """
         self._fit(X)
 
-        if self.contamination != "auto":
-            if not (0.0 < self.contamination <= 0.5):
-                raise ValueError(
-                    "contamination must be in (0, 0.5], got: %f" % self.contamination
-                )
-
         n_samples = self.n_samples_fit_
         if self.n_neighbors > n_samples:
             warnings.warn(
@@ -292,6 +290,12 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         self._distances_fit_X_, _neighbors_indices_fit_X_ = self.kneighbors(
             n_neighbors=self.n_neighbors_
         )
+
+        if self._fit_X.dtype == np.float32:
+            self._distances_fit_X_ = self._distances_fit_X_.astype(
+                self._fit_X.dtype,
+                copy=False,
+            )
 
         self._lrd = self._local_reachability_density(
             self._distances_fit_X_, _neighbors_indices_fit_X_
@@ -310,6 +314,14 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         else:
             self.offset_ = np.percentile(
                 self.negative_outlier_factor_, 100.0 * self.contamination
+            )
+
+        # Verify if negative_outlier_factor_ values are within acceptable range.
+        # Novelty must also be false to detect outliers
+        if np.min(self.negative_outlier_factor_) < -1e7 and not self.novelty:
+            warnings.warn(
+                "Duplicate values are leading to incorrect results. "
+                "Increase the number of neighbors for more accurate results."
             )
 
         return self
@@ -331,13 +343,15 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
 
         **Only available for novelty detection (when novelty is set to True).**
         This method allows to generalize prediction to *new observations* (not
-        in the training set).
+        in the training set). Note that the result of ``clf.fit(X)`` then
+        ``clf.predict(X)`` with ``novelty=True`` may differ from the result
+        obtained by ``clf.fit_predict(X)`` with ``novelty=False``.
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The query sample or samples to compute the Local Outlier Factor
-            w.r.t. to the training samples.
+            w.r.t. the training samples.
 
         Returns
         -------
@@ -353,9 +367,9 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features), default=None
+        X : {array-like, sparse matrix} of shape (n_samples, n_features), default=None
             The query sample or samples to compute the Local Outlier Factor
-            w.r.t. to the training samples. If None, makes prediction on the
+            w.r.t. the training samples. If None, makes prediction on the
             training data without considering them as their own neighbors.
 
         Returns
@@ -366,9 +380,9 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         check_is_fitted(self)
 
         if X is not None:
-            X = check_array(X, accept_sparse="csr")
-            is_inlier = np.ones(X.shape[0], dtype=int)
-            is_inlier[self.decision_function(X) < 0] = -1
+            shifted_opposite_lof_scores = self.decision_function(X)
+            is_inlier = np.ones(shifted_opposite_lof_scores.shape[0], dtype=int)
+            is_inlier[shifted_opposite_lof_scores < 0] = -1
         else:
             is_inlier = np.ones(self.n_samples_fit_, dtype=int)
             is_inlier[self.negative_outlier_factor_ < self.offset_] = -1
@@ -403,7 +417,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The query sample or samples to compute the Local Outlier Factor
             w.r.t. the training samples.
 
@@ -439,13 +453,14 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         The argument X is supposed to contain *new data*: if X contains a
         point from training, it considers the later in its own neighborhood.
         Also, the samples in X are not considered in the neighborhood of any
-        point.
-        The score_samples on training data is available by considering the
-        the ``negative_outlier_factor_`` attribute.
+        point. Because of this, the scores obtained via ``score_samples`` may
+        differ from the standard LOF scores.
+        The standard LOF scores for the training data is available via the
+        ``negative_outlier_factor_`` attribute.
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The query sample or samples to compute the Local Outlier Factor
             w.r.t. the training samples.
 
@@ -461,7 +476,14 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         distances_X, neighbors_indices_X = self.kneighbors(
             X, n_neighbors=self.n_neighbors_
         )
-        X_lrd = self._local_reachability_density(distances_X, neighbors_indices_X)
+
+        if X.dtype == np.float32:
+            distances_X = distances_X.astype(X.dtype, copy=False)
+
+        X_lrd = self._local_reachability_density(
+            distances_X,
+            neighbors_indices_X,
+        )
 
         lrd_ratios_array = self._lrd[neighbors_indices_X] / X_lrd[:, np.newaxis]
 

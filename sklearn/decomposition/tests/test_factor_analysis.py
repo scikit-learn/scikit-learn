@@ -1,25 +1,20 @@
-# Author: Christian Osendorfer <osendorf@gmail.com>
-#         Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD3
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from itertools import combinations
 
 import numpy as np
 import pytest
 
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.exceptions import ConvergenceWarning
 from sklearn.decomposition import FactorAnalysis
-from sklearn.utils._testing import ignore_warnings
 from sklearn.decomposition._factor_analysis import _ortho_rotation
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils._testing import assert_almost_equal, assert_array_almost_equal
 
 
-# Ignore warnings from switching to more power iterations in randomized_svd
-@ignore_warnings
-def test_factor_analysis():
+def test_factor_analysis(global_random_seed):
     # Test FactorAnalysis ability to recover the data covariance structure
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_samples, n_features, n_components = 20, 5, 3
 
     # Some random settings for the generative model
@@ -34,10 +29,6 @@ def test_factor_analysis():
     # wlog, mean is 0
     X = np.dot(h, W) + noise
 
-    fa_fail = FactorAnalysis(svd_method="foo")
-    msg = "SVD method 'foo' is not supported"
-    with pytest.raises(ValueError, match=msg):
-        fa_fail.fit(X)
     fas = []
     for method in ["randomized", "lapack"]:
         fa = FactorAnalysis(n_components=n_components, svd_method=method)
@@ -59,7 +50,7 @@ def test_factor_analysis():
         # Model Covariance
         mcov = fa.get_covariance()
         diff = np.sum(np.abs(scov - mcov)) / W.size
-        assert diff < 0.1, "Mean absolute difference is %f" % diff
+        assert diff < 0.2, "Mean absolute difference is %f" % diff
         fa = FactorAnalysis(
             n_components=n_components, noise_variance_init=np.ones(n_features)
         )
@@ -98,9 +89,6 @@ def test_factor_analysis():
     for rot1, rot2 in combinations([None, "varimax", "quartimax"], 2):
         assert not np.allclose(results[rot1], results[rot2])
         assert np.allclose(projections[rot1], projections[rot2], atol=3)
-
-    with pytest.raises(ValueError):
-        FactorAnalysis(rotation="not_implemented").fit_transform(X)
 
     # test against R's psych::principal with rotate="varimax"
     # (i.e., the values below stem from rotating the components in R)

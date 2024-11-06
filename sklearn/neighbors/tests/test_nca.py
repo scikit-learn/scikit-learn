@@ -1,31 +1,35 @@
-# coding: utf-8
 """
 Testing for Neighborhood Component Analysis module (sklearn.neighbors.nca)
 """
 
-# Authors: William de Vazelhes <wdevazelhes@gmail.com>
-#          John Chiotellis <ioannis.chiotellis@in.tum.de>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import pytest
 import re
-import numpy as np
-from numpy.testing import assert_array_equal, assert_array_almost_equal
-from scipy.optimize import check_grad
-from sklearn import clone
-from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils import check_random_state
-from sklearn.datasets import load_iris, make_classification, make_blobs
-from sklearn.neighbors import NeighborhoodComponentsAnalysis
-from sklearn.metrics import pairwise_distances
 
+import numpy as np
+import pytest
+from numpy.testing import assert_array_almost_equal, assert_array_equal
+from scipy.optimize import check_grad
+
+from sklearn import clone
+from sklearn.datasets import load_iris, make_blobs, make_classification
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.metrics import pairwise_distances
+from sklearn.neighbors import NeighborhoodComponentsAnalysis
+from sklearn.preprocessing import LabelEncoder
+from sklearn.utils import check_random_state
+from sklearn.utils.validation import validate_data
 
 rng = check_random_state(0)
-# load and shuffle iris dataset
+# Load and shuffle the iris dataset.
 iris = load_iris()
 perm = rng.permutation(iris.target.size)
 iris_data = iris.data[perm]
 iris_target = iris.target[perm]
+# Avoid having test data introducing dependencies between tests.
+iris_data.flags.writeable = False
+iris_target.flags.writeable = False
 EPS = np.finfo(float).eps
 
 
@@ -70,7 +74,8 @@ def test_toy_example_collapse_points():
             # Initialize a fake NCA and variables needed to compute the loss:
             self.fake_nca = NeighborhoodComponentsAnalysis()
             self.fake_nca.n_iter_ = np.inf
-            self.X, y, _ = self.fake_nca._validate_params(X, y)
+            self.X, y = validate_data(self.fake_nca, X, y, ensure_min_samples=2)
+            y = LabelEncoder().fit_transform(y)
             self.same_class_mask = y[:, np.newaxis] == y[np.newaxis, :]
 
         def callback(self, transformation, n_iter):
@@ -88,15 +93,15 @@ def test_toy_example_collapse_points():
     assert abs(loss_storer.loss + 1) < 1e-10
 
 
-def test_finite_differences():
+def test_finite_differences(global_random_seed):
     """Test gradient of loss function
 
     Assert that the gradient is almost equal to its finite differences
     approximation.
     """
     # Initialize the transformation `M`, as well as `X` and `y` and `NCA`
-    rng = np.random.RandomState(42)
-    X, y = make_classification()
+    rng = np.random.RandomState(global_random_seed)
+    X, y = make_classification(random_state=global_random_seed)
     M = rng.randn(rng.randint(1, X.shape[1] + 1), X.shape[1])
     nca = NeighborhoodComponentsAnalysis()
     nca.n_iter_ = 0
@@ -108,9 +113,9 @@ def test_finite_differences():
     def grad(M):
         return nca._loss_grad_lbfgs(M, X, mask)[1]
 
-    # compute relative error
-    rel_diff = check_grad(fun, grad, M.ravel()) / np.linalg.norm(grad(M))
-    np.testing.assert_almost_equal(rel_diff, 0.0, decimal=5)
+    # compare the gradient to a finite difference approximation
+    diff = check_grad(fun, grad, M.ravel())
+    assert diff == pytest.approx(0.0, abs=1e-4)
 
 
 def test_params_validation():
@@ -120,27 +125,6 @@ def test_params_validation():
     NCA = NeighborhoodComponentsAnalysis
     rng = np.random.RandomState(42)
 
-    # TypeError
-    with pytest.raises(TypeError):
-        NCA(max_iter="21").fit(X, y)
-    with pytest.raises(TypeError):
-        NCA(verbose="true").fit(X, y)
-    with pytest.raises(TypeError):
-        NCA(tol="1").fit(X, y)
-    with pytest.raises(TypeError):
-        NCA(n_components="invalid").fit(X, y)
-    with pytest.raises(TypeError):
-        NCA(warm_start=1).fit(X, y)
-
-    # ValueError
-    msg = (
-        r"`init` must be 'auto', 'pca', 'lda', 'identity', 'random' or a "
-        r"numpy array of shape (n_components, n_features)."
-    )
-    with pytest.raises(ValueError, match=re.escape(msg)):
-        NCA(init=1).fit(X, y)
-    with pytest.raises(ValueError, match="max_iter == -1, must be >= 1."):
-        NCA(max_iter=-1).fit(X, y)
     init = rng.rand(5, 3)
     msg = (
         f"The output dimensionality ({init.shape[0]}) "
@@ -433,8 +417,8 @@ def test_no_verbose(capsys):
 
 
 def test_singleton_class():
-    X = iris_data
-    y = iris_target
+    X = iris_data.copy()
+    y = iris_target.copy()
 
     # one singleton class
     singleton_class = 1
@@ -480,13 +464,6 @@ def test_one_class():
 
 
 def test_callback(capsys):
-    X = iris_data
-    y = iris_target
-
-    nca = NeighborhoodComponentsAnalysis(callback="my_cb")
-    with pytest.raises(ValueError):
-        nca.fit(X, y)
-
     max_iter = 10
 
     def my_cb(transformation, n_iter):
@@ -514,7 +491,8 @@ def test_expected_transformation_shape():
             # function:
             self.fake_nca = NeighborhoodComponentsAnalysis()
             self.fake_nca.n_iter_ = np.inf
-            self.X, y, _ = self.fake_nca._validate_params(X, y)
+            self.X, y = validate_data(self.fake_nca, X, y, ensure_min_samples=2)
+            y = LabelEncoder().fit_transform(y)
             self.same_class_mask = y[:, np.newaxis] == y[np.newaxis, :]
 
         def callback(self, transformation, n_iter):
@@ -554,3 +532,32 @@ def test_parameters_valid_types(param, value):
     y = iris_target
 
     nca.fit(X, y)
+
+
+@pytest.mark.parametrize("n_components", [None, 2])
+def test_nca_feature_names_out(n_components):
+    """Check `get_feature_names_out` for `NeighborhoodComponentsAnalysis`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28293
+    """
+
+    X = iris_data
+    y = iris_target
+
+    est = NeighborhoodComponentsAnalysis(n_components=n_components).fit(X, y)
+    names_out = est.get_feature_names_out()
+
+    class_name_lower = est.__class__.__name__.lower()
+
+    if n_components is not None:
+        expected_n_features = n_components
+    else:
+        expected_n_features = X.shape[1]
+
+    expected_names_out = np.array(
+        [f"{class_name_lower}{i}" for i in range(expected_n_features)],
+        dtype=object,
+    )
+
+    assert_array_equal(names_out, expected_names_out)

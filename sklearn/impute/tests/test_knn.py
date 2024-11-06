@@ -3,8 +3,7 @@ import pytest
 
 from sklearn import config_context
 from sklearn.impute import KNNImputer
-from sklearn.metrics.pairwise import nan_euclidean_distances
-from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.metrics.pairwise import nan_euclidean_distances, pairwise_distances
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.utils._testing import assert_allclose
 
@@ -68,10 +67,6 @@ def test_knn_imputer_default_with_invalid_input(na):
     with pytest.raises(ValueError, match="Input X contains (infinity|NaN)"):
         imputer.transform(X)
 
-    # negative n_neighbors
-    with pytest.raises(ValueError, match="Expected n_neighbors > 0"):
-        KNNImputer(missing_values=na, n_neighbors=0).fit(X_fit)
-
     # Test with missing_values=0 when NaN present
     imputer = KNNImputer(missing_values=0, n_neighbors=2, weights="uniform")
     X = np.array(
@@ -92,12 +87,6 @@ def test_knn_imputer_default_with_invalid_input(na):
             [np.nan, 2],
         ]
     )
-
-    # Test with a metric type without NaN support
-    imputer = KNNImputer(metric="euclidean")
-    bad_metric_msg = "The selected metric does not support NaN values"
-    with pytest.raises(ValueError, match=bad_metric_msg):
-        imputer.fit(X)
 
 
 @pytest.mark.parametrize("na", [np.nan, -1])
@@ -237,7 +226,6 @@ def test_knn_imputer_verify(na):
 
 @pytest.mark.parametrize("na", [np.nan, -1])
 def test_knn_imputer_one_n_neighbors(na):
-
     X = np.array([[0, 0], [na, 2], [4, 3], [5, na], [7, 7], [na, 8], [14, 13]])
 
     X_imputed = np.array([[0, 0], [4, 2], [4, 3], [5, 3], [7, 7], [7, 8], [14, 13]])
@@ -251,7 +239,9 @@ def test_knn_imputer_one_n_neighbors(na):
 def test_knn_imputer_all_samples_are_neighbors(na):
     X = np.array([[0, 0], [na, 2], [4, 3], [5, na], [7, 7], [na, 8], [14, 13]])
 
-    X_imputed = np.array([[0, 0], [6, 2], [4, 3], [5, 5.5], [7, 7], [6, 8], [14, 13]])
+    X_imputed = np.array(
+        [[0, 0], [6.25, 2], [4, 3], [5, 5.75], [7, 7], [6.25, 8], [14, 13]]
+    )
 
     n_neighbors = X.shape[0] - 1
     imputer = KNNImputer(n_neighbors=n_neighbors, missing_values=na)
@@ -265,7 +255,6 @@ def test_knn_imputer_all_samples_are_neighbors(na):
 
 @pytest.mark.parametrize("na", [np.nan, -1])
 def test_knn_imputer_weight_uniform(na):
-
     X = np.array([[0, 0], [na, 2], [4, 3], [5, 6], [7, 7], [9, 8], [11, 10]])
 
     # Test with "uniform" weight (or unweighted)
@@ -441,7 +430,6 @@ def test_knn_imputer_weight_distance(na):
 
 
 def test_knn_imputer_callable_metric():
-
     # Define callable metric that returns the l1 norm:
     def custom_callable(x, y, missing_values=np.nan, squared=False):
         x = np.ma.array(x, mask=np.isnan(x))
@@ -467,7 +455,6 @@ def test_knn_imputer_callable_metric():
 # for a small dataset. However, it should raise a UserWarning that we ignore.
 @pytest.mark.filterwarnings("ignore:adhere to working_memory")
 def test_knn_imputer_with_simple_example(na, working_memory):
-
     X = np.array(
         [
             [0, na, 0, na],
@@ -521,6 +508,27 @@ def test_knn_imputer_not_enough_valid_distances(na, weights):
 
 
 @pytest.mark.parametrize("na", [-1, np.nan])
+@pytest.mark.parametrize("weights", ["uniform", "distance"])
+def test_knn_imputer_nan_distance(na, weights):
+    # Samples with nan distance should be excluded from the mean computation
+    X1_train = np.array([[1, 1], [na, 2]])
+    X1_test = np.array([[0, na]])
+    X1_test_expected = np.array([[0, 1]])
+
+    knn1 = KNNImputer(n_neighbors=2, missing_values=na, weights=weights)
+    knn1.fit(X1_train)
+    assert_allclose(knn1.transform(X1_test), X1_test_expected)
+
+    X2_train = np.array([[na, 1, 1], [2, na, 2], [3, 3, na]])
+    X2_test = np.array([[na, 0, na], [0, na, na], [na, na, 0]])
+    X2_test_expected = np.array([[3, 0, 1], [0, 3, 2], [2, 1, 0]])
+
+    knn2 = KNNImputer(n_neighbors=2, missing_values=na, weights=weights)
+    knn2.fit(X2_train)
+    assert_allclose(knn2.transform(X2_test), X2_test_expected)
+
+
+@pytest.mark.parametrize("na", [-1, np.nan])
 def test_knn_imputer_drops_all_nan_features(na):
     X1 = np.array([[na, 1], [na, 2]])
     knn = KNNImputer(missing_values=na, n_neighbors=1)
@@ -559,4 +567,4 @@ def test_knn_imputer_distance_weighted_not_enough_neighbors(na, working_memory):
 @pytest.mark.parametrize("na, allow_nan", [(-1, False), (np.nan, True)])
 def test_knn_tags(na, allow_nan):
     knn = KNNImputer(missing_values=na)
-    assert knn._get_tags()["allow_nan"] == allow_nan
+    assert knn.__sklearn_tags__().input_tags.allow_nan == allow_nan

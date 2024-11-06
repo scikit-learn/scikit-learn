@@ -16,16 +16,15 @@ correspond to the scorer (key) that is set to the ``refit`` attribute.
 
 """
 
-# Author: Raghav RV <rvraghav93@gmail.com>
-# License: BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 from matplotlib import pyplot as plt
 
 from sklearn.datasets import make_hastie_10_2
+from sklearn.metrics import accuracy_score, make_scorer
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import make_scorer
-from sklearn.metrics import accuracy_score
 from sklearn.tree import DecisionTreeClassifier
 
 # %%
@@ -46,9 +45,10 @@ scoring = {"AUC": "roc_auc", "Accuracy": make_scorer(accuracy_score)}
 # ``gs.best_index_``
 gs = GridSearchCV(
     DecisionTreeClassifier(random_state=42),
-    param_grid={"min_samples_split": range(2, 403, 10)},
+    param_grid={"min_samples_split": range(2, 403, 20)},
     scoring=scoring,
     refit="AUC",
+    n_jobs=2,
     return_train_score=True,
 )
 gs.fit(X, y)

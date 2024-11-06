@@ -1,19 +1,18 @@
 """Solvers for Ridge and LogisticRegression using SAG algorithm"""
 
-# Authors: Tom Dupre la Tour <tom.dupre-la-tour@m4x.org>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 
 import numpy as np
 
-from ._base import make_dataset
-from ._sag_fast import sag32, sag64
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array
-from ..utils.validation import _check_sample_weight
 from ..utils.extmath import row_norms
+from ..utils.validation import _check_sample_weight
+from ._base import make_dataset
+from ._sag_fast import sag32, sag64
 
 
 def get_auto_step_size(
@@ -58,10 +57,9 @@ def get_auto_step_size(
     Minimizing finite sums with the stochastic average gradient
     https://hal.inria.fr/hal-00860051/document
 
-    Defazio, A., Bach F. & Lacoste-Julien S. (2014).
-    SAGA: A Fast Incremental Gradient Method With Support
-    for Non-Strongly Convex Composite Objectives
-    https://arxiv.org/abs/1407.0202
+    :arxiv:`Defazio, A., Bach F. & Lacoste-Julien S. (2014).
+    "SAGA: A Fast Incremental Gradient Method With Support
+    for Non-Strongly Convex Composite Objectives" <1407.0202>`
     """
     if loss in ("log", "multinomial"):
         L = 0.25 * (max_squared_sum + int(fit_intercept)) + alpha_scaled
@@ -129,7 +127,7 @@ def sag_solver(
 
     y : ndarray of shape (n_samples,)
         Target values. With loss='multinomial', y must be label encoded
-        (see preprocessing.LabelEncoder).
+        (see preprocessing.LabelEncoder). For loss='log' it must be in [0, 1].
 
     sample_weight : array-like of shape (n_samples,), default=None
         Weights applied to individual samples (1. for unweighted).
@@ -221,10 +219,9 @@ def sag_solver(
 
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> y = np.array([1, 1, 2, 2])
-    >>> clf = linear_model.LogisticRegression(
-    ...     solver='sag', multi_class='multinomial')
+    >>> clf = linear_model.LogisticRegression(solver='sag')
     >>> clf.fit(X, y)
-    LogisticRegression(multi_class='multinomial', solver='sag')
+    LogisticRegression(solver='sag')
 
     References
     ----------
@@ -232,10 +229,9 @@ def sag_solver(
     Minimizing finite sums with the stochastic average gradient
     https://hal.inria.fr/hal-00860051/document
 
-    Defazio, A., Bach F. & Lacoste-Julien S. (2014).
-    SAGA: A Fast Incremental Gradient Method With Support
-    for Non-Strongly Convex Composite Objectives
-    https://arxiv.org/abs/1407.0202
+    :arxiv:`Defazio, A., Bach F. & Lacoste-Julien S. (2014).
+    "SAGA: A Fast Incremental Gradient Method With Support
+    for Non-Strongly Convex Composite Objectives" <1407.0202>`
 
     See Also
     --------

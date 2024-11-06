@@ -1,39 +1,49 @@
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Raghav RV <rvraghav93@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import inspect
-import warnings
 import importlib
-
-from pkgutil import walk_packages
+import inspect
+import os
+import warnings
 from inspect import signature
+from pkgutil import walk_packages
 
 import numpy as np
-
-import sklearn
-from sklearn.utils import IS_PYPY
-from sklearn.utils._testing import check_docstring_parameters
-from sklearn.utils._testing import _get_func_name
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils import all_estimators
-from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
-from sklearn.utils.estimator_checks import _enforce_estimator_tags_x
-from sklearn.utils.estimator_checks import _construct_instance
-from sklearn.utils.deprecation import _is_deprecated
-from sklearn.datasets import make_classification
-from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import FunctionTransformer
-
 import pytest
 
+import sklearn
+from sklearn import metrics
+from sklearn.datasets import make_classification
+from sklearn.ensemble import StackingClassifier, StackingRegressor
+
+# make it possible to discover experimental estimators when calling `all_estimators`
+from sklearn.experimental import (
+    enable_halving_search_cv,  # noqa
+    enable_iterative_imputer,  # noqa
+)
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.utils import all_estimators
+from sklearn.utils._test_common.instance_generator import _construct_instances
+from sklearn.utils._testing import (
+    _get_func_name,
+    assert_docstring_consistency,
+    check_docstring_parameters,
+    ignore_warnings,
+    skip_if_no_numpydoc,
+)
+from sklearn.utils.deprecation import _is_deprecated
+from sklearn.utils.estimator_checks import (
+    _enforce_estimator_tags_X,
+    _enforce_estimator_tags_y,
+)
 
 # walk_packages() ignores DeprecationWarnings, now we need to ignore
 # FutureWarnings
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", FutureWarning)
     # mypy error: Module has no attribute "__path__"
-    sklearn_path = sklearn.__path__  # type: ignore  # mypy issue #1422
+    sklearn_path = [os.path.dirname(sklearn.__file__)]
     PUBLIC_MODULES = set(
         [
             pckg[1]
@@ -43,12 +53,14 @@ with warnings.catch_warnings():
     )
 
 # functions to ignore args / docstring of
+# TODO(1.7): remove "sklearn.utils._joblib"
 _DOCSTRING_IGNORES = [
     "sklearn.utils.deprecation.load_mlcomp",
     "sklearn.pipeline.make_pipeline",
     "sklearn.pipeline.make_union",
     "sklearn.utils.extmath.safe_sparse_dot",
     "sklearn.utils._joblib",
+    "HalfBinomialLoss",
 ]
 
 # Methods where y param should be ignored if y=None by default
@@ -62,11 +74,6 @@ _METHODS_IGNORE_NONE_Y = [
 ]
 
 
-# numpydoc 0.8.0's docscrape tool raises because of collections.abc under
-# Python 3.7
-@pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-@pytest.mark.skipif(IS_PYPY, reason="test segfaults on PyPy")
 def test_docstring_parameters():
     # Test module docstring formatting
 
@@ -104,12 +111,11 @@ def test_docstring_parameters():
                     "Error for __init__ of %s in %s:\n%s" % (cls, name, w[0])
                 )
 
-            cls_init = getattr(cls, "__init__", None)
-
-            if _is_deprecated(cls_init):
+            # Skip checks on deprecated classes
+            if _is_deprecated(cls.__new__):
                 continue
-            elif cls_init is not None:
-                this_incorrect += check_docstring_parameters(cls.__init__, cdoc)
+
+            this_incorrect += check_docstring_parameters(cls.__init__, cdoc)
 
             for method_name in cdoc.methods:
                 method = getattr(cls, method_name)
@@ -147,30 +153,6 @@ def test_docstring_parameters():
         raise AssertionError("Docstring Error:\n" + msg)
 
 
-@ignore_warnings(category=FutureWarning)
-def test_tabs():
-    # Test that there are no tabs in our source files
-    for importer, modname, ispkg in walk_packages(sklearn.__path__, prefix="sklearn."):
-
-        if IS_PYPY and (
-            "_svmlight_format_io" in modname
-            or "feature_extraction._hashing_fast" in modname
-        ):
-            continue
-
-        # because we don't import
-        mod = importlib.import_module(modname)
-
-        try:
-            source = inspect.getsource(mod)
-        except IOError:  # user probably should have run "make clean"
-            continue
-        assert "\t" not in source, (
-            '"%s" has tabs, please remove them ',
-            "or add it to the ignore list" % modname,
-        )
-
-
 def _construct_searchcv_instance(SearchCV):
     return SearchCV(LogisticRegression(), {"C": [0.1, 1]})
 
@@ -194,6 +176,7 @@ def _construct_sparse_coder(Estimator):
     return Estimator(dictionary=dictionary)
 
 
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("name, Estimator", all_estimators())
 def test_fit_docstring_attributes(name, Estimator):
     pytest.importorskip("numpydoc")
@@ -217,8 +200,13 @@ def test_fit_docstring_attributes(name, Estimator):
         est = _construct_compose_pipeline_instance(Estimator)
     elif Estimator.__name__ == "SparseCoder":
         est = _construct_sparse_coder(Estimator)
+    elif Estimator.__name__ == "FrozenEstimator":
+        X, y = make_classification(n_samples=20, n_features=5, random_state=0)
+        est = Estimator(LogisticRegression().fit(X, y))
     else:
-        est = _construct_instance(Estimator)
+        # TODO(devtools): use _tested_estimators instead of all_estimators in the
+        # decorator
+        est = next(_construct_instances(Estimator))
 
     if Estimator.__name__ == "SelectKBest":
         est.set_params(k=2)
@@ -233,33 +221,23 @@ def test_fit_docstring_attributes(name, Estimator):
     ):
         # default="auto" raises an error with the shape of `X`
         est.set_params(n_components=2)
+    elif Estimator.__name__ == "TSNE":
+        # default raises an error, perplexity must be less than n_samples
+        est.set_params(perplexity=2)
 
-    # FIXME: TO BE REMOVED in 1.4 (avoid FutureWarning)
-    if Estimator.__name__ in (
-        "OrthogonalMatchingPursuit",
-        "OrthogonalMatchingPursuitCV",
-        "Lars",
-        "LarsCV",
-        "LassoLars",
-        "LassoLarsCV",
-        "LassoLarsIC",
-    ):
-        est.set_params(normalize=False)
+    # Low max iter to speed up tests: we are only interested in checking the existence
+    # of fitted attributes. This should be invariant to whether it has converged or not.
+    if "max_iter" in est.get_params():
+        est.set_params(max_iter=2)
+        # min value for `TSNE` is 250
+        if Estimator.__name__ == "TSNE":
+            est.set_params(max_iter=250)
 
-    # FIXME: TO BE REMOVED for 1.2 (avoid FutureWarning)
-    if Estimator.__name__ == "TSNE":
-        est.set_params(learning_rate=200.0, init="random")
+    if "random_state" in est.get_params():
+        est.set_params(random_state=0)
 
-    # FIXME: TO BE REMOVED for 1.3 (avoid FutureWarning)
-    if Estimator.__name__ == "SequentialFeatureSelector":
-        est.set_params(n_features_to_select="auto")
-
-    # For PLS, TODO remove in 1.1
-    skipped_attributes = {"x_scores_", "y_scores_"}
-
-    # FIXME: TO BE REMOVED for 1.3 (avoid FutureWarning)
-    if Estimator.__name__ == "FastICA":
-        est.set_params(whiten="unit-variance")
+    # In case we want to deprecate some attributes in the future
+    skipped_attributes = {}
 
     if Estimator.__name__.endswith("Vectorizer"):
         # Vectorizer require some specific input data
@@ -287,12 +265,14 @@ def test_fit_docstring_attributes(name, Estimator):
         )
 
         y = _enforce_estimator_tags_y(est, y)
-        X = _enforce_estimator_tags_x(est, X)
+        X = _enforce_estimator_tags_X(est, X)
 
-    if "1dlabels" in est._get_tags()["X_types"]:
+    if est.__sklearn_tags__().target_tags.one_d_labels:
         est.fit(y)
-    elif "2dlabels" in est._get_tags()["X_types"]:
+    elif est.__sklearn_tags__().target_tags.two_d_labels:
         est.fit(np.c_[y, y])
+    elif est.__sklearn_tags__().input_tags.three_d_array:
+        est.fit(X[np.newaxis, ...], y)
     else:
         est.fit(X, y)
 
@@ -342,3 +322,34 @@ def _get_all_fitted_attributes(estimator):
             fit_attr.append(name)
 
     return [k for k in fit_attr if k.endswith("_") and not k.startswith("_")]
+
+
+@skip_if_no_numpydoc
+def test_precision_recall_f_score_docstring_consistency():
+    """Check docstrings parameters of related metrics are consistent."""
+    assert_docstring_consistency(
+        [
+            metrics.precision_recall_fscore_support,
+            metrics.f1_score,
+            metrics.fbeta_score,
+            metrics.precision_score,
+            metrics.recall_score,
+        ],
+        include_params=True,
+        # "average" - in `recall_score` we have an additional line: 'Weighted recall
+        # is equal to accuracy.'.
+        # "zero_division" - the reason for zero division differs between f scores,
+        # precison and recall.
+        exclude_params=["average", "zero_division"],
+    )
+
+
+@skip_if_no_numpydoc
+def test_stacking_classifier_regressor_docstring_consistency():
+    """Check docstrings parameters stacking estimators are consistent."""
+    assert_docstring_consistency(
+        [StackingClassifier, StackingRegressor],
+        include_params=["cv", "n_jobs", "passthrough", "verbose"],
+        include_attrs=True,
+        exclude_attrs=["final_estimator_"],
+    )

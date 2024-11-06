@@ -1,12 +1,15 @@
-# Author: Virgile Fritsch <virgile.fritsch@inria.fr>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+from numbers import Real
 
 import numpy as np
-from . import MinCovDet
-from ..utils.validation import check_is_fitted
+
+from ..base import OutlierMixin, _fit_context
 from ..metrics import accuracy_score
-from ..base import OutlierMixin
+from ..utils._param_validation import Interval
+from ..utils.validation import check_is_fitted
+from ._robust_covariance import MinCovDet
 
 
 class EllipticEnvelope(OutlierMixin, MinCovDet):
@@ -31,7 +34,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
     support_fraction : float, default=None
         The proportion of points to be included in the support of the raw
         MCD estimate. If None, the minimum value of support_fraction will
-        be used within the algorithm: `[n_sample + n_features + 1] / 2`.
+        be used within the algorithm: `(n_samples + n_features + 1) / 2 * n_samples`.
         Range is (0, 1).
 
     contamination : float, default=0.1
@@ -138,6 +141,11 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
     array([0.0813... , 0.0427...])
     """
 
+    _parameter_constraints: dict = {
+        **MinCovDet._parameter_constraints,
+        "contamination": [Interval(Real, 0, 0.5, closed="right")],
+    }
+
     def __init__(
         self,
         *,
@@ -155,12 +163,13 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         )
         self.contamination = contamination
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the EllipticEnvelope model.
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data.
 
         y : Ignored
@@ -171,12 +180,6 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         self : object
             Returns the instance itself.
         """
-        if self.contamination != "auto":
-            if not (0.0 < self.contamination <= 0.5):
-                raise ValueError(
-                    "contamination must be in (0, 0.5], got: %f" % self.contamination
-                )
-
         super().fit(X)
         self.offset_ = np.percentile(-self.dist_, 100.0 * self.contamination)
         return self

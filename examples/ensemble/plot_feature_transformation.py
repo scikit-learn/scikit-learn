@@ -20,14 +20,8 @@ high-dimensional categorical embedding of the data.
 
 """
 
-
-# Author: Tim Head <betatim@gmail.com>
-#
-# License: BSD 3 clause
-
-from sklearn import set_config
-
-set_config(display="diagram")
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # First, we will create a large dataset and split it into three sets:
@@ -43,7 +37,7 @@ set_config(display="diagram")
 from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split
 
-X, y = make_classification(n_samples=80000, random_state=10)
+X, y = make_classification(n_samples=80_000, random_state=10)
 
 X_full_train, X_test, y_full_train, y_test = train_test_split(
     X, y, test_size=0.5, random_state=10
@@ -63,7 +57,7 @@ max_depth = 3
 # First, we will start by training the random forest and gradient boosting on
 # the separated training set
 
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 
 random_forest = RandomForestClassifier(
     n_estimators=n_estimators, max_depth=max_depth, random_state=10
@@ -76,6 +70,11 @@ gradient_boosting = GradientBoostingClassifier(
 _ = gradient_boosting.fit(X_train_ensemble, y_train_ensemble)
 
 # %%
+# Notice that :class:`~sklearn.ensemble.HistGradientBoostingClassifier` is much
+# faster than :class:`~sklearn.ensemble.GradientBoostingClassifier` starting
+# with intermediate datasets (`n_samples >= 10_000`), which is not the case of
+# the present example.
+#
 # The :class:`~sklearn.ensemble.RandomTreesEmbedding` is an unsupervised method
 # and thus does not required to be trained independently.
 
@@ -104,8 +103,7 @@ rt_model.fit(X_train_linear, y_train_linear)
 # method `apply`. The pipeline in scikit-learn expects a call to `transform`.
 # Therefore, we wrapped the call to `apply` within a `FunctionTransformer`.
 
-from sklearn.preprocessing import FunctionTransformer
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
 
 
 def rf_apply(X, model):
@@ -142,9 +140,10 @@ gbdt_model.fit(X_train_linear, y_train_linear)
 # We can finally show the different ROC curves for all the models.
 
 import matplotlib.pyplot as plt
+
 from sklearn.metrics import RocCurveDisplay
 
-fig, ax = plt.subplots()
+_, ax = plt.subplots()
 
 models = [
     ("RT embedding -> LR", rt_model),
@@ -162,7 +161,7 @@ for name, pipeline in models:
 _ = ax.set_title("ROC curve")
 
 # %%
-fig, ax = plt.subplots()
+_, ax = plt.subplots()
 for name, pipeline in models:
     model_displays[name].plot(ax=ax)
 

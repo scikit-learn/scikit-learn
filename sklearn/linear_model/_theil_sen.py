@@ -1,27 +1,28 @@
-# -*- coding: utf-8 -*-
 """
 A Theil-Sen Estimator for Multiple Linear Regression Model
 """
 
-# Author: Florian Wilhelm <florian.wilhelm@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import warnings
 from itertools import combinations
+from numbers import Integral, Real
 
 import numpy as np
+from joblib import effective_n_jobs
 from scipy import linalg
-from scipy.special import binom
 from scipy.linalg.lapack import get_lapack_funcs
-from joblib import Parallel, effective_n_jobs
+from scipy.special import binom
 
-from ._base import LinearModel
-from ..base import RegressorMixin
-from ..utils import check_random_state
-from ..utils.fixes import delayed
+from ..base import RegressorMixin, _fit_context
 from ..exceptions import ConvergenceWarning
+from ..utils import check_random_state
+from ..utils._param_validation import Hidden, Interval, StrOptions
+from ..utils.parallel import Parallel, delayed
+from ..utils.validation import validate_data
+from ._base import LinearModel
 
 _EPSILON = np.finfo(np.double).eps
 
@@ -54,7 +55,7 @@ def _modified_weiszfeld_step(X, x_old):
       http://users.jyu.fi/~samiayr/pdf/ayramo_eurogen05.pdf
     """
     diff = X - x_old
-    diff_norm = np.sqrt(np.sum(diff ** 2, axis=1))
+    diff_norm = np.sqrt(np.sum(diff**2, axis=1))
     mask = diff_norm >= _EPSILON
     # x_old equals one of our samples
     is_x_old_in_X = int(mask.sum() < X.shape[0])
@@ -227,13 +228,18 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
+        .. deprecated:: 1.6
+            `copy_X` was deprecated in 1.6 and will be removed in 1.8.
+            It has no effect as a copy is always made.
+
     max_subpopulation : int, default=1e4
         Instead of computing with a set of cardinality 'n choose k', where n is
         the number of samples and k is the number of subsamples (at least
         number of features), consider only a stochastic subpopulation of a
         given maximal size if 'n choose k' is larger than max_subpopulation.
         For other than small problem sizes this parameter will determine
-        memory usage and runtime if n_subsamples is not changed.
+        memory usage and runtime if n_subsamples is not changed. Note that the
+        data type should be int but floats such as 1e4 can be accepted too.
 
     n_subsamples : int, default=None
         Number of samples to calculate the parameters. This is at least the
@@ -320,11 +326,24 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
     array([-31.5871...])
     """
 
+    _parameter_constraints: dict = {
+        "fit_intercept": ["boolean"],
+        "copy_X": ["boolean", Hidden(StrOptions({"deprecated"}))],
+        # target_type should be Integral but can accept Real for backward compatibility
+        "max_subpopulation": [Interval(Real, 1, None, closed="left")],
+        "n_subsamples": [None, Integral],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "tol": [Interval(Real, 0.0, None, closed="left")],
+        "random_state": ["random_state"],
+        "n_jobs": [None, Integral],
+        "verbose": ["verbose"],
+    }
+
     def __init__(
         self,
         *,
         fit_intercept=True,
-        copy_X=True,
+        copy_X="deprecated",
         max_subpopulation=1e4,
         n_subsamples=None,
         max_iter=300,
@@ -335,7 +354,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
     ):
         self.fit_intercept = fit_intercept
         self.copy_X = copy_X
-        self.max_subpopulation = int(max_subpopulation)
+        self.max_subpopulation = max_subpopulation
         self.n_subsamples = n_subsamples
         self.max_iter = max_iter
         self.tol = tol
@@ -363,7 +382,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
                     raise ValueError(
                         "Invalid parameter since n_features{0} "
                         "> n_subsamples ({1} > {2})."
-                        "".format(plus_1, n_dim, n_samples)
+                        "".format(plus_1, n_dim, n_subsamples)
                     )
             else:  # if n_samples < n_features
                 if n_subsamples != n_samples:
@@ -375,18 +394,12 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         else:
             n_subsamples = min(n_dim, n_samples)
 
-        if self.max_subpopulation <= 0:
-            raise ValueError(
-                "Subpopulation must be strictly positive ({0} <= 0).".format(
-                    self.max_subpopulation
-                )
-            )
-
         all_combinations = max(1, np.rint(binom(n_samples, n_subsamples)))
         n_subpopulation = int(min(self.max_subpopulation, all_combinations))
 
         return n_subsamples, n_subpopulation
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit linear model.
 
@@ -402,8 +415,16 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         self : returns an instance of self.
             Fitted `TheilSenRegressor` estimator.
         """
+        if self.copy_X != "deprecated":
+            warnings.warn(
+                "`copy_X` was deprecated in 1.6 and will be removed in 1.8 since it "
+                "has no effect internally. Simply leave this parameter to its default "
+                "value to avoid this warning.",
+                FutureWarning,
+            )
+
         random_state = check_random_state(self.random_state)
-        X, y = self._validate_data(X, y, y_numeric=True)
+        X, y = validate_data(self, X, y, y_numeric=True)
         n_samples, n_features = X.shape
         n_subsamples, self.n_subpopulation_ = self._check_subparams(
             n_samples, n_features
