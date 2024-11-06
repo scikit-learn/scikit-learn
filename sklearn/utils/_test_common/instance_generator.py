@@ -4,6 +4,7 @@
 
 import re
 import warnings
+from contextlib import suppress
 from functools import partial
 from inspect import isfunction
 
@@ -634,12 +635,10 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
 
 
 def _tested_estimators(type_filter=None):
-    for name, Estimator in all_estimators(type_filter=type_filter):
-        try:
+    for _, Estimator in all_estimators(type_filter=type_filter):
+        with suppress(SkipTest):
             for estimator in _construct_instances(Estimator):
                 yield estimator
-        except SkipTest:
-            continue
 
 
 SKIPPED_ESTIMATORS = [SparseCoder, FrozenEstimator]
