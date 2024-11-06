@@ -818,7 +818,7 @@ def binary_classification_curve(y_true, y_score, pos_label=None, sample_weight=N
     >>> fps, fns, thresholds = binary_classifaction_curve(y_true, y_scores)
     >>> fps
     array([0, 1, 1, 2])
-    >>> fns
+    >>> tps
     array([1, 1, 2, 2])
     >>> thresholds
     array([0.8, 0.4, 0.35, 0.1])
