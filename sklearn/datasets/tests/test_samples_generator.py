@@ -552,26 +552,6 @@ def test_make_sparse_spd_matrix(norm_diag, sparse_format, global_random_seed):
         assert_array_almost_equal(Xarr.diagonal(), np.ones(n_dim))
 
 
-# TODO(1.6): remove
-def test_make_sparse_spd_matrix_deprecation_warning():
-    """Check the message for future deprecation."""
-    warn_msg = "dim was deprecated in version 1.4"
-    with pytest.warns(FutureWarning, match=warn_msg):
-        make_sparse_spd_matrix(
-            dim=1,
-        )
-
-    error_msg = "`dim` and `n_dim` cannot be both specified"
-    with pytest.raises(ValueError, match=error_msg):
-        make_sparse_spd_matrix(
-            dim=1,
-            n_dim=1,
-        )
-
-    X = make_sparse_spd_matrix()
-    assert X.shape[1] == 1
-
-
 @pytest.mark.parametrize("hole", [False, True])
 def test_make_swiss_roll(hole):
     X, t = make_swiss_roll(n_samples=5, noise=0.0, random_state=0, hole=hole)
