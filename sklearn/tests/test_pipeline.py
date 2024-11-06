@@ -898,7 +898,7 @@ def test_non_estimator_last_step():
         ]
     )
 
-    # last step of the pipeline is not an estimator
+    # last step of the pipeline is not a predictor
     assert get_tags(pipeline).estimator_type == ""
 
 
