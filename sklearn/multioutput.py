@@ -621,7 +621,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         return tags
 
 
-def _available_if_estimator_has(attr):
+def _available_if_base_estimator_has(attr):
     """Return a function to check if `base_estimator` or `estimators_` has `attr`.
 
     Helper for Chain implementations.
@@ -1087,7 +1087,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         self.classes_ = [estimator.classes_ for estimator in self.estimators_]
         return self
 
-    @_available_if_estimator_has("predict_proba")
+    @_available_if_base_estimator_has("predict_proba")
     def predict_proba(self, X):
         """Predict probability estimates.
 
@@ -1118,7 +1118,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         """
         return np.log(self.predict_proba(X))
 
-    @_available_if_estimator_has("decision_function")
+    @_available_if_base_estimator_has("decision_function")
     def decision_function(self, X):
         """Evaluate the decision_function of the models in the chain.
 
