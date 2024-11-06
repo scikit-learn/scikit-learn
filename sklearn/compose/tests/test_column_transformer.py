@@ -2468,7 +2468,7 @@ def test_remainder_set_output():
 def test_transform_pd_na():
     """Check behavior when a tranformer's output contains pandas.NA
 
-    It should emit an error unless the output config is set to 'pandas'.
+    It should raise an error unless the output config is set to 'pandas'.
     """
     pd = pytest.importorskip("pandas")
     if not hasattr(pd, "Float64Dtype"):
@@ -2493,7 +2493,7 @@ def test_transform_pd_na():
     ct.fit_transform(df)
     ct.set_output(transform="default")
 
-    # No warning when there are no pd.NA
+    # No error when there are no pd.NA
     ct.fit_transform(df.fillna(-1.0))
 
 
