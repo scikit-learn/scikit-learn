@@ -991,15 +991,6 @@ Changelog
 :mod:`sklearn.manifold`
 .......................
 
-- |Feature| :func:`metrics.multiclass_brier_score_loss` implements the Brier
-  loss for multiclass classification problems with values in the [0, 2] range
-  (lower is better). This metric is notably useful to assess the calibration of
-  probablistic classifiers. It can also be used on binary classification
-  problems but this does not exactly match the usual convention used for the
-  binary classification case implemented in :func:`metrics.brier_score_loss`
-  that takes value in the [0, 1] range. See the docstrings for more details.
-  :pr:`18699` by :user:`Varun Aggarwal <aggvarun01>` and
-  :user:`Olivier Grisel`.
 - |Feature| :class:`manifold.Isomap` now supports radius-based
   neighbors via the `radius` argument.
   :pr:`19794` by :user:`Zhehao Liu <MaxwellLZH>`.
