@@ -195,7 +195,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
     """
 
     def freeze(self):
-        """Return a frozen version of this estimator.
+        """Return a :term:`frozen` version of this estimator.
 
         This method wraps the estimator in a :class:`~sklearn.frozen.FrozenEstimator`
         object, and returns the frozen object. This method does NOT freeze this object
