@@ -144,7 +144,9 @@ Manually setting the decision threshold
 The previous sections discussed strategies to find an optimal decision threshold. It is
 also possible to manually set the decision threshold using the class
 :class:`~sklearn.model_selection.FixedThresholdClassifier`. In case that you don't want
-to refit the model when calling `fit`, you can set the parameter `prefit=True`.
+to refit the model when calling `fit`, wrap your sub-estimator with a
+:class:`~sklearn.frozen.FrozenEstimator` and do
+``FixedThresholdClassifier(FrozenEstimator(estimator), ...)``.
 
 Examples
 --------

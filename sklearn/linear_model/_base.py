@@ -350,7 +350,11 @@ class LinearClassifierMixin(ClassifierMixin):
 
         X = validate_data(self, X, accept_sparse="csr", reset=False)
         scores = safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
-        return xp.reshape(scores, (-1,)) if scores.shape[1] == 1 else scores
+        return (
+            xp.reshape(scores, (-1,))
+            if (scores.ndim > 1 and scores.shape[1] == 1)
+            else scores
+        )
 
     def predict(self, X):
         """

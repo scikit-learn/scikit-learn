@@ -8,6 +8,8 @@ from numbers import Integral
 import numpy as np
 from scipy import linalg, sparse
 
+from sklearn.utils import metadata_routing
+
 from ..base import _fit_context
 from ..utils import gen_batches
 from ..utils._param_validation import Interval
@@ -183,6 +185,8 @@ class IncrementalPCA(_BasePCA):
     >>> X_transformed.shape
     (1797, 7)
     """
+
+    __metadata_request__partial_fit = {"check_input": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left"), None],
