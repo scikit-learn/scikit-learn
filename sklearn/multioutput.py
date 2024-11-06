@@ -621,14 +621,14 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         return tags
 
 
-def _available_if_base_estimator_has(attr):
+def _available_if_estimator_has(attr):
     """Return a function to check if `base_estimator` or `estimators_` has `attr`.
 
     Helper for Chain implementations.
     """
 
     def _check(self):
-        return hasattr(self.base_estimator, attr) or all(
+        return hasattr(self._estimator, attr) or all(
             hasattr(est, attr) for est in self.estimators_
         )
 
