@@ -177,7 +177,7 @@ Changelog
 
 :mod:`sklearn.utils`
 ....................
--|Fix| Added sample weighting handling into :func: `resample` which allows
+-|Fix| Added sample weight handling into :func: `resample` which allows
   weighted resampling.
   :pr:`29907` by :user:`Shruti Nath <snath-xoc>`
 
@@ -357,6 +357,7 @@ Changelog
 - |Fix| :class:`preprocessing.PowerTransformer` now uses `scipy.special.inv_boxcox`
   to output `nan` if the input of BoxCox's inverse is invalid.
   :pr:`27875` by :user:`Xuefeng Xu <xuefeng-xu>`.
+
 - |Fix| :class:`preprocessing.KBinsDiscretizer` now uses weighted resampling when
   sample weights are given and subsampling is used.
   :pr:`29907` by :user:`Shruti Nath <snath-xoc>`
