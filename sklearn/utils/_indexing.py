@@ -534,7 +534,9 @@ def resample(
     if stratify is None:
         if replace:
             if sample_weight is not None:
-                sample_weight = _check_sample_weight(sample_weight)
+                sample_weight = _check_sample_weight(
+                    sample_weight, first, dtype=first.dtype
+                )
                 p = sample_weight / sample_weight.sum()
             else:
                 p = None
