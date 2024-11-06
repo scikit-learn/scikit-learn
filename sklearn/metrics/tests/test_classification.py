@@ -673,7 +673,7 @@ def test_confusion_matrix_single_label():
                 "y_true": np.array([1, 1, 1, 0, 0, 0]),
                 "y_pred": np.array([1, 1, 1, 0, 0, 0]),
             },
-            "`positive_likelihood_ratio` is ill-defined and set to np.nan.",
+            "`positive_likelihood_ratio` is ill-defined and set to `np.nan`.",
         ),
         # When `fp == 0` and `tp == 0`, LR+ is undefined
         (
@@ -683,7 +683,7 @@ def test_confusion_matrix_single_label():
             },
             (
                 "No samples were predicted for the positive class and "
-                "`positive_likelihood_ratio` is set to np.nan."
+                "`positive_likelihood_ratio` is set to `np.nan`."
             ),
         ),
         # When `tn == 0`, LR- is undefined
@@ -692,7 +692,7 @@ def test_confusion_matrix_single_label():
                 "y_true": np.array([1, 1, 1, 0, 0, 0]),
                 "y_pred": np.array([0, 0, 0, 1, 1, 1]),
             },
-            "`negative_likelihood_ratio` is ill-defined and set to np.nan.",
+            "`negative_likelihood_ratio` is ill-defined and set to `np.nan`.",
         ),
         # When `tp + fn == 0` both ratios are undefined
         (
@@ -761,30 +761,14 @@ def test_likelihood_ratios():
 
 @pytest.mark.parametrize("raise_warning", [True, False])
 def test_likelihood_ratios_raise_warning_deprecation(raise_warning):
-    """Test that class_likelihood_ratios raises a FutureWarning when raise_warning param
-    is set."""
+    """Test that class_likelihood_ratios raises a FutureWarning when `raise_warning`
+    param is set."""
     y_true = np.array([1, 0])
     y_pred = np.array([1, 0])
 
     msg = "`raise_warning` was deprecated in version 1.6 and will be removed in 1.8."
     with pytest.warns(FutureWarning, match=msg):
         class_likelihood_ratios(y_true, y_pred, raise_warning=raise_warning)
-
-
-@pytest.mark.parametrize(
-    "zero_division",
-    [{"LR+": 0.0}, {"LR-": 0.0}, {"LR+": -5.0, "LR-": 0.0}, {"LR+": 1.0, "LR-": "nan"}],
-)
-def test_likelihood_ratios_wrong_dict_zero_division(zero_division):
-    """Test that class_likelihood_ratios raises a ValueError if the input dict for
-    `zero_division` is in the wrong format."""
-    y_true = np.array([1, 0])
-    y_pred = np.array([1, 0])
-
-    msg = "The dictionary passed as `zero_division` needs come in the format"
-
-    with pytest.raises(ValueError, match=msg):
-        class_likelihood_ratios(y_true, y_pred, zero_division=zero_division)
 
 
 def test_likelihood_ratios_raises_when_raise_warning_and_zero_division():
@@ -800,12 +784,35 @@ def test_likelihood_ratios_raises_when_raise_warning_and_zero_division():
         )
 
 
+@pytest.mark.parametrize(
+    "zero_division",
+    [
+        {"LR+": 0.0},
+        {"LR-": 0.0},
+        {"LR+": -5.0, "LR-": 0.0},
+        {"LR+": 1.0, "LR-": "nan"},
+        {"LR+": 0.0, "LR-": 0.0},
+        {"LR+": 1.0, "LR-": 2.0},
+    ],
+)
+def test_likelihood_ratios_wrong_dict_zero_division(zero_division):
+    """Test that class_likelihood_ratios raises a ValueError if the input dict for
+    `zero_division` is in the wrong format or contains impossible values."""
+    y_true = np.array([1, 0])
+    y_pred = np.array([1, 0])
+
+    msg = "The dictionary passed as `zero_division` needs come in the format"
+
+    with pytest.raises(ValueError, match=msg):
+        class_likelihood_ratios(y_true, y_pred, zero_division=zero_division)
+
+
 def test_likelihood_ratios_zero_division_warn():
     """Test that the correct warning is raised if zero_division is set to 'warn'."""
     y_true = np.array([1, 0])
     y_pred = np.array([1, 1])
 
-    msg = "`negative_likelihood_ratio` is ill-defined and set to np.nan. Use the "
+    msg = "`negative_likelihood_ratio` is ill-defined and set to `np.nan`. Use the "
     "`zero_division` param to control this behavior."
     with pytest.warns(UndefinedMetricWarning, match=msg):
         class_likelihood_ratios(y_true, y_pred, zero_division="warn")
@@ -817,6 +824,7 @@ def test_likelihood_ratios_zero_division_warn():
         ("warn", np.nan),
         ({"LR+": 1.0, "LR-": 1.0}, 1.0),
         ({"LR+": np.inf, "LR-": 0.0}, np.inf),
+        ({"LR+": 2.0, "LR-": 0.0}, 2.0),
         ({"LR+": np.nan, "LR-": np.nan}, np.nan),
         ("nan", np.nan),
     ],
@@ -845,6 +853,7 @@ def test_likelihood_ratios_zero_division_0_fp(zero_division, expected):
         ("warn", np.nan),
         ({"LR+": 1.0, "LR-": 1.0}, 1.0),
         ({"LR+": np.inf, "LR-": 0.0}, 0.0),
+        ({"LR+": np.inf, "LR-": 0.5}, 0.5),
         ({"LR+": np.nan, "LR-": np.nan}, np.nan),
         ("nan", np.nan),
     ],

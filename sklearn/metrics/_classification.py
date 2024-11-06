@@ -2076,7 +2076,7 @@ def class_likelihood_ratios(
 
     Warns
     -----
-    Raises UndefinedMetricWarning when `y_true` and `y_pred` lead to the following
+    Raises `UndefinedMetricWarning` when `y_true` and `y_pred` lead to the following
     conditions:
 
         - The number of false positives is 0 and either `zero_division="warn"` or
@@ -2165,25 +2165,26 @@ def class_likelihood_ratios(
             f"non-negative floats, `np.inf` or `np.nan`, got `{zero_division}`."
         )
         if ("LR+" in zero_division) and ("LR-" in zero_division):
-            positive_likelihood_ratio = zero_division.get("LR+", None)
+            desired_positive_likelihood_ratio = zero_division.get("LR+", None)
             try:
-                positive_likelihood_ratio = check_scalar(
-                    positive_likelihood_ratio,
+                check_scalar(
+                    desired_positive_likelihood_ratio,
                     "positive_likelihood_ratio",
                     target_type=(Real),
-                    min_val=0.0,
+                    min_val=1.0,
                     include_boundaries="left",
                 )
             except (TypeError, ValueError):
                 raise ValueError(msg)
-            negative_likelihood_ratio = zero_division.get("LR-", None)
+            desired_negative_likelihood_ratio = zero_division.get("LR-", None)
             try:
-                negative_likelihood_ratio = check_scalar(
-                    negative_likelihood_ratio,
+                check_scalar(
+                    desired_negative_likelihood_ratio,
                     "negative_likelihood_ratio",
                     target_type=(Real),
                     min_val=0.0,
-                    include_boundaries="left",
+                    max_val=1.0,
+                    include_boundaries="both",
                 )
             except (TypeError, ValueError):
                 raise ValueError(msg)
@@ -2205,6 +2206,7 @@ def class_likelihood_ratios(
     neg_num = fn * support_neg
     neg_denom = tn * support_pos
 
+    # if `support_pos == 0`a division by zero will occur
     if support_pos == 0:
         msg = (
             "No samples of the positive class are present in `y_true`. "
@@ -2215,6 +2217,7 @@ def class_likelihood_ratios(
         positive_likelihood_ratio = np.nan
         negative_likelihood_ratio = np.nan
 
+    # if `fp == 0`a division by zero will occur
     if fp == 0:
         if zero_division == "warn":
             if tp == 0:
@@ -2224,37 +2227,31 @@ def class_likelihood_ratios(
                 )
             else:
                 msg_beginning = "`positive_likelihood_ratio` is ill-defined and "
-            msg_end = "set to np.nan. Use the `zero_division` param to control this "
+            msg_end = "set to `np.nan`. Use the `zero_division` param to control this "
             "behavior."
             warnings.warn(msg_beginning + msg_end, UndefinedMetricWarning, stacklevel=2)
             positive_likelihood_ratio = np.nan
         elif zero_division == "nan":
             positive_likelihood_ratio = np.nan
-        elif (
-            isinstance(zero_division.get("LR+", None), Real)
-            and zero_division.get("LR+", None) == 1
-        ):
+        elif isinstance(zero_division.get("LR+", None), Real):  # this includes `np.inf`
             positive_likelihood_ratio = np.float64(zero_division["LR+"])
-        elif np.isinf(zero_division.get("LR+", None)):
-            positive_likelihood_ratio = np.inf
         else:  # np.isnan(zero_division["LR+"])
             positive_likelihood_ratio = np.nan
     else:
         positive_likelihood_ratio = pos_num / pos_denom
 
+    # if `tn == 0`a division by zero will occur
     if tn == 0:
         if zero_division == "warn":
             msg = (
-                "`negative_likelihood_ratio` is ill-defined and set to np.nan. "
+                "`negative_likelihood_ratio` is ill-defined and set to `np.nan`. "
                 "Use the `zero_division` param to control this behavior."
             )
             warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
             negative_likelihood_ratio = np.nan
         elif zero_division == "nan":
             negative_likelihood_ratio = np.nan
-        elif isinstance(zero_division.get("LR-", None), Real) and zero_division.get(
-            "LR-", None
-        ) in [0, 1]:
+        elif isinstance(zero_division.get("LR-", None), Real):
             negative_likelihood_ratio = np.float64(zero_division["LR-"])
         else:  # np.isnan(zero_division["LR-"])
             negative_likelihood_ratio = np.nan
