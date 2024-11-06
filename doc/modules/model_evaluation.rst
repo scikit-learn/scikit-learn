@@ -15,8 +15,8 @@ Before diving into the details of the many scores and metrics, we want
 to give some guidance, inspired by statistical decision theory, on the choice
 of **scoring functions** for **supervised learning**, see [Gneiting2009]_:
 
-  - *Which scoring function should I use?*
-  - *Which scoring function is a good one for my task?*
+- *Which scoring function should I use?*
+- *Which scoring function is a good one for my task?*
 
 In a nutshell, if the scoring function is given, e.g. in a kaggle competition
 or in a business context, use that one.
@@ -28,7 +28,7 @@ of the prediction. It is useful to distinguish two steps:
 
 **Prediction:**
 Usually, the response variable :math:`Y` is a random variable, in the sense that there
-is *no deterministic* function :math:`Y = g(X)`.
+is *no deterministic* function :math:`Y = g(X)` of the features :math:`X`.
 Instead, there is a probability distribution :math:`F` of :math:`Y`.
 One can aim to predict the whole distribution, known as *probabilistic prediction*,
 or---more the focus of scikit-learn---issue a *point prediction* (or point forecast)
@@ -38,12 +38,13 @@ response variable :math:`Y` (conditionally on :math:`X`).
 
 Once that is settled, use a **strictly consistent** scoring function for that
 target functional, see [Gneiting2009]_.
-For classification **stricly proper scoring rules**, see [Gneiting2007]_, conincide
-with strictly consistent scoring functions.
+For classification
+`**strictly proper scoring rules** <https://en.wikipedia.org/wiki/Scoring_rule>`_,
+see [Gneiting2007]_, coincide with strictly consistent scoring functions.
 See the table further below for examples.
 One could say that consistent scoring functions act as *truth serum* in that
-they guarantee "that truth telling [. . .] is an optimal strategy in
-expectation" [Gneiting2014]_.
+they guarantee *"that truth telling [. . .] is an optimal strategy in
+expectation"* [Gneiting2014]_.
 
 Note that for regressors, the prediction is done with :term:`predict` while for
 classifiers it is usually :term:`predict_proba`.
@@ -64,21 +65,21 @@ stritcly consistent scoring functions. Note that the list is not complete and th
 there are more of them.
 For further criteria on how to select a specific one, see [Fissler2022]_.
 
-==================  ===============================================  ================  ==============================
-functional          scoring or loss function                         response y        prediction
-==================  ===============================================  ================  ==============================
+==================  ===============================================  ==================  ==============================
+functional          scoring or loss function                         response :math:`y`  prediction
+==================  ===============================================  ==================  ==============================
 **Classification**
-mean                :ref:`Brier score <brier_score_loss>`            multi-class       ``predict_proba``
-mean                :ref:`log loss <log_loss>`                       multi-class       ``predict_proba``
-mode                :ref:`zero-one loss <zero_one_loss>` :sup:`1`    multi-class       ``predict``, categorical
-**Regression**
-mean                :ref:`squared error <mean_squared_error>`        all reals         ``predict``, all reals
-mean                :ref:`Poisson deviance <mean_tweedie_deviance>`  non-negative      ``predict``, strictly positive
-mean                :ref:`Gamma deviance <mean_tweedie_deviance>`    stricly positive  ``predict``, strictly positive
-median              :ref:`absolute error <mean_absolute_error>`      all reals         ``predict``, all reals
-quantile            :ref:`pinball loss <pinball_loss>`               all reals         ``predict``, all reals
-mode                does not exist
-==================  ===============================================  ================  ==============================
+mean                :ref:`Brier score <brier_score_loss>`            multi-class         ``predict_proba``
+mean                :ref:`log loss <log_loss>`                       multi-class         ``predict_proba``
+mode                :ref:`zero-one loss <zero_one_loss>` :sup:`1`    multi-class         ``predict``, categorical
+**Regression  **
+mean                :ref:`squared error <mean_squared_error>`        all reals           ``predict``, all reals
+mean                :ref:`Poisson deviance <mean_tweedie_deviance>`  non-negative        ``predict``, strictly positive
+mean                  :ref:`Gamma deviance <mean_tweedie_deviance>`  strictly positive   ``predict``, strictly positive
+median              :ref:`absolute error <mean_absolute_error>`      all reals           ``predict``, all reals
+quantile            :ref:`pinball loss <pinball_loss>`               all reals           ``predict``, all reals
+mode                no consistent one exists                         reals
+==================  ===============================================  ==================  ==============================
 
 :sup:`1` The zero-one loss is only consistent but not strictly consistent for the mode.
 
