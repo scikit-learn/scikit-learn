@@ -14,6 +14,7 @@ from ._array_api import _is_numpy_namespace, get_namespace
 from ._param_validation import Interval, validate_params
 from .extmath import _approximate_mode
 from .validation import (
+    _check_sample_weight,
     _is_arraylike_not_scalar,
     _is_pandas_df,
     _is_polars_df_or_series,
@@ -459,6 +460,9 @@ def resample(
         If not None, data is split in a stratified fashion, using this as
         the class labels.
 
+    sample_weight : array-like of shape (n_samples,) or None, default=None
+        Contains weight values to be associated with each sample.
+
     Returns
     -------
     resampled_arrays : sequence of array-like of shape (n_samples,) or \
@@ -515,7 +519,6 @@ def resample(
 
     if len(arrays) == 0:
         return None
-
     first = arrays[0]
     n_samples = first.shape[0] if hasattr(first, "shape") else len(first)
 
@@ -531,11 +534,15 @@ def resample(
     if stratify is None:
         if replace:
             if sample_weight is not None:
+                sample_weight = _check_sample_weight(sample_weight)
                 p = sample_weight / sample_weight.sum()
             else:
                 p = None
             indices = random_state.choice(
-                np.arange(n_samples), size=(max_n_samples,), p=p
+                n_samples,
+                size=max_n_samples,
+                p=p,
+                replace=True,
             )
         else:
             indices = np.arange(n_samples)
@@ -573,7 +580,6 @@ def resample(
     # convert sparse matrices to CSR for row-based indexing
     arrays = [a.tocsr() if issparse(a) else a for a in arrays]
     resampled_arrays = [_safe_indexing(a, indices) for a in arrays]
-
     if len(resampled_arrays) == 1:
         # syntactic sugar for the unit argument case
         return resampled_arrays[0]
