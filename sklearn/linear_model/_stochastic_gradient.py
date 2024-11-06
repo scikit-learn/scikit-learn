@@ -2090,7 +2090,7 @@ class SGDRegressor(BaseSGDRegressor):
         return tags
 
 
-class SGDOneClassSVM(BaseSGD, OutlierMixin):
+class SGDOneClassSVM(OutlierMixin, BaseSGD):
     """Solves linear One-Class SVM using Stochastic Gradient Descent.
 
     This implementation is meant to be used with a kernel approximation

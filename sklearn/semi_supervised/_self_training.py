@@ -4,6 +4,8 @@ from warnings import warn
 
 import numpy as np
 
+from sklearn.base import ClassifierMixin
+
 from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone
 from ..utils import Bunch, safe_mask
 from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
@@ -15,7 +17,7 @@ from ..utils.metadata_routing import (
     process_routing,
 )
 from ..utils.metaestimators import available_if
-from ..utils.validation import check_is_fitted, validate_data
+from ..utils.validation import _estimator_has, check_is_fitted, validate_data
 
 __all__ = ["SelfTrainingClassifier"]
 
@@ -23,26 +25,7 @@ __all__ = ["SelfTrainingClassifier"]
 # SPDX-License-Identifier: BSD-3-Clause
 
 
-def _estimator_has(attr):
-    """Check if we can delegate a method to the underlying estimator.
-
-    First, we check the fitted `estimator_` if available, otherwise we check
-    the unfitted `estimator`. We raise the original `AttributeError` if
-    `attr` does not exist. This function is used together with `available_if`.
-    """
-
-    def check(self):
-        if hasattr(self, "estimator_"):
-            getattr(self.estimator_, attr)
-        else:
-            getattr(self.estimator, attr)
-
-        return True
-
-    return check
-
-
-class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
+class SelfTrainingClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
     """Self-training classifier.
 
     This :term:`metaestimator` allows a given supervised classifier to function as a
@@ -170,8 +153,6 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
     >>> self_training_model.fit(iris.data, iris.target)
     SelfTrainingClassifier(...)
     """
-
-    _estimator_type = "classifier"
 
     _parameter_constraints: dict = {
         # We don't require `predic_proba` here to allow passing a meta-estimator
