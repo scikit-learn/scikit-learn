@@ -47,6 +47,7 @@ from sklearn.tests.metadata_routing_common import (
     _Registry,
     check_recorded_metadata,
 )
+from sklearn.utils import get_tags
 from sklearn.utils._metadata_requests import COMPOSITE_METHODS, METHODS
 from sklearn.utils._testing import (
     MinimalClassifier,
@@ -899,7 +900,7 @@ def test_non_estimator_last_step():
     )
 
     # last step of the pipeline is not a predictor
-    assert get_tags(pipeline).estimator_type == ""
+    assert get_tags(pipeline).estimator_type is None
 
 
 def test_empty_pipeline_estimator_type():
