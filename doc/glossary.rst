@@ -416,15 +416,6 @@ General Concepts
         the :term:`duck typing` of methods like ``predict_proba`` and through
         some special attributes on estimator objects:
 
-        .. glossary::
-
-            ``_estimator_type``
-                This string-valued attribute identifies an estimator as being a
-                classifier, regressor, etc. It is set by mixins such as
-                :class:`base.ClassifierMixin`, but needs to be more explicitly
-                adopted on a :term:`meta-estimator`.  Its value should usually be
-                checked by way of a helper such as :func:`base.is_classifier`.
-
         For more detailed info, see :ref:`estimator_tags`.
 
     feature
@@ -709,6 +700,9 @@ General Concepts
         Elsewhere a sample is called an instance, data point, or observation.
         ``n_samples`` indicates the number of samples in a dataset, being the
         number of rows in a data array :term:`X`.
+        Note that this definition is standard in machine learning and deviates from
+        statistics where it means *a set of individuals or objects collected or
+        selected*.
 
     sample property
     sample properties
@@ -856,8 +850,8 @@ Class APIs and Estimator Types
         strategy over the binary classification problem.
 
         Classifiers must store a :term:`classes_` attribute after fitting,
-        and usually inherit from :class:`base.ClassifierMixin`, which sets
-        their :term:`_estimator_type` attribute.
+        and inherit from :class:`base.ClassifierMixin`, which sets
+        their corresponding :term:`estimator tags` correctly.
 
         A classifier can be distinguished from other estimators with
         :func:`~base.is_classifier`.
@@ -1000,8 +994,8 @@ Class APIs and Estimator Types
         A :term:`supervised` (or :term:`semi-supervised`) :term:`predictor`
         with :term:`continuous` output values.
 
-        Regressors usually inherit from :class:`base.RegressorMixin`, which
-        sets their :term:`_estimator_type` attribute.
+        Regressors inherit from :class:`base.RegressorMixin`, which sets their
+        :term:`estimator tags` correctly.
 
         A regressor can be distinguished from other estimators with
         :func:`~base.is_regressor`.

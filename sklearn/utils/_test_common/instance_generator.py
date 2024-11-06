@@ -4,6 +4,7 @@
 
 import re
 import warnings
+from contextlib import suppress
 from functools import partial
 from inspect import isfunction
 
@@ -74,6 +75,7 @@ from sklearn.feature_selection import (
     SelectKBest,
     SequentialFeatureSelector,
 )
+from sklearn.frozen import FrozenEstimator
 from sklearn.kernel_approximation import (
     Nystroem,
     PolynomialCountSketch,
@@ -622,15 +624,13 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
 
 
 def _tested_estimators(type_filter=None):
-    for name, Estimator in all_estimators(type_filter=type_filter):
-        try:
+    for _, Estimator in all_estimators(type_filter=type_filter):
+        with suppress(SkipTest):
             for estimator in _construct_instances(Estimator):
                 yield estimator
-        except SkipTest:
-            continue
 
 
-SKIPPED_ESTIMATORS = [SparseCoder]
+SKIPPED_ESTIMATORS = [SparseCoder, FrozenEstimator]
 
 
 def _construct_instances(Estimator):

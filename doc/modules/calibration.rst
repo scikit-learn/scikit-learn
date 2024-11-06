@@ -193,10 +193,11 @@ The main advantage of using `ensemble=False` is computational: it reduces the
 overall fit time by training only a single base classifier and calibrator
 pair, decreases the final model size and increases prediction speed.
 
-Alternatively an already fitted classifier can be calibrated by setting
-`cv="prefit"`. In this case, the data is not split and all of it is used to
-fit the regressor. It is up to the user to
-make sure that the data used for fitting the classifier is disjoint from the
+Alternatively an already fitted classifier can be calibrated by using a
+:class:`~sklearn.frozen.FrozenEstimator` as
+``CalibratedClassifierCV(estimator=FrozenEstimator(estimator))``.
+It is up to the user to make sure that the data used for fitting the classifier
+is disjoint from the data used for fitting the regressor.
 data used for fitting the regressor.
 
 :class:`CalibratedClassifierCV` supports the use of two regression techniques

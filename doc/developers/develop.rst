@@ -432,27 +432,8 @@ if ``safe=False`` is passed to ``clone``.
 Estimators can customize the behavior of :func:`base.clone` by defining a
 `__sklearn_clone__` method. `__sklearn_clone__` must return an instance of the
 estimator. `__sklearn_clone__` is useful when an estimator needs to hold on to
-some state when :func:`base.clone` is called on the estimator. For example, a
-frozen meta-estimator for transformers can be defined as follows::
-
-    class FrozenTransformer(BaseEstimator):
-        def __init__(self, fitted_transformer):
-            self.fitted_transformer = fitted_transformer
-
-        def __getattr__(self, name):
-            # `fitted_transformer`'s attributes are now accessible
-            return getattr(self.fitted_transformer, name)
-
-        def __sklearn_clone__(self):
-            return self
-
-        def fit(self, X, y):
-            # Fitting does not change the state of the estimator
-            return self
-
-        def fit_transform(self, X, y=None):
-            # fit_transform only transforms the data
-            return self.fitted_transformer.transform(X, y)
+some state when :func:`base.clone` is called on the estimator. For example,
+:class:`~sklearn.frozen.FrozenEstimator` makes use of this.
 
 Pipeline compatibility
 ----------------------
@@ -468,26 +449,19 @@ accepts an optional ``y``.
 
 Estimator types
 ---------------
-Some common functionality depends on the kind of estimator passed.
-For example, cross-validation in :class:`model_selection.GridSearchCV` and
-:func:`model_selection.cross_val_score` defaults to being stratified when used
-on a classifier, but not otherwise. Similarly, scorers for average precision
-that take a continuous prediction need to call ``decision_function`` for classifiers,
-but ``predict`` for regressors. This distinction between classifiers and regressors
-is implemented using the ``_estimator_type`` attribute, which takes a string value.
-This attribute should have the following values to work as expected:
+Some common functionality depends on the kind of estimator passed. For example,
+cross-validation in :class:`model_selection.GridSearchCV` and
+:func:`model_selection.cross_val_score` defaults to being stratified when used on a
+classifier, but not otherwise. Similarly, scorers for average precision that take a
+continuous prediction need to call ``decision_function`` for classifiers, but
+``predict`` for regressors. This distinction between classifiers and regressors is
+implemented by inheriting from :class:`~base.ClassifierMixin`,
+:class:`~base.RegressorMixin`, :class:`~base.ClusterMixin`, :class:`~base.OutlierMixin`
+or :class:`~base.DensityMixin`, which will set the corresponding :term:`estimator tags`
+correctly.
 
-- ``"classifier"`` for classifiers
-- ``"regressor"`` for regressors
-- ``"clusterer"`` for clustering methods
-- ``"outlier_detector"`` for outlier detectors
-- ``"DensityEstimator"`` for density estimators
-
-Inheriting from :class:`~base.ClassifierMixin`, :class:`~base.RegressorMixin`, :class:`~base.ClusterMixin`,
-:class:`~base.OutlierMixin` or :class:`~base.DensityMixin`,
-will set the attribute automatically.  When a meta-estimator needs to distinguish
-among estimator types, instead of checking ``_estimator_type`` directly, helpers
-like :func:`base.is_classifier` should be used.
+When a meta-estimator needs to distinguish among estimator types, instead of checking
+the value of the tags directly, helpers like :func:`base.is_classifier` should be used.
 
 Specific models
 ---------------
