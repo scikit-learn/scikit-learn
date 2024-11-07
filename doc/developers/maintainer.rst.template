@@ -29,11 +29,6 @@ We adopted the following release schedule:
   done as a runnable example and check that its HTML rendering looks correct. It should
   be linked from the what's new file for the new version of scikit-learn.
 
-- Ensure that the changelog and commits correspond, and that the changelog is reasonably
-  well curated. In particular, make sure that the changelog entries are labeled and
-  ordered within each section. The order of the labels should be `|MajorFeature|`,
-  `|Feature|`, `|Efficiency|`, `|Enhancement|`, `|Fix|`, and `|API|`.
-
 .. rubric:: Permissions
 
 - The release manager must be a **maintainer** of the
@@ -102,7 +97,7 @@ Reference Steps
       - Do not remove lines but drop commit by replacing `pick` with `drop`.
       - Commits to pick for a bug-fix release are *generally* prefixed with `FIX`, `CI`,
         and `DOC`. They should at least include all the commits of the merged PRs that
-        were milestoned for this release and/or documented as such in the changelog.
+        were milestoned for this release.
       - Commits to `drop` for a bug-fix release are *generally* prefixed with `FEAT`,
         `MAINT`, `ENH`, and `API`. Reasons for not including them is to prevent change
         of behavior (which should only happen in major/minor releases).
@@ -148,9 +143,8 @@ Reference Steps
       variable in `sklearn/__init__.py`. This means while we are in the release
       candidate period, the latest stable is two version behind the `main` branch,
       instead of one. In this PR targeting `main`, you should also include a new what's
-      new file under the `doc/whats_new/` directory so PRs that target the next version
-      can contribute their changelog entries to this file in parallel to the release
-      process.
+      new file under the `doc/whats_new/` directory so that we prepare the
+      changelog for the next release.
     {% endif %}
 
     - In the release branch, change the version number `__version__` in

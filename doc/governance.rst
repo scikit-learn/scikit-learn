@@ -67,7 +67,7 @@ The following teams form the core contributors group:
   repeating patterns where people might struggle, and to help with improving
   those aspects of the project.
 
-  To this end, they have the required permissions on github to label and close
+  To this end, they have the required permissions on GitHub to label and close
   issues. :ref:`Their work <bug_triaging>` is crucial to improve the
   communication in the project and limit the crowding of the issue tracker.
 
@@ -158,7 +158,7 @@ are made according to the following rules:
   consensus), happens on the issue of pull-request page.
 
 * **Changes to the API principles and changes to dependencies or supported
-  versions** happen via a :ref:`slep` and follows the decision-making process
+  versions** happen via :ref:`slep` and follows the decision-making process
   outlined above.
 
 * **Changes to the governance model** follow the process outlined in `SLEP020

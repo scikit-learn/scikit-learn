@@ -570,10 +570,12 @@ clb.ax.set_title("Partial\ndependence")
 plt.show()
 
 # %%
+# .. _plt_partial_dependence_custom_values:
+# 
 # Custom Inspection Points
 # ~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# All of the examples so far do not specify _which_ points are evaluated to create the
+# None of the examples so far do not specify _which_ points are evaluated to create the
 # partial dependence plots. By default we use percentiles defined by the input dataset.
 # In some cases it can be helpful to specify the exact points where you would like the
 # model evaluated. For instance, if a user wants to test the model behavior on
@@ -604,6 +606,3 @@ _ = display.figure_.suptitle(
     ),
     fontsize=16,
 )
-
-
-# %%

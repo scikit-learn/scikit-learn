@@ -241,6 +241,9 @@ to the dataset :math:`X`.
 * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document clustering
   using :class:`KMeans` and :class:`MiniBatchKMeans` based on sparse data
 
+* :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_plusplus.py`: Using K-means++
+  to select seeds for other clustering algorithms.
+
 Low-level parallelism
 ---------------------
 
