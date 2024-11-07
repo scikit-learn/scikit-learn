@@ -542,9 +542,17 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
         ]
     },
     MDS: {"check_dict_unchanged": dict(max_iter=5, n_components=1, n_init=2)},
-    MLPClassifier: {"check_sample_weight_equivalence": dict(solver="lbfgs")},
+    MLPClassifier: {
+        "check_sample_weight_equivalence": [
+            dict(solver="lbfgs"),
+            dict(solver="lbfgs", early_stopping=True, n_iter_no_change=1, tol=1e-2),
+        ]
+    },
     MLPRegressor: {
-        "check_sample_weight_equivalence": dict(solver="sgd", tol=1e-2, random_state=42)
+        "check_sample_weight_equivalence": [
+            dict(solver="sgd", tol=1e-2, random_state=42),
+            dict(solver="sgd", early_stopping=True, n_iter_no_change=1, tol=1e-2),
+        ]
     },
     MiniBatchDictionaryLearning: {
         "check_dict_unchanged": dict(batch_size=10, max_iter=5, n_components=1)
