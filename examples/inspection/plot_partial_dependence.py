@@ -575,7 +575,7 @@ plt.show()
 # Custom Inspection Points
 # ~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# None of the examples so far do not specify _which_ points are evaluated to create the
+# None of the examples so far specify _which_ points are evaluated to create the
 # partial dependence plots. By default we use percentiles defined by the input dataset.
 # In some cases it can be helpful to specify the exact points where you would like the
 # model evaluated. For instance, if a user wants to test the model behavior on
@@ -587,7 +587,13 @@ plt.show()
 
 print("Computing partial dependence plots with custom evaluation values...")
 tic = time()
-_, ax = plt.subplots(ncols=3, nrows=2, figsize=(9, 8), constrained_layout=True)
+_, ax = plt.subplots(ncols=2, figsize=(6, 4), sharey=True, constrained_layout=True)
+
+features_info = {
+    "features": ["temp", "humidity"],
+    "kind": "both",
+}
+
 display = PartialDependenceDisplay.from_estimator(
     hgbdt_model,
     X_train,
