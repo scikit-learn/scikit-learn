@@ -518,7 +518,7 @@ class Pipeline(_BaseComposition):
         transformed_cache = dict()  # used to transform each param once
         # `step_params` is the output of `process_routing`, so it has a dict for each
         # method (e.g. fit, transform, predict), which are the args to be passed to
-        # those methods. We need to transforme the parameters which are in the
+        # those methods. We need to transform the parameters which are in the
         # `transform_input`, before returning these dicts.
         for method, method_params in step_params.items():
             transformed_params[method] = Bunch()
