@@ -25,6 +25,7 @@ from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import (
     check_array,
     gen_even_slices,
+    get_tags,
 )
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.fixes import parse_version, sp_base_version
@@ -471,10 +472,17 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 )
 
     def _fit(self, X, y=None):
+        ensure_all_finite = "allow-nan" if get_tags(self).input_tags.allow_nan else True
         if self.__sklearn_tags__().target_tags.required:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
                 X, y = validate_data(
-                    self, X, y, accept_sparse="csr", multi_output=True, order="C"
+                    self,
+                    X,
+                    y,
+                    accept_sparse="csr",
+                    multi_output=True,
+                    order="C",
+                    ensure_all_finite=ensure_all_finite,
                 )
 
             if is_classifier(self):
@@ -515,7 +523,13 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         else:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-                X = validate_data(self, X, accept_sparse="csr", order="C")
+                X = validate_data(
+                    self,
+                    X,
+                    ensure_all_finite=ensure_all_finite,
+                    accept_sparse="csr",
+                    order="C",
+                )
 
         self._check_algorithm_metric()
         if self.metric_params is None:
@@ -695,6 +709,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         tags = super().__sklearn_tags__()
         # For cross-validation routines to split data correctly
         tags.input_tags.pairwise = self.metric == "precomputed"
+        tags.input_tags.allow_nan = self.metric == "nan_euclidean"
         return tags
 
 
@@ -806,6 +821,7 @@ class KNeighborsMixin:
                 % type(n_neighbors)
             )
 
+        ensure_all_finite = "allow-nan" if get_tags(self).input_tags.allow_nan else True
         query_is_train = X is None
         if query_is_train:
             X = self._fit_X
@@ -816,7 +832,14 @@ class KNeighborsMixin:
             if self.metric == "precomputed":
                 X = _check_precomputed(X)
             else:
-                X = validate_data(self, X, accept_sparse="csr", reset=False, order="C")
+                X = validate_data(
+                    self,
+                    X,
+                    ensure_all_finite=ensure_all_finite,
+                    accept_sparse="csr",
+                    reset=False,
+                    order="C",
+                )
 
         n_samples_fit = self.n_samples_fit_
         if n_neighbors > n_samples_fit:
@@ -1145,6 +1168,7 @@ class RadiusNeighborsMixin:
         if sort_results and not return_distance:
             raise ValueError("return_distance must be True if sort_results is True.")
 
+        ensure_all_finite = "allow-nan" if get_tags(self).input_tags.allow_nan else True
         query_is_train = X is None
         if query_is_train:
             X = self._fit_X
@@ -1152,7 +1176,14 @@ class RadiusNeighborsMixin:
             if self.metric == "precomputed":
                 X = _check_precomputed(X)
             else:
-                X = validate_data(self, X, accept_sparse="csr", reset=False, order="C")
+                X = validate_data(
+                    self,
+                    X,
+                    ensure_all_finite=ensure_all_finite,
+                    accept_sparse="csr",
+                    reset=False,
+                    order="C",
+                )
 
         if radius is None:
             radius = self.radius
@@ -1363,3 +1394,8 @@ class RadiusNeighborsMixin:
         A_indptr = np.concatenate((np.zeros(1, dtype=int), np.cumsum(n_neighbors)))
 
         return csr_matrix((A_data, A_ind, A_indptr), shape=(n_queries, n_samples_fit))
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = self.metric == "nan_euclidean"
+        return tags
