@@ -1848,7 +1848,7 @@ class RepeatedStratifiedGroupKFold(_RepeatedSplits):
 
     Read more in the :ref:`User Guide <repeated_k_fold>`.
 
-    .. versionadded:: 1.5
+    .. versionadded:: 1.6
 
     Parameters
     ----------
@@ -1900,8 +1900,8 @@ class RepeatedStratifiedGroupKFold(_RepeatedSplits):
         super().__init__(
             StratifiedGroupKFold,
             n_repeats=n_repeats,
-            random_state=random_state,
             n_splits=n_splits,
+            random_state=random_state,
         )
 
 
