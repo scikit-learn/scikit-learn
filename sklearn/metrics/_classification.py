@@ -15,7 +15,7 @@ import warnings
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.sparse import coo_matrix, csr_matrix
+from scipy.sparse import coo_matrix, csr_matrix, issparse
 from scipy.special import xlogy
 
 from ..exceptions import UndefinedMetricWarning
@@ -639,7 +639,7 @@ def multilabel_confusion_matrix(
             y_true = y_true[:, labels[:n_labels]]
             y_pred = y_pred[:, labels[:n_labels]]
 
-        if _is_numpy_namespace(xp=xp):
+        if issparse(y_true) and issparse(y_pred):
             true_and_pred = y_true.multiply(y_pred)
         else:
             true_and_pred = xp.multiply(y_true, y_pred)
