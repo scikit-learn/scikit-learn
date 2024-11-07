@@ -1577,3 +1577,11 @@ def test_estimator_checks_generator():
     """Check that checks_generator returns a generator."""
     all_instance_gen_checks = estimator_checks_generator(LogisticRegression())
     assert isgenerator(all_instance_gen_checks)
+
+
+def test_check_estimator_callback_with_fast_fail_error():
+    """Check that check_estimator fails correctly with on_fail='raise' and callback."""
+    with raises(
+        ValueError, match="callback cannot be provided together with on_fail='raise'"
+    ):
+        check_estimator(LogisticRegression(), on_fail="raise", callback=lambda: None)

@@ -20,4 +20,4 @@
             "check_name": "reason to mark this check as xfail",
         }
 
-  By `Adrin Jalali`_.
+  By `Adrin Jalali`_

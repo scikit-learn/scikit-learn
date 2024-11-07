@@ -386,6 +386,7 @@ API_REFERENCE = {
                     "InconsistentVersionWarning",
                     "NotFittedError",
                     "UndefinedMetricWarning",
+                    "EstimatorCheckFailedWarning",
                 ],
             },
         ],

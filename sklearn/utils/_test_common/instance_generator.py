@@ -1096,6 +1096,9 @@ def _get_expected_failed_checks(estimator):
     failed_checks = PER_ESTIMATOR_XFAIL_CHECKS.get(type(estimator), {})
 
     tags = get_tags(estimator)
+
+    # all xfail marks that depend on the instance, come here. As of now, we have only
+    # these two cases.
     if type(estimator) in [KNeighborsClassifier, KNeighborsRegressor]:
         if tags.input_tags.pairwise:
             failed_checks.update(

@@ -494,6 +494,8 @@ def estimator_checks_generator(
 ):
     """Iteratively yield all check callables for an estimator.
 
+    .. versionadded:: 1.6
+
     Parameters
     ----------
     estimator : estimator object
@@ -504,7 +506,7 @@ def estimator_checks_generator(
     expected_failed_checks : dict[str, str], default=None
         Dictionary of the form {check_name: reason} for checks that are expected to
         fail.
-    mark : "xfail" or "skip" or None, default=None
+    mark : {"xfail", "skip"} or None, default=None
         Whether to mark the checks that are expected to fail as
         xfail(`pytest.mark.xfail`) or skip. Marking a test as "skip" is done via
         wrapping the check in a function that raises a
@@ -585,6 +587,9 @@ def parametrize_with_checks(
 
         Where `"check_name"` is the name of the check, and `"my reason"` is why
         the check fails. These tests will be marked as xfail if the check fails.
+
+
+        .. versionadded:: 1.6
 
     Returns
     -------
@@ -715,7 +720,7 @@ def check_estimator(
 
         .. versionadded:: 1.6
 
-    on_fail : "raise", "warn", None, default="raise"
+    on_fail : {"raise", "warn"}, None, default="raise"
         This parameter controls what happens when a check fails.
 
         - "raise": The exception raised by the first failing check is raised and
