@@ -174,7 +174,9 @@ def make_classification(
         See :term:`Glossary <random_state>`.
 
     return_X_y : bool, default=True
-        If True, the ``(data, target)`` instead of a Bunch object.
+        If True, the ``(data, target)`` instead of a Bunch object is returned.
+
+        .. versionadded:: 1.6
 
     Returns
     -------
@@ -187,8 +189,7 @@ def make_classification(
             A dictionary that stores the values of the arguments passed to the
             generator function.
         feature_info : list of len(n_features)
-            A description for each generated feature. "US" for useless, "IN" for
-            informative, "RP" for repeated and "RD" for redundant.
+            A description for each generated feature.
         X : ndarray of shape (n_samples, n_features)
             The generated samples.
         y : ndarray of shape (n_samples,)
@@ -256,7 +257,7 @@ def make_classification(
     else:
         weights = [1.0 / n_classes] * n_classes
 
-    n_useless = n_features - n_informative - n_redundant - n_repeated
+    n_random = n_features - n_informative - n_redundant - n_repeated
     n_clusters = n_classes * n_clusters_per_class
 
     # Distribute samples among clusters by weight
@@ -311,8 +312,8 @@ def make_classification(
         X[:, n : n + n_repeated] = X[:, indices]
 
     # Fill useless features
-    if n_useless > 0:
-        X[:, -n_useless:] = generator.standard_normal(size=(n_samples, n_useless))
+    if n_random > 0:
+        X[:, -n_random:] = generator.standard_normal(size=(n_samples, n_random))
 
     # Randomly replace labels
     if flip_y >= 0.0:
@@ -335,49 +336,48 @@ def make_classification(
 
         # Randomly permute features
         generator.shuffle(indices)
-
-    X[:, :] = X[:, indices]
+        X[:, :] = X[:, indices]
 
     # feat_desc describes features in X
-    feat_desc = ["US"] * n_features
+    feat_desc = ["random"] * n_features
     for i, index in enumerate(indices):
         if index < n_informative:
-            feat_desc[i] = "IN"
+            feat_desc[i] = "informative"
         elif index >= n_informative and index < n_informative + n_redundant:
-            feat_desc[i] = "RD"
+            feat_desc[i] = "redundant"
         elif index >= n and index < n + n_repeated:
-            feat_desc[i] = "RP"
+            feat_desc[i] = "repeated"
 
-    if not return_X_y:
-        parameters = {
-            "n_samples": n_samples,
-            "n_features": n_features,
-            "n_informative": n_informative,
-            "n_redundant": n_redundant,
-            "n_repeated": n_repeated,
-            "n_classes": n_classes,
-            "n_clusters_per_class": n_clusters_per_class,
-            "weights": weights,
-            "flip_y": flip_y,
-            "class_sep": class_sep,
-            "hypercube": hypercube,
-            "shift": shift,
-            "scale": scale,
-            "shuffle": shuffle,
-            "random_state": random_state,
-        }
+    if return_X_y:
+        return X, y
 
-        bunch = Bunch(
-            DESCR=make_classification.__doc__,
-            parameters=parameters,
-            feature_info=feat_desc,
-            X=X,
-            y=y,
-        )
+    parameters = {
+        "n_samples": n_samples,
+        "n_features": n_features,
+        "n_informative": n_informative,
+        "n_redundant": n_redundant,
+        "n_repeated": n_repeated,
+        "n_classes": n_classes,
+        "n_clusters_per_class": n_clusters_per_class,
+        "weights": weights,
+        "flip_y": flip_y,
+        "class_sep": class_sep,
+        "hypercube": hypercube,
+        "shift": shift,
+        "scale": scale,
+        "shuffle": shuffle,
+        "random_state": random_state,
+    }
 
-        return bunch
+    bunch = Bunch(
+        DESCR=make_classification.__doc__,
+        parameters=parameters,
+        feature_info=feat_desc,
+        X=X,
+        y=y,
+    )
 
-    return X, y
+    return bunch
 
 
 @validate_params(
