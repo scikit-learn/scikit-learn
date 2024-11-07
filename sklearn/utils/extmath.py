@@ -1237,7 +1237,7 @@ def _nanaverage(a, weights=None):
         return xp.nan
 
     if weights is None:
-        return _nanmean(a)
+        return _nanmean(a, xp=xp)
 
     weights = xp.asarray(weights)
     a, weights = a[~mask], weights[~mask]

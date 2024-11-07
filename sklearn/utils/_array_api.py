@@ -927,11 +927,12 @@ def indexing_dtype(xp):
     return xp.asarray(0).dtype
 
 
-def _searchsorted(xp, a, v, *, side="left", sorter=None):
+def _searchsorted(a, v, *, side="left", sorter=None, xp=None):
     # Temporary workaround needed as long as searchsorted is not widely
     # adopted by implementers of the Array API spec. This is a quite
     # recent addition to the spec:
     # https://data-apis.org/array-api/latest/API_specification/generated/array_api.searchsorted.html # noqa
+    xp, _ = get_namespace(a, v, xp=xp)
     if hasattr(xp, "searchsorted"):
         return xp.searchsorted(a, v, side=side, sorter=sorter)
 
@@ -1045,7 +1046,7 @@ def _in1d(ar1, ar2, xp, assume_unique=False, invert=False):
         return xp.take(ret, rev_idx, axis=0)
 
 
-def _count_nonzero(X, xp, device, axis=None, sample_weight=None):
+def _count_nonzero(X, axis=None, sample_weight=None, xp=None, device=None):
     """A variant of `sklearn.utils.sparsefuncs.count_nonzero` for the Array API.
 
     If the array `X` is sparse, and we are using the numpy namespace then we
@@ -1053,6 +1054,7 @@ def _count_nonzero(X, xp, device, axis=None, sample_weight=None):
     """
     from .sparsefuncs import count_nonzero
 
+    xp, _ = get_namespace(X, sample_weight, xp=xp)
     if _is_numpy_namespace(xp) and sp.issparse(X):
         return count_nonzero(X, axis=axis, sample_weight=sample_weight)
 
@@ -1076,9 +1078,10 @@ def _modify_in_place_if_numpy(xp, func, *args, out=None, **kwargs):
     return out
 
 
-def _bincount(array, xp, weights=None, minlength=None):
+def _bincount(array, weights=None, minlength=None, xp=None):
     # TODO: update if bincount is ever adopted in a future version of the standard:
     # https://github.com/data-apis/array-api/issues/812
+    xp, _ = get_namespace(array, xp=xp)
     if hasattr(xp, "bincount"):
         return xp.bincount(array, weights=weights, minlength=minlength)
 

@@ -590,7 +590,7 @@ def test_count_nonzero(
 
     with config_context(array_api_dispatch=True):
         result = _count_nonzero(
-            array_xp, xp=xp, device=device_, axis=axis, sample_weight=sample_weight
+            array_xp, axis=axis, sample_weight=sample_weight, xp=xp, device=device_
         )
 
     assert_allclose(_convert_to_numpy(result, xp=xp), expected)

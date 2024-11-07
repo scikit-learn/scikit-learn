@@ -594,22 +594,22 @@ def multilabel_confusion_matrix(
 
         if tp_bins.shape[0]:
             tp_sum = _bincount(
-                tp_bins, xp, weights=tp_bins_weights, minlength=labels.shape[0]
+                tp_bins, weights=tp_bins_weights, minlength=labels.shape[0], xp=xp
             )
         else:
             # Pathological case
             true_sum = pred_sum = tp_sum = xp.zeros(labels.shape[0])
         if y_pred.shape[0]:
             pred_sum = _bincount(
-                y_pred, xp, weights=sample_weight, minlength=labels.shape[0]
+                y_pred, weights=sample_weight, minlength=labels.shape[0], xp=xp
             )
         if y_true.shape[0]:
             true_sum = _bincount(
-                y_true, xp, weights=sample_weight, minlength=labels.shape[0]
+                y_true, weights=sample_weight, minlength=labels.shape[0], xp=xp
             )
 
         # Retain only selected labels
-        indices = _searchsorted(xp, sorted_labels, labels[:n_labels])
+        indices = _searchsorted(sorted_labels, labels[:n_labels], xp=xp)
         tp_sum = xp.take(tp_sum, indices, axis=0)
         true_sum = xp.take(true_sum, indices, axis=0)
         pred_sum = xp.take(pred_sum, indices, axis=0)
@@ -647,24 +647,24 @@ def multilabel_confusion_matrix(
         # calculate weighted counts
         tp_sum = _count_nonzero(
             true_and_pred,
-            xp=xp,
-            device=device_,
             axis=sum_axis,
             sample_weight=sample_weight,
+            xp=xp,
+            device=device_,
         )
         pred_sum = _count_nonzero(
             y_pred,
-            xp=xp,
-            device=device_,
             axis=sum_axis,
             sample_weight=sample_weight,
+            xp=xp,
+            device=device_,
         )
         true_sum = _count_nonzero(
             y_true,
-            xp=xp,
-            device=device_,
             axis=sum_axis,
             sample_weight=sample_weight,
+            xp=xp,
+            device=device_,
         )
 
     fp = pred_sum - tp_sum

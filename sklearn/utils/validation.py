@@ -1430,7 +1430,8 @@ def column_or_1d(y, *, dtype=None, warn=False, device=None):
        To control display of warnings.
 
     device : device, default=None
-        `device` object (see the "Device Support" section of the array API spec).
+        `device` object.
+        See the :ref:`Array API User Guide <array_api>` for more details.
 
         .. versionadded:: 1.6
 
