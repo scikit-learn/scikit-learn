@@ -1,0 +1,3 @@
+- :class:`svm.LinearSVM` now properly passes sample weights to
+  compute_class_weight under class_weight strategy 'balanced'.
+  By :user:`Shruti Nath <snath-xoc>`
