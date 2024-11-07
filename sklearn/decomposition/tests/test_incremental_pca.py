@@ -139,14 +139,13 @@ def test_incremental_pca_validation():
     ):
         IncrementalPCA(n_components, batch_size=10).fit(X)
 
-    # Tests that n_components is also <= n_samples.
+    # Test that n_components is also <= n_samples in first call to partial fit.
     n_components = 3
     with pytest.raises(
         ValueError,
         match=(
-            "n_components={} must be"
-            " less or equal to the batch number of"
-            " samples {}".format(n_components, n_samples)
+            f"n_components={n_components} must be less or equal to the batch "
+            f"number of samples {n_samples} for the first partial_fit call."
         ),
     ):
         IncrementalPCA(n_components=n_components).partial_fit(X)
@@ -231,6 +230,27 @@ def test_incremental_pca_batch_signs():
 
     for i, j in zip(all_components[:-1], all_components[1:]):
         assert_almost_equal(np.sign(i), np.sign(j), decimal=6)
+
+
+def test_incremental_pca_partial_fit_small_batch():
+    # Test that there is no minimum batch size after the first partial_fit
+    # Non-regression test
+    rng = np.random.RandomState(1999)
+    n, p = 50, 3
+    X = rng.randn(n, p)  # spherical data
+    X[:, 1] *= 0.00001  # make middle component relatively small
+    X += [5, 4, 3]  # make a large mean
+
+    n_components = p
+    pipca = IncrementalPCA(n_components=n_components)
+    pipca.partial_fit(X[:n_components])
+    for idx in range(n_components, n):
+        pipca.partial_fit(X[idx : idx + 1])
+
+    pca = PCA(n_components=n_components)
+    pca.fit(X)
+
+    assert_allclose(pca.components_, pipca.components_, atol=1e-3)
 
 
 def test_incremental_pca_batch_values():

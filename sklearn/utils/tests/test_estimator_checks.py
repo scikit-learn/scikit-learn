@@ -3,6 +3,7 @@
 # tests to make sure estimator_checks works without pytest.
 
 import importlib
+import re
 import sys
 import unittest
 import warnings
@@ -13,7 +14,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn import config_context, get_config
-from sklearn.base import BaseEstimator, ClassifierMixin, OutlierMixin
+from sklearn.base import BaseEstimator, ClassifierMixin, OutlierMixin, TransformerMixin
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.datasets import (
     load_iris,
@@ -33,7 +34,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC, NuSVC
 from sklearn.utils import _array_api, all_estimators, deprecated
 from sklearn.utils._param_validation import Interval, StrOptions
-from sklearn.utils._tags import default_tags
 from sklearn.utils._testing import (
     MinimalClassifier,
     MinimalRegressor,
@@ -70,6 +70,7 @@ from sklearn.utils.estimator_checks import (
     check_fit_score_takes_y,
     check_methods_sample_order_invariance,
     check_methods_subset_invariance,
+    check_mixin_order,
     check_no_attributes_set_in_init,
     check_outlier_contamination,
     check_outlier_corruption,
@@ -422,7 +423,7 @@ class LargeSparseNotSupportedClassifier(BaseEstimator):
         return self
 
 
-class SparseTransformer(BaseEstimator):
+class SparseTransformer(TransformerMixin, BaseEstimator):
     def __init__(self, sparse_container=None):
         self.sparse_container = sparse_container
 
@@ -1276,18 +1277,18 @@ def test_check_requires_y_none():
 def test_non_deterministic_estimator_skip_tests():
     # check estimators with non_deterministic tag set to True
     # will skip certain tests, refer to issue #22313 for details
-    for est in [MinimalTransformer, MinimalRegressor, MinimalClassifier]:
-        all_tests = list(_yield_all_checks(est(), legacy=True))
+    for Estimator in [MinimalTransformer, MinimalRegressor, MinimalClassifier]:
+        all_tests = list(_yield_all_checks(Estimator(), legacy=True))
         assert check_methods_sample_order_invariance in all_tests
         assert check_methods_subset_invariance in all_tests
 
-        class Estimator(est):
+        class MyEstimator(Estimator):
             def __sklearn_tags__(self):
-                tags = default_tags(self)
+                tags = super().__sklearn_tags__()
                 tags.non_deterministic = True
                 return tags
 
-        all_tests = list(_yield_all_checks(Estimator(), legacy=True))
+        all_tests = list(_yield_all_checks(MyEstimator(), legacy=True))
         assert check_methods_sample_order_invariance not in all_tests
         assert check_methods_subset_invariance not in all_tests
 
@@ -1457,3 +1458,15 @@ def test_estimator_with_set_output():
 
         estimator = StandardScaler().set_output(transform=lib)
         check_estimator(estimator)
+
+
+def test_check_mixin_order():
+    """Test that the check raises an error when the mixin order is incorrect."""
+
+    class BadEstimator(BaseEstimator, TransformerMixin):
+        def fit(self, X, y=None):
+            return self
+
+    msg = "TransformerMixin comes before/left side of BaseEstimator"
+    with raises(AssertionError, match=re.escape(msg)):
+        check_mixin_order("BadEstimator", BadEstimator())
