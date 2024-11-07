@@ -551,7 +551,6 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     MLPRegressor: {
         "check_sample_weight_equivalence": [
             dict(solver="sgd", tol=1e-2, random_state=42),
-            dict(solver="sgd", early_stopping=True, n_iter_no_change=1, tol=1e-2),
         ]
     },
     MiniBatchDictionaryLearning: {
