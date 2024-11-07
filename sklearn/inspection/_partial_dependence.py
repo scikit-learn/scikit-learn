@@ -483,7 +483,7 @@ def partial_dependence(
         <plt_partial_dependence_custom_values>` for an example of how this parameter can
         be used.
 
-        .. versionadded:: 1.6
+        .. versionadded:: 1.7
 
     method : {'auto', 'recursion', 'brute'}, default='auto'
         The method used to calculate the averaged predictions:

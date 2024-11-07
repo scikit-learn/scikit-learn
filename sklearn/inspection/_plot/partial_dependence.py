@@ -410,7 +410,7 @@ class PartialDependenceDisplay:
             for that feature. Setting a range of values for a feature overrides
             `grid_resolution` and `percentiles`.
 
-            .. versionadded:: 1.6
+            .. versionadded:: 1.7
 
         method : str, default='auto'
             The method used to calculate the averaged predictions:
