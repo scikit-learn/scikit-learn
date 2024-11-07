@@ -147,7 +147,6 @@ def test_estimator_html_repr_an_empty_pipeline():
     https://github.com/scikit-learn/scikit-learn/issues/30197
     """
     empty_pipeline = Pipeline([])
-    # Smoke test
     estimator_html_repr(empty_pipeline)
 
 
