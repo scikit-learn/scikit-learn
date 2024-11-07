@@ -524,13 +524,12 @@ def test_resample_weighted():
                 n_samples=data.shape[0],
             ).mean()
         )
-        # Should never be negative because -1 has a 0 weight.
-        assert mean_reweighted >= 0
 
     mean_repeated = np.asarray(mean_repeated)
     mean_reweighted = np.asarray(mean_reweighted)
 
     test_result = kstest(mean_repeated, mean_reweighted)
+    # Should never be negative because -1 has a 0 weight.
     assert np.all(mean_reweighted >= 0)
     # The null-hypothesis (the computed means are identically distributed)
     # cannot be rejected.
