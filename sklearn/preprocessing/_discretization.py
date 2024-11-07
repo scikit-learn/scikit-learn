@@ -240,7 +240,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         if self.subsample is not None and n_samples > self.subsample:
             # Take a subsample of `X`
-            # When resampling, it important to subsample **with replacement** to
+            # When resampling, it is important to subsample **with replacement** to
             # preserve the distribution, in particular in the presence of a few data
             # points with large weights.
             X = resample(
@@ -256,7 +256,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             # quantiles or k-means.
             sample_weight = None
 
-        elif sample_weight is not None:
+        if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         n_features = X.shape[1]
@@ -290,7 +290,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                         ],
                         dtype=np.float64,
                     )
-
             elif self.strategy == "kmeans":
                 from ..cluster import KMeans  # fixes import loops
 

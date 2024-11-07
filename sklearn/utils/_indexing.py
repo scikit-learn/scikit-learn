@@ -531,6 +531,7 @@ def resample(
         )
 
     check_consistent_length(*arrays)
+
     if stratify is None:
         if replace:
             if sample_weight is not None:
