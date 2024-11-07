@@ -607,4 +607,3 @@ _ = display.figure_.suptitle(
 
 
 # %%
-
