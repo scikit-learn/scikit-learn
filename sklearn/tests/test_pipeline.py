@@ -874,40 +874,27 @@ def test_make_pipeline():
     assert pipe.steps[2][0] == "fitparamt"
 
 
-def test_classifier_estimator_type():
-    pipeline = Pipeline(
-        [("scaler", StandardScaler()), ("classifier", LogisticRegression())]
-    )
-    # Smoke test the repr:
+@pytest.mark.parametrize(
+    "pipeline, check_estimator_type",
+    [
+        (make_pipeline(StandardScaler(), LogisticRegression()), is_classifier),
+        (make_pipeline(StandardScaler(), LinearRegression()), is_regressor),
+        (
+            make_pipeline(StandardScaler()),
+            lambda est: get_tags(est).estimator_type is None,
+        ),
+        (Pipeline([]), lambda est: est._estimator_type is None),
+    ],
+)
+def test_pipeline_estimator_type(pipeline, check_estimator_type):
+    """Check that the estimator type returned by the pipeline is correct.
+
+    Non-regression test as part of:
+    https://github.com/scikit-learn/scikit-learn/issues/30197
+    """
+    # Smoke test the repr
     repr(pipeline)
-    assert is_classifier(pipeline)
-
-
-def test_regressor_estimator_type():
-    pipeline = Pipeline(
-        [("scaler", StandardScaler()), ("regressor", LinearRegression())]
-    )
-    # Smoke test the repr:
-    repr(pipeline)
-    assert is_regressor(pipeline)
-
-
-def test_non_estimator_last_step():
-    pipeline = Pipeline(
-        [
-            ("scaler", StandardScaler()),
-        ]
-    )
-
-    # last step of the pipeline is not a predictor
-    assert get_tags(pipeline).estimator_type is None
-
-
-def test_empty_pipeline_estimator_type():
-    pipeline = Pipeline([])
-    # Smoke test the repr:
-    repr(pipeline)
-    assert pipeline._estimator_type is None
+    assert check_estimator_type(pipeline)
 
 
 def test_sklearn_tags_with_empty_pipeline():
