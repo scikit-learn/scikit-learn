@@ -526,6 +526,7 @@ def resample(
 
     if len(arrays) == 0:
         return None
+
     first = arrays[0]
     n_samples = first.shape[0] if hasattr(first, "shape") else len(first)
 
