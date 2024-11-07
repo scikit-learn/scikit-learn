@@ -668,7 +668,7 @@ class SVC(BaseSVC):
         Degree of the polynomial kernel function ('poly').
         Must be non-negative. Ignored by all other kernels.
 
-        .. deprecated:: 1.6
+        .. versionchanged:: 1.6
             Setting ``degree`` when ``kernel='linear'`` is irrelevant
             in 1.6 and will raise an error in 1.8.
 
@@ -682,7 +682,7 @@ class SVC(BaseSVC):
 
         .. versionchanged:: 0.22
            The default value of ``gamma`` changed from 'auto' to 'scale'.
-        .. deprecated:: 1.6
+        .. versionchanged:: 1.6
             Setting ``gamma`` when ``kernel='linear'`` is irrelevant
             in 1.6 and will raise an error in 1.8.
 
@@ -690,7 +690,7 @@ class SVC(BaseSVC):
         Independent term in kernel function.
         It is only significant in 'poly' and 'sigmoid'.
 
-        .. deprecated:: 1.6
+        .. versionchanged:: 1.6
             Setting ``coef0`` when ``kernel='linear'`` is irrelevant
             in 1.6 and will raise an error in 1.8.
 

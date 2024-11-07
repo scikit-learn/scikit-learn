@@ -92,8 +92,6 @@ def check_svm_model_equal(dense_svm, X_train, y_train, X_test):
 
 
 @skip_if_32bit
-# TODO(1.8): remove warning filter when setting gamma raises an error
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "X_train, y_train, X_test",
     [
@@ -103,12 +101,11 @@ def check_svm_model_equal(dense_svm, X_train, y_train, X_test):
         [iris.data, iris.target, iris.data],
     ],
 )
-@pytest.mark.parametrize("kernel", ["linear", "poly", "rbf", "sigmoid"])
+@pytest.mark.parametrize("kernel", ["poly", "rbf", "sigmoid"])
 @pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + LIL_CONTAINERS)
 def test_svc(X_train, y_train, X_test, kernel, sparse_container):
     """Check that sparse SVC gives the same result as SVC."""
     X_train = sparse_container(X_train)
-
     clf = svm.SVC(
         gamma=1,
         kernel=kernel,
@@ -116,7 +113,14 @@ def test_svc(X_train, y_train, X_test, kernel, sparse_container):
         random_state=0,
         decision_function_shape="ovo",
     )
+    clf_linear = svm.SVC(
+        kernel="linear",
+        probability=True,
+        random_state=0,
+        decision_function_shape="ovo",
+    )
     check_svm_model_equal(clf, X_train, y_train, X_test)
+    check_svm_model_equal(clf_linear, X_train, y_train, X_test)
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
@@ -325,8 +329,6 @@ def test_sparse_liblinear_intercept_handling():
     test_svm.test_dense_liblinear_intercept_handling(svm.LinearSVC)
 
 
-# TODO(1.8): remove warning filter when setting gamma raises an error
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "X_train, y_train, X_test",
     [
@@ -336,15 +338,16 @@ def test_sparse_liblinear_intercept_handling():
         [iris.data, None, iris.data],
     ],
 )
-@pytest.mark.parametrize("kernel", ["linear", "poly", "rbf", "sigmoid"])
+@pytest.mark.parametrize("kernel", ["poly", "rbf", "sigmoid"])
 @pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + LIL_CONTAINERS)
 @skip_if_32bit
 def test_sparse_oneclasssvm(X_train, y_train, X_test, kernel, sparse_container):
     # Check that sparse OneClassSVM gives the same result as dense OneClassSVM
     X_train = sparse_container(X_train)
-
     clf = svm.OneClassSVM(gamma=1, kernel=kernel)
+    clf_linear = svm.OneClassSVM(kernel="linear")
     check_svm_model_equal(clf, X_train, y_train, X_test)
+    check_svm_model_equal(clf_linear, X_train, y_train, X_test)
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
