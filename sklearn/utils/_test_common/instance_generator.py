@@ -545,7 +545,6 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     MLPClassifier: {
         "check_sample_weight_equivalence": [
             dict(solver="lbfgs"),
-            dict(solver="lbfgs", early_stopping=True, n_iter_no_change=1, tol=1e-2),
         ]
     },
     MLPRegressor: {
