@@ -151,7 +151,12 @@ from sklearn.neighbors import (
 )
 from sklearn.neural_network import BernoulliRBM, MLPClassifier, MLPRegressor
 from sklearn.pipeline import FeatureUnion, Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler, TargetEncoder
+from sklearn.preprocessing import (
+    KBinsDiscretizer,
+    OneHotEncoder,
+    StandardScaler,
+    TargetEncoder,
+)
 from sklearn.random_projection import (
     GaussianRandomProjection,
     SparseRandomProjection,
@@ -528,6 +533,16 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     IncrementalPCA: {"check_dict_unchanged": dict(batch_size=10, n_components=1)},
     Isomap: {"check_dict_unchanged": dict(n_components=1)},
     KMeans: {"check_dict_unchanged": dict(max_iter=5, n_clusters=1, n_init=2)},
+    KBinsDiscretizer: {
+        "check_sample_weight_equivalence": [
+            # Using subsample != None leads to a stochastic fit that is not
+            # handled by the check_sample_weight_equivalence test.
+            dict(strategy="quantile", subsample=None),
+            dict(strategy="uniform", subsample=None),
+            # The "kmeans" strategy leads to a stochastic fit that is not
+            # handled by the check_sample_weight_equivalence test.
+        ]
+    },
     KernelPCA: {"check_dict_unchanged": dict(n_components=1)},
     LassoLars: {"check_non_transformer_estimators_n_iter": dict(alpha=0.0)},
     LatentDirichletAllocation: {

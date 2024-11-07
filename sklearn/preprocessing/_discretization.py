@@ -213,9 +213,12 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         sample_weight : ndarray of shape (n_samples,)
             Contains weight values to be associated with each sample.
-            Cannot be used when `strategy` is set to `"uniform"`.
 
             .. versionadded:: 1.3
+
+            .. versionchanged:: 1.6
+
+                Added support for strategy="uniform".
 
         Returns
         -------
@@ -230,13 +233,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             output_dtype = X.dtype
 
         n_samples, n_features = X.shape
-
-        if sample_weight is not None and self.strategy == "uniform":
-            raise ValueError(
-                "`sample_weight` was provided but it cannot be "
-                "used with strategy='uniform'. Got strategy="
-                f"{self.strategy!r} instead."
-            )
 
         if self.subsample is not None and n_samples > self.subsample:
             # Take a subsample of `X`
@@ -263,9 +259,21 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         n_bins = self._validate_n_bins(n_features)
 
         bin_edges = np.zeros(n_features, dtype=object)
+
+        if self.strategy != "quantile" and sample_weight is not None:
+            # Preprare a mask to filter out zero-weight samples when extracting
+            # the min and max values of each columns which are needed for the
+            # "uniform" and "kmeans" strategies.
+            nnz_weight_mask = sample_weight != 0
+        else:
+            # Otherwise, all samples are used. Use a slice to avoid creating a
+            # new array.
+            nnz_weight_mask = slice(None)
+
         for jj in range(n_features):
             column = X[:, jj]
-            col_min, col_max = column.min(), column.max()
+            col_min = column[nnz_weight_mask].min()
+            col_max = column[nnz_weight_mask].max()
 
             if col_min == col_max:
                 warnings.warn(

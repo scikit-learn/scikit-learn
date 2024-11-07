@@ -11,6 +11,7 @@ from sklearn.utils._testing import (
     assert_allclose_dense_sparse,
     assert_array_almost_equal,
     assert_array_equal,
+    ignore_warnings,
 )
 
 X = [[-2, 1.5, -4, -1], [-1, 2.5, -3, -0.5], [0, 3.5, -2, 0.5], [1, 4.5, -1, 2]]
@@ -22,6 +23,16 @@ X = [[-2, 1.5, -4, -1], [-1, 2.5, -3, -0.5], [0, 3.5, -2, 0.5], [1, 4.5, -1, 2]]
         ("uniform", [[0, 0, 0, 0], [1, 1, 1, 0], [2, 2, 2, 1], [2, 2, 2, 2]], None),
         ("kmeans", [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2]], None),
         ("quantile", [[0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2], [2, 2, 2, 2]], None),
+        (
+            "uniform",
+            [[0, 0, 0, 0], [1, 1, 1, 0], [2, 2, 2, 1], [2, 2, 2, 2]],
+            [1, 1, 2, 1],
+        ),
+        (
+            "uniform",
+            [[0, 0, 0, 0], [1, 1, 1, 0], [2, 2, 2, 1], [2, 2, 2, 2]],
+            [1, 1, 1, 1],
+        ),
         (
             "quantile",
             [[0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2], [2, 2, 2, 2]],
@@ -51,7 +62,9 @@ X = [[-2, 1.5, -4, -1], [-1, 2.5, -3, -0.5], [0, 3.5, -2, 0.5], [1, 4.5, -1, 2]]
 )
 def test_fit_transform(strategy, expected, sample_weight):
     est = KBinsDiscretizer(n_bins=3, encode="ordinal", strategy=strategy)
-    est.fit(X, sample_weight=sample_weight)
+    with ignore_warnings(category=UserWarning):
+        # Ignore the warning on removed small bins.
+        est.fit(X, sample_weight=sample_weight)
     assert_array_equal(expected, est.transform(X))
 
 
@@ -59,18 +72,6 @@ def test_valid_n_bins():
     KBinsDiscretizer(n_bins=2).fit_transform(X)
     KBinsDiscretizer(n_bins=np.array([2])[0]).fit_transform(X)
     assert KBinsDiscretizer(n_bins=2).fit(X).n_bins_.dtype == np.dtype(int)
-
-
-@pytest.mark.parametrize("strategy", ["uniform"])
-def test_kbinsdiscretizer_wrong_strategy_with_weights(strategy):
-    """Check that we raise an error when the wrong strategy is used."""
-    sample_weight = np.ones(shape=(len(X)))
-    est = KBinsDiscretizer(n_bins=3, strategy=strategy)
-    err_msg = (
-        "`sample_weight` was provided but it cannot be used with strategy='uniform'."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        est.fit(X, sample_weight=sample_weight)
 
 
 def test_invalid_n_bins_array():
