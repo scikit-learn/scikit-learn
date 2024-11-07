@@ -440,7 +440,10 @@ def resample(
         sparse matrices with consistent first dimension.
 
     replace : bool, default=True
-        Implements resampling with replacement. If False, this will implement
+        Implements resampling with replacement it is recommended to use replace=True
+        whenever sampling with non-uniform weights: a few data points with very large
+        weights are expected to be sampled several times with probability to preserve
+        the distribution induced by the weights. If False, this will implement
         (sliced) random permutations.
 
     n_samples : int, default=None
@@ -462,6 +465,7 @@ def resample(
 
     sample_weight : array-like of shape (n_samples,) or None, default=None
         Contains weight values to be associated with each sample.
+        .. versionadded:: 1.6
 
     Returns
     -------
@@ -531,12 +535,19 @@ def resample(
         )
 
     check_consistent_length(*arrays)
-
+    if sample_weight is not None and not replace:
+        raise NotImplementedError(
+            "Resampling with sample_weight is only implemented for replace=True."
+        )
+    if sample_weight is not None and stratify is not None:
+        raise NotImplementedError(
+            "Resampling with sample_weight is only implemented for stratify=None"
+        )
     if stratify is None:
         if replace:
             if sample_weight is not None:
                 sample_weight = _check_sample_weight(
-                    sample_weight, first, dtype=first.dtype
+                    sample_weight, first, dtype=np.float64
                 )
                 p = sample_weight / sample_weight.sum()
             else:

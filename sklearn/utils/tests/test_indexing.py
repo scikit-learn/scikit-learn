@@ -588,6 +588,21 @@ def test_resample_stratify_2dy():
     assert y.ndim == 2
 
 
+def test_notimplementederror():
+
+    with pytest.raises(
+        NotImplementedError,
+        match="Resampling with sample_weight is only implemented for replace=True.",
+    ):
+        resample([0, 1], [0, 1], sample_weight=[1, 1], replace=False)
+
+    with pytest.raises(
+        NotImplementedError,
+        match="Resampling with sample_weight is only implemented for stratify=None",
+    ):
+        resample([0, 1], [0, 1], sample_weight=[1, 1], stratify=[0, 1])
+
+
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_resample_stratify_sparse_error(csr_container):
     # resample must be ndarray
