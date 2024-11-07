@@ -898,6 +898,11 @@ def test_pipeline_estimator_type(pipeline, check_estimator_type):
 
 
 def test_sklearn_tags_with_empty_pipeline():
+    """Check that we propagate properly the tags in a Pipeline.
+
+    Non-regression test as part of:
+    https://github.com/scikit-learn/scikit-learn/issues/30197
+    """
     empty_pipeline = Pipeline(steps=[])
     be = BaseEstimator()
 
