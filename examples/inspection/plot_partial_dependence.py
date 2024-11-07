@@ -570,6 +570,8 @@ clb.ax.set_title("Partial\ndependence")
 plt.show()
 
 # %%
+# .. _plt_partial_dependence_custom_values:
+# 
 # Custom Inspection Points
 # ~~~~~~~~~~~~~~~~~~~~~~~~
 #
