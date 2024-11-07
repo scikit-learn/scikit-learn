@@ -535,6 +535,7 @@ def resample(
         )
 
     check_consistent_length(*arrays)
+
     if sample_weight is not None and not replace:
         raise NotImplementedError(
             "Resampling with sample_weight is only implemented for replace=True."
