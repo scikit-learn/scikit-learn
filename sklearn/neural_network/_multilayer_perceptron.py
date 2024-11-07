@@ -358,9 +358,9 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
         # Backward propagate
         last = self.n_layers_ - 2
 
-        # Calculate delta[last]:
+        # The calculation of delta[last] is as follows:
         #   delta[last] = d/dz loss(y, act(z)) = act(z) - y
-        # with z=x@w + b is the output of the last layer before passing through the
+        # with z=x@w + b being the output of the last layer before passing through the
         # output activation, act(z) = activations[-1].
         # The simple formula for delta[last] here works with following (canonical
         # loss-link) combinations of output activation and loss function:
