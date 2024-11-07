@@ -604,7 +604,3 @@ _ = display.figure_.suptitle(
     ),
     fontsize=16,
 )
-
-
-# %%
-
