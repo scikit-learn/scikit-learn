@@ -479,6 +479,10 @@ def partial_dependence(
         for that feature. Setting a range of values for a feature overrides
         `grid_resolution` and `percentiles`.
 
+        See :ref:`how to use partial_dependence
+        <plt_partial_dependence_custom_values>` for an example of how this parameter can
+        be used.
+
         .. versionadded:: 1.6
 
     method : {'auto', 'recursion', 'brute'}, default='auto'
