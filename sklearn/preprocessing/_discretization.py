@@ -217,8 +217,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             .. versionadded:: 1.3
 
             .. versionchanged:: 1.6
-
-                Added support for strategy="uniform".
+               Added support for strategy="uniform".
 
         Returns
         -------
