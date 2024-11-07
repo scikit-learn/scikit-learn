@@ -696,6 +696,9 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         else:
             self._estimator = default
 
+            if default is None:
+                raise ValueError("`_estimator` attribute cannot be None.")
+
     def _log_message(self, *, estimator_idx, n_estimators, processing_msg):
         if not self.verbose:
             return None

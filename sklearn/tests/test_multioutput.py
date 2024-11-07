@@ -890,8 +890,15 @@ def test_validate_estimator(Estimator):
     y = np.array([[1, 0], [0, 1]])
 
     estimator = LogisticRegression(solver="liblinear")
-    chain = Estimator(estimator)
+    chain1 = Estimator(estimator)
+    chain2 = Estimator()
 
-    chain._validate_estimator()
-    assert hasattr(chain, "_estimator")
-    assert chain._estimator == estimator
+    # Test the _estimator attribute is set is each case
+    chain1._validate_estimator()
+    chain2._validate_estimator(estimator)
+    assert hasattr(chain1, "_estimator") and hasattr(chain2, "_estimator")
+    assert chain1._estimator == estimator and chain2._estimator == estimator
+
+    with pytest.raises(ValueError):
+        chain = Estimator()  # no estimator provided
+        chain._validate_estimator()
