@@ -1,4 +1,3 @@
-New public API :func:`metrics.binary_classification_curve`
-that returns the number of true and false positive per
-threshold. By :user:`Success Moses <SuccessMoses>` and
-:user:`Guillaume Lemaitre <glemaitre>`
+- New public API :func:`metrics.binary_classification_curve` that returns the number of
+  true and false positive per threshold.
+  By :user:`Success Moses <SuccessMoses>`
