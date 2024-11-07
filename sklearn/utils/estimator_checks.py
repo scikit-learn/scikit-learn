@@ -18,6 +18,20 @@ import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
 
+from sklearn.base import (
+    BaseEstimator,
+    BiclusterMixin,
+    ClassifierMixin,
+    ClassNamePrefixFeaturesOutMixin,
+    DensityMixin,
+    MetaEstimatorMixin,
+    MultiOutputMixin,
+    OneToOneFeatureMixin,
+    OutlierMixin,
+    RegressorMixin,
+    TransformerMixin,
+)
+
 from .. import config_context
 from ..base import (
     ClusterMixin,
@@ -97,6 +111,7 @@ def _yield_api_checks(estimator):
         yield check_estimators_unfitted
     yield check_do_not_raise_errors_in_init_or_set_params
     yield check_n_features_in_after_fitting
+    yield check_mixin_order
 
 
 def _yield_checks(estimator):
@@ -1735,6 +1750,47 @@ def check_pipeline_consistency(name, estimator_orig):
             result = func(X, y)
             result_pipe = func_pipeline(X, y)
             assert_allclose_dense_sparse(result, result_pipe)
+
+
+@ignore_warnings
+def check_mixin_order(name, estimator_orig):
+    """Check that mixins are inherited in the correct order."""
+    # We define a list of edges, which in effect define a DAG of mixins and their
+    # required order of inheritance.
+    # This is of the form (mixin_a_should_be_before, mixin_b_should_be_after)
+    dag = [
+        (ClassifierMixin, BaseEstimator),
+        (RegressorMixin, BaseEstimator),
+        (ClusterMixin, BaseEstimator),
+        (TransformerMixin, BaseEstimator),
+        (BiclusterMixin, BaseEstimator),
+        (OneToOneFeatureMixin, BaseEstimator),
+        (ClassNamePrefixFeaturesOutMixin, BaseEstimator),
+        (DensityMixin, BaseEstimator),
+        (OutlierMixin, BaseEstimator),
+        (MetaEstimatorMixin, BaseEstimator),
+        (MultiOutputMixin, BaseEstimator),
+    ]
+    violations = []
+    mro = type(estimator_orig).mro()
+    for mixin_a, mixin_b in dag:
+        if (
+            mixin_a in mro
+            and mixin_b in mro
+            and mro.index(mixin_a) > mro.index(mixin_b)
+        ):
+            violations.append((mixin_a, mixin_b))
+    violation_str = "\n".join(
+        f"{mixin_a.__name__} comes before/left side of {mixin_b.__name__}"
+        for mixin_a, mixin_b in violations
+    )
+    assert not violations, (
+        f"{name} is inheriting from mixins in the wrong order. In general, in mixin "
+        "inheritance, more specialized mixins must come before more general ones. "
+        "This means, for instance, `BaseEstimator` should be on the right side of most "
+        "other mixins. You need to change the order so that:\n"
+        f"{violation_str}"
+    )
 
 
 @ignore_warnings
