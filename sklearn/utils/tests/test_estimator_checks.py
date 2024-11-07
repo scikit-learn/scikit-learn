@@ -3,6 +3,7 @@
 # tests to make sure estimator_checks works without pytest.
 
 import importlib
+import re
 import sys
 import unittest
 import warnings
@@ -79,6 +80,7 @@ from sklearn.utils.estimator_checks import (
     check_fit_score_takes_y,
     check_methods_sample_order_invariance,
     check_methods_subset_invariance,
+    check_mixin_order,
     check_no_attributes_set_in_init,
     check_outlier_contamination,
     check_outlier_corruption,
@@ -1585,3 +1587,15 @@ def test_check_estimator_callback_with_fast_fail_error():
         ValueError, match="callback cannot be provided together with on_fail='raise'"
     ):
         check_estimator(LogisticRegression(), on_fail="raise", callback=lambda: None)
+
+
+def test_check_mixin_order():
+    """Test that the check raises an error when the mixin order is incorrect."""
+
+    class BadEstimator(BaseEstimator, TransformerMixin):
+        def fit(self, X, y=None):
+            return self
+
+    msg = "TransformerMixin comes before/left side of BaseEstimator"
+    with raises(AssertionError, match=re.escape(msg)):
+        check_mixin_order("BadEstimator", BadEstimator())

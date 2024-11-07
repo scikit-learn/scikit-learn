@@ -789,22 +789,17 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 if pd.NA not in Xs[col_name].values:
                     continue
                 class_name = self.__class__.__name__
-                # TODO(1.6): replace warning with ValueError
-                warnings.warn(
-                    (
-                        f"The output of the '{name}' transformer for column"
-                        f" '{col_name}' has dtype {dtype} and uses pandas.NA to"
-                        " represent null values. Storing this output in a numpy array"
-                        " can cause errors in downstream scikit-learn estimators, and"
-                        " inefficiencies. Starting with scikit-learn version 1.6, this"
-                        " will raise a ValueError. To avoid this problem you can (i)"
-                        " store the output in a pandas DataFrame by using"
-                        f" {class_name}.set_output(transform='pandas') or (ii) modify"
-                        f" the input data or the '{name}' transformer to avoid the"
-                        " presence of pandas.NA (for example by using"
-                        " pandas.DataFrame.astype)."
-                    ),
-                    FutureWarning,
+                raise ValueError(
+                    f"The output of the '{name}' transformer for column"
+                    f" '{col_name}' has dtype {dtype} and uses pandas.NA to"
+                    " represent null values. Storing this output in a numpy array"
+                    " can cause errors in downstream scikit-learn estimators, and"
+                    " inefficiencies. To avoid this problem you can (i)"
+                    " store the output in a pandas DataFrame by using"
+                    f" {class_name}.set_output(transform='pandas') or (ii) modify"
+                    f" the input data or the '{name}' transformer to avoid the"
+                    " presence of pandas.NA (for example by using"
+                    " pandas.DataFrame.astype)."
                 )
 
     def _record_output_indices(self, Xs):
