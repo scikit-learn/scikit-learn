@@ -464,7 +464,10 @@ def resample(
         the class labels.
 
     sample_weight : array-like of shape (n_samples,) or None, default=None
-        Contains weight values to be associated with each sample.
+        Contains weight values to be associated with each sample. Values are
+        normalized to sum to one and interpreted as probability for sampling
+        each data point
+
         .. versionadded:: 1.6
 
     Returns
