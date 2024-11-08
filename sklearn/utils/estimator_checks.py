@@ -784,9 +784,6 @@ def check_estimator(
                 "expected_to_fail_reason": expected_to_fail_reason,
             }
 
-        This return value is only present when all tests pass, or the ones failing
-        are expected to fail.
-
     estimator_checks_generator : generator
         Generator that yields (estimator, check) tuples. Returned when
         `generate_only=True`.
