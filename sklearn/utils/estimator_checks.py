@@ -2076,11 +2076,11 @@ def check_regressor_multioutput(name, estimator):
 
     assert y_pred.dtype == np.dtype("float64"), (
         "Multioutput predictions by a regressor are expected to be"
-        " floating-point precision. Got {} instead".format(y_pred.dtype)
+        f" floating-point precision. Got {y_pred.dtype} instead"
     )
     assert y_pred.shape == y.shape, (
         "The shape of the prediction for multioutput data is incorrect."
-        " Expected {}, got {}.".format(y_pred.shape, y.shape)
+        f" Expected {y_pred.shape}, got {y.shape}."
     )
 
 
