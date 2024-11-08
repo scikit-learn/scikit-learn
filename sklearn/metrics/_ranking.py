@@ -829,7 +829,7 @@ def binary_classification_curve(y_true, y_score, pos_label=None, sample_weight=N
     >>> tps
     array([1., 1., 2., 2.])
     >>> thresholds
-    array([0.8, 0.4, 0.35, 0.1])
+    array([0.8 , 0.4 , 0.35 , 0.1 ])
     """
     # Check to make sure y_true is valid
     y_type = type_of_target(y_true, input_name="y_true")
