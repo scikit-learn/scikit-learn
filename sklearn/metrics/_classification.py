@@ -1971,10 +1971,7 @@ def precision_recall_fscore_support(
         "labels": ["array-like", None],
         "sample_weight": ["array-like", None],
         "raise_warning": ["boolean", Hidden(StrOptions({"deprecated"}))],
-        "replace_undefined_by": [
-            np.nan,
-            dict,
-        ],
+        "replace_undefined_by": [Hidden(StrOptions({"default"})), np.nan, dict],
     },
     prefer_skip_nested_validation=True,
 )
@@ -1985,7 +1982,7 @@ def class_likelihood_ratios(
     labels=None,
     sample_weight=None,
     raise_warning="deprecated",
-    replace_undefined_by=np.nan,
+    replace_undefined_by="default",
 ):
     """Compute binary classification positive and negative likelihood ratios.
 
@@ -2054,10 +2051,11 @@ def class_likelihood_ratios(
 
         - `np.nan` to return `np.nan` for both `LR+` and `LR-`
         - a dict in the format `{"LR+": value_1, "LR-": value_2}` where the values can
-          be non-negative floats, `np.inf` or `np.nan`. For example, `{"LR+": 1.0,
-          "LR-": 1.0}` can be used for returning the worst scores, indicating a useless
-          model, and `{"LR+": np.inf, "LR-": 0.0}` can be used for returning the best
-          scores, indicating a useful model.
+          be non-negative floats, `np.inf` or `np.nan` in the range of the
+          likelihood ratios. For example, `{"LR+": 1.0, "LR-": 1.0}` can be used for
+          returning the worst scores, indicating a useless model, and `{"LR+": np.inf,
+          "LR-": 0.0}` can be used for returning the best scores, indicating a useful
+          model.
 
         If a division by zero occurs, only the affected metric is replaced with the set
         value; the other metric is calculated as usual.
@@ -2117,10 +2115,11 @@ def class_likelihood_ratios(
     # The checks for `raise_warning==True` need to be removed and we will always warn,
     # the default return value of `replace_undefined_by` should be updated from `np.nan`
     # (which was kept for backwards compatibility) to the worst score for each metric
-    # respectively (1 for LR+ and 1 for LR-), warning messages need to be updated, the
-    # Warns section in the docstring should not mention `raise_warning` anymore and the
-    # "Mathematical divergences" section in model_evaluation.rst needs to be updated on
-    # the new default behaviour of `replace_undefined_by`.
+    # respectively (1 for LR+ and 1 for LR-), its hidden option ("default") is not used
+    # anymore, warning messages can be removed, the Warns section in the docstring
+    # should not mention `raise_warning` anymore and the "Mathematical divergences"
+    # section in model_evaluation.rst needs to be updated on the new default behaviour
+    # of `replace_undefined_by`.
     y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type != "binary":
@@ -2132,12 +2131,27 @@ def class_likelihood_ratios(
     if raise_warning != "deprecated":
         warnings.warn(
             "`raise_warning` was deprecated in version 1.7 and will be removed "
-            "in 1.9, when an `UndefinedMetricWarning` will always raise.",
+            "in 1.9, when an `UndefinedMetricWarning` will always raise in case of a "
+            "division by zero.",
             FutureWarning,
         )
-
-    if raise_warning == "deprecated":
+    else:
         raise_warning = True
+        # TODO(1.9): This warning can be removed in 1.9. This is to make sure if users
+        # use the default args for `raise_warning` ("deprecated") and for
+        # `replace_undefined_by` (np.nan), they still get a FutureWarning telling them
+        # that the default return value will change:
+        if replace_undefined_by == "default":
+            warnings.warn(
+                "The default return value of `class_likelihood_ratios` in case of a "
+                "division by zero has been deprecated in 1.7 and will be changed to "
+                "the value set with the `replace_undefined_by` param in version 1.9. "
+                "Set `replace_undefined_by=np.nan` to silence this Warning.",
+                FutureWarning,
+            )
+
+    if replace_undefined_by == "default":
+        replace_undefined_by = np.nan
 
     if isinstance(replace_undefined_by, dict):
         msg = (
