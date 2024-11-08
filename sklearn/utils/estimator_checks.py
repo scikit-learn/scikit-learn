@@ -97,7 +97,27 @@ from .validation import _num_samples, check_is_fitted, has_fit_parameter
 REGRESSION_DATASET = None
 
 
+def _raise_for_missing_tags(estimator, tag_name, Mixin):
+    tags = get_tags(estimator)
+    estimator_type = Mixin.__name__.replace("Mixin", "")
+    if getattr(tags, tag_name) is None:
+        raise RuntimeError(
+            f"Estimator {estimator.__class__.__name__} seems to be a {estimator_type},"
+            f" but the `{tag_name}` tag is not set. Either set the tag manually"
+            f" or inherit from the {Mixin.__name__}. Note that the order of inheritance"
+            f" matters, the {Mixin.__name__} should come before BaseEstimator."
+        )
+
+
 def _yield_api_checks(estimator):
+    if not isinstance(estimator, BaseEstimator):
+        warnings.warn(
+            f"Estimator {estimator.__class__.__name__} does not inherit from"
+            " `sklearn.base.BaseEstimator`. This might lead to unexpected behavior, or"
+            " even errors when collecting tests.",
+            category=UserWarning,
+        )
+
     tags = get_tags(estimator)
     yield check_estimator_cloneable
     yield check_estimator_repr
@@ -170,6 +190,7 @@ def _yield_checks(estimator):
 
 
 def _yield_classifier_checks(classifier):
+    _raise_for_missing_tags(classifier, "classifier_tags", ClassifierMixin)
     tags = get_tags(classifier)
 
     # test classifiers can handle non-array data and pandas objects
@@ -215,42 +236,8 @@ def _yield_classifier_checks(classifier):
         yield check_classifier_not_supporting_multiclass
 
 
-@ignore_warnings(category=FutureWarning)
-def check_supervised_y_no_nan(name, estimator_orig):
-    # Checks that the Estimator targets are not NaN.
-    estimator = clone(estimator_orig)
-    rng = np.random.RandomState(888)
-    X = rng.standard_normal(size=(10, 5))
-
-    for value in [np.nan, np.inf]:
-        y = np.full(10, value)
-        y = _enforce_estimator_tags_y(estimator, y)
-
-        module_name = estimator.__module__
-        if module_name.startswith("sklearn.") and not (
-            "test_" in module_name or module_name.endswith("_testing")
-        ):
-            # In scikit-learn we want the error message to mention the input
-            # name and be specific about the kind of unexpected value.
-            if np.isinf(value):
-                match = (
-                    r"Input (y|Y) contains infinity or a value too large for"
-                    r" dtype\('float64'\)."
-                )
-            else:
-                match = r"Input (y|Y) contains NaN."
-        else:
-            # Do not impose a particular error message to third-party libraries.
-            match = None
-        err_msg = (
-            f"Estimator {name} should have raised error on fitting array y with inf"
-            " value."
-        )
-        with raises(ValueError, match=match, err_msg=err_msg):
-            estimator.fit(X, y)
-
-
 def _yield_regressor_checks(regressor):
+    _raise_for_missing_tags(regressor, "regressor_tags", RegressorMixin)
     tags = get_tags(regressor)
     # TODO: test with intercept
     # TODO: test with multiple responses
@@ -274,6 +261,7 @@ def _yield_regressor_checks(regressor):
 
 
 def _yield_transformer_checks(transformer):
+    _raise_for_missing_tags(transformer, "transformer_tags", TransformerMixin)
     tags = get_tags(transformer)
     # All transformers should either deal with sparse data or raise an
     # exception with type TypeError and an intelligible error message
@@ -724,6 +712,41 @@ def _generate_sparse_data(X_csr):
         X.indices = X.indices.astype("int64")
         X.indptr = X.indptr.astype("int64")
         yield sparse_format + "_64", X
+
+
+@ignore_warnings(category=FutureWarning)
+def check_supervised_y_no_nan(name, estimator_orig):
+    # Checks that the Estimator targets are not NaN.
+    estimator = clone(estimator_orig)
+    rng = np.random.RandomState(888)
+    X = rng.standard_normal(size=(10, 5))
+
+    for value in [np.nan, np.inf]:
+        y = np.full(10, value)
+        y = _enforce_estimator_tags_y(estimator, y)
+
+        module_name = estimator.__module__
+        if module_name.startswith("sklearn.") and not (
+            "test_" in module_name or module_name.endswith("_testing")
+        ):
+            # In scikit-learn we want the error message to mention the input
+            # name and be specific about the kind of unexpected value.
+            if np.isinf(value):
+                match = (
+                    r"Input (y|Y) contains infinity or a value too large for"
+                    r" dtype\('float64'\)."
+                )
+            else:
+                match = r"Input (y|Y) contains NaN."
+        else:
+            # Do not impose a particular error message to third-party libraries.
+            match = None
+        err_msg = (
+            f"Estimator {name} should have raised error on fitting array y with inf"
+            " value."
+        )
+        with raises(ValueError, match=match, err_msg=err_msg):
+            estimator.fit(X, y)
 
 
 def check_array_api_input(
