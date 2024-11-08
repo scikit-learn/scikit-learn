@@ -818,7 +818,7 @@ def binary_classification_curve(y_true, y_score, pos_label=None, sample_weight=N
         Decreasing score values.
 
     Examples
-    -------
+    --------
     >>> import numpy as np
     >>> from sklearn.metrics import binary_classification_curve
     >>> y_true = np.array([0., 0., 1., 1.])
