@@ -1,4 +1,4 @@
-- |Enhancement| :func:`class_likelihood_ratios` now has a `zero_division` param. When
-  there is a division by zero, the metric is undefined and the set values are returned
-  for LR+ and LR-. :pr:`29288` by :user:`Marc Torrellas Socastro <marctorsoc>` and
-  :user:`Stefanie Senger <StefanieSenger>`.
+- |Enhancement| :func:`class_likelihood_ratios` now has a `replace_undefined_by` param.
+  When there is a division by zero, the metric is undefined and the set values are
+  returned for `LR+` and `LR-`. :pr:`29288` by :user:`Marc Torrellas Socastro
+  <marctorsoc>` and :user:`Stefanie Senger <StefanieSenger>`.

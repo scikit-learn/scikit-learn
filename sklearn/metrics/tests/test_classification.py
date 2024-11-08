@@ -772,21 +772,8 @@ def test_likelihood_ratios_raise_warning_deprecation(raise_warning):
         class_likelihood_ratios(y_true, y_pred, raise_warning=raise_warning)
 
 
-def test_likelihood_ratios_raises_when_raise_warning_and_zero_division():
-    """Test that class_likelihood_ratios raises a ValueError if `raise_warning` and
-    `zero_division` params are both set."""
-    y_true = np.array([1, 0])
-    y_pred = np.array([1, 0])
-
-    msg = "`zero_division` and `raise_warning` cannot both be set."
-    with pytest.raises(ValueError, match=msg):
-        class_likelihood_ratios(
-            y_true, y_pred, raise_warning=True, zero_division="warn"
-        )
-
-
 @pytest.mark.parametrize(
-    "zero_division",
+    "replace_undefined_by",
     [
         {"LR+": 0.0},
         {"LR-": 0.0},
@@ -796,32 +783,22 @@ def test_likelihood_ratios_raises_when_raise_warning_and_zero_division():
         {"LR+": 1.0, "LR-": 2.0},
     ],
 )
-def test_likelihood_ratios_wrong_dict_zero_division(zero_division):
+def test_likelihood_ratios_wrong_dict_replace_undefined_by(replace_undefined_by):
     """Test that class_likelihood_ratios raises a `ValueError` if the input dict for
-    `zero_division` is in the wrong format or contains impossible values."""
+    `replace_undefined_by` is in the wrong format or contains impossible values."""
     y_true = np.array([1, 0])
     y_pred = np.array([1, 0])
 
-    msg = "The dictionary passed as `zero_division` needs come in the format"
+    msg = "The dictionary passed as `replace_undefined_by` needs come in the format"
     with pytest.raises(ValueError, match=msg):
-        class_likelihood_ratios(y_true, y_pred, zero_division=zero_division)
-
-
-def test_likelihood_ratios_zero_division_warn():
-    """Test that the correct warning is raised if `zero_division` is set to 'warn'."""
-    y_true = np.array([1, 0])
-    y_pred = np.array([1, 1])
-
-    msg = "`negative_likelihood_ratio` is ill-defined and set to `np.nan`. Use the "
-    "`zero_division` param to control this behavior."
-    with pytest.warns(UndefinedMetricWarning, match=msg):
-        class_likelihood_ratios(y_true, y_pred, zero_division="warn")
+        class_likelihood_ratios(
+            y_true, y_pred, replace_undefined_by=replace_undefined_by
+        )
 
 
 @pytest.mark.parametrize(
-    "zero_division, expected",
+    "replace_undefined_by, expected",
     [
-        ("warn", np.nan),
         ({"LR+": 1.0, "LR-": 1.0}, 1.0),
         ({"LR+": np.inf, "LR-": 0.0}, np.inf),
         ({"LR+": 2.0, "LR-": 0.0}, 2.0),
@@ -829,8 +806,8 @@ def test_likelihood_ratios_zero_division_warn():
         ("nan", np.nan),
     ],
 )
-def test_likelihood_ratios_zero_division_0_fp(zero_division, expected):
-    """Test that the `zero_division` param returns the right value for the
+def test_likelihood_ratios_replace_undefined_by_0_fp(replace_undefined_by, expected):
+    """Test that the `replace_undefined_by` param returns the right value for the
     positive_likelihood_ratio as defined by the user."""
     # This data causes fp=0 (0 false positives) in the confusion_matrix and a division
     # by zero that affects the positive_likelihood_ratio:
@@ -838,7 +815,7 @@ def test_likelihood_ratios_zero_division_0_fp(zero_division, expected):
     y_pred = np.array([1, 0, 0])
 
     positive_likelihood_ratio, _ = class_likelihood_ratios(
-        y_true, y_pred, zero_division=zero_division
+        y_true, y_pred, replace_undefined_by=replace_undefined_by
     )
 
     if np.isnan(expected):
@@ -848,9 +825,8 @@ def test_likelihood_ratios_zero_division_0_fp(zero_division, expected):
 
 
 @pytest.mark.parametrize(
-    "zero_division, expected",
+    "replace_undefined_by, expected",
     [
-        ("warn", np.nan),
         ({"LR+": 1.0, "LR-": 1.0}, 1.0),
         ({"LR+": np.inf, "LR-": 0.0}, 0.0),
         ({"LR+": np.inf, "LR-": 0.5}, 0.5),
@@ -858,8 +834,8 @@ def test_likelihood_ratios_zero_division_0_fp(zero_division, expected):
         ("nan", np.nan),
     ],
 )
-def test_likelihood_ratios_zero_division_0_tn(zero_division, expected):
-    """Test that the `zero_division` param returns the right value for the
+def test_likelihood_ratios_replace_undefined_by_0_tn(replace_undefined_by, expected):
+    """Test that the `replace_undefined_by` param returns the right value for the
     negative_likelihood_ratio as defined by the user."""
     # This data causes tn=0 (0 true negatives) in the confusion_matrix and a division
     # by zero that affects the negative_likelihood_ratio:
@@ -867,7 +843,7 @@ def test_likelihood_ratios_zero_division_0_tn(zero_division, expected):
     y_pred = np.array([1, 1, 1])
 
     _, negative_likelihood_ratio = class_likelihood_ratios(
-        y_true, y_pred, zero_division=zero_division
+        y_true, y_pred, replace_undefined_by=replace_undefined_by
     )
 
     if np.isnan(expected):

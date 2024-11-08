@@ -1971,9 +1971,9 @@ def precision_recall_fscore_support(
         "labels": ["array-like", None],
         "sample_weight": ["array-like", None],
         "raise_warning": ["boolean", Hidden(StrOptions({"deprecated"}))],
-        "zero_division": [
+        "replace_undefined_by": [
             Hidden(StrOptions({"default"})),
-            StrOptions({"warn", "nan"}),
+            StrOptions({"nan"}),
             dict,
         ],
     },
@@ -1986,7 +1986,7 @@ def class_likelihood_ratios(
     labels=None,
     sample_weight=None,
     raise_warning="deprecated",
-    zero_division="default",
+    replace_undefined_by="default",
 ):
     """Compute binary classification positive and negative likelihood ratios.
 
@@ -2042,24 +2042,23 @@ def class_likelihood_ratios(
         Sample weights.
 
     raise_warning : bool, default=True
-        Whether or not a case-specific warning message is raised when there is
-        division by zero.
+        Whether or not a case-specific warning message is raised when there is division
+        by zero.
 
         .. deprecated:: 1.7
             `raise_warning` was deprecated in version 1.7 and will be removed in 1.9,
             when an `UndefinedMetricWarning` will always raise.
 
-    zero_division : "warn", "nan" or dict, default="warn"
+    replace_undefined_by : "nan" or dict, default="nan"
         Sets the return values for LR+ and LR- when there is a division by zero. Can
         take the following values:
 
-        - "warn" to return `np.nan` for the affected scoring metric and raise a warning
-        - "nan" to return `np.nan` for both LR+ and LR- without raising a warning
-        - a dict in the format `{"LR+": value_1, "LR-": value_2}` where the
-          values can be non-negative floats, `np.inf` or `np.nan`. For example,
-          `{"LR+": 1.0, "LR-": 1.0}` can be used for returning the worst scores,
-          indicating a useless model, and `{"LR+": np.inf, "LR-": 0.0}` can be used for
-          returning the best scores, indicating a useful model.
+        - "nan" to return `np.nan` for both `LR+` and `LR-`
+        - a dict in the format `{"LR+": value_1, "LR-": value_2}` where the values can
+          be non-negative floats, `np.inf` or `np.nan`. For example, `{"LR+": 1.0,
+          "LR-": 1.0}` can be used for returning the worst scores, indicating a useless
+          model, and `{"LR+": np.inf, "LR-": 0.0}` can be used for returning the best
+          scores, indicating a useful model.
 
         If a division by zero occurs, only the affected metric is replaced with the set
         value; the other metric is calculated as usual.
@@ -2077,15 +2076,15 @@ def class_likelihood_ratios(
     Raises `UndefinedMetricWarning` when `y_true` and `y_pred` lead to the following
     conditions:
 
-        - The number of false positives is 0 and either `zero_division="warn"` or
-          `raise_warning=True`: positive likelihood ratio is undefined.
-        - The number of true negatives is 0 and either `zero_division="warn"` or
-          `raise_warning=True`: negative likelihood ratio is undefined.
+        - The number of false positives is 0 and `raise_warning` is set to `True`
+          (default): positive likelihood ratio is undefined.
+        - The number of true negatives is 0 and `raise_warning` is set to `True`
+          (default): negative likelihood ratio is undefined.
         - The sum of true positives and false negatives is 0 (no samples of the positive
           class are present in `y_true`): both likelihood ratios are undefined.
 
         For the first two cases, an undefined metric can be defined by setting the
-        `zero_division` param.
+        `replace_undefined_by` param.
 
     References
     ----------
@@ -2115,15 +2114,16 @@ def class_likelihood_ratios(
     >>> class_likelihood_ratios(y_true, y_pred, labels=["non-cat", "cat"])
     (np.float64(1.5), np.float64(0.75))
     """
-    # TODO(1.9): When `raise_warning` is removed, the following changes need to be made
-    # to match the other functions that take a zero_division param: The default return
-    # value with zero_division="warn" should be updated to the worst score for each
-    # metric respectively (1 for LR+ and 1 for LR-), return values and warning messages
-    # need to be updated, the Warns section in the docstring should not mention
-    # raise_warning anymore, the "Mathematical divergences" section in
-    # model_evaluation.rst needs to be updated on the new default behaviour of
-    # zero_division, the the hidden option for zero_division ("default") needs to be
-    # removed and the default set to "warn" in the function signature.
+    # TODO(1.9): When `raise_warning` is removed, the following changes need to be made:
+    # The checks for `raise_warning==True` need to be removed and we will always warn,
+    # the default return value of `replace_undefined_by` should be updated from `np.nan`
+    # (which was kept for backwards compatibility) to the worst score for each metric
+    # respectively (1 for LR+ and 1 for LR-), the hidden option for
+    # `replace_undefined_by` ("default") needs to be replaced by the actual default
+    # value in the function signature, warning messages need to be updated, the Warns
+    # section in the docstring should not mention `raise_warning` anymore and the
+    # "Mathematical divergences" section in model_evaluation.rst needs to be updated on
+    # the new default behaviour of `replace_undefined_by`.
     y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type != "binary":
@@ -2133,37 +2133,27 @@ def class_likelihood_ratios(
         )
 
     if raise_warning != "deprecated":
-        if zero_division != "default":
-            raise ValueError(
-                "`zero_division` and `raise_warning` cannot both be set. "
-                "Use `zero_division` to control the warning behaviour and the return "
-                "values in case of a division by zero."
-            )
-
         warnings.warn(
             "`raise_warning` was deprecated in version 1.7 and will be removed "
             "in 1.9, when an `UndefinedMetricWarning` will always raise.",
             FutureWarning,
         )
 
-        if raise_warning:  # user explicitly set `raise_warning=True`
-            zero_division = "warn"
+    if raise_warning == "deprecated":
+        raise_warning = True
 
-        else:  # user explicitly set `raise_warning=False`
-            zero_division = "nan"
+    if replace_undefined_by == "default":
+        replace_undefined_by = "nan"
 
-    if zero_division == "default":
-        zero_division = "warn"
-
-    if isinstance(zero_division, dict):
+    if isinstance(replace_undefined_by, dict):
         msg = (
-            "The dictionary passed as `zero_division` needs come in the format "
+            "The dictionary passed as `replace_undefined_by` needs come in the format "
             "`{'LR+': `value_1`, 'LR-': `value_2`}` where the value for `LR+` ranges "
             "from `1.0` to `np.inf` or is `np.nan` and the value for `LR-` ranges from "
-            f"`0.0` to `1.0` or is `np.nan`; got `{zero_division}`."
+            f"`0.0` to `1.0` or is `np.nan`; got `{replace_undefined_by}`."
         )
-        if ("LR+" in zero_division) and ("LR-" in zero_division):
-            desired_positive_likelihood_ratio = zero_division.get("LR+", None)
+        if ("LR+" in replace_undefined_by) and ("LR-" in replace_undefined_by):
+            desired_positive_likelihood_ratio = replace_undefined_by.get("LR+", None)
             try:
                 check_scalar(
                     desired_positive_likelihood_ratio,
@@ -2174,7 +2164,7 @@ def class_likelihood_ratios(
                 )
             except (TypeError, ValueError):
                 raise ValueError(msg)
-            desired_negative_likelihood_ratio = zero_division.get("LR-", None)
+            desired_negative_likelihood_ratio = replace_undefined_by.get("LR-", None)
             try:
                 check_scalar(
                     desired_negative_likelihood_ratio,
@@ -2217,41 +2207,42 @@ def class_likelihood_ratios(
 
     # if `fp == 0`a division by zero will occur
     if fp == 0:
-        if zero_division == "warn":
-            if tp == 0:
-                msg_beginning = (
-                    "No samples were predicted for the positive class and "
-                    "`positive_likelihood_ratio` is "
+        if replace_undefined_by == "nan":
+            positive_likelihood_ratio = np.nan
+            if raise_warning:
+                if tp == 0:
+                    msg_beginning = (
+                        "No samples were predicted for the positive class and "
+                        "`positive_likelihood_ratio` is "
+                    )
+                else:
+                    msg_beginning = "`positive_likelihood_ratio` is ill-defined and "
+                msg_end = "set to `np.nan`. Use the `replace_undefined_by` param to "
+                "control this behavior."
+                warnings.warn(
+                    msg_beginning + msg_end, UndefinedMetricWarning, stacklevel=2
                 )
-            else:
-                msg_beginning = "`positive_likelihood_ratio` is ill-defined and "
-            msg_end = "set to `np.nan`. Use the `zero_division` param to control this "
-            "behavior."
-            warnings.warn(msg_beginning + msg_end, UndefinedMetricWarning, stacklevel=2)
-            positive_likelihood_ratio = np.nan
-        elif zero_division == "nan":
-            positive_likelihood_ratio = np.nan
         else:
             # isinstance(zero_division.get("LR+", None), Real); this includes `np.inf`
             # and `np.nan`
-            positive_likelihood_ratio = np.float64(zero_division["LR+"])
+            positive_likelihood_ratio = np.float64(replace_undefined_by["LR+"])
     else:
         positive_likelihood_ratio = pos_num / pos_denom
 
     # if `tn == 0`a division by zero will occur
     if tn == 0:
-        if zero_division == "warn":
-            msg = (
-                "`negative_likelihood_ratio` is ill-defined and set to `np.nan`. "
-                "Use the `zero_division` param to control this behavior."
-            )
-            warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+        if replace_undefined_by == "nan":
             negative_likelihood_ratio = np.nan
-        elif zero_division == "nan":
-            negative_likelihood_ratio = np.nan
+            if raise_warning:
+                msg = (
+                    "`negative_likelihood_ratio` is ill-defined and set to `np.nan`. "
+                    "Use the `replace_undefined_by` param to control this behavior."
+                )
+                warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+
         else:
             # isinstance(zero_division.get("LR-", None), Real); this includes `np.nan`
-            negative_likelihood_ratio = np.float64(zero_division["LR-"])
+            negative_likelihood_ratio = np.float64(replace_undefined_by["LR-"])
     else:
         negative_likelihood_ratio = neg_num / neg_denom
 

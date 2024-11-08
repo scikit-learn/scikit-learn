@@ -1937,10 +1937,11 @@ the actual formulas).
   happen when cross-validating on highly imbalanced data and also leads to a division by
   zero.
 
-  In all of these cases :func:`class_likelihood_ratios` raises an
-  `UndefinedMetricWarning` and returns `np.nan` by default to avoid pollution when
-  averaging over cross-validation folds. Users can control set return values in case of
-  a division by zero with the `replace_undefined_by` param.
+  If a division by zero occurs and `raise_warning` is set to `True` (default),
+  :func:`class_likelihood_ratios` raises an `UndefinedMetricWarning` and returns
+  `np.nan` by default to avoid pollution when averaging over cross-validation folds.
+  Users can set return values in case of a division by zero with the
+  `replace_undefined_by` param.
 
   For a worked-out demonstration of the :func:`class_likelihood_ratios` function,
   see the example below.
