@@ -803,7 +803,7 @@ def test_likelihood_ratios_wrong_dict_replace_undefined_by(replace_undefined_by)
         ({"LR+": np.inf, "LR-": 0.0}, np.inf),
         ({"LR+": 2.0, "LR-": 0.0}, 2.0),
         ({"LR+": np.nan, "LR-": np.nan}, np.nan),
-        ("nan", np.nan),
+        (np.nan, np.nan),
     ],
 )
 def test_likelihood_ratios_replace_undefined_by_0_fp(replace_undefined_by, expected):
@@ -831,7 +831,7 @@ def test_likelihood_ratios_replace_undefined_by_0_fp(replace_undefined_by, expec
         ({"LR+": np.inf, "LR-": 0.0}, 0.0),
         ({"LR+": np.inf, "LR-": 0.5}, 0.5),
         ({"LR+": np.nan, "LR-": np.nan}, np.nan),
-        ("nan", np.nan),
+        (np.nan, np.nan),
     ],
 )
 def test_likelihood_ratios_replace_undefined_by_0_tn(replace_undefined_by, expected):

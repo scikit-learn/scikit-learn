@@ -1973,7 +1973,7 @@ def precision_recall_fscore_support(
         "raise_warning": ["boolean", Hidden(StrOptions({"deprecated"}))],
         "replace_undefined_by": [
             Hidden(StrOptions({"default"})),
-            StrOptions({"nan"}),
+            np.nan,
             dict,
         ],
     },
@@ -2049,11 +2049,11 @@ def class_likelihood_ratios(
             `raise_warning` was deprecated in version 1.7 and will be removed in 1.9,
             when an `UndefinedMetricWarning` will always raise.
 
-    replace_undefined_by : "nan" or dict, default="nan"
+    replace_undefined_by : np.nan or dict, default=np.nan
         Sets the return values for LR+ and LR- when there is a division by zero. Can
         take the following values:
 
-        - "nan" to return `np.nan` for both `LR+` and `LR-`
+        - `np.nan` to return `np.nan` for both `LR+` and `LR-`
         - a dict in the format `{"LR+": value_1, "LR-": value_2}` where the values can
           be non-negative floats, `np.inf` or `np.nan`. For example, `{"LR+": 1.0,
           "LR-": 1.0}` can be used for returning the worst scores, indicating a useless
@@ -2143,7 +2143,7 @@ def class_likelihood_ratios(
         raise_warning = True
 
     if replace_undefined_by == "default":
-        replace_undefined_by = "nan"
+        replace_undefined_by = np.nan
 
     if isinstance(replace_undefined_by, dict):
         msg = (
@@ -2207,21 +2207,19 @@ def class_likelihood_ratios(
 
     # if `fp == 0`a division by zero will occur
     if fp == 0:
-        if replace_undefined_by == "nan":
-            positive_likelihood_ratio = np.nan
-            if raise_warning:
-                if tp == 0:
-                    msg_beginning = (
-                        "No samples were predicted for the positive class and "
-                        "`positive_likelihood_ratio` is "
-                    )
-                else:
-                    msg_beginning = "`positive_likelihood_ratio` is ill-defined and "
-                msg_end = "set to `np.nan`. Use the `replace_undefined_by` param to "
-                "control this behavior."
-                warnings.warn(
-                    msg_beginning + msg_end, UndefinedMetricWarning, stacklevel=2
+        if raise_warning:
+            if tp == 0:
+                msg_beginning = (
+                    "No samples were predicted for the positive class and "
+                    "`positive_likelihood_ratio` is "
                 )
+            else:
+                msg_beginning = "`positive_likelihood_ratio` is ill-defined and "
+            msg_end = "set to `np.nan`. Use the `replace_undefined_by` param to "
+            "control this behavior."
+            warnings.warn(msg_beginning + msg_end, UndefinedMetricWarning, stacklevel=2)
+        if isinstance(replace_undefined_by, float) and np.isnan(replace_undefined_by):
+            positive_likelihood_ratio = replace_undefined_by
         else:
             # isinstance(zero_division.get("LR+", None), Real); this includes `np.inf`
             # and `np.nan`
@@ -2231,15 +2229,14 @@ def class_likelihood_ratios(
 
     # if `tn == 0`a division by zero will occur
     if tn == 0:
-        if replace_undefined_by == "nan":
-            negative_likelihood_ratio = np.nan
-            if raise_warning:
-                msg = (
-                    "`negative_likelihood_ratio` is ill-defined and set to `np.nan`. "
-                    "Use the `replace_undefined_by` param to control this behavior."
-                )
-                warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
-
+        if raise_warning:
+            msg = (
+                "`negative_likelihood_ratio` is ill-defined and set to `np.nan`. "
+                "Use the `replace_undefined_by` param to control this behavior."
+            )
+            warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+        if isinstance(replace_undefined_by, float) and np.isnan(replace_undefined_by):
+            negative_likelihood_ratio = replace_undefined_by
         else:
             # isinstance(zero_division.get("LR-", None), Real); this includes `np.nan`
             negative_likelihood_ratio = np.float64(replace_undefined_by["LR-"])
