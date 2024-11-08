@@ -1972,7 +1972,6 @@ def precision_recall_fscore_support(
         "sample_weight": ["array-like", None],
         "raise_warning": ["boolean", Hidden(StrOptions({"deprecated"}))],
         "replace_undefined_by": [
-            Hidden(StrOptions({"default"})),
             np.nan,
             dict,
         ],
@@ -1986,7 +1985,7 @@ def class_likelihood_ratios(
     labels=None,
     sample_weight=None,
     raise_warning="deprecated",
-    replace_undefined_by="default",
+    replace_undefined_by=np.nan,
 ):
     """Compute binary classification positive and negative likelihood ratios.
 
@@ -2118,10 +2117,8 @@ def class_likelihood_ratios(
     # The checks for `raise_warning==True` need to be removed and we will always warn,
     # the default return value of `replace_undefined_by` should be updated from `np.nan`
     # (which was kept for backwards compatibility) to the worst score for each metric
-    # respectively (1 for LR+ and 1 for LR-), the hidden option for
-    # `replace_undefined_by` ("default") needs to be replaced by the actual default
-    # value in the function signature, warning messages need to be updated, the Warns
-    # section in the docstring should not mention `raise_warning` anymore and the
+    # respectively (1 for LR+ and 1 for LR-), warning messages need to be updated, the
+    # Warns section in the docstring should not mention `raise_warning` anymore and the
     # "Mathematical divergences" section in model_evaluation.rst needs to be updated on
     # the new default behaviour of `replace_undefined_by`.
     y_true, y_pred = attach_unique(y_true, y_pred)
@@ -2141,9 +2138,6 @@ def class_likelihood_ratios(
 
     if raise_warning == "deprecated":
         raise_warning = True
-
-    if replace_undefined_by == "default":
-        replace_undefined_by = np.nan
 
     if isinstance(replace_undefined_by, dict):
         msg = (
