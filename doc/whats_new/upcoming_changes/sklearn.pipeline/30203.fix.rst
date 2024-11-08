@@ -1,0 +1,4 @@
+- Fixed an issue with tags and estimator type of :class:`~sklearn.pipeline.Pipeline`
+  when pipeline is empty. This allows the HTML representation of an empty
+  pipeline to be rendered correctly.
+  By :user:`Gennaro Daniele Acciaro <gdacciaro>`
