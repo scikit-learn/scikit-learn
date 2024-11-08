@@ -30,6 +30,7 @@ then
     then
         CIRCLE_BRANCH=$GITHUB_HEAD_REF
         CI_PULL_REQUEST=true
+        CI_TARGET_BRANCH=$GITHUB_BASE_REF
     else
         CIRCLE_BRANCH=$GITHUB_REF_NAME
     fi
@@ -183,7 +184,7 @@ ccache -s
 
 export OMP_NUM_THREADS=1
 
-if [[ "$CIRCLE_BRANCH" =~ ^main$ || -n "$CI_PULL_REQUEST" ]]
+if [[ "$CIRCLE_BRANCH" =~ ^main$ || ( -n "$CI_PULL_REQUEST" && "$CIRCLE_TARGET_BRANCH" =~ ^main$ ) ]]
 then
     towncrier build --yes
 fi
