@@ -388,6 +388,7 @@ API_REFERENCE = {
                     "InconsistentVersionWarning",
                     "NotFittedError",
                     "UndefinedMetricWarning",
+                    "EstimatorCheckFailedWarning",
                 ],
             },
         ],
@@ -1298,6 +1299,7 @@ API_REFERENCE = {
                 "autosummary": [
                     "estimator_checks.check_estimator",
                     "estimator_checks.parametrize_with_checks",
+                    "estimator_checks.estimator_checks_generator",
                 ],
             },
             {

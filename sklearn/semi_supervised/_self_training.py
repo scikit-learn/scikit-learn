@@ -613,10 +613,3 @@ class SelfTrainingClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             ),
         )
         return router
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags._xfail_checks.update(
-            {"check_non_transformer_estimators_n_iter": "n_iter_ can be 0."}
-        )
-        return tags

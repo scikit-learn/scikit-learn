@@ -907,16 +907,6 @@ def test_sklearn_tags_with_empty_pipeline():
     be = BaseEstimator()
 
     expected_tags = be.__sklearn_tags__()
-    expected_tags._xfail_checks = {
-        "check_dont_overwrite_parameters": (
-            "Pipeline changes the `steps` parameter, which it shouldn't."
-            "Therefore this test is x-fail until we fix this."
-        ),
-        "check_estimators_overwrite_params": (
-            "Pipeline changes the `steps` parameter, which it shouldn't."
-            "Therefore this test is x-fail until we fix this."
-        ),
-    }
     assert empty_pipeline.__sklearn_tags__() == expected_tags
 
 
