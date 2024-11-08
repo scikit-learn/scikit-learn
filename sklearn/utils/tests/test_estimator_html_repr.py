@@ -142,7 +142,7 @@ def test_get_visual_block_column_transformer():
 
 def test_estimator_html_repr_an_empty_pipeline():
     """Check that the representation of an empty Pipeline does not fail.
-    
+
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/30197
     """
