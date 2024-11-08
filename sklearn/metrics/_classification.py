@@ -2092,15 +2092,16 @@ def class_likelihood_ratios(
     --------
     >>> import numpy as np
     >>> from sklearn.metrics import class_likelihood_ratios
-    >>> class_likelihood_ratios([0, 1, 0, 1, 0], [1, 1, 0, 0, 0])
+    >>> class_likelihood_ratios([0, 1, 0, 1, 0], [1, 1, 0, 0, 0],
+    ...                          replace_undefined_by=np.nan)
     (np.float64(1.5), np.float64(0.75))
     >>> y_true = np.array(["non-cat", "cat", "non-cat", "cat", "non-cat"])
     >>> y_pred = np.array(["cat", "cat", "non-cat", "non-cat", "non-cat"])
-    >>> class_likelihood_ratios(y_true, y_pred)
+    >>> class_likelihood_ratios(y_true, y_pred, replace_undefined_by=np.nan)
     (np.float64(1.33...), np.float64(0.66...))
     >>> y_true = np.array(["non-zebra", "zebra", "non-zebra", "zebra", "non-zebra"])
     >>> y_pred = np.array(["zebra", "zebra", "non-zebra", "non-zebra", "non-zebra"])
-    >>> class_likelihood_ratios(y_true, y_pred)
+    >>> class_likelihood_ratios(y_true, y_pred, replace_undefined_by=np.nan)
     (np.float64(1.5), np.float64(0.75))
 
     To avoid ambiguities, use the notation `labels=[negative_class,
@@ -2108,7 +2109,8 @@ def class_likelihood_ratios(
 
     >>> y_true = np.array(["non-cat", "cat", "non-cat", "cat", "non-cat"])
     >>> y_pred = np.array(["cat", "cat", "non-cat", "non-cat", "non-cat"])
-    >>> class_likelihood_ratios(y_true, y_pred, labels=["non-cat", "cat"])
+    >>> class_likelihood_ratios(y_true, y_pred, labels=["non-cat", "cat"],
+    ...                          replace_undefined_by=np.nan)
     (np.float64(1.5), np.float64(0.75))
     """
     # TODO(1.9): When `raise_warning` is removed, the following changes need to be made:
