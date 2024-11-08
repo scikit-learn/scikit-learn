@@ -8,7 +8,12 @@ Whether you are proposing an estimator for inclusion in scikit-learn,
 developing a separate package compatible with scikit-learn, or
 implementing custom components for your own projects, this chapter
 details how to develop objects that safely interact with scikit-learn
-Pipelines and model selection tools.
+pipelines and model selection tools.
+
+This section details the public API you should use and implement for a scikit-learn
+compatible estimator. Inside scikit-learn itself, we experiment and use some private
+tools and our goal is always to make them public once they are stable enough, so that
+you can also use them in your own projects.
 
 .. currentmodule:: sklearn
 
@@ -17,10 +22,16 @@ Pipelines and model selection tools.
 APIs of scikit-learn objects
 ============================
 
-To have a uniform API, we try to have a common basic API for all the
-objects. In addition, to avoid the proliferation of framework code, we
-try to adopt simple conventions and limit to a minimum the number of
-methods an object must implement.
+There are two major types of estimators. You can think of the first group as simple
+estimators, which consists most estimators, such as
+:class:`~sklearn.linear_model.LogisticRegression` or
+:class:`~sklearn.ensemble.RandomForestClassifier`. And the second group are
+meta-estimators, which are estimators that wrap other estimators.
+:class:`~sklearn.pipeline.Pipeline` and :class:`~sklearn.model_selection.GridSearchCV`
+are two examples of meta-estimators.
+
+Here we start with a few vocabulary, and then we illustrate how you can implement
+your own estimators.
 
 Elements of the scikit-learn API are described more definitively in the
 :ref:`glossary`.
@@ -28,8 +39,7 @@ Elements of the scikit-learn API are described more definitively in the
 Different objects
 -----------------
 
-The main objects in scikit-learn are (one class can implement
-multiple interfaces):
+The main objects in scikit-learn are (one class can implement multiple interfaces):
 
 :Estimator:
 
@@ -66,8 +76,9 @@ multiple interfaces):
 
 :Model:
 
-    A model that can give a `goodness of fit <https://en.wikipedia.org/wiki/Goodness_of_fit>`_
-    measure or a likelihood of unseen data, implements (higher is better)::
+    A model that can give a `goodness of fit
+    <https://en.wikipedia.org/wiki/Goodness_of_fit>`_ measure or a likelihood of
+    unseen data, implements (higher is better)::
 
       score = model.score(data)
 
@@ -81,33 +92,35 @@ classifier or a regressor. All estimators implement the fit method::
 
     estimator.fit(X, y)
 
-All built-in estimators also have a ``set_params`` method, which sets
-data-independent parameters (overriding previous parameter values passed
-to ``__init__``).
-
-All estimators in the main scikit-learn codebase should inherit from
-``sklearn.base.BaseEstimator``.
+Out of all the methods that an estimator implements, ``fit`` is usually the one you
+want to implement yourself. Other methods such as ``set_params``, ``get_params``, etc.
+are implemented in :class:`~sklearn.base.BaseEstimator`, which you should inherit from.
+You might need to inherit from more mixins, which we will explain later.
 
 Instantiation
 ^^^^^^^^^^^^^
 
-This concerns the creation of an object. The object's ``__init__`` method
-might accept constants as arguments that determine the estimator's behavior
-(like the C constant in SVMs). It should not, however, take the actual training
-data as an argument, as this is left to the ``fit()`` method::
+This concerns the creation of an object. The object's ``__init__`` method might accept
+constants as arguments that determine the estimator's behavior (like the ``alpha``
+constant in :class:`~sklearn.linear_model.SGDClassifier`). It should not, however, take
+the actual training data as an argument, as this is left to the ``fit()`` method::
 
-    clf2 = SVC(C=2.3)
-    clf3 = SVC([[1, 2], [2, 3]], [-1, 1]) # WRONG!
+    clf2 = SGDClassifier(alpha=2.3)
+    clf3 = SGDClassifier([[1, 2], [2, 3]], [-1, 1]) # WRONG!
 
 
-The arguments accepted by ``__init__`` should all be keyword arguments
-with a default value. In other words, a user should be able to instantiate
-an estimator without passing any arguments to it. The arguments should all
-correspond to hyperparameters describing the model or the optimisation
-problem the estimator tries to solve. These initial arguments (or parameters)
-are always remembered by the estimator.
-Also note that they should not be documented under the "Attributes" section,
-but rather under the "Parameters" section for that estimator.
+Ideally, the arguments accepted by ``__init__`` should all be keyword arguments with a
+default value. In other words, a user should be able to instantiate an estimator without
+passing any arguments to it. In some cases, where there are no sane defaults for an
+argument, they can be left without a default value. In scikit-learn itself, we have
+very few places, only in some meta-estimators, where the sub-estimator(s) argument is
+a required argument.
+
+The arguments should all correspond to hyperparameters describing the model or the
+optimisation problem the estimator tries to solve. These initial arguments (or
+parameters) are always remembered by the estimator. Also note that they should not be
+documented under the "Attributes" section, but rather under the "Parameters" section for
+that estimator.
 
 In addition, **every keyword argument accepted by** ``__init__`` **should
 correspond to an attribute on the instance**. Scikit-learn relies on this to
@@ -119,10 +132,10 @@ To summarize, an ``__init__`` should look like::
         self.param1 = param1
         self.param2 = param2
 
-There should be no logic, not even input validation,
-and the parameters should not be changed.
-The corresponding logic should be put where the parameters are used,
-typically in ``fit``.
+There should be no logic, not even input validation, and the parameters should not be
+changed; which also means ideally they should not be mutable objects such as lists or
+dictionaries. If they're mutable, they should be copied before being modified. The
+corresponding logic should be put where the parameters are used, typically in ``fit``.
 The following is wrong::
 
     def __init__(self, param1=1, param2=2, param3=3):
@@ -134,19 +147,22 @@ The following is wrong::
         # the argument in the constructor
         self.param3 = param2
 
-The reason for postponing the validation is that the same validation
-would have to be performed in ``set_params``,
-which is used in algorithms like ``GridSearchCV``.
+The reason for postponing the validation is that if ``__init__`` includes input
+validation, then the same validation would have to be performed in ``set_params``, which
+is used in algorithms like :class:`~sklearn.model_selection.GridSearchCV`.
 
 Fitting
 ^^^^^^^
 
-The next thing you will probably want to do is to estimate some
-parameters in the model. This is implemented in the ``fit()`` method.
+The next thing you will probably want to do is to estimate some parameters in the model.
+This is implemented in the ``fit()`` method, and it's where the training happens.
+For instance, this is where you have the computation to learn or estimate coefficients
+for a linear model.
 
 The ``fit()`` method takes the training data as arguments, which can be one
 array in the case of unsupervised learning, or two arrays in the case
-of supervised learning.
+of supervised learning. Other metadata that come with the training data, such as
+``sample_weight``, can also be passed to ``fit`` as keyword arguments.
 
 Note that the model is fitted using ``X`` and ``y``, but the object holds no
 reference to ``X`` and ``y``. There are, however, some exceptions to this, as in
@@ -163,8 +179,8 @@ y             array-like of shape (n_samples,)
 kwargs        optional data-dependent parameters
 ============= ======================================================
 
-``X.shape[0]`` should be the same as ``y.shape[0]``. If this requisite
-is not met, an exception of type ``ValueError`` should be raised.
+The number of samples, i.e. ``X.shape[0]`` should be the same as ``y.shape[0]``. If this
+requirement is not met, an exception of type ``ValueError`` should be raised.
 
 ``y`` might be ignored in the case of unsupervised learning. However, to
 make it possible to use the estimator as part of a pipeline that can
@@ -178,17 +194,15 @@ the second place if they are implemented.
 The method should return the object (``self``). This pattern is useful
 to be able to implement quick one liners in an IPython session such as::
 
-  y_predicted = SVC(C=100).fit(X_train, y_train).predict(X_test)
+  y_predicted = SGDClassifier(alpha=10).fit(X_train, y_train).predict(X_test)
 
-Depending on the nature of the algorithm, ``fit`` can sometimes also
-accept additional keywords arguments. However, any parameter that can
-have a value assigned prior to having access to the data should be an
-``__init__`` keyword argument. **fit parameters should be restricted
-to directly data dependent variables**. For instance a Gram matrix or
-an affinity matrix which are precomputed from the data matrix ``X`` are
-data dependent. A tolerance stopping criterion ``tol`` is not directly
-data dependent (although the optimal value according to some scoring
-function probably is).
+Depending on the nature of the algorithm, ``fit`` can sometimes also accept additional
+keywords arguments. However, any parameter that can have a value assigned prior to
+having access to the data should be an ``__init__`` keyword argument. Ideally, **fit
+parameters should be restricted to directly data dependent variables**. For instance a
+Gram matrix or an affinity matrix which are precomputed from the data matrix ``X`` are
+data dependent. A tolerance stopping criterion ``tol`` is not directly data dependent
+(although the optimal value according to some scoring function probably is).
 
 When ``fit`` is called, any previous call to ``fit`` should be ignored. In
 general, calling ``estimator.fit(X1)`` and then ``estimator.fit(X2)`` should
@@ -203,37 +217,40 @@ default initialization strategy.
 Estimated Attributes
 ^^^^^^^^^^^^^^^^^^^^
 
-Attributes that have been estimated from the data must always have a name
-ending with trailing underscore, for example the coefficients of
-some regression estimator would be stored in a ``coef_`` attribute after
-``fit`` has been called.
+According to scikit-learn conventions, attributes which you'd want to expose to your
+users as public attributes and have been estimated or learned from the data must always
+have a name ending with trailing underscore, for example the coefficients of some
+regression estimator would be stored in a ``coef_`` attribute after ``fit`` has been
+called. Similarly, attributes that you learn in the process and you'd like to store yet
+not expose to the user, should have a leading underscure, e.g. ``_intermediate_coefs``.
+You'd need to document the first group (with a trailing underscore) as "Attributes" and
+no need to document the second group (with a leading underscore).
 
-The estimated attributes are expected to be overridden when you call ``fit``
-a second time.
-
-Optional Arguments
-^^^^^^^^^^^^^^^^^^
-
-In iterative algorithms, the number of iterations should be specified by
-an integer called ``n_iter``.
+The estimated attributes are expected to be overridden when you call ``fit`` a second
+time.
 
 Universal attributes
 ^^^^^^^^^^^^^^^^^^^^
 
 Estimators that expect tabular input should set a `n_features_in_`
 attribute at `fit` time to indicate the number of features that the estimator
-expects for subsequent calls to `predict` or `transform`.
-See
-`SLEP010
-<https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep010/proposal.html>`_
+expects for subsequent calls to :term:`predict` or :term:`transform`.
+See `SLEP010
+<https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep010/proposal.html>`__
 for details.
+
+Similarly, if estimators are given dataframes such as pandas or polars, they should
+set a ``feature_names_in_`` attribute to indicate the features names of the input data,
+detailed in `SLEP007
+<https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep007/proposal.html>`__.
+Using :func:`~sklearn.utils.validation.validate_data` would automatically set these
+attributes for you.
 
 .. _rolling_your_own_estimator:
 
 Rolling your own estimator
 ==========================
-If you want to implement a new estimator that is scikit-learn-compatible,
-whether it is just for you or for contributing it to scikit-learn, there are
+If you want to implement a new estimator that is scikit-learn compatible, there are
 several internals of scikit-learn that you should be aware of in addition to
 the scikit-learn API outlined above. You can check whether your estimator
 adheres to the scikit-learn interface and standards by running
@@ -243,32 +260,33 @@ decorator can also be used (see its docstring for details and possible
 interactions with `pytest`)::
 
   >>> from sklearn.utils.estimator_checks import check_estimator
-  >>> from sklearn.svm import LinearSVC
-  >>> check_estimator(LinearSVC())  # passes
+  >>> from sklearn.tree import DecisionTreeClassifier
+  >>> check_estimator(DecisionTreeClassifier())  # passes
 
 The main motivation to make a class compatible to the scikit-learn estimator
 interface might be that you want to use it together with model evaluation and
-selection tools such as :class:`model_selection.GridSearchCV` and
-:class:`pipeline.Pipeline`.
+selection tools such as :class:`~model_selection.GridSearchCV` and
+:class:`~pipeline.Pipeline`.
 
 Before detailing the required interface below, we describe two ways to achieve
 the correct interface more easily.
 
 .. topic:: Project template:
 
-    We provide a `project template <https://github.com/scikit-learn-contrib/project-template/>`_
-    which helps in the creation of Python packages containing scikit-learn compatible estimators.
-    It provides:
+    We provide a `project template
+    <https://github.com/scikit-learn-contrib/project-template/>`_ which helps in the
+    creation of Python packages containing scikit-learn compatible estimators. It
+    provides:
 
     * an initial git repository with Python package directory structure
     * a template of a scikit-learn estimator
-    * an initial test suite including use of ``check_estimator``
+    * an initial test suite including use of :func:`~utils.parametrize_with_checks`
     * directory structures and scripts to compile documentation and example
       galleries
-    * scripts to manage continuous integration (testing on Linux and Windows)
-    * instructions from getting started to publishing on `PyPi <https://pypi.org/>`_
+    * scripts to manage continuous integration (testing on Linux, MacOS, and Windows)
+    * instructions from getting started to publishing on `PyPi <https://pypi.org/>`__
 
-.. topic:: ``BaseEstimator`` and mixins:
+.. topic:: :class:`base.BaseEstimator` and mixins:
 
     We tend to use "duck typing", so building an estimator which follows
     the API suffices for compatibility, without needing to inherit from or
