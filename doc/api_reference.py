@@ -123,6 +123,8 @@ API_REFERENCE = {
                     "is_classifier",
                     "is_clusterer",
                     "is_regressor",
+                    "is_transformer",
+                    "is_outlier_detector",
                 ],
             }
         ],

@@ -3,4 +3,4 @@
   :class:`neighbors.RadiusNeighborsClassifier` accept `X=None` as input. In this case
   predictions for all training set points are returned, and points are not included
   into their own neighbors.
-  :pr:`30047` by :user:`Dmitry Kobak <dkobak>`.
+  By :user:`Dmitry Kobak <dkobak>`
