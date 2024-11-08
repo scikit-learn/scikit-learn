@@ -171,7 +171,7 @@ class Pipeline(_BaseComposition):
 
         You can only set this if metadata routing is enabled, which you
         can enable using ``sklearn.set_config(enable_metadata_routing=True)``.
-        
+
         .. versionadded:: 1.6
 
     memory : str or object with the joblib.Memory interface, default=None
@@ -1463,7 +1463,7 @@ def make_pipeline(*steps, memory=None, transform_input=None, verbose=False):
 
         You can only set this if metadata routing is enabled, which you
         can enable using ``sklearn.set_config(enable_metadata_routing=True)``.
-        
+
         .. versionadded:: 1.6
 
     verbose : bool, default=False
