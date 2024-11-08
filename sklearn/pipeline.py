@@ -348,6 +348,11 @@ class Pipeline(_BaseComposition):
     # TODO(1.8): Remove this property
     @property
     def _estimator_type(self):
+        """Return the estimator type of the last step in the pipeline."""
+
+        if not self.steps:
+            return None
+
         return self.steps[-1][1]._estimator_type
 
     @property
@@ -1059,6 +1064,9 @@ class Pipeline(_BaseComposition):
                 "Therefore this test is x-fail until we fix this."
             ),
         }
+
+        if not self.steps:
+            return tags
 
         try:
             if self.steps[0][1] is not None and self.steps[0][1] != "passthrough":
