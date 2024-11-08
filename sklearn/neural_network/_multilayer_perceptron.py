@@ -208,11 +208,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         # Forward propagate
         hidden_activation = ACTIVATIONS[self.activation]
-        for i in range(self.n_layers_ - 1):
+        for i in range(self.n_layers_ - 2):
             activation = safe_sparse_dot(activation, self.coefs_[i])
             activation += self.intercepts_[i]
-            if i != self.n_layers_ - 2:
-                hidden_activation(activation)
+            hidden_activation(activation)
         output_activation = ACTIVATIONS[self.out_activation_]
         output_activation(activation)
 
