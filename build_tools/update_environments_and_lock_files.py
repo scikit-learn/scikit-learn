@@ -301,6 +301,7 @@ build_metadata_list = [
             "sphinx-remove-toctrees",
             "sphinx-design",
             "pydata-sphinx-theme",
+            "towncrier",
         ],
         "pip_dependencies": [
             "sphinxext-opengraph",
@@ -327,6 +328,7 @@ build_metadata_list = [
             "sphinxcontrib-sass": "min",
             "sphinx-remove-toctrees": "min",
             "pydata-sphinx-theme": "min",
+            "towncrier": "min",
         },
     },
     {
@@ -353,6 +355,7 @@ build_metadata_list = [
             "sphinx-remove-toctrees",
             "sphinx-design",
             "pydata-sphinx-theme",
+            "towncrier",
         ],
         "pip_dependencies": [
             "jupyterlite-sphinx",
