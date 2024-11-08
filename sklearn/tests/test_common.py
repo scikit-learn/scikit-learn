@@ -45,6 +45,7 @@ from sklearn.utils._tags import (
 )
 from sklearn.utils._test_common.instance_generator import (
     _get_check_estimator_ids,
+    _get_expected_failed_checks,
     _tested_estimators,
 )
 from sklearn.utils._testing import (
@@ -118,7 +119,9 @@ def test_get_check_estimator_ids(val, expected):
     assert _get_check_estimator_ids(val) == expected
 
 
-@parametrize_with_checks(list(_tested_estimators()))
+@parametrize_with_checks(
+    list(_tested_estimators()), expected_failed_checks=_get_expected_failed_checks
+)
 def test_estimators(estimator, check, request):
     # Common tests for estimator instances
     with ignore_warnings(
@@ -127,8 +130,14 @@ def test_estimators(estimator, check, request):
         check(estimator)
 
 
-def test_check_estimator_generate_only():
-    all_instance_gen_checks = check_estimator(LogisticRegression(), generate_only=True)
+# TODO(1.8): remove test when generate_only is removed
+def test_check_estimator_generate_only_deprecation():
+    """Check that check_estimator with generate_only=True raises a deprecation
+    warning."""
+    with pytest.warns(FutureWarning, match="`generate_only` is deprecated in 1.6"):
+        all_instance_gen_checks = check_estimator(
+            LogisticRegression(), generate_only=True
+        )
     assert isgenerator(all_instance_gen_checks)
 
 
@@ -236,7 +245,6 @@ def test_valid_tag_types(estimator):
     assert isinstance(tags.non_deterministic, bool)
     assert isinstance(tags.requires_fit, bool)
     assert isinstance(tags._skip_test, bool)
-    assert isinstance(tags._xfail_checks, dict)
 
     assert isinstance(tags.target_tags.required, bool)
     assert isinstance(tags.target_tags.one_d_labels, bool)
@@ -305,8 +313,9 @@ column_name_estimators = list(
 def test_pandas_column_name_consistency(estimator):
     if isinstance(estimator, ColumnTransformer):
         pytest.skip("ColumnTransformer is not tested here")
-    tags = get_tags(estimator)
-    if "check_dataframe_column_names_consistency" in tags._xfail_checks:
+    if "check_dataframe_column_names_consistency" in _get_expected_failed_checks(
+        estimator
+    ):
         pytest.skip(
             "Estimator does not support check_dataframe_column_names_consistency"
         )

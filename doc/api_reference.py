@@ -123,6 +123,8 @@ API_REFERENCE = {
                     "is_classifier",
                     "is_clusterer",
                     "is_regressor",
+                    "is_transformer",
+                    "is_outlier_detector",
                 ],
             }
         ],
@@ -386,6 +388,7 @@ API_REFERENCE = {
                     "InconsistentVersionWarning",
                     "NotFittedError",
                     "UndefinedMetricWarning",
+                    "EstimatorCheckFailedWarning",
                 ],
             },
         ],
@@ -1296,6 +1299,7 @@ API_REFERENCE = {
                 "autosummary": [
                     "estimator_checks.check_estimator",
                     "estimator_checks.parametrize_with_checks",
+                    "estimator_checks.estimator_checks_generator",
                 ],
             },
             {

@@ -405,6 +405,11 @@ class Pipeline(_BaseComposition):
     # TODO(1.8): Remove this property
     @property
     def _estimator_type(self):
+        """Return the estimator type of the last step in the pipeline."""
+
+        if not self.steps:
+            return None
+
         return self.steps[-1][1]._estimator_type
 
     @property
@@ -1210,16 +1215,9 @@ class Pipeline(_BaseComposition):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_dont_overwrite_parameters": (
-                "Pipeline changes the `steps` parameter, which it shouldn't."
-                "Therefore this test is x-fail until we fix this."
-            ),
-            "check_estimators_overwrite_params": (
-                "Pipeline changes the `steps` parameter, which it shouldn't."
-                "Therefore this test is x-fail until we fix this."
-            ),
-        }
+
+        if not self.steps:
+            return tags
 
         try:
             if self.steps[0][1] is not None and self.steps[0][1] != "passthrough":
@@ -2114,15 +2112,6 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             )
 
         return router
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_estimators_overwrite_params": "FIXME",
-            "check_estimators_nan_inf": "FIXME",
-            "check_dont_overwrite_parameters": "FIXME",
-        }
-        return tags
 
 
 def make_union(*transformers, n_jobs=None, verbose=False):

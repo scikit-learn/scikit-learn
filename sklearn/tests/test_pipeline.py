@@ -20,6 +20,7 @@ from sklearn.base import (
     TransformerMixin,
     clone,
     is_classifier,
+    is_regressor,
 )
 from sklearn.cluster import KMeans
 from sklearn.datasets import load_iris
@@ -47,6 +48,7 @@ from sklearn.tests.metadata_routing_common import (
     _Registry,
     check_recorded_metadata,
 )
+from sklearn.utils import get_tags
 from sklearn.utils._metadata_requests import COMPOSITE_METHODS, METHODS
 from sklearn.utils._testing import (
     MinimalClassifier,
@@ -872,6 +874,42 @@ def test_make_pipeline():
     assert pipe.steps[0][0] == "transf-1"
     assert pipe.steps[1][0] == "transf-2"
     assert pipe.steps[2][0] == "fitparamt"
+
+
+@pytest.mark.parametrize(
+    "pipeline, check_estimator_type",
+    [
+        (make_pipeline(StandardScaler(), LogisticRegression()), is_classifier),
+        (make_pipeline(StandardScaler(), LinearRegression()), is_regressor),
+        (
+            make_pipeline(StandardScaler()),
+            lambda est: get_tags(est).estimator_type is None,
+        ),
+        (Pipeline([]), lambda est: est._estimator_type is None),
+    ],
+)
+def test_pipeline_estimator_type(pipeline, check_estimator_type):
+    """Check that the estimator type returned by the pipeline is correct.
+
+    Non-regression test as part of:
+    https://github.com/scikit-learn/scikit-learn/issues/30197
+    """
+    # Smoke test the repr
+    repr(pipeline)
+    assert check_estimator_type(pipeline)
+
+
+def test_sklearn_tags_with_empty_pipeline():
+    """Check that we propagate properly the tags in a Pipeline.
+
+    Non-regression test as part of:
+    https://github.com/scikit-learn/scikit-learn/issues/30197
+    """
+    empty_pipeline = Pipeline(steps=[])
+    be = BaseEstimator()
+
+    expected_tags = be.__sklearn_tags__()
+    assert empty_pipeline.__sklearn_tags__() == expected_tags
 
 
 def test_feature_union_weights():
