@@ -2042,14 +2042,12 @@ def class_likelihood_ratios(
         Sample weights.
 
     raise_warning : bool, default=True
-        Whether or not a case-specific warning message is raised when there is a
-        zero division. Even if the error is not raised, the function will return
-        nan in such cases.
+        Whether or not a case-specific warning message is raised when there is
+        division by zero.
 
-        .. deprecated:: 1.6
-            `raise_warning` was deprecated in version 1.6 and will be removed in 1.8.
-            To define the return values in case of a division by zero, use
-            `zero_division` instead.
+        .. deprecated:: 1.7
+            `raise_warning` was deprecated in version 1.7 and will be removed in 1.9,
+            when an `UndefinedMetricWarning` will always raise.
 
     zero_division : "warn", "nan" or dict, default="warn"
         Sets the return values for LR+ and LR- when there is a division by zero. Can
@@ -2066,7 +2064,7 @@ def class_likelihood_ratios(
         If a division by zero occurs, only the affected metric is replaced with the set
         value; the other metric is calculated as usual.
 
-        .. versionadded:: 1.6
+        .. versionadded:: 1.7
 
     Returns
     -------
@@ -2117,7 +2115,7 @@ def class_likelihood_ratios(
     >>> class_likelihood_ratios(y_true, y_pred, labels=["non-cat", "cat"])
     (np.float64(1.5), np.float64(0.75))
     """
-    # TODO(1.8): When `raise_warning` is removed, the following changes need to be made
+    # TODO(1.9): When `raise_warning` is removed, the following changes need to be made
     # to match the other functions that take a zero_division param: The default return
     # value with zero_division="warn" should be updated to the worst score for each
     # metric respectively (1 for LR+ and 1 for LR-), return values and warning messages
@@ -2143,9 +2141,8 @@ def class_likelihood_ratios(
             )
 
         warnings.warn(
-            "`raise_warning` was deprecated in version 1.6 and will be removed "
-            "in 1.8. To control the warning behaviour in case of a division by "
-            "zero use `zero_division='warn'` instead.",
+            "`raise_warning` was deprecated in version 1.7 and will be removed "
+            "in 1.9, when an `UndefinedMetricWarning` will always raise.",
             FutureWarning,
         )
 

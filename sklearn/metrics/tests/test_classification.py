@@ -759,6 +759,7 @@ def test_likelihood_ratios():
     assert_allclose(neg, 12 / 27)
 
 
+# TODO(1.9): remove test
 @pytest.mark.parametrize("raise_warning", [True, False])
 def test_likelihood_ratios_raise_warning_deprecation(raise_warning):
     """Test that class_likelihood_ratios raises a `FutureWarning` when `raise_warning`
@@ -766,7 +767,7 @@ def test_likelihood_ratios_raise_warning_deprecation(raise_warning):
     y_true = np.array([1, 0])
     y_pred = np.array([1, 0])
 
-    msg = "`raise_warning` was deprecated in version 1.6 and will be removed in 1.8."
+    msg = "`raise_warning` was deprecated in version 1.7 and will be removed in 1.9."
     with pytest.warns(FutureWarning, match=msg):
         class_likelihood_ratios(y_true, y_pred, raise_warning=raise_warning)
 
