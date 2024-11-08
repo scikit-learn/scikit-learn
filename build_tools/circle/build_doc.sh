@@ -36,6 +36,13 @@ then
     fi
 fi
 
+if [ -n "$CI_PULL_REQUEST" ] && [ -z "$CI_TARGET_BRANCH" ]
+then
+    # Get the target branch name when using CircleCI
+    PR_RESPONSE=$(curl -s "https://api.github.com/repos/scikit-learn/scikit-learn/pulls/$CIRCLE_PR_NUMBER")
+    CI_TARGET_BRANCH=$(echo "$PR_RESPONSE" | jq -r .base.ref)
+fi
+
 get_build_type() {
     if [ -z "$CIRCLE_SHA1" ]
     then
@@ -184,7 +191,7 @@ ccache -s
 
 export OMP_NUM_THREADS=1
 
-if [[ "$CIRCLE_BRANCH" =~ ^main$ || ( -n "$CI_PULL_REQUEST" && "$CIRCLE_TARGET_BRANCH" =~ ^main$ ) ]]
+if [[ "$CIRCLE_BRANCH" =~ ^main$ || ( -n "$CI_PULL_REQUEST" && "$CI_TARGET_BRANCH" =~ ^main$ ) ]]
 then
     towncrier build --yes
 fi
