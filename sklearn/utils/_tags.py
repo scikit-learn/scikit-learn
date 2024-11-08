@@ -226,18 +226,6 @@ class Tags:
         Whether to skip common tests entirely. Don't use this unless
         you have a *very good* reason.
 
-    _xfail_checks : dict[str, str], default={}
-        Dictionary ``{check_name: reason}`` of common checks that will
-        be marked as `XFAIL` for pytest, when using
-        :func:`~sklearn.utils.estimator_checks.parametrize_with_checks`. These
-        checks will be simply ignored and not run by
-        :func:`~sklearn.utils.estimator_checks.check_estimator`, but a
-        `SkipTestWarning` will be raised.  Don't use this unless there
-        is a *very good* reason for your estimator not to pass the
-        check.  Also note that the usage of this tag is highly subject
-        to change because we are trying to make it more flexible: be
-        prepared for breaking changes in the future.
-
     input_tags : :class:`InputTags`
         The input data(X) tags.
     """
@@ -252,7 +240,6 @@ class Tags:
     non_deterministic: bool = False
     requires_fit: bool = True
     _skip_test: bool = False
-    _xfail_checks: dict[str, str] = field(default_factory=dict)
     input_tags: InputTags = field(default_factory=InputTags)
 
 
