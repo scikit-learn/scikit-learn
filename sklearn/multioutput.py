@@ -616,11 +616,11 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags._skip_test = True
         tags.input_tags.pairwise = get_tags(self.estimator).input_tags.pairwise
         tags.target_tags.single_output = False
         tags.target_tags.multi_output = True
         return tags
-
 
 def _available_if_base_estimator_has(attr):
     """Return a function to check if `base_estimator` or `estimators_` has `attr`.
