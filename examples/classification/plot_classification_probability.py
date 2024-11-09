@@ -51,9 +51,7 @@ kernel = 1.0 * RBF([1.0, 1.0])  # for GPC
 # Create different classifiers.
 classifiers = {
     "L1 logistic": LogisticRegression(C=C, penalty="l1", solver="saga", max_iter=10000),
-    "L2 logistic": LogisticRegression(
-        C=C, penalty="l2", solver="saga", max_iter=10000
-    ),
+    "L2 logistic": LogisticRegression(C=C, penalty="l2", solver="saga", max_iter=10000),
     "RBF kernel logistic": make_pipeline(
         Nystroem(gamma=5e-1, n_components=50, random_state=1),
         LogisticRegression(C=C, penalty="l1", solver="saga", max_iter=10000),
@@ -64,11 +62,15 @@ classifiers = {
 
 n_classifiers = len(classifiers)
 scatter_kwargs = {
-    "s": 25, "marker": "o", "linewidths":0.8, "edgecolor":"k", "alpha":0.7
+    "s": 25,
+    "marker": "o",
+    "linewidths": 0.8,
+    "edgecolor": "k",
+    "alpha": 0.7,
 }
 y_unique = np.unique(y)
 # colors when plotting all classes (show class with max 'predict_proba')
-colors = plt.get_cmap('viridis', len(y_unique)).colors
+colors = plt.get_cmap("viridis", len(y_unique)).colors
 
 fig, axes = plt.subplots(
     nrows=n_classifiers,
@@ -89,7 +91,7 @@ for classifier_idx, (name, classifier) in enumerate(classifiers.items()):
             ax=axes[classifier_idx, label],
             vmin=0,
             vmax=1,
-            cmap='Blues',
+            cmap="Blues",
         )
         axes[classifier_idx, label].set_title(f"Class {label}")
         # plot data predicted to belong to given class
@@ -136,16 +138,14 @@ cmaps = [
 ]
 
 for label in y_unique:
-    ax_max = plt.axes([0.73, (0.06-(label*0.04)), 0.16, 0.015])
+    ax_max = plt.axes([0.73, (0.06 - (label * 0.04)), 0.16, 0.015])
     plt.title(f"Probability class {label}", fontsize=10)
     _ = plt.colorbar(
-        cm.ScalarMappable(
-            norm=None, cmap=cmaps[label]
-        ),
+        cm.ScalarMappable(norm=None, cmap=cmaps[label]),
         cax=ax_max,
         orientation="horizontal",
     )
-    if label in (0,1):
+    if label in (0, 1):
         ax_max.set(xticks=(), yticks=())
 
 plt.show()
