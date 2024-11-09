@@ -1,4 +1,4 @@
-#%%
+# %%
 """
 ============================
 Feature Extraction Examples
@@ -11,15 +11,15 @@ This example demonstrates how to use the `DictVectorizer` and `FeatureHasher` fr
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
-#%%
+# %%
 import numpy as np
 from sklearn.feature_extraction import DictVectorizer, FeatureHasher
 
 # Sample data: list of dictionaries
 data = [
-    {'feature1': 1, 'feature2': 2},
-    {'feature1': 3, 'feature2': 4},
-    {'feature1': 5, 'feature2': 6}
+    {"feature1": 1, "feature2": 2},
+    {"feature1": 3, "feature2": 4},
+    {"feature1": 5, "feature2": 6},
 ]
 
 # Initialize the DictVectorizer
@@ -35,7 +35,7 @@ print("Feature names:", vec.get_feature_names_out())
 print("Feature matrix:\n", feature_matrix)
 
 # Initialize the FeatureHasher
-hasher = FeatureHasher(n_features=10, input_type='dict')
+hasher = FeatureHasher(n_features=10, input_type="dict")
 
 # Transform the data into a hashed feature matrix using FeatureHasher
 hashed_matrix = hasher.transform(data).toarray()
