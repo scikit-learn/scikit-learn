@@ -8,7 +8,6 @@ extends single output estimators to multioutput estimators.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 from abc import ABCMeta, abstractmethod
 from numbers import Integral
 
@@ -621,6 +620,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         tags.target_tags.single_output = False
         tags.target_tags.multi_output = True
         return tags
+
 
 def _available_if_base_estimator_has(attr):
     """Return a function to check if `base_estimator` or `estimators_` has `attr`.
