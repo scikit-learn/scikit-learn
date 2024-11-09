@@ -288,17 +288,18 @@ the correct interface more easily.
 
 .. topic:: :class:`base.BaseEstimator` and mixins:
 
-    We tend to use "duck typing", so building an estimator which follows
-    the API suffices for compatibility, without needing to inherit from or
-    even import any scikit-learn classes.
+    We tend to use "duck typing" instead of checking for :func:`isinstance`, which means
+    it's technically possible to implement estimator without inheriting from
+    scikit-learn classes. However, if you don't inherit from the right mixins, either
+    there will be a large amount of boilerplate code for you to implement and keep in
+    sync with scikit-learn development, or your estimator might not function the same
+    way as a scikit-learn estimator. Here we only document how to develop an estimator
+    using our mixins. If you're interested in implementing your estimator without
+    inheriting from scikit-learn mixins, you'd need to check our implementations.
 
-    However, if a dependency on scikit-learn is acceptable in your code,
-    you can prevent a lot of boilerplate code
-    by deriving a class from ``BaseEstimator``
-    and optionally the mixin classes in ``sklearn.base``.
-    For example, below is a custom classifier, with more examples included
-    in the scikit-learn-contrib
-    `project template <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/_template.py>`__.
+    For example, below is a custom classifier, with more examples included in the
+    scikit-learn-contrib `project template
+    <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/_template.py>`__.
 
     It is particularly important to notice that mixins should be "on the left" while
     the ``BaseEstimator`` should be "on the right" in the inheritance list for proper
@@ -306,7 +307,7 @@ the correct interface more easily.
 
       >>> import numpy as np
       >>> from sklearn.base import BaseEstimator, ClassifierMixin
-      >>> from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
+      >>> from sklearn.utils.validation import validate_data, check_is_fitted
       >>> from sklearn.utils.multiclass import unique_labels
       >>> from sklearn.metrics import euclidean_distances
       >>> class TemplateClassifier(ClassifierMixin, BaseEstimator):
@@ -316,8 +317,8 @@ the correct interface more easily.
       ...
       ...     def fit(self, X, y):
       ...
-      ...         # Check that X and y have correct shape
-      ...         X, y = check_X_y(X, y)
+      ...         # Check that X and y have correct shape, set n_features_in_, etc.
+      ...         X, y = validate_data(self, X, y)
       ...         # Store the classes seen during fit
       ...         self.classes_ = unique_labels(y)
       ...
@@ -332,23 +333,27 @@ the correct interface more easily.
       ...         check_is_fitted(self)
       ...
       ...         # Input validation
-      ...         X = check_array(X)
+      ...         X = validate_data(self, X, reset=False)
       ...
       ...         closest = np.argmin(euclidean_distances(X, self.X_), axis=1)
       ...         return self.y_[closest]
 
+And you can check that the above estimator passes all common checks::
+
+    >>> from sklearn.utils.estimator_checks import check_estimator
+    >>> check_estimator(TemplateClassifier())  # passes
 
 get_params and set_params
 -------------------------
 All scikit-learn estimators have ``get_params`` and ``set_params`` functions.
+
 The ``get_params`` function takes no arguments and returns a dict of the
 ``__init__`` parameters of the estimator, together with their values.
 
-It must take one keyword argument, ``deep``, which receives a boolean value
-that determines whether the method should return the parameters of
-sub-estimators (for most estimators, this can be ignored). The default value
-for ``deep`` should be `True`. For instance considering the following
-estimator::
+It take one keyword argument, ``deep``, which receives a boolean value that determines
+whether the method should return the parameters of sub-estimators (only relevant for
+meta-estimators). The default value for ``deep`` is ``True``. For instance considering
+the following estimator::
 
     >>> from sklearn.base import BaseEstimator
     >>> from sklearn.linear_model import LogisticRegression
@@ -357,7 +362,7 @@ estimator::
     ...         self.subestimator = subestimator
     ...         self.my_extra_param = my_extra_param
 
-The parameter `deep` will control whether or not the parameters of the
+The parameter `deep` controls control whether or not the parameters of the
 `subestimator` should be reported. Thus when `deep=True`, the output will be::
 
     >>> my_estimator = MyEstimator(subestimator=LogisticRegression())
@@ -381,39 +386,23 @@ The parameter `deep` will control whether or not the parameters of the
     subestimator__warm_start -> False
     subestimator -> LogisticRegression()
 
-Often, the `subestimator` has a name (as e.g. named steps in a
-:class:`~sklearn.pipeline.Pipeline` object), in which case the key should
-become `<name>__C`, `<name>__class_weight`, etc.
+If the meta-estimator takes multiple sub-estimators, often, those sub-estimators have
+names (as e.g. named steps in a :class:`~pipeline.Pipeline` object), in which case the
+key should become `<name>__C`, `<name>__class_weight`, etc.
 
-While when `deep=False`, the output will be::
+When ``deep=False``, the output will be::
 
     >>> for param, value in my_estimator.get_params(deep=False).items():
     ...     print(f"{param} -> {value}")
     my_extra_param -> random
     subestimator -> LogisticRegression()
 
-On the other hand, ``set_params`` takes the parameters of ``__init__``
-as keyword arguments, unpacks them into a dict of the form
-``'parameter': value`` and sets the parameters of the estimator using this dict.
-Return value must be the estimator itself.
+On the other hand, ``set_params`` takes the parameters of ``__init__`` as keyword
+arguments, unpacks them into a dict of the form ``'parameter': value`` and sets the
+parameters of the estimator using this dict. It returns the estimator itself.
 
-While the ``get_params`` mechanism is not essential (see :ref:`cloning` below),
-the ``set_params`` function is necessary as it is used to set parameters during
-grid searches.
-
-The easiest way to implement these functions, and to get a sensible
-``__repr__`` method, is to inherit from ``sklearn.base.BaseEstimator``. If you
-do not want to make your code dependent on scikit-learn, the easiest way to
-implement the interface is::
-
-    def get_params(self, deep=True):
-        # suppose this estimator has parameters "alpha" and "recursive"
-        return {"alpha": self.alpha, "recursive": self.recursive}
-
-    def set_params(self, **parameters):
-        for parameter, value in parameters.items():
-            setattr(self, parameter, value)
-        return self
+The :func:`~base.BaseEstimator.set_params` function is used to set parameters during
+grid search for instance.
 
 
 Parameters and init
