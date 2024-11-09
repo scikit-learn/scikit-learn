@@ -151,6 +151,9 @@ The reason for postponing the validation is that if ``__init__`` includes input
 validation, then the same validation would have to be performed in ``set_params``, which
 is used in algorithms like :class:`~sklearn.model_selection.GridSearchCV`.
 
+Also it is expected that parameters with trailing ``_`` are **not to be set
+inside the** ``__init__`` **method**.
+
 Fitting
 ^^^^^^^
 
@@ -404,42 +407,25 @@ parameters of the estimator using this dict. It returns the estimator itself.
 The :func:`~base.BaseEstimator.set_params` function is used to set parameters during
 grid search for instance.
 
-
-Parameters and init
--------------------
-As :class:`model_selection.GridSearchCV` uses ``set_params``
-to apply parameter setting to estimators,
-it is essential that calling ``set_params`` has the same effect
-as setting parameters using the ``__init__`` method.
-The easiest and recommended way to accomplish this is to
-**not do any parameter validation in** ``__init__``.
-All logic behind estimator parameters,
-like translating string arguments into functions, should be done in ``fit``.
-
-Also it is expected that parameters with trailing ``_`` are **not to be set
-inside the** ``__init__`` **method**. All and only the public attributes set by
-fit have a trailing ``_``. As a result the existence of parameters with
-trailing ``_`` is used to check if the estimator has been fitted.
-
 .. _cloning:
 
 Cloning
 -------
-For use with the :mod:`~sklearn.model_selection` module,
-an estimator must support the ``base.clone`` function to replicate an estimator.
-This can be done by providing a ``get_params`` method.
-If ``get_params`` is present, then ``clone(estimator)`` will be an instance of
-``type(estimator)`` on which ``set_params`` has been called with clones of
-the result of ``estimator.get_params()``.
+As already mentioned that when constructor arguments are mutable, they should be
+copied before modifying them. This also applies to constructor arguments which are
+estimators. That's why meta-estimators such as :class:`~model_selection.GridSearchCV`
+create a copy of the given estimator before modifying it.
 
-Objects that do not provide this method will be deep-copied
-(using the Python standard function ``copy.deepcopy``)
-if ``safe=False`` is passed to ``clone``.
+However, in scikit-learn, when we copy an estimator, we get an unfitted estimator
+where only the constructor arguments are copied (with some exceptions, e.g. attributes
+related to certain internal machinery such as metadata routing).
 
-Estimators can customize the behavior of :func:`base.clone` by defining a
-`__sklearn_clone__` method. `__sklearn_clone__` must return an instance of the
-estimator. `__sklearn_clone__` is useful when an estimator needs to hold on to
-some state when :func:`base.clone` is called on the estimator. For example,
+The function responsible for this behavior is :func:`~base.clone`.
+
+Estimators can customize the behavior of :func:`base.clone` by overriding the
+:func:`base.BaseEstimator.__sklearn_clone__` method. `__sklearn_clone__` must return an
+instance of the estimator. `__sklearn_clone__` is useful when an estimator needs to hold
+on to some state when :func:`base.clone` is called on the estimator. For example,
 :class:`~sklearn.frozen.FrozenEstimator` makes use of this.
 
 Pipeline compatibility
