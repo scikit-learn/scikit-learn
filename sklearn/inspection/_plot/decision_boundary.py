@@ -219,8 +219,7 @@ class DecisionBoundaryDisplay:
                     if self.multiclass_colors is None
                     else self.multiclass_colors
                 )
-                cmap = plt.get_cmap(cmap, self.response.shape[-1])
-                colors = cmap.colors
+                colors = plt.get_cmap(cmap, self.response.shape[-1]).colors
             else:
                 colors = [mpl.colors.to_rgba(color) for color in self.multiclass_colors]
 

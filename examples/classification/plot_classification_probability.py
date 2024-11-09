@@ -8,16 +8,17 @@ dataset, and we classify it with the following:
 
 * a Support Vector classifier
 * L1 and L2 penalized logistic regression (multinomial multiclass)
-* logistic regression with a RBF kernel approximated by Nystroem method
+* RBF kernel (approximated by Nystroem method) followed by logistic regression
 * Gaussian process classification
+
+The first three columns shows the predicted probability for varing values of the two
+features. Points represent the fit data that was predicted to belong to that class.
+In the last column, all three classes are represented on each plot; the
+class with the highest predicted probability at each point is plotted. The scatter
+points show the fit data, colored by the true label.
 
 Linear SVC is not a probabilistic classifier by default but it has a built-in
 calibration option enabled in this example (`probability=True`).
-
-The logistic regression with One-Vs-Rest is not a multiclass classifier out of
-the box. As a result it has more trouble in separating class 2 and 3 than the
-other estimators.
-
 """
 
 # Authors: The scikit-learn developers
@@ -32,9 +33,10 @@ from sklearn import datasets
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.inspection import DecisionBoundaryDisplay
+from sklearn.kernel_approximation import Nystroem
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
-from sklearn.multiclass import OneVsRestClassifier
+from sklearn.pipeline import make_pipeline
 from sklearn.svm import SVC
 
 iris = datasets.load_iris()
@@ -49,17 +51,24 @@ kernel = 1.0 * RBF([1.0, 1.0])  # for GPC
 # Create different classifiers.
 classifiers = {
     "L1 logistic": LogisticRegression(C=C, penalty="l1", solver="saga", max_iter=10000),
-    "L2 logistic (Multinomial)": LogisticRegression(
+    "L2 logistic": LogisticRegression(
         C=C, penalty="l2", solver="saga", max_iter=10000
     ),
-    "L2 logistic (OvR)": OneVsRestClassifier(
-        LogisticRegression(C=C, penalty="l2", solver="saga", max_iter=10000)
+    "RBF kernel logistic": make_pipeline(
+        Nystroem(gamma=5e-1, n_components=50, random_state=1),
+        LogisticRegression(C=C, penalty="l1", solver="saga", max_iter=10000),
     ),
     "Linear SVC": SVC(kernel="linear", C=C, probability=True, random_state=0),
     "GPC": GaussianProcessClassifier(kernel),
 }
 
 n_classifiers = len(classifiers)
+scatter_kwargs = {
+    "s": 25, "marker": "o", "linewidths":0.8, "edgecolor":"k", "alpha":0.7
+}
+y_unique = np.unique(y)
+# colors when plotting all classes (show class with max 'predict_proba')
+colors = plt.get_cmap('viridis', len(y_unique)).colors
 
 fig, axes = plt.subplots(
     nrows=n_classifiers,
@@ -70,7 +79,6 @@ for classifier_idx, (name, classifier) in enumerate(classifiers.items()):
     y_pred = classifier.fit(X, y).predict(X)
     accuracy = accuracy_score(y, y_pred)
     print(f"Accuracy (train) for {name}: {accuracy:0.1%}")
-    y_unique = np.unique(y)
     for label in y_unique:
         # plot the probability estimate provided by the classifier
         disp = DecisionBoundaryDisplay.from_estimator(
@@ -87,9 +95,9 @@ for classifier_idx, (name, classifier) in enumerate(classifiers.items()):
         # plot data predicted to belong to given class
         mask_y_pred = y_pred == label
         axes[classifier_idx, label].scatter(
-            X[mask_y_pred, 0], X[mask_y_pred, 1], s=25, marker="o", c="w",
-            linewidths=0.8, edgecolor="k", alpha=0.7,
+            X[mask_y_pred, 0], X[mask_y_pred, 1], c="w", **scatter_kwargs
         )
+
         axes[classifier_idx, label].set(xticks=(), yticks=())
     # add column that shows all classes by plotting class with max 'predict_proba'
     disp = DecisionBoundaryDisplay.from_estimator(
@@ -102,13 +110,14 @@ for classifier_idx, (name, classifier) in enumerate(classifiers.items()):
         vmax=1,
     )
     # plot all data points
-    axes[classifier_idx, 3].scatter(
-        X[:, 0], X[:, 1], s=25, marker="o", c="w", linewidths=0.8, edgecolor="k", alpha=0.7
-    )
-    axes[classifier_idx, label].set(xticks=(), yticks=())
+    for label in y_unique:
+        mask_label = y == label
+        axes[classifier_idx, 3].scatter(
+            X[mask_label, 0], X[mask_label, 1], c=colors[[label], :], **scatter_kwargs
+        )
+
     axes[classifier_idx, 3].set(xticks=(), yticks=())
     axes[classifier_idx, 3].set_title("Max class")
-    # Add y labels for each classifier
     axes[classifier_idx, 0].set_ylabel(name)
 
 # colorbar for single class plots
@@ -119,9 +128,7 @@ _ = plt.colorbar(
 )
 
 # colorbars for max class column
-cmap = plt.get_cmap('viridis', len(y_unique))
-colors = cmap.colors
-multiclass_cmaps = [
+cmaps = [
     mpl.colors.LinearSegmentedColormap.from_list(
         f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
     )
@@ -132,7 +139,11 @@ for label in y_unique:
     ax_max = plt.axes([0.73, (0.06-(label*0.04)), 0.16, 0.015])
     plt.title(f"Probability class {label}", fontsize=10)
     _ = plt.colorbar(
-        cm.ScalarMappable(norm=None, cmap=multiclass_cmaps[label]), cax=ax_max, orientation="horizontal"
+        cm.ScalarMappable(
+            norm=None, cmap=cmaps[label]
+        ),
+        cax=ax_max,
+        orientation="horizontal",
     )
     if label in (0,1):
         ax_max.set(xticks=(), yticks=())
