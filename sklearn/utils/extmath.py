@@ -531,7 +531,7 @@ def randomized_svd(
 
     # project M to the (k + p) dimensional space using the basis vectors
     B = Q.T @ M  # shape (k + p, M.shape[1])
-    
+
     # Typically M.shape[1] > k + p, therefore we
     # compute the SVD of the tall and thin matrix B.T with shape (M.shape[1], k + p)
     # instead of less efficient SVD of (wide) matrix B.
