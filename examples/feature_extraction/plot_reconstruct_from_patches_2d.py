@@ -11,9 +11,10 @@ This example demonstrates how to use the `reconstruct_from_patches_2d` function 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 # %%
-import numpy as np
-from sklearn.feature_extraction import image
 import matplotlib.pyplot as plt
+import numpy as np
+
+from sklearn.feature_extraction import image
 
 # Create a sample image (2D array)
 original_image = np.array([[0, 1, 2], [3, 4, 5], [6, 7, 8]])

@@ -5,14 +5,14 @@ Feature Extraction Examples
 ============================
 
 This example demonstrates how to use the `DictVectorizer` and `FeatureHasher` from the
-`sklearn.feature_extraction` module to transform a list of dictionaries into a feature matrix.
+`sklearn.feature_extraction` module to transform a list of dictionaries
+into a feature matrix.
 
 """
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 # %%
-import numpy as np
 from sklearn.feature_extraction import DictVectorizer, FeatureHasher
 
 # Sample data: list of dictionaries
