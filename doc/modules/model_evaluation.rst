@@ -11,9 +11,10 @@ Metrics and scoring: quantifying the quality of predictions
 Which scoring function should I use?
 ====================================
 
-Before diving into the details of the many scores and metrics, we want
-to give some guidance, inspired by statistical decision theory, on the choice
-of **scoring functions** for **supervised learning**, see [Gneiting2009]_:
+Before we take a closer look into the details of the many scores and
+:term:`evaluation metrics`, we want to give some guidance, inspired by statistical
+decision theory, on the choice of **scoring functions** for **supervised learning**,
+see [Gneiting2009]_:
 
 - *Which scoring function should I use?*
 - *Which scoring function is a good one for my task?*
@@ -37,7 +38,7 @@ Typical examples are the mean (expected value), the median or a quantile of the
 response variable :math:`Y` (conditionally on :math:`X`).
 
 Once that is settled, use a **strictly consistent** scoring function for that
-target functional, see [Gneiting2009]_.
+(target) functional, see [Gneiting2009]_.
 For classification **strictly proper scoring rules**, see
 `wikipedia <https://en.wikipedia.org/wiki/Scoring_rule>`_ and [Gneiting2007]_, coincide
 with strictly consistent scoring functions.
@@ -45,6 +46,10 @@ The table further below provides examples.
 One could say that consistent scoring functions act as *truth serum* in that
 they guarantee *"that truth telling [. . .] is an optimal strategy in
 expectation"* [Gneiting2014]_.
+
+Once a strictly consistent scoring functions is chosen, it is best used for both: as
+loss function for model training and as metric/score in model evaluation and model
+comparison.
 
 Note that for regressors, the prediction is done with :term:`predict` while for
 classifiers it is usually :term:`predict_proba`.
