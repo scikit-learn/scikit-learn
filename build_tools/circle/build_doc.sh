@@ -183,6 +183,11 @@ ccache -s
 
 export OMP_NUM_THREADS=1
 
+if [[ "$CIRCLE_BRANCH" =~ ^main$ || -n "$CI_PULL_REQUEST" ]]
+then
+    towncrier build --yes
+fi
+
 if [[ "$CIRCLE_BRANCH" =~ ^main$ && -z "$CI_PULL_REQUEST" ]]
 then
     # List available documentation versions if on main

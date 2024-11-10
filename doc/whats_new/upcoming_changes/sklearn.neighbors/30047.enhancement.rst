@@ -1,0 +1,6 @@
+- Make `predict`, `predict_proba`, and `score` of
+  :class:`neighbors.KNeighborsClassifier` and
+  :class:`neighbors.RadiusNeighborsClassifier` accept `X=None` as input. In this case
+  predictions for all training set points are returned, and points are not included
+  into their own neighbors.
+  By :user:`Dmitry Kobak <dkobak>`

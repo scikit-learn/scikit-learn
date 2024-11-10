@@ -1,0 +1,3 @@
+- :func:`sklearn.compose.ColumnTransformer` `verbose_feature_names_out`
+  now accepts string format or callable to generate feature names.
+  By :user:`Marc Bresson <MarcBresson>`

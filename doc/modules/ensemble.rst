@@ -1107,7 +1107,6 @@ amount of time (e.g., on large datasets).
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_iris.py`
-* :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`
 * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`
 
 .. rubric:: References
@@ -1154,15 +1153,6 @@ evaluation with Random Forests.
   obtaining feature importance are explored in:
   :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`.
 
-The following example shows a color-coded representation of the relative
-importances of each individual pixel for a face recognition task using
-a :class:`ExtraTreesClassifier` model.
-
-.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_forest_importances_faces_001.png
-   :target: ../auto_examples/ensemble/plot_forest_importances_faces.html
-   :align: center
-   :scale: 75
-
 In practice those estimates are stored as an attribute named
 ``feature_importances_`` on the fitted model. This is an array with shape
 ``(n_features,)`` whose values are positive and sum to 1.0. The higher
@@ -1171,7 +1161,6 @@ to the prediction function.
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`
 * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances.py`
 
 .. rubric:: References
