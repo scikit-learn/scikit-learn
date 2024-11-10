@@ -339,6 +339,7 @@ floating point values instead of integer values::
     >>> regr.predict([[1, 1]])
     array([1.5])
 
+See a visualization example of Support Vector Regression with different kernels in :ref:`sphx_glr_auto_examples_svm_plot_svm_regression.py`.
 
 .. rubric:: Examples
 
