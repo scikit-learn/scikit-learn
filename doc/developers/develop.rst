@@ -428,102 +428,85 @@ instance of the estimator. `__sklearn_clone__` is useful when an estimator needs
 on to some state when :func:`base.clone` is called on the estimator. For example,
 :class:`~sklearn.frozen.FrozenEstimator` makes use of this.
 
-Pipeline compatibility
-----------------------
-For an estimator to be usable together with ``pipeline.Pipeline`` in any but the
-last step, it needs to provide a ``fit`` or ``fit_transform`` function.
-To be able to evaluate the pipeline on any data but the training set,
-it also needs to provide a ``transform`` function.
-There are no special requirements for the last step in a pipeline, except that
-it has a ``fit`` function. All ``fit`` and ``fit_transform`` functions must
-take arguments ``X, y``, even if y is not used. Similarly, for ``score`` to be
-usable, the last step of the pipeline needs to have a ``score`` function that
-accepts an optional ``y``.
-
 Estimator types
 ---------------
-Some common functionality depends on the kind of estimator passed. For example,
-cross-validation in :class:`model_selection.GridSearchCV` and
-:func:`model_selection.cross_val_score` defaults to being stratified when used on a
-classifier, but not otherwise. Similarly, scorers for average precision that take a
-continuous prediction need to call ``decision_function`` for classifiers, but
-``predict`` for regressors. This distinction between classifiers and regressors is
-implemented by inheriting from :class:`~base.ClassifierMixin`,
-:class:`~base.RegressorMixin`, :class:`~base.ClusterMixin`, :class:`~base.OutlierMixin`
-or :class:`~base.DensityMixin`, which will set the corresponding :term:`estimator tags`
-correctly.
+Among simple estimators (as opposed to meta-estimators), the most common types are
+transformers, classifiers, regressors, and clustering algorithms.
 
-When a meta-estimator needs to distinguish among estimator types, instead of checking
-the value of the tags directly, helpers like :func:`base.is_classifier` should be used.
+**Transformers** inherit from :class:`~base.TransformerMixin`, and implement a `transform`
+method. These are estimators which take the input, and transform it in some way. Note
+that they should never change the number of input samples, and the output of `transform`
+should correspond to its input samples in the same given order.
 
-Specific models
----------------
+**Regressors** inherit from :class:`~base.RegressorMixin`, and implement a `predict` method.
+They should accept numerical ``y`` in their `fit` method. Regressors use
+:func:`~metrics.r2_score` by default in their :func:`~base.RegressorMixin.score` method.
 
-Classifiers should accept ``y`` (target) arguments to ``fit`` that are
-sequences (lists, arrays) of either strings or integers.  They should not
-assume that the class labels are a contiguous range of integers; instead, they
-should store a list of classes in a ``classes_`` attribute or property.  The
-order of class labels in this attribute should match the order in which
-``predict_proba``, ``predict_log_proba`` and ``decision_function`` return their
-values.  The easiest way to achieve this is to put::
+**Classifiers** inherit from :class:`~base.ClassifierMixin`. If it applies, classifiers can
+implement ``decision_function`` to return raw decision values, based on which
+``predict`` can make its decision. If calculating probabilities is supported,
+classifiers can also implement ``predict_proba`` and ``predict_log_proba``.
+
+Classifiers should accept ``y`` (target) arguments to ``fit`` that are sequences (lists,
+arrays) of either strings or integers. They should not assume that the class labels are
+a contiguous range of integers; instead, they should store a list of classes in a
+``classes_`` attribute or property. The order of class labels in this attribute should
+match the order in which ``predict_proba``, ``predict_log_proba`` and
+``decision_function`` return their values. The easiest way to achieve this is to put::
 
     self.classes_, y = np.unique(y, return_inverse=True)
 
-in ``fit``.  This returns a new ``y`` that contains class indexes, rather than
-labels, in the range [0, ``n_classes``).
+in ``fit``.  This returns a new ``y`` that contains class indexes, rather than labels,
+in the range [0, ``n_classes``).
 
-A classifier's ``predict`` method should return
-arrays containing class labels from ``classes_``.
-In a classifier that implements ``decision_function``,
-this can be achieved with::
+A classifier's ``predict`` method should return arrays containing class labels from
+``classes_``. In a classifier that implements ``decision_function``, this can be
+achieved with::
 
     def predict(self, X):
         D = self.decision_function(X)
         return self.classes_[np.argmax(D, axis=1)]
 
-In linear models, coefficients are stored in an array called ``coef_``, and the
-independent term is stored in ``intercept_``.  ``sklearn.linear_model._base``
-contains a few base classes and mixins that implement common linear model
-patterns.
+The :mod:`~sklearn.utils.multiclass` module contains useful functions for working with
+multiclass and multilabel problems.
 
-The :mod:`~sklearn.utils.multiclass` module contains useful functions
-for working with multiclass and multilabel problems.
+**Clustering algorithms** inherit from :class:`~base.ClusterMixin`. Ideally, they should
+accept a ``y`` parameter in their ``fit`` method, but it should be ignored. Clustering
+algorithms should set a ``labels_`` attribute, storing the labels assigned to each
+sample. If applicale, they can also implement a ``predict`` method, returning the
+labels assigned to newly given samples.
+
+If one needs to check the type of a given estimator, e.g. in a meta-estimator, one can
+check if the given object implements a ``transform`` method for transformers, and
+otherwise use helper functions such as :func:`~base.is_classifier` or
+:func:`~base.is_regressor`.
 
 .. _estimator_tags:
 
 Estimator Tags
 --------------
-.. warning::
-
-    The estimator tags are experimental and the API is subject to change.
-
 .. note::
 
-    Scikit-learn introduced estimator tags in version 0.21 as a
-    private API and mostly used in tests. However, these tags expanded
-    over time and many third party developers also need to use
-    them. Therefore in version 1.6 the API for the tags were revamped
-    and exposed as public API.
+    Scikit-learn introduced estimator tags in version 0.21 as a private API and mostly
+    used in tests. However, these tags expanded over time and many third party
+    developers also need to use them. Therefore in version 1.6 the API for the tags were
+    revamped and exposed as public API.
 
-The estimator tags are annotations of estimators that allow
-programmatic inspection of their capabilities, such as sparse matrix
-support, supported output types and supported methods. The estimator
-tags are an instance of :class:`~sklearn.utils.Tags` returned by the
-method :meth:`~sklearn.base.BaseEstimator.__sklearn_tags__()`. These
-tags are used in the common checks run by the
-:func:`~sklearn.utils.estimator_checks.check_estimator` function and
-the :func:`~sklearn.utils.estimator_checks.parametrize_with_checks`
-decorator. Tags determine which checks to run and what input data is
-appropriate. Tags can depend on estimator parameters or even system
-architecture and can in general only be determined at runtime and
-are therefore instance attributes rather than class attributes. See
-:class:`~sklearn.utils.Tags` for more information about individual
-tags.
+The estimator tags are annotations of estimators that allow programmatic inspection of
+their capabilities, such as sparse matrix support, supported output types and supported
+methods. The estimator tags are an instance of :class:`~sklearn.utils.Tags` returned by
+the method :meth:`~sklearn.base.BaseEstimator.__sklearn_tags__()`. These tags are used
+in different places, such as :func:`~base.is_regressor` or the common checks run by
+:func:`~sklearn.utils.estimator_checks.check_estimator` and
+:func:`~sklearn.utils.estimator_checks.parametrize_with_checks`, where tags determine
+which checks to run and what input data is appropriate. Tags can depend on estimator
+parameters or even system architecture and can in general only be determined at runtime
+and are therefore instance attributes rather than class attributes. See
+:class:`~sklearn.utils.Tags` for more information about individual tags.
 
-It is unlikely that the default values for each tag will suit the
-needs of your specific estimator. You can change the default values by
-defining a `__sklearn_tags__()` method which returns the new values
-for your estimator's tags. For example::
+It is unlikely that the default values for each tag will suit the needs of your specific
+estimator. You can change the default values by defining a `__sklearn_tags__()` method
+which returns the new values for your estimator's tags. For example::
 
     class MyMultiOutputEstimator(BaseEstimator):
 
@@ -533,8 +516,8 @@ for your estimator's tags. For example::
             tags.non_deterministic = True
             return tags
 
-You can create a new subclass of :class:`~sklearn.utils.Tags` if you wish
-to add new tags to the existing set.
+You can create a new subclass of :class:`~sklearn.utils.Tags` if you wish to add new
+tags to the existing set.
 
 .. _developer_api_set_output:
 
