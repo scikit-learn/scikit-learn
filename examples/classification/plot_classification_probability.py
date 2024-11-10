@@ -72,6 +72,8 @@ y_unique = np.unique(y)
 # colors when plotting all classes (show class with max 'predict_proba')
 colors = plt.get_cmap("viridis", len(y_unique)).colors
 
+# Ensure legend not cut off
+mpl.rcParams['savefig.bbox'] = "tight"
 fig, axes = plt.subplots(
     nrows=n_classifiers,
     ncols=len(iris.target_names) + 1,
@@ -123,7 +125,7 @@ for classifier_idx, (name, classifier) in enumerate(classifiers.items()):
     axes[classifier_idx, 0].set_ylabel(name)
 
 # colorbar for single class plots
-ax_single = plt.axes([0.15, 0.01, 0.5, 0.02])
+ax_single = fig.add_axes([0.15, 0.01, 0.5, 0.02])
 plt.title("Probability")
 _ = plt.colorbar(
     cm.ScalarMappable(norm=None, cmap="Blues"), cax=ax_single, orientation="horizontal"
@@ -138,7 +140,7 @@ cmaps = [
 ]
 
 for label in y_unique:
-    ax_max = plt.axes([0.73, (0.06 - (label * 0.04)), 0.16, 0.015])
+    ax_max = fig.add_axes([0.73, (0.06 - (label * 0.04)), 0.16, 0.015])
     plt.title(f"Probability class {label}", fontsize=10)
     _ = plt.colorbar(
         cm.ScalarMappable(norm=None, cmap=cmaps[label]),
