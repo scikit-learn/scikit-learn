@@ -198,7 +198,8 @@ General Concepts
         This refers to the tests run on almost every estimator class in
         Scikit-learn to check they comply with basic API conventions.  They are
         available for external use through
-        :func:`utils.estimator_checks.check_estimator`, with most of the
+        :func:`utils.estimator_checks.check_estimator` or
+        :func:`utils.estimator_checks.parametrize_with_checks`, with most of the
         implementation in ``sklearn/utils/estimator_checks.py``.
 
         Note: Some exceptions to the common testing regime are currently
@@ -415,15 +416,6 @@ General Concepts
         Some aspects of estimator tags are currently determined through
         the :term:`duck typing` of methods like ``predict_proba`` and through
         some special attributes on estimator objects:
-
-        .. glossary::
-
-            ``_estimator_type``
-                This string-valued attribute identifies an estimator as being a
-                classifier, regressor, etc. It is set by mixins such as
-                :class:`base.ClassifierMixin`, but needs to be more explicitly
-                adopted on a :term:`meta-estimator`.  Its value should usually be
-                checked by way of a helper such as :func:`base.is_classifier`.
 
         For more detailed info, see :ref:`estimator_tags`.
 
@@ -859,8 +851,8 @@ Class APIs and Estimator Types
         strategy over the binary classification problem.
 
         Classifiers must store a :term:`classes_` attribute after fitting,
-        and usually inherit from :class:`base.ClassifierMixin`, which sets
-        their :term:`_estimator_type` attribute.
+        and inherit from :class:`base.ClassifierMixin`, which sets
+        their corresponding :term:`estimator tags` correctly.
 
         A classifier can be distinguished from other estimators with
         :func:`~base.is_classifier`.
@@ -1003,8 +995,8 @@ Class APIs and Estimator Types
         A :term:`supervised` (or :term:`semi-supervised`) :term:`predictor`
         with :term:`continuous` output values.
 
-        Regressors usually inherit from :class:`base.RegressorMixin`, which
-        sets their :term:`_estimator_type` attribute.
+        Regressors inherit from :class:`base.RegressorMixin`, which sets their
+        :term:`estimator tags` correctly.
 
         A regressor can be distinguished from other estimators with
         :func:`~base.is_regressor`.

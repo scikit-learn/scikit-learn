@@ -35,9 +35,17 @@ from sklearn.preprocessing import (
     StandardScaler,
 )
 from sklearn.utils import all_estimators
-from sklearn.utils._tags import get_tags
+from sklearn.utils._tags import (
+    ClassifierTags,
+    InputTags,
+    RegressorTags,
+    TargetTags,
+    TransformerTags,
+    get_tags,
+)
 from sklearn.utils._test_common.instance_generator import (
     _get_check_estimator_ids,
+    _get_expected_failed_checks,
     _tested_estimators,
 )
 from sklearn.utils._testing import (
@@ -111,7 +119,9 @@ def test_get_check_estimator_ids(val, expected):
     assert _get_check_estimator_ids(val) == expected
 
 
-@parametrize_with_checks(list(_tested_estimators()))
+@parametrize_with_checks(
+    list(_tested_estimators()), expected_failed_checks=_get_expected_failed_checks
+)
 def test_estimators(estimator, check, request):
     # Common tests for estimator instances
     with ignore_warnings(
@@ -120,8 +130,14 @@ def test_estimators(estimator, check, request):
         check(estimator)
 
 
-def test_check_estimator_generate_only():
-    all_instance_gen_checks = check_estimator(LogisticRegression(), generate_only=True)
+# TODO(1.8): remove test when generate_only is removed
+def test_check_estimator_generate_only_deprecation():
+    """Check that check_estimator with generate_only=True raises a deprecation
+    warning."""
+    with pytest.warns(FutureWarning, match="`generate_only` is deprecated in 1.6"):
+        all_instance_gen_checks = check_estimator(
+            LogisticRegression(), generate_only=True
+        )
     assert isgenerator(all_instance_gen_checks)
 
 
@@ -217,29 +233,48 @@ def test_class_support_removed():
 )
 def test_valid_tag_types(estimator):
     """Check that estimator tags are valid."""
-    from dataclasses import fields
-
-    from ..utils._tags import default_tags
-
-    def check_field_types(tags, defaults):
-        if tags is None:
-            return
-        tags_fields = fields(tags)
-        for field in tags_fields:
-            correct_tags = type(getattr(defaults, field.name))
-            if field.name == "_xfail_checks":
-                # _xfail_checks can be a dictionary
-                correct_tags = (correct_tags, dict)
-            assert isinstance(getattr(tags, field.name), correct_tags)
-
     tags = get_tags(estimator)
-    defaults = default_tags(estimator)
-    check_field_types(tags, defaults)
-    check_field_types(tags.input_tags, defaults.input_tags)
-    check_field_types(tags.target_tags, defaults.target_tags)
-    check_field_types(tags.classifier_tags, defaults.classifier_tags)
-    check_field_types(tags.regressor_tags, defaults.regressor_tags)
-    check_field_types(tags.transformer_tags, defaults.transformer_tags)
+    assert isinstance(tags.estimator_type, (str, type(None)))
+    assert isinstance(tags.target_tags, TargetTags)
+    assert isinstance(tags.classifier_tags, (ClassifierTags, type(None)))
+    assert isinstance(tags.regressor_tags, (RegressorTags, type(None)))
+    assert isinstance(tags.transformer_tags, (TransformerTags, type(None)))
+    assert isinstance(tags.input_tags, InputTags)
+    assert isinstance(tags.array_api_support, bool)
+    assert isinstance(tags.no_validation, bool)
+    assert isinstance(tags.non_deterministic, bool)
+    assert isinstance(tags.requires_fit, bool)
+    assert isinstance(tags._skip_test, bool)
+
+    assert isinstance(tags.target_tags.required, bool)
+    assert isinstance(tags.target_tags.one_d_labels, bool)
+    assert isinstance(tags.target_tags.two_d_labels, bool)
+    assert isinstance(tags.target_tags.positive_only, bool)
+    assert isinstance(tags.target_tags.multi_output, bool)
+    assert isinstance(tags.target_tags.single_output, bool)
+
+    assert isinstance(tags.input_tags.pairwise, bool)
+    assert isinstance(tags.input_tags.allow_nan, bool)
+    assert isinstance(tags.input_tags.sparse, bool)
+    assert isinstance(tags.input_tags.categorical, bool)
+    assert isinstance(tags.input_tags.string, bool)
+    assert isinstance(tags.input_tags.dict, bool)
+    assert isinstance(tags.input_tags.one_d_array, bool)
+    assert isinstance(tags.input_tags.two_d_array, bool)
+    assert isinstance(tags.input_tags.three_d_array, bool)
+    assert isinstance(tags.input_tags.positive_only, bool)
+
+    if tags.classifier_tags is not None:
+        assert isinstance(tags.classifier_tags.poor_score, bool)
+        assert isinstance(tags.classifier_tags.multi_class, bool)
+        assert isinstance(tags.classifier_tags.multi_label, bool)
+
+    if tags.regressor_tags is not None:
+        assert isinstance(tags.regressor_tags.poor_score, bool)
+        assert isinstance(tags.regressor_tags.multi_label, bool)
+
+    if tags.transformer_tags is not None:
+        assert isinstance(tags.transformer_tags.preserves_dtype, list)
 
 
 def _estimators_that_predict_in_fit():
@@ -278,8 +313,9 @@ column_name_estimators = list(
 def test_pandas_column_name_consistency(estimator):
     if isinstance(estimator, ColumnTransformer):
         pytest.skip("ColumnTransformer is not tested here")
-    tags = get_tags(estimator)
-    if "check_dataframe_column_names_consistency" in tags._xfail_checks:
+    if "check_dataframe_column_names_consistency" in _get_expected_failed_checks(
+        estimator
+    ):
         pytest.skip(
             "Estimator does not support check_dataframe_column_names_consistency"
         )
