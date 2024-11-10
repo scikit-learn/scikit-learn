@@ -73,7 +73,7 @@ y_unique = np.unique(y)
 colors = plt.get_cmap("viridis", len(y_unique)).colors
 
 # Ensure legend not cut off
-mpl.rcParams['savefig.bbox'] = "tight"
+mpl.rcParams["savefig.bbox"] = "tight"
 fig, axes = plt.subplots(
     nrows=n_classifiers,
     ncols=len(iris.target_names) + 1,
