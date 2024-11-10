@@ -75,7 +75,7 @@ colors = plt.get_cmap("viridis", len(y_unique)).colors
 fig, axes = plt.subplots(
     nrows=n_classifiers,
     ncols=len(iris.target_names) + 1,
-    figsize=(4 * 2.2, n_classifiers * 2),
+    figsize=(4 * 2.2, n_classifiers * 2.2),
 )
 for classifier_idx, (name, classifier) in enumerate(classifiers.items()):
     y_pred = classifier.fit(X, y).predict(X)
