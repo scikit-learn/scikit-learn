@@ -1345,8 +1345,8 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     The implementation is based on libsvm.
 
     Read more in the :ref:`User Guide <svm_regression>`.
-    See a visualization example in
-    :ref:`sphx_glr_auto_examples_svm_plot_svm_regression.py`.
+    See :ref:`sphx_glr_auto_examples_svm_plot_svm_regression.py`
+    for a regression example using NuSVR with different kernels.
 
     Parameters
     ----------
