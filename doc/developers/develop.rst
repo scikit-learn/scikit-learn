@@ -116,11 +116,12 @@ argument, they can be left without a default value. In scikit-learn itself, we h
 very few places, only in some meta-estimators, where the sub-estimator(s) argument is
 a required argument.
 
-The arguments should all correspond to hyperparameters describing the model or the
-optimisation problem the estimator tries to solve. These initial arguments (or
-parameters) are always remembered by the estimator. Also note that they should not be
-documented under the "Attributes" section, but rather under the "Parameters" section for
-that estimator.
+Most arguments correspond to hyperparameters describing the model or the optimisation
+problem the estimator tries to solve. Other parameters might define how the estimator
+behaves, e.g. defining the location of a cache to store some data. These initial
+arguments (or parameters) are always remembered by the estimator. Also note that they
+should not be documented under the "Attributes" section, but rather under the
+"Parameters" section for that estimator.
 
 In addition, **every keyword argument accepted by** ``__init__`` **should
 correspond to an attribute on the instance**. Scikit-learn relies on this to
@@ -152,7 +153,8 @@ validation, then the same validation would have to be performed in ``set_params`
 is used in algorithms like :class:`~sklearn.model_selection.GridSearchCV`.
 
 Also it is expected that parameters with trailing ``_`` are **not to be set
-inside the** ``__init__`` **method**.
+inside the** ``__init__`` **method**. More details on attributes that are not init
+arguments come shortly.
 
 Fitting
 ^^^^^^^
