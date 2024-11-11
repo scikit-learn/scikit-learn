@@ -1155,8 +1155,8 @@ class SVR(RegressorMixin, BaseLibSVM):
     other :ref:`kernel_approximation`.
 
     Read more in the :ref:`User Guide <svm_regression>`.
-    See a visualization example in
-    :ref:`sphx_glr_auto_examples_svm_plot_svm_regression.py`.
+    See :ref:`sphx_glr_auto_examples_svm_plot_svm_regression.py`
+    for a regression example using SVR with different kernels.
 
     Parameters
     ----------
