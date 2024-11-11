@@ -71,7 +71,7 @@ there are more of them.
 For further criteria on how to select a specific one, see [Fissler2022]_.
 
 ==================  ===============================================  ===================  ==============================
-functional          scoring or loss function                         response :math:`y`   prediction
+functional          scoring or loss function                         response `y`         prediction
 ==================  ===============================================  ===================  ==============================
 **Classification**
 mean                :ref:`Brier score <brier_score_loss>`            multi-class          ``predict_proba``
