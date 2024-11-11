@@ -88,7 +88,7 @@ class Pipeline(_BaseComposition):
     preprocess the data and, if desired, conclude the sequence with a final
     :term:`predictor` for predictive modeling.
 
-    Intermediate steps of the pipeline must be 'transforms', that is, they
+    Intermediate steps of the pipeline must be transformers, that is, they
     must implement `fit` and `transform` methods.
     The final :term:`estimator` only needs to implement `fit`.
     The transformers in the pipeline can be cached using ``memory`` argument.
