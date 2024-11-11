@@ -109,7 +109,7 @@ day free of interruptions larger than 1 minute) in order to know in advance when
 more bandwidth and thereby satisfy your customers. So the *target functional* is the
 99% quantile. From the table above, you choose the pinball loss as scoring function
 (fair enough, not much choice given), for model training (e.g.
-`HistGradientBoostingRegressor(loss="quantile", quantile=0.99)` as well as model
+`HistGradientBoostingRegressor(loss="quantile", quantile=0.99)`) as well as model
 evaluation (`mean_pinball_loss(..., alpha=0.9)` - we apoligize for the different
 argument names, `quantile` and `alpha`) be it in grid search for finding
 hyperparameters or in comparing to other models like
