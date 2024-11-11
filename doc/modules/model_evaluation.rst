@@ -39,6 +39,9 @@ response variable :math:`Y` (conditionally on :math:`X`).
 
 Once that is settled, use a **strictly consistent** scoring function for that
 (target) functional, see [Gneiting2009]_.
+This means using a scoring function that is aligned with *measuring the distance
+between predictions* `y_pred` *and the true target functional using observations of*
+:math:`Y`, i.e. `y_true`.
 For classification **strictly proper scoring rules**, see
 `wikipedia <https://en.wikipedia.org/wiki/Scoring_rule>`_ and [Gneiting2007]_, coincide
 with strictly consistent scoring functions.
