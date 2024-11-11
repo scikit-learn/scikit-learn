@@ -312,6 +312,10 @@ def get_tags(estimator) -> Tags:
     -------
     tags : :class:`~.sklearn.utils.Tags`
         The estimator tags.
+
+    Notes
+    -----
+    .. versionadded:: 1.6
     """
     if hasattr(estimator, "__sklearn_tags__"):
         tags = estimator.__sklearn_tags__()
