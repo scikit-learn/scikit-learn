@@ -97,6 +97,24 @@ R² gives the same ranking as squared loss.
 Furthermore, the Brier score is just a different name for the squared error
 in case of classification.
 
+**Ficticious Example:**
+Let's make the above arguments more tangible. Consider a setting of reliability
+engineering of network connections, e.g. internet or wifi. As provider of the network,
+you have access to the dataset of log entries of network connection containing network
+load over time and many interesting features. Your goal is to improve the raliability
+of the connections. In fact, you promise your customors that at least on 99% of all
+days there are no connection discontinuities larger 1 minute.
+Therefore, you are interested in a prediction of the 99% quantile (of connections per
+day free of interruptions larger than 1 minute) in order to know in advance when to add
+more bandwidth and thereby satisfy your customers. So the *target functional* is the
+99% quantile. From the table above, you choose the pinball loss as scoring function
+(fair enough, not much choice given), for model training (e.g.
+`HistGradientBoostingRegressor(loss="quantile", quantile=0.99)` as well as model
+evaluation (`mean_pinball_loss(..., alpha=0.9)` - we apoligize for the different
+argument names, `quantile` and `alpha`) be it in grid search for finding
+hyperparameters or in comparing to other models like
+`QuantileRegressor(quantile=0.99)`.
+
 .. topic:: References:
 
   .. [Gneiting2007] T. Gneiting and A. E. Raftery. :doi:`Strictly Proper
