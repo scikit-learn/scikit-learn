@@ -522,6 +522,8 @@ You can create a new subclass of :class:`~sklearn.utils.Tags` if you wish to add
 tags to the existing set. Note that all attributes that you add in a child class need
 to have a default value. It can be of the form::
 
+    from dataclasses import dataclass, asdict
+
     @dataclass
     class MyTags(Tags):
         my_tag: bool = True
