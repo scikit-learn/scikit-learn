@@ -793,14 +793,14 @@ def test_assert_docstring_consistency_descr_regex_pattern():
     assert_docstring_consistency(
         [f_four, f_five, f_six],
         include_params=True,
-        descr_regex_pattern=" ".join(regex_full.split())
+        descr_regex_pattern=" ".join(regex_full.split()),
     )
     # Check we can just match a few alternate words
     regex_words = r"(labels|average|binary)"
     assert_docstring_consistency(
         [f_four, f_five, f_six],
         include_params=True,
-        descr_regex_pattern=" ".join(regex_words.split())
+        descr_regex_pattern=" ".join(regex_words.split()),
     )
 
 
