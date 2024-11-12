@@ -264,7 +264,7 @@ package = "sklearn"  # name of your package
 
 [tool.towncrier]
     package = "sklearn"
-    filename = "doc/whats_new/v1.6.rst"
+    filename = "doc/whats_new/v1.7.rst"
     single_file = true
     directory = "doc/whats_new/upcoming_changes"
     issue_format = ":pr:`{issue}`"
