@@ -339,6 +339,7 @@ floating point values instead of integer values::
     >>> regr.predict([[1, 1]])
     array([1.5])
 
+
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_svm_plot_svm_regression.py`
