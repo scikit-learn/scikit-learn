@@ -1535,10 +1535,10 @@ def test_check_estimator_tags_renamed():
         def _more_tags(self):
             return None  # pragma: no cover
 
-    msg = "was removed in 1.6. Please use __sklearn_tags__ instead."
-    with raises(AssertionError, match=msg):
+    msg = "has defined either `_more_tags` or `_get_tags`"
+    with raises(TypeError, match=msg):
         check_estimator_tags_renamed("BadEstimator1", BadEstimator1())
-    with raises(AssertionError, match=msg):
+    with raises(TypeError, match=msg):
         check_estimator_tags_renamed("BadEstimator2", BadEstimator2())
 
     # This shouldn't fail since we allow both __sklearn_tags__ and _more_tags

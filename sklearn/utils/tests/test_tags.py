@@ -1,3 +1,5 @@
+from dataclasses import asdict, dataclass
+
 import pytest
 
 from sklearn.base import (
@@ -5,7 +7,12 @@ from sklearn.base import (
     RegressorMixin,
     TransformerMixin,
 )
+from sklearn.utils import Tags
 from sklearn.utils._tags import get_tags
+from sklearn.utils.estimator_checks import (
+    check_estimator_tags_renamed,
+    check_valid_tag_types,
+)
 
 
 class NoTagsEstimator:
@@ -52,4 +59,24 @@ def test_no___sklearn_tags__with_more_tags():
     with pytest.raises(
         TypeError, match="has defined either `_more_tags` or `_get_tags`"
     ):
-        get_tags(MoreTagsEstimator())
+        check_estimator_tags_renamed("MoreTagsEstimator", MoreTagsEstimator())
+
+
+def test_tag_test_passes_with_inheritance():
+    @dataclass
+    class MyTags(Tags):
+        my_tag: bool = True
+
+    class MyEstimator(BaseEstimator):
+        def __sklearn_tags__(self):
+            tags_orig = super().__sklearn_tags__()
+            tags = MyTags(**asdict(tags_orig))
+            tags.input_tags = tags_orig.input_tags
+            tags.target_tags = tags_orig.target_tags
+            tags.classifier_tags = tags_orig.classifier_tags
+            tags.regressor_tags = tags_orig.regressor_tags
+            tags.transformer_tags = tags_orig.transformer_tags
+            tags.my_tag = True
+            return tags
+
+    check_valid_tag_types("MyEstimator", MyEstimator())

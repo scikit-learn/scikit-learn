@@ -314,19 +314,6 @@ def get_tags(estimator) -> Tags:
         The estimator tags.
     """
 
-    for klass in type(estimator).mro():
-        if (
-            # Here we check vars(...) because we want to check if the method is
-            # explicitly defined in the class instead of inherited from a parent class.
-            ("_more_tags" in vars(klass) or "_get_tags" in vars(klass))
-            and "__sklearn_tags__" not in vars(klass)
-        ):
-            raise TypeError(
-                f"Estimator {estimator} has defined either `_more_tags` or `_get_tags`,"
-                " but not `__sklearn_tags__`. This function only uses"
-                " `__sklearn_tags__` to get tag values. Make sure to implement"
-                " `__sklearn_tags__`.",
-            )
     if hasattr(estimator, "__sklearn_tags__"):
         tags = estimator.__sklearn_tags__()
     else:

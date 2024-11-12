@@ -520,7 +520,24 @@ which returns the new values for your estimator's tags. For example::
 
 You can create a new subclass of :class:`~sklearn.utils.Tags` if you wish to add new
 tags to the existing set. Note that all attributes that you add ina a child class need
-to have a default value.
+to have a default value. It can be of the form::
+
+    @dataclass
+    class MyTags(Tags):
+        my_tag: bool = True
+
+    class MyEstimator(BaseEstimator):
+        def __sklearn_tags__(self):
+            tags_orig = super().__sklearn_tags__()
+            tags = MyTags(**asdict(tags_orig))
+            tags.input_tags = tags_orig.input_tags
+            tags.target_tags = tags_orig.target_tags
+            tags.classifier_tags = tags_orig.classifier_tags
+            tags.regressor_tags = tags_orig.regressor_tags
+            tags.transformer_tags = tags_orig.transformer_tags
+            tags.my_tag = True
+            return tags
+
 
 .. _developer_api_set_output:
 
