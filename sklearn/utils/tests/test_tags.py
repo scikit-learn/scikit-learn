@@ -38,3 +38,18 @@ class EmptyRegressor(RegressorMixin, BaseEstimator):
 )
 def test_requires_y(estimator, value):
     assert get_tags(estimator).target_tags.required == value
+
+
+def test_no___sklearn_tags__with_more_tags():
+    """Test that calling `get_tags` on a class that defines `_more_tags` but not
+    `__sklearn_tags__` raises an error.
+    """
+
+    class MoreTagsEstimator(BaseEstimator):
+        def _more_tags(self):
+            return {"requires_y": True}
+
+    with pytest.raises(
+        TypeError, match="has defined either `_more_tags` or `_get_tags`"
+    ):
+        get_tags(MoreTagsEstimator())
