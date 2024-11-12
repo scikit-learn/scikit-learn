@@ -7,8 +7,7 @@ from sklearn.base import (
     RegressorMixin,
     TransformerMixin,
 )
-from sklearn.utils import Tags
-from sklearn.utils._tags import get_tags
+from sklearn.utils import Tags, get_tags
 from sklearn.utils.estimator_checks import (
     check_estimator_tags_renamed,
     check_valid_tag_types,
