@@ -303,6 +303,8 @@ def get_tags(estimator) -> Tags:
     `get_tags(self.estimator)` where `self` is a meta-estimator, or in
     the common checks.
 
+    .. versionadded:: 1.6
+
     Parameters
     ----------
     estimator : estimator object
@@ -312,10 +314,6 @@ def get_tags(estimator) -> Tags:
     -------
     tags : :class:`~.sklearn.utils.Tags`
         The estimator tags.
-
-    Notes
-    -----
-    .. versionadded:: 1.6
     """
     if hasattr(estimator, "__sklearn_tags__"):
         tags = estimator.__sklearn_tags__()
