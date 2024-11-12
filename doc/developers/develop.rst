@@ -519,7 +519,7 @@ which returns the new values for your estimator's tags. For example::
             return tags
 
 You can create a new subclass of :class:`~sklearn.utils.Tags` if you wish to add new
-tags to the existing set. Note that all attributes that you add ina a child class need
+tags to the existing set. Note that all attributes that you add in a child class need
 to have a default value. It can be of the form::
 
     @dataclass
