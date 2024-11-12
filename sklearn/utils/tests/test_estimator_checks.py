@@ -846,7 +846,8 @@ def test_check_outlier_corruption():
 
 def test_check_estimator_transformer_no_mixin():
     # check that TransformerMixin is not required for transformer tests to run
-    with raises(AttributeError, ".*fit_transform.*"):
+    # but it fails since the tag is not set
+    with raises(RuntimeError, "the `transformer_tags` tag is not set"):
         check_estimator(BadTransformerWithoutMixin())
 
 
