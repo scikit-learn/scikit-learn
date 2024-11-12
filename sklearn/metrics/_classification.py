@@ -152,16 +152,10 @@ def _check_targets(y_true, y_pred):
         "y_pred": ["array-like", "sparse matrix"],
         "normalize": ["boolean"],
         "sample_weight": ["array-like", None],
-        "zero_division": [
-            Options(Real, {0.0, 1.0, np.nan}),
-            StrOptions({"warn"}),
-        ],
     },
     prefer_skip_nested_validation=True,
 )
-def accuracy_score(
-    y_true, y_pred, *, normalize=True, sample_weight=None, zero_division="warn"
-):
+def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     """Accuracy classification score.
 
     In multilabel classification, this function computes subset accuracy:
@@ -184,13 +178,6 @@ def accuracy_score(
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
-
-    zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
-        Sets the value to return when there is a zero division,
-        e.g. when `y_true` and `y_pred` are empty.
-        If set to "warn", returns 0.0 input, but a warning is also raised.
-
-        versionadded:: 1.6
 
     Returns
     -------
@@ -233,15 +220,6 @@ def accuracy_score(
     y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
-
-    if _num_samples(y_true) == 0:
-        if zero_division == "warn":
-            msg = (
-                "accuracy() is ill-defined and set to 0.0. Use the `zero_division` "
-                "param to control this behavior."
-            )
-            warnings.warn(msg, UndefinedMetricWarning)
-        return _check_zero_division(zero_division)
 
     if y_type.startswith("multilabel"):
         if _is_numpy_namespace(xp):
@@ -651,37 +629,6 @@ def multilabel_confusion_matrix(
     return np.array([tn, fp, fn, tp]).T.reshape(-1, 2, 2)
 
 
-def _metric_handle_division(*, numerator, denominator, metric, zero_division):
-    """Helper to handle zero-division.
-
-    Parameters
-    ----------
-    numerator : numbers.Real
-        The numerator of the division.
-    denominator : numbers.Real
-        The denominator of the division.
-    metric : str
-        Name of the caller metric function.
-    zero_division : {0.0, 1.0, "warn"}
-        The strategy to use when encountering 0-denominator.
-
-    Returns
-    -------
-    result : numbers.Real
-        The resulting of the division
-    is_zero_division : bool
-        Whether or not we encountered a zero division. This value could be
-        required to early return `result` in the "caller" function.
-    """
-    if np.isclose(denominator, 0):
-        if zero_division == "warn":
-            msg = f"{metric} is ill-defined and set to 0.0. Use the `zero_division` "
-            "param to control this behavior."
-            warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
-        return _check_zero_division(zero_division), True
-    return numerator / denominator, False
-
-
 @validate_params(
     {
         "y1": ["array-like"],
@@ -689,16 +636,10 @@ def _metric_handle_division(*, numerator, denominator, metric, zero_division):
         "labels": ["array-like", None],
         "weights": [StrOptions({"linear", "quadratic"}), None],
         "sample_weight": ["array-like", None],
-        "zero_division": [
-            StrOptions({"warn"}),
-            Options(Real, {0.0, 1.0, np.nan}),
-        ],
     },
     prefer_skip_nested_validation=True,
 )
-def cohen_kappa_score(
-    y1, y2, *, labels=None, weights=None, sample_weight=None, zero_division="warn"
-):
+def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     r"""Compute Cohen's kappa: a statistic that measures inter-annotator agreement.
 
     This function computes Cohen's kappa [1]_, a score that expresses the level
@@ -737,14 +678,6 @@ def cohen_kappa_score(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
-        Sets the return value when there is a zero division. This is the case when both
-        labelings `y1` and `y2` both exclusively contain the 0 class (e. g.
-        `[0, 0, 0, 0]`) (or if both are empty). If set to "warn", returns `0.0`, but a
-        warning is also raised.
-
-        .. versionadded:: 1.6
-
     Returns
     -------
     kappa : float
@@ -774,18 +707,7 @@ def cohen_kappa_score(
     n_classes = confusion.shape[0]
     sum0 = np.sum(confusion, axis=0)
     sum1 = np.sum(confusion, axis=1)
-
-    numerator = np.outer(sum0, sum1)
-    denominator = np.sum(sum0)
-    expected, is_zero_division = _metric_handle_division(
-        numerator=numerator,
-        denominator=denominator,
-        metric="cohen_kappa_score()",
-        zero_division=zero_division,
-    )
-
-    if is_zero_division:
-        return expected
+    expected = np.outer(sum0, sum1) / np.sum(sum0)
 
     if weights is None:
         w_mat = np.ones([n_classes, n_classes], dtype=int)
@@ -798,18 +720,8 @@ def cohen_kappa_score(
         else:
             w_mat = (w_mat - w_mat.T) ** 2
 
-    numerator = np.sum(w_mat * confusion)
-    denominator = np.sum(w_mat * expected)
-    score, is_zero_division = _metric_handle_division(
-        numerator=numerator,
-        denominator=denominator,
-        metric="cohen_kappa_score()",
-        zero_division=zero_division,
-    )
-
-    if is_zero_division:
-        return score
-    return 1 - score
+    k = np.sum(w_mat * confusion) / np.sum(w_mat * expected)
+    return 1 - k
 
 
 @validate_params(
@@ -910,6 +822,8 @@ def jaccard_score(
         Sets the value to return when there is a zero division, i.e. when there
         there are no negative values in predictions and labels. If set to
         "warn", this acts like 0, but a warning is also raised.
+
+        .. versionadded:: 0.24
 
     Returns
     -------
@@ -1015,15 +929,10 @@ def jaccard_score(
         "y_true": ["array-like"],
         "y_pred": ["array-like"],
         "sample_weight": ["array-like", None],
-        "zero_division": [
-            Options(Real, {0.0, 1.0}),
-            "nan",
-            StrOptions({"warn"}),
-        ],
     },
     prefer_skip_nested_validation=True,
 )
-def matthews_corrcoef(y_true, y_pred, *, sample_weight=None, zero_division="warn"):
+def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     """Compute the Matthews correlation coefficient (MCC).
 
     The Matthews correlation coefficient is used in machine learning as a
@@ -1053,13 +962,6 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None, zero_division="warn
         Sample weights.
 
         .. versionadded:: 0.18
-
-    zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
-        Sets the value to return when there is a zero division, i.e. when all
-        predictions and labels are negative. If set to "warn", this acts like 0,
-        but a warning is also raised.
-
-        .. versionadded:: 1.6
 
     Returns
     -------
@@ -1114,13 +1016,7 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None, zero_division="warn
     cov_ytyt = n_samples**2 - np.dot(t_sum, t_sum)
 
     if cov_ypyp * cov_ytyt == 0:
-        if zero_division == "warn":
-            msg = (
-                "Matthews correlation coefficient is ill-defined and being set to 0.0. "
-                "Use `zero_division` to control this behaviour."
-            )
-            warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
-        return _check_zero_division(zero_division)
+        return 0.0
     else:
         return cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
 
