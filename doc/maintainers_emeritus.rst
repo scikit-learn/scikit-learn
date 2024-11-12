@@ -32,7 +32,6 @@
 - Hanmin Qin
 - (Venkat) Raghav, Rajagopalan
 - Jacob Schreiber
-- scikit-learn-bot
 - 杜世橋 Du Shiqiao
 - Bertrand Thirion
 - Tom Dupré la Tour
