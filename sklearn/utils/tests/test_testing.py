@@ -802,6 +802,15 @@ def test_assert_docstring_consistency_descr_regex_pattern():
         include_params=True,
         descr_regex_pattern=" ".join(regex_words.split()),
     )
+    # Check error raised when regex doesn't match
+    regex_error = r"The set of labels to include when.+"
+    msg = r"The description of Parameter 'labels' in \['f_six'\] does not match"
+    with pytest.raises(AssertionError, match=msg):
+        assert_docstring_consistency(
+            [f_four, f_five, f_six],
+            include_params=True,
+            descr_regex_pattern=" ".join(regex_error.split()),
+        )
 
 
 class RegistrationCounter:
