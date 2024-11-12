@@ -782,6 +782,28 @@ def test_assert_docstring_consistency_error_msg():
         assert_docstring_consistency([f_four, f_five, f_six], include_params=True)
 
 
+@skip_if_no_numpydoc
+def test_assert_docstring_consistency_descr_regex_pattern():
+    """Check `assert_docstring_consistency` `descr_regex_pattern` works."""
+    # Check regex that matches full parameter descriptions
+    regex_full = r"""The (set|group) of labels to (include|add) when `average \!\=
+        'binary'`, and (their|the) order if `average is None`\.[\s\w]*\.*
+        Labels present (on|in) (them|the) datas? can be excluded\."""
+
+    assert_docstring_consistency(
+        [f_four, f_five, f_six],
+        include_params=True,
+        descr_regex_pattern=" ".join(regex_full.split())
+    )
+    # Check we can just match a few alternate words
+    regex_words = r"(labels|average|binary)"
+    assert_docstring_consistency(
+        [f_four, f_five, f_six],
+        include_params=True,
+        descr_regex_pattern=" ".join(regex_words.split())
+    )
+
+
 class RegistrationCounter:
     def __init__(self):
         self.nb_calls = 0
