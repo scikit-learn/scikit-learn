@@ -1155,8 +1155,6 @@ class SVR(RegressorMixin, BaseLibSVM):
     other :ref:`kernel_approximation`.
 
     Read more in the :ref:`User Guide <svm_regression>`.
-    See :ref:`sphx_glr_auto_examples_svm_plot_svm_regression.py`
-    for a regression example using SVR with different kernels.
 
     Parameters
     ----------
@@ -1165,6 +1163,8 @@ class SVR(RegressorMixin, BaseLibSVM):
          Specifies the kernel type to be used in the algorithm.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
+         For an intuitive visualization of different kernel types 
+         see :ref:`sphx_glr_auto_examples_svm_plot_svm_regression.py`
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
@@ -1345,8 +1345,6 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     The implementation is based on libsvm.
 
     Read more in the :ref:`User Guide <svm_regression>`.
-    See :ref:`sphx_glr_auto_examples_svm_plot_svm_regression.py`
-    for a regression example using NuSVR with different kernels.
 
     Parameters
     ----------
@@ -1365,6 +1363,8 @@ class NuSVR(RegressorMixin, BaseLibSVM):
          Specifies the kernel type to be used in the algorithm.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
+         For an intuitive visualization of different kernel types see
+         See :ref:`sphx_glr_auto_examples_svm_plot_svm_regression.py`
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
