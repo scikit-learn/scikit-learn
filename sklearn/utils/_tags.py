@@ -303,6 +303,8 @@ def get_tags(estimator) -> Tags:
     `get_tags(self.estimator)` where `self` is a meta-estimator, or in
     the common checks.
 
+    .. versionadded:: 1.6
+
     Parameters
     ----------
     estimator : estimator object
