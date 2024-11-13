@@ -190,7 +190,7 @@ ccache -s
 
 export OMP_NUM_THREADS=1
 
-if [[ "$CIRCLE_BRANCH" =~ ^main$ || ( -n "$CI_PULL_REQUEST" && "$CI_TARGET_BRANCH" =~ ^main$ ) ]]
+if [[ "$CIRCLE_BRANCH" =~ ^main$ || "$CI_TARGET_BRANCH" =~ ^main$ ) ]]
 then
     towncrier build --yes
 fi
