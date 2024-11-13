@@ -531,12 +531,11 @@ to have a default value. It can be of the form::
     class MyEstimator(BaseEstimator):
         def __sklearn_tags__(self):
             tags_orig = super().__sklearn_tags__()
-            tags = MyTags(**asdict(tags_orig))
-            tags.input_tags = tags_orig.input_tags
-            tags.target_tags = tags_orig.target_tags
-            tags.classifier_tags = tags_orig.classifier_tags
-            tags.regressor_tags = tags_orig.regressor_tags
-            tags.transformer_tags = tags_orig.transformer_tags
+            as_dict = {
+                field.name: getattr(tags_orig, field.name)
+                for field in fields(tags_orig)
+            }
+            tags = MyTags(**as_dict)
             tags.my_tag = True
             return tags
 

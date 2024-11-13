@@ -1,4 +1,4 @@
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass, fields
 
 import pytest
 
@@ -53,7 +53,7 @@ def test_no___sklearn_tags__with_more_tags():
 
     class MoreTagsEstimator(BaseEstimator):
         def _more_tags(self):
-            return {"requires_y": True}
+            return {"requires_y": True}  # pragma: no cover
 
     with pytest.raises(
         TypeError, match="has defined either `_more_tags` or `_get_tags`"
@@ -69,12 +69,11 @@ def test_tag_test_passes_with_inheritance():
     class MyEstimator(BaseEstimator):
         def __sklearn_tags__(self):
             tags_orig = super().__sklearn_tags__()
-            tags = MyTags(**asdict(tags_orig))
-            tags.input_tags = tags_orig.input_tags
-            tags.target_tags = tags_orig.target_tags
-            tags.classifier_tags = tags_orig.classifier_tags
-            tags.regressor_tags = tags_orig.regressor_tags
-            tags.transformer_tags = tags_orig.transformer_tags
+            as_dict = {
+                field.name: getattr(tags_orig, field.name)
+                for field in fields(tags_orig)
+            }
+            tags = MyTags(**as_dict)
             tags.my_tag = True
             return tags
 
