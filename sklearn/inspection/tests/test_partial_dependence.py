@@ -739,6 +739,67 @@ def test_partial_dependence_pipeline():
 
 
 @pytest.mark.parametrize(
+    "features, grid_resolution, n_vals_expected",
+    [
+        (["a"], 10, 10),
+        (["a"], 2, 2),
+    ],
+)
+def test_partial_dependence_binary_model_grid_resolution(
+    features, grid_resolution, n_vals_expected
+):
+    pd = pytest.importorskip("pandas")
+    model = DummyClassifier()
+
+    X = pd.DataFrame(
+        {
+            "a": np.random.random_integers(0, 10, size=100),
+            "b": np.random.random_integers(0, 10, size=100),
+        }
+    )
+    y = pd.Series(np.random.random_integers(0, 1, size=100))
+    model.fit(X, y)
+
+    part_dep = partial_dependence(
+        model,
+        X,
+        features=features,
+        grid_resolution=grid_resolution,
+        kind="average",
+    )
+    assert part_dep["average"].size == n_vals_expected
+
+
+@pytest.mark.parametrize(
+    "features, custom_values, n_vals_expected",
+    [
+        (["a"], {"a": [1, 2, 3, 4]}, 4),
+        (["a"], {"a": [1, 2]}, 2),
+        (["a"], {"a": [1]}, 1),
+    ],
+)
+def test_partial_dependence_binary_model_custom_values(
+    features, custom_values, n_vals_expected
+):
+    pd = pytest.importorskip("pandas")
+    model = DummyClassifier()
+
+    X = pd.DataFrame({"a": [1, 2, 3, 4], "b": [6, 7, 8, 9]})
+    y = pd.Series([0, 1, 0, 1])
+    model.fit(X, y)
+
+    part_dep = partial_dependence(
+        model,
+        X,
+        features=features,
+        grid_resolution=3,
+        custom_values=custom_values,
+        kind="average",
+    )
+    assert part_dep["average"].size == n_vals_expected
+
+
+@pytest.mark.parametrize(
     "features, custom_values, n_vals_expected",
     [
         (["b"], {"b": ["a", "b"]}, 2),

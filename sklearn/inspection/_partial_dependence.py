@@ -303,7 +303,7 @@ def _partial_dependence_brute(
         # (n_points,) for non-multioutput regressors
         # (n_points, n_tasks) for multioutput regressors
         # (n_points, 1) for the regressors in cross_decomposition (I think)
-        # (n_points, 2) for binary classification
+        # (n_points, 1) for binary classification (positive class already selected)
         # (n_points, n_classes) for multiclass classification
         pred, _ = _get_response_values(est, X_eval, response_method=response_method)
 
@@ -334,13 +334,9 @@ def _partial_dependence_brute(
     # - n_tasks for multi-output regression
     # - n_classes for multiclass classification.
     averaged_predictions = np.array(averaged_predictions).T
-    if is_regressor(est) and averaged_predictions.ndim == 1:
-        # non-multioutput regression, shape is (n_points,)
-        averaged_predictions = averaged_predictions.reshape(1, -1)
-    elif is_classifier(est) and averaged_predictions.shape[0] == 2:
-        # Binary classification, shape is (2, n_points).
-        # we output the effect of **positive** class
-        averaged_predictions = averaged_predictions[1]
+    if averaged_predictions.ndim == 1:
+        # reshape to (1, n_points) for consistency with
+        # _partial_dependence_recursion
         averaged_predictions = averaged_predictions.reshape(1, -1)
 
     return averaged_predictions, predictions
