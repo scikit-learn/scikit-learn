@@ -747,7 +747,10 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
-        check_is_fitted(self, "n_features_in_")
+        # Note that passing attributes="n_features_in_" forces check_is_fitted
+        # to check if the attribute is present. Otherwise it will pass on this
+        # stateless estimator (requires_fit=False)
+        check_is_fitted(self, attributes="n_features_in_")
         input_features = _check_feature_names_in(
             self, input_features, generate_names=True
         )
@@ -1091,10 +1094,5 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_transformer_preserves_dtypes": (
-                "dtypes are preserved but not at a close enough precision"
-            )
-        }
         tags.transformer_tags.preserves_dtype = ["float64", "float32"]
         return tags

@@ -7,6 +7,7 @@ import numbers
 import operator
 import sys
 import warnings
+from collections.abc import Sequence
 from contextlib import suppress
 from functools import reduce, wraps
 from inspect import Parameter, isclass, signature
@@ -1532,7 +1533,14 @@ def has_fit_parameter(estimator, parameter):
     >>> has_fit_parameter(SVC(), "sample_weight")
     True
     """
-    return parameter in signature(estimator.fit).parameters
+    return (
+        # This is used during test collection in common tests. The
+        # hasattr(estimator, "fit") makes it so that we don't fail for an estimator
+        # that does not have a `fit` method during collection of checks. The right
+        # checks will fail later.
+        hasattr(estimator, "fit")
+        and parameter in signature(estimator.fit).parameters
+    )
 
 
 def check_symmetric(array, *, tol=1e-10, raise_warning=True, raise_exception=False):
@@ -1656,13 +1664,18 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
 
     Checks if the estimator is fitted by verifying the presence of
     fitted attributes (ending with a trailing underscore) and otherwise
-    raises a NotFittedError with the given message.
+    raises a :class:`~sklearn.exceptions.NotFittedError` with the given message.
 
     If an estimator does not set any attributes with a trailing underscore, it
     can define a ``__sklearn_is_fitted__`` method returning a boolean to
     specify if the estimator is fitted or not. See
     :ref:`sphx_glr_auto_examples_developing_estimators_sklearn_is_fitted.py`
     for an example on how to use the API.
+
+    If no `attributes` are passed, this fuction will pass if an estimator is stateless.
+    An estimator can indicate it's stateless by setting the `requires_fit` tag. See
+    :ref:`estimator_tags` for more information. Note that the `requires_fit` tag
+    is ignored if `attributes` are passed.
 
     Parameters
     ----------
@@ -1724,8 +1737,55 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     if not hasattr(estimator, "fit"):
         raise TypeError("%s is not an estimator instance." % (estimator))
 
+    tags = get_tags(estimator)
+
+    if not tags.requires_fit and attributes is None:
+        return
+
     if not _is_fitted(estimator, attributes, all_or_any):
         raise NotFittedError(msg % {"name": type(estimator).__name__})
+
+
+def _estimator_has(attr, *, delegates=("estimator_", "estimator")):
+    """Check if we can delegate a method to the underlying estimator.
+
+    We check the `delegates` in the order they are passed. By default, we first check
+    the fitted estimator if available, otherwise we check the unfitted estimator.
+
+    Parameters
+    ----------
+    attr : str
+        Name of the attribute the delegate might or might not have.
+
+    delegates: tuple of str, default=("estimator_", "estimator")
+        A tuple of sub-estimator(s) to check if we can delegate the `attr` method.
+
+    Returns
+    -------
+    check : function
+        Function to check if the delegate has the attribute.
+
+    Raises
+    ------
+    ValueError
+        Raised when none of the delegates are present in the object.
+    """
+
+    def check(self):
+        for delegate in delegates:
+            # In meta estimators with multiple sub estimators,
+            # only the attribute of the first sub estimator is checked,
+            # assuming uniformity across all sub estimators.
+            if hasattr(self, delegate):
+                delegator = getattr(self, delegate)
+                if isinstance(delegator, Sequence):
+                    return getattr(delegator[0], attr)
+                else:
+                    return getattr(delegator, attr)
+
+        raise ValueError(f"None of the delegates {delegates} are present in the class.")
+
+    return check
 
 
 def check_non_negative(X, whom):

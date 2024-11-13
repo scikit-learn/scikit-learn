@@ -123,6 +123,8 @@ API_REFERENCE = {
                     "is_classifier",
                     "is_clusterer",
                     "is_regressor",
+                    "is_transformer",
+                    "is_outlier_detector",
                 ],
             }
         ],
@@ -386,6 +388,7 @@ API_REFERENCE = {
                     "InconsistentVersionWarning",
                     "NotFittedError",
                     "UndefinedMetricWarning",
+                    "EstimatorCheckFailedWarning",
                 ],
             },
         ],
@@ -457,6 +460,16 @@ API_REFERENCE = {
                     "mutual_info_regression",
                     "r_regression",
                 ],
+            },
+        ],
+    },
+    "sklearn.frozen": {
+        "short_summary": "Frozen estimators.",
+        "description": None,
+        "sections": [
+            {
+                "title": None,
+                "autosummary": ["FrozenEstimator"],
             },
         ],
     },
@@ -1166,7 +1179,6 @@ API_REFERENCE = {
                     "ClassifierTags",
                     "RegressorTags",
                     "TransformerTags",
-                    "default_tags",
                     "get_tags",
                 ],
             },
@@ -1287,6 +1299,7 @@ API_REFERENCE = {
                 "autosummary": [
                     "estimator_checks.check_estimator",
                     "estimator_checks.parametrize_with_checks",
+                    "estimator_checks.estimator_checks_generator",
                 ],
             },
             {

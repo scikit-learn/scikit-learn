@@ -1,0 +1,3 @@
+- :func:`sklearn.metrics.mean_poisson_deviance` now supports Array API
+  compatible inputs.
+  By :user:`Emily Chen <EmilyXinyi>`

@@ -1,0 +1,3 @@
+- :func:`sklearn.metrics.pairwise.cosine_similarity` now supports Array API
+  compatible inputs.
+  By :user:`Edoardo Abati <EdAbati>`
