@@ -39,8 +39,7 @@ fi
 if [ -n "$CI_PULL_REQUEST" ] && [ -z "$CI_TARGET_BRANCH" ]
 then
     # Get the target branch name when using CircleCI
-    PR_RESPONSE=$(curl -s "https://api.github.com/repos/scikit-learn/scikit-learn/pulls/$CIRCLE_PR_NUMBER")
-    CI_TARGET_BRANCH=$(echo "$PR_RESPONSE" | jq -r .base.ref)
+    CI_TARGET_BRANCH=$(curl -s "https://api.github.com/repos/scikit-learn/scikit-learn/pulls/$CIRCLE_PR_NUMBER" | jq -r .base.ref)
 fi
 
 get_build_type() {
