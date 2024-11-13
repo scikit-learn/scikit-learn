@@ -27,7 +27,7 @@ of the prediction. It is useful to distinguish two steps:
 * Predicting
 * Decision making
 
-**Prediction:**
+**Predicting:**
 Usually, the response variable :math:`Y` is a random variable, in the sense that there
 is *no deterministic* function :math:`Y = g(X)` of the features :math:`X`.
 Instead, there is a probability distribution :math:`F` of :math:`Y`.
@@ -43,14 +43,14 @@ This means using a scoring function that is aligned with *measuring the distance
 between predictions* `y_pred` *and the true target functional using observations of*
 :math:`Y`, i.e. `y_true`.
 For classification **strictly proper scoring rules**, see
-`wikipedia <https://en.wikipedia.org/wiki/Scoring_rule>`_ and [Gneiting2007]_, coincide
-with strictly consistent scoring functions.
+`Wikipedia entry for Scoring rule <https://en.wikipedia.org/wiki/Scoring_rule>`_
+and [Gneiting2007]_, coincide with strictly consistent scoring functions.
 The table further below provides examples.
 One could say that consistent scoring functions act as *truth serum* in that
 they guarantee *"that truth telling [. . .] is an optimal strategy in
 expectation"* [Gneiting2014]_.
 
-Once a strictly consistent scoring functions is chosen, it is best used for both: as
+Once a strictly consistent scoring function is chosen, it is best used for both: as
 loss function for model training and as metric/score in model evaluation and model
 comparison.
 
@@ -68,9 +68,9 @@ There are many scoring functions which measure different aspects of such a
 decision, most of them are covered with or derived from the :func:`confusion_matrix`.
 
 **List of strictly consistent scoring functions:**
-Here, we list some of the most well known statistical functionals and corresponding
-stritcly consistent scoring functions. Note that the list is not complete and that
-there are more of them.
+Here, we list some of the most relevant statistical functionals and corresponding
+strictly consistent scoring functions for tasks in practice. Note that the list is not
+complete and that there are more of them.
 For further criteria on how to select a specific one, see [Fissler2022]_.
 
 ==================  ===================================================  ====================  =================================
@@ -99,25 +99,26 @@ different score values but the same ranking.
 
 :sup:`3` R² gives the same ranking as squared error.
 
-**Ficticious Example:**
-Let's make the above arguments more tangible. Consider a setting of reliability
-engineering of network connections, e.g. internet or wifi. As provider of the network,
-you have access to the dataset of log entries of network connections containing network
-load over time and many interesting features. Your goal is to improve the raliability
-of the connections. In fact, you promise your customers that at least on 99% of all
-days there are no connection discontinuities larger 1 minute.
+**Fictitious Example:**
+Let's make the above arguments more tangible. Consider a setting in network reliability
+engineering, such as maintaining stable internet or Wi-Fi connections.
+As provider of the network, you have access to the dataset of log entries of network
+connections containing network load over time and many interesting features.
+Your goal is to improve the reliability of the connections.
+In fact, you promise your customers that at least on 99% of all days there are no
+connection discontinuities larger than 1 minute.
 Therefore, you are interested in a prediction of the 99% quantile (of longest
 connection interruption duration per day) in order to know in advance when to add
 more bandwidth and thereby satisfy your customers. So the *target functional* is the
 99% quantile. From the table above, you choose the pinball loss as scoring function
 (fair enough, not much choice given), for model training (e.g.
 `HistGradientBoostingRegressor(loss="quantile", quantile=0.99)`) as well as model
-evaluation (`mean_pinball_loss(..., alpha=0.9)` - we apoligize for the different
+evaluation (`mean_pinball_loss(..., alpha=0.99)` - we apologize for the different
 argument names, `quantile` and `alpha`) be it in grid search for finding
 hyperparameters or in comparing to other models like
 `QuantileRegressor(quantile=0.99)`.
 
-.. topic:: References:
+.. rubric:: References:
 
   .. [Gneiting2007] T. Gneiting and A. E. Raftery. :doi:`Strictly Proper
      Scoring Rules, Prediction, and Estimation <10.1198/016214506000001437>`
