@@ -100,12 +100,12 @@ in case of classification.
 **Ficticious Example:**
 Let's make the above arguments more tangible. Consider a setting of reliability
 engineering of network connections, e.g. internet or wifi. As provider of the network,
-you have access to the dataset of log entries of network connection containing network
+you have access to the dataset of log entries of network connections containing network
 load over time and many interesting features. Your goal is to improve the raliability
-of the connections. In fact, you promise your customors that at least on 99% of all
+of the connections. In fact, you promise your customers that at least on 99% of all
 days there are no connection discontinuities larger 1 minute.
-Therefore, you are interested in a prediction of the 99% quantile (of connections per
-day free of interruptions larger than 1 minute) in order to know in advance when to add
+Therefore, you are interested in a prediction of the 99% quantile (of longest
+connection interruption duration per day) in order to know in advance when to add
 more bandwidth and thereby satisfy your customers. So the *target functional* is the
 99% quantile. From the table above, you choose the pinball loss as scoring function
 (fair enough, not much choice given), for model training (e.g.
