@@ -1878,10 +1878,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         The alpha-quantile of the huber loss function and the quantile
         loss function. Only if ``loss='huber'`` or ``loss='quantile'``.
         Values must be in the range `(0.0, 1.0)`.
-        See
-        :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`
-        for an example of using quantile regression with
-        different alpha values.
 
     verbose : int, default=0
         Enable verbose output. If 1 then it prints progress and performance
