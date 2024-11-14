@@ -29,6 +29,7 @@ from ..utils._set_output import (
     _get_output_config,
     _safe_set_output,
 )
+from ..utils._tags import get_tags
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -1322,6 +1323,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = all(
+            get_tags(trans).input_tags.sparse if trans != "drop" else True
+            for name, trans, _ in self.transformers
+        )
         tags._xfail_checks = {
             "check_estimators_empty_data_messages": "FIXME",
             "check_estimators_nan_inf": "FIXME",
