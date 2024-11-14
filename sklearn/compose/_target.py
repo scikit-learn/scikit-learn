@@ -84,6 +84,14 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         Whether to check that `transform` followed by `inverse_transform`
         or `func` followed by `inverse_func` leads to the original targets.
 
+    preserve_y_dim : bool, default=False
+        Whether to preserve the number of dimensions of the target `y` during
+        transformation. If `True`, the target `y` will be transformed to a
+        2-dimensional array before applying the transformation. If `False`, the
+        target `y` will be transformed to a 1-dimensional array before applying
+        the transformation. This parameter is only relevant when `transformer`
+        is not provided and `func` and `inverse_func` are used.
+
     Attributes
     ----------
     regressor_ : object
@@ -103,14 +111,6 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
-
-    preserve_y_dim : bool, default=False
-        Whether to preserve the number of dimensions of the target `y` during
-        transformation. If `True`, the target `y` will be transformed to a
-        2-dimensional array before applying the transformation. If `False`, the
-        target `y` will be transformed to a 1-dimensional array before applying
-        the transformation. This parameter is only relevant when `transformer`
-        is not provided and `func` and `inverse_func` are used.
 
     See Also
     --------
@@ -149,6 +149,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         "func": [callable, None],
         "inverse_func": [callable, None],
         "check_inverse": ["boolean"],
+        "preserve_y_dim": ["boolean"],
     }
 
     def __init__(
