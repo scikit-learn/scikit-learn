@@ -18,7 +18,7 @@ utils_extension_metadata = {
   'sparsefuncs_fast':
     {'sources': ['sparsefuncs_fast.pyx']},
   '_cython_blas': {'sources': ['_cython_blas.pyx']},
-  'arrayfuncs': {'sources': ['arrayfuncs.pyx']},
+  'arrayfuncs': {'sources': ['arrayfuncs.pyx'], 'dependencies': [openmp_dep]},
   'murmurhash': {
       'sources': ['murmurhash.pyx', 'src' / 'MurmurHash3.cpp'],
   },

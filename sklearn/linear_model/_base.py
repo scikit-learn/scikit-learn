@@ -2,17 +2,8 @@
 Generalized Linear Models.
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# Fabian Pedregosa <fabian.pedregosa@inria.fr>
-# Olivier Grisel <olivier.grisel@ensta.org>
-#         Vincent Michel <vincent.michel@inria.fr>
-#         Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#         Mathieu Blondel <mathieu@mblondel.org>
-#         Lars Buitinck
-#         Maryan Morel <maryan.morel@polytechnique.edu>
-#         Giorgio Patrini <giorgio.patrini@anu.edu.au>
-#         Maria Telenczuk <https://github.com/maikia>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numbers
 import warnings
@@ -52,7 +43,7 @@ from ..utils._seq_dataset import (
 from ..utils.extmath import safe_sparse_dot
 from ..utils.parallel import Parallel, delayed
 from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.validation import _check_sample_weight, check_is_fitted
+from ..utils.validation import _check_sample_weight, check_is_fitted, validate_data
 
 # TODO: bayesian_ridge_regression and bayesian_regression_ard
 # should be squashed into its respective objects.
@@ -284,7 +275,7 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
     def _decision_function(self, X):
         check_is_fitted(self)
 
-        X = self._validate_data(X, accept_sparse=["csr", "csc", "coo"], reset=False)
+        X = validate_data(self, X, accept_sparse=["csr", "csc", "coo"], reset=False)
         coef_ = self.coef_
         if coef_.ndim == 1:
             return X @ coef_ + self.intercept_
@@ -328,9 +319,6 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
         else:
             self.intercept_ = 0.0
 
-    def _more_tags(self):
-        return {"requires_y": True}
-
 
 # XXX Should this derive from LinearModel? It should be a mixin, not an ABC.
 # Maybe the n_features checking can be moved to LinearModel.
@@ -365,11 +353,15 @@ class LinearClassifierMixin(ClassifierMixin):
         xp, _ = get_namespace(X)
         follow_X = make_converter(X)
 
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
+        X = validate_data(self, X, accept_sparse="csr", reset=False)
         scores = safe_sparse_dot(
             X, follow_X(self.coef_).T, dense_output=True
         ) + follow_X(self.intercept_)
-        return xp.reshape(scores, (-1,)) if scores.shape[1] == 1 else scores
+        return (
+            xp.reshape(scores, (-1,))
+            if (scores.ndim > 1 and scores.shape[1] == 1)
+            else scores
+        )
 
     def predict(self, X):
         """
@@ -568,7 +560,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     >>> reg.coef_
     array([1., 2.])
     >>> reg.intercept_
-    3.0...
+    np.float64(3.0...)
     >>> reg.predict(np.array([[3, 5]]))
     array([16.])
     """
@@ -621,14 +613,20 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
         accept_sparse = False if self.positive else ["csr", "csc", "coo"]
 
-        X, y = self._validate_data(
-            X, y, accept_sparse=accept_sparse, y_numeric=True, multi_output=True
+        X, y = validate_data(
+            self,
+            X,
+            y,
+            accept_sparse=accept_sparse,
+            y_numeric=True,
+            multi_output=True,
+            force_writeable=True,
         )
 
         has_sw = sample_weight is not None
         if has_sw:
             sample_weight = _check_sample_weight(
-                sample_weight, X, dtype=X.dtype, only_non_negative=True
+                sample_weight, X, dtype=X.dtype, ensure_non_negative=True
             )
 
         # Note that neither _rescale_data nor the rest of the fit method of
@@ -694,7 +692,9 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                 )
                 self.coef_ = np.vstack([out[0] for out in outs])
         else:
-            self.coef_, _, self.rank_, self.singular_ = linalg.lstsq(X, y)
+            # cut-off ratio for small singular values
+            cond = max(X.shape) * np.finfo(X.dtype).eps
+            self.coef_, _, self.rank_, self.singular_ = linalg.lstsq(X, y, cond=cond)
             self.coef_ = self.coef_.T
 
         if y.ndim == 1:

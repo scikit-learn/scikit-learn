@@ -1,5 +1,8 @@
 """All minimum dependencies for scikit-learn."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import argparse
 from collections import defaultdict
 
@@ -29,15 +32,15 @@ dependent_packages = {
     "memory_profiler": ("0.57.0", "benchmark, docs"),
     "pytest": (PYTEST_MIN_VERSION, "tests"),
     "pytest-cov": ("2.9.0", "tests"),
-    "ruff": ("0.2.1", "tests"),
+    "ruff": ("0.5.1", "tests"),
     "black": ("24.3.0", "tests"),
     "mypy": ("1.9", "tests"),
     "pyamg": ("4.0.0", "tests"),
-    "polars": ("0.20.23", "docs, tests"),
+    "polars": ("0.20.30", "docs, tests"),
     "pyarrow": ("12.0.0", "tests"),
     "sphinx": ("7.3.7", "docs"),
     "sphinx-copybutton": ("0.5.2", "docs"),
-    "sphinx-gallery": ("0.16.0", "docs"),
+    "sphinx-gallery": ("0.17.1", "docs"),
     "numpydoc": ("1.2.0", "docs, tests"),
     "Pillow": ("7.1.2", "docs"),
     "pooch": ("1.6.0", "docs, examples, tests"),
@@ -46,8 +49,9 @@ dependent_packages = {
     "plotly": ("5.14.0", "docs, examples"),
     "sphinxcontrib-sass": ("0.3.4", "docs"),
     "sphinx-remove-toctrees": ("1.0.0.post1", "docs"),
-    "sphinx-design": ("0.5.0", "docs"),
+    "sphinx-design": ("0.6.0", "docs"),
     "pydata-sphinx-theme": ("0.15.3", "docs"),
+    "towncrier": ("24.8.0", "docs"),
     # XXX: Pin conda-lock to the latest released version (needs manual update
     # from time to time)
     "conda-lock": ("2.5.6", "maintenance"),

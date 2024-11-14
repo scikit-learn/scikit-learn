@@ -1,0 +1,4 @@
+- `cv="prefit"` is deprecated for :class:`~sklearn.calibration.CalibratedClassifierCV`.
+  Use :class:`~sklearn.frozen.FrozenEstimator` instead, as
+  `CalibratedClassifierCV(FrozenEstimator(estimator))`.
+  By `Adrin Jalali`_

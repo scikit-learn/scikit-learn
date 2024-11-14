@@ -10,10 +10,8 @@ This format is used as the default format for both svmlight and the
 libsvm command line programs.
 """
 
-# Authors: Mathieu Blondel <mathieu@mblondel.org>
-#          Lars Buitinck
-#          Olivier Grisel <olivier.grisel@ensta.org>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import os.path
 from contextlib import closing
@@ -87,8 +85,7 @@ def load_svmlight_file(
 
     This implementation is written in Cython and is reasonably fast.
     However, a faster API-compatible loader is also available at:
-
-      https://github.com/mblondel/svmlight-loader
+    https://github.com/mblondel/svmlight-loader
 
     Parameters
     ----------

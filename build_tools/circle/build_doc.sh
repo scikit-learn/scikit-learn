@@ -159,33 +159,34 @@ if [[ `type -t deactivate` ]]; then
   deactivate
 fi
 
-MAMBAFORGE_PATH=$HOME/mambaforge
-# Install dependencies with mamba
-wget -q https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-x86_64.sh \
-    -O mambaforge.sh
-chmod +x mambaforge.sh && ./mambaforge.sh -b -p $MAMBAFORGE_PATH
-export PATH="/usr/lib/ccache:$MAMBAFORGE_PATH/bin:$PATH"
+# Install Miniforge
+MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh"
+curl -L --retry 10 $MINIFORGE_URL -o miniconda.sh
+MINIFORGE_PATH=$HOME/miniforge3
+bash ./miniconda.sh -b -p $MINIFORGE_PATH
+source $MINIFORGE_PATH/etc/profile.d/conda.sh
+conda activate
 
+export PATH="/usr/lib/ccache:$PATH"
 ccache -M 512M
 export CCACHE_COMPRESS=1
 
-# pin conda-lock to latest released version (needs manual update from time to time)
-mamba install "$(get_dep conda-lock min)" -y
-
-conda-lock install --log-level DEBUG --name $CONDA_ENV_NAME $LOCK_FILE
-source activate $CONDA_ENV_NAME
+create_conda_environment_from_lock_file $CONDA_ENV_NAME $LOCK_FILE
+conda activate $CONDA_ENV_NAME
 
 show_installed_libraries
 
-# Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
-# workers with 2 cores when building the compiled extensions of scikit-learn.
-export SKLEARN_BUILD_PARALLEL=3
 pip install -e . --no-build-isolation
 
 echo "ccache build summary:"
 ccache -s
 
 export OMP_NUM_THREADS=1
+
+if [[ "$CIRCLE_BRANCH" =~ ^main$ || -n "$CI_PULL_REQUEST" ]]
+then
+    towncrier build --yes
+fi
 
 if [[ "$CIRCLE_BRANCH" =~ ^main$ && -z "$CI_PULL_REQUEST" ]]
 then
@@ -202,7 +203,8 @@ set +o pipefail
 
 affected_doc_paths() {
     files=$(git diff --name-only origin/main...$CIRCLE_SHA1)
-    echo "$files" | grep ^doc/.*\.rst | sed 's/^doc\/\(.*\)\.rst$/\1.html/'
+    # use sed to replace files ending by .rst or .rst.template by .html
+    echo "$files" | grep ^doc/.*\.rst | sed 's/^doc\/\(.*\)\.rst$/\1.html/; s/^doc\/\(.*\)\.rst\.template$/\1.html/'
     echo "$files" | grep ^examples/.*.py | sed 's/^\(.*\)\.py$/auto_\1.html/'
     sklearn_files=$(echo "$files" | grep '^sklearn/')
     if [ -n "$sklearn_files" ]

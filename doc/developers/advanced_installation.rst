@@ -52,7 +52,7 @@ feature, code or documentation improvement).
 
    .. prompt:: bash $
 
-     git clone git://github.com/scikit-learn/scikit-learn.git  # add --depth 1 if your connection is slow
+     git clone git@github.com:scikit-learn/scikit-learn.git  # add --depth 1 if your connection is slow
      cd scikit-learn
 
    If you plan on submitting a pull-request, you should clone from your fork
@@ -99,7 +99,6 @@ feature, code or documentation improvement).
 
      pip install --editable . \
         --verbose --no-build-isolation \
-        --check-build-dependencies \
         --config-settings editable-verbose=true
 
 #. Check that the installed scikit-learn has a version number ending with
@@ -122,6 +121,9 @@ feature, code or documentation improvement).
     what is taking so long. Bonus: this means you only have to run the `pip
     install` command once, `sklearn` will automatically be rebuilt when
     importing `sklearn`.
+
+    Note that `--config-settings` is only supported in `pip` version 23.1 or
+    later. To upgrade `pip` to a compatible version, run `pip install -U pip`.
 
 Dependencies
 ------------
@@ -481,44 +483,3 @@ the base system and these steps will not be necessary.
 .. _virtualenv: https://docs.python.org/3/tutorial/venv.html
 .. _conda environment: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
 .. _Miniforge3: https://github.com/conda-forge/miniforge#miniforge3
-
-Alternative compilers
-=====================
-
-The following command will build scikit-learn using your default C/C++ compiler.
-
-.. prompt:: bash $
-
-    pip install --editable . \
-        --verbose --no-build-isolation \
-        --config-settings editable-verbose=true
-
-If you want to build scikit-learn with another compiler handled by ``setuptools``,
-use the following command:
-
-.. prompt:: bash $
-
-    python setup.py build_ext --compiler=<compiler> -i build_clib --compiler=<compiler>
-
-To see the list of available compilers run:
-
-.. prompt:: bash $
-
-    python setup.py build_ext --help-compiler
-
-If your compiler is not listed here, you can specify it through some environment
-variables (does not work on windows). This `section
-<https://setuptools.pypa.io/en/stable/userguide/ext_modules.html#compiler-and-linker-options>`_
-of the setuptools documentation explains in details which environment variables
-are used by ``setuptools``, and at which stage of the compilation, to set the
-compiler and linker options.
-
-When setting these environment variables, it is advised to first check their
-``sysconfig`` counterparts variables and adapt them to your compiler. For instance::
-
-    import sysconfig
-    print(sysconfig.get_config_var('CC'))
-    print(sysconfig.get_config_var('LDFLAGS'))
-
-In addition, since Scikit-learn uses OpenMP, you need to include the appropriate OpenMP
-flag of your compiler into the ``CFLAGS`` and ``CPPFLAGS`` environment variables.

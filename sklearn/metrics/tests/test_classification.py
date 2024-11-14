@@ -45,7 +45,6 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
-    assert_no_warnings,
     ignore_warnings,
 )
 from sklearn.utils.extmath import _nanaverage
@@ -266,27 +265,27 @@ def test_precision_recall_f1_score_binary():
     # individual scoring function that can be used for grid search: in the
     # binary class case the score is the value of the measure for the positive
     # class (e.g. label == 1). This is deprecated for average != 'binary'.
-    for kwargs, my_assert in [
-        ({}, assert_no_warnings),
-        ({"average": "binary"}, assert_no_warnings),
-    ]:
-        ps = my_assert(precision_score, y_true, y_pred, **kwargs)
-        assert_array_almost_equal(ps, 0.85, 2)
+    for kwargs in [{}, {"average": "binary"}]:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
 
-        rs = my_assert(recall_score, y_true, y_pred, **kwargs)
-        assert_array_almost_equal(rs, 0.68, 2)
+            ps = precision_score(y_true, y_pred, **kwargs)
+            assert_array_almost_equal(ps, 0.85, 2)
 
-        fs = my_assert(f1_score, y_true, y_pred, **kwargs)
-        assert_array_almost_equal(fs, 0.76, 2)
+            rs = recall_score(y_true, y_pred, **kwargs)
+            assert_array_almost_equal(rs, 0.68, 2)
 
-        assert_almost_equal(
-            my_assert(fbeta_score, y_true, y_pred, beta=2, **kwargs),
-            (1 + 2**2) * ps * rs / (2**2 * ps + rs),
-            2,
-        )
+            fs = f1_score(y_true, y_pred, **kwargs)
+            assert_array_almost_equal(fs, 0.76, 2)
+
+            assert_almost_equal(
+                fbeta_score(y_true, y_pred, beta=2, **kwargs),
+                (1 + 2**2) * ps * rs / (2**2 * ps + rs),
+                2,
+            )
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings(r"ignore::sklearn.exceptions.UndefinedMetricWarning")
 def test_precision_recall_f_binary_single_class():
     # Test precision, recall and F-scores behave with a single positive or
     # negative class
@@ -305,7 +304,7 @@ def test_precision_recall_f_binary_single_class():
     )
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings(r"ignore::sklearn.exceptions.UndefinedMetricWarning")
 def test_precision_recall_f_extra_labels():
     # Test handling of explicit additional (not in input) labels to PRF
     y_true = [1, 3, 3, 2]
@@ -351,7 +350,7 @@ def test_precision_recall_f_extra_labels():
     assert_almost_equal(np.array([p, r, f]), np.array([3 / 4, 1, 5 / 6]))
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings(r"ignore::sklearn.exceptions.UndefinedMetricWarning")
 def test_precision_recall_f_ignored_labels():
     # Test a subset of labels may be requested for PRF
     y_true = [1, 1, 2, 3]
@@ -796,13 +795,8 @@ def test_cohen_kappa():
     )
 
 
-def test_matthews_corrcoef_nan():
-    assert matthews_corrcoef([0], [1]) == 0.0
-    assert matthews_corrcoef([0, 0], [0, 1]) == 0.0
-
-
 @pytest.mark.parametrize("zero_division", [0, 1, np.nan])
-@pytest.mark.parametrize("y_true, y_pred", [([0], [0]), ([], [])])
+@pytest.mark.parametrize("y_true, y_pred", [([0], [0])])
 @pytest.mark.parametrize(
     "metric",
     [
@@ -826,7 +820,7 @@ def test_zero_division_nan_no_warning(metric, y_true, y_pred, zero_division):
         assert result == zero_division
 
 
-@pytest.mark.parametrize("y_true, y_pred", [([0], [0]), ([], [])])
+@pytest.mark.parametrize("y_true, y_pred", [([0], [0])])
 @pytest.mark.parametrize(
     "metric",
     [
@@ -1409,7 +1403,7 @@ def test_classification_report_no_labels_target_names_unequal_length():
         classification_report(y_true, y_pred, target_names=target_names)
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings(r"ignore::sklearn.exceptions.UndefinedMetricWarning")
 def test_multilabel_classification_report():
     n_classes = 4
     n_samples = 50
@@ -1679,7 +1673,7 @@ def test_jaccard_score_zero_division_set_value(zero_division, expected_score):
     assert score == pytest.approx(expected_score)
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings(r"ignore::sklearn.exceptions.UndefinedMetricWarning")
 def test_precision_recall_f1_score_multilabel_1():
     # Test precision_recall_f1_score on a crafted multilabel example
     # First crafted example
@@ -1746,7 +1740,7 @@ def test_precision_recall_f1_score_multilabel_1():
     assert_almost_equal(fbeta_score(y_true, y_pred, beta=2, average="samples"), 0.5)
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings(r"ignore::sklearn.exceptions.UndefinedMetricWarning")
 def test_precision_recall_f1_score_multilabel_2():
     # Test precision_recall_f1_score on a crafted multilabel example 2
     # Second crafted example
@@ -1811,7 +1805,7 @@ def test_precision_recall_f1_score_multilabel_2():
     )
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings(r"ignore::sklearn.exceptions.UndefinedMetricWarning")
 @pytest.mark.parametrize(
     "zero_division, zero_division_expected",
     [("warn", 0), (0, 0), (1, 1), (np.nan, np.nan)],
@@ -1917,22 +1911,23 @@ def test_precision_recall_f1_no_labels(beta, average, zero_division):
     y_true = np.zeros((20, 3))
     y_pred = np.zeros_like(y_true)
 
-    p, r, f, s = assert_no_warnings(
-        precision_recall_fscore_support,
-        y_true,
-        y_pred,
-        average=average,
-        beta=beta,
-        zero_division=zero_division,
-    )
-    fbeta = assert_no_warnings(
-        fbeta_score,
-        y_true,
-        y_pred,
-        beta=beta,
-        average=average,
-        zero_division=zero_division,
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
+        p, r, f, s = precision_recall_fscore_support(
+            y_true,
+            y_pred,
+            average=average,
+            beta=beta,
+            zero_division=zero_division,
+        )
+        fbeta = fbeta_score(
+            y_true,
+            y_pred,
+            beta=beta,
+            average=average,
+            zero_division=zero_division,
+        )
     assert s is None
 
     # if zero_division = nan, check that all metrics are nan and exit
@@ -1982,17 +1977,20 @@ def test_precision_recall_f1_no_labels_average_none(zero_division):
     # |y_i| = [0, 0, 0]
     # |y_hat_i| = [0, 0, 0]
 
-    p, r, f, s = assert_no_warnings(
-        precision_recall_fscore_support,
-        y_true,
-        y_pred,
-        average=None,
-        beta=1.0,
-        zero_division=zero_division,
-    )
-    fbeta = assert_no_warnings(
-        fbeta_score, y_true, y_pred, beta=1.0, average=None, zero_division=zero_division
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
+        p, r, f, s = precision_recall_fscore_support(
+            y_true,
+            y_pred,
+            average=None,
+            beta=1.0,
+            zero_division=zero_division,
+        )
+        fbeta = fbeta_score(
+            y_true, y_pred, beta=1.0, average=None, zero_division=zero_division
+        )
+
     zero_division = np.float64(zero_division)
     assert_array_almost_equal(p, [zero_division, zero_division, zero_division], 2)
     assert_array_almost_equal(r, [zero_division, zero_division, zero_division], 2)
@@ -2136,59 +2134,57 @@ def test_prf_warnings():
 
 @pytest.mark.parametrize("zero_division", [0, 1, np.nan])
 def test_prf_no_warnings_if_zero_division_set(zero_division):
-    # average of per-label scores
-    f = precision_recall_fscore_support
-    for average in [None, "weighted", "macro"]:
-        assert_no_warnings(
-            f, [0, 1, 2], [1, 1, 2], average=average, zero_division=zero_division
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
+        # average of per-label scores
+        for average in [None, "weighted", "macro"]:
+            precision_recall_fscore_support(
+                [0, 1, 2], [1, 1, 2], average=average, zero_division=zero_division
+            )
+
+            precision_recall_fscore_support(
+                [1, 1, 2], [0, 1, 2], average=average, zero_division=zero_division
+            )
+
+        # average of per-sample scores
+        precision_recall_fscore_support(
+            np.array([[1, 0], [1, 0]]),
+            np.array([[1, 0], [0, 0]]),
+            average="samples",
+            zero_division=zero_division,
         )
 
-        assert_no_warnings(
-            f, [1, 1, 2], [0, 1, 2], average=average, zero_division=zero_division
+        precision_recall_fscore_support(
+            np.array([[1, 0], [0, 0]]),
+            np.array([[1, 0], [1, 0]]),
+            average="samples",
+            zero_division=zero_division,
         )
 
-    # average of per-sample scores
-    assert_no_warnings(
-        f,
-        np.array([[1, 0], [1, 0]]),
-        np.array([[1, 0], [0, 0]]),
-        average="samples",
-        zero_division=zero_division,
-    )
+        # single score: micro-average
+        precision_recall_fscore_support(
+            np.array([[1, 1], [1, 1]]),
+            np.array([[0, 0], [0, 0]]),
+            average="micro",
+            zero_division=zero_division,
+        )
 
-    assert_no_warnings(
-        f,
-        np.array([[1, 0], [0, 0]]),
-        np.array([[1, 0], [1, 0]]),
-        average="samples",
-        zero_division=zero_division,
-    )
+        precision_recall_fscore_support(
+            np.array([[0, 0], [0, 0]]),
+            np.array([[1, 1], [1, 1]]),
+            average="micro",
+            zero_division=zero_division,
+        )
 
-    # single score: micro-average
-    assert_no_warnings(
-        f,
-        np.array([[1, 1], [1, 1]]),
-        np.array([[0, 0], [0, 0]]),
-        average="micro",
-        zero_division=zero_division,
-    )
+        # single positive label
+        precision_recall_fscore_support(
+            [1, 1], [-1, -1], average="binary", zero_division=zero_division
+        )
 
-    assert_no_warnings(
-        f,
-        np.array([[0, 0], [0, 0]]),
-        np.array([[1, 1], [1, 1]]),
-        average="micro",
-        zero_division=zero_division,
-    )
-
-    # single positive label
-    assert_no_warnings(
-        f, [1, 1], [-1, -1], average="binary", zero_division=zero_division
-    )
-
-    assert_no_warnings(
-        f, [-1, -1], [1, 1], average="binary", zero_division=zero_division
-    )
+        precision_recall_fscore_support(
+            [-1, -1], [1, 1], average="binary", zero_division=zero_division
+        )
 
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter("always")
@@ -2200,13 +2196,16 @@ def test_prf_no_warnings_if_zero_division_set(zero_division):
 
 @pytest.mark.parametrize("zero_division", ["warn", 0, 1, np.nan])
 def test_recall_warnings(zero_division):
-    assert_no_warnings(
-        recall_score,
-        np.array([[1, 1], [1, 1]]),
-        np.array([[0, 0], [0, 0]]),
-        average="micro",
-        zero_division=zero_division,
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
+        recall_score(
+            np.array([[1, 1], [1, 1]]),
+            np.array([[0, 0], [0, 0]]),
+            average="micro",
+            zero_division=zero_division,
+        )
+
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter("always")
         recall_score(
@@ -2264,13 +2263,15 @@ def test_precision_warnings(zero_division):
                 " this behavior."
             )
 
-    assert_no_warnings(
-        precision_score,
-        np.array([[0, 0], [0, 0]]),
-        np.array([[1, 1], [1, 1]]),
-        average="micro",
-        zero_division=zero_division,
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
+        precision_score(
+            np.array([[0, 0], [0, 0]]),
+            np.array([[1, 1], [1, 1]]),
+            average="micro",
+            zero_division=zero_division,
+        )
 
 
 @pytest.mark.parametrize("zero_division", ["warn", 0, 1, np.nan])
