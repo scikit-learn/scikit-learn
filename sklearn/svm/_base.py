@@ -1221,7 +1221,6 @@ def _fit_liblinear(
     sample_weight = _check_sample_weight(sample_weight, X, dtype=np.float64)
 
     solver_type = _get_liblinear_solver_type(multi_class, penalty, loss, dual)
-    print(solver_type)
     raw_coef_, n_iter_ = liblinear.train_wrap(
         X,
         y_ind,
