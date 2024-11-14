@@ -289,7 +289,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 quantiles = np.linspace(0, 100, n_bins[jj] + 1)
                 if sample_weight is None:
                     bin_edges[jj] = np.asarray(
-                        np.percentile(column, quantiles, method="inverted_cdf")
+                        np.percentile(column, quantiles, method="inverted_cdf"),
+                        dtype=np.float64,
                     )
                 else:
                     bin_edges[jj] = np.asarray(
