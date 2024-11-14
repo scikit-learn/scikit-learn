@@ -2157,7 +2157,7 @@ def class_likelihood_ratios(
 
     if isinstance(replace_undefined_by, dict):
         msg = (
-            "The dictionary passed as `replace_undefined_by` needs come in the format "
+            "The dictionary passed as `replace_undefined_by` needs to be in the form "
             "`{'LR+': `value_1`, 'LR-': `value_2`}` where the value for `LR+` ranges "
             "from `1.0` to `np.inf` or is `np.nan` and the value for `LR-` ranges from "
             f"`0.0` to `1.0` or is `np.nan`; got `{replace_undefined_by}`."

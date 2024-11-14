@@ -1930,7 +1930,8 @@ the actual formulas).
   divergence is invalid, as :math:`LR_- > 1.0` would indicate an increase in the odds of
   a sample belonging to the positive class after being classified as negative, as if the
   act of classifying caused the positive condition. This includes the case of a
-  `DummyClassifier` that always predicts the positive class (i.e. when :math:`tn=fn=0`).
+  :class:`~sklearn.dummy.DummyClassifier` that always predicts the positive class
+  (i.e. when :math:`tn=fn=0`).
 
   Both class likelihood ratios (`LR+ and LR-`)are undefined when :math:`tp=fn=0`, which
   means that no samples of the positive class were present in the test set. This can
