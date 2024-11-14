@@ -488,12 +488,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         tags.classifier_tags = deepcopy(sub_estimator_tags.classifier_tags)
         tags.regressor_tags = deepcopy(sub_estimator_tags.regressor_tags)
         # allows cross-validation to see 'precomputed' metrics
-        tags.input_tags.pairwise = sub_estimator_tags.input_tags.pairwise
-        tags._xfail_checks = {
-            "check_supervised_y_2d": "DataConversionWarning not caught",
-            "check_requires_y_none": "Doesn't fail gracefully",
-        }
-        tags.array_api_support = sub_estimator_tags.array_api_support
+        tags.input_tags.pairwise = get_tags(self.estimator).input_tags.pairwise
+        tags.array_api_support = get_tags(self.estimator).array_api_support
         return tags
 
     def score(self, X, y=None, **params):

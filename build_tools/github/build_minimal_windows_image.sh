@@ -30,15 +30,6 @@ function exec_inside_container() {
 }
 
 exec_inside_container "python -m pip install $MNT_FOLDER/$WHEEL_NAME"
-
-if [[ "$PYTHON_VERSION" == "313" ]]; then
-    # TODO: remove when pandas has a release with python 3.13 wheels
-    # First install numpy release
-    exec_inside_container "python -m pip install numpy"
-    # Then install pandas-dev
-    exec_inside_container "python -m pip install --pre --extra-index https://pypi.anaconda.org/scientific-python-nightly-wheels/simple pandas --only-binary :all:"
-fi
-
 exec_inside_container "python -m pip install $CIBW_TEST_REQUIRES"
 
 # Save container state to scikit-learn/minimal-windows image. On Windows the
