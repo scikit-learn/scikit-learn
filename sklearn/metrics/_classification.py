@@ -2163,29 +2163,26 @@ def class_likelihood_ratios(
             f"`0.0` to `1.0` or is `np.nan`; got `{replace_undefined_by}`."
         )
         if ("LR+" in replace_undefined_by) and ("LR-" in replace_undefined_by):
-            desired_positive_likelihood_ratio = replace_undefined_by.get("LR+", None)
             try:
+                desired_lr_pos = replace_undefined_by.get("LR+", None)
                 check_scalar(
-                    desired_positive_likelihood_ratio,
+                    desired_lr_pos,
                     "positive_likelihood_ratio",
                     target_type=(Real),
                     min_val=1.0,
                     include_boundaries="left",
                 )
-            except (TypeError, ValueError):
-                raise ValueError(msg)
-            desired_negative_likelihood_ratio = replace_undefined_by.get("LR-", None)
-            try:
+                desired_lr_neg = replace_undefined_by.get("LR-", None)
                 check_scalar(
-                    desired_negative_likelihood_ratio,
+                    desired_lr_neg,
                     "negative_likelihood_ratio",
                     target_type=(Real),
                     min_val=0.0,
                     max_val=1.0,
                     include_boundaries="both",
                 )
-            except (TypeError, ValueError):
-                raise ValueError(msg)
+            except Exception as e:
+                raise ValueError(msg) from e
         else:
             raise ValueError(msg)
 
@@ -2231,9 +2228,10 @@ def class_likelihood_ratios(
         if isinstance(replace_undefined_by, float) and np.isnan(replace_undefined_by):
             positive_likelihood_ratio = replace_undefined_by
         else:
-            # isinstance(zero_division.get("LR+", None), Real); this includes `np.inf`
-            # and `np.nan`
-            positive_likelihood_ratio = np.float64(replace_undefined_by["LR+"])
+            # replace_undefined_by is a dict and
+            # isinstance(replace_undefined_by.get("LR+", None), Real); this includes
+            # `np.inf` and `np.nan`
+            positive_likelihood_ratio = desired_lr_pos
     else:
         positive_likelihood_ratio = pos_num / pos_denom
 
@@ -2248,8 +2246,10 @@ def class_likelihood_ratios(
         if isinstance(replace_undefined_by, float) and np.isnan(replace_undefined_by):
             negative_likelihood_ratio = replace_undefined_by
         else:
-            # isinstance(zero_division.get("LR-", None), Real); this includes `np.nan`
-            negative_likelihood_ratio = np.float64(replace_undefined_by["LR-"])
+            # replace_undefined_by is a dict and
+            # isinstance(replace_undefined_by.get("LR-", None), Real); this includes
+            # `np.nan`
+            negative_likelihood_ratio = desired_lr_neg
     else:
         negative_likelihood_ratio = neg_num / neg_denom
 

@@ -1921,10 +1921,10 @@ the actual formulas).
 
   The positive likelihood ratio (`LR+`) is undefined when :math:`fp = 0`, meaning the
   classifier does not misclassify any negatives as positives. This condition can either
-  indicate a perfect identification of all positive cases or, in cases where there are
-  no true positives (tp = 0), that the classifier does not predict the positive class at
-  all. In the first case `LR+` can be interpreted as `np.inf`, in the second case (for
-  instance, with highly imbalanced data) it can be interpreted as `np.nan`.
+  indicate a perfect identification of all the negative cases or, if there are also no
+  true positive predictions (tp = 0), that the classifier does not predict the positive
+  class at all. In the first case, `LR+` can be interpreted as `np.inf`, in the second
+  case (for instance, with highly imbalanced data) it can be interpreted as `np.nan`.
 
   The negative likelihood ratio (`LR-`) is undefined when :math:`tn = 0`. Such
   divergence is invalid, as :math:`LR_- > 1.0` would indicate an increase in the odds of
@@ -1933,7 +1933,7 @@ the actual formulas).
   :class:`~sklearn.dummy.DummyClassifier` that always predicts the positive class
   (i.e. when :math:`tn=fn=0`).
 
-  Both class likelihood ratios (`LR+ and LR-`)are undefined when :math:`tp=fn=0`, which
+  Both class likelihood ratios (`LR+ and LR-`) are undefined when :math:`tp=fn=0`, which
   means that no samples of the positive class were present in the test set. This can
   happen when cross-validating on highly imbalanced data and also leads to a division by
   zero.

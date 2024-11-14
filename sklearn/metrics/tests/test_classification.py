@@ -803,7 +803,7 @@ def test_likelihood_ratios_wrong_dict_replace_undefined_by(replace_undefined_by)
     y_true = np.array([1, 0])
     y_pred = np.array([1, 0])
 
-    msg = "The dictionary passed as `replace_undefined_by` needs come in the format"
+    msg = "The dictionary passed as `replace_undefined_by` needs to be in the form"
     with pytest.raises(ValueError, match=msg):
         class_likelihood_ratios(
             y_true, y_pred, replace_undefined_by=replace_undefined_by
