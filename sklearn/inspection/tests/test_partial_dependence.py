@@ -753,11 +753,11 @@ def test_partial_dependence_binary_model_grid_resolution(
 
     X = pd.DataFrame(
         {
-            "a": np.random.random_integers(0, 10, size=100),
-            "b": np.random.random_integers(0, 10, size=100),
+            "a": np.random.randint(0, 10, size=100),
+            "b": np.random.randint(0, 10, size=100),
         }
     )
-    y = pd.Series(np.random.random_integers(0, 1, size=100))
+    y = pd.Series(np.random.randint(0, 2, size=100))
     model.fit(X, y)
 
     part_dep = partial_dependence(
