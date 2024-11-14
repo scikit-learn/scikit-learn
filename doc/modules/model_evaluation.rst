@@ -65,7 +65,8 @@ measures like an umbrella or not).
 For classifiers, this is what :term:`predict` returns.
 See also :ref:`TunedThresholdClassifierCV`.
 There are many scoring functions which measure different aspects of such a
-decision, most of them are covered with or derived from the :func:`confusion_matrix`.
+decision, most of them are covered with or derived from the
+:func:`metrics.confusion_matrix`.
 
 **List of strictly consistent scoring functions:**
 Here, we list some of the most relevant statistical functionals and corresponding
@@ -105,7 +106,7 @@ engineering, such as maintaining stable internet or Wi-Fi connections.
 As provider of the network, you have access to the dataset of log entries of network
 connections containing network load over time and many interesting features.
 Your goal is to improve the reliability of the connections.
-In fact, you promise your customers that at least on 99% of all days there are no
+In fact, you promise your customers that on at least 99% of all days there are no
 connection discontinuities larger than 1 minute.
 Therefore, you are interested in a prediction of the 99% quantile (of longest
 connection interruption duration per day) in order to know in advance when to add
