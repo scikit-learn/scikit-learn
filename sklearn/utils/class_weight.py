@@ -38,6 +38,9 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
         Array of original class labels per sample.
 
     sample_weight : array-like of shape (n_samples,) or None
+        Array of weights that are assigned to individual
+        samples. Used under class_weight 'balanced' when
+        only.
 
     Returns
     -------
