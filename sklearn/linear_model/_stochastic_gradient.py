@@ -1387,16 +1387,6 @@ class SGDClassifier(BaseSGDClassifier):
         """
         return np.log(self.predict_proba(X))
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        # TODO: replace by a statistical test, see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
-        return tags
-
 
 class BaseSGDRegressor(RegressorMixin, BaseSGD):
     loss_functions = {
@@ -2083,18 +2073,8 @@ class SGDRegressor(BaseSGDRegressor):
             average=average,
         )
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        # TODO: replace by a statistical test, see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
-        return tags
 
-
-class SGDOneClassSVM(BaseSGD, OutlierMixin):
+class SGDOneClassSVM(OutlierMixin, BaseSGD):
     """Solves linear One-Class SVM using Stochastic Gradient Descent.
 
     This implementation is meant to be used with a kernel approximation
@@ -2667,10 +2647,4 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.sparse = True
-        # TODO: replace by a statistical test, see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
         return tags

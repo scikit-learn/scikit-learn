@@ -304,5 +304,4 @@ class _BaseHeterogeneousEnsemble(
             sparse = False
         tags.input_tags.allow_nan = allow_nan
         tags.input_tags.sparse = sparse
-        tags.transformer_tags.preserves_dtype = []
         return tags

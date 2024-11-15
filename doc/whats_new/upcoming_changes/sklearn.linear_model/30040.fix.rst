@@ -3,4 +3,4 @@
   more numerically robust results on rank-deficient data. In particular, it
   empirically fixes the expected equivalence property between fitting with
   reweighted or with repeated data points.
-  :pr:`30040` by :user:`Antoine Baker <antoinebaker>`.
+  By :user:`Antoine Baker <antoinebaker>`

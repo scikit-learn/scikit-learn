@@ -16,6 +16,8 @@ import numpy as np
 from scipy import linalg, optimize, sparse
 from scipy.sparse import linalg as sp_linalg
 
+from sklearn.base import BaseEstimator
+
 from ..base import MultiOutputMixin, RegressorMixin, _fit_context, is_classifier
 from ..exceptions import ConvergenceWarning
 from ..metrics import check_scoring, get_scorer_names
@@ -1255,13 +1257,6 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
             self.solver == "cholesky" and self.fit_intercept
         )
         tags.input_tags.sparse = not reject_sparse
-        tags._xfail_checks.update(
-            {
-                "check_non_transformer_estimators_n_iter": (
-                    "n_iter_ cannot be easily accessed."
-                )
-            }
-        )
         return tags
 
 
@@ -1585,13 +1580,6 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
             self.solver == "cholesky" and self.fit_intercept
         )
         tags.input_tags.sparse = not reject_sparse
-        tags._xfail_checks.update(
-            {
-                "check_non_transformer_estimators_n_iter": (
-                    "n_iter_ cannot be easily accessed."
-                )
-            }
-        )
         return tags
 
 
@@ -1690,7 +1678,7 @@ class _XT_CenterStackOp(sparse.linalg.LinearOperator):
         return res
 
 
-class _IdentityRegressor:
+class _IdentityRegressor(RegressorMixin, BaseEstimator):
     """Fake regressor which will directly output the prediction."""
 
     def decision_function(self, y_predict):
@@ -1700,7 +1688,7 @@ class _IdentityRegressor:
         return y_predict
 
 
-class _IdentityClassifier(LinearClassifierMixin):
+class _IdentityClassifier(LinearClassifierMixin, BaseEstimator):
     """Fake classifier which will directly output the prediction.
 
     We inherit from LinearClassifierMixin to get the proper shape for the
@@ -2751,15 +2739,6 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         """
         super().fit(X, y, sample_weight=sample_weight, **params)
         return self
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "GridSearchCV does not forward the weights to the scorer by default."
-            ),
-        }
-        return tags
 
 
 class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
