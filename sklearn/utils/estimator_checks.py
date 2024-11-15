@@ -1194,6 +1194,7 @@ def check_array_api_input_and_values(
 
 
 def check_estimator_sparse_tag(name, estimator_orig):
+    """Check that estimator tag related with accepting sparse data is properly set."""
     if SPARSE_ARRAY_PRESENT:
         sparse_container = sparse.csr_array
     else:
@@ -1211,7 +1212,16 @@ def check_estimator_sparse_tag(name, estimator_orig):
 
     tags = get_tags(estimator)
     if tags.input_tags.sparse:
-        estimator.fit(X, y)  # should pass
+        try:
+            estimator.fit(X, y)  # should pass
+        except Exception as e:
+            raise AssertionError(
+                f"Estimator {name} raised an exception: {e}. The tag "
+                "self.input_tags.sparse_tag might not be consistent with the "
+                "estimator's ability to handle sparse data (i.e. controlled by the "
+                "parameter `accept_sparse` in `validate_data` or `check_array` "
+                f"functions). Got input_tags.sparse={tags.input_tags.sparse}."
+            )
     else:
         err_msg = (
             f"Estimator {name} with input_tags.sparse=False doesn't "
