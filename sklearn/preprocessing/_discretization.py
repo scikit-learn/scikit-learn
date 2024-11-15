@@ -57,9 +57,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         For an example of the different strategies see:
         :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization_strategies.py`.
 
-    quantile_method : {'inverted_cdf','averaged_inverted_cdf',
-            'closest_observation', 'interpolated_inverted_cdf',
-            'hazen','weibull','linear','median_unbiased',
+    quantile_method : {'inverted_cdf','averaged_inverted_cdf', 'closest_observation',
+            'interpolated_inverted_cdf', 'hazen','weibull','linear','median_unbiased',
             'normal_unbiased'}, default='linear'
             Method to pass on to np.percentile calculation when using
             strategy='quantile', only used when no sample weights are
