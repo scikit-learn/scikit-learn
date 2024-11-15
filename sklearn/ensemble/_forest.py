@@ -1557,19 +1557,6 @@ class RandomForestClassifier(ForestClassifier):
         self.monotonic_cst = monotonic_cst
         self.ccp_alpha = ccp_alpha
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        # TODO: replace by a statistical test, see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence_on_dense_data": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-            "check_sample_weight_equivalence_on_sparse_data": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
-        return tags
-
 
 class RandomForestRegressor(ForestRegressor):
     """
@@ -1930,19 +1917,6 @@ class RandomForestRegressor(ForestRegressor):
         self.min_impurity_decrease = min_impurity_decrease
         self.ccp_alpha = ccp_alpha
         self.monotonic_cst = monotonic_cst
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        # TODO: replace by a statistical test, see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence_on_dense_data": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-            "check_sample_weight_equivalence_on_sparse_data": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
-        return tags
 
 
 class ExtraTreesClassifier(ForestClassifier):
@@ -3018,16 +2992,3 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         """
         check_is_fitted(self)
         return self.one_hot_encoder_.transform(self.apply(X))
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        # TODO: replace by a statistical test, see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence_on_dense_data": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-            "check_sample_weight_equivalence_on_sparse_data": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
-        return tags

@@ -430,19 +430,6 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
         return score
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence_on_dense_data": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-            "check_sample_weight_equivalence_on_sparse_data": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
-        return tags
-
 
 ###############################################################################
 # ARD (Automatic Relevance Determination) regression

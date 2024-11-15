@@ -628,15 +628,6 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.allow_nan = get_tags(self._get_estimator()).input_tags.allow_nan
-        # TODO: replace by a statistical test, see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence_on_dense_data": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-            "check_sample_weight_equivalence_on_sparse_data": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
         return tags
 
 

@@ -1,0 +1,3 @@
+- :class:`pipeline.Pipeline` can now transform metadata up to the step requiring the
+  metadata, which can be set using the `transform_input` parameter.
+  By `Adrin Jalali`_
