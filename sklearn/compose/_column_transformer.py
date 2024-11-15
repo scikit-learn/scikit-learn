@@ -1319,8 +1319,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.sparse = all(
-            get_tags(trans).input_tags.sparse if trans != "drop" else True
+            get_tags(trans).input_tags.sparse
             for name, trans, _ in self.transformers
+            if trans not in {"passthrough", "drop"}
         )
         return tags
 
