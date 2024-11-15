@@ -771,31 +771,46 @@ def _yield_instances_for_check(check, estimator_orig):
 PER_ESTIMATOR_XFAIL_CHECKS = {
     AdaBoostClassifier: {
         # TODO: replace by a statistical test, see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
     AdaBoostRegressor: {
         # TODO: replace by a statistical test, see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
     BaggingClassifier: {
         # TODO: replace by a statistical test, see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
     BaggingRegressor: {
         # TODO: replace by a statistical test, see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
     BayesianRidge: {
         # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
@@ -805,13 +820,19 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     BisectingKMeans: {
         # TODO: replace by a statistical test, see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
     CategoricalNB: {
         # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
@@ -836,21 +857,30 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     FixedThresholdClassifier: {
         "check_classifiers_train": "Threshold at probability 0.5 does not hold",
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
             "Due to the cross-validation and sample ordering, removing a sample"
             " is not strictly equal to putting is weight to zero. Specific unit"
             " tests are added for TunedThresholdClassifierCV specifically."
         ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
     },
     GradientBoostingClassifier: {
         # TODO: investigate failure see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
     GradientBoostingRegressor: {
         # TODO: investigate failure see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
@@ -882,34 +912,51 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     HistGradientBoostingClassifier: {
         # TODO: replace by a statistical test, see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
     HistGradientBoostingRegressor: {
         # TODO: replace by a statistical test, see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
     IsolationForest: {
         # TODO: replace by a statistical test, see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
     KBinsDiscretizer: {
         # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
     KernelDensity: {
-        "check_sample_weight_equivalence": "sample_weight must have positive values"
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight must have positive values"
+        ),
     },
     KMeans: {
         # TODO: replace by a statistical test, see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
@@ -924,13 +971,19 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         # running the equivalence check even if n_features > n_samples. Maybe
         # this is is not the case and a different choice of solver could fix
         # this problem.
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
     LinearSVC: {
         # TODO: replace by a statistical test when _dual=True, see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
         "check_non_transformer_estimators_n_iter": (
@@ -939,19 +992,28 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     LinearSVR: {
         # TODO: replace by a statistical test, see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
     LogisticRegression: {
         # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
     MiniBatchKMeans: {
         # TODO: replace by a statistical test, see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
@@ -960,7 +1022,10 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         # TODO: fix sample_weight handling of this estimator when probability=False
         # TODO: replace by a statistical test when probability=True
         # see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
         "check_classifiers_one_label_sample_weights": (
@@ -969,7 +1034,10 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     NuSVR: {
         # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
@@ -980,13 +1048,19 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     OneClassSVM: {
         # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
     Perceptron: {
         # TODO: replace by a statistical test, see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
@@ -1005,13 +1079,19 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     RandomForestClassifier: {
         # TODO: replace by a statistical test, see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
     RandomForestRegressor: {
         # TODO: replace by a statistical test, see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
@@ -1021,13 +1101,19 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     RandomTreesEmbedding: {
         # TODO: replace by a statistical test, see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
     RANSACRegressor: {
         # TODO: replace by a statistical test, see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
@@ -1042,8 +1128,11 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         )
     },
     RidgeCV: {
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
             "GridSearchCV does not forward the weights to the scorer by default."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
     SelfTrainingClassifier: {
@@ -1051,19 +1140,28 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     SGDClassifier: {
         # TODO: replace by a statistical test, see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
     SGDOneClassSVM: {
         # TODO: replace by a statistical test, see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
     SGDRegressor: {
         # TODO: replace by a statistical test, see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
@@ -1100,19 +1198,25 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         # TODO: fix sample_weight handling of this estimator when probability=False
         # TODO: replace by a statistical test when probability=True
         # see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
     SVR: {
         # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
     TunedThresholdClassifierCV: {
         "check_classifiers_train": "Threshold at probability 0.5 does not hold",
-        "check_sample_weight_equivalence": (
+        "check_sample_weight_equivalence_on_dense_data": (
             "Due to the cross-validation and sample ordering, removing a sample"
             " is not strictly equal to putting is weight to zero. Specific unit"
             " tests are added for TunedThresholdClassifierCV specifically."
