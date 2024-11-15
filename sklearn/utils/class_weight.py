@@ -72,11 +72,10 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
         if not all(np.isin(classes, le.classes_)):
             raise ValueError("classes should have valid labels that are in y")
 
-        n_effective_samples = np.bincount(y_ind, weights=sample_weight).sum()
+        samples_bincount = np.bincount(y_ind, weights=sample_weight)
 
-        recip_freq = n_effective_samples / (
-            len(le.classes_)
-            * np.bincount(y_ind, weights=sample_weight).astype(np.float64)
+        recip_freq = samples_bincount.sum() / (
+            len(le.classes_) * samples_bincount.astype(np.float64)
         )
         weight = recip_freq[le.transform(classes)]
     else:
