@@ -891,11 +891,10 @@ def check_estimator_sparse_tag(name, estimator_orig):
     tags = get_tags(estimator)
     if tags.input_tags.sparse:
         estimator.fit(X, y)  # should pass
-        return
     else:
         err_msg = (
-            f"Estimator {name} has input_tags.sparse=False "
-            "but didn't raise an error when fitted on sparse data."
+            f"Estimator {name} with input_tags.sparse=False doesn't "
+            "fail gracefully when fitted on sparse data."
         )
         with raises(
             (TypeError, ValueError),
@@ -904,7 +903,6 @@ def check_estimator_sparse_tag(name, estimator_orig):
             err_msg=err_msg,
         ):
             estimator.fit(X, y)  # should fail
-        return
 
 
 def _check_estimator_sparse_container(name, estimator_orig, sparse_type):
