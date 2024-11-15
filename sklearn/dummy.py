@@ -425,10 +425,6 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         tags = super().__sklearn_tags__()
         tags.classifier_tags.poor_score = True
         tags.no_validation = True
-        tags._xfail_checks = {
-            "check_methods_subset_invariance": "fails for the predict method",
-            "check_methods_sample_order_invariance": "fails for the predict method",
-        }
         return tags
 
     def score(self, X, y, sample_weight=None):

@@ -1543,7 +1543,14 @@ def has_fit_parameter(estimator, parameter):
     >>> has_fit_parameter(SVC(), "sample_weight")
     True
     """
-    return parameter in signature(estimator.fit).parameters
+    return (
+        # This is used during test collection in common tests. The
+        # hasattr(estimator, "fit") makes it so that we don't fail for an estimator
+        # that does not have a `fit` method during collection of checks. The right
+        # checks will fail later.
+        hasattr(estimator, "fit")
+        and parameter in signature(estimator.fit).parameters
+    )
 
 
 def check_symmetric(array, *, tol=1e-10, raise_warning=True, raise_exception=False):
