@@ -1217,7 +1217,7 @@ def check_estimator_sparse_tag(name, estimator_orig):
         except Exception as e:
             raise AssertionError(
                 f"Estimator {name} raised an exception: {e}. The tag "
-                "self.input_tags.sparse_tag might not be consistent with the "
+                "self.input_tags.sparse might not be consistent with the "
                 "estimator's ability to handle sparse data (i.e. controlled by the "
                 "parameter `accept_sparse` in `validate_data` or `check_array` "
                 f"functions). Got input_tags.sparse={tags.input_tags.sparse}."
