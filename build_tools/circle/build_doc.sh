@@ -36,7 +36,7 @@ then
     fi
 fi
 
-if [ -n "$CI_PULL_REQUEST" ] && [ -z "$CI_TARGET_BRANCH" ]
+if [[ -n "$CI_PULL_REQUEST"  && -z "$CI_TARGET_BRANCH" ]]
 then
     # Get the target branch name when using CircleCI
     CI_TARGET_BRANCH=$(curl -s "https://api.github.com/repos/scikit-learn/scikit-learn/pulls/$CIRCLE_PR_NUMBER" | jq -r .base.ref)
@@ -190,7 +190,7 @@ ccache -s
 
 export OMP_NUM_THREADS=1
 
-if [[ "$CIRCLE_BRANCH" =~ ^main$ || "$CI_TARGET_BRANCH" =~ ^main$ ) ]]
+if [[ "$CIRCLE_BRANCH" == "main" || "$CI_TARGET_BRANCH" == "main" ]]
 then
     towncrier build --yes
 fi
