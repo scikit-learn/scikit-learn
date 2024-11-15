@@ -616,5 +616,6 @@ class SelfTrainingClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
+        if self.estimator is not None:
+            tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
         return tags
