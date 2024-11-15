@@ -57,6 +57,16 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         For an example of the different strategies see:
         :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization_strategies.py`.
 
+    quantile_method : {'inverted_cdf','averaged_inverted_cdf',
+            'closest_observation', 'interpolated_inverted_cdf',
+            'hazen','weibull','linear','median_unbiased',
+            'normal_unbiased'}, default='linear'
+            Method to pass on to np.percentile calculation when using
+            strategy='quantile', only used when no sample weights are
+            passed.
+
+            .. versionadded:: 1.6
+
     dtype : {np.float32, np.float64}, default=None
         The desired data-type for the output. If None, output dtype is
         consistent with input dtype. Only np.float32 and np.float64 are
@@ -175,6 +185,21 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         "n_bins": [Interval(Integral, 2, None, closed="left"), "array-like"],
         "encode": [StrOptions({"onehot", "onehot-dense", "ordinal"})],
         "strategy": [StrOptions({"uniform", "quantile", "kmeans"})],
+        "quantile_method": [
+            StrOptions(
+                {
+                    "inverted_cdf",
+                    "averaged_inverted_cdf",
+                    "closest_observation",
+                    "interpolated_inverted_cdf",
+                    "hazen",
+                    "weibull",
+                    "linear",
+                    "median_unbiased",
+                    "normal_unbiased",
+                }
+            )
+        ],
         "dtype": [Options(type, {np.float64, np.float32}), None],
         "subsample": [Interval(Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
@@ -186,6 +211,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         *,
         encode="onehot",
         strategy="quantile",
+        quantile_method="linear",
         dtype=None,
         subsample=200_000,
         random_state=None,
@@ -193,6 +219,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self.n_bins = n_bins
         self.encode = encode
         self.strategy = strategy
+        self.quantile_method = quantile_method
         self.dtype = dtype
         self.subsample = subsample
         self.random_state = random_state
@@ -289,7 +316,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 quantiles = np.linspace(0, 100, n_bins[jj] + 1)
                 if sample_weight is None:
                     bin_edges[jj] = np.asarray(
-                        np.percentile(column, quantiles, method="inverted_cdf"),
+                        np.percentile(column, quantiles, method=self.quantile_method),
                         dtype=np.float64,
                     )
                 else:
