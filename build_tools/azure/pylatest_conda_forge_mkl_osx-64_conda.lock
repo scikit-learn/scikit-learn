@@ -17,7 +17,7 @@ https://conda.anaconda.org/conda-forge/osx-64/icu-75.1-h120a0e1_0.conda#d68d48a3
 https://conda.anaconda.org/conda-forge/osx-64/libbrotlicommon-1.1.0-h00291cd_2.conda#58f2c4bdd56c46cc7451596e4ae68e0b
 https://conda.anaconda.org/conda-forge/osx-64/libcxx-19.1.3-hf95d169_0.conda#86801fc56d4641e3ef7a63f5d996b960
 https://conda.anaconda.org/conda-forge/osx-64/libdeflate-1.22-h00291cd_0.conda#a15785ccc62ae2a8febd299424081efb
-https://conda.anaconda.org/conda-forge/osx-64/libexpat-2.6.3-hac325c4_0.conda#c1db99b0a94a2f23bd6ce39e2d314e07
+https://conda.anaconda.org/conda-forge/osx-64/libexpat-2.6.4-h240833e_0.conda#20307f4049a735a78a29073be1be2626
 https://conda.anaconda.org/conda-forge/osx-64/libmpdec-4.0.0-hfdf4475_0.conda#ed625b2e59dff82859c23dd24774156b
 https://conda.anaconda.org/conda-forge/osx-64/libzlib-1.3.1-hd23fc13_2.conda#003a54a4e32b02f7355b50a837e699da
 https://conda.anaconda.org/conda-forge/osx-64/llvm-openmp-19.1.3-hf78d878_0.conda#18a8498d57d871da066beaa09263a638
@@ -117,10 +117,10 @@ https://conda.anaconda.org/conda-forge/osx-64/pandas-2.2.3-py313h38cdd20_1.conda
 https://conda.anaconda.org/conda-forge/osx-64/scipy-1.14.1-py313hbd2dc07_1.conda#63098e1999a8f08b82ae921440e6ed0a
 https://conda.anaconda.org/conda-forge/osx-64/blas-2.120-mkl.conda#b041a7677a412f3d925d8208936cb1e2
 https://conda.anaconda.org/conda-forge/osx-64/clang_impl_osx-64-17.0.6-h1af8efd_21.conda#6ef491cbc462aae64eaa0213e7ae6222
-https://conda.anaconda.org/conda-forge/osx-64/matplotlib-base-3.9.2-py313h04f2f9a_1.conda#e0355aa34089010cce072986cfb9c989
+https://conda.anaconda.org/conda-forge/osx-64/matplotlib-base-3.9.2-py313h04f2f9a_2.conda#73c8a15c5101126f8adc9ab9a6818959
 https://conda.anaconda.org/conda-forge/osx-64/pyamg-5.2.1-py313h0322a6a_1.conda#4bda5182eeaef3d2017a2ec625802e1a
 https://conda.anaconda.org/conda-forge/osx-64/clang_osx-64-17.0.6-hb91bd55_21.conda#d94a0f2c03e7a50203d2b78d7dd9fa25
-https://conda.anaconda.org/conda-forge/osx-64/matplotlib-3.9.2-py313habf4b1d_1.conda#5323d57b4ec77c8cdd7475cbdd85072b
+https://conda.anaconda.org/conda-forge/osx-64/matplotlib-3.9.2-py313habf4b1d_2.conda#4b81b94ada5a3bc121a91fc60d61fdd1
 https://conda.anaconda.org/conda-forge/osx-64/c-compiler-1.8.0-hfc4bf79_1.conda#d6e3cf55128335736c8d4bb86e73c191
 https://conda.anaconda.org/conda-forge/osx-64/clangxx_impl_osx-64-17.0.6-hc3430b7_21.conda#9dbdec57445cac0f0c39aefe3d3900bc
 https://conda.anaconda.org/conda-forge/osx-64/gfortran_osx-64-13.2.0-h18f7dce_1.conda#71d59c1ae3fea7a97154ff0e20b38df3

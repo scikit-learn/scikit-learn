@@ -226,33 +226,20 @@ class Tags:
         Whether to skip common tests entirely. Don't use this unless
         you have a *very good* reason.
 
-    _xfail_checks : dict[str, str], default={}
-        Dictionary ``{check_name: reason}`` of common checks that will
-        be marked as `XFAIL` for pytest, when using
-        :func:`~sklearn.utils.estimator_checks.parametrize_with_checks`. These
-        checks will be simply ignored and not run by
-        :func:`~sklearn.utils.estimator_checks.check_estimator`, but a
-        `SkipTestWarning` will be raised.  Don't use this unless there
-        is a *very good* reason for your estimator not to pass the
-        check.  Also note that the usage of this tag is highly subject
-        to change because we are trying to make it more flexible: be
-        prepared for breaking changes in the future.
-
     input_tags : :class:`InputTags`
         The input data(X) tags.
     """
 
     estimator_type: str | None
     target_tags: TargetTags
-    transformer_tags: TransformerTags | None
-    classifier_tags: ClassifierTags | None
-    regressor_tags: RegressorTags | None
+    transformer_tags: TransformerTags | None = None
+    classifier_tags: ClassifierTags | None = None
+    regressor_tags: RegressorTags | None = None
     array_api_support: bool = False
     no_validation: bool = False
     non_deterministic: bool = False
     requires_fit: bool = True
     _skip_test: bool = False
-    _xfail_checks: dict[str, str] = field(default_factory=dict)
     input_tags: InputTags = field(default_factory=InputTags)
 
 
@@ -316,6 +303,8 @@ def get_tags(estimator) -> Tags:
     `get_tags(self.estimator)` where `self` is a meta-estimator, or in
     the common checks.
 
+    .. versionadded:: 1.6
+
     Parameters
     ----------
     estimator : estimator object
@@ -326,6 +315,7 @@ def get_tags(estimator) -> Tags:
     tags : :class:`~.sklearn.utils.Tags`
         The estimator tags.
     """
+
     if hasattr(estimator, "__sklearn_tags__"):
         tags = estimator.__sklearn_tags__()
     else:

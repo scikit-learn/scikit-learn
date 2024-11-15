@@ -1171,13 +1171,3 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             # We chose the last one.
             indices = [j for j in range(XBS.shape[1]) if (j + 1) % n_splines != 0]
             return XBS[:, indices]
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_estimators_pickle": (
-                "Current Scipy implementation of _bsplines does not"
-                "support const memory views."
-            ),
-        }
-        return tags
