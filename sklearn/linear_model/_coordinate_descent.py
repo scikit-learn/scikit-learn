@@ -1869,6 +1869,11 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         )
         return router
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 class LassoCV(RegressorMixin, LinearModelCV):
     """Lasso linear model with iterative fitting along a regularization path.
@@ -2083,7 +2088,6 @@ class LassoCV(RegressorMixin, LinearModelCV):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.input_tags.sparse = True
         tags.target_tags.multi_output = False
         return tags
 
@@ -2365,7 +2369,6 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.input_tags.sparse = True
         tags.target_tags.multi_output = False
         return tags
 

@@ -887,11 +887,6 @@ class SVC(BaseSVC):
             random_state=random_state,
         )
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags.input_tags.sparse = self.kernel != "precomputed"
-        return tags
-
 
 class NuSVC(BaseSVC):
     """Nu-Support Vector Classification.
@@ -1155,11 +1150,6 @@ class NuSVC(BaseSVC):
             random_state=random_state,
         )
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags.input_tags.sparse = self.kernel != "precomputed"
-        return tags
-
 
 class SVR(RegressorMixin, BaseLibSVM):
     """Epsilon-Support Vector Regression.
@@ -1354,11 +1344,6 @@ class SVR(RegressorMixin, BaseLibSVM):
             random_state=None,
         )
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags.input_tags.sparse = self.kernel != "precomputed"
-        return tags
-
 
 class NuSVR(RegressorMixin, BaseLibSVM):
     """Nu Support Vector Regression.
@@ -1545,11 +1530,6 @@ class NuSVR(RegressorMixin, BaseLibSVM):
             max_iter=max_iter,
             random_state=None,
         )
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags.input_tags.sparse = self.kernel != "precomputed"
-        return tags
 
 
 class OneClassSVM(OutlierMixin, BaseLibSVM):
@@ -1807,8 +1787,3 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         """
         y = super().predict(X)
         return np.asarray(y, dtype=np.intp)
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags.input_tags.sparse = True
-        return tags

@@ -771,6 +771,7 @@ class _BaseDiscreteNB(_BaseNB):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.classifier_tags.poor_score = True
         return tags
 
@@ -880,7 +881,6 @@ class MultinomialNB(_BaseDiscreteNB):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.input_tags.sparse = True
         tags.input_tags.positive_only = True
         return tags
 
@@ -1029,7 +1029,6 @@ class ComplementNB(_BaseDiscreteNB):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.input_tags.sparse = True
         tags.input_tags.positive_only = True
         return tags
 
@@ -1228,11 +1227,6 @@ class BernoulliNB(_BaseDiscreteNB):
         jll += self.class_log_prior_ + neg_prob.sum(axis=1)
 
         return jll
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags.input_tags.sparse = True
-        return tags
 
 
 class CategoricalNB(_BaseDiscreteNB):

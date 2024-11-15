@@ -421,5 +421,6 @@ class IncrementalPCA(_BasePCA):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        # Beware that fit accepts sparse data but partial_fit doesn't
         tags.input_tags.sparse = True
         return tags

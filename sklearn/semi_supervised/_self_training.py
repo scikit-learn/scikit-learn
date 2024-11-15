@@ -4,9 +4,13 @@ from warnings import warn
 
 import numpy as np
 
-from sklearn.base import ClassifierMixin
-
-from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone
+from ..base import (
+    BaseEstimator,
+    ClassifierMixin,
+    MetaEstimatorMixin,
+    _fit_context,
+    clone,
+)
 from ..utils import Bunch, get_tags, safe_mask
 from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
 from ..utils.metadata_routing import (
