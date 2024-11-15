@@ -481,6 +481,28 @@ def test_kbinsdiscretizer_subsample(strategy, global_random_seed):
     )
 
 
+def test_quantile_method_FutureWarning():
+    X = [[-2, 1, -4], [-1, 2, -3], [0, 3, -2], [1, 4, -1]]
+    with pytest.warns(
+        FutureWarning,
+        match="Default quantile method will change from linear to average_inverted_cdf\
+              in scikit-learn version 1.9",
+    ):
+        KBinsDiscretizer(strategy="quantile").fit(X)
+
+
+def test_ValueError_sample_weight_quantile_method():
+    X = [[-2, 1, -4], [-1, 2, -3], [0, 3, -2], [1, 4, -1]]
+    with pytest.raises(
+        ValueError,
+        match="When using quantile strategy with sample weights, quantile method should\
+              be inverted_cdf or averaged_inverted_cdf",
+    ):
+        KBinsDiscretizer(strategy="quantile", quantile_method="linear").fit(
+            X, sample_weight=[1, 1, 2, 2]
+        )
+
+
 # TODO(1.7): remove this test
 def test_KBD_inverse_transform_Xt_deprecation():
     X = np.arange(10)[:, None]

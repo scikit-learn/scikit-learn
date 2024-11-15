@@ -285,6 +285,16 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         bin_edges = np.zeros(n_features, dtype=object)
 
+        if (
+            self.strategy == "quantile"
+            and sample_weight is not None
+            and self.quantile_method not in ["inverted_cdf", "averaged_inverted_cdf"]
+        ):
+            raise ValueError(
+                "When using quantile strategy with sample weights, quantile method\
+                      should be inverted_cdf or averaged_inverted_cdf"
+            )
+
         if self.strategy != "quantile" and sample_weight is not None:
             # Preprare a mask to filter out zero-weight samples when extracting
             # the min and max values of each columns which are needed for the
@@ -314,6 +324,13 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             elif self.strategy == "quantile":
                 quantiles = np.linspace(0, 100, n_bins[jj] + 1)
                 if sample_weight is None:
+
+                    if self.quantile_method == "linear":
+                        warnings.warn(
+                            "Default quantile method will change from linear to\
+                                  average_inverted_cdf in scikit-learn version 1.9",
+                            FutureWarning,
+                        )
                     bin_edges[jj] = np.asarray(
                         np.percentile(column, quantiles, method=self.quantile_method),
                         dtype=np.float64,
