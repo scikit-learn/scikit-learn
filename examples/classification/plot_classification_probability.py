@@ -11,11 +11,11 @@ dataset, and we classify it with the following:
 * RBF kernel (approximated by Nystroem method) followed by logistic regression
 * Gaussian process classification
 
-The first three columns shows the predicted probability for varing values of the two
-features. Points represent the fit data that was predicted to belong to that class.
-In the last column, all three classes are represented on each plot; the
-class with the highest predicted probability at each point is plotted. The scatter
-points show the fit data, colored by the true label.
+The first three columns shows the predicted probability for varying values of the two
+features. Round markers represent the fit data that was predicted to belong to that
+class. In the last column, all three classes are represented on each plot; the
+class with the highest predicted probability at each point is plotted. The round
+markers show the fit data and are colored by their true label.
 
 Linear SVC is not a probabilistic classifier by default but it has a built-in
 calibration option enabled in this example (`probability=True`).
