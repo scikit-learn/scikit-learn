@@ -16,7 +16,6 @@ from sklearn.metrics._pairwise_distances_reduction import (
     RadiusNeighborsClassMode,
     sqeuclidean_row_norms,
 )
-#TODO: import precomputed
 from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
@@ -39,7 +38,6 @@ CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS = [
     "minkowski",
     "seuclidean",
 ]
-
 
 def _get_metric_params_list(metric: str, n_features: int, seed: int = 1):
     """Return list of dummy DistanceMetric kwargs for tests."""
@@ -101,66 +99,22 @@ def assert_same_distances_for_common_neighbors(
                 f" dist_a={dist_a} vs dist_b={dist_b} (with atol={atol} and"
                 f" rtol={rtol})"
             ) from e
-            
-def assert_array_precomputed('precomputed',
-    [(precomputed, 5, 10),  # Use the imported matrix
+
+def assert_precomputed(precomputed, n_samples_X, n_samples_Y):
+    if isinstance(precomputed, np.ndarray) is False:
+        raise AssertionError("Input must be a numpy array")
+    if precomputed.dtype not in [np.float32, np.float64]:
+        raise AssertionError("Precomputed matrix must be of type float 32 or 64")
+    if precomputed.size == 0: 
+        raise AssertionError("Precomputed matrix should not be empty")
+    if precomputed.shape != (n_samples_X, n_samples_Y):
+        raise AssertionError(
+     f"Incorrect dimensions for precomputed matrix. "
+     f"Expected: ({n_samples_X}, {n_samples_Y}), "
+     f"Got: {precomputed.shape}")
     
-    ]                         
-                             ):
-    """Ensure input is a numpy array."""
-    assert isinstance(precomputed, np.ndarray), "Input must be a numpy array."
-
-def assert_dtype_precomputed(precomputed_matrix: np.ndarray) -> None:
-    """Ensure input is of type float32 or float64."""
-    assert precomputed_matrix.dtype in [np.float32, np.float64], "Array must be of type float32 or float64."
-
-def assert_not_empty_precomputed(precomputed_matrix: np.ndarray) -> None:
-    """Ensure array is not empty."""
-    assert precomputed_matrix.size > 0, "Precomputed matrix should not be empty."
-
-def assert_nan_precomputed(precomputed_matrix: np.ndarray) -> None:
-    """Ensure array contains no NaN or Inf values."""
-    assert not np.isnan(precomputed_matrix).any(), "Precomputed matrix contains NaN values."
-    assert not np.isinf(precomputed_matrix).any(), "Precomputed matrix contains Inf values."
-
-def assert_size_for_precomputed(precomputed_matrix: np.ndarray, n_samples_X: int, n_samples_Y: int) -> None:
-    """
-    Check the shape of the precomputed distance matrix.
-
-    Parameters:
-    precomputed (np.ndarray): The precomputed distance matrix.
-    n_samples_X (int): The expected number of samples for X.
-    n_samples_Y (int): The expected number of samples for Y.
-
-    Raises:
-    AssertionError: If the shape of the precomputed matrix is not correct.
-    """
-    assert isinstance(precomputed_matrix, np.ndarray), "Input must be a numpy array."
-    assert precomputed_matrix.shape == (n_samples_X, n_samples_Y), (
-        f"Incorrect dimensions for precomputed matrix. "
-        f"Expected: ({n_samples_X}, {n_samples_Y}), "
-        f"Got: {precomputed_matrix.shape}"
-    )
-
-def assert_size_for_precomputed(precomputed_matrix: np.ndarray, n_samples_X: int, n_samples_Y: int) -> None:
-    """
-    Check the shape of the precomputed distance matrix.
-
-    Parameters:
-    precomputed_matrix (np.ndarray): The precomputed distance matrix.
-    n_samples_X (int): The expected number of samples for X.
-    n_samples_Y (int): The expected number of samples for Y.
-
-    Raises:
-    AssertionError: If the shape of the precomputed matrix is not correct.
-    """
-    assert isinstance(precomputed_matrix, np.ndarray), "Input must be a numpy array."
-    assert precomputed_matrix.shape == (n_samples_X, n_samples_Y), (
-        f"Incorrect dimensions for precomputed matrix. "
-        f"Expected: ({n_samples_X}, {n_samples_Y}), "
-        f"Got: {precomputed_matrix.shape}"
-    )
     
+   
 def assert_no_missing_neighbors(
     query_idx,
     dist_row_a,
@@ -1680,7 +1634,7 @@ def test_radius_neighbors_classmode_strategy_consistent(outlier_label: None | Li
         X=X,
         Y=Y,
         radius=radius,
-        metric=metric,
+        metric=metric,     
         weights=weights,
         Y_labels=Y_labels,
         unique_Y_labels=unique_Y_labels,

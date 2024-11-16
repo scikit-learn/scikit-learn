@@ -97,8 +97,8 @@ class BaseDistancesReductionDispatcher:
 
         Y : {ndarray, sparse matrix} of shape (n_samples_Y, n_features)
             Input data.
-            
-        precomputed: ndarray of shape (n_samples_X, n_samples_Y)   
+
+        precomputed: ndarray of shape (n_samples_X, n_samples_Y)
 
         metric : str, default='euclidean'
             The distance metric to use.
@@ -110,9 +110,11 @@ class BaseDistancesReductionDispatcher:
         True if the dispatcher can be used, else False.
         """
         if precomputed is not None or (X is not None and Y is not None):
-            print('input is valid')
+            print("input is valid")
         else:
-            raise ValueError("Either 'precomputed' or both 'X' and 'Y' must be provided.")
+            raise ValueError(
+                "Either 'precomputed' or both 'X' and 'Y' must be provided."
+            )
 
         # FIXME: the current Cython implementation is too slow for a large number of
         # features. We temporarily disable it to fallback on SciPy's implementation.
@@ -314,7 +316,7 @@ class ArgKmin(BaseDistancesReductionDispatcher):
             return ArgKmin32.compute(
                 X=X,
                 Y=Y,
-                precomputed = precomputed_matrix,
+                precomputed=precomputed_matrix,
                 k=k,
                 metric=metric,
                 chunk_size=chunk_size,
