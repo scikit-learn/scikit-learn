@@ -14,6 +14,7 @@ implementation_specific_values = [
 
 }}
 from libcpp.vector cimport vector
+from libcpp.algorithm cimport fill
 
 from ...utils._cython_blas cimport (
   BLAS_Order,
@@ -24,13 +25,6 @@ from ...utils._cython_blas cimport (
   _gemm,
 )
 from ...utils._typedefs cimport float64_t, float32_t, int32_t, intp_t
-
-# TODO: change for `libcpp.algorithm.fill` once Cython 3 is used
-# Introduction in Cython:
-#
-# https://github.com/cython/cython/blob/05059e2a9b89bf6738a7750b905057e5b1e3fe2e/Cython/Includes/libcpp/algorithm.pxd#L50 #noqa
-cdef extern from "<algorithm>" namespace "std" nogil:
-    void fill[Iter, T](Iter first, Iter last, const T& value) except + #noqa
 
 import numpy as np
 from scipy.sparse import issparse, csr_matrix

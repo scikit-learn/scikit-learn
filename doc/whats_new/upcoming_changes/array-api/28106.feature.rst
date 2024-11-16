@@ -1,0 +1,3 @@
+- :func:`sklearn.metrics.mean_tweedie_deviance` now supports Array API
+  compatible inputs.
+  By :user:`Thomas Li <lithomas1>`

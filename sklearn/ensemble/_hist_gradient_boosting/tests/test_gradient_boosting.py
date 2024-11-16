@@ -35,9 +35,10 @@ from sklearn.metrics import get_scorer, mean_gamma_deviance, mean_poisson_devian
 from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
-from sklearn.utils import _IS_32BIT, shuffle
+from sklearn.utils import shuffle
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._testing import _convert_container
+from sklearn.utils.fixes import _IS_32BIT
 
 n_threads = _openmp_effective_n_threads()
 
@@ -159,7 +160,7 @@ def test_early_stopping_classification(
     X, y = data
 
     gb = HistGradientBoostingClassifier(
-        verbose=1,  # just for coverage
+        verbose=2,  # just for coverage
         min_samples_leaf=5,  # easier to overfit fast
         scoring=scoring,
         tol=tol,
@@ -1568,26 +1569,6 @@ def test_categorical_different_order_same_model(dataframe_lib):
         assert len(predictor_1[0].nodes) == len(predictor_2[0].nodes)
 
 
-# TODO(1.6): Remove warning and change default in 1.6
-def test_categorical_features_warn():
-    """Raise warning when there are categorical features in the input DataFrame.
-
-    This is not tested for polars because polars categories must always be
-    strings and strings can only be handled as categories. Therefore the
-    situation in which a categorical column is currently being treated as
-    numbers and in the future will be treated as categories cannot occur with
-    polars.
-    """
-    pd = pytest.importorskip("pandas")
-    X = pd.DataFrame({"a": pd.Series([1, 2, 3], dtype="category"), "b": [4, 5, 6]})
-    y = [0, 1, 0]
-    hist = HistGradientBoostingClassifier(random_state=0)
-
-    msg = "The categorical_features parameter will change to 'from_dtype' in v1.6"
-    with pytest.warns(FutureWarning, match=msg):
-        hist.fit(X, y)
-
-
 def get_different_bitness_node_ndarray(node_ndarray):
     new_dtype_for_indexing_fields = np.int64 if _IS_32BIT else np.int32
 
@@ -1669,3 +1650,15 @@ def test_different_bitness_joblib_pickle():
     new_clf = joblib.load(joblib_dump_with_different_bitness())
     new_score = new_clf.score(X, y)
     assert score == pytest.approx(new_score)
+
+
+def test_pandas_nullable_dtype():
+    # Non regression test for https://github.com/scikit-learn/scikit-learn/issues/28317
+    pd = pytest.importorskip("pandas")
+
+    rng = np.random.default_rng(0)
+    X = pd.DataFrame({"a": rng.integers(10, size=100)}).astype(pd.Int64Dtype())
+    y = rng.integers(2, size=100)
+
+    clf = HistGradientBoostingClassifier()
+    clf.fit(X, y)

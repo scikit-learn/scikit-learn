@@ -17,16 +17,10 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import scale
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._testing import (
+    _convert_container,
     assert_allclose,
     assert_array_equal,
 )
-
-# TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
-pytestmark = pytest.mark.filterwarnings(
-    "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
-    "matplotlib.*"
-)
-
 
 X, y = make_classification(
     n_informative=1,
@@ -340,7 +334,7 @@ def test_decision_boundary_display_regressor(pyplot, response_method, plot_metho
 def test_error_bad_response(pyplot, response_method, msg):
     """Check errors for bad response."""
 
-    class MyClassifier(BaseEstimator, ClassifierMixin):
+    class MyClassifier(ClassifierMixin, BaseEstimator):
         def fit(self, X, y):
             self.fitted_ = True
             self.classes_ = [0, 1]
@@ -468,15 +462,18 @@ def test_string_target(pyplot):
     )
 
 
-def test_dataframe_support(pyplot):
+@pytest.mark.parametrize("constructor_name", ["pandas", "polars"])
+def test_dataframe_support(pyplot, constructor_name):
     """Check that passing a dataframe at fit and to the Display does not
     raise warnings.
 
     Non-regression test for:
-    https://github.com/scikit-learn/scikit-learn/issues/23311
+    * https://github.com/scikit-learn/scikit-learn/issues/23311
+    * https://github.com/scikit-learn/scikit-learn/issues/28717
     """
-    pd = pytest.importorskip("pandas")
-    df = pd.DataFrame(X, columns=["col_x", "col_y"])
+    df = _convert_container(
+        X, constructor_name=constructor_name, columns_name=["col_x", "col_y"]
+    )
     estimator = LogisticRegression().fit(df, y)
 
     with warnings.catch_warnings():

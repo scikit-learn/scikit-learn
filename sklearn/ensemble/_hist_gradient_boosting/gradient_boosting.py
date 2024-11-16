@@ -1,9 +1,9 @@
 """Fast Gradient Boosting decision trees for classification and regression."""
 
-# Author: Nicolas Hug
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import itertools
-import warnings
 from abc import ABC, abstractmethod
 from contextlib import contextmanager, nullcontext, suppress
 from functools import partial
@@ -33,9 +33,10 @@ from ...metrics import check_scoring
 from ...metrics._scorer import _SCORERS
 from ...model_selection import train_test_split
 from ...preprocessing import FunctionTransformer, LabelEncoder, OrdinalEncoder
-from ...utils import check_random_state, compute_sample_weight, is_scalar_nan, resample
+from ...utils import check_random_state, compute_sample_weight, resample
+from ...utils._missing import is_scalar_nan
 from ...utils._openmp_helpers import _openmp_effective_n_threads
-from ...utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
+from ...utils._param_validation import Interval, RealNotInt, StrOptions
 from ...utils.multiclass import check_classification_targets
 from ...utils.validation import (
     _check_monotonic_cst,
@@ -45,6 +46,7 @@ from ...utils.validation import (
     check_array,
     check_consistent_length,
     check_is_fitted,
+    validate_data,
 )
 from ._gradient_boosting import _update_raw_predictions
 from .binning import _BinMapper
@@ -163,12 +165,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         ],
         "tol": [Interval(Real, 0, None, closed="left")],
         "max_bins": [Interval(Integral, 2, 255, closed="both")],
-        "categorical_features": [
-            "array-like",
-            StrOptions({"from_dtype"}),
-            Hidden(StrOptions({"warn"})),
-            None,
-        ],
+        "categorical_features": ["array-like", StrOptions({"from_dtype"}), None],
         "warm_start": ["boolean"],
         "early_stopping": [StrOptions({"auto"}), "boolean"],
         "scoring": [str, callable, None],
@@ -261,10 +258,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         """
         # If there is a preprocessor, we let the preprocessor handle the validation.
         # Otherwise, we validate the data ourselves.
-        check_X_kwargs = dict(dtype=[X_DTYPE], force_all_finite=False)
+        check_X_kwargs = dict(dtype=[X_DTYPE], ensure_all_finite=False)
         if not reset:
             if self._preprocessor is None:
-                return self._validate_data(X, reset=False, **check_X_kwargs)
+                return validate_data(self, X, reset=False, **check_X_kwargs)
             return self._preprocessor.transform(X)
 
         # At this point, reset is False, which runs during `fit`.
@@ -274,7 +271,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             self._preprocessor = None
             self._is_categorical_remapped = None
 
-            X = self._validate_data(X, **check_X_kwargs)
+            X = validate_data(self, X, **check_X_kwargs)
             return X, None
 
         n_features = X.shape[1]
@@ -368,7 +365,14 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             Indicates whether a feature is categorical. If no feature is
             categorical, this is None.
         """
-        if hasattr(X, "__dataframe__"):
+        # Special code for pandas because of a bug in recent pandas, which is
+        # fixed in main and maybe included in 2.2.1, see
+        # https://github.com/pandas-dev/pandas/pull/57173.
+        # Also pandas versions < 1.5.1 do not support the dataframe interchange
+        if _is_pandas_df(X):
+            X_is_dataframe = True
+            categorical_columns_mask = np.asarray(X.dtypes == "category")
+        elif hasattr(X, "__dataframe__"):
             X_is_dataframe = True
             categorical_columns_mask = np.asarray(
                 [
@@ -376,35 +380,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     for c in X.__dataframe__().get_columns()
                 ]
             )
-            X_has_categorical_columns = categorical_columns_mask.any()
-        # pandas versions < 1.5.1 do not support the dataframe interchange
-        # protocol so we inspect X.dtypes directly
-        elif _is_pandas_df(X):
-            X_is_dataframe = True
-            categorical_columns_mask = np.asarray(X.dtypes == "category")
-            X_has_categorical_columns = categorical_columns_mask.any()
         else:
             X_is_dataframe = False
             categorical_columns_mask = None
-            X_has_categorical_columns = False
 
-        # TODO(1.6): Remove warning and change default to "from_dtype" in v1.6
-        if (
-            isinstance(self.categorical_features, str)
-            and self.categorical_features == "warn"
-        ):
-            if X_has_categorical_columns:
-                warnings.warn(
-                    (
-                        "The categorical_features parameter will change to 'from_dtype'"
-                        " in v1.6. The 'from_dtype' option automatically treats"
-                        " categorical dtypes in a DataFrame as categorical features."
-                    ),
-                    FutureWarning,
-                )
-            categorical_features = None
-        else:
-            categorical_features = self.categorical_features
+        categorical_features = self.categorical_features
 
         categorical_by_dtype = (
             isinstance(categorical_features, str)
@@ -580,6 +560,17 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         self._validate_parameters()
         monotonic_cst = _check_monotonic_cst(self, self.monotonic_cst)
+        # _preprocess_X places the categorical features at the beginning,
+        # change the order of monotonic_cst accordingly
+        if self.is_categorical_ is not None:
+            monotonic_cst_remapped = np.concatenate(
+                (
+                    monotonic_cst[self.is_categorical_],
+                    monotonic_cst[~self.is_categorical_],
+                )
+            )
+        else:
+            monotonic_cst_remapped = monotonic_cst
 
         # used for validation in predict
         n_samples, self._n_features = X.shape
@@ -843,7 +834,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         )
 
         for iteration in range(begin_at_stage, self.max_iter):
-            if self.verbose:
+            if self.verbose >= 2:
                 iteration_start_time = time()
                 print(
                     "[{}/{}] ".format(iteration + 1, self.max_iter), end="", flush=True
@@ -892,7 +883,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     n_bins_non_missing=self._bin_mapper.n_bins_non_missing_,
                     has_missing_values=has_missing_values,
                     is_categorical=self._is_categorical_remapped,
-                    monotonic_cst=monotonic_cst,
+                    monotonic_cst=monotonic_cst_remapped,
                     interaction_cst=interaction_cst,
                     max_leaf_nodes=self.max_leaf_nodes,
                     max_depth=self.max_depth,
@@ -973,7 +964,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                         raw_predictions_val=raw_predictions_val,
                     )
 
-            if self.verbose:
+            if self.verbose >= 2:
                 self._print_iteration_stats(iteration_start_time)
 
             # maybe we could also early stop if all the trees are stumps?
@@ -1395,8 +1386,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         return averaged_predictions
 
-    def _more_tags(self):
-        return {"allow_nan": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        return tags
 
     @abstractmethod
     def _get_loss(self, sample_weight):
@@ -1427,6 +1420,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     assigned to the left or right child consequently. If no missing values
     were encountered for a given feature during training, then samples with
     missing values are mapped to whichever child has the most samples.
+    See :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py` for a
+    usecase example of this feature.
 
     This implementation is inspired by
     `LightGBM <https://github.com/Microsoft/LightGBM>`_.
@@ -1478,7 +1473,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         than a few hundred samples, it is recommended to lower this value
         since only very shallow trees would be built.
     l2_regularization : float, default=0
-        The L2 regularization parameter. Use ``0`` for no regularization (default).
+        The L2 regularization parameter penalizing leaves with small hessians.
+        Use ``0`` for no regularization (default).
     max_features : float, default=1.0
         Proportion of randomly chosen features in each and every node split.
         This is a form of regularization, smaller values make the trees weaker
@@ -1524,8 +1520,10 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
            Added support for feature names.
 
         .. versionchanged:: 1.4
-           Added `"from_dtype"` option. The default will change to `"from_dtype"` in
-           v1.6.
+           Added `"from_dtype"` option.
+
+        .. versionchanged:: 1.6
+           The default value changed from `None` to `"from_dtype"`.
 
     monotonic_cst : array-like of int of shape (n_features) or dict, default=None
         Monotonic constraint to enforce on each feature are specified using the
@@ -1600,7 +1598,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         iterations to be considered an improvement upon the reference score.
     verbose : int, default=0
         The verbosity level. If not zero, print some information about the
-        fitting process.
+        fitting process. ``1`` prints only summary info, ``2`` prints info per
+        iteration.
     random_state : int, RandomState instance or None, default=None
         Pseudo-random number generator to control the subsampling in the
         binning process, and the train/validation data split if early stopping
@@ -1697,7 +1696,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         l2_regularization=0.0,
         max_features=1.0,
         max_bins=255,
-        categorical_features="warn",
+        categorical_features="from_dtype",
         monotonic_cst=None,
         interaction_cst=None,
         warm_start=False,
@@ -1854,7 +1853,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         than a few hundred samples, it is recommended to lower this value
         since only very shallow trees would be built.
     l2_regularization : float, default=0
-        The L2 regularization parameter. Use ``0`` for no regularization (default).
+        The L2 regularization parameter penalizing leaves with small hessians.
+        Use ``0`` for no regularization (default).
     max_features : float, default=1.0
         Proportion of randomly chosen features in each and every node split.
         This is a form of regularization, smaller values make the trees weaker
@@ -1900,8 +1900,10 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
            Added support for feature names.
 
         .. versionchanged:: 1.4
-           Added `"from_dtype"` option. The default will change to `"from_dtype"` in
-           v1.6.
+           Added `"from_dtype"` option.
+
+        .. versionchanged::1.6
+           The default will changed from `None` to `"from_dtype"`.
 
     monotonic_cst : array-like of int of shape (n_features) or dict, default=None
         Monotonic constraint to enforce on each feature are specified using the
@@ -1978,7 +1980,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         considered an improvement upon the reference score.
     verbose : int, default=0
         The verbosity level. If not zero, print some information about the
-        fitting process.
+        fitting process. ``1`` prints only summary info, ``2`` prints info per
+        iteration.
     random_state : int, RandomState instance or None, default=None
         Pseudo-random number generator to control the subsampling in the
         binning process, and the train/validation data split if early stopping
@@ -2075,7 +2078,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         l2_regularization=0.0,
         max_features=1.0,
         max_bins=255,
-        categorical_features="warn",
+        categorical_features="from_dtype",
         monotonic_cst=None,
         interaction_cst=None,
         warm_start=False,

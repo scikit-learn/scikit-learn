@@ -1,4 +1,5 @@
 """Testing for Spectral Clustering methods"""
+
 import pickle
 import re
 
@@ -214,23 +215,6 @@ def test_discretize(n_samples, coo_container):
         assert adjusted_rand_score(y_true, y_pred) > 0.8
 
 
-# TODO: Remove when pyamg does replaces sp.rand call with np.random.rand
-# https://github.com/scikit-learn/scikit-learn/issues/15913
-@pytest.mark.filterwarnings(
-    "ignore:scipy.rand is deprecated:DeprecationWarning:pyamg.*"
-)
-# TODO: Remove when pyamg removes the use of np.float
-@pytest.mark.filterwarnings(
-    "ignore:`np.float` is a deprecated alias:DeprecationWarning:pyamg.*"
-)
-# TODO: Remove when pyamg removes the use of pinv2
-@pytest.mark.filterwarnings(
-    "ignore:scipy.linalg.pinv2 is deprecated:DeprecationWarning:pyamg.*"
-)
-# TODO: Remove when pyamg removes the use of np.find_common_type
-@pytest.mark.filterwarnings(
-    "ignore:np.find_common_type is deprecated:DeprecationWarning:pyamg.*"
-)
 def test_spectral_clustering_with_arpack_amg_solvers():
     # Test that spectral_clustering is the same for arpack and amg solver
     # Based on toy example from plot_segmentation_toy.py

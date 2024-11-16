@@ -1,5 +1,5 @@
-# Author: Vlad Niculae
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import numpy as np
@@ -155,6 +155,17 @@ def test_estimator():
     assert omp.coef_.shape == (n_targets, n_features)
     assert omp.intercept_ == 0
     assert np.count_nonzero(omp.coef_) <= n_targets * n_nonzero_coefs
+
+
+def test_estimator_n_nonzero_coefs():
+    """Check `n_nonzero_coefs_` correct when `tol` is and isn't set."""
+    omp = OrthogonalMatchingPursuit(n_nonzero_coefs=n_nonzero_coefs)
+    omp.fit(X, y[:, 0])
+    assert omp.n_nonzero_coefs_ == n_nonzero_coefs
+
+    omp = OrthogonalMatchingPursuit(n_nonzero_coefs=n_nonzero_coefs, tol=0.5)
+    omp.fit(X, y[:, 0])
+    assert omp.n_nonzero_coefs_ is None
 
 
 def test_identical_regressors():

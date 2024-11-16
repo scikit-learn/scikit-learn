@@ -7,16 +7,8 @@ Function named as ``*_error`` or ``*_loss`` return a scalar value to minimize:
 the lower the better.
 """
 
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Olivier Grisel <olivier.grisel@ensta.org>
-#          Arnaud Joly <a.joly@ulg.ac.be>
-#          Jochen Wersdorfer <jochen@wersdoerfer.de>
-#          Lars Buitinck
-#          Joel Nothman <joel.nothman@gmail.com>
-#          Noel Dawe <noel@dawe.me>
-#          Michal Karbownik <michakarbownik@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import warnings
@@ -24,6 +16,7 @@ from functools import partial
 from numbers import Integral, Real
 
 import numpy as np
+from scipy.integrate import trapezoid
 from scipy.sparse import csr_matrix, issparse
 from scipy.stats import rankdata
 
@@ -36,9 +29,8 @@ from ..utils import (
     column_or_1d,
 )
 from ..utils._encode import _encode, _unique
-from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.extmath import stable_cumsum
-from ..utils.fixes import trapezoid
 from ..utils.multiclass import type_of_target
 from ..utils.sparsefuncs import count_nonzero
 from ..utils.validation import _check_pos_label_consistency, _check_sample_weight
@@ -85,7 +77,7 @@ def auc(x, y):
     >>> pred = np.array([0.1, 0.4, 0.35, 0.8])
     >>> fpr, tpr, thresholds = metrics.roc_curve(y, pred, pos_label=2)
     >>> metrics.auc(fpr, tpr)
-    0.75
+    np.float64(0.75)
     """
     check_consistent_length(x, y)
     x = column_or_1d(x)
@@ -210,7 +202,7 @@ def average_precision_score(
     >>> y_true = np.array([0, 0, 1, 1])
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> average_precision_score(y_true, y_scores)
-    0.83...
+    np.float64(0.83...)
     >>> y_true = np.array([0, 0, 1, 1, 2, 2])
     >>> y_scores = np.array([
     ...     [0.7, 0.2, 0.1],
@@ -221,7 +213,7 @@ def average_precision_score(
     ...     [0.1, 0.2, 0.7],
     ... ])
     >>> average_precision_score(y_true, y_scores)
-    0.77...
+    np.float64(0.77...)
     """
 
     def _binary_uninterpolated_average_precision(
@@ -232,8 +224,9 @@ def average_precision_score(
         )
         # Return the step function integral
         # The following works because the last entry of precision is
-        # guaranteed to be 1, as returned by precision_recall_curve
-        return -np.sum(np.diff(recall) * np.array(precision)[:-1])
+        # guaranteed to be 1, as returned by precision_recall_curve.
+        # Due to numerical error, we can get `-0.0` and we therefore clip it.
+        return max(0.0, -np.sum(np.diff(recall) * np.array(precision)[:-1]))
 
     y_type = type_of_target(y_true, input_name="y_true")
 
@@ -354,7 +347,7 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
     if len(np.unique(y_true)) != 2:
         raise ValueError(
-            "Only one class present in y_true. Detection error "
+            "Only one class is present in y_true. Detection error "
             "tradeoff curve is not defined in that case."
         )
 
@@ -379,10 +372,14 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
 def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
     """Binary roc auc score."""
     if len(np.unique(y_true)) != 2:
-        raise ValueError(
-            "Only one class present in y_true. ROC AUC score "
-            "is not defined in that case."
+        warnings.warn(
+            (
+                "Only one class is present in y_true. ROC AUC score "
+                "is not defined in that case."
+            ),
+            UndefinedMetricWarning,
         )
+        return np.nan
 
     fpr, tpr, _ = roc_curve(y_true, y_score, sample_weight=sample_weight)
     if max_fpr is None or max_fpr == 1:
@@ -582,9 +579,9 @@ def roc_auc_score(
     >>> X, y = load_breast_cancer(return_X_y=True)
     >>> clf = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
     >>> roc_auc_score(y, clf.predict_proba(X)[:, 1])
-    0.99...
+    np.float64(0.99...)
     >>> roc_auc_score(y, clf.decision_function(X))
-    0.99...
+    np.float64(0.99...)
 
     Multiclass case:
 
@@ -592,7 +589,7 @@ def roc_auc_score(
     >>> X, y = load_iris(return_X_y=True)
     >>> clf = LogisticRegression(solver="liblinear").fit(X, y)
     >>> roc_auc_score(y, clf.predict_proba(X), multi_class='ovr')
-    0.99...
+    np.float64(0.99...)
 
     Multilabel case:
 
@@ -865,15 +862,25 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
 @validate_params(
     {
         "y_true": ["array-like"],
-        "probas_pred": ["array-like"],
+        "y_score": ["array-like", Hidden(None)],
         "pos_label": [Real, str, "boolean", None],
         "sample_weight": ["array-like", None],
         "drop_intermediate": ["boolean"],
+        "probas_pred": [
+            "array-like",
+            Hidden(StrOptions({"deprecated"})),
+        ],
     },
     prefer_skip_nested_validation=True,
 )
 def precision_recall_curve(
-    y_true, probas_pred, *, pos_label=None, sample_weight=None, drop_intermediate=False
+    y_true,
+    y_score=None,
+    *,
+    pos_label=None,
+    sample_weight=None,
+    drop_intermediate=False,
+    probas_pred="deprecated",
 ):
     """Compute precision-recall pairs for different probability thresholds.
 
@@ -903,7 +910,7 @@ def precision_recall_curve(
         True binary labels. If labels are not either {-1, 1} or {0, 1}, then
         pos_label should be explicitly given.
 
-    probas_pred : array-like of shape (n_samples,)
+    y_score : array-like of shape (n_samples,)
         Target scores, can either be probability estimates of the positive
         class, or non-thresholded measure of decisions (as returned by
         `decision_function` on some classifiers).
@@ -922,6 +929,15 @@ def precision_recall_curve(
         lighter precision-recall curves.
 
         .. versionadded:: 1.3
+
+    probas_pred : array-like of shape (n_samples,)
+        Target scores, can either be probability estimates of the positive
+        class, or non-thresholded measure of decisions (as returned by
+        `decision_function` on some classifiers).
+
+        .. deprecated:: 1.5
+            `probas_pred` is deprecated and will be removed in 1.7. Use
+            `y_score` instead.
 
     Returns
     -------
@@ -962,8 +978,26 @@ def precision_recall_curve(
     >>> thresholds
     array([0.1 , 0.35, 0.4 , 0.8 ])
     """
+    # TODO(1.7): remove in 1.7 and reset y_score to be required
+    # Note: validate params will raise an error if probas_pred is not array-like,
+    # or "deprecated"
+    if y_score is not None and not isinstance(probas_pred, str):
+        raise ValueError(
+            "`probas_pred` and `y_score` cannot be both specified. Please use `y_score`"
+            " only as `probas_pred` is deprecated in v1.5 and will be removed in v1.7."
+        )
+    if y_score is None:
+        warnings.warn(
+            (
+                "probas_pred was deprecated in version 1.5 and will be removed in 1.7."
+                "Please use ``y_score`` instead."
+            ),
+            FutureWarning,
+        )
+        y_score = probas_pred
+
     fps, tps, thresholds = _binary_clf_curve(
-        y_true, probas_pred, pos_label=pos_label, sample_weight=sample_weight
+        y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
 
     if drop_intermediate and len(fps) > 2:
@@ -1204,7 +1238,7 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
     >>> y_true = np.array([[1, 0, 0], [0, 0, 1]])
     >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
     >>> label_ranking_average_precision_score(y_true, y_score)
-    0.416...
+    np.float64(0.416...)
     """
     check_consistent_length(y_true, y_score, sample_weight)
     y_true = check_array(y_true, ensure_2d=False, accept_sparse="csr")
@@ -1307,7 +1341,7 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
     >>> y_true = [[1, 0, 0], [0, 1, 1]]
     >>> y_score = [[1, 0, 0], [0, 1, 1]]
     >>> coverage_error(y_true, y_score)
-    1.5
+    np.float64(1.5)
     """
     y_true = check_array(y_true, ensure_2d=True)
     y_score = check_array(y_score, ensure_2d=True)
@@ -1384,7 +1418,7 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     >>> y_true = [[1, 0, 0], [0, 0, 1]]
     >>> y_score = [[0.75, 0.5, 1], [1, 0.2, 0.1]]
     >>> label_ranking_loss(y_true, y_score)
-    0.75...
+    np.float64(0.75...)
     """
     y_true = check_array(y_true, ensure_2d=False, accept_sparse="csr")
     y_score = check_array(y_score, ensure_2d=False)
@@ -1635,27 +1669,27 @@ def dcg_score(
     --------
     >>> import numpy as np
     >>> from sklearn.metrics import dcg_score
-    >>> # we have groud-truth relevance of some answers to a query:
+    >>> # we have ground-truth relevance of some answers to a query:
     >>> true_relevance = np.asarray([[10, 0, 0, 1, 5]])
     >>> # we predict scores for the answers
     >>> scores = np.asarray([[.1, .2, .3, 4, 70]])
     >>> dcg_score(true_relevance, scores)
-    9.49...
+    np.float64(9.49...)
     >>> # we can set k to truncate the sum; only top k answers contribute
     >>> dcg_score(true_relevance, scores, k=2)
-    5.63...
+    np.float64(5.63...)
     >>> # now we have some ties in our prediction
     >>> scores = np.asarray([[1, 0, 0, 0, 1]])
     >>> # by default ties are averaged, so here we get the average true
     >>> # relevance of our top predictions: (10 + 5) / 2 = 7.5
     >>> dcg_score(true_relevance, scores, k=1)
-    7.5
+    np.float64(7.5)
     >>> # we can choose to ignore ties for faster results, but only
     >>> # if we know there aren't ties in our scores, otherwise we get
     >>> # wrong results:
     >>> dcg_score(true_relevance,
     ...           scores, k=1, ignore_ties=True)
-    5.0
+    np.float64(5.0)
     """
     y_true = check_array(y_true, ensure_2d=False)
     y_score = check_array(y_score, ensure_2d=False)
@@ -1795,34 +1829,34 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     --------
     >>> import numpy as np
     >>> from sklearn.metrics import ndcg_score
-    >>> # we have groud-truth relevance of some answers to a query:
+    >>> # we have ground-truth relevance of some answers to a query:
     >>> true_relevance = np.asarray([[10, 0, 0, 1, 5]])
     >>> # we predict some scores (relevance) for the answers
     >>> scores = np.asarray([[.1, .2, .3, 4, 70]])
     >>> ndcg_score(true_relevance, scores)
-    0.69...
+    np.float64(0.69...)
     >>> scores = np.asarray([[.05, 1.1, 1., .5, .0]])
     >>> ndcg_score(true_relevance, scores)
-    0.49...
+    np.float64(0.49...)
     >>> # we can set k to truncate the sum; only top k answers contribute.
     >>> ndcg_score(true_relevance, scores, k=4)
-    0.35...
+    np.float64(0.35...)
     >>> # the normalization takes k into account so a perfect answer
     >>> # would still get 1.0
     >>> ndcg_score(true_relevance, true_relevance, k=4)
-    1.0...
+    np.float64(1.0...)
     >>> # now we have some ties in our prediction
     >>> scores = np.asarray([[1, 0, 0, 0, 1]])
     >>> # by default ties are averaged, so here we get the average (normalized)
     >>> # true relevance of our top predictions: (10 / 10 + 5 / 10) / 2 = .75
     >>> ndcg_score(true_relevance, scores, k=1)
-    0.75...
+    np.float64(0.75...)
     >>> # we can choose to ignore ties for faster results, but only
     >>> # if we know there aren't ties in our scores, otherwise we get
     >>> # wrong results:
     >>> ndcg_score(true_relevance,
     ...           scores, k=1, ignore_ties=True)
-    0.5...
+    np.float64(0.5...)
     """
     y_true = check_array(y_true, ensure_2d=False)
     y_score = check_array(y_score, ensure_2d=False)
@@ -1925,10 +1959,10 @@ def top_k_accuracy_score(
     ...                     [0.2, 0.4, 0.3],  # 2 is in top 2
     ...                     [0.7, 0.2, 0.1]]) # 2 isn't in top 2
     >>> top_k_accuracy_score(y_true, y_score, k=2)
-    0.75
+    np.float64(0.75)
     >>> # Not normalizing gives the number of "correctly" classified samples
     >>> top_k_accuracy_score(y_true, y_score, k=2, normalize=False)
-    3
+    np.int64(3)
     """
     y_true = check_array(y_true, ensure_2d=False, dtype=None)
     y_true = column_or_1d(y_true)

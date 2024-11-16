@@ -6,7 +6,7 @@ import pytest
 
 import sklearn
 from sklearn import config_context, get_config, set_config
-from sklearn.utils import _IS_WASM
+from sklearn.utils.fixes import _IS_WASM
 from sklearn.utils.parallel import Parallel, delayed
 
 

@@ -7,6 +7,10 @@ Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
           Gael Varoquaux
 License: BSD 3 clause
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import warnings
 from heapq import heapify, heappop, heappush, heappushpop
 from numbers import Integral, Real
@@ -28,13 +32,12 @@ from ..utils import check_array
 from ..utils._fast_dict import IntFloatDict
 from ..utils._param_validation import (
     HasMethods,
-    Hidden,
     Interval,
     StrOptions,
     validate_params,
 )
 from ..utils.graph import _fix_connected_components
-from ..utils.validation import check_memory
+from ..utils.validation import check_memory, validate_data
 
 # mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
 from . import _hierarchical_fast as _hierarchical  # type: ignore
@@ -754,8 +757,7 @@ def _hc_cut(n_clusters, children, n_leaves):
     if n_clusters > n_leaves:
         raise ValueError(
             "Cannot extract more clusters than samples: "
-            "%s clusters where given for a tree with %s leaves."
-            % (n_clusters, n_leaves)
+            f"{n_clusters} clusters were given for a tree with {n_leaves} leaves."
         )
     # In this function, we store nodes as a heap to avoid recomputing
     # the max of the nodes: the first element is always the smallest
@@ -796,26 +798,28 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
         "manhattan", "cosine", or "precomputed". If linkage is "ward", only
         "euclidean" is accepted. If "precomputed", a distance matrix is needed
-        as input for the fit method.
+        as input for the fit method. If connectivity is None, linkage is
+        "single" and affinity is not "precomputed" any valid pairwise distance
+        metric can be assigned.
 
         .. versionadded:: 1.2
-
-        .. deprecated:: 1.4
-           `metric=None` is deprecated in 1.4 and will be removed in 1.6.
-           Let `metric` be the default value (i.e. `"euclidean"`) instead.
 
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
 
-    connectivity : array-like or callable, default=None
+    connectivity : array-like, sparse matrix, or callable, default=None
         Connectivity matrix. Defines for each sample the neighboring
         samples following a given structure of the data.
         This can be a connectivity matrix itself or a callable that transforms
         the data into a connectivity matrix, such as derived from
         `kneighbors_graph`. Default is ``None``, i.e, the
         hierarchical clustering algorithm is unstructured.
+
+        For an example of connectivity matrix using
+        :class:`~sklearn.neighbors.kneighbors_graph`, see
+        :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`.
 
     compute_full_tree : 'auto' or bool, default='auto'
         Stop early the construction of the tree at ``n_clusters``. This is
@@ -845,6 +849,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         .. versionadded:: 0.20
             Added the 'single' option
 
+        For examples comparing different `linkage` criteria, see
+        :ref:`sphx_glr_auto_examples_cluster_plot_linkage_comparison.py`.
+
     distance_threshold : float, default=None
         The linkage distance threshold at or above which clusters will not be
         merged. If not ``None``, ``n_clusters`` must be ``None`` and
@@ -858,6 +865,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         a computational and memory overhead.
 
         .. versionadded:: 0.24
+
+        For an example of dendrogram visualization, see
+        :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_dendrogram.py`.
 
     Attributes
     ----------
@@ -926,10 +936,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         "metric": [
             StrOptions(set(_VALID_METRICS) | {"precomputed"}),
             callable,
-            Hidden(None),
         ],
         "memory": [str, HasMethods("cache"), None],
-        "connectivity": ["array-like", callable, None],
+        "connectivity": ["array-like", "sparse matrix", callable, None],
         "compute_full_tree": [StrOptions({"auto"}), "boolean"],
         "linkage": [StrOptions(set(_TREE_BUILDERS.keys()))],
         "distance_threshold": [Interval(Real, 0, None, closed="left"), None],
@@ -976,7 +985,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         self : object
             Returns the fitted instance.
         """
-        X = self._validate_data(X, ensure_min_samples=2)
+        X = validate_data(self, X, ensure_min_samples=2)
         return self._fit(X)
 
     def _fit(self, X):
@@ -986,7 +995,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         ----------
         X : ndarray of shape (n_samples, n_features) or (n_samples, n_samples)
             Training instances to cluster, or distances between instances if
-            ``affinity='precomputed'``.
+            ``metric='precomputed'``.
 
         Returns
         -------
@@ -994,20 +1003,6 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
             Returns the fitted instance.
         """
         memory = check_memory(self.memory)
-
-        # TODO(1.6): remove in 1.6
-        if self.metric is None:
-            warnings.warn(
-                (
-                    "`metric=None` is deprecated in version 1.4 and will be removed in "
-                    "version 1.6. Let `metric` be the default value "
-                    "(i.e. `'euclidean'`) instead."
-                ),
-                FutureWarning,
-            )
-            self._metric = "euclidean"
-        else:
-            self._metric = self.metric
 
         if not ((self.n_clusters is None) ^ (self.distance_threshold is None)):
             raise ValueError(
@@ -1021,9 +1016,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
                 "compute_full_tree must be True if distance_threshold is set."
             )
 
-        if self.linkage == "ward" and self._metric != "euclidean":
+        if self.linkage == "ward" and self.metric != "euclidean":
             raise ValueError(
-                f"{self._metric} was provided as metric. Ward can only "
+                f"{self.metric} was provided as metric. Ward can only "
                 "work with euclidean distances."
             )
 
@@ -1057,7 +1052,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         kwargs = {}
         if self.linkage != "ward":
             kwargs["linkage"] = self.linkage
-            kwargs["affinity"] = self._metric
+            kwargs["affinity"] = self.metric
 
         distance_threshold = self.distance_threshold
 
@@ -1120,11 +1115,16 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
 
 class FeatureAgglomeration(
-    ClassNamePrefixFeaturesOutMixin, AgglomerativeClustering, AgglomerationTransform
+    ClassNamePrefixFeaturesOutMixin, AgglomerationTransform, AgglomerativeClustering
 ):
     """Agglomerate features.
 
     Recursively merges pair of clusters of features.
+
+    Refer to
+    :ref:`sphx_glr_auto_examples_cluster_plot_feature_agglomeration_vs_univariate_selection.py`
+    for an example comparison of :class:`FeatureAgglomeration` strategy with a
+    univariate feature selection strategy (based on ANOVA).
 
     Read more in the :ref:`User Guide <hierarchical_clustering>`.
 
@@ -1142,16 +1142,12 @@ class FeatureAgglomeration(
 
         .. versionadded:: 1.2
 
-        .. deprecated:: 1.4
-           `metric=None` is deprecated in 1.4 and will be removed in 1.6.
-           Let `metric` be the default value (i.e. `"euclidean"`) instead.
-
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
 
-    connectivity : array-like or callable, default=None
+    connectivity : array-like, sparse matrix, or callable, default=None
         Connectivity matrix. Defines for each feature the neighboring
         features following a given structure of the data.
         This can be a connectivity matrix itself or a callable that transforms
@@ -1272,10 +1268,9 @@ class FeatureAgglomeration(
         "metric": [
             StrOptions(set(_VALID_METRICS) | {"precomputed"}),
             callable,
-            Hidden(None),
         ],
         "memory": [str, HasMethods("cache"), None],
-        "connectivity": ["array-like", callable, None],
+        "connectivity": ["array-like", "sparse matrix", callable, None],
         "compute_full_tree": [StrOptions({"auto"}), "boolean"],
         "linkage": [StrOptions(set(_TREE_BUILDERS.keys()))],
         "pooling_func": [callable],
@@ -1325,7 +1320,7 @@ class FeatureAgglomeration(
         self : object
             Returns the transformer.
         """
-        X = self._validate_data(X, ensure_min_features=2)
+        X = validate_data(self, X, ensure_min_features=2)
         super()._fit(X.T)
         self._n_features_out = self.n_clusters_
         return self

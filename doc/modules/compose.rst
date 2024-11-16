@@ -79,20 +79,16 @@ is an estimator object::
     >>> pipe
     Pipeline(steps=[('reduce_dim', PCA()), ('clf', SVC())])
 
-|details-start|
-**Shorthand version using :func:`make_pipeline`**
-|details-split|
+.. dropdown:: Shorthand version using :func:`make_pipeline`
 
-The utility function :func:`make_pipeline` is a shorthand
-for constructing pipelines;
-it takes a variable number of estimators and returns a pipeline,
-filling in the names automatically::
+  The utility function :func:`make_pipeline` is a shorthand
+  for constructing pipelines;
+  it takes a variable number of estimators and returns a pipeline,
+  filling in the names automatically::
 
-    >>> from sklearn.pipeline import make_pipeline
-    >>> make_pipeline(PCA(), SVC())
-    Pipeline(steps=[('pca', PCA()), ('svc', SVC())])
-
-|details-end|
+      >>> from sklearn.pipeline import make_pipeline
+      >>> make_pipeline(PCA(), SVC())
+      Pipeline(steps=[('pca', PCA()), ('svc', SVC())])
 
 Access pipeline steps
 .....................
@@ -108,27 +104,23 @@ permitted). This is convenient for performing only some of the transformations
     >>> pipe[-1:]
     Pipeline(steps=[('clf', SVC())])
 
-|details-start|
-**Accessing a step by name or position**
-|details-split|
+.. dropdown:: Accessing a step by name or position
 
-A specific step can also be accessed by index or name by indexing (with ``[idx]``) the
-pipeline::
+  A specific step can also be accessed by index or name by indexing (with ``[idx]``) the
+  pipeline::
 
-    >>> pipe.steps[0]
-    ('reduce_dim', PCA())
-    >>> pipe[0]
-    PCA()
-    >>> pipe['reduce_dim']
-    PCA()
+      >>> pipe.steps[0]
+      ('reduce_dim', PCA())
+      >>> pipe[0]
+      PCA()
+      >>> pipe['reduce_dim']
+      PCA()
 
-`Pipeline`'s `named_steps` attribute allows accessing steps by name with tab
-completion in interactive environments::
+  `Pipeline`'s `named_steps` attribute allows accessing steps by name with tab
+  completion in interactive environments::
 
-    >>> pipe.named_steps.reduce_dim is pipe['reduce_dim']
-    True
-
-|details-end|
+      >>> pipe.named_steps.reduce_dim is pipe['reduce_dim']
+      True
 
 Tracking feature names in a pipeline
 ....................................
@@ -149,17 +141,13 @@ pipeline slicing to get the feature names going into each step::
     >>> pipe[:-1].get_feature_names_out()
     array(['x2', 'x3'], ...)
 
-|details-start|
-**Customize feature names**
-|details-split|
+.. dropdown:: Customize feature names
 
-You can also provide custom feature names for the input data using
-``get_feature_names_out``::
+  You can also provide custom feature names for the input data using
+  ``get_feature_names_out``::
 
-    >>> pipe[:-1].get_feature_names_out(iris.feature_names)
-    array(['petal length (cm)', 'petal width (cm)'], ...)
-
-|details-end|
+      >>> pipe[:-1].get_feature_names_out(iris.feature_names)
+      array(['petal length (cm)', 'petal width (cm)'], ...)
 
 .. _pipeline_nested_parameters:
 
@@ -175,40 +163,37 @@ syntax::
     >>> pipe.set_params(clf__C=10)
     Pipeline(steps=[('reduce_dim', PCA()), ('clf', SVC(C=10))])
 
-|details-start|
-**When does it matter?**
-|details-split|
+.. dropdown:: When does it matter?
 
-This is particularly important for doing grid searches::
+  This is particularly important for doing grid searches::
 
-    >>> from sklearn.model_selection import GridSearchCV
-    >>> param_grid = dict(reduce_dim__n_components=[2, 5, 10],
-    ...                   clf__C=[0.1, 10, 100])
-    >>> grid_search = GridSearchCV(pipe, param_grid=param_grid)
+      >>> from sklearn.model_selection import GridSearchCV
+      >>> param_grid = dict(reduce_dim__n_components=[2, 5, 10],
+      ...                   clf__C=[0.1, 10, 100])
+      >>> grid_search = GridSearchCV(pipe, param_grid=param_grid)
 
-Individual steps may also be replaced as parameters, and non-final steps may be
-ignored by setting them to ``'passthrough'``::
+  Individual steps may also be replaced as parameters, and non-final steps may be
+  ignored by setting them to ``'passthrough'``::
 
-    >>> param_grid = dict(reduce_dim=['passthrough', PCA(5), PCA(10)],
-    ...                   clf=[SVC(), LogisticRegression()],
-    ...                   clf__C=[0.1, 10, 100])
-    >>> grid_search = GridSearchCV(pipe, param_grid=param_grid)
+      >>> param_grid = dict(reduce_dim=['passthrough', PCA(5), PCA(10)],
+      ...                   clf=[SVC(), LogisticRegression()],
+      ...                   clf__C=[0.1, 10, 100])
+      >>> grid_search = GridSearchCV(pipe, param_grid=param_grid)
 
-.. topic:: See Also:
+  .. seealso::
 
- * :ref:`composite_grid_search`
+    * :ref:`composite_grid_search`
 
-|details-end|
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_feature_selection_plot_feature_selection_pipeline.py`
- * :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`
- * :ref:`sphx_glr_auto_examples_compose_plot_digits_pipe.py`
- * :ref:`sphx_glr_auto_examples_miscellaneous_plot_kernel_approximation.py`
- * :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`
- * :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py`
- * :ref:`sphx_glr_auto_examples_miscellaneous_plot_pipeline_display.py`
+* :ref:`sphx_glr_auto_examples_feature_selection_plot_feature_selection_pipeline.py`
+* :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`
+* :ref:`sphx_glr_auto_examples_compose_plot_digits_pipe.py`
+* :ref:`sphx_glr_auto_examples_miscellaneous_plot_kernel_approximation.py`
+* :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`
+* :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py`
+* :ref:`sphx_glr_auto_examples_miscellaneous_plot_pipeline_display.py`
 
 
 .. _pipeline_cache:
@@ -245,53 +230,49 @@ object::
     >>> # Clear the cache directory when you don't need it anymore
     >>> rmtree(cachedir)
 
-|details-start|
-**Warning: Side effect of caching transformers**
-|details-split|
+.. dropdown:: Side effect of caching transformers
+  :color: warning
 
-Using a :class:`Pipeline` without cache enabled, it is possible to
-inspect the original instance such as::
+  Using a :class:`Pipeline` without cache enabled, it is possible to
+  inspect the original instance such as::
 
-    >>> from sklearn.datasets import load_digits
-    >>> X_digits, y_digits = load_digits(return_X_y=True)
-    >>> pca1 = PCA()
-    >>> svm1 = SVC()
-    >>> pipe = Pipeline([('reduce_dim', pca1), ('clf', svm1)])
-    >>> pipe.fit(X_digits, y_digits)
-    Pipeline(steps=[('reduce_dim', PCA()), ('clf', SVC())])
-    >>> # The pca instance can be inspected directly
-    >>> print(pca1.components_)
-        [[-1.77484909e-19  ... 4.07058917e-18]]
+      >>> from sklearn.datasets import load_digits
+      >>> X_digits, y_digits = load_digits(return_X_y=True)
+      >>> pca1 = PCA(n_components=10)
+      >>> svm1 = SVC()
+      >>> pipe = Pipeline([('reduce_dim', pca1), ('clf', svm1)])
+      >>> pipe.fit(X_digits, y_digits)
+      Pipeline(steps=[('reduce_dim', PCA(n_components=10)), ('clf', SVC())])
+      >>> # The pca instance can be inspected directly
+      >>> pca1.components_.shape
+      (10, 64)
 
+  Enabling caching triggers a clone of the transformers before fitting.
+  Therefore, the transformer instance given to the pipeline cannot be
+  inspected directly.
+  In following example, accessing the :class:`~sklearn.decomposition.PCA`
+  instance ``pca2`` will raise an ``AttributeError`` since ``pca2`` will be an
+  unfitted transformer.
+  Instead, use the attribute ``named_steps`` to inspect estimators within
+  the pipeline::
 
-Enabling caching triggers a clone of the transformers before fitting.
-Therefore, the transformer instance given to the pipeline cannot be
-inspected directly.
-In following example, accessing the :class:`~sklearn.decomposition.PCA`
-instance ``pca2`` will raise an ``AttributeError`` since ``pca2`` will be an
-unfitted transformer.
-Instead, use the attribute ``named_steps`` to inspect estimators within
-the pipeline::
-
-    >>> cachedir = mkdtemp()
-    >>> pca2 = PCA()
-    >>> svm2 = SVC()
-    >>> cached_pipe = Pipeline([('reduce_dim', pca2), ('clf', svm2)],
-    ...                        memory=cachedir)
-    >>> cached_pipe.fit(X_digits, y_digits)
-    Pipeline(memory=...,
-             steps=[('reduce_dim', PCA()), ('clf', SVC())])
-    >>> print(cached_pipe.named_steps['reduce_dim'].components_)
-        [[-1.77484909e-19  ... 4.07058917e-18]]
-    >>> # Remove the cache directory
-    >>> rmtree(cachedir)
+      >>> cachedir = mkdtemp()
+      >>> pca2 = PCA(n_components=10)
+      >>> svm2 = SVC()
+      >>> cached_pipe = Pipeline([('reduce_dim', pca2), ('clf', svm2)],
+      ...                        memory=cachedir)
+      >>> cached_pipe.fit(X_digits, y_digits)
+      Pipeline(memory=...,
+               steps=[('reduce_dim', PCA(n_components=10)), ('clf', SVC())])
+      >>> cached_pipe.named_steps['reduce_dim'].components_.shape
+      (10, 64)
+      >>> # Remove the cache directory
+      >>> rmtree(cachedir)
 
 
-|details-end|
+.. rubric:: Examples
 
-.. topic:: Examples:
-
- * :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py`
+* :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py`
 
 .. _transformed_target_regressor:
 
@@ -364,9 +345,9 @@ each other. However, it is possible to bypass this checking by setting
    pair of functions ``func`` and ``inverse_func``. However, setting both
    options will raise an error.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_compose_plot_transformed_target.py`
+* :ref:`sphx_glr_auto_examples_compose_plot_transformed_target.py`
 
 
 .. _feature_union:
@@ -428,9 +409,9 @@ and ignored by setting to ``'drop'``::
     FeatureUnion(transformer_list=[('linear_pca', PCA()),
                                    ('kernel_pca', 'drop')])
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_compose_plot_feature_union.py`
+* :ref:`sphx_glr_auto_examples_compose_plot_feature_union.py`
 
 
 .. _column_transformer:
@@ -623,7 +604,7 @@ As an alternative, the HTML can be written to a file using
    >>> with open('my_estimator.html', 'w') as f:  # doctest: +SKIP
    ...     f.write(estimator_html_repr(clf))
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_compose_plot_column_transformer.py`
- * :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`
+* :ref:`sphx_glr_auto_examples_compose_plot_column_transformer.py`
+* :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`

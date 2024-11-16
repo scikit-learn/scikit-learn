@@ -59,13 +59,14 @@ gh = Github(args.bot_github_token)
 issue_repo = gh.get_repo(args.issue_repo)
 dt_now = datetime.now(tz=timezone.utc)
 date_str = dt_now.strftime("%b %d, %Y")
-title = f"⚠️ CI failed on {args.ci_name} ⚠️"
+title_query = f"CI failed on {args.ci_name}"
+title = f"⚠️ {title_query} (last failure: {date_str}) ⚠️"
 
 
 def get_issue():
     login = gh.get_user().login
     issues = gh.search_issues(
-        f"repo:{args.issue_repo} {title} in:title state:open author:{login}"
+        f"repo:{args.issue_repo} {title_query} in:title state:open author:{login}"
     )
     first_page = issues.get_page(0)
     # Return issue if it exist
@@ -95,7 +96,7 @@ def create_or_update_issue(body=""):
     else:
         # Update existing issue
         header = f"**CI is still failing on {link}** ({date_str})"
-        issue.edit(body=f"{header}\n{body}")
+        issue.edit(title=title, body=f"{header}\n{body}")
         print(f"Commented on issue: {args.issue_repo}#{issue.number}")
         sys.exit()
 
