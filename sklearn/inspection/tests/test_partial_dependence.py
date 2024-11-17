@@ -2,6 +2,8 @@
 Testing for the partial dependence module.
 """
 
+import time
+
 import numpy as np
 import pytest
 
@@ -928,3 +930,46 @@ def test_mixed_type_categorical():
     ).fit(X, y)
     with pytest.raises(ValueError, match="The column #0 contains mixed data types"):
         partial_dependence(clf, X, features=[0])
+
+
+def test_partial_dependence_max_memory_mb():
+    """Check that the `max_memory_mb` parameter works as expected."""
+    rng = np.random.RandomState(0)
+    n_samples = 200
+    target_variable = 2
+    X = rng.normal(size=(n_samples, 5))
+    y = X[:, target_variable]
+
+    est = RandomForestRegressor(n_jobs=3).fit(X, y)
+
+    # small `max_memory_mb` forces to use a batch of one point
+    start = time.time()
+    pd_small_batch = partial_dependence(
+        est,
+        features=[target_variable],
+        X=X,
+        grid_resolution=100,
+        method="brute",
+        kind="both",
+        max_memory_mb=1e-8,
+    )
+    end = time.time()
+    elapsed_small_batch = end - start
+    # large `max_memory_mb` allows to use a batch of 100 points
+    start = time.time()
+    pd_large_batch = partial_dependence(
+        est,
+        features=[target_variable],
+        X=X,
+        grid_resolution=100,
+        method="brute",
+        kind="both",
+        max_memory_mb=1e8,
+    )
+    end = time.time()
+    elapsed_large_batch = end - start
+
+    # check that the computation with a small batch is slower
+    assert elapsed_small_batch > elapsed_large_batch
+    assert_allclose(pd_small_batch["average"], pd_large_batch["average"])
+    assert_allclose(pd_small_batch["individual"], pd_large_batch["individual"])

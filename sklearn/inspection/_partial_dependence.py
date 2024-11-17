@@ -23,6 +23,7 @@ from ..utils._param_validation import (
     HasMethods,
     Integral,
     Interval,
+    Real,
     StrOptions,
     validate_params,
 )
@@ -187,7 +188,7 @@ def _partial_dependence_recursion(est, grid, features):
 
 
 def _partial_dependence_brute(
-    est, grid, features, X, response_method, sample_weight=None
+    est, grid, features, X, response_method, sample_weight=None, max_memory_mb=1_000
 ):
     """Calculate partial dependence via the brute force method.
 
@@ -240,6 +241,13 @@ def _partial_dependence_brute(
         model output. If `None`, then samples are equally weighted. Note that
         `sample_weight` does not change the individual predictions.
 
+    max_memory_mb : float, default=1_000
+        When `method="brute"`, it defines the maximum amount of memory in MB allowed
+        when creating the matrix combining the grid of points and the original dataset.
+        Larger values allow for bigger batches, reducing overheads, and thus allowing
+        some computation speed-up at the cost of a larger memory footprint. By default,
+        this matrix should not exceed 1 GB.
+
     Returns
     -------
     averaged_predictions : array-like of shape (n_targets, n_points)
@@ -258,44 +266,60 @@ def _partial_dependence_brute(
         is the number of instances in `X`, and `n_points` is the number of points
         in the `grid`.
     """
-    predictions = []
-    averaged_predictions = []
-
     if response_method == "auto":
         response_method = (
             "predict" if is_regressor(est) else ["predict_proba", "decision_function"]
         )
 
-    X_eval = X.copy()
-    for new_values in grid:
-        for i, variable in enumerate(features):
-            _safe_assign(X_eval, new_values[i], column_indexer=variable)
+    n_samples, n_points = X.shape[0], len(grid)
+    max_memory_bytes = max_memory_mb * 1_000_000
+    if hasattr(X, "nbytes"):
+        X_size_bytes = X.nbytes
+    else:  # pandas DataFrame
+        X_size_bytes = X.memory_usage(deep=True).sum()
+    total_memory_bytes = X_size_bytes * n_points
+    step_size = max(1, int(n_points // max(1, total_memory_bytes / max_memory_bytes)))
 
-        # Note: predictions is of shape
-        # (n_points,) for non-multioutput regressors
-        # (n_points, n_tasks) for multioutput regressors
-        # (n_points, 1) for the regressors in cross_decomposition (I think)
-        # (n_points, 2) for binary classification
-        # (n_points, n_classes) for multiclass classification
+    predictions = []
+    for batch_start in range(0, n_points, step_size):
+        # compute the effective step size that is smaller for the last batch
+        effective_step_size = min(step_size, n_points - batch_start)
+        batch_end = batch_start + effective_step_size
+        batch_indices = np.arange(batch_start, batch_end)
+        X_eval = _safe_indexing(
+            X, indices=np.tile(np.arange(n_samples), effective_step_size), axis=0
+        )
+        grid_eval = _safe_indexing(
+            grid, indices=np.repeat(batch_indices, n_samples), axis=0
+        )
+        _safe_assign(X_eval, values=grid_eval, column_indexer=features)
+
         pred, _ = _get_response_values(est, X_eval, response_method=response_method)
-
         predictions.append(pred)
-        # average over samples
-        averaged_predictions.append(np.average(pred, axis=0, weights=sample_weight))
 
-    n_samples = X.shape[0]
+    # Note: predictions is of shape
+    # (n_points,) for non-multioutput regressors
+    # (n_points, n_tasks) for multioutput regressors
+    # (n_points, 1) for the regressors in cross_decomposition (I think)
+    # (n_points, 2) for binary classification
+    # (n_points, n_classes) for multiclass classification
+    predictions = np.concatenate(predictions, axis=0)
+    predictions = predictions.reshape(n_points, n_samples, -1)
 
-    # reshape to (n_targets, n_instances, n_points) where n_targets is:
+    # average over samples
+    averaged_predictions = np.average(predictions, axis=1, weights=sample_weight)
+
+    # reshape to (n_targets, n_samples, n_points) where n_targets is:
     # - 1 for non-multioutput regression and binary classification (shape is
     #   already correct in those cases)
     # - n_tasks for multi-output regression
     # - n_classes for multiclass classification.
-    predictions = np.array(predictions).T
+    predictions = predictions.T
     if is_regressor(est) and predictions.ndim == 2:
-        # non-multioutput regression, shape is (n_instances, n_points,)
+        # non-multioutput regression, shape is (n_samples, n_points,)
         predictions = predictions.reshape(n_samples, -1)
     elif is_classifier(est) and predictions.shape[0] == 2:
-        # Binary classification, shape is (2, n_instances, n_points).
+        # Binary classification, shape is (2, n_samples, n_points).
         # we output the effect of **positive** class
         predictions = predictions[1]
         predictions = predictions.reshape(n_samples, -1)
@@ -305,7 +329,7 @@ def _partial_dependence_brute(
     #   already correct in those cases)
     # - n_tasks for multi-output regression
     # - n_classes for multiclass classification.
-    averaged_predictions = np.array(averaged_predictions).T
+    averaged_predictions = averaged_predictions.T
     if is_regressor(est) and averaged_predictions.ndim == 1:
         # non-multioutput regression, shape is (n_points,)
         averaged_predictions = averaged_predictions.reshape(1, -1)
@@ -335,6 +359,7 @@ def _partial_dependence_brute(
         "grid_resolution": [Interval(Integral, 1, None, closed="left")],
         "method": [StrOptions({"auto", "recursion", "brute"})],
         "kind": [StrOptions({"average", "individual", "both"})],
+        "max_memory_mb": [Interval(Real, 0, None, closed="neither")],
     },
     prefer_skip_nested_validation=True,
 )
@@ -351,6 +376,7 @@ def partial_dependence(
     grid_resolution=100,
     method="auto",
     kind="average",
+    max_memory_mb=1_000,
 ):
     """Partial dependence of ``features``.
 
@@ -482,6 +508,15 @@ def partial_dependence(
         `method='brute'`.
 
         .. versionadded:: 0.24
+
+    max_memory_mb : float, default=1_000
+        When `method="brute"`, it defines the maximum amount of memory in MB allowed
+        when creating the matrix combining the grid of points and the original dataset.
+        Larger values allow for bigger batches, reducing overheads, and thus allowing
+        some computation speed-up at the cost of a larger memory footprint. By default,
+        this matrix should not exceed 1 GB.
+
+        .. versionadded:: 1.6
 
     Returns
     -------
@@ -664,7 +699,13 @@ def partial_dependence(
 
     if method == "brute":
         averaged_predictions, predictions = _partial_dependence_brute(
-            estimator, grid, features_indices, X, response_method, sample_weight
+            estimator,
+            grid,
+            features_indices,
+            X,
+            response_method,
+            sample_weight,
+            max_memory_mb,
         )
 
         # reshape predictions to
