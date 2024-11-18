@@ -1,1 +1,3 @@
-- :func:`sklearn.metrics.d2_tweedie_score` by :user:`Emily Chen <EmilyXinyi>`
+- :func:`sklearn.metrics.d2_tweedie_score` now supports Array API compatible
+  inputs.
+  By :user:`Emily Chen <EmilyXinyi>`

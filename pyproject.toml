@@ -32,6 +32,7 @@ classifiers=[
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: Implementation :: CPython",
 ]
 
@@ -67,6 +68,7 @@ docs = [
     "sphinxcontrib-sass>=0.3.4",
     "pydata-sphinx-theme>=0.15.3",
     "sphinx-remove-toctrees>=1.0.0.post1",
+    "towncrier>=24.8.0",
 ]
 examples = [
     "matplotlib>=3.3.4",
@@ -262,11 +264,11 @@ package = "sklearn"  # name of your package
 
 [tool.towncrier]
     package = "sklearn"
-    filename = "doc/whats_new/notes-towncrier.rst"
+    filename = "doc/whats_new/v1.7.rst"
+    single_file = true
     directory = "doc/whats_new/upcoming_changes"
     issue_format = ":pr:`{issue}`"
     template = "doc/whats_new/upcoming_changes/towncrier_template.rst.jinja2"
-    title_format = "Version {version} ({project_date})"
     all_bullets = false
 
     [[tool.towncrier.type]]
@@ -383,6 +385,10 @@ package = "sklearn"  # name of your package
     [[tool.towncrier.section]]
         name = ":mod:`sklearn.feature_selection`"
         path = "sklearn.feature_selection"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.frozen`"
+        path = "sklearn.frozen"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn.gaussian_process`"
