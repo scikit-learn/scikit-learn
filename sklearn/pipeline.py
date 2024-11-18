@@ -2114,6 +2114,15 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         return router
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = all(
+            get_tags(trans).input_tags.sparse
+            for name, trans in self.transformer_list
+            if trans not in {"passthrough", "drop"}
+        )
+        return tags
+
 
 def make_union(*transformers, n_jobs=None, verbose=False):
     """Construct a :class:`FeatureUnion` from the given transformers.
