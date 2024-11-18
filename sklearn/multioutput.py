@@ -1206,8 +1206,16 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
     """
     # TODO(1.8): Remove this method. Necessary for passing the docstring check
     # during the deprecation of _estimator_type.
-    def __init__(self):
-        super().__init__()
+    def __init__(
+        self, base_estimator, *, order=None, cv=None, random_state=None, verbose=False
+    ):
+        super().__init__(
+            base_estimator,
+            order=order,
+            cv=cv,
+            random_state=random_state,
+            verbose=verbose,
+        )
 
     @_fit_context(
         # RegressorChain.base_estimator is not validated yet

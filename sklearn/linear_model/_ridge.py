@@ -2679,8 +2679,28 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     """
     # TODO(1.8): Remove this method. Necessary for passing the docstring check
     # during the deprecation of _estimator_type.
-    def __init__(self):
-        super().__init__()
+    def __init__(
+        self,
+        alphas=(0.1, 1.0, 10.0),
+        *,
+        fit_intercept=True,
+        scoring=None,
+        cv=None,
+        gcv_mode=None,
+        store_cv_results=None,
+        alpha_per_target=False,
+        store_cv_values="deprecated",
+    ):
+        super().__init__(
+            alphas=alphas,
+            fit_intercept=fit_intercept,
+            scoring=scoring,
+            cv=cv,
+            gcv_mode=gcv_mode,
+            store_cv_results=store_cv_results,
+            alpha_per_target=alpha_per_target,
+            store_cv_values=store_cv_values,
+        )
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None, **params):

@@ -781,10 +781,13 @@ class OAS(EmpiricalCovariance):
     >>> oas.shrinkage_
     np.float64(0.0195...)
     """
+
     # TODO(1.8): Remove this method. Necessary for passing the docstring check
     # during the deprecation of _estimator_type.
-    def __init__(self):
-        super().__init__()
+    def __init__(self, store_precision=True, assume_centered=False):
+        super().__init__(
+            store_precision=store_precision, assume_centered=assume_centered
+        )
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
