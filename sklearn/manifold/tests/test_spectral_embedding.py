@@ -54,7 +54,7 @@ S, true_labels = make_blobs(
 
 def _assert_equal_with_sign_flipping(A, B, tol=0.0):
     """Check array A and B are equal with possible sign flipping on
-    each columns"""
+    each column"""
     tol_squared = tol**2
     for A_col, B_col in zip(A.T, B.T):
         assert (

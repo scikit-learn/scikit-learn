@@ -175,7 +175,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     >>> # encodings:
     >>> enc_high_smooth = TargetEncoder(smooth=5000.0).fit(X, y)
     >>> enc_high_smooth.target_mean_
-    44...
+    np.float64(44...)
     >>> enc_high_smooth.encodings_
     [array([44..., 44..., 44...])]
 
@@ -528,7 +528,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         else:
             return feature_names
 
-    def _more_tags(self):
-        return {
-            "requires_y": True,
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.required = True
+        return tags

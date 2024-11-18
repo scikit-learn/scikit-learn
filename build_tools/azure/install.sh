@@ -24,6 +24,9 @@ setup_ccache() {
         done
         export PATH="${CCACHE_LINKS_DIR}:${PATH}"
         ccache -M 256M
+
+        # Zeroing statistics so that ccache statistics are shown only for this build
+        ccache -z
     fi
 }
 
@@ -36,7 +39,7 @@ pre_python_environment_install() {
     elif [[ "$DISTRIB" == "debian-32" ]]; then
         apt-get update
         apt-get install -y python3-dev python3-numpy python3-scipy \
-                python3-matplotlib libatlas3-base libatlas-base-dev \
+                python3-matplotlib libopenblas-dev \
                 python3-virtualenv python3-pandas ccache git
 
     # TODO for now we use CPython 3.13 from Ubuntu deadsnakes PPA. When CPython
@@ -117,6 +120,11 @@ scikit_learn_install() {
         # brings in openmp so that you end up having the omp.h include inside
         # the conda environment.
         find $CONDA_PREFIX -name omp.h -delete -print
+        # meson >= 1.5 detects OpenMP installed with brew and OpenMP may be installed
+        # with brew in CI runner. OpenMP was installed with brew in macOS-12 CI
+        # runners which doesn't seem to be the case in macOS-13 runners anymore,
+        # but we keep the next line just to be safe ...
+        brew uninstall --ignore-dependencies --force libomp
     fi
 
     if [[ "$UNAMESTR" == "Linux" ]]; then
