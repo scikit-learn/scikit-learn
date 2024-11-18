@@ -47,7 +47,9 @@ coverages
 samples
 doc/coverages
 doc/samples
+*venv*
 venv*/
+/*venv*
 *.prof
 .tox/
 .coverage
@@ -91,6 +93,7 @@ _configtest.o.d
 
 # virtualenv from advanced installation guide
 sklearn-env/
+venv*/
 
 # Default JupyterLite content
 jupyterlite_contents
