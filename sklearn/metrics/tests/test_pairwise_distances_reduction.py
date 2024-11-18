@@ -101,6 +101,39 @@ def assert_same_distances_for_common_neighbors(
             ) from e
 
 def assert_precomputed(precomputed, n_samples_X, n_samples_Y):
+    """
+    Validates a precomputed matrix for compatibility.
+
+    Parameters:
+        precomputed (np.ndarray): The precomputed matrix to validate.
+        n_samples_X (int): The expected number of rows in the matrix.
+        n_samples_Y (int): The expected number of columns in the matrix.
+
+    Raises:
+        AssertionError: If the input is not valid.
+    """
+    # Check if the input is a numpy array
+    if not isinstance(precomputed, np.ndarray):
+        raise AssertionError("Input must be a numpy array.")
+
+    # Check if the array has the correct data type
+    if precomputed.dtype not in [np.float32, np.float64]:
+        raise AssertionError("Precomputed matrix must be of type float (float32 or float64).")
+
+    # Check if the array is empty
+    if precomputed.size == 0:
+        raise AssertionError("Precomputed matrix should not be empty.")
+
+    # Check if the dimensions match the expected shape
+    expected_shape = (n_samples_X, n_samples_Y)
+    if precomputed.shape != expected_shape:
+        raise AssertionError(
+            f"Incorrect dimensions for precomputed matrix. "
+            f"Expected: {expected_shape}, Got: {precomputed.shape}."
+        )
+
+'''
+def assert_precomputed(precomputed, n_samples_X, n_samples_Y):
     if isinstance(precomputed, np.ndarray) is False:
         raise AssertionError("Input must be a numpy array")
     if precomputed.dtype not in [np.float32, np.float64]:
@@ -112,17 +145,14 @@ def assert_precomputed(precomputed, n_samples_X, n_samples_Y):
      f"Incorrect dimensions for precomputed matrix. "
      f"Expected: ({n_samples_X}, {n_samples_Y}), "
      f"Got: {precomputed.shape}")
-    
-    
-   
+'''    
 def assert_no_missing_neighbors(
     query_idx,
     dist_row_a,
     dist_row_b,
     indices_row_a,
     indices_row_b,
-    threshold,
-):
+    threshold):
     """Compare the indices of neighbors in two results sets.
 
     Any neighbor index with a distance below the precision threshold should
@@ -253,7 +283,6 @@ def _non_trivial_radius(
     sampled_dists.sort(axis=1)
     return sampled_dists[:, expected_n_neighbors].mean()
 
-
 def assert_compatible_radius_results(
     neighbors_dists_a,
     neighbors_dists_b,
@@ -359,6 +388,32 @@ ASSERT_RESULT = {
     ): partial(assert_compatible_radius_results, **FLOAT32_TOLS),
 }
 
+def test_assert_precomputed():
+    # Success Case: Valid precomputed matrix
+    n_samples_X, n_samples_Y = 5, 5
+    valid_precomputed = np.random.rand(n_samples_X, n_samples_Y).astype(np.float32)
+    try:
+        assert_precomputed(valid_precomputed, n_samples_X, n_samples_Y)
+    except AssertionError as e:
+        pytest.fail(f"Unexpected AssertionError: {e}")
+
+    # Failure Case: Not a numpy array
+    with pytest.raises(AssertionError, match="Input must be a numpy array"):
+        assert_precomputed([[1, 2], [3, 4]], n_samples_X, n_samples_Y)
+
+    # Failure Case: Incorrect dtype
+    invalid_dtype = np.random.randint(0, 10, (n_samples_X, n_samples_Y))
+    with pytest.raises(AssertionError, match="Precomputed matrix must be of type float"):
+        assert_precomputed(invalid_dtype, n_samples_X, n_samples_Y)
+
+    # Failure Case: Empty array
+    with pytest.raises(AssertionError, match="Precomputed matrix should not be empty"):
+        assert_precomputed(np.array([]), n_samples_X, n_samples_Y)
+
+    # Failure Case: Incorrect dimensions
+    incorrect_shape = np.random.rand(n_samples_X, n_samples_X).astype(np.float32)
+    with pytest.raises(AssertionError, match="Incorrect dimensions for precomputed matrix"):
+        assert_precomputed(incorrect_shape, n_samples_X, n_samples_Y)
 
 def test_assert_compatible_argkmin_results():
     atol = 1e-7
@@ -497,8 +552,7 @@ def test_assert_compatible_argkmin_results():
             np.array([[2, 1, 4, 5, 3]]),
             **tols,
         )
-
-
+        
 @pytest.mark.parametrize("check_sorted", [True, False])
 def test_assert_compatible_radius_results(check_sorted: bool):
     atol = 1e-7

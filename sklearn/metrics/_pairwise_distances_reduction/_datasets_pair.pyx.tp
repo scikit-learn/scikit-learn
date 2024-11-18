@@ -55,7 +55,7 @@ cdef class DatasetsPair{{name_suffix}}:
         cls,
         X,
         Y,
-        precomputed = None
+        precomputed = None,
         metric="euclidean",
         dict metric_kwargs=None,
     ) -> DatasetsPair{{name_suffix}}:
@@ -187,23 +187,25 @@ cdef class PrecomputedDistanceMatrix{{name_suffix}}(DatasetsPair{{name_suffix}})
         self.precomputed_distance = precomputed_distance
 
     @final
-    cdef ITYPE_t n_samples_X(self) noexcept nogil:
-        return self.precomputed_distance.shape[0]
+    cdef intp_t n_samples_X(self) noexcept nogil:
+        with gil:
+            return self.precomputed_distance.shape[0]
 
     @final
-    cdef ITYPE_t n_samples_Y(self) noexcept nogil:
-        return self.precomputed_distance.shape[1]
+    cdef intp_t n_samples_Y(self) noexcept nogil:
+        with gil: # Acquire the GIL before accessing Python objects
+            return self.precomputed_distance.shape[1]
   
     @final
-    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) noexcept nogil:
-        return self.precomputed_distance[i, j]
+    cdef float64_t surrogate_dist(self, intp_t i, intp_t j) noexcept nogil:
+        with gil:
+            return self.precomputed_distance[i, j]
    
     @final
-    cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) noexcept nogil:
-        return self.precomputed_distance[i, j]
+    cdef float64_t dist(self, intp_t i, intp_t j) noexcept nogil:
+        with gil:
+            return self.precomputed_distance[i, j]
 
-
-   
 @final
 cdef class DenseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
     """Compute distances between row vectors of two arrays.

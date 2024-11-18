@@ -20,8 +20,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
     Implementations inherit from this template and may override the several
     defined hooks as needed in order to easily extend functionality with
     minimal redundant code.
-    """
-
+    """    
     cdef:
         readonly DatasetsPair{{name_suffix}} datasets_pair
 

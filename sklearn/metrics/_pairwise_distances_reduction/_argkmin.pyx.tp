@@ -35,7 +35,7 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
     def compute(
         cls,
         X,
-        Y
+        Y,
         precomputed,
         intp_t k,
         metric="euclidean",
