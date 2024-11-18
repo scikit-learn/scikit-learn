@@ -786,6 +786,30 @@ def test_likelihood_ratios_raise_default_deprecation():
         class_likelihood_ratios(y_true, y_pred)
 
 
+def test_likelihood_ratios_replace_undefined_by_worst():
+    """Test that class_likelihood_ratios returns the worst scores `1.0` for both LR+ and
+    LR- when `replace_undefined_by="worst"` is set."""
+    # This data causes fp=0 (0 false positives) in the confusion_matrix and a division
+    # by zero that affects the positive_likelihood_ratio:
+    y_true = np.array([1, 1, 0])
+    y_pred = np.array([1, 0, 0])
+
+    positive_likelihood_ratio, _ = class_likelihood_ratios(
+        y_true, y_pred, replace_undefined_by="worst"
+    )
+    assert positive_likelihood_ratio == 1.0
+
+    # This data causes tn=0 (0 true negatives) in the confusion_matrix and a division
+    # by zero that affects the negative_likelihood_ratio:
+    y_true = np.array([1, 0, 0])
+    y_pred = np.array([1, 1, 1])
+
+    _, negative_likelihood_ratio = class_likelihood_ratios(
+        y_true, y_pred, replace_undefined_by="worst"
+    )
+    assert negative_likelihood_ratio == 1.0
+
+
 @pytest.mark.parametrize(
     "replace_undefined_by",
     [

@@ -1971,7 +1971,12 @@ def precision_recall_fscore_support(
         "labels": ["array-like", None],
         "sample_weight": ["array-like", None],
         "raise_warning": ["boolean", Hidden(StrOptions({"deprecated"}))],
-        "replace_undefined_by": [Hidden(StrOptions({"default"})), np.nan, dict],
+        "replace_undefined_by": [
+            Hidden(StrOptions({"default"})),
+            (StrOptions({"worst"})),
+            np.nan,
+            dict,
+        ],
     },
     prefer_skip_nested_validation=True,
 )
@@ -2116,12 +2121,11 @@ def class_likelihood_ratios(
     # TODO(1.9): When `raise_warning` is removed, the following changes need to be made:
     # The checks for `raise_warning==True` need to be removed and we will always warn,
     # the default return value of `replace_undefined_by` should be updated from `np.nan`
-    # (which was kept for backwards compatibility) to the worst score for each metric
-    # respectively (1 for LR+ and 1 for LR-), its hidden option ("default") is not used
-    # anymore, warning messages can be removed, the Warns section in the docstring
-    # should not mention `raise_warning` anymore and the "Mathematical divergences"
-    # section in model_evaluation.rst needs to be updated on the new default behaviour
-    # of `replace_undefined_by`.
+    # (which was kept for backwards compatibility) to "worst", its hidden option
+    # ("default") is not used anymore, warning messages can be removed, the Warns
+    # section in the docstring should not mention `raise_warning` anymore and the
+    # "Mathematical divergences" section in model_evaluation.rst needs to be updated on
+    # the new default behaviour of `replace_undefined_by`.
     y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type != "binary":
@@ -2138,22 +2142,26 @@ def class_likelihood_ratios(
             FutureWarning,
         )
     else:
-        raise_warning = True
-        # TODO(1.9): This warning can be removed in 1.9. This is to make sure if users
-        # use the default args for `raise_warning` ("deprecated") and for
-        # `replace_undefined_by` (np.nan), they still get a FutureWarning telling them
-        # that the default return value will change:
         if replace_undefined_by == "default":
+            # TODO(1.9): Remove. If users don't set any return values in case of a
+            # division by zero (`raise_warning="deprecated"` and
+            # `replace_undefined_by="default"`) they still get a FutureWarning about
+            # changing default return values:
             warnings.warn(
                 "The default return value of `class_likelihood_ratios` in case of a "
                 "division by zero has been deprecated in 1.7 and will be changed to "
-                "the value set with the `replace_undefined_by` param in version 1.9. "
-                "Set `replace_undefined_by=np.nan` to silence this Warning.",
+                "the worst scores (`(1.0, 1.0)`) in version 1.9. Set "
+                "`replace_undefined_by='worst'` to use the new default and to silence "
+                "this Warning.",
                 FutureWarning,
             )
+        raise_warning = True
 
     if replace_undefined_by == "default":
         replace_undefined_by = np.nan
+
+    if replace_undefined_by == "worst":
+        replace_undefined_by = {"LR+": 1.0, "LR-": 1.0}
 
     if isinstance(replace_undefined_by, dict):
         msg = (
