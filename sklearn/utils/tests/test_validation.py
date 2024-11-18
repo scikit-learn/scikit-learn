@@ -1833,19 +1833,19 @@ def test_num_features_errors_1d_containers(X, constructor_name):
     if constructor_name == "array":
         expected_type_name = "numpy.ndarray"
     elif constructor_name == "series":
-        expected_type_name = "pandas.core.series.Series"
+        expected_type_name = "pandas.*Series"
     else:
         expected_type_name = constructor_name
     message = (
         f"Unable to find the number of features from X of type {expected_type_name}"
     )
     if hasattr(X, "shape"):
-        message += " with shape (3,)"
+        message += re.escape(" with shape (3,)")
     elif isinstance(X[0], str):
         message += " where the samples are of type str"
     elif isinstance(X[0], dict):
         message += " where the samples are of type dict"
-    with pytest.raises(TypeError, match=re.escape(message)):
+    with pytest.raises(TypeError, match=message):
         _num_features(X)
 
 
