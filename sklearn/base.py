@@ -194,6 +194,22 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
     array([3, 3, 3])
     """
 
+    def __new__(cls, *args, **kwargs):
+        if hasattr(cls, "_estimator_type"):
+            attr = inspect.getattr_static(cls, "_estimator_type")
+            if not isinstance(attr, property):
+                # we use properties in scikit-learn to avoid false positive warning for
+                # people using our mixin classes.
+                warnings.warn(
+                    "`_estimator_type` is deprecated in 1.6 and will be removed "
+                    "in 1.8. Instead, use `estimator_type` defined in `Tags` "
+                    "through `__sklearn_tags__` method. See "
+                    "https://scikit-learn.org/dev/developers/develop.html#"
+                    "estimator-tags for more information.",
+                    FutureWarning,
+                )
+        return super().__new__(cls)
+
     @classmethod
     def _get_param_names(cls):
         """Get parameter names for the estimator"""
@@ -475,7 +491,9 @@ class ClassifierMixin:
     """
 
     # TODO(1.8): Remove this attribute
-    _estimator_type = "classifier"
+    @property
+    def _estimator_type(self):
+        return "classifier"
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -548,7 +566,9 @@ class RegressorMixin:
     """
 
     # TODO(1.8): Remove this attribute
-    _estimator_type = "regressor"
+    @property
+    def _estimator_type(self):
+        return "regressor"
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -624,7 +644,9 @@ class ClusterMixin:
     """
 
     # TODO(1.8): Remove this attribute
-    _estimator_type = "clusterer"
+    @property
+    def _estimator_type(self):
+        return "clusterer"
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -977,7 +999,9 @@ class DensityMixin:
     """
 
     # TODO(1.8): Remove this attribute
-    _estimator_type = "DensityEstimator"
+    @property
+    def _estimator_type(self):
+        return "DensityEstimator"
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -1027,7 +1051,9 @@ class OutlierMixin:
     """
 
     # TODO(1.8): Remove this attribute
-    _estimator_type = "outlier_detector"
+    @property
+    def _estimator_type(self):
+        return "outlier_detector"
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()

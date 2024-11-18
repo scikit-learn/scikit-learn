@@ -992,3 +992,34 @@ def test_outlier_mixin_fit_predict_with_metadata_in_predict():
     with warnings.catch_warnings(record=True) as record:
         CustomOutlierDetector().set_predict_request(prop=True).fit_predict([[1]], [1])
         assert len(record) == 0
+
+
+def test_deprecation_estimator_type():
+    """Test that the deprecation of _estimator_type works."""
+
+    class MyRegressor(BaseEstimator):
+        pass
+
+    class MyClassifier(BaseEstimator):
+        pass
+
+    class MyOutlierDetector(BaseEstimator, OutlierMixin):
+        pass
+
+    class MyTransformer(BaseEstimator, TransformerMixin):
+        pass
+
+    # Classes without _estimator_type should not raise warnings
+    with warnings.catch_warnings(record=True) as record:
+        MyRegressor()
+        MyClassifier()
+        MyOutlierDetector()
+        MyTransformer()
+        assert len(record) == 0
+
+    # Class with _estimator_type should raise FutureWarning
+    class EstimatorWithType(BaseEstimator):
+        _estimator_type = "classifier"
+
+    with pytest.warns(FutureWarning, match="`_estimator_type` is deprecated"):
+        EstimatorWithType()

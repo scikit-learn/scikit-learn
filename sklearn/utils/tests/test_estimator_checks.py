@@ -315,6 +315,11 @@ class BadBalancedWeightsClassifier(BaseBadClassifier):
 
 
 class BadTransformerWithoutMixin(BaseEstimator):
+    # TODO(1.8): Remove this method. Necessary for passing the docstring check
+    # during the deprecation of _estimator_type.
+    def __init__(self):
+        super().__init__()
+
     def fit(self, X, y=None):
         X = validate_data(self, X)
         return self

@@ -2428,6 +2428,11 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
     __metadata_request__transform = {"K": metadata_routing.UNUSED}
     __metadata_request__fit = {"K": metadata_routing.UNUSED}
 
+    # TODO(1.8): Remove this method. Necessary for passing the docstring check
+    # during the deprecation of _estimator_type.
+    def __init__(self):
+        super().__init__()
+
     def fit(self, K, y=None):
         """Fit KernelCenterer.
 

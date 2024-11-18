@@ -77,6 +77,11 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
     [np.str_('tokyo'), np.str_('tokyo'), np.str_('paris')]
     """
 
+    # TODO(1.8): Remove this method. Necessary for passing the docstring check
+    # during the deprecation of _estimator_type.
+    def __init__(self):
+        super().__init__()
+
     def fit(self, y):
         """Fit label encoder.
 
