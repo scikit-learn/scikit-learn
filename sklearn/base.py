@@ -30,11 +30,14 @@ from .utils._tags import (
 )
 from .utils.fixes import _IS_32BIT
 from .utils.validation import (
+    _check_feature_names,
     _check_feature_names_in,
+    _check_n_features,
     _generate_get_feature_names_out,
     _is_fitted,
     check_array,
     check_is_fitted,
+    validate_data,
 )
 
 
@@ -438,6 +441,32 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         if get_config()["display"] == "diagram":
             output["text/html"] = estimator_html_repr(self)
         return output
+
+    def _validate_data(self, *args, **kwargs):
+        warnings.warn(
+            "`BaseEstimator._validate_data` is deprecated in 1.6 and will be removed "
+            "in 1.8. Use `sklearn.utils.validation.validate_data` instead. This "
+            "function becomes public and is part of the scikit-learn developer API.",
+            FutureWarning,
+        )
+        validate_data(self, *args, **kwargs)
+
+    def _check_n_features(self, *args, **kwargs):
+        warnings.warn(
+            "`BaseEstimator._check_n_features` is deprecated in 1.6 and will be "
+            "removed in 1.8. Use `sklearn.utils.validation._check_n_features` instead.",
+            FutureWarning,
+        )
+        _check_n_features(self, *args, **kwargs)
+
+    def _check_feature_names(self, *args, **kwargs):
+        warnings.warn(
+            "`BaseEstimator._check_feature_names` is deprecated in 1.6 and will be "
+            "removed in 1.8. Use `sklearn.utils.validation._check_feature_names` "
+            "instead.",
+            FutureWarning,
+        )
+        _check_feature_names(self, *args, **kwargs)
 
 
 class ClassifierMixin:
