@@ -669,21 +669,19 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         self.random_state = random_state
         self.verbose = verbose
 
-    def _validate_estimator(self, default=None):
+    # TODO(1.8): Remove the _validate_estimator when base estimator
+    # is removed, use self.estimator instead of self._estimator
+    def _validate_estimator(self):
         """Check the base estimator.
 
         Set the `_estimator` attribute.
         """
-        # TODO(1.8): Remove the self.base_estimator condition when
-        # base_estimator is removed
-        if self.estimator is not None and (
-            self.base_estimator not in [None, "deprecated"]
-        ):
+        if self.estimator is not None and (self.base_estimator != "deprecated"):
             raise ValueError(
                 "Both `estimator` and `base_estimator` were set. Only set `estimator`."
             )
 
-        if self.base_estimator not in [None, "deprecated"]:
+        if self.base_estimator != "deprecated":
 
             warning_msg = (
                 "`base_estimator` was renamed to `estimator` in 1.6 "
@@ -693,11 +691,6 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             self._estimator = self.base_estimator
         elif self.estimator is not None:
             self._estimator = self.estimator
-        else:
-            self._estimator = default
-
-            if default is None:
-                raise ValueError("`_estimator` attribute cannot be None.")
 
     def _log_message(self, *, estimator_idx, n_estimators, processing_msg):
         if not self.verbose:
@@ -897,7 +890,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
     Parameters
     ----------
-    estimator : estimator, default=None
+    estimator : estimator
         The base estimator from which the classifier chain is built.
 
     order : array-like of shape (n_outputs,) or 'random', default=None
@@ -954,8 +947,9 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
         .. versionadded:: 1.2
 
-    base_estimator : estimator, default=None
+    base_estimator : estimator, default="deprecated"
         Use `estimator` instead.
+
         .. deprecated:: 1.6
             `base_estimator` is deprecated and will be removed in 1.8.
             Use `estimator` instead.
@@ -1227,8 +1221,9 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
         .. versionadded:: 1.2
 
-    base_estimator : estimator, default=None
+    base_estimator : estimator, default="deprecated"
         Use `estimator` instead.
+
         .. deprecated:: 1.6
             `base_estimator` is deprecated and will be removed in 1.8.
             Use `estimator` instead.
@@ -1265,7 +1260,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
     >>> from sklearn.linear_model import LogisticRegression
     >>> logreg = LogisticRegression(solver='lbfgs')
     >>> X, Y = [[1, 0], [0, 1], [1, 1]], [[0, 2], [1, 1], [2, 0]]
-    >>> chain = RegressorChain(estimator=logreg, order=[0, 1]).fit(X, Y)
+    >>> chain = RegressorChain(logreg, order=[0, 1]).fit(X, Y)
     >>> chain.predict(X)
     array([[0., 2.],
            [1., 1.],

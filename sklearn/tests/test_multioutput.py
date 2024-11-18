@@ -873,32 +873,10 @@ def test_base_estimator_deprecation(Estimator):
     X = np.array([[1, 2], [3, 4]])
     y = np.array([[1, 0], [0, 1]])
 
-    estimator = LogisticRegression(solver="liblinear")
+    estimator = LogisticRegression()
 
     with pytest.warns(FutureWarning):
-        chain = Estimator(base_estimator=estimator)
-        chain._validate_estimator()
+        Estimator(base_estimator=estimator).fit(X, y)
 
     with pytest.raises(ValueError):
-        chain = Estimator(base_estimator=estimator, estimator=estimator)
-        chain._validate_estimator()
-
-
-@pytest.mark.parametrize("Estimator", [ClassifierChain, RegressorChain])
-def test_validate_estimator(Estimator):
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([[1, 0], [0, 1]])
-
-    estimator = LogisticRegression(solver="liblinear")
-    chain1 = Estimator(estimator)
-    chain2 = Estimator()
-
-    # Test the _estimator attribute is set is each case
-    chain1._validate_estimator()
-    chain2._validate_estimator(estimator)
-    assert hasattr(chain1, "_estimator") and hasattr(chain2, "_estimator")
-    assert chain1._estimator == estimator and chain2._estimator == estimator
-
-    with pytest.raises(ValueError):
-        chain = Estimator()  # no estimator provided
-        chain._validate_estimator()
+        Estimator(base_estimator=estimator, estimator=estimator).fit(X, y)
