@@ -420,7 +420,7 @@ def test_transition_public_api_deprecations():
             return self
 
         def transform(self, X):
-            return X
+            return X  # pragma: no cover
 
     X, y = make_classification(n_samples=10, n_features=5, random_state=0)
 
