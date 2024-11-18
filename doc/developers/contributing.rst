@@ -598,45 +598,34 @@ update documentation-related lock files and add the `[doc build]` marker to the 
 Resolve conflicts in lock files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-When there are conflicts between the lock files in a user's branch and the `main`
-branch, the `main` branch must take precedence in defining the lock files. Only after
-this is resolved, the changes from the user's PR can be reapplied on top of the updated
-lock files. Therefore, conflicts should not be resolved directly on the GitHub PR
-interface. Instead, follow these steps:
-
-Merge `upstream/main` into your local branch:
+Conflicting lock files with the `upstream/main` branch can be resolved arbitrarily, and
+we will re-generate the lock files afterwards. For instance, the conflicts can be
+resolved as follows:
 
 .. prompt:: bash
 
+  # pull latest upstream/main
   git pull upstream main --no-rebase
-
-Resolve conflicts, prioritizing the `upstream/main` branch. Be careful not to modify any
-files marked with `# DO NOT EDIT`. These files are auto-generated and will be updated
-in a later step.
-
-After resolving conflicts, add the changed files and proceed with the merge:
-
-.. prompt:: bash
-
-  git add path/to/modified/files
+  # resolve conflicts - keeping the upstream/main version for specific files
+  git checkout --theirs  build_tools/*/*.lock build_tools/*/*environment.yml \
+    build_tools/*/*lock.txt build_tools/*/*requirements.txt
+  git add build_tools/*/*.lock build_tools/*/*environment.yml \
+    build_tools/*/*lock.txt build_tools/*/*requirements.txt
   git merge --continue
 
-Re-generate the environment and lock files. This can be done using one of the following
-methods:
+This will merge `upstream/main` into our branch, automatically prioritising the
+`upstream/main` for conflicting lock files.
 
-- Use the scikit-learn-bot to update the lock files as described in the :ref:`build lock
-  files section <build_lock_files>`, or:
+If, after resolving the lock files, there are still conflicting files (for instance
+dependency files), git will consider the merge incomplete and we resolve the remaining
+conflicts as usual.
 
-- Run the python script to update the lock files manually:
+Finally, we have to re-generate the dependencies and lock files for the CIs, as described in
+:ref:`Build lock files <build_lock_files>`, or by running:
 
-  .. prompt:: bash
+.. prompt:: bash
 
-    python build_tools/update_environments_and_lock_files.py
-
-  In order to run this script you might need to add `conda-lock` and `pip-tools` to your
-  environment as described on top of the file.
-
-Now you can add, merge and push the re-generated lock files back to your remote branch.
+  python build_tools/update_environments_and_lock_files.py
 
 .. _stalled_pull_request:
 
