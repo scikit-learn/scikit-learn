@@ -480,13 +480,6 @@ class KNeighborsTransformer(
         """
         return self.fit(X).transform(X)
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_methods_sample_order_invariance": "check is not applicable."
-        }
-        return tags
-
 
 class RadiusNeighborsTransformer(
     ClassNamePrefixFeaturesOutMixin,
@@ -709,10 +702,3 @@ class RadiusNeighborsTransformer(
             The matrix is of CSR format.
         """
         return self.fit(X).transform(X)
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_methods_sample_order_invariance": "check is not applicable."
-        }
-        return tags

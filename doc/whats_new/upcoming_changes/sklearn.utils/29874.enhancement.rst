@@ -2,4 +2,4 @@
   :func:`~sklearn.utils.estimator_checks.parametrize_with_checks` now check and fail if
   the classifier has the `tags.classifier_tags.multi_class = False` tag but does not
   fail on multi-class data.
-  By `Adrin Jalali`_.
+  By `Adrin Jalali`_

@@ -304,7 +304,7 @@ Pipeline(memory=None,
                                     penalty='l2', random_state=None,
                                     solver='warn', tol=0.0001, verbose=0,
                                     warm_start=False))],
-         verbose=False)"""
+         transform_input=None, verbose=False)"""
 
     expected = expected[1:]  # remove first \n
     assert pipeline.__repr__() == expected
