@@ -2677,6 +2677,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     >>> clf.score(X, y)
     0.5166...
     """
+
     # TODO(1.8): Remove this method. Necessary for passing the docstring check
     # during the deprecation of _estimator_type.
     def __init__(
