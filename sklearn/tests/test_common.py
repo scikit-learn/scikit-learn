@@ -410,6 +410,7 @@ def test_transition_public_api_deprecations():
     """This test checks that we raised deprecation warning explaining how to transition
     to the new developer public API from 1.5 to 1.6.
     """
+
     class OldEstimator(BaseEstimator):
         def fit(self, X, y=None):
             self._validate_data(X, y)
