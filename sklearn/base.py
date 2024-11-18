@@ -442,6 +442,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
             output["text/html"] = estimator_html_repr(self)
         return output
 
+    # TODO(1.8): Remove this method
     def _validate_data(self, *args, **kwargs):
         warnings.warn(
             "`BaseEstimator._validate_data` is deprecated in 1.6 and will be removed "
@@ -451,6 +452,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         )
         validate_data(self, *args, **kwargs)
 
+    # TODO(1.8): Remove this method
     def _check_n_features(self, *args, **kwargs):
         warnings.warn(
             "`BaseEstimator._check_n_features` is deprecated in 1.6 and will be "
@@ -459,6 +461,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         )
         _check_n_features(self, *args, **kwargs)
 
+    # TODO(1.8): Remove this method
     def _check_feature_names(self, *args, **kwargs):
         warnings.warn(
             "`BaseEstimator._check_feature_names` is deprecated in 1.6 and will be "

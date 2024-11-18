@@ -406,6 +406,7 @@ def test_check_inplace_ensure_writeable(estimator):
     check_inplace_ensure_writeable(name, estimator)
 
 
+# TODO(1.8): Remove this test when the deprecation cycle is over
 def test_transition_public_api_deprecations():
     """This test checks that we raised deprecation warning explaining how to transition
     to the new developer public API from 1.5 to 1.6.
