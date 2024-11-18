@@ -6,7 +6,7 @@
 Lasso, Lasso-LARS, and Elastic Net paths
 ========================================
 
-This example shows how to compute the "paths" of coefficients along the Lasso,
+This example shows how to compute the Lasso,
 Lasso-LARS, and Elastic Net regularization paths. It illustrates the
 relationship between the regularization parameter :math:`\\alpha`
 and the coefficients :math:`w`.
@@ -65,7 +65,7 @@ from sklearn.linear_model import enet_path, lars_path, lasso_path
 # The Diabetes Dataset
 # --------------------
 #
-# We use the diabetes dataset :func:`~sklearn.datasets.load_diabetes` to plot
+# We use the :func:`diabetes dataset <sklearn.datasets.load_diabetes>` to plot
 # the regression coefficients for Lasso and Elastic Net.
 
 X, y = load_diabetes(return_X_y=True)
@@ -108,7 +108,7 @@ alphas_lars, _, coefs_lars = lars_path(X, y, method="lasso")
 # is implemented as :func:`~sklearn.linear_model.LassoLars`
 # and :func:`~sklearn.linear_model.lars_path`.
 #
-# We now present the visualisation of the regularization path for the diabetes dataset.
+# We now present the visualisation of the regularization paths for the diabetes dataset.
 # Each model is represented by 10 curves, corresponding to the number of features in the
 # dataset. Each curve shows how a particular coefficient :math:`w_i` changes as
 # :math:`\alpha` increases.
