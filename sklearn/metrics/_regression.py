@@ -145,12 +145,13 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric", xp=None):
 def _check_reg_targets_with_floating_dtype(
     y_true, y_pred, sample_weight, multioutput, xp=None
 ):
-    """Ensure that y_true and y_pred correspond to the same regression task.
+    """Ensures that y_true, y_pred, and sample_weight correspond to the same
+    regression task.
 
-    This helper automatically selects a floating-point data type with
-    `_find_matching_floating_dtype` when computing with inputs that
-    follow the array API specification and ensure that all non-None inputs
-    are converted to that common dtype if needed before returning them.
+    Extends `_check_reg_targets` by automatically selecting a suitable floating-point
+    data type for inputs using `_find_matching_floating_dtype`.
+
+    Use this private method only when converting inputs to array API-compatibles.
 
     Parameters
     ----------
