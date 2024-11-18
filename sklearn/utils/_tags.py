@@ -318,6 +318,14 @@ def get_tags(estimator) -> Tags:
 
     if hasattr(estimator, "__sklearn_tags__"):
         tags = estimator.__sklearn_tags__()
+    elif hasattr(estimator, "_get_tags"):
+        warnings.warn("BROKEN SOON, IT WILL BE", FutureWarning)
+        tags = _to_new_tags(estimator._get_tags())
+    elif hasattr(estimator, "_more_tags"):
+        warnings.warn("BROKEN SOON, IT WILL BE", FutureWarning)
+        tags = _to_old_tags(default_tags(estimator))
+        tags = {**tags, **estimator._more_tags()}
+        tags = _to_new_tags(tags)
     else:
         warnings.warn(
             f"Estimator {estimator} has no __sklearn_tags__ attribute, which is "
@@ -331,4 +339,149 @@ def get_tags(estimator) -> Tags:
         )
         tags = default_tags(estimator)
 
+    return tags
+
+
+def _to_new_tags(old_tags, estimator_type=None):
+    """Utility function convert old tags (dictionary) to new tags (dataclass)."""
+    input_tags = InputTags(
+        one_d_array="1darray" in old_tags["X_types"],
+        two_d_array="2darray" in old_tags["X_types"],
+        three_d_array="3darray" in old_tags["X_types"],
+        sparse="sparse" in old_tags["X_types"],
+        categorical="categorical" in old_tags["X_types"],
+        string="string" in old_tags["X_types"],
+        dict="dict" in old_tags["X_types"],
+        positive_only=old_tags["requires_positive_X"],
+        allow_nan=old_tags["allow_nan"],
+        pairwise=old_tags["pairwise"],
+    )
+    target_tags = TargetTags(
+        required=old_tags["requires_y"],
+        one_d_labels="1dlabels" in old_tags["X_types"],
+        two_d_labels="2dlabels" in old_tags["X_types"],
+        positive_only=old_tags["requires_positive_y"],
+        multi_output=old_tags["multioutput"] or old_tags["multioutput_only"],
+        single_output=not old_tags["multioutput_only"],
+    )
+    transformer_tags = TransformerTags(
+        preserves_dtype=old_tags["preserves_dtype"],
+    )
+    classifier_tags = ClassifierTags(
+        poor_score=old_tags["poor_score"],
+        multi_class=not old_tags["binary_only"],
+        multi_label=old_tags["multilabel"],
+    )
+    regressor_tags = RegressorTags(
+        poor_score=old_tags["poor_score"],
+        multi_label=old_tags["multilabel"],
+    )
+    return Tags(
+        estimator_type=estimator_type,
+        target_tags=target_tags,
+        transformer_tags=transformer_tags,
+        classifier_tags=classifier_tags,
+        regressor_tags=regressor_tags,
+        input_tags=input_tags,
+        array_api_support=old_tags["array_api_support"],
+        no_validation=old_tags["no_validation"],
+        non_deterministic=old_tags["non_deterministic"],
+        requires_fit=old_tags["requires_fit"],
+        _skip_test=old_tags["_skip_test"],
+    )
+
+
+def _to_old_tags(new_tags):
+    """Utility function convert old tags (dictionary) to new tags (dataclass)."""
+    if new_tags.classifier_tags:
+        binary_only = not new_tags.classifier_tags.multi_class
+        multilabel_clf = new_tags.classifier_tags.multi_label
+        poor_score_clf = new_tags.classifier_tags.poor_score
+    else:
+        binary_only = False
+        multilabel_clf = False
+        poor_score_clf = False
+
+    if new_tags.regressor_tags:
+        multilabel_reg = new_tags.regressor_tags.multi_label
+        poor_score_reg = new_tags.regressor_tags.poor_score
+    else:
+        multilabel_reg = False
+        poor_score_reg = False
+
+    if new_tags.transformer_tags:
+        preserves_dtype = new_tags.transformer_tags.preserves_dtype
+    else:
+        preserves_dtype = ["float64"]
+
+    tags = {
+        "allow_nan": new_tags.input_tags.allow_nan,
+        "array_api_support": new_tags.array_api_support,
+        "binary_only": binary_only,
+        "multilabel": multilabel_clf or multilabel_reg,
+        "multioutput": new_tags.target_tags.multi_output,
+        "multioutput_only": (
+            not new_tags.target_tags.single_output
+            and new_tags.target_tags.multi_output
+        ),
+        "no_validation": new_tags.no_validation,
+        "non_deterministic": new_tags.non_deterministic,
+        "pairwise": new_tags.input_tags.pairwise,
+        "preserves_dtype": preserves_dtype,
+        "poor_score": poor_score_clf or poor_score_reg,
+        "requires_fit": new_tags.requires_fit,
+        "requires_positive_X": new_tags.input_tags.positive_only,
+        "requires_y": new_tags.target_tags.required,
+        "requires_positive_y": new_tags.target_tags.positive_only,
+        "_skip_test": new_tags._skip_test,
+        "stateless": new_tags.requires_fit,
+    }
+    X_types = []
+    if new_tags.input_tags.one_d_array:
+        X_types.append("1darray")
+    if new_tags.input_tags.two_d_array:
+        X_types.append("2darray")
+    if new_tags.input_tags.three_d_array:
+        X_types.append("3darray")
+    if new_tags.input_tags.sparse:
+        X_types.append("sparse")
+    if new_tags.input_tags.categorical:
+        X_types.append("categorical")
+    if new_tags.input_tags.string:
+        X_types.append("string")
+    if new_tags.input_tags.dict:
+        X_types.append("dict")
+    if new_tags.target_tags.one_d_labels:
+        X_types.append("1dlabels")
+    if new_tags.target_tags.two_d_labels:
+        X_types.append("2dlabels")
+    tags["X_types"] = X_types
+    return tags
+
+
+def _safe_tags(estimator, key=None):
+    warnings.warn(
+        "The `_safe_tags` utility function is deprecated in 1.6 and will be removed in "
+        "1.7. Use the public `get_tags` function instead and make sure to implement "
+        "the `__sklearn_tags__` method.",
+        category=FutureWarning,
+    )
+    if hasattr(estimator, "_get_tags"):
+        tags_provider = "_get_tags()"
+        tags = estimator._get_tags()
+    elif hasattr(estimator, "_more_tags"):
+        tags_provider = "_more_tags()"
+        tags = _to_old_tags(default_tags(estimator))
+        tags = {**tags, **estimator._more_tags()}
+    else:
+        tags_provider = "_DEFAULT_TAGS"
+        tags = _to_old_tags(default_tags(estimator))
+
+    if key is not None:
+        if key not in tags:
+            raise ValueError(
+                f"The key {key} is not defined in {tags_provider} for the "
+                f"class {estimator.__class__.__name__}."
+            )
+        return tags[key]
     return tags
