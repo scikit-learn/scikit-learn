@@ -657,15 +657,13 @@ def test_partial_dependence_pipeline():
 
 
 @pytest.mark.parametrize(
-    "features, grid_resolution, n_vals_expected",
+    "grid_resolution",
     [
-        (["a"], 10, 10),
-        (["a"], 2, 2),
+        10,
+        2,
     ],
 )
-def test_partial_dependence_binary_model_grid_resolution(
-    features, grid_resolution, n_vals_expected
-):
+def test_partial_dependence_binary_model_grid_resolution(grid_resolution):
     pd = pytest.importorskip("pandas")
     model = DummyClassifier()
 
@@ -681,11 +679,11 @@ def test_partial_dependence_binary_model_grid_resolution(
     part_dep = partial_dependence(
         model,
         X,
-        features=features,
+        features=["a"],
         grid_resolution=grid_resolution,
         kind="average",
     )
-    assert part_dep["average"].size == n_vals_expected
+    assert part_dep["average"].size == grid_resolution
 
 
 @pytest.mark.parametrize(
