@@ -1027,7 +1027,7 @@ def test_check_consistent_length():
 @pytest.mark.parametrize(
     "array_namespace, device, _", yield_namespace_device_dtype_combinations()
 )
-def test_check_consistent_length_array_API(array_namespace, device, _):
+def test_check_consistent_length_array_api(array_namespace, device, _):
     """Test that check_consistent_length works with different array types."""
     xp = _array_api_for_tests(array_namespace, device)
 
