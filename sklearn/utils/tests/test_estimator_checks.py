@@ -494,6 +494,11 @@ class UntaggedBinaryClassifier(SGDClassifier):
 
 
 class TaggedBinaryClassifier(UntaggedBinaryClassifier):
+    # TODO(1.8): Remove this method. Necessary for passing the docstring check
+    # during the deprecation of _estimator_type.
+    def __init__(self):
+        super().__init__()
+
     def fit(self, X, y):
         y_type = type_of_target(y, input_name="y", raise_unknown=True)
         if y_type != "binary":
