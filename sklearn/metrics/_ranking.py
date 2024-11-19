@@ -326,6 +326,8 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     DetCurveDisplay : DET curve visualization.
     roc_curve : Compute Receiver operating characteristic (ROC) curve.
     precision_recall_curve : Compute precision-recall curve.
+    binary_classification_curve : Compute True Positive and False Positive per
+        threshold.
 
     Examples
     --------
@@ -822,8 +824,8 @@ def binary_classification_curve(y_true, y_score, pos_label=None, sample_weight=N
     >>> import numpy as np
     >>> from sklearn.metrics import binary_classification_curve
     >>> y_true = np.array([0., 0., 1., 1.])
-    >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> fps, tps, thresholds = binary_classification_curve(y_true, y_scores)
+    >>> y_score = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> fps, tps, thresholds = binary_classification_curve(y_true, y_score)
     >>> fps
     array([0., 1., 1., 2.])
     >>> tps
@@ -984,7 +986,9 @@ def precision_recall_curve(
         using predictions from a binary classifier.
     average_precision_score : Compute average precision from prediction scores.
     det_curve: Compute error rates for different probability thresholds.
-    roc_curve : Compute Receiver operating characteristic (ROC) curve.
+    roc_curve : Compute Receiver operating characteristic (ROC) curve
+    binary_classification_curve : Compute True Positive and False Positive per
+        threshold.
 
     Examples
     --------
@@ -1129,6 +1133,8 @@ def roc_curve(
         (ROC) curve given the true and predicted values.
     det_curve: Compute error rates for different probability thresholds.
     roc_auc_score : Compute the area under the ROC curve.
+    binary_classification_curve : Compute True Positive and False Positive per
+        threshold.
 
     Notes
     -----
