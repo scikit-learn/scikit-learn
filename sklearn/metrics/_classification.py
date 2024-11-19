@@ -2048,7 +2048,7 @@ def class_likelihood_ratios(
 
         .. deprecated:: 1.7
             `raise_warning` was deprecated in version 1.7 and will be removed in 1.9,
-            when an `UndefinedMetricWarning` will always raise.
+            when an :class:`~sklearn.exceptions.UndefinedMetricWarning` will always raise.
 
     replace_undefined_by : np.nan or dict, default=np.nan
         Sets the return values for LR+ and LR- when there is a division by zero. Can
@@ -2075,7 +2075,7 @@ def class_likelihood_ratios(
 
     Warns
     -----
-    Raises `UndefinedMetricWarning` when `y_true` and `y_pred` lead to the following
+    Raises :class:`~sklearn.exceptions.UndefinedMetricWarning` when `y_true` and `y_pred` lead to the following
     conditions:
 
         - The number of false positives is 0 and `raise_warning` is set to `True`
