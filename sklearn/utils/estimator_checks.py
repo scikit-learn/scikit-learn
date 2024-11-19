@@ -115,13 +115,12 @@ def _raise_for_missing_tags(estimator, tag_name, Mixin):
     tags = get_tags(estimator)
     estimator_type = Mixin.__name__.replace("Mixin", "")
     if getattr(tags, tag_name) is None:
-        # raise RuntimeError(
-        #     f"Estimator {estimator.__class__.__name__} seems to be a {estimator_type},"
-        #     f" but the `{tag_name}` tag is not set. Either set the tag manually"
-        #     f" or inherit from the {Mixin.__name__}. Note that the order of inheritance"
-        #     f" matters, the {Mixin.__name__} should come before BaseEstimator."
-        # )
-        # warnings.warn("BROKEN SOON, IT WILL BE", FutureWarning)
+        raise RuntimeError(
+            f"Estimator {estimator.__class__.__name__} seems to be a {estimator_type},"
+            f" but the `{tag_name}` tag is not set. Either set the tag manually"
+            f" or inherit from the {Mixin.__name__}. Note that the order of inheritance"
+            f" matters, the {Mixin.__name__} should come before BaseEstimator."
+        )
         pass
 
 
@@ -279,8 +278,6 @@ def _yield_regressor_checks(regressor):
 def _yield_transformer_checks(transformer):
     _raise_for_missing_tags(transformer, "transformer_tags", TransformerMixin)
     tags = get_tags(transformer)
-    print(transformer)
-    print(tags)
     # All transformers should either deal with sparse data or raise an
     # exception with type TypeError and an intelligible error message
     if not tags.no_validation:
