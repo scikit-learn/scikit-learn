@@ -411,6 +411,13 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
             "1.7. Please implement the `__sklearn_tags__` method.",
             category=FutureWarning,
         )
+        # In case a user called `_get_tags` but that the estimator already did the job
+        # implementing `__sklearn_tags__` completely, let's default back to the future
+        # behaviour.
+        from sklearn.utils._tags import get_tags, _find_tags_provider, _to_old_tags
+        if _find_tags_provider(self) == "__sklearn_tags__":
+            return _to_old_tags(get_tags(self))
+
         collected_tags = {}
         for base_class in reversed(inspect.getmro(self.__class__)):
             if hasattr(base_class, "_more_tags"):
