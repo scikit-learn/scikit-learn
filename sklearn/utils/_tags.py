@@ -394,8 +394,6 @@ def get_tags(estimator) -> Tags:
 
     tag_provider = _find_tags_provider(estimator)
     if tag_provider == "__sklearn_tags__":
-        from sklearn.base import TransformerMixin  # avoid circular dependency
-
         tags = estimator.__sklearn_tags__()
 
         # TODO (1.7): Remove this block
