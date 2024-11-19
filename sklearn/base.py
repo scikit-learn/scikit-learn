@@ -412,9 +412,10 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
             category=FutureWarning,
         )
         # In case a user called `_get_tags` but that the estimator already did the job
-        # implementing `__sklearn_tags__` completely, let's default back to the future
-        # behaviour.
-        from sklearn.utils._tags import get_tags, _find_tags_provider, _to_old_tags
+        # implementing `__sklearn_tags__` completely and removed `_more_tags`, let's
+        # default back to the future behaviour. Otherwise, we will get the default tags.
+        from sklearn.utils._tags import _find_tags_provider, _to_old_tags, get_tags
+
         if _find_tags_provider(self) == "__sklearn_tags__":
             return _to_old_tags(get_tags(self))
 
