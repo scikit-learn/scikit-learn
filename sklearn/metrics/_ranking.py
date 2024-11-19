@@ -788,6 +788,10 @@ def _multiclass_roc_auc_score(
 def binary_classification_curve(y_true, y_score, pos_label=None, sample_weight=None):
     """Calculate true and false positives per binary classification threshold.
 
+    Read more in the :ref:`User Guide <confusion_matrix>`.
+
+    .. versionadded:: 1.6
+
     Parameters
     ----------
     y_true : ndarray of shape (n_samples,)
@@ -818,6 +822,17 @@ def binary_classification_curve(y_true, y_score, pos_label=None, sample_weight=N
 
     thresholds : ndarray of shape (n_thresholds,)
         Decreasing score values.
+
+    See Also
+    --------
+    confusion_matrix : Compute classification matrix to evaluate the accuracy of a
+        classifier.
+    roc_curve : Compute Receiver operating characteristic (ROC) curve.
+    precision_recall_curve : Compute precision-recall curve.
+    det_curve : Compute Detection error tradeoff (DET) curve.
+    binary_classification_curve : Compute True Positive and False Positive per
+        threshold.
+
 
     Examples
     --------

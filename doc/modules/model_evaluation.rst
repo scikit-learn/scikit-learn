@@ -689,11 +689,9 @@ false negatives and true positives for different thresholds.
   array([1., 1., 2., 2.])
   >>> thresholds
   array([0.8, 0.4, 0.35, 0.1])
-
   >>> # True Negatives can be calculated using:
   >>> fps[-1] - fps
   array([2., 1., 1., 0.])]
-
   >>> # False negatives can be calculated using:
   >>> tps[-1] - tps
   array([1., 1., 0., 0.])

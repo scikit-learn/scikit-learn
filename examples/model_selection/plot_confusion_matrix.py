@@ -74,7 +74,7 @@ plt.show()
 # Binary Classification
 # =====================
 #
-# For binary problems, :func:`sklearn.metrics.confusion_matrix` has an ``ravel`` method
+# For binary problems, :func:`sklearn.metrics.confusion_matrix` has the ``ravel`` method
 # we can use get counts of true negatives, false positives, false negatives and
 # true positives.
 #
@@ -99,17 +99,14 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.3, random_state=42
 )
 
-# Step 3: Train a classifier (Logistic Regression)
-classifier = svm.SVC(kernel="linear", C=0.01).fit(X_train, y_train)
+classifier = svm.SVC(kernel="linear", C=0.01, probability=True)
+classifier.fit(X_train, y_train)
 
-# Step 4: Obtain scores (y_score) from the classifier
 y_score = classifier.predict_proba(X_test)[:, 1]
 
-# Step 5: Calculate True Positives, False Positives, and Thresholds
-# _binary_clf_curve is the internal function used in roc_curve
 tps, fps, threshold = binary_classification_curve(y_test, y_score)
 
-# Step 6: Plot TPs and FPs vs Thresholds
+# Plot TPs and FPs vs Thresholds
 plt.figure(figsize=(10, 6))
 
 plt.plot(threshold, tps, label="True Positives (TPs)", color="blue")
