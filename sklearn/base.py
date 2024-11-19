@@ -419,6 +419,12 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
                 # (i.e. calling more tags on BaseEstimator multiple times)
                 more_tags = base_class._more_tags(self)
                 collected_tags.update(more_tags)
+            elif hasattr(base_class, "__sklearn_tags__"):
+                # Since that some people will inherit from scikit-learn that implements
+                # the new infrastructure, we need to collect it and merge it with
+                # the old tags.
+                more_tags = base_class.__sklearn_tags__(self)
+                collected_tags.update(_to_old_tags(more_tags))
         return collected_tags
 
     def _validate_params(self):

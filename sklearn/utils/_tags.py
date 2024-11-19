@@ -340,16 +340,7 @@ def _find_tags_provider(estimator):
         )
         has_sklearn_tags = "__sklearn_tags__" in tags_mro[klass]
 
-        if (
-            tags_mro[klass]  # is it empty
-            and tag_provider == "_get_tags"
-            and not has_get_or_more_tags
-            and has_sklearn_tags
-        ):
-            # Case where a class in the middle implements only __sklearn_tags__ but we
-            # already fallback to _get_tags. There is no safe way to resolve the tags.
-            raise ValueError(err_msg)
-        elif tags_mro[klass] and tag_provider == "__sklearn_tags__":  # is it empty
+        if tags_mro[klass] and tag_provider == "__sklearn_tags__":  # is it empty
             if has_get_or_more_tags and not has_sklearn_tags:
                 if encounter_sklearn_tags:
                     # One of the child class already implemented __sklearn_tags__
@@ -403,13 +394,16 @@ def get_tags(estimator) -> Tags:
 
     tag_provider = _find_tags_provider(estimator)
     if tag_provider == "__sklearn_tags__":
+        from sklearn.base import TransformerMixin  # avoid circular dependency
         tags = estimator.__sklearn_tags__()
 
         # TODO (1.7): Remove this block
         # Catch the corner case where a transformer inheriting from BaseEstimator but
         # that does not inherit from TransformerMixin ends up without the
         # transformer_tags set properly.
-        if hasattr(estimator, "transform") or hasattr(estimator, "fit_transform"):
+        if (
+            hasattr(estimator, "transform") or hasattr(estimator, "fit_transform")
+        ) and not isinstance(estimator, TransformerMixin):
             warnings.warn(
                 "The transformer tags are not set properly for the estimator "
                 f"{estimator.__class__.__name__}. This will raise an error in "
