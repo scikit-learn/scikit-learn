@@ -1547,7 +1547,7 @@ functions or non-estimator constructors.
 
     ``copy``
         This parameter is used to specify the nature of the input operated
-        during a computation. If False, try to avoid a copy and modify the input
+        during computation. If False, try to avoid a copy and modify the input
         in place.
         This is not guaranteed to always work in place. If the input is not an
         array of floating values or encoded as a CSR matrix, a new copy will
