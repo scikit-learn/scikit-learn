@@ -169,7 +169,7 @@ def cross_validate(
 
     scoring : str, callable, list, tuple, or dict, default=None
         Strategy to evaluate the performance of the cross-validated model on
-        the test set.
+        the test set. If None, the `estimator` object's `score` method is used.
 
         If `scoring` represents a single score, one can use:
 
