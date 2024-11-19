@@ -163,3 +163,17 @@ def _validate_style_kwargs(default_style_kwargs, user_style_kwargs):
             valid_style_kwargs[key] = user_style_kwargs[key]
 
     return valid_style_kwargs
+
+
+def _despine(ax):
+    """Remove the top and right spines of the plot.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The axes of the plot to despine.
+    """
+    for s in ["top", "right"]:
+        ax.spines[s].set_visible(False)
+    for s in ["bottom", "left"]:
+        ax.spines[s].set_bounds(0, 1)
