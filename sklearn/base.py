@@ -450,7 +450,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
             "function becomes public and is part of the scikit-learn developer API.",
             FutureWarning,
         )
-        validate_data(self, *args, **kwargs)
+        return validate_data(self, *args, **kwargs)
 
     # TODO(1.7): Remove this method
     def _check_n_features(self, *args, **kwargs):
