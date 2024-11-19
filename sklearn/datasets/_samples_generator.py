@@ -174,7 +174,7 @@ def make_classification(
         See :term:`Glossary <random_state>`.
 
     return_X_y : bool, default=True
-        If True, the ``(data, target)`` instead of a Bunch object is returned.
+        If True, a tuple ``(X, y)`` instead of a Bunch object is returned.
 
         .. versionadded:: 1.6
 
@@ -185,7 +185,7 @@ def make_classification(
 
         DESCR : str
             A description of the function that generated the dataset.
-        generator_parameter : dict
+        parameter : dict
             A dictionary that stores the values of the arguments passed to the
             generator function.
         feature_info : list of len(n_features)
@@ -197,7 +197,7 @@ def make_classification(
 
         .. versionadded:: 1.6
 
-    (data, target) : tuple if ``return_X_y`` is True
+    (X, y) : tuple if ``return_X_y`` is True
         A tuple of generated samples and labels.
 
     See Also
@@ -338,18 +338,18 @@ def make_classification(
         generator.shuffle(indices)
         X[:, :] = X[:, indices]
 
+    if return_X_y:
+        return X, y
+
     # feat_desc describes features in X
     feat_desc = ["random"] * n_features
     for i, index in enumerate(indices):
         if index < n_informative:
             feat_desc[i] = "informative"
-        elif index >= n_informative and index < n_informative + n_redundant:
+        elif n_informative <= index < n_informative + n_redundant:
             feat_desc[i] = "redundant"
-        elif index >= n and index < n + n_repeated:
+        elif n <= index < n + n_repeated:
             feat_desc[i] = "repeated"
-
-    if return_X_y:
-        return X, y
 
     parameters = {
         "n_samples": n_samples,
