@@ -399,16 +399,16 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
 
     def _more_tags(self):
         warnings.warn(
-            "The `_more_tags` method is deprecated in 1.8 and will be removed in "
-            "1.9. Please implement the `__sklearn_tags__` method.",
+            "The `_more_tags` method is deprecated in 1.6 and will be removed in "
+            "1.7. Please implement the `__sklearn_tags__` method.",
             category=FutureWarning,
         )
         return _to_old_tags(default_tags(self))
 
     def _get_tags(self):
         warnings.warn(
-            "The `_get_tags` tag provider is deprecated in 1.8 and will be removed in "
-            "1.9. Please implement the `__sklearn_tags__` method.",
+            "The `_get_tags` tag provider is deprecated in 1.6 and will be removed in "
+            "1.7. Please implement the `__sklearn_tags__` method.",
             category=FutureWarning,
         )
         collected_tags = {}

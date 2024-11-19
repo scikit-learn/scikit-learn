@@ -245,7 +245,7 @@ class Tags:
     input_tags: InputTags = field(default_factory=InputTags)
 
 
-# TODO(1.8): Remove this function
+# TODO(1.7): Remove this function
 def default_tags(estimator) -> Tags:
     """Get the default tags for an estimator.
 
