@@ -26,7 +26,9 @@ from .utils._tags import (
     Tags,
     TargetTags,
     TransformerTags,
+    default_tags,
     get_tags,
+    _to_old_tags,
 )
 from .utils.fixes import _IS_32BIT
 from .utils.validation import (
@@ -395,6 +397,30 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
             classifier_tags=None,
         )
 
+    def _more_tags(self):
+        warnings.warn(
+            "The `_more_tags` method is deprecated in 1.8 and will be removed in "
+            "1.9. Please implement the `__sklearn_tags__` method.",
+            category=FutureWarning,
+        )
+        return _to_old_tags(default_tags(self))
+
+    def _get_tags(self):
+        warnings.warn(
+            "The `_get_tags` tag provider is deprecated in 1.8 and will be removed in "
+            "1.9. Please implement the `__sklearn_tags__` method.",
+            category=FutureWarning,
+        )
+        collected_tags = {}
+        for base_class in reversed(inspect.getmro(self.__class__)):
+            if hasattr(base_class, "_more_tags"):
+                # need the if because mixins might not have _more_tags
+                # but might do redundant work in estimators
+                # (i.e. calling more tags on BaseEstimator multiple times)
+                more_tags = base_class._more_tags(self)
+                collected_tags.update(more_tags)
+        return collected_tags
+
     def _validate_params(self):
         """Validate types and values of constructor parameters
 
@@ -477,6 +503,10 @@ class ClassifierMixin:
     # TODO(1.8): Remove this attribute
     _estimator_type = "classifier"
 
+    # TODO(1.8): Remove this method
+    def _more_tags(self):
+        return {"requires_y": True}
+
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.estimator_type = "classifier"
@@ -549,6 +579,10 @@ class RegressorMixin:
 
     # TODO(1.8): Remove this attribute
     _estimator_type = "regressor"
+
+    # TODO(1.8): Remove this method
+    def _more_tags(self):
+        return {"requires_y": True}
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -625,6 +659,10 @@ class ClusterMixin:
 
     # TODO(1.8): Remove this attribute
     _estimator_type = "clusterer"
+
+    # TODO(1.8): Remove this method
+    def _more_tags(self):
+        return {"preserves_dtype": []}
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -1121,6 +1159,10 @@ class MetaEstimatorMixin:
 class MultiOutputMixin:
     """Mixin to mark estimators that support multioutput."""
 
+    # TODO(1.8): Remove this method
+    def _more_tags(self):
+        return {"multioutput": True}
+
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.target_tags.multi_output = True
@@ -1129,6 +1171,13 @@ class MultiOutputMixin:
 
 class _UnstableArchMixin:
     """Mark estimators that are non-determinstic on 32bit or PowerPC"""
+
+    # TODO(1.8): Remove this method
+    def _more_tags(self):
+        return {
+            "non_deterministic": _IS_32BIT
+            or platform.machine().startswith(("ppc", "powerpc"))
+        }
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()

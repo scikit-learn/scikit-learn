@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import warnings
+from collections import OrderedDict
 from dataclasses import dataclass, field
+from itertools import chain
 
 from .fixes import _dataclass_args
 
@@ -290,6 +292,89 @@ def default_tags(estimator) -> Tags:
     )
 
 
+# TODO(1.7): Remove this function
+def _find_tags_provider(estimator):
+    """Find the tags provider for an estimator.
+
+    Parameters
+    ----------
+    estimator : estimator object
+        The estimator to find the tags provider for.
+
+    Returns
+    -------
+    tag_provider : str
+        The tags provider for the estimator. Can be one of:
+        - "_get_tags": to use the old tags infrastructure
+        - "__sklearn_tags__": to use the new tags infrastructure
+    """
+    mro_model = type(estimator).mro()
+    tags_mro = OrderedDict()
+    for klass in mro_model:
+        tags_provider = []
+        if "_more_tags" in vars(klass):
+            tags_provider.append("_more_tags")
+        if "_get_tags" in vars(klass):
+            tags_provider.append("_get_tags")
+        if "__sklearn_tags__" in vars(klass):
+            tags_provider.append("__sklearn_tags__")
+        tags_mro[klass.__name__] = tags_provider
+
+    all_providers = set(chain.from_iterable(tags_mro.values()))
+    if "__sklearn_tags__" not in all_providers:
+        # default on the old tags infrastructure
+        return "_get_tags"
+
+    tag_provider = "__sklearn_tags__"
+    encounter_sklearn_tags = False
+    err_msg = (
+        f"Some classes from which {estimator.__class__.__name__} inherits only "
+        "use `_get_tags` and `_more_tags` while others implement the new "
+        "`__sklearn_tags__` method. There is no safe way to resolve the tags. "
+        "Please make sure to implement the `__sklearn_tags__` method in all "
+        "classes in the hierarchy."
+    )
+    for klass in tags_mro:
+        has_get_or_more_tags = any(
+            provider in tags_mro[klass] for provider in ("_get_tags", "_more_tags")
+        )
+        has_sklearn_tags = "__sklearn_tags__" in tags_mro[klass]
+
+        if (
+            tags_mro[klass]  # is it empty
+            and tag_provider == "_get_tags"
+            and not has_get_or_more_tags
+            and has_sklearn_tags
+        ):
+            # Case where a class in the middle implements only __sklearn_tags__ but we
+            # already fallback to _get_tags. There is no safe way to resolve the tags.
+            raise ValueError(err_msg)
+        elif tags_mro[klass] and tag_provider == "__sklearn_tags__":  # is it empty
+            if has_get_or_more_tags and not has_sklearn_tags:
+                if encounter_sklearn_tags:
+                    # One of the child class already implemented __sklearn_tags__
+                    # We cannot anymore fallback to _get_tags
+                    raise ValueError(err_msg)
+                # Case where a class does not implement __sklearn_tags__ and we fallback
+                # to _get_tags. We should therefore warn for implementing
+                # __sklearn_tags__.
+                tag_provider = "_get_tags"
+            encounter_sklearn_tags = True
+
+    if tag_provider == "_get_tags":
+        warnings.warn(
+            f"The {estimator.__class__.__name__} or classes from which it inherits "
+            "only use `_get_tags` and `_more_tags`. Please define the "
+            "`__sklearn_tags__` method, or inherit from `sklearn.base.BaseEstimator` "
+            "and other appropriate mixins such as `sklearn.base.TransformerMixin`, "
+            "`sklearn.base.ClassifierMixin`, `sklearn.base.RegressorMixin`, and "
+            "`sklearn.base.OutlierMixin`. From scikit-learn 1.7, not defining "
+            "`__sklearn_tags__` will raise an error.",
+            category=FutureWarning,
+        )
+    return tag_provider
+
+
 def get_tags(estimator) -> Tags:
     """Get estimator tags.
 
@@ -316,32 +401,24 @@ def get_tags(estimator) -> Tags:
         The estimator tags.
     """
 
-    if hasattr(estimator, "__sklearn_tags__"):
+    tag_provider = _find_tags_provider(estimator)
+    if tag_provider == "__sklearn_tags__":
         tags = estimator.__sklearn_tags__()
-    elif hasattr(estimator, "_get_tags"):
-        warnings.warn("BROKEN SOON, IT WILL BE", FutureWarning)
-        tags = _to_new_tags(estimator._get_tags())
-    elif hasattr(estimator, "_more_tags"):
-        warnings.warn("BROKEN SOON, IT WILL BE", FutureWarning)
-        tags = _to_old_tags(default_tags(estimator))
-        tags = {**tags, **estimator._more_tags()}
-        tags = _to_new_tags(tags)
+    # TODO(1.7): Remove this block
+    elif tag_provider == "_get_tags":
+        if hasattr(estimator, "_get_tags"):
+            tags = _to_new_tags(estimator._get_tags())
+        elif hasattr(estimator, "_more_tags"):
+            tags = _to_old_tags(default_tags(estimator))
+            tags = {**tags, **estimator._more_tags()}
+            tags = _to_new_tags(tags)
     else:
-        warnings.warn(
-            f"Estimator {estimator} has no __sklearn_tags__ attribute, which is "
-            "defined in `sklearn.base.BaseEstimator`. This will raise an error in "
-            "scikit-learn 1.8. Please define the __sklearn_tags__ method, or inherit "
-            "from `sklearn.base.BaseEstimator` and other appropriate mixins such as "
-            "`sklearn.base.TransformerMixin`, `sklearn.base.ClassifierMixin`, "
-            "`sklearn.base.RegressorMixin`, and `sklearn.base.ClusterMixin`, and "
-            "`sklearn.base.OutlierMixin`.",
-            category=FutureWarning,
-        )
         tags = default_tags(estimator)
 
     return tags
 
 
+# TODO(1.7): Remove this function
 def _to_new_tags(old_tags, estimator_type=None):
     """Utility function convert old tags (dictionary) to new tags (dataclass)."""
     input_tags = InputTags(
@@ -391,6 +468,7 @@ def _to_new_tags(old_tags, estimator_type=None):
     )
 
 
+# TODO(1.7): Remove this function
 def _to_old_tags(new_tags):
     """Utility function convert old tags (dictionary) to new tags (dataclass)."""
     if new_tags.classifier_tags:
@@ -421,8 +499,7 @@ def _to_old_tags(new_tags):
         "multilabel": multilabel_clf or multilabel_reg,
         "multioutput": new_tags.target_tags.multi_output,
         "multioutput_only": (
-            not new_tags.target_tags.single_output
-            and new_tags.target_tags.multi_output
+            not new_tags.target_tags.single_output and new_tags.target_tags.multi_output
         ),
         "no_validation": new_tags.no_validation,
         "non_deterministic": new_tags.non_deterministic,
@@ -459,6 +536,7 @@ def _to_old_tags(new_tags):
     return tags
 
 
+# TODO(1.7): Remove this function
 def _safe_tags(estimator, key=None):
     warnings.warn(
         "The `_safe_tags` utility function is deprecated in 1.6 and will be removed in "
@@ -466,22 +544,13 @@ def _safe_tags(estimator, key=None):
         "the `__sklearn_tags__` method.",
         category=FutureWarning,
     )
-    if hasattr(estimator, "_get_tags"):
-        tags_provider = "_get_tags()"
-        tags = estimator._get_tags()
-    elif hasattr(estimator, "_more_tags"):
-        tags_provider = "_more_tags()"
-        tags = _to_old_tags(default_tags(estimator))
-        tags = {**tags, **estimator._more_tags()}
-    else:
-        tags_provider = "_DEFAULT_TAGS"
-        tags = _to_old_tags(default_tags(estimator))
+    tags = _to_old_tags(get_tags(estimator))
 
     if key is not None:
         if key not in tags:
             raise ValueError(
-                f"The key {key} is not defined in {tags_provider} for the "
-                f"class {estimator.__class__.__name__}."
+                f"The key {key} is not defined for the class "
+                f"{estimator.__class__.__name__}."
             )
         return tags[key]
     return tags
