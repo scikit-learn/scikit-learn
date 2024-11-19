@@ -26,9 +26,9 @@ from .utils._tags import (
     Tags,
     TargetTags,
     TransformerTags,
+    _to_old_tags,
     default_tags,
     get_tags,
-    _to_old_tags,
 )
 from .utils.fixes import _IS_32BIT
 from .utils.validation import (

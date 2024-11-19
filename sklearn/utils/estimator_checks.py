@@ -121,8 +121,6 @@ def _raise_for_missing_tags(estimator, tag_name, Mixin):
             f" or inherit from the {Mixin.__name__}. Note that the order of inheritance"
             f" matters, the {Mixin.__name__} should come before BaseEstimator."
         )
-        pass
-
 
 
 def _yield_api_checks(estimator):
