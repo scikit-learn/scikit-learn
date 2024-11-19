@@ -502,6 +502,7 @@ def nan_euclidean_distances(
 
     copy : bool, default=True
         Make and use a deep copy of X and Y (if Y exists).
+        See the :term:`Glossary <copy>`.
 
     Returns
     -------

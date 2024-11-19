@@ -844,6 +844,7 @@ def _omp_path_residues(
     copy : bool, default=True
         Whether X_train, X_test, y_train and y_test should be copied.  If
         False, they may be overwritten.
+        See the :term:`Glossary <copy>`.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set

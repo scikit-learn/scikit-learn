@@ -66,6 +66,7 @@ def discretize(
 
     copy : bool, default=True
         Whether to copy vectors, or perform in-place normalization.
+        See the :term:`Glossary <copy>`.
 
     max_svd_restarts : int, default=30
         Maximum number of attempts to restart SVD if convergence fails

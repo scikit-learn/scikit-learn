@@ -1690,6 +1690,7 @@ class TfidfTransformer(
         copy : bool, default=True
             Whether to copy X and operate on the copy or perform in-place
             operations. `copy=False` will only be effective with CSR sparse matrix.
+            See the :term:`Glossary <copy>`.
 
         Returns
         -------

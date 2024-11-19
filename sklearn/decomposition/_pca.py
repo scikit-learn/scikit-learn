@@ -163,6 +163,7 @@ class PCA(_BasePCA):
         If False, data passed to fit are overwritten and running
         fit(X).transform(X) will not yield the expected results,
         use fit_transform(X) instead.
+        See the :term:`Glossary <copy>`.
 
     whiten : bool, default=False
         When True (False by default) the `components_` vectors are multiplied
