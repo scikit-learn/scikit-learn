@@ -503,7 +503,7 @@ class ClassifierMixin:
     # TODO(1.8): Remove this attribute
     _estimator_type = "classifier"
 
-    # TODO(1.8): Remove this method
+    # TODO(1.7): Remove this method
     def _more_tags(self):
         return {"requires_y": True}
 
@@ -580,7 +580,7 @@ class RegressorMixin:
     # TODO(1.8): Remove this attribute
     _estimator_type = "regressor"
 
-    # TODO(1.8): Remove this method
+    # TODO(1.7): Remove this method
     def _more_tags(self):
         return {"requires_y": True}
 
@@ -660,7 +660,7 @@ class ClusterMixin:
     # TODO(1.8): Remove this attribute
     _estimator_type = "clusterer"
 
-    # TODO(1.8): Remove this method
+    # TODO(1.7): Remove this method
     def _more_tags(self):
         return {"preserves_dtype": []}
 
@@ -1159,7 +1159,7 @@ class MetaEstimatorMixin:
 class MultiOutputMixin:
     """Mixin to mark estimators that support multioutput."""
 
-    # TODO(1.8): Remove this method
+    # TODO(1.7): Remove this method
     def _more_tags(self):
         return {"multioutput": True}
 
@@ -1172,7 +1172,7 @@ class MultiOutputMixin:
 class _UnstableArchMixin:
     """Mark estimators that are non-determinstic on 32bit or PowerPC"""
 
-    # TODO(1.8): Remove this method
+    # TODO(1.7): Remove this method
     def _more_tags(self):
         return {
             "non_deterministic": _IS_32BIT
