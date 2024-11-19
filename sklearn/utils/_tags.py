@@ -404,6 +404,20 @@ def get_tags(estimator) -> Tags:
     tag_provider = _find_tags_provider(estimator)
     if tag_provider == "__sklearn_tags__":
         tags = estimator.__sklearn_tags__()
+
+        # TODO (1.7): Remove this block
+        # Catch the corner case where a transformer inheriting from BaseEstimator but
+        # that does not inherit from TransformerMixin ends up without the
+        # transformer_tags set properly.
+        if hasattr(estimator, "transform") or hasattr(estimator, "fit_transform"):
+            warnings.warn(
+                "The transformer tags are not set properly for the estimator "
+                f"{estimator.__class__.__name__}. This will raise an error in "
+                "scikit-learn 1.7. Inherit from `TransformerMixin` or properly set "
+                "the `transformer_tags` attribute in `__sklearn_tags__`.",
+                category=FutureWarning,
+            )
+            tags.transformer_tags = TransformerTags()
     # TODO(1.7): Remove this block
     elif tag_provider == "_get_tags":
         if hasattr(estimator, "_get_tags"):

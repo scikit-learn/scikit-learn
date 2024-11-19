@@ -121,7 +121,8 @@ def _raise_for_missing_tags(estimator, tag_name, Mixin):
         #     f" or inherit from the {Mixin.__name__}. Note that the order of inheritance"
         #     f" matters, the {Mixin.__name__} should come before BaseEstimator."
         # )
-        warnings.warn("BROKEN SOON, IT WILL BE", FutureWarning)
+        # warnings.warn("BROKEN SOON, IT WILL BE", FutureWarning)
+        pass
 
 
 
