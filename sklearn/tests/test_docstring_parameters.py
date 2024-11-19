@@ -341,7 +341,8 @@ def test_precision_recall_f_score_docstring_consistency():
         # precision and recall.
         exclude_params=["average", "zero_division"],
     )
-    description_regex = r"""This parameter is required for multiclass/multilabel targets\.
+    description_regex = (
+        r"""This parameter is required for multiclass/multilabel targets\.
         If ``None``, the metrics for each class are returned\. Otherwise, this
         determines the type of averaging performed on the data:
         ``'binary'``:
@@ -357,11 +358,14 @@ def test_precision_recall_f_score_docstring_consistency():
             Calculate metrics for each label, and find their average weighted
             by support \(the number of true instances for each label\)\. This
             alters 'macro' to account for label imbalance; it can result in an
-            F-score that is not between precision and recall\.[\s\w]*\.*
+            F-score that is not between precision and recall\."""
+        + r"[\s\w]*\.*"  # optionally match additonal sentence
+        + r"""
         ``'samples'``:
             Calculate metrics for each instance, and find their average \(only
             meaningful for multilabel classification where this differs from
-            :func:`accuracy_score`\)\."""  # noqa E501
+            :func:`accuracy_score`\)\."""
+    )
     assert_docstring_consistency(
         metrics_to_check,
         include_params=["average"],
