@@ -414,7 +414,7 @@ def test_transition_public_api_deprecations():
 
     class OldEstimator(BaseEstimator):
         def fit(self, X, y=None):
-            self._validate_data(X, y)
+            X, y = self._validate_data(X, y)
             self._check_n_features(X, reset=True)
             self._check_feature_names(X, reset=True)
             return self
