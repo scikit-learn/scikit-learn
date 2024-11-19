@@ -789,12 +789,12 @@ def test_assert_docstring_consistency_descr_regex_pattern():
     regex_full = (
         r"The (set|group) "  # match 'set' or 'group'
         + r"of labels to (include|add) "  # match 'include' or 'add'
-        + r"when `average \!\= 'binary'`, and (their|the) " #  match 'their' or 'the'
+        + r"when `average \!\= 'binary'`, and (their|the) "  #  match 'their' or 'the'
         + r"order if `average is None`\."
-        + r"[\s\w]*\.* " # optionally match additonal sentence
-        + r"Labels present (on|in) " # match 'on' or 'in'
-        + r"(them|the) " # match 'them' or 'the'
-        + r"datas? can be excluded\." # match 'data' or 'datas'
+        + r"[\s\w]*\.* "  # optionally match additonal sentence
+        + r"Labels present (on|in) "  # match 'on' or 'in'
+        + r"(them|the) "  # match 'them' or 'the'
+        + r"datas? can be excluded\."  # match 'data' or 'datas'
     )
 
     assert_docstring_consistency(
