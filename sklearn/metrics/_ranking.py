@@ -833,7 +833,6 @@ def binary_classification_curve(y_true, y_score, pos_label=None, sample_weight=N
     binary_classification_curve : Compute True Positive and False Positive per
         threshold.
 
-
     Examples
     --------
     >>> import numpy as np
@@ -1001,7 +1000,7 @@ def precision_recall_curve(
         using predictions from a binary classifier.
     average_precision_score : Compute average precision from prediction scores.
     det_curve: Compute error rates for different probability thresholds.
-    roc_curve : Compute Receiver operating characteristic (ROC) curve
+    roc_curve : Compute Receiver operating characteristic (ROC) curve.
     binary_classification_curve : Compute True Positive and False Positive per
         threshold.
 
