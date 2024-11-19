@@ -78,7 +78,14 @@ from ..utils._param_validation import (
 from . import shuffle
 from ._missing import is_scalar_nan
 from ._param_validation import Interval, StrOptions, validate_params
-from ._tags import Tags, get_tags
+from ._tags import (
+    ClassifierTags,
+    InputTags,
+    RegressorTags,
+    TargetTags,
+    TransformerTags,
+    get_tags,
+)
 from ._test_common.instance_generator import (
     CROSS_DECOMPOSITION,
     _get_check_estimator_ids,
@@ -104,9 +111,31 @@ from .validation import _num_samples, check_is_fitted, has_fit_parameter
 REGRESSION_DATASET = None
 
 
+def _raise_for_missing_tags(estimator, tag_name, Mixin):
+    tags = get_tags(estimator)
+    estimator_type = Mixin.__name__.replace("Mixin", "")
+    if getattr(tags, tag_name) is None:
+        raise RuntimeError(
+            f"Estimator {estimator.__class__.__name__} seems to be a {estimator_type},"
+            f" but the `{tag_name}` tag is not set. Either set the tag manually"
+            f" or inherit from the {Mixin.__name__}. Note that the order of inheritance"
+            f" matters, the {Mixin.__name__} should come before BaseEstimator."
+        )
+
+
 def _yield_api_checks(estimator):
+    if not isinstance(estimator, BaseEstimator):
+        warnings.warn(
+            f"Estimator {estimator.__class__.__name__} does not inherit from"
+            " `sklearn.base.BaseEstimator`. This might lead to unexpected behavior, or"
+            " even errors when collecting tests.",
+            category=UserWarning,
+        )
+
     tags = get_tags(estimator)
     yield check_estimator_cloneable
+    yield check_estimator_tags_renamed
+    yield check_valid_tag_types
     yield check_estimator_repr
     yield check_no_attributes_set_in_init
     yield check_fit_score_takes_y
@@ -166,9 +195,6 @@ def _yield_checks(estimator):
     yield check_estimators_pickle
     yield partial(check_estimators_pickle, readonly_memmap=True)
 
-    yield check_estimator_get_tags_default_keys
-    yield check_estimator_tags_renamed
-
     if tags.array_api_support:
         for check in _yield_array_api_checks(estimator):
             yield check
@@ -177,6 +203,7 @@ def _yield_checks(estimator):
 
 
 def _yield_classifier_checks(classifier):
+    _raise_for_missing_tags(classifier, "classifier_tags", ClassifierMixin)
     tags = get_tags(classifier)
 
     # test classifiers can handle non-array data and pandas objects
@@ -222,42 +249,8 @@ def _yield_classifier_checks(classifier):
         yield check_classifier_not_supporting_multiclass
 
 
-@ignore_warnings(category=FutureWarning)
-def check_supervised_y_no_nan(name, estimator_orig):
-    # Checks that the Estimator targets are not NaN.
-    estimator = clone(estimator_orig)
-    rng = np.random.RandomState(888)
-    X = rng.standard_normal(size=(10, 5))
-
-    for value in [np.nan, np.inf]:
-        y = np.full(10, value)
-        y = _enforce_estimator_tags_y(estimator, y)
-
-        module_name = estimator.__module__
-        if module_name.startswith("sklearn.") and not (
-            "test_" in module_name or module_name.endswith("_testing")
-        ):
-            # In scikit-learn we want the error message to mention the input
-            # name and be specific about the kind of unexpected value.
-            if np.isinf(value):
-                match = (
-                    r"Input (y|Y) contains infinity or a value too large for"
-                    r" dtype\('float64'\)."
-                )
-            else:
-                match = r"Input (y|Y) contains NaN."
-        else:
-            # Do not impose a particular error message to third-party libraries.
-            match = None
-        err_msg = (
-            f"Estimator {name} should have raised error on fitting array y with inf"
-            " value."
-        )
-        with raises(ValueError, match=match, err_msg=err_msg):
-            estimator.fit(X, y)
-
-
 def _yield_regressor_checks(regressor):
+    _raise_for_missing_tags(regressor, "regressor_tags", RegressorMixin)
     tags = get_tags(regressor)
     # TODO: test with intercept
     # TODO: test with multiple responses
@@ -281,6 +274,7 @@ def _yield_regressor_checks(regressor):
 
 
 def _yield_transformer_checks(transformer):
+    _raise_for_missing_tags(transformer, "transformer_tags", TransformerMixin)
     tags = get_tags(transformer)
     # All transformers should either deal with sparse data or raise an
     # exception with type TypeError and an intelligible error message
@@ -1001,6 +995,41 @@ def _generate_sparse_data(X_csr):
         X.indices = X.indices.astype("int64")
         X.indptr = X.indptr.astype("int64")
         yield sparse_format + "_64", X
+
+
+@ignore_warnings(category=FutureWarning)
+def check_supervised_y_no_nan(name, estimator_orig):
+    # Checks that the Estimator targets are not NaN.
+    estimator = clone(estimator_orig)
+    rng = np.random.RandomState(888)
+    X = rng.standard_normal(size=(10, 5))
+
+    for value in [np.nan, np.inf]:
+        y = np.full(10, value)
+        y = _enforce_estimator_tags_y(estimator, y)
+
+        module_name = estimator.__module__
+        if module_name.startswith("sklearn.") and not (
+            "test_" in module_name or module_name.endswith("_testing")
+        ):
+            # In scikit-learn we want the error message to mention the input
+            # name and be specific about the kind of unexpected value.
+            if np.isinf(value):
+                match = (
+                    r"Input (y|Y) contains infinity or a value too large for"
+                    r" dtype\('float64'\)."
+                )
+            else:
+                match = r"Input (y|Y) contains NaN."
+        else:
+            # Do not impose a particular error message to third-party libraries.
+            match = None
+        err_msg = (
+            f"Estimator {name} should have raised error on fitting array y with inf"
+            " value."
+        )
+        with raises(ValueError, match=match, err_msg=err_msg):
+            estimator.fit(X, y)
 
 
 def check_array_api_input(
@@ -2409,11 +2438,11 @@ def check_regressor_multioutput(name, estimator):
 
     assert y_pred.dtype == np.dtype("float64"), (
         "Multioutput predictions by a regressor are expected to be"
-        " floating-point precision. Got {} instead".format(y_pred.dtype)
+        f" floating-point precision. Got {y_pred.dtype} instead"
     )
     assert y_pred.shape == y.shape, (
         "The shape of the prediction for multioutput data is incorrect."
-        " Expected {}, got {}."
+        f" Expected {y_pred.shape}, got {y.shape}."
     )
 
 
@@ -4336,15 +4365,58 @@ def check_n_features_in_after_fitting(name, estimator_orig):
         estimator.partial_fit(X_bad, y)
 
 
-def check_estimator_get_tags_default_keys(name, estimator_orig):
-    # check that if __sklearn_tags__ is implemented, it's an instance of Tags
-    estimator = clone(estimator_orig)
-    if not hasattr(estimator, "__sklearn_tags__"):
-        return
+def check_valid_tag_types(name, estimator):
+    """Check that estimator tags are valid."""
+    assert hasattr(estimator, "__sklearn_tags__"), (
+        f"Estimator {name} does not have `__sklearn_tags__` method. This method is"
+        " implemented in BaseEstimator and returns a sklearn.utils.Tags instance."
+    )
+    err_msg = (
+        "Tag values need to be of a certain type. "
+        "Please refer to the documentation of `sklearn.utils.Tags` for more details."
+    )
+    tags = get_tags(estimator)
+    assert isinstance(tags.estimator_type, (str, type(None))), err_msg
+    assert isinstance(tags.target_tags, TargetTags), err_msg
+    assert isinstance(tags.classifier_tags, (ClassifierTags, type(None))), err_msg
+    assert isinstance(tags.regressor_tags, (RegressorTags, type(None))), err_msg
+    assert isinstance(tags.transformer_tags, (TransformerTags, type(None))), err_msg
+    assert isinstance(tags.input_tags, InputTags), err_msg
+    assert isinstance(tags.array_api_support, bool), err_msg
+    assert isinstance(tags.no_validation, bool), err_msg
+    assert isinstance(tags.non_deterministic, bool), err_msg
+    assert isinstance(tags.requires_fit, bool), err_msg
+    assert isinstance(tags._skip_test, bool), err_msg
 
-    assert isinstance(
-        estimator.__sklearn_tags__(), Tags
-    ), f"{name}.__sklearn_tags__() must be an instance of Tags"
+    assert isinstance(tags.target_tags.required, bool), err_msg
+    assert isinstance(tags.target_tags.one_d_labels, bool), err_msg
+    assert isinstance(tags.target_tags.two_d_labels, bool), err_msg
+    assert isinstance(tags.target_tags.positive_only, bool), err_msg
+    assert isinstance(tags.target_tags.multi_output, bool), err_msg
+    assert isinstance(tags.target_tags.single_output, bool), err_msg
+
+    assert isinstance(tags.input_tags.pairwise, bool), err_msg
+    assert isinstance(tags.input_tags.allow_nan, bool), err_msg
+    assert isinstance(tags.input_tags.sparse, bool), err_msg
+    assert isinstance(tags.input_tags.categorical, bool), err_msg
+    assert isinstance(tags.input_tags.string, bool), err_msg
+    assert isinstance(tags.input_tags.dict, bool), err_msg
+    assert isinstance(tags.input_tags.one_d_array, bool), err_msg
+    assert isinstance(tags.input_tags.two_d_array, bool), err_msg
+    assert isinstance(tags.input_tags.three_d_array, bool), err_msg
+    assert isinstance(tags.input_tags.positive_only, bool), err_msg
+
+    if tags.classifier_tags is not None:
+        assert isinstance(tags.classifier_tags.poor_score, bool), err_msg
+        assert isinstance(tags.classifier_tags.multi_class, bool), err_msg
+        assert isinstance(tags.classifier_tags.multi_label, bool), err_msg
+
+    if tags.regressor_tags is not None:
+        assert isinstance(tags.regressor_tags.poor_score, bool), err_msg
+        assert isinstance(tags.regressor_tags.multi_label, bool), err_msg
+
+    if tags.transformer_tags is not None:
+        assert isinstance(tags.transformer_tags.preserves_dtype, list), err_msg
 
 
 def check_estimator_tags_renamed(name, estimator_orig):
@@ -4353,13 +4425,20 @@ You can implement both __sklearn_tags__() and {tags_func}() to support multiple
 scikit-learn versions.
 """
 
-    if not hasattr(estimator_orig, "__sklearn_tags__"):
-        assert not hasattr(estimator_orig, "_more_tags"), help.format(
-            tags_func="_more_tags"
-        )
-        assert not hasattr(estimator_orig, "_get_tags"), help.format(
-            tags_func="_get_tags"
-        )
+    for klass in type(estimator_orig).mro():
+        if (
+            # Here we check vars(...) because we want to check if the method is
+            # explicitly defined in the class instead of inherited from a parent class.
+            ("_more_tags" in vars(klass) or "_get_tags" in vars(klass))
+            and "__sklearn_tags__" not in vars(klass)
+        ):
+            raise TypeError(
+                f"Estimator {name} has defined either `_more_tags` or `_get_tags`,"
+                " but not `__sklearn_tags__`. If you're customizing tags, and need to"
+                " support multiple scikit-learn versions, you can implement both"
+                " `__sklearn_tags__` and `_more_tags` or `_get_tags`. This change was"
+                " introduced in scikit-learn=1.6"
+            )
 
 
 def check_dataframe_column_names_consistency(name, estimator_orig):
