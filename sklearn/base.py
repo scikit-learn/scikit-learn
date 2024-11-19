@@ -442,30 +442,30 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
             output["text/html"] = estimator_html_repr(self)
         return output
 
-    # TODO(1.8): Remove this method
+    # TODO(1.7): Remove this method
     def _validate_data(self, *args, **kwargs):
         warnings.warn(
             "`BaseEstimator._validate_data` is deprecated in 1.6 and will be removed "
-            "in 1.8. Use `sklearn.utils.validation.validate_data` instead. This "
+            "in 1.7. Use `sklearn.utils.validation.validate_data` instead. This "
             "function becomes public and is part of the scikit-learn developer API.",
             FutureWarning,
         )
         validate_data(self, *args, **kwargs)
 
-    # TODO(1.8): Remove this method
+    # TODO(1.7): Remove this method
     def _check_n_features(self, *args, **kwargs):
         warnings.warn(
             "`BaseEstimator._check_n_features` is deprecated in 1.6 and will be "
-            "removed in 1.8. Use `sklearn.utils.validation._check_n_features` instead.",
+            "removed in 1.7. Use `sklearn.utils.validation._check_n_features` instead.",
             FutureWarning,
         )
         _check_n_features(self, *args, **kwargs)
 
-    # TODO(1.8): Remove this method
+    # TODO(1.7): Remove this method
     def _check_feature_names(self, *args, **kwargs):
         warnings.warn(
             "`BaseEstimator._check_feature_names` is deprecated in 1.6 and will be "
-            "removed in 1.8. Use `sklearn.utils.validation._check_feature_names` "
+            "removed in 1.7. Use `sklearn.utils.validation._check_feature_names` "
             "instead.",
             FutureWarning,
         )
