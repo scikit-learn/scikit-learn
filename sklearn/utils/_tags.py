@@ -404,7 +404,7 @@ def get_tags(estimator) -> Tags:
         # transformer_tags set properly.
         if (
             hasattr(estimator, "transform") or hasattr(estimator, "fit_transform")
-        ) and not isinstance(estimator, TransformerMixin):
+        ) and tags.transformer_tags is None:
             warnings.warn(
                 "The transformer tags are not set properly for the estimator "
                 f"{estimator.__class__.__name__}. This will raise an error in "
