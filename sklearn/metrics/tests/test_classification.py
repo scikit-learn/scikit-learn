@@ -709,7 +709,9 @@ def test_likelihood_ratios_warnings(params, warn_msg):
     # least one of the ratios is ill-defined.
 
     with pytest.warns(UserWarning, match=warn_msg):
-        class_likelihood_ratios(replace_undefined_by=np.nan, **params)
+        # TODO(1.9): remove setting `replace_undefined_by` since this will be set by
+        # default
+        class_likelihood_ratios(replace_undefined_by="worst", **params)
 
 
 @pytest.mark.parametrize(
@@ -734,6 +736,7 @@ def test_likelihood_ratios_errors(params, err_msg):
         class_likelihood_ratios(**params)
 
 
+# TODO(1.9): remove setting `replace_undefined_by` since this will be set by default
 def test_likelihood_ratios():
     # Build confusion matrix with tn=9, fp=8, fn=1, tp=2,
     # sensitivity=2/3, specificity=9/17, prevalence=3/20,
@@ -747,6 +750,8 @@ def test_likelihood_ratios():
 
     # Build limit case with y_pred = y_true
     pos, neg = class_likelihood_ratios(y_true, y_true, replace_undefined_by=np.nan)
+    # TODO(1.9): replace next line with `assert_array_equal(pos, 1.0)`, since
+    # `replace_undefined_by` has a new default:
     assert_array_equal(pos, np.nan * 2)
     assert_allclose(neg, np.zeros(2), rtol=1e-12)
 
