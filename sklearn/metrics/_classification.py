@@ -2048,13 +2048,15 @@ def class_likelihood_ratios(
 
         .. deprecated:: 1.7
             `raise_warning` was deprecated in version 1.7 and will be removed in 1.9,
-            when an :class:`~sklearn.exceptions.UndefinedMetricWarning` will always raise.
+            when an :class:`~sklearn.exceptions.UndefinedMetricWarning` will always
+            raise.
 
-    replace_undefined_by : np.nan or dict, default=np.nan
+    replace_undefined_by : np.nan, 'worst' or dict, default=np.nan
         Sets the return values for LR+ and LR- when there is a division by zero. Can
         take the following values:
 
         - `np.nan` to return `np.nan` for both `LR+` and `LR-`
+        - `'worst'` to return the worst scores: `{"LR+": 1.0, "LR-": 1.0}`
         - a dict in the format `{"LR+": value_1, "LR-": value_2}` where the values can
           be non-negative floats, `np.inf` or `np.nan` in the range of the
           likelihood ratios. For example, `{"LR+": 1.0, "LR-": 1.0}` can be used for
@@ -2075,8 +2077,8 @@ def class_likelihood_ratios(
 
     Warns
     -----
-    Raises :class:`~sklearn.exceptions.UndefinedMetricWarning` when `y_true` and `y_pred` lead to the following
-    conditions:
+    Raises :class:`~sklearn.exceptions.UndefinedMetricWarning` when `y_true` and
+    `y_pred` lead to the following conditions:
 
         - The number of false positives is 0 and `raise_warning` is set to `True`
           (default): positive likelihood ratio is undefined.
@@ -2098,15 +2100,15 @@ def class_likelihood_ratios(
     >>> import numpy as np
     >>> from sklearn.metrics import class_likelihood_ratios
     >>> class_likelihood_ratios([0, 1, 0, 1, 0], [1, 1, 0, 0, 0],
-    ...                          replace_undefined_by=np.nan)
+    ...                          replace_undefined_by='worst')
     (np.float64(1.5), np.float64(0.75))
     >>> y_true = np.array(["non-cat", "cat", "non-cat", "cat", "non-cat"])
     >>> y_pred = np.array(["cat", "cat", "non-cat", "non-cat", "non-cat"])
-    >>> class_likelihood_ratios(y_true, y_pred, replace_undefined_by=np.nan)
+    >>> class_likelihood_ratios(y_true, y_pred, replace_undefined_by='worst')
     (np.float64(1.33...), np.float64(0.66...))
     >>> y_true = np.array(["non-zebra", "zebra", "non-zebra", "zebra", "non-zebra"])
     >>> y_pred = np.array(["zebra", "zebra", "non-zebra", "non-zebra", "non-zebra"])
-    >>> class_likelihood_ratios(y_true, y_pred, replace_undefined_by=np.nan)
+    >>> class_likelihood_ratios(y_true, y_pred, replace_undefined_by='worst')
     (np.float64(1.5), np.float64(0.75))
 
     To avoid ambiguities, use the notation `labels=[negative_class,
@@ -2115,13 +2117,13 @@ def class_likelihood_ratios(
     >>> y_true = np.array(["non-cat", "cat", "non-cat", "cat", "non-cat"])
     >>> y_pred = np.array(["cat", "cat", "non-cat", "non-cat", "non-cat"])
     >>> class_likelihood_ratios(y_true, y_pred, labels=["non-cat", "cat"],
-    ...                          replace_undefined_by=np.nan)
+    ...                          replace_undefined_by='worst')
     (np.float64(1.5), np.float64(0.75))
     """
     # TODO(1.9): When `raise_warning` is removed, the following changes need to be made:
     # The checks for `raise_warning==True` need to be removed and we will always warn,
     # the default return value of `replace_undefined_by` should be updated from `np.nan`
-    # (which was kept for backwards compatibility) to "worst", its hidden option
+    # (which was kept for backwards compatibility) to `'worst'`, its hidden option
     # ("default") is not used anymore, warning messages can be removed, the Warns
     # section in the docstring should not mention `raise_warning` anymore and the
     # "Mathematical divergences" section in model_evaluation.rst needs to be updated on
@@ -2138,7 +2140,8 @@ def class_likelihood_ratios(
         warnings.warn(
             "`raise_warning` was deprecated in version 1.7 and will be removed "
             "in 1.9, when an `UndefinedMetricWarning` will always raise in case of a "
-            "division by zero.",
+            "division by zero and the value set with the `replace_undefined_by` param "
+            "will be returned.",
             FutureWarning,
         )
     else:
