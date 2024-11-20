@@ -1263,8 +1263,8 @@ class OneHotEncoder(_BaseEncoder):
             if self._infrequent_enabled:
                 warnings.warn(
                     (
-                        f"{base_msg} These unknown will be mapped to the last position"
-                        " in the encoding"
+                        f"{base_msg} These unknown categories will be mapped to the"
+                        " last position in the encoding"
                     ),
                     UserWarning,
                 )
@@ -1314,9 +1314,6 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         - 'use_encoded_value' : The encoded value of unknown categories will be
           set to the value given for the parameter `unknown_value`. In
           :meth:`inverse_transform`, an unknown category will be denoted as None.
-
-        .. versionadded:: 0.24
-
         - 'ignore' : When an unknown category is encountered during
           transform the encoded value will be minus one.
           In the inverse transform, an unknown category
@@ -1333,7 +1330,12 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
           `min_frequency` and `max_categories`. Read more in the
           :ref:`User Guide <encoder_infrequent_categories>`.
 
-        .. versionadded:: 1.4
+        .. versionadded:: 0.24
+           The parameter `handle_unknown` was added in 0.24.
+
+        .. versionchanged:: 1.7
+           The options `handle_unknown='ignore'` and
+           `handle_unknown='infrequent_if_exist'` were added in 1.7.
 
     unknown_value : int or np.nan, default=None
         When the parameter handle_unknown is set to 'use_encoded_value', this
@@ -1473,11 +1475,11 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
            [ 0.],
            [-1.]])
 
-    When you specify the parameter `handle_unknown = 'infrequent_if_exist'`
+    When you specify the parameter `handle_unknown='infrequent_if_exist'`
     and you enable `min_frequency` or `max_categories` then unknown categories
-    during transform will be mapped to infrequent category if exist, which
-    is the last ordinal value. In the following example we set `min_frequency = 2`,
-    so 'Small' is considered as infrequent category, it will be mapped together
+    during transform will be mapped to the infrequent category if it exists, which
+    is the last ordinal value. In the following example we set `min_frequency=2`,
+    so 'Small' is considered as the infrequent category, and it will be mapped together
     with `Medium` to the last category, in this case,`1`
 
     >>> X = [['Large'], ['Large'], ['Small']]
@@ -1685,7 +1687,9 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         # create separate category for unknown values
         if self.handle_unknown == "use_encoded_value":
             X_trans[~X_mask] = self.unknown_value
-        # Ignoring or no infrequent found will set -1 as category
+
+        # With the option 'ignore' or when there is no infrequent category found,
+        # the unknown category will be set as -1
         if self.handle_unknown == "ignore" or (
             self.handle_unknown == "infrequent_if_exist"
             and not self._infrequent_enabled
@@ -1795,26 +1799,20 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         )
         if self.handle_unknown == "ignore":
             warnings.warn(
-                (
-                    f"{base_msg} These unknown categories will be encoded as all minus"
-                    " ones"
-                ),
+                (f"{base_msg} These unknown categories will be encoded as all -1"),
                 UserWarning,
             )
         if self.handle_unknown == "infrequent_if_exist":
             if self._infrequent_enabled:
                 warnings.warn(
                     (
-                        f"{base_msg} These unknown will be mapped to the last position"
-                        " in the encoding"
+                        f"{base_msg} These unknown categories will be mapped to the"
+                        " last position in the encoding"
                     ),
                     UserWarning,
                 )
             else:
                 warnings.warn(
-                    (
-                        f"{base_msg} These unknown categories will be encoded as all"
-                        " minus ones"
-                    ),
+                    (f"{base_msg} These unknown categories will be encoded as all -1"),
                     UserWarning,
                 )

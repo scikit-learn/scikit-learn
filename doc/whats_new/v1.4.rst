@@ -901,11 +901,6 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
-- |Feature| :class:`processing.OrdinalEncoder` now support arguments `handle_unknown = "ignore"`
-  and `handle_unknown = "infrequent_if_exist"` working in the same way than :class:`processing.OneHotEncoder`
-  but mapping to `-1` unknown values when `ignore` is set or `infrequent_if_exist` but infrequent is not enabled
-  :pr:`27980` by :user:`Andres Sandoval <andresliszt>`.
-
 - |Efficiency| :class:`preprocessing.OrdinalEncoder` avoids calculating
   missing indices twice to improve efficiency.
   :pr:`27017` by :user:`Xuefeng Xu <xuefeng-xu>`.
