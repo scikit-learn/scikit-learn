@@ -35,7 +35,7 @@ from sklearn.preprocessing import (
     OneHotEncoder,
     StandardScaler,
 )
-from sklearn.utils import all_estimators
+from sklearn.utils import TransformerMixin, all_estimators
 from sklearn.utils._test_common.instance_generator import (
     _get_check_estimator_ids,
     _get_expected_failed_checks,
@@ -412,7 +412,7 @@ def test_transition_public_api_deprecations():
     to the new developer public API from 1.5 to 1.6.
     """
 
-    class OldEstimator(BaseEstimator):
+    class OldEstimator(TransformerMixin, BaseEstimator):
         def fit(self, X, y=None):
             X = self._validate_data(X)
             self._check_n_features(X, reset=True)
