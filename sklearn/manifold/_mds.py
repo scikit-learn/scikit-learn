@@ -16,6 +16,7 @@ from ..isotonic import IsotonicRegression
 from ..metrics import euclidean_distances
 from ..utils import check_array, check_random_state, check_symmetric
 from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils._tags import TransformerTags
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import validate_data
 
@@ -572,6 +573,7 @@ class MDS(BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.transformer_tags = TransformerTags(preserves_dtype=["float64"])
         tags.input_tags.pairwise = self.dissimilarity == "precomputed"
         return tags
 

@@ -19,6 +19,7 @@ from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import MaxAbsScaler, StandardScaler
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.utils import all_estimators
+from sklearn.utils._tags import TransformerTags
 from sklearn.utils._test_common.instance_generator import _construct_instances
 from sklearn.utils._testing import SkipTest, set_random_state
 from sklearn.utils.estimator_checks import (
@@ -142,6 +143,12 @@ def test_metaestimator_delegation():
         def score(self, X, y, *args, **kwargs):
             self._check_fit()
             return 1.0
+
+        def __sklearn_tags__(self):
+            tags = super().__sklearn_tags__()
+            if hasattr(self, "transform"):
+                tags.transformer_tags = TransformerTags(preserves_dtype=[])
+            return tags
 
     methods = [
         k

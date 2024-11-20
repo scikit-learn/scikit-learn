@@ -487,6 +487,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         tags.estimator_type = sub_estimator_tags.estimator_type
         tags.classifier_tags = deepcopy(sub_estimator_tags.classifier_tags)
         tags.regressor_tags = deepcopy(sub_estimator_tags.regressor_tags)
+        tags.transformer_tags = deepcopy(sub_estimator_tags.transformer_tags)
         # allows cross-validation to see 'precomputed' metrics
         tags.input_tags.pairwise = get_tags(self.estimator).input_tags.pairwise
         tags.array_api_support = get_tags(self.estimator).array_api_support

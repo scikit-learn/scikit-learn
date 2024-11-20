@@ -15,7 +15,7 @@ from pytest import importorskip
 import sklearn
 from sklearn._config import config_context
 from sklearn._min_dependencies import dependent_packages
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.datasets import make_blobs
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
@@ -1990,7 +1990,7 @@ def test_get_feature_names_invalid_dtypes(names, dtypes):
         names = _get_feature_names(X)
 
 
-class PassthroughTransformer(BaseEstimator):
+class PassthroughTransformer(TransformerMixin, BaseEstimator):
     def fit(self, X, y=None):
         validate_data(self, X, reset=True)
         return self

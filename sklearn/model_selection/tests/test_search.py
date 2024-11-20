@@ -15,7 +15,7 @@ import pytest
 from scipy.stats import bernoulli, expon, uniform
 
 from sklearn import config_context
-from sklearn.base import BaseEstimator, ClassifierMixin, is_classifier
+from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin, is_classifier
 from sklearn.cluster import KMeans
 from sklearn.compose import ColumnTransformer
 from sklearn.datasets import (
@@ -100,7 +100,7 @@ from sklearn.utils.validation import _num_samples
 
 # Neither of the following two estimators inherit from BaseEstimator,
 # to test hyperparameter search on user-defined classifiers.
-class MockClassifier(ClassifierMixin, BaseEstimator):
+class MockClassifier(TransformerMixin, ClassifierMixin, BaseEstimator):
     """Dummy classifier to test the parameter search algorithms"""
 
     def __init__(self, foo_param=0):

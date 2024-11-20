@@ -23,6 +23,7 @@ from ..utils import (
 )
 from ..utils._arpack import _init_arpack_v0
 from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils._tags import TransformerTags
 from ..utils.extmath import _deterministic_vector_sign_flip
 from ..utils.fixes import laplacian as csgraph_laplacian
 from ..utils.fixes import parse_version, sp_version
@@ -654,6 +655,7 @@ class SpectralEmbedding(BaseEstimator):
             "precomputed",
             "precomputed_nearest_neighbors",
         ]
+        tags.transformer_tags = TransformerTags(preserves_dtype=["float64"])
         return tags
 
     def _get_affinity_matrix(self, X, Y=None):

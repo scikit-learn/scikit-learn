@@ -878,6 +878,7 @@ def test_check_estimator_transformer_no_mixin_without_tags():
     # TODO(1.7): replace the type of exception raised and remove the warning
     with raises(AttributeError, ".*fit_transform.*"):
         with warnings.catch_warnings(record=True) as record:
+            warnings.filterwarnings("ignore", category=FutureWarning)
             check_estimator(BadTransformerWithoutMixinWithoutTags())
     for rec in record:
         assert issubclass(rec.category, FutureWarning)
