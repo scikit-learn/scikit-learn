@@ -16,7 +16,7 @@ from operator import itemgetter
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils import metadata_routing
+from sklearn.utils import TransformerTags, metadata_routing
 
 from ..base import BaseEstimator, OneToOneFeatureMixin, TransformerMixin, _fit_context
 from ..exceptions import NotFittedError
@@ -553,6 +553,11 @@ class _VectorizerMixin:
                     "The parameter 'tokenizer' will not be used"
                     " since 'analyzer' != 'word'"
                 )
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags = TransformerTags(preserves_dtype=[])
+        return tags
 
 
 class HashingVectorizer(
