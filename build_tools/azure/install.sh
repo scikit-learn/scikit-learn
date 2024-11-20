@@ -41,6 +41,7 @@ pre_python_environment_install() {
         apt-get install -y python3-dev python3-numpy python3-scipy \
                 python3-matplotlib libopenblas-dev \
                 python3-virtualenv python3-pandas ccache git
+    fi
 }
 
 check_packages_dev_version() {
