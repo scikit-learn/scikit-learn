@@ -438,6 +438,8 @@ def get_tags(estimator) -> Tags:
                 # is not a direct user call but an internal one.
                 tags = {**tags, **estimator._more_tags()}
             tags = _to_new_tags(tags)
+        else:
+            tags = default_tags(estimator)
     else:
         tags = default_tags(estimator)
 

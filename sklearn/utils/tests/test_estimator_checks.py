@@ -39,6 +39,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC, NuSVC
 from sklearn.utils import _array_api, all_estimators, deprecated
 from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils._tags import TransformerTags
 from sklearn.utils._test_common.instance_generator import (
     _construct_instances,
     _get_expected_failed_checks,
@@ -314,7 +315,7 @@ class BadBalancedWeightsClassifier(BaseBadClassifier):
         return self
 
 
-class BadTransformerWithoutMixin(BaseEstimator):
+class BadTransformerWithoutMixinWithTags(BaseEstimator):
     def fit(self, X, y=None):
         X = validate_data(self, X)
         return self
@@ -323,6 +324,30 @@ class BadTransformerWithoutMixin(BaseEstimator):
         check_is_fitted(self)
         X = validate_data(self, X, reset=False)
         return X
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags = TransformerTags()
+        return tags
+
+
+class BadTransformerWithoutMixinWithoutTags(BaseEstimator):
+    """Transformer that does not implement `fit_transform` and the tags.
+
+    TODO(1.7):
+    In 1.6, it will raise an AttributeError for `fit_transform` and a warning to
+    mention that the `transformer_tags` tag is not set.
+    As for 1.7, it will raise a RuntimeError because the tag is not set.
+    """
+    def fit(self, X, y=None):
+        X = validate_data(self, X)
+        return self
+
+    def transform(self, X):
+        check_is_fitted(self)
+        X = validate_data(self, X, reset=False)
+        return X
+
 
 
 class NotInvariantPredict(BaseEstimator):
@@ -844,11 +869,19 @@ def test_check_outlier_corruption():
     check_outlier_corruption(1, 2, decision)
 
 
-def test_check_estimator_transformer_no_mixin():
-    # check that TransformerMixin is not required for transformer tests to run
-    # but it fails since the tag is not set
-    with raises(RuntimeError, "the `transformer_tags` tag is not set"):
-        check_estimator(BadTransformerWithoutMixin())
+def test_check_estimator_transformer_no_mixin_with_tags():
+    with raises(AttributeError, ".*fit_transform.*"):
+        check_estimator(BadTransformerWithoutMixinWithTags())
+
+
+def test_check_estimator_transformer_no_mixin_without_tags():
+    # TODO(1.7): replace the type of exception raised and remove the warning
+    with raises(AttributeError, ".*fit_transform.*"):
+        with warnings.catch_warnings(record=True) as record:
+            check_estimator(BadTransformerWithoutMixinWithoutTags())
+    for rec in record:
+        assert issubclass(rec.category, FutureWarning)
+        assert "The transformer tags are not set properly" in str(rec.message)
 
 
 def test_check_estimator_clones():
