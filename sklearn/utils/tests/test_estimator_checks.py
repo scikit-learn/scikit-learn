@@ -339,6 +339,7 @@ class BadTransformerWithoutMixinWithoutTags(BaseEstimator):
     mention that the `transformer_tags` tag is not set.
     As for 1.7, it will raise a RuntimeError because the tag is not set.
     """
+
     def fit(self, X, y=None):
         X = validate_data(self, X)
         return self
@@ -347,7 +348,6 @@ class BadTransformerWithoutMixinWithoutTags(BaseEstimator):
         check_is_fitted(self)
         X = validate_data(self, X, reset=False)
         return X
-
 
 
 class NotInvariantPredict(BaseEstimator):
