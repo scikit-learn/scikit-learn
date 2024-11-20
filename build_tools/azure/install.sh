@@ -68,26 +68,21 @@ check_packages_dev_version() {
 python_environment_install_and_activate() {
     if [[ "$DISTRIB" == "conda"* ]]; then
         create_conda_environment_from_lock_file $VIRTUALENV $LOCK_FILE
-        source activate $VIRTUALENV
+        conda activate $VIRTUALENV
 
     elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
         python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
         source $VIRTUALENV/bin/activate
         pip install -r "${LOCK_FILE}"
 
-    elif [[ "$DISTRIB" == "pip-free-threaded" ]]; then
-        python3.13t -m venv $VIRTUALENV
-        source $VIRTUALENV/bin/activate
-        pip install -r "${LOCK_FILE}"
-        # TODO you need pip>=24.1 to find free-threaded wheels. This may be
-        # removed when the underlying Ubuntu image has pip>=24.1.
-        pip install 'pip>=24.1'
-        # TODO When there are CPython 3.13 free-threaded wheels for numpy,
-        # scipy and cython move them to
-        # build_tools/azure/cpython_free_threaded_requirements.txt. For now we
-        # install them from scientific-python-nightly-wheels
+    elif [[ "$DISTRIB" == "conda-pip-free-threaded" ]]; then
+        # TODO We install scipy and cython from
+        # scientific-python-nightly-wheels. When there are conda-forge packages
+        # for scipy and cython, we can update
+        # build_tools/update_environments_and_lock_files.py and remove the
+        # lines below
         dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
-        dev_packages="numpy scipy Cython"
+        dev_packages="scipy Cython"
         pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages --only-binary :all:
     fi
 
