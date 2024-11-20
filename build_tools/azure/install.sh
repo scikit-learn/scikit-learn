@@ -57,14 +57,17 @@ check_packages_dev_version() {
 python_environment_install_and_activate() {
     if [[ "$DISTRIB" == "conda"* ]]; then
         create_conda_environment_from_lock_file $VIRTUALENV $LOCK_FILE
-        source activate $VIRTUALENV
+        activate_environment
 
     elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
         python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
-        source $VIRTUALENV/bin/activate
+        activate_environment
         pip install -r "${LOCK_FILE}"
 
-    elif [[ "$DISTRIB" == "conda-pip-free-threaded" ]]; then
+    fi
+
+    # Install additional on top of the lock-file in specific cases
+    if [[ "$DISTRIB" == "conda-free-threaded" ]]; then
         # TODO We install scipy and cython from
         # scientific-python-nightly-wheels. When there are conda-forge packages
         # for scipy and cython, we can update
@@ -73,9 +76,8 @@ python_environment_install_and_activate() {
         dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
         dev_packages="scipy Cython"
         pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages --only-binary :all:
-    fi
 
-    if [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
+    elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
         echo "Installing development dependency wheels"
         dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
         dev_packages="numpy scipy pandas Cython"

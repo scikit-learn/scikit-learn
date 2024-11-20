@@ -267,7 +267,7 @@ build_metadata_list = [
         ),
     },
     {
-        "name": "pylatest_pip_free_threaded",
+        "name": "pylatest_free_threaded",
         "type": "conda",
         "tag": "free-threaded",
         "folder": "build_tools/azure",
