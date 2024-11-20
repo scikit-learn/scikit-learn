@@ -13,3 +13,4 @@ dependencies:
   - ninja
   - meson-python
   - ccache
+  - pip

@@ -288,6 +288,7 @@ build_metadata_list = [
             "ninja",
             "meson-python",
             "ccache",
+            "pip",
         ],
     },
     {
