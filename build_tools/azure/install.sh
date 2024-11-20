@@ -41,18 +41,6 @@ pre_python_environment_install() {
         apt-get install -y python3-dev python3-numpy python3-scipy \
                 python3-matplotlib libopenblas-dev \
                 python3-virtualenv python3-pandas ccache git
-
-    # TODO for now we use CPython 3.13 from Ubuntu deadsnakes PPA. When CPython
-    # 3.13 is released (scheduled October 2024) we can use something more
-    # similar to other conda+pip based builds
-    elif [[ "$DISTRIB" == "pip-free-threaded" ]]; then
-        sudo apt-get -yq update
-        sudo apt-get install -yq ccache
-        sudo apt-get install -yq software-properties-common
-        sudo add-apt-repository --yes ppa:deadsnakes/nightly
-        sudo apt-get update -yq
-        sudo apt-get install -yq --no-install-recommends python3.13-dev python3.13-venv python3.13-nogil
-    fi
 }
 
 check_packages_dev_version() {
