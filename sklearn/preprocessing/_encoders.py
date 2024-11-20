@@ -1467,7 +1467,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
     the following example "Medium" is unknown so it is mapped to `-1`
 
     >>> X = [['Large'], ['Large'], ['Small']]
-    >>> enc = OrdinalEncoder(handle_unknown = 'ignore')
+    >>> enc = OrdinalEncoder(handle_unknown='ignore')
     >>> enc.fit(X)
     OrdinalEncoder(handle_unknown='ignore')
     >>> enc.transform([['Small'], ['Large'], ['Medium']])
