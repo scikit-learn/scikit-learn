@@ -8,7 +8,7 @@ from sklearn.base import (
     TransformerMixin,
 )
 from sklearn.utils import Tags, get_tags
-from sklearn.utils._tags import _to_new_tags, _to_old_tags, _safe_tags
+from sklearn.utils._tags import _safe_tags, _to_new_tags
 from sklearn.utils.estimator_checks import (
     check_estimator_tags_renamed,
     check_valid_tag_types,
@@ -85,6 +85,7 @@ def test_tag_test_passes_with_inheritance():
 # Test for the deprecation
 # TODO(1.7): Remove this
 ########################################################################################
+
 
 def test_tags_deprecation():
     class ChildClass(RegressorMixin, BaseEstimator):
