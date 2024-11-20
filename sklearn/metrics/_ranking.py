@@ -943,11 +943,17 @@ def precision_recall_curve(
     -------
     precision : ndarray of shape (n_thresholds + 1,)
         Precision values such that element i is the precision of
-        predictions with score >= thresholds[i] and the last element is 1.
+        predictions with score >= thresholds[i] and the last element is 1. 
+        Note that this means that the positive label must be associated with
+        high values for score and the negative with low ones. See examples
+        for a case where this condition is turned around.
 
     recall : ndarray of shape (n_thresholds + 1,)
         Decreasing recall values such that element i is the recall of
         predictions with score >= thresholds[i] and the last element is 0.
+        Note that this means that the positive label must be associated with
+        high values for score and the negative with low ones. See examples
+        for a case where this condition is turned around.
 
     thresholds : ndarray of shape (n_thresholds,)
         Increasing thresholds on the decision function used to compute
@@ -965,6 +971,7 @@ def precision_recall_curve(
 
     Examples
     --------
+    # positive label is associated with high values for y_score and negative label with low values for y_score
     >>> import numpy as np
     >>> from sklearn.metrics import precision_recall_curve
     >>> y_true = np.array([0, 0, 1, 1])
@@ -977,6 +984,12 @@ def precision_recall_curve(
     array([1. , 1. , 0.5, 0.5, 0. ])
     >>> thresholds
     array([0.1 , 0.35, 0.4 , 0.8 ])
+
+    # negative label is associated with high values for y_score and positive label with low values for y_score
+    >>> y_true = np.array([0, 0, 1, 1])
+    >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8]) * (-1)
+    >>> precision, recall, thresholds = precision_recall_curve(
+    ...     y_true, y_scores)
     """
     # TODO(1.7): remove in 1.7 and reset y_score to be required
     # Note: validate params will raise an error if probas_pred is not array-like,
