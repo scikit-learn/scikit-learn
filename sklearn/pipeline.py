@@ -1253,7 +1253,7 @@ class Pipeline(_BaseComposition):
                 if tags.transformer_tags is not None:
                     tags.transformer_tags.preserves_dtype = preserves_dtype
             elif self.steps[-1][1] is None or self.steps[-1][1] == "passthrough":
-                # "passthrough" behaves like a transformer
+                # None and "passthrough" behave like a transformer
                 tags.transformer_tags = TransformerTags(preserves_dtype=[])
         except (ValueError, AttributeError, TypeError):
             # This happens when the `steps` is not a list of (name, estimator)
