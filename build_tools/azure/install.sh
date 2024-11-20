@@ -66,7 +66,7 @@ python_environment_install_and_activate() {
 
     fi
 
-    # Install additional on top of the lock-file in specific cases
+    # Install additional packages on top of the lock-file in specific cases
     if [[ "$DISTRIB" == "conda-free-threaded" ]]; then
         # TODO We install scipy and cython from
         # scientific-python-nightly-wheels. When there are conda-forge packages
