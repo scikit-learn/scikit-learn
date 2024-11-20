@@ -2058,7 +2058,7 @@ def test_transform_tuple_input():
     ],
 )
 def test_pipeline_warns_not_fitted(method):
-    class StatelessEstimator(BaseEstimator):
+    class StatelessEstimator(TransformerMixin, ClassifierMixin, BaseEstimator):
         """Stateless estimator that doesn't check if it's fitted.
 
         Stateless estimators that don't require fit, should properly set the
@@ -2102,7 +2102,7 @@ def test_pipeline_warns_not_fitted(method):
 # =====================================================================
 
 
-class SimpleEstimator(BaseEstimator):
+class SimpleEstimator(TransformerMixin, ClassifierMixin, BaseEstimator):
     # This class is used in this section for testing routing in the pipeline.
     # This class should have every set_{method}_request
     def __sklearn_is_fitted__(self):

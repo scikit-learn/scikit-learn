@@ -7,6 +7,7 @@ import warnings
 from collections import Counter, defaultdict
 from contextlib import contextmanager
 from copy import deepcopy
+from functools import reduce
 from itertools import chain, islice
 
 import numpy as np
@@ -23,7 +24,7 @@ from .utils._set_output import (
     _get_container_adapter,
     _safe_set_output,
 )
-from .utils._tags import get_tags
+from .utils._tags import TransformerTags, get_tags
 from .utils._user_interface import _print_elapsed_time
 from .utils.deprecation import _deprecate_Xt_in_inverse_transform
 from .utils.metadata_routing import (
@@ -1229,18 +1230,35 @@ class Pipeline(_BaseComposition):
             # tuples and `fit` is not called yet to validate the steps.
             pass
 
-        try:
-            if self.steps[-1][1] is not None and self.steps[-1][1] != "passthrough":
-                last_step_tags = get_tags(self.steps[-1][1])
-                tags.estimator_type = last_step_tags.estimator_type
-                tags.target_tags.multi_output = last_step_tags.target_tags.multi_output
-                tags.classifier_tags = deepcopy(last_step_tags.classifier_tags)
-                tags.regressor_tags = deepcopy(last_step_tags.regressor_tags)
-                tags.transformer_tags = deepcopy(last_step_tags.transformer_tags)
-        except (ValueError, AttributeError, TypeError):
-            # This happens when the `steps` is not a list of (name, estimator)
-            # tuples and `fit` is not called yet to validate the steps.
-            pass
+        # try:
+        # dtype preservation will depend on the intersection of all steps
+        preserves_dtype = []
+        for step in self.steps:
+            if step[1] is not None and step[1] != "passthrough":
+                step_tags = get_tags(step[1])
+                if step_tags.transformer_tags is not None:
+                    preserves_dtype.append(
+                        set(step_tags.transformer_tags.preserves_dtype)
+                    )
+        if preserves_dtype:
+            preserves_dtype = list(reduce(set.intersection, preserves_dtype))
+
+        if self.steps[-1][1] is not None and self.steps[-1][1] != "passthrough":
+            last_step_tags = get_tags(self.steps[-1][1])
+            tags.estimator_type = last_step_tags.estimator_type
+            tags.target_tags.multi_output = last_step_tags.target_tags.multi_output
+            tags.classifier_tags = deepcopy(last_step_tags.classifier_tags)
+            tags.regressor_tags = deepcopy(last_step_tags.regressor_tags)
+            tags.transformer_tags = deepcopy(last_step_tags.transformer_tags)
+            if tags.transformer_tags is not None:
+                tags.transformer_tags.preserves_dtype = preserves_dtype
+        elif self.steps[-1][1] is None or self.steps[-1][1] == "passthrough":
+            # "passthrough" behaves like a transformer
+            tags.transformer_tags = TransformerTags(preserves_dtype=[])
+        # except (ValueError, AttributeError, TypeError):
+        #     # This happens when the `steps` is not a list of (name, estimator)
+        #     # tuples and `fit` is not called yet to validate the steps.
+        #     pass
 
         return tags
 
