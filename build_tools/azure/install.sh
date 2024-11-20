@@ -57,7 +57,7 @@ check_packages_dev_version() {
 python_environment_install_and_activate() {
     if [[ "$DISTRIB" == "conda"* ]]; then
         create_conda_environment_from_lock_file $VIRTUALENV $LOCK_FILE
-        conda activate $VIRTUALENV
+        source activate $VIRTUALENV
 
     elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
         python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
