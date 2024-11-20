@@ -413,6 +413,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
             classifier_tags=None,
         )
 
+    # TODO(1.7): Remove this method
     def _more_tags(self):
         warnings.warn(
             "The `_more_tags` method is deprecated in 1.6 and will be removed in "
@@ -421,6 +422,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         )
         return _to_old_tags(default_tags(self))
 
+    # TODO(1.7): Remove this method
     def _get_tags(self):
         warnings.warn(
             "The `_get_tags` tag provider is deprecated in 1.6 and will be removed in "
