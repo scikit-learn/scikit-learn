@@ -605,9 +605,10 @@ class RFECV(RFE):
             ``cv`` default value of None changed from 3-fold to 5-fold.
 
     scoring : str, callable or None, default=None
-        A string (see :ref:`scoring_parameter`) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
+        A string (see :ref:`scoring_parameter`),
+        a scorer callable object (e.g.,function) with signature
+        ``scorer(estimator, X, y)`` or `None`, in which case the `estimator`'s
+        :ref:`default evaluation criterion <model_evaluation>` is used.
 
     verbose : int, default=0
         Controls verbosity of output.

@@ -2752,6 +2752,8 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
     scoring : str, callable, default=None
         A string (see :ref:`scoring_parameter`) or a scorer callable object /
         function with signature ``scorer(estimator, X, y)``.
+        If `None`, the :ref:`default evaluation criterion <model_evaluation>` of the
+        estimator is used.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.

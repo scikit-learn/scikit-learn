@@ -190,7 +190,8 @@ def permutation_importance(
         `permutation_importance` for each of the scores as it reuses
         predictions to avoid redundant computation.
 
-        If None, the estimator's default scorer is used.
+        If None, the estimator's :ref:`default evaluation criterion <model_evaluation>`
+        is used.
 
     n_repeats : int, default=5
         Number of times to permute a feature.

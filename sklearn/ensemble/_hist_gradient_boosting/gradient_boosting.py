@@ -1579,8 +1579,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     scoring : str or callable or None, default='loss'
         Scoring parameter to use for early stopping. It can be a single
         string (see :ref:`scoring_parameter`) or a callable (see
-        :ref:`scoring`). If None, the estimator's default scorer is used. If
-        ``scoring='loss'``, early stopping is checked w.r.t the loss value.
+        :ref:`scoring`). If None, the
+        :ref:`coefficient of determination (:math:`R^2`) <r2_score>`
+        is used. If ``scoring='loss'``, early stopping is checked w.r.t the loss value.
         Only used if early stopping is performed.
     validation_fraction : int or float or None, default=0.1
         Proportion (or absolute size) of training data to set aside as
@@ -1961,7 +1962,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
     scoring : str or callable or None, default='loss'
         Scoring parameter to use for early stopping. It can be a single
         string (see :ref:`scoring_parameter`) or a callable (see
-        :ref:`scoring`). If None, the estimator's default scorer
+        :ref:`scoring`). If None, the estimator's
+        :ref:`default evaluation criterion <model_evaluation>`
         is used. If ``scoring='loss'``, early stopping is checked
         w.r.t the loss value. Only used if early stopping is performed.
     validation_fraction : int or float or None, default=0.1

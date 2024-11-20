@@ -83,7 +83,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         NOTE that when using a custom scorer, it should return a single
         value.
 
-        If None, the estimator's score method is used.
+        If `None`, the estimator's
+        :ref:`default evaluation criterion <model_evaluation>` is used.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
