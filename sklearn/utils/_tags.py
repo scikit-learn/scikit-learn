@@ -293,13 +293,16 @@ def default_tags(estimator) -> Tags:
 
 
 # TODO(1.7): Remove this function
-def _find_tags_provider(estimator):
+def _find_tags_provider(estimator, warn=True):
     """Find the tags provider for an estimator.
 
     Parameters
     ----------
     estimator : estimator object
         The estimator to find the tags provider for.
+
+    warn : bool, default=True
+        Whether to warn if the tags provider is not found.
 
     Returns
     -------
@@ -352,7 +355,7 @@ def _find_tags_provider(estimator):
                 tag_provider = "_get_tags"
             encounter_sklearn_tags = True
 
-    if tag_provider == "_get_tags":
+    if warn and tag_provider == "_get_tags":
         warnings.warn(
             f"The {estimator.__class__.__name__} or classes from which it inherits "
             "only use `_get_tags` and `_more_tags`. Please define the "
@@ -414,10 +417,26 @@ def get_tags(estimator) -> Tags:
     # TODO(1.7): Remove this block
     elif tag_provider == "_get_tags":
         if hasattr(estimator, "_get_tags"):
-            tags = _to_new_tags(estimator._get_tags())
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore",
+                    category=FutureWarning,
+                    message="The `_get_tags` tag provider is deprecated",
+                )
+                # silence the warning to avoid a false positive warning since this
+                # is not a direct user call but an internal one.
+                tags = _to_new_tags(estimator._get_tags())
         elif hasattr(estimator, "_more_tags"):
             tags = _to_old_tags(default_tags(estimator))
-            tags = {**tags, **estimator._more_tags()}
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore",
+                    category=FutureWarning,
+                    message="The `_more_tags` method is deprecated",
+                )
+                # silence the warning to avoid a false positive warning since this
+                # is not a direct user call but an internal one.
+                tags = {**tags, **estimator._more_tags()}
             tags = _to_new_tags(tags)
     else:
         tags = default_tags(estimator)

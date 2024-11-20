@@ -389,6 +389,22 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
             self.__dict__.update(state)
 
     def __sklearn_tags__(self):
+        from sklearn.utils._tags import _find_tags_provider, _to_new_tags
+
+        # TODO(1.7): Remove this block
+        if _find_tags_provider(self) == "_get_tags":
+            # one of the children classes only implements `_get_tags` so we need to
+            # warn and and mix old-style and new-style tags.
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore",
+                    category=FutureWarning,
+                    message="The `_get_tags` tag provider is deprecated",
+                )
+                # silence the warning to avoid a false positive warning since this
+                # is not a direct user call but an internal one.
+                return _to_new_tags(self._get_tags())
+
         return Tags(
             estimator_type=None,
             target_tags=TargetTags(required=False),
@@ -416,7 +432,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         # default back to the future behaviour. Otherwise, we will get the default tags.
         from sklearn.utils._tags import _find_tags_provider, _to_old_tags, get_tags
 
-        if _find_tags_provider(self) == "__sklearn_tags__":
+        if _find_tags_provider(self, warn=False) == "__sklearn_tags__":
             return _to_old_tags(get_tags(self))
 
         collected_tags = {}
@@ -425,7 +441,15 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
                 # need the if because mixins might not have _more_tags
                 # but might do redundant work in estimators
                 # (i.e. calling more tags on BaseEstimator multiple times)
-                more_tags = base_class._more_tags(self)
+                with warnings.catch_warnings():
+                    warnings.filterwarnings(
+                        "ignore",
+                        category=FutureWarning,
+                        message="The `_more_tags` method is deprecated",
+                    )
+                    # silence the warning to avoid a false positive warning since this
+                    # is not a direct user call but an internal one.
+                    more_tags = base_class._more_tags(self)
                 collected_tags.update(more_tags)
             elif hasattr(base_class, "__sklearn_tags__"):
                 # Since that some people will inherit from scikit-learn that implements
