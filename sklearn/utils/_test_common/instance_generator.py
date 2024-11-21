@@ -552,7 +552,11 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             dict(solver="liblinear"),
             dict(solver="newton-cg"),
             dict(solver="newton-cholesky"),
-        ]
+        ],
+        "check_classifiers_train": [
+            dict(),
+            dict(solver="newton-cholesky", max_iter=1000, tol=1e-12),
+        ],
     },
     MDS: {"check_dict_unchanged": dict(max_iter=5, n_components=1, n_init=2)},
     MiniBatchDictionaryLearning: {
