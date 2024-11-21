@@ -988,6 +988,8 @@ def precision_recall_curve(
     >>>
     >>> # negative label is positively correlated with y_score and positive
     >>> # label is negatively correlated with y_score
+    >>> import numpy as np
+    >>> from sklearn.metrics import precision_recall_curve
     >>> y_true = np.array([0, 0, 1, 1])
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> y_scores_adj = y_scores * (-1)
@@ -1165,6 +1167,8 @@ def roc_curve(
     >>>
     >>> # negative label is positively correlated with y_score and positive
     >>> # label is negatively correlated with y_score
+    >>> import numpy as np
+    >>> from sklearn.metrics import precision_recall_curve
     >>> y_true = np.array([0, 0, 1, 1])
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> y_scores_adj = y_scores * (-1)
