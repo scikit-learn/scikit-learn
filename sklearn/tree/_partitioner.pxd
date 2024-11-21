@@ -76,7 +76,7 @@ cdef class DensePartitioner:
     cdef const uint8_t[::1] missing_values_in_feature_mask
 
     cdef void sort_samples_and_feature_values(
-        self, intp_t current_feature, bint do_sort,
+        self, intp_t current_feature
     ) noexcept nogil
     cdef void init_node_split(
         self,
@@ -130,7 +130,7 @@ cdef class SparsePartitioner:
     cdef const uint8_t[::1] missing_values_in_feature_mask
 
     cdef void sort_samples_and_feature_values(
-        self, intp_t current_feature, bint do_sort
+        self, intp_t current_feature
     ) noexcept nogil
     cdef void init_node_split(
         self,
