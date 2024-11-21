@@ -971,8 +971,8 @@ def precision_recall_curve(
 
     Examples
     --------
-    >>> # positive label is positively correlated with y_score and negative
-    >>> # label is negatively correlated with y_score
+    >>> # positive class (y_true = 1) is positively correlated with y_score and negative
+    >>> # class is negatively correlated with y_score
     >>> import numpy as np
     >>> from sklearn.metrics import precision_recall_curve
     >>> y_true = np.array([0, 0, 1, 1])
@@ -986,8 +986,8 @@ def precision_recall_curve(
     >>> thresholds
     array([0.1 , 0.35, 0.4 , 0.8 ])
     >>>
-    >>> # negative label is positively correlated with y_score and positive
-    >>> # label is negatively correlated with y_score
+    >>> # negative class (y_true = 1) is positively correlated with y_score and positive
+    >>> # class is negatively correlated with y_score
     >>> import numpy as np
     >>> from sklearn.metrics import precision_recall_curve
     >>> y_true = np.array([0, 0, 1, 1])
