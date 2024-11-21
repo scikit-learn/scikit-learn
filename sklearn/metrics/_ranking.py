@@ -1151,8 +1151,8 @@ def roc_curve(
 
     Examples
     --------
-    >>> # positive label is positively correlated with y_score and negative
-    >>> # label is negatively correlated with y_score
+    >>> # positive class (y_true = 1) is positively correlated with y_score and negative
+    >>> # class is negatively correlated with y_score
     >>> import numpy as np
     >>> from sklearn import metrics
     >>> y = np.array([1, 1, 2, 2])
@@ -1165,8 +1165,8 @@ def roc_curve(
     >>> thresholds
     array([ inf, 0.8 , 0.4 , 0.35, 0.1 ])
     >>>
-    >>> # negative label is positively correlated with y_score and positive
-    >>> # label is negatively correlated with y_score
+    >>> # negative class (y_true = 1) is positively correlated with y_score and positive
+    >>> # class is negatively correlated with y_score
     >>> import numpy as np
     >>> from sklearn.metrics import precision_recall_curve
     >>> y_true = np.array([0, 0, 1, 1])
