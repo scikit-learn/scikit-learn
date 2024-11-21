@@ -71,7 +71,6 @@ plt.show()
 from sklearn.mixture import GaussianMixture
 from sklearn.model_selection import GridSearchCV
 
-
 def gmm_bic_score(estimator, X):
     """Callable to pass to GridSearchCV that will use the BIC score."""
     # Make it negative since GridSearchCV expects a score to maximize
@@ -83,7 +82,7 @@ param_grid = {
     "covariance_type": ["spherical", "tied", "diag", "full"],
 }
 grid_search = GridSearchCV(
-    GaussianMixture(), param_grid=param_grid, scoring=gmm_bic_score
+    GaussianMixture(), param_grid=param_grid, scoring=None
 )
 grid_search.fit(X)
 
