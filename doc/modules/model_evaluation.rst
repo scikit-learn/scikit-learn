@@ -61,8 +61,8 @@ for details.
 
 .. _scoring_string_names:
 
-Common cases: string names
---------------------------
+Scoring parameter: string names
+-------------------------------
 
 For the most common use cases, you can designate a scorer object with the
 ``scoring`` parameter via a string name; the table below shows all possible values.
