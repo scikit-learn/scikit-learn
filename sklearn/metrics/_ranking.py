@@ -947,7 +947,7 @@ def precision_recall_curve(
         Note that this means that the positive class must be positively
         correlated with score. See examples for a case where the negative
         class is positively correlated with score.
-        
+
     recall : ndarray of shape (n_thresholds + 1,)
         Decreasing recall values such that element i is the recall of
         predictions with score >= thresholds[i] and the last element is 0.
@@ -1107,14 +1107,14 @@ def roc_curve(
         Note that this means that the positive class must be positively
         correlated with score. See examples for a case where the negative
         class is positively correlated with score.
-        
+
     tpr : ndarray of shape (>2,)
         Increasing true positive rates such that element `i` is the true
         positive rate of predictions with score >= `thresholds[i]`.
         Note that this means that the positive class must be positively
         correlated with score.See examples for a case where the negative
         class is positively correlated with score.
-        
+
     thresholds : ndarray of shape (n_thresholds,)
         Decreasing thresholds on the decision function used to compute
         fpr and tpr. `thresholds[0]` represents no instances being predicted
