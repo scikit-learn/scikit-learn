@@ -52,7 +52,7 @@ cdef class DensePartitioner:
         self.n_missing = 0
 
     cdef inline void sort_samples_and_feature_values(
-        self, intp_t current_feature
+        self, intp_t current_feature, bint do_sort
     ) noexcept nogil:
         """Simultaneously sort based on the feature_values.
 
@@ -95,7 +95,8 @@ cdef class DensePartitioner:
             for i in range(self.start, self.end):
                 feature_values[i] = X[samples[i], current_feature]
 
-        sort(&feature_values[self.start], &samples[self.start], self.end - self.start - n_missing)
+        if do_sort:
+            sort(&feature_values[self.start], &samples[self.start], self.end - self.start - n_missing)
         self.n_missing = n_missing
 
     cdef inline void find_min_max(
@@ -197,6 +198,11 @@ cdef class DensePartitioner:
             intp_t partition_end = self.end
             intp_t[::1] samples = self.samples
             float32_t[::1] feature_values = self.feature_values
+
+        with gil:
+            print('p', p)
+            print('samples', np.asarray(samples))
+            print('feature_values', np.asarray(feature_values))
 
         while p < partition_end:
             if feature_values[p] <= current_threshold:
@@ -316,7 +322,7 @@ cdef class SparsePartitioner:
 
     cdef inline void sort_samples_and_feature_values(
         self,
-        intp_t current_feature
+        intp_t current_feature, bint do_sort
     ) noexcept nogil:
         """Simultaneously sort based on the feature_values."""
         cdef:

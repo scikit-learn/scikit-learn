@@ -371,7 +371,7 @@ cdef inline int node_split_best(
         f_j += n_found_constants
         # f_j in the interval [n_total_constants, f_i[
         current_split.feature = features[f_j]
-        partitioner.sort_samples_and_feature_values(current_split.feature)
+        partitioner.sort_samples_and_feature_values(current_split.feature, 1)
         n_missing = partitioner.n_missing
         end_non_missing = end - n_missing
 
@@ -551,6 +551,8 @@ cdef inline int node_split_random(
     Returns -1 in case of failure to allocate memory (and raise MemoryError)
     or 0 otherwise.
     """
+    with gil:
+        print('bla')
     cdef const int8_t[:] monotonic_cst = splitter.monotonic_cst
     cdef bint with_monotonic_cst = splitter.with_monotonic_cst
 
@@ -642,9 +644,14 @@ cdef inline int node_split_random(
         current_split.feature = features[f_j]
 
         # Find min, max as we will randomly select a threshold between them
+        partitioner.sort_samples_and_feature_values(current_split.feature, 0)
         partitioner.find_min_max(
             current_split.feature, &min_feature_value, &max_feature_value
         )
+        with gil:
+            print('min_feature_value', min_feature_value)
+            print('max_feature_value', max_feature_value)
+
         n_missing = partitioner.n_missing
         end_non_missing = end - n_missing
 
@@ -686,6 +693,8 @@ cdef inline int node_split_random(
             # of the feature. However, it is not clear how much probability weight should
             # be given to this edge case.
             missing_go_to_left = rand_int(0, 2, random_state)
+            with gil:
+                print('splitter', missing_go_to_left)
         else:
             missing_go_to_left = 0
         criterion.missing_go_to_left = missing_go_to_left
@@ -704,6 +713,15 @@ cdef inline int node_split_random(
         else:
             n_left = current_split.pos - start
             n_right = end_non_missing - current_split.pos + n_missing
+
+        with gil:
+            print('current_split.threshold', current_split.threshold)
+            print('current_split.pos', current_split.pos)
+            print('start', start)
+            print('n_missing', n_missing)
+            print('end_non_missing', n_missing)
+            print('n_left', n_left)
+            print('n_right', n_right)
 
         # Reject if min_samples_leaf is not guaranteed
         if n_left < min_samples_leaf or n_right < min_samples_leaf:
