@@ -782,6 +782,44 @@ def test_assert_docstring_consistency_error_msg():
         assert_docstring_consistency([f_four, f_five, f_six], include_params=True)
 
 
+@skip_if_no_numpydoc
+def test_assert_docstring_consistency_descr_regex_pattern():
+    """Check `assert_docstring_consistency` `descr_regex_pattern` works."""
+    # Check regex that matches full parameter descriptions
+    regex_full = (
+        r"The (set|group) "  # match 'set' or 'group'
+        + r"of labels to (include|add) "  # match 'include' or 'add'
+        + r"when `average \!\= 'binary'`, and (their|the) "  #  match 'their' or 'the'
+        + r"order if `average is None`\."
+        + r"[\s\w]*\.* "  # optionally match additonal sentence
+        + r"Labels present (on|in) "  # match 'on' or 'in'
+        + r"(them|the) "  # match 'them' or 'the'
+        + r"datas? can be excluded\."  # match 'data' or 'datas'
+    )
+
+    assert_docstring_consistency(
+        [f_four, f_five, f_six],
+        include_params=True,
+        descr_regex_pattern=" ".join(regex_full.split()),
+    )
+    # Check we can just match a few alternate words
+    regex_words = r"(labels|average|binary)"  # match any of these 3 words
+    assert_docstring_consistency(
+        [f_four, f_five, f_six],
+        include_params=True,
+        descr_regex_pattern=" ".join(regex_words.split()),
+    )
+    # Check error raised when regex doesn't match
+    regex_error = r"The set of labels to include when.+"
+    msg = r"The description of Parameter 'labels' in \['f_six'\] does not match"
+    with pytest.raises(AssertionError, match=msg):
+        assert_docstring_consistency(
+            [f_four, f_five, f_six],
+            include_params=True,
+            descr_regex_pattern=" ".join(regex_error.split()),
+        )
+
+
 class RegistrationCounter:
     def __init__(self):
         self.nb_calls = 0
