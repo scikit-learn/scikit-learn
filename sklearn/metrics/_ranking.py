@@ -945,15 +945,15 @@ def precision_recall_curve(
         Precision values such that element i is the precision of
         predictions with score >= thresholds[i] and the last element is 1. 
         Note that this means that the positive class must be positively 
-        correlated with score. 
-        See examples for a case where the negative class is positively correlated with score.
+        correlated with score. See examples for a case where the negative
+        class is positively correlated with score.
 
     recall : ndarray of shape (n_thresholds + 1,)
         Decreasing recall values such that element i is the recall of
         predictions with score >= thresholds[i] and the last element is 0.
         Note that this means that the positive class must be positively 
-        correlated with score. 
-        See examples for a case where the negative class is positively correlated with score.
+        correlated with score. See examples for a case where the negative
+        class is positively correlated with score.
 
     thresholds : ndarray of shape (n_thresholds,)
         Increasing thresholds on the decision function used to compute
@@ -971,7 +971,8 @@ def precision_recall_curve(
 
     Examples
     --------
-    >>> # positive label is positively correlated with y_score and negative label is negatively correlated with y_score
+    >>> # positive label is positively correlated with y_score and negative
+    >>> # label is negatively correlated with y_score
     >>> import numpy as np
     >>> from sklearn.metrics import precision_recall_curve
     >>> y_true = np.array([0, 0, 1, 1])
@@ -985,7 +986,8 @@ def precision_recall_curve(
     >>> thresholds
     array([0.1 , 0.35, 0.4 , 0.8 ])
 
-    >>> # negative label is positively correlated with y_score and positive label is negatively correlated with y_score
+    >>> # negative label is positively correlated with y_score and positive
+    >>> # label is negatively correlated with y_score
     >>> y_true = np.array([0, 0, 1, 1])
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> y_scores_adj = y_scores * (-1)
@@ -1103,15 +1105,16 @@ def roc_curve(
         Increasing false positive rates such that element i is the false
         positive rate of predictions with score >= `thresholds[i]`.
         Note that this means that the positive class must be positively 
-        correlated with score. 
-        See examples for a case where the negative class is positively correlated with score.
+        correlated with score. See examples for a case where the negative
+        class is positively correlated with score.
 
     tpr : ndarray of shape (>2,)
         Increasing true positive rates such that element `i` is the true
         positive rate of predictions with score >= `thresholds[i]`.
         Note that this means that the positive class must be positively 
         correlated with score. 
-        See examples for a case where the negative class is positively correlated with score.
+        See examples for a case where the negative class is positively
+        correlated with score.
         
     thresholds : ndarray of shape (n_thresholds,)
         Decreasing thresholds on the decision function used to compute
@@ -1147,7 +1150,8 @@ def roc_curve(
 
     Examples
     --------
-    >>> # positive label is positively correlated with y_score and negative label is negatively correlated with y_score
+    >>> # positive label is positively correlated with y_score and negative
+    >>> # label is negatively correlated with y_score
     >>> import numpy as np
     >>> from sklearn import metrics
     >>> y = np.array([1, 1, 2, 2])
@@ -1160,7 +1164,8 @@ def roc_curve(
     >>> thresholds
     array([ inf, 0.8 , 0.4 , 0.35, 0.1 ])
 
-    >>> # negative label is positively correlated with y_score and positive label is negatively correlated with y_score
+    >>> # negative label is positively correlated with y_score and positive
+    >>> # label is negatively correlated with y_score
     >>> y_true = np.array([0, 0, 1, 1])
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> y_scores_adj = y_scores * (-1)
