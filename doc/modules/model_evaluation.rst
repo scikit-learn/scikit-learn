@@ -49,7 +49,7 @@ controls what metric they apply to the estimators evaluated.
 
 They can be specified in several ways:
 
-* `None`: the estimator's default evaluation criterion (i.e., the method used in the
+* `None`: the estimator's default evaluation criterion (i.e., the metric used in the
   estimators `score` method) is used.
 * :ref:`String name <scoring_string_names>`: common metrics can be passed via a string
   name.
