@@ -2613,7 +2613,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
 
     store_cv_values : bool
         Flag indicating if the cross-validation values corresponding to
-        each alpha should be stored in the ``cv_results_`` attribute (see
+        each alpha should be stored in the ``cv_values_`` attribute (see
         below). This flag is only compatible with ``cv=None`` (i.e. using
         Leave-One-Out Cross-Validation).
 
