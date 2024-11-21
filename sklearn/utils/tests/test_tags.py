@@ -8,7 +8,7 @@ from sklearn.base import (
     TransformerMixin,
 )
 from sklearn.utils import Tags, get_tags
-from sklearn.utils._tags import _safe_tags
+from sklearn.utils._tags import _safe_tags, _to_new_tags, _to_old_tags, default_tags
 from sklearn.utils.estimator_checks import (
     check_estimator_tags_renamed,
     check_valid_tag_types,
@@ -101,7 +101,7 @@ class MixinAllowNanNewTags:
 
 class MixinAllowNanOldNewTags:
     def _more_tags(self):
-        return {"allow_nan": True}
+        return {"allow_nan": True}  # pragma: no cover
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -123,7 +123,7 @@ class MixinArrayApiSupportNewTags:
 
 class MixinArrayApiSupportOldNewTags:
     def _more_tags(self):
-        return {"array_api_support": True}
+        return {"array_api_support": True}  # pragma: no cover
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -145,7 +145,7 @@ class PredictorNewTags(BaseEstimator):
 
 class PredictorOldNewTags(BaseEstimator):
     def _more_tags(self):
-        return {"requires_fit": True}
+        return {"requires_fit": True}  # pragma: no cover
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -355,3 +355,34 @@ def test__get_tags_backward_compatibility():
                 assert tags["allow_nan"]
                 assert tags["array_api_support"]
                 assert tags["requires_fit"]
+
+
+def test_roundtrip_tags():
+    estimator = PredictorNewTags()
+    tags = default_tags(estimator)
+    assert _to_new_tags(_to_old_tags(tags), estimator=estimator) == tags
+
+
+def test_base_estimator_more_tags():
+    """Test that the `_more_tags` and `_get_tags` methods are equivalent for
+    `BaseEstimator`.
+    """
+    estimator = BaseEstimator()
+    with pytest.warns(FutureWarning, match="The `_more_tags` method is deprecated"):
+        more_tags = BaseEstimator._more_tags(estimator)
+
+    with pytest.warns(FutureWarning, match="The `_get_tags` method is deprecated"):
+        get_tags = BaseEstimator._get_tags(estimator)
+
+    assert more_tags == get_tags
+
+
+def test_safe_tags():
+    estimator = PredictorNewTags()
+    with pytest.warns(FutureWarning, match="The `_safe_tags` function is deprecated"):
+        tags = _safe_tags(estimator)
+
+    with pytest.warns(FutureWarning, match="The `_safe_tags` function is deprecated"):
+        tags_requires_fit = _safe_tags(estimator, key="requires_fit")
+
+    assert tags_requires_fit == tags["requires_fit"]

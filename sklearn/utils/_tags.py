@@ -425,7 +425,9 @@ def get_tags(estimator) -> Tags:
             elif klass in more_tags_provider:
                 tags = {**tags, **more_tags_provider[klass]}
 
-        tags = _to_new_tags({**_to_old_tags(default_tags(estimator)), **tags})
+        tags = _to_new_tags(
+            {**_to_old_tags(default_tags(estimator)), **tags}, estimator
+        )
 
     return tags
 
@@ -451,7 +453,7 @@ def _safe_tags(estimator, key=None):
 
 
 # TODO(1.7): Remove this function
-def _to_new_tags(old_tags, estimator_type=None):
+def _to_new_tags(old_tags, estimator=None):
     """Utility function convert old tags (dictionary) to new tags (dataclass)."""
     input_tags = InputTags(
         one_d_array="1darray" in old_tags["X_types"],
@@ -473,18 +475,30 @@ def _to_new_tags(old_tags, estimator_type=None):
         multi_output=old_tags["multioutput"] or old_tags["multioutput_only"],
         single_output=not old_tags["multioutput_only"],
     )
-    transformer_tags = TransformerTags(
-        preserves_dtype=old_tags["preserves_dtype"],
-    )
-    classifier_tags = ClassifierTags(
-        poor_score=old_tags["poor_score"],
-        multi_class=not old_tags["binary_only"],
-        multi_label=old_tags["multilabel"],
-    )
-    regressor_tags = RegressorTags(
-        poor_score=old_tags["poor_score"],
-        multi_label=old_tags["multilabel"],
-    )
+    if estimator is not None and (
+        hasattr(estimator, "transform") or hasattr(estimator, "fit_transform")
+    ):
+        transformer_tags = TransformerTags(
+            preserves_dtype=old_tags["preserves_dtype"],
+        )
+    else:
+        transformer_tags = None
+    estimator_type = getattr(estimator, "_estimator_type", None)
+    if estimator_type == "classifier":
+        classifier_tags = ClassifierTags(
+            poor_score=old_tags["poor_score"],
+            multi_class=not old_tags["binary_only"],
+            multi_label=old_tags["multilabel"],
+        )
+    else:
+        classifier_tags = None
+    if estimator_type == "regressor":
+        regressor_tags = RegressorTags(
+            poor_score=old_tags["poor_score"],
+            multi_label=old_tags["multilabel"],
+        )
+    else:
+        regressor_tags = None
     return Tags(
         estimator_type=estimator_type,
         target_tags=target_tags,

@@ -391,6 +391,10 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
 
     # TODO(1.7): Remove this method
     def _more_tags(self):
+        """This code should never be reached since our `get_tags` will fallback on
+        `__sklearn_tags__` implemented below. We keep it for backward compatibility.
+        It is tested in `test_base_estimator_more_tags` in
+        `sklearn/utils/testing/test_tags.py`."""
         from sklearn.utils._tags import _to_old_tags, default_tags
 
         warnings.warn(
