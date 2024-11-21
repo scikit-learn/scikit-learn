@@ -19,8 +19,8 @@ predictions:
   :ref:`cross-validation <cross_validation>` (such as
   :class:`model_selection.GridSearchCV`, :func:`model_selection.validation_curve` and
   :class:`linear_model.LogisticRegressionCV`) rely on an internal *scoring* strategy.
-  This can be specified using the `scoring` parameter and is discussed in the
-  section :ref:`scoring_parameter`.
+  This can be specified using the `scoring` parameter of that tool and is discussed
+  in the section :ref:`scoring_parameter`.
 
 * **Metric functions**: The :mod:`sklearn.metrics` module implements functions
   assessing prediction error for specific purposes. These metrics are detailed
