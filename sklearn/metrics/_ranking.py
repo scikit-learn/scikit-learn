@@ -985,7 +985,7 @@ def precision_recall_curve(
     array([1. , 1. , 0.5, 0.5, 0. ])
     >>> thresholds
     array([0.1 , 0.35, 0.4 , 0.8 ])
-
+    >>>
     >>> # negative label is positively correlated with y_score and positive
     >>> # label is negatively correlated with y_score
     >>> y_true = np.array([0, 0, 1, 1])
@@ -1162,7 +1162,7 @@ def roc_curve(
     array([0. , 0.5, 0.5, 1. , 1. ])
     >>> thresholds
     array([ inf, 0.8 , 0.4 , 0.35, 0.1 ])
-
+    >>>
     >>> # negative label is positively correlated with y_score and positive
     >>> # label is negatively correlated with y_score
     >>> y_true = np.array([0, 0, 1, 1])
