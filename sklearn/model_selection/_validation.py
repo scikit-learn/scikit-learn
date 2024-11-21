@@ -175,7 +175,7 @@ def cross_validate(
         If `scoring` represents a single score, one can use:
 
         - a single string (see :ref:`scoring_parameter`);
-        - a callable (see :ref:`scoring`) that returns a single value.
+        - a callable (see :ref:`scoring_callable`) that returns a single value.
 
         If `scoring` represents multiple scores, one can use:
 
@@ -1562,7 +1562,7 @@ def permutation_test_score(
 
     scoring : str or callable, default=None
         A single str (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring`) to evaluate the predictions on the test set.
+        (see :ref:`scoring_callable`) to evaluate the predictions on the test set.
 
         If `None` the estimator's score method is used.
 
