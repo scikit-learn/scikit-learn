@@ -191,7 +191,8 @@ def test_make_classification_return_x_y():
     Also that bunch.X is the same as X
     """
 
-    bunch = make_classification(
+    make = partial(
+        make_classification,
         n_samples=100,
         n_features=20,
         n_informative=5,
@@ -200,8 +201,9 @@ def test_make_classification_return_x_y():
         n_classes=3,
         n_clusters_per_class=1,
         random_state=0,
-        return_X_y=False,
     )
+
+    bunch = make(return_X_y=False)
 
     assert (
         hasattr(bunch, "DESCR")
@@ -211,7 +213,7 @@ def test_make_classification_return_x_y():
         and hasattr(bunch, "y")
     )
 
-    X, y = make_classification(random_state=42)
+    X, y = make()
 
     assert np.array_equal(X, bunch.X) and np.array_equal(y, bunch.y)
 
