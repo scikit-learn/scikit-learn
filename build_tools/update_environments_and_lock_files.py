@@ -267,6 +267,31 @@ build_metadata_list = [
         ),
     },
     {
+        "name": "pylatest_free_threaded",
+        "type": "conda",
+        "tag": "free-threaded",
+        "folder": "build_tools/azure",
+        "platform": "linux-64",
+        "channels": ["conda-forge"],
+        "conda_dependencies": [
+            "python-freethreading",
+            "numpy",
+            # TODO add cython and scipy when there are conda-forge packages for
+            # them and remove dev version install in
+            # build_tools/azure/install.sh. Note that for now conda-lock does
+            # not deal with free-threaded wheels correctly, see
+            # https://github.com/conda/conda-lock/issues/754.
+            "joblib",
+            "threadpoolctl",
+            "pytest",
+            "pytest-xdist",
+            "ninja",
+            "meson-python",
+            "ccache",
+            "pip",
+        ],
+    },
+    {
         "name": "pymin_conda_forge_mkl",
         "type": "conda",
         "tag": "main-ci",
