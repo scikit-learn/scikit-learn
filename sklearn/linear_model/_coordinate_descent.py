@@ -222,13 +222,28 @@ def lasso_path(
 
         (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
+    .. math::
+        \\frac{1}{2n_{\\operatorname{samples}}}
+        \\vert \\vert y - Xw \\vert \\vert^2_2 +
+        \\alpha \\vert \\vert w \\vert \\vert_1
+
     For multi-output tasks it is::
 
         (1 / (2 * n_samples)) * ||Y - XW||^2_Fro + alpha * ||W||_21
 
-    Where::
+    .. math::
+        \\frac{1}{2n_{\\operatorname{samples}}}
+        \\vert \\vert Y- XW \\vert \\vert^2_F +
+        \\alpha \\vert \\vert W \\vert \\vert_{2,1}
+
+    where :math:`\\vert\\vert W \\vert\\vert_F` is the Frobenius norm of :math:`W`,
+    and::
 
         ||W||_21 = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
+
+    .. math::
+        \\vert \\vert W \\vert \\vert_{2,1}
+        = \\displaystyle \\sum_i \\sqrt{\\sum_j W^2_{ij}}
 
     i.e. the sum of norm of each row.
 
@@ -419,15 +434,34 @@ def enet_path(
         + alpha * l1_ratio * ||w||_1
         + 0.5 * alpha * (1 - l1_ratio) * ||w||^2_2
 
+    .. math::
+        \\frac{1}{2n_{\\operatorname{samples}}}
+        \\vert \\vert y- Xw \\vert \\vert^2_2 +
+        \\alpha \\rho \\vert \\vert w \\vert \\vert_1 +
+        0.5 \\alpha \\left( 1 - \\rho \\right)
+        \\vert \\vert w \\vert \\vert^2_2
+
     For multi-output tasks it is::
 
         (1 / (2 * n_samples)) * ||Y - XW||_Fro^2
         + alpha * l1_ratio * ||W||_21
         + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
 
-    Where::
+    .. math::
+        \\frac{1}{2n_{\\operatorname{samples}}}
+        \\vert \\vert Y- XW \\vert \\vert^2_F +
+        \\alpha \\rho \\vert \\vert W \\vert \\vert_{2,1} +
+        0.5 \\alpha \\left( 1 - \\rho \\right)
+        \\vert \\vert W \\vert \\vert^2_F
+
+    where :math:`\\vert\\vert W \\vert\\vert_F` is the Frobenius norm of :math:`W`,
+    and::
 
         ||W||_21 = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
+
+    .. math::
+        \\vert \\vert W \\vert \\vert_{2,1}
+        = \\displaystyle \\sum_i \\sqrt{\\sum_j W^2_{ij}}
 
     i.e. the sum of norm of each row.
 
@@ -731,14 +765,33 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             + alpha * l1_ratio * ||w||_1
             + 0.5 * alpha * (1 - l1_ratio) * ||w||^2_2
 
+    or in LaTeX:
+
+    .. math::
+        \\frac{1}{2n_{\\operatorname{samples}}}
+        \\vert \\vert y- Xw \\vert \\vert^2_2 +
+        \\alpha \\rho \\vert \\vert w \\vert \\vert_1 +
+        0.5 \\alpha \\left( 1 - \\rho \\right)
+        \\vert \\vert w \\vert \\vert^2_2
+
     If you are interested in controlling the L1 and L2 penalty
     separately, keep in mind that this is equivalent to::
 
             a * ||w||_1 + 0.5 * b * ||w||_2^2
 
+    .. math::
+        a \\vert \\vert w \\vert \\vert_1 +
+        b \\vert \\vert w \\vert \\vert^2_2
+
     where::
 
             alpha = a + b and l1_ratio = a / (a + b)
+
+    .. math::
+        \\begin{array}{ccc}
+        \\alpha &= &a + b \\\\
+        \\rho &= &\\frac{a}{a + b}
+        \\end{array}
 
     The parameter l1_ratio corresponds to alpha in the glmnet R package while
     alpha corresponds to the lambda parameter in glmnet. Specifically, l1_ratio
@@ -1155,6 +1208,13 @@ class Lasso(ElasticNet):
 
         (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
+    or in LaTeX:
+
+    .. math::
+        \\frac{1}{2n_{\\operatorname{samples}}}
+        \\vert \\vert y - Xw \\vert \\vert^2_2 +
+        \\alpha \\vert \\vert w \\vert \\vert_1
+
     Technically the Lasso model is optimizing the same objective function as
     the Elastic Net with ``l1_ratio=1.0`` (no L2 penalty).
 
@@ -1280,7 +1340,13 @@ class Lasso(ElasticNet):
 
         (1 / (2 * n_samples)) * ||Y - XW||^2_F + alpha * ||W||_11
 
-    where :math:`||W||_{1,1}` is the sum of the magnitude of the matrix coefficients.
+    .. math::
+        \\frac{1}{2n_{\\operatorname{samples}}}
+        \\vert \\vert Y- XW \\vert \\vert^2_F +
+        \\alpha \\vert \\vert W \\vert \\vert_{1,1}
+
+    where :math:`\\vert\\vert W \\vert\\vert_F` is the Frobenius norm of :math:`W`, and
+    :math:`||W||_{1,1}` is the sum of the magnitude of the matrix coefficients.
     It should not be confused with :class:`~sklearn.linear_model.MultiTaskLasso` which
     instead penalizes the :math:`L_{2,1}` norm of the coefficients, yielding row-wise
     sparsity in the coefficients.
@@ -1870,6 +1936,11 @@ class LassoCV(RegressorMixin, LinearModelCV):
 
         (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
+    .. math::
+        \\frac{1}{2n_{\\operatorname{samples}}}
+        \\vert \\vert y - Xw \\vert \\vert^2_2 +
+        \\alpha \\vert \\vert w \\vert \\vert_1
+
     Read more in the :ref:`User Guide <lasso>`.
 
     Parameters
@@ -2273,14 +2344,33 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         + alpha * l1_ratio * ||w||_1
         + 0.5 * alpha * (1 - l1_ratio) * ||w||^2_2
 
+    or in LaTeX:
+
+    .. math::
+        \\frac{1}{2n_{\\operatorname{samples}}}
+        \\vert \\vert y- Xw \\vert \\vert^2_2 +
+        \\alpha \\rho \\vert \\vert w \\vert \\vert_1 +
+        0.5 \\alpha \\left( 1 - \\rho \\right)
+        \\vert \\vert w \\vert \\vert^2_2
+
     If you are interested in controlling the L1 and L2 penalty
     separately, keep in mind that this is equivalent to::
 
         a * L1 + b * L2
 
+    .. math::
+        a \\vert \\vert w \\vert \\vert_1 +
+        b \\vert \\vert w \\vert \\vert^2_2
+
     for::
 
         alpha = a + b and l1_ratio = a / (a + b).
+
+    .. math::
+        \\begin{array}{ccc}
+        \\alpha &= & a + b \\\\
+        \\rho &= &\\frac{a}{a + b}
+        \\end{array}
 
     For an example, see
     :ref:`examples/linear_model/plot_lasso_model_selection.py
@@ -2410,9 +2500,21 @@ class MultiTaskElasticNet(Lasso):
         + alpha * l1_ratio * ||W||_21
         + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
 
-    Where::
+    .. math::
+        \\frac{1}{2n_{\\operatorname{samples}}}
+        \\vert \\vert Y- XW \\vert \\vert^2_F +
+        \\alpha \\rho \\vert \\vert W \\vert \\vert_{2,1} +
+        0.5 \\alpha \\left( 1 - \\rho \\right)
+        \\vert \\vert W \\vert \\vert^2_F
+
+    where :math:`\\vert\\vert W \\vert\\vert_F` is the Frobenius norm of :math:`W`,
+    and::
 
         ||W||_21 = sum_i sqrt(sum_j W_ij ^ 2)
+
+    .. math::
+        \\vert \\vert W \\vert \\vert_{2,1}
+        = \\displaystyle \\sum_i \\sqrt{\\sum_j W^2_{ij}}
 
     i.e. the sum of norms of each row.
 
@@ -2660,9 +2762,19 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
         (1 / (2 * n_samples)) * ||Y - XW||^2_Fro + alpha * ||W||_21
 
-    Where::
+    .. math::
+        \\frac{1}{2n_{\\operatorname{samples}}}
+        \\vert \\vert Y- XW \\vert \\vert^2_F +
+        \\alpha \\vert \\vert W \\vert \\vert_{2,1}
+
+    where :math:`\\vert\\vert W \\vert\\vert_F` is the Frobenius norm of :math:`W`,
+    and::
 
         ||W||_21 = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
+
+    .. math::
+        \\vert \\vert W \\vert \\vert_{2,1}
+        = \\displaystyle \\sum_i \\sqrt{\\sum_j W^2_{ij}}
 
     i.e. the sum of norm of each row.
 
@@ -2807,9 +2919,23 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         + alpha * l1_ratio * ||W||_21
         + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
 
-    Where::
+    .. math::
+        \\frac{1}{2n_{\\operatorname{samples}}}
+        \\vert \\vert Y- XW \\vert \\vert^2_F +
+        \\alpha \\rho \\vert \\vert W \\vert \\vert_{2,1} +
+        0.5 \\alpha \\left( 1 - \\rho \\right)
+        \\vert \\vert W \\vert \\vert^2_F
+
+    where :math:`\\vert\\vert W \\vert\\vert_F` is the Frobenius norm of :math:`W`,
+    and::
+
+    where::
 
         ||W||_21 = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
+
+    .. math::
+        \\vert \\vert W \\vert \\vert_{2,1}
+        = \\displaystyle \\sum_i \\sqrt{\\sum_j W^2_{ij}}
 
     i.e. the sum of norm of each row.
 
@@ -3063,9 +3189,13 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
 
         (1 / (2 * n_samples)) * ||Y - XW||^Fro_2 + alpha * ||W||_21
 
-    Where::
+    where::
 
         ||W||_21 = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
+
+    .. math::
+        \\vert \\vert W \\vert \\vert_{2,1}
+        = \\displaystyle \\sum_i \\sqrt{\\sum_j W^2_{ij}}
 
     i.e. the sum of norm of each row.
 
