@@ -387,6 +387,7 @@ def get_tags(estimator) -> Tags:
     if tag_provider == "__sklearn_tags__":
         tags = estimator.__sklearn_tags__()
     else:
+        # TODO(1.7): Remove this branch of the code
         # Let's go through the MRO and patch each class implementing _more_tags
         sklearn_tags_provider = {}
         more_tags_provider = {}
