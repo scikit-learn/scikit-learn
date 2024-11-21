@@ -191,7 +191,17 @@ def test_make_classification_return_x_y():
     Also that bunch.X is the same as X
     """
 
-    bunch = make_classification(return_X_y=False, random_state=42)
+    bunch = make_classification(
+        n_samples=100,
+        n_features=20,
+        n_informative=5,
+        n_redundant=1,
+        n_repeated=1,
+        n_classes=3,
+        n_clusters_per_class=1,
+        random_state=0,
+        return_X_y=False,
+    )
 
     assert (
         hasattr(bunch, "DESCR")
