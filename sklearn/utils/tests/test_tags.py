@@ -394,6 +394,10 @@ def test_safe_tags():
 
     assert tags_requires_fit == tags["requires_fit"]
 
+    err_msg = "The key unknown_key is not defined"
+    with pytest.raises(ValueError, match=err_msg):
+        _safe_tags(estimator, key="unknown_key")
+
 
 def test_old_tags():
     """Set to non-default values and check that we get the expected old tags."""
