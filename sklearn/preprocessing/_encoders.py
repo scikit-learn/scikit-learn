@@ -546,8 +546,8 @@ class OneHotEncoder(_BaseEncoder):
     dtype : number type, default=np.float64
         Desired dtype of output.
 
-    handle_unknown : {'error', 'ignore', 'infrequent_if_exist', 'warn'}, \
-                     default='error'
+    handle_unknown : {'error', 'use_encoded_value', 'ignore',
+                      'infrequent_if_exist', 'warn'}, default='error'
         Specifies the way unknown categories are handled during :meth:`transform`.
 
         - 'error' : Raise an error if an unknown category is present during transform.
