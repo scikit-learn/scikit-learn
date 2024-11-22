@@ -32,6 +32,7 @@ classifiers=[
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: Implementation :: CPython",
 ]
 
@@ -263,7 +264,7 @@ package = "sklearn"  # name of your package
 
 [tool.towncrier]
     package = "sklearn"
-    filename = "doc/whats_new/v1.6.rst"
+    filename = "doc/whats_new/v1.7.rst"
     single_file = true
     directory = "doc/whats_new/upcoming_changes"
     issue_format = ":pr:`{issue}`"
