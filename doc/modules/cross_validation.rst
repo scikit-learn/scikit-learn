@@ -608,7 +608,7 @@ samples that are part of the validation set, and to -1 for all other samples.
 Cross-validation iterators for grouped data
 -------------------------------------------
 
-The i.i.d. assumption is broken if the underlying generative process yield
+The i.i.d. assumption is broken if the underlying generative process yields
 groups of dependent samples.
 
 Such a grouping of data is domain specific. An example would be when there is
