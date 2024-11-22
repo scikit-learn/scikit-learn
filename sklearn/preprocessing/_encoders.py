@@ -568,7 +568,7 @@ class OneHotEncoder(_BaseEncoder):
           :ref:`User Guide <encoder_infrequent_categories>`.
         - 'warn' : When an unknown category is encountered during transform
           a warning is issued, and the encoding then proceeds as described for
-          `handle_unknown="infrequent_if_exist"`
+          `handle_unknown="infrequent_if_exist"`.
 
         .. versionchanged:: 1.1
             `'infrequent_if_exist'` was added to automatically handle unknown
