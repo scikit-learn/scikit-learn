@@ -424,7 +424,7 @@ def get_tags(estimator) -> Tags:
             if klass in sklearn_tags_diff:
                 tags.update(sklearn_tags_diff[klass])
             elif klass in more_tags_provider:
-                tags = {**tags, **more_tags_provider[klass]}
+                tags.update(more_tags_provider[klass])
 
         tags = _to_new_tags(
             {**_to_old_tags(default_tags(estimator)), **tags}, estimator
