@@ -18,7 +18,7 @@ jobs:
 
   doc-min-dependencies:
     docker:
-      - image: cimg/python:3.12.7
+      - image: cimg/python:3.9.18
     environment:
       - MKL_NUM_THREADS: 2
       - OPENBLAS_NUM_THREADS: 2
@@ -56,7 +56,7 @@ jobs:
 
   doc:
     docker:
-      - image: cimg/python:3.12.7
+      - image: cimg/python:3.9.18
     environment:
       - MKL_NUM_THREADS: 2
       - OPENBLAS_NUM_THREADS: 2
