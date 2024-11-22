@@ -1322,7 +1322,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
           `handle_unknown='ignore'`. Infrequent categories exist based on
           `min_frequency` and `max_categories`. Read more in the
           :ref:`User Guide <encoder_infrequent_categories>`.
-            - 'warn' : When an unknown category is encountered during transform
+        - 'warn' : When an unknown category is encountered during transform
           a warning is issued, and the encoding then proceeds as described for
           `handle_unknown="infrequent_if_exist"`.
 
