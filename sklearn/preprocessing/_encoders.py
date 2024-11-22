@@ -192,7 +192,6 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         X,
         handle_unknown="error",
         ensure_all_finite=True,
-        warn_on_unknown=False,
         ignore_category_indices=None,
     ):
         X_list, n_samples, n_features = self._check_X(
@@ -204,10 +203,14 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         X_int = np.zeros((n_samples, n_features), dtype=int)
         X_mask = np.ones((n_samples, n_features), dtype=bool)
 
-        warn_on_unknown = handle_unknown in {
-            "ignore",
-            "infrequent_if_exist",
-        }
+        if handle_unknown == "warn":
+            warn_on_unknown, handle_unknown = True, "infrequent_if_exist"
+        else:
+            warn_on_unknown = handle_unknown in {
+                "ignore",
+                "infrequent_if_exist",
+            }
+
         columns_with_unknown = []
         for i in range(n_features):
             Xi = X_list[i]
@@ -248,8 +251,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             X_int[:, i] = _encode(Xi, uniques=self.categories_[i], check_unknown=False)
         self._map_infrequent_categories(X_int, X_mask, ignore_category_indices)
         if columns_with_unknown:
-            self._warn_on_unknown(columns_with_unknown)
-
+            self._warn_on_unknown(columns_with_unknown, handle_unknown)
         return X_int, X_mask
 
     @property
@@ -457,7 +459,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         tags.input_tags.allow_nan = True
         return tags
 
-    def _warn_on_unknown(self, columns_with_unknown):
+    def _warn_on_unknown(self, columns_with_unknown, handle_unknown):
         pass
 
 
@@ -1030,20 +1032,10 @@ class OneHotEncoder(_BaseEncoder):
                 '` ohe.set_output(transform="default").'
             )
 
-        # validation of X happens in _check_X called by _transform
-        if self.handle_unknown == "warn":
-            warn_on_unknown, handle_unknown = True, "infrequent_if_exist"
-        else:
-            warn_on_unknown = self.drop is not None and self.handle_unknown in {
-                "ignore",
-                "infrequent_if_exist",
-            }
-            handle_unknown = self.handle_unknown
         X_int, X_mask = self._transform(
             X,
-            handle_unknown=handle_unknown,
+            handle_unknown=self.handle_unknown,
             ensure_all_finite="allow-nan",
-            warn_on_unknown=warn_on_unknown,
         )
 
         n_samples, n_features = X_int.shape
@@ -1249,17 +1241,18 @@ class OneHotEncoder(_BaseEncoder):
                 )
             return self.feature_name_combiner
 
-    def _warn_on_unknown(self, columns_with_unknown):
+    def _warn_on_unknown(self, columns_with_unknown, handle_unknown):
         base_msg = (
             f"Found unknown categories in columns {columns_with_unknown} during"
             " transform."
         )
-        if self.handle_unknown == "ignore":
+
+        if handle_unknown == "ignore":
             warnings.warn(
                 f"{base_msg} These unknown categories will be encoded as all zeros",
                 UserWarning,
             )
-        if self.handle_unknown == "infrequent_if_exist":
+        elif handle_unknown == "infrequent_if_exist":
             if self._infrequent_enabled:
                 warnings.warn(
                     (
@@ -1305,8 +1298,8 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
     dtype : number type, default=np.float64
         Desired dtype of output.
 
-    handle_unknown : {'error', 'use_encoded_value', 'ignore', 'infrequent_if_exist'}, \
-                     default='error'
+    handle_unknown : {'error', 'use_encoded_value', 'ignore', \
+                      'infrequent_if_exist', 'warn'}, default='error' \
         Specifies the way unknown categories are handled during :meth:`transform`.
 
         - 'error' : An error will be raised in case an unknown
@@ -1329,13 +1322,16 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
           `handle_unknown='ignore'`. Infrequent categories exist based on
           `min_frequency` and `max_categories`. Read more in the
           :ref:`User Guide <encoder_infrequent_categories>`.
+            - 'warn' : When an unknown category is encountered during transform
+          a warning is issued, and the encoding then proceeds as described for
+          `handle_unknown="infrequent_if_exist"`.
 
         .. versionadded:: 0.24
            The parameter `handle_unknown` was added in 0.24.
 
         .. versionchanged:: 1.7
-           The options `handle_unknown='ignore'` and
-           `handle_unknown='infrequent_if_exist'` were added in 1.7.
+           The options 'ignore', 'infrequent_if_exist' and 'warn'
+           for `handle_unknown` were added in 1.7.
 
     unknown_value : int or np.nan, default=None
         When the parameter handle_unknown is set to 'use_encoded_value', this
@@ -1518,7 +1514,9 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         "dtype": "no_validation",  # validation delegated to numpy
         "encoded_missing_value": [Integral, type(np.nan)],
         "handle_unknown": [
-            StrOptions({"error", "ignore", "infrequent_if_exist", "use_encoded_value"})
+            StrOptions(
+                {"error", "ignore", "infrequent_if_exist", "use_encoded_value", "warn"}
+            )
         ],
         "unknown_value": [Integral, type(np.nan), None],
         "max_categories": [Interval(Integral, 1, None, closed="left"), None],
@@ -1672,6 +1670,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
             Transformed input.
         """
         check_is_fitted(self, "categories_")
+
         X_int, X_mask = self._transform(
             X,
             handle_unknown=self.handle_unknown,
@@ -1690,8 +1689,8 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         # With the option 'ignore' or when there is no infrequent category found,
         # the unknown category will be set as -1
-        if self.handle_unknown == "ignore" or (
-            self.handle_unknown == "infrequent_if_exist"
+        if (
+            self.handle_unknown in ("ignore", "infrequent_if_exist", "warn")
             and not self._infrequent_enabled
         ):
             X_trans[~X_mask] = -1
@@ -1792,17 +1791,17 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         return X_tr
 
-    def _warn_on_unknown(self, columns_with_unknown):
+    def _warn_on_unknown(self, columns_with_unknown, handle_unknown):
         base_msg = (
             f"Found unknown categories in columns {columns_with_unknown} during"
             " transform."
         )
-        if self.handle_unknown == "ignore":
+        if handle_unknown == "ignore":
             warnings.warn(
                 (f"{base_msg} These unknown categories will be encoded as all -1"),
                 UserWarning,
             )
-        if self.handle_unknown == "infrequent_if_exist":
+        elif handle_unknown == "infrequent_if_exist":
             if self._infrequent_enabled:
                 warnings.warn(
                     (

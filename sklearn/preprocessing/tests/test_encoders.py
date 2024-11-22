@@ -142,7 +142,7 @@ def test_one_hot_encoder_infrequent_should_warn():
     oh.fit(X)
     warn_msg = (
         r"Found unknown categories in columns \[0\] during "
-        "transform. These unknown will be mapped to the last position "
+        "transform. These unknown categories will be mapped to the last position "
         "in the encoding"
     )
 
@@ -1883,17 +1883,18 @@ def test_ordinal_encoder_handle_unknown(handle_unknown):
     assert_allclose(X2, X2_passed)
 
 
-def test_ordinal_encoder_infrequent_should_warn():
+@pytest.mark.parametrize("handle_unknown", ["infrequent_if_exist", "warn"])
+def test_ordinal_encoder_infrequent_should_warn(handle_unknown):
     X = np.array([["small"], ["small"], ["medium"], ["medium"], ["large"]])
     X2 = np.array([["small"], ["medium"], ["large"], ["unknown"]])
 
     # This case infrequent doesn't exist so unknown should be mapped to -1
-    oe = OrdinalEncoder(handle_unknown="infrequent_if_exist")
+    oe = OrdinalEncoder(handle_unknown=handle_unknown)
     oe.fit(X)
     warn_msg = (
         r"Found unknown categories in columns \[0\] during "
         "transform. These unknown categories will be encoded as "
-        "all minus ones"
+        "all -1"
     )
 
     with pytest.warns(UserWarning, match=warn_msg):
@@ -1904,11 +1905,11 @@ def test_ordinal_encoder_infrequent_should_warn():
 
     # This case should map large and unknown to the infrequent category, which is the
     # last position on the encoding, 2
-    oe = OrdinalEncoder(min_frequency=2, handle_unknown="infrequent_if_exist")
+    oe = OrdinalEncoder(min_frequency=2, handle_unknown=handle_unknown)
     oe.fit(X)
     warn_msg = (
         r"Found unknown categories in columns \[0\] during "
-        "transform. These unknown will be mapped to the last position "
+        "transform. These unknown categories will be mapped to the last position "
         "in the encoding"
     )
 
