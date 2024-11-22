@@ -1017,27 +1017,27 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
-    MultiOutputClassifier:{
-    "check_estimator_sparse_array": (
+    MultiOutputClassifier: {
+        "check_estimator_sparse_array": (
             "predict_proba returns a list of arrays, test expects array",
         ),
-	"check_estimator_sparse_matrix": (
+        "check_estimator_sparse_matrix": (
             "predict_proba returns a list of arrays, test expects array",
         ),
-	"check_classifiers_one_label": (
+        "check_classifiers_one_label": (
             "fit expects y to have at least two dimensions, tests provides y with one dimension",
         ),
-	"check_classifiers_one_label_sample_weights": (
+        "check_classifiers_one_label_sample_weights": (
             "fit expects y to have at least two dimensions, tests provides y with one dimension",
         ),
-	"check_classifiers_classes": (
+        "check_classifiers_classes": (
             "fit expects y to have at least two dimensions, tests provides y with one dimension",
         ),
-	"check_classifiers_train": (
+        "check_classifiers_train": (
             "predict returns an array of arrays, test expects array",
-            "predict_proba returns a list of arrays, test expects array"
+            "predict_proba returns a list of arrays, test expects array",
         ),
-	"check_methods_sample_order_invariance": (
+        "check_methods_sample_order_invariance": (
             "predict_proba returns a list of arrays, test expects array",
         ),
     },
