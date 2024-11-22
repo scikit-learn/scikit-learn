@@ -396,7 +396,10 @@ def test_safe_tags():
 
     err_msg = "The key unknown_key is not defined"
     with pytest.raises(ValueError, match=err_msg):
-        _safe_tags(estimator, key="unknown_key")
+        with pytest.warns(
+            FutureWarning, match="The `_safe_tags` function is deprecated"
+        ):
+            _safe_tags(estimator, key="unknown_key")
 
 
 def test_old_tags():
