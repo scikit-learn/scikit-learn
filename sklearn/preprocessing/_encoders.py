@@ -546,9 +546,9 @@ class OneHotEncoder(_BaseEncoder):
     dtype : number type, default=np.float64
         Desired dtype of output.
 
-    handle_unknown : {'error', 'use_encoded_value', 'ignore',
-                      'infrequent_if_exist', 'warn'}, default='error'
-        Specifies the way unknown categories are handled during :meth:`transform`.
+    handle_unknown : {'error', 'ignore', 'infrequent_if_exist', 'warn'}, \
+                     default='error'
+        Specifies the way unknown categories are handled during :meth:`transform`
 
         - 'error' : Raise an error if an unknown category is present during transform.
         - 'ignore' : When an unknown category is encountered during
@@ -568,7 +568,7 @@ class OneHotEncoder(_BaseEncoder):
           :ref:`User Guide <encoder_infrequent_categories>`.
         - 'warn' : When an unknown category is encountered during transform
           a warning is issued, and the encoding then proceeds as described for
-          `handle_unknown="infrequent_if_exist"`.
+          `handle_unknown="infrequent_if_exist"`
 
         .. versionchanged:: 1.1
             `'infrequent_if_exist'` was added to automatically handle unknown
@@ -1300,7 +1300,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
     handle_unknown : {'error', 'use_encoded_value', 'ignore', \
                       'infrequent_if_exist', 'warn'}, default='error' \
-        Specifies the way unknown categories are handled during :meth:`transform`.
+        Specifies the way unknown categories are handled during :meth:`transform`
 
         - 'error' : An error will be raised in case an unknown
           categorical feature is present during transform.
