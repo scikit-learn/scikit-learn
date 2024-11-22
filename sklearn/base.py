@@ -404,6 +404,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         )
         return _to_old_tags(default_tags(self))
 
+    # TODO(1.7): Remove this method
     def _get_tags(self):
         from sklearn.utils._tags import _to_old_tags, get_tags
 

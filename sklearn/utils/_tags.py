@@ -341,6 +341,7 @@ def _find_tags_provider(estimator, warn=True):
                 # to _get_tags. We should therefore warn for implementing
                 # __sklearn_tags__.
                 tag_provider = "_get_tags"
+                break
 
     if warn and tag_provider == "_get_tags":
         warnings.warn(
