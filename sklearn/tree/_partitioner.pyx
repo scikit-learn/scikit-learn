@@ -194,7 +194,7 @@ cdef class DensePartitioner:
         """Partition samples for feature_values at the current_threshold."""
         cdef:
             intp_t p = self.start
-            intp_t partition_end = self.end
+            intp_t partition_end = self.end - self.n_missing
             intp_t[::1] samples = self.samples
             float32_t[::1] feature_values = self.feature_values
 
