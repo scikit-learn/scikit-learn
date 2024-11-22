@@ -2688,7 +2688,7 @@ def classification_report(
         head_fmt = "{:>{width}s} " + " {:>9}" * len(headers)
         report = head_fmt.format("", *headers, width=width)
         report += "\n\n"
-        row_fmt = "{:>{width}s} " + " {:>9.{digits}f}" * 3 + " {:>9}\n"
+        row_fmt = "{:>{width}s} " + " {:>9.{digits}f}" * 3 + " {:>9.{digits}f}\n"
         for row in rows:
             report += row_fmt.format(*row, width=width, digits=digits)
         report += "\n"
@@ -2719,7 +2719,7 @@ def classification_report(
                     "{:>{width}s} "
                     + " {:>9.{digits}}" * 2
                     + " {:>9.{digits}f}"
-                    + " {:>9}\n"
+                    + " {:>9.{digits}f}\n"
                 )
                 report += row_fmt_accuracy.format(
                     line_heading, "", "", *avg[2:], width=width, digits=digits
