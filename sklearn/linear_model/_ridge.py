@@ -665,10 +665,8 @@ def _ridge_regression(
     if y.ndim > 2:
         raise ValueError("Target y has the wrong shape %s" % str(y.shape))
 
-    ravel = False
     if y.ndim == 1:
         y = xp.reshape(y, (-1, 1))
-        ravel = True
 
     n_samples_, n_targets = y.shape
 
@@ -2597,7 +2595,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
 
     store_cv_results : bool, default=False
         Flag indicating if the cross-validation values corresponding to
-        each alpha should be stored in the ``cv_values_`` attribute (see
+        each alpha should be stored in the ``cv_results_`` attribute (see
         below). This flag is only compatible with ``cv=None`` (i.e. using
         Leave-One-Out Cross-Validation).
 
