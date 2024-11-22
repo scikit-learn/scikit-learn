@@ -598,9 +598,7 @@ update documentation-related lock files and add the `[doc build]` marker to the 
 Resolve conflicts in lock files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Conflicting lock files with the `upstream/main` branch can be resolved arbitrarily, and
-we will re-generate the lock files afterwards. For instance, the conflicts can be
-resolved as follows:
+Here is a bash snippet that helps resolving conflicts in environment and lock files:
 
 .. prompt:: bash
 
@@ -608,20 +606,20 @@ resolved as follows:
   git pull upstream main --no-rebase
   # resolve conflicts - keeping the upstream/main version for specific files
   git checkout --theirs  build_tools/*/*.lock build_tools/*/*environment.yml \
-    build_tools/*/*lock.txt build_tools/*/*requirements.txt
+      build_tools/*/*lock.txt build_tools/*/*requirements.txt
   git add build_tools/*/*.lock build_tools/*/*environment.yml \
-    build_tools/*/*lock.txt build_tools/*/*requirements.txt
+      build_tools/*/*lock.txt build_tools/*/*requirements.txt
   git merge --continue
 
 This will merge `upstream/main` into our branch, automatically prioritising the
-`upstream/main` for conflicting lock files.
+`upstream/main` for conflicting environment and lock files (this is good enough, because
+we will re-generate the lock files afterwards).
 
-If, after resolving the lock files, there are still conflicting files (for instance
-dependency files), git will consider the merge incomplete and we resolve the remaining
-conflicts as usual.
+Note that this only fixes conflicts in environment and lock files and you might have
+other conflicts to resolve.
 
-Finally, we have to re-generate the dependencies and lock files for the CIs, as described in
-:ref:`Build lock files <build_lock_files>`, or by running:
+Finally, we have to re-generate the environment and lock files for the CIs, as described
+in :ref:`Build lock files <build_lock_files>`, or by running:
 
 .. prompt:: bash
 
