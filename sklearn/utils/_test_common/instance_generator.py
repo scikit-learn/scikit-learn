@@ -544,6 +544,11 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             # Using subsample != None leads to a stochastic fit that is not
             # handled by the check_sample_weight_equivalence test.
             dict(strategy="quantile", subsample=None, quantile_method="inverted_cdf"),
+            dict(
+                strategy="quantile",
+                subsample=None,
+                quantile_method="average_inverted_cdf",
+            ),
             dict(strategy="uniform", subsample=None),
             # The "kmeans" strategy leads to a stochastic fit that is not
             # handled by the check_sample_weight_equivalence test.

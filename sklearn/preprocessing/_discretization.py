@@ -290,15 +290,15 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         if self.strategy == "quantile" and self.quantile_method == "warn":
             if sample_weight is None:
                 warnings.warn(
-                    "Defaulting to quantile method linear this will be changed to\
-                                  average_inverted_cdf in scikit-learn version 1.9",
+                    "Defaulting to quantile method 'linear' this will be changed to "
+                    "average_inverted_cdf in scikit-learn version 1.9",
                     FutureWarning,
                 )
                 self.quantile_method = "linear"
             if sample_weight is not None:
                 warnings.warn(
-                    "Defaulting to quantile method inverted_cdf this will be changed to\
-                                  average_inverted_cdf in scikit-learn version 1.9",
+                    "Defaulting to quantile method 'inverted_cdf' this will be changed to "
+                    "average_inverted_cdf in scikit-learn version 1.9",
                     FutureWarning,
                 )
                 self.quantile_method = "inverted_cdf"
@@ -308,8 +308,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             and sample_weight is not None
         ):
             raise ValueError(
-                "When using quantile strategy with sample weights, quantile method\
-                      should be inverted_cdf or averaged_inverted_cdf"
+                "When fitting with strategy='quantile' and sample weights, "
+                "quantile_method should either be set to 'averaged_inverted_cdf' or "
+                f"'inverted_cdf', got quantile_method='{self.quantile_method}' instead".
             )
 
         if self.strategy != "quantile" and sample_weight is not None:

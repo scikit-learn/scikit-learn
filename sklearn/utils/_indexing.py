@@ -546,7 +546,7 @@ def resample(
         )
     if sample_weight is not None and stratify is not None:
         raise NotImplementedError(
-            "Resampling with sample_weight is only implemented for stratify=None"
+            "Resampling with sample_weight is only implemented for stratify=None."
         )
     if stratify is None:
         if replace:
