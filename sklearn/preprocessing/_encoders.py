@@ -548,7 +548,7 @@ class OneHotEncoder(_BaseEncoder):
 
     handle_unknown : {'error', 'ignore', 'infrequent_if_exist', 'warn'}, \
                      default='error'
-        Specifies the way unknown categories are handled during :meth:`transform`
+        Specifies the way unknown categories are handled during :meth:`transform`.
 
         - 'error' : Raise an error if an unknown category is present during transform.
         - 'ignore' : When an unknown category is encountered during
