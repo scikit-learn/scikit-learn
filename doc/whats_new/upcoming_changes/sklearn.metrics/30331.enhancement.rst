@@ -1,0 +1,3 @@
+- :func:`sklearn.metrics.classification_report` now uses `digits` parameter
+  to format the `support` column
+  By :user:`Dalesrox <Dalesrox>`
