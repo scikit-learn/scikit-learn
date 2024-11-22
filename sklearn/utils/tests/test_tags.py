@@ -13,6 +13,7 @@ from sklearn.utils import (
     RegressorTags,
     Tags,
     TargetTags,
+    TransformerTags,
     get_tags,
 )
 from sklearn.utils._tags import _safe_tags, _to_new_tags, _to_old_tags, default_tags
@@ -424,7 +425,7 @@ def test_old_tags():
             target_tags = TargetTags(
                 required=False,
                 one_d_labels=True,
-                two_d_labels=False,
+                two_d_labels=True,
                 positive_only=True,
                 multi_output=True,
                 single_output=False,
@@ -473,6 +474,7 @@ def test_old_tags():
             "string",
             "dict",
             "1dlabels",
+            "2dlabels",
         ],
     }
     assert old_tags == expected_tags
@@ -533,6 +535,83 @@ def test_old_tags():
         "pairwise": True,
         "preserves_dtype": ["float64"],
         "poor_score": True,
+        "requires_fit": True,
+        "requires_positive_X": True,
+        "requires_y": False,
+        "requires_positive_y": True,
+        "_skip_test": False,
+        "stateless": True,
+        "X_types": [
+            "1darray",
+            "3darray",
+            "sparse",
+            "categorical",
+            "string",
+            "dict",
+            "1dlabels",
+        ],
+    }
+    assert old_tags == expected_tags
+    assert _to_new_tags(_to_old_tags(new_tags), estimator=estimator) == new_tags
+
+    class MyClass:
+
+        def fit(self, X, y=None):
+            return self  # pragma: no cover
+
+        def transform(self, X):
+            return X  # pragma: no cover
+
+        def __sklearn_tags__(self):
+            input_tags = InputTags(
+                one_d_array=True,
+                two_d_array=False,
+                three_d_array=True,
+                sparse=True,
+                categorical=True,
+                string=True,
+                dict=True,
+                positive_only=True,
+                allow_nan=True,
+                pairwise=True,
+            )
+            target_tags = TargetTags(
+                required=False,
+                one_d_labels=True,
+                two_d_labels=False,
+                positive_only=True,
+                multi_output=True,
+                single_output=False,
+            )
+            transformer_tags = TransformerTags(
+                preserves_dtype=["float64"],
+            )
+            classifier_tags = None
+            regressor_tags = None
+            return Tags(
+                estimator_type=None,
+                input_tags=input_tags,
+                target_tags=target_tags,
+                transformer_tags=transformer_tags,
+                classifier_tags=classifier_tags,
+                regressor_tags=regressor_tags,
+            )
+
+    estimator = MyClass()
+    new_tags = get_tags(estimator)
+    old_tags = _to_old_tags(new_tags)
+    expected_tags = {
+        "allow_nan": True,
+        "array_api_support": False,
+        "binary_only": False,
+        "multilabel": False,
+        "multioutput": True,
+        "multioutput_only": True,
+        "no_validation": False,
+        "non_deterministic": False,
+        "pairwise": True,
+        "preserves_dtype": ["float64"],
+        "poor_score": False,
         "requires_fit": True,
         "requires_positive_X": True,
         "requires_y": False,
