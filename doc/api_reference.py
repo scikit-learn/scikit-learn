@@ -773,6 +773,7 @@ API_REFERENCE = {
                     "mean_tweedie_deviance",
                     "median_absolute_error",
                     "r2_score",
+                    "adjusted_r2_score",
                     "root_mean_squared_error",
                     "root_mean_squared_log_error",
                 ],

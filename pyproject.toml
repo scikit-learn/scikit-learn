@@ -106,7 +106,7 @@ requires = [
 ]
 
 [tool.black]
-line-length = 88
+line-length = 114
 target-version = ['py39', 'py310', 'py311']
 preview = true
 exclude = '''
@@ -126,7 +126,7 @@ exclude = '''
 
 [tool.ruff]
 # max line length for black
-line-length = 88
+line-length = 114
 target-version = "py38"
 exclude=[
     ".git",
@@ -191,7 +191,7 @@ notice-rgx = "\\#\\ Authors:\\ The\\ scikit\\-learn\\ developers\\\r?\\\n\\#\\ S
 
 [tool.cython-lint]
 # Ignore the same error codes as ruff
-# + E501 (line too long) because keeping it < 88 in cython
+# + E501 (line too long) because keeping it < 114 in cython
 # often makes code less readable.
 ignore = [
     # multiple spaces/tab after comma
