@@ -2366,7 +2366,7 @@ def recall_score(
     
     References
     ----------
-    .. [1] J. Opitz, (2024). `"A Closer Look at Classification Evaluation Metrics
+    .. [1] J. Opitz (2024). `"A Closer Look at Classification Evaluation Metrics
            and a Critical Reflection of Common Evaluation Practice". Transactions
            of the Association for Computational Linguistics 12 (2024): 820-836.
            <https://doi.org/10.1162/tacl_a_00675>`_.
