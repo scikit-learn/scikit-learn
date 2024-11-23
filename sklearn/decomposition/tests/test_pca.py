@@ -1115,7 +1115,6 @@ def test_pca_mle_array_api_compliance(
 
 
 def test_array_api_error_and_warnings_on_unsupported_params():
-    pytest.importorskip("array_api_compat")
     xp = pytest.importorskip("array_api_strict")
     iris_xp = xp.asarray(iris.data)
 
