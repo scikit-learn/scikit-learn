@@ -2636,7 +2636,6 @@ def test_yeo_johnson_inverse_transform_warning():
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
         x_inv = trans.inverse_transform(psi).item()
-        print(f"Inverse transformed value: {x_inv}")
         assert np.isnan(x_inv)
 
         # Check if warning was raised
