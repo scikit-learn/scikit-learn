@@ -62,6 +62,7 @@ from ._regression import (
     mean_tweedie_deviance,
     median_absolute_error,
     r2_score,
+    adjusted_r2_score,
     root_mean_squared_error,
     root_mean_squared_log_error,
 )
@@ -164,6 +165,7 @@ __all__ = [
     "precision_score",
     "PredictionErrorDisplay",
     "r2_score",
+    "adjusted_r2_score",
     "rand_score",
     "recall_score",
     "RocCurveDisplay",

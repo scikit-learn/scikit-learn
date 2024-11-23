@@ -43,6 +43,7 @@ __ALL__ = [
     "mean_absolute_percentage_error",
     "mean_pinball_loss",
     "r2_score",
+    "adjusted_r2_score",
     "root_mean_squared_log_error",
     "root_mean_squared_error",
     "explained_variance_score",
@@ -1230,6 +1231,62 @@ def r2_score(
     },
     prefer_skip_nested_validation=True,
 )
+def adjusted_r2_score(
+    y_true,
+    y_pred,
+    *,
+    sample_weight=None,
+    multioutput="uniform_average",
+    force_finite=True,
+):
+    """
+    Adjusted R² (coefficient of determination) regression score function.
+
+    This is an adjusted version of the R² score that accounts for the number
+    of features (predictors) in the model. The adjusted R² is useful when
+    comparing models with a different number of predictors.
+
+    Best possible score is 1.0, but it can be negative if the model is worse than a constant model.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Estimated target values.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    multioutput : {'raw_values', 'uniform_average', 'variance_weighted'}, \
+            array-like of shape (n_outputs,) or None, default='uniform_average'
+        Defines aggregating of multiple output scores.
+
+    force_finite : bool, default=True
+        Flag indicating if NaN and -Inf scores resulting from constant data should be replaced with real numbers.
+
+    Returns
+    -------
+    float or ndarray of floats
+        The adjusted R² score or ndarray of scores if 'multioutput' is 'raw_values'.
+    """
+    # Check input shapes and lengths
+    if len(y_true) != len(y_pred):
+        raise ValueError("Length of y_true and y_pred must be the same.")
+    
+    n = len(y_true)  # Number of samples
+    p = y_pred.shape[1] if len(y_pred.shape) > 1 else 1  # Number of predictors (features)
+    
+    # Calculate R²
+    r2 = r2_score(y_true, y_pred, sample_weight=sample_weight, multioutput=multioutput, force_finite=force_finite)
+
+    # Calculate Adjusted R²
+    if n - p - 1 == 0:  # To avoid division by zero
+        return float("nan")
+    
+    adjusted_r2 = 1 - ((1 - r2) * (n - 1)) / (n - p - 1)
+    return adjusted_r2
 def max_error(y_true, y_pred):
     """
     The max_error metric calculates the maximum residual error.
