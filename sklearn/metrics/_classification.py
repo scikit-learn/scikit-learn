@@ -2360,8 +2360,9 @@ def recall_score(
     ``UndefinedMetricWarning``. This behavior can be modified with
     ``zero_division``.
     
-    When used with ``average=macro``, the result equals the balanced accuracy.
-    That is, ``recall_score(y_true, y_pred, average=macro)`` is the same as
+    When used with ``average=macro``, the result equals that of
+    :func:`balanced_accuracy_score`. That is, 
+    ``recall_score(y_true, y_pred, average=macro)`` is the same as
     ``balanced_accuracy_score(y_true, y_pred)``.
     
     References
@@ -2471,8 +2472,8 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     sample weights, and shares desirable properties with the binary case.
     See the :ref:`User Guide <balanced_accuracy_score>`.
     
-    Also note the equivalency of balanced accuracy and macro-averaged recall.
-    That is, ``balanced_accuracy_score(y_true, y_pred)`` is equal to
+    Also note the equivalency of balanced accuracy and macro-averaged 
+    :func:`recall`. That is, ``balanced_accuracy_score(y_true, y_pred)`` equals
     ``recall_score(y_true, y_pred, average=macro)``.
     
     References
@@ -2485,7 +2486,7 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     .. [2] John. D. Kelleher, Brian Mac Namee, Aoife D'Arcy, (2015).
            `Fundamentals of Machine Learning for Predictive Data Analytics:
            Algorithms, Worked Examples, and Case Studies
-           <https://mitpress.mit.edu/books/fundamentals-machine-learning-predictive-data-analytics>`_
+           <https://mitpress.mit.edu/books/fundamentals-machine-learning-predictive-data-analytics>`_.
            
     .. [3] J. Opitz (2024). `"A Closer Look at Classification Evaluation Metrics
            and a Critical Reflection of Common Evaluation Practice". Transactions
