@@ -2369,8 +2369,8 @@ def recall_score(
     ----------
     .. [1] J. Opitz (2024). `"A Closer Look at Classification Evaluation Metrics
            and a Critical Reflection of Common Evaluation Practice". Transactions
-           of the Association for Computational Linguistics 12 (2024): 820-836.
-           <https://doi.org/10.1162/tacl_a_00675>`_
+           of the Association for Computational Linguistics 12 (2024): 820-836
+           <https://doi.org/10.1162/tacl_a_00675>`_.
 
     Examples
     --------
@@ -2473,7 +2473,7 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     See the :ref:`User Guide <balanced_accuracy_score>`.
     
     Also note the equivalency of our defintion of balanced accuracy and
-    macro-averaged :func:`recall`.
+    macro-averaged :func:`recall_score`.
     That is, ``balanced_accuracy_score(y_true, y_pred)`` equals
     ``recall_score(y_true, y_pred, average=macro)``.
     
@@ -2491,8 +2491,8 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
            
     .. [3] J. Opitz (2024). `"A Closer Look at Classification Evaluation Metrics
            and a Critical Reflection of Common Evaluation Practice". Transactions
-           of the Association for Computational Linguistics 12 (2024): 820-836.
-           <https://doi.org/10.1162/tacl_a_00675>`_
+           of the Association for Computational Linguistics 12 (2024): 820-836
+           <https://doi.org/10.1162/tacl_a_00675>`_.
 
     Examples
     --------
