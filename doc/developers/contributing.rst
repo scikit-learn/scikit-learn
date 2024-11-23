@@ -51,7 +51,7 @@ There are many ways to contribute to scikit-learn, with the most common ones
 being contribution of code or documentation to the project. Improving the
 documentation is no less important than improving the library itself.  If you
 find a typo in the documentation, or have made improvements, do not hesitate to
-send an email to the mailing list or preferably submit a GitHub pull request.
+create a GitHub issue or preferably submit a GitHub pull request.
 Full documentation can be found under the doc/ directory.
 
 But there are many other ways to help. In particular helping to
@@ -345,8 +345,10 @@ The next steps now describe the process of modifying code and submitting a PR:
 12. Follow `these
     <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
     instructions to create a pull request from your fork. This will send an
-    email to the committers. You may want to consider sending an email to the
-    mailing list for more visibility.
+    notification to potential reviewers. You may want to consider sending an message to
+    the `discord <https://discord.com/invite/h9qyrK8Jc8>`_ in the development
+    channel for more visibility if your pull request does not receive attention after
+    a couple of days (instant replies are not guaranteed though).
 
 It is often helpful to keep your local feature branch synchronized with the
 latest changes of the main scikit-learn repository:
@@ -560,12 +562,15 @@ Commit Message Marker  Action Taken by CI
 Note that, by default, the documentation is built but only the examples
 that are directly modified by the pull request are executed.
 
-Lock files
-^^^^^^^^^^
+.. _build_lock_files:
+
+Build lock files
+^^^^^^^^^^^^^^^^
 
 CIs use lock files to build environments with specific versions of dependencies. When a
 PR needs to modify the dependencies or their versions, the lock files should be updated
-accordingly. This can be done by commenting in the PR:
+accordingly. This can be done by adding the following comment directly in the GitHub
+Pull Request (PR) discussion:
 
 .. code-block:: text
 
@@ -589,6 +594,36 @@ update documentation-related lock files and add the `[doc build]` marker to the 
 .. code-block:: text
 
   @scikit-learn-bot update lock-files --select-build doc --commit-marker "[doc build]"
+
+Resolve conflicts in lock files
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Here is a bash snippet that helps resolving conflicts in environment and lock files:
+
+.. prompt:: bash
+
+  # pull latest upstream/main
+  git pull upstream main --no-rebase
+  # resolve conflicts - keeping the upstream/main version for specific files
+  git checkout --theirs  build_tools/*/*.lock build_tools/*/*environment.yml \
+      build_tools/*/*lock.txt build_tools/*/*requirements.txt
+  git add build_tools/*/*.lock build_tools/*/*environment.yml \
+      build_tools/*/*lock.txt build_tools/*/*requirements.txt
+  git merge --continue
+
+This will merge `upstream/main` into our branch, automatically prioritising the
+`upstream/main` for conflicting environment and lock files (this is good enough, because
+we will re-generate the lock files afterwards).
+
+Note that this only fixes conflicts in environment and lock files and you might have
+other conflicts to resolve.
+
+Finally, we have to re-generate the environment and lock files for the CIs, as described
+in :ref:`Build lock files <build_lock_files>`, or by running:
+
+.. prompt:: bash
+
+  python build_tools/update_environments_and_lock_files.py
 
 .. _stalled_pull_request:
 

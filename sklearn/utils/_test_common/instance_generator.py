@@ -4,6 +4,7 @@
 
 import re
 import warnings
+from contextlib import suppress
 from functools import partial
 from inspect import isfunction
 
@@ -110,6 +111,7 @@ from sklearn.linear_model import (
     RANSACRegressor,
     Ridge,
     RidgeClassifier,
+    RidgeCV,
     SGDClassifier,
     SGDOneClassSVM,
     SGDRegressor,
@@ -143,14 +145,24 @@ from sklearn.multioutput import (
     MultiOutputRegressor,
     RegressorChain,
 )
+from sklearn.naive_bayes import CategoricalNB
 from sklearn.neighbors import (
+    KernelDensity,
     KNeighborsClassifier,
     KNeighborsRegressor,
+    KNeighborsTransformer,
     NeighborhoodComponentsAnalysis,
+    RadiusNeighborsTransformer,
 )
 from sklearn.neural_network import BernoulliRBM, MLPClassifier, MLPRegressor
 from sklearn.pipeline import FeatureUnion, Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler, TargetEncoder
+from sklearn.preprocessing import (
+    KBinsDiscretizer,
+    OneHotEncoder,
+    SplineTransformer,
+    StandardScaler,
+    TargetEncoder,
+)
 from sklearn.random_projection import (
     GaussianRandomProjection,
     SparseRandomProjection,
@@ -163,6 +175,7 @@ from sklearn.semi_supervised import (
 from sklearn.svm import SVC, SVR, LinearSVC, LinearSVR, NuSVC, NuSVR, OneClassSVM
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import all_estimators
+from sklearn.utils._tags import get_tags
 from sklearn.utils._testing import SkipTest
 
 CROSS_DECOMPOSITION = ["PLSCanonical", "PLSRegression", "CCA", "PLSSVD"]
@@ -486,7 +499,6 @@ INIT_PARAMS = {
 # TODO(devtools): allow third-party developers to pass test specific params to checks
 PER_ESTIMATOR_CHECK_PARAMS: dict = {
     # TODO(devtools): check that function names here exist in checks for the estimator
-    # TODO(devtools): write a test for the same thing with tags._xfail_checks
     AgglomerativeClustering: {"check_dict_unchanged": dict(n_clusters=1)},
     BayesianGaussianMixture: {"check_dict_unchanged": dict(max_iter=5, n_init=2)},
     BernoulliRBM: {"check_dict_unchanged": dict(n_components=1, n_iter=5)},
@@ -494,19 +506,30 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     BisectingKMeans: {"check_dict_unchanged": dict(max_iter=5, n_clusters=1, n_init=2)},
     CCA: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     DecisionTreeRegressor: {
-        "check_sample_weight_equivalence": [
+        "check_sample_weight_equivalence_on_dense_data": [
             dict(criterion="squared_error"),
             dict(criterion="absolute_error"),
             dict(criterion="friedman_mse"),
             dict(criterion="poisson"),
-        ]
+        ],
+        "check_sample_weight_equivalence_on_sparse_data": [
+            dict(criterion="squared_error"),
+            dict(criterion="absolute_error"),
+            dict(criterion="friedman_mse"),
+            dict(criterion="poisson"),
+        ],
     },
     DecisionTreeClassifier: {
-        "check_sample_weight_equivalence": [
+        "check_sample_weight_equivalence_on_dense_data": [
             dict(criterion="gini"),
             dict(criterion="log_loss"),
             dict(criterion="entropy"),
-        ]
+        ],
+        "check_sample_weight_equivalence_on_sparse_data": [
+            dict(criterion="gini"),
+            dict(criterion="log_loss"),
+            dict(criterion="entropy"),
+        ],
     },
     DictionaryLearning: {
         "check_dict_unchanged": dict(
@@ -517,10 +540,10 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     FastICA: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     FeatureAgglomeration: {"check_dict_unchanged": dict(n_clusters=1)},
     GammaRegressor: {
-        "check_sample_weight_equivalence": [
+        "check_sample_weight_equivalence_on_dense_data": [
             dict(solver="newton-cholesky"),
             dict(solver="lbfgs"),
-        ]
+        ],
     },
     GaussianMixture: {"check_dict_unchanged": dict(max_iter=5, n_init=2)},
     GaussianRandomProjection: {"check_dict_unchanged": dict(n_components=1)},
@@ -535,12 +558,15 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     LinearDiscriminantAnalysis: {"check_dict_unchanged": dict(n_components=1)},
     LocallyLinearEmbedding: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     LogisticRegression: {
-        "check_sample_weight_equivalence": [
+        "check_sample_weight_equivalence_on_dense_data": [
             dict(solver="lbfgs"),
             dict(solver="liblinear"),
             dict(solver="newton-cg"),
             dict(solver="newton-cholesky"),
-        ]
+        ],
+        "check_sample_weight_equivalence_on_sparse_data": [
+            dict(solver="liblinear"),
+        ],
     },
     MDS: {"check_dict_unchanged": dict(max_iter=5, n_components=1, n_init=2)},
     MiniBatchDictionaryLearning: {
@@ -567,38 +593,45 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     PLSRegression: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     PLSSVD: {"check_dict_unchanged": dict(n_components=1)},
     PoissonRegressor: {
-        "check_sample_weight_equivalence": [
+        "check_sample_weight_equivalence_on_dense_data": [
             dict(solver="newton-cholesky"),
             dict(solver="lbfgs"),
-        ]
+        ],
     },
     PolynomialCountSketch: {"check_dict_unchanged": dict(n_components=1)},
     QuantileRegressor: {
-        "check_sample_weight_equivalence": [
+        "check_sample_weight_equivalence_on_dense_data": [
             dict(quantile=0.5),
             dict(quantile=0.75),
             dict(solver="highs-ds"),
             dict(solver="highs-ipm"),
-        ]
+        ],
     },
     RBFSampler: {"check_dict_unchanged": dict(n_components=1)},
     Ridge: {
-        "check_sample_weight_equivalence": [
+        "check_sample_weight_equivalence_on_dense_data": [
             dict(solver="svd"),
             dict(solver="cholesky"),
             dict(solver="sparse_cg"),
             dict(solver="lsqr"),
             dict(solver="lbfgs", positive=True),
-        ]
+        ],
+        "check_sample_weight_equivalence_on_sparse_data": [
+            dict(solver="sparse_cg"),
+            dict(solver="lsqr"),
+        ],
     },
     RidgeClassifier: {
-        "check_sample_weight_equivalence": [
+        "check_sample_weight_equivalence_on_dense_data": [
             dict(solver="svd"),
             dict(solver="cholesky"),
             dict(solver="sparse_cg"),
             dict(solver="lsqr"),
-            dict(solver="lbfgs", positive=True),
-        ]
+        ],
+        "check_sample_weight_equivalence_on_sparse_data": [
+            dict(solver="sparse_cg"),
+            dict(solver="lsqr"),
+        ],
     },
     SkewedChi2Sampler: {"check_dict_unchanged": dict(n_components=1)},
     SparsePCA: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
@@ -611,24 +644,31 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     },
     SpectralCoclustering: {"check_dict_unchanged": dict(n_clusters=1, n_init=2)},
     SpectralEmbedding: {"check_dict_unchanged": dict(eigen_tol=1e-05, n_components=1)},
+    StandardScaler: {
+        "check_sample_weight_equivalence_on_dense_data": [
+            dict(with_mean=True),
+            dict(with_mean=False),
+        ],
+        "check_sample_weight_equivalence_on_sparse_data": [
+            dict(with_mean=False),
+        ],
+    },
     TSNE: {"check_dict_unchanged": dict(n_components=1, perplexity=2)},
     TruncatedSVD: {"check_dict_unchanged": dict(n_components=1)},
     TweedieRegressor: {
-        "check_sample_weight_equivalence": [
+        "check_sample_weight_equivalence_on_dense_data": [
             dict(solver="newton-cholesky"),
             dict(solver="lbfgs"),
-        ]
+        ],
     },
 }
 
 
 def _tested_estimators(type_filter=None):
-    for name, Estimator in all_estimators(type_filter=type_filter):
-        try:
+    for _, Estimator in all_estimators(type_filter=type_filter):
+        with suppress(SkipTest):
             for estimator in _construct_instances(Estimator):
                 yield estimator
-        except SkipTest:
-            continue
 
 
 SKIPPED_ESTIMATORS = [SparseCoder, FrozenEstimator]
@@ -726,3 +766,480 @@ def _yield_instances_for_check(check, estimator_orig):
         estimator = clone(estimator_orig)
         estimator.set_params(**params)
         yield estimator
+
+
+PER_ESTIMATOR_XFAIL_CHECKS = {
+    AdaBoostClassifier: {
+        # TODO: replace by a statistical test, see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    AdaBoostRegressor: {
+        # TODO: replace by a statistical test, see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    BaggingClassifier: {
+        # TODO: replace by a statistical test, see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    BaggingRegressor: {
+        # TODO: replace by a statistical test, see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    BayesianRidge: {
+        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    BernoulliRBM: {
+        "check_methods_subset_invariance": ("fails for the decision_function method"),
+        "check_methods_sample_order_invariance": ("fails for the score_samples method"),
+    },
+    BisectingKMeans: {
+        # TODO: replace by a statistical test, see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    CategoricalNB: {
+        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    ColumnTransformer: {
+        "check_estimators_empty_data_messages": "FIXME",
+        "check_estimators_nan_inf": "FIXME",
+        "check_estimator_sparse_array": "FIXME",
+        "check_estimator_sparse_matrix": "FIXME",
+        "check_fit1d": "FIXME",
+        "check_fit2d_predict1d": "FIXME",
+        "check_complex_data": "FIXME",
+        "check_fit2d_1feature": "FIXME",
+    },
+    DummyClassifier: {
+        "check_methods_subset_invariance": "fails for the predict method",
+        "check_methods_sample_order_invariance": "fails for the predict method",
+    },
+    FeatureUnion: {
+        "check_estimators_overwrite_params": "FIXME",
+        "check_estimators_nan_inf": "FIXME",
+        "check_dont_overwrite_parameters": "FIXME",
+    },
+    FixedThresholdClassifier: {
+        "check_classifiers_train": "Threshold at probability 0.5 does not hold",
+        "check_sample_weight_equivalence_on_dense_data": (
+            "Due to the cross-validation and sample ordering, removing a sample"
+            " is not strictly equal to putting is weight to zero. Specific unit"
+            " tests are added for TunedThresholdClassifierCV specifically."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    GradientBoostingClassifier: {
+        # TODO: investigate failure see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    GradientBoostingRegressor: {
+        # TODO: investigate failure see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    GridSearchCV: {
+        "check_supervised_y_2d": "DataConversionWarning not caught",
+        "check_requires_y_none": "Doesn't fail gracefully",
+    },
+    HalvingGridSearchCV: {
+        "check_fit2d_1sample": (
+            "Fail during parameter check since min/max resources requires"
+            " more samples"
+        ),
+        "check_estimators_nan_inf": "FIXME",
+        "check_classifiers_one_label_sample_weights": "FIXME",
+        "check_fit2d_1feature": "FIXME",
+        "check_supervised_y_2d": "DataConversionWarning not caught",
+        "check_requires_y_none": "Doesn't fail gracefully",
+    },
+    HalvingRandomSearchCV: {
+        "check_fit2d_1sample": (
+            "Fail during parameter check since min/max resources requires"
+            " more samples"
+        ),
+        "check_estimators_nan_inf": "FIXME",
+        "check_classifiers_one_label_sample_weights": "FIXME",
+        "check_fit2d_1feature": "FIXME",
+        "check_supervised_y_2d": "DataConversionWarning not caught",
+        "check_requires_y_none": "Doesn't fail gracefully",
+    },
+    HistGradientBoostingClassifier: {
+        # TODO: replace by a statistical test, see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    HistGradientBoostingRegressor: {
+        # TODO: replace by a statistical test, see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    IsolationForest: {
+        # TODO: replace by a statistical test, see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    KBinsDiscretizer: {
+        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    KernelDensity: {
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight must have positive values"
+        ),
+    },
+    KMeans: {
+        # TODO: replace by a statistical test, see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    KNeighborsTransformer: {
+        "check_methods_sample_order_invariance": "check is not applicable."
+    },
+    LinearRegression: {
+        # TODO: investigate failure see meta-issue #16298
+        #
+        # Note: this model should converge to the minimum norm solution of the
+        # least squares problem and as result be numerically stable enough when
+        # running the equivalence check even if n_features > n_samples. Maybe
+        # this is is not the case and a different choice of solver could fix
+        # this problem.
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    LinearSVC: {
+        # TODO: replace by a statistical test when _dual=True, see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_non_transformer_estimators_n_iter": (
+            "n_iter_ cannot be easily accessed."
+        ),
+    },
+    LinearSVR: {
+        # TODO: replace by a statistical test, see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    LogisticRegression: {
+        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    MiniBatchKMeans: {
+        # TODO: replace by a statistical test, see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    NuSVC: {
+        "check_class_weight_classifiers": "class_weight is ignored.",
+        # TODO: fix sample_weight handling of this estimator when probability=False
+        # TODO: replace by a statistical test when probability=True
+        # see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_classifiers_one_label_sample_weights": (
+            "specified nu is infeasible for the fit."
+        ),
+    },
+    NuSVR: {
+        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    Nystroem: {
+        "check_transformer_preserves_dtypes": (
+            "dtypes are preserved but not at a close enough precision"
+        )
+    },
+    OneClassSVM: {
+        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    Perceptron: {
+        # TODO: replace by a statistical test, see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    Pipeline: {
+        "check_dont_overwrite_parameters": (
+            "Pipeline changes the `steps` parameter, which it shouldn't."
+            "Therefore this test is x-fail until we fix this."
+        ),
+        "check_estimators_overwrite_params": (
+            "Pipeline changes the `steps` parameter, which it shouldn't."
+            "Therefore this test is x-fail until we fix this."
+        ),
+    },
+    RadiusNeighborsTransformer: {
+        "check_methods_sample_order_invariance": "check is not applicable."
+    },
+    RandomForestClassifier: {
+        # TODO: replace by a statistical test, see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    RandomForestRegressor: {
+        # TODO: replace by a statistical test, see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    RandomizedSearchCV: {
+        "check_supervised_y_2d": "DataConversionWarning not caught",
+        "check_requires_y_none": "Doesn't fail gracefully",
+    },
+    RandomTreesEmbedding: {
+        # TODO: replace by a statistical test, see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    RANSACRegressor: {
+        # TODO: replace by a statistical test, see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    Ridge: {
+        "check_non_transformer_estimators_n_iter": (
+            "n_iter_ cannot be easily accessed."
+        )
+    },
+    RidgeClassifier: {
+        "check_non_transformer_estimators_n_iter": (
+            "n_iter_ cannot be easily accessed."
+        )
+    },
+    RidgeCV: {
+        "check_sample_weight_equivalence_on_dense_data": (
+            "GridSearchCV does not forward the weights to the scorer by default."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    SelfTrainingClassifier: {
+        "check_non_transformer_estimators_n_iter": "n_iter_ can be 0."
+    },
+    SGDClassifier: {
+        # TODO: replace by a statistical test, see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    SGDOneClassSVM: {
+        # TODO: replace by a statistical test, see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    SGDRegressor: {
+        # TODO: replace by a statistical test, see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    SpectralCoclustering: {
+        "check_estimators_dtypes": "raises nan error",
+        "check_fit2d_1sample": "_scale_normalize fails",
+        "check_fit2d_1feature": "raises apply_along_axis error",
+        "check_estimator_sparse_matrix": "does not fail gracefully",
+        "check_estimator_sparse_array": "does not fail gracefully",
+        "check_methods_subset_invariance": "empty array passed inside",
+        "check_dont_overwrite_parameters": "empty array passed inside",
+        "check_fit2d_predict1d": "empty array passed inside",
+        # ValueError: Found array with 0 feature(s) (shape=(23, 0))
+        # while a minimum of 1 is required.
+        "check_dict_unchanged": "FIXME",
+    },
+    SpectralBiclustering: {
+        "check_estimators_dtypes": "raises nan error",
+        "check_fit2d_1sample": "_scale_normalize fails",
+        "check_fit2d_1feature": "raises apply_along_axis error",
+        "check_estimator_sparse_matrix": "does not fail gracefully",
+        "check_estimator_sparse_array": "does not fail gracefully",
+        "check_methods_subset_invariance": "empty array passed inside",
+        "check_dont_overwrite_parameters": "empty array passed inside",
+        "check_fit2d_predict1d": "empty array passed inside",
+    },
+    SplineTransformer: {
+        "check_estimators_pickle": (
+            "Current Scipy implementation of _bsplines does not"
+            "support const memory views."
+        ),
+    },
+    SVC: {
+        # TODO: fix sample_weight handling of this estimator when probability=False
+        # TODO: replace by a statistical test when probability=True
+        # see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    SVR: {
+        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    TunedThresholdClassifierCV: {
+        "check_classifiers_train": "Threshold at probability 0.5 does not hold",
+        "check_sample_weight_equivalence_on_dense_data": (
+            "Due to the cross-validation and sample ordering, removing a sample"
+            " is not strictly equal to putting is weight to zero. Specific unit"
+            " tests are added for TunedThresholdClassifierCV specifically."
+        ),
+    },
+}
+
+
+def _get_expected_failed_checks(estimator):
+    """Get the expected failed checks for all estimators in scikit-learn."""
+    failed_checks = PER_ESTIMATOR_XFAIL_CHECKS.get(type(estimator), {})
+
+    tags = get_tags(estimator)
+
+    # all xfail marks that depend on the instance, come here. As of now, we have only
+    # these two cases.
+    if type(estimator) in [KNeighborsClassifier, KNeighborsRegressor]:
+        if tags.input_tags.pairwise:
+            failed_checks.update(
+                {
+                    "check_n_features_in_after_fitting": "FIXME",
+                    "check_dataframe_column_names_consistency": "FIXME",
+                }
+            )
+
+    return failed_checks
