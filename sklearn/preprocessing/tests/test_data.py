@@ -2641,6 +2641,4 @@ def test_yeo_johnson_inverse_transform_warning():
 
         # Check if warning was raised
         assert len(w) > 0
-        for i in w:
-            print(i)
         assert issubclass(w[-1].category, RuntimeWarning)
