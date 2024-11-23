@@ -2628,7 +2628,6 @@ def test_yeo_johnson_inverse_transform_warning():
     x = np.array([1, 1, 1e10]).reshape(-1, 1)  # extreme skew
     trans.fit(x)
     lmbda = trans.lambdas_[0]
-    print(f"Lambda: {lmbda}")
     assert lmbda < 0  # Should be negative
 
     # any value `psi` for which lambda * psi + 1 <= 0 will result in nan due
