@@ -2361,8 +2361,8 @@ def recall_score(
     ``zero_division``.
     
     When used with ``average=macro``, the result equals that of
-    :func:`balanced_accuracy_score`. That is, 
-    ``recall_score(y_true, y_pred, average=macro)`` is the same as
+    :func:`balanced_accuracy_score`. That is,
+    ``recall_score(y_true, y_pred, average=macro)`` is equivalent to
     ``balanced_accuracy_score(y_true, y_pred)``.
     
     References
@@ -2472,8 +2472,9 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     sample weights, and shares desirable properties with the binary case.
     See the :ref:`User Guide <balanced_accuracy_score>`.
     
-    Also note the equivalency of balanced accuracy and macro-averaged 
-    :func:`recall`. That is, ``balanced_accuracy_score(y_true, y_pred)`` equals
+    Also note the equivalency of our defintion of balanced accuracy and
+    macro-averaged :func:`recall`.
+    That is, ``balanced_accuracy_score(y_true, y_pred)`` equals
     ``recall_score(y_true, y_pred, average=macro)``.
     
     References
