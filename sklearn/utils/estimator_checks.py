@@ -163,7 +163,11 @@ def _yield_checks(estimator):
             # We skip pairwise because the data is not pairwise
             yield check_sample_weights_shape
             yield check_sample_weights_not_overwritten
-            yield check_sample_weight_equivalence
+            yield check_sample_weight_equivalence_on_dense_data
+            # FIXME: filter on tags.input_tags.sparse
+            # (estimator accepts sparse arrays)
+            # once issue #30139 is fixed.
+            yield check_sample_weight_equivalence_on_sparse_data
 
     # Check that all estimator yield informative messages when
     # trained on empty datasets
@@ -1407,7 +1411,7 @@ def check_sample_weights_shape(name, estimator_orig):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_sample_weight_equivalence(name, estimator_orig):
+def _check_sample_weight_equivalence(name, estimator_orig, sparse_container):
     # check that setting sample_weight to zero / integer is equivalent
     # to removing / repeating corresponding samples.
     estimator_weighted = clone(estimator_orig)
@@ -1422,13 +1426,13 @@ def check_sample_weight_equivalence(name, estimator_orig):
     # Use random integers (including zero) as weights.
     sw = rng.randint(0, 5, size=n_samples)
 
-    X_weigthed = X
+    X_weighted = X
     y_weighted = y
     # repeat samples according to weights
-    X_repeated = X_weigthed.repeat(repeats=sw, axis=0)
+    X_repeated = X_weighted.repeat(repeats=sw, axis=0)
     y_repeated = y_weighted.repeat(repeats=sw)
 
-    X_weigthed, y_weighted, sw = shuffle(X_weigthed, y_weighted, sw, random_state=0)
+    X_weighted, y_weighted, sw = shuffle(X_weighted, y_weighted, sw, random_state=0)
 
     # when the estimator has an internal CV scheme
     # we only use weights / repetitions in a specific CV group (here group=0)
@@ -1437,10 +1441,10 @@ def check_sample_weight_equivalence(name, estimator_orig):
             [np.full_like(y_weighted, 0), np.full_like(y, 1), np.full_like(y, 2)]
         )
         sw = np.hstack([sw, np.ones_like(y), np.ones_like(y)])
-        X_weigthed = np.vstack([X_weigthed, X, X])
+        X_weighted = np.vstack([X_weighted, X, X])
         y_weighted = np.hstack([y_weighted, y, y])
         splits_weighted = list(
-            LeaveOneGroupOut().split(X_weigthed, groups=groups_weighted)
+            LeaveOneGroupOut().split(X_weighted, groups=groups_weighted)
         )
         estimator_weighted.set_params(cv=splits_weighted)
 
@@ -1457,8 +1461,13 @@ def check_sample_weight_equivalence(name, estimator_orig):
     y_weighted = _enforce_estimator_tags_y(estimator_weighted, y_weighted)
     y_repeated = _enforce_estimator_tags_y(estimator_repeated, y_repeated)
 
+    # convert to sparse X if needed
+    if sparse_container is not None:
+        X_weighted = sparse_container(X_weighted)
+        X_repeated = sparse_container(X_repeated)
+
     estimator_repeated.fit(X_repeated, y=y_repeated, sample_weight=None)
-    estimator_weighted.fit(X_weigthed, y=y_weighted, sample_weight=sw)
+    estimator_weighted.fit(X_weighted, y=y_weighted, sample_weight=sw)
 
     for method in ["predict_proba", "decision_function", "predict", "transform"]:
         if hasattr(estimator_orig, method):
@@ -1470,6 +1479,22 @@ def check_sample_weight_equivalence(name, estimator_orig):
                 "or repeated data points."
             )
             assert_allclose_dense_sparse(X_pred1, X_pred2, err_msg=err_msg)
+
+
+def check_sample_weight_equivalence_on_dense_data(name, estimator_orig):
+    _check_sample_weight_equivalence(name, estimator_orig, sparse_container=None)
+
+
+def check_sample_weight_equivalence_on_sparse_data(name, estimator_orig):
+    if SPARSE_ARRAY_PRESENT:
+        sparse_container = sparse.csr_array
+    else:
+        sparse_container = sparse.csr_matrix
+    # FIXME: remove the catch once issue #30139 is fixed.
+    try:
+        _check_sample_weight_equivalence(name, estimator_orig, sparse_container)
+    except TypeError:
+        return
 
 
 def check_sample_weights_not_overwritten(name, estimator_orig):
