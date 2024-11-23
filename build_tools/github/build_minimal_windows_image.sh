@@ -8,6 +8,9 @@ PYTHON_VERSION=$1
 FREE_THREADED_BUILD="$(python -c"import sysconfig; print(bool(sysconfig.get_config_var('Py_GIL_DISABLED')))")"
 
 if [[ $FREE_THREADED_BUILD == "False" ]]; then
+    # Prepare a minimal Windows environement without any developer runtime libraries
+    # installed to check that the scikit-learn wheel does not implicitly rely on
+    # external DLLs when running the tests.
     TEMP_FOLDER="$HOME/AppData/Local/Temp"
     WHEEL_PATH=$(ls -d $TEMP_FOLDER/**/*/repaired_wheel/*)
     WHEEL_NAME=$(basename $WHEEL_PATH)
@@ -41,7 +44,8 @@ if [[ $FREE_THREADED_BUILD == "False" ]]; then
     docker commit $CONTAINER_ID scikit-learn/minimal-windows
 else
     # This is too cumbersome to use a Docker image in the free-threaded case
-    # TODO Remove next three lines when scipy and pandas has a release with a Windows free-threaded wheel
+    # TODO Remove the next three lines when scipy and pandas each have a release
+    # with a Windows free-threaded wheel.
     python -m pip install numpy
     dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
     python -m pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url scipy pandas --only-binary :all:
