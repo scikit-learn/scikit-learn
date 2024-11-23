@@ -2359,6 +2359,17 @@ def recall_score(
     When ``true positive + false negative == 0``, recall returns 0 and raises
     ``UndefinedMetricWarning``. This behavior can be modified with
     ``zero_division``.
+    
+    When used with ``average=macro``, the result equals balanced_accuracy_score .
+    That is, ``recall_score(y_true, y_pred, average=macro)`` is the same as
+    ``balanced_accuracy_score(y_true, y_pred)``.
+    
+    References
+    ----------
+    .. [1] J. Opitz, (2024). `"A Closer Look at Classification Evaluation Metrics
+           and a Critical Reflection of Common Evaluation Practice". Transactions
+           of the Association for Computational Linguistics 12 (2024): 820-836.
+           <https://doi.org/10.1162/tacl_a_00675>`_.
 
     Examples
     --------
@@ -2459,7 +2470,11 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     definition is equivalent to :func:`accuracy_score` with class-balanced
     sample weights, and shares desirable properties with the binary case.
     See the :ref:`User Guide <balanced_accuracy_score>`.
-
+    
+    Further note the equivalency of balanced accuracy and macro-averaged recall.
+    That is, ``balanced_accuracy_score(y_true, y_pred)`` is equal to
+    ``recall_score(y_true, y_pred, average=macro)`` using recall_score .
+    
     References
     ----------
     .. [1] Brodersen, K.H.; Ong, C.S.; Stephan, K.E.; Buhmann, J.M. (2010).
@@ -2470,6 +2485,11 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
            `Fundamentals of Machine Learning for Predictive Data Analytics:
            Algorithms, Worked Examples, and Case Studies
            <https://mitpress.mit.edu/books/fundamentals-machine-learning-predictive-data-analytics>`_.
+           
+    .. [3] J. Opitz (2024). `"A Closer Look at Classification Evaluation Metrics
+           and a Critical Reflection of Common Evaluation Practice". Transactions
+           of the Association for Computational Linguistics 12 (2024): 820-836.
+           <https://doi.org/10.1162/tacl_a_00675>`_.
 
     Examples
     --------
