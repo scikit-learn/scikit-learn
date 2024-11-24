@@ -1,0 +1,6 @@
+- :func:`sklearn.metrics.adjusted_r2_score`, a new function to calculate the 
+  adjusted R² score for regression models. This metric accounts for the number of 
+  predictors, making it a more reliable performance measure, especially when comparing 
+  models with different numbers of features. It supports sample weights and handles 
+  edge cases with constant data. 
+  By :user:`Kashif Ali Khan <kashifalikhan36>`
