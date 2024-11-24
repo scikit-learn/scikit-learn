@@ -1274,17 +1274,13 @@ def adjusted_r2_score(
     # Check input shapes and lengths
     if len(y_true) != len(y_pred):
         raise ValueError("Length of y_true and y_pred must be the same.")
-    
     n = len(y_true)  # Number of samples
     p = y_pred.shape[1] if len(y_pred.shape) > 1 else 1  # Number of predictors (features)
-    
     # Calculate R²
     r2 = r2_score(y_true, y_pred, sample_weight=sample_weight, multioutput=multioutput, force_finite=force_finite)
-
     # Calculate Adjusted R²
     if n - p - 1 == 0:  # To avoid division by zero
         return float("nan")
-    
     adjusted_r2 = 1 - ((1 - r2) * (n - 1)) / (n - p - 1)
     return adjusted_r2
 def max_error(y_true, y_pred):
