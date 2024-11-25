@@ -3428,12 +3428,18 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             "yeo-johnson": self._yeo_johnson_inverse_transform,
         }[self.method]
         for i, lmbda in enumerate(self.lambdas_):
-            # raise RuntimeWarning if return NaNs
-            with np.errstate(invalid="warn"):
-                X[:, i] = inv_fun(X[:, i], lmbda)
-
+            with np.errstate(invalid='warn'):
+                with warnings.catch_warnings(record=True) as captured_warnings:
+                    X[:, i] = inv_fun(X[:, i], lmbda)
+            if captured_warnings and np.isnan(X[:, i]).any():
+                    warnings.warn(
+                        f"""Some values in column {i} of the inverse-transformed data are NaN. This may be due to 
+                        extreme skewness or outliers in the data for this column. Consider addressing these issues, 
+                        such as removing or imputing outliers, before applying the transformation.""",
+                        UserWarning
+                    )            
         return X
-
+    
     def _yeo_johnson_inverse_transform(self, x, lmbda):
         """Return inverse-transformed input x following Yeo-Johnson inverse
         transform with parameter lambda.

@@ -2640,4 +2640,4 @@ def test_yeo_johnson_inverse_transform_warning():
 
         # Check if warning was raised
         assert len(w) > 0
-        assert issubclass(w[-1].category, RuntimeWarning)
+        assert issubclass(w[-1].category, UserWarning)
