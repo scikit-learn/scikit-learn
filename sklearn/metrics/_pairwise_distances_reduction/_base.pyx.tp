@@ -138,7 +138,6 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         chunk_size=None,
         strategy=None,
      ):
-
         cdef:
             intp_t X_n_full_chunks, Y_n_full_chunks
        
