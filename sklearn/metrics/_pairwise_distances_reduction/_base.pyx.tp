@@ -140,7 +140,6 @@ cdef class BaseDistancesReduction{{name_suffix}}:
      ):
         cdef:
             intp_t X_n_full_chunks, Y_n_full_chunks
-       
         if chunk_size is None:
             chunk_size = get_config().get("pairwise_dist_chunk_size", 256)
 
