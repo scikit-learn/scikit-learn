@@ -53,8 +53,8 @@ cdef class DatasetsPair{{name_suffix}}:
     @classmethod
     def get_for(
         cls,
-        X,
-        Y,
+        X = None,
+        Y = None,
         precomputed = None,
         metric="euclidean",
         dict metric_kwargs=None,
@@ -184,27 +184,23 @@ cdef class PrecomputedDistanceMatrix{{name_suffix}}(DatasetsPair{{name_suffix}})
             n_features=0,  
         )
         # This array has already been checked.
-        self.precomputed_distance = precomputed_distance
+        self.distance_matrix = precomputed_distance
 
     @final
     cdef intp_t n_samples_X(self) noexcept nogil:
-        with gil:
-            return self.precomputed_distance.shape[0]
+        return self.precomputed_distance.shape[0]
 
     @final
     cdef intp_t n_samples_Y(self) noexcept nogil:
-        with gil: # Acquire the GIL before accessing Python objects
-            return self.precomputed_distance.shape[1]
+        return self.precomputed_distance.shape[1]
   
     @final
     cdef float64_t surrogate_dist(self, intp_t i, intp_t j) noexcept nogil:
-        with gil:
-            return self.precomputed_distance[i, j]
+        return self.precomputed_distance[i, j]
    
     @final
     cdef float64_t dist(self, intp_t i, intp_t j) noexcept nogil:
-        with gil:
-            return self.precomputed_distance[i, j]
+        return self.precomputed_distance[i, j]
 
 @final
 cdef class DenseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
