@@ -94,6 +94,7 @@ Estimators
 - :class:`linear_model.Ridge` (with `solver="svd"`)
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
 - :class:`preprocessing.KernelCenterer`
+- :class:`preprocessing.LabelEncoder`
 - :class:`preprocessing.MaxAbsScaler`
 - :class:`preprocessing.MinMaxScaler`
 - :class:`preprocessing.Normalizer`
@@ -115,6 +116,7 @@ Metrics
 - :func:`sklearn.metrics.cluster.entropy`
 - :func:`sklearn.metrics.accuracy_score`
 - :func:`sklearn.metrics.d2_tweedie_score`
+- :func:`sklearn.metrics.f1_score`
 - :func:`sklearn.metrics.max_error`
 - :func:`sklearn.metrics.mean_absolute_error`
 - :func:`sklearn.metrics.mean_absolute_percentage_error`
@@ -123,6 +125,7 @@ Metrics
 - :func:`sklearn.metrics.mean_squared_error`
 - :func:`sklearn.metrics.mean_squared_log_error`
 - :func:`sklearn.metrics.mean_tweedie_deviance`
+- :func:`sklearn.metrics.multilabel_confusion_matrix`
 - :func:`sklearn.metrics.pairwise.additive_chi2_kernel`
 - :func:`sklearn.metrics.pairwise.chi2_kernel`
 - :func:`sklearn.metrics.pairwise.cosine_similarity`
