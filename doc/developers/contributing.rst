@@ -562,12 +562,15 @@ Commit Message Marker  Action Taken by CI
 Note that, by default, the documentation is built but only the examples
 that are directly modified by the pull request are executed.
 
-Lock files
-^^^^^^^^^^
+.. _build_lock_files:
+
+Build lock files
+^^^^^^^^^^^^^^^^
 
 CIs use lock files to build environments with specific versions of dependencies. When a
 PR needs to modify the dependencies or their versions, the lock files should be updated
-accordingly. This can be done by commenting in the PR:
+accordingly. This can be done by adding the following comment directly in the GitHub
+Pull Request (PR) discussion:
 
 .. code-block:: text
 
@@ -591,6 +594,36 @@ update documentation-related lock files and add the `[doc build]` marker to the 
 .. code-block:: text
 
   @scikit-learn-bot update lock-files --select-build doc --commit-marker "[doc build]"
+
+Resolve conflicts in lock files
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Here is a bash snippet that helps resolving conflicts in environment and lock files:
+
+.. prompt:: bash
+
+  # pull latest upstream/main
+  git pull upstream main --no-rebase
+  # resolve conflicts - keeping the upstream/main version for specific files
+  git checkout --theirs  build_tools/*/*.lock build_tools/*/*environment.yml \
+      build_tools/*/*lock.txt build_tools/*/*requirements.txt
+  git add build_tools/*/*.lock build_tools/*/*environment.yml \
+      build_tools/*/*lock.txt build_tools/*/*requirements.txt
+  git merge --continue
+
+This will merge `upstream/main` into our branch, automatically prioritising the
+`upstream/main` for conflicting environment and lock files (this is good enough, because
+we will re-generate the lock files afterwards).
+
+Note that this only fixes conflicts in environment and lock files and you might have
+other conflicts to resolve.
+
+Finally, we have to re-generate the environment and lock files for the CIs, as described
+in :ref:`Build lock files <build_lock_files>`, or by running:
+
+.. prompt:: bash
+
+  python build_tools/update_environments_and_lock_files.py
 
 .. _stalled_pull_request:
 
