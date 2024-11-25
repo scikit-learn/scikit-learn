@@ -2136,28 +2136,28 @@ def class_likelihood_ratios(
             f"problems, got targets of type: {y_type}"
         )
 
+    msg_deprecated_param = (
+        "`raise_warning` was deprecated in version 1.7 and will be "
+        "removed in 1.9, when an `UndefinedMetricWarning` will always raise in "
+        "case of a division by zero and the value set with the "
+        "`replace_undefined_by` param will be returned. "
+    )
+    mgs_changed_default = (
+        "The default return value of `class_likelihood_ratios` in "
+        "case of a division by zero has been deprecated in 1.7 and will be changed "
+        "to the worst scores (`(1.0, 1.0)`) in version 1.9. Set "
+        "`replace_undefined_by='worst'` to use the new default and to silence "
+        "this Warning."
+    )
     if raise_warning != "deprecated":
-        warnings.warn(
-            "`raise_warning` was deprecated in version 1.7 and will be removed "
-            "in 1.9, when an `UndefinedMetricWarning` will always raise in case of a "
-            "division by zero and the value set with the `replace_undefined_by` param "
-            "will be returned.",
-            FutureWarning,
-        )
+        warnings.warn(msg_deprecated_param + mgs_changed_default, FutureWarning)
     else:
         if replace_undefined_by == "default":
             # TODO(1.9): Remove. If users don't set any return values in case of a
             # division by zero (`raise_warning="deprecated"` and
             # `replace_undefined_by="default"`) they still get a FutureWarning about
             # changing default return values:
-            warnings.warn(
-                "The default return value of `class_likelihood_ratios` in case of a "
-                "division by zero has been deprecated in 1.7 and will be changed to "
-                "the worst scores (`(1.0, 1.0)`) in version 1.9. Set "
-                "`replace_undefined_by='worst'` to use the new default and to silence "
-                "this Warning.",
-                FutureWarning,
-            )
+            warnings.warn(mgs_changed_default, FutureWarning)
         raise_warning = True
 
     if replace_undefined_by == "default":
