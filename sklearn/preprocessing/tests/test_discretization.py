@@ -481,7 +481,7 @@ def test_kbinsdiscretizer_subsample(strategy, global_random_seed):
     )
 
 
-def test_quantile_method_FutureWarning():
+def test_quantile_method_future_warnings():
     X = [[-2, 1, -4], [-1, 2, -3], [0, 3, -2], [1, 4, -1]]
     with pytest.warns(
         FutureWarning,
@@ -497,12 +497,16 @@ def test_quantile_method_FutureWarning():
         KBinsDiscretizer(strategy="quantile").fit(X, sample_weight=[1, 1, 2, 2])
 
 
-def test_ValueError_sample_weight_quantile_method():
+def test_invalid_quantile_method_with_sample_weight():
     X = [[-2, 1, -4], [-1, 2, -3], [0, 3, -2], [1, 4, -1]]
+    expected_msg = (
+        "When fitting with strategy='quantile' and sample weights, "
+        "quantile_method should either be set to 'averaged_inverted_cdf' or "
+        "'inverted_cdf', got quantile_method='linear' instead".
+    )
     with pytest.raises(
         ValueError,
-        match="When using quantile strategy with sample weights, quantile method\
-                      should be inverted_cdf or averaged_inverted_cdf",
+        match=expected_msg,
     ):
         KBinsDiscretizer(strategy="quantile", quantile_method="linear").fit(
             X, sample_weight=[1, 1, 2, 2]

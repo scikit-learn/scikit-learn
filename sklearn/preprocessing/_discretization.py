@@ -62,8 +62,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             'weibull','linear','median_unbiased', 'normal_unbiased'},
             default='warn'
             Method to pass on to np.percentile calculation when using
-            strategy='quantile', only used when no sample weights are
-            passed.
+            strategy='quantile'.
 
             .. versionadded:: 1.6
 
