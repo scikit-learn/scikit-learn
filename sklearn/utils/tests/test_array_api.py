@@ -19,6 +19,7 @@ from sklearn.utils._array_api import (
     _isin,
     _max_precision_float_dtype,
     _nanmax,
+    _nanmean,
     _nanmin,
     _NumPyAPIWrapper,
     _ravel,
@@ -320,6 +321,19 @@ def test_device_inspection():
             partial(_nanmax, axis=1),
             [3.0, numpy.nan, 6.0],
         ),
+        ([1, 2, numpy.nan], _nanmean, 1.5),
+        ([1, -2, -numpy.nan], _nanmean, -0.5),
+        ([-numpy.inf, -numpy.inf], _nanmean, -numpy.inf),
+        (
+            [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
+            partial(_nanmean, axis=0),
+            [2.5, 3.5, 4.5],
+        ),
+        (
+            [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
+            partial(_nanmean, axis=1),
+            [2.0, numpy.nan, 5.0],
+        ),
     ],
 )
 def test_nan_reductions(library, X, reduction, expected):
@@ -576,7 +590,7 @@ def test_count_nonzero(
 
     with config_context(array_api_dispatch=True):
         result = _count_nonzero(
-            array_xp, xp=xp, device=device_, axis=axis, sample_weight=sample_weight
+            array_xp, axis=axis, sample_weight=sample_weight, xp=xp, device=device_
         )
 
     assert_allclose(_convert_to_numpy(result, xp=xp), expected)
