@@ -341,7 +341,7 @@ def test_overwrite():
 
 
 @pytest.mark.parametrize(
-    "strategy, expected_bin_edges", [("quantile", [0, 1, 3]), ("kmeans", [0, 1.5, 3])]
+    "strategy, expected_bin_edges", [("quantile", [0, 1.5, 3]), ("kmeans", [0, 1.5, 3])]
 )
 def test_redundant_bins(strategy, expected_bin_edges):
     X = [[0], [0], [0], [0], [3], [3]]
@@ -485,8 +485,8 @@ def test_quantile_method_future_warnings():
     X = [[-2, 1, -4], [-1, 2, -3], [0, 3, -2], [1, 4, -1]]
     with pytest.warns(
         FutureWarning,
-        match="Defaulting to quantile method 'linear' this will be changed "
-        "to averaged_inverted_cdf in scikit-learn version 1.9",
+        match="Defaulting to quantile method 'averaged_inverted_cdf' this will "
+        "be changed to averaged_inverted_cdf in scikit-learn version 1.9",
     ):
         KBinsDiscretizer(strategy="quantile").fit(X)
     with pytest.warns(

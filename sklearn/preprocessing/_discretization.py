@@ -268,20 +268,12 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         bin_edges = np.zeros(n_features, dtype=object)
 
         if self.strategy == "quantile" and quantile_method == "warn":
-            if sample_weight is None:
-                warnings.warn(
-                    "Defaulting to quantile method 'linear' this will be changed to "
-                    "averaged_inverted_cdf in scikit-learn version 1.9",
-                    FutureWarning,
-                )
-                quantile_method = "linear"
-            if sample_weight is not None:
-                warnings.warn(
-                    "Defaulting to quantile method 'averaged_inverted_cdf' this will "
-                    "be changed to averaged_inverted_cdf in scikit-learn version 1.9",
-                    FutureWarning,
-                )
-                quantile_method = "averaged_inverted_cdf"
+            warnings.warn(
+                "Defaulting to quantile method 'averaged_inverted_cdf' this will "
+                "be changed to averaged_inverted_cdf in scikit-learn version 1.9",
+                FutureWarning,
+            )
+            quantile_method = "averaged_inverted_cdf"
 
         if (
             quantile_method not in ["inverted_cdf", "averaged_inverted_cdf"]
