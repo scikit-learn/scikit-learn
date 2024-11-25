@@ -3433,13 +3433,15 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                     X[:, i] = inv_fun(X[:, i], lmbda)
             if captured_warnings and np.isnan(X[:, i]).any():
                     warnings.warn(
-                        f"""Some values in column {i} of the inverse-transformed data are NaN. This may be due to 
-                        extreme skewness or outliers in the data for this column. Consider addressing these issues, 
-                        such as removing or imputing outliers, before applying the transformation.""",
+                        f"""Some values in column {i} of the inverse-transformed data
+                        are NaN. This may be due to  extreme skewness or outliers in
+                        the data for this column. Consider addressing these issues,
+                        such as removing or imputing outliers, before applying the
+                        transformation.""",
                         UserWarning
-                    )            
+                    )
         return X
-    
+
     def _yeo_johnson_inverse_transform(self, x, lmbda):
         """Return inverse-transformed input x following Yeo-Johnson inverse
         transform with parameter lambda.
