@@ -1,0 +1,4 @@
+- :func:`utils.check_array` now accepts `ensure_non_negative`
+  to check for negative values in the passed array, until now only available through
+  calling :func:`utils.check_non_negative`.
+  By :user:`Tamara Atanasoska <tamaraatanasoska>`

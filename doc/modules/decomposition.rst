@@ -255,7 +255,7 @@ factorization, while larger values shrink many coefficients to zero.
 .. rubric:: References
 
 .. [Mrl09] `"Online Dictionary Learning for Sparse Coding"
-   <https://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
+   <https://www.di.ens.fr/~fbach/mairal_icml09.pdf>`_
    J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
 .. [Jen09] `"Structured Sparse Principal Component Analysis"
    <https://www.di.ens.fr/~fbach/sspca_AISTATS2010.pdf>`_
@@ -590,7 +590,7 @@ extracted from part of the image of a raccoon face looks like.
 .. rubric:: References
 
 * `"Online dictionary learning for sparse coding"
-  <https://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
+  <https://www.di.ens.fr/~fbach/mairal_icml09.pdf>`_
   J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
 
 .. _MiniBatchDictionaryLearning:

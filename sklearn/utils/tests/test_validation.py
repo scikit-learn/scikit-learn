@@ -67,6 +67,7 @@ from sklearn.utils.validation import (
     _check_sample_weight,
     _check_y,
     _deprecate_positional_args,
+    _estimator_has,
     _get_feature_names,
     _is_fitted,
     _is_pandas_df,
@@ -83,6 +84,7 @@ from sklearn.utils.validation import (
     check_scalar,
     column_or_1d,
     has_fit_parameter,
+    validate_data,
 )
 
 
@@ -893,6 +895,21 @@ def test_check_is_fitted_with_is_fitted():
     check_is_fitted(Estimator().fit())
 
 
+def test_check_is_fitted_stateless():
+    """Check that check_is_fitted passes for stateless estimators."""
+
+    class StatelessEstimator(BaseEstimator):
+        def fit(self, **kwargs):
+            return self  # pragma: no cover
+
+        def __sklearn_tags__(self):
+            tags = super().__sklearn_tags__()
+            tags.requires_fit = False
+            return tags
+
+    check_is_fitted(StatelessEstimator())
+
+
 def test_check_is_fitted():
     # Check is TypeError raised when non estimator instance passed
     with pytest.raises(TypeError):
@@ -930,7 +947,7 @@ def test_check_is_fitted():
 
 
 def test_check_is_fitted_attributes():
-    class MyEstimator:
+    class MyEstimator(BaseEstimator):
         def fit(self, X, y):
             return self
 
@@ -1148,6 +1165,93 @@ def test_check_array_memmap(copy):
 
 
 @pytest.mark.parametrize(
+    "estimator_name, estimator_value, delegates, expected_result, expected_exception",
+    [
+        (
+            "estimator_",
+            type("SubEstimator", (), {"attribute_present": True}),
+            None,  # default delegates - ["estimator_", "estimator"]
+            True,  # expected_result is True b/c delegate and attribute are present
+            None,  # expected_exception not relevant for this case
+        ),
+        (
+            "estimator",
+            type("SubEstimator", (), {"attribute_present": True}),
+            None,  # default delegates - ["estimator_", "estimator"]
+            True,  # expected_result is True b/c delegate and attribute are present
+            None,  # expected_exception not relevant for this case
+        ),
+        (
+            "estimators_",
+            [
+                type("SubEstimator", (), {"attribute_present": True})
+            ],  # list of sub-estimators
+            ["estimators_"],
+            True,  # expected_result is True b/c delegate and attribute are present
+            None,  # expected_exception not relevant for this case
+        ),
+        (
+            "custom_estimator",  # custom estimator attribute name
+            type("SubEstimator", (), {"attribute_present": True}),
+            ["custom_estimator"],  # custom delegates
+            True,  # expected_result is True b/c delegate and attribute are present
+            None,  # expected_exception not relevant for this case
+        ),
+        (
+            "no_estimator",  # no estimator attribute name
+            type("SubEstimator", (), {"attribute_present": True}),
+            None,  # default delegates - ["estimator_", "estimator"]
+            None,  # expected_result is not relevant for this case
+            ValueError,  # should raise ValueError b/c no estimator found from delegates
+        ),
+        (
+            "estimator",
+            type("SubEstimator", (), {"attribute_absent": True}),  # attribute_absent
+            None,  # default delegates - ["estimator_", "estimator"]
+            None,  # expected_result is not relevant for this case
+            AttributeError,  # should raise AttributeError b/c attribute is absent
+        ),
+    ],
+    ids=[
+        "fitted_estimator_with_default_delegates",
+        "estimator_with_default_delegates",
+        "list_of_estimators_with_estimators_",
+        "custom_estimator_with_custom_delegates",
+        "no_estimator_with_default_delegates",
+        "estimator_with_default_delegates_but_absent_attribute",
+    ],
+)
+def test_estimator_has(
+    estimator_name, estimator_value, delegates, expected_result, expected_exception
+):
+    """
+    Tests the _estimator_has function by verifying:
+    - Functionality with default and custom delegates.
+    - Raises ValueError if delegates are missing.
+    - Raises AttributeError if the specified attribute is missing.
+    """
+
+    # always checks for attribute - "attribute_present"
+    # ["estimator_", "estimator"] is default value for delegates
+    if delegates is None:
+        check = _estimator_has("attribute_present")
+    else:
+        check = _estimator_has("attribute_present", delegates=delegates)
+
+    class MockEstimator:
+        pass
+
+    a = MockEstimator()
+    setattr(a, estimator_name, estimator_value)
+
+    if expected_exception:
+        with pytest.raises(expected_exception):
+            check(a)
+    else:
+        assert check(a) == expected_result
+
+
+@pytest.mark.parametrize(
     "retype",
     [
         np.asarray,
@@ -1350,7 +1454,7 @@ def test_check_scalar_invalid(
             include_boundaries=include_boundaries,
         )
     assert str(raised_error.value) == str(err_msg)
-    assert type(raised_error.value) == type(err_msg)
+    assert isinstance(raised_error.value, type(err_msg))
 
 
 _psd_cases_valid = {
@@ -1729,19 +1833,19 @@ def test_num_features_errors_1d_containers(X, constructor_name):
     if constructor_name == "array":
         expected_type_name = "numpy.ndarray"
     elif constructor_name == "series":
-        expected_type_name = "pandas.core.series.Series"
+        expected_type_name = "pandas.*Series"
     else:
         expected_type_name = constructor_name
     message = (
         f"Unable to find the number of features from X of type {expected_type_name}"
     )
     if hasattr(X, "shape"):
-        message += " with shape (3,)"
+        message += re.escape(" with shape (3,)")
     elif isinstance(X[0], str):
         message += " where the samples are of type str"
     elif isinstance(X[0], dict):
         message += " where the samples are of type dict"
-    with pytest.raises(TypeError, match=re.escape(message)):
+    with pytest.raises(TypeError, match=message):
         _num_features(X)
 
 
@@ -1888,7 +1992,7 @@ def test_get_feature_names_invalid_dtypes(names, dtypes):
 
 class PassthroughTransformer(BaseEstimator):
     def fit(self, X, y=None):
-        self._validate_data(X, reset=True)
+        validate_data(self, X, reset=True)
         return self
 
     def transform(self, X):
@@ -2011,10 +2115,9 @@ def test_pandas_array_returns_ndarray(input_values):
 
 
 @skip_if_array_api_compat_not_configured
-@pytest.mark.parametrize("array_namespace", ["array_api_strict", "cupy.array_api"])
-def test_check_array_array_api_has_non_finite(array_namespace):
+def test_check_array_array_api_has_non_finite():
     """Checks that Array API arrays checks non-finite correctly."""
-    xp = pytest.importorskip(array_namespace)
+    xp = pytest.importorskip("array_api_strict")
 
     X_nan = xp.asarray([[xp.nan, 1, 0], [0, xp.nan, 3]], dtype=xp.float32)
     with config_context(array_api_dispatch=True):
@@ -2198,6 +2301,16 @@ def test_check_array_writeable_df():
     # df is backed by a read-only array, a copy is made
     assert not np.may_share_memory(out, df)
     assert out.flags.writeable
+
+
+@skip_if_array_api_compat_not_configured
+def test_check_array_on_sparse_inputs_with_array_api_enabled():
+    X_sp = sp.csr_array([[0, 1, 0], [1, 0, 1]])
+    with config_context(array_api_dispatch=True):
+        assert sp.issparse(check_array(X_sp, accept_sparse=True))
+
+        with pytest.raises(TypeError):
+            check_array(X_sp)
 
 
 # TODO(1.8): remove

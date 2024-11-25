@@ -190,15 +190,13 @@ plt.show()
 # References
 # ----------
 #
-#   .. [1] https://archive.ics.uci.edu/ml/datasets/Yeast
+# .. [1] https://archive.ics.uci.edu/ml/datasets/Yeast
 #
-#   .. [2] `"Reducing multiclass to binary: A unifying approach for margin classifiers."
-#      Allwein, Erin L., Robert E. Schapire, and Yoram Singer.
-#      Journal of machine learning research 1
-#      Dec (2000): 113-141.
-#      <https://www.jmlr.org/papers/volume1/allwein00a/allwein00a.pdf>`_.
+# .. [2] `"Reducing multiclass to binary: A unifying approach for margin classifiers."
+#    Allwein, Erin L., Robert E. Schapire, and Yoram Singer.
+#    Journal of machine learning research. 1 Dec (2000): 113-141.
+#    <https://www.jmlr.org/papers/volume1/allwein00a/allwein00a.pdf>`_
 #
-#   .. [3] `"In defense of one-vs-all classification."
-#      Journal of Machine Learning Research 5
-#      Jan (2004): 101-141.
-#      <https://www.jmlr.org/papers/volume5/rifkin04a/rifkin04a.pdf>`_.
+# .. [3] `"In defense of one-vs-all classification."
+#    Journal of Machine Learning Research. 5 Jan (2004): 101-141.
+#    <https://www.jmlr.org/papers/volume5/rifkin04a/rifkin04a.pdf>`_
