@@ -2363,13 +2363,12 @@ def recall_score(
     When used with ``average=macro``, the result equals that of
     :func:`balanced_accuracy_score`. That is,
     ``recall_score(y_true, y_pred, average=macro)`` is equivalent to
-    ``balanced_accuracy_score(y_true, y_pred)``.
+    ``balanced_accuracy_score(y_true, y_pred)``. See also [1], Eq. 8.
 
     References
     ----------
     .. [1] J. Opitz (2024). `"A Closer Look at Classification Evaluation Metrics
-           and a Critical Reflection of Common Evaluation Practice". Transactions
-           of the Association for Computational Linguistics 12 (2024): 820-836
+           and a Critical Reflection of Common Evaluation Practice". TACL
            <https://doi.org/10.1162/tacl_a_00675>`_.
 
     Examples
@@ -2490,8 +2489,7 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
            <https://mitpress.mit.edu/books/fundamentals-machine-learning-predictive-data-analytics>`_.
 
     .. [3] J. Opitz (2024). `"A Closer Look at Classification Evaluation Metrics
-           and a Critical Reflection of Common Evaluation Practice". Transactions
-           of the Association for Computational Linguistics 12 (2024): 820-836
+           and a Critical Reflection of Common Evaluation Practice". TACL
            <https://doi.org/10.1162/tacl_a_00675>`_.
 
     Examples
