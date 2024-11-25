@@ -57,15 +57,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         For an example of the different strategies see:
         :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization_strategies.py`.
 
-    quantile_method : {'warn, 'inverted_cdf','averaged_inverted_cdf',
-            'closest_observation', 'interpolated_inverted_cdf', 'hazen',
-            'weibull','linear','median_unbiased', 'normal_unbiased'},
-            default='warn'
-            Method to pass on to np.percentile calculation when using
-            strategy='quantile'.
-
-            .. versionadded:: 1.6
-
     dtype : {np.float32, np.float64}, default=None
         The desired data-type for the output. If None, output dtype is
         consistent with input dtype. Only np.float32 and np.float64 are
@@ -184,22 +175,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         "n_bins": [Interval(Integral, 2, None, closed="left"), "array-like"],
         "encode": [StrOptions({"onehot", "onehot-dense", "ordinal"})],
         "strategy": [StrOptions({"uniform", "quantile", "kmeans"})],
-        "quantile_method": [
-            StrOptions(
-                {
-                    "warn",
-                    "inverted_cdf",
-                    "averaged_inverted_cdf",
-                    "closest_observation",
-                    "interpolated_inverted_cdf",
-                    "hazen",
-                    "weibull",
-                    "linear",
-                    "median_unbiased",
-                    "normal_unbiased",
-                }
-            )
-        ],
         "dtype": [Options(type, {np.float64, np.float32}), None],
         "subsample": [Interval(Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
@@ -211,7 +186,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         *,
         encode="onehot",
         strategy="quantile",
-        quantile_method="warn",
         dtype=None,
         subsample=200_000,
         random_state=None,
@@ -219,13 +193,12 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self.n_bins = n_bins
         self.encode = encode
         self.strategy = strategy
-        self.quantile_method = quantile_method
         self.dtype = dtype
         self.subsample = subsample
         self.random_state = random_state
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y=None, sample_weight=None):
+    def fit(self, X, y=None, sample_weight=None, quantile_method="warn"):
         """
         Fit the estimator.
 
@@ -245,6 +218,14 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
             .. versionchanged:: 1.6
                Added support for strategy="uniform".
+
+        quantile_method : {'warn, 'inverted_cdf','averaged_inverted_cdf',
+            'closest_observation', 'interpolated_inverted_cdf', 'hazen',
+            'weibull','linear','median_unbiased', 'normal_unbiased'},
+            default='warn'
+            Method to pass on to np.percentile calculation when using
+            strategy='quantile'.
+            .. versionadded:: 1.6
 
         Returns
         -------
@@ -286,21 +267,21 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         bin_edges = np.zeros(n_features, dtype=object)
 
-        if self.strategy == "quantile" and self.quantile_method == "warn":
+        if self.strategy == "quantile" and quantile_method == "warn":
             if sample_weight is None:
                 warnings.warn(
                     "Defaulting to quantile method 'linear' this will be changed to "
                     "average_inverted_cdf in scikit-learn version 1.9",
                     FutureWarning,
                 )
-                self.quantile_method = "linear"
+                quantile_method = "linear"
             if sample_weight is not None:
                 warnings.warn(
-                    "Defaulting to quantile method 'inverted_cdf' this will be changed to "
-                    "average_inverted_cdf in scikit-learn version 1.9",
+                    "Defaulting to quantile method 'inverted_cdf' this will be changed "
+                    "to averaged_inverted_cdf in scikit-learn version 1.9",
                     FutureWarning,
                 )
-                self.quantile_method = "inverted_cdf"
+                quantile_method = "averaged_inverted_cdf"
 
         if (
             self.quantile_method not in ["inverted_cdf", "averaged_inverted_cdf"]
@@ -309,7 +290,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             raise ValueError(
                 "When fitting with strategy='quantile' and sample weights, "
                 "quantile_method should either be set to 'averaged_inverted_cdf' or "
-                f"'inverted_cdf', got quantile_method='{self.quantile_method}' instead".
+                f"'inverted_cdf', got quantile_method='{self.quantile_method}' instead."
             )
 
         if self.strategy != "quantile" and sample_weight is not None:
@@ -347,13 +328,32 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                         dtype=np.float64,
                     )
                 else:
-                    bin_edges[jj] = np.asarray(
-                        [
+                    # TODO: implement averaged_inverted_cdf in
+                    # _weighted_percentile instead of calling it twice and,
+                    # sorting the column twice.
+                    def averaged_weighted_percentile(q):
+                        return (
                             _weighted_percentile(column, sample_weight, q)
-                            for q in quantiles
-                        ],
-                        dtype=np.float64,
-                    )
+                            - _weighted_percentile(-column, sample_weight, 100 - q)
+                        ) / 2
+
+                    # TODO: make _weighted_percentile accept an array of
+                    # quantiles instead of calling it multiple times and
+                    # sorting the column multiple times as a result.
+
+                    if quantile_method == "averaged_weighted_percentile":
+                        bin_edges[jj] = np.asarray(
+                            [averaged_weighted_percentile(q) for q in quantiles],
+                            dtype=np.float64,
+                        )
+                    else:
+                        bin_edges[jj] = np.asarray(
+                            [
+                                _weighted_percentile(column, sample_weight, q)
+                                for q in quantiles
+                            ],
+                            dtype=np.float64,
+                        )
             elif self.strategy == "kmeans":
                 from ..cluster import KMeans  # fixes import loops
 
