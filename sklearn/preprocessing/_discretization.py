@@ -271,26 +271,26 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             if sample_weight is None:
                 warnings.warn(
                     "Defaulting to quantile method 'linear' this will be changed to "
-                    "average_inverted_cdf in scikit-learn version 1.9",
+                    "averaged_inverted_cdf in scikit-learn version 1.9",
                     FutureWarning,
                 )
                 quantile_method = "linear"
             if sample_weight is not None:
                 warnings.warn(
-                    "Defaulting to quantile method 'inverted_cdf' this will be changed "
-                    "to averaged_inverted_cdf in scikit-learn version 1.9",
+                    "Defaulting to quantile method 'averaged_inverted_cdf' this will "
+                    "be changed to averaged_inverted_cdf in scikit-learn version 1.9",
                     FutureWarning,
                 )
                 quantile_method = "averaged_inverted_cdf"
 
         if (
-            self.quantile_method not in ["inverted_cdf", "averaged_inverted_cdf"]
+            quantile_method not in ["inverted_cdf", "averaged_inverted_cdf"]
             and sample_weight is not None
         ):
             raise ValueError(
                 "When fitting with strategy='quantile' and sample weights, "
                 "quantile_method should either be set to 'averaged_inverted_cdf' or "
-                f"'inverted_cdf', got quantile_method='{self.quantile_method}' instead."
+                "'inverted_cdf', got quantile_method='%s' instead." % (quantile_method)
             )
 
         if self.strategy != "quantile" and sample_weight is not None:
@@ -324,7 +324,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 if sample_weight is None:
 
                     bin_edges[jj] = np.asarray(
-                        np.percentile(column, quantiles, method=self.quantile_method),
+                        np.percentile(column, quantiles, method=quantile_method),
                         dtype=np.float64,
                     )
                 else:
