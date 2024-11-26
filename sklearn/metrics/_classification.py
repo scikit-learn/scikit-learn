@@ -2140,7 +2140,7 @@ def class_likelihood_ratios(
         "`raise_warning` was deprecated in version 1.7 and will be "
         "removed in 1.9, when an `UndefinedMetricWarning` will always raise in "
         "case of a division by zero and the value set with the "
-        "`replace_undefined_by` param will be returned. "
+        "`replace_undefined_by` param will be returned."
     )
     mgs_changed_default = (
         "The default return value of `class_likelihood_ratios` in "
@@ -2150,7 +2150,7 @@ def class_likelihood_ratios(
         "this Warning."
     )
     if raise_warning != "deprecated":
-        warnings.warn(msg_deprecated_param + mgs_changed_default, FutureWarning)
+        warnings.warn(" ".join((msg_deprecated_param, mgs_changed_default)), FutureWarning)
     else:
         if replace_undefined_by == "default":
             # TODO(1.9): Remove. If users don't set any return values in case of a
