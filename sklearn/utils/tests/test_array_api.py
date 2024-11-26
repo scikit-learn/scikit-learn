@@ -1,5 +1,4 @@
 import os
-import re
 from functools import partial
 
 import numpy
@@ -9,7 +8,6 @@ from numpy.testing import assert_allclose
 from sklearn._config import config_context
 from sklearn.base import BaseEstimator
 from sklearn.utils._array_api import (
-    _ArrayAPIWrapper,
     _asarray_with_order,
     _atol_for_type,
     _average,
@@ -21,6 +19,7 @@ from sklearn.utils._array_api import (
     _isin,
     _max_precision_float_dtype,
     _nanmax,
+    _nanmean,
     _nanmin,
     _NumPyAPIWrapper,
     _ravel,
@@ -32,6 +31,7 @@ from sklearn.utils._array_api import (
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
+    SkipTest,
     _array_api_for_tests,
     assert_array_equal,
     skip_if_array_api_compat_not_configured,
@@ -63,18 +63,21 @@ def test_get_namespace_ndarray_creation_device():
 def test_get_namespace_ndarray_with_dispatch():
     """Test get_namespace on NumPy ndarrays."""
     array_api_compat = pytest.importorskip("array_api_compat")
+    if parse_version(array_api_compat.__version__) < parse_version("1.9"):
+        pytest.skip(
+            reason="array_api_compat was temporarily reporting NumPy as API compliant "
+            "and this test would fail"
+        )
 
     X_np = numpy.asarray([[1, 2, 3]])
 
     with config_context(array_api_dispatch=True):
         xp_out, is_array_api_compliant = get_namespace(X_np)
         assert is_array_api_compliant
-        if np_version >= parse_version("2.0.0"):
-            # NumPy 2.0+ is an array API compliant library.
-            assert xp_out is numpy
-        else:
-            # Older NumPy versions require the compatibility layer.
-            assert xp_out is array_api_compat.numpy
+
+        # In the future, NumPy should become API compliant library and we should have
+        # assert xp_out is numpy
+        assert xp_out is array_api_compat.numpy
 
 
 @skip_if_array_api_compat_not_configured
@@ -97,53 +100,11 @@ def test_get_namespace_array_api(monkeypatch):
 
         monkeypatch.setattr("os.environ.get", mock_getenv)
         assert os.environ.get("SCIPY_ARRAY_API") != "1"
-        with pytest.warns(
-            UserWarning,
-            match="enabling SciPy's own support for array API to function properly. ",
+        with pytest.raises(
+            RuntimeError,
+            match="scipy's own support is not enabled.",
         ):
-            xp_out, is_array_api_compliant = get_namespace(X_xp)
-
-
-class _AdjustableNameAPITestWrapper(_ArrayAPIWrapper):
-    """API wrapper that has an adjustable name. Used for testing."""
-
-    def __init__(self, array_namespace, name):
-        super().__init__(array_namespace=array_namespace)
-        self.__name__ = name
-
-
-def test_array_api_wrapper_astype():
-    """Test _ArrayAPIWrapper for ArrayAPIs that is not NumPy."""
-    array_api_strict = pytest.importorskip("array_api_strict")
-    xp_ = _AdjustableNameAPITestWrapper(array_api_strict, "array_api_strict")
-    xp = _ArrayAPIWrapper(xp_)
-
-    X = xp.asarray(([[1, 2, 3], [3, 4, 5]]), dtype=xp.float64)
-    X_converted = xp.astype(X, xp.float32)
-    assert X_converted.dtype == xp.float32
-
-    X_converted = xp.asarray(X, dtype=xp.float32)
-    assert X_converted.dtype == xp.float32
-
-
-def test_array_api_wrapper_maximum():
-    """Test _ArrayAPIWrapper `maximum` for ArrayAPIs other than NumPy.
-
-    This is mainly used to test for `cupy.array_api` but since that is
-    not available on our coverage-enabled PR CI, we resort to using
-    `array-api-strict`.
-    """
-    array_api_strict = pytest.importorskip("array_api_strict")
-    xp_ = _AdjustableNameAPITestWrapper(array_api_strict, "array_api_strict")
-    xp = _ArrayAPIWrapper(xp_)
-
-    x1 = xp.asarray(([[1, 2, 3], [3, 9, 5]]), dtype=xp.int64)
-    x2 = xp.asarray(([[0, 1, 6], [8, 4, 5]]), dtype=xp.int64)
-    result = xp.asarray([[1, 2, 6], [8, 9, 5]], dtype=xp.int64)
-
-    x_max = xp.maximum(x1, x2)
-    assert x_max.dtype == x1.dtype
-    assert xp.all(xp.equal(x_max, result))
+            get_namespace(X_xp)
 
 
 @pytest.mark.parametrize("array_api", ["numpy", "array_api_strict"])
@@ -156,21 +117,6 @@ def test_asarray_with_order(array_api):
 
     X_new_np = numpy.asarray(X_new)
     assert X_new_np.flags["F_CONTIGUOUS"]
-
-
-def test_asarray_with_order_ignored():
-    """Test _asarray_with_order ignores order for Generic ArrayAPI."""
-    xp = pytest.importorskip("array_api_strict")
-    xp_ = _AdjustableNameAPITestWrapper(xp, "array_api_strict")
-
-    X = numpy.asarray([[1.2, 3.4, 5.1], [3.4, 5.5, 1.2]], order="C")
-    X = xp_.asarray(X)
-
-    X_new = _asarray_with_order(X, order="F", xp=xp_)
-
-    X_new_np = numpy.asarray(X_new)
-    assert X_new_np.flags["C_CONTIGUOUS"]
-    assert not X_new_np.flags["F_CONTIGUOUS"]
 
 
 @pytest.mark.parametrize(
@@ -296,20 +242,10 @@ def test_average_raises_with_invalid_parameters(
         _average(array_in, axis=axis, weights=weights)
 
 
-def test_device_raises_if_no_input():
-    err_msg = re.escape(
-        "At least one input array expected after filtering with remove_none=True, "
-        "remove_types=[str]. Got none. Original types: []."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        device()
+def test_device_none_if_no_input():
+    assert device() is None
 
-    err_msg = re.escape(
-        "At least one input array expected after filtering with remove_none=True, "
-        "remove_types=[str]. Got none. Original types: [NoneType, str]."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        device(None, "name")
+    assert device(None, "name") is None
 
 
 def test_device_inspection():
@@ -351,8 +287,8 @@ def test_device_inspection():
     assert array1.device == device(array1, array1, array2)
 
 
-# TODO: add cupy and cupy.array_api to the list of libraries once the
-# the following upstream issue has been fixed:
+# TODO: add cupy to the list of libraries once the the following upstream issue
+# has been fixed:
 # https://github.com/cupy/cupy/issues/8180
 @skip_if_array_api_compat_not_configured
 @pytest.mark.parametrize("library", ["numpy", "array_api_strict", "torch"])
@@ -384,6 +320,19 @@ def test_device_inspection():
             [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
             partial(_nanmax, axis=1),
             [3.0, numpy.nan, 6.0],
+        ),
+        ([1, 2, numpy.nan], _nanmean, 1.5),
+        ([1, -2, -numpy.nan], _nanmean, -0.5),
+        ([-numpy.inf, -numpy.inf], _nanmean, -numpy.inf),
+        (
+            [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
+            partial(_nanmean, axis=0),
+            [2.5, 3.5, 4.5],
+        ),
+        (
+            [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
+            partial(_nanmean, axis=1),
+            [2.0, numpy.nan, 5.0],
         ),
     ],
 )
@@ -419,7 +368,7 @@ def test_ravel(namespace, _device, _dtype):
 
 
 @skip_if_array_api_compat_not_configured
-@pytest.mark.parametrize("library", ["cupy", "torch", "cupy.array_api"])
+@pytest.mark.parametrize("library", ["cupy", "torch"])
 def test_convert_to_numpy_gpu(library):  # pragma: nocover
     """Check convert_to_numpy for GPU backed libraries."""
     xp = pytest.importorskip(library)
@@ -459,7 +408,7 @@ class SimpleEstimator(BaseEstimator):
     [
         ("torch", lambda array: array.cpu().numpy()),
         ("array_api_strict", lambda array: numpy.asarray(array)),
-        ("cupy.array_api", lambda array: array._array.get()),
+        ("cupy", lambda array: array.get()),
     ],
 )
 def test_convert_estimator_to_ndarray(array_namespace, converter):
@@ -500,15 +449,9 @@ def test_reshape_behavior():
         xp.reshape(X, -1)
 
 
-@pytest.mark.parametrize("wrapper", [_ArrayAPIWrapper, _NumPyAPIWrapper])
-def test_get_namespace_array_api_isdtype(wrapper):
-    """Test isdtype implementation from _ArrayAPIWrapper and _NumPyAPIWrapper."""
-
-    if wrapper == _ArrayAPIWrapper:
-        xp_ = pytest.importorskip("array_api_strict")
-        xp = _ArrayAPIWrapper(xp_)
-    else:
-        xp = _NumPyAPIWrapper()
+def test_get_namespace_array_api_isdtype():
+    """Test isdtype implementation from _NumPyAPIWrapper."""
+    xp = _NumPyAPIWrapper()
 
     assert xp.isdtype(xp.float32, xp.float32)
     assert xp.isdtype(xp.float32, "real floating")
@@ -533,10 +476,9 @@ def test_get_namespace_array_api_isdtype(wrapper):
 
     assert not xp.isdtype(xp.float32, "complex floating")
 
-    if wrapper == _NumPyAPIWrapper:
-        assert not xp.isdtype(xp.int8, "complex floating")
-        assert xp.isdtype(xp.complex64, "complex floating")
-        assert xp.isdtype(xp.complex128, "complex floating")
+    assert not xp.isdtype(xp.int8, "complex floating")
+    assert xp.isdtype(xp.complex64, "complex floating")
+    assert xp.isdtype(xp.complex128, "complex floating")
 
     with pytest.raises(ValueError, match="Unrecognized data type"):
         assert xp.isdtype(xp.int16, "unknown")
@@ -605,13 +547,13 @@ def test_get_namespace_and_device():
     some_numpy_array = numpy.arange(3)
 
     # When dispatch is disabled, get_namespace_and_device should return the
-    # default NumPy wrapper namespace and no device. Our code will handle such
+    # default NumPy wrapper namespace and "cpu" device. Our code will handle such
     # inputs via the usual __array__ interface without attempting to dispatch
     # via the array API.
     namespace, is_array_api, device = get_namespace_and_device(some_torch_tensor)
     assert namespace is get_namespace(some_numpy_array)[0]
     assert not is_array_api
-    assert device is None
+    assert device.type == "cpu"
 
     # Otherwise, expose the torch namespace and device via array API compat
     # wrapper.
@@ -631,7 +573,6 @@ def test_get_namespace_and_device():
 def test_count_nonzero(
     array_namespace, device_, dtype_name, csr_container, axis, sample_weight_type
 ):
-
     from sklearn.utils.sparsefuncs import count_nonzero as sparse_count_nonzero
 
     xp = _array_api_for_tests(array_namespace, device_)
@@ -649,7 +590,7 @@ def test_count_nonzero(
 
     with config_context(array_api_dispatch=True):
         result = _count_nonzero(
-            array_xp, xp=xp, device=device_, axis=axis, sample_weight=sample_weight
+            array_xp, axis=axis, sample_weight=sample_weight, xp=xp, device=device_
         )
 
     assert_allclose(_convert_to_numpy(result, xp=xp), expected)
@@ -671,3 +612,17 @@ def test_fill_or_add_to_diagonal(array_namespace, device_, dtype_name, wrap):
     _fill_or_add_to_diagonal(array_xp, value=1, xp=xp, add_value=False, wrap=wrap)
     numpy.fill_diagonal(array_np, val=1, wrap=wrap)
     assert_array_equal(_convert_to_numpy(array_xp, xp=xp), array_np)
+
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+@pytest.mark.parametrize("dispatch", [True, False])
+def test_sparse_device(csr_container, dispatch):
+    a, b = csr_container(numpy.array([[1]])), csr_container(numpy.array([[2]]))
+    try:
+        with config_context(array_api_dispatch=dispatch):
+            assert device(a, b) is None
+            assert device(a, numpy.array([1])) == "cpu"
+            assert get_namespace_and_device(a, b)[2] is None
+            assert get_namespace_and_device(a, numpy.array([1]))[2] == "cpu"
+    except ImportError:
+        raise SkipTest("array_api_compat is not installed")

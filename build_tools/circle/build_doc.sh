@@ -30,9 +30,16 @@ then
     then
         CIRCLE_BRANCH=$GITHUB_HEAD_REF
         CI_PULL_REQUEST=true
+        CI_TARGET_BRANCH=$GITHUB_BASE_REF
     else
         CIRCLE_BRANCH=$GITHUB_REF_NAME
     fi
+fi
+
+if [[ -n "$CI_PULL_REQUEST"  && -z "$CI_TARGET_BRANCH" ]]
+then
+    # Get the target branch name when using CircleCI
+    CI_TARGET_BRANCH=$(curl -s "https://api.github.com/repos/scikit-learn/scikit-learn/pulls/$CIRCLE_PR_NUMBER" | jq -r .base.ref)
 fi
 
 get_build_type() {
@@ -176,12 +183,17 @@ conda activate $CONDA_ENV_NAME
 
 show_installed_libraries
 
-pip install -e . --no-build-isolation
+pip install -e . --no-build-isolation --config-settings=compile-args="-j4"
 
 echo "ccache build summary:"
 ccache -s
 
 export OMP_NUM_THREADS=1
+
+if [[ "$CIRCLE_BRANCH" == "main" || "$CI_TARGET_BRANCH" == "main" ]]
+then
+    towncrier build --yes
+fi
 
 if [[ "$CIRCLE_BRANCH" =~ ^main$ && -z "$CI_PULL_REQUEST" ]]
 then
@@ -198,7 +210,8 @@ set +o pipefail
 
 affected_doc_paths() {
     files=$(git diff --name-only origin/main...$CIRCLE_SHA1)
-    echo "$files" | grep ^doc/.*\.rst | sed 's/^doc\/\(.*\)\.rst$/\1.html/'
+    # use sed to replace files ending by .rst or .rst.template by .html
+    echo "$files" | grep ^doc/.*\.rst | sed 's/^doc\/\(.*\)\.rst$/\1.html/; s/^doc\/\(.*\)\.rst\.template$/\1.html/'
     echo "$files" | grep ^examples/.*.py | sed 's/^\(.*\)\.py$/auto_\1.html/'
     sklearn_files=$(echo "$files" | grep '^sklearn/')
     if [ -n "$sklearn_files" ]
