@@ -187,6 +187,8 @@ export CC="ccache $CC"
 export CXX="ccache $CXX"
 ccache -M 512M
 export CCACHE_COMPRESS=1
+# Zeroing statistics so that ccache statistics are shown only for this build
+ccache -z
 
 show_installed_libraries
 
