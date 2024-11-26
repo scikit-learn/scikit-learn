@@ -49,8 +49,7 @@ if [[ "$COVERAGE" == "true" ]]; then
     # the CI logs.
     export COVERAGE_PROCESS_START="$BUILD_SOURCESDIRECTORY/.coveragerc"
 
-    # Use sysmon for Python 3.12 to make statement coverage faster. Note: at
-    # the time of writing (July 2024) this can make branch coverage twice slower.
+    # Use sys.monitoring to make coverage faster for Python >= 3.12
     HAS_SYSMON=$(python -c 'import sys; print(sys.version_info >= (3, 12))')
     if [[ "$HAS_SYSMON" == "True" ]]; then
         export COVERAGE_CORE=sysmon
