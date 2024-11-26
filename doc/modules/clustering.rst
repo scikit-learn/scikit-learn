@@ -244,6 +244,9 @@ to the dataset :math:`X`.
 * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_plusplus.py`: Using K-means++
   to select seeds for other clustering algorithms.
 
+* :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_stability_low_dim_dense.py`:
+  Evaluating the impact of k-means initializations to convergence.
+
 Low-level parallelism
 ---------------------
 
@@ -310,6 +313,9 @@ small, as shown in the example and cited reference.
   using :class:`KMeans` and :class:`MiniBatchKMeans` based on sparse data
 
 * :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
+
+* :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_stability_low_dim_dense.py`:
+  Evaluating the impact of k-means initializations to convergence.
 
 .. dropdown:: References
 
