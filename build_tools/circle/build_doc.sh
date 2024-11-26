@@ -174,7 +174,11 @@ bash ./miniconda.sh -b -p $MINIFORGE_PATH
 source $MINIFORGE_PATH/etc/profile.d/conda.sh
 conda activate
 
+# Sets up ccache when using system compiler
 export PATH="/usr/lib/ccache:$PATH"
+# Sets up ccache when using conda-forge compilers
+export CC="ccache $CC"
+export CXX="ccache $CXX"
 ccache -M 512M
 export CCACHE_COMPRESS=1
 
