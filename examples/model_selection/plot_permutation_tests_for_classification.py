@@ -123,7 +123,9 @@ plt.show()
 # was not able to use the structure in the data. In this case, the p-value
 # would only be low for classifiers that are able to utilize the dependency
 # present. In our case above, where the data is random, all classifiers would
-# have a high p-value as there is no structure present in the data.
+# have a high p-value as there is no structure present in the data. We might or might
+# not fail to reject the null hypothesis depending on whether the p-value is high on a
+# more appropriate estimator as well.
 #
 # Finally, note that this test has been shown to produce low p-values even
 # if there is only weak structure in the data [1]_.
