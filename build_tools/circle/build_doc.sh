@@ -187,7 +187,7 @@ conda activate $CONDA_ENV_NAME
 
 show_installed_libraries
 
-pip install -e . --no-build-isolation --config-settings=compile-args="-j4"
+pip install -e . --no-build-isolation --config-settings=compile-args="-j4" -v
 
 echo "ccache build summary:"
 ccache -s
