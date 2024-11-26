@@ -1197,12 +1197,6 @@ def check_array_api_input_and_values(
     )
 
 
-def _is_sparse_input_error(e):
-    if not (isinstance(e, TypeError) or isinstance(e, ValueError)):
-        return False
-    return True if re.search("[Ss]parse", str(e)) else False
-
-
 def check_estimator_sparse_tag(name, estimator_orig):
     """Check that estimator tag related with accepting sparse data is properly set."""
     if SPARSE_ARRAY_PRESENT:
@@ -1233,20 +1227,23 @@ def check_estimator_sparse_tag(name, estimator_orig):
                 f"functions). Got input_tags.sparse={tags.input_tags.sparse}."
             )
     else:
+        err_msg = (
+            f"Estimator {name} raised an exception. "
+            "The estimator failed when fitted on sparse data in accordance "
+            f"with its tag self.input_tags.sparse={tags.input_tags.sparse} "
+            "but didn't raise the appropriate error : error message should "
+            "state explicitly that sparse input is not supported if this is "
+            "not the case, e.g. by using check_array(X, accept_sparse=False)."
+        )
         try:
             estimator.fit(X, y)  # should fail with appropriate error
-        except Exception as e:
-            if _is_sparse_input_error(e):
+        except (ValueError, TypeError) as e:
+            if re.search("[Ss]parse", str(e)):
+                # Got the right error type and mentioning sparse issue
                 return
-            else:
-                raise AssertionError(
-                    f"Estimator {name} raised an exception: {e}. "
-                    "The estimator failed when fitted on sparse data in accordance "
-                    f"with its tag self.input_tags.sparse={tags.input_tags.sparse} "
-                    "but didn't raise the appropriate error : error message should "
-                    "state explicitly that sparse input is not supported if this is "
-                    "not the case, e.g. by using check_array(X, accept_sparse=False)."
-                )
+            raise AssertionError(err_msg) from e
+        except Exception as e:
+            raise AssertionError(err_msg) from e
         raise AssertionError(
             f"Estimator {name} didn't fail when fitted on sparse data "
             "but should have according to its tag "
