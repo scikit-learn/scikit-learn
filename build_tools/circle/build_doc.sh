@@ -181,7 +181,8 @@ conda activate $CONDA_ENV_NAME
 
 # Sets up ccache when using system compiler
 export PATH="/usr/lib/ccache:$PATH"
-# Sets up ccache when using conda-forge compilers
+# Sets up ccache when using conda-forge compilers (needs to be after conda
+# activate which sets CC and CXX)
 export CC="ccache $CC"
 export CXX="ccache $CXX"
 ccache -M 512M
