@@ -488,12 +488,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         tags.classifier_tags = deepcopy(sub_estimator_tags.classifier_tags)
         tags.regressor_tags = deepcopy(sub_estimator_tags.regressor_tags)
         # allows cross-validation to see 'precomputed' metrics
-        tags.input_tags.pairwise = sub_estimator_tags.input_tags.pairwise
-        tags._xfail_checks = {
-            "check_supervised_y_2d": "DataConversionWarning not caught",
-            "check_requires_y_none": "Doesn't fail gracefully",
-        }
-        tags.array_api_support = sub_estimator_tags.array_api_support
+        tags.input_tags.pairwise = get_tags(self.estimator).input_tags.pairwise
+        tags.array_api_support = get_tags(self.estimator).array_api_support
         return tags
 
     def score(self, X, y=None, **params):
@@ -1258,7 +1254,7 @@ class GridSearchCV(BaseSearchCV):
         - a list or tuple of unique strings;
         - a callable returning a dictionary where the keys are the metric
           names and the values are the metric scores;
-        - a dictionary with metric names as keys and callables a values.
+        - a dictionary with metric names as keys and callables as values.
 
         See :ref:`multimetric_grid_search` for an example.
 
@@ -1634,7 +1630,7 @@ class RandomizedSearchCV(BaseSearchCV):
         - a list or tuple of unique strings;
         - a callable returning a dictionary where the keys are the metric
           names and the values are the metric scores;
-        - a dictionary with metric names as keys and callables a values.
+        - a dictionary with metric names as keys and callables as values.
 
         See :ref:`multimetric_grid_search` for an example.
 
@@ -1659,7 +1655,7 @@ class RandomizedSearchCV(BaseSearchCV):
 
         Where there are considerations other than maximum score in
         choosing a best estimator, ``refit`` can be set to a function which
-        returns the selected ``best_index_`` given the ``cv_results``. In that
+        returns the selected ``best_index_`` given the ``cv_results_``. In that
         case, the ``best_estimator_`` and ``best_params_`` will be set
         according to the returned ``best_index_`` while the ``best_score_``
         attribute will not be available.
