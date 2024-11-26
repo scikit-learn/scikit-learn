@@ -11,7 +11,7 @@ data and different problems.
 
 The flowchart below is designed to give users a bit of a rough guide on how to approach
 problems with regard to which estimators to try on your data. Click on any estimator in
-the chart below to see its documentation. The "Try next" orange arrows are to be read as
+the chart below to see its documentation. The **Try next** orange arrows are to be read as
 "if this estimator does not achieve the desired outcome, then follow the arrow and try
 the next one". Use scroll wheel to zoom in and out, and click and drag to pan around.
 You can also download the chart: :download:`ml_map.svg <images/ml_map.svg>`.
