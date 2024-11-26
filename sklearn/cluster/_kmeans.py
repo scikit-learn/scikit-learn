@@ -1213,8 +1213,8 @@ class KMeans(_BaseKMeans):
         * If a callable is passed, it should take arguments X, n_clusters and a\
         random state and return an initialization.
 
-        For an example of how to use the different `init` strategy, see the example
-        entitled :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`.
+        For an example of how to use the different `init` strategies, see
+        :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`.
 
         For an evaluation of the impact of initialization, see the example
         :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_stability_low_dim_dense.py`.
