@@ -192,7 +192,7 @@ ccache -z
 
 show_installed_libraries
 
-pip install -e . --no-build-isolation --config-settings=compile-args="-j4" -v
+time pip install -e . --no-build-isolation --config-settings=compile-args="-j3" -v
 
 echo "ccache build summary:"
 ccache -s
