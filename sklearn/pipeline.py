@@ -1224,7 +1224,15 @@ class Pipeline(_BaseComposition):
                 tags.input_tags.pairwise = get_tags(
                     self.steps[0][1]
                 ).input_tags.pairwise
-                tags.input_tags.sparse = get_tags(self.steps[0][1]).input_tags.sparse
+            # WARNING: the sparse tag can be incorrect.
+            # Some Pipelines accepting sparse data are wrongly tagged sparse=False.
+            # For example Pipeline([PCA(), estimator]) accepts sparse data
+            # even if the estimator doesn't as PCA outputs a dense array.
+            tags.input_tags.sparse = all(
+                get_tags(step).input_tags.sparse
+                for name, step in self.steps
+                if step != "passthrough"
+            )
         except (ValueError, AttributeError, TypeError):
             # This happens when the `steps` is not a list of (name, estimator)
             # tuples and `fit` is not called yet to validate the steps.
