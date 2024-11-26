@@ -655,8 +655,9 @@ def lorenz_curve(y_true, y_pred, exposure):
     ranked_pure_premium = y_true[ranking]
     cumulated_claim_amount = np.cumsum(ranked_pure_premium * ranked_exposure)
     cumulated_claim_amount /= cumulated_claim_amount[-1]
-    cumulated_samples = np.linspace(0, 1, len(cumulated_claim_amount))
-    return cumulated_samples, cumulated_claim_amount
+    cumulated_exposure = np.cumsum(ranked_exposure)
+    cumulated_exposure /= cumulated_exposure[-1]
+    return cumulated_exposure, cumulated_claim_amount
 
 
 fig, ax = plt.subplots(figsize=(8, 8))
