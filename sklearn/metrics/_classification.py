@@ -2084,7 +2084,9 @@ def class_likelihood_ratios(
         "this Warning."
     )
     if raise_warning != "deprecated":
-        warnings.warn(" ".join((msg_deprecated_param, mgs_changed_default)), FutureWarning)
+        warnings.warn(
+            " ".join((msg_deprecated_param, mgs_changed_default)), FutureWarning
+        )
     else:
         if replace_undefined_by == "default":
             # TODO(1.9): Remove. If users don't set any return values in case of a
