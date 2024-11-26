@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -e
+set -x
 
 # Decide what kind of documentation build to run, and run it.
 #
@@ -174,6 +175,10 @@ bash ./miniconda.sh -b -p $MINIFORGE_PATH
 source $MINIFORGE_PATH/etc/profile.d/conda.sh
 conda activate
 
+
+create_conda_environment_from_lock_file $CONDA_ENV_NAME $LOCK_FILE
+conda activate $CONDA_ENV_NAME
+
 # Sets up ccache when using system compiler
 export PATH="/usr/lib/ccache:$PATH"
 # Sets up ccache when using conda-forge compilers
@@ -181,9 +186,6 @@ export CC="ccache $CC"
 export CXX="ccache $CXX"
 ccache -M 512M
 export CCACHE_COMPRESS=1
-
-create_conda_environment_from_lock_file $CONDA_ENV_NAME $LOCK_FILE
-conda activate $CONDA_ENV_NAME
 
 show_installed_libraries
 
