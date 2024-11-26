@@ -2689,16 +2689,28 @@ def test_regression_tree_missing_values_toy(Tree, X, criterion):
     impurity = tree.tree_.impurity
     assert all(impurity >= 0), impurity.min()  # MSE should always be positive
 
-    # Note: the impurity matches after the first split only on greedy trees
-    if Tree is DecisionTreeRegressor:
-        # Check the impurity match after the first split
-        assert_allclose(tree.tree_.impurity[:2], tree_ref.tree_.impurity[:2])
+    # Check the impurity match after the first split
+    assert_allclose(tree.tree_.impurity[:2], tree_ref.tree_.impurity[:2])
 
     # Find the leaves with a single sample where the MSE should be 0
     leaves_idx = np.flatnonzero(
         (tree.tree_.children_left == -1) & (tree.tree_.n_node_samples == 1)
     )
     assert_allclose(tree.tree_.impurity[leaves_idx], 0.0)
+
+
+def test_regression_extra_tree_missing_values_toy(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
+    n_samples = 100
+    X = np.arange(n_samples, dtype=np.float64).reshape(-1, 1)
+    X[-20:, :] = np.nan
+    rng.shuffle(X)
+    y = np.arange(n_samples)
+
+    tree = ExtraTreeRegressor(random_state=global_random_seed, max_depth=5).fit(X, y)
+
+    impurity = tree.tree_.impurity
+    assert all(impurity >= 0), impurity  # MSE should always be positive
 
 
 def test_classification_tree_missing_values_toy():
