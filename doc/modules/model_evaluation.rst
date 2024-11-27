@@ -288,6 +288,7 @@ the `scoring` parameter. This can be done by:
 
 * :ref:`scoring_adapt_metric` (least flexible)
 * :ref:`scoring_make_scorer`
+
   * Using `make_scorer` (more flexible)
   * From scratch (most flexible)
 
@@ -345,9 +346,7 @@ Creating a custom scorer object
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You can create your own custom scorer object using
-:func:`make_scorer` or for the most flexibility, from scratch.
-
-Custom scorer objects using `make_scorer`
+:func:`make_scorer` or for the most flexibility, from scratch. See below for details.
 
 .. dropdown:: Custom scorer objects using `make_scorer`
 
