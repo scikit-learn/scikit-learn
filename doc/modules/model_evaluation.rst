@@ -567,6 +567,16 @@ With ``adjusted=True``, balanced accuracy reports the relative increase from
 `*Youden's J statistic* <https://en.wikipedia.org/wiki/Youden%27s_J_statistic>`_,
 or *informedness*.
 
+The equivalency to macro Recall (say N classes) becomes clear with the default
+``sample_weight=None``, i.e.,
+
+.. math::
+
+   \texttt{balanced-accuracy}(y, \hat{y}) = \frac{1}{N} \sum_{k=1}^N \frac{\sum_i 1(\hat{y}_i = y_i = k)}{\sum_j 1(y_j = k)} = \texttt{macro-recall}(y, \hat{y})
+
+Here we took the arithmetic mean of all class-wise recall scores, just as
+in macro recall (``average=macro``).
+
 .. note::
 
     The multiclass definition here seems the most reasonable extension of the
@@ -582,8 +592,10 @@ or *informedness*.
     * Balanced Accuracy as described in [Urbanowicz2015]_: the average of sensitivity and specificity
       is computed for each class and then averaged over total number of classes.
 
-    The noted equivalency of our version of balanced accuracy, macro averaged Recall,
-    and raw accuracy with inverse prevalence weighting is detailed in [Opitz2024]_.
+    There are some cases, where balanced accuracy does not avoid inflated performance
+    scores in imbalanced datasets (for example, when minority classes are detected well, but
+    majority classes aren't). In these cases, accuracy can be low, but balanced accuracy can
+    be high. Therefore [Opitz2024]_ recommend inspecting balanced accuracy together with accuracy.
 
 .. rubric:: References
 
