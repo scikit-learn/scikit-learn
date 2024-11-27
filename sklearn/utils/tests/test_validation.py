@@ -1031,25 +1031,20 @@ def test_check_consistent_length_array_api(array_namespace, device, _):
     """Test that check_consistent_length works with different array types."""
     xp = _array_api_for_tests(array_namespace, device)
 
-    check_consistent_length(
-        xp.asarray([1], device=device),
-        xp.asarray([2], device=device),
-    )
-    if xp.__name__ == "numpy":
+    with config_context(array_api_dispatch=True):
         check_consistent_length(
-            xp.asarray([[1, 2], [1, 2]], device=device),
-            xp.asarray([1, 2], device=device),
-            xp.asarray(["a", "b"], device=device),
+            xp.asarray([1, 2, 3], device=device),
+            xp.asarray([[1, 1], [2, 2], [3, 3]], device=device),
+            [1, 2, 3],
+            ["a", "b", "c"],
+            np.asarray(("a", "b", "c"), dtype=object),
+            sp.csr_array([[0, 1], [1, 0], [0, 0]]),
         )
-    else:
-        check_consistent_length(
-            xp.asarray([[1, 2], [1, 2]], device=device),
-            xp.asarray([1, 2], device=device),
-        )
-    with pytest.raises(ValueError, match="inconsistent numbers of samples"):
-        check_consistent_length(
-            xp.asarray([1, 2], device=device), xp.asarray([1], device=device)
-        )
+
+        with pytest.raises(ValueError, match="inconsistent numbers of samples"):
+            check_consistent_length(
+                xp.asarray([1, 2], device=device), xp.asarray([1], device=device)
+            )
 
 
 def test_check_dataframe_fit_attribute():
