@@ -8,6 +8,7 @@ from operator import itemgetter
 from tempfile import NamedTemporaryFile
 
 import numpy as np
+import pandas as pd
 import pytest
 import scipy.sparse as sp
 from pytest import importorskip
@@ -1039,6 +1040,7 @@ def test_check_consistent_length_array_api(array_namespace, device, _):
             ["a", "b", "c"],
             np.asarray(("a", "b", "c"), dtype=object),
             sp.csr_array([[0, 1], [1, 0], [0, 0]]),
+            pd.DataFrame({"col1": [1, 2, 3], "col2": [3, 4, 5]}),
         )
 
         with pytest.raises(ValueError, match="inconsistent numbers of samples"):
