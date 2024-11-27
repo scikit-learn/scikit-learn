@@ -744,7 +744,7 @@ def test_check_array_min_samples_and_features_messages():
 
     # Invalid edge case when checking the default minimum sample of a scalar
     msg = (
-        "Expected array-like of collection type, got type `<class 'numpy.ndarray'>` "
+        "Expected array-like or collection type, got type `<class 'numpy.ndarray'>` "
         "instead."
     )
     with pytest.raises(TypeError, match=msg):
