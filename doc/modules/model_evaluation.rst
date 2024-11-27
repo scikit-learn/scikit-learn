@@ -575,15 +575,15 @@ or *informedness*.
 
     * Our definition: [Mosley2013]_, [Kelleher2015]_ and [Guyon2015]_, where
       [Guyon2015]_ adopt the adjusted version to ensure that random predictions
-      have a score of :math:`0` and perfect predictions have a score of :math:`1`..
+      have a score of :math:`0` and perfect predictions have a score of :math:`1`.
     * Class balanced accuracy as described in [Mosley2013]_: the minimum between the precision
       and the recall for each class is computed. Those values are then averaged over the total
       number of classes to get the balanced accuracy.
     * Balanced Accuracy as described in [Urbanowicz2015]_: the average of sensitivity and specificity
       is computed for each class and then averaged over total number of classes.
 
-    The noted equivalency of macro average Recall, our version of balanced accuracy,
-    and raw accuracy with inverse prevalence weighting is detailed in [Opitz2024]_ (Eq. 8).
+    The noted equivalency of our version of balanced accuracy, macro averaged Recall,
+    and raw accuracy with inverse prevalence weighting is detailed in [Opitz2024]_.
 
 .. rubric:: References
 
