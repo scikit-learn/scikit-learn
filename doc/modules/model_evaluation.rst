@@ -582,6 +582,9 @@ or *informedness*.
     * Balanced Accuracy as described in [Urbanowicz2015]_: the average of sensitivity and specificity
       is computed for each class and then averaged over total number of classes.
 
+    The noted equivalency of macro average Recall, our version of balanced accuracy,
+    and raw accuracy with inverse prevalence weighting is detailed in [Opitz2024]_ (Eq. 8).
+
 .. rubric:: References
 
 .. [Guyon2015] I. Guyon, K. Bennett, G. Cawley, H.J. Escalante, S. Escalera, T.K. Ho, N. Macià,
@@ -596,7 +599,10 @@ or *informedness*.
 .. [Urbanowicz2015] Urbanowicz R.J.,  Moore, J.H. :doi:`ExSTraCS 2.0: description
     and evaluation of a scalable learning classifier
     system <10.1007/s12065-015-0128-8>`, Evol. Intel. (2015) 8: 89.
-
+.. [Opitz2024] J. Opitz (2024). `A Closer Look at Classification Evaluation Metrics
+   and a Critical Reflection of Common Evaluation Practice
+   <https://doi.org/10.1162/tacl_a_00675>`_, TACL 2024.
+  
 .. _cohen_kappa:
 
 Cohen's kappa

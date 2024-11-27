@@ -2363,13 +2363,8 @@ def recall_score(
     When used with ``average=macro``, the result equals that of
     :func:`balanced_accuracy_score`. That is,
     ``recall_score(y_true, y_pred, average=macro)`` is equivalent to
-    ``balanced_accuracy_score(y_true, y_pred)``. See also [1], Eq. 8.
-
-    References
-    ----------
-    .. [1] J. Opitz (2024). `"A Closer Look at Classification Evaluation Metrics
-           and a Critical Reflection of Common Evaluation Practice". TACL
-           <https://doi.org/10.1162/tacl_a_00675>`_.
+    ``balanced_accuracy_score(y_true, y_pred)``. See also the
+    :ref:`User Guide <balanced_accuracy_score>`. 
 
     Examples
     --------
@@ -2474,7 +2469,8 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     Also note the equivalency of our defintion of balanced accuracy and
     macro-averaged :func:`recall_score`.
     That is, ``balanced_accuracy_score(y_true, y_pred)`` equals
-    ``recall_score(y_true, y_pred, average=macro)``.
+    ``recall_score(y_true, y_pred, average=macro)``. See also the
+    :ref:`User Guide <balanced_accuracy_score>`.
 
     References
     ----------
@@ -2487,10 +2483,6 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
            `Fundamentals of Machine Learning for Predictive Data Analytics:
            Algorithms, Worked Examples, and Case Studies
            <https://mitpress.mit.edu/books/fundamentals-machine-learning-predictive-data-analytics>`_.
-
-    .. [3] J. Opitz (2024). `"A Closer Look at Classification Evaluation Metrics
-           and a Critical Reflection of Common Evaluation Practice". TACL
-           <https://doi.org/10.1162/tacl_a_00675>`_.
 
     Examples
     --------
