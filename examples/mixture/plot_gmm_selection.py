@@ -70,7 +70,7 @@ plt.show()
 
 from sklearn.mixture import GaussianMixture
 from sklearn.model_selection import GridSearchCV
-
+from sklearn.model_selection import ParameterGrid
 
 def gmm_bic_score(estimator, X):
     """Callable to pass to GridSearchCV that will use the BIC score."""
@@ -83,9 +83,17 @@ param_grid = {
     "covariance_type": ["spherical", "tied", "diag", "full"],
 }
 grid_search = GridSearchCV(
-    GaussianMixture(), param_grid=param_grid, scoring=gmm_bic_score
+    GaussianMixture(), param_grid=param_grid
 )
 grid_search.fit(X)
+
+bic_evaluations = []
+for params in ParameterGrid(param_grid):
+    bic_value = GaussianMixture(**params).fit(X).bic(X)
+    bic_evaluations.append({**params, "BIC": bic_value})
+
+bic_evaluations = pd.DataFrame(bic_evaluations).sort_values("BIC", ascending=True)
+print(bic_evaluations.head())
 
 # %%
 # Plot the BIC scores
