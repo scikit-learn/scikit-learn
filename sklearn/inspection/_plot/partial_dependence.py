@@ -260,6 +260,7 @@ class PartialDependenceDisplay:
         n_cols=3,
         grid_resolution=100,
         percentiles=(0.05, 0.95),
+        custom_values=None,
         method="auto",
         n_jobs=None,
         verbose=0,
@@ -396,10 +397,20 @@ class PartialDependenceDisplay:
         grid_resolution : int, default=100
             The number of equally spaced points on the axes of the plots, for each
             target feature.
+            This parameter is overridden by `custom_values` if that parameter is set.
 
         percentiles : tuple of float, default=(0.05, 0.95)
             The lower and upper percentile used to create the extreme values
             for the PDP axes. Must be in [0, 1].
+            This parameter is overridden by `custom_values` if that parameter is set.
+
+        custom_values : dict
+            A dictionary mapping the index of an element of `features` to an
+            array of values where the partial dependence should be calculated
+            for that feature. Setting a range of values for a feature overrides
+            `grid_resolution` and `percentiles`.
+
+            .. versionadded:: 1.7
 
         method : str, default='auto'
             The method used to calculate the averaged predictions:
@@ -717,6 +728,7 @@ class PartialDependenceDisplay:
                 grid_resolution=grid_resolution,
                 percentiles=percentiles,
                 kind=kind_plot,
+                custom_values=custom_values,
             )
             for kind_plot, fxs in zip(kind_, features)
         )

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -e
+set -x
 
 # Decide what kind of documentation build to run, and run it.
 #
@@ -174,16 +175,27 @@ bash ./miniconda.sh -b -p $MINIFORGE_PATH
 source $MINIFORGE_PATH/etc/profile.d/conda.sh
 conda activate
 
-export PATH="/usr/lib/ccache:$PATH"
-ccache -M 512M
-export CCACHE_COMPRESS=1
 
 create_conda_environment_from_lock_file $CONDA_ENV_NAME $LOCK_FILE
 conda activate $CONDA_ENV_NAME
 
+# Sets up ccache when using system compiler
+export PATH="/usr/lib/ccache:$PATH"
+# Sets up ccache when using conda-forge compilers (needs to be after conda
+# activate which sets CC and CXX)
+export CC="ccache $CC"
+export CXX="ccache $CXX"
+ccache -M 512M
+export CCACHE_COMPRESS=1
+# Zeroing statistics so that ccache statistics are shown only for this build
+ccache -z
+
 show_installed_libraries
 
-pip install -e . --no-build-isolation
+# Specify explictly ninja -j argument because ninja does not handle cgroups v2 and
+# use the same default rule as ninja (-j3 since we have 2 cores on CircleCI), see
+# https://github.com/scikit-learn/scikit-learn/pull/30333
+pip install -e . --no-build-isolation --config-settings=compile-args="-j 3"
 
 echo "ccache build summary:"
 ccache -s
