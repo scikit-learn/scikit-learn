@@ -286,11 +286,8 @@ Callable scorers
 For more complex use cases and more flexibility, you can pass a callable to
 the `scoring` parameter. This can be done by:
 
-* :ref:`scoring_adapt_metric` (least flexible)
-* :ref:`scoring_make_scorer`
-
-  * Using `make_scorer` (more flexible)
-  * From scratch (most flexible)
+* :ref:`scoring_adapt_metric`
+* :ref:`scoring_custom` (most flexible)
 
 .. _scoring_adapt_metric:
 
@@ -340,7 +337,7 @@ measuring a prediction error given ground truth and prediction:
   the ``greater_is_better`` parameter to ``False`` (``True`` by default; see the
   parameter description below).
 
-.. _scoring_make_scorer:
+.. _scoring_custom:
 
 Creating a custom scorer object
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
