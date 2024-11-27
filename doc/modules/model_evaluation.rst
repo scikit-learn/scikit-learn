@@ -871,8 +871,13 @@ Binary classification
 In a binary classification task, the terms ''positive'' and ''negative'' refer
 to the classifier's prediction, and the terms ''true'' and ''false'' refer to
 whether that prediction corresponds to the external judgment (sometimes known
-as the ''observation''). Given these definitions, we can formulate the
-following table:
+as the ''observation''). Note that the default assumption is that the positive
+class refers to high probabilities or decision function scores and the negative
+class refers to low probabilities or decision function scores. I.e. if the decision
+threshold for probabilities is assumed to be 0.5, cases for that the predicted
+probability is >= 0.5, would be assigned to the positive class and all cases for
+that the predicted probability is < 0.5 would be assigned to the negative class.
+Given these definitions, we can formulate the following table:
 
 +-------------------+------------------------------------------------+
 |                   |    Actual class (observation)                  |
@@ -895,6 +900,9 @@ In this context, we can define the notions of precision and recall:
    \text{recall} = \frac{\text{tp}}{\text{tp} + \text{fn}},
 
 (Sometimes recall is also called ''sensitivity'')
+
+
+It should be noted that 
 
 F-measure is the weighted harmonic mean of precision and recall, with precision's
 contribution to the mean weighted by some parameter :math:`\beta`:
