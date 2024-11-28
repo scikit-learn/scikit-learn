@@ -71,7 +71,7 @@ https://conda.anaconda.org/conda-forge/win-64/libtiff-4.7.0-hfc51747_1.conda#eac
 https://conda.anaconda.org/conda-forge/win-64/libxslt-1.1.39-h3df6e99_0.conda#279ee338c9b34871d578cb3c7aa68f70
 https://conda.anaconda.org/conda-forge/win-64/mkl-devel-2024.2.2-h57928b3_14.conda#ecc2c244eff5cb6289b6db5e0401c0aa
 https://conda.anaconda.org/conda-forge/noarch/munkres-1.1.4-pyh9f0ad1d_0.tar.bz2#2ba8498c1018c1e9c61eb99b973dfe19
-https://conda.anaconda.org/conda-forge/noarch/packaging-24.2-pyhff2d567_1.conda#8508b703977f4c4ada34d657d051972c
+https://conda.anaconda.org/conda-forge/noarch/packaging-24.2-pyhd8ed1ab_0.conda#c16469afe1ec91aaafcf4bea966c0465
 https://conda.anaconda.org/conda-forge/noarch/pluggy-1.5.0-pyhd8ed1ab_0.conda#d3483c8fc2dc2cc3f5cf43e26d60cabf
 https://conda.anaconda.org/conda-forge/win-64/pthread-stubs-0.4-h0e40799_1002.conda#3c8f2573569bb816483e5cf57efbbe29
 https://conda.anaconda.org/conda-forge/noarch/pyparsing-3.2.0-pyhd8ed1ab_1.conda#035c17fbf099f50ff60bf2eb303b0a83
@@ -87,7 +87,7 @@ https://conda.anaconda.org/conda-forge/win-64/xorg-libxau-1.0.11-h0e40799_1.cond
 https://conda.anaconda.org/conda-forge/win-64/xorg-libxdmcp-1.1.5-h0e40799_0.conda#8393c0f7e7870b4eb45553326f81f0ff
 https://conda.anaconda.org/conda-forge/noarch/zipp-3.21.0-pyhd8ed1ab_0.conda#fee389bf8a4843bd7a2248ce11b7f188
 https://conda.anaconda.org/conda-forge/win-64/brotli-1.1.0-h2466b09_2.conda#378f1c9421775dfe644731cb121c8979
-https://conda.anaconda.org/conda-forge/win-64/coverage-7.6.8-py39hf73967f_0.conda#99c682c1bde1e5661ad0af5c32710330
+https://conda.anaconda.org/conda-forge/win-64/coverage-7.6.5-py39hf73967f_0.conda#b6027bb1b34fbdf1d778e9fc8aaee1dc
 https://conda.anaconda.org/conda-forge/win-64/fontconfig-2.15.0-h765892d_1.conda#9bb0026a2131b09404c59c4290c697cd
 https://conda.anaconda.org/conda-forge/noarch/importlib_resources-6.4.5-pyhd8ed1ab_0.conda#c808991d29b9838fb4d96ce8267ec9ec
 https://conda.anaconda.org/conda-forge/noarch/joblib-1.4.2-pyhd8ed1ab_0.conda#25df261d4523d9f9783bcdb7208d872f

@@ -166,7 +166,7 @@ https://conda.anaconda.org/conda-forge/linux-64/markupsafe-3.0.2-py39h9399b63_0.
 https://conda.anaconda.org/conda-forge/noarch/munkres-1.1.4-pyh9f0ad1d_0.tar.bz2#2ba8498c1018c1e9c61eb99b973dfe19
 https://conda.anaconda.org/conda-forge/noarch/networkx-3.2.1-pyhd8ed1ab_0.conda#425fce3b531bed6ec3c74fab3e5f0a1c
 https://conda.anaconda.org/conda-forge/linux-64/openjpeg-2.5.2-h488ebb8_0.conda#7f2e286780f072ed750df46dc2631138
-https://conda.anaconda.org/conda-forge/noarch/packaging-24.2-pyhff2d567_1.conda#8508b703977f4c4ada34d657d051972c
+https://conda.anaconda.org/conda-forge/noarch/packaging-24.2-pyhd8ed1ab_0.conda#c16469afe1ec91aaafcf4bea966c0465
 https://conda.anaconda.org/conda-forge/noarch/platformdirs-4.3.6-pyhd8ed1ab_0.conda#fd8f2b18b65bbf62e8f653100690c8d2
 https://conda.anaconda.org/conda-forge/noarch/pluggy-1.5.0-pyhd8ed1ab_0.conda#d3483c8fc2dc2cc3f5cf43e26d60cabf
 https://conda.anaconda.org/conda-forge/linux-64/psutil-6.1.0-py39h8cd3c5a_0.conda#ef257b7ce1e1cb152639ced6bc653475
@@ -231,11 +231,11 @@ https://conda.anaconda.org/conda-forge/linux-64/imagecodecs-2024.9.22-py39h1aa77
 https://conda.anaconda.org/conda-forge/noarch/imageio-2.36.0-pyh12aca89_1.conda#36349844ff73fcd0140ee7f30745f0bf
 https://conda.anaconda.org/conda-forge/noarch/importlib-resources-6.4.5-pyhd8ed1ab_0.conda#67f4772681cf86652f3e2261794cf045
 https://conda.anaconda.org/conda-forge/noarch/lazy-loader-0.4-pyhd8ed1ab_1.conda#4809b9f4c6ce106d443c3f90b8e10db2
-https://conda.anaconda.org/conda-forge/linux-64/libpq-17.2-h04577a9_0.conda#52dd46162c6fb2765b49e6fd06adf8d5
+https://conda.anaconda.org/conda-forge/linux-64/libpq-17.1-h04577a9_0.conda#c2560bae9f56de89b8c50355f7c84910
 https://conda.anaconda.org/conda-forge/noarch/meson-python-0.17.1-pyh70fd9c4_0.conda#722b649da38842068d83b6e6770f11a1
 https://conda.anaconda.org/conda-forge/linux-64/pandas-2.2.3-py39h3b40f6f_1.conda#d07f482720066758dad87cf90b3de111
 https://conda.anaconda.org/conda-forge/noarch/patsy-1.0.1-pyhff2d567_0.conda#a97b9c7586cedcf4a0a158ef3479975c
-https://conda.anaconda.org/conda-forge/linux-64/polars-1.14.0-py39h74f158a_1.conda#e97a6ff57c37ac0a6f967d74dd73b464
+https://conda.anaconda.org/conda-forge/linux-64/polars-1.12.0-py39h74f158a_0.conda#698f8f845bcb227d52695b4ab6f7c381
 https://conda.anaconda.org/conda-forge/noarch/pytest-xdist-3.6.1-pyhd8ed1ab_0.conda#b39568655c127a9c4a44d178ac99b6d0
 https://conda.anaconda.org/conda-forge/linux-64/pywavelets-1.6.0-py39hd92a3bb_0.conda#32e26e16f60c568b17a82e3033a4d309
 https://conda.anaconda.org/conda-forge/linux-64/scipy-1.13.1-py39haf93ffa_0.conda#492a2cd65862d16a4aaf535ae9ccb761
