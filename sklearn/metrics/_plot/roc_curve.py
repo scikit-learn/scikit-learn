@@ -755,7 +755,6 @@ class MultiRocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         if ax is None:
             _, ax = plt.subplots()
 
-
         if fold_line_kw is None:
             fold_line_kw = [
                 {"alpha": 0.5, "color": "tab:blue", "linestyle": "--"}
