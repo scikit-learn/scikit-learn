@@ -496,7 +496,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     ):
         """Create a multi-fold ROC curve display given cross-validation results.
 
-        .. versionadded:: 1.3
+        .. versionadded:: 1.7
 
         Parameters
         ----------
@@ -656,7 +656,7 @@ class MultiRocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
     Read more in the :ref:`User Guide <visualizations>`.
 
-    .. versionadded:: 1.3
+    .. versionadded:: 1.7
 
     Parameters
     ----------
