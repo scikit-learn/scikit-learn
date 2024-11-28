@@ -17,31 +17,12 @@ from ..utils.metadata_routing import (
     process_routing,
 )
 from ..utils.metaestimators import available_if
-from ..utils.validation import check_is_fitted, validate_data
+from ..utils.validation import _estimator_has, check_is_fitted, validate_data
 
 __all__ = ["SelfTrainingClassifier"]
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
-
-
-def _estimator_has(attr):
-    """Check if we can delegate a method to the underlying estimator.
-
-    First, we check the fitted `estimator_` if available, otherwise we check
-    the unfitted `estimator`. We raise the original `AttributeError` if
-    `attr` does not exist. This function is used together with `available_if`.
-    """
-
-    def check(self):
-        if hasattr(self, "estimator_"):
-            getattr(self.estimator_, attr)
-        else:
-            getattr(self.estimator, attr)
-
-        return True
-
-    return check
 
 
 class SelfTrainingClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
@@ -632,10 +613,3 @@ class SelfTrainingClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             ),
         )
         return router
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags._xfail_checks.update(
-            {"check_non_transformer_estimators_n_iter": "n_iter_ can be 0."}
-        )
-        return tags

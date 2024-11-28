@@ -20,6 +20,7 @@ from sklearn.model_selection import (
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, StandardScaler, scale
 from sklearn.svm import OneClassSVM
+from sklearn.utils import get_tags
 from sklearn.utils._testing import (
     assert_allclose,
     assert_almost_equal,
@@ -2170,3 +2171,12 @@ def test_passive_aggressive_deprecated_average(Estimator):
     est = Estimator(average=0)
     with pytest.warns(FutureWarning, match="average=0"):
         est.fit(X, Y)
+
+
+def test_sgd_one_class_svm_estimator_type():
+    """Check that SGDOneClassSVM has the correct estimator type.
+
+    Non-regression test for if the mixin was not on the left.
+    """
+    sgd_ocsvm = SGDOneClassSVM()
+    assert get_tags(sgd_ocsvm).estimator_type == "outlier_detector"
