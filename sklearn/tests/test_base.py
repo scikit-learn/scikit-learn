@@ -21,6 +21,7 @@ from sklearn.base import (
     is_clusterer,
     is_outlier_detector,
     is_regressor,
+    is_transformer,
 )
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
@@ -332,6 +333,23 @@ def test_is_regressor(estimator, expected_result):
 )
 def test_is_clusterer(estimator, expected_result):
     assert is_clusterer(estimator) == expected_result
+
+
+@pytest.mark.parametrize(
+    "estimator, expected_result",
+    [
+        (KMeans(), True),
+        (GridSearchCV(KMeans(), {"n_clusters": [3, 8]}), True),
+        (Pipeline([("km", KMeans())]), True),
+        (Pipeline([("km_cv", GridSearchCV(KMeans(), {"n_clusters": [3, 8]}))]), True),
+        (SVC(), False),
+        (GridSearchCV(SVC(), {"C": [0.1, 1]}), False),
+        (Pipeline([("svc", SVC())]), False),
+        (Pipeline([("svc_cv", GridSearchCV(SVC(), {"C": [0.1, 1]}))]), False),
+    ],
+)
+def test_is_transformer(estimator, expected_result):
+    assert is_transformer(estimator) == expected_result
 
 
 def test_set_params():

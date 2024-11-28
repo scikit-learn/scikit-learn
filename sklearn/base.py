@@ -857,6 +857,7 @@ class TransformerMixin(_SetOutputMixin):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.estimator_type = "transformer"
         tags.transformer_tags = TransformerTags()
         return tags
 
@@ -1275,6 +1276,34 @@ def is_regressor(estimator):
         return getattr(estimator, "_estimator_type", None) == "regressor"
 
     return get_tags(estimator).estimator_type == "regressor"
+
+
+def is_transformer(estimator):
+    """Return True if the given estimator is (probably) a transformer.
+
+    Parameters
+    ----------
+    estimator : estimator instance
+        Estimator object to test.
+
+    Returns
+    -------
+    out : bool
+        True if estimator is a regressor and False otherwise.
+
+    Examples
+    --------
+    >>> from sklearn.base import is_transformer
+    >>> from sklearn.svm import SVC
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> svc = SVC()
+    >>> scalar = StandardScaler()
+    >>> is_transformer(svc)
+    False
+    >>> is_transformer(scalar)
+    True
+    """
+    return get_tags(estimator).estimator_type == "transformer"
 
 
 def is_clusterer(estimator):
