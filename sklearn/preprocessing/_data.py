@@ -3428,8 +3428,8 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             "yeo-johnson": self._yeo_johnson_inverse_transform,
         }[self.method]
         for i, lmbda in enumerate(self.lambdas_):
-            with np.errstate(invalid="warn"):
-                with warnings.catch_warnings(record=True) as captured_warnings:
+            with warnings.catch_warnings(record=True) as captured_warnings:
+                with np.errstate(invalid="warn"):
                     X[:, i] = inv_fun(X[:, i], lmbda)
             if captured_warnings and np.isnan(X[:, i]).any():
                 warnings.warn(
