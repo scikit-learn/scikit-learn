@@ -754,6 +754,7 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
             cross-validation strategies that can be used here.
 
         scoring : str or callable, default=None
+<<<<<<< HEAD
             Scoring method to use when computing the validation curve. Options:
 
             - str: see :ref:`scoring_string_names` for options.
@@ -761,6 +762,15 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
               ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
             - `None`: the `estimator`'s
               :ref:`default evaluation criterion <model_evaluation>` is used.
+||||||| merged common ancestors
+            A string (see :ref:`scoring_parameter`) or
+            a scorer callable object / function with signature
+            `scorer(estimator, X, y)` (see :ref:`scoring`).
+=======
+            A string (see :ref:`scoring_parameter`) or
+            a scorer callable object / function with signature
+            `scorer(estimator, X, y)` (see :ref:`scoring_callable`).
+>>>>>>> doc_score_api
 
         n_jobs : int, default=None
             Number of jobs to run in parallel. Training the estimator and
