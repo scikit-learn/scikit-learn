@@ -743,7 +743,12 @@ def test_check_array_min_samples_and_features_messages():
         check_array([], ensure_2d=False)
 
     # Invalid edge case when checking the default minimum sample of a scalar
-    msg = r"Singleton array array\(42\) cannot be considered a valid" " collection."
+    msg = re.escape(
+        (
+            "Input should have at least 1 dimension i.e. satisfy "
+            "`len(x.shape) > 0`, got scalar `array(42)` instead."
+        )
+    )
     with pytest.raises(TypeError, match=msg):
         check_array(42, ensure_2d=False)
 
