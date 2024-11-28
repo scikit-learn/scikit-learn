@@ -1,7 +1,8 @@
 Free-threaded CPython 3.13 support
 ----------------------------------
 
-scikit-learn free-threaded wheels are available for all of our supported platforms.
+scikit-learn has preliminary support for free-threaded CPython, in particular
+free-threaded wheels are available for all of our supported platforms.
 
 Free-threaded CPython 3.13 is an experimental version of CPython 3.13 that removes
 the Global Interpreter Lock (GIL) with the goal of enabling efficient
@@ -11,6 +12,6 @@ For more details about free-threaded CPython see `py-free-threading doc <https:/
 in particular `how to install a free-threaded CPython <https://py-free-threading.github.io/installing_cpython/>`_
 and `Ecosystem Compatibility tracking <https://py-free-threading.github.io/tracking/>`_.
 
-Feel free to test free-threaded on your use case and report any issues!
+Feel free to try free-threaded on your use case and report any issues!
 
 By :user:`Loïc Estève <lesteve>`.
