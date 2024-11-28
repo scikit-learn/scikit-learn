@@ -10,7 +10,7 @@ multi-threaded use cases in Python.
 
 For more details about free-threaded CPython see `py-free-threading doc <https://py-free-threading.github.io>`_,
 in particular `how to install a free-threaded CPython <https://py-free-threading.github.io/installing_cpython/>`_
-and `Ecosystem Compatibility tracking <https://py-free-threading.github.io/tracking/>`_.
+and `Ecosystem compatibility tracking <https://py-free-threading.github.io/tracking/>`_.
 
 Feel free to try free-threaded on your use case and report any issues!
 
