@@ -397,7 +397,7 @@ def _num_samples(x):
     if hasattr(x, "shape") and x.shape is not None:
         if len(x.shape) == 0:
             raise TypeError(
-                f"Expected array-like or collection type, got type `{type(x)}` instead."
+                f"Input 'x' should have at least 1 dimension i.e. satisfy len(x.shape) > 0, got array scalar {!r} instead."
             )
         # Check that shape is returning an integer or default to len
         # Dask dataframes may not return numeric shape[0] value
