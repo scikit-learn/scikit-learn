@@ -1141,7 +1141,7 @@ def test_sample_weight_invalid():
 
     expected_err = re.escape(
         (
-            "Input 'x' should have at least 1 dimension i.e. satisfy "
+            "Input should have at least 1 dimension i.e. satisfy "
             "`len(x.shape) > 0`, got scalar `array(0.)` instead."
         )
     )

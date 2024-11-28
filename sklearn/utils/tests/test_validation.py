@@ -745,7 +745,7 @@ def test_check_array_min_samples_and_features_messages():
     # Invalid edge case when checking the default minimum sample of a scalar
     msg = re.escape(
         (
-            "Input 'x' should have at least 1 dimension i.e. satisfy "
+            "Input should have at least 1 dimension i.e. satisfy "
             "`len(x.shape) > 0`, got scalar `array(42)` instead."
         )
     )
