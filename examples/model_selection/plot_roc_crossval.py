@@ -89,6 +89,7 @@ for fold, (train, test) in enumerate(cv.split(X, y)):
         lw=1,
         ax=ax,
         plot_chance_level=(fold == n_splits - 1),
+        chance_level_kw={"label": None},
     )
     interp_tpr = np.interp(mean_fpr, viz.fpr, viz.tpr)
     interp_tpr[0] = 0.0
