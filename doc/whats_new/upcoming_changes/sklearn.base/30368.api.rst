@@ -1,0 +1,3 @@
+- Defines :func:`~sklearn.base.is_transformer` to check if an estimator is a
+  transformer.
+  By `Thomas Fan`_
