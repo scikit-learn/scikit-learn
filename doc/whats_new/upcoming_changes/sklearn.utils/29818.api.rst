@@ -1,0 +1,7 @@
+- `utils.estimator_checks.check_sample_weights_invariance`
+  replaced by
+  `utils.estimator_checks.check_sample_weight_equivalence_on_dense_data`
+  which uses integer (including zero) weights and
+  `utils.estimator_checks.check_sample_weight_equivalence_on_sparse_data`
+  which does the same on sparse data.
+  By :user:`Antoine Baker <antoinebaker>`

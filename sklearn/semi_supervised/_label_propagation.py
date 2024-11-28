@@ -70,7 +70,7 @@ from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import safe_sparse_dot
 from ..utils.fixes import laplacian as csgraph_laplacian
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 
 
 class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
@@ -210,7 +210,8 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         """
         check_is_fitted(self)
 
-        X_2d = self._validate_data(
+        X_2d = validate_data(
+            self,
             X,
             accept_sparse=["csc", "csr", "coo", "dok", "bsr", "lil", "dia"],
             reset=False,
@@ -255,7 +256,8 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         self : object
             Returns the instance itself.
         """
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=["csr", "csc"],

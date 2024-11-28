@@ -20,7 +20,7 @@ from ..utils import (
 from ..utils._chunking import get_chunk_n_rows
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
 from ..utils.parallel import Parallel, delayed
-from ..utils.validation import _num_samples, check_is_fitted
+from ..utils.validation import _num_samples, check_is_fitted, validate_data
 from ._bagging import BaseBagging
 from ._base import _partition_estimators
 
@@ -84,9 +84,10 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
     max_samples : "auto", int or float, default="auto"
         The number of samples to draw from X to train each base estimator.
-            - If int, then draw `max_samples` samples.
-            - If float, then draw `max_samples * X.shape[0]` samples.
-            - If "auto", then `max_samples=min(256, n_samples)`.
+
+        - If int, then draw `max_samples` samples.
+        - If float, then draw `max_samples * X.shape[0]` samples.
+        - If "auto", then `max_samples=min(256, n_samples)`.
 
         If max_samples is larger than the number of samples provided,
         all samples will be used for all trees (no sampling).
@@ -96,9 +97,9 @@ class IsolationForest(OutlierMixin, BaseBagging):
         of outliers in the data set. Used when fitting to define the threshold
         on the scores of the samples.
 
-            - If 'auto', the threshold is determined as in the
-              original paper.
-            - If float, the contamination should be in the range (0, 0.5].
+        - If 'auto', the threshold is determined as in the
+          original paper.
+        - If float, the contamination should be in the range (0, 0.5].
 
         .. versionchanged:: 0.22
            The default value of ``contamination`` changed from 0.1
@@ -107,8 +108,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
     max_features : int or float, default=1.0
         The number of features to draw from X to train each base estimator.
 
-            - If int, then draw `max_features` features.
-            - If float, then draw `max(1, int(max_features * n_features_in_))` features.
+        - If int, then draw `max_features` features.
+        - If float, then draw `max(1, int(max_features * n_features_in_))` features.
 
         Note: using a float number less than 1.0 or integer less than number of
         features will enable feature subsampling and leads to a longer runtime.
@@ -315,8 +316,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
         self : object
             Fitted estimator.
         """
-        X = self._validate_data(
-            X, accept_sparse=["csc"], dtype=tree_dtype, ensure_all_finite=False
+        X = validate_data(
+            self, X, accept_sparse=["csc"], dtype=tree_dtype, ensure_all_finite=False
         )
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
@@ -517,7 +518,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
                 model.score(X)
         """
         # Check data
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse="csr",
             dtype=tree_dtype,
@@ -629,15 +631,10 @@ class IsolationForest(OutlierMixin, BaseBagging):
         )
         return scores
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            },
-            "allow_nan": True,
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        return tags
 
 
 def _average_path_length(n_samples_leaf):
