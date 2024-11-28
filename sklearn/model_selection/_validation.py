@@ -176,7 +176,7 @@ def cross_validate(
         - a single string (see :ref:`scoring_string_names`);
         - a callable (see :ref:`scoring_callable`) that returns a single value.
         - `None`, the `estimator`'s
-          :ref:`default evaluation criterion <model_evaluation>` is used.
+          :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
         If `scoring` represents multiple scores, one can use:
 
@@ -596,7 +596,7 @@ def cross_val_score(
           ``scorer(estimator, X, y)``, which should return only a single value.
           See :ref:`scoring_callable` for details.
         - `None`: the `estimator`'s
-          :ref:`default evaluation criterion <model_evaluation>` is used.
+          :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
         Similar to :func:`cross_validate` but only a single metric is permitted.
 
@@ -1573,7 +1573,7 @@ def permutation_test_score(
           ``scorer(estimator, X, y)``, which should return only a single value.
           See :ref:`scoring_callable` for details.
         - `None`: the `estimator`'s
-          :ref:`default evaluation criterion <model_evaluation>` is used.
+          :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
     fit_params : dict, default=None
         Parameters to pass to the fit method of the estimator.
@@ -1879,7 +1879,7 @@ def learning_curve(
         - callable: a scorer callable object (e.g., function) with signature
           ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
         - `None`: the `estimator`'s
-          :ref:`default evaluation criterion <model_evaluation>` is used.
+          :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
     exploit_incremental_learning : bool, default=False
         If the estimator supports incremental learning, this will be
@@ -2380,7 +2380,7 @@ def validation_curve(
         - callable: a scorer callable object (e.g., function) with signature
           ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
         - `None`: the `estimator`'s
-          :ref:`default evaluation criterion <model_evaluation>` is used.
+          :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
     n_jobs : int, default=None
         Number of jobs to run in parallel. Training the estimator and computing

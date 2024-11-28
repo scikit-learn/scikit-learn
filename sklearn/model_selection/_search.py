@@ -1249,7 +1249,7 @@ class GridSearchCV(BaseSearchCV):
         - a single string (see :ref:`scoring_string_names`);
         - a callable (see :ref:`scoring_callable`) that returns a single value;
         - `None`, the `estimator`'s
-          :ref:`default evaluation criterion <model_evaluation>` is used.
+          :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
         If `scoring` represents multiple scores, one can use:
 
@@ -1627,7 +1627,7 @@ class RandomizedSearchCV(BaseSearchCV):
         - a single string (see :ref:`scoring_string_names`);
         - a callable (see :ref:`scoring_callable`) that returns a single value;
         - `None`, the `estimator`'s
-          :ref:`default evaluation criterion <model_evaluation>` is used.
+          :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
         If `scoring` represents multiple scores, one can use:
 

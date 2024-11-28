@@ -373,7 +373,7 @@ class LearningCurveDisplay(_BaseCurveDisplay):
             - callable: a scorer callable object (e.g., function) with signature
               ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
             - `None`: the `estimator`'s
-              :ref:`default evaluation criterion <model_evaluation>` is used.
+              :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
         exploit_incremental_learning : bool, default=False
             If the estimator supports incremental learning, this will be
@@ -754,23 +754,13 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
             cross-validation strategies that can be used here.
 
         scoring : str or callable, default=None
-<<<<<<< HEAD
             Scoring method to use when computing the validation curve. Options:
 
             - str: see :ref:`scoring_string_names` for options.
             - callable: a scorer callable object (e.g., function) with signature
               ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
             - `None`: the `estimator`'s
-              :ref:`default evaluation criterion <model_evaluation>` is used.
-||||||| merged common ancestors
-            A string (see :ref:`scoring_parameter`) or
-            a scorer callable object / function with signature
-            `scorer(estimator, X, y)` (see :ref:`scoring`).
-=======
-            A string (see :ref:`scoring_parameter`) or
-            a scorer callable object / function with signature
-            `scorer(estimator, X, y)` (see :ref:`scoring_callable`).
->>>>>>> doc_score_api
+              :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
         n_jobs : int, default=None
             Number of jobs to run in parallel. Training the estimator and

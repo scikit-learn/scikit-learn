@@ -83,7 +83,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         - callable: a scorer callable object (e.g., function) with signature
           ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
         - `None`: the `estimator`'s
-          :ref:`default evaluation criterion <model_evaluation>` is used.
+          :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
         NOTE that when using a custom scorer, it should return a single
         value.

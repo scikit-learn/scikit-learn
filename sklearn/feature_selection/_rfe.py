@@ -611,7 +611,7 @@ class RFECV(RFE):
         - callable: a scorer callable object (e.g., function) with signature
           ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
         - `None`: the `estimator`'s
-          :ref:`default evaluation criterion <model_evaluation>` is used.
+          :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
     verbose : int, default=0
         Controls verbosity of output.
