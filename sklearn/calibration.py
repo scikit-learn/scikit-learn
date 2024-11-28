@@ -60,6 +60,8 @@ from .utils.validation import (
     check_is_fitted,
 )
 
+__all__ = ["CalibratedClassifierCV"]
+
 
 class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
     """Probability calibration with isotonic regression or logistic regression.

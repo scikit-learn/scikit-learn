@@ -27,6 +27,8 @@ from .utils.validation import (
     validate_data,
 )
 
+__all__ = ["PolynomialCountSketch"]
+
 
 class PolynomialCountSketch(
     ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator

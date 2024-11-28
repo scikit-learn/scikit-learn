@@ -27,6 +27,8 @@ from .fixes import _object_dtype_isnan
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
+__all__ = ["assert_all_finite"]
+
 
 # This function is not used anymore at this moment in the code base but we keep it in
 # case that we merge a new public function without kwarg only by mistake, which would

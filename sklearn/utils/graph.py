@@ -9,6 +9,12 @@ from scipy import sparse
 from ..metrics.pairwise import pairwise_distances
 from ._param_validation import Integral, Interval, validate_params
 
+__all__ = ["single_source_shortest_path_length"]
+
+
+def __dir__():
+    return __all__
+
 
 ###############################################################################
 # Path and connected component analysis.

@@ -40,6 +40,8 @@ from .utils.validation import (
     validate_data,
 )
 
+__all__ = ["clone"]
+
 
 def clone(estimator, *, safe=True):
     """Construct a new unfitted estimator with the same parameters.

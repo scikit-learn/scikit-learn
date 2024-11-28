@@ -24,6 +24,13 @@ except ImportError:
 from ..externals._packaging.version import parse as parse_version
 from .parallel import _get_threadpool_controller
 
+__all__ = ["parse_version", "pd_fillna", "tarfile_extractall"]
+
+
+def __dir__():
+    return __all__
+
+
 _IS_32BIT = 8 * struct.calcsize("P") == 32
 _IS_WASM = platform.machine() in ["wasm32", "wasm64"]
 

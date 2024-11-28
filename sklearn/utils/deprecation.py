@@ -4,8 +4,13 @@
 import functools
 import warnings
 from inspect import signature
+from typing import List
 
-__all__ = ["deprecated"]
+__all__: List[str] = []
+
+
+def __dir__():
+    return __all__
 
 
 class deprecated:

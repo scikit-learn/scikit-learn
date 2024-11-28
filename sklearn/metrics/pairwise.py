@@ -46,6 +46,8 @@ from ..utils.validation import _num_samples, check_non_negative
 from ._pairwise_distances_reduction import ArgKmin
 from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 
+__all__ = ["check_pairwise_arrays"]
+
 
 # Utility Functions
 def _return_float_dtype(X, Y):

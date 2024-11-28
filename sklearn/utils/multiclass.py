@@ -15,6 +15,18 @@ from ..utils.fixes import VisibleDeprecationWarning
 from ._unique import attach_unique, cached_unique
 from .validation import _assert_all_finite, check_array
 
+__all__ = [
+    "check_classification_targets",
+    "class_distribution",
+    "is_multilabel",
+    "type_of_target",
+    "unique_labels",
+]
+
+
+def __dir__():
+    return __all__
+
 
 def _unique_multiclass(y, xp=None):
     xp, is_array_api_compliant = get_namespace(y, xp=xp)

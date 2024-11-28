@@ -8,6 +8,15 @@ from scipy import sparse
 
 from ._param_validation import StrOptions, validate_params
 
+__all__ = [
+    "compute_class_weight",
+    "compute_sample_weight",
+]
+
+
+def __dir__():
+    return __all__
+
 
 @validate_params(
     {
