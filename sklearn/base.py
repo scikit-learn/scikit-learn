@@ -1289,7 +1289,7 @@ def is_transformer(estimator):
     Returns
     -------
     out : bool
-        True if estimator is a regressor and False otherwise.
+        True if estimator is a transformer and False otherwise.
 
     Examples
     --------
