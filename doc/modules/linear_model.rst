@@ -4,8 +4,6 @@
 Linear Models
 =============
 
-I am changing this to see whether affected paths is correct
-
 .. currentmodule:: sklearn.linear_model
 
 The following are a set of methods intended for regression in which
