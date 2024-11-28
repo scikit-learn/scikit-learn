@@ -14,4 +14,4 @@ and `Ecosystem Compatibility tracking <https://py-free-threading.github.io/track
 
 Feel free to try free-threaded on your use case and report any issues!
 
-By :user:`Loïc Estève <lesteve>`.
+By :user:`Loïc Estève <lesteve>`
