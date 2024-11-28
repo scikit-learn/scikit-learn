@@ -191,19 +191,26 @@ def test_make_classification_return_x_y():
     Also that bunch.X is the same as X
     """
 
-    make = partial(
-        make_classification,
-        n_samples=100,
-        n_features=20,
-        n_informative=5,
-        n_redundant=1,
-        n_repeated=1,
-        n_classes=3,
-        n_clusters_per_class=1,
-        random_state=0,
-    )
+    kwargs = {
+        "n_samples": 100,
+        "n_features": 20,
+        "n_informative": 5,
+        "n_redundant": 1,
+        "n_repeated": 1,
+        "n_classes": 3,
+        "n_clusters_per_class": 2,
+        "weights": None,
+        "flip_y": 0.01,
+        "class_sep": 1.0,
+        "hypercube": True,
+        "shift": 0.0,
+        "scale": 1.0,
+        "shuffle": True,
+        "random_state": None,
+        "return_X_y": True,
+    }
 
-    bunch = make(return_X_y=False)
+    bunch = make_classification(**kwargs, return_X_y=False)
 
     assert (
         hasattr(bunch, "DESCR")
@@ -213,9 +220,20 @@ def test_make_classification_return_x_y():
         and hasattr(bunch, "y")
     )
 
-    X, y = make()
+    X, y = make_classification(**kwargs)
 
-    assert np.array_equal(X, bunch.X) and np.array_equal(y, bunch.y)
+    def count(str_):
+        return bunch.feature_info.count(str_)
+
+    assert (
+        np.array_equal(X, bunch.X)
+        and np.array_equal(y, bunch.y)
+        and bunch.DESCR == make_classification.__doc__
+        and bunch.parameters == kwargs
+        and count("informative") == kwargs["n_informative"]
+        and count("redundant") == kwargs["n_redundant"]
+        and count("repeated") == kwargs["n_repeated"]
+    )
 
 
 @pytest.mark.parametrize(

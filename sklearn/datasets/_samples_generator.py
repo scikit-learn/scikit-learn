@@ -175,11 +175,11 @@ def make_classification(
     return_X_y : bool, default=True
         If True, a tuple ``(X, y)`` instead of a Bunch object is returned.
 
-        .. versionadded:: 1.6
+        .. versionadded:: 1.7
 
     Returns
     -------
-    data : :class:`~sklearn.utils.Bunch`
+    data : :class:`~sklearn.utils.Bunch` if `return_X_y` is `False`.
         Dictionary-like object, with the following attributes.
 
         DESCR : str
@@ -194,7 +194,7 @@ def make_classification(
         y : ndarray of shape (n_samples,)
             An integer label for class membership of each sample.
 
-        .. versionadded:: 1.6
+        .. versionadded:: 1.7
 
     (X, y) : tuple if ``return_X_y`` is True
         A tuple of generated samples and labels.
@@ -366,6 +366,7 @@ def make_classification(
         "scale": scale,
         "shuffle": shuffle,
         "random_state": random_state,
+        "return_X_y": return_X_y,
     }
 
     bunch = Bunch(
