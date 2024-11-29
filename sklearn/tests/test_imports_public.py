@@ -17,9 +17,16 @@ from sklearn.experimental import (  # noqa
 # - Importable but not documented
 # - deprecated
 OBJECTS_NOT_IN_API_REFERENCE = {
-    "sklearn": ["clone"] + sklearn._submodules,
-    "sklearn.cluster": ["get_bin_seeds"],
-    "sklearn.covariance": ["log_likelihood"],
+    "sklearn": [
+        "clone",  # reimport: base
+    ]
+    + sklearn._submodules,
+    "sklearn.cluster": [
+        "get_bin_seeds",  # undocumented
+    ],
+    "sklearn.covariance": [
+        "log_likelihood",  # undocumented
+    ],
     "sklearn.feature_extraction": [
         "image",  # submodule
         "text",  # submodule
@@ -27,10 +34,10 @@ OBJECTS_NOT_IN_API_REFERENCE = {
         "grid_to_graph",  # reimport: image
     ],
     "sklearn.feature_extraction.text": [
-        "ENGLISH_STOP_WORDS",
-        "strip_accents_ascii",
-        "strip_accents_unicode",
-        "strip_tags",
+        "ENGLISH_STOP_WORDS",  # undocumented
+        "strip_accents_ascii",  # undocumented
+        "strip_accents_unicode",  # undocumented
+        "strip_tags",  # undocumented
     ],
     "sklearn.gaussian_process": [
         "kernels",  # submodule
