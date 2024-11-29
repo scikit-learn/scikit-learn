@@ -627,17 +627,21 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
                 response_method=response_method,
                 pos_label=pos_label,
             )[0]
-            displays.append(cls.from_predictions(
-                y_true,
-                y_pred,
-                sample_weight=None if sample_weight is None else sample_weight[fold_id],
-                drop_intermediate=drop_intermediate,
-                pos_label=pos_label,
-                name=f"ROC fold {fold_id}" if name is None else name,
-                ax=ax,
-                plot_chance_level=plot_chance_level,
-                chance_level_kw=chance_level_kw,
-                despine=despine,
-                **fold_line_kw[fold_id],
-            ))
+            displays.append(
+                cls.from_predictions(
+                    y_true,
+                    y_pred,
+                    sample_weight=(
+                        None if sample_weight is None else sample_weight[fold_id]
+                    ),
+                    drop_intermediate=drop_intermediate,
+                    pos_label=pos_label,
+                    name=f"ROC fold {fold_id}" if name is None else name,
+                    ax=ax,
+                    plot_chance_level=plot_chance_level,
+                    chance_level_kw=chance_level_kw,
+                    despine=despine,
+                    **fold_line_kw[fold_id],
+                )
+            )
         return displays
