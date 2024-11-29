@@ -29,8 +29,8 @@ from .model_selection import cross_val_predict
 from .utils import Bunch, check_random_state
 from .utils._param_validation import (
     HasMethods,
-    StrOptions,
     Hidden,
+    StrOptions,
 )
 from .utils._response import _get_response_values
 from .utils._user_interface import _print_elapsed_time
@@ -673,7 +673,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         self.random_state = random_state
         self.verbose = verbose
 
-        self._get_estimator() #validate parameters wrt to deprecation.
+        self._get_estimator()  # validate parameters wrt to deprecation.
 
     # TODO(1.8): This is a temporary getter method to validate input wrt deprecation.
     # It was only included to avoid relying on the presence of self.estimator_
@@ -1149,7 +1149,6 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
             routing information.
         """
 
-
         router = MetadataRouter(owner=self.__class__.__name__).add(
             estimator=self._get_estimator(),
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),
@@ -1311,7 +1310,6 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-
 
         router = MetadataRouter(owner=self.__class__.__name__).add(
             estimator=self._get_estimator(),
