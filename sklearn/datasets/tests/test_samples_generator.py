@@ -206,11 +206,14 @@ def test_make_classification_return_x_y():
         "shift": 0.0,
         "scale": 1.0,
         "shuffle": True,
-        "random_state": None,
+        "random_state": 42,
         "return_X_y": True,
     }
 
-    bunch = make_classification(**kwargs, return_X_y=False)
+    X, y = make_classification(**kwargs)
+ 
+    kwargs["return_X_y"] = False
+    bunch = make_classification(**kwargs)
 
     assert (
         hasattr(bunch, "DESCR")
@@ -220,20 +223,16 @@ def test_make_classification_return_x_y():
         and hasattr(bunch, "y")
     )
 
-    X, y = make_classification(**kwargs)
-
     def count(str_):
         return bunch.feature_info.count(str_)
 
-    assert (
-        np.array_equal(X, bunch.X)
-        and np.array_equal(y, bunch.y)
-        and bunch.DESCR == make_classification.__doc__
-        and bunch.parameters == kwargs
-        and count("informative") == kwargs["n_informative"]
-        and count("redundant") == kwargs["n_redundant"]
-        and count("repeated") == kwargs["n_repeated"]
-    )
+    assert np.array_equal(X, bunch.X)
+    assert np.array_equal(y, bunch.y)
+    assert bunch.DESCR == make_classification.__doc__
+    assert bunch.parameters == kwargs
+    assert count("informative") == kwargs["n_informative"]
+    assert count("redundant") == kwargs["n_redundant"]
+    assert count("repeated") == kwargs["n_repeated"]
 
 
 @pytest.mark.parametrize(

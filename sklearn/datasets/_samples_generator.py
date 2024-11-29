@@ -243,25 +243,28 @@ def make_classification(
         )
 
     if weights is not None:
+        # we define new variable, weight_, instead of modifying user defined parameter.
         if len(weights) not in [n_classes, n_classes - 1]:
             raise ValueError(
                 "Weights specified but incompatible with number of classes."
             )
         if len(weights) == n_classes - 1:
             if isinstance(weights, list):
-                weights = weights + [1.0 - sum(weights)]
+                weights_ = weights + [1.0 - sum(weights)]
             else:
-                weights = np.resize(weights, n_classes)
-                weights[-1] = 1.0 - sum(weights[:-1])
+                weights_ = np.resize(weights, n_classes)
+                weights_[-1] = 1.0 - sum(weights_[:-1])
+        else:
+            weights_ = weights.copy()
     else:
-        weights = [1.0 / n_classes] * n_classes
+        weights_ = [1.0 / n_classes] * n_classes
 
     n_random = n_features - n_informative - n_redundant - n_repeated
     n_clusters = n_classes * n_clusters_per_class
 
     # Distribute samples among clusters by weight
     n_samples_per_cluster = [
-        int(n_samples * weights[k % n_classes] / n_clusters_per_class)
+        int(n_samples * weights_[k % n_classes] / n_clusters_per_class)
         for k in range(n_clusters)
     ]
 
