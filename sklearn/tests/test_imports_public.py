@@ -12,7 +12,7 @@ from sklearn.experimental import (  # noqa
 )
 
 # These functions or classes are added here if:
-# - A submodule
+# - A submodule  (This is okay)
 # - Reimported from somewhere else, and is documented there
 # - Importable but not documented
 # - deprecated
