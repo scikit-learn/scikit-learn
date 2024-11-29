@@ -627,7 +627,7 @@ print(pd.DataFrame(res).set_index("subset").T)
 # Gini coefficient is upper bounded by 1.0 but even an oracle model that ranks
 # the policyholders by the observed claim amounts cannot reach a score of 1.0.
 #
-# We observe that both models are able to rank policyholders by riskyness
+# We observe that both models are able to rank policyholders by riskiness
 # significantly better than chance although they are also both far from the
 # oracle model due to the natural difficulty of the prediction problem from a
 # few features: most accidents are not predictable and can be caused by
