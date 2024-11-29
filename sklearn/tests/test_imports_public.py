@@ -6,80 +6,99 @@ from pathlib import Path
 import pytest
 
 import sklearn
-from sklearn.experimental import (
-    enable_halving_search_cv,  # noqa
-    enable_iterative_imputer,  # noqa
+from sklearn.experimental import (  # noqa
+    enable_halving_search_cv,
+    enable_iterative_imputer,
 )
 
 # These functions or classes are added here if:
-# - Reimported from another module
-# - Importable but not documented
 # - A submodule
-EXPORTED_REIMPORTS = {
+# - Reimported from somewhere else, and is documented there
+# - Importable but not documented
+# - deprecated
+OBJECTS_NOT_IN_API_REFERENCE = {
     "sklearn": ["clone"] + sklearn._submodules,
+    "sklearn.cluster": ["get_bin_seeds"],
+    "sklearn.covariance": ["log_likelihood"],
     "sklearn.feature_extraction": [
-        "image",
-        "text",
-        "img_to_graph",
-        "grid_to_graph",
+        "image",  # submodule
+        "text",  # submodule
+        "img_to_graph",  # reimport: image
+        "grid_to_graph",  # reimport: image
+    ],
+    "sklearn.feature_extraction.text": [
+        "ENGLISH_STOP_WORDS",
+        "strip_accents_ascii",
+        "strip_accents_unicode",
+        "strip_tags",
     ],
     "sklearn.gaussian_process": [
-        "kernels",
+        "kernels",  # submodule
     ],
     "sklearn.metrics": [
-        "cluster",
-        "euclidean_distances",
-        "nan_euclidean_distances",
-        "pair_confusion_matrix",
-        "pairwise_kernels",
+        "cluster",  # submodule
+        "euclidean_distances",  # reimport: pairwise
+        "nan_euclidean_distances",  # reimport: pairwise
+        "pair_confusion_matrix",  # undocumented
+        "pairwise_kernels",  # reimport: pairwise
     ],
     "sklearn.metrics.cluster": [
-        "fowlkes_mallows_score",
-        "v_measure_score",
-        "entropy",
-        "expected_mutual_information",
-        "mutual_info_score",
-        "normalized_mutual_info_score",
-        "calinski_harabasz_score",
-        "adjusted_rand_score",
-        "homogeneity_score",
-        "consensus_score",
-        "davies_bouldin_score",
-        "silhouette_score",
-        "completeness_score",
-        "adjusted_mutual_info_score",
-        "rand_score",
-        "homogeneity_completeness_v_measure",
-        "silhouette_samples",
+        "fowlkes_mallows_score",  # reimport: metrics
+        "v_measure_score",  # reimport: metrics
+        "entropy",  # undocumented
+        "expected_mutual_information",  # undocumented
+        "mutual_info_score",  # reimport: metrics
+        "normalized_mutual_info_score",  # reimport: metrics
+        "calinski_harabasz_score",  # reimport: metrics
+        "adjusted_rand_score",  # reimport: metrics
+        "homogeneity_score",  # reimport: metrics
+        "consensus_score",  # reimport: metrics
+        "davies_bouldin_score",  # reimport: metrics
+        "silhouette_score",  # reimport: metrics
+        "completeness_score",  # reimport: metrics
+        "adjusted_mutual_info_score",  # reimport: metrics
+        "rand_score",  # reimport: metrics
+        "homogeneity_completeness_v_measure",  # reimport: metrics
+        "silhouette_samples",  # reimport: metrics
+    ],
+    "sklearn.model_selection": [
+        "BaseCrossValidator",  # undocumented
+        "BaseShuffleSplit",  # undocumented
+    ],
+    "sklearn.neighbors": [
+        "VALID_METRICS",  # undocumented
+        "VALID_METRICS_SPARSE",  # undocumented
     ],
     "sklearn.tree": [
-        "BaseDecisionTree",
+        "BaseDecisionTree",  # undocumented
     ],
     "sklearn.utils.multiclass": [
-        "check_classification_targets",
-        "class_distribution",
+        "check_classification_targets",  # undocumented
+        "class_distribution",  # undocumented
     ],
     "sklearn.utils.extmath": [
-        "make_nonnegative",
-        "svd_flip",
-        "row_norms",
-        "cartesian",
-        "softmax",
-        "stable_cumsum",
-        "squared_norm",
+        "make_nonnegative",  # undocumented
+        "svd_flip",  # undocumented
+        "row_norms",  # undocumented
+        "cartesian",  # undocumented
+        "softmax",  # undocumented
+        "stable_cumsum",  # undocumented
+        "squared_norm",  # undocumented
     ],
-    "sklearn.utils.validation": ["assert_all_finite"],
+    "sklearn.utils.validation": [
+        "assert_all_finite",  # reimport: utils
+    ],
     "sklearn.utils": [
-        "parallel_backend",
-        "check_symmetric",
-        "compute_sample_weight",
-        "default_tags",
-        "column_or_1d",
-        "all_estimators",
-        "compute_class_weight",
-        "tosequence",
-        "metadata_routing",
-        "DataConversionWarning",
+        "metadata_routing",  # module
+        "parallel_backend",  # deprecated
+        "check_symmetric",  # reimport: utils.validation
+        "compute_sample_weight",  # reimport: utils.class_weight
+        "default_tags",  # undocumented
+        "column_or_1d",  # reimport: utils.validation
+        "all_estimators",  # reimport: discovery.all_estimator
+        "compute_class_weight",  # reimport: utils.class_weight
+        "tosequence",  # undocumented
+        "DataConversionWarning",  # reimport exceptions
     ],
 }
 
@@ -101,7 +120,8 @@ def yield_all_public_apis():
 
     api_reference = import_module_from_path(api_reference_file)
     module_to_public_names = defaultdict(list)
-    module_to_public_names.update(EXPORTED_REIMPORTS)
+    module_to_public_names.update(OBJECTS_NOT_IN_API_REFERENCE)
+
     for module_name, info in api_reference.API_REFERENCE.items():
         for section in info["sections"]:
             for public_name in section["autosummary"]:
@@ -126,11 +146,6 @@ def yield_all_public_apis():
 def test_public_functions_are_in_all_and_dir(module_name, public_names):
     """Check that public functions and in __all__ and returned by __dir__()."""
     module = import_module(module_name)
-
-    # Remove when https://github.com/scikit-learn/scikit-learn/pull/30368 is
-    # merged
-    if module_name == "sklearn.base":
-        public_names.remove("is_transformer")
 
     if module_name == "sklearn.experimental":
         pytest.skip(reason="Do not need to run sklearn.experimental")
