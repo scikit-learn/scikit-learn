@@ -1011,7 +1011,6 @@ def test_check_consistent_length():
     check_consistent_length([1], (2,), np.array([3]), sp.csr_matrix((1, 2)))
     with pytest.raises(ValueError, match="inconsistent numbers of samples"):
         check_consistent_length([1, 2], [1])
-
     with pytest.raises(TypeError, match=r"got <\w+ 'int'>"):
         check_consistent_length([1, 2], 1)
     with pytest.raises(TypeError, match=r"got <\w+ 'object'>"):
