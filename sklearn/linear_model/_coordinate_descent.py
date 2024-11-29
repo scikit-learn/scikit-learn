@@ -1871,7 +1871,9 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.input_tags.sparse = not self._is_multitask()
+        multitask = self._is_multitask()
+        tags.input_tags.sparse = not multitask
+        tags.target_tags.multi_output = multitask
         return tags
 
 
@@ -2085,11 +2087,6 @@ class LassoCV(RegressorMixin, LinearModelCV):
 
     def _is_multitask(self):
         return False
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags.target_tags.multi_output = False
-        return tags
 
     def fit(self, X, y, sample_weight=None, **params):
         """Fit Lasso model with coordinate descent.
@@ -2366,11 +2363,6 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
     def _is_multitask(self):
         return False
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags.target_tags.multi_output = False
-        return tags
 
     def fit(self, X, y, sample_weight=None, **params):
         """Fit ElasticNet model with coordinate descent.
@@ -3035,7 +3027,6 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.target_tags.multi_output = True
         tags.target_tags.single_output = False
         return tags
 
@@ -3276,7 +3267,6 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.target_tags.multi_output = True
         tags.target_tags.single_output = False
         return tags
 
