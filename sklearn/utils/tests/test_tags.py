@@ -434,7 +434,6 @@ def test_old_tags():
             classifier_tags = None
             regressor_tags = RegressorTags(
                 poor_score=True,
-                multi_label=True,
             )
             return Tags(
                 estimator_type=self._estimator_type,

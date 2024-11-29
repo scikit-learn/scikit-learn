@@ -98,6 +98,8 @@ class TargetTags:
         Whether a regressor supports multi-target outputs or a classifier supports
         multi-class multi-output.
 
+        See :term:`multi-output` in the glossary.
+
     single_output : bool, default=True
         Whether the target can be single-output. This can be ``False`` if the
         estimator supports only multi-output cases.
@@ -150,8 +152,13 @@ class ClassifierTags:
         classification. Therefore this flag indicates whether the
         classifier is a binary-classifier-only or not.
 
+        See :term:`multi-class` in the glossary.
+
     multi_label : bool, default=False
-        Whether the classifier supports multi-label output.
+        Whether the classifier supports multi-label output: a data point can
+        be predicted to belong to a variable number of classes.
+
+        See :term:`multi-label` in the glossary.
     """
 
     poor_score: bool = False
@@ -172,13 +179,9 @@ class RegressorTags:
         n_informative=1, bias=5.0, noise=20, random_state=42)``. The
         dataset and values are based on current estimators in scikit-learn
         and might be replaced by something more systematic.
-
-    multi_label : bool, default=False
-        Whether the regressor supports multilabel output.
     """
 
     poor_score: bool = False
-    multi_label: bool = False
 
 
 @dataclass(**_dataclass_args())
