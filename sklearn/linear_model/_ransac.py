@@ -15,7 +15,7 @@ from ..base import (
     clone,
 )
 from ..exceptions import ConvergenceWarning
-from ..utils import check_consistent_length, check_random_state
+from ..utils import check_consistent_length, check_random_state, get_tags
 from ..utils._bunch import Bunch
 from ..utils._param_validation import (
     HasMethods,
@@ -724,5 +724,8 @@ class RANSACRegressor(
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.input_tags.sparse = True
+        if self.estimator is None:
+            tags.input_tags.sparse = True
+        else:
+            tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
         return tags
