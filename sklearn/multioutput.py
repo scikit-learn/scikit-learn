@@ -27,7 +27,11 @@ from .base import (
 )
 from .model_selection import cross_val_predict
 from .utils import Bunch, check_random_state
-from .utils._param_validation import HasMethods, StrOptions
+from .utils._param_validation import (
+    HasMethods,
+    StrOptions,
+    Hidden,
+)
 from .utils._response import _get_response_values
 from .utils._user_interface import _print_elapsed_time
 from .utils.metadata_routing import (
@@ -628,7 +632,7 @@ def _available_if_base_estimator_has(attr):
     """
 
     def _check(self):
-        return hasattr(self._estimator, attr) or all(
+        return hasattr(self._get_estimator(), attr) or all(
             hasattr(est, attr) for est in self.estimators_
         )
 
@@ -643,7 +647,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         ],
         "estimator": [
             HasMethods(["fit", "predict"]),
-            None,
+            Hidden(None),
         ],
         "order": ["array-like", StrOptions({"random"}), None],
         "cv": ["cv_object", StrOptions({"prefit"})],
@@ -669,13 +673,13 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         self.random_state = random_state
         self.verbose = verbose
 
-    # TODO(1.8): Remove the _validate_estimator when base estimator
-    # is removed, use self.estimator instead of self._estimator
-    def _validate_estimator(self):
-        """Check the base estimator.
+        self._get_estimator() #validate parameters wrt to deprecation.
 
-        Set the `_estimator` attribute.
-        """
+    # TODO(1.8): This is a temporary getter method to validate input wrt deprecation.
+    # It was only included to avoid relying on the presence of self.estimator_
+    def _get_estimator(self):
+        """Get and validate estimator."""
+
         if self.estimator is not None and (self.base_estimator != "deprecated"):
             raise ValueError(
                 "Both `estimator` and `base_estimator` were set. Only set `estimator`."
@@ -688,9 +692,9 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
                 "and will be removed in 1.8. Use `estimator` instead."
             )
             warnings.warn(warning_msg, FutureWarning)
-            self._estimator = self.base_estimator
+            return self.base_estimator
         elif self.estimator is not None:
-            self._estimator = self.estimator
+            return self.estimator
 
     def _log_message(self, *, estimator_idx, n_estimators, processing_msg):
         if not self.verbose:
@@ -774,9 +778,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         elif sorted(self.order_) != list(range(Y.shape[1])):
             raise ValueError("invalid order")
 
-        self._validate_estimator()
-
-        self.estimators_ = [clone(self._estimator) for _ in range(Y.shape[1])]
+        self.estimators_ = [clone(self._get_estimator()) for _ in range(Y.shape[1])]
 
         if self.cv is None:
             Y_pred_chain = Y[:, self.order_]
@@ -815,7 +817,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
 
         if hasattr(self, "chain_method"):
             chain_method = _check_response_method(
-                self._estimator,
+                self._get_estimator(),
                 self.chain_method,
             ).__name__
             self.chain_method_ = chain_method
@@ -840,7 +842,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             if self.cv is not None and chain_idx < len(self.estimators_) - 1:
                 col_idx = X.shape[1] + chain_idx
                 cv_result = cross_val_predict(
-                    self._estimator,
+                    self._get_estimator(),
                     X_aug[:, :col_idx],
                     y=y,
                     cv=self.cv,
@@ -1147,10 +1149,9 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
             routing information.
         """
 
-        self._validate_estimator()
 
         router = MetadataRouter(owner=self.__class__.__name__).add(
-            estimator=self._estimator,
+            estimator=self._get_estimator(),
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
         return router
@@ -1311,10 +1312,9 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
             routing information.
         """
 
-        self._validate_estimator()
 
         router = MetadataRouter(owner=self.__class__.__name__).add(
-            estimator=self._estimator,
+            estimator=self._get_estimator(),
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
         return router
