@@ -136,6 +136,7 @@ def _yield_api_checks(estimator):
     yield check_estimator_cloneable
     yield check_estimator_tags_renamed
     yield check_valid_tag_types
+    yield check_positive_only_tag_during_fit
     yield check_estimator_repr
     yield check_no_attributes_set_in_init
     yield check_fit_score_takes_y
@@ -3897,6 +3898,40 @@ def _enforce_estimator_tags_X(estimator, X, X_test=None, kernel=linear_kernel):
     if X_test is not None:
         return X_res, X_test
     return X_res
+
+
+@ignore_warnings(category=FutureWarning)
+def check_positive_only_tag_during_fit(name, estimator_orig):
+    """Test that the estimator correctly sets the tags.input_tags.positive_only
+
+    If the tag is False, the estimator should accept negative input regardless of the
+    tags.input_tags.pairwise flag.
+    """
+    estimator = clone(estimator_orig)
+    tags = get_tags(estimator)
+
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    y = _enforce_estimator_tags_y(estimator, y)
+    set_random_state(estimator, 0)
+    X = _enforce_estimator_tags_X(estimator_orig, X)
+    X -= X.mean()
+
+    if tags.input_tags.positive_only:
+        with raises(ValueError, match="Negative values in data"):
+            estimator.fit(X, y)
+    else:
+        # This should pass
+        try:
+            estimator.fit(X, y)
+        except Exception as e:
+            err_msg = (
+                f"Estimator {repr(name)} raised {e.__class__.__name__} unexpectedly."
+                " This happens when passing negative input values as X."
+                " If negative values are not supported for this estimator instance,"
+                " then the tags.input_tags.positive_only tag needs to be set to True."
+            )
+            raise AssertionError(err_msg) from e
 
 
 @ignore_warnings(category=FutureWarning)
