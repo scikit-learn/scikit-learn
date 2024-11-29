@@ -16,6 +16,10 @@ from .utils.validation import _check_sample_weight, check_is_fitted, validate_da
 __all__ = ["KernelRidge"]
 
 
+def __dir__():
+    return __all__
+
+
 class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
     """Kernel ridge regression.
 

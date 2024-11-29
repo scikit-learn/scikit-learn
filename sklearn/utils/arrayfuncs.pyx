@@ -17,6 +17,12 @@ ctypedef fused real_numeric:
     float
     double
 
+__all__ = ["min_pos"]
+
+
+def __dir__():
+    return __all__
+
 
 def min_pos(const floating[:] X):
     """Find the minimum value of an array over positive values.

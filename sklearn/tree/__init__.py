@@ -22,3 +22,7 @@ __all__ = [
     "plot_tree",
     "export_text",
 ]
+
+
+def __dir__():
+    return __all__

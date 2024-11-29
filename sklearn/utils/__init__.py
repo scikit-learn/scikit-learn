@@ -91,12 +91,6 @@ __all__ = [
     "estimator_html_repr",
     "gen_batches",
     "gen_even_slices",
-    "Tags",
-    "InputTags",
-    "TargetTags",
-    "ClassifierTags",
-    "RegressorTags",
-    "TransformerTags",
     "get_tags",
     "indexable",
     "parallel_backend",
@@ -107,6 +101,7 @@ __all__ = [
     "tosequence",
     "metadata_routing",
     "murmurhash3_32",
+    "_safe_indexing",
 ]
 
 

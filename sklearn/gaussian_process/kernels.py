@@ -36,7 +36,26 @@ from ..exceptions import ConvergenceWarning
 from ..metrics.pairwise import pairwise_kernels
 from ..utils.validation import _num_samples
 
-__all__ = ["Hyperparameter"]
+__all__ = [
+    "Hyperparameter",
+    "ExpSineSquared",
+    "Kernel",
+    "CompoundKernel",
+    "ConstantKernel",
+    "Exponentiation",
+    "Matern",
+    "PairwiseKernel",
+    "RBF",
+    "Sum",
+    "WhiteKernel",
+    "DotProduct",
+    "RationalQuadratic",
+    "Product",
+]
+
+
+def __dir__():
+    return __all__
 
 
 def _check_length_scale(X, length_scale):

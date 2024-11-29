@@ -8,7 +8,6 @@ extends single output estimators to multioutput estimators.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 from abc import ABCMeta, abstractmethod
 from numbers import Integral
 
@@ -53,6 +52,10 @@ __all__ = [
     "ClassifierChain",
     "RegressorChain",
 ]
+
+
+def __dir__():
+    return __all__
 
 
 def _fit_estimator(estimator, X, y, sample_weight=None, **fit_params):

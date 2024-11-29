@@ -40,6 +40,10 @@ __all__ = [
 ]
 
 
+def __dir__():
+    return __all__
+
+
 class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
     """Abstract base class for naive Bayes estimators"""
 

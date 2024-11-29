@@ -15,6 +15,7 @@ __all__ = [
     "PositiveSpectrumWarning",
     "UnsetMetadataPassedError",
     "EstimatorCheckFailedWarning",
+    "InconsistentVersionWarning",
 ]
 
 

@@ -40,3 +40,7 @@ __all__ = [
     "VALID_METRICS",
     "VALID_METRICS_SPARSE",
 ]
+
+
+def __dir__():
+    return __all__

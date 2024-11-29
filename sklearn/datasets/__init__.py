@@ -106,6 +106,10 @@ __all__ = [
 ]
 
 
+def __dir__():
+    return __all__
+
+
 def __getattr__(name):
     if name == "load_boston":
         msg = textwrap.dedent(

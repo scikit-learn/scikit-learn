@@ -10,6 +10,12 @@ import numpy as np
 from cython cimport floating
 from ..utils._typedefs cimport float64_t, int32_t, int64_t, intp_t, uint64_t
 
+__all__ = ["inplace_csr_row_normalize_l1", "inplace_csr_row_normalize_l2"]
+
+
+def __dir__():
+    return __all__
+
 
 ctypedef fused integral:
     int32_t

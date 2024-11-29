@@ -44,3 +44,7 @@ __all__ = [
     "oas",
     "shrunk_covariance",
 ]
+
+
+def __dir__():
+    return __all__

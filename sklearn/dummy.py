@@ -30,7 +30,11 @@ from .utils.validation import (
     validate_data,
 )
 
-__all__ = ["DummyClassifier"]
+__all__ = ["DummyClassifier", "DummyRegressor"]
+
+
+def __dir__():
+    return __all__
 
 
 class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):

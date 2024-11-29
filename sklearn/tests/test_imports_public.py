@@ -1,112 +1,161 @@
-import inspect
-import itertools
-import pkgutil
+import importlib
+from collections import defaultdict
 from importlib import import_module
+from pathlib import Path
 
 import pytest
 
 import sklearn
+from sklearn.experimental import (
+    enable_halving_search_cv,  # noqa
+    enable_iterative_imputer,  # noqa
+)
 
-module_part_to_ignore = {
-    "tests",
-    "externals",
-    "setup",
-    "conftest",
-    "experimental",
-    "estimator_checks",
+# These functions or classes are added here if:
+# - Reimported from another module
+# - Importable but not documented
+# - A submodule
+EXPORTED_REIMPORTS = {
+    "sklearn": ["clone"] + sklearn._submodules,
+    "sklearn.feature_extraction": [
+        "image",
+        "text",
+        "img_to_graph",
+        "grid_to_graph",
+    ],
+    "sklearn.gaussian_process": [
+        "kernels",
+    ],
+    "sklearn.metrics": [
+        "cluster",
+        "euclidean_distances",
+        "nan_euclidean_distances",
+        "pair_confusion_matrix",
+        "pairwise_kernels",
+    ],
+    "sklearn.metrics.cluster": [
+        "fowlkes_mallows_score",
+        "v_measure_score",
+        "entropy",
+        "expected_mutual_information",
+        "mutual_info_score",
+        "normalized_mutual_info_score",
+        "calinski_harabasz_score",
+        "adjusted_rand_score",
+        "homogeneity_score",
+        "consensus_score",
+        "davies_bouldin_score",
+        "silhouette_score",
+        "completeness_score",
+        "adjusted_mutual_info_score",
+        "rand_score",
+        "homogeneity_completeness_v_measure",
+        "silhouette_samples",
+    ],
+    "sklearn.tree": [
+        "BaseDecisionTree",
+    ],
+    "sklearn.utils.multiclass": [
+        "check_classification_targets",
+        "class_distribution",
+    ],
+    "sklearn.utils.extmath": [
+        "make_nonnegative",
+        "svd_flip",
+        "row_norms",
+        "cartesian",
+        "softmax",
+        "stable_cumsum",
+        "squared_norm",
+    ],
+    "sklearn.utils.validation": ["assert_all_finite"],
+    "sklearn.utils": [
+        "parallel_backend",
+        "check_symmetric",
+        "compute_sample_weight",
+        "default_tags",
+        "column_or_1d",
+        "all_estimators",
+        "compute_class_weight",
+        "tosequence",
+        "metadata_routing",
+        "DataConversionWarning",
+    ],
 }
 
-# Empty modules
-module_name_to_ignore = {
-    "sklearn.datasets.data",
-    "sklearn.datasets.descr",
-    "sklearn.datasets.images",
-}
 
-# Functions and classes from these modules are not public
-objects_in_module_to_ignore = {
-    "sklearn.utils._param_validation",
-    "sklearn.utils._array_api",
-    "sklearn.utils._unique",
-}
-
-# These public names are imported in an __init__.py file, but should also be imported
-# from the a specific module
-public_names_to_include_in_module = {
-    "sklearn.utils.class_weight": {"compute_class_weight", "compute_sample_weight"},
-    "sklearn.utils.discovery": {"all_estimators"},
-    "sklearn.utils.extmath": {"randomized_svd", "randomized_range_finder"},
-}
+def import_module_from_path(path):
+    module_name = path.name
+    spec = importlib.util.spec_from_file_location(module_name, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
-def yield_module_and_public_names():
-    root_path = sklearn.__path__
-    module_with_public_names = []
+def yield_all_public_apis():
+    root_directory = Path(sklearn.__file__).parent.parent
+    api_reference_file = root_directory / "doc" / "api_reference.py"
 
-    for _, module_name, _ in pkgutil.walk_packages(path=root_path, prefix="sklearn."):
-        if module_name in module_name_to_ignore:
-            continue
+    if not api_reference_file.exists():
+        return []
 
-        module_parts = module_name.split(".")
-        if (
-            any(part in module_part_to_ignore for part in module_parts)
-            or "._" in module_name
-        ):
-            continue
+    api_reference = import_module_from_path(api_reference_file)
+    module_to_public_names = defaultdict(list)
+    module_to_public_names.update(EXPORTED_REIMPORTS)
+    for module_name, info in api_reference.API_REFERENCE.items():
+        for section in info["sections"]:
+            for public_name in section["autosummary"]:
+                if "." in public_name:
+                    assert public_name.count(".") == 1
+                    submodule, public_name = public_name.split(".")
+                    module_to_public_names[f"{module_name}.{submodule}"].append(
+                        public_name
+                    )
+                else:
+                    # Part of the parent module
+                    module_to_public_names[module_name].append(public_name)
 
-        module = import_module(module_name)
-
-        # Only check python files
-        if not module.__file__.endswith(".py"):
-            continue
-
-        def _is_public_class_function(x):
-            return (hasattr(x, "__name__") and not x.__name__.startswith("_")) and (
-                hasattr(x, "__module__")
-                and x.__module__.startswith("sklearn.")
-                and x.__module__ not in objects_in_module_to_ignore
-            )
-
-        sklearn_objects = inspect.getmembers(module, _is_public_class_function)
-        public_names = set([o[0] for o in sklearn_objects])
-
-        module_with_public_names.append((module, public_names))
-
-    # Public names in __init__.py and sklearn.base are generally not imported by
-    # other modules
-    public_names_to_remove = set(
-        itertools.chain.from_iterable(
-            public_names
-            for module, public_names in module_with_public_names
-            if module.__file__.endswith("__init__.py")
-            or module.__name__ == "sklearn.base"
-        )
-    )
-
-    for module, public_names_in_module in module_with_public_names:
-        if module.__file__.endswith("__init__.py"):
-            yield module, sorted(public_names_in_module)
-        else:
-            if module.__name__ in public_names_to_include_in_module:
-                public_modules_to_remove = (
-                    public_names_to_remove
-                    - public_names_to_include_in_module[module.__name__]
-                )
-            else:
-                public_modules_to_remove = public_names_to_remove
-
-            yield module, sorted(public_names_in_module - public_modules_to_remove)
+    for mod_name, public_names in module_to_public_names.items():
+        yield mod_name, sorted(public_names)
 
 
 @pytest.mark.parametrize(
-    "module, public_names",
-    yield_module_and_public_names(),
+    "module_name, public_names",
+    yield_all_public_apis(),
 )
-def test_public_functions_consistent_with_all_and_dir(module, public_names):
-    assert (
-        module.__all__ == public_names
-    ), f"Expected {module.__name__} __all__ to have:\n{public_names}"
+def test_public_functions_are_in_all_and_dir(module_name, public_names):
+    """Check that public functions and in __all__ and returned by __dir__()."""
+    module = import_module(module_name)
 
-    assert (
-        module.__dir__() == public_names
-    ), f"Expected {module.__name__} __dir__() to return:\n{public_names}"
+    # Remove when https://github.com/scikit-learn/scikit-learn/pull/30368 is
+    # merged
+    if module_name == "sklearn.base":
+        public_names.remove("is_transformer")
+
+    if module_name == "sklearn.experimental":
+        pytest.skip(reason="Do not need to run sklearn.experimental")
+
+    public_name_set = set(public_names)
+    module_all_set = set(module.__all__)
+
+    in_module_but_not_in_api = module_all_set - public_name_set
+    in_api_but_not_in_module = public_name_set - module_all_set
+
+    errors = []
+    if in_module_but_not_in_api:
+        errors.append(
+            f"api_reference.py for {module.__name__} is missing "
+            f"{in_module_but_not_in_api}"
+        )
+    if in_api_but_not_in_module:
+        errors.append(
+            f"{module.__name__}'s __all__ is missing {in_api_but_not_in_module}"
+        )
+
+    assert not in_module_but_not_in_api and not in_api_but_not_in_module, "\n".join(
+        errors
+    )
+
+    assert public_names == sorted(
+        module.__dir__()
+    ), f"Expected {module.__name__}'s __dir__() to be:\n{public_names}"

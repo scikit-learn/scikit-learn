@@ -61,3 +61,7 @@ __all__ = [
     "quantile_transform",
     "power_transform",
 ]
+
+
+def __dir__():
+    return __all__

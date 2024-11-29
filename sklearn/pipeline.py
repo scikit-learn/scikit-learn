@@ -41,6 +41,10 @@ from .utils.validation import check_is_fitted, check_memory
 __all__ = ["Pipeline", "FeatureUnion", "make_pipeline", "make_union"]
 
 
+def __dir__():
+    return __all__
+
+
 @contextmanager
 def _raise_or_warn_if_not_fitted(estimator):
     """A context manager to make sure a NotFittedError is raised, if a sub-estimator

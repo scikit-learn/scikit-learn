@@ -60,7 +60,11 @@ from .utils.validation import (
     check_is_fitted,
 )
 
-__all__ = ["CalibratedClassifierCV"]
+__all__ = ["CalibratedClassifierCV", "CalibrationDisplay", "calibration_curve"]
+
+
+def __dir__():
+    return __all__
 
 
 class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
