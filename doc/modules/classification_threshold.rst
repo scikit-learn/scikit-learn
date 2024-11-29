@@ -97,7 +97,7 @@ a meaningful metric for their use case.
     the label of the class of interest (i.e. `pos_label`). Thus, if this label is not
     the right one for your application, you need to define a scorer and pass the right
     `pos_label` (and additional parameters) using the
-    :func:`~sklearn.metrics.make_scorer`. Refer to :ref:`scoring` to get
+    :func:`~sklearn.metrics.make_scorer`. Refer to :ref:`scoring_callable` to get
     information to define your own scoring function. For instance, we show how to pass
     the information to the scorer that the label of interest is `0` when maximizing the
     :func:`~sklearn.metrics.f1_score`::
