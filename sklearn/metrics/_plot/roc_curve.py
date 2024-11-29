@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 from collections.abc import Mapping
 
-from .._ranking import auc, roc_curve
 from ...utils import _safe_indexing
 from ...utils._optional_dependencies import check_matplotlib_support
 from ...utils._plotting import (
@@ -12,6 +11,7 @@ from ...utils._plotting import (
 )
 from ...utils._response import _get_response_values_binary
 from ...utils.validation import _num_samples
+from .._ranking import auc, roc_curve
 
 
 class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
