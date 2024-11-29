@@ -640,7 +640,7 @@ def make_scorer(
     The parameter `response_method` allows to specify which method of the estimator
     should be used to feed the scoring/loss function.
 
-    Read more in the :ref:`User Guide <scoring>`.
+    Read more in the :ref:`User Guide <scoring_callable>`.
 
     Parameters
     ----------
@@ -933,7 +933,7 @@ def check_scoring(estimator=None, scoring=None, *, allow_none=False, raise_exc=T
         Scorer to use. If `scoring` represents a single score, one can use:
 
         - a single string (see :ref:`scoring_parameter`);
-        - a callable (see :ref:`scoring`) that returns a single value.
+        - a callable (see :ref:`scoring_callable`) that returns a single value.
 
         If `scoring` represents multiple scores, one can use:
 
