@@ -479,6 +479,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
             `cv`'s `random_state` parameter to an integer.
 
     scoring : str, callable, or None, default=None
+<<<<<<< HEAD
         Scoring method to use to evaluate the predictions on the test set.
 
         - str: see :ref:`scoring_string_names` for options.
@@ -486,6 +487,15 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
           ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
         - `None`: the `estimator`'s
           :ref:`default evaluation criterion <scoring_api_overview>` is used.
+||||||| fa5d7275b
+        A single string (see :ref:`scoring_parameter`) or a callable
+        (see :ref:`scoring`) to evaluate the predictions on the test set.
+        If None, the estimator's score method is used.
+=======
+        A single string (see :ref:`scoring_parameter`) or a callable
+        (see :ref:`scoring_callable`) to evaluate the predictions on the test set.
+        If None, the estimator's score method is used.
+>>>>>>> main
 
     refit : bool, default=True
         If True, refit an estimator using the best found parameters on the

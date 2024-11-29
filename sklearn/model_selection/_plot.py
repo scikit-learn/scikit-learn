@@ -367,6 +367,7 @@ class LearningCurveDisplay(_BaseCurveDisplay):
             cross-validation strategies that can be used here.
 
         scoring : str or callable, default=None
+<<<<<<< HEAD
             The scoring method to use when calculating the learning curve. Options:
 
             - str: see :ref:`scoring_string_names` for options.
@@ -374,6 +375,15 @@ class LearningCurveDisplay(_BaseCurveDisplay):
               ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
             - `None`: the `estimator`'s
               :ref:`default evaluation criterion <scoring_api_overview>` is used.
+||||||| fa5d7275b
+            A string (see :ref:`scoring_parameter`) or
+            a scorer callable object / function with signature
+            `scorer(estimator, X, y)` (see :ref:`scoring`).
+=======
+            A string (see :ref:`scoring_parameter`) or
+            a scorer callable object / function with signature
+            `scorer(estimator, X, y)` (see :ref:`scoring_callable`).
+>>>>>>> main
 
         exploit_incremental_learning : bool, default=False
             If the estimator supports incremental learning, this will be
