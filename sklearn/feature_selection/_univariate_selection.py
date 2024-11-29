@@ -581,6 +581,7 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.target_tags.required = True
+        tags.input_tags.sparse = True
         return tags
 
 
