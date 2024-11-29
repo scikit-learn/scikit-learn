@@ -434,7 +434,6 @@ def test_old_tags():
             classifier_tags = None
             regressor_tags = RegressorTags(
                 poor_score=True,
-                multi_label=True,
             )
             return Tags(
                 estimator_type=self._estimator_type,
@@ -452,7 +451,7 @@ def test_old_tags():
         "allow_nan": True,
         "array_api_support": False,
         "binary_only": False,
-        "multilabel": True,
+        "multilabel": False,
         "multioutput": True,
         "multioutput_only": True,
         "no_validation": False,
