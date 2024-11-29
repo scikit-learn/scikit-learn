@@ -451,7 +451,7 @@ def test_old_tags():
         "allow_nan": True,
         "array_api_support": False,
         "binary_only": False,
-        "multilabel": True,
+        "multilabel": False,
         "multioutput": True,
         "multioutput_only": True,
         "no_validation": False,

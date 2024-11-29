@@ -499,7 +499,6 @@ def _to_new_tags(old_tags, estimator=None):
     if estimator_type == "regressor":
         regressor_tags = RegressorTags(
             poor_score=old_tags["poor_score"],
-            multi_label=old_tags["multilabel"],
         )
     else:
         regressor_tags = None
@@ -523,18 +522,16 @@ def _to_old_tags(new_tags):
     """Utility function convert old tags (dictionary) to new tags (dataclass)."""
     if new_tags.classifier_tags:
         binary_only = not new_tags.classifier_tags.multi_class
-        multilabel_clf = new_tags.classifier_tags.multi_label
+        multilabel = new_tags.classifier_tags.multi_label
         poor_score_clf = new_tags.classifier_tags.poor_score
     else:
         binary_only = False
-        multilabel_clf = False
+        multilabel = False
         poor_score_clf = False
 
     if new_tags.regressor_tags:
-        multilabel_reg = new_tags.regressor_tags.multi_label
         poor_score_reg = new_tags.regressor_tags.poor_score
     else:
-        multilabel_reg = False
         poor_score_reg = False
 
     if new_tags.transformer_tags:
@@ -546,7 +543,7 @@ def _to_old_tags(new_tags):
         "allow_nan": new_tags.input_tags.allow_nan,
         "array_api_support": new_tags.array_api_support,
         "binary_only": binary_only,
-        "multilabel": multilabel_clf or multilabel_reg,
+        "multilabel": multilabel,
         "multioutput": new_tags.target_tags.multi_output,
         "multioutput_only": (
             not new_tags.target_tags.single_output and new_tags.target_tags.multi_output
