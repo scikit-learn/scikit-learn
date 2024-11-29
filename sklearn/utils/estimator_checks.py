@@ -136,7 +136,6 @@ def _yield_api_checks(estimator):
     yield check_estimator_cloneable
     yield check_estimator_tags_renamed
     yield check_valid_tag_types
-    yield check_positive_only_tag_during_fit
     yield check_estimator_repr
     yield check_no_attributes_set_in_init
     yield check_fit_score_takes_y
@@ -149,6 +148,7 @@ def _yield_api_checks(estimator):
     yield check_do_not_raise_errors_in_init_or_set_params
     yield check_n_features_in_after_fitting
     yield check_mixin_order
+    yield check_positive_only_tag_during_fit
 
 
 def _yield_checks(estimator):
