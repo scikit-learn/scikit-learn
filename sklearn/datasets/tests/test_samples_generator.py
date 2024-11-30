@@ -211,7 +211,7 @@ def test_make_classification_return_x_y():
     }
 
     X, y = make_classification(**kwargs)
- 
+
     kwargs["return_X_y"] = False
     bunch = make_classification(**kwargs)
 
