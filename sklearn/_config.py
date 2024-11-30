@@ -67,6 +67,7 @@ def set_config(
     enable_cython_pairwise_dist=None,
     array_api_dispatch=None,
     transform_output=None,
+    inverse_transform_output=None,
     enable_metadata_routing=None,
     skip_parameter_validation=None,
 ):
@@ -206,6 +207,8 @@ def set_config(
         local_config["array_api_dispatch"] = array_api_dispatch
     if transform_output is not None:
         local_config["transform_output"] = transform_output
+    if inverse_transform_output is not None:
+        local_config["inverse_transform_output"] = inverse_transform_output
     if enable_metadata_routing is not None:
         local_config["enable_metadata_routing"] = enable_metadata_routing
     if skip_parameter_validation is not None:
@@ -223,6 +226,7 @@ def config_context(
     enable_cython_pairwise_dist=None,
     array_api_dispatch=None,
     transform_output=None,
+    inverse_transform_output=None,
     enable_metadata_routing=None,
     skip_parameter_validation=None,
 ):
@@ -367,6 +371,7 @@ def config_context(
         enable_cython_pairwise_dist=enable_cython_pairwise_dist,
         array_api_dispatch=array_api_dispatch,
         transform_output=transform_output,
+        inverse_transform_output=inverse_transform_output,
         enable_metadata_routing=enable_metadata_routing,
         skip_parameter_validation=skip_parameter_validation,
     )
