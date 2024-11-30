@@ -341,9 +341,9 @@ def _auto_wrap_is_configured(estimator):
     is manually disabled.
     """
     auto_wrap_output_keys = getattr(estimator, "_sklearn_auto_wrap_output_keys", set())
-    return (
-        hasattr(estimator, "get_feature_names_out")
-        and "transform" in auto_wrap_output_keys
+    return hasattr(estimator, "get_feature_names_out") and (
+        "transform" in auto_wrap_output_keys
+        or "inverse_transform" in auto_wrap_output_keys
     )
 
 
@@ -364,7 +364,7 @@ class _SetOutputMixin:
         super().__init_subclass__(**kwargs)
 
         # Dynamically wraps `transform` and `fit_transform` and configure it's
-        # output based on `set_output`.
+        # `inverse_transform` output based on `set_output`.
         if not (
             isinstance(auto_wrap_output_keys, tuple) or auto_wrap_output_keys is None
         ):
