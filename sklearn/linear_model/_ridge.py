@@ -2531,9 +2531,7 @@ class _BaseRidgeCV(LinearModel):
     @property
     def cv_values_(self):
         if not hasattr(self, "cv_results_") and not self.store_cv_results:
-                raise AttributeError(
-                    "Call 'RidgeCV' with 'store_cv_results=True'"
-                )
+            raise AttributeError("Call 'RidgeCV' with 'store_cv_results=True'")
         return self.cv_results_
 
 
