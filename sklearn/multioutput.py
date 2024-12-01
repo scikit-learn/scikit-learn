@@ -691,7 +691,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             )
             warnings.warn(warning_msg, FutureWarning)
             return self.base_estimator
-        elif self.estimator is not None:
+        else:
             return self.estimator
 
     def _log_message(self, *, estimator_idx, n_estimators, processing_msg):
