@@ -1161,12 +1161,11 @@ class NuSVC(BaseSVC):
         self : object
             Fitted estimator.
         """
-        # Validate input
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'], dtype=np.float64, order='C')
 
         if sample_weight is None and self.class_weight is not None:
 
             unique_classes = np.unique(y)
+
             # Initialize sample_weight to 1 for all samples
             sample_weight = np.ones(y.shape[0], dtype=np.float64)
 
@@ -1178,7 +1177,6 @@ class NuSVC(BaseSVC):
                     cls_indices = np.where(y == cls)[0]
                     sample_weight[cls_indices] *= self.class_weight[cls]
 
-        # Call the parent fit method with potentially modified sample weights
         return super().fit(X, y, sample_weight=sample_weight)
 
 
