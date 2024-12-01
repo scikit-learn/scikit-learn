@@ -22,7 +22,9 @@ from ..utils.validation import (
 from ._encoders import OneHotEncoder
 
 
-class KBinsDiscretizer(TransformerMixin, BaseEstimator):
+class KBinsDiscretizer(
+    TransformerMixin, BaseEstimator, auto_wrap_output_keys=("transform",)
+):
     """
     Bin continuous data into intervals.
 
@@ -412,6 +414,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         Xinv : ndarray, dtype={np.float32, np.float64}
             Data in the original feature space.
         """
+        # because this method takes X and Xt(deprecated),
+        # auto_wrap_output is not configured for this method.
+
         X = _deprecate_Xt_in_inverse_transform(X, Xt)
 
         check_is_fitted(self)
