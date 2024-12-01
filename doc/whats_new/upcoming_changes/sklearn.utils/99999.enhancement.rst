@@ -1,0 +1,2 @@
+- Filter warnings from the main process are propagated to joblib workers.
+  `Thomas Fan`_
