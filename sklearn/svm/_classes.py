@@ -9,7 +9,7 @@ from ..base import BaseEstimator, OutlierMixin, RegressorMixin, _fit_context
 from ..linear_model._base import LinearClassifierMixin, LinearModel, SparseCoefMixin
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import _num_samples, validate_data
+from ..utils.validation import _num_samples, validate_data, check_X_y
 from ._base import BaseLibSVM, BaseSVC, _fit_liblinear, _get_liblinear_solver_type
 
 
@@ -1114,6 +1114,7 @@ class NuSVC(BaseSVC):
         probability=False,
         tol=1e-3,
         cache_size=200,
+        class_weight=None,
         verbose=False,
         max_iter=-1,
         decision_function_shape="ovr",
@@ -1131,13 +1132,54 @@ class NuSVC(BaseSVC):
             shrinking=shrinking,
             probability=probability,
             cache_size=cache_size,
-            class_weight=None,
+            class_weight=class_weight,
             verbose=verbose,
             max_iter=max_iter,
             decision_function_shape=decision_function_shape,
             break_ties=break_ties,
             random_state=random_state,
         )
+
+    def fit(self, X, y, sample_weight=None):
+        """
+        Fit the model according to the given training data.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training vectors, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like of shape (n_samples,)
+            Target values (class labels).
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Per-sample weights. If None, then each sample is given equal weight.
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
+        """
+        # Validate input
+        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'], dtype=np.float64, order='C')
+
+        if sample_weight is None and self.class_weight is not None:
+
+            unique_classes = np.unique(y)
+            # Initialize sample_weight to 1 for all samples
+            sample_weight = np.ones(y.shape[0], dtype=np.float64)
+
+            # For each class, multiply the sample_weight by the class_weight
+            for cls in unique_classes:
+
+                # If class is in class_weight, apply the specified weight
+                if cls in self.class_weight:
+                    cls_indices = np.where(y == cls)[0]
+                    sample_weight[cls_indices] *= self.class_weight[cls]
+
+        # Call the parent fit method with potentially modified sample weights
+        return super().fit(X, y, sample_weight=sample_weight)
 
 
 class SVR(RegressorMixin, BaseLibSVM):
