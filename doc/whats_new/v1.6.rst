@@ -24,7 +24,7 @@ Version 1.6
 
 .. include:: changelog_legend.inc
 
-.. towncrier release notes start
+.. _changes_1_6:
 
 .. rubric:: Code and documentation contributors
 
