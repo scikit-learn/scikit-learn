@@ -72,6 +72,6 @@ forest.predict(X)
 # Scikit-learn supports Python 3.13 Free-threaded
 # -----------------------------------------------
 
-# %% 
+# %%
 # A developer API for third party libraries
 # -----------------------------------------
