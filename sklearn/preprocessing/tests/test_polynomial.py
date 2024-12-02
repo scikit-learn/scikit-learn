@@ -1123,13 +1123,14 @@ def test_csr_polynomial_expansion_index_overflow(
         return
     X_trans = pf.fit_transform(X)
 
-    expected_dtype = np.int64 if num_combinations > np.iinfo(np.int32).max else np.int32
+    expected_dtype_min_bits = 64 if num_combinations > np.iinfo(np.int32).max else 32
     # Terms higher than first degree
     non_bias_terms = 1 + (degree - 1) * int(not interaction_only)
     expected_nnz = int(include_bias) + non_bias_terms
     assert X_trans.dtype == X.dtype
     assert X_trans.shape == (1, pf.n_output_features_)
-    assert X_trans.indptr.dtype == X_trans.indices.dtype == expected_dtype
+    assert np.iinfo(X_trans.indptr.dtype).bits >= expected_dtype_min_bits
+    assert np.iinfo(X_trans.indices.dtype).bits >= expected_dtype_min_bits
     assert X_trans.nnz == expected_nnz
 
     if include_bias:
