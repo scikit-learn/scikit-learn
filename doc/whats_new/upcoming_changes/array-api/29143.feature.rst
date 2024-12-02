@@ -1,2 +1,0 @@
-- :func:`sklearn.metrics.mean_absolute_error` by :user:`Yaroslav Korobko <Tialo>` and
-  :user:`Loïc Estève <lesteve>`
