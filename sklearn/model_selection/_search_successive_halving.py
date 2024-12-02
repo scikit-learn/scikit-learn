@@ -1,5 +1,7 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from abc import abstractmethod
-from copy import deepcopy
 from math import ceil, floor, log
 from numbers import Integral, Real
 
@@ -10,7 +12,7 @@ from ..metrics._scorer import get_scorer_names
 from ..utils import resample
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import _num_samples
+from ..utils.validation import _num_samples, validate_data
 from . import ParameterGrid, ParameterSampler
 from ._search import BaseSearchCV
 from ._split import _yields_constant_splits, check_cv
@@ -159,7 +161,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 magic_factor = 2
                 self.min_resources_ = n_splits * magic_factor
                 if is_classifier(self.estimator):
-                    y = self._validate_data(X="no_validation", y=y)
+                    y = validate_data(self, X="no_validation", y=y)
                     check_classification_targets(y)
                     n_classes = np.unique(y).shape[0]
                     self.min_resources_ *= n_classes
@@ -368,18 +370,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
     def _generate_candidate_params(self):
         pass
 
-    def _more_tags(self):
-        tags = deepcopy(super()._more_tags())
-        tags["_xfail_checks"].update(
-            {
-                "check_fit2d_1sample": (
-                    "Fail during parameter check since min/max resources requires"
-                    " more samples"
-                ),
-            }
-        )
-        return tags
-
 
 class HalvingGridSearchCV(BaseSuccessiveHalving):
     """Search over specified parameter values with successive halving.
@@ -441,11 +431,10 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
         - 'smallest' is a heuristic that sets `r0` to a small value:
 
-            - ``n_splits * 2`` when ``resource='n_samples'`` for a regression
-              problem
-            - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
-              classification problem
-            - ``1`` when ``resource != 'n_samples'``
+          - ``n_splits * 2`` when ``resource='n_samples'`` for a regression problem
+          - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
+            classification problem
+          - ``1`` when ``resource != 'n_samples'``
 
         - 'exhaust' will set `r0` such that the **last** iteration uses as
           much resources as possible. Namely, the last iteration will use the
@@ -491,7 +480,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
     scoring : str, callable, or None, default=None
         A single string (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring`) to evaluate the predictions on the test set.
+        (see :ref:`scoring_callable`) to evaluate the predictions on the test set.
         If None, the estimator's score method is used.
 
     refit : bool, default=True
@@ -666,8 +655,6 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
     {'max_depth': None, 'min_samples_split': 10, 'n_estimators': 9}
     """
 
-    _required_parameters = ["estimator", "param_grid"]
-
     _parameter_constraints: dict = {
         **BaseSuccessiveHalving._parameter_constraints,
         "param_grid": [dict, list],
@@ -785,11 +772,10 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
         - 'smallest' is a heuristic that sets `r0` to a small value:
 
-            - ``n_splits * 2`` when ``resource='n_samples'`` for a regression
-              problem
-            - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
-              classification problem
-            - ``1`` when ``resource != 'n_samples'``
+          - ``n_splits * 2`` when ``resource='n_samples'`` for a regression problem
+          - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
+            classification problem
+          - ``1`` when ``resource != 'n_samples'``
 
         - 'exhaust' will set `r0` such that the **last** iteration uses as
           much resources as possible. Namely, the last iteration will use the
@@ -835,7 +821,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     scoring : str, callable, or None, default=None
         A single string (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring`) to evaluate the predictions on the test set.
+        (see :ref:`scoring_callable`) to evaluate the predictions on the test set.
         If None, the estimator's score method is used.
 
     refit : bool, default=True
@@ -1015,8 +1001,6 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     >>> search.best_params_  # doctest: +SKIP
     {'max_depth': None, 'min_samples_split': 10, 'n_estimators': 9}
     """
-
-    _required_parameters = ["estimator", "param_distributions"]
 
     _parameter_constraints: dict = {
         **BaseSuccessiveHalving._parameter_constraints,

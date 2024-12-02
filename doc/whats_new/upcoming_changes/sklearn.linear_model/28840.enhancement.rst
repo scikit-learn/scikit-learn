@@ -1,0 +1,5 @@
+- The `solver="newton-cholesky"` in
+  :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` is extended to support the full
+  multinomial loss in a multiclass setting.
+  By :user:`Christian Lorentzen <lorentzenchr>`

@@ -10,10 +10,8 @@ This format is used as the default format for both svmlight and the
 libsvm command line programs.
 """
 
-# Authors: Mathieu Blondel <mathieu@mblondel.org>
-#          Lars Buitinck
-#          Olivier Grisel <olivier.grisel@ensta.org>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import os.path
 from contextlib import closing
@@ -23,23 +21,12 @@ import numpy as np
 import scipy.sparse as sp
 
 from .. import __version__
-from ..utils import IS_PYPY, check_array
+from ..utils import check_array
 from ..utils._param_validation import HasMethods, Interval, StrOptions, validate_params
-
-if not IS_PYPY:
-    from ._svmlight_format_fast import (
-        _dump_svmlight_file,
-        _load_svmlight_file,
-    )
-else:
-
-    def _load_svmlight_file(*args, **kwargs):
-        raise NotImplementedError(
-            "load_svmlight_file is currently not "
-            "compatible with PyPy (see "
-            "https://github.com/scikit-learn/scikit-learn/issues/11543 "
-            "for the status updates)."
-        )
+from ._svmlight_format_fast import (
+    _dump_svmlight_file,
+    _load_svmlight_file,
+)
 
 
 @validate_params(
@@ -98,8 +85,7 @@ def load_svmlight_file(
 
     This implementation is written in Cython and is reasonably fast.
     However, a faster API-compatible loader is also available at:
-
-      https://github.com/mblondel/svmlight-loader
+    https://github.com/mblondel/svmlight-loader
 
     Parameters
     ----------
@@ -176,7 +162,7 @@ def load_svmlight_file(
     To use joblib.Memory to cache the svmlight file::
 
         from joblib import Memory
-        from .datasets import load_svmlight_file
+        from sklearn.datasets import load_svmlight_file
         mem = Memory("./mycache")
 
         @mem.cache
@@ -359,6 +345,23 @@ def load_svmlight_files(
     matrix X_test, it is essential that X_train and X_test have the same
     number of features (X_train.shape[1] == X_test.shape[1]). This may not
     be the case if you load the files individually with load_svmlight_file.
+
+    Examples
+    --------
+    To use joblib.Memory to cache the svmlight file::
+
+        from joblib import Memory
+        from sklearn.datasets import load_svmlight_file
+        mem = Memory("./mycache")
+
+        @mem.cache
+        def get_data():
+            data_train, target_train, data_test, target_test = load_svmlight_files(
+                ["svmlight_file_train", "svmlight_file_test"]
+            )
+            return data_train, target_train, data_test, target_test
+
+        X_train, y_train, X_test, y_test = get_data()
     """
     if (offset != 0 or length > 0) and zero_based == "auto":
         # disable heuristic search to avoid getting inconsistent results on
@@ -509,6 +512,13 @@ def dump_svmlight_file(
 
         .. versionadded:: 0.17
            parameter `multilabel` to support multilabel datasets.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import dump_svmlight_file, make_classification
+    >>> X, y = make_classification(random_state=0)
+    >>> output_file = "my_dataset.svmlight"
+    >>> dump_svmlight_file(X, y, output_file)  # doctest: +SKIP
     """
     if comment is not None:
         # Convert comment string to list of lines in UTF-8.

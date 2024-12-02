@@ -29,7 +29,23 @@ show_installed_libraries(){
 activate_environment() {
     if [[ "$DISTRIB" =~ ^conda.* ]]; then
         source activate $VIRTUALENV
-    elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" || "$DISTRIB" == "pip-nogil" ]]; then
+    elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
         source $VIRTUALENV/bin/activate
+    fi
+}
+
+create_conda_environment_from_lock_file() {
+    ENV_NAME=$1
+    LOCK_FILE=$2
+    # Because we are using lock-files with the "explicit" format, conda can
+    # install them directly, provided the lock-file does not contain pip solved
+    # packages. For more details, see
+    # https://conda.github.io/conda-lock/output/#explicit-lockfile
+    lock_file_has_pip_packages=$(grep -q files.pythonhosted.org $LOCK_FILE && echo "true" || echo "false")
+    if [[ "$lock_file_has_pip_packages" == "false" ]]; then
+        conda create --name $ENV_NAME --file $LOCK_FILE
+    else
+        conda install "$(get_dep conda-lock min)" -y
+        conda-lock install --name $ENV_NAME $LOCK_FILE
     fi
 }

@@ -3,7 +3,9 @@
 set -e
 set -x
 
-if [ "$GITHUB_EVENT_NAME" == "schedule" ]; then
+if [[ "$GITHUB_EVENT_NAME" == "schedule" \
+        || "$GITHUB_EVENT_NAME" == "workflow_dispatch" \
+        || "$CIRRUS_CRON" == "nightly" ]]; then
     ANACONDA_ORG="scientific-python-nightly-wheels"
     ANACONDA_TOKEN="$SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN"
 else

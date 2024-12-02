@@ -1,0 +1,10 @@
+- :class:`neighbors.NearestNeighbors`,
+  :class:`neighbors.KNeighborsClassifier`,
+  :class:`neighbors.KNeighborsRegressor`,
+  :class:`neighbors.RadiusNeighborsClassifier`,
+  :class:`neighbors.RadiusNeighborsRegressor`,
+  :class:`neighbors.KNeighborsTransformer`,
+  :class:`neighbors.RadiusNeighborsTransformer`, and
+  :class:`neighbors.LocalOutlierFactor`
+  now work with `metric="nan_euclidean"`, supporting `nan` inputs.
+  By :user:`Carlo Lemos <vitaliset>`, `Guillaume Lemaitre`_, and `Adrin Jalali`_

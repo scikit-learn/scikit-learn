@@ -13,6 +13,9 @@ matrix decomposition (dimension reduction) methods from the module
 - License: BSD 3 clause
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Dataset preparation
 # -------------------
@@ -193,7 +196,6 @@ kmeans_estimator = cluster.MiniBatchKMeans(
     batch_size=20,
     max_iter=50,
     random_state=rng,
-    n_init="auto",
 )
 kmeans_estimator.fit(faces_centered)
 plot_gallery(

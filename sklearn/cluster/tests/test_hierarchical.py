@@ -2,9 +2,10 @@
 Several basic tests for hierarchical clustering procedures
 
 """
-# Authors: Vincent Michel, 2010, Gael Varoquaux 2012,
-#          Matteo Visconti di Oleggio Castello 2014
-# License: BSD 3 clause
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import itertools
 import shutil
 from functools import partial
@@ -849,7 +850,7 @@ def test_invalid_shape_precomputed_dist_matrix():
         AgglomerativeClustering(metric="precomputed", linkage="complete").fit(X)
 
 
-def test_precomputed_connectivity_affinity_with_2_connected_components():
+def test_precomputed_connectivity_metric_with_2_connected_components():
     """Check that connecting components works when connectivity and
     affinity are both precomputed and the number of connected components is
     greater than 1. Non-regression test for #16151.
@@ -872,7 +873,7 @@ def test_precomputed_connectivity_affinity_with_2_connected_components():
 
     X_dist = pairwise_distances(X)
     clusterer_precomputed = AgglomerativeClustering(
-        affinity="precomputed", connectivity=connectivity_matrix, linkage="complete"
+        metric="precomputed", connectivity=connectivity_matrix, linkage="complete"
     )
     msg = "Completing it to avoid stopping the tree early"
     with pytest.warns(UserWarning, match=msg):
@@ -886,26 +887,3 @@ def test_precomputed_connectivity_affinity_with_2_connected_components():
 
     assert_array_equal(clusterer.labels_, clusterer_precomputed.labels_)
     assert_array_equal(clusterer.children_, clusterer_precomputed.children_)
-
-
-# TODO(1.4): Remove
-def test_deprecate_affinity():
-    rng = np.random.RandomState(42)
-    X = rng.randn(50, 10)
-
-    af = AgglomerativeClustering(affinity="euclidean")
-    msg = (
-        "Attribute `affinity` was deprecated in version 1.2 and will be removed in 1.4."
-        " Use `metric` instead"
-    )
-    with pytest.warns(FutureWarning, match=msg):
-        af.fit(X)
-    with pytest.warns(FutureWarning, match=msg):
-        af.fit_predict(X)
-
-    af = AgglomerativeClustering(metric="euclidean", affinity="euclidean")
-    msg = "Both `affinity` and `metric` attributes were set. Attribute"
-    with pytest.raises(ValueError, match=msg):
-        af.fit(X)
-    with pytest.raises(ValueError, match=msg):
-        af.fit_predict(X)

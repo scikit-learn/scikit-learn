@@ -1,0 +1,5 @@
+- :class:`tree.ExtraTreeClassifier` and :class:`tree.ExtraTreeRegressor` now
+  support missing-values in the data matrix ``X``. Missing-values are handled by
+  randomly moving all of the samples to the left, or right child node as the tree is
+  traversed.
+  By :user:`Adam Li <adam2392>` and :user:`Loïc Estève <lesteve>`

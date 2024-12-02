@@ -1,7 +1,7 @@
 """Generic feature selection mixin"""
 
-# Authors: G. Varoquaux, A. Gramfort, L. Buitinck, J. Nothman
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from abc import ABCMeta, abstractmethod
@@ -11,14 +11,15 @@ import numpy as np
 from scipy.sparse import csc_matrix, issparse
 
 from ..base import TransformerMixin
-from ..utils import (
-    _safe_indexing,
-    check_array,
-    safe_sqr,
-)
+from ..utils import _safe_indexing, check_array, safe_sqr
 from ..utils._set_output import _get_output_config
-from ..utils._tags import _safe_tags
-from ..utils.validation import _check_feature_names_in, check_is_fitted
+from ..utils._tags import get_tags
+from ..utils.validation import (
+    _check_feature_names_in,
+    _is_pandas_df,
+    check_is_fitted,
+    validate_data,
+)
 
 
 class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
@@ -28,6 +29,24 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
     This mixin provides a feature selector implementation with `transform` and
     `inverse_transform` functionality given an implementation of
     `_get_support_mask`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.base import BaseEstimator
+    >>> from sklearn.feature_selection import SelectorMixin
+    >>> class FeatureSelector(SelectorMixin, BaseEstimator):
+    ...    def fit(self, X, y=None):
+    ...        self.n_features_in_ = X.shape[1]
+    ...        return self
+    ...    def _get_support_mask(self):
+    ...        mask = np.zeros(self.n_features_in_, dtype=bool)
+    ...        mask[:2] = True  # select the first two features
+    ...        return mask
+    >>> X, y = load_iris(return_X_y=True)
+    >>> FeatureSelector().fit_transform(X, y).shape
+    (150, 2)
     """
 
     def get_support(self, indices=False):
@@ -81,16 +100,17 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         # Preserve X when X is a dataframe and the output is configured to
         # be pandas.
         output_config_dense = _get_output_config("transform", estimator=self)["dense"]
-        preserve_X = hasattr(X, "iloc") and output_config_dense == "pandas"
+        preserve_X = output_config_dense != "default" and _is_pandas_df(X)
 
-        # note: we use _safe_tags instead of _get_tags because this is a
+        # note: we use get_tags instead of __sklearn_tags__ because this is a
         # public Mixin.
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             dtype=None,
             accept_sparse="csr",
-            force_all_finite=not _safe_tags(self, key="allow_nan"),
-            cast_to_ndarray=not preserve_X,
+            ensure_all_finite=not get_tags(self).input_tags.allow_nan,
+            skip_check_array=preserve_X,
             reset=False,
         )
         return self._transform(X)

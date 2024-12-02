@@ -20,12 +20,12 @@ from sklearn.model_selection import (
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, StandardScaler, scale
 from sklearn.svm import OneClassSVM
+from sklearn.utils import get_tags
 from sklearn.utils._testing import (
     assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
-    ignore_warnings,
 )
 
 
@@ -360,7 +360,7 @@ def test_late_onset_averaging_reached(klass):
         shuffle=False,
     )
     clf2 = klass(
-        average=0,
+        average=False,
         learning_rate="constant",
         loss="squared_error",
         eta0=eta0,
@@ -724,15 +724,25 @@ def test_sgd_predict_proba_method_access(klass):
             assert hasattr(clf, "predict_proba")
             assert hasattr(clf, "predict_log_proba")
         else:
-            message = "probability estimates are not available for loss={!r}".format(
+            inner_msg = "probability estimates are not available for loss={!r}".format(
                 loss
             )
             assert not hasattr(clf, "predict_proba")
             assert not hasattr(clf, "predict_log_proba")
-            with pytest.raises(AttributeError, match=message):
+            with pytest.raises(
+                AttributeError, match="has no attribute 'predict_proba'"
+            ) as exec_info:
                 clf.predict_proba
-            with pytest.raises(AttributeError, match=message):
+
+            assert isinstance(exec_info.value.__cause__, AttributeError)
+            assert inner_msg in str(exec_info.value.__cause__)
+
+            with pytest.raises(
+                AttributeError, match="has no attribute 'predict_log_proba'"
+            ) as exec_info:
                 clf.predict_log_proba
+            assert isinstance(exec_info.value.__cause__, AttributeError)
+            assert inner_msg in str(exec_info.value.__cause__)
 
 
 @pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
@@ -756,10 +766,13 @@ def test_sgd_proba(klass):
         p = clf.predict_proba([[-1, -1]])
         assert p[0, 1] < 0.5
 
-        p = clf.predict_log_proba([[3, 2]])
-        assert p[0, 1] > p[0, 0]
-        p = clf.predict_log_proba([[-1, -1]])
-        assert p[0, 1] < p[0, 0]
+        # If predict_proba is 0, we get "RuntimeWarning: divide by zero encountered
+        # in log". We avoid it here.
+        with np.errstate(divide="ignore"):
+            p = clf.predict_log_proba([[3, 2]])
+            assert p[0, 1] > p[0, 0]
+            p = clf.predict_log_proba([[-1, -1]])
+            assert p[0, 1] < p[0, 0]
 
     # log loss multiclass probability estimates
     clf = klass(loss="log_loss", alpha=0.01, max_iter=10).fit(X2, Y2)
@@ -1352,7 +1365,6 @@ def test_elasticnet_convergence(klass):
             assert_almost_equal(cd.coef_, sgd.coef_, decimal=2, err_msg=err_msg)
 
 
-@ignore_warnings
 @pytest.mark.parametrize("klass", [SGDRegressor, SparseSGDRegressor])
 def test_partial_fit(klass):
     third = X.shape[0] // 3
@@ -1533,7 +1545,12 @@ def test_late_onset_averaging_reached_oneclass(klass):
     )
     # 1 pass over the training set with no averaging
     clf2 = klass(
-        average=0, learning_rate="constant", eta0=eta0, nu=nu, max_iter=1, shuffle=False
+        average=False,
+        learning_rate="constant",
+        eta0=eta0,
+        nu=nu,
+        max_iter=1,
+        shuffle=False,
     )
 
     clf1.fit(X)
@@ -1894,56 +1911,6 @@ def test_gradient_squared_hinge():
     _test_loss_common(loss, cases)
 
 
-def test_loss_log():
-    # Test Log (logistic loss)
-    loss = sgd_fast.Log()
-    cases = [
-        # (p, y, expected_loss, expected_dloss)
-        (1.0, 1.0, np.log(1.0 + np.exp(-1.0)), -1.0 / (np.exp(1.0) + 1.0)),
-        (1.0, -1.0, np.log(1.0 + np.exp(1.0)), 1.0 / (np.exp(-1.0) + 1.0)),
-        (-1.0, -1.0, np.log(1.0 + np.exp(-1.0)), 1.0 / (np.exp(1.0) + 1.0)),
-        (-1.0, 1.0, np.log(1.0 + np.exp(1.0)), -1.0 / (np.exp(-1.0) + 1.0)),
-        (0.0, 1.0, np.log(2), -0.5),
-        (0.0, -1.0, np.log(2), 0.5),
-        (17.9, -1.0, 17.9, 1.0),
-        (-17.9, 1.0, 17.9, -1.0),
-    ]
-    _test_loss_common(loss, cases)
-    assert_almost_equal(loss.py_dloss(18.1, 1.0), np.exp(-18.1) * -1.0, 16)
-    assert_almost_equal(loss.py_loss(18.1, 1.0), np.exp(-18.1), 16)
-    assert_almost_equal(loss.py_dloss(-18.1, -1.0), np.exp(-18.1) * 1.0, 16)
-    assert_almost_equal(loss.py_loss(-18.1, 1.0), 18.1, 16)
-
-
-def test_loss_squared_loss():
-    # Test SquaredLoss
-    loss = sgd_fast.SquaredLoss()
-    cases = [
-        # (p, y, expected_loss, expected_dloss)
-        (0.0, 0.0, 0.0, 0.0),
-        (1.0, 1.0, 0.0, 0.0),
-        (1.0, 0.0, 0.5, 1.0),
-        (0.5, -1.0, 1.125, 1.5),
-        (-2.5, 2.0, 10.125, -4.5),
-    ]
-    _test_loss_common(loss, cases)
-
-
-def test_loss_huber():
-    # Test Huber
-    loss = sgd_fast.Huber(0.1)
-    cases = [
-        # (p, y, expected_loss, expected_dloss)
-        (0.0, 0.0, 0.0, 0.0),
-        (0.1, 0.0, 0.005, 0.1),
-        (0.0, 0.1, 0.005, -0.1),
-        (3.95, 4.0, 0.00125, -0.05),
-        (5.0, 2.0, 0.295, 0.1),
-        (-1.0, 5.0, 0.595, -0.1),
-    ]
-    _test_loss_common(loss, cases)
-
-
 def test_loss_modified_huber():
     # (p, y, expected_loss, expected_dloss)
     loss = sgd_fast.ModifiedHuber()
@@ -2196,3 +2163,20 @@ def test_sgd_numerical_consistency(SGDEstimator):
     sgd_32.fit(X_32, Y_32)
 
     assert_allclose(sgd_64.coef_, sgd_32.coef_)
+
+
+# TODO(1.7): remove
+@pytest.mark.parametrize("Estimator", [SGDClassifier, SGDRegressor, SGDOneClassSVM])
+def test_passive_aggressive_deprecated_average(Estimator):
+    est = Estimator(average=0)
+    with pytest.warns(FutureWarning, match="average=0"):
+        est.fit(X, Y)
+
+
+def test_sgd_one_class_svm_estimator_type():
+    """Check that SGDOneClassSVM has the correct estimator type.
+
+    Non-regression test for if the mixin was not on the left.
+    """
+    sgd_ocsvm = SGDOneClassSVM()
+    assert get_tags(sgd_ocsvm).estimator_type == "outlier_detector"

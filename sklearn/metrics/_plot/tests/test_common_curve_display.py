@@ -1,15 +1,17 @@
 import numpy as np
 import pytest
 
-from sklearn.base import ClassifierMixin, clone
+from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.calibration import CalibrationDisplay
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_iris
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
+    ConfusionMatrixDisplay,
     DetCurveDisplay,
     PrecisionRecallDisplay,
+    PredictionErrorDisplay,
     RocCurveDisplay,
 )
 from sklearn.pipeline import make_pipeline
@@ -119,7 +121,7 @@ def test_display_curve_error_no_response(
     is not defined for the given trained classifier."""
     X, y = data_binary
 
-    class MyClassifier(ClassifierMixin):
+    class MyClassifier(ClassifierMixin, BaseEstimator):
         def fit(self, X, y):
             self.classes_ = [0, 1]
             return self
@@ -223,3 +225,45 @@ def test_display_curve_error_pos_label(pyplot, data_binary, Display):
     msg = r"y_true takes value in {10, 11} and pos_label is not specified"
     with pytest.raises(ValueError, match=msg):
         Display.from_predictions(y, y_pred)
+
+
+@pytest.mark.parametrize(
+    "Display",
+    [
+        CalibrationDisplay,
+        DetCurveDisplay,
+        PrecisionRecallDisplay,
+        RocCurveDisplay,
+        PredictionErrorDisplay,
+        ConfusionMatrixDisplay,
+    ],
+)
+@pytest.mark.parametrize(
+    "constructor",
+    ["from_predictions", "from_estimator"],
+)
+def test_classifier_display_curve_named_constructor_return_type(
+    pyplot, data_binary, Display, constructor
+):
+    """Check that named constructors return the correct type when subclassed.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/pull/27675
+    """
+    X, y = data_binary
+
+    # This can be anything - we just need to check the named constructor return
+    # type so the only requirement here is instantiating the class without error
+    y_pred = y
+
+    classifier = LogisticRegression().fit(X, y)
+
+    class SubclassOfDisplay(Display):
+        pass
+
+    if constructor == "from_predictions":
+        curve = SubclassOfDisplay.from_predictions(y, y_pred)
+    else:  # constructor == "from_estimator"
+        curve = SubclassOfDisplay.from_estimator(classifier, X, y)
+
+    assert isinstance(curve, SubclassOfDisplay)
