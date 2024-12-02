@@ -4473,7 +4473,6 @@ def check_valid_tag_types(name, estimator):
 
     if tags.regressor_tags is not None:
         assert isinstance(tags.regressor_tags.poor_score, bool), err_msg
-        assert isinstance(tags.regressor_tags.multi_label, bool), err_msg
 
     if tags.transformer_tags is not None:
         assert isinstance(tags.transformer_tags.preserves_dtype, list), err_msg
