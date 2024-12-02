@@ -1,0 +1,6 @@
+- :class:`linear_model.LinearRegression` now sets the `cond` parameter when
+  calling the `scipy.linalg.lstsq` solver on dense input data. This ensures
+  more numerically robust results on rank-deficient data. In particular, it
+  empirically fixes the expected equivalence property between fitting with
+  reweighted or with repeated data points.
+  By :user:`Antoine Baker <antoinebaker>`

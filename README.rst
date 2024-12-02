@@ -192,6 +192,7 @@ Communication
 - GitHub Discussions: https://github.com/scikit-learn/scikit-learn/discussions
 - Website: https://scikit-learn.org
 - LinkedIn: https://www.linkedin.com/company/scikit-learn
+- Bluesky: https://bsky.app/profile/scikit-learn.org
 - YouTube: https://www.youtube.com/channel/UCJosFjYm0ZYVUARxuOZqnnw/playlists
 - Facebook: https://www.facebook.com/scikitlearnofficial/
 - Instagram: https://www.instagram.com/scikitlearnofficial/

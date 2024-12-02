@@ -184,7 +184,7 @@ cpdef cnp.ndarray[CONDENSED_t, ndim=1, mode='c'] _condense_tree(
             left_count = 1
 
         if right >= n_samples:
-            right_count = <cnp.intp_t> hierarchy[right - n_samples].cluster_size
+            right_count = hierarchy[right - n_samples].cluster_size
         else:
             right_count = 1
 
