@@ -114,7 +114,8 @@ def delayed(function):
 
 
 @contextmanager
-def warning_filter_context(warning_filters):
+def _warning_filter_context(warning_filters):
+    """Context manager that sets warning filters."""
     previous_filters = warnings.filters
     warnings.filters = warning_filters
     yield
@@ -134,9 +135,9 @@ class _FuncWrapper:
         return self
 
     def __call__(self, *args, **kwargs):
-        config = getattr(self, "config", None)
-        warning_filters = getattr(self, "warning_filters", None)
-        if config is None or warning_filters is None:
+        config = getattr(self, "config", {})
+        warning_filters = getattr(self, "warning_filters", {})
+        if not config or not warning_filters:
             warnings.warn(
                 (
                     "`sklearn.utils.parallel.delayed` should be used with"
@@ -146,14 +147,10 @@ class _FuncWrapper:
                 ),
                 UserWarning,
             )
-            if config is None:
-                config = {}
-            if warning_filters is None:
-                warning_filters = []
 
         with (
             config_context(**config),
-            warning_filter_context(warning_filters=warning_filters),
+            _warning_filter_context(warning_filters=warning_filters),
         ):
             return self.function(*args, **kwargs)
 
