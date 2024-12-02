@@ -224,6 +224,9 @@ alpha parameter, the fewer features selected.
   noise, the smallest absolute value of non-zero coefficients, and the
   structure of the design matrix X. In addition, the design matrix must
   display certain specific properties, such as not being too correlated.
+  On the use of Lasso for sparse signal recovery, see this example on 
+  compressive sensing: 
+  :ref:`sphx_glr_auto_examples_applications_plot_tomography_l1_reconstruction.py`.
 
   There is no general rule to select an alpha parameter for recovery of
   non-zero coefficients. It can by set by cross-validation
@@ -270,8 +273,9 @@ meta-transformer)::
 * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances.py`: example on
   synthetic data showing the recovery of the actually meaningful features.
 
-* :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`: example
-  on face recognition data.
+* :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`: example
+  discussing the caveats of using impurity-based feature importances as a proxy for
+  feature relevance.
 
 .. _sequential_feature_selection:
 

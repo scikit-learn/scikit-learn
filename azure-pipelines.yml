@@ -83,10 +83,10 @@ jobs:
         )
       )
     matrix:
-      pylatest_pip_free_threaded:
+      pylatest_free_threaded:
         PYTHON_GIL: '0'
-        DISTRIB: 'pip-free-threaded'
-        LOCK_FILE: './build_tools/azure/cpython_free_threaded_lock.txt'
+        DISTRIB: 'conda-free-threaded'
+        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
         COVERAGE: 'false'
 
 - job: Linux_Nightly_Pyodide
@@ -253,7 +253,7 @@ jobs:
 - template: build_tools/azure/posix.yml
   parameters:
     name: macOS
-    vmImage: macOS-12
+    vmImage: macOS-13
     dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
     # Runs when dependencies succeeded or skipped
     condition: |

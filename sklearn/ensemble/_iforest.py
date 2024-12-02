@@ -633,11 +633,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_sample_weights_invariance": (
-                "zero sample_weight is not equivalent to removing samples"
-            ),
-        }
         tags.input_tags.allow_nan = True
         return tags
 

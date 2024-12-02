@@ -12,6 +12,8 @@ import numpy as np
 from joblib import effective_n_jobs
 from scipy import sparse
 
+from sklearn.utils import metadata_routing
+
 from ..base import MultiOutputMixin, RegressorMixin, _fit_context
 from ..model_selection import check_cv
 from ..utils import Bunch, check_array, check_scalar
@@ -317,8 +319,8 @@ def lasso_path(
     Notes
     -----
     For an example, see
-    :ref:`examples/linear_model/plot_lasso_coordinate_descent_path.py
-    <sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py>`.
+    :ref:`examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.py
+    <sphx_glr_auto_examples_linear_model_plot_lasso_lasso_lars_elasticnet_path.py>`.
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
@@ -522,8 +524,8 @@ def enet_path(
     Notes
     -----
     For an example, see
-    :ref:`examples/linear_model/plot_lasso_coordinate_descent_path.py
-    <sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py>`.
+    :ref:`examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.py
+    <sphx_glr_auto_examples_linear_model_plot_lasso_lasso_lars_elasticnet_path.py>`.
 
     Examples
     --------
@@ -874,6 +876,10 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     >>> print(regr.predict([[0, 0]]))
     [1.451...]
     """
+
+    # "check_input" is used for optimisation and isn't something to be passed
+    # around in a pipeline.
+    __metadata_request__fit = {"check_input": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         "alpha": [Interval(Real, 0, None, closed="left")],
@@ -1833,17 +1839,6 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         self.dual_gap_ = model.dual_gap_
         self.n_iter_ = model.n_iter_
         return self
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        # Note: check_sample_weights_invariance(kind='ones') should work, but
-        # currently we can only mark a whole test as xfail.
-        tags._xfail_checks = {
-            "check_sample_weights_invariance": (
-                "zero sample_weight is not equivalent to removing samples"
-            ),
-        }
-        return tags
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.

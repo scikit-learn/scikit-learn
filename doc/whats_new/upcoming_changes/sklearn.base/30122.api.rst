@@ -1,0 +1,5 @@
+- Passing a class object to :func:`~sklearn.base.is_classifier`,
+  :func:`~sklearn.base.is_regressor`, and
+  :func:`~sklearn.base.is_outlier_detector` is now deprecated. Pass an instance
+  instead.
+  By `Adrin Jalali`_
