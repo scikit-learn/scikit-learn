@@ -373,14 +373,16 @@ def mean_pinball_loss(
     0.0
     """
     xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
-    dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
 
-    _, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput, dtype=dtype, xp=xp
+    _, y_true, y_pred, sample_weight, multioutput = (
+        _check_reg_targets_with_floating_dtype(
+            y_true, y_pred, sample_weight, multioutput, xp=xp
+        )
     )
+
     check_consistent_length(y_true, y_pred, sample_weight)
     diff = y_true - y_pred
-    sign = xp.astype(diff >= 0, dtype)
+    sign = xp.astype(diff >= 0, diff.dtype)
     loss = alpha * sign * diff - (1 - alpha) * (1 - sign) * diff
     output_errors = _average(loss, weights=sample_weight, axis=0)
 
@@ -1092,10 +1094,12 @@ def explained_variance_score(
     -inf
     """
     xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
-    dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
-    _, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput, dtype=dtype, xp=xp
+    _, y_true, y_pred, sample_weight, multioutput = (
+        _check_reg_targets_with_floating_dtype(
+            y_true, y_pred, sample_weight, multioutput, xp=xp
+        )
     )
+
     check_consistent_length(y_true, y_pred, sample_weight)
 
     y_diff_avg = _average(y_true - y_pred, weights=sample_weight, axis=0)
