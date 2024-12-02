@@ -513,8 +513,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         ):
             y_type = type_of_target(y)
             if y_type == "unknown" or (
-                self._estimator_type == "classifier"
-                and y_type == "multiclass-multioutput"
+                is_classifier(self) and y_type == "multiclass-multioutput"
             ):
                 # FIXME: we could consider to support multiclass-multioutput if
                 # we introduce or reuse a constructor parameter (e.g.
@@ -1166,11 +1165,6 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
         return averaged_predictions
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags.regressor_tags.multi_label = True
-        return tags
-
 
 class RandomForestClassifier(ForestClassifier):
     """
@@ -1558,16 +1552,6 @@ class RandomForestClassifier(ForestClassifier):
         self.monotonic_cst = monotonic_cst
         self.ccp_alpha = ccp_alpha
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        # TODO: replace by a statistical test, see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
-        return tags
-
 
 class RandomForestRegressor(ForestRegressor):
     """
@@ -1928,16 +1912,6 @@ class RandomForestRegressor(ForestRegressor):
         self.min_impurity_decrease = min_impurity_decrease
         self.ccp_alpha = ccp_alpha
         self.monotonic_cst = monotonic_cst
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        # TODO: replace by a statistical test, see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
-        return tags
 
 
 class ExtraTreesClassifier(ForestClassifier):
@@ -3013,13 +2987,3 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         """
         check_is_fitted(self)
         return self.one_hot_encoder_.transform(self.apply(X))
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        # TODO: replace by a statistical test, see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
-        return tags
