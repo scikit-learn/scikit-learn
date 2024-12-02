@@ -216,16 +216,19 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
             .. versionadded:: 1.3
 
-            .. versionchanged:: 1.6
+            .. versionchanged:: 1.7
                Added support for strategy="uniform".
 
-        quantile_method : {'warn, 'inverted_cdf','averaged_inverted_cdf',
+        quantile_method : {'warn', 'inverted_cdf', 'averaged_inverted_cdf',
             'closest_observation', 'interpolated_inverted_cdf', 'hazen',
-            'weibull','linear','median_unbiased', 'normal_unbiased'},
+            'weibull', 'linear', 'median_unbiased', 'normal_unbiased'},
             default='warn'
             Method to pass on to np.percentile calculation when using
-            strategy='quantile'.
-            .. versionadded:: 1.6
+            strategy='quantile'. Only `averaged_inverted_cdf` and `inverted_cdf`
+            support the use of `sample_weight != None` when subsampling is not
+            active.
+
+            .. versionadded:: 1.7
 
         Returns
         -------
@@ -267,13 +270,19 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         bin_edges = np.zeros(n_features, dtype=object)
 
+        # TODO(1.9): remove and switch to quantile_method="averaged_inverted_cdf"
+        # by default.
         if self.strategy == "quantile" and quantile_method == "warn":
             warnings.warn(
-                "Defaulting to quantile method 'averaged_inverted_cdf' this will "
-                "be changed to averaged_inverted_cdf in scikit-learn version 1.9",
+                "The current default behavior, quantile_method='linear', will be "
+                "changed to quantile_method='averaged_inverted_cdf' in "
+                "scikit-learn version 1.9 to naturally support sample weight "
+                "equivalence properties by default. Pass "
+                "quantile_method='averaged_inverted_cdf' explicitly to silence this "
+                "warning.",
                 FutureWarning,
             )
-            quantile_method = "averaged_inverted_cdf"
+            quantile_method = "linear"
 
         if (
             quantile_method not in ["inverted_cdf", "averaged_inverted_cdf"]

@@ -468,7 +468,7 @@ def resample(
         normalized to sum to one and interpreted as probability for sampling
         each data point.
 
-        .. versionadded:: 1.6
+        .. versionadded:: 1.7
 
     Returns
     -------
