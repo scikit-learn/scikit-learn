@@ -18,9 +18,9 @@ meson==1.6.0
     # via meson-python
 meson-python==0.17.1
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
-ninja==1.11.1.1
+ninja==1.11.1.2
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
-packaging==24.1
+packaging==24.2
     # via
     #   meson-python
     #   pyproject-metadata
@@ -29,7 +29,7 @@ pluggy==1.5.0
     # via pytest
 pyproject-metadata==0.9.0
     # via meson-python
-pytest==8.3.3
+pytest==8.3.4
     # via
     #   -r build_tools/azure/ubuntu_atlas_requirements.txt
     #   pytest-xdist
@@ -37,7 +37,7 @@ pytest-xdist==3.6.1
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
 threadpoolctl==3.1.0
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
-tomli==2.0.2
+tomli==2.2.1
     # via
     #   meson-python
     #   pytest
