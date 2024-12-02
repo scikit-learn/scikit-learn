@@ -3,7 +3,7 @@
 # input_hash: 893e5f90e655d6606d6b7e308c1099125012b25c3444b5a4240d44b184531e00
 @EXPLICIT
 https://repo.anaconda.com/pkgs/main/linux-64/_libgcc_mutex-0.1-main.conda#c3473ff8bdb3d124ed5ff11ec380d6f9
-https://repo.anaconda.com/pkgs/main/linux-64/ca-certificates-2024.9.24-h06a4308_0.conda#e4369d7b4b0707ee0765794d14710e2e
+https://repo.anaconda.com/pkgs/main/linux-64/ca-certificates-2024.11.26-h06a4308_0.conda#cebd61e6520159a1315d679321620f6c
 https://repo.anaconda.com/pkgs/main/linux-64/ld_impl_linux-64-2.40-h12ee557_0.conda#ee672b5f635340734f58d618b7bca024
 https://repo.anaconda.com/pkgs/main/noarch/tzdata-2024b-h04d1e81_0.conda#9be694715c6a65f9631bb1b242125e9d
 https://repo.anaconda.com/pkgs/main/linux-64/libgomp-11.2.0-h1234567_1.conda#b372c0eea9b60732fdae4b817a63c8cd
@@ -66,17 +66,17 @@ https://repo.anaconda.com/pkgs/main/linux-64/pip-24.2-py311h06a4308_0.conda#eff3
 # pip urllib3 @ https://files.pythonhosted.org/packages/ce/d9/5f4c13cecde62396b0d3fe530a50ccea91e7dfc1ccf0e09c228841bb5ba8/urllib3-2.2.3-py3-none-any.whl#sha256=ca899ca043dcb1bafa3e262d73aa25c465bfb49e0bd9dd5d59f1d0acba2f8fac
 # pip array-api-strict @ https://files.pythonhosted.org/packages/9a/c2/a202399e3aa2e62aa15669fc95fdd7a5d63240cbf8695962c747f915a083/array_api_strict-2.2-py3-none-any.whl#sha256=577cfce66bf69701cefea85bc14b9e49e418df767b6b178bd93d22f1c1962d59
 # pip contourpy @ https://files.pythonhosted.org/packages/85/fc/7fa5d17daf77306840a4e84668a48ddff09e6bc09ba4e37e85ffc8e4faa3/contourpy-1.3.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=3a04ecd68acbd77fa2d39723ceca4c3197cb2969633836ced1bea14e219d077c
-# pip imageio @ https://files.pythonhosted.org/packages/4e/e7/26045404a30c8a200e960fb54fbaf4b73d12e58cd28e03b306b084253f4f/imageio-2.36.0-py3-none-any.whl#sha256=471f1eda55618ee44a3c9960911c35e647d9284c68f077e868df633398f137f0
+# pip imageio @ https://files.pythonhosted.org/packages/5c/f9/f78e7f5ac8077c481bf6b43b8bc736605363034b3d5eb3ce8eb79f53f5f1/imageio-2.36.1-py3-none-any.whl#sha256=20abd2cae58e55ca1af8a8dcf43293336a59adf0391f1917bf8518633cfc2cdf
 # pip jinja2 @ https://files.pythonhosted.org/packages/31/80/3a54838c3fb461f6fec263ebf3a3a41771bd05190238de3486aae8540c36/jinja2-3.1.4-py3-none-any.whl#sha256=bc5dd2abb727a5319567b7a813e6a2e7318c39f4f487cfe6c89c6f9c7d25197d
 # pip lazy-loader @ https://files.pythonhosted.org/packages/83/60/d497a310bde3f01cb805196ac61b7ad6dc5dcf8dce66634dc34364b20b4f/lazy_loader-0.4-py3-none-any.whl#sha256=342aa8e14d543a154047afb4ba8ef17f5563baad3fc610d7b15b213b0f119efc
 # pip pyproject-metadata @ https://files.pythonhosted.org/packages/e8/61/9dd3e68d2b6aa40a5fc678662919be3c3a7bf22cba5a6b4437619b77e156/pyproject_metadata-0.9.0-py3-none-any.whl#sha256=fc862aab066a2e87734333293b0af5845fe8ac6cb69c451a41551001e923be0b
-# pip pytest @ https://files.pythonhosted.org/packages/6b/77/7440a06a8ead44c7757a64362dd22df5760f9b12dc5f11b6188cd2fc27a0/pytest-8.3.3-py3-none-any.whl#sha256=a6853c7375b2663155079443d2e45de913a911a11d669df02a50814944db57b2
+# pip pytest @ https://files.pythonhosted.org/packages/11/92/76a1c94d3afee238333bc0a42b82935dd8f9cf8ce9e336ff87ee14d9e1cf/pytest-8.3.4-py3-none-any.whl#sha256=50e16d954148559c9a74109af1eaf0c945ba2d8f30f0a3d3335edde19788b6f6
 # pip python-dateutil @ https://files.pythonhosted.org/packages/ec/57/56b9bcc3c9c6a792fcbaf139543cee77261f3651ca9da0c93f5c1221264b/python_dateutil-2.9.0.post0-py2.py3-none-any.whl#sha256=a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427
 # pip requests @ https://files.pythonhosted.org/packages/f9/9b/335f9764261e915ed497fcdeb11df5dfd6f7bf257d4a6a2a686d80da4d54/requests-2.32.3-py3-none-any.whl#sha256=70761cfe03c773ceb22aa2f671b4757976145175cdfca038c02654d061d6dcc6
 # pip scipy @ https://files.pythonhosted.org/packages/93/6b/701776d4bd6bdd9b629c387b5140f006185bd8ddea16788a44434376b98f/scipy-1.14.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=fef8c87f8abfb884dac04e97824b61299880c43f4ce675dd2cbeadd3c9b466d2
 # pip tifffile @ https://files.pythonhosted.org/packages/50/0a/435d5d7ec64d1c8b422ac9ebe42d2f3b2ac0b3f8a56f5c04dd0f3b7ba83c/tifffile-2024.9.20-py3-none-any.whl#sha256=c54dc85bc1065d972cb8a6ffb3181389d597876aa80177933459733e4ed243dd
 # pip lightgbm @ https://files.pythonhosted.org/packages/4e/19/1b928cad70a4e1a3e2c37d5417ca2182510f2451eaadb6c91cd9ec692cae/lightgbm-4.5.0-py3-none-manylinux_2_28_x86_64.whl#sha256=960a0e7c077de0ca3053f1325d3edfc92ea815acf5176adcacdea0f635aeef9b
-# pip matplotlib @ https://files.pythonhosted.org/packages/01/75/6c7ce560e95714a10fcbb3367d1304975a1a3e620f72af28921b796403f3/matplotlib-3.9.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=8912ef7c2362f7193b5819d17dae8629b34a95c58603d781329712ada83f9447
+# pip matplotlib @ https://files.pythonhosted.org/packages/13/53/b178d51478109f7a700edc94757dd07112e9a0c7a158653b99434b74f9fb/matplotlib-3.9.3-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=d3c93796b44fa111049b88a24105e947f03c01966b5c0cc782e2ee3887b790a3
 # pip meson-python @ https://files.pythonhosted.org/packages/7d/ec/40c0ddd29ef4daa6689a2b9c5ced47d5b58fa54ae149b19e9a97f4979c8c/meson_python-0.17.1-py3-none-any.whl#sha256=30a75c52578ef14aff8392677b09c39346e0a24d2b2c6204b8ed30583c11269c
 # pip pandas @ https://files.pythonhosted.org/packages/cd/5f/4dba1d39bb9c38d574a9a22548c540177f78ea47b32f99c0ff2ec499fac5/pandas-2.2.3-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=c124333816c3a9b03fbeef3a9f230ba9a737e9e5bb4060aa2107a86cc0a497fc
 # pip pyamg @ https://files.pythonhosted.org/packages/d3/e8/6898b3b791f369605012e896ed903b6626f3bd1208c6a647d7219c070209/pyamg-5.2.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=679a5904eac3a4880288c8c0e6a29f110a2627ea15a443a4e9d5997c7dc5fab6
