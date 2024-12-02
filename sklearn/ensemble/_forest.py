@@ -1165,11 +1165,6 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
         return averaged_predictions
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags.regressor_tags.multi_label = True
-        return tags
-
 
 class RandomForestClassifier(ForestClassifier):
     """

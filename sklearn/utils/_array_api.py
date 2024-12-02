@@ -795,6 +795,19 @@ def _nanmax(X, axis=None, xp=None):
         return X
 
 
+def _nanmean(X, axis=None, xp=None):
+    # TODO: refactor once nan-aware reductions are standardized:
+    # https://github.com/data-apis/array-api/issues/621
+    xp, _ = get_namespace(X, xp=xp)
+    if _is_numpy_namespace(xp):
+        return xp.asarray(numpy.nanmean(X, axis=axis))
+    else:
+        mask = xp.isnan(X)
+        total = xp.sum(xp.where(mask, xp.asarray(0.0, device=device(X)), X), axis=axis)
+        count = xp.sum(xp.astype(xp.logical_not(mask), X.dtype), axis=axis)
+        return total / count
+
+
 def _asarray_with_order(
     array, dtype=None, order=None, copy=None, *, xp=None, device=None
 ):
@@ -914,11 +927,12 @@ def indexing_dtype(xp):
     return xp.asarray(0).dtype
 
 
-def _searchsorted(xp, a, v, *, side="left", sorter=None):
+def _searchsorted(a, v, *, side="left", sorter=None, xp=None):
     # Temporary workaround needed as long as searchsorted is not widely
     # adopted by implementers of the Array API spec. This is a quite
     # recent addition to the spec:
     # https://data-apis.org/array-api/latest/API_specification/generated/array_api.searchsorted.html # noqa
+    xp, _ = get_namespace(a, v, xp=xp)
     if hasattr(xp, "searchsorted"):
         return xp.searchsorted(a, v, side=side, sorter=sorter)
 
@@ -1032,11 +1046,18 @@ def _in1d(ar1, ar2, xp, assume_unique=False, invert=False):
         return xp.take(ret, rev_idx, axis=0)
 
 
-def _count_nonzero(X, xp, device, axis=None, sample_weight=None):
+def _count_nonzero(X, axis=None, sample_weight=None, xp=None, device=None):
     """A variant of `sklearn.utils.sparsefuncs.count_nonzero` for the Array API.
 
-    It only supports 2D arrays.
+    If the array `X` is sparse, and we are using the numpy namespace then we
+    simply call the original function. This function only supports 2D arrays.
     """
+    from .sparsefuncs import count_nonzero
+
+    xp, _ = get_namespace(X, sample_weight, xp=xp)
+    if _is_numpy_namespace(xp) and sp.issparse(X):
+        return count_nonzero(X, axis=axis, sample_weight=sample_weight)
+
     assert X.ndim == 2
 
     weights = xp.ones_like(X, device=device)
@@ -1055,3 +1076,27 @@ def _modify_in_place_if_numpy(xp, func, *args, out=None, **kwargs):
     else:
         out = func(*args, **kwargs)
     return out
+
+
+def _bincount(array, weights=None, minlength=None, xp=None):
+    # TODO: update if bincount is ever adopted in a future version of the standard:
+    # https://github.com/data-apis/array-api/issues/812
+    xp, _ = get_namespace(array, xp=xp)
+    if hasattr(xp, "bincount"):
+        return xp.bincount(array, weights=weights, minlength=minlength)
+
+    array_np = _convert_to_numpy(array, xp=xp)
+    if weights is not None:
+        weights_np = _convert_to_numpy(weights, xp=xp)
+    else:
+        weights_np = None
+    bin_out = numpy.bincount(array_np, weights=weights_np, minlength=minlength)
+    return xp.asarray(bin_out, device=device(array))
+
+
+def _tolist(array, xp=None):
+    xp, _ = get_namespace(array, xp=xp)
+    if _is_numpy_namespace(xp):
+        return array.tolist()
+    array_np = _convert_to_numpy(array, xp=xp)
+    return [element.item() for element in array_np]
