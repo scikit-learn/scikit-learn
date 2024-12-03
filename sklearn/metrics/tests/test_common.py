@@ -2084,7 +2084,15 @@ array_api_metric_checkers = {
         check_array_api_regression_metric_multioutput,
     ],
     cosine_similarity: [check_array_api_metric_pairwise],
+    explained_variance_score: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
     mean_absolute_error: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
+    mean_pinball_loss: [
         check_array_api_regression_metric,
         check_array_api_regression_metric_multioutput,
     ],
