@@ -174,7 +174,9 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         # If multi-curve, ensure all args are of the right length
         multi_params = [self.fpr, self.tpr, self.roc_auc, self.name]
         req_multi = [input for input in multi_params[:2] if isinstance(input, list)]
-        optional_multi = [input for input in multi_params[2:] if isinstance(input, list)]
+        optional_multi = [
+            input for input in multi_params[2:] if isinstance(input, list)
+        ]
         if req_multi and (len(req_multi) != 2):
             raise ValueError(
                 "When plotting multiple ROC curves, `self.fpr`, `self.tpr`, "
@@ -189,7 +191,10 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         n_multi = len(self.fpr) if req_multi else None
         self.ax_, self.figure_, name = self._validate_plot_params(
-            ax=ax, name=name, n_multi=n_multi, curve_type="ROC",
+            ax=ax,
+            name=name,
+            n_multi=n_multi,
+            curve_type="ROC",
         )
 
         if n_multi:
@@ -207,13 +212,12 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             line_kwargs = []
             for name_idx, curve_name in enumerate(name):
                 default_line_kwargs = self._get_default_line_kwargs(curve_name)
-                line_kwargs.append(_validate_style_kwargs(
-                    default_line_kwargs, fold_line_kw[name_idx]
-                ))
+                line_kwargs.append(
+                    _validate_style_kwargs(default_line_kwargs, fold_line_kw[name_idx])
+                )
         else:
             default_line_kwargs = self._get_default_line_kwargs(name)
             line_kwargs = _validate_style_kwargs(default_line_kwargs, kwargs)
-
 
         default_chance_level_line_kw = {
             "label": "Chance level (AUC = 0.5)",
@@ -697,7 +701,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             fpr_all.append(fpr)
             tpr_all.append(tpr)
             auc_all.append(roc_auc)
-
 
         viz = cls(
             fpr=fpr_all,
