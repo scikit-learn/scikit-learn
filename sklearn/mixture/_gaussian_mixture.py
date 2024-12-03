@@ -229,7 +229,11 @@ def _estimate_gaussian_covariances_diag(resp, X, nk, means, reg_covar):
     avg_X2 = np.dot(resp.T, X * X) / nk[:, np.newaxis]
     avg_means2 = means**2
     avg_X_means = means * np.dot(resp.T, X) / nk[:, np.newaxis]
-    return avg_X2 - 2 * avg_X_means + avg_means2 + reg_covar
+    # We clip negative values to 0 in the empirical estimate of the diagonal
+    # covariance values caused by numerical errors (catastrophic cancellation),
+    # before adding the regularization term.
+    # XXX: not sure this is a valid (or optimal) way to handle this.
+    return np.clip(avg_X2 - 2 * avg_X_means + avg_means2, 0, None) + reg_covar
 
 
 def _estimate_gaussian_covariances_spherical(resp, X, nk, means, reg_covar):
