@@ -1093,7 +1093,8 @@ def explained_variance_score(
     >>> explained_variance_score(y_true, y_pred, force_finite=False)
     -inf
     """
-    xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
+    xp, _, device = get_namespace_and_device(y_true, y_pred, sample_weight, multioutput)
+
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
             y_true, y_pred, sample_weight, multioutput, xp=xp
@@ -1117,7 +1118,7 @@ def explained_variance_score(
         multioutput=multioutput,
         force_finite=force_finite,
         xp=xp,
-        device=None,
+        device=device,
     )
 
 
