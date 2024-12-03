@@ -213,9 +213,11 @@ def _yield_classifier_checks(classifier):
     # test classifiers can handle non-array data and pandas objects
     yield check_classifier_data_not_an_array
     # test classifiers trained on a single label always return this label
-    yield check_classifiers_one_label
-    yield check_classifiers_one_label_sample_weights
-    yield check_classifiers_classes
+    if not tags.target_tags.two_d_labels:
+        yield check_classifiers_one_label
+        yield check_classifiers_one_label_sample_weights
+        yield check_classifiers_classes
+
     yield check_estimators_partial_fit_n_features
     if tags.target_tags.multi_output:
         yield check_classifier_multioutput
@@ -5220,9 +5222,7 @@ def check_classifier_not_supporting_multiclass(name, estimator_orig):
                 'Only binary classification is supported. The type of the target '
                 f'is {{y_type}}.'
         )
-    """.format(
-        name=name
-    )
+    """.format(name=name)
     err_msg = textwrap.dedent(err_msg)
 
     with raises(

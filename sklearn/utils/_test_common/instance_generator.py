@@ -1018,23 +1018,18 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         ),
     },
     MultiOutputClassifier: {
+        "check_param_validation": ("fit expects argument Y, test provides argument y"),
+        "check_sample_weight_equivalence_on_dense_data": (
+            "fit expects argument Y, test provides argument y"
+        ),
         "check_estimator_sparse_array": (
             "predict_proba returns a list of arrays, test expects array",
         ),
         "check_estimator_sparse_matrix": (
             "predict_proba returns a list of arrays, test expects array",
         ),
-        "check_classifiers_one_label": (
-            "fit expects y to have at least two dimensions, tests provides y with one dimension",
-        ),
-        "check_classifiers_one_label_sample_weights": (
-            "fit expects y to have at least two dimensions, tests provides y with one dimension",
-        ),
-        "check_classifiers_classes": (
-            "fit expects y to have at least two dimensions, tests provides y with one dimension",
-        ),
         "check_classifiers_train": (
-            "predict returns an array of arrays, test expects array",
+            "predict returns the shape (n_samples, n_outputs), test expects shape (n_samples,)",
             "predict_proba returns a list of arrays, test expects array",
         ),
         "check_methods_sample_order_invariance": (

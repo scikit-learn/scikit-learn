@@ -298,7 +298,6 @@ GET_FEATURES_OUT_ESTIMATORS = [
     "transformer", GET_FEATURES_OUT_ESTIMATORS, ids=_get_check_estimator_ids
 )
 def test_transformers_get_feature_names_out(transformer):
-
     with ignore_warnings(category=(FutureWarning)):
         check_transformer_get_feature_names_out(
             transformer.__class__.__name__, transformer
@@ -328,6 +327,10 @@ def test_check_param_validation(estimator):
     if isinstance(estimator, FeatureUnion):
         pytest.skip("FeatureUnion is not tested here")
     name = estimator.__class__.__name__
+    if "check_param_validation" in _get_expected_failed_checks(estimator):
+        pytest.skip(
+            "Estimator does not support check_dataframe_column_names_consistency"
+        )
     check_param_validation(name, estimator)
 
 

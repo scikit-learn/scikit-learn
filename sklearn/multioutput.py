@@ -513,7 +513,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     def __init__(self, estimator, *, n_jobs=None):
         super().__init__(estimator, n_jobs=n_jobs)
 
-    def fit(self, X, y, sample_weight=None, **fit_params):
+    def fit(self, X, Y, sample_weight=None, **fit_params):
         """Fit the model to data matrix X and targets Y.
 
         Parameters
@@ -521,7 +521,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input data.
 
-        y : array-like of shape (n_samples, n_classes)
+        Y : array-like of shape (n_samples, n_classes)
             The target values.
 
         sample_weight : array-like of shape (n_samples,), default=None
@@ -539,7 +539,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         self : object
             Returns a fitted instance.
         """
-        super().fit(X, y, sample_weight=sample_weight, **fit_params)
+        super().fit(X, Y, sample_weight=sample_weight, **fit_params)
         self.classes_ = [estimator.classes_ for estimator in self.estimators_]
         return self
 
@@ -618,6 +618,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         tags.input_tags.pairwise = get_tags(self.estimator).input_tags.pairwise
         tags.target_tags.single_output = False
         tags.target_tags.multi_output = True
+        tags.target_tags.two_d_labels = True
         return tags
 
 
