@@ -17,14 +17,18 @@ class _BinaryClassifierCurveDisplayMixin:
     the target and gather the response of the estimator.
     """
 
-    def _validate_plot_params(self, *, ax=None, name=None):
+    def _validate_plot_params(self, *, ax=None, name=None, n_multi=None, curve_type=None):
         check_matplotlib_support(f"{self.__class__.__name__}.plot")
         import matplotlib.pyplot as plt
 
         if ax is None:
             _, ax = plt.subplots()
 
-        name = self.estimator_name if name is None else name
+        # Not 100% sure on this change
+        if n_multi is None:
+            name = self.estimator_name if name is None else name
+        else:
+            name = [f"{curve_type} fold {curve_idx}:" for curve_idx in range(n_multi)]
         return ax, ax.figure, name
 
     @classmethod
