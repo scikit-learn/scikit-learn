@@ -1031,7 +1031,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_classifiers_train": (
             "predict returns shape (n_samples, n_outputs)"
             "test expects shape (n_samples,)",
-            "predict_proba returns a list of arrays, test expects array",
         ),
         "check_methods_sample_order_invariance": (
             "predict_proba returns a list of arrays, test expects array",
