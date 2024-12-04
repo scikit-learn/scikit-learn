@@ -3403,6 +3403,9 @@ def brier_score_loss(
         Class labels when `y_pred.shape = (n_samples, n_classes)`.
         If not provided, labels will be inferred from `y_true`.
 
+    normalize : bool, default=True
+        Divides by the number of classes.
+
     y_prob : array-like of shape (n_samples,)
         Probabilities of the positive class.
 
