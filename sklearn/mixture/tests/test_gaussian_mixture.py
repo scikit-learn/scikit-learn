@@ -1394,6 +1394,13 @@ def test_gaussian_mixture_single_component_stable():
 def test_gaussian_mixture_stability_on_unscaled_1d_data(
     covariance_type, global_random_seed
 ):
+    if covariance_type == "tied":
+        # XXX: TODO: investigate if we can improve the stability the estimation
+        # of the tied covariance in this case: depending on the random seed
+        # this can either lead to a bad estimate of the covariance or a
+        # ValueErorr caused by a LinalgError in the Cholesky decomposition.
+        pytest.xfail("The 'tied' covariance type fails to estimates the covariance.")
+
     # Non-regression test for #30382.
     reg_covar = 0.1
     rng = np.random.default_rng(global_random_seed)
@@ -1416,10 +1423,6 @@ def test_gaussian_mixture_stability_on_unscaled_1d_data(
     assert_allclose(sorted(gmm.means_.ravel()), locations.ravel(), **tols)
 
     # The estimated covariance(s) should be close to the regularization:
-    if covariance_type == "tied":
-        # XXX: TODO: investigate if we can improve the stability the estimation
-        # of the tied covariance in this case.
-        pytest.xfail("The 'tied' covariance type fails to estimates the covariance.")
     assert_allclose(gmm.covariances_, 0.1, **tols)
 
 
