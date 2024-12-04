@@ -86,7 +86,7 @@ class BaseDistancesReductionDispatcher:
         )
 
     @classmethod
-    def is_usable_for(cls, metric, X = None, Y = None, precomputed = None) -> bool:
+    def is_usable_for(cls, X = None, Y = None, precomputed = None, metric = "euclidean") -> bool:
         """Return True if the dispatcher can be used for the
         given parameters.
 
@@ -109,13 +109,9 @@ class BaseDistancesReductionDispatcher:
         -------
         True if the dispatcher can be used, else False.
         """
-        if precomputed is not None or (X is not None and Y is not None):
-            print("input is valid")
-        else:
-            raise ValueError(
-                "Either 'precomputed' or both 'X' and 'Y' must be provided."
-            )
-
+        is_usable = (bool(X) and bool(Y)) ^ bool(precomputed)
+        if is_usable == False:
+            return is_usable
         # FIXME: the current Cython implementation is too slow for a large number of
         # features. We temporarily disable it to fallback on SciPy's implementation.
         # See: https://github.com/scikit-learn/scikit-learn/issues/28191

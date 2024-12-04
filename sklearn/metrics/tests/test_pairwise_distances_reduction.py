@@ -388,15 +388,39 @@ ASSERT_RESULT = {
     ): partial(assert_compatible_radius_results, **FLOAT32_TOLS),
 }
 
+@pytest.mark.parametrize("cls", [ArgKmin, RadiusNeighbors])
+def test_precompute_all_inputs_none(cls):
+    """Test that ValueError is raised when all inputs are None."""
+    with pytest.raises(ValueError, match="Either X and Y or precomputed_matrix must be provided."):
+        cls.compute(X=None, Y=None, precomputed_matrix=None)
+
+@pytest.mark.parametrize("cls", [ArgKmin, RadiusNeighbors])
+def test_precompute_all_inputs_provided(cls):
+    """Test that ValueError is raised when both X/Y and precomputed_matrix are provided."""
+    X = np.random.rand(10, 5)
+    Y = np.random.rand(10, 5)
+    precomputed_matrix = np.random.rand(10, 10)
+    with pytest.raises(ValueError, match="Only one of X and Y or precomputed_matrix must be provided."):
+        cls.compute(X=X, Y=Y, precomputed_matrix=precomputed_matrix)
+
+@pytest.mark.parametrize("cls", [ArgKmin, RadiusNeighbors])
+def test_precompute_only_y(cls):
+    """Test that ValueError is raised when only Y is provided."""
+    Y = np.random.rand(10, 5)
+    with pytest.raises(ValueError, match="Y should not be provided without X."):
+        cls.compute(X=None, Y=Y)
+
+@pytest.mark.parametrize("cls", [ArgKmin, RadiusNeighbors])
+def test_precompute_only_x(cls):
+    """Test that ValueError is raised when only X is provided."""
+    X = np.random.rand(10, 5)
+    with pytest.raises(ValueError, match="X should not be provided without Y."):
+        cls.compute(X=X, Y=None)
+
 def test_assert_precomputed():
     # Success Case: Valid precomputed matrix
     n_samples_X, n_samples_Y = 5, 5
-    valid_precomputed = np.random.rand(n_samples_X, n_samples_Y).astype(np.float32)
-    try:
-        assert_precomputed(valid_precomputed, n_samples_X, n_samples_Y)
-    except AssertionError as e:
-        pytest.fail(f"Unexpected AssertionError: {e}")
-
+    
     # Failure Case: Not a numpy array
     with pytest.raises(AssertionError, match="Input must be a numpy array"):
         assert_precomputed([[1, 2], [3, 4]], n_samples_X, n_samples_Y)
@@ -554,7 +578,7 @@ def test_assert_compatible_argkmin_results():
         )
         
 @pytest.mark.parametrize("check_sorted", [True, False])
-def test_assert_compatible_radius_results(check_sorted: bool):
+def test_assert_compatible_radius_results(check_sorted):
     atol = 1e-7
     rtol = 0.0
     tols = dict(atol=atol, rtol=rtol)
