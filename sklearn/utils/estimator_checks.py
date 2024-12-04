@@ -3910,8 +3910,7 @@ def check_positive_only_tag_during_fit(name, estimator_orig):
     estimator = clone(estimator_orig)
     tags = get_tags(estimator)
 
-    iris = load_iris()
-    X, y = iris.data, iris.target
+    X, y = load_iris(return_X_y=True)
     y = _enforce_estimator_tags_y(estimator, y)
     set_random_state(estimator, 0)
     X = _enforce_estimator_tags_X(estimator_orig, X)
