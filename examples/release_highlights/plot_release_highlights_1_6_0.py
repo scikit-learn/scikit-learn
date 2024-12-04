@@ -108,8 +108,8 @@ forest.predict(X)
 # %%
 # Almost complete Metadata Routing support
 # ----------------------------------------
-# Support for routing metadata has been added to nearly all remaining estimators and
-# functions. See :ref:`Metadata Routing User Guide <metadata_routing>` for more details.
+# Support for routing metadata has been added to all remaining estimators and
+# functions except AdaBoost. See :ref:`Metadata Routing User Guide <metadata_routing>` for more details.
 
 # %%
 # Free-threaded CPython 3.13 support
