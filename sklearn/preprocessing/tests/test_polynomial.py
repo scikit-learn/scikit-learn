@@ -1050,8 +1050,10 @@ def test_csr_polynomial_expansion_index_overflow(
     `scipy.sparse.hstack`.
     """
     data = [1.0]
-    row = [0]
-    col = [n_features - 1]
+    # Use int32 indices as much as we can
+    indices_dtype = np.int32 if n_features - 1 <= np.iinfo(np.int32).max else np.int64
+    row = np.array([0], dtype=indices_dtype)
+    col = np.array([n_features - 1], dtype=indices_dtype)
 
     # First degree index
     expected_indices = [
