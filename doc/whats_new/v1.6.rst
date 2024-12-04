@@ -13,15 +13,6 @@ Version 1.6
   For a short description of the main highlights of the release, please refer to
   :ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_6_0.py`.
 
-
-..
-  DELETE WHEN 1.6.0 IS RELEASED
-  Since October 2024, DO NOT add your changelog entry in this file.
-..
-  Instead, create a file named `<PR_NUMBER>.<TYPE>.rst` in the relevant sub-folder in
-  `doc/whats_new/upcoming_changes/`. For full details, see:
-  https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md
-
 .. include:: changelog_legend.inc
 
 .. towncrier release notes start
@@ -31,7 +22,7 @@ Version 1.6
 Version 1.6.0
 =============
 
-**November 2024**
+**December 2024**
 
 Changes impacting many modules
 ------------------------------
@@ -71,6 +62,10 @@ See :ref:`array_api` for more details.
   :class:`model_selection.HalvingRandomSearchCV` now support Array API
   compatible inputs when their base estimators do.
   By :user:`Tim Head <betatim>` and :user:`Olivier Grisel <ogrisel>` :pr:`27096`
+
+- |Feature| :func:`sklearn.metrics.f1_score` now supports Array API compatible
+  inputs.
+  By :user:`Omar Salman <OmarManzoor>` :pr:`27369`
 
 - |Feature| :class:`preprocessing.LabelEncoder` now supports Array API compatible inputs.
   By :user:`Omar Salman <OmarManzoor>` :pr:`27381`
@@ -236,6 +231,26 @@ removed. Meson is the only supported way to build scikit-learn, see
 :ref:`Building from source <install_bleeding_edge>` for more details.
 By :user:`Loïc Estève <lesteve>` :pr:`29400`
 
+Free-threaded CPython 3.13 support
+----------------------------------
+
+scikit-learn has preliminary support for free-threaded CPython, in particular
+free-threaded wheels are available for all of our supported platforms.
+
+Free-threaded (also known as nogil) CPython 3.13 is an experimental version of
+CPython 3.13 who aims at enabling efficient multi-threaded use cases by
+removing the Global Interpreter Lock (GIL).
+
+For more details about free-threaded CPython see `py-free-threading doc <https://py-free-threading.github.io>`_,
+in particular `how to install a free-threaded CPython <https://py-free-threading.github.io/installing_cpython/>`_
+and `Ecosystem compatibility tracking <https://py-free-threading.github.io/tracking/>`_.
+
+Feel free to try free-threaded on your use case and report any issues!
+
+By :user:`Loïc Estève <lesteve>` and many other people in the wider Scientific
+Python and CPython ecosystem, for example :user:`Nathan Goldbaum <ngoldbaum>`,
+:user:`Ralf Gommers <rgommers>`, :user:`Edgar Andrés Margffoy Tuay <andfoy>`. :pr:`30360`
+
 :mod:`sklearn.base`
 -------------------
 
@@ -244,7 +259,7 @@ By :user:`Loïc Estève <lesteve>` :pr:`29400`
   By :user:`Christian Veenhuis <ChVeen>` :pr:`28936`
 
 - |API| Passing a class object to :func:`~sklearn.base.is_classifier`,
-  :func:`~sklearn.base.is_regressor`, :func:`~sklearn.base.is_transformer`, and
+  :func:`~sklearn.base.is_regressor`, and
   :func:`~sklearn.base.is_outlier_detector` is now deprecated. Pass an instance
   instead.
   By `Adrin Jalali`_ :pr:`30122`
@@ -560,6 +575,10 @@ By :user:`Loïc Estève <lesteve>` :pr:`29400`
 :mod:`sklearn.pipeline`
 -----------------------
 
+- |MajorFeature| :class:`pipeline.Pipeline` can now transform metadata up to the step requiring the
+  metadata, which can be set using the `transform_input` parameter.
+  By `Adrin Jalali`_ :pr:`28901`
+
 - |Enhancement| :class:`pipeline.Pipeline` now warns about not being fitted before calling methods
   that require the pipeline to be fitted. This warning will become an error in 1.8.
   By `Adrin Jalali`_ :pr:`29868`
@@ -598,7 +617,7 @@ By :user:`Loïc Estève <lesteve>` :pr:`29400`
   support missing-values in the data matrix ``X``. Missing-values are handled by
   randomly moving all of the samples to the left, or right child node as the tree is
   traversed.
-  By :user:`Adam Li <adam2392>` :pr:`27966`
+  By :user:`Adam Li <adam2392>` and :user:`Loïc Estève <lesteve>` :pr:`27966`, :pr:`30318`
 
 - |Fix| Escape double quotes for labels and feature names when exporting trees to Graphviz
   format.
@@ -657,10 +676,13 @@ By :user:`Loïc Estève <lesteve>` :pr:`29400`
   `ensure_all_finite`. `force_all_finite` will be removed in 1.8.
   By :user:`Jérémie du Boisberranger <jeremiedb>` :pr:`29404`
 
-- |API| :func:`check_estimators.check_sample_weights_invariance` replaced by
-  :func:`check_estimators.check_sample_weight_equivalence` which uses
-  integer (including zero) weights.
-  By :user:`Antoine Baker <antoinebaker>` :pr:`29818`
+- |API| `utils.estimator_checks.check_sample_weights_invariance`
+  replaced by
+  `utils.estimator_checks.check_sample_weight_equivalence_on_dense_data`
+  which uses integer (including zero) weights and
+  `utils.estimator_checks.check_sample_weight_equivalence_on_sparse_data`
+  which does the same on sparse data.
+  By :user:`Antoine Baker <antoinebaker>` :pr:`29818`, :pr:`30137`
 
 - |API| Using `_estimator_type` to set the estimator type is deprecated. Inherit from
   :class:`~sklearn.base.ClassifierMixin`, :class:`~sklearn.base.RegressorMixin`,
@@ -674,4 +696,34 @@ By :user:`Loïc Estève <lesteve>` :pr:`29400`
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
 
-TODO: update at the time of the release.
+Aaron Schumacher, Abdulaziz Aloqeely, abhi-jha, Acciaro Gennaro Daniele, Adam 
+J. Stewart, Adam Li, Adeel Hassan, Adeyemi Biola, Aditi Juneja, Adrin Jalali, 
+Aisha, Akanksha Mhadolkar, Akihiro Kuno, Alberto Torres, alexqiao, Alihan 
+Zihna, antoinebaker, Antony Lee, Anurag Varma, Arif Qodari, Arthur Courselle, 
+Arturo Amor, Aswathavicky, Audrey Flanders, aurelienmorgan, Austin, awwwyan, 
+AyGeeEm, a.zy.lee, baggiponte, BlazeStorm001, bme-git, brdav, Brigitta Sipőcz, 
+Cailean Carter, Carlo Lemos, Christian Lorentzen, Christian Veenhuis, claudio, 
+Conrad Stevens, datarollhexasphericon, Davide Chicco, David Matthew Cherney, 
+Dea María Léon, Deepak Saldanha, Deepyaman Datta, dependabot[bot], dinga92, 
+Dmitry Kobak, Drew Craeton, dymil, Edoardo Abati, EmilyXinyi, Eric Larson, 
+Evelyn, fabianhenning, Farid "Freddie" Taba, Gael Varoquaux, Giorgio Angelotti, 
+Gleb Levitski, Guillaume Lemaitre, Guntitat Sawadwuthikul, Henrique Caroço, 
+hhchen1105, Ilya Komarov, Inessa Pawson, Ivan Pan, Ivan Wiryadi, Jaimin 
+Chauhan, Jakob Bull, James Lamb, Janez Demšar, Jérémie du Boisberranger, 
+Jérôme Dockès, Jirair Aroyan, João Morais, Joe Cainey, John Enblom, 
+JorgeCardenas, Joseph Barbier, jpienaar-tuks, Julian Chan, K.Bharat Reddy, 
+Kevin Doshi, Lars, Loic Esteve, Lucy Liu, lunovian, Marc Bresson, Marco Edward 
+Gorelli, Marco Maggi, Marco Wolsza, Maren Westermann, MarieS-WiMLDS, Martin 
+Helm, Mathew Shen, mathurinm, Matthew Feickert, Maxwell Liu, Meekail Zain, 
+Michael Dawson, Miguel Cárdenas, m-maggi, mrastgoo, Natalia Mokeeva, Nathan 
+Goldbaum, Nathan Orgera, nbrown-ScottLogic, Nikita Chistyakov, Nithish 
+Bolleddula, Noam Keidar, NoPenguinsLand, Norbert Preining, notPlancha, Olivier 
+Grisel, Omar Salman, ParsifalXu, Piotr, Priyank Shroff, Priyansh Gupta, Quentin 
+Barthélemy, Rachit23110261, Rahil Parikh, raisadz, Rajath, renaissance0ne, 
+Reshama Shaikh, Roberto Rosati, Robert Pollak, rwelsch427, Santiago M. Mola, 
+scikit-learn-bot, sean moiselle, SHREEKANT VITTHAL NANDIYAWAR, Shruti Nath, 
+Søren Bredlund Caspersen, Stefanie Senger, Steffen Schneider, Štěpán 
+Sršeň, Sylvain Combettes, Tamara, Thomas, Thomas Gessey-Jones, Thomas J. Fan, 
+Thomas Li, Tialo, Tim Head, Tuhin Sharma, Tushar Parimi, vedpawar2254, Victoria 
+Shevchenko, viktor765, Vince Carey, Virgil Chan, Wang Jiayi, Xiao Yuan, Xuefeng 
+Xu, Yao Xiao, yareyaredesuyo, Zachary Vealey, Ziad Amerr
