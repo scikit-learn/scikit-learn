@@ -1396,9 +1396,10 @@ def test_gaussian_mixture_stability_on_unscaled_1d_data(
 ):
     if covariance_type == "tied":
         # XXX: TODO: investigate if we can improve the stability the estimation
-        # of the tied covariance in this case: depending on the random seed
-        # this can either lead to a bad estimate of the covariance or a
-        # ValueErorr caused by a LinalgError in the Cholesky decomposition.
+        # of the tied covariance in this case: depending on the BLAS/LAPACK
+        # implementation or the random seed this can either lead to a bad
+        # estimate of the covariance or a ValueErorr caused by a LinalgError in
+        # the Cholesky decomposition.
         pytest.xfail("The 'tied' covariance type fails to estimates the covariance.")
 
     # Non-regression test for #30382.
