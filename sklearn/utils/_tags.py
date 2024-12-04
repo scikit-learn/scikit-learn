@@ -58,6 +58,10 @@ class InputTags:
         Specifically, this tag is used by
         `sklearn.utils.metaestimators._safe_split` to slice rows and
         columns.
+
+        Note that if setting this tag to ``True`` means the estimator can take only
+        positive values, the `positive_only` tag must reflect it and also be set to
+        ``True``.
     """
 
     one_d_array: bool = False
