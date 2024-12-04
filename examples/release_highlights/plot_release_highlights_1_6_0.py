@@ -25,14 +25,26 @@ or with conda::
 # FrozenEstimator: Freezing an estimator
 # --------------------------------------
 # This meta-estimator allows to take an estimator and freeze its fit methods, meaning
-# that calling `fit`, `fit_predict` or `fit_transform` will have no effect. Its other
-# methods and properties are left unchanged.
-# An interesting use case for this is to use a pre-fitted model as a transformer step in
-# a pipeline.
+# that calling `fit` does not perform any operations; also, `fit_predict` and
+# `fit_transform` call `predict` and `transform` respectively without calling `fit`. The
+# original estimator's other methods and properties are left unchanged. An interesting
+# use case for this is to use a pre-fitted model as a transformer step in a pipeline,
+# or to pass a pre-fitted model to some of the meta-estimators. Here's a short example:
+
+from sklearn.datasets import make_classification
+from sklearn.frozen import FrozenEstimator
+from sklearn.linear_model import SGDClassifier
+from sklearn.model_selection import FixedThresholdClassifier
+
+X, y = make_classification(n_samples=1000, random_state=0)
+classifier = SGDClassifier().fit(X, y)
+
+threshold_classifier = FixedThresholdClassifier(
+    estimator=FrozenEstimator(classifier), threshold=0.9
+)
 
 # %%
-# Transforming metadata in a Pipeline
-# -----------------------------------
+# For more details refer to :ref:`plot_frozen_estimator_example`.
 
 # %%
 # Missing value support for Extra Trees
@@ -73,5 +85,29 @@ forest.predict(X)
 # -----------------------------------------------
 
 # %%
-# A developer API for third party libraries
-# -----------------------------------------
+# Improvements to the developer API for third party libraries
+# -----------------------------------------------------------
+# We have been working on improving the developer API for third party libraries.
+# This is still a work in progress, but a fair amount of work has been done in this
+# release. This release includes:
+#
+# - :func:`sklearn.utils.validation.validate_data` is introduced and replaces the
+#   previously private `BaseEstimator._validate_data` method. This function extends
+#   :func:`~sklearn.utils.validation.check_array` and adds support for remembering
+#   input feature counts and names.
+# - Estimator tags are now revamped and a part of the public API via
+#   :class:`sklearn.utils.Tags`. Estimators should now override the
+#   :meth:`BaseEstimator.__sklearn_tags__` method instead of implementing a `_more_tags`
+#   method. If you'd like to support multiple scikit-learn versions, you can implement
+#   both methods in your class.
+# - As a consequence of developing a public tag API, we've removed the `_xfail_checks`
+#   tag and tests which are expected to fail are directly passed to
+#   :func:`~sklearn.utils.estimator_checks.check_estimator` and
+#   :func:`~sklearn.utils.estimator_checks.parametrize_with_checks`. See their
+#   corresponding API docs for more details.
+# - Many tests in the common test suite are updated and raise more helpful error
+#   messages. We've also added some new tests, which should help you easier fix
+#   potential issues with your estimators.
+#
+# An updated version of our :ref:`develop` is also available which we recommend you
+# to check out.
