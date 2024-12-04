@@ -112,8 +112,21 @@ forest.predict(X)
 # functions. See :ref:`Metadata Routing User Guide <metadata_routing>` for more details.
 
 # %%
-# Scikit-learn supports Python 3.13 Free-threaded
-# -----------------------------------------------
+# Free-threaded CPython 3.13 support
+# ----------------------------------
+#
+# scikit-learn has preliminary support for free-threaded CPython, in particular
+# free-threaded wheels are available for all of our supported platforms.
+#
+# Free-threaded (also known as nogil) CPython 3.13 is an experimental version of
+# CPython 3.13 who aims at enabling efficient multi-threaded use cases by
+# removing the Global Interpreter Lock (GIL).
+#
+# For more details about free-threaded CPython see `py-free-threading doc <https://py-free-threading.github.io>`_,
+# in particular `how to install a free-threaded CPython <https://py-free-threading.github.io/installing_cpython/>`_
+# and `Ecosystem compatibility tracking <https://py-free-threading.github.io/tracking/>`_.
+#
+# Feel free to try free-threaded on your use case and report any issues!
 
 # %%
 # Improvements to the developer API for third party libraries
