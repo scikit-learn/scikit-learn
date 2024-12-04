@@ -2115,10 +2115,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
 
 def make_union(
-    *transformers,
-    n_jobs=None,
-    verbose=False,
-    verbose_feature_names_out=True
+    *transformers, n_jobs=None, verbose=False, verbose_feature_names_out=True
 ):
     """Construct a :class:`FeatureUnion` from the given transformers.
 
@@ -2172,5 +2169,5 @@ def make_union(
         _name_estimators(transformers),
         n_jobs=n_jobs,
         verbose=verbose,
-        verbose_feature_names_out=verbose_feature_names_out
+        verbose_feature_names_out=verbose_feature_names_out,
     )
