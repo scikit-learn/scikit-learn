@@ -104,7 +104,6 @@ CLF_SCORERS = [
     "recall_micro",
     "neg_log_loss",
     "neg_brier_score",
-    "neg_multiclass_brier_score",
     "jaccard",
     "jaccard_weighted",
     "jaccard_macro",

@@ -220,13 +220,14 @@ print(f" - uncalibrated classifier: {loss:.3f}")
 print(f" - calibrated classifier: {cal_loss:.3f}")
 
 # %%
-# We can also assess calibration with the multiclass variant of the Brier score
+# We can also assess calibration with the (unnormalized) Brier score
+# for multiclass probabilistics predictions
 # (lower is better, possible range is [0, 2]):
 
-from sklearn.metrics import multiclass_brier_score_loss
+from sklearn.metrics import brier_score_loss
 
-loss = multiclass_brier_score_loss(y_test, clf_probs)
-cal_loss = multiclass_brier_score_loss(y_test, cal_clf_probs)
+loss = brier_score_loss(y_test, clf_probs, normalize=False)
+cal_loss = brier_score_loss(y_test, cal_clf_probs, normalize=False)
 
 print("Brier score of")
 print(f" - uncalibrated classifier: {loss:.3f}")

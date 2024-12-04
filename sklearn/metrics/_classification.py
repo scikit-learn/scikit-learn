@@ -155,14 +155,14 @@ def _check_targets(y_true, y_pred):
 def _validate_multiclass_probabilistic_prediction(
     y_true, y_prob, sample_weight, labels
 ):
-    r"""Convert y_true and y_prob to shape [n_samples, n_classes]
+    r"""Convert y_true and y_prob to shape (n_samples, n_classes)
 
     1. Verify that y_true, y_prob, and sample_weights have the same first dim
     2. Ensure 2 or more classes in y_true i.e. valid classification task. The
        classes are provided by the labels argument, or inferred using y_true.
        When inferring y_true is assumed binary if it has shape (n_samples, ).
     3. Validate y_true, and y_prob have the same number of classes. Convert to
-       shape [n_samples, n_classes]/
+       shape (n_samples, n_classes)
 
     Parameters
     ----------
@@ -171,9 +171,9 @@ def _validate_multiclass_probabilistic_prediction(
 
     y_prob : array-like of float, shape=(n_samples, n_classes) or (n_samples,)
         Predicted probabilities, as returned by a classifier's
-        predict_proba method. If ``y_prob.shape = (n_samples,)``
+        predict_proba method. If `y_prob.shape = (n_samples,)`
         the probabilities provided are assumed to be that of the
-        positive class. The labels in ``y_prob`` are assumed to be
+        positive class. The labels in `y_prob` are assumed to be
         ordered lexicographically, as done by
         :class:`preprocessing.LabelBinarizer`.
 
@@ -181,19 +181,24 @@ def _validate_multiclass_probabilistic_prediction(
         Sample weights.
 
     labels : array-like, default=None
-        If not provided, labels will be inferred from y_true. If ``labels``
-        is ``None`` and ``y_prob`` has shape (n_samples,) the labels are
-        assumed to be binary and are inferred from ``y_true``.
+        If not provided, labels will be inferred from y_true. If `labels`
+        is `None` and `y_prob` has shape (n_samples,) the labels are
+        assumed to be binary and are inferred from `y_true`.
 
     Returns
     -------
-    transformed_labels : array of shape [n_samples, n_classes]
+    transformed_labels : array of shape (n_samples, n_classes)
 
-    y_prob : array of shape [n_samples, n_classes]
+    y_prob : array of shape (n_samples, n_classes)
     """
     y_prob = check_array(
         y_prob, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
     )
+
+    if y_prob.max() > 1:
+        raise ValueError("y_prob contains values greater than 1.")
+    if y_prob.min() < 0:
+        raise ValueError("y_prob contains values less than 0.")
 
     check_consistent_length(y_prob, y_true, sample_weight)
     lb = LabelBinarizer()
@@ -3240,44 +3245,130 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     return np.average(losses, weights=sample_weight)
 
 
+def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos_label):
+    r"""Convert y_true and y_prob in binary classification to shape (n_samples, 2)
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,)
+        True labels.
+
+    y_prob : array-like of shape (n_samples,)
+        Probabilities of the positive class.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    pos_label : int, float, bool or str, default=None
+        Label of the positive class. If None, `pos_label` will be inferred
+        in the following manner:
+
+        * if `y_true` in {-1, 1} or {0, 1}, `pos_label` defaults to 1;
+        * else if `y_true` contains string, an error will be raised and
+          `pos_label` should be explicitly specified;
+        * otherwise, `pos_label` defaults to the greater label,
+          i.e. `np.unique(y_true)[-1]`.
+
+    Returns
+    -------
+    transformed_labels : array of shape (n_samples, 2)
+
+    y_prob : array of shape (n_samples, 2)
+    """
+    # sanity checks on y_true and y_prob
+    y_true = column_or_1d(y_true)
+    y_prob = column_or_1d(y_prob)
+
+    assert_all_finite(y_true)
+    assert_all_finite(y_prob)
+
+    check_consistent_length(y_prob, y_true, sample_weight)
+
+    y_type = type_of_target(y_true, input_name="y_true")
+    if y_type != "binary":
+        raise ValueError(
+            f"The type of the target is {y_type} but should be "
+            "binary according to the shape of y_prob."
+        )
+
+    if y_prob.max() > 1:
+        raise ValueError("y_prob contains values greater than 1.")
+    if y_prob.min() < 0:
+        raise ValueError("y_prob contains values less than 0.")
+
+    # check that pos_label is consistent with y_true
+    try:
+        pos_label = _check_pos_label_consistency(pos_label, y_true)
+    except ValueError:
+        classes = np.unique(y_true)
+        if classes.dtype.kind not in ("O", "U", "S"):
+            # for backward compatibility, if classes are not string then
+            # `pos_label` will correspond to the greater label
+            pos_label = classes[-1]
+        else:
+            raise
+
+    # convert (n_samples,) to (n_samples, 2) shape
+    y_true = np.array(y_true == pos_label, int)
+    transformed_labels = np.column_stack((1 - y_true, y_true))
+    y_prob = np.column_stack((1 - y_prob, y_prob))
+
+    return transformed_labels, y_prob
+
+
 @validate_params(
     {
         "y_true": ["array-like"],
         "y_proba": ["array-like", Hidden(None)],
         "sample_weight": ["array-like", None],
         "pos_label": [Real, str, "boolean", None],
+        "labels": ["array-like", None],
+        "normalize": ["boolean"],
         "y_prob": ["array-like", Hidden(StrOptions({"deprecated"}))],
     },
     prefer_skip_nested_validation=True,
 )
 def brier_score_loss(
-    y_true, y_proba=None, *, sample_weight=None, pos_label=None, y_prob="deprecated"
+    y_true,
+    y_proba=None,
+    *,
+    sample_weight=None,
+    pos_label=None,
+    labels=None,
+    normalize=True,
+    y_prob="deprecated",
 ):
     """Compute the Brier score loss.
 
     The smaller the Brier score loss, the better, hence the naming with "loss".
     The Brier score measures the mean squared difference between the predicted
-    probability and the actual outcome. The Brier score always
-    takes on a value between zero and one, since this is the largest
-    possible difference between a predicted probability (which must be
-    between zero and one) and the actual outcome (which can take on values
-    of only 0 and 1). It can be decomposed as the sum of refinement loss and
-    calibration loss.
+    probability and the actual outcome. The Brier score is a stricly proper scoring
+    rule and can be decomposed as the sum of refinement loss and calibration loss.
 
-    The Brier score is appropriate for binary and categorical outcomes that
-    can be structured as true or false, but is inappropriate for ordinal
-    variables which can take on three or more values (this is because the
-    Brier score assumes that all possible outcomes are equivalently
-    "distant" from one another). Which label is considered to be the positive
-    label is controlled via the parameter `pos_label`, which defaults to
-    the greater label unless `y_true` is all 0 or all -1, in which case
-    `pos_label` defaults to 1.
+    For :math:`N` samples with :math:`C` different classes, the Brier score is
+    defined as:
 
-    A more generalized form of Brier score is implemented in
-    :func:`multiclass_brier_score_loss` that is applicable to the multi-class
-    case as well. When used for the binary case, `multiclass_brier_score_loss`
-    returns Brier score that is exactly twice of the value returned by this
-    function.
+    .. math::
+        \frac{1}{N}\\sum_{i=1}^{N}\\sum_{c=1}^{C}(y_{ic} - \\hat{y}_{ic})^{2}
+
+    where :math:`y_{ic}` is 1 if observation `i` belongs to class `c`,
+    otherwise 0 and :math:`\\hat{y}_{ic}` is the predicted probability of
+    observation `i` for class `c`. The probabilities for `c` classes for
+    observation `i` should sum to 1.
+
+    The Brier score is divided by the number of classes :math:`C` if `normalize=True`.
+    In multi-class classification, the unnormalized Brier score is usually prefred
+    and ranges between :math:`[0, 2]` while the normalized version ranges between
+    :math:`[0, 2/C]`. In binary classification, the normalized Brier score is
+    usually prefered and ranges from zero to one.
+
+    For binary classification tasks, which label is considered to be
+    the positive label is controlled via the parameter `pos_label`, which
+    defaults to the greater label unless `y_true` is all 0 or all -1, in
+    which case `pos_label` defaults to 1.
+
+    For multi-class classification tasks, the labels are assumed to be ordered
+    lexicographically and can be explicitely passed by the `labels` arguments.
 
     Read more in the :ref:`User Guide <brier_score_loss>`.
 
@@ -3286,14 +3377,20 @@ def brier_score_loss(
     y_true : array-like of shape (n_samples,)
         True targets.
 
-    y_proba : array-like of shape (n_samples,)
-        Probabilities of the positive class.
+    y_proba : array-like of shape (n_samples,) or (n_samples, n_classes)
+        Predicted probabilities. If `y_pred.shape = (n_samples,)`
+        the probabilities provided are assumed to be that of the
+        positive class. If `y_pred.shape = (n_samples, n_classes)`
+        the labels in `y_pred` are assumed to be
+        ordered alphabetically, as done by
+        :class:`~sklearn.preprocessing.LabelBinarizer`.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     pos_label : int, float, bool or str, default=None
-        Label of the positive class. `pos_label` will be inferred in the
+        Label of the positive class when `y_pred.shape = (n_samples,)`.
+        If not provided, `pos_label` will be inferred in the
         following manner:
 
         * if `y_true` in {-1, 1} or {0, 1}, `pos_label` defaults to 1;
@@ -3301,6 +3398,10 @@ def brier_score_loss(
           `pos_label` should be explicitly specified;
         * otherwise, `pos_label` defaults to the greater label,
           i.e. `np.unique(y_true)[-1]`.
+
+    labels : array-like of shape (n_classes,), default=None
+        Class labels when `y_pred.shape = (n_samples, n_classes)`.
+        If not provided, labels will be inferred from `y_true`.
 
     y_prob : array-like of shape (n_samples,)
         Probabilities of the positive class.
@@ -3334,6 +3435,14 @@ def brier_score_loss(
     np.float64(0.037...)
     >>> brier_score_loss(y_true, np.array(y_prob) > 0.5)
     np.float64(0.0)
+    >>> brier_score_loss(y_true, y_prob, normalize=False)
+    np.float64(0.074...)
+    >>> brier_score_loss(
+    ...    ["eggs", "ham", "spam"],
+    ...    [[0.8, 0.1, 0.1], [0.2, 0.7, 0.1], [0.2, 0.2, 0.6]],
+    ...    normalize=False
+    ... )
+    np.float64(0.146...)
     """
     # TODO(1.7): remove in 1.7 and reset y_proba to be required
     # Note: validate params will raise an error if y_prob is not array-like,
@@ -3353,37 +3462,24 @@ def brier_score_loss(
         )
         y_proba = y_prob
 
-    y_true = column_or_1d(y_true)
-    y_proba = column_or_1d(y_proba)
-    assert_all_finite(y_true)
-    assert_all_finite(y_proba)
-    check_consistent_length(y_true, y_proba, sample_weight)
+    y_proba = check_array(
+        y_proba, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
+    )
 
-    y_type = type_of_target(y_true, input_name="y_true")
-    if y_type != "binary":
-        raise ValueError(
-            "Only binary classification is supported. The type of the target "
-            f"is {y_type}. For the multiclass case, use "
-            "multiclass_brier_score_loss instead"
+    if y_proba.ndim == 1 or y_proba.shape[1] == 1:
+        transformed_labels, y_proba = _validate_binary_probabilistic_prediction(
+            y_true, y_proba, sample_weight, pos_label
+        )
+    else:
+        transformed_labels, y_proba = _validate_multiclass_probabilistic_prediction(
+            y_true, y_proba, sample_weight, labels
         )
 
-    if y_proba.max() > 1:
-        raise ValueError("y_proba contains values greater than 1.")
-    if y_proba.min() < 0:
-        raise ValueError("y_proba contains values less than 0.")
+    aggregate = np.average if normalize else np.sum
 
-    try:
-        pos_label = _check_pos_label_consistency(pos_label, y_true)
-    except ValueError:
-        classes = np.unique(y_true)
-        if classes.dtype.kind not in ("O", "U", "S"):
-            # for backward compatibility, if classes are not string then
-            # `pos_label` will correspond to the greater label
-            pos_label = classes[-1]
-        else:
-            raise
-    y_true = np.array(y_true == pos_label, int)
-    return np.average((y_true - y_proba) ** 2, weights=sample_weight)
+    return np.average(
+        aggregate((transformed_labels - y_proba) ** 2, axis=1), weights=sample_weight
+    )
 
 
 @validate_params(
@@ -3477,94 +3573,3 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
     )
 
     return 1 - (numerator / denominator)
-
-
-def multiclass_brier_score_loss(y_true, y_prob, sample_weight=None, labels=None):
-    r"""Compute the Brier score loss.
-
-    The smaller the Brier score loss, the better, hence the naming with "loss".
-    The Brier score measures the mean squared difference between the predicted
-    probability and the actual outcome.
-
-    For :math:`N` samples with :math:`C` different classes, the multi-class
-    Brier score is defined as:
-
-    .. math::
-        \frac{1}{N}\sum_{i=1}^{N}\sum_{c=1}^{C}(y_{ic} - \hat{y}_{ic})^{2}
-
-    where :math:`y_{ic}` is 1 if observation `i` belongs to class `c`,
-    otherwise 0 and :math:`\hat{y}_{ic}` is the predicted probability of
-    observation `i` for class `c`. The probabilities for `c` classes for
-    observation `i` should sum to 1.
-
-    The Brier score always takes on a value between [0, 2]. For the
-    binary case however, there is a more common definition of Brier score
-    implemented in :func:`brier_score_loss` that is exactly half of the value
-    returned by this function, thereby having a range between [0, 1].
-
-    It can be decomposed as the sum of refinement loss and calibration loss.
-
-    The Brier score is appropriate for binary and categorical outcomes that
-    can be structured as true or false, but is inappropriate for ordinal
-    variables which can take on three or more values (this is because the
-    Brier score assumes that all possible outcomes are equivalently
-    "distant" from one another).
-
-    Read more in the :ref:`User Guide <brier_score_loss>`.
-
-    Parameters
-    ----------
-    y_true : array of shape (n_samples,)
-        True targets.
-
-    y_prob : array-like of float, shape=(n_samples, n_classes) or (n_samples,)
-        Predicted probabilities, as returned by a classifier's
-        predict_proba method. If ``y_prob.shape = (n_samples,)``
-        the probabilities provided are assumed to be that of the
-        positive class. The labels in ``y_prob`` are assumed to be
-        ordered lexicographically, as done by
-        :class:`preprocessing.LabelBinarizer`.
-
-    sample_weight : array-like of shape (n_samples,), default=None
-        Sample weights.
-
-    labels : array-like, default=None
-        If not provided, labels will be inferred from y_true. If ``labels``
-        is ``None`` and ``y_prob`` has shape (n_samples,) the labels are
-        assumed to be binary and are inferred from ``y_true``.
-
-    Returns
-    -------
-    score : float
-        Brier score loss.
-
-    References
-    ----------
-    .. [1] `Wikipedia entry for the Brier score
-            <https://en.wikipedia.org/wiki/Brier_score>`_.
-
-    Examples
-    --------
-    >>> from sklearn.metrics import multiclass_brier_score_loss
-    >>> multiclass_brier_score_loss([0, 1, 1, 0],
-    ...                             [0.1, 0.9, 0.8, 0.3])
-    np.float64(0.074...)
-    >>> multiclass_brier_score_loss(['eggs', 'ham', 'spam'], [[.8, .1, .1],
-    ...                                                       [.2, .7, .1],
-    ...                                                       [.2, .2, .6]])
-    np.float64(0.146...)
-    """
-    y_true = column_or_1d(y_true)
-
-    transformed_labels, y_prob = _validate_multiclass_probabilistic_prediction(
-        y_true, y_prob, sample_weight, labels
-    )
-
-    if y_prob.max() > 1:
-        raise ValueError("y_prob contains values greater than 1.")
-    if y_prob.min() < 0:
-        raise ValueError("y_prob contains values less than 0.")
-
-    return np.average(
-        np.sum((transformed_labels - y_prob) ** 2, axis=1), weights=sample_weight
-    )

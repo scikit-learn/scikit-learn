@@ -29,7 +29,6 @@ from sklearn.metrics import (
     log_loss,
     make_scorer,
     matthews_corrcoef,
-    multiclass_brier_score_loss,
     multilabel_confusion_matrix,
     precision_recall_fscore_support,
     precision_score,
@@ -2771,12 +2770,12 @@ def test_brier_score_loss():
     with pytest.raises(ValueError):
         brier_score_loss(y_true, y_pred - 1.0)
 
-    # ensure to raise an error for multiclass y_true
+    # raise an error for multiclass y_true and binary y_pred
     y_true = np.array([0, 1, 2, 0])
     y_pred = np.array([0.8, 0.6, 0.4, 0.2])
     error_message = re.escape(
-        "Only binary classification is supported. The type of the target is multiclass."
-        " For the multiclass case, use multiclass_brier_score_loss instead"
+        "The type of the target is multiclass "
+        "but should be binary according to the shape of y_prob."
     )
 
     with pytest.raises(ValueError, match=error_message):
@@ -2790,18 +2789,10 @@ def test_brier_score_loss():
     assert_almost_equal(brier_score_loss(["foo"], [0.4], pos_label="foo"), 0.36)
 
 
+multiclass_brier_score_loss = partial(brier_score_loss, normalize=False)
+
+
 def test_multiclass_brier_score_loss():
-    # test cases for binary case
-    y_true = np.array([0, 1, 1, 0, 1, 1])
-    y_pred = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
-
-    assert_almost_equal(multiclass_brier_score_loss(y_true, y_pred), 0.05083333)
-    # Check brier_score_loss and multiclass_brier_score_loss are consistent
-    assert_almost_equal(
-        multiclass_brier_score_loss(y_true, y_pred),
-        brier_score_loss(y_true, y_pred) * 2,
-    )
-
     # test cases for multi-class
     assert_almost_equal(
         multiclass_brier_score_loss(
@@ -2819,22 +2810,12 @@ def test_multiclass_brier_score_loss():
         0.41333333,
     )
 
-    # check perfect predictions for 2 classes
-    assert_almost_equal(
-        multiclass_brier_score_loss([0, 0, 1, 1], [0.0, 0.0, 1.0, 1.0]), 0
-    )
-
     # check perfect predictions for 3 classes
     assert_almost_equal(
         multiclass_brier_score_loss(
             [0, 1, 2], [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
         ),
         0,
-    )
-
-    # check perfectly incorrect predictions for 2 classes
-    assert_almost_equal(
-        multiclass_brier_score_loss([0, 0, 1, 1], [1.0, 1.0, 0.0, 0.0]), 2
     )
 
     # check perfectly incorrect predictions for 3 classes
@@ -2861,8 +2842,8 @@ def test_multiclass_brier_score_loss_invalid_inputs():
         multiclass_brier_score_loss(y_true, y_pred - 1.0)
 
     # ensure to raise an error for wrong number of classes
-    y_true = np.array([0, 1, 2, 0])
-    y_pred = np.array([0.8, 0.6, 0.4, 0.2])
+    y_true = [0, 1, 2]
+    y_pred = [[1, 0], [0, 1], [0, 1]]
     error_message = (
         "y_true and y_prob contain different number of "
         "classes 3, 2. Please provide the true "
@@ -2886,7 +2867,7 @@ def test_multiclass_brier_score_loss_invalid_inputs():
 
     # raise error message when there's only one class in y_true
     y_true = ["eggs"]
-    y_pred = [0.1]
+    y_pred = [[0.9, 0.1]]
     error_message = (
         "y_true contains only one label (eggs). Please "
         "provide the true labels explicitly through the "
@@ -3229,7 +3210,7 @@ def test_d2_log_loss_score_raises():
 
     # check error when y_true only has 1 label
     y_true = [1, 1, 1]
-    y_pred = [[0.5, 0.5], [0.5, 0.5], [0.5, 5]]
+    y_pred = [[0.5, 0.5], [0.5, 0.5], [0.5, 0.5]]
     err = "y_true contains only one label"
     with pytest.raises(ValueError, match=err):
         d2_log_loss_score(y_true, y_pred)
@@ -3238,7 +3219,7 @@ def test_d2_log_loss_score_raises():
     # only 1 label
     y_true = [1, 1, 1]
     labels = [1]
-    y_pred = [[0.5, 0.5], [0.5, 0.5], [0.5, 5]]
+    y_pred = [[0.5, 0.5], [0.5, 0.5], [0.5, 0.5]]
     err = "The labels array needs to contain at least two"
     with pytest.raises(ValueError, match=err):
         d2_log_loss_score(y_true, y_pred, labels=labels)

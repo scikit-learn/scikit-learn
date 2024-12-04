@@ -61,7 +61,6 @@ from . import (
     mean_squared_error,
     mean_squared_log_error,
     median_absolute_error,
-    multiclass_brier_score_loss,
     precision_score,
     r2_score,
     recall_score,
@@ -810,11 +809,6 @@ neg_brier_score_scorer = make_scorer(
 brier_score_loss_scorer = make_scorer(
     brier_score_loss, greater_is_better=False, response_method="predict_proba"
 )
-neg_multiclass_brier_score_scorer = make_scorer(
-    multiclass_brier_score_loss,
-    greater_is_better=False,
-    response_method="predict_proba",
-)
 
 # Clustering scores
 adjusted_rand_scorer = make_scorer(adjusted_rand_score)
@@ -856,7 +850,6 @@ _SCORERS = dict(
     neg_brier_score=neg_brier_score_scorer,
     positive_likelihood_ratio=positive_likelihood_ratio_scorer,
     neg_negative_likelihood_ratio=neg_negative_likelihood_ratio_scorer,
-    neg_multiclass_brier_score=neg_multiclass_brier_score_scorer,
     # Cluster metrics that use supervised evaluation
     adjusted_rand_score=adjusted_rand_scorer,
     rand_score=rand_scorer,
