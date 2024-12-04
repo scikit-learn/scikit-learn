@@ -9,6 +9,7 @@ import numpy as np
 from scipy import optimize, sparse, stats
 from scipy.special import boxcox, inv_boxcox
 
+from sklearn.exceptions import TransformFailedWarning
 from sklearn.utils import metadata_routing
 
 from ..base import (
@@ -3431,15 +3432,18 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             with warnings.catch_warnings(record=True) as captured_warnings:
                 with np.errstate(invalid="warn"):
                     X[:, i] = inv_fun(X[:, i], lmbda)
-            if captured_warnings and np.isnan(X[:, i]).any():
-                warnings.warn(
-                    f"""Some values in column {i} of the inverse-transformed data
-                        are NaN. This may be due to  extreme skewness or outliers in
-                        the data for this column. Consider addressing these issues,
-                        such as removing or imputing outliers, before applying the
-                        transformation.""",
-                    UserWarning,
-                )
+
+            if captured_warnings:
+                last_warning = captured_warnings[-1]
+                # Check for the specific warning message
+                if "invalid value encountered" in str(last_warning.message):
+                    warnings.warn(
+                        f"Some values in column {i} of the inverse-transformed data "
+                        f"are NaN. This may be due to numerical issues in the "
+                        f"transformation process. Consider inspecting the input data "
+                        f"or preprocessing it before applying the transformation.",
+                        TransformFailedWarning,
+                    )
         return X
 
     def _yeo_johnson_inverse_transform(self, x, lmbda):
