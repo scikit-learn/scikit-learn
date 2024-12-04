@@ -1389,6 +1389,40 @@ def test_gaussian_mixture_single_component_stable():
     gm.fit(X).sample()
 
 
+# XXX: this test does not pass for the 'tied' covariance type
+@pytest.mark.parametrize("covariance_type", COVARIANCE_TYPE)
+def test_gaussian_mixture_stability_on_unscaled_1d_data(
+    covariance_type, global_random_seed
+):
+    # Non-regression test for #30382.
+    reg_covar = 0.1
+    rng = np.random.default_rng(global_random_seed)
+    locations = np.array([[0], [9999.0]])
+
+    # Each component is near constant: the scale of the data is much larger
+    # than the regularization of the covariance.
+    scale = 1e-7
+    X_0 = rng.normal(loc=locations[0], scale=scale, size=(10, 1)).astype(np.float32)
+    X_1 = rng.normal(loc=locations[1], scale=scale, size=(10, 1)).astype(np.float32)
+    X = np.vstack([X_0, X_1])
+
+    # The fit should not raise any exception:
+    gmm = GaussianMixture(
+        n_components=2, covariance_type=covariance_type, reg_covar=reg_covar
+    ).fit(X)
+
+    # The means should be recovered:
+    tols = dict(rtol=1e-5, atol=1e-5)
+    assert_allclose(sorted(gmm.means_.ravel()), locations.ravel(), **tols)
+
+    # The estimated covariance(s) should be close to the regularization:
+    if covariance_type == "tied":
+        # XXX: TODO: investigate if we can improve the stability the estimation
+        # of the tied covariance in this case.
+        pytest.xfail("The 'tied' covariance type fails to estimates the covariance.")
+    assert_allclose(gmm.covariances_, 0.1, **tols)
+
+
 def test_gaussian_mixture_all_init_does_not_estimate_gaussian_parameters(
     monkeypatch,
     global_random_seed,
