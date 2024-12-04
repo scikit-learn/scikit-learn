@@ -44,6 +44,37 @@ threshold_classifier = FixedThresholdClassifier(
 )
 
 # %%
+# Transforming data other than X in a Pipeline
+# --------------------------------------------
+# The :class:`~pipeline.Pipeline` now supports transforming passed data other than `X`
+# if necessary. This can be done by setting the new `transform_input` parameter. This
+# is particularly useful when passing a validation set through the pipeline.
+#
+# As an example, imagine `EstimatorWithValidationSet` is an estimator which accepts
+# a validation set. We can now have a pipeline which will transform the validation set
+# and pass it to the estimator::
+#
+#     sklearn.set_config(enable_metadata_routing=True)
+#     est_gs = GridSearchCV(
+#         Pipeline(
+#             (
+#                 StandardScaler(),
+#                 EstimatorWithValidationSet(...).set_fit_request(X_val=True, y_val=True),
+#             ),
+#             # telling pipeline to transform these inputs up to the step which is
+#             # requesting them.
+#             transform_input=["X_val"],
+#         ),
+#         param_grid={"estimatorwithvalidationset__param_to_optimize": list(range(5))},
+#         cv=5,
+#     ).fit(X, y, X_val, y_val)
+#
+# In the above code the key parts are the call to `set_fit_request` to specify that
+# `X_val` and `y_val` are required by the `EstimatorWithValidationSet.fit` method, and
+# the `transform_input` parameter to tell the pipeline to transform `X_val` before
+# passing  it to `EstimatorWithValidationSet.fit`.
+
+# %%
 # For more details refer to :ref:`plot_frozen_estimator_example`.
 
 # %%
