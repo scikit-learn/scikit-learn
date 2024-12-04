@@ -3913,7 +3913,7 @@ def check_positive_only_tag_during_fit(name, estimator_orig):
     X, y = load_iris(return_X_y=True)
     y = _enforce_estimator_tags_y(estimator, y)
     set_random_state(estimator, 0)
-    X = _enforce_estimator_tags_X(estimator_orig, X)
+    X = _enforce_estimator_tags_X(estimator, X)
     X -= X.mean()
 
     if tags.input_tags.positive_only:
