@@ -1843,14 +1843,13 @@ def precision_recall_fscore_support(
     pred_sum = tp_sum + MCM[:, 0, 1]
     true_sum = tp_sum + MCM[:, 1, 0]
 
-    xp, _ = get_namespace(y_true, y_pred)
+    xp, _, device_ = get_namespace_and_device(y_true, y_pred)
     if average == "micro":
         tp_sum = xp.reshape(xp.sum(tp_sum), (1,))
         pred_sum = xp.reshape(xp.sum(pred_sum), (1,))
         true_sum = xp.reshape(xp.sum(true_sum), (1,))
 
     # Finally, we have all our sufficient statistics. Divide! #
-    device_ = device(y_true, y_pred)
     max_float_type = _max_precision_float_dtype(xp=xp, device=device_)
     beta2 = xp.asarray(beta**2, dtype=max_float_type, device=device_)
 
@@ -1894,7 +1893,6 @@ def precision_recall_fscore_support(
         weights = None
 
     if average is not None:
-        assert average != "binary" or precision.shape[0] == 1
         precision = float(_nanaverage(precision, weights=weights))
         recall = float(_nanaverage(recall, weights=weights))
         f_score = float(_nanaverage(f_score, weights=weights))
