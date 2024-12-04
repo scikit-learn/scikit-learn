@@ -610,7 +610,6 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
         for the concrete implementation are therefore freed when this classmethod
         returns.
         """
-
         if weights not in {"uniform", "distance"}:
             raise ValueError(
                 "Only the 'uniform' or 'distance' weights options are supported"
