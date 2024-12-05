@@ -44,6 +44,9 @@ threshold_classifier = FixedThresholdClassifier(
 )
 
 # %%
+# For more details refer to :ref:`This example <plot_frozen_estimator_example>`.
+
+# %%
 # Transforming data other than X in a Pipeline
 # --------------------------------------------
 # The :class:`~pipeline.Pipeline` now supports transforming passed data other than `X`
@@ -75,9 +78,6 @@ threshold_classifier = FixedThresholdClassifier(
 # passing  it to `EstimatorWithValidationSet.fit`.
 
 # %%
-# For more details refer to :ref:`plot_frozen_estimator_example`.
-
-# %%
 # Missing value support for Extra Trees
 # -------------------------------------
 # The classes :class:`ensemble.ExtraTreesClassifier` and
@@ -96,6 +96,9 @@ forest.predict(X)
 # Download any dataset from the web
 # ---------------------------------
 # The function :func:`datasets.fetch_file` allows to download any file from a given url.
+# The goal is to extend the dataset fetchers to cover more application based use cases
+# where the dataset has to be downloaded from an arbitray url, cached, and then manually
+# loaded with functions such as `pandas.read_csv`, `pandas.read_parquet`, etc.
 
 # %%
 # Array API support
@@ -109,7 +112,8 @@ forest.predict(X)
 # Almost complete Metadata Routing support
 # ----------------------------------------
 # Support for routing metadata has been added to all remaining estimators and
-# functions except AdaBoost. See :ref:`Metadata Routing User Guide <metadata_routing>` for more details.
+# functions except AdaBoost. See :ref:`Metadata Routing User Guide <metadata_routing>`
+# for more details.
 
 # %%
 # Free-threaded CPython 3.13 support
