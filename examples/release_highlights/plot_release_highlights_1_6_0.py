@@ -47,7 +47,7 @@ print(f"Fitting the classifier took {(time.time() - start) * 1_000:.2f} millisec
 start = time.time()
 threshold_classifier = FixedThresholdClassifier(
     estimator=FrozenEstimator(classifier), threshold=0.9
-)
+).fit(X, y)
 print(
     f"Fitting the threshold classifier took {(time.time() - start) * 1_000:.2f} "
     "milliseconds"
@@ -92,6 +92,27 @@ print(
 # Note that at this time scikit-learn estimators have not yet been extended to accept
 # user specified validation sets. This feature is released early to collect feedback
 # from third-party libraries who might benefit from it.
+
+# %%
+# Multiclass support for `LogisticRegression(solver="newton-cholesky")`
+# ---------------------------------------------------------------------
+#
+# The `"newton-cholesky"` solver (originally introduced in scikit-learn version
+# 1.2) was previously limited to binary
+# :class:`~linear_model.LogisticRegression` and some other generalized linear
+# regression estimators (namely :class:`~linear_model.PoissonRegressor`,
+# :class:`~linear_model.GammaRegressor` and
+# :class:`~linear_model.TweedieRegressor`).
+#
+# This new release includes support for multiclass (multinomial)
+# :class:`~linear_model.LogisticRegression`.
+#
+# This solver is particularly useful when the number of features is small to
+# medium. It has been empirically shown to converge more reliably and faster
+# than other solvers on some medium sized datasets with one-hot encoded
+# categorical features as can be seen in the `benchmark results of the
+# pull-request
+# <https://github.com/scikit-learn/scikit-learn/pull/28840#issuecomment-2065368727>`_.
 
 # %%
 # Missing value support for Extra Trees
