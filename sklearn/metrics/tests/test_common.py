@@ -583,8 +583,8 @@ def _require_positive_targets(y1, y2):
 def _require_log1p_targets(y1, y2):
     """Make targets strictly larger than -1"""
     offset = abs(min(y1.min(), y2.min())) - 0.99
-    y1 = y1.astype(float)
-    y2 = y2.astype(float)
+    y1 = y1.astype(np.float64)
+    y2 = y2.astype(np.float64)
     y1 += offset
     y2 += offset
     return y1, y2
@@ -2084,7 +2084,15 @@ array_api_metric_checkers = {
         check_array_api_regression_metric_multioutput,
     ],
     cosine_similarity: [check_array_api_metric_pairwise],
+    explained_variance_score: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
     mean_absolute_error: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
+    mean_pinball_loss: [
         check_array_api_regression_metric,
         check_array_api_regression_metric_multioutput,
     ],
