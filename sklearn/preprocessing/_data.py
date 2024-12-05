@@ -9,7 +9,6 @@ import numpy as np
 from scipy import optimize, sparse, stats
 from scipy.special import boxcox, inv_boxcox
 
-from sklearn.exceptions import TransformFailedWarning
 from sklearn.utils import metadata_routing
 
 from ..base import (
@@ -3436,13 +3435,13 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             if captured_warnings:
                 last_warning = captured_warnings[-1]
                 # Check for the specific warning message
-                if "invalid value encountered" in str(last_warning.message):
+                if "invalid value encountered in power" in str(last_warning.message):
                     warnings.warn(
                         f"Some values in column {i} of the inverse-transformed data "
                         f"are NaN. This may be due to numerical issues in the "
                         f"transformation process. Consider inspecting the input data "
                         f"or preprocessing it before applying the transformation.",
-                        TransformFailedWarning,
+                        UserWarning,
                     )
         return X
 

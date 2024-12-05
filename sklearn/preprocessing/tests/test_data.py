@@ -11,7 +11,7 @@ from scipy import sparse, stats
 
 from sklearn import datasets
 from sklearn.base import clone
-from sklearn.exceptions import NotFittedError, TransformFailedWarning
+from sklearn.exceptions import NotFittedError
 from sklearn.metrics.pairwise import linear_kernel
 from sklearn.model_selection import cross_val_predict
 from sklearn.pipeline import Pipeline
@@ -2640,4 +2640,4 @@ def test_yeo_johnson_inverse_transform_warning():
 
         # Check if warning was raised
         assert len(w) > 0
-        assert issubclass(w[-1].category, TransformFailedWarning)
+        assert issubclass(w[-1].category, UserWarning)

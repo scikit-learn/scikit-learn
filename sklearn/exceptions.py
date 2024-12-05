@@ -15,7 +15,6 @@ __all__ = [
     "PositiveSpectrumWarning",
     "UnsetMetadataPassedError",
     "EstimatorCheckFailedWarning",
-    "TransformFailedWarning",
 ]
 
 
@@ -126,18 +125,6 @@ class FitFailedWarning(RuntimeWarning):
 
     .. versionchanged:: 0.18
        Moved from sklearn.cross_validation.
-    """
-
-
-class TransformFailedWarning(RuntimeWarning):
-    """Warning raised when a transformation fails to process data correctly.
-
-    This warning is used when a transformation produces invalid values, such as
-    NaNs, due to numerical computation failures or instability in the
-    transformation process.
-
-    .. versionadded:: 1.7.dev0
-       Added to warn users about failures in transformation processes.
     """
 
 
