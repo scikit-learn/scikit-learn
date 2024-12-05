@@ -213,7 +213,7 @@ def _yield_classifier_checks(classifier):
     # test classifiers can handle non-array data and pandas objects
     yield check_classifier_data_not_an_array
     # test classifiers trained on a single label always return this label
-    if not tags.target_tags.two_d_labels:
+    if tags.target_tags.single_output:
         yield check_classifiers_one_label
         yield check_classifiers_one_label_sample_weights
         yield check_classifiers_classes
