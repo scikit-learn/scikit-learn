@@ -198,7 +198,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self.random_state = random_state
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y=None, sample_weight=None, quantile_method="warn"):
+    def fit(self, X, y=None, sample_weight=None):
         """
         Fit the estimator.
 
@@ -272,6 +272,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         # TODO(1.9): remove and switch to quantile_method="averaged_inverted_cdf"
         # by default.
+        quantile_method = self.quantile_method
         if self.strategy == "quantile" and quantile_method == "warn":
             warnings.warn(
                 "The current default behavior, quantile_method='linear', will be "
@@ -285,13 +286,14 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             quantile_method = "linear"
 
         if (
-            quantile_method not in ["inverted_cdf", "averaged_inverted_cdf"]
+            self.strategy == "quantile"
+            and quantile_method not in ["inverted_cdf", "averaged_inverted_cdf"]
             and sample_weight is not None
         ):
             raise ValueError(
                 "When fitting with strategy='quantile' and sample weights, "
                 "quantile_method should either be set to 'averaged_inverted_cdf' or "
-                "'inverted_cdf', got quantile_method='%s' instead." % (quantile_method)
+                f"'inverted_cdf', got quantile_method='{quantile_method}' instead."
             )
 
         if self.strategy != "quantile" and sample_weight is not None:
