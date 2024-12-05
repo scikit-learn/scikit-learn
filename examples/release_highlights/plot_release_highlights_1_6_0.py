@@ -47,7 +47,7 @@ print(f"Fitting the classifier took {(time.time() - start) * 1_000:.2f} millisec
 start = time.time()
 threshold_classifier = FixedThresholdClassifier(
     estimator=FrozenEstimator(classifier), threshold=0.9
-)
+).fit(X, y)
 print(
     f"Fitting the threshold classifier took {(time.time() - start) * 1_000:.2f} "
     "milliseconds"
