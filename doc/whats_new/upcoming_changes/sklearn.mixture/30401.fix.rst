@@ -1,0 +1,4 @@
+- :class:`mixture.GaussianMixture` with `covariance_type="diag"` or
+  `covariance_type="spherical"` now clips the negative entries caused by
+  rounding errors to zero.
+  By :user:`Olivier Grisel <ogrisel>`
