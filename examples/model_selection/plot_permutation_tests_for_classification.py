@@ -17,7 +17,8 @@ significance of a cross-validated score using permutations.
 # -------
 #
 # We will use the :ref:`iris_dataset`, which consists of measurements taken
-# from 3 species of irises, that our model will try to predict.
+# from 3 species of irises. Our model will use the measurements to predict
+the iris species it belongs to.
 
 from sklearn.datasets import load_iris
 
@@ -42,7 +43,7 @@ X_rand = rng.normal(size=(X.shape[0], n_uncorrelated_features))
 #
 # Next, we calculate the
 # :func:`~sklearn.model_selection.permutation_test_score` for both, the original
-# iris dataset (where features strongly predict the labels) and
+# iris dataset (where there's a strong relationship between features and labels) and
 # the randomly generated features with iris labels (where no dependency between features
 # and labels is expected). We use the
 # :class:`~sklearn.svm.SVC` classifier and :ref:`accuracy_score` to evaluate
@@ -54,8 +55,8 @@ X_rand = rng.normal(size=(X.shape[0], n_uncorrelated_features))
 # remain the same but labels undergo different random permutations. This is the
 # distribution for the null hypothesis which states there is no dependency
 # between the features and labels. An empirical p-value is then calculated as
-# the proportion of permutations for which the score obtained by the model trained on
-# the permutations is greater than or equal to the score obtained using the original
+# the proportion of permutations, for which the score obtained by the model trained on
+# the permutation, is greater than or equal to the score obtained using the original
 # data.
 
 from sklearn.model_selection import StratifiedKFold, permutation_test_score
@@ -105,7 +106,7 @@ _ = ax.set_ylabel("Probability density")
 # because the permutation always destroys any feature-label dependency present.
 # The score obtained on the randomized data without label permutation in this case
 # though, is very poor. This results in a large p-value, confirming that there was no
-# feature-label dependency in the randomized data before labels where permuted.
+# feature-label dependency in the randomized data, before label permutation.
 
 fig, ax = plt.subplots()
 
