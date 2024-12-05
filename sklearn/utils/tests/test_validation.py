@@ -34,6 +34,7 @@ from sklearn.utils import (
     check_X_y,
     deprecated,
 )
+from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
 from sklearn.utils._mocking import (
     MockDataFrame,
     _MockEstimatorOnOffPrediction,
@@ -41,6 +42,7 @@ from sklearn.utils._mocking import (
 from sklearn.utils._testing import (
     SkipTest,
     TempMemmap,
+    _array_api_for_tests,
     _convert_container,
     assert_allclose,
     assert_allclose_dense_sparse,
@@ -1007,6 +1009,8 @@ def test_check_is_fitted_with_attributes(wrap):
 
 
 def test_check_consistent_length():
+    """Test that `check_consistent_length` raises on inconsistent lengths and wrong
+    input types trigger TypeErrors."""
     check_consistent_length([1], [2], [3], [4], [5])
     check_consistent_length([[1, 2], [[1, 2]]], [1, 2], ["a", "b"])
     check_consistent_length([1], (2,), np.array([3]), sp.csr_matrix((1, 2)))
@@ -1016,14 +1020,35 @@ def test_check_consistent_length():
         check_consistent_length([1, 2], 1)
     with pytest.raises(TypeError, match=r"got <\w+ 'object'>"):
         check_consistent_length([1, 2], object())
-
     with pytest.raises(TypeError):
         check_consistent_length([1, 2], np.array(1))
-
     # Despite ensembles having __len__ they must raise TypeError
     with pytest.raises(TypeError, match="Expected sequence or array-like"):
         check_consistent_length([1, 2], RandomForestRegressor())
     # XXX: We should have a test with a string, but what is correct behaviour?
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, _", yield_namespace_device_dtype_combinations()
+)
+def test_check_consistent_length_array_api(array_namespace, device, _):
+    """Test that check_consistent_length works with different array types."""
+    xp = _array_api_for_tests(array_namespace, device)
+
+    with config_context(array_api_dispatch=True):
+        check_consistent_length(
+            xp.asarray([1, 2, 3], device=device),
+            xp.asarray([[1, 1], [2, 2], [3, 3]], device=device),
+            [1, 2, 3],
+            ["a", "b", "c"],
+            np.asarray(("a", "b", "c"), dtype=object),
+            sp.csr_array([[0, 1], [1, 0], [0, 0]]),
+        )
+
+        with pytest.raises(ValueError, match="inconsistent numbers of samples"):
+            check_consistent_length(
+                xp.asarray([1, 2], device=device), xp.asarray([1], device=device)
+            )
 
 
 def test_check_dataframe_fit_attribute():
