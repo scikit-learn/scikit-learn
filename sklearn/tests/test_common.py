@@ -328,9 +328,7 @@ def test_check_param_validation(estimator):
         pytest.skip("FeatureUnion is not tested here")
     name = estimator.__class__.__name__
     if "check_param_validation" in _get_expected_failed_checks(estimator):
-        pytest.skip(
-            "Estimator does not support check_param_validation"
-        )
+        pytest.skip("Estimator does not support check_param_validation")
     check_param_validation(name, estimator)
 
 
