@@ -24,6 +24,7 @@ or with conda::
 # %%
 # FrozenEstimator: Freezing an estimator
 # --------------------------------------
+#
 # This meta-estimator allows you to take an estimator and freeze its fit method, meaning
 # that calling `fit` does not perform any operations; also, `fit_predict` and
 # `fit_transform` call `predict` and `transform` respectively without calling `fit`. The
@@ -59,6 +60,7 @@ print(
 # %%
 # Transforming data other than X in a Pipeline
 # --------------------------------------------
+#
 # The :class:`~pipeline.Pipeline` now supports transforming passed data other than `X`
 # if necessary. This can be done by setting the new `transform_input` parameter. This
 # is particularly useful when passing a validation set through the pipeline.
@@ -86,10 +88,15 @@ print(
 # `X_val` and `y_val` are required by the `EstimatorWithValidationSet.fit` method, and
 # the `transform_input` parameter to tell the pipeline to transform `X_val` before
 # passing it to `EstimatorWithValidationSet.fit`.
+#
+# Note that at this time scikit-learn estimators have not yet been extended to accept
+# user specified validation sets. This feature is released early to collect feedback
+# from third-party libraries who might benefit from it.
 
 # %%
 # Missing value support for Extra Trees
 # -------------------------------------
+#
 # The classes :class:`ensemble.ExtraTreesClassifier` and
 # :class:`ensemble.ExtraTreesRegressor` now support missing values. More details in the
 # :ref:`User Guide <tree_missing_value_support>`.
@@ -105,24 +112,34 @@ forest.predict(X)
 # %%
 # Download any dataset from the web
 # ---------------------------------
-# The function :func:`datasets.fetch_file` allows downloading any file from a given URL.
-# The goal is to extend the dataset fetchers to cover more application-based use cases
-# where the dataset has to be downloaded from an arbitrary URL, cached, and then
-# manually loaded with functions such as `pandas.read_csv`, `pandas.read_parquet`, etc.
+#
+# The function :func:`datasets.fetch_file` allows downloading a file from any given URL.
+# This convenience function provides built-in local disk caching, sha256 digest
+# integrity check and an automated retry mechanism on network error.
+#
+# The goal is to provide the same convenience and reliability as dataset fetchers while
+# giving the flexibility to work with data from arbitrary online sources and file
+# formats.
+#
+# The dowloaded file can then be loaded with generic or domain specific functions such
+# as `pandas.read_csv`, `pandas.read_parquet`, etc.
 
 # %%
 # Array API support
 # -----------------
-# Many more estimators and functions have been updated to support Array API compatible
+#
+# Many more estimators and functions have been updated to support array API compatible
 # inputs since version 1.5, in particular the meta-estimators for hyperparameter tuning
 # from the :mod:`sklearn.model_selection` module and the metrics from the
 # :mod:`sklearn.metrics` module.
-# See `https://scikit-learn.org/1.6/modules/array_api.html`_ for a complete progress
-# overview.
+#
+# Please refer to the :ref:`array API support<array_api>` page for instructions to use
+# scikit-learn with array API compatible libraries such as PyTorch or CuPy.
 
 # %%
 # Almost complete Metadata Routing support
 # ----------------------------------------
+#
 # Support for routing metadata has been added to all remaining estimators and
 # functions except AdaBoost. See :ref:`Metadata Routing User Guide <metadata_routing>`
 # for more details.
@@ -147,6 +164,7 @@ forest.predict(X)
 # %%
 # Improvements to the developer API for third party libraries
 # -----------------------------------------------------------
+#
 # We have been working on improving the developer API for third party libraries.
 # This is still a work in progress, but a fair amount of work has been done in this
 # release. This release includes:
