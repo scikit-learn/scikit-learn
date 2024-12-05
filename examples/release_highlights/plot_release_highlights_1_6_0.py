@@ -24,27 +24,37 @@ or with conda::
 # %%
 # FrozenEstimator: Freezing an estimator
 # --------------------------------------
-# This meta-estimator allows to take an estimator and freeze its fit methods, meaning
+# This meta-estimator allows you to take an estimator and freeze its fit method, meaning
 # that calling `fit` does not perform any operations; also, `fit_predict` and
 # `fit_transform` call `predict` and `transform` respectively without calling `fit`. The
 # original estimator's other methods and properties are left unchanged. An interesting
-# use case for this is to use a pre-fitted model as a transformer step in a pipeline,
+# use case for this is to use a pre-fitted model as a transformer step in a pipeline
 # or to pass a pre-fitted model to some of the meta-estimators. Here's a short example:
 
+import time
 from sklearn.datasets import make_classification
 from sklearn.frozen import FrozenEstimator
 from sklearn.linear_model import SGDClassifier
 from sklearn.model_selection import FixedThresholdClassifier
 
 X, y = make_classification(n_samples=1000, random_state=0)
-classifier = SGDClassifier().fit(X, y)
 
+start = time.time()
+classifier = SGDClassifier().fit(X, y)
+print(f"Fitting the classifier took {(time.time() - start) * 1_000:.2f} milliseconds")
+
+start = time.time()
 threshold_classifier = FixedThresholdClassifier(
     estimator=FrozenEstimator(classifier), threshold=0.9
 )
+print(
+    f"Fitting the threshold classifier took {(time.time() - start) * 1_000:.2f} "
+    "milliseconds"
+)
 
 # %%
-# For more details refer to :ref:`This example <plot_frozen_estimator_example>`.
+# Fitting the threshold classifier skipped fitting the inner `SGDClassifier`. For more
+# details refer to :ref:`This example <plot_frozen_estimator_example>`.
 
 # %%
 # Transforming data other than X in a Pipeline
@@ -72,10 +82,10 @@ threshold_classifier = FixedThresholdClassifier(
 #         cv=5,
 #     ).fit(X, y, X_val, y_val)
 #
-# In the above code the key parts are the call to `set_fit_request` to specify that
+# In the above code, the key parts are the call to `set_fit_request` to specify that
 # `X_val` and `y_val` are required by the `EstimatorWithValidationSet.fit` method, and
 # the `transform_input` parameter to tell the pipeline to transform `X_val` before
-# passing  it to `EstimatorWithValidationSet.fit`.
+# passing it to `EstimatorWithValidationSet.fit`.
 
 # %%
 # Missing value support for Extra Trees
@@ -95,10 +105,10 @@ forest.predict(X)
 # %%
 # Download any dataset from the web
 # ---------------------------------
-# The function :func:`datasets.fetch_file` allows to download any file from a given url.
-# The goal is to extend the dataset fetchers to cover more application based use cases
-# where the dataset has to be downloaded from an arbitray url, cached, and then manually
-# loaded with functions such as `pandas.read_csv`, `pandas.read_parquet`, etc.
+# The function :func:`datasets.fetch_file` allows downloading any file from a given URL.
+# The goal is to extend the dataset fetchers to cover more application-based use cases
+# where the dataset has to be downloaded from an arbitrary URL, cached, and then
+# manually loaded with functions such as `pandas.read_csv`, `pandas.read_parquet`, etc.
 
 # %%
 # Array API support
@@ -107,6 +117,8 @@ forest.predict(X)
 # inputs since version 1.5, in particular the meta-estimators for hyperparameter tuning
 # from the :mod:`sklearn.model_selection` module and the metrics from the
 # :mod:`sklearn.metrics` module.
+# See `https://scikit-learn.org/1.6/modules/array_api.html`_ for a complete progress
+# overview.
 
 # %%
 # Almost complete Metadata Routing support
@@ -123,14 +135,14 @@ forest.predict(X)
 # free-threaded wheels are available for all of our supported platforms.
 #
 # Free-threaded (also known as nogil) CPython 3.13 is an experimental version of
-# CPython 3.13 who aims at enabling efficient multi-threaded use cases by
+# CPython 3.13 which aims at enabling efficient multi-threaded use cases by
 # removing the Global Interpreter Lock (GIL).
 #
 # For more details about free-threaded CPython see `py-free-threading doc <https://py-free-threading.github.io>`_,
 # in particular `how to install a free-threaded CPython <https://py-free-threading.github.io/installing_cpython/>`_
 # and `Ecosystem compatibility tracking <https://py-free-threading.github.io/tracking/>`_.
 #
-# Feel free to try free-threaded on your use case and report any issues!
+# Feel free to try free-threaded CPython on your use case and report any issues!
 
 # %%
 # Improvements to the developer API for third party libraries
@@ -154,8 +166,8 @@ forest.predict(X)
 #   :func:`~sklearn.utils.estimator_checks.parametrize_with_checks`. See their
 #   corresponding API docs for more details.
 # - Many tests in the common test suite are updated and raise more helpful error
-#   messages. We've also added some new tests, which should help you easier fix
+#   messages. We've also added some new tests, which should help you more easily fix
 #   potential issues with your estimators.
 #
-# An updated version of our :ref:`develop` is also available which we recommend you
-# to check out.
+# An updated version of our :ref:`develop` is also available, which we recommend you
+# check out.
