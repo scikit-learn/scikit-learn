@@ -55,7 +55,7 @@ print(
 
 # %%
 # Fitting the threshold classifier skipped fitting the inner `SGDClassifier`. For more
-# details refer to the example :ref:`sphx_glr_auto_examples_frozen_plot_frozen_estimator_example.py`.
+# details refer to the example :ref:`sphx_glr_auto_examples_frozen_plot_frozen_examples.py`.
 
 # %%
 # Transforming data other than X in a Pipeline
