@@ -29,8 +29,8 @@ def test_averaged_weighted_percentile():
 
 def test_averaged_and_weighted_percentile():
 
-    y = [0, 1, 2]
-    sw = [5, 1, 5]
+    y = np.array([0, 1, 2])
+    sw = np.array([5, 1, 5])
     q = 50
 
     score_averaged = _averaged_weighted_percentile(y, sw, q)
