@@ -298,9 +298,12 @@ def test_permutation_importance_equivalence_sequential_parallel(max_samples):
     )
 
 
+@pytest.mark.parametrize("quantile_method", "averaged_inverted_cdf")
 @pytest.mark.parametrize("n_jobs", [None, 1, 2])
 @pytest.mark.parametrize("max_samples", [0.5, 1.0])
-def test_permutation_importance_equivalence_array_dataframe(n_jobs, max_samples):
+def test_permutation_importance_equivalence_array_dataframe(
+    quantile_method, n_jobs, max_samples
+):
     # This test checks that the column shuffling logic has the same behavior
     # both a dataframe and a simple numpy array.
     pd = pytest.importorskip("pandas")
@@ -311,7 +314,9 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs, max_samples)
     X_df = pd.DataFrame(X)
 
     # Add a categorical feature that is statistically linked to y:
-    binner = KBinsDiscretizer(n_bins=3, encode="ordinal")
+    binner = KBinsDiscretizer(
+        n_bins=3, encode="ordinal", quantile_method=quantile_method
+    )
     cat_column = binner.fit_transform(y.reshape(-1, 1))
 
     # Concatenate the extra column to the numpy array: integers will be
