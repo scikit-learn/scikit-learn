@@ -539,6 +539,7 @@ _ = display.figure_.suptitle(
 #
 # Let's make the same partial dependence plot for the 2 features interaction,
 # this time in 3 dimensions.
+
 # unused but required import for doing 3d projections with matplotlib < 3.2
 import mpl_toolkits.mplot3d  # noqa: F401
 import numpy as np
