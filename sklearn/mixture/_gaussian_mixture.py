@@ -170,7 +170,7 @@ def _estimate_gaussian_covariances_full(resp, X, nk, means, reg_covar):
         The covariance matrix of the current components.
     """
     n_components, n_features = means.shape
-    covariances = np.empty((n_components, n_features, n_features))
+    covariances = np.empty((n_components, n_features, n_features), dtype=X.dtype)
     for k in range(n_components):
         diff = X - means[k]
         covariances[k] = np.dot(resp[:, k] * diff.T, diff) / nk[k]
@@ -317,19 +317,25 @@ def _compute_precision_cholesky(covariances, covariance_type):
         "Fitting the mixture model failed because some components have "
         "ill-defined empirical covariance (for instance caused by singleton "
         "or collapsed samples). Try to decrease the number of components, "
-        "or increase reg_covar."
+        "increase reg_covar, or scale the input data."
     )
+    dtype = covariances.dtype
+    if dtype == np.float32:
+        estimate_precision_error_message += (
+            " The numerical accuracy can also be improved by passing float64"
+            " data instead of float32."
+        )
 
     if covariance_type == "full":
         n_components, n_features, _ = covariances.shape
-        precisions_chol = np.empty((n_components, n_features, n_features))
+        precisions_chol = np.empty((n_components, n_features, n_features), dtype=dtype)
         for k, covariance in enumerate(covariances):
             try:
                 cov_chol = linalg.cholesky(covariance, lower=True)
             except linalg.LinAlgError:
                 raise ValueError(estimate_precision_error_message)
             precisions_chol[k] = linalg.solve_triangular(
-                cov_chol, np.eye(n_features), lower=True
+                cov_chol, np.eye(n_features, dtype=dtype), lower=True
             ).T
     elif covariance_type == "tied":
         _, n_features = covariances.shape
@@ -338,7 +344,7 @@ def _compute_precision_cholesky(covariances, covariance_type):
         except linalg.LinAlgError:
             raise ValueError(estimate_precision_error_message)
         precisions_chol = linalg.solve_triangular(
-            cov_chol, np.eye(n_features), lower=True
+            cov_chol, np.eye(n_features, dtype=dtype), lower=True
         ).T
     else:
         if np.any(np.less_equal(covariances, 0.0)):
@@ -429,7 +435,7 @@ def _compute_log_det_cholesky(matrix_chol, covariance_type, n_features):
     if covariance_type == "full":
         n_components, _, _ = matrix_chol.shape
         log_det_chol = np.sum(
-            np.log(matrix_chol.reshape(n_components, -1)[:, :: n_features + 1]), 1
+            np.log(matrix_chol.reshape(n_components, -1)[:, :: n_features + 1]), axis=1
         )
 
     elif covariance_type == "tied":
@@ -439,7 +445,7 @@ def _compute_log_det_cholesky(matrix_chol, covariance_type, n_features):
         log_det_chol = np.sum(np.log(matrix_chol), axis=1)
 
     else:
-        log_det_chol = n_features * (np.log(matrix_chol))
+        log_det_chol = n_features * np.log(matrix_chol)
 
     return log_det_chol
 
@@ -475,13 +481,13 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
     log_det = _compute_log_det_cholesky(precisions_chol, covariance_type, n_features)
 
     if covariance_type == "full":
-        log_prob = np.empty((n_samples, n_components))
+        log_prob = np.empty((n_samples, n_components), dtype=X.dtype)
         for k, (mu, prec_chol) in enumerate(zip(means, precisions_chol)):
             y = np.dot(X, prec_chol) - np.dot(mu, prec_chol)
             log_prob[:, k] = np.sum(np.square(y), axis=1)
 
     elif covariance_type == "tied":
-        log_prob = np.empty((n_samples, n_components))
+        log_prob = np.empty((n_samples, n_components), dtype=X.dtype)
         for k, mu in enumerate(means):
             y = np.dot(X, precisions_chol) - np.dot(mu, precisions_chol)
             log_prob[:, k] = np.sum(np.square(y), axis=1)
@@ -846,8 +852,9 @@ class GaussianMixture(BaseMixture):
         # Attributes computation
         _, n_features = self.means_.shape
 
+        dtype = self.precisions_cholesky_.dtype
         if self.covariance_type == "full":
-            self.precisions_ = np.empty(self.precisions_cholesky_.shape)
+            self.precisions_ = np.empty(self.precisions_cholesky_.shape, dtype=dtype)
             for k, prec_chol in enumerate(self.precisions_cholesky_):
                 self.precisions_[k] = np.dot(prec_chol, prec_chol.T)
 
