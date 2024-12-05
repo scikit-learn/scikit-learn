@@ -229,7 +229,8 @@ def _estimate_gaussian_covariances_diag(resp, X, nk, means, reg_covar):
     # Align X to the other operands' floating-point precision
     # as squaring X immediately would increase its precision error and the
     # mismatch with operands of different precision
-    X2 = np.zeros(X.shape) + X
+    X2 = np.zeros(X.shape)
+    X2 += X
     # In-place squaring of X2
     X2 **= 2
     avg_X2 = np.dot(resp.T, X2) / nk[:, np.newaxis]
