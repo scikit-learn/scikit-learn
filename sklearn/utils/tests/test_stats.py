@@ -2,7 +2,41 @@ import numpy as np
 from numpy.testing import assert_allclose
 from pytest import approx
 
-from sklearn.utils.stats import _weighted_percentile
+from sklearn.utils.stats import _averaged_weighted_percentile, _weighted_percentile
+
+
+def test_averaged_weighted_median():
+
+    y = np.array([0, 1, 2, 3, 4, 5])
+    sw = np.array([1, 1, 1, 1, 1, 1])
+
+    score = _averaged_weighted_percentile(y, sw, 50)
+
+    assert score == np.median(y)
+
+
+def test_averaged_weighted_percentile():
+
+    rng = np.random.RandomState(0)
+    y = rng.randint(20, size=10)
+
+    sw = np.ones(20)
+
+    score = _averaged_weighted_percentile(y, sw, 20)
+
+    assert score == np.percentile(y, 20, method="averaged_inverted_cdf")
+
+
+def test_averaged_and_weighted_percentile():
+
+    y = [0, 1, 2]
+    sw = [5, 1, 5]
+    q = 50
+
+    score_averaged = _averaged_weighted_percentile(y, sw, q)
+    score = _weighted_percentile(y, sw, q)
+
+    assert score_averaged == score
 
 
 def test_weighted_percentile():

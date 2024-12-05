@@ -18,43 +18,65 @@ X = [[-2, 1.5, -4, -1], [-1, 2.5, -3, -0.5], [0, 3.5, -2, 0.5], [1, 4.5, -1, 2]]
 
 
 @pytest.mark.parametrize(
-    "strategy, expected, sample_weight",
+    "strategy, quantile_method, expected, sample_weight",
     [
-        ("uniform", [[0, 0, 0, 0], [1, 1, 1, 0], [2, 2, 2, 1], [2, 2, 2, 2]], None),
-        ("kmeans", [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2]], None),
-        ("quantile", [[0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2], [2, 2, 2, 2]], None),
         (
             "uniform",
+            "warn",
+            [[0, 0, 0, 0], [1, 1, 1, 0], [2, 2, 2, 1], [2, 2, 2, 2]],
+            None,
+        ),
+        (
+            "kmeans",
+            "warn",
+            [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2]],
+            None,
+        ),
+        (
+            "quantile",
+            "averaged_inverted_cdf",
+            [[0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2], [2, 2, 2, 2]],
+            None,
+        ),
+        (
+            "uniform",
+            "warn",
             [[0, 0, 0, 0], [1, 1, 1, 0], [2, 2, 2, 1], [2, 2, 2, 2]],
             [1, 1, 2, 1],
         ),
         (
             "uniform",
+            "warn",
             [[0, 0, 0, 0], [1, 1, 1, 0], [2, 2, 2, 1], [2, 2, 2, 2]],
             [1, 1, 1, 1],
         ),
         (
             "quantile",
+            "averaged_inverted_cdf",
             [[0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2], [2, 2, 2, 2]],
             [1, 1, 2, 1],
         ),
         (
             "quantile",
+            "averaged_inverted_cdf",
             [[0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2], [2, 2, 2, 2]],
             [1, 1, 1, 1],
         ),
         (
             "quantile",
+            "averaged_inverted_cdf",
             [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [1, 1, 1, 1]],
             [0, 1, 1, 1],
         ),
         (
             "kmeans",
+            "warn",
             [[0, 0, 0, 0], [1, 1, 1, 0], [1, 1, 1, 1], [2, 2, 2, 2]],
             [1, 0, 3, 1],
         ),
         (
             "kmeans",
+            "warn",
             [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2]],
             [1, 1, 1, 1],
         ),
@@ -113,18 +135,35 @@ def test_invalid_n_bins_array():
 
 
 @pytest.mark.parametrize(
-    "strategy, expected, sample_weight",
+    "strategy, quantile_method, expected, sample_weight",
     [
-        ("uniform", [[0, 0, 0, 0], [0, 1, 1, 0], [1, 2, 2, 1], [1, 2, 2, 2]], None),
-        ("kmeans", [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [1, 2, 2, 2]], None),
-        ("quantile", [[0, 0, 0, 0], [0, 1, 1, 1], [1, 2, 2, 2], [1, 2, 2, 2]], None),
+        (
+            "uniform",
+            "warn",
+            [[0, 0, 0, 0], [0, 1, 1, 0], [1, 2, 2, 1], [1, 2, 2, 2]],
+            None,
+        ),
+        (
+            "kmeans",
+            "warn",
+            [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [1, 2, 2, 2]],
+            None,
+        ),
         (
             "quantile",
+            "averaged_inverted_cdf",
+            [[0, 0, 0, 0], [0, 1, 1, 1], [1, 2, 2, 2], [1, 2, 2, 2]],
+            None,
+        ),
+        (
+            "quantile",
+            "averaged_inverted_cdf",
             [[0, 0, 0, 0], [0, 1, 1, 1], [1, 2, 2, 2], [1, 2, 2, 2]],
             [1, 1, 3, 1],
         ),
         (
             "quantile",
+            "averaged_inverted_cdf",
             [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [1, 1, 1, 1]],
             [0, 1, 3, 1],
         ),
@@ -143,6 +182,7 @@ def test_invalid_n_bins_array():
         #       https://github.com/scikit-learn/scikit-learn/issues/17370
         (
             "kmeans",
+            "warn",
             [[0, 0, 0, 0], [0, 1, 1, 0], [1, 1, 1, 1], [1, 2, 2, 2]],
             [1, 0, 3, 1],
         ),
@@ -167,7 +207,12 @@ def test_kbinsdiscretizer_effect_sample_weight():
     X = np.array([[-2], [-1], [1], [3], [500], [1000]])
     # add a large number of bins such that each sample with a non-null weight
     # will be used as bin edge
-    est = KBinsDiscretizer(n_bins=10, encode="ordinal", strategy="quantile")
+    est = KBinsDiscretizer(
+        n_bins=10,
+        encode="ordinal",
+        strategy="quantile",
+        quantile_method="averaged_inverted_cdf",
+    )
     est.fit(X, sample_weight=[1, 1, 1, 1, 0, 0])
     assert_allclose(est.bin_edges_[0], [-2, -1, 1, 3])
     assert_allclose(est.transform(X), [[0.0], [1.0], [2.0], [2.0], [2.0], [2.0]])
@@ -176,7 +221,16 @@ def test_kbinsdiscretizer_effect_sample_weight():
 @pytest.mark.parametrize("strategy", ["kmeans", "quantile"])
 def test_kbinsdiscretizer_no_mutating_sample_weight(strategy):
     """Make sure that `sample_weight` is not changed in place."""
-    est = KBinsDiscretizer(n_bins=3, encode="ordinal", strategy=strategy)
+
+    if strategy == "quantile":
+        est = KBinsDiscretizer(
+            n_bins=3,
+            encode="ordinal",
+            strategy=strategy,
+            quantile_method="averaged_inverted_cdf",
+        )
+    else:
+        est = KBinsDiscretizer(n_bins=3, encode="ordinal", strategy=strategy)
     sample_weight = np.array([1, 3, 1, 2], dtype=np.float64)
     sample_weight_copy = np.copy(sample_weight)
     est.fit(X, sample_weight=sample_weight)
@@ -187,7 +241,15 @@ def test_kbinsdiscretizer_no_mutating_sample_weight(strategy):
 def test_same_min_max(strategy):
     warnings.simplefilter("always")
     X = np.array([[1, -2], [1, -1], [1, 0], [1, 1]])
-    est = KBinsDiscretizer(strategy=strategy, n_bins=3, encode="ordinal")
+    if strategy == "quantile":
+        est = KBinsDiscretizer(
+            strategy=strategy,
+            n_bins=3,
+            encode="ordinal",
+            quantile_method="averaged_inverted_cdf",
+        )
+    else:
+        est = KBinsDiscretizer(strategy=strategy, n_bins=3, encode="ordinal")
     warning_message = "Feature 0 is constant and will be replaced with 0."
     with pytest.warns(UserWarning, match=warning_message):
         est.fit(X)
@@ -246,11 +308,17 @@ def test_encode_options():
 
 
 @pytest.mark.parametrize(
-    "strategy, expected_2bins, expected_3bins, expected_5bins",
+    "strategy, quantile_method, expected_2bins, expected_3bins, expected_5bins",
     [
-        ("uniform", [0, 0, 0, 0, 1, 1], [0, 0, 0, 0, 2, 2], [0, 0, 1, 1, 4, 4]),
-        ("kmeans", [0, 0, 0, 0, 1, 1], [0, 0, 1, 1, 2, 2], [0, 0, 1, 2, 3, 4]),
-        ("quantile", [0, 0, 0, 1, 1, 1], [0, 0, 1, 1, 2, 2], [0, 1, 2, 3, 4, 4]),
+        ("uniform", "warn", [0, 0, 0, 0, 1, 1], [0, 0, 0, 0, 2, 2], [0, 0, 1, 1, 4, 4]),
+        ("kmeans", "warn", [0, 0, 0, 0, 1, 1], [0, 0, 1, 1, 2, 2], [0, 0, 1, 2, 3, 4]),
+        (
+            "quantile",
+            "averaged_inverted_cdf",
+            [0, 0, 0, 1, 1, 1],
+            [0, 0, 1, 1, 2, 2],
+            [0, 1, 2, 3, 4, 4],
+        ),
     ],
 )
 def test_nonuniform_strategies(
@@ -275,7 +343,7 @@ def test_nonuniform_strategies(
 
 
 @pytest.mark.parametrize(
-    "strategy, expected_inv",
+    "strategy, expected_inv,quantile_method",
     [
         (
             "uniform",
@@ -285,6 +353,7 @@ def test_nonuniform_strategies(
                 [0.5, 4.0, -1.5, 0.5],
                 [0.5, 4.0, -1.5, 1.5],
             ],
+            "warn",
         ),
         (
             "kmeans",
@@ -294,6 +363,7 @@ def test_nonuniform_strategies(
                 [-0.125, 3.375, -2.125, 0.5625],
                 [0.75, 4.25, -1.25, 1.625],
             ],
+            "warn",
         ),
         (
             "quantile",
@@ -303,6 +373,7 @@ def test_nonuniform_strategies(
                 [0.5, 4.0, -1.5, 1.25],
                 [0.5, 4.0, -1.5, 1.25],
             ],
+            "averaged_inverted_cdf",
         ),
     ],
 )
@@ -317,7 +388,16 @@ def test_inverse_transform(strategy, encode, expected_inv):
 @pytest.mark.parametrize("strategy", ["uniform", "kmeans", "quantile"])
 def test_transform_outside_fit_range(strategy):
     X = np.array([0, 1, 2, 3])[:, None]
-    kbd = KBinsDiscretizer(n_bins=4, strategy=strategy, encode="ordinal")
+
+    if strategy == "quantile":
+        kbd = KBinsDiscretizer(
+            n_bins=4,
+            strategy=strategy,
+            encode="ordinal",
+            quantile_method="averaged_inverted_cdf",
+        )
+    else:
+        kbd = KBinsDiscretizer(n_bins=4, strategy=strategy, encode="ordinal")
     kbd.fit(X)
 
     X2 = np.array([-2, 5])[:, None]
@@ -341,7 +421,11 @@ def test_overwrite():
 
 
 @pytest.mark.parametrize(
-    "strategy, expected_bin_edges", [("quantile", [0, 1.5, 3]), ("kmeans", [0, 1.5, 3])]
+    "strategy, expected_bin_edges, quantile_method",
+    [
+        ("quantile", [0, 1.5, 3], "averaged_inverted_cdf"),
+        ("kmeans", [0, 1.5, 3], "warn"),
+    ],
 )
 def test_redundant_bins(strategy, expected_bin_edges):
     X = [[0], [0], [0], [0], [3], [3]]
@@ -356,7 +440,12 @@ def test_percentile_numeric_stability():
     X = np.array([0.05, 0.05, 0.95]).reshape(-1, 1)
     bin_edges = np.array([0.05, 0.23, 0.41, 0.59, 0.77, 0.95])
     Xt = np.array([0, 0, 4]).reshape(-1, 1)
-    kbd = KBinsDiscretizer(n_bins=10, encode="ordinal", strategy="quantile")
+    kbd = KBinsDiscretizer(
+        n_bins=10,
+        encode="ordinal",
+        strategy="quantile",
+        quantile_method="averaged_inverted_cdf",
+    )
     warning_message = "Consider decreasing the number of bins."
     with pytest.warns(UserWarning, match=warning_message):
         kbd.fit(X)
@@ -408,7 +497,12 @@ def test_32_equal_64(input_dtype, encode):
 def test_kbinsdiscretizer_subsample_default():
     # Since the size of X is small (< 2e5), subsampling will not take place.
     X = np.array([-2, 1.5, -4, -1]).reshape(-1, 1)
-    kbd_default = KBinsDiscretizer(n_bins=10, encode="ordinal", strategy="quantile")
+    kbd_default = KBinsDiscretizer(
+        n_bins=10,
+        encode="ordinal",
+        strategy="quantile",
+        quantile_method="averaged_inverted_cdf",
+    )
     kbd_default.fit(X)
 
     kbd_without_subsampling = clone(kbd_default)
@@ -465,9 +559,17 @@ def test_kbinsdiscretizer_subsample(strategy, global_random_seed):
     # Check that the bin edges are almost the same when subsampling is used.
     X = np.random.RandomState(global_random_seed).random_sample((100000, 1)) + 1
 
-    kbd_subsampling = KBinsDiscretizer(
-        strategy=strategy, subsample=50000, random_state=global_random_seed
-    )
+    if strategy == "quantile":
+        kbd_subsampling = KBinsDiscretizer(
+            strategy=strategy,
+            subsample=50000,
+            random_state=global_random_seed,
+            quantile_method="averaged_inverted_cdf",
+        )
+    else:
+        kbd_subsampling = KBinsDiscretizer(
+            strategy=strategy, subsample=50000, random_state=global_random_seed
+        )
     kbd_subsampling.fit(X)
 
     kbd_no_subsampling = clone(kbd_subsampling)

@@ -11,7 +11,7 @@ from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import resample
 from ..utils._param_validation import Interval, Options, StrOptions
 from ..utils.deprecation import _deprecate_Xt_in_inverse_transform
-from ..utils.stats import _weighted_percentile
+from ..utils.stats import _averaged_weighted_percentile, _weighted_percentile
 from ..utils.validation import (
     _check_feature_names_in,
     _check_sample_weight,
@@ -56,6 +56,17 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         For an example of the different strategies see:
         :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization_strategies.py`.
+
+    quantile_method : {"warn", "inverted_cdf", "averaged_inverted_cdf",
+            "closest_observation", "interpolated_inverted_cdf", "hazen",
+            "weibull", "linear", "median_unbiased", "normal_unbiased"},
+            default="warn"
+            Method to pass on to np.percentile calculation when using
+            strategy="quantile". Only `averaged_inverted_cdf` and `inverted_cdf`
+            support the use of `sample_weight != None` when subsampling is not
+            active.
+
+            .. versionadded:: 1.7
 
     dtype : {np.float32, np.float64}, default=None
         The desired data-type for the output. If None, output dtype is
@@ -186,6 +197,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         *,
         encode="onehot",
         strategy="quantile",
+        quantile_method="warn",
         dtype=None,
         subsample=200_000,
         random_state=None,
@@ -193,6 +205,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self.n_bins = n_bins
         self.encode = encode
         self.strategy = strategy
+        self.quantile_method = quantile_method
         self.dtype = dtype
         self.subsample = subsample
         self.random_state = random_state
@@ -218,17 +231,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
             .. versionchanged:: 1.7
                Added support for strategy="uniform".
-
-        quantile_method : {'warn', 'inverted_cdf', 'averaged_inverted_cdf',
-            'closest_observation', 'interpolated_inverted_cdf', 'hazen',
-            'weibull', 'linear', 'median_unbiased', 'normal_unbiased'},
-            default='warn'
-            Method to pass on to np.percentile calculation when using
-            strategy='quantile'. Only `averaged_inverted_cdf` and `inverted_cdf`
-            support the use of `sample_weight != None` when subsampling is not
-            active.
-
-            .. versionadded:: 1.7
 
         Returns
         -------
@@ -331,22 +333,13 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                         dtype=np.float64,
                     )
                 else:
-                    # TODO: implement averaged_inverted_cdf in
-                    # _weighted_percentile instead of calling it twice and,
-                    # sorting the column twice.
-                    def averaged_weighted_percentile(q):
-                        return (
-                            _weighted_percentile(column, sample_weight, q)
-                            - _weighted_percentile(-column, sample_weight, 100 - q)
-                        ) / 2
-
                     # TODO: make _weighted_percentile accept an array of
                     # quantiles instead of calling it multiple times and
                     # sorting the column multiple times as a result.
 
                     if quantile_method == "averaged_weighted_percentile":
                         bin_edges[jj] = np.asarray(
-                            [averaged_weighted_percentile(q) for q in quantiles],
+                            [_averaged_weighted_percentile(q) for q in quantiles],
                             dtype=np.float64,
                         )
                     else:
