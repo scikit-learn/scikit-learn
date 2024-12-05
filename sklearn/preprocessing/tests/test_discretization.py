@@ -82,8 +82,10 @@ X = [[-2, 1.5, -4, -1], [-1, 2.5, -3, -0.5], [0, 3.5, -2, 0.5], [1, 4.5, -1, 2]]
         ),
     ],
 )
-def test_fit_transform(strategy, expected, sample_weight):
-    est = KBinsDiscretizer(n_bins=3, encode="ordinal", strategy=strategy)
+def test_fit_transform(strategy, quantile_method, expected, sample_weight):
+    est = KBinsDiscretizer(
+        n_bins=3, encode="ordinal", strategy=strategy, quantile_method=quantile_method
+    )
     with ignore_warnings(category=UserWarning):
         # Ignore the warning on removed small bins.
         est.fit(X, sample_weight=sample_weight)
@@ -188,9 +190,12 @@ def test_invalid_n_bins_array():
         ),
     ],
 )
-def test_fit_transform_n_bins_array(strategy, expected, sample_weight):
+def test_fit_transform_n_bins_array(strategy, quantile_method, expected, sample_weight):
     est = KBinsDiscretizer(
-        n_bins=[2, 3, 3, 3], encode="ordinal", strategy=strategy
+        n_bins=[2, 3, 3, 3],
+        encode="ordinal",
+        strategy=strategy,
+        quantile_method=quantile_method,
     ).fit(X, sample_weight=sample_weight)
     assert_array_equal(expected, est.transform(X))
 
@@ -322,17 +327,21 @@ def test_encode_options():
     ],
 )
 def test_nonuniform_strategies(
-    strategy, expected_2bins, expected_3bins, expected_5bins
+    strategy, quantile_method, expected_2bins, expected_3bins, expected_5bins
 ):
     X = np.array([0, 0.5, 2, 3, 9, 10]).reshape(-1, 1)
 
     # with 2 bins
-    est = KBinsDiscretizer(n_bins=2, strategy=strategy, encode="ordinal")
+    est = KBinsDiscretizer(
+        n_bins=2, strategy=strategy, quantile_method=quantile_method, encode="ordinal"
+    )
     Xt = est.fit_transform(X)
     assert_array_equal(expected_2bins, Xt.ravel())
 
     # with 3 bins
-    est = KBinsDiscretizer(n_bins=3, strategy=strategy, encode="ordinal")
+    est = KBinsDiscretizer(
+        n_bins=3, strategy=strategy, quantile_method=quantile_method, encode="ordinal"
+    )
     Xt = est.fit_transform(X)
     assert_array_equal(expected_3bins, Xt.ravel())
 
@@ -378,8 +387,10 @@ def test_nonuniform_strategies(
     ],
 )
 @pytest.mark.parametrize("encode", ["ordinal", "onehot", "onehot-dense"])
-def test_inverse_transform(strategy, encode, expected_inv):
-    kbd = KBinsDiscretizer(n_bins=3, strategy=strategy, encode=encode)
+def test_inverse_transform(strategy, encode, expected_inv, quantile_method):
+    kbd = KBinsDiscretizer(
+        n_bins=3, strategy=strategy, quantile_method=quantile_method, encode=encode
+    )
     Xt = kbd.fit_transform(X)
     Xinv = kbd.inverse_transform(Xt)
     assert_array_almost_equal(expected_inv, Xinv)
@@ -427,9 +438,11 @@ def test_overwrite():
         ("kmeans", [0, 1.5, 3], "warn"),
     ],
 )
-def test_redundant_bins(strategy, expected_bin_edges):
+def test_redundant_bins(strategy, expected_bin_edges, quantile_method):
     X = [[0], [0], [0], [0], [3], [3]]
-    kbd = KBinsDiscretizer(n_bins=3, strategy=strategy, subsample=None)
+    kbd = KBinsDiscretizer(
+        n_bins=3, strategy=strategy, quantile_method=quantile_method, subsample=None
+    )
     warning_message = "Consider decreasing the number of bins."
     with pytest.warns(UserWarning, match=warning_message):
         kbd.fit(X)
