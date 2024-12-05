@@ -3,8 +3,6 @@
 Examples of Using `FrozenEstimator`
 ===================================
 
-.. _plot_frozen_estimator_example:
-
 This examples showcases some use cases of :class:`~sklearn.frozen.FrozenEstimator`.
 
 :class:`~sklearn.frozen.FrozenEstimator` is a utility class that allows to freeze a
