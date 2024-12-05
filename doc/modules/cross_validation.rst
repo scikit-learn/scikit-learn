@@ -947,38 +947,40 @@ Permutation test score
 ======================
 
 :func:`~sklearn.model_selection.permutation_test_score` offers another way
-to evaluate the performance of estimators. It provides a permutation-based
-p-value, which represents how likely an observed performance of the
-estimator would be obtained by chance. The null hypothesis in this test is
+to evaluate the performance of a model that we can score on. It provides a
+permutation-based p-value, which represents how likely an observed performance of the
+estimator would be obtained by random chance. The null hypothesis in this test is
 that the estimator fails to leverage any statistical dependency between the
 features and the targets to make correct predictions on left out data.
 :func:`~sklearn.model_selection.permutation_test_score` generates a null
 distribution by calculating `n_permutations` different permutations of the
 data. In each permutation the targets are randomly shuffled, thereby removing
 any dependency between the features and the targets. The p-value output
-is the fraction for which the model's average cross-validation score on the
-permutations is better or equal than the cross-validation score obtained by
+is the fraction  of randomized data sets for which the model's average cross-validation
+score on the permutations is better or equal than the cross-validation score obtained by
 the model using the original data. For reliable results ``n_permutations``
 should typically be larger than 100 and ``cv`` between 3-10 folds.
 
-A low p-value provides evidence that the dataset contains real dependency
-between features and targets and the estimator was able to utilize this
-to obtain good results. A high p-value could be due to a lack of dependency
-between features and targets (there is no systematic relationship between these two and
-any observed patterns are likely due to random chance) or because the estimator was not
-able to use the dependency in the data (for instance because it under fit). In the
-latter case, using a more appropriate estimator that is able to utilize the structure in
-the data, would result in a lower p-value.
+A low p-value provides evidence that the dataset contains some real dependency between
+features and targets **and** that the estimator was able to utilize this dependency to
+obtain good results. A high p-value, in reverse, could be due to either one of these:
+  - a lack of dependency between features and targets (i.e., there is no systematic
+    relationship and any observed patterns are likely due to random chance)
+  - **or** because the estimator was not able to use the dependency in the data (for
+    instance because it under fit).
+
+In the latter case, using a more appropriate estimator that is able to utilize the
+structure in the data, would result in a lower p-value.
 
 Cross-validation provides information about how well an estimator generalizes
-by estimating the range of its expected errors. However, an
+by estimating the range of its expected scores. However, an
 estimator trained on a high dimensional dataset with no structure may still
 perform better than expected on cross-validation, just by chance.
 This can typically happen with small datasets with less than a few hundred
 samples.
 :func:`~sklearn.model_selection.permutation_test_score` provides information
-on whether the estimator has found a real dependency between features and target and can
-help in evaluating the performance of the estimator.
+on whether the estimator has found a real dependency between features and targets and
+can help in evaluating the performance of the estimator.
 
 It is important to note that this test has been shown to produce low
 p-values even if there is only weak structure in the data because in the
