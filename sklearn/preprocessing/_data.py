@@ -3431,17 +3431,17 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             with warnings.catch_warnings(record=True) as captured_warnings:
                 with np.errstate(invalid="warn"):
                     X[:, i] = inv_fun(X[:, i], lmbda)
-
-            for warning in captured_warnings:
-                if "invalid value encountered in power" in str(warning.message):
-                    warnings.warn(
-                        f"Some values in column {i} of the inverse-transformed data "
-                        f"are NaN. This may be due to numerical issues in the "
-                        f"transformation process. Consider inspecting the input data "
-                        f"or preprocessing it before applying the transformation.",
-                        UserWarning,
-                    )
-                    break
+            if any(
+                "invalid value encountered in power" in str(w.message)
+                for w in captured_warnings
+            ):
+                warnings.warn(
+                    f"Some values in column {i} of the inverse-transformed data "
+                    f"are NaN. This may be due to numerical issues in the "
+                    f"transformation process. Consider inspecting the input data "
+                    f"or preprocessing it before applying the transformation.",
+                    UserWarning,
+                )
         return X
 
     def _yeo_johnson_inverse_transform(self, x, lmbda):
