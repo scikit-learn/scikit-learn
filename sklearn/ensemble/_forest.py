@@ -2641,6 +2641,9 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
     ``n_out <= n_estimators * max_leaf_nodes``. If ``max_leaf_nodes == None``,
     the number of leaf nodes is at most ``n_estimators * 2 ** max_depth``.
 
+    For a usage example of random trees embedding, see
+    :ref:`sphx_glr_auto_examples_ensemble_plot_random_forest_embedding.py`.
+
     Read more in the :ref:`User Guide <random_trees_embedding>`.
 
     Parameters
