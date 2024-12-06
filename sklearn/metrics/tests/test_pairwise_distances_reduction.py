@@ -1210,8 +1210,8 @@ def test_radius_neighbors_classmode_factory_method_wrong_usages():
 @pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_chunk_size_agnosticism(
     global_random_seed,
-    Dispatcher: ArgKmin | RadiusNeighbors,
-    dtype: np.float64[np._64Bit] | np.float32[np._32Bit],
+    Dispatcher,
+    dtype,
     n_features=100,
 ):
     """Check that results do not depend on the chunk size."""
@@ -1260,8 +1260,8 @@ def test_chunk_size_agnosticism(
 @pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_n_threads_agnosticism(
     global_random_seed,
-    Dispatcher: ArgKmin | RadiusNeighbors,
-    dtype: np.float64[np._64Bit] | np.float32[np._32Bit],
+    Dispatcher,
+    dtype,
     n_features=100,
 ):
     """Check that results do not depend on the number of threads."""
@@ -1317,9 +1317,9 @@ def test_n_threads_agnosticism(
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_format_agnosticism(
     global_random_seed,
-    Dispatcher: ArgKmin | RadiusNeighbors,
-    dtype: np.float64[np._64Bit] | np.float32[np._32Bit],
-    csr_container: Any,
+    Dispatcher,
+    dtype,
+    csr_container,
 ):
     """Check that results do not depend on the format (dense, sparse) of the input."""
     rng = np.random.RandomState(global_random_seed)
@@ -1525,9 +1525,9 @@ def test_pairwise_distances_argkmin(
 @pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_pairwise_distances_radius_neighbors(
     global_random_seed,
-    metric: str,
-    strategy: Literal['parallel_on_X'] | Literal['parallel_on_Y'],
-    dtype: np.float64[np._64Bit] | np.float32[np._32Bit],
+    metric,
+    strategy,
+    dtype,
     n_queries=5,
     n_samples=100,
 ):
@@ -1639,8 +1639,8 @@ def test_memmap_backed_data(
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_sqeuclidean_row_norms(
     global_random_seed,
-    dtype: np.float64[np._64Bit] | np.float32[np._32Bit],
-    csr_container: Any,
+    dtype,
+    csr_container,
 ):
     rng = np.random.RandomState(global_random_seed)
     spread = 100
@@ -1698,7 +1698,7 @@ def test_argkmin_classmode_strategy_consistent():
 
 
 @pytest.mark.parametrize("outlier_label", [None, 0, 3, 6, 9])
-def test_radius_neighbors_classmode_strategy_consistent(outlier_label: None | Literal[0] | Literal[3] | Literal[6] | Literal[9]):
+def test_radius_neighbors_classmode_strategy_consistent(outlier_label):
     rng = np.random.RandomState(1)
     X = rng.rand(100, 10)
     Y = rng.rand(100, 10)
