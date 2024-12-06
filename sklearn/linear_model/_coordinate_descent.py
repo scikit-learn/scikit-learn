@@ -2053,7 +2053,6 @@ class LassoCV(RegressorMixin, LinearModelCV):
         random_state=None,
         selection="cyclic",
         refit=True
-    
     ):
         self.refit = refit
         super().__init__(
@@ -2122,6 +2121,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
         self : object
             Returns an instance of fitted model.
         """
+        
         return super().fit(X, y, sample_weight=sample_weight, **params)
 
         if self.refit:
