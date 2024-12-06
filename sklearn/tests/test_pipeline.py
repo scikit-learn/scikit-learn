@@ -626,7 +626,9 @@ def test_make_union_verbose_feature_names_out_enabled():
 
     # Check if feature names are prefixed with transformer names
     assert all(feature_name.startswith("pca__") for feature_name in feature_names[:4])
-    assert all(feature_name.startswith("transf__") for feature_name in feature_names[4:])
+    assert all(
+        feature_name.startswith("transf__") for feature_name in feature_names[4:]
+    )
 
 
 def test_make_union_verbose_feature_names_out_disabled():
