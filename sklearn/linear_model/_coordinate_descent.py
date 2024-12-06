@@ -910,7 +910,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         warm_start=False,
         positive=False,
         random_state=None,
-        selection="cyclic",
+        selection="cyclic"
     ):
         self.alpha = alpha
         self.l1_ratio = l1_ratio
@@ -2052,7 +2052,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
         positive=False,
         random_state=None,
         selection="cyclic",
-        refit=True
+        refit=True,
     ):
         self.refit = refit
         super().__init__(
@@ -2127,6 +2127,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
 
         if self.refit:
             self._fit(X, y)
+
         return self
 
 class ElasticNetCV(RegressorMixin, LinearModelCV):
