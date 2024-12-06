@@ -1639,7 +1639,7 @@ in the following ways.
   produce the same robustness.
 
 Note that this estimator is different from the `R implementation of Robust
-Regression <https://stats.oarc.ucla.edu/r/dae/robust-regression/`_  because the R
+Regression <https://stats.oarc.ucla.edu/r/dae/robust-regression/>`_  because the R
 implementation does a weighted least squares implementation with weights given to each
 sample on the basis of how much the residual is greater than a certain threshold.
 
