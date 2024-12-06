@@ -93,9 +93,13 @@ def test_fit_transform(strategy, quantile_method, expected, sample_weight):
 
 
 def test_valid_n_bins():
-    KBinsDiscretizer(n_bins=2).fit_transform(X)
-    KBinsDiscretizer(n_bins=np.array([2])[0]).fit_transform(X)
-    assert KBinsDiscretizer(n_bins=2).fit(X).n_bins_.dtype == np.dtype(int)
+    KBinsDiscretizer(n_bins=2, quantile_method="averaged_inverted_cdf").fit_transform(X)
+    KBinsDiscretizer(
+        n_bins=np.array([2])[0], quantile_method="averaged_inverted_cdf"
+    ).fit_transform(X)
+    assert KBinsDiscretizer(n_bins=2, quantile_method="averaged_inverted_cdf").fit(
+        X
+    ).n_bins_.dtype == np.dtype(int)
 
 
 def test_invalid_n_bins_array():
@@ -266,11 +270,11 @@ def test_same_min_max(strategy):
 
 def test_transform_1d_behavior():
     X = np.arange(4)
-    est = KBinsDiscretizer(n_bins=2)
+    est = KBinsDiscretizer(n_bins=2, quantile_method="averaged_inverted_cdf")
     with pytest.raises(ValueError):
         est.fit(X)
 
-    est = KBinsDiscretizer(n_bins=2)
+    est = KBinsDiscretizer(n_bins=2, quantile_method="averaged_inverted_cdf")
     est.fit(X.reshape(-1, 1))
     with pytest.raises(ValueError):
         est.transform(X)
@@ -283,14 +287,22 @@ def test_numeric_stability(i):
 
     # Test up to discretizing nano units
     X = X_init / 10**i
-    Xt = KBinsDiscretizer(n_bins=2, encode="ordinal").fit_transform(X)
+    Xt = KBinsDiscretizer(
+        n_bins=2, encode="ordinal", quantile_method="averaged_inverted_cdf"
+    ).fit_transform(X)
     assert_array_equal(Xt_expected, Xt)
 
 
 def test_encode_options():
-    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], encode="ordinal").fit(X)
+    est = KBinsDiscretizer(
+        n_bins=[2, 3, 3, 3], encode="ordinal", quantile_method="averaged_inverted_cdf"
+    ).fit(X)
     Xt_1 = est.transform(X)
-    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], encode="onehot-dense").fit(X)
+    est = KBinsDiscretizer(
+        n_bins=[2, 3, 3, 3],
+        encode="onehot-dense",
+        quantile_method="averaged_inverted_cdf",
+    ).fit(X)
     Xt_2 = est.transform(X)
     assert not sp.issparse(Xt_2)
     assert_array_equal(
@@ -299,7 +311,9 @@ def test_encode_options():
         ).fit_transform(Xt_1),
         Xt_2,
     )
-    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], encode="onehot").fit(X)
+    est = KBinsDiscretizer(
+        n_bins=[2, 3, 3, 3], encode="onehot", quantile_method="averaged_inverted_cdf"
+    ).fit(X)
     Xt_3 = est.transform(X)
     assert sp.issparse(Xt_3)
     assert_array_equal(
@@ -457,8 +471,11 @@ def test_percentile_numeric_stability():
         n_bins=10,
         encode="ordinal",
         strategy="quantile",
-        quantile_method="averaged_inverted_cdf",
+        quantile_method="linear",
     )
+    ## TO DO: change to averaged inverted cdf, but that means we only get bin
+    ## edges of 0.05 and 0.95 and nothing in between
+
     warning_message = "Consider decreasing the number of bins."
     with pytest.warns(UserWarning, match=warning_message):
         kbd.fit(X)
@@ -600,16 +617,14 @@ def test_quantile_method_future_warnings():
     X = [[-2, 1, -4], [-1, 2, -3], [0, 3, -2], [1, 4, -1]]
     with pytest.warns(
         FutureWarning,
-        match="Defaulting to quantile method 'averaged_inverted_cdf' this will "
-        "be changed to averaged_inverted_cdf in scikit-learn version 1.9",
+        match="The current default behavior, quantile_method='linear', will be "
+        "changed to quantile_method='averaged_inverted_cdf' in "
+        "scikit-learn version 1.9 to naturally support sample weight "
+        "equivalence properties by default. Pass "
+        "quantile_method='averaged_inverted_cdf' explicitly to silence this "
+        "warning.",
     ):
         KBinsDiscretizer(strategy="quantile").fit(X)
-    with pytest.warns(
-        FutureWarning,
-        match="Defaulting to quantile method 'averaged_inverted_cdf' this will "
-        "be changed to averaged_inverted_cdf in scikit-learn version 1.9",
-    ):
-        KBinsDiscretizer(strategy="quantile").fit(X, sample_weight=[1, 1, 2, 2])
 
 
 def test_invalid_quantile_method_with_sample_weight():
@@ -623,10 +638,9 @@ def test_invalid_quantile_method_with_sample_weight():
         ValueError,
         match=expected_msg,
     ):
-        KBinsDiscretizer(strategy="quantile").fit(
+        KBinsDiscretizer(strategy="quantile", quantile_method="linear").fit(
             X,
             sample_weight=[1, 1, 2, 2],
-            quantile_method="linear",
         )
 
 
