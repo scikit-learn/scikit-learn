@@ -520,6 +520,9 @@ class GaussianMixture(BaseMixture):
     For examples on model selection with Gassian Mixture, refer to:
     :ref:`sphx_glr_auto_examples_mixture_plot_gmm_selection.py`
 
+    For example covariances types for Gaussian mixture models, see:
+    :ref:`sphx_glr_auto_examples_mixture_plot_gmm_covariances.py`
+
     .. versionadded:: 0.18
 
     Parameters
