@@ -196,7 +196,7 @@ cdef class PrecomputedDistanceMatrix{{name_suffix}}(DatasetsPair{{name_suffix}})
   
     @final
     cdef float64_t surrogate_dist(self, intp_t i, intp_t j) noexcept nogil:
-        return self.precomputed_distance[i, j]
+        return self.distance_matrix[i, j]
    
     @final
     cdef float64_t dist(self, intp_t i, intp_t j) noexcept nogil:
