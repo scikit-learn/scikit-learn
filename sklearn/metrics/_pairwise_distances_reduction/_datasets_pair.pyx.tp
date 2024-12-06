@@ -188,7 +188,7 @@ cdef class PrecomputedDistanceMatrix{{name_suffix}}(DatasetsPair{{name_suffix}})
 
     @final
     cdef intp_t n_samples_X(self) noexcept nogil:
-        return self.precomputed_distance.shape[0]
+        return self.distance_matrix.shape[0]
 
     @final
     cdef intp_t n_samples_Y(self) noexcept nogil:
