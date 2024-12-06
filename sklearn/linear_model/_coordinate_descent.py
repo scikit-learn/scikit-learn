@@ -2052,7 +2052,10 @@ class LassoCV(RegressorMixin, LinearModelCV):
         positive=False,
         random_state=None,
         selection="cyclic",
+        refit=True
+    
     ):
+        self.refit = refit
         super().__init__(
             eps=eps,
             n_alphas=n_alphas,
@@ -2121,7 +2124,10 @@ class LassoCV(RegressorMixin, LinearModelCV):
         """
         return super().fit(X, y, sample_weight=sample_weight, **params)
 
-
+        if self.refit:
+            self._fit(X, y)
+        return self
+        
 class ElasticNetCV(RegressorMixin, LinearModelCV):
     """Elastic Net model with iterative fitting along a regularization path.
 
