@@ -7,9 +7,10 @@ import numpy as np
 
 from ..base import BaseEstimator, OutlierMixin, RegressorMixin, _fit_context
 from ..linear_model._base import LinearClassifierMixin, LinearModel, SparseCoefMixin
+from ..utils import compute_class_weight
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import _num_samples, validate_data
+from ..utils.validation import _num_samples, validate_data, _check_sample_weight
 from ._base import BaseLibSVM, BaseSVC, _fit_liblinear, _get_liblinear_solver_type
 
 
@@ -1161,21 +1162,24 @@ class NuSVC(BaseSVC):
         self : object
             Fitted estimator.
         """
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=np.float64)
 
-        if sample_weight is None and self.class_weight is not None:
+        classes_ = np.unique(y)
 
-            unique_classes = np.unique(y)
+        # Array with `class_weight_vect[i]` the weight for i-th class.
+        class_weight_vect = compute_class_weight(
+            self.class_weight, classes=classes_, y=y
+        )
+
+        if class_weight_vect is not None:
 
             # Initialize sample_weight to 1 for all samples
-            sample_weight = np.ones(y.shape[0], dtype=np.float64)
+            sample_weight = np.ones(len(y), dtype=np.float64)
 
             # For each class, multiply the sample_weight by the class_weight
-            for cls in unique_classes:
-
-                # If class is in class_weight, apply the specified weight
-                if cls in self.class_weight:
-                    cls_indices = np.where(y == cls)[0]
-                    sample_weight[cls_indices] *= self.class_weight[cls]
+            for i, cls in enumerate(classes_):
+                cls_indices = np.where(y == cls)[0]
+                sample_weight[cls_indices] *= class_weight_vect[i]
 
         return super().fit(X, y, sample_weight=sample_weight)
 
