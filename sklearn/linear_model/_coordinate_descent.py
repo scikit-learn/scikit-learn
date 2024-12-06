@@ -2085,7 +2085,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
 
     def fit(self, X, y, sample_weight=None, **params):
         params.pop('refit', None)
-        """Fit Lasso model with coordinate descent.        
+        """Fit Lasso model with coordinate descent.
 
         Fit is on grid of alphas and best alpha estimated by cross-validation.
 
