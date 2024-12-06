@@ -1163,15 +1163,14 @@ class NuSVC(BaseSVC):
             Fitted estimator.
         """
         sample_weight = _check_sample_weight(sample_weight, X, dtype=np.float64)
-
-        classes_ = np.unique(y)
-
-        # Array with `class_weight_vect[i]` the weight for i-th class.
-        class_weight_vect = compute_class_weight(
-            self.class_weight, classes=classes_, y=y
-        )
-
-        if class_weight_vect is not None:
+      
+        if self.class_weight is not None:
+            # Compute class_weight_vect from class_weight
+            classes_ = np.unique(y)
+            class_weight_vect = compute_class_weight(
+                self.class_weight, classes=classes_, y=y
+            )
+            
             # Initialize sample_weight to 1 for all samples
             sample_weight = np.ones(len(y), dtype=np.float64)
 
@@ -1179,7 +1178,7 @@ class NuSVC(BaseSVC):
             for i, cls in enumerate(classes_):
                 cls_indices = np.where(y == cls)[0]
                 sample_weight[cls_indices] *= class_weight_vect[i]
-
+        
         return super().fit(X, y, sample_weight=sample_weight)
 
 
