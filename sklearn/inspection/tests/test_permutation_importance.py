@@ -298,7 +298,6 @@ def test_permutation_importance_equivalence_sequential_parallel(max_samples):
     )
 
 
-@pytest.mark.parametrize("quantile_method", "averaged_inverted_cdf")
 @pytest.mark.parametrize("n_jobs", [None, 1, 2])
 @pytest.mark.parametrize("max_samples", [0.5, 1.0])
 def test_permutation_importance_equivalence_array_dataframe(
@@ -315,7 +314,9 @@ def test_permutation_importance_equivalence_array_dataframe(
 
     # Add a categorical feature that is statistically linked to y:
     binner = KBinsDiscretizer(
-        n_bins=3, encode="ordinal", quantile_method=quantile_method
+        n_bins=3,
+        encode="ordinal",
+        quantile_method="averaged_inverted_cdf",
     )
     cat_column = binner.fit_transform(y.reshape(-1, 1))
 
