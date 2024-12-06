@@ -2084,7 +2084,8 @@ class LassoCV(RegressorMixin, LinearModelCV):
         return tags
 
     def fit(self, X, y, sample_weight=None, **params):
-        """Fit Lasso model with coordinate descent.
+        params.pop('refit', None)
+        """Fit Lasso model with coordinate descent.        
 
         Fit is on grid of alphas and best alpha estimated by cross-validation.
 
@@ -2121,13 +2122,13 @@ class LassoCV(RegressorMixin, LinearModelCV):
         self : object
             Returns an instance of fitted model.
         """
-        
+
         return super().fit(X, y, sample_weight=sample_weight, **params)
 
         if self.refit:
             self._fit(X, y)
         return self
-        
+
 class ElasticNetCV(RegressorMixin, LinearModelCV):
     """Elastic Net model with iterative fitting along a regularization path.
 
