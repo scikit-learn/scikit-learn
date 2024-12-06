@@ -1172,7 +1172,6 @@ class NuSVC(BaseSVC):
         )
 
         if class_weight_vect is not None:
-
             # Initialize sample_weight to 1 for all samples
             sample_weight = np.ones(len(y), dtype=np.float64)
 
