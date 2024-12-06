@@ -514,6 +514,9 @@ class GaussianMixture(BaseMixture):
 
     Read more in the :ref:`User Guide <gmm>`.
 
+    For examples on different methods of initialization, refer to:
+    :ref:`sphx_glr_auto_examples_mixture_plot_gmm_init.py`
+
     .. versionadded:: 0.18
 
     Parameters
