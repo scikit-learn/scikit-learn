@@ -360,7 +360,9 @@ def test_nonuniform_strategies(
     assert_array_equal(expected_3bins, Xt.ravel())
 
     # with 5 bins
-    est = KBinsDiscretizer(n_bins=5, strategy=strategy, encode="ordinal")
+    est = KBinsDiscretizer(
+        n_bins=5, strategy=strategy, quantile_method=quantile_method, encode="ordinal"
+    )
     Xt = est.fit_transform(X)
     assert_array_equal(expected_5bins, Xt.ravel())
 
@@ -435,7 +437,9 @@ def test_overwrite():
     X = np.array([0, 1, 2, 3])[:, None]
     X_before = X.copy()
 
-    est = KBinsDiscretizer(n_bins=3, encode="ordinal")
+    est = KBinsDiscretizer(
+        n_bins=3, quantile_method="averaged_inverted_cdf", encode="ordinal"
+    )
     Xt = est.fit_transform(X)
     assert_array_equal(X, X_before)
 
@@ -489,7 +493,12 @@ def test_percentile_numeric_stability():
 @pytest.mark.parametrize("encode", ["ordinal", "onehot", "onehot-dense"])
 def test_consistent_dtype(in_dtype, out_dtype, encode):
     X_input = np.array(X, dtype=in_dtype)
-    kbd = KBinsDiscretizer(n_bins=3, encode=encode, dtype=out_dtype)
+    kbd = KBinsDiscretizer(
+        n_bins=3,
+        encode=encode,
+        quantile_method="averaged_inverted_cdf",
+        dtype=out_dtype,
+    )
     kbd.fit(X_input)
 
     # test output dtype
