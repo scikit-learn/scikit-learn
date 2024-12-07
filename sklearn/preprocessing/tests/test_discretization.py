@@ -105,21 +105,21 @@ def test_valid_n_bins():
 def test_invalid_n_bins_array():
     # Bad shape
     n_bins = np.full((2, 4), 2.0)
-    est = KBinsDiscretizer(n_bins=n_bins)
+    est = KBinsDiscretizer(n_bins=n_bins, quantile_method="averaged_inverted_cdf")
     err_msg = r"n_bins must be a scalar or array of shape \(n_features,\)."
     with pytest.raises(ValueError, match=err_msg):
         est.fit_transform(X)
 
     # Incorrect number of features
     n_bins = [1, 2, 2]
-    est = KBinsDiscretizer(n_bins=n_bins)
+    est = KBinsDiscretizer(n_bins=n_bins, quantile_method="averaged_inverted_cdf")
     err_msg = r"n_bins must be a scalar or array of shape \(n_features,\)."
     with pytest.raises(ValueError, match=err_msg):
         est.fit_transform(X)
 
     # Bad bin values
     n_bins = [1, 2, 2, 1]
-    est = KBinsDiscretizer(n_bins=n_bins)
+    est = KBinsDiscretizer(n_bins=n_bins, quantile_method="averaged_inverted_cdf")
     err_msg = (
         "KBinsDiscretizer received an invalid number of bins "
         "at indices 0, 3. Number of bins must be at least 2, "
@@ -130,7 +130,7 @@ def test_invalid_n_bins_array():
 
     # Float bin values
     n_bins = [2.1, 2, 2.1, 2]
-    est = KBinsDiscretizer(n_bins=n_bins)
+    est = KBinsDiscretizer(n_bins=n_bins, quantile_method="averaged_inverted_cdf")
     err_msg = (
         "KBinsDiscretizer received an invalid number of bins "
         "at indices 0, 2. Number of bins must be at least 2, "
@@ -521,12 +521,22 @@ def test_32_equal_64(input_dtype, encode):
     X_input = np.array(X, dtype=input_dtype)
 
     # 32 bit output
-    kbd_32 = KBinsDiscretizer(n_bins=3, encode=encode, dtype=np.float32)
+    kbd_32 = KBinsDiscretizer(
+        n_bins=3,
+        encode=encode,
+        quantile_method="averaged_inverted_cdf",
+        dtype=np.float32,
+    )
     kbd_32.fit(X_input)
     Xt_32 = kbd_32.transform(X_input)
 
     # 64 bit output
-    kbd_64 = KBinsDiscretizer(n_bins=3, encode=encode, dtype=np.float64)
+    kbd_64 = KBinsDiscretizer(
+        n_bins=3,
+        encode=encode,
+        quantile_method="averaged_inverted_cdf",
+        dtype=np.float64,
+    )
     kbd_64.fit(X_input)
     Xt_64 = kbd_64.transform(X_input)
 
@@ -583,7 +593,9 @@ def test_kbinsdiscrtizer_get_feature_names_out(encode, expected_names):
     """
     X = [[-2, 1, -4], [-1, 2, -3], [0, 3, -2], [1, 4, -1]]
 
-    kbd = KBinsDiscretizer(n_bins=4, encode=encode).fit(X)
+    kbd = KBinsDiscretizer(
+        n_bins=4, encode=encode, quantile_method="averaged_inverted_cdf"
+    ).fit(X)
     Xt = kbd.transform(X)
 
     input_features = [f"feat{i}" for i in range(3)]
@@ -654,9 +666,13 @@ def test_invalid_quantile_method_with_sample_weight():
 
 
 # TODO(1.7): remove this test
-def test_KBD_inverse_transform_Xt_deprecation():
+@pytest.mark.parametrize(
+    "strategy, quantile_method",
+    [("uniform", "warn"), ("quantile", "averaged_inverted_cdf"), ("kmeans", "warn")],
+)
+def test_KBD_inverse_transform_Xt_deprecation(strategy, quantile_method):
     X = np.arange(10)[:, None]
-    kbd = KBinsDiscretizer()
+    kbd = KBinsDiscretizer(strategy=strategy, quantile_method=quantile_method)
     X = kbd.fit_transform(X)
 
     with pytest.raises(TypeError, match="Missing required positional argument"):
