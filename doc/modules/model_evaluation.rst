@@ -2543,7 +2543,7 @@ Here is a small example of usage of the :func:`mean_absolute_error` function::
 Mean squared error
 -------------------
 
-The :func:`mean_squared_error` function computes `mean square
+The :func:`mean_squared_error` function computes `mean squared
 error <https://en.wikipedia.org/wiki/Mean_squared_error>`_, a risk
 metric corresponding to the expected value of the squared (quadratic) error or
 loss.
