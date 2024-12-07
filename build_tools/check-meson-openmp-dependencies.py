@@ -14,7 +14,13 @@ from pathlib import Path
 
 
 def has_source_openmp_flags(target_source):
+    """Check if a source in the target has OpenMP flags"""
     return any("openmp" in arg for arg in target_source["parameters"])
+
+
+def has_openmp_flags_helper(parameter_list):
+    """Helper fuction to iterate through the parameter lists"""
+    return any("openmp" in arg for arg in parameter_list)
 
 
 def has_openmp_flags(target):
@@ -26,7 +32,8 @@ def has_openmp_flags(target):
     target_sources = target["target_sources"]
 
     target_use_openmp_flags = any(
-        has_source_openmp_flags(target_source) for target_source in target_sources
+        has_source_openmp_flags(target_source)
+        for target_source in target_sources
     )
 
     if not target_use_openmp_flags:
@@ -39,11 +46,11 @@ def has_openmp_flags(target):
     assert "compiler" in compiler_source
     assert "linker" in linker_source
 
-    compiler_use_openmp_flags = any(
-        "openmp" in arg for arg in compiler_source["parameters"]
+    compiler_use_openmp_flags = has_openmp_flags_helper(
+        compiler_source["parameters"]
     )
-    linker_use_openmp_flags = any(
-        "openmp" in arg for arg in linker_source["parameters"]
+    linker_use_openmp_flags = has_openmp_flags_helper(
+        linker_source["parameters"]
     )
 
     assert compiler_use_openmp_flags == linker_use_openmp_flags
@@ -82,10 +89,12 @@ def get_canonical_name_git_grep(filename):
 
 
 def get_meson_info():
-    """Return names of extension that use OpenMP based on meson introspect output.
+    """Return names of extension that use OpenMP based on meson introspect
+    output.
 
-    The meson introspect json info is a list of targets where a target is a dict
-    that looks like this (parts not used in this script are not shown for simplicity):
+    The meson introspect json info is a list of targets where a target is a
+    dict that looks like this (parts not used in this script are not shown
+    for simplicity):
     {
       'name': '_k_means_elkan.cpython-312-x86_64-linux-gnu',
       'filename': [
@@ -121,9 +130,11 @@ def get_meson_info():
         ["meson", "introspect", build_path, "--targets"], text=True
     )
     target_list = json.loads(json_out)
-    meson_targets = [target for target in target_list if has_openmp_flags(target)]
+    meson_targets = [
+        (target for target in target_list if has_openmp_flags(target))]
 
-    return [get_canonical_name_meson(each, build_path) for each in meson_targets]
+    return [(
+        get_canonical_name_meson(each, build_path) for each in meson_targets)]
 
 
 def get_git_grep_info():
@@ -137,6 +148,7 @@ def get_git_grep_info():
 
 
 def main():
+    """Main function to compare OpenMP dependencies in Meson and Cython."""
     from_meson = set(get_meson_info())
     from_git_grep = set(get_git_grep_info())
 
@@ -155,7 +167,8 @@ def main():
         )
 
     if only_in_meson:
-        only_in_meson_msg = "\n".join([f"  {each}" for each in sorted(only_in_meson)])
+        only_in_meson_msg = "\n".join(
+            [f"  {each}" for each in sorted(only_in_meson)])
         msg += (
             "Some Cython files do not use OpenMP,"
             " you should remove openmp_dep from their meson.build:\n"
@@ -164,7 +177,8 @@ def main():
 
     if from_meson != from_git_grep:
         raise ValueError(
-            f"Some issues have been found in Meson OpenMP dependencies:\n\n{msg}"
+            f"Some issues have been found in "
+            f"Meson OpenMP dependencies:\n\n{msg}"
         )
 
 
