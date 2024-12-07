@@ -1585,10 +1585,10 @@ better than an ordinary least squares in high dimension.
 Huber Regression
 ----------------
 
-The :class:`HuberRegressor` is different to :class:`Ridge` because it applies a
-linear loss to samples that are classified as outliers.
+The :class:`HuberRegressor` is different from :class:`Ridge` because it applies a
+linear loss to samples that are defined as outliers by the `epsilon` parameter.
 A sample is classified as an inlier if the absolute error of that sample is
-lesser than a certain threshold. It differs from :class:`TheilSenRegressor`
+lesser than the threshold `epsilon`. It differs from :class:`TheilSenRegressor`
 and :class:`RANSACRegressor` because it does not ignore the effect of the outliers
 but gives a lesser weight to them.
 
@@ -1603,13 +1603,13 @@ but gives a lesser weight to them.
 
 .. dropdown:: Mathematical details
 
-  The loss function that :class:`HuberRegressor` minimizes is given by
+  :class:`HuberRegressor` minimizes
 
   .. math::
 
     \min_{w, \sigma} {\sum_{i=1}^n\left(\sigma + H_{\epsilon}\left(\frac{X_{i}w - y_{i}}{\sigma}\right)\sigma\right) + \alpha {||w||_2}^2}
 
-  where
+  where the loss function is given by
 
   .. math::
 
@@ -1624,7 +1624,7 @@ but gives a lesser weight to them.
   .. rubric:: References
 
   * Peter J. Huber, Elvezio M. Ronchetti: Robust Statistics, Concomitant scale
-    estimates, pg 172
+    estimates, p. 172.
 
 The :class:`HuberRegressor` differs from using :class:`SGDRegressor` with loss set to `huber`
 in the following ways.
@@ -1638,10 +1638,10 @@ in the following ways.
   samples while :class:`SGDRegressor` needs a number of passes on the training data to
   produce the same robustness.
 
-Note that this estimator is different from the R implementation of Robust Regression
-(https://stats.oarc.ucla.edu/r/dae/robust-regression/) because the R implementation does a weighted least
-squares implementation with weights given to each sample on the basis of how much the residual is
-greater than a certain threshold.
+Note that this estimator is different from the `R implementation of Robust
+Regression <https://stats.oarc.ucla.edu/r/dae/robust-regression/>`_  because the R
+implementation does a weighted least squares implementation with weights given to each
+sample on the basis of how much the residual is greater than a certain threshold.
 
 .. _quantile_regression:
 
