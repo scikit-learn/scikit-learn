@@ -1586,7 +1586,7 @@ Huber Regression
 ----------------
 
 The :class:`HuberRegressor` is different from :class:`Ridge` because it applies a
-linear loss to samples that are defined as outliers by the user-set parameter `epsilon`.
+linear loss to samples that are defined as outliers by the `epsilon` parameter.
 A sample is classified as an inlier if the absolute error of that sample is
 lesser than the threshold `epsilon`. It differs from :class:`TheilSenRegressor`
 and :class:`RANSACRegressor` because it does not ignore the effect of the outliers
