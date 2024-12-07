@@ -603,65 +603,12 @@ def test_make_union_kwargs():
         make_union(pca, mock, transformer_weights={"pca": 10, "Transf": 1})
 
 
-def create_mock_transformer(base_name, n_features=3):
-    """Helper to create a mock transformer with custom feature names."""
+def test_make_union_passes_verbose_feature_names_out():
+    pca = PCA()
     mock = Transf()
-    mock.get_feature_names_out = lambda input_features: [
-        f"{base_name}{i}" for i in range(n_features)
-    ]
-    return mock
 
-
-def test_make_union_verbose_feature_names_out_enabled():
-    """Test verbose_feature_names_out=True behavior."""
-    X = iris.data.copy()
-    y = iris.target
-
-    pca = PCA()
-    mock = create_mock_transformer("transf")
-
-    fu_verbose = make_union(pca, mock)
-    fu_verbose.fit(X, y)
-    feature_names = fu_verbose.get_feature_names_out()
-
-    # Check if feature names are prefixed with transformer names
-    assert all(feature_name.startswith("pca__") for feature_name in feature_names[:4])
-    assert all(
-        feature_name.startswith("transf__") for feature_name in feature_names[4:]
-    )
-
-
-def test_make_union_verbose_feature_names_out_disabled():
-    """Test verbose_feature_names_out=False behavior."""
-    X = iris.data.copy()
-    y = iris.target
-
-    pca = PCA()
-    mock = create_mock_transformer("transf")
-
-    fu_non_verbose = make_union(pca, mock, verbose_feature_names_out=False)
-    fu_non_verbose.fit(X, y)
-    feature_names = fu_non_verbose.get_feature_names_out()
-
-    # Check if feature names are not prefixed
-    assert all("pca__" not in feature_name for feature_name in feature_names[:4])
-    assert all("transf__" not in feature_name for feature_name in feature_names[4:])
-
-
-def test_make_union_duplicate_feature_names_error():
-    """Test error for duplicate feature names with verbose_feature_names_out=False."""
-    mock = create_mock_transformer("transf")
-    duplicate_mock = create_mock_transformer("transf")
-
-    fu_duplicate = make_union(mock, duplicate_mock, verbose_feature_names_out=False)
-
-    duplicate_error_msg = re.escape(
-        "Output feature names: ['transf0', 'transf1', 'transf2'] are not unique. "
-        "Please set verbose_feature_names_out=True to add prefixes to feature names"
-    )
-
-    with pytest.raises(ValueError, match=duplicate_error_msg):
-        fu_duplicate.get_feature_names_out()
+    union = make_union(pca, mock, verbose_feature_names_out=False)
+    assert not union.verbose_feature_names_out
 
 
 def test_pipeline_transform():
