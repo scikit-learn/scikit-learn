@@ -93,6 +93,7 @@ def _assess_dimension(spectrum, rank, n_samples):
                 (spectrum[i] - spectrum[j]) * (1.0 / spectrum_[j] - 1.0 / spectrum_[i])
             ) + log(n_samples)
 
+    pu = xp.asarray(pu, device=spectrum.device)
     ll = pu + pl + pv + pp - pa / 2.0 - rank * log(n_samples) / 2.0
 
     return ll
