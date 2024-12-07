@@ -346,6 +346,7 @@ html_additional_pages = {"index": "index.html"}
 html_js_files = [
     "scripts/dropdown.js",
     "scripts/version-switcher.js",
+    "scripts/sg_plotly_resize.js",
 ]
 
 # Compile scss files into css files using sphinxcontrib-sass
