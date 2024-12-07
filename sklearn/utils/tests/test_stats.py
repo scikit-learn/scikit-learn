@@ -20,7 +20,7 @@ def test_averaged_weighted_percentile():
     rng = np.random.RandomState(0)
     y = rng.randint(20, size=10)
 
-    sw = np.ones(20)
+    sw = np.ones(10)
 
     score = _averaged_weighted_percentile(y, sw, 20)
 

@@ -186,6 +186,22 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         "n_bins": [Interval(Integral, 2, None, closed="left"), "array-like"],
         "encode": [StrOptions({"onehot", "onehot-dense", "ordinal"})],
         "strategy": [StrOptions({"uniform", "quantile", "kmeans"})],
+        "quantile_method": [
+            StrOptions(
+                {
+                    "warn",
+                    "inverted_cdf",
+                    "averaged_inverted_cdf",
+                    "closest_observation",
+                    "interpolated_inverted_cdf",
+                    "hazen",
+                    "weibull",
+                    "linear",
+                    "median_unbiased",
+                    "normal_unbiased",
+                }
+            )
+        ],
         "dtype": [Options(type, {np.float64, np.float32}), None],
         "subsample": [Interval(Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
