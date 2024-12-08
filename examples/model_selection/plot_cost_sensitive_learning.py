@@ -689,3 +689,148 @@ print(f"Benefit of logistic regression with a tuned threshold:  {business_score:
 # historical data (offline evaluation) should ideally be confirmed by A/B testing
 # on live data (online evaluation). Note however that A/B testing models is
 # beyond the scope of the scikit-learn library itself.
+
+# %%
+# Fixed Elkan-optimal threshold
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+#
+# Under the assumption that the probabilistic classifier is well-calibrated.
+
+
+# %%
+def elkan_optimal_threshold(amount):
+    # Cost matrix (negative of gain matrix)
+    c00 = -0.02 * amount  # Accepting a legitimate transaction
+    c01 = amount  # Accepting a fraudulent transaction
+    c10 = 5  # Refusing a legitimate transaction
+    c11 = -50  # Refusing a fraudulent transaction
+    optimal_threshold = (c10 - c00) / (c10 - c00 + c01 - c11)
+    return optimal_threshold
+
+
+elkan_optimal_threshold(amount_test).mean()
+
+# %%
+elkan_optimal_threshold(amount_test[amount_test > 100]).mean()
+
+# %%
+elkan_optimal_threshold(amount_test[amount_test <= 100]).mean()
+
+# %%
+_ = plt.hist(elkan_optimal_threshold(amount_test), bins=30)
+# %%
+import matplotlib.pyplot as plt
+
+x = np.linspace(amount_test.min(), amount_test.max(), 1000)
+plt.plot(x, elkan_optimal_threshold(x))
+plt.xlabel("Amount (€)")
+_ = plt.ylabel("Optimal threshold")
+
+# %%
+fixed_elkan_model = FixedThresholdClassifier(
+    estimator=model.best_estimator_,
+    threshold=elkan_optimal_threshold(amount_test).mean(),
+    prefit=True,
+).fit(data_train, target_train)
+
+business_score = business_scorer(
+    fixed_elkan_model, data_test, target_test, amount=amount_test
+)
+print(
+    f"Benefit of logistic regression with a fixed mean theoretical threshold: "
+    f"{business_score:,.2f}€"
+)
+
+
+# %%
+from sklearn.calibration import CalibrationDisplay
+
+disp = CalibrationDisplay.from_estimator(
+    model.best_estimator_, data_test, target_test, strategy="quantile", n_bins=5
+)
+_ = disp.ax_.set(xlim=(1e-7, 0.03), ylim=(1e-7, 0.03), xscale="log", yscale="log")
+
+# %%
+from sklearn.calibration import CalibratedClassifierCV
+
+calibrated_estimator = CalibratedClassifierCV(
+    model.best_estimator_, method="isotonic"
+).fit(data_train, target_train)
+disp = CalibrationDisplay.from_estimator(
+    calibrated_estimator, data_test, target_test, strategy="quantile", n_bins=5
+)
+_ = disp.ax_.set(xlim=(1e-7, 0.03), ylim=(1e-7, 0.03), xscale="log", yscale="log")
+
+# %%
+fixed_elkan_model = FixedThresholdClassifier(
+    estimator=calibrated_estimator,
+    threshold=elkan_optimal_threshold(amount_test).mean(),
+    prefit=True,
+).fit(data_train, target_train)
+
+business_score = business_scorer(
+    fixed_elkan_model, data_test, target_test, amount=amount_test
+)
+print(
+    f"Benefit of recalibrated logistic regression with a fixed mean theoretical "
+    f" threshold:  {business_score:,.2f}€"
+)
+
+
+# %%
+# Variable Elkan-optimal threshold - predict-time optimization
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+#
+# Also under the assumption that the probabilistic classifier is well-calibrated.
+
+
+class VariableThresholdClassifier:
+
+    def __init__(self, estimator, variable_threshold):
+        self.estimator = estimator
+        self.variable_threshold = variable_threshold
+
+    def fit(self, X, y):
+        return self
+
+    def predict(self, X, amount):
+        proba = self.estimator.predict_proba(X)[:, 1]
+        return (proba >= self.variable_threshold(amount)).astype(int)
+
+
+business_score = business_metric(
+    target_test,
+    VariableThresholdClassifier(
+        model.best_estimator_,
+        variable_threshold=elkan_optimal_threshold,
+    ).predict(data_test, amount=amount_test),
+    amount=amount_test,
+)
+print(
+    f"Benefit of logistic regression with optimal variable threshold: "
+    f"{business_score:,.2f}€"
+)
+
+# %%
+business_score = business_metric(
+    target_test,
+    VariableThresholdClassifier(
+        calibrated_estimator,
+        variable_threshold=elkan_optimal_threshold,
+    ).predict(data_test, amount=amount_test),
+    amount=amount_test,
+)
+print(
+    f"Benefit of recalibrated logistic regression with optimal variable threshold: "
+    f"{business_score:,.2f}€"
+)
+
+# %%
+business_score = business_metric(
+    target_test,
+    target_test,
+    amount=amount_test,
+)
+print(f"Benefit of oracle decisions (not reachable):  {business_score:,.2f}€")
+
+# %%
