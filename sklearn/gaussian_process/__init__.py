@@ -8,3 +8,7 @@ from ._gpc import GaussianProcessClassifier
 from ._gpr import GaussianProcessRegressor
 
 __all__ = ["GaussianProcessRegressor", "GaussianProcessClassifier", "kernels"]
+
+
+def __dir__():
+    return __all__

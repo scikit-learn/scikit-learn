@@ -19,6 +19,20 @@ from .sparsefuncs_fast import (
     incr_mean_variance_axis0 as _incr_mean_var_axis0,
 )
 
+__all__ = [
+    "mean_variance_axis",
+    "inplace_column_scale",
+    "inplace_swap_column",
+    "incr_mean_variance_axis",
+    "inplace_swap_row",
+    "inplace_row_scale",
+    "inplace_csr_column_scale",
+]
+
+
+def __dir__():
+    return __all__
+
 
 def _raise_typeerror(X):
     """Raises a TypeError if X is not a CSR or CSC matrix"""

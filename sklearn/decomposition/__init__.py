@@ -52,3 +52,7 @@ __all__ = [
     "TruncatedSVD",
     "LatentDirichletAllocation",
 ]
+
+
+def __dir__():
+    return __all__

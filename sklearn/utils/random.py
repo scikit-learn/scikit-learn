@@ -14,6 +14,10 @@ from ._random import sample_without_replacement
 __all__ = ["sample_without_replacement"]
 
 
+def __dir__():
+    return __all__
+
+
 def _random_choice_csc(n_samples, classes, class_probability=None, random_state=None):
     """Generate a sparse random matrix given column class distributions
 

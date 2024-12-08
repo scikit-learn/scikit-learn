@@ -53,3 +53,7 @@ __all__ = [
     "davies_bouldin_score",
     "consensus_score",
 ]
+
+
+def __dir__():
+    return __all__

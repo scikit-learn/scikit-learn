@@ -23,6 +23,10 @@ from .utils.validation import _check_sample_weight, check_is_fitted
 __all__ = ["check_increasing", "isotonic_regression", "IsotonicRegression"]
 
 
+def __dir__():
+    return __all__
+
+
 @validate_params(
     {
         "x": ["array-like"],

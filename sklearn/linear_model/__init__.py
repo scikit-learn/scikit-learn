@@ -93,3 +93,7 @@ __all__ = [
     "GammaRegressor",
     "TweedieRegressor",
 ]
+
+
+def __dir__():
+    return __all__
