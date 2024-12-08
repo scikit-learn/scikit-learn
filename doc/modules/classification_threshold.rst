@@ -64,8 +64,8 @@ Post-tuning the decision threshold
 One solution to address the problem stated in the introduction is to tune the decision
 threshold of the classifier once the model has been trained. The
 :class:`~sklearn.model_selection.TunedThresholdClassifierCV` tunes this threshold using
-an internal cross-validation. The optimum threshold is chosen to maximize a given
-metric.
+an internal cross-validation [S2006]_. The optimum threshold is chosen to maximize a
+given metric.
 
 The following image illustrates the tuning of the decision threshold for a gradient
 boosting classifier. While the vanilla and tuned classifiers provide the same
@@ -148,6 +148,14 @@ to refit the model when calling `fit`, wrap your sub-estimator with a
 :class:`~sklearn.frozen.FrozenEstimator` and do
 ``FixedThresholdClassifier(FrozenEstimator(estimator), ...)``.
 
+.. note::
+  Given a calibrated classifier, the optimal decision threshold is theoretically defined
+  as in Eq. (2) of [E2001]_ if the metric to optimize can be expressed as a weighted
+  sum of the entries of the confusion matrix.
+
+  In this case, using :class:`~sklearn.model_selection.FixedThresholdClassifier` is
+  therefore advantageous in terms of computational cost.
+
 Examples
 --------
 
@@ -157,3 +165,16 @@ Examples
 - See the example entitled
   :ref:`sphx_glr_auto_examples_model_selection_plot_cost_sensitive_learning.py`,
   to learn about cost-sensitive learning and decision threshold tuning.
+
+References
+==========
+
+.. [S2006] Sheng, Victor S., and Charles X. Ling.
+   "Thresholding for making classifiers cost-sensitive." Aaai. Vol. 6. 2006.
+   https://cdn.aaai.org/AAAI/2006/AAAI06-076.pdf
+
+.. [E2001] Elkan, Charles.
+   "The foundations of cost-sensitive learning."
+   International joint conference on artificial intelligence. Vol. 17. No. 1.
+   Lawrence Erlbaum Associates Ltd, 2001.
+   https://cseweb.ucsd.edu//~elkan/rescale.pdf
