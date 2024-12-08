@@ -550,6 +550,36 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     IncrementalPCA: {"check_dict_unchanged": dict(batch_size=10, n_components=1)},
     Isomap: {"check_dict_unchanged": dict(n_components=1)},
     KMeans: {"check_dict_unchanged": dict(max_iter=5, n_clusters=1, n_init=2)},
+    KBinsDiscretizer: {
+        "check_sample_weight_equivalence": [
+            # Using subsample != None leads to a stochastic fit that is not
+            # handled by the check_sample_weight_equivalence test.
+            dict(strategy="quantile", subsample=None, quantile_method="inverted_cdf"),
+            dict(
+                strategy="quantile",
+                subsample=None,
+                quantile_method="average_inverted_cdf",
+            ),
+            dict(strategy="uniform", subsample=None),
+            # The "kmeans" strategy leads to a stochastic fit that is not
+            # handled by the check_sample_weight_equivalence test.
+        ],
+        "check_sample_weights_list": dict(
+            strategy="quantile", quantile_method="averaged_inverted_cdf"
+        ),
+        "check_sample_weights_pandas_series": dict(
+            strategy="quantile", quantile_method="averaged_inverted_cdf"
+        ),
+        "check_sample_weights_shape": dict(
+            strategy="quantile", quantile_method="averaged_inverted_cdf"
+        ),
+        "check_sample_weights_not_an_array": dict(
+            strategy="quantile", quantile_method="averaged_inverted_cdf"
+        ),
+        "check_sample_weights_not_overwritten": dict(
+            strategy="quantile", quantile_method="averaged_inverted_cdf"
+        ),
+    },
     KernelPCA: {"check_dict_unchanged": dict(n_components=1)},
     LassoLars: {"check_non_transformer_estimators_n_iter": dict(alpha=0.0)},
     LatentDirichletAllocation: {
