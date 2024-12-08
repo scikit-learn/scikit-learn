@@ -2199,8 +2199,13 @@ def binarize(X, *, threshold=0.0, copy=True):
         X.data[not_cond] = 0
         X.eliminate_zeros()
     else:
+        xp, is_array_api_compliant = get_namespace(X)
+        if is_array_api_compliant and xp.isdtype(
+            X.dtype, ("signed integer", "unsigned integer")
+        ):
+            threshold = xp.asarray(threshold, dtype=xp.int64)
         cond = X > threshold
-        not_cond = np.logical_not(cond)
+        not_cond = xp.logical_not(cond)
         X[cond] = 1
         X[not_cond] = 0
     return X
@@ -2343,6 +2348,7 @@ class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.requires_fit = False
+        tags.array_api_support = True
         return tags
 
 
