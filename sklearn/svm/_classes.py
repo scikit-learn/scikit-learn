@@ -313,7 +313,6 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         )
         check_classification_targets(y)
         self.classes_ = np.unique(y)
-
         _dual = _validate_dual_parameter(
             self.dual, self.loss, self.penalty, self.multi_class, X
         )
@@ -646,6 +645,10 @@ class SVC(BaseSVC):
         Degree of the polynomial kernel function ('poly').
         Must be non-negative. Ignored by all other kernels.
 
+        .. versionchanged:: 1.6
+            Setting ``degree`` when ``kernel='linear'`` is irrelevant
+            in 1.6 and will raise an error in 1.8.
+
     gamma : {'scale', 'auto'} or float, default='scale'
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
@@ -656,10 +659,17 @@ class SVC(BaseSVC):
 
         .. versionchanged:: 0.22
            The default value of ``gamma`` changed from 'auto' to 'scale'.
+        .. versionchanged:: 1.6
+            Setting ``gamma`` when ``kernel='linear'`` is irrelevant
+            in 1.6 and will raise an error in 1.8.
 
     coef0 : float, default=0.0
         Independent term in kernel function.
         It is only significant in 'poly' and 'sigmoid'.
+
+        .. versionchanged:: 1.6
+            Setting ``coef0`` when ``kernel='linear'`` is irrelevant
+            in 1.6 and will raise an error in 1.8.
 
     shrinking : bool, default=True
         Whether to use the shrinking heuristic.

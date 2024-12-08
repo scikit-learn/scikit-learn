@@ -114,7 +114,10 @@ def plot_training_data_with_decision_boundary(
     kernel, ax=None, long_title=True, support_vectors=True
 ):
     # Train the SVC
-    clf = svm.SVC(kernel=kernel, gamma=2).fit(X, y)
+    if kernel == "linear":
+        clf = svm.SVC(kernel=kernel).fit(X, y)
+    else:
+        clf = svm.SVC(kernel=kernel, gamma=2).fit(X, y)
 
     # Settings for plotting
     if ax is None:

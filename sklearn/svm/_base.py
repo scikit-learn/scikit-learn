@@ -217,7 +217,25 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 "X and y have incompatible shapes.\n"
                 + "X has %s samples, but y has %s." % (n_samples, y.shape[0])
             )
-
+        if self.kernel == "linear":
+            if self.gamma != "scale":
+                warnings.warn(
+                    "Setting 'gamma' when using 'linear' kernel is irrelevant"
+                    " in 1.6 and will raise an error in 1.8.",
+                    FutureWarning,
+                )
+            if self.coef0 != 0:
+                warnings.warn(
+                    "Setting 'coef0' when using 'linear' kernel is irrelevant"
+                    " in 1.6 and will raise an error in 1.8.",
+                    FutureWarning,
+                )
+            if self.degree != 3:
+                warnings.warn(
+                    "Setting 'degree' when using 'linear' kernel is irrelevant"
+                    " in 1.6 and will raise an error in 1.8.",
+                    FutureWarning,
+                )
         if self.kernel == "precomputed" and n_samples != X.shape[1]:
             raise ValueError(
                 "Precomputed matrix must be a square matrix."
