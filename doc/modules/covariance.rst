@@ -166,7 +166,9 @@ object to the same sample.
 .. rubric:: Examples
 
 * See :ref:`sphx_glr_auto_examples_covariance_plot_covariance_estimation.py` for
-  an example on how to fit an :class:`OAS` object to data.
+  an example on how to fit an :class:`OAS` object to data and
+  for visualizing the performances of the OAS estimator in
+  terms of likelihood.
 
 * See :ref:`sphx_glr_auto_examples_covariance_plot_lw_vs_oas.py` to visualize the
   Mean Squared Error difference between a :class:`LedoitWolf` and
