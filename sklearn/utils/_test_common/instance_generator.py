@@ -1018,10 +1018,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         ),
     },
     MultiOutputClassifier: {
-        "check_param_validation": ("fit expects argument Y, test provides argument y"),
-        "check_sample_weight_equivalence_on_dense_data": (
-            "fit expects argument Y, test provides argument y"
-        ),
         "check_estimator_sparse_array": (
             "predict_proba returns a list of arrays, test expects array"
         ),
