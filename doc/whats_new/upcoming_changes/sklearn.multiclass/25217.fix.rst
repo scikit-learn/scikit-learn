@@ -1,0 +1,7 @@
+- :class:`multiclass.OutputCodeClassifier` suffers from several bugs.
+  Now, the implementation follows the original paper more closely: (i) the
+  predictions generated rely on a probablity estimate of each binary
+  classifier, (ii) a distance computed between the predictions and the codes in
+  the codebook is the L1 distance, and (iii) the codebook is generated with
+  sampling without replacement whenever possible to avoid codes collisions.
+  By :user:`Guillaume Lemaitre <glemaitre>`
