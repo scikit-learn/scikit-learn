@@ -604,6 +604,13 @@ Changelog
   implementations of the Array API like CuPY.
   :pr:`28407` by :user:`Tim Head <betatim>`.
 
+- |MajorFeature| :class:`model_selection.ScoreCutModelSelector` is a new refit callable
+  factory for use with `SearchCV` objects like `GridSearchCV`, `RandomSearchCV`, or
+  `HalvingRandomSearchCV` that can be used to constrain model selection according to
+  favorability criteria and a window of permissible performance relative to the
+  best-performing model.
+  :pr:`22573` by :user:`Derek Alexander <dPys>` and :user:`Joel Nothman <jnothman>`.
+
 :mod:`sklearn.multioutput`
 ..........................
 
