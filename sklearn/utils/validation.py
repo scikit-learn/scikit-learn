@@ -397,7 +397,8 @@ def _num_samples(x):
     if hasattr(x, "shape") and x.shape is not None:
         if len(x.shape) == 0:
             raise TypeError(
-                "Singleton array %r cannot be considered a valid collection." % x
+                "Input should have at least 1 dimension i.e. satisfy "
+                f"`len(x.shape) > 0`, got scalar `{x!r}` instead."
             )
         # Check that shape is returning an integer or default to len
         # Dask dataframes may not return numeric shape[0] value
@@ -467,10 +468,8 @@ def check_consistent_length(*arrays):
     >>> b = [2, 3, 4]
     >>> check_consistent_length(a, b)
     """
-
     lengths = [_num_samples(X) for X in arrays if X is not None]
-    uniques = np.unique(lengths)
-    if len(uniques) > 1:
+    if len(set(lengths)) > 1:
         raise ValueError(
             "Found input variables with inconsistent numbers of samples: %r"
             % [int(l) for l in lengths]
@@ -1413,7 +1412,7 @@ def _check_y(y, multi_output=False, y_numeric=False, estimator=None):
     return y
 
 
-def column_or_1d(y, *, dtype=None, warn=False):
+def column_or_1d(y, *, dtype=None, warn=False, device=None):
     """Ravel column or 1d numpy array, else raises an error.
 
     Parameters
@@ -1428,6 +1427,12 @@ def column_or_1d(y, *, dtype=None, warn=False):
 
     warn : bool, default=False
        To control display of warnings.
+
+    device : device, default=None
+        `device` object.
+        See the :ref:`Array API User Guide <array_api>` for more details.
+
+        .. versionadded:: 1.6
 
     Returns
     -------
@@ -1457,7 +1462,9 @@ def column_or_1d(y, *, dtype=None, warn=False):
 
     shape = y.shape
     if len(shape) == 1:
-        return _asarray_with_order(xp.reshape(y, (-1,)), order="C", xp=xp)
+        return _asarray_with_order(
+            xp.reshape(y, (-1,)), order="C", xp=xp, device=device
+        )
     if len(shape) == 2 and shape[1] == 1:
         if warn:
             warnings.warn(
@@ -1469,7 +1476,9 @@ def column_or_1d(y, *, dtype=None, warn=False):
                 DataConversionWarning,
                 stacklevel=2,
             )
-        return _asarray_with_order(xp.reshape(y, (-1,)), order="C", xp=xp)
+        return _asarray_with_order(
+            xp.reshape(y, (-1,)), order="C", xp=xp, device=device
+        )
 
     raise ValueError(
         "y should be a 1d array, got an array of shape {} instead.".format(shape)

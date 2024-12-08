@@ -540,7 +540,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
-        """Fit the random regressor.
+        """Fit the baseline regressor.
 
         Parameters
         ----------
