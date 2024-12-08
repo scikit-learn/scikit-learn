@@ -705,14 +705,14 @@ def partial_dependence(
             continue
 
         if _safe_indexing(X, feature_idx, axis=1).dtype.kind in "iu":
-            # TODO(1.8): raise a ValueError instead.
+            # TODO(1.9): raise a ValueError instead.
             warnings.warn(
                 f"The column {feature!r} contains integer data. Partial "
                 "dependence plots are not supported for integer data: this "
                 "can lead to implicit rounding with NumPy arrays or even errors "
                 "with newer pandas versions. Please convert numerical features"
                 "to floating point dtypes ahead of time to avoid problems. "
-                "This will raise ValueError in scikit-learn 1.8.",
+                "This will raise ValueError in scikit-learn 1.9.",
                 FutureWarning,
             )
             # Do not warn again for other features to avoid spamming the caller.
