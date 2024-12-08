@@ -726,6 +726,7 @@ API_REFERENCE = {
                     "auc",
                     "average_precision_score",
                     "balanced_accuracy_score",
+                    "binary_classification_curve",
                     "brier_score_loss",
                     "class_likelihood_ratios",
                     "classification_report",
