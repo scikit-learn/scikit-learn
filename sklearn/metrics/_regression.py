@@ -1792,7 +1792,7 @@ def d2_pinball_score(
         sample_weight = _check_sample_weight(sample_weight, y_true)
         y_quantile = np.tile(
             _weighted_percentile(
-                y_true, sample_weight=sample_weight, percentile=alpha * 100
+                y_true, sample_weight=sample_weight, percentile_rank=alpha * 100
             ),
             (len(y_true), 1),
         )
