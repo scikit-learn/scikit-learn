@@ -351,16 +351,15 @@ def confusion_matrix(
         if n_labels == 0:
             raise ValueError("'labels' should contains at least one label.")
         elif y_true.size == 0:
-            return xp.zeros((n_labels, n_labels), dtype=int, device=device_)
-        # This is not tested other than for numpy; it seems xp.isin is not existing in
-        # array_api_compat:
+            return xp.zeros((n_labels, n_labels), dtype=xp.int64, device=device_)
+        # xp.isin is not existing in array_api_strict; not tested other than for numpy:
         elif not xp.isin(labels, y_true).any():
             raise ValueError("At least one label specified must be in y_true")
 
     if sample_weight is None:
-        sample_weight = xp.ones(y_true.shape[0], dtype=xp.int64)
+        sample_weight = xp.ones(y_true.shape[0], dtype=xp.int64, device=device_)
     else:
-        sample_weight = xp.asarray(sample_weight)
+        sample_weight = xp.asarray(sample_weight, device=device_)
 
     check_consistent_length(y_true, y_pred, sample_weight)
 
@@ -378,9 +377,14 @@ def confusion_matrix(
         and xp.min(y_pred) >= 0
     )
     if need_index_conversion:
+        # only tested for numpy so far:
         label_to_ind = {y: x for x, y in enumerate(labels)}
-        y_pred = xp.array([label_to_ind.get(x, n_labels + 1) for x in y_pred])
-        y_true = xp.array([label_to_ind.get(x, n_labels + 1) for x in y_true])
+        y_pred = xp.asarray(
+            [label_to_ind.get(x, n_labels + 1) for x in y_pred], device=device_
+        )
+        y_true = xp.asarray(
+            [label_to_ind.get(x, n_labels + 1) for x in y_true], device=device_
+        )
 
     # intersect y_pred, y_true with labels, eliminate items not in labels
     ind = xp.logical_and(y_pred < n_labels, y_true < n_labels)
@@ -403,7 +407,7 @@ def confusion_matrix(
             dtype=dtype,
         ).toarray()
     else:
-        cm = xp.zeros((n_labels, n_labels), dtype=dtype)
+        cm = xp.zeros((n_labels, n_labels), dtype=dtype, device=device_)
         # that is probably not very performant?
         for true, pred, weight in zip(y_true, y_pred, sample_weight):
             cm[true, pred] += weight
@@ -420,10 +424,10 @@ def confusion_matrix(
 
         if xp.__name__ == "array_api_strict":
             cm[xp.isnan(cm)] = 0
-            if isinstance(cm.dtype, float):  # type checking not working properly !!!!
+            if xp.isdtype(cm.dtype, "real floating"):
                 cm[xp.isinf(cm) & (cm > 0)] = xp.finfo(cm.dtype).max
                 cm[xp.isinf(cm) & (cm < 0)] = xp.finfo(cm.dtype).min
-            elif isinstance(cm.dtype, int):
+            else:  # xp.isdtype(cm.dtype, "integral")
                 cm[xp.isinf(cm) & (cm > 0)] = xp.iinfo(cm.dtype).max
                 cm[xp.isinf(cm) & (cm < 0)] = xp.iinfo(cm.dtype).min
         else:
