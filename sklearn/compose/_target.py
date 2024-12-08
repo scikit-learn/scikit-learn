@@ -84,6 +84,14 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         Whether to check that `transform` followed by `inverse_transform`
         or `func` followed by `inverse_func` leads to the original targets.
 
+    preserve_y_dim : bool, default=False
+        Whether to preserve the number of dimensions of the target `y` during
+        transformation. If `True`, the target `y` will be transformed to a
+        2-dimensional array before applying the transformation. If `False`, the
+        target `y` will be transformed to a 1-dimensional array before applying
+        the transformation. This parameter is only relevant when `transformer`
+        is not provided and `func` and `inverse_func` are used.
+
     Attributes
     ----------
     regressor_ : object
@@ -141,6 +149,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         "func": [callable, None],
         "inverse_func": [callable, None],
         "check_inverse": ["boolean"],
+        "preserve_y_dim": ["boolean"],
     }
 
     def __init__(
@@ -151,12 +160,14 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         func=None,
         inverse_func=None,
         check_inverse=True,
+        preserve_y_dim=False,
     ):
         self.regressor = regressor
         self.transformer = transformer
         self.func = func
         self.inverse_func = inverse_func
         self.check_inverse = check_inverse
+        self.preserve_y_dim = preserve_y_dim
 
     def _fit_transformer(self, y):
         """Check transformer and fit transformer.
@@ -263,7 +274,6 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
             dtype="numeric",
             allow_nd=True,
         )
-
         # store the number of dimension of the target to predict an array of
         # similar shape at predict
         self._training_dim = y.ndim
@@ -278,10 +288,9 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
         # transform y and convert back to 1d array if needed
         y_trans = self.transformer_.transform(y_2d)
-        # FIXME: a FunctionTransformer can return a 1D array even when validate
-        # is set to True. Therefore, we need to check the number of dimension
-        # first.
-        if y_trans.ndim == 2 and y_trans.shape[1] == 1:
+
+        # only squeeze to 1D if y was initially 1D and preserve_y_dim is False
+        if y_trans.ndim == 2 and y_trans.shape[1] == 1 and not self.preserve_y_dim:
             y_trans = y_trans.squeeze(axis=1)
 
         self.regressor_ = self._get_regressor(get_clone=True)
