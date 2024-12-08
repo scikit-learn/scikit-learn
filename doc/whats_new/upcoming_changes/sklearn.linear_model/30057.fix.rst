@@ -1,0 +1,4 @@
+- :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` now properly pass sample weights to
+  compute_class_weight under class_weight strategy 'balanced'.
+  By :user:`Shruti Nath <snath-xoc>` and :user:`Olivier Grisel <ogrisel>`
