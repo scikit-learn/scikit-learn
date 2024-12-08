@@ -977,6 +977,16 @@ def precision_recall_curve(
     array([1. , 1. , 0.5, 0.5, 0. ])
     >>> thresholds
     array([0.1 , 0.35, 0.4 , 0.8 ])
+    >>>
+    >>> # negative class (y_true = 1) is positively correlated with y_score and positive
+    >>> # class is negatively correlated with y_score
+    >>> import numpy as np
+    >>> from sklearn.metrics import precision_recall_curve
+    >>> y_true = np.array([0, 0, 1, 1])
+    >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> y_scores_adj = y_scores * (-1)
+    >>> precision, recall, thresholds = precision_recall_curve(
+    ...     y_true, y_scores_adj)
     """
     # TODO(1.7): remove in 1.7 and reset y_score to be required
     # Note: validate params will raise an error if probas_pred is not array-like,
@@ -1138,6 +1148,16 @@ def roc_curve(
     array([0. , 0.5, 0.5, 1. , 1. ])
     >>> thresholds
     array([ inf, 0.8 , 0.4 , 0.35, 0.1 ])
+    >>>
+    >>> # negative class (y_true = 1) is positively correlated with y_score and positive
+    >>> # class is negatively correlated with y_score
+    >>> import numpy as np
+    >>> from sklearn.metrics import precision_recall_curve
+    >>> y_true = np.array([0, 0, 1, 1])
+    >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> y_scores_adj = y_scores * (-1)
+    >>> precision, recall, thresholds = precision_recall_curve(
+    ...     y_true, y_scores_adj)
     """
     fps, tps, thresholds = _binary_clf_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
