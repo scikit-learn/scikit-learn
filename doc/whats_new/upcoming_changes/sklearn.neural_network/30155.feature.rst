@@ -1,0 +1,3 @@
+- Added support for `sample_weight` in :class:`neural_network.MLPClassifier` and
+  :class:`neural_network.MLPRegressor`.
+  By :user:`Zach Shu <zshu115x>` and :user:`Christian Lorentzen <lorentzenchr>`
