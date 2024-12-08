@@ -89,6 +89,9 @@ class BayesianGaussianMixture(BaseMixture):
 
     Read more in the :ref:`User Guide <bgmm>`.
 
+    For examples on how to implement the class model, please refer to:
+    :ref:`sphx_glr_auto_examples_mixture_plot_concentration_prior.py`
+
     Parameters
     ----------
     n_components : int, default=1
