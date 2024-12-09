@@ -270,6 +270,8 @@ def test_dict_learning_split():
         n_components, transform_algorithm="threshold", random_state=0
     )
     code = dico.fit(X).transform(X)
+    Xr = dico.inverse_transform(code)
+
     dico.split_sign = True
     split_code = dico.transform(X)
 
@@ -277,8 +279,8 @@ def test_dict_learning_split():
         split_code[:, :n_components] - split_code[:, n_components:], code
     )
 
-    Xr = dico.inverse_transform(split_code)
-    assert_array_almost_equal(Xr, X, decimal=2)
+    Xr2 = dico.inverse_transform(split_code)
+    assert_array_almost_equal(Xr, Xr2)
 
 
 def test_dict_learning_online_shapes():
