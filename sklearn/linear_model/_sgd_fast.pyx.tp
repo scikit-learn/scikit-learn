@@ -459,8 +459,6 @@ def _plain_sgd{{name_suffix}}(
         # initialize t such that eta at first sample equals eta0
         optimal_init = 1.0 / (initial_eta0 * alpha)
 
-    print(gradient_clip_norm)
-
     t_start = time()
     with nogil:
         for epoch in range(max_iter):
@@ -512,7 +510,7 @@ def _plain_sgd{{name_suffix}}(
                     
                     if gradient_clip_norm != -1:
                         # Scale down dloss when the gradient norm
-                        # is larger than the threshold 
+                        # is larger than the threshold
                         gradient_norm = sqrt(sqnorm(x_data_ptr, x_ind_ptr, xnnz)) * fabs(dloss)
                         if gradient_norm > gradient_clip_norm:
                             scaling_factor = gradient_clip_norm / gradient_norm
