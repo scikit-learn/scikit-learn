@@ -1103,8 +1103,14 @@ def _tolist(array, xp=None):
     return [element.item() for element in array_np]
 
 
-def _allclose(x, y, rtol=1e-5, atol=1e-8, xp=None):
-    xp, _ = get_namespace(x, y, remove_types=(float, int, complex), xp=xp)
-    x_np = _convert_to_numpy(x, xp=xp)
-    y_np = y if isinstance(y, (int, float, complex)) else _convert_to_numpy(y, xp=xp)
-    return numpy.allclose(x_np, y_np, rtol=rtol, atol=atol)
+def _allclose(a, b, rtol=1e-5, atol=1e-8, xp=None):
+    """Internally converts the array inputs to numpy arrays and then uses
+    numpy's `allclose` function.
+
+    This helper function requires `a` to be an array whereas `b` can be an
+    array or a scalar.
+    """
+    xp, _ = get_namespace(a, b, remove_types=(float, int, complex), xp=xp)
+    a_np = _convert_to_numpy(a, xp=xp)
+    b_np = b if isinstance(b, (int, float, complex)) else _convert_to_numpy(b, xp=xp)
+    return numpy.allclose(a_np, b_np, rtol=rtol, atol=atol)
