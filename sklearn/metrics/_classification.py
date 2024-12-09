@@ -32,6 +32,7 @@ from ..utils._array_api import (
     _count_nonzero,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
+    _isin,
     _searchsorted,
     _setdiff1d,
     _tolist,
@@ -351,7 +352,7 @@ def confusion_matrix(
             raise ValueError("'labels' should contains at least one label.")
         elif y_true.size == 0:
             return xp.zeros((n_labels, n_labels), dtype=xp.int64, device=device_)
-        elif not xp.isin(labels, y_true).any():
+        elif not _isin(labels, y_true, xp=xp).any():
             raise ValueError("At least one label specified must be in y_true")
 
     if sample_weight is None:
