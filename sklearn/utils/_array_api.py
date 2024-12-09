@@ -1101,3 +1101,13 @@ def _tolist(array, xp=None):
         return array.tolist()
     array_np = _convert_to_numpy(array, xp=xp)
     return [element.item() for element in array_np]
+
+
+def _allclose(x, y, rtol=1e-5, atol=1e-8, xp=None):
+    xp, _ = get_namespace(x, y, xp=xp)
+    if hasattr(xp, "allclose"):
+        return xp.allclose(x, y, rtol=rtol, atol=atol)
+
+    x_np = _convert_to_numpy(x, xp=xp)
+    y_np = _convert_to_numpy(y, xp=xp)
+    return numpy.allclose(x_np, y_np, rtol=rtol, atol=atol)

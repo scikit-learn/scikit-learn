@@ -27,8 +27,10 @@ from ..utils import (
     column_or_1d,
 )
 from ..utils._array_api import (
+    _allclose,
     _average,
     _bincount,
+    _convert_to_numpy,
     _count_nonzero,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
@@ -39,6 +41,7 @@ from ..utils._array_api import (
     device,
     get_namespace,
     get_namespace_and_device,
+    supported_float_dtypes,
 )
 from ..utils._param_validation import (
     Hidden,
@@ -2953,17 +2956,16 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
     ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
     0.21616...
     """
-    y_pred = check_array(
-        y_pred, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
-    )
+    xp, _, device_ = get_namespace_and_device(y_true, y_pred, sample_weight, labels)
+    y_pred = check_array(y_pred, ensure_2d=False, dtype=supported_float_dtypes(xp=xp))
 
     check_consistent_length(y_pred, y_true, sample_weight)
     lb = LabelBinarizer()
 
     if labels is not None:
-        lb.fit(labels)
+        lb.fit(_convert_to_numpy(labels, xp=xp))
     else:
-        lb.fit(y_true)
+        lb.fit(_convert_to_numpy(y_true, xp=xp))
 
     if len(lb.classes_) == 1:
         if labels is None:
@@ -2979,32 +2981,36 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
                 "got {0}.".format(lb.classes_)
             )
 
-    transformed_labels = lb.transform(y_true)
+    xp_float = _find_matching_floating_dtype(y_true, y_pred, xp=xp)
+    transformed_labels = xp.asarray(
+        lb.transform(_convert_to_numpy(y_true, xp=xp)), dtype=xp_float, device=device_
+    )
 
     if transformed_labels.shape[1] == 1:
-        transformed_labels = np.append(
-            1 - transformed_labels, transformed_labels, axis=1
+        transformed_labels = xp.concat(
+            (1 - transformed_labels, transformed_labels), axis=1
         )
 
     # If y_pred is of single dimension, assume y_true to be binary
     # and then check.
     if y_pred.ndim == 1:
-        y_pred = y_pred[:, np.newaxis]
+        y_pred = y_pred[:, xp.newaxis]
     if y_pred.shape[1] == 1:
-        y_pred = np.append(1 - y_pred, y_pred, axis=1)
+        y_pred = xp.concat((1 - y_pred, y_pred), axis=1)
 
-    eps = np.finfo(y_pred.dtype).eps
+    eps = xp.finfo(y_pred.dtype).eps
 
     # Make sure y_pred is normalized
-    y_pred_sum = y_pred.sum(axis=1)
-    if not np.allclose(y_pred_sum, 1, rtol=np.sqrt(eps)):
+    y_pred_sum = xp.sum(y_pred, axis=1)
+    xp_1 = xp.asarray(1, dtype=xp_float, device=device_)
+    if not _allclose(y_pred_sum, xp_1, rtol=xp.sqrt(xp.asarray(eps, device=device_))):
         warnings.warn(
             "The y_pred values do not sum to one. Make sure to pass probabilities.",
             UserWarning,
         )
 
     # Clipping
-    y_pred = np.clip(y_pred, eps, 1 - eps)
+    y_pred = xp.clip(y_pred, eps, 1 - eps)
 
     # Check if dimensions are consistent.
     transformed_labels = check_array(transformed_labels)
@@ -3026,7 +3032,7 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
                 "labels: {0}".format(lb.classes_)
             )
 
-    loss = -xlogy(transformed_labels, y_pred).sum(axis=1)
+    loss = xp.sum(-xlogy(transformed_labels, y_pred), axis=1)
 
     return float(_average(loss, weights=sample_weight, normalize=normalize))
 
