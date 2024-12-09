@@ -1104,10 +1104,7 @@ def _tolist(array, xp=None):
 
 
 def _allclose(x, y, rtol=1e-5, atol=1e-8, xp=None):
-    xp, _ = get_namespace(x, y, xp=xp)
-    if hasattr(xp, "allclose"):
-        return xp.allclose(x, y, rtol=rtol, atol=atol)
-
+    xp, _ = get_namespace(x, y, remove_types=(float, int, complex), xp=xp)
     x_np = _convert_to_numpy(x, xp=xp)
-    y_np = _convert_to_numpy(y, xp=xp)
+    y_np = y if isinstance(y, (int, float, complex)) else _convert_to_numpy(y, xp=xp)
     return numpy.allclose(x_np, y_np, rtol=rtol, atol=atol)

@@ -3004,8 +3004,7 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
 
     # Make sure y_pred is normalized
     y_pred_sum = xp.sum(y_pred, axis=1)
-    xp_1 = xp.asarray(1, dtype=float_dtype, device=device_)
-    if not _allclose(y_pred_sum, xp_1, rtol=xp.sqrt(xp.asarray(eps, device=device_))):
+    if not _allclose(y_pred_sum, 1, rtol=np.sqrt(eps)):
         warnings.warn(
             "The y_pred values do not sum to one. Make sure to pass probabilities.",
             UserWarning,
