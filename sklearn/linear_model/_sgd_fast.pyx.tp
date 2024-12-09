@@ -30,7 +30,7 @@ import numpy as np
 from time import time
 
 from cython cimport floating
-from libc.math cimport exp, fabs, isfinite, log, pow, INFINITY
+from libc.math cimport exp, fabs, isfinite, log, pow, INFINITY, sqrt
 
 from .._loss._loss cimport CyLossFunction
 from ..utils._typedefs cimport uint32_t, uint8_t
@@ -306,6 +306,7 @@ def _plain_sgd{{name_suffix}}(
     double t=1.0,
     double intercept_decay=1.0,
     int average=0,
+    double gradient_clip_norm=-1,
 ):
     """SGD for generic loss functions and penalties with optional averaging
 
@@ -380,7 +381,9 @@ def _plain_sgd{{name_suffix}}(
     average : int
         The number of iterations before averaging starts. average=1 is
         equivalent to averaging for all iterations.
-
+    gradient_clip_norm : double
+        The maximum size of the norm of the weights gradient per update.
+        Default = 1e12. 
 
     Returns
     -------
@@ -429,6 +432,8 @@ def _plain_sgd{{name_suffix}}(
     cdef double optimal_init = 0.0
     cdef double dloss = 0.0
     cdef double MAX_DLOSS = 1e12
+    cdef double gradient_norm = 0.0
+    cdef double scaling_factor = 1e12
 
     cdef long long sample_index
 
@@ -453,6 +458,8 @@ def _plain_sgd{{name_suffix}}(
         initial_eta0 = typw / max(1.0, loss.cy_gradient(1.0, -typw))
         # initialize t such that eta at first sample equals eta0
         optimal_init = 1.0 / (initial_eta0 * alpha)
+
+    print(gradient_clip_norm)
 
     t_start = time()
     with nogil:
@@ -502,6 +509,14 @@ def _plain_sgd{{name_suffix}}(
                         dloss = -MAX_DLOSS
                     elif dloss > MAX_DLOSS:
                         dloss = MAX_DLOSS
+                    
+                    if gradient_clip_norm != -1:
+                        # Scale down dloss when the gradient norm
+                        # is larger than the threshold 
+                        gradient_norm = sqrt(sqnorm(x_data_ptr, x_ind_ptr, xnnz)) * fabs(dloss)
+                        if gradient_norm > gradient_clip_norm:
+                            scaling_factor = gradient_clip_norm / gradient_norm
+                            dloss *= scaling_factor
                     update = -eta * dloss
 
                 if learning_rate >= PA1:
