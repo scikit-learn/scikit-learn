@@ -1220,19 +1220,20 @@ def check_estimator_sparse_tag(name, estimator_orig):
         try:
             estimator.fit(X, y)  # should pass
         except Exception as e:
-            raise AssertionError(
-                f"Estimator {name} raised an exception: {e}. The tag "
-                "self.input_tags.sparse might not be consistent with the "
-                "estimator's ability to handle sparse data (i.e. controlled by the "
-                "parameter `accept_sparse` in `validate_data` or `check_array` "
-                f"functions). Got input_tags.sparse={tags.input_tags.sparse}."
+            err_msg = (
+                f"Estimator {name} raised an exception. "
+                f"The tag self.input_tags.sparse={tags.input_tags.sparse} "
+                "might not be consistent with the estimator's ability to "
+                "handle sparse data (i.e. controlled by the parameter `accept_sparse`"
+                " in `validate_data` or `check_array` functions)."
             )
+            raise AssertionError(err_msg) from e
     else:
         err_msg = (
             f"Estimator {name} raised an exception. "
             "The estimator failed when fitted on sparse data in accordance "
             f"with its tag self.input_tags.sparse={tags.input_tags.sparse} "
-            "but didn't raise the appropriate error : error message should "
+            "but didn't raise the appropriate error: error message should "
             "state explicitly that sparse input is not supported if this is "
             "not the case, e.g. by using check_array(X, accept_sparse=False)."
         )
