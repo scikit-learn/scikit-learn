@@ -1,0 +1,2 @@
+- :func:`sklearn.metrics.log_loss` now supports Array API compatible inputs.
+  by :user:`Omar Salman <OmarManzoor>`
