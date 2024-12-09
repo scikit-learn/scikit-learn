@@ -277,6 +277,9 @@ def test_dict_learning_split():
         split_code[:, :n_components] - split_code[:, n_components:], code
     )
 
+    Xr = dico.inverse_transform(split_code)
+    assert_array_almost_equal(Xr, X, decimal=2)
+
 
 def test_dict_learning_online_shapes():
     rng = np.random.RandomState(0)
