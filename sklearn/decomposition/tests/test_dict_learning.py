@@ -202,10 +202,12 @@ def test_dict_learning_reconstruction():
     )
     code = dico.fit(X).transform(X)
     assert_array_almost_equal(np.dot(code, dico.components_), X)
+    assert_array_almost_equal(dico.inverse_transform(code), X)
 
     dico.set_params(transform_algorithm="lasso_lars")
     code = dico.transform(X)
     assert_array_almost_equal(np.dot(code, dico.components_), X, decimal=2)
+    assert_array_almost_equal(dico.inverse_transform(code), X)
 
     # used to test lars here too, but there's no guarantee the number of
     # nonzero atoms is right.
