@@ -2981,9 +2981,11 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
                 "got {0}.".format(lb.classes_)
             )
 
-    xp_float = _find_matching_floating_dtype(y_true, y_pred, xp=xp)
+    float_dtype = _find_matching_floating_dtype(y_true, y_pred, xp=xp)
     transformed_labels = xp.asarray(
-        lb.transform(_convert_to_numpy(y_true, xp=xp)), dtype=xp_float, device=device_
+        lb.transform(_convert_to_numpy(y_true, xp=xp)),
+        dtype=float_dtype,
+        device=device_,
     )
 
     if transformed_labels.shape[1] == 1:
@@ -3002,7 +3004,7 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
 
     # Make sure y_pred is normalized
     y_pred_sum = xp.sum(y_pred, axis=1)
-    xp_1 = xp.asarray(1, dtype=xp_float, device=device_)
+    xp_1 = xp.asarray(1, dtype=float_dtype, device=device_)
     if not _allclose(y_pred_sum, xp_1, rtol=xp.sqrt(xp.asarray(eps, device=device_))):
         warnings.warn(
             "The y_pred values do not sum to one. Make sure to pass probabilities.",
