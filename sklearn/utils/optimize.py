@@ -23,6 +23,12 @@ import scipy
 from ..exceptions import ConvergenceWarning
 from .fixes import line_search_wolfe1, line_search_wolfe2
 
+__all__ = ["ConvergenceWarning"]
+
+
+def __dir__():
+    return __all__
+
 
 class _LineSearchError(RuntimeError):
     pass
