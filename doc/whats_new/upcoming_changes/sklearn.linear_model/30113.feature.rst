@@ -1,0 +1,3 @@
+- :class:`SGDRegressor`` now has a parameter to set a gradient clip value, which clips gradients above a specified norm at each step.
+
+By :user:`John Zhang <john-zhang-uoft>`
