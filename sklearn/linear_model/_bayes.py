@@ -247,6 +247,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=dtype)
+            sample_weight = sample_weight / np.mean(sample_weight)
 
         X, y, X_offset_, y_offset_, X_scale_ = _preprocess_data(
             X,
