@@ -1,0 +1,4 @@
+- :class:`preprocessing.KBinsDiscretizer` with `strategy="uniform"` now
+  accepts `sample_weight`.
+  :pr:`29907` by :user:`Shruti Nath <snath-xoc>` and :user:`Olivier Grisel
+  <ogrisel>`

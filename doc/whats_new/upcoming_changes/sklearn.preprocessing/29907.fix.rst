@@ -1,0 +1,4 @@
+- :class:`preprocessing.KBinsDiscretizer` now uses weighted resampling when
+  sample weights are given and subsampling is used.
+  :pr:`29907` by :user:`Shruti Nath <snath-xoc>` and :user:`Jérémie du Boisberranger
+  <jeremiedbb>`
