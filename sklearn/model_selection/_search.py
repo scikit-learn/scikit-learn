@@ -1531,11 +1531,6 @@ class GridSearchCV(BaseSearchCV):
      'rank_test_score', 'split0_test_score',...
      'split2_test_score', ...
      'std_fit_time', 'std_score_time', 'std_test_score']
-
-    * See also :ref:`sphx_glr_auto_examples_covariance_plot_covariance_estimation.py`
-    for an example on how to fit a :class:`GridSearchCV` object to data and
-    for visualizing the performances of the grid search cross-validation estimator in
-    terms of likelihood.
     """
 
     _parameter_constraints: dict = {
