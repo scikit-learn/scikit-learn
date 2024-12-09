@@ -337,8 +337,7 @@ def confusion_matrix(
     (np.int64(0), np.int64(2), np.int64(1), np.int64(1))
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
-    xp, _ = get_namespace(y_true, y_pred, labels, sample_weight)
-    device_ = device(y_true, y_pred, labels, sample_weight)
+    xp, _, device_ = get_namespace_and_device(y_true, y_pred, labels, sample_weight)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):
         raise ValueError("%s is not supported" % y_type)
@@ -352,7 +351,6 @@ def confusion_matrix(
             raise ValueError("'labels' should contains at least one label.")
         elif y_true.size == 0:
             return xp.zeros((n_labels, n_labels), dtype=xp.int64, device=device_)
-        # xp.isin is not existing in array_api_strict; not tested other than for numpy:
         elif not xp.isin(labels, y_true).any():
             raise ValueError("At least one label specified must be in y_true")
 
@@ -377,7 +375,6 @@ def confusion_matrix(
         and xp.min(y_pred) >= 0
     )
     if need_index_conversion:
-        # only tested for numpy so far:
         label_to_ind = {y: x for x, y in enumerate(labels)}
         y_pred = xp.asarray(
             [label_to_ind.get(x, n_labels + 1) for x in y_pred], device=device_
@@ -408,12 +405,9 @@ def confusion_matrix(
         ).toarray()
     else:
         cm = xp.zeros((n_labels, n_labels), dtype=dtype, device=device_)
-        # that is probably not very performant?
         for true, pred, weight in zip(y_true, y_pred, sample_weight):
             cm[true, pred] += weight
 
-    # does only numpy warn for divisions by zero or do we have to handle warnings from
-    # other libraries as well?
     with np.errstate(all="ignore"):
         if normalize == "true":
             cm = cm / cm.sum(axis=1, keepdims=True)
