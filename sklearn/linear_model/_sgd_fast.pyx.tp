@@ -384,7 +384,7 @@ def _plain_sgd{{name_suffix}}(
     gradient_clip_norm : double
         The maximum size of the norm of the weights gradient per update.
         If it is set to 0, there is no clipping according to weight gradients.
-        Default = 0. 
+        Default: 0.
 
     Returns
     -------

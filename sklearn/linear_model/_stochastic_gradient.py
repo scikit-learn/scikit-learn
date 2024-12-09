@@ -1955,6 +1955,10 @@ class SGDRegressor(BaseSGDRegressor):
         samples seen reaches `average`. So ``average=10`` will begin
         averaging after seeing 10 samples.
 
+    gradient_clip_norm : float, default=0
+        If greater than 0, the gradient norms are clipped to the value of
+        `gradient_clip_norm` before updating the weights each step.
+
     Attributes
     ----------
     coef_ : ndarray of shape (n_features,)
