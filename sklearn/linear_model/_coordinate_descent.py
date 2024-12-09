@@ -426,44 +426,47 @@ def enet_path(
     check_input=True,
     **params,
 ):
-    """Compute elastic net path with coordinate descent.
+    r"""Compute elastic net path with coordinate descent.
 
     The elastic net optimization function varies for mono and multi-outputs.
 
-    For mono-output tasks it is::
+    For mono-output tasks it is:
 
+    ..
         1 / (2 * n_samples) * ||y - Xw||^2_2
         + alpha * l1_ratio * ||w||_1
         + 0.5 * alpha * (1 - l1_ratio) * ||w||^2_2
 
     .. math::
-        \\frac{1}{2n_{\\operatorname{samples}}}
-        \\vert \\vert y- Xw \\vert \\vert^2_2 +
-        \\alpha \\rho \\vert \\vert w \\vert \\vert_1 +
-        0.5 \\alpha \\left( 1 - \\rho \\right)
-        \\vert \\vert w \\vert \\vert^2_2
+        \frac{1}{2n_{\operatorname{samples}}}
+        \Vert y- Xw \Vert^2_2 +
+        \alpha \rho \Vert w \Vert_1 +
+        \frac{\alpha \left( 1 - \rho \right)}{2}
+        \Vert w \Vert^2_2
 
-    For multi-output tasks it is::
+    For multi-output tasks it is:
 
+    ..
         (1 / (2 * n_samples)) * ||Y - XW||_Fro^2
         + alpha * l1_ratio * ||W||_21
         + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
 
     .. math::
-        \\frac{1}{2n_{\\operatorname{samples}}}
-        \\vert \\vert Y- XW \\vert \\vert^2_F +
-        \\alpha \\rho \\vert \\vert W \\vert \\vert_{2,1} +
-        0.5 \\alpha \\left( 1 - \\rho \\right)
-        \\vert \\vert W \\vert \\vert^2_F
+        \frac{1}{2n_{\operatorname{samples}}}
+        \Vert Y- XW \Vert^2_F +
+        \alpha \rho \Vert W \Vert_{2,1} +
+        \frac{\alpha \left( 1 - \rho \right)}{2}
+        \Vert W \Vert^2_F
 
-    where :math:`\\vert\\vert W \\vert\\vert_F` is the Frobenius norm of :math:`W`,
-    and::
+    where :math:`\Vert W \Vert_F` is the Frobenius norm of :math:`W`,
+    and:
 
+    ..
         ||W||_21 = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
 
     .. math::
-        \\vert \\vert W \\vert \\vert_{2,1}
-        = \\displaystyle \\sum_i \\sqrt{\\sum_j W^2_{ij}}
+        \Vert W \Vert_{2,1}
+        = \displaystyle \sum_i \sqrt{\sum_j W^2_{ij}}
 
     i.e. the sum of norm of each row.
 
@@ -495,14 +498,14 @@ def enet_path(
         List of alphas where to compute the models.
         If None alphas are set automatically.
 
-    precompute : 'auto', bool or array-like of shape \
-            (n_features, n_features), default='auto'
+    precompute : 'auto', bool or array-like of shape (n_features, n_features),
+        default='auto'
+
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
-    Xy : array-like of shape (n_features,) or (n_features, n_targets),\
-         default=None
+    Xy : array-like of shape (n_features,) or (n_features, n_targets), default=None
         Xy = np.dot(X.T, y) that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
 
@@ -535,8 +538,7 @@ def enet_path(
     alphas : ndarray of shape (n_alphas,)
         The alphas along the path where models are computed.
 
-    coefs : ndarray of shape (n_features, n_alphas) or \
-            (n_targets, n_features, n_alphas)
+    coefs : ndarray of shape (n_features, n_alphas) or (n_targets, n_features, n_alphas)
         Coefficients along the path.
 
     dual_gaps : ndarray of shape (n_alphas,)
@@ -550,7 +552,7 @@ def enet_path(
     See Also
     --------
     MultiTaskElasticNet : Multi-task ElasticNet model trained with L1/L2 mixed-norm \
-    as regularizer.
+        as regularizer.
     MultiTaskElasticNetCV : Multi-task L1/L2 ElasticNet with built-in cross-validation.
     ElasticNet : Linear regression with combined L1 and L2 priors as regularizer.
     ElasticNetCV : Elastic Net model with iterative fitting along a regularization path.
