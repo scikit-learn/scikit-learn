@@ -58,6 +58,10 @@ class InputTags:
         Specifically, this tag is used by
         `sklearn.utils.metaestimators._safe_split` to slice rows and
         columns.
+
+        Note that if setting this tag to ``True`` means the estimator can take only
+        positive values, the `positive_only` tag must reflect it and also be set to
+        ``True``.
     """
 
     one_d_array: bool = False
@@ -97,6 +101,8 @@ class TargetTags:
     multi_output : bool, default=False
         Whether a regressor supports multi-target outputs or a classifier supports
         multi-class multi-output.
+
+        See :term:`multi-output` in the glossary.
 
     single_output : bool, default=True
         Whether the target can be single-output. This can be ``False`` if the
@@ -150,8 +156,13 @@ class ClassifierTags:
         classification. Therefore this flag indicates whether the
         classifier is a binary-classifier-only or not.
 
+        See :term:`multi-class` in the glossary.
+
     multi_label : bool, default=False
-        Whether the classifier supports multi-label output.
+        Whether the classifier supports multi-label output: a data point can
+        be predicted to belong to a variable number of classes.
+
+        See :term:`multi-label` in the glossary.
     """
 
     poor_score: bool = False
@@ -172,13 +183,9 @@ class RegressorTags:
         n_informative=1, bias=5.0, noise=20, random_state=42)``. The
         dataset and values are based on current estimators in scikit-learn
         and might be replaced by something more systematic.
-
-    multi_label : bool, default=False
-        Whether the regressor supports multilabel output.
     """
 
     poor_score: bool = False
-    multi_label: bool = False
 
 
 @dataclass(**_dataclass_args())
@@ -496,7 +503,6 @@ def _to_new_tags(old_tags, estimator=None):
     if estimator_type == "regressor":
         regressor_tags = RegressorTags(
             poor_score=old_tags["poor_score"],
-            multi_label=old_tags["multilabel"],
         )
     else:
         regressor_tags = None
@@ -520,18 +526,16 @@ def _to_old_tags(new_tags):
     """Utility function convert old tags (dictionary) to new tags (dataclass)."""
     if new_tags.classifier_tags:
         binary_only = not new_tags.classifier_tags.multi_class
-        multilabel_clf = new_tags.classifier_tags.multi_label
+        multilabel = new_tags.classifier_tags.multi_label
         poor_score_clf = new_tags.classifier_tags.poor_score
     else:
         binary_only = False
-        multilabel_clf = False
+        multilabel = False
         poor_score_clf = False
 
     if new_tags.regressor_tags:
-        multilabel_reg = new_tags.regressor_tags.multi_label
         poor_score_reg = new_tags.regressor_tags.poor_score
     else:
-        multilabel_reg = False
         poor_score_reg = False
 
     if new_tags.transformer_tags:
@@ -543,7 +547,7 @@ def _to_old_tags(new_tags):
         "allow_nan": new_tags.input_tags.allow_nan,
         "array_api_support": new_tags.array_api_support,
         "binary_only": binary_only,
-        "multilabel": multilabel_clf or multilabel_reg,
+        "multilabel": multilabel,
         "multioutput": new_tags.target_tags.multi_output,
         "multioutput_only": (
             not new_tags.target_tags.single_output and new_tags.target_tags.multi_output
