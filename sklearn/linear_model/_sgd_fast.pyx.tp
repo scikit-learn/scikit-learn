@@ -383,7 +383,8 @@ def _plain_sgd{{name_suffix}}(
         equivalent to averaging for all iterations.
     gradient_clip_norm : double
         The maximum size of the norm of the weights gradient per update.
-        Default = 1e12. 
+        If it is set to 0, there is no clipping according to weight gradients.
+        Default = 0. 
 
     Returns
     -------
@@ -433,7 +434,7 @@ def _plain_sgd{{name_suffix}}(
     cdef double dloss = 0.0
     cdef double MAX_DLOSS = 1e12
     cdef double gradient_norm = 0.0
-    cdef double scaling_factor = 1e12
+    cdef double scaling_factor = 0.0
 
     cdef long long sample_index
 
@@ -508,7 +509,7 @@ def _plain_sgd{{name_suffix}}(
                     elif dloss > MAX_DLOSS:
                         dloss = MAX_DLOSS
                     
-                    if gradient_clip_norm != -1:
+                    if gradient_clip_norm > 0:
                         # Scale down dloss when the gradient norm
                         # is larger than the threshold
                         gradient_norm = sqrt(sqnorm(x_data_ptr, x_ind_ptr, xnnz)) * fabs(dloss)

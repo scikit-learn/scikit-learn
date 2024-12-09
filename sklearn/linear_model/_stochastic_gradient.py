@@ -113,7 +113,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         n_iter_no_change=5,
         warm_start=False,
         average=False,
-        gradient_clip_norm=-1,
+        gradient_clip_norm=0,
     ):
         self.loss = loss
         self.penalty = penalty
@@ -1424,7 +1424,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         n_iter_no_change=5,
         warm_start=False,
         average=False,
-        gradient_clip_norm=-1,
+        gradient_clip_norm=0,
     ):
         super().__init__(
             loss=loss,
@@ -2021,6 +2021,8 @@ class SGDRegressor(BaseSGDRegressor):
         ],
         "epsilon": [Interval(Real, 0, None, closed="left")],
         "eta0": [Interval(Real, 0, None, closed="left")],
+        "gradient_clip_norm": [Interval(Real, 0, None, closed="left")],
+
     }
 
     def __init__(
@@ -2045,7 +2047,7 @@ class SGDRegressor(BaseSGDRegressor):
         n_iter_no_change=5,
         warm_start=False,
         average=False,
-        gradient_clip_norm=-1,
+        gradient_clip_norm=0,
     ):
         super().__init__(
             loss=loss,
