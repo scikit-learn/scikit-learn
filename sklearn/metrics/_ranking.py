@@ -145,7 +145,7 @@ def average_precision_score(
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by :term:`decision_function` on some classifiers).
-        For y_scores from "decision_function", positive scores are required to
+        For y_scores from `decision_function`, positive scores are required to
         correspond to the positive class.
 
     average : {'micro', 'samples', 'weighted', 'macro'} or None, \
