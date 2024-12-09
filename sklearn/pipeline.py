@@ -182,7 +182,9 @@ class Pipeline(_BaseComposition):
         before fitting. Therefore, the transformer instance given to the
         pipeline cannot be inspected directly. Use the attribute ``named_steps``
         or ``steps`` to inspect estimators within the pipeline. Caching the
-        transformers is advantageous when fitting is time consuming.
+        transformers is advantageous when fitting is time consuming. See
+        :ref:`sphx_glr_auto_examples_neighbors_plot_caching_nearest_neighbors.py`
+        for an example on how to enable caching.
 
     verbose : bool, default=False
         If True, the time elapsed while fitting each step will be printed as it
