@@ -147,6 +147,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         tags = super().__sklearn_tags__()
         # Used by cross_val_score.
         tags.input_tags.pairwise = self.kernel == "precomputed"
+        tags.input_tags.sparse = self.kernel != "precomputed"
         return tags
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -998,6 +999,11 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         ndarray of shape  (n_classes * (n_classes - 1) / 2)
         """
         return self._probB
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = self.kernel != "precomputed"
+        return tags
 
 
 def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
