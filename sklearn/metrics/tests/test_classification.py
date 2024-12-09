@@ -2658,15 +2658,15 @@ def test_log_loss():
     y_pred = [[0.2, 0.8], [0.6, 0.4]]
     y_score = np.array([[0.1, 0.9], [0.1, 0.9]])
     error_str = (
-        r"y_true contains only one label \(2\). Please provide "
-        r"the true labels explicitly through the labels argument."
+        "y_true contains only one label (2). Please provide "
+        "the true labels explicitly through the labels argument."
     )
-    with pytest.raises(ValueError, match=error_str):
+    with pytest.raises(ValueError, match=re.escape(error_str)):
         log_loss(y_true, y_pred)
 
     y_pred = [[0.2, 0.8], [0.6, 0.4], [0.7, 0.3]]
-    error_str = r"Found input variables with inconsistent numbers of samples: \[3, 2\]"
-    with pytest.raises(ValueError, match=error_str):
+    error_str = "Found input variables with inconsistent numbers of samples: [3, 2]"
+    with pytest.raises(ValueError, match=re.escape(error_str)):
         log_loss(y_true, y_pred)
 
     # works when the labels argument is used
@@ -2702,7 +2702,7 @@ def test_log_loss_not_probabilities_warning(dtype):
     y_true = np.array([0, 1, 1, 0])
     y_pred = np.array([[0.2, 0.7], [0.6, 0.3], [0.4, 0.7], [0.8, 0.3]], dtype=dtype)
 
-    with pytest.warns(UserWarning, match="The y_pred values do not sum to one."):
+    with pytest.warns(UserWarning, match="The y_prob values do not sum to one."):
         log_loss(y_true, y_pred)
 
 
@@ -2738,6 +2738,21 @@ def test_log_loss_pandas_input():
         assert_allclose(loss, 0.7469410)
 
 
+def test_log_loss_warnings():
+    expected_message = re.escape(
+        "Labels passed were ['spam', 'eggs', 'ham']. But this function "
+        "assumes labels are ordered lexicographically. "
+        "Ensure that labels in y_prob are ordered as "
+        "['eggs' 'ham' 'spam']."
+    )
+    with pytest.warns(UserWarning, match=expected_message):
+        log_loss(
+            ["eggs", "spam", "ham"],
+            [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+            labels=["spam", "eggs", "ham"],
+        )
+
+
 def test_brier_score_loss():
     # Check brier_score_loss function
     y_true = np.array([0, 1, 1, 0, 1, 1])
@@ -2755,11 +2770,12 @@ def test_brier_score_loss():
     with pytest.raises(ValueError):
         brier_score_loss(y_true, y_pred - 1.0)
 
-    # ensure to raise an error for multiclass y_true
+    # raise an error for multiclass y_true and binary y_pred
     y_true = np.array([0, 1, 2, 0])
     y_pred = np.array([0.8, 0.6, 0.4, 0.2])
-    error_message = (
-        "Only binary classification is supported. The type of the target is multiclass"
+    error_message = re.escape(
+        "The type of the target is multiclass "
+        "but should be binary according to the shape of y_prob."
     )
 
     with pytest.raises(ValueError, match=error_message):
@@ -2771,6 +2787,118 @@ def test_brier_score_loss():
     assert_almost_equal(brier_score_loss([1], [0.4]), 0.36)
     assert_almost_equal(brier_score_loss(["foo"], [0.4], pos_label="bar"), 0.16)
     assert_almost_equal(brier_score_loss(["foo"], [0.4], pos_label="foo"), 0.36)
+
+
+multiclass_brier_score_loss = partial(brier_score_loss, normalize=False)
+
+
+def test_multiclass_brier_score_loss():
+    # test cases for multi-class
+    assert_almost_equal(
+        multiclass_brier_score_loss(
+            ["eggs", "spam", "ham"],
+            [[1, 0, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0]],
+            labels=["eggs", "ham", "spam", "yams"],
+        ),
+        2 / 3,
+    )
+
+    assert_almost_equal(
+        multiclass_brier_score_loss(
+            [1, 0, 2], [[0.2, 0.7, 0.1], [0.6, 0.2, 0.2], [0.6, 0.1, 0.3]]
+        ),
+        0.41333333,
+    )
+
+    # check perfect predictions for 3 classes
+    assert_almost_equal(
+        multiclass_brier_score_loss(
+            [0, 1, 2], [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
+        ),
+        0,
+    )
+
+    # check perfectly incorrect predictions for 3 classes
+    assert_almost_equal(
+        multiclass_brier_score_loss(
+            [0, 1, 2], [[0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [1.0, 0.0, 0.0]]
+        ),
+        2,
+    )
+
+
+def test_multiclass_brier_score_loss_invalid_inputs():
+    y_true = np.array([0, 1, 1, 0, 1, 1])
+    y_pred = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
+
+    with pytest.raises(ValueError):
+        # bad length of y_pred
+        multiclass_brier_score_loss(y_true, y_pred[1:])
+    with pytest.raises(ValueError):
+        # y_pred has value greater than 1
+        multiclass_brier_score_loss(y_true, y_pred + 1.0)
+    with pytest.raises(ValueError):
+        # y_pred has value less than 1
+        multiclass_brier_score_loss(y_true, y_pred - 1.0)
+
+    # ensure to raise an error for wrong number of classes
+    y_true = [0, 1, 2]
+    y_pred = [[1, 0], [0, 1], [0, 1]]
+    error_message = (
+        "y_true and y_prob contain different number of "
+        "classes 3, 2. Please provide the true "
+        "labels explicitly through the labels argument. "
+        "Classes found in "
+        "y_true: [0 1 2]"
+    )
+    with pytest.raises(ValueError, match=re.escape(error_message)):
+        multiclass_brier_score_loss(y_true, y_pred)
+
+    y_true = ["eggs", "spam", "ham"]
+    y_pred = [[1, 0, 0], [0, 1, 0], [0, 1, 0]]
+    labels = ["eggs", "spam", "ham", "yams"]
+    error_message = (
+        "The number of classes in labels is different "
+        "from that in y_prob. Classes found in "
+        "labels: ['eggs' 'ham' 'spam' 'yams']"
+    )
+    with pytest.raises(ValueError, match=re.escape(error_message)):
+        multiclass_brier_score_loss(y_true, y_pred, labels=labels)
+
+    # raise error message when there's only one class in y_true
+    y_true = ["eggs"]
+    y_pred = [[0.9, 0.1]]
+    error_message = (
+        "y_true contains only one label (eggs). Please "
+        "provide the true labels explicitly through the "
+        "labels argument."
+    )
+    with pytest.raises(ValueError, match=re.escape(error_message)):
+        multiclass_brier_score_loss(y_true, y_pred)
+
+    # error is fixed when labels is specified
+    assert_almost_equal(
+        multiclass_brier_score_loss(y_true, y_pred, labels=["eggs", "ham"]), 0.02
+    )
+
+
+def test_multiclass_brier_score_loss_warnings():
+    expected_message = re.escape(
+        "Labels passed were ['spam', 'eggs', 'ham']. But this function "
+        "assumes labels are ordered lexicographically. "
+        "Ensure that labels in y_prob are ordered as "
+        "['eggs' 'ham' 'spam']."
+    )
+    with pytest.warns(UserWarning, match=expected_message):
+        multiclass_brier_score_loss(
+            ["eggs", "spam", "ham"],
+            [
+                [1, 0, 0],
+                [0, 1, 0],
+                [0, 0, 1],
+            ],
+            labels=["spam", "eggs", "ham"],
+        )
 
 
 def test_balanced_accuracy_score_unseen():
@@ -3082,7 +3210,7 @@ def test_d2_log_loss_score_raises():
 
     # check error when y_true only has 1 label
     y_true = [1, 1, 1]
-    y_pred = [[0.5, 0.5], [0.5, 0.5], [0.5, 5]]
+    y_pred = [[0.5, 0.5], [0.5, 0.5], [0.5, 0.5]]
     err = "y_true contains only one label"
     with pytest.raises(ValueError, match=err):
         d2_log_loss_score(y_true, y_pred)
@@ -3091,7 +3219,7 @@ def test_d2_log_loss_score_raises():
     # only 1 label
     y_true = [1, 1, 1]
     labels = [1]
-    y_pred = [[0.5, 0.5], [0.5, 0.5], [0.5, 5]]
+    y_pred = [[0.5, 0.5], [0.5, 0.5], [0.5, 0.5]]
     err = "The labels array needs to contain at least two"
     with pytest.raises(ValueError, match=err):
         d2_log_loss_score(y_true, y_pred, labels=labels)
