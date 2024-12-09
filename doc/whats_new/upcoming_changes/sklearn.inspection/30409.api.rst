@@ -1,0 +1,5 @@
+- :func:`inspection.partial_dependence` does no longer accept integer dtype for
+  numerical feature columns. Explicity conversion to floating point values is
+  now required before calling this tool (and preferably even before fitting the
+  model to inspect).
+  By :user:`Olivier Grisel <ogrisel>`

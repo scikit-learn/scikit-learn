@@ -1001,7 +1001,6 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.classifier_tags.multi_label = True
         tags.input_tags.sparse = True
         return tags
 
@@ -1168,7 +1167,6 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.regressor_tags.multi_label = True
         tags.input_tags.sparse = True
         return tags
 
