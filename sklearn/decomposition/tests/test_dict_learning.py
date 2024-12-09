@@ -202,10 +202,12 @@ def test_dict_learning_reconstruction():
     )
     code = dico.fit(X).transform(X)
     assert_array_almost_equal(np.dot(code, dico.components_), X)
+    assert_array_almost_equal(dico.inverse_transform(code), X)
 
     dico.set_params(transform_algorithm="lasso_lars")
     code = dico.transform(X)
     assert_array_almost_equal(np.dot(code, dico.components_), X, decimal=2)
+    assert_array_almost_equal(dico.inverse_transform(code), X, decimal=2)
 
     # used to test lars here too, but there's no guarantee the number of
     # nonzero atoms is right.
@@ -268,12 +270,17 @@ def test_dict_learning_split():
         n_components, transform_algorithm="threshold", random_state=0
     )
     code = dico.fit(X).transform(X)
+    Xr = dico.inverse_transform(code)
+
     dico.split_sign = True
     split_code = dico.transform(X)
 
     assert_array_almost_equal(
         split_code[:, :n_components] - split_code[:, n_components:], code
     )
+
+    Xr2 = dico.inverse_transform(split_code)
+    assert_array_almost_equal(Xr, Xr2)
 
 
 def test_dict_learning_online_shapes():

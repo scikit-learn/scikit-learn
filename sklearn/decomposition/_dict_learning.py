@@ -1142,6 +1142,33 @@ class _BaseSparseCoding(ClassNamePrefixFeaturesOutMixin, TransformerMixin):
         check_is_fitted(self)
         return self._transform(X, self.components_)
 
+    def _inverse_transform(self, code, dictionary):
+        """Private method allowing to accommodate both DictionaryLearning and
+        SparseCoder."""
+        if self.split_sign:
+            n_samples, n_features = code.shape
+            n_features //= 2
+            code = code[:, :n_features] - code[:, n_features:]
+
+        return code @ dictionary
+
+    def inverse_transform(self, X):
+        """Transform data back to its original space.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_components)
+            Data to be transformed back. Must have the same number of
+            components as the data used to train the model.
+
+        Returns
+        -------
+        X_new : ndarray of shape (n_samples, n_features)
+            Transformed data.
+        """
+        check_is_fitted(self)
+        return self._inverse_transform(X, self.components_)
+
 
 class SparseCoder(_BaseSparseCoding, BaseEstimator):
     """Sparse coding.
