@@ -1017,6 +1017,12 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
     ||y - Xw||^2_2 + alpha * ||w||^2_2
 
+    or in LaTeX:
+
+    .. math::
+        \\vert \\vert Xw - y \\vert \\vert^2_2 +
+        \\alpha \\vert \\vert w \\vert \\vert^2_2
+
     This model solves a regression model where the loss function is
     the linear least squares function and regularization is given by
     the l2-norm. Also known as Ridge Regression or Tikhonov regularization.
