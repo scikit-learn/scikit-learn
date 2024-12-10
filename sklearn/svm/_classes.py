@@ -7,7 +7,7 @@ import numpy as np
 
 from ..base import BaseEstimator, OutlierMixin, RegressorMixin, _fit_context
 from ..linear_model._base import LinearClassifierMixin, LinearModel, SparseCoefMixin
-from ..utils import compute_class_weight
+from ..utils import compute_sample_weight
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import _check_sample_weight, _num_samples, validate_data
@@ -1100,6 +1100,7 @@ class NuSVC(BaseSVC):
     _parameter_constraints: dict = {
         **BaseSVC._parameter_constraints,
         "nu": [Interval(Real, 0.0, 1.0, closed="right")],
+        "class_weight": [dict, StrOptions({"balanced"}), None],
     }
     _parameter_constraints.pop("C")
 
@@ -1141,43 +1142,22 @@ class NuSVC(BaseSVC):
             random_state=random_state,
         )
 
+    def _finalize_sample_weight(self, sample_weight, y):
+        if self.class_weight is None:
+            return sample_weight
+
+        expanded_class_weight = compute_sample_weight(self.class_weight, y)
+
+        if sample_weight is not None:
+            return sample_weight * expanded_class_weight
+        else:
+            return expanded_class_weight
+
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
-        """
-        Fit the model according to the given training data.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
-
-        y : array-like of shape (n_samples,)
-            Target values (class labels).
-
-        sample_weight : array-like of shape (n_samples,), default=None
-            Per-sample weights. If None, then each sample is given equal weight.
-
-        Returns
-        -------
-        self : object
-            Fitted estimator.
-        """
         sample_weight = _check_sample_weight(sample_weight, X, dtype=np.float64)
 
-        if self.class_weight is not None:
-            # Compute class_weight_vect from class_weight
-            classes_ = np.unique(y)
-            class_weight_vect = compute_class_weight(
-                self.class_weight, classes=classes_, y=y
-            )
-
-            # Initialize sample_weight to 1 for all samples
-            sample_weight = np.ones(len(y), dtype=np.float64)
-
-            # For each class, multiply the sample_weight by the class_weight
-            for i, cls in enumerate(classes_):
-                cls_indices = np.where(y == cls)[0]
-                sample_weight[cls_indices] *= class_weight_vect[i]
+        sample_weight = self._finalize_sample_weight(sample_weight, y)
 
         return super().fit(X, y, sample_weight=sample_weight)
 
