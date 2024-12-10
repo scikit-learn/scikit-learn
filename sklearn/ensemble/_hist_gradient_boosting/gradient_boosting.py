@@ -1964,7 +1964,6 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         .. versionadded:: 0.23
 
     scoring : str or callable or None, default='loss'
-<<<<<<< HEAD
         Scoring parameter to use for early stopping. Only used if early stopping
         is performed. Options:
 
@@ -1974,19 +1973,6 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         - `None`: :ref:`accuracy <accuracy_score>` is used.
         - 'loss': early stopping is checked w.r.t the loss value.
 
-||||||| 8a8bfc24a
-        Scoring parameter to use for early stopping. It can be a single
-        string (see :ref:`scoring_parameter`) or a callable (see
-        :ref:`scoring`). If None, the estimator's default scorer
-        is used. If ``scoring='loss'``, early stopping is checked
-        w.r.t the loss value. Only used if early stopping is performed.
-=======
-        Scoring parameter to use for early stopping. It can be a single
-        string (see :ref:`scoring_parameter`) or a callable (see
-        :ref:`scoring_callable`). If None, the estimator's default scorer
-        is used. If ``scoring='loss'``, early stopping is checked
-        w.r.t the loss value. Only used if early stopping is performed.
->>>>>>> main
     validation_fraction : int or float or None, default=0.1
         Proportion (or absolute size) of training data to set aside as
         validation data for early stopping. If None, early stopping is done on
