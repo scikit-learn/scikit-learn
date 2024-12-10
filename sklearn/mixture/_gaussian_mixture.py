@@ -514,13 +514,16 @@ class GaussianMixture(BaseMixture):
 
     Read more in the :ref:`User Guide <gmm>`.
 
-    For examples on different methods of initialization, refer to:
+    For a detailed example of how the init_params parameter impacts 
+    the model's convergence behaviour, refer to:
     :ref:`sphx_glr_auto_examples_mixture_plot_gmm_init.py`
 
-    For examples on model selection with Gassian Mixture, refer to:
+    For a detailed example of how the n_components and covariance_type
+    parameters influence the model's performance, refer to:
     :ref:`sphx_glr_auto_examples_mixture_plot_gmm_selection.py`
 
-    For example covariances types for Gaussian mixture models, see:
+    For a detailed example of how the covariance_type parameter 
+    impacts the model's performance, refer to:
     :ref:`sphx_glr_auto_examples_mixture_plot_gmm_covariances.py`
 
     .. versionadded:: 0.18
