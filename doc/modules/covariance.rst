@@ -18,11 +18,12 @@ a population's covariance matrix under various settings.
 We assume that the observations are independent and identically
 distributed (i.i.d.).
 
+.. rubric:: Examples
+
 * See :ref:`sphx_glr_auto_examples_covariance_plot_covariance_estimation.py` for
   an example on how to fit :class:`ShrunkCovariance` , :class:`LedoitWolf` and
   :class:`OAS` objects to data and for visualizing their performances in terms of
   likelihood.
-
 
 
 Empirical covariance
@@ -46,7 +47,6 @@ on whether the data are centered, so one may want to use the
 same mean vector as the training set. If not, both should be centered
 by the user, and ``assume_centered=True`` should be used.
 
-.. rubric:: Examples
 
 
 
@@ -87,7 +87,6 @@ Tr}\hat{\Sigma}}{p}\rm Id`.
 Choosing the amount of shrinkage, :math:`\alpha` amounts to setting a
 bias/variance trade-off, and is discussed below.
 
-.. rubric:: Examples
 
 
 
@@ -121,7 +120,6 @@ fitting a :class:`LedoitWolf` object to the same sample.
     Since the population covariance is already a multiple of the identity
     matrix, the Ledoit-Wolf solution is indeed a reasonable estimate.
 
-.. rubric:: Examples
 
 
 .. rubric:: References
@@ -162,7 +160,6 @@ object to the same sample.
        <0907.4698>`
 
 .. rubric:: Examples
-
 
 * See :ref:`sphx_glr_auto_examples_covariance_plot_lw_vs_oas.py` to visualize the
   Mean Squared Error difference between a :class:`LedoitWolf` and
