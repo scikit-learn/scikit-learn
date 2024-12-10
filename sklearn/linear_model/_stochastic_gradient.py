@@ -1757,7 +1757,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             self.t_,
             intercept_decay,
             self.average,
-            self.gradient_clip_norm
+            self.gradient_clip_norm,
         )
 
         self.t_ += self.n_iter_ * X.shape[0]
@@ -2026,7 +2026,6 @@ class SGDRegressor(BaseSGDRegressor):
         "epsilon": [Interval(Real, 0, None, closed="left")],
         "eta0": [Interval(Real, 0, None, closed="left")],
         "gradient_clip_norm": [Interval(Real, 0, None, closed="left")],
-
     }
 
     def __init__(
