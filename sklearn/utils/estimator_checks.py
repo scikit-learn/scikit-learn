@@ -1113,6 +1113,37 @@ def check_array_api_input(
         "transform",
     )
 
+    try:
+        np.asarray(X_xp)
+        np.asarray(y_xp)
+        # TODO For some reason there are a few errors with array-api-strict.
+        # Probably not worth investigating for now, since using
+        # array-api-strict with array API disabled does not seem a very
+        # relevant use case.
+        numpy_asarray_works = xp.__name__ != "array_api_strict"
+
+    except TypeError:
+        # PyTorch with CUDA device and CuPy raise TypeError consistently.
+        # Exception type may need to be updated in the future for other
+        # libraries.
+        numpy_asarray_works = False
+
+    if numpy_asarray_works:
+        # In this case, array_api_dispatch is disabled and we rely on the
+        # np.asarray being called on the array inputs
+        est_fitted_with_as_array = clone(est).fit(X_xp, y_xp)
+        # We only do a smoke test for now, in order to avoid complicating the
+        # test function even further
+        for method_name in methods:
+            method = getattr(est_fitted_with_as_array, method_name, None)
+            if method is None:
+                continue
+
+            if method_name == "score":
+                method(X_xp, y_xp)
+            else:
+                method(X_xp)
+
     for method_name in methods:
         method = getattr(est, method_name, None)
         if method is None:

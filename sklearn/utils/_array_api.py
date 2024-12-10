@@ -130,8 +130,12 @@ def _check_array_api_dispatch(array_api_dispatch):
 
 def _single_array_device(array):
     """Hardware device where the array data resides on."""
-    if isinstance(array, (numpy.ndarray, numpy.generic)) or not hasattr(
-        array, "device"
+    if (
+        isinstance(array, (numpy.ndarray, numpy.generic))
+        or not hasattr(array, "device")
+        # When array API dispatch is disabled, we expect the scikit-learn code
+        # to do np.asarray so that the resulting array will be on the CPU.
+        or not get_config()["array_api_dispatch"]
     ):
         return "cpu"
     else:

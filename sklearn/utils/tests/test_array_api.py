@@ -273,10 +273,17 @@ def test_device_inspection():
     with pytest.raises(TypeError):
         hash(Array("device").device)
 
-    # Test raise if on different devices
+    # If array API dispatch is disabled the device is always "cpu". Erroring
+    # early for different devices would prevent the np.asarray conversion to
+    # happen. For example, `r2_score(np.ones(5), torch.ones(5))` should work
+    # fine with array API disabled.
+    assert device(Array("cpu"), Array("mygpu")) == "cpu"
+
+    # Test raise if on different devices and array API dispatch is enabled
     err_msg = "Input arrays use different devices: cpu, mygpu"
-    with pytest.raises(ValueError, match=err_msg):
-        device(Array("cpu"), Array("mygpu"))
+    with config_context(array_api_dispatch=True):
+        with pytest.raises(ValueError, match=err_msg):
+            device(Array("cpu"), Array("mygpu"))
 
     # Test expected value is returned otherwise
     array1 = Array("device")
@@ -553,7 +560,7 @@ def test_get_namespace_and_device():
     namespace, is_array_api, device = get_namespace_and_device(some_torch_tensor)
     assert namespace is get_namespace(some_numpy_array)[0]
     assert not is_array_api
-    assert device.type == "cpu"
+    assert device == "cpu"
 
     # Otherwise, expose the torch namespace and device via array API compat
     # wrapper.
