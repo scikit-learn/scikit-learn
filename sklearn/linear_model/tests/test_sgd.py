@@ -2230,15 +2230,12 @@ def test_sgd_regressor_gradient_clip_norm():
         weight_norm_with_clip = np.linalg.norm(weights_with_clip)
         assert (
             weight_norm_with_clip <= gradient_clip_norm
-        ), f"Weight norm {
-            weight_norm_with_clip
-            } exceeds the clipping threshold {gradient_clip_norm}"
+        ), f"Norm {weight_norm_with_clip} exceeds threshold {gradient_clip_norm}"
 
         weight_norm_no_clip = np.linalg.norm(weights_no_clip)
         assert (
             weight_norm_no_clip > gradient_clip_norm * 100
-        ), f"Without clipping, the weight norm should be greater than the threshold {
-            gradient_clip_norm} * 100"
+        ), f"Unclipped norm should exceed the threshold {gradient_clip_norm} * 100"
         clipped_weights_results.append(weight_norm_with_clip)
 
     # Check that the clipped weights are strictly increasing with increasing clip norm
