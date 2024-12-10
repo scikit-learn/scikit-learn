@@ -40,6 +40,7 @@ from ..utils._array_api import (
     device,
     get_namespace,
     get_namespace_and_device,
+    size,
 )
 from ..utils._param_validation import (
     Hidden,
@@ -362,11 +363,7 @@ def confusion_matrix(
 
     check_consistent_length(y_true, y_pred, sample_weight)
 
-    # TODO: remove condition when torch supports the size attribute
-    if xp.__name__ == "array_api_compat.torch":
-        n_labels = xp.size(labels)
-    else:
-        n_labels = labels.size
+    n_labels = size(labels)
     # If labels are not consecutive integers starting from zero, then
     # y_true and y_pred must be converted into index form
     need_index_conversion = not (
@@ -416,17 +413,8 @@ def confusion_matrix(
             cm = cm / cm.sum(axis=0, keepdims=True)
         elif normalize == "all":
             cm = cm / cm.sum()
-
-        if xp.__name__ == "array_api_strict":
-            cm[xp.isnan(cm)] = 0
-            if xp.isdtype(cm.dtype, "real floating"):
-                cm[xp.isinf(cm) & (cm > 0)] = xp.finfo(cm.dtype).max
-                cm[xp.isinf(cm) & (cm < 0)] = xp.finfo(cm.dtype).min
-            else:  # xp.isdtype(cm.dtype, "integral")
-                cm[xp.isinf(cm) & (cm > 0)] = xp.iinfo(cm.dtype).max
-                cm[xp.isinf(cm) & (cm < 0)] = xp.iinfo(cm.dtype).min
-        else:
-            cm = xp.nan_to_num(cm)
+        # cm = _nan_to_num(cm)
+        cm = xp.nan_to_num(cm)
 
     if cm.shape == (1, 1):
         warnings.warn(
