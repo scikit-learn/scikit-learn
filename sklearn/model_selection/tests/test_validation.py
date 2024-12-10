@@ -2552,6 +2552,10 @@ def test_groups_with_routing_validation(func, extra_args):
 )
 @config_context(enable_metadata_routing=True)
 def test_cross_validate_params_none(func, extra_args):
+    """Test that no errors are raised when passing `params=None`, which is the
+    default value.
+    Non-regression test for: https://github.com/scikit-learn/scikit-learn/issues/30447
+    """
     X, y = make_classification(n_samples=100, n_classes=2, random_state=0)
     func(estimator=ConsumingClassifier(), X=X, y=y, **extra_args)
 
