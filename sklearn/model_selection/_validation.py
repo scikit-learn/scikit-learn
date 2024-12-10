@@ -77,7 +77,7 @@ def _check_params_groups_deprecation(fit_params, params, groups, version):
         )
         params = fit_params
 
-    params = {} if params is None else params
+    params = params or {}
 
     _check_groups_routing_disabled(groups)
 
@@ -343,7 +343,7 @@ def cross_validate(
     _check_groups_routing_disabled(groups)
 
     X, y = indexable(X, y)
-
+    params = params or {}
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
 
     scorers = check_scoring(
@@ -1172,6 +1172,7 @@ def cross_val_predict(
     """
     _check_groups_routing_disabled(groups)
     X, y = indexable(X, y)
+    params = params or {}
 
     if _routing_enabled():
         # For estimators, a MetadataRouter is created in get_metadata_routing
@@ -1636,6 +1637,7 @@ def permutation_test_score(
     params = _check_params_groups_deprecation(fit_params, params, groups, "1.8")
 
     X, y, groups = indexable(X, y, groups)
+    params = params or {}
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
