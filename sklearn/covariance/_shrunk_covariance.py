@@ -564,7 +564,7 @@ class LedoitWolf(EmpiricalCovariance):
     >>> cov.location_
     array([ 0.0595... , -0.0075...])
 
-    * See also :ref:`sphx_glr_auto_examples_covariance_plot_covariance_estimation.py`
+    See also :ref:`sphx_glr_auto_examples_covariance_plot_covariance_estimation.py`
     for an example on how to fit a :class:`LedoitWolf` object to data and
     for visualizing the performances of the Ledoit-Wolf estimator in
     terms of likelihood.
@@ -787,7 +787,7 @@ class OAS(EmpiricalCovariance):
     >>> oas.shrinkage_
     np.float64(0.0195...)
 
-    * See also :ref:`sphx_glr_auto_examples_covariance_plot_covariance_estimation.py`
+    See also :ref:`sphx_glr_auto_examples_covariance_plot_covariance_estimation.py`
     for an example on how to fit a :class:`OAS` object to data and
     for visualizing the performances of the OAS estimator in
     terms of likelihood.
