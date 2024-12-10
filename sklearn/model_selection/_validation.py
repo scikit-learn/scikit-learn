@@ -1637,7 +1637,6 @@ def permutation_test_score(
     params = _check_params_groups_deprecation(fit_params, params, groups, "1.8")
 
     X, y, groups = indexable(X, y, groups)
-    params = params or {}
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
