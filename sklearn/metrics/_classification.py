@@ -33,6 +33,7 @@ from ..utils._array_api import (
     _find_matching_floating_dtype,
     _is_numpy_namespace,
     _isin,
+    _nan_to_num,
     _searchsorted,
     _setdiff1d,
     _tolist,
@@ -413,8 +414,7 @@ def confusion_matrix(
             cm = cm / cm.sum(axis=0, keepdims=True)
         elif normalize == "all":
             cm = cm / cm.sum()
-        # cm = _nan_to_num(cm)
-        cm = xp.nan_to_num(cm)
+        cm = _nan_to_num(cm)
 
     if cm.shape == (1, 1):
         warnings.warn(
