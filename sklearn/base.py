@@ -545,7 +545,7 @@ class ClassifierMixin:
 
     def score(self, X, y, sample_weight=None):
         """
-        Return mean :ref:`accuracy <accuracy_score>` on test data and labels.
+        Return :ref:`accuracy <accuracy_score>` on test data and labels.
 
         In multi-label classification, this is the subset accuracy
         which is a harsh metric since you require for each sample that

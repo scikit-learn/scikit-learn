@@ -553,8 +553,8 @@ class RFECV(RFE):
 
     The number of features selected is tuned automatically by fitting an :class:`RFE`
     selector on the different cross-validation splits (provided by the `cv` parameter).
-    The performance of the :class:`RFE` selectors are evaluated using `scoring` for
-    different number of selected features and aggregated together. Finally, the scores
+    The performance of each :class:`RFE` selector is evaluated using `scoring` for
+    different numbers of selected features and aggregated together. Finally, the scores
     are averaged across folds and the number of features selected is set to the number
     of features that maximize the cross-validation score.
     See glossary entry for :term:`cross-validation estimator`.
