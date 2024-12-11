@@ -1516,6 +1516,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         max_iter=1000,
         tol=1e-4,
         copy_X=True,
+        refit=True,
         cv=None,
         verbose=False,
         n_jobs=None,
@@ -1531,6 +1532,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         self.max_iter = max_iter
         self.tol = tol
         self.copy_X = copy_X
+        self.refit = refit
         self.cv = cv
         self.verbose = verbose
         self.n_jobs = n_jobs
@@ -1811,6 +1813,9 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         # Remove duplicate alphas in case alphas is provided.
         else:
             self.alphas_ = np.asarray(alphas[0])
+
+        if not self.refit:
+            return self
 
         # Refit the model with the parameters selected
         common_params = {
