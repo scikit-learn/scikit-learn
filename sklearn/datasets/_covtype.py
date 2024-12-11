@@ -3,6 +3,9 @@
 A classic dataset for classification benchmarks, featuring categorical and
 real-valued features.
 
+For benchmarking using a specific classification estimator, see:
+:ref:`sphx_glr_auto_examples_applications_plot_prediction_latency.py`
+
 The dataset page is available from UCI Machine Learning Repository
 
     https://archive.ics.uci.edu/ml/datasets/Covertype
