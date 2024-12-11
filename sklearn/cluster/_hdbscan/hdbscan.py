@@ -627,14 +627,17 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.cluster import HDBSCAN
     >>> from sklearn.datasets import load_digits
     >>> X, _ = load_digits(return_X_y=True)
     >>> hdb = HDBSCAN(min_cluster_size=20)
     >>> hdb.fit(X)
     HDBSCAN(min_cluster_size=20)
-    >>> hdb.labels_
-    array([ 2,  6, -1, ..., -1, -1, -1])
+    >>> hdb.labels_.shape == (X.shape[0],)
+    True
+    >>> np.unique(hdb.labels_).tolist()
+    [-1, 0, 1, 2, 3, 4, 5, 6, 7]
     """
 
     _parameter_constraints = {
