@@ -1,5 +1,8 @@
 [run]
-branch = True
+# Use statement coverage rather than branch coverage because
+# COVERAGE_CORE=sysmon can make branch coverage slower rather than faster. See
+# https://github.com/nedbat/coveragepy/issues/1812 for more details.
+branch = False
 source = sklearn
 parallel = True
 omit =
