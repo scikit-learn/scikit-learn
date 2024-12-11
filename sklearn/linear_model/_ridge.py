@@ -1350,11 +1350,6 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
             return self._label_binarizer.inverse_transform(scores)
         return super().predict(X)
 
-    @property
-    def classes_(self):
-        """Classes labels."""
-        return self._label_binarizer.classes_
-
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.classifier_tags.multi_label = True
@@ -2276,7 +2271,7 @@ class _RidgeGCV(LinearModel):
             dual_T = self.dual_coef_
         self.coef_ = safe_sparse_dot(dual_T, X)
         if y.ndim == 1 or y.shape[1] == 1:
-            self.coef_ = self.coef_.ravel()
+            self.coef_ = _ravel(self.coef_)
 
         if sparse.issparse(X):
             X_offset = X_mean * X_scale
@@ -2341,8 +2336,8 @@ class _RidgeGCV(LinearModel):
             else:
                 _score = scorer(
                     identity_estimator,
-                    xp.reshape(predictions, shape=(-1,)),
-                    xp.reshape(y, shape=(-1,)),
+                    predictions,
+                    y,
                     **score_params,
                 )
 
@@ -2387,9 +2382,6 @@ class _BaseRidgeCV(LinearModel):
         self.store_cv_results = store_cv_results
         self.alpha_per_target = alpha_per_target
         self.store_cv_values = store_cv_values
-
-    def _more_tags(self):
-        return {"array_api_support": True}
 
     def fit(self, X, y, sample_weight=None, **params):
         """Fit Ridge regression model with cv.
@@ -2602,6 +2594,11 @@ class _BaseRidgeCV(LinearModel):
     @property
     def cv_values_(self):
         return self.cv_results_
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.array_api_support = True
+        return tags
 
 
 class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
