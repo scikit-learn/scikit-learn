@@ -18,14 +18,14 @@ class RandomForestClassifierBenchmark(Predictor, Estimator, Benchmark):
     Benchmarks for RandomForestClassifier.
     """
 
-    param_names = ["representation", "n_jobs"]
-    params = (["dense", "sparse"], Benchmark.n_jobs_vals)
+    param_names = ["representation", "n_jobs", "use_oob"]
+    params = (["dense", "sparse"], Benchmark.n_jobs_vals, [True, False])
 
     def setup_cache(self):
         super().setup_cache()
 
     def make_data(self, params):
-        representation, n_jobs = params
+        representation, n_jobs, _ = params
 
         if representation == "sparse":
             data = _20newsgroups_highdim_dataset()
@@ -35,7 +35,7 @@ class RandomForestClassifierBenchmark(Predictor, Estimator, Benchmark):
         return data
 
     def make_estimator(self, params):
-        representation, n_jobs = params
+        representation, n_jobs, use_oob = params
 
         n_estimators = 500 if Benchmark.data_size == "large" else 100
 
@@ -45,6 +45,7 @@ class RandomForestClassifierBenchmark(Predictor, Estimator, Benchmark):
             max_features="log2",
             n_jobs=n_jobs,
             random_state=0,
+            oob_score=use_oob,
         )
 
         return estimator
