@@ -2753,7 +2753,7 @@ def test_log_loss_warnings():
         )
 
 
-def test_brier_score_loss():
+def test_binary_brier_score_loss():
     # Check brier_score_loss function
     y_true = np.array([0, 1, 1, 0, 1, 1])
     y_pred = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
@@ -2763,23 +2763,17 @@ def test_brier_score_loss():
     assert_almost_equal(brier_score_loss(y_true, y_pred), true_score)
     assert_almost_equal(brier_score_loss(1.0 + y_true, y_pred), true_score)
     assert_almost_equal(brier_score_loss(2 * y_true - 1, y_pred), true_score)
-    with pytest.raises(ValueError):
-        brier_score_loss(y_true, y_pred[1:])
-    with pytest.raises(ValueError):
-        brier_score_loss(y_true, y_pred + 1.0)
-    with pytest.raises(ValueError):
-        brier_score_loss(y_true, y_pred - 1.0)
 
-    # raise an error for multiclass y_true and binary y_pred
-    y_true = np.array([0, 1, 2, 0])
-    y_pred = np.array([0.8, 0.6, 0.4, 0.2])
-    error_message = re.escape(
-        "The type of the target is multiclass "
-        "but should be binary according to the shape of y_prob."
+    # check scale_by_half argument
+    assert_almost_equal(
+        brier_score_loss(y_true, y_pred, scale_by_half="auto"), true_score
     )
-
-    with pytest.raises(ValueError, match=error_message):
-        brier_score_loss(y_true, y_pred)
+    assert_almost_equal(
+        brier_score_loss(y_true, y_pred, scale_by_half=True), true_score
+    )
+    assert_almost_equal(
+        brier_score_loss(y_true, y_pred, scale_by_half=False), 2 * true_score
+    )
 
     # calculate correctly when there's only one class in y_true
     assert_almost_equal(brier_score_loss([-1], [0.4]), 0.16)
@@ -2789,13 +2783,10 @@ def test_brier_score_loss():
     assert_almost_equal(brier_score_loss(["foo"], [0.4], pos_label="foo"), 0.36)
 
 
-multiclass_brier_score_loss = partial(brier_score_loss, normalize=False)
-
-
 def test_multiclass_brier_score_loss():
     # test cases for multi-class
     assert_almost_equal(
-        multiclass_brier_score_loss(
+        brier_score_loss(
             ["eggs", "spam", "ham"],
             [[1, 0, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0]],
             labels=["eggs", "ham", "spam", "yams"],
@@ -2804,7 +2795,7 @@ def test_multiclass_brier_score_loss():
     )
 
     assert_almost_equal(
-        multiclass_brier_score_loss(
+        brier_score_loss(
             [1, 0, 2], [[0.2, 0.7, 0.1], [0.6, 0.2, 0.2], [0.6, 0.1, 0.3]]
         ),
         0.41333333,
@@ -2812,7 +2803,7 @@ def test_multiclass_brier_score_loss():
 
     # check perfect predictions for 3 classes
     assert_almost_equal(
-        multiclass_brier_score_loss(
+        brier_score_loss(
             [0, 1, 2], [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
         ),
         0,
@@ -2820,26 +2811,35 @@ def test_multiclass_brier_score_loss():
 
     # check perfectly incorrect predictions for 3 classes
     assert_almost_equal(
-        multiclass_brier_score_loss(
+        brier_score_loss(
             [0, 1, 2], [[0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [1.0, 0.0, 0.0]]
         ),
         2,
     )
 
 
-def test_multiclass_brier_score_loss_invalid_inputs():
+def test_brier_score_loss_invalid_inputs():
     y_true = np.array([0, 1, 1, 0, 1, 1])
     y_pred = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
-
     with pytest.raises(ValueError):
         # bad length of y_pred
-        multiclass_brier_score_loss(y_true, y_pred[1:])
+        brier_score_loss(y_true, y_pred[1:])
     with pytest.raises(ValueError):
         # y_pred has value greater than 1
-        multiclass_brier_score_loss(y_true, y_pred + 1.0)
+        brier_score_loss(y_true, y_pred + 1.0)
     with pytest.raises(ValueError):
         # y_pred has value less than 1
-        multiclass_brier_score_loss(y_true, y_pred - 1.0)
+        brier_score_loss(y_true, y_pred - 1.0)
+
+    # raise an error for multiclass y_true and binary y_pred
+    y_true = np.array([0, 1, 2, 0])
+    y_pred = np.array([0.8, 0.6, 0.4, 0.2])
+    error_message = re.escape(
+        "The type of the target is multiclass "
+        "but should be binary according to the shape of y_prob."
+    )
+    with pytest.raises(ValueError, match=error_message):
+        brier_score_loss(y_true, y_pred)
 
     # ensure to raise an error for wrong number of classes
     y_true = [0, 1, 2]
@@ -2852,7 +2852,7 @@ def test_multiclass_brier_score_loss_invalid_inputs():
         "y_true: [0 1 2]"
     )
     with pytest.raises(ValueError, match=re.escape(error_message)):
-        multiclass_brier_score_loss(y_true, y_pred)
+        brier_score_loss(y_true, y_pred)
 
     y_true = ["eggs", "spam", "ham"]
     y_pred = [[1, 0, 0], [0, 1, 0], [0, 1, 0]]
@@ -2863,7 +2863,7 @@ def test_multiclass_brier_score_loss_invalid_inputs():
         "labels: ['eggs' 'ham' 'spam' 'yams']"
     )
     with pytest.raises(ValueError, match=re.escape(error_message)):
-        multiclass_brier_score_loss(y_true, y_pred, labels=labels)
+        brier_score_loss(y_true, y_pred, labels=labels)
 
     # raise error message when there's only one class in y_true
     y_true = ["eggs"]
@@ -2874,15 +2874,13 @@ def test_multiclass_brier_score_loss_invalid_inputs():
         "labels argument."
     )
     with pytest.raises(ValueError, match=re.escape(error_message)):
-        multiclass_brier_score_loss(y_true, y_pred)
+        brier_score_loss(y_true, y_pred)
 
     # error is fixed when labels is specified
-    assert_almost_equal(
-        multiclass_brier_score_loss(y_true, y_pred, labels=["eggs", "ham"]), 0.02
-    )
+    assert_almost_equal(brier_score_loss(y_true, y_pred, labels=["eggs", "ham"]), 0.01)
 
 
-def test_multiclass_brier_score_loss_warnings():
+def test_brier_score_loss_warnings():
     expected_message = re.escape(
         "Labels passed were ['spam', 'eggs', 'ham']. But this function "
         "assumes labels are ordered lexicographically. "
@@ -2890,7 +2888,7 @@ def test_multiclass_brier_score_loss_warnings():
         "['eggs' 'ham' 'spam']."
     )
     with pytest.warns(UserWarning, match=expected_message):
-        multiclass_brier_score_loss(
+        brier_score_loss(
             ["eggs", "spam", "ham"],
             [
                 [1, 0, 0],

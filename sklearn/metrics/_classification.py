@@ -3323,7 +3323,7 @@ def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos
         "sample_weight": ["array-like", None],
         "pos_label": [Real, str, "boolean", None],
         "labels": ["array-like", None],
-        "normalize": ["boolean"],
+        "scale_by_half": ["boolean", StrOptions({"auto"})],
         "y_prob": ["array-like", Hidden(StrOptions({"deprecated"}))],
     },
     prefer_skip_nested_validation=True,
@@ -3335,7 +3335,7 @@ def brier_score_loss(
     sample_weight=None,
     pos_label=None,
     labels=None,
-    normalize=True,
+    scale_by_half="auto",
     y_prob="deprecated",
 ):
     """Compute the Brier score loss.
@@ -3349,26 +3349,23 @@ def brier_score_loss(
     defined as:
 
     .. math::
-        \frac{1}{N}\\sum_{i=1}^{N}\\sum_{c=1}^{C}(y_{ic} - \\hat{y}_{ic})^{2}
+        \frac{1}{N}\\sum_{i=1}^{N}\\sum_{c=1}^{C}(y_{ic} - \\hat{p}_{ic})^{2}
 
     where :math:`y_{ic}` is 1 if observation `i` belongs to class `c`,
-    otherwise 0 and :math:`\\hat{y}_{ic}` is the predicted probability of
+    otherwise 0 and :math:`\\hat{p}_{ic}` is the predicted probability of
     observation `i` for class `c`. The probabilities for `c` classes for
     observation `i` should sum to 1.
 
-    The Brier score is divided by the number of classes :math:`C` if `normalize=True`.
-    In multi-class classification, the unnormalized Brier score is usually prefred
-    and ranges between :math:`[0, 2]` while the normalized version ranges between
-    :math:`[0, 2/C]`. In binary classification, the normalized Brier score is
-    usually prefered and ranges from zero to one.
+    The Brier score ranges between :math:`[0, 2]`.
 
-    For binary classification tasks, which label is considered to be
-    the positive label is controlled via the parameter `pos_label`, which
-    defaults to the greater label unless `y_true` is all 0 or all -1, in
-    which case `pos_label` defaults to 1.
+    In binary classification tasks the Brier score is usually rescaled by
+    half and ranges between :math:`[0, 1]`, it is then equal to:
 
-    For multi-class classification tasks, the labels are assumed to be ordered
-    lexicographically and can be explicitely passed by the `labels` arguments.
+    .. math::
+        \frac{1}{N}\\sum_{i=1}^{N}(y_{i} - \\hat{p}_{i})^{2}
+
+    where :math:`y_{i}` is the binary target and :math:`\\hat{p}_{i}`
+    is the predicted probability of the positive class.
 
     Read more in the :ref:`User Guide <brier_score_loss>`.
 
@@ -3403,8 +3400,10 @@ def brier_score_loss(
         Class labels when `y_pred.shape = (n_samples, n_classes)`.
         If not provided, labels will be inferred from `y_true`.
 
-    normalize : bool, default=True
-        Divides by the number of classes.
+    scale_by_half : bool or "auto", default="auto"
+        Rescales the Brier score by half, which then ranges from 0 to 1.
+        The default "auto" option will rescale the Brier score only for
+        binary classification (`n_classes=2`).
 
     y_prob : array-like of shape (n_samples,)
         Probabilities of the positive class.
@@ -3438,12 +3437,11 @@ def brier_score_loss(
     np.float64(0.037...)
     >>> brier_score_loss(y_true, np.array(y_prob) > 0.5)
     np.float64(0.0)
-    >>> brier_score_loss(y_true, y_prob, normalize=False)
+    >>> brier_score_loss(y_true, y_prob, scale_by_half=False)
     np.float64(0.074...)
     >>> brier_score_loss(
     ...    ["eggs", "ham", "spam"],
     ...    [[0.8, 0.1, 0.1], [0.2, 0.7, 0.1], [0.2, 0.2, 0.6]],
-    ...    normalize=False
     ... )
     np.float64(0.146...)
     """
@@ -3478,11 +3476,16 @@ def brier_score_loss(
             y_true, y_proba, sample_weight, labels
         )
 
-    aggregate = np.average if normalize else np.sum
-
-    return np.average(
-        aggregate((transformed_labels - y_proba) ** 2, axis=1), weights=sample_weight
+    brier_score = np.average(
+        np.sum((transformed_labels - y_proba) ** 2, axis=1), weights=sample_weight
     )
+
+    if scale_by_half == "auto":
+        scale_by_half = y_proba.ndim == 1 or y_proba.shape[1] < 3
+    if scale_by_half:
+        brier_score *= 0.5
+
+    return brier_score
 
 
 @validate_params(
