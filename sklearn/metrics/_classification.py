@@ -277,7 +277,7 @@ def confusion_matrix(
     y_pred : array-like of shape (n_samples,)
         Estimated targets as returned by a classifier.
 
-    labels : array-like of shape (n_classes), default=None
+    labels : array-like of shape (n_classes,), default=None
         List of labels to index the matrix. This may be used to reorder
         or select a subset of labels.
         If ``None`` is given, those that appear at least once
@@ -374,7 +374,7 @@ def confusion_matrix(
         and xp.min(y_pred) >= 0
     )
     if need_index_conversion:
-        label_to_ind = {y: x for x, y in enumerate(labels)}
+        label_to_ind = {entry: idx for idx, entry in enumerate(labels)}
         y_pred = xp.asarray(
             [label_to_ind.get(x, n_labels + 1) for x in y_pred], device=device_
         )

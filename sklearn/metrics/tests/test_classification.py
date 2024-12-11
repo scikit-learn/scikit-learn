@@ -10,6 +10,7 @@ from scipy.spatial.distance import hamming as sp_hamming
 from scipy.stats import bernoulli
 
 from sklearn import datasets, svm
+from sklearn.base import config_context
 from sklearn.datasets import make_multilabel_classification
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.metrics import (
@@ -39,8 +40,10 @@ from sklearn.metrics._classification import _check_targets, d2_log_loss_score
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelBinarizer, label_binarize
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
@@ -3095,3 +3098,18 @@ def test_d2_log_loss_score_raises():
     err = "The labels array needs to contain at least two"
     with pytest.raises(ValueError, match=err):
         d2_log_loss_score(y_true, y_pred, labels=labels)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, _", yield_namespace_device_dtype_combinations()
+)
+def test_confusion_matrix_array_api(array_namespace, device, _):
+    """Test that confusion_matrix works for all array types index conversion is done
+    and that it raises if not at least one label from `y_pred` is in `y_true`."""
+    xp = _array_api_for_tests(array_namespace, device)
+
+    y_true = xp.asarray([1, 2, 3], device=device)
+    y_pred = xp.asarray([4, 5, 6], device=device)
+
+    with config_context(array_api_dispatch=True):
+        confusion_matrix(y_true, y_pred)

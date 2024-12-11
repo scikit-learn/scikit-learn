@@ -1104,10 +1104,9 @@ def _tolist(array, xp=None):
 
 
 def _nan_to_num(array, xp=None):
-    """Substitutes NaN values with 0 and inf values with the maximum or minimum
-    numbers available for the dtype respectively; like np.nan_to_num."""
-    if xp is None:
-        xp, _ = get_namespace(array, xp=xp)
+    """Substitutes NaN values of an array with 0 and inf values with the maximum or
+    minimum numbers available for the dtype respectively; like np.nan_to_num."""
+    xp, _ = get_namespace(array, xp=xp)
     try:
         array = xp.nan_to_num(array)
     except AttributeError:  # currently catching exceptions from array_api_strict
