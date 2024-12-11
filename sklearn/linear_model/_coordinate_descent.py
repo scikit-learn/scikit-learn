@@ -1689,6 +1689,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             l1_ratios = [
                 1,
             ]
+        path_params.pop("refit", None)
         path_params.pop("cv", None)
         path_params.pop("n_jobs", None)
 
