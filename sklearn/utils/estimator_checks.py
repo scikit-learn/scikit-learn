@@ -1116,10 +1116,11 @@ def check_array_api_input(
     try:
         np.asarray(X_xp)
         np.asarray(y_xp)
-        # TODO For some reason there are a few errors with array-api-strict.
-        # Probably not worth investigating for now, since using
-        # array-api-strict with array API disabled does not seem a very
-        # relevant use case.
+        # TODO There are a few errors in SearchCV with array-api-strict because
+        # we end up doing X[train_indices] where X is a array-api-strict array
+        # and indices a numpy array. Probably not worth investigating for now,
+        # since using array-api-strict with array API disabled does not seem a
+        # very relevant.
         numpy_asarray_works = xp.__name__ != "array_api_strict"
 
     except TypeError:

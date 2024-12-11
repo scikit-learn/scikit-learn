@@ -137,7 +137,7 @@ def _single_array_device(array):
         # to do np.asarray so that the resulting array will be on the CPU.
         or not get_config()["array_api_dispatch"]
     ):
-        return "cpu"
+        return None
     else:
         return array.device
 
