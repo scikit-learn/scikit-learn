@@ -21,3 +21,7 @@ __all__ = [
     "TransformedTargetRegressor",
     "make_column_selector",
 ]
+
+
+def __dir__():
+    return __all__

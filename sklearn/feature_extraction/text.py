@@ -39,6 +39,10 @@ __all__ = [
 ]
 
 
+def __dir__():
+    return __all__
+
+
 def _preprocess(doc, accent_function=None, lower=False):
     """Chain together an optional series of text preprocessing steps to
     apply to a document.

@@ -15,7 +15,12 @@ __all__ = [
     "PositiveSpectrumWarning",
     "UnsetMetadataPassedError",
     "EstimatorCheckFailedWarning",
+    "InconsistentVersionWarning",
 ]
+
+
+def __dir__():
+    return __all__
 
 
 class UnsetMetadataPassedError(ValueError):
