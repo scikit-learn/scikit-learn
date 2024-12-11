@@ -1,6 +1,0 @@
-- Using `_estimator_type` to set the estimator type is deprecated. Inherit from
-  :class:`~sklearn.base.ClassifierMixin`, :class:`~sklearn.base.RegressorMixin`,
-  :class:`~sklearn.base.TransformerMixin`, or :class:`~sklearn.base.OutlierMixin`
-  instead. Alternatively, you can set `estimator_type` in :class:`~sklearn.utils.Tags`
-  in the `__sklearn_tags__` method.
-  By `Adrin Jalali`_
