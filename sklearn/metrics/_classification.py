@@ -3349,20 +3349,19 @@ def brier_score_loss(
     defined as:
 
     .. math::
-        \frac{1}{N}\\sum_{i=1}^{N}\\sum_{c=1}^{C}(y_{ic} - \\hat{p}_{ic})^{2}
+        \\frac{1}{N}\\sum_{i=1}^{N}\\sum_{c=1}^{C}(y_{ic} - \\hat{p}_{ic})^{2}
 
     where :math:`y_{ic}` is 1 if observation `i` belongs to class `c`,
-    otherwise 0 and :math:`\\hat{p}_{ic}` is the predicted probability of
-    observation `i` for class `c`. The probabilities for `c` classes for
-    observation `i` should sum to 1.
+    otherwise 0 and :math:`\\hat{p}_{ic}` is the predicted probability for
+    observation `i` to belong to class `c`.
+    The Brier score then ranges between :math:`[0, 2]`.
 
-    The Brier score ranges between :math:`[0, 2]`.
-
-    In binary classification tasks the Brier score is usually rescaled by
-    half and ranges between :math:`[0, 1]`, it is then equal to:
+    In binary classification tasks the Brier score is usually divided by
+    two and then ranges between :math:`[0, 1]`. It can be alternatively
+    written as:
 
     .. math::
-        \frac{1}{N}\\sum_{i=1}^{N}(y_{i} - \\hat{p}_{i})^{2}
+        \\frac{1}{N}\\sum_{i=1}^{N}(y_{i} - \\hat{p}_{i})^{2}
 
     where :math:`y_{i}` is the binary target and :math:`\\hat{p}_{i}`
     is the predicted probability of the positive class.
@@ -3403,7 +3402,7 @@ def brier_score_loss(
     scale_by_half : bool or "auto", default="auto"
         Rescales the Brier score by half, which then ranges from 0 to 1.
         The default "auto" option will rescale the Brier score only for
-        binary classification (`n_classes=2`).
+        binary classification.
 
     y_prob : array-like of shape (n_samples,)
         Probabilities of the positive class.
