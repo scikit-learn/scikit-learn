@@ -4,10 +4,6 @@ Cross-validation on diabetes Dataset Exercise
 ===============================================
 
 A tutorial exercise which uses cross-validation with linear models.
-
-This exercise is used in the :ref:`cv_estimators_tut` part of the
-:ref:`model_selection_tut` section of the :ref:`stat_learn_tut_index`.
-
 """
 
 # Authors: The scikit-learn developers
@@ -61,7 +57,7 @@ plt.xlim([alphas[0], alphas[-1]])
 # %%
 # Bonus: how much can you trust the selection of alpha?
 # -----------------------------------------------------
-
+#
 # To answer this question we use the LassoCV object that sets its alpha
 # parameter automatically from the data by internal cross-validation (i.e. it
 # performs cross-validation on the training data it receives).
