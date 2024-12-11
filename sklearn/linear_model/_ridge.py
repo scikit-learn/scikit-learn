@@ -35,12 +35,12 @@ from ..utils import (
 from ..utils._array_api import (
     _convert_to_numpy,
     _is_numpy_namespace,
+    _max_precision_float_dtype,
     _ravel,
     device,
     get_namespace,
     get_namespace_and_device,
     make_converter,
-    max_precision_float_dtype,
 )
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.extmath import row_norms, safe_sparse_dot
@@ -2142,7 +2142,7 @@ class _RidgeGCV(LinearModel):
             # attributes will be stored in the dtype chosen by validate_data, ie
             # np.float64
             original_dtype = None
-        dtype = max_precision_float_dtype(xp, device=device_)
+        dtype = _max_precision_float_dtype(xp, device=device_)
         X, y = validate_data(
             self,
             X,

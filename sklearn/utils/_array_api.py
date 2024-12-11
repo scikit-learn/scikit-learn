@@ -263,11 +263,6 @@ def _isdtype_single(dtype, kind, *, xp):
         return dtype == kind
 
 
-# TODO: supported_float_dtypes and max_precision_float_dtype below have been
-# copied from PR # 27113. Once 27113 is merged update the section below to
-# remove any lingering diff.
-
-
 def supported_float_dtypes(xp, device=None):
     """Supported floating point types for the namespace/device pair.
 
@@ -315,31 +310,6 @@ def supported_float_dtypes(xp, device=None):
     return dtypes
 
 
-def max_precision_float_dtype(xp, device=None):
-    """Get the maximum precision real-floating type for the namespace and device.
-
-    Parameters
-    ----------
-    xp : module
-        Array namespace.
-
-    device : str, default=None
-        Device to use for dtype selection. If ``None``, then the maximum
-        precision in the namespace is returned.
-
-    Returns
-    -------
-    dtype: data-type
-        The maximum precision real-floating data type supported by the namespace
-        and device.
-
-    See Also
-    --------
-    supported_float_dtypes : All supported real floating dtypes for a namespace.
-    """
-    return supported_float_dtypes(xp, device=device)[0]
-
-
 def ensure_common_namespace_device(reference, *arrays):
     """Ensure that all arrays use the same namespace and device as reference.
 
@@ -367,35 +337,6 @@ def ensure_common_namespace_device(reference, *arrays):
         return [xp.asarray(a, device=device_) for a in arrays]
     else:
         return arrays
-
-
-class _ArrayAPIWrapper:
-    """sklearn specific Array API compatibility wrapper
-
-    This wrapper makes it possible for scikit-learn maintainers to
-    deal with discrepancies between different implementations of the
-    Python Array API standard and its evolution over time.
-
-    The Python Array API standard specification:
-    https://data-apis.org/array-api/latest/
-
-    Documentation of the NumPy implementation:
-    https://numpy.org/neps/nep-0047-array-api-standard.html
-    """
-
-    def __init__(self, array_namespace):
-        self._namespace = array_namespace
-
-    def __getattr__(self, name):
-        return getattr(self._namespace, name)
-
-    def __eq__(self, other):
-        if not isinstance(other, _ArrayAPIWrapper):
-            return False
-        return self._namespace == other._namespace
-
-    def isdtype(self, dtype, kind):
-        return isdtype(dtype, kind, xp=self._namespace)
 
 
 def _check_device_cpu(device):  # noqa

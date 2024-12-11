@@ -45,7 +45,7 @@ from sklearn.utils._array_api import (
     _NUMPY_NAMESPACE_NAMES,
     _atol_for_type,
     _convert_to_numpy,
-    max_precision_float_dtype,
+    _max_precision_float_dtype,
     yield_namespace_device_dtype_combinations,
     yield_namespaces,
 )
@@ -1222,7 +1222,7 @@ def _test_tolerance(sparse_container):
 
 
 def check_array_api_attributes(
-    name, estimator, array_namespace, device, dtype_name, rtol=None
+    name, estimator, array_namespace, device, dtype_name, rtol=None, atol=None
 ):
     xp = _array_api_for_tests(array_namespace, device)
 
@@ -1255,7 +1255,7 @@ def check_array_api_attributes(
         assert_allclose(
             _convert_to_numpy(intercept_xp, xp=xp),
             intercept_np,
-            atol=_atol_for_type(dtype_name),
+            atol=atol if atol is not None else _atol_for_type(dtype_name),
             rtol=rtol,
         )
 
@@ -1277,22 +1277,19 @@ def test_ridge_array_api_compliance(
     estimator, check, array_namespace, device, dtype_name
 ):
     name = estimator.__class__.__name__
-    rtol = {}
+    tols = {}
+    xp = _array_api_for_tests(array_namespace, device)
     if (
         "CV" in name
-        and not isinstance(
-            array_namespace, str
-        )  # can be 'numpy' (which has float64 support)
         and check is check_array_api_attributes
-        and max_precision_float_dtype(array_namespace, device)
-        is array_namespace.float32
+        and _max_precision_float_dtype(xp, device) == xp.float32
     ):
         # The RidgeGCV is not very numerically stable in float32. It casts the
         # input to float64 unless the device and array api combination makes it
         # impossible.
-        rtol = {"rtol": 0.01}
+        tols = {"rtol": 1e-3, "atol": 1e-3}
     check(
-        name, estimator, array_namespace, device=device, dtype_name=dtype_name, **rtol
+        name, estimator, array_namespace, device=device, dtype_name=dtype_name, **tols
     )
 
 
