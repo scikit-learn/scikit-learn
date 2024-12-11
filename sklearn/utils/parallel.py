@@ -7,6 +7,7 @@ usage.
 
 import functools
 import warnings
+from contextlib import contextmanager
 from functools import update_wrapper
 
 import joblib
@@ -21,10 +22,10 @@ from .._config import config_context, get_config
 _threadpool_controller = None
 
 
-def _with_config(delayed_func, config):
+def _with_config(delayed_func, config, warning_filters):
     """Helper function that intends to attach a config to a delayed function."""
     if hasattr(delayed_func, "with_config"):
-        return delayed_func.with_config(config)
+        return delayed_func.with_config(config, warning_filters)
     else:
         warnings.warn(
             (
@@ -70,8 +71,9 @@ class Parallel(joblib.Parallel):
         # in a different thread depending on the backend and on the value of
         # pre_dispatch and n_jobs.
         config = get_config()
+        warning_filters = warnings.filters
         iterable_with_config = (
-            (_with_config(delayed_func, config), args, kwargs)
+            (_with_config(delayed_func, config, warning_filters), args, kwargs)
             for delayed_func, args, kwargs in iterable
         )
         return super().__call__(iterable_with_config)
@@ -111,6 +113,15 @@ def delayed(function):
     return delayed_function
 
 
+@contextmanager
+def _warning_filter_context(warning_filters):
+    """Context manager that sets warning filters."""
+    previous_filters = warnings.filters
+    warnings.filters = warning_filters
+    yield
+    warnings.filters = previous_filters
+
+
 class _FuncWrapper:
     """Load the global configuration before calling the function."""
 
@@ -118,13 +129,15 @@ class _FuncWrapper:
         self.function = function
         update_wrapper(self, self.function)
 
-    def with_config(self, config):
+    def with_config(self, config, warning_filters):
         self.config = config
+        self.warning_filters = warning_filters
         return self
 
     def __call__(self, *args, **kwargs):
-        config = getattr(self, "config", None)
-        if config is None:
+        config = getattr(self, "config", {})
+        warning_filters = getattr(self, "warning_filters", {})
+        if not config or not warning_filters:
             warnings.warn(
                 (
                     "`sklearn.utils.parallel.delayed` should be used with"
@@ -134,8 +147,11 @@ class _FuncWrapper:
                 ),
                 UserWarning,
             )
-            config = {}
-        with config_context(**config):
+
+        with (
+            config_context(**config),
+            _warning_filter_context(warning_filters=warning_filters),
+        ):
             return self.function(*args, **kwargs)
 
 
