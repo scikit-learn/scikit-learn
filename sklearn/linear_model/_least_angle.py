@@ -1672,7 +1672,7 @@ class LarsCV(Lars):
         verbose=False,
         max_iter=500,
         precompute="auto",
-        refit = True,
+        refit=True,
         cv=None,
         max_n_alphas=1000,
         n_jobs=None,
