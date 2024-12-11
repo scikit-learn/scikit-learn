@@ -1,6 +1,6 @@
 - :func:`metrics.brier_score_loss` implements the Brier
-  loss for multiclass classification problems and add a
-  `normalize` argument to divide by the number of classes.
+  score for multiclass classification problems and add a
+  `scale_by_half` argument.
   This metric is notably useful to assess the calibration of
-  probablistic classifiers. See the docstrings for more details.
+  probabilistic classifiers. See the docstrings for more details.
   By :user:`Varun Aggarwal <aggvarun01>` and :user:`Olivier Grisel`.
