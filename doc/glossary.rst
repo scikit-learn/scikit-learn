@@ -929,6 +929,16 @@ Class APIs and Estimator Types
         * :term:`transform`
         * :term:`get_feature_names_out`
 
+    frozen
+    frozen estimator
+        An estimator which has been :term:`fitted` and wrapped in a
+        :class:`~sklearn.frozen.FrozenEstimator`. Calling `fit` on a frozen
+        estimator has no effect. This is useful for instance, in cases where a
+        step of a :class:`~sklearn.pipeline.Pipeline` is pre-fitted and we don't
+        want it to be refitted when the pipeline is used in a cross-validation
+        loop. All estimators expose a `.freeze()` method which returns a
+        frozen estimator wrapping the original estimator.
+
     meta-estimator
     meta-estimators
     metaestimator
