@@ -196,6 +196,49 @@ DATASETS = {
 }
 
 
+def _make_categorical(
+    n_rows: int,
+    n_numerical: int,
+    n_categorical: int,
+    cat_size: int,
+    n_num_meaningful: int,
+    n_cat_meaningful: int,
+    regression: bool,
+    return_tuple: bool,
+    random_state: int,
+):
+
+    from sklearn.preprocessing import OneHotEncoder
+
+    np.random.seed(random_state)
+    numeric = np.random.standard_normal((n_rows, n_numerical))
+    categorical = np.random.randint(0, cat_size, (n_rows, n_categorical))
+    categorical_ohe = OneHotEncoder(categories="auto").fit_transform(
+        categorical[:, :n_cat_meaningful]
+    )
+
+    data_meaningful = np.hstack(
+        (numeric[:, :n_num_meaningful], categorical_ohe.todense())
+    )
+    _, cols = data_meaningful.shape
+    coefs = np.random.standard_normal(cols)
+    y = np.dot(data_meaningful, coefs)
+    y = np.asarray(y).reshape(-1)
+    X = np.hstack((numeric, categorical))
+
+    if not regression:
+        y = (y < y.mean()).astype(int)
+
+    meaningful_features = np.r_[
+        np.arange(n_num_meaningful), np.arange(n_cat_meaningful) + n_numerical
+    ]
+
+    if return_tuple:
+        return X, y, meaningful_features
+    else:
+        return {"X": X, "y": y, "meaningful_features": meaningful_features}
+
+
 def assert_tree_equal(d, s, message):
     assert (
         s.node_count == d.node_count
@@ -2139,13 +2182,15 @@ def get_different_alignment_node_ndarray(node_ndarray):
 
 def reduce_tree_with_different_bitness(tree):
     new_dtype = np.int64 if _IS_32BIT else np.int32
-    tree_cls, (n_features, n_classes, n_outputs), state = tree.__reduce__()
+    tree_cls, (n_features, n_classes, n_outputs, n_categories), state = (
+        tree.__reduce__()
+    )
     new_n_classes = n_classes.astype(new_dtype, casting="same_kind")
 
     new_state = state.copy()
     new_state["nodes"] = get_different_bitness_node_ndarray(new_state["nodes"])
 
-    return (tree_cls, (n_features, new_n_classes, n_outputs), new_state)
+    return (tree_cls, (n_features, new_n_classes, n_outputs, n_categories), new_state)
 
 
 def test_different_bitness_pickle():
@@ -2310,7 +2355,9 @@ def test_splitter_serializable(Splitter):
     n_outputs, n_classes = 2, np.array([3, 2], dtype=np.intp)
 
     criterion = CRITERIA_CLF["gini"](n_outputs, n_classes)
-    splitter = Splitter(criterion, max_features, 5, 0.5, rng, monotonic_cst=None)
+    splitter = Splitter(
+        criterion, max_features, 5, 0.5, rng, monotonic_cst=None, breiman_shortcut=False
+    )
     splitter_serialize = pickle.dumps(splitter)
 
     splitter_back = pickle.loads(splitter_serialize)
@@ -2814,3 +2861,101 @@ def test_build_pruned_tree_infinite_loop():
         ValueError, match="Node has reached a leaf in the original tree"
     ):
         _build_pruned_tree_py(pruned_tree, tree.tree_, leave_in_subtree)
+
+
+@pytest.mark.skip()
+@pytest.mark.parametrize("name", ALL_TREES)
+@pytest.mark.parametrize(
+    "categorical",
+    ["invalid string", [[0]], [False, False, False], [1, 2], [-3], [0, 0, 1]],
+)
+def test_invalid_categorical(name, categorical):
+    Tree = ALL_TREES[name]
+    with pytest.raises(ValueError, match="Invalid value for categorical"):
+        Tree(categorical=categorical).fit(X, y)
+
+
+@pytest.mark.skip()
+@pytest.mark.parametrize("name", ALL_TREES)
+def test_no_sparse_with_categorical(name):
+    # Currently we do not support sparse categorical features
+    X, y, X_sparse = [DATASETS["clf_small"][z] for z in ["X", "y", "X_sparse"]]
+    Tree = ALL_TREES[name]
+    with pytest.raises(
+        NotImplementedError, match="Categorical features not supported with sparse"
+    ):
+        Tree(categorical=[6, 10]).fit(X_sparse, y)
+
+    with pytest.raises(
+        NotImplementedError, match="Categorical features not supported with sparse"
+    ):
+        Tree(categorical=[6, 10]).fit(X, y).predict(X_sparse)
+
+
+@pytest.mark.skip()
+@pytest.mark.parametrize("model", ALL_TREES)
+@pytest.mark.parametrize(
+    "data_params",
+    [
+        {
+            "n_rows": 1000,
+            "n_numerical": 5,
+            "n_categorical": 5,
+            "cat_size": 3,
+            "n_num_meaningful": 2,
+            "n_cat_meaningful": 3,
+        },
+        {
+            "n_rows": 1000,
+            "n_numerical": 0,
+            "n_categorical": 5,
+            "cat_size": 3,
+            "n_num_meaningful": 0,
+            "n_cat_meaningful": 3,
+        },
+        {
+            "n_rows": 1000,
+            "n_numerical": 5,
+            "n_categorical": 5,
+            "cat_size": 64,
+            "n_num_meaningful": 0,
+            "n_cat_meaningful": 2,
+        },
+        {
+            "n_rows": 1000,
+            "n_numerical": 5,
+            "n_categorical": 5,
+            "cat_size": 3,
+            "n_num_meaningful": 0,
+            "n_cat_meaningful": 3,
+        },
+    ],
+)
+def test_categorical_data(model, data_params):
+    # DecisionTrees are too slow for large category sizes.
+    if data_params["cat_size"] > 8 and "DecisionTree" in model:
+        pass
+
+    X, y, meaningful_features = _make_categorical(
+        **data_params, regression=model in REG_TREES, return_tuple=True, random_state=42
+    )
+    rows, cols = X.shape
+    categorical_features = (
+        np.arange(data_params["n_categorical"]) + data_params["n_numerical"]
+    )
+
+    model = ALL_TREES[model](random_state=42, categorical=categorical_features).fit(
+        X, y
+    )
+    fi = model.feature_importances_
+    bad_features = np.array([True] * cols)
+    bad_features[meaningful_features] = False
+
+    good_ones = fi[meaningful_features]
+    bad_ones = fi[bad_features]
+
+    # all good features should be more important than all bad features.
+    assert np.all([np.all(x > bad_ones) for x in good_ones])
+
+    leaves = model.tree_.children_left < 0
+    assert np.all(model.tree_.impurity[leaves] < 1e-6)

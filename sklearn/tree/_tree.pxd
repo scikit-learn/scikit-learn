@@ -4,34 +4,14 @@
 # See _tree.pyx for details.
 
 import numpy as np
+
 cimport numpy as cnp
 
-from ..utils._typedefs cimport float32_t, float64_t, intp_t, int32_t, uint8_t, uint32_t
-
+from ..ensemble._hist_gradient_boosting.common cimport BITSET_INNER_DTYPE_C
+from ..utils._typedefs cimport float32_t, float64_t, int32_t, intp_t, uint8_t, uint32_t, BITSET_t
+from ._utils cimport ParentInfo, SplitRecord, SplitValue, Node
 from ._splitter cimport Splitter
-from ._splitter cimport SplitRecord
 
-cdef struct Node:
-    # Base storage structure for the nodes in a Tree object
-
-    intp_t left_child                    # id of the left child of the node
-    intp_t right_child                   # id of the right child of the node
-    intp_t feature                       # Feature used for splitting the node
-    float64_t threshold                  # Threshold value at the node
-    float64_t impurity                   # Impurity of the node (i.e., the value of the criterion)
-    intp_t n_node_samples                # Number of samples at the node
-    float64_t weighted_n_node_samples    # Weighted number of samples at the node
-    uint8_t missing_go_to_left     # Whether features have missing values
-
-
-cdef struct ParentInfo:
-    # Structure to store information about the parent of a node
-    # This is passed to the splitter, to provide information about the previous split
-
-    float64_t lower_bound           # the lower bound of the parent's impurity
-    float64_t upper_bound           # the upper bound of the parent's impurity
-    float64_t impurity              # the impurity of the parent
-    intp_t n_constant_features      # the number of constant features found in parent
 
 cdef class Tree:
     # The Tree object is a binary tree structure constructed by the
@@ -43,6 +23,8 @@ cdef class Tree:
     cdef intp_t* n_classes               # Number of classes in y[:, k]
     cdef public intp_t n_outputs         # Number of outputs in y
     cdef public intp_t max_n_classes     # max(n_classes)
+    cdef int32_t *n_categories           # (n_features,) array giving number of
+    #                                    # categories (<0 for non-categorical)
 
     # Inner structures: values are stored separately from node structure,
     # since size is determined at runtime.
@@ -54,11 +36,19 @@ cdef class Tree:
     cdef intp_t value_stride             # = n_outputs * max_n_classes
 
     # Methods
-    cdef intp_t _add_node(self, intp_t parent, bint is_left, bint is_leaf,
-                          intp_t feature, float64_t threshold, float64_t impurity,
-                          intp_t n_node_samples,
-                          float64_t weighted_n_node_samples,
-                          uint8_t missing_go_to_left) except -1 nogil
+    cdef intp_t _add_node(
+        self,
+        intp_t parent,
+        bint is_left,
+        bint is_leaf,
+        intp_t feature,
+        SplitValue split_value,
+        # float64_t threshold,
+        float64_t impurity,
+        intp_t n_node_samples,
+        float64_t weighted_n_node_samples,
+        uint8_t missing_go_to_left
+    ) except -1 nogil
     cdef int _resize(self, intp_t capacity) except -1 nogil
     cdef int _resize_c(self, intp_t capacity=*) except -1 nogil
 
@@ -106,6 +96,7 @@ cdef class TreeBuilder:
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight=*,
         const uint8_t[::1] missing_values_in_feature_mask=*,
+        const int32_t[::1] n_categories=*,
     )
 
     cdef _check_input(
@@ -115,6 +106,19 @@ cdef class TreeBuilder:
         const float64_t[:] sample_weight,
     )
 
+
+# cdef class CategoryCacheMgr:
+#     # Class to manage the category cache memory during Tree.apply()
+
+#     cdef intp_t n_nodes
+#     cdef BITSET_INNER_DTYPE_C **bits
+
+#     cdef void populate(
+#         self,
+#         Node *nodes,
+#         intp_t n_nodes,
+#         int32_t *n_categories
+#     )
 
 # =============================================================================
 # Tree pruning

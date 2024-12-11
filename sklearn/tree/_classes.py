@@ -11,6 +11,7 @@ import numbers
 from abc import ABCMeta, abstractmethod
 from math import ceil
 from numbers import Integral, Real
+from warnings import warn
 
 import numpy as np
 from scipy.sparse import issparse
@@ -76,7 +77,10 @@ CRITERIA_REG = {
     "poisson": _criterion.Poisson,
 }
 
-DENSE_SPLITTERS = {"best": _splitter.BestSplitter, "random": _splitter.RandomSplitter}
+DENSE_SPLITTERS = {
+    "best": _splitter.BestSplitter,
+    "random": _splitter.RandomSplitter,
+}
 
 SPARSE_SPLITTERS = {
     "best": _splitter.BestSparseSplitter,
@@ -122,6 +126,11 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         "min_impurity_decrease": [Interval(Real, 0.0, None, closed="left")],
         "ccp_alpha": [Interval(Real, 0.0, None, closed="left")],
         "monotonic_cst": ["array-like", None],
+        "categorical_features": [
+            "array-like",
+            StrOptions({"from_dtype"}),
+            None,
+        ],
     }
 
     @abstractmethod
@@ -141,6 +150,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         class_weight=None,
         ccp_alpha=0.0,
         monotonic_cst=None,
+        categorical_features=None,
     ):
         self.criterion = criterion
         self.splitter = splitter
@@ -155,6 +165,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.class_weight = class_weight
         self.ccp_alpha = ccp_alpha
         self.monotonic_cst = monotonic_cst
+        self.categorical_features = categorical_features
 
     def get_depth(self):
         """Return the depth of the decision tree.
@@ -256,13 +267,19 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             missing_values_in_feature_mask = (
                 self._compute_missing_values_in_feature_mask(X)
             )
-            if issparse(X):
+
+            is_sparse_X = issparse(X)
+            if is_sparse_X:
                 X.sort_indices()
 
                 if X.indices.dtype != np.intc or X.indptr.dtype != np.intc:
                     raise ValueError(
                         "No support for np.int64 index based sparse matrices"
                     )
+            if is_sparse_X and self.categorical_features is not None:
+                raise NotImplementedError(
+                    "Categorical features not supported" " with sparse inputs"
+                )
 
             if self.criterion == "poisson":
                 if np.any(y < 0):
@@ -366,6 +383,78 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             else:
                 sample_weight = expanded_class_weight
 
+        # Validate categorical features
+        if isinstance(self.categorical_features, str):
+            if self.categorical_features == "all":
+                categorical = np.arange(self.n_features_in_)
+            else:
+                raise ValueError(
+                    "Invalid value for categorical: {}. Allowed"
+                    " strings are 'all' or 'none'"
+                    "".format(self.categorical_features)
+                )
+        elif self.categorical_features is None:
+            categorical = np.array([], dtype=np.intp)
+        else:
+            categorical = np.atleast_1d(self.categorical_features).flatten()
+        print(categorical)
+        if categorical.dtype == np.bool:
+            if categorical.size != self.n_features_:
+                raise ValueError(
+                    "Invalid value for categorical: Shape of "
+                    "boolean parameter categorical must "
+                    "be (n_features,)"
+                )
+            categorical = np.nonzero(categorical)[0]
+        print(categorical)
+        if np.size(categorical) > self.n_features_in_ or (
+            categorical.size > 0
+            and (categorical.min() < 0 or categorical.max() >= self.n_features_in_)
+        ):
+            raise ValueError(
+                "Invalid value for categorical: Invalid shape or "
+                "feature index for parameter categorical "
+                "invalid."
+            )
+        if issparse(X):
+            if categorical.size > 0:
+                raise NotImplementedError(
+                    "Categorical features not supported" " with sparse inputs"
+                )
+        else:
+            if np.any(X[:, categorical].astype(np.intp) < 0):
+                raise ValueError(
+                    "Invalid value for categorical: given values "
+                    "for categorical features must be "
+                    "non-negative."
+                )
+
+        # Calculate n_categories and verify they are all at least 1% populated
+        n_categories = np.array(
+            [
+                np.intp(X[:, i].max()) + 1 if i in categorical else -1
+                for i in range(self.n_features_in_)
+            ],
+            dtype=np.int32,
+        )
+        n_cat_present = np.array(
+            [
+                np.unique(X[:, i].astype(np.intp)).size if i in categorical else -1
+                for i in range(self.n_features_in_)
+            ],
+            dtype=np.int32,
+        )
+        if np.any((n_cat_present < 0.01 * n_cat_present)[categorical]):
+            warn(
+                "At least one categorical feature has less than 1%"
+                " of its categories present in the sample. Runtime"
+                " and memory usage will be much smaller if you"
+                " represent the categories as sequential integers.",
+                UserWarning,
+            )
+
+        self.n_categories_ = n_categories
+
         # Set min_weight_leaf from min_weight_fraction_leaf
         if sample_weight is None:
             min_weight_leaf = self.min_weight_fraction_leaf * n_samples
@@ -386,9 +475,17 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             # might be shared and modified concurrently during parallel fitting
             criterion = copy.deepcopy(criterion)
 
-        SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
+        # We automatically use the Breiman shortcut for categorical splits
+        # if the criterion is Gini or Entropy and the tree is a binary classifier,
+        # or if the criterion is MSE and the tree is a regression tree.
+        if is_classification:
+            breiman_shortcut = self.n_classes_.tolist() == [2] and (
+                isinstance(criterion, _criterion.Gini)
+                or isinstance(criterion, _criterion.Entropy)
+            )
+        else:
+            breiman_shortcut = isinstance(criterion, _criterion.MSE)
 
-        splitter = self.splitter
         if self.monotonic_cst is None:
             monotonic_cst = None
         else:
@@ -428,7 +525,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 # *positive class*, all signs must be flipped.
                 monotonic_cst *= -1
 
+        SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
+        splitter = self.splitter
         if not isinstance(self.splitter, Splitter):
+            # Note: random splitter does not use breiman shortcut
             splitter = SPLITTERS[self.splitter](
                 criterion,
                 self.max_features_,
@@ -436,16 +536,30 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 min_weight_leaf,
                 random_state,
                 monotonic_cst,
+                breiman_shortcut,
+            )
+
+        if (
+            not isinstance(splitter, _splitter.RandomSplitter)
+            and np.max(n_categories) > 64
+        ):
+            raise ValueError(
+                "Categorical features with greater than 64"
+                " categories not supported with DecisionTree;"
+                " try ExtraTree."
             )
 
         if is_classifier(self):
-            self.tree_ = Tree(self.n_features_in_, self.n_classes_, self.n_outputs_)
+            self.tree_ = Tree(
+                self.n_features_in_, self.n_classes_, self.n_outputs_, n_categories
+            )
         else:
             self.tree_ = Tree(
                 self.n_features_in_,
                 # TODO: tree shouldn't need this in this case
                 np.array([1] * self.n_outputs_, dtype=np.intp),
                 self.n_outputs_,
+                n_categories,
             )
 
         # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
@@ -469,7 +583,14 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 self.min_impurity_decrease,
             )
 
-        builder.build(self.tree_, X, y, sample_weight, missing_values_in_feature_mask)
+        builder.build(
+            self.tree_,
+            X,
+            y,
+            sample_weight,
+            missing_values_in_feature_mask,
+            n_categories,
+        )
 
         if self.n_outputs_ == 1 and is_classifier(self):
             self.n_classes_ = self.n_classes_[0]
@@ -494,10 +615,15 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 reset=False,
                 ensure_all_finite=ensure_all_finite,
             )
-            if issparse(X) and (
+            is_sparse_X = issparse(X)
+            if is_sparse_X and (
                 X.indices.dtype != np.intc or X.indptr.dtype != np.intc
             ):
                 raise ValueError("No support for np.int64 index based sparse matrices")
+            if is_sparse_X and np.any(self.n_categories_ > 0):
+                raise NotImplementedError(
+                    "Categorical features not supported" " with sparse inputs"
+                )
         else:
             # The number of features is checked regardless of `check_input`
             _check_n_features(self, X, reset=False)
@@ -617,13 +743,16 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         # build pruned tree
         if is_classifier(self):
             n_classes = np.atleast_1d(self.n_classes_)
-            pruned_tree = Tree(self.n_features_in_, n_classes, self.n_outputs_)
+            pruned_tree = Tree(
+                self.n_features_in_, n_classes, self.n_outputs_, self.n_categories_
+            )
         else:
             pruned_tree = Tree(
                 self.n_features_in_,
                 # TODO: the tree shouldn't need this param
                 np.array([1] * self.n_outputs_, dtype=np.intp),
                 self.n_outputs_,
+                self.n_categories_,
             )
         _build_pruned_tree_ccp(pruned_tree, self.tree_, self.ccp_alpha)
 
@@ -851,6 +980,25 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         .. versionadded:: 1.4
 
+    categorical_features : array-like of bool of shape (n_features) or \
+                            array-like of int of shape (n_categorical_features), \
+                            default=None
+        Array of feature indices, boolean array of length n_features,
+        ``'all'`` or ``'none'``. Indicates which features should be
+        considered as categorical rather than ordinal. For decision trees,
+        the maximum number of categories is 64. In practice, the limit will
+        often be lower because the process of searching for the best possible
+        split grows exponentially with the number of categories. However, a
+        shortcut due to Breiman (1984) is used when fitting data with binary
+        labels using the ``Gini`` or ``Entropy`` criteria. In this case,
+        the runtime is linear in the number of categories. Extra-random trees
+        have an upper limit of :math:`2^{31}` categories, and runtimes
+        linear in the number of categories.
+
+        Read more in the :ref:`User Guide <categorical_support_gbdt>`.
+
+        .. versionadded:: 1.6
+
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes,) or list of ndarray
@@ -968,6 +1116,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         class_weight=None,
         ccp_alpha=0.0,
         monotonic_cst=None,
+        categorical_features=None,
     ):
         super().__init__(
             criterion=criterion,
@@ -983,6 +1132,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             min_impurity_decrease=min_impurity_decrease,
             monotonic_cst=monotonic_cst,
             ccp_alpha=ccp_alpha,
+            categorical_features=categorical_features,
         )
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -1350,6 +1500,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         min_impurity_decrease=0.0,
         ccp_alpha=0.0,
         monotonic_cst=None,
+        categorical_features=None,
     ):
         super().__init__(
             criterion=criterion,
@@ -1364,6 +1515,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             min_impurity_decrease=min_impurity_decrease,
             ccp_alpha=ccp_alpha,
             monotonic_cst=monotonic_cst,
+            categorical_features=categorical_features,
         )
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -1703,6 +1855,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         class_weight=None,
         ccp_alpha=0.0,
         monotonic_cst=None,
+        categorical_features=None,
     ):
         super().__init__(
             criterion=criterion,
@@ -1718,6 +1871,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             random_state=random_state,
             ccp_alpha=ccp_alpha,
             monotonic_cst=monotonic_cst,
+            categorical_features=categorical_features,
         )
 
     def __sklearn_tags__(self):
@@ -1963,6 +2117,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         max_leaf_nodes=None,
         ccp_alpha=0.0,
         monotonic_cst=None,
+        categorical_features=None,
     ):
         super().__init__(
             criterion=criterion,
@@ -1977,6 +2132,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             random_state=random_state,
             ccp_alpha=ccp_alpha,
             monotonic_cst=monotonic_cst,
+            categorical_features=categorical_features,
         )
 
     def __sklearn_tags__(self):

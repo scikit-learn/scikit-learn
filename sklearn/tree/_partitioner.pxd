@@ -4,9 +4,9 @@
 # See _partitioner.pyx for details.
 
 from ..utils._typedefs cimport (
-    float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t
+    BITSET_t, float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t
 )
-from ._splitter cimport SplitRecord
+from ._utils cimport SplitValue, SplitRecord
 
 
 # Mitigate precision differences between 32 bit and 64 bit
@@ -56,7 +56,7 @@ cdef float32_t FEATURE_THRESHOLD = 1e-7
 #     cdef void partition_samples_final(
 #         self,
 #         intp_t best_pos,
-#         float64_t best_threshold,
+#         SplitValue best_split_value,
 #         intp_t best_feature,
 #         intp_t n_missing,
 #     ) noexcept nogil
@@ -74,6 +74,28 @@ cdef class DensePartitioner:
     cdef intp_t end
     cdef intp_t n_missing
     cdef const uint8_t[::1] missing_values_in_feature_mask
+    cdef const int32_t[::1] n_categories
+
+    # We implement a caching of the categories, so it is easy/cheap to determine
+    # whether the split should move samples to the left, or right child
+    cdef BITSET_t[:] cat_cache
+    cdef float32_t[:] sort_value
+    cdef float32_t[:] sort_density
+    cdef int32_t[:] cat_offset
+    cdef intp_t[:] sorted_cat
+    cdef bint breiman_shortcut
+
+    cdef void _breiman_sort_categories(
+        self,
+        intp_t start,
+        intp_t end,
+        int32_t ncat,
+        intp_t ncat_present,
+        const int32_t[:] cat_offset,
+        intp_t[:] sorted_cat,
+        const float64_t[:, ::1] y,
+        const float64_t[:] sample_weight,
+    ) noexcept nogil
 
     cdef void sort_samples_and_feature_values(
         self, intp_t current_feature
@@ -96,14 +118,19 @@ cdef class DensePartitioner:
     ) noexcept nogil
     cdef intp_t partition_samples(
         self,
-        float64_t current_threshold
+        SplitValue split_value,
+        intp_t feature,
     ) noexcept nogil
     cdef void partition_samples_final(
         self,
         intp_t best_pos,
-        float64_t best_threshold,
+        SplitValue best_split_value,
         intp_t best_feature,
         intp_t n_missing,
+    ) noexcept nogil
+    cdef intp_t partition_samples_category(
+        self,
+        BITSET_t cat_split
     ) noexcept nogil
 
 
@@ -128,6 +155,16 @@ cdef class SparsePartitioner:
     cdef intp_t end
     cdef intp_t n_missing
     cdef const uint8_t[::1] missing_values_in_feature_mask
+    cdef const int32_t[::1] n_categories
+
+    # We implement a caching of the categories, so it is easy/cheap to determine
+    # whether the split should move samples to the left, or right child
+    cdef BITSET_t[:] cat_cache
+    cdef float32_t[:] sort_value
+    cdef float32_t[:] sort_density
+    cdef int32_t[:] cat_offset
+    cdef intp_t[:] sorted_cat
+    cdef bint breiman_shortcut
 
     cdef void sort_samples_and_feature_values(
         self, intp_t current_feature
@@ -150,12 +187,13 @@ cdef class SparsePartitioner:
     ) noexcept nogil
     cdef intp_t partition_samples(
         self,
-        float64_t current_threshold
+        SplitValue split_value,
+        intp_t feature,
     ) noexcept nogil
     cdef void partition_samples_final(
         self,
         intp_t best_pos,
-        float64_t best_threshold,
+        SplitValue best_split_value,
         intp_t best_feature,
         intp_t n_missing,
     ) noexcept nogil
@@ -168,6 +206,23 @@ cdef class SparsePartitioner:
         self,
         float64_t threshold,
         intp_t zero_pos
+    ) noexcept nogil
+
+    cdef void _breiman_sort_categories(
+        self,
+        intp_t start,
+        intp_t end,
+        int32_t ncat,
+        intp_t ncat_present,
+        const int32_t[:] cat_offset,
+        intp_t[:] sorted_cat,
+        const float64_t[:, ::1] y,
+        const float64_t[:] sample_weight,
+    ) noexcept nogil
+
+    cdef intp_t partition_samples_category(
+        self,
+        BITSET_t cat_split
     ) noexcept nogil
 
 

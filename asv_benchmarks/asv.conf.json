@@ -26,7 +26,7 @@
 
     // List of branches to benchmark. If not provided, defaults to "master
     // (for git) or "default" (for mercurial).
-    "branches": ["main"],
+    // "branches": ["main"],
     // "branches": ["default"],    // for mercurial
 
     // The DVCS being used.  If not set, it will be automatically
@@ -40,7 +40,7 @@
     // If missing or the empty string, the tool will be automatically
     // determined by looking for tools on the PATH environment
     // variable.
-    "environment_type": "conda",
+    "environment_type": "mamba",
 
     // timeout in seconds for installing any dependencies in environment
     // defaults to 10 min
