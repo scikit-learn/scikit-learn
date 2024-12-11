@@ -854,11 +854,14 @@ def test_check_estimator_sparse_tag():
     misaligned."""
 
     class EstimatorWithSparseConfig(BaseEstimator):
-        def __init__(self, tag_sparse, accept_sparse):
+        def __init__(self, tag_sparse, accept_sparse, fit_error=None):
             self.tag_sparse = tag_sparse
             self.accept_sparse = accept_sparse
+            self.fit_error = fit_error
 
         def fit(self, X, y=None):
+            if self.fit_error:
+                raise self.fit_error
             validate_data(self, X, y, accept_sparse=self.accept_sparse)
             return self
 
@@ -876,13 +879,21 @@ def test_check_estimator_sparse_tag():
 
     for test_case in test_cases:
         estimator = EstimatorWithSparseConfig(
-            test_case["tag_sparse"], test_case["accept_sparse"]
+            test_case["tag_sparse"],
+            test_case["accept_sparse"],
         )
         if test_case["error_type"] is None:
             check_estimator_sparse_tag(estimator.__class__.__name__, estimator)
         else:
             with raises(test_case["error_type"]):
                 check_estimator_sparse_tag(estimator.__class__.__name__, estimator)
+
+    # estimator `tag_sparse=accept_sparse=False` fails on sparse data
+    # but does not raise the appropriate error
+    for fit_error in [TypeError("unexpected error"), KeyError("other error")]:
+        estimator = EstimatorWithSparseConfig(False, False, fit_error)
+        with raises(AssertionError):
+            check_estimator_sparse_tag(estimator.__class__.__name__, estimator)
 
 
 def test_check_estimator_transformer_no_mixin():
