@@ -40,7 +40,6 @@ from ..utils.validation import (
     _check_feature_names_in,
     _deprecate_positional_args,
     check_is_fitted,
-    column_or_1d,
 )
 from ._base import _BaseHeterogeneousEnsemble, _fit_single_estimator
 
@@ -670,7 +669,8 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
             Training vectors, where `n_samples` is the number of samples and
             `n_features` is the number of features.
 
-        y : array-like of shape (n_samples,)
+        y : Array-like of shape (n_samples, n_features) for multi-output
+            or (n_samples,) for single output
             Target values.
 
         sample_weight : array-like of shape (n_samples,), default=None
@@ -691,11 +691,10 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
         Returns
         -------
-        self : object
+        self : Object
             Fitted estimator.
         """
         _raise_for_params(fit_params, self, "fit")
-        y = column_or_1d(y, warn=True)
         if sample_weight is not None:
             fit_params["sample_weight"] = sample_weight
         return super().fit(X, y, **fit_params)
@@ -713,11 +712,18 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
         Returns
         -------
-        y : ndarray of shape (n_samples,)
+        y : Ndarray of shape (n_samples, n_features) for multi-output
+            or (n_samples,) for single output
             The predicted values.
         """
         check_is_fitted(self)
-        return np.average(self._predict(X), axis=1, weights=self._weights_not_none)
+        pred = self._predict(X)
+        avg_pred = np.average(self._predict(X), axis=-1, weights=self._weights_not_none)
+
+        if len(pred.shape) > 0:
+            avg_pred = avg_pred.T
+
+        return avg_pred
 
     def transform(self, X):
         """Return predictions for X for each estimator.
@@ -745,7 +751,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
         Returns
         -------
-        feature_names_out : ndarray of str objects
+        feature_names_out : Ndarray of str objects
             Transformed feature names.
         """
         check_is_fitted(self, "n_features_in_")
@@ -755,3 +761,6 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
             [f"{class_name}_{name}" for name, est in self.estimators if est != "drop"],
             dtype=object,
         )
+
+    def _more_tags(self):
+        return {"multioutput": True}
