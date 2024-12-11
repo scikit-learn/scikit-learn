@@ -2180,3 +2180,157 @@ def test_sgd_one_class_svm_estimator_type():
     """
     sgd_ocsvm = SGDOneClassSVM()
     assert get_tags(sgd_ocsvm).estimator_type == "outlier_detector"
+
+
+def test_sgd_regressor_gradient_clip_norm():
+
+    clipped_weights_results = []
+    for gradient_clip_norm in [0.01, 0.1, 0.5]:
+        # Step 1: Train without gradient clipping
+        X = np.array([[1, 1], [1, 1], [1, 1], [1, 1]])  # Simple 2D data
+        y = np.array(
+            [5000, 5000, 5000, 5000]
+        )  # Labels with large values to induce large gradients
+
+        # These input values should have very large gradients
+        # The gradients initially should be around 0.1 * 2 * 5000 = 1000
+        # which is sufficient such that the weights will be clipped
+        clf_no_clip = SGDRegressor(
+            max_iter=1,
+            tol=None,
+            eta0=0.05,
+            warm_start=True,
+            random_state=42,
+            gradient_clip_norm=0,  # No clipping
+            penalty=None,
+            alpha=0,
+        )
+        clf_no_clip.fit(X, y)
+        clf_no_clip.coef_ = np.zeros_like(clf_no_clip.coef_)
+        clf_no_clip.intercept_ = np.zeros_like(clf_no_clip.intercept_)
+        clf_no_clip.fit(X, y)
+        weights_no_clip = clf_no_clip.coef_.copy()
+
+        clf_with_clip = SGDRegressor(
+            max_iter=1,
+            tol=None,
+            eta0=0.05,
+            warm_start=True,
+            random_state=42,
+            gradient_clip_norm=gradient_clip_norm,  # Clipping threshold
+            penalty=None,
+            alpha=0,
+        )
+        clf_with_clip.fit(X, y)
+        clf_with_clip.coef_ = np.zeros_like(clf_with_clip.coef_)
+        clf_with_clip.intercept_ = np.zeros_like(clf_with_clip.intercept_)
+        clf_with_clip.fit(X, y)
+        weights_with_clip = clf_with_clip.coef_.copy()
+
+        weight_norm_with_clip = np.linalg.norm(weights_with_clip)
+        assert (
+            weight_norm_with_clip <= gradient_clip_norm
+        ), f"Norm {weight_norm_with_clip} exceeds threshold {gradient_clip_norm}"
+
+        weight_norm_no_clip = np.linalg.norm(weights_no_clip)
+        assert (
+            weight_norm_no_clip > gradient_clip_norm * 100
+        ), f"Unclipped norm should exceed the threshold {gradient_clip_norm} * 100"
+        clipped_weights_results.append(weight_norm_with_clip)
+
+    # Check that the clipped weights are strictly increasing with increasing clip norm
+    assert np.all(
+        np.diff(clipped_weights_results) > 0
+    ), "Clipped weights should increase with increasing clip norm."
+
+
+@pytest.mark.parametrize("gradient_clip_norm", [0.5, 1.0, 5.0])
+def test_sgd_gradient_clipping_math(gradient_clip_norm):
+    """Test that the gradient clipping math is correct."""
+    X = np.array([[1, 1]])
+    y = np.array([5000])
+
+    clf = SGDRegressor(
+        max_iter=1,
+        tol=None,
+        alpha=0,
+        warm_start=True,
+        random_state=42,
+        gradient_clip_norm=gradient_clip_norm,
+        penalty=None,
+        eta0=1.0,
+    )
+    clf.fit(X, y)
+    clf.coef_ = np.zeros_like(clf.coef_)
+    clf.intercept_ = np.zeros_like(clf.intercept_)
+    clf.fit(X, y)
+
+    weights_with_clip = clf.coef_.copy()
+    weight_norm_with_clip = np.linalg.norm(weights_with_clip)
+    assert (
+        abs(weight_norm_with_clip - gradient_clip_norm) < 1e-9
+    ), f"Weight norm {weight_norm_with_clip} is not {gradient_clip_norm}"
+
+
+def test_sgd_regressor_no_clipping():
+    """Test that the gradient is not clipped when gradient_clip_norm=0."""
+    X = np.array([[1, 2], [2, 3], [3, 4], [4, 5]])
+    y = np.array([1, 2, 3, 4])
+
+    reg_no_clip = SGDRegressor(
+        max_iter=1,
+        tol=None,
+        alpha=0.01,
+        learning_rate="constant",
+        eta0=0.1,
+        gradient_clip_norm=0,  # No clipping
+        random_state=42,
+    )
+    reg_clip = SGDRegressor(
+        max_iter=1,
+        tol=None,
+        alpha=0.01,
+        learning_rate="constant",
+        eta0=0.1,
+        gradient_clip_norm=1000,  # Large enough to have no effect
+        random_state=42,
+    )
+
+    reg_no_clip.fit(X, y)
+    reg_clip.fit(X, y)
+
+    assert_array_almost_equal(reg_no_clip.coef_, reg_clip.coef_, decimal=6)
+
+
+def test_sgd_regressor_weights_change_with_clipping():
+    """Test that coefficients are affected by gradient clipping."""
+    X = np.array([[1, 2], [2, 3], [3, 4], [4, 5]])
+    y = np.array([1, 2, 3, 4])
+
+    reg_clip = SGDRegressor(
+        max_iter=10,
+        tol=None,
+        alpha=0.01,
+        learning_rate="constant",
+        eta0=0.1,
+        gradient_clip_norm=1.0,
+        random_state=42,
+    )
+
+    reg_no_clip = SGDRegressor(
+        max_iter=10,
+        tol=None,
+        alpha=0.01,
+        learning_rate="constant",
+        eta0=0.1,
+        gradient_clip_norm=0,  # No gradient clipping
+        random_state=42,
+    )
+
+    reg_clip.fit(X, y)
+    reg_no_clip.fit(X, y)
+
+    # Check that weights are different to see the effect of gradient clipping
+    assert not np.allclose(
+        reg_clip.coef_, reg_no_clip.coef_, atol=1e-2
+    ), "Gradient clipping should affect the weights."
