@@ -354,9 +354,10 @@ class LinearClassifierMixin(ClassifierMixin):
         follow_X = make_converter(X)
 
         X = validate_data(self, X, accept_sparse="csr", reset=False)
-        scores = safe_sparse_dot(
-            X, follow_X(self.coef_).T, dense_output=True
-        ) + follow_X(self.intercept_)
+        coef = follow_X(self.coef_)
+        if coef.ndim == 2:
+            coef = coef.T
+        scores = safe_sparse_dot(X, coef, dense_output=True) + follow_X(self.intercept_)
         return (
             xp.reshape(scores, (-1,))
             if (scores.ndim > 1 and scores.shape[1] == 1)
