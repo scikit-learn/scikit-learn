@@ -12,6 +12,7 @@ for comparison.
 
 """
 
+
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
@@ -27,8 +28,10 @@ from sklearn.model_selection import (
     StratifiedGroupKFold,
     StratifiedKFold,
     StratifiedShuffleSplit,
+    GroupTimeSeriesSplit,
     TimeSeriesSplit,
 )
+
 
 rng = np.random.RandomState(1338)
 cmap_data = plt.cm.Paired
@@ -55,7 +58,8 @@ X = rng.randn(100, 10)
 
 percentiles_classes = [0.1, 0.3, 0.6]
 y = np.hstack([[ii] * int(100 * perc) for ii, perc in enumerate(percentiles_classes)])
-
+# generate random classes for Timeseries split
+y_ts = rng.choice(y, len(y), replace=False)
 # Generate uneven groups
 group_prior = rng.dirichlet([2] * 10)
 groups = np.repeat(np.arange(10), rng.multinomial(100, group_prior))
@@ -190,6 +194,7 @@ for cv in cvs:
 #
 # Note how some use the group/class information while others do not.
 
+
 cvs = [
     KFold,
     GroupKFold,
@@ -199,13 +204,17 @@ cvs = [
     GroupShuffleSplit,
     StratifiedShuffleSplit,
     TimeSeriesSplit,
+    GroupTimeSeriesSplit,
 ]
 
 
 for cv in cvs:
     this_cv = cv(n_splits=n_splits)
     fig, ax = plt.subplots(figsize=(6, 3))
-    plot_cv_indices(this_cv, X, y, groups, ax, n_splits)
+    if cv in [GroupTimeSeriesSplit, TimeSeriesSplit]:
+        plot_cv_indices(this_cv, X, y_ts, groups, ax, n_splits)
+    else:
+        plot_cv_indices(this_cv, X, y, groups, ax, n_splits)
 
     ax.legend(
         [Patch(color=cmap_cv(0.8)), Patch(color=cmap_cv(0.02))],
