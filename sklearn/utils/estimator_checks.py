@@ -1130,11 +1130,11 @@ def check_array_api_input(
         numpy_asarray_works = False
 
     if numpy_asarray_works:
-        # In this case, array_api_dispatch is disabled and we rely on the
-        # np.asarray being called on the array inputs
+        # In this case, array_api_dispatch is disabled and we rely on np.asarray 
+        # being called to convert the non-NumPy inputs to NumPy arrays when needed.
         est_fitted_with_as_array = clone(est).fit(X_xp, y_xp)
         # We only do a smoke test for now, in order to avoid complicating the
-        # test function even further
+        # test function even further.
         for method_name in methods:
             method = getattr(est_fitted_with_as_array, method_name, None)
             if method is None:

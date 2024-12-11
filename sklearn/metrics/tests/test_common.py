@@ -1818,7 +1818,9 @@ def check_array_api_metric(
         metric_kwargs["multioutput"] = xp.asarray(multioutput, device=device)
 
     # When array API dispatch is disabled, and np.asarray works (for example PyTorch
-    # with CPU device), calling metric with array API inputs should work
+    # with CPU device), calling the metric function with such numpy compatible inputs
+    # should work (albeit by implicitly converting to numpy arrays instead of
+    # dispatching to the array library).
     try:
         np.asarray(a_xp)
         np.asarray(b_xp)

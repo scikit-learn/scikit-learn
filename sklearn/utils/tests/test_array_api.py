@@ -280,7 +280,8 @@ def test_device_inspection():
     # fine with array API disabled.
     assert device(Array("cpu"), Array("mygpu")) is None
 
-    # Test raise if on different devices and array API dispatch is enabled
+    # Test that ValueError is raised if on different devices and array API dispatch is
+    # enabled.
     err_msg = "Input arrays use different devices: cpu, mygpu"
     with config_context(array_api_dispatch=True):
         with pytest.raises(ValueError, match=err_msg):
