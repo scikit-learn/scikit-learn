@@ -376,10 +376,8 @@ The course features interactive content, exercises, detailed explanations,
 and discussion forum to help you build a solid foundation in scikit-learn
 while applying it to real-world datasets.
 
-
 The MOOC is free of charge, all the course materials are available at:
 `<https://inria.github.io/scikit-learn-mooc/>`_.
-Check it out and get started today!
 
 What's the best way to get help on scikit-learn usage?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
