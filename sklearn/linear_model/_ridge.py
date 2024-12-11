@@ -2305,6 +2305,7 @@ class _BaseRidgeCV(LinearModel):
         *,
         fit_intercept=True,
         scoring=None,
+        refit=True,
         cv=None,
         gcv_mode=None,
         store_cv_results=None,
@@ -2314,6 +2315,7 @@ class _BaseRidgeCV(LinearModel):
         self.alphas = alphas
         self.fit_intercept = fit_intercept
         self.scoring = scoring
+        self.refit = refit
         self.cv = cv
         self.gcv_mode = gcv_mode
         self.store_cv_results = store_cv_results
@@ -2869,6 +2871,7 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         *,
         fit_intercept=True,
         scoring=None,
+        refit=True,
         cv=None,
         class_weight=None,
         store_cv_results=None,
@@ -2878,6 +2881,7 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
             alphas=alphas,
             fit_intercept=fit_intercept,
             scoring=scoring,
+            refit=refit,
             cv=cv,
             store_cv_results=store_cv_results,
             store_cv_values=store_cv_values,

@@ -1669,6 +1669,7 @@ class LarsCV(Lars):
         verbose=False,
         max_iter=500,
         precompute="auto",
+        refit = True,
         cv=None,
         max_n_alphas=1000,
         n_jobs=None,
@@ -1676,6 +1677,7 @@ class LarsCV(Lars):
         copy_X=True,
     ):
         self.max_iter = max_iter
+        self.refit = refit
         self.cv = cv
         self.max_n_alphas = max_n_alphas
         self.n_jobs = n_jobs
@@ -1793,6 +1795,9 @@ class LarsCV(Lars):
         self.alpha_ = best_alpha
         self.cv_alphas_ = all_alphas
         self.mse_path_ = mse_path
+
+        if not self.refit:
+            return self
 
         # Now compute the full model using best_alpha
         # it will call a lasso internally when self if LassoLarsCV
@@ -2005,6 +2010,7 @@ class LassoLarsCV(LarsCV):
         verbose=False,
         max_iter=500,
         precompute="auto",
+        refit=True,
         cv=None,
         max_n_alphas=1000,
         n_jobs=None,
@@ -2016,6 +2022,7 @@ class LassoLarsCV(LarsCV):
         self.verbose = verbose
         self.max_iter = max_iter
         self.precompute = precompute
+        self.refit = refit
         self.cv = cv
         self.max_n_alphas = max_n_alphas
         self.n_jobs = n_jobs
