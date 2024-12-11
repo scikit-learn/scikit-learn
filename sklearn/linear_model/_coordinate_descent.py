@@ -1920,7 +1920,8 @@ class LassoCV(RegressorMixin, LinearModelCV):
         If ``True``, X will be copied; else, it may be overwritten.
 
     refit : bool, default=True
-        If ``True``, refit an estimator using the best found parameters on the whole dataset.
+        If ``True``, refit an estimator using the best found parameters
+        on the whole dataset.
 
     cv : int, cross-validation generator or iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -2185,7 +2186,8 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         than ``tol``.
 
     refit : bool, default=True
-        If ``True``, refit an estimator using the best found parameters on the whole dataset.
+        If ``True``, refit an estimator using the best found parameters
+        on the whole dataset.
 
     cv : int, cross-validation generator or iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -2876,7 +2878,8 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         than ``tol``.
 
     refit : bool, default=True
-        If ``True``, refit an estimator using the best found parameters on the whole dataset.
+        If ``True``, refit an estimator using the best found parameters
+        on the whole dataset.
 
     cv : int, cross-validation generator or iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -3126,7 +3129,8 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         If ``True``, X will be copied; else, it may be overwritten.
 
     refit : bool, default=True
-        If ``True``, Refit an estimator using the best found parameters on the whole dataset
+        If ``True``, refit an estimator using the best found parameters
+        on the whole dataset.
 
     cv : int, cross-validation generator or iterable, default=None
         Determines the cross-validation splitting strategy.

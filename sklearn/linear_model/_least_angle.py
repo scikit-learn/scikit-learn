@@ -1538,7 +1538,8 @@ class LarsCV(Lars):
         cannot be passed as argument since we will use only subsets of X.
 
     refit : bool, default=True
-        If ``True``, refit an estimator using the best found parameters on the whole dataset.
+        If ``True``, refit an estimator using the best found parameters
+        on the whole dataset.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -1866,7 +1867,8 @@ class LassoLarsCV(LarsCV):
         cannot be passed as argument since we will use only subsets of X.
 
     refit : bool, default=True
-        If ``True``, refit an estimator using the best found parameters on the whole dataset.
+        If ``True``, refit an estimator using the best found parameters
+        on the whole dataset.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.

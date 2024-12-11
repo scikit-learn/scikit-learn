@@ -2568,7 +2568,8 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         leave-one-out cross-validation), and r2 score otherwise.
 
     refit : bool, default=True
-        If ``True``, refit an estimator using the best found parameters on the whole dataset.
+        If ``True``, refit an estimator using the best found parameters
+        on the whole dataset.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -2759,7 +2760,8 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         function with signature ``scorer(estimator, X, y)``.
 
     refit : bool, default=True
-        If ``True``, refit an estimator using the best found parameters on the whole dataset.
+        If ``True``, refit an estimator using the best found parameters
+        on the whole dataset.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
