@@ -36,7 +36,8 @@ class PartialDependenceDisplay:
     stored as attributes.
 
     Read more in
-    :ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_visualization_api.py`
+    :ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_visualization_api.py`,
+    :ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_marginal_dist.py`,
     and the :ref:`User Guide <partial_dependence>`.
 
     .. versionadded:: 0.22
@@ -67,6 +68,18 @@ class PartialDependenceDisplay:
 
     deciles : dict
         Deciles for feature indices in ``features``.
+
+    marginal_dist_data : dict, default=None
+        A dictionary containing the original feature values for the extra plots.
+        The keys are the feature names (or indices) and the values are the
+        original feature values for each feature. This is used to plot the extra
+        plots in the partial dependence plot. ``marginal_dist_data`` is created
+        and passed automatically when using ``.from_estimator()``.
+
+        When ``marginal_dist_data`` is ``None``, no extra plots are plotted.
+
+        When ``marginal_dist_data`` is not ``None`` it should be in the form:
+            {"feature_name_1" : feature_values_1}
 
     kind : {'average', 'individual', 'both'} or list of such str, \
             default='average'
@@ -215,7 +228,7 @@ class PartialDependenceDisplay:
     ...     clf, X, features=0, kind="average", grid_resolution=5)
     >>> display = PartialDependenceDisplay(
     ...     [pd_results], features=features, feature_names=feature_names,
-    ...     target_idx=0, deciles=deciles
+    ...     target_idx=0, deciles=deciles, marginal_dist_data=None,
     ... )
     >>> display.plot(pdp_lim={1: (-1.38, 0.66)})
     <...>
@@ -230,6 +243,7 @@ class PartialDependenceDisplay:
         feature_names,
         target_idx,
         deciles,
+        marginal_dist_data,
         kind="average",
         subsample=1000,
         random_state=None,
@@ -240,6 +254,7 @@ class PartialDependenceDisplay:
         self.feature_names = feature_names
         self.target_idx = target_idx
         self.deciles = deciles
+        self.marginal_dist_data = marginal_dist_data
         self.kind = kind
         self.subsample = subsample
         self.random_state = random_state
@@ -272,6 +287,8 @@ class PartialDependenceDisplay:
         kind="average",
         centered=False,
         subsample=1000,
+        marginal_dist=False,
+        marginal_dist_kw=None,
         random_state=None,
     ):
         """Partial dependence (PD) and individual conditional expectation (ICE) plots.
@@ -509,6 +526,30 @@ class PartialDependenceDisplay:
 
             Note that the full dataset is still used to calculate averaged partial
             dependence when `kind='both'`.
+
+        marginal_dist : bool, or list of such, default=False
+            Extra plots to be added to the partial dependence plots.
+            If ``True``, A histogram of the feature distributions will be
+            plotted above (one-way) or above and to the right (two-way) of
+            the PD display. If the feature is categorical, a bar plot will
+            be used instead. When, ``False``, no extra plots will be added.
+
+            .. note::
+                The histogram plots will be truncated if the
+                ``percentiles`` parameter has it's min > 0 and max < 1. In
+                this situation, the ``marginal_dist`` visuals can be
+                misleading.
+
+            .. versionadded:: 1.4
+
+        marginal_dist_kw : dict of dicts, default=None
+            Dictionary with keywords passed to ``matplotlib.pyplot.hist``
+            or ``matplotlib.pyplot.bar``.
+
+            Should be in the format:
+                ``{"hist": {'fill' : False}, {"bar": {"color" : "blue"}}``
+
+            .. versionadded:: 1.4
 
         random_state : int, RandomState instance or None, default=None
             Controls the randomness of the selected samples when subsamples is not
@@ -754,11 +795,28 @@ class PartialDependenceDisplay:
             target_idx = target
 
         deciles = {}
+        marginal_dist_data = {}
         for fxs, cats in zip(features, is_categorical):
             for fx, cat in zip(fxs, cats):
-                if not cat and fx not in deciles:
+                if fx not in deciles:
                     X_col = _safe_indexing(X, fx, axis=1)
-                    deciles[fx] = mquantiles(X_col, prob=np.arange(0.1, 1.0, 0.1))
+                    if not cat:
+                        deciles[fx] = mquantiles(X_col, prob=np.arange(0.1, 1.0, 0.1))
+                    if marginal_dist:
+                        marginal_dist_data[fx] = X_col
+
+        # validate marginal_dist is bool or list of bools
+        if not (
+            isinstance(marginal_dist, bool)
+            or (
+                isinstance(marginal_dist, list)
+                and all(isinstance(item, bool) for item in marginal_dist)
+            )
+        ):
+            raise ValueError(
+                "marginal_dist must be a bool or a list of bools, got"
+                f" {type(marginal_dist)}."
+            )
 
         display = cls(
             pd_results=pd_results,
@@ -766,6 +824,7 @@ class PartialDependenceDisplay:
             feature_names=feature_names,
             target_idx=target_idx,
             deciles=deciles,
+            marginal_dist_data=marginal_dist_data if marginal_dist else None,
             kind=kind,
             subsample=subsample,
             random_state=random_state,
@@ -779,6 +838,8 @@ class PartialDependenceDisplay:
             pd_line_kw=pd_line_kw,
             contour_kw=contour_kw,
             centered=centered,
+            marginal_dist=marginal_dist,
+            marginal_dist_kw=marginal_dist_kw,
         )
 
     def _get_sample_count(self, n_samples):
@@ -900,6 +961,8 @@ class PartialDependenceDisplay:
         categorical,
         bar_kw,
         pdp_lim,
+        marginal_dist,
+        marginal_dist_kw,
     ):
         """Plot 1-way partial dependence: ICE and PDP.
 
@@ -916,8 +979,8 @@ class PartialDependenceDisplay:
             given feature for all samples in `X`.
         feature_values : ndarray of shape (n_grid_points,)
             The feature values for which the predictions have been computed.
-        feature_idx : int
-            The index corresponding to the target feature.
+        feature_idx : tuple of int
+            A length 1 tuple containing the index of the target feature.
         n_ice_lines : int
             The number of ICE lines to plot.
         ax : Matplotlib axes
@@ -941,8 +1004,66 @@ class PartialDependenceDisplay:
             Global min and max average predictions, such that all plots will
             have the same scale and y limits. `pdp_lim[1]` is the global min
             and max for single partial dependence curves.
+        marginal_dist : bool
+            If True, histogram plot(s) will be added to the partial dependence
+            plot.
+        marginal_dist_kw : dict
+            Dictionary with keywords passed to ``matplotlib.pyplot.hist``
+            or ``matplotlib.pyplot.bar``.
+
+            Should be in the format:
+                ``{"hist": {'fill' : False}, {"bar": {"color" : "blue"}}``
+
+            .. versionadded:: 1.4
         """
         from matplotlib import transforms  # noqa
+
+        if marginal_dist:
+            from matplotlib.gridspec import GridSpecFromSubplotSpec
+
+            marginal_dist_kw = {} if marginal_dist_kw is None else marginal_dist_kw
+            marginal_dist_defaults = {"color": "grey", "alpha": 0.3}
+            if "hist" not in marginal_dist_kw:
+                marginal_dist_kw["hist"] = {}
+            if "bar" not in marginal_dist_kw:
+                marginal_dist_kw["bar"] = {}
+            for default_arg, default_value in marginal_dist_defaults.items():
+                if default_arg not in marginal_dist_kw["hist"]:
+                    marginal_dist_kw["hist"][default_arg] = default_value
+                if default_arg not in marginal_dist_kw["bar"]:
+                    marginal_dist_kw["bar"][default_arg] = default_value
+
+            marginal_dist_gs = GridSpecFromSubplotSpec(
+                2, 1, height_ratios=[0.2, 1], subplot_spec=ax.get_subplotspec()
+            )
+
+            axs = marginal_dist_gs.subplots()
+            ax.remove()
+            marginal_x_ax = axs[0]
+            ax = axs[1]
+            # Set defaults for marginal_dist
+            if "color" not in marginal_dist_kw:
+                marginal_dist_kw["color"] = "grey"
+            if "alpha" not in marginal_dist_kw:
+                marginal_dist_kw["alpha"] = 0.3
+            if categorical:
+                categories, counts = np.unique(
+                    self.marginal_dist_data[feature_idx[0]], return_counts=True
+                )
+                marginal_x_ax.bar(categories, counts, **marginal_dist_kw["bar"])
+            else:
+                if "bins" not in marginal_dist_kw:
+                    marginal_dist_kw["bins"] = 10
+                marginal_x_ax.hist(
+                    self.marginal_dist_data[feature_idx[0]], **marginal_dist_kw["hist"]
+                )
+            marginal_x_ax.tick_params(labelbottom=False, bottom=True)
+
+            if not categorical:
+                marginal_x_ax.set_xlim([feature_values.min(), feature_values.max()])
+
+            marginal_x_ax.spines["top"].set_visible(False)
+            marginal_x_ax.spines["right"].set_visible(False)
 
         if kind in ("individual", "both"):
             self._plot_ice_lines(
@@ -985,7 +1106,11 @@ class PartialDependenceDisplay:
         # reset ylim which was overwritten by vlines
         min_val = min(val[0] for val in pdp_lim.values())
         max_val = max(val[1] for val in pdp_lim.values())
-        ax.set_ylim([min_val, max_val])
+        # Avoid Matplotlib UserWarning
+        if min_val != max_val:
+            ax.set_ylim([min_val, max_val])
+        else:
+            ax.set_ylim([min_val - 1, max_val + 1])
 
         # Set xlabel if it is not already set
         if not ax.get_xlabel():
@@ -1011,6 +1136,8 @@ class PartialDependenceDisplay:
         contour_kw,
         categorical,
         heatmap_kw,
+        marginal_dist,
+        marginal_dist_kw,
     ):
         """Plot 2-way partial dependence.
 
@@ -1039,10 +1166,102 @@ class PartialDependenceDisplay:
         heatmap_kw: dict
             Dict with keywords passed when plotting the PD heatmap
             (categorical).
-        """
-        if categorical:
-            import matplotlib.pyplot as plt
+        marginal_dist : bool
+            If True a histogram is added to the partial dependence plot.
+            If marginal_dist is ``True``' and ``categorical`` is ``True``,
+            a barplot is drawn.
+        marginal_dist_kw : dict of dicts, default=None
+            Dictionary with keywords passed to ``matplotlib.pyplot.hist``
+            or ``matplotlib.pyplot.bar``.
 
+            Should be in the format:
+                ``{"hist": {'fill' : False}, {"bar": {"color" : "blue"}}``
+
+            .. versionadded:: 1.4
+        """
+        import matplotlib.pyplot as plt
+
+        if marginal_dist:
+            from matplotlib.gridspec import GridSpecFromSubplotSpec
+
+            # Set defaults for marginal_dist
+            marginal_dist_kw = {} if marginal_dist_kw is None else marginal_dist_kw
+            marginal_dist_defaults = {"color": "grey", "alpha": 0.3}
+            if "hist" not in marginal_dist_kw:
+                marginal_dist_kw["hist"] = {}
+            if "bar" not in marginal_dist_kw:
+                marginal_dist_kw["bar"] = {}
+            for default_arg, default_value in marginal_dist_defaults.items():
+                if default_arg not in marginal_dist_kw["hist"]:
+                    marginal_dist_kw["hist"][default_arg] = default_value
+                if default_arg not in marginal_dist_kw["bar"]:
+                    marginal_dist_kw["bar"][default_arg] = default_value
+
+            marginal_dist_gs = GridSpecFromSubplotSpec(
+                2,
+                2,
+                width_ratios=[1, 0.2],
+                height_ratios=[0.2, 1],
+                subplot_spec=ax.get_subplotspec(),
+            )
+
+            axs = marginal_dist_gs.subplots()
+            marginal_x_ax = axs[0, 0]
+            marginal_x_ax.sharex(ax)
+            marginal_y_ax = axs[1, 1]
+            marginal_y_ax.sharey(ax)
+            ax.remove()
+            axs[0, 1].remove()
+            ax = axs[1, 0]
+
+            if categorical:
+                categories_x, counts_x = np.unique(
+                    self.marginal_dist_data[feature_idx[0]],
+                    return_counts=True,
+                )
+                categories_y, counts_y = np.unique(
+                    self.marginal_dist_data[feature_idx[1]],
+                    return_counts=True,
+                )
+                marginal_x_ax.bar(categories_y, counts_y, **marginal_dist_kw["bar"])
+                marginal_y_ax.barh(categories_x, counts_x, **marginal_dist_kw["bar"])
+                marginal_x_ax.tick_params(
+                    labelleft=False, bottom=False, labelbottom=False
+                )
+                marginal_y_ax.tick_params(
+                    labelbottom=False, left=False, labelleft=False
+                )
+            else:
+                if "bins" not in marginal_dist_kw:
+                    marginal_dist_kw["bins"] = 10
+                marginal_x_ax.hist(
+                    self.marginal_dist_data[feature_idx[0]],
+                    **marginal_dist_kw["hist"],
+                )
+                marginal_y_ax.hist(
+                    self.marginal_dist_data[feature_idx[1]],
+                    orientation="horizontal",
+                    **marginal_dist_kw["hist"],
+                )
+                marginal_x_ax.tick_params(labelbottom=False, bottom=True)
+                marginal_y_ax.tick_params(labelleft=False, left=True)
+
+            # Clip the axes of the marginal_dist to the contour min and max
+            if not categorical:
+                marginal_x_ax.set_xlim(
+                    [feature_values[0].min(), feature_values[0].max()]
+                )
+                marginal_y_ax.set_ylim(
+                    [feature_values[1].min(), feature_values[1].max()]
+                )
+
+            marginal_x_ax.spines["top"].set_visible(False)
+            marginal_x_ax.spines["right"].set_visible(False)
+
+            marginal_y_ax.spines["right"].set_visible(False)
+            marginal_y_ax.spines["top"].set_visible(False)
+
+        if categorical:
             default_im_kw = dict(interpolation="nearest", cmap="viridis")
             im_kw = {**default_im_kw, **heatmap_kw}
 
@@ -1065,8 +1284,6 @@ class PartialDependenceDisplay:
                 text_kwargs = dict(ha="center", va="center", color=color)
                 text[row, col] = ax.text(col, row, text_data, **text_kwargs)
 
-            fig = ax.figure
-            fig.colorbar(im, ax=ax)
             ax.set(
                 xticks=np.arange(len(feature_values[1])),
                 yticks=np.arange(len(feature_values[0])),
@@ -1141,6 +1358,8 @@ class PartialDependenceDisplay:
         heatmap_kw=None,
         pdp_lim=None,
         centered=False,
+        marginal_dist=False,
+        marginal_dist_kw=None,
     ):
         """Plot partial dependence plots.
 
@@ -1210,6 +1429,30 @@ class PartialDependenceDisplay:
             y-axis. By default, no centering is done.
 
             .. versionadded:: 1.1
+
+        marginal_dist : bool, or list of such, default=False
+            Whether to add a histogram to the partial dependence plots. If ``True``,
+            A histogram of the feature distributions will be plotted above
+            (one-way) or above and to the right (two-way) of the PD display.
+            If the feature is categorical, a bar plot will be used instead.
+            If ``False`` then no extra plots will be added.
+
+            .. note::
+
+                The histogram plot will be truncated if the
+                ``percentiles`` parameter has it's min > 0 and max < 1. In this
+                situation, the ``marginal_dist`` visuals can be misleading.
+
+            .. versionadded:: 1.4
+
+        marginal_dist_kw : dict of dicts, default=None
+            Dictionary with keywords passed to ``matplotlib.pyplot.hist``
+            or ``matplotlib.pyplot.bar``.
+
+            Should be in the format:
+                ``{"hist": {'fill' : False}, {"bar": {"color" : "blue"}}``
+
+            .. versionadded:: 1.4
 
         Returns
         -------
@@ -1390,13 +1633,35 @@ class PartialDependenceDisplay:
         self.deciles_vlines_ = np.empty_like(self.axes_, dtype=object)
         self.deciles_hlines_ = np.empty_like(self.axes_, dtype=object)
 
-        for pd_plot_idx, (axi, feature_idx, cat, pd_result, kind_plot) in enumerate(
+        # process marginal_dist argument
+        if marginal_dist is False:
+            marginal_dist = [False] * len(self.features)
+        elif marginal_dist is True:
+            marginal_dist = [marginal_dist] * len(self.features)
+        elif isinstance(marginal_dist, list):
+            if len(marginal_dist) != len(self.features):
+                raise ValueError(
+                    "When `marginal_dist` is provided as a list of booleans, "
+                    "it should contain as many elements as `features`. "
+                    f"`marginal_dist` contains {len(marginal_dist)} element(s) and"
+                    f"`features` contains {len(self.features)} element(s)."
+                )
+
+        for pd_plot_idx, (
+            axi,
+            feature_idx,
+            cat,
+            pd_result,
+            kind_plot,
+            marginal_dist,
+        ) in enumerate(
             zip(
                 self.axes_.ravel(),
                 self.features,
                 is_categorical,
                 pd_results_,
                 kind,
+                marginal_dist,
             )
         ):
             avg_preds = None
@@ -1471,6 +1736,8 @@ class PartialDependenceDisplay:
                     cat[0],
                     bar_kw,
                     pdp_lim,
+                    marginal_dist,
+                    marginal_dist_kw,
                 )
             else:
                 self._plot_two_way_partial_dependence(
@@ -1483,6 +1750,8 @@ class PartialDependenceDisplay:
                     contour_kw,
                     cat[0] and cat[1],
                     heatmap_kw,
+                    marginal_dist,
+                    marginal_dist_kw,
                 )
 
         return self
