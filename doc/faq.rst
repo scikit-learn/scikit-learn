@@ -360,6 +360,27 @@ long-term maintenance issues in open-source software, look at
 Using scikit-learn
 ------------------
 
+How do I get started with scikit-learn?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you are new to scikit-learn, or looking to stregthen your understanding,
+we highly recommend the
+`scikit-learn MOOC (Massive Open Online Course)
+<https://www.fun-mooc.fr/en/courses/machine-learning-python-scikit-learn/>`_.
+This comprehensive course is designed to help learners of all levels master
+machine learning concepts and techniques using scikit-learn. It covers everything
+from the fundamental concepts of machine learning to more advanced topics like
+predictive modeling pipelines and model evaluation.
+
+The course features interactive content, exercises, detailed explanations,
+and discussion forum to help you build a solid foundation in scikit-learn
+while applying it to real-world datasets.
+
+
+The MOOC is free of charge, all the course materials are available at:
+`<https://inria.github.io/scikit-learn-mooc/>`_.
+Check it out and get started today!
+
 What's the best way to get help on scikit-learn usage?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
