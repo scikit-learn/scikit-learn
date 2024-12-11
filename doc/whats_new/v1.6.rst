@@ -514,6 +514,9 @@ Python and CPython ecosystem, for example :user:`Nathan Goldbaum <ngoldbaum>`,
   removed in 1.8. In the mean time, `None` is equivalent to `"predict"`.
   By :user:`Jérémie du Boisberranger <jeremiedb>` :pr:`30001`
 
+- |Feature| :func:`metrics.d2_brier_score` has been added which calculates
+  the D^2 for the brier score. :pr:`28971` by :user:`Omar Salman <OmarManzoor>`.
+
 :mod:`sklearn.model_selection`
 ------------------------------
 
