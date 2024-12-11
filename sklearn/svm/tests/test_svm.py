@@ -1438,3 +1438,31 @@ def test_svm_with_infinite_C(Estimator, make_dataset, C_inf, global_random_seed)
     estimator_C_large = Estimator(C=1e10).fit(X, y)
 
     assert_allclose(estimator_C_large.predict(X), estimator_C_inf.predict(X))
+
+
+@pytest.mark.parametrize(
+    "Estimator, data",
+    [
+        (svm.SVC, datasets.load_iris(return_X_y=True)),
+        (svm.NuSVC, datasets.load_iris(return_X_y=True)),
+        (svm.SVR, datasets.load_diabetes(return_X_y=True)),
+        (svm.NuSVR, datasets.load_diabetes(return_X_y=True)),
+        (svm.OneClassSVM, datasets.load_iris(return_X_y=True)),
+    ],
+)
+def test_svm_warning_with_linear_kernel(Estimator, data):
+    est_gamma = Estimator(kernel="linear", gamma=1.0)
+    est_coef = Estimator(kernel="linear", coef0=1.0)
+    est_deg = Estimator(kernel="linear", degree=4)
+    warn_msg_gamma = "Setting 'gamma' when using 'linear' kernel"
+    warn_msg_coef = "Setting 'coef0' when using 'linear' kernel"
+    warn_msg_deg = "Setting 'degree' when using 'linear' kernel"
+
+    with pytest.warns(FutureWarning, match=warn_msg_gamma):
+        est_gamma.fit(*data)
+
+    with pytest.warns(FutureWarning, match=warn_msg_coef):
+        est_coef.fit(*data)
+
+    with pytest.warns(FutureWarning, match=warn_msg_deg):
+        est_deg.fit(*data)
