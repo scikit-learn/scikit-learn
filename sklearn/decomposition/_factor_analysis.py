@@ -72,6 +72,7 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
     copy : bool, default=True
         Whether to make a copy of X. If ``False``, the input X gets overwritten
         during fitting.
+        See the :term:`Glossary <copy>`.
 
     max_iter : int, default=1000
         Maximum number of iterations.

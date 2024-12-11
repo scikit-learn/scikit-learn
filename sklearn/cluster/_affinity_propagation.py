@@ -229,6 +229,7 @@ def affinity_propagation(
     copy : bool, default=True
         If copy is False, the affinity matrix is modified inplace by the
         algorithm, for memory efficiency.
+        See the :term:`Glossary <copy>`.
 
     verbose : bool, default=False
         The verbosity level.
@@ -331,7 +332,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         of estimated clusters that stops the convergence.
 
     copy : bool, default=True
-        Make a copy of input data.
+        Make a copy of input data. See the :term:`Glossary <copy>`.
 
     preference : array-like of shape (n_samples,) or float, default=None
         Preferences for each point - points with larger values of
