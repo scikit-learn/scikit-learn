@@ -753,6 +753,15 @@ Changelog
   :class:`sklearn.metrics.pairwise.polynomial_kernel`.
   :pr:`27668` by :user:`Nolan McMahon <NolantheNerd>`.
 
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |Enhancement| The method `predict_proba` of
+  :class:`gaussian_process.GaussianProcessClassifier` now exposes
+  the standard deviation of the latent function f with a
+  `return_std_of_f` flag. :pr:`22227` by
+  :user:`Miguel González Duque <miguelgondu>`
+
 :mod:`sklearn.linear_model`
 ...........................
 
