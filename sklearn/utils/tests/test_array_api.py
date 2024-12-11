@@ -248,6 +248,7 @@ def test_device_none_if_no_input():
     assert device(None, "name") is None
 
 
+@skip_if_array_api_compat_not_configured
 def test_device_inspection():
     class Device:
         def __init__(self, name):
