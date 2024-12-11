@@ -1,0 +1,3 @@
+- :func:`sklearn.metrics.ndcg_score` now includes a `zero_division`
+  parameter to raise a warning all true relevances are equal to zero for some samples.
+  :pr:`30156` by :user:`Natalia Mokeeva <natmokval>`.
