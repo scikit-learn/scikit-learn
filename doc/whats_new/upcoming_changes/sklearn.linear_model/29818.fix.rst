@@ -1,5 +1,0 @@
-- :class:`linear_model.LogisticRegression`, :class:`linear_model.PoissonRegressor`,
-  :class:`linear_model.GammaRegressor`, :class:`linear_model.TweedieRegressor`
-  now take sample weights into account to decide when to fall back to `solver='lbfgs'`
-  whenever `solver='newton-cholesky'` becomes numerically unstable.
-  By :user:`Antoine Baker <antoinebaker>`
