@@ -1656,6 +1656,7 @@ class LarsCV(Lars):
     _parameter_constraints: dict = {
         **Lars._parameter_constraints,
         "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "refit": ["boolean"],
         "cv": ["cv_object"],
         "max_n_alphas": [Interval(Integral, 1, None, closed="left")],
         "n_jobs": [Integral, None],

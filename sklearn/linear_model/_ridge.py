@@ -2292,6 +2292,7 @@ class _BaseRidgeCV(LinearModel):
         "alphas": ["array-like", Interval(Real, 0, None, closed="neither")],
         "fit_intercept": ["boolean"],
         "scoring": [StrOptions(set(get_scorer_names())), callable, None],
+        "refit": ["boolean"],
         "cv": ["cv_object"],
         "gcv_mode": [StrOptions({"auto", "svd", "eigen"}), None],
         "store_cv_results": ["boolean", Hidden(None)],

@@ -1497,6 +1497,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left")],
         "copy_X": ["boolean"],
+        "refit": ["boolean"],
         "cv": ["cv_object"],
         "verbose": ["verbose"],
         "n_jobs": [Integral, None],

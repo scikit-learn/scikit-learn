@@ -1009,6 +1009,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         "copy": ["boolean"],
         "fit_intercept": ["boolean"],
         "max_iter": [Interval(Integral, 0, None, closed="left"), None],
+        "refit": ["boolean"],
         "cv": ["cv_object"],
         "n_jobs": [Integral, None],
         "verbose": ["verbose"],
