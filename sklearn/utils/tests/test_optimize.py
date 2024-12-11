@@ -7,10 +7,10 @@ from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils.optimize import _newton_cg
 
 
-def test_newton_cg():
+def test_newton_cg(global_random_seed):
     # Test that newton_cg gives same result as scipy's fmin_ncg
 
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     A = rng.normal(size=(10, 10))
     x0 = np.ones(10)
 
@@ -28,7 +28,7 @@ def test_newton_cg():
         return grad(x), lambda x: A.T.dot(A.dot(x))
 
     assert_array_almost_equal(
-        _newton_cg(grad_hess, func, grad, x0, tol=1e-10)[0],
+        _newton_cg(grad_hess, func, grad, x0, tol=1e-7)[0],
         fmin_ncg(f=func, x0=x0, fprime=grad, fhess_p=hess),
     )
 
