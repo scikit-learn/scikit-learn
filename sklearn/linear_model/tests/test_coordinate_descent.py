@@ -381,7 +381,6 @@ def test_model_pipeline_same_dense_and_sparse(LinearModel, params, csr_container
     # Test that linear model preceded by StandardScaler in the pipeline and
     # with normalize set to False gives the same y_pred and the same .coef_
     # given X sparse or dense
-
     model_dense = make_pipeline(StandardScaler(with_mean=False), LinearModel(**params))
 
     model_sparse = make_pipeline(StandardScaler(with_mean=False), LinearModel(**params))
@@ -445,9 +444,8 @@ def test_enet_path():
 
     # Here we have a small number of iterations, and thus the
     # ElasticNet might not converge. This is to speed up tests
-    clf = ElasticNetCV(
-        alphas=[0.01, 0.05, 0.1], eps=2e-3, l1_ratio=[0.5, 0.7], cv=3, max_iter=max_iter
-    )
+    clf = ElasticNetCV(alphas=[0.01, 0.05, 0.1], eps=2e-3, l1_ratio=[0.5, 0.7], cv=3, max_iter=max_iter)
+    clf.fit(X,y)
     ignore_warnings(clf.fit)(X, y)
     # Well-conditioned settings, we should have selected our
     # smallest penalty

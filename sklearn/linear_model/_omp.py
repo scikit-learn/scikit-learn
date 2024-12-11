@@ -1016,6 +1016,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         copy=True,
         fit_intercept=True,
         max_iter=None,
+        refit=True,
         cv=None,
         n_jobs=None,
         verbose=False,
@@ -1023,6 +1024,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         self.copy = copy
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
+        self.refit = refit
         self.cv = cv
         self.n_jobs = n_jobs
         self.verbose = verbose

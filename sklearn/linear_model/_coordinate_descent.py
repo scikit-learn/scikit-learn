@@ -1497,6 +1497,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left")],
         "copy_X": ["boolean"],
+        "refit": ["boolean"],
         "cv": ["cv_object"],
         "verbose": ["verbose"],
         "n_jobs": [Integral, None],
@@ -1516,6 +1517,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         max_iter=1000,
         tol=1e-4,
         copy_X=True,
+        refit=True,
         cv=None,
         verbose=False,
         n_jobs=None,
@@ -1531,6 +1533,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         self.max_iter = max_iter
         self.tol = tol
         self.copy_X = copy_X
+        self.refit = refit
         self.cv = cv
         self.verbose = verbose
         self.n_jobs = n_jobs
@@ -1813,6 +1816,9 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             self.alphas_ = np.asarray(alphas[0])
 
         # Refit the model with the parameters selected
+        if not self.refit:
+            return self
+
         common_params = {
             name: value
             for name, value in self.get_params().items()
@@ -2046,6 +2052,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
         max_iter=1000,
         tol=1e-4,
         copy_X=True,
+        refit=True,
         cv=None,
         verbose=False,
         n_jobs=None,
@@ -2062,6 +2069,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
             max_iter=max_iter,
             tol=tol,
             copy_X=copy_X,
+            refit=refit,
             cv=cv,
             verbose=verbose,
             n_jobs=n_jobs,
@@ -2329,6 +2337,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         tol=1e-4,
         cv=None,
         copy_X=True,
+        refit=True,
         verbose=0,
         n_jobs=None,
         positive=False,
@@ -2345,6 +2354,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         self.tol = tol
         self.cv = cv
         self.copy_X = copy_X
+        self.refit = refit
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.positive = positive
@@ -2997,6 +3007,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         tol=1e-4,
         cv=None,
         copy_X=True,
+        refit=True,
         verbose=0,
         n_jobs=None,
         random_state=None,
@@ -3011,6 +3022,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         self.tol = tol
         self.cv = cv
         self.copy_X = copy_X
+        self.refit = refit
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.random_state = random_state
@@ -3236,6 +3248,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         max_iter=1000,
         tol=1e-4,
         copy_X=True,
+        refit=True,
         cv=None,
         verbose=False,
         n_jobs=None,
@@ -3250,6 +3263,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
             max_iter=max_iter,
             tol=tol,
             copy_X=copy_X,
+            refit=refit,
             cv=cv,
             verbose=verbose,
             n_jobs=n_jobs,
