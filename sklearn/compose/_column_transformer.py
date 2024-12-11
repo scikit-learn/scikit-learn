@@ -1319,7 +1319,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         try:
-            sparse = all(
+            tags.input_tags.sparse = all(
                 get_tags(trans).input_tags.sparse
                 for name, trans, _ in self.transformers
                 if trans not in {"passthrough", "drop"}
@@ -1328,8 +1328,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             # If `transformers` does not comply with our API (list of tuples)
             # then it will fail. In this case, we assume that `sparse` is False
             # but the parameter validation will raise an error during `fit`.
-            sparse = False
-        tags.input_tags.sparse = sparse
+            pass  # pragma: no cover
         return tags
 
 
