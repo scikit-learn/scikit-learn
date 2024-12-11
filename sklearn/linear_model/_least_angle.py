@@ -1537,6 +1537,9 @@ class LarsCV(Lars):
         calculations. If set to ``'auto'`` let us decide. The Gram matrix
         cannot be passed as argument since we will use only subsets of X.
 
+    refit : bool, default=True
+        If ``True``, refit an estimator using the best found parameters on the whole dataset.
+
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
@@ -1861,6 +1864,9 @@ class LassoLarsCV(LarsCV):
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram matrix
         cannot be passed as argument since we will use only subsets of X.
+
+    refit : bool, default=True
+        If ``True``, refit an estimator using the best found parameters on the whole dataset.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.

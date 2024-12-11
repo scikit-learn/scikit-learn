@@ -914,6 +914,9 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         Maximum numbers of iterations to perform, therefore maximum features
         to include. 10% of ``n_features`` but at least 5 if available.
 
+    refit : bool, default=True
+        If ``True``, refit an estimator using the best found parameters on the whole dataset.
+
     cv : int, cross-validation generator or iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:

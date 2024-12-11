@@ -1919,6 +1919,9 @@ class LassoCV(RegressorMixin, LinearModelCV):
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
+    refit : bool, default=True
+        If ``True``, refit an estimator using the best found parameters on the whole dataset.
+
     cv : int, cross-validation generator or iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
@@ -2068,7 +2071,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
             max_iter=max_iter,
             tol=tol,
             copy_X=copy_X,
-            refit=True,
+            refit=refit,
             cv=cv,
             verbose=verbose,
             n_jobs=n_jobs,
@@ -2180,6 +2183,9 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
         than ``tol``.
+
+    refit : bool, default=True
+        If ``True``, refit an estimator using the best found parameters on the whole dataset.
 
     cv : int, cross-validation generator or iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -2869,6 +2875,9 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
+    refit : bool, default=True
+        If ``True``, refit an estimator using the best found parameters on the whole dataset.
+
     cv : int, cross-validation generator or iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
@@ -3115,6 +3124,9 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
 
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
+
+    refit : bool, default=True
+        If ``True``, Refit an estimator using the best found parameters on the whole dataset
 
     cv : int, cross-validation generator or iterable, default=None
         Determines the cross-validation splitting strategy.

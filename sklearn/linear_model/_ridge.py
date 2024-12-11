@@ -2567,6 +2567,9 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         negative mean squared error if cv is 'auto' or None (i.e. when using
         leave-one-out cross-validation), and r2 score otherwise.
 
+    refit : bool, default=True
+        If ``True``, refit an estimator using the best found parameters on the whole dataset.
+
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
@@ -2754,6 +2757,9 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
     scoring : str, callable, default=None
         A string (see :ref:`scoring_parameter`) or a scorer callable object /
         function with signature ``scorer(estimator, X, y)``.
+
+    refit : bool, default=True
+        If ``True``, refit an estimator using the best found parameters on the whole dataset.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
