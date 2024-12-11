@@ -444,8 +444,9 @@ def test_enet_path():
 
     # Here we have a small number of iterations, and thus the
     # ElasticNet might not converge. This is to speed up tests
-    clf = ElasticNetCV(alphas=[0.01, 0.05, 0.1], eps=2e-3, l1_ratio=[0.5, 0.7], cv=3, max_iter=max_iter)
-    clf.fit(X,y)
+    clf = ElasticNetCV(
+        alphas=[0.01, 0.05, 0.1], eps=2e-3, l1_ratio=[0.5, 0.7], cv=3, max_iter=max_iter
+    )
     ignore_warnings(clf.fit)(X, y)
     # Well-conditioned settings, we should have selected our
     # smallest penalty
