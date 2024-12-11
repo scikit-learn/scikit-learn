@@ -2551,6 +2551,27 @@ def test_groups_with_routing_validation(func, extra_args):
     ],
 )
 @config_context(enable_metadata_routing=True)
+def test_cross_validate_params_none(func, extra_args):
+    """Test that no errors are raised when passing `params=None`, which is the
+    default value.
+    Non-regression test for: https://github.com/scikit-learn/scikit-learn/issues/30447
+    """
+    X, y = make_classification(n_samples=100, n_classes=2, random_state=0)
+    func(estimator=ConsumingClassifier(), X=X, y=y, **extra_args)
+
+
+@pytest.mark.parametrize(
+    "func, extra_args",
+    [
+        (cross_validate, {}),
+        (cross_val_score, {}),
+        (cross_val_predict, {}),
+        (learning_curve, {}),
+        (permutation_test_score, {}),
+        (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
+    ],
+)
+@config_context(enable_metadata_routing=True)
 def test_passed_unrequested_metadata(func, extra_args):
     """Check that we raise an error when passing metadata that is not
     requested."""
