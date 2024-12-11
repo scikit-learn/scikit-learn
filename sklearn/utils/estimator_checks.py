@@ -1118,9 +1118,11 @@ def check_array_api_input(
         np.asarray(y_xp)
         # TODO There are a few errors in SearchCV with array-api-strict because
         # we end up doing X[train_indices] where X is a array-api-strict array
-        # and indices a numpy array. Probably not worth investigating for now,
-        # since using array-api-strict with array API disabled does not seem a
-        # very relevant.
+        # and train_indices is a numpy array. array-api-strict insists
+        # train_indices should be an array-api-strict array. On the other hand,
+        # all the array API library (PyTorch, jax, CuPy) accept to index with a
+        # numpy array. This is probably not worth doing anything about it for
+        # now since array-api-strict seems a bit too strict ...
         numpy_asarray_works = xp.__name__ != "array_api_strict"
 
     except TypeError:
