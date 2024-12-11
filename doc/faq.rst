@@ -363,7 +363,7 @@ Using scikit-learn
 How do I get started with scikit-learn?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you are new to scikit-learn, or looking to stregthen your understanding,
+If you are new to scikit-learn, or looking to strengthen your understanding,
 we highly recommend the
 `scikit-learn MOOC (Massive Open Online Course)
 <https://www.fun-mooc.fr/en/courses/machine-learning-python-scikit-learn/>`_.
