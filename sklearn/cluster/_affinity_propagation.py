@@ -483,6 +483,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.pairwise = self.affinity == "precomputed"
+        tags.input_tags.sparse = self.affinity != "precomputed"
         return tags
 
     @_fit_context(prefer_skip_nested_validation=True)

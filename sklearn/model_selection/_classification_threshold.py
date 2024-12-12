@@ -22,7 +22,7 @@ from ..metrics._scorer import (
     _CurveScorer,
     _threshold_scores_to_class_labels,
 )
-from ..utils import _safe_indexing
+from ..utils import _safe_indexing, get_tags
 from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
 from ..utils._response import _get_response_values_binary
 from ..utils.metadata_routing import (
@@ -206,6 +206,7 @@ class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.classifier_tags.multi_class = False
+        tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
         return tags
 
 
