@@ -1,3 +1,0 @@
-- `scoring="neg_max_error"` should be used instead of `scoring="max_error"`
-  which is now deprecated.
-  By :user:`Farid "Freddie" Taba <artificialfintelligence>`
