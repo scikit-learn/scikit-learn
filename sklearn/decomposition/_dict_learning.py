@@ -1146,7 +1146,8 @@ class _BaseSparseCoding(ClassNamePrefixFeaturesOutMixin, TransformerMixin):
         """Private method allowing to accommodate both DictionaryLearning and
         SparseCoder."""
         code = check_array(code)
-        nb_features = dictionary.shape[1]
+        # compute number of expected features in code
+        nb_features = dictionary.shape[0]
         if self.split_sign:
             nb_features += nb_features
         if not code.shape[1] == nb_features:
