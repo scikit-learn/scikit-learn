@@ -374,12 +374,19 @@ def confusion_matrix(
         and xp.min(y_pred) >= 0
     )
     if need_index_conversion:
-        label_to_ind = {entry: idx for idx, entry in enumerate(labels)}
+        # convert 0D array into scalar type, see https://github.com/data-apis/array-api-strict/issues/109:
+        if xp.isdtype(labels.dtype, ("real floating")):
+            scalar_dtype = float
+        else:
+            scalar_dtype = str
+        label_to_ind = {scalar_dtype(entry): idx for idx, entry in enumerate(labels)}
         y_pred = xp.asarray(
-            [label_to_ind.get(x, n_labels + 1) for x in y_pred], device=device_
+            [label_to_ind.get(scalar_dtype(x), n_labels + 1) for x in y_pred],
+            device=device_,
         )
         y_true = xp.asarray(
-            [label_to_ind.get(x, n_labels + 1) for x in y_true], device=device_
+            [label_to_ind.get(scalar_dtype(x), n_labels + 1) for x in y_true],
+            device=device_,
         )
 
     # intersect y_pred, y_true with labels, eliminate items not in labels
