@@ -240,7 +240,7 @@ def chi2(X, y):
     - For continuous data, it is necessary to discretize the values (binning)
       into intervals before applying this function. You can use methods such
       as `numpy.digitize` or `KBinsDiscretizer` from `sklearn.preprocessing`.
-    
+
     Examples
     --------
     Using chi2 with discrete data:
