@@ -1146,6 +1146,15 @@ class _BaseSparseCoding(ClassNamePrefixFeaturesOutMixin, TransformerMixin):
         """Private method allowing to accommodate both DictionaryLearning and
         SparseCoder."""
         code = check_array(code)
+        nb_features = dictionary.shape[1]
+        if self.split_sign:
+            nb_features += nb_features
+        if not code.shape[1] == nb_features:
+            raise ValueError(
+                "The number of components in the code is different from the "
+                "number of features in the dictionary."
+                f"Expected {nb_features}, got {code.shape[1]}."
+            )
         if self.split_sign:
             n_samples, n_features = code.shape
             n_features //= 2
