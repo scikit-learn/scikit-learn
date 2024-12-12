@@ -159,6 +159,7 @@ TEST_MODULES_EXCEPTIONS = [
     "impute.tests.test_knn.py",
     "inspection._plot.tests.test_boundary_decision_display.py",
     "linear_model.tests.test_coordinate_descent.py",
+    "linear_model.tests.test_common.py",
     "linear_model.tests.test_huber.py",
     "linear_model.tests.test_logistic.py",
     "linear_model.tests.test_omp.py",
@@ -181,12 +182,15 @@ TEST_MODULES_EXCEPTIONS = [
     "model_selection.tests.test_successive_halving.py",
     "model_selection.tests.test_validation.py",
     "neighbors.tests.test_lof.py",
+    "neighbors.tests.test_nca.py",
+    "neighbors.tests.test_nearest_centroid.py",
     "neighbors.tests.test_neighbors.py",
     "neighbors.tests.test_neighbors_pipeline.py",
     "neural_network.tests.test_mlp.py",
     "preprocessing.tests.test_common.py",
     "preprocessing.tests.test_data.py",
     "preprocessing.tests.test_discretization.py",
+    "preprocessing.tests.test_encoders.py",
     "svm.tests.test_svm.py",
     "tests.test_calibration.py",
     "tests.test_common.py",
@@ -229,6 +233,7 @@ TEST_MODULES_EXCEPTIONS = [
     "neighbors._regression.py",
     "neural_network._multilayer_perceptron.py",
     "utils.tests.test_testing.py",
+    "utils.estimator_checks.py",
 ]
 
 
