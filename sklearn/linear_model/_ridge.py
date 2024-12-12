@@ -2292,6 +2292,7 @@ class _BaseRidgeCV(LinearModel):
         "alphas": ["array-like", Interval(Real, 0, None, closed="neither")],
         "fit_intercept": ["boolean"],
         "scoring": [StrOptions(set(get_scorer_names())), callable, None],
+        "refit": ["boolean"],
         "cv": ["cv_object"],
         "gcv_mode": [StrOptions({"auto", "svd", "eigen"}), None],
         "store_cv_results": ["boolean", Hidden(None)],
@@ -2305,6 +2306,7 @@ class _BaseRidgeCV(LinearModel):
         *,
         fit_intercept=True,
         scoring=None,
+        refit=True,
         cv=None,
         gcv_mode=None,
         store_cv_results=None,
@@ -2314,6 +2316,7 @@ class _BaseRidgeCV(LinearModel):
         self.alphas = alphas
         self.fit_intercept = fit_intercept
         self.scoring = scoring
+        self.refit = refit
         self.cv = cv
         self.gcv_mode = gcv_mode
         self.store_cv_results = store_cv_results
@@ -2565,6 +2568,10 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         negative mean squared error if cv is 'auto' or None (i.e. when using
         leave-one-out cross-validation), and r2 score otherwise.
 
+    refit : bool, default=True
+        If ``True``, refit an estimator using the best found parameters
+        on the whole dataset.
+
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
@@ -2753,6 +2760,10 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         A string (see :ref:`scoring_parameter`) or a scorer callable object /
         function with signature ``scorer(estimator, X, y)``.
 
+    refit : bool, default=True
+        If ``True``, refit an estimator using the best found parameters
+        on the whole dataset.
+
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
@@ -2869,6 +2880,7 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         *,
         fit_intercept=True,
         scoring=None,
+        refit=True,
         cv=None,
         class_weight=None,
         store_cv_results=None,
@@ -2878,6 +2890,7 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
             alphas=alphas,
             fit_intercept=fit_intercept,
             scoring=scoring,
+            refit=refit,
             cv=cv,
             store_cv_results=store_cv_results,
             store_cv_values=store_cv_values,
