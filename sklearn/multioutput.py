@@ -8,6 +8,7 @@ extends single output estimators to multioutput estimators.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral
 
@@ -42,6 +43,7 @@ from .utils.parallel import Parallel, delayed
 from .utils.validation import (
     _check_method_params,
     _check_response_method,
+    _deprecate_positional_args,
     check_is_fitted,
     has_fit_parameter,
     validate_data,
@@ -513,7 +515,8 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     def __init__(self, estimator, *, n_jobs=None):
         super().__init__(estimator, n_jobs=n_jobs)
 
-    def fit(self, X, y, sample_weight=None, **fit_params):
+    @_deprecate_positional_args(version="1.9")
+    def fit(self, X, y=None, *, sample_weight=None, Y=None, **fit_params):
         """Fit the model to data matrix X and targets Y.
 
         Parameters
@@ -523,6 +526,12 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
 
         y : array-like of shape (n_samples, n_classes)
             The target values.
+
+        Y : array-like of shape (n_samples, n_classes)
+            The target values.
+
+            .. deprecated:: 1.9
+               `Y` is deprecated in 1.9 and will be removed in 2.1. Use `y` instead.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If `None`, then samples are equally weighted.
@@ -539,6 +548,17 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         self : object
             Returns a fitted instance.
         """
+        if Y:
+            warnings.warn(
+                "`Y` was renamed to `y` in 1.9 and will be removed in 2.1",
+                FutureWarning,
+            )
+            if y:
+                raise ValueError(
+                    "Cannot use both `y` and `Y`. Use only `y` as `Y` is deprecated."
+                )
+            y = Y
+
         super().fit(X, y, sample_weight=sample_weight, **fit_params)
         self.classes_ = [estimator.classes_ for estimator in self.estimators_]
         return self
