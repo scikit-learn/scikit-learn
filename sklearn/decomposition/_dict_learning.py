@@ -1361,7 +1361,7 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
 
         Parameters
         ----------
-        X : ndarray of shape (n_samples, n_components)
+        X : array-like of shape (n_samples, n_components)
             Data to be transformed back. Must have the same number of
             components as the data used to train the model.
 
