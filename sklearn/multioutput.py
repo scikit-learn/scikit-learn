@@ -548,12 +548,12 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         self : object
             Returns a fitted instance.
         """
-        if Y:
+        if Y is not None:
             warnings.warn(
                 "`Y` was renamed to `y` in 1.9 and will be removed in 2.1",
                 FutureWarning,
             )
-            if y:
+            if y is not None:
                 raise ValueError(
                     "Cannot use both `y` and `Y`. Use only `y` as `Y` is deprecated."
                 )
