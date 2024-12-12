@@ -527,16 +527,16 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         y : array-like of shape (n_samples, n_classes)
             The target values.
 
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If `None`, then samples are equally weighted.
+            Only supported if the underlying classifier supports sample
+            weights.
+
         Y : array-like of shape (n_samples, n_classes)
             The target values.
 
             .. deprecated:: 1.9
                `Y` is deprecated in 1.9 and will be removed in 2.1. Use `y` instead.
-
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If `None`, then samples are equally weighted.
-            Only supported if the underlying classifier supports sample
-            weights.
 
         **fit_params : dict of string -> object
             Parameters passed to the ``estimator.fit`` method of each step.
