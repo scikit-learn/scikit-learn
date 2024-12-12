@@ -1145,6 +1145,7 @@ class _BaseSparseCoding(ClassNamePrefixFeaturesOutMixin, TransformerMixin):
     def _inverse_transform(self, code, dictionary):
         """Private method allowing to accommodate both DictionaryLearning and
         SparseCoder."""
+        code = check_array(code)
         if self.split_sign:
             n_samples, n_features = code.shape
             n_features //= 2
