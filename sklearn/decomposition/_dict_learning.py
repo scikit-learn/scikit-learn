@@ -1153,7 +1153,7 @@ class _BaseSparseCoding(ClassNamePrefixFeaturesOutMixin, TransformerMixin):
         if not code.shape[1] == expected_n_components:
             raise ValueError(
                 "The number of components in the code is different from the "
-                "number of features in the dictionary."
+                "number of components in the dictionary."
                 f"Expected {expected_n_components}, got {code.shape[1]}."
             )
         if self.split_sign:
