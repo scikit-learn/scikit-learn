@@ -1356,7 +1356,7 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         """
         return super()._transform(X, self.dictionary)
 
-    def inverse_transform(self, X, y=None):
+    def inverse_transform(self, X):
         """Transform data back to its original space.
 
         Parameters
@@ -1365,15 +1365,12 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
             Data to be transformed back. Must have the same number of
             components as the data used to train the model.
 
-        y : Ignored
-            Not used, present for API consistency by convention.
-
         Returns
         -------
         X_new : ndarray of shape (n_samples, n_features)
             Transformed data.
         """
-        return super()._inverse_transform(X, self.dictionary)
+        return self._inverse_transform(X, self.dictionary)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
