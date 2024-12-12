@@ -85,6 +85,7 @@ from sklearn.utils.estimator_checks import (
     check_outlier_contamination,
     check_outlier_corruption,
     check_parameters_default_constructible,
+    check_positive_only_tag_during_fit,
     check_regressor_data_not_an_array,
     check_requires_y_none,
     check_sample_weights_pandas_series,
@@ -509,7 +510,7 @@ class RequiresPositiveXRegressor(LinearRegression):
     def fit(self, X, y):
         X, y = validate_data(self, X, y, multi_output=True)
         if (X < 0).any():
-            raise ValueError("negative X values not supported!")
+            raise ValueError("Negative values in data passed to X.")
         return super().fit(X, y)
 
     def __sklearn_tags__(self):
@@ -1600,3 +1601,18 @@ def test_check_mixin_order():
     msg = "TransformerMixin comes before/left side of BaseEstimator"
     with raises(AssertionError, match=re.escape(msg)):
         check_mixin_order("BadEstimator", BadEstimator())
+
+
+def test_check_positive_only_tag_during_fit():
+    class RequiresPositiveXBadTag(RequiresPositiveXRegressor):
+        def __sklearn_tags__(self):
+            tags = super().__sklearn_tags__()
+            tags.input_tags.positive_only = False
+            return tags
+
+    with raises(
+        AssertionError, match="This happens when passing negative input values as X."
+    ):
+        check_positive_only_tag_during_fit(
+            "RequiresPositiveXBadTag", RequiresPositiveXBadTag()
+        )

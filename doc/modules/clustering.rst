@@ -222,9 +222,10 @@ initializations of the centroids. One method to help address this issue is the
 k-means++ initialization scheme, which has been implemented in scikit-learn
 (use the ``init='k-means++'`` parameter). This initializes the centroids to be
 (generally) distant from each other, leading to probably better results than
-random initialization, as shown in the reference. For a detailed example of
-comaparing different initialization schemes, refer to
-:ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`.
+random initialization, as shown in the reference. For detailed examples of
+comparing different initialization schemes, refer to
+:ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py` and
+:ref:`sphx_glr_auto_examples_cluster_plot_kmeans_stability_low_dim_dense.py`.
 
 K-means++ can also be called independently to select seeds for other
 clustering algorithms, see :func:`sklearn.cluster.kmeans_plusplus` for details
