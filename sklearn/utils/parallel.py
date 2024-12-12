@@ -2,6 +2,9 @@
 usage.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import functools
 import warnings
 from functools import update_wrapper

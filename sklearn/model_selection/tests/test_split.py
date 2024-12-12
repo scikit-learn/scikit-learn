@@ -116,7 +116,6 @@ def _split(splitter, X, y, groups):
         return splitter.split(X, y)
 
 
-@ignore_warnings
 def test_cross_validator_with_default_params():
     n_samples = 4
     n_unique_groups = 4
@@ -184,10 +183,10 @@ def test_cross_validator_with_default_params():
         # Test if the cross-validator works as expected even if
         # the data is 1d
         np.testing.assert_equal(
-            list(cv.split(X, y, groups)), list(cv.split(X_1d, y, groups))
+            list(_split(cv, X, y, groups)), list(_split(cv, X_1d, y, groups))
         )
         # Test that train, test indices returned are integers
-        for train, test in cv.split(X, y, groups):
+        for train, test in _split(cv, X, y, groups):
             assert np.asarray(train).dtype.kind == "i"
             assert np.asarray(test).dtype.kind == "i"
 
@@ -593,6 +592,30 @@ def test_shuffle_stratifiedkfold():
     test_set1 = sorted([tuple(s[1]) for s in kf1.split(X, y)])
     test_set2 = sorted([tuple(s[1]) for s in kf2.split(X, y)])
     assert test_set1 != test_set2
+
+
+def test_shuffle_groupkfold():
+    # Check that shuffling is happening when requested, and for proper
+    # sample coverage
+    X = np.ones(40)
+    y = [0] * 20 + [1] * 20
+    groups = np.arange(40) // 3
+    gkf0 = GroupKFold(4, shuffle=True, random_state=0)
+    gkf1 = GroupKFold(4, shuffle=True, random_state=1)
+
+    # Check that the groups are shuffled differently
+    test_groups0 = [
+        set(groups[test_idx]) for _, test_idx in gkf0.split(X, None, groups)
+    ]
+    test_groups1 = [
+        set(groups[test_idx]) for _, test_idx in gkf1.split(X, None, groups)
+    ]
+    for g0, g1 in zip(test_groups0, test_groups1):
+        assert g0 != g1, "Test groups should differ with different random states"
+
+    # Check coverage and splits
+    check_cv_coverage(gkf0, X, y, groups, expected_n_splits=4)
+    check_cv_coverage(gkf1, X, y, groups, expected_n_splits=4)
 
 
 def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
@@ -1602,8 +1625,9 @@ def test_cv_iterable_wrapper():
 
 
 @pytest.mark.parametrize("kfold", [GroupKFold, StratifiedGroupKFold])
-def test_group_kfold(kfold):
-    rng = np.random.RandomState(0)
+@pytest.mark.parametrize("shuffle", [True, False])
+def test_group_kfold(kfold, shuffle, global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
 
     # Parameters of the test
     n_groups = 15
@@ -1621,7 +1645,8 @@ def test_group_kfold(kfold):
     len(np.unique(groups))
     # Get the test fold indices from the test set indices of each fold
     folds = np.zeros(n_samples)
-    lkf = kfold(n_splits=n_splits)
+    random_state = None if not shuffle else global_random_seed
+    lkf = kfold(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
     for i, (_, test) in enumerate(lkf.split(X, y, groups)):
         folds[test] = i
 
@@ -1698,8 +1723,9 @@ def test_group_kfold(kfold):
 
     # Check that folds have approximately the same size
     assert len(folds) == len(groups)
-    for i in np.unique(folds):
-        assert tolerance >= abs(sum(folds == i) - ideal_n_groups_per_fold)
+    if not shuffle:
+        for i in np.unique(folds):
+            assert tolerance >= abs(sum(folds == i) - ideal_n_groups_per_fold)
 
     # Check that each group appears only in 1 fold
     with warnings.catch_warnings():
@@ -1713,8 +1739,10 @@ def test_group_kfold(kfold):
         assert len(np.intersect1d(groups[train], groups[test])) == 0
 
     # groups can also be a list
+    # use a new instance for reproducibility when shuffle=True
+    lkf_copy = kfold(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
     cv_iter = list(lkf.split(X, y, groups.tolist()))
-    for (train1, test1), (train2, test2) in zip(lkf.split(X, y, groups), cv_iter):
+    for (train1, test1), (train2, test2) in zip(lkf_copy.split(X, y, groups), cv_iter):
         assert_array_equal(train1, train2)
         assert_array_equal(test1, test2)
 
@@ -1976,7 +2004,9 @@ def test_leave_p_out_empty_trainset():
         next(cv.split(X, y))
 
 
-@pytest.mark.parametrize("Klass", (KFold, StratifiedKFold, StratifiedGroupKFold))
+@pytest.mark.parametrize(
+    "Klass", (KFold, StratifiedKFold, StratifiedGroupKFold, GroupKFold)
+)
 def test_random_state_shuffle_false(Klass):
     # passing a non-default random_state when shuffle=False makes no sense
     with pytest.raises(ValueError, match="has no effect since shuffle is False"):
@@ -1998,6 +2028,7 @@ def test_random_state_shuffle_false(Klass):
         (GroupShuffleSplit(random_state=123), True),
         (StratifiedShuffleSplit(random_state=123), True),
         (GroupKFold(), True),
+        (GroupKFold(shuffle=True, random_state=123), True),
         (TimeSeriesSplit(), True),
         (LeaveOneOut(), True),
         (LeaveOneGroupOut(), True),

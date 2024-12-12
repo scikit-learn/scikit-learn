@@ -1,6 +1,5 @@
 import atexit
 import os
-import unittest
 import warnings
 
 import numpy as np
@@ -16,16 +15,14 @@ from sklearn.utils._testing import (
     _get_warnings_filters_info_list,
     assert_allclose,
     assert_allclose_dense_sparse,
-    assert_no_warnings,
-    assert_raise_message,
-    assert_raises,
-    assert_raises_regex,
+    assert_docstring_consistency,
     assert_run_python_script_without_output,
     check_docstring_parameters,
     create_memmap_backed_data,
     ignore_warnings,
     raises,
     set_random_state,
+    skip_if_no_numpydoc,
     turn_warnings_into_errors,
 )
 from sklearn.utils.deprecation import deprecated
@@ -68,51 +65,6 @@ def test_assert_allclose_dense_sparse(csr_container):
         assert_allclose_dense_sparse(B, A)
 
 
-def test_assert_raises_msg():
-    with assert_raises_regex(AssertionError, "Hello world"):
-        with assert_raises(ValueError, msg="Hello world"):
-            pass
-
-
-def test_assert_raise_message():
-    def _raise_ValueError(message):
-        raise ValueError(message)
-
-    def _no_raise():
-        pass
-
-    assert_raise_message(ValueError, "test", _raise_ValueError, "test")
-
-    assert_raises(
-        AssertionError,
-        assert_raise_message,
-        ValueError,
-        "something else",
-        _raise_ValueError,
-        "test",
-    )
-
-    assert_raises(
-        ValueError,
-        assert_raise_message,
-        TypeError,
-        "something else",
-        _raise_ValueError,
-        "test",
-    )
-
-    assert_raises(AssertionError, assert_raise_message, ValueError, "test", _no_raise)
-
-    # multiple exceptions in a tuple
-    assert_raises(
-        AssertionError,
-        assert_raise_message,
-        (ValueError, AttributeError),
-        "test",
-        _no_raise,
-    )
-
-
 def test_ignore_warning():
     # This check that ignore_warning decorator and context manager are working
     # as expected
@@ -124,8 +76,12 @@ def test_ignore_warning():
         warnings.warn("deprecation warning")
 
     # Check the function directly
-    assert_no_warnings(ignore_warnings(_warning_function))
-    assert_no_warnings(ignore_warnings(_warning_function, category=DeprecationWarning))
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
+        ignore_warnings(_warning_function)
+        ignore_warnings(_warning_function, category=DeprecationWarning)
+
     with pytest.warns(DeprecationWarning):
         ignore_warnings(_warning_function, category=UserWarning)()
 
@@ -140,9 +96,10 @@ def test_ignore_warning():
     assert len(record) == 1
     assert isinstance(record[0].message, DeprecationWarning)
 
-    assert_no_warnings(
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
         ignore_warnings(_warning_function, category=(DeprecationWarning, UserWarning))
-    )
 
     # Check the decorator
     @ignore_warnings
@@ -170,9 +127,13 @@ def test_ignore_warning():
     def decorator_no_user_multiple_warning():
         _multiple_warning_function()
 
-    assert_no_warnings(decorator_no_warning)
-    assert_no_warnings(decorator_no_warning_multiple)
-    assert_no_warnings(decorator_no_deprecation_warning)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
+        decorator_no_warning()
+        decorator_no_warning_multiple()
+        decorator_no_deprecation_warning()
+
     with pytest.warns(DeprecationWarning):
         decorator_no_user_warning()
     with pytest.warns(UserWarning):
@@ -205,9 +166,13 @@ def test_ignore_warning():
         with ignore_warnings(category=UserWarning):
             _multiple_warning_function()
 
-    assert_no_warnings(context_manager_no_warning)
-    assert_no_warnings(context_manager_no_warning_multiple)
-    assert_no_warnings(context_manager_no_deprecation_warning)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
+        context_manager_no_warning()
+        context_manager_no_warning_multiple()
+        context_manager_no_deprecation_warning()
+
     with pytest.warns(DeprecationWarning):
         context_manager_no_user_warning()
     with pytest.warns(UserWarning):
@@ -228,17 +193,6 @@ def test_ignore_warning():
         @ignore_warnings(warning_class)
         def test():
             pass
-
-
-class TestWarns(unittest.TestCase):
-    def test_warn(self):
-        def f():
-            warnings.warn("yo")
-            return 3
-
-        with pytest.raises(AssertionError):
-            assert_no_warnings(f)
-        assert assert_no_warnings(lambda x: x, 1) == 1
 
 
 # Tests for docstrings:
@@ -446,13 +400,8 @@ class MockMetaEstimator:
         """Incorrect docstring but should not be tested"""
 
 
+@skip_if_no_numpydoc
 def test_check_docstring_parameters():
-    pytest.importorskip(
-        "numpydoc",
-        reason="numpydoc is required to test the docstrings",
-        minversion="1.2.0",
-    )
-
     incorrect = check_docstring_parameters(f_ok)
     assert incorrect == []
     incorrect = check_docstring_parameters(f_ok, ignore=["b"])
@@ -580,6 +529,295 @@ def test_check_docstring_parameters():
     ):
         incorrect = check_docstring_parameters(f)
         assert msg == incorrect, '\n"%s"\n not in \n"%s"' % (msg, incorrect)
+
+
+def f_one(a, b):  # pragma: no cover
+    """Function one.
+
+    Parameters
+    ----------
+    a : int,   float
+        Parameter a.
+        Second    line.
+
+    b : str
+        Parameter b.
+
+    Returns
+    -------
+    c : int
+       Returning
+
+    d : int
+       Returning
+    """
+    pass
+
+
+def f_two(a, b):  # pragma: no cover
+    """Function two.
+
+    Parameters
+    ----------
+    a :   int, float
+        Parameter a.
+          Second line.
+
+    b : str
+        Parameter bb.
+
+    e : int
+        Extra parameter.
+
+    Returns
+    -------
+    c : int
+       Returning
+
+    d : int
+       Returning
+    """
+    pass
+
+
+def f_three(a, b):  # pragma: no cover
+    """Function two.
+
+    Parameters
+    ----------
+    a :   int, float
+        Parameter a.
+
+    b : str
+        Parameter B!
+
+    e :
+        Extra parameter.
+
+    Returns
+    -------
+    c : int
+       Returning.
+
+    d : int
+       Returning
+    """
+    pass
+
+
+@skip_if_no_numpydoc
+def test_assert_docstring_consistency_object_type():
+    """Check error raised when `objects` incorrect type."""
+    with pytest.raises(TypeError, match="All 'objects' must be one of"):
+        assert_docstring_consistency(["string", f_one])
+
+
+@skip_if_no_numpydoc
+@pytest.mark.parametrize(
+    "objects, kwargs, error",
+    [
+        (
+            [f_one, f_two],
+            {"include_params": ["a"], "exclude_params": ["b"]},
+            "The 'exclude_params' argument",
+        ),
+        (
+            [f_one, f_two],
+            {"include_returns": False, "exclude_returns": ["c"]},
+            "The 'exclude_returns' argument",
+        ),
+    ],
+)
+def test_assert_docstring_consistency_arg_checks(objects, kwargs, error):
+    """Check `assert_docstring_consistency` argument checking correct."""
+    with pytest.raises(TypeError, match=error):
+        assert_docstring_consistency(objects, **kwargs)
+
+
+@skip_if_no_numpydoc
+@pytest.mark.parametrize(
+    "objects, kwargs, error, warn",
+    [
+        pytest.param(
+            [f_one, f_two], {"include_params": ["a"]}, "", "", id="whitespace"
+        ),
+        pytest.param([f_one, f_two], {"include_returns": True}, "", "", id="incl_all"),
+        pytest.param(
+            [f_one, f_two, f_three],
+            {"include_params": ["a"]},
+            (
+                r"The description of Parameter 'a' is inconsistent between "
+                r"\['f_one',\n'f_two'\]"
+            ),
+            "",
+            id="2-1 group",
+        ),
+        pytest.param(
+            [f_one, f_two, f_three],
+            {"include_params": ["b"]},
+            (
+                r"The description of Parameter 'b' is inconsistent between "
+                r"\['f_one'\] and\n\['f_two'\] and"
+            ),
+            "",
+            id="1-1-1 group",
+        ),
+        pytest.param(
+            [f_two, f_three],
+            {"include_params": ["e"]},
+            (
+                r"The type specification of Parameter 'e' is inconsistent between\n"
+                r"\['f_two'\] and"
+            ),
+            "",
+            id="empty type",
+        ),
+        pytest.param(
+            [f_one, f_two],
+            {"include_params": True, "exclude_params": ["b"]},
+            "",
+            r"Checking was skipped for Parameters: \['e'\]",
+            id="skip warn",
+        ),
+    ],
+)
+def test_assert_docstring_consistency(objects, kwargs, error, warn):
+    """Check `assert_docstring_consistency` gives correct results."""
+    if error:
+        with pytest.raises(AssertionError, match=error):
+            assert_docstring_consistency(objects, **kwargs)
+    elif warn:
+        with pytest.warns(UserWarning, match=warn):
+            assert_docstring_consistency(objects, **kwargs)
+    else:
+        assert_docstring_consistency(objects, **kwargs)
+
+
+def f_four(labels):  # pragma: no cover
+    """Function four.
+
+    Parameters
+    ----------
+
+    labels : array-like, default=None
+        The set of labels to include when `average != 'binary'`, and their
+        order if `average is None`. Labels present in the data can be excluded.
+    """
+    pass
+
+
+def f_five(labels):  # pragma: no cover
+    """Function five.
+
+    Parameters
+    ----------
+
+    labels : array-like, default=None
+        The set of labels to include when `average != 'binary'`, and their
+        order if `average is None`. This is an extra line. Labels present in the
+        data can be excluded.
+    """
+    pass
+
+
+def f_six(labels):  # pragma: no cover
+    """Function six.
+
+    Parameters
+    ----------
+
+    labels : array-like, default=None
+        The group of labels to add when `average != 'binary'`, and the
+        order if `average is None`. Labels present on them datas can be excluded.
+    """
+    pass
+
+
+@skip_if_no_numpydoc
+def test_assert_docstring_consistency_error_msg():
+    """Check `assert_docstring_consistency` difference message."""
+    msg = r"""The description of Parameter 'labels' is inconsistent between
+\['f_four'\] and \['f_five'\] and \['f_six'\]:
+
+\*\*\* \['f_four'\]
+--- \['f_five'\]
+\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
+
+\*\*\* 10,25 \*\*\*\*
+
+--- 10,30 ----
+
+  'binary'`, and their order if `average is None`.
+\+ This is an extra line.
+  Labels present in the data can be excluded.
+
+\*\*\* \['f_four'\]
+--- \['f_six'\]
+\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
+
+\*\*\* 1,25 \*\*\*\*
+
+  The
+! set
+  of labels to
+! include
+  when `average != 'binary'`, and
+! their
+  order if `average is None`. Labels present
+! in the data
+  can be excluded.
+--- 1,25 ----
+
+  The
+! group
+  of labels to
+! add
+  when `average != 'binary'`, and
+! the
+  order if `average is None`. Labels present
+! on them datas
+  can be excluded."""
+
+    with pytest.raises(AssertionError, match=msg):
+        assert_docstring_consistency([f_four, f_five, f_six], include_params=True)
+
+
+@skip_if_no_numpydoc
+def test_assert_docstring_consistency_descr_regex_pattern():
+    """Check `assert_docstring_consistency` `descr_regex_pattern` works."""
+    # Check regex that matches full parameter descriptions
+    regex_full = (
+        r"The (set|group) "  # match 'set' or 'group'
+        + r"of labels to (include|add) "  # match 'include' or 'add'
+        + r"when `average \!\= 'binary'`, and (their|the) "  #  match 'their' or 'the'
+        + r"order if `average is None`\."
+        + r"[\s\w]*\.* "  # optionally match additonal sentence
+        + r"Labels present (on|in) "  # match 'on' or 'in'
+        + r"(them|the) "  # match 'them' or 'the'
+        + r"datas? can be excluded\."  # match 'data' or 'datas'
+    )
+
+    assert_docstring_consistency(
+        [f_four, f_five, f_six],
+        include_params=True,
+        descr_regex_pattern=" ".join(regex_full.split()),
+    )
+    # Check we can just match a few alternate words
+    regex_words = r"(labels|average|binary)"  # match any of these 3 words
+    assert_docstring_consistency(
+        [f_four, f_five, f_six],
+        include_params=True,
+        descr_regex_pattern=" ".join(regex_words.split()),
+    )
+    # Check error raised when regex doesn't match
+    regex_error = r"The set of labels to include when.+"
+    msg = r"The description of Parameter 'labels' in \['f_six'\] does not match"
+    with pytest.raises(AssertionError, match=msg):
+        assert_docstring_consistency(
+            [f_four, f_five, f_six],
+            include_params=True,
+            descr_regex_pattern=" ".join(regex_error.split()),
+        )
 
 
 class RegistrationCounter:

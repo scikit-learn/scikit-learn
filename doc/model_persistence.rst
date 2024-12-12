@@ -4,6 +4,47 @@
 Model persistence
 =================
 
+.. list-table:: Summary of model persistence methods
+   :widths: 25 50 50
+   :header-rows: 1
+
+   * - Persistence method
+     - Pros
+     - Risks / Cons
+   * - :ref:`ONNX <onnx_persistence>`
+     - * Serve models without a Python environment
+       * Serving and training environments independent of one another
+       * Most secure option
+     - * Not all scikit-learn models are supported
+       * Custom estimators require more work to support
+       * Original Python object is lost and cannot be reconstructed
+   * - :ref:`skops_persistence`
+     - * More secure than `pickle` based formats
+       * Contents can be partly validated without loading
+     - * Not as fast as `pickle` based formats
+       * Supports less types than `pickle` based formats
+       * Requires the same environment as the training environment
+   * - :mod:`pickle`
+     - * Native to Python
+       * Can serialize most Python objects
+       * Efficient memory usage with `protocol=5`
+     - * Loading can execute arbitrary code
+       * Requires the same environment as the training environment
+   * - :mod:`joblib`
+     - * Efficient memory usage
+       * Supports memory mapping
+       * Easy shortcuts for compression and decompression
+     - * Pickle based format
+       * Loading can execute arbitrary code
+       * Requires the same environment as the training environment
+   * - `cloudpickle`_
+     - * Can serialize non-packaged, custom Python code
+       * Comparable loading efficiency as :mod:`pickle` with `protocol=5`
+     - * Pickle based format
+       * Loading can execute arbitrary code
+       * No forward compatibility guarantees
+       * Requires the same environment as the training environment
+
 After training a scikit-learn model, it is desirable to have a way to persist
 the model for future use without having to retrain. Based on your use-case,
 there are a few different ways to persist a scikit-learn model, and here we
@@ -78,7 +119,7 @@ persist and plan to serve the model:
   to get predictions. This environment can be minimal and does not necessarily
   even require Python to be installed to load the model and compute
   predictions. Also note that `onnxruntime` typically requires much less RAM
-  than Python to to compute predictions from small models.
+  than Python to compute predictions from small models.
 
 - :mod:`skops.io`, :mod:`pickle`, :mod:`joblib`, `cloudpickle`_: You need a
   Python environment with the appropriate dependencies installed to load the

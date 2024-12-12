@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pytest
 import scipy.sparse as sp
@@ -9,17 +11,18 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
-    ignore_warnings,
 )
 from sklearn.utils.fixes import CSC_CONTAINERS
 from sklearn.utils.stats import _weighted_percentile
 
 
-@ignore_warnings
 def _check_predict_proba(clf, X, y):
     proba = clf.predict_proba(X)
+
     # We know that we can have division by zero
-    log_proba = clf.predict_log_proba(X)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "divide by zero encountered in log")
+        log_proba = clf.predict_log_proba(X)
 
     y = np.atleast_1d(y)
     if y.ndim == 1:
@@ -37,7 +40,9 @@ def _check_predict_proba(clf, X, y):
         assert proba[k].shape[1] == len(np.unique(y[:, k]))
         assert_array_almost_equal(proba[k].sum(axis=1), np.ones(len(X)))
         # We know that we can have division by zero
-        assert_array_almost_equal(np.log(proba[k]), log_proba[k])
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "divide by zero encountered in log")
+            assert_array_almost_equal(np.log(proba[k]), log_proba[k])
 
 
 def _check_behavior_2d(clf):

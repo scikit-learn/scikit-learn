@@ -212,6 +212,9 @@ def test_pairwise_distances_for_sparse_data(
         pairwise_distances(X, Y_sparse, metric="minkowski")
 
 
+# Some scipy metrics are deprecated (depending on the scipy version) but we
+# still want to test them.
+@ignore_warnings(category=DeprecationWarning)
 @pytest.mark.parametrize("metric", PAIRWISE_BOOLEAN_FUNCTIONS)
 def test_pairwise_boolean_distance(metric):
     # test that we convert to boolean arrays for boolean distances
@@ -710,7 +713,7 @@ def test_parallel_pairwise_distances_diagonal(metric, global_dtype):
     assert_allclose(np.diag(distances), 0, atol=1e-10)
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings("ignore:Could not adhere to working_memory config")
 def test_pairwise_distances_chunked(global_dtype):
     # Test the pairwise_distance helper function.
     rng = np.random.RandomState(0)
@@ -1580,6 +1583,33 @@ def test_numeric_pairwise_distances_datatypes(metric, global_dtype, y_is_x):
 
 
 @pytest.mark.parametrize(
+    "pairwise_distances_func",
+    [pairwise_distances, pairwise_distances_argmin, pairwise_distances_argmin_min],
+)
+def test_nan_euclidean_support(pairwise_distances_func):
+    """Check that `nan_euclidean` is lenient with `nan` values."""
+
+    X = [[0, 1], [1, np.nan], [2, 3], [3, 5]]
+    output = pairwise_distances_func(X, X, metric="nan_euclidean")
+
+    assert not np.isnan(output).any()
+
+
+def test_nan_euclidean_constant_input_argmin():
+    """Check that the behavior of constant input is the same in the case of
+    full of nan vector and full of zero vector.
+    """
+
+    X_nan = [[np.nan, np.nan], [np.nan, np.nan], [np.nan, np.nan]]
+    argmin_nan = pairwise_distances_argmin(X_nan, X_nan, metric="nan_euclidean")
+
+    X_const = [[0, 0], [0, 0], [0, 0]]
+    argmin_const = pairwise_distances_argmin(X_const, X_const, metric="nan_euclidean")
+
+    assert_allclose(argmin_nan, argmin_const)
+
+
+@pytest.mark.parametrize(
     "X,Y,expected_distance",
     [
         (
@@ -1637,3 +1667,17 @@ def test_sparse_manhattan_readonly_dataset(csr_container):
     Parallel(n_jobs=2, max_nbytes=0)(
         delayed(manhattan_distances)(m1, m2) for m1, m2 in zip(matrices1, matrices2)
     )
+
+
+# TODO(1.8): remove
+def test_force_all_finite_rename_warning():
+    X = np.random.uniform(size=(10, 10))
+    Y = np.random.uniform(size=(10, 10))
+
+    msg = "'force_all_finite' was renamed to 'ensure_all_finite'"
+
+    with pytest.warns(FutureWarning, match=msg):
+        check_pairwise_arrays(X, Y, force_all_finite=True)
+
+    with pytest.warns(FutureWarning, match=msg):
+        pairwise_distances(X, Y, force_all_finite=True)

@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from numbers import Integral, Real
 
 import numpy as np
@@ -6,7 +9,7 @@ from ..base import BaseEstimator, OutlierMixin, RegressorMixin, _fit_context
 from ..linear_model._base import LinearClassifierMixin, LinearModel, SparseCoefMixin
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import _num_samples
+from ..utils.validation import _num_samples, validate_data
 from ._base import BaseLibSVM, BaseSVC, _fit_liblinear, _get_liblinear_solver_type
 
 
@@ -299,7 +302,8 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self : object
             An instance of the estimator.
         """
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse="csr",
@@ -344,15 +348,6 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 self.intercept_ = np.array([intercept])
 
         return self
-
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
-        }
 
 
 class LinearSVR(RegressorMixin, LinearModel):
@@ -566,7 +561,8 @@ class LinearSVR(RegressorMixin, LinearModel):
         self : object
             An instance of the estimator.
         """
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse="csr",
@@ -603,15 +599,6 @@ class LinearSVR(RegressorMixin, LinearModel):
         self.n_iter_ = n_iter_.max().item()
 
         return self
-
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
-        }
 
 
 class SVC(BaseSVC):
@@ -729,7 +716,9 @@ class SVC(BaseSVC):
         :term:`predict` will break ties according to the confidence values of
         :term:`decision_function`; otherwise the first class among the tied
         classes is returned. Please note that breaking ties comes at a
-        relatively high computational cost compared to a simple predict.
+        relatively high computational cost compared to a simple predict. See
+        :ref:`sphx_glr_auto_examples_svm_plot_svm_tie_breaking.py` for an
+        example of its usage with ``decision_function_shape='ovr'``.
 
         .. versionadded:: 0.22
 
@@ -843,6 +832,9 @@ class SVC(BaseSVC):
 
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
+
+    For a comaprison of the SVC with other classifiers see:
+    :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`.
     """
 
     _impl = "c_svc"
@@ -884,15 +876,6 @@ class SVC(BaseSVC):
             break_ties=break_ties,
             random_state=random_state,
         )
-
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
-        }
 
 
 class NuSVC(BaseSVC):
@@ -993,6 +976,8 @@ class NuSVC(BaseSVC):
         :term:`decision_function`; otherwise the first class among the tied
         classes is returned. Please note that breaking ties comes at a
         relatively high computational cost compared to a simple predict.
+        See :ref:`sphx_glr_auto_examples_svm_plot_svm_tie_breaking.py` for an
+        example of its usage with ``decision_function_shape='ovr'``.
 
         .. versionadded:: 0.22
 
@@ -1155,22 +1140,6 @@ class NuSVC(BaseSVC):
             random_state=random_state,
         )
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_methods_subset_invariance": (
-                    "fails for the decision_function method"
-                ),
-                "check_class_weight_classifiers": "class_weight is ignored.",
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-                "check_classifiers_one_label_sample_weights": (
-                    "specified nu is infeasible for the fit."
-                ),
-            }
-        }
-
 
 class SVR(RegressorMixin, BaseLibSVM):
     """Epsilon-Support Vector Regression.
@@ -1194,6 +1163,8 @@ class SVR(RegressorMixin, BaseLibSVM):
          Specifies the kernel type to be used in the algorithm.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
+         For an intuitive visualization of different kernel types
+         see :ref:`sphx_glr_auto_examples_svm_plot_svm_regression.py`
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
@@ -1363,15 +1334,6 @@ class SVR(RegressorMixin, BaseLibSVM):
             random_state=None,
         )
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
-        }
-
 
 class NuSVR(RegressorMixin, BaseLibSVM):
     """Nu Support Vector Regression.
@@ -1401,6 +1363,8 @@ class NuSVR(RegressorMixin, BaseLibSVM):
          Specifies the kernel type to be used in the algorithm.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
+         For an intuitive visualization of different kernel types see
+         See :ref:`sphx_glr_auto_examples_svm_plot_svm_regression.py`
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
@@ -1557,15 +1521,6 @@ class NuSVR(RegressorMixin, BaseLibSVM):
             random_state=None,
         )
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
-        }
-
 
 class OneClassSVM(OutlierMixin, BaseLibSVM):
     """Unsupervised Outlier Detection.
@@ -1698,6 +1653,9 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     array([-1,  1,  1,  1, -1])
     >>> clf.score_samples(X)
     array([1.7798..., 2.0547..., 2.0556..., 2.0561..., 1.7332...])
+
+    For a more extended example,
+    see :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`
     """
 
     _impl = "one_class"
@@ -1819,12 +1777,3 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         """
         y = super().predict(X)
         return np.asarray(y, dtype=np.intp)
-
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
-        }

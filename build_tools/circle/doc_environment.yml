@@ -11,7 +11,7 @@ dependencies:
   - cython
   - joblib
   - threadpoolctl
-  - matplotlib<3.9
+  - matplotlib
   - pandas
   - pyamg
   - pytest
@@ -36,6 +36,7 @@ dependencies:
   - sphinx-remove-toctrees
   - sphinx-design
   - pydata-sphinx-theme
+  - towncrier
   - pip
   - pip:
     - jupyterlite-sphinx
