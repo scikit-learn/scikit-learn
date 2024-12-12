@@ -75,7 +75,7 @@ else
     echo "Could not inspect CPU architecture."
 fi
 
-TEST_CMD="$TEST_CMD --pyargs sklearn"
+TEST_CMD="$TEST_CMD -s --pyargs sklearn"
 
 set -x
 eval "$TEST_CMD"
