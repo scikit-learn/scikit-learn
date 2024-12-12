@@ -1251,10 +1251,9 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.array_api_support = True
-        reject_sparse = (self.solver == "svd") or (
-            self.solver == "cholesky" and self.fit_intercept
+        tags.input_tags.sparse = (self.solver != "svd") and (
+            self.solver != "cholesky" or not self.fit_intercept
         )
-        tags.input_tags.sparse = not reject_sparse
         return tags
 
 

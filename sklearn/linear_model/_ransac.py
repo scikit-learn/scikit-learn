@@ -725,7 +725,7 @@ class RANSACRegressor(
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         if self.estimator is None:
-            tags.input_tags.sparse = True
+            tags.input_tags.sparse = True  # default estimator is LinearRegression
         else:
             tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
         return tags
