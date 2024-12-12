@@ -1145,7 +1145,7 @@ def test_confusion_matrix_multiclass_subset_labels():
 @pytest.mark.parametrize(
     "labels, err_msg",
     [
-        ([], "'labels' should contains at least one label."),
+        ([], "'labels' should contain at least one label."),
         ([3, 4], "At least one label specified must be in y_true"),
     ],
     ids=["empty list", "unknown labels"],
@@ -3104,8 +3104,9 @@ def test_d2_log_loss_score_raises():
     "array_namespace, device, _", yield_namespace_device_dtype_combinations()
 )
 def test_confusion_matrix_array_api(array_namespace, device, _):
-    """Test that confusion_matrix works for all array types index conversion is done
-    and that it raises if not at least one label from `y_pred` is in `y_true`."""
+    """Test that `confusion_matrix` works for all array types if need_index_conversion
+    evaluates to `True`and that it raises if not at least one label from `y_pred` is in
+    `y_true`."""
     xp = _array_api_for_tests(array_namespace, device)
 
     y_true = xp.asarray([1, 2, 3], device=device)

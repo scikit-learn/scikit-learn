@@ -351,7 +351,7 @@ def confusion_matrix(
         labels = xp.asarray(labels)
         n_labels = labels.size
         if n_labels == 0:
-            raise ValueError("'labels' should contains at least one label.")
+            raise ValueError("'labels' should contain at least one label.")
         elif y_true.size == 0:
             return xp.zeros((n_labels, n_labels), dtype=xp.int64, device=device_)
         elif not _isin(labels, y_true, xp=xp).any():
