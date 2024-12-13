@@ -810,6 +810,7 @@ brier_score_loss_scorer = make_scorer(
     brier_score_loss, greater_is_better=False, response_method="predict_proba"
 )
 
+
 # Clustering scores
 adjusted_rand_scorer = make_scorer(adjusted_rand_score)
 rand_scorer = make_scorer(rand_score)

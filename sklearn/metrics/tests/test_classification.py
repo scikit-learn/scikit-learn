@@ -2753,7 +2753,7 @@ def test_log_loss_warnings():
         )
 
 
-def test_binary_brier_score_loss():
+def test_brier_score_loss_binary():
     # Check brier_score_loss function
     y_true = np.array([0, 1, 1, 0, 1, 1])
     y_pred = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
@@ -2783,7 +2783,7 @@ def test_binary_brier_score_loss():
     assert_almost_equal(brier_score_loss(["foo"], [0.4], pos_label="foo"), 0.36)
 
 
-def test_multiclass_brier_score_loss():
+def test_brier_score_loss_multiclass():
     # test cases for multi-class
     assert_almost_equal(
         brier_score_loss(
@@ -2819,6 +2819,7 @@ def test_multiclass_brier_score_loss():
 
 
 def test_brier_score_loss_invalid_inputs():
+    # binary case
     y_true = np.array([0, 1, 1, 0, 1, 1])
     y_pred = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
     with pytest.raises(ValueError):
@@ -2828,7 +2829,20 @@ def test_brier_score_loss_invalid_inputs():
         # y_pred has value greater than 1
         brier_score_loss(y_true, y_pred + 1.0)
     with pytest.raises(ValueError):
-        # y_pred has value less than 1
+        # y_pred has value less than 0
+        brier_score_loss(y_true, y_pred - 1.0)
+
+    # multiclass case
+    y_true = np.array([1, 0, 2])
+    y_pred = np.array([[0.2, 0.7, 0.1], [0.6, 0.2, 0.2], [0.6, 0.1, 0.3]])
+    with pytest.raises(ValueError):
+        # bad length of y_pred
+        brier_score_loss(y_true, y_pred[1:])
+    with pytest.raises(ValueError):
+        # y_pred has value greater than 1
+        brier_score_loss(y_true, y_pred + 1.0)
+    with pytest.raises(ValueError):
+        # y_pred has value less than 0
         brier_score_loss(y_true, y_pred - 1.0)
 
     # raise an error for multiclass y_true and binary y_pred
@@ -2841,7 +2855,7 @@ def test_brier_score_loss_invalid_inputs():
     with pytest.raises(ValueError, match=error_message):
         brier_score_loss(y_true, y_pred)
 
-    # ensure to raise an error for wrong number of classes
+    # raise an error for wrong number of classes
     y_true = [0, 1, 2]
     y_pred = [[1, 0], [0, 1], [0, 1]]
     error_message = (
