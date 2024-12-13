@@ -210,7 +210,7 @@ def test_dict_learning_reconstruction():
     assert_array_almost_equal(dico.inverse_transform(code), X, decimal=2)
 
     # test error raised for wrong code size
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Expected 12, got 11."):
         dico.inverse_transform(code[:, :-1])
 
     # used to test lars here too, but there's no guarantee the number of
