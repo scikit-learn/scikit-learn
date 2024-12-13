@@ -39,13 +39,13 @@ Videos
   by `Gael Varoquaux`_, `Jake Vanderplas`_  and `Olivier Grisel`_.
 
   Video I:
-  `Part 1 <https://www.youtube.com/watch?v=r4bRUvvlaBw>`_,
-  `Part 2 <https://www.youtube.com/watch?v=hlaMiXCRxB0>`_,
-  `Part 3 <https://www.youtube.com/watch?v=XS4TIGe7MaU>`_.
+  `Part 1 of 3 <https://www.youtube.com/watch?v=r4bRUvvlaBw>`_,
+  `Part 2 of 3 <https://www.youtube.com/watch?v=hlaMiXCRxB0>`_,
+  `Part 3 of 3 <https://www.youtube.com/watch?v=XS4TIGe7MaU>`_.
 
   Video II:
-  `Part 1 <https://www.youtube.com/watch?v=uX4ZirOiWkw>`_,
-  `Part 2 <https://www.youtube.com/watch?v=kTLyp10FD60>`_.
+  `Part 1 of 2 <https://www.youtube.com/watch?v=uX4ZirOiWkw>`_,
+  `Part 2 of 2 <https://www.youtube.com/watch?v=kTLyp10FD60>`_.
 
   Notebooks available on
   `github <https://github.com/jakevdp/sklearn_scipy2013>`_.
