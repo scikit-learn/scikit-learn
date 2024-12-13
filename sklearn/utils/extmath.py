@@ -530,21 +530,35 @@ def randomized_svd(
     )
 
     # project M to the (k + p) dimensional space using the basis vectors
-    B = Q.T @ M
+    B = Q.T @ M  # shape (k + p, M.shape[1]), often M.shape[1] > k + p
 
-    # compute the SVD on the thin matrix: (k + p) wide
+    # It is more efficient to compute the SVD of a tall and thin matrix.
+    # Therefore, if B is wide, we compute the SVD of its transpose.
+    thin = B.shape[0] > B.shape[1]
+    # When array_api_dispatch is disabled, rely on scipy.linalg
+    # instead of numpy.linalg to avoid introducing a behavior change w.r.t.
+    # previous versions of scikit-learn.
     xp, is_array_api_compliant = get_namespace(B)
-    if is_array_api_compliant:
-        Uhat, s, Vt = xp.linalg.svd(B, full_matrices=False)
-    else:
-        # When array_api_dispatch is disabled, rely on scipy.linalg
-        # instead of numpy.linalg to avoid introducing a behavior change w.r.t.
-        # previous versions of scikit-learn.
-        Uhat, s, Vt = linalg.svd(
-            B, full_matrices=False, lapack_driver=svd_lapack_driver
+    if thin:
+        Uhat, s, Vt = (
+            xp.linalg.svd(B, full_matrices=False)
+            if is_array_api_compliant
+            else linalg.svd(B, full_matrices=False, lapack_driver=svd_lapack_driver)
         )
+    else:
+        V, s, Uhat_t = (
+            xp.linalg.svd(B.T, full_matrices=False)
+            if is_array_api_compliant
+            else linalg.svd(B.T, full_matrices=False, lapack_driver=svd_lapack_driver)
+        )
+        Uhat = Uhat_t.T
+        del Uhat_t
+        Vt = V.T
+        del V
     del B
+
     U = Q @ Uhat
+    del Uhat
 
     if flip_sign:
         if not transpose:
