@@ -964,10 +964,11 @@ should typically be larger than 100 and ``cv`` between 3-10 folds.
 A low p-value provides evidence that the dataset contains some real dependency between
 features and targets **and** that the estimator was able to utilize this dependency to
 obtain good results. A high p-value, in reverse, could be due to either one of these:
-  - a lack of dependency between features and targets (i.e., there is no systematic
-    relationship and any observed patterns are likely due to random chance)
-  - **or** because the estimator was not able to use the dependency in the data (for
-    instance because it under fit).
+
+- a lack of dependency between features and targets (i.e., there is no systematic
+  relationship and any observed patterns are likely due to random chance)
+- **or** because the estimator was not able to use the dependency in the data (for
+  instance because it under fit).
 
 In the latter case, using a more appropriate estimator that is able to utilize the
 structure in the data, would result in a lower p-value.
