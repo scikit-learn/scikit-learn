@@ -364,10 +364,11 @@ How do I get started with scikit-learn?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you are new to scikit-learn, or looking to strengthen your understanding,
-we highly recommend the
-`scikit-learn MOOC (Massive Open Online Course)
-<https://www.fun-mooc.fr/en/courses/machine-learning-python-scikit-learn/>`_.
-This comprehensive course is designed to help learners of all levels master
+we highly recommend the **scikit-learn MOOC (Massive Open Online Course)**.
+
+This comprehensive course, hosted on `FUN platform
+<https://www.fun-mooc.fr/en/courses/machine-learning-python-scikit-learn/>`_,
+is designed to help learners of all levels master
 machine learning concepts and techniques using scikit-learn. It covers everything
 from the fundamental concepts of machine learning to more advanced topics like
 predictive modeling pipelines and model evaluation.
@@ -377,7 +378,12 @@ and discussion forum to help you build a solid foundation in scikit-learn
 while applying it to real-world datasets.
 
 The MOOC is free of charge, all the course materials are available at:
+
 `<https://inria.github.io/scikit-learn-mooc/>`_.
+
+The videos are available as YouTube playlist at the Inria Learning Lab channel:
+
+`<https://www.youtube.com/playlist?list=PL2okA_2qDJ-m44KooOI7x8tu85wr4ez4f>`_
 
 What's the best way to get help on scikit-learn usage?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

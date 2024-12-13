@@ -24,10 +24,30 @@ specific subject areas:
 Videos
 ======
 
-- An introduction to scikit-learn `Part
-  I <https://conference.scipy.org/scipy2013/tutorial_detail.php?id=107>`_ and
-  `Part II <https://conference.scipy.org/scipy2013/tutorial_detail.php?id=111>`_ at Scipy 2013
-  by `Gael Varoquaux`_, `Jake Vanderplas`_  and `Olivier Grisel`_. Notebooks on
+- `Machine learning in Python with scikit-learn
+  <https://www.youtube.com/playlist?list=PL2okA_2qDJ-m44KooOI7x8tu85wr4ez4f>`_
+  by `Gael Varoquaux`_, `Arturo Amor`_, and `Olivier Grisel`_.
+
+  These videos are part of the MOOC (Massive Open Online Course)
+  "Machine learning in Python with scikit-learn" hosted on `FUN platform
+  <https://www.fun-mooc.fr/en/courses/machine-learning-python-scikit-learn/>`_.
+
+  The course materials are available at:
+  `<https://inria.github.io/scikit-learn-mooc/>`_.
+
+- An introduction to scikit-learn at Scipy 2013
+  by `Gael Varoquaux`_, `Jake Vanderplas`_  and `Olivier Grisel`_.
+
+  Video I:
+  `Part 1 <https://www.youtube.com/watch?v=r4bRUvvlaBw>`_,
+  `Part 2 <https://www.youtube.com/watch?v=hlaMiXCRxB0>`_,
+  `Part 3 <https://www.youtube.com/watch?v=XS4TIGe7MaU>`_.
+
+  Video II:
+  `Part 1 <https://www.youtube.com/watch?v=uX4ZirOiWkw>`_,
+  `Part 2 <https://www.youtube.com/watch?v=kTLyp10FD60>`_.
+
+  Notebooks available on
   `github <https://github.com/jakevdp/sklearn_scipy2013>`_.
 
 - `Introduction to scikit-learn
@@ -71,3 +91,4 @@ Videos
 .. _Gael Varoquaux: https://gael-varoquaux.info
 .. _Jake Vanderplas: http://www.vanderplas.com
 .. _Olivier Grisel: https://twitter.com/ogrisel
+.. _Arturo Amor: https://twitter.com/ArturoAmorQ
