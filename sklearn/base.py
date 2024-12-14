@@ -26,6 +26,7 @@ from .utils._tags import (
     Tags,
     TargetTags,
     TransformerTags,
+    default_tags,
     get_tags,
 )
 from .utils.fixes import _IS_32BIT
@@ -537,7 +538,17 @@ class ClassifierMixin:
     _estimator_type = "classifier"
 
     def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
+        try:
+            tags = super().__sklearn_tags__()
+        except AttributeError:
+            warnings.warn(
+                "It appears that your estimator inherits from"
+                f" {self.__class__.__name__} without inheriting from BaseEstimator. "
+                "From scikit-learn 1.7, this will raise an error. Please inherit "
+                "from BaseEstimator to use scikit-learn estimators.",
+                FutureWarning,
+            )
+            tags = default_tags(self)
         tags.estimator_type = "classifier"
         tags.classifier_tags = ClassifierTags()
         tags.target_tags.required = True
@@ -610,7 +621,17 @@ class RegressorMixin:
     _estimator_type = "regressor"
 
     def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
+        try:
+            tags = super().__sklearn_tags__()
+        except AttributeError:
+            warnings.warn(
+                "It appears that your estimator inherits from"
+                f" {self.__class__.__name__} without inheriting from BaseEstimator. "
+                "From scikit-learn 1.7, this will raise an error. Please inherit "
+                "from BaseEstimator to use scikit-learn estimators.",
+                FutureWarning,
+            )
+            tags = default_tags(self)
         tags.estimator_type = "regressor"
         tags.regressor_tags = RegressorTags()
         tags.target_tags.required = True
@@ -686,7 +707,17 @@ class ClusterMixin:
     _estimator_type = "clusterer"
 
     def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
+        try:
+            tags = super().__sklearn_tags__()
+        except AttributeError:
+            warnings.warn(
+                "It appears that your estimator inherits from"
+                f" {self.__class__.__name__} without inheriting from BaseEstimator. "
+                "From scikit-learn 1.7, this will raise an error. Please inherit "
+                "from BaseEstimator to use scikit-learn estimators.",
+                FutureWarning,
+            )
+            tags = default_tags(self)
         tags.estimator_type = "clusterer"
         if tags.transformer_tags is not None:
             tags.transformer_tags.preserves_dtype = []
@@ -856,7 +887,17 @@ class TransformerMixin(_SetOutputMixin):
     """
 
     def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
+        try:
+            tags = super().__sklearn_tags__()
+        except AttributeError:
+            warnings.warn(
+                "It appears that your estimator inherits from"
+                f" {self.__class__.__name__} without inheriting from BaseEstimator. "
+                "From scikit-learn 1.7, this will raise an error. Please inherit "
+                "from BaseEstimator to use scikit-learn estimators.",
+                FutureWarning,
+            )
+            tags = default_tags(self)
         tags.transformer_tags = TransformerTags()
         return tags
 
@@ -1039,7 +1080,17 @@ class DensityMixin:
     _estimator_type = "DensityEstimator"
 
     def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
+        try:
+            tags = super().__sklearn_tags__()
+        except AttributeError:
+            warnings.warn(
+                "It appears that your estimator inherits from"
+                f" {self.__class__.__name__} without inheriting from BaseEstimator. "
+                "From scikit-learn 1.7, this will raise an error. Please inherit "
+                "from BaseEstimator to use scikit-learn estimators.",
+                FutureWarning,
+            )
+            tags = default_tags(self)
         tags.estimator_type = "density_estimator"
         return tags
 
@@ -1089,7 +1140,17 @@ class OutlierMixin:
     _estimator_type = "outlier_detector"
 
     def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
+        try:
+            tags = super().__sklearn_tags__()
+        except AttributeError:
+            warnings.warn(
+                "It appears that your estimator inherits from"
+                f" {self.__class__.__name__} without inheriting from BaseEstimator. "
+                "From scikit-learn 1.7, this will raise an error. Please inherit "
+                "from BaseEstimator to use scikit-learn estimators.",
+                FutureWarning,
+            )
+            tags = default_tags(self)
         tags.estimator_type = "outlier_detector"
         return tags
 
@@ -1181,7 +1242,17 @@ class MultiOutputMixin:
     """Mixin to mark estimators that support multioutput."""
 
     def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
+        try:
+            tags = super().__sklearn_tags__()
+        except AttributeError:
+            warnings.warn(
+                "It appears that your estimator inherits from"
+                f" {self.__class__.__name__} without inheriting from BaseEstimator. "
+                "From scikit-learn 1.7, this will raise an error. Please inherit "
+                "from BaseEstimator to use scikit-learn estimators.",
+                FutureWarning,
+            )
+            tags = default_tags(self)
         tags.target_tags.multi_output = True
         return tags
 
@@ -1190,7 +1261,17 @@ class _UnstableArchMixin:
     """Mark estimators that are non-determinstic on 32bit or PowerPC"""
 
     def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
+        try:
+            tags = super().__sklearn_tags__()
+        except AttributeError:
+            warnings.warn(
+                "It appears that your estimator inherits from"
+                f" {self.__class__.__name__} without inheriting from BaseEstimator. "
+                "From scikit-learn 1.7, this will raise an error. Please inherit "
+                "from BaseEstimator to use scikit-learn estimators.",
+                FutureWarning,
+            )
+            tags = default_tags(self)
         tags.non_deterministic = _IS_32BIT or platform.machine().startswith(
             ("ppc", "powerpc")
         )
