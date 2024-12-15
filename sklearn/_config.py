@@ -8,18 +8,19 @@ import threading
 from contextlib import contextmanager as contextmanager
 
 _global_config = {
+    "array_api_dispatch": False,
     "assume_finite": bool(os.environ.get("SKLEARN_ASSUME_FINITE", False)),
-    "working_memory": int(os.environ.get("SKLEARN_WORKING_MEMORY", 1024)),
-    "print_changed_only": True,
     "display": "diagram",
+    "enable_cython_pairwise_dist": True,
+    "enable_metadata_routing": False,
+    "inverse_transform_output": "default",
     "pairwise_dist_chunk_size": int(
         os.environ.get("SKLEARN_PAIRWISE_DIST_CHUNK_SIZE", 256)
     ),
-    "enable_cython_pairwise_dist": True,
-    "array_api_dispatch": False,
-    "transform_output": "default",
-    "enable_metadata_routing": False,
+    "print_changed_only": True,
     "skip_parameter_validation": False,
+    "transform_output": "default",
+    "working_memory": int(os.environ.get("SKLEARN_WORKING_MEMORY", 1024)),
 }
 _threadlocal = threading.local()
 
@@ -66,6 +67,7 @@ def set_config(
     enable_cython_pairwise_dist=None,
     array_api_dispatch=None,
     transform_output=None,
+    inverse_transform_output=None,
     enable_metadata_routing=None,
     skip_parameter_validation=None,
 ):
@@ -205,6 +207,8 @@ def set_config(
         local_config["array_api_dispatch"] = array_api_dispatch
     if transform_output is not None:
         local_config["transform_output"] = transform_output
+    if inverse_transform_output is not None:
+        local_config["inverse_transform_output"] = inverse_transform_output
     if enable_metadata_routing is not None:
         local_config["enable_metadata_routing"] = enable_metadata_routing
     if skip_parameter_validation is not None:
@@ -222,6 +226,7 @@ def config_context(
     enable_cython_pairwise_dist=None,
     array_api_dispatch=None,
     transform_output=None,
+    inverse_transform_output=None,
     enable_metadata_routing=None,
     skip_parameter_validation=None,
 ):
@@ -366,6 +371,7 @@ def config_context(
         enable_cython_pairwise_dist=enable_cython_pairwise_dist,
         array_api_dispatch=array_api_dispatch,
         transform_output=transform_output,
+        inverse_transform_output=inverse_transform_output,
         enable_metadata_routing=enable_metadata_routing,
         skip_parameter_validation=skip_parameter_validation,
     )
