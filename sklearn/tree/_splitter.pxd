@@ -3,27 +3,13 @@
 
 # See _splitter.pyx for details.
 
+from ..ensemble._hist_gradient_boosting.common cimport BITSET_INNER_DTYPE_C
 from ..utils._typedefs cimport (
-    float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t
+    BITSET_t, float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t, uint64_t
 )
+from ._utils cimport ParentInfo, SplitRecord, SplitValue
 from ._criterion cimport Criterion
-from ._tree cimport ParentInfo
 
-
-cdef struct SplitRecord:
-    # Data to track sample split
-    intp_t feature         # Which feature to split on.
-    intp_t pos             # Split samples array at the given position,
-    #                      # i.e. count of samples below threshold for feature.
-    #                      # pos is >= end if the node is a leaf.
-    float64_t threshold       # Threshold to split at.
-    float64_t improvement     # Impurity improvement given parent node.
-    float64_t impurity_left   # Impurity of the left split.
-    float64_t impurity_right  # Impurity of the right split.
-    float64_t lower_bound     # Lower bound on value of both children for monotonicity
-    float64_t upper_bound     # Upper bound on value of both children for monotonicity
-    uint8_t missing_go_to_left  # Controls if missing values go to the left node.
-    intp_t n_missing            # Number of missing values for the feature being split on
 
 cdef class Splitter:
     # The splitter searches in the input space for a feature and a threshold
@@ -61,6 +47,14 @@ cdef class Splitter:
     cdef bint with_monotonic_cst
     cdef const float64_t[:] sample_weight
 
+    # Whether or not to sort categories by probabilities to split categorical
+    # features using the Breiman shortcut
+    cdef bint breiman_shortcut
+
+    # We know the number of categories within our dataset across each feature.
+    # If a feature index has -1, then it is not categorical
+    cdef const int32_t[:] n_categories
+
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,
     # `node_split` reorganizes the node samples `samples[start:end]` in two
@@ -84,6 +78,7 @@ cdef class Splitter:
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
         const uint8_t[::1] missing_values_in_feature_mask,
+        const int32_t[::1] n_categories,
     ) except -1
 
     cdef int node_reset(

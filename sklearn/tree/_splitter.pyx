@@ -22,15 +22,14 @@ of splitting strategies:
 
 from libc.string cimport memcpy
 
-from ..utils._typedefs cimport int8_t
+from ._utils cimport rand_int
+from ._utils cimport rand_uniform
+from ._utils cimport RAND_R_MAX, bs_get, bs_set, bs_from_template, setup_cat_cache
 from ._criterion cimport Criterion
-from ._partitioner cimport (
-    FEATURE_THRESHOLD, DensePartitioner, SparsePartitioner,
-    shift_missing_values_to_left_if_required
-)
-from ._utils cimport RAND_R_MAX, rand_int, rand_uniform
+from ._partitioner cimport DensePartitioner, SparsePartitioner, FEATURE_THRESHOLD, shift_missing_values_to_left_if_required
 
 import numpy as np
+
 
 # Introduce a fused-class to make it possible to share the split implementation
 # between the dense and sparse cases in the node_split_best and node_split_random
@@ -50,7 +49,7 @@ cdef inline void _init_split(SplitRecord* self, intp_t start_pos) noexcept nogil
     self.impurity_right = INFINITY
     self.pos = start_pos
     self.feature = 0
-    self.threshold = 0.
+    self.split_value.threshold = 0.
     self.improvement = -INFINITY
     self.missing_go_to_left = False
     self.n_missing = 0
@@ -70,6 +69,8 @@ cdef class Splitter:
         float64_t min_weight_leaf,
         object random_state,
         const int8_t[:] monotonic_cst,
+        bint breiman_shortcut,
+        *argv
     ):
         """
         Parameters
@@ -96,6 +97,8 @@ cdef class Splitter:
         monotonic_cst : const int8_t[:]
             Monotonicity constraints
 
+        breiman_shortcut : bool
+            Whether to use the breiman shortcut or not when possible.
         """
 
         self.criterion = criterion
@@ -110,6 +113,9 @@ cdef class Splitter:
         self.monotonic_cst = monotonic_cst
         self.with_monotonic_cst = monotonic_cst is not None
 
+        # Unused in random splitters
+        self.breiman_shortcut = breiman_shortcut
+
     def __getstate__(self):
         return {}
 
@@ -117,12 +123,15 @@ cdef class Splitter:
         pass
 
     def __reduce__(self):
-        return (type(self), (self.criterion,
-                             self.max_features,
-                             self.min_samples_leaf,
-                             self.min_weight_leaf,
-                             self.random_state,
-                             self.monotonic_cst), self.__getstate__())
+        return (type(self), (
+            self.criterion,
+            self.max_features,
+            self.min_samples_leaf,
+            self.min_weight_leaf,
+            self.random_state,
+            self.monotonic_cst,
+            self.breiman_shortcut,
+        ), self.__getstate__())
 
     cdef int init(
         self,
@@ -130,6 +139,7 @@ cdef class Splitter:
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
         const uint8_t[::1] missing_values_in_feature_mask,
+        const int32_t[::1] n_categories,
     ) except -1:
         """Initialize the splitter.
 
@@ -196,6 +206,14 @@ cdef class Splitter:
         self.sample_weight = sample_weight
         if missing_values_in_feature_mask is not None:
             self.criterion.init_sum_missing()
+
+        # Initialize the number of categories for each feature
+        # A value of -1 indicates a non-categorical feature
+        if n_categories is None:
+            self.n_categories = np.array([-1] * n_features, dtype=np.int32)
+        else:
+            self.n_categories = n_categories
+
         return 0
 
     cdef int node_reset(
@@ -310,6 +328,22 @@ cdef inline int node_split_best(
     cdef float64_t lower_bound = parent_record.lower_bound
     cdef float64_t upper_bound = parent_record.upper_bound
 
+    # variables for categorical split handling
+    cdef bint breiman_shortcut = splitter.breiman_shortcut
+    cdef bint is_categorical
+    # index through categories
+    cdef uint64_t cat_idx
+    # total number of categories per feature
+    cdef uint64_t ncat_present
+    # the bitset to store which category to split on
+    cdef BITSET_t cat_split = 0
+
+    # XXX: unsure what this it.
+    cdef int32_t[:] cat_offs = partitioner.cat_offset
+
+    # A storage of the sorted categories used in Breiman shortcut
+    cdef intp_t[:] sorted_cat = partitioner.sorted_cat
+
     cdef intp_t f_i = n_features
     cdef intp_t f_j
     cdef intp_t p
@@ -323,6 +357,8 @@ cdef inline int node_split_best(
     cdef intp_t n_known_constants = parent_record.n_constant_features
     # n_total_constants = n_known_constants + n_found_constants
     cdef intp_t n_total_constants = n_known_constants
+
+    cdef intp_t i
 
     _init_split(&best_split, end)
 
@@ -395,6 +431,46 @@ cdef inline int node_split_best(
         has_missing = n_missing != 0
         criterion.init_missing(n_missing)  # initialize even when n_missing == 0
 
+        is_categorical = splitter.n_categories[current_split.feature] > 0
+        if is_categorical:
+            # Identify the number of categories present in this node
+            # and apply breiman sorting if number of categories is small
+            # XXX: could improve this by passing in parent information.
+            cat_split = 0
+            ncat_present = 0
+
+            # Initialize the bitset for the categories present in the node
+            for i in range(start, end):
+                # Xf[i] < 64 already verified in tree.py
+                cat_split = bs_set(cat_split, <intp_t>feature_values[i])
+
+            # count the number of categories present per feature in this node
+            for i in range(splitter.n_categories[current_split.feature]):
+                if bs_get(cat_split, i):
+                    cat_offs[ncat_present] = i - ncat_present
+                    ncat_present += 1
+
+            # TODO: Why do we need to recompute ncat_present? Isn't it in n_categories?
+            # - we do it since the number of categories may change as we traverse the tree, but
+            # instead of running this loop could we pass in parent information? via parentInfo...
+            # similar to constant feature tracking
+            if ncat_present <= 3:
+                breiman_shortcut = False  # No benefit for small N
+
+            # Apply sorting to the categories if we can leverage the Breiman computational
+            # trick to improve the computational efficiency of the categorical splits
+            if breiman_shortcut:
+                partitioner._breiman_sort_categories(
+                    start,
+                    end,
+                    splitter.n_categories[current_split.feature],
+                    ncat_present,
+                    cat_offs,
+                    sorted_cat,
+                    splitter.y,
+                    splitter.sample_weight
+                )
+
         # Evaluate all splits
 
         # If there are missing values, then we search twice for the most optimal split.
@@ -410,25 +486,51 @@ cdef inline int node_split_best(
             criterion.reset()
 
             p = start
+            cat_idx = 0
 
             while p < end_non_missing:
-                partitioner.next_p(&p_prev, &p)
+                if is_categorical:
+                    cat_idx += 1
 
-                if p >= end_non_missing:
-                    continue
+                    if breiman_shortcut:
+                        # TODO: Implement breiman shortcut
+                        pass
+                    else:
+                        if cat_idx >= (<uint64_t> 1) << (ncat_present - 1):
+                            break
 
-                if missing_go_to_left:
-                    n_left = p - start + n_missing
-                    n_right = end_non_missing - p
+                        # Expand the bits of (2 * cat_idx) out into
+                        # cat_split. We double cat_idx to avoid
+                        # double-counting equivalent splits. This also
+                        # ensures that cat_split & 1 == 0 as required
+                        cat_split = bs_from_template(
+                            cat_idx << 1,
+                            cat_offs, ncat_present)
+
+                    # Partition samples
+                    p = partitioner.partition_samples_category(cat_split)
+
+                    # Must reset criterion since we've reordered the samples
+                    criterion.reset()
                 else:
-                    n_left = p - start
-                    n_right = end_non_missing - p + n_missing
+                    partitioner.next_p(&p_prev, &p)
+
+                    if p >= end_non_missing:
+                        continue
+
+                    if missing_go_to_left:
+                        n_left = p - start + n_missing
+                        n_right = end_non_missing - p
+                    else:
+                        n_left = p - start
+                        n_right = end_non_missing - p + n_missing
+
+                current_split.pos = p
 
                 # Reject if min_samples_leaf is not guaranteed
                 if n_left < min_samples_leaf or n_right < min_samples_leaf:
                     continue
 
-                current_split.pos = p
                 criterion.update(current_split.pos)
 
                 # Reject if monotonicity constraints are not satisfied
@@ -452,17 +554,21 @@ cdef inline int node_split_best(
 
                 if current_proxy_improvement > best_proxy_improvement:
                     best_proxy_improvement = current_proxy_improvement
-                    # sum of halves is used to avoid infinite value
-                    current_split.threshold = (
-                        feature_values[p_prev] / 2.0 + feature_values[p] / 2.0
-                    )
+
+                    if is_categorical:
+                        current_split.split_value.cat_split = cat_split
+                    else:
+                        # sum of halves is used to avoid infinite value
+                        current_split.split_value.threshold = (
+                            feature_values[p_prev] / 2.0 + feature_values[p] / 2.0
+                        )
 
                     if (
-                        current_split.threshold == feature_values[p] or
-                        current_split.threshold == INFINITY or
-                        current_split.threshold == -INFINITY
+                        current_split.split_value.threshold == feature_values[p] or
+                        current_split.split_value.threshold == INFINITY or
+                        current_split.split_value.threshold == -INFINITY
                     ):
-                        current_split.threshold = feature_values[p_prev]
+                        current_split.split_value.threshold = feature_values[p_prev]
 
                     current_split.n_missing = n_missing
 
@@ -493,7 +599,7 @@ cdef inline int node_split_best(
 
                     if current_proxy_improvement > best_proxy_improvement:
                         best_proxy_improvement = current_proxy_improvement
-                        current_split.threshold = INFINITY
+                        current_split.split_value.threshold = INFINITY
                         current_split.missing_go_to_left = missing_go_to_left
                         current_split.n_missing = n_missing
                         current_split.pos = p
@@ -501,9 +607,15 @@ cdef inline int node_split_best(
 
     # Reorganize into samples[start:best_split.pos] + samples[best_split.pos:end]
     if best_split.pos < end:
+        setup_cat_cache(
+            partitioner.cat_cache,
+            best_split.split_value.cat_split,
+            splitter.n_categories[best_split.feature]
+        )
+
         partitioner.partition_samples_final(
             best_split.pos,
-            best_split.threshold,
+            best_split.split_value,
             best_split.feature,
             best_split.n_missing
         )
@@ -572,6 +684,11 @@ cdef inline int node_split_random(
     cdef intp_t min_samples_leaf = splitter.min_samples_leaf
     cdef float64_t min_weight_leaf = splitter.min_weight_leaf
     cdef uint32_t* random_state = &splitter.rand_r_state
+
+    # variables for categorical split handling
+    cdef bint is_categorical
+    # index through categories
+    cdef uint64_t split_seed
 
     cdef SplitRecord best_split, current_split
     cdef float64_t current_proxy_improvement = - INFINITY
@@ -668,13 +785,34 @@ cdef inline int node_split_random(
         has_missing = n_missing != 0
         criterion.init_missing(n_missing)
 
-        # Draw a random threshold
-        current_split.threshold = rand_uniform(
-            min_feature_value,
-            max_feature_value,
-            random_state,
+        # Construct a random split
+        is_categorical = splitter.n_categories[current_split.feature] > 0
+        if is_categorical:
+            split_seed = rand_int(0, <uint32_t>RAND_R_MAX + 1, random_state)
+            current_split.split_value.cat_split = (split_seed << 32) | 1
+        else:
+            # Draw a random threshold
+            current_split.split_value.threshold = rand_uniform(
+                min_feature_value,
+                max_feature_value,
+                random_state,
+            )
+
+            if current_split.split_value.threshold == max_feature_value:
+                current_split.split_value.threshold = min_feature_value
+
+        # Partition
+        setup_cat_cache(
+            partitioner.cat_cache,
+            current_split.split_value.cat_split,
+            splitter.n_categories[current_split.feature]
+        )
+        current_split.pos = partitioner.partition_samples(
+            current_split.split_value,
+            current_split.feature
         )
 
+        # Randomly split missing values
         if has_missing:
             # If there are missing values, then we randomly make all missing
             # values go to the right or left.
@@ -689,14 +827,6 @@ cdef inline int node_split_random(
         else:
             missing_go_to_left = 0
         criterion.missing_go_to_left = missing_go_to_left
-
-        if current_split.threshold == max_feature_value:
-            current_split.threshold = min_feature_value
-
-        # Partition
-        current_split.pos = partitioner.partition_samples(
-            current_split.threshold
-        )
 
         if missing_go_to_left:
             n_left = current_split.pos - start + n_missing
@@ -750,10 +880,16 @@ cdef inline int node_split_random(
 
     # Reorganize into samples[start:best.pos] + samples[best.pos:end]
     if best_split.pos < end:
+        setup_cat_cache(
+            partitioner.cat_cache,
+            best_split.split_value.cat_split,
+            splitter.n_categories[best_split.feature]
+        )
+
         if current_split.feature != best_split.feature:
             partitioner.partition_samples_final(
                 best_split.pos,
-                best_split.threshold,
+                best_split.split_value,
                 best_split.feature,
                 best_split.n_missing
             )
@@ -798,10 +934,11 @@ cdef class BestSplitter(Splitter):
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
         const uint8_t[::1] missing_values_in_feature_mask,
+        const int32_t[::1] n_categories,
     ) except -1:
-        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask)
+        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories)
         self.partitioner = DensePartitioner(
-            X, self.samples, self.feature_values, missing_values_in_feature_mask
+            X, self.samples, self.feature_values, missing_values_in_feature_mask, n_categories, self.breiman_shortcut
         )
 
     cdef int node_split(
@@ -826,10 +963,11 @@ cdef class BestSparseSplitter(Splitter):
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
         const uint8_t[::1] missing_values_in_feature_mask,
+        const int32_t[::1] n_categories,
     ) except -1:
-        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask)
+        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories)
         self.partitioner = SparsePartitioner(
-            X, self.samples, self.n_samples, self.feature_values, missing_values_in_feature_mask
+            X, self.samples, self.n_samples, self.feature_values, missing_values_in_feature_mask, n_categories, self.breiman_shortcut
         )
 
     cdef int node_split(
@@ -854,10 +992,11 @@ cdef class RandomSplitter(Splitter):
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
         const uint8_t[::1] missing_values_in_feature_mask,
+        const int32_t[::1] n_categories,
     ) except -1:
-        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask)
+        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories)
         self.partitioner = DensePartitioner(
-            X, self.samples, self.feature_values, missing_values_in_feature_mask
+            X, self.samples, self.feature_values, missing_values_in_feature_mask, n_categories, self.breiman_shortcut
         )
 
     cdef int node_split(
@@ -882,10 +1021,11 @@ cdef class RandomSparseSplitter(Splitter):
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
         const uint8_t[::1] missing_values_in_feature_mask,
+        const int32_t[::1] n_categories,
     ) except -1:
-        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask)
+        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories)
         self.partitioner = SparsePartitioner(
-            X, self.samples, self.n_samples, self.feature_values, missing_values_in_feature_mask
+            X, self.samples, self.n_samples, self.feature_values, missing_values_in_feature_mask, n_categories, self.breiman_shortcut
         )
     cdef int node_split(
             self,
