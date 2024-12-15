@@ -569,7 +569,11 @@ def test_ovr_decision_function():
 
     n_classes = 3
 
-    dec_values = _ovr_decision_function(predictions, confidences, n_classes)
+    probabilities_indexes = []
+
+    dec_values = _ovr_decision_function(
+        predictions, confidences, n_classes, probabilities_indexes
+    )
 
     # check that the decision values are within 0.5 range of the votes
     votes = np.array([[1, 0, 2], [1, 1, 1], [1, 0, 2], [1, 0, 2]])
@@ -589,9 +593,59 @@ def test_ovr_decision_function():
     # assert subset invariance.
     dec_values_one = [
         _ovr_decision_function(
-            np.array([predictions[i]]), np.array([confidences[i]]), n_classes
+            np.array([predictions[i]]), np.array([confidences[i]]), n_classes, []
         )[0]
         for i in range(4)
+    ]
+
+    assert_allclose(dec_values, dec_values_one, atol=1e-6)
+
+
+def test_ovr_decision_function_confidence_prob():
+    # test ovr decision function with parameter confidences as probabilities
+    predictions = np.array([[0, 1, 1], [1, 0, 1], [1, 1, 0], [0, 1, 1], [0, 1, 0]])
+
+    confidences = np.array(
+        [
+            [0.1, 0.9, 0.1],
+            [0.8, 0.2, 0],
+            [0.5, 0.2, 0.3],
+            [1, 1, 0.6],
+            [0, 0.5, 0.3],
+        ]
+    )
+
+    n_classes = 3
+
+    probabilities_indexes = list(range(n_classes))
+
+    dec_values = _ovr_decision_function(
+        predictions, confidences, n_classes, probabilities_indexes
+    )
+
+    votes = np.array([[1, 0, 2], [1, 1, 1], [0, 2, 1], [1, 0, 2], [1, 1, 1]])
+
+    # check that the decision values are within 0.5 range of the votes
+    assert_allclose(votes, dec_values, atol=0.5)
+
+    # should be predicted the class with
+    # highest vote or highest confidence if there is a tie in the votes.
+    # for the second and fifth sample we have a tie(should be won by 1 for both samples)
+    expected_prediction = np.array([2, 1, 1, 2, 1])
+    assert_array_equal(np.argmax(dec_values, axis=1), expected_prediction)
+
+    # first and forth sample have the same vote but forth
+    # sample has higher confidence, this should reflect on the decision values
+    assert dec_values[3, 2] > dec_values[0, 2]
+
+    dec_values_one = [
+        _ovr_decision_function(
+            np.array([predictions[i]]),
+            np.array([confidences[i]]),
+            n_classes,
+            probabilities_indexes,
+        )[0]
+        for i in range(5)
     ]
 
     assert_allclose(dec_values, dec_values_one, atol=1e-6)
