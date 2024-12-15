@@ -1,0 +1,15 @@
+{
+    "image": "mcr.microsoft.com/devcontainers/universal:2",
+    "waitFor": "onCreateCommand",
+    "updateContentCommand": "python3 -m pip install pytest pytest-cov ruff mypy numpydoc black==23.3.0 pre-commit sphinx sphinx-gallery numpydoc matplotlib Pillow pandas scikit-image packaging seaborn sphinx-prompt sphinxext-opengraph sphinx-copybutton plotly pooch && pre-commit install",
+    "postCreateCommand": "",
+    "customizations": {
+      "vscode": {
+        "extensions": [
+          "ms-python.python"
+        ]
+      }
+    },
+    "features": {
+    }
+  }
