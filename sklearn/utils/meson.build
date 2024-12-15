@@ -33,6 +33,10 @@ utils_extension_metadata = {
     {'sources': ['_vector_sentinel.pyx'], 'override_options': ['cython_language=cpp'],
      'dependencies': [np_dep]},
   '_isfinite': {'sources': ['_isfinite.pyx']},
+  '_numpy_aligned_allocator': {
+    'sources': ['_numpy_aligned_allocator.pyx', 'src' / 'numpy_allocator.h'],
+    'dependencies': [np_dep]
+  }
 }
 
 foreach ext_name, ext_dict : utils_extension_metadata
