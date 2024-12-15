@@ -4,6 +4,7 @@
 """Recursive feature elimination for feature ranking"""
 
 import warnings
+from copy import deepcopy
 from numbers import Integral
 
 import numpy as np
@@ -22,12 +23,15 @@ from ..utils._metadata_requests import (
     process_routing,
 )
 from ..utils._param_validation import HasMethods, Interval, RealNotInt
+from ..utils._tags import get_tags
 from ..utils.metaestimators import _safe_split, available_if
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
     _check_method_params,
     _deprecate_positional_args,
+    _estimator_has,
     check_is_fitted,
+    validate_data,
 )
 from ._base import SelectorMixin, _get_feature_importances
 
@@ -59,25 +63,6 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer, routed_params):
     )
 
     return rfe.step_scores_, rfe.step_n_features_
-
-
-def _estimator_has(attr):
-    """Check if we can delegate a method to the underlying estimator.
-
-    First, we check the fitted `estimator_` if available, otherwise we check the
-    unfitted `estimator`. We raise the original `AttributeError` if `attr` does
-    not exist. This function is used together with `available_if`.
-    """
-
-    def check(self):
-        if hasattr(self, "estimator_"):
-            getattr(self.estimator_, attr)
-        else:
-            getattr(self.estimator, attr)
-
-        return True
-
-    return check
 
 
 class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
@@ -237,6 +222,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         self.importance_getter = importance_getter
         self.verbose = verbose
 
+    # TODO(1.8) remove this property
     @property
     def _estimator_type(self):
         return self.estimator._estimator_type
@@ -267,19 +253,15 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             The target values.
 
         **fit_params : dict
-            - If `enable_metadata_routing=False` (default):
+            - If `enable_metadata_routing=False` (default): Parameters directly passed
+              to the ``fit`` method of the underlying estimator.
 
-                Parameters directly passed to the ``fit`` method of the
-                underlying estimator.
+            - If `enable_metadata_routing=True`: Parameters safely routed to the ``fit``
+              method of the underlying estimator.
 
-            - If `enable_metadata_routing=True`:
-
-                Parameters safely routed to the ``fit`` method of the
-                underlying estimator.
-
-                .. versionchanged:: 1.6
-                    See :ref:`Metadata Routing User Guide <metadata_routing>`
-                    for more details.
+            .. versionchanged:: 1.6
+                See :ref:`Metadata Routing User Guide <metadata_routing>`
+                for more details.
 
         Returns
         -------
@@ -298,7 +280,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         # step_score is not exposed to users and is used when implementing RFECV
         # self.step_scores_ will not be calculated when calling _fit through fit
 
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse="csc",
@@ -435,21 +418,17 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             The target values.
 
         **score_params : dict
-            - If `enable_metadata_routing=False` (default):
+            - If `enable_metadata_routing=False` (default): Parameters directly passed
+              to the ``score`` method of the underlying estimator.
 
-                Parameters directly passed to the ``score`` method of the
-                underlying estimator.
+            - If `enable_metadata_routing=True`: Parameters safely routed to the `score`
+              method of the underlying estimator.
 
-                .. versionadded:: 1.0
+            .. versionadded:: 1.0
 
-            - If `enable_metadata_routing=True`:
-
-                Parameters safely routed to the `score` method of the
-                underlying estimator.
-
-                .. versionchanged:: 1.6
-                    See :ref:`Metadata Routing User Guide <metadata_routing>`
-                    for more details.
+            .. versionchanged:: 1.6
+                See :ref:`Metadata Routing User Guide <metadata_routing>`
+                for more details.
 
         Returns
         -------
@@ -531,17 +510,18 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         check_is_fitted(self)
         return self.estimator_.predict_log_proba(self.transform(X))
 
-    def _more_tags(self):
-        tags = {
-            "poor_score": True,
-            "requires_y": True,
-            "allow_nan": True,
-        }
-
-        # Adjust allow_nan if estimator explicitly defines `allow_nan`.
-        if hasattr(self.estimator, "_get_tags"):
-            tags["allow_nan"] = self.estimator._get_tags()["allow_nan"]
-
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        sub_estimator_tags = get_tags(self.estimator)
+        tags.estimator_type = sub_estimator_tags.estimator_type
+        tags.classifier_tags = deepcopy(sub_estimator_tags.classifier_tags)
+        tags.regressor_tags = deepcopy(sub_estimator_tags.regressor_tags)
+        if tags.classifier_tags is not None:
+            tags.classifier_tags.poor_score = True
+        if tags.regressor_tags is not None:
+            tags.regressor_tags.poor_score = True
+        tags.target_tags.required = True
+        tags.input_tags.allow_nan = sub_estimator_tags.input_tags.allow_nan
         return tags
 
     def get_metadata_routing(self):
@@ -670,6 +650,9 @@ class RFECV(RFE):
         by the number of features used (i.e., the first element of the array
         represents the models that used the least number of features, while the
         last element represents the models that used all available features).
+
+        .. versionadded:: 1.0
+
         This dictionary contains the following keys:
 
         split(k)_test_score : ndarray of shape (n_subsets_of_features,)
@@ -684,7 +667,7 @@ class RFECV(RFE):
         n_features : ndarray of shape (n_subsets_of_features,)
             Number of features used at each step.
 
-        .. versionadded:: 1.0
+            .. versionadded:: 1.5
 
     n_features_ : int
         The number of selected features with cross-validation.
@@ -810,7 +793,7 @@ class RFECV(RFE):
             Parameters passed to the ``fit`` method of the estimator,
             the scorer, and the CV splitter.
 
-            ..versionadded:: 1.6
+            .. versionadded:: 1.6
                 Only available if `enable_metadata_routing=True`,
                 which can be set by using
                 ``sklearn.set_config(enable_metadata_routing=True)``.
@@ -823,7 +806,8 @@ class RFECV(RFE):
             Fitted estimator.
         """
         _raise_for_params(params, self, "fit")
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse="csr",
@@ -886,7 +870,7 @@ class RFECV(RFE):
             func = delayed(_rfe_single_fit)
 
         scores_features = parallel(
-            func(rfe, self.estimator, X, y, train, test, scorer, routed_params)
+            func(clone(rfe), self.estimator, X, y, train, test, scorer, routed_params)
             for train, test in cv.split(X, y, **routed_params.splitter.split)
         )
         scores, step_n_features = zip(*scores_features)
@@ -940,7 +924,7 @@ class RFECV(RFE):
         **score_params : dict
             Parameters to pass to the `score` method of the underlying scorer.
 
-            ..versionadded:: 1.6
+            .. versionadded:: 1.6
                 Only available if `enable_metadata_routing=True`,
                 which can be set by using
                 ``sklearn.set_config(enable_metadata_routing=True)``.

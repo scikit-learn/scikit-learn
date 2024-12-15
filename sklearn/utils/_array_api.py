@@ -6,11 +6,11 @@
 import itertools
 import math
 import os
-import warnings
 from functools import wraps
 
 import numpy
 import scipy
+import scipy.sparse as sp
 import scipy.special as special
 
 from .._config import get_config
@@ -120,15 +120,11 @@ def _check_array_api_dispatch(array_api_dispatch):
             )
 
         if os.environ.get("SCIPY_ARRAY_API") != "1":
-            warnings.warn(
-                (
-                    "Some scikit-learn array API features might rely on enabling "
-                    "SciPy's own support for array API to function properly. "
-                    "Please set the SCIPY_ARRAY_API=1 environment variable "
-                    "before importing sklearn or scipy. More details at: "
-                    "https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html"
-                ),
-                UserWarning,
+            raise RuntimeError(
+                "Scikit-learn array API support was enabled but scipy's own support is "
+                "not enabled. Please set the SCIPY_ARRAY_API=1 environment variable "
+                "before importing sklearn or scipy. More details at: "
+                "https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html"
             )
 
 
@@ -167,7 +163,9 @@ def device(*array_list, remove_none=True, remove_types=(str,)):
         *array_list, remove_none=remove_none, remove_types=remove_types
     )
 
-    # Note that _remove_non_arrays ensures that array_list is not empty.
+    if not array_list:
+        return None
+
     device_ = _single_array_device(array_list[0])
 
     # Note: here we cannot simply use a Python `set` as it requires
@@ -208,7 +206,11 @@ def _is_numpy_namespace(xp):
 
 def _union1d(a, b, xp):
     if _is_numpy_namespace(xp):
-        return xp.asarray(numpy.union1d(a, b))
+        # avoid circular import
+        from ._unique import cached_unique
+
+        a_unique, b_unique = cached_unique(a, b, xp=xp)
+        return xp.asarray(numpy.union1d(a_unique, b_unique))
     assert a.ndim == b.ndim == 1
     return xp.unique_values(xp.concat([xp.unique_values(a), xp.unique_values(b)]))
 
@@ -452,6 +454,8 @@ def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
 
     Raise ValueError if no arrays are left after filtering.
 
+    Sparse arrays are always filtered out.
+
     Parameters
     ----------
     *arrays : array objects
@@ -466,7 +470,8 @@ def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
     Returns
     -------
     filtered_arrays : list
-        List of arrays with None and typoe
+        List of arrays filtered as requested. An empty list is returned if no input
+        passes the filters.
     """
     filtered_arrays = []
     remove_types = tuple(remove_types)
@@ -475,14 +480,10 @@ def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
             continue
         if isinstance(array, remove_types):
             continue
+        if sp.issparse(array):
+            continue
         filtered_arrays.append(array)
 
-    if not filtered_arrays:
-        raise ValueError(
-            f"At least one input array expected after filtering with {remove_none=}, "
-            f"remove_types=[{', '.join(t.__name__ for t in remove_types)}]. Got none. "
-            f"Original types: [{', '.join(type(a).__name__ for a in arrays)}]."
-        )
     return filtered_arrays
 
 
@@ -491,6 +492,8 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
 
     Introspect `arrays` arguments and return their common Array API compatible
     namespace object, if any.
+
+    Note that sparse arrays are filtered by default.
 
     See: https://numpy.org/neps/nep-0047-array-api-standard.html
 
@@ -509,6 +512,9 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     Otherwise an instance of the `_NumPyAPIWrapper` compatibility wrapper is
     always returned irrespective of the fact that arrays implement the
     `__array_namespace__` protocol or not.
+
+    Note that if no arrays pass the set filters, ``_NUMPY_API_WRAPPER_INSTANCE, False``
+    is returned.
 
     Parameters
     ----------
@@ -530,10 +536,11 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     -------
     namespace : module
         Namespace shared by array objects. If any of the `arrays` are not arrays,
-        the namespace defaults to NumPy.
+        the namespace defaults to the NumPy namespace.
 
     is_array_api_compliant : bool
-        True if the arrays are containers that implement the Array API spec.
+        True if the arrays are containers that implement the array API spec (see
+        https://data-apis.org/array-api/latest/index.html).
         Always False when array_api_dispatch=False.
     """
     array_api_dispatch = get_config()["array_api_dispatch"]
@@ -547,8 +554,13 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
         return xp, True
 
     arrays = _remove_non_arrays(
-        *arrays, remove_none=remove_none, remove_types=remove_types
+        *arrays,
+        remove_none=remove_none,
+        remove_types=remove_types,
     )
+
+    if not arrays:
+        return _NUMPY_API_WRAPPER_INSTANCE, False
 
     _check_array_api_dispatch(array_api_dispatch)
 
@@ -592,20 +604,19 @@ def get_namespace_and_device(*array_list, remove_none=True, remove_types=(str,))
         `device` object (see the "Device Support" section of the array API spec).
     """
     array_list = _remove_non_arrays(
-        *array_list, remove_none=remove_none, remove_types=remove_types
+        *array_list,
+        remove_none=remove_none,
+        remove_types=remove_types,
     )
 
     skip_remove_kwargs = dict(remove_none=False, remove_types=[])
 
     xp, is_array_api = get_namespace(*array_list, **skip_remove_kwargs)
+    arrays_device = device(*array_list, **skip_remove_kwargs)
     if is_array_api:
-        return (
-            xp,
-            is_array_api,
-            device(*array_list, **skip_remove_kwargs),
-        )
+        return xp, is_array_api, arrays_device
     else:
-        return xp, False, None
+        return xp, False, arrays_device
 
 
 def _expit(X, xp=None):
@@ -785,6 +796,19 @@ def _nanmax(X, axis=None, xp=None):
         return X
 
 
+def _nanmean(X, axis=None, xp=None):
+    # TODO: refactor once nan-aware reductions are standardized:
+    # https://github.com/data-apis/array-api/issues/621
+    xp, _ = get_namespace(X, xp=xp)
+    if _is_numpy_namespace(xp):
+        return xp.asarray(numpy.nanmean(X, axis=axis))
+    else:
+        mask = xp.isnan(X)
+        total = xp.sum(xp.where(mask, xp.asarray(0.0, device=device(X)), X), axis=axis)
+        count = xp.sum(xp.astype(xp.logical_not(mask), X.dtype), axis=axis)
+        return total / count
+
+
 def _asarray_with_order(
     array, dtype=None, order=None, copy=None, *, xp=None, device=None
 ):
@@ -904,11 +928,12 @@ def indexing_dtype(xp):
     return xp.asarray(0).dtype
 
 
-def _searchsorted(xp, a, v, *, side="left", sorter=None):
+def _searchsorted(a, v, *, side="left", sorter=None, xp=None):
     # Temporary workaround needed as long as searchsorted is not widely
     # adopted by implementers of the Array API spec. This is a quite
     # recent addition to the spec:
     # https://data-apis.org/array-api/latest/API_specification/generated/array_api.searchsorted.html # noqa
+    xp, _ = get_namespace(a, v, xp=xp)
     if hasattr(xp, "searchsorted"):
         return xp.searchsorted(a, v, side=side, sorter=sorter)
 
@@ -1022,11 +1047,18 @@ def _in1d(ar1, ar2, xp, assume_unique=False, invert=False):
         return xp.take(ret, rev_idx, axis=0)
 
 
-def _count_nonzero(X, xp, device, axis=None, sample_weight=None):
+def _count_nonzero(X, axis=None, sample_weight=None, xp=None, device=None):
     """A variant of `sklearn.utils.sparsefuncs.count_nonzero` for the Array API.
 
-    It only supports 2D arrays.
+    If the array `X` is sparse, and we are using the numpy namespace then we
+    simply call the original function. This function only supports 2D arrays.
     """
+    from .sparsefuncs import count_nonzero
+
+    xp, _ = get_namespace(X, sample_weight, xp=xp)
+    if _is_numpy_namespace(xp) and sp.issparse(X):
+        return count_nonzero(X, axis=axis, sample_weight=sample_weight)
+
     assert X.ndim == 2
 
     weights = xp.ones_like(X, device=device)
@@ -1045,3 +1077,27 @@ def _modify_in_place_if_numpy(xp, func, *args, out=None, **kwargs):
     else:
         out = func(*args, **kwargs)
     return out
+
+
+def _bincount(array, weights=None, minlength=None, xp=None):
+    # TODO: update if bincount is ever adopted in a future version of the standard:
+    # https://github.com/data-apis/array-api/issues/812
+    xp, _ = get_namespace(array, xp=xp)
+    if hasattr(xp, "bincount"):
+        return xp.bincount(array, weights=weights, minlength=minlength)
+
+    array_np = _convert_to_numpy(array, xp=xp)
+    if weights is not None:
+        weights_np = _convert_to_numpy(weights, xp=xp)
+    else:
+        weights_np = None
+    bin_out = numpy.bincount(array_np, weights=weights_np, minlength=minlength)
+    return xp.asarray(bin_out, device=device(array))
+
+
+def _tolist(array, xp=None):
+    xp, _ = get_namespace(array, xp=xp)
+    if _is_numpy_namespace(xp):
+        return array.tolist()
+    array_np = _convert_to_numpy(array, xp=xp)
+    return [element.item() for element in array_np]
