@@ -35,7 +35,11 @@ from sklearn.metrics import (
     recall_score,
     zero_one_loss,
 )
-from sklearn.metrics._classification import _check_targets, d2_log_loss_score
+from sklearn.metrics._classification import (
+    _check_targets,
+    d2_brier_score,
+    d2_log_loss_score,
+)
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelBinarizer, label_binarize
 from sklearn.tree import DecisionTreeClassifier
@@ -3095,3 +3099,94 @@ def test_d2_log_loss_score_raises():
     err = "The labels array needs to contain at least two"
     with pytest.raises(ValueError, match=err):
         d2_log_loss_score(y_true, y_pred, labels=labels)
+
+
+def test_d2_brier_score():
+    sample_weight = [2, 2, 3, 1, 1, 1]
+    y_true = [0, 1, 1, 0, 0, 1]
+    y_true_string = ["no", "yes", "yes", "no", "no", "yes"]
+
+    # check that the value of the returned d2 score is correct
+    y_proba = [0.3, 0.5, 0.6, 0.7, 0.9, 0.8]
+    y_proba_ref = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+    d2_score = d2_brier_score(y_true=y_true, y_proba=y_proba)
+    brier_score_model = brier_score_loss(y_true=y_true, y_proba=y_proba)
+    brier_score_ref = brier_score_loss(y_true=y_true, y_proba=y_proba_ref)
+    d2_score_expected = 1 - brier_score_model / brier_score_ref
+    assert pytest.approx(d2_score) == d2_score_expected
+
+    # check that a model which gives a constant prediction equal to the
+    # proportion of the positive class should get a d2 score of 0
+    y_proba = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+    d2_score = d2_brier_score(y_true=y_true, y_proba=y_proba)
+    assert d2_score == 0
+    d2_score = d2_brier_score(y_true=y_true_string, y_proba=y_proba, pos_label="yes")
+    assert d2_score == 0
+
+    # check that a model which gives a constant prediction equal to the
+    # proportion of the positive class should get a d2 score of 0
+    # when we also provide sample weight
+    y_proba = [0.6, 0.6, 0.6, 0.6, 0.6, 0.6]
+    d2_score = d2_brier_score(
+        y_true=y_true, y_proba=y_proba, sample_weight=sample_weight
+    )
+    assert d2_score == 0
+    d2_score = d2_brier_score(
+        y_true=y_true_string,
+        y_proba=y_proba,
+        sample_weight=sample_weight,
+        pos_label="yes",
+    )
+    assert d2_score == 0
+
+
+def test_d2_brier_score_raises():
+    """Test that d2_brier_loss_score raises the appropriate errors
+    on invalid inputs."""
+    y_pred = np.array([0.8, 0.6, 0.4, 0.2])
+
+    # check an error is raised for y_true having more than 2 classes
+    y_true = np.array([1, 2, 1, 3])
+    error_message = "Only binary classification is supported"
+    with pytest.raises(ValueError, match=error_message):
+        d2_brier_score(y_true, y_pred)
+
+    # check that an error is raised if y_true is not in {-1, 1} or {0, 1}
+    # and pos_label is not specified
+    y_true = np.array(["yes", "no", "yes", "no"])
+    error_message = "pos_label is not specified"
+    with pytest.raises(ValueError, match=error_message):
+        d2_brier_score(y_true, y_pred)
+
+    # check that an error is raised if y_true and y_pred do not have a
+    # consistent length
+    y_true = np.array([0, 1, 0, 0, 1, 1, 0])
+    error_message = "variables with inconsistent numbers of samples"
+    with pytest.raises(ValueError, match=error_message):
+        d2_brier_score(y_true, y_pred)
+
+    y_true = np.array([0, 1, 0, 1])
+    # check that an error is raised if y_pred has a value greater than 1
+    y_pred = np.array([1.8, 0.6, 0.4, 0.2])
+    error_message = "y_proba contains values greater than 1"
+    with pytest.raises(ValueError, match=error_message):
+        d2_brier_score(y_true, y_pred)
+
+    # check that an error is raised if y_pred has a value less than 0
+    y_pred = np.array([-0.8, 0.6, 0.4, 0.2])
+    error_message = "y_proba contains values less than 0"
+    with pytest.raises(ValueError, match=error_message):
+        d2_brier_score(y_true, y_pred)
+
+    # check that an error is raised if y_true is not a 1d array
+    y_true = np.array([[1, 0, 1, 0], [2, 3, 3, 2]])
+    y_pred = np.array([[0.3, 0.3, 0.2, 0.2], [0.4, 0.1, 0.3, 0.2]])
+    error_message = "y should be a 1d array"
+    with pytest.raises(ValueError, match=error_message):
+        d2_brier_score(y_true, y_pred)
+
+    y_true = np.array([1])
+    y_pred = np.array([0.8])
+    warning_message = "not well-defined with less than two samples"
+    with pytest.warns(UndefinedMetricWarning, match=warning_message):
+        d2_brier_score(y_true, y_pred)
