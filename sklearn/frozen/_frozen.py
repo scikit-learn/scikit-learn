@@ -36,6 +36,11 @@ class FrozenEstimator(BaseEstimator):
     transformer in a pipeline, and you'd like `pipeline.fit` to have no effect on this
     step.
 
+    Note that a shortcut to get an instance of this class wrapping your estimator is
+    provided by the :func:`~sklearn.base.BaseEstimator.freeze` method, which means you
+    can simply call `estimator.freeze()` to get a :term:`frozen` version of your
+    estimator.
+
     Parameters
     ----------
     estimator : estimator

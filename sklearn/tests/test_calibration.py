@@ -22,7 +22,6 @@ from sklearn.ensemble import (
 )
 from sklearn.exceptions import NotFittedError
 from sklearn.feature_extraction import DictVectorizer
-from sklearn.frozen import FrozenEstimator
 from sklearn.impute import SimpleImputer
 from sklearn.isotonic import IsotonicRegression
 from sklearn.linear_model import LogisticRegression, SGDClassifier
@@ -338,7 +337,7 @@ def test_calibration_prefit(csr_container):
     ]:
         for method in ["isotonic", "sigmoid"]:
             cal_clf_prefit = CalibratedClassifierCV(clf, method=method, cv="prefit")
-            cal_clf_frozen = CalibratedClassifierCV(FrozenEstimator(clf), method=method)
+            cal_clf_frozen = CalibratedClassifierCV(clf.freeze(), method=method)
 
             for sw in [sw_calib, None]:
                 cal_clf_prefit.fit(this_X_calib, y_calib, sample_weight=sw)
@@ -552,7 +551,7 @@ def test_calibration_dict_pipeline(dict_data, dict_data_pipeline):
     """
     X, y = dict_data
     clf = dict_data_pipeline
-    calib_clf = CalibratedClassifierCV(FrozenEstimator(clf), cv=2)
+    calib_clf = CalibratedClassifierCV(clf.freeze(), cv=2)
     calib_clf.fit(X, y)
     # Check attributes are obtained from fitted estimator
     assert_array_equal(calib_clf.classes_, clf.classes_)
@@ -596,7 +595,7 @@ def test_calibration_inconsistent_prefit_n_features_in():
     # is consistent with training set
     X, y = make_classification(n_samples=10, n_features=5, n_classes=2, random_state=7)
     clf = LinearSVC(C=1).fit(X, y)
-    calib_clf = CalibratedClassifierCV(FrozenEstimator(clf))
+    calib_clf = CalibratedClassifierCV(clf.freeze())
 
     msg = "X has 3 features, but LinearSVC is expecting 5 features as input."
     with pytest.raises(ValueError, match=msg):
@@ -614,7 +613,7 @@ def test_calibration_votingclassifier():
     )
     vote.fit(X, y)
 
-    calib_clf = CalibratedClassifierCV(estimator=FrozenEstimator(vote))
+    calib_clf = CalibratedClassifierCV(estimator=vote.freeze())
     # smoke test: should not raise an error
     calib_clf.fit(X, y)
 
