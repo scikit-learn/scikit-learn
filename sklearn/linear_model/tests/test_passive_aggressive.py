@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pytest
 
@@ -69,6 +71,7 @@ class MyPassiveAggressive(ClassifierMixin):
         return np.dot(X, self.w) + self.b
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("average", [False, True])
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("csr_container", [None, *CSR_CONTAINERS])
@@ -92,6 +95,7 @@ def test_classifier_accuracy(csr_container, fit_intercept, average):
         assert hasattr(clf, "_standard_coef")
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("average", [False, True])
 @pytest.mark.parametrize("csr_container", [None, *CSR_CONTAINERS])
 def test_classifier_partial_fit(csr_container, average):
@@ -109,6 +113,7 @@ def test_classifier_partial_fit(csr_container, average):
         assert hasattr(clf, "_standard_coef")
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_classifier_refit():
     # Classifier can be retrained on different labels and features.
     clf = PassiveAggressiveClassifier(max_iter=5).fit(X, y)
@@ -118,6 +123,7 @@ def test_classifier_refit():
     assert_array_equal(clf.classes_, iris.target_names)
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("csr_container", [None, *CSR_CONTAINERS])
 @pytest.mark.parametrize("loss", ("hinge", "squared_hinge"))
 def test_classifier_correctness(loss, csr_container):
@@ -134,6 +140,7 @@ def test_classifier_correctness(loss, csr_container):
     assert_array_almost_equal(clf1.w, clf2.coef_.ravel(), decimal=2)
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "response_method", ["predict_proba", "predict_log_proba", "transform"]
 )
@@ -143,6 +150,7 @@ def test_classifier_undefined_methods(response_method):
         getattr(clf, response_method)
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_class_weights():
     # Test class weights.
     X2 = np.array([[-1.0, -1.0], [-1.0, 0], [-0.8, -1.0], [1.0, 1.0], [1.0, 0.0]])
@@ -165,6 +173,7 @@ def test_class_weights():
     assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([-1]))
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_partial_fit_weight_class_balanced():
     # partial_fit with class_weight='balanced' not supported
     clf = PassiveAggressiveClassifier(class_weight="balanced", max_iter=100)
@@ -172,6 +181,7 @@ def test_partial_fit_weight_class_balanced():
         clf.partial_fit(X, y, classes=np.unique(y))
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_equal_class_weight():
     X2 = [[1, 0], [1, 0], [0, 1], [0, 1]]
     y2 = [0, 0, 1, 1]
@@ -192,6 +202,7 @@ def test_equal_class_weight():
     assert_almost_equal(clf.coef_, clf_balanced.coef_, decimal=2)
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_wrong_class_weight_label():
     # ValueError due to wrong class_weight label.
     X2 = np.array([[-1.0, -1.0], [-1.0, 0], [-0.8, -1.0], [1.0, 1.0], [1.0, 0.0]])
@@ -202,6 +213,7 @@ def test_wrong_class_weight_label():
         clf.fit(X2, y2)
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("average", [False, True])
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("csr_container", [None, *CSR_CONTAINERS])
@@ -227,6 +239,7 @@ def test_regressor_mse(csr_container, fit_intercept, average):
         assert hasattr(reg, "_standard_coef")
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("average", [False, True])
 @pytest.mark.parametrize("csr_container", [None, *CSR_CONTAINERS])
 def test_regressor_partial_fit(csr_container, average):
@@ -246,6 +259,7 @@ def test_regressor_partial_fit(csr_container, average):
         assert hasattr(reg, "_standard_coef")
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("csr_container", [None, *CSR_CONTAINERS])
 @pytest.mark.parametrize("loss", ("epsilon_insensitive", "squared_epsilon_insensitive"))
 def test_regressor_correctness(loss, csr_container):
@@ -262,6 +276,7 @@ def test_regressor_correctness(loss, csr_container):
     assert_array_almost_equal(reg1.w, reg2.coef_.ravel(), decimal=2)
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_regressor_undefined_methods():
     reg = PassiveAggressiveRegressor(max_iter=100)
     with pytest.raises(AttributeError):
@@ -273,6 +288,19 @@ def test_regressor_undefined_methods():
     "Estimator", [PassiveAggressiveClassifier, PassiveAggressiveRegressor]
 )
 def test_passive_aggressive_deprecated_average(Estimator):
-    est = Estimator(average=0)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        est = Estimator(average=0)
     with pytest.warns(FutureWarning, match="average=0"):
         est.fit(X, y)
+
+
+# TODO(1.8): remove
+@pytest.mark.parametrize(
+    "Estimator", [PassiveAggressiveClassifier, PassiveAggressiveRegressor]
+)
+def test_class_deprecation(Estimator):
+    # Check that we raise the proper deprecation warning.
+
+    with pytest.warns(FutureWarning, match=f"Class {Estimator.__name__} is deprecated"):
+        Estimator()
