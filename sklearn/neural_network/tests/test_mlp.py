@@ -229,7 +229,7 @@ def test_gradient():
             # analytically compute the gradients
             def loss_grad_fun(t):
                 return mlp._loss_grad_lbfgs(
-                    t, X, Y, activations, deltas, coef_grads, intercept_grads
+                    t, X, Y, None, activations, deltas, coef_grads, intercept_grads
                 )
 
             [value, grad] = loss_grad_fun(theta)
@@ -1019,3 +1019,30 @@ def test_mlp_diverging_loss():
     # In python, float("nan") != float("nan")
     assert str(mlp.validation_scores_[-1]) == str(np.nan)
     assert isinstance(mlp.validation_scores_[-1], float)
+
+
+def test_mlp_sample_weight_with_early_stopping():
+    # Test code path for inner validation set splitting.
+    X, y = make_regression(
+        n_samples=100,
+        n_features=2,
+        n_informative=2,
+        random_state=42,
+    )
+    sw = np.ones_like(y)
+    params = dict(
+        hidden_layer_sizes=10,
+        solver="adam",
+        early_stopping=True,
+        tol=1e-2,
+        learning_rate_init=0.01,
+        batch_size=10,
+        random_state=42,
+    )
+    m1 = MLPRegressor(
+        **params,
+    )
+    m1.fit(X, y, sample_weight=sw)
+
+    m2 = MLPRegressor(**params).fit(X, y, sample_weight=None)
+    assert_allclose(m1.predict(X), m2.predict(X))
