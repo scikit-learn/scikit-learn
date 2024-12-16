@@ -274,7 +274,7 @@ def test_device_inspection():
     with pytest.raises(TypeError):
         hash(Array("device").device)
 
-    # If array API dispatch is disabled the device is always "cpu". Erroring
+    # If array API dispatch is disabled the device should be ignored. Erroring
     # early for different devices would prevent the np.asarray conversion to
     # happen. For example, `r2_score(np.ones(5), torch.ones(5))` should work
     # fine with array API disabled.
