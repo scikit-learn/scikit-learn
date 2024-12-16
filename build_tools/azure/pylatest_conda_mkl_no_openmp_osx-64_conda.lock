@@ -17,7 +17,7 @@ https://repo.anaconda.com/pkgs/main/noarch/tzdata-2024b-h04d1e81_0.conda#9be6947
 https://repo.anaconda.com/pkgs/main/osx-64/xz-5.4.6-h6c40b1e_1.conda#b40d69768d28133d8be1843def4f82f5
 https://repo.anaconda.com/pkgs/main/osx-64/zlib-1.2.13-h4b97444_1.conda#38e35f7c817fac0973034bfce6706ec2
 https://repo.anaconda.com/pkgs/main/osx-64/ccache-3.7.9-hf120daa_0.conda#a01515a32e721c51d631283f991bc8ea
-https://repo.anaconda.com/pkgs/main/osx-64/expat-2.6.3-h6d0c2b6_0.conda#7cfb1a4651369640118e6ee80198e682
+https://repo.anaconda.com/pkgs/main/osx-64/expat-2.6.4-h6d0c2b6_0.conda#337f85e792486001ba7aed0fa2f93e64
 https://repo.anaconda.com/pkgs/main/osx-64/intel-openmp-2023.1.0-ha357a0b_43548.conda#ba8a89ffe593eb88e4c01334753c40c3
 https://repo.anaconda.com/pkgs/main/osx-64/lerc-3.0-he9d5cce_0.conda#aec2c3dbef836849c9260f05be04f3db
 https://repo.anaconda.com/pkgs/main/osx-64/libbrotlidec-1.0.9-h6c40b1e_8.conda#6338cd7779e614fc16d835990e627e04
@@ -38,8 +38,8 @@ https://repo.anaconda.com/pkgs/main/osx-64/sqlite-3.45.3-h6c40b1e_0.conda#2edf90
 https://repo.anaconda.com/pkgs/main/osx-64/zstd-1.5.6-h138b38a_0.conda#f4d15d7d0054d39e6a24fe8d7d1e37c5
 https://repo.anaconda.com/pkgs/main/osx-64/brotli-1.0.9-h6c40b1e_8.conda#10f89677a3898d0113dc354adf643df3
 https://repo.anaconda.com/pkgs/main/osx-64/libtiff-4.5.1-hcec6c5f_0.conda#e127a800ffd9d300ed7d5e1b026944ec
-https://repo.anaconda.com/pkgs/main/osx-64/python-3.12.7-hcd54a6c_0.conda#6eabc1d6b0c0a5dcbf5adfa79f18b95e
-https://repo.anaconda.com/pkgs/main/osx-64/coverage-7.6.1-py312h46256e1_0.conda#08c49d882d5749d2d34385050584f014
+https://repo.anaconda.com/pkgs/main/osx-64/python-3.12.8-hcd54a6c_0.conda#54c4f4421ae085eb9e9d63643c272cf3
+https://repo.anaconda.com/pkgs/main/osx-64/coverage-7.6.9-py312h46256e1_0.conda#f8c1547bbf522a600ee795901240a7b0
 https://repo.anaconda.com/pkgs/main/noarch/cycler-0.11.0-pyhd3eb1b0_0.conda#f5e365d2cdb66d547eb8c3ab93843aab
 https://repo.anaconda.com/pkgs/main/noarch/execnet-2.1.1-pyhd3eb1b0_0.conda#b3cb797432ee4657d5907b91a5dc65ad
 https://repo.anaconda.com/pkgs/main/noarch/iniconfig-1.1.1-pyhd3eb1b0_0.tar.bz2#e40edff2c5708f342cef43c7f280c507
@@ -57,7 +57,7 @@ https://repo.anaconda.com/pkgs/main/osx-64/pytz-2024.1-py312hecd8cb5_0.conda#2b2
 https://repo.anaconda.com/pkgs/main/osx-64/setuptools-75.1.0-py312hecd8cb5_0.conda#3e59d1f40cba32a613a20b2ebdcf2c07
 https://repo.anaconda.com/pkgs/main/noarch/six-1.16.0-pyhd3eb1b0_1.conda#34586824d411d36af2fa40e799c172d0
 https://repo.anaconda.com/pkgs/main/noarch/toml-0.10.2-pyhd3eb1b0_0.conda#cda05f5f6d8509529d1a2743288d197a
-https://repo.anaconda.com/pkgs/main/osx-64/tornado-6.4.1-py312h46256e1_0.conda#ff2efd781e1b1af38284aeda9d676d42
+https://repo.anaconda.com/pkgs/main/osx-64/tornado-6.4.2-py312h46256e1_0.conda#6b41d7d8a2bf93ae3fc512202b14a9ec
 https://repo.anaconda.com/pkgs/main/osx-64/unicodedata2-15.1.0-py312h6c40b1e_0.conda#65bd2cb787fc99662d9bb6e6520c5826
 https://repo.anaconda.com/pkgs/main/osx-64/wheel-0.44.0-py312hecd8cb5_0.conda#bc98874d00f71c3f6f654d0316174d17
 https://repo.anaconda.com/pkgs/main/osx-64/fonttools-4.51.0-py312h6c40b1e_0.conda#8f55fa86b73e8a7f4403503f9b7a9959
