@@ -48,3 +48,7 @@ __all__ = [
     "mutual_info_regression",
     "SelectorMixin",
 ]
+
+
+def __dir__():
+    return __all__

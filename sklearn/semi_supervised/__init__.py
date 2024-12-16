@@ -11,3 +11,7 @@ from ._label_propagation import LabelPropagation, LabelSpreading
 from ._self_training import SelfTrainingClassifier
 
 __all__ = ["SelfTrainingClassifier", "LabelPropagation", "LabelSpreading"]
+
+
+def __dir__():
+    return __all__

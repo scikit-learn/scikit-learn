@@ -33,6 +33,7 @@ from ._tags import (
     Tags,
     TargetTags,
     TransformerTags,
+    default_tags,
     get_tags,
 )
 from .class_weight import compute_class_weight, compute_sample_weight
@@ -65,41 +66,47 @@ class parallel_backend(_joblib.parallel_backend):
 
 
 __all__ = [
-    "murmurhash3_32",
+    "Bunch",
+    "ClassifierTags",
+    "DataConversionWarning",
+    "InputTags",
+    "RegressorTags",
+    "Tags",
+    "TargetTags",
+    "TransformerTags",
+    "all_estimators",
     "as_float_array",
     "assert_all_finite",
+    "check_X_y",
     "check_array",
+    "check_consistent_length",
     "check_random_state",
+    "check_scalar",
+    "check_symmetric",
+    "column_or_1d",
     "compute_class_weight",
     "compute_sample_weight",
-    "column_or_1d",
-    "check_consistent_length",
-    "check_X_y",
-    "check_scalar",
-    "indexable",
-    "check_symmetric",
+    "default_tags",
     "deprecated",
-    "parallel_backend",
-    "register_parallel_backend",
-    "resample",
-    "shuffle",
-    "all_estimators",
-    "DataConversionWarning",
     "estimator_html_repr",
-    "Bunch",
-    "metadata_routing",
-    "safe_sqr",
-    "safe_mask",
     "gen_batches",
     "gen_even_slices",
-    "Tags",
-    "InputTags",
-    "TargetTags",
-    "ClassifierTags",
-    "RegressorTags",
-    "TransformerTags",
     "get_tags",
+    "indexable",
+    "parallel_backend",
+    "resample",
+    "safe_mask",
+    "safe_sqr",
+    "shuffle",
+    "tosequence",
+    "metadata_routing",
+    "murmurhash3_32",
+    "_safe_indexing",
 ]
+
+
+def __dir__():
+    return __all__
 
 
 # TODO(1.7): remove

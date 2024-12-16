@@ -19,3 +19,7 @@ __all__ = [
     "SVR",
     "l1_min_c",
 ]
+
+
+def __dir__():
+    return __all__
