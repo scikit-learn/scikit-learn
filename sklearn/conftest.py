@@ -7,6 +7,7 @@ import sys
 from contextlib import suppress
 from functools import wraps
 from os import environ
+from pathlib import Path
 from unittest import SkipTest
 
 import joblib
@@ -381,16 +382,14 @@ def pytest_collection_modifyitems(config, items):
 
 def _get_item_module(item):
     """Get the full module name of a test item."""
-    path, line, name = item.reportinfo()
-    print("*", path)
-    print("**", line)
-    print("***", name)
-    module = []
-    while item.parent is not None and "sklearn" not in item.parent.name:
-        print(item.name, item.parent.name)
-        item = item.parent
-        module.append(item.name)
-    return ".".join(reversed(module))
+    path, _, _ = item.reportinfo()
+    parts = list(Path(path).parts)
+
+    module = parts.pop()
+    while parts[-1] != "sklearn":
+        module = parts.pop() + "." + module
+
+    return module
 
 
 @pytest.fixture(scope="function")
