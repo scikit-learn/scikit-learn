@@ -224,6 +224,8 @@ build_metadata_list = [
             + ["lightgbm", "scikit-image"]
             # Test array API on CPU without PyTorch
             + ["array-api-compat", "array-api-strict"]
+            # doctests dependencies
+            + ["scipy-doctest"]
         ),
     },
     {
