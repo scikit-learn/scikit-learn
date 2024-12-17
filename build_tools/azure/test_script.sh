@@ -78,6 +78,5 @@ fi
 TEST_CMD="$TEST_CMD --pyargs sklearn"
 
 set -x
-# TODO test are not run the while working on scipy-doctest for quicker iteration
 eval "$TEST_CMD"
 set +x
