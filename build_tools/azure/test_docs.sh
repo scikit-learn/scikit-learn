@@ -9,6 +9,12 @@ show_installed_libraries
 conda info -e
 which python
 which pytest
+
+echo $TEST_DIR
+mkdir -p $TEST_DIR
+cp setup.cfg $TEST_DIR
+cd $TEST_DIR
+
 python -c 'import sklearn; print(sklearn.__file__)'
 
 scipy_doctest_installed=$(python -c 'import scipy_doctest' && echo "True" || echo "False")
