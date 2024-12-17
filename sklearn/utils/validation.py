@@ -1096,12 +1096,10 @@ def check_array(
                 "Convert your data to numeric values explicitly instead."
             )
         if not allow_nd and array.ndim >= 3:
-            if estimator_name is not None:
-                raise ValueError(
-                    "Found array with dim %d. %s expected <= 2."
-                    % (array.ndim, estimator_name)
-                )
-            raise ValueError("Found array with dim %d. Expected <= 2." % (array.ndim))
+            raise ValueError(
+                f"Found array with dim {array.ndim},"
+                f" while dim <= 2 is required{context}."
+            )
 
         if ensure_all_finite:
             _assert_all_finite(

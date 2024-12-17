@@ -3,7 +3,6 @@
 import numbers
 import re
 import warnings
-from contextlib import nullcontext as does_not_raise
 from itertools import product
 from operator import itemgetter
 from tempfile import NamedTemporaryFile
@@ -2362,31 +2361,21 @@ def test_force_all_finite_rename_warning():
 
 
 @pytest.mark.parametrize(
-    ["X", "estimator", "expectation"],
+    ["X", "estimator", "expected_error_message"],
     [
         (
             np.array([[[1, 2], [3, 4]], [[1, 2], [3, 4]]]),
             RandomForestRegressor(),
-            pytest.raises(
-                ValueError,
-                match="Found array with dim 3. RandomForestRegressor expected <= 2.",
-            ),
+            "Found array with dim 3, while dim <= 2 is required by "
+            "RandomForestRegressor.",
         ),
         (
             np.array([[[1, 2], [3, 4]], [[1, 2], [3, 4]]]),
             None,
-            pytest.raises(
-                ValueError,
-                match="Found array with dim 3. Expected <= 2.",
-            ),
-        ),
-        (
-            np.array([[1, 2], [3, 4]]),
-            None,
-            does_not_raise(),
+            "Found array with dim 3, while dim <= 2 is required.",
         ),
     ],
 )
-def test_check_array_allow_nd_errors(X, estimator, expectation) -> None:
-    with expectation:
+def test_check_array_allow_nd_errors(X, estimator, expected_error_message):
+    with pytest.raises(ValueError, match=expected_error_message):
         check_array(X, estimator=estimator, allow_nd=False)
