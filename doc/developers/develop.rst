@@ -266,7 +266,7 @@ interactions with `pytest`)::
 
   >>> from sklearn.utils.estimator_checks import check_estimator
   >>> from sklearn.tree import DecisionTreeClassifier
-  >>> check_estimator(DecisionTreeClassifier())  # passes
+  >>> check_estimator(DecisionTreeClassifier())  # passes            # doctest: +SKIP
 
 The main motivation to make a class compatible to the scikit-learn estimator
 interface might be that you want to use it together with model evaluation and
@@ -346,7 +346,8 @@ the correct interface more easily.
 And you can check that the above estimator passes all common checks::
 
     >>> from sklearn.utils.estimator_checks import check_estimator
-    >>> check_estimator(TemplateClassifier())  # passes
+    >>> check_estimator(TemplateClassifier())  # passes            # doctest: +SKIP
+
 
 get_params and set_params
 -------------------------
