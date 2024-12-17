@@ -29,3 +29,6 @@ dependencies:
   - pyarrow
   - array-api-compat
   - array-api-strict
+  - pip
+  - pip:
+    - scipy-doctest

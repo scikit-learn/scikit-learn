@@ -127,6 +127,7 @@ build_metadata_list = [
             "array-api-compat",
             "array-api-strict",
         ],
+        "pip_dependencies": ["scipy-doctest"],
         "package_constraints": {
             "blas": "[build=mkl]",
         },
