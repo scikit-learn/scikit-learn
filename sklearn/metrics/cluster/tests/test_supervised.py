@@ -3,6 +3,7 @@ import warnings
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_almost_equal, assert_array_equal
+from scipy import sparse as sp
 
 from sklearn.base import config_context
 from sklearn.metrics.cluster import (
@@ -495,3 +496,13 @@ def test_normalized_mutual_info_score_bounded(average_method):
     # non constant, non perfect matching labels
     nmi = normalized_mutual_info_score(labels2, labels3, average_method=average_method)
     assert 0 <= nmi < 1
+
+
+def test_contingency_matrix_array_api_sparse():
+    with config_context(array_api_dispatch=True):
+        res = contingency_matrix(
+            np.array([1, 2]),
+            np.array([1, 0]),
+            sparse=True,
+        )
+        assert isinstance(res, sp.csr_matrix)
