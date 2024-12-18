@@ -20,6 +20,7 @@ _global_config = {
     "transform_output": "default",
     "enable_metadata_routing": False,
     "skip_parameter_validation": False,
+    "disable_convergence_warnings": False,
 }
 _threadlocal = threading.local()
 
@@ -68,6 +69,7 @@ def set_config(
     transform_output=None,
     enable_metadata_routing=None,
     skip_parameter_validation=None,
+    disable_convergence_warnings=None,
 ):
     """Set global scikit-learn configuration.
 
@@ -174,6 +176,11 @@ def set_config(
 
         .. versionadded:: 1.3
 
+    disable_convergence_warnings : bool, default=None
+        If `True` disables convergence warnings including subprocesses.
+
+        .. versionadded:: 1.5
+
     See Also
     --------
     config_context : Context manager for global scikit-learn configuration.
@@ -209,6 +216,8 @@ def set_config(
         local_config["enable_metadata_routing"] = enable_metadata_routing
     if skip_parameter_validation is not None:
         local_config["skip_parameter_validation"] = skip_parameter_validation
+    if disable_convergence_warnings is not None:
+        local_config["disable_convergence_warnings"] = disable_convergence_warnings
 
 
 @contextmanager
@@ -224,6 +233,7 @@ def config_context(
     transform_output=None,
     enable_metadata_routing=None,
     skip_parameter_validation=None,
+    disable_convergence_warnings=None,
 ):
     """Context manager for global scikit-learn configuration.
 
@@ -329,6 +339,11 @@ def config_context(
 
         .. versionadded:: 1.3
 
+    disable_convergence_warnings : bool, default=None
+        If `True` disables convergence warnings including subprocesses.
+
+        .. versionadded:: 1.5
+
     Yields
     ------
     None.
@@ -368,6 +383,7 @@ def config_context(
         transform_output=transform_output,
         enable_metadata_routing=enable_metadata_routing,
         skip_parameter_validation=skip_parameter_validation,
+        disable_convergence_warnings=disable_convergence_warnings,
     )
 
     try:
