@@ -1817,6 +1817,40 @@ def check_array_api_metric(
     if isinstance(multioutput, np.ndarray):
         metric_kwargs["multioutput"] = xp.asarray(multioutput, device=device)
 
+    # When array API dispatch is disabled, and np.asarray works (for example PyTorch
+    # with CPU device), calling the metric function with such numpy compatible inputs
+    # should work (albeit by implicitly converting to numpy arrays instead of
+    # dispatching to the array library).
+    try:
+        np.asarray(a_xp)
+        np.asarray(b_xp)
+        numpy_as_array_works = True
+    except TypeError:
+        # PyTorch with CUDA device and CuPy raise TypeError consistently.
+        # Exception type may need to be updated in the future for other
+        # libraries.
+        numpy_as_array_works = False
+
+    if numpy_as_array_works:
+        metric_xp = metric(a_xp, b_xp, **metric_kwargs)
+        assert_allclose(
+            metric_xp,
+            metric_np,
+            atol=_atol_for_type(dtype_name),
+        )
+        metric_xp_mixed_1 = metric(a_np, b_xp, **metric_kwargs)
+        assert_allclose(
+            metric_xp_mixed_1,
+            metric_np,
+            atol=_atol_for_type(dtype_name),
+        )
+        metric_xp_mixed_2 = metric(a_xp, b_np, **metric_kwargs)
+        assert_allclose(
+            metric_xp_mixed_2,
+            metric_np,
+            atol=_atol_for_type(dtype_name),
+        )
+
     with config_context(array_api_dispatch=True):
         metric_xp = metric(a_xp, b_xp, **metric_kwargs)
 
