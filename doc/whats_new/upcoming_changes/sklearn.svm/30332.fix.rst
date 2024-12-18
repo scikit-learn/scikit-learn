@@ -1,0 +1,2 @@
+- Removed the unused `class_weight` parameter from the constructor of `:class:~sklearn.svm.NuSVC`, as it was not being used during model fitting.
+  By :user:`Gennaro Daniele Acciaro <gdacciaro>`
