@@ -82,6 +82,19 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
             ):
                 yield array_namespace, device, dtype
             yield array_namespace, "mps", "float32"
+
+        elif array_namespace == "array_api_strict":
+            try:
+                import array_api_strict  # noqa
+
+                yield array_namespace, array_api_strict.Device("CPU_DEVICE"), "float64"
+                yield array_namespace, array_api_strict.Device("device1"), "float32"
+            except ImportError:
+                # Those combinations will typically be skipped by pytest if
+                # array_api_strict is not installed but we still to see them in
+                # the test output.
+                yield array_namespace, "CPU_DEVICE", "float64"
+                yield array_namespace, "device1", "float32"
         else:
             yield array_namespace, None, None
 
@@ -868,6 +881,8 @@ def _convert_to_numpy(array, xp):
         return array.cpu().numpy()
     elif xp_name in {"array_api_compat.cupy", "cupy"}:  # pragma: nocover
         return array.get()
+    elif xp_name in {"array_api_strict"}:
+        return numpy.asarray(xp.asarray(array, device=xp.Device("CPU_DEVICE")))
 
     return numpy.asarray(array)
 
