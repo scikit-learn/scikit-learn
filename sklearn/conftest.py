@@ -368,3 +368,6 @@ def print_changed_only_false():
 if HAVE_SCPDT:
     # Strict mode to differentiate between 3.14 and np.float64(3.14)
     dt_config.strict_check = True
+    # Set rtol a bit looser than the default 1e-2 to be able to have less
+    # digits to show in docstrings
+    dt_config.rtol = 0.1

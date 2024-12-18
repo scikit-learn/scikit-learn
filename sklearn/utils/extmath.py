@@ -269,9 +269,9 @@ def randomized_range_finder(
     >>> from sklearn.utils.extmath import randomized_range_finder
     >>> A = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     >>> randomized_range_finder(A, size=2, n_iter=2, random_state=42)
-    array([[-0.214,  0.887],
-           [-0.521,  0.250],
-           [-0.826, -0.388]])
+    array([[-0.21,  0.88],
+           [-0.52,  0.25],
+           [-0.82, -0.38]])
     """
     xp, is_array_api_compliant = get_namespace(A)
     random_state = check_random_state(random_state)
