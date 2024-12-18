@@ -148,13 +148,16 @@ predictions:
 
 * **Estimator score method**: Estimators have a ``score`` method providing a
   default evaluation criterion for the problem they are designed to solve.
-  This is not discussed on this page, but in each estimator's documentation.
+  Most commonly this is :ref:`accuracy <accuracy_score>` for classifiers and the
+  :ref:`coefficient of determination <r2_score>` (:math:`R^2`) for regressors.
+  Details for each estimator can be found in its documentation.
 
-* **Scoring parameter**: Model-evaluation tools using
+* **Scoring parameter**: Model-evaluation tools that use
   :ref:`cross-validation <cross_validation>` (such as
-  :func:`model_selection.cross_val_score` and
-  :class:`model_selection.GridSearchCV`) rely on an internal *scoring* strategy.
-  This is discussed in the section :ref:`scoring_parameter`.
+  :class:`model_selection.GridSearchCV`, :func:`model_selection.validation_curve` and
+  :class:`linear_model.LogisticRegressionCV`) rely on an internal *scoring* strategy.
+  This can be specified using the `scoring` parameter of that tool and is discussed
+  in the section :ref:`scoring_parameter`.
 
 * **Metric functions**: The :mod:`sklearn.metrics` module implements functions
   assessing prediction error for specific purposes. These metrics are detailed
@@ -175,24 +178,39 @@ value of those metrics for random predictions.
 The ``scoring`` parameter: defining model evaluation rules
 ==========================================================
 
-Model selection and evaluation using tools, such as
-:class:`model_selection.GridSearchCV` and
-:func:`model_selection.cross_val_score`, take a ``scoring`` parameter that
+Model selection and evaluation tools that internally use
+:ref:`cross-validation <cross_validation>` (such as
+:class:`model_selection.GridSearchCV`, :func:`model_selection.validation_curve` and
+:class:`linear_model.LogisticRegressionCV`) take a ``scoring`` parameter that
 controls what metric they apply to the estimators evaluated.
 
-Common cases: predefined values
--------------------------------
+They can be specified in several ways:
+
+* `None`: the estimator's default evaluation criterion (i.e., the metric used in the
+  estimator's `score` method) is used.
+* :ref:`String name <scoring_string_names>`: common metrics can be passed via a string
+  name.
+* :ref:`Callable <scoring_callable>`: more complex metrics can be passed via a custom
+  metric callable (e.g., function).
+
+Some tools do also accept multiple metric evaluation. See :ref:`multimetric_scoring`
+for details.
+
+.. _scoring_string_names:
+
+String name scorers
+-------------------
 
 For the most common use cases, you can designate a scorer object with the
-``scoring`` parameter; the table below shows all possible values.
+``scoring`` parameter via a string name; the table below shows all possible values.
 All scorer objects follow the convention that **higher return values are better
-than lower return values**.  Thus metrics which measure the distance between
+than lower return values**. Thus metrics which measure the distance between
 the model and the data, like :func:`metrics.mean_squared_error`, are
-available as neg_mean_squared_error which return the negated value
+available as 'neg_mean_squared_error' which return the negated value
 of the metric.
 
 ====================================   ==============================================     ==================================
-Scoring                                Function                                           Comment
+Scoring string name                    Function                                           Comment
 ====================================   ==============================================     ==================================
 **Classification**
 'accuracy'                             :func:`metrics.accuracy_score`
@@ -260,12 +278,23 @@ Usage examples:
 
 .. currentmodule:: sklearn.metrics
 
-.. _scoring:
+.. _scoring_callable:
 
-Defining your scoring strategy from metric functions
------------------------------------------------------
+Callable scorers
+----------------
 
-The following metrics functions are not implemented as named scorers,
+For more complex use cases and more flexibility, you can pass a callable to
+the `scoring` parameter. This can be done by:
+
+* :ref:`scoring_adapt_metric`
+* :ref:`scoring_custom` (most flexible)
+
+.. _scoring_adapt_metric:
+
+Adapting predefined metrics via `make_scorer`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The following metric functions are not implemented as named scorers,
 sometimes because they require additional parameters, such as
 :func:`fbeta_score`. They cannot be passed to the ``scoring``
 parameters; instead their callable needs to be passed to
@@ -303,15 +332,22 @@ measuring a prediction error given ground truth and prediction:
   maximize, the higher the better.
 
 - functions ending with ``_error``, ``_loss``, or ``_deviance`` return a
-  value to minimize, the lower the better.  When converting
+  value to minimize, the lower the better. When converting
   into a scorer object using :func:`make_scorer`, set
   the ``greater_is_better`` parameter to ``False`` (``True`` by default; see the
   parameter description below).
 
+.. _scoring_custom:
 
-.. dropdown:: Custom scorer objects
+Creating a custom scorer object
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  The second use case is to build a completely custom scorer object
+You can create your own custom scorer object using
+:func:`make_scorer` or for the most flexibility, from scratch. See below for details.
+
+.. dropdown:: Custom scorer objects using `make_scorer`
+
+  You can build a completely custom scorer object
   from a simple python function using :func:`make_scorer`, which can
   take several parameters:
 
@@ -319,21 +355,21 @@ measuring a prediction error given ground truth and prediction:
     in the example below)
 
   * whether the python function returns a score (``greater_is_better=True``,
-    the default) or a loss (``greater_is_better=False``).  If a loss, the output
+    the default) or a loss (``greater_is_better=False``). If a loss, the output
     of the python function is negated by the scorer object, conforming to
     the cross validation convention that scorers return higher values for better models.
 
   * for classification metrics only: whether the python function you provided requires
     continuous decision certainties. If the scoring function only accepts probability
-    estimates (e.g. :func:`metrics.log_loss`) then one needs to set the parameter
-    `response_method`, thus in this case `response_method="predict_proba"`. Some scoring
-    function do not necessarily require probability estimates but rather non-thresholded
-    decision values (e.g. :func:`metrics.roc_auc_score`). In this case, one provides a
-    list such as `response_method=["decision_function", "predict_proba"]`. In this case,
-    the scorer will use the first available method, in the order given in the list,
+    estimates (e.g. :func:`metrics.log_loss`), then one needs to set the parameter
+    `response_method="predict_proba"`. Some scoring
+    functions do not necessarily require probability estimates but rather non-thresholded
+    decision values (e.g. :func:`metrics.roc_auc_score`). In this case, one can provide a
+    list (e.g., `response_method=["decision_function", "predict_proba"]`),
+    and scorer will use the first available method, in the order given in the list,
     to compute the scores.
 
-  * any additional parameters, such as ``beta`` or ``labels`` in :func:`f1_score`.
+  * any additional parameters of the scoring function, such as ``beta`` or ``labels``.
 
   Here is an example of building custom scorers, and of using the
   ``greater_is_better`` parameter::
@@ -357,16 +393,10 @@ measuring a prediction error given ground truth and prediction:
       >>> score(clf, X, y)
       -0.69...
 
-.. _diy_scoring:
+.. dropdown:: Custom scorer objects from scratch
 
-Implementing your own scoring object
-------------------------------------
-
-You can generate even more flexible model scorers by constructing your own
-scoring object from scratch, without using the :func:`make_scorer` factory.
-
-
-.. dropdown:: How to build a scorer from scratch
+  You can generate even more flexible model scorers by constructing your own
+  scoring object from scratch, without using the :func:`make_scorer` factory.
 
   For a callable to be a scorer, it needs to meet the protocol specified by
   the following two rules:
@@ -389,24 +419,24 @@ scoring object from scratch, without using the :func:`make_scorer` factory.
     more details.
 
 
-  .. note:: **Using custom scorers in functions where n_jobs > 1**
+.. dropdown:: Using custom scorers in functions where n_jobs > 1
 
-      While defining the custom scoring function alongside the calling function
-      should work out of the box with the default joblib backend (loky),
-      importing it from another module will be a more robust approach and work
-      independently of the joblib backend.
+    While defining the custom scoring function alongside the calling function
+    should work out of the box with the default joblib backend (loky),
+    importing it from another module will be a more robust approach and work
+    independently of the joblib backend.
 
-      For example, to use ``n_jobs`` greater than 1 in the example below,
-      ``custom_scoring_function`` function is saved in a user-created module
-      (``custom_scorer_module.py``) and imported::
+    For example, to use ``n_jobs`` greater than 1 in the example below,
+    ``custom_scoring_function`` function is saved in a user-created module
+    (``custom_scorer_module.py``) and imported::
 
-          >>> from custom_scorer_module import custom_scoring_function # doctest: +SKIP
-          >>> cross_val_score(model,
-          ...  X_train,
-          ...  y_train,
-          ...  scoring=make_scorer(custom_scoring_function, greater_is_better=False),
-          ...  cv=5,
-          ...  n_jobs=-1) # doctest: +SKIP
+        >>> from custom_scorer_module import custom_scoring_function # doctest: +SKIP
+        >>> cross_val_score(model,
+        ...  X_train,
+        ...  y_train,
+        ...  scoring=make_scorer(custom_scoring_function, greater_is_better=False),
+        ...  cv=5,
+        ...  n_jobs=-1) # doctest: +SKIP
 
 .. _multimetric_scoring:
 
@@ -2513,7 +2543,7 @@ Here is a small example of usage of the :func:`mean_absolute_error` function::
 Mean squared error
 -------------------
 
-The :func:`mean_squared_error` function computes `mean square
+The :func:`mean_squared_error` function computes `mean squared
 error <https://en.wikipedia.org/wiki/Mean_squared_error>`_, a risk
 metric corresponding to the expected value of the squared (quadratic) error or
 loss.
@@ -3066,15 +3096,14 @@ display.
 .. _clustering_metrics:
 
 Clustering metrics
-======================
+==================
 
 .. currentmodule:: sklearn.metrics
 
 The :mod:`sklearn.metrics` module implements several loss, score, and utility
-functions. For more information see the :ref:`clustering_evaluation`
-section for instance clustering, and :ref:`biclustering_evaluation` for
-biclustering.
-
+functions to measure clustering performance. For more information see the
+:ref:`clustering_evaluation` section for instance clustering, and
+:ref:`biclustering_evaluation` for biclustering.
 
 .. _dummy_estimators:
 
