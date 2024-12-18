@@ -947,7 +947,7 @@ Permutation test score
 ======================
 
 :func:`~sklearn.model_selection.permutation_test_score` offers another way
-to evaluate the performance of a model that we can score on. It provides a
+to evaluate the performance of any model that we can score on. It provides a
 permutation-based p-value, which represents how likely an observed performance of the
 estimator would be obtained by random chance. The null hypothesis in this test is
 that the estimator fails to leverage any statistical dependency between the
