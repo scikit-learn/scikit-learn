@@ -45,6 +45,7 @@ __all__ = [
     "LeavePOut",
     "RepeatedStratifiedKFold",
     "RepeatedKFold",
+    "RepeatedStratifiedGroupKFold",
     "ShuffleSplit",
     "GroupShuffleSplit",
     "StratifiedKFold",
@@ -1831,6 +1832,77 @@ class RepeatedStratifiedKFold(_UnsupportedGroupCVMixin, _RepeatedSplits):
         """
         y = check_array(y, input_name="y", ensure_2d=False, dtype=None)
         return super().split(X, y, groups=groups)
+
+
+class RepeatedStratifiedGroupKFold(_RepeatedSplits):
+    """Repeated Stratified Group K-Fold cross validator.
+
+    Repeats Stratified Group K-Fold n times with different randomization in each
+    repetition.
+
+    This cross-validation object is a variation of RepeatedStratifiedKFold attempts to
+    return stratified folds with non-overlapping groups. The folds are made by
+    preserving the percentage of samples for each class.
+    Each group will appear exactly once in the test set across all folds (the
+    number of distinct groups has to be at least equal to the number of folds).
+
+    Read more in the :ref:`User Guide <repeated_k_fold>`.
+
+    .. versionadded:: 1.6
+
+    Parameters
+    ----------
+    n_splits : int, default=5
+        Number of folds. Must be at least 2.
+
+    n_repeats : int, default=10
+        Number of times cross-validator needs to be repeated.
+
+    random_state : int, RandomState instance or None, default=None
+        Controls the generation of the random states for each repetition.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.model_selection import RepeatedStratifiedGroupKFold
+    >>> X = np.random.randn(10, 1)
+    >>> y = np.array([0, 0, 0, 0, 0, 1, 1, 1, 1, 1])
+    >>> groups = np.array([1, 1, 2, 2, 2, 3, 4, 4, 5, 5])
+    >>> rsgkf = RepeatedStratifiedGroupKFold(n_splits=3, n_repeats=2, random_state=42)
+    >>> for train_idxs, test_idxs in rsgkf.split(X, y, groups):
+    ...     # print the group assignment for the train/test indices
+    ...     print("TRAIN:", groups[train_idxs], "TEST:", groups[test_idxs])
+    ...     X_train, X_test = X[train_idxs], X[test_idxs]
+    ...     y_train, y_test = y[train_idxs], y[test_idxs]
+    TRAIN: [2 2 2 4 4 5 5] TEST: [1 1 3]
+    TRAIN: [1 1 3 4 4 5 5] TEST: [2 2 2]
+    TRAIN: [1 1 2 2 2 3] TEST: [4 4 5 5]
+    TRAIN: [1 1 4 4 5 5] TEST: [2 2 2 3]
+    TRAIN: [2 2 2 3 4 4 5 5] TEST: [1 1]
+    TRAIN: [1 1 2 2 2 3] TEST: [4 4 5 5]
+
+    Notes
+    -----
+    Randomized CV splitters may return different results for each call of
+    split. You can make the results identical by setting `random_state`
+    to an integer.
+
+    See Also
+    --------
+    RepeatedStratifiedKFold : Repeats stratified K-Fold n times.
+
+    GroupKFold : K-Fold iterator variant with non-overlapping groups.
+    """
+
+    def __init__(self, *, n_splits=5, n_repeats=10, random_state=None):
+        super().__init__(
+            StratifiedGroupKFold,
+            n_repeats=n_repeats,
+            n_splits=n_splits,
+            random_state=random_state,
+        )
 
 
 class BaseShuffleSplit(_MetadataRequester, metaclass=ABCMeta):
