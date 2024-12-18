@@ -28,7 +28,7 @@ class _BinaryClassifierCurveDisplayMixin:
 
         # Not 100% sure on this change
         if n_multi is None:
-            name = self.estimator_name if name is None else name
+            name = self.curve_name if name is None else name
         else:
             name = [f"{curve_type} fold {curve_idx}:" for curve_idx in range(n_multi)]
         return ax, ax.figure, name

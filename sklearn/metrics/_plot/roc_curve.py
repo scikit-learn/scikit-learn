@@ -40,7 +40,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         of the same length as `fpr` and `tpr`.
         If None, no roc_auc score is shown.
 
-    curve_name : str or list of str, default=None
+    name : str or list of str, default=None
         Label for the ROC curve. For multiple ROC curves, `name` can be a list
         of the same length as `tpr` and `fpr`.
         If None, no name is shown.
@@ -100,12 +100,12 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         self.name = name
         self.pos_label = pos_label
 
-    def _get_default_line_kwargs(self, name):
+    def _get_default_line_kwargs(self, roc_auc, name):
         default_line_kwargs = {}
-        if self.roc_auc is not None and name is not None:
-            default_line_kwargs["label"] = f"{name} (AUC = {self.roc_auc:0.2f})"
-        elif self.roc_auc is not None:
-            default_line_kwargs["label"] = f"AUC = {self.roc_auc:0.2f}"
+        if roc_auc is not None and name is not None:
+            default_line_kwargs["label"] = f"{name} (AUC = {roc_auc:0.2f})"
+        elif roc_auc is not None:
+            default_line_kwargs["label"] = f"AUC = {roc_auc:0.2f}"
         elif name is not None:
             default_line_kwargs["label"] = name
         return default_line_kwargs
@@ -132,11 +132,10 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             created.
 
         name : str or list of str, default=None
-            Name of ROC Curve(s) for labeling. If `None`:
-            * for single curve, use `self.name` if not `None`, otherwise
-              no labeling is shown
-            * for multiple curves (`self.fpr` and `self.fpr` are both lists),
-              use 'ROC fold {cv_index}'
+            Name of ROC Curve(s) for labeling. If `None`;
+            * try to use `self.name`,
+            * if `self.name` also `None`, no labeling is shown for single curves.
+              For multiple curves use 'ROC fold {cv_index}'
 
         plot_chance_level : bool, default=False
             Whether to plot the chance level.
@@ -171,8 +170,9 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         display : :class:`~sklearn.metrics.RocCurveDisplay`
             Object that stores computed values.
         """
+        name_ = self.name if name is None else name
         # If multi-curve, ensure all args are of the right length
-        multi_params = [self.fpr, self.tpr, self.roc_auc, self.name]
+        multi_params = [self.fpr, self.tpr, self.roc_auc, name_]
         req_multi = [input for input in multi_params[:2] if isinstance(input, list)]
         optional_multi = [
             input for input in multi_params[2:] if isinstance(input, list)
@@ -185,8 +185,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         if len({len(arg) for arg in req_multi + optional_multi}) > 1:
             raise ValueError(
                 "When plotting multiple ROC curves, `self.fpr`, `self.tpr`, and "
-                "if provided, `self.roc_auc` and `self.name`, should all be "
-                "lists of the same length."
+                "if provided, `self.roc_auc` and `name` (or `self.name`), should all "
+                "be lists of the same length."
             )
 
         n_multi = len(self.fpr) if req_multi else None
@@ -209,11 +209,19 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
                     "When `fold_line_kw` is a list, it must have the same length as "
                     "the number of ROC curves to be plotted."
                 )
+            name_ = [name_] * n_multi if name_ is None else name_
+            roc_auc_ = (
+                [self.roc_auc] * n_multi if self.roc_auc is None else self.roc_auc
+            )
             line_kwargs = []
-            for name_idx, curve_name in enumerate(name):
-                default_line_kwargs = self._get_default_line_kwargs(curve_name)
+            for fold_idx, (curve_name, curve_roc_auc) in enumerate(
+                zip(name_, roc_auc_)
+            ):
+                default_line_kwargs = self._get__default_line_kwargs(
+                    curve_name, curve_roc_auc
+                )
                 line_kwargs.append(
-                    _validate_style_kwargs(default_line_kwargs, fold_line_kw[name_idx])
+                    _validate_style_kwargs(default_line_kwargs, fold_line_kw[fold_idx])
                 )
         else:
             default_line_kwargs = self._get_default_line_kwargs(name)
@@ -604,7 +612,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         Returns
         -------
-        display : :class:`~sklearn.metrics.MultiRocCurveDisplay`
+        display : :class:`~sklearn.metrics.RocCurveDisplay`
             The multi-fold ROC curve display.
 
         See Also
