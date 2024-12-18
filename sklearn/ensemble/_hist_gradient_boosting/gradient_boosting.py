@@ -1713,7 +1713,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         verbose=0,
         random_state=None,
     ):
-        super(HistGradientBoostingRegressor, self).__init__(
+        super().__init__(
             loss=loss,
             learning_rate=learning_rate,
             max_iter=max_iter,
@@ -2100,7 +2100,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         random_state=None,
         class_weight=None,
     ):
-        super(HistGradientBoostingClassifier, self).__init__(
+        super().__init__(
             loss=loss,
             learning_rate=learning_rate,
             max_iter=max_iter,
