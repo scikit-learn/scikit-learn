@@ -29,6 +29,7 @@ from ..utils import (
 from ..utils._array_api import (
     _average,
     _bincount,
+    _convert_to_numpy,
     _count_nonzero,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
@@ -399,20 +400,18 @@ def confusion_matrix(
 
     # Choose the accumulator dtype to always have high precision
     if xp.isdtype(sample_weight.dtype, ("signed integer", "unsigned integer", "bool")):
-        dtype = xp.int64
+        dtype = np.int64
     else:
-        dtype = xp.float64
-
-    if _is_numpy_namespace(xp):
-        cm = coo_matrix(
-            (sample_weight, (y_true, y_pred)),
-            shape=(n_labels, n_labels),
-            dtype=dtype,
-        ).toarray()
-    else:
-        cm = xp.zeros((n_labels, n_labels), dtype=dtype, device=device_)
-        for true, pred, weight in zip(y_true, y_pred, sample_weight):
-            cm[true, pred] += weight
+        dtype = np.float64
+    cm = coo_matrix(
+        (
+            _convert_to_numpy(sample_weight, xp=xp),
+            (_convert_to_numpy(y_true, xp=xp), _convert_to_numpy(y_pred, xp=xp)),
+        ),
+        shape=(n_labels, n_labels),
+        dtype=dtype,
+    ).toarray()
+    cm = xp.asarray(cm)
 
     with np.errstate(all="ignore"):
         if normalize == "true":
