@@ -1,5 +1,28 @@
-# Authors: The scikit-learn developers
-# SPDX-License-Identifier: BSD-3-Clause
+# =============================================================================
+# Federal University of Rio Grande do Sul (UFRGS)
+# Connectionist Artificial Intelligence Laboratory (LIAC)
+# Renato de Pontes Pereira - rppereira@inf.ufrgs.br
+# =============================================================================
+# Copyright (c) 2011 Renato de Pontes Pereira, renato.ppontes at gmail dot com
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# =============================================================================
 
 """
 The liac-arff module implements functions to read and write ARFF files in
@@ -113,8 +136,18 @@ This module provides several features, including:
   ``zipfile``;
 - Supports read and write the descriptions of files;
 - Supports missing values and names with spaces;
-- Supports unicode values and names
+- Supports unicode values and names;
+- Fully compatible with Python 2.7+, Python 3.5+, pypy and pypy3;
+- Under `MIT License <http://opensource.org/licenses/MIT>`_
+
 """
+__author__ = "Renato de Pontes Pereira, Matthias Feurer, Joel Nothman"
+__author_email__ = (
+    "renato.ppontes@gmail.com, "
+    "feurerm@informatik.uni-freiburg.de, "
+    "joel.nothman@gmail.com"
+)
+__version__ = "2.4.0"
 
 import re
 import csv
