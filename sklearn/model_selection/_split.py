@@ -1662,7 +1662,7 @@ class _RepeatedSplits(_MetadataRequester, metaclass=ABCMeta):
 class RepeatedKFold(_UnsupportedGroupCVMixin, _RepeatedSplits):
     """Repeated K-Fold cross validator.
 
-    Repeats K-Fold n times with different randomization in each repetition.
+    Repeats K-Fold `n_repeats` times with different randomization in each repetition.
 
     Read more in the :ref:`User Guide <repeated_k_fold>`.
 
