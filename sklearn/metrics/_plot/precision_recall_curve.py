@@ -352,6 +352,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         if despine:
             _despine(self.ax_)
 
+        # Todo: fix this for multi, as `line_kwargs` is list
         if "label" in line_kwargs or plot_chance_level:
             self.ax_.legend(loc="lower left")
 
