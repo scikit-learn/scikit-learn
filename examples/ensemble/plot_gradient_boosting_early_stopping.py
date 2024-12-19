@@ -27,9 +27,6 @@ The number of estimators (trees) in the final model, when early stopping is
 applied, can be accessed using the `n_estimators_` attribute. Overall, early
 stopping is a valuable tool to strike a balance between model performance and
 efficiency in gradient boosting.
-
-License: BSD 3 clause
-
 """
 
 # Authors: The scikit-learn developers

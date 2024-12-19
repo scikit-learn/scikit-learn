@@ -1,6 +1,7 @@
 """This module contains routines for building histograms."""
 
-# Author: Nicolas Hug
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 cimport cython
 from cython.parallel import prange

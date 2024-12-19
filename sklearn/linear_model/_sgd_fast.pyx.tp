@@ -8,14 +8,10 @@ Generated file: _sgd_fast.pyx
 
 Each relevant function is duplicated for the dtypes float and double.
 The keywords between double braces are substituted during the build.
-
-Authors: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-         Mathieu Blondel (partial_fit support)
-         Rob Zinkov (passive-aggressive)
-         Lars Buitinck
-
-License: BSD 3 clause
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # The dtypes are defined as follows (name_suffix, c_type, np_type)
 dtypes = [

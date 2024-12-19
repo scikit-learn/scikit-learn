@@ -1,6 +1,6 @@
 //-----------------------------------------------------------------------------
-// MurmurHash3 was written by Austin Appleby, and is placed in the public
-// domain. The author hereby disclaims copyright to this source code.
+// Authors: The scikit-learn developers
+// SPDX-License-Identifier: BSD-3-Clause
 
 // Note - The x86 and x64 versions do _not_ produce the same results, as the
 // algorithms are optimized for their respective platforms. You can still
@@ -343,4 +343,3 @@ void MurmurHash3_x64_128 ( const void * key, const int len,
 }
 
 //-----------------------------------------------------------------------------
-
