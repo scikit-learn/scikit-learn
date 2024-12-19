@@ -63,7 +63,7 @@ References
     A. Szlam et al. 2014
 """
 
-# Author: Giorgio Patrini
+# Authors: The scikit-learn developers
 
 import gc
 import os.path
