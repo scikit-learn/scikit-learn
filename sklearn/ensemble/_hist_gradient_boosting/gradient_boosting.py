@@ -1577,7 +1577,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         .. versionadded:: 0.23
 
     scoring : str or callable or None, default='loss'
-        Scoring parameter to use for early stopping. Only used if early stopping
+        Scoring method to use for early stopping. Only used if early stopping
         is performed. Options:
 
         - str: see :ref:`scoring_string_names` for options.
