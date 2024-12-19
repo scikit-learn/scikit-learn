@@ -113,18 +113,8 @@ This module provides several features, including:
   ``zipfile``;
 - Supports read and write the descriptions of files;
 - Supports missing values and names with spaces;
-- Supports unicode values and names;
-- Fully compatible with Python 2.7+, Python 3.5+, pypy and pypy3;
-- Under `MIT License <http://opensource.org/licenses/MIT>`_
-
+- Supports unicode values and names
 """
-__author__ = "Renato de Pontes Pereira, Matthias Feurer, Joel Nothman"
-__author_email__ = (
-    "renato.ppontes@gmail.com, "
-    "feurerm@informatik.uni-freiburg.de, "
-    "joel.nothman@gmail.com"
-)
-__version__ = "2.4.0"
 
 import re
 import csv
