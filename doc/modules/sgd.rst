@@ -402,7 +402,7 @@ We describe here the mathematical details of the SGD procedure. A good
 overview with convergence rates can be found in [#6]_.
 
 Given a set of training examples :math:`(x_1, y_1), \ldots, (x_n, y_n)` where
-:math:`x_i \in \mathbf{R}^m` and :math:`y_i \in \mathcal{R}` (:math:`y_i \in
+:math:`x_i \in \mathbf{R}^m` and :math:`y_i \in \mathbf{R}` (:math:`y_i \in
 {-1, 1}` for classification), our goal is to learn a linear scoring function
 :math:`f(x) = w^T x + b` with model parameters :math:`w \in \mathbf{R}^m` and
 intercept :math:`b \in \mathbf{R}`. In order to make predictions for binary
