@@ -10,9 +10,9 @@ from ...utils._plotting import (
     _despine,
     _validate_style_kwargs,
 )
-from .._ranking import average_precision_score, precision_recall_curve
 from ...utils._response import _get_response_values_binary
 from ...utils.validation import _num_samples
+from .._ranking import average_precision_score, precision_recall_curve
 
 
 class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
