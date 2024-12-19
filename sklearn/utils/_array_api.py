@@ -14,6 +14,7 @@ import scipy.sparse as sp
 import scipy.special as special
 
 from .._config import get_config
+from ..externals import _array_api_extra as xpx  # noqa: F401
 from .fixes import parse_version
 
 _NUMPY_NAMESPACE_NAMES = {"numpy", "array_api_compat.numpy"}
@@ -451,6 +452,26 @@ class _NumPyAPIWrapper:
 
     def pow(self, x1, x2):
         return numpy.power(x1, x2)
+
+    # from array-api-compat
+    def argsort(self, x, axis=-1, descending=False, stable=True, **kwargs):
+        if stable:
+            kwargs["kind"] = "stable"
+        if not descending:
+            res = numpy.argsort(x, axis=axis, **kwargs)
+        else:
+            # As NumPy has no native descending sort, we imitate it here. Note that
+            # simply flipping the results of numpy.argsort(x, ...) would not
+            # respect the relative order like it would in native descending sorts.
+            res = numpy.flip(
+                numpy.argsort(numpy.flip(x, axis=axis), axis=axis, **kwargs),
+                axis=axis,
+            )
+            # Rely on flip()/argsort() to validate axis
+            normalised_axis = axis if axis >= 0 else x.ndim + axis
+            max_i = x.shape[normalised_axis] - 1
+            res = max_i - res
+        return res
 
 
 _NUMPY_API_WRAPPER_INSTANCE = _NumPyAPIWrapper()
@@ -950,28 +971,6 @@ def _searchsorted(a, v, *, side="left", sorter=None, xp=None):
     return xp.asarray(indices, device=device(a))
 
 
-def _setdiff1d(ar1, ar2, xp, assume_unique=False):
-    """Find the set difference of two arrays.
-
-    Return the unique values in `ar1` that are not in `ar2`.
-    """
-    if _is_numpy_namespace(xp):
-        return xp.asarray(
-            numpy.setdiff1d(
-                ar1=ar1,
-                ar2=ar2,
-                assume_unique=assume_unique,
-            )
-        )
-
-    if assume_unique:
-        ar1 = xp.reshape(ar1, (-1,))
-    else:
-        ar1 = xp.unique_values(ar1)
-        ar2 = xp.unique_values(ar2)
-    return ar1[_in1d(ar1=ar1, ar2=ar2, xp=xp, assume_unique=True, invert=True)]
-
-
 def _isin(element, test_elements, xp, assume_unique=False, invert=False):
     """Calculates ``element in test_elements``, broadcasting over `element`
     only.
@@ -1004,8 +1003,8 @@ def _isin(element, test_elements, xp, assume_unique=False, invert=False):
     )
 
 
-# Note: This is a helper for the functions `_isin` and
-# `_setdiff1d`. It is not meant to be called directly.
+# Note: This is a helper for the function `_isin`.
+# It is not meant to be called directly.
 def _in1d(ar1, ar2, xp, assume_unique=False, invert=False):
     """Checks whether each element of an array is also present in a
     second array.
