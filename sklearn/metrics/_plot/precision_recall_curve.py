@@ -146,9 +146,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         # I think we could factorize this for all display classes
         default_line_kwargs = {"drawstyle": "steps-post"}
         if average_precision is not None and name is not None:
-            default_line_kwargs["label"] = (
-                f"{name} (AP = {average_precision:0.2f})"
-            )
+            default_line_kwargs["label"] = f"{name} (AP = {average_precision:0.2f})"
         elif average_precision is not None:
             default_line_kwargs["label"] = f"AP = {average_precision:0.2f}"
         elif name is not None:
@@ -231,7 +229,9 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         req_multi = [
             input for input in (self.precision, self.recall) if isinstance(input, list)
         ]
-        if req_multi and ((len(req_multi) != 2) or len({len(arg) for arg in req_multi}) > 1):
+        if req_multi and (
+            (len(req_multi) != 2) or len({len(arg) for arg in req_multi}) > 1
+        ):
             raise ValueError(
                 "When plotting multiple precision-recall curves, `self.precision` "
                 "and `self.recall` should both be lists of the same length."
@@ -240,9 +240,12 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         if req_multi:
             for name, param in zip(
                 ["self.average_precision", "`name` or `self.curve_name`"],
-                (self.average_precision, name_)
+                (self.average_precision, name_),
             ):
-                if not((isinstance(param, list) and len(param) != n_multi) or param is not None):
+                if not (
+                    (isinstance(param, list) and len(param) != n_multi)
+                    or param is not None
+                ):
                     raise ValueError(
                         f"For multi precision-recall curves, {name} must either be "
                         "a list of the same length as `self.precision` and "
@@ -271,7 +274,9 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
                 )
             name_ = [name_] * n_multi if name_ is None else name_
             average_precision_ = (
-                [None] * n_multi if self.average_precision is None else self.average_precision
+                [None] * n_multi
+                if self.average_precision is None
+                else self.average_precision
             )
             line_kwargs = []
             for fold_idx, (curve_name, curve_ap) in enumerate(
@@ -291,7 +296,9 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
         if n_multi:
             self.line_ = []
-            for recall, precision, line_kw in zip(self.recall, self.precision, line_kwargs):
+            for recall, precision, line_kw in zip(
+                self.recall, self.precision, line_kwargs
+            ):
                 self.line_.extend(self.ax_.plot(recall, precision, **line_kw))
         else:
             (self.line_,) = self.ax_.plot(self.recall, self.precision, **line_kwargs)
@@ -634,7 +641,6 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             despine=despine,
             **kwargs,
         )
-
 
     @classmethod
     def from_cv_results(
