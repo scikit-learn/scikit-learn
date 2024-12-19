@@ -406,6 +406,7 @@ class Birch(
     copy : bool, default=True
         Whether or not to make a copy of the given data. If set to False,
         the initial data will be overwritten.
+        See the :term:`Glossary <copy>`.
 
         .. deprecated:: 1.6
             `copy` was deprecated in 1.6 and will be removed in 1.8. It has no effect

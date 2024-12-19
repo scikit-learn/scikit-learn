@@ -424,6 +424,7 @@ class _PLS(
 
         copy : bool, default=True
             Whether to copy `X` and `Y`, or perform in-place normalization.
+            See the :term:`Glossary <copy>`.
 
         Returns
         -------
@@ -515,6 +516,7 @@ class _PLS(
 
         copy : bool, default=True
             Whether to copy `X` and `Y`, or perform in-place normalization.
+            See the :term:`Glossary <copy>`.
 
         Returns
         -------
@@ -595,6 +597,7 @@ class PLSRegression(_PLS):
         Whether to copy `X` and `Y` in :term:`fit` before applying centering,
         and potentially scaling. If `False`, these operations will be done
         inplace, modifying both arrays.
+        See the :term:`Glossary <copy>`.
 
     Attributes
     ----------
@@ -760,6 +763,7 @@ class PLSCanonical(_PLS):
         Whether to copy `X` and `Y` in fit before applying centering, and
         potentially scaling. If False, these operations will be done inplace,
         modifying both arrays.
+        See the :term:`Glossary <copy>`.
 
     Attributes
     ----------
@@ -885,6 +889,7 @@ class CCA(_PLS):
         Whether to copy `X` and `Y` in fit before applying centering, and
         potentially scaling. If False, these operations will be done inplace,
         modifying both arrays.
+        See the :term:`Glossary <copy>`.
 
     Attributes
     ----------
@@ -991,6 +996,7 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         Whether to copy `X` and `Y` in fit before applying centering, and
         potentially scaling. If `False`, these operations will be done inplace,
         modifying both arrays.
+        See the :term:`Glossary <copy>`.
 
     Attributes
     ----------
