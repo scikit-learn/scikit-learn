@@ -125,6 +125,7 @@ build_metadata_list = [
             "array-api-compat",
             "array-api-strict",
         ],
+        "pip_dependencies": ["scipy-doctest"],
         "package_constraints": {
             "blas": "[build=mkl]",
         },
@@ -222,6 +223,8 @@ build_metadata_list = [
             + ["lightgbm", "scikit-image"]
             # Test array API on CPU without PyTorch
             + ["array-api-compat", "array-api-strict"]
+            # doctests dependencies
+            + ["scipy-doctest"]
         ),
     },
     {
