@@ -260,7 +260,7 @@ package = "sklearn"  # name of your package
         enabled = true
         verify_pr_number = true
         changelog_noop_label = "No Changelog Needed"
-        whatsnew_pattern = 'doc/whatsnew/upcoming_changes/[^/]+/\d+\.[^.]+\.rst'
+        whatsnew_pattern = 'doc/whats_new/upcoming_changes/[^/]+/\d+\.[^.]+\.rst'
 
 [tool.towncrier]
     package = "sklearn"
