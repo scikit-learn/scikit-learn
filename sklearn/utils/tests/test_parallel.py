@@ -1,4 +1,5 @@
 import time
+import warnings
 
 import joblib
 import numpy as np
@@ -9,6 +10,7 @@ from sklearn import config_context, get_config
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_iris
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -98,3 +100,19 @@ def test_dispatch_config_parallel(n_jobs):
         search_cv.fit(iris.data, iris.target)
 
     assert not np.isnan(search_cv.cv_results_["mean_test_score"]).any()
+
+
+def raise_warning():
+    warnings.warn("Convergence warning", ConvergenceWarning)
+
+
+@pytest.mark.parametrize("n_jobs", [1, 2])
+@pytest.mark.parametrize("backend", ["loky", "threading", "multiprocessing"])
+def test_filter_warning_propagates(n_jobs, backend):
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", category=ConvergenceWarning)
+
+        with pytest.raises(ConvergenceWarning):
+            Parallel(n_jobs=n_jobs, backend=backend)(
+                delayed(raise_warning)() for _ in range(2)
+            )
