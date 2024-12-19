@@ -343,11 +343,19 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             elif self.strategy == "quantile":
                 quantiles = np.linspace(0, 100, n_bins[jj] + 1)
                 if sample_weight is None:
-
-                    bin_edges[jj] = np.asarray(
-                        np.percentile(column, quantiles, method=quantile_method),
-                        dtype=np.float64,
-                    )
+                    ## numpy version less than 1.22 does not support method
+                    ## need to stick to using linear interpolation in that
+                    ## case
+                    if np.__version__ < 1.22:
+                        bin_edges[jj] = np.asarray(
+                            np.percentile(column, quantiles, interpolation="linear"),
+                            dtype=np.float64,
+                        )
+                    else:
+                        bin_edges[jj] = np.asarray(
+                            np.percentile(column, quantiles, method=quantile_method),
+                            dtype=np.float64,
+                        )
                 else:
                     # TODO: make _weighted_percentile accept an array of
                     # quantiles instead of calling it multiple times and
