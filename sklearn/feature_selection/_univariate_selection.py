@@ -206,6 +206,10 @@ def chi2(X, y):
     contain only **non-negative features** such as booleans or frequencies
     (e.g., term counts in document classification), relative to the classes.
 
+    For continuous data, it is necessary to discretize the values (binning)
+    into intervals before applying this function. You can use methods such
+    as :class:`~sklearn.preprocessing.KBinsDiscretizer`.
+
     Recall that the chi-square test measures dependence between stochastic
     variables, so using this function "weeds out" the features that are the
     most likely to be independent of class and therefore irrelevant for
@@ -236,15 +240,10 @@ def chi2(X, y):
 
     Notes
     -----
-    - Complexity of this algorithm is O(n_classes * n_features).
-    - For continuous data, it is necessary to discretize the values (binning)
-      into intervals before applying this function. You can use methods such
-      as `numpy.digitize` or `KBinsDiscretizer` from `sklearn.preprocessing`.
+    Complexity of this algorithm is O(n_classes * n_features).
 
     Examples
     --------
-    Using chi2 with discrete data:
-
     >>> import numpy as np
     >>> from sklearn.feature_selection import chi2
     >>> X = np.array([[1, 1, 3],
@@ -259,21 +258,6 @@ def chi2(X, y):
     array([15.3...,  6.5       ,  8.9...])
     >>> p_values
     array([0.0004..., 0.0387..., 0.0116... ])
-
-    Using chi2 with continuous data (requires binning):
-
-    >>> from sklearn.preprocessing import KBinsDiscretizer
-    >>> X = np.array([[1.5, 2.4, 3.1],
-    ...               [4.5, 6.2, 5.1],
-    ...               [7.5, 8.8, 9.5]])
-    >>> y = np.array([0, 1, 1])
-    >>> kbd = KBinsDiscretizer(n_bins=3, encode='ordinal', strategy='uniform')
-    >>> X_binned = kbd.fit_transform(X)
-    >>> chi2_stats, p_values = chi2(X_binned, y)
-    >>> chi2_stats
-    array([1.5, 1.5, 1.])
-    >>> p_values
-    array([0.22067136, 0.22067136, 0.31731051])
     """
 
     # XXX: we might want to do some of the following in logspace instead for
