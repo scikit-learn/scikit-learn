@@ -464,6 +464,12 @@ def test_redundant_bins(strategy, expected_bin_edges, quantile_method):
     warning_message = "Consider decreasing the number of bins."
     with pytest.warns(UserWarning, match=warning_message):
         kbd.fit(X)
+
+    if np.__version__ < "1.22" and strategy == "quantile":
+        ## go back to default for np version less than 1.22
+        ## since "method" not impelmented then
+        expected_bin_edges = [0, 1, 3]
+
     assert_array_almost_equal(kbd.bin_edges_[0], expected_bin_edges)
 
 

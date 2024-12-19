@@ -17,6 +17,12 @@ def test_averaged_weighted_median():
 
 def test_averaged_weighted_percentile():
 
+    if np.__version__ < "1.22":
+        ## skip test for numpy version less than 1.22
+        ## since "method" not implemented before then
+        ## in np.percentile
+        return
+
     rng = np.random.RandomState(0)
     y = rng.randint(20, size=10)
 
