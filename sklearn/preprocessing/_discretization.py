@@ -346,7 +346,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                     ## numpy version less than 1.22 does not support method
                     ## need to stick to using linear interpolation in that
                     ## case
-                    if np.__version__ < 1.22:
+                    if np.__version__ < "1.22":
                         bin_edges[jj] = np.asarray(
                             np.percentile(column, quantiles, interpolation="linear"),
                             dtype=np.float64,
