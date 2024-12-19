@@ -1097,8 +1097,8 @@ def check_array(
             )
         if not allow_nd and array.ndim >= 3:
             raise ValueError(
-                "Found array with dim %d. %s expected <= 2."
-                % (array.ndim, estimator_name)
+                f"Found array with dim {array.ndim},"
+                f" while dim <= 2 is required{context}."
             )
 
         if ensure_all_finite:
