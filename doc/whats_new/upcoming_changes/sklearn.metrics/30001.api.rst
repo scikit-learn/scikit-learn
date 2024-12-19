@@ -1,4 +1,0 @@
-- The default value of the `response_method` parameter of
-  :func:`metrics.make_scorer` will change from `None` to `"predict"` and `None` will be
-  removed in 1.8. In the mean time, `None` is equivalent to `"predict"`.
-  By :user:`Jérémie du Boisberranger <jeremiedb>`

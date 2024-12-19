@@ -30,6 +30,10 @@
     <p>Norbert Preining</p>
     </div>
     <div>
+    <a href='https://github.com/StefanieSenger'><img src='https://avatars.githubusercontent.com/u/91849487?v=4' class='avatar' /></a> <br />
+    <p>Stefanie Senger</p>
+    </div>
+    <div>
     <a href='https://github.com/reshamas'><img src='https://avatars.githubusercontent.com/u/2507232?v=4' class='avatar' /></a> <br />
     <p>Reshama Shaikh</p>
     </div>
