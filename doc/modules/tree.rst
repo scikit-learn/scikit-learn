@@ -284,11 +284,11 @@ of shape ``(n_samples, n_outputs)`` then the resulting estimator will:
   ``predict_proba``.
 
 The use of multi-output trees for regression is demonstrated in
-:ref:`sphx_glr_auto_examples_tree_plot_tree_regression_multioutput.py`. In this example, the input
+:ref:`sphx_glr_auto_examples_tree_plot_tree_regression.py`. In this example, the input
 X is a single real value and the outputs Y are the sine and cosine of X.
 
-.. figure:: ../auto_examples/tree/images/sphx_glr_plot_tree_regression_multioutput_001.png
-   :target: ../auto_examples/tree/plot_tree_regression_multioutput.html
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_tree_regression_002.png
+   :target: ../auto_examples/tree/plot_tree_regression.html
    :scale: 75
    :align: center
 
@@ -304,7 +304,6 @@ the lower half of those faces.
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_tree_plot_tree_regression_multioutput.py`
 * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`
 
 .. rubric:: References

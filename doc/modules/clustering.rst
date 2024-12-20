@@ -222,9 +222,10 @@ initializations of the centroids. One method to help address this issue is the
 k-means++ initialization scheme, which has been implemented in scikit-learn
 (use the ``init='k-means++'`` parameter). This initializes the centroids to be
 (generally) distant from each other, leading to probably better results than
-random initialization, as shown in the reference. For a detailed example of
-comaparing different initialization schemes, refer to
-:ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`.
+random initialization, as shown in the reference. For detailed examples of
+comparing different initialization schemes, refer to
+:ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py` and
+:ref:`sphx_glr_auto_examples_cluster_plot_kmeans_stability_low_dim_dense.py`.
 
 K-means++ can also be called independently to select seeds for other
 clustering algorithms, see :func:`sklearn.cluster.kmeans_plusplus` for details
@@ -236,18 +237,13 @@ computing cluster centers and values of inertia. For example, assigning a
 weight of 2 to a sample is equivalent to adding a duplicate of that sample
 to the dataset :math:`X`.
 
-K-means can be used for vector quantization. This is achieved using the
-``transform`` method of a trained model of :class:`KMeans`. For an example of
-performing vector quantization on an image refer to
-:ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`.
-
 .. rubric:: Examples
-
-* :ref:`sphx_glr_auto_examples_cluster_plot_cluster_iris.py`: Example usage of
-  :class:`KMeans` using the iris dataset
 
 * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document clustering
   using :class:`KMeans` and :class:`MiniBatchKMeans` based on sparse data
+
+* :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_plusplus.py`: Using K-means++
+  to select seeds for other clustering algorithms.
 
 Low-level parallelism
 ---------------------
@@ -1791,20 +1787,25 @@ homogeneous but not complete::
 Fowlkes-Mallows scores
 ----------------------
 
-The Fowlkes-Mallows index (:func:`sklearn.metrics.fowlkes_mallows_score`) can be
-used when the ground truth class assignments of the samples is known. The
-Fowlkes-Mallows score FMI is defined as the geometric mean of the
-pairwise precision and recall:
+The original Fowlkes-Mallows index (FMI) was intended to measure the similarity
+between two clustering results, which is inherently an unsupervised comparison.
+The supervised adaptation of the Fowlkes-Mallows index
+(as implemented in :func:`sklearn.metrics.fowlkes_mallows_score`) can be used
+when the ground truth class assignments of the samples are known.
+The FMI is defined as the geometric mean of the pairwise precision and recall:
 
 .. math:: \text{FMI} = \frac{\text{TP}}{\sqrt{(\text{TP} + \text{FP}) (\text{TP} + \text{FN})}}
 
-Where ``TP`` is the number of **True Positive** (i.e. the number of pair
-of points that belong to the same clusters in both the true labels and the
-predicted labels), ``FP`` is the number of **False Positive** (i.e. the number
-of pair of points that belong to the same clusters in the true labels and not
-in the predicted labels) and ``FN`` is the number of **False Negative** (i.e. the
-number of pair of points that belongs in the same clusters in the predicted
-labels and not in the true labels).
+In the above formula:
+
+* ``TP`` (**True Positive**): The number of pairs of points that are clustered together
+  both in the true labels and in the predicted labels.
+
+* ``FP`` (**False Positive**): The number of pairs of points that are clustered together
+  in the predicted labels but not in the true labels.
+
+* ``FN`` (**False Negative**): The number of pairs of points that are clustered together
+  in the true labels but not in the predicted labels.
 
 The score ranges from 0 to 1. A high value indicates a good similarity
 between two clusters.
