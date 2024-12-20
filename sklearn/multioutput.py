@@ -680,7 +680,9 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
 
         if self.estimator is not None and (self.base_estimator != "deprecated"):
             raise ValueError(
-                "Both `estimator` and `base_estimator` were set. Only set `estimator`."
+                "Both `estimator` and `base_estimator` are provided. You should only"
+                " pass `estimator`. `base_estimator` as a parameter is deprecated in"
+                " version 1.7, and will be removed in version 1.9."
             )
 
         if self.base_estimator != "deprecated":
