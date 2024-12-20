@@ -46,6 +46,33 @@ from ..utils.validation import _num_samples, check_non_negative
 from ._pairwise_distances_reduction import ArgKmin
 from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 
+__all__ = [
+    "laplacian_kernel",
+    "pairwise_kernels",
+    "cosine_similarity",
+    "polynomial_kernel",
+    "nan_euclidean_distances",
+    "linear_kernel",
+    "paired_cosine_distances",
+    "paired_manhattan_distances",
+    "paired_euclidean_distances",
+    "kernel_metrics",
+    "cosine_distances",
+    "distance_metrics",
+    "haversine_distances",
+    "paired_distances",
+    "rbf_kernel",
+    "chi2_kernel",
+    "additive_chi2_kernel",
+    "manhattan_distances",
+    "sigmoid_kernel",
+    "euclidean_distances",
+]
+
+
+def __dir__():
+    return __all__
+
 
 # Utility Functions
 def _return_float_dtype(X, Y):

@@ -4,3 +4,7 @@
 from ._frozen import FrozenEstimator
 
 __all__ = ["FrozenEstimator"]
+
+
+def __dir__():
+    return __all__

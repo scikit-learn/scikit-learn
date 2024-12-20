@@ -14,3 +14,7 @@ __all__ = [
     "PartialDependenceDisplay",
     "DecisionBoundaryDisplay",
 ]
+
+
+def __dir__():
+    return __all__

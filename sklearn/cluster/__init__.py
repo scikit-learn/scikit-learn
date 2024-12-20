@@ -54,3 +54,7 @@ __all__ = [
     "SpectralCoclustering",
     "HDBSCAN",
 ]
+
+
+def __dir__():
+    return __all__

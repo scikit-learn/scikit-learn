@@ -20,3 +20,7 @@ __all__ = [
     "TSNE",
     "trustworthiness",
 ]
+
+
+def __dir__():
+    return __all__
