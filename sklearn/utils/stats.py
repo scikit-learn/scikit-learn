@@ -70,3 +70,10 @@ def _weighted_percentile(array, sample_weight, percentile=50):
     percentile_in_sorted = sorted_idx[percentile_idx, col_index]
     percentile = array[percentile_in_sorted, col_index]
     return percentile[0] if n_dim == 1 else percentile
+
+
+def _averaged_weighted_percentile(array, sample_weight, percentile=50):
+    return (
+        _weighted_percentile(array, sample_weight, percentile)
+        - _weighted_percentile(-array, sample_weight, 100 - percentile)
+    ) / 2
