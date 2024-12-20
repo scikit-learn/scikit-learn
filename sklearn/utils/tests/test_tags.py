@@ -652,6 +652,8 @@ def test_tags_no_sklearn_tags_concrete_implementation():
         def predict(self, X):
             return np.full(shape=X.shape[0], fill_value=self.param)
 
+
+
     X = np.array([[1, 2], [2, 3], [3, 4]])
     y = np.array([1, 0, 1])
 
