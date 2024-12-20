@@ -328,12 +328,12 @@ def smacof(
     >>> X = np.array([[0, 1, 2], [1, 0, 3],[2, 3, 0]])
     >>> dissimilarities = euclidean_distances(X)
     >>> mds_result, stress = smacof(dissimilarities, n_components=2, random_state=42)
-    >>> mds_result
-    array([[ 0.05... -1.07... ],
-           [ 1.74..., -0.75...],
-           [-1.79...,  1.83...]])
-    >>> stress
-    np.float64(0.0012...)
+    >>> np.round(mds_result, 5)
+    array([[ 0.05352, -1.07253],
+           [ 1.74231, -0.75675],
+           [-1.79583,  1.82928]])
+    >>> np.round(stress, 5).item()
+    0.00128
     """
 
     dissimilarities = check_array(dissimilarities)
