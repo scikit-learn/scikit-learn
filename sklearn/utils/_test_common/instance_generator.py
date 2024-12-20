@@ -1219,11 +1219,11 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
 }
 
-
-if sp_base_version < parse_version("1.11"):
+# TODO Remove the upper bound when https://github.com/scipy/scipy/issues/22143 is fixed
+if sp_base_version < parse_version("1.11") or sp_base_version >= parse_version("1.15"):
     PER_ESTIMATOR_XFAIL_CHECKS[SplineTransformer] = {
         "check_estimators_pickle": (
-            "Current Scipy implementation of _bsplines does not"
+            "scipy < 1.11 implementation of _bsplines does not"
             "support const memory views."
         ),
     }
