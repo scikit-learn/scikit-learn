@@ -10,11 +10,18 @@ The `Array API <https://data-apis.org/array-api/latest/>`_ specification defines
 a standard API for all array manipulation libraries with a NumPy-like API.
 Scikit-learn's Array API support requires
 `array-api-compat <https://github.com/data-apis/array-api-compat>`__ to be installed,
-and the environment variable `SCIPY_ARRAY_API` must be set to `1`:
+and the environment variable `SCIPY_ARRAY_API` must be set to `1` before importing
+`scipy` and `scikit-learn`:
 
 .. prompt:: bash $
 
-   SCIPY_ARRAY_API=1
+   export SCIPY_ARRAY_API=1
+
+Please note that this environment variable is intended for temporary use.
+For more details, refer to the following SciPy documentation:
+
+- https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html#using-array-api-standard-support
+
 
 Some scikit-learn estimators that primarily rely on NumPy (as opposed to using
 Cython) to implement the algorithmic logic of their `fit`, `predict` or
@@ -33,7 +40,7 @@ The following video provides an overview of the standard's design principles
 and how it facilitates interoperability between array libraries:
 
 - `Scikit-learn on GPUs with Array API <https://www.youtube.com/watch?v=c_s8tr1AizA>`_
-  by `Thomas J. Fan`_ at PyData NYC 2023.
+  by :user:`Thomas Fan <thomasjpfan>` at PyData NYC 2023.
 
 Example usage
 =============
@@ -237,5 +244,3 @@ certain combinations of array namespaces and devices, such as `PyTorch on MPS`
 scikit-learn will revert to using the `float32` data type instead. This can result in
 different behavior (typically numerically unstable results) compared to not using array
 API dispatching or using a device with `float64` support.
-
-.. _Thomas J. Fan: https://github.com/thomasjpfan
