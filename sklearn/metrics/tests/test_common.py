@@ -1898,6 +1898,7 @@ def check_array_api_multiclass_classification_metric(
 
     additional_params = {
         "average": ("micro", "macro", "weighted"),
+        "beta": (0.2, 0.5, 0.8),
     }
     metric_kwargs_combinations = _get_metric_kwargs_for_array_api_testing(
         metric=metric,
@@ -1937,6 +1938,7 @@ def check_array_api_multilabel_classification_metric(
 
     additional_params = {
         "average": ("micro", "macro", "weighted"),
+        "beta": (0.2, 0.5, 0.8),
     }
     metric_kwargs_combinations = _get_metric_kwargs_for_array_api_testing(
         metric=metric,
@@ -2100,7 +2102,21 @@ array_api_metric_checkers = {
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
     ],
+    fbeta_score: [
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
     multilabel_confusion_matrix: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
+    precision_score: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
+    recall_score: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
