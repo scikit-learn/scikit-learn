@@ -444,7 +444,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         """HTML representation of estimator.
 
         This is redundant with the logic of `_repr_mimebundle_`. The latter
-        should be favorted in the long term, `_repr_html_` is only
+        should be favored in the long term, `_repr_html_` is only
         implemented for consumers who do not interpret `_repr_mimbundle_`.
         """
         if get_config()["display"] != "diagram":
