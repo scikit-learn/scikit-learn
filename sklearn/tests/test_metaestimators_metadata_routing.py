@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 from sklearn import config_context
-from sklearn.base import is_classifier
+from sklearn.base import BaseEstimator, is_classifier
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.covariance import GraphicalLassoCV
@@ -551,13 +551,13 @@ def get_init_args(metaestimator_info, sub_estimator_consumes):
     )
 
 
-def set_requests(estimator, *, method_mapping, methods, metadata_name, value=True):
+def set_requests(obj, *, method_mapping, methods, metadata_name, value=True):
     """Call `set_{method}_request` on a list of methods from the sub-estimator.
 
     Parameters
     ----------
-    estimator : BaseEstimator
-        The estimator for which `set_{method}_request` methods are called.
+    obj : BaseEstimator
+        The object for which `set_{method}_request` methods are called.
 
     method_mapping : dict
         The method mapping in the form of `{caller: [callee, ...]}`.
@@ -577,9 +577,13 @@ def set_requests(estimator, *, method_mapping, methods, metadata_name, value=Tru
     """
     for caller in methods:
         for callee in method_mapping.get(caller, [caller]):
-            set_request_for_method = getattr(estimator, f"set_{callee}_request")
+            set_request_for_method = getattr(obj, f"set_{callee}_request")
             set_request_for_method(**{metadata_name: value})
-            if is_classifier(estimator) and callee == "partial_fit":
+            if (
+                isinstance(obj, BaseEstimator)
+                and is_classifier(obj)
+                and callee == "partial_fit"
+            ):
                 set_request_for_method(classes=True)
 
 

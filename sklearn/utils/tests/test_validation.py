@@ -34,6 +34,7 @@ from sklearn.utils import (
     check_X_y,
     deprecated,
 )
+from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
 from sklearn.utils._mocking import (
     MockDataFrame,
     _MockEstimatorOnOffPrediction,
@@ -41,6 +42,7 @@ from sklearn.utils._mocking import (
 from sklearn.utils._testing import (
     SkipTest,
     TempMemmap,
+    _array_api_for_tests,
     _convert_container,
     assert_allclose,
     assert_allclose_dense_sparse,
@@ -67,6 +69,7 @@ from sklearn.utils.validation import (
     _check_sample_weight,
     _check_y,
     _deprecate_positional_args,
+    _estimator_has,
     _get_feature_names,
     _is_fitted,
     _is_pandas_df,
@@ -742,7 +745,12 @@ def test_check_array_min_samples_and_features_messages():
         check_array([], ensure_2d=False)
 
     # Invalid edge case when checking the default minimum sample of a scalar
-    msg = r"Singleton array array\(42\) cannot be considered a valid" " collection."
+    msg = re.escape(
+        (
+            "Input should have at least 1 dimension i.e. satisfy "
+            "`len(x.shape) > 0`, got scalar `array(42)` instead."
+        )
+    )
     with pytest.raises(TypeError, match=msg):
         check_array(42, ensure_2d=False)
 
@@ -946,7 +954,7 @@ def test_check_is_fitted():
 
 
 def test_check_is_fitted_attributes():
-    class MyEstimator:
+    class MyEstimator(BaseEstimator):
         def fit(self, X, y):
             return self
 
@@ -1001,6 +1009,8 @@ def test_check_is_fitted_with_attributes(wrap):
 
 
 def test_check_consistent_length():
+    """Test that `check_consistent_length` raises on inconsistent lengths and wrong
+    input types trigger TypeErrors."""
     check_consistent_length([1], [2], [3], [4], [5])
     check_consistent_length([[1, 2], [[1, 2]]], [1, 2], ["a", "b"])
     check_consistent_length([1], (2,), np.array([3]), sp.csr_matrix((1, 2)))
@@ -1010,14 +1020,35 @@ def test_check_consistent_length():
         check_consistent_length([1, 2], 1)
     with pytest.raises(TypeError, match=r"got <\w+ 'object'>"):
         check_consistent_length([1, 2], object())
-
     with pytest.raises(TypeError):
         check_consistent_length([1, 2], np.array(1))
-
     # Despite ensembles having __len__ they must raise TypeError
     with pytest.raises(TypeError, match="Expected sequence or array-like"):
         check_consistent_length([1, 2], RandomForestRegressor())
     # XXX: We should have a test with a string, but what is correct behaviour?
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, _", yield_namespace_device_dtype_combinations()
+)
+def test_check_consistent_length_array_api(array_namespace, device, _):
+    """Test that check_consistent_length works with different array types."""
+    xp = _array_api_for_tests(array_namespace, device)
+
+    with config_context(array_api_dispatch=True):
+        check_consistent_length(
+            xp.asarray([1, 2, 3], device=device),
+            xp.asarray([[1, 1], [2, 2], [3, 3]], device=device),
+            [1, 2, 3],
+            ["a", "b", "c"],
+            np.asarray(("a", "b", "c"), dtype=object),
+            sp.csr_array([[0, 1], [1, 0], [0, 0]]),
+        )
+
+        with pytest.raises(ValueError, match="inconsistent numbers of samples"):
+            check_consistent_length(
+                xp.asarray([1, 2], device=device), xp.asarray([1], device=device)
+            )
 
 
 def test_check_dataframe_fit_attribute():
@@ -1161,6 +1192,93 @@ def test_check_array_memmap(copy):
         X_checked = check_array(X_memmap, copy=copy)
         assert np.may_share_memory(X_memmap, X_checked) == (not copy)
         assert X_checked.flags["WRITEABLE"] == copy
+
+
+@pytest.mark.parametrize(
+    "estimator_name, estimator_value, delegates, expected_result, expected_exception",
+    [
+        (
+            "estimator_",
+            type("SubEstimator", (), {"attribute_present": True}),
+            None,  # default delegates - ["estimator_", "estimator"]
+            True,  # expected_result is True b/c delegate and attribute are present
+            None,  # expected_exception not relevant for this case
+        ),
+        (
+            "estimator",
+            type("SubEstimator", (), {"attribute_present": True}),
+            None,  # default delegates - ["estimator_", "estimator"]
+            True,  # expected_result is True b/c delegate and attribute are present
+            None,  # expected_exception not relevant for this case
+        ),
+        (
+            "estimators_",
+            [
+                type("SubEstimator", (), {"attribute_present": True})
+            ],  # list of sub-estimators
+            ["estimators_"],
+            True,  # expected_result is True b/c delegate and attribute are present
+            None,  # expected_exception not relevant for this case
+        ),
+        (
+            "custom_estimator",  # custom estimator attribute name
+            type("SubEstimator", (), {"attribute_present": True}),
+            ["custom_estimator"],  # custom delegates
+            True,  # expected_result is True b/c delegate and attribute are present
+            None,  # expected_exception not relevant for this case
+        ),
+        (
+            "no_estimator",  # no estimator attribute name
+            type("SubEstimator", (), {"attribute_present": True}),
+            None,  # default delegates - ["estimator_", "estimator"]
+            None,  # expected_result is not relevant for this case
+            ValueError,  # should raise ValueError b/c no estimator found from delegates
+        ),
+        (
+            "estimator",
+            type("SubEstimator", (), {"attribute_absent": True}),  # attribute_absent
+            None,  # default delegates - ["estimator_", "estimator"]
+            None,  # expected_result is not relevant for this case
+            AttributeError,  # should raise AttributeError b/c attribute is absent
+        ),
+    ],
+    ids=[
+        "fitted_estimator_with_default_delegates",
+        "estimator_with_default_delegates",
+        "list_of_estimators_with_estimators_",
+        "custom_estimator_with_custom_delegates",
+        "no_estimator_with_default_delegates",
+        "estimator_with_default_delegates_but_absent_attribute",
+    ],
+)
+def test_estimator_has(
+    estimator_name, estimator_value, delegates, expected_result, expected_exception
+):
+    """
+    Tests the _estimator_has function by verifying:
+    - Functionality with default and custom delegates.
+    - Raises ValueError if delegates are missing.
+    - Raises AttributeError if the specified attribute is missing.
+    """
+
+    # always checks for attribute - "attribute_present"
+    # ["estimator_", "estimator"] is default value for delegates
+    if delegates is None:
+        check = _estimator_has("attribute_present")
+    else:
+        check = _estimator_has("attribute_present", delegates=delegates)
+
+    class MockEstimator:
+        pass
+
+    a = MockEstimator()
+    setattr(a, estimator_name, estimator_value)
+
+    if expected_exception:
+        with pytest.raises(expected_exception):
+            check(a)
+    else:
+        assert check(a) == expected_result
 
 
 @pytest.mark.parametrize(
@@ -1745,19 +1863,19 @@ def test_num_features_errors_1d_containers(X, constructor_name):
     if constructor_name == "array":
         expected_type_name = "numpy.ndarray"
     elif constructor_name == "series":
-        expected_type_name = "pandas.core.series.Series"
+        expected_type_name = "pandas.*Series"
     else:
         expected_type_name = constructor_name
     message = (
         f"Unable to find the number of features from X of type {expected_type_name}"
     )
     if hasattr(X, "shape"):
-        message += " with shape (3,)"
+        message += re.escape(" with shape (3,)")
     elif isinstance(X[0], str):
         message += " where the samples are of type str"
     elif isinstance(X[0], dict):
         message += " where the samples are of type dict"
-    with pytest.raises(TypeError, match=re.escape(message)):
+    with pytest.raises(TypeError, match=message):
         _num_features(X)
 
 
@@ -2240,3 +2358,24 @@ def test_force_all_finite_rename_warning():
 
     with pytest.warns(FutureWarning, match=msg):
         as_float_array(X, force_all_finite=True)
+
+
+@pytest.mark.parametrize(
+    ["X", "estimator", "expected_error_message"],
+    [
+        (
+            np.array([[[1, 2], [3, 4]], [[1, 2], [3, 4]]]),
+            RandomForestRegressor(),
+            "Found array with dim 3, while dim <= 2 is required by "
+            "RandomForestRegressor.",
+        ),
+        (
+            np.array([[[1, 2], [3, 4]], [[1, 2], [3, 4]]]),
+            None,
+            "Found array with dim 3, while dim <= 2 is required.",
+        ),
+    ],
+)
+def test_check_array_allow_nd_errors(X, estimator, expected_error_message):
+    with pytest.raises(ValueError, match=expected_error_message):
+        check_array(X, estimator=estimator)

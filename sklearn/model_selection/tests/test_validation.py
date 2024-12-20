@@ -14,7 +14,7 @@ import pytest
 from scipy.sparse import issparse
 
 from sklearn import config_context
-from sklearn.base import BaseEstimator, clone
+from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.cluster import KMeans
 from sklearn.datasets import (
     load_diabetes,
@@ -186,7 +186,7 @@ class MockEstimatorWithSingleFitCallAllowed(MockEstimatorWithParameter):
         raise NotImplementedError
 
 
-class MockClassifier:
+class MockClassifier(ClassifierMixin, BaseEstimator):
     """Dummy classifier to test the cross-validation"""
 
     def __init__(self, a=0, allow_nd=False):
@@ -254,7 +254,7 @@ class MockClassifier:
                 P.shape[0],
                 P.shape[1],
             )
-        self.fitted_ = True
+        self.classes_ = np.unique(y)
         return self
 
     def predict(self, T):
@@ -274,11 +274,11 @@ class MockClassifier:
 
 # XXX: use 2D array, since 1D X is being detected as a single sample in
 # check_consistent_length
-X = np.ones((10, 2))
-y = np.array([0, 0, 1, 1, 2, 2, 3, 3, 4, 4])
+X = np.ones((15, 2))
+y = np.array([0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 6])
 # The number of samples per class needs to be > n_splits,
 # for StratifiedKFold(n_splits=3)
-y2 = np.array([1, 1, 1, 2, 2, 2, 3, 3, 3, 3])
+y2 = np.array([1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
 P = np.eye(5)
 
 
@@ -694,7 +694,7 @@ def test_cross_val_score_fit_params(coo_container):
     n_classes = len(np.unique(y))
 
     W_sparse = coo_container(
-        (np.array([1]), (np.array([1]), np.array([0]))), shape=(10, 1)
+        (np.array([1]), (np.array([1]), np.array([0]))), shape=(15, 1)
     )
     P_sparse = coo_container(np.eye(5))
 
@@ -720,7 +720,7 @@ def test_cross_val_score_fit_params(coo_container):
         "dummy_obj": DUMMY_OBJ,
         "callback": assert_fit_params,
     }
-    cross_val_score(clf, X, y, params=fit_params)
+    cross_val_score(clf, X, y2, params=fit_params)
 
 
 def test_cross_val_score_score_func():

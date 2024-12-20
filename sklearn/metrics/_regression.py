@@ -58,11 +58,16 @@ __ALL__ = [
 def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric", xp=None):
     """Check that y_true and y_pred belong to the same regression task.
 
+    To reduce redundancy when calling `_find_matching_floating_dtype`,
+    please use `_check_reg_targets_with_floating_dtype` instead.
+
     Parameters
     ----------
-    y_true : array-like
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Ground truth (correct) target values.
 
-    y_pred : array-like
+    y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Estimated target values.
 
     multioutput : array-like or string in ['raw_values', uniform_average',
         'variance_weighted'] or None
@@ -137,6 +142,71 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric", xp=None):
     return y_type, y_true, y_pred, multioutput
 
 
+def _check_reg_targets_with_floating_dtype(
+    y_true, y_pred, sample_weight, multioutput, xp=None
+):
+    """Ensures that y_true, y_pred, and sample_weight correspond to the same
+    regression task.
+
+    Extends `_check_reg_targets` by automatically selecting a suitable floating-point
+    data type for inputs using `_find_matching_floating_dtype`.
+
+    Use this private method only when converting inputs to array API-compatibles.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Estimated target values.
+
+    sample_weight : array-like of shape (n_samples,)
+
+    multioutput : array-like or string in ['raw_values', 'uniform_average', \
+        'variance_weighted'] or None
+        None is accepted due to backward compatibility of r2_score().
+
+    xp : module, default=None
+        Precomputed array namespace module. When passed, typically from a caller
+        that has already performed inspection of its own inputs, skips array
+        namespace inspection.
+
+    Returns
+    -------
+    type_true : one of {'continuous', 'continuous-multioutput'}
+        The type of the true target data, as output by
+        'utils.multiclass.type_of_target'.
+
+    y_true : array-like of shape (n_samples, n_outputs)
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape (n_samples, n_outputs)
+        Estimated target values.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    multioutput : array-like of shape (n_outputs) or string in ['raw_values', \
+        'uniform_average', 'variance_weighted'] or None
+        Custom output weights if ``multioutput`` is array-like or
+        just the corresponding argument if ``multioutput`` is a
+        correct keyword.
+    """
+    dtype_name = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
+
+    y_type, y_true, y_pred, multioutput = _check_reg_targets(
+        y_true, y_pred, multioutput, dtype=dtype_name, xp=xp
+    )
+
+    # _check_reg_targets does not accept sample_weight as input.
+    # Convert sample_weight's data type separately to match dtype_name.
+    if sample_weight is not None:
+        sample_weight = xp.asarray(sample_weight, dtype=dtype_name)
+
+    return y_type, y_true, y_pred, sample_weight, multioutput
+
+
 @validate_params(
     {
         "y_true": ["array-like"],
@@ -201,14 +271,14 @@ def mean_absolute_error(
     >>> mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.85...
     """
-    input_arrays = [y_true, y_pred, sample_weight, multioutput]
-    xp, _ = get_namespace(*input_arrays)
+    xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
 
-    dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
-
-    _, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput, dtype=dtype, xp=xp
+    _, y_true, y_pred, sample_weight, multioutput = (
+        _check_reg_targets_with_floating_dtype(
+            y_true, y_pred, sample_weight, multioutput, xp=xp
+        )
     )
+
     check_consistent_length(y_true, y_pred, sample_weight)
 
     output_errors = _average(
@@ -218,7 +288,7 @@ def mean_absolute_error(
         if multioutput == "raw_values":
             return output_errors
         elif multioutput == "uniform_average":
-            # pass None as weights to np.average: uniform mean
+            # pass None as weights to _average: uniform mean
             multioutput = None
 
     # Average across the outputs (if needed).
@@ -290,35 +360,45 @@ def mean_pinball_loss(
     >>> from sklearn.metrics import mean_pinball_loss
     >>> y_true = [1, 2, 3]
     >>> mean_pinball_loss(y_true, [0, 2, 3], alpha=0.1)
-    np.float64(0.03...)
+    0.03...
     >>> mean_pinball_loss(y_true, [1, 2, 4], alpha=0.1)
-    np.float64(0.3...)
+    0.3...
     >>> mean_pinball_loss(y_true, [0, 2, 3], alpha=0.9)
-    np.float64(0.3...)
+    0.3...
     >>> mean_pinball_loss(y_true, [1, 2, 4], alpha=0.9)
-    np.float64(0.03...)
+    0.03...
     >>> mean_pinball_loss(y_true, y_true, alpha=0.1)
-    np.float64(0.0)
+    0.0
     >>> mean_pinball_loss(y_true, y_true, alpha=0.9)
-    np.float64(0.0)
+    0.0
     """
-    y_type, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput
+    xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
+
+    _, y_true, y_pred, sample_weight, multioutput = (
+        _check_reg_targets_with_floating_dtype(
+            y_true, y_pred, sample_weight, multioutput, xp=xp
+        )
     )
+
     check_consistent_length(y_true, y_pred, sample_weight)
     diff = y_true - y_pred
-    sign = (diff >= 0).astype(diff.dtype)
+    sign = xp.astype(diff >= 0, diff.dtype)
     loss = alpha * sign * diff - (1 - alpha) * (1 - sign) * diff
-    output_errors = np.average(loss, weights=sample_weight, axis=0)
+    output_errors = _average(loss, weights=sample_weight, axis=0)
 
     if isinstance(multioutput, str) and multioutput == "raw_values":
         return output_errors
 
     if isinstance(multioutput, str) and multioutput == "uniform_average":
-        # pass None as weights to np.average: uniform mean
+        # pass None as weights to _average: uniform mean
         multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    # Average across the outputs (if needed).
+    # The second call to `_average` should always return
+    # a scalar array that we convert to a Python float to
+    # consistently return the same eager evaluated value.
+    # Therefore, `axis=None`.
+    return float(_average(output_errors, weights=multioutput))
 
 
 @validate_params(
@@ -398,19 +478,16 @@ def mean_absolute_percentage_error(
     >>> mean_absolute_percentage_error(y_true, y_pred)
     112589990684262.48
     """
-    input_arrays = [y_true, y_pred, sample_weight, multioutput]
-    xp, _ = get_namespace(*input_arrays)
-    dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
-
-    y_type, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput, dtype=dtype, xp=xp
+    xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
+    _, y_true, y_pred, sample_weight, multioutput = (
+        _check_reg_targets_with_floating_dtype(
+            y_true, y_pred, sample_weight, multioutput, xp=xp
+        )
     )
     check_consistent_length(y_true, y_pred, sample_weight)
-    epsilon = xp.asarray(xp.finfo(xp.float64).eps, dtype=dtype)
-    y_true_abs = xp.asarray(xp.abs(y_true), dtype=dtype)
-    mape = xp.asarray(xp.abs(y_pred - y_true), dtype=dtype) / xp.maximum(
-        y_true_abs, epsilon
-    )
+    epsilon = xp.asarray(xp.finfo(xp.float64).eps, dtype=y_true.dtype)
+    y_true_abs = xp.abs(y_true)
+    mape = xp.abs(y_pred - y_true) / xp.maximum(y_true_abs, epsilon)
     output_errors = _average(mape, weights=sample_weight, axis=0)
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
@@ -494,10 +571,10 @@ def mean_squared_error(
     0.825...
     """
     xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
-    dtype = _find_matching_floating_dtype(y_true, y_pred, xp=xp)
-
-    _, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput, dtype=dtype, xp=xp
+    _, y_true, y_pred, sample_weight, multioutput = (
+        _check_reg_targets_with_floating_dtype(
+            y_true, y_pred, sample_weight, multioutput, xp=xp
+        )
     )
     check_consistent_length(y_true, y_pred, sample_weight)
     output_errors = _average((y_true - y_pred) ** 2, axis=0, weights=sample_weight)
@@ -670,10 +747,9 @@ def mean_squared_log_error(
     0.060...
     """
     xp, _ = get_namespace(y_true, y_pred)
-    dtype = _find_matching_floating_dtype(y_true, y_pred, xp=xp)
 
-    _, y_true, y_pred, _ = _check_reg_targets(
-        y_true, y_pred, multioutput, dtype=dtype, xp=xp
+    _, y_true, y_pred, _, _ = _check_reg_targets_with_floating_dtype(
+        y_true, y_pred, sample_weight, multioutput, xp=xp
     )
 
     if xp.any(y_true <= -1) or xp.any(y_pred <= -1):
@@ -747,10 +823,9 @@ def root_mean_squared_log_error(
     0.199...
     """
     xp, _ = get_namespace(y_true, y_pred)
-    dtype = _find_matching_floating_dtype(y_true, y_pred, xp=xp)
 
-    _, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput, dtype=dtype, xp=xp
+    _, y_true, y_pred, _, _ = _check_reg_targets_with_floating_dtype(
+        y_true, y_pred, sample_weight, multioutput, xp=xp
     )
 
     if xp.any(y_true <= -1) or xp.any(y_pred <= -1):
@@ -884,12 +959,12 @@ def _assemble_r2_explained_variance(
             # return scores individually
             return output_scores
         elif multioutput == "uniform_average":
-            # Passing None as weights to np.average results is uniform mean
+            # pass None as weights to _average: uniform mean
             avg_weights = None
         elif multioutput == "variance_weighted":
             avg_weights = denominator
             if not xp.any(nonzero_denominator):
-                # All weights are zero, np.average would raise a ZeroDiv error.
+                # All weights are zero, _average would raise a ZeroDiv error.
                 # This only happens when all y are constant (or 1-element long)
                 # Since weights are all equal, fall back to uniform weights.
                 avg_weights = None
@@ -1018,18 +1093,23 @@ def explained_variance_score(
     >>> explained_variance_score(y_true, y_pred, force_finite=False)
     -inf
     """
-    y_type, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput
+    xp, _, device = get_namespace_and_device(y_true, y_pred, sample_weight, multioutput)
+
+    _, y_true, y_pred, sample_weight, multioutput = (
+        _check_reg_targets_with_floating_dtype(
+            y_true, y_pred, sample_weight, multioutput, xp=xp
+        )
     )
+
     check_consistent_length(y_true, y_pred, sample_weight)
 
-    y_diff_avg = np.average(y_true - y_pred, weights=sample_weight, axis=0)
-    numerator = np.average(
+    y_diff_avg = _average(y_true - y_pred, weights=sample_weight, axis=0)
+    numerator = _average(
         (y_true - y_pred - y_diff_avg) ** 2, weights=sample_weight, axis=0
     )
 
-    y_true_avg = np.average(y_true, weights=sample_weight, axis=0)
-    denominator = np.average((y_true - y_true_avg) ** 2, weights=sample_weight, axis=0)
+    y_true_avg = _average(y_true, weights=sample_weight, axis=0)
+    denominator = _average((y_true - y_true_avg) ** 2, weights=sample_weight, axis=0)
 
     return _assemble_r2_explained_variance(
         numerator=numerator,
@@ -1037,9 +1117,8 @@ def explained_variance_score(
         n_outputs=y_true.shape[1],
         multioutput=multioutput,
         force_finite=force_finite,
-        xp=get_namespace(y_true)[0],
-        # TODO: update once Array API support is added to explained_variance_score.
-        device=None,
+        xp=xp,
+        device=device,
     )
 
 
@@ -1188,11 +1267,12 @@ def r2_score(
         y_true, y_pred, sample_weight, multioutput
     )
 
-    dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
-
-    _, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput, dtype=dtype, xp=xp
+    _, y_true, y_pred, sample_weight, multioutput = (
+        _check_reg_targets_with_floating_dtype(
+            y_true, y_pred, sample_weight, multioutput, xp=xp
+        )
     )
+
     check_consistent_length(y_true, y_pred, sample_weight)
 
     if _num_samples(y_pred) < 2:
@@ -1201,7 +1281,7 @@ def r2_score(
         return float("nan")
 
     if sample_weight is not None:
-        sample_weight = column_or_1d(sample_weight, dtype=dtype)
+        sample_weight = column_or_1d(sample_weight)
         weight = sample_weight[:, None]
     else:
         weight = 1.0
@@ -1356,8 +1436,8 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     1.4260...
     """
     xp, _ = get_namespace(y_true, y_pred)
-    y_type, y_true, y_pred, _ = _check_reg_targets(
-        y_true, y_pred, None, dtype=[xp.float64, xp.float32], xp=xp
+    y_type, y_true, y_pred, sample_weight, _ = _check_reg_targets_with_floating_dtype(
+        y_true, y_pred, sample_weight, multioutput=None, xp=xp
     )
     if y_type == "continuous-multioutput":
         raise ValueError("Multioutput not supported in mean_tweedie_deviance")
@@ -1570,8 +1650,8 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     """
     xp, _ = get_namespace(y_true, y_pred)
 
-    y_type, y_true, y_pred, _ = _check_reg_targets(
-        y_true, y_pred, None, dtype=[xp.float64, xp.float32], xp=xp
+    y_type, y_true, y_pred, sample_weight, _ = _check_reg_targets_with_floating_dtype(
+        y_true, y_pred, sample_weight, multioutput=None, xp=xp
     )
     if y_type == "continuous-multioutput":
         raise ValueError("Multioutput not supported in d2_tweedie_score")
