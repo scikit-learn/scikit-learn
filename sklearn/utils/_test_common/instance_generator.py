@@ -1220,7 +1220,7 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
 }
 
 
-if sp_base_version < parse_version("1.13"):
+if sp_base_version < parse_version("1.11"):
     PER_ESTIMATOR_XFAIL_CHECKS[SplineTransformer] = {
         "check_estimators_pickle": (
             "Current Scipy implementation of _bsplines does not"
