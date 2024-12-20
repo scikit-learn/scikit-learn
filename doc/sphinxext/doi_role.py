@@ -8,10 +8,11 @@ create a link to a DOI resolver
 The link caption will be the raw DOI.
 You can also give an explicit caption, e.g.
 :doi:`Basic local alignment search tool <10.1016/S0022-2836(05)80360-2>`.
-"""
 
-# Authors: The scikit-learn developers
-# SPDX-License-Identifier: BSD-3-Clause
+:copyright: Copyright 2015  Jon Lund Steffensen. Based on extlinks by
+    the Sphinx team.
+:license: BSD.
+"""
 
 from docutils import nodes, utils
 from sphinx.util.nodes import split_explicit_title
