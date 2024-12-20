@@ -58,7 +58,7 @@ bounded distortion introduced by the random projection::
 
   >>> from sklearn.random_projection import johnson_lindenstrauss_min_dim
   >>> johnson_lindenstrauss_min_dim(n_samples=1e6, eps=0.5)
-  663
+  np.int64(663)
   >>> johnson_lindenstrauss_min_dim(n_samples=1e6, eps=[0.5, 0.1, 0.01])
   array([    663,   11841, 1112658])
   >>> johnson_lindenstrauss_min_dim(n_samples=[1e4, 1e5, 1e6], eps=0.1)

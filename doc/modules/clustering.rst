@@ -1305,7 +1305,7 @@ ignoring permutations::
   >>> labels_true = [0, 0, 0, 1, 1, 1]
   >>> labels_pred = [0, 0, 1, 1, 2, 2]
   >>> metrics.rand_score(labels_true, labels_pred)
-  0.66...
+  np.float64(0.66...)
 
 The Rand index does not ensure to obtain a value close to 0.0 for a
 random labelling. The adjusted Rand index **corrects for chance** and
@@ -1319,7 +1319,7 @@ labels, rename 2 to 3, and get the same score::
 
   >>> labels_pred = [1, 1, 0, 0, 3, 3]
   >>> metrics.rand_score(labels_true, labels_pred)
-  0.66...
+  np.float64(0.66...)
   >>> metrics.adjusted_rand_score(labels_true, labels_pred)
   0.24...
 
@@ -1328,7 +1328,7 @@ Furthermore, both :func:`rand_score` :func:`adjusted_rand_score` are
 thus be used as **consensus measures**::
 
   >>> metrics.rand_score(labels_pred, labels_true)
-  0.66...
+  np.float64(0.66...)
   >>> metrics.adjusted_rand_score(labels_pred, labels_true)
   0.24...
 
@@ -1348,7 +1348,7 @@ will not necessarily be close to zero.::
   >>> labels_true = [0, 0, 0, 0, 0, 0, 1, 1]
   >>> labels_pred = [0, 1, 2, 3, 4, 5, 5, 6]
   >>> metrics.rand_score(labels_true, labels_pred)
-  0.39...
+  np.float64(0.39...)
   >>> metrics.adjusted_rand_score(labels_true, labels_pred)
   -0.07...
 
@@ -1644,16 +1644,16 @@ We can turn those concept as scores :func:`homogeneity_score` and
   >>> labels_pred = [0, 0, 1, 1, 2, 2]
 
   >>> metrics.homogeneity_score(labels_true, labels_pred)
-  0.66...
+  np.float64(0.66...)
 
   >>> metrics.completeness_score(labels_true, labels_pred)
-  0.42...
+  np.float64(0.42...)
 
 Their harmonic mean called **V-measure** is computed by
 :func:`v_measure_score`::
 
   >>> metrics.v_measure_score(labels_true, labels_pred)
-  0.51...
+  np.float64(0.51...)
 
 This function's formula is as follows:
 
@@ -1662,12 +1662,12 @@ This function's formula is as follows:
 `beta` defaults to a value of 1.0, but for using a value less than 1 for beta::
 
   >>> metrics.v_measure_score(labels_true, labels_pred, beta=0.6)
-  0.54...
+  np.float64(0.54...)
 
 more weight will be attributed to homogeneity, and using a value greater than 1::
 
   >>> metrics.v_measure_score(labels_true, labels_pred, beta=1.8)
-  0.48...
+  np.float64(0.48...)
 
 more weight will be attributed to completeness.
 
@@ -1678,14 +1678,14 @@ Homogeneity, completeness and V-measure can be computed at once using
 :func:`homogeneity_completeness_v_measure` as follows::
 
   >>> metrics.homogeneity_completeness_v_measure(labels_true, labels_pred)
-  (0.66..., 0.42..., 0.51...)
+  (np.float64(0.66...), np.float64(0.42...), np.float64(0.51...))
 
 The following clustering assignment is slightly better, since it is
 homogeneous but not complete::
 
   >>> labels_pred = [0, 0, 0, 1, 2, 2]
   >>> metrics.homogeneity_completeness_v_measure(labels_true, labels_pred)
-  (1.0, 0.68..., 0.81...)
+  (np.float64(1.0), np.float64(0.68...), np.float64(0.81...))
 
 .. note::
 
@@ -1815,7 +1815,7 @@ between two clusters.
   >>> labels_pred = [0, 0, 1, 1, 2, 2]
 
   >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)
-  0.47140...
+  np.float64(0.47140...)
 
 One can permute 0 and 1 in the predicted labels, rename 2 to 3 and get
 the same score::
@@ -1823,13 +1823,13 @@ the same score::
   >>> labels_pred = [1, 1, 0, 0, 3, 3]
 
   >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)
-  0.47140...
+  np.float64(0.47140...)
 
 Perfect labeling is scored 1.0::
 
   >>> labels_pred = labels_true[:]
   >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)
-  1.0
+  np.float64(1.0)
 
 Bad (e.g. independent labelings) have zero scores::
 
@@ -1912,7 +1912,7 @@ cluster analysis.
   >>> kmeans_model = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans_model.labels_
   >>> metrics.silhouette_score(X, labels, metric='euclidean')
-  0.55...
+  np.float64(0.55...)
 
 .. topic:: Advantages:
 
@@ -1969,7 +1969,7 @@ cluster analysis:
   >>> kmeans_model = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans_model.labels_
   >>> metrics.calinski_harabasz_score(X, labels)
-  561.59...
+  np.float64(561.59...)
 
 
 .. topic:: Advantages:
@@ -2043,7 +2043,7 @@ cluster analysis as follows:
   >>> kmeans = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans.labels_
   >>> davies_bouldin_score(X, labels)
-  0.666...
+  np.float64(0.666...)
 
 
 .. topic:: Advantages:

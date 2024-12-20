@@ -241,7 +241,7 @@ The following toy example demonstrates that samples with a sample weight of zero
     >>> gb.predict([[1, 0]])
     array([1])
     >>> gb.predict_proba([[1, 0]])[0, 1]
-    0.99...
+    np.float64(0.999...)
 
 As you can see, the `[1, 0]` is comfortably classified as `1` since the first
 two samples are ignored due to their sample weights.
@@ -1035,19 +1035,19 @@ in bias::
     ...     random_state=0)
     >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean()
-    0.98...
+    np.float64(0.98...)
 
     >>> clf = RandomForestClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=2, random_state=0)
     >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean()
-    0.999...
+    np.float64(0.999...)
 
     >>> clf = ExtraTreesClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=2, random_state=0)
     >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean() > 0.999
-    True
+    np.True_
 
 .. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_forest_iris_001.png
     :target: ../auto_examples/ensemble/plot_forest_iris.html
@@ -1701,7 +1701,7 @@ learners::
     >>> clf = AdaBoostClassifier(n_estimators=100)
     >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean()
-    0.9...
+    np.float64(0.9...)
 
 The number of weak learners is controlled by the parameter ``n_estimators``. The
 ``learning_rate`` parameter controls the contribution of the weak learners in
