@@ -137,7 +137,7 @@ See :ref:`adding_graphical_models`.
 Will you add GPU support?
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Adding GPU support by default would introduce heavy harware-specific software
+Adding GPU support by default would introduce heavy hardware-specific software
 dependencies and existing algorithms would need to be reimplemented. This would
 make it both harder for the average user to install scikit-learn and harder for
 the developers to maintain the code.
