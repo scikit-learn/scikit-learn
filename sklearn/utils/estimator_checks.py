@@ -1113,6 +1113,40 @@ def check_array_api_input(
         "transform",
     )
 
+    try:
+        np.asarray(X_xp)
+        np.asarray(y_xp)
+        # TODO There are a few errors in SearchCV with array-api-strict because
+        # we end up doing X[train_indices] where X is an array-api-strict array
+        # and train_indices is a numpy array. array-api-strict insists
+        # train_indices should be an array-api-strict array. On the other hand,
+        # all the array API libraries (PyTorch, jax, CuPy) accept indexing with a
+        # numpy array. This is probably not worth doing anything about for
+        # now since array-api-strict seems a bit too strict ...
+        numpy_asarray_works = xp.__name__ != "array_api_strict"
+
+    except TypeError:
+        # PyTorch with CUDA device and CuPy raise TypeError consistently.
+        # Exception type may need to be updated in the future for other
+        # libraries.
+        numpy_asarray_works = False
+
+    if numpy_asarray_works:
+        # In this case, array_api_dispatch is disabled and we rely on np.asarray
+        # being called to convert the non-NumPy inputs to NumPy arrays when needed.
+        est_fitted_with_as_array = clone(est).fit(X_xp, y_xp)
+        # We only do a smoke test for now, in order to avoid complicating the
+        # test function even further.
+        for method_name in methods:
+            method = getattr(est_fitted_with_as_array, method_name, None)
+            if method is None:
+                continue
+
+            if method_name == "score":
+                method(X_xp, y_xp)
+            else:
+                method(X_xp)
+
     for method_name in methods:
         method = getattr(est, method_name, None)
         if method is None:

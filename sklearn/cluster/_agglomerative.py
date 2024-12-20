@@ -2,10 +2,6 @@
 
 These routines perform some hierarchical agglomerative clustering of some
 input data.
-
-Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
-          Gael Varoquaux
-License: BSD 3 clause
 """
 
 # Authors: The scikit-learn developers

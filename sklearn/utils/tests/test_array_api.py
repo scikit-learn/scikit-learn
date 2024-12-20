@@ -248,6 +248,7 @@ def test_device_none_if_no_input():
     assert device(None, "name") is None
 
 
+@skip_if_array_api_compat_not_configured
 def test_device_inspection():
     class Device:
         def __init__(self, name):
@@ -273,18 +274,26 @@ def test_device_inspection():
     with pytest.raises(TypeError):
         hash(Array("device").device)
 
-    # Test raise if on different devices
+    # If array API dispatch is disabled the device should be ignored. Erroring
+    # early for different devices would prevent the np.asarray conversion to
+    # happen. For example, `r2_score(np.ones(5), torch.ones(5))` should work
+    # fine with array API disabled.
+    assert device(Array("cpu"), Array("mygpu")) is None
+
+    # Test that ValueError is raised if on different devices and array API dispatch is
+    # enabled.
     err_msg = "Input arrays use different devices: cpu, mygpu"
-    with pytest.raises(ValueError, match=err_msg):
-        device(Array("cpu"), Array("mygpu"))
+    with config_context(array_api_dispatch=True):
+        with pytest.raises(ValueError, match=err_msg):
+            device(Array("cpu"), Array("mygpu"))
 
-    # Test expected value is returned otherwise
-    array1 = Array("device")
-    array2 = Array("device")
+        # Test expected value is returned otherwise
+        array1 = Array("device")
+        array2 = Array("device")
 
-    assert array1.device == device(array1)
-    assert array1.device == device(array1, array2)
-    assert array1.device == device(array1, array1, array2)
+        assert array1.device == device(array1)
+        assert array1.device == device(array1, array2)
+        assert array1.device == device(array1, array1, array2)
 
 
 # TODO: add cupy to the list of libraries once the the following upstream issue
@@ -553,7 +562,7 @@ def test_get_namespace_and_device():
     namespace, is_array_api, device = get_namespace_and_device(some_torch_tensor)
     assert namespace is get_namespace(some_numpy_array)[0]
     assert not is_array_api
-    assert device.type == "cpu"
+    assert device is None
 
     # Otherwise, expose the torch namespace and device via array API compat
     # wrapper.
@@ -621,8 +630,8 @@ def test_sparse_device(csr_container, dispatch):
     try:
         with config_context(array_api_dispatch=dispatch):
             assert device(a, b) is None
-            assert device(a, numpy.array([1])) == "cpu"
+            assert device(a, numpy.array([1])) is None
             assert get_namespace_and_device(a, b)[2] is None
-            assert get_namespace_and_device(a, numpy.array([1]))[2] == "cpu"
+            assert get_namespace_and_device(a, numpy.array([1]))[2] is None
     except ImportError:
         raise SkipTest("array_api_compat is not installed")
