@@ -646,17 +646,16 @@ def test_tags_no_sklearn_tags_concrete_implementation():
     class MyEstimator(ClassifierMixin):
         def __init__(self, *, param=1):
             self.param = param
+
         def fit(self, X, y=None):
             self.is_fitted_ = True
             return self
+
         def predict(self, X):
             return np.full(shape=X.shape[0], fill_value=self.param)
 
-
-
     X = np.array([[1, 2], [2, 3], [3, 4]])
     y = np.array([1, 0, 1])
-
 
     my_pipeline = Pipeline([("estimator", MyEstimator(param=1))])
     with pytest.warns(FutureWarning, match="The following error was raised"):
