@@ -2,6 +2,33 @@
 External Resources, Videos and Talks
 ===========================================
 
+.. _mooc:
+
+scikit-learn MOOC
+=================
+
+If you are new to scikit-learn, or looking to strengthen your understanding,
+we highly recommend the **scikit-learn MOOC (Massive Open Online Course)**.
+
+This comprehensive course, hosted on `FUN platform
+<https://www.fun-mooc.fr/en/courses/machine-learning-python-scikit-learn/>`_,
+is designed to help learners of all levels master
+machine learning concepts and techniques using scikit-learn. It covers everything
+from the fundamental concepts of machine learning to more advanced topics like
+predictive modeling pipelines and model evaluation.
+
+The course features interactive content, exercises, detailed explanations,
+and discussion forum to help you build a solid foundation in scikit-learn
+while applying it to real-world datasets.
+
+The MOOC is free of charge, all the course materials are available at:
+
+`<https://inria.github.io/scikit-learn-mooc/>`_.
+
+The videos are available as a YouTube playlist on the Inria Learning Lab channel:
+
+`<https://www.youtube.com/playlist?list=PL2okA_2qDJ-m44KooOI7x8tu85wr4ez4f>`_
+
 New to Scientific Python?
 ==========================
 For those that are still new to the scientific Python ecosystem, we highly
@@ -24,16 +51,11 @@ specific subject areas:
 Videos
 ======
 
-- `Machine learning in Python with scikit-learn
-  <https://www.youtube.com/playlist?list=PL2okA_2qDJ-m44KooOI7x8tu85wr4ez4f>`_
-  by `Gael Varoquaux`_, `Arturo Amor`_, and `Olivier Grisel`_.
+- The `scikit-learn YouTube channel <https://www.youtube.com/@scikit-learn>`_
+  features a playlist of videos showcasing talks by maintainers
+  and community members:
 
-  These videos are part of the MOOC (Massive Open Online Course)
-  "Machine learning in Python with scikit-learn" hosted on `FUN platform
-  <https://www.fun-mooc.fr/en/courses/machine-learning-python-scikit-learn/>`_.
-
-  The course materials are available at:
-  `<https://inria.github.io/scikit-learn-mooc/>`_.
+  `<https://www.youtube.com/@scikit-learn/playlists>`_
 
 - An introduction to scikit-learn at Scipy 2013
   by `Gael Varoquaux`_, `Jake Vanderplas`_  and `Olivier Grisel`_.
