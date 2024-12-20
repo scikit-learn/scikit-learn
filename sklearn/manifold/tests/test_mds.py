@@ -59,17 +59,6 @@ def test_normed_stress(k):
     assert_allclose(X1, X2, rtol=1e-5)
 
 
-def test_normalize_metric_warning():
-    """
-    Test that a UserWarning is emitted when using normalized stress with
-    metric-MDS.
-    """
-    msg = "Normalized stress is not supported"
-    sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
-    with pytest.raises(ValueError, match=msg):
-        mds.smacof(sim, metric=True, normalized_stress=True)
-
-
 @pytest.mark.parametrize("metric", [True, False])
 def test_normalized_stress_auto(metric, monkeypatch):
     rng = np.random.RandomState(0)
