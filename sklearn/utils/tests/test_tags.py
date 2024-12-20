@@ -1,12 +1,15 @@
 from dataclasses import dataclass, fields
 
+import numpy as np
 import pytest
 
 from sklearn.base import (
     BaseEstimator,
+    ClassifierMixin,
     RegressorMixin,
     TransformerMixin,
 )
+from sklearn.pipeline import Pipeline
 from sklearn.utils import (
     ClassifierTags,
     InputTags,
@@ -629,3 +632,30 @@ def test_old_tags():
     }
     assert old_tags == expected_tags
     assert _to_new_tags(_to_old_tags(new_tags), estimator=estimator) == new_tags
+
+
+def test_tags_no_sklearn_tags_concrete_implementation():
+    """Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/30479
+
+    There is no class implementing `__sklearn_tags__` without calling
+    `super().__sklearn_tags__()`. Thus, we raise a warning and request to inherit from
+    `BaseEstimator` that implements `__sklearn_tags__`.
+    """
+
+    class MyEstimator(ClassifierMixin):
+        def __init__(self, *, param=1):
+            self.param = param
+        def fit(self, X, y=None):
+            self.is_fitted_ = True
+            return self
+        def predict(self, X):
+            return np.full(shape=X.shape[0], fill_value=self.param)
+
+    X = np.array([[1, 2], [2, 3], [3, 4]])
+    y = np.array([1, 0, 1])
+
+
+    my_pipeline = Pipeline([("estimator", MyEstimator(param=1))])
+    with pytest.warns(FutureWarning, match="The following error was raised"):
+        my_pipeline.fit(X, y).predict(X)
