@@ -2378,4 +2378,4 @@ def test_force_all_finite_rename_warning():
 )
 def test_check_array_allow_nd_errors(X, estimator, expected_error_message):
     with pytest.raises(ValueError, match=expected_error_message):
-        check_array(X, estimator=estimator, allow_nd=False)
+        check_array(X, estimator=estimator)
