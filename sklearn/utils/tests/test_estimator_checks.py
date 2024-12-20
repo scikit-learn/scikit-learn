@@ -72,6 +72,7 @@ from sklearn.utils.estimator_checks import (
     check_estimator_repr,
     check_estimator_sparse_array,
     check_estimator_sparse_matrix,
+    check_estimator_sparse_tag,
     check_estimator_tags_renamed,
     check_estimators_nan_inf,
     check_estimators_overwrite_params,
@@ -508,7 +509,8 @@ class TaggedBinaryClassifier(UntaggedBinaryClassifier):
 
 class RequiresPositiveXRegressor(LinearRegression):
     def fit(self, X, y):
-        X, y = validate_data(self, X, y, multi_output=True)
+        # reject sparse X to be able to call (X < 0).any()
+        X, y = validate_data(self, X, y, accept_sparse=False, multi_output=True)
         if (X < 0).any():
             raise ValueError("Negative values in data passed to X.")
         return super().fit(X, y)
@@ -516,12 +518,14 @@ class RequiresPositiveXRegressor(LinearRegression):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.positive_only = True
+        # reject sparse X to be able to call (X < 0).any()
+        tags.input_tags.sparse = False
         return tags
 
 
 class RequiresPositiveYRegressor(LinearRegression):
     def fit(self, X, y):
-        X, y = validate_data(self, X, y, multi_output=True)
+        X, y = validate_data(self, X, y, accept_sparse=True, multi_output=True)
         if (y <= 0).any():
             raise ValueError("negative y values not supported!")
         return super().fit(X, y)
@@ -843,6 +847,53 @@ def test_check_outlier_corruption():
     # should pass
     decision = np.array([0.0, 1.0, 1.0, 2.0])
     check_outlier_corruption(1, 2, decision)
+
+
+def test_check_estimator_sparse_tag():
+    """Test that check_estimator_sparse_tag raises error when sparse tag is
+    misaligned."""
+
+    class EstimatorWithSparseConfig(BaseEstimator):
+        def __init__(self, tag_sparse, accept_sparse, fit_error=None):
+            self.tag_sparse = tag_sparse
+            self.accept_sparse = accept_sparse
+            self.fit_error = fit_error
+
+        def fit(self, X, y=None):
+            if self.fit_error:
+                raise self.fit_error
+            validate_data(self, X, y, accept_sparse=self.accept_sparse)
+            return self
+
+        def __sklearn_tags__(self):
+            tags = super().__sklearn_tags__()
+            tags.input_tags.sparse = self.tag_sparse
+            return tags
+
+    test_cases = [
+        {"tag_sparse": True, "accept_sparse": True, "error_type": None},
+        {"tag_sparse": False, "accept_sparse": False, "error_type": None},
+        {"tag_sparse": False, "accept_sparse": True, "error_type": AssertionError},
+        {"tag_sparse": True, "accept_sparse": False, "error_type": AssertionError},
+    ]
+
+    for test_case in test_cases:
+        estimator = EstimatorWithSparseConfig(
+            test_case["tag_sparse"],
+            test_case["accept_sparse"],
+        )
+        if test_case["error_type"] is None:
+            check_estimator_sparse_tag(estimator.__class__.__name__, estimator)
+        else:
+            with raises(test_case["error_type"]):
+                check_estimator_sparse_tag(estimator.__class__.__name__, estimator)
+
+    # estimator `tag_sparse=accept_sparse=False` fails on sparse data
+    # but does not raise the appropriate error
+    for fit_error in [TypeError("unexpected error"), KeyError("other error")]:
+        estimator = EstimatorWithSparseConfig(False, False, fit_error)
+        with raises(AssertionError):
+            check_estimator_sparse_tag(estimator.__class__.__name__, estimator)
 
 
 def test_check_estimator_transformer_no_mixin():
