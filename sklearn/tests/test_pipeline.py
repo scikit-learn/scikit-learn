@@ -603,6 +603,14 @@ def test_make_union_kwargs():
         make_union(pca, mock, transformer_weights={"pca": 10, "Transf": 1})
 
 
+def test_make_union_passes_verbose_feature_names_out():
+    pca = PCA()
+    mock = Transf()
+
+    union = make_union(pca, mock, verbose_feature_names_out=False)
+    assert not union.verbose_feature_names_out
+
+
 def test_pipeline_transform():
     # Test whether pipeline works with a transformer at the end.
     # Also test pipeline.transform and pipeline.inverse_transform
