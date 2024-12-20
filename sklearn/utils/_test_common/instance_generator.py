@@ -1219,7 +1219,8 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
 }
 
-# TODO Remove the upper bound when https://github.com/scipy/scipy/issues/22143 is fixed
+# TODO remove the >= 1.15 check when
+# https://github.com/scipy/scipy/issues/22143 is fixed
 if sp_base_version < parse_version("1.11") or sp_base_version >= parse_version("1.15"):
     PER_ESTIMATOR_XFAIL_CHECKS[SplineTransformer] = {
         "check_estimators_pickle": (
