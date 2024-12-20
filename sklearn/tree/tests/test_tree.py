@@ -6,6 +6,7 @@ import copy
 import copyreg
 import io
 import pickle
+import re
 import struct
 from itertools import chain, product
 
@@ -1137,7 +1138,13 @@ def test_sample_weight_invalid():
         clf.fit(X, y, sample_weight=sample_weight)
 
     sample_weight = np.array(0)
-    expected_err = r"Singleton.* cannot be considered a valid collection"
+
+    expected_err = re.escape(
+        (
+            "Input should have at least 1 dimension i.e. satisfy "
+            "`len(x.shape) > 0`, got scalar `array(0.)` instead."
+        )
+    )
     with pytest.raises(TypeError, match=expected_err):
         clf.fit(X, y, sample_weight=sample_weight)
 

@@ -100,9 +100,7 @@ build_metadata_list = [
         "conda_dependencies": common_dependencies
         + [
             "ccache",
-            # Make sure pytorch comes from the pytorch channel and not conda-forge
-            "pytorch::pytorch",
-            "pytorch-cuda",
+            "pytorch-gpu",
             "polars",
             "pyarrow",
             "cupy",
@@ -225,12 +223,6 @@ build_metadata_list = [
             # Test array API on CPU without PyTorch
             + ["array-api-compat", "array-api-strict"]
         ),
-        "package_constraints": {
-            # XXX: we would like to use the latest Python version, but for now using
-            # Python 3.12 makes the CI much slower so we use Python 3.11. See
-            # https://github.com/scikit-learn/scikit-learn/pull/29444#issuecomment-2219550662.
-            "python": "3.11",
-        },
     },
     {
         "name": "pylatest_pip_scipy_dev",
