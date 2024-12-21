@@ -1,63 +1,97 @@
 """
-=========================================================
-Linear Regression Example
-=========================================================
-The example below uses only the first feature of the `diabetes` dataset,
-in order to illustrate the data points within the two-dimensional plot.
-The straight line can be seen in the plot, showing how linear regression
-attempts to draw a straight line that will best minimize the
-residual sum of squares between the observed responses in the dataset,
-and the responses predicted by the linear approximation.
+==============================
+Ordinary Least Squares Example
+==============================
 
-The coefficients, residual sum of squares and the coefficient of
-determination are also calculated.
+This example shows how to use the ordinary least squares (OLS) model
+called :class:`~sklearn.linear_model.LinearRegression` in scikit-learn.
 
+For this purpose, we use a single feature from the diabetes dataset and try to
+predict the diabetes progression using this linear model. We therefore load the
+diabetes dataset and split it into training and test sets.
+
+Then, we fit the model on the training set and evaluate its performance on the test
+set and finally visualize the results on the test set.
 """
 
-# Code source: Jaques Grobler
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import matplotlib.pyplot as plt
-import numpy as np
+# %%
+# Data Loading and Preparation
+# ----------------------------
+#
+# Load the diabetes dataset. For simplicity, we only keep a single feature in the data.
+# Then, we split the data and target into training and test sets.
+from sklearn.datasets import load_diabetes
+from sklearn.model_selection import train_test_split
 
-from sklearn import datasets, linear_model
+X, y = load_diabetes(return_X_y=True)
+X = X[:, [2]]  # Use only one feature
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=20, shuffle=False)
+
+# %%
+# Linear regression model
+# -----------------------
+#
+# We create a linear regression model and fit it on the training data. Note that by
+# default, an intercept is added to the model. We can control this behavior by setting
+# the `fit_intercept` parameter.
+from sklearn.linear_model import LinearRegression
+
+regressor = LinearRegression().fit(X_train, y_train)
+
+# %%
+# Model evaluation
+# ----------------
+#
+# We evaluate the model's performance on the test set using the mean squared error
+# and the coefficient of determination.
 from sklearn.metrics import mean_squared_error, r2_score
 
-# Load the diabetes dataset
-diabetes_X, diabetes_y = datasets.load_diabetes(return_X_y=True)
+y_pred = regressor.predict(X_test)
 
-# Use only one feature
-diabetes_X = diabetes_X[:, np.newaxis, 2]
+print(f"Mean squared error: {mean_squared_error(y_test, y_pred):.2f}")
+print(f"Coefficient of determination: {r2_score(y_test, y_pred):.2f}")
 
-# Split the data into training/testing sets
-diabetes_X_train = diabetes_X[:-20]
-diabetes_X_test = diabetes_X[-20:]
+# %%
+# Plotting the results
+# --------------------
+#
+# Finally, we visualize the results on the train and test data.
+import matplotlib.pyplot as plt
 
-# Split the targets into training/testing sets
-diabetes_y_train = diabetes_y[:-20]
-diabetes_y_test = diabetes_y[-20:]
+fig, ax = plt.subplots(ncols=2, figsize=(10, 5), sharex=True, sharey=True)
 
-# Create linear regression object
-regr = linear_model.LinearRegression()
+ax[0].scatter(X_train, y_train, label="Train data points")
+ax[0].plot(
+    X_train,
+    regressor.predict(X_train),
+    linewidth=3,
+    color="tab:orange",
+    label="Model predictions",
+)
+ax[0].set(xlabel="Feature", ylabel="Target", title="Train set")
+ax[0].legend()
 
-# Train the model using the training sets
-regr.fit(diabetes_X_train, diabetes_y_train)
+ax[1].scatter(X_test, y_test, label="Test data points")
+ax[1].plot(X_test, y_pred, linewidth=3, color="tab:orange", label="Model predictions")
+ax[1].set(xlabel="Feature", ylabel="Target", title="Test set")
+ax[1].legend()
 
-# Make predictions using the testing set
-diabetes_y_pred = regr.predict(diabetes_X_test)
-
-# The coefficients
-print("Coefficients: \n", regr.coef_)
-# The mean squared error
-print("Mean squared error: %.2f" % mean_squared_error(diabetes_y_test, diabetes_y_pred))
-# The coefficient of determination: 1 is perfect prediction
-print("Coefficient of determination: %.2f" % r2_score(diabetes_y_test, diabetes_y_pred))
-
-# Plot outputs
-plt.scatter(diabetes_X_test, diabetes_y_test, color="black")
-plt.plot(diabetes_X_test, diabetes_y_pred, color="blue", linewidth=3)
-
-plt.xticks(())
-plt.yticks(())
+fig.suptitle("Linear Regression")
 
 plt.show()
+
+# %%
+# Conclusion
+# ----------
+#
+# The trained model corresponds to the estimator that minimizes the mean squared error
+# between the predicted and the true target values on the training data. We therefore
+# obtain an estimator of the conditional mean of the target given the data.
+#
+# Note that in higher dimensions, minimizing only the squared error might lead to
+# overfitting. Therefore, regularization techniques are commonly used to prevent this
+# issue, such as those implemented in :class:`~sklearn.linear_model.Ridge` or
+# :class:`~sklearn.linear_model.Lasso`.

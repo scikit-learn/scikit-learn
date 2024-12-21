@@ -25,8 +25,8 @@ that of representing a flat map of the Earth, as with
 
 """
 
-# Author: Jaques Grobler <jaques.grobler@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from time import time
 
@@ -112,7 +112,7 @@ plt.axis("tight")
 
 # Perform Multi-dimensional scaling.
 t0 = time()
-mds = manifold.MDS(2, max_iter=100, n_init=1, normalized_stress="auto", random_state=42)
+mds = manifold.MDS(2, max_iter=100, n_init=1, random_state=42)
 trans_data = mds.fit_transform(sphere_data).T
 t1 = time()
 print("MDS: %.2g sec" % (t1 - t0))

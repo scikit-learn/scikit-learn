@@ -110,9 +110,9 @@ imputation round are returned.
    This estimator is still **experimental** for now: default parameters or
    details of behaviour might change without any deprecation cycle. Resolving
    the following issues would help stabilize :class:`IterativeImputer`:
-   convergence criteria (:issue:`14338`), default estimators (:issue:`13286`),
-   and use of random state (:issue:`15611`). To use it, you need to explicitly
-   import ``enable_iterative_imputer``.
+   convergence criteria (:issue:`14338`) and default estimators
+   (:issue:`13286`). To use it, you need to explicitly import
+   ``enable_iterative_imputer``.
 
 ::
 
@@ -224,13 +224,13 @@ neighbors of samples with missing values::
 
 For another example on usage, see :ref:`sphx_glr_auto_examples_impute_plot_missing_values.py`.
 
-.. topic:: References
+.. rubric:: References
 
-  .. [OL2001] `Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown,
-      Trevor Hastie, Robert Tibshirani, David Botstein and Russ B. Altman,
-      Missing value estimation methods for DNA microarrays, BIOINFORMATICS
-      Vol. 17 no. 6, 2001 Pages 520-525.
-      <https://academic.oup.com/bioinformatics/article/17/6/520/272365>`_
+.. [OL2001] `Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown,
+    Trevor Hastie, Robert Tibshirani, David Botstein and Russ B. Altman,
+    Missing value estimation methods for DNA microarrays, BIOINFORMATICS
+    Vol. 17 no. 6, 2001 Pages 520-525.
+    <https://academic.oup.com/bioinformatics/article/17/6/520/272365>`_
 
 Keeping the number of features constant
 =======================================

@@ -14,13 +14,13 @@ matrices supported), sample them, and estimate them from
 data. Facilities to help determine the appropriate number of
 components are also provided.
 
- .. figure:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_pdf_001.png
-   :target: ../auto_examples/mixture/plot_gmm_pdf.html
-   :align: center
-   :scale: 50%
+.. figure:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_pdf_001.png
+  :target: ../auto_examples/mixture/plot_gmm_pdf.html
+  :align: center
+  :scale: 50%
 
-   **Two-component Gaussian mixture model:** *data points, and equi-probability
-   surfaces of the model.*
+  **Two-component Gaussian mixture model:** *data points, and equi-probability
+  surfaces of the model.*
 
 A Gaussian mixture model is a probabilistic model that assumes all the
 data points are generated from a mixture of a finite number of
@@ -60,128 +60,111 @@ full covariance.
    :align: center
    :scale: 75%
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * See :ref:`sphx_glr_auto_examples_mixture_plot_gmm_covariances.py` for an example of
-      using the Gaussian mixture as clustering on the iris dataset.
+* See :ref:`sphx_glr_auto_examples_mixture_plot_gmm_covariances.py` for an example of
+  using the Gaussian mixture as clustering on the iris dataset.
 
-    * See :ref:`sphx_glr_auto_examples_mixture_plot_gmm_pdf.py` for an example on plotting the
-      density estimation.
+* See :ref:`sphx_glr_auto_examples_mixture_plot_gmm_pdf.py` for an example on plotting the
+  density estimation.
 
-|details-start|
-**Pros and cons of class GaussianMixture**
-|details-split|
+.. dropdown:: Pros and cons of class GaussianMixture
 
-.. topic:: Pros:
+  .. rubric:: Pros
 
-    :Speed: It is the fastest algorithm for learning mixture models
+  :Speed: It is the fastest algorithm for learning mixture models
 
-    :Agnostic: As this algorithm maximizes only the likelihood, it
-      will not bias the means towards zero, or bias the cluster sizes to
-      have specific structures that might or might not apply.
+  :Agnostic: As this algorithm maximizes only the likelihood, it
+    will not bias the means towards zero, or bias the cluster sizes to
+    have specific structures that might or might not apply.
 
-.. topic:: Cons:
+  .. rubric:: Cons
 
-    :Singularities: When one has insufficiently many points per
-      mixture, estimating the covariance matrices becomes difficult,
-      and the algorithm is known to diverge and find solutions with
-      infinite likelihood unless one regularizes the covariances artificially.
+  :Singularities: When one has insufficiently many points per
+    mixture, estimating the covariance matrices becomes difficult,
+    and the algorithm is known to diverge and find solutions with
+    infinite likelihood unless one regularizes the covariances artificially.
 
-    :Number of components: This algorithm will always use all the
-      components it has access to, needing held-out data
-      or information theoretical criteria to decide how many components to use
-      in the absence of external cues.
+  :Number of components: This algorithm will always use all the
+    components it has access to, needing held-out data
+    or information theoretical criteria to decide how many components to use
+    in the absence of external cues.
 
-|details-end|
+.. dropdown:: Selecting the number of components in a classical Gaussian Mixture model
 
+  The BIC criterion can be used to select the number of components in a Gaussian
+  Mixture in an efficient way. In theory, it recovers the true number of
+  components only in the asymptotic regime (i.e. if much data is available and
+  assuming that the data was actually generated i.i.d. from a mixture of Gaussian
+  distribution). Note that using a :ref:`Variational Bayesian Gaussian mixture <bgmm>`
+  avoids the specification of the number of components for a Gaussian mixture
+  model.
 
-|details-start|
-**Selecting the number of components in a classical Gaussian Mixture model**
-|details-split|
+  .. figure:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_selection_002.png
+    :target: ../auto_examples/mixture/plot_gmm_selection.html
+    :align: center
+    :scale: 50%
 
-The BIC criterion can be used to select the number of components in a Gaussian
-Mixture in an efficient way. In theory, it recovers the true number of
-components only in the asymptotic regime (i.e. if much data is available and
-assuming that the data was actually generated i.i.d. from a mixture of Gaussian
-distribution). Note that using a :ref:`Variational Bayesian Gaussian mixture <bgmm>`
-avoids the specification of the number of components for a Gaussian mixture
-model.
+  .. rubric:: Examples
 
-.. figure:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_selection_002.png
-   :target: ../auto_examples/mixture/plot_gmm_selection.html
-   :align: center
-   :scale: 50%
-
-.. topic:: Examples:
-
-    * See :ref:`sphx_glr_auto_examples_mixture_plot_gmm_selection.py` for an example
-      of model selection performed with classical Gaussian mixture.
-
-|details-end|
+  * See :ref:`sphx_glr_auto_examples_mixture_plot_gmm_selection.py` for an example
+    of model selection performed with classical Gaussian mixture.
 
 .. _expectation_maximization:
 
-|details-start|
-**Estimation algorithm expectation-maximization**
-|details-split|
+.. dropdown:: Estimation algorithm expectation-maximization
 
-The main difficulty in learning Gaussian mixture models from unlabeled
-data is that one usually doesn't know which points came from
-which latent component (if one has access to this information it gets
-very easy to fit a separate Gaussian distribution to each set of
-points). `Expectation-maximization
-<https://en.wikipedia.org/wiki/Expectation%E2%80%93maximization_algorithm>`_
-is a well-founded statistical
-algorithm to get around this problem by an iterative process. First
-one assumes random components (randomly centered on data points,
-learned from k-means, or even just normally distributed around the
-origin) and computes for each point a probability of being generated by
-each component of the model. Then, one tweaks the
-parameters to maximize the likelihood of the data given those
-assignments. Repeating this process is guaranteed to always converge
-to a local optimum.
+  The main difficulty in learning Gaussian mixture models from unlabeled
+  data is that one usually doesn't know which points came from
+  which latent component (if one has access to this information it gets
+  very easy to fit a separate Gaussian distribution to each set of
+  points). `Expectation-maximization
+  <https://en.wikipedia.org/wiki/Expectation%E2%80%93maximization_algorithm>`_
+  is a well-founded statistical
+  algorithm to get around this problem by an iterative process. First
+  one assumes random components (randomly centered on data points,
+  learned from k-means, or even just normally distributed around the
+  origin) and computes for each point a probability of being generated by
+  each component of the model. Then, one tweaks the
+  parameters to maximize the likelihood of the data given those
+  assignments. Repeating this process is guaranteed to always converge
+  to a local optimum.
 
-|details-end|
+.. dropdown:: Choice of the Initialization method
 
-|details-start|
-**Choice of the Initialization method**
-|details-split|
+  There is a choice of four initialization methods (as well as inputting user defined
+  initial means) to generate the initial centers for the model components:
 
-There is a choice of four initialization methods (as well as inputting user defined
-initial means) to generate the initial centers for the model components:
+  k-means (default)
+    This applies a traditional k-means clustering algorithm.
+    This can be computationally expensive compared to other initialization methods.
 
-k-means (default)
-  This applies a traditional k-means clustering algorithm.
-  This can be computationally expensive compared to other initialization methods.
+  k-means++
+    This uses the initialization method of k-means clustering: k-means++.
+    This will pick the first center at random from the data. Subsequent centers will be
+    chosen from a weighted distribution of the data favouring points further away from
+    existing centers. k-means++ is the default initialization for k-means so will be
+    quicker than running a full k-means but can still take a significant amount of
+    time for large data sets with many components.
 
-k-means++
-  This uses the initialization method of k-means clustering: k-means++.
-  This will pick the first center at random from the data. Subsequent centers will be
-  chosen from a weighted distribution of the data favouring points further away from
-  existing centers. k-means++ is the default initialization for k-means so will be
-  quicker than running a full k-means but can still take a significant amount of
-  time for large data sets with many components.
+  random_from_data
+    This will pick random data points from the input data as the initial
+    centers. This is a very fast method of initialization but can produce non-convergent
+    results if the chosen points are too close to each other.
 
-random_from_data
-  This will pick random data points from the input data as the initial
-  centers. This is a very fast method of initialization but can produce non-convergent
-  results if the chosen points are too close to each other.
+  random
+    Centers are chosen as a small perturbation away from the mean of all data.
+    This method is simple but can lead to the model taking longer to converge.
 
-random
-  Centers are chosen as a small perturbation away from the mean of all data.
-  This method is simple but can lead to the model taking longer to converge.
+  .. figure:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_init_001.png
+    :target: ../auto_examples/mixture/plot_gmm_init.html
+    :align: center
+    :scale: 50%
 
-.. figure:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_init_001.png
-   :target: ../auto_examples/mixture/plot_gmm_init.html
-   :align: center
-   :scale: 50%
+  .. rubric:: Examples
 
-.. topic:: Examples:
-
-    * See :ref:`sphx_glr_auto_examples_mixture_plot_gmm_init.py` for an example of
-      using different initializations in Gaussian Mixture.
-
-|details-end|
+  * See :ref:`sphx_glr_auto_examples_mixture_plot_gmm_init.py` for an example of
+    using different initializations in Gaussian Mixture.
 
 .. _bgmm:
 
@@ -276,63 +259,58 @@ from the two resulting mixtures.
 
 
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * See :ref:`sphx_glr_auto_examples_mixture_plot_gmm.py` for an example on
-      plotting the confidence ellipsoids for both :class:`GaussianMixture`
-      and :class:`BayesianGaussianMixture`.
+* See :ref:`sphx_glr_auto_examples_mixture_plot_gmm.py` for an example on
+  plotting the confidence ellipsoids for both :class:`GaussianMixture`
+  and :class:`BayesianGaussianMixture`.
 
-    * :ref:`sphx_glr_auto_examples_mixture_plot_gmm_sin.py` shows using
-      :class:`GaussianMixture` and :class:`BayesianGaussianMixture` to fit a
-      sine wave.
+* :ref:`sphx_glr_auto_examples_mixture_plot_gmm_sin.py` shows using
+  :class:`GaussianMixture` and :class:`BayesianGaussianMixture` to fit a
+  sine wave.
 
-    * See :ref:`sphx_glr_auto_examples_mixture_plot_concentration_prior.py`
-      for an example plotting the confidence ellipsoids for the
-      :class:`BayesianGaussianMixture` with different
-      ``weight_concentration_prior_type`` for different values of the parameter
-      ``weight_concentration_prior``.
+* See :ref:`sphx_glr_auto_examples_mixture_plot_concentration_prior.py`
+  for an example plotting the confidence ellipsoids for the
+  :class:`BayesianGaussianMixture` with different
+  ``weight_concentration_prior_type`` for different values of the parameter
+  ``weight_concentration_prior``.
 
-|details-start|
-**Pros and cons of variational inference with BayesianGaussianMixture**
-|details-split|
+.. dropdown:: Pros and cons of variational inference with BayesianGaussianMixture
 
-.. topic:: Pros:
+  .. rubric:: Pros
 
-    :Automatic selection: when ``weight_concentration_prior`` is small enough and
-      ``n_components`` is larger than what is found necessary by the model, the
-      Variational Bayesian mixture model has a natural tendency to set some mixture
-      weights values close to zero. This makes it possible to let the model choose
-      a suitable number of effective components automatically. Only an upper bound
-      of this number needs to be provided. Note however that the "ideal" number of
-      active components is very application specific and is typically ill-defined
-      in a data exploration setting.
+  :Automatic selection: When ``weight_concentration_prior`` is small enough and
+    ``n_components`` is larger than what is found necessary by the model, the
+    Variational Bayesian mixture model has a natural tendency to set some mixture
+    weights values close to zero. This makes it possible to let the model choose
+    a suitable number of effective components automatically. Only an upper bound
+    of this number needs to be provided. Note however that the "ideal" number of
+    active components is very application specific and is typically ill-defined
+    in a data exploration setting.
 
-    :Less sensitivity to the number of parameters: unlike finite models, which will
-      almost always use all components as much as they can, and hence will produce
-      wildly different solutions for different numbers of components, the
-      variational inference with a Dirichlet process prior
-      (``weight_concentration_prior_type='dirichlet_process'``) won't change much
-      with changes to the parameters, leading to more stability and less tuning.
+  :Less sensitivity to the number of parameters: Unlike finite models, which will
+    almost always use all components as much as they can, and hence will produce
+    wildly different solutions for different numbers of components, the
+    variational inference with a Dirichlet process prior
+    (``weight_concentration_prior_type='dirichlet_process'``) won't change much
+    with changes to the parameters, leading to more stability and less tuning.
 
-    :Regularization: due to the incorporation of prior information,
-      variational solutions have less pathological special cases than
-      expectation-maximization solutions.
+  :Regularization: Due to the incorporation of prior information,
+    variational solutions have less pathological special cases than
+    expectation-maximization solutions.
 
+  .. rubric:: Cons
 
-.. topic:: Cons:
+  :Speed: The extra parametrization necessary for variational inference makes
+    inference slower, although not by much.
 
-    :Speed: the extra parametrization necessary for variational inference makes
-      inference slower, although not by much.
+  :Hyperparameters: This algorithm needs an extra hyperparameter
+    that might need experimental tuning via cross-validation.
 
-    :Hyperparameters: this algorithm needs an extra hyperparameter
-      that might need experimental tuning via cross-validation.
-
-    :Bias: there are many implicit biases in the inference algorithms (and also in
-      the Dirichlet process if used), and whenever there is a mismatch between
-      these biases and the data it might be possible to fit better models using a
-      finite mixture.
-
-|details-end|
+  :Bias: There are many implicit biases in the inference algorithms (and also in
+    the Dirichlet process if used), and whenever there is a mismatch between
+    these biases and the data it might be possible to fit better models using a
+    finite mixture.
 
 .. _dirichlet_process:
 

@@ -9,6 +9,9 @@ This example shows how to use
 errors.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # We will load the diabetes dataset and create an instance of a linear
 # regression model.
@@ -74,6 +77,6 @@ plt.show()
 # :func:`~sklearn.model_selection.cross_val_predict`
 # when the different CV folds vary by size and distributions.
 #
-# In is recommended to compute per-fold performance metrics using:
+# It is recommended to compute per-fold performance metrics using:
 # :func:`~sklearn.model_selection.cross_val_score` or
 # :func:`~sklearn.model_selection.cross_validate` instead.

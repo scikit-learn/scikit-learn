@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numbers
 from itertools import chain
 from math import ceil
@@ -11,10 +14,11 @@ from ...utils import (
     Bunch,
     _safe_indexing,
     check_array,
-    check_matplotlib_support,  # noqa
     check_random_state,
 )
 from ...utils._encode import _unique
+from ...utils._optional_dependencies import check_matplotlib_support  # noqa
+from ...utils._plotting import _validate_style_kwargs
 from ...utils.parallel import Parallel, delayed
 from .. import partial_dependence
 from .._pd_utils import _check_feature_names, _get_feature_index
@@ -35,7 +39,7 @@ class PartialDependenceDisplay:
     :ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_visualization_api.py`
     and the :ref:`User Guide <partial_dependence>`.
 
-        .. versionadded:: 0.22
+    .. versionadded:: 0.22
 
     Parameters
     ----------
@@ -256,6 +260,7 @@ class PartialDependenceDisplay:
         n_cols=3,
         grid_resolution=100,
         percentiles=(0.05, 0.95),
+        custom_values=None,
         method="auto",
         n_jobs=None,
         verbose=0,
@@ -392,10 +397,20 @@ class PartialDependenceDisplay:
         grid_resolution : int, default=100
             The number of equally spaced points on the axes of the plots, for each
             target feature.
+            This parameter is overridden by `custom_values` if that parameter is set.
 
         percentiles : tuple of float, default=(0.05, 0.95)
             The lower and upper percentile used to create the extreme values
             for the PDP axes. Must be in [0, 1].
+            This parameter is overridden by `custom_values` if that parameter is set.
+
+        custom_values : dict
+            A dictionary mapping the index of an element of `features` to an
+            array of values where the partial dependence should be calculated
+            for that feature. Setting a range of values for a feature overrides
+            `grid_resolution` and `percentiles`.
+
+            .. versionadded:: 1.7
 
         method : str, default='auto'
             The method used to calculate the averaged predictions:
@@ -475,10 +490,10 @@ class PartialDependenceDisplay:
             - ``kind='average'`` results in the traditional PD plot;
             - ``kind='individual'`` results in the ICE plot.
 
-           Note that the fast `method='recursion'` option is only available for
-           `kind='average'` and `sample_weights=None`. Computing individual
-           dependencies and doing weighted averages requires using the slower
-           `method='brute'`.
+            Note that the fast `method='recursion'` option is only available for
+            `kind='average'` and `sample_weights=None`. Computing individual
+            dependencies and doing weighted averages requires using the slower
+            `method='brute'`.
 
         centered : bool, default=False
             If `True`, the ICE and PD lines will start at the origin of the
@@ -540,7 +555,7 @@ class PartialDependenceDisplay:
         # Use check_array only on lists and other non-array-likes / sparse. Do not
         # convert DataFrame into a NumPy array.
         if not (hasattr(X, "__array__") or sparse.issparse(X)):
-            X = check_array(X, force_all_finite="allow-nan", dtype=object)
+            X = check_array(X, ensure_all_finite="allow-nan", dtype=object)
         n_features = X.shape[1]
 
         feature_names = _check_feature_names(X, feature_names)
@@ -602,7 +617,7 @@ class PartialDependenceDisplay:
         else:
             # we need to create a boolean indicator of which features are
             # categorical from the categorical_features list.
-            categorical_features = np.array(categorical_features, copy=False)
+            categorical_features = np.asarray(categorical_features)
             if categorical_features.dtype.kind == "b":
                 # categorical features provided as a list of boolean
                 if categorical_features.size != n_features:
@@ -713,6 +728,7 @@ class PartialDependenceDisplay:
                 grid_resolution=grid_resolution,
                 percentiles=percentiles,
                 kind=kind_plot,
+                custom_values=custom_values,
             )
             for kind_plot, fxs in zip(kind_, features)
         )
@@ -744,7 +760,7 @@ class PartialDependenceDisplay:
                     X_col = _safe_indexing(X, fx, axis=1)
                     deciles[fx] = mquantiles(X_col, prob=np.arange(0.1, 1.0, 0.1))
 
-        display = PartialDependenceDisplay(
+        display = cls(
             pd_results=pd_results,
             features=features,
             feature_names=feature_names,
@@ -1291,7 +1307,7 @@ class PartialDependenceDisplay:
         if contour_kw is None:
             contour_kw = {}
         default_contour_kws = {"alpha": 0.75}
-        contour_kw = {**default_contour_kws, **contour_kw}
+        contour_kw = _validate_style_kwargs(default_contour_kws, contour_kw)
 
         n_features = len(self.features)
         is_average_plot = [kind_plot == "average" for kind_plot in kind]
@@ -1419,26 +1435,25 @@ class PartialDependenceDisplay:
                     default_ice_lines_kws = {}
                     default_pd_lines_kws = {}
 
-                ice_lines_kw = {
-                    **default_line_kws,
-                    **default_ice_lines_kws,
-                    **line_kw,
-                    **ice_lines_kw,
-                }
+                default_ice_lines_kws = {**default_line_kws, **default_ice_lines_kws}
+                default_pd_lines_kws = {**default_line_kws, **default_pd_lines_kws}
+
+                line_kw = _validate_style_kwargs(default_line_kws, line_kw)
+
+                ice_lines_kw = _validate_style_kwargs(
+                    _validate_style_kwargs(default_ice_lines_kws, line_kw), ice_lines_kw
+                )
                 del ice_lines_kw["label"]
 
-                pd_line_kw = {
-                    **default_line_kws,
-                    **default_pd_lines_kws,
-                    **line_kw,
-                    **pd_line_kw,
-                }
+                pd_line_kw = _validate_style_kwargs(
+                    _validate_style_kwargs(default_pd_lines_kws, line_kw), pd_line_kw
+                )
 
                 default_bar_kws = {"color": "C0"}
-                bar_kw = {**default_bar_kws, **bar_kw}
+                bar_kw = _validate_style_kwargs(default_bar_kws, bar_kw)
 
                 default_heatmap_kw = {}
-                heatmap_kw = {**default_heatmap_kw, **heatmap_kw}
+                heatmap_kw = _validate_style_kwargs(default_heatmap_kw, heatmap_kw)
 
                 self._plot_one_way_partial_dependence(
                     kind_plot,

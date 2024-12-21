@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from abc import abstractmethod
 from typing import List
 
@@ -102,6 +105,17 @@ class BaseDistancesReductionDispatcher:
         -------
         True if the dispatcher can be used, else False.
         """
+
+        # FIXME: the current Cython implementation is too slow for a large number of
+        # features. We temporarily disable it to fallback on SciPy's implementation.
+        # See: https://github.com/scikit-learn/scikit-learn/issues/28191
+        if (
+            issparse(X)
+            and issparse(Y)
+            and isinstance(metric, str)
+            and "euclidean" in metric
+        ):
+            return False
 
         def is_numpy_c_ordered(X):
             return hasattr(X, "flags") and getattr(X.flags, "c_contiguous", False)

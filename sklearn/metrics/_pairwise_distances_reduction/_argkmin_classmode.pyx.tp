@@ -4,10 +4,10 @@ from libcpp.map cimport map as cpp_map, pair as cpp_pair
 from libc.stdlib cimport free
 
 from ...utils._typedefs cimport intp_t, float64_t
+from ...utils.parallel import _get_threadpool_controller
 
 import numpy as np
 from scipy.sparse import issparse
-from sklearn.utils.fixes import threadpool_limits
 from ._classmode cimport WeightingStrategy
 
 {{for name_suffix in ["32", "64"]}}
@@ -66,7 +66,7 @@ cdef class ArgKminClassMode{{name_suffix}}(ArgKmin{{name_suffix}}):
 
         # Limit the number of threads in second level of nested parallelism for BLAS
         # to avoid threads over-subscription (in GEMM for instance).
-        with threadpool_limits(limits=1, user_api="blas"):
+        with _get_threadpool_controller().limit(limits=1, user_api="blas"):
             if pda.execute_in_parallel_on_Y:
                 pda._parallel_on_Y()
             else:

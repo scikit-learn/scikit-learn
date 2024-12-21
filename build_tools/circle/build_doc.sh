@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -e
+set -x
 
 # Decide what kind of documentation build to run, and run it.
 #
@@ -30,9 +31,16 @@ then
     then
         CIRCLE_BRANCH=$GITHUB_HEAD_REF
         CI_PULL_REQUEST=true
+        CI_TARGET_BRANCH=$GITHUB_BASE_REF
     else
         CIRCLE_BRANCH=$GITHUB_REF_NAME
     fi
+fi
+
+if [[ -n "$CI_PULL_REQUEST"  && -z "$CI_TARGET_BRANCH" ]]
+then
+    # Get the target branch name when using CircleCI
+    CI_TARGET_BRANCH=$(curl -s "https://api.github.com/repos/scikit-learn/scikit-learn/pulls/$CIRCLE_PR_NUMBER" | jq -r .base.ref)
 fi
 
 get_build_type() {
@@ -159,54 +167,70 @@ if [[ `type -t deactivate` ]]; then
   deactivate
 fi
 
-MAMBAFORGE_PATH=$HOME/mambaforge
-# Install dependencies with mamba
-wget -q https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-x86_64.sh \
-    -O mambaforge.sh
-chmod +x mambaforge.sh && ./mambaforge.sh -b -p $MAMBAFORGE_PATH
-export PATH="/usr/lib/ccache:$MAMBAFORGE_PATH/bin:$PATH"
+# Install Miniforge
+MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh"
+curl -L --retry 10 $MINIFORGE_URL -o miniconda.sh
+MINIFORGE_PATH=$HOME/miniforge3
+bash ./miniconda.sh -b -p $MINIFORGE_PATH
+source $MINIFORGE_PATH/etc/profile.d/conda.sh
+conda activate
 
+
+create_conda_environment_from_lock_file $CONDA_ENV_NAME $LOCK_FILE
+conda activate $CONDA_ENV_NAME
+
+# Sets up ccache when using system compiler
+export PATH="/usr/lib/ccache:$PATH"
+# Sets up ccache when using conda-forge compilers (needs to be after conda
+# activate which sets CC and CXX)
+export CC="ccache $CC"
+export CXX="ccache $CXX"
 ccache -M 512M
 export CCACHE_COMPRESS=1
-
-# pin conda-lock to latest released version (needs manual update from time to time)
-mamba install "$(get_dep conda-lock min)" -y
-
-conda-lock install --log-level DEBUG --name $CONDA_ENV_NAME $LOCK_FILE
-source activate $CONDA_ENV_NAME
+# Zeroing statistics so that ccache statistics are shown only for this build
+ccache -z
 
 show_installed_libraries
 
-# Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
-# workers with 2 cores when building the compiled extensions of scikit-learn.
-export SKLEARN_BUILD_PARALLEL=3
-pip install -e . --no-build-isolation
+# Specify explictly ninja -j argument because ninja does not handle cgroups v2 and
+# use the same default rule as ninja (-j3 since we have 2 cores on CircleCI), see
+# https://github.com/scikit-learn/scikit-learn/pull/30333
+pip install -e . --no-build-isolation --config-settings=compile-args="-j 3"
 
 echo "ccache build summary:"
 ccache -s
 
 export OMP_NUM_THREADS=1
 
+if [[ "$CIRCLE_BRANCH" == "main" || "$CI_TARGET_BRANCH" == "main" ]]
+then
+    towncrier build --yes
+fi
+
 if [[ "$CIRCLE_BRANCH" =~ ^main$ && -z "$CI_PULL_REQUEST" ]]
 then
     # List available documentation versions if on main
-    python build_tools/circle/list_versions.py > doc/versions.rst
+    python build_tools/circle/list_versions.py --json doc/js/versions.json --rst doc/versions.rst
 fi
 
 
 # The pipefail is requested to propagate exit code
 set -o pipefail && cd doc && make $make_args 2>&1 | tee ~/log.txt
 
-# Insert the version warning for deployment
-find _build/html/stable -name "*.html" | xargs sed -i '/<\/body>/ i \
-\    <script src="https://scikit-learn.org/versionwarning.js"></script>'
-
 cd -
 set +o pipefail
 
 affected_doc_paths() {
+    scikit_learn_version=$(python -c 'import re; import sklearn; print(re.sub(r"(\d+\.\d+).+", r"\1", sklearn.__version__))')
     files=$(git diff --name-only origin/main...$CIRCLE_SHA1)
-    echo "$files" | grep ^doc/.*\.rst | sed 's/^doc\/\(.*\)\.rst$/\1.html/'
+    # use sed to replace files ending by .rst or .rst.template by .html
+    echo "$files" | grep -vP 'upcoming_changes/.*/\d+.*\.rst' | grep ^doc/.*\.rst | \
+        sed 's/^doc\/\(.*\)\.rst$/\1.html/; s/^doc\/\(.*\)\.rst\.template$/\1.html/'
+    # replace towncrier fragment files by link to changelog. uniq is used
+    # because in some edge cases multiple fragments can be added and we want a
+    # single link to the changelog.
+    echo "$files" | grep -P 'upcoming_changes/.*/\d+.*\.rst' | sed "s@.*@whats_new/v${scikit_learn_version}.html@" | uniq
+
     echo "$files" | grep ^examples/.*.py | sed 's/^\(.*\)\.py$/auto_\1.html/'
     sklearn_files=$(echo "$files" | grep '^sklearn/')
     if [ -n "$sklearn_files" ]
@@ -244,7 +268,7 @@ then
     (
     echo '<html><body><ul>'
     echo "$affected" | sed 's|.*|<li><a href="&">&</a> [<a href="https://scikit-learn.org/dev/&">dev</a>, <a href="https://scikit-learn.org/stable/&">stable</a>]</li>|'
-    echo '</ul><p>General: <a href="index.html">Home</a> | <a href="modules/classes.html">API Reference</a> | <a href="auto_examples/index.html">Examples</a></p>'
+    echo '</ul><p>General: <a href="index.html">Home</a> | <a href="api/index.html">API Reference</a> | <a href="auto_examples/index.html">Examples</a></p>'
     echo '<strong>Sphinx Warnings in affected files</strong><ul>'
     echo "$warnings" | sed 's/\/home\/circleci\/project\//<li>/g'
     echo '</ul></body></html>'

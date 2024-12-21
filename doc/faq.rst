@@ -1,16 +1,46 @@
+.. raw:: html
+
+  <style>
+    /* h3 headings on this page are the questions; make them rubric-like */
+    h3 {
+      font-size: 1rem;
+      font-weight: bold;
+      padding-bottom: 0.2rem;
+      margin: 2rem 0 1.15rem 0;
+      border-bottom: 1px solid var(--pst-color-border);
+    }
+
+    /* Increase top margin for first question in each section */
+    h2 + section > h3 {
+      margin-top: 2.5rem;
+    }
+
+    /* Make the headerlinks a bit more visible */
+    h3 > a.headerlink {
+      font-size: 0.9rem;
+    }
+
+    /* Remove the backlink decoration on the titles */
+    h2 > a.toc-backref,
+    h3 > a.toc-backref {
+      text-decoration: none;
+    }
+  </style>
+
 .. _faq:
 
-===========================
+==========================
 Frequently Asked Questions
-===========================
+==========================
 
 .. currentmodule:: sklearn
 
 Here we try to give some answers to questions that regularly pop up on the mailing list.
 
 .. contents:: Table of Contents
-   :local:
-   :depth: 2
+  :local:
+  :depth: 2
+
 
 About the project
 -----------------
@@ -32,29 +62,36 @@ Apart from scikit-learn, another popular one is `scikit-image <https://scikit-im
 Do you support PyPy?
 ^^^^^^^^^^^^^^^^^^^^
 
-scikit-learn is regularly tested and maintained to work with
-`PyPy <https://pypy.org/>`_ (an alternative Python implementation with
-a built-in just-in-time compiler).
+Due to limited maintainer resources and small number of users, using
+scikit-learn with `PyPy <https://pypy.org/>`_ (an alternative Python
+implementation with a built-in just-in-time compiler) is not officially
+supported.
 
-Note however that this support is still considered experimental and specific
-components might behave slightly differently. Please refer to the test
-suite of the specific module of interest for more details.
+How can I obtain permission to use the images in scikit-learn for my work?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+The images contained in the `scikit-learn repository
+<https://github.com/scikit-learn/scikit-learn>`_ and the images generated within
+the `scikit-learn documentation <https://scikit-learn.org/stable/index.html>`_
+can be used via the `BSD 3-Clause License
+<https://github.com/scikit-learn/scikit-learn?tab=BSD-3-Clause-1-ov-file>`_ for
+your work. Citations of scikit-learn are highly encouraged and appreciated. See
+:ref:`citing scikit-learn <citing-scikit-learn>`.
 
 Implementation decisions
 ------------------------
 
-Why is there no support for deep or reinforcement learning / Will there be support for deep or reinforcement learning in scikit-learn?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Why is there no support for deep or reinforcement learning? Will there be such support in the future?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Deep learning and reinforcement learning both require a rich vocabulary to
 define an architecture, with deep learning additionally requiring
 GPUs for efficient computing. However, neither of these fit within
-the design constraints of scikit-learn; as a result, deep learning
+the design constraints of scikit-learn. As a result, deep learning
 and reinforcement learning are currently out of scope for what
 scikit-learn seeks to achieve.
 
-You can find more information about addition of gpu support at
+You can find more information about the addition of GPU support at
 `Will you add GPU support?`_.
 
 Note that scikit-learn currently implements a simple multilayer perceptron
@@ -62,7 +99,7 @@ in :mod:`sklearn.neural_network`. We will only accept bug fixes for this module.
 If you want to implement more complex deep learning models, please turn to
 popular deep learning frameworks such as
 `tensorflow <https://www.tensorflow.org/>`_,
-`keras <https://keras.io/>`_
+`keras <https://keras.io/>`_,
 and `pytorch <https://pytorch.org/>`_.
 
 .. _adding_graphical_models:
@@ -85,12 +122,12 @@ do structured prediction:
 * `pystruct <https://pystruct.github.io/>`_ handles general structured
   learning (focuses on SSVMs on arbitrary graph structures with
   approximate inference; defines the notion of sample as an instance of
-  the graph structure)
+  the graph structure).
 
 * `seqlearn <https://larsmans.github.io/seqlearn/>`_ handles sequences only
   (focuses on exact inference; has HMMs, but mostly for the sake of
   completeness; treats a feature vector as a sample and uses an offset encoding
-  for the dependencies between feature vectors)
+  for the dependencies between feature vectors).
 
 Why did you remove HMMs from scikit-learn?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -100,63 +137,97 @@ See :ref:`adding_graphical_models`.
 Will you add GPU support?
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-No, or at least not in the near future. The main reason is that GPU support
-will introduce many software dependencies and introduce platform specific
-issues. scikit-learn is designed to be easy to install on a wide variety of
-platforms. Outside of neural networks, GPUs don't play a large role in machine
-learning today, and much larger gains in speed can often be achieved by a
-careful choice of algorithms.
+Adding GPU support by default would introduce heavy hardware-specific software
+dependencies and existing algorithms would need to be reimplemented. This would
+make it both harder for the average user to install scikit-learn and harder for
+the developers to maintain the code.
+
+However, since 2023, a limited but growing :ref:`list of scikit-learn
+estimators <array_api_supported>` can already run on GPUs if the input data is
+provided as a PyTorch or CuPy array and if scikit-learn has been configured to
+accept such inputs as explained in :ref:`array_api`. This Array API support
+allows scikit-learn to run on GPUs without introducing heavy and
+hardware-specific software dependencies to the main package.
+
+Most estimators that rely on NumPy for their computationally intensive operations
+can be considered for Array API support and therefore GPU support.
+
+However, not all scikit-learn estimators are amenable to efficiently running
+on GPUs via the Array API for fundamental algorithmic reasons. For instance,
+tree-based models currently implemented with Cython in scikit-learn are
+fundamentally not array-based algorithms. Other algorithms such as k-means or
+k-nearest neighbors rely on array-based algorithms but are also implemented in
+Cython. Cython is used to manually interleave consecutive array operations to
+avoid introducing performance killing memory access to large intermediate
+arrays: this low-level algorithmic rewrite is called "kernel fusion" and cannot
+be expressed via the Array API for the foreseeable future.
+
+Adding efficient GPU support to estimators that cannot be efficiently
+implemented with the Array API would require designing and adopting a more
+flexible extension system for scikit-learn. This possibility is being
+considered in the following GitHub issue (under discussion):
+
+- https://github.com/scikit-learn/scikit-learn/issues/22438
+
 
 Why do categorical variables need preprocessing in scikit-learn, compared to other tools?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Most of scikit-learn assumes data is in NumPy arrays or SciPy sparse matrices
 of a single numeric dtype. These do not explicitly represent categorical
-variables at present. Thus, unlike R's data.frames or pandas.DataFrame, we
-require explicit conversion of categorical features to numeric values, as
+variables at present. Thus, unlike R's ``data.frames`` or :class:`pandas.DataFrame`,
+we require explicit conversion of categorical features to numeric values, as
 discussed in :ref:`preprocessing_categorical_features`.
 See also :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py` for an
 example of working with heterogeneous (e.g. categorical and numeric) data.
 
-Why does Scikit-learn not directly work with, for example, pandas.DataFrame?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Note that recently, :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
+:class:`~sklearn.ensemble.HistGradientBoostingRegressor` gained native support for
+categorical features through the option `categorical_features="from_dtype"`. This
+option relies on inferring which columns of the data are categorical based on the
+:class:`pandas.CategoricalDtype` and :class:`polars.datatypes.Categorical` dtypes.
 
-The homogeneous NumPy and SciPy data objects currently expected are most
-efficient to process for most operations. Extensive work would also be needed
-to support Pandas categorical types. Restricting input to homogeneous
-types therefore reduces maintenance cost and encourages usage of efficient
-data structures.
+Does scikit-learn work natively with various types of dataframes?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Note however that :class:`~sklearn.compose.ColumnTransformer` makes it
-convenient to handle heterogeneous pandas dataframes by mapping homogeneous subsets of
-dataframe columns selected by name or dtype to dedicated scikit-learn transformers.
+Scikit-learn has limited support for :class:`pandas.DataFrame` and
+:class:`polars.DataFrame`. Scikit-learn estimators can accept both these dataframe types
+as input, and scikit-learn transformers can output dataframes using the `set_output`
+API. For more details, refer to
+:ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`.
 
-Therefore :class:`~sklearn.compose.ColumnTransformer` are often used in the first
-step of scikit-learn pipelines when dealing
-with heterogeneous dataframes (see :ref:`pipeline` for more details).
+However, the internal computations in scikit-learn estimators rely on numerical
+operations that are more efficiently performed on homogeneous data structures such as
+NumPy arrays or SciPy sparse matrices. As a result, most scikit-learn estimators will
+internally convert dataframe inputs into these homogeneous data structures. Similarly,
+dataframe outputs are generated from these homogeneous data structures.
+
+Also note that :class:`~sklearn.compose.ColumnTransformer` makes it convenient to handle
+heterogeneous pandas dataframes by mapping homogeneous subsets of dataframe columns
+selected by name or dtype to dedicated scikit-learn transformers. Therefore
+:class:`~sklearn.compose.ColumnTransformer` are often used in the first step of
+scikit-learn pipelines when dealing with heterogeneous dataframes (see :ref:`pipeline`
+for more details).
 
 See also :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`
 for an example of working with heterogeneous (e.g. categorical and numeric) data.
 
-Do you plan to implement transform for target y in a pipeline?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Currently transform only works for features X in a pipeline.
-There's a long-standing discussion about
-not being able to transform y in a pipeline.
-Follow on github issue
-`#4143 <https://github.com/scikit-learn/scikit-learn/issues/4143>`_.
-Meanwhile check out
+Do you plan to implement transform for target ``y`` in a pipeline?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Currently transform only works for features ``X`` in a pipeline. There's a
+long-standing discussion about not being able to transform ``y`` in a pipeline.
+Follow on GitHub issue :issue:`4143`. Meanwhile, you can check out
 :class:`~compose.TransformedTargetRegressor`,
 `pipegraph <https://github.com/mcasl/PipeGraph>`_,
-`imbalanced-learn <https://github.com/scikit-learn-contrib/imbalanced-learn>`_.
-Note that Scikit-learn solved for the case where y
+and `imbalanced-learn <https://github.com/scikit-learn-contrib/imbalanced-learn>`_.
+Note that scikit-learn solved for the case where ``y``
 has an invertible transformation applied before training
-and inverted after prediction. Scikit-learn intends to solve for
-use cases where y should be transformed at training time
-and not at test time, for resampling and similar uses,
-like at `imbalanced-learn`.
+and inverted after prediction. scikit-learn intends to solve for
+use cases where ``y`` should be transformed at training time
+and not at test time, for resampling and similar uses, like at
+`imbalanced-learn <https://github.com/scikit-learn-contrib/imbalanced-learn>`_.
 In general, these use cases can be solved
-with a custom meta estimator rather than a Pipeline
+with a custom meta estimator rather than a :class:`~pipeline.Pipeline`.
 
 Why are there so many different estimators for linear models?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -174,16 +245,17 @@ each other. Let us have a look at
 - :class:`~linear_model.Ridge`, L2 penalty
 - :class:`~linear_model.Lasso`, L1 penalty (sparse models)
 - :class:`~linear_model.ElasticNet`, L1 + L2 penalty (less sparse models)
-- :class:`~linear_model.SGDRegressor` with `loss='squared_loss'`
+- :class:`~linear_model.SGDRegressor` with `loss="squared_loss"`
 
 **Maintainer perspective:**
 They all do in principle the same and are different only by the penalty they
 impose. This, however, has a large impact on the way the underlying
 optimization problem is solved. In the end, this amounts to usage of different
-methods and tricks from linear algebra. A special case is `SGDRegressor` which
+methods and tricks from linear algebra. A special case is
+:class:`~linear_model.SGDRegressor` which
 comprises all 4 previous models and is different by the optimization procedure.
 A further side effect is that the different estimators favor different data
-layouts (`X` c-contiguous or f-contiguous, sparse csr or csc). This complexity
+layouts (`X` C-contiguous or F-contiguous, sparse csr or csc). This complexity
 of the seemingly simple linear models is the reason for having different
 estimator classes for different penalties.
 
@@ -230,8 +302,8 @@ this reason.
 
 .. _new_algorithms_inclusion_criteria:
 
-What are the inclusion criteria for new algorithms ?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+What are the inclusion criteria for new algorithms?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 We only consider well-established algorithms for inclusion. A rule of thumb is
 at least 3 years since publication, 200+ citations, and wide use and
@@ -256,8 +328,8 @@ Inclusion of a new algorithm speeding up an existing model is easier if:
 - it does not introduce new hyper-parameters (as it makes the library
   more future-proof),
 - it is easy to document clearly when the contribution improves the speed
-  and when it does not, for instance "when n_features >>
-  n_samples",
+  and when it does not, for instance, "when ``n_features >>
+  n_samples``",
 - benchmarks clearly show a speed up.
 
 Also, note that your implementation need not be in scikit-learn to be used
@@ -282,7 +354,7 @@ at which point the original author might long have lost interest.
 See also :ref:`new_algorithms_inclusion_criteria`. For a great read about
 long-term maintenance issues in open-source software, look at
 `the Executive Summary of Roads and Bridges
-<https://www.fordfoundation.org/media/2976/roads-and-bridges-the-unseen-labor-behind-our-digital-infrastructure.pdf#page=8>`_
+<https://www.fordfoundation.org/media/2976/roads-and-bridges-the-unseen-labor-behind-our-digital-infrastructure.pdf#page=8>`_.
 
 
 Using scikit-learn
@@ -290,25 +362,25 @@ Using scikit-learn
 
 What's the best way to get help on scikit-learn usage?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-**For general machine learning questions**, please use
-`Cross Validated <https://stats.stackexchange.com/>`_ with the ``[machine-learning]`` tag.
 
-**For scikit-learn usage questions**, please use `Stack Overflow <https://stackoverflow.com/questions/tagged/scikit-learn>`_
-with the ``[scikit-learn]`` and ``[python]`` tags. You can alternatively use the `mailing list
-<https://mail.python.org/mailman/listinfo/scikit-learn>`_.
+* General machine learning questions: use `Cross Validated
+  <https://stats.stackexchange.com/>`_ with the ``[machine-learning]`` tag.
+
+* scikit-learn usage questions: use `Stack Overflow
+  <https://stackoverflow.com/questions/tagged/scikit-learn>`_ with the
+  ``[scikit-learn]`` and ``[python]`` tags. You can alternatively use the `mailing list
+  <https://mail.python.org/mailman/listinfo/scikit-learn>`_.
 
 Please make sure to include a minimal reproduction code snippet (ideally shorter
 than 10 lines) that highlights your problem on a toy dataset (for instance from
-``sklearn.datasets`` or randomly generated with functions of ``numpy.random`` with
+:mod:`sklearn.datasets` or randomly generated with functions of ``numpy.random`` with
 a fixed random seed). Please remove any line of code that is not necessary to
 reproduce your problem.
 
 The problem should be reproducible by simply copy-pasting your code snippet in a Python
 shell with scikit-learn installed. Do not forget to include the import statements.
-
 More guidance to write good reproduction code snippets can be found at:
-
-https://stackoverflow.com/help/mcve
+https://stackoverflow.com/help/mcve.
 
 If your problem raises an exception that you do not understand (even after googling it),
 please make sure to include the full traceback that you obtain when running the
@@ -317,12 +389,9 @@ reproduction script.
 For bug reports or feature requests, please make use of the
 `issue tracker on GitHub <https://github.com/scikit-learn/scikit-learn/issues>`_.
 
-There is also a `scikit-learn Gitter channel
-<https://gitter.im/scikit-learn/scikit-learn>`_ where some users and developers
-might be found.
-
-**Please do not email any authors directly to ask for assistance, report bugs,
-or for any other issue related to scikit-learn.**
+.. warning::
+  Please do not email any authors directly to ask for assistance, report bugs,
+  or for any other issue related to scikit-learn.
 
 How should I save, export or deploy estimators for production?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -336,15 +405,15 @@ Bunch objects are sometimes used as an output for functions and methods. They
 extend dictionaries by enabling values to be accessed by key,
 `bunch["value_key"]`, or by an attribute, `bunch.value_key`.
 
-They should not be used as an input; therefore you almost never need to create
-a ``Bunch`` object, unless you are extending the scikit-learn's API.
+They should not be used as an input. Therefore you almost never need to create
+a :class:`~utils.Bunch` object, unless you are extending scikit-learn's API.
 
 How can I load my own datasets into a format usable by scikit-learn?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Generally, scikit-learn works on any numeric data stored as numpy arrays
 or scipy sparse matrices. Other types that are convertible to numeric
-arrays such as pandas DataFrame are also acceptable.
+arrays such as :class:`pandas.DataFrame` are also acceptable.
 
 For more information on loading your data files into these usable data
 structures, please refer to :ref:`loading external datasets <external_datasets>`.
@@ -363,7 +432,7 @@ For more general feature extraction from any kind of data, see
 
 Another common case is when you have non-numerical data and a custom distance
 (or similarity) metric on these data. Examples include strings with edit
-distance (aka. Levenshtein distance; e.g., DNA or RNA sequences). These can be
+distance (aka. Levenshtein distance), for instance, DNA or RNA sequences. These can be
 encoded as numbers, but doing so is painful and error-prone. Working with
 distance metrics on arbitrary data can be done in two ways.
 
@@ -371,15 +440,15 @@ Firstly, many estimators take precomputed distance/similarity matrices, so if
 the dataset is not too large, you can compute distances for all pairs of inputs.
 If the dataset is large, you can use feature vectors with only one "feature",
 which is an index into a separate data structure, and supply a custom metric
-function that looks up the actual data in this data structure. E.g., to use
-DBSCAN with Levenshtein distances::
+function that looks up the actual data in this data structure. For instance, to use
+:class:`~cluster.dbscan` with Levenshtein distances::
 
-    >>> from leven import levenshtein       # doctest: +SKIP
     >>> import numpy as np
+    >>> from leven import levenshtein  # doctest: +SKIP
     >>> from sklearn.cluster import dbscan
     >>> data = ["ACCTCCTAGAAG", "ACCTACTAGAAGTT", "GAATATTAGGCCGA"]
     >>> def lev_metric(x, y):
-    ...     i, j = int(x[0]), int(y[0])     # extract indices
+    ...     i, j = int(x[0]), int(y[0])  # extract indices
     ...     return levenshtein(data[i], data[j])
     ...
     >>> X = np.arange(len(data)).reshape(-1, 1)
@@ -389,25 +458,24 @@ DBSCAN with Levenshtein distances::
            [2]])
     >>> # We need to specify algorithm='brute' as the default assumes
     >>> # a continuous feature space.
-    >>> dbscan(X, metric=lev_metric, eps=5, min_samples=2, algorithm='brute')
-    ... # doctest: +SKIP
-    ([0, 1], array([ 0,  0, -1]))
+    >>> dbscan(X, metric=lev_metric, eps=5, min_samples=2, algorithm='brute')  # doctest: +SKIP
+    (array([0, 1]), array([ 0,  0, -1]))
 
-(This uses the third-party edit distance package ``leven``.)
+Note that the example above uses the third-party edit distance package
+`leven <https://pypi.org/project/leven/>`_. Similar tricks can be used,
+with some care, for tree kernels, graph kernels, etc.
 
-Similar tricks can be used, with some care, for tree kernels, graph kernels,
-etc.
+Why do I sometimes get a crash/freeze with ``n_jobs > 1`` under OSX or Linux?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Why do I sometime get a crash/freeze with n_jobs > 1 under OSX or Linux?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Several scikit-learn tools such as ``GridSearchCV`` and ``cross_val_score``
-rely internally on Python's `multiprocessing` module to parallelize execution
+Several scikit-learn tools such as :class:`~model_selection.GridSearchCV` and
+:class:`~model_selection.cross_val_score` rely internally on Python's
+:mod:`multiprocessing` module to parallelize execution
 onto several Python processes by passing ``n_jobs > 1`` as an argument.
 
-The problem is that Python ``multiprocessing`` does a ``fork`` system call
+The problem is that Python :mod:`multiprocessing` does a ``fork`` system call
 without following it with an ``exec`` system call for performance reasons. Many
-libraries like (some versions of) Accelerate / vecLib under OSX, (some versions
+libraries like (some versions of) Accelerate or vecLib under OSX, (some versions
 of) MKL, the OpenMP runtime of GCC, nvidia's Cuda (and probably many others),
 manage their own internal thread pool. Upon a call to `fork`, the thread pool
 state in the child process is corrupted: the thread pool believes it has many
@@ -418,30 +486,30 @@ main since 0.2.10) and we contributed a `patch
 <https://gcc.gnu.org/bugzilla/show_bug.cgi?id=60035>`_ to GCC's OpenMP runtime
 (not yet reviewed).
 
-But in the end the real culprit is Python's ``multiprocessing`` that does
+But in the end the real culprit is Python's :mod:`multiprocessing` that does
 ``fork`` without ``exec`` to reduce the overhead of starting and using new
 Python processes for parallel computing. Unfortunately this is a violation of
 the POSIX standard and therefore some software editors like Apple refuse to
-consider the lack of fork-safety in Accelerate / vecLib as a bug.
+consider the lack of fork-safety in Accelerate and vecLib as a bug.
 
-In Python 3.4+ it is now possible to configure ``multiprocessing`` to
-use the 'forkserver' or 'spawn' start methods (instead of the default
-'fork') to manage the process pools. To work around this issue when
+In Python 3.4+ it is now possible to configure :mod:`multiprocessing` to
+use the ``"forkserver"`` or ``"spawn"`` start methods (instead of the default
+``"fork"``) to manage the process pools. To work around this issue when
 using scikit-learn, you can set the ``JOBLIB_START_METHOD`` environment
-variable to 'forkserver'. However the user should be aware that using
-the 'forkserver' method prevents joblib.Parallel to call function
+variable to ``"forkserver"``. However the user should be aware that using
+the ``"forkserver"`` method prevents :class:`joblib.Parallel` to call function
 interactively defined in a shell session.
 
-If you have custom code that uses ``multiprocessing`` directly instead of using
-it via joblib you can enable the 'forkserver' mode globally for your
-program: Insert the following instructions in your main script::
+If you have custom code that uses :mod:`multiprocessing` directly instead of using
+it via :mod:`joblib` you can enable the ``"forkserver"`` mode globally for your
+program. Insert the following instructions in your main script::
 
     import multiprocessing
 
     # other imports, custom code, load data, define model...
 
-    if __name__ == '__main__':
-        multiprocessing.set_start_method('forkserver')
+    if __name__ == "__main__":
+        multiprocessing.set_start_method("forkserver")
 
         # call scikit-learn utils with n_jobs > 1 here
 
@@ -450,20 +518,20 @@ documentation <https://docs.python.org/3/library/multiprocessing.html#contexts-a
 
 .. _faq_mkl_threading:
 
-Why does my job use more cores than specified with n_jobs?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Why does my job use more cores than specified with ``n_jobs``?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This is because ``n_jobs`` only controls the number of jobs for
-routines that are parallelized with ``joblib``, but parallel code can come
+routines that are parallelized with :mod:`joblib`, but parallel code can come
 from other sources:
 
 - some routines may be parallelized with OpenMP (for code written in C or
-  Cython).
+  Cython),
 - scikit-learn relies a lot on numpy, which in turn may rely on numerical
   libraries like MKL, OpenBLAS or BLIS which can provide parallel
   implementations.
 
-For more details, please refer to our :ref:`Parallelism notes <parallelism>`.
+For more details, please refer to our :ref:`notes on parallelism <parallelism>`.
 
 How do I set a ``random_state`` for an entire execution?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

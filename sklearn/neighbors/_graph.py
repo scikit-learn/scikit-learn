@@ -1,9 +1,8 @@
 """Nearest Neighbors graph functions"""
 
-# Author: Jake Vanderplas <vanderplas@astro.washington.edu>
-#         Tom Dupre la Tour
-#
-# License: BSD 3 clause (C) INRIA, University of Amsterdam
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import itertools
 
 from ..base import ClassNamePrefixFeaturesOutMixin, TransformerMixin, _fit_context
@@ -45,7 +44,7 @@ def _query_include_self(X, include_self, mode):
 
 @validate_params(
     {
-        "X": ["array-like", KNeighborsMixin],
+        "X": ["array-like", "sparse matrix", KNeighborsMixin],
         "n_neighbors": [Interval(Integral, 1, None, closed="left")],
         "mode": [StrOptions({"connectivity", "distance"})],
         "metric": [StrOptions(set(itertools.chain(*VALID_METRICS.values()))), callable],
@@ -73,7 +72,7 @@ def kneighbors_graph(
 
     Parameters
     ----------
-    X : array-like of shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Sample data.
 
     n_neighbors : int
@@ -150,7 +149,7 @@ def kneighbors_graph(
 
 @validate_params(
     {
-        "X": ["array-like", RadiusNeighborsMixin],
+        "X": ["array-like", "sparse matrix", RadiusNeighborsMixin],
         "radius": [Interval(Real, 0, None, closed="both")],
         "mode": [StrOptions({"connectivity", "distance"})],
         "metric": [StrOptions(set(itertools.chain(*VALID_METRICS.values()))), callable],
@@ -181,7 +180,7 @@ def radius_neighbors_graph(
 
     Parameters
     ----------
-    X : array-like of shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Sample data.
 
     radius : float
@@ -362,6 +361,12 @@ class KNeighborsTransformer(
     RadiusNeighborsTransformer : Transform X into a weighted graph of
         neighbors nearer than a radius.
 
+    Notes
+    -----
+    For an example of using :class:`~sklearn.neighbors.KNeighborsTransformer`
+    in combination with :class:`~sklearn.manifold.TSNE` see
+    :ref:`sphx_glr_auto_examples_neighbors_approximate_nearest_neighbors.py`.
+
     Examples
     --------
     >>> from sklearn.datasets import load_wine
@@ -393,7 +398,7 @@ class KNeighborsTransformer(
         metric_params=None,
         n_jobs=None,
     ):
-        super(KNeighborsTransformer, self).__init__(
+        super().__init__(
             n_neighbors=n_neighbors,
             radius=None,
             algorithm=algorithm,
@@ -474,13 +479,6 @@ class KNeighborsTransformer(
             The matrix is of CSR format.
         """
         return self.fit(X).transform(X)
-
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_methods_sample_order_invariance": "check is not applicable."
-            }
-        }
 
 
 class RadiusNeighborsTransformer(
@@ -625,7 +623,7 @@ class RadiusNeighborsTransformer(
         metric_params=None,
         n_jobs=None,
     ):
-        super(RadiusNeighborsTransformer, self).__init__(
+        super().__init__(
             n_neighbors=None,
             radius=radius,
             algorithm=algorithm,
@@ -704,10 +702,3 @@ class RadiusNeighborsTransformer(
             The matrix is of CSR format.
         """
         return self.fit(X).transform(X)
-
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_methods_sample_order_invariance": "check is not applicable."
-            }
-        }
