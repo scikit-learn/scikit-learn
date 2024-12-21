@@ -109,6 +109,20 @@ def dbscan(
         If precomputed distance are used, parallel execution is not available
         and thus n_jobs will have no effect.
 
+    subsample : float, default=None
+        Should be between [0, 1]. By default, no sampling is done.
+        Sampling probability, representing the proportion of the dataset
+        that can be labeled a core sample. The lower the subsample, the
+        less memory and computation is used.
+        See: Jang, J. and Jiang, H. "DBSCAN++: Towards fast and scalable
+        density clustering". Proceedings of the 36th International Conference
+        on Machine Learning, 2019.
+
+    random_state : int, RandomState instance or None, default=None
+        Only relevant when ``subsample`` is set. Controls the randomness
+        of the subsampling. Pass an int for reproducible output across
+        multiple function calls. See :term:`Glossary <random_state>`.
+
     Returns
     -------
     core_samples : ndarray of shape (n_core_samples,)
@@ -301,6 +315,9 @@ class DBSCAN(ClusterMixin, BaseEstimator):
 
     Another way to reduce memory and computation time is to remove
     (near-)duplicate points and use ``sample_weight`` instead.
+
+    Yet another way is to use ``subsample`` in order to reduce the core
+    samples search space.
 
     :class:`~sklearn.cluster.OPTICS` provides a similar clustering with lower memory
     usage.
