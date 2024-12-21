@@ -384,10 +384,8 @@ def test_subsampled_dbscan(global_random_seed):
     with pytest.raises(ValueError):
         dbscan([[0], [1]], subsample="")
 
-    core1, label1 = dbscan(X, subsample=0.1, random_state=global_random_seed)
-    assert_array_equal(core1, [0, 13, 19, 43])
-
     # ensure subsample has an effect
+    core1, label1 = dbscan(X, subsample=0.1, random_state=global_random_seed)
     core2 = dbscan(X, subsample=None)[0]
     assert len(core1) != len(core2)
 

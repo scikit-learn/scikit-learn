@@ -24,6 +24,8 @@ from ._dbscan_inner import dbscan_inner
     {
         "X": ["array-like", "sparse matrix"],
         "sample_weight": ["array-like", None],
+        "subsample": [Interval(Real, 0, 1, closed="neither"), None],
+        "random_state": ["random_state"],
     },
     prefer_skip_nested_validation=False,
 )
@@ -389,21 +391,18 @@ class DBSCAN(ClusterMixin, BaseEstimator):
             Note that weights are absolute, and default to 1.
 
         subsample : float, default=None
-            Sampling probability. By default, no sampling is done. Between 0.0
-            and 1.0 and represents the proportion of the dataset that can be
-            labeled a core sample. All data points are still used in the
-            eps-neighborhood graph. The lower the subsample, the less memory
-            and computation is used. For large datasets, subsampled DBSCAN
-            is sub-quadratic and has comparable performance to full DBSCAN.
+            Should be between [0, 1]. By default, no sampling is done.
+            Sampling probability, representing the proportion of the dataset
+            that can be labeled a core sample. The lower the subsample, the
+            less memory and computation is used.
             See: Jang, J. and Jiang, H. "DBSCAN++: Towards fast and scalable
             density clustering". Proceedings of the 36th International Conference
             on Machine Learning, 2019.
 
         random_state : int, RandomState instance or None, default=None
-            Only relevant when ``subsample`` is set; has no effect otherwise.
-            Controls the randomness of the subsampling. Pass an int for
-            reproducible output across multiple function calls.
-            See :term:`Glossary <random_state>`.
+            Only relevant when ``subsample`` is set. Controls the randomness
+            of the subsampling. Pass an int for reproducible output across
+            multiple function calls. See :term:`Glossary <random_state>`.
 
         Returns
         -------
@@ -511,21 +510,18 @@ class DBSCAN(ClusterMixin, BaseEstimator):
             Note that weights are absolute, and default to 1.
 
         subsample : float, default=None
-            Sampling probability. By default, no sampling is done. Between 0.0
-            and 1.0 and represents the proportion of the dataset that can be
-            labeled a core sample. All data points are still used in the
-            eps-neighborhood graph. The lower the subsample, the less memory
-            and computation is used. For large datasets, subsampled DBSCAN
-            is sub-quadratic and has comparable performance to full DBSCAN.
+            Should be between [0, 1]. By default, no sampling is done.
+            Sampling probability, representing the proportion of the dataset
+            that can be labeled a core sample. The lower the subsample, the
+            less memory and computation is used.
             See: Jang, J. and Jiang, H. "DBSCAN++: Towards fast and scalable
             density clustering". Proceedings of the 36th International Conference
             on Machine Learning, 2019.
 
         random_state : int, RandomState instance or None, default=None
-            Only relevant when ``subsample`` is set; has no effect otherwise.
-            Controls the randomness of the subsampling. Pass an int for
-            reproducible output across multiple function calls.
-            See :term:`Glossary <random_state>`.
+            Only relevant when ``subsample`` is set. Controls the randomness
+            of the subsampling. Pass an int for reproducible output across
+            multiple function calls. See :term:`Glossary <random_state>`.
 
         Returns
         -------
