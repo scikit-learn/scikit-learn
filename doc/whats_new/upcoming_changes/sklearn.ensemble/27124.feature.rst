@@ -1,0 +1,5 @@
+- :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` allow more control of the validation
+  set used for early stopping. You can now pass them data used for validation directly
+  to `fit` via the arguments `X_val`, `y_val` and `sample_weight_val`.
+  By :user:`Christian Lorentzen <lorentzenchr>`.
