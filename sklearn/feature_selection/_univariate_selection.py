@@ -206,9 +206,8 @@ def chi2(X, y):
     contain only **non-negative features** such as booleans or frequencies
     (e.g., term counts in document classification), relative to the classes.
 
-    For continuous data, it is necessary to discretize the values (binning)
-    into intervals before applying this function. You can use methods such
-    as :class:`~sklearn.preprocessing.KBinsDiscretizer`.
+    If some of your features are continuous, you need to bin them, for
+    example by using :class:`~sklearn.preprocessing.KBinsDiscretizer`.
 
     Recall that the chi-square test measures dependence between stochastic
     variables, so using this function "weeds out" the features that are the
