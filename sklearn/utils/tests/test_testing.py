@@ -1173,6 +1173,7 @@ def test_convert_container_df_to_df(
     pyarrow_dtype,
 ):
     """Check that we can convert a DataFrame to another DataFrame."""
+    pytest.importorskip(constructor_lib_from)
     lib_to = pytest.importorskip(constructor_lib_to)
 
     column_names_from = ["A", "B"]
