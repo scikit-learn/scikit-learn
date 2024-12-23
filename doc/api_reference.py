@@ -549,7 +549,7 @@ API_REFERENCE = {
         ],
     },
     "sklearn.kernel_approximation": {
-        "short_summary": "Isotonic regression.",
+        "short_summary": "Kernel approximation.",
         "description": _get_guide("kernel_approximation"),
         "sections": [
             {

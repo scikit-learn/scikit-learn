@@ -2358,3 +2358,24 @@ def test_force_all_finite_rename_warning():
 
     with pytest.warns(FutureWarning, match=msg):
         as_float_array(X, force_all_finite=True)
+
+
+@pytest.mark.parametrize(
+    ["X", "estimator", "expected_error_message"],
+    [
+        (
+            np.array([[[1, 2], [3, 4]], [[1, 2], [3, 4]]]),
+            RandomForestRegressor(),
+            "Found array with dim 3, while dim <= 2 is required by "
+            "RandomForestRegressor.",
+        ),
+        (
+            np.array([[[1, 2], [3, 4]], [[1, 2], [3, 4]]]),
+            None,
+            "Found array with dim 3, while dim <= 2 is required.",
+        ),
+    ],
+)
+def test_check_array_allow_nd_errors(X, estimator, expected_error_message):
+    with pytest.raises(ValueError, match=expected_error_message):
+        check_array(X, estimator=estimator)
