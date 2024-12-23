@@ -1,0 +1,2 @@
+- :func:`utils._safe_indexing` now works correctly for scipy sparse arrays with
+  scalar index. By :user:`Yao Xiao <Charlie-XIAO>`

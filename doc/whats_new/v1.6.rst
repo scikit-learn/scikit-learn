@@ -691,12 +691,6 @@ Python and CPython ecosystem, for example :user:`Nathan Goldbaum <ngoldbaum>`,
 
 .. rubric:: Code and documentation contributors
 
-:mod:`sklearn.utils`
-....................
-
-- |Fix| :func:`~utils._safe_indexing` now works correctly for scipy sparse arrays with
-  scalar index. :pr:`28681` by :user:`Yao Xiao <Charlie-XIAO>`.
-
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
 
