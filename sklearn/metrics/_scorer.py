@@ -13,17 +13,18 @@ is the model to be evaluated, ``X`` is the test data and ``y`` is the
 ground truth labeling (or ``None`` in the case of unsupervised models).
 """
 
-# Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
-#          Lars Buitinck
-#          Arnaud Joly <arnaud.v.joly@gmail.com>
-# License: Simplified BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import copy
 import warnings
 from collections import Counter
 from functools import partial
 from inspect import signature
+from numbers import Integral
 from traceback import format_exc
+
+import numpy as np
 
 from ..base import is_regressor
 from ..utils import Bunch
@@ -219,6 +220,8 @@ class _BaseScorer(_MetadataRequester):
         self._sign = sign
         self._kwargs = kwargs
         self._response_method = response_method
+        # TODO (1.8): remove in 1.8 (scoring="max_error" has been deprecated in 1.6)
+        self._deprecation_msg = None
 
     def _get_pos_label(self):
         if "pos_label" in self._kwargs:
@@ -270,6 +273,12 @@ class _BaseScorer(_MetadataRequester):
         score : float
             Score function applied to prediction of estimator on X.
         """
+        # TODO (1.8): remove in 1.8 (scoring="max_error" has been deprecated in 1.6)
+        if self._deprecation_msg is not None:
+            warnings.warn(
+                self._deprecation_msg, category=DeprecationWarning, stacklevel=2
+            )
+
         _raise_for_params(kwargs, self, None)
 
         _kwargs = copy.deepcopy(kwargs)
@@ -369,7 +378,10 @@ class _Scorer(_BaseScorer):
         pos_label = None if is_regressor(estimator) else self._get_pos_label()
         response_method = _check_response_method(estimator, self._response_method)
         y_pred = method_caller(
-            estimator, response_method.__name__, X, pos_label=pos_label
+            estimator,
+            _get_response_method_name(response_method),
+            X,
+            pos_label=pos_label,
         )
 
         scoring_kwargs = {**self._kwargs, **kwargs}
@@ -420,7 +432,12 @@ def get_scorer(scoring):
     """
     if isinstance(scoring, str):
         try:
-            scorer = copy.deepcopy(_SCORERS[scoring])
+            if scoring == "max_error":
+                # TODO (1.8): scoring="max_error" has been deprecated in 1.6,
+                # remove in 1.8
+                scorer = max_error_scorer
+            else:
+                scorer = copy.deepcopy(_SCORERS[scoring])
         except KeyError:
             raise ValueError(
                 "%r is not a valid scoring value. "
@@ -588,53 +605,11 @@ def _check_multimetric_scoring(estimator, scoring):
     return scorers
 
 
-def _get_response_method(response_method, needs_threshold, needs_proba):
-    """Handles deprecation of `needs_threshold` and `needs_proba` parameters in
-    favor of `response_method`.
-    """
-    needs_threshold_provided = needs_threshold != "deprecated"
-    needs_proba_provided = needs_proba != "deprecated"
-    response_method_provided = response_method is not None
-
-    needs_threshold = False if needs_threshold == "deprecated" else needs_threshold
-    needs_proba = False if needs_proba == "deprecated" else needs_proba
-
-    if response_method_provided and (needs_proba_provided or needs_threshold_provided):
-        raise ValueError(
-            "You cannot set both `response_method` and `needs_proba` or "
-            "`needs_threshold` at the same time. Only use `response_method` since "
-            "the other two are deprecated in version 1.4 and will be removed in 1.6."
-        )
-
-    if needs_proba_provided or needs_threshold_provided:
-        warnings.warn(
-            (
-                "The `needs_threshold` and `needs_proba` parameter are deprecated in "
-                "version 1.4 and will be removed in 1.6. You can either let "
-                "`response_method` be `None` or set it to `predict` to preserve the "
-                "same behaviour."
-            ),
-            FutureWarning,
-        )
-
-    if response_method_provided:
-        return response_method
-
-    if needs_proba is True and needs_threshold is True:
-        raise ValueError(
-            "You cannot set both `needs_proba` and `needs_threshold` at the same "
-            "time. Use `response_method` instead since the other two are deprecated "
-            "in version 1.4 and will be removed in 1.6."
-        )
-
-    if needs_proba is True:
-        response_method = "predict_proba"
-    elif needs_threshold is True:
-        response_method = ("decision_function", "predict_proba")
-    else:
-        response_method = "predict"
-
-    return response_method
+def _get_response_method_name(response_method):
+    try:
+        return response_method.__name__
+    except AttributeError:
+        return _get_response_method_name(response_method.func)
 
 
 @validate_params(
@@ -645,21 +620,14 @@ def _get_response_method(response_method, needs_threshold, needs_proba):
             list,
             tuple,
             StrOptions({"predict", "predict_proba", "decision_function"}),
+            Hidden(StrOptions({"default"})),
         ],
         "greater_is_better": ["boolean"],
-        "needs_proba": ["boolean", Hidden(StrOptions({"deprecated"}))],
-        "needs_threshold": ["boolean", Hidden(StrOptions({"deprecated"}))],
     },
     prefer_skip_nested_validation=True,
 )
 def make_scorer(
-    score_func,
-    *,
-    response_method=None,
-    greater_is_better=True,
-    needs_proba="deprecated",
-    needs_threshold="deprecated",
-    **kwargs,
+    score_func, *, response_method="default", greater_is_better=True, **kwargs
 ):
     """Make a scorer from a performance metric or loss function.
 
@@ -672,7 +640,7 @@ def make_scorer(
     The parameter `response_method` allows to specify which method of the estimator
     should be used to feed the scoring/loss function.
 
-    Read more in the :ref:`User Guide <scoring>`.
+    Read more in the :ref:`User Guide <scoring_callable>`.
 
     Parameters
     ----------
@@ -695,39 +663,14 @@ def make_scorer(
 
         .. versionadded:: 1.4
 
+        .. deprecated:: 1.6
+            None is equivalent to 'predict' and is deprecated. It will be removed in
+            version 1.8.
+
     greater_is_better : bool, default=True
         Whether `score_func` is a score function (default), meaning high is
         good, or a loss function, meaning low is good. In the latter case, the
         scorer object will sign-flip the outcome of the `score_func`.
-
-    needs_proba : bool, default=False
-        Whether `score_func` requires `predict_proba` to get probability
-        estimates out of a classifier.
-
-        If True, for binary `y_true`, the score function is supposed to accept
-        a 1D `y_pred` (i.e., probability of the positive class, shape
-        `(n_samples,)`).
-
-        .. deprecated:: 1.4
-           `needs_proba` is deprecated in version 1.4 and will be removed in
-           1.6. Use `response_method="predict_proba"` instead.
-
-    needs_threshold : bool, default=False
-        Whether `score_func` takes a continuous decision certainty.
-        This only works for binary classification using estimators that
-        have either a `decision_function` or `predict_proba` method.
-
-        If True, for binary `y_true`, the score function is supposed to accept
-        a 1D `y_pred` (i.e., probability of the positive class or the decision
-        function, shape `(n_samples,)`).
-
-        For example `average_precision` or the area under the roc curve
-        can not be computed using discrete predictions alone.
-
-        .. deprecated:: 1.4
-           `needs_threshold` is deprecated in version 1.4 and will be removed
-           in 1.6. Use `response_method=("decision_function", "predict_proba")`
-           instead to preserve the same behaviour.
 
     **kwargs : additional arguments
         Additional parameters to be passed to `score_func`.
@@ -748,17 +691,33 @@ def make_scorer(
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
     ...                     scoring=ftwo_scorer)
     """
-    response_method = _get_response_method(
-        response_method, needs_threshold, needs_proba
-    )
     sign = 1 if greater_is_better else -1
+
+    if response_method is None:
+        warnings.warn(
+            "response_method=None is deprecated in version 1.6 and will be removed "
+            "in version 1.8. Leave it to its default value to avoid this warning.",
+            FutureWarning,
+        )
+        response_method = "predict"
+    elif response_method == "default":
+        response_method = "predict"
+
     return _Scorer(score_func, sign, kwargs, response_method)
 
 
 # Standard regression scores
 explained_variance_scorer = make_scorer(explained_variance_score)
 r2_scorer = make_scorer(r2_score)
+neg_max_error_scorer = make_scorer(max_error, greater_is_better=False)
 max_error_scorer = make_scorer(max_error, greater_is_better=False)
+# TODO (1.8): remove in 1.8 (scoring="max_error" has been deprecated in 1.6)
+deprecation_msg = (
+    "Scoring method max_error was renamed to "
+    "neg_max_error in version 1.6 and will "
+    "be removed in 1.8."
+)
+max_error_scorer._deprecation_msg = deprecation_msg
 neg_mean_squared_error_scorer = make_scorer(mean_squared_error, greater_is_better=False)
 neg_mean_squared_log_error_scorer = make_scorer(
     mean_squared_log_error, greater_is_better=False
@@ -867,7 +826,7 @@ fowlkes_mallows_scorer = make_scorer(fowlkes_mallows_score)
 _SCORERS = dict(
     explained_variance=explained_variance_scorer,
     r2=r2_scorer,
-    max_error=max_error_scorer,
+    neg_max_error=neg_max_error_scorer,
     matthews_corrcoef=matthews_corrcoef_scorer,
     neg_median_absolute_error=neg_median_absolute_error_scorer,
     neg_mean_absolute_error=neg_mean_absolute_error_scorer,
@@ -955,10 +914,11 @@ for name, metric in [
             None,
         ],
         "allow_none": ["boolean"],
+        "raise_exc": ["boolean"],
     },
     prefer_skip_nested_validation=True,
 )
-def check_scoring(estimator=None, scoring=None, *, allow_none=False):
+def check_scoring(estimator=None, scoring=None, *, allow_none=False, raise_exc=True):
     """Determine scorer from user options.
 
     A TypeError will be thrown if the estimator cannot be scored.
@@ -969,30 +929,43 @@ def check_scoring(estimator=None, scoring=None, *, allow_none=False):
         The object to use to fit the data. If `None`, then this function may error
         depending on `allow_none`.
 
-    scoring : str, callable, list, tuple, or dict, default=None
+    scoring : str, callable, list, tuple, set, or dict, default=None
         Scorer to use. If `scoring` represents a single score, one can use:
 
         - a single string (see :ref:`scoring_parameter`);
-        - a callable (see :ref:`scoring`) that returns a single value.
+        - a callable (see :ref:`scoring_callable`) that returns a single value.
 
         If `scoring` represents multiple scores, one can use:
 
-        - a list or tuple of unique strings;
-        - a callable returning a dictionary where the keys are the metric
-          names and the values are the metric scorers;
-        - a dictionary with metric names as keys and callables a values.
+        - a list, tuple or set of unique strings;
+        - a callable returning a dictionary where the keys are the metric names and the
+          values are the metric scorers;
+        - a dictionary with metric names as keys and callables a values. The callables
+          need to have the signature `callable(estimator, X, y)`.
 
         If None, the provided estimator object's `score` method is used.
 
     allow_none : bool, default=False
-        If no scoring is specified and the estimator has no score function, we
-        can either return None or raise an exception.
+        Whether to return None or raise an error if no `scoring` is specified and the
+        estimator has no `score` method.
+
+    raise_exc : bool, default=True
+        Whether to raise an exception (if a subset of the scorers in multimetric scoring
+        fails) or to return an error code.
+
+        - If set to `True`, raises the failing scorer's exception.
+        - If set to `False`, a formatted string of the exception details is passed as
+          result of the failing scorer(s).
+
+        This applies if `scoring` is list, tuple, set, or dict. Ignored if `scoring` is
+        a str or a callable.
+
+        .. versionadded:: 1.6
 
     Returns
     -------
     scoring : callable
-        A scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
+        A scorer callable object / function with signature ``scorer(estimator, X, y)``.
 
     Examples
     --------
@@ -1004,6 +977,19 @@ def check_scoring(estimator=None, scoring=None, *, allow_none=False):
     >>> scorer = check_scoring(classifier, scoring='accuracy')
     >>> scorer(classifier, X, y)
     0.96...
+
+    >>> from sklearn.metrics import make_scorer, accuracy_score, mean_squared_log_error
+    >>> X, y = load_iris(return_X_y=True)
+    >>> y *= -1
+    >>> clf = DecisionTreeClassifier().fit(X, y)
+    >>> scoring = {
+    ...     "accuracy": make_scorer(accuracy_score),
+    ...     "mean_squared_log_error": make_scorer(mean_squared_log_error),
+    ... }
+    >>> scoring_call = check_scoring(estimator=clf, scoring=scoring, raise_exc=False)
+    >>> scores = scoring_call(clf, X, y)
+    >>> scores
+    {'accuracy': 1.0, 'mean_squared_log_error': 'Traceback ...'}
     """
     if isinstance(scoring, str):
         return get_scorer(scoring)
@@ -1026,7 +1012,7 @@ def check_scoring(estimator=None, scoring=None, *, allow_none=False):
         return get_scorer(scoring)
     if isinstance(scoring, (list, tuple, set, dict)):
         scorers = _check_multimetric_scoring(estimator, scoring=scoring)
-        return _MultimetricScorer(scorers=scorers)
+        return _MultimetricScorer(scorers=scorers, raise_exc=raise_exc)
     if scoring is None:
         if hasattr(estimator, "score"):
             return _PassthroughScorer(estimator)
@@ -1037,3 +1023,120 @@ def check_scoring(estimator=None, scoring=None, *, allow_none=False):
                 "If no scoring is specified, the estimator passed should "
                 "have a 'score' method. The estimator %r does not." % estimator
             )
+
+
+def _threshold_scores_to_class_labels(y_score, threshold, classes, pos_label):
+    """Threshold `y_score` and return the associated class labels."""
+    if pos_label is None:
+        map_thresholded_score_to_label = np.array([0, 1])
+    else:
+        pos_label_idx = np.flatnonzero(classes == pos_label)[0]
+        neg_label_idx = np.flatnonzero(classes != pos_label)[0]
+        map_thresholded_score_to_label = np.array([neg_label_idx, pos_label_idx])
+
+    return classes[map_thresholded_score_to_label[(y_score >= threshold).astype(int)]]
+
+
+class _CurveScorer(_BaseScorer):
+    """Scorer taking a continuous response and output a score for each threshold.
+
+    Parameters
+    ----------
+    score_func : callable
+        The score function to use. It will be called as
+        `score_func(y_true, y_pred, **kwargs)`.
+
+    sign : int
+        Either 1 or -1 to returns the score with `sign * score_func(estimator, X, y)`.
+        Thus, `sign` defined if higher scores are better or worse.
+
+    kwargs : dict
+        Additional parameters to pass to the score function.
+
+    thresholds : int or array-like
+        Related to the number of decision thresholds for which we want to compute the
+        score. If an integer, it will be used to generate `thresholds` thresholds
+        uniformly distributed between the minimum and maximum predicted scores. If an
+        array-like, it will be used as the thresholds.
+
+    response_method : str
+        The method to call on the estimator to get the response values.
+    """
+
+    def __init__(self, score_func, sign, kwargs, thresholds, response_method):
+        super().__init__(
+            score_func=score_func,
+            sign=sign,
+            kwargs=kwargs,
+            response_method=response_method,
+        )
+        self._thresholds = thresholds
+
+    @classmethod
+    def from_scorer(cls, scorer, response_method, thresholds):
+        """Create a continuous scorer from a normal scorer."""
+        instance = cls(
+            score_func=scorer._score_func,
+            sign=scorer._sign,
+            response_method=response_method,
+            thresholds=thresholds,
+            kwargs=scorer._kwargs,
+        )
+        # transfer the metadata request
+        instance._metadata_request = scorer._get_metadata_request()
+        return instance
+
+    def _score(self, method_caller, estimator, X, y_true, **kwargs):
+        """Evaluate predicted target values for X relative to y_true.
+
+        Parameters
+        ----------
+        method_caller : callable
+            Returns predictions given an estimator, method name, and other
+            arguments, potentially caching results.
+
+        estimator : object
+            Trained estimator to use for scoring.
+
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Test data that will be fed to estimator.predict.
+
+        y_true : array-like of shape (n_samples,)
+            Gold standard target values for X.
+
+        **kwargs : dict
+            Other parameters passed to the scorer. Refer to
+            :func:`set_score_request` for more details.
+
+        Returns
+        -------
+        scores : ndarray of shape (thresholds,)
+            The scores associated to each threshold.
+
+        potential_thresholds : ndarray of shape (thresholds,)
+            The potential thresholds used to compute the scores.
+        """
+        pos_label = self._get_pos_label()
+        y_score = method_caller(
+            estimator, self._response_method, X, pos_label=pos_label
+        )
+
+        scoring_kwargs = {**self._kwargs, **kwargs}
+        if isinstance(self._thresholds, Integral):
+            potential_thresholds = np.linspace(
+                np.min(y_score), np.max(y_score), self._thresholds
+            )
+        else:
+            potential_thresholds = np.asarray(self._thresholds)
+        score_thresholds = [
+            self._sign
+            * self._score_func(
+                y_true,
+                _threshold_scores_to_class_labels(
+                    y_score, th, estimator.classes_, pos_label
+                ),
+                **scoring_kwargs,
+            )
+            for th in potential_thresholds
+        ]
+        return np.array(score_thresholds), potential_thresholds

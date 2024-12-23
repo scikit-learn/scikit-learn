@@ -5,7 +5,7 @@ import re
 import numpy as np
 import pytest
 
-from sklearn import datasets
+from sklearn import config_context, datasets
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.datasets import make_multilabel_classification
 from sklearn.dummy import DummyRegressor
@@ -34,7 +34,6 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
-    ignore_warnings,
 )
 
 # Load datasets
@@ -314,7 +313,8 @@ def test_parallel_fit(global_random_seed):
     assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
 
 
-@ignore_warnings(category=FutureWarning)
+# TODO(1.7): remove warning filter when sample_weight is kwarg only
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_sample_weight(global_random_seed):
     """Tests sample_weight parameter of VotingClassifier"""
     clf1 = LogisticRegression(random_state=global_random_seed)
@@ -606,8 +606,7 @@ def test_voting_verbose(estimator, capsys):
         r"\[Voting\].*\(1 of 2\) Processing lr, total=.*\n"
         r"\[Voting\].*\(2 of 2\) Processing rf, total=.*\n$"
     )
-
-    estimator.fit(X, y)
+    clone(estimator).fit(X, y)
     assert re.match(pattern, capsys.readouterr()[0])
 
 
@@ -712,23 +711,23 @@ def test_routing_passed_metadata_not_supported(Estimator, Child):
         Estimator(["clf", Child()]).fit(X, y, sample_weight=[1, 1, 1], metadata="a")
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
     "Estimator, Child",
     [(VotingClassifier, ConsumingClassifier), (VotingRegressor, ConsumingRegressor)],
 )
+@config_context(enable_metadata_routing=True)
 def test_get_metadata_routing_without_fit(Estimator, Child):
     # Test that metadata_routing() doesn't raise when called before fit.
     est = Estimator([("sub_est", Child())])
     est.get_metadata_routing()
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
     "Estimator, Child",
     [(VotingClassifier, ConsumingClassifier), (VotingRegressor, ConsumingRegressor)],
 )
 @pytest.mark.parametrize("prop", ["sample_weight", "metadata"])
+@config_context(enable_metadata_routing=True)
 def test_metadata_routing_for_voting_estimators(Estimator, Child, prop):
     """Test that metadata is routed correctly for Voting*."""
     X = np.array([[0, 1], [2, 2], [4, 6]])
@@ -759,14 +758,14 @@ def test_metadata_routing_for_voting_estimators(Estimator, Child, prop):
         registry = estimator[1].registry
         assert len(registry)
         for sub_est in registry:
-            check_recorded_metadata(obj=sub_est, method="fit", **kwargs)
+            check_recorded_metadata(obj=sub_est, method="fit", parent="fit", **kwargs)
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
     "Estimator, Child",
     [(VotingClassifier, ConsumingClassifier), (VotingRegressor, ConsumingRegressor)],
 )
+@config_context(enable_metadata_routing=True)
 def test_metadata_routing_error_for_voting_estimators(Estimator, Child):
     """Test that the right error is raised when metadata is not requested."""
     X = np.array([[0, 1], [2, 2], [4, 6]])

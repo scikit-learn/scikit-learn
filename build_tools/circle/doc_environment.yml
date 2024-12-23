@@ -14,7 +14,7 @@ dependencies:
   - matplotlib
   - pandas
   - pyamg
-  - pytest<8
+  - pytest
   - pytest-xdist
   - pillow
   - pip
@@ -36,6 +36,7 @@ dependencies:
   - sphinx-remove-toctrees
   - sphinx-design
   - pydata-sphinx-theme
+  - towncrier
   - pip
   - pip:
     - jupyterlite-sphinx

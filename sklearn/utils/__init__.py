@@ -1,5 +1,9 @@
 """Various utilities to help with development."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+import platform
 import warnings
 from collections.abc import Sequence
 
@@ -22,6 +26,15 @@ from ._indexing import (
     shuffle,
 )
 from ._mask import safe_mask
+from ._tags import (
+    ClassifierTags,
+    InputTags,
+    RegressorTags,
+    Tags,
+    TargetTags,
+    TransformerTags,
+    get_tags,
+)
 from .class_weight import compute_class_weight, compute_sample_weight
 from .deprecation import deprecated
 from .discovery import all_estimators
@@ -79,6 +92,13 @@ __all__ = [
     "safe_mask",
     "gen_batches",
     "gen_even_slices",
+    "Tags",
+    "InputTags",
+    "TargetTags",
+    "ClassifierTags",
+    "RegressorTags",
+    "TransformerTags",
+    "get_tags",
 ]
 
 
@@ -89,9 +109,7 @@ def __getattr__(name):
             "IS_PYPY is deprecated and will be removed in 1.7.",
             FutureWarning,
         )
-        from .fixes import _IS_PYPY
-
-        return _IS_PYPY
+        return platform.python_implementation() == "PyPy"
     raise AttributeError(f"module {__name__} has no attribute {name}")
 
 

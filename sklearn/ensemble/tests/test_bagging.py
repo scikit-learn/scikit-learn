@@ -2,8 +2,9 @@
 Testing for the bagging ensemble module (sklearn.ensemble.bagging).
 """
 
-# Author: Gilles Louppe
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from itertools import cycle, product
 
 import joblib
@@ -940,7 +941,7 @@ def test_bagging_get_estimators_indices():
 )
 def test_bagging_allow_nan_tag(bagging, expected_allow_nan):
     """Check that bagging inherits allow_nan tag."""
-    assert bagging._get_tags()["allow_nan"] == expected_allow_nan
+    assert bagging.__sklearn_tags__().input_tags.allow_nan == expected_allow_nan
 
 
 @pytest.mark.parametrize(
@@ -964,7 +965,7 @@ def test_bagging_with_metadata_routing(model):
     "model",
     [
         BaggingClassifier(
-            estimator=AdaBoostClassifier(n_estimators=1, algorithm="SAMME"),
+            estimator=AdaBoostClassifier(n_estimators=1),
             n_estimators=1,
         ),
         BaggingRegressor(estimator=AdaBoostRegressor(n_estimators=1), n_estimators=1),

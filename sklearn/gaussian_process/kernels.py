@@ -15,8 +15,8 @@
 # optimization.
 
 
-# Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # Note: this module is strongly inspired by the kernel module of the george
 #       package.
@@ -134,9 +134,7 @@ class Hyperparameter(
 
         if fixed is None:
             fixed = isinstance(bounds, str) and bounds == "fixed"
-        return super(Hyperparameter, cls).__new__(
-            cls, name, value_type, bounds, n_elements, fixed
-        )
+        return super().__new__(cls, name, value_type, bounds, n_elements, fixed)
 
     # This is mainly a testing utility to check that two hyperparameters
     # are equal.

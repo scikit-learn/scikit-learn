@@ -22,13 +22,6 @@ from sklearn.utils._testing import (
     assert_array_equal,
 )
 
-# TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
-pytestmark = pytest.mark.filterwarnings(
-    "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
-    "matplotlib.*"
-)
-
-
 X, y = make_classification(
     n_informative=1,
     n_redundant=1,
@@ -341,7 +334,7 @@ def test_decision_boundary_display_regressor(pyplot, response_method, plot_metho
 def test_error_bad_response(pyplot, response_method, msg):
     """Check errors for bad response."""
 
-    class MyClassifier(BaseEstimator, ClassifierMixin):
+    class MyClassifier(ClassifierMixin, BaseEstimator):
         def fit(self, X, y):
             self.fitted_ = True
             self.classes_ = [0, 1]

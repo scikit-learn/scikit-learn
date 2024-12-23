@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import gzip
 import hashlib
 import json
@@ -1063,7 +1066,7 @@ def fetch_openml(
                 )
             else:
                 err_msg = (
-                    f"Using `parser={parser!r}` wit dense data requires pandas to be "
+                    f"Using `parser={parser!r}` with dense data requires pandas to be "
                     "installed. Alternatively, explicitly set `parser='liac-arff'`."
                 )
             raise ImportError(err_msg) from exc

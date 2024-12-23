@@ -149,9 +149,14 @@ The :class:`CalibratedClassifierCV` class is used to calibrate a classifier.
 unbiased data is always used to fit the calibrator. The data is split into k
 `(train_set, test_set)` couples (as determined by `cv`). When `ensemble=True`
 (default), the following procedure is repeated independently for each
-cross-validation split: a clone of `base_estimator` is first trained on the
-train subset. Then its predictions on the test subset are used to fit a
-calibrator (either a sigmoid or isotonic regressor). This results in an
+cross-validation split:
+
+1. a clone of `base_estimator` is trained on the train subset
+2. the trained `base_estimator` makes predictions on the test subset
+3. the predictions are used to fit a calibrator (either a sigmoid or isotonic
+   regressor) (when the data is multiclass, a calibrator is fit for every class)
+
+This results in an
 ensemble of k `(classifier, calibrator)` couples where each calibrator maps
 the output of its corresponding classifier into [0, 1]. Each couple is exposed
 in the `calibrated_classifiers_` attribute, where each entry is a calibrated
@@ -161,6 +166,15 @@ probabilities. The output of :term:`predict_proba` for the main
 predicted probabilities of the `k` estimators in the `calibrated_classifiers_`
 list. The output of :term:`predict` is the class that has the highest
 probability.
+
+It is important to choose `cv` carefully when using `ensemble=True`.
+All classes should be present in both train and test subsets for every split.
+When a class is absent in the train subset, the predicted probability for that
+class will default to 0 for the `(classifier, calibrator)` couple of that split.
+This skews the :term:`predict_proba` as it averages across all couples.
+When a class is absent in the test subset, the calibrator for that class
+(within the `(classifier, calibrator)` couple of that split) is
+fit on data with no positive class. This results in ineffective calibration.
 
 When `ensemble=False`, cross-validation is used to obtain 'unbiased'
 predictions for all the data, via
@@ -179,10 +193,11 @@ The main advantage of using `ensemble=False` is computational: it reduces the
 overall fit time by training only a single base classifier and calibrator
 pair, decreases the final model size and increases prediction speed.
 
-Alternatively an already fitted classifier can be calibrated by setting
-`cv="prefit"`. In this case, the data is not split and all of it is used to
-fit the regressor. It is up to the user to
-make sure that the data used for fitting the classifier is disjoint from the
+Alternatively an already fitted classifier can be calibrated by using a
+:class:`~sklearn.frozen.FrozenEstimator` as
+``CalibratedClassifierCV(estimator=FrozenEstimator(estimator))``.
+It is up to the user to make sure that the data used for fitting the classifier
+is disjoint from the data used for fitting the regressor.
 data used for fitting the regressor.
 
 :class:`CalibratedClassifierCV` supports the use of two regression techniques

@@ -14,7 +14,7 @@ from sklearn import (
     neighbors,
 )
 from sklearn.base import clone
-from sklearn.exceptions import DataConversionWarning, EfficiencyWarning, NotFittedError
+from sklearn.exceptions import EfficiencyWarning, NotFittedError
 from sklearn.metrics._dist_metrics import (
     DistanceMetric,
 )
@@ -24,7 +24,12 @@ from sklearn.metrics.tests.test_pairwise_distances_reduction import (
     assert_compatible_argkmin_results,
     assert_compatible_radius_results,
 )
-from sklearn.model_selection import cross_val_score, train_test_split
+from sklearn.model_selection import (
+    LeaveOneOut,
+    cross_val_predict,
+    cross_val_score,
+    train_test_split,
+)
 from sklearn.neighbors import (
     VALID_METRICS_SPARSE,
     KNeighborsRegressor,
@@ -1721,6 +1726,10 @@ def test_neighbors_metrics(
             assert_array_equal(ball_tree_idx, kd_tree_idx)
 
 
+# TODO: Remove ignore_warnings when minimum supported SciPy version is 1.17
+# Some scipy metrics are deprecated (depending on the scipy version) but we
+# still want to test them.
+@ignore_warnings(category=DeprecationWarning)
 @pytest.mark.parametrize(
     "metric", sorted(set(neighbors.VALID_METRICS["brute"]) - set(["precomputed"]))
 )
@@ -2143,7 +2152,7 @@ def test_sparse_metric_callable(csr_container):
 
 
 # ignore conversion to boolean in pairwise_distances
-@ignore_warnings(category=DataConversionWarning)
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.DataConversionWarning")
 def test_pairwise_boolean_distance():
     # Non-regression test for #4523
     # 'brute': uses scipy.spatial.distance through pairwise_distances
@@ -2243,6 +2252,10 @@ def test_auto_algorithm(X, metric, metric_params, expected_algo):
     assert model._fit_method == expected_algo
 
 
+# TODO: Remove ignore_warnings when minimum supported SciPy version is 1.17
+# Some scipy metrics are deprecated (depending on the scipy version) but we
+# still want to test them.
+@ignore_warnings(category=DeprecationWarning)
 @pytest.mark.parametrize(
     "metric", sorted(set(neighbors.VALID_METRICS["brute"]) - set(["precomputed"]))
 )
@@ -2324,6 +2337,38 @@ def test_regressor_predict_on_arraylikes():
     assert_allclose(est.predict([[0, 2.5]]), [6])
 
 
+@pytest.mark.parametrize(
+    "Estimator, params",
+    [
+        (neighbors.KNeighborsClassifier, {"n_neighbors": 2}),
+        (neighbors.KNeighborsRegressor, {"n_neighbors": 2}),
+        (neighbors.RadiusNeighborsRegressor, {}),
+        (neighbors.RadiusNeighborsClassifier, {}),
+        (neighbors.KNeighborsTransformer, {"n_neighbors": 2}),
+        (neighbors.RadiusNeighborsTransformer, {"radius": 1.5}),
+        (neighbors.LocalOutlierFactor, {"n_neighbors": 1}),
+    ],
+)
+def test_nan_euclidean_support(Estimator, params):
+    """Check that the different neighbor estimators are lenient towards `nan`
+    values if using `metric="nan_euclidean"`.
+    """
+
+    X = [[0, 1], [1, np.nan], [2, 3], [3, 5]]
+    y = [0, 0, 1, 1]
+
+    params.update({"metric": "nan_euclidean"})
+    estimator = Estimator().set_params(**params).fit(X, y)
+
+    for response_method in ("kneighbors", "predict", "transform", "fit_predict"):
+        if hasattr(estimator, response_method):
+            output = getattr(estimator, response_method)(X)
+            if hasattr(output, "toarray"):
+                assert not np.isnan(output.data).any()
+            else:
+                assert not np.isnan(output).any()
+
+
 def test_predict_dataframe():
     """Check that KNN predict works with dataframes
 
@@ -2382,3 +2427,79 @@ def test_KNeighborsClassifier_raise_on_all_zero_weights():
 
     with pytest.raises(ValueError, match=msg):
         est.predict_proba([[1.1, 1.1]])
+
+
+@pytest.mark.parametrize(
+    "nn_model",
+    [
+        neighbors.KNeighborsClassifier(n_neighbors=10),
+        neighbors.RadiusNeighborsClassifier(),
+    ],
+)
+@pytest.mark.parametrize("algorithm", ALGORITHMS)
+def test_neighbor_classifiers_loocv(nn_model, algorithm):
+    """Check that `predict` and related functions work fine with X=None
+
+    Calling predict with X=None computes a prediction for each training point
+    from the labels of its neighbors (without the label of the data point being
+    predicted upon). This is therefore mathematically equivalent to
+    leave-one-out cross-validation without having do any retraining (rebuilding
+    a KD-tree or Ball-tree index) or any data reshuffling.
+    """
+    X, y = datasets.make_blobs(n_samples=15, centers=5, n_features=2, random_state=0)
+
+    nn_model = clone(nn_model).set_params(algorithm=algorithm)
+
+    # Set the radius for RadiusNeighborsRegressor to some percentile of the
+    # empirical pairwise distances to avoid trivial test cases and warnings for
+    # predictions with no neighbors within the radius.
+    if "radius" in nn_model.get_params():
+        dists = pairwise_distances(X).ravel()
+        dists = dists[dists > 0]
+        nn_model.set_params(radius=np.percentile(dists, 80))
+
+    loocv = cross_val_score(nn_model, X, y, cv=LeaveOneOut())
+    nn_model.fit(X, y)
+
+    assert_allclose(loocv, nn_model.predict(None) == y)
+    assert np.mean(loocv) == pytest.approx(nn_model.score(None, y))
+
+    # Evaluating `nn_model` on its "training" set should lead to a higher
+    # accuracy value than leaving out each data point in turn because the
+    # former can overfit while the latter cannot by construction.
+    assert nn_model.score(None, y) < nn_model.score(X, y)
+
+
+@pytest.mark.parametrize(
+    "nn_model",
+    [
+        neighbors.KNeighborsRegressor(n_neighbors=10),
+        neighbors.RadiusNeighborsRegressor(),
+    ],
+)
+@pytest.mark.parametrize("algorithm", ALGORITHMS)
+def test_neighbor_regressors_loocv(nn_model, algorithm):
+    """Check that `predict` and related functions work fine with X=None"""
+    X, y = datasets.make_regression(n_samples=15, n_features=2, random_state=0)
+
+    # Only checking cross_val_predict and not cross_val_score because
+    # cross_val_score does not work with LeaveOneOut() for a regressor: the
+    # default score method implements R2 score which is not well defined for a
+    # single data point.
+    #
+    # TODO: if score is refactored to evaluate models for other scoring
+    # functions, then this test can be extended to check cross_val_score as
+    # well.
+    nn_model = clone(nn_model).set_params(algorithm=algorithm)
+
+    # Set the radius for RadiusNeighborsRegressor to some percentile of the
+    # empirical pairwise distances to avoid trivial test cases and warnings for
+    # predictions with no neighbors within the radius.
+    if "radius" in nn_model.get_params():
+        dists = pairwise_distances(X).ravel()
+        dists = dists[dists > 0]
+        nn_model.set_params(radius=np.percentile(dists, 80))
+
+    loocv = cross_val_predict(nn_model, X, y, cv=LeaveOneOut())
+    nn_model.fit(X, y)
+    assert_allclose(loocv, nn_model.predict(None))
