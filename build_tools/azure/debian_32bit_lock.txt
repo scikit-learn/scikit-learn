@@ -12,7 +12,7 @@ iniconfig==2.0.0
     # via pytest
 joblib==1.4.2
     # via -r build_tools/azure/debian_32bit_requirements.txt
-meson==1.6.0
+meson==1.6.1
     # via meson-python
 meson-python==0.17.1
     # via -r build_tools/azure/debian_32bit_requirements.txt
