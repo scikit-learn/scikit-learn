@@ -33,7 +33,6 @@ from ..utils._array_api import (
     _count_nonzero,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
-    _isin,
     _searchsorted,
     _setdiff1d,
     _tolist,
@@ -355,7 +354,7 @@ def confusion_matrix(
             raise ValueError("'labels' should contain at least one label.")
         elif y_true.size == 0:
             return np.zeros((n_labels, n_labels), dtype=int)
-        elif not _isin(labels, y_true, xp=xp).any():
+        elif len(np.intersect1d(y_true, labels)) == 0:
             raise ValueError("At least one label specified must be in y_true")
     if not _is_numpy_namespace(get_namespace(labels)[0]):
         labels = _convert_to_numpy(labels, xp)
