@@ -11,6 +11,7 @@ linux_arm64_wheel_task:
     CIBW_BEFORE_BUILD: bash {project}/build_tools/wheels/cibw_before_build.sh {project}
     CIBW_TEST_COMMAND: bash {project}/build_tools/wheels/test_wheels.sh {project}
     CIBW_TEST_REQUIRES: pytest pandas threadpoolctl pytest-xdist
+    CIBW_ENVIRONMENT_PASS_LINUX: RUNNER_OS
     CIBW_BUILD_VERBOSITY: 1
     RUNNER_OS: Linux
     # Upload tokens have been encrypted via the CirrusCI interface:

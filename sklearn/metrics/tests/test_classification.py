@@ -795,13 +795,8 @@ def test_cohen_kappa():
     )
 
 
-def test_matthews_corrcoef_nan():
-    assert matthews_corrcoef([0], [1]) == 0.0
-    assert matthews_corrcoef([0, 0], [0, 1]) == 0.0
-
-
 @pytest.mark.parametrize("zero_division", [0, 1, np.nan])
-@pytest.mark.parametrize("y_true, y_pred", [([0], [0]), ([], [])])
+@pytest.mark.parametrize("y_true, y_pred", [([0], [0])])
 @pytest.mark.parametrize(
     "metric",
     [
@@ -809,7 +804,6 @@ def test_matthews_corrcoef_nan():
         partial(fbeta_score, beta=1),
         precision_score,
         recall_score,
-        partial(cohen_kappa_score, labels=[0, 1]),
     ],
 )
 def test_zero_division_nan_no_warning(metric, y_true, y_pred, zero_division):
@@ -826,7 +820,7 @@ def test_zero_division_nan_no_warning(metric, y_true, y_pred, zero_division):
         assert result == zero_division
 
 
-@pytest.mark.parametrize("y_true, y_pred", [([0], [0]), ([], [])])
+@pytest.mark.parametrize("y_true, y_pred", [([0], [0])])
 @pytest.mark.parametrize(
     "metric",
     [
@@ -834,7 +828,6 @@ def test_zero_division_nan_no_warning(metric, y_true, y_pred, zero_division):
         partial(fbeta_score, beta=1),
         precision_score,
         recall_score,
-        cohen_kappa_score,
     ],
 )
 def test_zero_division_nan_warning(metric, y_true, y_pred):

@@ -370,21 +370,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
     def _generate_candidate_params(self):
         pass
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags._xfail_checks.update(
-            {
-                "check_fit2d_1sample": (
-                    "Fail during parameter check since min/max resources requires"
-                    " more samples"
-                ),
-                "check_estimators_nan_inf": "FIXME",
-                "check_classifiers_one_label_sample_weights": "FIXME",
-                "check_fit2d_1feature": "FIXME",
-            }
-        )
-        return tags
-
 
 class HalvingGridSearchCV(BaseSuccessiveHalving):
     """Search over specified parameter values with successive halving.
@@ -495,7 +480,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
     scoring : str, callable, or None, default=None
         A single string (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring`) to evaluate the predictions on the test set.
+        (see :ref:`scoring_callable`) to evaluate the predictions on the test set.
         If None, the estimator's score method is used.
 
     refit : bool, default=True
@@ -836,7 +821,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     scoring : str, callable, or None, default=None
         A single string (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring`) to evaluate the predictions on the test set.
+        (see :ref:`scoring_callable`) to evaluate the predictions on the test set.
         If None, the estimator's score method is used.
 
     refit : bool, default=True
