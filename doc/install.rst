@@ -43,7 +43,7 @@ To install scikit-learn, follow the instructions for your operating system:
           :class-label: tab-6
 
           1. Download and install the 64-bit Python 3 from the
-             `official website <https://www.python.org/downloads/windows/>`_.
+             `Windows official website <https://www.python.org/downloads/windows/>`_.
 
           2. Create a virtual environment (recommended):
 
@@ -95,7 +95,7 @@ To install scikit-learn, follow the instructions for your operating system:
           :class-label: tab-6
 
           1. Install Python 3 using `Homebrew <https://brew.sh>`_ or from the
-             `official website <https://www.python.org/downloads/macos/>`_.
+             `macOS official website <https://www.python.org/downloads/macos/>`_.
 
           2. Create a virtual environment (recommended):
 
