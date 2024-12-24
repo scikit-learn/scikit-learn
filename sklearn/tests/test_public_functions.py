@@ -278,6 +278,9 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.pairwise.linear_kernel",
     "sklearn.metrics.pairwise.manhattan_distances",
     "sklearn.metrics.pairwise.nan_euclidean_distances",
+    # TODO(1.9): paired_cosine_distances, paired_distances,
+    # paired_euclidean_distances and paired_manhattan_distances are deprecated
+    # and will be removed in 1.9
     "sklearn.metrics.pairwise.paired_cosine_distances",
     "sklearn.metrics.pairwise.paired_distances",
     "sklearn.metrics.pairwise.paired_euclidean_distances",
