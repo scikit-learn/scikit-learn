@@ -1677,7 +1677,7 @@ def test_sparse_manhattan_readonly_dataset(csr_container):
     )
 
 
-# TODO(1.6): Remove in 1.6
+# TODO(1.9): Remove in 1.9
 def test_paired_distances_deprecation():
     """Check that we issue the FutureWarning regarding the deprecation of
     paired_distances for gh-26982"""
@@ -1686,8 +1686,8 @@ def test_paired_distances_deprecation():
     X = rng.random_sample((5, 4))
     Y = rng.random_sample((5, 4))
 
-    warn_msg = "The public function `sklearn.pairwise.paired_distances` "
-    "has been deprecated and will be removed in 1.6."
+    warn_msg = "The public function `sklearn.pairwise.paired_cosine_distances`"
+    " has been deprecated in 1.7 and will be removed in 1.9."
     with pytest.warns(FutureWarning, match=warn_msg):
         paired_distances(X, Y)
 
@@ -1701,8 +1701,8 @@ def test_paired_cosine_distances_deprecation():
     X = rng.random_sample((5, 4))
     Y = rng.random_sample((5, 4))
 
-    warn_msg = "The public function `sklearn.pairwise.paired_cosine_distances` "
-    "has been deprecated and will be removed in 1.9."
+    warn_msg = "The public function `sklearn.pairwise.paired_cosine_distances`"
+    " has been deprecated in 1.7 and will be removed in 1.9."
     with pytest.warns(FutureWarning, match=warn_msg):
         paired_cosine_distances(X, Y)
 
@@ -1716,8 +1716,8 @@ def test_paired_euclidean_distances_deprecation():
     X = rng.random_sample((5, 4))
     Y = rng.random_sample((5, 4))
 
-    warn_msg = "The public function `sklearn.pairwise.paired_euclidean_distances` "
-    "has been deprecated and will be removed in 1.9."
+    warn_msg = "The public function `sklearn.pairwise.paired_euclidean_distances`"
+    " has been deprecated in 1.7 and will be removed in 1.9."
     with pytest.warns(FutureWarning, match=warn_msg):
         paired_euclidean_distances(X, Y)
 
@@ -1731,8 +1731,8 @@ def test_paired_manhattan_distances_deprecation():
     X = rng.random_sample((5, 4))
     Y = rng.random_sample((5, 4))
 
-    warn_msg = "The public function `sklearn.pairwise.paired_manhattan_distances` "
-    "has been deprecated and will be removed in 1.9."
+    warn_msg = "The public function `sklearn.pairwise.paired_manhattan_distances`"
+    " has been deprecated in 1.7 and will be removed in 1.9."
     with pytest.warns(FutureWarning, match=warn_msg):
         paired_manhattan_distances(X, Y)
 

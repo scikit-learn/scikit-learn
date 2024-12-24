@@ -1450,6 +1450,11 @@ _PAIRED_DISTANCES = {
 }
 
 
+# TODO(1.9): Remove in 1.9
+@deprecated(
+    "The public function `sklearn.pairwise.paired_cosine_distances` has been "
+    "deprecated in 1.7 and will be removed in 1.9."
+)
 @validate_params(
     {
         "X": ["array-like"],
