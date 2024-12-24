@@ -1,3 +1,0 @@
-- Improve error message when :func:`model_selection.RepeatedStratifiedKFold.split`
-  is called without a `y` argument
-  By :user:`Anurag Varma <Anurag-Varma>`

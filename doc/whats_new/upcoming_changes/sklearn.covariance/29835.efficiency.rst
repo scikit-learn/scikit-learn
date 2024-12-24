@@ -1,2 +1,0 @@
-- :class:`covariance.MinCovDet` fitting is now slightly faster.
-  By :user:`Antony Lee <anntzer>`

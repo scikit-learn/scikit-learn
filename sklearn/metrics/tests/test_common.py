@@ -583,8 +583,8 @@ def _require_positive_targets(y1, y2):
 def _require_log1p_targets(y1, y2):
     """Make targets strictly larger than -1"""
     offset = abs(min(y1.min(), y2.min())) - 0.99
-    y1 = y1.astype(float)
-    y2 = y2.astype(float)
+    y1 = y1.astype(np.float64)
+    y2 = y2.astype(np.float64)
     y1 += offset
     y2 += offset
     return y1, y2
@@ -1817,6 +1817,40 @@ def check_array_api_metric(
     if isinstance(multioutput, np.ndarray):
         metric_kwargs["multioutput"] = xp.asarray(multioutput, device=device)
 
+    # When array API dispatch is disabled, and np.asarray works (for example PyTorch
+    # with CPU device), calling the metric function with such numpy compatible inputs
+    # should work (albeit by implicitly converting to numpy arrays instead of
+    # dispatching to the array library).
+    try:
+        np.asarray(a_xp)
+        np.asarray(b_xp)
+        numpy_as_array_works = True
+    except TypeError:
+        # PyTorch with CUDA device and CuPy raise TypeError consistently.
+        # Exception type may need to be updated in the future for other
+        # libraries.
+        numpy_as_array_works = False
+
+    if numpy_as_array_works:
+        metric_xp = metric(a_xp, b_xp, **metric_kwargs)
+        assert_allclose(
+            metric_xp,
+            metric_np,
+            atol=_atol_for_type(dtype_name),
+        )
+        metric_xp_mixed_1 = metric(a_np, b_xp, **metric_kwargs)
+        assert_allclose(
+            metric_xp_mixed_1,
+            metric_np,
+            atol=_atol_for_type(dtype_name),
+        )
+        metric_xp_mixed_2 = metric(a_xp, b_np, **metric_kwargs)
+        assert_allclose(
+            metric_xp_mixed_2,
+            metric_np,
+            atol=_atol_for_type(dtype_name),
+        )
+
     with config_context(array_api_dispatch=True):
         metric_xp = metric(a_xp, b_xp, **metric_kwargs)
 
@@ -2084,7 +2118,15 @@ array_api_metric_checkers = {
         check_array_api_regression_metric_multioutput,
     ],
     cosine_similarity: [check_array_api_metric_pairwise],
+    explained_variance_score: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
     mean_absolute_error: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
+    mean_pinball_loss: [
         check_array_api_regression_metric,
         check_array_api_regression_metric_multioutput,
     ],
