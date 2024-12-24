@@ -339,8 +339,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             if step_score:
                 self.step_n_features_.append(len(features))
                 self.step_scores_.append(step_score(estimator, features))
-                self.step_support_.append(support_)
-                self.step_ranking_.append(ranking_)
+                self.step_support_.append(list(support_))
+                self.step_ranking_.append(list(ranking_))
 
             # Get importance and rank them
             importances = _get_feature_importances(
@@ -676,12 +676,12 @@ class RFECV(RFE):
 
           .. versionadded:: 1.5
 
-        ranking(k) : ndarray of shape (n_subsets_of_features,)
-            The cross-validation ranking across (k)th fold.
+        split(k)_ranking : ndarray of shape (n_subsets_of_features,)
+            The cross-validation rankings across (k)th fold.
 
           .. versionadded:: 1.7
 
-        support(k) : ndarray of shape (n_subsets_of_features,)
+        split(k)_support : ndarray of shape (n_subsets_of_features,)
             The cross-validation supports across (k)th fold.
 
           .. versionadded:: 1.7
@@ -894,6 +894,8 @@ class RFECV(RFE):
 
         step_n_features_rev = np.array(step_n_features[0])[::-1]
         scores = np.array(scores)
+        rankings = np.array(rankings)
+        supports = np.array(supports)
 
         # Reverse order such that lowest number of features is selected in case of tie.
         scores_sum_rev = np.sum(scores, axis=0)[::-1]
@@ -925,8 +927,8 @@ class RFECV(RFE):
             "mean_test_score": np.mean(scores_rev, axis=0),
             "std_test_score": np.std(scores_rev, axis=0),
             **{f"split{i}_test_score": scores_rev[i] for i in range(scores.shape[0])},
-            **{f"ranking{i}": rankings_rev[i] for i in range(rankings.shape[0])},
-            **{f"support{i}": supports_rev[i] for i in range(supports.shape[0])},
+            **{f"split{i}_ranking": rankings_rev[i] for i in range(rankings.shape[0])},
+            **{f"split{i}_support": supports_rev[i] for i in range(supports.shape[0])},
             "n_features": step_n_features_rev,
         }
         return self

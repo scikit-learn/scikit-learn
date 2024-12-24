@@ -721,3 +721,22 @@ def test_rfe_with_joblib_threading_backend(global_random_seed):
         rfe.fit(X, y)
 
     assert_array_equal(ranking_ref, rfe.ranking_)
+
+
+def test_results_per_cv_in_rfecv(global_random_seed):
+    X, y = make_classification(random_state=global_random_seed)
+
+    clf = LogisticRegression()
+    rfecv = RFECV(
+        estimator=clf,
+        n_jobs=2,
+        cv=5,
+    )
+
+    rfecv.fit(X, y)
+
+    assert len(rfecv.cv_results_["split1_test_score"]) == len(
+        rfecv.cv_results_["split2_test_score"]
+    )
+    assert len(rfecv.cv_results_["support1"]) == len(rfecv.cv_results_["support2"])
+    assert len(rfecv.cv_results_["ranking1"]) == len(rfecv.cv_results_["ranking2"])
