@@ -2,6 +2,7 @@
 Testing Recursive feature elimination
 """
 
+import re
 from operator import attrgetter
 
 import numpy as np
@@ -541,7 +542,11 @@ def test_rfecv_std_and_mean(global_random_seed):
 
     rfecv = RFECV(estimator=SVC(kernel="linear"))
     rfecv.fit(X, y)
-    split_keys = [key for key in rfecv.cv_results_.keys() if "split" in key]
+    split_keys = [
+        key
+        for key in rfecv.cv_results_.keys()
+        if re.search(r"split\d+_test_score", key)
+    ]
     cv_scores = np.asarray([rfecv.cv_results_[key] for key in split_keys])
     expected_mean = np.mean(cv_scores, axis=0)
     expected_std = np.std(cv_scores, axis=0)
@@ -738,5 +743,9 @@ def test_results_per_cv_in_rfecv(global_random_seed):
     assert len(rfecv.cv_results_["split1_test_score"]) == len(
         rfecv.cv_results_["split2_test_score"]
     )
-    assert len(rfecv.cv_results_["support1"]) == len(rfecv.cv_results_["support2"])
-    assert len(rfecv.cv_results_["ranking1"]) == len(rfecv.cv_results_["ranking2"])
+    assert len(rfecv.cv_results_["split1_support"]) == len(
+        rfecv.cv_results_["split2_support"]
+    )
+    assert len(rfecv.cv_results_["split1_ranking"]) == len(
+        rfecv.cv_results_["split2_ranking"]
+    )
