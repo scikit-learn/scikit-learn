@@ -11,6 +11,7 @@ from collections.abc import Sequence
 from contextlib import suppress
 from functools import reduce, wraps
 from inspect import Parameter, isclass, signature
+from math import floor, log10
 
 import joblib
 import numpy as np
