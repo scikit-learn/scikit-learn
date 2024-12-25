@@ -499,7 +499,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         _check_feature_names(self, *args, **kwargs)
 
 
-class ClassifierMixin:
+class ClassifierMixin(BaseEstimator):
     """Mixin class for all classifiers in scikit-learn.
 
     This mixin defines the following functionality:
@@ -572,7 +572,7 @@ class ClassifierMixin:
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
 
 
-class RegressorMixin:
+class RegressorMixin(BaseEstimator):
     """Mixin class for all regression estimators in scikit-learn.
 
     This mixin defines the following functionality:
