@@ -1219,10 +1219,10 @@ def paired_euclidean_distances(X, Y):
 
     Examples
     --------
-    >>> from sklearn.metrics.pairwise import paired_euclidean_distances
+    >>> from sklearn.metrics.pairwise import _paired_euclidean_distances
     >>> X = [[0, 0, 0], [1, 1, 1]]
     >>> Y = [[1, 0, 0], [1, 1, 0]]
-    >>> paired_euclidean_distances(X, Y)
+    >>> _paired_euclidean_distances(X, Y)
     array([1., 1.])
     """
 
@@ -1250,10 +1250,10 @@ def _paired_euclidean_distances(X, Y):
 
     Examples
     --------
-    >>> from sklearn.metrics.pairwise import paired_euclidean_distances
+    >>> from sklearn.metrics.pairwise import _paired_euclidean_distances
     >>> X = [[0, 0, 0], [1, 1, 1]]
     >>> Y = [[1, 0, 0], [1, 1, 0]]
-    >>> paired_euclidean_distances(X, Y)
+    >>> _paired_euclidean_distances(X, Y)
     array([1., 1.])
     """
 
@@ -1294,11 +1294,11 @@ def paired_manhattan_distances(X, Y):
 
     Examples
     --------
-    >>> from sklearn.metrics.pairwise import paired_manhattan_distances
+    >>> from sklearn.metrics.pairwise import _paired_manhattan_distances
     >>> import numpy as np
     >>> X = np.array([[1, 1, 0], [0, 1, 0], [0, 0, 1]])
     >>> Y = np.array([[0, 1, 0], [0, 0, 1], [0, 0, 0]])
-    >>> paired_manhattan_distances(X, Y)
+    >>> _paired_manhattan_distances(X, Y)
     array([1., 2., 1.])
     """
 
@@ -1329,11 +1329,11 @@ def _paired_manhattan_distances(X, Y):
 
     Examples
     --------
-    >>> from sklearn.metrics.pairwise import paired_manhattan_distances
+    >>> from sklearn.metrics.pairwise import _paired_manhattan_distances
     >>> import numpy as np
     >>> X = np.array([[1, 1, 0], [0, 1, 0], [0, 0, 1]])
     >>> Y = np.array([[0, 1, 0], [0, 0, 1], [0, 0, 0]])
-    >>> paired_manhattan_distances(X, Y)
+    >>> _paired_manhattan_distances(X, Y)
     array([1., 2., 1.])
     """
     X, Y = check_paired_arrays(X, Y)
@@ -1382,10 +1382,10 @@ def paired_cosine_distances(X, Y):
 
     Examples
     --------
-    >>> from sklearn.metrics.pairwise import paired_cosine_distances
+    >>> from sklearn.metrics.pairwise import _paired_cosine_distances
     >>> X = [[0, 0, 0], [1, 1, 1]]
     >>> Y = [[1, 0, 0], [1, 1, 0]]
-    >>> paired_cosine_distances(X, Y)
+    >>> _paired_cosine_distances(X, Y)
     array([0.5       , 0.18...])
     """
     return _paired_cosine_distances(X, Y)
@@ -1419,10 +1419,10 @@ def _paired_cosine_distances(X, Y):
 
     Examples
     --------
-    >>> from sklearn.metrics.pairwise import paired_cosine_distances
+    >>> from sklearn.metrics.pairwise import _paired_cosine_distances
     >>> X = [[0, 0, 0], [1, 1, 1]]
     >>> Y = [[1, 0, 0], [1, 1, 0]]
-    >>> paired_cosine_distances(X, Y)
+    >>> _paired_cosine_distances(X, Y)
     array([0.5       , 0.18...])
     """
     X, Y = check_paired_arrays(X, Y)
@@ -1452,7 +1452,7 @@ _PAIRED_DISTANCES = {
 
 # TODO(1.9): Remove in 1.9
 @deprecated(
-    "The public function `sklearn.pairwise.paired_cosine_distances` has been "
+    "The public function `sklearn.pairwise.paired_distances` has been "
     "deprecated in 1.7 and will be removed in 1.9."
 )
 @validate_params(
@@ -1505,10 +1505,10 @@ def paired_distances(X, Y, *, metric="euclidean", **kwds):
 
     Examples
     --------
-    >>> from sklearn.metrics.pairwise import paired_distances
+    >>> from sklearn.metrics.pairwise import _paired_distances
     >>> X = [[0, 1], [1, 1]]
     >>> Y = [[0, 1], [2, 1]]
-    >>> paired_distances(X, Y)
+    >>> _paired_distances(X, Y)
     array([0., 1.])
     """
 
@@ -1557,10 +1557,10 @@ def _paired_distances(X, Y, *, metric="euclidean", **kwds):
 
     Examples
     --------
-    >>> from sklearn.metrics.pairwise import paired_distances
+    >>> from sklearn.metrics.pairwise import _paired_distances
     >>> X = [[0, 1], [1, 1]]
     >>> Y = [[0, 1], [2, 1]]
-    >>> paired_distances(X, Y)
+    >>> _paired_distances(X, Y)
     array([0., 1.])
     """
     if metric in _PAIRED_DISTANCES:
