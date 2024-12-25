@@ -420,7 +420,7 @@ def test_pairwise_kernels_filter_param():
 
 @pytest.mark.parametrize("metric, func", _PAIRED_DISTANCES.items())
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_paired_distances(metric, func, csr_container):
+def test__paired_distances(metric, func, csr_container):
     # Test the pairwise_distance helper function.
     rng = np.random.RandomState(0)
     # Euclidean distance should be equivalent to calling the function.
@@ -1686,7 +1686,7 @@ def test_paired_distances_deprecation():
     X = rng.random_sample((5, 4))
     Y = rng.random_sample((5, 4))
 
-    warn_msg = "The public function `sklearn.pairwise.paired_cosine_distances`"
+    warn_msg = "The public function `sklearn.pairwise.paired_distances`"
     " has been deprecated in 1.7 and will be removed in 1.9."
     with pytest.warns(FutureWarning, match=warn_msg):
         paired_distances(X, Y)
