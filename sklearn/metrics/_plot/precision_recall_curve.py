@@ -153,6 +153,10 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             default_line_kwargs["label"] = name
         return default_line_kwargs
 
+    def _plot():
+        """Take single ndarray, plot."""
+        # plot one curve
+
     def plot(
         self,
         ax=None,
@@ -273,6 +277,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
                     "When `fold_line_kw` is a list, it must have the same length as "
                     "the number of precision-recall curves to be plotted."
                 )
+            # This is okay
             name_ = [None] * n_multi if name_ is None else name_
             average_precision_ = (
                 [None] * n_multi
