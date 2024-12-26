@@ -40,8 +40,8 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         Average precision.  When plotting multiple precision-recall curves, can be
         a list of the same length as `precision` and `recall`.
         If None, no average precision score is shown.
-
-    curve_name : str or list of str, default=None
+    # All 4 lists
+    names : str or list of str, default=None
         Label for the precision-recall curve. For multiple precision-recall curves,
         `curve_name` can be a list of the same length as `precision` and `recall`.
         If None, no name is shown.
@@ -176,7 +176,8 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
         name : str, default=None
             Name of precision recall curve for labeling. If `None`, use
-            `self.curve_name` if not `None`, otherwise no labeling is shown.
+            name provided at `PrecisionRecallDisplay` initialization, if
+            `None`, otherwise no labeling is shown.
 
         despine : bool, default=False
             Whether to remove the top and right spines from the plot.
@@ -272,12 +273,13 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
                     "When `fold_line_kw` is a list, it must have the same length as "
                     "the number of precision-recall curves to be plotted."
                 )
-            name_ = [name_] * n_multi if name_ is None else name_
+            name_ = [None] * n_multi if name_ is None else name_
             average_precision_ = (
                 [None] * n_multi
                 if self.average_precision is None
                 else self.average_precision
             )
+
             line_kwargs = []
             for fold_idx, (curve_name, curve_ap) in enumerate(
                 zip(name_, average_precision_)
