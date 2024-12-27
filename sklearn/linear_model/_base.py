@@ -475,9 +475,9 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     tol : float, default=1e-4
         The precision of the solution (`coef_`) is determined by `tol` which
         specifies a different convergence criterion for the `lsqr` solver.
-        `tol` is set as atol and btol of scipy.sparse.linalg.lsqr,
-        which control the norm of the residual vector in terms of the norms of
-        matrix and coefficients.
+        `tol` is set as `atol` and `btol` of `scipy.sparse.linalg.lsqr` when
+        fitting on sparse training data. This parameter has no effect when fitting
+        on dense data.
 
         .. versionadded:: 1.7
 
