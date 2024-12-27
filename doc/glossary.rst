@@ -1701,7 +1701,7 @@ functions or non-estimator constructors.
         * the score function to be maximized (usually by :ref:`cross
         validation <cross_validation>`),
         * -- in some cases -- the multiple score functions to be reported, or
-        * in a few specific cases, the score function to be used for early
+        * in a few specific cases, the score function to be used to check early
           stopping
 
         The score function can be a string accepted
