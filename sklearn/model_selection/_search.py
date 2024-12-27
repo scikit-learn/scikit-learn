@@ -18,7 +18,6 @@ from functools import partial, reduce
 from itertools import product
 
 import numpy as np
-from numpy.exceptions import VisibleDeprecationWarning
 from numpy.ma import MaskedArray
 from scipy.stats import rankdata
 
@@ -35,6 +34,7 @@ from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils._tags import get_tags
 from ..utils.deprecation import _deprecate_Xt_in_inverse_transform
+from ..utils.fixes import VisibleDeprecationWarning
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -408,9 +408,9 @@ def _yield_masked_array_for_each_param(candidate_params):
         param_list = list(param_result.values())
         try:
             # TODO: remove warning filter when numpy min version >= 1.24, i.e. when
-            # creating an ndarray from ragged nested sequences always errors.
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", VisibleDeprecationWarning)
+            # creating an ndarray from ragged nested sequences always errors.
                 arr = np.array(param_list)
         except ValueError:
             # This can happen when param_list contains lists of different
