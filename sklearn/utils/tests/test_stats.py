@@ -1,12 +1,13 @@
 import numpy as np
+import pytest
 from numpy.testing import assert_allclose
 from pytest import approx
 
+from sklearn.utils.fixes import np_version, parse_version
 from sklearn.utils.stats import _averaged_weighted_percentile, _weighted_percentile
 
 
 def test_averaged_weighted_median():
-
     y = np.array([0, 1, 2, 3, 4, 5])
     sw = np.array([1, 1, 1, 1, 1, 1])
 
@@ -15,14 +16,11 @@ def test_averaged_weighted_median():
     assert score == np.median(y)
 
 
+@pytest.mark.skipif(
+    condition=np_version < parse_version("1.22"),
+    reason="older numpy do not support the 'method' parameter",
+)
 def test_averaged_weighted_percentile():
-
-    if np.__version__ < "1.22":
-        ## skip test for numpy version less than 1.22
-        ## since "method" not implemented before then
-        ## in np.percentile
-        return
-
     rng = np.random.RandomState(0)
     y = rng.randint(20, size=10)
 
@@ -34,7 +32,6 @@ def test_averaged_weighted_percentile():
 
 
 def test_averaged_and_weighted_percentile():
-
     y = np.array([0, 1, 2])
     sw = np.array([5, 1, 5])
     q = 50
