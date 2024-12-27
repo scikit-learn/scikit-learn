@@ -18,6 +18,7 @@ from functools import partial, reduce
 from itertools import product
 
 import numpy as np
+from numpy.exceptions import VisibleDeprecationWarning
 from numpy.ma import MaskedArray
 from scipy.stats import rankdata
 
@@ -406,7 +407,11 @@ def _yield_masked_array_for_each_param(candidate_params):
     for key, param_result in param_results.items():
         param_list = list(param_result.values())
         try:
-            arr = np.array(param_list)
+            # TODO: remove warning filter when numpy min version >= 1.24, i.e. when
+            # creating an ndarray from ragged nested sequences always errors.
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", VisibleDeprecationWarning)
+                arr = np.array(param_list)
         except ValueError:
             # This can happen when param_list contains lists of different
             # lengths, for example:
