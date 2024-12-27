@@ -1696,9 +1696,15 @@ functions or non-estimator constructors.
         objects and avoid common pitfalls, you may refer to :ref:`randomness`.
 
     ``scoring``
-        Specifies the score function to be maximized (usually by :ref:`cross
-        validation <cross_validation>`), or -- in some cases -- multiple score
-        functions to be reported. The score function can be a string accepted
+        Specifies:
+``
+        * the score function to be maximized (usually by :ref:`cross
+        validation <cross_validation>`),
+        * -- in some cases -- the multiple score functions to be reported, or
+        * in a few specific cases, the score function to be used for early
+          stopping
+
+        The score function can be a string accepted
         by :func:`metrics.get_scorer` or a callable :term:`scorer`, not to be
         confused with an :term:`evaluation metric`, as the latter have a more
         diverse API.  ``scoring`` may also be set to None, in which case the
