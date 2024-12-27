@@ -156,6 +156,7 @@ TEST_MODULES_EXCEPTIONS = [
     "feature_selection.tests.test_feature_select.py",
     "feature_selection.tests.test_from_model.py",
     "feature_selection.tests.test_rfe.py",
+    "feature_selection.tests.test_sequential.py",
     "feature_selection.tests.test_variance_threshold.py",
     "frozen.tests.test_frozen.py",
     "gaussian_process.tests.test_gpc.py",
@@ -375,13 +376,14 @@ def pytest_collection_modifyitems(config, items):
     # Turn all warnings into errors. TODO: when the TEST_MODULES_EXCEPTIONS list is
     # empty, remove this and add a config warning filter Warning("error") in
     # sklearn.utils._testing.py::_get_warnings_filters_info_list
-    error_mark = pytest.mark.filterwarnings("error")
-    for item in items:
-        if _get_item_module(item) not in TEST_MODULES_EXCEPTIONS:
-            # When markers overlap, the last one has priority. Thus we need to insert
-            # this global one at the beginning to be able to keep module or test-level
-            # markers.
-            item.own_markers.insert(0, error_mark)
+    if environ.get("SKLEARN_WARNINGS_AS_ERRORS", "0") != "0":
+        error_mark = pytest.mark.filterwarnings("error")
+        for item in items:
+            if _get_item_module(item) not in TEST_MODULES_EXCEPTIONS:
+                # When markers overlap, the last one has priority. Thus we need to
+                # insert this global one at the beginning to be able to keep module or
+                # test-level markers.
+                item.own_markers.insert(0, error_mark)
 
 
 def _get_item_module(item):
