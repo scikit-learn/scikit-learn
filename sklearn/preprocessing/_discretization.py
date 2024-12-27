@@ -349,7 +349,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
                 # method="linear" is the implicit default for any numpy
                 # version. So we keep it version independent in that case by
-                # using an param dict.
+                # using an empty param dict.
                 percentile_kwargs = {}
                 if quantile_method != "linear" and sample_weight is None:
                     if np_version < parse_version("1.22"):
