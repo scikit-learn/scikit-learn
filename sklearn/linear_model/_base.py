@@ -8,7 +8,7 @@ Generalized Linear Models.
 import numbers
 import warnings
 from abc import ABCMeta, abstractmethod
-from numbers import Integral
+from numbers import Integral, Real
 
 import numpy as np
 import scipy.sparse as sp
@@ -32,6 +32,7 @@ from ..utils._array_api import (
     indexing_dtype,
     supported_float_dtypes,
 )
+from ..utils._param_validation import Interval
 from ..utils._seq_dataset import (
     ArrayDataset32,
     ArrayDataset64,
@@ -564,6 +565,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         "copy_X": ["boolean"],
         "n_jobs": [None, Integral],
         "positive": ["boolean"],
+        "tol": [Interval(Real, 0, None, closed="left")],
     }
 
     def __init__(
@@ -683,7 +685,9 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             else:
                 # sparse_lstsq cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
-                    delayed(lsqr)(X_centered, y[:, j].ravel())
+                    delayed(lsqr)(
+                        X_centered, y[:, j].ravel(), atol=self.tol, btol=self.tol
+                    )
                     for j in range(y.shape[1])
                 )
                 self.coef_ = np.vstack([out[0] for out in outs])
