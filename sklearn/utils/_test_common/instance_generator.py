@@ -551,14 +551,14 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     Isomap: {"check_dict_unchanged": dict(n_components=1)},
     KMeans: {"check_dict_unchanged": dict(max_iter=5, n_clusters=1, n_init=2)},
     KBinsDiscretizer: {
-        "check_sample_weight_equivalence": [
+        "check_sample_weight_equivalence_on_dense_data": [
             # Using subsample != None leads to a stochastic fit that is not
-            # handled by the check_sample_weight_equivalence test.
+            # handled by the check_sample_weight_equivalence_on_dense_data test.
             dict(strategy="quantile", subsample=None, quantile_method="inverted_cdf"),
             dict(
                 strategy="quantile",
                 subsample=None,
-                quantile_method="average_inverted_cdf",
+                quantile_method="averaged_inverted_cdf",
             ),
             dict(strategy="uniform", subsample=None),
             # The "kmeans" strategy leads to a stochastic fit that is not
@@ -960,15 +960,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     IsolationForest: {
         # TODO: replace by a statistical test, see meta-issue #16298
-        "check_sample_weight_equivalence_on_dense_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-        "check_sample_weight_equivalence_on_sparse_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-    },
-    KBinsDiscretizer: {
-        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
         "check_sample_weight_equivalence_on_dense_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
