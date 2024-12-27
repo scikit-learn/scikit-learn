@@ -353,10 +353,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 percentile_kwargs = {}
                 if quantile_method != "linear" and sample_weight is None:
                     if np_version < parse_version("1.22"):
-                        if quantile_method in [
-                            "averaged_inverted_cdf",
-                            "inverted_cdf",
-                        ]:
+                        if quantile_method in ["averaged_inverted_cdf", "inverted_cdf"]:
                             # The method parameter is not supported in numpy <
                             # 1.22 but we can define unit sample weight to use
                             # our own implementation instead:
