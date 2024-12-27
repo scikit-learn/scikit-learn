@@ -1700,9 +1700,10 @@ functions or non-estimator constructors.
 ``
         * the score function to be maximized (usually by :ref:`cross
         validation <cross_validation>`),
-        * -- in some cases -- the multiple score functions to be reported, or
+        * -- in some cases --, the multiple score functions to be reported,
         * in a few specific cases, the score function to be used to check early
-          stopping
+          stopping, or
+        * for visualization related objects, the score to output or plot
 
         The score function can be a string accepted
         by :func:`metrics.get_scorer` or a callable :term:`scorer`, not to be
