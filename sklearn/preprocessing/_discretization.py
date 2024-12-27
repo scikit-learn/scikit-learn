@@ -11,6 +11,7 @@ from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import resample
 from ..utils._param_validation import Interval, Options, StrOptions
 from ..utils.deprecation import _deprecate_Xt_in_inverse_transform
+from ..utils.fixes import np_version, parse_version
 from ..utils.stats import _averaged_weighted_percentile, _weighted_percentile
 from ..utils.validation import (
     _check_feature_names_in,
@@ -341,39 +342,54 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 bin_edges[jj] = np.linspace(col_min, col_max, n_bins[jj] + 1)
 
             elif self.strategy == "quantile":
-                quantiles = np.linspace(0, 100, n_bins[jj] + 1)
-                if sample_weight is None:
-                    ## numpy version less than 1.22 does not support method
-                    ## need to stick to using linear interpolation in that
-                    ## case
-                    if np.__version__ < "1.22":
-                        bin_edges[jj] = np.asarray(
-                            np.percentile(column, quantiles, interpolation="linear"),
-                            dtype=np.float64,
-                        )
+                percentile_levels = np.linspace(0, 100, n_bins[jj] + 1)
+
+                # TODO(1.7): simplify the following if the minimum numpy
+                # version becomes >= 1.22.
+
+                # method="linear" is the implicit default for any numpy
+                # version. So we keep it version independent in that case by
+                # using an param dict.
+                percentile_kwargs = {}
+                if quantile_method != "linear" and sample_weight is None:
+                    if np_version < parse_version("1.22"):
+                        if quantile_method in [
+                            "averaged_inverted_cdf",
+                            "inverted_cdf",
+                        ]:
+                            # The method parameter is not supported in numpy <
+                            # 1.22 but we can define unit sample weight to use
+                            # our own implementation instead:
+                            sample_weight = np.ones(X.shape[0], dtype=X.dtype)
+                        else:
+                            raise ValueError(
+                                f"quantile_method='{quantile_method}' is not "
+                                "supported with numpy < 1.22"
+                            )
                     else:
-                        bin_edges[jj] = np.asarray(
-                            np.percentile(column, quantiles, method=quantile_method),
-                            dtype=np.float64,
-                        )
+                        percentile_kwargs["method"] = quantile_method
+
+                if sample_weight is None:
+                    bin_edges[jj] = np.asarray(
+                        np.percentile(column, percentile_levels, **percentile_kwargs),
+                        dtype=np.float64,
+                    )
                 else:
-                    # TODO: make _weighted_percentile accept an array of
+                    # TODO: make _weighted_percentile and
+                    # _averaged_weighted_percentile accept an array of
                     # quantiles instead of calling it multiple times and
                     # sorting the column multiple times as a result.
-
-                    if quantile_method == "averaged_weighted_percentile":
-                        bin_edges[jj] = np.asarray(
-                            [_averaged_weighted_percentile(q) for q in quantiles],
-                            dtype=np.float64,
-                        )
-                    else:
-                        bin_edges[jj] = np.asarray(
-                            [
-                                _weighted_percentile(column, sample_weight, q)
-                                for q in quantiles
-                            ],
-                            dtype=np.float64,
-                        )
+                    percentile_func = {
+                        "inverted_cdf": _weighted_percentile,
+                        "averaged_inverted_cdf": _averaged_weighted_percentile,
+                    }[quantile_method]
+                    bin_edges[jj] = np.asarray(
+                        [
+                            percentile_func(column, sample_weight, percentile=p)
+                            for p in percentile_levels
+                        ],
+                        dtype=np.float64,
+                    )
             elif self.strategy == "kmeans":
                 from ..cluster import KMeans  # fixes import loops
 

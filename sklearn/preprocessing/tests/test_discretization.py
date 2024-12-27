@@ -65,7 +65,7 @@ X = [[-2, 1.5, -4, -1], [-1, 2.5, -3, -0.5], [0, 3.5, -2, 0.5], [1, 4.5, -1, 2]]
         (
             "quantile",
             "averaged_inverted_cdf",
-            [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [1, 1, 1, 1]],
+            [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2]],
             [0, 1, 1, 1],
         ),
         (
@@ -89,7 +89,7 @@ def test_fit_transform(strategy, quantile_method, expected, sample_weight):
     with ignore_warnings(category=UserWarning):
         # Ignore the warning on removed small bins.
         est.fit(X, sample_weight=sample_weight)
-    assert_array_equal(expected, est.transform(X))
+    assert_array_equal(est.transform(X), expected)
 
 
 def test_valid_n_bins():
@@ -157,6 +157,12 @@ def test_invalid_n_bins_array():
         ),
         (
             "quantile",
+            "linear",
+            [[0, 0, 0, 0], [0, 1, 1, 1], [1, 2, 2, 2], [1, 2, 2, 2]],
+            None,
+        ),
+        (
+            "quantile",
             "averaged_inverted_cdf",
             [[0, 0, 0, 0], [0, 1, 1, 1], [1, 2, 2, 2], [1, 2, 2, 2]],
             None,
@@ -165,7 +171,7 @@ def test_invalid_n_bins_array():
             "quantile",
             "averaged_inverted_cdf",
             [[0, 0, 0, 0], [0, 1, 1, 1], [1, 2, 2, 2], [1, 2, 2, 2]],
-            [1, 1, 3, 1],
+            [1, 1, 1, 1],
         ),
         (
             "quantile",
@@ -173,19 +179,12 @@ def test_invalid_n_bins_array():
             [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [1, 1, 1, 1]],
             [0, 1, 3, 1],
         ),
-        # (
-        #     "quantile",
-        #     [[0, 0, 0, 0], [0, 1, 1, 1], [1, 2, 2, 2], [1, 2, 2, 2]],
-        #     [1, 1, 1, 1],
-        # ),
-        #
-        # TODO: This test case above aims to test if the case where an array of
-        #       ones passed in sample_weight parameter is equal to the case when
-        #       sample_weight is None.
-        #       Unfortunately, the behavior of `_weighted_percentile` when
-        #       `sample_weight = [1, 1, 1, 1]` are currently not equivalent.
-        #       This problem has been addressed in issue :
-        #       https://github.com/scikit-learn/scikit-learn/issues/17370
+        (
+            "quantile",
+            "averaged_inverted_cdf",
+            [[0, 0, 0, 0], [0, 0, 0, 0], [1, 2, 2, 2], [1, 2, 2, 2]],
+            [1, 1, 3, 1],
+        ),
         (
             "kmeans",
             "warn",
@@ -201,7 +200,7 @@ def test_fit_transform_n_bins_array(strategy, quantile_method, expected, sample_
         strategy=strategy,
         quantile_method=quantile_method,
     ).fit(X, sample_weight=sample_weight)
-    assert_array_equal(expected, est.transform(X))
+    assert_array_equal(est.transform(X), expected)
 
     # test the shape of bin_edges_
     n_features = np.array(X).shape[1]
@@ -223,8 +222,8 @@ def test_kbinsdiscretizer_effect_sample_weight():
         quantile_method="averaged_inverted_cdf",
     )
     est.fit(X, sample_weight=[1, 1, 1, 1, 0, 0])
-    assert_allclose(est.bin_edges_[0], [-2, -1, 1, 3])
-    assert_allclose(est.transform(X), [[0.0], [1.0], [2.0], [2.0], [2.0], [2.0]])
+    assert_allclose(est.bin_edges_[0], [-2, -1, 0, 1, 3])
+    assert_allclose(est.transform(X), [[0.0], [1.0], [3.0], [3.0], [3.0], [3.0]])
 
 
 @pytest.mark.parametrize("strategy", ["kmeans", "quantile"])
@@ -464,11 +463,6 @@ def test_redundant_bins(strategy, expected_bin_edges, quantile_method):
     warning_message = "Consider decreasing the number of bins."
     with pytest.warns(UserWarning, match=warning_message):
         kbd.fit(X)
-
-    if np.__version__ < "1.22" and strategy == "quantile":
-        ## go back to default for np version less than 1.22
-        ## since "method" not impelmented then
-        expected_bin_edges = [0, 1, 3]
 
     assert_array_almost_equal(kbd.bin_edges_[0], expected_bin_edges)
 
