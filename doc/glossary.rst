@@ -1793,7 +1793,7 @@ See concept :term:`attribute`.
         the number of output features and :term:`n_features` is the number of
         input features.
 
-        See also :term:`components_` which is a similar attribute for linear
+        See also :term:`coef_` which is a similar attribute for linear
         predictors.
 
     ``coef_``
