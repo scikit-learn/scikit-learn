@@ -1321,11 +1321,11 @@ def _check_X(X):
     Use `check_array` only when necessary, e.g., on lists and other non-array-likes.
 
     For sparse matrices, check if they are subscriptable by verifying the presence
-    of the `__getitem__` method. If a sparse matrix is not subscriptable , raise a 
-    warning and convert it to the CSR format for compatibility. This ensures 
+    of the `__getitem__` method. If a sparse matrix is not subscriptable , raise a
+    warning and convert it to the CSR format for compatibility. This ensures
     efficient and consistent handling of sparse matrices.
 
-    For other input types, such as DataFrame-like objects or array-like structures 
+    For other input types, such as DataFrame-like objects or array-like structures
     with `__array__` and `shape` attributes, return them as-is without additional
     validation to optimize performance.
 
@@ -1341,7 +1341,8 @@ def _check_X(X):
         if not hasattr(X, "__getitem__"):
             warnings.warn(
                 (
-                  f"\nThe input sparse matrix of type {type(X).__name__} is not subscriptable."
+                  f"\nThe input sparse matrix of type {type(X).__name__}"
+                  "is not subscriptable."
                   "It will be converted to CSR format for compatibility."
                 ),
                 category=UserWarning,
