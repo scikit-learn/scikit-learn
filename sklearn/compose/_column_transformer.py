@@ -1341,9 +1341,9 @@ def _check_X(X):
         if not hasattr(X, "__getitem__"):
             warnings.warn(
                 (
-                  f"\nThe input sparse matrix of type {type(X).__name__}"
-                  "is not subscriptable."
-                  "It will be converted to CSR format for compatibility."
+                    f"\nThe input sparse matrix of type {type(X).__name__}"
+                    "is not subscriptable."
+                    "It will be converted to CSR format for compatibility."
                 ),
                 category=UserWarning,
             )
