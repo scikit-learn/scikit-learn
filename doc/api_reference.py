@@ -285,6 +285,7 @@ API_REFERENCE = {
                     "make_sparse_spd_matrix",
                     "make_sparse_uncorrelated",
                     "make_spd_matrix",
+                    "make_spirals",
                     "make_swiss_roll",
                 ],
             },
