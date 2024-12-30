@@ -227,7 +227,7 @@ users as public attributes and have been estimated or learned from the data must
 have a name ending with trailing underscore, for example the coefficients of some
 regression estimator would be stored in a ``coef_`` attribute after ``fit`` has been
 called. Similarly, attributes that you learn in the process and you'd like to store yet
-not expose to the user, should have a leading underscure, e.g. ``_intermediate_coefs``.
+not expose to the user, should have a leading underscore, e.g. ``_intermediate_coefs``.
 You'd need to document the first group (with a trailing underscore) as "Attributes" and
 no need to document the second group (with a leading underscore).
 
@@ -355,7 +355,7 @@ All scikit-learn estimators have ``get_params`` and ``set_params`` functions.
 The ``get_params`` function takes no arguments and returns a dict of the
 ``__init__`` parameters of the estimator, together with their values.
 
-It take one keyword argument, ``deep``, which receives a boolean value that determines
+It takes one keyword argument, ``deep``, which receives a boolean value that determines
 whether the method should return the parameters of sub-estimators (only relevant for
 meta-estimators). The default value for ``deep`` is ``True``. For instance considering
 the following estimator::
