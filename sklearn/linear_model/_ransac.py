@@ -97,13 +97,13 @@ class RANSACRegressor(
     estimator : object, default=None
         Base estimator object which implements the following methods:
 
-         * `fit(X, y)`: Fit model to given training data and target values.
-         * `score(X, y)`: Returns the mean accuracy on the given test data,
-           which is used for the stop criterion defined by `stop_score`.
-           Additionally, the score is used to decide which of two equally
-           large consensus sets is chosen as the better one.
-         * `predict(X)`: Returns predicted values using the linear model,
-           which is used to compute residual error using loss function.
+        * `fit(X, y)`: Fit model to given training data and target values.
+        * `score(X, y)`: Returns the mean accuracy on the given test data,
+          which is used for the stop criterion defined by `stop_score`.
+          Additionally, the score is used to decide which of two equally
+          large consensus sets is chosen as the better one.
+        * `predict(X)`: Returns predicted values using the linear model,
+          which is used to compute residual error using loss function.
 
         If `estimator` is None, then
         :class:`~sklearn.linear_model.LinearRegression` is used for
@@ -192,7 +192,8 @@ class RANSACRegressor(
     Attributes
     ----------
     estimator_ : object
-        Best fitted model (copy of the `estimator` object).
+        Final model fitted on the inliers predicted by the "best" model found
+        during RANSAC sampling (copy of the `estimator` object).
 
     n_trials_ : int
         Number of random selection trials until one of the stop criteria is
@@ -239,7 +240,7 @@ class RANSACRegressor(
     ----------
     .. [1] https://en.wikipedia.org/wiki/RANSAC
     .. [2] https://www.sri.com/wp-content/uploads/2021/12/ransac-publication.pdf
-    .. [3] http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf
+    .. [3] https://bmva-archive.org.uk/bmvc/2009/Papers/Paper355/Paper355.pdf
 
     Examples
     --------
@@ -720,12 +721,3 @@ class RANSACRegressor(
             .add(caller="predict", callee="predict"),
         )
         return router
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_sample_weights_invariance": (
-                "zero sample_weight is not equivalent to removing samples"
-            ),
-        }
-        return tags

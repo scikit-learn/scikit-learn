@@ -426,3 +426,10 @@ else:
 
     def _create_pandas_dataframe_from_non_pandas_container(X, *, index, copy):
         return pd.DataFrame(X, index=index, copy=copy)
+
+
+# TODO: Remove when python>=3.10 is the minimum supported version
+def _dataclass_args():
+    if sys.version_info < (3, 10):
+        return {}
+    return {"slots": True}

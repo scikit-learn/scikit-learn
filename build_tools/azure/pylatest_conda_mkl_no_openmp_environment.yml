@@ -25,4 +25,4 @@ dependencies:
     - cython
     - threadpoolctl
     - meson-python
-    - meson<1.5
+    - meson

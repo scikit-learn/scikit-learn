@@ -123,6 +123,7 @@ API_REFERENCE = {
                     "is_classifier",
                     "is_clusterer",
                     "is_regressor",
+                    "is_outlier_detector",
                 ],
             }
         ],
@@ -240,6 +241,7 @@ API_REFERENCE = {
                     "fetch_20newsgroups_vectorized",
                     "fetch_california_housing",
                     "fetch_covtype",
+                    "fetch_file",
                     "fetch_kddcup99",
                     "fetch_lfw_pairs",
                     "fetch_lfw_people",
@@ -385,6 +387,7 @@ API_REFERENCE = {
                     "InconsistentVersionWarning",
                     "NotFittedError",
                     "UndefinedMetricWarning",
+                    "EstimatorCheckFailedWarning",
                 ],
             },
         ],
@@ -456,6 +459,16 @@ API_REFERENCE = {
                     "mutual_info_regression",
                     "r_regression",
                 ],
+            },
+        ],
+    },
+    "sklearn.frozen": {
+        "short_summary": "Frozen estimators.",
+        "description": None,
+        "sections": [
+            {
+                "title": None,
+                "autosummary": ["FrozenEstimator"],
             },
         ],
     },
@@ -536,7 +549,7 @@ API_REFERENCE = {
         ],
     },
     "sklearn.kernel_approximation": {
-        "short_summary": "Isotonic regression.",
+        "short_summary": "Kernel approximation.",
         "description": _get_guide("kernel_approximation"),
         "sections": [
             {
@@ -1165,7 +1178,6 @@ API_REFERENCE = {
                     "ClassifierTags",
                     "RegressorTags",
                     "TransformerTags",
-                    "default_tags",
                     "get_tags",
                 ],
             },
@@ -1286,6 +1298,7 @@ API_REFERENCE = {
                 "autosummary": [
                     "estimator_checks.check_estimator",
                     "estimator_checks.parametrize_with_checks",
+                    "estimator_checks.estimator_checks_generator",
                 ],
             },
             {

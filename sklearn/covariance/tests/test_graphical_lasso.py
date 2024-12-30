@@ -8,7 +8,7 @@ import pytest
 from numpy.testing import assert_allclose
 from scipy import linalg
 
-from sklearn import datasets
+from sklearn import config_context, datasets
 from sklearn.covariance import (
     GraphicalLasso,
     GraphicalLassoCV,
@@ -263,7 +263,7 @@ def test_graphical_lasso_cv_scores():
     )
 
 
-@pytest.mark.usefixtures("enable_slep006")
+@config_context(enable_metadata_routing=True)
 def test_graphical_lasso_cv_scores_with_routing(global_random_seed):
     """Check that `GraphicalLassoCV` internally dispatches metadata to
     the splitter.

@@ -222,9 +222,10 @@ initializations of the centroids. One method to help address this issue is the
 k-means++ initialization scheme, which has been implemented in scikit-learn
 (use the ``init='k-means++'`` parameter). This initializes the centroids to be
 (generally) distant from each other, leading to probably better results than
-random initialization, as shown in the reference. For a detailed example of
-comaparing different initialization schemes, refer to
-:ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`.
+random initialization, as shown in the reference. For detailed examples of
+comparing different initialization schemes, refer to
+:ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py` and
+:ref:`sphx_glr_auto_examples_cluster_plot_kmeans_stability_low_dim_dense.py`.
 
 K-means++ can also be called independently to select seeds for other
 clustering algorithms, see :func:`sklearn.cluster.kmeans_plusplus` for details
@@ -236,18 +237,13 @@ computing cluster centers and values of inertia. For example, assigning a
 weight of 2 to a sample is equivalent to adding a duplicate of that sample
 to the dataset :math:`X`.
 
-K-means can be used for vector quantization. This is achieved using the
-``transform`` method of a trained model of :class:`KMeans`. For an example of
-performing vector quantization on an image refer to
-:ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`.
-
 .. rubric:: Examples
-
-* :ref:`sphx_glr_auto_examples_cluster_plot_cluster_iris.py`: Example usage of
-  :class:`KMeans` using the iris dataset
 
 * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document clustering
   using :class:`KMeans` and :class:`MiniBatchKMeans` based on sparse data
+
+* :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_plusplus.py`: Using K-means++
+  to select seeds for other clustering algorithms.
 
 Low-level parallelism
 ---------------------

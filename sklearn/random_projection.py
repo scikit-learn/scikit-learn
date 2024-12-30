@@ -68,6 +68,8 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
     with good probability. The projection `p` is an eps-embedding as defined
     by:
 
+    .. code-block:: text
+
       (1 - eps) ||u - v||^2 < ||p(u) - p(v)||^2 < (1 + eps) ||u - v||^2
 
     Where u and v are any rows taken from a dataset of shape (n_samples,
@@ -77,6 +79,8 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
 
     The minimum number of components to guarantee the eps-embedding is
     given by:
+
+    .. code-block:: text
 
       n_components >= 4 log(n_samples) / (eps^2 / 2 - eps^3 / 3)
 
@@ -301,7 +305,7 @@ def _sparse_random_matrix(n_components, n_features, density="auto", random_state
 
 
 class BaseRandomProjection(
-    TransformerMixin, BaseEstimator, ClassNamePrefixFeaturesOutMixin, metaclass=ABCMeta
+    ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator, metaclass=ABCMeta
 ):
     """Base class for random projections.
 
@@ -618,9 +622,11 @@ class SparseRandomProjection(BaseRandomProjection):
     If we note `s = 1 / density` the components of the random matrix are
     drawn from:
 
-      - -sqrt(s) / sqrt(n_components)   with probability 1 / 2s
-      -  0                              with probability 1 - 1 / s
-      - +sqrt(s) / sqrt(n_components)   with probability 1 / 2s
+    .. code-block:: text
+
+      -sqrt(s) / sqrt(n_components)   with probability 1 / 2s
+       0                              with probability 1 - 1 / s
+      +sqrt(s) / sqrt(n_components)   with probability 1 / 2s
 
     Read more in the :ref:`User Guide <sparse_random_matrix>`.
 

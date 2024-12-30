@@ -125,8 +125,8 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         products of at most `degree` *distinct* input features, i.e. terms with
         power of 2 or higher of the same input feature are excluded:
 
-            - included: `x[0]`, `x[1]`, `x[0] * x[1]`, etc.
-            - excluded: `x[0] ** 2`, `x[0] ** 2 * x[1]`, etc.
+        - included: `x[0]`, `x[1]`, `x[0] * x[1]`, etc.
+        - excluded: `x[0] ** 2`, `x[0] ** 2 * x[1]`, etc.
 
     include_bias : bool, default=True
         If `True` (default), then include a bias column, the feature in which
@@ -1171,13 +1171,3 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             # We chose the last one.
             indices = [j for j in range(XBS.shape[1]) if (j + 1) % n_splines != 0]
             return XBS[:, indices]
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_estimators_pickle": (
-                "Current Scipy implementation of _bsplines does not"
-                "support const memory views."
-            ),
-        }
-        return tags

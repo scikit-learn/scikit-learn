@@ -9,6 +9,8 @@ import numpy as np
 from scipy import optimize, sparse, stats
 from scipy.special import boxcox, inv_boxcox
 
+from sklearn.utils import metadata_routing
+
 from ..base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
@@ -17,7 +19,7 @@ from ..base import (
     _fit_context,
 )
 from ..utils import _array_api, check_array, resample
-from ..utils._array_api import get_namespace
+from ..utils._array_api import _modify_in_place_if_numpy, device, get_namespace
 from ..utils._param_validation import Interval, Options, StrOptions, validate_params
 from ..utils.extmath import _incremental_mean_and_var, row_norms
 from ..utils.sparsefuncs import (
@@ -540,7 +542,15 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         X *= self.scale_
         X += self.min_
         if self.clip:
-            xp.clip(X, self.feature_range[0], self.feature_range[1], out=X)
+            device_ = device(X)
+            X = _modify_in_place_if_numpy(
+                xp,
+                xp.clip,
+                X,
+                xp.asarray(self.feature_range[0], dtype=X.dtype, device=device_),
+                xp.asarray(self.feature_range[1], dtype=X.dtype, device=device_),
+                out=X,
+            )
         return X
 
     def inverse_transform(self, X):
@@ -575,6 +585,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.allow_nan = True
+        tags.array_api_support = True
         return tags
 
 
@@ -700,6 +711,8 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Standardize features by removing the mean and scaling to unit variance.
 
     The standard score of a sample `x` is calculated as:
+
+    .. code-block:: text
 
         z = (x - u) / s
 
@@ -2410,6 +2423,10 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
            [  0.,  14., -14.],
            [ -5., -14.,  19.]])
     """
+
+    # X is called K in these methods.
+    __metadata_request__transform = {"K": metadata_routing.UNUSED}
+    __metadata_request__fit = {"K": metadata_routing.UNUSED}
 
     def fit(self, K, y=None):
         """Fit KernelCenterer.

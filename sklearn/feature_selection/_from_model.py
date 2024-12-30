@@ -19,6 +19,7 @@ from ..utils.metadata_routing import (
 from ..utils.metaestimators import available_if
 from ..utils.validation import (
     _check_feature_names,
+    _estimator_has,
     _num_features,
     check_is_fitted,
     check_scalar,
@@ -74,25 +75,6 @@ def _calculate_threshold(estimator, importances, threshold):
         threshold = float(threshold)
 
     return threshold
-
-
-def _estimator_has(attr):
-    """Check if we can delegate a method to the underlying estimator.
-
-    First, we check the fitted `estimator_` if available, otherwise we check the
-    unfitted `estimator`. We raise the original `AttributeError` if `attr` does
-    not exist. This function is used together with `available_if`.
-    """
-
-    def check(self):
-        if hasattr(self, "estimator_"):
-            getattr(self.estimator_, attr)
-        else:
-            getattr(self.estimator, attr)
-
-        return True
-
-    return check
 
 
 class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
@@ -352,19 +334,16 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             classification, real numbers in regression).
 
         **fit_params : dict
-            - If `enable_metadata_routing=False` (default):
+            - If `enable_metadata_routing=False` (default): Parameters directly passed
+              to the `fit` method of the sub-estimator. They are ignored if
+              `prefit=True`.
 
-                Parameters directly passed to the `fit` method of the
-                sub-estimator. They are ignored if `prefit=True`.
+            - If `enable_metadata_routing=True`: Parameters safely routed to the `fit`
+              method of the sub-estimator. They are ignored if `prefit=True`.
 
-            - If `enable_metadata_routing=True`:
-
-                Parameters safely routed to the `fit` method of the
-                sub-estimator. They are ignored if `prefit=True`.
-
-                .. versionchanged:: 1.4
-                    See :ref:`Metadata Routing User Guide <metadata_routing>` for
-                    more details.
+            .. versionchanged:: 1.4
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
 
         Returns
         -------
@@ -428,20 +407,17 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             classification, real numbers in regression).
 
         **partial_fit_params : dict
-            - If `enable_metadata_routing=False` (default):
+            - If `enable_metadata_routing=False` (default): Parameters directly passed
+              to the `partial_fit` method of the sub-estimator.
 
-                Parameters directly passed to the `partial_fit` method of the
-                sub-estimator.
+            - If `enable_metadata_routing=True`: Parameters passed to the `partial_fit`
+              method of the sub-estimator. They are ignored if `prefit=True`.
 
-            - If `enable_metadata_routing=True`:
+            .. versionchanged:: 1.4
 
-                Parameters passed to the `partial_fit` method of the
-                sub-estimator. They are ignored if `prefit=True`.
-
-                .. versionchanged:: 1.4
-                    `**partial_fit_params` are routed to the sub-estimator, if
-                    `enable_metadata_routing=True` is set via
-                    :func:`~sklearn.set_config`, which allows for aliasing.
+                `**partial_fit_params` are routed to the sub-estimator, if
+                `enable_metadata_routing=True` is set via
+                :func:`~sklearn.set_config`, which allows for aliasing.
 
                 See :ref:`Metadata Routing User Guide <metadata_routing>` for
                 more details.
