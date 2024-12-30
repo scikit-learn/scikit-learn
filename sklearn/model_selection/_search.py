@@ -13,6 +13,7 @@ import warnings
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
+from copy import deepcopy
 from functools import partial, reduce
 from itertools import product
 
@@ -355,7 +356,7 @@ def _check_refit(search_cv, attr):
         )
 
 
-def _estimator_has(attr):
+def _search_estimator_has(attr):
     """Check if we can delegate a method to the underlying estimator.
 
     Calling a prediction method will only be available if `refit=True`. In
@@ -476,17 +477,18 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         self.return_train_score = return_train_score
 
     @property
+    # TODO(1.8) remove this property
     def _estimator_type(self):
         return self.estimator._estimator_type
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        sub_estimator_tags = get_tags(self.estimator)
+        tags.estimator_type = sub_estimator_tags.estimator_type
+        tags.classifier_tags = deepcopy(sub_estimator_tags.classifier_tags)
+        tags.regressor_tags = deepcopy(sub_estimator_tags.regressor_tags)
         # allows cross-validation to see 'precomputed' metrics
         tags.input_tags.pairwise = get_tags(self.estimator).input_tags.pairwise
-        tags._xfail_checks = {
-            "check_supervised_y_2d": "DataConversionWarning not caught",
-            "check_requires_y_none": "Doesn't fail gracefully",
-        }
         tags.array_api_support = get_tags(self.estimator).array_api_support
         return tags
 
@@ -549,7 +551,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             score = score[self.refit]
         return score
 
-    @available_if(_estimator_has("score_samples"))
+    @available_if(_search_estimator_has("score_samples"))
     def score_samples(self, X):
         """Call score_samples on the estimator with the best found parameters.
 
@@ -572,7 +574,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         return self.best_estimator_.score_samples(X)
 
-    @available_if(_estimator_has("predict"))
+    @available_if(_search_estimator_has("predict"))
     def predict(self, X):
         """Call predict on the estimator with the best found parameters.
 
@@ -594,7 +596,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         return self.best_estimator_.predict(X)
 
-    @available_if(_estimator_has("predict_proba"))
+    @available_if(_search_estimator_has("predict_proba"))
     def predict_proba(self, X):
         """Call predict_proba on the estimator with the best found parameters.
 
@@ -617,7 +619,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         return self.best_estimator_.predict_proba(X)
 
-    @available_if(_estimator_has("predict_log_proba"))
+    @available_if(_search_estimator_has("predict_log_proba"))
     def predict_log_proba(self, X):
         """Call predict_log_proba on the estimator with the best found parameters.
 
@@ -640,7 +642,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         return self.best_estimator_.predict_log_proba(X)
 
-    @available_if(_estimator_has("decision_function"))
+    @available_if(_search_estimator_has("decision_function"))
     def decision_function(self, X):
         """Call decision_function on the estimator with the best found parameters.
 
@@ -663,7 +665,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         return self.best_estimator_.decision_function(X)
 
-    @available_if(_estimator_has("transform"))
+    @available_if(_search_estimator_has("transform"))
     def transform(self, X):
         """Call transform on the estimator with the best found parameters.
 
@@ -685,7 +687,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         return self.best_estimator_.transform(X)
 
-    @available_if(_estimator_has("inverse_transform"))
+    @available_if(_search_estimator_has("inverse_transform"))
     def inverse_transform(self, X=None, Xt=None):
         """Call inverse_transform on the estimator with the best found params.
 
@@ -740,7 +742,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         Only available when `refit=True` and the estimator is a classifier.
         """
-        _estimator_has("classes_")(self)
+        _search_estimator_has("classes_")(self)
         return self.best_estimator_.classes_
 
     def _run_search(self, evaluate_candidates):
@@ -1245,14 +1247,14 @@ class GridSearchCV(BaseSearchCV):
         If `scoring` represents a single score, one can use:
 
         - a single string (see :ref:`scoring_parameter`);
-        - a callable (see :ref:`scoring`) that returns a single value.
+        - a callable (see :ref:`scoring_callable`) that returns a single value.
 
         If `scoring` represents multiple scores, one can use:
 
         - a list or tuple of unique strings;
         - a callable returning a dictionary where the keys are the metric
           names and the values are the metric scores;
-        - a dictionary with metric names as keys and callables a values.
+        - a dictionary with metric names as keys and callables as values.
 
         See :ref:`multimetric_grid_search` for an example.
 
@@ -1621,14 +1623,14 @@ class RandomizedSearchCV(BaseSearchCV):
         If `scoring` represents a single score, one can use:
 
         - a single string (see :ref:`scoring_parameter`);
-        - a callable (see :ref:`scoring`) that returns a single value.
+        - a callable (see :ref:`scoring_callable`) that returns a single value.
 
         If `scoring` represents multiple scores, one can use:
 
         - a list or tuple of unique strings;
         - a callable returning a dictionary where the keys are the metric
           names and the values are the metric scores;
-        - a dictionary with metric names as keys and callables a values.
+        - a dictionary with metric names as keys and callables as values.
 
         See :ref:`multimetric_grid_search` for an example.
 
@@ -1653,7 +1655,7 @@ class RandomizedSearchCV(BaseSearchCV):
 
         Where there are considerations other than maximum score in
         choosing a best estimator, ``refit`` can be set to a function which
-        returns the selected ``best_index_`` given the ``cv_results``. In that
+        returns the selected ``best_index_`` given the ``cv_results_``. In that
         case, the ``best_estimator_`` and ``best_params_`` will be set
         according to the returned ``best_index_`` while the ``best_score_``
         attribute will not be available.

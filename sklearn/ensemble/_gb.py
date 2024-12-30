@@ -1725,16 +1725,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
                 "loss=%r does not support predict_proba" % self.loss
             ) from e
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        # TODO: investigate failure see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
-        return tags
-
 
 class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     """Gradient Boosting for regression.
@@ -1759,6 +1749,10 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         regression and is a robust loss function. 'huber' is a
         combination of the two. 'quantile' allows quantile regression (use
         `alpha` to specify the quantile).
+        See
+        :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`
+        for an example that demonstrates quantile regression for creating
+        prediction intervals with `loss='quantile'`.
 
     learning_rate : float, default=0.1
         Learning rate shrinks the contribution of each tree by `learning_rate`.
@@ -2191,13 +2185,3 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         leaves = super().apply(X)
         leaves = leaves.reshape(X.shape[0], self.estimators_.shape[0])
         return leaves
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        # TODO: investigate failure see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
-        return tags
