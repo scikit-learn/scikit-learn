@@ -40,7 +40,11 @@ from sklearn.metrics._classification import _check_targets, d2_log_loss_score
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelBinarizer, label_binarize
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
+from sklearn.utils._array_api import (
+    _is_numpy_namespace,
+    get_namespace,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._testing import (
     _array_api_for_tests,
@@ -3113,4 +3117,11 @@ def test_confusion_matrix_array_api(array_namespace, device, _):
     y_pred = xp.asarray([4, 5, 6], device=device)
 
     with config_context(array_api_dispatch=True):
-        confusion_matrix(y_true, y_pred)
+        result = confusion_matrix(y_true, y_pred)
+        xp_result, _ = get_namespace(result)
+        assert _is_numpy_namespace(xp_result)
+
+        # Since the computation always happens with NumPy / SciPy on the CPU, this
+        # function is expected to return an array allocated on the CPU even when it does
+        # not match the input array's device.
+        assert result.device == "cpu"
