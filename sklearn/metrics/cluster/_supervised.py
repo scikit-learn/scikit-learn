@@ -275,6 +275,8 @@ def rand_score(labels_true, labels_pred):
 
     The raw RI score [3]_ is:
 
+    .. code-block:: text
+
         RI = (number of agreeing pairs) / (number of pairs)
 
     Read more in the :ref:`User Guide <rand_score>`.
@@ -433,6 +435,9 @@ def adjusted_rand_score(labels_true, labels_pred):
 
       >>> adjusted_rand_score([0, 0, 1, 1], [0, 1, 0, 1])
       -0.5
+
+    See :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`
+    for a more detailed example.
     """
     (tn, fp), (fn, tp) = pair_confusion_matrix(labels_true, labels_pred)
     # convert to Python integer types, to avoid overflow or underflow
@@ -1179,7 +1184,7 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
 
     .. versionadded:: 0.18
 
-    The Fowlkes-Mallows index (FMI) is defined as the geometric mean between of
+    The Fowlkes-Mallows index (FMI) is defined as the geometric mean of
     the precision and recall::
 
         FMI = TP / sqrt((TP + FP) * (TP + FN))

@@ -1569,26 +1569,6 @@ def test_categorical_different_order_same_model(dataframe_lib):
         assert len(predictor_1[0].nodes) == len(predictor_2[0].nodes)
 
 
-# TODO(1.6): Remove warning and change default in 1.6
-def test_categorical_features_warn():
-    """Raise warning when there are categorical features in the input DataFrame.
-
-    This is not tested for polars because polars categories must always be
-    strings and strings can only be handled as categories. Therefore the
-    situation in which a categorical column is currently being treated as
-    numbers and in the future will be treated as categories cannot occur with
-    polars.
-    """
-    pd = pytest.importorskip("pandas")
-    X = pd.DataFrame({"a": pd.Series([1, 2, 3], dtype="category"), "b": [4, 5, 6]})
-    y = [0, 1, 0]
-    hist = HistGradientBoostingClassifier(random_state=0)
-
-    msg = "The categorical_features parameter will change to 'from_dtype' in v1.6"
-    with pytest.warns(FutureWarning, match=msg):
-        hist.fit(X, y)
-
-
 def get_different_bitness_node_ndarray(node_ndarray):
     new_dtype_for_indexing_fields = np.int64 if _IS_32BIT else np.int32
 

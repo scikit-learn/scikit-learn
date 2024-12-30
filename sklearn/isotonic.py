@@ -11,6 +11,8 @@ import numpy as np
 from scipy import interpolate, optimize
 from scipy.stats import spearmanr
 
+from sklearn.utils import metadata_routing
+
 from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
 from .base import BaseEstimator, RegressorMixin, TransformerMixin, _fit_context
 from .utils import check_array, check_consistent_length
@@ -272,6 +274,10 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     array([1.8628..., 3.7256...])
     """
 
+    # T should have been called X
+    __metadata_request__predict = {"T": metadata_routing.UNUSED}
+    __metadata_request__transform = {"T": metadata_routing.UNUSED}
+
     _parameter_constraints: dict = {
         "y_min": [Interval(Real, None, None, closed="both"), None],
         "y_max": [Interval(Real, None, None, closed="both"), None],
@@ -504,5 +510,8 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         if hasattr(self, "X_thresholds_") and hasattr(self, "y_thresholds_"):
             self._build_f(self.X_thresholds_, self.y_thresholds_)
 
-    def _more_tags(self):
-        return {"X_types": ["1darray"]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.one_d_array = True
+        tags.input_tags.two_d_array = False
+        return tags

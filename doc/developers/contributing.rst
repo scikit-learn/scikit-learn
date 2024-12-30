@@ -51,7 +51,7 @@ There are many ways to contribute to scikit-learn, with the most common ones
 being contribution of code or documentation to the project. Improving the
 documentation is no less important than improving the library itself.  If you
 find a typo in the documentation, or have made improvements, do not hesitate to
-send an email to the mailing list or preferably submit a GitHub pull request.
+create a GitHub issue or preferably submit a GitHub pull request.
 Full documentation can be found under the doc/ directory.
 
 But there are many other ways to help. In particular helping to
@@ -345,8 +345,10 @@ The next steps now describe the process of modifying code and submitting a PR:
 12. Follow `these
     <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
     instructions to create a pull request from your fork. This will send an
-    email to the committers. You may want to consider sending an email to the
-    mailing list for more visibility.
+    notification to potential reviewers. You may want to consider sending an message to
+    the `discord <https://discord.com/invite/h9qyrK8Jc8>`_ in the development
+    channel for more visibility if your pull request does not receive attention after
+    a couple of days (instant replies are not guaranteed though).
 
 It is often helpful to keep your local feature branch synchronized with the
 latest changes of the main scikit-learn repository:
@@ -363,7 +365,7 @@ line
 
 .. topic:: Learning Git
 
-    The `Git documentation <https://git-scm.com/documentation>`_ and
+    The `Git documentation <https://git-scm.com/doc>`_ and
     http://try.github.io are excellent resources to get started with git,
     and understanding all of the commands shown here.
 
@@ -431,13 +433,17 @@ complies with the following rules before marking a PR as "ready for review". The
    non-regression tests should fail for the code base in the ``main`` branch
    and pass for the PR code.
 
-5. Follow the :ref:`coding-guidelines`.
+5. If your PR is likely to affect users, you need to add a changelog entry describing
+   your PR changes, see the `following README <https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md>`
+   for more details.
 
-6. When applicable, use the validation tools and scripts in the :mod:`sklearn.utils`
+6. Follow the :ref:`coding-guidelines`.
+
+7. When applicable, use the validation tools and scripts in the :mod:`sklearn.utils`
    module. A list of utility routines available for developers can be found in the
    :ref:`developers-utils` page.
 
-7. Often pull requests resolve one or more other issues (or pull requests).
+8. Often pull requests resolve one or more other issues (or pull requests).
    If merging your pull request means that some other issues/PRs should
    be closed, you should `use keywords to create link to them
    <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
@@ -447,7 +453,7 @@ complies with the following rules before marking a PR as "ready for review". The
    related to some other issues/PRs, or it only partially resolves the target
    issue, create a link to them without using the keywords (e.g., ``Towards #1234``).
 
-8. PRs should often substantiate the change, through benchmarks of
+9. PRs should often substantiate the change, through benchmarks of
    performance and efficiency (see :ref:`monitoring_performances`) or through
    examples of usage. Examples also illustrate the features and intricacies of
    the library to users. Have a look at other examples in the `examples/
@@ -456,14 +462,14 @@ complies with the following rules before marking a PR as "ready for review". The
    functionality is useful in practice and, if possible, compare it to other
    methods available in scikit-learn.
 
-9. New features have some maintenance overhead. We expect PR authors
-   to take part in the maintenance for the code they submit, at least
-   initially. New features need to be illustrated with narrative
-   documentation in the user guide, with small code snippets.
-   If relevant, please also add references in the literature, with PDF links
-   when possible.
+10. New features have some maintenance overhead. We expect PR authors
+    to take part in the maintenance for the code they submit, at least
+    initially. New features need to be illustrated with narrative
+    documentation in the user guide, with small code snippets.
+    If relevant, please also add references in the literature, with PDF links
+    when possible.
 
-10. The user guide should also include expected time and space complexity
+11. The user guide should also include expected time and space complexity
     of the algorithm and scalability, e.g. "this algorithm can scale to a
     large number of samples > 100000, but does not scale in dimensionality:
     `n_features` is expected to be lower than 100".
@@ -556,12 +562,15 @@ Commit Message Marker  Action Taken by CI
 Note that, by default, the documentation is built but only the examples
 that are directly modified by the pull request are executed.
 
-Lock files
-^^^^^^^^^^
+.. _build_lock_files:
+
+Build lock files
+^^^^^^^^^^^^^^^^
 
 CIs use lock files to build environments with specific versions of dependencies. When a
 PR needs to modify the dependencies or their versions, the lock files should be updated
-accordingly. This can be done by commenting in the PR:
+accordingly. This can be done by adding the following comment directly in the GitHub
+Pull Request (PR) discussion:
 
 .. code-block:: text
 
@@ -585,6 +594,36 @@ update documentation-related lock files and add the `[doc build]` marker to the 
 .. code-block:: text
 
   @scikit-learn-bot update lock-files --select-build doc --commit-marker "[doc build]"
+
+Resolve conflicts in lock files
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Here is a bash snippet that helps resolving conflicts in environment and lock files:
+
+.. prompt:: bash
+
+  # pull latest upstream/main
+  git pull upstream main --no-rebase
+  # resolve conflicts - keeping the upstream/main version for specific files
+  git checkout --theirs  build_tools/*/*.lock build_tools/*/*environment.yml \
+      build_tools/*/*lock.txt build_tools/*/*requirements.txt
+  git add build_tools/*/*.lock build_tools/*/*environment.yml \
+      build_tools/*/*lock.txt build_tools/*/*requirements.txt
+  git merge --continue
+
+This will merge `upstream/main` into our branch, automatically prioritising the
+`upstream/main` for conflicting environment and lock files (this is good enough, because
+we will re-generate the lock files afterwards).
+
+Note that this only fixes conflicts in environment and lock files and you might have
+other conflicts to resolve.
+
+Finally, we have to re-generate the environment and lock files for the CIs, as described
+in :ref:`Build lock files <build_lock_files>`, or by running:
+
+.. prompt:: bash
+
+  python build_tools/update_environments_and_lock_files.py
 
 .. _stalled_pull_request:
 

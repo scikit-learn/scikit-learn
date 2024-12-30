@@ -94,6 +94,7 @@ Estimators
 - :class:`linear_model.Ridge` (with `solver="svd"`)
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
 - :class:`preprocessing.KernelCenterer`
+- :class:`preprocessing.LabelEncoder`
 - :class:`preprocessing.MaxAbsScaler`
 - :class:`preprocessing.MinMaxScaler`
 - :class:`preprocessing.Normalizer`
@@ -115,13 +116,18 @@ Metrics
 - :func:`sklearn.metrics.cluster.entropy`
 - :func:`sklearn.metrics.accuracy_score`
 - :func:`sklearn.metrics.d2_tweedie_score`
+- :func:`sklearn.metrics.explained_variance_score`
+- :func:`sklearn.metrics.f1_score`
 - :func:`sklearn.metrics.max_error`
 - :func:`sklearn.metrics.mean_absolute_error`
 - :func:`sklearn.metrics.mean_absolute_percentage_error`
 - :func:`sklearn.metrics.mean_gamma_deviance`
+- :func:`sklearn.metrics.mean_pinball_loss`
 - :func:`sklearn.metrics.mean_poisson_deviance` (requires `enabling array API support for SciPy <https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html#using-array-api-standard-support>`_)
 - :func:`sklearn.metrics.mean_squared_error`
+- :func:`sklearn.metrics.mean_squared_log_error`
 - :func:`sklearn.metrics.mean_tweedie_deviance`
+- :func:`sklearn.metrics.multilabel_confusion_matrix`
 - :func:`sklearn.metrics.pairwise.additive_chi2_kernel`
 - :func:`sklearn.metrics.pairwise.chi2_kernel`
 - :func:`sklearn.metrics.pairwise.cosine_similarity`
@@ -133,13 +139,17 @@ Metrics
 - :func:`sklearn.metrics.pairwise.polynomial_kernel`
 - :func:`sklearn.metrics.pairwise.rbf_kernel` (see :ref:`device_support_for_float64`)
 - :func:`sklearn.metrics.pairwise.sigmoid_kernel`
+- :func:`sklearn.metrics.precision_recall_fscore_support`
 - :func:`sklearn.metrics.r2_score`
+- :func:`sklearn.metrics.root_mean_squared_error`
+- :func:`sklearn.metrics.root_mean_squared_log_error`
 - :func:`sklearn.metrics.zero_one_loss`
 
 Tools
 -----
 
 - :func:`model_selection.train_test_split`
+- :func:`utils.check_consistent_length`
 
 Coverage is expected to grow over time. Please follow the dedicated `meta-issue on GitHub
 <https://github.com/scikit-learn/scikit-learn/issues/22352>`_ to track progress.
