@@ -18,9 +18,8 @@ and the environment variable `SCIPY_ARRAY_API` must be set to `1` before importi
    export SCIPY_ARRAY_API=1
 
 Please note that this environment variable is intended for temporary use.
-For more details, refer to the following SciPy documentation:
-
-- https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html#using-array-api-standard-support
+For more details, refer to SciPy's `Array API documentation
+<https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html#using-array-api-standard-support>`_.
 
 
 Some scikit-learn estimators that primarily rely on NumPy (as opposed to using
