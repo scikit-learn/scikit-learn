@@ -408,9 +408,9 @@ def _yield_masked_array_for_each_param(candidate_params):
         param_list = list(param_result.values())
         try:
             # TODO: remove warning filter when numpy min version >= 1.24, i.e. when
+            # creating an ndarray from ragged nested sequences always errors.
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", VisibleDeprecationWarning)
-                # creating an ndarray from ragged nested sequences always errors.
                 arr = np.array(param_list)
         except ValueError:
             # This can happen when param_list contains lists of different
