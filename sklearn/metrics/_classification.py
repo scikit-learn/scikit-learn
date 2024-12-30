@@ -337,10 +337,10 @@ def confusion_matrix(
     >>> (tn, fp, fn, tp)
     (np.int64(0), np.int64(2), np.int64(1), np.int64(1))
     """
-    y_true, y_pred = attach_unique(y_true, y_pred)
     xp, _, device_ = get_namespace_and_device(y_true, y_pred, labels, sample_weight)
     y_true = _convert_to_numpy(y_true, xp)
     y_pred = _convert_to_numpy(y_pred, xp)
+    y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):
         raise ValueError("%s is not supported" % y_type)
