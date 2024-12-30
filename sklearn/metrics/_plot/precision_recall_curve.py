@@ -325,7 +325,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
                 "`self.precisions`, `self.recalls`, and if provided, "
                 "`self.average_precisions` and `self.names` (or `plot`'s `names`), "
                 "from `PrecisionRecallDisplay` initialization, should all "
-                f"be lists of the same length."
+                "be lists of the same length."
             )
 
         n_multi = len(self.precisions)
