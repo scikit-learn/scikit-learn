@@ -421,7 +421,7 @@ def confusion_matrix(
             UserWarning,
         )
 
-    return xp.asarray(cm, device=device_)
+    return cm
 
 
 @validate_params(
