@@ -14,14 +14,11 @@ implementation_specific_values = [
 # KD Tree and Ball Tree
 # =====================
 #
-#    Author: Jake Vanderplas <jakevdp@cs.washington.edu>, 2012-2013
-#            Omar Salman <omar.salman@arbisoft.com>
-#
-#    License: BSD
-#
 # _binary_tree.pxi is generated and is then literally Cython included in
 # ball_tree.pyx and kd_tree.pyx. See ball_tree.pyx.tp and kd_tree.pyx.tp.
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 }}
 
 
