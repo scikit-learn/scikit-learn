@@ -247,6 +247,7 @@ def test_spectral_embedding_callable_affinity(sparse_container, seed=36):
 @pytest.mark.skipif(
     not pyamg_available, reason="PyAMG is required for the tests in this function."
 )
+# TODO: remove warning filter when pyamg min version >= 5.1
 @pytest.mark.filterwarnings(
     "ignore:np.find_common_type is deprecated.*:DeprecationWarning"
 )
@@ -309,6 +310,7 @@ def test_spectral_embedding_amg_solver(dtype, coo_container, seed=36):
 @pytest.mark.skipif(
     not pyamg_available, reason="PyAMG is required for the tests in this function."
 )
+# TODO: remove warning filter when pyamg min version >= 5.1
 @pytest.mark.filterwarnings(
     "ignore:np.find_common_type is deprecated.*:DeprecationWarning"
 )
@@ -480,6 +482,7 @@ def test_error_pyamg_not_available():
         se_precomp.fit_transform(S)
 
 
+# TODO: remove warning filter when pyamg min version >= 5.1
 @pytest.mark.filterwarnings(
     "ignore:np.find_common_type is deprecated.*:DeprecationWarning"
 )
