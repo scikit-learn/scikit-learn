@@ -3048,6 +3048,8 @@ def test_d2_log_loss_score():
     assert d2_score < 0
 
 
+# TODO: remove warning filter when numpy min version >= 1.25
+@pytest.mark.filterwarnings("ignore:elementwise comparison failed:FutureWarning")
 def test_d2_log_loss_score_raises():
     """Test that d2_log_loss_score raises the appropriate errors on
     invalid inputs."""
