@@ -320,7 +320,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         multi_args.extend([self.precisions, self.recalls])
         # I could make this message more informative (i.e. give
         # lengths of each param) but it requires a fair bit more code
-        if (len({len(arg) for arg in multi_args}) > 1):
+        if len({len(arg) for arg in multi_args}) > 1:
             raise ValueError(
                 "`self.precisions`, `self.recalls`, and if provided, "
                 "`self.average_precisions` and `self.names` (or `plot`'s `names`), "
