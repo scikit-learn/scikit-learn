@@ -293,7 +293,7 @@ def confusion_matrix(
 
     Returns
     -------
-    C : array of shape (n_classes, n_classes)
+    C : ndarray of shape (n_classes, n_classes)
         Confusion matrix whose i-th row and j-th
         column entry indicates the number of
         samples with true label being i-th class
