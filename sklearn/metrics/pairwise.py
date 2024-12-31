@@ -53,13 +53,14 @@ def _return_float_dtype(X, Y):
     1. If dtype of X and Y is float32, then dtype float32 is returned.
     2. Else dtype float is returned.
     """
+    xp, _ = get_namespace(X, Y)
     if not issparse(X) and not isinstance(X, np.ndarray):
-        X = np.asarray(X)
+        X = xp.asarray(X)
 
     if Y is None:
         Y_dtype = X.dtype
     elif not issparse(Y) and not isinstance(Y, np.ndarray):
-        Y = np.asarray(Y)
+        Y = xp.asarray(Y)
         Y_dtype = Y.dtype
     else:
         Y_dtype = Y.dtype
@@ -1552,12 +1553,15 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     """
     xp, _ = get_namespace(X, Y)
     X, Y = check_pairwise_arrays(X, Y)
+    xp, _ = get_namespace(X, Y)
+
     if gamma is None:
         gamma = 1.0 / X.shape[1]
 
     K = safe_sparse_dot(X, Y.T, dense_output=True)
     K *= gamma
     K += coef0
+
     # compute tanh in-place for numpy
     K = _modify_in_place_if_numpy(xp, xp.tanh, K, out=K)
     return K
@@ -2028,8 +2032,10 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
         for i, j in iterator:
             # scipy has not yet implemented 1D sparse slices; once implemented this can
             # be removed and `arr[ind]` can be simply used.
-            x = X[[i], :] if issparse(X) else X[i]
-            y = Y[[j], :] if issparse(Y) else Y[j]
+            # x = X[[i], :] if issparse(X) else X[i]
+            # y = Y[[j], :] if issparse(Y) else Y[j]
+            x = X[i : i + 1, :]
+            y = Y[j : j + 1, :]
             out[i, j] = metric(x, y, **kwds)
 
     return out
