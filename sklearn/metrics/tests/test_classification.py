@@ -2884,7 +2884,7 @@ def test_brier_score_loss_invalid_inputs():
     y_pred = [[0.9, 0.1]]
     error_message = (
         "y_true contains only one label (eggs). Please "
-        "provide the true labels explicitly through the "
+        "provide the list of all expected class labels explicitly through the "
         "labels argument."
     )
     with pytest.raises(ValueError, match=re.escape(error_message)):

@@ -663,7 +663,7 @@ def test_not_symmetric_metric(name):
             always_symmetric = False
             break
 
-    if always_symmetric:
+    if always_symmetric:  # pragma: no cover
         raise ValueError(f"{name} seems to be symmetric")
 
 

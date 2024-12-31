@@ -1943,7 +1943,7 @@ Following the original definition by [Brier1950]_, the Brier score is given by:
 
   BS(Y, P) = \frac{1}{N}\sum_{i=0}^{N-1}\sum_{k=0}^{K-1}(y_{i,k} - p_{i,k})^{2}
 
-The Brier score ranges between :math:`[0, 2]` and the lower the value
+The Brier score lies in the :math:`[0, 2]` range and the lower the value
 the better the probability estimates are (the mean squared difference is smaller).
 Actually the Brier score is a strictly proper scoring rule, meaning that it
 achieves the best score only when the estimated probabilities are equal to the
@@ -1960,7 +1960,8 @@ the Brier score is then equal to:
 
 The :func:`brier_score_loss` function computes the Brier score given the
 ground-truth labels and predicted probabilities,
-as returned by an estimator's ``predict_proba`` method.
+as returned by an estimator's ``predict_proba`` method. The `scale_by_half` parameter
+controls which of the two above definitions to follow.
 
 
     >>> import numpy as np

@@ -196,9 +196,9 @@ def _validate_multiclass_probabilistic_prediction(
     )
 
     if y_prob.max() > 1:
-        raise ValueError("y_prob contains values greater than 1.")
+        raise ValueError(f"y_prob contains values greater than 1: {y_prob.max()}")
     if y_prob.min() < 0:
-        raise ValueError("y_prob contains values less than 0.")
+        raise ValueError(f"y_prob contains values lower than 0: {y_prob.min()")
 
     check_consistent_length(y_prob, y_true, sample_weight)
     lb = LabelBinarizer()
@@ -222,7 +222,7 @@ def _validate_multiclass_probabilistic_prediction(
         if labels is None:
             raise ValueError(
                 "y_true contains only one label ({0}). Please "
-                "provide the true labels explicitly through the "
+                "provide the list of all expected class labels explicitly through the "
                 "labels argument.".format(lb.classes_[0])
             )
         else:
@@ -262,7 +262,7 @@ def _validate_multiclass_probabilistic_prediction(
         if labels is None:
             raise ValueError(
                 "y_true and y_prob contain different number of "
-                "classes {0}, {1}. Please provide the true "
+                "classes: {0} vs {1}. Please provide the true "
                 "labels explicitly through the labels argument. "
                 "Classes found in "
                 "y_true: {2}".format(
@@ -3287,14 +3287,14 @@ def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos
     y_type = type_of_target(y_true, input_name="y_true")
     if y_type != "binary":
         raise ValueError(
-            f"The type of the target is {y_type} but should be "
+            f"The type of the target inferred from y_true is {y_type} but should be "
             "binary according to the shape of y_prob."
         )
 
     if y_prob.max() > 1:
-        raise ValueError("y_prob contains values greater than 1.")
+        raise ValueError(f"y_prob contains values greater than 1: {y_prob.max()}")
     if y_prob.min() < 0:
-        raise ValueError("y_prob contains values less than 0.")
+        raise ValueError(f"y_prob contains values less than 0: {y_prob.min()}")
 
     # check that pos_label is consistent with y_true
     try:
@@ -3400,9 +3400,10 @@ def brier_score_loss(
         If not provided, labels will be inferred from `y_true`.
 
     scale_by_half : bool or "auto", default="auto"
-        Rescales the Brier score by half, which then ranges from 0 to 1.
-        The default "auto" option will rescale the Brier score only for
-        binary classification.
+        When True, scale the Brier score by half to lie in the [0, 1] range instead
+        of the [0, 2] range. The default "auto" option implements the rescaling to
+        [0, 1] only for binary classification (as customary) but keeps the
+        original [0, 2] range for multiclasss classification.
 
     y_prob : array-like of shape (n_samples,)
         Probabilities of the positive class.

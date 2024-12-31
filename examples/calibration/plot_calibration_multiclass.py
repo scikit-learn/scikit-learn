@@ -220,8 +220,7 @@ print(f" - uncalibrated classifier: {loss:.3f}")
 print(f" - calibrated classifier: {cal_loss:.3f}")
 
 # %%
-# We can also assess calibration with the Brier score
-# for probabilistics predictions
+# We can also assess calibration with the Brier score for probabilistics predictions
 # (lower is better, possible range is [0, 2]):
 
 from sklearn.metrics import brier_score_loss
