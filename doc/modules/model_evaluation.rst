@@ -1976,6 +1976,7 @@ two above definitions to follow.
     >>> brier_score_loss(
     ...    ["eggs", "ham", "spam"],
     ...    [[0.8, 0.1, 0.1], [0.2, 0.7, 0.1], [0.2, 0.2, 0.6]],
+    ...    labels=["eggs", "ham", "spam"]
     ... )
     0.146
 

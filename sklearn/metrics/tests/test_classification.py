@@ -2658,8 +2658,8 @@ def test_log_loss():
     y_pred = [[0.2, 0.8], [0.6, 0.4]]
     y_score = np.array([[0.1, 0.9], [0.1, 0.9]])
     error_str = (
-        "y_true contains only one label (2). Please provide "
-        "the true labels explicitly through the labels argument."
+        "y_true contains only one label (2). Please provide the list of all "
+        "expected class labels explicitly through the labels argument."
     )
     with pytest.raises(ValueError, match=re.escape(error_str)):
         log_loss(y_true, y_pred)
@@ -2849,7 +2849,7 @@ def test_brier_score_loss_invalid_inputs():
     y_true = np.array([0, 1, 2, 0])
     y_pred = np.array([0.8, 0.6, 0.4, 0.2])
     error_message = re.escape(
-        "The type of the target is multiclass "
+        "The type of the target inferred from y_true is multiclass "
         "but should be binary according to the shape of y_prob."
     )
     with pytest.raises(ValueError, match=error_message):
@@ -2860,7 +2860,7 @@ def test_brier_score_loss_invalid_inputs():
     y_pred = [[1, 0], [0, 1], [0, 1]]
     error_message = (
         "y_true and y_prob contain different number of "
-        "classes 3, 2. Please provide the true "
+        "classes: 3 vs 2. Please provide the true "
         "labels explicitly through the labels argument. "
         "Classes found in "
         "y_true: [0 1 2]"

@@ -198,7 +198,7 @@ def _validate_multiclass_probabilistic_prediction(
     if y_prob.max() > 1:
         raise ValueError(f"y_prob contains values greater than 1: {y_prob.max()}")
     if y_prob.min() < 0:
-        raise ValueError(f"y_prob contains values lower than 0: {y_prob.min()")
+        raise ValueError(f"y_prob contains values lower than 0: {y_prob.min()}")
 
     check_consistent_length(y_prob, y_true, sample_weight)
     lb = LabelBinarizer()
@@ -3442,6 +3442,7 @@ def brier_score_loss(
     >>> brier_score_loss(
     ...    ["eggs", "ham", "spam"],
     ...    [[0.8, 0.1, 0.1], [0.2, 0.7, 0.1], [0.2, 0.2, 0.6]],
+    ...    labels=["eggs", "ham", "spam"]
     ... )
     np.float64(0.146...)
     """
