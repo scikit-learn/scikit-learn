@@ -262,7 +262,7 @@ def _deprecate_singular(singular, plural, name):
 def _check_param_lengths(required, optional, class_name):
     """Check required and optional parameters are of the same length."""
     optional_provided = {}
-    for name, param in optional:
+    for name, param in optional.items():
         if isinstance(param, list):
             optional_provided[name] = param
 
@@ -290,7 +290,7 @@ def _process_fold_names_line_kwargs(n_curves, fold_names, fold_line_kwargs):
 
     if fold_names is None:
         fold_names_ = [f"ROC fold: {idx}" for idx in range(n_curves)]
-    elif fold_names is not None and len(fold_names) != n_curves:
+    elif len(fold_names) != n_curves:
         raise ValueError(
             msg.format(param="fold_names", len_param=len(fold_names), n_curves=n_curves)
         )
@@ -299,7 +299,7 @@ def _process_fold_names_line_kwargs(n_curves, fold_names, fold_line_kwargs):
 
     if isinstance(fold_line_kwargs, Mapping):
         fold_line_kws_ = [fold_line_kwargs] * n_curves
-    elif len(fold_line_kwargs) != n_curves:
+    elif fold_names is not None and len(fold_line_kwargs) != n_curves:
         raise ValueError(
             msg.format(
                 param="fold_line_kwargs",
@@ -309,4 +309,5 @@ def _process_fold_names_line_kwargs(n_curves, fold_names, fold_line_kwargs):
         )
     else:
         fold_line_kws_ = fold_line_kwargs
+
     return fold_names_, fold_line_kws_
