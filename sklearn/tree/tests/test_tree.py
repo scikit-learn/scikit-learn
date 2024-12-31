@@ -2818,7 +2818,11 @@ def test_build_pruned_tree_infinite_loop():
 
 
 def test_sort_log2_build():
-    """Non-regression test for gh-30554."""
+    """Non-regression test for gh-30554.
+
+    Using log2 and log in sort correctly sorts feature_values, but the tie breaking is
+    different which can results in placing samples in a different order.
+    """
     rng = np.random.default_rng(75)
     some = rng.normal(loc=0.0, scale=10.0, size=10).astype(np.float32)
     feature_values = np.concatenate([some] * 5)
