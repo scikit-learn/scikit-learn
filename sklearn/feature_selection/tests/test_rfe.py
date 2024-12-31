@@ -461,7 +461,7 @@ def test_rfe_cv_groups():
 
 
 @pytest.mark.parametrize(
-    "importance_getter", [attrgetter("regressor_.coef_"), "regressor_.coef_"]
+    "importance_getter", [attrgetter("estimator_.coef_"), "estimator_.coef_"]
 )
 @pytest.mark.parametrize("selector, expected_n_features", [(RFE, 5), (RFECV, 4)])
 def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features):
@@ -471,7 +471,7 @@ def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features)
     estimator = LinearSVR(random_state=0)
 
     log_estimator = TransformedTargetRegressor(
-        regressor=estimator, func=np.log, inverse_func=np.exp
+        estimator=estimator, func=np.log, inverse_func=np.exp
     )
 
     selector = selector(log_estimator, importance_getter=importance_getter)
@@ -492,7 +492,7 @@ def test_rfe_importance_getter_validation(importance_getter, err_type, Selector)
     X, y = make_friedman1(n_samples=50, n_features=10, random_state=42)
     estimator = LinearSVR()
     log_estimator = TransformedTargetRegressor(
-        regressor=estimator, func=np.log, inverse_func=np.exp
+        estimator=estimator, func=np.log, inverse_func=np.exp
     )
 
     with pytest.raises(err_type):
