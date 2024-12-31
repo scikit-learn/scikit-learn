@@ -73,6 +73,10 @@ jobs:
           - os: windows-latest
             python: 313
             platform_id: win_amd64
+          - os: windows-latest
+            python: 313t
+            platform_id: win_amd64
+            free_threaded_support: True
 
           # Linux 64 bit manylinux2014
           - os: ubuntu-latest
