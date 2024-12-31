@@ -196,7 +196,7 @@ def _deprecate_singular(singular, plural, name):
         warnings.warn(
             f"`{name}` was passed to `{name}s` in a list because `{name}` is "
             f"deprecated in 1.7 and will be removed in 1.9. Use "
-            f"`{name}s` instead in future.",
+            f"`{name}s` instead.",
             FutureWarning,
         )
         if plural:
