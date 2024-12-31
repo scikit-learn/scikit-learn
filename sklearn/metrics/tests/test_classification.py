@@ -2776,11 +2776,14 @@ def test_brier_score_loss_binary():
     )
 
     # calculate correctly when there's only one class in y_true
-    assert_almost_equal(brier_score_loss([-1], [0.4]), 0.16)
-    assert_almost_equal(brier_score_loss([0], [0.4]), 0.16)
-    assert_almost_equal(brier_score_loss([1], [0.4]), 0.36)
-    assert_almost_equal(brier_score_loss(["foo"], [0.4], pos_label="bar"), 0.16)
-    assert_almost_equal(brier_score_loss(["foo"], [0.4], pos_label="foo"), 0.36)
+    assert_almost_equal(brier_score_loss([-1], [0.4]), 0.4**2)
+    assert_almost_equal(brier_score_loss([0], [0.4]), 0.4**2)
+    assert_almost_equal(brier_score_loss([1], [0.4]), (1 - 0.4)**2)
+    assert_almost_equal(brier_score_loss(["foo"], [0.4], pos_label="bar"), 0.4**2)
+    assert_almost_equal(
+        brier_score_loss(["foo"], [0.4], pos_label="foo"),
+        (1 - 0.4)**2,
+    )
 
 
 def test_brier_score_loss_multiclass():
