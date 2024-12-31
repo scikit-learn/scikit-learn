@@ -703,6 +703,7 @@ cdef inline void shift_missing_values_to_left_if_required(
 
 
 def _py_sort(float32_t[::1] feature_values, intp_t[::1] samples, intp_t n):
+    """Used for testing sort."""
     sort(&feature_values[0], &samples[0], n)
 
 
