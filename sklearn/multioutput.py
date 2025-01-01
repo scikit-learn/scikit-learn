@@ -952,8 +952,8 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     base_estimator : estimator, default="deprecated"
         Use `estimator` instead.
 
-        .. deprecated:: 1.6
-            `base_estimator` is deprecated and will be removed in 1.8.
+        .. deprecated:: 1.7
+            `base_estimator` is deprecated and will be removed in 1.9.
             Use `estimator` instead.
 
     Attributes
