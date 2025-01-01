@@ -738,15 +738,15 @@ def test_feature_selectors_in_pipeline(metaestimator):
 
     kwargs["estimator"] = estimator
 
+    # configure scorer and call set_score_request
     if "scorer_name" in metaestimator:
         scorer_name = metaestimator["scorer_name"]
         set_requests(scorer, method_mapping={}, methods=["score"], metadata_name=key)
         kwargs[scorer_name] = scorer
 
-    # NOTE: ignore CV since we are explicitly testing
-    # sample_weight metadata (and not CV groups)
+    # skip configuring cv and calling set_split_request (not necessary for this test)
 
-    # `set_{method}_request({metadata}==True)` on the underlying objects
+    # `set_{method}_request({metadata}==True)` on the underlying estimator
     set_requests(
         estimator,
         method_mapping=method_mapping,
@@ -765,26 +765,14 @@ def test_feature_selectors_in_pipeline(metaestimator):
 
     pipeline_method = getattr(pipe, method_name)
 
-    try:
-        # `fit` and `partial_fit` accept y, others don't.
-        pipeline_method(X, y, **method_kwargs)
-        selected_features_with_sample_weights = (
-            pipe["feature_selector"].get_feature_names_out().tolist()
-        )
-        pipeline_method(X, y)
-        selected_features_without_sample_weights = (
-            pipe["feature_selector"].get_feature_names_out().tolist()
-        )
-
-    except TypeError:
-        pipeline_method(X, **method_kwargs)
-        selected_features_with_sample_weights = (
-            pipe["feature_selector"].get_feature_names_out().tolist()
-        )
-        pipeline_method(X)
-        selected_features_without_sample_weights = (
-            pipe["feature_selector"].get_feature_names_out().tolist()
-        )
+    pipeline_method(X, y, **method_kwargs)
+    selected_features_with_sample_weights = (
+        pipe["feature_selector"].get_feature_names_out().tolist()
+    )
+    pipeline_method(X, y)
+    selected_features_without_sample_weights = (
+        pipe["feature_selector"].get_feature_names_out().tolist()
+    )
 
     assert (
         selected_features_with_sample_weights
