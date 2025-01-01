@@ -748,7 +748,7 @@ def test_feature_selectors_in_pipeline(metaestimator):
             )
             kwargs[scorer_name] = scorer
 
-        # skip configuring cv and calling set_split_request (not necessary for this test)
+        # skip configuring cv and set_split_request call (not necessary for this test)
 
         # `set_{method}_request({metadata}==True)` on the underlying estimator
         set_requests(
