@@ -1,0 +1,6 @@
+- :class:`compose.ColumnTransformer`
+  `ColumnTransformer` now validates sparse formats for input X and 
+  converts non-subscriptable sparse formats to csr format before 
+  processing.
+  added a non-regression unit test for verification.
+  By :user:`Ayush <AYUSH27112021>`
