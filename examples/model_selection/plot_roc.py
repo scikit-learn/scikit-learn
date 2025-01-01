@@ -155,6 +155,10 @@ print(f"y_score:\n{y_score[0:2,:]}")
 print()
 print(f"y_score.ravel():\n{y_score[0:2,:].ravel()}")
 
+# %%
+# In a multi-class classification setup with highly imbalanced classes,
+# micro-averaging is preferable over macro-averaging. In such cases, one can
+# alternatively use a weighted macro-averaging, not demonstrated here.
 
 display = RocCurveDisplay.from_predictions(
     y_onehot_test.ravel(),
