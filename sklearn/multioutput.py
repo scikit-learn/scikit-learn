@@ -1030,7 +1030,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         ],
     }
 
-    # TODO(1.8): Remove base_estimator from __init__
+    # TODO(1.9): Remove base_estimator from __init__
     def __init__(
         self,
         estimator=None,
