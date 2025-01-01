@@ -371,7 +371,7 @@ def test_pipeline_raise_set_params_error():
     # expected error message for invalid inner parameter
     error_msg = re.escape(
         "Invalid parameter 'invalid_param' for estimator LinearRegression(). Valid"
-        " parameters are: ['copy_X', 'fit_intercept', 'n_jobs', 'positive']."
+        " parameters are: ['copy_X', 'fit_intercept', 'n_jobs', 'positive', 'tol']."
     )
     with pytest.raises(ValueError, match=error_msg):
         pipe.set_params(cls__invalid_param="nope")
