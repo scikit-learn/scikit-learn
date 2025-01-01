@@ -32,6 +32,8 @@ from sklearn.linear_model import (
     LarsCV,
     LassoCV,
     LassoLarsCV,
+    LinearRegression,
+    LogisticRegression,
     LogisticRegressionCV,
     MultiTaskElasticNetCV,
     MultiTaskLassoCV,
@@ -40,8 +42,8 @@ from sklearn.linear_model import (
     RidgeClassifierCV,
     RidgeCV,
 )
-from sklearn.metrics._regression import mean_squared_error
-from sklearn.metrics._scorer import make_scorer
+from sklearn.metrics._regression import mean_squared_error, r2_score
+from sklearn.metrics._scorer import make_scorer, accuracy_score
 from sklearn.model_selection import (
     FixedThresholdClassifier,
     GridSearchCV,
@@ -63,6 +65,7 @@ from sklearn.multioutput import (
     MultiOutputRegressor,
     RegressorChain,
 )
+from sklearn.pipeline import Pipeline
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.tests.metadata_routing_common import (
     ConsumingClassifier,
@@ -87,6 +90,9 @@ y_multi = rng.randint(0, 3, size=(N, 3))
 classes_multi = [np.unique(y_multi[:, i]) for i in range(y_multi.shape[1])]
 metadata = rng.randint(0, 10, size=N)
 sample_weight = rng.rand(N)
+# for testing purposes, create sample weights highly correlated to features,
+# which forces different outcomes between using and not using sample weights
+sample_weight_feature_selector = X[:, 0] * X[:, 1] * X[:, 2] * X[:, 3]
 groups = rng.randint(0, 10, size=len(y))
 
 
@@ -695,6 +701,95 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
                     method(X, y, **method_kwargs)
                 except TypeError:
                     method(X, **method_kwargs)
+
+
+@pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
+@config_context(enable_metadata_routing=True)
+def test_feature_selectors_in_pipeline(metaestimator):
+
+    metaestimator_class = metaestimator["metaestimator"]
+
+    # This test only makes sense for metaestimators which have a
+    # sub-estimator and belong to the feature_selection module
+    if ("estimator" not in metaestimator) or (
+        metaestimator_class.__module__.split(".")[1]
+    ) != "feature_selection":
+        return
+
+    X = metaestimator["X"]
+    y = metaestimator["y"]
+    method_mapping = metaestimator.get("method_mapping", {})
+    preserves_metadata = metaestimator.get("preserves_metadata", True)
+
+    method_name = "fit"
+    key = "sample_weight"
+    method_kwargs = {key: sample_weight_feature_selector}
+
+    kwargs = metaestimator.get("init_args", {})
+
+    if metaestimator["estimator"] == "classifier":
+        estimator = LogisticRegression()
+        scorer = make_scorer(accuracy_score)
+    elif metaestimator["estimator"] == "regressor":
+        estimator = LinearRegression()
+        scorer = make_scorer(r2_score)
+    else:
+        raise ValueError("Unpermitted `sub_estimator_type`.")  # pragma: nocover
+
+    kwargs["estimator"] = estimator
+
+    if "scorer_name" in metaestimator:
+        scorer_name = metaestimator["scorer_name"]
+        set_requests(scorer, method_mapping={}, methods=["score"], metadata_name=key)
+        kwargs[scorer_name] = scorer
+
+    # NOTE: ignore CV since we are explicitly testing
+    # sample_weight metadata (and not CV groups)
+
+    # `set_{method}_request({metadata}==True)` on the underlying objects
+    set_requests(
+        estimator,
+        method_mapping=method_mapping,
+        methods=[method_name],
+        metadata_name=key,
+    )
+
+    metaestimator_instance = metaestimator_class(**kwargs)
+
+    pipe = Pipeline(
+        [
+            ("feature_selector", metaestimator_instance),
+            ("regressor", estimator),
+        ]
+    )
+
+    pipeline_method = getattr(pipe, method_name)
+
+    try:
+        # `fit` and `partial_fit` accept y, others don't.
+        pipeline_method(X, y, **method_kwargs)
+        selected_features_with_sample_weights = (
+            pipe["feature_selector"].get_feature_names_out().tolist()
+        )
+        pipeline_method(X, y)
+        selected_features_without_sample_weights = (
+            pipe["feature_selector"].get_feature_names_out().tolist()
+        )
+
+    except TypeError:
+        pipeline_method(X, **method_kwargs)
+        selected_features_with_sample_weights = (
+            pipe["feature_selector"].get_feature_names_out().tolist()
+        )
+        pipeline_method(X)
+        selected_features_without_sample_weights = (
+            pipe["feature_selector"].get_feature_names_out().tolist()
+        )
+
+    assert (
+        selected_features_with_sample_weights
+        != selected_features_without_sample_weights
+    )
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
