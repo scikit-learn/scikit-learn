@@ -725,59 +725,63 @@ def test_feature_selectors_in_pipeline(metaestimator):
     key = "sample_weight"
     method_kwargs = {key: sample_weight_feature_selector}
 
-    kwargs = metaestimator.get("init_args", {})
+    for sub_estimator_type in ["classifier", "regressor"]:
 
-    if metaestimator["estimator"] == "classifier":
-        estimator = LogisticRegression()
-        scorer = make_scorer(accuracy_score)
-    elif metaestimator["estimator"] == "regressor":
-        estimator = LinearRegression()
-        scorer = make_scorer(r2_score)
-    else:
-        raise ValueError("Unpermitted `sub_estimator_type`.")  # pragma: nocover
+        kwargs = metaestimator.get("init_args", {})
 
-    kwargs["estimator"] = estimator
+        if sub_estimator_type == "classifier":
+            estimator = LogisticRegression()
+            scorer = make_scorer(accuracy_score)
+        elif sub_estimator_type == "regressor":
+            estimator = LinearRegression()
+            scorer = make_scorer(r2_score)
+        else:
+            raise ValueError("Unpermitted `sub_estimator_type`.")  # pragma: nocover
 
-    # configure scorer and call set_score_request
-    if "scorer_name" in metaestimator:
-        scorer_name = metaestimator["scorer_name"]
-        set_requests(scorer, method_mapping={}, methods=["score"], metadata_name=key)
-        kwargs[scorer_name] = scorer
+        kwargs["estimator"] = estimator
 
-    # skip configuring cv and calling set_split_request (not necessary for this test)
+        # configure scorer and call set_score_request
+        if "scorer_name" in metaestimator:
+            scorer_name = metaestimator["scorer_name"]
+            set_requests(
+                scorer, method_mapping={}, methods=["score"], metadata_name=key
+            )
+            kwargs[scorer_name] = scorer
 
-    # `set_{method}_request({metadata}==True)` on the underlying estimator
-    set_requests(
-        estimator,
-        method_mapping=method_mapping,
-        methods=[method_name],
-        metadata_name=key,
-    )
+        # skip configuring cv and calling set_split_request (not necessary for this test)
 
-    metaestimator_instance = metaestimator_class(**kwargs)
+        # `set_{method}_request({metadata}==True)` on the underlying estimator
+        set_requests(
+            estimator,
+            method_mapping=method_mapping,
+            methods=[method_name],
+            metadata_name=key,
+        )
 
-    pipe = Pipeline(
-        [
-            ("feature_selector", metaestimator_instance),
-            ("regressor", estimator),
-        ]
-    )
+        metaestimator_instance = metaestimator_class(**kwargs)
 
-    pipeline_method = getattr(pipe, method_name)
+        pipe = Pipeline(
+            [
+                ("feature_selector", metaestimator_instance),
+                ("regressor", estimator),
+            ]
+        )
 
-    pipeline_method(X, y, **method_kwargs)
-    selected_features_with_sample_weights = (
-        pipe["feature_selector"].get_feature_names_out().tolist()
-    )
-    pipeline_method(X, y)
-    selected_features_without_sample_weights = (
-        pipe["feature_selector"].get_feature_names_out().tolist()
-    )
+        pipeline_method = getattr(pipe, method_name)
 
-    assert (
-        selected_features_with_sample_weights
-        != selected_features_without_sample_weights
-    )
+        pipeline_method(X, y, **method_kwargs)
+        selected_features_with_sample_weights = (
+            pipe["feature_selector"].get_feature_names_out().tolist()
+        )
+        pipeline_method(X, y)
+        selected_features_without_sample_weights = (
+            pipe["feature_selector"].get_feature_names_out().tolist()
+        )
+
+        assert (
+            selected_features_with_sample_weights
+            != selected_features_without_sample_weights
+        )
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
