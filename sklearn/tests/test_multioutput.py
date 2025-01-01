@@ -866,7 +866,7 @@ def test_multioutput_regressor_has_partial_fit():
         getattr(est, "partial_fit")
 
 
-# TODO(1.8):  remove when deprecated `base_estimator` is removed
+# TODO(1.9):  remove when deprecated `base_estimator` is removed
 @pytest.mark.parametrize("Estimator", [ClassifierChain, RegressorChain])
 def test_base_estimator_deprecation(Estimator):
     """Check that we warn about the deprecation of `base_estimator`."""
