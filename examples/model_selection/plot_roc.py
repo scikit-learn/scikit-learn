@@ -439,10 +439,8 @@ _ = ax.set(
 # global performance of a classifier can still be summarized via a given
 # averaging strategy.
 #
-# When dealing with imbalanced datasets, choosing the correct metric is crucial.
-# Accuracy may not always reflect model performance well in these cases.
-# For example, metrics such as F1 score, precision, or recall might be more
-# appropriate, depending on the business context or problem you are addressing.
+# When dealing with imbalanced datasets, choosing the appropriate metric based on
+# the business context or problem you are addressing is crucial.
 # It is also essential to select an appropriate averaging method (micro vs. macro)
 # depending on the desired outcome:
 #
