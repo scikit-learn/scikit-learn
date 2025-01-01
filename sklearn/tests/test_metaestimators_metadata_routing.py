@@ -43,7 +43,7 @@ from sklearn.linear_model import (
     RidgeCV,
 )
 from sklearn.metrics._regression import mean_squared_error, r2_score
-from sklearn.metrics._scorer import make_scorer, accuracy_score
+from sklearn.metrics._scorer import accuracy_score, make_scorer
 from sklearn.model_selection import (
     FixedThresholdClassifier,
     GridSearchCV,
