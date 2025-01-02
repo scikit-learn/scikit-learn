@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from ..utils._array_api import (
-    _apply_along_axis,
     _cumsum,
     _find_matching_floating_dtype,
     _nextafter,
@@ -56,7 +55,7 @@ def _weighted_percentile(array, sample_weight, percentile=50):
 
     # Find index of median prediction for each sample
     weight_cdf = _cumsum(sorted_weights, axis=0)
-    adjusted_percentile = percentile / 100 * weight_cdf[-1]
+    adjusted_percentile = percentile / 100 * weight_cdf[-1, :]
     weight_cdf = xp.asarray(
         weight_cdf, dtype=_find_matching_floating_dtype(weight_cdf, xp=xp)
     )
@@ -71,18 +70,21 @@ def _weighted_percentile(array, sample_weight, percentile=50):
         adjusted_percentile[mask], adjusted_percentile[mask] + 1, xp=xp
     )
 
-    percentile_idx = xp.asarray(
-        [
-            xp.searchsorted(weight_cdf[:, i], adjusted_percentile[i])
-            for i in range(weight_cdf.shape[1])
-        ]
-    )
+    if adjusted_percentile.ndim == 0:
+        percentile_idx = xp.asarray(
+            [xp.searchsorted(weight_cdf[:, 0], adjusted_percentile)]
+        )
+    else:
+        percentile_idx = xp.asarray(
+            [
+                xp.searchsorted(weight_cdf[:, i], adjusted_percentile[i])
+                for i in range(weight_cdf.shape[1])
+            ]
+        )
 
     # In rare cases, percentile_idx equals to sorted_idx.shape[0]
     max_idx = sorted_idx.shape[0] - 1
-    percentile_idx = _apply_along_axis(
-        lambda x: xp.clip(x, 0, max_idx), axis=0, arr=percentile_idx, xp=xp
-    )
+    percentile_idx = xp.clip(percentile_idx, 0, max_idx)
 
     col_index = xp.arange(array.shape[1])
     # percentile_in_sorted = sorted_idx[percentile_idx, col_index]

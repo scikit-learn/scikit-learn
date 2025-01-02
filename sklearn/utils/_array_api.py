@@ -1086,7 +1086,6 @@ def _modify_in_place_if_numpy(xp, func, *args, out=None, **kwargs):
     return out
 
 
-
 def _take_along_axis(sample_weight, sorted_idx, xp=None):
     """
     TO DO: add docstring
@@ -1167,6 +1166,7 @@ def _cumsum(X, axis=None, dtype=None, xp=None):
 
     return xp.asarray(numpy.cumsum(_convert_to_numpy(X, xp=xp), axis=axis), dtype=dtype)
 
+
 def _bincount(array, weights=None, minlength=None, xp=None):
     # TODO: update if bincount is ever adopted in a future version of the standard:
     # https://github.com/data-apis/array-api/issues/812
@@ -1189,4 +1189,3 @@ def _tolist(array, xp=None):
         return array.tolist()
     array_np = _convert_to_numpy(array, xp=xp)
     return [element.item() for element in array_np]
-
