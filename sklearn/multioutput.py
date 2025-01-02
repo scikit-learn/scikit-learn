@@ -876,7 +876,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.input_tags.sparse = get_tags(self.base_estimator).input_tags.sparse
+        tags.input_tags.sparse = get_tags(self._get_estimator()).input_tags.sparse
         return tags
 
 
