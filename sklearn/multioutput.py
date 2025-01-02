@@ -25,7 +25,7 @@ from .base import (
     is_classifier,
 )
 from .model_selection import cross_val_predict
-from .utils import Bunch, check_random_state
+from .utils import Bunch, check_random_state, get_tags
 from .utils._param_validation import HasMethods, StrOptions
 from .utils._response import _get_response_values
 from .utils._user_interface import _print_elapsed_time
@@ -311,6 +311,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
         tags.target_tags.single_output = False
         tags.target_tags.multi_output = True
         return tags
@@ -828,6 +829,11 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             The predicted values.
         """
         return self._get_predictions(X, output_method="predict")
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = get_tags(self.base_estimator).input_tags.sparse
+        return tags
 
 
 class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
