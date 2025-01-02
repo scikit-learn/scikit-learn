@@ -135,6 +135,7 @@ Metrics
 - :func:`sklearn.metrics.d2_tweedie_score`
 - :func:`sklearn.metrics.explained_variance_score`
 - :func:`sklearn.metrics.f1_score`
+- :func:`sklearn.metrics.fbeta_score`
 - :func:`sklearn.metrics.max_error`
 - :func:`sklearn.metrics.mean_absolute_error`
 - :func:`sklearn.metrics.mean_absolute_percentage_error`
@@ -156,8 +157,10 @@ Metrics
 - :func:`sklearn.metrics.pairwise.polynomial_kernel`
 - :func:`sklearn.metrics.pairwise.rbf_kernel` (see :ref:`device_support_for_float64`)
 - :func:`sklearn.metrics.pairwise.sigmoid_kernel`
+- :func:`sklearn.metrics.precision_score`
 - :func:`sklearn.metrics.precision_recall_fscore_support`
 - :func:`sklearn.metrics.r2_score`
+- :func:`sklearn.metrics.recall_score`
 - :func:`sklearn.metrics.root_mean_squared_error`
 - :func:`sklearn.metrics.root_mean_squared_log_error`
 - :func:`sklearn.metrics.zero_one_loss`
