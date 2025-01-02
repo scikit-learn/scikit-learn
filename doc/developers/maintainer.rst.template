@@ -118,6 +118,7 @@ Reference Steps
         * [ ] Update the sklearn dev0 version in main branch
         {%- endif %}
         * [ ] Set the version number in the release branch
+        * [ ] Generate the changelog in the release branch
         * [ ] Check that the wheels for the release can be built successfully
         * [ ] Merge the PR with `[cd build]` commit message to upload wheels to the staging repo
         * [ ] Upload the wheels and source tarball to https://test.pypi.org
@@ -125,8 +126,10 @@ Reference Steps
         * [ ] Confirm bot detected at https://github.com/conda-forge/scikit-learn-feedstock
               and wait for merge
         * [ ] Upload the wheels and source tarball to PyPI
+        {%- if key != "rc" %}
         * [ ] Update news and what's new date in main branch
         * [ ] Backport news and what's new date in release branch
+        {%- endif %}
         {%- if key == "final" %}
         * [ ] Update symlink for stable in https://github.com/scikit-learn/scikit-learn.github.io
         {%- endif %}
@@ -139,16 +142,61 @@ Reference Steps
         {%- endif %}
 
     {% if key == "rc" %}
-    - Create a PR from `main` and targeting `main` to increment the dev0 `__version__`
-      variable in `sklearn/__init__.py`. This means while we are in the release
-      candidate period, the latest stable is two version behind the `main` branch,
-      instead of one. In this PR targeting `main`, you should also include a new what's
-      new file under the `doc/whats_new/` directory so that we prepare the
-      changelog for the next release.
+    - Create a PR from `main` and targeting `main` to prepare for the next version. In
+      this PR you need to:
+      
+      - Increment the dev0 `__version__` variable in `sklearn/__init__.py`. This means
+        that while we are in the release candidate period, the latest stable is two
+        versions behind the `main` branch, instead of one.
+      
+      - Include a new what's new file under the `doc/whats_new/` directory. Don't forget
+        to add an entry for this new file in `doc/whats_new.rst`.
+
+      - Change the what's new file to the newly created one in the `filename` field of
+        the `tool.towncrier` section in `pyproject.toml`. 
+
     {% endif %}
 
     - In the release branch, change the version number `__version__` in
       `sklearn/__init__.py` to `{{ version_full }}`.
+
+    - In the release branch, generate the changelog for the incoming version, i.e
+      `doc/whats_new/{{ version_short }}.rst`.
+      {%- if key == "rc" %}
+      During the RC period we want to keep the fragments when we generate the changelog
+      because we'll generate it again for the final release, including the changes that
+      may happen in between:
+
+      .. prompt:: bash
+
+        towncrier build --keep --version {{ version_short}}.0
+      {%- else -%}
+      For a non RC release, push a commit where you:
+      
+      - generate the changelog, not keeping the fragments.
+
+      .. prompt:: bash
+
+        towncrier build --version {{ version_full}}
+
+      {%- if key == "final" %}
+      - link the release highlights example
+      {%- endif %}
+      - add the list of contributor names. Suppose that the tag of the last release in
+      the previous major/minor version is `{{ previous_tag }}`, then you can use the
+      following command to retrieve the list of contributor names:
+
+      .. prompt:: bash
+
+        git shortlog -s {{ previous_tag }}.. |
+          cut -f2- |
+          sort --ignore-case |
+          tr "\n" ";" |
+          sed "s/;/, /g;s/, $//" |
+          fold -s
+
+      Then create a PR targeting the `main` branch and cherry-pick this commit there.
+      {%- endif %}
 
     - Trigger the wheel builder with the `[cd build]` commit marker. See also the
       `workflow runs of the wheel builder
@@ -206,6 +254,12 @@ Reference Steps
       https://github.com/conda-forge/scikit-learn-feedstock. If not, submit a PR for the
       release, targeting the `{% if key == "rc" %}rc{% else %}main{% endif %}` branch.
 
+      {%- if key == "rc" %}
+      Make sure to update the PR such that it will be synchronized with the `main`
+      branch. In particular, backport migrations that may have been added since the last
+      release.
+      {% endif %}
+
     - Trigger the `PyPI publishing workflow
       <https://github.com/scikit-learn/scikit-learn/actions/workflows/publish_pypi.yml>`_
       again, but this time to upload the artifacts to the real https://pypi.org/. To do
@@ -246,24 +300,6 @@ Reference Steps
           twine upload dist/*
 
     {% if key != "rc" %}
-    - In the `main` branch, edit the corresponding file in the `doc/whats_new` directory
-      to update the release date
-      {%- if key == "final" %}, link the release highlights example,{% endif %}
-      and add the list of contributor names. Suppose that the tag of the last release in
-      the previous major/minor version is `{{ previous_tag }}`, then you can use the
-      following command to retrieve the list of contributor names:
-
-      .. prompt:: bash
-
-        git shortlog -s {{ previous_tag }}.. |
-          cut -f2- |
-          sort --ignore-case |
-          tr "\n" ";" |
-          sed "s/;/, /g;s/, $//" |
-          fold -s
-
-      Then cherry-pick it in the release branch.
-
     - In the `main` branch, edit `doc/templates/index.html` to change the "News" section
       in the landing page, along with the month of the release.
       {%- if key == "final" %}
