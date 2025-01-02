@@ -693,7 +693,6 @@ _VALID_METRICS = [
     "rogerstanimoto",
     "russellrao",
     "seuclidean",
-    "sokalmichener",
     "sokalsneath",
     "sqeuclidean",
     "yule",
@@ -701,6 +700,9 @@ _VALID_METRICS = [
     "nan_euclidean",
     "haversine",
 ]
+if sp_base_version < parse_version("1.17"):  # pragma: no cover
+    # Deprecated in SciPy 1.15 and removed in SciPy 1.17
+    _VALID_METRICS += ["sokalmichener"]
 if sp_base_version < parse_version("1.11"):  # pragma: no cover
     # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     _VALID_METRICS += ["kulsinski"]
@@ -766,7 +768,7 @@ def pairwise_distances_argmin_min(
         Valid values for metric are:
 
         - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-          'manhattan']
+          'manhattan', 'nan_euclidean']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
@@ -812,7 +814,8 @@ def pairwise_distances_argmin_min(
     >>> distances
     array([1., 1.])
     """
-    X, Y = check_pairwise_arrays(X, Y)
+    ensure_all_finite = "allow-nan" if metric == "nan_euclidean" else True
+    X, Y = check_pairwise_arrays(X, Y, ensure_all_finite=ensure_all_finite)
 
     if axis == 0:
         X, Y = Y, X
@@ -913,7 +916,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
         Valid values for metric are:
 
         - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-          'manhattan']
+          'manhattan', 'nan_euclidean']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
@@ -952,7 +955,8 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     >>> pairwise_distances_argmin(X, Y)
     array([0, 1])
     """
-    X, Y = check_pairwise_arrays(X, Y)
+    ensure_all_finite = "allow-nan" if metric == "nan_euclidean" else True
+    X, Y = check_pairwise_arrays(X, Y, ensure_all_finite=ensure_all_finite)
 
     if axis == 0:
         X, Y = Y, X
@@ -2482,10 +2486,12 @@ PAIRWISE_BOOLEAN_FUNCTIONS = [
     "jaccard",
     "rogerstanimoto",
     "russellrao",
-    "sokalmichener",
     "sokalsneath",
     "yule",
 ]
+if sp_base_version < parse_version("1.17"):
+    # Deprecated in SciPy 1.15 and removed in SciPy 1.17
+    PAIRWISE_BOOLEAN_FUNCTIONS += ["sokalmichener"]
 if sp_base_version < parse_version("1.11"):
     # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     PAIRWISE_BOOLEAN_FUNCTIONS += ["kulsinski"]

@@ -131,6 +131,7 @@ display = RocCurveDisplay.from_predictions(
     name=f"{class_of_interest} vs the rest",
     color="darkorange",
     plot_chance_level=True,
+    despine=True,
 )
 _ = display.ax_.set(
     xlabel="False Positive Rate",
@@ -158,7 +159,7 @@ print(f"y_score.ravel():\n{y_score[0:2,:].ravel()}")
 # %%
 # In a multi-class classification setup with highly imbalanced classes,
 # micro-averaging is preferable over macro-averaging. In such cases, one can
-# alternatively use a weighted macro-averaging, not demoed here.
+# alternatively use a weighted macro-averaging, not demonstrated here.
 
 display = RocCurveDisplay.from_predictions(
     y_onehot_test.ravel(),
@@ -166,6 +167,7 @@ display = RocCurveDisplay.from_predictions(
     name="micro-average OvR",
     color="darkorange",
     plot_chance_level=True,
+    despine=True,
 )
 _ = display.ax_.set(
     xlabel="False Positive Rate",
@@ -285,6 +287,7 @@ for class_id, color in zip(range(n_classes), colors):
         color=color,
         ax=ax,
         plot_chance_level=(class_id == 2),
+        despine=True,
     )
 
 _ = ax.set(
@@ -366,6 +369,7 @@ for ix, (label_a, label_b) in enumerate(pair_list):
         ax=ax,
         name=f"{label_b} as positive class",
         plot_chance_level=True,
+        despine=True,
     )
     ax.set(
         xlabel="False Positive Rate",
