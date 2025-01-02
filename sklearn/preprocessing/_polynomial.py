@@ -392,7 +392,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 )
             raise ValueError(msg)
         # We also record the number of output features for
-        # _max_degree = 0
+        # _min_degree = 0
         self._n_out_full = self._num_combinations(
             n_features=n_features,
             min_degree=0,
