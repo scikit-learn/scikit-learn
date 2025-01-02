@@ -82,7 +82,7 @@ print(
 #         ),
 #         param_grid={"estimatorwithvalidationset__param_to_optimize": list(range(5))},
 #         cv=5,
-#     ).fit(X, y, X_val, y_val)
+#     ).fit(X, y, X_val=X_val, y_val=y_val)
 #
 # In the above code, the key parts are the call to `set_fit_request` to specify that
 # `X_val` and `y_val` are required by the `EstimatorWithValidationSet.fit` method, and

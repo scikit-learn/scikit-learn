@@ -1,4 +1,0 @@
-- :class:`pipeline.Pipeline` now warns about not being fitted before calling methods
-  that require the pipeline to be fitted. This warning will become an error in 1.8.
-  By `Adrin Jalali`_
-
