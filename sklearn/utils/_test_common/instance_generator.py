@@ -1219,9 +1219,7 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
 }
 
-# TODO remove the >= 1.15 check when
-# https://github.com/scipy/scipy/issues/22143 is fixed
-if sp_base_version < parse_version("1.11") or sp_base_version >= parse_version("1.15"):
+if sp_base_version < parse_version("1.11"):
     PER_ESTIMATOR_XFAIL_CHECKS[SplineTransformer] = {
         "check_estimators_pickle": (
             "scipy < 1.11 implementation of _bsplines does not"
