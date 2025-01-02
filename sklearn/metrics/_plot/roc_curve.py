@@ -303,7 +303,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     def from_predictions(
         cls,
         y_true,
-        y_score,
+        y_score=None,
         *,
         sample_weight=None,
         drop_intermediate=True,
@@ -330,6 +330,9 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Target scores, can either be probability estimates of the positive
             class, confidence values, or non-thresholded measure of decisions
             (as returned by “decision_function” on some classifiers).
+
+            .. versionadded:: 1.7
+                `y_score` is now used instead of `y_pred`.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
@@ -368,8 +371,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             class, confidence values, or non-thresholded measure of decisions
             (as returned by “decision_function” on some classifiers).
 
-            .. deprecated:: 1.6
-                `y_pred` is deprecated and will be removed in 1.8. Use
+            .. deprecated:: 1.7
+                `y_pred` is deprecated and will be removed in 1.9. Use
                 `y_score` instead.
 
         **kwargs : dict
@@ -399,22 +402,23 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         ...     X, y, random_state=0)
         >>> clf = SVC(random_state=0).fit(X_train, y_train)
         >>> y_score = clf.decision_function(X_test)
-        >>> RocCurveDisplay.from_predictions(
-        ...    y_test, y_score)
+        >>> RocCurveDisplay.from_predictions(y_test, y_score)
         <...>
         >>> plt.show()
         """
-        # TODO(1.8): Remove y_pred support and use y_score only
-        if y_score is not None and not isinstance(y_pred, str):
+        # TODO(1.8): remove after the end of the deprecation period of `y_pred`
+        if y_score is not None and (
+            not isinstance(y_pred, str) or y_pred != "deprecated"
+        ):
             raise ValueError(
                 "`y_pred` and `y_score` cannot be both specified. Please use `y_score`"
-                " only as `y_pred` is deprecated in v1.6 and will be removed in v1.8."
+                " only as `y_pred` is deprecated in 1.7 and will be removed in 1.9."
             )
-        if y_pred is not None and y_pred != "deprecated":
+        if not isinstance(y_pred, str) or y_pred != "deprecated":
             warnings.warn(
                 (
-                    "y_pred was deprecated in version 1.6 and will be removed in 1.8. "
-                    "Please use ``y_score`` instead."
+                    "y_pred is deprecated in 1.7 and will be removed in 1.9. "
+                    "Please use `y_score` instead."
                 ),
                 FutureWarning,
             )
