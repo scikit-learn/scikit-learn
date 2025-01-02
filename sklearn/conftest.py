@@ -226,6 +226,7 @@ TEST_MODULES_EXCEPTIONS = [
     # doctests
     "calibration.py",
     "datasets._base.py",
+    "decomposition._fastica.py",
     "decomposition._nmf.py",
     "gaussian_process._gpr.py",
     "gaussian_process.kernels.py",
