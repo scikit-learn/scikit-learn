@@ -1579,7 +1579,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     scoring : str or callable or None, default='loss'
         Scoring parameter to use for early stopping. It can be a single
         string (see :ref:`scoring_parameter`) or a callable (see
-        :ref:`scoring`). If None, the estimator's default scorer is used. If
+        :ref:`scoring_callable`). If None, the estimator's default scorer is used. If
         ``scoring='loss'``, early stopping is checked w.r.t the loss value.
         Only used if early stopping is performed.
     validation_fraction : int or float or None, default=0.1
@@ -1708,7 +1708,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         verbose=0,
         random_state=None,
     ):
-        super(HistGradientBoostingRegressor, self).__init__(
+        super().__init__(
             loss=loss,
             learning_rate=learning_rate,
             max_iter=max_iter,
@@ -1961,7 +1961,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
     scoring : str or callable or None, default='loss'
         Scoring parameter to use for early stopping. It can be a single
         string (see :ref:`scoring_parameter`) or a callable (see
-        :ref:`scoring`). If None, the estimator's default scorer
+        :ref:`scoring_callable`). If None, the estimator's default scorer
         is used. If ``scoring='loss'``, early stopping is checked
         w.r.t the loss value. Only used if early stopping is performed.
     validation_fraction : int or float or None, default=0.1
@@ -2091,7 +2091,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         random_state=None,
         class_weight=None,
     ):
-        super(HistGradientBoostingClassifier, self).__init__(
+        super().__init__(
             loss=loss,
             learning_rate=learning_rate,
             max_iter=max_iter,

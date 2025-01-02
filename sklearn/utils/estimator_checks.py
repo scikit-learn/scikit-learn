@@ -148,6 +148,7 @@ def _yield_api_checks(estimator):
     yield check_do_not_raise_errors_in_init_or_set_params
     yield check_n_features_in_after_fitting
     yield check_mixin_order
+    yield check_positive_only_tag_during_fit
 
 
 def _yield_checks(estimator):
@@ -1111,6 +1112,40 @@ def check_array_api_input(
         "predict_proba",
         "transform",
     )
+
+    try:
+        np.asarray(X_xp)
+        np.asarray(y_xp)
+        # TODO There are a few errors in SearchCV with array-api-strict because
+        # we end up doing X[train_indices] where X is an array-api-strict array
+        # and train_indices is a numpy array. array-api-strict insists
+        # train_indices should be an array-api-strict array. On the other hand,
+        # all the array API libraries (PyTorch, jax, CuPy) accept indexing with a
+        # numpy array. This is probably not worth doing anything about for
+        # now since array-api-strict seems a bit too strict ...
+        numpy_asarray_works = xp.__name__ != "array_api_strict"
+
+    except TypeError:
+        # PyTorch with CUDA device and CuPy raise TypeError consistently.
+        # Exception type may need to be updated in the future for other
+        # libraries.
+        numpy_asarray_works = False
+
+    if numpy_asarray_works:
+        # In this case, array_api_dispatch is disabled and we rely on np.asarray
+        # being called to convert the non-NumPy inputs to NumPy arrays when needed.
+        est_fitted_with_as_array = clone(est).fit(X_xp, y_xp)
+        # We only do a smoke test for now, in order to avoid complicating the
+        # test function even further.
+        for method_name in methods:
+            method = getattr(est_fitted_with_as_array, method_name, None)
+            if method is None:
+                continue
+
+            if method_name == "score":
+                method(X_xp, y_xp)
+            else:
+                method(X_xp)
 
     for method_name in methods:
         method = getattr(est, method_name, None)
@@ -3897,6 +3932,39 @@ def _enforce_estimator_tags_X(estimator, X, X_test=None, kernel=linear_kernel):
     if X_test is not None:
         return X_res, X_test
     return X_res
+
+
+@ignore_warnings(category=FutureWarning)
+def check_positive_only_tag_during_fit(name, estimator_orig):
+    """Test that the estimator correctly sets the tags.input_tags.positive_only
+
+    If the tag is False, the estimator should accept negative input regardless of the
+    tags.input_tags.pairwise flag.
+    """
+    estimator = clone(estimator_orig)
+    tags = get_tags(estimator)
+
+    X, y = load_iris(return_X_y=True)
+    y = _enforce_estimator_tags_y(estimator, y)
+    set_random_state(estimator, 0)
+    X = _enforce_estimator_tags_X(estimator, X)
+    X -= X.mean()
+
+    if tags.input_tags.positive_only:
+        with raises(ValueError, match="Negative values in data"):
+            estimator.fit(X, y)
+    else:
+        # This should pass
+        try:
+            estimator.fit(X, y)
+        except Exception as e:
+            err_msg = (
+                f"Estimator {repr(name)} raised {e.__class__.__name__} unexpectedly."
+                " This happens when passing negative input values as X."
+                " If negative values are not supported for this estimator instance,"
+                " then the tags.input_tags.positive_only tag needs to be set to True."
+            )
+            raise AssertionError(err_msg) from e
 
 
 @ignore_warnings(category=FutureWarning)

@@ -288,7 +288,7 @@ def mean_absolute_error(
         if multioutput == "raw_values":
             return output_errors
         elif multioutput == "uniform_average":
-            # pass None as weights to np.average: uniform mean
+            # pass None as weights to _average: uniform mean
             multioutput = None
 
     # Average across the outputs (if needed).
@@ -360,35 +360,45 @@ def mean_pinball_loss(
     >>> from sklearn.metrics import mean_pinball_loss
     >>> y_true = [1, 2, 3]
     >>> mean_pinball_loss(y_true, [0, 2, 3], alpha=0.1)
-    np.float64(0.03...)
+    0.03...
     >>> mean_pinball_loss(y_true, [1, 2, 4], alpha=0.1)
-    np.float64(0.3...)
+    0.3...
     >>> mean_pinball_loss(y_true, [0, 2, 3], alpha=0.9)
-    np.float64(0.3...)
+    0.3...
     >>> mean_pinball_loss(y_true, [1, 2, 4], alpha=0.9)
-    np.float64(0.03...)
+    0.03...
     >>> mean_pinball_loss(y_true, y_true, alpha=0.1)
-    np.float64(0.0)
+    0.0
     >>> mean_pinball_loss(y_true, y_true, alpha=0.9)
-    np.float64(0.0)
+    0.0
     """
-    y_type, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput
+    xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
+
+    _, y_true, y_pred, sample_weight, multioutput = (
+        _check_reg_targets_with_floating_dtype(
+            y_true, y_pred, sample_weight, multioutput, xp=xp
+        )
     )
+
     check_consistent_length(y_true, y_pred, sample_weight)
     diff = y_true - y_pred
-    sign = (diff >= 0).astype(diff.dtype)
+    sign = xp.astype(diff >= 0, diff.dtype)
     loss = alpha * sign * diff - (1 - alpha) * (1 - sign) * diff
-    output_errors = np.average(loss, weights=sample_weight, axis=0)
+    output_errors = _average(loss, weights=sample_weight, axis=0)
 
     if isinstance(multioutput, str) and multioutput == "raw_values":
         return output_errors
 
     if isinstance(multioutput, str) and multioutput == "uniform_average":
-        # pass None as weights to np.average: uniform mean
+        # pass None as weights to _average: uniform mean
         multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    # Average across the outputs (if needed).
+    # The second call to `_average` should always return
+    # a scalar array that we convert to a Python float to
+    # consistently return the same eager evaluated value.
+    # Therefore, `axis=None`.
+    return float(_average(output_errors, weights=multioutput))
 
 
 @validate_params(
@@ -949,12 +959,12 @@ def _assemble_r2_explained_variance(
             # return scores individually
             return output_scores
         elif multioutput == "uniform_average":
-            # Passing None as weights to np.average results is uniform mean
+            # pass None as weights to _average: uniform mean
             avg_weights = None
         elif multioutput == "variance_weighted":
             avg_weights = denominator
             if not xp.any(nonzero_denominator):
-                # All weights are zero, np.average would raise a ZeroDiv error.
+                # All weights are zero, _average would raise a ZeroDiv error.
                 # This only happens when all y are constant (or 1-element long)
                 # Since weights are all equal, fall back to uniform weights.
                 avg_weights = None
@@ -1083,18 +1093,23 @@ def explained_variance_score(
     >>> explained_variance_score(y_true, y_pred, force_finite=False)
     -inf
     """
-    y_type, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput
+    xp, _, device = get_namespace_and_device(y_true, y_pred, sample_weight, multioutput)
+
+    _, y_true, y_pred, sample_weight, multioutput = (
+        _check_reg_targets_with_floating_dtype(
+            y_true, y_pred, sample_weight, multioutput, xp=xp
+        )
     )
+
     check_consistent_length(y_true, y_pred, sample_weight)
 
-    y_diff_avg = np.average(y_true - y_pred, weights=sample_weight, axis=0)
-    numerator = np.average(
+    y_diff_avg = _average(y_true - y_pred, weights=sample_weight, axis=0)
+    numerator = _average(
         (y_true - y_pred - y_diff_avg) ** 2, weights=sample_weight, axis=0
     )
 
-    y_true_avg = np.average(y_true, weights=sample_weight, axis=0)
-    denominator = np.average((y_true - y_true_avg) ** 2, weights=sample_weight, axis=0)
+    y_true_avg = _average(y_true, weights=sample_weight, axis=0)
+    denominator = _average((y_true - y_true_avg) ** 2, weights=sample_weight, axis=0)
 
     return _assemble_r2_explained_variance(
         numerator=numerator,
@@ -1102,9 +1117,8 @@ def explained_variance_score(
         n_outputs=y_true.shape[1],
         multioutput=multioutput,
         force_finite=force_finite,
-        xp=get_namespace(y_true)[0],
-        # TODO: update once Array API support is added to explained_variance_score.
-        device=None,
+        xp=xp,
+        device=device,
     )
 
 

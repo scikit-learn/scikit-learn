@@ -359,7 +359,7 @@ class LabelPropagation(BaseLabelPropagation):
     max_iter : int, default=1000
         Change maximum number of iterations allowed.
 
-    tol : float, 1e-3
+    tol : float, default=1e-3
         Convergence tolerance: threshold to consider the system at steady
         state.
 
