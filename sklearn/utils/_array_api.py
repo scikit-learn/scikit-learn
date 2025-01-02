@@ -872,14 +872,14 @@ def _convert_to_numpy(array, xp):
     if isinstance(array, pd.Series) and isinstance(
         array.dtype, pd.api.extensions.ExtensionDtype
     ):
-        array = convert_pandas_nullable_dtypes(array)
+        array = _convert_pandas_nullable_dtypes(array)
     return numpy.asarray(array)
 
 
 # TODO: remove when minimum pandas version is pandas==1.2.0, when
 # `numpy.asarray(pd.Series)` with nullable dtypes no longer returns nd.arrays with
 # `object` dtypes:
-def convert_pandas_nullable_dtypes(pandas_series):
+def _convert_pandas_nullable_dtypes(pandas_series):
     """Convert from pandas nullable extension dtypes to numpy dtypes. Without this
     conversion, numpy.asarray(array) creates a numpy array with dtype `object` for older
     pandas versions.
