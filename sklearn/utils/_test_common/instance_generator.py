@@ -569,7 +569,11 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     },
     LinearDiscriminantAnalysis: {"check_dict_unchanged": dict(n_components=1)},
     LinearRegression: {
-        "check_estimator_sparse_tag": [dict(positive=False), dict(positive=True)]
+        "check_estimator_sparse_tag": [dict(positive=False), dict(positive=True)],
+        "check_sample_weight_equivalence_on_dense_data": [
+            dict(positive=False),
+            dict(positive=True),
+        ],
     },
     LocallyLinearEmbedding: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     LogisticRegression: {
@@ -979,16 +983,13 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_methods_sample_order_invariance": "check is not applicable."
     },
     LinearRegression: {
-        # TODO: investigate failure see meta-issue #16298
-        #
-        # Note: this model should converge to the minimum norm solution of the
+        # TODO: this model should converge to the minimum norm solution of the
         # least squares problem and as result be numerically stable enough when
         # running the equivalence check even if n_features > n_samples. Maybe
         # this is is not the case and a different choice of solver could fix
-        # this problem.
-        "check_sample_weight_equivalence_on_dense_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
+        # this problem. This might require setting a low enough value for the
+        # tolerance of the lsqr solver:
+        # https://github.com/scikit-learn/scikit-learn/issues/30131
         "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),

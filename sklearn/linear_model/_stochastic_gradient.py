@@ -2245,7 +2245,7 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         average=False,
     ):
         self.nu = nu
-        super(SGDOneClassSVM, self).__init__(
+        super().__init__(
             loss="hinge",
             penalty="l2",
             C=1.0,
