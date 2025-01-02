@@ -125,7 +125,7 @@ METAESTIMATORS: list = [
     },
     {
         "metaestimator": ClassifierChain,
-        "estimator_name": "base_estimator",
+        "estimator_name": "estimator",
         "estimator": "classifier",
         "X": X,
         "y": y_multi,
@@ -133,7 +133,7 @@ METAESTIMATORS: list = [
     },
     {
         "metaestimator": RegressorChain,
-        "estimator_name": "base_estimator",
+        "estimator_name": "estimator",
         "estimator": "regressor",
         "X": X,
         "y": y_multi,

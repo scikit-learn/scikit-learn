@@ -1,0 +1,2 @@
+- The `tags.input_tags.sparse` flag was corrected for a majority of estimators.
+  By :user:`Antoine Baker <antoinebaker>`

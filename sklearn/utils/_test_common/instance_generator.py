@@ -197,7 +197,7 @@ INIT_PARAMS = {
     BisectingKMeans: dict(n_init=2, n_clusters=2, max_iter=5),
     CalibratedClassifierCV: dict(estimator=LogisticRegression(C=1), cv=3),
     CCA: dict(n_components=1, max_iter=5),
-    ClassifierChain: dict(base_estimator=LogisticRegression(C=1), cv=3),
+    ClassifierChain: dict(estimator=LogisticRegression(C=1), cv=3),
     ColumnTransformer: dict(transformers=[("trans1", StandardScaler(), [0, 1])]),
     DictionaryLearning: dict(max_iter=20, transform_algorithm="lasso_lars"),
     # the default strategy prior would output constant predictions and fail
@@ -429,7 +429,7 @@ INIT_PARAMS = {
     # For common tests, we can enforce using `LinearRegression` that
     # is the default estimator in `RANSACRegressor` instead of `Ridge`.
     RANSACRegressor: dict(estimator=LinearRegression(), max_trials=10),
-    RegressorChain: dict(base_estimator=Ridge(), cv=3),
+    RegressorChain: dict(estimator=Ridge(), cv=3),
     RFECV: dict(estimator=LogisticRegression(C=1), cv=3),
     RFE: dict(estimator=LogisticRegression(C=1)),
     # be tolerant of noisy datasets (not actually speed)
@@ -539,6 +539,18 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     FactorAnalysis: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     FastICA: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     FeatureAgglomeration: {"check_dict_unchanged": dict(n_clusters=1)},
+    FeatureUnion: {
+        "check_estimator_sparse_tag": [
+            dict(transformer_list=[("trans1", StandardScaler())]),
+            dict(
+                transformer_list=[
+                    ("trans1", StandardScaler(with_mean=False)),
+                    ("trans2", "drop"),
+                    ("trans3", "passthrough"),
+                ]
+            ),
+        ]
+    },
     GammaRegressor: {
         "check_sample_weight_equivalence_on_dense_data": [
             dict(solver="newton-cholesky"),
@@ -557,10 +569,11 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     },
     LinearDiscriminantAnalysis: {"check_dict_unchanged": dict(n_components=1)},
     LinearRegression: {
+        "check_estimator_sparse_tag": [dict(positive=False), dict(positive=True)],
         "check_sample_weight_equivalence_on_dense_data": [
             dict(positive=False),
             dict(positive=True),
-        ]
+        ],
     },
     LocallyLinearEmbedding: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     LogisticRegression: {
