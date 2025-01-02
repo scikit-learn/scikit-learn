@@ -336,49 +336,34 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
     assert trapezoid(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)
 
 
-# TODO(1.8): remove
-def test_y_score_and_y_pred_deprecation():
+# TODO(1.9): remove
+def test_y_score_and_y_pred_specified_error():
+    """Check that an error is raised when both y_score and y_pred are specified."""
     y_true = np.array([0, 1, 1, 0])
     y_score = np.array([0.1, 0.4, 0.35, 0.8])
     y_pred = np.array([0.2, 0.3, 0.5, 0.1])
 
-    # Test that an error is raised when both y_score and y_pred are specified
     with pytest.raises(
         ValueError, match="`y_pred` and `y_score` cannot be both specified"
     ):
         RocCurveDisplay.from_predictions(y_true, y_score=y_score, y_pred=y_pred)
 
-    # Test that y_score is used when y_pred is not specified
-    display = RocCurveDisplay.from_predictions(y_true, y_score=y_score)
-    assert_allclose(display.fpr, [0, 0.5, 0.5, 1])
-    assert_allclose(display.tpr, [0, 0, 1, 1])
 
-    # Test that y_score is used when y_pred is "deprecated"
-    display = RocCurveDisplay.from_predictions(
-        y_true, y_score=y_score, y_pred="deprecated"
-    )
-    assert_allclose(display.fpr, [0, 0.5, 0.5, 1])
-    assert_allclose(display.tpr, [0, 0, 1, 1])
-
-
+# TODO(1.9): remove
 def test_y_pred_deprecation_warning():
+    """Check that a warning is raised when y_pred is specified."""
     y_true = np.array([0, 1, 1, 0])
-    y_pred = np.array([0.1, 0.4, 0.35, 0.8])
+    y_score = np.array([0.1, 0.4, 0.35, 0.8])
 
-    with pytest.warns(FutureWarning, match="y_pred was deprecated in version 1.6"):
-        display = RocCurveDisplay.from_predictions(y_true, y_pred=y_pred)
+    with pytest.warns(FutureWarning, match="y_pred is deprecated in 1.7"):
+        display_y_pred = RocCurveDisplay.from_predictions(y_true, y_pred=y_score)
 
-    assert_allclose(display.fpr, [0, 0.5, 0.5, 1])
-    assert_allclose(display.tpr, [0, 0, 1, 1])
+    assert_allclose(display_y_pred.fpr, [0, 0.5, 0.5, 1])
+    assert_allclose(display_y_pred.tpr, [0, 0, 1, 1])
 
-    # Test that y_score is used when y_pred is "deprecated"
-    y_score = np.array([0.2, 0.3, 0.5, 0.1])
-    display = RocCurveDisplay.from_predictions(
-        y_true, y_score=y_score, y_pred="deprecated"
-    )
-    assert_allclose(display.fpr, [0, 0.5, 0.5, 1])
-    assert_allclose(display.tpr, [0, 0, 1, 1])
-    assert np.array_equal(display.y_score, y_score)
+    display_y_score = RocCurveDisplay.from_predictions(y_true, y_score)
+    assert_allclose(display_y_score.fpr, [0, 0.5, 0.5, 1])
+    assert_allclose(display_y_score.tpr, [0, 0, 1, 1])
 
 
 @pytest.mark.parametrize("despine", [True, False])
