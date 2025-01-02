@@ -16,6 +16,7 @@ from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.ensemble import (
     GradientBoostingRegressor,
     RandomForestClassifier,
+    RandomForestRegressor,
     StackingRegressor,
 )
 from sklearn.exceptions import NotFittedError
@@ -864,3 +865,41 @@ def test_multioutput_regressor_has_partial_fit():
     msg = "This 'MultiOutputRegressor' has no attribute 'partial_fit'"
     with pytest.raises(AttributeError, match=msg):
         getattr(est, "partial_fit")
+
+
+@pytest.mark.parametrize(
+    "model_cls, estimator",
+    [
+        (RegressorChain, RandomForestRegressor),
+        (ClassifierChain, RandomForestClassifier),
+    ],
+)
+def test_chains_accept_nan(model_cls, estimator):
+    """Test that chains accept nan values if the underlying
+    estimator does."""
+    X = np.array([[np.nan], [-1]])
+    y = np.array([[0, 1], [0, 0]])
+
+    model = model_cls(estimator())
+    model.fit(X, y)
+    model.predict(X)
+
+
+@pytest.mark.parametrize(
+    "model_cls, estimator",
+    [
+        (RegressorChain, LinearRegression),
+        (ClassifierChain, LogisticRegression),
+    ],
+)
+def test_chain_do_not_accept_nan(model_cls, estimator):
+    """Test that chains do not accept nan values if the underlying
+    estimator does not."""
+    X = np.array([[np.nan], [-1]])
+    y = np.array([[0, 1], [0, 0]])
+
+    raise_model = model_cls(estimator())
+    msg = "Input X contains NaN"
+    with pytest.raises(ValueError, match=msg):
+        raise_model.fit(X, y)
+        raise_model.predict(X)
