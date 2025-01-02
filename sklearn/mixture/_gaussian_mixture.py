@@ -226,7 +226,14 @@ def _estimate_gaussian_covariances_diag(resp, X, nk, means, reg_covar):
     covariances : array, shape (n_components, n_features)
         The covariance vector of the current components.
     """
-    avg_X2 = np.dot(resp.T, X * X) / nk[:, np.newaxis]
+    # Align X to the other operands' floating-point precision
+    # as squaring X immediately would increase its precision error and the
+    # mismatch with operands of different precision
+    X2 = np.zeros(X.shape)
+    X2 += X
+    # In-place squaring of X2
+    X2 **= 2
+    avg_X2 = np.dot(resp.T, X2) / nk[:, np.newaxis]
     avg_means2 = means**2
     return avg_X2 - avg_means2 + reg_covar
 
