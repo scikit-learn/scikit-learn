@@ -1850,8 +1850,7 @@ def precision_recall_fscore_support(
         true_sum = xp.reshape(xp.sum(true_sum), (1,))
 
     # Finally, we have all our sufficient statistics. Divide! #
-    max_float_type = _max_precision_float_dtype(xp=xp, device=device_)
-    beta2 = xp.asarray(beta**2, dtype=max_float_type, device=device_)
+    beta2 = beta**2
 
     # Divide, and on zero-division, set scores and/or warn according to
     # zero_division:
@@ -1871,11 +1870,16 @@ def precision_recall_fscore_support(
         # score = (1 + beta**2) * precision * recall / (beta**2 * precision + recall)
         # Therefore, we can express the score in terms of confusion matrix entries as:
         # score = (1 + beta**2) * tp / ((1 + beta**2) * tp + beta**2 * fn + fp)
-        denom = beta2 * xp.asarray(
-            true_sum, dtype=max_float_type, device=device_
-        ) + xp.asarray(pred_sum, dtype=max_float_type, device=device_)
+
+        # Array api strict requires all arrays be of the same type so we need
+        # to convert true_sum, pred_sum and tp_sum to the max supported float
+        # dtype because beta2 is a float
+        max_float_type = _max_precision_float_dtype(xp=xp, device=device_)
+        denom = beta2 * xp.astype(true_sum, max_float_type) + xp.astype(
+            pred_sum, max_float_type
+        )
         f_score = _prf_divide(
-            (1 + beta2) * xp.asarray(tp_sum, dtype=max_float_type, device=device_),
+            (1 + beta2) * xp.astype(tp_sum, max_float_type),
             denom,
             "f-score",
             "true nor predicted",
