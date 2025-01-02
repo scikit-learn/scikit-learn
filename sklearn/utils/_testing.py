@@ -1118,8 +1118,14 @@ def _convert_container_to_dataframe(
 
         # Convert to pandas DataFrame with the specified dtype and column names (if any)
         if container_lib is not None:
-            if container_lib != "pandas":
+            if container_lib == "polars":
+                # Polars df.to_pandas() requires pyarrow to be installed
+                container = pd.DataFrame(
+                    {column: container[column] for column in container.columns}
+                )
+            elif container_lib == "pyarrow":
                 container = container.to_pandas()
+
             if dtype is not None:
                 container = container.astype(dtype)
             if column_names is not None:
@@ -1227,8 +1233,8 @@ def _convert_container_to_series(container, dtype, constructor_lib, minversion):
     if constructor_lib == "pandas":
         pd = pytest.importorskip("pandas", minversion=minversion)
         if container_lib is not None:
-            if container_lib != "pandas":
-                container = container.to_pandas()
+            if container_lib == "polars":
+                container = pd.Series(container.to_numpy())
             if dtype is not None:
                 container = container.astype(dtype)
         else:
