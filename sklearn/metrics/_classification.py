@@ -1871,9 +1871,9 @@ def precision_recall_fscore_support(
         # Therefore, we can express the score in terms of confusion matrix entries as:
         # score = (1 + beta**2) * tp / ((1 + beta**2) * tp + beta**2 * fn + fp)
 
-        # Array api strict requires all arrays be of the same type so we need
-        # to convert true_sum, pred_sum and tp_sum to the max supported float
-        # dtype because beta2 is a float
+        # Array api strict requires all arrays to be of the same type so we
+        # need to convert true_sum, pred_sum and tp_sum to the max supported
+        # float dtype because beta2 is a float
         max_float_type = _max_precision_float_dtype(xp=xp, device=device_)
         denom = beta2 * xp.astype(true_sum, max_float_type) + xp.astype(
             pred_sum, max_float_type
