@@ -572,8 +572,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         self,
         *,
         fit_intercept=True,
-        tol=1e-4,
         copy_X=True,
+        tol=1e-4,
         n_jobs=None,
         positive=False,
     ):
