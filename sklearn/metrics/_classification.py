@@ -337,7 +337,7 @@ def confusion_matrix(
     >>> (tn, fp, fn, tp)
     (np.int64(0), np.int64(2), np.int64(1), np.int64(1))
     """
-    xp, _, device_ = get_namespace_and_device(y_true, y_pred, labels, sample_weight)
+    xp, _ = get_namespace(y_true, y_pred, labels, sample_weight)
     y_true = _convert_to_numpy(y_true, xp)
     y_pred = _convert_to_numpy(y_pred, xp)
     y_true, y_pred = attach_unique(y_true, y_pred)
