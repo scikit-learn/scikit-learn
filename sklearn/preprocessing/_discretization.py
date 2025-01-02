@@ -267,7 +267,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             # Take a subsample of `X`
             # When resampling, it is important to subsample **with replacement** to
             # preserve the distribution, in particular in the presence of a few data
-            # points with large weights.
+            # points with large weights. You can check this by setting `replace=False`
+            # in sklearn.utils.test.test_indexing.test_resample_weighted and check that
+            # it fails as a justification for this claim.
             X = resample(
                 X,
                 replace=True,
