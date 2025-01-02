@@ -539,6 +539,18 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     FactorAnalysis: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     FastICA: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     FeatureAgglomeration: {"check_dict_unchanged": dict(n_clusters=1)},
+    FeatureUnion: {
+        "check_estimator_sparse_tag": [
+            dict(transformer_list=[("trans1", StandardScaler())]),
+            dict(
+                transformer_list=[
+                    ("trans1", StandardScaler(with_mean=False)),
+                    ("trans2", "drop"),
+                    ("trans3", "passthrough"),
+                ]
+            ),
+        ]
+    },
     GammaRegressor: {
         "check_sample_weight_equivalence_on_dense_data": [
             dict(solver="newton-cholesky"),
@@ -557,10 +569,11 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     },
     LinearDiscriminantAnalysis: {"check_dict_unchanged": dict(n_components=1)},
     LinearRegression: {
+        "check_estimator_sparse_tag": [dict(positive=False), dict(positive=True)],
         "check_sample_weight_equivalence_on_dense_data": [
             dict(positive=False),
             dict(positive=True),
-        ]
+        ],
     },
     LocallyLinearEmbedding: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     LogisticRegression: {

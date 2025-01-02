@@ -312,6 +312,11 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
                 "feature_importances_ attribute"
             ) from e
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 def _samme_proba(estimator, n_classes, X):
     """Calculate algorithm 4, step 2, equation c) of Zhu et al [1].
