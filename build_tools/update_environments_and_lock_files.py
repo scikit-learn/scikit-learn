@@ -100,9 +100,7 @@ build_metadata_list = [
         "conda_dependencies": common_dependencies
         + [
             "ccache",
-            # Make sure pytorch comes from the pytorch channel and not conda-forge
-            "pytorch::pytorch",
-            "pytorch-cuda",
+            "pytorch-gpu",
             "polars",
             "pyarrow",
             "cupy",
