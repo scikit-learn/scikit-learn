@@ -1931,7 +1931,7 @@ probabilistic predictions. Quoting Wikipedia:
     probabilistic predictions. It is applicable to tasks in which predictions
     must assign probabilities to a set of mutually exclusive discrete outcomes."
 
-Let the true labels for a set of :math:`N` samples be encoded as a 1-of-K binary
+Let the true labels for a set of :math:`N` data points be encoded as a 1-of-K binary
 indicator matrix :math:`Y`, i.e., :math:`y_{i,k} = 1` if sample :math:`i` has
 label :math:`k` taken from a set of :math:`K` labels. Let :math:`P` be a matrix
 of probability estimates :math:`p_{i,k} = \operatorname{Pr}(y_{i,k} = 1)`.

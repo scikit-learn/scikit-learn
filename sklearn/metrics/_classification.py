@@ -182,7 +182,7 @@ def _validate_multiclass_probabilistic_prediction(
 
     labels : array-like, default=None
         If not provided, labels will be inferred from y_true. If `labels`
-        is `None` and `y_prob` has shape (n_samples,) the labels are
+        is `None` and `y_prob` has shape `(n_samples,)` the labels are
         assumed to be binary and are inferred from `y_true`.
 
     Returns
@@ -3345,8 +3345,8 @@ def brier_score_loss(
     probability and the actual outcome. The Brier score is a stricly proper scoring
     rule and can be decomposed as the sum of refinement loss and calibration loss.
 
-    For :math:`N` samples with :math:`C` different classes, the Brier score is
-    defined as:
+    For :math:`N` observations labeled from :math:`C` possible classes, the Brier
+    score is defined as:
 
     .. math::
         \\frac{1}{N}\\sum_{i=1}^{N}\\sum_{c=1}^{C}(y_{ic} - \\hat{p}_{ic})^{2}
