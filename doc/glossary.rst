@@ -1854,26 +1854,27 @@ See concept :term:`sample property`.
         the weight.  Weights may be specified as floats, so that sample weights
         are usually equivalent up to a constant positive scaling factor.
 
-        Weighting samples can be useful in several contexts. For instance, if the
-        training data is not uniformly sampled from the target population, it
-        is possible to correct for this by weighting training data points
-        according to the inverse probability of being sampled for training. It
-        is also useful to model the frequency of an event of interest per unit
-        of time on a dataset of observations with different exposure durations
-        per individual (see
+        Weighting samples can be useful in several contexts. For instance, if
+        the training data is not uniformly sampled from the target population,
+        it can be corrected by weighting the training data points based on the
+        inverse probability of their selection for training. It is also useful
+        to model the frequency of an event of interest per unit of time on a
+        dataset of observations with different exposure durations per
+        individual (see
         :ref:`sphx_glr_auto_examples_linear_model_plot_poisson_regression_non_normal_loss.py`
         and
         :ref:`sphx_glr_auto_examples_linear_model_plot_tweedie_regression_insurance_claims.py`).
 
-        Third-party libraries can also use `sample_weight`-capable estimators
-        as building blocks to reduce a specific statistical task into a
-        weighted regression or classification task. For instance sample weights
-        can be constructed to adjust a time-to-event model for censoring in a
-        predictive survival analysis setting. In causal inference, it is
-        possible to reduce a conditional average treatment effect estimation
-        task to a weighted regression task under some assumptions. Sample
-        weights can also be used to mitigate fairness-related harms based on a
-        given quantitative definition of fairness.
+        Third-party libraries can also use `sample_weight`-compatible
+        estimators as building blocks to reduce a specific statistical task
+        into a weighted regression or classification task. For instance sample
+        weights can be constructed to adjust a time-to-event model for
+        censoring in a predictive survival analysis setting. In causal
+        inference, it is possible to reduce a conditional average treatment
+        effect estimation task to a weighted regression task under some
+        assumptions. Sample weights can also be used to mitigate
+        fairness-related harms based on a given quantitative definition of
+        fairness.
 
         Some model hyper-parameters are expressed in terms of a discrete number
         of samples in a region of the feature space. When fitting with sample
@@ -1902,7 +1903,7 @@ See concept :term:`sample property`.
         tracks ongoing work to detect and fix remaining discrepancies.
 
         Furthermore, some estimators have a stochastic fit method. For
-        instance, k-means clustering depends on a random initialization,
+        instance, :class:`cluster.KMeans` depends on a random initialization,
         bagging models randomly resample from the training data, etc. In this
         case, the sample weight-repetition equivalence property described above
         does not hold exactly. However, it should hold at least in expectation
