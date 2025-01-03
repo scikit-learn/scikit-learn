@@ -407,8 +407,10 @@ def get_tags(estimator) -> Tags:
                     "there are no classes that implement `__sklearn_tags__` "
                     "in the MRO and/or all classes in the MRO call "
                     "`super().__sklearn_tags__()`. Make sure to inherit from "
-                    "`BaseEstimator` that implements `__sklearn_tags__`. The default "
-                    "are used instead.",
+                    "`BaseEstimator` which implements `__sklearn_tags__`. Note that "
+                    "`BaseEstimator` needs to be on the right side of other Mixins in the "
+                    "inheritance order. The default "
+                    "are now used instead since retrieving tags failed.",
                     category=FutureWarning,
                 )
                 tags = default_tags(estimator)
