@@ -638,20 +638,27 @@ def test_symmetric_metric(name):
 
 @pytest.mark.parametrize("name", sorted(NOT_SYMMETRIC_METRICS))
 def test_not_symmetric_metric(name):
+
     # Test the symmetry of score and loss functions
     random_state = check_random_state(0)
-    y_true = random_state.randint(0, 2, size=(20,))
-    y_pred = random_state.randint(0, 2, size=(20,))
-
-    if name in METRICS_REQUIRE_POSITIVE_Y:
-        y_true, y_pred = _require_positive_targets(y_true, y_pred)
-
     metric = ALL_METRICS[name]
 
-    # use context manager to supply custom error message
-    with pytest.raises(AssertionError):
-        assert_array_equal(metric(y_true, y_pred), metric(y_pred, y_true))
-        raise ValueError("%s seems to be symmetric" % name)
+    always_symmetric = True
+    for _ in range(5):
+        y_true = random_state.randint(0, 2, size=(20,))
+        y_pred = random_state.randint(0, 2, size=(20,))
+
+        if name in METRICS_REQUIRE_POSITIVE_Y:
+            y_true, y_pred = _require_positive_targets(y_true, y_pred)
+
+        nominal = metric(y_true, y_pred)
+        swapped = metric(y_pred, y_true)
+        if not np.allclose(nominal, swapped):
+            always_symmetric = False
+            break
+
+    if always_symmetric:  # pragma: no cover
+        raise ValueError(f"{name} seems to be symmetric")
 
 
 @pytest.mark.parametrize(
