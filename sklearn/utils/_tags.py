@@ -396,7 +396,7 @@ def get_tags(estimator) -> Tags:
         try:
             tags = estimator.__sklearn_tags__()
         except AttributeError as exc:
-            if str(exc) == "'super' object has no attribute '__sklearn_tags__'":
+            if hasattr(estimator, "__sklearn_tags__"):
                 # workaround the regression reported in
                 # https://github.com/scikit-learn/scikit-learn/issues/30479
                 # `__sklearn_tags__` is implemented by calling
