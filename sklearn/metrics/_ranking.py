@@ -73,9 +73,9 @@ def auc(x, y):
     --------
     >>> import numpy as np
     >>> from sklearn import metrics
-    >>> y = np.array([1, 1, 2, 2])
-    >>> pred = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> fpr, tpr, thresholds = metrics.roc_curve(y, pred, pos_label=2)
+    >>> y_true = np.array([1, 1, 2, 2])
+    >>> y_score = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> fpr, tpr, thresholds = metrics.roc_curve(y_true, y_score, pos_label=2)
     >>> metrics.auc(fpr, tpr)
     np.float64(0.75)
     """
@@ -604,10 +604,10 @@ def roc_auc_score(
     >>> clf = MultiOutputClassifier(clf).fit(X, y)
     >>> # get a list of n_output containing probability arrays of shape
     >>> # (n_samples, n_classes)
-    >>> y_pred = clf.predict_proba(X)
+    >>> y_score = clf.predict_proba(X)
     >>> # extract the positive columns for each output
-    >>> y_pred = np.transpose([pred[:, 1] for pred in y_pred])
-    >>> roc_auc_score(y, y_pred, average=None)
+    >>> y_score = np.transpose([score[:, 1] for score in y_score])
+    >>> roc_auc_score(y, y_score, average=None)
     array([0.82..., 0.86..., 0.94..., 0.85... , 0.94...])
     >>> from sklearn.linear_model import RidgeClassifierCV
     >>> clf = RidgeClassifierCV().fit(X, y)
