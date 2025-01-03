@@ -215,6 +215,13 @@ def _validate_multiclass_probabilistic_prediction(
                 "the columns of y_prob correspond to this ordering.",
                 UserWarning,
             )
+        if not np.isin(y_true, labels).all():
+            undeclared_labels = set(y_true) - set(labels)
+            raise ValueError(
+                f"y_true contains values {undeclared_labels} not belonging "
+                f"to the passed labels {labels}."
+            )
+
     else:
         lb = lb.fit(y_true)
 

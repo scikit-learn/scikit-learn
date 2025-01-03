@@ -2646,6 +2646,17 @@ def test_log_loss():
     with pytest.raises(ValueError):
         log_loss(y_true, y_pred)
 
+    # raise error if labels does not contains all values of y_true
+    y_true = ["a", "b", "c"]
+    y_pred = [[0.9, 0.1, 0.0], [0.1, 0.9, 0.0], [0.1, 0.1, 0.8]]
+    labels = ["a", "c", "d"]
+    error_str = (
+        "y_true contains values {'b'} not belonging to the passed "
+        "labels ['a', 'c', 'd']."
+    )
+    with pytest.raises(ValueError, match=re.escape(error_str)):
+        log_loss(y_true, y_pred, labels=labels)
+
     # case when y_true is a string array object
     y_true = ["ham", "spam", "spam", "ham"]
     y_pred = [[0.3, 0.7], [0.6, 0.4], [0.4, 0.6], [0.7, 0.3]]
@@ -3202,7 +3213,7 @@ def test_d2_log_loss_score_raises():
 
     # check error if the number of classes in labels do not match the number
     # of classes in y_pred.
-    y_true = ["a", "b", "c"]
+    y_true = [0, 1, 2]
     y_pred = [[0.5, 0.5], [0.5, 0.5], [0.5, 0.5]]
     labels = [0, 1, 2]
     err = "number of classes in labels is different"
