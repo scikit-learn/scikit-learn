@@ -3399,11 +3399,15 @@ def brier_score_loss(
         Class labels when `y_pred.shape = (n_samples, n_classes)`.
         If not provided, labels will be inferred from `y_true`.
 
+        .. versionadded:: 1.7
+
     scale_by_half : bool or "auto", default="auto"
         When True, scale the Brier score by half to lie in the [0, 1] range instead
         of the [0, 2] range. The default "auto" option implements the rescaling to
         [0, 1] only for binary classification (as customary) but keeps the
         original [0, 2] range for multiclasss classification.
+
+        .. versionadded:: 1.7
 
     y_prob : array-like of shape (n_samples,)
         Probabilities of the positive class.
