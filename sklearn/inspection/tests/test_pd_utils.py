@@ -16,7 +16,7 @@ from sklearn.utils._testing import _convert_container
 def test_check_feature_names(feature_names, array_type, expected_feature_names):
     X = np.random.randn(10, 3)
     column_names = ["a", "b", "c"]
-    X = _convert_container(X, constructor_name=array_type, columns_name=column_names)
+    X = _convert_container(X, array_type, column_names=column_names)
     feature_names_validated = _check_feature_names(X, feature_names)
     assert feature_names_validated == expected_feature_names
 
