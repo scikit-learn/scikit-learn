@@ -2740,9 +2740,10 @@ def test_log_loss_pandas_input():
 
 def test_log_loss_warnings():
     expected_message = re.escape(
-        "Labels passed were ['spam', 'eggs', 'ham']. But this function assumes "
-        "labels are ordered lexicographically. Ensure that labels in y_prob are "
-        "ordered as ['eggs' 'ham' 'spam']."
+        "Labels passed were ['spam', 'eggs', 'ham']. But this function "
+        "assumes labels are ordered lexicographically. "
+        "Pass the ordered labels=['eggs', 'ham', 'spam'] and ensure that "
+        "the columns of y_prob correspond to this ordering."
     )
     with pytest.warns(UserWarning, match=expected_message):
         log_loss(
@@ -2900,8 +2901,8 @@ def test_brier_score_loss_warnings():
     expected_message = re.escape(
         "Labels passed were ['spam', 'eggs', 'ham']. But this function "
         "assumes labels are ordered lexicographically. "
-        "Ensure that labels in y_prob are ordered as "
-        "['eggs' 'ham' 'spam']."
+        "Pass the ordered labels=['eggs', 'ham', 'spam'] and ensure that "
+        "the columns of y_prob correspond to this ordering."
     )
     with pytest.warns(UserWarning, match=expected_message):
         brier_score_loss(

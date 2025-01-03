@@ -211,8 +211,8 @@ def _validate_multiclass_probabilistic_prediction(
             warnings.warn(
                 f"Labels passed were {labels}. But this function "
                 "assumes labels are ordered lexicographically. "
-                "Ensure that labels in y_prob are ordered as "
-                f"{lb.classes_}.",
+                f"Pass the ordered labels={lb.classes_.tolist()} and ensure that "
+                "the columns of y_prob correspond to this ordering.",
                 UserWarning,
             )
     else:
