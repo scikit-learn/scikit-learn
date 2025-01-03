@@ -634,6 +634,7 @@ def test_old_tags():
     assert _to_new_tags(_to_old_tags(new_tags), estimator=estimator) == new_tags
 
 
+# TODO(1.7): Remove this test
 def test_tags_no_sklearn_tags_concrete_implementation():
     """Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/30479
@@ -660,3 +661,19 @@ def test_tags_no_sklearn_tags_concrete_implementation():
     my_pipeline = Pipeline([("estimator", MyEstimator(param=1))])
     with pytest.warns(DeprecationWarning, match="The following error was raised"):
         my_pipeline.fit(X, y).predict(X)
+
+    # check that we still raise an error if it is not a AttributeError or related to
+    # __sklearn_tags__
+    class MyEstimator2(MyEstimator, BaseEstimator):
+        def __init__(self, *, param=1, error_type=AttributeError):
+            self.param = param
+            self.error_type = error_type
+
+        def __sklearn_tags__(self):
+            super().__sklearn_tags__()
+            raise self.error_type("test")
+
+    for error_type in (AttributeError, TypeError, ValueError):
+        estimator = MyEstimator2(param=1, error_type=error_type)
+        with pytest.raises(error_type):
+            get_tags(estimator)
