@@ -48,7 +48,9 @@ with warnings.catch_warnings():
         [
             pckg[1]
             for pckg in walk_packages(prefix="sklearn.", path=sklearn_path)
-            if not ("._" in pckg[1] or ".tests." in pckg[1])
+            if not any(
+                substr in pckg[1] for substr in ["._", ".tests.", "sklearn.externals"]
+            )
         ]
     )
 
@@ -90,7 +92,7 @@ def test_docstring_parameters():
         if name.endswith(".conftest"):
             # pytest tooling, not part of the scikit-learn API
             continue
-        if name == "sklearn.utils.fixes":
+        if name in "sklearn.utils.fixes":
             # We cannot always control these docstrings
             continue
         with warnings.catch_warnings(record=True):
