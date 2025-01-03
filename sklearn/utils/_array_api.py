@@ -861,15 +861,41 @@ def _ravel(array, xp=None):
 
 
 def _convert_to_numpy(array, xp):
-    """Convert X into a NumPy ndarray on the CPU."""
+    """Convert array into a NumPy ndarray on the CPU."""
     xp_name = xp.__name__
+
+    try:
+        import pandas as pd
+    except ImportError:
+        pd = None
 
     if xp_name in {"array_api_compat.torch", "torch"}:
         return array.cpu().numpy()
     elif xp_name in {"array_api_compat.cupy", "cupy"}:  # pragma: nocover
         return array.get()
-
+    if (
+        pd
+        and isinstance(array, pd.Series)
+        and isinstance(array.dtype, pd.api.extensions.ExtensionDtype)
+    ):
+        array = _convert_pandas_nullable_dtypes(array)
     return numpy.asarray(array)
+
+
+# TODO: remove when minimum pandas version is pandas==1.2.0, when
+# `numpy.asarray(pd.Series)` with nullable dtypes no longer returns nd.arrays with
+# `object` dtypes:
+def _convert_pandas_nullable_dtypes(pandas_series):
+    """Convert from pandas nullable extension dtypes to numpy dtypes. Without this
+    conversion, numpy.asarray(array) creates a numpy array with dtype `object` for older
+    pandas versions.
+    """
+    dtype_mapping = {
+        **{f"pd.Int{x}Dtype()": f"int{x}" for x in [8, 16, 32, 64]},
+        **{f"pd.Float{x}Dtype()": f"float{x}" for x in [32, 64]},
+        "pd.BooleanDtype()": "bool",
+    }
+    return pandas_series.astype(dtype_mapping.get(pandas_series.dtype), None)
 
 
 def _estimator_with_converted_arrays(estimator, converter):
@@ -1108,3 +1134,20 @@ def _tolist(array, xp=None):
         return array.tolist()
     array_np = _convert_to_numpy(array, xp=xp)
     return [element.item() for element in array_np]
+
+
+def _nan_to_num(array, xp=None):
+    """Substitutes NaN values of an array with 0 and inf values with the maximum or
+    minimum numbers available for the dtype respectively; like np.nan_to_num."""
+    xp, _ = get_namespace(array, xp=xp)
+    try:
+        array = xp.nan_to_num(array)
+    except AttributeError:  # currently catching exceptions from array_api_strict
+        array[xp.isnan(array)] = 0
+        if xp.isdtype(array.dtype, "real floating"):
+            array[xp.isinf(array) & (array > 0)] = xp.finfo(array.dtype).max
+            array[xp.isinf(array) & (array < 0)] = xp.finfo(array.dtype).min
+        else:  # xp.isdtype(array.dtype, "integral")
+            array[xp.isinf(array) & (array > 0)] = xp.iinfo(array.dtype).max
+            array[xp.isinf(array) & (array < 0)] = xp.iinfo(array.dtype).min
+    return array
