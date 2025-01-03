@@ -40,7 +40,9 @@ class EmptyRegressor(RegressorMixin, BaseEstimator):
     pass
 
 
-@pytest.mark.filterwarnings("ignore:.*no __sklearn_tags__ attribute.*:FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:.*no __sklearn_tags__ attribute.*:DeprecationWarning"
+)
 @pytest.mark.parametrize(
     "estimator, value",
     [
@@ -169,7 +171,7 @@ def test_get_tags_backward_compatibility():
     predictor_classes = [PredictorNewTags, PredictorOldNewTags, PredictorOldTags]
     for predictor_cls in predictor_classes:
         if predictor_cls.__name__.endswith("OldTags"):
-            with pytest.warns(FutureWarning, match=warn_msg):
+            with pytest.warns(DeprecationWarning, match=warn_msg):
                 tags = get_tags(predictor_cls())
         else:
             tags = get_tags(predictor_cls())
@@ -194,7 +196,7 @@ def test_get_tags_backward_compatibility():
                 base_cls.__name__.endswith("OldTags")
                 for base_cls in (predictor_cls, allow_nan_cls)
             ):
-                with pytest.warns(FutureWarning, match=warn_msg):
+                with pytest.warns(DeprecationWarning, match=warn_msg):
                     tags = get_tags(ChildClass())
             else:
                 tags = get_tags(ChildClass())
@@ -227,7 +229,7 @@ def test_get_tags_backward_compatibility():
                     base_cls.__name__.endswith("OldTags")
                     for base_cls in (predictor_cls, array_api_cls, allow_nan_cls)
                 ):
-                    with pytest.warns(FutureWarning, match=warn_msg):
+                    with pytest.warns(DeprecationWarning, match=warn_msg):
                         tags = get_tags(ChildClass())
                 else:
                     tags = get_tags(ChildClass())
@@ -238,7 +240,7 @@ def test_get_tags_backward_compatibility():
 
 
 @pytest.mark.filterwarnings(
-    "ignore:.*Please define the `__sklearn_tags__` method.*:FutureWarning"
+    "ignore:.*Please define the `__sklearn_tags__` method.*:DeprecationWarning"
 )
 def test_safe_tags_backward_compatibility():
     warn_msg = "The `_safe_tags` function is deprecated in 1.6"
@@ -247,7 +249,7 @@ def test_safe_tags_backward_compatibility():
     # only predictor inheriting from BaseEstimator
     predictor_classes = [PredictorNewTags, PredictorOldNewTags, PredictorOldTags]
     for predictor_cls in predictor_classes:
-        with pytest.warns(FutureWarning, match=warn_msg):
+        with pytest.warns(DeprecationWarning, match=warn_msg):
             tags = _safe_tags(predictor_cls())
         assert tags["requires_fit"]
 
@@ -266,7 +268,7 @@ def test_safe_tags_backward_compatibility():
             class ChildClass(allow_nan_cls, predictor_cls):
                 pass
 
-            with pytest.warns(FutureWarning, match=warn_msg):
+            with pytest.warns(DeprecationWarning, match=warn_msg):
                 tags = _safe_tags(ChildClass())
 
             assert tags["allow_nan"]
@@ -293,7 +295,7 @@ def test_safe_tags_backward_compatibility():
                 class ChildClass(allow_nan_cls, array_api_cls, predictor_cls):
                     pass
 
-                with pytest.warns(FutureWarning, match=warn_msg):
+                with pytest.warns(DeprecationWarning, match=warn_msg):
                     tags = _safe_tags(ChildClass())
 
                 assert tags["allow_nan"]
@@ -302,7 +304,7 @@ def test_safe_tags_backward_compatibility():
 
 
 @pytest.mark.filterwarnings(
-    "ignore:.*Please define the `__sklearn_tags__` method.*:FutureWarning"
+    "ignore:.*Please define the `__sklearn_tags__` method.*:DeprecationWarning"
 )
 def test__get_tags_backward_compatibility():
     warn_msg = "The `_get_tags` method is deprecated in 1.6"
@@ -311,7 +313,7 @@ def test__get_tags_backward_compatibility():
     # only predictor inheriting from BaseEstimator
     predictor_classes = [PredictorNewTags, PredictorOldNewTags, PredictorOldTags]
     for predictor_cls in predictor_classes:
-        with pytest.warns(FutureWarning, match=warn_msg):
+        with pytest.warns(DeprecationWarning, match=warn_msg):
             tags = predictor_cls()._get_tags()
         assert tags["requires_fit"]
 
@@ -330,7 +332,7 @@ def test__get_tags_backward_compatibility():
             class ChildClass(allow_nan_cls, predictor_cls):
                 pass
 
-            with pytest.warns(FutureWarning, match=warn_msg):
+            with pytest.warns(DeprecationWarning, match=warn_msg):
                 tags = ChildClass()._get_tags()
 
             assert tags["allow_nan"]
@@ -357,7 +359,7 @@ def test__get_tags_backward_compatibility():
                 class ChildClass(allow_nan_cls, array_api_cls, predictor_cls):
                     pass
 
-                with pytest.warns(FutureWarning, match=warn_msg):
+                with pytest.warns(DeprecationWarning, match=warn_msg):
                     tags = ChildClass()._get_tags()
 
                 assert tags["allow_nan"]
@@ -376,10 +378,12 @@ def test_base_estimator_more_tags():
     `BaseEstimator`.
     """
     estimator = BaseEstimator()
-    with pytest.warns(FutureWarning, match="The `_more_tags` method is deprecated"):
+    with pytest.warns(
+        DeprecationWarning, match="The `_more_tags` method is deprecated"
+    ):
         more_tags = BaseEstimator._more_tags(estimator)
 
-    with pytest.warns(FutureWarning, match="The `_get_tags` method is deprecated"):
+    with pytest.warns(DeprecationWarning, match="The `_get_tags` method is deprecated"):
         get_tags = BaseEstimator._get_tags(estimator)
 
     assert more_tags == get_tags
@@ -387,10 +391,14 @@ def test_base_estimator_more_tags():
 
 def test_safe_tags():
     estimator = PredictorNewTags()
-    with pytest.warns(FutureWarning, match="The `_safe_tags` function is deprecated"):
+    with pytest.warns(
+        DeprecationWarning, match="The `_safe_tags` function is deprecated"
+    ):
         tags = _safe_tags(estimator)
 
-    with pytest.warns(FutureWarning, match="The `_safe_tags` function is deprecated"):
+    with pytest.warns(
+        DeprecationWarning, match="The `_safe_tags` function is deprecated"
+    ):
         tags_requires_fit = _safe_tags(estimator, key="requires_fit")
 
     assert tags_requires_fit == tags["requires_fit"]
@@ -398,7 +406,7 @@ def test_safe_tags():
     err_msg = "The key unknown_key is not defined"
     with pytest.raises(ValueError, match=err_msg):
         with pytest.warns(
-            FutureWarning, match="The `_safe_tags` function is deprecated"
+            DeprecationWarning, match="The `_safe_tags` function is deprecated"
         ):
             _safe_tags(estimator, key="unknown_key")
 
