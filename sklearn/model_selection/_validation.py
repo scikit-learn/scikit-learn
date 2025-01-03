@@ -343,7 +343,7 @@ def cross_validate(
     _check_groups_routing_disabled(groups)
 
     X, y = indexable(X, y)
-
+    params = {} if params is None else params
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
 
     scorers = check_scoring(
@@ -1172,6 +1172,7 @@ def cross_val_predict(
     """
     _check_groups_routing_disabled(groups)
     X, y = indexable(X, y)
+    params = {} if params is None else params
 
     if _routing_enabled():
         # For estimators, a MetadataRouter is created in get_metadata_routing
