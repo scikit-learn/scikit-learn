@@ -362,8 +362,6 @@ def confusion_matrix(
     if sample_weight is None:
         sample_weight = np.ones(y_true.shape[0], dtype=np.int64)
     else:
-        sample_weight = np.asarray(sample_weight)
-    if not _is_numpy_namespace(get_namespace(sample_weight)[0]):
         sample_weight = _convert_to_numpy(sample_weight, xp)
 
     check_consistent_length(y_true, y_pred, sample_weight)
