@@ -684,19 +684,25 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
 
 
 class StratifiedKFold(_BaseKFold):
-    """Stratified K-Fold cross-validator.
+    """Class-wise stratified K-Fold cross-validator.
 
     Provides train/test indices to split data in train/test sets.
 
     This cross-validation object is a variation of KFold that returns
     stratified folds. The folds are made by preserving the percentage of
-    samples for each class.
+    samples for each class in `y` in a binary or multiclass classification
+    setting.
 
     Read more in the :ref:`User Guide <stratified_k_fold>`.
 
     For visualisation of cross-validation behaviour and
     comparison between common scikit-learn split methods
     refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
+
+    .. note::
+
+        Stratification on the class label solves an engineering problem rather
+        than a statistical one. See :ref:`stratification` for more details.
 
     Parameters
     ----------
@@ -883,11 +889,12 @@ class StratifiedKFold(_BaseKFold):
 
 
 class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
-    """Stratified K-Fold iterator variant with non-overlapping groups.
+    """Class-wise stratified K-Fold iterator variant with non-overlapping groups.
 
     This cross-validation object is a variation of StratifiedKFold attempts to
     return stratified folds with non-overlapping groups. The folds are made by
-    preserving the percentage of samples for each class.
+    preserving the percentage of samples for each class in `y` in a binary or
+    multiclass classification setting.
 
     Each group will appear exactly once in the test set across all folds (the
     number of distinct groups has to be at least equal to the number of folds).
@@ -905,6 +912,11 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
     For visualisation of cross-validation behaviour and
     comparison between common scikit-learn split methods
     refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
+
+    .. note::
+
+        Stratification on the class label solves an engineering problem rather
+        than a statistical one. See :ref:`stratification` for more details.
 
     Parameters
     ----------
@@ -1726,12 +1738,17 @@ class RepeatedKFold(_UnsupportedGroupCVMixin, _RepeatedSplits):
 
 
 class RepeatedStratifiedKFold(_UnsupportedGroupCVMixin, _RepeatedSplits):
-    """Repeated Stratified K-Fold cross validator.
+    """Repeated class-wise stratified K-Fold cross validator.
 
     Repeats Stratified K-Fold n times with different randomization in each
     repetition.
 
     Read more in the :ref:`User Guide <repeated_k_fold>`.
+
+    .. note::
+
+        Stratification on the class label solves an engineering problem rather
+        than a statistical one. See :ref:`stratification` for more details.
 
     Parameters
     ----------
@@ -2204,13 +2221,14 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
 
 
 class StratifiedShuffleSplit(BaseShuffleSplit):
-    """Stratified ShuffleSplit cross-validator.
+    """Class-wise stratified ShuffleSplit cross-validator.
 
     Provides train/test indices to split data in train/test sets.
 
     This cross-validation object is a merge of :class:`StratifiedKFold` and
     :class:`ShuffleSplit`, which returns stratified randomized folds. The folds
-    are made by preserving the percentage of samples for each class.
+    are made by preserving the percentage of samples for each class in `y` in a
+    binary or multiclass classification setting.
 
     Note: like the :class:`ShuffleSplit` strategy, stratified random splits
     do not guarantee that test sets across all folds will be mutually exclusive,
@@ -2222,6 +2240,11 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     For visualisation of cross-validation behaviour and
     comparison between common scikit-learn split methods
     refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
+
+    .. note::
+
+        Stratification on the class label solves an engineering problem rather
+        than a statistical one. See :ref:`stratification` for more details.
 
     Parameters
     ----------
