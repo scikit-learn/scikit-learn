@@ -638,12 +638,6 @@ def test_symmetric_metric(name):
 
 @pytest.mark.parametrize("name", sorted(NOT_SYMMETRIC_METRICS))
 def test_not_symmetric_metric(name):
-    if name == "log_loss":
-        # XXX: is symmetric when y_pred has only edge case values in {0, 1} but
-        # not in the general case when y_pred is between 0 and 1. It's not
-        # clear what "symmetric" should mean for binary classification losses
-        # that are not valid regression losses.
-        pytest.xfail("log_loss lack of symmetry cannot be highlighted by this test.")
 
     # Test the symmetry of score and loss functions
     random_state = check_random_state(0)
