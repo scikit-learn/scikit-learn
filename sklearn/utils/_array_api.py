@@ -9,7 +9,6 @@ import os
 from functools import wraps
 
 import numpy
-import pytest
 import scipy
 import scipy.sparse as sp
 import scipy.special as special
@@ -865,14 +864,19 @@ def _convert_to_numpy(array, xp):
     """Convert array into a NumPy ndarray on the CPU."""
     xp_name = xp.__name__
 
-    pd = pytest.importorskip("pandas")
+    try:
+        import pandas as pd
+    except ImportError:
+        pd = None
 
     if xp_name in {"array_api_compat.torch", "torch"}:
         return array.cpu().numpy()
     elif xp_name in {"array_api_compat.cupy", "cupy"}:  # pragma: nocover
         return array.get()
-    if isinstance(array, pd.Series) and isinstance(
-        array.dtype, pd.api.extensions.ExtensionDtype
+    if (
+        pd
+        and isinstance(array, pd.Series)
+        and isinstance(array.dtype, pd.api.extensions.ExtensionDtype)
     ):
         array = _convert_pandas_nullable_dtypes(array)
     return numpy.asarray(array)
@@ -886,7 +890,6 @@ def _convert_pandas_nullable_dtypes(pandas_series):
     conversion, numpy.asarray(array) creates a numpy array with dtype `object` for older
     pandas versions.
     """
-    pd = pytest.importorskip("pandas")
     dtype_mapping = {
         **{f"pd.Int{x}Dtype()": f"int{x}" for x in [8, 16, 32, 64]},
         **{f"pd.Float{x}Dtype()": f"float{x}" for x in [32, 64]},
