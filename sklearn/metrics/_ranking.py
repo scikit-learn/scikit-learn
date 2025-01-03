@@ -103,7 +103,7 @@ def auc(x, y):
         # scalar by default for numpy.memmap instances contrary to
         # regular numpy.ndarray instances.
         area = area.dtype.type(area)
-    return area
+    return float(area)
 
 
 @validate_params(
@@ -260,8 +260,10 @@ def average_precision_score(
     average_precision = partial(
         _binary_uninterpolated_average_precision, pos_label=pos_label
     )
-    return _average_binary_score(
-        average_precision, y_true, y_score, average, sample_weight=sample_weight
+    return float(
+        _average_binary_score(
+            average_precision, y_true, y_score, average, sample_weight=sample_weight
+        )
     )
 
 

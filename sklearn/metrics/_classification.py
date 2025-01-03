@@ -757,7 +757,7 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
             w_mat = (w_mat - w_mat.T) ** 2
 
     k = np.sum(w_mat * confusion) / np.sum(w_mat * expected)
-    return 1 - k
+    return float(1 - k)
 
 
 @validate_params(
@@ -957,7 +957,7 @@ def jaccard_score(
         weights = sample_weight
     else:
         weights = None
-    return np.average(jaccard, weights=weights)
+    return float(np.average(jaccard, weights=weights))
 
 
 @validate_params(
@@ -1054,7 +1054,7 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     if cov_ypyp * cov_ytyt == 0:
         return 0.0
     else:
-        return cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
+        return float(cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp))
 
 
 @validate_params(
@@ -2080,7 +2080,7 @@ def class_likelihood_ratios(
         else:
             negative_likelihood_ratio = neg_num / neg_denom
 
-    return positive_likelihood_ratio, negative_likelihood_ratio
+    return float(positive_likelihood_ratio), float(negative_likelihood_ratio)
 
 
 @validate_params(
@@ -2536,7 +2536,7 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
         chance = 1 / n_classes
         score -= chance
         score /= 1 - chance
-    return score
+    return float(score)
 
 
 @validate_params(
@@ -2874,7 +2874,9 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
 
     if y_type.startswith("multilabel"):
         n_differences = count_nonzero(y_true - y_pred, sample_weight=sample_weight)
-        return n_differences / (y_true.shape[0] * y_true.shape[1] * weight_average)
+        return float(
+            n_differences / (y_true.shape[0] * y_true.shape[1] * weight_average)
+        )
 
     elif y_type in ["binary", "multiclass"]:
         return float(_average(y_true != y_pred, weights=sample_weight, normalize=True))
@@ -3187,7 +3189,7 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     losses = 1 - margin
     # The hinge_loss doesn't penalize good enough predictions.
     np.clip(losses, 0, None, out=losses)
-    return np.average(losses, weights=sample_weight)
+    return float(np.average(losses, weights=sample_weight))
 
 
 @validate_params(
@@ -3326,7 +3328,7 @@ def brier_score_loss(
         else:
             raise
     y_true = np.array(y_true == pos_label, int)
-    return np.average((y_true - y_proba) ** 2, weights=sample_weight)
+    return float(np.average((y_true - y_proba) ** 2, weights=sample_weight))
 
 
 @validate_params(
@@ -3419,4 +3421,4 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
         labels=labels,
     )
 
-    return 1 - (numerator / denominator)
+    return float(1 - (numerator / denominator))
