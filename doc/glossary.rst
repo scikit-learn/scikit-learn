@@ -1696,9 +1696,15 @@ functions or non-estimator constructors.
         objects and avoid common pitfalls, you may refer to :ref:`randomness`.
 
     ``scoring``
-        Specifies the score function to be maximized (usually by :ref:`cross
-        validation <cross_validation>`), or -- in some cases -- multiple score
-        functions to be reported. The score function can be a string accepted
+        Depending on the object, can specify:
+
+        * the score function to be maximized (usually by
+          :ref:`cross validation <cross_validation>`),
+        * the multiple score functions to be reported,
+        * the score function to be used to check early stopping, or
+        * for visualization related objects, the score function to output or plot
+
+        The score function can be a string accepted
         by :func:`metrics.get_scorer` or a callable :term:`scorer`, not to be
         confused with an :term:`evaluation metric`, as the latter have a more
         diverse API.  ``scoring`` may also be set to None, in which case the
@@ -1710,7 +1716,6 @@ functions or non-estimator constructors.
         callables as values or a callable that returns a dictionary. Note that
         this does *not* specify which score function is to be maximized, and
         another parameter such as ``refit`` maybe used for this purpose.
-
 
         The ``scoring`` parameter is validated and interpreted using
         :func:`metrics.check_scoring`.
@@ -1793,7 +1798,7 @@ See concept :term:`attribute`.
         the number of output features and :term:`n_features` is the number of
         input features.
 
-        See also :term:`components_` which is a similar attribute for linear
+        See also :term:`coef_` which is a similar attribute for linear
         predictors.
 
     ``coef_``
