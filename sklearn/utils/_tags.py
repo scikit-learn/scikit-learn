@@ -411,7 +411,7 @@ def get_tags(estimator) -> Tags:
                     "`BaseEstimator` needs to be on the right side of other Mixins in "
                     "the inheritance order. The default are now used instead since "
                     "retrieving tags failed.",
-                    category=FutureWarning,
+                    category=DeprecationWarning,
                 )
                 tags = default_tags(estimator)
             else:

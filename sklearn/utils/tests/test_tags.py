@@ -658,5 +658,5 @@ def test_tags_no_sklearn_tags_concrete_implementation():
     y = np.array([1, 0, 1])
 
     my_pipeline = Pipeline([("estimator", MyEstimator(param=1))])
-    with pytest.warns(FutureWarning, match="The following error was raised"):
+    with pytest.warns(DeprecationWarning, match="The following error was raised"):
         my_pipeline.fit(X, y).predict(X)
