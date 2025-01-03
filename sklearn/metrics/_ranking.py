@@ -1978,7 +1978,7 @@ def top_k_accuracy_score(
     0.75
     >>> # Not normalizing gives the number of "correctly" classified samples
     >>> top_k_accuracy_score(y_true, y_score, k=2, normalize=False)
-    3
+    3.0
     """
     y_true = check_array(y_true, ensure_2d=False, dtype=None)
     y_true = column_or_1d(y_true)
