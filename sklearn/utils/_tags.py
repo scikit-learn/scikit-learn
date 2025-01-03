@@ -404,7 +404,7 @@ def get_tags(estimator) -> Tags:
                 # method in the base class.
                 warnings.warn(
                     f"The following error was raised: {str(exc)}. It seems that "
-                    "some there is no classes that implement `__sklearn_tags__` "
+                    "there are no classes that implement `__sklearn_tags__` "
                     "in the MRO and/or all classes in the MRO call "
                     "`super().__sklearn_tags__()`. Make sure to inherit from "
                     "`BaseEstimator` that implements `__sklearn_tags__`. The default "
