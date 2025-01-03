@@ -1898,7 +1898,7 @@ See concept :term:`sample property`.
         evaluation.
 
         At the time of writing, not all scikit-learn estimators correctly
-        implement the  weight-repetition equivalence property. The `#16298 meta
+        implement the weight-repetition equivalence property. The `#16298 meta
         issue <https://github.com/scikit-learn/scikit-learn/issues/16298>`_
         tracks ongoing work to detect and fix remaining discrepancies.
 
