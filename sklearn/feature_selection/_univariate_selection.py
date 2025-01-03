@@ -203,7 +203,7 @@ def chi2(X, y):
 
     This score can be used to select the `n_features` features with the
     highest values for the test chi-squared statistic from X, which must
-    contain only **non-negative features** such as booleans or frequencies
+    contain only **non-negative integer feature values** such as booleans or frequencies
     (e.g., term counts in document classification), relative to the classes.
 
     If some of your features are continuous, you need to bin them, for
