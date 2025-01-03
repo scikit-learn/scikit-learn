@@ -204,7 +204,7 @@ def average_precision_score(
     >>> y_true = np.array([0, 0, 1, 1])
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> average_precision_score(y_true, y_scores)
-    np.float64(0.83...)
+    0.83...
     >>> y_true = np.array([0, 0, 1, 1, 2, 2])
     >>> y_scores = np.array([
     ...     [0.7, 0.2, 0.1],
@@ -215,7 +215,7 @@ def average_precision_score(
     ...     [0.1, 0.2, 0.7],
     ... ])
     >>> average_precision_score(y_true, y_scores)
-    np.float64(0.77...)
+    0.77...
     """
 
     def _binary_uninterpolated_average_precision(
@@ -260,10 +260,8 @@ def average_precision_score(
     average_precision = partial(
         _binary_uninterpolated_average_precision, pos_label=pos_label
     )
-    return float(
-        _average_binary_score(
-            average_precision, y_true, y_score, average, sample_weight=sample_weight
-        )
+    return _average_binary_score(
+        average_precision, y_true, y_score, average, sample_weight=sample_weight
     )
 
 

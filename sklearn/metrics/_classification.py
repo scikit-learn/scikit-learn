@@ -737,7 +737,7 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     >>> y1 = ["negative", "positive", "negative", "neutral", "positive"]
     >>> y2 = ["negative", "positive", "negative", "neutral", "negative"]
     >>> cohen_kappa_score(y1, y2)
-    np.float64(0.6875)
+    0.6875
     """
     confusion = confusion_matrix(y1, y2, labels=labels, sample_weight=sample_weight)
     n_classes = confusion.shape[0]
@@ -898,19 +898,19 @@ def jaccard_score(
     In the binary case:
 
     >>> jaccard_score(y_true[0], y_pred[0])
-    np.float64(0.6666...)
+    0.6666...
 
     In the 2D comparison case (e.g. image similarity):
 
     >>> jaccard_score(y_true, y_pred, average="micro")
-    np.float64(0.6)
+    0.6
 
     In the multilabel case:
 
     >>> jaccard_score(y_true, y_pred, average='samples')
-    np.float64(0.5833...)
+    0.5833...
     >>> jaccard_score(y_true, y_pred, average='macro')
-    np.float64(0.6666...)
+    0.6666...
     >>> jaccard_score(y_true, y_pred, average=None)
     array([0.5, 0.5, 1. ])
 
@@ -1029,7 +1029,7 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     >>> y_true = [+1, +1, +1, -1]
     >>> y_pred = [+1, -1, +1, +1]
     >>> matthews_corrcoef(y_true, y_pred)
-    np.float64(-0.33...)
+    -0.33...
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
@@ -2004,15 +2004,15 @@ def class_likelihood_ratios(
     >>> import numpy as np
     >>> from sklearn.metrics import class_likelihood_ratios
     >>> class_likelihood_ratios([0, 1, 0, 1, 0], [1, 1, 0, 0, 0])
-    (np.float64(1.5), np.float64(0.75))
+    (1.5, 0.75)
     >>> y_true = np.array(["non-cat", "cat", "non-cat", "cat", "non-cat"])
     >>> y_pred = np.array(["cat", "cat", "non-cat", "non-cat", "non-cat"])
     >>> class_likelihood_ratios(y_true, y_pred)
-    (np.float64(1.33...), np.float64(0.66...))
+    (1.33..., 0.66...)
     >>> y_true = np.array(["non-zebra", "zebra", "non-zebra", "zebra", "non-zebra"])
     >>> y_pred = np.array(["zebra", "zebra", "non-zebra", "non-zebra", "non-zebra"])
     >>> class_likelihood_ratios(y_true, y_pred)
-    (np.float64(1.5), np.float64(0.75))
+    (1.5, 0.75)
 
     To avoid ambiguities, use the notation `labels=[negative_class,
     positive_class]`
@@ -2020,7 +2020,7 @@ def class_likelihood_ratios(
     >>> y_true = np.array(["non-cat", "cat", "non-cat", "cat", "non-cat"])
     >>> y_pred = np.array(["cat", "cat", "non-cat", "non-cat", "non-cat"])
     >>> class_likelihood_ratios(y_true, y_pred, labels=["non-cat", "cat"])
-    (np.float64(1.5), np.float64(0.75))
+    (1.5, 0.75)
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
@@ -2522,7 +2522,7 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     >>> y_true = [0, 1, 0, 0, 1, 0]
     >>> y_pred = [0, 1, 0, 0, 0, 1]
     >>> balanced_accuracy_score(y_true, y_pred)
-    np.float64(0.625)
+    0.625
     """
     C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
     with np.errstate(divide="ignore", invalid="ignore"):
@@ -3113,7 +3113,7 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     >>> pred_decision
     array([-2.18...,  2.36...,  0.09...])
     >>> hinge_loss([-1, 1, 1], pred_decision)
-    np.float64(0.30...)
+    0.30...
 
     In the multiclass case:
 
@@ -3127,7 +3127,7 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     >>> pred_decision = est.decision_function([[-1], [2], [3]])
     >>> y_true = [0, 2, 3]
     >>> hinge_loss(y_true, pred_decision, labels=labels)
-    np.float64(0.56...)
+    0.56...
     """
     check_consistent_length(y_true, pred_decision, sample_weight)
     pred_decision = check_array(pred_decision, ensure_2d=False)
@@ -3273,13 +3273,13 @@ def brier_score_loss(
     >>> y_true_categorical = np.array(["spam", "ham", "ham", "spam"])
     >>> y_prob = np.array([0.1, 0.9, 0.8, 0.3])
     >>> brier_score_loss(y_true, y_prob)
-    np.float64(0.037...)
+    0.037...
     >>> brier_score_loss(y_true, 1-y_prob, pos_label=0)
-    np.float64(0.037...)
+    0.037...
     >>> brier_score_loss(y_true_categorical, y_prob, pos_label="ham")
-    np.float64(0.037...)
+    0.037...
     >>> brier_score_loss(y_true, np.array(y_prob) > 0.5)
-    np.float64(0.0)
+    0.0
     """
     # TODO(1.7): remove in 1.7 and reset y_proba to be required
     # Note: validate params will raise an error if y_prob is not array-like,
