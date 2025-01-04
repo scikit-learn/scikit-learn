@@ -7,7 +7,7 @@ import pytest
 
 from sklearn import config_context, datasets
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
-from sklearn.datasets import make_multilabel_classification
+from sklearn.datasets import make_multilabel_classification, make_regression
 from sklearn.dummy import DummyRegressor
 from sklearn.ensemble import (
     RandomForestClassifier,
@@ -271,6 +271,18 @@ def test_multilabel():
 
     try:
         eclf.fit(X, y)
+    except NotImplementedError:
+        return
+
+
+def test_multiregression():
+    """Check if error is raised for multiple output regression."""
+    X, y = make_regression(n_targets=2, random_state=123)
+    rf = RandomForestRegressor()
+    ereg = VotingRegressor(estimators=[("rf", rf)])
+
+    try:
+        ereg.fit(X, y)
     except NotImplementedError:
         return
 
