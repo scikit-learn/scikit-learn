@@ -85,7 +85,7 @@ for i, ax in enumerate(axes):
         title += " (Default)"
     ax.set_title(title, fontsize=12)
     text = "$\\alpha={:.1f}$\n$\\lambda={:.3f}$\n$L={:.1f}$".format(
-        reg.alpha_, reg.lambda_, reg.scores_[-1]
+        reg.alpha_, reg._lambda, reg.scores_[-1]
     )
     ax.text(0.05, -1.0, text, fontsize=12)
 
