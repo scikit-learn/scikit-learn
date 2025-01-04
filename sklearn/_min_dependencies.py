@@ -38,7 +38,7 @@ dependent_packages = {
     "pyamg": ("4.0.0", "tests"),
     "polars": ("0.20.30", "docs, tests"),
     "pyarrow": ("12.0.0", "tests"),
-    "sphinx": ("7.3.7", "docs"),
+    "sphinx": ("8.1.3", "docs"),
     "sphinx-copybutton": ("0.5.2", "docs"),
     "sphinx-gallery": ("0.17.1", "docs"),
     "numpydoc": ("1.2.0", "docs, tests"),
@@ -49,7 +49,7 @@ dependent_packages = {
     "plotly": ("5.14.0", "docs, examples"),
     "sphinxcontrib-sass": ("0.3.4", "docs"),
     "sphinx-remove-toctrees": ("1.0.0.post1", "docs"),
-    "sphinx-design": ("0.6.0", "docs"),
+    "sphinx-design": ("0.6.1", "docs"),
     "pydata-sphinx-theme": ("0.15.3", "docs"),
     "towncrier": ("24.8.0", "docs"),
     # XXX: Pin conda-lock to the latest released version (needs manual update
