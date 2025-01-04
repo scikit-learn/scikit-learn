@@ -87,6 +87,7 @@ _submodules = [
     "externals",
     "feature_extraction",
     "feature_selection",
+    "filter",
     "frozen",
     "gaussian_process",
     "inspection",
