@@ -70,7 +70,8 @@ class L1TrendFiltering(BaseEstimator, TransformerMixin):
         self._max_ls_iter = max_ls_iter
         self._tol = tol
 
-    def _second_difference_matrix(self, n):
+    @classmethod
+    def _second_difference_matrix(cls, n):
         """
         Constructs a second-order finite difference matrix.
 
@@ -140,17 +141,28 @@ class L1TrendFiltering(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y=None):
         """
-        This class represents an implementation of a machine learning model using a fitting
-        method to train on the provided data. It can be extended based on specific algorithmic
-        requirements.
+        Fits the model according to the given training data.
 
-        Attributes
+        This method trains the model using the input features `X` and, optionally,
+        the target labels `y`. The model learns patterns from the data to make
+        accurate predictions or decisions. The input data should have
+        appropriate dimensions and align with the training requirements of the model.
+
+        Parameters
         ----------
-        model : sklearn.base.BaseEstimator or any compatible estimator
-            The machine learning model or estimator that will fit the input data.
-        is_fitted : bool
-            Indicates whether the model has been successfully trained.
+        X : array-like of shape (n_samples, n_features)
+            The input training data where n_samples is the number of samples
+            and n_features is the number of features.
 
+        y : array-like of shape (n_samples,), default=None
+            The target values corresponding to the training data. If None, the method
+            assumes an unsupervised learning scenario.
+
+        Returns
+        -------
+        self : object
+            Returns the instance of the model after fitting. This allows
+            method chaining and further operations on the fitted model.
         """
         return self
 
