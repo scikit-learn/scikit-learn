@@ -89,7 +89,7 @@ def test_bayesian_ridge_parameter():
     # A Ridge regression model using an alpha value equal to the ratio of
     # lambda_ and alpha_ from the Bayesian Ridge model must be identical
     br_model = BayesianRidge(compute_score=True).fit(X, y)
-    rr_model = Ridge(alpha=br_model._lambda / br_model.alpha_).fit(X, y)
+    rr_model = Ridge(alpha=br_model.lambda_ / br_model.alpha_).fit(X, y)
     assert_array_almost_equal(rr_model.coef_, br_model.coef_)
     assert_almost_equal(rr_model.intercept_, br_model.intercept_)
 
@@ -103,7 +103,7 @@ def test_bayesian_sample_weights():
     # A Ridge regression model using an alpha value equal to the ratio of
     # lambda_ and alpha_ from the Bayesian Ridge model must be identical
     br_model = BayesianRidge(compute_score=True).fit(X, y, sample_weight=w)
-    rr_model = Ridge(alpha=br_model._lambda / br_model.alpha_).fit(
+    rr_model = Ridge(alpha=br_model.lambda_ / br_model.alpha_).fit(
         X, y, sample_weight=w
     )
     assert_array_almost_equal(rr_model.coef_, br_model.coef_)
