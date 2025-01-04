@@ -1,20 +1,22 @@
-"""Kernels for Gaussian process regression and classification.
+"""A set of kernels that can be combined by operators and used in Gaussian processes."""
 
-The kernels in this module allow kernel-engineering, i.e., they can be
-combined via the "+" and "*" operators or be exponentiated with a scalar
-via "**". These sum and product expressions can also contain scalar values,
-which are automatically converted to a constant kernel.
+# Kernels for Gaussian process regression and classification.
+#
+# The kernels in this module allow kernel-engineering, i.e., they can be
+# combined via the "+" and "*" operators or be exponentiated with a scalar
+# via "**". These sum and product expressions can also contain scalar values,
+# which are automatically converted to a constant kernel.
+#
+# All kernels allow (analytic) gradient-based hyperparameter optimization.
+# The space of hyperparameters can be specified by giving lower und upper
+# boundaries for the value of each hyperparameter (the search space is thus
+# rectangular). Instead of specifying bounds, hyperparameters can also be
+# declared to be "fixed", which causes these hyperparameters to be excluded from
+# optimization.
 
-All kernels allow (analytic) gradient-based hyperparameter optimization.
-The space of hyperparameters can be specified by giving lower und upper
-boundaries for the value of each hyperparameter (the search space is thus
-rectangular). Instead of specifying bounds, hyperparameters can also be
-declared to be "fixed", which causes these hyperparameters to be excluded from
-optimization.
-"""
 
-# Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # Note: this module is strongly inspired by the kernel module of the george
 #       package.
@@ -132,9 +134,7 @@ class Hyperparameter(
 
         if fixed is None:
             fixed = isinstance(bounds, str) and bounds == "fixed"
-        return super(Hyperparameter, cls).__new__(
-            cls, name, value_type, bounds, n_elements, fixed
-        )
+        return super().__new__(cls, name, value_type, bounds, n_elements, fixed)
 
     # This is mainly a testing utility to check that two hyperparameters
     # are equal.
@@ -152,6 +152,27 @@ class Kernel(metaclass=ABCMeta):
     """Base class for all kernels.
 
     .. versionadded:: 0.18
+
+    Examples
+    --------
+    >>> from sklearn.gaussian_process.kernels import Kernel, RBF
+    >>> import numpy as np
+    >>> class CustomKernel(Kernel):
+    ...     def __init__(self, length_scale=1.0):
+    ...         self.length_scale = length_scale
+    ...     def __call__(self, X, Y=None):
+    ...         if Y is None:
+    ...             Y = X
+    ...         return np.inner(X, X if Y is None else Y) ** 2
+    ...     def diag(self, X):
+    ...         return np.ones(X.shape[0])
+    ...     def is_stationary(self):
+    ...         return True
+    >>> kernel = CustomKernel(length_scale=2.0)
+    >>> X = np.array([[1, 2], [3, 4]])
+    >>> print(kernel(X))
+    [[ 25 121]
+     [121 625]]
     """
 
     def get_params(self, deep=True):
@@ -1724,9 +1745,7 @@ class Matern(RBF):
 
             # We need to recompute the pairwise dimension-wise distances
             if self.anisotropic:
-                D = (X[:, np.newaxis, :] - X[np.newaxis, :, :]) ** 2 / (
-                    length_scale**2
-                )
+                D = (X[:, np.newaxis, :] - X[np.newaxis, :, :]) ** 2 / (length_scale**2)
             else:
                 D = squareform(dists**2)[:, :, np.newaxis]
 
@@ -1944,7 +1963,7 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
         \frac{ 2\sin^2(\pi d(x_i, x_j)/p) }{ l^ 2} \right)
 
     where :math:`l` is the length scale of the kernel, :math:`p` the
-    periodicity of the kernel and :math:`d(\\cdot,\\cdot)` is the
+    periodicity of the kernel and :math:`d(\cdot,\cdot)` is the
     Euclidean distance.
 
     Read more in the :ref:`User Guide <gp_kernels>`.

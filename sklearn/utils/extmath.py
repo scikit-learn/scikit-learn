@@ -1,15 +1,7 @@
-"""
-Extended math utilities.
-"""
-# Authors: Gael Varoquaux
-#          Alexandre Gramfort
-#          Alexandre T. Passos
-#          Olivier Grisel
-#          Lars Buitinck
-#          Stefan van der Walt
-#          Kyle Kastner
-#          Giorgio Patrini
-# License: BSD 3 clause
+"""Utilities to perform optimal mathematical operations in scikit-learn."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from functools import partial
@@ -19,11 +11,9 @@ import numpy as np
 from scipy import linalg, sparse
 
 from ..utils._param_validation import Interval, StrOptions, validate_params
-from . import check_random_state
-from ._array_api import _is_numpy_namespace, device, get_namespace
-from ._logistic_sigmoid import _log_logistic_sigmoid
+from ._array_api import _average, _is_numpy_namespace, _nanmean, device, get_namespace
 from .sparsefuncs_fast import csr_row_norms
-from .validation import check_array
+from .validation import check_array, check_random_state
 
 
 def squared_norm(x):
@@ -77,11 +67,18 @@ def row_norms(X, squared=False):
     if sparse.issparse(X):
         X = X.tocsr()
         norms = csr_row_norms(X)
+        if not squared:
+            norms = np.sqrt(norms)
     else:
-        norms = np.einsum("ij,ij->i", X, X)
-
-    if not squared:
-        np.sqrt(norms, norms)
+        xp, _ = get_namespace(X)
+        if _is_numpy_namespace(xp):
+            X = np.asarray(X)
+            norms = np.einsum("ij,ij->i", X, X)
+            norms = xp.asarray(norms)
+        else:
+            norms = xp.sum(xp.multiply(X, X), axis=1)
+        if not squared:
+            norms = xp.sqrt(norms)
     return norms
 
 
@@ -116,7 +113,7 @@ def fast_logdet(A):
     >>> from sklearn.utils.extmath import fast_logdet
     >>> a = np.array([[5, 1], [2, 8]])
     >>> fast_logdet(a)
-    3.6375861597263857
+    np.float64(3.6375861597263857)
     """
     xp, _ = get_namespace(A)
     sign, ld = xp.linalg.slogdet(A)
@@ -125,34 +122,27 @@ def fast_logdet(A):
     return ld
 
 
-def density(w, **kwargs):
+def density(w):
     """Compute density of a sparse vector.
 
     Parameters
     ----------
-    w : array-like
-        The sparse vector.
-    **kwargs : keyword arguments
-        Ignored.
-
-        .. deprecated:: 1.2
-            ``**kwargs`` were deprecated in version 1.2 and will be removed in
-            1.4.
+    w : {ndarray, sparse matrix}
+        The input data can be numpy ndarray or a sparse matrix.
 
     Returns
     -------
     float
         The density of w, between 0 and 1.
-    """
-    if kwargs:
-        warnings.warn(
-            (
-                "Additional keyword arguments are deprecated in version 1.2 and will be"
-                " removed in version 1.4."
-            ),
-            FutureWarning,
-        )
 
+    Examples
+    --------
+    >>> from scipy import sparse
+    >>> from sklearn.utils.extmath import density
+    >>> X = sparse.random(10, 10, density=0.25, random_state=0)
+    >>> density(X)
+    0.25
+    """
     if hasattr(w, "toarray"):
         d = float(w.nnz) / (w.shape[0] * w.shape[1])
     else:
@@ -175,7 +165,19 @@ def safe_sparse_dot(a, b, *, dense_output=False):
     -------
     dot_product : {ndarray, sparse matrix}
         Sparse if ``a`` and ``b`` are sparse and ``dense_output=False``.
+
+    Examples
+    --------
+    >>> from scipy.sparse import csr_matrix
+    >>> from sklearn.utils.extmath import safe_sparse_dot
+    >>> X = csr_matrix([[1, 2], [3, 4], [5, 6]])
+    >>> dot_product = safe_sparse_dot(X, X.T)
+    >>> dot_product.toarray()
+    array([[ 5, 11, 17],
+           [11, 25, 39],
+           [17, 39, 61]])
     """
+    xp, _ = get_namespace(a, b)
     if a.ndim > 2 or b.ndim > 2:
         if sparse.issparse(a):
             # sparse is always 2D. Implies b is 3D+
@@ -191,7 +193,12 @@ def safe_sparse_dot(a, b, *, dense_output=False):
             ret = a_2d @ b
             ret = ret.reshape(*a.shape[:-1], b.shape[1])
         else:
-            ret = np.dot(a, b)
+            # Alternative for `np.dot` when dealing with a or b having
+            # more than 2 dimensions, that works with the array api.
+            # If b is 1-dim then the last axis for b is taken otherwise
+            # if b is >= 2-dim then the second to last axis is taken.
+            b_axis = -1 if b.ndim == 1 else -2
+            ret = xp.tensordot(a, b, axes=[-1, b_axis])
     else:
         ret = a @ b
 
@@ -255,6 +262,16 @@ def randomized_range_finder(
     An implementation of a randomized algorithm for principal component
     analysis
     A. Szlam et al. 2014
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils.extmath import randomized_range_finder
+    >>> A = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    >>> randomized_range_finder(A, size=2, n_iter=2, random_state=42)
+    array([[-0.21...,  0.88...],
+           [-0.52...,  0.24...],
+           [-0.82..., -0.38...]])
     """
     xp, is_array_api_compliant = get_namespace(A)
     random_state = check_random_state(random_state)
@@ -303,12 +320,12 @@ def randomized_range_finder(
     else:
         # Use scipy.linalg instead of numpy.linalg when not explicitly
         # using the Array API.
-        qr_normalizer = partial(linalg.qr, mode="economic")
+        qr_normalizer = partial(linalg.qr, mode="economic", check_finite=False)
 
     if power_iteration_normalizer == "QR":
         normalizer = qr_normalizer
     elif power_iteration_normalizer == "LU":
-        normalizer = partial(linalg.lu, permute_l=True)
+        normalizer = partial(linalg.lu, permute_l=True, check_finite=False)
     else:
         normalizer = lambda x: (x, None)
 
@@ -355,6 +372,12 @@ def randomized_svd(
 
     This method solves the fixed-rank approximation problem described in [1]_
     (problem (1.5), p5).
+
+    Refer to
+    :ref:`sphx_glr_auto_examples_applications_wikipedia_principal_eigenvector.py`
+    for a typical example where the power iteration algorithm is used to rank web pages.
+    This algorithm is also known to be used as a building block in Google's PageRank
+    algorithm.
 
     Parameters
     ----------
@@ -514,7 +537,7 @@ def randomized_svd(
     if is_array_api_compliant:
         Uhat, s, Vt = xp.linalg.svd(B, full_matrices=False)
     else:
-        # When when array_api_dispatch is disabled, rely on scipy.linalg
+        # When array_api_dispatch is disabled, rely on scipy.linalg
         # instead of numpy.linalg to avoid introducing a behavior change w.r.t.
         # previous versions of scikit-learn.
         Uhat, s, Vt = linalg.svd(
@@ -842,12 +865,14 @@ def svd_flip(u, v, u_based_decision=True):
         Parameters u and v are the output of `linalg.svd` or
         :func:`~sklearn.utils.extmath.randomized_svd`, with matching inner
         dimensions so one can compute `np.dot(u * s, v)`.
+        u can be None if `u_based_decision` is False.
 
     v : ndarray
         Parameters u and v are the output of `linalg.svd` or
         :func:`~sklearn.utils.extmath.randomized_svd`, with matching inner
         dimensions so one can compute `np.dot(u * s, v)`. The input v should
         really be called vt to be consistent with scipy's output.
+        v can be None if `u_based_decision` is True.
 
     u_based_decision : bool, default=True
         If True, use the columns of u as the basis for sign flipping.
@@ -862,71 +887,27 @@ def svd_flip(u, v, u_based_decision=True):
     v_adjusted : ndarray
         Array v with adjusted rows and the same dimensions as v.
     """
-    xp, _ = get_namespace(u, v)
-    device = getattr(u, "device", None)
+    xp, _ = get_namespace(*[a for a in [u, v] if a is not None])
 
     if u_based_decision:
         # columns of u, rows of v, or equivalently rows of u.T and v
         max_abs_u_cols = xp.argmax(xp.abs(u.T), axis=1)
-        shift = xp.arange(u.T.shape[0], device=device)
+        shift = xp.arange(u.T.shape[0], device=device(u))
         indices = max_abs_u_cols + shift * u.T.shape[1]
         signs = xp.sign(xp.take(xp.reshape(u.T, (-1,)), indices, axis=0))
         u *= signs[np.newaxis, :]
-        v *= signs[:, np.newaxis]
+        if v is not None:
+            v *= signs[:, np.newaxis]
     else:
         # rows of v, columns of u
         max_abs_v_rows = xp.argmax(xp.abs(v), axis=1)
-        shift = xp.arange(v.shape[0], device=device)
+        shift = xp.arange(v.shape[0], device=device(v))
         indices = max_abs_v_rows + shift * v.shape[1]
-        signs = xp.sign(xp.take(xp.reshape(v, (-1,)), indices))
-        u *= signs[np.newaxis, :]
+        signs = xp.sign(xp.take(xp.reshape(v, (-1,)), indices, axis=0))
+        if u is not None:
+            u *= signs[np.newaxis, :]
         v *= signs[:, np.newaxis]
     return u, v
-
-
-def log_logistic(X, out=None):
-    """Compute the log of the logistic function, ``log(1 / (1 + e ** -x))``.
-
-    This implementation is numerically stable because it splits positive and
-    negative values::
-
-        -log(1 + exp(-x_i))     if x_i > 0
-        x_i - log(1 + exp(x_i)) if x_i <= 0
-
-    For the ordinary logistic function, use ``scipy.special.expit``.
-
-    Parameters
-    ----------
-    X : array-like of shape (M, N) or (M,)
-        Argument to the logistic function.
-
-    out : array-like of shape (M, N) or (M,), default=None
-        Preallocated output array.
-
-    Returns
-    -------
-    out : ndarray of shape (M, N) or (M,)
-        Log of the logistic function evaluated at every point in x.
-
-    Notes
-    -----
-    See the blog post describing this implementation:
-    http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression/
-    """
-    is_1d = X.ndim == 1
-    X = np.atleast_2d(X)
-    X = check_array(X, dtype=np.float64)
-
-    n_samples, n_features = X.shape
-
-    if out is None:
-        out = np.empty_like(X)
-
-    _log_logistic_sigmoid(n_samples, n_features, X, out)
-
-    if is_1d:
-        return np.squeeze(out)
-    return out
 
 
 def softmax(X, copy=True):
@@ -1208,14 +1189,10 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
     out : ndarray
         Array with the cumulative sums along the chosen axis.
     """
-    xp, _ = get_namespace(arr)
-
-    out = xp.cumsum(arr, axis=axis, dtype=np.float64)
-    expected = xp.sum(arr, axis=axis, dtype=np.float64)
-    if not xp.all(
-        xp.isclose(
-            out.take(-1, axis=axis), expected, rtol=rtol, atol=atol, equal_nan=True
-        )
+    out = np.cumsum(arr, axis=axis, dtype=np.float64)
+    expected = np.sum(arr, axis=axis, dtype=np.float64)
+    if not np.allclose(
+        out.take(-1, axis=axis), expected, rtol=rtol, atol=atol, equal_nan=True
     ):
         warnings.warn(
             (
@@ -1251,21 +1228,125 @@ def _nanaverage(a, weights=None):
     that :func:`np.nan` values are ignored from the average and weights can
     be passed. Note that when possible, we delegate to the prime methods.
     """
+    xp, _ = get_namespace(a)
+    if a.shape[0] == 0:
+        return xp.nan
 
-    if len(a) == 0:
-        return np.nan
-
-    mask = np.isnan(a)
-    if mask.all():
-        return np.nan
+    mask = xp.isnan(a)
+    if xp.all(mask):
+        return xp.nan
 
     if weights is None:
-        return np.nanmean(a)
+        return _nanmean(a, xp=xp)
 
-    weights = np.array(weights, copy=False)
+    weights = xp.asarray(weights)
     a, weights = a[~mask], weights[~mask]
     try:
-        return np.average(a, weights=weights)
+        return _average(a, weights=weights)
     except ZeroDivisionError:
         # this is when all weights are zero, then ignore them
-        return np.average(a)
+        return _average(a)
+
+
+def safe_sqr(X, *, copy=True):
+    """Element wise squaring of array-likes and sparse matrices.
+
+    Parameters
+    ----------
+    X : {array-like, ndarray, sparse matrix}
+
+    copy : bool, default=True
+        Whether to create a copy of X and operate on it or to perform
+        inplace computation (default behaviour).
+
+    Returns
+    -------
+    X ** 2 : element wise square
+         Return the element-wise square of the input.
+
+    Examples
+    --------
+    >>> from sklearn.utils import safe_sqr
+    >>> safe_sqr([1, 2, 3])
+    array([1, 4, 9])
+    """
+    X = check_array(X, accept_sparse=["csr", "csc", "coo"], ensure_2d=False)
+    if sparse.issparse(X):
+        if copy:
+            X = X.copy()
+        X.data **= 2
+    else:
+        if copy:
+            X = X**2
+        else:
+            X **= 2
+    return X
+
+
+def _approximate_mode(class_counts, n_draws, rng):
+    """Computes approximate mode of multivariate hypergeometric.
+
+    This is an approximation to the mode of the multivariate
+    hypergeometric given by class_counts and n_draws.
+    It shouldn't be off by more than one.
+
+    It is the mostly likely outcome of drawing n_draws many
+    samples from the population given by class_counts.
+
+    Parameters
+    ----------
+    class_counts : ndarray of int
+        Population per class.
+    n_draws : int
+        Number of draws (samples to draw) from the overall population.
+    rng : random state
+        Used to break ties.
+
+    Returns
+    -------
+    sampled_classes : ndarray of int
+        Number of samples drawn from each class.
+        np.sum(sampled_classes) == n_draws
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils.extmath import _approximate_mode
+    >>> _approximate_mode(class_counts=np.array([4, 2]), n_draws=3, rng=0)
+    array([2, 1])
+    >>> _approximate_mode(class_counts=np.array([5, 2]), n_draws=4, rng=0)
+    array([3, 1])
+    >>> _approximate_mode(class_counts=np.array([2, 2, 2, 1]),
+    ...                   n_draws=2, rng=0)
+    array([0, 1, 1, 0])
+    >>> _approximate_mode(class_counts=np.array([2, 2, 2, 1]),
+    ...                   n_draws=2, rng=42)
+    array([1, 1, 0, 0])
+    """
+    rng = check_random_state(rng)
+    # this computes a bad approximation to the mode of the
+    # multivariate hypergeometric given by class_counts and n_draws
+    continuous = class_counts / class_counts.sum() * n_draws
+    # floored means we don't overshoot n_samples, but probably undershoot
+    floored = np.floor(continuous)
+    # we add samples according to how much "left over" probability
+    # they had, until we arrive at n_samples
+    need_to_add = int(n_draws - floored.sum())
+    if need_to_add > 0:
+        remainder = continuous - floored
+        values = np.sort(np.unique(remainder))[::-1]
+        # add according to remainder, but break ties
+        # randomly to avoid biases
+        for value in values:
+            (inds,) = np.where(remainder == value)
+            # if we need_to_add less than what's in inds
+            # we draw randomly from them.
+            # if we need to add more, we add them all and
+            # go to the next value
+            add_now = min(len(inds), need_to_add)
+            inds = rng.choice(inds, size=add_now, replace=False)
+            floored[inds] += 1
+            need_to_add -= add_now
+            if need_to_add == 0:
+                break
+    return floored.astype(int)

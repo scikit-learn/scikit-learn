@@ -73,27 +73,25 @@ will run all :term:`common tests` for the ``LogisticRegression`` estimator.
 
 When a unit test fails, the following tricks can make debugging easier:
 
-  1. The command line argument ``pytest -l`` instructs pytest to print the local
-     variables when a failure occurs.
+1. The command line argument ``pytest -l`` instructs pytest to print the local
+   variables when a failure occurs.
 
-  2. The argument ``pytest --pdb`` drops into the Python debugger on failure. To
-     instead drop into the rich IPython debugger ``ipdb``, you may set up a
-     shell alias to:
+2. The argument ``pytest --pdb`` drops into the Python debugger on failure. To
+   instead drop into the rich IPython debugger ``ipdb``, you may set up a
+   shell alias to:
 
-.. prompt:: bash $
+   .. prompt:: bash $
 
-    pytest --pdbcls=IPython.terminal.debugger:TerminalPdb --capture no
+      pytest --pdbcls=IPython.terminal.debugger:TerminalPdb --capture no
 
 Other `pytest` options that may become useful include:
 
-  - ``-x`` which exits on the first failed test
-  - ``--lf`` to rerun the tests that failed on the previous run
-  - ``--ff`` to rerun all previous tests, running the ones that failed first
-  - ``-s`` so that pytest does not capture the output of ``print()``
-    statements
-  - ``--tb=short`` or ``--tb=line`` to control the length of the logs
-  - ``--runxfail`` also run tests marked as a known failure (XFAIL) and report
-    errors.
+- ``-x`` which exits on the first failed test,
+- ``--lf`` to rerun the tests that failed on the previous run,
+- ``--ff`` to rerun all previous tests, running the ones that failed first,
+- ``-s`` so that pytest does not capture the output of ``print()`` statements,
+- ``--tb=short`` or ``--tb=line`` to control the length of the logs,
+- ``--runxfail`` also run tests marked as a known failure (XFAIL) and report errors.
 
 Since our continuous integration tests will error if
 ``FutureWarning`` isn't properly caught,
@@ -114,113 +112,180 @@ replies <https://github.com/settings/replies/>`_ for reviewing:
     Note that putting this content on a single line in a literal is the easiest way to make it copyable and wrapped on screen.
 
 Issue: Usage questions
-    ::
 
-        You are asking a usage question. The issue tracker is for bugs and new features. For usage questions, it is recommended to try [Stack Overflow](https://stackoverflow.com/questions/tagged/scikit-learn) or [the Mailing List](https://mail.python.org/mailman/listinfo/scikit-learn).
+::
 
-        Unfortunately, we need to close this issue as this issue tracker is a communication tool used for the development of scikit-learn. The additional activity created by usage questions crowds it too much and impedes this development. The conversation can continue here, however there is no guarantee that is will receive attention from core developers.
+    You are asking a usage question. The issue tracker is for bugs and new features. For usage questions, it is recommended to try [Stack Overflow](https://stackoverflow.com/questions/tagged/scikit-learn) or [the Mailing List](https://mail.python.org/mailman/listinfo/scikit-learn).
+
+    Unfortunately, we need to close this issue as this issue tracker is a communication tool used for the development of scikit-learn. The additional activity created by usage questions crowds it too much and impedes this development. The conversation can continue here, however there is no guarantee that it will receive attention from core developers.
 
 
 Issue: You're welcome to update the docs
-    ::
 
-        Please feel free to offer a pull request updating the documentation if you feel it could be improved.
+::
+
+    Please feel free to offer a pull request updating the documentation if you feel it could be improved.
 
 Issue: Self-contained example for bug
-    ::
 
-        Please provide [self-contained example code](https://stackoverflow.com/help/mcve), including imports and data (if possible), so that other contributors can just run it and reproduce your issue. Ideally your example code should be minimal.
+::
+
+    Please provide [self-contained example code](https://scikit-learn.org/dev/developers/minimal_reproducer.html), including imports and data (if possible), so that other contributors can just run it and reproduce your issue. Ideally your example code should be minimal.
 
 Issue: Software versions
-    ::
 
-        To help diagnose your issue, please paste the output of:
-        ```py
-        import sklearn; sklearn.show_versions()
-        ```
-        Thanks.
+::
+
+    To help diagnose your issue, please paste the output of:
+    ```py
+    import sklearn; sklearn.show_versions()
+    ```
+    Thanks.
 
 Issue: Code blocks
-    ::
 
-        Readability can be greatly improved if you [format](https://help.github.com/articles/creating-and-highlighting-code-blocks/) your code snippets and complete error messages appropriately. For example:
+::
 
-            ```python
-            print(something)
-            ```
-        generates:
+    Readability can be greatly improved if you [format](https://help.github.com/articles/creating-and-highlighting-code-blocks/) your code snippets and complete error messages appropriately. For example:
+
         ```python
         print(something)
         ```
-        And:
 
-            ```pytb
-            Traceback (most recent call last):
-              File "<stdin>", line 1, in <module>
-            ImportError: No module named 'hello'
-            ```
-        generates:
+    generates:
+
+    ```python
+    print(something)
+    ```
+
+    And:
+
         ```pytb
         Traceback (most recent call last):
-          File "<stdin>", line 1, in <module>
+            File "<stdin>", line 1, in <module>
         ImportError: No module named 'hello'
         ```
-        You can edit your issue descriptions and comments at any time to improve readability. This helps maintainers a lot. Thanks!
+
+    generates:
+
+    ```pytb
+    Traceback (most recent call last):
+        File "<stdin>", line 1, in <module>
+    ImportError: No module named 'hello'
+    ```
+
+    You can edit your issue descriptions and comments at any time to improve readability. This helps maintainers a lot. Thanks!
 
 Issue/Comment: Linking to code
-    ::
 
-        Friendly advice: for clarity's sake, you can link to code like [this](https://help.github.com/articles/creating-a-permanent-link-to-a-code-snippet/).
+::
+
+    Friendly advice: for clarity's sake, you can link to code like [this](https://help.github.com/articles/creating-a-permanent-link-to-a-code-snippet/).
 
 Issue/Comment: Linking to comments
-    ::
 
-        Please use links to comments, which make it a lot easier to see what you are referring to, rather than just linking to the issue. See [this](https://stackoverflow.com/questions/25163598/how-do-i-reference-a-specific-issue-comment-on-github) for more details.
+::
+
+    Please use links to comments, which make it a lot easier to see what you are referring to, rather than just linking to the issue. See [this](https://stackoverflow.com/questions/25163598/how-do-i-reference-a-specific-issue-comment-on-github) for more details.
 
 PR-NEW: Better description and title
-    ::
 
-        Thanks for the pull request! Please make the title of the PR more descriptive. The title will become the commit message when this is merged. You should state what issue (or PR) it fixes/resolves in the description using the syntax described [here](https://scikit-learn.org/dev/developers/contributing.html#contributing-pull-requests).
+::
+
+    Thanks for the pull request! Please make the title of the PR more descriptive. The title will become the commit message when this is merged. You should state what issue (or PR) it fixes/resolves in the description using the syntax described [here](https://scikit-learn.org/dev/developers/contributing.html#contributing-pull-requests).
 
 PR-NEW: Fix #
-    ::
 
-        Please use "Fix #issueNumber" in your PR description (and you can do it more than once). This way the associated issue gets closed automatically when the PR is merged. For more details, look at [this](https://github.com/blog/1506-closing-issues-via-pull-requests).
+::
+
+    Please use "Fix #issueNumber" in your PR description (and you can do it more than once). This way the associated issue gets closed automatically when the PR is merged. For more details, look at [this](https://github.com/blog/1506-closing-issues-via-pull-requests).
 
 PR-NEW or Issue: Maintenance cost
-    ::
 
-        Every feature we include has a [maintenance cost](https://scikit-learn.org/dev/faq.html#why-are-you-so-selective-on-what-algorithms-you-include-in-scikit-learn). Our maintainers are mostly volunteers. For a new feature to be included, we need evidence that it is often useful and, ideally, [well-established](https://scikit-learn.org/dev/faq.html#what-are-the-inclusion-criteria-for-new-algorithms) in the literature or in practice. Also, we expect PR authors to take part in the maintenance for the code they submit, at least initially. That doesn't stop you implementing it for yourself and publishing it in a separate repository, or even [scikit-learn-contrib](https://scikit-learn-contrib.github.io).
+::
+
+    Every feature we include has a [maintenance cost](https://scikit-learn.org/dev/faq.html#why-are-you-so-selective-on-what-algorithms-you-include-in-scikit-learn). Our maintainers are mostly volunteers. For a new feature to be included, we need evidence that it is often useful and, ideally, [well-established](https://scikit-learn.org/dev/faq.html#what-are-the-inclusion-criteria-for-new-algorithms) in the literature or in practice. Also, we expect PR authors to take part in the maintenance for the code they submit, at least initially. That doesn't stop you implementing it for yourself and publishing it in a separate repository, or even [scikit-learn-contrib](https://scikit-learn-contrib.github.io).
 
 PR-WIP: What's needed before merge?
-    ::
 
-        Please clarify (perhaps as a TODO list in the PR description) what work you believe still needs to be done before it can be reviewed for merge. When it is ready, please prefix the PR title with `[MRG]`.
+::
+
+    Please clarify (perhaps as a TODO list in the PR description) what work you believe still needs to be done before it can be reviewed for merge. When it is ready, please prefix the PR title with `[MRG]`.
 
 PR-WIP: Regression test needed
-    ::
 
-        Please add a [non-regression test](https://en.wikipedia.org/wiki/Non-regression_testing) that would fail at main but pass in this PR.
+::
 
-PR-WIP: PEP8
-    ::
-
-        You have some [PEP8](https://www.python.org/dev/peps/pep-0008/) violations, whose details you can see in the Circle CI `lint` job. It might be worth configuring your code editor to check for such errors on the fly, so you can catch them before committing.
+    Please add a [non-regression test](https://en.wikipedia.org/wiki/Non-regression_testing) that would fail at main but pass in this PR.
 
 PR-MRG: Patience
-    ::
 
-        Before merging, we generally require two core developers to agree that your pull request is desirable and ready. [Please be patient](https://scikit-learn.org/dev/faq.html#why-is-my-pull-request-not-getting-any-attention), as we mostly rely on volunteered time from busy core developers. (You are also welcome to help us out with [reviewing other PRs](https://scikit-learn.org/dev/developers/contributing.html#code-review-guidelines).)
+::
+
+    Before merging, we generally require two core developers to agree that your pull request is desirable and ready. [Please be patient](https://scikit-learn.org/dev/faq.html#why-is-my-pull-request-not-getting-any-attention), as we mostly rely on volunteered time from busy core developers. (You are also welcome to help us out with [reviewing other PRs](https://scikit-learn.org/dev/developers/contributing.html#code-review-guidelines).)
 
 PR-MRG: Add to what's new
-    ::
 
-        Please add an entry to the change log at `doc/whats_new/v*.rst`. Like the other entries there, please reference this pull request with `:pr:` and credit yourself (and other contributors if applicable) with `:user:`.
+::
+
+    Please add an entry to the future changelog by adding an RST fragment into the module associated with your change located in `doc/whats_new/upcoming_changes`. Refer to the following [README](https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md) for full instructions.
 
 PR: Don't change unrelated
-    ::
 
-        Please do not change unrelated lines. It makes your contribution harder to review and may introduce merge conflicts to other pull requests.
+::
+
+    Please do not change unrelated lines. It makes your contribution harder to review and may introduce merge conflicts to other pull requests.
+
+.. _debugging_ci_issues:
+
+Debugging CI issues
+-------------------
+
+CI issues may arise for a variety of reasons, so this is by no means a
+comprehensive guide, but rather a list of useful tips and tricks.
+
+Using a lock-file to get an environment close to the CI
++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+`conda-lock` can be used to create a conda environment with the exact same
+conda and pip packages as on the CI. For example, the following command will
+create a conda environment named `scikit-learn-doc` that is similar to the CI:
+
+.. prompt:: bash $
+
+    conda-lock install -n scikit-learn-doc build_tools/circle/doc_linux-64_conda.lock
+
+.. note::
+
+    It only works if you have the same OS as the CI build (check `platform:` in
+    the lock-file). For example, the previous command will only work if you are
+    on a Linux machine. Also this may not allow you to reproduce some of the
+    issues that are more tied to the particularities of the CI environment, for
+    example CPU architecture reported by OpenBLAS in `sklearn.show_versions()`.
+
+If you don't have the same OS as the CI build you can still create a conda
+environment from the right environment yaml file, although it won't be as close
+as the CI environment as using the associated lock-file. For example for the
+doc build:
+
+.. prompt:: bash $
+
+    conda env create -n scikit-learn-doc -f build_tools/circle/doc_environment.yml -y
+
+This may not give you exactly the same package versions as in the CI for a
+variety of reasons, for example:
+
+- some packages may have had new releases between the time the lock files were
+  last updated in the `main` branch and the time you run the `conda create`
+  command. You can always try to look at the version in the lock-file and
+  specify the versions by hand for some specific packages that you think would
+  help reproducing the issue.
+- different packages may be installed by default depending on the OS. For
+  example, the default BLAS library when installing numpy is OpenBLAS on Linux
+  and MKL on Windows.
+
+Also the problem may be OS specific so the only way to be able to reproduce
+would be to have the same OS as the CI build.
 
 .. highlight:: default
 
@@ -244,19 +309,19 @@ valgrind_.
 Valgrind is a command-line tool that can trace memory errors in a variety of
 code. Follow these steps:
 
-  1. Install `valgrind`_ on your system.
+1. Install `valgrind`_ on your system.
 
-  2. Download the python valgrind suppression file: `valgrind-python.supp`_.
+2. Download the python valgrind suppression file: `valgrind-python.supp`_.
 
-  3. Follow the directions in the `README.valgrind`_ file to customize your
-     python suppressions. If you don't, you will have spurious output coming
-     related to the python interpreter instead of your own code.
+3. Follow the directions in the `README.valgrind`_ file to customize your
+   python suppressions. If you don't, you will have spurious output coming
+   related to the python interpreter instead of your own code.
 
-  4. Run valgrind as follows:
+4. Run valgrind as follows:
 
-.. prompt:: bash $
+   .. prompt:: bash $
 
-  valgrind -v --suppressions=valgrind-python.supp python my_test_script.py
+        valgrind -v --suppressions=valgrind-python.supp python my_test_script.py
 
 .. _valgrind: https://valgrind.org
 .. _`README.valgrind`: https://github.com/python/cpython/blob/master/Misc/README.valgrind
@@ -335,3 +400,19 @@ point.
 
 Then use pytest to run only the tests of the module you are interested in
 debugging.
+
+.. _meson_build_backend:
+
+The Meson Build Backend
+=======================
+
+Since scikit-learn 1.5.0 we use meson-python as the build tool. Meson is
+a new tool for scikit-learn and the PyData ecosystem. It is used by several
+other packages that have written good guides about what it is and how it works.
+
+- `pandas setup doc
+  <https://pandas.pydata.org/docs/development/contributing_environment.html#step-3-build-and-install-pandas>`_:
+  pandas has a similar setup as ours (no spin or dev.py)
+- `scipy Meson doc
+  <https://scipy.github.io/devdocs/building/understanding_meson.html>`_ gives
+  more background about how Meson works behind the scenes

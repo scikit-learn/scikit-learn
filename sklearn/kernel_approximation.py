@@ -1,24 +1,15 @@
-"""
-The :mod:`sklearn.kernel_approximation` module implements several
-approximate kernel feature maps based on Fourier transforms and Count Sketches.
-"""
+"""Approximate kernel feature maps based on Fourier transforms and count sketches."""
 
-# Author: Andreas Mueller <amueller@ais.uni-bonn.de>
-#         Daniel Lopez-Sanchez (TensorSketch) <lope@usal.es>
-
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Integral, Real
 
 import numpy as np
 import scipy.sparse as sp
+from scipy.fft import fft, ifft
 from scipy.linalg import svd
-
-try:
-    from scipy.fft import fft, ifft
-except ImportError:  # scipy < 1.4
-    from scipy.fftpack import fft, ifft
 
 from .base import (
     BaseEstimator,
@@ -27,13 +18,13 @@ from .base import (
     _fit_context,
 )
 from .metrics.pairwise import KERNEL_PARAMS, PAIRWISE_KERNEL_FUNCTIONS, pairwise_kernels
-from .utils import check_random_state, deprecated
+from .utils import check_random_state
 from .utils._param_validation import Interval, StrOptions
 from .utils.extmath import safe_sparse_dot
 from .utils.validation import (
     _check_feature_names_in,
     check_is_fitted,
-    check_non_negative,
+    validate_data,
 )
 
 
@@ -122,6 +113,9 @@ class PolynomialCountSketch(
     SGDClassifier(max_iter=10)
     >>> clf.score(X_features, y)
     1.0
+
+    For a more detailed example of usage, see
+    :ref:`sphx_glr_auto_examples_kernel_approximation_plot_scalable_poly_kernels.py`
     """
 
     _parameter_constraints: dict = {
@@ -163,7 +157,7 @@ class PolynomialCountSketch(
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X, accept_sparse="csc")
+        X = validate_data(self, X, accept_sparse="csc")
         random_state = check_random_state(self.random_state)
 
         n_features = X.shape[1]
@@ -194,7 +188,7 @@ class PolynomialCountSketch(
         """
 
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse="csc", reset=False)
+        X = validate_data(self, X, accept_sparse="csc", reset=False)
 
         X_gamma = np.sqrt(self.gamma) * X
 
@@ -223,7 +217,7 @@ class PolynomialCountSketch(
                     iHashIndex = self.indexHash_[d, j]
                     iHashBit = self.bitHash_[d, j]
                     count_sketches[:, d, iHashIndex] += (
-                        (iHashBit * X_gamma[:, j]).toarray().ravel()
+                        (iHashBit * X_gamma[:, [j]]).toarray().ravel()
                     )
 
         else:
@@ -240,6 +234,11 @@ class PolynomialCountSketch(
         data_sketch = np.real(ifft(count_sketches_fft_prod, overwrite_x=True))
 
         return data_sketch
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
 
 
 class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
@@ -360,7 +359,7 @@ class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X, accept_sparse="csr")
+        X = validate_data(self, X, accept_sparse="csr")
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
         sparse = sp.issparse(X)
@@ -401,15 +400,18 @@ class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
+        X = validate_data(self, X, accept_sparse="csr", reset=False)
         projection = safe_sparse_dot(X, self.random_weights_)
         projection += self.random_offset_
         np.cos(projection, projection)
         projection *= (2.0 / self.n_components) ** 0.5
         return projection
 
-    def _more_tags(self):
-        return {"preserves_dtype": [np.float64, np.float32]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
 
 class SkewedChi2Sampler(
@@ -519,7 +521,7 @@ class SkewedChi2Sampler(
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X)
+        X = validate_data(self, X)
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
         uniform = random_state.uniform(size=(n_features, self.n_components))
@@ -552,8 +554,8 @@ class SkewedChi2Sampler(
             Returns the instance itself.
         """
         check_is_fitted(self)
-        X = self._validate_data(
-            X, copy=True, dtype=[np.float64, np.float32], reset=False
+        X = validate_data(
+            self, X, copy=True, dtype=[np.float64, np.float32], reset=False
         )
         if (X <= -self.skewedness).any():
             raise ValueError("X may not contain entries smaller than -skewedness.")
@@ -566,8 +568,10 @@ class SkewedChi2Sampler(
         projection *= np.sqrt(2.0) / np.sqrt(self.n_components)
         return projection
 
-    def _more_tags(self):
-        return {"preserves_dtype": [np.float64, np.float32]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
 
 class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
@@ -597,13 +601,6 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    sample_interval_ : float
-        Stored sampling interval. Specified as a parameter if `sample_steps`
-        not in {1,2,3}.
-
-        .. deprecated:: 1.3
-           `sample_interval_` serves internal purposes only and will be removed in 1.5.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -687,39 +684,15 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         self : object
             Returns the transformer.
         """
-        X = self._validate_data(X, accept_sparse="csr")
-        check_non_negative(X, "X in AdditiveChi2Sampler.fit")
+        X = validate_data(self, X, accept_sparse="csr", ensure_non_negative=True)
 
-        # TODO(1.5): remove the setting of _sample_interval from fit
-        if self.sample_interval is None:
-            # See figure 2 c) of "Efficient additive kernels via explicit feature maps"
-            # <http://www.robots.ox.ac.uk/~vedaldi/assets/pubs/vedaldi11efficient.pdf>
-            # A. Vedaldi and A. Zisserman, Pattern Analysis and Machine Intelligence,
-            # 2011
-            if self.sample_steps == 1:
-                self._sample_interval = 0.8
-            elif self.sample_steps == 2:
-                self._sample_interval = 0.5
-            elif self.sample_steps == 3:
-                self._sample_interval = 0.4
-            else:
-                raise ValueError(
-                    "If sample_steps is not in [1, 2, 3],"
-                    " you need to provide sample_interval"
-                )
-        else:
-            self._sample_interval = self.sample_interval
+        if self.sample_interval is None and self.sample_steps not in (1, 2, 3):
+            raise ValueError(
+                "If sample_steps is not in [1, 2, 3],"
+                " you need to provide sample_interval"
+            )
 
         return self
-
-    # TODO(1.5): remove
-    @deprecated(  # type: ignore
-        "The ``sample_interval_`` attribute was deprecated in version 1.3 and "
-        "will be removed 1.5."
-    )
-    @property
-    def sample_interval_(self):
-        return self._sample_interval
 
     def transform(self, X):
         """Apply approximate feature map to X.
@@ -737,33 +710,29 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
             Whether the return value is an array or sparse matrix depends on
             the type of the input X.
         """
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
-        check_non_negative(X, "X in AdditiveChi2Sampler.transform")
+        X = validate_data(
+            self, X, accept_sparse="csr", reset=False, ensure_non_negative=True
+        )
         sparse = sp.issparse(X)
 
-        if hasattr(self, "_sample_interval"):
-            # TODO(1.5): remove this branch
-            sample_interval = self._sample_interval
-
-        else:
-            if self.sample_interval is None:
-                # See figure 2 c) of "Efficient additive kernels via explicit feature maps" # noqa
-                # <http://www.robots.ox.ac.uk/~vedaldi/assets/pubs/vedaldi11efficient.pdf>
-                # A. Vedaldi and A. Zisserman, Pattern Analysis and Machine Intelligence, # noqa
-                # 2011
-                if self.sample_steps == 1:
-                    sample_interval = 0.8
-                elif self.sample_steps == 2:
-                    sample_interval = 0.5
-                elif self.sample_steps == 3:
-                    sample_interval = 0.4
-                else:
-                    raise ValueError(
-                        "If sample_steps is not in [1, 2, 3],"
-                        " you need to provide sample_interval"
-                    )
+        if self.sample_interval is None:
+            # See figure 2 c) of "Efficient additive kernels via explicit feature maps" # noqa
+            # <http://www.robots.ox.ac.uk/~vedaldi/assets/pubs/vedaldi11efficient.pdf>
+            # A. Vedaldi and A. Zisserman, Pattern Analysis and Machine Intelligence, # noqa
+            # 2011
+            if self.sample_steps == 1:
+                sample_interval = 0.8
+            elif self.sample_steps == 2:
+                sample_interval = 0.5
+            elif self.sample_steps == 3:
+                sample_interval = 0.4
             else:
-                sample_interval = self.sample_interval
+                raise ValueError(
+                    "If sample_steps is not in [1, 2, 3],"
+                    " you need to provide sample_interval"
+                )
+        else:
+            sample_interval = self.sample_interval
 
         # zeroth component
         # 1/cosh = sech
@@ -784,7 +753,10 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
-        check_is_fitted(self, "n_features_in_")
+        # Note that passing attributes="n_features_in_" forces check_is_fitted
+        # to check if the attribute is present. Otherwise it will pass on this
+        # stateless estimator (requires_fit=False)
+        check_is_fitted(self, attributes="n_features_in_")
         input_features = _check_feature_names_in(
             self, input_features, generate_names=True
         )
@@ -856,8 +828,12 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
 
         return sp.hstack(X_new)
 
-    def _more_tags(self):
-        return {"stateless": True, "requires_positive_X": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.requires_fit = False
+        tags.input_tags.positive_only = True
+        tags.input_tags.sparse = True
+        return tags
 
 
 class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
@@ -965,13 +941,13 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
     >>> from sklearn.kernel_approximation import Nystroem
     >>> X, y = datasets.load_digits(n_class=9, return_X_y=True)
     >>> data = X / 16.
-    >>> clf = svm.LinearSVC(dual="auto")
+    >>> clf = svm.LinearSVC()
     >>> feature_map_nystroem = Nystroem(gamma=.2,
     ...                                 random_state=1,
     ...                                 n_components=300)
     >>> data_transformed = feature_map_nystroem.fit_transform(data)
     >>> clf.fit(data_transformed, y)
-    LinearSVC(dual='auto')
+    LinearSVC()
     >>> clf.score(data_transformed, y)
     0.9987...
     """
@@ -1033,7 +1009,7 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X, accept_sparse="csr")
+        X = validate_data(self, X, accept_sparse="csr")
         rnd = check_random_state(self.random_state)
         n_samples = X.shape[0]
 
@@ -1088,7 +1064,7 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             Transformed data.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
+        X = validate_data(self, X, accept_sparse="csr", reset=False)
 
         kernel_params = self._get_kernel_params()
         embedded = pairwise_kernels(
@@ -1123,12 +1099,8 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
 
         return params
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_transformer_preserve_dtypes": (
-                    "dtypes are preserved but not at a close enough precision"
-                )
-            },
-            "preserves_dtype": [np.float64, np.float32],
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags

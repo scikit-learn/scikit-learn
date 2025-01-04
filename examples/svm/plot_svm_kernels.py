@@ -36,8 +36,8 @@ linear kernel (`"linear"`), the polynomial kernel (`"poly"`), the radial basis f
 kernel (`"rbf"`) and the sigmoid kernel (`"sigmoid"`).
 """
 
-# Code source: Gaël Varoquaux
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Creating a dataset
@@ -110,12 +110,15 @@ from sklearn import svm
 from sklearn.inspection import DecisionBoundaryDisplay
 
 
-def plot_training_data_with_decision_boundary(kernel):
+def plot_training_data_with_decision_boundary(
+    kernel, ax=None, long_title=True, support_vectors=True
+):
     # Train the SVC
     clf = svm.SVC(kernel=kernel, gamma=2).fit(X, y)
 
     # Settings for plotting
-    _, ax = plt.subplots(figsize=(4, 3))
+    if ax is None:
+        _, ax = plt.subplots(figsize=(4, 3))
     x_min, x_max, y_min, y_max = -3, 3, -3, 3
     ax.set(xlim=(x_min, x_max), ylim=(y_min, y_max))
 
@@ -136,20 +139,26 @@ def plot_training_data_with_decision_boundary(kernel):
         linestyles=["--", "-", "--"],
     )
 
-    # Plot bigger circles around samples that serve as support vectors
-    ax.scatter(
-        clf.support_vectors_[:, 0],
-        clf.support_vectors_[:, 1],
-        s=250,
-        facecolors="none",
-        edgecolors="k",
-    )
-    # Plot samples by color and add legend
-    ax.scatter(X[:, 0], X[:, 1], c=y, s=150, edgecolors="k")
-    ax.legend(*scatter.legend_elements(), loc="upper right", title="Classes")
-    ax.set_title(f" Decision boundaries of {kernel} kernel in SVC")
+    if support_vectors:
+        # Plot bigger circles around samples that serve as support vectors
+        ax.scatter(
+            clf.support_vectors_[:, 0],
+            clf.support_vectors_[:, 1],
+            s=150,
+            facecolors="none",
+            edgecolors="k",
+        )
 
-    _ = plt.show()
+    # Plot samples by color and add legend
+    ax.scatter(X[:, 0], X[:, 1], c=y, s=30, edgecolors="k")
+    ax.legend(*scatter.legend_elements(), loc="upper right", title="Classes")
+    if long_title:
+        ax.set_title(f" Decision boundaries of {kernel} kernel in SVC")
+    else:
+        ax.set_title(kernel)
+
+    if ax is None:
+        plt.show()
 
 
 # %%
@@ -184,7 +193,7 @@ plot_training_data_with_decision_boundary("linear")
 # (`gamma`) controls the influence of each individual training sample on the
 # decision boundary and :math:`{r}` is the bias term (`coef0`) that shifts the
 # data up or down. Here, we use the default value for the degree of the
-# polynomal in the kernel funcion (`degree=3`). When `coef0=0` (the default),
+# polynomial in the kernel function (`degree=3`). When `coef0=0` (the default),
 # the data is only transformed, but no additional dimension is added. Using a
 # polynomial kernel is equivalent to creating
 # :class:`~sklearn.preprocessing.PolynomialFeatures` and then fitting a
@@ -237,7 +246,6 @@ plot_training_data_with_decision_boundary("rbf")
 # using the hyperbolic tangent function (:math:`\tanh`). The kernel function
 # scales and possibly shifts the dot product of the two points
 # (:math:`\mathbf{x}_1` and :math:`\mathbf{x}_2`).
-
 plot_training_data_with_decision_boundary("sigmoid")
 
 # %%
@@ -271,3 +279,26 @@ plot_training_data_with_decision_boundary("sigmoid")
 # parameters using techniques such as
 # :class:`~sklearn.model_selection.GridSearchCV` is recommended to capture the
 # underlying structures within the data.
+
+# %%
+# XOR dataset
+# -----------
+# A classical example of a dataset which is not linearly separable is the XOR
+# pattern. HEre we demonstrate how different kernels work on such a dataset.
+
+xx, yy = np.meshgrid(np.linspace(-3, 3, 500), np.linspace(-3, 3, 500))
+np.random.seed(0)
+X = np.random.randn(300, 2)
+y = np.logical_xor(X[:, 0] > 0, X[:, 1] > 0)
+
+_, ax = plt.subplots(2, 2, figsize=(8, 8))
+args = dict(long_title=False, support_vectors=False)
+plot_training_data_with_decision_boundary("linear", ax[0, 0], **args)
+plot_training_data_with_decision_boundary("poly", ax[0, 1], **args)
+plot_training_data_with_decision_boundary("rbf", ax[1, 0], **args)
+plot_training_data_with_decision_boundary("sigmoid", ax[1, 1], **args)
+plt.show()
+
+# %%
+# As you can see from the plots above, only the `rbf` kernel can find a
+# reasonable decision boundary for the above dataset.

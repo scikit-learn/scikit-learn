@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import warnings
 from collections import namedtuple
 from numbers import Integral, Real
@@ -9,16 +12,24 @@ from scipy import stats
 from ..base import _fit_context, clone
 from ..exceptions import ConvergenceWarning
 from ..preprocessing import normalize
-from ..utils import (
-    _safe_assign,
-    _safe_indexing,
-    check_array,
-    check_random_state,
-    is_scalar_nan,
-)
+from ..utils import _safe_indexing, check_array, check_random_state
+from ..utils._indexing import _safe_assign
 from ..utils._mask import _get_mask
+from ..utils._missing import is_scalar_nan
 from ..utils._param_validation import HasMethods, Interval, StrOptions
-from ..utils.validation import FLOAT_DTYPES, _check_feature_names_in, check_is_fitted
+from ..utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
+    process_routing,
+)
+from ..utils.validation import (
+    FLOAT_DTYPES,
+    _check_feature_names_in,
+    _num_samples,
+    check_is_fitted,
+    validate_data,
+)
 from ._base import SimpleImputer, _BaseImputer, _check_inputs_dtype
 
 _ImputerTriplet = namedtuple(
@@ -273,6 +284,10 @@ class IterativeImputer(_BaseImputer):
     array([[ 6.9584...,  2.       ,  3.        ],
            [ 4.       ,  2.6000...,  6.        ],
            [10.       ,  4.9999...,  9.        ]])
+
+    For a more detailed example see
+    :ref:`sphx_glr_auto_examples_impute_plot_missing_values.py` or
+    :ref:`sphx_glr_auto_examples_impute_plot_iterative_imputer_variants_comparison.py`.
     """
 
     _parameter_constraints: dict = {
@@ -344,6 +359,7 @@ class IterativeImputer(_BaseImputer):
         neighbor_feat_idx,
         estimator=None,
         fit_mode=True,
+        params=None,
     ):
         """Impute a single feature from the others provided.
 
@@ -375,6 +391,9 @@ class IterativeImputer(_BaseImputer):
         fit_mode : boolean, default=True
             Whether to fit and predict with the estimator or just predict.
 
+        params : dict
+            Additional params routed to the individual estimator.
+
         Returns
         -------
         X_filled : ndarray
@@ -405,7 +424,7 @@ class IterativeImputer(_BaseImputer):
                 ~missing_row_mask,
                 axis=0,
             )
-            estimator.fit(X_train, y_train)
+            estimator.fit(X_train, y_train, **params)
 
         # if no missing values, don't predict
         if np.sum(missing_row_mask) == 0:
@@ -601,21 +620,29 @@ class IterativeImputer(_BaseImputer):
             number of features.
         """
         if is_scalar_nan(self.missing_values):
-            force_all_finite = "allow-nan"
+            ensure_all_finite = "allow-nan"
         else:
-            force_all_finite = True
+            ensure_all_finite = True
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             dtype=FLOAT_DTYPES,
             order="F",
             reset=in_fit,
-            force_all_finite=force_all_finite,
+            ensure_all_finite=ensure_all_finite,
         )
         _check_inputs_dtype(X, self.missing_values)
 
         X_missing_mask = _get_mask(X, self.missing_values)
         mask_missing_values = X_missing_mask.copy()
+
+        # TODO (1.8): remove this once the deprecation is removed. In the meantime,
+        # we need to catch the warning to avoid false positives.
+        catch_warning = (
+            self.initial_strategy == "constant" and not self.keep_empty_features
+        )
+
         if self.initial_imputer_ is None:
             self.initial_imputer_ = SimpleImputer(
                 missing_values=self.missing_values,
@@ -623,28 +650,55 @@ class IterativeImputer(_BaseImputer):
                 fill_value=self.fill_value,
                 keep_empty_features=self.keep_empty_features,
             ).set_output(transform="default")
-            X_filled = self.initial_imputer_.fit_transform(X)
-        else:
-            X_filled = self.initial_imputer_.transform(X)
 
-        valid_mask = np.flatnonzero(
-            np.logical_not(np.isnan(self.initial_imputer_.statistics_))
-        )
+            # TODO (1.8): remove this once the deprecation is removed to keep only
+            # the code in the else case.
+            if catch_warning:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", FutureWarning)
+                    X_filled = self.initial_imputer_.fit_transform(X)
+            else:
+                X_filled = self.initial_imputer_.fit_transform(X)
+        else:
+            # TODO (1.8): remove this once the deprecation is removed to keep only
+            # the code in the else case.
+            if catch_warning:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", FutureWarning)
+                    X_filled = self.initial_imputer_.transform(X)
+            else:
+                X_filled = self.initial_imputer_.transform(X)
+
+        if in_fit:
+            self._is_empty_feature = np.all(mask_missing_values, axis=0)
 
         if not self.keep_empty_features:
             # drop empty features
-            Xt = X[:, valid_mask]
-            mask_missing_values = mask_missing_values[:, valid_mask]
+            Xt = X[:, ~self._is_empty_feature]
+            mask_missing_values = mask_missing_values[:, ~self._is_empty_feature]
+
+            if self.initial_imputer_.get_params()["strategy"] == "constant":
+                # The constant strategy has a specific behavior and preserve empty
+                # features even with ``keep_empty_features=False``. We need to drop
+                # the column for consistency.
+                # TODO (1.8): remove this `if` branch once the following issue is
+                # addressed:
+                # https://github.com/scikit-learn/scikit-learn/issues/29827
+                X_filled = X_filled[:, ~self._is_empty_feature]
+
         else:
             # mark empty features as not missing and keep the original
             # imputation
-            mask_missing_values[:, valid_mask] = True
+            mask_missing_values[:, self._is_empty_feature] = False
             Xt = X
+            Xt[:, self._is_empty_feature] = X_filled[:, self._is_empty_feature]
 
         return Xt, X_filled, mask_missing_values, X_missing_mask
 
     @staticmethod
-    def _validate_limit(limit, limit_type, n_features):
+    def _validate_limit(
+        limit, limit_type, n_features, is_empty_feature, keep_empty_feature
+    ):
         """Validate the limits (min/max) of the feature values.
 
         Converts scalar min/max limits to vectors of shape `(n_features,)`.
@@ -657,30 +711,44 @@ class IterativeImputer(_BaseImputer):
             Type of limit to validate.
         n_features: int
             Number of features in the dataset.
+        is_empty_feature: ndarray, shape (n_features, )
+            Mask array indicating empty feature imputer has seen during fit.
+        keep_empty_feature: bool
+            If False, remove empty-feature indices from the limit.
 
         Returns
         -------
         limit: ndarray, shape(n_features,)
             Array of limits, one for each feature.
         """
+        n_features_in = _num_samples(is_empty_feature)
+        if (
+            limit is not None
+            and not np.isscalar(limit)
+            and _num_samples(limit) != n_features_in
+        ):
+            raise ValueError(
+                f"'{limit_type}_value' should be of shape ({n_features_in},) when an"
+                f" array-like is provided. Got {len(limit)}, instead."
+            )
+
         limit_bound = np.inf if limit_type == "max" else -np.inf
         limit = limit_bound if limit is None else limit
         if np.isscalar(limit):
             limit = np.full(n_features, limit)
-        limit = check_array(limit, force_all_finite=False, copy=False, ensure_2d=False)
-        if not limit.shape[0] == n_features:
-            raise ValueError(
-                f"'{limit_type}_value' should be of "
-                f"shape ({n_features},) when an array-like "
-                f"is provided. Got {limit.shape}, instead."
-            )
+        limit = check_array(limit, ensure_all_finite=False, copy=False, ensure_2d=False)
+
+        # Make sure to remove the empty feature elements from the bounds
+        if not keep_empty_feature and len(limit) == len(is_empty_feature):
+            limit = limit[~is_empty_feature]
+
         return limit
 
     @_fit_context(
         # IterativeImputer.estimator is not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X, y=None, **params):
         """Fit the imputer on `X` and return the transformed `X`.
 
         Parameters
@@ -692,11 +760,29 @@ class IterativeImputer(_BaseImputer):
         y : Ignored
             Not used, present for API consistency by convention.
 
+        **params : dict
+            Parameters routed to the `fit` method of the sub-estimator via the
+            metadata routing API.
+
+            .. versionadded:: 1.5
+              Only available if
+              `sklearn.set_config(enable_metadata_routing=True)` is set. See
+              :ref:`Metadata Routing User Guide <metadata_routing>` for more
+              details.
+
         Returns
         -------
         Xt : array-like, shape (n_samples, n_features)
             The imputed input data.
         """
+        _raise_for_params(params, self, "fit")
+
+        routed_params = process_routing(
+            self,
+            "fit",
+            **params,
+        )
+
         self.random_state_ = getattr(
             self, "random_state_", check_random_state(self.random_state)
         )
@@ -723,13 +809,25 @@ class IterativeImputer(_BaseImputer):
             self.n_iter_ = 0
             return super()._concatenate_indicator(Xt, X_indicator)
 
-        # Edge case: a single feature. We return the initial ...
+        # Edge case: a single feature, we return the initial imputation.
         if Xt.shape[1] == 1:
             self.n_iter_ = 0
             return super()._concatenate_indicator(Xt, X_indicator)
 
-        self._min_value = self._validate_limit(self.min_value, "min", X.shape[1])
-        self._max_value = self._validate_limit(self.max_value, "max", X.shape[1])
+        self._min_value = self._validate_limit(
+            self.min_value,
+            "min",
+            X.shape[1],
+            self._is_empty_feature,
+            self.keep_empty_features,
+        )
+        self._max_value = self._validate_limit(
+            self.max_value,
+            "max",
+            X.shape[1],
+            self._is_empty_feature,
+            self.keep_empty_features,
+        )
 
         if not np.all(np.greater(self._max_value, self._min_value)):
             raise ValueError("One (or more) features have min_value >= max_value.")
@@ -765,6 +863,7 @@ class IterativeImputer(_BaseImputer):
                     neighbor_feat_idx,
                     estimator=None,
                     fit_mode=True,
+                    params=routed_params.estimator.fit,
                 )
                 estimator_triplet = _ImputerTriplet(
                     feat_idx, neighbor_feat_idx, estimator
@@ -855,7 +954,7 @@ class IterativeImputer(_BaseImputer):
 
         return super()._concatenate_indicator(Xt, X_indicator)
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, **fit_params):
         """Fit the imputer on `X` and return self.
 
         Parameters
@@ -867,12 +966,22 @@ class IterativeImputer(_BaseImputer):
         y : Ignored
             Not used, present for API consistency by convention.
 
+        **fit_params : dict
+            Parameters routed to the `fit` method of the sub-estimator via the
+            metadata routing API.
+
+            .. versionadded:: 1.5
+              Only available if
+              `sklearn.set_config(enable_metadata_routing=True)` is set. See
+              :ref:`Metadata Routing User Guide <metadata_routing>` for more
+              details.
+
         Returns
         -------
         self : object
             Fitted estimator.
         """
-        self.fit_transform(X)
+        self.fit_transform(X, **fit_params)
         return self
 
     def get_feature_names_out(self, input_features=None):
@@ -899,3 +1008,23 @@ class IterativeImputer(_BaseImputer):
         input_features = _check_feature_names_in(self, input_features)
         names = self.initial_imputer_.get_feature_names_out(input_features)
         return self._concatenate_indicator_feature_names_out(names, input_features)
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.5
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self.__class__.__name__).add(
+            estimator=self.estimator,
+            method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+        )
+        return router

@@ -51,10 +51,11 @@ data based on the amount of variance it explains. As such it implements a
     :scale: 75%
 
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_lda.py`
-    * :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_fa_model_selection.py`
+* :ref:`sphx_glr_auto_examples_decomposition_plot_pca_iris.py`
+* :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_lda.py`
+* :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_fa_model_selection.py`
 
 
 .. _IncrementalPCA:
@@ -71,11 +72,11 @@ exactly match the results of :class:`PCA` while processing the data in a
 minibatch fashion. :class:`IncrementalPCA` makes it possible to implement
 out-of-core Principal Component Analysis either by:
 
- * Using its ``partial_fit`` method on chunks of data fetched sequentially
-   from the local hard drive or a network database.
+* Using its ``partial_fit`` method on chunks of data fetched sequentially
+  from the local hard drive or a network database.
 
- * Calling its fit method on a sparse matrix or a memory mapped file using
-   ``numpy.memmap``.
+* Calling its fit method on a memory mapped file using
+  ``numpy.memmap``.
 
 :class:`IncrementalPCA` only stores estimates of component and noise variances,
 in order update ``explained_variance_ratio_`` incrementally. This is why
@@ -96,9 +97,9 @@ input data for each feature before applying the SVD.
     :scale: 75%
 
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_decomposition_plot_incremental_pca.py`
+* :ref:`sphx_glr_auto_examples_decomposition_plot_incremental_pca.py`
 
 
 .. _RandomizedPCA:
@@ -159,20 +160,20 @@ Note: the implementation of ``inverse_transform`` in :class:`PCA` with
 ``transform`` even when ``whiten=False`` (default).
 
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_applications_plot_face_recognition.py`
-    * :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
+* :ref:`sphx_glr_auto_examples_applications_plot_face_recognition.py`
+* :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
 
-.. topic:: References:
+.. rubric:: References
 
-    * Algorithm 4.3 in
-      :arxiv:`"Finding structure with randomness: Stochastic algorithms for
-      constructing approximate matrix decompositions" <0909.4061>`
-      Halko, et al., 2009
+* Algorithm 4.3 in
+  :arxiv:`"Finding structure with randomness: Stochastic algorithms for
+  constructing approximate matrix decompositions" <0909.4061>`
+  Halko, et al., 2009
 
-    * :arxiv:`"An implementation of a randomized algorithm for principal component
-      analysis" <1412.3510>` A. Szlam et al. 2014
+* :arxiv:`"An implementation of a randomized algorithm for principal component
+  analysis" <1412.3510>` A. Szlam et al. 2014
 
 .. _SparsePCA:
 
@@ -247,18 +248,18 @@ factorization, while larger values shrink many coefficients to zero.
   the algorithm is online along the features direction, not the samples
   direction.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-   * :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
+* :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
 
-.. topic:: References:
+.. rubric:: References
 
-  .. [Mrl09] `"Online Dictionary Learning for Sparse Coding"
-     <https://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
-     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
-  .. [Jen09] `"Structured Sparse Principal Component Analysis"
-     <https://www.di.ens.fr/~fbach/sspca_AISTATS2010.pdf>`_
-     R. Jenatton, G. Obozinski, F. Bach, 2009
+.. [Mrl09] `"Online Dictionary Learning for Sparse Coding"
+   <https://www.di.ens.fr/~fbach/mairal_icml09.pdf>`_
+   J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
+.. [Jen09] `"Structured Sparse Principal Component Analysis"
+   <https://www.di.ens.fr/~fbach/sspca_AISTATS2010.pdf>`_
+   R. Jenatton, G. Obozinski, F. Bach, 2009
 
 
 .. _kernel_PCA:
@@ -287,22 +288,23 @@ prediction (kernel dependency estimation). :class:`KernelPCA` supports both
     :meth:`KernelPCA.inverse_transform` is an approximation. See the example
     linked below for more details.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_decomposition_plot_kernel_pca.py`
+* :ref:`sphx_glr_auto_examples_decomposition_plot_kernel_pca.py`
+* :ref:`sphx_glr_auto_examples_applications_plot_digits_denoising.py`
 
-.. topic:: References:
+.. rubric:: References
 
-    .. [Scholkopf1997] Schölkopf, Bernhard, Alexander Smola, and Klaus-Robert Müller.
-       `"Kernel principal component analysis."
-       <https://people.eecs.berkeley.edu/~wainwrig/stat241b/scholkopf_kernel.pdf>`_
-       International conference on artificial neural networks.
-       Springer, Berlin, Heidelberg, 1997.
+.. [Scholkopf1997] Schölkopf, Bernhard, Alexander Smola, and Klaus-Robert Müller.
+   `"Kernel principal component analysis."
+   <https://people.eecs.berkeley.edu/~wainwrig/stat241b/scholkopf_kernel.pdf>`_
+   International conference on artificial neural networks.
+   Springer, Berlin, Heidelberg, 1997.
 
-    .. [Bakir2003] Bakır, Gökhan H., Jason Weston, and Bernhard Schölkopf.
-       `"Learning to find pre-images."
-       <https://papers.nips.cc/paper/2003/file/ac1ad983e08ad3304a97e147f522747e-Paper.pdf>`_
-       Advances in neural information processing systems 16 (2003): 449-456.
+.. [Bakir2003] Bakır, Gökhan H., Jason Weston, and Bernhard Schölkopf.
+   `"Learning to find pre-images."
+   <https://papers.nips.cc/paper/2003/file/ac1ad983e08ad3304a97e147f522747e-Paper.pdf>`_
+   Advances in neural information processing systems 16 (2003): 449-456.
 
 .. _kPCA_Solvers:
 
@@ -319,31 +321,34 @@ is eigendecomposed in the Kernel PCA fitting process has an effective rank that
 is much smaller than its size. This is a situation where approximate
 eigensolvers can provide speedup with very low precision loss.
 
-The optional parameter ``eigen_solver='randomized'`` can be used to
-*significantly* reduce the computation time when the number of requested
-``n_components`` is small compared with the number of samples. It relies on
-randomized decomposition methods to find an approximate solution in a shorter
-time.
 
-The time complexity of the randomized :class:`KernelPCA` is
-:math:`O(n_{\mathrm{samples}}^2 \cdot n_{\mathrm{components}})`
-instead of :math:`O(n_{\mathrm{samples}}^3)` for the exact method
-implemented with ``eigen_solver='dense'``.
+.. dropdown:: Eigensolvers
 
-The memory footprint of randomized :class:`KernelPCA` is also proportional to
-:math:`2 \cdot n_{\mathrm{samples}} \cdot n_{\mathrm{components}}` instead of
-:math:`n_{\mathrm{samples}}^2` for the exact method.
+    The optional parameter ``eigen_solver='randomized'`` can be used to
+    *significantly* reduce the computation time when the number of requested
+    ``n_components`` is small compared with the number of samples. It relies on
+    randomized decomposition methods to find an approximate solution in a shorter
+    time.
 
-Note: this technique is the same as in :ref:`RandomizedPCA`.
+    The time complexity of the randomized :class:`KernelPCA` is
+    :math:`O(n_{\mathrm{samples}}^2 \cdot n_{\mathrm{components}})`
+    instead of :math:`O(n_{\mathrm{samples}}^3)` for the exact method
+    implemented with ``eigen_solver='dense'``.
 
-In addition to the above two solvers, ``eigen_solver='arpack'`` can be used as
-an alternate way to get an approximate decomposition. In practice, this method
-only provides reasonable execution times when the number of components to find
-is extremely small. It is enabled by default when the desired number of
-components is less than 10 (strict) and the number of samples is more than 200
-(strict). See :class:`KernelPCA` for details.
+    The memory footprint of randomized :class:`KernelPCA` is also proportional to
+    :math:`2 \cdot n_{\mathrm{samples}} \cdot n_{\mathrm{components}}` instead of
+    :math:`n_{\mathrm{samples}}^2` for the exact method.
 
-.. topic:: References:
+    Note: this technique is the same as in :ref:`RandomizedPCA`.
+
+    In addition to the above two solvers, ``eigen_solver='arpack'`` can be used as
+    an alternate way to get an approximate decomposition. In practice, this method
+    only provides reasonable execution times when the number of components to find
+    is extremely small. It is enabled by default when the desired number of
+    components is less than 10 (strict) and the number of samples is more than 200
+    (strict). See :class:`KernelPCA` for details.
+
+    .. rubric:: References
 
     * *dense* solver:
       `scipy.linalg.eigh documentation
@@ -351,14 +356,14 @@ components is less than 10 (strict) and the number of samples is more than 200
 
     * *randomized* solver:
 
-        * Algorithm 4.3 in
-          :arxiv:`"Finding structure with randomness: Stochastic
-          algorithms for constructing approximate matrix decompositions" <0909.4061>`
-          Halko, et al. (2009)
+      * Algorithm 4.3 in
+        :arxiv:`"Finding structure with randomness: Stochastic
+        algorithms for constructing approximate matrix decompositions" <0909.4061>`
+        Halko, et al. (2009)
 
-        * :arxiv:`"An implementation of a randomized algorithm
-          for principal component analysis" <1412.3510>`
-          A. Szlam et al. (2014)
+      * :arxiv:`"An implementation of a randomized algorithm
+        for principal component analysis" <1412.3510>`
+        A. Szlam et al. (2014)
 
     * *arpack* solver:
       `scipy.sparse.linalg.eigsh documentation
@@ -375,75 +380,74 @@ Truncated singular value decomposition and latent semantic analysis
 (SVD) that only computes the :math:`k` largest singular values,
 where :math:`k` is a user-specified parameter.
 
-When truncated SVD is applied to term-document matrices
-(as returned by :class:`~sklearn.feature_extraction.text.CountVectorizer` or
-:class:`~sklearn.feature_extraction.text.TfidfVectorizer`),
-this transformation is known as
-`latent semantic analysis <https://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
-(LSA), because it transforms such matrices
-to a "semantic" space of low dimensionality.
-In particular, LSA is known to combat the effects of synonymy and polysemy
-(both of which roughly mean there are multiple meanings per word),
-which cause term-document matrices to be overly sparse
-and exhibit poor similarity under measures such as cosine similarity.
-
-.. note::
-    LSA is also known as latent semantic indexing, LSI,
-    though strictly that refers to its use in persistent indexes
-    for information retrieval purposes.
-
-Mathematically, truncated SVD applied to training samples :math:`X`
-produces a low-rank approximation :math:`X`:
-
-.. math::
-    X \approx X_k = U_k \Sigma_k V_k^\top
-
-After this operation, :math:`U_k \Sigma_k`
-is the transformed training set with :math:`k` features
-(called ``n_components`` in the API).
-
-To also transform a test set :math:`X`, we multiply it with :math:`V_k`:
-
-.. math::
-    X' = X V_k
-
-.. note::
-    Most treatments of LSA in the natural language processing (NLP)
-    and information retrieval (IR) literature
-    swap the axes of the matrix :math:`X` so that it has shape
-    ``n_features`` × ``n_samples``.
-    We present LSA in a different way that matches the scikit-learn API better,
-    but the singular values found are the same.
-
 :class:`TruncatedSVD` is very similar to :class:`PCA`, but differs
 in that the matrix :math:`X` does not need to be centered.
 When the columnwise (per-feature) means of :math:`X`
 are subtracted from the feature values,
 truncated SVD on the resulting matrix is equivalent to PCA.
-In practical terms, this means
-that the :class:`TruncatedSVD` transformer accepts ``scipy.sparse``
-matrices without the need to densify them,
-as densifying may fill up memory even for medium-sized document collections.
 
-While the :class:`TruncatedSVD` transformer
-works with any feature matrix,
-using it on tf–idf matrices is recommended over raw frequency counts
-in an LSA/document processing setting.
-In particular, sublinear scaling and inverse document frequency
-should be turned on (``sublinear_tf=True, use_idf=True``)
-to bring the feature values closer to a Gaussian distribution,
-compensating for LSA's erroneous assumptions about textual data.
+.. dropdown:: About truncated SVD and latent semantic analysis (LSA)
 
-.. topic:: Examples:
+    When truncated SVD is applied to term-document matrices
+    (as returned by :class:`~sklearn.feature_extraction.text.CountVectorizer` or
+    :class:`~sklearn.feature_extraction.text.TfidfVectorizer`),
+    this transformation is known as
+    `latent semantic analysis <https://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
+    (LSA), because it transforms such matrices
+    to a "semantic" space of low dimensionality.
+    In particular, LSA is known to combat the effects of synonymy and polysemy
+    (both of which roughly mean there are multiple meanings per word),
+    which cause term-document matrices to be overly sparse
+    and exhibit poor similarity under measures such as cosine similarity.
 
-   * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`
+    .. note::
+        LSA is also known as latent semantic indexing, LSI,
+        though strictly that refers to its use in persistent indexes
+        for information retrieval purposes.
 
-.. topic:: References:
+    Mathematically, truncated SVD applied to training samples :math:`X`
+    produces a low-rank approximation :math:`X`:
 
-  * Christopher D. Manning, Prabhakar Raghavan and Hinrich Schütze (2008),
-    *Introduction to Information Retrieval*, Cambridge University Press,
-    chapter 18: `Matrix decompositions & latent semantic indexing
-    <https://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
+    .. math::
+        X \approx X_k = U_k \Sigma_k V_k^\top
+
+    After this operation, :math:`U_k \Sigma_k`
+    is the transformed training set with :math:`k` features
+    (called ``n_components`` in the API).
+
+    To also transform a test set :math:`X`, we multiply it with :math:`V_k`:
+
+    .. math::
+        X' = X V_k
+
+    .. note::
+        Most treatments of LSA in the natural language processing (NLP)
+        and information retrieval (IR) literature
+        swap the axes of the matrix :math:`X` so that it has shape
+        ``(n_features, n_samples)``.
+        We present LSA in a different way that matches the scikit-learn API better,
+        but the singular values found are the same.
+
+    While the :class:`TruncatedSVD` transformer
+    works with any feature matrix,
+    using it on tf-idf matrices is recommended over raw frequency counts
+    in an LSA/document processing setting.
+    In particular, sublinear scaling and inverse document frequency
+    should be turned on (``sublinear_tf=True, use_idf=True``)
+    to bring the feature values closer to a Gaussian distribution,
+    compensating for LSA's erroneous assumptions about textual data.
+
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`
+
+.. rubric:: References
+
+* Christopher D. Manning, Prabhakar Raghavan and Hinrich Schütze (2008),
+  *Introduction to Information Retrieval*, Cambridge University Press,
+  chapter 18: `Matrix decompositions & latent semantic indexing
+  <https://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
+
 
 
 .. _DictionaryLearning:
@@ -496,9 +500,9 @@ the split code is filled with the negative part of the code vector, only with
 a positive sign. Therefore, the split_code is non-negative.
 
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_decomposition_plot_sparse_coding.py`
+* :ref:`sphx_glr_auto_examples_decomposition_plot_sparse_coding.py`
 
 
 Generic dictionary learning
@@ -578,16 +582,16 @@ extracted from part of the image of a raccoon face looks like.
     :scale: 50%
 
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_decomposition_plot_image_denoising.py`
+* :ref:`sphx_glr_auto_examples_decomposition_plot_image_denoising.py`
 
 
-.. topic:: References:
+.. rubric:: References
 
-  * `"Online dictionary learning for sparse coding"
-    <https://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
-    J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
+* `"Online dictionary learning for sparse coding"
+  <https://www.di.ens.fr/~fbach/mairal_icml09.pdf>`_
+  J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
 
 .. _MiniBatchDictionaryLearning:
 
@@ -623,7 +627,7 @@ does not fit into the memory.
    computationally efficient and implements on-line learning with a
    ``partial_fit`` method.
 
-    Example: :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
+   Example: :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
 
 .. currentmodule:: sklearn.decomposition
 
@@ -718,10 +722,10 @@ Varimax rotation maximizes the sum of the variances of the squared loadings,
 i.e., it tends to produce sparser factors, which are influenced by only a few
 features each (the "simple structure"). See e.g., the first example below.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_decomposition_plot_varimax_fa.py`
-    * :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_fa_model_selection.py`
+* :ref:`sphx_glr_auto_examples_decomposition_plot_varimax_fa.py`
+* :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_fa_model_selection.py`
 
 
 .. _ICA:
@@ -760,11 +764,11 @@ components with some sparsity:
 
 .. centered:: |pca_img4| |ica_img4|
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_decomposition_plot_ica_blind_source_separation.py`
-    * :ref:`sphx_glr_auto_examples_decomposition_plot_ica_vs_pca.py`
-    * :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
+* :ref:`sphx_glr_auto_examples_decomposition_plot_ica_blind_source_separation.py`
+* :ref:`sphx_glr_auto_examples_decomposition_plot_ica_vs_pca.py`
+* :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
 
 
 .. _NMF:
@@ -887,18 +891,20 @@ Note that this definition is not valid if :math:`\beta \in (0; 1)`, yet it can
 be continuously extended to the definitions of :math:`d_{KL}` and :math:`d_{IS}`
 respectively.
 
-:class:`NMF` implements two solvers, using Coordinate Descent ('cd') [5]_, and
-Multiplicative Update ('mu') [6]_. The 'mu' solver can optimize every
-beta-divergence, including of course the Frobenius norm (:math:`\beta=2`), the
-(generalized) Kullback-Leibler divergence (:math:`\beta=1`) and the
-Itakura-Saito divergence (:math:`\beta=0`). Note that for
-:math:`\beta \in (1; 2)`, the 'mu' solver is significantly faster than for other
-values of :math:`\beta`. Note also that with a negative (or 0, i.e.
-'itakura-saito') :math:`\beta`, the input matrix cannot contain zero values.
+.. dropdown:: NMF implemented solvers
 
-The 'cd' solver can only optimize the Frobenius norm. Due to the
-underlying non-convexity of NMF, the different solvers may converge to
-different minima, even when optimizing the same distance function.
+    :class:`NMF` implements two solvers, using Coordinate Descent ('cd') [5]_, and
+    Multiplicative Update ('mu') [6]_. The 'mu' solver can optimize every
+    beta-divergence, including of course the Frobenius norm (:math:`\beta=2`), the
+    (generalized) Kullback-Leibler divergence (:math:`\beta=1`) and the
+    Itakura-Saito divergence (:math:`\beta=0`). Note that for
+    :math:`\beta \in (1; 2)`, the 'mu' solver is significantly faster than for other
+    values of :math:`\beta`. Note also that with a negative (or 0, i.e.
+    'itakura-saito') :math:`\beta`, the input matrix cannot contain zero values.
+
+    The 'cd' solver can only optimize the Frobenius norm. Due to the
+    underlying non-convexity of NMF, the different solvers may converge to
+    different minima, even when optimizing the same distance function.
 
 NMF is best used with the ``fit_transform`` method, which returns the matrix W.
 The matrix H is stored into the fitted model in the ``components_`` attribute;
@@ -914,10 +920,12 @@ stored components::
     >>> X_new = np.array([[1, 0], [1, 6.1], [1, 0], [1, 4], [3.2, 1], [0, 4]])
     >>> W_new = model.transform(X_new)
 
-.. topic:: Examples:
 
-    * :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
-    * :ref:`sphx_glr_auto_examples_applications_plot_topics_extraction_with_nmf_lda.py`
+
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
+* :ref:`sphx_glr_auto_examples_applications_plot_topics_extraction_with_nmf_lda.py`
 
 .. _MiniBatchNMF:
 
@@ -942,33 +950,33 @@ The estimator also implements ``partial_fit``, which updates ``H`` by iterating
 only once over a mini-batch. This can be used for online learning when the data
 is not readily available from the start, or when the data does not fit into memory.
 
-.. topic:: References:
+.. rubric:: References
 
-    .. [1] `"Learning the parts of objects by non-negative matrix factorization"
-      <http://www.cs.columbia.edu/~blei/fogm/2020F/readings/LeeSeung1999.pdf>`_
-      D. Lee, S. Seung, 1999
+.. [1] `"Learning the parts of objects by non-negative matrix factorization"
+  <http://www.cs.columbia.edu/~blei/fogm/2020F/readings/LeeSeung1999.pdf>`_
+  D. Lee, S. Seung, 1999
 
-    .. [2] `"Non-negative Matrix Factorization with Sparseness Constraints"
-      <https://www.jmlr.org/papers/volume5/hoyer04a/hoyer04a.pdf>`_
-      P. Hoyer, 2004
+.. [2] `"Non-negative Matrix Factorization with Sparseness Constraints"
+  <https://www.jmlr.org/papers/volume5/hoyer04a/hoyer04a.pdf>`_
+  P. Hoyer, 2004
 
-    .. [4] `"SVD based initialization: A head start for nonnegative
-      matrix factorization"
-      <https://www.boutsidis.org/Boutsidis_PRE_08.pdf>`_
-      C. Boutsidis, E. Gallopoulos, 2008
+.. [4] `"SVD based initialization: A head start for nonnegative
+  matrix factorization"
+  <https://www.boutsidis.org/Boutsidis_PRE_08.pdf>`_
+  C. Boutsidis, E. Gallopoulos, 2008
 
-    .. [5] `"Fast local algorithms for large scale nonnegative matrix and tensor
-      factorizations."
-      <https://www.researchgate.net/profile/Anh-Huy-Phan/publication/220241471_Fast_Local_Algorithms_for_Large_Scale_Nonnegative_Matrix_and_Tensor_Factorizations>`_
-      A. Cichocki, A. Phan, 2009
+.. [5] `"Fast local algorithms for large scale nonnegative matrix and tensor
+  factorizations."
+  <https://www.researchgate.net/profile/Anh-Huy-Phan/publication/220241471_Fast_Local_Algorithms_for_Large_Scale_Nonnegative_Matrix_and_Tensor_Factorizations>`_
+  A. Cichocki, A. Phan, 2009
 
-    .. [6] :arxiv:`"Algorithms for nonnegative matrix factorization with
-           the beta-divergence" <1010.1763>`
-           C. Fevotte, J. Idier, 2011
+.. [6] :arxiv:`"Algorithms for nonnegative matrix factorization with
+  the beta-divergence" <1010.1763>`
+  C. Fevotte, J. Idier, 2011
 
-    .. [7] :arxiv:`"Online algorithms for nonnegative matrix factorization with the
-       Itakura-Saito divergence" <1106.4198>`
-       A. Lefevre, F. Bach, C. Fevotte, 2011
+.. [7] :arxiv:`"Online algorithms for nonnegative matrix factorization with the
+  Itakura-Saito divergence" <1106.4198>`
+  A. Lefevre, F. Bach, C. Fevotte, 2011
 
 .. _LatentDirichletAllocation:
 
@@ -987,10 +995,10 @@ The graphical model of LDA is a three-level generative model:
 Note on notations presented in the graphical model above, which can be found in
 Hoffman et al. (2013):
 
-  * The corpus is a collection of :math:`D` documents.
-  * A document is a sequence of :math:`N` words.
-  * There are :math:`K` topics in the corpus.
-  * The boxes represent repeated sampling.
+* The corpus is a collection of :math:`D` documents.
+* A document is a sequence of :math:`N` words.
+* There are :math:`K` topics in the corpus.
+* The boxes represent repeated sampling.
 
 In the graphical model, each node is a random variable and has a role in the
 generative process. A shaded node indicates an observed variable and an unshaded
@@ -1000,45 +1008,48 @@ of topics in the corpus and the distribution of words in the documents.
 The goal of LDA is to use the observed words to infer the hidden topic
 structure.
 
-When modeling text corpora, the model assumes the following generative process
-for a corpus with :math:`D` documents and :math:`K` topics, with :math:`K`
-corresponding to `n_components` in the API:
+.. dropdown:: Details on modeling text corpora
 
-  1. For each topic :math:`k \in K`, draw :math:`\beta_k \sim
-     \mathrm{Dirichlet}(\eta)`. This provides a distribution over the words,
-     i.e. the probability of a word appearing in topic :math:`k`.
-     :math:`\eta` corresponds to `topic_word_prior`.
+    When modeling text corpora, the model assumes the following generative process
+    for a corpus with :math:`D` documents and :math:`K` topics, with :math:`K`
+    corresponding to `n_components` in the API:
 
-  2. For each document :math:`d \in D`, draw the topic proportions
-     :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha)`. :math:`\alpha`
-     corresponds to `doc_topic_prior`.
+    1. For each topic :math:`k \in K`, draw :math:`\beta_k \sim
+       \mathrm{Dirichlet}(\eta)`. This provides a distribution over the words,
+       i.e. the probability of a word appearing in topic :math:`k`.
+       :math:`\eta` corresponds to `topic_word_prior`.
 
-  3. For each word :math:`i` in document :math:`d`:
+    2. For each document :math:`d \in D`, draw the topic proportions
+       :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha)`. :math:`\alpha`
+       corresponds to `doc_topic_prior`.
 
-    a. Draw the topic assignment :math:`z_{di} \sim \mathrm{Multinomial}
-       (\theta_d)`
-    b. Draw the observed word :math:`w_{ij} \sim \mathrm{Multinomial}
-       (\beta_{z_{di}})`
+    3. For each word :math:`i` in document :math:`d`:
 
-For parameter estimation, the posterior distribution is:
+       a. Draw the topic assignment :math:`z_{di} \sim \mathrm{Multinomial}
+          (\theta_d)`
+       b. Draw the observed word :math:`w_{ij} \sim \mathrm{Multinomial}
+          (\beta_{z_{di}})`
 
-.. math::
-  p(z, \theta, \beta |w, \alpha, \eta) =
-    \frac{p(z, \theta, \beta|\alpha, \eta)}{p(w|\alpha, \eta)}
+    For parameter estimation, the posterior distribution is:
 
-Since the posterior is intractable, variational Bayesian method
-uses a simpler distribution :math:`q(z,\theta,\beta | \lambda, \phi, \gamma)`
-to approximate it, and those variational parameters :math:`\lambda`,
-:math:`\phi`, :math:`\gamma` are optimized to maximize the Evidence
-Lower Bound (ELBO):
+    .. math::
+        p(z, \theta, \beta |w, \alpha, \eta) =
+        \frac{p(z, \theta, \beta|\alpha, \eta)}{p(w|\alpha, \eta)}
 
-.. math::
-  \log\: P(w | \alpha, \eta) \geq L(w,\phi,\gamma,\lambda) \overset{\triangle}{=}
-    E_{q}[\log\:p(w,z,\theta,\beta|\alpha,\eta)] - E_{q}[\log\:q(z, \theta, \beta)]
+    Since the posterior is intractable, variational Bayesian method
+    uses a simpler distribution :math:`q(z,\theta,\beta | \lambda, \phi, \gamma)`
+    to approximate it, and those variational parameters :math:`\lambda`,
+    :math:`\phi`, :math:`\gamma` are optimized to maximize the Evidence
+    Lower Bound (ELBO):
 
-Maximizing ELBO is equivalent to minimizing the Kullback-Leibler(KL) divergence
-between :math:`q(z,\theta,\beta)` and the true posterior
-:math:`p(z, \theta, \beta |w, \alpha, \eta)`.
+    .. math::
+        \log\: P(w | \alpha, \eta) \geq L(w,\phi,\gamma,\lambda) \overset{\triangle}{=}
+        E_{q}[\log\:p(w,z,\theta,\beta|\alpha,\eta)] - E_{q}[\log\:q(z, \theta, \beta)]
+
+    Maximizing ELBO is equivalent to minimizing the Kullback-Leibler(KL) divergence
+    between :math:`q(z,\theta,\beta)` and the true posterior
+    :math:`p(z, \theta, \beta |w, \alpha, \eta)`.
+
 
 :class:`LatentDirichletAllocation` implements the online variational Bayes
 algorithm and supports both online and batch update methods.
@@ -1060,27 +1071,27 @@ can be calculated from ``transform`` method.
 :class:`LatentDirichletAllocation` also implements ``partial_fit`` method. This is used
 when data can be fetched sequentially.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_applications_plot_topics_extraction_with_nmf_lda.py`
+* :ref:`sphx_glr_auto_examples_applications_plot_topics_extraction_with_nmf_lda.py`
 
-.. topic:: References:
+.. rubric:: References
 
-    * `"Latent Dirichlet Allocation"
-      <https://www.jmlr.org/papers/volume3/blei03a/blei03a.pdf>`_
-      D. Blei, A. Ng, M. Jordan, 2003
+* `"Latent Dirichlet Allocation"
+  <https://www.jmlr.org/papers/volume3/blei03a/blei03a.pdf>`_
+  D. Blei, A. Ng, M. Jordan, 2003
 
-    * `"Online Learning for Latent Dirichlet Allocation”
-      <https://papers.nips.cc/paper/3902-online-learning-for-latent-dirichlet-allocation.pdf>`_
-      M. Hoffman, D. Blei, F. Bach, 2010
+* `"Online Learning for Latent Dirichlet Allocation”
+  <https://papers.nips.cc/paper/3902-online-learning-for-latent-dirichlet-allocation.pdf>`_
+  M. Hoffman, D. Blei, F. Bach, 2010
 
-    * `"Stochastic Variational Inference"
-      <https://www.cs.columbia.edu/~blei/papers/HoffmanBleiWangPaisley2013.pdf>`_
-      M. Hoffman, D. Blei, C. Wang, J. Paisley, 2013
+* `"Stochastic Variational Inference"
+  <https://www.cs.columbia.edu/~blei/papers/HoffmanBleiWangPaisley2013.pdf>`_
+  M. Hoffman, D. Blei, C. Wang, J. Paisley, 2013
 
-    * `"The varimax criterion for analytic rotation in factor analysis"
-      <https://link.springer.com/article/10.1007%2FBF02289233>`_
-      H. F. Kaiser, 1958
+* `"The varimax criterion for analytic rotation in factor analysis"
+  <https://link.springer.com/article/10.1007%2FBF02289233>`_
+  H. F. Kaiser, 1958
 
 See also :ref:`nca_dim_reduction` for dimensionality reduction with
 Neighborhood Components Analysis.

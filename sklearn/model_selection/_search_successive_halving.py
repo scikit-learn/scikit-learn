@@ -1,5 +1,7 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from abc import abstractmethod
-from copy import deepcopy
 from math import ceil, floor, log
 from numbers import Integral, Real
 
@@ -10,7 +12,7 @@ from ..metrics._scorer import get_scorer_names
 from ..utils import resample
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import _num_samples
+from ..utils.validation import _num_samples, validate_data
 from . import ParameterGrid, ParameterSampler
 from ._search import BaseSearchCV
 from ._split import _yields_constant_splits, check_cv
@@ -27,20 +29,20 @@ class _SubsampleMetaSplitter:
         self.subsample_test = subsample_test
         self.random_state = random_state
 
-    def split(self, X, y, groups=None):
-        for train_idx, test_idx in self.base_cv.split(X, y, groups):
+    def split(self, X, y, **kwargs):
+        for train_idx, test_idx in self.base_cv.split(X, y, **kwargs):
             train_idx = resample(
                 train_idx,
                 replace=False,
                 random_state=self.random_state,
-                n_samples=int(self.fraction * train_idx.shape[0]),
+                n_samples=int(self.fraction * len(train_idx)),
             )
             if self.subsample_test:
                 test_idx = resample(
                     test_idx,
                     replace=False,
                     random_state=self.random_state,
-                    n_samples=int(self.fraction * test_idx.shape[0]),
+                    n_samples=int(self.fraction * len(test_idx)),
                 )
             yield train_idx, test_idx
 
@@ -123,7 +125,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
         self.min_resources = min_resources
         self.aggressive_elimination = aggressive_elimination
 
-    def _check_input_parameters(self, X, y, groups):
+    def _check_input_parameters(self, X, y, split_params):
         # We need to enforce that successive calls to cv.split() yield the same
         # splits: see https://github.com/scikit-learn/scikit-learn/issues/15149
         if not _yields_constant_splits(self._checked_cv_orig):
@@ -154,12 +156,12 @@ class BaseSuccessiveHalving(BaseSearchCV):
         self.min_resources_ = self.min_resources
         if self.min_resources_ in ("smallest", "exhaust"):
             if self.resource == "n_samples":
-                n_splits = self._checked_cv_orig.get_n_splits(X, y, groups)
+                n_splits = self._checked_cv_orig.get_n_splits(X, y, **split_params)
                 # please see https://gph.is/1KjihQe for a justification
                 magic_factor = 2
                 self.min_resources_ = n_splits * magic_factor
                 if is_classifier(self.estimator):
-                    y = self._validate_data(X="no_validation", y=y)
+                    y = validate_data(self, X="no_validation", y=y)
                     check_classification_targets(y)
                     n_classes = np.unique(y).shape[0]
                     self.min_resources_ *= n_classes
@@ -215,7 +217,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
         # Halving*SearchCV.estimator is not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y=None, groups=None, **fit_params):
+    def fit(self, X, y=None, **params):
         """Run fit with all sets of parameters.
 
         Parameters
@@ -229,12 +231,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
-        groups : array-like of shape (n_samples,), default=None
-            Group labels for the samples used while splitting the dataset into
-            train/test set. Only used in conjunction with a "Group" :term:`cv`
-            instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
-
-        **fit_params : dict of string -> object
+        **params : dict of string -> object
             Parameters passed to the ``fit`` method of the estimator.
 
         Returns
@@ -246,15 +243,14 @@ class BaseSuccessiveHalving(BaseSearchCV):
             self.cv, y, classifier=is_classifier(self.estimator)
         )
 
+        routed_params = self._get_routed_params_for_fit(params)
         self._check_input_parameters(
-            X=X,
-            y=y,
-            groups=groups,
+            X=X, y=y, split_params=routed_params.splitter.split
         )
 
         self._n_samples_orig = _num_samples(X)
 
-        super().fit(X, y=y, groups=groups, **fit_params)
+        super().fit(X, y=y, **params)
 
         # Set best_score_: BaseSearchCV does not set it, as refit is a callable
         self.best_score_ = self.cv_results_["mean_test_score"][self.best_index_]
@@ -374,18 +370,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
     def _generate_candidate_params(self):
         pass
 
-    def _more_tags(self):
-        tags = deepcopy(super()._more_tags())
-        tags["_xfail_checks"].update(
-            {
-                "check_fit2d_1sample": (
-                    "Fail during parameter check since min/max resources requires"
-                    " more samples"
-                ),
-            }
-        )
-        return tags
-
 
 class HalvingGridSearchCV(BaseSuccessiveHalving):
     """Search over specified parameter values with successive halving.
@@ -447,11 +431,10 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
         - 'smallest' is a heuristic that sets `r0` to a small value:
 
-            - ``n_splits * 2`` when ``resource='n_samples'`` for a regression
-              problem
-            - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
-              classification problem
-            - ``1`` when ``resource != 'n_samples'``
+          - ``n_splits * 2`` when ``resource='n_samples'`` for a regression problem
+          - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
+            classification problem
+          - ``1`` when ``resource != 'n_samples'``
 
         - 'exhaust' will set `r0` such that the **last** iteration uses as
           much resources as possible. Namely, the last iteration will use the
@@ -497,7 +480,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
     scoring : str, callable, or None, default=None
         A single string (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring`) to evaluate the predictions on the test set.
+        (see :ref:`scoring_callable`) to evaluate the predictions on the test set.
         If None, the estimator's score method is used.
 
     refit : bool, default=True
@@ -672,8 +655,6 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
     {'max_depth': None, 'min_samples_split': 10, 'n_estimators': 9}
     """
 
-    _required_parameters = ["estimator", "param_grid"]
-
     _parameter_constraints: dict = {
         **BaseSuccessiveHalving._parameter_constraints,
         "param_grid": [dict, list],
@@ -791,11 +772,10 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
         - 'smallest' is a heuristic that sets `r0` to a small value:
 
-            - ``n_splits * 2`` when ``resource='n_samples'`` for a regression
-              problem
-            - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
-              classification problem
-            - ``1`` when ``resource != 'n_samples'``
+          - ``n_splits * 2`` when ``resource='n_samples'`` for a regression problem
+          - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
+            classification problem
+          - ``1`` when ``resource != 'n_samples'``
 
         - 'exhaust' will set `r0` such that the **last** iteration uses as
           much resources as possible. Namely, the last iteration will use the
@@ -841,7 +821,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     scoring : str, callable, or None, default=None
         A single string (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring`) to evaluate the predictions on the test set.
+        (see :ref:`scoring_callable`) to evaluate the predictions on the test set.
         If None, the estimator's score method is used.
 
     refit : bool, default=True
@@ -1021,8 +1001,6 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     >>> search.best_params_  # doctest: +SKIP
     {'max_depth': None, 'min_samples_split': 10, 'n_estimators': 9}
     """
-
-    _required_parameters = ["estimator", "param_distributions"]
 
     _parameter_constraints: dict = {
         **BaseSuccessiveHalving._parameter_constraints,

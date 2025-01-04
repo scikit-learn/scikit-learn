@@ -18,14 +18,15 @@ variable, as long as the model has the capacity to use them to overfit.
 This example shows how to use Permutation Importances as an alternative that
 can mitigate those limitations.
 
-.. topic:: References:
+.. rubric:: References
 
-   * :doi:`L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
-     2001. <10.1023/A:1010933404324>`
+* :doi:`L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
+  2001. <10.1023/A:1010933404324>`
 
 """
-# %%
-import numpy as np
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Data Loading and Feature Engineering
@@ -40,12 +41,12 @@ import numpy as np
 #   values as records).
 # - ``random_cat`` is a low cardinality categorical variable (3 possible
 #   values).
+import numpy as np
+
 from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
 
-X, y = fetch_openml(
-    "titanic", version=1, as_frame=True, return_X_y=True, parser="pandas"
-)
+X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True)
 rng = np.random.RandomState(seed=42)
 X["random_cat"] = rng.randint(3, size=X.shape[0])
 X["random_num"] = rng.randn(X.shape[0])

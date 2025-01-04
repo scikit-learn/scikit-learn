@@ -9,17 +9,17 @@ total), which are differently distributed in each of two classes.
 
 Points are labeled as follows, where Y means the class is present:
 
-    =====  =====  =====  ======
-      1      2      3    Color
-    =====  =====  =====  ======
-      Y      N      N    Red
-      N      Y      N    Blue
-      N      N      Y    Yellow
-      Y      Y      N    Purple
-      Y      N      Y    Orange
-      Y      Y      N    Green
-      Y      Y      Y    Brown
-    =====  =====  =====  ======
+=====  =====  =====  ======
+  1      2      3    Color
+=====  =====  =====  ======
+  Y      N      N    Red
+  N      Y      N    Blue
+  N      N      Y    Yellow
+  Y      Y      N    Purple
+  Y      N      Y    Orange
+  Y      Y      N    Green
+  Y      Y      Y    Brown
+=====  =====  =====  ======
 
 A star marks the expected sample for each class; its size reflects the
 probability of selecting that class label.
@@ -34,6 +34,9 @@ Similarly, with ``n_classes > n_features``, it is much less likely that a
 feature distinguishes a particular class.
 
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np

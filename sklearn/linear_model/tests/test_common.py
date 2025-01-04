@@ -1,4 +1,4 @@
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import inspect
 
@@ -6,16 +6,19 @@ import numpy as np
 import pytest
 
 from sklearn.base import is_classifier
-from sklearn.datasets import make_low_rank_matrix
+from sklearn.datasets import make_classification, make_low_rank_matrix, make_regression
 from sklearn.linear_model import (
     ARDRegression,
     BayesianRidge,
     ElasticNet,
     ElasticNetCV,
+    GammaRegressor,
+    HuberRegressor,
     Lars,
     LarsCV,
     Lasso,
     LassoCV,
+    LassoLars,
     LassoLarsCV,
     LassoLarsIC,
     LinearRegression,
@@ -27,12 +30,22 @@ from sklearn.linear_model import (
     MultiTaskLassoCV,
     OrthogonalMatchingPursuit,
     OrthogonalMatchingPursuitCV,
+    PassiveAggressiveClassifier,
+    PassiveAggressiveRegressor,
+    Perceptron,
     PoissonRegressor,
     Ridge,
+    RidgeClassifier,
+    RidgeClassifierCV,
     RidgeCV,
+    SGDClassifier,
     SGDRegressor,
+    TheilSenRegressor,
     TweedieRegressor,
 )
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.svm import LinearSVC, LinearSVR
+from sklearn.utils._testing import set_random_state
 
 
 # Note: GammaRegressor() and TweedieRegressor(power != 1) have a non-canonical link.
@@ -59,7 +72,7 @@ from sklearn.linear_model import (
             ),
             marks=pytest.mark.xfail(reason="Missing importance sampling scheme"),
         ),
-        LogisticRegressionCV(),
+        LogisticRegressionCV(tol=1e-6),
         MultiTaskElasticNet(),
         MultiTaskElasticNetCV(),
         MultiTaskLasso(),
@@ -135,7 +148,6 @@ def test_balance_property(model, with_sample_weight, global_random_seed):
         model.fit(X, y, sample_weight=sw)
     else:
         model.fit(X, y)
-
     # Assert balance property.
     if is_classifier(model):
         assert np.average(model.predict_proba(X)[:, 1], weights=sw) == pytest.approx(
@@ -145,3 +157,78 @@ def test_balance_property(model, with_sample_weight, global_random_seed):
         assert np.average(model.predict(X), weights=sw, axis=0) == pytest.approx(
             np.average(y, weights=sw, axis=0), rel=rel
         )
+
+
+@pytest.mark.filterwarnings("ignore:The default of 'normalize'")
+@pytest.mark.filterwarnings("ignore:lbfgs failed to converge")
+@pytest.mark.parametrize(
+    "Regressor",
+    [
+        ARDRegression,
+        BayesianRidge,
+        ElasticNet,
+        ElasticNetCV,
+        GammaRegressor,
+        HuberRegressor,
+        Lars,
+        LarsCV,
+        Lasso,
+        LassoCV,
+        LassoLars,
+        LassoLarsCV,
+        LassoLarsIC,
+        LinearSVR,
+        LinearRegression,
+        OrthogonalMatchingPursuit,
+        OrthogonalMatchingPursuitCV,
+        PassiveAggressiveRegressor,
+        PoissonRegressor,
+        Ridge,
+        RidgeCV,
+        SGDRegressor,
+        TheilSenRegressor,
+        TweedieRegressor,
+    ],
+)
+@pytest.mark.parametrize("ndim", [1, 2])
+def test_linear_model_regressor_coef_shape(Regressor, ndim):
+    """Check the consistency of linear models `coef` shape."""
+    if Regressor is LinearRegression:
+        pytest.xfail("LinearRegression does not follow `coef_` shape contract!")
+
+    X, y = make_regression(random_state=0, n_samples=200, n_features=20)
+    y = MinMaxScaler().fit_transform(y.reshape(-1, 1))[:, 0] + 1
+    y = y[:, np.newaxis] if ndim == 2 else y
+
+    regressor = Regressor()
+    set_random_state(regressor)
+    regressor.fit(X, y)
+    assert regressor.coef_.shape == (X.shape[1],)
+
+
+@pytest.mark.parametrize(
+    "Classifier",
+    [
+        LinearSVC,
+        LogisticRegression,
+        LogisticRegressionCV,
+        PassiveAggressiveClassifier,
+        Perceptron,
+        RidgeClassifier,
+        RidgeClassifierCV,
+        SGDClassifier,
+    ],
+)
+@pytest.mark.parametrize("n_classes", [2, 3])
+def test_linear_model_classifier_coef_shape(Classifier, n_classes):
+    if Classifier in (RidgeClassifier, RidgeClassifierCV):
+        pytest.xfail(f"{Classifier} does not follow `coef_` shape contract!")
+
+    X, y = make_classification(n_informative=10, n_classes=n_classes, random_state=0)
+    n_features = X.shape[1]
+
+    classifier = Classifier()
+    set_random_state(classifier)
+    classifier.fit(X, y)
+    expected_shape = (1, n_features) if n_classes == 2 else (n_classes, n_features)
+    assert classifier.coef_.shape == expected_shape

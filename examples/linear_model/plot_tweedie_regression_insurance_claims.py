@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
 ======================================
 Tweedie regression on insurance claims
@@ -34,13 +37,8 @@ helper functions for loading the data and visualizing results.
 
 .. [1]  A. Noll, R. Salzmann and M.V. Wuthrich, Case Study: French Motor
     Third-Party Liability Claims (November 8, 2018). `doi:10.2139/ssrn.3164764
-    <http://dx.doi.org/10.2139/ssrn.3164764>`_
+    <https://doi.org/10.2139/ssrn.3164764>`_
 """
-
-# Authors: Christian Lorentzen <lorentzen.ch@gmail.com>
-#          Roman Yurchak <rth.yurchak@gmail.com>
-#          Olivier Grisel <olivier.grisel@ensta.org>
-# License: BSD 3 clause
 
 # %%
 
@@ -68,21 +66,21 @@ def load_mtpl2(n_samples=None):
       678013 samples.
     """
     # freMTPL2freq dataset from https://www.openml.org/d/41214
-    df_freq = fetch_openml(data_id=41214, as_frame=True, parser="pandas").data
+    df_freq = fetch_openml(data_id=41214, as_frame=True).data
     df_freq["IDpol"] = df_freq["IDpol"].astype(int)
     df_freq.set_index("IDpol", inplace=True)
 
     # freMTPL2sev dataset from https://www.openml.org/d/41215
-    df_sev = fetch_openml(data_id=41215, as_frame=True, parser="pandas").data
+    df_sev = fetch_openml(data_id=41215, as_frame=True).data
 
     # sum ClaimAmount over identical IDs
     df_sev = df_sev.groupby("IDpol").sum()
 
     df = df_freq.join(df_sev, how="left")
-    df["ClaimAmount"].fillna(0, inplace=True)
+    df["ClaimAmount"] = df["ClaimAmount"].fillna(0)
 
     # unquote string fields
-    for column_name in df.columns[df.dtypes.values == object]:
+    for column_name in df.columns[[t is object for t in df.dtypes.values]]:
         df[column_name] = df[column_name].str.strip("'")
     return df.iloc[:n_samples]
 
@@ -222,15 +220,16 @@ from sklearn.preprocessing import (
 
 df = load_mtpl2()
 
-# Note: filter out claims with zero amount, as the severity model
-# requires strictly positive target values.
-df.loc[(df["ClaimAmount"] == 0) & (df["ClaimNb"] >= 1), "ClaimNb"] = 0
 
 # Correct for unreasonable observations (that might be data error)
 # and a few exceptionally large claim amounts
 df["ClaimNb"] = df["ClaimNb"].clip(upper=4)
 df["Exposure"] = df["Exposure"].clip(upper=1)
 df["ClaimAmount"] = df["ClaimAmount"].clip(upper=200000)
+# If the claim amount is 0, then we do not count it as a claim. The loss function
+# used by the severity model needs strictly positive claim amounts. This way
+# frequency and severity are more consistent with each other.
+df.loc[(df["ClaimAmount"] == 0) & (df["ClaimNb"] >= 1), "ClaimNb"] = 0
 
 log_scale_transformer = make_pipeline(
     FunctionTransformer(func=np.log), StandardScaler()
@@ -240,7 +239,7 @@ column_trans = ColumnTransformer(
     [
         (
             "binned_numeric",
-            KBinsDiscretizer(n_bins=10, subsample=int(2e5), random_state=0),
+            KBinsDiscretizer(n_bins=10, random_state=0),
             ["VehAge", "DrivAge"],
         ),
         (
@@ -614,11 +613,11 @@ print(pd.DataFrame(res).set_index("subset").T)
 
 # %%
 #
-# Finally, we can compare the two models using a plot of cumulated claims: for
+# Finally, we can compare the two models using a plot of cumulative claims: for
 # each model, the policyholders are ranked from safest to riskiest based on the
-# model predictions and the fraction of observed total cumulated claims is
-# plotted on the y axis. This plot is often called the ordered Lorenz curve of
-# the model.
+# model predictions and the cumulative proportion of claim amounts is plotted
+# against the cumulative proportion of exposure. This plot is often called
+# the ordered Lorenz curve of the model.
 #
 # The Gini coefficient (based on the area between the curve and the diagonal)
 # can be used as a model selection metric to quantify the ability of the model
@@ -628,7 +627,7 @@ print(pd.DataFrame(res).set_index("subset").T)
 # Gini coefficient is upper bounded by 1.0 but even an oracle model that ranks
 # the policyholders by the observed claim amounts cannot reach a score of 1.0.
 #
-# We observe that both models are able to rank policyholders by risky-ness
+# We observe that both models are able to rank policyholders by riskiness
 # significantly better than chance although they are also both far from the
 # oracle model due to the natural difficulty of the prediction problem from a
 # few features: most accidents are not predictable and can be caused by
@@ -654,10 +653,11 @@ def lorenz_curve(y_true, y_pred, exposure):
     ranking = np.argsort(y_pred)
     ranked_exposure = exposure[ranking]
     ranked_pure_premium = y_true[ranking]
-    cumulated_claim_amount = np.cumsum(ranked_pure_premium * ranked_exposure)
-    cumulated_claim_amount /= cumulated_claim_amount[-1]
-    cumulated_samples = np.linspace(0, 1, len(cumulated_claim_amount))
-    return cumulated_samples, cumulated_claim_amount
+    cumulative_claim_amount = np.cumsum(ranked_pure_premium * ranked_exposure)
+    cumulative_claim_amount /= cumulative_claim_amount[-1]
+    cumulative_exposure = np.cumsum(ranked_exposure)
+    cumulative_exposure /= cumulative_exposure[-1]
+    return cumulative_exposure, cumulative_claim_amount
 
 
 fig, ax = plt.subplots(figsize=(8, 8))
@@ -669,27 +669,30 @@ for label, y_pred in [
     ("Frequency * Severity model", y_pred_product),
     ("Compound Poisson Gamma", y_pred_total),
 ]:
-    ordered_samples, cum_claims = lorenz_curve(
+    cum_exposure, cum_claims = lorenz_curve(
         df_test["PurePremium"], y_pred, df_test["Exposure"]
     )
-    gini = 1 - 2 * auc(ordered_samples, cum_claims)
+    gini = 1 - 2 * auc(cum_exposure, cum_claims)
     label += " (Gini index: {:.3f})".format(gini)
-    ax.plot(ordered_samples, cum_claims, linestyle="-", label=label)
+    ax.plot(cum_exposure, cum_claims, linestyle="-", label=label)
 
 # Oracle model: y_pred == y_test
-ordered_samples, cum_claims = lorenz_curve(
+cum_exposure, cum_claims = lorenz_curve(
     df_test["PurePremium"], df_test["PurePremium"], df_test["Exposure"]
 )
-gini = 1 - 2 * auc(ordered_samples, cum_claims)
+gini = 1 - 2 * auc(cum_exposure, cum_claims)
 label = "Oracle (Gini index: {:.3f})".format(gini)
-ax.plot(ordered_samples, cum_claims, linestyle="-.", color="gray", label=label)
+ax.plot(cum_exposure, cum_claims, linestyle="-.", color="gray", label=label)
 
 # Random baseline
 ax.plot([0, 1], [0, 1], linestyle="--", color="black", label="Random baseline")
 ax.set(
     title="Lorenz Curves",
-    xlabel="Fraction of policyholders\n(ordered by model from safest to riskiest)",
-    ylabel="Fraction of total claim amount",
+    xlabel=(
+        "Cumulative proportion of exposure\n"
+        "(ordered by model from safest to riskiest)"
+    ),
+    ylabel="Cumulative proportion of claim amounts",
 )
 ax.legend(loc="upper left")
 plt.plot()

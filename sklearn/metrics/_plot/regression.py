@@ -1,8 +1,13 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numbers
 
 import numpy as np
 
-from ...utils import _safe_indexing, check_matplotlib_support, check_random_state
+from ...utils import _safe_indexing, check_random_state
+from ...utils._optional_dependencies import check_matplotlib_support
+from ...utils._plotting import _validate_style_kwargs
 
 
 class PredictionErrorDisplay:
@@ -99,9 +104,9 @@ class PredictionErrorDisplay:
                 default="residual_vs_predicted"
             The type of plot to draw:
 
-            - "actual_vs_predicted" draws the the observed values (y-axis) vs.
+            - "actual_vs_predicted" draws the observed values (y-axis) vs.
               the predicted values (x-axis).
-            - "residual_vs_predicted" draws the residuals, i.e difference
+            - "residual_vs_predicted" draws the residuals, i.e. difference
               between observed and predicted values, (y-axis) vs. the predicted
               values (x-axis).
 
@@ -137,6 +142,9 @@ class PredictionErrorDisplay:
 
         default_scatter_kwargs = {"color": "tab:blue", "alpha": 0.8}
         default_line_kwargs = {"color": "black", "alpha": 0.7, "linestyle": "--"}
+
+        scatter_kwargs = _validate_style_kwargs(default_scatter_kwargs, scatter_kwargs)
+        line_kwargs = _validate_style_kwargs(default_line_kwargs, line_kwargs)
 
         scatter_kwargs = {**default_scatter_kwargs, **scatter_kwargs}
         line_kwargs = {**default_line_kwargs, **line_kwargs}
@@ -217,9 +225,9 @@ class PredictionErrorDisplay:
                 default="residual_vs_predicted"
             The type of plot to draw:
 
-            - "actual_vs_predicted" draws the the observed values (y-axis) vs.
+            - "actual_vs_predicted" draws the observed values (y-axis) vs.
               the predicted values (x-axis).
-            - "residual_vs_predicted" draws the residuals, i.e difference
+            - "residual_vs_predicted" draws the residuals, i.e. difference
               between observed and predicted values, (y-axis) vs. the predicted
               values (x-axis).
 
@@ -228,7 +236,7 @@ class PredictionErrorDisplay:
             it should be between 0 and 1 and represents the proportion of the
             original dataset. If `int`, it represents the number of samples
             display on the scatter plot. If `None`, no subsampling will be
-            applied. by default, a 1000 samples or less will be displayed.
+            applied. by default, 1000 samples or less will be displayed.
 
         random_state : int or RandomState, default=None
             Controls the randomness when `subsample` is not `None`.
@@ -317,9 +325,9 @@ class PredictionErrorDisplay:
                 default="residual_vs_predicted"
             The type of plot to draw:
 
-            - "actual_vs_predicted" draws the the observed values (y-axis) vs.
+            - "actual_vs_predicted" draws the observed values (y-axis) vs.
               the predicted values (x-axis).
-            - "residual_vs_predicted" draws the residuals, i.e difference
+            - "residual_vs_predicted" draws the residuals, i.e. difference
               between observed and predicted values, (y-axis) vs. the predicted
               values (x-axis).
 
@@ -328,7 +336,7 @@ class PredictionErrorDisplay:
             it should be between 0 and 1 and represents the proportion of the
             original dataset. If `int`, it represents the number of samples
             display on the scatter plot. If `None`, no subsampling will be
-            applied. by default, a 1000 samples or less will be displayed.
+            applied. by default, 1000 samples or less will be displayed.
 
         random_state : int or RandomState, default=None
             Controls the randomness when `subsample` is not `None`.
@@ -392,7 +400,7 @@ class PredictionErrorDisplay:
             y_true = _safe_indexing(y_true, indices, axis=0)
             y_pred = _safe_indexing(y_pred, indices, axis=0)
 
-        viz = PredictionErrorDisplay(
+        viz = cls(
             y_true=y_true,
             y_pred=y_pred,
         )

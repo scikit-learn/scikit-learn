@@ -6,16 +6,17 @@ from operator import attrgetter
 
 import numpy as np
 import pytest
+from joblib import parallel_backend
 from numpy.testing import assert_allclose, assert_array_almost_equal, assert_array_equal
-from scipy import sparse
 
-from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.base import BaseEstimator, ClassifierMixin, is_classifier
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.cross_decomposition import CCA, PLSCanonical, PLSRegression
-from sklearn.datasets import load_iris, make_friedman1
+from sklearn.datasets import load_iris, make_classification, make_friedman1
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import RFE, RFECV
-from sklearn.linear_model import LogisticRegression
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import get_scorer, make_scorer, zero_one_loss
 from sklearn.model_selection import GroupKFold, cross_val_score
 from sklearn.pipeline import make_pipeline
@@ -23,9 +24,10 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC, SVR, LinearSVR
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import ignore_warnings
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 
-class MockClassifier:
+class MockClassifier(ClassifierMixin, BaseEstimator):
     """
     Dummy classifier to test recursive feature elimination
     """
@@ -36,10 +38,11 @@ class MockClassifier:
     def fit(self, X, y):
         assert len(X) == len(y)
         self.coef_ = np.ones(X.shape[1], dtype=np.float64)
+        self.classes_ = sorted(set(y))
         return self
 
     def predict(self, T):
-        return T.shape[0]
+        return np.ones(T.shape[0])
 
     predict_proba = predict
     decision_function = predict
@@ -54,8 +57,10 @@ class MockClassifier:
     def set_params(self, **params):
         return self
 
-    def _more_tags(self):
-        return {"allow_nan": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        return tags
 
 
 def test_rfe_features_importance():
@@ -79,13 +84,14 @@ def test_rfe_features_importance():
     assert_array_equal(rfe.get_support(), rfe_svc.get_support())
 
 
-def test_rfe():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_rfe(csr_container):
     generator = check_random_state(0)
     iris = load_iris()
     # Add some irrelevant features. Random seed is set to make sure that
     # irrelevant features are always irrelevant.
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
-    X_sparse = sparse.csr_matrix(X)
+    X_sparse = csr_container(X)
     y = iris.target
 
     # dense model
@@ -173,7 +179,8 @@ def test_rfe_mockclassifier():
     assert X_r.shape == iris.data.shape
 
 
-def test_rfecv():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_rfecv(csr_container):
     generator = check_random_state(0)
     iris = load_iris()
     # Add some irrelevant features. Random seed is set to make sure that
@@ -197,7 +204,7 @@ def test_rfecv():
 
     # same in sparse
     rfecv_sparse = RFECV(estimator=SVC(kernel="linear"), step=1)
-    X_sparse = sparse.csr_matrix(X)
+    X_sparse = csr_container(X)
     rfecv_sparse.fit(X_sparse, y)
     X_r_sparse = rfecv_sparse.transform(X_sparse)
     assert_array_equal(X_r_sparse.toarray(), iris.data)
@@ -241,14 +248,14 @@ def test_rfecv():
     assert_array_equal(X_r, iris.data)
 
     rfecv_sparse = RFECV(estimator=SVC(kernel="linear"), step=2)
-    X_sparse = sparse.csr_matrix(X)
+    X_sparse = csr_container(X)
     rfecv_sparse.fit(X_sparse, y)
     X_r_sparse = rfecv_sparse.transform(X_sparse)
     assert_array_equal(X_r_sparse.toarray(), iris.data)
 
     # Verifying that steps < 1 don't blow up.
     rfecv_sparse = RFECV(estimator=SVC(kernel="linear"), step=0.2)
-    X_sparse = sparse.csr_matrix(X)
+    X_sparse = csr_container(X)
     rfecv_sparse.fit(X_sparse, y)
     X_r_sparse = rfecv_sparse.transform(X_sparse)
     assert_array_equal(X_r_sparse.toarray(), iris.data)
@@ -318,7 +325,7 @@ def test_rfecv_cv_results_size(global_random_seed):
 
 def test_rfe_estimator_tags():
     rfe = RFE(SVC(kernel="linear"))
-    assert rfe._estimator_type == "classifier"
+    assert is_classifier(rfe)
     # make sure that cross-validation is stratified
     iris = load_iris()
     score = cross_val_score(rfe, iris.data, iris.target)
@@ -461,7 +468,7 @@ def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features)
     # Non-regression test for
     # https://github.com/scikit-learn/scikit-learn/issues/15312
     X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
-    estimator = LinearSVR(dual="auto", random_state=0)
+    estimator = LinearSVR(random_state=0)
 
     log_estimator = TransformedTargetRegressor(
         regressor=estimator, func=np.log, inverse_func=np.exp
@@ -483,7 +490,7 @@ def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features)
 @pytest.mark.parametrize("Selector", [RFE, RFECV])
 def test_rfe_importance_getter_validation(importance_getter, err_type, Selector):
     X, y = make_friedman1(n_samples=50, n_features=10, random_state=42)
-    estimator = LinearSVR(dual="auto")
+    estimator = LinearSVR()
     log_estimator = TransformedTargetRegressor(
         regressor=estimator, func=np.log, inverse_func=np.exp
     )
@@ -534,15 +541,51 @@ def test_rfecv_std_and_mean(global_random_seed):
 
     rfecv = RFECV(estimator=SVC(kernel="linear"))
     rfecv.fit(X, y)
-    n_split_keys = len(rfecv.cv_results_) - 2
-    split_keys = [f"split{i}_test_score" for i in range(n_split_keys)]
-
+    split_keys = [key for key in rfecv.cv_results_.keys() if "split" in key]
     cv_scores = np.asarray([rfecv.cv_results_[key] for key in split_keys])
     expected_mean = np.mean(cv_scores, axis=0)
     expected_std = np.std(cv_scores, axis=0)
 
     assert_allclose(rfecv.cv_results_["mean_test_score"], expected_mean)
     assert_allclose(rfecv.cv_results_["std_test_score"], expected_std)
+
+
+@pytest.mark.parametrize(
+    ["min_features_to_select", "n_features", "step", "cv_results_n_features"],
+    [
+        [1, 4, 1, np.array([1, 2, 3, 4])],
+        [1, 5, 1, np.array([1, 2, 3, 4, 5])],
+        [1, 4, 2, np.array([1, 2, 4])],
+        [1, 5, 2, np.array([1, 3, 5])],
+        [1, 4, 3, np.array([1, 4])],
+        [1, 5, 3, np.array([1, 2, 5])],
+        [1, 4, 4, np.array([1, 4])],
+        [1, 5, 4, np.array([1, 5])],
+        [4, 4, 2, np.array([4])],
+        [4, 5, 1, np.array([4, 5])],
+        [4, 5, 2, np.array([4, 5])],
+    ],
+)
+def test_rfecv_cv_results_n_features(
+    min_features_to_select,
+    n_features,
+    step,
+    cv_results_n_features,
+):
+    X, y = make_classification(
+        n_samples=20, n_features=n_features, n_informative=n_features, n_redundant=0
+    )
+    rfecv = RFECV(
+        estimator=SVC(kernel="linear"),
+        step=step,
+        min_features_to_select=min_features_to_select,
+    )
+    rfecv.fit(X, y)
+    assert_array_equal(rfecv.cv_results_["n_features"], cv_results_n_features)
+    assert all(
+        len(value) == len(rfecv.cv_results_["n_features"])
+        for value in rfecv.cv_results_.values()
+    )
 
 
 @pytest.mark.parametrize("ClsRFE", [RFE, RFECV])
@@ -552,6 +595,28 @@ def test_multioutput(ClsRFE):
     clf = RandomForestClassifier(n_estimators=5)
     rfe_test = ClsRFE(clf)
     rfe_test.fit(X, y)
+
+
+@pytest.mark.parametrize("ClsRFE", [RFE, RFECV])
+def test_pipeline_with_nans(ClsRFE):
+    """Check that RFE works with pipeline that accept nans.
+
+    Non-regression test for gh-21743.
+    """
+    X, y = load_iris(return_X_y=True)
+    X[0, 0] = np.nan
+
+    pipe = make_pipeline(
+        SimpleImputer(),
+        StandardScaler(),
+        LogisticRegression(),
+    )
+
+    fs = ClsRFE(
+        estimator=pipe,
+        importance_getter="named_steps.logisticregression.coef_",
+    )
+    fs.fit(X, y)
 
 
 @pytest.mark.parametrize("ClsRFE", [RFE, RFECV])
@@ -566,3 +631,93 @@ def test_rfe_pls(ClsRFE, PLSEstimator):
     estimator = PLSEstimator(n_components=1)
     selector = ClsRFE(estimator, step=1).fit(X, y)
     assert selector.score(X, y) > 0.5
+
+
+def test_rfe_estimator_attribute_error():
+    """Check that we raise the proper AttributeError when the estimator
+    does not implement the `decision_function` method, which is decorated with
+    `available_if`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28108
+    """
+    iris = load_iris()
+
+    # `LinearRegression` does not implement 'decision_function' and should raise an
+    # AttributeError
+    rfe = RFE(estimator=LinearRegression())
+
+    outer_msg = "This 'RFE' has no attribute 'decision_function'"
+    inner_msg = "'LinearRegression' object has no attribute 'decision_function'"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
+        rfe.fit(iris.data, iris.target).decision_function(iris.data)
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg in str(exec_info.value.__cause__)
+
+
+@pytest.mark.parametrize(
+    "ClsRFE, param", [(RFE, "n_features_to_select"), (RFECV, "min_features_to_select")]
+)
+def test_rfe_n_features_to_select_warning(ClsRFE, param):
+    """Check if the correct warning is raised when trying to initialize a RFE
+    object with a n_features_to_select attribute larger than the number of
+    features present in the X variable that is passed to the fit method
+    """
+    X, y = make_classification(n_features=20, random_state=0)
+
+    with pytest.warns(UserWarning, match=f"{param}=21 > n_features=20"):
+        # Create RFE/RFECV with n_features_to_select/min_features_to_select
+        # larger than the number of features present in the X variable
+        clsrfe = ClsRFE(estimator=LogisticRegression(), **{param: 21})
+        clsrfe.fit(X, y)
+
+
+def test_rfe_with_sample_weight():
+    """Test that `RFE` works correctly with sample weights."""
+    X, y = make_classification(random_state=0)
+    n_samples = X.shape[0]
+
+    # Assign the first half of the samples with twice the weight
+    sample_weight = np.ones_like(y)
+    sample_weight[: n_samples // 2] = 2
+
+    # Duplicate the first half of the data samples to replicate the effect
+    # of sample weights for comparison
+    X2 = np.concatenate([X, X[: n_samples // 2]], axis=0)
+    y2 = np.concatenate([y, y[: n_samples // 2]])
+
+    estimator = SVC(kernel="linear")
+
+    rfe_sw = RFE(estimator=estimator, step=0.1)
+    rfe_sw.fit(X, y, sample_weight=sample_weight)
+
+    rfe = RFE(estimator=estimator, step=0.1)
+    rfe.fit(X2, y2)
+
+    assert_array_equal(rfe_sw.ranking_, rfe.ranking_)
+
+    # Also verify that when sample weights are not doubled the results
+    # are different from the duplicated data
+    rfe_sw_2 = RFE(estimator=estimator, step=0.1)
+    sample_weight_2 = np.ones_like(y)
+    rfe_sw_2.fit(X, y, sample_weight=sample_weight_2)
+
+    assert not np.array_equal(rfe_sw_2.ranking_, rfe.ranking_)
+
+
+def test_rfe_with_joblib_threading_backend(global_random_seed):
+    X, y = make_classification(random_state=global_random_seed)
+
+    clf = LogisticRegression()
+    rfe = RFECV(
+        estimator=clf,
+        n_jobs=2,
+    )
+
+    rfe.fit(X, y)
+    ranking_ref = rfe.ranking_
+
+    with parallel_backend("threading"):
+        rfe.fit(X, y)
+
+    assert_array_equal(ranking_ref, rfe.ranking_)

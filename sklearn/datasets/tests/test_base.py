@@ -1,15 +1,24 @@
+import hashlib
+import io
 import os
+import re
 import shutil
 import tempfile
 import warnings
 from functools import partial
+from importlib import resources
+from pathlib import Path
 from pickle import dumps, loads
+from unittest.mock import Mock
+from urllib.error import HTTPError
+from urllib.parse import urlparse
 
 import numpy as np
 import pytest
 
 from sklearn.datasets import (
     clear_data_home,
+    fetch_file,
     get_data_home,
     load_breast_cancer,
     load_diabetes,
@@ -22,13 +31,25 @@ from sklearn.datasets import (
     load_wine,
 )
 from sklearn.datasets._base import (
+    RemoteFileMetadata,
+    _derive_folder_and_filename_from_url,
+    _fetch_remote,
     load_csv_data,
     load_gzip_compressed_csv_data,
 )
 from sklearn.datasets.tests.test_common import check_as_frame
 from sklearn.preprocessing import scale
 from sklearn.utils import Bunch
-from sklearn.utils.fixes import _is_resource
+
+
+class _DummyPath:
+    """Minimal class that implements the os.PathLike interface."""
+
+    def __init__(self, path):
+        self.path = path
+
+    def __fspath__(self):
+        return self.path
 
 
 def _remove_dir(path):
@@ -67,13 +88,18 @@ def test_category_dir_2(load_files_root):
     _remove_dir(test_category_dir2)
 
 
-def test_data_home(data_home):
+@pytest.mark.parametrize("path_container", [None, Path, _DummyPath])
+def test_data_home(path_container, data_home):
     # get_data_home will point to a pre-existing folder
+    if path_container is not None:
+        data_home = path_container(data_home)
     data_home = get_data_home(data_home=data_home)
     assert data_home == data_home
     assert os.path.exists(data_home)
 
     # clear_data_home will delete both the content and the folder it-self
+    if path_container is not None:
+        data_home = path_container(data_home)
     clear_data_home(data_home=data_home)
     assert not os.path.exists(data_home)
 
@@ -275,7 +301,8 @@ def test_loader(loader_func, data_shape, target_shape, n_target, has_descr, file
         assert "data_module" in bunch
         assert all(
             [
-                f in bunch and _is_resource(bunch["data_module"], bunch[f])
+                f in bunch
+                and (resources.files(bunch["data_module"]) / bunch[f]).is_file()
                 for f in filenames
             ]
         )
@@ -346,3 +373,286 @@ def test_load_boston_error():
     msg = "cannot import name 'non_existing_function' from 'sklearn.datasets'"
     with pytest.raises(ImportError, match=msg):
         from sklearn.datasets import non_existing_function  # noqa
+
+
+def test_fetch_remote_raise_warnings_with_invalid_url(monkeypatch):
+    """Check retry mechanism in _fetch_remote."""
+
+    url = "https://scikit-learn.org/this_file_does_not_exist.tar.gz"
+    invalid_remote_file = RemoteFileMetadata("invalid_file", url, None)
+    urlretrieve_mock = Mock(
+        side_effect=HTTPError(
+            url=url, code=404, msg="Not Found", hdrs=None, fp=io.BytesIO()
+        )
+    )
+    monkeypatch.setattr("sklearn.datasets._base.urlretrieve", urlretrieve_mock)
+
+    with pytest.warns(UserWarning, match="Retry downloading") as record:
+        with pytest.raises(HTTPError, match="HTTP Error 404"):
+            _fetch_remote(invalid_remote_file, n_retries=3, delay=0)
+
+        assert urlretrieve_mock.call_count == 4
+
+        for r in record:
+            assert str(r.message) == f"Retry downloading from url: {url}"
+        assert len(record) == 3
+
+
+def test_derive_folder_and_filename_from_url():
+    folder, filename = _derive_folder_and_filename_from_url(
+        "https://example.com/file.tar.gz"
+    )
+    assert folder == "example.com"
+    assert filename == "file.tar.gz"
+
+    folder, filename = _derive_folder_and_filename_from_url(
+        "https://example.com/نمونه نماینده.data"
+    )
+    assert folder == "example.com"
+    assert filename == "نمونه-نماینده.data"
+
+    folder, filename = _derive_folder_and_filename_from_url(
+        "https://example.com/path/to-/.file.tar.gz"
+    )
+    assert folder == "example.com/path_to"
+    assert filename == "file.tar.gz"
+
+    folder, filename = _derive_folder_and_filename_from_url("https://example.com/")
+    assert folder == "example.com"
+    assert filename == "downloaded_file"
+
+    folder, filename = _derive_folder_and_filename_from_url("https://example.com")
+    assert folder == "example.com"
+    assert filename == "downloaded_file"
+
+    folder, filename = _derive_folder_and_filename_from_url(
+        "https://example.com/path/@to/data.json?param=value"
+    )
+    assert folder == "example.com/path_to"
+    assert filename == "data.json"
+
+    folder, filename = _derive_folder_and_filename_from_url(
+        "https://example.com/path/@@to._/-_.data.json.#anchor"
+    )
+    assert folder == "example.com/path_to"
+    assert filename == "data.json"
+
+    folder, filename = _derive_folder_and_filename_from_url(
+        "https://example.com//some_file.txt"
+    )
+    assert folder == "example.com"
+    assert filename == "some_file.txt"
+
+    folder, filename = _derive_folder_and_filename_from_url(
+        "http://example/../some_file.txt"
+    )
+    assert folder == "example"
+    assert filename == "some_file.txt"
+
+    folder, filename = _derive_folder_and_filename_from_url(
+        "https://example.com/!.'.,/some_file.txt"
+    )
+    assert folder == "example.com"
+    assert filename == "some_file.txt"
+
+    folder, filename = _derive_folder_and_filename_from_url(
+        "https://example.com/a/!.'.,/b/some_file.txt"
+    )
+    assert folder == "example.com/a_b"
+    assert filename == "some_file.txt"
+
+    folder, filename = _derive_folder_and_filename_from_url("https://example.com/!.'.,")
+    assert folder == "example.com"
+    assert filename == "downloaded_file"
+
+    with pytest.raises(ValueError, match="Invalid URL"):
+        _derive_folder_and_filename_from_url("https:/../")
+
+
+def _mock_urlretrieve(server_side):
+    def _urlretrieve_mock(url, local_path):
+        server_root = Path(server_side)
+        file_path = urlparse(url).path.strip("/")
+        if not (server_root / file_path).exists():
+            raise HTTPError(url, 404, "Not Found", None, None)
+        shutil.copy(server_root / file_path, local_path)
+
+    return Mock(side_effect=_urlretrieve_mock)
+
+
+def test_fetch_file_using_data_home(monkeypatch, tmpdir):
+    tmpdir = Path(tmpdir)
+    server_side = tmpdir / "server_side"
+    server_side.mkdir()
+    data_file = server_side / "data.jsonl"
+    server_data = '{"a": 1, "b": 2}\n'
+    data_file.write_text(server_data, encoding="utf-8")
+
+    server_subfolder = server_side / "subfolder"
+    server_subfolder.mkdir()
+    other_data_file = server_subfolder / "other_file.txt"
+    other_data_file.write_text("Some important text data.", encoding="utf-8")
+
+    data_home = tmpdir / "data_home"
+    data_home.mkdir()
+
+    urlretrieve_mock = _mock_urlretrieve(server_side)
+    monkeypatch.setattr("sklearn.datasets._base.urlretrieve", urlretrieve_mock)
+
+    monkeypatch.setattr(
+        "sklearn.datasets._base.get_data_home", Mock(return_value=data_home)
+    )
+    fetched_file_path = fetch_file(
+        "https://example.com/data.jsonl",
+    )
+    assert fetched_file_path == data_home / "example.com" / "data.jsonl"
+    assert fetched_file_path.read_text(encoding="utf-8") == server_data
+
+    fetched_file_path = fetch_file(
+        "https://example.com/subfolder/other_file.txt",
+    )
+    assert (
+        fetched_file_path == data_home / "example.com" / "subfolder" / "other_file.txt"
+    )
+    assert fetched_file_path.read_text(encoding="utf-8") == other_data_file.read_text(
+        "utf-8"
+    )
+
+    expected_warning_msg = re.escape(
+        "Retry downloading from url: https://example.com/subfolder/invalid.txt"
+    )
+    with pytest.raises(HTTPError):
+        with pytest.warns(match=expected_warning_msg):
+            fetch_file(
+                "https://example.com/subfolder/invalid.txt",
+                delay=0,
+            )
+
+    local_subfolder = data_home / "example.com" / "subfolder"
+    assert sorted(local_subfolder.iterdir()) == [local_subfolder / "other_file.txt"]
+
+
+def test_fetch_file_without_sha256(monkeypatch, tmpdir):
+    server_side = tmpdir.mkdir("server_side")
+    data_file = Path(server_side / "data.jsonl")
+    server_data = '{"a": 1, "b": 2}\n'
+    data_file.write_text(server_data, encoding="utf-8")
+
+    client_side = tmpdir.mkdir("client_side")
+
+    urlretrieve_mock = _mock_urlretrieve(server_side)
+    monkeypatch.setattr("sklearn.datasets._base.urlretrieve", urlretrieve_mock)
+
+    # The first call should trigger a download:
+    fetched_file_path = fetch_file(
+        "https://example.com/data.jsonl",
+        folder=client_side,
+    )
+    assert fetched_file_path == client_side / "data.jsonl"
+    assert fetched_file_path.read_text(encoding="utf-8") == server_data
+    assert urlretrieve_mock.call_count == 1
+
+    # Fetching again the same file to the same folder should do nothing:
+    fetched_file_path = fetch_file(
+        "https://example.com/data.jsonl",
+        folder=client_side,
+    )
+    assert fetched_file_path == client_side / "data.jsonl"
+    assert fetched_file_path.read_text(encoding="utf-8") == server_data
+    assert urlretrieve_mock.call_count == 1
+
+    # Deleting and calling again should re-download
+    fetched_file_path.unlink()
+    fetched_file_path = fetch_file(
+        "https://example.com/data.jsonl",
+        folder=client_side,
+    )
+    assert fetched_file_path == client_side / "data.jsonl"
+    assert fetched_file_path.read_text(encoding="utf-8") == server_data
+    assert urlretrieve_mock.call_count == 2
+
+
+def test_fetch_file_with_sha256(monkeypatch, tmpdir):
+    server_side = tmpdir.mkdir("server_side")
+    data_file = Path(server_side / "data.jsonl")
+    server_data = '{"a": 1, "b": 2}\n'
+    data_file.write_text(server_data, encoding="utf-8")
+    expected_sha256 = hashlib.sha256(data_file.read_bytes()).hexdigest()
+
+    client_side = tmpdir.mkdir("client_side")
+
+    urlretrieve_mock = _mock_urlretrieve(server_side)
+    monkeypatch.setattr("sklearn.datasets._base.urlretrieve", urlretrieve_mock)
+
+    # The first call should trigger a download.
+    fetched_file_path = fetch_file(
+        "https://example.com/data.jsonl", folder=client_side, sha256=expected_sha256
+    )
+    assert fetched_file_path == client_side / "data.jsonl"
+    assert fetched_file_path.read_text(encoding="utf-8") == server_data
+    assert urlretrieve_mock.call_count == 1
+
+    # Fetching again the same file to the same folder should do nothing when
+    # the sha256 match:
+    fetched_file_path = fetch_file(
+        "https://example.com/data.jsonl", folder=client_side, sha256=expected_sha256
+    )
+    assert fetched_file_path == client_side / "data.jsonl"
+    assert fetched_file_path.read_text(encoding="utf-8") == server_data
+    assert urlretrieve_mock.call_count == 1
+
+    # Corrupting the local data should yield a warning and trigger a new download:
+    fetched_file_path.write_text("corrupted contents", encoding="utf-8")
+    expected_msg = (
+        r"SHA256 checksum of existing local file data.jsonl "
+        rf"\(.*\) differs from expected \({expected_sha256}\): "
+        r"re-downloading from https://example.com/data.jsonl \."
+    )
+    with pytest.warns(match=expected_msg):
+        fetched_file_path = fetch_file(
+            "https://example.com/data.jsonl", folder=client_side, sha256=expected_sha256
+        )
+        assert fetched_file_path == client_side / "data.jsonl"
+        assert fetched_file_path.read_text(encoding="utf-8") == server_data
+        assert urlretrieve_mock.call_count == 2
+
+    # Calling again should do nothing:
+    fetched_file_path = fetch_file(
+        "https://example.com/data.jsonl", folder=client_side, sha256=expected_sha256
+    )
+    assert fetched_file_path == client_side / "data.jsonl"
+    assert fetched_file_path.read_text(encoding="utf-8") == server_data
+    assert urlretrieve_mock.call_count == 2
+
+    # Deleting the local file and calling again should redownload without warning:
+    fetched_file_path.unlink()
+    fetched_file_path = fetch_file(
+        "https://example.com/data.jsonl", folder=client_side, sha256=expected_sha256
+    )
+    assert fetched_file_path == client_side / "data.jsonl"
+    assert fetched_file_path.read_text(encoding="utf-8") == server_data
+    assert urlretrieve_mock.call_count == 3
+
+    # Calling without a sha256 should also work without redownloading:
+    fetched_file_path = fetch_file(
+        "https://example.com/data.jsonl",
+        folder=client_side,
+    )
+    assert fetched_file_path == client_side / "data.jsonl"
+    assert fetched_file_path.read_text(encoding="utf-8") == server_data
+    assert urlretrieve_mock.call_count == 3
+
+    # Calling with a wrong sha256 should raise an informative exception:
+    non_matching_sha256 = "deadbabecafebeef"
+    expected_warning_msg = "differs from expected"
+    expected_error_msg = re.escape(
+        f"The SHA256 checksum of data.jsonl ({expected_sha256}) differs from "
+        f"expected ({non_matching_sha256})."
+    )
+    with pytest.raises(OSError, match=expected_error_msg):
+        with pytest.warns(match=expected_warning_msg):
+            fetch_file(
+                "https://example.com/data.jsonl",
+                folder=client_side,
+                sha256=non_matching_sha256,
+            )

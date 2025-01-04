@@ -8,23 +8,44 @@ from numpy.testing import assert_array_equal
 
 from sklearn import config_context, datasets
 from sklearn.base import clone
-from sklearn.datasets import load_iris
+from sklearn.datasets import load_iris, make_classification, make_low_rank_matrix
 from sklearn.decomposition import PCA
 from sklearn.decomposition._pca import _assess_dimension, _infer_dimension
 from sklearn.utils._array_api import (
+    _atol_for_type,
     _convert_to_numpy,
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._testing import assert_allclose
+from sklearn.utils._array_api import device as array_device
+from sklearn.utils._test_common.instance_generator import _get_check_estimator_ids
+from sklearn.utils._testing import _array_api_for_tests, assert_allclose
 from sklearn.utils.estimator_checks import (
-    _array_api_for_tests,
-    _get_check_estimator_ids,
     check_array_api_input_and_values,
 )
-from sklearn.utils.fixes import CSR_CONTAINERS
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 
 iris = datasets.load_iris()
-PCA_SOLVERS = ["full", "arpack", "randomized", "auto"]
+PCA_SOLVERS = ["full", "covariance_eigh", "arpack", "randomized", "auto"]
+
+# `SPARSE_M` and `SPARSE_N` could be larger, but be aware:
+# * SciPy's generation of random sparse matrix can be costly
+# * A (SPARSE_M, SPARSE_N) dense array is allocated to compare against
+SPARSE_M, SPARSE_N = 1000, 300  # arbitrary
+SPARSE_MAX_COMPONENTS = min(SPARSE_M, SPARSE_N)
+
+
+def _check_fitted_pca_close(pca1, pca2, rtol=1e-7, atol=1e-12):
+    assert_allclose(pca1.components_, pca2.components_, rtol=rtol, atol=atol)
+    assert_allclose(
+        pca1.explained_variance_, pca2.explained_variance_, rtol=rtol, atol=atol
+    )
+    assert_allclose(pca1.singular_values_, pca2.singular_values_, rtol=rtol, atol=atol)
+    assert_allclose(pca1.mean_, pca2.mean_, rtol=rtol, atol=atol)
+    assert_allclose(pca1.noise_variance_, pca2.noise_variance_, rtol=rtol, atol=atol)
+
+    assert pca1.n_components_ == pca2.n_components_
+    assert pca1.n_samples_ == pca2.n_samples_
+    assert pca1.n_features_in_ == pca2.n_features_in_
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
@@ -47,6 +68,139 @@ def test_pca(svd_solver, n_components):
     cov = pca.get_covariance()
     precision = pca.get_precision()
     assert_allclose(np.dot(cov, precision), np.eye(X.shape[1]), atol=1e-12)
+
+
+@pytest.mark.parametrize("density", [0.01, 0.1, 0.30])
+@pytest.mark.parametrize("n_components", [1, 2, 10])
+@pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
+@pytest.mark.parametrize("svd_solver", ["arpack", "covariance_eigh"])
+@pytest.mark.parametrize("scale", [1, 10, 100])
+def test_pca_sparse(
+    global_random_seed, svd_solver, sparse_container, n_components, density, scale
+):
+    """Check that the results are the same for sparse and dense input."""
+
+    # Set atol in addition of the default rtol to account for the very wide range of
+    # result values (1e-8 to 1e0).
+    atol = 1e-12
+    transform_atol = 1e-10
+
+    random_state = np.random.default_rng(global_random_seed)
+    X = sparse_container(
+        sp.sparse.random(
+            SPARSE_M,
+            SPARSE_N,
+            random_state=random_state,
+            density=density,
+        )
+    )
+    # Scale the data + vary the column means
+    scale_vector = random_state.random(X.shape[1]) * scale
+    X = X.multiply(scale_vector)
+
+    pca = PCA(
+        n_components=n_components,
+        svd_solver=svd_solver,
+        random_state=global_random_seed,
+    )
+    pca.fit(X)
+
+    Xd = X.toarray()
+    pcad = PCA(
+        n_components=n_components,
+        svd_solver=svd_solver,
+        random_state=global_random_seed,
+    )
+    pcad.fit(Xd)
+
+    # Fitted attributes equality
+    _check_fitted_pca_close(pca, pcad, atol=atol)
+
+    # Test transform
+    X2 = sparse_container(
+        sp.sparse.random(
+            SPARSE_M,
+            SPARSE_N,
+            random_state=random_state,
+            density=density,
+        )
+    )
+    X2d = X2.toarray()
+
+    assert_allclose(pca.transform(X2), pca.transform(X2d), atol=transform_atol)
+    assert_allclose(pca.transform(X2), pcad.transform(X2d), atol=transform_atol)
+
+
+@pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
+def test_pca_sparse_fit_transform(global_random_seed, sparse_container):
+    random_state = np.random.default_rng(global_random_seed)
+    X = sparse_container(
+        sp.sparse.random(
+            SPARSE_M,
+            SPARSE_N,
+            random_state=random_state,
+            density=0.01,
+        )
+    )
+    X2 = sparse_container(
+        sp.sparse.random(
+            SPARSE_M,
+            SPARSE_N,
+            random_state=random_state,
+            density=0.01,
+        )
+    )
+
+    pca_fit = PCA(n_components=10, svd_solver="arpack", random_state=global_random_seed)
+    pca_fit_transform = PCA(
+        n_components=10, svd_solver="arpack", random_state=global_random_seed
+    )
+
+    pca_fit.fit(X)
+    transformed_X = pca_fit_transform.fit_transform(X)
+
+    _check_fitted_pca_close(pca_fit, pca_fit_transform)
+    assert_allclose(transformed_X, pca_fit_transform.transform(X))
+    assert_allclose(transformed_X, pca_fit.transform(X))
+    assert_allclose(pca_fit.transform(X2), pca_fit_transform.transform(X2))
+
+
+@pytest.mark.parametrize("svd_solver", ["randomized", "full"])
+@pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
+def test_sparse_pca_solver_error(global_random_seed, svd_solver, sparse_container):
+    random_state = np.random.RandomState(global_random_seed)
+    X = sparse_container(
+        sp.sparse.random(
+            SPARSE_M,
+            SPARSE_N,
+            random_state=random_state,
+        )
+    )
+    pca = PCA(n_components=30, svd_solver=svd_solver)
+    error_msg_pattern = (
+        'PCA only support sparse inputs with the "arpack" and "covariance_eigh"'
+        f' solvers, while "{svd_solver}" was passed'
+    )
+    with pytest.raises(TypeError, match=error_msg_pattern):
+        pca.fit(X)
+
+
+@pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
+def test_sparse_pca_auto_arpack_singluar_values_consistency(
+    global_random_seed, sparse_container
+):
+    """Check that "auto" and "arpack" solvers are equivalent for sparse inputs."""
+    random_state = np.random.RandomState(global_random_seed)
+    X = sparse_container(
+        sp.sparse.random(
+            SPARSE_M,
+            SPARSE_N,
+            random_state=random_state,
+        )
+    )
+    pca_arpack = PCA(n_components=10, svd_solver="arpack").fit(X)
+    pca_auto = PCA(n_components=10, svd_solver="auto").fit(X)
+    assert_allclose(pca_arpack.singular_values_, pca_auto.singular_values_, rtol=5e-3)
 
 
 def test_no_empty_slice_warning():
@@ -115,26 +269,144 @@ def test_whitening(solver, copy):
     # we always center, so no test for non-centering.
 
 
-@pytest.mark.parametrize("svd_solver", ["arpack", "randomized"])
-def test_pca_explained_variance_equivalence_solver(svd_solver):
-    rng = np.random.RandomState(0)
-    n_samples, n_features = 100, 80
-    X = rng.randn(n_samples, n_features)
+@pytest.mark.parametrize(
+    "other_svd_solver", sorted(list(set(PCA_SOLVERS) - {"full", "auto"}))
+)
+@pytest.mark.parametrize("data_shape", ["tall", "wide"])
+@pytest.mark.parametrize("rank_deficient", [False, True])
+@pytest.mark.parametrize("whiten", [False, True])
+def test_pca_solver_equivalence(
+    other_svd_solver,
+    data_shape,
+    rank_deficient,
+    whiten,
+    global_random_seed,
+    global_dtype,
+):
+    if data_shape == "tall":
+        n_samples, n_features = 100, 30
+    else:
+        n_samples, n_features = 30, 100
+    n_samples_test = 10
 
-    pca_full = PCA(n_components=2, svd_solver="full")
-    pca_other = PCA(n_components=2, svd_solver=svd_solver, random_state=0)
+    if rank_deficient:
+        rng = np.random.default_rng(global_random_seed)
+        rank = min(n_samples, n_features) // 2
+        X = rng.standard_normal(
+            size=(n_samples + n_samples_test, rank)
+        ) @ rng.standard_normal(size=(rank, n_features))
+    else:
+        X = make_low_rank_matrix(
+            n_samples=n_samples + n_samples_test,
+            n_features=n_features,
+            tail_strength=0.5,
+            random_state=global_random_seed,
+        )
+        # With a non-zero tail strength, the data is actually full-rank.
+        rank = min(n_samples, n_features)
 
-    pca_full.fit(X)
-    pca_other.fit(X)
+    X = X.astype(global_dtype, copy=False)
+    X_train, X_test = X[:n_samples], X[n_samples:]
 
-    assert_allclose(
-        pca_full.explained_variance_, pca_other.explained_variance_, rtol=5e-2
+    if global_dtype == np.float32:
+        tols = dict(atol=3e-2, rtol=1e-5)
+        variance_threshold = 1e-5
+    else:
+        tols = dict(atol=1e-10, rtol=1e-12)
+        variance_threshold = 1e-12
+
+    extra_other_kwargs = {}
+    if other_svd_solver == "randomized":
+        # Only check for a truncated result with a large number of iterations
+        # to make sure that we can recover precise results.
+        n_components = 10
+        extra_other_kwargs = {"iterated_power": 50}
+    elif other_svd_solver == "arpack":
+        # Test all components except the last one which cannot be estimated by
+        # arpack.
+        n_components = np.minimum(n_samples, n_features) - 1
+    else:
+        # Test all components to high precision.
+        n_components = None
+
+    pca_full = PCA(n_components=n_components, svd_solver="full", whiten=whiten)
+    pca_other = PCA(
+        n_components=n_components,
+        svd_solver=other_svd_solver,
+        whiten=whiten,
+        random_state=global_random_seed,
+        **extra_other_kwargs,
     )
+    X_trans_full_train = pca_full.fit_transform(X_train)
+    assert np.isfinite(X_trans_full_train).all()
+    assert X_trans_full_train.dtype == global_dtype
+    X_trans_other_train = pca_other.fit_transform(X_train)
+    assert np.isfinite(X_trans_other_train).all()
+    assert X_trans_other_train.dtype == global_dtype
+
+    assert (pca_full.explained_variance_ >= 0).all()
+    assert_allclose(pca_full.explained_variance_, pca_other.explained_variance_, **tols)
     assert_allclose(
         pca_full.explained_variance_ratio_,
         pca_other.explained_variance_ratio_,
-        rtol=5e-2,
+        **tols,
     )
+    reference_components = pca_full.components_
+    assert np.isfinite(reference_components).all()
+    other_components = pca_other.components_
+    assert np.isfinite(other_components).all()
+
+    # For some choice of n_components and data distribution, some components
+    # might be pure noise, let's ignore them in the comparison:
+    stable = pca_full.explained_variance_ > variance_threshold
+    assert stable.sum() > 1
+    assert_allclose(reference_components[stable], other_components[stable], **tols)
+
+    # As a result the output of fit_transform should be the same:
+    assert_allclose(
+        X_trans_other_train[:, stable], X_trans_full_train[:, stable], **tols
+    )
+
+    # And similarly for the output of transform on new data (except for the
+    # last component that can be underdetermined):
+    X_trans_full_test = pca_full.transform(X_test)
+    assert np.isfinite(X_trans_full_test).all()
+    assert X_trans_full_test.dtype == global_dtype
+    X_trans_other_test = pca_other.transform(X_test)
+    assert np.isfinite(X_trans_other_test).all()
+    assert X_trans_other_test.dtype == global_dtype
+    assert_allclose(X_trans_other_test[:, stable], X_trans_full_test[:, stable], **tols)
+
+    # Check that inverse transform reconstructions for both solvers are
+    # compatible.
+    X_recons_full_test = pca_full.inverse_transform(X_trans_full_test)
+    assert np.isfinite(X_recons_full_test).all()
+    assert X_recons_full_test.dtype == global_dtype
+    X_recons_other_test = pca_other.inverse_transform(X_trans_other_test)
+    assert np.isfinite(X_recons_other_test).all()
+    assert X_recons_other_test.dtype == global_dtype
+
+    if pca_full.components_.shape[0] == pca_full.components_.shape[1]:
+        # In this case, the models should have learned the same invertible
+        # transform. They should therefore both be able to reconstruct the test
+        # data.
+        assert_allclose(X_recons_full_test, X_test, **tols)
+        assert_allclose(X_recons_other_test, X_test, **tols)
+    elif pca_full.components_.shape[0] < rank:
+        # In the absence of noisy components, both models should be able to
+        # reconstruct the same low-rank approximation of the original data.
+        assert pca_full.explained_variance_.min() > variance_threshold
+        assert_allclose(X_recons_full_test, X_recons_other_test, **tols)
+    else:
+        # When n_features > n_samples and n_components is larger than the rank
+        # of the training set, the output of the `inverse_transform` function
+        # is ill-defined. We can only check that we reach the same fixed point
+        # after another round of transform:
+        assert_allclose(
+            pca_full.transform(X_recons_full_test)[:, stable],
+            pca_other.transform(X_recons_other_test)[:, stable],
+            **tols,
+        )
 
 
 @pytest.mark.parametrize(
@@ -142,8 +414,9 @@ def test_pca_explained_variance_equivalence_solver(svd_solver):
     [
         np.random.RandomState(0).randn(100, 80),
         datasets.make_classification(100, 80, n_informative=78, random_state=0)[0],
+        np.random.RandomState(0).randn(10, 100),
     ],
-    ids=["random-data", "correlated-data"],
+    ids=["random-tall", "correlated-tall", "random-wide"],
 )
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
 def test_pca_explained_variance_empirical(X, svd_solver):
@@ -481,37 +754,30 @@ def test_pca_zero_noise_variance_edge_cases(svd_solver):
 
 
 @pytest.mark.parametrize(
-    "data, n_components, expected_solver",
-    [  # case: n_components in (0,1) => 'full'
-        (np.random.RandomState(0).uniform(size=(1000, 50)), 0.5, "full"),
-        # case: max(X.shape) <= 500 => 'full'
-        (np.random.RandomState(0).uniform(size=(10, 50)), 5, "full"),
+    "n_samples, n_features, n_components, expected_solver",
+    [
+        # case: n_samples < 10 * n_features and max(X.shape) <= 500 => 'full'
+        (10, 50, 5, "full"),
+        # case: n_samples > 10 * n_features and n_features < 500 => 'covariance_eigh'
+        (1000, 50, 50, "covariance_eigh"),
         # case: n_components >= .8 * min(X.shape) => 'full'
-        (np.random.RandomState(0).uniform(size=(1000, 50)), 50, "full"),
+        (1000, 500, 400, "full"),
         # n_components >= 1 and n_components < .8*min(X.shape) => 'randomized'
-        (np.random.RandomState(0).uniform(size=(1000, 50)), 10, "randomized"),
+        (1000, 500, 10, "randomized"),
+        # case: n_components in (0,1) => 'full'
+        (1000, 500, 0.5, "full"),
     ],
 )
-def test_pca_svd_solver_auto(data, n_components, expected_solver):
+def test_pca_svd_solver_auto(n_samples, n_features, n_components, expected_solver):
+    data = np.random.RandomState(0).uniform(size=(n_samples, n_features))
     pca_auto = PCA(n_components=n_components, random_state=0)
     pca_test = PCA(
         n_components=n_components, svd_solver=expected_solver, random_state=0
     )
     pca_auto.fit(data)
+    assert pca_auto._fit_svd_solver == expected_solver
     pca_test.fit(data)
     assert_allclose(pca_auto.components_, pca_test.components_)
-
-
-@pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_pca_sparse_input(svd_solver, csr_container):
-    X = np.random.RandomState(0).rand(5, 4)
-    X = csr_container(X)
-    assert sp.sparse.issparse(X)
-
-    pca = PCA(n_components=3, svd_solver=svd_solver)
-    with pytest.raises(TypeError):
-        pca.fit(X)
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
@@ -527,28 +793,33 @@ def test_pca_deterministic_output(svd_solver):
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
-def test_pca_dtype_preservation(svd_solver):
-    check_pca_float_dtype_preservation(svd_solver)
+def test_pca_dtype_preservation(svd_solver, global_random_seed):
+    check_pca_float_dtype_preservation(svd_solver, global_random_seed)
     check_pca_int_dtype_upcast_to_double(svd_solver)
 
 
-def check_pca_float_dtype_preservation(svd_solver):
+def check_pca_float_dtype_preservation(svd_solver, seed):
     # Ensure that PCA does not upscale the dtype when input is float32
-    X_64 = np.random.RandomState(0).rand(1000, 4).astype(np.float64, copy=False)
-    X_32 = X_64.astype(np.float32)
+    X = np.random.RandomState(seed).rand(1000, 4)
+    X_float64 = X.astype(np.float64, copy=False)
+    X_float32 = X.astype(np.float32)
 
-    pca_64 = PCA(n_components=3, svd_solver=svd_solver, random_state=0).fit(X_64)
-    pca_32 = PCA(n_components=3, svd_solver=svd_solver, random_state=0).fit(X_32)
+    pca_64 = PCA(n_components=3, svd_solver=svd_solver, random_state=seed).fit(
+        X_float64
+    )
+    pca_32 = PCA(n_components=3, svd_solver=svd_solver, random_state=seed).fit(
+        X_float32
+    )
 
     assert pca_64.components_.dtype == np.float64
     assert pca_32.components_.dtype == np.float32
-    assert pca_64.transform(X_64).dtype == np.float64
-    assert pca_32.transform(X_32).dtype == np.float32
+    assert pca_64.transform(X_float64).dtype == np.float64
+    assert pca_32.transform(X_float32).dtype == np.float32
 
-    # the rtol is set such that the test passes on all platforms tested on
-    # conda-forge: PR#15775
-    # see: https://github.com/conda-forge/scikit-learn-feedstock/pull/113
-    assert_allclose(pca_64.components_, pca_32.components_, rtol=2e-4)
+    # The atol and rtol are set such that the test passes for all random seeds
+    # on all supported platforms on our CI and conda-forge with the default
+    # random seed.
+    assert_allclose(pca_64.components_, pca_32.components_, rtol=1e-3, atol=1e-3)
 
 
 def check_pca_int_dtype_upcast_to_double(svd_solver):
@@ -699,15 +970,16 @@ def test_variance_correctness(copy):
     np.testing.assert_allclose(pca_var, true_var)
 
 
-def check_array_api_get_precision(name, estimator, array_namepsace, device, dtype):
-    xp, device, dtype = _array_api_for_tests(array_namepsace, device, dtype)
-    iris_np = iris.data.astype(dtype)
+def check_array_api_get_precision(name, estimator, array_namespace, device, dtype_name):
+    xp = _array_api_for_tests(array_namespace, device)
+    iris_np = iris.data.astype(dtype_name)
     iris_xp = xp.asarray(iris_np, device=device)
 
     estimator.fit(iris_np)
     precision_np = estimator.get_precision()
     covariance_np = estimator.get_covariance()
 
+    rtol = 2e-4 if iris_np.dtype == "float32" else 2e-7
     with config_context(array_api_dispatch=True):
         estimator_xp = clone(estimator).fit(iris_xp)
         precision_xp = estimator_xp.get_precision()
@@ -717,7 +989,8 @@ def check_array_api_get_precision(name, estimator, array_namepsace, device, dtyp
         assert_allclose(
             _convert_to_numpy(precision_xp, xp=xp),
             precision_np,
-            atol=np.finfo(dtype).eps * 100,
+            rtol=rtol,
+            atol=_atol_for_type(dtype_name),
         )
         covariance_xp = estimator_xp.get_covariance()
         assert covariance_xp.shape == (4, 4)
@@ -726,12 +999,13 @@ def check_array_api_get_precision(name, estimator, array_namepsace, device, dtyp
         assert_allclose(
             _convert_to_numpy(covariance_xp, xp=xp),
             covariance_np,
-            atol=np.finfo(dtype).eps * 100,
+            rtol=rtol,
+            atol=_atol_for_type(dtype_name),
         )
 
 
 @pytest.mark.parametrize(
-    "array_namepsace, device, dtype", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize(
     "check",
@@ -743,6 +1017,9 @@ def check_array_api_get_precision(name, estimator, array_namepsace, device, dtyp
     [
         PCA(n_components=2, svd_solver="full"),
         PCA(n_components=2, svd_solver="full", whiten=True),
+        PCA(n_components=0.1, svd_solver="full", whiten=True),
+        PCA(n_components=2, svd_solver="covariance_eigh"),
+        PCA(n_components=2, svd_solver="covariance_eigh", whiten=True),
         PCA(
             n_components=2,
             svd_solver="randomized",
@@ -752,14 +1029,94 @@ def check_array_api_get_precision(name, estimator, array_namepsace, device, dtyp
     ],
     ids=_get_check_estimator_ids,
 )
-def test_pca_array_api_compliance(estimator, check, array_namepsace, device, dtype):
+def test_pca_array_api_compliance(
+    estimator, check, array_namespace, device, dtype_name
+):
     name = estimator.__class__.__name__
-    check(name, estimator, array_namepsace, device=device, dtype=dtype)
+    check(name, estimator, array_namespace, device=device, dtype_name=dtype_name)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize(
+    "check",
+    [check_array_api_get_precision],
+    ids=_get_check_estimator_ids,
+)
+@pytest.mark.parametrize(
+    "estimator",
+    [
+        # PCA with mle cannot use check_array_api_input_and_values because of
+        # rounding errors in the noisy (low variance) components. Even checking
+        # the shape of the `components_` is problematic because the number of
+        # components depends on trimming threshold of the mle algorithm which
+        # can depend on device-specific rounding errors.
+        PCA(n_components="mle", svd_solver="full"),
+    ],
+    ids=_get_check_estimator_ids,
+)
+def test_pca_mle_array_api_compliance(
+    estimator, check, array_namespace, device, dtype_name
+):
+    name = estimator.__class__.__name__
+    check(name, estimator, array_namespace, device=device, dtype_name=dtype_name)
+
+    # Simpler variant of the generic check_array_api_input checker tailored for
+    # the specific case of PCA with mle-trimmed components.
+    xp = _array_api_for_tests(array_namespace, device)
+
+    X, y = make_classification(random_state=42)
+    X = X.astype(dtype_name, copy=False)
+    atol = _atol_for_type(X.dtype)
+
+    est = clone(estimator)
+
+    X_xp = xp.asarray(X, device=device)
+    y_xp = xp.asarray(y, device=device)
+
+    est.fit(X, y)
+
+    components_np = est.components_
+    explained_variance_np = est.explained_variance_
+
+    est_xp = clone(est)
+    with config_context(array_api_dispatch=True):
+        est_xp.fit(X_xp, y_xp)
+        components_xp = est_xp.components_
+        assert array_device(components_xp) == array_device(X_xp)
+        components_xp_np = _convert_to_numpy(components_xp, xp=xp)
+
+        explained_variance_xp = est_xp.explained_variance_
+        assert array_device(explained_variance_xp) == array_device(X_xp)
+        explained_variance_xp_np = _convert_to_numpy(explained_variance_xp, xp=xp)
+
+    assert components_xp_np.dtype == components_np.dtype
+    assert components_xp_np.shape[1] == components_np.shape[1]
+    assert explained_variance_xp_np.dtype == explained_variance_np.dtype
+
+    # Check that the explained variance values match for the
+    # common components:
+    min_components = min(components_xp_np.shape[0], components_np.shape[0])
+    assert_allclose(
+        explained_variance_xp_np[:min_components],
+        explained_variance_np[:min_components],
+        atol=atol,
+    )
+
+    # If the number of components differ, check that the explained variance of
+    # the trimmed components is very small.
+    if components_xp_np.shape[0] != components_np.shape[0]:
+        reference_variance = explained_variance_np[-1]
+        extra_variance_np = explained_variance_np[min_components:]
+        extra_variance_xp_np = explained_variance_xp_np[min_components:]
+        assert all(np.abs(extra_variance_np - reference_variance) < atol)
+        assert all(np.abs(extra_variance_xp_np - reference_variance) < atol)
 
 
 def test_array_api_error_and_warnings_on_unsupported_params():
     pytest.importorskip("array_api_compat")
-    xp = pytest.importorskip("numpy.array_api")
+    xp = pytest.importorskip("array_api_strict")
     iris_xp = xp.asarray(iris.data)
 
     pca = PCA(n_components=2, svd_solver="arpack", random_state=0)

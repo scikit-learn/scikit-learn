@@ -32,7 +32,7 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -40,10 +40,15 @@ jobs:
         name: Check build trigger
         run: bash build_tools/github/check_build_trigger.sh
 
-  # Build the wheels for Linux, Windows and macOS for Python 3.8 and newer
+  # Build the wheels for Linux, Windows and macOS for Python 3.9 and newer
   build_wheels:
     name: Build wheel for cp${{ matrix.python }}-${{ matrix.platform_id }}-${{ matrix.manylinux_image }}
     runs-on: ${{ matrix.os }}
+
+    # For conda-incubator/setup-miniconda to work
+    defaults:
+      run:
+        shell: bash -el {0}
     needs: check_build_trigger
     if: needs.check_build_trigger.outputs.build
 
@@ -53,11 +58,6 @@ jobs:
       matrix:
         include:
           # Window 64 bit
-          # Note: windows-2019 is needed for older Python versions:
-          # https://github.com/scikit-learn/scikit-learn/issues/22530
-          - os: windows-2019
-            python: 38
-            platform_id: win_amd64
           - os: windows-latest
             python: 39
             platform_id: win_amd64
@@ -67,12 +67,18 @@ jobs:
           - os: windows-latest
             python: 311
             platform_id: win_amd64
+          - os: windows-latest
+            python: 312
+            platform_id: win_amd64
+          - os: windows-latest
+            python: 313
+            platform_id: win_amd64
+          - os: windows-latest
+            python: 313t
+            platform_id: win_amd64
+            free_threaded_support: True
 
           # Linux 64 bit manylinux2014
-          - os: ubuntu-latest
-            python: 38
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
           - os: ubuntu-latest
             python: 39
             platform_id: manylinux_x86_64
@@ -88,66 +94,107 @@ jobs:
             python: 311
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
+          - os: ubuntu-latest
+            python: 312
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
+          - os: ubuntu-latest
+            python: 313
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
+          - os: ubuntu-latest
+            python: 313t
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
+            free_threaded_support: True
 
           # MacOS x86_64
-          - os: macos-latest
-            python: 38
-            platform_id: macosx_x86_64
-          - os: macos-latest
+          - os: macos-13
             python: 39
             platform_id: macosx_x86_64
-          - os: macos-latest
+          - os: macos-13
             python: 310
             platform_id: macosx_x86_64
-          - os: macos-latest
+          - os: macos-13
             python: 311
             platform_id: macosx_x86_64
+          - os: macos-13
+            python: 312
+            platform_id: macosx_x86_64
+          - os: macos-13
+            python: 313
+            platform_id: macosx_x86_64
+          - os: macos-13
+            python: 313t
+            platform_id: macosx_x86_64
+            free_threaded_support: True
 
           # MacOS arm64
-          # The latest Python version is built and tested on CirrusCI
-          - os: macos-latest
-            python: 38
-            platform_id: macosx_arm64
-          - os: macos-latest
+          - os: macos-14
             python: 39
             platform_id: macosx_arm64
-          - os: macos-latest
+          - os: macos-14
             python: 310
             platform_id: macosx_arm64
+          - os: macos-14
+            python: 311
+            platform_id: macosx_arm64
+          - os: macos-14
+            python: 312
+            platform_id: macosx_arm64
+          - os: macos-14
+            python: 313
+            platform_id: macosx_arm64
+          - os: macos-14
+            python: 313t
+            platform_id: macosx_arm64
+            free_threaded_support: True
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'  # update once build dependencies are available
+          python-version: "3.11" # update once build dependencies are available
+
+      - uses: conda-incubator/setup-miniconda@v3
+        if: ${{ startsWith(matrix.platform_id, 'macosx') }}
 
       - name: Build and test wheels
         env:
-          CONFTEST_PATH: ${{ github.workspace }}/conftest.py
-          CONFTEST_NAME: conftest.py
+          CIBW_PRERELEASE_PYTHONS: ${{ matrix.prerelease_pythons }}
+          CIBW_FREE_THREADED_SUPPORT: ${{ matrix.free_threaded_support }}
           CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
-                            SKLEARN_BUILD_PARALLEL=3
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
           CIBW_ARCHS: all
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
           CIBW_MANYLINUX_I686_IMAGE: ${{ matrix.manylinux_image }}
-          CIBW_TEST_SKIP: "*-macosx_arm64"
+          # Needed on Windows CI to compile with Visual Studio compiler
+          # otherwise Meson detects a MINGW64 platform and use MINGW64
+          # toolchain
+          CIBW_CONFIG_SETTINGS_WINDOWS: "setup-args=--vsenv"
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir}
+          CIBW_BEFORE_BUILD: bash {project}/build_tools/wheels/cibw_before_build.sh {project}
           CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }}
-          CIBW_TEST_REQUIRES: pytest pandas threadpoolctl
-          CIBW_TEST_COMMAND: bash {project}/build_tools/wheels/test_wheels.sh
-          CIBW_TEST_COMMAND_WINDOWS: bash {project}/build_tools/github/test_windows_wheels.sh ${{ matrix.python }}
+          CIBW_BEFORE_TEST: bash {project}/build_tools/wheels/cibw_before_test.sh
+          CIBW_ENVIRONMENT_PASS_LINUX: RUNNER_OS
+          CIBW_TEST_REQUIRES: pytest pandas
+          # On Windows, we use a custom Docker image and CIBW_TEST_REQUIRES_WINDOWS
+          # does not make sense because it would install dependencies in the host
+          # rather than inside the Docker image
+          CIBW_TEST_REQUIRES_WINDOWS: ""
+          CIBW_TEST_COMMAND: bash {project}/build_tools/wheels/test_wheels.sh {project}
+          CIBW_TEST_COMMAND_WINDOWS: bash {project}/build_tools/github/test_windows_wheels.sh ${{ matrix.python }} {project}
           CIBW_BUILD_VERBOSITY: 1
-          CONDA_HOME: /usr/local/miniconda
 
         run: bash build_tools/wheels/build_wheels.sh
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
+          name: cibw-wheels-cp${{ matrix.python }}-${{ matrix.platform_id }}
           path: wheelhouse/*.whl
 
   update-tracker:
@@ -168,17 +215,15 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'  # update once build dependencies are available
+          python-version: "3.9" # update once build dependencies are available
 
       - name: Build source distribution
         run: bash build_tools/github/build_source.sh
-        env:
-          SKLEARN_BUILD_PARALLEL: 3
 
       - name: Test source distribution
         run: bash build_tools/github/test_source.sh
@@ -186,35 +231,39 @@ jobs:
           SKLEARN_SKIP_NETWORK_TESTS: 1
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
+          name: cibw-sdist
           path: dist/*.tar.gz
 
   # Upload the wheels and the source distribution
   upload_anaconda:
     name: Upload to Anaconda
     runs-on: ubuntu-latest
+    environment: upload_anaconda
     needs: [build_wheels, build_sdist]
     # The artifacts cannot be uploaded on PRs
     if: github.event_name != 'pull_request'
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
+          pattern: cibw-*
           path: dist
+          merge-multiple: true
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
 
       - name: Upload artifacts
         env:
           # Secret variables need to be mapped to environment variables explicitly
           SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN }}
           SCIKIT_LEARN_STAGING_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_STAGING_UPLOAD_TOKEN }}
-          ARTIFACTS_PATH: dist/artifact
+          ARTIFACTS_PATH: dist
         # Force a replacement if the remote file already exists
         run: bash build_tools/github/upload_anaconda.sh

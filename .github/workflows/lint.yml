@@ -7,7 +7,7 @@ on:
   - pull_request_target
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.head_ref }}
   cancel-in-progress: true
 
 jobs:
@@ -20,20 +20,21 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
         with:
           python-version: 3.11
 
       - name: Install dependencies
         run: |
+          curl https://raw.githubusercontent.com/${{ github.repository }}/main/build_tools/shared.sh --retry 5 -o ./build_tools/shared.sh
           source build_tools/shared.sh
           # Include pytest compatibility with mypy
-          pip install pytest ruff $(get_dep mypy min) $(get_dep black min) cython-lint
+          pip install pytest $(get_dep ruff min) $(get_dep mypy min) $(get_dep black min) cython-lint
           # we save the versions of the linters to be used in the error message later.
           python -c "from importlib.metadata import version; print(f\"ruff={version('ruff')}\")" >> /tmp/versions.txt
           python -c "from importlib.metadata import version; print(f\"mypy={version('mypy')}\")" >> /tmp/versions.txt
@@ -52,7 +53,7 @@ jobs:
 
       - name: Upload Artifact
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: lint-log
           path: |
@@ -62,7 +63,7 @@ jobs:
 
   comment:
     needs: lint
-    if: always()
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
 
     # We need these permissions to be able to post / update comments
@@ -72,10 +73,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
         with:
           python-version: 3.11
 
@@ -84,7 +85,7 @@ jobs:
 
       - name: Download artifact
         id: download-artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: lint-log
 

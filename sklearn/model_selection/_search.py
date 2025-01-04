@@ -3,12 +3,8 @@ The :mod:`sklearn.model_selection._search` includes utilities to fine-tune the
 parameters of an estimator.
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
-#         Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Andreas Mueller <amueller@ais.uni-bonn.de>
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Raghav RV <rvraghav93@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numbers
 import operator
@@ -17,6 +13,7 @@ import warnings
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
+from copy import deepcopy
 from functools import partial, reduce
 from itertools import product
 
@@ -27,10 +24,23 @@ from scipy.stats import rankdata
 from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone, is_classifier
 from ..exceptions import NotFittedError
 from ..metrics import check_scoring
-from ..metrics._scorer import _check_multimetric_scoring, get_scorer_names
-from ..utils import check_random_state
+from ..metrics._scorer import (
+    _check_multimetric_scoring,
+    _MultimetricScorer,
+    get_scorer_names,
+)
+from ..utils import Bunch, check_random_state
+from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import HasMethods, Interval, StrOptions
-from ..utils._tags import _safe_tags
+from ..utils._tags import get_tags
+from ..utils.deprecation import _deprecate_Xt_in_inverse_transform
+from ..utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
+    _routing_enabled,
+    process_routing,
+)
 from ..utils.metaestimators import available_if
 from ..utils.parallel import Parallel, delayed
 from ..utils.random import sample_without_replacement
@@ -346,7 +356,7 @@ def _check_refit(search_cv, attr):
         )
 
 
-def _estimator_has(attr):
+def _search_estimator_has(attr):
     """Check if we can delegate a method to the underlying estimator.
 
     Calling a prediction method will only be available if `refit=True`. In
@@ -368,6 +378,56 @@ def _estimator_has(attr):
         return True
 
     return check
+
+
+def _yield_masked_array_for_each_param(candidate_params):
+    """
+    Yield a masked array for each candidate param.
+
+    `candidate_params` is a sequence of params which were used in
+    a `GridSearchCV`. We use masked arrays for the results, as not
+    all params are necessarily present in each element of
+    `candidate_params`. For example, if using `GridSearchCV` with
+    a `SVC` model, then one might search over params like:
+
+        - kernel=["rbf"], gamma=[0.1, 1]
+        - kernel=["poly"], degree=[1, 2]
+
+    and then param `'gamma'` would not be present in entries of
+    `candidate_params` corresponding to `kernel='poly'`.
+    """
+    n_candidates = len(candidate_params)
+    param_results = defaultdict(dict)
+
+    for cand_idx, params in enumerate(candidate_params):
+        for name, value in params.items():
+            param_results["param_%s" % name][cand_idx] = value
+
+    for key, param_result in param_results.items():
+        param_list = list(param_result.values())
+        try:
+            arr = np.array(param_list)
+        except ValueError:
+            # This can happen when param_list contains lists of different
+            # lengths, for example:
+            # param_list=[[1], [2, 3]]
+            arr_dtype = np.dtype(object)
+        else:
+            # There are two cases when we don't use the automatically inferred
+            # dtype when creating the array and we use object instead:
+            # - string dtype
+            # - when array.ndim > 1, that means that param_list was something
+            #   like a list of same-size sequences, which gets turned into a
+            #   multi-dimensional array but we want a 1d array
+            arr_dtype = arr.dtype if arr.dtype.kind != "U" and arr.ndim == 1 else object
+
+        # Use one MaskedArray and mask all the places where the param is not
+        # applicable for that candidate (which may not contain all the params).
+        ma = MaskedArray(np.empty(n_candidates, dtype=arr_dtype), mask=True)
+        for index, value in param_result.items():
+            # Setting the value at an index unmasks that index
+            ma[index] = value
+        yield (key, ma)
 
 
 class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
@@ -417,19 +477,23 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         self.return_train_score = return_train_score
 
     @property
+    # TODO(1.8) remove this property
     def _estimator_type(self):
         return self.estimator._estimator_type
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        sub_estimator_tags = get_tags(self.estimator)
+        tags.estimator_type = sub_estimator_tags.estimator_type
+        tags.classifier_tags = deepcopy(sub_estimator_tags.classifier_tags)
+        tags.regressor_tags = deepcopy(sub_estimator_tags.regressor_tags)
         # allows cross-validation to see 'precomputed' metrics
-        return {
-            "pairwise": _safe_tags(self.estimator, "pairwise"),
-            "_xfail_checks": {
-                "check_supervised_y_2d": "DataConversionWarning not caught"
-            },
-        }
+        tags.input_tags.pairwise = sub_estimator_tags.input_tags.pairwise
+        tags.input_tags.sparse = sub_estimator_tags.input_tags.sparse
+        tags.array_api_support = sub_estimator_tags.array_api_support
+        return tags
 
-    def score(self, X, y=None):
+    def score(self, X, y=None, **params):
         """Return the score on the given data, if the estimator has been refit.
 
         This uses the score defined by ``scoring`` where provided, and the
@@ -446,6 +510,14 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
+        **params : dict
+            Parameters to be passed to the underlying scorer(s).
+
+            .. versionadded:: 1.4
+                Only available if `enable_metadata_routing=True`. See
+                :ref:`Metadata Routing User Guide <metadata_routing>` for more
+                details.
+
         Returns
         -------
         score : float
@@ -454,26 +526,33 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         """
         _check_refit(self, "score")
         check_is_fitted(self)
+
+        _raise_for_params(params, self, "score")
+
+        if _routing_enabled():
+            score_params = process_routing(self, "score", **params).scorer["score"]
+        else:
+            score_params = dict()
+
         if self.scorer_ is None:
             raise ValueError(
                 "No score function explicitly defined, "
-                "and the estimator doesn't provide one %s"
-                % self.best_estimator_
+                "and the estimator doesn't provide one %s" % self.best_estimator_
             )
         if isinstance(self.scorer_, dict):
             if self.multimetric_:
                 scorer = self.scorer_[self.refit]
             else:
                 scorer = self.scorer_
-            return scorer(self.best_estimator_, X, y)
+            return scorer(self.best_estimator_, X, y, **score_params)
 
         # callable
-        score = self.scorer_(self.best_estimator_, X, y)
+        score = self.scorer_(self.best_estimator_, X, y, **score_params)
         if self.multimetric_:
             score = score[self.refit]
         return score
 
-    @available_if(_estimator_has("score_samples"))
+    @available_if(_search_estimator_has("score_samples"))
     def score_samples(self, X):
         """Call score_samples on the estimator with the best found parameters.
 
@@ -496,7 +575,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         return self.best_estimator_.score_samples(X)
 
-    @available_if(_estimator_has("predict"))
+    @available_if(_search_estimator_has("predict"))
     def predict(self, X):
         """Call predict on the estimator with the best found parameters.
 
@@ -518,7 +597,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         return self.best_estimator_.predict(X)
 
-    @available_if(_estimator_has("predict_proba"))
+    @available_if(_search_estimator_has("predict_proba"))
     def predict_proba(self, X):
         """Call predict_proba on the estimator with the best found parameters.
 
@@ -541,7 +620,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         return self.best_estimator_.predict_proba(X)
 
-    @available_if(_estimator_has("predict_log_proba"))
+    @available_if(_search_estimator_has("predict_log_proba"))
     def predict_log_proba(self, X):
         """Call predict_log_proba on the estimator with the best found parameters.
 
@@ -564,7 +643,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         return self.best_estimator_.predict_log_proba(X)
 
-    @available_if(_estimator_has("decision_function"))
+    @available_if(_search_estimator_has("decision_function"))
     def decision_function(self, X):
         """Call decision_function on the estimator with the best found parameters.
 
@@ -587,7 +666,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         return self.best_estimator_.decision_function(X)
 
-    @available_if(_estimator_has("transform"))
+    @available_if(_search_estimator_has("transform"))
     def transform(self, X):
         """Call transform on the estimator with the best found parameters.
 
@@ -609,8 +688,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         return self.best_estimator_.transform(X)
 
-    @available_if(_estimator_has("inverse_transform"))
-    def inverse_transform(self, Xt):
+    @available_if(_search_estimator_has("inverse_transform"))
+    def inverse_transform(self, X=None, Xt=None):
         """Call inverse_transform on the estimator with the best found params.
 
         Only available if the underlying estimator implements
@@ -618,9 +697,16 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
         Xt : indexable, length n_samples
             Must fulfill the input assumptions of the
             underlying estimator.
+
+            .. deprecated:: 1.5
+                `Xt` was deprecated in 1.5 and will be removed in 1.7. Use `X` instead.
 
         Returns
         -------
@@ -628,8 +714,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Result of the `inverse_transform` function for `Xt` based on the
             estimator with the best found parameters.
         """
+        X = _deprecate_Xt_in_inverse_transform(X, Xt)
         check_is_fitted(self)
-        return self.best_estimator_.inverse_transform(Xt)
+        return self.best_estimator_.inverse_transform(X)
 
     @property
     def n_features_in_(self):
@@ -656,7 +743,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         Only available when `refit=True` and the estimator is a classifier.
         """
-        _estimator_has("classes_")(self)
+        _search_estimator_has("classes_")(self)
         return self.best_estimator_.classes_
 
     def _run_search(self, evaluate_candidates):
@@ -754,44 +841,15 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             best_index = results[f"rank_test_{refit_metric}"].argmin()
         return best_index
 
-    @_fit_context(
-        # *SearchCV.estimator is not validated yet
-        prefer_skip_nested_validation=False
-    )
-    def fit(self, X, y=None, *, groups=None, **fit_params):
-        """Run fit with all sets of parameters.
+    def _get_scorers(self):
+        """Get the scorer(s) to be used.
 
-        Parameters
-        ----------
-
-        X : array-like of shape (n_samples, n_features)
-            Training vector, where `n_samples` is the number of samples and
-            `n_features` is the number of features.
-
-        y : array-like of shape (n_samples, n_output) \
-            or (n_samples,), default=None
-            Target relative to X for classification or regression;
-            None for unsupervised learning.
-
-        groups : array-like of shape (n_samples,), default=None
-            Group labels for the samples used while splitting the dataset into
-            train/test set. Only used in conjunction with a "Group" :term:`cv`
-            instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
-
-        **fit_params : dict of str -> object
-            Parameters passed to the `fit` method of the estimator.
-
-            If a fit parameter is an array-like whose length is equal to
-            `num_samples` then it will be split across CV groups along with `X`
-            and `y`. For example, the :term:`sample_weight` parameter is split
-            because `len(sample_weights) = len(X)`.
+        This is used in ``fit`` and ``get_metadata_routing``.
 
         Returns
         -------
-        self : object
-            Instance of fitted estimator.
+        scorers, refit_metric
         """
-        estimator = self.estimator
         refit_metric = "score"
 
         if callable(self.scoring):
@@ -802,12 +860,78 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             scorers = _check_multimetric_scoring(self.estimator, self.scoring)
             self._check_refit_for_multimetric(scorers)
             refit_metric = self.refit
+            scorers = _MultimetricScorer(
+                scorers=scorers, raise_exc=(self.error_score == "raise")
+            )
 
-        X, y, groups = indexable(X, y, groups)
-        fit_params = _check_method_params(X, params=fit_params)
+        return scorers, refit_metric
+
+    def _get_routed_params_for_fit(self, params):
+        """Get the parameters to be used for routing.
+
+        This is a method instead of a snippet in ``fit`` since it's used twice,
+        here in ``fit``, and in ``HalvingRandomSearchCV.fit``.
+        """
+        if _routing_enabled():
+            routed_params = process_routing(self, "fit", **params)
+        else:
+            params = params.copy()
+            groups = params.pop("groups", None)
+            routed_params = Bunch(
+                estimator=Bunch(fit=params),
+                splitter=Bunch(split={"groups": groups}),
+                scorer=Bunch(score={}),
+            )
+        return routed_params
+
+    @_fit_context(
+        # *SearchCV.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
+    def fit(self, X, y=None, **params):
+        """Run fit with all sets of parameters.
+
+        Parameters
+        ----------
+
+        X : array-like of shape (n_samples, n_features) or (n_samples, n_samples)
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features. For precomputed kernel or
+            distance matrix, the expected shape of X is (n_samples, n_samples).
+
+        y : array-like of shape (n_samples, n_output) \
+            or (n_samples,), default=None
+            Target relative to X for classification or regression;
+            None for unsupervised learning.
+
+        **params : dict of str -> object
+            Parameters passed to the ``fit`` method of the estimator, the scorer,
+            and the CV splitter.
+
+            If a fit parameter is an array-like whose length is equal to
+            `num_samples` then it will be split by cross-validation along with
+            `X` and `y`. For example, the :term:`sample_weight` parameter is
+            split because `len(sample_weights) = len(X)`. However, this behavior
+            does not apply to `groups` which is passed to the splitter configured
+            via the `cv` parameter of the constructor. Thus, `groups` is used
+            *to perform the split* and determines which samples are
+            assigned to the each side of the a split.
+
+        Returns
+        -------
+        self : object
+            Instance of fitted estimator.
+        """
+        estimator = self.estimator
+        scorers, refit_metric = self._get_scorers()
+
+        X, y = indexable(X, y)
+        params = _check_method_params(X, params=params)
+
+        routed_params = self._get_routed_params_for_fit(params)
 
         cv_orig = check_cv(self.cv, y, classifier=is_classifier(estimator))
-        n_splits = cv_orig.get_n_splits(X, y, groups)
+        n_splits = cv_orig.get_n_splits(X, y, **routed_params.splitter.split)
 
         base_estimator = clone(self.estimator)
 
@@ -815,9 +939,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         fit_and_score_kwargs = dict(
             scorer=scorers,
-            fit_params=fit_params,
-            # TODO(SLEP6): pass score params along
-            score_params=None,
+            fit_params=routed_params.estimator.fit,
+            score_params=routed_params.scorer.score,
             return_train_score=self.return_train_score,
             return_n_test_samples=True,
             return_times=True,
@@ -857,7 +980,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                         **fit_and_score_kwargs,
                     )
                     for (cand_idx, parameters), (split_idx, (train, test)) in product(
-                        enumerate(candidate_params), enumerate(cv.split(X, y, groups))
+                        enumerate(candidate_params),
+                        enumerate(cv.split(X, y, **routed_params.splitter.split)),
                     )
                 )
 
@@ -904,7 +1028,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             first_test_score = all_out[0]["test_scores"]
             self.multimetric_ = isinstance(first_test_score, dict)
 
-            # check refit_metric now for a callabe scorer that is multimetric
+            # check refit_metric now for a callable scorer that is multimetric
             if callable(self.scoring) and self.multimetric_:
                 self._check_refit_for_multimetric(first_test_score)
                 refit_metric = self.refit
@@ -935,9 +1059,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
             refit_start_time = time.time()
             if y is not None:
-                self.best_estimator_.fit(X, y, **fit_params)
+                self.best_estimator_.fit(X, y, **routed_params.estimator.fit)
             else:
-                self.best_estimator_.fit(X, **fit_params)
+                self.best_estimator_.fit(X, **routed_params.estimator.fit)
             refit_end_time = time.time()
             self.refit_time_ = refit_end_time - refit_start_time
 
@@ -945,7 +1069,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 self.feature_names_in_ = self.best_estimator_.feature_names_in_
 
         # Store the only scorer not as a dict for single metric evaluation
-        self.scorer_ = scorers
+        if isinstance(scorers, _MultimetricScorer):
+            self.scorer_ = scorers._scorers
+        else:
+            self.scorer_ = scorers
 
         self.cv_results_ = results
         self.n_splits_ = n_splits
@@ -1011,28 +1138,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         _store("fit_time", out["fit_time"])
         _store("score_time", out["score_time"])
-        # Use one MaskedArray and mask all the places where the param is not
-        # applicable for that candidate. Use defaultdict as each candidate may
-        # not contain all the params
-        param_results = defaultdict(
-            partial(
-                MaskedArray,
-                np.empty(
-                    n_candidates,
-                ),
-                mask=True,
-                dtype=object,
-            )
-        )
-        for cand_idx, params in enumerate(candidate_params):
-            for name, value in params.items():
-                # An all masked empty array gets created for the key
-                # `"param_%s" % name` at the first occurrence of `name`.
-                # Setting the value at an index also unmasks that index
-                param_results["param_%s" % name][cand_idx] = value
-
-        results.update(param_results)
         # Store a list of param dicts at the key 'params'
+        for param, ma in _yield_masked_array_for_each_param(candidate_params):
+            results[param] = ma
         results["params"] = candidate_params
 
         test_scores_dict = _normalize_score_results(out["test_scores"])
@@ -1056,6 +1164,52 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 )
 
         return results
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.4
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self.__class__.__name__)
+        router.add(
+            estimator=self.estimator,
+            method_mapping=MethodMapping().add(caller="fit", callee="fit"),
+        )
+
+        scorer, _ = self._get_scorers()
+        router.add(
+            scorer=scorer,
+            method_mapping=MethodMapping()
+            .add(caller="score", callee="score")
+            .add(caller="fit", callee="score"),
+        )
+        router.add(
+            splitter=self.cv,
+            method_mapping=MethodMapping().add(caller="fit", callee="split"),
+        )
+        return router
+
+    def _sk_visual_block_(self):
+        if hasattr(self, "best_estimator_"):
+            key, estimator = "best_estimator_", self.best_estimator_
+        else:
+            key, estimator = "estimator", self.estimator
+
+        return _VisualBlock(
+            "parallel",
+            [estimator],
+            names=[f"{key}: {estimator.__class__.__name__}"],
+            name_details=[str(estimator)],
+        )
 
 
 class GridSearchCV(BaseSearchCV):
@@ -1094,14 +1248,14 @@ class GridSearchCV(BaseSearchCV):
         If `scoring` represents a single score, one can use:
 
         - a single string (see :ref:`scoring_parameter`);
-        - a callable (see :ref:`scoring`) that returns a single value.
+        - a callable (see :ref:`scoring_callable`) that returns a single value.
 
         If `scoring` represents multiple scores, one can use:
 
         - a list or tuple of unique strings;
         - a callable returning a dictionary where the keys are the metric
           names and the values are the metric scores;
-        - a dictionary with metric names as keys and callables a values.
+        - a dictionary with metric names as keys and callables as values.
 
         See :ref:`multimetric_grid_search` for an example.
 
@@ -1183,16 +1337,11 @@ class GridSearchCV(BaseSearchCV):
         explosion of memory consumption when more jobs get dispatched
         than CPUs can process. This parameter can be:
 
-            - None, in which case all the jobs are immediately
-              created and spawned. Use this for lightweight and
-              fast-running jobs, to avoid delays due to on-demand
-              spawning of the jobs
-
-            - An int, giving the exact number of total jobs that are
-              spawned
-
-            - A str, giving an expression as a function of n_jobs,
-              as in '2*n_jobs'
+        - None, in which case all the jobs are immediately created and spawned. Use
+          this for lightweight and fast-running jobs, to avoid delays due to on-demand
+          spawning of the jobs
+        - An int, giving the exact number of total jobs that are spawned
+        - A str, giving an expression as a function of n_jobs, as in '2*n_jobs'
 
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
@@ -1385,8 +1534,6 @@ class GridSearchCV(BaseSearchCV):
      'std_fit_time', 'std_score_time', 'std_test_score']
     """
 
-    _required_parameters = ["estimator", "param_grid"]
-
     _parameter_constraints: dict = {
         **BaseSearchCV._parameter_constraints,
         "param_grid": [dict, list],
@@ -1477,14 +1624,14 @@ class RandomizedSearchCV(BaseSearchCV):
         If `scoring` represents a single score, one can use:
 
         - a single string (see :ref:`scoring_parameter`);
-        - a callable (see :ref:`scoring`) that returns a single value.
+        - a callable (see :ref:`scoring_callable`) that returns a single value.
 
         If `scoring` represents multiple scores, one can use:
 
         - a list or tuple of unique strings;
         - a callable returning a dictionary where the keys are the metric
           names and the values are the metric scores;
-        - a dictionary with metric names as keys and callables a values.
+        - a dictionary with metric names as keys and callables as values.
 
         See :ref:`multimetric_grid_search` for an example.
 
@@ -1509,7 +1656,7 @@ class RandomizedSearchCV(BaseSearchCV):
 
         Where there are considerations other than maximum score in
         choosing a best estimator, ``refit`` can be set to a function which
-        returns the selected ``best_index_`` given the ``cv_results``. In that
+        returns the selected ``best_index_`` given the ``cv_results_``. In that
         case, the ``best_estimator_`` and ``best_params_`` will be set
         according to the returned ``best_index_`` while the ``best_score_``
         attribute will not be available.
@@ -1564,16 +1711,11 @@ class RandomizedSearchCV(BaseSearchCV):
         explosion of memory consumption when more jobs get dispatched
         than CPUs can process. This parameter can be:
 
-            - None, in which case all the jobs are immediately
-              created and spawned. Use this for lightweight and
-              fast-running jobs, to avoid delays due to on-demand
-              spawning of the jobs
-
-            - An int, giving the exact number of total jobs that are
-              spawned
-
-            - A str, giving an expression as a function of n_jobs,
-              as in '2*n_jobs'
+        - None, in which case all the jobs are immediately created and spawned. Use
+          this for lightweight and fast-running jobs, to avoid delays due to on-demand
+          spawning of the jobs
+        - An int, giving the exact number of total jobs that are spawned
+        - A str, giving an expression as a function of n_jobs, as in '2*n_jobs'
 
     random_state : int, RandomState instance or None, default=None
         Pseudo random number generator state used for random uniform sampling
@@ -1763,10 +1905,8 @@ class RandomizedSearchCV(BaseSearchCV):
     >>> clf = RandomizedSearchCV(logistic, distributions, random_state=0)
     >>> search = clf.fit(iris.data, iris.target)
     >>> search.best_params_
-    {'C': 2..., 'penalty': 'l1'}
+    {'C': np.float64(2...), 'penalty': 'l1'}
     """
-
-    _required_parameters = ["estimator", "param_distributions"]
 
     _parameter_constraints: dict = {
         **BaseSearchCV._parameter_constraints,

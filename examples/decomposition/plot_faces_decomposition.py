@@ -7,11 +7,10 @@ This example applies to :ref:`olivetti_faces_dataset` different unsupervised
 matrix decomposition (dimension reduction) methods from the module
 :mod:`sklearn.decomposition` (see the documentation chapter
 :ref:`decompositions`).
-
-
-- Authors: Vlad Niculae, Alexandre Gramfort
-- License: BSD 3 clause
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Dataset preparation
@@ -182,7 +181,7 @@ plot_gallery("Dictionary learning", batch_dict_estimator.components_[:n_componen
 #
 # :class:`sklearn.cluster.MiniBatchKMeans` is computationally efficient and
 # implements on-line learning with a
-# :meth:`~sklearn.decomposition.MiniBatchKMeans.partial_fit` method. That is
+# :meth:`~sklearn.cluster.MiniBatchKMeans.partial_fit` method. That is
 # why it could be beneficial to enhance some time-consuming algorithms with
 # :class:`~sklearn.cluster.MiniBatchKMeans`.
 
@@ -193,7 +192,6 @@ kmeans_estimator = cluster.MiniBatchKMeans(
     batch_size=20,
     max_iter=50,
     random_state=rng,
-    n_init="auto",
 )
 kmeans_estimator.fit(faces_centered)
 plot_gallery(

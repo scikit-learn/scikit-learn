@@ -74,10 +74,14 @@ by showing the number of samples in each predicted probability bin.
 
 .. currentmodule:: sklearn.linear_model
 
-:class:`LogisticRegression` returns well calibrated predictions by default as it has a
+:class:`LogisticRegression` is more likely to return well calibrated predictions by itself as it has a
 canonical link function for its loss, i.e. the logit-link for the :ref:`log_loss`.
-This leads to the so-called **balance property**, see [8]_ and
-:ref:`Logistic_regression`.
+In the unpenalized case, this leads to the so-called **balance property**, see [8]_ and :ref:`Logistic_regression`.
+In the plot above, data is generated according to a linear mechanism, which is
+consistent with the :class:`LogisticRegression` model (the model is 'well specified'),
+and the value of the regularization parameter `C` is tuned to be
+appropriate (neither too strong nor too low). As a consequence, this model returns
+accurate predictions from its `predict_proba` method.
 In contrast to that, the other shown models return biased probabilities; with
 different biases per model.
 
@@ -145,9 +149,14 @@ The :class:`CalibratedClassifierCV` class is used to calibrate a classifier.
 unbiased data is always used to fit the calibrator. The data is split into k
 `(train_set, test_set)` couples (as determined by `cv`). When `ensemble=True`
 (default), the following procedure is repeated independently for each
-cross-validation split: a clone of `base_estimator` is first trained on the
-train subset. Then its predictions on the test subset are used to fit a
-calibrator (either a sigmoid or isotonic regressor). This results in an
+cross-validation split:
+
+1. a clone of `base_estimator` is trained on the train subset
+2. the trained `base_estimator` makes predictions on the test subset
+3. the predictions are used to fit a calibrator (either a sigmoid or isotonic
+   regressor) (when the data is multiclass, a calibrator is fit for every class)
+
+This results in an
 ensemble of k `(classifier, calibrator)` couples where each calibrator maps
 the output of its corresponding classifier into [0, 1]. Each couple is exposed
 in the `calibrated_classifiers_` attribute, where each entry is a calibrated
@@ -157,6 +166,15 @@ probabilities. The output of :term:`predict_proba` for the main
 predicted probabilities of the `k` estimators in the `calibrated_classifiers_`
 list. The output of :term:`predict` is the class that has the highest
 probability.
+
+It is important to choose `cv` carefully when using `ensemble=True`.
+All classes should be present in both train and test subsets for every split.
+When a class is absent in the train subset, the predicted probability for that
+class will default to 0 for the `(classifier, calibrator)` couple of that split.
+This skews the :term:`predict_proba` as it averages across all couples.
+When a class is absent in the test subset, the calibrator for that class
+(within the `(classifier, calibrator)` couple of that split) is
+fit on data with no positive class. This results in ineffective calibration.
 
 When `ensemble=False`, cross-validation is used to obtain 'unbiased'
 predictions for all the data, via
@@ -175,10 +193,11 @@ The main advantage of using `ensemble=False` is computational: it reduces the
 overall fit time by training only a single base classifier and calibrator
 pair, decreases the final model size and increases prediction speed.
 
-Alternatively an already fitted classifier can be calibrated by setting
-`cv="prefit"`. In this case, the data is not split and all of it is used to
-fit the regressor. It is up to the user to
-make sure that the data used for fitting the classifier is disjoint from the
+Alternatively an already fitted classifier can be calibrated by using a
+:class:`~sklearn.frozen.FrozenEstimator` as
+``CalibratedClassifierCV(estimator=FrozenEstimator(estimator))``.
+It is up to the user to make sure that the data used for fitting the classifier
+is disjoint from the data used for fitting the regressor.
 data used for fitting the regressor.
 
 :class:`CalibratedClassifierCV` supports the use of two regression techniques
@@ -241,7 +260,7 @@ there is enough data (greater than ~ 1000 samples) to avoid overfitting [3]_.
     `method="isotonic"` since isotonic regression introduces ties in the predicted
     probabilities. This can be seen as within the uncertainty of the model predictions.
     In case, you strictly want to keep the ranking and thus AUC scores, use
-    `method="logistic"` which is a strictly monotonic transformation and thus keeps
+    `method="sigmoid"` which is a strictly monotonic transformation and thus keeps
     the ranking.
 
 Multiclass support
@@ -258,51 +277,51 @@ probabilities, the calibrated probabilities for each class
 are predicted separately. As those probabilities do not necessarily sum to
 one, a postprocessing is performed to normalize them.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-   * :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve.py`
-   * :ref:`sphx_glr_auto_examples_calibration_plot_calibration_multiclass.py`
-   * :ref:`sphx_glr_auto_examples_calibration_plot_calibration.py`
-   * :ref:`sphx_glr_auto_examples_calibration_plot_compare_calibration.py`
+* :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve.py`
+* :ref:`sphx_glr_auto_examples_calibration_plot_calibration_multiclass.py`
+* :ref:`sphx_glr_auto_examples_calibration_plot_calibration.py`
+* :ref:`sphx_glr_auto_examples_calibration_plot_compare_calibration.py`
 
-.. topic:: References:
+.. rubric:: References
 
-    .. [1] Allan H. Murphy (1973).
-           :doi:`"A New Vector Partition of the Probability Score"
-           <10.1175/1520-0450(1973)012%3C0595:ANVPOT%3E2.0.CO;2>`
-           Journal of Applied Meteorology and Climatology
+.. [1] Allan H. Murphy (1973).
+       :doi:`"A New Vector Partition of the Probability Score"
+       <10.1175/1520-0450(1973)012%3C0595:ANVPOT%3E2.0.CO;2>`
+       Journal of Applied Meteorology and Climatology
 
-    .. [2] `On the combination of forecast probabilities for
-           consecutive precipitation periods.
-           <https://journals.ametsoc.org/waf/article/5/4/640/40179>`_
-           Wea. Forecasting, 5, 640–650., Wilks, D. S., 1990a
+.. [2] `On the combination of forecast probabilities for
+       consecutive precipitation periods.
+       <https://journals.ametsoc.org/waf/article/5/4/640/40179>`_
+       Wea. Forecasting, 5, 640–650., Wilks, D. S., 1990a
 
-    .. [3] `Predicting Good Probabilities with Supervised Learning
-           <https://www.cs.cornell.edu/~alexn/papers/calibration.icml05.crc.rev3.pdf>`_,
-           A. Niculescu-Mizil & R. Caruana, ICML 2005
+.. [3] `Predicting Good Probabilities with Supervised Learning
+       <https://www.cs.cornell.edu/~alexn/papers/calibration.icml05.crc.rev3.pdf>`_,
+       A. Niculescu-Mizil & R. Caruana, ICML 2005
 
 
-    .. [4] `Probabilistic Outputs for Support Vector Machines and Comparisons
-           to Regularized Likelihood Methods.
-           <https://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf>`_
-           J. Platt, (1999)
+.. [4] `Probabilistic Outputs for Support Vector Machines and Comparisons
+       to Regularized Likelihood Methods.
+       <https://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf>`_
+       J. Platt, (1999)
 
-    .. [5] `Transforming Classifier Scores into Accurate Multiclass
-           Probability Estimates.
-           <https://dl.acm.org/doi/pdf/10.1145/775047.775151>`_
-           B. Zadrozny & C. Elkan, (KDD 2002)
+.. [5] `Transforming Classifier Scores into Accurate Multiclass
+       Probability Estimates.
+       <https://dl.acm.org/doi/pdf/10.1145/775047.775151>`_
+       B. Zadrozny & C. Elkan, (KDD 2002)
 
-    .. [6] `Predicting accurate probabilities with a ranking loss.
-           <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4180410/>`_
-           Menon AK, Jiang XJ, Vembu S, Elkan C, Ohno-Machado L.
-           Proc Int Conf Mach Learn. 2012;2012:703-710
+.. [6] `Predicting accurate probabilities with a ranking loss.
+       <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4180410/>`_
+       Menon AK, Jiang XJ, Vembu S, Elkan C, Ohno-Machado L.
+       Proc Int Conf Mach Learn. 2012;2012:703-710
 
-    .. [7] `Beyond sigmoids: How to obtain well-calibrated probabilities from
-           binary classifiers with beta calibration
-           <https://projecteuclid.org/euclid.ejs/1513306867>`_
-           Kull, M., Silva Filho, T. M., & Flach, P. (2017).
+.. [7] `Beyond sigmoids: How to obtain well-calibrated probabilities from
+       binary classifiers with beta calibration
+       <https://projecteuclid.org/euclid.ejs/1513306867>`_
+       Kull, M., Silva Filho, T. M., & Flach, P. (2017).
 
-    .. [8] Mario V. Wüthrich, Michael Merz (2023).
-           :doi:`"Statistical Foundations of Actuarial Learning and its Applications"
-           <10.1007/978-3-031-12409-9>`
-           Springer Actuarial
+.. [8] Mario V. Wüthrich, Michael Merz (2023).
+       :doi:`"Statistical Foundations of Actuarial Learning and its Applications"
+       <10.1007/978-3-031-12409-9>`
+       Springer Actuarial

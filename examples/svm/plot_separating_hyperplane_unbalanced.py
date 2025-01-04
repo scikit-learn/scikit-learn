@@ -25,6 +25,10 @@ unbalanced classes.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+import matplotlib.lines as mlines
 import matplotlib.pyplot as plt
 
 from sklearn import svm
@@ -81,7 +85,10 @@ wdisp = DecisionBoundaryDisplay.from_estimator(
 )
 
 plt.legend(
-    [disp.surface_.collections[0], wdisp.surface_.collections[0]],
+    [
+        mlines.Line2D([], [], color="k", label="non weighted"),
+        mlines.Line2D([], [], color="r", label="weighted"),
+    ],
     ["non weighted", "weighted"],
     loc="upper right",
 )

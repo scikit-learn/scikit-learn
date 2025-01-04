@@ -1,0 +1,88 @@
+# Workflow to update lock files
+name: Update lock files
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 5 * * 1'
+
+jobs:
+  update_lock_files:
+    if: github.repository == 'scikit-learn/scikit-learn'
+    runs-on: ubuntu-latest
+
+    strategy:
+      # Ensure that each build will continue even if one build in the matrix fails
+      fail-fast: false
+      matrix:
+        include:
+          - name: main
+            update_script_args: "--select-tag main-ci"
+            additional_commit_message: "[doc build]"
+          - name: scipy-dev
+            update_script_args: "--select-tag scipy-dev"
+            additional_commit_message: "[scipy-dev]"
+          - name: free-threaded
+            update_script_args: "--select-tag free-threaded"
+            additional_commit_message: "[free-threaded]"
+          - name: cirrus-arm
+            update_script_args: "--select-tag arm"
+            additional_commit_message: "[cirrus arm]"
+          - name: array-api
+            update_script_args: "--select-tag cuda"
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate lock files
+        run: |
+          source build_tools/shared.sh
+          source $CONDA/bin/activate
+          conda install -n base conda conda-libmamba-solver -y
+          conda config --set solver libmamba
+          conda install -c conda-forge "$(get_dep conda-lock min)" -y
+
+          python build_tools/update_environments_and_lock_files.py ${{ matrix.update_script_args }}
+
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.BOT_GITHUB_TOKEN }}
+          push-to-fork: scikit-learn-bot/scikit-learn
+          commit-message: Update CI lock files ${{ matrix.additional_commit_message }}
+          committer: "Lock file bot <noreply@github.com>"
+          author: "Lock file bot <noreply@github.com>"
+          delete-branch: true
+          branch: auto-update-lock-files-${{ matrix.name }}
+          title: ":lock: :robot: CI Update lock files for ${{ matrix.name }} CI build(s) :lock: :robot:"
+          body: |
+            Update lock files.
+
+            ### Note
+            If the CI tasks fail, create a new branch based on this PR and add the required fixes to that branch.
+
+      # The CUDA workflow needs to be triggered explicitly as it uses an expensive runner
+      - name: Trigger additional tests
+        if: steps.cpr.outputs.pull-request-number != '' && matrix.name == 'array-api'
+        env:
+          GH_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
+          PR_NUMBER: ${{steps.cpr.outputs.pull-request-number}}
+        run: |
+          curl -L \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/repos/scikit-learn/scikit-learn/issues/$PR_NUMBER/labels \
+            -d '{"labels":["CUDA CI"]}'
+
+      - name: Check Pull Request
+        if: steps.cpr.outputs.pull-request-number != ''
+        run: |
+          echo "### :rocket: Pull-Request Summary" >> ${GITHUB_STEP_SUMMARY}
+          echo "" >> ${GITHUB_STEP_SUMMARY}
+          echo "The following lock files pull-request has been auto-generated:"
+          echo "- **PR** #${{ steps.cpr.outputs.pull-request-number }}" >> ${GITHUB_STEP_SUMMARY}
+          echo "- **URL** ${{ steps.cpr.outputs.pull-request-url }}" >> ${GITHUB_STEP_SUMMARY}
+          echo "- **Operation** [${{ steps.cpr.outputs.pull-request-operation }}]" >> ${GITHUB_STEP_SUMMARY}
+          echo "- **SHA** ${{ steps.cpr.outputs.pull-request-head-sha }}" >> ${GITHUB_STEP_SUMMARY}

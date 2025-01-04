@@ -5,28 +5,26 @@ Author: fabian.pedregosa@inria.fr
 """
 
 import  numpy as np
-cimport numpy as cnp
 
 from ..utils._cython_blas cimport _dot, _axpy, _scal, _nrm2
+from ..utils._typedefs cimport float32_t, float64_t, int32_t
 
 include "_liblinear.pxi"
-
-cnp.import_array()
 
 
 def train_wrap(
     object X,
-    const cnp.float64_t[::1] Y,
+    const float64_t[::1] Y,
     bint is_sparse,
     int solver_type,
     double eps,
     double bias,
     double C,
-    const cnp.float64_t[:] class_weight,
+    const float64_t[:] class_weight,
     int max_iter,
     unsigned random_seed,
     double epsilon,
-    const cnp.float64_t[::1] sample_weight
+    const float64_t[::1] sample_weight
 ):
     cdef parameter *param
     cdef problem *problem
@@ -35,10 +33,10 @@ def train_wrap(
     cdef int len_w
     cdef bint X_has_type_float64 = X.dtype == np.float64
     cdef char * X_data_bytes_ptr
-    cdef const cnp.float64_t[::1] X_data_64
-    cdef const cnp.float32_t[::1] X_data_32
-    cdef const cnp.int32_t[::1] X_indices
-    cdef const cnp.int32_t[::1] X_indptr
+    cdef const float64_t[::1] X_data_64
+    cdef const float32_t[::1] X_data_32
+    cdef const int32_t[::1] X_indices
+    cdef const int32_t[::1] X_indptr
 
     if is_sparse:
         X_indices = X.indices
@@ -55,9 +53,9 @@ def train_wrap(
             X_has_type_float64,
             <char *> &X_indices[0],
             <char *> &X_indptr[0],
-            (<cnp.int32_t>X.shape[0]),
-            (<cnp.int32_t>X.shape[1]),
-            (<cnp.int32_t>X.nnz),
+            (<int32_t>X.shape[0]),
+            (<int32_t>X.shape[1]),
+            (<int32_t>X.nnz),
             bias,
             <char *> &sample_weight[0],
             <char *> &Y[0]
@@ -74,15 +72,15 @@ def train_wrap(
         problem = set_problem(
             X_data_bytes_ptr,
             X_has_type_float64,
-            (<cnp.int32_t>X.shape[0]),
-            (<cnp.int32_t>X.shape[1]),
-            (<cnp.int32_t>np.count_nonzero(X)),
+            (<int32_t>X.shape[0]),
+            (<int32_t>X.shape[1]),
+            (<int32_t>np.count_nonzero(X)),
             bias,
             <char *> &sample_weight[0],
             <char *> &Y[0]
         )
 
-    cdef cnp.int32_t[::1] class_weight_label = np.arange(class_weight.shape[0], dtype=np.intc)
+    cdef int32_t[::1] class_weight_label = np.arange(class_weight.shape[0], dtype=np.intc)
     param = set_parameter(
         solver_type,
         eps,
@@ -117,13 +115,13 @@ def train_wrap(
     # destroy_param(param)  don't call this or it will destroy class_weight_label and class_weight
 
     # coef matrix holder created as fortran since that's what's used in liblinear
-    cdef cnp.float64_t[::1, :] w
+    cdef float64_t[::1, :] w
     cdef int nr_class = get_nr_class(model)
 
     cdef int labels_ = nr_class
     if nr_class == 2:
         labels_ = 1
-    cdef cnp.int32_t[::1] n_iter = np.zeros(labels_, dtype=np.intc)
+    cdef int32_t[::1] n_iter = np.zeros(labels_, dtype=np.intc)
     get_n_iter(model, <int *> &n_iter[0])
 
     cdef int nr_feature = get_nr_feature(model)

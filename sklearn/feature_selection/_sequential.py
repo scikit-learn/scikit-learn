@@ -1,16 +1,27 @@
 """
 Sequential feature selection
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from numbers import Integral, Real
 
 import numpy as np
 
 from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone, is_classifier
-from ..metrics import get_scorer_names
+from ..metrics import check_scoring, get_scorer_names
 from ..model_selection import check_cv, cross_val_score
+from ..utils._metadata_requests import (
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
+    _routing_enabled,
+    process_routing,
+)
 from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
-from ..utils._tags import _safe_tags
-from ..utils.validation import check_is_fitted
+from ..utils._tags import get_tags
+from ..utils.validation import check_is_fitted, validate_data
 from ._base import SelectorMixin
 
 
@@ -54,6 +65,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         consecutive feature additions or removals, stop adding or removing.
 
         `tol` can be negative when removing features using `direction="backward"`.
+        `tol` is required to be strictly positive when doing forward selection.
         It can be useful to reduce the number of features at the cost of a small
         decrease in the score.
 
@@ -66,7 +78,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
 
     scoring : str or callable, default=None
         A single str (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring`) to evaluate the predictions on the test set.
+        (see :ref:`scoring_callable`) to evaluate the predictions on the test set.
 
         NOTE that when using a custom scorer, it should return a single
         value.
@@ -184,7 +196,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         # SequentialFeatureSelector.estimator is not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, **params):
         """Learn the features to select from X.
 
         Parameters
@@ -197,17 +209,31 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             Target values. This parameter may be ignored for
             unsupervised learning.
 
+        **params : dict, default=None
+            Parameters to be passed to the underlying `estimator`, `cv`
+            and `scorer` objects.
+
+            .. versionadded:: 1.6
+
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
         Returns
         -------
         self : object
             Returns the instance itself.
         """
-        tags = self._get_tags()
-        X = self._validate_data(
+        _raise_for_params(params, self, "fit")
+        tags = self.__sklearn_tags__()
+        X = validate_data(
+            self,
             X,
             accept_sparse="csc",
             ensure_min_features=2,
-            force_all_finite=not tags.get("allow_nan", True),
+            ensure_all_finite=not tags.input_tags.allow_nan,
         )
         n_features = X.shape[1]
 
@@ -226,7 +252,9 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             self.n_features_to_select_ = int(n_features * self.n_features_to_select)
 
         if self.tol is not None and self.tol < 0 and self.direction == "forward":
-            raise ValueError("tol must be positive when doing forward selection")
+            raise ValueError(
+                "tol must be strictly positive when doing forward selection"
+            )
 
         cv = check_cv(self.cv, y, classifier=is_classifier(self.estimator))
 
@@ -244,9 +272,15 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
 
         old_score = -np.inf
         is_auto_select = self.tol is not None and self.n_features_to_select == "auto"
+
+        # We only need to verify the routing here and not use the routed params
+        # because internally the actual routing will also take place inside the
+        # `cross_val_score` function.
+        if _routing_enabled():
+            process_routing(self, "fit", **params)
         for _ in range(n_iterations):
             new_feature_idx, new_score = self._get_best_new_feature_score(
-                cloned_estimator, X, y, cv, current_mask
+                cloned_estimator, X, y, cv, current_mask, **params
             )
             if is_auto_select and ((new_score - old_score) < self.tol):
                 break
@@ -262,7 +296,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
 
         return self
 
-    def _get_best_new_feature_score(self, estimator, X, y, cv, current_mask):
+    def _get_best_new_feature_score(self, estimator, X, y, cv, current_mask, **params):
         # Return the best new feature and its score to add to the current_mask,
         # i.e. return the best new feature and its score to add (resp. remove)
         # when doing forward selection (resp. backward selection).
@@ -283,6 +317,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
                 cv=cv,
                 scoring=self.scoring,
                 n_jobs=self.n_jobs,
+                params=params,
             ).mean()
         new_feature_idx = max(scores, key=lambda feature_idx: scores[feature_idx])
         return new_feature_idx, scores[new_feature_idx]
@@ -291,7 +326,37 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         check_is_fitted(self)
         return self.support_
 
-    def _more_tags(self):
-        return {
-            "allow_nan": _safe_tags(self.estimator, key="allow_nan"),
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = get_tags(self.estimator).input_tags.allow_nan
+        tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
+        return tags
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.6
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self.__class__.__name__)
+        router.add(
+            estimator=self.estimator,
+            method_mapping=MethodMapping().add(caller="fit", callee="fit"),
+        )
+        router.add(
+            splitter=check_cv(self.cv, classifier=is_classifier(self.estimator)),
+            method_mapping=MethodMapping().add(caller="fit", callee="split"),
+        )
+        router.add(
+            scorer=check_scoring(self.estimator, scoring=self.scoring),
+            method_mapping=MethodMapping().add(caller="fit", callee="score"),
+        )
+        return router

@@ -1,3 +1,8 @@
+"""Utilities to discover scikit-learn objects."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import inspect
 import pkgutil
 from importlib import import_module
@@ -36,6 +41,34 @@ def all_estimators(type_filter=None):
     estimators : list of tuples
         List of (name, class), where ``name`` is the class name as string
         and ``class`` is the actual type of the class.
+
+    Examples
+    --------
+    >>> from sklearn.utils.discovery import all_estimators
+    >>> estimators = all_estimators()
+    >>> type(estimators)
+    <class 'list'>
+    >>> type(estimators[0])
+    <class 'tuple'>
+    >>> estimators[:2]
+    [('ARDRegression', <class 'sklearn.linear_model._bayes.ARDRegression'>),
+     ('AdaBoostClassifier',
+      <class 'sklearn.ensemble._weight_boosting.AdaBoostClassifier'>)]
+    >>> classifiers = all_estimators(type_filter="classifier")
+    >>> classifiers[:2]
+    [('AdaBoostClassifier',
+      <class 'sklearn.ensemble._weight_boosting.AdaBoostClassifier'>),
+     ('BaggingClassifier', <class 'sklearn.ensemble._bagging.BaggingClassifier'>)]
+    >>> regressors = all_estimators(type_filter="regressor")
+    >>> regressors[:2]
+    [('ARDRegression', <class 'sklearn.linear_model._bayes.ARDRegression'>),
+     ('AdaBoostRegressor',
+      <class 'sklearn.ensemble._weight_boosting.AdaBoostRegressor'>)]
+    >>> both = all_estimators(type_filter=["classifier", "regressor"])
+    >>> both[:2]
+    [('ARDRegression', <class 'sklearn.linear_model._bayes.ARDRegression'>),
+     ('AdaBoostClassifier',
+      <class 'sklearn.ensemble._weight_boosting.AdaBoostClassifier'>)]
     """
     # lazy import to avoid circular imports from sklearn.base
     from ..base import (
@@ -45,7 +78,6 @@ def all_estimators(type_filter=None):
         RegressorMixin,
         TransformerMixin,
     )
-    from . import IS_PYPY
     from ._testing import ignore_warnings
 
     def is_abstract(c):
@@ -72,15 +104,6 @@ def all_estimators(type_filter=None):
             classes = [
                 (name, est_cls) for name, est_cls in classes if not name.startswith("_")
             ]
-
-            # TODO: Remove when FeatureHasher is implemented in PYPY
-            # Skips FeatureHasher for PYPY
-            if IS_PYPY and "feature_extraction" in module_name:
-                classes = [
-                    (name, est_cls)
-                    for name, est_cls in classes
-                    if name == "FeatureHasher"
-                ]
 
             all_classes.extend(classes)
 
@@ -135,6 +158,13 @@ def all_displays():
     displays : list of tuples
         List of (name, class), where ``name`` is the display class name as
         string and ``class`` is the actual type of the class.
+
+    Examples
+    --------
+    >>> from sklearn.utils.discovery import all_displays
+    >>> displays = all_displays()
+    >>> displays[0]
+    ('CalibrationDisplay', <class 'sklearn.calibration.CalibrationDisplay'>)
     """
     # lazy import to avoid circular imports from sklearn.base
     from ._testing import ignore_warnings
@@ -185,6 +215,14 @@ def all_functions():
     functions : list of tuples
         List of (name, function), where ``name`` is the function name as
         string and ``function`` is the actual function.
+
+    Examples
+    --------
+    >>> from sklearn.utils.discovery import all_functions
+    >>> functions = all_functions()
+    >>> name, function = functions[0]
+    >>> name
+    'accuracy_score'
     """
     # lazy import to avoid circular imports from sklearn.base
     from ._testing import ignore_warnings

@@ -2,13 +2,10 @@
 
 These routines execute the OPTICS algorithm, and implement various
 cluster extraction methods of the ordered list.
-
-Authors: Shane Grigsby <refuge@rocktalus.com>
-         Adrin Jalali <adrinjalali@gmail.com>
-         Erich Schubert <erich@debian.org>
-         Hanmin Qin <qinhanmin2005@sina.com>
-License: BSD 3 clause
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Integral, Real
@@ -21,7 +18,8 @@ from ..exceptions import DataConversionWarning
 from ..metrics import pairwise_distances
 from ..metrics.pairwise import _VALID_METRICS, PAIRWISE_BOOLEAN_FUNCTIONS
 from ..neighbors import NearestNeighbors
-from ..utils import gen_batches, get_chunk_n_rows
+from ..utils import gen_batches
+from ..utils._chunking import get_chunk_n_rows
 from ..utils._param_validation import (
     HasMethods,
     Interval,
@@ -29,7 +27,7 @@ from ..utils._param_validation import (
     StrOptions,
     validate_params,
 )
-from ..utils.validation import check_memory
+from ..utils.validation import check_memory, validate_data
 
 
 class OPTICS(ClusterMixin, BaseEstimator):
@@ -96,7 +94,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
         metrics.
 
         .. note::
-           `'kulsinski'` is deprecated from SciPy 1.9 and will removed in SciPy 1.11.
+           `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
 
     p : float, default=2
         Parameter for the Minkowski metric from
@@ -323,7 +321,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
             Returns a fitted instance of self.
         """
         dtype = bool if self.metric in PAIRWISE_BOOLEAN_FUNCTIONS else float
-        if dtype == bool and X.dtype != bool:
+        if dtype is bool and X.dtype != bool:
             msg = (
                 "Data will be converted to boolean for"
                 f" metric {self.metric}, to avoid this warning,"
@@ -331,8 +329,9 @@ class OPTICS(ClusterMixin, BaseEstimator):
             )
             warnings.warn(msg, DataConversionWarning)
 
-        X = self._validate_data(X, dtype=dtype, accept_sparse="csr")
+        X = validate_data(self, X, dtype=dtype, accept_sparse="csr")
         if self.metric == "precomputed" and issparse(X):
+            X = X.copy()  # copy to avoid in-place modification
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", SparseEfficiencyWarning)
                 # Set each diagonal to an explicit value so each point is its
@@ -562,6 +561,34 @@ def compute_optics_graph(
     .. [1] Ankerst, Mihael, Markus M. Breunig, Hans-Peter Kriegel,
        and Jörg Sander. "OPTICS: ordering points to identify the clustering
        structure." ACM SIGMOD Record 28, no. 2 (1999): 49-60.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.cluster import compute_optics_graph
+    >>> X = np.array([[1, 2], [2, 5], [3, 6],
+    ...               [8, 7], [8, 8], [7, 3]])
+    >>> ordering, core_distances, reachability, predecessor = compute_optics_graph(
+    ...     X,
+    ...     min_samples=2,
+    ...     max_eps=np.inf,
+    ...     metric="minkowski",
+    ...     p=2,
+    ...     metric_params=None,
+    ...     algorithm="auto",
+    ...     leaf_size=30,
+    ...     n_jobs=None,
+    ... )
+    >>> ordering
+    array([0, 1, 2, 5, 3, 4])
+    >>> core_distances
+    array([3.16..., 1.41..., 1.41..., 1.        , 1.        ,
+           4.12...])
+    >>> reachability
+    array([       inf, 3.16..., 1.41..., 4.12..., 1.        ,
+           5.        ])
+    >>> predecessor
+    array([-1,  0,  1,  5,  3,  2])
     """
     n_samples = X.shape[0]
     _validate_size(min_samples, n_samples, "min_samples")
@@ -665,10 +692,10 @@ def _set_reach_dist(
 
     # Only compute distances to unprocessed neighbors:
     if metric == "precomputed":
-        dists = X[point_index, unproc]
-        if issparse(dists):
-            dists.sort_indices()
-            dists = dists.data
+        dists = X[[point_index], unproc]
+        if isinstance(dists, np.matrix):
+            dists = np.asarray(dists)
+        dists = dists.ravel()
     else:
         _params = dict() if metric_params is None else metric_params.copy()
         if metric == "minkowski" and "p" not in _params:
@@ -720,6 +747,33 @@ def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
     -------
     labels_ : array of shape (n_samples,)
         The estimated labels.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.cluster import cluster_optics_dbscan, compute_optics_graph
+    >>> X = np.array([[1, 2], [2, 5], [3, 6],
+    ...               [8, 7], [8, 8], [7, 3]])
+    >>> ordering, core_distances, reachability, predecessor = compute_optics_graph(
+    ...     X,
+    ...     min_samples=2,
+    ...     max_eps=np.inf,
+    ...     metric="minkowski",
+    ...     p=2,
+    ...     metric_params=None,
+    ...     algorithm="auto",
+    ...     leaf_size=30,
+    ...     n_jobs=None,
+    ... )
+    >>> eps = 4.5
+    >>> labels = cluster_optics_dbscan(
+    ...     reachability=reachability,
+    ...     core_distances=core_distances,
+    ...     ordering=ordering,
+    ...     eps=eps,
+    ... )
+    >>> labels
+    array([0, 0, 0, 1, 1, 1])
     """
     n_samples = len(core_distances)
     labels = np.zeros(n_samples, dtype=int)
@@ -806,6 +860,37 @@ def cluster_optics_xi(
         clusters come after such nested smaller clusters. Since ``labels`` does
         not reflect the hierarchy, usually ``len(clusters) >
         np.unique(labels)``.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.cluster import cluster_optics_xi, compute_optics_graph
+    >>> X = np.array([[1, 2], [2, 5], [3, 6],
+    ...               [8, 7], [8, 8], [7, 3]])
+    >>> ordering, core_distances, reachability, predecessor = compute_optics_graph(
+    ...     X,
+    ...     min_samples=2,
+    ...     max_eps=np.inf,
+    ...     metric="minkowski",
+    ...     p=2,
+    ...     metric_params=None,
+    ...     algorithm="auto",
+    ...     leaf_size=30,
+    ...     n_jobs=None
+    ... )
+    >>> min_samples = 2
+    >>> labels, clusters = cluster_optics_xi(
+    ...     reachability=reachability,
+    ...     predecessor=predecessor,
+    ...     ordering=ordering,
+    ...     min_samples=min_samples,
+    ... )
+    >>> labels
+    array([0, 0, 0, 1, 1, 1])
+    >>> clusters
+    array([[0, 2],
+           [3, 5],
+           [0, 5]])
     """
     n_samples = len(reachability)
     _validate_size(min_samples, n_samples, "min_samples")
@@ -921,7 +1006,7 @@ def _correct_predecessor(reachability_plot, predecessor_plot, ordering, s, e):
     while s < e:
         if reachability_plot[s] > reachability_plot[e]:
             return s, e
-        p_e = ordering[predecessor_plot[e]]
+        p_e = predecessor_plot[e]
         for i in range(s, e):
             if p_e == ordering[i]:
                 return s, e

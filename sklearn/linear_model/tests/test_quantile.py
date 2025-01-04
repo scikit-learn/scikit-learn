@@ -1,19 +1,23 @@
-# Authors: David Dale <dale.david@mail.ru>
-#          Christian Lorentzen <lorentzen.ch@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 import pytest
 from pytest import approx
-from scipy import sparse
 from scipy.optimize import minimize
 
 from sklearn.datasets import make_regression
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import HuberRegressor, QuantileRegressor
 from sklearn.metrics import mean_pinball_loss
-from sklearn.utils._testing import assert_allclose, skip_if_32bit
-from sklearn.utils.fixes import parse_version, sp_version
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils.fixes import (
+    COO_CONTAINERS,
+    CSC_CONTAINERS,
+    CSR_CONTAINERS,
+    parse_version,
+    sp_version,
+)
 
 
 @pytest.fixture
@@ -22,36 +26,20 @@ def X_y_data():
     return X, y
 
 
-@pytest.fixture
-def default_solver():
-    return "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
-
-
 @pytest.mark.skipif(
     parse_version(sp_version.base_version) >= parse_version("1.11"),
     reason="interior-point solver is not available in SciPy 1.11",
 )
 @pytest.mark.parametrize("solver", ["interior-point", "revised simplex"])
-def test_incompatible_solver_for_sparse_input(X_y_data, solver):
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+def test_incompatible_solver_for_sparse_input(X_y_data, solver, csc_container):
     X, y = X_y_data
-    X_sparse = sparse.csc_matrix(X)
+    X_sparse = csc_container(X)
     err_msg = (
         f"Solver {solver} does not support sparse X. Use solver 'highs' for example."
     )
     with pytest.raises(ValueError, match=err_msg):
         QuantileRegressor(solver=solver).fit(X_sparse, y)
-
-
-@pytest.mark.parametrize("solver", ("highs-ds", "highs-ipm", "highs"))
-@pytest.mark.skipif(
-    sp_version >= parse_version("1.6.0"),
-    reason="Solvers are available as of scipy 1.6.0",
-)
-def test_too_new_solver_methods_raise_error(X_y_data, solver):
-    """Test that highs solver raises for scipy<1.6.0."""
-    X, y = X_y_data
-    with pytest.raises(ValueError, match="scipy>=1.6.0"):
-        QuantileRegressor(solver=solver).fit(X, y)
 
 
 @pytest.mark.parametrize(
@@ -69,13 +57,11 @@ def test_too_new_solver_methods_raise_error(X_y_data, solver):
         [0.5, 100, 2, 0],
     ],
 )
-def test_quantile_toy_example(quantile, alpha, intercept, coef, default_solver):
+def test_quantile_toy_example(quantile, alpha, intercept, coef):
     # test how different parameters affect a small intuitive example
     X = [[0], [1], [1]]
     y = [1, 2, 11]
-    model = QuantileRegressor(
-        quantile=quantile, alpha=alpha, solver=default_solver
-    ).fit(X, y)
+    model = QuantileRegressor(quantile=quantile, alpha=alpha).fit(X, y)
     assert_allclose(model.intercept_, intercept, atol=1e-2)
     if coef is not None:
         assert_allclose(model.coef_[0], coef, atol=1e-2)
@@ -85,15 +71,13 @@ def test_quantile_toy_example(quantile, alpha, intercept, coef, default_solver):
 
 
 @pytest.mark.parametrize("fit_intercept", [True, False])
-def test_quantile_equals_huber_for_low_epsilon(fit_intercept, default_solver):
+def test_quantile_equals_huber_for_low_epsilon(fit_intercept):
     X, y = make_regression(n_samples=100, n_features=20, random_state=0, noise=1.0)
     alpha = 1e-4
     huber = HuberRegressor(
         epsilon=1 + 1e-4, alpha=alpha, fit_intercept=fit_intercept
     ).fit(X, y)
-    quant = QuantileRegressor(
-        alpha=alpha, fit_intercept=fit_intercept, solver=default_solver
-    ).fit(X, y)
+    quant = QuantileRegressor(alpha=alpha, fit_intercept=fit_intercept).fit(X, y)
     assert_allclose(huber.coef_, quant.coef_, atol=1e-1)
     if fit_intercept:
         assert huber.intercept_ == approx(quant.intercept_, abs=1e-1)
@@ -102,18 +86,14 @@ def test_quantile_equals_huber_for_low_epsilon(fit_intercept, default_solver):
 
 
 @pytest.mark.parametrize("q", [0.5, 0.9, 0.05])
-def test_quantile_estimates_calibration(q, default_solver):
+def test_quantile_estimates_calibration(q):
     # Test that model estimates percentage of points below the prediction
     X, y = make_regression(n_samples=1000, n_features=20, random_state=0, noise=1.0)
-    quant = QuantileRegressor(
-        quantile=q,
-        alpha=0,
-        solver=default_solver,
-    ).fit(X, y)
+    quant = QuantileRegressor(quantile=q, alpha=0).fit(X, y)
     assert np.mean(y < quant.predict(X)) == approx(q, abs=1e-2)
 
 
-def test_quantile_sample_weight(default_solver):
+def test_quantile_sample_weight():
     # test that with unequal sample weights we still estimate weighted fraction
     n = 1000
     X, y = make_regression(n_samples=n, n_features=5, random_state=0, noise=10.0)
@@ -121,7 +101,7 @@ def test_quantile_sample_weight(default_solver):
     # when we increase weight of upper observations,
     # estimate of quantile should go up
     weight[y > y.mean()] = 100
-    quant = QuantileRegressor(quantile=0.5, alpha=1e-8, solver=default_solver)
+    quant = QuantileRegressor(quantile=0.5, alpha=1e-8)
     quant.fit(X, y, sample_weight=weight)
     fraction_below = np.mean(y < quant.predict(X))
     assert fraction_below > 0.5
@@ -129,12 +109,8 @@ def test_quantile_sample_weight(default_solver):
     assert weighted_fraction_below == approx(0.5, abs=3e-2)
 
 
-@pytest.mark.skipif(
-    sp_version < parse_version("1.6.0"),
-    reason="The `highs` solver is available from the 1.6.0 scipy version",
-)
 @pytest.mark.parametrize("quantile", [0.2, 0.5, 0.8])
-def test_asymmetric_error(quantile, default_solver):
+def test_asymmetric_error(quantile):
     """Test quantile regression for asymmetric distributed targets."""
     n_samples = 1000
     rng = np.random.RandomState(42)
@@ -159,7 +135,6 @@ def test_asymmetric_error(quantile, default_solver):
     model = QuantileRegressor(
         quantile=quantile,
         alpha=0,
-        solver=default_solver,
     ).fit(X, y)
     # This test can be made to pass with any solver but in the interest
     # of sparing continuous integration resources, the test is performed
@@ -194,7 +169,7 @@ def test_asymmetric_error(quantile, default_solver):
 
 
 @pytest.mark.parametrize("quantile", [0.2, 0.5, 0.8])
-def test_equivariance(quantile, default_solver):
+def test_equivariance(quantile):
     """Test equivariace of quantile regression.
 
     See Koenker (2005) Quantile Regression, Chapter 2.2.3.
@@ -211,7 +186,7 @@ def test_equivariance(quantile, default_solver):
     )
     # make y asymmetric
     y += rng.exponential(scale=100, size=y.shape)
-    params = dict(alpha=0, solver=default_solver)
+    params = dict(alpha=0)
     model1 = QuantileRegressor(quantile=quantile, **params).fit(X, y)
 
     # coef(q; a*y, X) = a * coef(q; y, X)
@@ -258,45 +233,40 @@ def test_linprog_failure():
         reg.fit(X, y)
 
 
-@skip_if_32bit
-@pytest.mark.skipif(
-    sp_version <= parse_version("1.6.0"),
-    reason="Solvers are available as of scipy 1.6.0",
-)
 @pytest.mark.parametrize(
-    "sparse_format", [sparse.csc_matrix, sparse.csr_matrix, sparse.coo_matrix]
+    "sparse_container", CSC_CONTAINERS + CSR_CONTAINERS + COO_CONTAINERS
 )
 @pytest.mark.parametrize("solver", ["highs", "highs-ds", "highs-ipm"])
 @pytest.mark.parametrize("fit_intercept", [True, False])
-def test_sparse_input(sparse_format, solver, fit_intercept, default_solver):
+def test_sparse_input(sparse_container, solver, fit_intercept, global_random_seed):
     """Test that sparse and dense X give same results."""
-    X, y = make_regression(n_samples=100, n_features=20, random_state=1, noise=1.0)
-    X_sparse = sparse_format(X)
-    alpha = 1e-4
+    n_informative = 10
+    quantile_level = 0.6
+    X, y = make_regression(
+        n_samples=300,
+        n_features=20,
+        n_informative=10,
+        random_state=global_random_seed,
+        noise=1.0,
+    )
+    X_sparse = sparse_container(X)
+    alpha = 0.1
     quant_dense = QuantileRegressor(
-        alpha=alpha, fit_intercept=fit_intercept, solver=default_solver
+        quantile=quantile_level, alpha=alpha, fit_intercept=fit_intercept
     ).fit(X, y)
     quant_sparse = QuantileRegressor(
-        alpha=alpha, fit_intercept=fit_intercept, solver=solver
+        quantile=quantile_level, alpha=alpha, fit_intercept=fit_intercept, solver=solver
     ).fit(X_sparse, y)
     assert_allclose(quant_sparse.coef_, quant_dense.coef_, rtol=1e-2)
+    sparse_support = quant_sparse.coef_ != 0
+    dense_support = quant_dense.coef_ != 0
+    assert dense_support.sum() == pytest.approx(n_informative, abs=1)
+    assert sparse_support.sum() == pytest.approx(n_informative, abs=1)
     if fit_intercept:
         assert quant_sparse.intercept_ == approx(quant_dense.intercept_)
         # check that we still predict fraction
-        assert 0.45 <= np.mean(y < quant_sparse.predict(X_sparse)) <= 0.57
-
-
-# TODO (1.4): remove this test in 1.4
-@pytest.mark.skipif(
-    parse_version(sp_version.base_version) >= parse_version("1.11"),
-    reason="interior-point solver is not available in SciPy 1.11",
-)
-def test_warning_new_default(X_y_data):
-    """Check that we warn about the new default solver."""
-    X, y = X_y_data
-    model = QuantileRegressor()
-    with pytest.warns(FutureWarning, match="The default solver will change"):
-        model.fit(X, y)
+        empirical_coverage = np.mean(y < quant_sparse.predict(X_sparse))
+        assert empirical_coverage == approx(quantile_level, abs=3e-2)
 
 
 def test_error_interior_point_future(X_y_data, monkeypatch):

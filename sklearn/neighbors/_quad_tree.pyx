@@ -1,9 +1,10 @@
-# Author: Thomas Moreau <thomas.moreau.2010@gmail.com>
-# Author: Olivier Grisel <olivier.grisel@ensta.fr>
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 from cpython cimport Py_INCREF, PyObject, PyTypeObject
 
+from libc.math cimport fabsf
 from libc.stdlib cimport free
 from libc.string cimport memcpy
 from libc.stdio cimport printf
@@ -14,9 +15,6 @@ from ..tree._utils cimport safe_realloc
 import numpy as np
 cimport numpy as cnp
 cnp.import_array()
-
-cdef extern from "math.h":
-    float fabsf(float x) nogil
 
 cdef extern from "numpy/arrayobject.h":
     object PyArray_NewFromDescr(PyTypeObject* subtype, cnp.dtype descr,
@@ -80,11 +78,11 @@ cdef class _QuadTree:
         """Build a tree from an array of points X."""
         cdef:
             int i
-            DTYPE_t[3] pt
-            DTYPE_t[3] min_bounds, max_bounds
+            float32_t[3] pt
+            float32_t[3] min_bounds, max_bounds
 
         # validate X and prepare for query
-        # X = check_array(X, dtype=DTYPE_t, order='C')
+        # X = check_array(X, dtype=float32_t, order='C')
         n_samples = X.shape[0]
 
         capacity = 100
@@ -113,13 +111,13 @@ cdef class _QuadTree:
         # Shrink the cells array to reduce memory usage
         self._resize(capacity=self.cell_count)
 
-    cdef int insert_point(self, DTYPE_t[3] point, SIZE_t point_index,
-                          SIZE_t cell_id=0) except -1 nogil:
+    cdef int insert_point(self, float32_t[3] point, intp_t point_index,
+                          intp_t cell_id=0) except -1 nogil:
         """Insert a point in the QuadTree."""
         cdef int ax
-        cdef SIZE_t selected_child
+        cdef intp_t selected_child
         cdef Cell* cell = &self.cells[cell_id]
-        cdef SIZE_t n_point = cell.cumulative_size
+        cdef intp_t n_point = cell.cumulative_size
 
         if self.verbose > 10:
             printf("[QuadTree] Inserting depth %li\n", cell.depth)
@@ -177,16 +175,16 @@ cdef class _QuadTree:
         return self.insert_point(point, point_index, cell_id)
 
     # XXX: This operation is not Thread safe
-    cdef SIZE_t _insert_point_in_new_child(
-        self, DTYPE_t[3] point, Cell* cell, SIZE_t point_index, SIZE_t size=1
+    cdef intp_t _insert_point_in_new_child(
+        self, float32_t[3] point, Cell* cell, intp_t point_index, intp_t size=1
     ) noexcept nogil:
         """Create a child of cell which will contain point."""
 
         # Local variable definition
         cdef:
-            SIZE_t cell_id, cell_child_id, parent_id
-            DTYPE_t[3] save_point
-            DTYPE_t width
+            intp_t cell_id, cell_child_id, parent_id
+            float32_t[3] save_point
+            float32_t width
             Cell* child
             int i
 
@@ -247,7 +245,7 @@ cdef class _QuadTree:
 
         return cell_id
 
-    cdef bint _is_duplicate(self, DTYPE_t[3] point1, DTYPE_t[3] point2) noexcept nogil:
+    cdef bint _is_duplicate(self, float32_t[3] point1, float32_t[3] point2) noexcept nogil:
         """Check if the two given points are equals."""
         cdef int i
         cdef bint res = True
@@ -256,11 +254,11 @@ cdef class _QuadTree:
             res &= fabsf(point1[i] - point2[i]) <= EPSILON
         return res
 
-    cdef SIZE_t _select_child(self, DTYPE_t[3] point, Cell* cell) noexcept nogil:
+    cdef intp_t _select_child(self, float32_t[3] point, Cell* cell) noexcept nogil:
         """Select the child of cell which contains the given query point."""
         cdef:
             int i
-            SIZE_t selected_child = 0
+            intp_t selected_child = 0
 
         for i in range(self.n_dimensions):
             # Select the correct child cell to insert the point by comparing
@@ -270,7 +268,7 @@ cdef class _QuadTree:
                 selected_child += 1
         return cell.children[selected_child]
 
-    cdef void _init_cell(self, Cell* cell, SIZE_t parent, SIZE_t depth) noexcept nogil:
+    cdef void _init_cell(self, Cell* cell, intp_t parent, intp_t depth) noexcept nogil:
         """Initialize a cell structure with some constants."""
         cell.parent = parent
         cell.is_leaf = True
@@ -280,12 +278,12 @@ cdef class _QuadTree:
         for i in range(self.n_cells_per_cell):
             cell.children[i] = SIZE_MAX
 
-    cdef void _init_root(self, DTYPE_t[3] min_bounds, DTYPE_t[3] max_bounds
+    cdef void _init_root(self, float32_t[3] min_bounds, float32_t[3] max_bounds
                          ) noexcept nogil:
         """Initialize the root node with the given space boundaries"""
         cdef:
             int i
-            DTYPE_t width
+            float32_t width
             Cell* root = &self.cells[0]
 
         self._init_cell(root, -1, 0)
@@ -299,7 +297,7 @@ cdef class _QuadTree:
 
         self.cell_count += 1
 
-    cdef int _check_point_in_cell(self, DTYPE_t[3] point, Cell* cell
+    cdef int _check_point_in_cell(self, float32_t[3] point, Cell* cell
                                   ) except -1 nogil:
         """Check that the given point is in the cell boundaries."""
 
@@ -366,8 +364,8 @@ cdef class _QuadTree:
                 "in children."
                 .format(self.n_points, self.cells[0].cumulative_size))
 
-    cdef long summarize(self, DTYPE_t[3] point, DTYPE_t* results,
-                        float squared_theta=.5, SIZE_t cell_id=0, long idx=0
+    cdef long summarize(self, float32_t[3] point, float32_t* results,
+                        float squared_theta=.5, intp_t cell_id=0, long idx=0
                         ) noexcept nogil:
         """Summarize the tree compared to a query point.
 
@@ -429,7 +427,7 @@ cdef class _QuadTree:
         # Otherwise, we go a higher level of resolution and into the leaves.
         if cell.is_leaf or (
                 (cell.squared_max_width / results[idx_d]) < squared_theta):
-            results[idx_d + 1] = <DTYPE_t> cell.cumulative_size
+            results[idx_d + 1] = <float32_t> cell.cumulative_size
             return idx + self.n_dimensions + 2
 
         else:
@@ -446,7 +444,7 @@ cdef class _QuadTree:
         """return the id of the cell containing the query point or raise
         ValueError if the point is not in the tree
         """
-        cdef DTYPE_t[3] query_pt
+        cdef float32_t[3] query_pt
         cdef int i
 
         assert len(point) == self.n_dimensions, (
@@ -458,14 +456,14 @@ cdef class _QuadTree:
 
         return self._get_cell(query_pt, 0)
 
-    cdef int _get_cell(self, DTYPE_t[3] point, SIZE_t cell_id=0
+    cdef int _get_cell(self, float32_t[3] point, intp_t cell_id=0
                        ) except -1 nogil:
         """guts of get_cell.
 
         Return the id of the cell containing the query point or raise ValueError
         if the point is not in the tree"""
         cdef:
-            SIZE_t selected_child
+            intp_t selected_child
             Cell* cell = &self.cells[cell_id]
 
         if cell.is_leaf:
@@ -562,7 +560,7 @@ cdef class _QuadTree:
             raise ValueError("Can't initialize array!")
         return arr
 
-    cdef int _resize(self, SIZE_t capacity) except -1 nogil:
+    cdef int _resize(self, intp_t capacity) except -1 nogil:
         """Resize all inner arrays to `capacity`, if `capacity` == -1, then
            double the size of the inner arrays.
 
@@ -574,7 +572,7 @@ cdef class _QuadTree:
             with gil:
                 raise MemoryError()
 
-    cdef int _resize_c(self, SIZE_t capacity=SIZE_MAX) except -1 nogil:
+    cdef int _resize_c(self, intp_t capacity=SIZE_MAX) except -1 nogil:
         """Guts of _resize
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -598,10 +596,10 @@ cdef class _QuadTree:
         self.capacity = capacity
         return 0
 
-    def _py_summarize(self, DTYPE_t[:] query_pt, DTYPE_t[:, :] X, float angle):
+    def _py_summarize(self, float32_t[:] query_pt, float32_t[:, :] X, float angle):
         # Used for testing summarize
         cdef:
-            DTYPE_t[:] summary
+            float32_t[:] summary
             int n_samples
 
         n_samples = X.shape[0]

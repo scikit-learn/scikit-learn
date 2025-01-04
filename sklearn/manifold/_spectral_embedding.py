@@ -1,8 +1,7 @@
 """Spectral Embedding."""
 
-# Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Wei LI <kuantkid@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import warnings
@@ -12,7 +11,6 @@ import numpy as np
 from scipy import sparse
 from scipy.linalg import eigh
 from scipy.sparse.csgraph import connected_components
-from scipy.sparse.csgraph import laplacian as csgraph_laplacian
 from scipy.sparse.linalg import eigsh, lobpcg
 
 from ..base import BaseEstimator, _fit_context
@@ -24,8 +22,11 @@ from ..utils import (
     check_symmetric,
 )
 from ..utils._arpack import _init_arpack_v0
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import _deterministic_vector_sign_flip
+from ..utils.fixes import laplacian as csgraph_laplacian
+from ..utils.fixes import parse_version, sp_version
+from ..utils.validation import validate_data
 
 
 def _graph_connected_component(graph, node_id):
@@ -64,7 +65,9 @@ def _graph_connected_component(graph, node_id):
         nodes_to_explore.fill(False)
         for i in indices:
             if sparse.issparse(graph):
-                neighbors = graph[i].toarray().ravel()
+                # scipy not yet implemented 1D sparse slices; can be changed back to
+                # `neighbors = graph[i].toarray().ravel()` once implemented
+                neighbors = graph[[i], :].toarray().ravel()
             else:
                 neighbors = graph[i]
             np.logical_or(nodes_to_explore, neighbors, out=nodes_to_explore)
@@ -86,6 +89,15 @@ def _graph_is_connected(graph):
         True means the graph is fully connected and False means not.
     """
     if sparse.issparse(graph):
+        # Before Scipy 1.11.3, `connected_components` only supports 32-bit indices.
+        # PR: https://github.com/scipy/scipy/pull/18913
+        # First integration in 1.11.3: https://github.com/scipy/scipy/pull/19279
+        # TODO(jjerphan): Once SciPy 1.11.3 is the minimum supported version, use
+        # `accept_large_sparse=True`.
+        accept_large_sparse = sp_version >= parse_version("1.11.3")
+        graph = check_array(
+            graph, accept_sparse=True, accept_large_sparse=accept_large_sparse
+        )
         # sparse graph, find all the connected components
         n_connected_components, _ = connected_components(graph)
         return n_connected_components == 1
@@ -140,6 +152,18 @@ def _set_diag(laplacian, value, norm_laplacian):
     return laplacian
 
 
+@validate_params(
+    {
+        "adjacency": ["array-like", "sparse matrix"],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "eigen_solver": [StrOptions({"arpack", "lobpcg", "amg"}), None],
+        "random_state": ["random_state"],
+        "eigen_tol": [Interval(Real, 0, None, closed="left"), StrOptions({"auto"})],
+        "norm_laplacian": ["boolean"],
+        "drop_first": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def spectral_embedding(
     adjacency,
     *,
@@ -243,26 +267,58 @@ def spectral_embedding(
       Block Preconditioned Conjugate Gradient Method",
       Andrew V. Knyazev
       <10.1137/S1064827500366124>`
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.neighbors import kneighbors_graph
+    >>> from sklearn.manifold import spectral_embedding
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> X = X[:100]
+    >>> affinity_matrix = kneighbors_graph(
+    ...     X, n_neighbors=int(X.shape[0] / 10), include_self=True
+    ... )
+    >>> # make the matrix symmetric
+    >>> affinity_matrix = 0.5 * (affinity_matrix + affinity_matrix.T)
+    >>> embedding = spectral_embedding(affinity_matrix, n_components=2, random_state=42)
+    >>> embedding.shape
+    (100, 2)
     """
+    random_state = check_random_state(random_state)
+
+    return _spectral_embedding(
+        adjacency,
+        n_components=n_components,
+        eigen_solver=eigen_solver,
+        random_state=random_state,
+        eigen_tol=eigen_tol,
+        norm_laplacian=norm_laplacian,
+        drop_first=drop_first,
+    )
+
+
+def _spectral_embedding(
+    adjacency,
+    *,
+    n_components=8,
+    eigen_solver=None,
+    random_state=None,
+    eigen_tol="auto",
+    norm_laplacian=True,
+    drop_first=True,
+):
     adjacency = check_symmetric(adjacency)
 
-    try:
-        from pyamg import smoothed_aggregation_solver
-    except ImportError as e:
-        if eigen_solver == "amg":
+    if eigen_solver == "amg":
+        try:
+            from pyamg import smoothed_aggregation_solver
+        except ImportError as e:
             raise ValueError(
                 "The eigen_solver was set to 'amg', but pyamg is not available."
             ) from e
 
     if eigen_solver is None:
         eigen_solver = "arpack"
-    elif eigen_solver not in ("arpack", "lobpcg", "amg"):
-        raise ValueError(
-            "Unknown value for eigen_solver: '%s'."
-            "Should be 'amg', 'arpack', or 'lobpcg'" % eigen_solver
-        )
-
-    random_state = check_random_state(random_state)
 
     n_nodes = adjacency.shape[0]
     # Whether to drop the first eigenvector
@@ -310,6 +366,9 @@ def spectral_embedding(
             tol = 0 if eigen_tol == "auto" else eigen_tol
             laplacian *= -1
             v0 = _init_arpack_v0(laplacian.shape[0], random_state)
+            laplacian = check_array(
+                laplacian, accept_sparse="csr", accept_large_sparse=False
+            )
             _, diffusion_map = eigsh(
                 laplacian, k=n_components, sigma=1.0, which="LM", tol=tol, v0=v0
             )
@@ -345,6 +404,10 @@ def spectral_embedding(
         # matrix to the solver and afterward set it back to the original.
         diag_shift = 1e-5 * sparse.eye(laplacian.shape[0])
         laplacian += diag_shift
+        if hasattr(sparse, "csr_array") and isinstance(laplacian, sparse.csr_array):
+            # `pyamg` does not work with `csr_array` and we need to convert it to a
+            # `csr_matrix` object.
+            laplacian = sparse.csr_matrix(laplacian)
         ml = smoothed_aggregation_solver(check_array(laplacian, accept_sparse="csr"))
         laplacian -= diag_shift
 
@@ -585,13 +648,14 @@ class SpectralEmbedding(BaseEstimator):
         self.n_neighbors = n_neighbors
         self.n_jobs = n_jobs
 
-    def _more_tags(self):
-        return {
-            "pairwise": self.affinity in [
-                "precomputed",
-                "precomputed_nearest_neighbors",
-            ]
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        tags.input_tags.pairwise = self.affinity in [
+            "precomputed",
+            "precomputed_nearest_neighbors",
+        ]
+        return tags
 
     def _get_affinity_matrix(self, X, Y=None):
         """Calculate the affinity matrix from data
@@ -674,12 +738,12 @@ class SpectralEmbedding(BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X, accept_sparse="csr", ensure_min_samples=2)
+        X = validate_data(self, X, accept_sparse="csr", ensure_min_samples=2)
 
         random_state = check_random_state(self.random_state)
 
         affinity_matrix = self._get_affinity_matrix(X)
-        self.embedding_ = spectral_embedding(
+        self.embedding_ = _spectral_embedding(
             affinity_matrix,
             n_components=self.n_components,
             eigen_solver=self.eigen_solver,

@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   lint:
     docker:
-      - image: cimg/python:3.8.12
+      - image: cimg/python:3.9.18
     steps:
       - checkout
       - run:
@@ -11,19 +11,23 @@ jobs:
           command: |
             source build_tools/shared.sh
             # Include pytest compatibility with mypy
-            pip install pytest ruff $(get_dep mypy min) $(get_dep black min) cython-lint
+            pip install pytest $(get_dep ruff min) $(get_dep mypy min) $(get_dep black min) cython-lint
       - run:
           name: linting
           command: ./build_tools/linting.sh
 
   doc-min-dependencies:
     docker:
-      - image: cimg/python:3.8.12
+      - image: cimg/python:3.9.18
     environment:
       - MKL_NUM_THREADS: 2
       - OPENBLAS_NUM_THREADS: 2
       - CONDA_ENV_NAME: testenv
       - LOCK_FILE: build_tools/circle/doc_min_dependencies_linux-64_conda.lock
+      # Do not fail if the documentation build generates warnings with minimum
+      # dependencies as long as we can avoid raising warnings with more recent
+      # versions of the same dependencies.
+      - SKLEARN_WARNINGS_AS_ERRORS: '0'
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
@@ -52,12 +56,15 @@ jobs:
 
   doc:
     docker:
-      - image: cimg/python:3.8.12
+      - image: cimg/python:3.9.18
     environment:
       - MKL_NUM_THREADS: 2
       - OPENBLAS_NUM_THREADS: 2
       - CONDA_ENV_NAME: testenv
       - LOCK_FILE: build_tools/circle/doc_linux-64_conda.lock
+      # Make sure that we fail if the documentation build generates warnings with
+      # recent versions of the dependencies.
+      - SKLEARN_WARNINGS_AS_ERRORS: '1'
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
@@ -91,7 +98,7 @@ jobs:
 
   deploy:
     docker:
-      - image: cimg/python:3.8.12
+      - image: cimg/python:3.9.18
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
@@ -100,7 +107,7 @@ jobs:
       - attach_workspace:
           at: doc/_build/html
       - run: ls -ltrh doc/_build/html/stable
-      - deploy:
+      - run:
           command: |
             if [[ "${CIRCLE_BRANCH}" =~ ^main$|^[0-9]+\.[0-9]+\.X$ ]]; then
               bash build_tools/circle/push_doc.sh doc/_build/html/stable

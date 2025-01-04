@@ -32,12 +32,8 @@ The module structure is the following:
 Single and multi-output problems are both handled.
 """
 
-# Authors: Gilles Louppe <g.louppe@gmail.com>
-#          Brian Holt <bdholt1@gmail.com>
-#          Joly Arnaud <arnaud.v.joly@gmail.com>
-#          Fares Hedayati <fares.hedayati@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import threading
@@ -70,7 +66,7 @@ from ..tree import (
 from ..tree._tree import DOUBLE, DTYPE
 from ..utils import check_random_state, compute_sample_weight
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
-from ..utils._tags import _safe_tags
+from ..utils._tags import get_tags
 from ..utils.multiclass import check_classification_targets, type_of_target
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
@@ -78,6 +74,7 @@ from ..utils.validation import (
     _check_sample_weight,
     _num_samples,
     check_is_fitted,
+    validate_data,
 )
 from ._base import BaseEnsemble, _partition_estimators
 
@@ -130,7 +127,9 @@ def _generate_sample_indices(random_state, n_samples, n_samples_bootstrap):
     Private function used to _parallel_build_trees function."""
 
     random_instance = check_random_state(random_state)
-    sample_indices = random_instance.randint(0, n_samples, n_samples_bootstrap)
+    sample_indices = random_instance.randint(
+        0, n_samples, n_samples_bootstrap, dtype=np.int32
+    )
 
     return sample_indices
 
@@ -244,13 +243,11 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         warm_start=False,
         class_weight=None,
         max_samples=None,
-        base_estimator="deprecated",
     ):
         super().__init__(
             estimator=estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params,
-            base_estimator=base_estimator,
         )
 
         self.bootstrap = bootstrap
@@ -360,13 +357,14 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         if issparse(y):
             raise ValueError("sparse multilabel-indicator for y is not supported.")
 
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             multi_output=True,
             accept_sparse="csc",
             dtype=DTYPE,
-            force_all_finite=False,
+            ensure_all_finite=False,
         )
         # _compute_missing_values_in_feature_mask checks if X has missing values and
         # will raise an error if the underlying tree base estimator can't handle missing
@@ -416,7 +414,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     "is necessary for Poisson regression."
                 )
 
-        self.n_outputs_ = y.shape[1]
+        self._n_samples, self.n_outputs_ = y.shape
 
         y, expanded_class_weight = self._validate_y_class_weight(y)
 
@@ -441,6 +439,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             )
         else:
             n_samples_bootstrap = None
+
+        self._n_samples_bootstrap = n_samples_bootstrap
 
         self._validate_estimator()
 
@@ -512,7 +512,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             n_more_estimators > 0 or not hasattr(self, "oob_score_")
         ):
             y_type = type_of_target(y)
-            if y_type in ("multiclass-multioutput", "unknown"):
+            if y_type == "unknown" or (
+                is_classifier(self) and y_type == "multiclass-multioutput"
+            ):
                 # FIXME: we could consider to support multiclass-multioutput if
                 # we introduce or reuse a constructor parameter (e.g.
                 # oob_score) allowing our user to pass a callable defining the
@@ -629,16 +631,17 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         Validate X whenever one tries to predict, apply, predict_proba."""
         check_is_fitted(self)
         if self.estimators_[0]._support_missing_values(X):
-            force_all_finite = "allow-nan"
+            ensure_all_finite = "allow-nan"
         else:
-            force_all_finite = True
+            ensure_all_finite = True
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             dtype=DTYPE,
             accept_sparse="csr",
             reset=False,
-            force_all_finite=force_all_finite,
+            ensure_all_finite=ensure_all_finite,
         )
         if issparse(X) and (X.indices.dtype != np.intc or X.indptr.dtype != np.intc):
             raise ValueError("No support for np.int64 index based sparse matrices")
@@ -679,11 +682,43 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         all_importances = np.mean(all_importances, axis=0, dtype=np.float64)
         return all_importances / np.sum(all_importances)
 
-    def _more_tags(self):
+    def _get_estimators_indices(self):
+        # Get drawn indices along both sample and feature axes
+        for tree in self.estimators_:
+            if not self.bootstrap:
+                yield np.arange(self._n_samples, dtype=np.int32)
+            else:
+                # tree.random_state is actually an immutable integer seed rather
+                # than a mutable RandomState instance, so it's safe to use it
+                # repeatedly when calling this property.
+                seed = tree.random_state
+                # Operations accessing random_state must be performed identically
+                # to those in `_parallel_build_trees()`
+                yield _generate_sample_indices(
+                    seed, self._n_samples, self._n_samples_bootstrap
+                )
+
+    @property
+    def estimators_samples_(self):
+        """The subset of drawn samples for each base estimator.
+
+        Returns a dynamically generated list of indices identifying
+        the samples used for fitting each member of the ensemble, i.e.,
+        the in-bag samples.
+
+        Note: the list is re-created at each call to the property in order
+        to reduce the object memory footprint by not storing the sampling
+        data. Thus fetching the property may be slower than expected.
+        """
+        return [sample_indices for sample_indices in self._get_estimators_indices()]
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         # Only the criterion is required to determine if the tree supports
         # missing values
         estimator = type(self.estimator)(criterion=self.criterion)
-        return {"allow_nan": _safe_tags(estimator, key="allow_nan")}
+        tags.input_tags.allow_nan = get_tags(estimator).input_tags.allow_nan
+        return tags
 
 
 def _accumulate_prediction(predict, X, out, lock):
@@ -725,7 +760,6 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         warm_start=False,
         class_weight=None,
         max_samples=None,
-        base_estimator="deprecated",
     ):
         super().__init__(
             estimator=estimator,
@@ -739,7 +773,6 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             warm_start=warm_start,
             class_weight=class_weight,
             max_samples=max_samples,
-            base_estimator=base_estimator,
         )
 
     @staticmethod
@@ -759,7 +792,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             The OOB associated predictions.
         """
         y_pred = tree.predict_proba(X, check_input=False)
-        y_pred = np.array(y_pred, copy=False)
+        y_pred = np.asarray(y_pred)
         if y_pred.ndim == 2:
             # binary and multiclass
             y_pred = y_pred[..., np.newaxis]
@@ -822,8 +855,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
                     raise ValueError(
                         "Valid presets for class_weight include "
                         '"balanced" and "balanced_subsample".'
-                        'Given "%s".'
-                        % self.class_weight
+                        'Given "%s".' % self.class_weight
                     )
                 if self.warm_start:
                     warn(
@@ -967,8 +999,11 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
 
             return proba
 
-    def _more_tags(self):
-        return {"multilabel": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.classifier_tags.multi_label = True
+        tags.input_tags.sparse = True
+        return tags
 
 
 class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
@@ -993,7 +1028,6 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         verbose=0,
         warm_start=False,
         max_samples=None,
-        base_estimator="deprecated",
     ):
         super().__init__(
             estimator,
@@ -1006,7 +1040,6 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             verbose=verbose,
             warm_start=warm_start,
             max_samples=max_samples,
-            base_estimator=base_estimator,
         )
 
     def predict(self, X):
@@ -1104,10 +1137,10 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
         Parameters
         ----------
-        grid : ndarray of shape (n_samples, n_target_features)
+        grid : ndarray of shape (n_samples, n_target_features), dtype=DTYPE
             The grid points on which the partial dependence should be
             evaluated.
-        target_features : ndarray of shape (n_target_features)
+        target_features : ndarray of shape (n_target_features), dtype=np.intp
             The set of target features for which the partial dependence
             should be evaluated.
 
@@ -1117,6 +1150,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             The value of the partial dependence function on each grid point.
         """
         grid = np.asarray(grid, dtype=DTYPE, order="C")
+        target_features = np.asarray(target_features, dtype=np.intp, order="C")
         averaged_predictions = np.zeros(
             shape=grid.shape[0], dtype=np.float64, order="C"
         )
@@ -1132,8 +1166,10 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
         return averaged_predictions
 
-    def _more_tags(self):
-        return {"multilabel": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
 
 
 class RandomForestClassifier(ForestClassifier):
@@ -1143,6 +1179,8 @@ class RandomForestClassifier(ForestClassifier):
     A random forest is a meta estimator that fits a number of decision tree
     classifiers on various sub-samples of the dataset and uses averaging to
     improve the predictive accuracy and control over-fitting.
+    Trees in the forest use the best split strategy, i.e. equivalent to passing
+    `splitter="best"` to the underlying :class:`~sklearn.tree.DecisionTreeClassifier`.
     The sub-sample size is controlled with the `max_samples` parameter if
     `bootstrap=True` (default), otherwise the whole dataset is used to build
     each tree.
@@ -1275,7 +1313,7 @@ class RandomForestClassifier(ForestClassifier):
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`Glossary <warm_start>` and
-        :ref:`gradient_boosting_warm_start` for details.
+        :ref:`tree_ensemble_warm_start` for details.
 
     class_weight : {"balanced", "balanced_subsample"}, dict or list of dicts, \
             default=None
@@ -1307,7 +1345,9 @@ class RandomForestClassifier(ForestClassifier):
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
-        :ref:`minimal_cost_complexity_pruning` for details.
+        :ref:`minimal_cost_complexity_pruning` for details. See
+        :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+        for an example of such pruning.
 
         .. versionadded:: 0.22
 
@@ -1349,14 +1389,6 @@ class RandomForestClassifier(ForestClassifier):
 
         .. versionadded:: 1.2
            `base_estimator_` was renamed to `estimator_`.
-
-    base_estimator_ : DecisionTreeClassifier
-        The child estimator template used to create the collection of fitted
-        sub-estimators.
-
-        .. deprecated:: 1.2
-            `base_estimator_` is deprecated and will be removed in 1.4.
-            Use `estimator_` instead.
 
     estimators_ : list of DecisionTreeClassifier
         The collection of fitted sub-estimators.
@@ -1405,6 +1437,12 @@ class RandomForestClassifier(ForestClassifier):
         was never left out during the bootstrap. In this case,
         `oob_decision_function_` might contain NaN. This attribute exists
         only when ``oob_score`` is True.
+
+    estimators_samples_ : list of arrays
+        The subset of drawn samples (i.e., the in-bag samples) for each base
+        estimator. Each subset is defined by an array of the indices selected.
+
+        .. versionadded:: 1.4
 
     See Also
     --------
@@ -1525,9 +1563,11 @@ class RandomForestRegressor(ForestRegressor):
     """
     A random forest regressor.
 
-    A random forest is a meta estimator that fits a number of classifying
-    decision trees on various sub-samples of the dataset and uses averaging
-    to improve the predictive accuracy and control over-fitting.
+    A random forest is a meta estimator that fits a number of decision tree
+    regressors on various sub-samples of the dataset and uses averaging to
+    improve the predictive accuracy and control over-fitting.
+    Trees in the forest use the best split strategy, i.e. equivalent to passing
+    `splitter="best"` to the underlying :class:`~sklearn.tree.DecisionTreeRegressor`.
     The sub-sample size is controlled with the `max_samples` parameter if
     `bootstrap=True` (default), otherwise the whole dataset is used to build
     each tree.
@@ -1677,13 +1717,15 @@ class RandomForestRegressor(ForestRegressor):
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`Glossary <warm_start>` and
-        :ref:`gradient_boosting_warm_start` for details.
+        :ref:`tree_ensemble_warm_start` for details.
 
     ccp_alpha : non-negative float, default=0.0
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
-        :ref:`minimal_cost_complexity_pruning` for details.
+        :ref:`minimal_cost_complexity_pruning` for details. See
+        :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+        for an example of such pruning.
 
         .. versionadded:: 0.22
 
@@ -1723,14 +1765,6 @@ class RandomForestRegressor(ForestRegressor):
         .. versionadded:: 1.2
            `base_estimator_` was renamed to `estimator_`.
 
-    base_estimator_ : DecisionTreeRegressor
-        The child estimator template used to create the collection of fitted
-        sub-estimators.
-
-        .. deprecated:: 1.2
-            `base_estimator_` is deprecated and will be removed in 1.4.
-            Use `estimator_` instead.
-
     estimators_ : list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
 
@@ -1766,6 +1800,12 @@ class RandomForestRegressor(ForestRegressor):
     oob_prediction_ : ndarray of shape (n_samples,) or (n_samples, n_outputs)
         Prediction computed with out-of-bag estimate on the training set.
         This attribute exists only when ``oob_score`` is True.
+
+    estimators_samples_ : list of arrays
+        The subset of drawn samples (i.e., the in-bag samples) for each base
+        estimator. Each subset is defined by an array of the indices selected.
+
+        .. versionadded:: 1.4
 
     See Also
     --------
@@ -2018,7 +2058,7 @@ class ExtraTreesClassifier(ForestClassifier):
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`Glossary <warm_start>` and
-        :ref:`gradient_boosting_warm_start` for details.
+        :ref:`tree_ensemble_warm_start` for details.
 
     class_weight : {"balanced", "balanced_subsample"}, dict or list of dicts, \
             default=None
@@ -2050,7 +2090,9 @@ class ExtraTreesClassifier(ForestClassifier):
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
-        :ref:`minimal_cost_complexity_pruning` for details.
+        :ref:`minimal_cost_complexity_pruning` for details. See
+        :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+        for an example of such pruning.
 
         .. versionadded:: 0.22
 
@@ -2092,14 +2134,6 @@ class ExtraTreesClassifier(ForestClassifier):
 
         .. versionadded:: 1.2
            `base_estimator_` was renamed to `estimator_`.
-
-    base_estimator_ : ExtraTreesClassifier
-        The child estimator template used to create the collection of fitted
-        sub-estimators.
-
-        .. deprecated:: 1.2
-            `base_estimator_` is deprecated and will be removed in 1.4.
-            Use `estimator_` instead.
 
     estimators_ : list of DecisionTreeClassifier
         The collection of fitted sub-estimators.
@@ -2148,6 +2182,12 @@ class ExtraTreesClassifier(ForestClassifier):
         was never left out during the bootstrap. In this case,
         `oob_decision_function_` might contain NaN. This attribute exists
         only when ``oob_score`` is True.
+
+    estimators_samples_ : list of arrays
+        The subset of drawn samples (i.e., the in-bag samples) for each base
+        estimator. Each subset is defined by an array of the indices selected.
+
+        .. versionadded:: 1.4
 
     See Also
     --------
@@ -2405,13 +2445,15 @@ class ExtraTreesRegressor(ForestRegressor):
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`Glossary <warm_start>` and
-        :ref:`gradient_boosting_warm_start` for details.
+        :ref:`tree_ensemble_warm_start` for details.
 
     ccp_alpha : non-negative float, default=0.0
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
-        :ref:`minimal_cost_complexity_pruning` for details.
+        :ref:`minimal_cost_complexity_pruning` for details. See
+        :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+        for an example of such pruning.
 
         .. versionadded:: 0.22
 
@@ -2451,14 +2493,6 @@ class ExtraTreesRegressor(ForestRegressor):
         .. versionadded:: 1.2
            `base_estimator_` was renamed to `estimator_`.
 
-    base_estimator_ : ExtraTreeRegressor
-        The child estimator template used to create the collection of fitted
-        sub-estimators.
-
-        .. deprecated:: 1.2
-            `base_estimator_` is deprecated and will be removed in 1.4.
-            Use `estimator_` instead.
-
     estimators_ : list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
 
@@ -2494,6 +2528,12 @@ class ExtraTreesRegressor(ForestRegressor):
     oob_prediction_ : ndarray of shape (n_samples,) or (n_samples, n_outputs)
         Prediction computed with out-of-bag estimate on the training set.
         This attribute exists only when ``oob_score`` is True.
+
+    estimators_samples_ : list of arrays
+        The subset of drawn samples (i.e., the in-bag samples) for each base
+        estimator. Each subset is defined by an array of the indices selected.
+
+        .. versionadded:: 1.4
 
     See Also
     --------
@@ -2607,6 +2647,10 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
     ``n_out <= n_estimators * max_leaf_nodes``. If ``max_leaf_nodes == None``,
     the number of leaf nodes is at most ``n_estimators * 2 ** max_depth``.
 
+    For an example of applying Random Trees Embedding to non-linear
+    classification, see
+    :ref:`sphx_glr_auto_examples_ensemble_plot_random_forest_embedding.py`.
+
     Read more in the :ref:`User Guide <random_trees_embedding>`.
 
     Parameters
@@ -2700,7 +2744,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`Glossary <warm_start>` and
-        :ref:`gradient_boosting_warm_start` for details.
+        :ref:`tree_ensemble_warm_start` for details.
 
     Attributes
     ----------
@@ -2710,14 +2754,6 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
 
         .. versionadded:: 1.2
            `base_estimator_` was renamed to `estimator_`.
-
-    base_estimator_ : :class:`~sklearn.tree.ExtraTreeRegressor` instance
-        The child estimator template used to create the collection of fitted
-        sub-estimators.
-
-        .. deprecated:: 1.2
-            `base_estimator_` is deprecated and will be removed in 1.4.
-            Use `estimator_` instead.
 
     estimators_ : list of :class:`~sklearn.tree.ExtraTreeRegressor` instances
         The collection of fitted sub-estimators.
@@ -2741,6 +2777,12 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
 
     one_hot_encoder_ : OneHotEncoder instance
         One-hot encoder used to create the sparse embedding.
+
+    estimators_samples_ : list of arrays
+        The subset of drawn samples (i.e., the in-bag samples) for each base
+        estimator. Each subset is defined by an array of the indices selected.
+
+        .. versionadded:: 1.4
 
     See Also
     --------
@@ -2955,3 +2997,8 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         """
         check_is_fitted(self)
         return self.one_hot_encoder_.transform(self.apply(X))
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags

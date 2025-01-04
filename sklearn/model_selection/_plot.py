@@ -1,8 +1,9 @@
-import warnings
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 
-from ..utils import check_matplotlib_support
+from ..utils._optional_dependencies import check_matplotlib_support
 from ..utils._plotting import _interval_max_min_ratio, _validate_score_name
 from ._validation import learning_curve, validation_curve
 
@@ -16,7 +17,6 @@ class _BaseCurveDisplay:
         negate_score=False,
         score_name=None,
         score_type="test",
-        log_scale="deprecated",
         std_display_style="fill_between",
         line_kw=None,
         fill_between_kw=None,
@@ -108,25 +108,14 @@ class _BaseCurveDisplay:
 
         ax.legend()
 
-        # TODO(1.5): to be removed
-        if log_scale != "deprecated":
-            warnings.warn(
-                (
-                    "The `log_scale` parameter is deprecated as of version 1.3 "
-                    "and will be removed in 1.5. You can use display.ax_.set_xscale "
-                    "and display.ax_.set_yscale instead."
-                ),
-                FutureWarning,
-            )
-            xscale = "log" if log_scale else "linear"
+        # We found that a ratio, smaller or bigger than 5, between the largest and
+        # smallest gap of the x values is a good indicator to choose between linear
+        # and log scale.
+        if _interval_max_min_ratio(x_data) > 5:
+            xscale = "symlog" if x_data.min() <= 0 else "log"
         else:
-            # We found that a ratio, smaller or bigger than 5, between the largest and
-            # smallest gap of the x values is a good indicator to choose between linear
-            # and log scale.
-            if _interval_max_min_ratio(x_data) > 5:
-                xscale = "symlog" if x_data.min() <= 0 else "log"
-            else:
-                xscale = "linear"
+            xscale = "linear"
+
         ax.set_xscale(xscale)
         ax.set_ylabel(f"{score_name}")
 
@@ -226,7 +215,6 @@ class LearningCurveDisplay(_BaseCurveDisplay):
         negate_score=False,
         score_name=None,
         score_type="both",
-        log_scale="deprecated",
         std_display_style="fill_between",
         line_kw=None,
         fill_between_kw=None,
@@ -259,13 +247,6 @@ class LearningCurveDisplay(_BaseCurveDisplay):
             The type of score to plot. Can be one of `"test"`, `"train"`, or
             `"both"`.
 
-        log_scale : bool, default="deprecated"
-            Whether or not to use a logarithmic scale for the x-axis.
-
-            .. deprecated:: 1.3
-               `log_scale` is deprecated in 1.3 and will be removed in 1.5.
-               Use `display.ax_.set_xscale` and `display.ax_.set_yscale` instead.
-
         std_display_style : {"errorbar", "fill_between"} or None, default="fill_between"
             The style used to display the score standard deviation around the
             mean score. If None, no standard deviation representation is
@@ -294,7 +275,6 @@ class LearningCurveDisplay(_BaseCurveDisplay):
             negate_score=negate_score,
             score_name=score_name,
             score_type=score_type,
-            log_scale=log_scale,
             std_display_style=std_display_style,
             line_kw=line_kw,
             fill_between_kw=fill_between_kw,
@@ -326,7 +306,6 @@ class LearningCurveDisplay(_BaseCurveDisplay):
         negate_score=False,
         score_name=None,
         score_type="both",
-        log_scale="deprecated",
         std_display_style="fill_between",
         line_kw=None,
         fill_between_kw=None,
@@ -390,7 +369,7 @@ class LearningCurveDisplay(_BaseCurveDisplay):
         scoring : str or callable, default=None
             A string (see :ref:`scoring_parameter`) or
             a scorer callable object / function with signature
-            `scorer(estimator, X, y)` (see :ref:`scoring`).
+            `scorer(estimator, X, y)` (see :ref:`scoring_callable`).
 
         exploit_incremental_learning : bool, default=False
             If the estimator supports incremental learning, this will be
@@ -450,13 +429,6 @@ class LearningCurveDisplay(_BaseCurveDisplay):
         score_type : {"test", "train", "both"}, default="both"
             The type of score to plot. Can be one of `"test"`, `"train"`, or
             `"both"`.
-
-        log_scale : bool, default="deprecated"
-            Whether or not to use a logarithmic scale for the x-axis.
-
-            .. deprecated:: 1.3
-               `log_scale` is deprecated in 1.3 and will be removed in 1.5.
-               Use `display.ax_.xscale` and `display.ax_.yscale` instead.
 
         std_display_style : {"errorbar", "fill_between"} or None, default="fill_between"
             The style used to display the score standard deviation around the
@@ -525,7 +497,6 @@ class LearningCurveDisplay(_BaseCurveDisplay):
             ax=ax,
             negate_score=negate_score,
             score_type=score_type,
-            log_scale=log_scale,
             std_display_style=std_display_style,
             line_kw=line_kw,
             fill_between_kw=fill_between_kw,
@@ -552,7 +523,7 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
     param_name : str
         Name of the parameter that has been varied.
 
-    param_range : ndarray of shape (n_ticks,)
+    param_range : array-like of shape (n_ticks,)
         The values of the parameter that have been evaluated.
 
     train_scores : ndarray of shape (n_ticks, n_cv_folds)
@@ -694,7 +665,6 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
             negate_score=negate_score,
             score_name=score_name,
             score_type=score_type,
-            log_scale="deprecated",
             std_display_style=std_display_style,
             line_kw=line_kw,
             fill_between_kw=fill_between_kw,
@@ -782,7 +752,7 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
         scoring : str or callable, default=None
             A string (see :ref:`scoring_parameter`) or
             a scorer callable object / function with signature
-            `scorer(estimator, X, y)` (see :ref:`scoring`).
+            `scorer(estimator, X, y)` (see :ref:`scoring_callable`).
 
         n_jobs : int, default=None
             Number of jobs to run in parallel. Training the estimator and
@@ -891,7 +861,7 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
 
         viz = cls(
             param_name=param_name,
-            param_range=param_range,
+            param_range=np.asarray(param_range),
             train_scores=train_scores,
             test_scores=test_scores,
             score_name=score_name,

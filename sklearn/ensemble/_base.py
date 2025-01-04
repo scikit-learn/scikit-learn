@@ -1,28 +1,31 @@
 """Base class for ensemble-based estimators."""
 
-# Authors: Gilles Louppe
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import warnings
 from abc import ABCMeta, abstractmethod
-from typing import List
 
 import numpy as np
 from joblib import effective_n_jobs
 
 from ..base import BaseEstimator, MetaEstimatorMixin, clone, is_classifier, is_regressor
-from ..utils import Bunch, _print_elapsed_time, check_random_state, deprecated
+from ..utils import Bunch, check_random_state
+from ..utils._tags import get_tags
+from ..utils._user_interface import _print_elapsed_time
+from ..utils.metadata_routing import _routing_enabled
 from ..utils.metaestimators import _BaseComposition
 
 
 def _fit_single_estimator(
-    estimator, X, y, sample_weight=None, message_clsname=None, message=None
+    estimator, X, y, fit_params, message_clsname=None, message=None
 ):
     """Private function used to fit an estimator within a job."""
-    if sample_weight is not None:
+    # TODO(SLEP6): remove if-condition for unrouted sample_weight when metadata
+    # routing can't be disabled.
+    if not _routing_enabled() and "sample_weight" in fit_params:
         try:
             with _print_elapsed_time(message_clsname, message):
-                estimator.fit(X, y, sample_weight=sample_weight)
+                estimator.fit(X, y, sample_weight=fit_params["sample_weight"])
         except TypeError as exc:
             if "unexpected keyword argument 'sample_weight'" in str(exc):
                 raise TypeError(
@@ -33,7 +36,7 @@ def _fit_single_estimator(
             raise
     else:
         with _print_elapsed_time(message_clsname, message):
-            estimator.fit(X, y)
+            estimator.fit(X, y, **fit_params)
     return estimator
 
 
@@ -93,31 +96,14 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         The list of attributes to use as parameters when instantiating a
         new base estimator. If none are given, default parameters are used.
 
-    base_estimator : object, default="deprecated"
-        Use `estimator` instead.
-
-        .. deprecated:: 1.2
-            `base_estimator` is deprecated and will be removed in 1.4.
-            Use `estimator` instead.
-
     Attributes
     ----------
     estimator_ : estimator
         The base estimator from which the ensemble is grown.
 
-    base_estimator_ : estimator
-        The base estimator from which the ensemble is grown.
-
-        .. deprecated:: 1.2
-            `base_estimator_` is deprecated and will be removed in 1.4.
-            Use `estimator_` instead.
-
     estimators_ : list of estimators
         The collection of fitted base estimators.
     """
-
-    # overwrite _required_parameters from MetaEstimatorMixin
-    _required_parameters: List[str] = []
 
     @abstractmethod
     def __init__(
@@ -126,15 +112,13 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         *,
         n_estimators=10,
         estimator_params=tuple(),
-        base_estimator="deprecated",
     ):
         # Set parameters
         self.estimator = estimator
         self.n_estimators = n_estimators
         self.estimator_params = estimator_params
-        self.base_estimator = base_estimator
 
-        # Don't instantiate estimators now! Parameters of base_estimator might
+        # Don't instantiate estimators now! Parameters of estimator might
         # still change. Eg., when grid-searching with the nested object syntax.
         # self.estimators_ needs to be filled by the derived classes in fit.
 
@@ -143,40 +127,10 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         Sets the `estimator_` attributes.
         """
-        if self.estimator is not None and (
-            self.base_estimator not in [None, "deprecated"]
-        ):
-            raise ValueError(
-                "Both `estimator` and `base_estimator` were set. Only set `estimator`."
-            )
-
         if self.estimator is not None:
             self.estimator_ = self.estimator
-        elif self.base_estimator != "deprecated":
-            warnings.warn(
-                (
-                    "`base_estimator` was renamed to `estimator` in version 1.2 and "
-                    "will be removed in 1.4."
-                ),
-                FutureWarning,
-            )
-            if self.base_estimator is not None:
-                self.estimator_ = self.base_estimator
-            else:
-                self.estimator_ = default
         else:
             self.estimator_ = default
-
-    # TODO(1.4): remove
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `base_estimator_` was deprecated in version 1.2 and will be removed "
-        "in 1.4. Use `estimator_` instead."
-    )
-    @property
-    def base_estimator_(self):
-        """Estimator used to grow the ensemble."""
-        return self.estimator_
 
     def _make_estimator(self, append=True, random_state=None):
         """Make and configure a copy of the `estimator_` attribute.
@@ -241,8 +195,6 @@ class _BaseHeterogeneousEnsemble(
         training data. If an estimator has been set to `'drop'`, it will not
         appear in `estimators_`.
     """
-
-    _required_parameters = ["estimators"]
 
     @property
     def named_estimators(self):
@@ -332,3 +284,21 @@ class _BaseHeterogeneousEnsemble(
             names mapped to their values.
         """
         return super()._get_params("estimators", deep=deep)
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        try:
+            tags.input_tags.allow_nan = all(
+                get_tags(est[1]).input_tags.allow_nan if est[1] != "drop" else True
+                for est in self.estimators
+            )
+            tags.input_tags.sparse = all(
+                get_tags(est[1]).input_tags.sparse if est[1] != "drop" else True
+                for est in self.estimators
+            )
+        except Exception:
+            # If `estimators` does not comply with our API (list of tuples) then it will
+            # fail. In this case, we assume that `allow_nan` and `sparse` are False but
+            # the parameter validation will raise an error during `fit`.
+            pass  # pragma: no cover
+        return tags

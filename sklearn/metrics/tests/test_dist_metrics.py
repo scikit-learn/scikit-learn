@@ -4,18 +4,22 @@ import pickle
 
 import numpy as np
 import pytest
-import scipy.sparse as sp
 from scipy.spatial.distance import cdist
 
 from sklearn.metrics import DistanceMetric
 from sklearn.metrics._dist_metrics import (
     BOOL_METRICS,
+    DEPRECATED_METRICS,
     DistanceMetric32,
     DistanceMetric64,
 )
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_allclose, create_memmap_backed_data
-from sklearn.utils.fixes import parse_version, sp_version
+from sklearn.utils._testing import (
+    assert_allclose,
+    create_memmap_backed_data,
+    ignore_warnings,
+)
+from sklearn.utils.fixes import CSR_CONTAINERS, parse_version, sp_version
 
 
 def dist_func(x1, x2, p):
@@ -61,10 +65,11 @@ METRICS_DEFAULT_PARAMS = [
     "metric_param_grid", METRICS_DEFAULT_PARAMS, ids=lambda params: params[0]
 )
 @pytest.mark.parametrize("X, Y", [(X64, Y64), (X32, Y32), (X_mmap, Y_mmap)])
-def test_cdist(metric_param_grid, X, Y):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_cdist(metric_param_grid, X, Y, csr_container):
     metric, param_grid = metric_param_grid
     keys = param_grid.keys()
-    X_csr, Y_csr = sp.csr_matrix(X), sp.csr_matrix(Y)
+    X_csr, Y_csr = csr_container(X), csr_container(Y)
     for vals in itertools.product(*param_grid.values()):
         kwargs = dict(zip(keys, vals))
         rtol_dict = {}
@@ -110,8 +115,17 @@ def test_cdist(metric_param_grid, X, Y):
 @pytest.mark.parametrize(
     "X_bool, Y_bool", [(X_bool, Y_bool), (X_bool_mmap, Y_bool_mmap)]
 )
-def test_cdist_bool_metric(metric, X_bool, Y_bool):
-    D_scipy_cdist = cdist(X_bool, Y_bool, metric)
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_cdist_bool_metric(metric, X_bool, Y_bool, csr_container):
+    if metric in DEPRECATED_METRICS:
+        with ignore_warnings(category=DeprecationWarning):
+            # Some metrics can be deprecated depending on the scipy version.
+            # But if they are present, we still want to test wether
+            # scikit-learn gives the same result, whether or not they are
+            # deprecated.
+            D_scipy_cdist = cdist(X_bool, Y_bool, metric)
+    else:
+        D_scipy_cdist = cdist(X_bool, Y_bool, metric)
 
     dm = DistanceMetric.get_metric(metric)
     D_sklearn = dm.pairwise(X_bool, Y_bool)
@@ -119,7 +133,7 @@ def test_cdist_bool_metric(metric, X_bool, Y_bool):
 
     # DistanceMetric.pairwise must be consistent
     # on all combinations of format in {sparse, dense}².
-    X_bool_csr, Y_bool_csr = sp.csr_matrix(X_bool), sp.csr_matrix(Y_bool)
+    X_bool_csr, Y_bool_csr = csr_container(X_bool), csr_container(Y_bool)
 
     D_sklearn = dm.pairwise(X_bool, Y_bool)
     assert D_sklearn.flags.c_contiguous
@@ -142,10 +156,11 @@ def test_cdist_bool_metric(metric, X_bool, Y_bool):
     "metric_param_grid", METRICS_DEFAULT_PARAMS, ids=lambda params: params[0]
 )
 @pytest.mark.parametrize("X", [X64, X32, X_mmap])
-def test_pdist(metric_param_grid, X):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_pdist(metric_param_grid, X, csr_container):
     metric, param_grid = metric_param_grid
     keys = param_grid.keys()
-    X_csr = sp.csr_matrix(X)
+    X_csr = csr_container(X)
     for vals in itertools.product(*param_grid.values()):
         kwargs = dict(zip(keys, vals))
         rtol_dict = {}
@@ -215,13 +230,23 @@ def test_distance_metrics_dtype_consistency(metric_param_grid):
 
 @pytest.mark.parametrize("metric", BOOL_METRICS)
 @pytest.mark.parametrize("X_bool", [X_bool, X_bool_mmap])
-def test_pdist_bool_metrics(metric, X_bool):
-    D_scipy_pdist = cdist(X_bool, X_bool, metric)
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_pdist_bool_metrics(metric, X_bool, csr_container):
+    if metric in DEPRECATED_METRICS:
+        with ignore_warnings(category=DeprecationWarning):
+            # Some metrics can be deprecated depending on the scipy version.
+            # But if they are present, we still want to test wether
+            # scikit-learn gives the same result, whether or not they are
+            # deprecated.
+            D_scipy_pdist = cdist(X_bool, X_bool, metric)
+    else:
+        D_scipy_pdist = cdist(X_bool, X_bool, metric)
+
     dm = DistanceMetric.get_metric(metric)
     D_sklearn = dm.pairwise(X_bool)
     assert_allclose(D_sklearn, D_scipy_pdist)
 
-    X_bool_csr = sp.csr_matrix(X_bool)
+    X_bool_csr = csr_container(X_bool)
     D_sklearn = dm.pairwise(X_bool_csr)
     assert_allclose(D_sklearn, D_scipy_pdist)
 
@@ -259,12 +284,13 @@ def test_pickle_bool_metrics(metric, X_bool):
 
 
 @pytest.mark.parametrize("X, Y", [(X64, Y64), (X32, Y32), (X_mmap, Y_mmap)])
-def test_haversine_metric(X, Y):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_haversine_metric(X, Y, csr_container):
     # The Haversine DistanceMetric only works on 2 features.
     X = np.asarray(X[:, :2])
     Y = np.asarray(Y[:, :2])
 
-    X_csr, Y_csr = sp.csr_matrix(X), sp.csr_matrix(Y)
+    X_csr, Y_csr = csr_container(X), csr_container(Y)
 
     # Haversine is not supported by scipy.special.distance.{cdist,pdist}
     # So we reimplement it to have a reference.
@@ -360,11 +386,14 @@ def test_readonly_kwargs():
     [
         (np.array([1, 1.5, -13]), ValueError, "w cannot contain negative weights"),
         (np.array([1, 1.5, np.nan]), ValueError, "w contains NaN"),
-        (
-            sp.csr_matrix([1, 1.5, 1]),
-            TypeError,
-            "A sparse matrix was passed, but dense data is required",
-        ),
+        *[
+            (
+                csr_container([[1, 1.5, 1]]),
+                TypeError,
+                "Sparse data was passed for w, but dense data is required",
+            )
+            for csr_container in CSR_CONTAINERS
+        ],
         (np.array(["a", "b", "c"]), ValueError, "could not convert string to float"),
         (np.array([]), ValueError, "a minimum of 1 is required"),
     ],

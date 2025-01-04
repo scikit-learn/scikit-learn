@@ -1,169 +1,182 @@
 """
 ===================================
-Early stopping of Gradient Boosting
+Early stopping in Gradient Boosting
 ===================================
 
-Gradient boosting is an ensembling technique where several weak learners
-(regression trees) are combined to yield a powerful single model, in an
-iterative fashion.
+Gradient Boosting is an ensemble technique that combines multiple weak
+learners, typically decision trees, to create a robust and powerful
+predictive model. It does so in an iterative fashion, where each new stage
+(tree) corrects the errors of the previous ones.
 
-Early stopping support in Gradient Boosting enables us to find the least number
-of iterations which is sufficient to build a model that generalizes well to
-unseen data.
+Early stopping is a technique in Gradient Boosting that allows us to find
+the optimal number of iterations required to build a model that generalizes
+well to unseen data and avoids overfitting. The concept is simple: we set
+aside a portion of our dataset as a validation set (specified using
+`validation_fraction`) to assess the model's performance during training.
+As the model is iteratively built with additional stages (trees), its
+performance on the validation set is monitored as a function of the
+number of steps.
 
-The concept of early stopping is simple. We specify a ``validation_fraction``
-which denotes the fraction of the whole dataset that will be kept aside from
-training to assess the validation loss of the model. The gradient boosting
-model is trained using the training set and evaluated using the validation set.
-When each additional stage of regression tree is added, the validation set is
-used to score the model.  This is continued until the scores of the model in
-the last ``n_iter_no_change`` stages do not improve by at least `tol`. After
-that the model is considered to have converged and further addition of stages
-is "stopped early".
+Early stopping becomes effective when the model's performance on the
+validation set plateaus or worsens (within deviations specified by `tol`)
+over a certain number of consecutive stages (specified by `n_iter_no_change`).
+This signals that the model has reached a point where further iterations may
+lead to overfitting, and it's time to stop training.
 
-The number of stages of the final model is available at the attribute
-``n_estimators_``.
-
-This example illustrates how the early stopping can used in the
-:class:`~sklearn.ensemble.GradientBoostingClassifier` model to achieve
-almost the same accuracy as compared to a model built without early stopping
-using many fewer estimators. This can significantly reduce training time,
-memory usage and prediction latency.
-
+The number of estimators (trees) in the final model, when early stopping is
+applied, can be accessed using the `n_estimators_` attribute. Overall, early
+stopping is a valuable tool to strike a balance between model performance and
+efficiency in gradient boosting.
 """
 
-# Authors: Vighnesh Birodkar <vighneshbirodkar@nyu.edu>
-#          Raghav RV <rvraghav93@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+# %%
+# Data Preparation
+# ----------------
+# First we load and prepares the California Housing Prices dataset for
+# training and evaluation. It subsets the dataset, splits it into training
+# and validation sets.
 
 import time
 
 import matplotlib.pyplot as plt
-import numpy as np
 
-from sklearn import datasets, ensemble
+from sklearn.datasets import fetch_california_housing
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 
-data_list = [
-    datasets.load_iris(return_X_y=True),
-    datasets.make_classification(n_samples=800, random_state=0),
-    datasets.make_hastie_10_2(n_samples=2000, random_state=0),
-]
-names = ["Iris Data", "Classification Data", "Hastie Data"]
+data = fetch_california_housing()
+X, y = data.data[:600], data.target[:600]
 
-n_gb = []
-score_gb = []
-time_gb = []
-n_gbes = []
-score_gbes = []
-time_gbes = []
-
-n_estimators = 200
-
-for X, y in data_list:
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=0
-    )
-
-    # We specify that if the scores don't improve by at least 0.01 for the last
-    # 10 stages, stop fitting additional stages
-    gbes = ensemble.GradientBoostingClassifier(
-        n_estimators=n_estimators,
-        validation_fraction=0.2,
-        n_iter_no_change=5,
-        tol=0.01,
-        random_state=0,
-    )
-    gb = ensemble.GradientBoostingClassifier(n_estimators=n_estimators, random_state=0)
-    start = time.time()
-    gb.fit(X_train, y_train)
-    time_gb.append(time.time() - start)
-
-    start = time.time()
-    gbes.fit(X_train, y_train)
-    time_gbes.append(time.time() - start)
-
-    score_gb.append(gb.score(X_test, y_test))
-    score_gbes.append(gbes.score(X_test, y_test))
-
-    n_gb.append(gb.n_estimators_)
-    n_gbes.append(gbes.n_estimators_)
-
-bar_width = 0.2
-n = len(data_list)
-index = np.arange(0, n * bar_width, bar_width) * 2.5
-index = index[0:n]
+X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
 
 # %%
-# Compare scores with and without early stopping
-# ----------------------------------------------
+# Model Training and Comparison
+# -----------------------------
+# Two :class:`~sklearn.ensemble.GradientBoostingRegressor` models are trained:
+# one with and another without early stopping. The purpose is to compare their
+# performance. It also calculates the training time and the `n_estimators_`
+# used by both models.
 
-plt.figure(figsize=(9, 5))
+params = dict(n_estimators=1000, max_depth=5, learning_rate=0.1, random_state=42)
 
-bar1 = plt.bar(
-    index, score_gb, bar_width, label="Without early stopping", color="crimson"
+gbm_full = GradientBoostingRegressor(**params)
+gbm_early_stopping = GradientBoostingRegressor(
+    **params,
+    validation_fraction=0.1,
+    n_iter_no_change=10,
 )
-bar2 = plt.bar(
-    index + bar_width, score_gbes, bar_width, label="With early stopping", color="coral"
-)
 
-plt.xticks(index + bar_width, names)
-plt.yticks(np.arange(0, 1.3, 0.1))
+start_time = time.time()
+gbm_full.fit(X_train, y_train)
+training_time_full = time.time() - start_time
+n_estimators_full = gbm_full.n_estimators_
 
-
-def autolabel(rects, n_estimators):
-    """
-    Attach a text label above each bar displaying n_estimators of each model
-    """
-    for i, rect in enumerate(rects):
-        plt.text(
-            rect.get_x() + rect.get_width() / 2.0,
-            1.05 * rect.get_height(),
-            "n_est=%d" % n_estimators[i],
-            ha="center",
-            va="bottom",
-        )
-
-
-autolabel(bar1, n_gb)
-autolabel(bar2, n_gbes)
-
-plt.ylim([0, 1.3])
-plt.legend(loc="best")
-plt.grid(True)
-
-plt.xlabel("Datasets")
-plt.ylabel("Test score")
-
-plt.show()
-
+start_time = time.time()
+gbm_early_stopping.fit(X_train, y_train)
+training_time_early_stopping = time.time() - start_time
+estimators_early_stopping = gbm_early_stopping.n_estimators_
 
 # %%
-# Compare fit times with and without early stopping
-# -------------------------------------------------
+# Error Calculation
+# -----------------
+# The code calculates the :func:`~sklearn.metrics.mean_squared_error` for both
+# training and validation datasets for the models trained in the previous
+# section. It computes the errors for each boosting iteration. The purpose is
+# to assess the performance and convergence of the models.
 
-plt.figure(figsize=(9, 5))
+train_errors_without = []
+val_errors_without = []
 
-bar1 = plt.bar(
-    index, time_gb, bar_width, label="Without early stopping", color="crimson"
-)
-bar2 = plt.bar(
-    index + bar_width, time_gbes, bar_width, label="With early stopping", color="coral"
-)
+train_errors_with = []
+val_errors_with = []
 
-max_y = np.amax(np.maximum(time_gb, time_gbes))
+for i, (train_pred, val_pred) in enumerate(
+    zip(
+        gbm_full.staged_predict(X_train),
+        gbm_full.staged_predict(X_val),
+    )
+):
+    train_errors_without.append(mean_squared_error(y_train, train_pred))
+    val_errors_without.append(mean_squared_error(y_val, val_pred))
 
-plt.xticks(index + bar_width, names)
-plt.yticks(np.linspace(0, 1.3 * max_y, 13))
+for i, (train_pred, val_pred) in enumerate(
+    zip(
+        gbm_early_stopping.staged_predict(X_train),
+        gbm_early_stopping.staged_predict(X_val),
+    )
+):
+    train_errors_with.append(mean_squared_error(y_train, train_pred))
+    val_errors_with.append(mean_squared_error(y_val, val_pred))
 
-autolabel(bar1, n_gb)
-autolabel(bar2, n_gbes)
+# %%
+# Visualize Comparison
+# --------------------
+# It includes three subplots:
+#
+# 1. Plotting training errors of both models over boosting iterations.
+# 2. Plotting validation errors of both models over boosting iterations.
+# 3. Creating a bar chart to compare the training times and the estimator used
+#    of the models with and without early stopping.
+#
 
-plt.ylim([0, 1.3 * max_y])
-plt.legend(loc="best")
-plt.grid(True)
+fig, axes = plt.subplots(ncols=3, figsize=(12, 4))
 
-plt.xlabel("Datasets")
-plt.ylabel("Fit Time")
+axes[0].plot(train_errors_without, label="gbm_full")
+axes[0].plot(train_errors_with, label="gbm_early_stopping")
+axes[0].set_xlabel("Boosting Iterations")
+axes[0].set_ylabel("MSE (Training)")
+axes[0].set_yscale("log")
+axes[0].legend()
+axes[0].set_title("Training Error")
 
+axes[1].plot(val_errors_without, label="gbm_full")
+axes[1].plot(val_errors_with, label="gbm_early_stopping")
+axes[1].set_xlabel("Boosting Iterations")
+axes[1].set_ylabel("MSE (Validation)")
+axes[1].set_yscale("log")
+axes[1].legend()
+axes[1].set_title("Validation Error")
+
+training_times = [training_time_full, training_time_early_stopping]
+labels = ["gbm_full", "gbm_early_stopping"]
+bars = axes[2].bar(labels, training_times)
+axes[2].set_ylabel("Training Time (s)")
+
+for bar, n_estimators in zip(bars, [n_estimators_full, estimators_early_stopping]):
+    height = bar.get_height()
+    axes[2].text(
+        bar.get_x() + bar.get_width() / 2,
+        height + 0.001,
+        f"Estimators: {n_estimators}",
+        ha="center",
+        va="bottom",
+    )
+
+plt.tight_layout()
 plt.show()
+
+# %%
+# The difference in training error between the `gbm_full` and the
+# `gbm_early_stopping` stems from the fact that `gbm_early_stopping` sets
+# aside `validation_fraction` of the training data as internal validation set.
+# Early stopping is decided based on this internal validation score.
+
+# %%
+# Summary
+# -------
+# In our example with the :class:`~sklearn.ensemble.GradientBoostingRegressor`
+# model on the California Housing Prices dataset, we have demonstrated the
+# practical benefits of early stopping:
+#
+# - **Preventing Overfitting:** We showed how the validation error stabilizes
+#   or starts to increase after a certain point, indicating that the model
+#   generalizes better to unseen data. This is achieved by stopping the training
+#   process before overfitting occurs.
+# - **Improving Training Efficiency:** We compared training times between
+#   models with and without early stopping. The model with early stopping
+#   achieved comparable accuracy while requiring significantly fewer
+#   estimators, resulting in faster training.

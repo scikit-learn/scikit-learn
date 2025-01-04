@@ -1,20 +1,26 @@
 """
 Test the ColumnTransformer.
 """
+
 import pickle
 import re
+import warnings
+from unittest.mock import Mock
 
+import joblib
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 from scipy import sparse
 
+from sklearn import config_context
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.compose import (
     ColumnTransformer,
     make_column_selector,
     make_column_transformer,
 )
+from sklearn.compose._column_transformer import _RemainderColsList
 from sklearn.exceptions import NotFittedError
 from sklearn.feature_selection import VarianceThreshold
 from sklearn.preprocessing import (
@@ -28,12 +34,14 @@ from sklearn.tests.metadata_routing_common import (
     _Registry,
     check_recorded_metadata,
 )
+from sklearn.utils._indexing import _safe_indexing
 from sklearn.utils._testing import (
+    _convert_container,
     assert_allclose_dense_sparse,
     assert_almost_equal,
     assert_array_equal,
 )
-from sklearn.utils.fixes import CSR_CONTAINERS
+from sklearn.utils.fixes import CSR_CONTAINERS, parse_version
 
 
 class Trans(TransformerMixin, BaseEstimator):
@@ -45,7 +53,7 @@ class Trans(TransformerMixin, BaseEstimator):
         if hasattr(X, "to_frame"):
             return X.to_frame()
         # 1D array -> 2D array
-        if X.ndim == 1:
+        if getattr(X, "ndim", 2) == 1:
             return np.atleast_2d(X).T
         return X
 
@@ -169,27 +177,29 @@ def test_column_transformer_tuple_transformers_parameter():
     )
 
 
-def test_column_transformer_dataframe():
-    pd = pytest.importorskip("pandas")
+@pytest.mark.parametrize("constructor_name", ["dataframe", "polars"])
+def test_column_transformer_dataframe(constructor_name):
+    if constructor_name == "dataframe":
+        dataframe_lib = pytest.importorskip("pandas")
+    else:
+        dataframe_lib = pytest.importorskip(constructor_name)
 
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
-    X_df = pd.DataFrame(X_array, columns=["first", "second"])
+    X_df = _convert_container(
+        X_array, constructor_name, columns_name=["first", "second"]
+    )
 
     X_res_first = np.array([0, 1, 2]).reshape(-1, 1)
     X_res_both = X_array
 
     cases = [
         # String keys: label based
-        # scalar
-        ("first", X_res_first),
         # list
         (["first"], X_res_first),
         (["first", "second"], X_res_both),
         # slice
         (slice("first", "second"), X_res_both),
         # int keys: positional
-        # scalar
-        (0, X_res_first),
         # list
         ([0], X_res_first),
         ([0, 1], X_res_both),
@@ -199,9 +209,21 @@ def test_column_transformer_dataframe():
         (slice(0, 2), X_res_both),
         # boolean mask
         (np.array([True, False]), X_res_first),
-        (pd.Series([True, False], index=["first", "second"]), X_res_first),
         ([True, False], X_res_first),
     ]
+    if constructor_name == "dataframe":
+        # Scalars are only supported for pandas dataframes.
+        cases.extend(
+            [
+                # scalar
+                (0, X_res_first),
+                ("first", X_res_first),
+                (
+                    dataframe_lib.Series([True, False], index=["first", "second"]),
+                    X_res_first,
+                ),
+            ]
+        )
 
     for selection, res in cases:
         ct = ColumnTransformer([("trans", Trans(), selection)], remainder="drop")
@@ -274,37 +296,49 @@ def test_column_transformer_dataframe():
 
         def transform(self, X, y=None):
             assert isinstance(X, self.expected_type_transform)
-            if isinstance(X, pd.Series):
+            if isinstance(X, dataframe_lib.Series):
                 X = X.to_frame()
             return X
 
     ct = ColumnTransformer(
-        [("trans", TransAssert(expected_type_transform=pd.Series), "first")],
-        remainder="drop",
-    )
-    ct.fit_transform(X_df)
-    ct = ColumnTransformer(
         [
             (
                 "trans",
-                TransAssert(expected_type_transform=pd.DataFrame),
+                TransAssert(expected_type_transform=dataframe_lib.DataFrame),
                 ["first", "second"],
             )
         ]
     )
     ct.fit_transform(X_df)
 
-    # integer column spec + integer column names -> still use positional
-    X_df2 = X_df.copy()
-    X_df2.columns = [1, 0]
-    ct = ColumnTransformer([("trans", Trans(), 0)], remainder="drop")
-    assert_array_equal(ct.fit_transform(X_df2), X_res_first)
-    assert_array_equal(ct.fit(X_df2).transform(X_df2), X_res_first)
+    if constructor_name == "dataframe":
+        # DataFrame protocol does not have 1d columns, so we only test on Pandas
+        # dataframes.
+        ct = ColumnTransformer(
+            [
+                (
+                    "trans",
+                    TransAssert(expected_type_transform=dataframe_lib.Series),
+                    "first",
+                )
+            ],
+            remainder="drop",
+        )
+        ct.fit_transform(X_df)
 
-    assert len(ct.transformers_) == 2
-    assert ct.transformers_[-1][0] == "remainder"
-    assert ct.transformers_[-1][1] == "drop"
-    assert_array_equal(ct.transformers_[-1][2], [1])
+        # Only test on pandas because the dataframe protocol requires string column
+        # names
+        # integer column spec + integer column names -> still use positional
+        X_df2 = X_df.copy()
+        X_df2.columns = [1, 0]
+        ct = ColumnTransformer([("trans", Trans(), 0)], remainder="drop")
+        assert_array_equal(ct.fit_transform(X_df2), X_res_first)
+        assert_array_equal(ct.fit(X_df2).transform(X_df2), X_res_first)
+
+        assert len(ct.transformers_) == 2
+        assert ct.transformers_[-1][0] == "remainder"
+        assert ct.transformers_[-1][1] == "drop"
+        assert_array_equal(ct.transformers_[-1][2], [1])
 
 
 @pytest.mark.parametrize("pandas", [True, False], ids=["pandas", "numpy"])
@@ -758,6 +792,7 @@ def test_column_transformer_get_set_params():
         "transformer_weights": None,
         "verbose_feature_names_out": True,
         "verbose": False,
+        "force_int_remainder_cols": True,
     }
 
     assert ct.get_params() == exp
@@ -779,6 +814,7 @@ def test_column_transformer_get_set_params():
         "transformer_weights": None,
         "verbose_feature_names_out": True,
         "verbose": False,
+        "force_int_remainder_cols": True,
     }
 
     assert ct.get_params() == exp
@@ -882,7 +918,7 @@ def test_column_transformer_remainder():
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == "remainder"
-    assert ct.transformers_[-1][1] == "passthrough"
+    assert isinstance(ct.transformers_[-1][1], FunctionTransformer)
     assert_array_equal(ct.transformers_[-1][2], [1])
 
     # column order is not preserved (passed through added to end)
@@ -891,7 +927,7 @@ def test_column_transformer_remainder():
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both[:, ::-1])
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == "remainder"
-    assert ct.transformers_[-1][1] == "passthrough"
+    assert isinstance(ct.transformers_[-1][1], FunctionTransformer)
     assert_array_equal(ct.transformers_[-1][2], [0])
 
     # passthrough when all actual transformers are skipped
@@ -900,7 +936,7 @@ def test_column_transformer_remainder():
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_second)
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == "remainder"
-    assert ct.transformers_[-1][1] == "passthrough"
+    assert isinstance(ct.transformers_[-1][1], FunctionTransformer)
     assert_array_equal(ct.transformers_[-1][2], [1])
 
     # check default for make_column_transformer
@@ -908,38 +944,135 @@ def test_column_transformer_remainder():
     assert ct.remainder == "drop"
 
 
+# TODO(1.7): check for deprecated force_int_remainder_cols
+# TODO(1.9): remove force_int but keep the test
 @pytest.mark.parametrize(
-    "key", [[0], np.array([0]), slice(0, 1), np.array([True, False])]
+    "cols1, cols2",
+    [
+        ([0], [False, True, False]),  # mix types
+        ([0], [1]),  # ints
+        (lambda x: [0], lambda x: [1]),  # callables
+    ],
 )
-def test_column_transformer_remainder_numpy(key):
+@pytest.mark.parametrize("force_int", [False, True])
+def test_column_transformer_remainder_dtypes_ints(force_int, cols1, cols2):
+    """Check that the remainder columns are always stored as indices when
+    other columns are not all specified as column names or masks, regardless of
+    `force_int_remainder_cols`.
+    """
+    X = np.ones((1, 3))
+
+    ct = make_column_transformer(
+        (Trans(), cols1),
+        (Trans(), cols2),
+        remainder="passthrough",
+        force_int_remainder_cols=force_int,
+    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        ct.fit_transform(X)
+        assert ct.transformers_[-1][-1][0] == 2
+
+
+# TODO(1.7): check for deprecated force_int_remainder_cols
+# TODO(1.9): remove force_int but keep the test
+@pytest.mark.parametrize(
+    "force_int, cols1, cols2, expected_cols",
+    [
+        (True, ["A"], ["B"], [2]),
+        (False, ["A"], ["B"], ["C"]),
+        (True, [True, False, False], [False, True, False], [2]),
+        (False, [True, False, False], [False, True, False], [False, False, True]),
+    ],
+)
+def test_column_transformer_remainder_dtypes(force_int, cols1, cols2, expected_cols):
+    """Check that the remainder columns format matches the format of the other
+    columns when they're all strings or masks, unless `force_int = True`.
+    """
+    X = np.ones((1, 3))
+
+    if isinstance(cols1[0], str):
+        pd = pytest.importorskip("pandas")
+        X = pd.DataFrame(X, columns=["A", "B", "C"])
+
+    # if inputs are column names store remainder columns as column names unless
+    # force_int_remainder_cols is True
+    ct = make_column_transformer(
+        (Trans(), cols1),
+        (Trans(), cols2),
+        remainder="passthrough",
+        force_int_remainder_cols=force_int,
+    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        ct.fit_transform(X)
+
+    if force_int:
+        # If we forced using ints and we access the remainder columns a warning is shown
+        match = "The format of the columns of the 'remainder' transformer"
+        cols = ct.transformers_[-1][-1]
+        with pytest.warns(FutureWarning, match=match):
+            cols[0]
+    else:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            cols = ct.transformers_[-1][-1]
+            cols[0]
+
+    assert cols == expected_cols
+
+
+def test_remainder_list_repr():
+    cols = _RemainderColsList([0, 1], warning_enabled=False)
+    assert str(cols) == "[0, 1]"
+    assert repr(cols) == "[0, 1]"
+    mock = Mock()
+    cols._repr_pretty_(mock, False)
+    mock.text.assert_called_once_with("[0, 1]")
+
+
+@pytest.mark.parametrize(
+    "key, expected_cols",
+    [
+        ([0], [1]),
+        (np.array([0]), [1]),
+        (slice(0, 1), [1]),
+        (np.array([True, False]), [False, True]),
+    ],
+)
+def test_column_transformer_remainder_numpy(key, expected_cols):
     # test different ways that columns are specified with passthrough
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     X_res_both = X_array
 
-    ct = ColumnTransformer([("trans1", Trans(), key)], remainder="passthrough")
+    ct = ColumnTransformer(
+        [("trans1", Trans(), key)],
+        remainder="passthrough",
+        force_int_remainder_cols=False,
+    )
     assert_array_equal(ct.fit_transform(X_array), X_res_both)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == "remainder"
-    assert ct.transformers_[-1][1] == "passthrough"
-    assert_array_equal(ct.transformers_[-1][2], [1])
+    assert isinstance(ct.transformers_[-1][1], FunctionTransformer)
+    assert ct.transformers_[-1][2] == expected_cols
 
 
 @pytest.mark.parametrize(
-    "key",
+    "key, expected_cols",
     [
-        [0],
-        slice(0, 1),
-        np.array([True, False]),
-        ["first"],
-        "pd-index",
-        np.array(["first"]),
-        np.array(["first"], dtype=object),
-        slice(None, "first"),
-        slice("first", "first"),
+        ([0], [1]),
+        (slice(0, 1), [1]),
+        (np.array([True, False]), [False, True]),
+        (["first"], ["second"]),
+        ("pd-index", ["second"]),
+        (np.array(["first"]), ["second"]),
+        (np.array(["first"], dtype=object), ["second"]),
+        (slice(None, "first"), ["second"]),
+        (slice("first", "first"), ["second"]),
     ],
 )
-def test_column_transformer_remainder_pandas(key):
+def test_column_transformer_remainder_pandas(key, expected_cols):
     # test different ways that columns are specified with passthrough
     pd = pytest.importorskip("pandas")
     if isinstance(key, str) and key == "pd-index":
@@ -949,33 +1082,47 @@ def test_column_transformer_remainder_pandas(key):
     X_df = pd.DataFrame(X_array, columns=["first", "second"])
     X_res_both = X_array
 
-    ct = ColumnTransformer([("trans1", Trans(), key)], remainder="passthrough")
+    ct = ColumnTransformer(
+        [("trans1", Trans(), key)],
+        remainder="passthrough",
+        force_int_remainder_cols=False,
+    )
     assert_array_equal(ct.fit_transform(X_df), X_res_both)
     assert_array_equal(ct.fit(X_df).transform(X_df), X_res_both)
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == "remainder"
-    assert ct.transformers_[-1][1] == "passthrough"
-    assert_array_equal(ct.transformers_[-1][2], [1])
+    assert isinstance(ct.transformers_[-1][1], FunctionTransformer)
+    assert ct.transformers_[-1][2] == expected_cols
 
 
 @pytest.mark.parametrize(
-    "key", [[0], np.array([0]), slice(0, 1), np.array([True, False, False])]
+    "key, expected_cols",
+    [
+        ([0], [1, 2]),
+        (np.array([0]), [1, 2]),
+        (slice(0, 1), [1, 2]),
+        (np.array([True, False, False]), [False, True, True]),
+    ],
 )
-def test_column_transformer_remainder_transformer(key):
+def test_column_transformer_remainder_transformer(key, expected_cols):
     X_array = np.array([[0, 1, 2], [2, 4, 6], [8, 6, 4]]).T
     X_res_both = X_array.copy()
 
     # second and third columns are doubled when remainder = DoubleTrans
     X_res_both[:, 1:3] *= 2
 
-    ct = ColumnTransformer([("trans1", Trans(), key)], remainder=DoubleTrans())
+    ct = ColumnTransformer(
+        [("trans1", Trans(), key)],
+        remainder=DoubleTrans(),
+        force_int_remainder_cols=False,
+    )
 
     assert_array_equal(ct.fit_transform(X_array), X_res_both)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == "remainder"
     assert isinstance(ct.transformers_[-1][1], DoubleTrans)
-    assert_array_equal(ct.transformers_[-1][2], [1, 2])
+    assert ct.transformers_[-1][2] == expected_cols
 
 
 def test_column_transformer_no_remaining_remainder_transformer():
@@ -1070,6 +1217,7 @@ def test_column_transformer_get_set_params_with_remainder():
         "transformer_weights": None,
         "verbose_feature_names_out": True,
         "verbose": False,
+        "force_int_remainder_cols": True,
     }
 
     assert ct.get_params() == exp
@@ -1090,6 +1238,7 @@ def test_column_transformer_get_set_params_with_remainder():
         "transformer_weights": None,
         "verbose_feature_names_out": True,
         "verbose": False,
+        "force_int_remainder_cols": True,
     }
     assert ct.get_params() == exp
 
@@ -1446,7 +1595,9 @@ def test_sk_visual_block_remainder_fitted_pandas(remainder):
     pd = pytest.importorskip("pandas")
     ohe = OneHotEncoder()
     ct = ColumnTransformer(
-        transformers=[("ohe", ohe, ["col1", "col2"])], remainder=remainder
+        transformers=[("ohe", ohe, ["col1", "col2"])],
+        remainder=remainder,
+        force_int_remainder_cols=False,
     )
     df = pd.DataFrame(
         {
@@ -1707,6 +1858,72 @@ def test_verbose_feature_names_out_true(transformers, remainder, expected_names)
     ct = ColumnTransformer(
         transformers,
         remainder=remainder,
+    )
+    ct.fit(df)
+
+    names = ct.get_feature_names_out()
+    assert isinstance(names, np.ndarray)
+    assert names.dtype == object
+    assert_array_equal(names, expected_names)
+
+
+def _feature_names_out_callable_name_clash(trans_name: str, feat_name: str):
+    return f"{trans_name[:2]}++{feat_name}"
+
+
+def _feature_names_out_callable_upper(trans_name: str, feat_name: str):
+    return f"{trans_name.upper()}={feat_name.upper()}"
+
+
+@pytest.mark.parametrize(
+    "transformers, remainder, verbose_feature_names_out, expected_names",
+    [
+        (
+            [
+                ("bycol1", TransWithNames(), ["d", "c"]),
+                ("bycol2", "passthrough", ["d"]),
+            ],
+            "passthrough",
+            _feature_names_out_callable_name_clash,
+            ["by++d", "by++c", "by++d", "re++a", "re++b"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(), ["d", "c"]),
+                ("bycol2", "passthrough", ["d"]),
+            ],
+            "drop",
+            "{feature_name}-{transformer_name}",
+            ["d-bycol1", "c-bycol1", "d-bycol2"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(), ["d", "c"]),
+                ("bycol2", "passthrough", slice("c", "d")),
+            ],
+            "passthrough",
+            _feature_names_out_callable_upper,
+            [
+                "BYCOL1=D",
+                "BYCOL1=C",
+                "BYCOL2=C",
+                "BYCOL2=D",
+                "REMAINDER=A",
+                "REMAINDER=B",
+            ],
+        ),
+    ],
+)
+def test_verbose_feature_names_out_callable_or_str(
+    transformers, remainder, verbose_feature_names_out, expected_names
+):
+    """Check feature_names_out for verbose_feature_names_out=True (default)"""
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame([[1, 2, 3, 4]], columns=["a", "b", "c", "d"])
+    ct = ColumnTransformer(
+        transformers,
+        remainder=remainder,
+        verbose_feature_names_out=verbose_feature_names_out,
     )
     ct.fit(df)
 
@@ -2248,6 +2465,206 @@ def test_remainder_set_output():
     assert isinstance(out, np.ndarray)
 
 
+def test_transform_pd_na():
+    """Check behavior when a tranformer's output contains pandas.NA
+
+    It should raise an error unless the output config is set to 'pandas'.
+    """
+    pd = pytest.importorskip("pandas")
+    if not hasattr(pd, "Float64Dtype"):
+        pytest.skip(
+            "The issue with pd.NA tested here does not happen in old versions that do"
+            " not have the extension dtypes"
+        )
+    df = pd.DataFrame({"a": [1.5, None]})
+    ct = make_column_transformer(("passthrough", ["a"]))
+    # No warning with non-extension dtypes and np.nan
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        ct.fit_transform(df)
+    df = df.convert_dtypes()
+
+    # Error with extension dtype and pd.NA
+    with pytest.raises(ValueError, match=r"set_output\(transform='pandas'\)"):
+        ct.fit_transform(df)
+
+    # No error when output is set to pandas
+    ct.set_output(transform="pandas")
+    ct.fit_transform(df)
+    ct.set_output(transform="default")
+
+    # No error when there are no pd.NA
+    ct.fit_transform(df.fillna(-1.0))
+
+
+def test_dataframe_different_dataframe_libraries():
+    """Check fitting and transforming on pandas and polars dataframes."""
+    pd = pytest.importorskip("pandas")
+    pl = pytest.importorskip("polars")
+    X_train_np = np.array([[0, 1], [2, 4], [4, 5]])
+    X_test_np = np.array([[1, 2], [1, 3], [2, 3]])
+
+    # Fit on pandas and transform on polars
+    X_train_pd = pd.DataFrame(X_train_np, columns=["a", "b"])
+    X_test_pl = pl.DataFrame(X_test_np, schema=["a", "b"])
+
+    ct = make_column_transformer((Trans(), [0, 1]))
+    ct.fit(X_train_pd)
+
+    out_pl_in = ct.transform(X_test_pl)
+    assert_array_equal(out_pl_in, X_test_np)
+
+    # Fit on polars and transform on pandas
+    X_train_pl = pl.DataFrame(X_train_np, schema=["a", "b"])
+    X_test_pd = pd.DataFrame(X_test_np, columns=["a", "b"])
+    ct.fit(X_train_pl)
+
+    out_pd_in = ct.transform(X_test_pd)
+    assert_array_equal(out_pd_in, X_test_np)
+
+
+def test_column_transformer__getitem__():
+    """Check __getitem__ for ColumnTransformer."""
+    X = np.array([[0, 1, 2], [3, 4, 5]])
+    ct = ColumnTransformer([("t1", Trans(), [0, 1]), ("t2", Trans(), [1, 2])])
+
+    msg = "ColumnTransformer is subscriptable after it is fitted"
+    with pytest.raises(TypeError, match=msg):
+        ct["t1"]
+
+    ct.fit(X)
+    assert ct["t1"] is ct.named_transformers_["t1"]
+    assert ct["t2"] is ct.named_transformers_["t2"]
+
+    msg = "'does_not_exist' is not a valid transformer name"
+    with pytest.raises(KeyError, match=msg):
+        ct["does_not_exist"]
+
+
+@pytest.mark.parametrize("transform_output", ["default", "pandas"])
+def test_column_transformer_remainder_passthrough_naming_consistency(transform_output):
+    """Check that when `remainder="passthrough"`, inconsistent naming is handled
+    correctly by the underlying `FunctionTransformer`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28232
+    """
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame(np.random.randn(10, 4))
+
+    preprocessor = ColumnTransformer(
+        transformers=[("scaler", StandardScaler(), [0, 1])],
+        remainder="passthrough",
+    ).set_output(transform=transform_output)
+    X_trans = preprocessor.fit_transform(X)
+    assert X_trans.shape == X.shape
+
+    expected_column_names = [
+        "scaler__x0",
+        "scaler__x1",
+        "remainder__x2",
+        "remainder__x3",
+    ]
+    if hasattr(X_trans, "columns"):
+        assert X_trans.columns.tolist() == expected_column_names
+    assert preprocessor.get_feature_names_out().tolist() == expected_column_names
+
+
+@pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
+def test_column_transformer_column_renaming(dataframe_lib):
+    """Check that we properly rename columns when using `ColumnTransformer` and
+    selected columns are redundant between transformers.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28260
+    """
+    lib = pytest.importorskip(dataframe_lib)
+
+    df = lib.DataFrame({"x1": [1, 2, 3], "x2": [10, 20, 30], "x3": [100, 200, 300]})
+
+    transformer = ColumnTransformer(
+        transformers=[
+            ("A", "passthrough", ["x1", "x2", "x3"]),
+            ("B", FunctionTransformer(), ["x1", "x2"]),
+            ("C", StandardScaler(), ["x1", "x3"]),
+            # special case of a transformer returning 0-columns, e.g feature selector
+            (
+                "D",
+                FunctionTransformer(lambda x: _safe_indexing(x, [], axis=1)),
+                ["x1", "x2", "x3"],
+            ),
+        ],
+        verbose_feature_names_out=True,
+    ).set_output(transform=dataframe_lib)
+    df_trans = transformer.fit_transform(df)
+    assert list(df_trans.columns) == [
+        "A__x1",
+        "A__x2",
+        "A__x3",
+        "B__x1",
+        "B__x2",
+        "C__x1",
+        "C__x3",
+    ]
+
+
+@pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
+def test_column_transformer_error_with_duplicated_columns(dataframe_lib):
+    """Check that we raise an error when using `ColumnTransformer` and
+    the columns names are duplicated between transformers."""
+    lib = pytest.importorskip(dataframe_lib)
+
+    df = lib.DataFrame({"x1": [1, 2, 3], "x2": [10, 20, 30], "x3": [100, 200, 300]})
+
+    transformer = ColumnTransformer(
+        transformers=[
+            ("A", "passthrough", ["x1", "x2", "x3"]),
+            ("B", FunctionTransformer(), ["x1", "x2"]),
+            ("C", StandardScaler(), ["x1", "x3"]),
+            # special case of a transformer returning 0-columns, e.g feature selector
+            (
+                "D",
+                FunctionTransformer(lambda x: _safe_indexing(x, [], axis=1)),
+                ["x1", "x2", "x3"],
+            ),
+        ],
+        verbose_feature_names_out=False,
+    ).set_output(transform=dataframe_lib)
+    err_msg = re.escape(
+        "Duplicated feature names found before concatenating the outputs of the "
+        "transformers: ['x1', 'x2', 'x3'].\n"
+        "Transformer A has conflicting columns names: ['x1', 'x2', 'x3'].\n"
+        "Transformer B has conflicting columns names: ['x1', 'x2'].\n"
+        "Transformer C has conflicting columns names: ['x1', 'x3'].\n"
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        transformer.fit_transform(df)
+
+
+@pytest.mark.skipif(
+    parse_version(joblib.__version__) < parse_version("1.3"),
+    reason="requires joblib >= 1.3",
+)
+def test_column_transformer_auto_memmap():
+    """Check that ColumnTransformer works in parallel with joblib's auto-memmapping.
+
+    non-regression test for issue #28781
+    """
+    X = np.random.RandomState(0).uniform(size=(3, 4))
+
+    scaler = StandardScaler(copy=False)
+
+    transformer = ColumnTransformer(
+        transformers=[("scaler", scaler, [0])],
+        n_jobs=2,
+    )
+
+    with joblib.parallel_backend("loky", max_nbytes=1):
+        Xt = transformer.fit_transform(X)
+
+    assert_allclose(Xt, StandardScaler().fit_transform(X[:, [0]]))
+
+
 # Metadata Routing Tests
 # ======================
 
@@ -2267,8 +2684,8 @@ def test_routing_passed_metadata_not_supported(method):
         getattr(trs, method)([[1]], sample_weight=[1], prop="a")
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize("method", ["transform", "fit_transform", "fit"])
+@config_context(enable_metadata_routing=True)
 def test_metadata_routing_for_column_transformer(method):
     """Test that metadata is routed correctly for column transformer."""
     X = np.array([[0, 1, 2], [2, 4, 6]]).T
@@ -2288,7 +2705,7 @@ def test_metadata_routing_for_column_transformer(method):
     )
 
     if method == "transform":
-        trs.fit(X, y)
+        trs.fit(X, y, sample_weight=sample_weight, metadata=metadata)
         trs.transform(X, sample_weight=sample_weight, metadata=metadata)
     else:
         getattr(trs, method)(X, y, sample_weight=sample_weight, metadata=metadata)
@@ -2296,11 +2713,15 @@ def test_metadata_routing_for_column_transformer(method):
     assert len(registry)
     for _trs in registry:
         check_recorded_metadata(
-            obj=_trs, method=method, sample_weight=sample_weight, metadata=metadata
+            obj=_trs,
+            method=method,
+            parent=method,
+            sample_weight=sample_weight,
+            metadata=metadata,
         )
 
 
-@pytest.mark.usefixtures("enable_slep006")
+@config_context(enable_metadata_routing=True)
 def test_metadata_routing_no_fit_transform():
     """Test metadata routing when the sub-estimator doesn't implement
     ``fit_transform``."""
@@ -2318,7 +2739,6 @@ def test_metadata_routing_no_fit_transform():
 
     X = np.array([[0, 1, 2], [2, 4, 6]]).T
     y = [1, 2, 3]
-    _Registry()
     sample_weight, metadata = [1], "a"
     trs = ColumnTransformer(
         [
@@ -2336,8 +2756,8 @@ def test_metadata_routing_no_fit_transform():
     trs.fit_transform(X, y, sample_weight=sample_weight, metadata=metadata)
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize("method", ["transform", "fit_transform", "fit"])
+@config_context(enable_metadata_routing=True)
 def test_metadata_routing_error_for_column_transformer(method):
     """Test that the right error is raised when metadata is not requested."""
     X = np.array([[0, 1, 2], [2, 4, 6]]).T
@@ -2347,7 +2767,7 @@ def test_metadata_routing_error_for_column_transformer(method):
 
     error_message = (
         "[sample_weight, metadata] are passed but are not explicitly set as requested"
-        f" or not for ConsumingTransformer.{method}"
+        f" or not requested for ConsumingTransformer.{method}"
     )
     with pytest.raises(ValueError, match=re.escape(error_message)):
         if method == "transform":
@@ -2355,6 +2775,46 @@ def test_metadata_routing_error_for_column_transformer(method):
             trs.transform(X, sample_weight=sample_weight, metadata=metadata)
         else:
             getattr(trs, method)(X, y, sample_weight=sample_weight, metadata=metadata)
+
+
+@config_context(enable_metadata_routing=True)
+def test_get_metadata_routing_works_without_fit():
+    # Regression test for https://github.com/scikit-learn/scikit-learn/issues/28186
+    # Make sure ct.get_metadata_routing() works w/o having called fit.
+    ct = ColumnTransformer([("trans", ConsumingTransformer(), [0])])
+    ct.get_metadata_routing()
+
+
+@config_context(enable_metadata_routing=True)
+def test_remainder_request_always_present():
+    # Test that remainder request is always present.
+    ct = ColumnTransformer(
+        [("trans", StandardScaler(), [0])],
+        remainder=ConsumingTransformer()
+        .set_fit_request(metadata=True)
+        .set_transform_request(metadata=True),
+    )
+    router = ct.get_metadata_routing()
+    assert router.consumes("fit", ["metadata"]) == set(["metadata"])
+
+
+@config_context(enable_metadata_routing=True)
+def test_unused_transformer_request_present():
+    # Test that the request of a transformer is always present even when not
+    # used due to no selected columns.
+    ct = ColumnTransformer(
+        [
+            (
+                "trans",
+                ConsumingTransformer()
+                .set_fit_request(metadata=True)
+                .set_transform_request(metadata=True),
+                lambda X: [],
+            )
+        ]
+    )
+    router = ct.get_metadata_routing()
+    assert router.consumes("fit", ["metadata"]) == set(["metadata"])
 
 
 # End of Metadata Routing Tests

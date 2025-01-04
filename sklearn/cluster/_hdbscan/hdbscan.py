@@ -2,12 +2,9 @@
 HDBSCAN: Hierarchical Density-Based Spatial Clustering
          of Applications with Noise
 """
-# Authors: Leland McInnes <leland.mcinnes@gmail.com>
-#          Steve Astels <sastels@gmail.com>
-#          John Healy <jchealy@gmail.com>
-#          Meekail Zain <zainmeekail@gmail.com>
-# Copyright (c) 2015, Leland McInnes
-# All rights reserved.
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -41,12 +38,17 @@ from warnings import warn
 import numpy as np
 from scipy.sparse import csgraph, issparse
 
-from ...base import BaseEstimator, ClusterMixin
+from ...base import BaseEstimator, ClusterMixin, _fit_context
 from ...metrics import pairwise_distances
 from ...metrics._dist_metrics import DistanceMetric
+from ...metrics.pairwise import _VALID_METRICS
 from ...neighbors import BallTree, KDTree, NearestNeighbors
 from ...utils._param_validation import Interval, StrOptions
-from ...utils.validation import _allclose_dense_sparse, _assert_all_finite
+from ...utils.validation import (
+    _allclose_dense_sparse,
+    _assert_all_finite,
+    validate_data,
+)
 from ._linkage import (
     MST_edge_dtype,
     make_single_linkage,
@@ -104,15 +106,11 @@ def _brute_mst(mutual_reachability, min_samples):
     if not issparse(mutual_reachability):
         return mst_from_mutual_reachability(mutual_reachability)
 
-    # Check connected component on mutual reachability
-    # If more than one component, it means that even if the distance matrix X
-    # has one component, there exists with less than `min_samples` neighbors
-    if (
-        csgraph.connected_components(
-            mutual_reachability, directed=False, return_labels=False
-        )
-        > 1
-    ):
+    # Check if the mutual reachability matrix has any rows which have
+    # less than `min_samples` non-zero elements.
+    indptr = mutual_reachability.indptr
+    num_points = mutual_reachability.shape[0]
+    if any((indptr[i + 1] - indptr[i]) < min_samples for i in range(num_points)):
         raise ValueError(
             f"There exists points with fewer than {min_samples} neighbors. Ensure"
             " your distance matrix has non-zero values for at least"
@@ -120,11 +118,23 @@ def _brute_mst(mutual_reachability, min_samples):
             " graph), or specify a `max_distance` in `metric_params` to use when"
             " distances are missing."
         )
+    # Check connected component on mutual reachability.
+    # If more than one connected component is present,
+    # it means that the graph is disconnected.
+    n_components = csgraph.connected_components(
+        mutual_reachability, directed=False, return_labels=False
+    )
+    if n_components > 1:
+        raise ValueError(
+            f"Sparse mutual reachability matrix has {n_components} connected"
+            " components. HDBSCAN cannot be perfomed on a disconnected graph. Ensure"
+            " that the sparse distance matrix has only one connected component."
+        )
 
     # Compute the minimum spanning tree for the sparse graph
     sparse_min_spanning_tree = csgraph.minimum_spanning_tree(mutual_reachability)
     rows, cols = sparse_min_spanning_tree.nonzero()
-    mst = np.core.records.fromarrays(
+    mst = np.rec.fromarrays(
         [rows, cols, sparse_min_spanning_tree.data],
         dtype=MST_edge_dtype,
     )
@@ -197,7 +207,7 @@ def _hdbscan_brute(
         The number of jobs to use for computing the pairwise distances. This
         works by breaking down the pairwise matrix into n_jobs even slices and
         computing them in parallel. This parameter is passed directly to
-        :func:`~sklearn.metrics.pairwise.pairwise_distances`.
+        :func:`~sklearn.metrics.pairwise_distances`.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -296,14 +306,14 @@ def _hdbscan_prims(
     metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. `metric` must be one of the options allowed by
-        :func:`~sklearn.metrics.pairwise.pairwise_distances` for its metric
+        :func:`~sklearn.metrics.pairwise_distances` for its metric
         parameter.
 
     n_jobs : int, default=None
         The number of jobs to use for computing the pairwise distances. This
         works by breaking down the pairwise matrix into n_jobs even slices and
         computing them in parallel. This parameter is passed directly to
-        :func:`~sklearn.metrics.pairwise.pairwise_distances`.
+        :func:`~sklearn.metrics.pairwise_distances`.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -431,8 +441,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         as noise.
 
     min_samples : int, default=None
-        The number of samples in a neighborhood for a point
-        to be considered as a core point. This includes the point itself.
+        The parameter `k` used to calculate the distance between a point
+        `x_p` and its k-th nearest neighbor.
         When `None`, defaults to `min_cluster_size`.
 
     cluster_selection_epsilon : float, default=0.0
@@ -449,7 +459,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         feature array.
 
         - If metric is a string or callable, it must be one of
-          the options allowed by :func:`~sklearn.metrics.pairwise.pairwise_distances`
+          the options allowed by :func:`~sklearn.metrics.pairwise_distances`
           for its metric parameter.
 
         - If metric is "precomputed", X is assumed to be a distance matrix and
@@ -474,14 +484,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         both :class:`~sklearn.neighbors.KDTree` and
         :class:`~sklearn.neighbors.BallTree`, then it resolves to use the
         `"brute"` algorithm.
-
-        .. deprecated:: 1.4
-           The `'kdtree'` option was deprecated in version 1.4,
-           and will be renamed to `'kd_tree'` in 1.6.
-
-        .. deprecated:: 1.4
-           The `'balltree'` option was deprecated in version 1.4,
-           and will be renamed to `'ball_tree'` in 1.6.
 
     leaf_size : int, default=40
         Leaf size for trees responsible for fast nearest neighbour queries when
@@ -586,6 +588,14 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     OPTICS : Ordering Points To Identify the Clustering Structure.
     Birch : Memory-efficient, online-learning algorithm.
 
+    Notes
+    -----
+    The `min_samples` parameter includes the point itself, whereas the implementation in
+    `scikit-learn-contrib/hdbscan <https://github.com/scikit-learn-contrib/hdbscan>`_
+    does not. To get the same results in both versions, the value of `min_samples` here
+    must be 1 greater than the value used in `scikit-learn-contrib/hdbscan
+    <https://github.com/scikit-learn-contrib/hdbscan>`_.
+
     References
     ----------
 
@@ -610,14 +620,17 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.cluster import HDBSCAN
     >>> from sklearn.datasets import load_digits
     >>> X, _ = load_digits(return_X_y=True)
     >>> hdb = HDBSCAN(min_cluster_size=20)
     >>> hdb.fit(X)
     HDBSCAN(min_cluster_size=20)
-    >>> hdb.labels_
-    array([ 2,  6, -1, ..., -1, -1, -1])
+    >>> hdb.labels_.shape == (X.shape[0],)
+    True
+    >>> np.unique(hdb.labels_).tolist()
+    [-1, 0, 1, 2, 3, 4, 5, 6, 7]
     """
 
     _parameter_constraints = {
@@ -630,16 +643,13 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             None,
             Interval(Integral, left=1, right=None, closed="left"),
         ],
-        "metric": [StrOptions(FAST_METRICS | {"precomputed"}), callable],
+        "metric": [
+            StrOptions(FAST_METRICS | set(_VALID_METRICS) | {"precomputed"}),
+            callable,
+        ],
         "metric_params": [dict, None],
         "alpha": [Interval(Real, left=0, right=None, closed="neither")],
-        # TODO(1.6): Remove "kdtree" and "balltree"  option
-        "algorithm": [
-            StrOptions(
-                {"auto", "brute", "kd_tree", "ball_tree", "kdtree", "balltree"},
-                deprecated={"kdtree", "balltree"},
-            ),
-        ],
+        "algorithm": [StrOptions({"auto", "brute", "kd_tree", "ball_tree"})],
         "leaf_size": [Interval(Integral, left=1, right=None, closed="left")],
         "n_jobs": [Integral, None],
         "cluster_selection_method": [StrOptions({"eom", "leaf"})],
@@ -680,6 +690,10 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         self.store_centers = store_centers
         self.copy = copy
 
+    @_fit_context(
+        # HDBSCAN.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Find clusters based on hierarchical density-based clustering.
 
@@ -698,14 +712,19 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         self : object
             Returns self.
         """
-        self._validate_params()
+        if self.metric == "precomputed" and self.store_centers is not None:
+            raise ValueError(
+                "Cannot store centers when using a precomputed distance matrix."
+            )
+
         self._metric_params = self.metric_params or {}
         if self.metric != "precomputed":
             # Non-precomputed matrices may contain non-finite values.
-            X = self._validate_data(
+            X = validate_data(
+                self,
                 X,
                 accept_sparse=["csr", "lil"],
-                force_all_finite=False,
+                ensure_all_finite=False,
                 dtype=np.float64,
             )
             self._raw_data = X
@@ -737,10 +756,12 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 X = X[finite_index]
         elif issparse(X):
             # Handle sparse precomputed distance matrices separately
-            X = self._validate_data(
+            X = validate_data(
+                self,
                 X,
                 accept_sparse=["csr", "lil"],
                 dtype=np.float64,
+                force_writeable=True,
             )
         else:
             # Only non-sparse, precomputed distance matrices are handled here
@@ -748,7 +769,9 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
             # Perform data validation after removing infinite values (numpy.inf)
             # from the given distance matrix.
-            X = self._validate_data(X, force_all_finite=False, dtype=np.float64)
+            X = validate_data(
+                self, X, ensure_all_finite=False, dtype=np.float64, force_writeable=True
+            )
             if np.isnan(X).any():
                 # TODO: Support np.nan in Cython implementation for precomputed
                 # dense HDBSCAN
@@ -764,30 +787,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 f"min_samples ({self._min_samples}) must be at most the number of"
                 f" samples in X ({X.shape[0]})"
             )
-
-        # TODO(1.6): Remove
-        if self.algorithm == "kdtree":
-            warn(
-                (
-                    "`algorithm='kdtree'`has been deprecated in 1.4 and will be renamed"
-                    " to'kd_tree'`in 1.6. To keep the past behaviour, set"
-                    " `algorithm='kd_tree'`."
-                ),
-                FutureWarning,
-            )
-            self.algorithm = "kd_tree"
-
-        # TODO(1.6): Remove
-        if self.algorithm == "balltree":
-            warn(
-                (
-                    "`algorithm='balltree'`has been deprecated in 1.4 and will be"
-                    " renamed to'ball_tree'`in 1.6. To keep the past behaviour, set"
-                    " `algorithm='ball_tree'`."
-                ),
-                FutureWarning,
-            )
-            self.algorithm = "ball_tree"
 
         mst_func = None
         kwargs = dict(
@@ -998,5 +997,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         labels[missing_index] = _OUTLIER_ENCODING["missing"]["label"]
         return labels
 
-    def _more_tags(self):
-        return {"allow_nan": self.metric != "precomputed"}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        tags.input_tags.allow_nan = self.metric != "precomputed"
+        return tags

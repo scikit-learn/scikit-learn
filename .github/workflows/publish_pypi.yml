@@ -13,12 +13,13 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    environment: publish_pypi
     permissions:
       # IMPORTANT: this permission is mandatory for trusted publishing
       id-token: write
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.8'
     - name: Install dependencies
@@ -38,10 +39,13 @@ jobs:
       run: |
         python build_tools/github/check_wheels.py
     - name: Publish package to TestPyPI
-      uses: pypa/gh-action-pypi-publish@v1.8.5
+      uses: pypa/gh-action-pypi-publish@67339c736fd9354cd4f8cb0b744f2b82a74b5c70 # v1.12.3
       with:
-        repository_url: https://test.pypi.org/legacy/
+        repository-url: https://test.pypi.org/legacy/
+        print-hash: true
       if: ${{ github.event.inputs.pypi_repo == 'testpypi' }}
     - name: Publish package to PyPI
-      uses: pypa/gh-action-pypi-publish@v1.8.5
+      uses: pypa/gh-action-pypi-publish@67339c736fd9354cd4f8cb0b744f2b82a74b5c70 # v1.12.3
       if: ${{ github.event.inputs.pypi_repo == 'pypi' }}
+      with:
+        print-hash: true

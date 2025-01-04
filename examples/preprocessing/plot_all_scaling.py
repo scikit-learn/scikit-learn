@@ -40,10 +40,8 @@ of the results_.
 
 """
 
-# Author:  Raghav RV <rvraghav93@gmail.com>
-#          Guillaume Lemaitre <g.lemaitre58@gmail.com>
-#          Thomas Unterthiner
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib as mpl
 import numpy as np
@@ -102,11 +100,15 @@ distributions = [
     ),
     (
         "Data after quantile transformation (uniform pdf)",
-        QuantileTransformer(output_distribution="uniform").fit_transform(X),
+        QuantileTransformer(
+            output_distribution="uniform", random_state=42
+        ).fit_transform(X),
     ),
     (
         "Data after quantile transformation (gaussian pdf)",
-        QuantileTransformer(output_distribution="normal").fit_transform(X),
+        QuantileTransformer(
+            output_distribution="normal", random_state=42
+        ).fit_transform(X),
     ),
     ("Data after sample-wise L2 normalizing", Normalizer().fit_transform(X)),
 ]

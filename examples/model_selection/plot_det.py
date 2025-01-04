@@ -33,6 +33,9 @@ corner) is the "ideal" point.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Generate synthetic data
 # -----------------------
@@ -66,7 +69,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.svm import LinearSVC
 
 classifiers = {
-    "Linear SVM": make_pipeline(StandardScaler(), LinearSVC(C=0.025, dual="auto")),
+    "Linear SVM": make_pipeline(StandardScaler(), LinearSVC(C=0.025)),
     "Random Forest": RandomForestClassifier(
         max_depth=5, n_estimators=10, max_features=1
     ),
@@ -79,7 +82,7 @@ classifiers = {
 # DET curves are commonly plotted in normal deviate scale. To achieve this the
 # DET display transforms the error rates as returned by the
 # :func:`~sklearn.metrics.det_curve` and the axis scale using
-# :func:`scipy.stats.norm`.
+# `scipy.stats.norm`.
 
 import matplotlib.pyplot as plt
 

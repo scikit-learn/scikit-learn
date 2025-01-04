@@ -56,7 +56,7 @@ cdef extern from *:
     }
     """
     void partition_node_indices_inner[D, I](
-                D *data,
+                const D *data,
                 I *node_indices,
                 I split_dim,
                 I split_index,
@@ -65,7 +65,7 @@ cdef extern from *:
 
 
 cdef int partition_node_indices(
-        floating *data,
+        const floating *data,
         intp_t *node_indices,
         intp_t split_dim,
         intp_t split_index,

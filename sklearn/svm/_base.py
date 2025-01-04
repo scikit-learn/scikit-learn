@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
@@ -19,6 +22,7 @@ from ..utils.validation import (
     _num_samples,
     check_consistent_length,
     check_is_fitted,
+    validate_data,
 )
 from . import _liblinear as liblinear  # type: ignore
 
@@ -82,7 +86,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         ],
         "coef0": [Interval(Real, None, None, closed="neither")],
         "tol": [Interval(Real, 0.0, None, closed="neither")],
-        "C": [Interval(Real, 0.0, None, closed="neither")],
+        "C": [Interval(Real, 0.0, None, closed="right")],
         "nu": [Interval(Real, 0.0, 1.0, closed="right")],
         "epsilon": [Interval(Real, 0.0, None, closed="left")],
         "shrinking": ["boolean"],
@@ -139,9 +143,12 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         self.max_iter = max_iter
         self.random_state = random_state
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         # Used by cross_val_score.
-        return {"pairwise": self.kernel == "precomputed"}
+        tags.input_tags.pairwise = self.kernel == "precomputed"
+        tags.input_tags.sparse = self.kernel != "precomputed"
+        return tags
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
@@ -187,7 +194,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         if callable(self.kernel):
             check_consistent_length(X, y)
         else:
-            X, y = self._validate_data(
+            X, y = validate_data(
+                self,
                 X,
                 y,
                 dtype=np.float64,
@@ -297,8 +305,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             warnings.warn(
                 "Solver terminated early (max_iter=%i)."
                 "  Consider pre-processing your data with"
-                " StandardScaler or MinMaxScaler."
-                % self.max_iter,
+                " StandardScaler or MinMaxScaler." % self.max_iter,
                 ConvergenceWarning,
             )
 
@@ -331,8 +338,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             y,
             svm_type=solver_type,
             sample_weight=sample_weight,
-            # TODO(1.4): Replace "_class_weight" with "class_weight_"
-            class_weight=getattr(self, "_class_weight", np.empty(0)),
+            class_weight=getattr(self, "class_weight_", np.empty(0)),
             kernel=kernel,
             C=self.C,
             nu=self.nu,
@@ -381,8 +387,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.coef0,
             self.tol,
             self.C,
-            # TODO(1.4): Replace "_class_weight" with "class_weight_"
-            getattr(self, "_class_weight", np.empty(0)),
+            getattr(self, "class_weight_", np.empty(0)),
             sample_weight,
             self.nu,
             self.cache_size,
@@ -492,8 +497,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.coef0,
             self.tol,
             C,
-            # TODO(1.4): Replace "_class_weight" with "class_weight_"
-            getattr(self, "_class_weight", np.empty(0)),
+            getattr(self, "class_weight_", np.empty(0)),
             self.nu,
             self.epsilon,
             self.shrinking,
@@ -593,8 +597,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.coef0,
             self.tol,
             self.C,
-            # TODO(1.4): Replace "_class_weight" with "class_weight_"
-            getattr(self, "_class_weight", np.empty(0)),
+            getattr(self, "class_weight_", np.empty(0)),
             self.nu,
             self.epsilon,
             self.shrinking,
@@ -608,7 +611,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
 
         if not callable(self.kernel):
-            X = self._validate_data(
+            X = validate_data(
+                self,
                 X,
                 accept_sparse="csr",
                 dtype=np.float64,
@@ -950,8 +954,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
             self.coef0,
             self.tol,
             self.C,
-            # TODO(1.4): Replace "_class_weight" with "class_weight_"
-            getattr(self, "_class_weight", np.empty(0)),
+            getattr(self, "class_weight_", np.empty(0)),
             self.nu,
             self.epsilon,
             self.shrinking,
@@ -997,13 +1000,10 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         """
         return self._probB
 
-    # TODO(1.4): Remove
-    @property
-    def _class_weight(self):
-        """Weights per class"""
-        # Class weights are defined for classifiers during
-        # fit.
-        return self.class_weight_
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = self.kernel != "precomputed"
+        return tags
 
 
 def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
@@ -1187,8 +1187,7 @@ def _fit_liblinear(
             raise ValueError(
                 "This solver needs samples of at least 2 classes"
                 " in the data, but the data contains only one"
-                " class: %r"
-                % classes_[0]
+                " class: %r" % classes_[0]
             )
 
         class_weight_ = compute_class_weight(class_weight, classes=classes_, y=y)

@@ -3,12 +3,14 @@ import warnings
 from os import environ
 from os.path import exists, join
 
+import pytest
+from _pytest.doctest import DoctestItem
+
 from sklearn.datasets import get_data_home
 from sklearn.datasets._base import _pkl_filepath
 from sklearn.datasets._twenty_newsgroups import CACHE_NAME
-from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import SkipTest, check_skip_network
-from sklearn.utils.fixes import parse_version
+from sklearn.utils.fixes import np_base_version, parse_version, sp_version
 
 
 def setup_labeled_faces():
@@ -32,8 +34,6 @@ def setup_twenty_newsgroups():
 
 
 def setup_working_with_text_data():
-    if IS_PYPY and os.environ.get("CI", None):
-        raise SkipTest("Skipping too slow test with PyPy on CI")
     check_skip_network()
     cache_path = _pkl_filepath(get_data_home(), CACHE_NAME)
     if not exists(cache_path):
@@ -126,10 +126,6 @@ def pytest_runtest_setup(item):
         setup_rcv1()
     elif fname.endswith("datasets/twenty_newsgroups.rst") or is_index:
         setup_twenty_newsgroups()
-    elif (
-        fname.endswith("tutorial/text_analytics/working_with_text_data.rst") or is_index
-    ):
-        setup_working_with_text_data()
     elif fname.endswith("modules/compose.rst") or is_index:
         setup_compose()
     elif fname.endswith("datasets/loading_other_datasets.rst"):
@@ -142,19 +138,10 @@ def pytest_runtest_setup(item):
         setup_preprocessing()
     elif fname.endswith("statistical_inference/unsupervised_learning.rst"):
         setup_unsupervised_learning()
-    elif fname.endswith("metadata_routing.rst"):
-        # TODO: remove this once implemented
-        # Skip metarouting because is it is not fully implemented yet
-        raise SkipTest(
-            "Skipping doctest for metadata_routing.rst because it "
-            "is not fully implemented yet"
-        )
 
     rst_files_requiring_matplotlib = [
         "modules/partial_dependence.rst",
         "modules/tree.rst",
-        "tutorial/statistical_inference/settings.rst",
-        "tutorial/statistical_inference/supervised_learning.rst",
     ]
     for each in rst_files_requiring_matplotlib:
         if fname.endswith(each):
@@ -172,3 +159,38 @@ def pytest_configure(config):
         matplotlib.use("agg")
     except ImportError:
         pass
+
+
+def pytest_collection_modifyitems(config, items):
+    """Called after collect is completed.
+
+    Parameters
+    ----------
+    config : pytest config
+    items : list of collected items
+    """
+    skip_doctests = False
+    if np_base_version < parse_version("2"):
+        # TODO: configure numpy to output scalar arrays as regular Python scalars
+        # once possible to improve readability of the tests docstrings.
+        # https://numpy.org/neps/nep-0051-scalar-representation.html#implementation
+        reason = "Due to NEP 51 numpy scalar repr has changed in numpy 2"
+        skip_doctests = True
+
+    if sp_version < parse_version("1.14"):
+        reason = "Scipy sparse matrix repr has changed in scipy 1.14"
+        skip_doctests = True
+
+    # Normally doctest has the entire module's scope. Here we set globs to an empty dict
+    # to remove the module's scope:
+    # https://docs.python.org/3/library/doctest.html#what-s-the-execution-context
+    for item in items:
+        if isinstance(item, DoctestItem):
+            item.dtest.globs = {}
+
+    if skip_doctests:
+        skip_marker = pytest.mark.skip(reason=reason)
+
+        for item in items:
+            if isinstance(item, DoctestItem):
+                item.add_marker(skip_marker)

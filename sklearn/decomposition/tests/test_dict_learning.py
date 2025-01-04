@@ -43,7 +43,7 @@ def test_sparse_encode_shapes_omp():
     for n_components, n_samples in itertools.product([1, 5], [1, 9]):
         X_ = rng.randn(n_samples, n_features)
         dictionary = rng.randn(n_components, n_features)
-        for algorithm, n_jobs in itertools.product(algorithms, [1, 3]):
+        for algorithm, n_jobs in itertools.product(algorithms, [1, 2]):
             code = sparse_encode(X_, dictionary, algorithm=algorithm, n_jobs=n_jobs)
             assert code.shape == (n_samples, n_components)
 
@@ -202,10 +202,16 @@ def test_dict_learning_reconstruction():
     )
     code = dico.fit(X).transform(X)
     assert_array_almost_equal(np.dot(code, dico.components_), X)
+    assert_array_almost_equal(dico.inverse_transform(code), X)
 
     dico.set_params(transform_algorithm="lasso_lars")
     code = dico.transform(X)
     assert_array_almost_equal(np.dot(code, dico.components_), X, decimal=2)
+    assert_array_almost_equal(dico.inverse_transform(code), X, decimal=2)
+
+    # test error raised for wrong code size
+    with pytest.raises(ValueError, match="Expected 12, got 11."):
+        dico.inverse_transform(code[:, :-1])
 
     # used to test lars here too, but there's no guarantee the number of
     # nonzero atoms is right.
@@ -268,12 +274,17 @@ def test_dict_learning_split():
         n_components, transform_algorithm="threshold", random_state=0
     )
     code = dico.fit(X).transform(X)
+    Xr = dico.inverse_transform(code)
+
     dico.split_sign = True
     split_code = dico.transform(X)
 
     assert_array_almost_equal(
         split_code[:, :n_components] - split_code[:, n_components:], code
     )
+
+    Xr2 = dico.inverse_transform(split_code)
+    assert_array_almost_equal(Xr, Xr2)
 
 
 def test_dict_learning_online_shapes():
@@ -591,9 +602,12 @@ def test_sparse_coder_estimator():
     V /= np.sum(V**2, axis=1)[:, np.newaxis]
     coder = SparseCoder(
         dictionary=V, transform_algorithm="lasso_lars", transform_alpha=0.001
-    ).transform(X)
-    assert not np.all(coder == 0)
-    assert np.sqrt(np.sum((np.dot(coder, V) - X) ** 2)) < 0.1
+    )
+    code = coder.fit_transform(X)
+    Xr = coder.inverse_transform(code)
+    assert not np.all(code == 0)
+    assert np.sqrt(np.sum((np.dot(code, V) - X) ** 2)) < 0.1
+    np.testing.assert_allclose(Xr, np.dot(code, V))
 
 
 def test_sparse_coder_estimator_clone():
@@ -655,44 +669,6 @@ def test_sparse_coder_n_features_in():
     assert sc.n_features_in_ == d.shape[1]
 
 
-def test_minibatch_dict_learning_n_iter_deprecated():
-    # check the deprecation warning of n_iter
-    # TODO(1.4) remove
-    depr_msg = (
-        "'n_iter' is deprecated in version 1.1 and will be removed in version 1.4"
-    )
-    est = MiniBatchDictionaryLearning(
-        n_components=2, batch_size=4, n_iter=5, random_state=0
-    )
-
-    with pytest.warns(FutureWarning, match=depr_msg):
-        est.fit(X)
-
-
-@pytest.mark.parametrize(
-    "arg, val",
-    [
-        ("iter_offset", 0),
-        ("inner_stats", None),
-        ("return_inner_stats", False),
-        ("return_n_iter", False),
-        ("n_iter", 5),
-    ],
-)
-def test_dict_learning_online_deprecated_args(arg, val):
-    # check the deprecation warning for the deprecated args of
-    # dict_learning_online
-    # TODO(1.4) remove
-    depr_msg = (
-        f"'{arg}' is deprecated in version 1.1 and will be removed in version 1.4."
-    )
-
-    with pytest.warns(FutureWarning, match=depr_msg):
-        dict_learning_online(
-            X, n_components=2, batch_size=4, random_state=0, **{arg: val}
-        )
-
-
 def test_update_dict():
     # Check the dict update in batch mode vs online mode
     # Non-regression test for #4866
@@ -714,15 +690,6 @@ def test_update_dict():
     _update_dict(newd_online, X, code, A, B)
 
     assert_allclose(newd_batch, newd_online)
-
-
-# TODO(1.4) remove
-def test_dict_learning_online_n_iter_deprecated():
-    # Check that an error is raised when a deprecated argument is set when max_iter
-    # is also set.
-    msg = "The following arguments are incompatible with 'max_iter'"
-    with pytest.raises(ValueError, match=msg):
-        dict_learning_online(X, max_iter=10, return_inner_stats=True)
 
 
 @pytest.mark.parametrize(
@@ -942,18 +909,24 @@ def test_dict_learning_online_numerical_consistency(method):
     U_64, V_64 = dict_learning_online(
         X.astype(np.float64),
         n_components=n_components,
+        max_iter=1_000,
         alpha=alpha,
         batch_size=10,
         random_state=0,
         method=method,
+        tol=0.0,
+        max_no_improvement=None,
     )
     U_32, V_32 = dict_learning_online(
         X.astype(np.float32),
         n_components=n_components,
+        max_iter=1_000,
         alpha=alpha,
         batch_size=10,
         random_state=0,
         method=method,
+        tol=0.0,
+        max_no_improvement=None,
     )
 
     # Optimal solution (U*, V*) is not unique.
@@ -1013,14 +986,3 @@ def test_cd_work_on_joblib_memmapped_data(monkeypatch):
 
     # This must run and complete without error.
     dict_learner.fit(X_train)
-
-
-# TODO(1.4) remove
-def test_minibatch_dictionary_learning_warns_and_ignore_n_iter():
-    """Check that we always raise a warning when `n_iter` is set even if it is
-    ignored if `max_iter` is set.
-    """
-    warn_msg = "'n_iter' is deprecated in version 1.1"
-    with pytest.warns(FutureWarning, match=warn_msg):
-        model = MiniBatchDictionaryLearning(batch_size=256, n_iter=2, max_iter=2).fit(X)
-    assert model.n_iter_ == 2

@@ -52,16 +52,15 @@ Learning (2006), pp. 193-216
 Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
 """
 
-# Authors: Clay Woolam <clay@woolam.org>
-#          Utkarsh Upadhyay <mail@musicallyut.in>
-# License: BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
 
 import numpy as np
 from scipy import sparse
-from scipy.sparse import csgraph
 
 from ..base import BaseEstimator, ClassifierMixin, _fit_context
 from ..exceptions import ConvergenceWarning
@@ -69,8 +68,9 @@ from ..metrics.pairwise import rbf_kernel
 from ..neighbors import NearestNeighbors
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import safe_sparse_dot
+from ..utils.fixes import laplacian as csgraph_laplacian
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 
 
 class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
@@ -210,7 +210,8 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         """
         check_is_fitted(self)
 
-        X_2d = self._validate_data(
+        X_2d = validate_data(
+            self,
             X,
             accept_sparse=["csc", "csr", "coo", "dok", "bsr", "lil", "dia"],
             reset=False,
@@ -255,7 +256,8 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         self : object
             Returns the instance itself.
         """
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=["csr", "csc"],
@@ -334,6 +336,11 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         self.transduction_ = transduction.ravel()
         return self
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 class LabelPropagation(BaseLabelPropagation):
     """Label Propagation classifier.
@@ -357,7 +364,7 @@ class LabelPropagation(BaseLabelPropagation):
     max_iter : int, default=1000
         Change maximum number of iterations allowed.
 
-    tol : float, 1e-3
+    tol : float, default=1e-3
         Convergence tolerance: threshold to consider the system at steady
         state.
 
@@ -613,7 +620,7 @@ class LabelSpreading(BaseLabelPropagation):
             self.nn_fit = None
         n_samples = self.X_.shape[0]
         affinity_matrix = self._get_kernel(self.X_)
-        laplacian = csgraph.laplacian(affinity_matrix, normed=True)
+        laplacian = csgraph_laplacian(affinity_matrix, normed=True)
         laplacian = -laplacian
         if sparse.issparse(laplacian):
             diag_mask = laplacian.row == laplacian.col
