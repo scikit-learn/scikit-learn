@@ -234,19 +234,15 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
             Target values.
 
         **fit_params : dict
-            - If `enable_metadata_routing=False` (default):
+            - If `enable_metadata_routing=False` (default): Parameters directly passed
+              to the `fit` method of the underlying regressor.
 
-                Parameters directly passed to the `fit` method of the
-                underlying regressor.
+            - If `enable_metadata_routing=True`: Parameters safely routed to the `fit`
+              method of the underlying regressor.
 
-            - If `enable_metadata_routing=True`:
-
-                Parameters safely routed to the `fit` method of the
-                underlying regressor.
-
-                .. versionchanged:: 1.6
-                    See :ref:`Metadata Routing User Guide <metadata_routing>` for
-                    more details.
+            .. versionchanged:: 1.6
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
 
         Returns
         -------
@@ -313,19 +309,15 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
             Samples.
 
         **predict_params : dict of str -> object
-            - If `enable_metadata_routing=False` (default):
+            - If `enable_metadata_routing=False` (default): Parameters directly passed
+              to the `predict` method of the underlying regressor.
 
-                Parameters directly passed to the `predict` method of the
-                underlying regressor.
+            - If `enable_metadata_routing=True`: Parameters safely routed to the
+              `predict` method of the underlying regressor.
 
-            - If `enable_metadata_routing=True`:
-
-                Parameters safely routed to the `predict` method of the
-                underlying regressor.
-
-                .. versionchanged:: 1.6
-                    See :ref:`Metadata Routing User Guide <metadata_routing>`
-                    for more details.
+            .. versionchanged:: 1.6
+                See :ref:`Metadata Routing User Guide <metadata_routing>`
+                for more details.
 
         Returns
         -------
@@ -356,6 +348,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         regressor = self._get_regressor()
         tags = super().__sklearn_tags__()
         tags.regressor_tags.poor_score = True
+        tags.input_tags.sparse = get_tags(regressor).input_tags.sparse
         tags.target_tags.multi_output = get_tags(regressor).target_tags.multi_output
         return tags
 

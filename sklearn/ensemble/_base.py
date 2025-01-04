@@ -4,7 +4,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from abc import ABCMeta, abstractmethod
-from typing import List
 
 import numpy as np
 from joblib import effective_n_jobs
@@ -106,9 +105,6 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         The collection of fitted base estimators.
     """
 
-    # overwrite _required_parameters from MetaEstimatorMixin
-    _required_parameters: List[str] = []
-
     @abstractmethod
     def __init__(
         self,
@@ -199,8 +195,6 @@ class _BaseHeterogeneousEnsemble(
         training data. If an estimator has been set to `'drop'`, it will not
         appear in `estimators_`.
     """
-
-    _required_parameters = ["estimators"]
 
     @property
     def named_estimators(self):
@@ -294,15 +288,17 @@ class _BaseHeterogeneousEnsemble(
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         try:
-            allow_nan = all(
+            tags.input_tags.allow_nan = all(
                 get_tags(est[1]).input_tags.allow_nan if est[1] != "drop" else True
+                for est in self.estimators
+            )
+            tags.input_tags.sparse = all(
+                get_tags(est[1]).input_tags.sparse if est[1] != "drop" else True
                 for est in self.estimators
             )
         except Exception:
             # If `estimators` does not comply with our API (list of tuples) then it will
-            # fail. In this case, we assume that `allow_nan` is False but the parameter
-            # validation will raise an error during `fit`.
-            allow_nan = False
-        tags.input_tags.allow_nan = allow_nan
-        tags.transformer_tags.preserves_dtype = []
+            # fail. In this case, we assume that `allow_nan` and `sparse` are False but
+            # the parameter validation will raise an error during `fit`.
+            pass  # pragma: no cover
         return tags

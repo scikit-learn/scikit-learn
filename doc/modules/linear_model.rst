@@ -124,7 +124,7 @@ its ``coef_`` member::
     >>> reg.coef_
     array([0.34545455, 0.34545455])
     >>> reg.intercept_
-    0.13636...
+    np.float64(0.13636...)
 
 Note that the class :class:`Ridge` allows for the user to specify that the
 solver be automatically chosen by setting `solver="auto"`. When this option
@@ -209,7 +209,7 @@ Usage example::
     RidgeCV(alphas=array([1.e-06, 1.e-05, 1.e-04, 1.e-03, 1.e-02, 1.e-01, 1.e+00, 1.e+01,
           1.e+02, 1.e+03, 1.e+04, 1.e+05, 1.e+06]))
     >>> reg.alpha_
-    0.01
+    np.float64(0.01)
 
 Specifying the value of the :term:`cv` attribute will trigger the use of
 cross-validation with :class:`~sklearn.model_selection.GridSearchCV`, for
@@ -504,8 +504,8 @@ The objective function to minimize is in this case
     \frac{\alpha(1-\rho)}{2} ||w||_2 ^ 2}
 
 
-.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_coordinate_descent_path_001.png
-   :target: ../auto_examples/linear_model/plot_lasso_coordinate_descent_path.html
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_lasso_lars_elasticnet_path_002.png
+   :target: ../auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.html
    :align: center
    :scale: 50%
 
@@ -515,7 +515,7 @@ The class :class:`ElasticNetCV` can be used to set the parameters
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
-* :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py`
+* :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_lasso_lars_elasticnet_path.py`
 * :ref:`sphx_glr_auto_examples_linear_model_plot_elastic_net_precomputed_gram_matrix_with_weighted_samples.py`
 
 .. dropdown:: References
@@ -609,8 +609,8 @@ algorithm, and unlike the implementation based on coordinate descent,
 this yields the exact solution, which is piecewise linear as a
 function of the norm of its coefficients.
 
-.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_lars_001.png
-   :target: ../auto_examples/linear_model/plot_lasso_lars.html
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_lasso_lars_elasticnet_path_001.png
+   :target: ../auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.html
    :align: center
    :scale: 50%
 
@@ -625,7 +625,7 @@ function of the norm of its coefficients.
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_lars.py`
+* :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_lasso_lars_elasticnet_path.py`
 
 The Lars algorithm provides the full path of the coefficients along
 the regularization parameter almost for free, thus a common operation
@@ -891,6 +891,7 @@ regularization.
 * :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_multinomial.py`
 * :ref:`sphx_glr_auto_examples_linear_model_plot_sparse_logistic_regression_20newsgroups.py`
 * :ref:`sphx_glr_auto_examples_linear_model_plot_sparse_logistic_regression_mnist.py`
+* :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`
 
 Binary Case
 -----------
@@ -999,6 +1000,8 @@ logistic regression, see also `log-linear model
   +----------------+----------------------------------------------------------------------------------+
   | `ElasticNet`   | :math:`\frac{1 - \rho}{2}\|W\|_F^2 + \rho \|W\|_{1,1}`                           |
   +----------------+----------------------------------------------------------------------------------+
+
+.. _logistic_regression_solvers:
 
 Solvers
 -------
@@ -1275,7 +1278,7 @@ Usage example::
     >>> reg.coef_
     array([0.2463..., 0.4337...])
     >>> reg.intercept_
-    -0.7638...
+    np.float64(-0.7638...)
 
 
 .. rubric:: Examples
@@ -1582,10 +1585,10 @@ better than an ordinary least squares in high dimension.
 Huber Regression
 ----------------
 
-The :class:`HuberRegressor` is different to :class:`Ridge` because it applies a
-linear loss to samples that are classified as outliers.
+The :class:`HuberRegressor` is different from :class:`Ridge` because it applies a
+linear loss to samples that are defined as outliers by the `epsilon` parameter.
 A sample is classified as an inlier if the absolute error of that sample is
-lesser than a certain threshold. It differs from :class:`TheilSenRegressor`
+lesser than the threshold `epsilon`. It differs from :class:`TheilSenRegressor`
 and :class:`RANSACRegressor` because it does not ignore the effect of the outliers
 but gives a lesser weight to them.
 
@@ -1600,13 +1603,13 @@ but gives a lesser weight to them.
 
 .. dropdown:: Mathematical details
 
-  The loss function that :class:`HuberRegressor` minimizes is given by
+  :class:`HuberRegressor` minimizes
 
   .. math::
 
     \min_{w, \sigma} {\sum_{i=1}^n\left(\sigma + H_{\epsilon}\left(\frac{X_{i}w - y_{i}}{\sigma}\right)\sigma\right) + \alpha {||w||_2}^2}
 
-  where
+  where the loss function is given by
 
   .. math::
 
@@ -1621,7 +1624,7 @@ but gives a lesser weight to them.
   .. rubric:: References
 
   * Peter J. Huber, Elvezio M. Ronchetti: Robust Statistics, Concomitant scale
-    estimates, pg 172
+    estimates, p. 172.
 
 The :class:`HuberRegressor` differs from using :class:`SGDRegressor` with loss set to `huber`
 in the following ways.
@@ -1635,10 +1638,10 @@ in the following ways.
   samples while :class:`SGDRegressor` needs a number of passes on the training data to
   produce the same robustness.
 
-Note that this estimator is different from the R implementation of Robust Regression
-(https://stats.oarc.ucla.edu/r/dae/robust-regression/) because the R implementation does a weighted least
-squares implementation with weights given to each sample on the basis of how much the residual is
-greater than a certain threshold.
+Note that this estimator is different from the `R implementation of Robust
+Regression <https://stats.oarc.ucla.edu/r/dae/robust-regression/>`_  because the R
+implementation does a weighted least squares implementation with weights given to each
+sample on the basis of how much the residual is greater than a certain threshold.
 
 .. _quantile_regression:
 

@@ -24,6 +24,7 @@ from .utils.extmath import safe_sparse_dot
 from .utils.validation import (
     _check_feature_names_in,
     check_is_fitted,
+    validate_data,
 )
 
 
@@ -156,7 +157,7 @@ class PolynomialCountSketch(
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X, accept_sparse="csc")
+        X = validate_data(self, X, accept_sparse="csc")
         random_state = check_random_state(self.random_state)
 
         n_features = X.shape[1]
@@ -187,7 +188,7 @@ class PolynomialCountSketch(
         """
 
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse="csc", reset=False)
+        X = validate_data(self, X, accept_sparse="csc", reset=False)
 
         X_gamma = np.sqrt(self.gamma) * X
 
@@ -233,6 +234,11 @@ class PolynomialCountSketch(
         data_sketch = np.real(ifft(count_sketches_fft_prod, overwrite_x=True))
 
         return data_sketch
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
 
 
 class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
@@ -353,7 +359,7 @@ class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X, accept_sparse="csr")
+        X = validate_data(self, X, accept_sparse="csr")
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
         sparse = sp.issparse(X)
@@ -394,7 +400,7 @@ class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
+        X = validate_data(self, X, accept_sparse="csr", reset=False)
         projection = safe_sparse_dot(X, self.random_weights_)
         projection += self.random_offset_
         np.cos(projection, projection)
@@ -403,6 +409,7 @@ class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.transformer_tags.preserves_dtype = ["float64", "float32"]
         return tags
 
@@ -514,7 +521,7 @@ class SkewedChi2Sampler(
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X)
+        X = validate_data(self, X)
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
         uniform = random_state.uniform(size=(n_features, self.n_components))
@@ -547,8 +554,8 @@ class SkewedChi2Sampler(
             Returns the instance itself.
         """
         check_is_fitted(self)
-        X = self._validate_data(
-            X, copy=True, dtype=[np.float64, np.float32], reset=False
+        X = validate_data(
+            self, X, copy=True, dtype=[np.float64, np.float32], reset=False
         )
         if (X <= -self.skewedness).any():
             raise ValueError("X may not contain entries smaller than -skewedness.")
@@ -677,7 +684,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         self : object
             Returns the transformer.
         """
-        X = self._validate_data(X, accept_sparse="csr", ensure_non_negative=True)
+        X = validate_data(self, X, accept_sparse="csr", ensure_non_negative=True)
 
         if self.sample_interval is None and self.sample_steps not in (1, 2, 3):
             raise ValueError(
@@ -703,8 +710,8 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
             Whether the return value is an array or sparse matrix depends on
             the type of the input X.
         """
-        X = self._validate_data(
-            X, accept_sparse="csr", reset=False, ensure_non_negative=True
+        X = validate_data(
+            self, X, accept_sparse="csr", reset=False, ensure_non_negative=True
         )
         sparse = sp.issparse(X)
 
@@ -746,7 +753,10 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
-        check_is_fitted(self, "n_features_in_")
+        # Note that passing attributes="n_features_in_" forces check_is_fitted
+        # to check if the attribute is present. Otherwise it will pass on this
+        # stateless estimator (requires_fit=False)
+        check_is_fitted(self, attributes="n_features_in_")
         input_features = _check_feature_names_in(
             self, input_features, generate_names=True
         )
@@ -822,6 +832,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         tags = super().__sklearn_tags__()
         tags.requires_fit = False
         tags.input_tags.positive_only = True
+        tags.input_tags.sparse = True
         return tags
 
 
@@ -998,7 +1009,7 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X, accept_sparse="csr")
+        X = validate_data(self, X, accept_sparse="csr")
         rnd = check_random_state(self.random_state)
         n_samples = X.shape[0]
 
@@ -1053,7 +1064,7 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             Transformed data.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
+        X = validate_data(self, X, accept_sparse="csr", reset=False)
 
         kernel_params = self._get_kernel_params()
         embedded = pairwise_kernels(
@@ -1090,10 +1101,6 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_transformer_preserves_dtypes": (
-                "dtypes are preserved but not at a close enough precision"
-            )
-        }
+        tags.input_tags.sparse = True
         tags.transformer_tags.preserves_dtype = ["float64", "float32"]
         return tags

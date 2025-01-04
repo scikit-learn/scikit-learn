@@ -7,7 +7,7 @@ Two scenarios where this script can be useful:
 - make sure that the latest versions of all the dependencies are used in the CI.
   There is a scheduled workflow that does this, see
   .github/workflows/update-lock-files.yml. This is still useful to run this
-  script when when the automated PR fails and for example some packages need to
+  script when the automated PR fails and for example some packages need to
   be pinned. You can add the pins to this script, run it, and open a PR with
   the changes.
 - bump minimum dependencies in sklearn/_min_dependencies.py. Running this
@@ -26,6 +26,7 @@ scipy) with apt-get and the rest of the dependencies (e.g. pytest and joblib)
 with pip.
 
 To run this script you need:
+- conda
 - conda-lock. The version should match the one used in the CI in
   sklearn/_min_dependencies.py
 - pip-tools
@@ -100,9 +101,7 @@ build_metadata_list = [
         "conda_dependencies": common_dependencies
         + [
             "ccache",
-            # Make sure pytorch comes from the pytorch channel and not conda-forge
-            "pytorch::pytorch",
-            "pytorch-cuda",
+            "pytorch-gpu",
             "polars",
             "pyarrow",
             "cupy",
@@ -165,9 +164,6 @@ build_metadata_list = [
             # TODO: release scipy constraint when 1.13 is available in the "default"
             # channel.
             "scipy": "<1.12",
-            # TODO temporary to avoid a timeout in the no-OpenMP build, see
-            # https://github.com/scikit-learn/scikit-learn/pull/29486#issuecomment-2242359516
-            "meson": "<1.5",
         },
         # TODO: put cython, threadpoolctl and meson-python back to conda
         # dependencies when required version is available on the main channel
@@ -228,12 +224,6 @@ build_metadata_list = [
             # Test array API on CPU without PyTorch
             + ["array-api-compat", "array-api-strict"]
         ),
-        "package_constraints": {
-            # XXX: we would like to use the latest Python version, but for now using
-            # Python 3.12 makes the CI much slower so we use Python 3.11. See
-            # https://github.com/scikit-learn/scikit-learn/pull/29444#issuecomment-2219550662.
-            "python": "3.11",
-        },
     },
     {
         "name": "pylatest_pip_scipy_dev",
@@ -268,6 +258,31 @@ build_metadata_list = [
             # the environment.yml. Adding python-dateutil so it is pinned
             + ["python-dateutil"]
         ),
+    },
+    {
+        "name": "pylatest_free_threaded",
+        "type": "conda",
+        "tag": "free-threaded",
+        "folder": "build_tools/azure",
+        "platform": "linux-64",
+        "channels": ["conda-forge"],
+        "conda_dependencies": [
+            "python-freethreading",
+            "numpy",
+            # TODO add cython and scipy when there are conda-forge packages for
+            # them and remove dev version install in
+            # build_tools/azure/install.sh. Note that for now conda-lock does
+            # not deal with free-threaded wheels correctly, see
+            # https://github.com/conda/conda-lock/issues/754.
+            "joblib",
+            "threadpoolctl",
+            "pytest",
+            "pytest-xdist",
+            "ninja",
+            "meson-python",
+            "ccache",
+            "pip",
+        ],
     },
     {
         "name": "pymin_conda_forge_mkl",
@@ -310,6 +325,7 @@ build_metadata_list = [
             "sphinx-remove-toctrees",
             "sphinx-design",
             "pydata-sphinx-theme",
+            "towncrier",
         ],
         "pip_dependencies": [
             "sphinxext-opengraph",
@@ -336,6 +352,7 @@ build_metadata_list = [
             "sphinxcontrib-sass": "min",
             "sphinx-remove-toctrees": "min",
             "pydata-sphinx-theme": "min",
+            "towncrier": "min",
         },
     },
     {
@@ -363,6 +380,7 @@ build_metadata_list = [
             "sphinx-remove-toctrees",
             "sphinx-design",
             "pydata-sphinx-theme",
+            "towncrier",
         ],
         "pip_dependencies": [
             "jupyterlite-sphinx",

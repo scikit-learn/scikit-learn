@@ -41,8 +41,10 @@ from ..utils.validation import (
     _check_method_params,
     _check_sample_weight,
     _deprecate_positional_args,
+    _estimator_has,
     check_is_fitted,
     has_fit_parameter,
+    validate_data,
 )
 from ._base import BaseEnsemble, _partition_estimators
 
@@ -268,22 +270,6 @@ def _parallel_predict_regression(estimators, estimators_features, X):
     )
 
 
-def _estimator_has(attr):
-    """Check if we can delegate a method to the underlying estimator.
-
-    First, we check the first fitted estimator if available, otherwise we
-    check the estimator attribute.
-    """
-
-    def check(self):
-        if hasattr(self, "estimators_"):
-            return hasattr(self.estimators_[0], attr)
-        else:  # self.estimator is not None
-            return hasattr(self.estimator, attr)
-
-    return check
-
-
 class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
     """Base class for Bagging meta-estimator.
 
@@ -386,7 +372,8 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         _raise_for_params(fit_params, self, "fit")
 
         # Convert data (X is required to be 2d and indexable)
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=["csr", "csc"],
@@ -640,6 +627,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = get_tags(self._get_estimator()).input_tags.sparse
         tags.input_tags.allow_nan = get_tags(self._get_estimator()).input_tags.allow_nan
         return tags
 
@@ -939,7 +927,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         """
         check_is_fitted(self)
         # Check data
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=["csr", "csc"],
             dtype=None,
@@ -989,7 +978,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         check_is_fitted(self)
         if hasattr(self.estimator_, "predict_log_proba"):
             # Check data
-            X = self._validate_data(
+            X = validate_data(
+                self,
                 X,
                 accept_sparse=["csr", "csc"],
                 dtype=None,
@@ -1023,7 +1013,9 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
         return log_proba
 
-    @available_if(_estimator_has("decision_function"))
+    @available_if(
+        _estimator_has("decision_function", delegates=("estimators_", "estimator"))
+    )
     def decision_function(self, X):
         """Average of the decision functions of the base classifiers.
 
@@ -1044,7 +1036,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         check_is_fitted(self)
 
         # Check data
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=["csr", "csc"],
             dtype=None,
@@ -1277,7 +1270,8 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         """
         check_is_fitted(self)
         # Check data
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=["csr", "csc"],
             dtype=None,
