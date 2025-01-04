@@ -423,6 +423,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.classifier_tags.poor_score = True
         tags.no_validation = True
         return tags
@@ -540,7 +541,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
-        """Fit the random regressor.
+        """Fit the baseline regressor.
 
         Parameters
         ----------
@@ -662,6 +663,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.regressor_tags.poor_score = True
         tags.no_validation = True
         return tags

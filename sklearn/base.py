@@ -389,6 +389,33 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         except AttributeError:
             self.__dict__.update(state)
 
+    # TODO(1.7): Remove this method
+    def _more_tags(self):
+        """This code should never be reached since our `get_tags` will fallback on
+        `__sklearn_tags__` implemented below. We keep it for backward compatibility.
+        It is tested in `test_base_estimator_more_tags` in
+        `sklearn/utils/testing/test_tags.py`."""
+        from sklearn.utils._tags import _to_old_tags, default_tags
+
+        warnings.warn(
+            "The `_more_tags` method is deprecated in 1.6 and will be removed in "
+            "1.7. Please implement the `__sklearn_tags__` method.",
+            category=FutureWarning,
+        )
+        return _to_old_tags(default_tags(self))
+
+    # TODO(1.7): Remove this method
+    def _get_tags(self):
+        from sklearn.utils._tags import _to_old_tags, get_tags
+
+        warnings.warn(
+            "The `_get_tags` method is deprecated in 1.6 and will be removed in "
+            "1.7. Please implement the `__sklearn_tags__` method.",
+            category=FutureWarning,
+        )
+
+        return _to_old_tags(get_tags(self))
+
     def __sklearn_tags__(self):
         return Tags(
             estimator_type=None,
@@ -417,7 +444,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         """HTML representation of estimator.
 
         This is redundant with the logic of `_repr_mimebundle_`. The latter
-        should be favorted in the long term, `_repr_html_` is only
+        should be favored in the long term, `_repr_html_` is only
         implemented for consumers who do not interpret `_repr_mimbundle_`.
         """
         if get_config()["display"] != "diagram":

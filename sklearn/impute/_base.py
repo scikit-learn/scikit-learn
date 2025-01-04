@@ -739,6 +739,7 @@ class SimpleImputer(_BaseImputer):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.input_tags.allow_nan = is_pandas_na(self.missing_values) or is_scalar_nan(
             self.missing_values
         )
@@ -1130,5 +1131,6 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         tags = super().__sklearn_tags__()
         tags.input_tags.allow_nan = True
         tags.input_tags.string = True
+        tags.input_tags.sparse = True
         tags.transformer_tags.preserves_dtype = []
         return tags
