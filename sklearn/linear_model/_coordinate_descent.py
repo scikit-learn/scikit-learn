@@ -848,7 +848,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     SGDRegressor : Implements elastic net regression with incremental training.
     SGDClassifier : Implements logistic regression with elastic net penalty
         (``SGDClassifier(loss="log_loss", penalty="elasticnet")``).
-
+	
     Notes
     -----
     To avoid unnecessary memory duplication the X argument of the fit method
@@ -859,7 +859,10 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     is smaller than `tol` times the maximum absolute coefficient, :math:`\\max_j |w_j|`.
     If so, then additionally check whether the dual gap is smaller than `tol` times
     :math:`||y||_2^2 / n_{\text{samples}}`.
-
+    
+    For an example showcasing Elastic-Net alongside Lasso and ARDRegression for sparse 
+    signal recovery in the presence of noise and feature correlation, see:
+    :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`.
     Examples
     --------
     >>> from sklearn.linear_model import ElasticNet
@@ -1264,6 +1267,10 @@ class Lasso(ElasticNet):
     LassoCV : Lasso alpha parameter by cross-validation.
     LassoLarsCV : Lasso least angle parameter algorithm by cross-validation.
     sklearn.decomposition.sparse_encode : Sparse coding array estimator.
+    
+    For an example comparing Lasso with other L1-based regression models 
+    (Elastic-Net and ARDRegression) on sparse and noisy data, see:  
+    :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`.
 
     Notes
     -----
