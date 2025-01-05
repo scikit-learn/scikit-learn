@@ -14,7 +14,7 @@ code.literal {
 
 /* Version switcher */
 
-.version-switcher__menu {
+.version-switcher__menu.dropdown-menu {
   // The version switcher is aligned right so we need to avoid the dropdown menu
   // to be cut off by the right boundary
   left: unset;
