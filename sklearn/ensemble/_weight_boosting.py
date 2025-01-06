@@ -54,7 +54,9 @@ __all__ = [
     "AdaBoostClassifier",
     "AdaBoostRegressor",
 ]
-
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import LabelEncoder
+from sklearn.exceptions import NotFittedError
 
 class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
     """Base class for AdaBoost estimators.
@@ -501,6 +503,8 @@ class AdaBoostClassifier(
         learning_rate=1.0,
         algorithm="deprecated",
         random_state=None,
+        imputation_strategy='mean',
+        imputation_fill_value=None,
     ):
         super().__init__(
             estimator=estimator,
@@ -510,7 +514,38 @@ class AdaBoostClassifier(
         )
 
         self.algorithm = algorithm
+        self.imputation_strategy = imputation_strategy
+        self.imputation_fill_value = imputation_fill_value
+        self.imputer_ = SimpleImputer(
+            strategy=self.imputation_strategy,
+            fill_value=self.imputation_fill_value
+        )
 
+    def fit(self, X, y):
+        """Fit the AdaBoost classifier with imputation for missing values.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The training input samples.
+        y : array-like of shape (n_samples,)
+            The target values (class labels).
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
+        """
+        # Impute missing values in X
+        X_imputed = self.imputer_.fit_transform(X)
+        return super().fit(X_imputed, y)
+
+    def _check_X_impute(self, X):
+        """Impute missing values in X and validate the input."""
+        if not hasattr(self, 'imputer_'):
+            raise NotFittedError("Imputer has not been fitted yet.")
+        return self.imputer_.transform(X)
+    
     def _validate_estimator(self):
         """Check the estimator and set the estimator_ attribute."""
         super()._validate_estimator(default=DecisionTreeClassifier(max_depth=1))
@@ -565,6 +600,7 @@ class AdaBoostClassifier(
             The classification error for the current boost.
             If None then boosting has terminated early.
         """
+        X = self._check_X_impute(X)
         estimator = self._make_estimator(random_state=random_state)
 
         estimator.fit(X, y, sample_weight=sample_weight)
@@ -630,6 +666,7 @@ class AdaBoostClassifier(
         y : ndarray of shape (n_samples,)
             The predicted classes.
         """
+        X = self._check_X_impute(X)
         pred = self.decision_function(X)
 
         if self.n_classes_ == 2:
@@ -658,6 +695,7 @@ class AdaBoostClassifier(
         y : generator of ndarray of shape (n_samples,)
             The predicted classes.
         """
+        X = self._check_X_impute(X)
         X = self._check_X(X)
 
         n_classes = self.n_classes_
@@ -691,6 +729,7 @@ class AdaBoostClassifier(
             class in ``classes_``, respectively.
         """
         check_is_fitted(self)
+        X = self._check_X_impute(X)
         X = self._check_X(X)
 
         n_classes = self.n_classes_
@@ -737,6 +776,7 @@ class AdaBoostClassifier(
             class in ``classes_``, respectively.
         """
         check_is_fitted(self)
+        X = self._check_X_impute(X)
         X = self._check_X(X)
 
         n_classes = self.n_classes_
@@ -804,6 +844,7 @@ class AdaBoostClassifier(
             outputs is the same of that of the :term:`classes_` attribute.
         """
         check_is_fitted(self)
+        X = self._check_X_impute(X)
         n_classes = self.n_classes_
 
         if n_classes == 1:
@@ -838,7 +879,7 @@ class AdaBoostClassifier(
         """
 
         n_classes = self.n_classes_
-
+        X = self._check_X_impute(X)
         for decision in self.staged_decision_function(X):
             yield self._compute_proba_from_decision(decision, n_classes)
 
@@ -861,6 +902,7 @@ class AdaBoostClassifier(
             The class probabilities of the input samples. The order of
             outputs is the same of that of the :term:`classes_` attribute.
         """
+        X = self._check_X_impute(X)
         return np.log(self.predict_proba(X))
 
 
