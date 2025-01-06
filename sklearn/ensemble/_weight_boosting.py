@@ -503,7 +503,7 @@ class AdaBoostClassifier(
         learning_rate=1.0,
         algorithm="deprecated",
         random_state=None,
-        imputation_strategy='mean',
+        imputation_strategy="mean",
         imputation_fill_value=None,
     ):
         super().__init__(
@@ -517,8 +517,7 @@ class AdaBoostClassifier(
         self.imputation_strategy = imputation_strategy
         self.imputation_fill_value = imputation_fill_value
         self.imputer_ = SimpleImputer(
-            strategy=self.imputation_strategy,
-            fill_value=self.imputation_fill_value
+            strategy=self.imputation_strategy, fill_value=self.imputation_fill_value
         )
 
     def fit(self, X, y):
