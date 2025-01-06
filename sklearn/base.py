@@ -400,7 +400,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         warnings.warn(
             "The `_more_tags` method is deprecated in 1.6 and will be removed in "
             "1.7. Please implement the `__sklearn_tags__` method.",
-            category=FutureWarning,
+            category=DeprecationWarning,
         )
         return _to_old_tags(default_tags(self))
 
@@ -411,7 +411,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         warnings.warn(
             "The `_get_tags` method is deprecated in 1.6 and will be removed in "
             "1.7. Please implement the `__sklearn_tags__` method.",
-            category=FutureWarning,
+            category=DeprecationWarning,
         )
 
         return _to_old_tags(get_tags(self))
