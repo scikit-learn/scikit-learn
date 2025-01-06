@@ -2811,7 +2811,6 @@ def train_test_split(
 
     Examples
     --------
-    # Data are `numpy` arrays
     >>> import numpy as np
     >>> from sklearn.model_selection import train_test_split
     >>> X, y = np.arange(10).reshape((5, 2)), range(5)
@@ -2842,7 +2841,6 @@ def train_test_split(
     >>> train_test_split(y, shuffle=False)
     [[0, 1, 2], [3, 4]]
 
-    # Data are a `pandas` DataFrame
     >>> import pandas as pd
     >>> from sklearn import datasets
     >>> from sklearn.model_selection import train_test_split
@@ -2861,8 +2859,10 @@ def train_test_split(
     2    0
     3    0
     4    0
+
     >>> X_train, X_test, y_train, y_test = train_test_split(
     ... X, y, test_size=0.33, random_state=42)
+    ...
     >>> X_train.head()
         sepal length (cm)  sepal width (cm)  petal length (cm)  petal width (cm)
     96                 5.7               2.9                4.2               1.3
