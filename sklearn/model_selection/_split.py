@@ -2841,13 +2841,12 @@ def train_test_split(
     >>> train_test_split(y, shuffle=False)
     [[0, 1, 2], [3, 4]]
 
-    >>> import pandas as pd
     >>> from sklearn import datasets
     >>> from sklearn.model_selection import train_test_split
     >>> iris = datasets.load_iris(as_frame=True)
     >>> X, y = iris['data'], iris['target']
     >>> X.head()
-    sepal length (cm)  sepal width (cm)  petal length (cm)  petal width (cm)
+        sepal length (cm)  sepal width (cm)  petal length (cm)  petal width (cm)
     0                5.1               3.5                1.4               0.2
     1                4.9               3.0                1.4               0.2
     2                4.7               3.2                1.3               0.2
