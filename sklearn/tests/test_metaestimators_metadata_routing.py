@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 from sklearn import config_context
-from sklearn.base import is_classifier
+from sklearn.base import BaseEstimator, is_classifier
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.covariance import GraphicalLassoCV
@@ -90,13 +90,6 @@ sample_weight = rng.rand(N)
 groups = rng.randint(0, 10, size=len(y))
 
 
-@pytest.fixture(autouse=True)
-def enable_slep006():
-    """Enable SLEP006 for all tests."""
-    with config_context(enable_metadata_routing=True):
-        yield
-
-
 METAESTIMATORS: list = [
     {
         "metaestimator": MultiOutputRegressor,
@@ -126,7 +119,7 @@ METAESTIMATORS: list = [
     },
     {
         "metaestimator": ClassifierChain,
-        "estimator_name": "base_estimator",
+        "estimator_name": "estimator",
         "estimator": "classifier",
         "X": X,
         "y": y_multi,
@@ -134,7 +127,7 @@ METAESTIMATORS: list = [
     },
     {
         "metaestimator": RegressorChain,
-        "estimator_name": "base_estimator",
+        "estimator_name": "estimator",
         "estimator": "regressor",
         "X": X,
         "y": y_multi,
@@ -558,13 +551,13 @@ def get_init_args(metaestimator_info, sub_estimator_consumes):
     )
 
 
-def set_requests(estimator, *, method_mapping, methods, metadata_name, value=True):
+def set_requests(obj, *, method_mapping, methods, metadata_name, value=True):
     """Call `set_{method}_request` on a list of methods from the sub-estimator.
 
     Parameters
     ----------
-    estimator : BaseEstimator
-        The estimator for which `set_{method}_request` methods are called.
+    obj : BaseEstimator
+        The object for which `set_{method}_request` methods are called.
 
     method_mapping : dict
         The method mapping in the form of `{caller: [callee, ...]}`.
@@ -584,13 +577,18 @@ def set_requests(estimator, *, method_mapping, methods, metadata_name, value=Tru
     """
     for caller in methods:
         for callee in method_mapping.get(caller, [caller]):
-            set_request_for_method = getattr(estimator, f"set_{callee}_request")
+            set_request_for_method = getattr(obj, f"set_{callee}_request")
             set_request_for_method(**{metadata_name: value})
-            if is_classifier(estimator) and callee == "partial_fit":
+            if (
+                isinstance(obj, BaseEstimator)
+                and is_classifier(obj)
+                and callee == "partial_fit"
+            ):
                 set_request_for_method(classes=True)
 
 
 @pytest.mark.parametrize("estimator", UNSUPPORTED_ESTIMATORS)
+@config_context(enable_metadata_routing=True)
 def test_unsupported_estimators_get_metadata_routing(estimator):
     """Test that get_metadata_routing is not implemented on meta-estimators for
     which we haven't implemented routing yet."""
@@ -599,6 +597,7 @@ def test_unsupported_estimators_get_metadata_routing(estimator):
 
 
 @pytest.mark.parametrize("estimator", UNSUPPORTED_ESTIMATORS)
+@config_context(enable_metadata_routing=True)
 def test_unsupported_estimators_fit_with_metadata(estimator):
     """Test that fit raises NotImplementedError when metadata routing is
     enabled and a metadata is passed on meta-estimators for which we haven't
@@ -612,6 +611,7 @@ def test_unsupported_estimators_fit_with_metadata(estimator):
             raise NotImplementedError
 
 
+@config_context(enable_metadata_routing=True)
 def test_registry_copy():
     # test that _Registry is not copied into a new instance.
     a = _Registry()
@@ -622,6 +622,7 @@ def test_registry_copy():
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
+@config_context(enable_metadata_routing=True)
 def test_default_request(metaestimator):
     # Check that by default request is empty and the right type
     metaestimator_class = metaestimator["metaestimator"]
@@ -638,6 +639,7 @@ def test_default_request(metaestimator):
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
+@config_context(enable_metadata_routing=True)
 def test_error_on_missing_requests_for_sub_estimator(metaestimator):
     # Test that a UnsetMetadataPassedError is raised when the sub-estimator's
     # requests are not set
@@ -696,6 +698,7 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
+@config_context(enable_metadata_routing=True)
 def test_setting_request_on_sub_estimator_removes_error(metaestimator):
     # When the metadata is explicitly requested on the sub-estimator, there
     # should be no errors.
@@ -765,6 +768,7 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
+@config_context(enable_metadata_routing=True)
 def test_non_consuming_estimator_works(metaestimator):
     # Test that when a non-consuming estimator is given, the meta-estimator
     # works w/o setting any requests.
@@ -803,6 +807,7 @@ def test_non_consuming_estimator_works(metaestimator):
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
+@config_context(enable_metadata_routing=True)
 def test_metadata_is_routed_correctly_to_scorer(metaestimator):
     """Test that any requested metadata is correctly routed to the underlying
     scorers in CV estimators.
@@ -848,6 +853,7 @@ def test_metadata_is_routed_correctly_to_scorer(metaestimator):
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
+@config_context(enable_metadata_routing=True)
 def test_metadata_is_routed_correctly_to_splitter(metaestimator):
     """Test that any requested metadata is correctly routed to the underlying
     splitters in CV estimators.
@@ -882,6 +888,7 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
+@config_context(enable_metadata_routing=True)
 def test_metadata_routed_to_group_splitter(metaestimator):
     """Test that groups are routed correctly if group splitter of CV estimator is used
     within cross_validate. Regression test for issue described in PR #29634 to test that
