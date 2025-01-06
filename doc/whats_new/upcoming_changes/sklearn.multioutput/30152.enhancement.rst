@@ -1,0 +1,3 @@
+- The parameter `base_estimator` has been deprecated in favour of `estimator` for
+  :class:`multioutput.RegressorChain` and :class:`multioutput.ClassifierChain`.
+  By :user:`Success Moses <SuccessMoses>` and :user:`dikraMasrour <dikra_masrour>`

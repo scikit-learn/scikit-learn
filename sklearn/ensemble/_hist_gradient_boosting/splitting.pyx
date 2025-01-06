@@ -5,7 +5,9 @@
 - Apply a split to a node, i.e. split the indices of the samples at the node
   into the newly created left and right children.
 """
-# Author: Nicolas Hug
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 cimport cython
 from cython.parallel import prange
