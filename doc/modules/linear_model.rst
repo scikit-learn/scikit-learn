@@ -124,7 +124,7 @@ its ``coef_`` member::
     >>> reg.coef_
     array([0.34545455, 0.34545455])
     >>> reg.intercept_
-    0.13636...
+    np.float64(0.13636...)
 
 Note that the class :class:`Ridge` allows for the user to specify that the
 solver be automatically chosen by setting `solver="auto"`. When this option
@@ -209,7 +209,7 @@ Usage example::
     RidgeCV(alphas=array([1.e-06, 1.e-05, 1.e-04, 1.e-03, 1.e-02, 1.e-01, 1.e+00, 1.e+01,
           1.e+02, 1.e+03, 1.e+04, 1.e+05, 1.e+06]))
     >>> reg.alpha_
-    0.01
+    np.float64(0.01)
 
 Specifying the value of the :term:`cv` attribute will trigger the use of
 cross-validation with :class:`~sklearn.model_selection.GridSearchCV`, for
@@ -1278,7 +1278,7 @@ Usage example::
     >>> reg.coef_
     array([0.2463..., 0.4337...])
     >>> reg.intercept_
-    -0.7638...
+    np.float64(-0.7638...)
 
 
 .. rubric:: Examples
