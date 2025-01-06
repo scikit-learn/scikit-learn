@@ -359,7 +359,7 @@ def _find_tags_provider(estimator, warn=True):
             "`sklearn.base.ClassifierMixin`, `sklearn.base.RegressorMixin`, and "
             "`sklearn.base.OutlierMixin`. From scikit-learn 1.7, not defining "
             "`__sklearn_tags__` will raise an error.",
-            category=FutureWarning,
+            category=DeprecationWarning,
         )
     return tag_provider
 
@@ -446,7 +446,7 @@ def _safe_tags(estimator, key=None):
         "The `_safe_tags` function is deprecated in 1.6 and will be removed in "
         "1.7. Use the public `get_tags` function instead and make sure to implement "
         "the `__sklearn_tags__` method.",
-        category=FutureWarning,
+        category=DeprecationWarning,
     )
     tags = _to_old_tags(get_tags(estimator))
 
