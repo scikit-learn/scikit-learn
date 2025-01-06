@@ -848,6 +848,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     SGDRegressor : Implements elastic net regression with incremental training.
     SGDClassifier : Implements logistic regression with elastic net penalty
         (``SGDClassifier(loss="log_loss", penalty="elasticnet")``).
+
     Notes
     -----
     To avoid unnecessary memory duplication the X argument of the fit method
