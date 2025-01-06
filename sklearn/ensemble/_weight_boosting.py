@@ -22,8 +22,6 @@ The module structure is the following:
 import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
-from sklearn.impute import SimpleImputer
-from sklearn.exceptions import NotFittedError
 
 import numpy as np
 
@@ -34,6 +32,8 @@ from ..base import (
     is_classifier,
     is_regressor,
 )
+from ..exceptions import NotFittedError
+from ..impute import SimpleImputer
 from ..metrics import accuracy_score, r2_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import _safe_indexing, check_random_state
