@@ -493,6 +493,10 @@ class AdaBoostClassifier(
     _parameter_constraints: dict = {
         **BaseWeightBoosting._parameter_constraints,
         "algorithm": [StrOptions({"SAMME"}), Hidden(StrOptions({"deprecated"}))],
+        "imputation_strategy": [
+            StrOptions({"mean", "median", "most_frequent", "constant"})
+        ],
+        "imputation_fill_value": [Real(), type(None)],
     }
 
     def __init__(
@@ -516,11 +520,11 @@ class AdaBoostClassifier(
         self.algorithm = algorithm
         self.imputation_strategy = imputation_strategy
         self.imputation_fill_value = imputation_fill_value
-        self.imputer_ = SimpleImputer(
-            strategy=self.imputation_strategy, fill_value=self.imputation_fill_value
-        )
+        # self.imputer_ = SimpleImputer(
+        #     strategy=self.imputation_strategy, fill_value=self.imputation_fill_value
+        # )
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the AdaBoost classifier with imputation for missing values.
 
         Parameters
@@ -529,19 +533,50 @@ class AdaBoostClassifier(
             The training input samples.
         y : array-like of shape (n_samples,)
             The target values (class labels).
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights.
 
         Returns
         -------
         self : object
             Fitted estimator.
         """
+        # Validate X and y
+        X, y = validate_data(
+            X, 
+            y,
+            accept_sparse=["csr", "csc", "coo", "dok", "lil"],
+            dtype=None,  # Let the estimator decide the dtype
+            force_all_finite=False  # SimpleImputer can handle NaNs
+        )
+
+        # Check if X is at least 2D
+        if X.ndim > 2:
+            raise ValueError(f"Found array with dim {X.ndim}, while dim <= 2 is required by SimpleImputer")
+
+        # Initialize and fit the imputer
+        self.imputer_ = SimpleImputer(
+            strategy=self.imputation_strategy, fill_value=self.imputation_fill_value
+        )
         X_imputed = self.imputer_.fit_transform(X)
-        return super().fit(X_imputed, y)
+
+        return super().fit(X_imputed, y, sample_weight=sample_weight)
 
     def _check_X_impute(self, X):
         """Impute missing values in X and validate the input."""
-        if not hasattr(self, "imputer_"):
-            raise NotFittedError("Imputer has not been fitted yet.")
+        check_is_fitted(self, "imputer_")
+        X = validate_data(
+            X,
+            reset=False,
+            accept_sparse=["csr", "csc", "coo", "dok", "lil"],
+            dtype=None,
+            force_all_finite=False,
+        )
+        # Check if X is at least 2D
+        if X.ndim > 2:
+            raise ValueError(
+                f"Found array with dim {X.ndim}, while dim <= 2 is required by SimpleImputer"
+            )
         return self.imputer_.transform(X)
 
     def _validate_estimator(self):
