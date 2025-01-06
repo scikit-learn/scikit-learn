@@ -543,6 +543,7 @@ class AdaBoostClassifier(
         if not hasattr(self, "imputer_"):
             raise NotFittedError("Imputer has not been fitted yet.")
         return self.imputer_.transform(X)
+
     def _validate_estimator(self):
         """Check the estimator and set the estimator_ attribute."""
         super()._validate_estimator(default=DecisionTreeClassifier(max_depth=1))
