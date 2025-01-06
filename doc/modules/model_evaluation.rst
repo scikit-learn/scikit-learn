@@ -1978,7 +1978,7 @@ two above definitions to follow.
     ...    [[0.8, 0.1, 0.1], [0.2, 0.7, 0.1], [0.2, 0.2, 0.6]],
     ...    labels=["eggs", "ham", "spam"]
     ... )
-    np.float64(0.146)
+    np.float64(0.146...)
 
 The Brier score can be used to assess how well a classifier is calibrated.
 However, a lower Brier score loss does not always mean a better calibration.
