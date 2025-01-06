@@ -22,6 +22,8 @@ The module structure is the following:
 import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
+from sklearn.impute import SimpleImputer
+from sklearn.exceptions import NotFittedError
 
 import numpy as np
 
@@ -54,9 +56,7 @@ __all__ = [
     "AdaBoostClassifier",
     "AdaBoostRegressor",
 ]
-from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import LabelEncoder
-from sklearn.exceptions import NotFittedError
+
 
 class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
     """Base class for AdaBoost estimators.
@@ -536,7 +536,6 @@ class AdaBoostClassifier(
         self : object
             Fitted estimator.
         """
-        # Impute missing values in X
         X_imputed = self.imputer_.fit_transform(X)
         return super().fit(X_imputed, y)
 
@@ -877,9 +876,9 @@ class AdaBoostClassifier(
             The class probabilities of the input samples. The order of
             outputs is the same of that of the :term:`classes_` attribute.
         """
-
-        n_classes = self.n_classes_
         X = self._check_X_impute(X)
+        n_classes = self.n_classes_
+    
         for decision in self.staged_decision_function(X):
             yield self._compute_proba_from_decision(decision, n_classes)
 
