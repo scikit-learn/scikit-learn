@@ -160,7 +160,7 @@ much higher than expected accuracy score::
 
     >>> from sklearn.model_selection import train_test_split
     >>> from sklearn.feature_selection import SelectKBest
-    >>> from sklearn.ensemble import GradientBoostingClassifier
+    >>> from sklearn.ensemble import HistGradientBoostingClassifier
     >>> from sklearn.metrics import accuracy_score
 
     >>> # Incorrect preprocessing: the entire data is transformed
@@ -168,9 +168,9 @@ much higher than expected accuracy score::
 
     >>> X_train, X_test, y_train, y_test = train_test_split(
     ...     X_selected, y, random_state=42)
-    >>> gbc = GradientBoostingClassifier(random_state=1)
+    >>> gbc = HistGradientBoostingClassifier(random_state=1)
     >>> gbc.fit(X_train, y_train)
-    GradientBoostingClassifier(random_state=1)
+    HistGradientBoostingClassifier(random_state=1)
 
     >>> y_pred = gbc.predict(X_test)
     >>> accuracy_score(y_test, y_pred)
@@ -189,14 +189,14 @@ data, close to chance::
     >>> select = SelectKBest(k=25)
     >>> X_train_selected = select.fit_transform(X_train, y_train)
 
-    >>> gbc = GradientBoostingClassifier(random_state=1)
+    >>> gbc = HistGradientBoostingClassifier(random_state=1)
     >>> gbc.fit(X_train_selected, y_train)
-    GradientBoostingClassifier(random_state=1)
+    HistGradientBoostingClassifier(random_state=1)
 
     >>> X_test_selected = select.transform(X_test)
     >>> y_pred = gbc.predict(X_test_selected)
     >>> accuracy_score(y_test, y_pred)
-    0.46
+    0.5
 
 Here again, we recommend using a :class:`~sklearn.pipeline.Pipeline` to chain
 together the feature selection and model estimators. The pipeline ensures
@@ -207,15 +207,15 @@ is used only for calculating the accuracy score::
     >>> X_train, X_test, y_train, y_test = train_test_split(
     ...     X, y, random_state=42)
     >>> pipeline = make_pipeline(SelectKBest(k=25),
-    ...                          GradientBoostingClassifier(random_state=1))
+    ...                          HistGradientBoostingClassifier(random_state=1))
     >>> pipeline.fit(X_train, y_train)
     Pipeline(steps=[('selectkbest', SelectKBest(k=25)),
-                    ('gradientboostingclassifier',
-                    GradientBoostingClassifier(random_state=1))])
+                    ('histgradientboostingclassifier',
+                     HistGradientBoostingClassifier(random_state=1))])
 
     >>> y_pred = pipeline.predict(X_test)
     >>> accuracy_score(y_test, y_pred)
-    0.46
+    0.5
 
 The pipeline can also be fed into a cross-validation
 function such as :func:`~sklearn.model_selection.cross_val_score`.
@@ -225,7 +225,7 @@ method is used during fitting and predicting::
     >>> from sklearn.model_selection import cross_val_score
     >>> scores = cross_val_score(pipeline, X, y)
     >>> print(f"Mean accuracy: {scores.mean():.2f}+/-{scores.std():.2f}")
-    Mean accuracy: 0.46+/-0.07
+    Mean accuracy: 0.43+/-0.05
 
 
 .. _randomness:
