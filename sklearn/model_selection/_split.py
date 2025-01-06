@@ -2842,8 +2842,6 @@ def train_test_split(
     >>> train_test_split(y, shuffle=False)
     [[0, 1, 2], [3, 4]]
 
-    Examples
-    --------
     # Data are a `pandas` DataFrame
     >>> import pandas as pd
     >>> from sklearn import datasets
