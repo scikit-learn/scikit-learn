@@ -540,7 +540,7 @@ class AdaBoostClassifier(
 
     def _check_X_impute(self, X):
         """Impute missing values in X and validate the input."""
-        if not hasattr(self, 'imputer_'):
+        if not hasattr(self, "imputer_"):
             raise NotFittedError("Imputer has not been fitted yet.")
         return self.imputer_.transform(X)
     def _validate_estimator(self):
