@@ -236,8 +236,7 @@ def _validate_multiclass_probabilistic_prediction(
         else:
             raise ValueError(
                 "The labels array needs to contain at least two "
-                "labels for log_loss, "
-                "got {0}.".format(lb.classes_)
+                "labels, got {0}.".format(lb.classes_)
             )
 
     transformed_labels = lb.transform(y_true)
