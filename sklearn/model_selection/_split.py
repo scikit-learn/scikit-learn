@@ -2842,7 +2842,6 @@ def train_test_split(
     [[0, 1, 2], [3, 4]]
 
     >>> from sklearn import datasets
-    >>> from sklearn.model_selection import train_test_split
     >>> iris = datasets.load_iris(as_frame=True)
     >>> X, y = iris['data'], iris['target']
     >>> X.head()
