@@ -527,7 +527,7 @@ Some classification problems can exhibit very rare classes.
 of the target classes: for instance, there could be orders of magnitude more
 negative observations than positive observations. As a result, cross-validation
 splitting can generate train or validation folds without any occurence of
-observations of a particular class. This typically leads to undefined
+a particular class. This typically leads to undefined
 classification metrics (e.g. ROC AUC), exceptions raised when attempting to
 call :term:`fit` or missing columns in the output of
 the `predict_proba` or `decision_function` methods of multiclass classifiers
