@@ -523,14 +523,14 @@ the proportion of samples on each side of the train / test split.
 Cross-validation iterators with stratification based on class labels
 --------------------------------------------------------------------
 
-Some classification problems can exhibit very rare classes. of the target
-classes: for instance, there could be orders of magnitude more negative
-observations than positive observations. As a result, cross-validation
-splitting can generate train or validation folds without any occurence of a
-particular class. This typically leads to undefined classification metrics
-(e.g. ROC AUC), exceptions raised when attempting to call :term:`fit` or
-missing columns in the output of the `predict_proba` or `decision_function`
-methods of multiclass classifiers trained on different folds.
+Some classification tasks can exhibit very rare classes. of the target classes:
+for instance, there could be orders of magnitude more negative observations
+than positive observations. As a result, cross-validation splitting can
+generate train or validation folds without any occurence of a particular class.
+This typically leads to undefined classification metrics (e.g. ROC AUC),
+exceptions raised when attempting to call :term:`fit` or missing columns in the
+output of the `predict_proba` or `decision_function` methods of multiclass
+classifiers trained on different folds.
 
 To mitigate such problems, splitters such as :class:`StratifiedKFold` and
 :class:`StratifiedShuffleSplit` implement stratified sampling to ensure that
