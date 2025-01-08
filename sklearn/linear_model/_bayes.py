@@ -564,6 +564,10 @@ class ARDRegression(RegressorMixin, LinearModel):
     ARDRegression()
     >>> clf.predict([[1, 1]])
     array([1.])
+
+    For an example showcasing ARD Regression alongside Lasso and Elastic-Net for sparse
+    signal recovery in the presence of noise and feature correlation, see:
+    :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`.
     """
 
     _parameter_constraints: dict = {
