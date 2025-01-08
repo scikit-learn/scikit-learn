@@ -400,7 +400,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         X = validate_data(self, X, reset=False)
         _, log_resp = self._estimate_log_prob_resp(X)
-        return np.exp(log_resp)
+        return np.exp(log_resp, out=log_resp)
 
     def sample(self, n_samples=1):
         """Generate random samples from the fitted Gaussian distribution.
@@ -475,7 +475,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         -------
         weighted_log_prob : array, shape (n_samples, n_component)
         """
-        return self._estimate_log_prob(X) + self._estimate_log_weights()
+        result = self._estimate_log_prob(X)
+        result += self._estimate_log_weights()
+        return result
 
     @abstractmethod
     def _estimate_log_weights(self):
@@ -522,11 +524,13 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         log_responsibilities : array, shape (n_samples, n_components)
             logarithm of the responsibilities
         """
-        weighted_log_prob = self._estimate_weighted_log_prob(X)
-        log_prob_norm = logsumexp(weighted_log_prob, axis=1)
+        # Inplace normalize the weighted log probabilities into log
+        # responsibilities to avoid a memory copy.
+        log_resp = self._estimate_weighted_log_prob(X)
+        log_prob_norm = logsumexp(log_resp, axis=1)
         with np.errstate(under="ignore"):
-            # ignore underflow
-            log_resp = weighted_log_prob - log_prob_norm[:, np.newaxis]
+            # Ignore underflow
+            log_resp -= log_prob_norm[:, np.newaxis]
         return log_prob_norm, log_resp
 
     def _print_verbose_msg_init_beg(self, n_init):
