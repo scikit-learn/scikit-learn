@@ -1506,7 +1506,7 @@ def make_pipeline(*steps, memory=None, transform_input=None, verbose=False):
     )
 
 
-def _transform_one(transformer, X, y, weight, params=None):
+def _transform_one(transformer, X, y, weight, params=Bunch(transform={})):
     """Call transform and apply weight to output.
 
     Parameters
