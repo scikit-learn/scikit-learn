@@ -523,15 +523,14 @@ the proportion of samples on each side of the train / test split.
 Cross-validation iterators with stratification based on class labels
 --------------------------------------------------------------------
 
-Some classification problems can exhibit very rare classes.
-of the target classes: for instance, there could be orders of magnitude more
-negative observations than positive observations. As a result, cross-validation
-splitting can generate train or validation folds without any occurence of
-a particular class. This typically leads to undefined
-classification metrics (e.g. ROC AUC), exceptions raised when attempting to
-call :term:`fit` or missing columns in the output of
-the `predict_proba` or `decision_function` methods of multiclass classifiers
-trained on different folds.
+Some classification problems can exhibit very rare classes. of the target
+classes: for instance, there could be orders of magnitude more negative
+observations than positive observations. As a result, cross-validation
+splitting can generate train or validation folds without any occurence of a
+particular class. This typically leads to undefined classification metrics
+(e.g. ROC AUC), exceptions raised when attempting to call :term:`fit` or
+missing columns in the output of the `predict_proba` or `decision_function`
+methods of multiclass classifiers trained on different folds.
 
 To mitigate such problems, splitters such as :class:`StratifiedKFold` and
 :class:`StratifiedShuffleSplit` implement stratified sampling to ensure that
@@ -540,13 +539,16 @@ relative class frequencies are approximately preserved in each fold.
 .. note::
 
   Stratified sampling was introduced in scikit-learn to workaround the
-  afore mentionned engineering problems rather than solve a statistical one.
+  aforementioned engineering problems rather than solve a statistical one.
 
-  On classification problems with very rare classes, the inter-fold variability of
-  the performance metric measured via stratified cross-validation can
-  arbitrarily **under-estimate the uncertainty** in the "true" metric value of
-  the classifier retrained on all the available data and evaluated on an
-  hypothetical infinite test set.
+  Stratification makes cross-validation folds more homogeneous, and as a result
+  hides some of the variability inherent to fitting models with a limitted
+  number of observations.
+
+  As a result, stratification can artificially shrink the spread of the metric
+  measured accross cross-validation iterations: the inter-fold variabiliy does
+  no longer reflect the uncertainty in the performance of classifiers in the
+  presence of rare classes.
 
 .. _stratified_k_fold:
 
