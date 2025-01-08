@@ -303,7 +303,6 @@ METRIC_UNDEFINED_BINARY = {
 
 # Those metrics don't support multiclass inputs
 METRIC_UNDEFINED_MULTICLASS = {
-    "brier_score_loss",
     "micro_roc_auc",
     "samples_roc_auc",
     "partial_roc_auc",
@@ -398,6 +397,8 @@ METRICS_WITH_LABELS = {
     "unnormalized_multilabel_confusion_matrix",
     "unnormalized_multilabel_confusion_matrix_sample",
     "cohen_kappa_score",
+    "log_loss",
+    "brier_score_loss",
 }
 
 # Metrics with a "normalize" option
@@ -411,6 +412,7 @@ METRICS_WITH_NORMALIZE_OPTION = {
 THRESHOLDED_MULTILABEL_METRICS = {
     "log_loss",
     "unnormalized_log_loss",
+    "brier_score_loss",
     "roc_auc_score",
     "weighted_roc_auc",
     "samples_roc_auc",
