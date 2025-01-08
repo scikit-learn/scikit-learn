@@ -106,9 +106,9 @@ _ = ax.set_ylabel("Probability density")
 # Below we plot the null distribution for the randomized data. The permutation
 # scores are similar to those obtained using the original iris dataset
 # because the permutation always destroys any feature-label dependency present.
-# The score obtained on the randomized data without label permutation in this case
+# The score obtained on the randomized data in this case
 # though, is very poor. This results in a large p-value, confirming that there was no
-# feature-label dependency in the randomized data, before label permutation.
+# feature-label dependency in the randomized data.
 
 fig, ax = plt.subplots()
 
