@@ -17,8 +17,8 @@ significance of a cross-validated score using permutations.
 # -------
 #
 # We will use the :ref:`iris_dataset`, which consists of measurements taken
-# from 3 species of irises. Our model will use the measurements to predict
-# the iris species it belongs to.
+# from 3 Iris species. Our model will use the measurements to predict
+# the iris species.
 
 from sklearn.datasets import load_iris
 

@@ -947,14 +947,14 @@ Permutation test score
 ======================
 
 :func:`~sklearn.model_selection.permutation_test_score` offers another way
-to evaluate the performance of any model that we can score on. It provides a
+to evaluate the performance of a :term:`predictor`. It provides a
 permutation-based p-value, which represents how likely an observed performance of the
-estimator would be obtained by random chance. The null hypothesis in this test is
+estimator would be obtained by chance. The null hypothesis in this test is
 that the estimator fails to leverage any statistical dependency between the
 features and the targets to make correct predictions on left out data.
 :func:`~sklearn.model_selection.permutation_test_score` generates a null
 distribution by calculating `n_permutations` different permutations of the
-data. In each permutation the targets are randomly shuffled, thereby removing
+data. In each permutation the target values are randomly shuffled, thereby removing
 any dependency between the features and the targets. The p-value output
 is the fraction  of randomized data sets for which the model's average cross-validation
 score on the permutations is better or equal than the cross-validation score obtained by
