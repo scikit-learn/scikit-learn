@@ -569,9 +569,9 @@ def test_gaussian_mixture_predict_predict_proba():
         (4, 300, 1e-1),  # loose convergence
     ],
 )
-def test_gaussian_mixture_fit_predict(seed, max_iter, tol):
+def test_gaussian_mixture_fit_predict(seed, max_iter, tol, global_dtype):
     rng = np.random.RandomState(seed)
-    rand_data = RandomData(rng)
+    rand_data = RandomData(rng, dtype=global_dtype)
     for covar_type in COVARIANCE_TYPE:
         X = rand_data.X[covar_type]
         Y = rand_data.Y
@@ -592,6 +592,9 @@ def test_gaussian_mixture_fit_predict(seed, max_iter, tol):
         Y_pred2 = g.fit_predict(X)
         assert_array_equal(Y_pred1, Y_pred2)
         assert adjusted_rand_score(Y, Y_pred2) > 0.95
+        assert g.means_.dtype == global_dtype
+        assert g.weights_.dtype == global_dtype
+        assert g.precisions_.dtype == global_dtype
 
 
 def test_gaussian_mixture_fit_predict_n_init():
@@ -603,10 +606,10 @@ def test_gaussian_mixture_fit_predict_n_init():
     assert_array_equal(y_pred1, y_pred2)
 
 
-def test_gaussian_mixture_fit():
+def test_gaussian_mixture_fit(global_dtype):
     # recover the ground truth
     rng = np.random.RandomState(0)
-    rand_data = RandomData(rng)
+    rand_data = RandomData(rng, dtype=global_dtype)
     n_features = rand_data.n_features
     n_components = rand_data.n_components
 
@@ -654,6 +657,10 @@ def test_gaussian_mixture_fit():
             ecov.covariance_ = prec_test[h]
             # the accuracy depends on the number of data and randomness, rng
             assert_allclose(ecov.error_norm(prec_pred[k]), 0, atol=0.15)
+
+        assert g.means_.dtype == global_dtype
+        assert g.covariances_.dtype == global_dtype
+        assert g.precisions_.dtype == global_dtype
 
 
 def test_gaussian_mixture_fit_best_params():
