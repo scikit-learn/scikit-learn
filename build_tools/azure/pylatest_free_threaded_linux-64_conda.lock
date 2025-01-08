@@ -33,10 +33,10 @@ https://conda.anaconda.org/conda-forge/linux-64/readline-8.2-h8228510_1.conda#47
 https://conda.anaconda.org/conda-forge/linux-64/zstd-1.5.6-ha6fb4c9_0.conda#4d056880988120e29d75bfff282e0f45
 https://conda.anaconda.org/conda-forge/linux-64/libblas-3.9.0-26_linux64_openblas.conda#ac52800af2e0c0e7dac770b435ce768a
 https://conda.anaconda.org/conda-forge/linux-64/libhiredis-1.0.2-h2cc385e_0.tar.bz2#b34907d3a81a3cd8095ee83d174c074a
-https://conda.anaconda.org/conda-forge/linux-64/python-3.13.1-h9a34b6e_2_cp313t.conda#f0659443f1e7eae7f7606583fde56397
+https://conda.anaconda.org/conda-forge/linux-64/python-3.13.1-h9a34b6e_4_cp313t.conda#1dbe31c1b134348cac3865852348c5b4
 https://conda.anaconda.org/conda-forge/linux-64/ccache-4.10.1-h065aff2_0.conda#d6b48c138e0c8170a6fe9c136e063540
 https://conda.anaconda.org/conda-forge/noarch/colorama-0.4.6-pyhd8ed1ab_1.conda#962b9857ee8e7018c22f2776ffa0b2d7
-https://conda.anaconda.org/conda-forge/noarch/cpython-3.13.1-py313hd8ed1ab_2.conda#0808acf1f700deba701a0e86833a5f4d
+https://conda.anaconda.org/conda-forge/noarch/cpython-3.13.1-py313hd8ed1ab_4.conda#18a6ae0ac38c9b811f4decf1405d4663
 https://conda.anaconda.org/conda-forge/noarch/exceptiongroup-1.2.2-pyhd8ed1ab_1.conda#a16662747cdeb9abbac74d0057cc976e
 https://conda.anaconda.org/conda-forge/noarch/execnet-2.1.1-pyhd8ed1ab_1.conda#a71efeae2c160f6789900ba2631a2c90
 https://conda.anaconda.org/conda-forge/noarch/iniconfig-2.0.0-pyhd8ed1ab_1.conda#6837f3eff7dcea42ecd714ce1ac2b108
@@ -53,6 +53,6 @@ https://conda.anaconda.org/conda-forge/noarch/meson-1.6.1-pyhd8ed1ab_0.conda#006
 https://conda.anaconda.org/conda-forge/linux-64/numpy-2.2.1-py313h151ba9f_0.conda#7dff61c6e719aa5c1ac9a00595c8e9b2
 https://conda.anaconda.org/conda-forge/noarch/pyproject-metadata-0.9.0-pyhd8ed1ab_1.conda#1239146a53a383a84633800294120f17
 https://conda.anaconda.org/conda-forge/noarch/pytest-8.3.4-pyhd8ed1ab_1.conda#799ed216dc6af62520f32aa39bc1c2bb
-https://conda.anaconda.org/conda-forge/noarch/python-freethreading-3.13.1-h92d6c8b_2.conda#8618c8e664359e801165606d1c5cf10e
+https://conda.anaconda.org/conda-forge/noarch/python-freethreading-3.13.1-h92d6c8b_4.conda#8d633a0e6baa1fa12e557715b0244668
 https://conda.anaconda.org/conda-forge/noarch/meson-python-0.17.1-pyh70fd9c4_1.conda#7a02679229c6c2092571b4c025055440
 https://conda.anaconda.org/conda-forge/noarch/pytest-xdist-3.6.1-pyhd8ed1ab_1.conda#59aad4fb37cabc0bacc73cf344612ddd
