@@ -1,4 +1,0 @@
-- Raise a `DeprecationWarning` when there is no concrete implementation of `__sklearn_tags__`
-  in the MRO of the estimator. We request to inherit from `BaseEstimator` that
-  implements `__sklearn_tags__`.
-  By :user:`Guillaume Lemaitre <glemaitre>`
