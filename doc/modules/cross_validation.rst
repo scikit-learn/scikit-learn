@@ -523,28 +523,27 @@ the proportion of samples on each side of the train / test split.
 Cross-validation iterators with stratification based on class labels
 --------------------------------------------------------------------
 
-Some classification problems can exhibit a large imbalance in the distribution
-of the target classes: for instance there could be orders of magnitude more
+Some classification problems can exhibit very rare classes.
+of the target classes: for instance, there could be orders of magnitude more
 negative observations than positive observations. As a result, cross-validation
 splitting can generate train or validation folds without any occurence of
 observations of a particular class. This typically leads to undefined
 classification metrics (e.g. ROC AUC), exceptions raised when attempting to
-call fit on a single-class training fold or missing columns in the output of
+call :term:`fit` or missing columns in the output of
 the `predict_proba` or `decision_function` methods of multiclass classifiers
 trained on different folds.
 
 To mitigate such problems, splitters such as :class:`StratifiedKFold` and
 :class:`StratifiedShuffleSplit` implement stratified sampling to ensure that
-relative class frequencies are approximately preserved in each train and
-validation fold.
+relative class frequencies are approximately preserved in each fold.
 
 .. note::
 
   Stratified sampling was introduced in scikit-learn to workaround the
   afore mentionned engineering problems rather than solve a statistical one.
 
-  On highly imbalanced classification problems, the inter-fold variability of
-  the performance metric values measured via stratified cross-validation can
+  On classification problems with very rare classes, the inter-fold variability of
+  the performance metric measured via stratified cross-validation can
   arbitrarily **under-estimate the uncertainty** in the "true" metric value of
   the classifier retrained on all the available data and evaluated on an
   hypothetical infinite test set.
