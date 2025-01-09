@@ -543,11 +543,11 @@ relative class frequencies are approximately preserved in each fold.
   aforementioned engineering problems rather than solve a statistical one.
 
   Stratification makes cross-validation folds more homogeneous, and as a result
-  hides some of the variability inherent to fitting models with a limitted
+  hides some of the variability inherent to fitting models with a limited
   number of observations.
 
   As a result, stratification can artificially shrink the spread of the metric
-  measured accross cross-validation iterations: the inter-fold variabiliy does
+  measured across cross-validation iterations: the inter-fold variability does
   no longer reflect the uncertainty in the performance of classifiers in the
   presence of rare classes.
 
