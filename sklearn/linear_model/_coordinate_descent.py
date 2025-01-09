@@ -1709,7 +1709,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
 
         if self.n_alphas != "deprecated":
             warnings.warn(
-                "`n_alphas` was deprecated in 1.6 and will be removed in 1.8"
+                "`n_alphas` was deprecated in 1.7 and will be removed in 1.9"
                 " use `alphas` to set number of alphas values to test along"
                 " regularization path",
                 FutureWarning,
@@ -1720,8 +1720,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         # if the default value is used in the constructor
         if isinstance(self.alphas, str):
             warnings.warn(
-                "The default value of `alphas` will change from None to 100 in 1.6"
-                " Since 1.6, ``alphas`` supports an integer argument which generates"
+                "The default value of `alphas` will change from None to 100 in 1.7"
+                " Since 1.7, ``alphas`` supports an integer argument which generates"
                 " ``alphas`` number of alpha values along the regularization path.",
                 FutureWarning,
             )
@@ -2199,17 +2199,17 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     n_alphas : int, default=100
         Number of alphas along the regularization path.
 
-    .. deprecated:: 1.6
-        ``n_alphas`` was deprecated in 1.6 and will be removed in 1.8.
+    .. deprecated:: 1.7
+        ``n_alphas`` was deprecated in 1.7 and will be removed in 1.9.
         Use parameter ``alphas`` instead.
 
     alphas : array-like or int, default=100
         List of alphas of where to compute the models.
         If int, ``alphas`` number of values are generated automatically
 
-    .. versionchanged:: 1.6
-        The default value of ``alphas`` will change from None to 100 in 1.6
-        Since 1.6, ``alphas`` supports an integer argument which generates
+    .. versionchanged:: 1.7
+        The default value of ``alphas`` will change from None to 100 in 1.7
+        Since 1.7, ``alphas`` supports an integer argument which generates
         ``alphas`` number of alpha values along the regularization path.
 
     fit_intercept : bool, default=True
@@ -2898,17 +2898,17 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     n_alphas : int, default=100
         Number of alphas along the regularization path.
 
-    .. deprecated:: 1.6
-        ``n_alphas`` was deprecated in 1.6 and will be removed in 1.8.
+    .. deprecated:: 1.7
+        ``n_alphas`` was deprecated in 1.7 and will be removed in 1.9.
         Use parameter ``alphas`` instead.
 
     alphas : array-like or int, default=100
         List of alphas of where to compute the models.
         If int, ``alphas`` number of values are generated automatically
 
-    .. versionchanged:: 1.6
-        The default value of ``alphas`` will change from None to 100 in 1.6
-        Since 1.6, ``alphas`` supports an integer argument which generates
+    .. versionchanged:: 1.7
+        The default value of ``alphas`` will change from None to 100 in 1.7
+        Since 1.7, ``alphas`` supports an integer argument which generates
         ``alphas`` number of alpha values along the regularization path.
 
     fit_intercept : bool, default=True
@@ -3150,17 +3150,17 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     n_alphas : int, default=100
         Number of alphas along the regularization path.
 
-    .. deprecated:: 1.6
-        ``n_alphas`` was deprecated in 1.6 and will be removed in 1.8.
+    .. deprecated:: 1.7
+        ``n_alphas`` was deprecated in 1.7 and will be removed in 1.9.
         Use parameter ``alphas`` instead.
 
     alphas : array-like or int, default=100
         List of alphas of where to compute the models.
         If int, ``alphas`` number of values are generated automatically
 
-    .. versionchanged:: 1.6
-        The default value of ``alphas`` will change from None to 100 in 1.6
-        Since 1.6, ``alphas`` supports an integer argument which generates
+    .. versionchanged:: 1.7
+        The default value of ``alphas`` will change from None to 100 in 1.7
+        Since 1.7, ``alphas`` supports an integer argument which generates
         ``alphas`` number of alpha values along the regularization path.
 
     fit_intercept : bool, default=True

@@ -241,7 +241,7 @@ def build_dataset(n_samples=50, n_features=200, n_informative_features=10, n_tar
     return X, y, X_test, y_test
 
 
-@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.6:FutureWarning")
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
 @pytest.mark.filterwarnings(
     "ignore:The default value of `alphas` will change:FutureWarning"
 )
@@ -275,7 +275,7 @@ def test_lasso_cv():
     assert clf.score(X_test, y_test) > 0.99
 
 
-@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.6:FutureWarning")
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
 @pytest.mark.filterwarnings(
     "ignore:The default value of `alphas` will change:FutureWarning"
 )
@@ -291,7 +291,7 @@ def test_lasso_cv_with_some_model_selection():
     pipe.fit(X, y)
 
 
-@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.6:FutureWarning")
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
 @pytest.mark.filterwarnings(
     "ignore:The default value of `alphas` will change:FutureWarning"
 )
@@ -312,7 +312,7 @@ def test_lasso_cv_positive_constraint():
     assert min(clf_constrained.coef_) >= 0
 
 
-@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.6:FutureWarning")
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
 @pytest.mark.filterwarnings(
     "ignore:The default value of `alphas` will change:FutureWarning"
 )
@@ -376,7 +376,7 @@ def _scale_alpha_inplace(estimator, n_samples):
     estimator.set_params(alpha=alpha)
 
 
-@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.6:FutureWarning")
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
 @pytest.mark.filterwarnings(
     "ignore:The default value of `alphas` will change:FutureWarning"
 )
@@ -455,7 +455,7 @@ def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
     )
 
 
-@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.6:FutureWarning")
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
 @pytest.mark.filterwarnings(
     "ignore:The default value of `alphas` will change:FutureWarning"
 )
@@ -523,7 +523,7 @@ def test_enet_path():
     assert_almost_equal(clf1.alpha_, clf2.alpha_)
 
 
-@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.6:FutureWarning")
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
 @pytest.mark.filterwarnings(
     "ignore:The default value of `alphas` will change:FutureWarning"
 )
@@ -585,7 +585,7 @@ def test_enet_positive_constraint():
     assert min(enet.coef_) >= 0
 
 
-@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.6:FutureWarning")
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
 @pytest.mark.filterwarnings(
     "ignore:The default value of `alphas` will change:FutureWarning"
 )
@@ -608,7 +608,7 @@ def test_enet_cv_positive_constraint():
     assert min(enetcv_constrained.coef_) >= 0
 
 
-@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.6:FutureWarning")
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
 @pytest.mark.filterwarnings(
     "ignore:The default value of `alphas` will change:FutureWarning"
 )
@@ -709,7 +709,7 @@ def test_enet_multitarget():
         assert_array_almost_equal(dual_gap[k], estimator.dual_gap_)
 
 
-@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.6:FutureWarning")
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
 @pytest.mark.filterwarnings(
     "ignore:The default value of `alphas` will change:FutureWarning"
 )
@@ -722,7 +722,7 @@ def test_multioutput_enetcv_error():
         clf.fit(X, y)
 
 
-@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.6:FutureWarning")
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
 @pytest.mark.filterwarnings(
     "ignore:The default value of `alphas` will change:FutureWarning"
 )
@@ -753,7 +753,7 @@ def test_multitask_enet_and_lasso_cv():
     assert 10 == len(clf.alphas_)
 
 
-@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.6:FutureWarning")
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
 @pytest.mark.filterwarnings(
     "ignore:The default value of `alphas` will change:FutureWarning"
 )
@@ -770,7 +770,7 @@ def test_1d_multioutput_enet_and_multitask_enet_cv():
     assert_almost_equal(clf.intercept_, clf1.intercept_[0])
 
 
-@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.6:FutureWarning")
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
 @pytest.mark.filterwarnings(
     "ignore:The default value of `alphas` will change:FutureWarning"
 )
@@ -786,7 +786,7 @@ def test_1d_multioutput_lasso_and_multitask_lasso_cv():
     assert_almost_equal(clf.intercept_, clf1.intercept_[0])
 
 
-@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.6:FutureWarning")
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
 @pytest.mark.filterwarnings(
     "ignore:The default value of `alphas` will change:FutureWarning"
 )
@@ -1123,7 +1123,7 @@ def test_enet_float_precision():
             )
 
 
-@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.6:FutureWarning")
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
 @pytest.mark.filterwarnings(
     "ignore:The default value of `alphas` will change:FutureWarning"
 )
@@ -1239,7 +1239,7 @@ def test_sparse_input_convergence_warning(csr_container):
         Lasso().fit(csr_container(X, dtype=np.float32), y)
 
 
-@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.6:FutureWarning")
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
 @pytest.mark.filterwarnings(
     "ignore:The default value of `alphas` will change:FutureWarning"
 )
@@ -1268,7 +1268,7 @@ def test_lassoCV_does_not_set_precompute(monkeypatch, precompute, inner_precompu
     assert calls > 0
 
 
-@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.6:FutureWarning")
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
 @pytest.mark.filterwarnings(
     "ignore:The default value of `alphas` will change:FutureWarning"
 )
@@ -1371,7 +1371,7 @@ def test_enet_sample_weight_consistency(
     assert_allclose(reg1.coef_, reg2.coef_, rtol=1e-6)
 
 
-@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.6:FutureWarning")
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
 @pytest.mark.filterwarnings(
     "ignore:The default value of `alphas` will change:FutureWarning"
 )
@@ -1451,7 +1451,7 @@ def test_enet_cv_sample_weight_correctness(
     assert reg_with_weights.intercept_ == pytest.approx(reg_with_repetitions.intercept_)
 
 
-@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.6:FutureWarning")
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
 @pytest.mark.filterwarnings(
     "ignore:The default value of `alphas` will change:FutureWarning"
 )
@@ -1490,7 +1490,7 @@ def test_enet_cv_grid_search(sample_weight):
     assert reg.alpha_ == pytest.approx(gs.best_params_["alpha"])
 
 
-@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.6:FutureWarning")
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
 @pytest.mark.filterwarnings(
     "ignore:The default value of `alphas` will change:FutureWarning"
 )
@@ -1548,7 +1548,7 @@ def test_enet_cv_sample_weight_consistency(
         assert_allclose(reg.intercept_, intercept)
 
 
-@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.6:FutureWarning")
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
 @pytest.mark.filterwarnings(
     "ignore:The default value of `alphas` will change:FutureWarning"
 )
@@ -1572,7 +1572,7 @@ def test_enet_alpha_max_sample_weight(X_is_sparse, fit_intercept, sample_weight)
     assert_array_less(1e-3, np.max(np.abs(reg.coef_)))
 
 
-@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.6:FutureWarning")
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
 @pytest.mark.filterwarnings(
     "ignore:The default value of `alphas` will change:FutureWarning"
 )
@@ -1710,7 +1710,7 @@ def test_read_only_buffer():
     clf.fit(X, y)
 
 
-@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.6:FutureWarning")
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
 @pytest.mark.filterwarnings(
     "ignore:The default value of `alphas` will change:FutureWarning"
 )
@@ -1730,7 +1730,7 @@ def test_cv_estimators_reject_params_with_no_routing_enabled(EstimatorCV):
         estimator.fit(X, y, groups=groups)
 
 
-@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.6:FutureWarning")
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
 @pytest.mark.filterwarnings(
     "ignore:The default value of `alphas` will change:FutureWarning"
 )
@@ -1797,7 +1797,7 @@ def test_LinearModelCV_deprecated_n_alphas(model, n_alphas):
     my = np.random.random((n_samples, 2))
 
     msg = (
-        "`n_alphas` was deprecated in 1.6 and will be removed in 1.8"
+        "`n_alphas` was deprecated in 1.7 and will be removed in 1.9"
         " use `alphas` to set number of alphas values to test along"
         " regularization path"
     )
@@ -1842,8 +1842,8 @@ def test_LinearModelCV_warning_default_alphas(model, alphas):
     my = np.random.random((n_samples, 2))
 
     msg = (
-        "The default value of `alphas` will change from None to 100 in 1.6"
-        " Since 1.6, ``alphas`` supports an integer argument which generates"
+        "The default value of `alphas` will change from None to 100 in 1.7"
+        " Since 1.7, ``alphas`` supports an integer argument which generates"
         " ``alphas`` number of alpha values along the regularization path."
     )
 
