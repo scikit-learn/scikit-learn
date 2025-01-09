@@ -6,7 +6,7 @@ https://repo.anaconda.com/pkgs/main/osx-64/blas-1.0-mkl.conda#cb2c87e85ac8e0ceae
 https://repo.anaconda.com/pkgs/main/osx-64/bzip2-1.0.8-h6c40b1e_6.conda#96224786021d0765ce05818fa3c59bdb
 https://repo.anaconda.com/pkgs/main/osx-64/ca-certificates-2024.11.26-hecd8cb5_0.conda#c1b6397899ce957abf8d1e3428cd3bba
 https://repo.anaconda.com/pkgs/main/osx-64/jpeg-9e-h46256e1_3.conda#b1d9769eac428e11f5f922531a1da2e0
-https://repo.anaconda.com/pkgs/main/osx-64/libbrotlicommon-1.0.9-h46256e1_9.conda#29f2ba3085034ceba3d7b2db73ffbf3e
+https://repo.anaconda.com/pkgs/main/osx-64/libbrotlicommon-1.0.9-h6c40b1e_8.conda#8e86dfa34b08bc664b19e1499e5465b8
 https://repo.anaconda.com/pkgs/main/osx-64/libcxx-14.0.6-h9765a3e_0.conda#387757bb354ae9042370452cd0fb5627
 https://repo.anaconda.com/pkgs/main/osx-64/libdeflate-1.22-h46256e1_0.conda#7612fb79e5e76fcd16655c7d026f4a66
 https://repo.anaconda.com/pkgs/main/osx-64/libffi-3.4.4-hecd8cb5_1.conda#eb7f09ada4d95f1a26f483f1009d9286
@@ -20,8 +20,8 @@ https://repo.anaconda.com/pkgs/main/osx-64/ccache-3.7.9-hf120daa_0.conda#a01515a
 https://repo.anaconda.com/pkgs/main/osx-64/expat-2.6.4-h6d0c2b6_0.conda#337f85e792486001ba7aed0fa2f93e64
 https://repo.anaconda.com/pkgs/main/osx-64/intel-openmp-2023.1.0-ha357a0b_43548.conda#ba8a89ffe593eb88e4c01334753c40c3
 https://repo.anaconda.com/pkgs/main/osx-64/lerc-4.0.0-h6d0c2b6_0.conda#824f87854c58df1525557c8639ce7f93
-https://repo.anaconda.com/pkgs/main/osx-64/libbrotlidec-1.0.9-h46256e1_9.conda#6c3c1cc28eb052545bab681786d61b31
-https://repo.anaconda.com/pkgs/main/osx-64/libbrotlienc-1.0.9-h46256e1_9.conda#df4665cdb4024593e5b2abfb2b31409c
+https://repo.anaconda.com/pkgs/main/osx-64/libbrotlidec-1.0.9-h6c40b1e_8.conda#6338cd7779e614fc16d835990e627e04
+https://repo.anaconda.com/pkgs/main/osx-64/libbrotlienc-1.0.9-h6c40b1e_8.conda#2af01a7b3fdbed47ebe5c452c34e5c5d
 https://repo.anaconda.com/pkgs/main/osx-64/libgfortran5-11.3.0-h9dfd629_28.conda#1fa1a27ee100b1918c3021dbfa3895a3
 https://repo.anaconda.com/pkgs/main/osx-64/libpng-1.6.39-h6c40b1e_0.conda#a3c824835f53ad27aeb86d2b55e47804
 https://repo.anaconda.com/pkgs/main/osx-64/lz4-c-1.9.4-hcec6c5f_1.conda#aee0efbb45220e1985533dbff48551f8
@@ -30,13 +30,13 @@ https://repo.anaconda.com/pkgs/main/osx-64/openssl-3.0.15-h46256e1_0.conda#3286a
 https://repo.anaconda.com/pkgs/main/osx-64/readline-8.2-hca72f7f_0.conda#971667436260e523f6f7355fdfa238bf
 https://repo.anaconda.com/pkgs/main/osx-64/tbb-2021.8.0-ha357a0b_0.conda#fb48530a3eea681c11dafb95b3387c0f
 https://repo.anaconda.com/pkgs/main/osx-64/tk-8.6.14-h4d00af3_0.conda#a2c03940c2ae54614301ec82e6a98d75
-https://repo.anaconda.com/pkgs/main/osx-64/brotli-bin-1.0.9-h46256e1_9.conda#2361288e9d8bf4c679f64ef3a40c880a
+https://repo.anaconda.com/pkgs/main/osx-64/brotli-bin-1.0.9-h6c40b1e_8.conda#11053f9c6b8d8a8348d0c33450c23ce9
 https://repo.anaconda.com/pkgs/main/osx-64/freetype-2.12.1-hd8bbffd_0.conda#1f276af321375ee7fe8056843044fa76
 https://repo.anaconda.com/pkgs/main/osx-64/libgfortran-5.0.0-11_3_0_hecd8cb5_28.conda#2eb13b680803f1064e53873ae0aaafb3
 https://repo.anaconda.com/pkgs/main/osx-64/mkl-2023.1.0-h8e150cf_43560.conda#85d0f3431dd5c6ae44f8725fdd3d3e59
 https://repo.anaconda.com/pkgs/main/osx-64/sqlite-3.45.3-h6c40b1e_0.conda#2edf909b937b3aad48322c9cb2e8f1a0
 https://repo.anaconda.com/pkgs/main/osx-64/zstd-1.5.6-h138b38a_0.conda#f4d15d7d0054d39e6a24fe8d7d1e37c5
-https://repo.anaconda.com/pkgs/main/osx-64/brotli-1.0.9-h46256e1_9.conda#eac1625374340fbc2f6f8905a4451c9f
+https://repo.anaconda.com/pkgs/main/osx-64/brotli-1.0.9-h6c40b1e_8.conda#10f89677a3898d0113dc354adf643df3
 https://repo.anaconda.com/pkgs/main/osx-64/libtiff-4.5.1-h6fa9cd1_1.conda#3d7e2cea5c733721750160acb997a90b
 https://repo.anaconda.com/pkgs/main/osx-64/python-3.12.8-hcd54a6c_0.conda#54c4f4421ae085eb9e9d63643c272cf3
 https://repo.anaconda.com/pkgs/main/osx-64/coverage-7.6.9-py312h46256e1_0.conda#f8c1547bbf522a600ee795901240a7b0

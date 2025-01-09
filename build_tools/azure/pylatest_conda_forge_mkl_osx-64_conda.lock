@@ -32,7 +32,7 @@ https://conda.anaconda.org/conda-forge/osx-64/libbrotlidec-1.1.0-h00291cd_2.cond
 https://conda.anaconda.org/conda-forge/osx-64/libbrotlienc-1.1.0-h00291cd_2.conda#691f0dcb36f1ae67f5c489f20ae987ea
 https://conda.anaconda.org/conda-forge/osx-64/libcxx-devel-17.0.6-h8f8a49f_6.conda#faa013d493ffd2d5f2d2fc6df5f98f2e
 https://conda.anaconda.org/conda-forge/osx-64/libgfortran5-13.2.0-h2873a65_3.conda#e4fb4d23ec2870ff3c40d10afe305aec
-https://conda.anaconda.org/conda-forge/osx-64/libpng-1.6.45-h3c4a55f_0.conda#1b2605bdbcb98cee6e7b19778ccbea6e
+https://conda.anaconda.org/conda-forge/osx-64/libpng-1.6.44-h4b8f8c9_0.conda#f32ac2c8dd390dbf169f550887ed09d9
 https://conda.anaconda.org/conda-forge/osx-64/libsqlite-3.47.2-hdb6dae5_0.conda#44d9799fda97eb34f6d88ac1e3eb0ea6
 https://conda.anaconda.org/conda-forge/osx-64/libxcb-1.17.0-hf1f96e2_0.conda#bbeca862892e2898bdb45792a61c4afc
 https://conda.anaconda.org/conda-forge/osx-64/libxml2-2.13.5-he8ee3e7_1.conda#9379f216f9132d0d3cdeeb10af165262
@@ -51,7 +51,7 @@ https://conda.anaconda.org/conda-forge/osx-64/libhwloc-2.11.2-default_h4cdd727_1
 https://conda.anaconda.org/conda-forge/osx-64/libllvm17-17.0.6-hbedff68_1.conda#fcd38f0553a99fa279fb66a5bfc2fb28
 https://conda.anaconda.org/conda-forge/osx-64/libtiff-4.7.0-hb77a491_3.conda#6f2f9df7b093d6b33bc0c334acc7d2d9
 https://conda.anaconda.org/conda-forge/osx-64/mpfr-4.2.1-haed47dc_3.conda#d511e58aaaabfc23136880d9956fa7a6
-https://conda.anaconda.org/conda-forge/osx-64/python-3.13.1-h2334245_104_cp313.conda#9c1422b063e09c3b61af2d08db48c121
+https://conda.anaconda.org/conda-forge/osx-64/python-3.13.1-h2334245_102_cp313.conda#bacdbf2fd86557ad1fb862cb2d30d821
 https://conda.anaconda.org/conda-forge/osx-64/brotli-1.1.0-h00291cd_2.conda#2db0c38a7f2321c5bdaf32b181e832c7
 https://conda.anaconda.org/conda-forge/noarch/colorama-0.4.6-pyhd8ed1ab_1.conda#962b9857ee8e7018c22f2776ffa0b2d7
 https://conda.anaconda.org/conda-forge/noarch/cycler-0.12.1-pyhd8ed1ab_1.conda#44600c4667a319d67dbe0681fc0bc833
