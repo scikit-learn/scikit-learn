@@ -226,15 +226,8 @@ assigning different length-scales to the two feature dimensions.
 
 .. rubric:: Examples
 
-<<<<<<< HEAD
-* :ref:`sphx_glr_auto_examples_gaussian_process_plot_gpc_iris.py`
-* :ref:`sphx_glr_auto_examples_gaussian_process_plot_gpc_isoprobability.py`
-* :ref:`sphx_glr_auto_examples_gaussian_process_plot_gpc.py`
-* :ref:`sphx_glr_auto_examples_gaussian_process_plot_gpc_xor.py`
-=======
 * :ref:`sphx_glr_auto_examples_gaussian_process_plot_gpc.py`
 * :ref:`sphx_glr_auto_examples_gaussian_process_plot_gpc_iris.py`
->>>>>>> main
 
 .. _gp_kernels:
 
