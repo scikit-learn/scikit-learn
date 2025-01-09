@@ -145,6 +145,8 @@ def average_precision_score(
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by :term:`decision_function` on some classifiers).
+        For :term:`decision_function` scores, values greater than or equal to
+        zero should indicate the positive class.
 
     average : {'micro', 'samples', 'weighted', 'macro'} or None, \
             default='macro'
@@ -293,6 +295,8 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
+        For :term:`decision_function` scores, values greater than or equal to
+        zero should indicate the positive class.
 
     pos_label : int, float, bool or str, default=None
         The label of the positive class.
@@ -914,6 +918,8 @@ def precision_recall_curve(
         Target scores, can either be probability estimates of the positive
         class, or non-thresholded measure of decisions (as returned by
         `decision_function` on some classifiers).
+        For :term:`decision_function` scores, values greater than or equal to
+        zero should indicate the positive class.
 
     pos_label : int, float, bool or str, default=None
         The label of the positive class.
@@ -1066,6 +1072,8 @@ def roc_curve(
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
+        For :term:`decision_function` scores, values greater than or equal to
+        zero should indicate the positive class.
 
     pos_label : int, float, bool or str, default=None
         The label of the positive class.
@@ -1220,6 +1228,8 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
+        For :term:`decision_function` scores, values greater than or equal to
+        zero should indicate the positive class.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -1320,6 +1330,8 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
+        For :term:`decision_function` scores, values greater than or equal to
+        zero should indicate the positive class.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -1395,6 +1407,8 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
+        For :term:`decision_function` scores, values greater than or equal to
+        zero should indicate the positive class.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
