@@ -1495,8 +1495,15 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
 
     _parameter_constraints: dict = {
         "eps": [Interval(Real, 0, None, closed="neither")],
-        "n_alphas": [Interval(Integral, 1, None, closed="left"), StrOptions({"deprecated"})],
-        "alphas": [Interval(Integral, 1, None, closed="left"), "array-like", StrOptions({"warn"})],
+        "n_alphas": [
+            Interval(Integral, 1, None, closed="left"),
+            StrOptions({"deprecated"}),
+        ],
+        "alphas": [
+            Interval(Integral, 1, None, closed="left"),
+            "array-like",
+            StrOptions({"warn"}),
+        ],
         "fit_intercept": ["boolean"],
         "precompute": [StrOptions({"auto"}), "array-like", "boolean"],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
@@ -1516,8 +1523,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         eps=1e-3,
         ############ TODO:
         ############ Need to change _parameter_constraints dictionary
-        n_alphas='deprecated',
-        alphas='warn',
+        n_alphas="deprecated",
+        alphas="warn",
         fit_intercept=True,
         precompute="auto",
         max_iter=1000,
@@ -1693,13 +1700,13 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             l1_ratios = [
                 1,
             ]
-        
+
         path_params.pop("cv", None)
         path_params.pop("n_jobs", None)
 
         alphas = None
         n_l1_ratio = len(l1_ratios)
-        
+
         if self.n_alphas != "deprecated":
             warnings.warn(
                 "`n_alphas` was deprecated in 1.6 and will be removed in 1.8"
@@ -1708,7 +1715,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 FutureWarning,
             )
             self.alphas = self.n_alphas
-        
+
         # self.alphas is only string with value "warn"
         # if the default value is used in the constructor
         if isinstance(self.alphas, str):
@@ -1923,15 +1930,15 @@ class LassoCV(RegressorMixin, LinearModelCV):
 
     n_alphas : int, default=100
         Number of alphas along the regularization path.
-    
+
     .. deprecated:: 1.6
         ``n_alphas`` was deprecated in 1.6 and will be removed in 1.8.
         Use parameter ``alphas`` instead.
-    
+
     alphas : array-like or int, default=100
         List of alphas of where to compute the models.
         If int, ``alphas`` number of values are generated automatically
-    
+
     .. versionchanged:: 1.6
         The default value of ``alphas`` will change from None to 100 in 1.6.
         Since 1.6, ``alphas`` supports an integer argument which generates
@@ -2191,15 +2198,15 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
     n_alphas : int, default=100
         Number of alphas along the regularization path.
-    
+
     .. deprecated:: 1.6
         ``n_alphas`` was deprecated in 1.6 and will be removed in 1.8.
         Use parameter ``alphas`` instead.
-    
+
     alphas : array-like or int, default=100
         List of alphas of where to compute the models.
         If int, ``alphas`` number of values are generated automatically
-    
+
     .. versionchanged:: 1.6
         The default value of ``alphas`` will change from None to 100 in 1.6
         Since 1.6, ``alphas`` supports an integer argument which generates
@@ -2890,15 +2897,15 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
 
     n_alphas : int, default=100
         Number of alphas along the regularization path.
-    
+
     .. deprecated:: 1.6
         ``n_alphas`` was deprecated in 1.6 and will be removed in 1.8.
         Use parameter ``alphas`` instead.
-    
+
     alphas : array-like or int, default=100
         List of alphas of where to compute the models.
         If int, ``alphas`` number of values are generated automatically
-    
+
     .. versionchanged:: 1.6
         The default value of ``alphas`` will change from None to 100 in 1.6
         Since 1.6, ``alphas`` supports an integer argument which generates
@@ -3142,15 +3149,15 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
 
     n_alphas : int, default=100
         Number of alphas along the regularization path.
-    
+
     .. deprecated:: 1.6
         ``n_alphas`` was deprecated in 1.6 and will be removed in 1.8.
         Use parameter ``alphas`` instead.
-    
+
     alphas : array-like or int, default=100
         List of alphas of where to compute the models.
         If int, ``alphas`` number of values are generated automatically
-    
+
     .. versionchanged:: 1.6
         The default value of ``alphas`` will change from None to 100 in 1.6
         Since 1.6, ``alphas`` supports an integer argument which generates
