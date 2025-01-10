@@ -38,9 +38,8 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
         Array of original class labels per sample.
 
     sample_weight : array-like of shape (n_samples,) or None
-        Array of weights that are assigned to individual
-        samples. Used under class_weight 'balanced' when
-        only.
+        Array of weights that are assigned to individual samples. Used under
+        class_weight 'balanced' when only.
 
     Returns
     -------
@@ -75,10 +74,9 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
         if not all(np.isin(classes, le.classes_)):
             raise ValueError("classes should have valid labels that are in y")
 
-        samples_bincount = np.bincount(y_ind, weights=sample_weight)
-
-        recip_freq = samples_bincount.sum() / (
-            len(le.classes_) * samples_bincount.astype(np.float64)
+        weighted_class_counts = np.bincount(y_ind, weights=sample_weight)
+        recip_freq = weighted_class_counts.sum() / (
+            len(le.classes_) * weighted_class_counts.astype(np.float64)
         )
         weight = recip_freq[le.transform(classes)]
     else:
