@@ -687,6 +687,11 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         self._set_intercept(X_offset, y_offset, X_scale)
         return self
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = not self.positive
+        return tags
+
 
 def _check_precomputed_gram_matrix(
     X, precompute, X_offset, X_scale, rtol=None, atol=1e-5
