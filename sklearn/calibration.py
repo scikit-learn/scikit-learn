@@ -239,8 +239,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     >>> base_clf = GaussianNB()
     >>> base_clf.fit(X_train, y_train)
     GaussianNB()
-    >>> from sklearn.frozen import FrozenEstimator
-    >>> calibrated_clf = CalibratedClassifierCV(FrozenEstimator(base_clf))
+    >>> calibrated_clf = CalibratedClassifierCV(base_clf.freeze())
     >>> calibrated_clf.fit(X_calib, y_calib)
     CalibratedClassifierCV(...)
     >>> len(calibrated_clf.calibrated_classifiers_)
@@ -332,7 +331,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             # TODO(1.8): Remove this code branch and cv='prefit'
             warnings.warn(
                 "The `cv='prefit'` option is deprecated in 1.6 and will be removed in"
-                " 1.8. You can use CalibratedClassifierCV(FrozenEstimator(estimator))"
+                " 1.8. You can use CalibratedClassifierCV(estimator.freeze())"
                 " instead."
             )
             # `classes_` should be consistent with that of estimator
