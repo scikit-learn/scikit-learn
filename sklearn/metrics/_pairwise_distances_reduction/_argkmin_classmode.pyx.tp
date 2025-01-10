@@ -13,6 +13,7 @@ from ._classmode cimport WeightingStrategy
 {{for name_suffix in ["32", "64"]}}
 from ._argkmin cimport ArgKmin{{name_suffix}}
 from ._datasets_pair cimport DatasetsPair{{name_suffix}}
+from ._datasets_pair cimport PrecomputedDistanceMatrix{{name_suffix}}
 
 cdef class ArgKminClassMode{{name_suffix}}(ArgKmin{{name_suffix}}):
     """
@@ -30,6 +31,7 @@ cdef class ArgKminClassMode{{name_suffix}}(ArgKmin{{name_suffix}}):
         cls,
         X,
         Y,
+        precomputed,
         intp_t k,
         weights,
         Y_labels,
@@ -55,7 +57,7 @@ cdef class ArgKminClassMode{{name_suffix}}(ArgKmin{{name_suffix}}):
         # Use a generic implementation that handles most scipy
         # metrics by computing the distances between 2 vectors at a time.
         pda = ArgKminClassMode{{name_suffix}}(
-            datasets_pair=DatasetsPair{{name_suffix}}.get_for(X, Y, metric, metric_kwargs),
+            datasets_pair=DatasetsPair{{name_suffix}}.get_for(X, Y, precomputed, metric, metric_kwargs),
             k=k,
             chunk_size=chunk_size,
             strategy=strategy,
