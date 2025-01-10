@@ -1348,14 +1348,17 @@ def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
     """Mean Tweedie deviance regression loss."""
     xp, _ = get_namespace(y_true, y_pred)
     p = power
-    zero = xp.asarray(0, dtype=y_true.dtype)
+    zero = xp.asarray(0, dtype=y_true.dtype, device=y_true.device)
     if p < 0:
         # 'Extreme stable', y any real number, y_pred > 0
         dev = 2 * (
-            xp.pow(xp.where(y_true > 0, y_true, zero), xp.asarray(2 - p))
+            xp.pow(
+                xp.where(y_true > 0, y_true, zero),
+                xp.asarray(2 - p, device=y_true.device),
+            )
             / ((1 - p) * (2 - p))
-            - y_true * xp.pow(y_pred, xp.asarray(1 - p)) / (1 - p)
-            + xp.pow(y_pred, xp.asarray(2 - p)) / (2 - p)
+            - y_true * xp.pow(y_pred, xp.asarray(1 - p, device=y_true.device)) / (1 - p)
+            + xp.pow(y_pred, xp.asarray(2 - p, device=y_true.device)) / (2 - p)
         )
     elif p == 0:
         # Normal distribution, y and y_pred any real number
@@ -1368,9 +1371,10 @@ def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
         dev = 2 * (xp.log(y_pred / y_true) + y_true / y_pred - 1)
     else:
         dev = 2 * (
-            xp.pow(y_true, xp.asarray(2 - p)) / ((1 - p) * (2 - p))
-            - y_true * xp.pow(y_pred, xp.asarray(1 - p)) / (1 - p)
-            + xp.pow(y_pred, xp.asarray(2 - p)) / (2 - p)
+            xp.pow(y_true, xp.asarray(2 - p, device=y_true.device))
+            / ((1 - p) * (2 - p))
+            - y_true * xp.pow(y_pred, xp.asarray(1 - p, device=y_true.device)) / (1 - p)
+            + xp.pow(y_pred, xp.asarray(2 - p, device=y_true.device)) / (2 - p)
         )
     return float(_average(dev, weights=sample_weight))
 
