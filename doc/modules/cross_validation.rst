@@ -392,8 +392,9 @@ Example of 2-fold K-Fold repeated 2 times::
   [1 3] [0 2]
 
 
-Similarly, :class:`RepeatedStratifiedKFold` repeats Stratified K-Fold n times
-with different randomization in each repetition.
+Similarly, :class:`RepeatedStratifiedKFold` repeats Stratified K-Fold and
+:class:`RepeatedStratifiedGroupKFold` N times with different randomization in
+each repetition.
 
 .. _leave_one_out:
 
@@ -723,6 +724,9 @@ Here is a visualization of cross-validation behavior for uneven groups:
    :target: ../auto_examples/model_selection/plot_cv_indices.html
    :align: center
    :scale: 75%
+
+:class:`RepeatedStratifiedGroupKFold` can be used to repeat Stratified group K-Fold n times
+with different randomization in each repetition.
 
 .. _leave_one_group_out:
 
