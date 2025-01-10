@@ -575,6 +575,7 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             dict(positive=False, tol=1e-12),
             dict(positive=True, tol=1e-12),
         ],
+        "check_sample_weight_equivalence_on_sparse_data": [dict(tol=1e-12)],
     },
     LocallyLinearEmbedding: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     LogisticRegression: {
