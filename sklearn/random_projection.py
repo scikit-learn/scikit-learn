@@ -305,7 +305,7 @@ def _sparse_random_matrix(n_components, n_features, density="auto", random_state
 
 
 class BaseRandomProjection(
-    TransformerMixin, BaseEstimator, ClassNamePrefixFeaturesOutMixin, metaclass=ABCMeta
+    ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator, metaclass=ABCMeta
 ):
     """Base class for random projections.
 
@@ -463,6 +463,7 @@ class BaseRandomProjection(
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        tags.input_tags.sparse = True
         return tags
 
 

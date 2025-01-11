@@ -1,4 +1,5 @@
-# Author: Nelle Varoquaux, Andrew Tulloch, Antony Lee
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # Uses the pool adjacent violators algorithm (PAVA), with the
 # enhancement of searching for the longest decreasing subsequence to

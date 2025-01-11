@@ -100,7 +100,7 @@ from sklearn.utils.validation import _num_samples
 
 # Neither of the following two estimators inherit from BaseEstimator,
 # to test hyperparameter search on user-defined classifiers.
-class MockClassifier:
+class MockClassifier(ClassifierMixin, BaseEstimator):
     """Dummy classifier to test the parameter search algorithms"""
 
     def __init__(self, foo_param=0):
@@ -213,7 +213,7 @@ def test_parameter_grid():
 def test_grid_search():
     # Test that the best estimator contains the right value for foo_param
     clf = MockClassifier()
-    grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]}, cv=3, verbose=3)
+    grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]}, cv=2, verbose=3)
     # make sure it selects the smallest parameter in case of ties
     old_stdout = sys.stdout
     sys.stdout = StringIO()
@@ -383,11 +383,11 @@ def test_classes__property():
 def test_trivial_cv_results_attr():
     # Test search over a "grid" with only one point.
     clf = MockClassifier()
-    grid_search = GridSearchCV(clf, {"foo_param": [1]}, cv=3)
+    grid_search = GridSearchCV(clf, {"foo_param": [1]}, cv=2)
     grid_search.fit(X, y)
     assert hasattr(grid_search, "cv_results_")
 
-    random_search = RandomizedSearchCV(clf, {"foo_param": [0]}, n_iter=1, cv=3)
+    random_search = RandomizedSearchCV(clf, {"foo_param": [0]}, n_iter=1, cv=2)
     random_search.fit(X, y)
     assert hasattr(grid_search, "cv_results_")
 
@@ -396,7 +396,7 @@ def test_no_refit():
     # Test that GSCV can be used for model selection alone without refitting
     clf = MockClassifier()
     for scoring in [None, ["accuracy", "precision"]]:
-        grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]}, refit=False, cv=3)
+        grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]}, refit=False, cv=2)
         grid_search.fit(X, y)
         assert (
             not hasattr(grid_search, "best_estimator_")
@@ -463,7 +463,7 @@ def test_grid_search_when_param_grid_includes_range():
     # Test that the best estimator contains the right value for foo_param
     clf = MockClassifier()
     grid_search = None
-    grid_search = GridSearchCV(clf, {"foo_param": range(1, 4)}, cv=3)
+    grid_search = GridSearchCV(clf, {"foo_param": range(1, 4)}, cv=2)
     grid_search.fit(X, y)
     assert grid_search.best_estimator_.foo_param == 2
 
@@ -1496,13 +1496,13 @@ def test_grid_search_correct_score_results():
 def test_pickle():
     # Test that a fit search can be pickled
     clf = MockClassifier()
-    grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]}, refit=True, cv=3)
+    grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]}, refit=True, cv=2)
     grid_search.fit(X, y)
     grid_search_pickled = pickle.loads(pickle.dumps(grid_search))
     assert_array_almost_equal(grid_search.predict(X), grid_search_pickled.predict(X))
 
     random_search = RandomizedSearchCV(
-        clf, {"foo_param": [1, 2, 3]}, refit=True, n_iter=3, cv=3
+        clf, {"foo_param": [1, 2, 3]}, refit=True, n_iter=3, cv=2
     )
     random_search.fit(X, y)
     random_search_pickled = pickle.loads(pickle.dumps(random_search))
@@ -1901,7 +1901,7 @@ def test_grid_search_cv_splits_consistency():
 
 def test_transform_inverse_transform_round_trip():
     clf = MockClassifier()
-    grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]}, cv=3, verbose=3)
+    grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]}, cv=2, verbose=3)
 
     grid_search.fit(X, y)
     X_round_trip = grid_search.inverse_transform(grid_search.transform(X))
@@ -2571,7 +2571,7 @@ def test_search_html_repr():
 @pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
 def test_inverse_transform_Xt_deprecation(SearchCV):
     clf = MockClassifier()
-    search = SearchCV(clf, {"foo_param": [1, 2, 3]}, cv=3, verbose=3)
+    search = SearchCV(clf, {"foo_param": [1, 2, 3]}, cv=2, verbose=3)
 
     X2 = search.fit(X, y).transform(X)
 
@@ -2593,7 +2593,6 @@ def test_inverse_transform_Xt_deprecation(SearchCV):
 # ======================
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
     "SearchCV, param_search",
     [
@@ -2601,6 +2600,7 @@ def test_inverse_transform_Xt_deprecation(SearchCV):
         (RandomizedSearchCV, "param_distributions"),
     ],
 )
+@config_context(enable_metadata_routing=True)
 def test_multi_metric_search_forwards_metadata(SearchCV, param_search):
     """Test that *SearchCV forwards metadata correctly when passed multiple metrics."""
     X, y = make_classification(random_state=42)
@@ -2864,3 +2864,11 @@ def test_yield_masked_array_for_each_param(candidate_params, expected):
         assert value.dtype == expected_value.dtype
         np.testing.assert_array_equal(value, expected_value)
         np.testing.assert_array_equal(value.mask, expected_value.mask)
+
+
+def test_yield_masked_array_no_runtime_warning():
+    # non-regression test for https://github.com/scikit-learn/scikit-learn/issues/29929
+    candidate_params = [{"param": i} for i in range(1000)]
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        list(_yield_masked_array_for_each_param(candidate_params))

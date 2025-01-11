@@ -1117,6 +1117,11 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         return leaves
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     """Gradient Boosting for classification.
@@ -1749,6 +1754,10 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         regression and is a robust loss function. 'huber' is a
         combination of the two. 'quantile' allows quantile regression (use
         `alpha` to specify the quantile).
+        See
+        :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`
+        for an example that demonstrates quantile regression for creating
+        prediction intervals with `loss='quantile'`.
 
     learning_rate : float, default=0.1
         Learning rate shrinks the contribution of each tree by `learning_rate`.
