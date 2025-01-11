@@ -28,6 +28,9 @@ on the X axis.
     - See :func:`sklearn.metrics.det_curve` for further information about
       DET curves.
 
+    - See :func:`sklearn.metrics.cap_curve` for further information about
+      CAP curves.
+
     - This example is loosely based on
       :ref:`sphx_glr_auto_examples_classification_plot_classifier_comparison.py`
       example.
