@@ -2857,7 +2857,7 @@ def train_test_split(
     2    0
     3    0
     4    0
-    Name: target, dtype: int64
+    ...
 
     >>> X_train, X_test, y_train, y_test = train_test_split(
     ... X, y, test_size=0.33, random_state=42)
@@ -2875,7 +2875,7 @@ def train_test_split(
     66     1
     0      0
     122    2
-    Name: target, dtype: int64
+    ...
     >>> X_test.head()
         sepal length (cm)  sepal width (cm)  petal length (cm)  petal width (cm)
     73                 6.1               2.8                4.7               1.2
@@ -2889,7 +2889,7 @@ def train_test_split(
     118    2
     78     1
     76     1
-    Name: target, dtype: int64
+    ...
     """
     n_arrays = len(arrays)
     if n_arrays == 0:
