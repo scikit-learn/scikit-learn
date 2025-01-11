@@ -5,16 +5,19 @@ import numpy as np
 
 from sklearn.base import is_classifier
 
-from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
+from ...utils._plotting import (
+    _BinaryClassifierCurveDisplayMixin,
+    _validate_style_kwargs,
+)
 
 
-class CapCurveDisplay(_BinaryClassifierCurveDisplayMixin):
+class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     """Cumulative Accuracy Profile (CAP) Curve visualization.
 
     It is recommended to use
-    :func:`~sklearn.metrics.CapCurveDisplay.from_estimator` or
-    :func:`~sklearn.metrics.CapCurveDisplay.from_predictions` to create
-    a :class:`~sklearn.metrics.CapCurveDisplay`. All parameters are
+    :func:`~sklearn.metrics.CAPCurveDisplay.from_estimator` or
+    :func:`~sklearn.metrics.CAPCurveDisplay.from_predictions` to create
+    a :class:`~sklearn.metrics.CAPCurveDisplay`. All parameters are
     stored as attributes.
 
     Read more in the :ref:`User Guide <visualizations>`.
@@ -97,7 +100,7 @@ class CapCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         Returns
         -------
-        display : :class:`~sklearn.metrics.CapCurveDisplay`
+        display : :class:`~sklearn.metrics.CAPCurveDisplay`
             Object that stores computed values.
         """
 
@@ -117,13 +120,18 @@ class CapCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         line_kwargs = {"label": name} if name is not None else {}
         line_kwargs.update(**kwargs)
 
-        chance_level_line_kw = {
+        default_chance_level_line_kw = {
             "label": "Chance level",
             "color": "k",
             "linestyle": "--",
         }
-        if chance_level_kw is not None:
-            chance_level_line_kw.update(**chance_level_kw)
+
+        if chance_level_kw is None:
+            chance_level_kw = {}
+
+        chance_level_line_kw = _validate_style_kwargs(
+            default_chance_level_line_kw, chance_level_kw
+        )
 
         (self.line_,) = self.ax_.plot(
             self.cumulative_total, self.y_true_cumulative, **line_kwargs
@@ -200,7 +208,7 @@ class CapCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         Returns
         -------
-        display : :class:`~sklearn.metrics.CapCurveDisplay`
+        display : :class:`~sklearn.metrics.CAPCurveDisplay`
             Object that stores computed values.
         """
         if pos_label is None:
@@ -208,8 +216,12 @@ class CapCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         if sample_weight is None:
             sample_weight = np.ones_like(y_true, dtype=float)
 
+        pos_label_validated, name = cls._validate_from_predictions_params(
+            y_true, y_pred, sample_weight=sample_weight, pos_label=pos_label, name=name
+        )
+
         # ensure y_true is boolean for positive class identification
-        y_bool = y_true == pos_label
+        y_bool = y_true == pos_label_validated
 
         # sort predictions and true values based on the predictions
         sorted_indices = np.argsort(y_pred)[::-1]
@@ -224,7 +236,7 @@ class CapCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             y_true_cumulative=y_true_cumulative,
             cumulative_total=cumulative_total,
             estimator_name=name,
-            pos_label=pos_label,
+            pos_label=pos_label_validated,
         )
 
         return viz.plot(
@@ -297,7 +309,7 @@ class CapCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         Returns
         -------
-        display : :class:`~sklearn.metrics.CapCurveDisplay`
+        display : :class:`~sklearn.metrics.CAPCurveDisplay`
             The CAP Curve display.
         """
 
@@ -316,7 +328,7 @@ class CapCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             y_pred = estimator.predict(X)
         elif response_method == "predict_proba":
             probabilities = estimator.predict_proba(X)
-            if pos_label is None:  # assuming positive class is the second column
+            if pos_label is None:
                 pos_label = 1
             class_index = np.where(estimator.classes_ == pos_label)[0][0]
             y_pred = probabilities[:, class_index]
