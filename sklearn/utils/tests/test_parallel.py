@@ -109,6 +109,7 @@ def raise_warning():
 @pytest.mark.parametrize("n_jobs", [1, 2])
 @pytest.mark.parametrize("backend", ["loky", "threading", "multiprocessing"])
 def test_filter_warning_propagates(n_jobs, backend):
+    """Check warning propagates to the job."""
     with warnings.catch_warnings():
         warnings.simplefilter("error", category=ConvergenceWarning)
 
@@ -116,3 +117,22 @@ def test_filter_warning_propagates(n_jobs, backend):
             Parallel(n_jobs=n_jobs, backend=backend)(
                 delayed(raise_warning)() for _ in range(2)
             )
+
+
+def get_warnings():
+    return warnings.filters
+
+
+def test_check_warnings_threading():
+    """Check that warnings filters are set correctly in the threading backend."""
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", category=ConvergenceWarning)
+
+        filters = warnings.filters
+        assert ("error", None, ConvergenceWarning, None, 0) in filters
+
+        all_warnings = Parallel(n_jobs=2, backend="threading")(
+            delayed(get_warnings)() for _ in range(2)
+        )
+
+        assert all(w == filters for w in all_warnings)
