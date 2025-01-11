@@ -46,11 +46,11 @@ tracker = "https://github.com/scikit-learn/scikit-learn/issues"
 [project.optional-dependencies]
 build = ["numpy>=1.19.5", "scipy>=1.6.0", "cython>=3.0.10", "meson-python>=0.16.0"]
 install = ["numpy>=1.19.5", "scipy>=1.6.0", "joblib>=1.2.0", "threadpoolctl>=3.1.0"]
-benchmark = ["matplotlib>=3.3.4", "pandas>=1.1.5", "memory_profiler>=0.57.0"]
+benchmark = ["matplotlib>=3.3.4", "pandas>=1.2.0", "memory_profiler>=0.57.0"]
 docs = [
     "matplotlib>=3.3.4",
     "scikit-image>=0.17.2",
-    "pandas>=1.1.5",
+    "pandas>=1.2.0",
     "seaborn>=0.9.0",
     "memory_profiler>=0.57.0",
     "sphinx>=7.3.7",
@@ -73,7 +73,7 @@ docs = [
 examples = [
     "matplotlib>=3.3.4",
     "scikit-image>=0.17.2",
-    "pandas>=1.1.5",
+    "pandas>=1.2.0",
     "seaborn>=0.9.0",
     "pooch>=1.6.0",
     "plotly>=5.14.0",
@@ -81,7 +81,7 @@ examples = [
 tests = [
     "matplotlib>=3.3.4",
     "scikit-image>=0.17.2",
-    "pandas>=1.1.5",
+    "pandas>=1.2.0",
     "pytest>=7.1.2",
     "pytest-cov>=2.9.0",
     "ruff>=0.5.1",
