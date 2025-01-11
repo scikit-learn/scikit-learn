@@ -563,11 +563,11 @@ class ARDRegression(RegressorMixin, LinearModel):
     For examples, refer to:
 
     - :ref:`sphx_glr_auto_examples_linear_model_plot_ard.py`:
-    Demonstrates ARD Regression.
+     Demonstrates ARD Regression.
 
     - :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`:
-    Showcases ARD Regression alongside Lasso and Elastic-Net for sparse signal
-    recovery, addressing noise and feature correlation.
+     Showcases ARD Regression alongside Lasso and Elastic-Net for sparse signal
+     recovery, addressing noise and feature correlation.
 
     """
 
