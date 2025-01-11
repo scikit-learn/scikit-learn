@@ -941,6 +941,11 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             sample_weight=sample_weight,
         )
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 class SGDClassifier(BaseSGDClassifier):
     """Linear classifiers (SVM, logistic regression, etc.) with SGD training.
@@ -1382,16 +1387,6 @@ class SGDClassifier(BaseSGDClassifier):
         """
         return np.log(self.predict_proba(X))
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        # TODO: replace by a statistical test, see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
-        return tags
-
 
 class BaseSGDRegressor(RegressorMixin, BaseSGD):
     loss_functions = {
@@ -1782,6 +1777,11 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         else:
             self.intercept_ = np.atleast_1d(intercept)
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 class SGDRegressor(BaseSGDRegressor):
     """Linear model fitted by minimizing a regularized empirical loss with SGD.
@@ -2073,18 +2073,8 @@ class SGDRegressor(BaseSGDRegressor):
             average=average,
         )
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        # TODO: replace by a statistical test, see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
-        return tags
 
-
-class SGDOneClassSVM(BaseSGD, OutlierMixin):
+class SGDOneClassSVM(OutlierMixin, BaseSGD):
     """Solves linear One-Class SVM using Stochastic Gradient Descent.
 
     This implementation is meant to be used with a kernel approximation
@@ -2255,7 +2245,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         average=False,
     ):
         self.nu = nu
-        super(SGDOneClassSVM, self).__init__(
+        super().__init__(
             loss="hinge",
             penalty="l2",
             C=1.0,
@@ -2656,10 +2646,5 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # TODO: replace by a statistical test, see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
+        tags.input_tags.sparse = True
         return tags

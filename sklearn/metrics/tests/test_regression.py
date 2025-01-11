@@ -566,7 +566,7 @@ def test_mean_pinball_loss_on_constant_predictions(distribution, target_quantile
         # Check that the loss of this constant predictor is greater or equal
         # than the loss of using the optimal quantile (up to machine
         # precision):
-        assert pbl >= best_pbl - np.finfo(best_pbl.dtype).eps
+        assert pbl >= best_pbl - np.finfo(np.float64).eps
 
         # Check that the value of the pinball loss matches the analytical
         # formula.

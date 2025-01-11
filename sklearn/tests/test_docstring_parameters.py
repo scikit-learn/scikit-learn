@@ -177,9 +177,6 @@ def _construct_sparse_coder(Estimator):
 
 
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
-# TODO(1.6): remove "@pytest.mark.filterwarnings" as SAMME.R will be removed
-# and substituted with the SAMME algorithm as a default
-@pytest.mark.filterwarnings("ignore:The SAMME.R algorithm")
 @pytest.mark.parametrize("name, Estimator", all_estimators())
 def test_fit_docstring_attributes(name, Estimator):
     pytest.importorskip("numpydoc")
@@ -203,6 +200,9 @@ def test_fit_docstring_attributes(name, Estimator):
         est = _construct_compose_pipeline_instance(Estimator)
     elif Estimator.__name__ == "SparseCoder":
         est = _construct_sparse_coder(Estimator)
+    elif Estimator.__name__ == "FrozenEstimator":
+        X, y = make_classification(n_samples=20, n_features=5, random_state=0)
+        est = Estimator(LogisticRegression().fit(X, y))
     else:
         # TODO(devtools): use _tested_estimators instead of all_estimators in the
         # decorator
@@ -224,10 +224,6 @@ def test_fit_docstring_attributes(name, Estimator):
     elif Estimator.__name__ == "TSNE":
         # default raises an error, perplexity must be less than n_samples
         est.set_params(perplexity=2)
-
-    # TODO(1.6): remove (avoid FutureWarning)
-    if Estimator.__name__ in ("NMF", "MiniBatchNMF"):
-        est.set_params(n_components="auto")
 
     # Low max iter to speed up tests: we are only interested in checking the existence
     # of fitted attributes. This should be invariant to whether it has converged or not.
@@ -331,20 +327,49 @@ def _get_all_fitted_attributes(estimator):
 @skip_if_no_numpydoc
 def test_precision_recall_f_score_docstring_consistency():
     """Check docstrings parameters of related metrics are consistent."""
+    metrics_to_check = [
+        metrics.precision_recall_fscore_support,
+        metrics.f1_score,
+        metrics.fbeta_score,
+        metrics.precision_score,
+        metrics.recall_score,
+    ]
     assert_docstring_consistency(
-        [
-            metrics.precision_recall_fscore_support,
-            metrics.f1_score,
-            metrics.fbeta_score,
-            metrics.precision_score,
-            metrics.recall_score,
-        ],
+        metrics_to_check,
         include_params=True,
-        # "average" - in `recall_score` we have an additional line: 'Weighted recall
-        # is equal to accuracy.'.
         # "zero_division" - the reason for zero division differs between f scores,
-        # precison and recall.
+        # precision and recall.
         exclude_params=["average", "zero_division"],
+    )
+    description_regex = (
+        r"""This parameter is required for multiclass/multilabel targets\.
+        If ``None``, the metrics for each class are returned\. Otherwise, this
+        determines the type of averaging performed on the data:
+        ``'binary'``:
+            Only report results for the class specified by ``pos_label``\.
+            This is applicable only if targets \(``y_\{true,pred\}``\) are binary\.
+        ``'micro'``:
+            Calculate metrics globally by counting the total true positives,
+            false negatives and false positives\.
+        ``'macro'``:
+            Calculate metrics for each label, and find their unweighted
+            mean\.  This does not take label imbalance into account\.
+        ``'weighted'``:
+            Calculate metrics for each label, and find their average weighted
+            by support \(the number of true instances for each label\)\. This
+            alters 'macro' to account for label imbalance; it can result in an
+            F-score that is not between precision and recall\."""
+        + r"[\s\w]*\.*"  # optionally match additonal sentence
+        + r"""
+        ``'samples'``:
+            Calculate metrics for each instance, and find their average \(only
+            meaningful for multilabel classification where this differs from
+            :func:`accuracy_score`\)\."""
+    )
+    assert_docstring_consistency(
+        metrics_to_check,
+        include_params=["average"],
+        descr_regex_pattern=" ".join(description_regex.split()),
     )
 
 

@@ -78,7 +78,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
 
     scoring : str or callable, default=None
         A single str (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring`) to evaluate the predictions on the test set.
+        (see :ref:`scoring_callable`) to evaluate the predictions on the test set.
 
         NOTE that when using a custom scorer, it should return a single
         value.
@@ -329,6 +329,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.allow_nan = get_tags(self.estimator).input_tags.allow_nan
+        tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
         return tags
 
     def get_metadata_routing(self):
