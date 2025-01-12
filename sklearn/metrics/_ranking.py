@@ -227,7 +227,6 @@ def average_precision_score(
                 f"Average precision requires at least 2 samples. Got {len(y_true)}."
                 " A single sample cannot form a precision-recall curve."
             )
-
         precision, recall, _ = precision_recall_curve(
             y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
         )
