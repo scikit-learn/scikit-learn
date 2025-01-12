@@ -220,7 +220,14 @@ def average_precision_score(
 
     def _binary_uninterpolated_average_precision(
         y_true, y_score, pos_label=1, sample_weight=None
+
     ):
+        if len(y_true) < 2:
+            raise ValueError(
+                f"Average precision requires at least 2 samples. Got {len(y_true)}."
+                " A single sample cannot form a precision-recall curve."
+            )
+
         precision, recall, _ = precision_recall_curve(
             y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
         )
