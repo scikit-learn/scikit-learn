@@ -107,7 +107,7 @@ fig = plt.figure(figsize=(10, 10))
 plt.plot(xx, f(xx), "g:", linewidth=3, label=r"$f(x) = x\,\sin(x)$")
 plt.plot(X_test, y_test, "b.", markersize=10, label="Test observations")
 plt.plot(xx, y_med, "r-", label="Predicted median")
-plt.plot(xx, y_pred, "r-", label="Predicted mean")
+plt.plot(xx, y_pred, "y-", label="Predicted mean")
 plt.plot(xx, y_upper, "k-")
 plt.plot(xx, y_lower, "k-")
 plt.fill_between(
