@@ -209,6 +209,9 @@ class BisectingKMeans(_BaseKMeans):
     array([[ 2., 1.],
            [10., 9.],
            [10., 1.]])
+
+    For a comparison between BisectingKMeans and K-Means refer to example
+    :ref:`sphx_glr_auto_examples_cluster_plot_bisect_kmeans.py`.
     """
 
     _parameter_constraints: dict = {
@@ -535,5 +538,6 @@ class BisectingKMeans(_BaseKMeans):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.transformer_tags.preserves_dtype = ["float64", "float32"]
         return tags

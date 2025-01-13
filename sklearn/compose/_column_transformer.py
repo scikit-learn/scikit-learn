@@ -29,6 +29,7 @@ from ..utils._set_output import (
     _get_output_config,
     _safe_set_output,
 )
+from ..utils._tags import get_tags
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -789,22 +790,17 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 if pd.NA not in Xs[col_name].values:
                     continue
                 class_name = self.__class__.__name__
-                # TODO(1.6): replace warning with ValueError
-                warnings.warn(
-                    (
-                        f"The output of the '{name}' transformer for column"
-                        f" '{col_name}' has dtype {dtype} and uses pandas.NA to"
-                        " represent null values. Storing this output in a numpy array"
-                        " can cause errors in downstream scikit-learn estimators, and"
-                        " inefficiencies. Starting with scikit-learn version 1.6, this"
-                        " will raise a ValueError. To avoid this problem you can (i)"
-                        " store the output in a pandas DataFrame by using"
-                        f" {class_name}.set_output(transform='pandas') or (ii) modify"
-                        f" the input data or the '{name}' transformer to avoid the"
-                        " presence of pandas.NA (for example by using"
-                        " pandas.DataFrame.astype)."
-                    ),
-                    FutureWarning,
+                raise ValueError(
+                    f"The output of the '{name}' transformer for column"
+                    f" '{col_name}' has dtype {dtype} and uses pandas.NA to"
+                    " represent null values. Storing this output in a numpy array"
+                    " can cause errors in downstream scikit-learn estimators, and"
+                    " inefficiencies. To avoid this problem you can (i)"
+                    " store the output in a pandas DataFrame by using"
+                    f" {class_name}.set_output(transform='pandas') or (ii) modify"
+                    f" the input data or the '{name}' transformer to avoid the"
+                    " presence of pandas.NA (for example by using"
+                    " pandas.DataFrame.astype)."
                 )
 
     def _record_output_indices(self, Xs):
@@ -1322,23 +1318,27 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_estimators_empty_data_messages": "FIXME",
-            "check_estimators_nan_inf": "FIXME",
-            "check_estimator_sparse_array": "FIXME",
-            "check_estimator_sparse_matrix": "FIXME",
-            "check_transformer_data_not_an_array": "FIXME",
-            "check_fit1d": "FIXME",
-            "check_fit2d_predict1d": "FIXME",
-            "check_complex_data": "FIXME",
-            "check_fit2d_1feature": "FIXME",
-        }
+        try:
+            tags.input_tags.sparse = all(
+                get_tags(trans).input_tags.sparse
+                for name, trans, _ in self.transformers
+                if trans not in {"passthrough", "drop"}
+            )
+        except Exception:
+            # If `transformers` does not comply with our API (list of tuples)
+            # then it will fail. In this case, we assume that `sparse` is False
+            # but the parameter validation will raise an error during `fit`.
+            pass  # pragma: no cover
         return tags
 
 
 def _check_X(X):
     """Use check_array only when necessary, e.g. on lists and other non-array-likes."""
-    if hasattr(X, "__array__") or hasattr(X, "__dataframe__") or sparse.issparse(X):
+    if (
+        (hasattr(X, "__array__") and hasattr(X, "shape"))
+        or hasattr(X, "__dataframe__")
+        or sparse.issparse(X)
+    ):
         return X
     return check_array(X, ensure_all_finite="allow-nan", dtype=object)
 

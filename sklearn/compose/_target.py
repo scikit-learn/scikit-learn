@@ -249,6 +249,7 @@ class BaseTransformedTarget(BaseEstimator):
         if estimator_tags.regressor_tags is not None:
             tags.regressor_tags.poor_score = True
 
+        tags.input_tags.sparse = estimator_tags.input_tags.sparse
         tags.target_tags.multi_output = estimator_tags.target_tags.multi_output
         tags.target_tags.required = True
         return tags
@@ -593,7 +594,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseTransformedTarget):
         automatically be cloned each time prior to fitting. If `estimator is
         None`, :class:`~sklearn.linear_model.LinearRegression` is created and used.
 
-        .. versionadded:: 1.7
+        .. versionadded:: 1.6
            `regressor` was renamed to `estimator`.
 
     regressor : object, default=None
@@ -602,8 +603,8 @@ class TransformedTargetRegressor(RegressorMixin, BaseTransformedTarget):
         automatically be cloned each time prior to fitting. If `estimator is
         None`, :class:`~sklearn.linear_model.LinearRegression` is created and used.
 
-        .. deprecated:: 1.7
-            `regressor` was deprecated in 1.7 and will be removed in 1.9.
+        .. deprecated:: 1.6
+            `regressor` was deprecated in 1.6 and will be removed in 1.8.
             Use `estimator` instead.
 
     transformer : object, default=None
@@ -693,7 +694,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseTransformedTarget):
         ],
     }
 
-    # TODO(1.9) remove
+    # TODO(1.8) remove
     def __init__(
         self,
         estimator=None,
@@ -751,29 +752,29 @@ class TransformedTargetRegressor(RegressorMixin, BaseTransformedTarget):
             )
 
     def _get_estimator(self, get_clone=False):
-        # TODO(1.9): remove
+        # TODO(1.8): remove
         estimator_ = self.estimator
         if self.estimator is None and self.regressor != "deprecated":
             estimator_ = self.regressor
 
             warnings.warn(
                 (
-                    "`regressor` has been deprecated in 1.7 and will be removed"
-                    " in 1.9. Please use `estimator` instead."
+                    "`regressor` has been deprecated in 1.6 and will be removed"
+                    " in 1.8. Please use `estimator` instead."
                 ),
                 FutureWarning,
             )
-        # TODO(1.9) remove
+        # TODO(1.8) remove
         elif self.estimator is not None and self.regressor != "deprecated":
             raise ValueError(
                 "You must pass only one estimator to TransformedTargetRegressor."
                 " Use `estimator`."
             )
-        # TODO(1.9) remove
+        # TODO(1.8) remove
         elif self.estimator is None and self.regressor == "deprecated":
             estimator_ = None
 
-        # TODO(1.9) replace estimator_ by self.estimator in remaining code
+        # TODO(1.8) replace estimator_ by self.estimator in remaining code
         if estimator_ is None:
             return LinearRegression()
 

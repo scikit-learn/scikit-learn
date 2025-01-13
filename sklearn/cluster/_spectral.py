@@ -287,7 +287,9 @@ def spectral_clustering(
         The cluster_qr method [5]_ directly extracts clusters from eigenvectors
         in spectral clustering. In contrast to k-means and discretization, cluster_qr
         has no tuning parameters and is not an iterative method, yet may outperform
-        k-means and discretization in terms of both quality and speed.
+        k-means and discretization in terms of both quality and speed. For a detailed
+        comparison of clustering strategies, refer to the following example:
+        :ref:`sphx_glr_auto_examples_cluster_plot_coin_segmentation.py`.
 
         .. versionchanged:: 1.1
            Added new labeling method 'cluster_qr'.
@@ -792,6 +794,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.input_tags.pairwise = self.affinity in [
             "precomputed",
             "precomputed_nearest_neighbors",

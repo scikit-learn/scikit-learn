@@ -1,3 +1,4 @@
+import math
 from functools import partial
 from inspect import signature
 from itertools import chain, permutations, product
@@ -7,6 +8,7 @@ import pytest
 
 from sklearn._config import config_context
 from sklearn.datasets import make_multilabel_classification
+from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.metrics import (
     accuracy_score,
     average_precision_score,
@@ -37,6 +39,7 @@ from sklearn.metrics import (
     mean_pinball_loss,
     mean_poisson_deviance,
     mean_squared_error,
+    mean_squared_log_error,
     mean_tweedie_deviance,
     median_absolute_error,
     multilabel_confusion_matrix,
@@ -47,6 +50,8 @@ from sklearn.metrics import (
     recall_score,
     roc_auc_score,
     roc_curve,
+    root_mean_squared_error,
+    root_mean_squared_log_error,
     top_k_accuracy_score,
     zero_one_loss,
 )
@@ -120,11 +125,14 @@ REGRESSION_METRICS = {
     "max_error": max_error,
     "mean_absolute_error": mean_absolute_error,
     "mean_squared_error": mean_squared_error,
+    "mean_squared_log_error": mean_squared_log_error,
     "mean_pinball_loss": mean_pinball_loss,
     "median_absolute_error": median_absolute_error,
     "mean_absolute_percentage_error": mean_absolute_percentage_error,
     "explained_variance_score": explained_variance_score,
     "r2_score": partial(r2_score, multioutput="variance_weighted"),
+    "root_mean_squared_error": root_mean_squared_error,
+    "root_mean_squared_log_error": root_mean_squared_log_error,
     "mean_normal_deviance": partial(mean_tweedie_deviance, power=0),
     "mean_poisson_deviance": mean_poisson_deviance,
     "mean_gamma_deviance": mean_gamma_deviance,
@@ -458,7 +466,10 @@ MULTIOUTPUT_METRICS = {
     "mean_absolute_error",
     "median_absolute_error",
     "mean_squared_error",
+    "mean_squared_log_error",
     "r2_score",
+    "root_mean_squared_error",
+    "root_mean_squared_log_error",
     "explained_variance_score",
     "mean_absolute_percentage_error",
     "mean_pinball_loss",
@@ -482,6 +493,9 @@ SYMMETRIC_METRICS = {
     "micro_f1_score",
     "macro_f1_score",
     "weighted_recall_score",
+    "mean_squared_log_error",
+    "root_mean_squared_error",
+    "root_mean_squared_log_error",
     # P = R = F = accuracy in multiclass case
     "micro_f0.5_score",
     "micro_f1_score",
@@ -551,10 +565,26 @@ METRICS_REQUIRE_POSITIVE_Y = {
     "d2_tweedie_score",
 }
 
+# Metrics involving y = log(1+x)
+METRICS_WITH_LOG1P_Y = {
+    "mean_squared_log_error",
+    "root_mean_squared_log_error",
+}
+
 
 def _require_positive_targets(y1, y2):
     """Make targets strictly positive"""
     offset = abs(min(y1.min(), y2.min())) + 1
+    y1 += offset
+    y2 += offset
+    return y1, y2
+
+
+def _require_log1p_targets(y1, y2):
+    """Make targets strictly larger than -1"""
+    offset = abs(min(y1.min(), y2.min())) - 0.99
+    y1 = y1.astype(np.float64)
+    y2 = y2.astype(np.float64)
     y1 += offset
     y2 += offset
     return y1, y2
@@ -581,6 +611,9 @@ def test_symmetric_metric(name):
 
     if name in METRICS_REQUIRE_POSITIVE_Y:
         y_true, y_pred = _require_positive_targets(y_true, y_pred)
+
+    elif name in METRICS_WITH_LOG1P_Y:
+        y_true, y_pred = _require_log1p_targets(y_true, y_pred)
 
     y_true_bin = random_state.randint(0, 2, size=(20, 25))
     y_pred_bin = random_state.randint(0, 2, size=(20, 25))
@@ -631,6 +664,8 @@ def test_sample_order_invariance(name):
 
     if name in METRICS_REQUIRE_POSITIVE_Y:
         y_true, y_pred = _require_positive_targets(y_true, y_pred)
+    elif name in METRICS_WITH_LOG1P_Y:
+        y_true, y_pred = _require_log1p_targets(y_true, y_pred)
 
     y_true_shuffle, y_pred_shuffle = shuffle(y_true, y_pred, random_state=0)
 
@@ -698,6 +733,8 @@ def test_format_invariance_with_1d_vectors(name):
 
     if name in METRICS_REQUIRE_POSITIVE_Y:
         y1, y2 = _require_positive_targets(y1, y2)
+    elif name in METRICS_WITH_LOG1P_Y:
+        y1, y2 = _require_log1p_targets(y1, y2)
 
     y1_list = list(y1)
     y2_list = list(y2)
@@ -805,8 +842,14 @@ def test_format_invariance_with_1d_vectors(name):
         if name not in (
             MULTIOUTPUT_METRICS | THRESHOLDED_MULTILABEL_METRICS | MULTILABELS_METRICS
         ):
-            with pytest.raises(ValueError):
-                metric(y1_row, y2_row)
+            if "roc_auc" in name:
+                # for consistency between the `roc_cuve` and `roc_auc_score`
+                # np.nan is returned and an `UndefinedMetricWarning` is raised
+                with pytest.warns(UndefinedMetricWarning):
+                    assert math.isnan(metric(y1_row, y2_row))
+            else:
+                with pytest.raises(ValueError):
+                    metric(y1_row, y2_row)
 
 
 @pytest.mark.parametrize(
@@ -986,6 +1029,8 @@ def check_single_sample(name):
     # assert that no exception is thrown
     if name in METRICS_REQUIRE_POSITIVE_Y:
         values = [1, 2]
+    elif name in METRICS_WITH_LOG1P_Y:
+        values = [-0.7, 1]
     else:
         values = [0, 1]
     for i, j in product(values, repeat=2):
@@ -1772,6 +1817,40 @@ def check_array_api_metric(
     if isinstance(multioutput, np.ndarray):
         metric_kwargs["multioutput"] = xp.asarray(multioutput, device=device)
 
+    # When array API dispatch is disabled, and np.asarray works (for example PyTorch
+    # with CPU device), calling the metric function with such numpy compatible inputs
+    # should work (albeit by implicitly converting to numpy arrays instead of
+    # dispatching to the array library).
+    try:
+        np.asarray(a_xp)
+        np.asarray(b_xp)
+        numpy_as_array_works = True
+    except TypeError:
+        # PyTorch with CUDA device and CuPy raise TypeError consistently.
+        # Exception type may need to be updated in the future for other
+        # libraries.
+        numpy_as_array_works = False
+
+    if numpy_as_array_works:
+        metric_xp = metric(a_xp, b_xp, **metric_kwargs)
+        assert_allclose(
+            metric_xp,
+            metric_np,
+            atol=_atol_for_type(dtype_name),
+        )
+        metric_xp_mixed_1 = metric(a_np, b_xp, **metric_kwargs)
+        assert_allclose(
+            metric_xp_mixed_1,
+            metric_np,
+            atol=_atol_for_type(dtype_name),
+        )
+        metric_xp_mixed_2 = metric(a_xp, b_np, **metric_kwargs)
+        assert_allclose(
+            metric_xp_mixed_2,
+            metric_np,
+            atol=_atol_for_type(dtype_name),
+        )
+
     with config_context(array_api_dispatch=True):
         metric_xp = metric(a_xp, b_xp, **metric_kwargs)
 
@@ -1817,27 +1896,38 @@ def check_array_api_multiclass_classification_metric(
     y_true_np = np.array([0, 1, 2, 3])
     y_pred_np = np.array([0, 1, 0, 2])
 
-    check_array_api_metric(
-        metric,
-        array_namespace,
-        device,
-        dtype_name,
-        a_np=y_true_np,
-        b_np=y_pred_np,
-        sample_weight=None,
+    additional_params = {
+        "average": ("micro", "macro", "weighted"),
+        "beta": (0.2, 0.5, 0.8),
+    }
+    metric_kwargs_combinations = _get_metric_kwargs_for_array_api_testing(
+        metric=metric,
+        params=additional_params,
     )
+    for metric_kwargs in metric_kwargs_combinations:
+        check_array_api_metric(
+            metric,
+            array_namespace,
+            device,
+            dtype_name,
+            a_np=y_true_np,
+            b_np=y_pred_np,
+            sample_weight=None,
+            **metric_kwargs,
+        )
 
-    sample_weight = np.array([0.0, 0.1, 2.0, 1.0], dtype=dtype_name)
+        sample_weight = np.array([0.0, 0.1, 2.0, 1.0], dtype=dtype_name)
 
-    check_array_api_metric(
-        metric,
-        array_namespace,
-        device,
-        dtype_name,
-        a_np=y_true_np,
-        b_np=y_pred_np,
-        sample_weight=sample_weight,
-    )
+        check_array_api_metric(
+            metric,
+            array_namespace,
+            device,
+            dtype_name,
+            a_np=y_true_np,
+            b_np=y_pred_np,
+            sample_weight=sample_weight,
+            **metric_kwargs,
+        )
 
 
 def check_array_api_multilabel_classification_metric(
@@ -1846,27 +1936,38 @@ def check_array_api_multilabel_classification_metric(
     y_true_np = np.array([[1, 1], [0, 1], [0, 0]], dtype=dtype_name)
     y_pred_np = np.array([[1, 1], [1, 1], [1, 1]], dtype=dtype_name)
 
-    check_array_api_metric(
-        metric,
-        array_namespace,
-        device,
-        dtype_name,
-        a_np=y_true_np,
-        b_np=y_pred_np,
-        sample_weight=None,
+    additional_params = {
+        "average": ("micro", "macro", "weighted"),
+        "beta": (0.2, 0.5, 0.8),
+    }
+    metric_kwargs_combinations = _get_metric_kwargs_for_array_api_testing(
+        metric=metric,
+        params=additional_params,
     )
+    for metric_kwargs in metric_kwargs_combinations:
+        check_array_api_metric(
+            metric,
+            array_namespace,
+            device,
+            dtype_name,
+            a_np=y_true_np,
+            b_np=y_pred_np,
+            sample_weight=None,
+            **metric_kwargs,
+        )
 
-    sample_weight = np.array([0.0, 0.1, 2.0], dtype=dtype_name)
+        sample_weight = np.array([0.0, 0.1, 2.0], dtype=dtype_name)
 
-    check_array_api_metric(
-        metric,
-        array_namespace,
-        device,
-        dtype_name,
-        a_np=y_true_np,
-        b_np=y_pred_np,
-        sample_weight=sample_weight,
-    )
+        check_array_api_metric(
+            metric,
+            array_namespace,
+            device,
+            dtype_name,
+            a_np=y_true_np,
+            b_np=y_pred_np,
+            sample_weight=sample_weight,
+            **metric_kwargs,
+        )
 
 
 def check_array_api_regression_metric(metric, array_namespace, device, dtype_name):
@@ -1996,6 +2097,30 @@ array_api_metric_checkers = {
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
     ],
+    f1_score: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
+    fbeta_score: [
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
+    multilabel_confusion_matrix: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
+    precision_score: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
+    recall_score: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
     zero_one_loss: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
@@ -2009,11 +2134,23 @@ array_api_metric_checkers = {
         check_array_api_regression_metric_multioutput,
     ],
     cosine_similarity: [check_array_api_metric_pairwise],
+    explained_variance_score: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
     mean_absolute_error: [
         check_array_api_regression_metric,
         check_array_api_regression_metric_multioutput,
     ],
+    mean_pinball_loss: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
     mean_squared_error: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
+    mean_squared_log_error: [
         check_array_api_regression_metric,
         check_array_api_regression_metric_multioutput,
     ],
@@ -2036,6 +2173,14 @@ array_api_metric_checkers = {
     linear_kernel: [check_array_api_metric_pairwise],
     polynomial_kernel: [check_array_api_metric_pairwise],
     rbf_kernel: [check_array_api_metric_pairwise],
+    root_mean_squared_error: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
+    root_mean_squared_log_error: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
     sigmoid_kernel: [check_array_api_metric_pairwise],
 }
 
@@ -2069,3 +2214,24 @@ def test_metrics_dataframe_series(metric_name, df_lib_name):
         pytest.skip(f"{metric_name} can not deal with 1d inputs")
 
     assert_allclose(metric(y_pred, y_true), expected_metric)
+
+
+def _get_metric_kwargs_for_array_api_testing(metric, params):
+    """Helper function to enable specifying a variety of additional params and
+    their corresponding values, so that they can be passed to a metric function
+    when testing for array api compliance."""
+    metric_kwargs_combinations = [{}]
+    for param, values in params.items():
+        if param not in signature(metric).parameters:
+            continue
+
+        new_combinations = []
+        for kwargs in metric_kwargs_combinations:
+            for value in values:
+                new_kwargs = kwargs.copy()
+                new_kwargs[param] = value
+                new_combinations.append(new_kwargs)
+
+        metric_kwargs_combinations = new_combinations
+
+    return metric_kwargs_combinations

@@ -7,6 +7,7 @@ import numbers
 import operator
 import sys
 import warnings
+from collections.abc import Sequence
 from contextlib import suppress
 from functools import reduce, wraps
 from inspect import Parameter, isclass, signature
@@ -396,7 +397,8 @@ def _num_samples(x):
     if hasattr(x, "shape") and x.shape is not None:
         if len(x.shape) == 0:
             raise TypeError(
-                "Singleton array %r cannot be considered a valid collection." % x
+                "Input should have at least 1 dimension i.e. satisfy "
+                f"`len(x.shape) > 0`, got scalar `{x!r}` instead."
             )
         # Check that shape is returning an integer or default to len
         # Dask dataframes may not return numeric shape[0] value
@@ -466,10 +468,8 @@ def check_consistent_length(*arrays):
     >>> b = [2, 3, 4]
     >>> check_consistent_length(a, b)
     """
-
     lengths = [_num_samples(X) for X in arrays if X is not None]
-    uniques = np.unique(lengths)
-    if len(uniques) > 1:
+    if len(set(lengths)) > 1:
         raise ValueError(
             "Found input variables with inconsistent numbers of samples: %r"
             % [int(l) for l in lengths]
@@ -1097,8 +1097,8 @@ def check_array(
             )
         if not allow_nd and array.ndim >= 3:
             raise ValueError(
-                "Found array with dim %d. %s expected <= 2."
-                % (array.ndim, estimator_name)
+                f"Found array with dim {array.ndim},"
+                f" while dim <= 2 is required{context}."
             )
 
         if ensure_all_finite:
@@ -1412,7 +1412,7 @@ def _check_y(y, multi_output=False, y_numeric=False, estimator=None):
     return y
 
 
-def column_or_1d(y, *, dtype=None, warn=False):
+def column_or_1d(y, *, dtype=None, warn=False, device=None):
     """Ravel column or 1d numpy array, else raises an error.
 
     Parameters
@@ -1427,6 +1427,12 @@ def column_or_1d(y, *, dtype=None, warn=False):
 
     warn : bool, default=False
        To control display of warnings.
+
+    device : device, default=None
+        `device` object.
+        See the :ref:`Array API User Guide <array_api>` for more details.
+
+        .. versionadded:: 1.6
 
     Returns
     -------
@@ -1456,7 +1462,9 @@ def column_or_1d(y, *, dtype=None, warn=False):
 
     shape = y.shape
     if len(shape) == 1:
-        return _asarray_with_order(xp.reshape(y, (-1,)), order="C", xp=xp)
+        return _asarray_with_order(
+            xp.reshape(y, (-1,)), order="C", xp=xp, device=device
+        )
     if len(shape) == 2 and shape[1] == 1:
         if warn:
             warnings.warn(
@@ -1468,7 +1476,9 @@ def column_or_1d(y, *, dtype=None, warn=False):
                 DataConversionWarning,
                 stacklevel=2,
             )
-        return _asarray_with_order(xp.reshape(y, (-1,)), order="C", xp=xp)
+        return _asarray_with_order(
+            xp.reshape(y, (-1,)), order="C", xp=xp, device=device
+        )
 
     raise ValueError(
         "y should be a 1d array, got an array of shape {} instead.".format(shape)
@@ -1532,7 +1542,14 @@ def has_fit_parameter(estimator, parameter):
     >>> has_fit_parameter(SVC(), "sample_weight")
     True
     """
-    return parameter in signature(estimator.fit).parameters
+    return (
+        # This is used during test collection in common tests. The
+        # hasattr(estimator, "fit") makes it so that we don't fail for an estimator
+        # that does not have a `fit` method during collection of checks. The right
+        # checks will fail later.
+        hasattr(estimator, "fit")
+        and parameter in signature(estimator.fit).parameters
+    )
 
 
 def check_symmetric(array, *, tol=1e-10, raise_warning=True, raise_exception=False):
@@ -1656,13 +1673,18 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
 
     Checks if the estimator is fitted by verifying the presence of
     fitted attributes (ending with a trailing underscore) and otherwise
-    raises a NotFittedError with the given message.
+    raises a :class:`~sklearn.exceptions.NotFittedError` with the given message.
 
     If an estimator does not set any attributes with a trailing underscore, it
     can define a ``__sklearn_is_fitted__`` method returning a boolean to
     specify if the estimator is fitted or not. See
     :ref:`sphx_glr_auto_examples_developing_estimators_sklearn_is_fitted.py`
     for an example on how to use the API.
+
+    If no `attributes` are passed, this fuction will pass if an estimator is stateless.
+    An estimator can indicate it's stateless by setting the `requires_fit` tag. See
+    :ref:`estimator_tags` for more information. Note that the `requires_fit` tag
+    is ignored if `attributes` are passed.
 
     Parameters
     ----------
@@ -1724,8 +1746,55 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     if not hasattr(estimator, "fit"):
         raise TypeError("%s is not an estimator instance." % (estimator))
 
+    tags = get_tags(estimator)
+
+    if not tags.requires_fit and attributes is None:
+        return
+
     if not _is_fitted(estimator, attributes, all_or_any):
         raise NotFittedError(msg % {"name": type(estimator).__name__})
+
+
+def _estimator_has(attr, *, delegates=("estimator_", "estimator")):
+    """Check if we can delegate a method to the underlying estimator.
+
+    We check the `delegates` in the order they are passed. By default, we first check
+    the fitted estimator if available, otherwise we check the unfitted estimator.
+
+    Parameters
+    ----------
+    attr : str
+        Name of the attribute the delegate might or might not have.
+
+    delegates: tuple of str, default=("estimator_", "estimator")
+        A tuple of sub-estimator(s) to check if we can delegate the `attr` method.
+
+    Returns
+    -------
+    check : function
+        Function to check if the delegate has the attribute.
+
+    Raises
+    ------
+    ValueError
+        Raised when none of the delegates are present in the object.
+    """
+
+    def check(self):
+        for delegate in delegates:
+            # In meta estimators with multiple sub estimators,
+            # only the attribute of the first sub estimator is checked,
+            # assuming uniformity across all sub estimators.
+            if hasattr(self, delegate):
+                delegator = getattr(self, delegate)
+                if isinstance(delegator, Sequence):
+                    return getattr(delegator[0], attr)
+                else:
+                    return getattr(delegator, attr)
+
+        raise ValueError(f"None of the delegates {delegates} are present in the class.")
+
+    return check
 
 
 def check_non_negative(X, whom):

@@ -6,13 +6,6 @@ HDBSCAN: Hierarchical Density-Based Spatial Clustering
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-# Authors: Leland McInnes <leland.mcinnes@gmail.com>
-#          Steve Astels <sastels@gmail.com>
-#          John Healy <jchealy@gmail.com>
-#          Meekail Zain <zainmeekail@gmail.com>
-# Copyright (c) 2015, Leland McInnes
-# All rights reserved.
-
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 
@@ -492,14 +485,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         :class:`~sklearn.neighbors.BallTree`, then it resolves to use the
         `"brute"` algorithm.
 
-        .. deprecated:: 1.4
-           The `'kdtree'` option was deprecated in version 1.4,
-           and will be renamed to `'kd_tree'` in 1.6.
-
-        .. deprecated:: 1.4
-           The `'balltree'` option was deprecated in version 1.4,
-           and will be renamed to `'ball_tree'` in 1.6.
-
     leaf_size : int, default=40
         Leaf size for trees responsible for fast nearest neighbour queries when
         a KDTree or a BallTree are used as core-distance algorithms. A large
@@ -635,14 +620,17 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.cluster import HDBSCAN
     >>> from sklearn.datasets import load_digits
     >>> X, _ = load_digits(return_X_y=True)
     >>> hdb = HDBSCAN(min_cluster_size=20)
     >>> hdb.fit(X)
     HDBSCAN(min_cluster_size=20)
-    >>> hdb.labels_
-    array([ 2,  6, -1, ..., -1, -1, -1])
+    >>> hdb.labels_.shape == (X.shape[0],)
+    True
+    >>> np.unique(hdb.labels_).tolist()
+    [-1, 0, 1, 2, 3, 4, 5, 6, 7]
     """
 
     _parameter_constraints = {
@@ -661,13 +649,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         ],
         "metric_params": [dict, None],
         "alpha": [Interval(Real, left=0, right=None, closed="neither")],
-        # TODO(1.6): Remove "kdtree" and "balltree"  option
-        "algorithm": [
-            StrOptions(
-                {"auto", "brute", "kd_tree", "ball_tree", "kdtree", "balltree"},
-                deprecated={"kdtree", "balltree"},
-            ),
-        ],
+        "algorithm": [StrOptions({"auto", "brute", "kd_tree", "ball_tree"})],
         "leaf_size": [Interval(Integral, left=1, right=None, closed="left")],
         "n_jobs": [Integral, None],
         "cluster_selection_method": [StrOptions({"eom", "leaf"})],
@@ -805,30 +787,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 f"min_samples ({self._min_samples}) must be at most the number of"
                 f" samples in X ({X.shape[0]})"
             )
-
-        # TODO(1.6): Remove
-        if self.algorithm == "kdtree":
-            warn(
-                (
-                    "`algorithm='kdtree'`has been deprecated in 1.4 and will be renamed"
-                    " to'kd_tree'`in 1.6. To keep the past behaviour, set"
-                    " `algorithm='kd_tree'`."
-                ),
-                FutureWarning,
-            )
-            self.algorithm = "kd_tree"
-
-        # TODO(1.6): Remove
-        if self.algorithm == "balltree":
-            warn(
-                (
-                    "`algorithm='balltree'`has been deprecated in 1.4 and will be"
-                    " renamed to'ball_tree'`in 1.6. To keep the past behaviour, set"
-                    " `algorithm='ball_tree'`."
-                ),
-                FutureWarning,
-            )
-            self.algorithm = "ball_tree"
 
         mst_func = None
         kwargs = dict(
@@ -1041,5 +999,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.input_tags.allow_nan = self.metric != "precomputed"
         return tags

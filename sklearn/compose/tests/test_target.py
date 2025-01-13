@@ -425,7 +425,7 @@ def test_deprecation_warning_regressor():
     X_train = np.arange(4).reshape(-1, 1)
     y_train = np.arange(4)
 
-    warn_msg = "`regressor` has been deprecated in 1.7 and will be removed"
+    warn_msg = "`regressor` has been deprecated in 1.6 and will be removed"
     with pytest.warns(FutureWarning, match=warn_msg):
         TransformedTargetRegressor(regressor=LinearRegression()).fit(X_train, y_train)
 

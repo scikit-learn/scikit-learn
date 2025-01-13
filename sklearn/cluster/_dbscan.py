@@ -120,8 +120,7 @@ def dbscan(
 
     Notes
     -----
-    For an example, see :ref:`examples/cluster/plot_dbscan.py
-    <sphx_glr_auto_examples_cluster_plot_dbscan.py>`.
+    For an example, see :ref:`sphx_glr_auto_examples_cluster_plot_dbscan.py`.
 
     This implementation bulk-computes all neighborhood queries, which increases
     the memory complexity to O(n.d) where d is the average number of neighbors,
@@ -278,8 +277,8 @@ class DBSCAN(ClusterMixin, BaseEstimator):
 
     Notes
     -----
-    For an example, see :ref:`examples/cluster/plot_dbscan.py
-    <sphx_glr_auto_examples_cluster_plot_dbscan.py>`.
+    For an example, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_dbscan.py`.
 
     This implementation bulk-computes all neighborhood queries, which increases
     the memory complexity to O(n.d) where d is the average number of neighbors,
@@ -474,4 +473,5 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.pairwise = self.metric == "precomputed"
+        tags.input_tags.sparse = True
         return tags
