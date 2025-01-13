@@ -184,7 +184,7 @@ Contributing code
   If in doubt about duplicated work, or if you want to work on a non-trivial
   feature, it's recommended to first open an issue in
   the `issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_
-  to get some feedbacks from core developers.
+  to get some feedback from core developers.
 
   One easy way to find an issue to work on is by applying the "help wanted"
   label in your search. This lists all the issues that have been unclaimed
@@ -344,7 +344,7 @@ The next steps now describe the process of modifying code and submitting a PR:
 
 12. Follow `these
     <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
-    instructions to create a pull request from your fork. This will send an
+    instructions to create a pull request from your fork. This will send a
     notification to potential reviewers. You may want to consider sending an message to
     the `discord <https://discord.com/invite/h9qyrK8Jc8>`_ in the development
     channel for more visibility if your pull request does not receive attention after
@@ -537,7 +537,7 @@ Continuous Integration (CI)
 Commit message markers
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Please note that if one of the following markers appear in the latest commit
+Please note that if one of the following markers appears in the latest commit
 message, the following actions are taken.
 
 ====================== ===================
@@ -643,7 +643,7 @@ using the following guidelines:
 
 * If a contributor comments on an issue to say they are working on it,
   a pull request is expected within 2 weeks (new contributor) or 4 weeks
-  (contributor or core dev), unless an larger time frame is explicitly given.
+  (contributor or core dev), unless a larger time frame is explicitly given.
   Beyond that time, another contributor can take the issue and make a
   pull request for it. We encourage contributors to comment directly on the
   stalled or unclaimed issue to let community members know that they will be
@@ -702,7 +702,7 @@ We are glad to accept any sort of documentation:
 * **Function/method/class docstrings:** Also known as "API documentation", these
   describe what the object does and details any parameters, attributes and
   methods. Docstrings live alongside the code in `sklearn/
-  <https://github.com/scikit-learn/scikit-learn/tree/main/sklearn>`_, and are generated
+  <https://github.com/scikit-learn/scikit-learn/tree/main/sklearn>`_, and are
   generated according to `doc/api_reference.py
   <https://github.com/scikit-learn/scikit-learn/blob/main/doc/api_reference.py>`_. To
   add, update, remove, or deprecate a public API that is listed in :ref:`api_ref`, this
