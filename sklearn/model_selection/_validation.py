@@ -1487,7 +1487,7 @@ def permutation_test_score(
     independent.
 
     The p-value represents the fraction of randomized data sets where the
-    estimator performed as well or better than in the original data. A small
+    estimator performed as well or better than on the original data. A small
     p-value suggests that there is a real dependency between features and
     targets which has been used by the estimator to give good predictions.
     A large p-value may be due to lack of real dependency between features
