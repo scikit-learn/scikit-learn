@@ -2078,9 +2078,9 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
     ``GroupShuffleSplit(test_size=10, n_splits=100)``.
 
     The parameters ``test_size`` and ``train_size`` can refer either to the groups or
-    the samples. Use the ``group_by`` parameter to distribute the groups based on the
-    number of groups (``number``) or by the groups' sizes (``size``), i.e. the number
-    of samples in the groups. The default is ``number``.
+    the samples. Use the ``split_size`` parameter to distribute the groups based on the
+    number of groups (``groups``) or by the groups' sizes (``samples``), i.e. the number
+    of samples in the groups. The default is ``groups``.
 
     Contrary to other cross-validation strategies, the random splits
     do not guarantee that test sets across all folds will be mutually exclusive,
@@ -2111,9 +2111,9 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
         int, represents the absolute number of train groups. If None,
         the value is automatically set to the complement of the test size.
 
-    group_by : str, default="number"
-        If "number", the values of the ``test_size`` and `train_size` parameters
-        refer to the number of groups. If ``size``, they refer to the number of
+    split_size : str, default="groups"
+        If "groups", the values of the ``test_size`` and `train_size` parameters
+        refer to the number of groups. If ``samples``, they refer to the number of
         samples, i.e. the size of the groups.
 
     random_state : int, RandomState instance or None, default=None
@@ -2134,7 +2134,7 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
     >>> gss.get_n_splits()
     2
     >>> print(gss)
-    GroupShuffleSplit(group_by='number', n_splits=2, random_state=42, test_size=None,
+    GroupShuffleSplit(n_splits=2, random_state=42, split_size='groups', test_size=None,
                       train_size=0.7)
     >>> for i, (train_index, test_index) in enumerate(gss.split(X, y, groups)):
     ...     print(f"Fold {i}:")
@@ -2147,9 +2147,9 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
       Train: index=[0 1 5 6 7], group=[1 1 3 3 3]
       Test:  index=[2 3 4], group=[2 2 2]
 
-    For unbalanced group sizes, ``group_by=size`` can be used:
+    For unbalanced group sizes, ``split_size=samples`` can be used:
     >>> groups = np.array([1, 1, 1, 1, 1, 2, 3, 4])
-    >>> gss = GroupShuffleSplit(n_splits=1, train_size=.7, group_by="size",
+    >>> gss = GroupShuffleSplit(n_splits=1, train_size=.7, split_size="samples",
     ...                         random_state=42)
     >>> train_index, test_index = next(gss.split(X, y, groups))
     >>> print(f"Train: index={train_index}, group={groups[train_index]}")
@@ -2170,7 +2170,7 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
         *,
         test_size=None,
         train_size=None,
-        group_by="number",
+        split_size="groups",
         random_state=None,
     ):
         super().__init__(
@@ -2180,13 +2180,13 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
             random_state=random_state,
         )
         self._default_test_size = 0.2
-        if group_by not in ["size", "number"]:
+        if split_size not in ["groups", "samples"]:
             raise ValueError(
-                "Bad parameter 'group_by'. Allowed are 'size' and 'number'."
+                "Bad parameter 'split_size'. Allowed are 'groups' and 'samples'."
             )
-        self.group_by = group_by
+        self.split_size = split_size
 
-    def _iter_indices_by_group_size(self, X, groups):
+    def _iter_indices_split_size_samples(self, X, groups):
         n_samples = _num_samples(X)
         n_train, n_test = _validate_shuffle_split(
             n_samples,
@@ -2255,7 +2255,7 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
             raise ValueError("The 'groups' parameter should not be None.")
         groups = check_array(groups, input_name="groups", ensure_2d=False, dtype=None)
 
-        if self.group_by == "number":
+        if self.split_size == "groups":
             classes, group_indices = np.unique(groups, return_inverse=True)
             for group_train, group_test in super()._iter_indices(X=classes):
                 # these are the indices of classes in the partition
@@ -2266,7 +2266,7 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
 
                 yield train, test
         else:
-            yield from self._iter_indices_by_group_size(X, groups)
+            yield from self._iter_indices_split_size_samples(X, groups)
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.

@@ -792,10 +792,10 @@ def test_group_shuffle_split_default_test_size(train_size, exp_train, exp_test):
     y = np.ones(10)
     groups = range(10)
 
-    for group_by in ["size", "number"]:
+    for split_size in ["groups", "samples"]:
 
         X_train, X_test = next(
-            GroupShuffleSplit(train_size=train_size, group_by=group_by).split(
+            GroupShuffleSplit(train_size=train_size, split_size=split_size).split(
                 X, y, groups
             )
         )
@@ -1015,7 +1015,7 @@ def test_predefinedsplit_with_kfold_split():
 def test_group_shuffle_split():
     with pytest.raises(ValueError):
         GroupShuffleSplit(
-            1, test_size=0.3, group_by="Not a valid option.", random_state=0
+            1, test_size=0.3, split_size="Not a valid option.", random_state=0
         )
 
     for groups_i in test_groups:
@@ -1023,10 +1023,10 @@ def test_group_shuffle_split():
         n_splits = 6
         test_size = 1.0 / 3
 
-        for group_by in ["size", "number"]:
+        for split_size in ["groups", "samples"]:
 
             slo = GroupShuffleSplit(
-                n_splits, test_size=test_size, group_by=group_by, random_state=0
+                n_splits, test_size=test_size, split_size=split_size, random_state=0
             )
 
             # Make sure the repr works
@@ -1051,7 +1051,7 @@ def test_group_shuffle_split():
                 # Third test: train and test are disjoint
                 assert_array_equal(np.intersect1d(train, test), [])
 
-                if group_by == "number":
+                if split_size == "groups":
                     # Fourth test:
                     # unique train and test groups are correct, +- 1 for rounding error
                     assert (
@@ -1066,7 +1066,7 @@ def test_group_shuffle_split():
                     )
 
 
-def test_group_shuffle_split_group_by_size():
+def test_group_shuffle_split_with_split_size():
     test_groups_list = [
         np.array([0, 1, 2, 3, 4]),  # balanced group
         np.array([0, 0, 0, 0, 0, 1, 2, 3, 4, 5]),  # unbalanced groups
@@ -1078,7 +1078,7 @@ def test_group_shuffle_split_group_by_size():
         X = y = np.ones(len(groups))
 
         slo = GroupShuffleSplit(
-            n_splits, test_size=test_size, group_by="size", random_state=0
+            n_splits, test_size=test_size, split_size="groups", random_state=0
         )
         train, test = next(slo.split(X, y, groups=groups))
 
