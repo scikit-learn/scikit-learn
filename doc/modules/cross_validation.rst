@@ -951,7 +951,7 @@ to evaluate the performance of a :term:`predictor`. It provides a
 permutation-based p-value, which represents how likely an observed performance of the
 estimator would be obtained by chance. The null hypothesis in this test is
 that the estimator fails to leverage any statistical dependency between the
-features and the targets to make correct predictions on left out data.
+features and the targets to make correct predictions on left-out data.
 :func:`~sklearn.model_selection.permutation_test_score` generates a null
 distribution by calculating `n_permutations` different permutations of the
 data. In each permutation the target values are randomly shuffled, thereby removing
@@ -967,9 +967,9 @@ obtain good results. A high p-value, in reverse, could be due to either one of t
 - a lack of dependency between features and targets (i.e., there is no systematic
   relationship and any observed patterns are likely due to random chance)
 - **or** because the estimator was not able to use the dependency in the data (for
-  instance because it under fit).
+  instance because it underfit).
 
-In the latter case, using a more appropriate estimator that is able to utilize the
+In the latter case, using a more appropriate estimator that is able to use the
 structure in the data, would result in a lower p-value.
 
 Cross-validation provides information about how well an estimator generalizes
@@ -991,7 +991,8 @@ random guessing.
 Finally, :func:`~sklearn.model_selection.permutation_test_score` is computed
 using brute force and internally fits ``(n_permutations + 1) * n_cv`` models.
 It is therefore only tractable with small datasets for which fitting an
-individual model is very fast. Using the `n_jobs` parameter can speed up this process.
+individual model is very fast. Using the `n_jobs` parameter parallelizes the
+computation and thus speeds it up.
 
 .. rubric:: Examples
 
