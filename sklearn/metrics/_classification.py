@@ -29,6 +29,7 @@ from ..utils import (
 from ..utils._array_api import (
     _average,
     _bincount,
+    _convert_to_numpy,
     _count_nonzero,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
@@ -275,7 +276,7 @@ def confusion_matrix(
     y_pred : array-like of shape (n_samples,)
         Estimated targets as returned by a classifier.
 
-    labels : array-like of shape (n_classes), default=None
+    labels : array-like of shape (n_classes,), default=None
         List of labels to index the matrix. This may be used to reorder
         or select a subset of labels.
         If ``None`` is given, those that appear at least once
@@ -337,6 +338,9 @@ def confusion_matrix(
     >>> (tn, fp, fn, tp)
     (np.int64(0), np.int64(2), np.int64(1), np.int64(1))
     """
+    xp, _ = get_namespace(y_true, y_pred, labels, sample_weight)
+    y_true = _convert_to_numpy(y_true, xp)
+    y_pred = _convert_to_numpy(y_pred, xp)
     y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):
@@ -348,16 +352,18 @@ def confusion_matrix(
         labels = np.asarray(labels)
         n_labels = labels.size
         if n_labels == 0:
-            raise ValueError("'labels' should contains at least one label.")
+            raise ValueError("'labels' should contain at least one label.")
         elif y_true.size == 0:
             return np.zeros((n_labels, n_labels), dtype=int)
         elif len(np.intersect1d(y_true, labels)) == 0:
             raise ValueError("At least one label specified must be in y_true")
+    if not _is_numpy_namespace(get_namespace(labels)[0]):
+        labels = _convert_to_numpy(labels, xp)
 
     if sample_weight is None:
         sample_weight = np.ones(y_true.shape[0], dtype=np.int64)
     else:
-        sample_weight = np.asarray(sample_weight)
+        sample_weight = _convert_to_numpy(sample_weight, xp)
 
     check_consistent_length(y_true, y_pred, sample_weight)
 
