@@ -294,7 +294,7 @@ class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTarget):
 
         transformer.inverse_transform(classifier.predict(X))
 
-    Read more in the :ref:`User Guide <transformed_target_classifier>`. # TODO
+    Read more in the :ref:`User Guide <transformed_target_classifier>`.
 
     Parameters
     ----------
@@ -398,7 +398,6 @@ class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTarget):
         # but not label transformers as they modify y which is 1d
         # we check the input tags and modify y accordingly
 
-        # TODO: Use tags better
         requires_2d_input = get_tags(self.transformer).input_tags.two_d_array
         if requires_2d_input and y.ndim == 1:
             y_2d = y.reshape(-1, 1)

@@ -13,7 +13,7 @@ from sklearn.linear_model import (
     OrthogonalMatchingPursuit,
 )
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import FunctionTransformer, LabelEncoder, StandardScaler
+from sklearn.preprocessing import FunctionTransformer, StandardScaler
 from sklearn.utils._testing import assert_allclose
 
 friedman = datasets.make_friedman1(random_state=0)
@@ -420,25 +420,12 @@ def test_transform_target_regressor_not_warns_with_global_output_set(output_form
             ).fit(X, y)
 
 
-# TODO: Remove
-def test_example_docstring():
-    tt = TransformedTargetClassifier(
-        estimator=LogisticRegression(), transformer=LabelEncoder()
-    )
-    X = np.arange(4).reshape(-1, 1)
-    y = np.array(["c_1", "c_1", "c_2", "c_2"])
-    tt.fit(X, y)
-    assert tt.score(X, y) == 1.0
-    np.allclose(tt.estimator_.coef_, np.array([[0.95826546]]))
-    assert hasattr(tt, "classes_")
-
-
 # TODO(1.8): remove in 1.8
 def test_deprecation_warning_regressor():
     X_train = np.arange(4).reshape(-1, 1)
     y_train = np.arange(4)
 
-    warn_msg = "`regressor` has been deprecated in 1.6 and will be removed"
+    warn_msg = "`regressor` has been deprecated in 1.7 and will be removed"
     with pytest.warns(FutureWarning, match=warn_msg):
         TransformedTargetRegressor(regressor=LinearRegression()).fit(X_train, y_train)
 
