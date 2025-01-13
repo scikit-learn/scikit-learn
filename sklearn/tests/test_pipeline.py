@@ -603,6 +603,44 @@ def test_make_union_kwargs():
         make_union(pca, mock, transformer_weights={"pca": 10, "Transf": 1})
 
 
+def create_mock_transformer(base_name, n_features=3):
+    """Helper to create a mock transformer with custom feature names."""
+    mock = Transf()
+    mock.get_feature_names_out = lambda input_features: [
+        f"{base_name}{i}" for i in range(n_features)
+    ]
+    return mock
+
+
+def test_make_union_passes_verbose_feature_names_out():
+    # Test that make_union passes verbose_feature_names_out
+    # to the FeatureUnion.
+    X = iris.data
+    y = iris.target
+
+    pca = PCA()
+    mock = create_mock_transformer("transf")
+    union = make_union(pca, mock, verbose_feature_names_out=False)
+
+    assert not union.verbose_feature_names_out
+
+    fu_union = make_union(pca, mock, verbose_feature_names_out=True)
+    fu_union.fit(X, y)
+
+    assert_array_equal(
+        [
+            "pca__pca0",
+            "pca__pca1",
+            "pca__pca2",
+            "pca__pca3",
+            "transf__transf0",
+            "transf__transf1",
+            "transf__transf2",
+        ],
+        fu_union.get_feature_names_out(),
+    )
+
+
 def test_pipeline_transform():
     # Test whether pipeline works with a transformer at the end.
     # Also test pipeline.transform and pipeline.inverse_transform
