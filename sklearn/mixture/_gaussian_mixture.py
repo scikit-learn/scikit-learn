@@ -6,7 +6,9 @@
 import numpy as np
 from scipy import linalg
 
+from .._config import get_config
 from ..utils import check_array
+from ..utils._chunking import gen_batches
 from ..utils._param_validation import StrOptions
 from ..utils.extmath import row_norms
 from ._base import BaseMixture, _check_shape
@@ -172,8 +174,22 @@ def _estimate_gaussian_covariances_full(resp, X, nk, means, reg_covar):
     n_components, n_features = means.shape
     covariances = np.empty((n_components, n_features, n_features))
     for k in range(n_components):
-        diff = X - means[k]
-        covariances[k] = np.dot(resp[:, k] * diff.T, diff) / nk[k]
+        # Compute the covariance matrix of the k-th component by first forming
+        # the responsibilities-weighted Gram matrix using the uncentered data.
+        # Then, we subtract the outer product of the responsibilities-weighted
+        # mean. This avoids an explicit centering of the data, which would
+        # cause a significant waste of memory.
+        #
+        # XXX: We could further optimize memory usage and computation speed if
+        # we had access to a fused-implementation of the sandwich product
+        # kernel. A similar pattern occurs in the computation of the Hessian
+        # matrix in the "newton-cholesky" solver of the LogisticRegression
+        # class.
+        np.dot((resp[:, k] / nk[k]) * X.T, X, out=covariances[k])
+        covariances[k] -= np.outer(means[k], means[k])
+
+        # Apply covariance regularization on the diagonal of the covariance
+        # matrix:
         covariances[k].flat[:: n_features + 1] += reg_covar
     return covariances
 
@@ -473,17 +489,37 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
     # In short: det(precision_chol) = - det(precision) / 2
     log_det = _compute_log_det_cholesky(precisions_chol, covariance_type, n_features)
 
+    # Chunk the input X to avoid allocating too large temporary arrays when
+    # n_samples is large, yet we want to use large enough chunks to benefit
+    # from BLAS-level parallelism. "working_memory" is expressed in MB, we need
+    # to convert it to bytes
+    bytes_per_sample = max(X.dtype.itemsize * X.shape[1], 1)
+    batch_size = max(int(get_config()["working_memory"] * 1e6) // bytes_per_sample, 1)
+
+    # Pre-allocate a reusable buffer to store feature-wise squared diff.
+    if covariance_type in ["full", "tied"]:
+        squared_diff = np.empty((batch_size, n_features), dtype=X.dtype)
+
     if covariance_type == "full":
         log_prob = np.empty((n_samples, n_components))
-        for k, (mu, prec_chol) in enumerate(zip(means, precisions_chol)):
-            y = np.dot(X, prec_chol) - np.dot(mu, prec_chol)
-            log_prob[:, k] = np.sum(np.square(y), axis=1)
+        for k, (mean_k, prec_chol) in enumerate(zip(means, precisions_chol)):
+            mean_k_prec_chol = mean_k @ prec_chol
+            for batch_slice in gen_batches(X.shape[0], batch_size):
+                X_batch = X[batch_slice]
+                np.dot(X_batch, prec_chol, out=squared_diff[: len(X_batch)])
+                squared_diff[: len(X_batch)] -= mean_k_prec_chol
+                squared_diff[: len(X_batch)] **= 2
+                log_prob[batch_slice, k] = np.sum(squared_diff[: len(X_batch)], axis=1)
 
     elif covariance_type == "tied":
         log_prob = np.empty((n_samples, n_components))
-        for k, mu in enumerate(means):
-            y = np.dot(X, precisions_chol) - np.dot(mu, precisions_chol)
-            log_prob[:, k] = np.sum(np.square(y), axis=1)
+        for k, mean_k in enumerate(means):
+            mean_k_precisions_chol = mean_k @ precisions_chol
+            for batch_slice in gen_batches(X.shape[0], batch_size):
+                squared_diff = X[batch_slice] @ precisions_chol
+                squared_diff -= mean_k_precisions_chol
+                squared_diff **= 2
+                log_prob[batch_slice, k] = np.sum(squared_diff, axis=1)
 
     elif covariance_type == "diag":
         precisions = precisions_chol**2
@@ -502,7 +538,11 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
         )
     # Since we are using the precision of the Cholesky decomposition,
     # `- 0.5 * log_det_precision` becomes `+ log_det_precision_chol`
-    return -0.5 * (n_features * np.log(2 * np.pi) + log_prob) + log_det
+    result = log_prob
+    result += n_features * np.log(2 * np.pi)
+    result *= -0.5
+    result += log_det
+    return result
 
 
 class GaussianMixture(BaseMixture):
@@ -807,8 +847,14 @@ class GaussianMixture(BaseMixture):
             Logarithm of the posterior probabilities (or responsibilities) of
             the point of each sample in X.
         """
+        # XXX: inplace mutation of the input argument. This is done to reduce
+        # the number of large memory allocations of temporary arrays. We know
+        # that log_resp is not used after this function but it would probably
+        # be better to refactor the code to make that explicit in the caller by
+        # passing the result of the exponentiation to the _m_step.
+        resp = np.exp(log_resp, out=log_resp)
         self.weights_, self.means_, self.covariances_ = _estimate_gaussian_parameters(
-            X, np.exp(log_resp), self.reg_covar, self.covariance_type
+            X, resp, self.reg_covar, self.covariance_type
         )
         self.weights_ /= self.weights_.sum()
         self.precisions_cholesky_ = _compute_precision_cholesky(
