@@ -2651,26 +2651,26 @@ def classification_report(
     >>> print(classification_report(y_true, y_pred, target_names=target_names))
                   precision    recall  f1-score   support
     <BLANKLINE>
-         class 0       0.50      1.00      0.67         1
-         class 1       0.00      0.00      0.00         1
-         class 2       1.00      0.67      0.80         3
+         class 0       0.50      1.00      0.67      1.00
+         class 1       0.00      0.00      0.00      1.00
+         class 2       1.00      0.67      0.80      3.00
     <BLANKLINE>
-        accuracy                           0.60         5
-       macro avg       0.50      0.56      0.49         5
-    weighted avg       0.70      0.60      0.61         5
+        accuracy                           0.60      5.00
+       macro avg       0.50      0.56      0.49      5.00
+    weighted avg       0.70      0.60      0.61      5.00
     <BLANKLINE>
     >>> y_pred = [1, 1, 0]
     >>> y_true = [1, 1, 1]
     >>> print(classification_report(y_true, y_pred, labels=[1, 2, 3]))
                   precision    recall  f1-score   support
     <BLANKLINE>
-               1       1.00      0.67      0.80         3
-               2       0.00      0.00      0.00         0
-               3       0.00      0.00      0.00         0
+               1       1.00      0.67      0.80      3.00
+               2       0.00      0.00      0.00      0.00
+               3       0.00      0.00      0.00      0.00
     <BLANKLINE>
-       micro avg       1.00      0.67      0.80         3
-       macro avg       0.33      0.22      0.27         3
-    weighted avg       1.00      0.67      0.80         3
+       micro avg       1.00      0.67      0.80      3.00
+       macro avg       0.33      0.22      0.27      3.00
+    weighted avg       1.00      0.67      0.80      3.00
     <BLANKLINE>
     """
 
@@ -2733,7 +2733,7 @@ def classification_report(
         head_fmt = "{:>{width}s} " + " {:>9}" * len(headers)
         report = head_fmt.format("", *headers, width=width)
         report += "\n\n"
-        row_fmt = "{:>{width}s} " + " {:>9.{digits}f}" * 3 + " {:>9}\n"
+        row_fmt = "{:>{width}s} " + " {:>9.{digits}f}" * 3 + " {:>9.{digits}f}\n"
         for row in rows:
             report += row_fmt.format(*row, width=width, digits=digits)
         report += "\n"
@@ -2764,7 +2764,7 @@ def classification_report(
                     "{:>{width}s} "
                     + " {:>9.{digits}}" * 2
                     + " {:>9.{digits}f}"
-                    + " {:>9}\n"
+                    + " {:>9.{digits}f}\n"
                 )
                 report += row_fmt_accuracy.format(
                     line_heading, "", "", *avg[2:], width=width, digits=digits
