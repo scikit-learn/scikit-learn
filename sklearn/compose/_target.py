@@ -249,6 +249,7 @@ class BaseTransformedTarget(BaseEstimator):
         if estimator_tags.regressor_tags is not None:
             tags.regressor_tags.poor_score = True
 
+        tags.input_tags.sparse = estimator_tags.input_tags.sparse
         tags.target_tags.multi_output = estimator_tags.target_tags.multi_output
         tags.target_tags.required = True
         return tags

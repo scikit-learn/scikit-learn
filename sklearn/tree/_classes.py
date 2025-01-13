@@ -15,6 +15,8 @@ from numbers import Integral, Real
 import numpy as np
 from scipy.sparse import issparse
 
+from sklearn.utils import metadata_routing
+
 from ..base import (
     BaseEstimator,
     ClassifierMixin,
@@ -92,6 +94,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     Warning: This class should not be used directly.
     Use derived classes instead.
     """
+
+    # "check_input" is used for optimisation and isn't something to be passed
+    # around in a pipeline.
+    __metadata_request__predict = {"check_input": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         "splitter": [StrOptions({"best", "random"})],
@@ -684,6 +690,11 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         return self.tree_.compute_feature_importances()
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 # =============================================================================
 # Public estimators
@@ -820,7 +831,9 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
-        :ref:`minimal_cost_complexity_pruning` for details.
+        :ref:`minimal_cost_complexity_pruning` for details. See
+        :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+        for an example of such pruning.
 
         .. versionadded:: 0.22
 
@@ -932,6 +945,11 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     array([ 1.     ,  0.93...,  0.86...,  0.93...,  0.93...,
             0.93...,  0.93...,  1.     ,  0.93...,  1.      ])
     """
+
+    # "check_input" is used for optimisation and isn't something to be passed
+    # around in a pipeline.
+    __metadata_request__predict_proba = {"check_input": metadata_routing.UNUSED}
+    __metadata_request__fit = {"check_input": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         **BaseDecisionTree._parameter_constraints,
@@ -1124,6 +1142,9 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
 
+        For an example of how ``max_depth`` influences the model, see
+        :ref:`sphx_glr_auto_examples_tree_plot_tree_regression.py`.
+
     min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
 
@@ -1209,7 +1230,9 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
-        :ref:`minimal_cost_complexity_pruning` for details.
+        :ref:`minimal_cost_complexity_pruning` for details. See
+        :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+        for an example of such pruning.
 
         .. versionadded:: 0.22
 
@@ -1304,6 +1327,10 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     array([-0.39..., -0.46...,  0.02...,  0.06..., -0.50...,
            0.16...,  0.11..., -0.73..., -0.30..., -0.00...])
     """
+
+    # "check_input" is used for optimisation and isn't something to be passed
+    # around in a pipeline.
+    __metadata_request__fit = {"check_input": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         **BaseDecisionTree._parameter_constraints,
@@ -1555,7 +1582,9 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
-        :ref:`minimal_cost_complexity_pruning` for details.
+        :ref:`minimal_cost_complexity_pruning` for details. See
+        :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+        for an example of such pruning.
 
         .. versionadded:: 0.22
 
@@ -1833,7 +1862,9 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
-        :ref:`minimal_cost_complexity_pruning` for details.
+        :ref:`minimal_cost_complexity_pruning` for details. See
+        :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+        for an example of such pruning.
 
         .. versionadded:: 0.22
 

@@ -36,6 +36,7 @@ dependencies:
   - sphinx-remove-toctrees
   - sphinx-design
   - pydata-sphinx-theme
+  - towncrier
   - pip
   - pip:
     - jupyterlite-sphinx

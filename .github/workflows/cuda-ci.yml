@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.20.0
+        uses: pypa/cibuildwheel@v2.22.0
         env:
           CIBW_BUILD: cp312-manylinux_x86_64
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
@@ -71,6 +71,6 @@ jobs:
           conda activate sklearn
           python -c "import sklearn; sklearn.show_versions()"
 
-          SCIPY_ARRAY_API=1 pytest --pyargs sklearn -k 'array_api'
+          SCIPY_ARRAY_API=1 pytest --pyargs sklearn -k 'array_api' -v
         # Run in /home/runner to not load sklearn from the checkout repo
         working-directory: /home/runner

@@ -33,7 +33,6 @@ from ._tags import (
     Tags,
     TargetTags,
     TransformerTags,
-    default_tags,
     get_tags,
 )
 from .class_weight import compute_class_weight, compute_sample_weight
@@ -99,7 +98,6 @@ __all__ = [
     "ClassifierTags",
     "RegressorTags",
     "TransformerTags",
-    "default_tags",
     "get_tags",
 ]
 

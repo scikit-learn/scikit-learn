@@ -85,13 +85,13 @@ def _check_multi_class(multi_class, solver, n_classes):
     For all other cases, in particular binary classification, return "ovr".
     """
     if multi_class == "auto":
-        if solver in ("liblinear", "newton-cholesky"):
+        if solver in ("liblinear",):
             multi_class = "ovr"
         elif n_classes > 2:
             multi_class = "multinomial"
         else:
             multi_class = "ovr"
-    if multi_class == "multinomial" and solver in ("liblinear", "newton-cholesky"):
+    if multi_class == "multinomial" and solver in ("liblinear",):
         raise ValueError("Solver %s does not support a multinomial backend." % solver)
     return multi_class
 
@@ -331,9 +331,9 @@ def _logistic_regression_path(
             sample_weight *= class_weight_[le.fit_transform(y_bin)]
 
     else:
-        if solver in ["sag", "saga", "lbfgs", "newton-cg"]:
-            # SAG, lbfgs and newton-cg multinomial solvers need LabelEncoder,
-            # not LabelBinarizer, i.e. y as a 1d-array of integers.
+        if solver in ["sag", "saga", "lbfgs", "newton-cg", "newton-cholesky"]:
+            # SAG, lbfgs, newton-cg and newton-cg multinomial solvers need
+            # LabelEncoder, not LabelBinarizer, i.e. y as a 1d-array of integers.
             # LabelEncoder also saves memory compared to LabelBinarizer, especially
             # when n_classes is large.
             le = LabelEncoder()
@@ -402,16 +402,16 @@ def _logistic_regression_path(
                 w0[:, : coef.shape[1]] = coef
 
     if multi_class == "multinomial":
-        if solver in ["lbfgs", "newton-cg"]:
+        if solver in ["lbfgs", "newton-cg", "newton-cholesky"]:
             # scipy.optimize.minimize and newton-cg accept only ravelled parameters,
             # i.e. 1d-arrays. LinearModelLoss expects classes to be contiguous and
             # reconstructs the 2d-array via w0.reshape((n_classes, -1), order="F").
             # As w0 is F-contiguous, ravel(order="F") also avoids a copy.
             w0 = w0.ravel(order="F")
-            loss = LinearModelLoss(
-                base_loss=HalfMultinomialLoss(n_classes=classes.size),
-                fit_intercept=fit_intercept,
-            )
+        loss = LinearModelLoss(
+            base_loss=HalfMultinomialLoss(n_classes=classes.size),
+            fit_intercept=fit_intercept,
+        )
         target = Y_multi
         if solver == "lbfgs":
             func = loss.loss_gradient
@@ -565,7 +565,7 @@ def _logistic_regression_path(
 
         if multi_class == "multinomial":
             n_classes = max(2, classes.size)
-            if solver in ["lbfgs", "newton-cg"]:
+            if solver in ["lbfgs", "newton-cg", "newton-cholesky"]:
                 multi_w0 = np.reshape(w0, (n_classes, -1), order="F")
             else:
                 multi_w0 = w0
@@ -808,12 +808,6 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     """
     Logistic Regression (aka logit, MaxEnt) classifier.
 
-    In the multiclass case, the training algorithm uses the one-vs-rest (OvR)
-    scheme if the 'multi_class' option is set to 'ovr', and uses the
-    cross-entropy loss if the 'multi_class' option is set to 'multinomial'.
-    (Currently the 'multinomial' option is supported only by the 'lbfgs',
-    'sag', 'saga' and 'newton-cg' solvers.)
-
     This class implements regularized logistic regression using the
     'liblinear' library, 'newton-cg', 'sag', 'saga' and 'lbfgs' solvers. **Note
     that regularization is applied by default**. It can handle both dense
@@ -826,6 +820,11 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     supports both L1 and L2 regularization, with a dual formulation only for
     the L2 penalty. The Elastic-Net regularization is only supported by the
     'saga' solver.
+
+    For :term:`multiclass` problems, only 'newton-cg', 'sag', 'saga' and 'lbfgs'
+    handle multinomial loss. 'liblinear' and 'newton-cholesky' only handle binary
+    classification but can be extended to handle multiclass by using
+    :class:`~sklearn.multiclass.OneVsRestClassifier`.
 
     Read more in the :ref:`User Guide <logistic_regression>`.
 
@@ -904,16 +903,16 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
         - For small datasets, 'liblinear' is a good choice, whereas 'sag'
           and 'saga' are faster for large ones;
-        - For multiclass problems, only 'newton-cg', 'sag', 'saga' and
-          'lbfgs' handle multinomial loss;
-        - 'liblinear' and 'newton-cholesky' can only handle binary classification
-          by default. To apply a one-versus-rest scheme for the multiclass setting
-          one can wrapt it with the `OneVsRestClassifier`.
-        - 'newton-cholesky' is a good choice for `n_samples` >> `n_features`,
-          especially with one-hot encoded categorical features with rare
-          categories. Be aware that the memory usage of this solver has a quadratic
-          dependency on `n_features` because it explicitly computes the Hessian
-          matrix.
+        - For :term:`multiclass` problems, all solvers except 'liblinear' minimize the
+          full multinomial loss;
+        - 'liblinear' can only handle binary classification by default. To apply a
+          one-versus-rest scheme for the multiclass setting one can wrap it with the
+          :class:`~sklearn.multiclass.OneVsRestClassifier`.
+        - 'newton-cholesky' is a good choice for
+          `n_samples` >> `n_features * n_classes`, especially with one-hot encoded
+          categorical features with rare categories. Be aware that the memory usage
+          of this solver has a quadratic dependency on `n_features * n_classes`
+          because it explicitly computes the full Hessian matrix.
 
         .. warning::
            The choice of the algorithm depends on the penalty chosen and on
@@ -936,9 +935,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            a scaler from :mod:`sklearn.preprocessing`.
 
         .. seealso::
-           Refer to the User Guide for more information regarding
-           :class:`LogisticRegression` and more specifically the
-           :ref:`Table <Logistic_regression>`
+           Refer to the :ref:`User Guide <Logistic_regression>` for more
+           information regarding :class:`LogisticRegression` and more specifically the
+           :ref:`Table <logistic_regression_solvers>`
            summarizing solver/penalty supports.
 
         .. versionadded:: 0.17
@@ -1096,6 +1095,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            [9.7...e-01, 2.8...e-02, ...e-08]])
     >>> clf.score(X, y)
     0.97...
+
+    For a comaprison of the LogisticRegression with other classifiers see:
+    :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`.
     """
 
     _parameter_constraints: dict = {
@@ -1420,10 +1422,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
         ovr = self.multi_class in ["ovr", "warn"] or (
             self.multi_class in ["auto", "deprecated"]
-            and (
-                self.classes_.size <= 2
-                or self.solver in ("liblinear", "newton-cholesky")
-            )
+            and (self.classes_.size <= 2 or self.solver == "liblinear")
         )
         if ovr:
             return super()._predict_proba_lr(X)
@@ -1457,6 +1456,11 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             model, where classes are ordered as they are in ``self.classes_``.
         """
         return np.log(self.predict_proba(X))
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
 
 
 class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstimator):
@@ -1533,18 +1537,18 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         - For small datasets, 'liblinear' is a good choice, whereas 'sag'
           and 'saga' are faster for large ones;
-        - For multiclass problems, only 'newton-cg', 'sag', 'saga' and
-          'lbfgs' handle multinomial loss;
+        - For multiclass problems, all solvers except 'liblinear' minimize the full
+          multinomial loss;
         - 'liblinear' might be slower in :class:`LogisticRegressionCV`
           because it does not handle warm-starting.
-        - 'liblinear' and 'newton-cholesky' can only handle binary classification
-          by default. To apply a one-versus-rest scheme for the multiclass setting
-          one can wrapt it with the `OneVsRestClassifier`.
-        - 'newton-cholesky' is a good choice for `n_samples` >> `n_features`,
-          especially with one-hot encoded categorical features with rare
-          categories. Be aware that the memory usage of this solver has a quadratic
-          dependency on `n_features` because it explicitly computes the Hessian
-          matrix.
+        - 'liblinear' can only handle binary classification by default. To apply a
+          one-versus-rest scheme for the multiclass setting one can wrap it with the
+          :class:`~sklearn.multiclass.OneVsRestClassifier`.
+        - 'newton-cholesky' is a good choice for
+          `n_samples` >> `n_features * n_classes`, especially with one-hot encoded
+          categorical features with rare categories. Be aware that the memory usage
+          of this solver has a quadratic dependency on `n_features * n_classes`
+          because it explicitly computes the full Hessian matrix.
 
         .. warning::
            The choice of the algorithm depends on the penalty chosen and on
@@ -2275,3 +2279,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         """
         scoring = self.scoring or "accuracy"
         return get_scorer(scoring)
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
