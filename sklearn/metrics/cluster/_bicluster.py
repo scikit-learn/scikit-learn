@@ -103,7 +103,7 @@ def consensus_score(a, b, *, similarity="jaccard"):
     >>> a = ([[True, False], [False, True]], [[False, True], [True, False]])
     >>> b = ([[False, True], [True, False]], [[True, False], [False, True]])
     >>> consensus_score(a, b, similarity='jaccard')
-    np.float64(1.0)
+    1.0
     """
     if similarity == "jaccard":
         similarity = _jaccard
@@ -111,4 +111,4 @@ def consensus_score(a, b, *, similarity="jaccard"):
     row_indices, col_indices = linear_sum_assignment(1.0 - matrix)
     n_a = len(a[0])
     n_b = len(b[0])
-    return matrix[row_indices, col_indices].sum() / max(n_a, n_b)
+    return float(matrix[row_indices, col_indices].sum() / max(n_a, n_b))
