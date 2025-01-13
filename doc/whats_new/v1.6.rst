@@ -303,6 +303,13 @@ By :user:`Loïc Estève <lesteve>` and many other people in the wider Scientific
 Python and CPython ecosystem, for example :user:`Nathan Goldbaum <ngoldbaum>`,
 :user:`Ralf Gommers <rgommers>`, :user:`Edgar Andrés Margffoy Tuay <andfoy>`. :pr:`30360`
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Enhancement| :class:`preprocessing.SplineTransformer` can now handle missing
+  values with the parameter `handle_missing`. :pr:`28043` by :user:`Stefanie
+  Senger <StefanieSenger>`.
+  
 :mod:`sklearn.base`
 -------------------
 
