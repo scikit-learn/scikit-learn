@@ -440,7 +440,7 @@ def resample(
         sparse matrices with consistent first dimension.
 
     replace : bool, default=True
-        Implements resampling with replacement it is recommended to use replace=True
+        Implements resampling with replacement. It is recommended to use replace=True
         whenever sampling with non-uniform weights: a few data points with very large
         weights are expected to be sampled several times with probability to preserve
         the distribution induced by the weights. If False, this will implement
