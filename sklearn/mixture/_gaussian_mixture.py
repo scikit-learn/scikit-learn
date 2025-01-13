@@ -42,7 +42,8 @@ def _check_weights(weights, n_components):
         )
 
     # check normalization
-    if not np.allclose(np.abs(1.0 - np.sum(weights)), 0.0, atol=1e-6):
+    atol = 1e-6 if weights.dtype == np.float32 else 1e-8
+    if not np.allclose(np.abs(1.0 - np.sum(weights)), 0.0, atol=atol):
         raise ValueError(
             "The parameter 'weights' should be normalized, but got sum(weights) = %.5f"
             % np.sum(weights)
