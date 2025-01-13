@@ -575,10 +575,6 @@ class BrokenArrayAPI(BaseEstimator):
 
 def test_check_array_api_input():
     try:
-        importlib.import_module("array_api_compat")
-    except ModuleNotFoundError:
-        raise SkipTest("array_api_compat is required to run this test")
-    try:
         importlib.import_module("array_api_strict")
     except ModuleNotFoundError:  # pragma: nocover
         raise SkipTest("array-api-strict is required to run this test")
