@@ -15,6 +15,60 @@ For a short description of the main highlights of the release, please refer to
 
 .. towncrier release notes start
 
+.. _changes_1_6_1:
+
+Version 1.6.1
+=============
+
+**January 2025**
+
+Changed models
+--------------
+
+- |Fix| The `tags.input_tags.sparse` flag was corrected for a majority of estimators.
+  By :user:`Antoine Baker <antoinebaker>` :pr:`30187`
+
+Changes impacting many modules
+------------------------------
+
+- |Fix| `_more_tags`, `_get_tags`, and `_safe_tags` are now raising a
+  :class:`DeprecationWarning` instead of a :class:`FutureWarning` to only notify
+  developers instead of end-users.
+  By :user:`Guillaume Lemaitre <glemaitre>` in :pr:`30573`
+
+:mod:`sklearn.metrics`
+----------------------
+
+- |Fix| Fix regression when scikit-learn metric called on PyTorch CPU tensors would
+  raise an error (with array API dispatch disabled which is the default).
+  By :user:`Loïc Estève <lesteve>` :pr:`30454`
+
+:mod:`sklearn.model_selection`
+------------------------------
+
+- |Fix| :func:`~model_selection.cross_validate`, :func:`~model_selection.cross_val_predict`,
+  and :func:`~model_selection.cross_val_score` now accept `params=None` when metadata
+  routing is enabled. By `Adrin Jalali`_ :pr:`30451`
+
+:mod:`sklearn.tree`
+-------------------
+
+- |Fix| Use `log2` instead of `ln` for building trees to maintain behavior of previous
+  versions. By `Thomas Fan`_ :pr:`30557`
+
+:mod:`sklearn.utils`
+--------------------
+
+- |Enhancement| :func:`utils.estimator_checks.check_estimator_sparse_tag` ensures that
+  the estimator tag `input_tags.sparse` is consistent with its `fit`
+  method (accepting sparse input `X` or raising the appropriate error).
+  By :user:`Antoine Baker <antoinebaker>` :pr:`30187`
+
+- |Fix| Raise a `DeprecationWarning` when there is no concrete implementation of `__sklearn_tags__`
+  in the MRO of the estimator. We request to inherit from `BaseEstimator` that
+  implements `__sklearn_tags__`.
+  By :user:`Guillaume Lemaitre <glemaitre>` :pr:`30516`
+
 .. _changes_1_6_0:
 
 Version 1.6.0
@@ -697,31 +751,35 @@ the project since version 1.5, including:
 Aaron Schumacher, Abdulaziz Aloqeely, abhi-jha, Acciaro Gennaro Daniele, Adam 
 J. Stewart, Adam Li, Adeel Hassan, Adeyemi Biola, Aditi Juneja, Adrin Jalali, 
 Aisha, Akanksha Mhadolkar, Akihiro Kuno, Alberto Torres, alexqiao, Alihan 
-Zihna, antoinebaker, Antony Lee, Anurag Varma, Arif Qodari, Arthur Courselle, 
-Arturo Amor, Aswathavicky, Audrey Flanders, aurelienmorgan, Austin, awwwyan, 
-AyGeeEm, a.zy.lee, baggiponte, BlazeStorm001, bme-git, brdav, Brigitta Sipőcz, 
-Cailean Carter, Carlo Lemos, Christian Lorentzen, Christian Veenhuis, claudio, 
-Conrad Stevens, datarollhexasphericon, Davide Chicco, David Matthew Cherney, 
-Dea María Léon, Deepak Saldanha, Deepyaman Datta, dependabot[bot], dinga92, 
-Dmitry Kobak, Drew Craeton, dymil, Edoardo Abati, EmilyXinyi, Eric Larson, 
-Evelyn, fabianhenning, Farid "Freddie" Taba, Gael Varoquaux, Giorgio Angelotti, 
-Gleb Levitski, Guillaume Lemaitre, Guntitat Sawadwuthikul, Henrique Caroço, 
-hhchen1105, Ilya Komarov, Inessa Pawson, Ivan Pan, Ivan Wiryadi, Jaimin 
-Chauhan, Jakob Bull, James Lamb, Janez Demšar, Jérémie du Boisberranger, 
-Jérôme Dockès, Jirair Aroyan, João Morais, Joe Cainey, John Enblom, 
+Zihna, Aniruddha Saha, antoinebaker, Antony Lee, Anurag Varma, Arif Qodari, 
+Arthur Courselle, ArthurDbrn, Arturo Amor, Aswathavicky, Audrey Flanders, 
+aurelienmorgan, Austin, awwwyan, AyGeeEm, a.zy.lee, baggiponte, BlazeStorm001, 
+bme-git, Boney Patel, brdav, Brigitta Sipőcz, Cailean Carter, Camille 
+Troillard, Carlo Lemos, Christian Lorentzen, Christian Veenhuis, Christine P. 
+Chai, claudio, Conrad Stevens, datarollhexasphericon, Davide Chicco, David 
+Matthew Cherney, Dea María Léon, Deepak Saldanha, Deepyaman Datta, 
+dependabot[bot], dinga92, Dmitry Kobak, Domenico, Drew Craeton, dymil, Edoardo 
+Abati, EmilyXinyi, Eric Larson, Evelyn, fabianhenning, Farid "Freddie" Taba, 
+Gael Varoquaux, Giorgio Angelotti, Gleb Levitski, Guillaume Lemaitre, Guntitat 
+Sawadwuthikul, Haesun Park, Hanjun Kim, Henrique Caroço, hhchen1105, Hugo 
+Boulenger, Ilya Komarov, Inessa Pawson, Ivan Pan, Ivan Wiryadi, Jaimin Chauhan, 
+Jakob Bull, James Lamb, Janez Demšar, Jérémie du Boisberranger, Jérôme 
+Dockès, Jirair Aroyan, João Morais, Joe Cainey, Joel Nothman, John Enblom, 
 JorgeCardenas, Joseph Barbier, jpienaar-tuks, Julian Chan, K.Bharat Reddy, 
-Kevin Doshi, Lars, Loic Esteve, Lucy Liu, lunovian, Marc Bresson, Marco Edward 
-Gorelli, Marco Maggi, Marco Wolsza, Maren Westermann, MarieS-WiMLDS, Martin 
-Helm, Mathew Shen, mathurinm, Matthew Feickert, Maxwell Liu, Meekail Zain, 
-Michael Dawson, Miguel Cárdenas, m-maggi, mrastgoo, Natalia Mokeeva, Nathan 
-Goldbaum, Nathan Orgera, nbrown-ScottLogic, Nikita Chistyakov, Nithish 
-Bolleddula, Noam Keidar, NoPenguinsLand, Norbert Preining, notPlancha, Olivier 
-Grisel, Omar Salman, ParsifalXu, Piotr, Priyank Shroff, Priyansh Gupta, Quentin 
-Barthélemy, Rachit23110261, Rahil Parikh, raisadz, Rajath, renaissance0ne, 
-Reshama Shaikh, Roberto Rosati, Robert Pollak, rwelsch427, Santiago M. Mola, 
-scikit-learn-bot, sean moiselle, SHREEKANT VITTHAL NANDIYAWAR, Shruti Nath, 
-Søren Bredlund Caspersen, Stefanie Senger, Steffen Schneider, Štěpán 
-Sršeň, Sylvain Combettes, Tamara, Thomas, Thomas Gessey-Jones, Thomas J. Fan, 
-Thomas Li, Tialo, Tim Head, Tuhin Sharma, Tushar Parimi, vedpawar2254, Victoria 
-Shevchenko, viktor765, Vince Carey, Virgil Chan, Wang Jiayi, Xiao Yuan, Xuefeng 
-Xu, Yao Xiao, yareyaredesuyo, Zachary Vealey, Ziad Amerr
+Kevin Doshi, Lars, Loic Esteve, Lucas Colley, Lucy Liu, lunovian, Marc Bresson, 
+Marco Edward Gorelli, Marco Maggi, Marco Wolsza, Maren Westermann, 
+MarieS-WiMLDS, Martin Helm, Mathew Shen, mathurinm, Matthew Feickert, Maxwell 
+Liu, Meekail Zain, Michael Dawson, Miguel Cárdenas, m-maggi, mrastgoo, Natalia 
+Mokeeva, Nathan Goldbaum, Nathan Orgera, nbrown-ScottLogic, Nikita Chistyakov, 
+Nithish Bolleddula, Noam Keidar, NoPenguinsLand, Norbert Preining, notPlancha, 
+Olivier Grisel, Omar Salman, ParsifalXu, Piotr, Priyank Shroff, Priyansh Gupta, 
+Quentin Barthélemy, Rachit23110261, Rahil Parikh, raisadz, Rajath, 
+renaissance0ne, Reshama Shaikh, Roberto Rosati, Robert Pollak, rwelsch427, 
+Santiago Castro, Santiago M. Mola, scikit-learn-bot, sean moiselle, SHREEKANT 
+VITTHAL NANDIYAWAR, Shruti Nath, Søren Bredlund Caspersen, Stefanie Senger, 
+Stefano Gaspari, Steffen Schneider, Štěpán Sršeň, Sylvain Combettes, 
+Tamara, Thomas, Thomas Gessey-Jones, Thomas J. Fan, Thomas Li, ThorbenMaa, 
+Tialo, Tim Head, Tuhin Sharma, Tushar Parimi, Umberto Fasci, UV, vedpawar2254, 
+Velislav Babatchev, Victoria Shevchenko, viktor765, Vince Carey, Virgil Chan, 
+Wang Jiayi, Xiao Yuan, Xuefeng Xu, Yao Xiao, yareyaredesuyo, Zachary Vealey, 
+Ziad Amerr
