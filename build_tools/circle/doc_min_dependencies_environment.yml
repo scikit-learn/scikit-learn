@@ -12,7 +12,7 @@ dependencies:
   - joblib
   - threadpoolctl
   - matplotlib=3.3.4  # min
-  - pandas=1.1.5  # min
+  - pandas=1.2.0  # min
   - pyamg
   - pytest
   - pytest-xdist
@@ -25,7 +25,7 @@ dependencies:
   - memory_profiler
   - compilers
   - sphinx=7.3.7  # min
-  - sphinx-gallery=0.16.0  # min
+  - sphinx-gallery=0.17.1  # min
   - sphinx-copybutton=0.5.2  # min
   - numpydoc=1.2.0  # min
   - sphinx-prompt=1.4.0  # min
@@ -35,6 +35,7 @@ dependencies:
   - sphinx-remove-toctrees=1.0.0.post1  # min
   - sphinx-design=0.6.0  # min
   - pydata-sphinx-theme=0.15.3  # min
+  - towncrier=24.8.0  # min
   - pip
   - pip:
     - sphinxext-opengraph==0.9.1  # min

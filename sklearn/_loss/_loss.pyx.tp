@@ -818,6 +818,9 @@ cdef inline double_pair cgrad_hess_exponential(
 cdef class CyLossFunction:
     """Base class for convex loss functions."""
 
+    def __reduce__(self):
+        return (self.__class__, ())
+
     cdef double cy_loss(self, double y_true, double raw_prediction) noexcept nogil:
         """Compute the loss for a single sample.
 
@@ -1011,6 +1014,11 @@ cdef class {{name}}(CyLossFunction):
     {{if param is not None}}
     def __init__(self, {{param}}):
         self.{{param}} = {{param}}
+    {{endif}}
+
+    {{if param is not None}}
+    def __reduce__(self):
+        return (self.__class__, (self.{{param}},))
     {{endif}}
 
     cdef inline double cy_loss(self, double y_true, double raw_prediction) noexcept nogil:

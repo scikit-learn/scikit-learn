@@ -19,7 +19,7 @@ from ..base import (
 from ..utils import check_random_state, gen_even_slices
 from ..utils._param_validation import Interval
 from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 
 
 class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
@@ -169,8 +169,8 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
         """
         check_is_fitted(self)
 
-        X = self._validate_data(
-            X, accept_sparse="csr", reset=False, dtype=(np.float64, np.float32)
+        X = validate_data(
+            self, X, accept_sparse="csr", reset=False, dtype=(np.float64, np.float32)
         )
         return self._mean_hiddens(X)
 
@@ -287,8 +287,8 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
             The fitted model.
         """
         first_pass = not hasattr(self, "components_")
-        X = self._validate_data(
-            X, accept_sparse="csr", dtype=np.float64, reset=first_pass
+        X = validate_data(
+            self, X, accept_sparse="csr", dtype=np.float64, reset=first_pass
         )
         if not hasattr(self, "random_state_"):
             self.random_state_ = check_random_state(self.random_state)
@@ -362,7 +362,7 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
         """
         check_is_fitted(self)
 
-        v = self._validate_data(X, accept_sparse="csr", reset=False)
+        v = validate_data(self, X, accept_sparse="csr", reset=False)
         rng = check_random_state(self.random_state)
 
         # Randomly corrupt one feature in each sample in v.
@@ -399,7 +399,7 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
         self : BernoulliRBM
             The fitted model.
         """
-        X = self._validate_data(X, accept_sparse="csr", dtype=(np.float64, np.float32))
+        X = validate_data(self, X, accept_sparse="csr", dtype=(np.float64, np.float32))
         n_samples = X.shape[0]
         rng = check_random_state(self.random_state)
 
@@ -438,15 +438,8 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
 
         return self
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_methods_subset_invariance": (
-                    "fails for the decision_function method"
-                ),
-                "check_methods_sample_order_invariance": (
-                    "fails for the score_samples method"
-                ),
-            },
-            "preserves_dtype": [np.float64, np.float32],
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
