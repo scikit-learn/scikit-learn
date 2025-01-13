@@ -864,15 +864,11 @@ def _convert_to_numpy(array, xp):
     """Convert array into a NumPy ndarray on the CPU."""
     xp_name = xp.__name__
 
-    try:
-        import pandas as pd
-    except ImportError:
-        pd = None
-
     if xp_name in {"array_api_compat.torch", "torch"}:
         return array.cpu().numpy()
     elif xp_name in {"array_api_compat.cupy", "cupy"}:  # pragma: nocover
         return array.get()
+
     return numpy.asarray(array)
 
 
