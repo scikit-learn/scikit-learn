@@ -1189,8 +1189,9 @@ def _fit_liblinear(
                 " in the data, but the data contains only one"
                 " class: %r" % classes_[0]
             )
-
-        class_weight_ = compute_class_weight(class_weight, classes=classes_, y=y)
+        class_weight_ = compute_class_weight(
+            class_weight, classes=classes_, y=y, sample_weight=sample_weight
+        )
     else:
         class_weight_ = np.empty(0, dtype=np.float64)
         y_ind = y
