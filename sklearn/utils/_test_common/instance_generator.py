@@ -578,6 +578,8 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             # dict(max_iter=20, dual=True, tol=1e-12),
             dict(dual=False, tol=1e-12),
             dict(dual=False, tol=1e-12, class_weight="balanced"),
+        ]
+    },
     LinearRegression: {
         "check_estimator_sparse_tag": [dict(positive=False), dict(positive=True)],
         "check_sample_weight_equivalence_on_dense_data": [
