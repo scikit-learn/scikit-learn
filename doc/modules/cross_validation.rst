@@ -955,11 +955,10 @@ features and the targets to make correct predictions on left out data.
 :func:`~sklearn.model_selection.permutation_test_score` generates a null
 distribution by calculating `n_permutations` different permutations of the
 data. In each permutation the target values are randomly shuffled, thereby removing
-any dependency between the features and the targets. The p-value output
-is the fraction  of randomized data sets for which the model's average cross-validation
-score on the permutations is better or equal than the cross-validation score obtained by
-the model using the original data. For reliable results ``n_permutations``
-should typically be larger than 100 and ``cv`` between 3-10 folds.
+any dependency between the features and the targets. The p-value output is the fraction
+of permutations whose cross-validation score is better or equal than the true score
+without permuting targets. For reliable results ``n_permutations`` should typically be
+larger than 100 and ``cv`` between 3-10 folds.
 
 A low p-value provides evidence that the dataset contains some real dependency between
 features and targets **and** that the estimator was able to utilize this dependency to
