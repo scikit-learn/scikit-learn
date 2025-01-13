@@ -350,7 +350,11 @@ class LinearClassifierMixin(ClassifierMixin):
 
         X = validate_data(self, X, accept_sparse="csr", reset=False)
         scores = safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
-        return xp.reshape(scores, (-1,)) if scores.shape[1] == 1 else scores
+        return (
+            xp.reshape(scores, (-1,))
+            if (scores.ndim > 1 and scores.shape[1] == 1)
+            else scores
+        )
 
     def predict(self, X):
         """
@@ -682,6 +686,11 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             self.coef_ = np.ravel(self.coef_)
         self._set_intercept(X_offset, y_offset, X_scale)
         return self
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = not self.positive
+        return tags
 
 
 def _check_precomputed_gram_matrix(

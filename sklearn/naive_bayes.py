@@ -517,16 +517,6 @@ class GaussianNB(_BaseNB):
         joint_log_likelihood = np.array(joint_log_likelihood).T
         return joint_log_likelihood
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
-        return tags
-
 
 class _BaseDiscreteNB(_BaseNB):
     """Abstract base class for naive Bayes on discrete/categorical data
@@ -781,6 +771,7 @@ class _BaseDiscreteNB(_BaseNB):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.classifier_tags.poor_score = True
         return tags
 
@@ -1442,13 +1433,8 @@ class CategoricalNB(_BaseDiscreteNB):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = False
         tags.input_tags.positive_only = True
-        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
         return tags
 
     def _check_X(self, X):

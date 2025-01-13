@@ -1459,23 +1459,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags._xfail_checks.update(
-            {
-                "check_non_transformer_estimators_n_iter": (
-                    "n_iter_ cannot be easily accessed."
-                ),
-            }
-        )
-        if self.solver in ("lbfgs", "liblinear"):
-            tags._xfail_checks.update(
-                {
-                    # TODO: fix sample_weight handling of this estimator, see
-                    # meta-issue #16298
-                    "check_sample_weight_equivalence": (
-                        "sample_weight is not equivalent to removing/repeating samples."
-                    ),
-                }
-            )
+        tags.input_tags.sparse = True
         return tags
 
 
@@ -2295,3 +2279,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         """
         scoring = self.scoring or "accuracy"
         return get_scorer(scoring)
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags

@@ -1,3 +1,0 @@
-- The parameter `algorithm` of :class:`ensemble.AdaBoostClassifier` is deprecated
-  and will be removed in 1.8.
-  By :user:`Jérémie du Boisberranger <jeremiedbb>`

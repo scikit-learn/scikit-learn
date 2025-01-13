@@ -1,7 +1,0 @@
-- :class:`semi_supervised.SelfTrainingClassifier`
-  now supports metadata routing. The fit method now accepts ``**fit_params``
-  which are passed to the underlying estimators via their `fit` methods.
-  In addition, the `predict`, `predict_proba`, `predict_log_proba`, `score`
-  and `decision_function` methods also accept ``**params`` which are
-  passed to the underlying estimators via their respective methods.
-  By :user:`Adam Li <adam2392>`

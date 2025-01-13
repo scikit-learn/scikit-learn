@@ -73,8 +73,10 @@ jobs:
           - os: windows-latest
             python: 313
             platform_id: win_amd64
-            # TODO: remove next line when Python 3.13 is released
-            prerelease_pythons: True
+          - os: windows-latest
+            python: 313t
+            platform_id: win_amd64
+            free_threaded_support: True
 
           # Linux 64 bit manylinux2014
           - os: ubuntu-latest

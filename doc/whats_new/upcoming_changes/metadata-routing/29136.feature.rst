@@ -1,4 +1,0 @@
-- :class:`compose.TransformedTargetRegressor` now supports metadata
-  routing in its `fit` and `predict` methods and routes the corresponding
-  params to the underlying regressor.
-  By :user:`Omar Salman <OmarManzoor>`

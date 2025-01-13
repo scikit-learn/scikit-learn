@@ -132,10 +132,10 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     ``|(y - Xw - c) / sigma| < epsilon`` and the absolute loss for the samples
     where ``|(y - Xw - c) / sigma| > epsilon``, where the model coefficients
     ``w``, the intercept ``c`` and the scale ``sigma`` are parameters
-    to be optimized. The parameter sigma makes sure that if y is scaled up
-    or down by a certain factor, one does not need to rescale epsilon to
+    to be optimized. The parameter `sigma` makes sure that if `y` is scaled up
+    or down by a certain factor, one does not need to rescale `epsilon` to
     achieve the same robustness. Note that this does not take into account
-    the fact that the different features of X may be of different scales.
+    the fact that the different features of `X` may be of different scales.
 
     The Huber loss function has the advantage of not being heavily influenced
     by the outliers while not completely ignoring their effect.
@@ -219,9 +219,9 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     References
     ----------
     .. [1] Peter J. Huber, Elvezio M. Ronchetti, Robust Statistics
-           Concomitant scale estimates, pg 172
-    .. [2] Art B. Owen (2006), A robust hybrid of lasso and ridge regression.
-           https://statweb.stanford.edu/~owen/reports/hhu.pdf
+           Concomitant scale estimates, p. 172
+    .. [2] Art B. Owen (2006), `A robust hybrid of lasso and ridge regression.
+           <https://artowen.su.domains/reports/hhu.pdf>`_
 
     Examples
     --------
@@ -354,13 +354,5 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags._xfail_checks.update(
-            {
-                # TODO: fix sample_weight handling of this estimator, see
-                # meta-issue #16298
-                "check_sample_weight_equivalence": (
-                    "sample_weight is not equivalent to removing/repeating samples."
-                ),
-            }
-        )
+        tags.input_tags.sparse = True
         return tags
