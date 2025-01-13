@@ -25,7 +25,8 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
     ----------
     class_weight : dict, "balanced" or None
         If "balanced", class weights will be given by
-        `n_samples / (n_classes * np.bincount(y))`.
+        `n_samples / (n_classes * np.bincount(y))` or their weighted equivalent if
+        `sample_weight` is provided.
         If a dictionary is given, keys are classes and values are corresponding class
         weights.
         If `None` is given, the class weights will be uniform.
