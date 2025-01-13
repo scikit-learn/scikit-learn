@@ -140,17 +140,21 @@ def test_compute_class_weight_balanced_sample_weight_equivalence():
 
     y_rep = np.repeat(y, sw, axis=0)
 
-    cw = compute_class_weight("balanced", classes=classes, y=y, sample_weight=sw)
-    cw_rep = compute_class_weight("balanced", classes=classes, y=y_rep)
-    assert len(cw) == len(classes)
-    assert len(cw_rep) == len(classes)
+    class_weights_weighted = compute_class_weight(
+        "balanced", classes=classes, y=y, sample_weight=sw
+    )
+    class_weights_repeated = compute_class_weight("balanced", classes=classes, y=y_rep)
+    assert len(class_weights_weighted) == len(classes)
+    assert len(class_weights_repeated) == len(classes)
 
-    class_counts = np.bincount(y + 2, weights=sw)
-    class_counts_rep = np.bincount(y_rep + 2)
+    class_counts_weighted = np.bincount(y + 2, weights=sw)
+    class_counts_repeated = np.bincount(y_rep + 2)
 
-    assert np.dot(cw, class_counts) == pytest.approx(np.dot(cw_rep, class_counts_rep))
+    assert np.dot(class_weights_weighted, class_counts_weighted) == pytest.approx(
+        np.dot(class_weights_repeated, class_counts_repeated)
+    )
 
-    assert_array_equal(cw, cw_rep)
+    assert_allclose(class_weights_weighted, class_weights_repeated)
 
 
 def test_compute_class_weight_balanced_unordered():
