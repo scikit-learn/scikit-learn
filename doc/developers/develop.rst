@@ -295,7 +295,7 @@ the correct interface more easily.
 .. topic:: :class:`base.BaseEstimator` and mixins:
 
     We tend to use "duck typing" instead of checking for :func:`isinstance`, which means
-    it's technically possible to implement estimator without inheriting from
+    it's technically possible to implement an estimator without inheriting from
     scikit-learn classes. However, if you don't inherit from the right mixins, either
     there will be a large amount of boilerplate code for you to implement and keep in
     sync with scikit-learn development, or your estimator might not function the same
@@ -493,7 +493,7 @@ Estimator Tags
 
     Scikit-learn introduced estimator tags in version 0.21 as a private API and mostly
     used in tests. However, these tags expanded over time and many third party
-    developers also need to use them. Therefore in version 1.6 the API for the tags were
+    developers also need to use them. Therefore in version 1.6 the API for the tags was
     revamped and exposed as public API.
 
 The estimator tags are annotations of estimators that allow programmatic inspection of

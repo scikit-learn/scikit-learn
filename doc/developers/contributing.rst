@@ -345,7 +345,7 @@ The next steps now describe the process of modifying code and submitting a PR:
 12. Follow `these
     <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
     instructions to create a pull request from your fork. This will send a
-    notification to potential reviewers. You may want to consider sending an message to
+    notification to potential reviewers. You may want to consider sending a message to
     the `discord <https://discord.com/invite/h9qyrK8Jc8>`_ in the development
     channel for more visibility if your pull request does not receive attention after
     a couple of days (instant replies are not guaranteed though).
@@ -670,7 +670,7 @@ underestimate how easy an issue is to solve!
   A great way to start contributing to scikit-learn is to pick an item from
   the list of `good first issues
   <https://github.com/scikit-learn/scikit-learn/labels/good%20first%20issue>`_
-  in the issue tracker. Resolving these issues allow you to start contributing
+  in the issue tracker. Resolving these issues allows you to start contributing
   to the project without much prior knowledge. If you have already contributed
   to scikit-learn, you should look at Easy issues instead.
 
@@ -700,7 +700,7 @@ Documentation
 We are glad to accept any sort of documentation:
 
 * **Function/method/class docstrings:** Also known as "API documentation", these
-  describe what the object does and details any parameters, attributes and
+  describe what the object does and detail any parameters, attributes and
   methods. Docstrings live alongside the code in `sklearn/
   <https://github.com/scikit-learn/scikit-learn/tree/main/sklearn>`_, and are
   generated according to `doc/api_reference.py
@@ -1126,7 +1126,7 @@ You can also specify a whole module to benchmark:
   asv continuous -b linear_model upstream/main HEAD
 
 You can replace `HEAD` by any local branch. By default it will only report the
-benchmarks that have change by at least 10%. You can control this ratio with
+benchmarks that have changed by at least 10%. You can control this ratio with
 the `-f` flag.
 
 To run the full benchmark suite, simply remove the `-b` flag :
