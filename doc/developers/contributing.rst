@@ -562,39 +562,6 @@ Commit Message Marker  Action Taken by CI
 Note that, by default, the documentation is built but only the examples
 that are directly modified by the pull request are executed.
 
-.. _build_lock_files:
-
-Build lock files
-^^^^^^^^^^^^^^^^
-
-CIs use lock files to build environments with specific versions of dependencies. When a
-PR needs to modify the dependencies or their versions, the lock files should be updated
-accordingly. This can be done by adding the following comment directly in the GitHub
-Pull Request (PR) discussion:
-
-.. code-block:: text
-
-  @scikit-learn-bot update lock-files
-
-A bot will push a commit to your PR branch with the updated lock files in a few minutes.
-Make sure to tick the *Allow edits from maintainers* checkbox located at the bottom of
-the right sidebar of the PR. You can also specify the options `--select-build`,
-`--skip-build`, and `--select-tag` as in a command line. Use `--help` on the script
-`build_tools/update_environments_and_lock_files.py` for more information. For example,
-
-.. code-block:: text
-
-  @scikit-learn-bot update lock-files --select-tag main-ci --skip-build doc
-
-The bot will automatically add :ref:`commit message markers <commit_markers>` to the
-commit for certain tags. If you want to add more markers manually, you can do so using
-the `--commit-marker` option. For example, the following comment will trigger the bot to
-update documentation-related lock files and add the `[doc build]` marker to the commit:
-
-.. code-block:: text
-
-  @scikit-learn-bot update lock-files --select-build doc --commit-marker "[doc build]"
-
 Resolve conflicts in lock files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -618,8 +585,7 @@ we will re-generate the lock files afterwards).
 Note that this only fixes conflicts in environment and lock files and you might have
 other conflicts to resolve.
 
-Finally, we have to re-generate the environment and lock files for the CIs, as described
-in :ref:`Build lock files <build_lock_files>`, or by running:
+Finally, we have to re-generate the environment and lock files for the CIs by running:
 
 .. prompt:: bash
 
