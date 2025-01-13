@@ -263,6 +263,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         n_samples, n_features = X.shape
 
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+
         if self.subsample is not None and n_samples > self.subsample:
             # Take a subsample of `X`
             # When resampling, it is important to subsample **with replacement** to
@@ -282,9 +285,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             # in subsequent operations to compute weight-aware bin edges with
             # quantiles or k-means.
             sample_weight = None
-
-        if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         n_features = X.shape[1]
         n_bins = self._validate_n_bins(n_features)
