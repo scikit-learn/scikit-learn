@@ -2379,3 +2379,113 @@ def make_checkerboard(
     )
 
     return result, rows, cols
+
+
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left"), tuple],
+        "initial_radius": [Interval(Real, 0, 1, closed="left"), None],
+        "linear_speed": [Interval(Real, 0, None, closed="neither"), None],
+        "shuffle": ["boolean"],
+        "noise": [Interval(Real, 0, None, closed="left"), None],
+        "random_state": ["random_state"],
+    },
+    prefer_skip_nested_validation=True,
+)
+def make_spirals(
+    n_samples=100,
+    *,
+    initial_radius=0.05,
+    linear_speed=4,
+    shuffle=True,
+    noise=None,
+    random_state=None,
+):
+    """Make two interleaving spirals.
+
+    A simple toy dataset to visualize clustering and classification
+    algorithms. Read more in the :ref:`User Guide <sample_generators>`.
+
+    Parameters
+    ----------
+    n_samples : int or tuple of shape (2,), dtype=int, default=100
+        If int, the total number of points generated.
+        If two-element tuple, number of points in each spiral.
+
+    initial_radius : float, default=0.05
+        Initial radius of the spirals.
+
+    linear_speed : float, default=4
+        The constant speed of a point along a line from the origin during
+        rotation. Large values increase the number of loops or, equivalently,
+        decrease their distance.
+
+    shuffle : bool, default=True
+        Whether to shuffle the samples.
+
+    noise : float, default=None
+        Standard deviation of Gaussian noise added to the data.
+
+    random_state : int, RandomState instance or None, default=None
+        Determines random number generation for dataset creation. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
+
+    Returns
+    -------
+    X : ndarray of shape (n_samples, 2)
+        The generated samples.
+
+    y : ndarray of shape (n_samples,)
+        The integer labels (0 or 1) for class membership of each sample.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_spirals
+    >>> X, y = make_spirals(n_samples=200, noise=0.2, random_state=42)
+    >>> X.shape
+    (200, 2)
+    >>> y.shape
+    (200,)
+    """
+
+    if isinstance(n_samples, numbers.Integral):
+        n_samples_above = n_samples // 2
+        n_samples_below = n_samples - n_samples_above
+    else:
+        try:
+            n_samples_above, n_samples_below = n_samples
+        except ValueError as e:
+            raise ValueError(
+                "`n_samples` can be either an int or a two-element tuple."
+            ) from e
+
+    generator = check_random_state(random_state)
+
+    r_above = linear_speed * np.linspace(initial_radius, 1, num=n_samples_above)
+    r_below = linear_speed * np.linspace(initial_radius, 1, num=n_samples_below)
+
+    angles_above = np.linspace(0, 2 * np.pi, num=n_samples_above)
+    angles_below = np.linspace(0, 2 * np.pi, num=n_samples_below)
+
+    if noise is not None:
+        r_above += generator.normal(scale=noise * linear_speed, size=r_above.shape)
+        r_below += generator.normal(scale=noise * linear_speed, size=r_below.shape)
+
+    X_above = np.column_stack((np.cos(angles_above), np.sin(angles_above)))
+    X_below = np.column_stack((np.cos(angles_below), np.sin(angles_below)))
+    X = np.concatenate((r_above, -r_below))[:, np.newaxis] * np.vstack(
+        (X_above, X_below)
+    )
+
+    y = np.concatenate(
+        (
+            np.zeros(n_samples_above, dtype=np.intp),
+            np.ones(n_samples_below, dtype=np.intp),
+        )
+    )
+
+    if shuffle:
+        X, y = util_shuffle(X, y, random_state=generator)
+
+    return X, y
