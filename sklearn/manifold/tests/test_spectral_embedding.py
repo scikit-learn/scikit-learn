@@ -247,6 +247,10 @@ def test_spectral_embedding_callable_affinity(sparse_container, seed=36):
 @pytest.mark.skipif(
     not pyamg_available, reason="PyAMG is required for the tests in this function."
 )
+# TODO: remove warning filter when pyamg min version >= 5.1
+@pytest.mark.filterwarnings(
+    "ignore:np.find_common_type is deprecated.*:DeprecationWarning"
+)
 @pytest.mark.parametrize("dtype", (np.float32, np.float64))
 @pytest.mark.parametrize("coo_container", COO_CONTAINERS)
 def test_spectral_embedding_amg_solver(dtype, coo_container, seed=36):
@@ -305,6 +309,10 @@ def test_spectral_embedding_amg_solver(dtype, coo_container, seed=36):
 
 @pytest.mark.skipif(
     not pyamg_available, reason="PyAMG is required for the tests in this function."
+)
+# TODO: remove warning filter when pyamg min version >= 5.1
+@pytest.mark.filterwarnings(
+    "ignore:np.find_common_type is deprecated.*:DeprecationWarning"
 )
 @pytest.mark.parametrize("dtype", (np.float32, np.float64))
 def test_spectral_embedding_amg_solver_failure(dtype, seed=36):
@@ -474,6 +482,10 @@ def test_error_pyamg_not_available():
         se_precomp.fit_transform(S)
 
 
+# TODO: remove warning filter when pyamg min version >= 5.1
+@pytest.mark.filterwarnings(
+    "ignore:np.find_common_type is deprecated.*:DeprecationWarning"
+)
 @pytest.mark.parametrize("solver", ["arpack", "amg", "lobpcg"])
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_spectral_eigen_tol_auto(monkeypatch, solver, csr_container):
