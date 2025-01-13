@@ -3,7 +3,7 @@
 # input_hash: 38d3951742eb4e3d26c6768f2c329b12d5418fed96f94c97da19b776b04ee767
 @EXPLICIT
 https://repo.anaconda.com/pkgs/main/linux-64/_libgcc_mutex-0.1-main.conda#c3473ff8bdb3d124ed5ff11ec380d6f9
-https://repo.anaconda.com/pkgs/main/linux-64/ca-certificates-2024.11.26-h06a4308_0.conda#cebd61e6520159a1315d679321620f6c
+https://repo.anaconda.com/pkgs/main/linux-64/ca-certificates-2024.12.31-h06a4308_0.conda#3208a05dc81c1e3a788fd6e5a5a38295
 https://repo.anaconda.com/pkgs/main/linux-64/ld_impl_linux-64-2.40-h12ee557_0.conda#ee672b5f635340734f58d618b7bca024
 https://repo.anaconda.com/pkgs/main/linux-64/python_abi-3.13-0_cp313.conda#d4009c49dd2b54ffded7f1365b5f6505
 https://repo.anaconda.com/pkgs/main/noarch/tzdata-2024b-h04d1e81_0.conda#9be694715c6a65f9631bb1b242125e9d
@@ -52,7 +52,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/pip-24.2-py313h06a4308_0.conda#59f8
 # pip packaging @ https://files.pythonhosted.org/packages/88/ef/eb23f262cca3c0c4eb7ab1933c3b1f03d021f2c48f54763065b6f0e321be/packaging-24.2-py3-none-any.whl#sha256=09abb1bccd265c01f4a3aa3f7a7db064b36514d2cba19a2f694fe6150451a759
 # pip pillow @ https://files.pythonhosted.org/packages/de/7c/7433122d1cfadc740f577cb55526fdc39129a648ac65ce64db2eb7209277/pillow-11.1.0-cp313-cp313-manylinux_2_28_x86_64.whl#sha256=3764d53e09cdedd91bee65c2527815d315c6b90d7b8b79759cc48d7bf5d4f114
 # pip pluggy @ https://files.pythonhosted.org/packages/88/5f/e351af9a41f866ac3f1fac4ca0613908d9a41741cfcf2228f4ad853b697d/pluggy-1.5.0-py3-none-any.whl#sha256=44e1ad92c8ca002de6377e165f3e0f1be63266ab4d554740532335b9d75ea669
-# pip pygments @ https://files.pythonhosted.org/packages/20/dc/fde3e7ac4d279a331676829af4afafd113b34272393d73f610e8f0329221/pygments-2.19.0-py3-none-any.whl#sha256=4755e6e64d22161d5b61432c0600c923c5927214e7c956e31c23923c89251a9b
+# pip pygments @ https://files.pythonhosted.org/packages/8a/0b/9fcc47d19c48b59121088dd6da2488a49d5f72dacf8262e2790a1d2c7d15/pygments-2.19.1-py3-none-any.whl#sha256=9ea1544ad55cecf4b8242fab6dd35a93bbce657034b0611ee383099054ab6d8c
 # pip pyparsing @ https://files.pythonhosted.org/packages/1c/a7/c8a2d361bf89c0d9577c934ebb7421b25dc84bf3a8e3ac0a40aed9acc547/pyparsing-3.2.1-py3-none-any.whl#sha256=506ff4f4386c4cec0590ec19e6302d3aedb992fdc02c761e90416f158dacf8e1
 # pip pytz @ https://files.pythonhosted.org/packages/11/c3/005fcca25ce078d2cc29fd559379817424e94885510568bc1bc53d7d5846/pytz-2024.2-py2.py3-none-any.whl#sha256=31c7c1817eb7fae7ca4b8c7ee50c72f93aa2dd863de768e1ef4245d426aa0725
 # pip six @ https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl#sha256=4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274
@@ -76,8 +76,8 @@ https://repo.anaconda.com/pkgs/main/linux-64/pip-24.2-py313h06a4308_0.conda#59f8
 # pip pytest @ https://files.pythonhosted.org/packages/11/92/76a1c94d3afee238333bc0a42b82935dd8f9cf8ce9e336ff87ee14d9e1cf/pytest-8.3.4-py3-none-any.whl#sha256=50e16d954148559c9a74109af1eaf0c945ba2d8f30f0a3d3335edde19788b6f6
 # pip python-dateutil @ https://files.pythonhosted.org/packages/ec/57/56b9bcc3c9c6a792fcbaf139543cee77261f3651ca9da0c93f5c1221264b/python_dateutil-2.9.0.post0-py2.py3-none-any.whl#sha256=a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427
 # pip requests @ https://files.pythonhosted.org/packages/f9/9b/335f9764261e915ed497fcdeb11df5dfd6f7bf257d4a6a2a686d80da4d54/requests-2.32.3-py3-none-any.whl#sha256=70761cfe03c773ceb22aa2f671b4757976145175cdfca038c02654d061d6dcc6
-# pip scipy @ https://files.pythonhosted.org/packages/82/4d/ecef655956ce332edbc411ab64ab843d767dd86e646898ac721dbcc7910e/scipy-1.15.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=36be480e512d38db67f377add5b759fb117edd987f4791cdf58e59b26962bee4
-# pip tifffile @ https://files.pythonhosted.org/packages/d8/1e/76cbc758f6865a9da18001ac70d1a4154603b71e233f704401fc7d62493e/tifffile-2024.12.12-py3-none-any.whl#sha256=6ff0f196a46a75c8c0661c70995e06ea4d08a81fe343193e69f1673f4807d508
+# pip scipy @ https://files.pythonhosted.org/packages/f1/26/98585cbf04c7cf503d7eb0a1966df8a268154b5d923c5fe0c1ed13154c49/scipy-1.15.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=070d10654f0cb6abd295bc96c12656f948e623ec5f9a4eab0ddb1466c000716e
+# pip tifffile @ https://files.pythonhosted.org/packages/59/50/7bef6a1259a2c4b81823653a69d2d51074f7b8095db2abae5abee962ab87/tifffile-2025.1.10-py3-none-any.whl#sha256=ed24cf4c99fb13b4f5fb29f8a0d5605e60558c950bccbdca2a6470732a27cfb3
 # pip lightgbm @ https://files.pythonhosted.org/packages/4e/19/1b928cad70a4e1a3e2c37d5417ca2182510f2451eaadb6c91cd9ec692cae/lightgbm-4.5.0-py3-none-manylinux_2_28_x86_64.whl#sha256=960a0e7c077de0ca3053f1325d3edfc92ea815acf5176adcacdea0f635aeef9b
 # pip matplotlib @ https://files.pythonhosted.org/packages/ea/3a/bab9deb4fb199c05e9100f94d7f1c702f78d3241e6a71b784d2b88d7bebd/matplotlib-3.10.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=ad2e15300530c1a94c63cfa546e3b7864bd18ea2901317bae8bbf06a5ade6dcf
 # pip meson-python @ https://files.pythonhosted.org/packages/7d/ec/40c0ddd29ef4daa6689a2b9c5ced47d5b58fa54ae149b19e9a97f4979c8c/meson_python-0.17.1-py3-none-any.whl#sha256=30a75c52578ef14aff8392677b09c39346e0a24d2b2c6204b8ed30583c11269c
