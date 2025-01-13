@@ -349,6 +349,11 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
         return self
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 class LinearSVR(RegressorMixin, LinearModel):
     """Linear Support Vector Regression.
@@ -599,6 +604,11 @@ class LinearSVR(RegressorMixin, LinearModel):
         self.n_iter_ = n_iter_.max().item()
 
         return self
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
 
 
 class SVC(BaseSVC):

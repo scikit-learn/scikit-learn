@@ -1177,6 +1177,11 @@ class _BaseKMeans(
         )
         return -scores
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 class KMeans(_BaseKMeans):
     """K-Means clustering.
