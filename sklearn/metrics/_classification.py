@@ -32,6 +32,7 @@ from ..utils._array_api import (
     _count_nonzero,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
+    _max_precision_float_dtype,
     _searchsorted,
     _setdiff1d,
     _tolist,
@@ -1562,7 +1563,7 @@ def _prf_divide(
 
     # build appropriate warning
     if metric in warn_for:
-        _warn_prf(average, modifier, f"{metric.capitalize()} is", len(result))
+        _warn_prf(average, modifier, f"{metric.capitalize()} is", result.shape[0])
 
     return result
 
@@ -1842,7 +1843,7 @@ def precision_recall_fscore_support(
     pred_sum = tp_sum + MCM[:, 0, 1]
     true_sum = tp_sum + MCM[:, 1, 0]
 
-    xp, _ = get_namespace(y_true, y_pred)
+    xp, _, device_ = get_namespace_and_device(y_true, y_pred)
     if average == "micro":
         tp_sum = xp.reshape(xp.sum(tp_sum), (1,))
         pred_sum = xp.reshape(xp.sum(pred_sum), (1,))
@@ -1869,9 +1870,16 @@ def precision_recall_fscore_support(
         # score = (1 + beta**2) * precision * recall / (beta**2 * precision + recall)
         # Therefore, we can express the score in terms of confusion matrix entries as:
         # score = (1 + beta**2) * tp / ((1 + beta**2) * tp + beta**2 * fn + fp)
-        denom = beta2 * true_sum + pred_sum
+
+        # Array api strict requires all arrays to be of the same type so we
+        # need to convert true_sum, pred_sum and tp_sum to the max supported
+        # float dtype because beta2 is a float
+        max_float_type = _max_precision_float_dtype(xp=xp, device=device_)
+        denom = beta2 * xp.astype(true_sum, max_float_type) + xp.astype(
+            pred_sum, max_float_type
+        )
         f_score = _prf_divide(
-            (1 + beta2) * tp_sum,
+            (1 + beta2) * xp.astype(tp_sum, max_float_type),
             denom,
             "f-score",
             "true nor predicted",
@@ -1889,7 +1897,6 @@ def precision_recall_fscore_support(
         weights = None
 
     if average is not None:
-        assert average != "binary" or precision.shape[0] == 1
         precision = float(_nanaverage(precision, weights=weights))
         recall = float(_nanaverage(recall, weights=weights))
         f_score = float(_nanaverage(f_score, weights=weights))

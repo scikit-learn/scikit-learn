@@ -488,8 +488,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         tags.classifier_tags = deepcopy(sub_estimator_tags.classifier_tags)
         tags.regressor_tags = deepcopy(sub_estimator_tags.regressor_tags)
         # allows cross-validation to see 'precomputed' metrics
-        tags.input_tags.pairwise = get_tags(self.estimator).input_tags.pairwise
-        tags.array_api_support = get_tags(self.estimator).array_api_support
+        tags.input_tags.pairwise = sub_estimator_tags.input_tags.pairwise
+        tags.input_tags.sparse = sub_estimator_tags.input_tags.sparse
+        tags.array_api_support = sub_estimator_tags.array_api_support
         return tags
 
     def score(self, X, y=None, **params):
@@ -1247,7 +1248,7 @@ class GridSearchCV(BaseSearchCV):
         If `scoring` represents a single score, one can use:
 
         - a single string (see :ref:`scoring_parameter`);
-        - a callable (see :ref:`scoring`) that returns a single value.
+        - a callable (see :ref:`scoring_callable`) that returns a single value.
 
         If `scoring` represents multiple scores, one can use:
 
@@ -1623,7 +1624,7 @@ class RandomizedSearchCV(BaseSearchCV):
         If `scoring` represents a single score, one can use:
 
         - a single string (see :ref:`scoring_parameter`);
-        - a callable (see :ref:`scoring`) that returns a single value.
+        - a callable (see :ref:`scoring_callable`) that returns a single value.
 
         If `scoring` represents multiple scores, one can use:
 
