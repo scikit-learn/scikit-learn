@@ -873,29 +873,7 @@ def _convert_to_numpy(array, xp):
         return array.cpu().numpy()
     elif xp_name in {"array_api_compat.cupy", "cupy"}:  # pragma: nocover
         return array.get()
-    if (
-        pd
-        and isinstance(array, pd.Series)
-        and isinstance(array.dtype, pd.api.extensions.ExtensionDtype)
-    ):
-        array = _convert_pandas_nullable_dtypes(array)
     return numpy.asarray(array)
-
-
-# TODO: remove when minimum pandas version is pandas==1.2.0, when
-# `numpy.asarray(pd.Series)` with nullable dtypes no longer returns nd.arrays with
-# `object` dtypes:
-def _convert_pandas_nullable_dtypes(pandas_series):
-    """Convert from pandas nullable extension dtypes to numpy dtypes. Without this
-    conversion, numpy.asarray(array) creates a numpy array with dtype `object` for older
-    pandas versions.
-    """
-    dtype_mapping = {
-        **{f"pd.Int{x}Dtype()": f"int{x}" for x in [8, 16, 32, 64]},
-        **{f"pd.Float{x}Dtype()": f"float{x}" for x in [32, 64]},
-        "pd.BooleanDtype()": "bool",
-    }
-    return pandas_series.astype(dtype_mapping.get(pandas_series.dtype), None)
 
 
 def _estimator_with_converted_arrays(estimator, converter):
