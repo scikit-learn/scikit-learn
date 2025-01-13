@@ -6,7 +6,7 @@ import warnings
 import numpy as np
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin, _fit_context, clone
-from ..exceptions import NotFittedError
+from ..exceptions import DataConversionWarning, NotFittedError
 from ..linear_model import LinearRegression, LogisticRegression
 from ..preprocessing import FunctionTransformer
 from ..utils import Bunch, _safe_indexing, check_array
@@ -163,10 +163,6 @@ class BaseTransformedTarget(BaseEstimator):
             )
 
         y_2d = self._validate_y(y)
-
-        # store the number of dimension of the target to predict an array of
-        # similar shape at predict
-        self._training_dim = y.ndim
 
         self._fit_transformer(y_2d)
 
@@ -394,13 +390,29 @@ class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTarget):
             allow_nd=True,
         )
 
+        # store the number of dimension of the target to predict an array of
+        # similar shape at predict
+        self._training_dim = y.ndim
+
         # transformers are designed to modify X which is 2d dimensional,
         # but not label transformers as they modify y which is 1d
         # we check the input tags and modify y accordingly
+
+        # TODO: Use tags better
         requires_2d_input = get_tags(self.transformer).input_tags.two_d_array
         if requires_2d_input and y.ndim == 1:
             y_2d = y.reshape(-1, 1)
         else:
+            if not get_tags(self._get_estimator()).target_tags.multi_output:
+                warnings.warn(
+                    (
+                        "A column-vector y was passed when a 1d array was"
+                        " expected. Please change the shape of y to "
+                        "(n_samples,), for example using ravel()."
+                    ),
+                    DataConversionWarning,
+                    stacklevel=2,
+                )
             y_2d = y
 
         return y_2d
@@ -440,10 +452,6 @@ class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTarget):
             - If `enable_metadata_routing=True`: Parameters safely routed to the
               `predict` method of the underlying estimator.
 
-            .. versionchanged:: 1.6
-                See :ref:`Metadata Routing User Guide <metadata_routing>`
-                for more details.
-
         Returns
         -------
         p : ndarray of shape (n_samples, n_classes)
@@ -474,10 +482,6 @@ class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTarget):
 
             - If `enable_metadata_routing=True`: Parameters safely routed to the
               `predict` method of the underlying estimator.
-
-            .. versionchanged:: 1.6
-                See :ref:`Metadata Routing User Guide <metadata_routing>`
-                for more details.
 
         Returns
         -------
@@ -512,10 +516,6 @@ class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTarget):
             - If `enable_metadata_routing=True`: Parameters safely routed to the
               `predict` method of the underlying estimator.
 
-            .. versionchanged:: 1.6
-                See :ref:`Metadata Routing User Guide <metadata_routing>`
-                for more details.
-
         Returns
         -------
         score : ndarray of shape (n_samples, k)
@@ -539,8 +539,6 @@ class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTarget):
 
         Please check :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
-
-        .. versionadded:: 1.6
 
         Returns
         -------
@@ -596,7 +594,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseTransformedTarget):
         automatically be cloned each time prior to fitting. If `estimator is
         None`, :class:`~sklearn.linear_model.LinearRegression` is created and used.
 
-        .. versionadded:: 1.6
+        .. versionadded:: 1.7
            `regressor` was renamed to `estimator`.
 
     regressor : object, default=None
@@ -605,8 +603,8 @@ class TransformedTargetRegressor(RegressorMixin, BaseTransformedTarget):
         automatically be cloned each time prior to fitting. If `estimator is
         None`, :class:`~sklearn.linear_model.LinearRegression` is created and used.
 
-        .. deprecated:: 1.6
-            `regressor` was deprecated in 1.6 and will be removed in 1.8.
+        .. deprecated:: 1.7
+            `regressor` was deprecated in 1.7 and will be removed in 1.9.
             Use `estimator` instead.
 
     transformer : object, default=None
@@ -696,7 +694,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseTransformedTarget):
         ],
     }
 
-    # TODO(1.8) remove
+    # TODO(1.9) remove
     def __init__(
         self,
         estimator=None,
@@ -728,6 +726,10 @@ class TransformedTargetRegressor(RegressorMixin, BaseTransformedTarget):
             allow_nd=True,
         )
 
+        # store the number of dimension of the target to predict an array of
+        # similar shape at predict
+        self._training_dim = y.ndim
+
         # transformers are designed to modify X which is 2d dimensional, we
         # need to modify y accordingly.
         if y.ndim == 1:
@@ -750,29 +752,29 @@ class TransformedTargetRegressor(RegressorMixin, BaseTransformedTarget):
             )
 
     def _get_estimator(self, get_clone=False):
-        # TODO(1.8): remove
+        # TODO(1.9): remove
         estimator_ = self.estimator
         if self.estimator is None and self.regressor != "deprecated":
             estimator_ = self.regressor
 
             warnings.warn(
                 (
-                    "`regressor` has been deprecated in 1.6 and will be removed"
-                    " in 1.8. Please use `estimator` instead."
+                    "`regressor` has been deprecated in 1.7 and will be removed"
+                    " in 1.9. Please use `estimator` instead."
                 ),
                 FutureWarning,
             )
-        # TODO(1.8) remove
+        # TODO(1.9) remove
         elif self.estimator is not None and self.regressor != "deprecated":
             raise ValueError(
                 "You must pass only one estimator to TransformedTargetRegressor."
                 " Use `estimator`."
             )
-        # TODO(1.8) remove
+        # TODO(1.9) remove
         elif self.estimator is None and self.regressor == "deprecated":
             estimator_ = None
 
-        # TODO(1.8) replace estimator_ by self.estimator in remaining code
+        # TODO(1.9) replace estimator_ by self.estimator in remaining code
         if estimator_ is None:
             return LinearRegression()
 

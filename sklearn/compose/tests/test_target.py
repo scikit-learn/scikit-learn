@@ -19,11 +19,15 @@ from sklearn.utils._testing import assert_allclose
 friedman = datasets.make_friedman1(random_state=0)
 
 
-def test_transform_target_regressor_error():
+@pytest.mark.parametrize(
+    "transformed_target_estimator_class",
+    [TransformedTargetRegressor, TransformedTargetClassifier],
+)
+def test_transform_target_estimator_error(transformed_target_estimator_class):
     X, y = friedman
     # provide a transformer and functions at the same time
-    regr = TransformedTargetRegressor(
-        estimator=LinearRegression(),
+    est = transformed_target_estimator_class(
+        estimator=LogisticRegression(),
         transformer=StandardScaler(),
         func=np.exp,
         inverse_func=np.log,
@@ -32,32 +36,32 @@ def test_transform_target_regressor_error():
         ValueError,
         match="'transformer' and functions 'func'/'inverse_func' cannot both be set.",
     ):
-        regr.fit(X, y)
+        est.fit(X, y)
     # fit with sample_weight with a regressor which does not support it
     sample_weight = np.ones((y.shape[0],))
-    regr = TransformedTargetRegressor(
+    est = transformed_target_estimator_class(
         estimator=OrthogonalMatchingPursuit(), transformer=StandardScaler()
     )
     with pytest.raises(
         TypeError,
         match=r"fit\(\) got an unexpected " "keyword argument 'sample_weight'",
     ):
-        regr.fit(X, y, sample_weight=sample_weight)
+        est.fit(X, y, sample_weight=sample_weight)
 
     # one of (func, inverse_func) is given but the other one is not
-    regr = TransformedTargetRegressor(func=np.exp)
+    est = transformed_target_estimator_class(func=np.exp)
     with pytest.raises(
         ValueError,
         match="When 'func' is provided, 'inverse_func' must also be provided",
     ):
-        regr.fit(X, y)
+        est.fit(X, y)
 
-    regr = TransformedTargetRegressor(inverse_func=np.log)
+    est = transformed_target_estimator_class(inverse_func=np.log)
     with pytest.raises(
         ValueError,
         match="When 'inverse_func' is provided, 'func' must also be provided",
     ):
-        regr.fit(X, y)
+        est.fit(X, y)
 
 
 def test_transform_target_regressor_invertible():
