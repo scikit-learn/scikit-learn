@@ -23,14 +23,14 @@ APIs of scikit-learn objects
 ============================
 
 There are two major types of estimators. You can think of the first group as simple
-estimators, which consists most estimators, such as
+estimators, which consists of most estimators, such as
 :class:`~sklearn.linear_model.LogisticRegression` or
 :class:`~sklearn.ensemble.RandomForestClassifier`. And the second group are
 meta-estimators, which are estimators that wrap other estimators.
 :class:`~sklearn.pipeline.Pipeline` and :class:`~sklearn.model_selection.GridSearchCV`
 are two examples of meta-estimators.
 
-Here we start with a few vocabulary, and then we illustrate how you can implement
+Here we start with a few vocabulary terms, and then we illustrate how you can implement
 your own estimators.
 
 Elements of the scikit-learn API are described more definitively in the
@@ -369,7 +369,7 @@ the following estimator::
     ...         self.subestimator = subestimator
     ...         self.my_extra_param = my_extra_param
 
-The parameter `deep` controls control whether or not the parameters of the
+The parameter `deep` controls whether or not the parameters of the
 `subestimator` should be reported. Thus when `deep=True`, the output will be::
 
     >>> my_estimator = MyEstimator(subestimator=LogisticRegression())
@@ -477,7 +477,7 @@ multiclass and multilabel problems.
 **Clustering algorithms** inherit from :class:`~base.ClusterMixin`. Ideally, they should
 accept a ``y`` parameter in their ``fit`` method, but it should be ignored. Clustering
 algorithms should set a ``labels_`` attribute, storing the labels assigned to each
-sample. If applicale, they can also implement a ``predict`` method, returning the
+sample. If applicable, they can also implement a ``predict`` method, returning the
 labels assigned to newly given samples.
 
 If one needs to check the type of a given estimator, e.g. in a meta-estimator, one can
@@ -578,7 +578,7 @@ when defining a custom subclass::
 The default value for `auto_wrap_output_keys` is `("transform",)`, which automatically
 wraps `fit_transform` and `transform`. The `TransformerMixin` uses the
 `__init_subclass__` mechanism to consume `auto_wrap_output_keys` and pass all other
-keyword arguments to it's super class. Super classes' `__init_subclass__` should
+keyword arguments to its super class. Super classes' `__init_subclass__` should
 **not** depend on `auto_wrap_output_keys`.
 
 For transformers that return multiple arrays in `transform`, auto wrapping will
