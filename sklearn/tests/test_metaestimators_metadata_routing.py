@@ -66,11 +66,11 @@ from sklearn.multioutput import (
 from sklearn.pipeline import Pipeline
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.tests.metadata_routing_common import (
-    ConsumingTransformer,
     ConsumingClassifier,
     ConsumingRegressor,
     ConsumingScorer,
     ConsumingSplitter,
+    ConsumingTransformer,
     NonConsumingClassifier,
     NonConsumingRegressor,
     _Registry,
