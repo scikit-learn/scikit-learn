@@ -32,8 +32,6 @@ from sklearn.linear_model import (
     LarsCV,
     LassoCV,
     LassoLarsCV,
-    LinearRegression,
-    LogisticRegression,
     LogisticRegressionCV,
     MultiTaskElasticNetCV,
     MultiTaskLassoCV,
@@ -42,8 +40,8 @@ from sklearn.linear_model import (
     RidgeClassifierCV,
     RidgeCV,
 )
-from sklearn.metrics._regression import mean_squared_error, r2_score
-from sklearn.metrics._scorer import accuracy_score, make_scorer
+from sklearn.metrics._regression import mean_squared_error
+from sklearn.metrics._scorer import make_scorer
 from sklearn.model_selection import (
     FixedThresholdClassifier,
     GridSearchCV,
@@ -91,9 +89,6 @@ y_multi = rng.randint(0, 3, size=(N, 3))
 classes_multi = [np.unique(y_multi[:, i]) for i in range(y_multi.shape[1])]
 metadata = rng.randint(0, 10, size=N)
 sample_weight = rng.rand(N)
-# for testing purposes, create sample weights highly correlated to features,
-# which forces different outcomes between using and not using sample weights
-sample_weight_feature_selector = X[:, 0] * X[:, 1] * X[:, 2] * X[:, 3]
 groups = rng.randint(0, 10, size=len(y))
 
 
