@@ -29,6 +29,7 @@ from ..utils._set_output import (
     _get_output_config,
     _safe_set_output,
 )
+from ..utils._tags import get_tags
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -1314,6 +1315,21 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             router.add(method_mapping=method_mapping, **{name: step})
 
         return router
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        try:
+            tags.input_tags.sparse = all(
+                get_tags(trans).input_tags.sparse
+                for name, trans, _ in self.transformers
+                if trans not in {"passthrough", "drop"}
+            )
+        except Exception:
+            # If `transformers` does not comply with our API (list of tuples)
+            # then it will fail. In this case, we assume that `sparse` is False
+            # but the parameter validation will raise an error during `fit`.
+            pass  # pragma: no cover
+        return tags
 
 
 def _check_X(X):

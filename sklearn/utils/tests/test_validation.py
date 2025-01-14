@@ -57,7 +57,6 @@ from sklearn.utils.fixes import (
     CSR_CONTAINERS,
     DIA_CONTAINERS,
     DOK_CONTAINERS,
-    parse_version,
 )
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
@@ -1778,11 +1777,9 @@ def test_check_sparse_pandas_sp_format(sp_format):
         ("uint8", "int8"),
     ],
 )
-def test_check_pandas_sparse_invalid(ntype1, ntype2):
-    """check that we raise an error with dataframe having
-    sparse extension arrays with unsupported mixed dtype
-    and pandas version below 1.1. pandas versions 1.1 and
-    above fixed this issue so no error will be raised."""
+def test_check_pandas_sparse_mixed_dtypes(ntype1, ntype2):
+    """Check that pandas dataframes having sparse extension arrays with mixed dtypes
+    works."""
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame(
         {
@@ -1790,15 +1787,7 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
             "col2": pd.arrays.SparseArray([1, 0, 1], dtype=ntype2, fill_value=0),
         }
     )
-
-    if parse_version(pd.__version__) < parse_version("1.1"):
-        err_msg = "Pandas DataFrame with mixed sparse extension arrays"
-        with pytest.raises(ValueError, match=err_msg):
-            check_array(df, accept_sparse=["csr", "csc"])
-    else:
-        # pandas fixed this issue at 1.1 so from here on,
-        # no error will be raised.
-        check_array(df, accept_sparse=["csr", "csc"])
+    check_array(df, accept_sparse=["csr", "csc"])
 
 
 @pytest.mark.parametrize(

@@ -104,12 +104,10 @@ y_upper = all_models["q 0.95"].predict(xx)
 y_med = all_models["q 0.50"].predict(xx)
 
 fig = plt.figure(figsize=(10, 10))
-plt.plot(xx, f(xx), "g:", linewidth=3, label=r"$f(x) = x\,\sin(x)$")
+plt.plot(xx, f(xx), "black", linewidth=3, label=r"$f(x) = x\,\sin(x)$")
 plt.plot(X_test, y_test, "b.", markersize=10, label="Test observations")
-plt.plot(xx, y_med, "r-", label="Predicted median")
-plt.plot(xx, y_pred, "r-", label="Predicted mean")
-plt.plot(xx, y_upper, "k-")
-plt.plot(xx, y_lower, "k-")
+plt.plot(xx, y_med, "tab:orange", linewidth=3, label="Predicted median")
+plt.plot(xx, y_pred, "tab:green", linewidth=3, label="Predicted mean")
 plt.fill_between(
     xx.ravel(), y_lower, y_upper, alpha=0.4, label="Predicted 90% interval"
 )
@@ -310,10 +308,8 @@ y_lower = search_05p.predict(xx)
 y_upper = search_95p.predict(xx)
 
 fig = plt.figure(figsize=(10, 10))
-plt.plot(xx, f(xx), "g:", linewidth=3, label=r"$f(x) = x\,\sin(x)$")
+plt.plot(xx, f(xx), "black", linewidth=3, label=r"$f(x) = x\,\sin(x)$")
 plt.plot(X_test, y_test, "b.", markersize=10, label="Test observations")
-plt.plot(xx, y_upper, "k-")
-plt.plot(xx, y_lower, "k-")
 plt.fill_between(
     xx.ravel(), y_lower, y_upper, alpha=0.4, label="Predicted 90% interval"
 )
