@@ -177,6 +177,7 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import all_estimators
 from sklearn.utils._tags import get_tags
 from sklearn.utils._testing import SkipTest
+from sklearn.utils.fixes import parse_version, sp_base_version
 
 CROSS_DECOMPOSITION = ["PLSCanonical", "PLSRegression", "CCA", "PLSSVD"]
 
@@ -1204,12 +1205,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_dont_overwrite_parameters": "empty array passed inside",
         "check_fit2d_predict1d": "empty array passed inside",
     },
-    SplineTransformer: {
-        "check_estimators_pickle": (
-            "Current Scipy implementation of _bsplines does not"
-            "support const memory views."
-        ),
-    },
     SVC: {
         # TODO: fix sample_weight handling of this estimator when probability=False
         # TODO: replace by a statistical test when probability=True
@@ -1239,6 +1234,15 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         ),
     },
 }
+
+# TODO: remove when scipy min version >= 1.11
+if sp_base_version < parse_version("1.11"):
+    PER_ESTIMATOR_XFAIL_CHECKS[SplineTransformer] = {
+        "check_estimators_pickle": (
+            "scipy < 1.11 implementation of _bsplines does not"
+            "support const memory views."
+        ),
+    }
 
 
 def _get_expected_failed_checks(estimator):
