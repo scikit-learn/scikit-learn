@@ -290,7 +290,7 @@ scikit-learn has preliminary support for free-threaded CPython, in particular
 free-threaded wheels are available for all of our supported platforms.
 
 Free-threaded (also known as nogil) CPython 3.13 is an experimental version of
-CPython 3.13 who aims at enabling efficient multi-threaded use cases by
+CPython 3.13 which aims at enabling efficient multi-threaded use cases by
 removing the Global Interpreter Lock (GIL).
 
 For more details about free-threaded CPython see `py-free-threading doc <https://py-free-threading.github.io>`_,
