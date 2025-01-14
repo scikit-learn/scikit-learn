@@ -767,12 +767,7 @@ def test_metaestimators_in_pipeline(metaestimator):
         )
 
         pipe_method = getattr(pipe, method_name)
-
-        try:
-            # `fit` and `partial_fit` accept y, others don't.
-            pipe_method(X, y, **method_kwargs, **extra_method_args)
-        except TypeError:
-            pipe_method(X, **method_kwargs, **extra_method_args)
+        pipe_method(X, y, **method_kwargs, **extra_method_args)
 
         # sanity check that registry is not empty, or else the test passes
         # trivially
