@@ -264,14 +264,19 @@ class BayesianRidge(RegressorMixin, LinearModel):
         self.X_scale_ = X_scale_
         n_samples, n_features = X.shape
 
+        sw_sum = n_samples
+        if sample_weight is not None:
+            sw_sum = sample_weight.sum()
+
         # Initialization of the values of the parameters
         eps = np.finfo(np.float64).eps
-        # Add `eps` in the denominator to omit division by zero if `np.var(y)`
-        # is zero
+        # Add `eps` in the denominator to omit division by zero
+        # if y_weighted_var is zero
         alpha_ = self.alpha_init
         lambda_ = self.lambda_init
         if alpha_ is None:
-            alpha_ = 1.0 / (np.var(y) + eps)
+            y_weighted_var = (y**2).sum() / sw_sum
+            alpha_ = 1.0 / (y_weighted_var + eps)
         if lambda_ is None:
             lambda_ = 1.0
 
@@ -309,7 +314,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
             # Update alpha and lambda according to (MacKay, 1992)
             gamma_ = np.sum((alpha_ * eigen_vals_) / (lambda_ + alpha_ * eigen_vals_))
             lambda_ = (gamma_ + 2 * lambda_1) / (np.sum(coef_**2) + 2 * lambda_2)
-            alpha_ = (n_samples - gamma_ + 2 * alpha_1) / (rmse_ + 2 * alpha_2)
+            alpha_ = (sw_sum - gamma_ + 2 * alpha_1) / (rmse_ + 2 * alpha_2)
 
             # Check for convergence
             if iter_ != 0 and np.sum(np.abs(coef_old_ - coef_)) < self.tol:
@@ -330,7 +335,14 @@ class BayesianRidge(RegressorMixin, LinearModel):
         if self.compute_score:
             # compute the log marginal likelihood
             s = self._log_marginal_likelihood(
-                n_samples, n_features, eigen_vals_, alpha_, lambda_, coef_, rmse_
+                n_samples,
+                n_features,
+                sw_sum,
+                eigen_vals_,
+                alpha_,
+                lambda_,
+                coef_,
+                rmse_,
             )
             self.scores_.append(s)
             self.scores_ = np.array(self.scores_)
@@ -399,7 +411,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
         return coef_, rmse_
 
     def _log_marginal_likelihood(
-        self, n_samples, n_features, eigen_vals, alpha_, lambda_, coef, rmse
+        self, n_samples, n_features, sw_sum, eigen_vals, alpha_, lambda_, coef, rmse
     ):
         """Log marginal likelihood."""
         alpha_1 = self.alpha_1
@@ -421,11 +433,11 @@ class BayesianRidge(RegressorMixin, LinearModel):
         score += alpha_1 * log(alpha_) - alpha_2 * alpha_
         score += 0.5 * (
             n_features * log(lambda_)
-            + n_samples * log(alpha_)
+            + sw_sum * log(alpha_)
             - alpha_ * rmse
             - lambda_ * np.sum(coef**2)
             + logdet_sigma
-            - n_samples * log(2 * np.pi)
+            - sw_sum * log(2 * np.pi)
         )
 
         return score
