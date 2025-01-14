@@ -134,8 +134,8 @@ def test_compute_class_weight_balanced_sample_weight_equivalence():
     # Test with unbalanced and negative class labels for
     # equivalence between repeated and weighted samples
 
-    classes = np.array([-2, -1, 42])
-    y = np.asarray([-1, -1, 42, 42, -2, -2])
+    classes = np.array([-2, -1, 0])
+    y = np.asarray([-1, -1, 0, 0, -2, -2])
     sw = np.asarray([1, 0, 1, 1, 1, 2])
 
     y_rep = np.repeat(y, sw, axis=0)
