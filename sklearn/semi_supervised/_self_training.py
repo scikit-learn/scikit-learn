@@ -4,10 +4,14 @@ from warnings import warn
 
 import numpy as np
 
-from sklearn.base import ClassifierMixin
-
-from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone
-from ..utils import Bunch, safe_mask
+from ..base import (
+    BaseEstimator,
+    ClassifierMixin,
+    MetaEstimatorMixin,
+    _fit_context,
+    clone,
+)
+from ..utils import Bunch, get_tags, safe_mask
 from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
 from ..utils.metadata_routing import (
     MetadataRouter,
@@ -613,3 +617,10 @@ class SelfTrainingClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             ),
         )
         return router
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # TODO(1.8): remove the condition check together with base_estimator
+        if self.estimator is not None:
+            tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
+        return tags
