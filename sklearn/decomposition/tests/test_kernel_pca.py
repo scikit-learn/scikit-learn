@@ -187,7 +187,7 @@ def test_kernel_pca_n_components():
     For all solvers this tests that the output has the correct shape depending
     on the selected number of components.
     """
-    rng = np.random.RandomState(global_random_seed)
+    rng = np.random.RandomState(0)
     X_fit = rng.random_sample((5, 4))
     X_pred = rng.random_sample((2, 4))
 
