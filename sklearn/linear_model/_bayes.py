@@ -307,7 +307,14 @@ class BayesianRidge(RegressorMixin, LinearModel):
             if self.compute_score:
                 # compute the log marginal likelihood
                 s = self._log_marginal_likelihood(
-                    n_samples, n_features, eigen_vals_, alpha_, lambda_, coef_, mse_
+                    n_samples,
+                    n_features,
+                    sw_sum,
+                    eigen_vals_,
+                    alpha_,
+                    lambda_,
+                    coef_,
+                    mse_,
                 )
                 self.scores_.append(s)
 
