@@ -12,6 +12,8 @@ import numpy as np
 from joblib import effective_n_jobs
 from scipy import sparse
 
+from sklearn.utils import metadata_routing
+
 from ..base import MultiOutputMixin, RegressorMixin, _fit_context
 from ..model_selection import check_cv
 from ..utils import Bunch, check_array, check_scalar
@@ -875,6 +877,10 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     [1.451...]
     """
 
+    # "check_input" is used for optimisation and isn't something to be passed
+    # around in a pipeline.
+    __metadata_request__fit = {"check_input": metadata_routing.UNUSED}
+
     _parameter_constraints: dict = {
         "alpha": [Interval(Real, 0, None, closed="left")],
         "l1_ratio": [Interval(Real, 0, 1, closed="both")],
@@ -1142,6 +1148,11 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             return safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
         else:
             return super()._decision_function(X)
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
 
 
 ###############################################################################
@@ -1858,6 +1869,13 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         )
         return router
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        multitask = self._is_multitask()
+        tags.input_tags.sparse = not multitask
+        tags.target_tags.multi_output = multitask
+        return tags
+
 
 class LassoCV(RegressorMixin, LinearModelCV):
     """Lasso linear model with iterative fitting along a regularization path.
@@ -2069,11 +2087,6 @@ class LassoCV(RegressorMixin, LinearModelCV):
 
     def _is_multitask(self):
         return False
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags.target_tags.multi_output = False
-        return tags
 
     def fit(self, X, y, sample_weight=None, **params):
         """Fit Lasso model with coordinate descent.
@@ -2350,11 +2363,6 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
     def _is_multitask(self):
         return False
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags.target_tags.multi_output = False
-        return tags
 
     def fit(self, X, y, sample_weight=None, **params):
         """Fit ElasticNet model with coordinate descent.
@@ -2648,6 +2656,7 @@ class MultiTaskElasticNet(Lasso):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = False
         tags.target_tags.multi_output = True
         tags.target_tags.single_output = False
         return tags
@@ -3018,7 +3027,6 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.target_tags.multi_output = True
         tags.target_tags.single_output = False
         return tags
 
@@ -3259,7 +3267,6 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.target_tags.multi_output = True
         tags.target_tags.single_output = False
         return tags
 

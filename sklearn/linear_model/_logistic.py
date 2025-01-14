@@ -1459,13 +1459,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags._xfail_checks.update(
-            {
-                "check_non_transformer_estimators_n_iter": (
-                    "n_iter_ cannot be easily accessed."
-                )
-            }
-        )
+        tags.input_tags.sparse = True
         return tags
 
 
@@ -2285,3 +2279,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         """
         scoring = self.scoring or "accuracy"
         return get_scorer(scoring)
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags

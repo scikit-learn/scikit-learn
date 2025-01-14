@@ -39,7 +39,7 @@
 .. |ThreadpoolctlMinVersion| replace:: 3.1.0
 .. |MatplotlibMinVersion| replace:: 3.3.4
 .. |Scikit-ImageMinVersion| replace:: 0.17.2
-.. |PandasMinVersion| replace:: 1.1.5
+.. |PandasMinVersion| replace:: 1.2.0
 .. |SeabornMinVersion| replace:: 0.9.0
 .. |PytestMinVersion| replace:: 7.1.2
 .. |PlotlyMinVersion| replace:: 5.14.0
@@ -192,6 +192,7 @@ Communication
 - GitHub Discussions: https://github.com/scikit-learn/scikit-learn/discussions
 - Website: https://scikit-learn.org
 - LinkedIn: https://www.linkedin.com/company/scikit-learn
+- Bluesky: https://bsky.app/profile/scikit-learn.org
 - YouTube: https://www.youtube.com/channel/UCJosFjYm0ZYVUARxuOZqnnw/playlists
 - Facebook: https://www.facebook.com/scikitlearnofficial/
 - Instagram: https://www.instagram.com/scikitlearnofficial/
