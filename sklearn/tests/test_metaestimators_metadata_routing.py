@@ -68,6 +68,7 @@ from sklearn.multioutput import (
 from sklearn.pipeline import Pipeline
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.tests.metadata_routing_common import (
+    ConsumingTransformer,
     ConsumingClassifier,
     ConsumingRegressor,
     ConsumingScorer,
@@ -416,6 +417,7 @@ METAESTIMATORS: list = [
         "estimator": "classifier",
         "X": X,
         "y": y,
+        "preserves_metadata": "subset",
         "estimator_routing_methods": ["fit"],
         "scorer_name": "scoring",
         "scorer_routing_methods": ["fit"],
@@ -434,6 +436,7 @@ METAESTIMATORS: list = [
         "metaestimator": RFECV,
         "estimator": "classifier",
         "estimator_name": "estimator",
+        "preserves_metadata": "subset",
         "estimator_routing_methods": ["fit"],
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
@@ -705,50 +708,36 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
 @config_context(enable_metadata_routing=True)
-def test_feature_selectors_in_pipeline(metaestimator):
-
-    metaestimator_class = metaestimator["metaestimator"]
-
-    # This test only makes sense for metaestimators which have a
-    # sub-estimator and belong to the feature_selection module
-    if ("estimator" not in metaestimator) or (
-        metaestimator_class.__module__.split(".")[1]
-    ) != "feature_selection":
+def test_metaestimators_in_pipeline(metaestimator):
+    # Check that metadata is routed correctly to the sub-estimator when the
+    # metaestimator is an intermediate step within a Pipeline.
+    if "estimator" not in metaestimator:
+        # This test only makes sense for metaestimators which have a
+        # sub-estimator, e.g. MyMetaEstimator(estimator=MySubEstimator())
         return
 
+    metaestimator_class = metaestimator["metaestimator"]
     X = metaestimator["X"]
     y = metaestimator["y"]
+    method_name = "fit"
     method_mapping = metaestimator.get("method_mapping", {})
     preserves_metadata = metaestimator.get("preserves_metadata", True)
 
-    method_name = "fit"
-    key = "sample_weight"
-    method_kwargs = {key: sample_weight_feature_selector}
+    for key in ["sample_weight", "metadata"]:
+        val = {"sample_weight": sample_weight, "metadata": metadata}[key]
+        method_kwargs = {key: val}
 
-    for sub_estimator_type in ["classifier", "regressor"]:
-
-        kwargs = metaestimator.get("init_args", {})
-
-        if sub_estimator_type == "classifier":
-            estimator = LogisticRegression()
-            scorer = make_scorer(accuracy_score)
-        elif sub_estimator_type == "regressor":
-            estimator = LinearRegression()
-            scorer = make_scorer(r2_score)
-        else:
-            raise ValueError("Unpermitted `sub_estimator_type`.")  # pragma: nocover
-
-        kwargs["estimator"] = estimator
-
-        # configure scorer and call set_score_request
-        if "scorer_name" in metaestimator:
-            scorer_name = metaestimator["scorer_name"]
+        kwargs, (estimator, registry), (scorer, _), (cv, _) = get_init_args(
+            metaestimator, sub_estimator_consumes=True
+        )
+        if scorer:
             set_requests(
                 scorer, method_mapping={}, methods=["score"], metadata_name=key
             )
-            kwargs[scorer_name] = scorer
+        if cv:
+            cv.set_split_request(groups=True, metadata=True)
 
-        # skip configuring cv and set_split_request call (not necessary for this test)
+        final_estimator = ConsumingTransformer()
 
         # `set_{method}_request({metadata}==True)` on the underlying estimator
         set_requests(
@@ -758,30 +747,53 @@ def test_feature_selectors_in_pipeline(metaestimator):
             metadata_name=key,
         )
 
+        # `set_{method}_request({metadata}==True)` on the final estimator
+        # (required to avoid UnsetMetadataPassedError on final estimator)
+        set_requests(
+            final_estimator,
+            method_mapping={},
+            methods=[method_name],
+            metadata_name=key,
+        )
+
         metaestimator_instance = metaestimator_class(**kwargs)
+        extra_method_args = metaestimator.get("method_args", {}).get(method_name, {})
+
+        if not hasattr(metaestimator_instance, "transform"):
+            # This test only makes sense for metaestimators that can be
+            # intermediate steps in a Pipeline (e.g. transform method exists)
+            return
 
         pipe = Pipeline(
             [
                 ("feature_selector", metaestimator_instance),
-                ("regressor", estimator),
+                ("final_estimator", final_estimator),
             ]
         )
 
-        pipeline_method = getattr(pipe, method_name)
+        pipe_method = getattr(pipe, method_name)
 
-        pipeline_method(X, y, **method_kwargs)
-        selected_features_with_sample_weights = (
-            pipe["feature_selector"].get_feature_names_out().tolist()
-        )
-        pipeline_method(X, y)
-        selected_features_without_sample_weights = (
-            pipe["feature_selector"].get_feature_names_out().tolist()
-        )
+        try:
+            # `fit` and `partial_fit` accept y, others don't.
+            pipe_method(X, y, **method_kwargs, **extra_method_args)
+        except TypeError:
+            pipe_method(X, **method_kwargs, **extra_method_args)
 
-        assert (
-            selected_features_with_sample_weights
-            != selected_features_without_sample_weights
-        )
+        # sanity check that registry is not empty, or else the test passes
+        # trivially
+        for registry_ in [registry]:
+            assert registry_
+            split_params = (
+                method_kwargs.keys() if preserves_metadata == "subset" else ()
+            )
+            for estimator in registry_:
+                check_recorded_metadata(
+                    estimator,
+                    method=method_name,
+                    parent=None,
+                    split_params=split_params,
+                    **method_kwargs,
+                )
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
