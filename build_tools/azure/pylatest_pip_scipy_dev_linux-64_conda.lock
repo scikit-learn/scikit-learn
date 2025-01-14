@@ -3,7 +3,7 @@
 # input_hash: 45bccf0e77c6967a2f49b8c304ef02337f7bd84c59e63221f8c0cb0e75dfe269
 @EXPLICIT
 https://repo.anaconda.com/pkgs/main/linux-64/_libgcc_mutex-0.1-main.conda#c3473ff8bdb3d124ed5ff11ec380d6f9
-https://repo.anaconda.com/pkgs/main/linux-64/ca-certificates-2024.11.26-h06a4308_0.conda#cebd61e6520159a1315d679321620f6c
+https://repo.anaconda.com/pkgs/main/linux-64/ca-certificates-2024.12.31-h06a4308_0.conda#3208a05dc81c1e3a788fd6e5a5a38295
 https://repo.anaconda.com/pkgs/main/linux-64/ld_impl_linux-64-2.40-h12ee557_0.conda#ee672b5f635340734f58d618b7bca024
 https://repo.anaconda.com/pkgs/main/linux-64/python_abi-3.13-0_cp313.conda#d4009c49dd2b54ffded7f1365b5f6505
 https://repo.anaconda.com/pkgs/main/noarch/tzdata-2024b-h04d1e81_0.conda#9be694715c6a65f9631bb1b242125e9d
