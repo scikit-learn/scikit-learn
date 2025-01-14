@@ -181,7 +181,7 @@ def test_kernel_pca_linear_kernel(solver, n_features, global_random_seed):
     )
 
 
-def test_kernel_pca_n_components(global_random_seed):
+def test_kernel_pca_n_components():
     """Test that `n_components` is correctly taken into account for projections
 
     For all solvers this tests that the output has the correct shape depending
