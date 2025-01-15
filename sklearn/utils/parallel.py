@@ -7,7 +7,6 @@ usage.
 
 import functools
 import warnings
-from contextlib import contextmanager
 from functools import update_wrapper
 
 import joblib
@@ -22,7 +21,7 @@ from .._config import config_context, get_config
 _threadpool_controller = None
 
 
-def _with_config(delayed_func, config, warning_filters):
+def _with_config_and_warning_filters(delayed_func, config, warning_filters):
     """Helper function that intends to attach a config to a delayed function."""
     if hasattr(delayed_func, "with_config"):
         return delayed_func.with_config(config, warning_filters)
@@ -73,7 +72,11 @@ class Parallel(joblib.Parallel):
         config = get_config()
         warning_filters = warnings.filters
         iterable_with_config = (
-            (_with_config(delayed_func, config, warning_filters), args, kwargs)
+            (
+                _with_config_and_warning_filters(delayed_func, config, warning_filters),
+                args,
+                kwargs,
+            )
             for delayed_func, args, kwargs in iterable
         )
         return super().__call__(iterable_with_config)
@@ -113,15 +116,6 @@ def delayed(function):
     return delayed_function
 
 
-@contextmanager
-def _warning_filter_context(warning_filters):
-    """Context manager that sets warning filters."""
-    previous_filters = warnings.filters
-    warnings.filters = warning_filters
-    yield
-    warnings.filters = previous_filters
-
-
 class _FuncWrapper:
     """Load the global configuration before calling the function."""
 
@@ -136,7 +130,7 @@ class _FuncWrapper:
 
     def __call__(self, *args, **kwargs):
         config = getattr(self, "config", {})
-        warning_filters = getattr(self, "warning_filters", {})
+        warning_filters = getattr(self, "warning_filters", [])
         if not config or not warning_filters:
             warnings.warn(
                 (
@@ -148,10 +142,8 @@ class _FuncWrapper:
                 UserWarning,
             )
 
-        with (
-            config_context(**config),
-            _warning_filter_context(warning_filters=warning_filters),
-        ):
+        with config_context(**config), warnings.catch_warnings():
+            warnings.filters = warning_filters
             return self.function(*args, **kwargs)
 
 

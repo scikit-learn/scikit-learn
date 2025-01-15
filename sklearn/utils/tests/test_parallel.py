@@ -136,3 +136,18 @@ def test_check_warnings_threading():
         )
 
         assert all(w == filters for w in all_warnings)
+
+
+def test_filter_warning_propagates_no_side_effect_with_loky_backend():
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", category=ConvergenceWarning)
+
+        Parallel(n_jobs=2, backend="loky")(delayed(time.sleep)(0) for i in range(10))
+
+        # Make sure that inside the loky workers, warnings filters have been reset to
+        # their original value. Using joblib directly should not turn ConvergenceWarning
+        # turned into an error
+        joblib.Parallel(n_jobs=2, backend="loky")(
+            joblib.delayed(warnings.warn)("Convergence warning", ConvergenceWarning)
+            for _ in range(10)
+        )
