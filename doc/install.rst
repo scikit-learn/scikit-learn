@@ -27,6 +27,8 @@ There are different ways to install scikit-learn:
 
 Installing the latest release
 =============================
+For most users, we recommend installing scikit-learn using the `conda-forge` channel on Conda. `conda-forge` provides up-to-date packages that are optimized for scientific computing and ensure better compatibility across platforms. If you prefer using pip, scikit-learn is also available on PyPI.
+
 
 .. raw:: html
 
