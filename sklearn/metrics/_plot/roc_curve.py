@@ -1,7 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from ...utils import deprecated, _safe_indexing
+from ...utils import _safe_indexing, deprecated
 from ...utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
     _check_param_lengths,
@@ -292,7 +292,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         return self
 
-    #TODO(1.9): Remove
+    # TODO(1.9): Remove
     @deprecated(
         "Attribute `line_` is deprecated in 1.7 and will be removed in "
         "1.9. Use `lines_` instead."
