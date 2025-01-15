@@ -129,7 +129,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     >>> pred = np.array([0.1, 0.4, 0.35, 0.8])
     >>> fpr, tpr, thresholds = metrics.roc_curve(y, pred)
     >>> roc_auc = metrics.auc(fpr, tpr)
-    >>> display = metrics.RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc,
+    >>> display = metrics.RocCurveDisplay(fprs=[fpr], tprs=[tpr], roc_aucs=[roc_auc],
     ...                                   name='example estimator')
     >>> display.plot()
     <...>
