@@ -130,10 +130,17 @@ def _check_array_api_dispatch(array_api_dispatch):
 
 def _single_array_device(array):
     """Hardware device where the array data resides on."""
-    if isinstance(array, (numpy.ndarray, numpy.generic)) or not hasattr(
-        array, "device"
+    if (
+        isinstance(array, (numpy.ndarray, numpy.generic))
+        or not hasattr(array, "device")
+        # When array API dispatch is disabled, we expect the scikit-learn code
+        # to use np.asarray so that the resulting NumPy array will implicitly use the
+        # CPU. In this case, scikit-learn should stay as device neutral as possible,
+        # hence the use of `device=None` which is accepted by all libraries, before
+        # and after the expected conversion to NumPy via np.asarray.
+        or not get_config()["array_api_dispatch"]
     ):
-        return "cpu"
+        return None
     else:
         return array.device
 
@@ -536,10 +543,11 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     -------
     namespace : module
         Namespace shared by array objects. If any of the `arrays` are not arrays,
-        the namespace defaults to NumPy.
+        the namespace defaults to the NumPy namespace.
 
     is_array_api_compliant : bool
-        True if the arrays are containers that implement the Array API spec.
+        True if the arrays are containers that implement the array API spec (see
+        https://data-apis.org/array-api/latest/index.html).
         Always False when array_api_dispatch=False.
     """
     array_api_dispatch = get_config()["array_api_dispatch"]
