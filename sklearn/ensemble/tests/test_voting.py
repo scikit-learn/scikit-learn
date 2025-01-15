@@ -53,6 +53,10 @@ X_r, y_r = datasets.load_diabetes(return_X_y=True)
             "Invalid 'estimators' attribute, 'estimators' should be a non-empty list",
         ),
         (
+            {"estimators": [LogisticRegression()]},
+            "Invalid 'estimators' attribute, 'estimators' should be a non-empty list",
+        ),
+        (
             {"estimators": [("lr", LogisticRegression())], "weights": [1, 2]},
             "Number of `estimators` and weights must be equal",
         ),
