@@ -293,7 +293,9 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         return self
 
     # TODO(1.9): Remove
-    @deprecated(
+    # Is it worth adding a global ignore for mypy error?
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
         "Attribute `line_` is deprecated in 1.7 and will be removed in "
         "1.9. Use `lines_` instead."
     )
