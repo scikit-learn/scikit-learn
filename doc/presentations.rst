@@ -2,6 +2,33 @@
 External Resources, Videos and Talks
 ===========================================
 
+.. _mooc:
+
+scikit-learn MOOC
+=================
+
+If you are new to scikit-learn, or looking to strengthen your understanding,
+we highly recommend the **scikit-learn MOOC (Massive Open Online Course)**.
+
+This comprehensive course, hosted on `FUN platform
+<https://www.fun-mooc.fr/en/courses/machine-learning-python-scikit-learn/>`_,
+is designed to help learners of all levels master
+machine learning concepts and techniques using scikit-learn. It covers everything
+from the fundamental concepts of machine learning to more advanced topics like
+predictive modeling pipelines and model evaluation.
+
+The course features interactive content, exercises, detailed explanations,
+and discussion forum to help you build a solid foundation in scikit-learn
+while applying it to real-world datasets.
+
+The MOOC is free of charge, all the course materials are available at:
+
+`<https://inria.github.io/scikit-learn-mooc/>`_.
+
+The videos are available as a YouTube playlist on the Inria Learning Lab channel:
+
+`<https://www.youtube.com/playlist?list=PL2okA_2qDJ-m44KooOI7x8tu85wr4ez4f>`_
+
 New to Scientific Python?
 ==========================
 For those that are still new to the scientific Python ecosystem, we highly
@@ -24,10 +51,25 @@ specific subject areas:
 Videos
 ======
 
-- An introduction to scikit-learn `Part
-  I <https://conference.scipy.org/scipy2013/tutorial_detail.php?id=107>`_ and
-  `Part II <https://conference.scipy.org/scipy2013/tutorial_detail.php?id=111>`_ at Scipy 2013
-  by `Gael Varoquaux`_, `Jake Vanderplas`_  and `Olivier Grisel`_. Notebooks on
+- The `scikit-learn YouTube channel <https://www.youtube.com/@scikit-learn>`_
+  features a playlist of videos showcasing talks by maintainers
+  and community members:
+
+  `<https://www.youtube.com/@scikit-learn/playlists>`_
+
+- An introduction to scikit-learn at Scipy 2013
+  by `Gael Varoquaux`_, `Jake Vanderplas`_  and `Olivier Grisel`_.
+
+  Video I:
+  `Part 1 of 3 <https://www.youtube.com/watch?v=r4bRUvvlaBw>`_,
+  `Part 2 of 3 <https://www.youtube.com/watch?v=hlaMiXCRxB0>`_,
+  `Part 3 of 3 <https://www.youtube.com/watch?v=XS4TIGe7MaU>`_.
+
+  Video II:
+  `Part 1 of 2 <https://www.youtube.com/watch?v=uX4ZirOiWkw>`_,
+  `Part 2 of 2 <https://www.youtube.com/watch?v=kTLyp10FD60>`_.
+
+  Notebooks available on
   `github <https://github.com/jakevdp/sklearn_scipy2013>`_.
 
 - `Introduction to scikit-learn
@@ -71,3 +113,4 @@ Videos
 .. _Gael Varoquaux: https://gael-varoquaux.info
 .. _Jake Vanderplas: http://www.vanderplas.com
 .. _Olivier Grisel: https://twitter.com/ogrisel
+.. _Arturo Amor: https://twitter.com/ArturoAmorQ
