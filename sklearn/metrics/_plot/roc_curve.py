@@ -43,7 +43,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         Area under ROC curve. Should be list of the same length as `fprs` and
         `tprs` or None, in which case no area under ROC curve score is shown.
 
-    names : str or list of str, default=None
+    names : list of str, default=None
         Label for the ROC curve. Should be list of the same length as
         `fprs` and `tprs` or None, in which case no name is shown.
 
@@ -79,7 +79,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             `roc_auc` is deprecated in 1.7 and will be removed in 1.9.
             Use `roc_aucs` instead.
 
-    name : str or list of str, default=None
+    name : str, default=None
         Label for the ROC curve. For multiple ROC curves, `name` can be a list
         of the same length as `tpr` and `fpr`.
         If None, no name is shown.
@@ -180,8 +180,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         names : list of str, default=None
             Names of each ROC curve for labeling each curve in the legend.
-            If `None`, use name provided at `RocCurveDisplay` initialization. If none
-            provided at initialization, no legend is added.
+            If `None`, use `names` provided at `RocCurveDisplay` initialization. If
+            also not provided at initialization, no legend is added.
 
             .. versionadded:: 1.7
 
@@ -257,7 +257,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         self.lines_ = []
         for fpr, tpr, line_kw in zip(self.fprs, self.tprs, line_kwargs):
-            self.line_.extend(self.ax_.plot(fpr, tpr, **line_kw))
+            self.lines_.extend(self.ax_.plot(fpr, tpr, **line_kw))
 
         info_pos_label = (
             f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
@@ -544,16 +544,17 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         roc_auc = auc(fpr, tpr)
 
         viz = cls(
-            fpr=fpr,
-            tpr=tpr,
-            roc_auc=roc_auc,
-            name=name,
+            fprs=[fpr],
+            tprs=[tpr],
+            roc_aucs=[roc_auc],
+            names=[name],
             pos_label=pos_label_validated,
         )
 
         return viz.plot(
             ax=ax,
-            name=name,
+            # Should we provide `name` to both `cls` and `plot` or just `cls`?
+            names=[name],
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
             despine=despine,
