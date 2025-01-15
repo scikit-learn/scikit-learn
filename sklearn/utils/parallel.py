@@ -23,8 +23,8 @@ _threadpool_controller = None
 
 def _with_config_and_warning_filters(delayed_func, config, warning_filters):
     """Helper function that intends to attach a config to a delayed function."""
-    if hasattr(delayed_func, "with_config"):
-        return delayed_func.with_config(config, warning_filters)
+    if hasattr(delayed_func, "with_config_and_warning_filters"):
+        return delayed_func.with_config_and_warning_filters(config, warning_filters)
     else:
         warnings.warn(
             (
@@ -71,7 +71,7 @@ class Parallel(joblib.Parallel):
         # pre_dispatch and n_jobs.
         config = get_config()
         warning_filters = warnings.filters
-        iterable_with_config = (
+        iterable_with_config_and_warning_filters = (
             (
                 _with_config_and_warning_filters(delayed_func, config, warning_filters),
                 args,
@@ -79,7 +79,7 @@ class Parallel(joblib.Parallel):
             )
             for delayed_func, args, kwargs in iterable
         )
-        return super().__call__(iterable_with_config)
+        return super().__call__(iterable_with_config_and_warning_filters)
 
 
 # remove when https://github.com/joblib/joblib/issues/1071 is fixed
@@ -123,7 +123,7 @@ class _FuncWrapper:
         self.function = function
         update_wrapper(self, self.function)
 
-    def with_config(self, config, warning_filters):
+    def with_config_and_warning_filters(self, config, warning_filters):
         self.config = config
         self.warning_filters = warning_filters
         return self
