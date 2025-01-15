@@ -229,7 +229,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Object that stores computed values.
         """
         names = _deprecate_singular(name, names, "name")
-        names_ = self.names if (names[0] is None) else names
+        # Not sure about this, as ideally we would check params are correct first??
+        self.ax_, self.figure_, names_ = self._validate_plot_params(ax=ax, name=names)
         _check_param_lengths(
             {"self.fprs": self.fprs, "self.tprs": self.tprs},
             {"roc_aucs": self.roc_aucs, "self.names (or names from `plot`)": names_},
@@ -237,10 +238,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         )
 
         n_curves = len(self.fprs)
-        self.ax_, self.figure_, _ = self._validate_plot_params(
-            ax=ax,
-        )
-
         line_kwargs = self._get_line_kwargs(
             n_curves, names_, self.roc_aucs, fold_line_kwargs, **kwargs
         )
@@ -664,7 +661,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> clf = SVC(random_state=0)
         >>> cv_results = cross_validate(
         ...     clf, X, y, cv=3, return_estimator=True, return_indices=True)
-        >>> RocCurveDisplay.from_cv_results(cv_results, X, y, kind="both")
+        >>> RocCurveDisplay.from_cv_results(cv_results, X, y)
         <...>
         >>> plt.show()
         """

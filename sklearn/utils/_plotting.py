@@ -19,16 +19,18 @@ class _BinaryClassifierCurveDisplayMixin:
     the target and gather the response of the estimator.
     """
 
-    def _validate_plot_params(self, *, ax=None, names=None):
+    def _validate_plot_params(self, *, ax=None, name=None):
         check_matplotlib_support(f"{self.__class__.__name__}.plot")
         import matplotlib.pyplot as plt
 
         if ax is None:
             _, ax = plt.subplots()
 
-        if names is not None:
-            names = self.names if names[0] is None else names
-        return ax, ax.figure, names
+        if name is None:
+            name = getattr(self, "estimator_name", None)
+        elif isinstance(name, list):
+            name = self.names if name[0] is None else name
+        return ax, ax.figure, name
 
     @classmethod
     def _get_line_kwargs(
