@@ -26,8 +26,6 @@ class _BinaryClassifierCurveDisplayMixin:
         if ax is None:
             _, ax = plt.subplots()
 
-        # Displays will either have `estimator_name` or `names`,
-        # try one first, then the other.
         if name is None:
             for attr in ["estimator_name", "names"]:
                 name = getattr(self, attr, None)
@@ -46,6 +44,7 @@ class _BinaryClassifierCurveDisplayMixin:
         n_curves,
         names,
         summary_values,
+        summary_value_name,
         fold_line_kws,
         default_line_kwargs={},
         **kwargs,
@@ -81,10 +80,10 @@ class _BinaryClassifierCurveDisplayMixin:
         ):
             if curve_summary_value is not None and curve_name is not None:
                 default_line_kwargs["label"] = (
-                    f"{curve_name} (AP = {curve_summary_value:0.2f})"
+                    f"{curve_name} ({summary_value_name} = {curve_summary_value:0.2f})"
                 )
             elif curve_summary_value is not None:
-                default_line_kwargs["label"] = f"AP = {curve_summary_value:0.2f}"
+                default_line_kwargs["label"] = f"{summary_value_name} = {curve_summary_value:0.2f}"
             elif curve_name is not None:
                 default_line_kwargs["label"] = curve_name
 

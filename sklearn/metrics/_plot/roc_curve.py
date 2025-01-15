@@ -240,7 +240,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         n_curves = len(self.fprs)
         line_kwargs = self._get_line_kwargs(
-            n_curves, names_, self.roc_aucs, fold_line_kwargs, **kwargs
+            n_curves, names_, self.roc_aucs, "AUC", fold_line_kwargs, **kwargs
         )
 
         default_chance_level_line_kw = {
