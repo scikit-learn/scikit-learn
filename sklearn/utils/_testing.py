@@ -317,7 +317,7 @@ def _is_numpydoc():
 try:
     _check_array_api_dispatch(True)
     ARRAY_API_COMPAT_FUNCTIONAL = True
-except ImportError:
+except (ImportError, RuntimeError):
     ARRAY_API_COMPAT_FUNCTIONAL = False
 
 try:
@@ -333,7 +333,7 @@ try:
     )
     skip_if_array_api_compat_not_configured = pytest.mark.skipif(
         not ARRAY_API_COMPAT_FUNCTIONAL,
-        reason="requires array_api_compat installed and a new enough version of NumPy",
+        reason="SCIPY_ARRAY_API not set, or versions of NumPy/SciPy too old.",
     )
 
     #  Decorator for tests involving both BLAS calls and multiprocessing.
@@ -1268,22 +1268,21 @@ class MinimalTransformer:
 def _array_api_for_tests(array_namespace, device):
     try:
         array_mod = importlib.import_module(array_namespace)
-    except ModuleNotFoundError:
+    except (ModuleNotFoundError, ImportError):
         raise SkipTest(
             f"{array_namespace} is not installed: not checking array_api input"
         )
-    try:
-        import array_api_compat  # noqa
-    except ImportError:
-        raise SkipTest(
-            "array_api_compat is not installed: not checking array_api input"
-        )
+
+    if os.environ.get("SCIPY_ARRAY_API") is None:
+        raise SkipTest("SCIPY_ARRAY_API is not set: not checking array_api input")
+
+    from sklearn.externals.array_api_compat import get_namespace
 
     # First create an array using the chosen array module and then get the
     # corresponding (compatibility wrapped) array namespace based on it.
     # This is because `cupy` is not the same as the compatibility wrapped
     # namespace of a CuPy array.
-    xp = array_api_compat.get_namespace(array_mod.asarray(1))
+    xp = get_namespace(array_mod.asarray(1))
     if (
         array_namespace == "torch"
         and device == "cuda"
