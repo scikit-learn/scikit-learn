@@ -265,9 +265,7 @@ def test_roc_curve_display_complex_pipeline(pyplot, data_binary, clf, constructo
         (0.8, "my_est2", "my_est2 (AUC = 0.80)"),
     ],
 )
-def test_roc_curve_display_default_labels(
-    pyplot, roc_aucs, names, expected_label
-):
+def test_roc_curve_display_default_labels(pyplot, roc_aucs, names, expected_label):
     """Check the default labels used in the display."""
     fpr = np.array([0, 0.5, 1])
     tpr = np.array([0, 0.5, 1])
