@@ -44,8 +44,9 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         `tprs` or None, in which case no area under ROC curve score is shown.
 
     names : list of str, default=None
-        Label for the ROC curve. Should be list of the same length as
-        `fprs` and `tprs` or None, in which case no name is shown.
+        Names of each ROC curve, used for labeling curves in the legend.
+        Should be list of the same length as `fprs` and `tprs`, or None, in which
+        case no legend is added.
 
     pos_label : int, float, bool or str, default=None
         The class considered as the positive class when computing the roc auc
@@ -179,7 +180,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             created.
 
         names : list of str, default=None
-            Names of each ROC curve for labeling each curve in the legend.
+            Names of each ROC curve, used for labeling curves in the legend.
             If `None`, use `names` provided at `RocCurveDisplay` initialization. If
             also not provided at initialization, no legend is added.
 
@@ -619,9 +620,9 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             created.
 
         fold_names : list of str, default=None
-            Names used in the legend for each individual ROC curve. If `None`,
-            the name will be set to "ROC fold <N>" where N is the index of the
-            CV fold.
+            Names of each ROC curve, used for labeling curves in the legend.
+            If `None`, the name will be set to "Fold <N>" where N is the index of
+            the CV fold.
 
         fold_line_kwargs : dict or list of dict, default=None
             Dictionary with keywords passed to the matplotlib's `plot` function

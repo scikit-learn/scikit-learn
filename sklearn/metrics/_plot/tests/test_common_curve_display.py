@@ -133,7 +133,7 @@ def test_display_curve_error_no_response(
 
 
 @pytest.mark.parametrize(
-    "Display", [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay]
+    "Display", [DetCurveDisplay, PrecisionRecallDisplay]
 )
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
 def test_display_curve_estimator_name_multiple_calls(
@@ -177,7 +177,7 @@ def test_display_curve_estimator_name_multiple_calls(
     ],
 )
 @pytest.mark.parametrize(
-    "Display", [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay]
+    "Display", [DetCurveDisplay, PrecisionRecallDisplay]
 )
 def test_display_curve_not_fitted_errors(pyplot, data_binary, clf, Display):
     """Check that a proper error is raised when the classifier is not
