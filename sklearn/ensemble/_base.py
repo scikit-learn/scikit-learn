@@ -212,7 +212,8 @@ class _BaseHeterogeneousEnsemble(
 
     def _validate_estimators(self):
         if len(self.estimators) == 0 or not all(
-            isinstance(est, tuple) for est in self.estimators
+            isinstance(item, tuple) and isinstance(item[0], str)
+            for item in self.estimators
         ):
             raise ValueError(
                 "Invalid 'estimators' attribute, 'estimators' should be a "
