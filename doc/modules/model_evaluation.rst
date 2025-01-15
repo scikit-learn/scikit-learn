@@ -1923,41 +1923,62 @@ set [0,1] has an error::
 Brier score loss
 ----------------
 
-The :func:`brier_score_loss` function computes the
-`Brier score <https://en.wikipedia.org/wiki/Brier_score>`_
-for binary classes [Brier1950]_. Quoting Wikipedia:
+The :func:`brier_score_loss` function computes the `Brier score
+<https://en.wikipedia.org/wiki/Brier_score>`_ for binary or multiclass
+probabilistic predictions. Quoting Wikipedia:
 
     "The Brier score is a proper score function that measures the accuracy of
     probabilistic predictions. It is applicable to tasks in which predictions
     must assign probabilities to a set of mutually exclusive discrete outcomes."
 
-This function returns the mean squared error of the actual outcome
-:math:`y \in \{0,1\}` and the predicted probability estimate
-:math:`p = \operatorname{Pr}(y = 1)` (:term:`predict_proba`) as outputted by:
+Let the true labels for a set of :math:`N` data points be encoded as a 1-of-K binary
+indicator matrix :math:`Y`, i.e., :math:`y_{i,k} = 1` if sample :math:`i` has
+label :math:`k` taken from a set of :math:`K` labels. Let :math:`P` be a matrix
+of probability estimates :math:`p_{i,k} = \operatorname{Pr}(y_{i,k} = 1)`.
+Following the original definition by [Brier1950]_, the Brier score is given by:
 
 .. math::
 
-   BS = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}} - 1}(y_i - p_i)^2
+  BS(Y, P) = \frac{1}{N}\sum_{i=0}^{N-1}\sum_{k=0}^{K-1}(y_{i,k} - p_{i,k})^{2}
 
-The Brier score loss is also between 0 to 1 and the lower the value (the mean
-square difference is smaller), the more accurate the prediction is.
+The Brier score lies in the :math:`[0, 2]` range and the lower the value the
+better the probability estimates are (the mean squared difference is smaller).
+Actually the Brier score is a strictly proper scoring rule, meaning that it
+achieves the best score only when the estimated probabilities are equal to the
+true ones.
 
-Here is a small example of usage of this function::
+Note that in the binary case, the Brier score is usually divided by two and
+ranges between :math:`[0,1]`. For binary targets :math:`y_i \in {0, 1}` and
+probability estimates :math:`p_i  = \operatorname{Pr}(y_i = 1)` for the positive
+class, the Brier score is then equal to:
+
+.. math::
+
+   BS(y, p) = \frac{1}{N} \sum_{i=0}^{N - 1}(y_i - p_i)^2
+
+The :func:`brier_score_loss` function computes the Brier score given the
+ground-truth labels and predicted probabilities, as returned by an estimator's
+``predict_proba`` method. The `scale_by_half` parameter controls which of the
+two above definitions to follow.
+
 
     >>> import numpy as np
     >>> from sklearn.metrics import brier_score_loss
     >>> y_true = np.array([0, 1, 1, 0])
     >>> y_true_categorical = np.array(["spam", "ham", "ham", "spam"])
     >>> y_prob = np.array([0.1, 0.9, 0.8, 0.4])
-    >>> y_pred = np.array([0, 1, 1, 0])
     >>> brier_score_loss(y_true, y_prob)
     np.float64(0.055)
     >>> brier_score_loss(y_true, 1 - y_prob, pos_label=0)
     np.float64(0.055)
     >>> brier_score_loss(y_true_categorical, y_prob, pos_label="ham")
     np.float64(0.055)
-    >>> brier_score_loss(y_true, y_prob > 0.5)
-    np.float64(0.0)
+    >>> brier_score_loss(
+    ...    ["eggs", "ham", "spam"],
+    ...    [[0.8, 0.1, 0.1], [0.2, 0.7, 0.1], [0.2, 0.2, 0.6]],
+    ...    labels=["eggs", "ham", "spam"]
+    ... )
+    np.float64(0.146...)
 
 The Brier score can be used to assess how well a classifier is calibrated.
 However, a lower Brier score loss does not always mean a better calibration.
