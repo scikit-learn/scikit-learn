@@ -1333,12 +1333,16 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
 
 def _check_X(X):
-    """Use check_array only when necessary, e.g. on lists and other non-array-likes."""
-    if (
-        (hasattr(X, "__array__") and hasattr(X, "shape"))
-        or hasattr(X, "__dataframe__")
-        or sparse.issparse(X)
-    ):
+    """
+    Use `check_array` only when necessary, e.g., on lists and other non-array-likes,
+    Converts non-subscriptable sparse formats to CSR format.
+
+    """
+    if sparse.issparse(X):
+        if not hasattr(X, "__getitem__"):
+            X = sparse.csr_matrix(X)
+        return X
+    if hasattr(X, "__dataframe__") or (hasattr(X, "__array__") and hasattr(X, "shape")):
         return X
     return check_array(X, ensure_all_finite="allow-nan", dtype=object)
 
