@@ -244,9 +244,15 @@ class BayesianRidge(RegressorMixin, LinearModel):
             y_numeric=True,
         )
         dtype = X.dtype
+        n_samples, n_features = X.shape
 
+        sw_sum = n_samples
+        y_var = y.var()
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=dtype)
+            sw_sum = sample_weight.sum()
+            y_mean = np.average(y, weights=sample_weight)
+            y_var = np.average((y - y_mean) ** 2, weights=sample_weight)
 
         X, y, X_offset_, y_offset_, X_scale_ = _preprocess_data(
             X,
@@ -262,21 +268,14 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
         self.X_offset_ = X_offset_
         self.X_scale_ = X_scale_
-        n_samples, n_features = X.shape
-
-        sw_sum = n_samples
-        if sample_weight is not None:
-            sw_sum = sample_weight.sum()
 
         # Initialization of the values of the parameters
         eps = np.finfo(np.float64).eps
         # Add `eps` in the denominator to omit division by zero
-        # if y_weighted_var is zero
         alpha_ = self.alpha_init
         lambda_ = self.lambda_init
         if alpha_ is None:
-            y_weighted_var = (y**2).sum() / sw_sum
-            alpha_ = 1.0 / (y_weighted_var + eps)
+            alpha_ = 1.0 / (y_var + eps)
         if lambda_ is None:
             lambda_ = 1.0
 
