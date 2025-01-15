@@ -284,8 +284,10 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         if despine:
             _despine(self.ax_)
 
-        # Note: if 'label' present in one `line_kwargs`, it should be present in all
-        if "label" in line_kwargs[0] or chance_level_kw:
+        if (
+            line_kwargs[0].get("label") is not None
+            or chance_level_kw.get("label") is not None
+        ):
             self.ax_.legend(loc="lower right")
 
         return self

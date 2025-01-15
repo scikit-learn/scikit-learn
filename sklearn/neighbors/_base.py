@@ -707,8 +707,11 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         # For cross-validation routines to split data correctly
         tags.input_tags.pairwise = self.metric == "precomputed"
+        # when input is precomputed metric values, all those values need to be positive
+        tags.input_tags.positive_only = tags.input_tags.pairwise
         tags.input_tags.allow_nan = self.metric == "nan_euclidean"
         return tags
 

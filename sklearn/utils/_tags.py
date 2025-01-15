@@ -58,6 +58,10 @@ class InputTags:
         Specifically, this tag is used by
         `sklearn.utils.metaestimators._safe_split` to slice rows and
         columns.
+
+        Note that if setting this tag to ``True`` means the estimator can take only
+        positive values, the `positive_only` tag must reflect it and also be set to
+        ``True``.
     """
 
     one_d_array: bool = False
@@ -97,6 +101,8 @@ class TargetTags:
     multi_output : bool, default=False
         Whether a regressor supports multi-target outputs or a classifier supports
         multi-class multi-output.
+
+        See :term:`multi-output` in the glossary.
 
     single_output : bool, default=True
         Whether the target can be single-output. This can be ``False`` if the
@@ -150,8 +156,13 @@ class ClassifierTags:
         classification. Therefore this flag indicates whether the
         classifier is a binary-classifier-only or not.
 
+        See :term:`multi-class` in the glossary.
+
     multi_label : bool, default=False
-        Whether the classifier supports multi-label output.
+        Whether the classifier supports multi-label output: a data point can
+        be predicted to belong to a variable number of classes.
+
+        See :term:`multi-label` in the glossary.
     """
 
     poor_score: bool = False
@@ -172,13 +183,9 @@ class RegressorTags:
         n_informative=1, bias=5.0, noise=20, random_state=42)``. The
         dataset and values are based on current estimators in scikit-learn
         and might be replaced by something more systematic.
-
-    multi_label : bool, default=False
-        Whether the regressor supports multilabel output.
     """
 
     poor_score: bool = False
-    multi_label: bool = False
 
 
 @dataclass(**_dataclass_args())
@@ -352,7 +359,7 @@ def _find_tags_provider(estimator, warn=True):
             "`sklearn.base.ClassifierMixin`, `sklearn.base.RegressorMixin`, and "
             "`sklearn.base.OutlierMixin`. From scikit-learn 1.7, not defining "
             "`__sklearn_tags__` will raise an error.",
-            category=FutureWarning,
+            category=DeprecationWarning,
         )
     return tag_provider
 
@@ -386,7 +393,32 @@ def get_tags(estimator) -> Tags:
     tag_provider = _find_tags_provider(estimator)
 
     if tag_provider == "__sklearn_tags__":
-        tags = estimator.__sklearn_tags__()
+        # TODO(1.7): turn the warning into an error
+        try:
+            tags = estimator.__sklearn_tags__()
+        except AttributeError as exc:
+            if str(exc) == "'super' object has no attribute '__sklearn_tags__'":
+                # workaround the regression reported in
+                # https://github.com/scikit-learn/scikit-learn/issues/30479
+                # `__sklearn_tags__` is implemented by calling
+                # `super().__sklearn_tags__()` but there is no `__sklearn_tags__`
+                # method in the base class.
+                warnings.warn(
+                    f"The following error was raised: {str(exc)}. It seems that "
+                    "there are no classes that implement `__sklearn_tags__` "
+                    "in the MRO and/or all classes in the MRO call "
+                    "`super().__sklearn_tags__()`. Make sure to inherit from "
+                    "`BaseEstimator` which implements `__sklearn_tags__` (or "
+                    "alternatively define `__sklearn_tags__` but we don't recommend "
+                    "this approach). Note that `BaseEstimator` needs to be on the "
+                    "right side of other Mixins in the inheritance order. The "
+                    "default are now used instead since retrieving tags failed. "
+                    "This warning will be replaced by an error in 1.7.",
+                    category=DeprecationWarning,
+                )
+                tags = default_tags(estimator)
+            else:
+                raise
     else:
         # TODO(1.7): Remove this branch of the code
         # Let's go through the MRO and patch each class implementing _more_tags
@@ -439,7 +471,7 @@ def _safe_tags(estimator, key=None):
         "The `_safe_tags` function is deprecated in 1.6 and will be removed in "
         "1.7. Use the public `get_tags` function instead and make sure to implement "
         "the `__sklearn_tags__` method.",
-        category=FutureWarning,
+        category=DeprecationWarning,
     )
     tags = _to_old_tags(get_tags(estimator))
 
@@ -496,7 +528,6 @@ def _to_new_tags(old_tags, estimator=None):
     if estimator_type == "regressor":
         regressor_tags = RegressorTags(
             poor_score=old_tags["poor_score"],
-            multi_label=old_tags["multilabel"],
         )
     else:
         regressor_tags = None
@@ -520,18 +551,16 @@ def _to_old_tags(new_tags):
     """Utility function convert old tags (dictionary) to new tags (dataclass)."""
     if new_tags.classifier_tags:
         binary_only = not new_tags.classifier_tags.multi_class
-        multilabel_clf = new_tags.classifier_tags.multi_label
+        multilabel = new_tags.classifier_tags.multi_label
         poor_score_clf = new_tags.classifier_tags.poor_score
     else:
         binary_only = False
-        multilabel_clf = False
+        multilabel = False
         poor_score_clf = False
 
     if new_tags.regressor_tags:
-        multilabel_reg = new_tags.regressor_tags.multi_label
         poor_score_reg = new_tags.regressor_tags.poor_score
     else:
-        multilabel_reg = False
         poor_score_reg = False
 
     if new_tags.transformer_tags:
@@ -543,7 +572,7 @@ def _to_old_tags(new_tags):
         "allow_nan": new_tags.input_tags.allow_nan,
         "array_api_support": new_tags.array_api_support,
         "binary_only": binary_only,
-        "multilabel": multilabel_clf or multilabel_reg,
+        "multilabel": multilabel,
         "multioutput": new_tags.target_tags.multi_output,
         "multioutput_only": (
             not new_tags.target_tags.single_output and new_tags.target_tags.multi_output

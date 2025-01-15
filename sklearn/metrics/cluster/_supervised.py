@@ -1184,7 +1184,7 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
 
     .. versionadded:: 0.18
 
-    The Fowlkes-Mallows index (FMI) is defined as the geometric mean between of
+    The Fowlkes-Mallows index (FMI) is defined as the geometric mean of
     the precision and recall::
 
         FMI = TP / sqrt((TP + FP) * (TP + FN))
