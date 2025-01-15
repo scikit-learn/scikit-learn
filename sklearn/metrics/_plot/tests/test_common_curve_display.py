@@ -176,6 +176,8 @@ def test_display_curve_estimator_name_multiple_calls(
         ),
     ],
 )
+# Add separate test for displays that have converted to names?,
+# add note to remove this one in 1.9
 @pytest.mark.parametrize(
     "Display", [DetCurveDisplay, PrecisionRecallDisplay]
 )
