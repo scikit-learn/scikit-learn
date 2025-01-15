@@ -25,7 +25,7 @@ For more details, refer to SciPy's `Array API documentation
 Some scikit-learn estimators that primarily rely on NumPy (as opposed to using
 Cython) to implement the algorithmic logic of their `fit`, `predict` or
 `transform` methods can be configured to accept any Array API compatible input
-datastructures and automatically dispatch operations to the underlying namespace
+data structures and automatically dispatch operations to the underlying namespace
 instead of relying on NumPy.
 
 At this stage, this support is **considered experimental** and must be enabled
@@ -68,7 +68,7 @@ Here is an example code snippet to demonstrate how to use `CuPy
 After the model is trained, fitted attributes that are arrays will also be
 from the same Array API namespace as the training data. For example, if CuPy's
 Array API namespace was used for training, then fitted attributes will be on the
-GPU. We provide a experimental `_estimator_with_converted_arrays` utility that
+GPU. We provide an experimental `_estimator_with_converted_arrays` utility that
 transfers an estimator attributes from Array API to a ndarray::
 
     >>> from sklearn.utils._array_api import _estimator_with_converted_arrays
@@ -195,7 +195,7 @@ Common estimator checks
 
 Add the `array_api_support` tag to an estimator's set of tags to indicate that
 it supports the Array API. This will enable dedicated checks as part of the
-common tests to verify that the estimators result's are the same when using
+common tests to verify that the estimators' results are the same when using
 vanilla NumPy and Array API inputs.
 
 To run these checks you need to install

@@ -2054,9 +2054,9 @@ cluster analysis as follows:
 
 .. topic:: Drawbacks:
 
-  - The Davies-Boulding index is generally higher for convex clusters than other
-    concepts of clusters, such as density based clusters like those obtained
-    from DBSCAN.
+  - The Davies-Bouldin index is generally higher for convex clusters than other
+    concepts of clusters, such as density-based clusters like those
+    obtained from DBSCAN.
   - The usage of centroid distance limits the distance metric to Euclidean
     space.
 
@@ -2067,7 +2067,7 @@ cluster analysis as follows:
   this index, similarity is defined as a measure :math:`R_{ij}` that trades off:
 
   - :math:`s_i`, the average distance between each point of cluster :math:`i` and
-    the centroid of that cluster -- also know as cluster diameter.
+    the centroid of that cluster -- also known as cluster diameter.
   - :math:`d_{ij}`, the distance between cluster centroids :math:`i` and
     :math:`j`.
 
@@ -2116,7 +2116,7 @@ Here is an example::
    array([[2, 1, 0],
           [0, 1, 2]])
 
-The first row of output array indicates that there are three samples whose
+The first row of the output array indicates that there are three samples whose
 true cluster is "a". Of them, two are in predicted cluster 0, one is in 1,
 and none is in 2. And the second row indicates that there are three samples
 whose true cluster is "b". Of them, none is in predicted cluster 0, one is in

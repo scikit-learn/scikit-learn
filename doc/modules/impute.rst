@@ -250,7 +250,7 @@ imputation. While this feature will not help in predictive setting, dropping
 the columns will change the shape of `X` which could be problematic when using
 imputers in a more complex machine-learning pipeline. The parameter
 `keep_empty_features` offers the option to keep the empty features by imputing
-with a constant values. In most of the cases, this constant value is zero::
+with a constant value. In most of the cases, this constant value is zero::
 
   >>> imputer.set_params(keep_empty_features=True)
   SimpleImputer(keep_empty_features=True)

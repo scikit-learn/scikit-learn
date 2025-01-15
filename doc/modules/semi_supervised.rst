@@ -118,7 +118,7 @@ computing the normalized graph Laplacian matrix. This procedure is also
 used in :ref:`spectral_clustering`.
 
 Label propagation models have two built-in kernel methods. Choice of kernel
-effects both scalability and performance of the algorithms. The following are
+affects both scalability and performance of the algorithms. The following are
 available:
 
 * rbf (:math:`\exp(-\gamma |x-y|^2), \gamma > 0`). :math:`\gamma` is

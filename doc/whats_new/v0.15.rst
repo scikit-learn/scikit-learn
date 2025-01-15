@@ -46,7 +46,7 @@ Bug fixes
 - Performance optimization in :class:`isotonic.IsotonicRegression`.
   By Robert Bradshaw.
 
-- ``nose`` is non-longer a runtime dependency to import ``sklearn``, only for
+- ``nose`` is no longer a runtime dependency to import ``sklearn``, only for
   running the tests. By `Joel Nothman`_.
 
 - Many documentation and website fixes by `Joel Nothman`_, `Lars Buitinck`_
@@ -340,7 +340,7 @@ Bug fixes
   ``l1_ratio`` was used as ``(1.0 - l1_ratio)`` .
 
 - Fixed bug in :class:`multiclass.OneVsOneClassifier` with string
-  labels
+  labels.
 
 - Fixed a bug in :class:`LassoCV <linear_model.LassoCV>` and
   :class:`ElasticNetCV <linear_model.ElasticNetCV>`: they would not

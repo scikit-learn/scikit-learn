@@ -596,7 +596,7 @@ Support for Python 3.3 has been officially dropped.
   :issue:`10933` by :user:`Johannes Hansen <jnhansen>`.
 
 - |Efficiency| :class:`cluster.KMeans`, :class:`cluster.MiniBatchKMeans` and
-  :func:`cluster.k_means` passed with ``algorithm='full'`` now enforces
+  :func:`cluster.k_means` passed with ``algorithm='full'`` now enforce
   row-major ordering, improving runtime.
   :issue:`10471` by :user:`Gaurav Dhingra <gxyd>`.
 

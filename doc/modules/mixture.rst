@@ -42,7 +42,7 @@ algorithm for fitting mixture-of-Gaussian models. It can also draw
 confidence ellipsoids for multivariate models, and compute the
 Bayesian Information Criterion to assess the number of clusters in the
 data. A :meth:`GaussianMixture.fit` method is provided that learns a Gaussian
-Mixture Model from train data. Given test data, it can assign to each
+Mixture Model from training data. Given test data, it can assign to each
 sample the Gaussian it most probably belongs to using
 the :meth:`GaussianMixture.predict` method.
 
@@ -96,7 +96,7 @@ full covariance.
   Mixture in an efficient way. In theory, it recovers the true number of
   components only in the asymptotic regime (i.e. if much data is available and
   assuming that the data was actually generated i.i.d. from a mixture of Gaussian
-  distribution). Note that using a :ref:`Variational Bayesian Gaussian mixture <bgmm>`
+  distributions). Note that using a :ref:`Variational Bayesian Gaussian mixture <bgmm>`
   avoids the specification of the number of components for a Gaussian mixture
   model.
 
@@ -208,7 +208,7 @@ uses a truncated distribution with a fixed maximum number of components (called
 the Stick-breaking representation). The number of components actually used
 almost always depends on the data.
 
-The next figure compares the results obtained for the different type of the
+The next figure compares the results obtained for the different types of the
 weight concentration prior (parameter ``weight_concentration_prior_type``)
 for different values of ``weight_concentration_prior``.
 Here, we can see the value of the ``weight_concentration_prior`` parameter

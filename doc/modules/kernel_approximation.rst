@@ -42,7 +42,7 @@ computational complexity of the exact method is
 :math:`\mathcal{O}(n^3_{\text{samples}})`, the complexity of the approximation
 is :math:`\mathcal{O}(n^2_{\text{components}} \cdot n_{\text{samples}})`, where
 one can set :math:`n_{\text{components}} \ll n_{\text{samples}}` without a
-significative decrease in performance [WS2001]_.
+significant decrease in performance [WS2001]_.
 
 We can construct the eigendecomposition of the kernel matrix :math:`K`, based
 on the features of the data, and then split it into sampled and unsampled data
