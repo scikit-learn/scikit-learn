@@ -115,7 +115,7 @@ def test_roc_curve_display_plotting(
     assert display.ax_.get_aspect() in ("equal", 1.0)
     assert display.ax_.get_xlim() == display.ax_.get_ylim() == (-0.01, 1.01)
 
-    expected_label = f"{default_name} (AUC = {display.roc_auc[0]:.2f})"
+    expected_label = f"{default_name} (AUC = {display.roc_aucs[0]:.2f})"
     assert display.line_.get_label() == expected_label
 
     expected_pos_label = 1 if pos_label is None else pos_label
@@ -272,7 +272,7 @@ def test_roc_curve_display_default_labels(pyplot, roc_aucs, names, expected_labe
     disp = RocCurveDisplay(
         fprs=[fpr], tprs=[tpr], roc_aucs=[roc_aucs], names=names
     ).plot()
-    assert disp.line_.get_label() == expected_label
+    assert disp.lines_[0].get_label() == expected_label
 
 
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
@@ -346,7 +346,7 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
         )
 
     assert display.roc_aucs[0] == pytest.approx(roc_auc_limit)
-    assert trapezoid(display.tpr[0], display.fpr[0]) == pytest.approx(roc_auc_limit)
+    assert trapezoid(display.tprs[0], display.fprs[0]) == pytest.approx(roc_auc_limit)
 
 
 @pytest.mark.parametrize("despine", [True, False])
