@@ -289,7 +289,8 @@ def _process_fold_names_line_kwargs(n_curves, fold_names, fold_line_kwargs):
     )
 
     if fold_names is None:
-        fold_names_ = [f"ROC fold: {idx}" for idx in range(n_curves)]
+        # "<estimator> fold <idx> ?"
+        fold_names_ = [f"Fold: {idx}" for idx in range(n_curves)]
     elif len(fold_names) != n_curves:
         raise ValueError(
             msg.format(param="fold_names", len_param=len(fold_names), n_curves=n_curves)

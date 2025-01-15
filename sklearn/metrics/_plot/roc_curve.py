@@ -1,7 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from ...utils import _safe_indexing
+from ...utils import deprecated, _safe_indexing
 from ...utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
     _check_param_lengths,
@@ -90,8 +90,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
     Attributes
     ----------
-    line_ : matplotlib Artist or list of Artists
-        ROC Curve.
+    lines_ : list of matplotlib Artists
+        ROC Curves.
 
     chance_level_ : matplotlib Artist or None
         The chance level line. It is `None` if the chance level is not plotted.
@@ -103,6 +103,13 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
     figure_ : matplotlib Figure
         Figure containing the curve.
+
+    line_ : matplotlib Artist
+        ROC Curve.
+
+        .. deprecated:: 1.7
+            `line_` is deprecated in 1.7 and will be removed in 1.9. Use `lines_`
+            instead.
 
     See Also
     --------
@@ -148,16 +155,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         self.names = _deprecate_singular(name, names, "name")
         self.pos_label = pos_label
 
-    def _get_default_line_kwargs(self, roc_auc, name):
-        default_line_kwargs = {}
-        if roc_auc is not None and name is not None:
-            default_line_kwargs["label"] = f"{name} (AUC = {roc_auc:0.2f})"
-        elif roc_auc is not None:
-            default_line_kwargs["label"] = f"AUC = {roc_auc:0.2f}"
-        elif name is not None:
-            default_line_kwargs["label"] = name
-        return default_line_kwargs
-
     def plot(
         self,
         ax=None,
@@ -166,7 +163,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         plot_chance_level=False,
         chance_level_kw=None,
         despine=False,
-        fold_line_kws=None,
+        fold_line_kwargs=None,
         name="deprecated",
         **kwargs,
     ):
@@ -182,9 +179,9 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             created.
 
         names : list of str, default=None
-            Names of each ROC curve for labeling. If `None`, use
-            name provided at `RocCurveDisplay` initialization. If not
-            provided at initialization, no labeling is shown.
+            Names of each ROC curve for labeling each curve in the legend.
+            If `None`, use name provided at `RocCurveDisplay` initialization. If none
+            provided at initialization, no legend is added.
 
             .. versionadded:: 1.7
 
@@ -204,13 +201,12 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
             .. versionadded:: 1.6
 
-        fold_line_kws : dict or list of dict, default=None
+        fold_line_kwargs : dict or list of dict, default=None
             Dictionary with keywords passed to the matplotlib's `plot` function
             to draw the individual ROC curves. If a list is provided, the
-            parameters are applied to the ROC curves of each fold
-            sequentially. If a single dictionary is provided, the same
-            parameters are applied to all ROC curves. Ignored for single curve
-            plots.
+            parameters are applied to the ROC curves sequentially. If a single
+            dictionary is provided, the same parameters are applied to all ROC
+            curves. Ignored for single curve plots.
 
             .. versionadded:: 1.7
 
@@ -225,6 +221,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         **kwargs : dict
             For a single curve plots only, keyword arguments to be passed to
             matplotlib's `plot`. Ignored for multi-curve plots.
+            (Note req for backwards compat, maybe not ideal?)
 
         Returns
         -------
@@ -245,7 +242,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         )
 
         line_kwargs = self._get_line_kwargs(
-            n_curves, names_, self.roc_aucs, fold_line_kws, **kwargs
+            n_curves, names_, self.roc_aucs, fold_line_kwargs, **kwargs
         )
 
         default_chance_level_line_kw = {
@@ -261,12 +258,9 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             default_chance_level_line_kw, chance_level_kw
         )
 
-        self.line_ = []
+        self.lines_ = []
         for fpr, tpr, line_kw in zip(self.fprs, self.tprs, line_kwargs):
             self.line_.extend(self.ax_.plot(fpr, tpr, **line_kw))
-        # Should we do this to be backwards compatible or have `line_` always be list?
-        if len(self.line_) == 1:
-            self.line_ = self.line_[0]
 
         info_pos_label = (
             f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
@@ -295,6 +289,15 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             self.ax_.legend(loc="lower right")
 
         return self
+
+    #TODO(1.9): Remove
+    @deprecated(
+        "Attribute `line_` is deprecated in 1.7 and will be removed in "
+        "1.9. Use `lines_` instead."
+    )
+    @property
+    def line_(self):
+        return self.lines_[0]
 
     @classmethod
     def from_estimator(
@@ -680,7 +683,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
                 f"Expected {train_size + test_size}, got {_num_samples(X)}."
             )
 
-        fold_names_, fold_line_kws_ = _process_fold_names_line_kwargs(
+        fold_names_, fold_line_kwargs_ = _process_fold_names_line_kwargs(
             len(cv_results["estimator"]), fold_names, fold_line_kwargs
         )
 
@@ -715,13 +718,13 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         viz = cls(
             fprs=fpr_all,
             tprs=tpr_all,
+            names=fold_names_,
             roc_aucs=auc_all,
             pos_label=pos_label,
         )
         return viz.plot(
             ax=ax,
-            names=fold_names_,
-            fold_line_kws=fold_line_kws_,
+            fold_line_kwargs=fold_line_kwargs_,
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
         )
