@@ -861,7 +861,7 @@ def _ravel(array, xp=None):
 
 
 def _convert_to_numpy(array, xp):
-    """Convert X into a NumPy ndarray on the CPU."""
+    """Convert array into a NumPy ndarray on the CPU."""
     xp_name = xp.__name__
 
     if xp_name in {"array_api_compat.torch", "torch"}:
