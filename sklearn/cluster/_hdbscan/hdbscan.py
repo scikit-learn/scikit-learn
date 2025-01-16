@@ -6,13 +6,6 @@ HDBSCAN: Hierarchical Density-Based Spatial Clustering
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-# Authors: Leland McInnes <leland.mcinnes@gmail.com>
-#          Steve Astels <sastels@gmail.com>
-#          John Healy <jchealy@gmail.com>
-#          Meekail Zain <zainmeekail@gmail.com>
-# Copyright (c) 2015, Leland McInnes
-# All rights reserved.
-
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 
@@ -627,14 +620,17 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.cluster import HDBSCAN
     >>> from sklearn.datasets import load_digits
     >>> X, _ = load_digits(return_X_y=True)
     >>> hdb = HDBSCAN(min_cluster_size=20)
     >>> hdb.fit(X)
     HDBSCAN(min_cluster_size=20)
-    >>> hdb.labels_
-    array([ 2,  6, -1, ..., -1, -1, -1])
+    >>> hdb.labels_.shape == (X.shape[0],)
+    True
+    >>> np.unique(hdb.labels_).tolist()
+    [-1, 0, 1, 2, 3, 4, 5, 6, 7]
     """
 
     _parameter_constraints = {
@@ -1003,5 +999,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.input_tags.allow_nan = self.metric != "precomputed"
         return tags

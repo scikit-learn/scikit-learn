@@ -855,6 +855,11 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
 
         return score_function(y, y_pred, sample_weight=sample_weight)
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     """Multi-layer Perceptron classifier.

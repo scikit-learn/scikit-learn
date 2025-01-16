@@ -7,6 +7,8 @@ from numbers import Integral
 import numpy as np
 import scipy.sparse as sp
 
+from sklearn.utils import metadata_routing
+
 from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils._param_validation import Interval, StrOptions
 from ._hashing_fast import transform as _hashing_transform
@@ -103,6 +105,9 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
            [ 0.,  0.,  0., -1.,  0., -1.,  0.,  0.],
            [ 0., -1.,  0.,  0.,  0.,  0.,  0.,  1.]])
     """
+
+    # raw_X should have been called X
+    __metadata_request__transform = {"raw_X": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         "n_features": [Interval(Integral, 1, np.iinfo(np.int32).max, closed="both")],
