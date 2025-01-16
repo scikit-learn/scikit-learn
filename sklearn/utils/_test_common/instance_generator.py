@@ -591,12 +591,12 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     },
     MDS: {"check_dict_unchanged": dict(max_iter=5, n_components=1, n_init=2)},
     MLPClassifier: {
-        "check_sample_weight_equivalence": [
+        "check_sample_weight_equivalence_on_dense_data": [
             dict(solver="lbfgs"),
         ]
     },
     MLPRegressor: {
-        "check_sample_weight_equivalence": [
+        "check_sample_weight_equivalence_on_dense_data": [
             dict(solver="sgd", tol=1e-2, random_state=42),
         ]
     },
