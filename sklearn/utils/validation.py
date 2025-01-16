@@ -2365,6 +2365,15 @@ def _is_polars_df(X):
     return isinstance(X, pl.DataFrame)
 
 
+def _is_arrow_df(X):
+    """Return True if X is a pyarrow table."""
+    try:
+        pa = sys.modules["pyarrow"]
+    except KeyError:
+        return False
+    return isinstance(X, pa.Table)
+
+
 def _get_feature_names(X):
     """Get feature names from X.
 
