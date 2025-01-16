@@ -113,6 +113,48 @@ def test_one_hot_encoder_dtype_pandas(output_dtype):
     assert_array_equal(oh.fit(X_df).transform(X_df), X_expected)
 
 
+def test_one_hot_encoder_infrequent_should_warn():
+    X = np.array([["small"], ["small"], ["medium"], ["medium"], ["large"]])
+    X2 = np.array([["small"], ["medium"], ["large"], ["unknown"]])
+
+    # This case infrequent doesn't exist so unknown should be mapped to zeros
+    oh = OneHotEncoder(handle_unknown="infrequent_if_exist", sparse_output=False)
+    oh.fit(X)
+    warn_msg = (
+        r"Found unknown categories in columns \[0\] during "
+        "transform. These unknown categories will be encoded as "
+        "all zeros"
+    )
+
+    with pytest.warns(UserWarning, match=warn_msg):
+        assert_array_equal(
+            oh.transform(X2),
+            np.array(
+                [[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
+            ),
+        )
+
+    # This case should map large and unknown to the infrequent category, which is the
+    # last position on the encoding
+    oh = OneHotEncoder(
+        min_frequency=2, handle_unknown="infrequent_if_exist", sparse_output=False
+    )
+    oh.fit(X)
+    warn_msg = (
+        r"Found unknown categories in columns \[0\] during "
+        "transform. These unknown categories will be mapped to the last position "
+        "in the encoding"
+    )
+
+    with pytest.warns(UserWarning, match=warn_msg):
+        assert_array_equal(
+            oh.transform(X2),
+            np.array(
+                [[0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0]]
+            ),
+        )
+
+
 def test_one_hot_encoder_feature_names():
     enc = OneHotEncoder()
     X = [
@@ -679,6 +721,36 @@ def test_ordinal_encoder_inverse():
     msg = re.escape("Shape of the passed X data is not correct")
     with pytest.raises(ValueError, match=msg):
         enc.inverse_transform(X_tr)
+
+
+@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
+def test_ordinal_encoder_inverse_handle_unknown(handle_unknown):
+    X = [["abc", 2, 55], ["def", 1, 55], ["abc", 3, 55]]
+    oc = OrdinalEncoder(
+        handle_unknown=handle_unknown,
+        categories=[["abc", "def"], [1, 2], [54, 55, 56]],
+    )
+    X_tr = oc.fit_transform(X)
+    exp = np.array(X, dtype=object)
+    exp[2, 1] = None
+    assert_array_equal(oc.inverse_transform(X_tr), exp)
+    # with an otherwise numerical output, still object if unknown
+    X = [[2, 55], [1, 55], [3, 55]]
+    oc = OrdinalEncoder(
+        categories=[[1, 2], [54, 56]],
+        handle_unknown=handle_unknown,
+    )
+    X_tr = oc.fit_transform(X)
+    exp = np.array(X, dtype=object)
+    exp[2, 0] = None
+    exp[:, 1] = None
+    assert_array_equal(oc.inverse_transform(X_tr), exp)
+
+    # incorrect shape raises
+    X_tr = np.array([[0, 1, 1], [1, 0, 1]])
+    msg = re.escape("Shape of the passed X data is not correct")
+    with pytest.raises(ValueError, match=msg):
+        oc.inverse_transform(X_tr)
 
 
 def test_ordinal_encoder_handle_unknowns_string():
@@ -1785,6 +1857,114 @@ def test_ordinal_encoder_handle_missing_and_unknown(X, expected_X_trans, X_test)
     assert_allclose(X_trans, expected_X_trans)
 
     assert_allclose(oe.transform(X_test), [[-1.0]])
+
+
+@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
+def test_ordinal_encoder_handle_unknown(handle_unknown):
+    X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2]])
+    X2 = np.array([[4, 1, 1]])
+
+    # Test that one hot encoder raises error for unknown features
+    # present during transform.
+    oe = OrdinalEncoder(handle_unknown="error")
+    oe.fit(X)
+    with pytest.raises(ValueError, match="Found unknown categories"):
+        oe.transform(X2)
+
+    # Test the ignore option, ignores unknown features (giving all -1's)
+    oe = OrdinalEncoder(handle_unknown=handle_unknown)
+    oe.fit(X)
+    X2_passed = X2.copy()
+    assert_array_equal(
+        oe.transform(X2_passed),
+        np.array([[-1.0, -1.0, 0.0]]),
+    )
+    # ensure transformed data was not modified in place
+    assert_allclose(X2, X2_passed)
+
+
+@pytest.mark.parametrize("handle_unknown", ["infrequent_if_exist", "warn"])
+def test_ordinal_encoder_infrequent_should_warn(handle_unknown):
+    X = np.array([["small"], ["small"], ["medium"], ["medium"], ["large"]])
+    X2 = np.array([["small"], ["medium"], ["large"], ["unknown"]])
+
+    # This case infrequent doesn't exist so unknown should be mapped to -1
+    oe = OrdinalEncoder(handle_unknown=handle_unknown)
+    oe.fit(X)
+    warn_msg = (
+        r"Found unknown categories in columns \[0\] during "
+        "transform. These unknown categories will be encoded as "
+        "all -1"
+    )
+
+    with pytest.warns(UserWarning, match=warn_msg):
+        assert_array_equal(
+            oe.transform(X2).T,
+            np.array([[2.0, 1.0, 0.0, -1.0]]),
+        )
+
+    # This case should map large and unknown to the infrequent category, which is the
+    # last position on the encoding, 2
+    oe = OrdinalEncoder(min_frequency=2, handle_unknown=handle_unknown)
+    oe.fit(X)
+    warn_msg = (
+        r"Found unknown categories in columns \[0\] during "
+        "transform. These unknown categories will be mapped to the last position "
+        "in the encoding"
+    )
+
+    with pytest.warns(UserWarning, match=warn_msg):
+        assert_array_equal(oe.transform(X2).T, np.array([[1.0, 0.0, 2.0, 2.0]]))
+
+
+@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
+def test_ordinal_encoder_handle_unknown_strings(handle_unknown):
+    X = np.array(["11111111", "22", "333", "4444"]).reshape((-1, 1))
+    X2 = np.array(["55555", "22"]).reshape((-1, 1))
+
+    oe = OrdinalEncoder(handle_unknown=handle_unknown)
+    oe.fit(X)
+    # Note that 55555 unkown should be mapped to -1
+    X2_passed = X2.copy()
+    assert_array_equal(
+        oe.transform(X2_passed).T,
+        np.array([[-1.0, 1.0]]),
+    )
+    # ensure transformed data was not modified in place
+    assert_array_equal(X2, X2_passed)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"max_categories": 2},
+        {"min_frequency": 11},
+        {"min_frequency": 0.29},
+        {"max_categories": 2, "min_frequency": 6},
+        {"max_categories": 4, "min_frequency": 12},
+    ],
+)
+@pytest.mark.parametrize("categories", ["auto", [["a", "b", "c", "d"]]])
+def test_ordinal_encoder_infrequent_two_levels(kwargs, categories):
+    """Test that different parameters for combine 'a', 'c', and 'd' into
+    the infrequent category works as expected."""
+
+    X_train = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3]).T
+    oc = OrdinalEncoder(
+        categories=categories,
+        handle_unknown="infrequent_if_exist",
+        **kwargs,
+    ).fit(X_train)
+    assert_array_equal(oc.infrequent_categories_, [["a", "c", "d"]])
+
+    X_test = [["b"], ["a"], ["c"], ["d"], ["e"]]
+    expected = np.array([[0.0, 1.0, 1.0, 1.0, 1.0]])
+
+    X_trans = oc.transform(X_test)
+    assert_allclose(expected, X_trans.T)
+    expected_inv = [["b", *["infrequent_sklearn"] * 4]]
+    X_inv = oc.inverse_transform(X_trans)
+    assert_array_equal(expected_inv, X_inv.T)
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
