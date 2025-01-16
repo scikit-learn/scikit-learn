@@ -299,8 +299,8 @@ class BayesianRidge(RegressorMixin, LinearModel):
         # Convergence loop of the bayesian ridge regression
         for iter_ in range(self.max_iter):
             # update posterior mean coef_ based on alpha_ and lambda_ and
-            # compute corresponding mse
-            coef_, mse_ = self._update_coef_(
+            # compute corresponding sse (sum of squared errors)
+            coef_, sse_ = self._update_coef_(
                 X, y, n_samples, n_features, XT_y, U, Vh, eigen_vals_, alpha_, lambda_
             )
             if self.compute_score:
@@ -313,14 +313,14 @@ class BayesianRidge(RegressorMixin, LinearModel):
                     alpha_,
                     lambda_,
                     coef_,
-                    mse_,
+                    sse_,
                 )
                 self.scores_.append(s)
 
             # Update alpha and lambda according to (MacKay, 1992)
             gamma_ = np.sum((alpha_ * eigen_vals_) / (lambda_ + alpha_ * eigen_vals_))
             lambda_ = (gamma_ + 2 * lambda_1) / (np.sum(coef_**2) + 2 * lambda_2)
-            alpha_ = (sw_sum - gamma_ + 2 * alpha_1) / (mse_ + 2 * alpha_2)
+            alpha_ = (sw_sum - gamma_ + 2 * alpha_1) / (sse_ + 2 * alpha_2)
 
             # Check for convergence
             if iter_ != 0 and np.sum(np.abs(coef_old_ - coef_)) < self.tol:
@@ -335,7 +335,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
         # log marginal likelihood and posterior covariance
         self.alpha_ = alpha_
         self.lambda_ = lambda_
-        self.coef_, mse_ = self._update_coef_(
+        self.coef_, sse_ = self._update_coef_(
             X, y, n_samples, n_features, XT_y, U, Vh, eigen_vals_, alpha_, lambda_
         )
         if self.compute_score:
@@ -348,7 +348,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
                 alpha_,
                 lambda_,
                 coef_,
-                mse_,
+                sse_,
             )
             self.scores_.append(s)
             self.scores_ = np.array(self.scores_)
@@ -396,7 +396,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
     def _update_coef_(
         self, X, y, n_samples, n_features, XT_y, U, Vh, eigen_vals_, alpha_, lambda_
     ):
-        """Update posterior mean and compute corresponding mse.
+        """Update posterior mean and compute corresponding sse (sum of squared errors).
 
         Posterior mean is given by coef_ = scaled_sigma_ * X.T * y where
         scaled_sigma_ = (lambda_/alpha_ * np.eye(n_features)
@@ -413,13 +413,13 @@ class BayesianRidge(RegressorMixin, LinearModel):
             )
 
         # Note: we do not need to explicit use the weights in this sum because
-        # y and X were proprocessed by _rescale_data to handle the weights.
-        mse_ = np.sum((y - np.dot(X, coef_)) ** 2)
+        # y and X were preprocessed by _rescale_data to handle the weights.
+        sse_ = np.sum((y - np.dot(X, coef_)) ** 2)
 
-        return coef_, mse_
+        return coef_, sse_
 
     def _log_marginal_likelihood(
-        self, n_samples, n_features, sw_sum, eigen_vals, alpha_, lambda_, coef, mse
+        self, n_samples, n_features, sw_sum, eigen_vals, alpha_, lambda_, coef, sse
     ):
         """Log marginal likelihood."""
         alpha_1 = self.alpha_1
@@ -442,7 +442,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
         score += 0.5 * (
             n_features * log(lambda_)
             + sw_sum * log(alpha_)
-            - alpha_ * mse
+            - alpha_ * sse
             - lambda_ * np.sum(coef**2)
             + logdet_sigma
             - sw_sum * log(2 * np.pi)
@@ -704,12 +704,12 @@ class ARDRegression(RegressorMixin, LinearModel):
             coef_ = update_coeff(X, y, coef_, alpha_, keep_lambda, sigma_)
 
             # Update alpha and lambda
-            mse_ = np.sum((y - np.dot(X, coef_)) ** 2)
+            sse_ = np.sum((y - np.dot(X, coef_)) ** 2)
             gamma_ = 1.0 - lambda_[keep_lambda] * np.diag(sigma_)
             lambda_[keep_lambda] = (gamma_ + 2.0 * lambda_1) / (
                 (coef_[keep_lambda]) ** 2 + 2.0 * lambda_2
             )
-            alpha_ = (n_samples - gamma_.sum() + 2.0 * alpha_1) / (mse_ + 2.0 * alpha_2)
+            alpha_ = (n_samples - gamma_.sum() + 2.0 * alpha_1) / (sse_ + 2.0 * alpha_2)
 
             # Prune the weights with a precision over a threshold
             keep_lambda = lambda_ < self.threshold_lambda
@@ -724,7 +724,7 @@ class ARDRegression(RegressorMixin, LinearModel):
                     + n_samples * log(alpha_)
                     + np.sum(np.log(lambda_))
                 )
-                s -= 0.5 * (alpha_ * mse_ + (lambda_ * coef_**2).sum())
+                s -= 0.5 * (alpha_ * sse_ + (lambda_ * coef_**2).sum())
                 self.scores_.append(s)
 
             # Check for convergence
