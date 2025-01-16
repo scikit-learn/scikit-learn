@@ -2086,14 +2086,15 @@ the actual formulas).
 
 .. dropdown:: Mathematical divergences
 
-  The positive likelihood ratio (`LR+`) is undefined when :math:`fp = 0`, meaning the
-  classifier does not misclassify any negatives as positives. This condition can either
-  indicate a perfect identification of all the negative cases or, if there are also no
-  true positive predictions (:math:`tp = 0`), that the classifier does not predict the positive
-  class at all. In the first case, `LR+` can be interpreted as `np.inf`, in the second
-  case (for instance, with highly imbalanced data) it can be interpreted as `np.nan`.
+  The positive likelihood ratio (`LR+`) is undefined when :math:`fp=0`, meaning the
+  classifier does not misclassify any negative labels as positives. This condition can
+  either indicate a perfect identification of all the negative cases or, if there are
+  also no true positive predictions (:math:`tp=0`), that the classifier does not predict
+  the positive class at all. In the first case, `LR+` can be interpreted as `np.inf`, in
+  the second case (for instance, with highly imbalanced data) it can be interpreted as
+  `np.nan`.
 
-  The negative likelihood ratio (`LR-`) is undefined when :math:`tn = 0`. Such
+  The negative likelihood ratio (`LR-`) is undefined when :math:`tn=0`. Such
   divergence is invalid, as :math:`LR_- > 1.0` would indicate an increase in the odds of
   a sample belonging to the positive class after being classified as negative, as if the
   act of classifying caused the positive condition. This includes the case of a
