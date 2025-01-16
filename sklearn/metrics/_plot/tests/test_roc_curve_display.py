@@ -263,16 +263,18 @@ def test_roc_curve_display_complex_pipeline(pyplot, data_binary, clf, constructo
         ([0.9, 0.8], None, ["AUC = 0.90", "AUC = 0.80"]),
         ([0.8, 0.7], [None, None], ["AUC = 0.80", "AUC = 0.70"]),
         (None, ["fold1", "fold2"], ["fold1", "fold2"]),
-        ([0.8, 0.7], ["my_est2", "my_est2"], ["my_est2 (AUC = 0.80)", "my_est2 (AUC = 0.70)"]),
+        (
+            [0.8, 0.7],
+            ["my_est2", "my_est2"],
+            ["my_est2 (AUC = 0.80)", "my_est2 (AUC = 0.70)"],
+        ),
     ],
 )
 def test_roc_curve_display_default_labels(pyplot, roc_aucs, names, expected_labels):
     """Check the default labels used in the display."""
     fprs = [np.array([0, 0.5, 1]), np.array([0, 0.3, 1])]
     tprs = [np.array([0, 0.5, 1]), np.array([0, 0.3, 1])]
-    disp = RocCurveDisplay(
-        fprs=fprs, tprs=tprs, roc_aucs=roc_aucs, names=names
-    ).plot()
+    disp = RocCurveDisplay(fprs=fprs, tprs=tprs, roc_aucs=roc_aucs, names=names).plot()
     for idx, expected_label in enumerate(expected_labels):
         assert disp.lines_[idx].get_label() == expected_label
 
