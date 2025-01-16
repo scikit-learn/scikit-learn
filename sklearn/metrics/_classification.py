@@ -2044,7 +2044,7 @@ def class_likelihood_ratios(
     (np.float64(1.5), np.float64(0.75))
     >>> y_true = np.array(["non-cat", "cat", "non-cat", "cat", "non-cat"])
     >>> y_pred = np.array(["cat", "cat", "non-cat", "non-cat", "non-cat"])
-    >>> class_likelihood_ratios(y_true, y_pred, replace_undefined_by=1.0')
+    >>> class_likelihood_ratios(y_true, y_pred, replace_undefined_by=1.0)
     (np.float64(1.33...), np.float64(0.66...))
     >>> y_true = np.array(["non-zebra", "zebra", "non-zebra", "zebra", "non-zebra"])
     >>> y_pred = np.array(["zebra", "zebra", "non-zebra", "non-zebra", "non-zebra"])
