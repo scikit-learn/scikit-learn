@@ -8,6 +8,8 @@ from contextlib import suppress
 from functools import partial
 from inspect import isfunction
 
+import numpy as np
+
 from sklearn import clone, config_context
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.cluster import (
@@ -111,6 +113,7 @@ from sklearn.linear_model import (
     RANSACRegressor,
     Ridge,
     RidgeClassifier,
+    RidgeClassifierCV,
     RidgeCV,
     SGDClassifier,
     SGDOneClassSVM,
@@ -537,6 +540,10 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             max_iter=20, n_components=1, transform_algorithm="lasso_lars"
         )
     },
+    ElasticNetCV: {
+        "check_sample_weight_equivalence_on_dense_data": dict(max_iter=100, tol=1e-2),
+        "check_sample_weight_equivalence_on_sparse_data": dict(max_iter=100, tol=1e-2),
+    },
     FactorAnalysis: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     FastICA: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     FeatureAgglomeration: {"check_dict_unchanged": dict(n_clusters=1)},
@@ -554,39 +561,89 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     },
     GammaRegressor: {
         "check_sample_weight_equivalence_on_dense_data": [
-            dict(solver="newton-cholesky"),
-            dict(solver="lbfgs"),
+            dict(solver="newton-cholesky", max_iter=1_000, tol=1e-12),
+            dict(solver="lbfgs", max_iter=1_000, tol=1e-12),
+        ],
+        "check_sample_weight_equivalence_on_sparse_data": [
+            dict(solver="newton-cholesky", max_iter=1_000, tol=1e-12),
+            dict(solver="lbfgs", max_iter=1_000, tol=1e-12),
         ],
     },
     GaussianMixture: {"check_dict_unchanged": dict(max_iter=5, n_init=2)},
     GaussianRandomProjection: {"check_dict_unchanged": dict(n_components=1)},
+    HuberRegressor: {
+        "check_sample_weight_equivalence_on_dense_data": dict(
+            tol=1e-12, max_iter=1_000
+        ),
+        "check_sample_weight_equivalence_on_sparse_data": dict(
+            tol=1e-12, max_iter=1_000
+        ),
+    },
     IncrementalPCA: {"check_dict_unchanged": dict(batch_size=10, n_components=1)},
     Isomap: {"check_dict_unchanged": dict(n_components=1)},
     KMeans: {"check_dict_unchanged": dict(max_iter=5, n_clusters=1, n_init=2)},
     KernelPCA: {"check_dict_unchanged": dict(n_components=1)},
     LassoLars: {"check_non_transformer_estimators_n_iter": dict(alpha=0.0)},
+    LassoCV: {
+        "check_sample_weight_equivalence_on_dense_data": dict(max_iter=100, tol=1e-2),
+        "check_sample_weight_equivalence_on_sparse_data": dict(max_iter=100, tol=1e-2),
+    },
     LatentDirichletAllocation: {
         "check_dict_unchanged": dict(batch_size=10, max_iter=5, n_components=1)
     },
     LinearDiscriminantAnalysis: {"check_dict_unchanged": dict(n_components=1)},
-    LinearRegression: {
-        "check_estimator_sparse_tag": [dict(positive=False), dict(positive=True)],
+    LinearSVC: {
         "check_sample_weight_equivalence_on_dense_data": [
-            dict(positive=False),
-            dict(positive=True),
+            dict(dual=False, max_iter=1_000, tol=1e-12),
+            # XXX: the dual solver has trouble converging on the repeated test
+            # data with a lower tolerance. Futhermore, the solver is not
+            # deterministic with dual=True. We would need a statistical test
+            # to check weight/repetition equivalence instead.
+            # dict(dual=True, max_iter=1_000, tol=1e-3),
+        ],
+        "check_sample_weight_equivalence_on_sparse_data": [
+            dict(dual=False, max_iter=1_000, tol=1e-12),
+        ],
+    },
+    LinearSVR: {
+        "check_sample_weight_equivalence_on_dense_data": [
+            dict(max_iter=1_000, tol=1e-8),
+        ],
+        "check_sample_weight_equivalence_on_sparse_data": [
+            dict(max_iter=1_000, tol=1e-8),
         ],
         "check_sample_weight_equivalence_on_sparse_data": [dict(tol=1e-12)],
     },
     LocallyLinearEmbedding: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     LogisticRegression: {
         "check_sample_weight_equivalence_on_dense_data": [
-            dict(solver="lbfgs"),
-            dict(solver="liblinear"),
-            dict(solver="newton-cg"),
-            dict(solver="newton-cholesky"),
+            dict(solver="lbfgs", max_iter=1_000, tol=1e-12),
+            dict(solver="newton-cg", max_iter=1_000, tol=1e-12),
+            dict(solver="newton-cholesky", max_iter=1_000, tol=1e-12),
+            # liblinear has more problems with higher regularization apparently...
+            dict(solver="liblinear", C=0.01, max_iter=1_000, tol=1e-12),
         ],
         "check_sample_weight_equivalence_on_sparse_data": [
-            dict(solver="liblinear"),
+            # liblinear has more problems with higher regularization apparently...
+            dict(solver="liblinear", C=0.01, max_iter=1_000, tol=1e-12),
+        ],
+    },
+    LogisticRegressionCV: {
+        "check_sample_weight_equivalence_on_dense_data": [
+            dict(
+                solver="newton-cholesky",
+                Cs=np.logspace(-3, 3, 5),
+                max_iter=1_000,
+                tol=1e-12,
+            ),
+        ],
+        "check_sample_weight_equivalence_on_sparse_data": [
+            dict(
+                solver="newton-cholesky",
+                Cs=np.logspace(-3, 3, 5),
+                max_iter=1_000,
+                tol=1e-12,
+            ),
         ],
     },
     MDS: {"check_dict_unchanged": dict(max_iter=5, n_components=1, n_init=2)},
@@ -625,8 +682,12 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     PLSSVD: {"check_dict_unchanged": dict(n_components=1)},
     PoissonRegressor: {
         "check_sample_weight_equivalence_on_dense_data": [
-            dict(solver="newton-cholesky"),
-            dict(solver="lbfgs"),
+            dict(solver="newton-cholesky", max_iter=100),
+            dict(solver="lbfgs", max_iter=100),
+        ],
+        "check_sample_weight_equivalence_on_sparse_data": [
+            dict(solver="newton-cholesky", max_iter=100),
+            dict(solver="lbfgs", max_iter=100),
         ],
     },
     PolynomialCountSketch: {"check_dict_unchanged": dict(n_components=1)},
@@ -643,26 +704,39 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
         "check_sample_weight_equivalence_on_dense_data": [
             dict(solver="svd"),
             dict(solver="cholesky"),
-            dict(solver="sparse_cg"),
-            dict(solver="lsqr"),
+            dict(solver="sparse_cg", tol=1e-12),
+            dict(solver="lsqr", tol=1e-12),
             dict(solver="lbfgs", positive=True),
         ],
         "check_sample_weight_equivalence_on_sparse_data": [
-            dict(solver="sparse_cg"),
-            dict(solver="lsqr"),
+            dict(solver="sparse_cg", tol=1e-12),
+            dict(solver="lsqr", tol=1e-12),
         ],
     },
     RidgeClassifier: {
         "check_sample_weight_equivalence_on_dense_data": [
             dict(solver="svd"),
             dict(solver="cholesky"),
-            dict(solver="sparse_cg"),
-            dict(solver="lsqr"),
+            dict(solver="sparse_cg", tol=1e-12),
+            dict(solver="lsqr", tol=1e-12),
+            dict(solver="lbfgs", positive=True),
         ],
         "check_sample_weight_equivalence_on_sparse_data": [
-            dict(solver="sparse_cg"),
-            dict(solver="lsqr"),
+            dict(solver="sparse_cg", tol=1e-12),
+            dict(solver="lsqr", tol=1e-12),
         ],
+    },
+    RidgeCV: {
+        # XXX: the default grid (0.1, 1, 10.) is not wide and fine enough to
+        # detect discrepancies that impact the choice of the best alpha.
+        "check_sample_weight_equivalence_on_dense_data": dict(
+            alphas=np.logspace(-3, 3, 5)
+        ),
+    },
+    RidgeClassifierCV: {
+        "check_sample_weight_equivalence_on_dense_data": dict(
+            alphas=np.logspace(-3, 3, 5)
+        ),
     },
     SkewedChi2Sampler: {"check_dict_unchanged": dict(n_components=1)},
     SparsePCA: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
@@ -688,8 +762,12 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     TruncatedSVD: {"check_dict_unchanged": dict(n_components=1)},
     TweedieRegressor: {
         "check_sample_weight_equivalence_on_dense_data": [
-            dict(solver="newton-cholesky"),
-            dict(solver="lbfgs"),
+            dict(solver="newton-cholesky", max_iter=1_000, tol=1e-12),
+            dict(solver="lbfgs", max_iter=1_000, tol=1e-12),
+        ],
+        "check_sample_weight_equivalence_on_sparse_data": [
+            dict(solver="newton-cholesky", max_iter=1_000, tol=1e-12),
+            dict(solver="lbfgs", max_iter=1_000, tol=1e-12),
         ],
     },
 }
@@ -841,9 +919,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_sample_weight_equivalence_on_dense_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
-        "check_sample_weight_equivalence_on_sparse_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
+        # "check_sample_weight_equivalence_on_sparse_data": (
+        #     "sample_weight is not equivalent to removing/repeating samples."
+        # ),
     },
     BernoulliRBM: {
         "check_methods_subset_invariance": ("fails for the decision_function method"),
@@ -995,34 +1073,25 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_methods_sample_order_invariance": "check is not applicable."
     },
     LinearSVC: {
-        # TODO: replace by a statistical test when _dual=True, see meta-issue #16298
-        "check_sample_weight_equivalence_on_dense_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-        "check_sample_weight_equivalence_on_sparse_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
+        # TODO: replace by a statistical test when dual=True, see meta-issue #16298
+        # "check_sample_weight_equivalence_on_dense_data": (
+        #     "sample_weight is not equivalent to removing/repeating samples."
+        # ),
+        # "check_sample_weight_equivalence_on_sparse_data": (
+        #     "sample_weight is not equivalent to removing/repeating samples."
+        # ),
         "check_non_transformer_estimators_n_iter": (
             "n_iter_ cannot be easily accessed."
         ),
     },
     LinearSVR: {
         # TODO: replace by a statistical test, see meta-issue #16298
-        "check_sample_weight_equivalence_on_dense_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-        "check_sample_weight_equivalence_on_sparse_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-    },
-    LogisticRegression: {
-        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
-        "check_sample_weight_equivalence_on_dense_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-        "check_sample_weight_equivalence_on_sparse_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
+        # "check_sample_weight_equivalence_on_dense_data": (
+        #     "sample_weight is not equivalent to removing/repeating samples."
+        # ),
+        # "check_sample_weight_equivalence_on_sparse_data": (
+        #     "sample_weight is not equivalent to removing/repeating samples."
+        # ),
     },
     MiniBatchKMeans: {
         # TODO: replace by a statistical test, see meta-issue #16298

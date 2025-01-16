@@ -50,6 +50,7 @@ from ..datasets import (
     make_regression,
 )
 from ..exceptions import (
+    ConvergenceWarning,
     DataConversionWarning,
     EstimatorCheckFailedWarning,
     NotFittedError,
@@ -1510,11 +1511,38 @@ def _check_sample_weight_equivalence(name, estimator_orig, sparse_container):
     set_random_state(estimator_repeated, random_state=0)
 
     rng = np.random.RandomState(42)
-    n_samples = 15
-    X = rng.rand(n_samples, n_samples * 2)
-    y = rng.randint(0, 3, size=n_samples)
+
+    # Generate some random data with 3 classes that could either be used for
+    # classification or regression. We use a large number of features to give
+    # more freedom to the estimator when fitting and be more sensitive to
+    # train data weighting/resampling as a result.
+    n_samples_with_small_weights = 16
+    n_features = n_samples_with_small_weights * 2
+    X, y = make_classification(
+        n_samples=n_samples_with_small_weights,
+        n_classes=2,
+        n_features=n_features,
+        n_informative=3 * n_features // 4,
+        random_state=rng,
+    )
     # Use random integers (including zero) as weights.
-    sw = rng.randint(0, 5, size=n_samples)
+    sw = rng.randint(0, 3, size=n_samples_with_small_weights)
+
+    # Add a third class with a few data points but with heavier weights right
+    # in the middle of the rest of the data.
+    n_samples_with_large_weights = 4
+    X_with_large_weights = rng.normal(
+        loc=X[y == 0].mean(axis=0),
+        scale=0.01,
+        size=(n_samples_with_large_weights, n_features),
+    )
+    X = np.vstack([X, X_with_large_weights])
+    y = np.hstack([y, [2] * n_samples_with_large_weights])
+    sw = np.hstack([sw, [100] * n_samples_with_large_weights])
+
+    tags = get_tags(estimator_orig)
+    if tags.input_tags.positive_only:
+        X -= X.min(axis=0)
 
     X_weighted = X
     y_weighted = y
@@ -1556,19 +1584,36 @@ def _check_sample_weight_equivalence(name, estimator_orig, sparse_container):
         X_weighted = sparse_container(X_weighted)
         X_repeated = sparse_container(X_repeated)
 
-    estimator_repeated.fit(X_repeated, y=y_repeated, sample_weight=None)
-    estimator_weighted.fit(X_weighted, y=y_weighted, sample_weight=sw)
+    with warnings.catch_warnings(record=True):
+        # Ensure we converge, otherwise debugging sample_weight equivalence
+        # failures can be very misleading.
+        warnings.simplefilter("error", category=ConvergenceWarning)
+
+        estimator_repeated.fit(X_repeated, y=y_repeated, sample_weight=None)
+        estimator_weighted.fit(X_weighted, y=y_weighted, sample_weight=sw)
+
+    X_test = rng.uniform(low=X.min(), high=X.max(), size=(300, n_features))
+    if sparse_container is not None:
+        X_test = sparse_container(X_test)
 
     for method in ["predict_proba", "decision_function", "predict", "transform"]:
         if hasattr(estimator_orig, method):
-            X_pred1 = getattr(estimator_repeated, method)(X)
-            X_pred2 = getattr(estimator_weighted, method)(X)
+            X_pred1 = getattr(estimator_repeated, method)(X_test)
+            X_pred2 = getattr(estimator_weighted, method)(X_test)
             err_msg = (
                 f"Comparing the output of {name}.{method} revealed that fitting "
                 "with `sample_weight` is not equivalent to fitting with removed "
                 "or repeated data points."
             )
-            assert_allclose_dense_sparse(X_pred1, X_pred2, err_msg=err_msg)
+
+            # We use a large tolerance than usual because this check is pushing
+            # the solvers to their limits and it is acceptable to tolerate some
+            # cumulative rounding errors after many iterations. But if the
+            # `sample_weight` is not equivalent to removing or repeating data
+            # points, the error will be large and the test will fail.
+            assert_allclose_dense_sparse(
+                X_pred1, X_pred2, err_msg=err_msg, rtol=1e-5, atol=1e-6
+            )
 
 
 def check_sample_weight_equivalence_on_dense_data(name, estimator_orig):
