@@ -219,7 +219,7 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
         return activation
 
     def _compute_loss_grad(
-        self, layer, n_sum, activations, deltas, coef_grads, intercept_grads
+        self, layer, sw_sum, activations, deltas, coef_grads, intercept_grads
     ):
         """Compute the gradient of loss with respect to coefs and intercept for
         specified layer.
@@ -228,9 +228,9 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
         """
         coef_grads[layer] = safe_sparse_dot(activations[layer].T, deltas[layer])
         coef_grads[layer] += self.alpha * self.coefs_[layer]
-        coef_grads[layer] /= n_sum
+        coef_grads[layer] /= sw_sum
 
-        intercept_grads[layer] = np.sum(deltas[layer], axis=0) / n_sum
+        intercept_grads[layer] = np.sum(deltas[layer], axis=0) / sw_sum
 
     def _loss_grad_lbfgs(
         self,
@@ -350,10 +350,10 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
             s = s.ravel()
             values += np.dot(s, s)
         if sample_weight is None:
-            n_sum = n_samples
+            sw_sum = n_samples
         else:
-            n_sum = sample_weight.sum()
-        loss += (0.5 * self.alpha) * values / n_sum
+            sw_sum = sample_weight.sum()
+        loss += (0.5 * self.alpha) * values / sw_sum
 
         # Backward propagate
         last = self.n_layers_ - 2
@@ -372,7 +372,7 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
 
         # Compute gradient for the last layer
         self._compute_loss_grad(
-            last, n_sum, activations, deltas, coef_grads, intercept_grads
+            last, sw_sum, activations, deltas, coef_grads, intercept_grads
         )
 
         inplace_derivative = DERIVATIVES[self.activation]
@@ -382,7 +382,7 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
             inplace_derivative(activations[i], deltas[i - 1])
 
             self._compute_loss_grad(
-                i - 1, n_sum, activations, deltas, coef_grads, intercept_grads
+                i - 1, sw_sum, activations, deltas, coef_grads, intercept_grads
             )
 
         return loss, coef_grads, intercept_grads
