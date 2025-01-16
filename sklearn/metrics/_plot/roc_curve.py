@@ -222,7 +222,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         **kwargs : dict
             For a single curve plots only, keyword arguments to be passed to
             matplotlib's `plot`. Ignored for multi-curve plots.
-            (Note req for backwards compat, maybe not ideal?)
+            (Note req for backwards compat, maybe not ideal?).
 
         Returns
         -------
