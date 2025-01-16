@@ -434,7 +434,8 @@ complies with the following rules before marking a PR as "ready for review". The
    and pass for the PR code.
 
 5. If your PR is likely to affect users, you need to add a changelog entry describing
-   your PR changes, see the `following README <https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md>`
+   your PR changes. See the
+   `README <https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md>`_
    for more details.
 
 6. Follow the :ref:`coding-guidelines`.
