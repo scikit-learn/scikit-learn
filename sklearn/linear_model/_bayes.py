@@ -412,6 +412,8 @@ class BayesianRidge(RegressorMixin, LinearModel):
                 [X.T, U / (eigen_vals_ + lambda_ / alpha_)[None, :], U.T, y]
             )
 
+        # Note: we do not need to explicit use the weights in this sum because
+        # y and X were proprocessed by _rescale_data to handle the weights.
         mse_ = np.sum((y - np.dot(X, coef_)) ** 2)
 
         return coef_, mse_
