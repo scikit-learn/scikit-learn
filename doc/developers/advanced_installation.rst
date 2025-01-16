@@ -59,7 +59,7 @@ feature, code or documentation improvement).
    instead.
 
 #. Install a recent version of Python (3.9 or later at the time of writing) for
-   instance using Miniforge3_. Miniforge provides a conda-based distribution of
+   instance using Condaforge_. Conda-forge provides a conda-based distribution of
    Python and the most popular scientific libraries.
 
    If you installed Python with conda, we recommend to create a dedicated
@@ -258,8 +258,8 @@ to enable OpenMP support:
 
 For Apple Silicon M1 hardware, only the conda-forge method below is known to
 work at the time of writing (January 2021). You can install the `macos/arm64`
-distribution of conda using the `miniforge installer
-<https://github.com/conda-forge/miniforge#miniforge>`_
+distribution of conda using the `conda-forge installer
+<https://conda-forge.org/download/>`_
 
 macOS compilers from conda-forge
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -482,4 +482,4 @@ the base system and these steps will not be necessary.
 .. _Homebrew: https://brew.sh
 .. _virtualenv: https://docs.python.org/3/tutorial/venv.html
 .. _conda environment: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
-.. _Miniforge3: https://github.com/conda-forge/miniforge#miniforge3
+.. _Condaforge: https://conda-forge.org/download/

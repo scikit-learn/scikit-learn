@@ -3,7 +3,7 @@
 # input_hash: 8a4a203136d97ff3b2c8657fce2dd2228215bfbf9c1cfbe271e401f934bdf1a7
 @EXPLICIT
 https://repo.anaconda.com/pkgs/main/linux-64/_libgcc_mutex-0.1-main.conda#c3473ff8bdb3d124ed5ff11ec380d6f9
-https://repo.anaconda.com/pkgs/main/linux-64/ca-certificates-2024.11.26-h06a4308_0.conda#cebd61e6520159a1315d679321620f6c
+https://repo.anaconda.com/pkgs/main/linux-64/ca-certificates-2024.12.31-h06a4308_0.conda#3208a05dc81c1e3a788fd6e5a5a38295
 https://repo.anaconda.com/pkgs/main/linux-64/ld_impl_linux-64-2.40-h12ee557_0.conda#ee672b5f635340734f58d618b7bca024
 https://repo.anaconda.com/pkgs/main/linux-64/python_abi-3.13-0_cp313.conda#d4009c49dd2b54ffded7f1365b5f6505
 https://repo.anaconda.com/pkgs/main/noarch/tzdata-2024b-h04d1e81_0.conda#9be694715c6a65f9631bb1b242125e9d
@@ -44,7 +44,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/pip-24.2-py313h06a4308_0.conda#59f8
 # pip packaging @ https://files.pythonhosted.org/packages/88/ef/eb23f262cca3c0c4eb7ab1933c3b1f03d021f2c48f54763065b6f0e321be/packaging-24.2-py3-none-any.whl#sha256=09abb1bccd265c01f4a3aa3f7a7db064b36514d2cba19a2f694fe6150451a759
 # pip platformdirs @ https://files.pythonhosted.org/packages/3c/a6/bc1012356d8ece4d66dd75c4b9fc6c1f6650ddd5991e421177d9f8f671be/platformdirs-4.3.6-py3-none-any.whl#sha256=73e575e1408ab8103900836b97580d5307456908a03e92031bab39e4554cc3fb
 # pip pluggy @ https://files.pythonhosted.org/packages/88/5f/e351af9a41f866ac3f1fac4ca0613908d9a41741cfcf2228f4ad853b697d/pluggy-1.5.0-py3-none-any.whl#sha256=44e1ad92c8ca002de6377e165f3e0f1be63266ab4d554740532335b9d75ea669
-# pip pygments @ https://files.pythonhosted.org/packages/20/dc/fde3e7ac4d279a331676829af4afafd113b34272393d73f610e8f0329221/pygments-2.19.0-py3-none-any.whl#sha256=4755e6e64d22161d5b61432c0600c923c5927214e7c956e31c23923c89251a9b
+# pip pygments @ https://files.pythonhosted.org/packages/8a/0b/9fcc47d19c48b59121088dd6da2488a49d5f72dacf8262e2790a1d2c7d15/pygments-2.19.1-py3-none-any.whl#sha256=9ea1544ad55cecf4b8242fab6dd35a93bbce657034b0611ee383099054ab6d8c
 # pip six @ https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl#sha256=4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274
 # pip snowballstemmer @ https://files.pythonhosted.org/packages/ed/dc/c02e01294f7265e63a7315fe086dd1df7dacb9f840a804da846b96d01b96/snowballstemmer-2.2.0-py2.py3-none-any.whl#sha256=c8e1716e83cc398ae16824e5572ae04e0d9fc2c6b985fb0f900f5f0c96ecba1a
 # pip sphinxcontrib-applehelp @ https://files.pythonhosted.org/packages/5d/85/9ebeae2f76e9e77b952f4b274c27238156eae7979c5421fba91a28f4970d/sphinxcontrib_applehelp-2.0.0-py3-none-any.whl#sha256=4cd3f0ec4ac5dd9c17ec65e9ab272c9b867ea77425228e68ecf08d6b28ddbdb5
