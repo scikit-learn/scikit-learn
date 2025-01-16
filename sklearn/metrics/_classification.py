@@ -2079,7 +2079,7 @@ def class_likelihood_ratios(
 
     msg_deprecated_param = (
         "`raise_warning` was deprecated in version 1.7 and will be "
-        "removed in 1.9, when an `UndefinedMetricWarning` will always raise in "
+        "removed in 1.9. An `UndefinedMetricWarning` will always be raised in "
         "case of a division by zero and the value set with the "
         "`replace_undefined_by` param will be returned."
     )

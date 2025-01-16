@@ -2089,7 +2089,7 @@ the actual formulas).
   The positive likelihood ratio (`LR+`) is undefined when :math:`fp = 0`, meaning the
   classifier does not misclassify any negatives as positives. This condition can either
   indicate a perfect identification of all the negative cases or, if there are also no
-  true positive predictions (tp = 0), that the classifier does not predict the positive
+  true positive predictions (:math:`tp = 0`), that the classifier does not predict the positive
   class at all. In the first case, `LR+` can be interpreted as `np.inf`, in the second
   case (for instance, with highly imbalanced data) it can be interpreted as `np.nan`.
 

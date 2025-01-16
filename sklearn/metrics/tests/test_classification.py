@@ -802,7 +802,7 @@ def test_likelihood_ratios_replace_undefined_by_worst():
     positive_likelihood_ratio, _ = class_likelihood_ratios(
         y_true, y_pred, replace_undefined_by="worst"
     )
-    assert positive_likelihood_ratio == 1.0
+    assert positive_likelihood_ratio == pytest.approx(1.0)
 
     # This data causes tn=0 (0 true negatives) in the confusion_matrix and a division
     # by zero that affects the negative_likelihood_ratio:
@@ -812,7 +812,7 @@ def test_likelihood_ratios_replace_undefined_by_worst():
     _, negative_likelihood_ratio = class_likelihood_ratios(
         y_true, y_pred, replace_undefined_by="worst"
     )
-    assert negative_likelihood_ratio == 1.0
+    assert negative_likelihood_ratio == pytest.approx(1.0)
 
 
 @pytest.mark.parametrize(
@@ -864,7 +864,7 @@ def test_likelihood_ratios_replace_undefined_by_0_fp(replace_undefined_by, expec
     if np.isnan(expected):
         assert np.isnan(positive_likelihood_ratio)
     else:
-        assert positive_likelihood_ratio == expected
+        assert positive_likelihood_ratio == pytest.approx(expected)
 
 
 @pytest.mark.parametrize(
@@ -892,7 +892,7 @@ def test_likelihood_ratios_replace_undefined_by_0_tn(replace_undefined_by, expec
     if np.isnan(expected):
         assert np.isnan(negative_likelihood_ratio)
     else:
-        assert negative_likelihood_ratio == expected
+        assert negative_likelihood_ratio == pytest.approx(expected)
 
 
 def test_cohen_kappa():
