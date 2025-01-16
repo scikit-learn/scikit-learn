@@ -4,8 +4,6 @@ This directory (`doc/whats_new/upcoming_changes`) contains "news fragments",
 which are short files that contain a small **ReST**-formatted text that will be
 added to the next release changelog.
 
-In October 2024, scikit-learn DO NOT add your changelog entry in this file
-
 Each file should be named like `<PULL REQUEST>.<TYPE>.rst`, where
 `<PULL REQUEST>` is a pull request number, and `<TYPE>` is one of:
 
