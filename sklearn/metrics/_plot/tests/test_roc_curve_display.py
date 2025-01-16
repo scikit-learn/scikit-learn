@@ -9,7 +9,7 @@ from sklearn.datasets import load_breast_cancer, load_iris
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import RocCurveDisplay, auc, roc_curve
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_validate, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
@@ -258,22 +258,23 @@ def test_roc_curve_display_complex_pipeline(pyplot, data_binary, clf, constructo
 
 
 @pytest.mark.parametrize(
-    "roc_aucs, names, expected_label",
+    "roc_aucs, names, expected_labels",
     [
-        (0.9, None, "AUC = 0.90"),
-        (None, ["my_est"], "my_est"),
-        (0.8, ["my_est2"], "my_est2 (AUC = 0.80)"),
+        ([0.9, 0.8], None, ["AUC = 0.90", "AUC = 0.80"]),
+        ([0.8, 0.7], [None, None], ["AUC = 0.80", "AUC = 0.70"]),
+        (None, ["fold1", "fold2"], ["fold1", "fold2"]),
+        ([0.8, 0.7], ["my_est2", "my_est2"], ["my_est2 (AUC = 0.80)", "my_est2 (AUC = 0.70)"]),
     ],
 )
-def test_roc_curve_display_default_labels(pyplot, roc_aucs, names, expected_label):
+def test_roc_curve_display_default_labels(pyplot, roc_aucs, names, expected_labels):
     """Check the default labels used in the display."""
-    fpr = np.array([0, 0.5, 1])
-    tpr = np.array([0, 0.5, 1])
+    fprs = [np.array([0, 0.5, 1]), np.array([0, 0.3, 1])]
+    tprs = [np.array([0, 0.5, 1]), np.array([0, 0.3, 1])]
     disp = RocCurveDisplay(
-        fprs=[fpr], tprs=[tpr], roc_aucs=[roc_aucs], names=names
+        fprs=fprs, tprs=tprs, roc_aucs=roc_aucs, names=names
     ).plot()
-    print(disp.lines_[0].get_label())
-    # assert disp.lines_[0].get_label() == expected_label
+    for idx, expected_label in enumerate(expected_labels):
+        assert disp.lines_[idx].get_label() == expected_label
 
 
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
@@ -301,7 +302,7 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
     classifier = LogisticRegression()
     classifier.fit(X_train, y_train)
 
-    # sanity check to be sure the positive class is classes_[0] and that we
+    # sanity check to be sure the positive class is `classes_[0]` and that we
     # are betrayed by the class imbalance
     assert classifier.classes_.tolist() == ["cancer", "not cancer"]
 
