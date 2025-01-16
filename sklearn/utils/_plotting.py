@@ -83,7 +83,9 @@ class _BinaryClassifierCurveDisplayMixin:
                     f"{curve_name} ({summary_value_name} = {curve_summary_value:0.2f})"
                 )
             elif curve_summary_value is not None:
-                default_line_kwargs["label"] = f"{summary_value_name} = {curve_summary_value:0.2f}"
+                default_line_kwargs["label"] = (
+                    f"{summary_value_name} = {curve_summary_value:0.2f}"
+                )
             elif curve_name is not None:
                 default_line_kwargs["label"] = curve_name
 
