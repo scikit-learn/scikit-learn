@@ -828,7 +828,7 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
-            .. versionadded:: 1.6
+            .. versionadded:: 1.7
 
         Returns
         -------
@@ -1295,7 +1295,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
-            .. versionadded:: 1.6
+            .. versionadded:: 1.7
 
         classes : array of shape (n_classes,), default=None
             Classes across all calls to partial_fit.
