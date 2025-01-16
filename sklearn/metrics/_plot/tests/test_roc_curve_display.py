@@ -9,7 +9,7 @@ from sklearn.datasets import load_breast_cancer, load_iris
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import RocCurveDisplay, auc, roc_curve
-from sklearn.model_selection import cross_validate, train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
@@ -105,7 +105,7 @@ def test_roc_curve_display_plotting(
 
     assert display.names[0] == default_name
 
-    import matplotlib as mpl  # noqal
+    import matplotlib as mpl  # noqa
 
     assert isinstance(display.lines_[0], mpl.lines.Line2D)
     assert display.lines_[0].get_alpha() == 0.8
