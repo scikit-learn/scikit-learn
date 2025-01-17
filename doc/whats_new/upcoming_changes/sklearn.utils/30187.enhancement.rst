@@ -1,4 +1,0 @@
-- :func:`utils.estimator_checks.check_estimator_sparse_tag` ensures that
-  the estimator tag `input_tags.sparse` is consistent with its `fit`
-  method (accepting sparse input `X` or raising the appropriate error).
-  By :user:`Antoine Baker <antoinebaker>`
