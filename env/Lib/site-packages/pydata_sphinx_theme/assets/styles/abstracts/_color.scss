@@ -1,0 +1,117 @@
+/**
+ * Miscellaneous color functions and mixins
+**/
+
+@use "sass:list";
+@use "sass:map";
+@use "sass:meta";
+@use "sass:math";
+@use "sass:string";
+
+// We must add ::before pseudo-element to some theme components (such as admonitions)
+// because users were instructed to customize the background color this way.
+@mixin legacy-backdrop-placeholder {
+  &::before {
+    content: "";
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: -1;
+
+    // So that hovering over the text within background is still possible.
+    // Otherwise the background overlays the text and you cannot click or select easily.
+    // ref: https://developer.mozilla.org/en-US/docs/Web/CSS/pointer-events
+    pointer-events: none;
+  }
+}
+
+/**
+* Function to get items from nested maps
+*/
+// @param {Map} $map - Map
+// @param {Arglist} $keys - Keys to fetc
+// @return {*}
+@function map-deep-get($map, $keys...) {
+  @each $key in $keys {
+    $map: map.get($map, $key);
+  }
+
+  @return $map;
+}
+
+/**
+  * Function to check if the color needs converting to a "color" type
+  * if it is a string we cannot use other color manipulation functions
+  * It is used to create the sphinx-design colours as these are often interpolated
+  */
+// @param {String/Color} $color - Color definition from map
+// @return {Color} - Color type (in hex)
+@function check-color($color) {
+  @if meta.type-of($color) == string {
+    $color: from-hex($color);
+  }
+
+  @return $color;
+}
+
+/**
+  * Function to convert the string representation of a color to a color type (hex)
+  */
+// @param {String} $string - String representation of a color
+@function from-hex($string) {
+  $string-lower: string.to-lower-case($string);
+  $r: "";
+  $g: "";
+  $b: "";
+  $hex: "0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "a" "b" "c" "d" "e" "f";
+  $length: string.length($string);
+  $max: if($length == 4, 1, 2);
+
+  // Check for length accuracy
+  @if $length != 4 and $length != 7 {
+    @return $string;
+  }
+
+  // Loop from the second character (omitting #)
+  @for $i from 2 through $length {
+    $c: string.slice($string-lower, $i, $i);
+
+    // If wrong character, return
+    @if not list.index($hex, $c) {
+      @return $string;
+    }
+
+    @if string.length($r) < $max {
+      $r: $r + $c;
+    } @else if string.length($g) < $max {
+      $g: $g + $c;
+    } @else if string.length($b) < $max {
+      $b: $b + $c;
+    }
+  }
+
+  @if $length == 4 {
+    $r: $r + $r;
+    $g: $g + $g;
+    $b: $b + $b;
+  }
+
+  @return rgb(hex-to-dec($r), hex-to-dec($g), hex-to-dec($b));
+}
+
+@function hex-to-dec($string) {
+  $hex: "0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "a" "b" "c" "d" "e" "f";
+  $string: string.to-lower-case($string);
+  $length: string.length($string);
+  $dec: 0;
+
+  @for $i from 1 through $length {
+    $factor: 1 + (15 * ($length - $i));
+    $index: list.index($hex, string.slice($string, $i, $i));
+    $dec: $dec + $factor * ($index - 1);
+  }
+
+  @return $dec;
+}

@@ -24,6 +24,29 @@ into a composite feature space.
 :ref:`TransformedTargetRegressor <transformed_target_regressor>`
 deals with transforming the :term:`target` (i.e. log-transform :term:`y`).
 
+The diagrams below illustrate the concepts discussed above. The first diagram shows 
+a Pipeline, where data flows sequentially through multiple steps, such as imputation and scaling,
+before reaching the final estimator. The second diagram demonstrates the use of FeatureUnion, 
+where multiple transformers are applied in parallel, and their outputs are concatenated into
+a composite feature space.Finally, the third diagram provides an example of a ColumnTransformer,
+which applies different transformations to specific subsets of columns based on their data type 
+or other criteria, producing a composite output.
+
+.. image:: ../images/pipeline_compose.png
+   :alt: Pipeline
+   :align: center
+   :scale: 75%
+
+.. image:: ../images/feature_compose.png
+   :alt: Feature Union
+   :align: center
+   :scale: 75%
+
+.. image:: ../images/COLUMN_TRANSFORMER.png
+   :alt: ColumnTransformer
+   :align: center
+   :scale: 75%
+
 .. _pipeline:
 
 Pipeline: chaining estimators

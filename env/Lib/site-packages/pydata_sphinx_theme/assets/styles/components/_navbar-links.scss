@@ -1,0 +1,25 @@
+/**
+ * Navigation links in the navbar and icon links
+ */
+ul.navbar-nav {
+  // Reduce padding of nested `ul` items a bit
+  ul {
+    padding: 0 0 0 1rem;
+  }
+
+  // Navbar links - do not have an underline by default
+  li {
+    display: flex;
+    flex-direction: column;
+
+    a {
+      display: flex;
+      align-items: center;
+      height: 100%;
+      padding-top: $navbar-link-padding-y;
+      padding-bottom: $navbar-link-padding-y;
+
+      @include link-style-text;
+    }
+  }
+}

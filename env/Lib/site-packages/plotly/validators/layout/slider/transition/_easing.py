@@ -1,0 +1,54 @@
+import _plotly_utils.basevalidators
+
+
+class EasingValidator(_plotly_utils.basevalidators.EnumeratedValidator):
+    def __init__(
+        self, plotly_name="easing", parent_name="layout.slider.transition", **kwargs
+    ):
+        super(EasingValidator, self).__init__(
+            plotly_name=plotly_name,
+            parent_name=parent_name,
+            edit_type=kwargs.pop("edit_type", "arraydraw"),
+            values=kwargs.pop(
+                "values",
+                [
+                    "linear",
+                    "quad",
+                    "cubic",
+                    "sin",
+                    "exp",
+                    "circle",
+                    "elastic",
+                    "back",
+                    "bounce",
+                    "linear-in",
+                    "quad-in",
+                    "cubic-in",
+                    "sin-in",
+                    "exp-in",
+                    "circle-in",
+                    "elastic-in",
+                    "back-in",
+                    "bounce-in",
+                    "linear-out",
+                    "quad-out",
+                    "cubic-out",
+                    "sin-out",
+                    "exp-out",
+                    "circle-out",
+                    "elastic-out",
+                    "back-out",
+                    "bounce-out",
+                    "linear-in-out",
+                    "quad-in-out",
+                    "cubic-in-out",
+                    "sin-in-out",
+                    "exp-in-out",
+                    "circle-in-out",
+                    "elastic-in-out",
+                    "back-in-out",
+                    "bounce-in-out",
+                ],
+            ),
+            **kwargs,
+        )

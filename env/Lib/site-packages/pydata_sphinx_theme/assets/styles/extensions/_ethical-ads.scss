@@ -1,0 +1,23 @@
+// adapt ethical ad to the theme
+#ethical-ad-placement {
+  .ethical-sidebar a,
+  .ethical-sidebar a:visited,
+  .ethical-sidebar a:hover,
+  .ethical-sidebar a:active,
+  .ethical-footer a,
+  .ethical-footer a:visited,
+  .ethical-footer a:hover,
+  .ethical-footer a:active {
+    color: var(--pst-color-text-base);
+  }
+
+  .ethical-sidebar,
+  .ethical-footer {
+    background-color: var(--pst-color-background);
+    border: 1px solid var(--pst-color-border);
+    border-radius: 5px;
+    color: var(--pst-color-text-base);
+    font-size: 14px;
+    line-height: 20px;
+  }
+}

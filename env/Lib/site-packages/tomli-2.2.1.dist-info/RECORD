@@ -1,0 +1,14 @@
+tomli-2.2.1.dist-info/INSTALLER,sha256=zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg,4
+tomli-2.2.1.dist-info/LICENSE,sha256=uAgWsNUwuKzLTCIReDeQmEpuO2GSLCte6S8zcqsnQv4,1072
+tomli-2.2.1.dist-info/METADATA,sha256=_SN10RF_yI83GfdY5hy0YhMYUHzrOYXpr6Te6Po8tnU,10486
+tomli-2.2.1.dist-info/RECORD,,
+tomli-2.2.1.dist-info/WHEEL,sha256=CpUCUxeHQbRN5UGRQHYRJorO5Af-Qy_fHMctcQ8DSGI,82
+tomli/__init__.py,sha256=PhNw_eyLgdn7McJ6nrAN8yIm3dXC75vr1sVGVVwDSpA,314
+tomli/__pycache__/__init__.cpython-310.pyc,,
+tomli/__pycache__/_parser.cpython-310.pyc,,
+tomli/__pycache__/_re.cpython-310.pyc,,
+tomli/__pycache__/_types.cpython-310.pyc,,
+tomli/_parser.py,sha256=9w8LG0jB7fwmZZWB0vVXbeejDHcl4ANIJxB2scEnDlA,25591
+tomli/_re.py,sha256=sh4sBDRgO94KJZwNIrgdcyV_qQast50YvzOAUGpRDKA,3171
+tomli/_types.py,sha256=-GTG2VUqkpxwMqzmVO4F7ybKddIbAnuAHXfmWQcTi3Q,254
+tomli/py.typed,sha256=8PjyZ1aVoQpRVvt71muvuq5qE-jTFZkK-GLHkhdebmc,26

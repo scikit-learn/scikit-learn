@@ -1,0 +1,47 @@
+/* Pandas dataframe css */
+/* Taken from: https://github.com/spatialaudio/nbsphinx/blob/fb3ba670fc1ba5f54d4c487573dbc1b4ecf7e9ff/src/nbsphinx.py#L587-L619 */
+html[data-theme="light"] {
+  --sg-text-color: #000;
+  --sg-tr-odd-color: #f5f5f5;
+  --sg-tr-hover-color: rgba(66, 165, 245, 0.2);
+}
+html[data-theme="dark"] {
+  --sg-text-color: #fff;
+  --sg-tr-odd-color: #373737;
+  --sg-tr-hover-color: rgba(30, 81, 122, 0.2);
+}
+
+table.dataframe {
+  border: none !important;
+  border-collapse: collapse;
+  border-spacing: 0;
+  border-color: transparent;
+  color: var(--sg-text-color);
+  font-size: 12px;
+  table-layout: fixed;
+  width: auto;
+}
+table.dataframe thead {
+  border-bottom: 1px solid var(--sg-text-color);
+  vertical-align: bottom;
+}
+table.dataframe tr,
+table.dataframe th,
+table.dataframe td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+table.dataframe th {
+  font-weight: bold;
+}
+table.dataframe tbody tr:nth-child(odd) {
+  background: var(--sg-tr-odd-color);
+}
+table.dataframe tbody tr:hover {
+  background: var(--sg-tr-hover-color);
+}

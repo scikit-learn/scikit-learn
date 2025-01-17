@@ -1,0 +1,67 @@
+/*******************************************************************************
+* Rules for the UX/UI of sidebar sliding drawers on mobile
+* Note that this sheet controls styles across many parts of the theme
+* It is aggregated into this one sheet instead of being split across
+* components in order to keep it easier to debug in one place.
+* It is broken up into major sections below.
+*/
+
+/*******************************************************************************
+* Sidebar drawer behavior
+*/
+
+/**
+ * NOTE: We use this mixin to define the toggle behavior on narrow screens,
+ * And the wide-screen behavior of the sections is defined in their own section
+ * .scss files.
+ */
+@mixin sliding-drawer($side: "left") {
+  position: fixed;
+  top: 0;
+  z-index: $zindex-modal;
+  height: 100vh;
+  max-height: 100vh;
+  width: 75%;
+  flex-grow: 0.75;
+  max-width: 350px;
+  transition:
+    visibility $animation-time ease-out,
+    margin $animation-time ease-out;
+  visibility: hidden;
+  border: 0;
+
+  @if $side == "right" {
+    margin-right: -75%;
+    right: 0;
+  } @else {
+    margin-left: -75%;
+    left: 0;
+  }
+}
+
+.bd-sidebar::backdrop {
+  background-color: black;
+  opacity: 0.5;
+}
+
+.bd-sidebar-primary {
+  @include media-breakpoint-down($breakpoint-sidebar-primary) {
+    @include sliding-drawer("left");
+  }
+
+  &[open] {
+    margin-left: 0;
+    visibility: visible;
+  }
+}
+
+.bd-sidebar-secondary {
+  @include media-breakpoint-down($breakpoint-sidebar-secondary) {
+    @include sliding-drawer("right");
+  }
+
+  &[open] {
+    margin-right: 0;
+    visibility: visible;
+  }
+}

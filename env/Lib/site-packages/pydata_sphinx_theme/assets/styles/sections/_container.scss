@@ -1,0 +1,17 @@
+.bd-container {
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+
+  .bd-container__inner {
+    display: flex;
+  }
+}
+
+.bd-page-width {
+  width: 100%;
+
+  @include media-breakpoint-up(lg) {
+    max-width: $breakpoint-page-width;
+  }
+}

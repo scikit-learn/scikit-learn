@@ -1,0 +1,178 @@
+%% TOPIC AND CONTENTS BOXES
+%
+% change this info string if making any custom modification
+\ProvidesPackage{sphinxlatexshadowbox}[2024/07/28 v8.1.0 sphinxShadowBox]
+
+% Provides support for this output mark-up from Sphinx latex writer:
+%
+% - Environments: sphinxtopic, sphinxcontents, and sphinxsidebar.
+%
+%   These wrappers replace at 8.1.0 former direct use of sphinxShadowBox
+%   environment which did not allow separate styling.
+%
+% - Commands: \sphinxstyletopictitle, \sphinxstylecontentstitle, and
+%   \sphinxstylesidebartitle.
+%
+%   At 8.1.0 they default to use \sphinxdotitlerow whose definiion is done in
+%   sphinxlatexadmonitions.sty.  There is also  \sphinxstylesidebarsubtitle
+%   which does not use \sphinxdotitlerow.
+%
+% Dependencies (they do not need to be defined at time of loading):
+%
+% - of course the various colour and dimension options handled via sphinx.sty
+% - dimension register \spx@image@maxheight from sphinxlatexgraphics.sty
+% - \savenotes/\spewnotes from sphinxpackagefootnote.sty
+% - \ifspx@inframed defined in sphinx.sty
+% - \sphinxdotitlerow from sphinxlatexadmonitions.sty
+% - \spx@boxes@fcolorbox@setup from sphinxpackageboxes.sty
+%
+\RequirePackage{framed}
+% Those are required either before or after by sphinx.sty anyhow, but for
+% clarity we list them here:
+\RequirePackage{sphinxlatexgraphics}
+\RequirePackage{sphinxpackagefootnote}
+\RequirePackage{sphinxlatexadmonitions}
+\RequirePackage{sphinxpackageboxes}
+
+% At 5.1.0 the code formerly here in a definition of \spx@ShadowFBox has been
+% refactored to hand over to a more powerful \spx@boxes@fcolorbox provided by
+% file sphinxpackageboxes.sty, it can draw rounded corners and add a background
+% color.
+
+% At 6.2.0, \spx@ShadowFBox is so much simplified that it is now not
+% separately defined but directly incorporated into the \FrameCommand
+% definition done by sphinxShadowBox environment below.
+
+% Use framed.sty \MakeFramed/\endMakeFramed to allow page breaks for topic
+% boxes.  Originally Sphinx used \shadowbox from fancybox.sty but it did not
+% allow pagebreaks (which was problematic for "contents" directive if there
+% are many subsections).
+%
+% Docutils does not allow topic to be nested within topics or other body
+% elements.  But the LaTeX code here does allow it:
+%
+% - a topic inside another topic would be rendered in a minipage (thus not
+%   allowing pagebreaks).  Its external frame would adapt perfectly to
+%   the *current (smaller) width for text*.
+%
+% - a topic inside (nested) lists or quote environments would have its frame
+%   take the *full width* of the page, but its text contents on the other hand
+%   would obey exactly the current indentation plus inner separation.  This is
+%   in contrast with the framing used for literal blocks, also based, but in a
+%   more sophisticated way on usage of \MakeFramed/\endMakeFramed, and
+%   adjusting to current text indentation.
+%
+% At 8.1.0, sphinxShadowBox takes an optional argument #1 and uses it as
+% \spx@boxes@fcolorbox@setup{#1} rather than \spx@boxes@fcolorbox@setup{topic}.
+% Some hesitation whether to move this line to newly added sphinxtopic,
+% sphinxcontents and sphinxsidebar environmments.  But anyhow the environment
+% also requires later knowing a few more things: sphinx<type>TextColor and
+% spx@<type>@texextras.
+%
+% The #1 defaulting to topic must be such that all parameters expected by
+% \spx@boxes@fcolorbox@setup actually do exist, see CSS options in sphinx.sty
+% which is what defines them for contents, topic, and sidebar.
+%
+% Fortunately the #1 is not needed in \end{sphinxShadowBox} so we don't have
+% to work around a LaTeX conception bug that such #1 can not be used as is in
+% the definition of the \end part of an environment.
+%
+% MEMO: the "shadow" is not really drawn directly by this environment but
+% indirectly via the configuration which is passed over to \spx@boxes@fcolorbox,
+% which is the macro creating frame and (perhaps but not necessarily) a shadow.
+\newenvironment{sphinxShadowBox}[1][topic]%
+  {%
+   \spx@boxes@fcolorbox@setup{#1}%
+   % we will use the dimen registers from sphinxpackageboxes.sty which now hold
+   % the values from options related to topic/contents
+   % MEMO: \spx@boxes@fcolorbox creates an \hbox but does not quit vertical
+   %       mode; but in context of framed.sty's \FrameCommand TeX is already
+   %       in restricted horizontal mode, so no need for a \leavevmode here.
+   \def\FrameCommand {\spx@boxes@fcolorbox}%
+   % 6.2.0 adds support for div.topic_box-decoration-break=slice.
+   % (it is yet undecided if slice style should inhibit a bottom shadow)
+   \@nameuse{ifspx@#1@border@open}%
+     \def\FirstFrameCommand
+               {\spx@boxes@fcolorbox@setup@openbottom\FrameCommand}%
+     \def\MidFrameCommand
+               {\spx@boxes@fcolorbox@setup@openboth  \FrameCommand}%
+     \def\LastFrameCommand
+               {\spx@boxes@fcolorbox@setup@opentop   \FrameCommand}%
+   \fi
+   \advance\spx@image@maxheight
+   -\dimexpr\spx@boxes@border@top+\spx@boxes@border@bottom
+           +\spx@boxes@padding@top+\spx@boxes@padding@bottom
+           +\ifdim\spx@boxes@shadow@yoffset<\z@-\fi\spx@boxes@shadow@yoffset
+           +\baselineskip\relax
+   % configure framed.sty not to add extra vertical spacing
+   \ltx@ifundefined{OuterFrameSep}{}{\OuterFrameSep\z@skip}%
+   % the \trivlist will add the vertical spacing on top and bottom which is
+   % typical of center environment as used in Sphinx <= 1.4.1
+   % the \noindent has the effet of an extra blank line on top, to
+   % imitate closely the layout from Sphinx <= 1.4.1; the \FrameHeightAdjust
+   % will put top part of frame on this baseline.
+   \def\FrameHeightAdjust {\baselineskip}%
+   % use package footnote to handle footnotes
+   \savenotes
+   \trivlist\item\noindent
+    % use a minipage if we are already inside a framed environment
+    \ifspx@inframed\begin{minipage}{\linewidth}\fi
+    \MakeFramed {\spx@inframedtrue
+    % framed.sty puts into "\width" the added width (padding+border widths)
+    % adjust \hsize to what the contents must use
+    \advance\hsize-\width
+    % adjust LaTeX parameters to behave properly in indented/quoted contexts
+    \FrameRestore
+    % typeset the contents as in a minipage (Sphinx <= 1.4.1 used a minipage and
+    % itemize/enumerate are therein typeset more tightly, we want to keep
+    % that). We copy-paste from LaTeX source code but don't do a real minipage.
+    \@pboxswfalse
+    \let\@listdepth\@mplistdepth \@mplistdepth\z@
+    \@minipagerestore
+    \@setminipage
+    }%
+    \color@begingroup % workaround upstream framed.sty bug
+    \@nameuse{ifspx@#1@withtextcolor}%
+      \color{sphinx#1TextColor}%
+    \fi
+    \@nameuse{spx@#1@TeXextras}%
+  }%
+  {% insert the "endminipage" code
+    \par\unskip
+    \color@endgroup   % matches the \color@begingroup
+    \@minipagefalse
+   \endMakeFramed
+     \ifspx@inframed\end{minipage}\fi
+   \endtrivlist
+   % output the stored footnotes
+   \spewnotes
+  }
+
+% 8.1.0
+\newenvironment{sphinxtopic}
+               {\begin{sphinxShadowBox}[topic]}{\end{sphinxShadowBox}}
+\newenvironment{sphinxcontents}
+               {\begin{sphinxShadowBox}[contents]}{\end{sphinxShadowBox}}
+% Arguably sphinxsidebar should rather use a wrapfig or similar environment
+% but this is so dysfunctional in LaTeX (except for self-written documents)
+% so we prefer to not venture into such a potential quagmire and keep the
+% legacy rendering using a full width display.
+\newenvironment{sphinxsidebar}
+               {\begin{sphinxShadowBox}[sidebar]}{\end{sphinxShadowBox}}
+
+% TODO: decide if this should be in sphinxlatexstyletext.sty rather
+%
+% 8.1.0 styles topic/contents/sidebar with a title row, too.
+% Prior to 8.1.0, definitions use \protected\def but there does not seem
+% to be any reason so back to \newcommand.
+\newcommand*\sphinxstyletopictitle[1]{\sphinxdotitlerow{topic}{#1}}
+\newcommand*\sphinxstylecontentstitle[1]{\sphinxdotitlerow{contents}{#1}}
+\newcommand*\sphinxstylesidebartitle[1]{\sphinxdotitlerow{sidebar}{#1}}
+% No default color background for subtitle.  The contents next are injected by
+% LaTeX writer after a blank line in source hence will start a new paragrpah.
+% The \sphinxAtStartPar here is only for coherence with other text paragraphs,
+% but does not have serious necessity (its general role is to allow hyphenation
+% for first word in narrow table cells).
+\newcommand*\sphinxstylesidebarsubtitle[1]{\sphinxAtStartPar\textbf{#1}}
+
+\endinput

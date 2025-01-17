@@ -1,0 +1,37 @@
+/**
+ * Secondary sidebar on the right.
+ * e.g., in-page table of contents.
+ */
+.bd-sidebar-secondary {
+  display: flex;
+  order: 2;
+  flex-shrink: 0;
+  flex-direction: column;
+  position: sticky;
+  top: var(--pst-header-height);
+  max-height: calc(100vh - var(--pst-header-height));
+  padding: 2rem 1rem 1rem;
+  width: var(--pst-sidebar-secondary);
+  font-size: var(--pst-sidebar-font-size-mobile);
+
+  @include media-breakpoint-up($breakpoint-sidebar-secondary) {
+    font-size: var(--pst-sidebar-font-size);
+  }
+
+  // Color and border
+  background-color: var(--pst-color-background);
+  overflow-y: auto;
+}
+
+.sidebar-secondary-item {
+  padding: 0.5rem;
+
+  @include media-breakpoint-up($breakpoint-sidebar-secondary) {
+    border-left: 1px solid var(--pst-color-border);
+    padding-left: 1rem;
+  }
+
+  i {
+    padding-right: 0.5rem;
+  }
+}
