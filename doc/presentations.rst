@@ -54,7 +54,7 @@ Videos
 
 - The `:probabl YouTube channel <https://www.youtube.com/@probabl_ai>`_
   hosts the Whiteboard Series, which provides supplementary materials for
-  the scikit-learn MOOC and covers more recent versions of the library:
+  the scikit-learn MOOC and covers more features of the library:
 
   `<https://www.youtube.com/playlist?list=PLSIzlWDI17bS025ph6R0W_3RKM0qJ3qoO>`_
 
