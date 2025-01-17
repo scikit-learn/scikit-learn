@@ -10,7 +10,7 @@ from scipy.spatial.distance import hamming as sp_hamming
 from scipy.stats import bernoulli
 
 from sklearn import datasets, svm
-from sklearn.datasets import make_multilabel_classification
+from sklearn.datasets import make_classification, make_multilabel_classification
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.metrics import (
     accuracy_score,
@@ -479,13 +479,26 @@ def test_precision_recall_f_unused_pos_label():
         )
 
 
-def test_confusion_matrix_binary():
+def test_confusion_matrix_pos_label_error():
+    _, y = make_classification(n_classes=3, n_clusters_per_class=1, random_state=0)
+    err_msg = "`pos_label` should only be set when the target is binary."
+    with pytest.raises(ValueError, match=err_msg):
+        confusion_matrix(y, y, pos_label=1)
+
+
+@pytest.mark.parametrize("pos_label", [0, 1])
+def test_confusion_matrix_binary(pos_label):
     # Test confusion matrix - binary classification case
     y_true, y_pred, _ = make_prediction(binary=True)
 
-    def test(y_true, y_pred):
-        cm = confusion_matrix(y_true, y_pred)
-        assert_array_equal(cm, [[22, 3], [8, 17]])
+    def test(y_true, y_pred, pos_label):
+        cm = confusion_matrix(y_true, y_pred, pos_label=pos_label)
+        expected_cm = np.array([[22, 3], [8, 17]])
+        if pos_label in {"0", 0}:
+            # we should flip the confusion matrix to respect the documentation
+            # of tp, fp, fn, tn
+            expected_cm = expected_cm[::-1, ::-1]
+        assert_array_equal(cm, expected_cm)
 
         tp, fp, fn, tn = cm.flatten()
         num = tp * tn - fp * fn
@@ -496,8 +509,8 @@ def test_confusion_matrix_binary():
         assert_array_almost_equal(mcc, true_mcc, decimal=2)
         assert_array_almost_equal(mcc, 0.57, decimal=2)
 
-    test(y_true, y_pred)
-    test([str(y) for y in y_true], [str(y) for y in y_pred])
+    test(y_true, y_pred, pos_label)
+    test([str(y) for y in y_true], [str(y) for y in y_pred], str(pos_label))
 
 
 def test_multilabel_confusion_matrix_binary():
