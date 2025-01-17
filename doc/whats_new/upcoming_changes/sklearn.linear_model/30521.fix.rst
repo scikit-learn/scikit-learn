@@ -1,0 +1,4 @@
+-  |Enhancement| Added a new paramenter `tol` to
+   :class:`linear_model.LinearRegression` that determines the precision of the
+   solution `coef_` when fitting on sparse data.
+   By :user:`Success Moses <SuccessMoses>`

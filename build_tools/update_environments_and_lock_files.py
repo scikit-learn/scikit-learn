@@ -26,6 +26,7 @@ scipy) with apt-get and the rest of the dependencies (e.g. pytest and joblib)
 with pip.
 
 To run this script you need:
+- conda
 - conda-lock. The version should match the one used in the CI in
   sklearn/_min_dependencies.py
 - pip-tools
