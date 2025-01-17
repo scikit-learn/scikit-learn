@@ -36,10 +36,10 @@ You may highlight or reference your work with scikit-learn by using one of the l
 
 | | |
 | - | - |
-|  <img src="1280px-scikit-learn-logo.png" height="100px"> | __Logo 1__ <br> File type: PNG <br> File size: 49 KB (1280 x 689 px) <br> File name: [1280px-scikit-learn-logo.png](https://github.com/scikit-learn/scikit-learn/blob/main/doc/logos/1280px-scikit-learn-logo.png) | 
+|  <img src="1280px-scikit-learn-logo.png" height="100px"> | __Logo 1__ <br> File type: PNG <br> File size: 49 KB (1280 x 689 px) <br> File name: [1280px-scikit-learn-logo.png](https://github.com/scikit-learn/scikit-learn/blob/main/doc/logos/1280px-scikit-learn-logo.png) |
 |  <img src="favicon.ico" height="100px"> | __Logo 2__ <br> File type: ICO <br> File size:  2 KB (32 x 32 px) <br> File name: [favicon.ico](https://github.com/scikit-learn/scikit-learn/blob/main/doc/logos/favicon.ico) |
-|  <img src="scikit-learn-logo-without-subtitle.svg" height="100px"> | __Logo 3__ <br> File type: SVG <br> File size: 5 KB <br> File name: [scikit-learn-logo-without-subtitle.svg](https://github.com/scikit-learn/scikit-learn/blob/main/doc/logos/scikit-learn-logo-without-subtitle.svg) | 
-|  <img src="scikit-learn-logo.svg" height="200px"> | __Logo 4__ <br> File type: SVG <br> File size: 4.59 KB <br> File name: [scikit-learn-logo.svg](https://github.com/scikit-learn/scikit-learn/blob/main/doc/logos/scikit-learn-logo.svg) | 
+|  <img src="scikit-learn-logo-without-subtitle.svg" height="100px"> | __Logo 3__ <br> File type: SVG <br> File size: 5 KB <br> File name: [scikit-learn-logo-without-subtitle.svg](https://github.com/scikit-learn/scikit-learn/blob/main/doc/logos/scikit-learn-logo-without-subtitle.svg) |
+|  <img src="scikit-learn-logo.svg" height="200px"> | __Logo 4__ <br> File type: SVG <br> File size: 4.59 KB <br> File name: [scikit-learn-logo.svg](https://github.com/scikit-learn/scikit-learn/blob/main/doc/logos/scikit-learn-logo.svg) |
 
 <br>
 
@@ -51,8 +51,8 @@ You may highlight or reference your work with scikit-learn by using one of the l
 
 - __Clear Space:__ To ensure the logo is clearly visible in all uses, surround it with a sufficient amount of clear space that is free of type, graphics, and other elements that might cause visual clutter. Do not overlap or obscure the logo with text, images, or other elements. The image below demonstrates the suggested amount of clear space margins to use around the logo. <br> <center><img src="brand_guidelines/scikitlearn_logo_clearspace_updated.png" width="250px"></center>
 
-- __Colors:__ Only use logos in the approved color palette defined above. Do not recolor the logo. 
-- __Typeface:__ Do not change the typeface used in the logo. 
+- __Colors:__ Only use logos in the approved color palette defined above. Do not recolor the logo.
+- __Typeface:__ Do not change the typeface used in the logo.
 - __No Modification:__ Do not attempt recreate or otherwise modify the scikit-learn logo.
 
 
