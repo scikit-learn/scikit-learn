@@ -836,15 +836,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
-    BayesianRidge: {
-        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
-        "check_sample_weight_equivalence_on_dense_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-        "check_sample_weight_equivalence_on_sparse_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-    },
     BernoulliRBM: {
         "check_methods_subset_invariance": ("fails for the decision_function method"),
         "check_methods_sample_order_invariance": ("fails for the score_samples method"),
