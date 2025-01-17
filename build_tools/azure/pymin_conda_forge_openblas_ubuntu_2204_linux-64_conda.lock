@@ -9,11 +9,11 @@ https://conda.anaconda.org/conda-forge/noarch/font-ttf-inconsolata-3.000-h77eed3
 https://conda.anaconda.org/conda-forge/noarch/font-ttf-source-code-pro-2.038-h77eed37_0.tar.bz2#4d59c254e01d9cde7957100457e2d5fb
 https://conda.anaconda.org/conda-forge/noarch/font-ttf-ubuntu-0.83-h77eed37_3.conda#49023d73832ef61042f6a237cb2687e7
 https://conda.anaconda.org/conda-forge/linux-64/python_abi-3.9-5_cp39.conda#40363a30db350596b5f225d0d5a33328
-https://conda.anaconda.org/conda-forge/noarch/tzdata-2024b-hc8b5060_0.conda#8ac3367aafb1cc0a068483c580af8015
+https://conda.anaconda.org/conda-forge/noarch/tzdata-2025a-h78e105d_0.conda#dbcace4706afdfb7eb891f7b37d07c04
 https://conda.anaconda.org/conda-forge/noarch/fonts-conda-forge-1-0.tar.bz2#f766549260d6815b0c52253f1fb1bb29
 https://conda.anaconda.org/conda-forge/linux-64/ld_impl_linux-64-2.43-h712a8e2_2.conda#048b02e3962f066da18efe3a21b77672
 https://conda.anaconda.org/conda-forge/linux-64/libglvnd-1.7.0-ha4b6fd6_2.conda#434ca7e50e40f4918ab701e3facd59a0
-https://conda.anaconda.org/conda-forge/linux-64/llvm-openmp-19.1.6-h024ca30_0.conda#96e42ccbd3c067c1713ff5f2d2169247
+https://conda.anaconda.org/conda-forge/linux-64/llvm-openmp-19.1.7-h024ca30_0.conda#9915f85a72472011550550623cce2d53
 https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-2_kmp_llvm.tar.bz2#562b26ba2e19059551a811e72ab7f793
 https://conda.anaconda.org/conda-forge/noarch/fonts-conda-ecosystem-1-0.tar.bz2#fee5683a3f04bd15cbd8318b096a27ab
 https://conda.anaconda.org/conda-forge/linux-64/libegl-1.7.0-ha4b6fd6_2.conda#c151d5eb730e9b7480e6d48c0fc44048
@@ -101,7 +101,7 @@ https://conda.anaconda.org/conda-forge/noarch/iniconfig-2.0.0-pyhd8ed1ab_1.conda
 https://conda.anaconda.org/conda-forge/linux-64/kiwisolver-1.4.7-py39h74842e3_0.conda#1bf77976372ff6de02af7b75cf034ce5
 https://conda.anaconda.org/conda-forge/linux-64/libblas-3.9.0-26_linux64_openblas.conda#ac52800af2e0c0e7dac770b435ce768a
 https://conda.anaconda.org/conda-forge/linux-64/libcups-2.3.3-h4637d8d_4.conda#d4529f4dff3057982a7617c7ac58fde3
-https://conda.anaconda.org/conda-forge/linux-64/libglib-2.82.2-h2ff4ddf_0.conda#13e8e54035ddd2b91875ba399f0f7c04
+https://conda.anaconda.org/conda-forge/linux-64/libglib-2.82.2-h2ff4ddf_1.conda#37d1af619d999ee8f1f73cf5a06f4e2f
 https://conda.anaconda.org/conda-forge/linux-64/libglx-1.7.0-ha4b6fd6_2.conda#c8013e438185f33b13814c5c488acd5c
 https://conda.anaconda.org/conda-forge/linux-64/libhiredis-1.0.2-h2cc385e_0.tar.bz2#b34907d3a81a3cd8095ee83d174c074a
 https://conda.anaconda.org/conda-forge/linux-64/libtiff-4.7.0-hd9ff511_3.conda#0ea6510969e1296cc19966fad481f6de
@@ -149,7 +149,7 @@ https://conda.anaconda.org/conda-forge/linux-64/lcms2-2.16-hb7c19ff_0.conda#51bb
 https://conda.anaconda.org/conda-forge/linux-64/libcblas-3.9.0-26_linux64_openblas.conda#ebcc5f37a435aa3c19640533c82f8d76
 https://conda.anaconda.org/conda-forge/linux-64/libgl-1.7.0-ha4b6fd6_2.conda#928b8be80851f5d8ffb016f9c81dae7a
 https://conda.anaconda.org/conda-forge/linux-64/liblapack-3.9.0-26_linux64_openblas.conda#3792604c43695d6a273bc5faaac47d48
-https://conda.anaconda.org/conda-forge/linux-64/libllvm19-19.1.6-ha7bfdaf_0.conda#ec6abc65eefc96cba8443b2716dcc43b
+https://conda.anaconda.org/conda-forge/linux-64/libllvm19-19.1.7-ha7bfdaf_0.conda#683d876292316d64a1aa26fb79b21f8e
 https://conda.anaconda.org/conda-forge/linux-64/libxkbcommon-1.7.0-h2c5496b_1.conda#e2eaefa4de2b7237af7c907b8bbc760a
 https://conda.anaconda.org/conda-forge/linux-64/libxslt-1.1.39-h76b75d6_0.conda#e71f31f8cfb0a91439f2086fc8aa0461
 https://conda.anaconda.org/conda-forge/noarch/meson-1.6.1-pyhd8ed1ab_0.conda#0062fb0a7f5da474705d0ce626de12f4
@@ -168,8 +168,8 @@ https://conda.anaconda.org/conda-forge/linux-64/xorg-libxrandr-1.5.4-hb9d3cd8_0.
 https://conda.anaconda.org/conda-forge/linux-64/xorg-libxxf86vm-1.1.6-hb9d3cd8_0.conda#5efa5fa6243a622445fdfd72aee15efa
 https://conda.anaconda.org/conda-forge/linux-64/harfbuzz-10.2.0-h4bba637_0.conda#9e38e86167e8b1ea0094747d12944ce4
 https://conda.anaconda.org/conda-forge/noarch/importlib-resources-6.5.2-pyhd8ed1ab_0.conda#e376ea42e9ae40f3278b0f79c9bf9826
-https://conda.anaconda.org/conda-forge/linux-64/libclang-cpp19.1-19.1.6-default_hb5137d0_0.conda#9caebd39281536bf6bcb32f665dd4fbf
-https://conda.anaconda.org/conda-forge/linux-64/libclang13-19.1.6-default_h9c6a7e4_0.conda#e1d2936c320083f1c520c3a17372521c
+https://conda.anaconda.org/conda-forge/linux-64/libclang-cpp19.1-19.1.7-default_hb5137d0_0.conda#646e1269735c1a00dcf7953c20fc4687
+https://conda.anaconda.org/conda-forge/linux-64/libclang13-19.1.7-default_h9c6a7e4_0.conda#3c903d532f24be4b295cef03518d5ae9
 https://conda.anaconda.org/conda-forge/linux-64/liblapacke-3.9.0-26_linux64_openblas.conda#7b8b7732fb4786c00cf9b67d1d69445c
 https://conda.anaconda.org/conda-forge/linux-64/libpq-17.2-h3b95a9b_1.conda#37724d8bae042345a19ca1a25dde786b
 https://conda.anaconda.org/conda-forge/noarch/meson-python-0.17.1-pyh70fd9c4_1.conda#7a02679229c6c2092571b4c025055440

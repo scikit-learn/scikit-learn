@@ -10,10 +10,10 @@ https://conda.anaconda.org/conda-forge/noarch/font-ttf-ubuntu-0.83-h77eed37_3.co
 https://conda.anaconda.org/conda-forge/win-64/intel-openmp-2024.2.1-h57928b3_1083.conda#2d89243bfb53652c182a7c73182cce4f
 https://conda.anaconda.org/conda-forge/win-64/mkl-include-2024.2.2-h66d3029_15.conda#e2f516189b44b6e042199d13e7015361
 https://conda.anaconda.org/conda-forge/win-64/python_abi-3.9-5_cp39.conda#86ba1bbcf9b259d1592201f3c345c810
-https://conda.anaconda.org/conda-forge/noarch/tzdata-2024b-hc8b5060_0.conda#8ac3367aafb1cc0a068483c580af8015
+https://conda.anaconda.org/conda-forge/noarch/tzdata-2025a-h78e105d_0.conda#dbcace4706afdfb7eb891f7b37d07c04
 https://conda.anaconda.org/conda-forge/win-64/ucrt-10.0.22621.0-h57928b3_1.conda#6797b005cd0f439c4c5c9ac565783700
 https://conda.anaconda.org/conda-forge/noarch/fonts-conda-forge-1-0.tar.bz2#f766549260d6815b0c52253f1fb1bb29
-https://conda.anaconda.org/conda-forge/win-64/libwinpthread-12.0.0.r4.gg4f2fc60ca-h57928b3_8.conda#03cccbba200ee0523bde1f3dad60b1f3
+https://conda.anaconda.org/conda-forge/win-64/libwinpthread-12.0.0.r4.gg4f2fc60ca-h57928b3_9.conda#08bfa5da6e242025304b206d152479ef
 https://conda.anaconda.org/conda-forge/win-64/vc14_runtime-14.42.34433-he29a5d6_23.conda#32b37d0cfa80da34548501cdc913a832
 https://conda.anaconda.org/conda-forge/noarch/fonts-conda-ecosystem-1-0.tar.bz2#fee5683a3f04bd15cbd8318b096a27ab
 https://conda.anaconda.org/conda-forge/win-64/libgomp-14.2.0-h1383e82_1.conda#9e2d4d1214df6f21cba12f6eff4972f9
@@ -60,8 +60,8 @@ https://conda.anaconda.org/conda-forge/noarch/execnet-2.1.1-pyhd8ed1ab_1.conda#a
 https://conda.anaconda.org/conda-forge/win-64/freetype-2.12.1-hdaf720e_2.conda#3761b23693f768dc75a8fd0a73ca053f
 https://conda.anaconda.org/conda-forge/noarch/iniconfig-2.0.0-pyhd8ed1ab_1.conda#6837f3eff7dcea42ecd714ce1ac2b108
 https://conda.anaconda.org/conda-forge/win-64/kiwisolver-1.4.7-py39h2b77a98_0.conda#c116c25e2e36f770f065559ad2a1da73
-https://conda.anaconda.org/conda-forge/win-64/libclang13-19.1.6-default_ha5278ca_0.conda#1cfe412982fe3a83577aa80d1e39cfb3
-https://conda.anaconda.org/conda-forge/win-64/libglib-2.82.2-h7025463_0.conda#3e379c1b908a7101ecbc503def24613f
+https://conda.anaconda.org/conda-forge/win-64/libclang13-19.1.7-default_ha5278ca_0.conda#70e93d93ce0e891ecc3e0f5f41a628a9
+https://conda.anaconda.org/conda-forge/win-64/libglib-2.82.2-h7025463_1.conda#40596e78a77327f271acea904efdc911
 https://conda.anaconda.org/conda-forge/win-64/libhwloc-2.11.2-default_ha69328c_1001.conda#b87a0ac5ab6495d8225db5dc72dd21cd
 https://conda.anaconda.org/conda-forge/win-64/libtiff-4.7.0-h797046b_3.conda#defed79ff7a9164ad40320e3f116a138
 https://conda.anaconda.org/conda-forge/win-64/libxslt-1.1.39-h3df6e99_0.conda#279ee338c9b34871d578cb3c7aa68f70
