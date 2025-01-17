@@ -133,6 +133,11 @@ scikit_learn_install() {
         fi
         # Use the pre-installed build dependencies and build directly in the
         # current environment.
+        which python
+        which pip
+        python -m pip install --help
+        pip install --help
+        python -c 'import pip; print(pip)'
         pip install --verbose --no-build-isolation --editable . $ADDITIONAL_PIP_OPTIONS
     fi
 
