@@ -98,6 +98,8 @@ def contingency_matrix(
     labels_true, labels_pred, *, eps=None, sparse=False, dtype=np.int64
 ):
     """Build a contingency matrix describing the relationship between labels.
+    
+    Read more in the :ref:`User Guide <contingency-matrix>`.
 
     Parameters
     ----------
