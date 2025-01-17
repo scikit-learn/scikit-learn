@@ -110,7 +110,7 @@ jobs:
           #   free_threaded_support: True
 
           # # Linux 64 bit manylinux2014
-          - os: ubuntu-latest
+          - os: ubuntu-24.04-arm
             python: 39
             platform_id: manylinux_aarch64
             manylinux_image: manylinux2014
