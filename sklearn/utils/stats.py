@@ -9,7 +9,8 @@ from .extmath import stable_cumsum
 def _weighted_percentile(array, sample_weight, percentile_rank=50):
     """Compute the weighted percentile with method 'inverted_cdf'.
 
-    When the percentile lies between two values, the function returns the lower value.
+    When the percentile lies between two data points of `array`, the function returns
+    the lower value.
 
     If `array` is a 2D array, the `values` are selected along axis 0.
 
@@ -46,7 +47,7 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50):
         return array[()]
     if array.ndim == 1:
         array = array.reshape((-1, 1))
-    # When sample_weight 1D, repeat for each array.shape[1]:
+    # When sample_weight 1D, repeat for each array.shape[1]
     if array.shape != sample_weight.shape and array.shape[0] == sample_weight.shape[0]:
         sample_weight = np.tile(sample_weight, (array.shape[1], 1)).T
 
@@ -76,7 +77,8 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50):
         adjusted_percentile_rank[mask], adjusted_percentile_rank[mask] + 1
     )
 
-    # Find the indices `adjusted_percentile_rank` would have in `weight_cdf`:
+    # Find index (i) of `adjusted_percentile` in `weight_cdf`,
+    # such that weight_cdf[i-1] < percentile <= weight_cdf[i]
     percentile_idx = np.array(
         [
             np.searchsorted(weight_cdf[:, i], adjusted_percentile_rank[i])
