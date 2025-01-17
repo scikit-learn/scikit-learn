@@ -55,10 +55,10 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50):
     sorted_idx = np.argsort(array, axis=0)
     sorted_weights = np.take_along_axis(sample_weight, sorted_idx, axis=0)
 
-    # Set NaN values in `sample_weight` to 0. We only perform this operation if NaN values
-    # are present at all to avoid temporary allocations of size `(n_samples, n_features)`. 
-    # If NaN values were present, they would sort to the end (which we can observe from
-    # `sorted_idx`).
+    # Set NaN values in `sample_weight` to 0. We only perform this operation if NaN
+    # values are present at all to avoid temporary allocations of size `(n_samples,
+    # n_features)`. If NaN values were present, they would sort to the end (which we can
+    # observe from `sorted_idx`).
     n_features = array.shape[1]
     largest_value_per_column = array[sorted_idx[-1, ...], np.arange(n_features)]
     if np.isnan(largest_value_per_column).any():
