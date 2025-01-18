@@ -21,7 +21,7 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50):
         .. versionchanged:: 0.24
             Accepts 2D `array`.
 
-        .. versionchanged:: 1.6
+        .. versionchanged:: 1.7
             Supports handling of `NaN` values.
 
     Parameters
