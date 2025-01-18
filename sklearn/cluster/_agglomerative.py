@@ -34,7 +34,6 @@ from ..utils._param_validation import (
 )
 from ..utils.graph import _fix_connected_components
 from ..utils.validation import check_memory, validate_data
-
 from . import _hierarchical_fast as _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
 
