@@ -3,6 +3,7 @@ import pytest
 from numpy.testing import assert_allclose, assert_array_equal
 from pytest import approx
 
+from sklearn.utils.fixes import np_version, parse_version
 from sklearn.utils.stats import _weighted_percentile
 
 
@@ -170,3 +171,34 @@ def test_weighted_percentile_all_nan_column():
     # values present; the percentile of the first column can only be nan, since there
     # are no other possible values:
     assert np.array_equal(values, np.array([np.nan, 5]), equal_nan=True)
+
+
+@pytest.mark.skipif(
+    np_version < parse_version("2.0"),
+    reason="np.quantile only accepts weights since version 2.0",
+)
+@pytest.mark.parametrize(
+    "percentile, arr, weights",
+    [
+        (66, np.array([[3, 30], [2, 20], [1, 10]]), np.array([[1, 1], [1, 1], [1, 1]])),
+        (
+            10,
+            np.array([[3, 30], [2, 20], [1, 10]]),
+            np.array([[1, 100], [1, 10], [1, 1]]),
+        ),
+        (
+            50,
+            np.array([[3, 30], [2, 20], [1, 10]]),
+            np.array([[100, 1], [1, 1], [1, 1]]),
+        ),
+    ],
+)
+def test_weighted_percentile_like_numpy_quantile(percentile, arr, weights):
+    """Check that weighted_percentile delivers equivalent results as np.quantile with
+    weights."""
+    percentile_weighted_percentile = _weighted_percentile(arr, weights, percentile)
+    percentile_numpy_quantile = np.quantile(
+        arr, percentile / 100, weights=weights, axis=0, method="inverted_cdf"
+    )
+
+    assert_array_equal(percentile_weighted_percentile, percentile_numpy_quantile)
