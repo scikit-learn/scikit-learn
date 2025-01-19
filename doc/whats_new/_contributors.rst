@@ -20,7 +20,7 @@
 .. |API| replace:: :raw-html:`<span class="badge text-bg-warning">API Change</span>` :raw-latex:`{\small\sc [API Change]}`
 
 
-.. _Olivier Grisel: https://twitter.com/ogrisel
+.. _Olivier Grisel: https://x.com/ogrisel
 
 .. _Gael Varoquaux: http://gael-varoquaux.info
 
@@ -44,7 +44,7 @@
 
 .. _Alexandre Passos: http://atpassos.me
 
-.. _Nicolas Pinto: https://twitter.com/npinto
+.. _Nicolas Pinto: https://x.com/npinto
 
 .. _Bertrand Thirion: https://team.inria.fr/parietal/bertrand-thirions-page
 
@@ -66,9 +66,9 @@
 
 .. _Satrajit Ghosh: https://www.mit.edu/~satra/
 
-.. _Robert Layton: https://twitter.com/robertlayton
+.. _Robert Layton: https://x.com/robertlayton
 
-.. _Scott White: https://twitter.com/scottblanc
+.. _Scott White: https://x.com/scottblanc
 
 .. _David Marek: https://davidmarek.cz/
 

@@ -70,4 +70,4 @@ Videos
 
 .. _Gael Varoquaux: https://gael-varoquaux.info
 .. _Jake Vanderplas: http://www.vanderplas.com
-.. _Olivier Grisel: https://twitter.com/ogrisel
+.. _Olivier Grisel: https://x.com/ogrisel

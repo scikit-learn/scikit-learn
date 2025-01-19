@@ -187,7 +187,7 @@ Communication
 - Logos & Branding: https://github.com/scikit-learn/scikit-learn/tree/main/doc/logos
 - Blog: https://blog.scikit-learn.org
 - Calendar: https://blog.scikit-learn.org/calendar/
-- Twitter: https://twitter.com/scikit_learn
+- X: https://x.com/scikit_learn
 - Stack Overflow: https://stackoverflow.com/questions/tagged/scikit-learn
 - GitHub Discussions: https://github.com/scikit-learn/scikit-learn/discussions
 - Website: https://scikit-learn.org
