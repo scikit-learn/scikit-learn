@@ -9,7 +9,9 @@ set +e
 set -o pipefail
 
 # XXX: debug
+echo "debugging ssh config"
 ls ~/.ssh/
+ssh-add -l
 
 global_status=0
 
