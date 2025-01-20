@@ -12,6 +12,7 @@ set -o pipefail
 echo "debugging ssh config"
 ls ~/.ssh/
 ssh-add -l
+echo ${DOCSEARCH_APP_ID:(-1)}
 
 global_status=0
 
