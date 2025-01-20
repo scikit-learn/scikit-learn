@@ -202,3 +202,34 @@ def test_weighted_percentile_like_numpy_quantile(percentile, arr, weights):
     )
 
     assert_array_equal(percentile_weighted_percentile, percentile_numpy_quantile)
+
+
+@pytest.mark.parametrize(
+    "percentile, arr, weights",
+    [
+        (
+            66,
+            np.array([[3, np.nan], [np.nan, 20], [1, 10]]),
+            np.array([[1, 1], [1, 1], [1, 1]]),
+        ),
+        (
+            10,
+            np.array([[3, np.nan], [2, np.nan], [1, 10]]),
+            np.array([[1, 100], [1, 10], [1, 1]]),
+        ),
+        (
+            50,
+            np.array([[np.nan, np.nan], [2, 20], [1, 10]]),
+            np.array([[100, 1], [1, 1], [1, 1]]),
+        ),
+    ],
+)
+def test_weighted_percentile_like_numpy_nanquantile(percentile, arr, weights):
+    """Check that weighted_percentile delivers equivalent results as np.nanquantile with
+    weights."""
+    percentile_weighted_percentile = _weighted_percentile(arr, weights, percentile)
+    percentile_numpy_nanquantile = np.nanquantile(
+        arr, percentile / 100, weights=weights, axis=0, method="inverted_cdf"
+    )
+
+    assert_array_equal(percentile_weighted_percentile, percentile_numpy_nanquantile)
