@@ -8,6 +8,9 @@ set +e
 # pipefail is necessary to propagate exit codes
 set -o pipefail
 
+# XXX: debug
+ls ~/.ssh/
+
 global_status=0
 
 echo -e "### Running black ###\n"
