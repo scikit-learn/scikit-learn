@@ -174,6 +174,7 @@ a linear kernel.
 
 .. rubric:: Examples
 
+* :ref:`sphx_glr_auto_examples_linear_model_plot_ols_ridge_variance.py`
 * :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_path.py`
 * :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
 * :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
