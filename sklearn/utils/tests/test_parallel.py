@@ -139,7 +139,7 @@ def test_check_warnings_threading():
         assert all(w == filters for w in all_warnings)
 
 
-@pytest.mark.xfail(_IS_WASM, "Pyodide always use the sequential backend")
+@pytest.mark.xfail(_IS_WASM, reason="Pyodide always use the sequential backend")
 def test_filter_warning_propagates_no_side_effect_with_loky_backend():
     with warnings.catch_warnings():
         warnings.simplefilter("error", category=ConvergenceWarning)
