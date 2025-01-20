@@ -14,7 +14,7 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.utils._fixes import _IS_WASM
+from sklearn.utils.fixes import _IS_WASM
 from sklearn.utils.parallel import Parallel, delayed
 
 
