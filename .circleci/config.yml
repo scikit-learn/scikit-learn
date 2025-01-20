@@ -32,7 +32,9 @@ jobs:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
       - restore_cache:
-          key: v1-doc-min-deps-datasets-{{ .Branch }}
+          keys:
+            - v1-doc-min-deps-datasets-{{ .Branch }}
+            - v1-doc-min-deps-datasets
       - restore_cache:
           keys:
             - doc-min-deps-ccache-{{ .Branch }}
@@ -69,7 +71,9 @@ jobs:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
       - restore_cache:
-          key: v1-doc-datasets-{{ .Branch }}
+          keys:
+            - v1-doc-datasets-{{ .Branch }}
+            - v1-doc-datasets
       - restore_cache:
           keys:
             - doc-ccache-{{ .Branch }}
