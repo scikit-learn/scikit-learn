@@ -204,6 +204,10 @@ def test_weighted_percentile_like_numpy_quantile(percentile, arr, weights):
     assert_array_equal(percentile_weighted_percentile, percentile_numpy_quantile)
 
 
+@pytest.mark.skipif(
+    np_version < parse_version("2.0"),
+    reason="np.nanquantile only accepts weights since version 2.0",
+)
 @pytest.mark.parametrize(
     "percentile, arr, weights",
     [
