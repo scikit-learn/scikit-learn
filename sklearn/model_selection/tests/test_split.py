@@ -82,6 +82,7 @@ GROUP_SPLITTERS = [
     StratifiedGroupKFold(),
     LeaveOneGroupOut(),
     GroupShuffleSplit(),
+    GroupTimeSeriesSplit(),
 ]
 GROUP_SPLITTER_NAMES = set(splitter.__class__.__name__ for splitter in GROUP_SPLITTERS)
 
