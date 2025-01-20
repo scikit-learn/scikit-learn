@@ -26,6 +26,7 @@ scipy) with apt-get and the rest of the dependencies (e.g. pytest and joblib)
 with pip.
 
 To run this script you need:
+- conda
 - conda-lock. The version should match the one used in the CI in
   sklearn/_min_dependencies.py
 - pip-tools
@@ -100,9 +101,7 @@ build_metadata_list = [
         "conda_dependencies": common_dependencies
         + [
             "ccache",
-            # Make sure pytorch comes from the pytorch channel and not conda-forge
-            "pytorch::pytorch",
-            "pytorch-cuda",
+            "pytorch-gpu",
             "polars",
             "pyarrow",
             "cupy",
@@ -126,6 +125,7 @@ build_metadata_list = [
             "pyarrow",
             "array-api-compat",
             "array-api-strict",
+            "scipy-doctest",
         ],
         "package_constraints": {
             "blas": "[build=mkl]",
@@ -224,6 +224,8 @@ build_metadata_list = [
             + ["lightgbm", "scikit-image"]
             # Test array API on CPU without PyTorch
             + ["array-api-compat", "array-api-strict"]
+            # doctests dependencies
+            + ["scipy-doctest"]
         ),
     },
     {
