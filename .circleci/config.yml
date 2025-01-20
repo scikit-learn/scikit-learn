@@ -34,7 +34,7 @@ jobs:
       - restore_cache:
           keys:
             - v1-doc-min-deps-datasets-{{ .Branch }}
-            - v1-doc-min-deps-datasets
+            - v1-doc-min-deps-datasets-main
       - restore_cache:
           keys:
             - doc-min-deps-ccache-{{ .Branch }}
@@ -73,7 +73,7 @@ jobs:
       - restore_cache:
           keys:
             - v1-doc-datasets-{{ .Branch }}
-            - v1-doc-datasets
+            - v1-doc-datasets-main
       - restore_cache:
           keys:
             - doc-ccache-{{ .Branch }}
