@@ -18,7 +18,6 @@ from scipy.linalg.lapack import get_lapack_funcs
 from ..base import MultiOutputMixin, RegressorMixin, _fit_context
 from ..exceptions import ConvergenceWarning
 from ..model_selection import check_cv
-
 from ..utils import (
     Bunch,
     arrayfuncs,
