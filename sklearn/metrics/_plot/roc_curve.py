@@ -55,7 +55,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         .. versionadded:: 0.24
 
-    fpr : ndarray or list of ndarray
+    fpr : ndarray
         False positive rate. When plotting multiple ROC curves, `fpr` and `tpr` should
         lists of the same length.
 
@@ -63,7 +63,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             `fpr` is deprecated in 1.7 and will be removed in 1.9.
             Use `fprs` instead.
 
-    tpr : ndarray or list of ndarray
+    tpr : ndarray
         True positive rate. When plotting multiple ROC curves, `fpr` and `tpr` should
         lists of the same length.
 
@@ -71,7 +71,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             `tpr` is deprecated in 1.7 and will be removed in 1.9.
             Use `tprs` instead.
 
-    roc_auc : float or list of floats, default=None
+    roc_auc : float, default=None
         Area under ROC curve. When plotting multiple ROC curves, can be a list
         of the same length as `fpr` and `tpr`.
         If None, no roc_auc score is shown.
