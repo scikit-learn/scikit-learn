@@ -7,7 +7,7 @@ import itertools
 import numbers
 import warnings
 from abc import ABCMeta, abstractmethod
-from functools import partial
+from functools import partial, reduce
 from numbers import Integral, Real
 
 import numpy as np
@@ -1249,13 +1249,13 @@ class RadiusNeighborsMixin:
             )
             if return_distance:
                 neigh_dist_chunks, neigh_ind_chunks = zip(*chunked_results)
-                neigh_dist_list = sum(neigh_dist_chunks, [])
-                neigh_ind_list = sum(neigh_ind_chunks, [])
+                neigh_dist_list = list(itertools.chain.from_iterable(neigh_dist_chunks))
+                neigh_ind_list = list(itertools.chain.from_iterable(neigh_ind_chunks))
                 neigh_dist = _to_object_array(neigh_dist_list)
                 neigh_ind = _to_object_array(neigh_ind_list)
                 results = neigh_dist, neigh_ind
             else:
-                neigh_ind_list = sum(chunked_results, [])
+                neigh_ind_list = list(itertools.chain.from_iterable(chunked_results))
                 results = _to_object_array(neigh_ind_list)
 
             if sort_results:
