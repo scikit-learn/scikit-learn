@@ -2317,7 +2317,7 @@ def check_estimators_empty_data_messages(name, estimator_orig):
     # the following y should be accepted by both classifiers and regressors
     # and ignored by unsupervised models
     y = _enforce_estimator_tags_y(e, np.array([1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]))
-    msg = r"0 feature\(s\) \(shape=\(\d*, 0\)\) while a minimum of \d* " "is required."
+    msg = r"0 feature\(s\) \(shape=\(\d*, 0\)\) while a minimum of \d* is required."
     with raises(ValueError, match=msg):
         e.fit(X_zero_features, y)
 
