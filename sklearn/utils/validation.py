@@ -988,7 +988,7 @@ def check_array(
     # When all dataframe columns are sparse, convert to a sparse array
     if hasattr(array, "sparse") and array.ndim > 1:
         with suppress(ImportError):
-            from pandas import SparseDtype  # noqa: F811
+            from pandas import SparseDtype
 
             def is_sparse(dtype):
                 return isinstance(dtype, SparseDtype)

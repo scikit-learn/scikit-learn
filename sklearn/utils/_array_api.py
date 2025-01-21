@@ -324,7 +324,7 @@ def ensure_common_namespace_device(reference, *arrays):
         return arrays
 
 
-def _check_device_cpu(device):  # noqa
+def _check_device_cpu(device):
     if device not in {"cpu", None}:
         raise ValueError(f"Unsupported device for NumPy: {device!r}")
 
@@ -410,7 +410,7 @@ class _NumPyAPIWrapper:
         # astype is not defined in the top level NumPy namespace
         return x.astype(dtype, copy=copy, casting=casting)
 
-    def asarray(self, x, *, dtype=None, device=None, copy=None):  # noqa
+    def asarray(self, x, *, dtype=None, device=None, copy=None):
         _check_device_cpu(device)
         # Support copy in NumPy namespace
         if copy is True:
