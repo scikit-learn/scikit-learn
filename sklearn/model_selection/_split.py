@@ -37,22 +37,22 @@ from ..utils.validation import _num_samples, check_array, column_or_1d
 
 __all__ = [
     "BaseCrossValidator",
-    "KFold",
     "GroupKFold",
+    "GroupShuffleSplit",
+    "KFold",
     "LeaveOneGroupOut",
     "LeaveOneOut",
     "LeavePGroupsOut",
     "LeavePOut",
-    "RepeatedStratifiedKFold",
-    "RepeatedKFold",
-    "ShuffleSplit",
-    "GroupShuffleSplit",
-    "StratifiedKFold",
-    "StratifiedGroupKFold",
-    "StratifiedShuffleSplit",
     "PredefinedSplit",
-    "train_test_split",
+    "RepeatedKFold",
+    "RepeatedStratifiedKFold",
+    "ShuffleSplit",
+    "StratifiedGroupKFold",
+    "StratifiedKFold",
+    "StratifiedShuffleSplit",
     "check_cv",
+    "train_test_split",
 ]
 
 

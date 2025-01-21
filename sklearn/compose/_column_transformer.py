@@ -50,7 +50,7 @@ from ..utils.validation import (
     check_is_fitted,
 )
 
-__all__ = ["ColumnTransformer", "make_column_transformer", "make_column_selector"]
+__all__ = ["ColumnTransformer", "make_column_selector", "make_column_transformer"]
 
 
 _ERR_MSG_1DCOLUMN = (
