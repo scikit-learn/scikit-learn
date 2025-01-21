@@ -196,8 +196,7 @@ def device(*array_list, remove_none=True, remove_types=(str,)):
         device_other = _single_array_device(array)
         if device_ != device_other:
             raise ValueError(
-                f"Input arrays use different devices: {str(device_)}, "
-                f"{str(device_other)}"
+                f"Input arrays use different devices: {device_}, {device_other}"
             )
 
     return device_
