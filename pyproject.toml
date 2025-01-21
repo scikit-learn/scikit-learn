@@ -146,7 +146,7 @@ preview = true
 # This enables us to use the explicit preview rules that we want only
 explicit-preview-rules = true
 # all rules can be found here: https://docs.astral.sh/ruff/rules/
-select = ["E", "F", "W", "I", "CPY001", "RUF"]
+select = ["E", "F", "W", "I", "CPY001", "PERF", "RUF"]
 ignore=[
     # space before : (needed for how black formats slicing)
     "E203",
@@ -161,6 +161,8 @@ ignore=[
     # We don't care much about F841.
     # Local variable ... is assigned to but never used
     "F841",
+    # `try`-`except` within a loop incurs performance overhead
+    "PERF203",
     # some RUF rules trigger too many changes
     "RUF002",
     "RUF003",
