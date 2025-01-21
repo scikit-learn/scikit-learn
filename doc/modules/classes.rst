@@ -1173,6 +1173,7 @@ Splitter Classes
 
    model_selection.GroupKFold
    model_selection.GroupShuffleSplit
+   model_selection.GroupTimeSeriesSplit
    model_selection.KFold
    model_selection.LeaveOneGroupOut
    model_selection.LeavePGroupsOut
@@ -1186,7 +1187,6 @@ Splitter Classes
    model_selection.StratifiedShuffleSplit
    model_selection.StratifiedGroupKFold
    model_selection.TimeSeriesSplit
-   model_selection.GroupTimeSeriesSplit
 
 Splitter Functions
 ------------------
