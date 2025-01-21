@@ -753,11 +753,11 @@ matthews_corrcoef_scorer = make_scorer(matthews_corrcoef)
 
 
 def positive_likelihood_ratio(y_true, y_pred):
-    return class_likelihood_ratios(y_true, y_pred)[0]
+    return class_likelihood_ratios(y_true, y_pred, replace_undefined_by=1.0)[0]
 
 
 def negative_likelihood_ratio(y_true, y_pred):
-    return class_likelihood_ratios(y_true, y_pred)[1]
+    return class_likelihood_ratios(y_true, y_pred, replace_undefined_by=1.0)[1]
 
 
 positive_likelihood_ratio_scorer = make_scorer(positive_likelihood_ratio)

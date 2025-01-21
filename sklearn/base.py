@@ -400,7 +400,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         warnings.warn(
             "The `_more_tags` method is deprecated in 1.6 and will be removed in "
             "1.7. Please implement the `__sklearn_tags__` method.",
-            category=FutureWarning,
+            category=DeprecationWarning,
         )
         return _to_old_tags(default_tags(self))
 
@@ -411,7 +411,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         warnings.warn(
             "The `_get_tags` method is deprecated in 1.6 and will be removed in "
             "1.7. Please implement the `__sklearn_tags__` method.",
-            category=FutureWarning,
+            category=DeprecationWarning,
         )
 
         return _to_old_tags(get_tags(self))
@@ -444,7 +444,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         """HTML representation of estimator.
 
         This is redundant with the logic of `_repr_mimebundle_`. The latter
-        should be favorted in the long term, `_repr_html_` is only
+        should be favored in the long term, `_repr_html_` is only
         implemented for consumers who do not interpret `_repr_mimbundle_`.
         """
         if get_config()["display"] != "diagram":

@@ -389,9 +389,9 @@ You can create your own custom scorer object using
       >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
       >>> clf = clf.fit(X, y)
       >>> my_custom_loss_func(y, clf.predict(X))
-      0.69...
+      np.float64(0.69...)
       >>> score(clf, X, y)
-      -0.69...
+      np.float64(-0.69...)
 
 .. dropdown:: Custom scorer objects from scratch
 
@@ -673,10 +673,10 @@ where :math:`k` is the number of guesses allowed and :math:`1(x)` is the
   ...                     [0.2, 0.4, 0.3],
   ...                     [0.7, 0.2, 0.1]])
   >>> top_k_accuracy_score(y_true, y_score, k=2)
-  0.75
+  np.float64(0.75)
   >>> # Not normalizing gives the number of "correctly" classified samples
   >>> top_k_accuracy_score(y_true, y_score, k=2, normalize=False)
-  3
+  np.int64(3)
 
 .. _balanced_accuracy_score:
 
@@ -786,7 +786,7 @@ and not for more than two annotators.
   >>> labeling1 = [2, 0, 2, 2, 0, 1]
   >>> labeling2 = [0, 0, 2, 2, 0, 2]
   >>> cohen_kappa_score(labeling1, labeling2)
-  0.4285714285714286
+  np.float64(0.4285714285714286)
 
 .. _confusion_matrix:
 
@@ -839,7 +839,7 @@ false negatives and true positives as follows::
   >>> y_pred = [0, 1, 0, 1, 0, 1, 0, 1]
   >>> tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
   >>> tn, fp, fn, tp
-  (2, 1, 2, 3)
+  (np.int64(2), np.int64(1), np.int64(2), np.int64(3))
 
 .. rubric:: Examples
 
@@ -1115,7 +1115,7 @@ Here are some small examples in binary classification::
   >>> threshold
   array([0.1 , 0.35, 0.4 , 0.8 ])
   >>> average_precision_score(y_true, y_scores)
-  0.83...
+  np.float64(0.83...)
 
 
 
@@ -1234,19 +1234,19 @@ In the binary case::
   >>> y_pred = np.array([[1, 1, 1],
   ...                    [1, 0, 0]])
   >>> jaccard_score(y_true[0], y_pred[0])
-  0.6666...
+  np.float64(0.6666...)
 
 In the 2D comparison case (e.g. image similarity):
 
   >>> jaccard_score(y_true, y_pred, average="micro")
-  0.6
+  np.float64(0.6)
 
 In the multilabel case with binary label indicators::
 
   >>> jaccard_score(y_true, y_pred, average='samples')
-  0.5833...
+  np.float64(0.5833...)
   >>> jaccard_score(y_true, y_pred, average='macro')
-  0.6666...
+  np.float64(0.6666...)
   >>> jaccard_score(y_true, y_pred, average=None)
   array([0.5, 0.5, 1. ])
 
@@ -1258,9 +1258,9 @@ multilabel problem::
   >>> jaccard_score(y_true, y_pred, average=None)
   array([1. , 0. , 0.33...])
   >>> jaccard_score(y_true, y_pred, average='macro')
-  0.44...
+  np.float64(0.44...)
   >>> jaccard_score(y_true, y_pred, average='micro')
-  0.33...
+  np.float64(0.33...)
 
 .. _hinge_loss:
 
@@ -1315,7 +1315,7 @@ with a svm classifier in a binary class problem::
   >>> pred_decision
   array([-2.18...,  2.36...,  0.09...])
   >>> hinge_loss([-1, 1, 1], pred_decision)
-  0.3...
+  np.float64(0.3...)
 
 Here is an example demonstrating the use of the :func:`hinge_loss` function
 with a svm classifier in a multiclass problem::
@@ -1329,7 +1329,7 @@ with a svm classifier in a multiclass problem::
   >>> pred_decision = est.decision_function([[-1], [2], [3]])
   >>> y_true = [0, 2, 3]
   >>> hinge_loss(y_true, pred_decision, labels=labels)
-  0.56...
+  np.float64(0.56...)
 
 .. _log_loss:
 
@@ -1445,7 +1445,7 @@ function:
     >>> y_true = [+1, +1, +1, -1]
     >>> y_pred = [+1, -1, +1, +1]
     >>> matthews_corrcoef(y_true, y_pred)
-    -0.33...
+    np.float64(-0.33...)
 
 .. rubric:: References
 
@@ -1640,12 +1640,12 @@ We can use the probability estimates corresponding to `clf.classes_[1]`.
 
   >>> y_score = clf.predict_proba(X)[:, 1]
   >>> roc_auc_score(y, y_score)
-  0.99...
+  np.float64(0.99...)
 
 Otherwise, we can use the non-thresholded decision values
 
   >>> roc_auc_score(y, clf.decision_function(X))
-  0.99...
+  np.float64(0.99...)
 
 .. _roc_auc_multiclass:
 
@@ -1951,13 +1951,13 @@ Here is a small example of usage of this function::
     >>> y_prob = np.array([0.1, 0.9, 0.8, 0.4])
     >>> y_pred = np.array([0, 1, 1, 0])
     >>> brier_score_loss(y_true, y_prob)
-    0.055
+    np.float64(0.055)
     >>> brier_score_loss(y_true, 1 - y_prob, pos_label=0)
-    0.055
+    np.float64(0.055)
     >>> brier_score_loss(y_true_categorical, y_prob, pos_label="ham")
-    0.055
+    np.float64(0.055)
     >>> brier_score_loss(y_true, y_prob > 0.5)
-    0.0
+    np.float64(0.0)
 
 The Brier score can be used to assess how well a classifier is calibrated.
 However, a lower Brier score loss does not always mean a better calibration.
@@ -2086,26 +2086,31 @@ the actual formulas).
 
 .. dropdown:: Mathematical divergences
 
-  The positive likelihood ratio is undefined when :math:`fp = 0`, which can be
-  interpreted as the classifier perfectly identifying positive cases. If :math:`fp
-  = 0` and additionally :math:`tp = 0`, this leads to a zero/zero division. This
-  happens, for instance, when using a `DummyClassifier` that always predicts the
-  negative class and therefore the interpretation as a perfect classifier is lost.
+  The positive likelihood ratio (`LR+`) is undefined when :math:`fp=0`, meaning the
+  classifier does not misclassify any negative labels as positives. This condition can
+  either indicate a perfect identification of all the negative cases or, if there are
+  also no true positive predictions (:math:`tp=0`), that the classifier does not predict
+  the positive class at all. In the first case, `LR+` can be interpreted as `np.inf`, in
+  the second case (for instance, with highly imbalanced data) it can be interpreted as
+  `np.nan`.
 
-  The negative likelihood ratio is undefined when :math:`tn = 0`. Such divergence
-  is invalid, as :math:`LR_- > 1` would indicate an increase in the odds of a
-  sample belonging to the positive class after being classified as negative, as if
-  the act of classifying caused the positive condition. This includes the case of
-  a `DummyClassifier` that always predicts the positive class (i.e. when
-  :math:`tn=fn=0`).
+  The negative likelihood ratio (`LR-`) is undefined when :math:`tn=0`. Such
+  divergence is invalid, as :math:`LR_- > 1.0` would indicate an increase in the odds of
+  a sample belonging to the positive class after being classified as negative, as if the
+  act of classifying caused the positive condition. This includes the case of a
+  :class:`~sklearn.dummy.DummyClassifier` that always predicts the positive class
+  (i.e. when :math:`tn=fn=0`).
 
-  Both class likelihood ratios are undefined when :math:`tp=fn=0`, which means
-  that no samples of the positive class were present in the testing set. This can
-  also happen when cross-validating highly imbalanced data.
+  Both class likelihood ratios (`LR+ and LR-`) are undefined when :math:`tp=fn=0`, which
+  means that no samples of the positive class were present in the test set. This can
+  happen when cross-validating on highly imbalanced data and also leads to a division by
+  zero.
 
-  In all the previous cases the :func:`class_likelihood_ratios` function raises by
-  default an appropriate warning message and returns `nan` to avoid pollution when
-  averaging over cross-validation folds.
+  If a division by zero occurs and `raise_warning` is set to `True` (default),
+  :func:`class_likelihood_ratios` raises an `UndefinedMetricWarning` and returns
+  `np.nan` by default to avoid pollution when averaging over cross-validation folds.
+  Users can set return values in case of a division by zero with the
+  `replace_undefined_by` param.
 
   For a worked-out demonstration of the :func:`class_likelihood_ratios` function,
   see the example below.
@@ -2117,8 +2122,7 @@ the actual formulas).
 
   * Brenner, H., & Gefeller, O. (1997).
     Variation of sensitivity, specificity, likelihood ratios and predictive
-    values with disease prevalence.
-    Statistics in medicine, 16(9), 981-991.
+    values with disease prevalence. Statistics in medicine, 16(9), 981-991.
 
 
 .. _d2_score_classification:
@@ -2232,7 +2236,7 @@ Here is a small example of usage of this function::
     >>> y_true = np.array([[1, 0, 0], [0, 0, 1]])
     >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
     >>> coverage_error(y_true, y_score)
-    2.5
+    np.float64(2.5)
 
 .. _label_ranking_average_precision:
 
@@ -2279,7 +2283,7 @@ Here is a small example of usage of this function::
     >>> y_true = np.array([[1, 0, 0], [0, 0, 1]])
     >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
     >>> label_ranking_average_precision_score(y_true, y_score)
-    0.416...
+    np.float64(0.416...)
 
 .. _label_ranking_loss:
 
@@ -2314,11 +2318,11 @@ Here is a small example of usage of this function::
     >>> y_true = np.array([[1, 0, 0], [0, 0, 1]])
     >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
     >>> label_ranking_loss(y_true, y_score)
-    0.75...
+    np.float64(0.75...)
     >>> # With the following prediction, we have perfect and minimal loss
     >>> y_score = np.array([[1.0, 0.1, 0.2], [0.1, 0.2, 0.9]])
     >>> label_ranking_loss(y_true, y_score)
-    0.0
+    np.float64(0.0)
 
 
 .. dropdown:: References
@@ -2696,7 +2700,7 @@ function::
   >>> y_true = [3, -0.5, 2, 7]
   >>> y_pred = [2.5, 0.0, 2, 8]
   >>> median_absolute_error(y_true, y_pred)
-  0.5
+  np.float64(0.5)
 
 
 
@@ -2728,7 +2732,7 @@ Here is a small example of usage of the :func:`max_error` function::
   >>> y_true = [3, 2, 7, 1]
   >>> y_pred = [9, 2, 7, 1]
   >>> max_error(y_true, y_pred)
-  6
+  np.int64(6)
 
 The :func:`max_error` does not support multioutput.
 
@@ -3007,15 +3011,15 @@ of 0.0.
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> d2_absolute_error_score(y_true, y_pred)
-    0.764...
+    np.float64(0.764...)
     >>> y_true = [1, 2, 3]
     >>> y_pred = [1, 2, 3]
     >>> d2_absolute_error_score(y_true, y_pred)
-    1.0
+    np.float64(1.0)
     >>> y_true = [1, 2, 3]
     >>> y_pred = [2, 2, 2]
     >>> d2_absolute_error_score(y_true, y_pred)
-    0.0
+    np.float64(0.0)
 
 
 .. _visualization_regression_evaluation:

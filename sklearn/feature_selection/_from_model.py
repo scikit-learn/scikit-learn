@@ -501,5 +501,6 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
         tags.input_tags.allow_nan = get_tags(self.estimator).input_tags.allow_nan
         return tags
