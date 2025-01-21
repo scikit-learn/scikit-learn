@@ -196,10 +196,10 @@ def _liac_arff_parser(
         # read arff data with chunks
         columns_to_keep = [col for col in columns_names if col in columns_to_select]
         dfs = [first_df[columns_to_keep]]
-        for data in chunk_generator(arff_container["data"], chunksize):
-            dfs.append(
-                pd.DataFrame(data, columns=columns_names, copy=False)[columns_to_keep]
-            )
+        dfs.extend(
+            pd.DataFrame(data, columns=columns_names, copy=False)[columns_to_keep]
+            for data in chunk_generator(arff_container["data"], chunksize)
+        )
         # dfs[0] contains only one row, which may not have enough data to infer to
         # column's dtype. Here we use `dfs[1]` to configure the dtype in dfs[0]
         if len(dfs) >= 2:

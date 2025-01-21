@@ -76,8 +76,7 @@ def test_sparse_graph_connected_component(coo_container):
         group = p[start:stop]
         # Connect all elements within the group at least once via an
         # arbitrary path that spans the group.
-        for i in range(len(group) - 1):
-            connections.append((group[i], group[i + 1]))
+        connections.extend((group[i], group[i + 1]) for i in range(len(group) - 1))
 
         # Add some more random connections within the group
         min_idx, max_idx = 0, len(group) - 1

@@ -296,11 +296,12 @@ class Kernel(metaclass=ABCMeta):
         theta : ndarray of shape (n_dims,)
             The non-fixed, log-transformed hyperparameters of the kernel
         """
-        theta = []
         params = self.get_params()
-        for hyperparameter in self.hyperparameters:
-            if not hyperparameter.fixed:
-                theta.append(params[hyperparameter.name])
+        theta = [
+            params[hyperparameter.name]
+            for hyperparameter in self.hyperparameters
+            if not hyperparameter.fixed
+        ]
         if len(theta) > 0:
             return np.log(np.hstack(theta))
         else:
@@ -719,15 +720,16 @@ class KernelOperator(Kernel):
             for hyperparameter in self.k1.hyperparameters
         ]
 
-        for hyperparameter in self.k2.hyperparameters:
-            r.append(
-                Hyperparameter(
-                    "k2__" + hyperparameter.name,
-                    hyperparameter.value_type,
-                    hyperparameter.bounds,
-                    hyperparameter.n_elements,
-                )
+        r.extend(
+            Hyperparameter(
+                "k2__" + hyperparameter.name,
+                hyperparameter.value_type,
+                hyperparameter.bounds,
+                hyperparameter.n_elements,
             )
+            for hyperparameter in self.k2.hyperparameters
+        )
+
         return r
 
     @property
@@ -1056,17 +1058,15 @@ class Exponentiation(Kernel):
     @property
     def hyperparameters(self):
         """Returns a list of all hyperparameter."""
-        r = []
-        for hyperparameter in self.kernel.hyperparameters:
-            r.append(
-                Hyperparameter(
-                    "kernel__" + hyperparameter.name,
-                    hyperparameter.value_type,
-                    hyperparameter.bounds,
-                    hyperparameter.n_elements,
-                )
+        return [
+            Hyperparameter(
+                "kernel__" + hyperparameter.name,
+                hyperparameter.value_type,
+                hyperparameter.bounds,
+                hyperparameter.n_elements,
             )
-        return r
+            for hyperparameter in self.kernel.hyperparameters
+        ]
 
     @property
     def theta(self):

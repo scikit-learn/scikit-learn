@@ -113,8 +113,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
                 # Since those probabilities must sum to one for each sample,
                 # we can work with probabilities of `n_classes - 1` classes.
                 # Hence we drop the first column.
-                for pred in preds:
-                    X_meta.append(pred[:, 1:])
+                X_meta.extend(pred[:, 1:] for pred in preds)
             elif preds.ndim == 1:
                 # Some estimator return a 1D array for predictions
                 # which must be 2-dimensional arrays.

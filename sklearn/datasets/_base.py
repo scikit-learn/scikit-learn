@@ -304,9 +304,7 @@ def load_files(
         target = target[indices]
 
     if load_content:
-        data = []
-        for filename in filenames:
-            data.append(Path(filename).read_bytes())
+        data = [Path(filename).read_bytes() for filename in filenames]
         if encoding is not None:
             data = [d.decode(encoding, decode_error) for d in data]
         return Bunch(

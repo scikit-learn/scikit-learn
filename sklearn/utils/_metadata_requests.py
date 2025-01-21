@@ -754,10 +754,9 @@ class MethodMapping:
         obj : list
             A serialized version of the instance in the form of a list.
         """
-        result = list()
-        for route in self._routes:
-            result.append({"caller": route.caller, "callee": route.callee})
-        return result
+        return [
+            {"caller": route.caller, "callee": route.callee} for route in self._routes
+        ]
 
     def __repr__(self):
         return str(self._serialize())

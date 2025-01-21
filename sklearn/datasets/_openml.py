@@ -741,15 +741,15 @@ def _valid_data_column_names(features_list, target_columns):
     # OpenML guide follows that columns that have the `is_row_identifier` or
     # `is_ignore` flag, these can not be learned on. Also target columns are
     # excluded.
-    valid_data_column_names = []
-    for feature in features_list:
+    return [
+        feature["name"]
+        for feature in features_list
         if (
             feature["name"] not in target_columns
             and feature["is_ignore"] != "true"
             and feature["is_row_identifier"] != "true"
-        ):
-            valid_data_column_names.append(feature["name"])
-    return valid_data_column_names
+        )
+    ]
 
 
 @validate_params(
