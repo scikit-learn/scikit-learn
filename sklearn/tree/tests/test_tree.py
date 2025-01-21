@@ -388,7 +388,7 @@ def test_arrayrepr():
     X = np.arange(10000)[:, np.newaxis]
     y = np.arange(10000)
 
-    for name, Tree in REG_TREES.items():
+    for Tree in REG_TREES.values():
         reg = Tree(max_depth=None, random_state=0)
         reg.fit(X, y)
 
@@ -426,7 +426,7 @@ def test_numerical_stability():
     y = np.array([1.0, 0.70209277, 0.53896582, 0.0, 0.90914464, 0.48026916, 0.49622521])
 
     with np.errstate(all="raise"):
-        for name, Tree in REG_TREES.items():
+        for Tree in REG_TREES.values():
             reg = Tree(random_state=0)
             reg.fit(X, y)
             reg.fit(X, -y)
@@ -504,7 +504,7 @@ def test_importances_gini_equal_squared_error():
 
 def test_max_features():
     # Check max_features.
-    for name, TreeEstimator in ALL_TREES.items():
+    for TreeEstimator in ALL_TREES.values():
         est = TreeEstimator(max_features="sqrt")
         est.fit(iris.data, iris.target)
         assert est.max_features_ == int(np.sqrt(iris.data.shape[1]))
@@ -540,7 +540,7 @@ def test_max_features():
 
 def test_error():
     # Test that it gives proper exception on deficient input.
-    for name, TreeEstimator in CLF_TREES.items():
+    for TreeEstimator in CLF_TREES.values():
         # predict before fit
         est = TreeEstimator()
         with pytest.raises(NotFittedError):
@@ -973,7 +973,7 @@ def test_multioutput():
     y_true = [[-1, 0], [1, 1], [-1, 2], [1, 3]]
 
     # toy classification problem
-    for name, TreeClassifier in CLF_TREES.items():
+    for TreeClassifier in CLF_TREES.values():
         clf = TreeClassifier(random_state=0)
         y_hat = clf.fit(X, y).predict(T)
         assert_array_equal(y_hat, y_true)
@@ -990,7 +990,7 @@ def test_multioutput():
         assert log_proba[1].shape == (4, 4)
 
     # toy regression problem
-    for name, TreeRegressor in REG_TREES.items():
+    for TreeRegressor in REG_TREES.values():
         reg = TreeRegressor(random_state=0)
         y_hat = reg.fit(X, y).predict(T)
         assert_almost_equal(y_hat, y_true)
@@ -999,7 +999,7 @@ def test_multioutput():
 
 def test_classes_shape():
     # Test that n_classes_ and classes_ have proper shape.
-    for name, TreeClassifier in CLF_TREES.items():
+    for TreeClassifier in CLF_TREES.values():
         # Classification, single output
         clf = TreeClassifier(random_state=0)
         clf.fit(X, y)
@@ -1023,7 +1023,7 @@ def test_unbalanced_iris():
     unbalanced_y = iris.target[:125]
     sample_weight = compute_sample_weight("balanced", unbalanced_y)
 
-    for name, TreeClassifier in CLF_TREES.items():
+    for TreeClassifier in CLF_TREES.values():
         clf = TreeClassifier(random_state=0)
         clf.fit(unbalanced_X, unbalanced_y, sample_weight=sample_weight)
         assert_almost_equal(clf.predict(unbalanced_X), unbalanced_y)
@@ -1215,7 +1215,7 @@ def test_max_leaf_nodes():
     # Test greedy trees with max_depth + 1 leafs.
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     k = 4
-    for name, TreeEstimator in ALL_TREES.items():
+    for TreeEstimator in ALL_TREES.values():
         est = TreeEstimator(max_depth=None, max_leaf_nodes=k + 1).fit(X, y)
         assert est.get_n_leaves() == k + 1
 
@@ -1224,7 +1224,7 @@ def test_max_leaf_nodes_max_depth():
     # Test precedence of max_leaf_nodes over max_depth.
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     k = 4
-    for name, TreeEstimator in ALL_TREES.items():
+    for TreeEstimator in ALL_TREES.values():
         est = TreeEstimator(max_depth=1, max_leaf_nodes=k).fit(X, y)
         assert est.get_depth() == 1
 
@@ -1251,7 +1251,7 @@ def test_only_constant_features():
     random_state = check_random_state(0)
     X = np.zeros((10, 20))
     y = random_state.randint(0, 2, (10,))
-    for name, TreeEstimator in ALL_TREES.items():
+    for TreeEstimator in ALL_TREES.values():
         est = TreeEstimator(random_state=0)
         est.fit(X, y)
         assert est.tree_.max_depth == 0
@@ -1275,13 +1275,13 @@ def test_with_only_one_non_constant_features():
     X = np.hstack([np.array([[1.0], [1.0], [0.0], [0.0]]), np.zeros((4, 1000))])
 
     y = np.array([0.0, 1.0, 0.0, 1.0])
-    for name, TreeEstimator in CLF_TREES.items():
+    for TreeEstimator in CLF_TREES.values():
         est = TreeEstimator(random_state=0, max_features=1)
         est.fit(X, y)
         assert est.tree_.max_depth == 1
         assert_array_equal(est.predict_proba(X), np.full((4, 2), 0.5))
 
-    for name, TreeEstimator in REG_TREES.items():
+    for TreeEstimator in REG_TREES.values():
         est = TreeEstimator(random_state=0, max_features=1)
         est.fit(X, y)
         assert est.tree_.max_depth == 1
@@ -1771,7 +1771,7 @@ def test_criterion_copy():
         return pickle.loads(pickle.dumps(obj))
 
     for copy_func in [copy.copy, copy.deepcopy, _pickle_copy]:
-        for _, typename in CRITERIA_CLF.items():
+        for typename in CRITERIA_CLF.values():
             criteria = typename(n_outputs, n_classes)
             result = copy_func(criteria).__reduce__()
             typename_, (n_outputs_, n_classes_), _ = result
@@ -1779,7 +1779,7 @@ def test_criterion_copy():
             assert n_outputs == n_outputs_
             assert_array_equal(n_classes, n_classes_)
 
-        for _, typename in CRITERIA_REG.items():
+        for typename in CRITERIA_REG.values():
             criteria = typename(n_outputs, n_samples)
             result = copy_func(criteria).__reduce__()
             typename_, (n_outputs_, n_samples_), _ = result
