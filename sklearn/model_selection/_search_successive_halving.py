@@ -478,7 +478,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
             deactivating shuffling (`shuffle=False`), or by setting the
             `cv`'s `random_state` parameter to an integer.
 
-    scoring : str, callable, or None, default=None
+    scoring : str or callable, default=None
         Scoring method to use to evaluate the predictions on the test set.
 
         - str: see :ref:`scoring_string_names` for options.
@@ -823,7 +823,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
             deactivating shuffling (`shuffle=False`), or by setting the
             `cv`'s `random_state` parameter to an integer.
 
-    scoring : str, callable, or None, default=None
+    scoring : str or callable, default=None
         Scoring method to use to evaluate the predictions on the test set.
 
         - str: see :ref:`scoring_string_names` for options.

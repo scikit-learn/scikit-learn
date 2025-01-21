@@ -631,7 +631,7 @@ def _log_reg_scoring_path(
         regularization strength. If Cs is as an int, then a grid of Cs
         values are chosen in a logarithmic scale between 1e-4 and 1e4.
 
-    scoring : str or callable or None
+    scoring : str, callable or None
         The scoring method to use. Options:
 
         - str: see :ref:`scoring_string_names` for options.

@@ -598,7 +598,8 @@ def cross_val_score(
         - `None`: the `estimator`'s
           :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
-        Similar to :func:`cross_validate` but only a single metric is permitted.
+        Similar to the use of `scoring` in :func:`cross_validate` but only a
+        single metric is permitted.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.

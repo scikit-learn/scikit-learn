@@ -81,13 +81,10 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
 
         - str: see :ref:`scoring_string_names` for options.
         - callable: a scorer callable object (e.g., function) with signature
-          ``scorer(estimator, X, y)`` tha returns a single value.
+          ``scorer(estimator, X, y)`` that returns a single value.
           See :ref:`scoring_callable` for details.
         - `None`: the `estimator`'s
           :ref:`default evaluation criterion <scoring_api_overview>` is used.
-
-        NOTE that when using a custom scorer, it should return a single
-        value.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.

@@ -605,7 +605,7 @@ class RFECV(RFE):
         .. versionchanged:: 0.22
             ``cv`` default value of None changed from 3-fold to 5-fold.
 
-    scoring : str, callable or None, default=None
+    scoring : str or callable, default=None
         Scoring method to evaluate the :class:`RFE` selectors' performance. Options:
 
         - str: see :ref:`scoring_string_names` for options.
