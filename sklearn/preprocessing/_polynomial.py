@@ -816,10 +816,11 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         n_splines = self.bsplines_[0].c.shape[1]
 
         input_features = _check_feature_names_in(self, input_features)
-        feature_names = []
-        for i in range(self.n_features_in_):
-            for j in range(n_splines - 1 + self.include_bias):
-                feature_names.append(f"{input_features[i]}_sp_{j}")
+        feature_names = [
+            f"{input_features[i]}_sp_{j}"
+            for i in range(self.n_features_in_)
+            for j in range(n_splines - 1 + self.include_bias)
+        ]
         return np.asarray(feature_names, dtype=object)
 
     @_fit_context(prefer_skip_nested_validation=True)
