@@ -882,7 +882,7 @@ class MetadataRouter:
         if self._self_request:
             res = res | self._self_request.consumes(method=method, params=params)
 
-        for _, route_mapping in self._route_mappings.items():
+        for route_mapping in self._route_mappings.values():
             for caller, callee in route_mapping.mapping:
                 if caller == method:
                     res = res | route_mapping.router.consumes(
@@ -925,7 +925,7 @@ class MetadataRouter:
                 )
             )
 
-        for name, route_mapping in self._route_mappings.items():
+        for route_mapping in self._route_mappings.values():
             for caller, callee in route_mapping.mapping:
                 if caller == method:
                     res = res.union(
