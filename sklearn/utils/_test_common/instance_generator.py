@@ -177,6 +177,7 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import all_estimators
 from sklearn.utils._tags import get_tags
 from sklearn.utils._testing import SkipTest
+from sklearn.utils.fixes import parse_version, sp_base_version
 
 CROSS_DECOMPOSITION = ["PLSCanonical", "PLSRegression", "CCA", "PLSSVD"]
 
@@ -574,6 +575,7 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             dict(positive=False),
             dict(positive=True),
         ],
+        "check_sample_weight_equivalence_on_sparse_data": [dict(tol=1e-12)],
     },
     LocallyLinearEmbedding: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     LogisticRegression: {
@@ -588,6 +590,16 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
         ],
     },
     MDS: {"check_dict_unchanged": dict(max_iter=5, n_components=1, n_init=2)},
+    MLPClassifier: {
+        "check_sample_weight_equivalence_on_dense_data": [
+            dict(solver="lbfgs"),
+        ]
+    },
+    MLPRegressor: {
+        "check_sample_weight_equivalence_on_dense_data": [
+            dict(solver="sgd", tol=1e-2, random_state=42),
+        ]
+    },
     MiniBatchDictionaryLearning: {
         "check_dict_unchanged": dict(batch_size=10, max_iter=5, n_components=1)
     },
@@ -824,15 +836,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
-    BayesianRidge: {
-        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
-        "check_sample_weight_equivalence_on_dense_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-        "check_sample_weight_equivalence_on_sparse_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-    },
     BernoulliRBM: {
         "check_methods_subset_invariance": ("fails for the decision_function method"),
         "check_methods_sample_order_invariance": ("fails for the score_samples method"),
@@ -981,18 +984,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     KNeighborsTransformer: {
         "check_methods_sample_order_invariance": "check is not applicable."
-    },
-    LinearRegression: {
-        # TODO: this model should converge to the minimum norm solution of the
-        # least squares problem and as result be numerically stable enough when
-        # running the equivalence check even if n_features > n_samples. Maybe
-        # this is is not the case and a different choice of solver could fix
-        # this problem. This might require setting a low enough value for the
-        # tolerance of the lsqr solver:
-        # https://github.com/scikit-learn/scikit-learn/issues/30131
-        "check_sample_weight_equivalence_on_sparse_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
     },
     LinearSVC: {
         # TODO: replace by a statistical test when _dual=True, see meta-issue #16298
@@ -1204,12 +1195,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_dont_overwrite_parameters": "empty array passed inside",
         "check_fit2d_predict1d": "empty array passed inside",
     },
-    SplineTransformer: {
-        "check_estimators_pickle": (
-            "Current Scipy implementation of _bsplines does not"
-            "support const memory views."
-        ),
-    },
     SVC: {
         # TODO: fix sample_weight handling of this estimator when probability=False
         # TODO: replace by a statistical test when probability=True
@@ -1239,6 +1224,15 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         ),
     },
 }
+
+# TODO: remove when scipy min version >= 1.11
+if sp_base_version < parse_version("1.11"):
+    PER_ESTIMATOR_XFAIL_CHECKS[SplineTransformer] = {
+        "check_estimators_pickle": (
+            "scipy < 1.11 implementation of _bsplines does not"
+            "support const memory views."
+        ),
+    }
 
 
 def _get_expected_failed_checks(estimator):

@@ -340,7 +340,7 @@ html_sidebars = {
 html_additional_pages = {"index": "index.html"}
 
 # Additional files to copy
-# html_extra_path = []
+html_extra_path = ["robots.txt"]
 
 # Additional JS files
 html_js_files = [

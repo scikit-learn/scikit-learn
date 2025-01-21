@@ -183,6 +183,7 @@ plt.errorbar(
 plt.title("Influence of outliers on the covariance estimation")
 plt.xlabel("Amount of contamination (%)")
 plt.ylabel("RMSE")
-plt.legend(loc="upper center", prop=font_prop)
+plt.legend(loc="center", prop=font_prop)
 
+plt.tight_layout()
 plt.show()
