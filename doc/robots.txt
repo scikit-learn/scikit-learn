@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /
+Allow: /stable
+Allow: /dev/developers
