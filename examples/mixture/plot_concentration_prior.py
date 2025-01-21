@@ -103,7 +103,7 @@ means = np.array([[0.0, -0.70], [0.0, 0.0], [0.0, 0.70]])
 # mean_precision_prior= 0.8 to minimize the influence of the prior
 estimators = [
     (
-        "Finite mixture with a Dirichlet distribution\nprior and " r"$\gamma_0=$",
+        r"Finite mixture with a Dirichlet distribution\nprior and $\gamma_0=$",
         BayesianGaussianMixture(
             weight_concentration_prior_type="dirichlet_distribution",
             n_components=2 * n_components,
