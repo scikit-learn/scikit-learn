@@ -3,7 +3,7 @@
 Cython Best Practices, Conventions and Knowledge
 ================================================
 
-This document tips to develop Cython code in scikit-learn.
+This document contains tips to develop Cython code in scikit-learn.
 
 Tips for developing with Cython in scikit-learn
 -----------------------------------------------

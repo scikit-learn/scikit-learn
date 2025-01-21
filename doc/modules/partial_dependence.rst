@@ -128,7 +128,8 @@ Due to the limits of human perception, only one input feature of interest is
 supported for ICE plots.
 
 The figures below show two ICE plots for the bike sharing dataset,
-with a :class:`~sklearn.ensemble.HistGradientBoostingRegressor`. The figures plot the corresponding PD line overlaid on ICE lines.
+with a :class:`~sklearn.ensemble.HistGradientBoostingRegressor`. The figures plot
+the corresponding PD line overlaid on ICE lines.
 
 .. figure:: ../auto_examples/inspection/images/sphx_glr_plot_partial_dependence_004.png
    :target: ../auto_examples/inspection/plot_partial_dependence.html

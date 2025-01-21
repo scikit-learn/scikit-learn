@@ -27,7 +27,8 @@ performance.
 On the top figure, we observe that permuting a predictive feature breaks the
 correlation between the feature and the target, and consequently the model's
 statistical performance decreases. On the bottom figure, we observe that permuting
-a non-predictive feature does not significantly degrade the model's statistical performance.
+a non-predictive feature does not significantly degrade the model's statistical
+performance.
 
 One key advantage of permutation feature importance is that it is
 model-agnostic, i.e. it can be applied to any fitted estimator. Moreover, it can

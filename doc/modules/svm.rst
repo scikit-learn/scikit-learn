@@ -230,7 +230,7 @@ In the multiclass case, this is extended as per [#2]_.
   The same probability calibration procedure is available for all estimators
   via the :class:`~sklearn.calibration.CalibratedClassifierCV` (see
   :ref:`calibration`). In the case of :class:`SVC` and :class:`NuSVC`, this
-  procedure is built in `libsvm`_ which is used under the hood, so it does
+  procedure is builtin to `libsvm`_ which is used under the hood, so it does
   not rely on scikit-learn's
   :class:`~sklearn.calibration.CalibratedClassifierCV`.
 

@@ -400,7 +400,7 @@ Using stop words
 
 Stop words are words like "and", "the", "him", which are presumed to be
 uninformative in representing the content of a text, and which may be
-removed to avoid them being construed as signals for prediction. Sometimes,
+removed to avoid them being construed as informative for prediction. Sometimes,
 however, similar words are useful for prediction, such as in classifying
 writing style or personality.
 
