@@ -846,7 +846,7 @@ class SVC(BaseSVC):
     For an example of handling weighed samples with :class:`SVC`s, please see:
     :ref:`sphx_glr_auto_examples_svm_plot_weighted_samples.py`
 
-    For a comaprison of the SVC with other classifiers see:
+    For a comparison of the SVC with other classifiers see:
     :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`.
     """
 
