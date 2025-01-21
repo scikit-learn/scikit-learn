@@ -443,8 +443,7 @@ def test_check_docstring_parameters():
             "+ ['a', 'b']",
         ],
         [
-            "In function: "
-            + "sklearn.utils.tests.test_testing.f_too_many_param_docstring",
+            "In function: sklearn.utils.tests.test_testing.f_too_many_param_docstring",
             (
                 "Parameters in function docstring have more items w.r.t. function"
                 " signature, first extra item: c"
@@ -475,8 +474,7 @@ def test_check_docstring_parameters():
             "+ []",
         ],
         [
-            "In function: "
-            + f"sklearn.utils.tests.test_testing.{mock_meta_name}.predict",
+            f"In function: sklearn.utils.tests.test_testing.{mock_meta_name}.predict",
             (
                 "There's a parameter name mismatch in function docstring w.r.t."
                 " function signature, at index 0 diff: 'X' != 'y'"
@@ -489,21 +487,20 @@ def test_check_docstring_parameters():
         ],
         [
             "In function: "
-            + f"sklearn.utils.tests.test_testing.{mock_meta_name}."
-            + "predict_proba",
+            f"sklearn.utils.tests.test_testing.{mock_meta_name}."
+            "predict_proba",
             "potentially wrong underline length... ",
             "Parameters ",
             "--------- in ",
         ],
         [
-            "In function: "
-            + f"sklearn.utils.tests.test_testing.{mock_meta_name}.score",
+            f"In function: sklearn.utils.tests.test_testing.{mock_meta_name}.score",
             "potentially wrong underline length... ",
             "Parameters ",
             "--------- in ",
         ],
         [
-            "In function: " + f"sklearn.utils.tests.test_testing.{mock_meta_name}.fit",
+            f"In function: sklearn.utils.tests.test_testing.{mock_meta_name}.fit",
             (
                 "Parameters in function docstring have less items w.r.t. function"
                 " signature, first missing item: X"
@@ -788,13 +785,13 @@ def test_assert_docstring_consistency_descr_regex_pattern():
     # Check regex that matches full parameter descriptions
     regex_full = (
         r"The (set|group) "  # match 'set' or 'group'
-        + r"of labels to (include|add) "  # match 'include' or 'add'
-        + r"when `average \!\= 'binary'`, and (their|the) "  #  match 'their' or 'the'
-        + r"order if `average is None`\."
-        + r"[\s\w]*\.* "  # optionally match additional sentence
-        + r"Labels present (on|in) "  # match 'on' or 'in'
-        + r"(them|the) "  # match 'them' or 'the'
-        + r"datas? can be excluded\."  # match 'data' or 'datas'
+        r"of labels to (include|add) "  # match 'include' or 'add'
+        r"when `average \!\= 'binary'`, and (their|the) "  #  match 'their' or 'the'
+        r"order if `average is None`\."
+        r"[\s\w]*\.* "  # optionally match additional sentence
+        r"Labels present (on|in) "  # match 'on' or 'in'
+        r"(them|the) "  # match 'them' or 'the'
+        r"datas? can be excluded\."  # match 'data' or 'datas'
     )
 
     assert_docstring_consistency(
