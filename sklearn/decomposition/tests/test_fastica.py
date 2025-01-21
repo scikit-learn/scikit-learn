@@ -367,7 +367,7 @@ def test_fastica_errors():
     with pytest.raises(ValueError, match=r"alpha must be in \[1,2\]"):
         fastica(X, fun_args={"alpha": 0})
     with pytest.raises(
-        ValueError, match="w_init has invalid shape.+" r"should be \(3L?, 3L?\)"
+        ValueError, match=r"w_init has invalid shape.+should be \(3L?, 3L?\)"
     ):
         fastica(X, w_init=w_init)
 
