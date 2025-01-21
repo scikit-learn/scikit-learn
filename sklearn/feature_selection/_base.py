@@ -260,8 +260,8 @@ def _get_feature_importances(estimator, getter, transform_func=None, norm_order=
     else:
         raise ValueError(
             "Valid values for `transform_func` are "
-            + "None, 'norm' and 'square'. Those two "
-            + "transformation are only supported now"
+            "None, 'norm' and 'square'. Those two "
+            "transformation are only supported now"
         )
 
     return importances
