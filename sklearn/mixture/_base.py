@@ -16,9 +16,9 @@ from ..base import BaseEstimator, DensityMixin, _fit_context
 from ..cluster import kmeans_plusplus
 from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state
+from ..utils._array_api import get_namespace
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.validation import check_is_fitted, validate_data
-from ..utils._array_api import get_namespace
 
 
 def _check_shape(param, param_shape, name):

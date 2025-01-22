@@ -1,25 +1,30 @@
 # %%
-from sklearn.mixture import GaussianMixture
-from sklearn.datasets import make_blobs
-import sklearn
+import os
+
 import numpy as np
 import torch
 
-import os
-os.environ['SCIPY_ARRAY_API'] = '1'
+import sklearn
+from sklearn.datasets import make_blobs
+from sklearn.mixture import GaussianMixture
+
+os.environ["SCIPY_ARRAY_API"] = "1"
 
 X, y = make_blobs(n_samples=int(1e3), n_features=2, centers=3, random_state=0)
 X, y = torch.asarray(X), torch.asarray(y)
 
 sklearn.set_config(array_api_dispatch=True)
 
-gmm = GaussianMixture(n_components=3, covariance_type="full", random_state=0, init_params="random").fit(X)
+gmm = GaussianMixture(
+    n_components=3, covariance_type="full", random_state=0, init_params="random"
+).fit(X)
 print(gmm.means_)
 print(gmm.covariances_)
 
 # %%
-import matplotlib.pyplot as plt
 import matplotlib as mpl
+import matplotlib.pyplot as plt
+
 fig, ax = plt.subplots()
 
 ax.scatter(X[:, 0], X[:, 1], c=y)
@@ -48,5 +53,6 @@ def make_ellipses(gmm, ax):
         ell.set_alpha(0.5)
         ax.add_artist(ell)
         ax.set_aspect("equal", "datalim")
+
 
 make_ellipses(gmm, ax)
