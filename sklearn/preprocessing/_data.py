@@ -1130,6 +1130,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.allow_nan = True
+        tags.input_tags.sparse = not self.with_mean
         tags.transformer_tags.preserves_dtype = ["float64", "float32"]
         return tags
 
@@ -1363,6 +1364,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.allow_nan = True
+        tags.input_tags.sparse = True
         return tags
 
 
@@ -1737,6 +1739,7 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = not self.with_centering
         tags.input_tags.allow_nan = True
         return tags
 
@@ -2136,6 +2139,7 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.requires_fit = False
         tags.array_api_support = True
         return tags
@@ -2343,6 +2347,7 @@ class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.requires_fit = False
+        tags.input_tags.sparse = True
         return tags
 
 
@@ -3009,6 +3014,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.input_tags.allow_nan = True
         return tags
 

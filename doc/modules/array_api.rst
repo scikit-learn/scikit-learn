@@ -9,7 +9,18 @@ Array API support (experimental)
 The `Array API <https://data-apis.org/array-api/latest/>`_ specification defines
 a standard API for all array manipulation libraries with a NumPy-like API.
 Scikit-learn's Array API support requires
-`array-api-compat <https://github.com/data-apis/array-api-compat>`__ to be installed.
+`array-api-compat <https://github.com/data-apis/array-api-compat>`__ to be installed,
+and the environment variable `SCIPY_ARRAY_API` must be set to `1` before importing
+`scipy` and `scikit-learn`:
+
+.. prompt:: bash $
+
+   export SCIPY_ARRAY_API=1
+
+Please note that this environment variable is intended for temporary use.
+For more details, refer to SciPy's `Array API documentation
+<https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html#using-array-api-standard-support>`_.
+
 
 Some scikit-learn estimators that primarily rely on NumPy (as opposed to using
 Cython) to implement the algorithmic logic of their `fit`, `predict` or
@@ -23,6 +34,12 @@ explicitly as explained in the following.
 .. note::
     Currently, only `array-api-strict`, `cupy`, and `PyTorch` are known to work
     with scikit-learn's estimators.
+
+The following video provides an overview of the standard's design principles
+and how it facilitates interoperability between array libraries:
+
+- `Scikit-learn on GPUs with Array API <https://www.youtube.com/watch?v=c_s8tr1AizA>`_
+  by :user:`Thomas Fan <thomasjpfan>` at PyData NYC 2023.
 
 Example usage
 =============
@@ -118,6 +135,7 @@ Metrics
 - :func:`sklearn.metrics.d2_tweedie_score`
 - :func:`sklearn.metrics.explained_variance_score`
 - :func:`sklearn.metrics.f1_score`
+- :func:`sklearn.metrics.fbeta_score`
 - :func:`sklearn.metrics.max_error`
 - :func:`sklearn.metrics.mean_absolute_error`
 - :func:`sklearn.metrics.mean_absolute_percentage_error`
@@ -139,8 +157,10 @@ Metrics
 - :func:`sklearn.metrics.pairwise.polynomial_kernel`
 - :func:`sklearn.metrics.pairwise.rbf_kernel` (see :ref:`device_support_for_float64`)
 - :func:`sklearn.metrics.pairwise.sigmoid_kernel`
+- :func:`sklearn.metrics.precision_score`
 - :func:`sklearn.metrics.precision_recall_fscore_support`
 - :func:`sklearn.metrics.r2_score`
+- :func:`sklearn.metrics.recall_score`
 - :func:`sklearn.metrics.root_mean_squared_error`
 - :func:`sklearn.metrics.root_mean_squared_log_error`
 - :func:`sklearn.metrics.zero_one_loss`
