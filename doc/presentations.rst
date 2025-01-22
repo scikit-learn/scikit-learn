@@ -27,7 +27,7 @@ anything, and gives access to a discussion forum.
 The videos are available on the
 `Inria Learning Lab channel <https://www.youtube.com/@inrialearninglab>`_
 in a
-`playlist <https://www.youtube.com/playlist?list=PL2okA_2qDJ-m44KooOI7x8tu85wr4ez4f>`_.
+`playlist <https://www.youtube.com/playlist?list=PL2okA_2qDJ-m44KooOI7x8tu85wr4ez4f>`__.
 
 New to Scientific Python?
 ==========================
@@ -63,17 +63,17 @@ Videos
   :user:`Jake Vanderplas <jakevdp>`  and
   :user:`Olivier Grisel <ogrisel>`.
 
-  Video I:
-  `Part 1 of 3 <https://www.youtube.com/watch?v=r4bRUvvlaBw>`_,
-  `Part 2 of 3 <https://www.youtube.com/watch?v=hlaMiXCRxB0>`_,
-  `Part 3 of 3 <https://www.youtube.com/watch?v=XS4TIGe7MaU>`_.
+  Part I:
+  `1 <https://www.youtube.com/watch?v=r4bRUvvlaBw>`__,
+  `2 <https://www.youtube.com/watch?v=hlaMiXCRxB0>`__,
+  `3 <https://www.youtube.com/watch?v=XS4TIGe7MaU>`__.
 
-  Video II:
-  `Part 1 of 2 <https://www.youtube.com/watch?v=uX4ZirOiWkw>`_,
-  `Part 2 of 2 <https://www.youtube.com/watch?v=kTLyp10FD60>`_.
+  Part II:
+  `1 <https://www.youtube.com/watch?v=uX4ZirOiWkw>`__,
+  `2 <https://www.youtube.com/watch?v=kTLyp10FD60>`__.
 
   Notebooks available on
-  `github <https://github.com/jakevdp/sklearn_scipy2013>`_.
+  `github <https://github.com/jakevdp/sklearn_scipy2013>`__.
 
 - `Introduction to scikit-learn
   <http://videolectures.net/icml2010_varaquaux_scik/>`_
