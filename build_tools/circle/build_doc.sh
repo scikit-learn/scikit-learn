@@ -20,6 +20,10 @@ set -x
 # defines the get_dep and show_installed_libraries functions
 source build_tools/shared.sh
 
+rm -rf ~/scikit_learn_data
+git clone https://github.com/lesteve/scikit_learn_data ~/scikit_learn_data
+du -sh ~/scikit_learn_data/*
+
 if [ -n "$GITHUB_ACTION" ]
 then
     # Map the variables from Github Action to CircleCI
