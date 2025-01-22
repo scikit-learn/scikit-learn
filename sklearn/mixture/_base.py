@@ -18,6 +18,7 @@ from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.validation import check_is_fitted, validate_data
+from ..utils._array_api import get_namespace
 
 
 def _check_shape(param, param_shape, name):
@@ -95,7 +96,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         """
         pass
 
-    def _initialize_parameters(self, X, random_state):
+    def _initialize_parameters(self, X, random_state, xp):
         """Initialize the model parameters.
 
         Parameters
@@ -109,7 +110,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         n_samples, _ = X.shape
 
         if self.init_params == "kmeans":
-            resp = np.zeros((n_samples, self.n_components), dtype=X.dtype)
+            resp = xp.zeros((n_samples, self.n_components), dtype=X.dtype)
             label = (
                 cluster.KMeans(
                     n_clusters=self.n_components, n_init=1, random_state=random_state
@@ -117,26 +118,26 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                 .fit(X)
                 .labels_
             )
-            resp[np.arange(n_samples), label] = 1
+            resp[xp.arange(n_samples), label] = 1
         elif self.init_params == "random":
-            resp = np.asarray(
+            resp = xp.asarray(
                 random_state.uniform(size=(n_samples, self.n_components)), dtype=X.dtype
             )
-            resp /= resp.sum(axis=1)[:, np.newaxis]
+            resp /= resp.sum(axis=1)[:, xp.newaxis]
         elif self.init_params == "random_from_data":
-            resp = np.zeros((n_samples, self.n_components), dtype=X.dtype)
+            resp = xp.zeros((n_samples, self.n_components), dtype=X.dtype)
             indices = random_state.choice(
                 n_samples, size=self.n_components, replace=False
             )
-            resp[indices, np.arange(self.n_components)] = 1
+            resp[indices, xp.arange(self.n_components)] = 1
         elif self.init_params == "k-means++":
-            resp = np.zeros((n_samples, self.n_components), dtype=X.dtype)
+            resp = xp.zeros((n_samples, self.n_components), dtype=X.dtype)
             _, indices = kmeans_plusplus(
                 X,
                 self.n_components,
                 random_state=random_state,
             )
-            resp[indices, np.arange(self.n_components)] = 1
+            resp[indices, xp.arange(self.n_components)] = 1
 
         self._initialize(X, resp)
 
@@ -210,7 +211,8 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         labels : array, shape (n_samples,)
             Component labels.
         """
-        X = validate_data(self, X, dtype=[np.float64, np.float32], ensure_min_samples=2)
+        xp, _ = get_namespace(X)
+        X = validate_data(self, X, dtype=[xp.float64, xp.float32], ensure_min_samples=2)
         if X.shape[0] < self.n_components:
             raise ValueError(
                 "Expected n_samples >= n_components "
@@ -223,7 +225,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         do_init = not (self.warm_start and hasattr(self, "converged_"))
         n_init = self.n_init if do_init else 1
 
-        max_lower_bound = -np.inf
+        max_lower_bound = -xp.inf
         self.converged_ = False
 
         random_state = check_random_state(self.random_state)
@@ -233,9 +235,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             self._print_verbose_msg_init_beg(init)
 
             if do_init:
-                self._initialize_parameters(X, random_state)
+                self._initialize_parameters(X, random_state, xp)
 
-            lower_bound = -np.inf if do_init else self.lower_bound_
+            lower_bound = -xp.inf if do_init else self.lower_bound_
 
             if self.max_iter == 0:
                 best_params = self._get_parameters()
@@ -258,7 +260,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
                 self._print_verbose_msg_init_end(lower_bound, converged)
 
-                if lower_bound > max_lower_bound or max_lower_bound == -np.inf:
+                if lower_bound > max_lower_bound or max_lower_bound == -xp.inf:
                     max_lower_bound = lower_bound
                     best_params = self._get_parameters()
                     best_n_iter = n_iter
