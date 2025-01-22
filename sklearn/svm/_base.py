@@ -171,9 +171,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             Per-sample weights. Rescale C per sample. Higher weights
             force the classifier to put more emphasis on these points.
 
-        For an example of handling weighed samples with :class:`SVC`s, please see:
-        :ref:`sphx_glr_auto_examples_svm_plot_weighted_samples.py`
-
         Returns
         -------
         self : object
@@ -186,6 +183,9 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         If X is a dense array, then the other methods will not support sparse
         matrices as input.
+
+        For an example of handling weighed samples with :class:`SVC`s, please see:
+        :ref:`sphx_glr_auto_examples_svm_plot_weighted_samples.py`
         """
         rnd = check_random_state(self.random_state)
 
