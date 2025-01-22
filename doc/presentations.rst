@@ -53,7 +53,8 @@ Videos
 
 - The `scikit-learn YouTube channel <https://www.youtube.com/@scikit-learn>`_
   features a
-  `playlist of videos <https://www.youtube.com/@scikit-learn/playlists>`_
+  `playlist <https://www.youtube.com/@scikit-learn/playlists>`__
+  of videos
   showcasing talks by maintainers
   and community members.
 
