@@ -22,7 +22,7 @@ source build_tools/shared.sh
 
 [ -d ~/scikit_learn_data ] && du -sh ~/scikit_learn_data/*
 is_dataset_cache_present=$(du -sh ~/scikit_learn_data | grep -P '\d{3}M' && echo yes || echo no)
-if [[ "$is_dataset_cache_present" == "no" ]];
+if [[ "$is_dataset_cache_present" == "no" ]]; then
     rm -rf ~/scikit_learn_data
     git clone https://github.com/lesteve/scikit_learn_data ~/scikit_learn_data
 fi
