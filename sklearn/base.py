@@ -384,7 +384,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
                         original_sklearn_version=pickle_version,
                     ),
                 )
-            state.update({"_original_sklearn_version": pickle_version})
+                state.update({"_original_sklearn_version": pickle_version})
         try:
             super().__setstate__(state)
         except AttributeError:
