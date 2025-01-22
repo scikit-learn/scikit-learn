@@ -10,7 +10,6 @@ the lower the better.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 import warnings
 from numbers import Integral, Real
 
@@ -24,6 +23,7 @@ from ..utils import (
     assert_all_finite,
     check_array,
     check_consistent_length,
+    check_scalar,
     column_or_1d,
 )
 from ..utils._array_api import (
@@ -1911,7 +1911,12 @@ def precision_recall_fscore_support(
         "y_pred": ["array-like", "sparse matrix"],
         "labels": ["array-like", None],
         "sample_weight": ["array-like", None],
-        "raise_warning": ["boolean"],
+        "raise_warning": ["boolean", Hidden(StrOptions({"deprecated"}))],
+        "replace_undefined_by": [
+            Hidden(StrOptions({"default"})),
+            Options(Real, {1.0, np.nan}),
+            dict,
+        ],
     },
     prefer_skip_nested_validation=True,
 )
@@ -1921,7 +1926,8 @@ def class_likelihood_ratios(
     *,
     labels=None,
     sample_weight=None,
-    raise_warning=True,
+    raise_warning="deprecated",
+    replace_undefined_by="default",
 ):
     """Compute binary classification positive and negative likelihood ratios.
 
@@ -1933,18 +1939,18 @@ def class_likelihood_ratios(
     `fn` the number of false negatives. Both class likelihood ratios can be used
     to obtain post-test probabilities given a pre-test probability.
 
-    `LR+` ranges from 1 to infinity. A `LR+` of 1 indicates that the probability
+    `LR+` ranges from 1.0 to infinity. A `LR+` of 1.0 indicates that the probability
     of predicting the positive class is the same for samples belonging to either
     class; therefore, the test is useless. The greater `LR+` is, the more a
     positive prediction is likely to be a true positive when compared with the
-    pre-test probability. A value of `LR+` lower than 1 is invalid as it would
+    pre-test probability. A value of `LR+` lower than 1.0 is invalid as it would
     indicate that the odds of a sample being a true positive decrease with
     respect to the pre-test odds.
 
-    `LR-` ranges from 0 to 1. The closer it is to 0, the lower the probability
-    of a given sample to be a false negative. A `LR-` of 1 means the test is
+    `LR-` ranges from 0.0 to 1.0. The closer it is to 0.0, the lower the probability
+    of a given sample to be a false negative. A `LR-` of 1.0 means the test is
     useless because the odds of having the condition did not change after the
-    test. A value of `LR-` greater than 1 invalidates the classifier as it
+    test. A value of `LR-` greater than 1.0 invalidates the classifier as it
     indicates an increase in the odds of a sample belonging to the positive
     class after being classified as negative. This is the case when the
     classifier systematically predicts the opposite of the true label.
@@ -1977,22 +1983,52 @@ def class_likelihood_ratios(
         Sample weights.
 
     raise_warning : bool, default=True
-        Whether or not a case-specific warning message is raised when there is a
-        zero division. Even if the error is not raised, the function will return
-        nan in such cases.
+        Whether or not a case-specific warning message is raised when there is division
+        by zero.
+
+        .. deprecated:: 1.7
+            `raise_warning` was deprecated in version 1.7 and will be removed in 1.9,
+            when an :class:`~sklearn.exceptions.UndefinedMetricWarning` will always
+            raise in case of a division by zero.
+
+    replace_undefined_by : np.nan, 1.0, or dict, default=np.nan
+        Sets the return values for LR+ and LR- when there is a division by zero. Can
+        take the following values:
+
+        - `np.nan` to return `np.nan` for both `LR+` and `LR-`
+        - `1.0` to return the worst possible scores: `{"LR+": 1.0, "LR-": 1.0}`
+        - a dict in the format `{"LR+": value_1, "LR-": value_2}` where the values can
+          be non-negative floats, `np.inf` or `np.nan` in the range of the
+          likelihood ratios. For example, `{"LR+": 1.0, "LR-": 1.0}` can be used for
+          returning the worst scores, indicating a useless model, and `{"LR+": np.inf,
+          "LR-": 0.0}` can be used for returning the best scores, indicating a useful
+          model.
+
+        If a division by zero occurs, only the affected metric is replaced with the set
+        value; the other metric is calculated as usual.
+
+        .. versionadded:: 1.7
 
     Returns
     -------
     (positive_likelihood_ratio, negative_likelihood_ratio) : tuple
-        A tuple of two float, the first containing the Positive likelihood ratio
-        and the second the Negative likelihood ratio.
+        A tuple of two floats, the first containing the positive likelihood ratio (LR+)
+        and the second the negative likelihood ratio (LR-).
 
     Warns
     -----
-    When `false positive == 0`, the positive likelihood ratio is undefined.
-    When `true negative == 0`, the negative likelihood ratio is undefined.
-    When `true positive + false negative == 0` both ratios are undefined.
-    In such cases, `UserWarning` will be raised if raise_warning=True.
+    Raises :class:`~sklearn.exceptions.UndefinedMetricWarning` when `y_true` and
+    `y_pred` lead to the following conditions:
+
+        - The number of false positives is 0 and `raise_warning` is set to `True`
+          (default): positive likelihood ratio is undefined.
+        - The number of true negatives is 0 and `raise_warning` is set to `True`
+          (default): negative likelihood ratio is undefined.
+        - The sum of true positives and false negatives is 0 (no samples of the positive
+          class are present in `y_true`): both likelihood ratios are undefined.
+
+        For the first two cases, an undefined metric can be defined by setting the
+        `replace_undefined_by` param.
 
     References
     ----------
@@ -2003,15 +2039,16 @@ def class_likelihood_ratios(
     --------
     >>> import numpy as np
     >>> from sklearn.metrics import class_likelihood_ratios
-    >>> class_likelihood_ratios([0, 1, 0, 1, 0], [1, 1, 0, 0, 0])
+    >>> class_likelihood_ratios([0, 1, 0, 1, 0], [1, 1, 0, 0, 0],
+    ...                          replace_undefined_by=1.0)
     (np.float64(1.5), np.float64(0.75))
     >>> y_true = np.array(["non-cat", "cat", "non-cat", "cat", "non-cat"])
     >>> y_pred = np.array(["cat", "cat", "non-cat", "non-cat", "non-cat"])
-    >>> class_likelihood_ratios(y_true, y_pred)
+    >>> class_likelihood_ratios(y_true, y_pred, replace_undefined_by=1.0)
     (np.float64(1.33...), np.float64(0.66...))
     >>> y_true = np.array(["non-zebra", "zebra", "non-zebra", "zebra", "non-zebra"])
     >>> y_pred = np.array(["zebra", "zebra", "non-zebra", "non-zebra", "non-zebra"])
-    >>> class_likelihood_ratios(y_true, y_pred)
+    >>> class_likelihood_ratios(y_true, y_pred, replace_undefined_by=1.0)
     (np.float64(1.5), np.float64(0.75))
 
     To avoid ambiguities, use the notation `labels=[negative_class,
@@ -2019,9 +2056,18 @@ def class_likelihood_ratios(
 
     >>> y_true = np.array(["non-cat", "cat", "non-cat", "cat", "non-cat"])
     >>> y_pred = np.array(["cat", "cat", "non-cat", "non-cat", "non-cat"])
-    >>> class_likelihood_ratios(y_true, y_pred, labels=["non-cat", "cat"])
+    >>> class_likelihood_ratios(y_true, y_pred, labels=["non-cat", "cat"],
+    ...                          replace_undefined_by=1.0)
     (np.float64(1.5), np.float64(0.75))
     """
+    # TODO(1.9): When `raise_warning` is removed, the following changes need to be made:
+    # The checks for `raise_warning==True` need to be removed and we will always warn,
+    # the default return value of `replace_undefined_by` should be updated from `np.nan`
+    # (which was kept for backwards compatibility) to `1.0`, its hidden option
+    # ("default") is not used anymore, some warning messages can be removed, the Warns
+    # section in the docstring should not mention `raise_warning` anymore and the
+    # "Mathematical divergences" section in model_evaluation.rst needs to be updated on
+    # the new default behaviour of `replace_undefined_by`.
     y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type != "binary":
@@ -2030,6 +2076,67 @@ def class_likelihood_ratios(
             f"problems, got targets of type: {y_type}"
         )
 
+    msg_deprecated_param = (
+        "`raise_warning` was deprecated in version 1.7 and will be removed in 1.9. An "
+        "`UndefinedMetricWarning` will always be raised in case of a division by zero "
+        "and the value set with the `replace_undefined_by` param will be returned."
+    )
+    mgs_changed_default = (
+        "The default return value of `class_likelihood_ratios` in case of a division "
+        "by zero has been deprecated in 1.7 and will be changed to the worst scores "
+        "(`(1.0, 1.0)`) in version 1.9. Set `replace_undefined_by=1.0` to use the new"
+        "default and to silence this Warning."
+    )
+    if raise_warning != "deprecated":
+        warnings.warn(
+            " ".join((msg_deprecated_param, mgs_changed_default)), FutureWarning
+        )
+    else:
+        if replace_undefined_by == "default":
+            # TODO(1.9): Remove. If users don't set any return values in case of a
+            # division by zero (`raise_warning="deprecated"` and
+            # `replace_undefined_by="default"`) they still get a FutureWarning about
+            # changing default return values:
+            warnings.warn(mgs_changed_default, FutureWarning)
+        raise_warning = True
+
+    if replace_undefined_by == "default":
+        replace_undefined_by = np.nan
+
+    if replace_undefined_by == 1.0:
+        replace_undefined_by = {"LR+": 1.0, "LR-": 1.0}
+
+    if isinstance(replace_undefined_by, dict):
+        msg = (
+            "The dictionary passed as `replace_undefined_by` needs to be in the form "
+            "`{'LR+': `value_1`, 'LR-': `value_2`}` where the value for `LR+` ranges "
+            "from `1.0` to `np.inf` or is `np.nan` and the value for `LR-` ranges from "
+            f"`0.0` to `1.0` or is `np.nan`; got `{replace_undefined_by}`."
+        )
+        if ("LR+" in replace_undefined_by) and ("LR-" in replace_undefined_by):
+            try:
+                desired_lr_pos = replace_undefined_by.get("LR+", None)
+                check_scalar(
+                    desired_lr_pos,
+                    "positive_likelihood_ratio",
+                    target_type=(Real),
+                    min_val=1.0,
+                    include_boundaries="left",
+                )
+                desired_lr_neg = replace_undefined_by.get("LR-", None)
+                check_scalar(
+                    desired_lr_neg,
+                    "negative_likelihood_ratio",
+                    target_type=(Real),
+                    min_val=0.0,
+                    max_val=1.0,
+                    include_boundaries="both",
+                )
+            except Exception as e:
+                raise ValueError(msg) from e
+        else:
+            raise ValueError(msg)
+
     cm = confusion_matrix(
         y_true,
         y_pred,
@@ -2037,48 +2144,71 @@ def class_likelihood_ratios(
         labels=labels,
     )
 
-    # Case when `y_test` contains a single class and `y_test == y_pred`.
-    # This may happen when cross-validating imbalanced data and should
-    # not be interpreted as a perfect score.
-    if cm.shape == (1, 1):
-        msg = "samples of only one class were seen during testing "
-        if raise_warning:
-            warnings.warn(msg, UserWarning, stacklevel=2)
+    tn, fp, fn, tp = cm.ravel()
+    support_pos = tp + fn
+    support_neg = tn + fp
+    pos_num = tp * support_neg
+    pos_denom = fp * support_pos
+    neg_num = fn * support_neg
+    neg_denom = tn * support_pos
+
+    # if `support_pos == 0`a division by zero will occur
+    if support_pos == 0:
+        # TODO(1.9): Change return values in warning message to new default: the worst
+        # possible scores: `(1.0, 1.0)`
+        msg = (
+            "No samples of the positive class are present in `y_true`. "
+            "`positive_likelihood_ratio` and `negative_likelihood_ratio` are both set "
+            "to `np.nan`."
+        )
+        warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
         positive_likelihood_ratio = np.nan
         negative_likelihood_ratio = np.nan
-    else:
-        tn, fp, fn, tp = cm.ravel()
-        support_pos = tp + fn
-        support_neg = tn + fp
-        pos_num = tp * support_neg
-        pos_denom = fp * support_pos
-        neg_num = fn * support_neg
-        neg_denom = tn * support_pos
 
-        # If zero division warn and set scores to nan, else divide
-        if support_pos == 0:
-            msg = "no samples of the positive class were present in the testing set "
-            if raise_warning:
-                warnings.warn(msg, UserWarning, stacklevel=2)
-            positive_likelihood_ratio = np.nan
-            negative_likelihood_ratio = np.nan
-        if fp == 0:
+    # if `fp == 0`a division by zero will occur
+    if fp == 0:
+        if raise_warning:
             if tp == 0:
-                msg = "no samples predicted for the positive class"
+                msg_beginning = (
+                    "No samples were predicted for the positive class and "
+                    "`positive_likelihood_ratio` is "
+                )
             else:
-                msg = "positive_likelihood_ratio ill-defined and being set to nan "
-            if raise_warning:
-                warnings.warn(msg, UserWarning, stacklevel=2)
-            positive_likelihood_ratio = np.nan
+                msg_beginning = "`positive_likelihood_ratio` is ill-defined and "
+            msg_end = "set to `np.nan`. Use the `replace_undefined_by` param to "
+            "control this behavior."
+            # TODO(1.9): Change return value in warning message to new default: `1.0`,
+            # which is the worst possible score for "LR+"
+            warnings.warn(msg_beginning + msg_end, UndefinedMetricWarning, stacklevel=2)
+        if isinstance(replace_undefined_by, float) and np.isnan(replace_undefined_by):
+            positive_likelihood_ratio = replace_undefined_by
         else:
-            positive_likelihood_ratio = pos_num / pos_denom
-        if tn == 0:
-            msg = "negative_likelihood_ratio ill-defined and being set to nan "
-            if raise_warning:
-                warnings.warn(msg, UserWarning, stacklevel=2)
-            negative_likelihood_ratio = np.nan
+            # replace_undefined_by is a dict and
+            # isinstance(replace_undefined_by.get("LR+", None), Real); this includes
+            # `np.inf` and `np.nan`
+            positive_likelihood_ratio = desired_lr_pos
+    else:
+        positive_likelihood_ratio = pos_num / pos_denom
+
+    # if `tn == 0`a division by zero will occur
+    if tn == 0:
+        if raise_warning:
+            # TODO(1.9): Change return value in warning message to new default: `1.0`,
+            # which is the worst possible score for "LR-"
+            msg = (
+                "`negative_likelihood_ratio` is ill-defined and set to `np.nan`. "
+                "Use the `replace_undefined_by` param to control this behavior."
+            )
+            warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+        if isinstance(replace_undefined_by, float) and np.isnan(replace_undefined_by):
+            negative_likelihood_ratio = replace_undefined_by
         else:
-            negative_likelihood_ratio = neg_num / neg_denom
+            # replace_undefined_by is a dict and
+            # isinstance(replace_undefined_by.get("LR-", None), Real); this includes
+            # `np.nan`
+            negative_likelihood_ratio = desired_lr_neg
+    else:
+        negative_likelihood_ratio = neg_num / neg_denom
 
     return positive_likelihood_ratio, negative_likelihood_ratio
 

@@ -434,7 +434,8 @@ complies with the following rules before marking a PR as "ready for review". The
    and pass for the PR code.
 
 5. If your PR is likely to affect users, you need to add a changelog entry describing
-   your PR changes, see the `following README <https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md>`
+   your PR changes. See the
+   `README <https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md>`_
    for more details.
 
 6. Follow the :ref:`coding-guidelines`.
@@ -545,8 +546,6 @@ Commit Message Marker  Action Taken by CI
 ====================== ===================
 [ci skip]              CI is skipped completely
 [cd build]             CD is run (wheels and source distribution are built)
-[cd build gh]          CD is run only for GitHub Actions
-[cd build cirrus]      CD is run only for Cirrus CI
 [lint skip]            Azure pipeline skips linting
 [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc.) development builds
 [free-threaded]        Build & test with CPython 3.13 free-threaded
