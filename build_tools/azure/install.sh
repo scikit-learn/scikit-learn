@@ -140,6 +140,9 @@ scikit_learn_install() {
 }
 
 main() {
+    rm -rf ~/scikit_learn_data
+    git clone https://github.com/lesteve/scikit_learn_data ~/scikit_learn_data
+    du -sh ~/scikit_learn_data/*
     pre_python_environment_install
     python_environment_install_and_activate
     scikit_learn_install
