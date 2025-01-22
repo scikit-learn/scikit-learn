@@ -3,11 +3,11 @@
 // that causes plotly figures to not detect the right-hand sidebar width
 
 function resizePlotlyGraphs() {
-    const plotlyDivs = document.getElementsByClassName("plotly-graph-div");
+  const plotlyDivs = document.getElementsByClassName("plotly-graph-div");
 
-    for (const div of plotlyDivs) {
-        Plotly.Plots.resize(div);
-    }
+  for (const div of plotlyDivs) {
+    Plotly.Plots.resize(div);
+  }
 }
 
 window.addEventListener("resize", resizePlotlyGraphs);

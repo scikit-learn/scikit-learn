@@ -194,7 +194,7 @@ iteration, which will be allocated more resources. For parameter tuning, the
 resource is typically the number of training samples, but it can also be an
 arbitrary numeric parameter such as `n_estimators` in a random forest.
 
-.. note:: 
+.. note::
 
     The resource increase chosen should be large enough so that a large improvement
     in scores is obtained when taking into account statistical significance.
