@@ -16,19 +16,18 @@ machine learning using scikit-learn. It covers topics
 from the fundamental machine learning concepts to more advanced areas like
 predictive modeling pipelines and model evaluation.
 
-The course materials are available at:
-
-`<https://inria.github.io/scikit-learn-mooc/>`_.
+The course materials are available on the
+`scikit-learn MOOC website <https://inria.github.io/scikit-learn-mooc/>`_.
 
 This course is also hosted on the `FUN platform
 <https://www.fun-mooc.fr/en/courses/machine-learning-python-scikit-learn/>`_,
-which additionally makes the content interactive without installation, and gives
-access to a discussion forum.
+which additionally makes the content interactive without the need to install
+anything, and gives access to a discussion forum.
 
-The videos are available as a YouTube playlist on the
-`Inria Learning Lab channel <https://www.youtube.com/@inrialearninglab>`_:
-
-`<https://www.youtube.com/playlist?list=PL2okA_2qDJ-m44KooOI7x8tu85wr4ez4f>`_
+The videos are available on the
+`Inria Learning Lab channel <https://www.youtube.com/@inrialearninglab>`_
+in a
+`playlist <https://www.youtube.com/playlist?list=PL2okA_2qDJ-m44KooOI7x8tu85wr4ez4f>`_.
 
 New to Scientific Python?
 ==========================
@@ -52,17 +51,11 @@ specific subject areas:
 Videos
 ======
 
-- The `:probabl YouTube channel <https://www.youtube.com/@probabl_ai>`_
-  hosts the Whiteboard Series, which provides supplementary materials for
-  the scikit-learn MOOC and covers more features of the library:
-
-  `<https://www.youtube.com/playlist?list=PLSIzlWDI17bS025ph6R0W_3RKM0qJ3qoO>`_
-
 - The `scikit-learn YouTube channel <https://www.youtube.com/@scikit-learn>`_
-  features a playlist of videos showcasing talks by maintainers
-  and community members:
-
-  `<https://www.youtube.com/@scikit-learn/playlists>`_
+  features a
+  `playlist <https://www.youtube.com/@scikit-learn/playlists>`_
+  of videos showcasing talks by maintainers
+  and community members.
 
 - An introduction to scikit-learn at Scipy 2013
   by :user:`Gael Varoquaux <GaelVaroquaux>`,
