@@ -20,9 +20,12 @@ set -x
 # defines the get_dep and show_installed_libraries functions
 source build_tools/shared.sh
 
-rm -rf ~/scikit_learn_data
-git clone https://github.com/lesteve/scikit_learn_data ~/scikit_learn_data
 du -sh ~/scikit_learn_data/*
+is_dataset_cache_present=$(du -sh ~/scikit_learn_data | grep -P '\d{3}M' && echo yes || echo no)
+if [[ "$is_dataset_cache_present" == "no" ]];
+    rm -rf ~/scikit_learn_data
+    git clone https://github.com/lesteve/scikit_learn_data ~/scikit_learn_data
+fi
 
 if [ -n "$GITHUB_ACTION" ]
 then
