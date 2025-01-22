@@ -9,6 +9,7 @@ extends single output estimators to multioutput estimators.
 # SPDX-License-Identifier: BSD-3-Clause
 
 
+import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral
 
@@ -25,8 +26,12 @@ from .base import (
     is_classifier,
 )
 from .model_selection import cross_val_predict
-from .utils import Bunch, check_random_state
-from .utils._param_validation import HasMethods, StrOptions
+from .utils import Bunch, check_random_state, get_tags
+from .utils._param_validation import (
+    HasMethods,
+    Hidden,
+    StrOptions,
+)
 from .utils._response import _get_response_values
 from .utils._user_interface import _print_elapsed_time
 from .utils.metadata_routing import (
@@ -311,6 +316,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
         tags.target_tags.single_output = False
         tags.target_tags.multi_output = True
         return tags
@@ -627,7 +633,7 @@ def _available_if_base_estimator_has(attr):
     """
 
     def _check(self):
-        return hasattr(self.base_estimator, attr) or all(
+        return hasattr(self._get_estimator(), attr) or all(
             hasattr(est, attr) for est in self.estimators_
         )
 
@@ -636,21 +642,60 @@ def _available_if_base_estimator_has(attr):
 
 class _BaseChain(BaseEstimator, metaclass=ABCMeta):
     _parameter_constraints: dict = {
-        "base_estimator": [HasMethods(["fit", "predict"])],
+        "base_estimator": [
+            HasMethods(["fit", "predict"]),
+            StrOptions({"deprecated"}),
+        ],
+        "estimator": [
+            HasMethods(["fit", "predict"]),
+            Hidden(None),
+        ],
         "order": ["array-like", StrOptions({"random"}), None],
         "cv": ["cv_object", StrOptions({"prefit"})],
         "random_state": ["random_state"],
         "verbose": ["boolean"],
     }
 
+    # TODO(1.9): Remove base_estimator
     def __init__(
-        self, base_estimator, *, order=None, cv=None, random_state=None, verbose=False
+        self,
+        estimator=None,
+        *,
+        order=None,
+        cv=None,
+        random_state=None,
+        verbose=False,
+        base_estimator="deprecated",
     ):
+        self.estimator = estimator
         self.base_estimator = base_estimator
         self.order = order
         self.cv = cv
         self.random_state = random_state
         self.verbose = verbose
+
+    # TODO(1.8): This is a temporary getter method to validate input wrt deprecation.
+    # It was only included to avoid relying on the presence of self.estimator_
+    def _get_estimator(self):
+        """Get and validate estimator."""
+
+        if self.estimator is not None and (self.base_estimator != "deprecated"):
+            raise ValueError(
+                "Both `estimator` and `base_estimator` are provided. You should only"
+                " pass `estimator`. `base_estimator` as a parameter is deprecated in"
+                " version 1.7, and will be removed in version 1.9."
+            )
+
+        if self.base_estimator != "deprecated":
+
+            warning_msg = (
+                "`base_estimator` as an argument was deprecated in 1.7 and will be"
+                " removed in 1.9. Use `estimator` instead."
+            )
+            warnings.warn(warning_msg, FutureWarning)
+            return self.base_estimator
+        else:
+            return self.estimator
 
     def _log_message(self, *, estimator_idx, n_estimators, processing_msg):
         if not self.verbose:
@@ -734,7 +779,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         elif sorted(self.order_) != list(range(Y.shape[1])):
             raise ValueError("invalid order")
 
-        self.estimators_ = [clone(self.base_estimator) for _ in range(Y.shape[1])]
+        self.estimators_ = [clone(self._get_estimator()) for _ in range(Y.shape[1])]
 
         if self.cv is None:
             Y_pred_chain = Y[:, self.order_]
@@ -773,7 +818,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
 
         if hasattr(self, "chain_method"):
             chain_method = _check_response_method(
-                self.base_estimator,
+                self._get_estimator(),
                 self.chain_method,
             ).__name__
             self.chain_method_ = chain_method
@@ -798,7 +843,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             if self.cv is not None and chain_idx < len(self.estimators_) - 1:
                 col_idx = X.shape[1] + chain_idx
                 cv_result = cross_val_predict(
-                    self.base_estimator,
+                    self._get_estimator(),
                     X_aug[:, :col_idx],
                     y=y,
                     cv=self.cv,
@@ -829,6 +874,11 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         """
         return self._get_predictions(X, output_method="predict")
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = get_tags(self._get_estimator()).input_tags.sparse
+        return tags
+
 
 class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     """A multi-label model that arranges binary classifiers into a chain.
@@ -848,7 +898,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
     Parameters
     ----------
-    base_estimator : estimator
+    estimator : estimator
         The base estimator from which the classifier chain is built.
 
     order : array-like of shape (n_outputs,) or 'random', default=None
@@ -904,6 +954,13 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         If True, chain progress is output as each model is completed.
 
         .. versionadded:: 1.2
+
+    base_estimator : estimator, default="deprecated"
+        Use `estimator` instead.
+
+        .. deprecated:: 1.7
+            `base_estimator` is deprecated and will be removed in 1.9.
+            Use `estimator` instead.
 
     Attributes
     ----------
@@ -979,22 +1036,25 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         ],
     }
 
+    # TODO(1.9): Remove base_estimator from __init__
     def __init__(
         self,
-        base_estimator,
+        estimator=None,
         *,
         order=None,
         cv=None,
         chain_method="predict",
         random_state=None,
         verbose=False,
+        base_estimator="deprecated",
     ):
         super().__init__(
-            base_estimator,
+            estimator,
             order=order,
             cv=cv,
             random_state=random_state,
             verbose=verbose,
+            base_estimator=base_estimator,
         )
         self.chain_method = chain_method
 
@@ -1094,8 +1154,9 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
+
         router = MetadataRouter(owner=self.__class__.__name__).add(
-            estimator=self.base_estimator,
+            estimator=self._get_estimator(),
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
         return router
@@ -1122,7 +1183,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
     Parameters
     ----------
-    base_estimator : estimator
+    estimator : estimator
         The base estimator from which the regressor chain is built.
 
     order : array-like of shape (n_outputs,) or 'random', default=None
@@ -1166,6 +1227,13 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
         .. versionadded:: 1.2
 
+    base_estimator : estimator, default="deprecated"
+        Use `estimator` instead.
+
+        .. deprecated:: 1.7
+            `base_estimator` is deprecated and will be removed in 1.9.
+            Use `estimator` instead.
+
     Attributes
     ----------
     estimators_ : list
@@ -1198,7 +1266,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
     >>> from sklearn.linear_model import LogisticRegression
     >>> logreg = LogisticRegression(solver='lbfgs')
     >>> X, Y = [[1, 0], [0, 1], [1, 1]], [[0, 2], [1, 1], [2, 0]]
-    >>> chain = RegressorChain(base_estimator=logreg, order=[0, 1]).fit(X, Y)
+    >>> chain = RegressorChain(logreg, order=[0, 1]).fit(X, Y)
     >>> chain.predict(X)
     array([[0., 2.],
            [1., 1.],
@@ -1248,8 +1316,9 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
+
         router = MetadataRouter(owner=self.__class__.__name__).add(
-            estimator=self.base_estimator,
+            estimator=self._get_estimator(),
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
         return router

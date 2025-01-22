@@ -336,6 +336,11 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         self.transduction_ = transduction.ravel()
         return self
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 class LabelPropagation(BaseLabelPropagation):
     """Label Propagation classifier.
