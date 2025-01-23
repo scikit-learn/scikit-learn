@@ -150,7 +150,14 @@ def _open_openml_url(
     def is_gzip_encoded(_fsrc):
         return _fsrc.info().get("Content-Encoding", "") == "gzip"
 
-    req = Request(_OPENML_PREFIX + openml_path)
+    # print(f'{openml_path=}')
+    full_url = openml_path
+    # TODO temporray hack for downloading data file path is a full url not a
+    # relative path to _OPENML_PREFIX
+    if not openml_path.startswith("http:"):
+        full_url = _OPENML_PREFIX + openml_path
+
+    req = Request(full_url)
     req.add_header("Accept-encoding", "gzip")
 
     if data_home is None:
@@ -1126,7 +1133,8 @@ def fetch_openml(
         shape = None
 
     # obtain the data
-    url = _DATA_FILE.format(data_description["file_id"])
+    url = data_description["url"]
+    # print(f'{url=}')
     bunch = _download_data_to_bunch(
         url,
         return_sparse,
