@@ -366,7 +366,8 @@ How do I get started with scikit-learn?
 If you are new to scikit-learn, or looking to strengthen your understanding,
 we highly recommend the **scikit-learn MOOC (Massive Open Online Course)**.
 
-See our :ref:`External Resources, Videos and Talks page <mooc>` for more details.
+See our :ref:`External Resources, Videos and Talks page <external_resources>`
+for more details.
 
 What's the best way to get help on scikit-learn usage?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
