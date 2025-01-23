@@ -1761,7 +1761,7 @@ class LarsCV(Lars):
             )
             for train, test in cv.split(X, y, **routed_params.splitter.split)
         )
-        all_alphas = np.concatenate(list(zip(*cv_paths))[0])
+        all_alphas = np.concatenate(next(zip(*cv_paths)))
         # Unique also sorts
         all_alphas = np.unique(all_alphas)
         # Take at most max_n_alphas values
