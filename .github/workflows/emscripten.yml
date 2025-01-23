@@ -1,0 +1,92 @@
+name: Test Emscripten/Pyodide build
+# TODO: move the relevant workflow items to Azure Pipelines
+# when the build and tests pass on GitHub Actions here
+# and then remove this workflow file altogether.
+
+on:
+  pull_request:
+
+env:
+  FORCE_COLOR: 3
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  build-wasm-emscripten:
+    name: Build scikit-learn distribution for Pyodide
+    runs-on: ubuntu-22.04
+    env:
+      PYODIDE_VERSION: 0.27.0a2
+      # PYTHON_VERSION and EMSCRIPTEN_VERSION are determined by PYODIDE_VERSION.
+      # The appropriate versions can be found in the Pyodide repodata.json
+      # "info" field, or in Makefile.envs:
+      # https://github.com/pyodide/pyodide/blob/main/Makefile.envs#L2
+      PYTHON_VERSION: 3.12.1
+      EMSCRIPTEN_VERSION: 3.1.58
+      NODE_VERSION: 20
+    steps:
+      - name: Checkout scikit-learn
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Set up Emscripten toolchain
+        uses: mymindstorm/setup-emsdk@6ab9eb1bda2574c4ddb79809fc9247783eaf9021 # v14
+        with:
+          version: ${{ env.EMSCRIPTEN_VERSION }}
+          actions-cache-folder: emsdk-cache
+
+      - name: Install pyodide-build
+        run: pip install pyodide-build
+
+      - name: Build scikit-learn for Pyodide
+        run: pyodide build
+
+      - name: Sanity check build artifacts
+        run: ls -ltrh dist
+
+      - name: Upload wheel artifact
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        with:
+          name: pyodide_wheel_${{ github.run_id }}
+          path: dist/*.whl
+
+      - name: Set up Node.js
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Set up Pyodide virtual environment and test scikit-learn for Pyodide
+        env:
+          SKLEARN_SKIP_OPENMP_TEST: "true"
+          SKLEARN_SKIP_NETWORK_TESTS: 1
+        run: |
+          set -e -x
+
+          # Set up Pyodide virtual environment
+          pyodide xbuildenv install ${{ env.PYODIDE_VERSION }}
+          pyodide venv .venv-pyodide
+
+          # Activate the virtual environment and install the built scikit-learn wheel
+          source .venv-pyodide/bin/activate
+          pip install dist/*.whl
+
+          # Change to a different directory to avoid importing the local scikit-learn
+          # package instead of the installed one
+          cd maint_tools
+          pip install pytest
+
+          # Try importing sklearn to see if the build is successful
+          python -c "import sklearn; print(sklearn.__version__)"
+
+          # Don't use the cache provider plugin, as it doesn't work with Pyodide
+          # right now: https://github.com/pypa/cibuildwheel/issues/1966
+          pytest -svra -p no:cacheprovider --pyargs sklearn --durations 20 --showlocals
