@@ -18,7 +18,9 @@ from scipy.linalg.lapack import get_lapack_funcs
 from ..base import MultiOutputMixin, RegressorMixin, _fit_context
 from ..exceptions import ConvergenceWarning
 from ..model_selection import check_cv
-from ..utils import (
+
+# mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
+from ..utils import (  # type: ignore
     Bunch,
     arrayfuncs,
     as_float_array,

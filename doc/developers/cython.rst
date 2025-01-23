@@ -3,7 +3,7 @@
 Cython Best Practices, Conventions and Knowledge
 ================================================
 
-This documents tips to develop Cython code in scikit-learn.
+This document contains tips to develop Cython code in scikit-learn.
 
 Tips for developing with Cython in scikit-learn
 -----------------------------------------------
@@ -88,14 +88,14 @@ Tips for performance
 
 * Make sure you have deactivated `checks <https://github.com/scikit-learn/scikit-learn/blob/62a017efa047e9581ae7df8bbaa62cf4c0544ee4/sklearn/_build_utils/__init__.py#L68-L87>`_.
 
-* Always prefer memoryviews instead over ``cnp.ndarray`` when possible: memoryviews are lightweight.
+* Always prefer memoryviews instead of ``cnp.ndarray`` when possible: memoryviews are lightweight.
 
 * Avoid memoryview slicing: memoryview slicing might be costly or misleading in some cases and
   we better not use it, even if handling fewer dimensions in some context would be preferable.
 
 * Decorate final classes or methods with ``@final`` (this allows removing virtual tables when needed)
 
-* Inline methods and function when it makes sense
+* Inline methods and functions when it makes sense
 
 * In doubt, read the generated C or C++ code if you can: "The fewer C instructions and indirections
   for a line of Cython code, the better" is a good rule of thumb.
@@ -112,7 +112,7 @@ Tips for performance
           # Some logic interacting with CPython, e.g. allocating arrays via NumPy.
 
           with nogil:
-              # The code here is run as is it were written in C.
+              # The code here is run as if it were written in C.
 
           return 0
 
@@ -151,4 +151,4 @@ Ideally you start by having a look there and `cimport` types you need, for examp
 
 .. code-block:: cython
 
-    from sklear.utils._typedefs cimport float32, float64
+    from sklearn.utils._typedefs cimport float32, float64

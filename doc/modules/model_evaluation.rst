@@ -709,7 +709,7 @@ In contrast, if the conventional accuracy is above chance only because the
 classifier takes advantage of an imbalanced test set, then the balanced
 accuracy, as appropriate, will drop to :math:`\frac{1}{n\_classes}`.
 
-The score ranges from 0 to 1, or when ``adjusted=True`` is used, it rescaled to
+The score ranges from 0 to 1, or when ``adjusted=True`` is used, it is rescaled to
 the range :math:`\frac{1}{1 - n\_classes}` to 1, inclusive, with
 performance at random scoring 0.
 
@@ -1434,7 +1434,7 @@ Then the multiclass MCC is defined as:
 
 When there are more than two labels, the value of the MCC will no longer range
 between -1 and +1. Instead the minimum value will be somewhere between -1 and 0
-depending on the number and distribution of ground true labels. The maximum
+depending on the number and distribution of ground truth labels. The maximum
 value is always +1.
 For additional information, see [WikipediaMCC2021]_.
 
@@ -1860,7 +1860,7 @@ same classification task:
     `The DET Curve in Assessment of Detection Task Performance
     <https://ccc.inaoep.mx/~villasen/bib/martin97det.pdf>`_, NIST 1997.
 
-.. [Navratil2007] J. Navractil and D. Klusacek,
+.. [Navratil2007] J. Navratil and D. Klusacek,
     `"On Linear DETs" <https://ieeexplore.ieee.org/document/4218079>`_,
     2007 IEEE International Conference on Acoustics,
     Speech and Signal Processing - ICASSP '07, Honolulu,
@@ -1992,7 +1992,7 @@ the same does a lower Brier score loss always mean better calibration"
 
 .. [Flach2008] Flach, Peter, and Edson Matsubara. `"On classification, ranking,
   and probability estimation." <https://drops.dagstuhl.de/opus/volltexte/2008/1382/>`_
-  Dagstuhl Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum fr Informatik (2008).
+  Dagstuhl Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum für Informatik (2008).
 
 .. _class_likelihood_ratios:
 
@@ -2207,7 +2207,7 @@ The :func:`coverage_error` function computes the average number of labels that
 have to be included in the final prediction such that all true labels
 are predicted. This is useful if you want to know how many top-scored-labels
 you have to predict in average without missing any true one. The best value
-of this metrics is thus the average number of true labels.
+of this metric is thus the average number of true labels.
 
 .. note::
 
@@ -2579,7 +2579,7 @@ function::
   for an example of mean squared error usage to evaluate gradient boosting regression.
 
 Taking the square root of the MSE, called the root mean squared error (RMSE), is another
-common metric that provides a measure in the same units as the target variable. RSME is
+common metric that provides a measure in the same units as the target variable. RMSE is
 available through the :func:`root_mean_squared_error` function.
 
 .. _mean_squared_log_error:

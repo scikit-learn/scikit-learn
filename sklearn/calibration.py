@@ -448,7 +448,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 if len(self.classes_) == 2:
                     # Ensure shape (n_samples, 1) in the binary case
                     if method_name == "predict_proba":
-                        # Select the probability column of the postive class
+                        # Select the probability column of the positive class
                         predictions = _process_predict_proba(
                             y_pred=predictions,
                             target_type="binary",
