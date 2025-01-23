@@ -168,7 +168,7 @@ The :class:`RidgeClassifier` can be significantly faster than e.g.
 compute the projection matrix :math:`(X^T X)^{-1} X^T` only once.
 
 This classifier is sometimes referred to as a `Least Squares Support Vector
-Machines
+Machine
 <https://en.wikipedia.org/wiki/Least-squares_support-vector_machine>`_ with
 a linear kernel.
 
@@ -367,7 +367,7 @@ scikit-learn.
   :math:`d` is the number of parameters (as well referred to as degrees of
   freedom in the previous section).
 
-  The definition of BIC replace the constant :math:`2` by :math:`\log(N)`:
+  The definition of BIC replaces the constant :math:`2` by :math:`\log(N)`:
 
   .. math::
       BIC = -2 \log(\hat{L}) + \log(N) d
@@ -627,7 +627,7 @@ function of the norm of its coefficients.
 
 * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_lasso_lars_elasticnet_path.py`
 
-The Lars algorithm provides the full path of the coefficients along
+The LARS algorithm provides the full path of the coefficients along
 the regularization parameter almost for free, thus a common operation
 is to retrieve the path with one of the functions :func:`lars_path`
 or :func:`lars_path_gram`.
@@ -657,7 +657,7 @@ Orthogonal Matching Pursuit (OMP)
 =================================
 :class:`OrthogonalMatchingPursuit` and :func:`orthogonal_mp` implement the OMP
 algorithm for approximating the fit of a linear model with constraints imposed
-on the number of non-zero coefficients (ie. the :math:`\ell_0` pseudo-norm).
+on the number of non-zero coefficients (i.e. the :math:`\ell_0` pseudo-norm).
 
 Being a forward feature selection method like :ref:`least_angle_regression`,
 orthogonal matching pursuit can approximate the optimum solution vector with a
@@ -788,7 +788,7 @@ The coefficients :math:`w` of the model can be accessed::
     >>> reg.coef_
     array([0.49999993, 0.49999993])
 
-Due to the Bayesian framework, the weights found are slightly different to the
+Due to the Bayesian framework, the weights found are slightly different from the
 ones found by :ref:`ordinary_least_squares`. However, Bayesian Ridge Regression
 is more robust to ill-posed problems.
 
@@ -1055,7 +1055,7 @@ are zeroes. This is because for the sample(s) with ``decision_function`` zero,
 :class:`LogisticRegression` and :class:`~sklearn.svm.LinearSVC` predict the
 negative class, while liblinear predicts the positive class. Note that a model
 with ``fit_intercept=False`` and having many samples with ``decision_function``
-zero, is likely to be a underfit, bad model and you are advised to set
+zero, is likely to be an underfit, bad model and you are advised to set
 ``fit_intercept=True`` and increase the ``intercept_scaling``.
 
 .. dropdown:: Solvers' details
@@ -1437,7 +1437,7 @@ in these settings.
 
   * :ref:`HuberRegressor <huber_regression>` should be faster than
     :ref:`RANSAC <ransac_regression>` and :ref:`Theil Sen <theil_sen_regression>`
-    unless the number of samples are very large, i.e. ``n_samples`` >> ``n_features``.
+    unless the number of samples is very large, i.e. ``n_samples`` >> ``n_features``.
     This is because :ref:`RANSAC <ransac_regression>` and :ref:`Theil Sen <theil_sen_regression>`
     fit on smaller subsets of the data. However, both :ref:`Theil Sen <theil_sen_regression>`
     and :ref:`RANSAC <ransac_regression>` are unlikely to be as robust as
@@ -1588,7 +1588,7 @@ Huber Regression
 The :class:`HuberRegressor` is different from :class:`Ridge` because it applies a
 linear loss to samples that are defined as outliers by the `epsilon` parameter.
 A sample is classified as an inlier if the absolute error of that sample is
-lesser than the threshold `epsilon`. It differs from :class:`TheilSenRegressor`
+less than the threshold `epsilon`. It differs from :class:`TheilSenRegressor`
 and :class:`RANSACRegressor` because it does not ignore the effect of the outliers
 but gives a lesser weight to them.
 
