@@ -21,14 +21,14 @@ from sklearn.utils.fixes import CSR_CONTAINERS
 from sklearn.utils.validation import _check_psd_eigenvalues
 
 
-def test_kernel_pca():
+def test_kernel_pca(global_random_seed):
     """Nominal test for all solvers and all known kernels + a custom one
 
     It tests
      - that fit_transform is equivalent to fit+transform
      - that the shapes of transforms and inverse transforms are correct
     """
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X_fit = rng.random_sample((5, 4))
     X_pred = rng.random_sample((2, 4))
 
@@ -81,7 +81,7 @@ def test_kernel_pca_invalid_parameters():
         estimator.fit(np.random.randn(10, 10))
 
 
-def test_kernel_pca_consistent_transform():
+def test_kernel_pca_consistent_transform(global_random_seed):
     """Check robustness to mutations in the original training array
 
     Test that after fitting a kPCA model, it stays independent of any
@@ -89,7 +89,7 @@ def test_kernel_pca_consistent_transform():
     internal copy.
     """
     # X_fit_ needs to retain the old, unmodified copy of X
-    state = np.random.RandomState(0)
+    state = np.random.RandomState(global_random_seed)
     X = state.rand(10, 10)
     kpca = KernelPCA(random_state=state).fit(X)
     transformed1 = kpca.transform(X)
@@ -100,12 +100,12 @@ def test_kernel_pca_consistent_transform():
     assert_array_almost_equal(transformed1, transformed2)
 
 
-def test_kernel_pca_deterministic_output():
+def test_kernel_pca_deterministic_output(global_random_seed):
     """Test that Kernel PCA produces deterministic output
 
     Tests that the same inputs and random state produce the same output.
     """
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.rand(10, 10)
     eigen_solver = ("arpack", "dense")
 
@@ -118,13 +118,13 @@ def test_kernel_pca_deterministic_output():
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_kernel_pca_sparse(csr_container):
+def test_kernel_pca_sparse(csr_container, global_random_seed):
     """Test that kPCA works on a sparse data input.
 
     Same test as ``test_kernel_pca except inverse_transform`` since it's not
     implemented for sparse matrices.
     """
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X_fit = csr_container(rng.random_sample((5, 4)))
     X_pred = csr_container(rng.random_sample((2, 4)))
 
@@ -157,12 +157,12 @@ def test_kernel_pca_sparse(csr_container):
 
 @pytest.mark.parametrize("solver", ["auto", "dense", "arpack", "randomized"])
 @pytest.mark.parametrize("n_features", [4, 10])
-def test_kernel_pca_linear_kernel(solver, n_features):
+def test_kernel_pca_linear_kernel(solver, n_features, global_random_seed):
     """Test that kPCA with linear kernel is equivalent to PCA for all solvers.
 
     KernelPCA with linear kernel should produce the same output as PCA.
     """
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X_fit = rng.random_sample((5, n_features))
     X_pred = rng.random_sample((2, n_features))
 
@@ -246,9 +246,9 @@ def test_leave_zero_eig():
             assert_array_almost_equal(np.abs(A), np.abs(B))
 
 
-def test_kernel_pca_precomputed():
+def test_kernel_pca_precomputed(global_random_seed):
     """Test that kPCA works with a precomputed kernel, for all solvers"""
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X_fit = rng.random_sample((5, 4))
     X_pred = rng.random_sample((2, 4))
 
@@ -526,12 +526,12 @@ def test_kernel_pca_feature_names_out():
     assert_array_equal([f"kernelpca{i}" for i in range(2)], names)
 
 
-def test_kernel_pca_inverse_correct_gamma():
+def test_kernel_pca_inverse_correct_gamma(global_random_seed):
     """Check that gamma is set correctly when not provided.
 
     Non-regression test for #26280
     """
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.random_sample((5, 4))
 
     kwargs = {
