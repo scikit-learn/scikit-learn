@@ -41,7 +41,8 @@ X_plot, y_plot = X[plot_indices], y[plot_indices]
 
 
 def plot_decision_function(classifier, sample_weight, axis, title):
-
+    """Plot the synthetic data and the classifier decision function. Points with
+    larger sample_weight are mapped to larger circles in the scatter plot."""
     axis.scatter(
         X_plot[:, 0],
         X_plot[:, 1],
@@ -66,10 +67,10 @@ def plot_decision_function(classifier, sample_weight, axis, title):
 # we define constant weights as expected by the plotting function
 sample_weight_constant = np.ones(len(X))
 # assign random weights to all points
-sample_weight_last_ten = abs(rng.randn(len(X)))
-# assing bigger weights to the positive class
+sample_weight_modified = abs(rng.randn(len(X)))
+# assign bigger weights to the positive class
 positive_class_indices = np.asarray(y == 1).nonzero()[0]
-sample_weight_last_ten[positive_class_indices] *= 15
+sample_weight_modified[positive_class_indices] *= 15
 
 # This model does not take into account sample weights.
 clf_no_weights = SVC(gamma=1)
@@ -77,12 +78,12 @@ clf_no_weights.fit(X, y)
 
 # This other model takes into account some dedicated sample weights.
 clf_weights = SVC(gamma=1)
-clf_weights.fit(X, y, sample_weight=sample_weight_last_ten)
+clf_weights.fit(X, y, sample_weight=sample_weight_modified)
 
 fig, axes = plt.subplots(1, 2, figsize=(14, 6))
 plot_decision_function(
     clf_no_weights, sample_weight_constant, axes[0], "Constant weights"
 )
-plot_decision_function(clf_weights, sample_weight_last_ten, axes[1], "Modified weights")
+plot_decision_function(clf_weights, sample_weight_modified, axes[1], "Modified weights")
 
 plt.show()
