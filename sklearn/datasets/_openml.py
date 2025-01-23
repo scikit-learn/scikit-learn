@@ -37,7 +37,6 @@ _SEARCH_NAME = "api/v1/json/data/list/data_name/{}/limit/2"
 _DATA_INFO = "api/v1/json/data/{}"
 _DATA_FEATURES = "api/v1/json/data/features/{}"
 _DATA_QUALITIES = "api/v1/json/data/qualities/{}"
-_DATA_FILE = "data/v1/download/{}"
 
 OpenmlQualitiesType = List[Dict[str, str]]
 OpenmlFeaturesType = List[Dict[str, str]]
@@ -150,11 +149,11 @@ def _open_openml_url(
     def is_gzip_encoded(_fsrc):
         return _fsrc.info().get("Content-Encoding", "") == "gzip"
 
-    # print(f'{openml_path=}')
+    # print(f"{openml_path=}")
     full_url = openml_path
     # TODO temporray hack for downloading data file path is a full url not a
     # relative path to _OPENML_PREFIX
-    if not openml_path.startswith("http:"):
+    if not openml_path.startswith("http"):
         full_url = _OPENML_PREFIX + openml_path
 
     req = Request(full_url)
@@ -1134,7 +1133,7 @@ def fetch_openml(
 
     # obtain the data
     url = data_description["url"]
-    # print(f'{url=}')
+    # print(f"{url=}")
     bunch = _download_data_to_bunch(
         url,
         return_sparse,

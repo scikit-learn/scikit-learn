@@ -19,12 +19,8 @@ from datetime import datetime
 from pathlib import Path
 from urllib.request import urlopen
 
-from sklearn.datasets import _openml
 from sklearn.externals._packaging.version import parse
 from sklearn.utils._testing import turn_warnings_into_errors
-
-# Point to http server For now invalid certificate
-_openml._OPENML_PREFIX = "http://api.openml.org/"
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory
