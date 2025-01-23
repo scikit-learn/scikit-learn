@@ -687,17 +687,32 @@ def _get_diff_msg(docstrings_grouped):
     return msg_diff
 
 
-def _check_consistency_items(items_docs, type_or_desc, section, n_objects):
+def _check_consistency_items(
+    items_docs, type_or_desc, section, n_objects, descr_regex_pattern=""
+):
     """Helper to check docstring consistency of all `items_docs`.
 
     If item is not present in all objects, checking is skipped and warning raised.
+    If `regex` provided, match descriptions to all descriptions.
     """
     skipped = []
     for item_name, docstrings_grouped in items_docs.items():
         # If item not found in all objects, skip
         if sum([len(objs) for objs in docstrings_grouped.values()]) < n_objects:
             skipped.append(item_name)
-        # If more than one key, docstrings not consistent between objects
+        # If regex provided, match to all descriptions
+        elif type_or_desc == "description" and descr_regex_pattern:
+            not_matched = []
+            for docstring, group in docstrings_grouped.items():
+                if not re.search(descr_regex_pattern, docstring):
+                    not_matched.extend(group)
+            if not_matched:
+                msg = textwrap.fill(
+                    f"The description of {section[:-1]} '{item_name}' in {not_matched}"
+                    f" does not match 'descr_regex_pattern': {descr_regex_pattern} "
+                )
+                raise AssertionError(msg)
+        # Otherwise, if more than one key, docstrings not consistent between objects
         elif len(docstrings_grouped.keys()) > 1:
             msg_diff = _get_diff_msg(docstrings_grouped)
             obj_groups = " and ".join(
@@ -724,8 +739,9 @@ def assert_docstring_consistency(
     exclude_attrs=None,
     include_returns=False,
     exclude_returns=None,
+    descr_regex_pattern=None,
 ):
-    """Check consistency between docstring parameters/attributes/returns of objects.
+    r"""Check consistency between docstring parameters/attributes/returns of objects.
 
     Checks if parameters/attributes/returns have the same type specification and
     description (ignoring whitespace) across `objects`. Intended to be used for
@@ -767,18 +783,27 @@ def assert_docstring_consistency(
         List of returns to be excluded. If None, no returns are excluded.
         Can only be set if `include_returns` is True.
 
+    descr_regex_pattern : str, default=None
+        Regular expression to match to all descriptions of included
+        parameters/attributes/returns. If None, will revert to default behavior
+        of comparing descriptions between objects.
+
     Examples
     --------
-    >>> from sklearn.metrics import (mean_absolute_error, mean_squared_error,
-    ... median_absolute_error)
-    >>> from sklearn.utils.testing import assert_docstring_consistency
+    >>> from sklearn.metrics import (accuracy_score, classification_report,
+    ... mean_absolute_error, mean_squared_error, median_absolute_error)
+    >>> from sklearn.utils._testing import assert_docstring_consistency
     ... # doctest: +SKIP
     >>> assert_docstring_consistency([mean_absolute_error, mean_squared_error],
     ... include_params=['y_true', 'y_pred', 'sample_weight'])  # doctest: +SKIP
     >>> assert_docstring_consistency([median_absolute_error, mean_squared_error],
     ... include_params=True)  # doctest: +SKIP
+    >>> assert_docstring_consistency([accuracy_score, classification_report],
+    ... include_params=["y_true"],
+    ... descr_regex_pattern=r"Ground truth \(correct\) (labels|target values)")
+    ... # doctest: +SKIP
     """
-    from numpydoc import docscrape
+    from numpydoc.docscrape import NumpyDocString
 
     Args = namedtuple("args", ["include", "exclude", "arg_name"])
 
@@ -805,7 +830,7 @@ def assert_docstring_consistency(
             or inspect.isfunction(obj)
             or inspect.isclass(obj)
         ):
-            objects_doc[obj.__name__] = docscrape.NumpyDocString(inspect.getdoc(obj))
+            objects_doc[obj.__name__] = NumpyDocString(inspect.getdoc(obj))
         else:
             raise TypeError(
                 "All 'objects' must be one of: function, class or descriptor, "
@@ -827,7 +852,13 @@ def assert_docstring_consistency(
                     desc_items[item_name][desc].append(obj_name)
 
         _check_consistency_items(type_items, "type specification", section, n_objects)
-        _check_consistency_items(desc_items, "description", section, n_objects)
+        _check_consistency_items(
+            desc_items,
+            "description",
+            section,
+            n_objects,
+            descr_regex_pattern=descr_regex_pattern,
+        )
 
 
 def assert_run_python_script_without_output(source_code, pattern=".+", timeout=60):

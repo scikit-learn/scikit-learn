@@ -34,6 +34,7 @@ from sklearn.utils import (
     check_X_y,
     deprecated,
 )
+from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
 from sklearn.utils._mocking import (
     MockDataFrame,
     _MockEstimatorOnOffPrediction,
@@ -41,6 +42,7 @@ from sklearn.utils._mocking import (
 from sklearn.utils._testing import (
     SkipTest,
     TempMemmap,
+    _array_api_for_tests,
     _convert_container,
     assert_allclose,
     assert_allclose_dense_sparse,
@@ -55,7 +57,6 @@ from sklearn.utils.fixes import (
     CSR_CONTAINERS,
     DIA_CONTAINERS,
     DOK_CONTAINERS,
-    parse_version,
 )
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
@@ -743,7 +744,12 @@ def test_check_array_min_samples_and_features_messages():
         check_array([], ensure_2d=False)
 
     # Invalid edge case when checking the default minimum sample of a scalar
-    msg = r"Singleton array array\(42\) cannot be considered a valid" " collection."
+    msg = re.escape(
+        (
+            "Input should have at least 1 dimension i.e. satisfy "
+            "`len(x.shape) > 0`, got scalar `array(42)` instead."
+        )
+    )
     with pytest.raises(TypeError, match=msg):
         check_array(42, ensure_2d=False)
 
@@ -1002,6 +1008,8 @@ def test_check_is_fitted_with_attributes(wrap):
 
 
 def test_check_consistent_length():
+    """Test that `check_consistent_length` raises on inconsistent lengths and wrong
+    input types trigger TypeErrors."""
     check_consistent_length([1], [2], [3], [4], [5])
     check_consistent_length([[1, 2], [[1, 2]]], [1, 2], ["a", "b"])
     check_consistent_length([1], (2,), np.array([3]), sp.csr_matrix((1, 2)))
@@ -1011,14 +1019,35 @@ def test_check_consistent_length():
         check_consistent_length([1, 2], 1)
     with pytest.raises(TypeError, match=r"got <\w+ 'object'>"):
         check_consistent_length([1, 2], object())
-
     with pytest.raises(TypeError):
         check_consistent_length([1, 2], np.array(1))
-
     # Despite ensembles having __len__ they must raise TypeError
     with pytest.raises(TypeError, match="Expected sequence or array-like"):
         check_consistent_length([1, 2], RandomForestRegressor())
     # XXX: We should have a test with a string, but what is correct behaviour?
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, _", yield_namespace_device_dtype_combinations()
+)
+def test_check_consistent_length_array_api(array_namespace, device, _):
+    """Test that check_consistent_length works with different array types."""
+    xp = _array_api_for_tests(array_namespace, device)
+
+    with config_context(array_api_dispatch=True):
+        check_consistent_length(
+            xp.asarray([1, 2, 3], device=device),
+            xp.asarray([[1, 1], [2, 2], [3, 3]], device=device),
+            [1, 2, 3],
+            ["a", "b", "c"],
+            np.asarray(("a", "b", "c"), dtype=object),
+            sp.csr_array([[0, 1], [1, 0], [0, 0]]),
+        )
+
+        with pytest.raises(ValueError, match="inconsistent numbers of samples"):
+            check_consistent_length(
+                xp.asarray([1, 2], device=device), xp.asarray([1], device=device)
+            )
 
 
 def test_check_dataframe_fit_attribute():
@@ -1748,11 +1777,9 @@ def test_check_sparse_pandas_sp_format(sp_format):
         ("uint8", "int8"),
     ],
 )
-def test_check_pandas_sparse_invalid(ntype1, ntype2):
-    """check that we raise an error with dataframe having
-    sparse extension arrays with unsupported mixed dtype
-    and pandas version below 1.1. pandas versions 1.1 and
-    above fixed this issue so no error will be raised."""
+def test_check_pandas_sparse_mixed_dtypes(ntype1, ntype2):
+    """Check that pandas dataframes having sparse extension arrays with mixed dtypes
+    works."""
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame(
         {
@@ -1760,15 +1787,7 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
             "col2": pd.arrays.SparseArray([1, 0, 1], dtype=ntype2, fill_value=0),
         }
     )
-
-    if parse_version(pd.__version__) < parse_version("1.1"):
-        err_msg = "Pandas DataFrame with mixed sparse extension arrays"
-        with pytest.raises(ValueError, match=err_msg):
-            check_array(df, accept_sparse=["csr", "csc"])
-    else:
-        # pandas fixed this issue at 1.1 so from here on,
-        # no error will be raised.
-        check_array(df, accept_sparse=["csr", "csc"])
+    check_array(df, accept_sparse=["csr", "csc"])
 
 
 @pytest.mark.parametrize(
@@ -2328,3 +2347,24 @@ def test_force_all_finite_rename_warning():
 
     with pytest.warns(FutureWarning, match=msg):
         as_float_array(X, force_all_finite=True)
+
+
+@pytest.mark.parametrize(
+    ["X", "estimator", "expected_error_message"],
+    [
+        (
+            np.array([[[1, 2], [3, 4]], [[1, 2], [3, 4]]]),
+            RandomForestRegressor(),
+            "Found array with dim 3, while dim <= 2 is required by "
+            "RandomForestRegressor.",
+        ),
+        (
+            np.array([[[1, 2], [3, 4]], [[1, 2], [3, 4]]]),
+            None,
+            "Found array with dim 3, while dim <= 2 is required.",
+        ),
+    ],
+)
+def test_check_array_allow_nd_errors(X, estimator, expected_error_message):
+    with pytest.raises(ValueError, match=expected_error_message):
+        check_array(X, estimator=estimator)

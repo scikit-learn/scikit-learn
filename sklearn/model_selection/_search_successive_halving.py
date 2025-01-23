@@ -480,7 +480,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
     scoring : str, callable, or None, default=None
         A single string (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring`) to evaluate the predictions on the test set.
+        (see :ref:`scoring_callable`) to evaluate the predictions on the test set.
         If None, the estimator's score method is used.
 
     refit : bool, default=True
@@ -821,7 +821,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     scoring : str, callable, or None, default=None
         A single string (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring`) to evaluate the predictions on the test set.
+        (see :ref:`scoring_callable`) to evaluate the predictions on the test set.
         If None, the estimator's score method is used.
 
     refit : bool, default=True

@@ -434,7 +434,8 @@ complies with the following rules before marking a PR as "ready for review". The
    and pass for the PR code.
 
 5. If your PR is likely to affect users, you need to add a changelog entry describing
-   your PR changes, see the `following README <https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md>`
+   your PR changes. See the
+   `README <https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md>`_
    for more details.
 
 6. Follow the :ref:`coding-guidelines`.
@@ -545,8 +546,6 @@ Commit Message Marker  Action Taken by CI
 ====================== ===================
 [ci skip]              CI is skipped completely
 [cd build]             CD is run (wheels and source distribution are built)
-[cd build gh]          CD is run only for GitHub Actions
-[cd build cirrus]      CD is run only for Cirrus CI
 [lint skip]            Azure pipeline skips linting
 [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc.) development builds
 [free-threaded]        Build & test with CPython 3.13 free-threaded
@@ -562,35 +561,34 @@ Commit Message Marker  Action Taken by CI
 Note that, by default, the documentation is built but only the examples
 that are directly modified by the pull request are executed.
 
-Lock files
-^^^^^^^^^^
+Resolve conflicts in lock files
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-CIs use lock files to build environments with specific versions of dependencies. When a
-PR needs to modify the dependencies or their versions, the lock files should be updated
-accordingly. This can be done by commenting in the PR:
+Here is a bash snippet that helps resolving conflicts in environment and lock files:
 
-.. code-block:: text
+.. prompt:: bash
 
-  @scikit-learn-bot update lock-files
+  # pull latest upstream/main
+  git pull upstream main --no-rebase
+  # resolve conflicts - keeping the upstream/main version for specific files
+  git checkout --theirs  build_tools/*/*.lock build_tools/*/*environment.yml \
+      build_tools/*/*lock.txt build_tools/*/*requirements.txt
+  git add build_tools/*/*.lock build_tools/*/*environment.yml \
+      build_tools/*/*lock.txt build_tools/*/*requirements.txt
+  git merge --continue
 
-A bot will push a commit to your PR branch with the updated lock files in a few minutes.
-Make sure to tick the *Allow edits from maintainers* checkbox located at the bottom of
-the right sidebar of the PR. You can also specify the options `--select-build`,
-`--skip-build`, and `--select-tag` as in a command line. Use `--help` on the script
-`build_tools/update_environments_and_lock_files.py` for more information. For example,
+This will merge `upstream/main` into our branch, automatically prioritising the
+`upstream/main` for conflicting environment and lock files (this is good enough, because
+we will re-generate the lock files afterwards).
 
-.. code-block:: text
+Note that this only fixes conflicts in environment and lock files and you might have
+other conflicts to resolve.
 
-  @scikit-learn-bot update lock-files --select-tag main-ci --skip-build doc
+Finally, we have to re-generate the environment and lock files for the CIs by running:
 
-The bot will automatically add :ref:`commit message markers <commit_markers>` to the
-commit for certain tags. If you want to add more markers manually, you can do so using
-the `--commit-marker` option. For example, the following comment will trigger the bot to
-update documentation-related lock files and add the `[doc build]` marker to the commit:
+.. prompt:: bash
 
-.. code-block:: text
-
-  @scikit-learn-bot update lock-files --select-build doc --commit-marker "[doc build]"
+  python build_tools/update_environments_and_lock_files.py
 
 .. _stalled_pull_request:
 

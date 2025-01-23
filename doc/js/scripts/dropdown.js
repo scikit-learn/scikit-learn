@@ -35,6 +35,8 @@ document.addEventListener("DOMContentLoaded", () => {
     newStateMarker.setAttribute("data-bs-placement", "top");
     newStateMarker.setAttribute("data-bs-offset", "0,10");
     newStateMarker.setAttribute("data-bs-title", "Toggle all dropdowns");
+    // Enable the tooltip
+    new bootstrap.Tooltip(newStateMarker);
 
     // Assign the collapse/expand action to the state marker
     newStateMarker.addEventListener("click", () => {
