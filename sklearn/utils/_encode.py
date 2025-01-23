@@ -285,10 +285,8 @@ def _check_unknown(values, known_values, return_mask=False):
         def is_valid(value):
             return (
                 value in uniques_set
-                or missing_in_uniques.none
-                and value is None
-                or missing_in_uniques.nan
-                and is_scalar_nan(value)
+                or (missing_in_uniques.none and value is None)
+                or (missing_in_uniques.nan and is_scalar_nan(value))
             )
 
         if return_mask:
