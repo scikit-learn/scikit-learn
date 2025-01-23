@@ -7,7 +7,7 @@ import itertools
 import numbers
 import warnings
 from abc import ABCMeta, abstractmethod
-from functools import partial, reduce
+from functools import partial
 from numbers import Integral, Real
 
 import numpy as np
@@ -487,7 +487,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
             if is_classifier(self):
                 # Classification targets require a specific format
-                if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
+                if y.ndim == 1 or (y.ndim == 2 and y.shape[1] == 1):
                     if y.ndim != 1:
                         warnings.warn(
                             (

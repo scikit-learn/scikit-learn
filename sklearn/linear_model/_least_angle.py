@@ -554,7 +554,7 @@ def _lars_path_solver(
         Gram = None
         if X is None:
             raise ValueError("X and Gram cannot both be unspecified.")
-    elif isinstance(Gram, str) and Gram == "auto" or Gram is True:
+    elif (isinstance(Gram, str) and Gram == "auto") or Gram is True:
         if Gram is True or X.shape[0] > X.shape[1]:
             Gram = np.dot(X.T, X)
         else:

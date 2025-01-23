@@ -1352,10 +1352,8 @@ def _is_empty_column_selection(column):
     if hasattr(column, "dtype") and np.issubdtype(column.dtype, np.bool_):
         return not column.any()
     elif hasattr(column, "__len__"):
-        return (
-            len(column) == 0
-            or all(isinstance(col, bool) for col in column)
-            and not any(column)
+        return len(column) == 0 or (
+            all(isinstance(col, bool) for col in column) and not any(column)
         )
     else:
         return False
