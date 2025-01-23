@@ -940,6 +940,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         -------
         self : ColumnTransformer
             This estimator.
+
+        Notes
+        -----
+        If `X` is a sparse matrix and not row-wise indexable by default, it will
+        be internally converted to the CSR format for efficient processing.
         """
         _raise_for_params(params, self, "fit")
         # we use fit_transform to make sure to set sparse_output_ (for which we
@@ -980,6 +985,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             sum of n_components (output dimension) over transformers. If
             any result is a sparse matrix, everything will be converted to
             sparse matrices.
+
+        Notes
+        -----
+        If `X` is a sparse matrix and not row-wise indexable by default, it will
+        be internally converted to the CSR format for efficient processing.
         """
         _raise_for_params(params, self, "fit_transform")
         _check_feature_names(self, X, reset=True)
