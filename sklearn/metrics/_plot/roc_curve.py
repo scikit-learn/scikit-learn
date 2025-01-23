@@ -207,7 +207,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             to draw the individual ROC curves. If a list is provided, the
             parameters are applied to the ROC curves sequentially. If a single
             dictionary is provided, the same parameters are applied to all ROC
-            curves. Ignored for single curve plots.
+            curves. Ignored for single curve plots - pass as `**kwargs` for
+            single curve plots.
 
             .. versionadded:: 1.7
 
@@ -221,8 +222,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         **kwargs : dict
             For a single curve plots only, keyword arguments to be passed to
-            matplotlib's `plot`. Ignored for multi-curve plots.
-            (Note req for backwards compat, maybe not ideal?).
+            matplotlib's `plot`. Ignored for multi-curve plots - use `fold_line_kwargs`
+            for multi-curve plots.
 
         Returns
         -------

@@ -26,16 +26,11 @@ class _BinaryClassifierCurveDisplayMixin:
         if ax is None:
             _, ax = plt.subplots()
 
+        # write better comment
         if name is None:
-            for attr in ["estimator_name", "names"]:
-                name = getattr(self, attr, None)
-                if name is not None:
-                    break
-        # One line shorter alternative, but looks funny:
-        # if name is None:
-        #     name = getattr(self, "estimator_name", None)
-        # if name is None:
-        #     name = getattr(self, "names", None)
+            name = getattr(self, "estimator_name", None)
+        if name is None:
+            name = getattr(self, "names", None)
         return ax, ax.figure, name
 
     @classmethod
