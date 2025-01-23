@@ -294,8 +294,8 @@ General Concepts
         error, but demand more computational resources, resulting in slower
         operations and increased memory usage. In contrast, 32-bit types
         promise enhanced operation speed and reduced memory consumption, but
-        introduce a larger floating-point error. The efficiency improvement are
-        dependent on lower level optimization such as like vectorization,
+        introduce a larger floating-point error. The efficiency improvements are
+        dependent on lower level optimization such as vectorization,
         single instruction multiple dispatch (SIMD), or cache optimization but
         crucially on the compatibility of the algorithm in use.
 
@@ -507,7 +507,7 @@ General Concepts
 
     joblib
         A Python library (https://joblib.readthedocs.io) used in Scikit-learn to
-        facilite simple parallelism and caching.  Joblib is oriented towards
+        facilitate simple parallelism and caching.  Joblib is oriented towards
         efficiently working with numpy arrays, such as through use of
         :term:`memory mapping`. See :ref:`parallelism` for more
         information.
@@ -747,7 +747,7 @@ General Concepts
     sparse matrix
     sparse graph
         A representation of two-dimensional numeric data that is more memory
-        efficient the corresponding dense numpy array where almost all elements
+        efficient than the corresponding dense numpy array where almost all elements
         are zero. We use the :mod:`scipy.sparse` framework, which provides
         several underlying sparse data representations, or *formats*.
         Some formats are more efficient than others for particular tasks, and
@@ -1715,7 +1715,7 @@ functions or non-estimator constructors.
         either as a list of unique strings, a dictionary with names as keys and
         callables as values or a callable that returns a dictionary. Note that
         this does *not* specify which score function is to be maximized, and
-        another parameter such as ``refit`` maybe used for this purpose.
+        another parameter such as ``refit`` may be used for this purpose.
 
         The ``scoring`` parameter is validated and interpreted using
         :func:`metrics.check_scoring`.
@@ -1756,7 +1756,7 @@ functions or non-estimator constructors.
 
         Other models, usually using gradient-based solvers, have a different
         behavior. They all expose a ``max_iter`` parameter. The reported
-        ``n_iter_`` corresponds to the number of iteration done during the last
+        ``n_iter_`` corresponds to the number of iterations done during the last
         call to ``fit`` and will be at most ``max_iter``. Thus, we do not
         consider the state of the estimator since the initialization.
 

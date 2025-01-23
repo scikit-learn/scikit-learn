@@ -513,7 +513,7 @@ program. Insert the following instructions in your main script::
 
         # call scikit-learn utils with n_jobs > 1 here
 
-You can find more default on the new start methods in the `multiprocessing
+You can find more details on the new start methods in the `multiprocessing
 documentation <https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods>`_.
 
 .. _faq_mkl_threading:
