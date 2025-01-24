@@ -61,7 +61,7 @@ from sklearn.metrics import class_likelihood_ratios
 
 estimator = LogisticRegression().fit(X_train, y_train)
 y_pred = estimator.predict(X_test)
-pos_LR, neg_LR = class_likelihood_ratios(y_test, y_pred)
+pos_LR, neg_LR = class_likelihood_ratios(y_test, y_pred, replace_undefined_by=1.0)
 print(f"LR+: {pos_LR:.3f}")
 
 # %%
@@ -81,7 +81,7 @@ import pandas as pd
 
 def scoring(estimator, X, y):
     y_pred = estimator.predict(X)
-    pos_lr, neg_lr = class_likelihood_ratios(y, y_pred, raise_warning=False)
+    pos_lr, neg_lr = class_likelihood_ratios(y, y_pred, replace_undefined_by=1.0)
     return {"positive_likelihood_ratio": pos_lr, "negative_likelihood_ratio": neg_lr}
 
 

@@ -119,14 +119,14 @@ magic command::
           1    0.000    0.000    0.000    0.000 nmf.py:337(__init__)
           1    0.000    0.000    1.681    1.681 nmf.py:461(fit)
 
-The ``tottime`` column is the most interesting: it gives to total time spent
+The ``tottime`` column is the most interesting: it gives the total time spent
 executing the code of a given function ignoring the time spent in executing the
 sub-functions. The real total time (local code + sub-function calls) is given by
 the ``cumtime`` column.
 
 Note the use of the ``-l nmf.py`` that restricts the output to lines that
-contains the "nmf.py" string. This is useful to have a quick look at the hotspot
-of the nmf Python module it-self ignoring anything else.
+contain the "nmf.py" string. This is useful to have a quick look at the hotspot
+of the nmf Python module itself ignoring anything else.
 
 Here is the beginning of the output of the same command without the ``-l nmf.py``
 filter::
@@ -150,7 +150,7 @@ filter::
   ...
 
 The above results show that the execution is largely dominated by
-dot products operations (delegated to blas). Hence there is probably
+dot product operations (delegated to blas). Hence there is probably
 no huge gain to expect by rewriting this code in Cython or C/C++: in
 this case out of the 1.7s total execution time, almost 0.7s are spent
 in compiled code we can consider optimal. By rewriting the rest of the
@@ -159,8 +159,8 @@ Python code and assuming we could achieve a 1000% boost on this portion
 we would not gain more than a 2.4x speed-up globally.
 
 Hence major improvements can only be achieved by **algorithmic
-improvements** in this particular example (e.g. trying to find operation
-that are both costly and useless to avoid computing then rather than
+improvements** in this particular example (e.g. trying to find operations
+that are both costly and useless to avoid computing them rather than
 trying to optimize their implementation).
 
 It is however still interesting to check what's happening inside the
@@ -324,7 +324,7 @@ Profiling compiled extensions
 When working with compiled extensions (written in C/C++ with a wrapper or
 directly as Cython extension), the default Python profiler is useless:
 we need a dedicated tool to introspect what's happening inside the
-compiled extension it-self.
+compiled extension itself.
 
 Using yep and gperftools
 ------------------------

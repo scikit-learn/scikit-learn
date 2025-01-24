@@ -109,7 +109,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         n_samples, _ = X.shape
 
         if self.init_params == "kmeans":
-            resp = np.zeros((n_samples, self.n_components))
+            resp = np.zeros((n_samples, self.n_components), dtype=X.dtype)
             label = (
                 cluster.KMeans(
                     n_clusters=self.n_components, n_init=1, random_state=random_state
@@ -119,16 +119,18 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             )
             resp[np.arange(n_samples), label] = 1
         elif self.init_params == "random":
-            resp = random_state.uniform(size=(n_samples, self.n_components))
+            resp = np.asarray(
+                random_state.uniform(size=(n_samples, self.n_components)), dtype=X.dtype
+            )
             resp /= resp.sum(axis=1)[:, np.newaxis]
         elif self.init_params == "random_from_data":
-            resp = np.zeros((n_samples, self.n_components))
+            resp = np.zeros((n_samples, self.n_components), dtype=X.dtype)
             indices = random_state.choice(
                 n_samples, size=self.n_components, replace=False
             )
             resp[indices, np.arange(self.n_components)] = 1
         elif self.init_params == "k-means++":
-            resp = np.zeros((n_samples, self.n_components))
+            resp = np.zeros((n_samples, self.n_components), dtype=X.dtype)
             _, indices = kmeans_plusplus(
                 X,
                 self.n_components,

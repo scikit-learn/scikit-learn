@@ -203,8 +203,11 @@ def chi2(X, y):
 
     This score can be used to select the `n_features` features with the
     highest values for the test chi-squared statistic from X, which must
-    contain only **non-negative features** such as booleans or frequencies
+    contain only **non-negative integer feature values** such as booleans or frequencies
     (e.g., term counts in document classification), relative to the classes.
+
+    If some of your features are continuous, you need to bin them, for
+    example by using :class:`~sklearn.preprocessing.KBinsDiscretizer`.
 
     Recall that the chi-square test measures dependence between stochastic
     variables, so using this function "weeds out" the features that are the
@@ -581,6 +584,7 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.target_tags.required = True
+        tags.input_tags.sparse = True
         return tags
 
 

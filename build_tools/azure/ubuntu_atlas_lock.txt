@@ -14,11 +14,11 @@ iniconfig==2.0.0
     # via pytest
 joblib==1.2.0
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
-meson==1.6.0
+meson==1.6.1
     # via meson-python
 meson-python==0.17.1
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
-ninja==1.11.1.2
+ninja==1.11.1.3
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
 packaging==24.2
     # via

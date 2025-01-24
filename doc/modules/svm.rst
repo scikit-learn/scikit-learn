@@ -230,7 +230,7 @@ In the multiclass case, this is extended as per [#2]_.
   The same probability calibration procedure is available for all estimators
   via the :class:`~sklearn.calibration.CalibratedClassifierCV` (see
   :ref:`calibration`). In the case of :class:`SVC` and :class:`NuSVC`, this
-  procedure is builtin in `libsvm`_ which is used under the hood, so it does
+  procedure is builtin to `libsvm`_ which is used under the hood, so it does
   not rely on scikit-learn's
   :class:`~sklearn.calibration.CalibratedClassifierCV`.
 
@@ -659,7 +659,7 @@ Once the optimization problem is solved, the output of
 
 .. math:: \sum_{i\in SV} y_i \alpha_i K(x_i, x) + b,
 
-and the predicted class correspond to its sign. We only need to sum over the
+and the predicted class corresponds to its sign. We only need to sum over the
 support vectors (i.e. the samples that lie within the margin) because the
 dual coefficients :math:`\alpha_i` are zero for the other samples.
 
@@ -811,6 +811,6 @@ used, please refer to their respective papers.
 .. [#7] Schölkopf et. al `New Support Vector Algorithms
   <https://www.stat.purdue.edu/~yuzhu/stat598m3/Papers/NewSVM.pdf>`_
 
-.. [#8] Crammer and Singer `On the Algorithmic Implementation ofMulticlass
+.. [#8] Crammer and Singer `On the Algorithmic Implementation of Multiclass
   Kernel-based Vector Machines
   <http://jmlr.csail.mit.edu/papers/volume2/crammer01a/crammer01a.pdf>`_, JMLR 2001.

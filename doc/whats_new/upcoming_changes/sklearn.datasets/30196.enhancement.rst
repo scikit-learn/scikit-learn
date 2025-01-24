@@ -1,0 +1,3 @@
+- New parameter ``return_X_y`` added to :func:`datasets.make_classification`. The
+  default value of the parameter does not change how the function behaves.
+  By :user:`Success Moses <SuccessMoses>` and :user:`Adam Cooper <arc12>`

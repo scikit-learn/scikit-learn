@@ -394,6 +394,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         tags = super().__sklearn_tags__()
         tags.no_validation = not self.validate
         tags.requires_fit = False
+        tags.input_tags.sparse = not self.validate or self.accept_sparse
         return tags
 
     def set_output(self, *, transform=None):

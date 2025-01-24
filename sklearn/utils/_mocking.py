@@ -250,7 +250,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         Returns
         -------
         preds : ndarray of shape (n_samples,)
-            Predictions of the first class seens in `classes_`.
+            Predictions of the first class seen in `classes_`.
         """
         if self.methods_to_check == "all" or "predict" in self.methods_to_check:
             X, y = self._check_X_y(X)

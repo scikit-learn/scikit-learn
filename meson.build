@@ -47,7 +47,7 @@ tempita = files('sklearn/_build_utils/tempita.py')
 py = import('python').find_installation(pure: false)
 
 # Copy all the .py files to the install dir, rather than using
-# py.install_sources and needing to list them explicitely one by one
+# py.install_sources and needing to list them explicitly one by one
 install_subdir('sklearn', install_dir: py.get_install_dir())
 
 subdir('sklearn')

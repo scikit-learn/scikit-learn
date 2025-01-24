@@ -398,7 +398,7 @@ class KNeighborsTransformer(
         metric_params=None,
         n_jobs=None,
     ):
-        super(KNeighborsTransformer, self).__init__(
+        super().__init__(
             n_neighbors=n_neighbors,
             radius=None,
             algorithm=algorithm,
@@ -623,7 +623,7 @@ class RadiusNeighborsTransformer(
         metric_params=None,
         n_jobs=None,
     ):
-        super(RadiusNeighborsTransformer, self).__init__(
+        super().__init__(
             n_neighbors=None,
             radius=radius,
             algorithm=algorithm,

@@ -507,7 +507,7 @@ class NewtonCholeskySolver(NewtonSolver):
             # probabilities are invariant under shifting all coefficients of a single
             # feature j for all classes by the same amount c:
             #   coef[k, :] -> coef[k, :] + c    =>    proba stays the same
-            # where we have assumned coef.shape = (n_classes, n_features).
+            # where we have assumed coef.shape = (n_classes, n_features).
             # Therefore, also the loss (-log-likelihood), gradient and hessian stay the
             # same, see
             # Noah Simon and Jerome Friedman and Trevor Hastie. (2013) "A Blockwise

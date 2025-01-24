@@ -1097,8 +1097,8 @@ def check_array(
             )
         if not allow_nd and array.ndim >= 3:
             raise ValueError(
-                "Found array with dim %d. %s expected <= 2."
-                % (array.ndim, estimator_name)
+                f"Found array with dim {array.ndim},"
+                f" while dim <= 2 is required{context}."
             )
 
         if ensure_all_finite:
@@ -1681,7 +1681,7 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     :ref:`sphx_glr_auto_examples_developing_estimators_sklearn_is_fitted.py`
     for an example on how to use the API.
 
-    If no `attributes` are passed, this fuction will pass if an estimator is stateless.
+    If no `attributes` are passed, this function will pass if an estimator is stateless.
     An estimator can indicate it's stateless by setting the `requires_fit` tag. See
     :ref:`estimator_tags` for more information. Note that the `requires_fit` tag
     is ignored if `attributes` are passed.

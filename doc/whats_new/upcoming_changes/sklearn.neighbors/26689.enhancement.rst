@@ -1,7 +1,0 @@
-- Add :meth:`neighbors.NearestCentroid.decision_function`,
-  :meth:`neighbors.NearestCentroid.predict_proba` and
-  :meth:`neighbors.NearestCentroid.predict_log_proba`
-  to the :class:`neighbors.NearestCentroid` estimator class.
-  Support the case when `X` is sparse and `shrinking_threshold`
-  is not `None` in :class:`neighbors.NearestCentroid`.
-  By :user:`Matthew Ning <NoPenguinsLand>`

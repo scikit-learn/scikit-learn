@@ -1177,6 +1177,11 @@ class _BaseKMeans(
         )
         return -scores
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 class KMeans(_BaseKMeans):
     """K-Means clustering.
@@ -1213,8 +1218,11 @@ class KMeans(_BaseKMeans):
         * If a callable is passed, it should take arguments X, n_clusters and a\
         random state and return an initialization.
 
-        For an example of how to use the different `init` strategy, see the example
-        entitled :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`.
+        For an example of how to use the different `init` strategies, see
+        :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`.
+
+        For an evaluation of the impact of initialization, see the example
+        :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_stability_low_dim_dense.py`.
 
     n_init : 'auto' or int, default='auto'
         Number of times the k-means algorithm is run with different centroid
@@ -1699,6 +1707,9 @@ class MiniBatchKMeans(_BaseKMeans):
 
         If a callable is passed, it should take arguments X, n_clusters and a
         random state and return an initialization.
+
+        For an evaluation of the impact of initialization, see the example
+        :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_stability_low_dim_dense.py`.
 
     max_iter : int, default=100
         Maximum number of iterations over the complete dataset before

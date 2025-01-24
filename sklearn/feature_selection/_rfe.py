@@ -521,6 +521,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         if tags.regressor_tags is not None:
             tags.regressor_tags.poor_score = True
         tags.target_tags.required = True
+        tags.input_tags.sparse = sub_estimator_tags.input_tags.sparse
         tags.input_tags.allow_nan = sub_estimator_tags.input_tags.allow_nan
         return tags
 

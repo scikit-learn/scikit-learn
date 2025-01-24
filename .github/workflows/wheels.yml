@@ -108,6 +108,28 @@ jobs:
             manylinux_image: manylinux2014
             free_threaded_support: True
 
+          # # Linux 64 bit manylinux2014
+          - os: ubuntu-24.04-arm
+            python: 39
+            platform_id: manylinux_aarch64
+            manylinux_image: manylinux2014
+          - os: ubuntu-24.04-arm
+            python: 310
+            platform_id: manylinux_aarch64
+            manylinux_image: manylinux2014
+          - os: ubuntu-24.04-arm
+            python: 311
+            platform_id: manylinux_aarch64
+            manylinux_image: manylinux2014
+          - os: ubuntu-24.04-arm
+            python: 312
+            platform_id: manylinux_aarch64
+            manylinux_image: manylinux2014
+          - os: ubuntu-24.04-arm
+            python: 313
+            platform_id: manylinux_aarch64
+            manylinux_image: manylinux2014
+
           # MacOS x86_64
           - os: macos-13
             python: 39

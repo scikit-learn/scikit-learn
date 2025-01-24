@@ -349,6 +349,11 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
         return self
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 class LinearSVR(RegressorMixin, LinearModel):
     """Linear Support Vector Regression.
@@ -600,6 +605,11 @@ class LinearSVR(RegressorMixin, LinearModel):
 
         return self
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 class SVC(BaseSVC):
     """C-Support Vector Classification.
@@ -833,7 +843,7 @@ class SVC(BaseSVC):
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
-    For a comaprison of the SVC with other classifiers see:
+    For a comparison of the SVC with other classifiers see:
     :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`.
     """
 

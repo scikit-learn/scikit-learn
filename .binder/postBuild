@@ -23,7 +23,7 @@ find . -delete
 GENERATED_NOTEBOOKS_DIR=.generated-notebooks
 cp -r $TMP_CONTENT_DIR/examples $GENERATED_NOTEBOOKS_DIR
 
-find $GENERATED_NOTEBOOKS_DIR -name '*.py' -exec sphx_glr_python_to_jupyter.py '{}' +
+find $GENERATED_NOTEBOOKS_DIR -name '*.py' -exec sphinx_gallery_py2jupyter '{}' +
 NON_NOTEBOOKS=$(find $GENERATED_NOTEBOOKS_DIR -type f | grep -v '\.ipynb')
 rm -f $NON_NOTEBOOKS
 

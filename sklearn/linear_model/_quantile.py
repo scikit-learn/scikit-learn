@@ -294,3 +294,8 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             self.coef_ = params
             self.intercept_ = 0.0
         return self
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags

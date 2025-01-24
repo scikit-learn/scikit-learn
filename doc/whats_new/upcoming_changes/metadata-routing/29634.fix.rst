@@ -1,5 +1,0 @@
-- Metadata is routed correctly to grouped CV splitters via
-  :class:`linear_model.RidgeCV` and :class:`linear_model.RidgeClassifierCV` and
-  `UnsetMetadataPassedError` is fixed for :class:`linear_model.RidgeClassifierCV` with
-  default scoring.
-  By :user:`Stefanie Senger <StefanieSenger>`

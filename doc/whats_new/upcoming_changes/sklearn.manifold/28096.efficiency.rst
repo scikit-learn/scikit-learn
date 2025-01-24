@@ -1,4 +1,0 @@
-- :func:`manifold.locally_linear_embedding` and
-  :class:`manifold.LocallyLinearEmbedding` now allocate more efficiently the memory of
-  sparse matrices in the Hessian, Modified and LTSA methods.
-  By :user:`Giorgio Angelotti <giorgioangel>`

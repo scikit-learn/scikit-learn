@@ -1,3 +1,0 @@
-- `__sklearn_tags__` was introduced for setting tags in estimators.
-  More details in :ref:`estimator_tags`.
-  By :user:`Thomas Fan <thomasjpfan>` and :user:`Adrin Jalali <adrinjalali>`

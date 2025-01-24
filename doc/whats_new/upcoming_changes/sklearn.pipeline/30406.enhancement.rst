@@ -1,0 +1,4 @@
+- Expose the ``verbose_feature_names_out`` argument in the
+  :func:`pipeline.make_union` function, allowing users to control
+  feature name uniqueness in the :class:`pipeline.FeatureUnion`.
+  By :user:`Abhijeetsingh Meena <Ethan0456>`

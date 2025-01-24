@@ -1,3 +1,0 @@
-- :class:`feature_selection.RFE` and :class:`feature_selection.RFECV`
-  now support metadata routing.
-  By :user:`Omar Salman <OmarManzoor>`

@@ -128,8 +128,8 @@ Due to the limits of human perception, only one input feature of interest is
 supported for ICE plots.
 
 The figures below show two ICE plots for the bike sharing dataset,
-with a :class:`~sklearn.ensemble.HistGradientBoostingRegressor`:.
-The figures plot the corresponding PD line overlaid on ICE lines.
+with a :class:`~sklearn.ensemble.HistGradientBoostingRegressor`. The figures plot
+the corresponding PD line overlaid on ICE lines.
 
 .. figure:: ../auto_examples/inspection/images/sphx_glr_plot_partial_dependence_004.png
    :target: ../auto_examples/inspection/plot_partial_dependence.html
@@ -140,8 +140,8 @@ While the PDPs are good at showing the average effect of the target features,
 they can obscure a heterogeneous relationship created by interactions.
 When interactions are present the ICE plot will provide many more insights.
 For example, we see that the ICE for the temperature feature gives us some
-additional information: Some of the ICE lines are flat while some others
-shows a decrease of the dependence for temperature above 35 degrees Celsius.
+additional information: some of the ICE lines are flat while some others
+show a decrease of the dependence for temperature above 35 degrees Celsius.
 We observe a similar pattern for the humidity feature: some of the ICE
 lines show a sharp decrease when the humidity is above 80%.
 
@@ -229,7 +229,7 @@ over the dataset `X` which is computationally intensive.
 Each of the :math:`f(x_{S}, x_{C}^{(i)})` corresponds to one ICE line evaluated
 at :math:`x_{S}`. Computing this for multiple values of :math:`x_{S}`, one
 obtains a full ICE line. As one can see, the average of the ICE lines
-correspond to the partial dependence line.
+corresponds to the partial dependence line.
 
 The 'recursion' method is faster than the 'brute' method, but it is only
 supported for PDP plots by some tree-based estimators. It is computed as
@@ -238,7 +238,7 @@ if a split node involves an input feature of interest, the corresponding left
 or right branch is followed; otherwise both branches are followed, each branch
 being weighted by the fraction of training samples that entered that branch.
 Finally, the partial dependence is given by a weighted average of all the
-visited leaves values.
+visited leaves' values.
 
 With the 'brute' method, the parameter `X` is used both for generating the
 grid of values :math:`x_S` and the complement feature values :math:`x_C`.

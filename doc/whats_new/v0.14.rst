@@ -19,7 +19,7 @@ Changelog
 - Missing values with sparse and dense matrices can be imputed with the
   transformer `preprocessing.Imputer` by `Nicolas Trésegnie`_.
 
-- The core implementation of decisions trees has been rewritten from
+- The core implementation of decision trees has been rewritten from
   scratch, allowing for faster tree induction and lower memory
   consumption in all tree-based estimators. By `Gilles Louppe`_.
 
@@ -61,7 +61,7 @@ Changelog
 
 - `grid_search.GridSearchCV` and
   `cross_validation.cross_val_score` now support the use of advanced
-  scoring function such as area under the ROC curve and f-beta scores.
+  scoring functions such as area under the ROC curve and f-beta scores.
   See :ref:`scoring_parameter` for details. By `Andreas Müller`_
   and `Lars Buitinck`_.
   Passing a function from :mod:`sklearn.metrics` as ``score_func`` is
@@ -107,13 +107,13 @@ Changelog
 
 - ``max_features`` in :class:`tree.DecisionTreeClassifier`,
   :class:`tree.DecisionTreeRegressor` and all derived ensemble estimators
-  now supports percentage values. By `Gilles Louppe`_.
+  now support percentage values. By `Gilles Louppe`_.
 
 - Performance improvements in :class:`isotonic.IsotonicRegression` by
   `Nelle Varoquaux`_.
 
 - :func:`metrics.accuracy_score` has an option normalize to return
-  the fraction or the number of correctly classified sample
+  the fraction or the number of correctly classified samples
   by `Arnaud Joly`_.
 
 - Added :func:`metrics.log_loss` that computes log loss, aka cross-entropy

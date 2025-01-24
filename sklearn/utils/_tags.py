@@ -359,7 +359,7 @@ def _find_tags_provider(estimator, warn=True):
             "`sklearn.base.ClassifierMixin`, `sklearn.base.RegressorMixin`, and "
             "`sklearn.base.OutlierMixin`. From scikit-learn 1.7, not defining "
             "`__sklearn_tags__` will raise an error.",
-            category=FutureWarning,
+            category=DeprecationWarning,
         )
     return tag_provider
 
@@ -393,7 +393,32 @@ def get_tags(estimator) -> Tags:
     tag_provider = _find_tags_provider(estimator)
 
     if tag_provider == "__sklearn_tags__":
-        tags = estimator.__sklearn_tags__()
+        # TODO(1.7): turn the warning into an error
+        try:
+            tags = estimator.__sklearn_tags__()
+        except AttributeError as exc:
+            if str(exc) == "'super' object has no attribute '__sklearn_tags__'":
+                # workaround the regression reported in
+                # https://github.com/scikit-learn/scikit-learn/issues/30479
+                # `__sklearn_tags__` is implemented by calling
+                # `super().__sklearn_tags__()` but there is no `__sklearn_tags__`
+                # method in the base class.
+                warnings.warn(
+                    f"The following error was raised: {str(exc)}. It seems that "
+                    "there are no classes that implement `__sklearn_tags__` "
+                    "in the MRO and/or all classes in the MRO call "
+                    "`super().__sklearn_tags__()`. Make sure to inherit from "
+                    "`BaseEstimator` which implements `__sklearn_tags__` (or "
+                    "alternatively define `__sklearn_tags__` but we don't recommend "
+                    "this approach). Note that `BaseEstimator` needs to be on the "
+                    "right side of other Mixins in the inheritance order. The "
+                    "default are now used instead since retrieving tags failed. "
+                    "This warning will be replaced by an error in 1.7.",
+                    category=DeprecationWarning,
+                )
+                tags = default_tags(estimator)
+            else:
+                raise
     else:
         # TODO(1.7): Remove this branch of the code
         # Let's go through the MRO and patch each class implementing _more_tags
@@ -446,7 +471,7 @@ def _safe_tags(estimator, key=None):
         "The `_safe_tags` function is deprecated in 1.6 and will be removed in "
         "1.7. Use the public `get_tags` function instead and make sure to implement "
         "the `__sklearn_tags__` method.",
-        category=FutureWarning,
+        category=DeprecationWarning,
     )
     tags = _to_old_tags(get_tags(estimator))
 

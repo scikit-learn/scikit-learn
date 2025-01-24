@@ -870,7 +870,7 @@ def test_plot_partial_dependence_legend(pyplot):
     X = pd.DataFrame(
         {
             "col_A": ["A", "B", "C"],
-            "col_B": [1, 0, 2],
+            "col_B": [1.0, 0.0, 2.0],
             "col_C": ["C", "B", "A"],
         }
     )

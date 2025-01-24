@@ -169,7 +169,7 @@ While the hyperparameters chosen by optimizing LML have a considerably larger
 LML, they perform slightly worse according to the log-loss on test data. The
 figure shows that this is because they exhibit a steep change of the class
 probabilities at the class boundaries (which is good) but have predicted
-probabilities close to 0.5 far away from the class boundaries (which is bad)
+probabilities close to 0.5 far away from the class boundaries (which is bad).
 This undesirable effect is caused by the Laplace approximation used
 internally by GPC.
 
@@ -209,7 +209,7 @@ Gaussian process classification (GPC) on iris dataset
 -----------------------------------------------------
 
 This example illustrates the predicted probability of GPC for an isotropic
-and anisotropic RBF kernel on a two-dimensional version for the iris-dataset.
+and anisotropic RBF kernel on a two-dimensional version for the iris dataset.
 This illustrates the applicability of GPC to non-binary classification.
 The anisotropic RBF kernel obtains slightly higher log-marginal-likelihood by
 assigning different length-scales to the two feature dimensions.

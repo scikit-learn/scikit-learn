@@ -1,4 +1,0 @@
-- Add a warning in :class:`impute.SimpleImputer` when `keep_empty_feature=False` and
-  `strategy="constant"`. In this case empty features are not dropped and this behaviour
-  will change in 1.8.
-  By :user:`Arthur Courselle <ArthurCourselle>` and :user:`Simon Riou <simon-riou>`

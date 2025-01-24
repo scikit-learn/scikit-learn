@@ -351,3 +351,8 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         residual = np.abs(y - safe_sparse_dot(X, self.coef_) - self.intercept_)
         self.outliers_ = residual > self.scale_ * self.epsilon
         return self
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags

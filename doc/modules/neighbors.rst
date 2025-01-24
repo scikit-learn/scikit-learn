@@ -560,7 +560,7 @@ a scikit-learn pipeline, one can also use the corresponding classes
 :class:`KNeighborsTransformer` and :class:`RadiusNeighborsTransformer`.
 The benefits of this sparse graph API are multiple.
 
-First, the precomputed graph can be re-used multiple times, for instance while
+First, the precomputed graph can be reused multiple times, for instance while
 varying a parameter of the estimator. This can be done manually by the user, or
 using the caching properties of the scikit-learn pipeline:
 

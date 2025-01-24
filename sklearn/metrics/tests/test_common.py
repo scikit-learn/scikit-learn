@@ -1817,6 +1817,40 @@ def check_array_api_metric(
     if isinstance(multioutput, np.ndarray):
         metric_kwargs["multioutput"] = xp.asarray(multioutput, device=device)
 
+    # When array API dispatch is disabled, and np.asarray works (for example PyTorch
+    # with CPU device), calling the metric function with such numpy compatible inputs
+    # should work (albeit by implicitly converting to numpy arrays instead of
+    # dispatching to the array library).
+    try:
+        np.asarray(a_xp)
+        np.asarray(b_xp)
+        numpy_as_array_works = True
+    except TypeError:
+        # PyTorch with CUDA device and CuPy raise TypeError consistently.
+        # Exception type may need to be updated in the future for other
+        # libraries.
+        numpy_as_array_works = False
+
+    if numpy_as_array_works:
+        metric_xp = metric(a_xp, b_xp, **metric_kwargs)
+        assert_allclose(
+            metric_xp,
+            metric_np,
+            atol=_atol_for_type(dtype_name),
+        )
+        metric_xp_mixed_1 = metric(a_np, b_xp, **metric_kwargs)
+        assert_allclose(
+            metric_xp_mixed_1,
+            metric_np,
+            atol=_atol_for_type(dtype_name),
+        )
+        metric_xp_mixed_2 = metric(a_xp, b_np, **metric_kwargs)
+        assert_allclose(
+            metric_xp_mixed_2,
+            metric_np,
+            atol=_atol_for_type(dtype_name),
+        )
+
     with config_context(array_api_dispatch=True):
         metric_xp = metric(a_xp, b_xp, **metric_kwargs)
 
@@ -1864,6 +1898,7 @@ def check_array_api_multiclass_classification_metric(
 
     additional_params = {
         "average": ("micro", "macro", "weighted"),
+        "beta": (0.2, 0.5, 0.8),
     }
     metric_kwargs_combinations = _get_metric_kwargs_for_array_api_testing(
         metric=metric,
@@ -1903,6 +1938,7 @@ def check_array_api_multilabel_classification_metric(
 
     additional_params = {
         "average": ("micro", "macro", "weighted"),
+        "beta": (0.2, 0.5, 0.8),
     }
     metric_kwargs_combinations = _get_metric_kwargs_for_array_api_testing(
         metric=metric,
@@ -2066,7 +2102,21 @@ array_api_metric_checkers = {
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
     ],
+    fbeta_score: [
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
     multilabel_confusion_matrix: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
+    precision_score: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
+    recall_score: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,

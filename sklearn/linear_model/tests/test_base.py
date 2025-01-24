@@ -72,7 +72,7 @@ def test_linear_regression_sample_weights(
     sample_weight = 1.0 + rng.uniform(size=n_samples)
 
     # LinearRegression with explicit sample_weight
-    reg = LinearRegression(fit_intercept=fit_intercept)
+    reg = LinearRegression(fit_intercept=fit_intercept, tol=1e-16)
     reg.fit(X, y, sample_weight=sample_weight)
     coefs1 = reg.coef_
     inter1 = reg.intercept_

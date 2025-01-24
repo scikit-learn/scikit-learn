@@ -107,7 +107,7 @@ Installing the latest release
           Now create a `virtual environment (venv)
           <https://docs.python.org/3/tutorial/venv.html>`_ and install scikit-learn.
           Note that the virtual environment is optional but strongly recommended, in
-          order to avoid potential conflicts with other packges.
+          order to avoid potential conflicts with other packages.
 
           .. prompt:: bash
 
