@@ -38,9 +38,9 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
     y : array-like of shape (n_samples,)
         Array of original class labels per sample.
 
-    sample_weight : array-like of shape (n_samples,) or None
-        Array of weights that are assigned to individual samples. Used under
-        class_weight 'balanced' when only.
+    sample_weight : array-like of shape (n_samples,), default=None
+        Array of weights that are assigned to individual samples. Only used when
+        `class_weight='balanced'`.
 
     Returns
     -------
@@ -77,7 +77,7 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
 
         weighted_class_counts = np.bincount(y_ind, weights=sample_weight)
         recip_freq = weighted_class_counts.sum() / (
-            len(le.classes_) * weighted_class_counts.astype(np.float64)
+            len(le.classes_) * weighted_class_counts
         )
         weight = recip_freq[le.transform(classes)]
     else:
