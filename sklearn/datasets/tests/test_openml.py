@@ -74,7 +74,7 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
     # stored as cache should not be mixed up with real openml datasets
     url_prefix_data_description = "https://api.openml.org/api/v1/json/data/"
     url_prefix_data_features = "https://api.openml.org/api/v1/json/data/features/"
-    url_prefix_download_data = "https://api.openml.org/data/v1/"
+    url_prefix_download_data = "https://api.openml.org/datasets"
     url_prefix_data_list = "https://api.openml.org/api/v1/json/data/list/"
 
     path_suffix = ".gz"
@@ -175,7 +175,7 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
             return _mock_urlopen_data_list(url, has_gzip_header)
         elif url.startswith(url_prefix_data_features):
             return _mock_urlopen_data_features(url, has_gzip_header)
-        elif url.startswith(url_prefix_download_data):
+        elif 'datasets' in url: # url.startswith(url_prefix_download_data):
             return _mock_urlopen_download_data(url, has_gzip_header)
         elif url.startswith(url_prefix_data_description):
             return _mock_urlopen_data_description(url, has_gzip_header)
