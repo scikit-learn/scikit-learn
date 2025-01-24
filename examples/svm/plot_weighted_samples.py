@@ -9,8 +9,8 @@ is proportional to its weight.
 The sample weighting rescales the C parameter, which means that the classifier
 puts more emphasis on getting these points right. The effect might often be
 subtle.
-To emphasize the effect here, we particularly increase the weight the positive
-class, making the deformation of the decision boundary very visible.
+To emphasize the effect here, we particularly increase the weight of the positive
+class, making the deformation of the decision boundary more visible.
 
 """
 
@@ -72,11 +72,11 @@ sample_weight_modified = abs(rng.randn(len(X)))
 positive_class_indices = np.asarray(y == 1).nonzero()[0]
 sample_weight_modified[positive_class_indices] *= 15
 
-# This model does not take into account sample weights.
+# This model does not include sample weights.
 clf_no_weights = SVC(gamma=1)
 clf_no_weights.fit(X, y)
 
-# This other model takes into account some dedicated sample weights.
+# This other model includes sample weights.
 clf_weights = SVC(gamma=1)
 clf_weights.fit(X, y, sample_weight=sample_weight_modified)
 
