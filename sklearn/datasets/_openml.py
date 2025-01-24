@@ -13,9 +13,9 @@ from os.path import join
 from tempfile import TemporaryDirectory
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 from urllib.error import HTTPError, URLError
+from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 from warnings import warn
-from urllib.parse import urlparse
 
 import numpy as np
 
@@ -150,13 +150,15 @@ def _open_openml_url(
     def is_gzip_encoded(_fsrc):
         return _fsrc.info().get("Content-Encoding", "") == "gzip"
 
-    print(f"{openml_path=}")
-    parsed_openml_path  = urlparse(openml_path)
+    # print(f"{openml_path=}")
+    parsed_openml_path = urlparse(openml_path)
     # if openml_path is a full URL need to extrac the path
     if parsed_openml_path.netloc:
-        # TODO first character is a / is there a better way?
         full_url = openml_path
+        # TODO not sure whether to keep netloc or not
+        # openml_path = parsed_openml_path.netloc + parsed_openml_path.path
         openml_path = parsed_openml_path.path.lstrip("/")
+
     else:
         full_url = _OPENML_PREFIX + openml_path
 
@@ -1137,7 +1139,7 @@ def fetch_openml(
 
     # obtain the data
     url = data_description["url"]
-    print(f"{url=}")
+    # print(f"{url=}")
     bunch = _download_data_to_bunch(
         url,
         return_sparse,
