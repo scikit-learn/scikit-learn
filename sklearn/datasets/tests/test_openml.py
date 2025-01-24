@@ -1357,7 +1357,7 @@ def test_open_openml_url_cache(monkeypatch, gzip_response, tmpdir):
     data_id = 61
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
-    openml_path = _DATA_FILE.format(data_id)
+    openml_path = _DATA_FILE.format(data_id) + "/filename.arff"
     cache_directory = str(tmpdir.mkdir("scikit_learn_data"))
     # first fill the cache
     response1 = _open_openml_url(openml_path, cache_directory)
