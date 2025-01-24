@@ -224,6 +224,7 @@ def test_fit_docstring_attributes(name, Estimator):
     elif Estimator.__name__ == "TSNE":
         # default raises an error, perplexity must be less than n_samples
         est.set_params(perplexity=2)
+    # TODO(1.9) remove
     elif Estimator.__name__ == "KBinsDiscretizer":
         # default raises an FutureWarning if quantile method is at default "warn"
         est.set_params(quantile_method="averaged_inverted_cdf")

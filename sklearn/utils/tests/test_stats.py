@@ -16,8 +16,7 @@ def test_averaged_weighted_median():
     assert score == np.median(y)
 
 
-# TODO(1.7): remove @pytest.mark.skipif if the minimum numpy version is 1.22 or
-# higher.
+# TODO: remove @pytest.mark.skipif when numpy min version >= 1.22.
 @pytest.mark.skipif(
     condition=np_version < parse_version("1.22"),
     reason="older numpy do not support the 'method' parameter",

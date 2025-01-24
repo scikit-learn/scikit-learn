@@ -58,10 +58,10 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         For an example of the different strategies see:
         :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization_strategies.py`.
 
-    quantile_method : {"warn", "inverted_cdf", "averaged_inverted_cdf",
+    quantile_method : {"inverted_cdf", "averaged_inverted_cdf",
             "closest_observation", "interpolated_inverted_cdf", "hazen",
             "weibull", "linear", "median_unbiased", "normal_unbiased"},
-            default="warn"
+            default="linear"
             Method to pass on to np.percentile calculation when using
             strategy="quantile". Only `averaged_inverted_cdf` and `inverted_cdf`
             support the use of `sample_weight != None` when subsampling is not
@@ -346,8 +346,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             elif self.strategy == "quantile":
                 percentile_levels = np.linspace(0, 100, n_bins[jj] + 1)
 
-                # TODO(1.7): simplify the following if the minimum numpy
-                # version becomes >= 1.22.
+                # TODO: simplify the following when numpy min version >= 1.22.
 
                 # method="linear" is the implicit default for any numpy
                 # version. So we keep it version independent in that case by
