@@ -40,7 +40,7 @@ from sklearn.datasets import fetch_file
 pl.Config.set_fmt_str_lengths(20)
 
 bike_sharing_data_file = fetch_file(
-    "https://openml.org/datasets/0004/44063/dataset_44063.pq",
+    "https://github.com/lesteve/scikit_learn_data/raw/refs/heads/main/openml1.win.tue.nl/datasets_0004_44063/dataset_44063.pq",
     sha256="d120af76829af0d256338dc6dd4be5df4fd1f35bf3a283cab66a51c1c6abd06a",
 )
 bike_sharing_data_file
