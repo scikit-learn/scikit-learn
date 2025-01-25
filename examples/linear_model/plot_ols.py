@@ -1,17 +1,21 @@
 """
-==============================
-Ordinary Least Squares Example
-==============================
+===========================================
+Ordinary Least Squares and Ridge Regression
+===========================================
 
-This example shows how to use the ordinary least squares (OLS) model
-called :class:`~sklearn.linear_model.LinearRegression` in scikit-learn.
+1. Ordinary Least Squares:
+   We illustrate how to use the ordinary least squares (OLS) model,
+   :class:`~sklearn.linear_model.LinearRegression`, on a single feature of
+   the diabetes dataset. We train on a subset of the data, evaluate on a
+   test set, and visualize the predictions.
 
-For this purpose, we use a single feature from the diabetes dataset and try to
-predict the diabetes progression using this linear model. We therefore load the
-diabetes dataset and split it into training and test sets.
+2. Ordinary Least Squares and Ridge Regression Variance:
+   We then show how OLS can have high variance when the data is sparse or
+   noisy, by fitting on a very small synthetic sample repeatedly. Ridge
+   regression, :class:`~sklearn.linear_model.Ridge`, reduces this variance
+   by penalizing (shrinking) the coefficients, leading to more stable
+   predictions.
 
-Then, we fit the model on the training set and evaluate its performance on the test
-set and finally visualize the results on the test set.
 """
 
 # Authors: The scikit-learn developers
@@ -84,14 +88,80 @@ fig.suptitle("Linear Regression")
 plt.show()
 
 # %%
+#
+# OLS on this single-feature subset learns a linear function that minimizes
+# the mean squared error on the training data. We can see how well (or poorly)
+# it generalizes by looking at the R^2 score and mean squared error on the
+# test set. In higher dimensions, pure OLS often overfits, especially if the
+# data is noisy. Regularization techniques (like Ridge or Lasso) can help
+# reduce that.
+
+# %%
+# Ordinary Least Squares and Ridge Regression Variance
+# ----------------------------------------------------------
+#
+# Next, we illustrate the problem of high variance more clearly by using
+# a tiny synthetic dataset. We sample only two data points, then repeatedly
+# add small Gaussian noise to them and refit both OLS and Ridge. We plot
+# each new line to see how much OLS can jump around, whereas Ridge remains
+# more stable thanks to its penalty term.
+
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+from sklearn import linear_model
+
+X_train = np.c_[0.5, 1].T
+y_train = [0.5, 1]
+X_test = np.c_[0, 2].T
+
+np.random.seed(0)
+
+classifiers = dict(
+    ols=linear_model.LinearRegression(), ridge=linear_model.Ridge(alpha=0.1)
+)
+
+for name, clf in classifiers.items():
+    fig, ax = plt.subplots(figsize=(4, 3))
+
+    for _ in range(6):
+        this_X = 0.1 * np.random.normal(size=(2, 1)) + X_train
+        clf.fit(this_X, y_train)
+
+        ax.plot(X_test, clf.predict(X_test), color="gray")
+        ax.scatter(this_X, y_train, s=3, c="gray", marker="o", zorder=10)
+
+    clf.fit(X_train, y_train)
+    ax.plot(X_test, clf.predict(X_test), linewidth=2, color="blue")
+    ax.scatter(X_train, y_train, s=30, c="red", marker="+", zorder=10)
+
+    ax.set_title(name)
+    ax.set_xlim(0, 2)
+    ax.set_ylim((0, 1.6))
+    ax.set_xlabel("X")
+    ax.set_ylabel("y")
+
+    fig.tight_layout()
+
+plt.show()
+
+
+# %%
 # Conclusion
 # ----------
 #
-# The trained model corresponds to the estimator that minimizes the mean squared error
-# between the predicted and the true target values on the training data. We therefore
-# obtain an estimator of the conditional mean of the target given the data.
+# - In the first example, we applied OLS to a real dataset, showing
+#   how a plain linear model can fit the data by minimizing the squared error
+#   on the training set.
 #
-# Note that in higher dimensions, minimizing only the squared error might lead to
-# overfitting. Therefore, regularization techniques are commonly used to prevent this
-# issue, such as those implemented in :class:`~sklearn.linear_model.Ridge` or
-# :class:`~sklearn.linear_model.Lasso`.
+# - In the second example, OLS lines varied drastically each time noise
+#   was added, reflecting its high variance when data is sparse or noisy. By
+#   contrast, **Ridge** regression introduces a regularization term that shrinks
+#   the coefficients, stabilizing predictions.
+#
+# Techniques like :class:`~sklearn.linear_model.Ridge` or
+# :class:`~sklearn.linear_model.Lasso` (which applies an L1 penalty) are both
+# common ways to improve generalization and reduce overfitting. A well-tuned
+# Ridge or Lasso often outperforms pure OLS when features are correlated, data
+# is noisy, or sample size is small.
