@@ -59,7 +59,7 @@ example, when data are collected without an experimental design.
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_linear_model_plot_ols.py`
+* :ref:`sphx_glr_auto_examples_linear_model_plot_ols_ridge.py`
 
 Non-Negative Least Squares
 --------------------------
@@ -145,7 +145,7 @@ the corresponding solver is chosen.
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_linear_model_plot_ols_ridge_variance.py`
+* :ref:`sphx_glr_auto_examples_linear_model_plot_ols_ridge.py`
 * :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_path.py`
 * :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
 
