@@ -207,6 +207,8 @@ add_function_parentheses = False
 # Sphinx are currently 'default' and 'sphinxdoc'.
 html_theme = "pydata_sphinx_theme"
 
+html_baseurl = "https://scikit-learn.org/stable/"
+
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
