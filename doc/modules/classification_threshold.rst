@@ -15,12 +15,12 @@ Let's take a straightforward example related to weather forecasting: the first p
 related to answering "what is the chance that it will rain tomorrow?" while the second
 point is related to answering "should I take an umbrella tomorrow?".
 
-When it comes to the scikit-learn API, the first point is addressed providing scores
+When it comes to the scikit-learn API, the first point is addressed by providing scores
 using :term:`predict_proba` or :term:`decision_function`. The former returns conditional
 probability estimates :math:`P(y|X)` for each class, while the latter returns a decision
 score for each class.
 
-The decision corresponding to the labels are obtained with :term:`predict`. In binary
+The decision corresponding to the labels is obtained with :term:`predict`. In binary
 classification, a decision rule or action is then defined by thresholding the scores,
 leading to the prediction of a single class label for each sample. For binary
 classification in scikit-learn, class labels predictions are obtained by hard-coded

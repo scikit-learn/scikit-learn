@@ -120,7 +120,7 @@ def test_cdist_bool_metric(metric, X_bool, Y_bool, csr_container):
     if metric in DEPRECATED_METRICS:
         with ignore_warnings(category=DeprecationWarning):
             # Some metrics can be deprecated depending on the scipy version.
-            # But if they are present, we still want to test wether
+            # But if they are present, we still want to test whether
             # scikit-learn gives the same result, whether or not they are
             # deprecated.
             D_scipy_cdist = cdist(X_bool, Y_bool, metric)
@@ -235,7 +235,7 @@ def test_pdist_bool_metrics(metric, X_bool, csr_container):
     if metric in DEPRECATED_METRICS:
         with ignore_warnings(category=DeprecationWarning):
             # Some metrics can be deprecated depending on the scipy version.
-            # But if they are present, we still want to test wether
+            # But if they are present, we still want to test whether
             # scikit-learn gives the same result, whether or not they are
             # deprecated.
             D_scipy_pdist = cdist(X_bool, X_bool, metric)

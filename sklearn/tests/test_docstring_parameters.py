@@ -359,7 +359,7 @@ def test_precision_recall_f_score_docstring_consistency():
             by support \(the number of true instances for each label\)\. This
             alters 'macro' to account for label imbalance; it can result in an
             F-score that is not between precision and recall\."""
-        + r"[\s\w]*\.*"  # optionally match additonal sentence
+        + r"[\s\w]*\.*"  # optionally match additional sentence
         + r"""
         ``'samples'``:
             Calculate metrics for each instance, and find their average \(only
