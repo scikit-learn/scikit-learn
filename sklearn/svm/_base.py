@@ -184,7 +184,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         If X is a dense array, then the other methods will not support sparse
         matrices as input.
 
-        For an example of handling weighed samples with :class:`SVC`s, please see:
+        For an example of handling weighed samples with :class:`svm.SVC`s, please see:
         :ref:`sphx_glr_auto_examples_svm_plot_weighted_samples.py`
         """
         rnd = check_random_state(self.random_state)

@@ -843,7 +843,7 @@ class SVC(BaseSVC):
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
-    For a comparison of the SVC with other classifiers see:
+    For an example on how to enable probability estimates for SVC, see:
     :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`.
     """
 
