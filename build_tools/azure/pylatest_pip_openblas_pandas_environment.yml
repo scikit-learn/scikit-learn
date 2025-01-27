@@ -4,7 +4,7 @@
 channels:
   - defaults
 dependencies:
-  - python=3.11
+  - python
   - ccache
   - pip
   - pip:
@@ -29,3 +29,4 @@ dependencies:
     - scikit-image
     - array-api-compat
     - array-api-strict
+    - scipy-doctest

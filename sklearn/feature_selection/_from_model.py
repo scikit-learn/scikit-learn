@@ -19,6 +19,7 @@ from ..utils.metadata_routing import (
 from ..utils.metaestimators import available_if
 from ..utils.validation import (
     _check_feature_names,
+    _estimator_has,
     _num_features,
     check_is_fitted,
     check_scalar,
@@ -74,25 +75,6 @@ def _calculate_threshold(estimator, importances, threshold):
         threshold = float(threshold)
 
     return threshold
-
-
-def _estimator_has(attr):
-    """Check if we can delegate a method to the underlying estimator.
-
-    First, we check the fitted `estimator_` if available, otherwise we check the
-    unfitted `estimator`. We raise the original `AttributeError` if `attr` does
-    not exist. This function is used together with `available_if`.
-    """
-
-    def check(self):
-        if hasattr(self, "estimator_"):
-            getattr(self.estimator_, attr)
-        else:
-            getattr(self.estimator, attr)
-
-        return True
-
-    return check
 
 
 class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
@@ -519,5 +501,6 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
         tags.input_tags.allow_nan = get_tags(self.estimator).input_tags.allow_nan
         return tags

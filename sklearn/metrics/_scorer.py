@@ -605,55 +605,6 @@ def _check_multimetric_scoring(estimator, scoring):
     return scorers
 
 
-def _get_response_method(response_method, needs_threshold, needs_proba):
-    """Handles deprecation of `needs_threshold` and `needs_proba` parameters in
-    favor of `response_method`.
-    """
-    needs_threshold_provided = needs_threshold != "deprecated"
-    needs_proba_provided = needs_proba != "deprecated"
-    response_method_provided = response_method is not None
-
-    needs_threshold = False if needs_threshold == "deprecated" else needs_threshold
-    needs_proba = False if needs_proba == "deprecated" else needs_proba
-
-    if response_method_provided and (needs_proba_provided or needs_threshold_provided):
-        raise ValueError(
-            "You cannot set both `response_method` and `needs_proba` or "
-            "`needs_threshold` at the same time. Only use `response_method` since "
-            "the other two are deprecated in version 1.4 and will be removed in 1.6."
-        )
-
-    if needs_proba_provided or needs_threshold_provided:
-        warnings.warn(
-            (
-                "The `needs_threshold` and `needs_proba` parameter are deprecated in "
-                "version 1.4 and will be removed in 1.6. You can either let "
-                "`response_method` be `None` or set it to `predict` to preserve the "
-                "same behaviour."
-            ),
-            FutureWarning,
-        )
-
-    if response_method_provided:
-        return response_method
-
-    if needs_proba is True and needs_threshold is True:
-        raise ValueError(
-            "You cannot set both `needs_proba` and `needs_threshold` at the same "
-            "time. Use `response_method` instead since the other two are deprecated "
-            "in version 1.4 and will be removed in 1.6."
-        )
-
-    if needs_proba is True:
-        response_method = "predict_proba"
-    elif needs_threshold is True:
-        response_method = ("decision_function", "predict_proba")
-    else:
-        response_method = "predict"
-
-    return response_method
-
-
 def _get_response_method_name(response_method):
     try:
         return response_method.__name__
@@ -669,21 +620,14 @@ def _get_response_method_name(response_method):
             list,
             tuple,
             StrOptions({"predict", "predict_proba", "decision_function"}),
+            Hidden(StrOptions({"default"})),
         ],
         "greater_is_better": ["boolean"],
-        "needs_proba": ["boolean", Hidden(StrOptions({"deprecated"}))],
-        "needs_threshold": ["boolean", Hidden(StrOptions({"deprecated"}))],
     },
     prefer_skip_nested_validation=True,
 )
 def make_scorer(
-    score_func,
-    *,
-    response_method=None,
-    greater_is_better=True,
-    needs_proba="deprecated",
-    needs_threshold="deprecated",
-    **kwargs,
+    score_func, *, response_method="default", greater_is_better=True, **kwargs
 ):
     """Make a scorer from a performance metric or loss function.
 
@@ -696,7 +640,7 @@ def make_scorer(
     The parameter `response_method` allows to specify which method of the estimator
     should be used to feed the scoring/loss function.
 
-    Read more in the :ref:`User Guide <scoring>`.
+    Read more in the :ref:`User Guide <scoring_callable>`.
 
     Parameters
     ----------
@@ -719,39 +663,14 @@ def make_scorer(
 
         .. versionadded:: 1.4
 
+        .. deprecated:: 1.6
+            None is equivalent to 'predict' and is deprecated. It will be removed in
+            version 1.8.
+
     greater_is_better : bool, default=True
         Whether `score_func` is a score function (default), meaning high is
         good, or a loss function, meaning low is good. In the latter case, the
         scorer object will sign-flip the outcome of the `score_func`.
-
-    needs_proba : bool, default=False
-        Whether `score_func` requires `predict_proba` to get probability
-        estimates out of a classifier.
-
-        If True, for binary `y_true`, the score function is supposed to accept
-        a 1D `y_pred` (i.e., probability of the positive class, shape
-        `(n_samples,)`).
-
-        .. deprecated:: 1.4
-           `needs_proba` is deprecated in version 1.4 and will be removed in
-           1.6. Use `response_method="predict_proba"` instead.
-
-    needs_threshold : bool, default=False
-        Whether `score_func` takes a continuous decision certainty.
-        This only works for binary classification using estimators that
-        have either a `decision_function` or `predict_proba` method.
-
-        If True, for binary `y_true`, the score function is supposed to accept
-        a 1D `y_pred` (i.e., probability of the positive class or the decision
-        function, shape `(n_samples,)`).
-
-        For example `average_precision` or the area under the roc curve
-        can not be computed using discrete predictions alone.
-
-        .. deprecated:: 1.4
-           `needs_threshold` is deprecated in version 1.4 and will be removed
-           in 1.6. Use `response_method=("decision_function", "predict_proba")`
-           instead to preserve the same behaviour.
 
     **kwargs : additional arguments
         Additional parameters to be passed to `score_func`.
@@ -772,10 +691,18 @@ def make_scorer(
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
     ...                     scoring=ftwo_scorer)
     """
-    response_method = _get_response_method(
-        response_method, needs_threshold, needs_proba
-    )
     sign = 1 if greater_is_better else -1
+
+    if response_method is None:
+        warnings.warn(
+            "response_method=None is deprecated in version 1.6 and will be removed "
+            "in version 1.8. Leave it to its default value to avoid this warning.",
+            FutureWarning,
+        )
+        response_method = "predict"
+    elif response_method == "default":
+        response_method = "predict"
+
     return _Scorer(score_func, sign, kwargs, response_method)
 
 
@@ -826,11 +753,11 @@ matthews_corrcoef_scorer = make_scorer(matthews_corrcoef)
 
 
 def positive_likelihood_ratio(y_true, y_pred):
-    return class_likelihood_ratios(y_true, y_pred)[0]
+    return class_likelihood_ratios(y_true, y_pred, replace_undefined_by=1.0)[0]
 
 
 def negative_likelihood_ratio(y_true, y_pred):
-    return class_likelihood_ratios(y_true, y_pred)[1]
+    return class_likelihood_ratios(y_true, y_pred, replace_undefined_by=1.0)[1]
 
 
 positive_likelihood_ratio_scorer = make_scorer(positive_likelihood_ratio)
@@ -1006,7 +933,7 @@ def check_scoring(estimator=None, scoring=None, *, allow_none=False, raise_exc=T
         Scorer to use. If `scoring` represents a single score, one can use:
 
         - a single string (see :ref:`scoring_parameter`);
-        - a callable (see :ref:`scoring`) that returns a single value.
+        - a callable (see :ref:`scoring_callable`) that returns a single value.
 
         If `scoring` represents multiple scores, one can use:
 

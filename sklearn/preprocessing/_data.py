@@ -9,6 +9,8 @@ import numpy as np
 from scipy import optimize, sparse, stats
 from scipy.special import boxcox, inv_boxcox
 
+from sklearn.utils import metadata_routing
+
 from ..base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
@@ -1128,6 +1130,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.allow_nan = True
+        tags.input_tags.sparse = not self.with_mean
         tags.transformer_tags.preserves_dtype = ["float64", "float32"]
         return tags
 
@@ -1361,6 +1364,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.allow_nan = True
+        tags.input_tags.sparse = True
         return tags
 
 
@@ -1735,6 +1739,7 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = not self.with_centering
         tags.input_tags.allow_nan = True
         return tags
 
@@ -2134,6 +2139,7 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.requires_fit = False
         tags.array_api_support = True
         return tags
@@ -2341,6 +2347,7 @@ class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.requires_fit = False
+        tags.input_tags.sparse = True
         return tags
 
 
@@ -2421,6 +2428,10 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
            [  0.,  14., -14.],
            [ -5., -14.,  19.]])
     """
+
+    # X is called K in these methods.
+    __metadata_request__transform = {"K": metadata_routing.UNUSED}
+    __metadata_request__fit = {"K": metadata_routing.UNUSED}
 
     def fit(self, K, y=None):
         """Fit KernelCenterer.
@@ -3003,6 +3014,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.input_tags.allow_nan = True
         return tags
 

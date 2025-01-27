@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -e
+set -x
 
 # Decide what kind of documentation build to run, and run it.
 #
@@ -30,9 +31,16 @@ then
     then
         CIRCLE_BRANCH=$GITHUB_HEAD_REF
         CI_PULL_REQUEST=true
+        CI_TARGET_BRANCH=$GITHUB_BASE_REF
     else
         CIRCLE_BRANCH=$GITHUB_REF_NAME
     fi
+fi
+
+if [[ -n "$CI_PULL_REQUEST"  && -z "$CI_TARGET_BRANCH" ]]
+then
+    # Get the target branch name when using CircleCI
+    CI_TARGET_BRANCH=$(curl -s "https://api.github.com/repos/scikit-learn/scikit-learn/pulls/$CIRCLE_PR_NUMBER" | jq -r .base.ref)
 fi
 
 get_build_type() {
@@ -167,21 +175,37 @@ bash ./miniconda.sh -b -p $MINIFORGE_PATH
 source $MINIFORGE_PATH/etc/profile.d/conda.sh
 conda activate
 
-export PATH="/usr/lib/ccache:$PATH"
-ccache -M 512M
-export CCACHE_COMPRESS=1
 
 create_conda_environment_from_lock_file $CONDA_ENV_NAME $LOCK_FILE
 conda activate $CONDA_ENV_NAME
 
+# Sets up ccache when using system compiler
+export PATH="/usr/lib/ccache:$PATH"
+# Sets up ccache when using conda-forge compilers (needs to be after conda
+# activate which sets CC and CXX)
+export CC="ccache $CC"
+export CXX="ccache $CXX"
+ccache -M 512M
+export CCACHE_COMPRESS=1
+# Zeroing statistics so that ccache statistics are shown only for this build
+ccache -z
+
 show_installed_libraries
 
-pip install -e . --no-build-isolation
+# Specify explicitly ninja -j argument because ninja does not handle cgroups v2 and
+# use the same default rule as ninja (-j3 since we have 2 cores on CircleCI), see
+# https://github.com/scikit-learn/scikit-learn/pull/30333
+pip install -e . --no-build-isolation --config-settings=compile-args="-j 3"
 
 echo "ccache build summary:"
 ccache -s
 
 export OMP_NUM_THREADS=1
+
+if [[ "$CIRCLE_BRANCH" == "main" || "$CI_TARGET_BRANCH" == "main" ]]
+then
+    towncrier build --yes
+fi
 
 if [[ "$CIRCLE_BRANCH" =~ ^main$ && -z "$CI_PULL_REQUEST" ]]
 then
@@ -197,9 +221,16 @@ cd -
 set +o pipefail
 
 affected_doc_paths() {
+    scikit_learn_version=$(python -c 'import re; import sklearn; print(re.sub(r"(\d+\.\d+).+", r"\1", sklearn.__version__))')
     files=$(git diff --name-only origin/main...$CIRCLE_SHA1)
     # use sed to replace files ending by .rst or .rst.template by .html
-    echo "$files" | grep ^doc/.*\.rst | sed 's/^doc\/\(.*\)\.rst$/\1.html/; s/^doc\/\(.*\)\.rst\.template$/\1.html/'
+    echo "$files" | grep -vP 'upcoming_changes/.*/\d+.*\.rst' | grep ^doc/.*\.rst | \
+        sed 's/^doc\/\(.*\)\.rst$/\1.html/; s/^doc\/\(.*\)\.rst\.template$/\1.html/'
+    # replace towncrier fragment files by link to changelog. uniq is used
+    # because in some edge cases multiple fragments can be added and we want a
+    # single link to the changelog.
+    echo "$files" | grep -P 'upcoming_changes/.*/\d+.*\.rst' | sed "s@.*@whats_new/v${scikit_learn_version}.html@" | uniq
+
     echo "$files" | grep ^examples/.*.py | sed 's/^\(.*\)\.py$/auto_\1.html/'
     sklearn_files=$(echo "$files" | grep '^sklearn/')
     if [ -n "$sklearn_files" ]

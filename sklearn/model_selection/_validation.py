@@ -79,6 +79,14 @@ def _check_params_groups_deprecation(fit_params, params, groups, version):
 
     params = {} if params is None else params
 
+    _check_groups_routing_disabled(groups)
+
+    return params
+
+
+# TODO(SLEP6): To be removed when set_config(enable_metadata_routing=False) is not
+# possible.
+def _check_groups_routing_disabled(groups):
     if groups is not None and _routing_enabled():
         raise ValueError(
             "`groups` can only be passed if metadata routing is not enabled via"
@@ -86,8 +94,6 @@ def _check_params_groups_deprecation(fit_params, params, groups, version):
             " enabled, pass `groups` alongside other metadata via the `params` argument"
             " instead."
         )
-
-    return params
 
 
 @validate_params(
@@ -107,7 +113,6 @@ def _check_params_groups_deprecation(fit_params, params, groups, version):
         "cv": ["cv_object"],
         "n_jobs": [Integral, None],
         "verbose": ["verbose"],
-        "fit_params": [dict, None],
         "params": [dict, None],
         "pre_dispatch": [Integral, str],
         "return_train_score": ["boolean"],
@@ -127,7 +132,6 @@ def cross_validate(
     cv=None,
     n_jobs=None,
     verbose=0,
-    fit_params=None,
     params=None,
     pre_dispatch="2*n_jobs",
     return_train_score=False,
@@ -165,12 +169,14 @@ def cross_validate(
 
     scoring : str, callable, list, tuple, or dict, default=None
         Strategy to evaluate the performance of the cross-validated model on
-        the test set.
+        the test set. If `None`, the
+        :ref:`default evaluation criterion <scoring_api_overview>` of the estimator
+        is used.
 
         If `scoring` represents a single score, one can use:
 
         - a single string (see :ref:`scoring_parameter`);
-        - a callable (see :ref:`scoring`) that returns a single value.
+        - a callable (see :ref:`scoring_callable`) that returns a single value.
 
         If `scoring` represents multiple scores, one can use:
 
@@ -210,13 +216,6 @@ def cross_validate(
 
     verbose : int, default=0
         The verbosity level.
-
-    fit_params : dict, default=None
-        Parameters to pass to the fit method of the estimator.
-
-        .. deprecated:: 1.4
-            This parameter is deprecated and will be removed in version 1.6. Use
-            ``params`` instead.
 
     params : dict, default=None
         Parameters to pass to the underlying estimator's ``fit``, the scorer,
@@ -341,10 +340,10 @@ def cross_validate(
     >>> print(scores['train_r2'])
     [0.28009951 0.3908844  0.22784907]
     """
-    params = _check_params_groups_deprecation(fit_params, params, groups, "1.6")
+    _check_groups_routing_disabled(groups)
 
     X, y = indexable(X, y)
-
+    params = {} if params is None else params
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
 
     scorers = check_scoring(
@@ -539,7 +538,6 @@ def _warn_or_raise_about_fit_failures(results, error_score):
         "cv": ["cv_object"],
         "n_jobs": [Integral, None],
         "verbose": ["verbose"],
-        "fit_params": [dict, None],
         "params": [dict, None],
         "pre_dispatch": [Integral, str, None],
         "error_score": [StrOptions({"raise"}), Real],
@@ -556,7 +554,6 @@ def cross_val_score(
     cv=None,
     n_jobs=None,
     verbose=0,
-    fit_params=None,
     params=None,
     pre_dispatch="2*n_jobs",
     error_score=np.nan,
@@ -629,13 +626,6 @@ def cross_val_score(
     verbose : int, default=0
         The verbosity level.
 
-    fit_params : dict, default=None
-        Parameters to pass to the fit method of the estimator.
-
-        .. deprecated:: 1.4
-            This parameter is deprecated and will be removed in version 1.6. Use
-            ``params`` instead.
-
     params : dict, default=None
         Parameters to pass to the underlying estimator's ``fit``, the scorer,
         and the CV splitter.
@@ -700,7 +690,6 @@ def cross_val_score(
         cv=cv,
         n_jobs=n_jobs,
         verbose=verbose,
-        fit_params=fit_params,
         params=params,
         pre_dispatch=pre_dispatch,
         error_score=error_score,
@@ -1024,7 +1013,6 @@ def _score(estimator, X_test, y_test, scorer, score_params, error_score="raise")
         "cv": ["cv_object"],
         "n_jobs": [Integral, None],
         "verbose": ["verbose"],
-        "fit_params": [dict, None],
         "params": [dict, None],
         "pre_dispatch": [Integral, str, None],
         "method": [
@@ -1049,7 +1037,6 @@ def cross_val_predict(
     cv=None,
     n_jobs=None,
     verbose=0,
-    fit_params=None,
     params=None,
     pre_dispatch="2*n_jobs",
     method="predict",
@@ -1123,13 +1110,6 @@ def cross_val_predict(
     verbose : int, default=0
         The verbosity level.
 
-    fit_params : dict, default=None
-        Parameters to pass to the fit method of the estimator.
-
-        .. deprecated:: 1.4
-            This parameter is deprecated and will be removed in version 1.6. Use
-            ``params`` instead.
-
     params : dict, default=None
         Parameters to pass to the underlying estimator's ``fit`` and the CV
         splitter.
@@ -1190,8 +1170,9 @@ def cross_val_predict(
     >>> lasso = linear_model.Lasso()
     >>> y_pred = cross_val_predict(lasso, X, y, cv=3)
     """
-    params = _check_params_groups_deprecation(fit_params, params, groups, "1.6")
+    _check_groups_routing_disabled(groups)
     X, y = indexable(X, y)
+    params = {} if params is None else params
 
     if _routing_enabled():
         # For estimators, a MetadataRouter is created in get_metadata_routing
@@ -1506,7 +1487,7 @@ def permutation_test_score(
     independent.
 
     The p-value represents the fraction of randomized data sets where the
-    estimator performed as well or better than in the original data. A small
+    estimator performed as well or better than on the original data. A small
     p-value suggests that there is a real dependency between features and
     targets which has been used by the estimator to give good predictions.
     A large p-value may be due to lack of real dependency between features
@@ -1583,7 +1564,7 @@ def permutation_test_score(
 
     scoring : str or callable, default=None
         A single str (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring`) to evaluate the predictions on the test set.
+        (see :ref:`scoring_callable`) to evaluate the predictions on the test set.
 
         If `None` the estimator's score method is used.
 
@@ -2436,7 +2417,7 @@ def validation_curve(
 
     Notes
     -----
-    See :ref:`sphx_glr_auto_examples_model_selection_plot_validation_curve.py`
+    See :ref:`sphx_glr_auto_examples_model_selection_plot_train_error_vs_test_error.py`
 
     Examples
     --------

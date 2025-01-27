@@ -21,7 +21,7 @@ Folding and unfolding outdated diffs on pull requests
 -----------------------------------------------------
 
 GitHub hides discussions on PRs when the corresponding lines of code have been
-changed in the mean while. This `userscript
+changed in the meantime. This `userscript
 <https://raw.githubusercontent.com/lesteve/userscripts/master/github-expand-all.user.js>`__
 provides a shortcut (Control-Alt-P at the time of writing but look at the code
 to be sure) to unfold all such hidden discussions at once, so you can catch up.
@@ -53,7 +53,7 @@ Useful pytest aliases and flags
 -------------------------------
 
 The full test suite takes fairly long to run. For faster iterations,
-it is possibly to select a subset of tests using pytest selectors.
+it is possible to select a subset of tests using pytest selectors.
 In particular, one can run a `single test based on its node ID
 <https://docs.pytest.org/en/latest/example/markers.html#selecting-tests-based-on-their-node-id>`_:
 
@@ -218,12 +218,6 @@ PR-WIP: Regression test needed
 
     Please add a [non-regression test](https://en.wikipedia.org/wiki/Non-regression_testing) that would fail at main but pass in this PR.
 
-PR-WIP: PEP8
-
-::
-
-    You have some [PEP8](https://www.python.org/dev/peps/pep-0008/) violations, whose details you can see in the Circle CI `lint` job. It might be worth configuring your code editor to check for such errors on the fly, so you can catch them before committing.
-
 PR-MRG: Patience
 
 ::
@@ -234,7 +228,7 @@ PR-MRG: Add to what's new
 
 ::
 
-    Please add an entry to the change log at `doc/whats_new/v*.rst`. Like the other entries there, please reference this pull request with `:pr:` and credit yourself (and other contributors if applicable) with `:user:`.
+    Please add an entry to the future changelog by adding an RST fragment into the module associated with your change located in `doc/whats_new/upcoming_changes`. Refer to the following [README](https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md) for full instructions.
 
 PR: Don't change unrelated
 
@@ -377,7 +371,7 @@ to your shared folder under the `/io` mount point:
 .. prompt:: bash $
 
     docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-    docker run -v`pwd`:/io --rm -it arm64v8/ubuntu /bin/bash
+    docker run -v `pwd`:/io --rm -it arm64v8/ubuntu /bin/bash
 
 In the container, install miniforge3 for the ARM64 (a.k.a. aarch64)
 architecture:

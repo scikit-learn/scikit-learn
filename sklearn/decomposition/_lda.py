@@ -549,6 +549,7 @@ class LatentDirichletAllocation(
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.positive_only = True
+        tags.input_tags.sparse = True
         tags.transformer_tags.preserves_dtype = ["float32", "float64"]
         return tags
 
@@ -723,7 +724,7 @@ class LatentDirichletAllocation(
 
         return doc_topic_distr
 
-    def transform(self, X):
+    def transform(self, X, *, normalize=True):
         """Transform data X according to the fitted model.
 
         .. versionchanged:: 0.18
@@ -733,6 +734,9 @@ class LatentDirichletAllocation(
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Document word matrix.
+
+        normalize : bool, default=True
+            Whether to normalize the document topic distribution.
 
         Returns
         -------
@@ -744,8 +748,34 @@ class LatentDirichletAllocation(
             X, reset_n_features=False, whom="LatentDirichletAllocation.transform"
         )
         doc_topic_distr = self._unnormalized_transform(X)
-        doc_topic_distr /= doc_topic_distr.sum(axis=1)[:, np.newaxis]
+        if normalize:
+            doc_topic_distr /= doc_topic_distr.sum(axis=1)[:, np.newaxis]
         return doc_topic_distr
+
+    def fit_transform(self, X, y=None, *, normalize=True):
+        """
+        Fit to data, then transform it.
+
+        Fits transformer to `X` and `y` and returns a transformed version of `X`.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Input samples.
+
+        y :  array-like of shape (n_samples,) or (n_samples, n_outputs), \
+                default=None
+            Target values (None for unsupervised transformations).
+
+        normalize : bool, default=True
+            Whether to normalize the document topic distribution in `transform`.
+
+        Returns
+        -------
+        X_new : ndarray array of shape (n_samples, n_features_new)
+            Transformed array.
+        """
+        return self.fit(X, y).transform(X, normalize=normalize)
 
     def _approx_bound(self, X, doc_topic_distr, sub_sampling):
         """Estimate the variational bound.

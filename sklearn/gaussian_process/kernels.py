@@ -134,9 +134,7 @@ class Hyperparameter(
 
         if fixed is None:
             fixed = isinstance(bounds, str) and bounds == "fixed"
-        return super(Hyperparameter, cls).__new__(
-            cls, name, value_type, bounds, n_elements, fixed
-        )
+        return super().__new__(cls, name, value_type, bounds, n_elements, fixed)
 
     # This is mainly a testing utility to check that two hyperparameters
     # are equal.

@@ -13,7 +13,8 @@ import numpy as np
 import pytest
 from scipy.sparse import issparse
 
-from sklearn.base import BaseEstimator, clone
+from sklearn import config_context
+from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.cluster import KMeans
 from sklearn.datasets import (
     load_diabetes,
@@ -185,7 +186,7 @@ class MockEstimatorWithSingleFitCallAllowed(MockEstimatorWithParameter):
         raise NotImplementedError
 
 
-class MockClassifier:
+class MockClassifier(ClassifierMixin, BaseEstimator):
     """Dummy classifier to test the cross-validation"""
 
     def __init__(self, a=0, allow_nd=False):
@@ -253,6 +254,7 @@ class MockClassifier:
                 P.shape[0],
                 P.shape[1],
             )
+        self.classes_ = np.unique(y)
         return self
 
     def predict(self, T):
@@ -272,11 +274,11 @@ class MockClassifier:
 
 # XXX: use 2D array, since 1D X is being detected as a single sample in
 # check_consistent_length
-X = np.ones((10, 2))
-y = np.array([0, 0, 1, 1, 2, 2, 3, 3, 4, 4])
+X = np.ones((15, 2))
+y = np.array([0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 6])
 # The number of samples per class needs to be > n_splits,
 # for StratifiedKFold(n_splits=3)
-y2 = np.array([1, 1, 1, 2, 2, 2, 3, 3, 3, 3])
+y2 = np.array([1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
 P = np.eye(5)
 
 
@@ -692,7 +694,7 @@ def test_cross_val_score_fit_params(coo_container):
     n_classes = len(np.unique(y))
 
     W_sparse = coo_container(
-        (np.array([1]), (np.array([1]), np.array([0]))), shape=(10, 1)
+        (np.array([1]), (np.array([1]), np.array([0]))), shape=(15, 1)
     )
     P_sparse = coo_container(np.eye(5))
 
@@ -718,7 +720,7 @@ def test_cross_val_score_fit_params(coo_container):
         "dummy_obj": DUMMY_OBJ,
         "callback": assert_fit_params,
     }
-    cross_val_score(clf, X, y, params=fit_params)
+    cross_val_score(clf, X, y2, params=fit_params)
 
 
 def test_cross_val_score_score_func():
@@ -2482,14 +2484,10 @@ def test_cross_validate_return_indices(global_random_seed):
 # ======================================================
 
 
-# TODO(1.6): remove `cross_validate` and `cross_val_predict` from this test in 1.6 and
-# `learning_curve` and `validation_curve` in 1.8
+# TODO(1.8): remove `learning_curve`, `validation_curve` and `permutation_test_score`.
 @pytest.mark.parametrize(
     "func, extra_args",
     [
-        (cross_validate, {}),
-        (cross_val_score, {}),
-        (cross_val_predict, {}),
         (learning_curve, {}),
         (permutation_test_score, {}),
         (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
@@ -2515,7 +2513,6 @@ def test_fit_param_deprecation(func, extra_args):
         )
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
     "func, extra_args",
     [
@@ -2527,6 +2524,7 @@ def test_fit_param_deprecation(func, extra_args):
         (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
     ],
 )
+@config_context(enable_metadata_routing=True)
 def test_groups_with_routing_validation(func, extra_args):
     """Check that we raise an error if `groups` are passed to the cv method instead
     of `params` when metadata routing is enabled.
@@ -2541,7 +2539,6 @@ def test_groups_with_routing_validation(func, extra_args):
         )
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
     "func, extra_args",
     [
@@ -2553,6 +2550,28 @@ def test_groups_with_routing_validation(func, extra_args):
         (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
     ],
 )
+@config_context(enable_metadata_routing=True)
+def test_cross_validate_params_none(func, extra_args):
+    """Test that no errors are raised when passing `params=None`, which is the
+    default value.
+    Non-regression test for: https://github.com/scikit-learn/scikit-learn/issues/30447
+    """
+    X, y = make_classification(n_samples=100, n_classes=2, random_state=0)
+    func(estimator=ConsumingClassifier(), X=X, y=y, **extra_args)
+
+
+@pytest.mark.parametrize(
+    "func, extra_args",
+    [
+        (cross_validate, {}),
+        (cross_val_score, {}),
+        (cross_val_predict, {}),
+        (learning_curve, {}),
+        (permutation_test_score, {}),
+        (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
+    ],
+)
+@config_context(enable_metadata_routing=True)
 def test_passed_unrequested_metadata(func, extra_args):
     """Check that we raise an error when passing metadata that is not
     requested."""
@@ -2567,7 +2586,6 @@ def test_passed_unrequested_metadata(func, extra_args):
         )
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
     "func, extra_args",
     [
@@ -2579,6 +2597,7 @@ def test_passed_unrequested_metadata(func, extra_args):
         (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
     ],
 )
+@config_context(enable_metadata_routing=True)
 def test_validation_functions_routing(func, extra_args):
     """Check that the respective cv method is properly dispatching the metadata
     to the consumer."""
@@ -2671,7 +2690,7 @@ def test_validation_functions_routing(func, extra_args):
         )
 
 
-@pytest.mark.usefixtures("enable_slep006")
+@config_context(enable_metadata_routing=True)
 def test_learning_curve_exploit_incremental_learning_routing():
     """Test that learning_curve routes metadata to the estimator correctly while
     partial_fitting it with `exploit_incremental_learning=True`."""

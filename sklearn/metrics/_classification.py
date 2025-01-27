@@ -10,12 +10,11 @@ the lower the better.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 import warnings
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.sparse import coo_matrix, csr_matrix
+from scipy.sparse import coo_matrix, csr_matrix, issparse
 from scipy.special import xlogy
 
 from ..exceptions import UndefinedMetricWarning
@@ -24,13 +23,21 @@ from ..utils import (
     assert_all_finite,
     check_array,
     check_consistent_length,
+    check_scalar,
     column_or_1d,
 )
 from ..utils._array_api import (
     _average,
+    _bincount,
     _count_nonzero,
+    _find_matching_floating_dtype,
     _is_numpy_namespace,
+    _max_precision_float_dtype,
+    _searchsorted,
+    _setdiff1d,
+    _tolist,
     _union1d,
+    device,
     get_namespace,
     get_namespace_and_device,
 )
@@ -220,6 +227,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
+
     if y_type.startswith("multilabel"):
         if _is_numpy_namespace(xp):
             differing_labels = count_nonzero(y_true - y_pred, axis=1)
@@ -520,9 +528,11 @@ def multilabel_confusion_matrix(
             [1, 2]]])
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
+    xp, _ = get_namespace(y_true, y_pred)
+    device_ = device(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if sample_weight is not None:
-        sample_weight = column_or_1d(sample_weight)
+        sample_weight = column_or_1d(sample_weight, device=device_)
     check_consistent_length(y_true, y_pred, sample_weight)
 
     if y_type not in ("binary", "multiclass", "multilabel-indicator"):
@@ -533,9 +543,11 @@ def multilabel_confusion_matrix(
         labels = present_labels
         n_labels = None
     else:
-        n_labels = len(labels)
-        labels = np.hstack(
-            [labels, np.setdiff1d(present_labels, labels, assume_unique=True)]
+        labels = xp.asarray(labels, device=device_)
+        n_labels = labels.shape[0]
+        labels = xp.concat(
+            [labels, _setdiff1d(present_labels, labels, assume_unique=True, xp=xp)],
+            axis=-1,
         )
 
     if y_true.ndim == 1:
@@ -555,108 +567,102 @@ def multilabel_confusion_matrix(
         tp = y_true == y_pred
         tp_bins = y_true[tp]
         if sample_weight is not None:
-            tp_bins_weights = np.asarray(sample_weight)[tp]
+            tp_bins_weights = sample_weight[tp]
         else:
             tp_bins_weights = None
 
-        if len(tp_bins):
-            tp_sum = np.bincount(
-                tp_bins, weights=tp_bins_weights, minlength=len(labels)
+        if tp_bins.shape[0]:
+            tp_sum = _bincount(
+                tp_bins, weights=tp_bins_weights, minlength=labels.shape[0], xp=xp
             )
         else:
             # Pathological case
-            true_sum = pred_sum = tp_sum = np.zeros(len(labels))
-        if len(y_pred):
-            pred_sum = np.bincount(y_pred, weights=sample_weight, minlength=len(labels))
-        if len(y_true):
-            true_sum = np.bincount(y_true, weights=sample_weight, minlength=len(labels))
+            true_sum = pred_sum = tp_sum = xp.zeros(labels.shape[0])
+        if y_pred.shape[0]:
+            pred_sum = _bincount(
+                y_pred, weights=sample_weight, minlength=labels.shape[0], xp=xp
+            )
+        if y_true.shape[0]:
+            true_sum = _bincount(
+                y_true, weights=sample_weight, minlength=labels.shape[0], xp=xp
+            )
 
         # Retain only selected labels
-        indices = np.searchsorted(sorted_labels, labels[:n_labels])
-        tp_sum = tp_sum[indices]
-        true_sum = true_sum[indices]
-        pred_sum = pred_sum[indices]
+        indices = _searchsorted(sorted_labels, labels[:n_labels], xp=xp)
+        tp_sum = xp.take(tp_sum, indices, axis=0)
+        true_sum = xp.take(true_sum, indices, axis=0)
+        pred_sum = xp.take(pred_sum, indices, axis=0)
 
     else:
         sum_axis = 1 if samplewise else 0
 
         # All labels are index integers for multilabel.
         # Select labels:
-        if not np.array_equal(labels, present_labels):
-            if np.max(labels) > np.max(present_labels):
+        if labels.shape != present_labels.shape or xp.any(
+            xp.not_equal(labels, present_labels)
+        ):
+            if xp.max(labels) > xp.max(present_labels):
                 raise ValueError(
                     "All labels must be in [0, n labels) for "
                     "multilabel targets. "
-                    "Got %d > %d" % (np.max(labels), np.max(present_labels))
+                    "Got %d > %d" % (xp.max(labels), xp.max(present_labels))
                 )
-            if np.min(labels) < 0:
+            if xp.min(labels) < 0:
                 raise ValueError(
                     "All labels must be in [0, n labels) for "
                     "multilabel targets. "
-                    "Got %d < 0" % np.min(labels)
+                    "Got %d < 0" % xp.min(labels)
                 )
 
         if n_labels is not None:
             y_true = y_true[:, labels[:n_labels]]
             y_pred = y_pred[:, labels[:n_labels]]
 
+        if issparse(y_true) or issparse(y_pred):
+            true_and_pred = y_true.multiply(y_pred)
+        else:
+            true_and_pred = xp.multiply(y_true, y_pred)
+
         # calculate weighted counts
-        true_and_pred = y_true.multiply(y_pred)
-        tp_sum = count_nonzero(
-            true_and_pred, axis=sum_axis, sample_weight=sample_weight
+        tp_sum = _count_nonzero(
+            true_and_pred,
+            axis=sum_axis,
+            sample_weight=sample_weight,
+            xp=xp,
+            device=device_,
         )
-        pred_sum = count_nonzero(y_pred, axis=sum_axis, sample_weight=sample_weight)
-        true_sum = count_nonzero(y_true, axis=sum_axis, sample_weight=sample_weight)
+        pred_sum = _count_nonzero(
+            y_pred,
+            axis=sum_axis,
+            sample_weight=sample_weight,
+            xp=xp,
+            device=device_,
+        )
+        true_sum = _count_nonzero(
+            y_true,
+            axis=sum_axis,
+            sample_weight=sample_weight,
+            xp=xp,
+            device=device_,
+        )
 
     fp = pred_sum - tp_sum
     fn = true_sum - tp_sum
     tp = tp_sum
 
     if sample_weight is not None and samplewise:
-        sample_weight = np.array(sample_weight)
-        tp = np.array(tp)
-        fp = np.array(fp)
-        fn = np.array(fn)
+        tp = xp.asarray(tp)
+        fp = xp.asarray(fp)
+        fn = xp.asarray(fn)
         tn = sample_weight * y_true.shape[1] - tp - fp - fn
     elif sample_weight is not None:
-        tn = sum(sample_weight) - tp - fp - fn
+        tn = xp.sum(sample_weight) - tp - fp - fn
     elif samplewise:
         tn = y_true.shape[1] - tp - fp - fn
     else:
         tn = y_true.shape[0] - tp - fp - fn
 
-    return np.array([tn, fp, fn, tp]).T.reshape(-1, 2, 2)
-
-
-def _metric_handle_division(*, numerator, denominator, metric, zero_division):
-    """Helper to handle zero-division.
-
-    Parameters
-    ----------
-    numerator : numbers.Real
-        The numerator of the division.
-    denominator : numbers.Real
-        The denominator of the division.
-    metric : str
-        Name of the caller metric function.
-    zero_division : {0.0, 1.0, "warn"}
-        The strategy to use when encountering 0-denominator.
-
-    Returns
-    -------
-    result : numbers.Real
-        The resulting of the division
-    is_zero_division : bool
-        Whether or not we encountered a zero division. This value could be
-        required to early return `result` in the "caller" function.
-    """
-    if np.isclose(denominator, 0):
-        if zero_division == "warn":
-            msg = f"{metric} is ill-defined and set to 0.0. Use the `zero_division` "
-            "param to control this behavior."
-            warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
-        return _check_zero_division(zero_division), True
-    return numerator / denominator, False
+    return xp.reshape(xp.stack([tn, fp, fn, tp]).T, (-1, 2, 2))
 
 
 @validate_params(
@@ -666,16 +672,10 @@ def _metric_handle_division(*, numerator, denominator, metric, zero_division):
         "labels": ["array-like", None],
         "weights": [StrOptions({"linear", "quadratic"}), None],
         "sample_weight": ["array-like", None],
-        "zero_division": [
-            StrOptions({"warn"}),
-            Options(Real, {0.0, 1.0, np.nan}),
-        ],
     },
     prefer_skip_nested_validation=True,
 )
-def cohen_kappa_score(
-    y1, y2, *, labels=None, weights=None, sample_weight=None, zero_division="warn"
-):
+def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     r"""Compute Cohen's kappa: a statistic that measures inter-annotator agreement.
 
     This function computes Cohen's kappa [1]_, a score that expresses the level
@@ -714,14 +714,6 @@ def cohen_kappa_score(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
-        Sets the return value when there is a zero division. This is the case when both
-        labelings `y1` and `y2` both exclusively contain the 0 class (e. g.
-        `[0, 0, 0, 0]`) (or if both are empty). If set to "warn", returns `0.0`, but a
-        warning is also raised.
-
-        .. versionadded:: 1.6
-
     Returns
     -------
     kappa : float
@@ -751,18 +743,7 @@ def cohen_kappa_score(
     n_classes = confusion.shape[0]
     sum0 = np.sum(confusion, axis=0)
     sum1 = np.sum(confusion, axis=1)
-
-    numerator = np.outer(sum0, sum1)
-    denominator = np.sum(sum0)
-    expected, is_zero_division = _metric_handle_division(
-        numerator=numerator,
-        denominator=denominator,
-        metric="cohen_kappa_score()",
-        zero_division=zero_division,
-    )
-
-    if is_zero_division:
-        return expected
+    expected = np.outer(sum0, sum1) / np.sum(sum0)
 
     if weights is None:
         w_mat = np.ones([n_classes, n_classes], dtype=int)
@@ -775,18 +756,8 @@ def cohen_kappa_score(
         else:
             w_mat = (w_mat - w_mat.T) ** 2
 
-    numerator = np.sum(w_mat * confusion)
-    denominator = np.sum(w_mat * expected)
-    score, is_zero_division = _metric_handle_division(
-        numerator=numerator,
-        denominator=denominator,
-        metric="cohen_kappa_score()",
-        zero_division=zero_division,
-    )
-
-    if is_zero_division:
-        return score
-    return 1 - score
+    k = np.sum(w_mat * confusion) / np.sum(w_mat * expected)
+    return 1 - k
 
 
 @validate_params(
@@ -887,6 +858,8 @@ def jaccard_score(
         Sets the value to return when there is a zero division, i.e. when there
         there are no negative values in predictions and labels. If set to
         "warn", this acts like 0, but a warning is also raised.
+
+        .. versionadded:: 0.24
 
     Returns
     -------
@@ -1254,7 +1227,7 @@ def f1_score(
     average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None, \
             default='binary'
         This parameter is required for multiclass/multilabel targets.
-        If ``None``, the scores for each class are returned. Otherwise, this
+        If ``None``, the metrics for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
 
         ``'binary'``:
@@ -1325,11 +1298,11 @@ def f1_score(
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
     >>> f1_score(y_true, y_pred, average='macro')
-    np.float64(0.26...)
+    0.26...
     >>> f1_score(y_true, y_pred, average='micro')
-    np.float64(0.33...)
+    0.33...
     >>> f1_score(y_true, y_pred, average='weighted')
-    np.float64(0.26...)
+    0.26...
     >>> f1_score(y_true, y_pred, average=None)
     array([0.8, 0. , 0. ])
 
@@ -1337,9 +1310,9 @@ def f1_score(
     >>> y_true_empty = [0, 0, 0, 0, 0, 0]
     >>> y_pred_empty = [0, 0, 0, 0, 0, 0]
     >>> f1_score(y_true_empty, y_pred_empty)
-    np.float64(0.0...)
+    0.0...
     >>> f1_score(y_true_empty, y_pred_empty, zero_division=1.0)
-    np.float64(1.0...)
+    1.0...
     >>> f1_score(y_true_empty, y_pred_empty, zero_division=np.nan)
     nan...
 
@@ -1457,7 +1430,7 @@ def fbeta_score(
     average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None, \
             default='binary'
         This parameter is required for multiclass/multilabel targets.
-        If ``None``, the scores for each class are returned. Otherwise, this
+        If ``None``, the metrics for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
 
         ``'binary'``:
@@ -1487,6 +1460,7 @@ def fbeta_score(
         predictions and labels are negative.
 
         Notes:
+
         - If set to "warn", this acts like 0, but a warning is also raised.
         - If set to `np.nan`, such values will be excluded from the average.
 
@@ -1528,17 +1502,17 @@ def fbeta_score(
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
     >>> fbeta_score(y_true, y_pred, average='macro', beta=0.5)
-    np.float64(0.23...)
+    0.23...
     >>> fbeta_score(y_true, y_pred, average='micro', beta=0.5)
-    np.float64(0.33...)
+    0.33...
     >>> fbeta_score(y_true, y_pred, average='weighted', beta=0.5)
-    np.float64(0.23...)
+    0.23...
     >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
     array([0.71..., 0.        , 0.        ])
     >>> y_pred_empty = [0, 0, 0, 0, 0, 0]
     >>> fbeta_score(y_true, y_pred_empty,
     ...             average="macro", zero_division=np.nan, beta=0.5)
-    np.float64(0.12...)
+    0.12...
     """
 
     _, _, f, _ = precision_recall_fscore_support(
@@ -1567,12 +1541,14 @@ def _prf_divide(
     The metric, modifier and average arguments are used only for determining
     an appropriate warning.
     """
-    mask = denominator == 0.0
-    denominator = denominator.copy()
+    xp, _ = get_namespace(numerator, denominator)
+    dtype_float = _find_matching_floating_dtype(numerator, denominator, xp=xp)
+    mask = denominator == 0
+    denominator = xp.asarray(denominator, copy=True, dtype=dtype_float)
     denominator[mask] = 1  # avoid infs/nans
-    result = numerator / denominator
+    result = xp.asarray(numerator, dtype=dtype_float) / denominator
 
-    if not np.any(mask):
+    if not xp.any(mask):
         return result
 
     # set those with 0 denominator to `zero_division`, and 0 when "warn"
@@ -1587,7 +1563,7 @@ def _prf_divide(
 
     # build appropriate warning
     if metric in warn_for:
-        _warn_prf(average, modifier, f"{metric.capitalize()} is", len(result))
+        _warn_prf(average, modifier, f"{metric.capitalize()} is", result.shape[0])
 
     return result
 
@@ -1621,7 +1597,7 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     # Convert to Python primitive type to avoid NumPy type / Python str
     # comparison. See https://github.com/numpy/numpy/issues/6784
-    present_labels = unique_labels(y_true, y_pred).tolist()
+    present_labels = _tolist(unique_labels(y_true, y_pred))
     if average == "binary":
         if y_type == "binary":
             if pos_label not in present_labels:
@@ -1776,11 +1752,13 @@ def precision_recall_fscore_support(
 
     zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
         Sets the value to return when there is a zero division:
-           - recall: when there are no positive labels
-           - precision: when there are no positive predictions
-           - f-score: both
+
+        - recall: when there are no positive labels
+        - precision: when there are no positive predictions
+        - f-score: both
 
         Notes:
+
         - If set to "warn", this acts like 0, but a warning is also raised.
         - If set to `np.nan`, such values will be excluded from the average.
 
@@ -1834,11 +1812,11 @@ def precision_recall_fscore_support(
     >>> y_true = np.array(['cat', 'dog', 'pig', 'cat', 'dog', 'pig'])
     >>> y_pred = np.array(['cat', 'pig', 'dog', 'cat', 'cat', 'dog'])
     >>> precision_recall_fscore_support(y_true, y_pred, average='macro')
-    (np.float64(0.22...), np.float64(0.33...), np.float64(0.26...), None)
+    (0.22..., 0.33..., 0.26..., None)
     >>> precision_recall_fscore_support(y_true, y_pred, average='micro')
-    (np.float64(0.33...), np.float64(0.33...), np.float64(0.33...), None)
+    (0.33..., 0.33..., 0.33..., None)
     >>> precision_recall_fscore_support(y_true, y_pred, average='weighted')
-    (np.float64(0.22...), np.float64(0.33...), np.float64(0.26...), None)
+    (0.22..., 0.33..., 0.26..., None)
 
     It is possible to compute per-label precisions, recalls, F1-scores and
     supports instead of averaging:
@@ -1865,10 +1843,11 @@ def precision_recall_fscore_support(
     pred_sum = tp_sum + MCM[:, 0, 1]
     true_sum = tp_sum + MCM[:, 1, 0]
 
+    xp, _, device_ = get_namespace_and_device(y_true, y_pred)
     if average == "micro":
-        tp_sum = np.array([tp_sum.sum()])
-        pred_sum = np.array([pred_sum.sum()])
-        true_sum = np.array([true_sum.sum()])
+        tp_sum = xp.reshape(xp.sum(tp_sum), (1,))
+        pred_sum = xp.reshape(xp.sum(pred_sum), (1,))
+        true_sum = xp.reshape(xp.sum(true_sum), (1,))
 
     # Finally, we have all our sufficient statistics. Divide! #
     beta2 = beta**2
@@ -1891,9 +1870,16 @@ def precision_recall_fscore_support(
         # score = (1 + beta**2) * precision * recall / (beta**2 * precision + recall)
         # Therefore, we can express the score in terms of confusion matrix entries as:
         # score = (1 + beta**2) * tp / ((1 + beta**2) * tp + beta**2 * fn + fp)
-        denom = beta2 * true_sum + pred_sum
+
+        # Array api strict requires all arrays to be of the same type so we
+        # need to convert true_sum, pred_sum and tp_sum to the max supported
+        # float dtype because beta2 is a float
+        max_float_type = _max_precision_float_dtype(xp=xp, device=device_)
+        denom = beta2 * xp.astype(true_sum, max_float_type) + xp.astype(
+            pred_sum, max_float_type
+        )
         f_score = _prf_divide(
-            (1 + beta2) * tp_sum,
+            (1 + beta2) * xp.astype(tp_sum, max_float_type),
             denom,
             "f-score",
             "true nor predicted",
@@ -1911,10 +1897,9 @@ def precision_recall_fscore_support(
         weights = None
 
     if average is not None:
-        assert average != "binary" or len(precision) == 1
-        precision = _nanaverage(precision, weights=weights)
-        recall = _nanaverage(recall, weights=weights)
-        f_score = _nanaverage(f_score, weights=weights)
+        precision = float(_nanaverage(precision, weights=weights))
+        recall = float(_nanaverage(recall, weights=weights))
+        f_score = float(_nanaverage(f_score, weights=weights))
         true_sum = None  # return no support
 
     return precision, recall, f_score, true_sum
@@ -1926,7 +1911,12 @@ def precision_recall_fscore_support(
         "y_pred": ["array-like", "sparse matrix"],
         "labels": ["array-like", None],
         "sample_weight": ["array-like", None],
-        "raise_warning": ["boolean"],
+        "raise_warning": ["boolean", Hidden(StrOptions({"deprecated"}))],
+        "replace_undefined_by": [
+            Hidden(StrOptions({"default"})),
+            Options(Real, {1.0, np.nan}),
+            dict,
+        ],
     },
     prefer_skip_nested_validation=True,
 )
@@ -1936,7 +1926,8 @@ def class_likelihood_ratios(
     *,
     labels=None,
     sample_weight=None,
-    raise_warning=True,
+    raise_warning="deprecated",
+    replace_undefined_by="default",
 ):
     """Compute binary classification positive and negative likelihood ratios.
 
@@ -1948,18 +1939,18 @@ def class_likelihood_ratios(
     `fn` the number of false negatives. Both class likelihood ratios can be used
     to obtain post-test probabilities given a pre-test probability.
 
-    `LR+` ranges from 1 to infinity. A `LR+` of 1 indicates that the probability
+    `LR+` ranges from 1.0 to infinity. A `LR+` of 1.0 indicates that the probability
     of predicting the positive class is the same for samples belonging to either
     class; therefore, the test is useless. The greater `LR+` is, the more a
     positive prediction is likely to be a true positive when compared with the
-    pre-test probability. A value of `LR+` lower than 1 is invalid as it would
+    pre-test probability. A value of `LR+` lower than 1.0 is invalid as it would
     indicate that the odds of a sample being a true positive decrease with
     respect to the pre-test odds.
 
-    `LR-` ranges from 0 to 1. The closer it is to 0, the lower the probability
-    of a given sample to be a false negative. A `LR-` of 1 means the test is
+    `LR-` ranges from 0.0 to 1.0. The closer it is to 0.0, the lower the probability
+    of a given sample to be a false negative. A `LR-` of 1.0 means the test is
     useless because the odds of having the condition did not change after the
-    test. A value of `LR-` greater than 1 invalidates the classifier as it
+    test. A value of `LR-` greater than 1.0 invalidates the classifier as it
     indicates an increase in the odds of a sample belonging to the positive
     class after being classified as negative. This is the case when the
     classifier systematically predicts the opposite of the true label.
@@ -1992,22 +1983,52 @@ def class_likelihood_ratios(
         Sample weights.
 
     raise_warning : bool, default=True
-        Whether or not a case-specific warning message is raised when there is a
-        zero division. Even if the error is not raised, the function will return
-        nan in such cases.
+        Whether or not a case-specific warning message is raised when there is division
+        by zero.
+
+        .. deprecated:: 1.7
+            `raise_warning` was deprecated in version 1.7 and will be removed in 1.9,
+            when an :class:`~sklearn.exceptions.UndefinedMetricWarning` will always
+            raise in case of a division by zero.
+
+    replace_undefined_by : np.nan, 1.0, or dict, default=np.nan
+        Sets the return values for LR+ and LR- when there is a division by zero. Can
+        take the following values:
+
+        - `np.nan` to return `np.nan` for both `LR+` and `LR-`
+        - `1.0` to return the worst possible scores: `{"LR+": 1.0, "LR-": 1.0}`
+        - a dict in the format `{"LR+": value_1, "LR-": value_2}` where the values can
+          be non-negative floats, `np.inf` or `np.nan` in the range of the
+          likelihood ratios. For example, `{"LR+": 1.0, "LR-": 1.0}` can be used for
+          returning the worst scores, indicating a useless model, and `{"LR+": np.inf,
+          "LR-": 0.0}` can be used for returning the best scores, indicating a useful
+          model.
+
+        If a division by zero occurs, only the affected metric is replaced with the set
+        value; the other metric is calculated as usual.
+
+        .. versionadded:: 1.7
 
     Returns
     -------
     (positive_likelihood_ratio, negative_likelihood_ratio) : tuple
-        A tuple of two float, the first containing the Positive likelihood ratio
-        and the second the Negative likelihood ratio.
+        A tuple of two floats, the first containing the positive likelihood ratio (LR+)
+        and the second the negative likelihood ratio (LR-).
 
     Warns
     -----
-    When `false positive == 0`, the positive likelihood ratio is undefined.
-    When `true negative == 0`, the negative likelihood ratio is undefined.
-    When `true positive + false negative == 0` both ratios are undefined.
-    In such cases, `UserWarning` will be raised if raise_warning=True.
+    Raises :class:`~sklearn.exceptions.UndefinedMetricWarning` when `y_true` and
+    `y_pred` lead to the following conditions:
+
+        - The number of false positives is 0 and `raise_warning` is set to `True`
+          (default): positive likelihood ratio is undefined.
+        - The number of true negatives is 0 and `raise_warning` is set to `True`
+          (default): negative likelihood ratio is undefined.
+        - The sum of true positives and false negatives is 0 (no samples of the positive
+          class are present in `y_true`): both likelihood ratios are undefined.
+
+        For the first two cases, an undefined metric can be defined by setting the
+        `replace_undefined_by` param.
 
     References
     ----------
@@ -2018,15 +2039,16 @@ def class_likelihood_ratios(
     --------
     >>> import numpy as np
     >>> from sklearn.metrics import class_likelihood_ratios
-    >>> class_likelihood_ratios([0, 1, 0, 1, 0], [1, 1, 0, 0, 0])
+    >>> class_likelihood_ratios([0, 1, 0, 1, 0], [1, 1, 0, 0, 0],
+    ...                          replace_undefined_by=1.0)
     (np.float64(1.5), np.float64(0.75))
     >>> y_true = np.array(["non-cat", "cat", "non-cat", "cat", "non-cat"])
     >>> y_pred = np.array(["cat", "cat", "non-cat", "non-cat", "non-cat"])
-    >>> class_likelihood_ratios(y_true, y_pred)
+    >>> class_likelihood_ratios(y_true, y_pred, replace_undefined_by=1.0)
     (np.float64(1.33...), np.float64(0.66...))
     >>> y_true = np.array(["non-zebra", "zebra", "non-zebra", "zebra", "non-zebra"])
     >>> y_pred = np.array(["zebra", "zebra", "non-zebra", "non-zebra", "non-zebra"])
-    >>> class_likelihood_ratios(y_true, y_pred)
+    >>> class_likelihood_ratios(y_true, y_pred, replace_undefined_by=1.0)
     (np.float64(1.5), np.float64(0.75))
 
     To avoid ambiguities, use the notation `labels=[negative_class,
@@ -2034,9 +2056,18 @@ def class_likelihood_ratios(
 
     >>> y_true = np.array(["non-cat", "cat", "non-cat", "cat", "non-cat"])
     >>> y_pred = np.array(["cat", "cat", "non-cat", "non-cat", "non-cat"])
-    >>> class_likelihood_ratios(y_true, y_pred, labels=["non-cat", "cat"])
+    >>> class_likelihood_ratios(y_true, y_pred, labels=["non-cat", "cat"],
+    ...                          replace_undefined_by=1.0)
     (np.float64(1.5), np.float64(0.75))
     """
+    # TODO(1.9): When `raise_warning` is removed, the following changes need to be made:
+    # The checks for `raise_warning==True` need to be removed and we will always warn,
+    # the default return value of `replace_undefined_by` should be updated from `np.nan`
+    # (which was kept for backwards compatibility) to `1.0`, its hidden option
+    # ("default") is not used anymore, some warning messages can be removed, the Warns
+    # section in the docstring should not mention `raise_warning` anymore and the
+    # "Mathematical divergences" section in model_evaluation.rst needs to be updated on
+    # the new default behaviour of `replace_undefined_by`.
     y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type != "binary":
@@ -2045,6 +2076,67 @@ def class_likelihood_ratios(
             f"problems, got targets of type: {y_type}"
         )
 
+    msg_deprecated_param = (
+        "`raise_warning` was deprecated in version 1.7 and will be removed in 1.9. An "
+        "`UndefinedMetricWarning` will always be raised in case of a division by zero "
+        "and the value set with the `replace_undefined_by` param will be returned."
+    )
+    mgs_changed_default = (
+        "The default return value of `class_likelihood_ratios` in case of a division "
+        "by zero has been deprecated in 1.7 and will be changed to the worst scores "
+        "(`(1.0, 1.0)`) in version 1.9. Set `replace_undefined_by=1.0` to use the new"
+        "default and to silence this Warning."
+    )
+    if raise_warning != "deprecated":
+        warnings.warn(
+            " ".join((msg_deprecated_param, mgs_changed_default)), FutureWarning
+        )
+    else:
+        if replace_undefined_by == "default":
+            # TODO(1.9): Remove. If users don't set any return values in case of a
+            # division by zero (`raise_warning="deprecated"` and
+            # `replace_undefined_by="default"`) they still get a FutureWarning about
+            # changing default return values:
+            warnings.warn(mgs_changed_default, FutureWarning)
+        raise_warning = True
+
+    if replace_undefined_by == "default":
+        replace_undefined_by = np.nan
+
+    if replace_undefined_by == 1.0:
+        replace_undefined_by = {"LR+": 1.0, "LR-": 1.0}
+
+    if isinstance(replace_undefined_by, dict):
+        msg = (
+            "The dictionary passed as `replace_undefined_by` needs to be in the form "
+            "`{'LR+': `value_1`, 'LR-': `value_2`}` where the value for `LR+` ranges "
+            "from `1.0` to `np.inf` or is `np.nan` and the value for `LR-` ranges from "
+            f"`0.0` to `1.0` or is `np.nan`; got `{replace_undefined_by}`."
+        )
+        if ("LR+" in replace_undefined_by) and ("LR-" in replace_undefined_by):
+            try:
+                desired_lr_pos = replace_undefined_by.get("LR+", None)
+                check_scalar(
+                    desired_lr_pos,
+                    "positive_likelihood_ratio",
+                    target_type=(Real),
+                    min_val=1.0,
+                    include_boundaries="left",
+                )
+                desired_lr_neg = replace_undefined_by.get("LR-", None)
+                check_scalar(
+                    desired_lr_neg,
+                    "negative_likelihood_ratio",
+                    target_type=(Real),
+                    min_val=0.0,
+                    max_val=1.0,
+                    include_boundaries="both",
+                )
+            except Exception as e:
+                raise ValueError(msg) from e
+        else:
+            raise ValueError(msg)
+
     cm = confusion_matrix(
         y_true,
         y_pred,
@@ -2052,48 +2144,71 @@ def class_likelihood_ratios(
         labels=labels,
     )
 
-    # Case when `y_test` contains a single class and `y_test == y_pred`.
-    # This may happen when cross-validating imbalanced data and should
-    # not be interpreted as a perfect score.
-    if cm.shape == (1, 1):
-        msg = "samples of only one class were seen during testing "
-        if raise_warning:
-            warnings.warn(msg, UserWarning, stacklevel=2)
+    tn, fp, fn, tp = cm.ravel()
+    support_pos = tp + fn
+    support_neg = tn + fp
+    pos_num = tp * support_neg
+    pos_denom = fp * support_pos
+    neg_num = fn * support_neg
+    neg_denom = tn * support_pos
+
+    # if `support_pos == 0`a division by zero will occur
+    if support_pos == 0:
+        # TODO(1.9): Change return values in warning message to new default: the worst
+        # possible scores: `(1.0, 1.0)`
+        msg = (
+            "No samples of the positive class are present in `y_true`. "
+            "`positive_likelihood_ratio` and `negative_likelihood_ratio` are both set "
+            "to `np.nan`."
+        )
+        warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
         positive_likelihood_ratio = np.nan
         negative_likelihood_ratio = np.nan
-    else:
-        tn, fp, fn, tp = cm.ravel()
-        support_pos = tp + fn
-        support_neg = tn + fp
-        pos_num = tp * support_neg
-        pos_denom = fp * support_pos
-        neg_num = fn * support_neg
-        neg_denom = tn * support_pos
 
-        # If zero division warn and set scores to nan, else divide
-        if support_pos == 0:
-            msg = "no samples of the positive class were present in the testing set "
-            if raise_warning:
-                warnings.warn(msg, UserWarning, stacklevel=2)
-            positive_likelihood_ratio = np.nan
-            negative_likelihood_ratio = np.nan
-        if fp == 0:
+    # if `fp == 0`a division by zero will occur
+    if fp == 0:
+        if raise_warning:
             if tp == 0:
-                msg = "no samples predicted for the positive class"
+                msg_beginning = (
+                    "No samples were predicted for the positive class and "
+                    "`positive_likelihood_ratio` is "
+                )
             else:
-                msg = "positive_likelihood_ratio ill-defined and being set to nan "
-            if raise_warning:
-                warnings.warn(msg, UserWarning, stacklevel=2)
-            positive_likelihood_ratio = np.nan
+                msg_beginning = "`positive_likelihood_ratio` is ill-defined and "
+            msg_end = "set to `np.nan`. Use the `replace_undefined_by` param to "
+            "control this behavior."
+            # TODO(1.9): Change return value in warning message to new default: `1.0`,
+            # which is the worst possible score for "LR+"
+            warnings.warn(msg_beginning + msg_end, UndefinedMetricWarning, stacklevel=2)
+        if isinstance(replace_undefined_by, float) and np.isnan(replace_undefined_by):
+            positive_likelihood_ratio = replace_undefined_by
         else:
-            positive_likelihood_ratio = pos_num / pos_denom
-        if tn == 0:
-            msg = "negative_likelihood_ratio ill-defined and being set to nan "
-            if raise_warning:
-                warnings.warn(msg, UserWarning, stacklevel=2)
-            negative_likelihood_ratio = np.nan
+            # replace_undefined_by is a dict and
+            # isinstance(replace_undefined_by.get("LR+", None), Real); this includes
+            # `np.inf` and `np.nan`
+            positive_likelihood_ratio = desired_lr_pos
+    else:
+        positive_likelihood_ratio = pos_num / pos_denom
+
+    # if `tn == 0`a division by zero will occur
+    if tn == 0:
+        if raise_warning:
+            # TODO(1.9): Change return value in warning message to new default: `1.0`,
+            # which is the worst possible score for "LR-"
+            msg = (
+                "`negative_likelihood_ratio` is ill-defined and set to `np.nan`. "
+                "Use the `replace_undefined_by` param to control this behavior."
+            )
+            warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+        if isinstance(replace_undefined_by, float) and np.isnan(replace_undefined_by):
+            negative_likelihood_ratio = replace_undefined_by
         else:
-            negative_likelihood_ratio = neg_num / neg_denom
+            # replace_undefined_by is a dict and
+            # isinstance(replace_undefined_by.get("LR-", None), Real); this includes
+            # `np.nan`
+            negative_likelihood_ratio = desired_lr_neg
+    else:
+        negative_likelihood_ratio = neg_num / neg_denom
 
     return positive_likelihood_ratio, negative_likelihood_ratio
 
@@ -2176,7 +2291,7 @@ def precision_score(
     average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None, \
             default='binary'
         This parameter is required for multiclass/multilabel targets.
-        If ``None``, the scores for each class are returned. Otherwise, this
+        If ``None``, the metrics for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
 
         ``'binary'``:
@@ -2205,6 +2320,7 @@ def precision_score(
         Sets the value to return when there is a zero division.
 
         Notes:
+
         - If set to "warn", this acts like 0, but a warning is also raised.
         - If set to `np.nan`, such values will be excluded from the average.
 
@@ -2244,11 +2360,11 @@ def precision_score(
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
     >>> precision_score(y_true, y_pred, average='macro')
-    np.float64(0.22...)
+    0.22...
     >>> precision_score(y_true, y_pred, average='micro')
-    np.float64(0.33...)
+    0.33...
     >>> precision_score(y_true, y_pred, average='weighted')
-    np.float64(0.22...)
+    0.22...
     >>> precision_score(y_true, y_pred, average=None)
     array([0.66..., 0.        , 0.        ])
     >>> y_pred = [0, 0, 0, 0, 0, 0]
@@ -2354,7 +2470,7 @@ def recall_score(
     average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None, \
             default='binary'
         This parameter is required for multiclass/multilabel targets.
-        If ``None``, the scores for each class are returned. Otherwise, this
+        If ``None``, the metrics for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
 
         ``'binary'``:
@@ -2384,6 +2500,7 @@ def recall_score(
         Sets the value to return when there is a zero division.
 
         Notes:
+
         - If set to "warn", this acts like 0, but a warning is also raised.
         - If set to `np.nan`, such values will be excluded from the average.
 
@@ -2425,11 +2542,11 @@ def recall_score(
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
     >>> recall_score(y_true, y_pred, average='macro')
-    np.float64(0.33...)
+    0.33...
     >>> recall_score(y_true, y_pred, average='micro')
-    np.float64(0.33...)
+    0.33...
     >>> recall_score(y_true, y_pred, average='weighted')
-    np.float64(0.33...)
+    0.33...
     >>> recall_score(y_true, y_pred, average=None)
     array([1., 0., 0.])
     >>> y_true = [0, 0, 0, 0, 0, 0]
