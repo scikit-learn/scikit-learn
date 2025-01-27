@@ -1092,8 +1092,8 @@ class TimeSeriesSplit(_BaseKFold):
     """Time Series cross-validator.
 
     Provides train/test indices to split time ordered data. Samples are
-    required to be equally spaced in the dataset to split, for the fold to
-    represent the same duration, in order to have comparable metrics accross folds.
+    required to be equally spaced, for the folds to represent the same duration,
+    in order to have comparable metrics across folds.
     With this split, shuffling in cross validator is inappropriate, otherwise some
     train indices would be higher than test indices, representing learning from future
     and evaluating on the past.
