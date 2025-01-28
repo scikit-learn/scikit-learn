@@ -473,7 +473,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
-    tol : float, default=1e-4
+    tol : float, default=1e-6
         The precision of the solution (`coef_`) is determined by `tol` which
         specifies a different convergence criterion for the `lsqr` solver.
         `tol` is set as `atol` and `btol` of `scipy.sparse.linalg.lsqr` when
@@ -573,7 +573,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         *,
         fit_intercept=True,
         copy_X=True,
-        tol=1e-4,
+        tol=1e-6,
         n_jobs=None,
         positive=False,
     ):

@@ -97,7 +97,7 @@ Changelog
 ..............................
 
 - |Fix| :class:`model_selection.RandomizedSearchCV` and
-  :class:`model_selection.GridSearchCV` now correctly shows the score for
+  :class:`model_selection.GridSearchCV` now correctly show the score for
   single metrics and verbose > 2. :pr:`19659` by `Thomas Fan`_.
 
 - |Fix| Some values in the `cv_results_` attribute of
@@ -415,7 +415,7 @@ Changelog
   :pr:`18149` by :user:`Sylvain Marié <smarie>`.
 
 - |Fix| Fix :class:`decomposition.SparseCoder` such that it follows
-  scikit-learn API and support cloning. The attribute `components_` is
+  scikit-learn API and supports cloning. The attribute `components_` is
   deprecated in 0.24 and will be removed in 1.1 (renaming of 0.26).
   This attribute was redundant with the `dictionary` attribute and constructor
   parameter.
@@ -491,7 +491,7 @@ Changelog
   and :user:`Chiara Marmo <cmarmo>`.
 
 - |Fix| :class:`feature_extraction.text.CountVectorizer` raises an issue if a
-  custom token pattern which capture more than one group is provided.
+  custom token pattern which captures more than one group is provided.
   :pr:`15427` by :user:`Gangesh Gudmalwar <ggangesh>` and
   :user:`Erin R Hoffman <hoffm386>`.
 
@@ -783,7 +783,7 @@ Changelog
 - |Enhancement| :class:`model_selection.GridSearchCV`,
   :class:`model_selection.RandomizedSearchCV` and
   :func:`model_selection.cross_validate` support `scoring` being a callable
-  returning a dictionary of of multiple metric names/values association.
+  returning a dictionary of multiple metric names/values association.
   :pr:`15126` by `Thomas Fan`_.
 
 :mod:`sklearn.multiclass`
@@ -976,7 +976,7 @@ Changelog
 
 - |API| The parameter ``X_idx_sorted`` is now deprecated in
   :meth:`tree.DecisionTreeClassifier.fit` and
-  :meth:`tree.DecisionTreeRegressor.fit`, and has not effect.
+  :meth:`tree.DecisionTreeRegressor.fit`, and has no effect.
   :pr:`17614` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
 :mod:`sklearn.utils`
