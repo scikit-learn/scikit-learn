@@ -1014,7 +1014,8 @@ class SGDClassifier(BaseSGDClassifier):
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
         Only used if `penalty` is 'elasticnet'.
-        Values must be in the range `[0.0, 1.0]`.
+        Values must be in the range `[0.0, 1.0]` or can be `None` if
+        `penalty` is not `elasticnet`.
 
     fit_intercept : bool, default=True
         Whether the intercept should be estimated or not. If False, the
@@ -1215,7 +1216,7 @@ class SGDClassifier(BaseSGDClassifier):
         **BaseSGDClassifier._parameter_constraints,
         "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
         "alpha": [Interval(Real, 0, None, closed="left")],
-        "l1_ratio": [Interval(Real, 0, 1, closed="both")],
+        "l1_ratio": [Interval(Real, 0, 1, closed="both"), None],
         "power_t": [Interval(Real, None, None, closed="neither")],
         "epsilon": [Interval(Real, 0, None, closed="left")],
         "learning_rate": [
@@ -1838,7 +1839,8 @@ class SGDRegressor(BaseSGDRegressor):
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
         Only used if `penalty` is 'elasticnet'.
-        Values must be in the range `[0.0, 1.0]`.
+        Values must be in the range `[0.0, 1.0]` or can be `None` if
+        `penalty` is not `elasticnet`.
 
     fit_intercept : bool, default=True
         Whether the intercept should be estimated or not. If False, the
@@ -2018,7 +2020,7 @@ class SGDRegressor(BaseSGDRegressor):
         **BaseSGDRegressor._parameter_constraints,
         "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
         "alpha": [Interval(Real, 0, None, closed="left")],
-        "l1_ratio": [Interval(Real, 0, 1, closed="both")],
+        "l1_ratio": [Interval(Real, 0, 1, closed="both"), None],
         "power_t": [Interval(Real, None, None, closed="neither")],
         "learning_rate": [
             StrOptions({"constant", "optimal", "invscaling", "adaptive"}),
