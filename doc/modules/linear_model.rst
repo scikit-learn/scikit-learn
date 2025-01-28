@@ -48,7 +48,7 @@ solves a problem of the form:
     >>> reg.coef_
     array([0.5, 0.5])
     >>> reg.intercept_
-    np.float64(1.11022...)
+    np.float64(2.22044...)
 
 The coefficient estimates for Ordinary Least Squares rely on the
 independence of the features. When features are correlated and some
