@@ -1,0 +1,13 @@
+```rst
+- The parameter `n_alphas` has been deprecated in the following classes:
+:class:`linear_model.ElasticNetCV` and :class:`linear_model.LassoCV`
+and :class:`linear_model.MultiTaskElasticNetCV` 
+and :class:`linear_model.MultiTaskLassoCV`.
+- The parameter `alphas` now supports integer and array-like argument. 
+Passing an integer, k, to `alphas` will generate k alpha values to 
+compute along the regularization path. Passing an array-like object into
+`alphas` will compute each item in the array as an alpha value
+along the regularization. 
+- To achieve similar behavior as passing an integer into `n_alphas`
+in scikit-learn 1.7+, pass an integer into the argument `alphas`.
+```

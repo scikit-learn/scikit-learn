@@ -1495,8 +1495,15 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
 
     _parameter_constraints: dict = {
         "eps": [Interval(Real, 0, None, closed="neither")],
-        "n_alphas": [Interval(Integral, 1, None, closed="left")],
-        "alphas": ["array-like", None],
+        "n_alphas": [
+            Interval(Integral, 1, None, closed="left"),
+            StrOptions({"deprecated"}),
+        ],
+        "alphas": [
+            Interval(Integral, 1, None, closed="left"),
+            "array-like",
+            StrOptions({"warn"}),
+        ],
         "fit_intercept": ["boolean"],
         "precompute": [StrOptions({"auto"}), "array-like", "boolean"],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
@@ -1514,8 +1521,10 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
     def __init__(
         self,
         eps=1e-3,
-        n_alphas=100,
-        alphas=None,
+        ############ TODO:
+        ############ Need to change _parameter_constraints dictionary
+        n_alphas="deprecated",
+        alphas="warn",
         fit_intercept=True,
         precompute="auto",
         max_iter=1000,
@@ -1691,11 +1700,32 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             l1_ratios = [
                 1,
             ]
+
         path_params.pop("cv", None)
         path_params.pop("n_jobs", None)
 
-        alphas = self.alphas
+        alphas = None
         n_l1_ratio = len(l1_ratios)
+
+        if self.n_alphas != "deprecated":
+            warnings.warn(
+                "`n_alphas` was deprecated in 1.7 and will be removed in 1.9"
+                " use `alphas` to set number of alphas values to test along"
+                " regularization path",
+                FutureWarning,
+            )
+            self.alphas = self.n_alphas
+
+        # self.alphas is only string with value "warn"
+        # if the default value is used in the constructor
+        if isinstance(self.alphas, str):
+            warnings.warn(
+                "The default value of `alphas` will change from None to 100 in 1.7"
+                " Since 1.7, ``alphas`` supports an integer argument which generates"
+                " ``alphas`` number of alpha values along the regularization path.",
+                FutureWarning,
+            )
+            self.alphas = 100
 
         check_scalar_alpha = partial(
             check_scalar,
@@ -1704,7 +1734,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             include_boundaries="left",
         )
 
-        if alphas is None:
+        # In Deprecation, alphas' default value will change to 100
+        if isinstance(self.alphas, Integral):
             alphas = [
                 _alpha_grid(
                     X,
@@ -1712,7 +1743,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                     l1_ratio=l1_ratio,
                     fit_intercept=self.fit_intercept,
                     eps=self.eps,
-                    n_alphas=self.n_alphas,
+                    n_alphas=self.alphas,
                     copy_X=self.copy_X,
                     sample_weight=sample_weight,
                 )
@@ -1720,10 +1751,10 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             ]
         else:
             # Making sure alphas entries are scalars.
-            for index, alpha in enumerate(alphas):
+            for index, alpha in enumerate(self.alphas):
                 check_scalar_alpha(alpha, f"alphas[{index}]")
             # Making sure alphas is properly ordered.
-            alphas = np.tile(np.sort(alphas)[::-1], (n_l1_ratio, 1))
+            alphas = np.tile(np.sort(self.alphas)[::-1], (n_l1_ratio, 1))
 
         # We want n_alphas to be the number of alphas used for each l1_ratio.
         n_alphas = len(alphas[0])
@@ -1809,7 +1840,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
 
         self.l1_ratio_ = best_l1_ratio
         self.alpha_ = best_alpha
-        if self.alphas is None:
+        # If alphas auto-generated, used by deprecated n_alphas
+        if isinstance(self.alphas, Integral):
             self.alphas_ = np.asarray(alphas)
             if n_l1_ratio == 1:
                 self.alphas_ = self.alphas_[0]
@@ -1899,9 +1931,18 @@ class LassoCV(RegressorMixin, LinearModelCV):
     n_alphas : int, default=100
         Number of alphas along the regularization path.
 
-    alphas : array-like, default=None
-        List of alphas where to compute the models.
-        If ``None`` alphas are set automatically.
+    .. deprecated:: 1.6
+        ``n_alphas`` was deprecated in 1.6 and will be removed in 1.8.
+        Use parameter ``alphas`` instead.
+
+    alphas : array-like or int, default=100
+        List of alphas of where to compute the models.
+        If int, ``alphas`` number of values are generated automatically
+
+    .. versionchanged:: 1.6
+        The default value of ``alphas`` will change from None to 100 in 1.6.
+        Since 1.6, ``alphas`` supports an integer argument which generates
+        ``alphas`` number of alpha values along the regularization path.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
@@ -2051,8 +2092,8 @@ class LassoCV(RegressorMixin, LinearModelCV):
         self,
         *,
         eps=1e-3,
-        n_alphas=100,
-        alphas=None,
+        n_alphas="deprecated",
+        alphas="warn",
         fit_intercept=True,
         precompute="auto",
         max_iter=1000,
@@ -2081,6 +2122,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
             random_state=random_state,
             selection=selection,
         )
+        print(n_alphas)
 
     def _get_estimator(self):
         return Lasso()
@@ -2155,11 +2197,20 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         ``alpha_min / alpha_max = 1e-3``.
 
     n_alphas : int, default=100
-        Number of alphas along the regularization path, used for each l1_ratio.
+        Number of alphas along the regularization path.
 
-    alphas : array-like, default=None
-        List of alphas where to compute the models.
-        If None alphas are set automatically.
+    .. deprecated:: 1.7
+        ``n_alphas`` was deprecated in 1.7 and will be removed in 1.9.
+        Use parameter ``alphas`` instead.
+
+    alphas : array-like or int, default=100
+        List of alphas of where to compute the models.
+        If int, ``alphas`` number of values are generated automatically
+
+    .. versionchanged:: 1.7
+        The default value of ``alphas`` will change from None to 100 in 1.7
+        Since 1.7, ``alphas`` supports an integer argument which generates
+        ``alphas`` number of alpha values along the regularization path.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
@@ -2328,8 +2379,8 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         *,
         l1_ratio=0.5,
         eps=1e-3,
-        n_alphas=100,
-        alphas=None,
+        n_alphas="deprecated",
+        alphas="warn",
         fit_intercept=True,
         precompute="auto",
         max_iter=1000,
@@ -2847,9 +2898,18 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     n_alphas : int, default=100
         Number of alphas along the regularization path.
 
-    alphas : array-like, default=None
-        List of alphas where to compute the models.
-        If not provided, set automatically.
+    .. deprecated:: 1.7
+        ``n_alphas`` was deprecated in 1.7 and will be removed in 1.9.
+        Use parameter ``alphas`` instead.
+
+    alphas : array-like or int, default=100
+        List of alphas of where to compute the models.
+        If int, ``alphas`` number of values are generated automatically
+
+    .. versionchanged:: 1.7
+        The default value of ``alphas`` will change from None to 100 in 1.7
+        Since 1.7, ``alphas`` supports an integer argument which generates
+        ``alphas`` number of alpha values along the regularization path.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
@@ -2993,8 +3053,8 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         *,
         l1_ratio=0.5,
         eps=1e-3,
-        n_alphas=100,
-        alphas=None,
+        n_alphas="deprecated",
+        alphas="warn",
         fit_intercept=True,
         max_iter=1000,
         tol=1e-4,
@@ -3090,9 +3150,18 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     n_alphas : int, default=100
         Number of alphas along the regularization path.
 
-    alphas : array-like, default=None
-        List of alphas where to compute the models.
-        If not provided, set automatically.
+    .. deprecated:: 1.7
+        ``n_alphas`` was deprecated in 1.7 and will be removed in 1.9.
+        Use parameter ``alphas`` instead.
+
+    alphas : array-like or int, default=100
+        List of alphas of where to compute the models.
+        If int, ``alphas`` number of values are generated automatically
+
+    .. versionchanged:: 1.7
+        The default value of ``alphas`` will change from None to 100 in 1.7
+        Since 1.7, ``alphas`` supports an integer argument which generates
+        ``alphas`` number of alpha values along the regularization path.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
@@ -3232,8 +3301,8 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         self,
         *,
         eps=1e-3,
-        n_alphas=100,
-        alphas=None,
+        n_alphas="deprecated",
+        alphas="warn",
         fit_intercept=True,
         max_iter=1000,
         tol=1e-4,
