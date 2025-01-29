@@ -910,7 +910,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         warm_start=False,
         positive=False,
         random_state=None,
-        selection="cyclic",
+        selection="cyclic"
     ):
         self.alpha = alpha
         self.l1_ratio = l1_ratio
@@ -2064,7 +2064,9 @@ class LassoCV(RegressorMixin, LinearModelCV):
         positive=False,
         random_state=None,
         selection="cyclic",
+        refit=True,
     ):
+        self.refit = refit
         super().__init__(
             eps=eps,
             n_alphas=n_alphas,
@@ -2089,6 +2091,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
         return False
 
     def fit(self, X, y, sample_weight=None, **params):
+        params.pop('refit', None)
         """Fit Lasso model with coordinate descent.
 
         Fit is on grid of alphas and best alpha estimated by cross-validation.
@@ -2126,8 +2129,13 @@ class LassoCV(RegressorMixin, LinearModelCV):
         self : object
             Returns an instance of fitted model.
         """
+
         return super().fit(X, y, sample_weight=sample_weight, **params)
 
+        if self.refit:
+            self._fit(X, y)
+
+        return self
 
 class ElasticNetCV(RegressorMixin, LinearModelCV):
     """Elastic Net model with iterative fitting along a regularization path.
