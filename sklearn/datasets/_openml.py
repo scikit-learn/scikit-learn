@@ -33,11 +33,10 @@ from ._arff_parser import load_arff_from_gzip_file
 
 __all__ = ["fetch_openml"]
 
-_OPENML_PREFIX = "https://api.openml.org/"
-_SEARCH_NAME = "api/v1/json/data/list/data_name/{}/limit/2"
-_DATA_INFO = "api/v1/json/data/{}"
-_DATA_FEATURES = "api/v1/json/data/features/{}"
-_DATA_QUALITIES = "api/v1/json/data/qualities/{}"
+_SEARCH_NAME = "https://api.openml.org/api/v1/json/data/list/data_name/{}/limit/2"
+_DATA_INFO = "https://api.openml.org/api/v1/json/data/{}"
+_DATA_FEATURES = "https://api.openml.org/api/v1/json/data/features/{}"
+_DATA_QUALITIES = "https://api.openml.org/api/v1/json/data/qualities/{}"
 
 OpenmlQualitiesType = List[Dict[str, str]]
 OpenmlFeaturesType = List[Dict[str, str]]
@@ -119,16 +118,17 @@ def _retry_on_network_error(
 
 
 def _open_openml_url(
-    openml_path: str, data_home: Optional[str], n_retries: int = 3, delay: float = 1.0
+    url: str, data_home: Optional[str], n_retries: int = 3, delay: float = 1.0
 ):
     """
     Returns a resource from OpenML.org. Caches it to data_home if required.
 
     Parameters
     ----------
-    openml_path : str
-        OpenML URL that will be accessed. This will be prefixes with
-        _OPENML_PREFIX.
+    url : str
+        OpenML URL that will be downloaded and cached locally. The path component
+        of the URL is used to replicate the tree structure as sub-folders of the local
+        cache folder.
 
     data_home : str
         Directory to which the files will be cached. If None, no caching will
@@ -150,19 +150,7 @@ def _open_openml_url(
     def is_gzip_encoded(_fsrc):
         return _fsrc.info().get("Content-Encoding", "") == "gzip"
 
-    # print(f"{openml_path=}")
-    parsed_openml_path = urlparse(openml_path)
-    # if openml_path is a full URL need to extrac the path
-    if parsed_openml_path.netloc:
-        full_url = openml_path
-        # TODO not sure whether to keep netloc or not
-        # openml_path = parsed_openml_path.netloc + parsed_openml_path.path
-        openml_path = parsed_openml_path.path.lstrip("/")
-
-    else:
-        full_url = _OPENML_PREFIX + openml_path
-
-    req = Request(full_url)
+    req = Request(url)
     req.add_header("Accept-encoding", "gzip")
 
     if data_home is None:
@@ -171,6 +159,7 @@ def _open_openml_url(
             return gzip.GzipFile(fileobj=fsrc, mode="rb")
         return fsrc
 
+    openml_path = urlparse(url).path.lstrip("/")
     local_path = _get_local_path(openml_path, data_home)
     dir_name, file_name = os.path.split(local_path)
     if not os.path.exists(local_path):

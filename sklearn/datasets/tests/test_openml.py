@@ -19,7 +19,6 @@ import sklearn
 from sklearn import config_context
 from sklearn.datasets import fetch_openml as fetch_openml_orig
 from sklearn.datasets._openml import (
-    _OPENML_PREFIX,
     _get_local_path,
     _open_openml_url,
     _retry_with_clean_cache,
@@ -140,8 +139,8 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
         )
 
     def _mock_urlopen_download_data(url, has_gzip_header):
-        # `_mock_urlopen_shared` expect that the `url` does not contain the filename
-        # and only the path to the ARFF file.
+        # TODO `_mock_urlopen_shared` expect that the `url` does not contain the
+        # filename and only the path to the ARFF file.
         # However, the `url` is nowadays containing the filename as well and we need to
         # modify it for `_mock_urlopen_shared` to work.
         url_arff_data = urlparse(url)
@@ -149,6 +148,7 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
         url_arff_data = url_arff_data._replace(
             path=str(Path(url_arff_data.path).parent)
         ).geturl()
+
         return _mock_urlopen_shared(
             url=url_arff_data,
             has_gzip_header=has_gzip_header,
@@ -1358,21 +1358,23 @@ def test_open_openml_url_cache(monkeypatch, gzip_response, tmpdir):
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     openml_path = _DATA_FILE.format(data_id) + "/filename.arff"
+    url = f"https://api.openml.org/{openml_path}"
     cache_directory = str(tmpdir.mkdir("scikit_learn_data"))
     # first fill the cache
-    response1 = _open_openml_url(openml_path, cache_directory)
+    response1 = _open_openml_url(url, cache_directory)
     # assert file exists
     location = _get_local_path(openml_path, cache_directory)
     assert os.path.isfile(location)
     # redownload, to utilize cache
-    response2 = _open_openml_url(openml_path, cache_directory)
+    response2 = _open_openml_url(url, cache_directory)
     assert response1.read() == response2.read()
 
 
 @pytest.mark.parametrize("write_to_disk", [True, False])
 def test_open_openml_url_unlinks_local_path(monkeypatch, tmpdir, write_to_disk):
     data_id = 61
-    openml_path = _DATA_FILE.format(data_id)
+    openml_path = _DATA_FILE.format(data_id) + "/filename.arff"
+    url = f"https://api.openml.org/{openml_path}"
     cache_directory = str(tmpdir.mkdir("scikit_learn_data"))
     location = _get_local_path(openml_path, cache_directory)
 
@@ -1385,7 +1387,7 @@ def test_open_openml_url_unlinks_local_path(monkeypatch, tmpdir, write_to_disk):
     monkeypatch.setattr(sklearn.datasets._openml, "urlopen", _mock_urlopen)
 
     with pytest.raises(ValueError, match="Invalid request"):
-        _open_openml_url(openml_path, cache_directory)
+        _open_openml_url(url, cache_directory)
 
     assert not os.path.exists(location)
 
@@ -1530,13 +1532,13 @@ def test_open_openml_url_retry_on_network_error(monkeypatch):
         sklearn.datasets._openml, "urlopen", _mock_urlopen_network_error
     )
 
-    invalid_openml_url = "invalid-url"
+    invalid_openml_url = "https://api.openml.org/invalid-url"
 
     with pytest.warns(
         UserWarning,
         match=re.escape(
             "A network error occurred while downloading"
-            f" {_OPENML_PREFIX + invalid_openml_url}. Retrying..."
+            f" {invalid_openml_url}. Retrying..."
         ),
     ) as record:
         with pytest.raises(HTTPError, match="Simulated network error"):
