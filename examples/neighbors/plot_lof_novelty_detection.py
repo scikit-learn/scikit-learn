@@ -89,4 +89,5 @@ plt.xlabel(
     "errors novel regular: %d/40 ; errors novel abnormal: %d/40"
     % (n_error_test, n_error_outliers)
 )
+plt.tight_layout()
 plt.show()
