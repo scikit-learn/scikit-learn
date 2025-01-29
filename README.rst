@@ -97,6 +97,16 @@ the easiest way to install scikit-learn is using ``pip``::
 or ``conda``::
 
     conda install -c conda-forge scikit-learn
+or ``Linux virtual environment``::
+
+   sudo apt update
+   sudo apt install python3 python3-venv python3-pip -y
+   mkdir my_project
+   cd my_project
+   python3 -m venv venv
+   source venv/bin/activate
+   pip install scikit-learn
+
 
 The documentation includes more detailed `installation instructions <https://scikit-learn.org/stable/install.html>`_.
 
