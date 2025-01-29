@@ -2257,7 +2257,7 @@ def test_returned_value_consistency(name):
         y_pred = rng.randint(0, 2, size=(20, 3))
 
     metric = ALL_METRICS[name]
-    score = metric(y_pred, y_true)
+    score = metric(y_true, y_pred)
 
     assert isinstance(score, (float, np.ndarray, tuple))
     assert not isinstance(score, (np.float64, np.float32))

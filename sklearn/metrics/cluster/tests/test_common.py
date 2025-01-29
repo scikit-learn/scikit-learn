@@ -225,7 +225,7 @@ def test_returned_value_consistency(name):
 
     if name in SUPERVISED_METRICS:
         metric = SUPERVISED_METRICS[name]
-        score = metric(labels_true, labels_true)
+        score = metric(labels_true, labels_pred)
     else:
         metric = UNSUPERVISED_METRICS[name]
         score = metric(X, labels_pred)
