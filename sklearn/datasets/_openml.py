@@ -1128,7 +1128,6 @@ def fetch_openml(
 
     # obtain the data
     url = data_description["url"]
-    # print(f"{url=}")
     bunch = _download_data_to_bunch(
         url,
         return_sparse,
