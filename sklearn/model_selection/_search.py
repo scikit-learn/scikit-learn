@@ -22,7 +22,7 @@ from numpy.ma import MaskedArray
 from scipy.stats import rankdata
 
 from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone, is_classifier
-from ..exceptions import NotFittedError
+from ..exceptions import ConvergenceWarning, NotFittedError
 from ..metrics import check_scoring
 from ..metrics._scorer import (
     _check_multimetric_scoring,
@@ -295,6 +295,8 @@ class ParameterSampler:
         self.n_iter = n_iter
         self.random_state = random_state
         self.param_distributions = param_distributions
+        self.param_history = set()
+        self.max_tries_new_param_combination = 10
 
     def _is_all_lists(self):
         return all(
@@ -330,12 +332,29 @@ class ParameterSampler:
                 # Always sort the keys of a dictionary, for reproducibility
                 items = sorted(dist.items())
                 params = dict()
-                for k, v in items:
-                    if hasattr(v, "rvs"):
-                        params[k] = v.rvs(random_state=rng)
-                    else:
-                        params[k] = v[rng.randint(len(v))]
-                yield params
+                for _ in range(self.max_tries_new_param_combination):
+                    for k, v in items:
+                        if hasattr(v, "rvs"):
+                            params[k] = v.rvs(random_state=rng)
+                        else:
+                            params[k] = v[rng.randint(len(v))]
+
+                    param_tuple = tuple(sorted(params.items()))
+                    is_new_param_combination = param_tuple not in self.param_history
+                    if is_new_param_combination:
+                        self.param_history.add(param_tuple)
+                        print(f"{params=}")
+                        yield params
+                        break
+                else:
+                    warnings.warn(
+                        "The total space of possible combination of parameters "
+                        "is smaller or really close to the number of iterations "
+                        f"provided ({self.n_iter}). Search stoped before reaching "
+                        "that number.For exhaustive searches, GridSearch may be "
+                        " a better option ",
+                        ConvergenceWarning,
+                    )
 
     def __len__(self):
         """Number of points that will be sampled."""
