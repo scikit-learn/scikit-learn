@@ -74,10 +74,12 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
     # monkey patches the urlopen function. Important note: Do NOT use this
     # in combination with a regular cache directory, as the files that are
     # stored as cache should not be mixed up with real openml datasets
-    url_prefix_data_description = "https://api.openml.org/api/v1/json/data/"
-    url_prefix_data_features = "https://api.openml.org/api/v1/json/data/features/"
+    url_prefix_data_description = re.escape("https://api.openml.org/api/v1/json/data/")
+    url_prefix_data_features = re.escape(
+        "https://api.openml.org/api/v1/json/data/features/"
+    )
     url_prefix_download_data = r"https://(api\.|www\.)openml\.org/data/v1/download"
-    url_prefix_data_list = "https://api.openml.org/api/v1/json/data/list/"
+    url_prefix_data_list = re.escape("https://api.openml.org/api/v1/json/data/list/")
 
     path_suffix = ".gz"
     read_fn = gzip.open
@@ -187,13 +189,13 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
     def _mock_urlopen(request, *args, **kwargs):
         url = request.get_full_url()
         has_gzip_header = request.get_header("Accept-encoding") == "gzip"
-        if url.startswith(url_prefix_data_list):
+        if re.match(url_prefix_data_list, url):
             return _mock_urlopen_data_list(url, has_gzip_header)
-        elif url.startswith(url_prefix_data_features):
+        elif re.match(url_prefix_data_features, url):
             return _mock_urlopen_data_features(url, has_gzip_header)
         elif re.match(url_prefix_download_data, url):
             return _mock_urlopen_download_data(url, has_gzip_header)
-        elif url.startswith(url_prefix_data_description):
+        elif re.match(url_prefix_data_description, url):
             return _mock_urlopen_data_description(url, has_gzip_header)
         else:
             raise ValueError("Unknown mocking URL pattern: %s" % url)
