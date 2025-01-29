@@ -15,7 +15,11 @@ from numbers import Real
 import numpy as np
 from scipy import sparse as sp
 
-from ...utils._array_api import _max_precision_float_dtype, get_namespace_and_device
+from ...utils._array_api import (
+    _convert_to_numpy,
+    _max_precision_float_dtype,
+    get_namespace_and_device,
+)
 from ...utils._param_validation import Interval, StrOptions, validate_params
 from ...utils.multiclass import type_of_target
 from ...utils.validation import check_array, check_consistent_length
@@ -143,12 +147,15 @@ def contingency_matrix(
            [0, 1, 1],
            [1, 0, 1]])
     """
-
     if eps is not None and sparse:
         raise ValueError("Cannot set 'eps' when sparse=True")
 
-    classes, class_idx = np.unique(labels_true, return_inverse=True)
-    clusters, cluster_idx = np.unique(labels_pred, return_inverse=True)
+    xp, _, device = get_namespace_and_device(labels_pred, labels_true)
+
+    classes, class_idx = xp.unique_inverse(labels_true)
+    clusters, cluster_idx = xp.unique_inverse(labels_pred)
+    class_idx = _convert_to_numpy(class_idx, xp)
+    cluster_idx = _convert_to_numpy(cluster_idx, xp)
     n_classes = classes.shape[0]
     n_clusters = clusters.shape[0]
     # Using coo_matrix to accelerate simple histogram calculation,
@@ -163,7 +170,7 @@ def contingency_matrix(
         contingency = contingency.tocsr()
         contingency.sum_duplicates()
     else:
-        contingency = contingency.toarray()
+        contingency = xp.asarray(contingency.toarray(), device=device)
         if eps is not None:
             # don't use += as contingency is integer
             contingency = contingency + eps

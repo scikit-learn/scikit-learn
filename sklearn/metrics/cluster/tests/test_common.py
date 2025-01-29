@@ -4,11 +4,13 @@ from itertools import chain
 import numpy as np
 import pytest
 
+from sklearn.base import config_context
 from sklearn.metrics.cluster import (
     adjusted_mutual_info_score,
     adjusted_rand_score,
     calinski_harabasz_score,
     completeness_score,
+    contingency_matrix,
     davies_bouldin_score,
     fowlkes_mallows_score,
     homogeneity_score,
@@ -18,7 +20,15 @@ from sklearn.metrics.cluster import (
     silhouette_score,
     v_measure_score,
 )
-from sklearn.utils._testing import assert_allclose
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._testing import (
+    _array_api_for_tests,
+    assert_allclose,
+    assert_array_equal,
+)
 
 # Dictionaries of metrics
 # ------------------------
@@ -209,3 +219,60 @@ def test_inf_nan_input(metric_name, metric_func):
     with pytest.raises(ValueError, match=r"contains (NaN|infinity)"):
         for args in invalids:
             metric_func(*args)
+
+
+def check_array_api_metric(
+    metric,
+    array_namespace,
+    device,
+    labels_true,
+    labels_pred,
+    **metric_kwargs,
+):
+    xp = _array_api_for_tests(array_namespace, device)
+
+    labels_true_xp = xp.asarray(labels_true, device=device)
+    labels_pred_xp = xp.asarray(labels_pred, device=device)
+
+    metric_np = metric(labels_true, labels_pred, **metric_kwargs)
+
+    with config_context(array_api_dispatch=True):
+        metric_xp = metric(labels_true_xp, labels_pred_xp)
+
+        assert_array_equal(
+            _convert_to_numpy(xp.asarray(metric_xp), xp),
+            metric_np,
+        )
+
+
+def check_array_api_metric_supervised(metric, array_namespace, device, int_dtype):
+    labels_true = np.array([0, 0, 1, 1, 2, 2], dtype=int_dtype)
+    labels_pred = np.array([1, 0, 2, 1, 0, 2], dtype=int_dtype)
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        labels_true=labels_true,
+        labels_pred=labels_pred,
+    )
+
+
+array_api_metric_checkers = {contingency_matrix: [check_array_api_metric_supervised]}
+
+
+def yield_metric_checker_combinations(metric_checkers):
+    for metric, checkers in metric_checkers.items():
+        for checker in checkers:
+            yield metric, checker
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, _", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize(
+    "metric, check_func", yield_metric_checker_combinations(array_api_metric_checkers)
+)
+def test_array_api_compliance(metric, array_namespace, device, _, check_func):
+    for int_dtype in ["int32", "int64"]:
+        check_func(metric, array_namespace, device, int_dtype)
