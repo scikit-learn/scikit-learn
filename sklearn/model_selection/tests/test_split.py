@@ -24,6 +24,7 @@ from sklearn.model_selection import (
     LeavePOut,
     PredefinedSplit,
     RepeatedKFold,
+    RepeatedStratifiedGroupKFold,
     RepeatedStratifiedKFold,
     ShuffleSplit,
     StratifiedGroupKFold,
@@ -1177,14 +1178,16 @@ def test_leave_one_p_group_out_error_on_fewer_number_of_groups():
 
 def test_repeated_cv_value_errors():
     # n_repeats is not integer or <= 0
-    for cv in (RepeatedKFold, RepeatedStratifiedKFold):
+    for cv in (RepeatedKFold, RepeatedStratifiedKFold, RepeatedStratifiedGroupKFold):
         with pytest.raises(ValueError):
             cv(n_repeats=0)
         with pytest.raises(ValueError):
             cv(n_repeats=1.5)
 
 
-@pytest.mark.parametrize("RepeatedCV", [RepeatedKFold, RepeatedStratifiedKFold])
+@pytest.mark.parametrize(
+    "RepeatedCV", [RepeatedKFold, RepeatedStratifiedKFold, RepeatedStratifiedGroupKFold]
+)
 def test_repeated_cv_repr(RepeatedCV):
     n_splits, n_repeats = 2, 6
     repeated_cv = RepeatedCV(n_splits=n_splits, n_repeats=n_repeats)
@@ -1239,7 +1242,15 @@ def test_get_n_splits_for_repeated_stratified_kfold():
     assert expected_n_splits == rskf.get_n_splits()
 
 
-def test_repeated_stratified_kfold_determinstic_split():
+def test_get_n_splits_for_repeated_stratified_group_kfold():
+    n_splits = 3
+    n_repeats = 4
+    rsgkf = RepeatedStratifiedGroupKFold(n_splits=n_splits, n_repeats=n_repeats)
+    expected_n_splits = n_splits * n_repeats
+    assert expected_n_splits == rsgkf.get_n_splits()
+
+
+def test_repeated_stratified_kfold_deterministic_split():
     X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
     y = [1, 1, 1, 0, 0]
     random_state = 1944695409
@@ -1264,6 +1275,48 @@ def test_repeated_stratified_kfold_determinstic_split():
         train, test = next(splits)
         assert_array_equal(train, [0, 1, 4])
         assert_array_equal(test, [2, 3])
+
+        with pytest.raises(StopIteration):
+            next(splits)
+
+
+@pytest.mark.parametrize("random_state", [0, 1])
+def test_repeated_stratified_group_kfold_deterministic_split(random_state):
+    X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
+    y = [1, 1, 1, 0, 0]
+    groups = [0, 0, 1, 1, 1]
+    random_state = random_state
+    rsgkf = RepeatedStratifiedGroupKFold(
+        n_splits=2, n_repeats=2, random_state=random_state
+    )
+
+    # Make sure we don't get the same split for a different seed
+    expected_train_splits = [[0, 1], [2, 3, 4], [2, 3, 4], [0, 1]]
+    expected_test_splits = [[2, 3, 4], [0, 1], [0, 1], [2, 3, 4]]
+
+    if random_state == 1:
+        expected_train_splits = [[2, 3, 4], [0, 1], [2, 3, 4], [0, 1]]
+        expected_test_splits = [[0, 1], [2, 3, 4], [0, 1], [2, 3, 4]]
+
+    # split should produce same and deterministic splits on
+    # each call
+    for _ in range(3):
+        splits = rsgkf.split(X, y, groups)
+        train, test = next(splits)
+        assert_array_equal(train, expected_train_splits[0])
+        assert_array_equal(test, expected_test_splits[0])
+
+        train, test = next(splits)
+        assert_array_equal(train, expected_train_splits[1])
+        assert_array_equal(test, expected_test_splits[1])
+
+        train, test = next(splits)
+        assert_array_equal(train, expected_train_splits[2])
+        assert_array_equal(test, expected_test_splits[2])
+
+        train, test = next(splits)
+        assert_array_equal(train, expected_train_splits[3])
+        assert_array_equal(test, expected_test_splits[3])
 
         with pytest.raises(StopIteration):
             next(splits)
@@ -2042,6 +2095,8 @@ def test_random_state_shuffle_false(Klass):
         (RepeatedKFold(random_state=np.random.RandomState(0)), False),
         (RepeatedStratifiedKFold(random_state=None), False),
         (RepeatedStratifiedKFold(random_state=np.random.RandomState(0)), False),
+        (RepeatedStratifiedGroupKFold(random_state=None), False),
+        (RepeatedStratifiedGroupKFold(random_state=np.random.RandomState(0)), False),
         (ShuffleSplit(random_state=None), False),
         (ShuffleSplit(random_state=np.random.RandomState(0)), False),
         (GroupShuffleSplit(random_state=None), False),
