@@ -1179,7 +1179,7 @@ def normalized_mutual_info_score(
     },
     prefer_skip_nested_validation=True,
 )
-def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
+def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=True):
     """Measure the similarity of two clusterings of a set of points.
 
     .. versionadded:: 0.18
@@ -1210,7 +1210,7 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     labels_pred : array-like of shape (n_samples,), dtype=int
         A clustering of the data into disjoint subsets.
 
-    sparse : bool, default=False
+    sparse : bool, default=True
         Compute contingency matrix internally with sparse matrix.
 
     Returns
@@ -1249,7 +1249,7 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     (n_samples,) = labels_true.shape
 
-    c = contingency_matrix(labels_true, labels_pred, sparse=True)
+    c = contingency_matrix(labels_true, labels_pred, sparse=sparse)
     c = c.astype(np.int64, copy=False)
     tk = np.dot(c.data, c.data) - n_samples
     pk = np.sum(np.asarray(c.sum(axis=0)).ravel() ** 2) - n_samples
