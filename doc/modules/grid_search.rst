@@ -667,6 +667,117 @@ be controlled by setting `error_score="raise"` to raise an exception if one fit
 fails, or for example `error_score=0` to set another value for the score of
 failing parameter combinations.
 
+.. _refit_constraints:
+
+Constrained Model selection
+---------------------------
+
+Constrained model selection methods expand the user's level of control over the
+hyper-parameter optimization process by seeking a balance between the rote performance
+of a model (e.g., its accuracy, R2 score, or multi-metric criteria) and its
+\"favorability\" (e.g., simplicity, computational efficiency, interpretability).
+Formally, constrained model selection can be framed as a special case of hyperparameter
+optimization with three key components:
+
+1. **Performance Metric Score** (:math:`P`): A function that evaluates the performance
+of a model, :math:`m`, on a given dataset. This is the objective function that a
+SearchCV object uses by default and which we aim to optimize in traditional model
+selection.
+
+2. **Slack Constraint** (:math:`S`): A function that incorporates a slack variable into
+the model selection process, allowing for a trade-off between performance and
+favorability by defining an allowable margin of error in performance (e.g., within one
+standard error of the best score) or a similar concept.
+
+3. **Favorability Score** (:math:`F`): A function that evaluates the
+favorability of a model based on specified criteria. The criteria might include model
+complexity, interpretability, or other user-defined measures.
+
+Given these components, constrained model selection can be expressed as follows:
+
+The goal is to select a model, :math:`m^*`, from a set of candidate models,
+:math:`\mathcal{M}`, such that :math:`m^*` optimizes a weighted combination of
+performance and favorability. More specifically,
+
+.. math::
+  m^* = \arg \max_{m \in \mathcal{M}} \big\{ \omega P(m) + (1 - \omega) F(m) \big\}
+
+which is further subject to a slack constraint on :math:`P`:
+
+.. math::
+  S(P(m^*), P(m)) \leq \delta
+
+where:
+
+- :math:`\omega` is a weighting parameter that balances the importance of performance versus favorability, with :math:`0 \leq \omega \leq 1`.
+
+- :math:`\delta` is a threshold that defines the allowable slack in performance to consider a model's favorability.
+
+Scikit-Learn provides two mechanisms for constrained model selection that can be easily
+extended to each of these scenarios using a common set of semantics. The first is
+*after* conducting a SearchCV -- by fitting a
+:class:`~sklearn.model_selection.ScoreCutModelSelector` instance, together with a
+:class:`~sklearn.model_selection.FavorabilityRanker` instance, to the ``cv_results_``
+attribute of a fitted instance of ``GridSearchCV``, ``RandomizedSearchCV``,  or
+``HalvingRandomSearchCV``. The second is *before* conducting a SearchCV -- by setting
+the ``refit`` parameter in a ``GridSearchCV``, ``RandomizedSearchCV``, or
+``RandomizedSearchCV`` instance to a callable function
+:func:`~sklearn.model_selection.promote` with an accompanying
+:class:`~sklearn.model_selection.FavorabilityRanker` instance. In either case, the
+constrained model selection process comprises two steps, respectively: (i) specifying a
+rule for defining a margin of model performance, wherein hyper-parameter optimization
+is relaxed to accommodate for secondary model favorability objectives; and (ii)
+specifying a ranking of hyper-parameter values, for each searched hyperparameter, whose
+corresponding model performance falls within the margin defined by (i).
+
+The slack constraint, :math:`S(P(m^*), P(m))`, could be defined in various ways and
+with varying degrees of leniency depending on the application. For example, in the case
+of refitting a SearchCV object with the simplest best-performing model, one common
+constraint to use is the "One Standard Error Rule" (1-SE) (see the
+:class:`~sklearn.model_selection._refit.StandardErrorSlicer`). 1-SE has traditionally
+been used to identify the most parsimonious model whose cross-validated performance is
+not more than 1 standard error worse than the best CV performance. In this scenario,
+:math:`\delta` would be set to the standard error of the best model's performance, and
+:math:`S` could be defined as the absolute difference in performance:
+
+.. math::
+  S(P(m^*), P(m)) = |P(m^*) - P(m)|
+
+The benefit of constraining a SearchCV by a user-defined ranking of model complexity
+within a 1-SE performance margin, is that it can help to promote more generalizable
+models, since those with the highest rote performance can be more prone to overfit
+(Breiman et al., 1984). Although it is easy to demonstrate the value of 1-SE (e.g. see
+:ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`),
+the 1-SE criteria alone may be too rigid or lenient in some contexts. In such cases, the
+:class:`~sklearn.model_selection.ScoreCutModelSelector` also supports other score
+slicing rules, including:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+
+    model_selection.PercentileSlicer
+    model_selection.WilcoxonSlicer
+    model_selection.FixedWindowSlicer
+
+These callable classes follow a common structure that subclasses
+:class:`~sklearn.model_selection.BaseScoreSlicer`, enabling users to easily define
+their own custom slicing rules as well.
+
+.. topic:: References:
+
+  * Breiman, Leo, Jerome Friedman, Richard Olshen, and Charles Stone. 1984.
+    "Classification and Regression Trees." :doi:`10.1080/01621459.1984.10477025`
+  * Chen, Yuchen, and Yuhong Yang. 2021. "The One Standard Error Rule for Model
+    Selection: Does It Work?" Stats 4, no. 4: 868-892.
+    :doi:`https://doi.org/10.3390/stats404005`
+  * Hastie, Trevor, Robert Tibshirani, and Jerome Friedman. 2009. The Elements of
+    Statistical Learning: Data Mining, Inference, and Prediction. New York:
+    Springer Series in Statistics. :doi:`10.1007/978-0-387-84858-7`
+  * Zacharias, J., von Zahn, M., Chen, J. et al. 2022. Designing a feature selection
+    method based on explainable artificial intelligence. Electron Markets 32, 2159-2184
+    (2022). :doi:`https://doi.org/10.1007/s12525-022-00608-1`
+
 .. _alternative_cv:
 
 Alternatives to brute force parameter search
