@@ -136,7 +136,7 @@ Reference Steps
         {%- if key != "rc" %}
         * [ ] Publish to https://github.com/scikit-learn/scikit-learn/releases
         {%- endif %}
-        * [ ] Announce on mailing list and on LinkedIn, Bluesky, Twitter
+        * [ ] Announce on mailing list and on social media platforms (LinkedIn, Bluesky, etc.) 
         {%- if key != "rc" %}
         * [ ] Update SECURITY.md in main branch
         {%- endif %}
