@@ -323,7 +323,7 @@ def rand_score(labels_true, labels_pred):
     are complete but may not always be pure, hence penalized:
 
       >>> rand_score([0, 0, 1, 2], [0, 0, 1, 1])
-      np.float64(0.83...)
+      0.83...
     """
     contingency = pair_confusion_matrix(labels_true, labels_pred)
     numerator = contingency.diagonal().sum()
@@ -335,7 +335,7 @@ def rand_score(labels_true, labels_pred):
         # cluster. These are perfect matches hence return 1.0.
         return 1.0
 
-    return numerator / denominator
+    return float(numerator / denominator)
 
 
 @validate_params(
@@ -522,7 +522,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     >>> from sklearn.metrics import homogeneity_completeness_v_measure
     >>> y_true, y_pred = [0, 0, 1, 1, 2, 2], [0, 0, 1, 2, 2, 2]
     >>> homogeneity_completeness_v_measure(y_true, y_pred)
-    (np.float64(0.71...), np.float64(0.77...), np.float64(0.73...))
+    (0.71..., 0.77..., 0.73...)
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
 
@@ -548,7 +548,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
             / (beta * homogeneity + completeness)
         )
 
-    return homogeneity, completeness, v_measure_score
+    return float(homogeneity), float(completeness), float(v_measure_score)
 
 
 @validate_params(
@@ -606,7 +606,7 @@ def homogeneity_score(labels_true, labels_pred):
 
       >>> from sklearn.metrics.cluster import homogeneity_score
       >>> homogeneity_score([0, 0, 1, 1], [1, 1, 0, 0])
-      np.float64(1.0)
+      1.0
 
     Non-perfect labelings that further split classes into more clusters can be
     perfectly homogeneous::
@@ -682,7 +682,7 @@ def completeness_score(labels_true, labels_pred):
 
       >>> from sklearn.metrics.cluster import completeness_score
       >>> completeness_score([0, 0, 1, 1], [1, 1, 0, 0])
-      np.float64(1.0)
+      1.0
 
     Non-perfect labelings that assign all classes members to the same clusters
     are still complete::
@@ -771,9 +771,9 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
 
       >>> from sklearn.metrics.cluster import v_measure_score
       >>> v_measure_score([0, 0, 1, 1], [0, 0, 1, 1])
-      np.float64(1.0)
+      1.0
       >>> v_measure_score([0, 0, 1, 1], [1, 1, 0, 0])
-      np.float64(1.0)
+      1.0
 
     Labelings that assign all classes members to the same clusters
     are complete but not homogeneous, hence penalized::
@@ -879,7 +879,7 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     >>> labels_true = [0, 1, 1, 0, 1, 0]
     >>> labels_pred = [0, 1, 0, 0, 1, 1]
     >>> mutual_info_score(labels_true, labels_pred)
-    np.float64(0.056...)
+    0.056...
     """
     if contingency is None:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -920,7 +920,7 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
         + contingency_nm * log_outer
     )
     mi = np.where(np.abs(mi) < np.finfo(mi.dtype).eps, 0.0, mi)
-    return np.clip(mi.sum(), 0.0, None)
+    return float(np.clip(mi.sum(), 0.0, None))
 
 
 @validate_params(
@@ -1008,17 +1008,14 @@ def adjusted_mutual_info_score(
 
       >>> from sklearn.metrics.cluster import adjusted_mutual_info_score
       >>> adjusted_mutual_info_score([0, 0, 1, 1], [0, 0, 1, 1])
-      ... # doctest: +SKIP
       1.0
       >>> adjusted_mutual_info_score([0, 0, 1, 1], [1, 1, 0, 0])
-      ... # doctest: +SKIP
       1.0
 
     If classes members are completely split across different clusters,
     the assignment is totally in-complete, hence the AMI is null::
 
       >>> adjusted_mutual_info_score([0, 0, 0, 0], [0, 1, 2, 3])
-      ... # doctest: +SKIP
       0.0
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -1053,7 +1050,7 @@ def adjusted_mutual_info_score(
     else:
         denominator = max(denominator, np.finfo("float64").eps)
     ami = (mi - emi) / denominator
-    return ami
+    return float(ami)
 
 
 @validate_params(
@@ -1127,17 +1124,14 @@ def normalized_mutual_info_score(
 
       >>> from sklearn.metrics.cluster import normalized_mutual_info_score
       >>> normalized_mutual_info_score([0, 0, 1, 1], [0, 0, 1, 1])
-      ... # doctest: +SKIP
       1.0
       >>> normalized_mutual_info_score([0, 0, 1, 1], [1, 1, 0, 0])
-      ... # doctest: +SKIP
       1.0
 
     If classes members are completely split across different clusters,
     the assignment is totally in-complete, hence the NMI is null::
 
       >>> normalized_mutual_info_score([0, 0, 0, 0], [0, 1, 2, 3])
-      ... # doctest: +SKIP
       0.0
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -1168,7 +1162,7 @@ def normalized_mutual_info_score(
     h_true, h_pred = entropy(labels_true), entropy(labels_pred)
 
     normalizer = _generalized_average(h_true, h_pred, average_method)
-    return mi / normalizer
+    return float(mi / normalizer)
 
 
 @validate_params(
@@ -1236,9 +1230,9 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
 
       >>> from sklearn.metrics.cluster import fowlkes_mallows_score
       >>> fowlkes_mallows_score([0, 0, 1, 1], [0, 0, 1, 1])
-      np.float64(1.0)
+      1.0
       >>> fowlkes_mallows_score([0, 0, 1, 1], [1, 1, 0, 0])
-      np.float64(1.0)
+      1.0
 
     If classes members are completely split across different clusters,
     the assignment is totally random, hence the FMI is null::
@@ -1254,7 +1248,7 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     tk = np.dot(c.data, c.data) - n_samples
     pk = np.sum(np.asarray(c.sum(axis=0)).ravel() ** 2) - n_samples
     qk = np.sum(np.asarray(c.sum(axis=1)).ravel() ** 2) - n_samples
-    return np.sqrt(tk / pk) * np.sqrt(tk / qk) if tk != 0.0 else 0.0
+    return float(np.sqrt(tk / pk) * np.sqrt(tk / qk)) if tk != 0.0 else 0.0
 
 
 @validate_params(

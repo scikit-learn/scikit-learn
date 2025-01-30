@@ -209,3 +209,26 @@ def test_inf_nan_input(metric_name, metric_func):
     with pytest.raises(ValueError, match=r"contains (NaN|infinity)"):
         for args in invalids:
             metric_func(*args)
+
+
+@pytest.mark.parametrize("name", chain(SUPERVISED_METRICS, UNSUPERVISED_METRICS))
+def test_returned_value_consistency(name):
+    """Ensure that the returned values of all metrics are consistent.
+
+    It can only be a float. It should not be a numpy float64 or float32.
+    """
+
+    rng = np.random.RandomState(0)
+    X = rng.randint(10, size=(20, 10))
+    labels_true = rng.randint(0, 3, size=(20,))
+    labels_pred = rng.randint(0, 3, size=(20,))
+
+    if name in SUPERVISED_METRICS:
+        metric = SUPERVISED_METRICS[name]
+        score = metric(labels_true, labels_pred)
+    else:
+        metric = UNSUPERVISED_METRICS[name]
+        score = metric(X, labels_pred)
+
+    assert isinstance(score, float)
+    assert not isinstance(score, (np.float64, np.float32))
