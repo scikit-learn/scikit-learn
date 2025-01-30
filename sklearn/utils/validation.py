@@ -2169,7 +2169,7 @@ def _check_sample_weight(
     sample_weight : ndarray of shape (n_samples,)
         Validated sample weight. It is guaranteed to be "C" contiguous.
     """
-    xp, device_ = get_namespace_and_device(X)
+    xp, _, device_ = get_namespace_and_device(X)
     n_samples = _num_samples(X)
 
     if dtype is not None and dtype not in [xp.float32, xp.float64]:
