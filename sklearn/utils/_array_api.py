@@ -578,10 +578,7 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     # message in case it is missing.
     import array_api_compat
 
-    namespace, is_array_api_compliant = (
-        array_api_compat.get_namespace(*arrays),
-        True,
-    )
+    namespace, is_array_api_compliant = array_api_compat.get_namespace(*arrays), True
 
     if namespace.__name__ == "array_api_strict" and hasattr(
         namespace, "set_array_api_strict_flags"
