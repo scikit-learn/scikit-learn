@@ -554,8 +554,8 @@ class RFECV(RFE):
 
     The number of features selected is tuned automatically by fitting an :class:`RFE`
     selector on the different cross-validation splits (provided by the `cv` parameter).
-    The performance of the :class:`RFE` selector are evaluated using `scorer` for
-    different number of selected features and aggregated together. Finally, the scores
+    The performance of each :class:`RFE` selector is evaluated using `scoring` for
+    different numbers of selected features and aggregated together. Finally, the scores
     are averaged across folds and the number of features selected is set to the number
     of features that maximize the cross-validation score.
     See glossary entry for :term:`cross-validation estimator`.
@@ -605,10 +605,14 @@ class RFECV(RFE):
         .. versionchanged:: 0.22
             ``cv`` default value of None changed from 3-fold to 5-fold.
 
-    scoring : str, callable or None, default=None
-        A string (see :ref:`scoring_parameter`) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
+    scoring : str or callable, default=None
+        Scoring method to evaluate the :class:`RFE` selectors' performance. Options:
+
+        - str: see :ref:`scoring_string_names` for options.
+        - callable: a scorer callable object (e.g., function) with signature
+          ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
+        - `None`: the `estimator`'s
+          :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
     verbose : int, default=0
         Controls verbosity of output.
