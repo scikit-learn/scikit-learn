@@ -333,7 +333,8 @@ def randomized_range_finder(
     # singular vectors of A in Q
     for _ in range(n_iter):
         Q, _ = normalizer(A @ Q)
-        Q, _ = normalizer(A.T @ Q)
+        # Conjugate transpose for complex input (conj is no-op for real input)
+        Q, _ = normalizer(A.conj().T @ Q)
 
     # Sample the range of A using by linear projection of Q
     # Extract an orthonormal basis
@@ -519,7 +520,7 @@ def randomized_svd(
         transpose = n_samples < n_features
     if transpose:
         # this implementation is a bit faster with smaller shape[1]
-        M = M.T
+        M = M.conj().T
 
     Q = randomized_range_finder(
         M,
@@ -530,7 +531,8 @@ def randomized_svd(
     )
 
     # project M to the (k + p) dimensional space using the basis vectors
-    B = Q.T @ M
+    # conjugate transpose for complex input (conj is no-op for real input)
+    B = Q.conj().T @ M
 
     # compute the SVD on the thin matrix: (k + p) wide
     xp, is_array_api_compliant = get_namespace(B)
@@ -546,7 +548,9 @@ def randomized_svd(
     del B
     U = Q @ Uhat
 
-    if flip_sign:
+    # can't flip sign for complex valued input, since complex svd is unique only up to
+    # phase shifts.
+    if flip_sign and not np.iscomplexobj(M):
         if not transpose:
             U, Vt = svd_flip(U, Vt)
         else:
@@ -556,7 +560,11 @@ def randomized_svd(
 
     if transpose:
         # transpose back the results according to the input convention
-        return Vt[:n_components, :].T, s[:n_components], U[:, :n_components].T
+        return (
+            Vt[:n_components, :].conj().T,
+            s[:n_components],
+            U[:, :n_components].conj().T,
+        )
     else:
         return U[:, :n_components], s[:n_components], Vt[:n_components, :]
 
