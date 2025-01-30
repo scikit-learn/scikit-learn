@@ -663,40 +663,41 @@ def get_namespace_and_device(*array_list, remove_none=True, remove_types=(str,))
         return xp, False, arrays_device
 
 
-def make_converter(X):
+def move_to_namespace_and_device(*arrays_to_move, ref):
     """Helper to implement the 'y follows X' rule.
 
-    Returns a function that converts an array to the namespace and device of X.
+    Convert arrays to the namespace and device of ``ref``.
 
-    When X is not an array api array, the converter does nothing.
+    When ``ref`` is not an array api array, the inputs are returned unchanged.
     """
-    xp, is_array_api = get_namespace(X)
+    xp, is_array_api = get_namespace(ref)
     if not is_array_api:
+        return arrays_to_move
 
-        def convert(data):
-            return data
+    device_ = device(ref)
 
-        return convert
-    else:
-        device_ = device(X)
+    new_arrays = []
+    for array in arrays_to_move:
+        if array is None or isinstance(array, (numbers.Number, str)):
+            new_arrays.append(array)
+            continue
+        array_xp, array_is_array_api, array_device = get_namespace_and_device(array)
+        if array_xp == xp and array_device == device_:
+            new_arrays.append(array)
+            continue
+        if not array_is_array_api:
+            new_arrays.append(xp.asarray(array, device=device_))
+            continue
+        try:
+            new_arrays.append(xp.asarray(array, device=device_))
+            continue
+        except Exception:
+            # direct conversion to a different library may fail in which
+            # case we try converting to numpy first
+            array = _convert_to_numpy(array, array_xp)
+            new_arrays.append(xp.asarray(array, device=device_))
 
-        def convert(data):
-            if data is None or isinstance(data, (numbers.Number, str)):
-                return data
-            data_xp, data_is_array_api, data_device = get_namespace_and_device(data)
-            if data_xp == xp and data_device == device_:
-                return data
-            if not data_is_array_api:
-                return xp.asarray(data, device=device_)
-            try:
-                return xp.asarray(data, device=device_)
-            except Exception:
-                # direct conversion to a different library may fail in which
-                # case we try converting to numpy first
-                data = _convert_to_numpy(data, data_xp)
-                return xp.asarray(data, device=device_)
-
-        return convert
+    return tuple(new_arrays)
 
 
 def _expit(X, xp=None):

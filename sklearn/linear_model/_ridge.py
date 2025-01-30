@@ -40,7 +40,7 @@ from ..utils._array_api import (
     device,
     get_namespace,
     get_namespace_and_device,
-    make_converter,
+    move_to_namespace_and_device,
 )
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.extmath import row_norms, safe_sparse_dot
@@ -1294,8 +1294,8 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
             The binarized version of `y`.
         """
         accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
-        follow_X = make_converter(X)
-        sample_weight = follow_X(sample_weight)
+        sample_weight = move_to_namespace_and_device(sample_weight, ref=X)
+        original_X = X
         X, y = validate_data(
             self,
             X,
@@ -1310,9 +1310,11 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         Y = self._label_binarizer.fit_transform(
             _convert_to_numpy(y, y_xp) if y_is_array_api else y
         )
-        Y = follow_X(Y)
+        Y = move_to_namespace_and_device(Y, ref=original_X)
         if y_is_array_api and y_xp.isdtype(y.dtype, "numeric"):
-            self.classes_ = follow_X(self._label_binarizer.classes_)
+            self.classes_ = move_to_namespace_and_device(
+                self._label_binarizer.classes_, ref=original_X
+            )
         else:
             self.classes_ = self._label_binarizer.classes_
         if not self._label_binarizer.y_type_.startswith("multilabel"):
@@ -1321,7 +1323,7 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         if self.class_weight:
             reweighting = compute_sample_weight(self.class_weight, y)
-            reweighting = follow_X(reweighting)
+            reweighting = move_to_namespace_and_device(reweighting, ref=original_X)
             sample_weight = sample_weight * reweighting
         return X, y, sample_weight, Y
 
@@ -2143,8 +2145,7 @@ class _RidgeGCV(LinearModel):
         self : object
         """
         xp, is_array_api, device_ = get_namespace_and_device(X)
-        follow_X = make_converter(X)
-        y, sample_weight = follow_X(y), follow_X(sample_weight)
+        y, sample_weight = move_to_namespace_and_device(y, sample_weight, ref=X)
         if is_array_api or hasattr(getattr(X, "dtype", None), "kind"):
             original_dtype = X.dtype
         else:
