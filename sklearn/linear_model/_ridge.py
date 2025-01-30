@@ -2228,7 +2228,7 @@ class _RidgeGCV(LinearModel):
                 squared_errors = (c / G_inverse_diag) ** 2
                 alpha_score = self._score_without_scorer(squared_errors=squared_errors)
                 if self.store_cv_results:
-                    self.cv_results_[:, i] = xp.reshape(squared_errors, shape=(-1,))
+                    self.cv_results_[:, i] = _ravel(squared_errors)
             else:
                 predictions = y - (c / G_inverse_diag)
                 # Rescale predictions back to original scale
