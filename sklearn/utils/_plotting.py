@@ -1,5 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
+import warnings
 
 import numpy as np
 
@@ -17,14 +18,20 @@ class _BinaryClassifierCurveDisplayMixin:
     the target and gather the response of the estimator.
     """
 
-    def _validate_plot_params(self, *, ax=None, name=None):
+    def _validate_plot_params(
+        self, *, ax=None, name=None, n_multi=None, curve_type=None
+    ):
         check_matplotlib_support(f"{self.__class__.__name__}.plot")
         import matplotlib.pyplot as plt
 
         if ax is None:
             _, ax = plt.subplots()
 
-        name = self.estimator_name if name is None else name
+        # Not 100% sure on this change
+        if n_multi > 1:
+            name = self.names if name is None else name
+        else:
+            name = [f"{curve_type} fold {curve_idx}:" for curve_idx in range(n_multi)]
         return ax, ax.figure, name
 
     @classmethod
@@ -177,3 +184,25 @@ def _despine(ax):
         ax.spines[s].set_visible(False)
     for s in ["bottom", "left"]:
         ax.spines[s].set_bounds(0, 1)
+
+
+# TODO(1.9): remove
+def _deprecate_singular(singular, plural, name):
+    """Deprecate the singular version of Display parameters.
+
+    If only `singular` parameter passed, it will be returned as a list with a warning.
+    """
+    if singular != "deprecated":
+        warnings.warn(
+            f"`{name}` was passed to `{name}s` in a list because `{name}` is "
+            f"deprecated in 1.7 and will be removed in 1.9. Use "
+            f"`{name}s` instead.",
+            FutureWarning,
+        )
+        if plural:
+            raise ValueError(
+                f"Cannot use both `{name}` and `{name}s`. Use only `{name}s` as "
+                f"`{name}` is deprecated."
+            )
+        return [singular]
+    return plural
