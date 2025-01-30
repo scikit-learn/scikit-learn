@@ -1294,7 +1294,7 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
             The binarized version of `y`.
         """
         accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
-        sample_weight = move_to_namespace_and_device(sample_weight, ref=X)
+        (sample_weight,) = move_to_namespace_and_device(sample_weight, ref=X)
         original_X = X
         X, y = validate_data(
             self,
@@ -1305,14 +1305,15 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
             y_numeric=False,
             force_writeable=True,
         )
+
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         y_xp, y_is_array_api = get_namespace(y)
         Y = self._label_binarizer.fit_transform(
             _convert_to_numpy(y, y_xp) if y_is_array_api else y
         )
-        Y = move_to_namespace_and_device(Y, ref=original_X)
+        (Y,) = move_to_namespace_and_device(Y, ref=original_X)
         if y_is_array_api and y_xp.isdtype(y.dtype, "numeric"):
-            self.classes_ = move_to_namespace_and_device(
+            (self.classes_,) = move_to_namespace_and_device(
                 self._label_binarizer.classes_, ref=original_X
             )
         else:
@@ -1323,7 +1324,7 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         if self.class_weight:
             reweighting = compute_sample_weight(self.class_weight, y)
-            reweighting = move_to_namespace_and_device(reweighting, ref=original_X)
+            (reweighting,) = move_to_namespace_and_device(reweighting, ref=original_X)
             sample_weight = sample_weight * reweighting
         return X, y, sample_weight, Y
 
