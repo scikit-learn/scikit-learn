@@ -339,6 +339,8 @@ def confusion_matrix(
     (np.int64(0), np.int64(2), np.int64(1), np.int64(1))
     """
     xp, _ = get_namespace(y_true, y_pred, labels, sample_weight)
+    y_true = check_array(y_true, dtype=None, ensure_2d=False, ensure_min_samples=0)
+    y_pred = check_array(y_pred, dtype=None, ensure_2d=False, ensure_min_samples=0)
     y_true = _convert_to_numpy(y_true, xp)
     y_pred = _convert_to_numpy(y_pred, xp)
     y_true, y_pred = attach_unique(y_true, y_pred)
