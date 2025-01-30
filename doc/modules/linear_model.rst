@@ -37,9 +37,9 @@ solves a problem of the form:
    :align: center
    :scale: 50%
 
-:class:`LinearRegression` will take in its ``fit`` method arrays ``X``, ``y``
-and will store the coefficients :math:`w` of the linear model in its
-``coef_`` member::
+:class:`LinearRegression` takes in its ``fit`` method arguments ``X``, ``y``,
+``sample_weight`` and stores the coefficients :math:`w` of the linear model in its
+``coef_`` and ``intercept_`` attributes::
 
     >>> from sklearn import linear_model
     >>> reg = linear_model.LinearRegression()
@@ -47,9 +47,11 @@ and will store the coefficients :math:`w` of the linear model in its
     LinearRegression()
     >>> reg.coef_
     array([0.5, 0.5])
+    >>> reg.intercept_
+    0.0
 
 The coefficient estimates for Ordinary Least Squares rely on the
-independence of the features. When features are correlated and the
+independence of the features. When features are correlated and some
 columns of the design matrix :math:`X` have an approximately linear
 dependence, the design matrix becomes close to singular
 and as a result, the least-squares estimate becomes highly sensitive
@@ -79,7 +81,7 @@ Ordinary Least Squares Complexity
 ---------------------------------
 
 The least squares solution is computed using the singular value
-decomposition of X. If X is a matrix of shape `(n_samples, n_features)`
+decomposition of :math:`X`. If :math:`X` is a matrix of shape `(n_samples, n_features)`
 this method has a cost of
 :math:`O(n_{\text{samples}} n_{\text{features}}^2)`, assuming that
 :math:`n_{\text{samples}} \geq n_{\text{features}}`.
