@@ -563,6 +563,37 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     IncrementalPCA: {"check_dict_unchanged": dict(batch_size=10, n_components=1)},
     Isomap: {"check_dict_unchanged": dict(n_components=1)},
     KMeans: {"check_dict_unchanged": dict(max_iter=5, n_clusters=1, n_init=2)},
+    # TODO(1.9) simplify when averaged_inverted_cdf is the default
+    KBinsDiscretizer: {
+        "check_sample_weight_equivalence_on_dense_data": [
+            # Using subsample != None leads to a stochastic fit that is not
+            # handled by the check_sample_weight_equivalence_on_dense_data test.
+            dict(strategy="quantile", subsample=None, quantile_method="inverted_cdf"),
+            dict(
+                strategy="quantile",
+                subsample=None,
+                quantile_method="averaged_inverted_cdf",
+            ),
+            dict(strategy="uniform", subsample=None),
+            # The "kmeans" strategy leads to a stochastic fit that is not
+            # handled by the check_sample_weight_equivalence test.
+        ],
+        "check_sample_weights_list": dict(
+            strategy="quantile", quantile_method="averaged_inverted_cdf"
+        ),
+        "check_sample_weights_pandas_series": dict(
+            strategy="quantile", quantile_method="averaged_inverted_cdf"
+        ),
+        "check_sample_weights_shape": dict(
+            strategy="quantile", quantile_method="averaged_inverted_cdf"
+        ),
+        "check_sample_weights_not_an_array": dict(
+            strategy="quantile", quantile_method="averaged_inverted_cdf"
+        ),
+        "check_sample_weights_not_overwritten": dict(
+            strategy="quantile", quantile_method="averaged_inverted_cdf"
+        ),
+    },
     KernelPCA: {"check_dict_unchanged": dict(n_components=1)},
     LassoLars: {"check_non_transformer_estimators_n_iter": dict(alpha=0.0)},
     LatentDirichletAllocation: {
@@ -952,15 +983,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     IsolationForest: {
         # TODO: replace by a statistical test, see meta-issue #16298
-        "check_sample_weight_equivalence_on_dense_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-        "check_sample_weight_equivalence_on_sparse_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-    },
-    KBinsDiscretizer: {
-        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
         "check_sample_weight_equivalence_on_dense_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),

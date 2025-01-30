@@ -4,6 +4,7 @@ from unittest import SkipTest
 
 import numpy as np
 import pytest
+from scipy.stats import kstest
 
 import sklearn
 from sklearn.externals._packaging.version import parse as parse_version
@@ -495,6 +496,46 @@ def test_resample():
     assert len(resample([1, 2], n_samples=5)) == 5
 
 
+def test_resample_weighted():
+    # Check that sampling with replacement with integer weights yields the
+    # samples from the same distribution as sampling uniformly with
+    # repeated data points.
+    data = np.array([-1, 0, 1])
+    sample_weight = np.asarray([0, 100, 1])
+
+    mean_repeated = []
+    mean_reweighted = []
+
+    for seed in range(100):
+        mean_repeated.append(
+            resample(
+                data.repeat(sample_weight),
+                replace=True,
+                random_state=seed,
+                n_samples=data.shape[0],
+            ).mean()
+        )
+        mean_reweighted.append(
+            resample(
+                data,
+                sample_weight=sample_weight,
+                replace=True,
+                random_state=seed,
+                n_samples=data.shape[0],
+            ).mean()
+        )
+
+    mean_repeated = np.asarray(mean_repeated)
+    mean_reweighted = np.asarray(mean_reweighted)
+
+    test_result = kstest(mean_repeated, mean_reweighted)
+    # Should never be negative because -1 has a 0 weight.
+    assert np.all(mean_reweighted >= 0)
+    # The null-hypothesis (the computed means are identically distributed)
+    # cannot be rejected.
+    assert test_result.pvalue > 0.05
+
+
 def test_resample_stratified():
     # Make sure resample can stratify
     rng = np.random.RandomState(0)
@@ -544,6 +585,21 @@ def test_resample_stratify_2dy():
     y = rng.randint(0, 2, size=(n_samples, 2))
     X, y = resample(X, y, n_samples=50, random_state=rng, stratify=y)
     assert y.ndim == 2
+
+
+def test_notimplementederror():
+
+    with pytest.raises(
+        NotImplementedError,
+        match="Resampling with sample_weight is only implemented for replace=True.",
+    ):
+        resample([0, 1], [0, 1], sample_weight=[1, 1], replace=False)
+
+    with pytest.raises(
+        NotImplementedError,
+        match="Resampling with sample_weight is only implemented for stratify=None",
+    ):
+        resample([0, 1], [0, 1], sample_weight=[1, 1], stratify=[0, 1])
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)

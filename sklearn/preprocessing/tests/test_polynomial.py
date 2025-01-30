@@ -386,7 +386,12 @@ def test_spline_transformer_kbindiscretizer(global_random_seed):
     )
     splines = splt.fit_transform(X)
 
-    kbd = KBinsDiscretizer(n_bins=n_bins, encode="onehot-dense", strategy="quantile")
+    kbd = KBinsDiscretizer(
+        n_bins=n_bins,
+        encode="onehot-dense",
+        strategy="quantile",
+        quantile_method="averaged_inverted_cdf",
+    )
     kbins = kbd.fit_transform(X)
 
     # Though they should be exactly equal, we test approximately with high
