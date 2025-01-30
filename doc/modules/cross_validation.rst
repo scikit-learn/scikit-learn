@@ -902,7 +902,8 @@ Also, it adds all surplus data to the first training partition, which
 is always used to train the model.
 
 This class can be used to cross-validate time series data samples
-that are observed at fixed time intervals.
+that are observed at fixed time intervals. Indeed, the folds must
+represent the same duration, in order to have comparable metrics accross folds.
 
 Example of 3-split time series cross-validation on a dataset with 6 samples::
 
