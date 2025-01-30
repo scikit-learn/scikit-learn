@@ -21,8 +21,8 @@ from ..exceptions import DataConversionWarning, NotFittedError, PositiveSpectrum
 from ..utils._array_api import (
     _asarray_with_order,
     _is_numpy_namespace,
-    device,
     get_namespace,
+    get_namespace_and_device,
 )
 from ..utils.deprecation import _deprecate_force_all_finite
 from ..utils.fixes import ComplexWarning, _preserve_dia_indices_dtype
@@ -2169,8 +2169,7 @@ def _check_sample_weight(
     sample_weight : ndarray of shape (n_samples,)
         Validated sample weight. It is guaranteed to be "C" contiguous.
     """
-    xp, _ = get_namespace(X)
-    device_ = device(X)
+    xp, device_ = get_namespace_and_device(X)
     n_samples = _num_samples(X)
 
     if dtype is not None and dtype not in [xp.float32, xp.float64]:
