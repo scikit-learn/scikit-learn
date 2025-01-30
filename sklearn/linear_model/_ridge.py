@@ -1960,8 +1960,7 @@ class _RidgeGCV(LinearModel):
             # ie removing the weighted average, we add a column
             # containing the square roots of the sample weights.
             # by centering, it is orthogonal to the other columns
-            outer = xp.linalg.outer if is_array_api else np.outer
-            K += outer(sqrt_sw, sqrt_sw)
+            K += xp.linalg.outer(sqrt_sw, sqrt_sw)
         eigvals, Q = xp.linalg.eigh(K)
         QT_y = Q.T @ y
         return X_mean, eigvals, Q, QT_y
@@ -2104,8 +2103,7 @@ class _RidgeGCV(LinearModel):
         w = ((singvals_sq + alpha) ** -1) - (alpha**-1)
         if self.fit_intercept:
             # detect intercept column
-            norm = xp.linalg.vector_norm if is_array_api else np.linalg.norm
-            normalized_sw = sqrt_sw / norm(sqrt_sw)
+            normalized_sw = sqrt_sw / xp.linalg.vector_norm(sqrt_sw)
             intercept_dim = _find_smallest_angle(normalized_sw, U)
             # cancel the regularization for the intercept
             w[intercept_dim] = -(alpha**-1)

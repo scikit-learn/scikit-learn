@@ -327,6 +327,17 @@ def _accept_device_cpu(func):
     return wrapped_func
 
 
+class _NumPyLinalgAPIWrapper:
+    def __getattr__(self, attr):
+        return getattr(numpy.linalg, attr)
+
+    def vector_norm(self, x, /, *, axis=None, keepdims=False, ord=2):
+        return numpy.linalg.norm(x, ord - ord, axis=axis, keepdims=keepdims)
+
+    def outer(self, x1, x2, /):
+        return numpy.outer(x1, x2)
+
+
 class _NumPyAPIWrapper:
     """Array API compat wrapper for any numpy version
 
@@ -378,6 +389,8 @@ class _NumPyAPIWrapper:
         "complex64",
         "complex128",
     }
+
+    linalg = _NumPyLinalgAPIWrapper()
 
     def __getattr__(self, name):
         attr = getattr(numpy, name)
