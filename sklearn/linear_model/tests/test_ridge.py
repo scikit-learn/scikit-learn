@@ -45,6 +45,7 @@ from sklearn.utils._array_api import (
     _NUMPY_NAMESPACE_NAMES,
     _atol_for_type,
     _convert_to_numpy,
+    _max_precision_float_dtype,
     yield_namespace_device_dtype_combinations,
     yield_namespaces,
 )
@@ -1220,7 +1221,9 @@ def _test_tolerance(sparse_container):
     assert score >= score2
 
 
-def check_array_api_attributes(name, estimator, array_namespace, device, dtype_name):
+def check_array_api_attributes(
+    name, estimator, array_namespace, device, dtype_name, rtol=None, atol=None
+):
     xp = _array_api_for_tests(array_namespace, device)
 
     X_iris_np = X_iris.astype(dtype_name)
@@ -1243,6 +1246,7 @@ def check_array_api_attributes(name, estimator, array_namespace, device, dtype_n
             _convert_to_numpy(coef_xp, xp=xp),
             coef_np,
             atol=_atol_for_type(dtype_name),
+            rtol=rtol,
         )
         intercept_xp = estimator_xp.intercept_
         assert intercept_xp.shape == ()
@@ -1251,7 +1255,8 @@ def check_array_api_attributes(name, estimator, array_namespace, device, dtype_n
         assert_allclose(
             _convert_to_numpy(intercept_xp, xp=xp),
             intercept_np,
-            atol=_atol_for_type(dtype_name),
+            atol=atol if atol is not None else _atol_for_type(dtype_name),
+            rtol=rtol,
         )
 
 
@@ -1265,14 +1270,27 @@ def check_array_api_attributes(name, estimator, array_namespace, device, dtype_n
 )
 @pytest.mark.parametrize(
     "estimator",
-    [Ridge(solver="svd")],
+    [Ridge(solver="svd"), RidgeCV()],
     ids=_get_check_estimator_ids,
 )
 def test_ridge_array_api_compliance(
     estimator, check, array_namespace, device, dtype_name
 ):
     name = estimator.__class__.__name__
-    check(name, estimator, array_namespace, device=device, dtype_name=dtype_name)
+    tols = {}
+    xp = _array_api_for_tests(array_namespace, device)
+    if (
+        "CV" in name
+        and check is check_array_api_attributes
+        and _max_precision_float_dtype(xp, device) == xp.float32
+    ):
+        # The RidgeGCV is not very numerically stable in float32. It casts the
+        # input to float64 unless the device and array api combination makes it
+        # impossible.
+        tols = {"rtol": 1e-3, "atol": 1e-3}
+    check(
+        name, estimator, array_namespace, device=device, dtype_name=dtype_name, **tols
+    )
 
 
 @pytest.mark.parametrize(
