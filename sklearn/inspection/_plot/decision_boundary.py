@@ -26,11 +26,10 @@ def _check_boundary_response_method(estimator, response_method, class_of_interes
     estimator : object
         Fitted estimator to check.
 
-    response_method : {'auto', 'predict_proba', 'decision_function', 'predict'}
-        Specifies whether to use :term:`predict_proba`,
-        :term:`decision_function`, :term:`predict` as the target response.
-        If set to 'auto', the response method is tried in the following order:
-        :term:`decision_function`, :term:`predict_proba`, :term:`predict`.
+    response_method : {'auto', 'decision_function', 'predict_proba', 'predict'}
+        Specifies whether to use :term:`decision_function`, :term:`predict_proba`,
+        :term:`predict` as the target response. If set to 'auto', the response method is
+        tried in the before mentioned order.
 
     class_of_interest : int, float, bool, str or None
         The class considered when plotting the decision. Cannot be None if

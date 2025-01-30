@@ -37,8 +37,8 @@ solves a problem of the form:
    :align: center
    :scale: 50%
 
-:class:`LinearRegression` will take in its ``fit`` method arguments ``X``, ``y``,
-``sample_weight`` and will store the coefficients :math:`w` of the linear model in its
+:class:`LinearRegression` takes in its ``fit`` method arguments ``X``, ``y``,
+``sample_weight`` and stores the coefficients :math:`w` of the linear model in its
 ``coef_`` and ``intercept_`` attributes::
 
     >>> from sklearn import linear_model
