@@ -78,7 +78,7 @@ def test_mean_shift(
     assert cluster_centers.dtype == global_dtype
 
 
-def test_parallel(global_dtype):
+def test_parallel(global_dtype, global_random_seed):
     centers = np.array([[1, 1], [-1, -1], [1, -1]]) + 10
     X, _ = make_blobs(
         n_samples=50,
@@ -86,7 +86,7 @@ def test_parallel(global_dtype):
         centers=centers,
         cluster_std=0.4,
         shuffle=True,
-        random_state=11,
+        random_state=global_random_seed,
     )
 
     X = X.astype(global_dtype, copy=False)

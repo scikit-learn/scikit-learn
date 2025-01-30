@@ -767,7 +767,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     )
 
                     # If the scorer is a predefined string, then we optimize
-                    # the evaluation by re-using the incrementally updated raw
+                    # the evaluation by reusing the incrementally updated raw
                     # predictions.
                     if scoring_is_predefined_string:
                         raw_predictions_small_train = raw_predictions[
@@ -945,7 +945,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
                 else:
                     # If the scorer is a predefined string, then we optimize the
-                    # evaluation by re-using the incrementally computed raw predictions.
+                    # evaluation by reusing the incrementally computed raw predictions.
                     if scoring_is_predefined_string:
                         raw_predictions_small_train = raw_predictions[
                             indices_small_train
@@ -2170,7 +2170,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         """
         for raw_predictions in self._staged_raw_predict(X):
             if raw_predictions.shape[1] == 1:
-                # np.argmax([0, 0]) is 0, not 1, therefor "> 0" not ">= 0"
+                # np.argmax([0, 0]) is 0, not 1, therefore "> 0" not ">= 0"
                 encoded_classes = (raw_predictions.ravel() > 0).astype(int)
             else:
                 encoded_classes = np.argmax(raw_predictions, axis=1)

@@ -14,6 +14,7 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.utils.fixes import _IS_WASM
 from sklearn.utils.parallel import Parallel, delayed
 
 
@@ -138,6 +139,7 @@ def test_check_warnings_threading():
         assert all(w == filters for w in all_warnings)
 
 
+@pytest.mark.xfail(_IS_WASM, reason="Pyodide always use the sequential backend")
 def test_filter_warning_propagates_no_side_effect_with_loky_backend():
     with warnings.catch_warnings():
         warnings.simplefilter("error", category=ConvergenceWarning)

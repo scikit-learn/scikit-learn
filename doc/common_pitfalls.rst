@@ -392,7 +392,7 @@ each case**:
   be the same across all folds.
 - Since `rf_inst` was passed a `RandomState` instance, each call to `fit`
   starts from a different RNG. As a result, the random subset of features
-  will be different for each folds.
+  will be different for each fold.
 
 While having a constant estimator RNG across folds isn't inherently wrong, we
 usually want CV results that are robust w.r.t. the estimator's randomness. As
@@ -424,7 +424,7 @@ it will allow the estimator RNG to vary for each fold.
     Since a `RandomState` instance was passed to `a`, `a` and `b` are not clones
     in the strict sense, but rather clones in the statistical sense: `a` and `b`
     will still be different models, even when calling `fit(X, y)` on the same
-    data. Moreover, `a` and `b` will influence each-other since they share the
+    data. Moreover, `a` and `b` will influence each other since they share the
     same internal RNG: calling `a.fit` will consume `b`'s RNG, and calling
     `b.fit` will consume `a`'s RNG, since they are the same. This bit is true for
     any estimators that share a `random_state` parameter; it is not specific to
