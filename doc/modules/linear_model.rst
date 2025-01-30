@@ -47,8 +47,8 @@ solves a problem of the form:
     LinearRegression()
     >>> reg.coef_
     array([0.5, 0.5])
-    >>> round(reg.intercept_)
-    0
+    >>> reg.intercept_
+    0.0
 
 The coefficient estimates for Ordinary Least Squares rely on the
 independence of the features. When features are correlated and some
