@@ -944,6 +944,10 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     ...
     array([ 1.     ,  0.93...,  0.86...,  0.93...,  0.93...,
             0.93...,  0.93...,  1.     ,  0.93...,  1.      ])
+
+    See :ref:`sphx_glr_auto_examples_tree_plot_iris_dtc.py` for an
+    example of training and visualizing a decision tree classifer on
+    the Iris dataset.
     """
 
     # "check_input" is used for optimisation and isn't something to be passed
