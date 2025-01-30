@@ -24,7 +24,7 @@ scikit-learn.
 .. toctree::
     :maxdepth: 2
 
-    modules/compose
+    modules/composgue
     modules/feature_extraction
     modules/preprocessing
     modules/impute

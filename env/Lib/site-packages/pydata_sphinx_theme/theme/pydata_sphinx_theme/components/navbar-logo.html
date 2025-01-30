@@ -1,0 +1,37 @@
+{# Displays the logo of your documentation site, in the header navbar. #}
+{# Logo link generation -#}
+{% if theme_logo_link %}
+  {% set href = theme_logo_link %}
+{% else %}
+  {% if not theme_logo.get("link") %}
+    {% set href = pathto(root_doc) %}
+  {% elif hasdoc(theme_logo.get("link")) %}
+    {% set href = pathto(theme_logo.get("link")) %} {# internal page #}
+  {% else %}
+    {% set href = theme_logo.get("link") %} {# external url #}
+  {% endif %}
+{% endif %}
+
+{#- Logo HTML and image #}
+<a class="navbar-brand logo" href="{{ href }}">
+  {# get all the brand information from html_theme_option #}
+  {% set is_logo = "light" in theme_logo["image_relative"] %}
+  {# use alt_text if given. If not, only add alt text if no additional branding text given. #}
+  {% set alt = theme_logo.get("alt_text", "" if theme_logo.get("text") else "%s - Home" % docstitle) %}
+  {% if is_logo %}
+    {#
+       Theme switching is only available when JavaScript is enabled.
+       We thus adds elements that should be present only when JavaScript is
+       enabled with a pst-js-only class
+     #}
+    {% if default_mode is undefined or default_mode == "auto" %}
+      {% set default_mode = "light" %}
+    {% endif %}
+    {% set js_mode = "light" if default_mode == "dark" else "dark" %}
+    <img src="{{ theme_logo['image_relative'][default_mode] }}" class="logo__image only-{{ default_mode }}" alt="{{ alt }}"/>
+    <img src="{{ theme_logo['image_relative'][js_mode] }}" class="logo__image only-{{ js_mode }} pst-js-only" alt="{{ alt }}"/>
+  {% endif %}
+  {% if not is_logo or theme_logo.get("text") %}
+    <p class="title logo__title">{{ theme_logo.get("text") or docstitle }}</p>
+  {% endif %}
+</a>

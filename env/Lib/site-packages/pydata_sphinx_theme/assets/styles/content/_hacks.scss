@@ -1,0 +1,12 @@
+/**
+ * Hacky fixes that don't fit cleanly into other sections
+ */
+
+// Ensure user highlighting/selecting behaves properly
+// From https://stackoverflow.com/a/34372191
+table.highlighttable td.linenos,
+span.linenos,
+div.doctest > div.highlight span.gp {
+  /* gp: Generic.Prompt */
+  user-select: none;
+}

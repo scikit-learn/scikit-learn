@@ -1,0 +1,86 @@
+// IMPORTANT: our Bootstrap variable overrides must be imported before the
+// Bootstrap files that reference those variables; otherwise our overrides will
+// have no effect.
+@import "variables/bootstrap";
+
+// Import all of Bootstrap scss.
+@import "~bootstrap/scss/bootstrap";
+
+// Import FontAwesome from _node_modules
+@import "~@fortawesome/fontawesome-free/scss/fontawesome";
+@import "~@fortawesome/fontawesome-free/scss/solid";
+@import "~@fortawesome/fontawesome-free/scss/regular";
+@import "~@fortawesome/fontawesome-free/scss/brands";
+
+// Variables
+@import "variables/layout";
+@import "variables/fonts";
+@import "variables/icons";
+@import "variables/admonitions";
+@import "variables/versionmodified";
+@import "variables/color";
+
+// re-usable SCSS functions / classes
+@import "abstracts/all";
+
+// Basic styling applied throughout site
+@import "./base/base";
+
+// Major theme layout, skeleton, and whitespace
+@import "./sections/skip-link";
+@import "./sections/container";
+@import "./sections/announcement";
+@import "./sections/article";
+@import "./sections/footer";
+@import "./sections/footer-article";
+@import "./sections/footer-content";
+@import "./sections/header";
+@import "./sections/header-article";
+@import "./sections/sidebar-primary";
+@import "./sections/sidebar-secondary";
+@import "./sections/sidebar-toggle";
+
+// Re-usable components across the theme
+@import "./components/breadcrumbs";
+@import "./components/icon-links";
+@import "./components/header/header-logo";
+@import "./components/navbar-links";
+@import "./components/page-toc";
+@import "./components/prev-next";
+@import "./components/search";
+@import "./components/searchbox";
+@import "./components/switcher-theme";
+@import "./components/switcher-version";
+@import "./components/toc-inpage";
+@import "./components/versionmodified";
+@import "./components/indices";
+
+// Content blocks in standard Sphinx
+@import "./content/admonitions";
+@import "./content/api";
+@import "./content/code";
+@import "./content/figures";
+@import "./content/footnotes";
+@import "./content/hacks";
+@import "./content/lists";
+@import "./content/quotes";
+@import "./content/spans";
+@import "./content/tables";
+@import "./content/toctree";
+@import "./content/math";
+
+// Content blocks from Sphinx extensions
+@import "./extensions/ablog";
+@import "./extensions/bootstrap";
+@import "./extensions/copybutton";
+@import "./extensions/ethical-ads";
+@import "./extensions/execution";
+@import "./extensions/graphviz";
+@import "./extensions/pydata";
+@import "./extensions/sphinx_design";
+@import "./extensions/togglebutton";
+@import "./extensions/notebooks";
+@import "./extensions/leaflet";
+
+// Page-specific CSS
+@import "./pages/search";

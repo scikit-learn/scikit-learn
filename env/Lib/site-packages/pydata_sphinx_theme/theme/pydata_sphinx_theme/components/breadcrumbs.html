@@ -1,0 +1,25 @@
+{# Displays (and links to) the parent section(s) of the currently viewed page. #}
+{%- block breadcrumbs %}
+
+{#- Hide breadcrumbs on the home page #}
+{% if title and pagename != root_doc %}
+<nav aria-label="{{ _('Breadcrumb') }}" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    {# Home icon #}
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="{{ pathto(root_doc) }}" class="nav-link" aria-label="{{ _('Home') }}">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    {%- for doc in parents %}
+    {% if doc.link %}
+    <li class="breadcrumb-item"><a href="{{ doc.link|e }}" class="nav-link">{{ doc.title }}</a></li>
+    {% else %}
+    <li class="breadcrumb-item">{{ doc.title }}</li>
+    {% endif %}
+    {%- endfor %}
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">{{ title }}</span></li>
+  </ul>
+</nav>
+{% endif %}
+{%- endblock %}

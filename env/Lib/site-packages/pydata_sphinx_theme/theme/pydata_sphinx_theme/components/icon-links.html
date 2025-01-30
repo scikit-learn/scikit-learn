@@ -1,0 +1,36 @@
+{# Displays icon-links as list items. #}
+{%- macro icon_link_nav_item(url, icon, name, type, attributes='') -%}
+  {%- if url | length > 2 %}
+        <li class="nav-item">
+          {%- set attributesDefault = { "href": url, "title": name, "class": "nav-link pst-navbar-icon", "rel": "noopener", "target": "_blank", "data-bs-toggle": "tooltip", "data-bs-placement": "bottom"} %}
+          {%- if attributes %}{% for key, val in attributes.items() %}
+            {% set _ = attributesDefault.update(attributes) %}
+          {% endfor %}{% endif -%}
+          {% set attributeString = [] %}
+          {% for key, val in attributesDefault.items() %}
+            {%- set _ = attributeString.append('%s="%s"' % (key, val)) %}
+          {% endfor %}
+          {% set attributeString = attributeString | join(" ") -%}
+          <a {{ attributeString }}>
+            {%- if type == "fontawesome" -%}
+            <i class="{{ icon }} fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">{{ name }}</span>
+            {%- elif type == "local" -%}
+            <img src="{{ pathto(icon, 1) }}" class="icon-link-image" alt="{{ name }}"/>
+            {%- elif type == "url" -%}
+            <img src="{{ icon }}" class="icon-link-image" alt="{{ name }}"/>
+            {%- else %}
+            <span>Incorrectly configured icon link. Type must be `fontawesome`, `url` or `local`.</span>
+            {%- endif -%}
+          </a>
+        </li>
+  {%- endif -%}
+{%- endmacro -%}
+{%- if theme_icon_links -%}
+<ul class="navbar-icon-links"
+    aria-label="{{ theme_icon_links_label }}">
+  {%- for icon_link in theme_icon_links -%}
+    {{ icon_link_nav_item(icon_link["url"], icon_link["icon"], icon_link["name"], icon_link.get("type", "fontawesome"), icon_link.get("attributes", {})) -}}
+  {%- endfor %}
+</ul>
+{%- endif -%}

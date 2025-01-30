@@ -1,0 +1,19 @@
+/**
+ * Special cases for Bootstrap functionality
+ */
+
+// Bootstrap adds margin to their general container class. However, sphinx/docutils
+// can also generate output with the container class, but in those cases we should
+// not add the margin from bootstrap. Same for max-width.
+.docutils.container {
+  padding-left: unset;
+  padding-right: unset;
+  margin-left: unset;
+  margin-right: unset;
+  max-width: unset;
+  width: unset;
+}
+
+.btn {
+  --bs-btn-focus-box-shadow: #{$btn-focus-box-shadow};
+}

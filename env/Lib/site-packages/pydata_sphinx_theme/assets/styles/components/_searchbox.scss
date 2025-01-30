@@ -1,0 +1,45 @@
+/**
+ * The 'Hide Search Matches' button.
+ * This only shows up when a person lands on a page after clicking a search result.
+ * Clicking it removes the highlighting of the search term from the page.
+ * We want it to behave like a button.
+ */
+div#searchbox {
+  // Leave `#searchbox` rules empty so that it doesn't show at all when it is empty
+  p.highlight-link {
+    margin: 1rem 0;
+    width: fit-content;
+
+    // A bit more margin on wide screens to mimic article behavior
+    @include media-breakpoint-up($breakpoint-sidebar-secondary) {
+      margin-left: 2rem;
+    }
+
+    // Put outer shadow on this one so that we can darken the link w/ an inner shadow
+    @include box-shadow;
+
+    // Style the button to look like a Sphinx Design button
+    a {
+      border-radius: 0.25rem;
+      font-size: 1.25rem;
+      padding: 0.75rem;
+      background-color: var(--pst-color-primary);
+      color: var(--pst-color-primary-text);
+      text-decoration: none;
+
+      // The box shadow is inset so that it darkens the button on hover
+      transition: box-shadow 0.25s ease-out;
+
+      &:hover {
+        box-shadow: inset 0 0 50px 50px rgb(0 0 0 / 25%);
+      }
+
+      &::before {
+        content: var(--pst-icon-search-minus);
+        color: unset;
+        font: var(--fa-font-solid);
+        margin-right: 0.5rem;
+      }
+    }
+  }
+}

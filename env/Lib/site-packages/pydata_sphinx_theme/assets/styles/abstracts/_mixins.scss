@@ -1,0 +1,78 @@
+/*********************************************
+* SASS Mixins
+*********************************************/
+
+/**
+ * A consistent box shadow style we apply across elements.
+ */
+@mixin box-shadow() {
+  box-shadow:
+    0 0.2rem 0.5rem var(--pst-color-shadow),
+    0 0 0.0625rem var(--pst-color-shadow) !important;
+}
+
+/**
+   * Set background of some cell outputs to white-ish to make sure colors work
+   * This is because many libraries make output that only looks good on white
+   */
+@mixin cell-output-background {
+  color: var(--pst-color-on-background);
+  background-color: var(--pst-color-text-base);
+  border-radius: 0.25rem;
+  padding: 0.5rem;
+}
+
+@mixin table-colors {
+  color: var(--pst-color-table);
+  border: 1px solid var(--pst-color-table-outer-border);
+
+  th,
+  td {
+    ~ th,
+    ~ td {
+      border-left: 1px solid var(--pst-color-table-inner-border);
+    }
+  }
+
+  thead {
+    tr {
+      background-color: var(--pst-color-table-heading-bg);
+      border-bottom: 2px solid var(--pst-color-primary);
+    }
+  }
+
+  tbody {
+    tr {
+      &:nth-child(odd) {
+        background-color: var(--pst-color-table-row-zebra-low-bg);
+      }
+
+      &:nth-child(even) {
+        background-color: var(--pst-color-table-row-zebra-high-bg);
+      }
+    }
+  }
+}
+
+// Minimum mouse hit area
+// ----------------------
+// Ensures that the element has a minimum hit area that conforms to
+// accessibility guidelines. For WCAG AA, we need 24px x 24px, see:
+// https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html
+@mixin min-hit-area() {
+  box-sizing: border-box;
+  min-width: 24px;
+  min-height: 24px;
+}
+
+// Meant to darken the element on hover in light mode, or
+// lighten on hover in dark mode.
+@mixin hover-darken-lighten {
+  &:hover {
+    filter: brightness(0.9);
+
+    html[data-theme="dark"] & {
+      filter: brightness(1.1);
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{# Displays the copyright information (which is defined in conf.py). #}
+{% if show_copyright and copyright %}
+  <p class="copyright">
+    {% if hasdoc('copyright') %}
+      © <a href="{{ pathto('copyright') }}">{% trans copyright=copyright|e %}Copyright {{ copyright }}{% endtrans %}</a>.
+      <br/>
+    {% else %}
+      {% trans copyright=copyright|e %}© Copyright {{ copyright }}.{% endtrans %}
+      <br/>
+    {% endif %}
+  </p>
+{% endif %}

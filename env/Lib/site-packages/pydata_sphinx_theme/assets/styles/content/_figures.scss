@@ -1,0 +1,47 @@
+figure > a,
+figure > a > img,
+figure > img,
+figure > video {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+figure {
+  a.headerlink {
+    // So that header link doesn't push caption to be off-center.
+    position: absolute;
+    font-size: inherit;
+  }
+
+  // Default headerlink hover doesn't trigger on figures
+  &:hover a.headerlink {
+    visibility: visible;
+  }
+
+  figcaption {
+    font-family: var(--pst-font-family-heading);
+    font-weight: var(--pst-font-weight-caption);
+    color: var(--pst-color-text-muted);
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 0.3rem;
+    text-align: center;
+
+    & > p:last-child {
+      // Don't add extra margin to already existing figure bottom margin
+      margin-bottom: 0;
+    }
+
+    p {
+      text-align: start;
+      display: inline-block;
+    }
+
+    table.table {
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+}

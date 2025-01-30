@@ -1,0 +1,212 @@
+html {
+  font-size: var(--pst-font-size-base);
+  scroll-padding-top: calc(var(--pst-header-height) + 1rem);
+}
+
+body {
+  background-color: var(--pst-color-background);
+  font-family: var(--pst-font-family-base);
+  font-weight: 400;
+  line-height: $line-height-body;
+  color: var(--pst-color-text-base);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+
+  // hack to avoid the black background on some browser including Safari
+  &::-webkit-scrollbar-track {
+    background-color: var(--pst-color-background);
+  }
+}
+
+p {
+  margin-bottom: 1.15rem;
+  font-size: 1em;
+
+  /* section header in docstring pages */
+  &.rubric {
+    border-bottom: 1px solid var(--pst-color-border);
+  }
+
+  &.centered {
+    text-align: center;
+  }
+}
+
+a {
+  @include link-style-default;
+
+  // The # anchor that appears on hover over headings
+  &.headerlink {
+    color: var(--pst-color-secondary);
+    font-size: 0.8em;
+    padding: 0 4px;
+    margin-left: 0.2em;
+    text-decoration: none;
+    user-select: none;
+  }
+
+  // set up a icon next to the shorten links from github and gitlab
+  &.github,
+  &.gitlab {
+    &::before {
+      color: var(--pst-color-text-muted);
+      font: var(--fa-font-brands);
+      margin-right: 0.25rem;
+    }
+  }
+
+  &.github::before {
+    content: var(--pst-icon-github);
+  }
+
+  &.gitlab::before {
+    content: var(--pst-icon-gitlab);
+  }
+}
+
+%heading-style {
+  margin: 2.75rem 0 1.05rem;
+  font-family: var(--pst-font-family-heading);
+  font-weight: var(--pst-font-weight-heading);
+  line-height: 1.15;
+}
+
+h1 {
+  @extend %heading-style;
+
+  margin-top: 0;
+  font-size: var(--pst-font-size-h1);
+  color: var(--pst-color-heading);
+}
+
+h2 {
+  @extend %heading-style;
+
+  font-size: var(--pst-font-size-h2);
+  color: var(--pst-color-heading);
+}
+
+h3 {
+  @extend %heading-style;
+
+  font-size: var(--pst-font-size-h3);
+  color: var(--pst-color-heading);
+}
+
+h4 {
+  @extend %heading-style;
+
+  font-size: var(--pst-font-size-h4);
+  color: var(--pst-color-heading);
+}
+
+h5 {
+  @extend %heading-style;
+
+  font-size: var(--pst-font-size-h5);
+  color: var(--pst-color-text-base);
+}
+
+h6 {
+  @extend %heading-style;
+
+  font-size: var(--pst-font-size-h6);
+  color: var(--pst-color-text-base);
+}
+
+small,
+.text_small {
+  font-size: var(--pst-font-size-milli);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--pst-color-border);
+}
+
+pre,
+code,
+kbd,
+samp {
+  font-family: var(--pst-font-family-monospace);
+}
+
+kbd {
+  // use theme negative
+  background-color: var(--pst-color-on-background);
+  color: var(--pst-color-text-muted);
+
+  // Compound keyboard elements will have nested kbd in them, so this prevents double lines
+  &:not(.compound) {
+    border: 1px solid var(--pst-color-border);
+    margin: 0 0.1rem;
+    padding: 0.1rem 0.4rem;
+    box-shadow: 1px 1px 1px var(--pst-color-shadow);
+  }
+}
+
+code {
+  color: var(--pst-color-inline-code);
+}
+
+pre {
+  margin: 1.5em 0;
+  padding: 1rem;
+  background-color: var(--pst-color-surface);
+  color: var(--pst-color-text-base);
+  line-height: 1.2em;
+  border: 1px solid var(--pst-color-border);
+  border-radius: $admonition-border-radius;
+
+  .linenos {
+    // minimum opacity to make the line numbers WCAG AA conformant
+    opacity: 0.8;
+    padding-right: 10px;
+  }
+}
+
+// the back to top btn
+#pst-back-to-top {
+  // zindex-tooltip comes from Bootstrap https://getbootstrap.com/docs/5.2/layout/z-index/
+  z-index: $zindex-tooltip;
+  position: fixed;
+  display: none;
+  top: 90vh;
+  left: 50vw;
+  transform: translate(-50%);
+  color: var(--pst-color-secondary-text);
+  background-color: var(--pst-color-secondary);
+  border: none;
+
+  .fa-arrow-up {
+    // Using margin instead of a space character prevents the space between the
+    // icon and the text from being underlined when the button is hovered.
+    margin-inline-end: 0.5em;
+  }
+
+  &:hover {
+    @include link-style-hover;
+
+    text-decoration-thickness: 1px;
+    background-color: var(--pst-color-secondary-highlight);
+    color: var(--pst-color-secondary-highlight-text);
+  }
+
+  &:focus-visible {
+    box-shadow: none;
+    outline: $focus-ring-outline;
+    outline-color: var(--pst-color-secondary);
+    outline-offset: $focus-ring-width;
+  }
+}
+
+// Focus ring
+// ----------
+// Note: The Bootstrap stylesheet provides the focus ring (customized by this
+// theme via Sass variables in _bootstrap.scss) in some cases. This rule covers
+// all other cases.
+:focus-visible {
+  outline: $focus-ring-outline;
+  box-shadow: none; // override Bootstrap
+}

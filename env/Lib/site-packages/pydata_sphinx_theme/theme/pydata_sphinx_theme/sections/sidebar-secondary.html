@@ -1,0 +1,8 @@
+{% if secondary_sidebar_items -%}
+<div class="sidebar-secondary-items sidebar-secondary__inner">
+{# Note: secondary_sidebar_items is set by set_secondary_sidebar_items() in utils.py #}
+{% for toc_item in secondary_sidebar_items %}
+  <div class="sidebar-secondary-item">{% include toc_item %}</div>
+{% endfor %}
+</div>
+{%- endif %}

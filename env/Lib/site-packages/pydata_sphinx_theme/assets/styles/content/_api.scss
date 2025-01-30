@@ -1,0 +1,160 @@
+// Style API docs from sphinx' autodoc / autosummary
+
+/*******************************************************************************
+* Styling for field lists
+*/
+
+/* grey highlighting of 'parameter' and 'returns' field */
+table.field-list {
+  border-collapse: separate;
+  border-spacing: 10px;
+  margin-left: 1px;
+
+  th.field-name {
+    padding: 1px 8px 1px 5px;
+    white-space: nowrap;
+    background-color: var(--pst-color-surface);
+  }
+
+  /* italic font for parameter types */
+  td.field-body {
+    p {
+      font-style: italic;
+
+      > strong {
+        font-style: normal;
+      }
+    }
+
+    /* reduced space around parameter description */
+    blockquote {
+      border-left: none;
+      margin: 0 0 0.3em;
+      padding-left: 30px;
+    }
+  }
+}
+
+/*******************************************************************************
+* Styling for autosummary tables
+*/
+
+.table.autosummary {
+  // The first column (with the signature) should not wrap
+  td:first-child {
+    white-space: nowrap;
+  }
+}
+
+/* overriding basic.css to use our own monospace font */
+.sig {
+  font-family: var(--pst-font-family-monospace);
+}
+
+/* C++ specific styling - overriding the basic.css to avoid custom colors */
+
+.sig-inline.c-texpr,
+.sig-inline.cpp-texpr {
+  font-family: unset;
+}
+
+.sig.c .k,
+.sig.c .kt,
+.sig.cpp .k,
+.sig.cpp .kt {
+  color: var(--pst-color-text-base);
+}
+
+.sig.c .m,
+.sig.cpp .m {
+  color: var(--pst-color-text-base);
+}
+
+.sig.c .s,
+.sig.c .sc,
+.sig.cpp .s,
+.sig.cpp .sc {
+  color: var(--pst-color-text-base);
+}
+
+// addition
+
+// .sig.c .sig-name .n,
+// .sig.cpp .sig-name .n {
+//   color: var(--pst-color-inline-code);
+// }
+
+.sig-name {
+  color: var(--pst-color-inline-code);
+}
+
+.sig-param .o,
+.sig-param .default_value {
+  color: var(--pst-color-text-muted);
+  font-weight: normal;
+}
+
+// change target color for dark theme
+dt:target,
+span.highlighted {
+  background-color: var(--pst-color-target);
+}
+
+.viewcode-back {
+  font-family: var(--pst-font-family-base);
+}
+
+.viewcode-block:target {
+  border-top: 1px solid var(--pst-color-border);
+  border-bottom: 1px solid var(--pst-color-border);
+  position: relative;
+  background-color: var(--pst-color-target);
+}
+
+dl > dt > a:has(.viewcode-link) {
+  // Sphinx applies a `float:right` rule to the .viewcode-line span, which
+  // exposes a browser glitch in the focus ring. It seems the browser creates
+  // two separate boxes, an empty box where the anchor element gets laid out and
+  // then another box around the anchor's contents that have been floated right.
+  // Firefox draws the focus ring around the empty anchor element box. Chrome
+  // draws two focus rings: one around the empty anchor and one around the
+  // floated-right element. To fix the glitch, we apply the float rule on the
+  // parent rather than the child.
+  float: right;
+
+  .viewcode-link {
+    float: none;
+  }
+}
+
+/*******************************************************************************
+* Styling for autosummary titles like "parameters" and "returns"
+*/
+
+// the API selector
+// from https://github.com/pradyunsg/furo/blob/main/src/furo/assets/styles/content/_api.sass#L6)
+dl[class]:not(.option-list, .field-list, .footnote, .glossary, .simple) {
+  // increase margin bottom after the dl elements
+  margin-bottom: 3rem;
+
+  dd {
+    margin-left: 2rem;
+
+    // Fix until this will be solved to Sphinx https://github.com/sphinx-doc/sphinx/issues/10815
+    & > dl.simple > dt {
+      display: flex;
+    }
+  }
+
+  dl.field-list {
+    display: grid;
+    grid-template-columns: unset;
+  }
+
+  dt.field-odd,
+  dt.field-even {
+    margin-top: 0.2rem;
+    margin-bottom: 0.1rem;
+    background-color: var(--pst-color-surface);
+  }
+}

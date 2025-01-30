@@ -1,0 +1,288 @@
+/**
+ * The primary sidebar on the left.
+ * e.g., between-pages navigation.
+ */
+
+$sidebar-padding-right: 1rem;
+
+.bd-sidebar-primary {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-height: calc(100vh - var(--pst-header-height));
+  position: sticky;
+  top: var(--pst-header-height);
+
+  @include make-col(3);
+
+  // Borders padding and whitespace
+  padding: 2rem $sidebar-padding-right 1rem 1rem;
+  border-right: 1px solid var(--pst-color-border);
+  background-color: var(--pst-color-background);
+  overflow-y: auto;
+  font-size: var(--pst-sidebar-font-size-mobile);
+
+  @include media-breakpoint-up($breakpoint-sidebar-primary) {
+    font-size: var(--pst-sidebar-font-size);
+  }
+
+  :focus-visible {
+    border-radius: $focus-ring-radius;
+  }
+
+  // override bootstrap when navlink are displayed in the sidebar
+  .nav-link {
+    font-size: var(--pst-sidebar-font-size-mobile);
+  }
+
+  &.no-sidebar {
+    border-right: 0;
+  }
+
+  &.hide-on-wide {
+    @include media-breakpoint-up($breakpoint-sidebar-primary) {
+      display: none;
+    }
+  }
+
+  // Headers shouldn't be colored in the sidebars and some extensions add headers
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: var(--pst-color-text-base);
+  }
+
+  .sidebar-primary-items__start,
+  .sidebar-primary-items__end {
+    .sidebar-primary-item {
+      padding: 0.5rem 0;
+    }
+  }
+
+  // Hide the sidebar header items on widescreen since they are visible in the header
+  .sidebar-header-items {
+    display: flex;
+    flex-direction: column;
+
+    .sidebar-header-items__title {
+      font-weight: var(--pst-sidebar-header-font-weight);
+      font-size: var(--pst-sidebar-header-font-size);
+      color: var(--pst-color-text-base);
+      margin-bottom: 0.5rem;
+    }
+
+    .bd-navbar-elements {
+      .nav-link {
+        &:focus-visible {
+          box-shadow: none; // Override Bootstrap
+          outline: $focus-ring-outline;
+          outline-offset: $focus-ring-width;
+        }
+      }
+    }
+
+    // Center header items get displayed vertically, end items are displayed horizontally
+    .sidebar-header-items__center {
+      display: flex;
+      flex-direction: column;
+    }
+
+    // Positioning end items
+    .sidebar-header-items__end {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    @include media-breakpoint-up($breakpoint-sidebar-primary) {
+      display: none;
+    }
+  }
+
+  .sidebar-primary-items__start {
+    // Add a border on mobile to separate it from the header sidebar area
+    border-top: 1px solid var(--pst-color-border);
+
+    @include media-breakpoint-up($breakpoint-sidebar-primary) {
+      border-top: none;
+    }
+  }
+
+  .sidebar-primary-items__end {
+    margin-top: auto;
+    margin-bottom: 1em;
+  }
+
+  .list-caption {
+    list-style: none;
+    padding-left: 0;
+
+    // Level 0 TOC heading is put inside the <summary> tag
+    // so let the <summary> tag take up more space
+    li.toctree-l0.has-children {
+      > details {
+        > summary {
+          position: relative;
+          height: auto;
+          width: auto;
+          display: flex;
+          justify-content: space-between;
+          align-items: baseline;
+
+          .toctree-toggle {
+            // Prevent toggle icon from getting squished by summary being a
+            // flexbox
+            flex: 0 0 auto;
+
+            // Make the level 0 chevron icon slightly bigger than descendant
+            // levels
+            .fa-chevron-down {
+              font-size: 1rem;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  li.has-children {
+    $toctree-toggle-width: 30px;
+
+    position: relative;
+
+    > .reference,
+    .caption {
+      margin-right: calc(
+        $toctree-toggle-width + $focus-ring-width
+      ); // keep clear of the toggle icon
+
+      padding-top: 0.25rem; // align caption text with toggle chevron
+    }
+
+    > details {
+      > summary {
+        // Remove browser default toggle icon
+        list-style: none;
+
+        &::-webkit-details-marker {
+          display: none;
+        }
+
+        // The summary element is natively focusable, but delegate the focus state to the toggle icon
+        &:focus-visible {
+          outline: none;
+
+          > .toctree-toggle {
+            outline: $focus-ring-outline;
+            outline-offset: -$focus-ring-width; // Prevent right side of focus ring from disappearing underneath the sidebar's right edge
+          }
+        }
+
+        // Container for expand/collapse chevron icon
+        .toctree-toggle {
+          cursor: pointer;
+
+          // Position it so that it's aligned with the top right corner of the
+          // last positioned element, in this case the li.has-children
+          position: absolute;
+          top: 0;
+          right: 0;
+
+          // Give it dimensions
+          width: $toctree-toggle-width;
+          height: $toctree-toggle-width; // make it square
+
+          // Vertically and horizontally center the icon within the container
+          display: inline-flex;
+          justify-content: center;
+          align-items: center;
+
+          .fa-chevron-down {
+            font-size: 0.75rem;
+          }
+        }
+      }
+
+      // The section is open/expanded, rotate the toggle icon (chevron) so it
+      // points up instead of down
+      &[open] {
+        > summary {
+          .fa-chevron-down {
+            transform: rotate(180deg);
+          }
+        }
+      }
+    }
+  }
+}
+
+/* Between-page links and captions */
+nav.bd-links {
+  margin-right: -$sidebar-padding-right; // align toctree toggle chevrons with right edge of sidebar and allow text to flow closer to the right edge
+
+  @include media-breakpoint-up($breakpoint-sidebar-primary) {
+    display: block;
+  }
+
+  ul {
+    display: block;
+    list-style: none;
+
+    // Reduce padding of nested `ul` items a bit
+    ul {
+      padding: 0 0 0 1rem;
+    }
+  }
+
+  li > a {
+    display: block;
+    padding: $toc-item-padding-y 0.65rem;
+
+    @include link-sidebar;
+
+    box-shadow: none;
+    margin-right: $focus-ring-width; // prevent the right side focus ring from disappearing under the sidebar right edge
+
+    &.reference.external {
+      &::after {
+        font: var(--fa-font-solid);
+        content: var(--pst-icon-external-link);
+        font-size: 0.75em;
+        margin-left: 0.3em;
+      }
+    }
+  }
+
+  .current > a {
+    @include link-sidebar-current;
+
+    background-color: transparent;
+  }
+
+  // Title
+  p.bd-links__title {
+    font-size: var(--pst-sidebar-header-font-size);
+    font-weight: var(--pst-sidebar-header-font-weight);
+    margin-bottom: 0.5rem;
+  }
+
+  // Toctree captions
+  p.caption {
+    font-weight: var(--pst-sidebar-header-font-weight);
+    position: relative;
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+    color: var(--pst-color-text-base);
+
+    &:first-child {
+      margin-top: 0;
+    }
+
+    font-size: var(--pst-sidebar-font-size-mobile);
+
+    @include media-breakpoint-up($breakpoint-sidebar-primary) {
+      font-size: var(--pst-sidebar-font-size);
+    }
+  }
+}

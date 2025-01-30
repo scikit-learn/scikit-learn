@@ -1,0 +1,2 @@
+Version: 1.9.0
+Arguments: ['C:\\Users\\runneradmin\\AppData\\Local\\Temp\\cibw-run-5byf486q\\cp310-win_amd64\\build\\venv\\Scripts\\delvewheel', 'repair', '--add-path', 'C:/Users/runneradmin/AppData/Local/Temp/cibw-run-5byf486q/cp310-win_amd64/build/venv/Lib/site-packages/scipy_openblas32/lib', '--no-dll', 'libsf_error_state.dll', '-w', 'C:\\Users\\runneradmin\\AppData\\Local\\Temp\\cibw-run-5byf486q\\cp310-win_amd64\\repaired_wheel', 'C:\\Users\\runneradmin\\AppData\\Local\\Temp\\cibw-run-5byf486q\\cp310-win_amd64\\built_wheel\\scipy-1.15.0-cp310-cp310-win_amd64.whl']

@@ -1,0 +1,24 @@
+{# Displays links to the Sphinx-generated indices (genindex, modindex, py-modindex). #}
+{%- set indices_navigation_heading_id = unique_html_id("pst-indices-navigation-heading") -%}
+<nav class="sidebar-indices-items" aria-labelledby="{{ indices_navigation_heading_id }}">
+  <p id="{{ indices_navigation_heading_id }}" class="sidebar-indices-items__title" role="heading" aria-level="1">{{ _("Indices") }}</p>
+  <ul class="indices-link">
+    {%- for rellink in rellinks %}
+      {%- if rellink[0] == 'genindex' %}
+        <li class="toctree-l1">
+          <a class="reference internal"
+             href="{{ pathto('genindex') }}"
+             accesskey="I">{{ _('General Index') }}</a>
+        </li>
+      {%- elif rellink[0] == 'modindex' %}
+        <li class="toctree-l1">
+          <a class="reference internal" href="{{ pathto('modindex') }}">{{ _('Global Module Index') }}</a>
+        </li>
+      {%- elif rellink[0] == 'py-modindex' %}
+        <li class="toctree-l1">
+          <a class="reference internal" href="{{ pathto('py-modindex') }}">{{ _('Python Module Index') }}</a>
+        </li>
+      {%- endif %}
+    {%- endfor %}
+  </ul>
+</nav>

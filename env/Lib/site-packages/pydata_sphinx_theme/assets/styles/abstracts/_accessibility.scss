@@ -1,0 +1,85 @@
+@use "sass:color";
+@use "sass:map";
+@use "sass:math";
+
+// Get color combinations that meet a minimum contrast ratio as per WCAG 2
+
+// @param {color} $bg - Background color of the element
+// @param {color} optional $target-color-contrast-dark $target-color-contrast-light  - Target text colors, defaul to our
+// $foundation-black and $foundation-white colors
+// @return {color} $max-ratio-color - The color that has the highest contrast ratio
+@function a11y-combination(
+  $bg,
+  $target-color-contrast-dark: $foundation-black,
+  $target-color-contrast-light: $foundation-white,
+  $min-contrast-ratio: $min-contrast-ratio-4
+) {
+  // will test against the specified foreground colors
+  $foregrounds: $target-color-contrast-light, $target-color-contrast-dark;
+  $max-ratio: 0;
+  $max-ratio-color: null;
+
+  @each $fg in $foregrounds {
+    $contrast-ratio: get-contrast-ratio($bg, $fg);
+
+    @if $contrast-ratio >= $min-contrast-ratio {
+      @return $fg;
+    } @else if $contrast-ratio > $max-ratio {
+      $max-ratio: $contrast-ratio;
+      $max-ratio-color: $fg;
+    }
+  }
+
+  @warn "Found no color leading to #{$min-contrast-ratio}:1 contrast ratio against #{$bg}...";
+  @return $max-ratio-color;
+}
+
+@function get-contrast-ratio($bg, $foreground) {
+  $l1: luminance($bg);
+  $l2: luminance($foreground);
+
+  // return the relative contrast ratio
+  @if $l1 > $l2 {
+    @return math.div(($l1 + 0.05), ($l2 + 0.05));
+  } @else {
+    @return math.div(($l2 + 0.05), ($l1 + 0.05));
+  }
+}
+
+// Return WCAG2.1 relative luminance
+// See https://www.w3.org/TR/WCAG/#dfn-relative-luminance
+// See https://www.w3.org/TR/WCAG/#dfn-contrast-ratio
+@function luminance($target-color) {
+  $rgb-col: (
+    "r": color.red($target-color),
+    "g": color.green($target-color),
+    "b": color.blue($target-color),
+  );
+
+  @each $channel, $value in $rgb-col {
+    // here we get RsRGB, GsRGB, and BsRGB
+    // stylelint-disable-next-line number-max-precision
+    @if math.div($value, 255) <= 0.04045 {
+      $rgb-col: map.merge(
+        $rgb-col,
+        (
+          $channel: math.div(math.div($value, 255), 12.92),
+        )
+      );
+    } @else {
+      $rgb-col: map.merge(
+        $rgb-col,
+        (
+          $channel:
+            math.pow(math.div((math.div($value, 255) + 0.055), 1.055), 2.4),
+        )
+      );
+    }
+  }
+
+  $r: map.get($rgb-col, "r");
+  $g: map.get($rgb-col, "g");
+  $b: map.get($rgb-col, "b");
+
+  @return (0.2126 * $r + 0.7152 * $g + 0.0722 * $b);
+}
