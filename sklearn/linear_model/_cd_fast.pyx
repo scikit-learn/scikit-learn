@@ -176,12 +176,8 @@ def enet_coordinate_descent(
 
                 w_ii = w[ii]  # Store previous value
 
-                if w_ii != 0.0:
-                    # R += w_ii * X[:,ii]
-                    _axpy(n_samples, w_ii, &X[0, ii], 1, &R[0], 1)
-
-                # tmp = (X[:,ii]*R).sum()
-                tmp = _dot(n_samples, &X[0, ii], 1, &R[0], 1)
+                # tmp = (X[:,ii]*R).sum() + w_ii * norm_cols_X[ii]
+                tmp = _dot(n_samples, &X[0, ii], 1, &R[0], 1) + w_ii * norm_cols_X[ii]
 
                 if positive and tmp < 0:
                     w[ii] = 0.0
@@ -189,9 +185,9 @@ def enet_coordinate_descent(
                     w[ii] = (fsign(tmp) * fmax(fabs(tmp) - alpha, 0)
                              / (norm_cols_X[ii] + beta))
 
-                if w[ii] != 0.0:
-                    # R -=  w[ii] * X[:,ii] # Update residual
-                    _axpy(n_samples, -w[ii], &X[0, ii], 1, &R[0], 1)
+                if (w_ii - w[ii]) != 0.0:
+                    # R +=  (w_ii - w[ii]) * X[:,ii] # Update residual
+                    _axpy(n_samples, w_ii - w[ii], &X[0, ii], 1, &R[0], 1)
 
                 # update the maximum absolute coefficient update
                 d_w_ii = fabs(w[ii] - w_ii)
