@@ -35,6 +35,7 @@ from ._plot.roc_curve import RocCurveDisplay
 from ._ranking import (
     auc,
     average_precision_score,
+    binary_classification_curve,
     coverage_error,
     dcg_score,
     det_curve,
@@ -101,6 +102,7 @@ __all__ = [
     "auc",
     "average_precision_score",
     "balanced_accuracy_score",
+    "binary_classification_curve",
     "calinski_harabasz_score",
     "check_scoring",
     "class_likelihood_ratios",
