@@ -13,6 +13,7 @@
 
 .estimator-params li{
     position:relative; /* to position the lines using sudo elements absolutely */
+    padding-left: 3em;
     /*outline:.2em solid green; /*USE THIS LINE to see the green lines */
 }
 .estimator-params li::before{ /* before the content */
@@ -22,7 +23,7 @@
     border-left:.2em solid rgb(240, 4, 4);
     border-bottom:.2em solid green;
     content: "";
-    width: 1em;
+    width: 3em;
     height: 1em;
 
 }
