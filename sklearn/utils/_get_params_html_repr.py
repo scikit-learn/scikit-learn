@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from collections import UserDict
 from pathlib import Path
 
@@ -38,9 +41,13 @@ def _get_css_style():
 
 
 def html_template(data):
+    num_parameters = len(data)
     style_template = _get_css_style()
-    html_start = f"<head><style>{style_template}</style><body>"
-    html_end = "</ul></body>"
+    html_start = (
+        f"<head><style>{style_template}</style><body>"
+        "<details>"
+        "<summary>Estimator x</summary>"
+    )
     out = ""
     for x, y in data.items():
         out += f"""
@@ -48,4 +55,5 @@ def html_template(data):
                       <li>{x}:{y}</li>
                   </ul>
            """
+    html_end = "</details></ul></body>"
     return html_start + out + html_end

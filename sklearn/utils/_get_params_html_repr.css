@@ -1,37 +1,43 @@
-ul {
-    list-style-type: none;
-    margin: 0;
-    padding: 0 0 0 1em;
+:root {
+
+}
+ul{
+    list-style: none;
+    line-height: 2em; /*separates each line in the list so the horizontal tree line shows in the middle */
 }
 
-li {
-    position: relative;
-    padding: 3px 0 3px 1em;
+summary{
+    cursor: pointer; /* pointer with a hand */
 }
 
-li::before {
+
+ul li{
+    position:relative; /* to position the lines using sudo elements absolutely */
+    outline:1px solid green; /*USE THIS LINE to see the green lines */
+}
+ul li::before{ /* before the content */
+    position:absolute;
+    left:-10px;
+    top:0px;
+    border-left:2px solid rgb(240, 4, 4);
+    border-bottom:2px solid green;
     content: "";
-    position: absolute;
-    top: 12px;
-    left: -10px;
-    border-left: 1px solid #666;
-    border-bottom: 1px solid #666;
-    width: 10px;
-    height: 15px;
-}
+    width: 8px;
+    height: 1em;
 
-li:last-child::before {
-    border-left: none;
 }
-
-li::after {
+ul li::after{
+    position:absolute;
+    left:-10px;
+    bottom:0px;
+    border-left:2px solid yellow;
     content: "";
-    position: absolute;
-    left: -10px;
-    border-left: 1px solid #666;
+    width: 8px;
     height: 100%;
 }
-
-li:last-child::after {
-    display: none;
+ul li:last-child::after{ /* the ::after over-rides the 'after' element */
+    display:none;
+}
+ul.tree > li:after{
+    display:none
 }
