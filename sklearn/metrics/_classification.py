@@ -363,7 +363,10 @@ def confusion_matrix(
     if labels is None:
         labels = unique_labels(y_true, y_pred)
     else:
-        labels = np.asarray(labels)
+        if not _is_numpy_namespace(get_namespace(labels)[0]):
+            labels = _convert_to_numpy(labels, xp)
+        else:  # input is a list
+            labels = np.asarray(labels)
         n_labels = labels.size
         if n_labels == 0:
             raise ValueError("'labels' should contain at least one label.")
