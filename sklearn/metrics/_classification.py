@@ -29,10 +29,13 @@ from ..utils import (
 from ..utils._array_api import (
     _average,
     _bincount,
+    _convert_to_numpy,
     _count_nonzero,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
+    _isin,
     _max_precision_float_dtype,
+    _nan_to_num,
     _searchsorted,
     _setdiff1d,
     _tolist,
@@ -40,6 +43,7 @@ from ..utils._array_api import (
     device,
     get_namespace,
     get_namespace_and_device,
+    size,
 )
 from ..utils._param_validation import (
     Hidden,
@@ -275,7 +279,7 @@ def confusion_matrix(
     y_pred : array-like of shape (n_samples,)
         Estimated targets as returned by a classifier.
 
-    labels : array-like of shape (n_classes), default=None
+    labels : array-like of shape (n_classes,), default=None
         List of labels to index the matrix. This may be used to reorder
         or select a subset of labels.
         If ``None`` is given, those that appear at least once
@@ -293,7 +297,7 @@ def confusion_matrix(
 
     Returns
     -------
-    C : ndarray of shape (n_classes, n_classes)
+    C : array of shape (n_classes, n_classes)
         Confusion matrix whose i-th row and j-th
         column entry indicates the number of
         samples with true label being i-th class
@@ -338,6 +342,7 @@ def confusion_matrix(
     (np.int64(0), np.int64(2), np.int64(1), np.int64(1))
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
+    xp, _, device_ = get_namespace_and_device(y_true, y_pred, labels, sample_weight)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):
         raise ValueError("%s is not supported" % y_type)
@@ -345,55 +350,69 @@ def confusion_matrix(
     if labels is None:
         labels = unique_labels(y_true, y_pred)
     else:
-        labels = np.asarray(labels)
+        labels = xp.asarray(labels)
         n_labels = labels.size
         if n_labels == 0:
-            raise ValueError("'labels' should contains at least one label.")
+            raise ValueError("'labels' should contain at least one label.")
         elif y_true.size == 0:
-            return np.zeros((n_labels, n_labels), dtype=int)
-        elif len(np.intersect1d(y_true, labels)) == 0:
+            return xp.zeros((n_labels, n_labels), dtype=xp.int64, device=device_)
+        elif not _isin(labels, y_true, xp=xp).any():
             raise ValueError("At least one label specified must be in y_true")
 
     if sample_weight is None:
-        sample_weight = np.ones(y_true.shape[0], dtype=np.int64)
+        sample_weight = xp.ones(y_true.shape[0], dtype=xp.int64, device=device_)
     else:
-        sample_weight = np.asarray(sample_weight)
+        sample_weight = xp.asarray(sample_weight, device=device_)
 
     check_consistent_length(y_true, y_pred, sample_weight)
 
-    n_labels = labels.size
+    n_labels = size(labels)
     # If labels are not consecutive integers starting from zero, then
     # y_true and y_pred must be converted into index form
     need_index_conversion = not (
-        labels.dtype.kind in {"i", "u", "b"}
-        and np.all(labels == np.arange(n_labels))
-        and y_true.min() >= 0
-        and y_pred.min() >= 0
+        xp.isdtype(labels.dtype, ("signed integer", "unsigned integer", "bool"))
+        and xp.all(labels == xp.arange(n_labels, device=device_))
+        and xp.min(y_true) >= 0
+        and xp.min(y_pred) >= 0
     )
     if need_index_conversion:
-        label_to_ind = {y: x for x, y in enumerate(labels)}
-        y_pred = np.array([label_to_ind.get(x, n_labels + 1) for x in y_pred])
-        y_true = np.array([label_to_ind.get(x, n_labels + 1) for x in y_true])
+        # convert 0D array into scalar type, see https://github.com/data-apis/array-api-strict/issues/109:
+        if xp.isdtype(labels.dtype, ("real floating")):
+            scalar_dtype = float
+        else:
+            scalar_dtype = str
+        label_to_ind = {scalar_dtype(entry): idx for idx, entry in enumerate(labels)}
+        y_pred = xp.asarray(
+            [label_to_ind.get(scalar_dtype(x), n_labels + 1) for x in y_pred],
+            device=device_,
+        )
+        y_true = xp.asarray(
+            [label_to_ind.get(scalar_dtype(x), n_labels + 1) for x in y_true],
+            device=device_,
+        )
 
     # intersect y_pred, y_true with labels, eliminate items not in labels
-    ind = np.logical_and(y_pred < n_labels, y_true < n_labels)
-    if not np.all(ind):
+    ind = xp.logical_and(y_pred < n_labels, y_true < n_labels)
+    if not xp.all(ind):
         y_pred = y_pred[ind]
         y_true = y_true[ind]
         # also eliminate weights of eliminated items
         sample_weight = sample_weight[ind]
 
     # Choose the accumulator dtype to always have high precision
-    if sample_weight.dtype.kind in {"i", "u", "b"}:
+    if xp.isdtype(sample_weight.dtype, ("signed integer", "unsigned integer", "bool")):
         dtype = np.int64
     else:
         dtype = np.float64
-
     cm = coo_matrix(
-        (sample_weight, (y_true, y_pred)),
+        (
+            _convert_to_numpy(sample_weight, xp=xp),
+            (_convert_to_numpy(y_true, xp=xp), _convert_to_numpy(y_pred, xp=xp)),
+        ),
         shape=(n_labels, n_labels),
         dtype=dtype,
     ).toarray()
+    cm = xp.asarray(cm)
 
     with np.errstate(all="ignore"):
         if normalize == "true":
@@ -402,7 +421,7 @@ def confusion_matrix(
             cm = cm / cm.sum(axis=0, keepdims=True)
         elif normalize == "all":
             cm = cm / cm.sum()
-        cm = np.nan_to_num(cm)
+        cm = _nan_to_num(cm)
 
     if cm.shape == (1, 1):
         warnings.warn(
