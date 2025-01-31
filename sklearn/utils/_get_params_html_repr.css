@@ -3,7 +3,7 @@
 }
 .estimator-params ul{
     list-style: none;
-    line-height: 2em; /*separates each line in the list so the horizontal tree line shows in the middle */
+    line-height: 1.5em; /*separates each line in the list so the horizontal tree line shows in the middle */
 }
 
 .estimator-params ul li{
@@ -24,7 +24,7 @@
     border-bottom:.2em solid green;
     content: "";
     width: 3em;
-    height: 1em;
+    height: .5em;
 
 }
 .estimator-params li::after{
