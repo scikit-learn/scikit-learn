@@ -27,17 +27,17 @@ with _warnings.catch_warnings():
 
 
 __all__ = [
-    "parallel_backend",
-    "register_parallel_backend",
-    "cpu_count",
-    "Parallel",
     "Memory",
+    "Parallel",
+    "__version__",
+    "cpu_count",
     "delayed",
+    "dump",
     "effective_n_jobs",
     "hash",
-    "logger",
-    "dump",
-    "load",
     "joblib",
-    "__version__",
+    "load",
+    "logger",
+    "parallel_backend",
+    "register_parallel_backend",
 ]

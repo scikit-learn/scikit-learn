@@ -27,7 +27,7 @@ from ..utils.extmath import svd_flip
 from ..utils.fixes import parse_version, sp_version
 from ..utils.validation import FLOAT_DTYPES, check_is_fitted, validate_data
 
-__all__ = ["PLSCanonical", "PLSRegression", "PLSSVD"]
+__all__ = ["PLSSVD", "PLSCanonical", "PLSRegression"]
 
 
 if sp_version >= parse_version("1.7"):
