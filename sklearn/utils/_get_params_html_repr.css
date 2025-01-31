@@ -24,7 +24,7 @@
     border-bottom:.2em solid green;
     content: "";
     width: 3em;
-    height: .5em;
+    height: .8em;
 
 }
 .estimator-params li::after{
