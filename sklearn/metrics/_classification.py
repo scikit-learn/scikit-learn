@@ -392,8 +392,8 @@ def confusion_matrix(
     )
     if need_index_conversion:
         label_to_ind = {label: index for index, label in enumerate(labels)}
-        y_pred = np.array([label_to_ind.get(index, n_labels + 1) for index in y_pred])
-        y_true = np.array([label_to_ind.get(index, n_labels + 1) for index in y_true])
+        y_pred = np.array([label_to_ind.get(label, n_labels + 1) for label in y_pred])
+        y_true = np.array([label_to_ind.get(label, n_labels + 1) for label in y_true])
 
     # intersect y_pred, y_true with labels, eliminate items not in labels
     ind = np.logical_and(y_pred < n_labels, y_true < n_labels)
