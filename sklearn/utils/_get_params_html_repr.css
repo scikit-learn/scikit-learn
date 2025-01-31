@@ -1,43 +1,45 @@
 :root {
-
+    padding: 1em;
 }
-ul{
+.estimator-params ul{
     list-style: none;
     line-height: 2em; /*separates each line in the list so the horizontal tree line shows in the middle */
 }
 
-summary{
+.estimator-params ul li{
     cursor: pointer; /* pointer with a hand */
 }
 
 
-ul li{
+.estimator-params li{
     position:relative; /* to position the lines using sudo elements absolutely */
-    outline:1px solid green; /*USE THIS LINE to see the green lines */
+    /*outline:.2em solid green; /*USE THIS LINE to see the green lines */
 }
-ul li::before{ /* before the content */
+.estimator-params li::before{ /* before the content */
     position:absolute;
     left:-10px;
     top:0px;
-    border-left:2px solid rgb(240, 4, 4);
-    border-bottom:2px solid green;
+    border-left:.2em solid rgb(240, 4, 4);
+    border-bottom:.2em solid green;
     content: "";
-    width: 8px;
+    width: 1em;
     height: 1em;
 
 }
-ul li::after{
+.estimator-params li::after{
     position:absolute;
     left:-10px;
     bottom:0px;
-    border-left:2px solid yellow;
+    border-left:2px solid rgb(179, 0, 255);
     content: "";
     width: 8px;
     height: 100%;
 }
-ul li:last-child::after{ /* the ::after over-rides the 'after' element */
-    display:none;
+
+.estimator-params  ul > li:last-child::after{  /*the ::after over-rides the 'after' element */
+    border-left: none;
 }
-ul.tree > li:after{
+
+.estimator-params ul.tree > li:after{
     display:none
 }

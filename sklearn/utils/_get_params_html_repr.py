@@ -41,19 +41,39 @@ def _get_css_style():
 
 
 def html_template(data):
+
     num_parameters = len(data)
     style_template = _get_css_style()
-    html_start = (
-        f"<head><style>{style_template}</style><body>"
-        "<details>"
-        "<summary>Estimator x</summary>"
-    )
+    html_start = f"""
+        <head><style>{style_template}</style></head>
+        <body>
+
+        <div class="estimator-params">
+             <ul>
+            <details>
+                <summary>Estimator x</summary>
+                <ul>
+        """
     out = ""
     for x, y in data.items():
         out += f"""
-                  <ul>
+
                       <li>{x}:{y}</li>
-                  </ul>
+
            """
-    html_end = "</details></ul></body>"
-    return html_start + out + html_end
+    html_end = """
+            </details>
+            </ul>
+        </div>
+
+        </body>
+    """
+    html_template = f"{html_start}{out}{html_end}"
+    try:
+        output_path = "get_params.html"
+        with open(output_path, "w") as f:
+            f.write(html_template)
+        print(f"HTML saved to: {output_path}")
+    except Exception as e:
+        print(f"Error saving HTML: {e}")
+    return html_template
