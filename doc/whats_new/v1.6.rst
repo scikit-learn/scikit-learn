@@ -182,19 +182,19 @@ See :ref:`array_api` for more details.
   By :user:`Emily Chen <EmilyXinyi>` :pr:`29389`
 
 - |Feature| :func:`sklearn.metrics.pairwise.euclidean_distances` and
-  :func:`sklearn.metrics.pairwise.rbf_kernel` now supports Array API compatible
+  :func:`sklearn.metrics.pairwise.rbf_kernel` now support Array API compatible
   inputs.
   By :user:`Omar Salman <OmarManzoor>` :pr:`29433`
 
 - |Feature| :func:`sklearn.metrics.pairwise.linear_kernel`,
   :func:`sklearn.metrics.pairwise.sigmoid_kernel`, and
-  :func:`sklearn.metrics.pairwise.polynomial_kernel` now supports Array API
+  :func:`sklearn.metrics.pairwise.polynomial_kernel` now support Array API
   compatible inputs.
   By :user:`Omar Salman <OmarManzoor>` :pr:`29475`
 
 - |Feature| :func:`sklearn.metrics.mean_squared_log_error` and
   :func:`sklearn.metrics.root_mean_squared_log_error`
-  now supports Array API compatible inputs.
+  now support Array API compatible inputs.
   By :user:`Virgil Chan <virchan>` :pr:`29709`
 
 - |Feature| :class:`preprocessing.MinMaxScaler` with `clip=True` now supports Array API
@@ -290,7 +290,7 @@ scikit-learn has preliminary support for free-threaded CPython, in particular
 free-threaded wheels are available for all of our supported platforms.
 
 Free-threaded (also known as nogil) CPython 3.13 is an experimental version of
-CPython 3.13 who aims at enabling efficient multi-threaded use cases by
+CPython 3.13 which aims at enabling efficient multi-threaded use cases by
 removing the Global Interpreter Lock (GIL).
 
 For more details about free-threaded CPython see `py-free-threading doc <https://py-free-threading.github.io>`_,
@@ -500,7 +500,7 @@ Python and CPython ecosystem, for example :user:`Nathan Goldbaum <ngoldbaum>`,
   reweighted or with repeated data points.
   By :user:`Antoine Baker <antoinebaker>` :pr:`30040`
 
-- |Fix| :class:`linear_model.LogisticRegression` and and other linear models that
+- |Fix| :class:`linear_model.LogisticRegression` and other linear models that
   accept `solver="newton-cholesky"` now report the correct number of iterations
   when they fall back to the `"lbfgs"` solver because of a rank deficient
   Hessian matrix.
@@ -565,7 +565,7 @@ Python and CPython ecosystem, for example :user:`Nathan Goldbaum <ngoldbaum>`,
 
 - |API| The default value of the `response_method` parameter of
   :func:`metrics.make_scorer` will change from `None` to `"predict"` and `None` will be
-  removed in 1.8. In the mean time, `None` is equivalent to `"predict"`.
+  removed in 1.8. In the meantime, `None` is equivalent to `"predict"`.
   By :user:`Jérémie du Boisberranger <jeremiedb>` :pr:`30001`
 
 :mod:`sklearn.model_selection`
