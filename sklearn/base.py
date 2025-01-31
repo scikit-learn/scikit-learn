@@ -17,6 +17,7 @@ from . import __version__
 from ._config import config_context, get_config
 from .exceptions import InconsistentVersionWarning
 from .utils._estimator_html_repr import _HTMLDocumentationLinkMixin, estimator_html_repr
+from .utils._get_params_html_repr import ParamsDict
 from .utils._metadata_requests import _MetadataRequester, _routing_enabled
 from .utils._param_validation import validate_parameter_constraints
 from .utils._set_output import _SetOutputMixin
@@ -250,7 +251,8 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
                 deep_items = value.get_params().items()
                 out.update((key + "__" + k, val) for k, val in deep_items)
             out[key] = value
-        return out
+
+        return ParamsDict(out)
 
     def set_params(self, **params):
         """Set the parameters of this estimator.

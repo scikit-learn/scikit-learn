@@ -1,0 +1,37 @@
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0 0 0 1em;
+}
+
+li {
+    position: relative;
+    padding: 3px 0 3px 1em;
+}
+
+li::before {
+    content: "";
+    position: absolute;
+    top: 12px;
+    left: -10px;
+    border-left: 1px solid #666;
+    border-bottom: 1px solid #666;
+    width: 10px;
+    height: 15px;
+}
+
+li:last-child::before {
+    border-left: none;
+}
+
+li::after {
+    content: "";
+    position: absolute;
+    left: -10px;
+    border-left: 1px solid #666;
+    height: 100%;
+}
+
+li:last-child::after {
+    display: none;
+}
