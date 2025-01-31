@@ -371,8 +371,6 @@ def confusion_matrix(
             return np.zeros((n_labels, n_labels), dtype=int)
         elif len(np.intersect1d(y_true, labels)) == 0:
             raise ValueError("At least one label specified must be in y_true")
-    if not _is_numpy_namespace(get_namespace(labels)[0]):
-        labels = _convert_to_numpy(labels, xp)
 
     if sample_weight is None:
         sample_weight = np.ones(y_true.shape[0], dtype=np.int64)
