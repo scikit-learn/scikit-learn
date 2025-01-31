@@ -41,64 +41,6 @@ Videos
   showcasing talks by maintainers
   and community members.
 
-Older videos
-------------
-
-- An introduction to scikit-learn at Scipy 2013
-  by :user:`Gael Varoquaux <GaelVaroquaux>`,
-  :user:`Jake Vanderplas <jakevdp>`  and
-  :user:`Olivier Grisel <ogrisel>`.
-
-  Part I:
-  `1 <https://www.youtube.com/watch?v=r4bRUvvlaBw>`__,
-  `2 <https://www.youtube.com/watch?v=hlaMiXCRxB0>`__,
-  `3 <https://www.youtube.com/watch?v=XS4TIGe7MaU>`__.
-
-  Part II:
-  `1 <https://www.youtube.com/watch?v=uX4ZirOiWkw>`__,
-  `2 <https://www.youtube.com/watch?v=kTLyp10FD60>`__.
-
-  Notebooks available on
-  `github <https://github.com/jakevdp/sklearn_scipy2013>`__.
-
-- `Introduction to scikit-learn
-  <http://videolectures.net/icml2010_varaquaux_scik/>`_
-  by :user:`Gael Varoquaux <GaelVaroquaux>` at ICML 2010
-
-  A three minute video from a very early stage of scikit-learn, explaining the
-  basic idea and approach we are following.
-
-- `Introduction to statistical learning with scikit-learn <https://archive.org/search.php?query=scikit-learn>`_
-  by :user:`Gael Varoquaux <GaelVaroquaux>` at SciPy 2011
-
-  An extensive tutorial, consisting of four sessions of one hour.
-  The tutorial covers the basics of machine learning,
-  many algorithms and how to apply them using scikit-learn.
-
-- `Statistical Learning for Text Classification with scikit-learn and NLTK
-  <https://pyvideo.org/video/417/pycon-2011--statistical-machine-learning-for-text>`_
-  (and `slides <https://www.slideshare.net/ogrisel/statistical-machine-learning-for-text-classification-with-scikitlearn-and-nltk>`_)
-  by :user:`Olivier Grisel <ogrisel>` at PyCon 2011
-
-  Thirty minute introduction to text classification. Explains how to
-  use NLTK and scikit-learn to solve real-world text classification
-  tasks and compares against cloud-based solutions.
-
-- `Introduction to Interactive Predictive Analytics in Python with scikit-learn <https://www.youtube.com/watch?v=Zd5dfooZWG4>`_
-  by :user:`Olivier Grisel <ogrisel>` at PyCon 2012
-
-  3-hours long introduction to prediction tasks using scikit-learn.
-
-- `scikit-learn - Machine Learning in Python <https://www.youtube.com/watch?v=cHZONQ2-x7I>`_
-  by :user:`Jake Vanderplas <jakevdp>` at the 2012 PyData workshop at Google
-
-  Interactive demonstration of some scikit-learn features. 75 minutes.
-
-- `scikit-learn tutorial <https://www.youtube.com/watch?v=cHZONQ2-x7I>`_
-  by :user:`Jake Vanderplas <jakevdp>` at PyData NYC 2012
-
-  Presentation using the online tutorial, 45 minutes.
-
 New to Scientific Python?
 ==========================
 
