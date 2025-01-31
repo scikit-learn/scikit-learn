@@ -1385,6 +1385,12 @@ def _get_warnings_filters_info_list():
         WarningInfo(
             "ignore", message="Attribute s is deprecated", category=DeprecationWarning
         ),
+        # TODO: remove when numpy min version >= 1.22 or pandas min version >= 1.2
+        WarningInfo(
+            "ignore",
+            message="Numeric-style type codes are deprecated",
+            category=DeprecationWarning,
+        ),
     ]
 
 
