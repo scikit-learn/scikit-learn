@@ -21,7 +21,7 @@ Folding and unfolding outdated diffs on pull requests
 -----------------------------------------------------
 
 GitHub hides discussions on PRs when the corresponding lines of code have been
-changed in the mean while. This `userscript
+changed in the meantime. This `userscript
 <https://raw.githubusercontent.com/lesteve/userscripts/master/github-expand-all.user.js>`__
 provides a shortcut (Control-Alt-P at the time of writing but look at the code
 to be sure) to unfold all such hidden discussions at once, so you can catch up.
@@ -53,7 +53,7 @@ Useful pytest aliases and flags
 -------------------------------
 
 The full test suite takes fairly long to run. For faster iterations,
-it is possibly to select a subset of tests using pytest selectors.
+it is possible to select a subset of tests using pytest selectors.
 In particular, one can run a `single test based on its node ID
 <https://docs.pytest.org/en/latest/example/markers.html#selecting-tests-based-on-their-node-id>`_:
 
@@ -371,7 +371,7 @@ to your shared folder under the `/io` mount point:
 .. prompt:: bash $
 
     docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-    docker run -v`pwd`:/io --rm -it arm64v8/ubuntu /bin/bash
+    docker run -v `pwd`:/io --rm -it arm64v8/ubuntu /bin/bash
 
 In the container, install miniforge3 for the ARM64 (a.k.a. aarch64)
 architecture:

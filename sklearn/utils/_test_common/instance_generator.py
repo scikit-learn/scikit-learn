@@ -590,6 +590,16 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
         ],
     },
     MDS: {"check_dict_unchanged": dict(max_iter=5, n_components=1, n_init=2)},
+    MLPClassifier: {
+        "check_sample_weight_equivalence_on_dense_data": [
+            dict(solver="lbfgs"),
+        ]
+    },
+    MLPRegressor: {
+        "check_sample_weight_equivalence_on_dense_data": [
+            dict(solver="sgd", tol=1e-2, random_state=42),
+        ]
+    },
     MiniBatchDictionaryLearning: {
         "check_dict_unchanged": dict(batch_size=10, max_iter=5, n_components=1)
     },
@@ -819,15 +829,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     BaggingRegressor: {
         # TODO: replace by a statistical test, see meta-issue #16298
-        "check_sample_weight_equivalence_on_dense_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-        "check_sample_weight_equivalence_on_sparse_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-    },
-    BayesianRidge: {
-        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
         "check_sample_weight_equivalence_on_dense_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),

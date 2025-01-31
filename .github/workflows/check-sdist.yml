@@ -1,4 +1,6 @@
 name: "Check sdist"
+permissions:
+  contents: read
 
 on:
   schedule:
