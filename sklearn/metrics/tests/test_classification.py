@@ -3109,15 +3109,15 @@ def test_d2_log_loss_score_raises():
 )
 def test_confusion_matrix_array_api(array_namespace, device, _):
     """Test that `confusion_matrix` works for all array types if need_index_conversion
-    evaluates to `True`and that it raises if not at least one label from `y_pred` is in
-    `y_true`."""
+    evaluates to `True` and with labels passed."""
     xp = _array_api_for_tests(array_namespace, device)
 
     y_true = xp.asarray([1, 2, 3], device=device)
     y_pred = xp.asarray([4, 5, 6], device=device)
+    labels = xp.asarray([1, 2, 3], device=device)
 
     with config_context(array_api_dispatch=True):
-        result = confusion_matrix(y_true, y_pred)
+        result = confusion_matrix(y_true, y_pred, labels=labels)
         xp_result, _ = get_namespace(result)
         assert _is_numpy_namespace(xp_result)
 
