@@ -59,7 +59,7 @@ feature, code or documentation improvement).
    instead.
 
 #. Install a recent version of Python (3.9 or later at the time of writing) for
-   instance using Condaforge_. Conda-forge provides a conda-based distribution of
+   instance using conda-forge_. Conda-forge provides a conda-based distribution of
    Python and the most popular scientific libraries.
 
    If you installed Python with conda, we recommend to create a dedicated
@@ -482,4 +482,4 @@ the base system and these steps will not be necessary.
 .. _Homebrew: https://brew.sh
 .. _virtualenv: https://docs.python.org/3/tutorial/venv.html
 .. _conda environment: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
-.. _Condaforge: https://conda-forge.org/download/
+.. _conda-forge: https://conda-forge.org/download/

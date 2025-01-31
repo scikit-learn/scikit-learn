@@ -207,6 +207,11 @@ add_function_parentheses = False
 # Sphinx are currently 'default' and 'sphinxdoc'.
 html_theme = "pydata_sphinx_theme"
 
+# This config option is used to generate the canonical links in the header
+# of every page. The canonical link is needed to prevent search engines from
+# returning results pointing to old scikit-learn versions.
+html_baseurl = "https://scikit-learn.org/stable/"
+
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
