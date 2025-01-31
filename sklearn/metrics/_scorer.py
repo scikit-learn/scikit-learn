@@ -61,12 +61,14 @@ from . import (
     mean_squared_error,
     mean_squared_log_error,
     median_absolute_error,
+    npv_score,
     precision_score,
     r2_score,
     recall_score,
     roc_auc_score,
     root_mean_squared_error,
     root_mean_squared_log_error,
+    specificity_score,
     top_k_accuracy_score,
 )
 from .cluster import (
@@ -894,6 +896,8 @@ for name, metric in [
     ("recall", recall_score),
     ("f1", f1_score),
     ("jaccard", jaccard_score),
+    ("specificity", specificity_score),
+    ("npv", npv_score),
 ]:
     _SCORERS[name] = make_scorer(metric, average="binary")
     for average in ["macro", "micro", "samples", "weighted"]:
