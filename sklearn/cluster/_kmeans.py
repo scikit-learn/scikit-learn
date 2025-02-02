@@ -2138,9 +2138,18 @@ class MiniBatchKMeans(_BaseKMeans):
             # Perform the iterative optimization until convergence
             for i in range(n_steps):
                 # Sample a minibatch from the full dataset
-                minibatch_indices = random_state.randint(0, n_samples, self._batch_size)
+                minibatch_indices = random_state.choice(
+                    n_samples,
+                    self._batch_size,
+                    p=sample_weight / np.sum(sample_weight),
+                    replace=True,
+                )
 
                 # Perform the actual update step on the minibatch data
+                # Note, I am not sure how sample weights are used here
+                # So left it in, it seems like the weight sums are updated using
+                # sample weights so need some help here to understand the
+                # _minibatch_update_dense/sparse code
                 batch_inertia = _mini_batch_step(
                     X=X[minibatch_indices],
                     sample_weight=sample_weight[minibatch_indices],
