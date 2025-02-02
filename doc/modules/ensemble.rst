@@ -819,7 +819,8 @@ recommend to set the learning rate to a small constant
 that early stopping applies,
 see :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_early_stopping.py`
 for a more detailed discussion of the interaction between
-``learning_rate`` and ``n_estimators`` see [R2007]_.
+``learning_rate`` and ``n_estimators`` see [R2007]_. Also see :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regularization.py`
+for an example on how regularization via shrinkage impacts Gradient Boosting.
 
 Subsampling
 ^^^^^^^^^^^^
