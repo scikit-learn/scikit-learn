@@ -132,6 +132,7 @@ Metrics
 
 - :func:`sklearn.metrics.cluster.entropy`
 - :func:`sklearn.metrics.accuracy_score`
+- :func:`sklearn.metrics.cluster.contingency_matrix`
 - :func:`sklearn.metrics.d2_tweedie_score`
 - :func:`sklearn.metrics.explained_variance_score`
 - :func:`sklearn.metrics.f1_score`
