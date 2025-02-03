@@ -20,8 +20,8 @@
     position:absolute;
     left:-10px;
     top:0px;
-    border-left:.2em solid rgb(240, 4, 4);
-    border-bottom:.2em solid green;
+    border-left:.2em solid gray;
+    border-bottom:.2em solid gray;
     content: "";
     width: 3em;
     height: .5em;
@@ -31,7 +31,7 @@
     position:absolute;
     left:-10px;
     bottom:0px;
-    border-left:2px solid rgb(179, 0, 255);
+    border-left:2px solid gray;
     content: "";
     width: 8px;
     height: 100%;
