@@ -25,14 +25,12 @@ class ParamsDict(UserDict):
         return self._repr_html_inner
 
     def _repr_html_inner(self):
-        # return f"<body><h1>Hello World aqui</h1></body>"
         return html_template(self)
 
     def _repr_mimebundle_(self, **kwargs):
         """Mime bundle used by jupyter kernels to display estimator"""
         output = {"text/plain": repr(self)}
         if get_config()["display"] == "diagram":
-            # output["text/html"] = f"<body><h1>Hello World alla {self}</h1></body>"
             output["text/html"] = html_template(self)
 
 
@@ -57,15 +55,12 @@ def html_template(data):
     out = ""
     for x, y in data.items():
         out += f"""
-
                       <li>{x}:{y}</li>
-
            """
     html_end = """
             </details>
             </ul>
         </div>
-
         </body>
     """
     html_template = f"{html_start}{out}{html_end}"
@@ -73,7 +68,6 @@ def html_template(data):
         output_path = "get_params.html"
         with open(output_path, "w") as f:
             f.write(html_template)
-        print(f"HTML saved to: {output_path}")
     except Exception as e:
         print(f"Error saving HTML: {e}")
     return html_template

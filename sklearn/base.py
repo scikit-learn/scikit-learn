@@ -251,7 +251,6 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
                 deep_items = value.get_params().items()
                 out.update((key + "__" + k, val) for k, val in deep_items)
             out[key] = value
-
         return ParamsDict(out)
 
     def set_params(self, **params):

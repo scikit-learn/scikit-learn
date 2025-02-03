@@ -10,7 +10,6 @@
     cursor: pointer; /* pointer with a hand */
 }
 
-
 .estimator-params li{
     position:relative; /* to position the lines using sudo elements absolutely */
     padding-left: 3em;
@@ -20,8 +19,8 @@
     position:absolute;
     left:-10px;
     top:0px;
-    border-left:.2em solid gray;
-    border-bottom:.2em solid gray;
+    border-left:.2em solid whitesmoke;
+    border-bottom:.2em solid whitesmoke;
     content: "";
     width: 3em;
     height: .5em;
@@ -31,7 +30,7 @@
     position:absolute;
     left:-10px;
     bottom:0px;
-    border-left:2px solid gray;
+    border-left:2px solid whitesmoke;
     content: "";
     width: 8px;
     height: 100%;
