@@ -40,7 +40,12 @@ from sklearn.datasets import fetch_file
 pl.Config.set_fmt_str_lengths(20)
 
 bike_sharing_data_file = fetch_file(
-    "https://openml1.win.tue.nl/datasets/0004/44063/dataset_44063.pq",
+    # Original file was hosted at:
+    # https://openml1.win.tue.nl/datasets/0004/44063/dataset_44063.pq
+    # but is no longer reachable.
+    # TODO: switch to https://data.openml.org/datasets/0004/44063/dataset_44063.pq
+    # once possible.
+    "https://github.com/scikit-learn/examples-data/raw/refs/heads/master/bike-sharing-demand/dataset_44063.pq",
     sha256="d120af76829af0d256338dc6dd4be5df4fd1f35bf3a283cab66a51c1c6abd06a",
 )
 bike_sharing_data_file
