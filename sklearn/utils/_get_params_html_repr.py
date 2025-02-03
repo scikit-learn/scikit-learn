@@ -44,6 +44,7 @@ def html_template(data):
     style_template = _get_css_style()
     html_start = f"""
         <head><style>{style_template}</style>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <script>
             function copyToClipboard(text) {{
                 navigator.clipboard.writeText(text)
@@ -64,10 +65,10 @@ def html_template(data):
     for x, y in data.items():
         out += f"""
                       <li>{x}:{y}
-                        <a href="#" onclick="copyToClipboard('{x}'); ">
-                          <img src="sklearn/utils/copy-button-img.svg"
-                          style="width: 16px; height: 16px;"/>
-                        </a>
+                        <i class="fa-regular fa-copy"
+                       onclick="copyToClipboard('{x}')"
+                       style="color: #B197FC; cursor: pointer;">
+                      </i>
                       </li>
            """
     html_end = """
