@@ -43,9 +43,17 @@ def html_template(data):
     num_parameters = len(data)
     style_template = _get_css_style()
     html_start = f"""
-        <head><style>{style_template}</style></head>
+        <head><style>{style_template}</style>
+        <script>
+            function copyToClipboard(text) {{
+                navigator.clipboard.writeText(text)
+                    .then(() => console.log('Copied!'))
+                    .catch(err => console.error('Failed to copy:', err));
+                return false;
+            }}
+        </script>
+        </head>
         <body>
-
         <div class="estimator-params">
              <ul>
             <details>
@@ -55,7 +63,12 @@ def html_template(data):
     out = ""
     for x, y in data.items():
         out += f"""
-                      <li>{x}:{y}</li>
+                      <li>{x}:{y}
+                        <a href="#" onclick="copyToClipboard('{x}'); ">
+                          <img src="sklearn/utils/copy-button-img.svg"
+                          style="width: 16px; height: 16px;"/>
+                        </a>
+                      </li>
            """
     html_end = """
             </details>
