@@ -7,7 +7,6 @@ import re
 from functools import partial
 from importlib import resources
 from io import BytesIO
-from pathlib import Path
 from urllib.error import HTTPError
 from urllib.parse import urlparse
 
@@ -148,10 +147,8 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
         # modify it for `_mock_urlopen_shared` to work.
         url_arff_data = urlparse(url)
         # remove the filename of the ARFF file
-        path=url_arff_data.path.rsplit("/", 1)[0]
-        url_arff_data = url_arff_data._replace(
-            path=path
-        ).geturl()
+        path = url_arff_data.path.rsplit("/", 1)[0]
+        url_arff_data = url_arff_data._replace(path=path).geturl()
 
         return _mock_urlopen_shared(
             url=url_arff_data,
