@@ -1562,6 +1562,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         and specifies that each branch of a tree will either only split
         on features 0 and 1 or only split on features 2, 3 and 4.
 
+        See :ref:`Example<ice-vs-pdp>` for how to use `interaction_cst`.
+
         .. versionadded:: 1.2
 
     warm_start : bool, default=False
