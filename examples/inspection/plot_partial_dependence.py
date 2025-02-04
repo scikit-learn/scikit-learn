@@ -368,7 +368,7 @@ _ = display.figure_.suptitle(
 # .. _ice-vs-pdp:
 #
 # ICE vs. PDP
-# -----------
+# ~~~~~~~~~~~
 #
 # PDP is an average of the marginal effects of the features. We are averaging the
 # response of all samples of the provided set. Thus, some effects could be hidden. In
