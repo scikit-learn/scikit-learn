@@ -201,9 +201,9 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         y,
         *,
         sample_weight=None,
-        pos_label=None,
         drop_intermediate=True,
         response_method="auto",
+        pos_label=None,
         name=None,
         ax=None,
         plot_chance_level=False,
@@ -228,11 +228,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
-        pos_label : int, float, bool or str, default=None
-            The class considered as the positive class when computing the roc auc
-            metrics. By default, `estimators.classes_[1]` is considered
-            as the positive class.
-
         drop_intermediate : bool, default=True
             Whether to drop some suboptimal thresholds which would not appear
             on a plotted ROC curve. This is useful in order to create lighter
@@ -244,6 +239,11 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             :term:`decision_function` as the target response. If set to 'auto',
             :term:`predict_proba` is tried first and if it does not exist
             :term:`decision_function` is tried next.
+
+        pos_label : int, float, bool or str, default=None
+            The class considered as the positive class when computing the roc auc
+            metrics. By default, `estimators.classes_[1]` is considered
+            as the positive class.
 
         name : str, default=None
             Name of ROC Curve for labeling. If `None`, use the name of the
