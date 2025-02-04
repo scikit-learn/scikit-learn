@@ -1133,13 +1133,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     classification is a special case where only a single regression tree is
     induced.
 
-    See :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_oob.py` for
-    an example on using Out-of-Bag estimates to estimate the optimal number of
-    iterations for Gradient Boosting.
-    See
-    :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regularization.py`
-    for an example on using regularization with Gradient Boosting.
-
     :class:`~sklearn.ensemble.HistGradientBoostingClassifier` is a much faster variant
     of this algorithm for intermediate and large datasets (`n_samples >= 10_000`) and
     supports monotonic constraints.
@@ -1458,6 +1451,13 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     ...     max_depth=1, random_state=0).fit(X_train, y_train)
     >>> clf.score(X_test, y_test)
     0.913...
+
+    See :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_oob.py` for
+    an example on using Out-of-Bag estimates to estimate the optimal number of
+    iterations for Gradient Boosting. For a detailed example of utilizing
+    regularization with
+    :class:`~sklearn.ensemble.GradientBoostingClassifier`, please refer to
+    :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regularization.py`.
     """
 
     _parameter_constraints: dict = {
@@ -1745,9 +1745,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     allows for the optimization of arbitrary differentiable loss functions. In
     each stage a regression tree is fit on the negative gradient of the given
     loss function.
-
-    See :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regularization.py`
-    for an example on using regularization with Gradient Boosting.
 
     :class:`~sklearn.ensemble.HistGradientBoostingRegressor` is a much faster variant
     of this algorithm for intermediate and large datasets (`n_samples >= 10_000`) and

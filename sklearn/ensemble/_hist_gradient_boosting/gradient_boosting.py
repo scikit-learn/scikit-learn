@@ -1421,9 +1421,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     were encountered for a given feature during training, then samples with
     missing values are mapped to whichever child has the most samples.
     See :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py` for a
-    usecase example of this feature. See
-    :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`
-    for an example using histogram-based gradient boosting on categorical features.
+    usecase example of this feature.
 
     This implementation is inspired by
     `LightGBM <https://github.com/Microsoft/LightGBM>`_.
@@ -1666,6 +1664,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     >>> est = HistGradientBoostingRegressor().fit(X, y)
     >>> est.score(X, y)
     0.92...
+
+    See :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`
+    for an example using histogram-based gradient boosting on categorical features.
     """
 
     _parameter_constraints: dict = {
