@@ -1108,3 +1108,21 @@ def _tolist(array, xp=None):
         return array.tolist()
     array_np = _convert_to_numpy(array, xp=xp)
     return [element.item() for element in array_np]
+
+
+def _conj_transpose(array, xp=None):
+    """Return the matrix transpose, or conjugate transpose for complex input.
+
+    Array API compliant version of `array.conj().T`.
+    """
+    xp, _ = get_namespace(array, xp=xp)
+    return xp.conj(array).T if _iscomplexobj(array, xp=xp) else array.T
+
+
+def _iscomplexobj(array, xp=None):
+    """Check if an array is complex valued.
+
+    Array API compliant version of `np.iscomplexobj()`.
+    """
+    xp, _ = get_namespace(array, xp=xp)
+    return hasattr(array, "dtype") and xp.isdtype(array.dtype, kind="complex floating")

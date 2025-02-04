@@ -11,7 +11,15 @@ import numpy as np
 from scipy import linalg, sparse
 
 from ..utils._param_validation import Interval, StrOptions, validate_params
-from ._array_api import _average, _is_numpy_namespace, _nanmean, device, get_namespace
+from ._array_api import (
+    _average,
+    _conj_transpose,
+    _is_numpy_namespace,
+    _iscomplexobj,
+    _nanmean,
+    device,
+    get_namespace,
+)
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array, check_random_state
 
@@ -1358,17 +1366,3 @@ def _approximate_mode(class_counts, n_draws, rng):
             if need_to_add == 0:
                 break
     return floored.astype(int)
-
-
-def _conj_transpose(A, xp=None):
-    """Return the transpose of A, or conjugate transpose for complex input."""
-    xp, _ = get_namespace(A, xp=xp)
-
-    return xp.conj(A).T if _iscomplexobj(A, xp=xp) else A.T
-
-
-def _iscomplexobj(A, xp=None):
-    """Check if an array is complex valued."""
-    xp, _ = get_namespace(A, xp=xp)
-
-    return hasattr(A, "dtype") and xp.isdtype(A.dtype, kind="complex floating")
