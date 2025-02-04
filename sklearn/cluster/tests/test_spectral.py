@@ -215,6 +215,10 @@ def test_discretize(n_samples, coo_container):
         assert adjusted_rand_score(y_true, y_pred) > 0.8
 
 
+# TODO: remove warning filter when pyamg min version >= 5.1
+@pytest.mark.filterwarnings(
+    "ignore:np.find_common_type is deprecated.*:DeprecationWarning"
+)
 def test_spectral_clustering_with_arpack_amg_solvers():
     # Test that spectral_clustering is the same for arpack and amg solver
     # Based on toy example from plot_segmentation_toy.py

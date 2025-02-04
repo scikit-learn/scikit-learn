@@ -7,6 +7,7 @@ import sys
 from contextlib import suppress
 from functools import wraps
 from os import environ
+from pathlib import Path
 from unittest import SkipTest
 
 import joblib
@@ -127,6 +128,132 @@ fetch_olivetti_faces_fxt = _fetch_fixture(fetch_olivetti_faces)
 fetch_rcv1_fxt = _fetch_fixture(fetch_rcv1)
 fetch_species_distributions_fxt = _fetch_fixture(fetch_species_distributions)
 raccoon_face_fxt = pytest.fixture(raccoon_face_or_skip)
+
+
+TEST_MODULES_EXCEPTIONS = [
+    "cluster.tests.test_affinity_propagation.py",
+    "cluster.tests.test_bicluster.py",
+    "cluster.tests.test_birch.py",
+    "cluster.tests.test_bisect_k_means.py",
+    "cluster.tests.test_dbscan.py",
+    "cluster.tests.test_hdbscan.py",
+    "cluster.tests.test_hierarchical.py",
+    "cluster.tests.test_k_means.py",
+    "cluster.tests.test_mean_shift.py",
+    "cluster.tests.test_optics.py",
+    "cluster.tests.test_spectral.py",
+    "compose.tests.test_column_transformer.py",
+    "compose.tests.test_target.py",
+    "covariance.tests.test_graphical_lasso.py",
+    "covariance.tests.test_robust_covariance.py",
+    "datasets.tests.test_openml.py",
+    "datasets.tests.test_svmlight_format.py",
+    "decomposition.tests.test_dict_learning.py",
+    "decomposition.tests.test_kernel_pca.py",
+    "decomposition.tests.test_nmf.py",
+    "decomposition.tests.test_online_lda.py",
+    "ensemble.tests.test_bagging.py",
+    "ensemble.tests.test_common.py",
+    "ensemble.tests.test_forest.py",
+    "ensemble.tests.test_stacking.py",
+    "ensemble.tests.test_weight_boosting.py",
+    "feature_extraction.tests.test_text.py",
+    "feature_selection.tests.test_feature_select.py",
+    "feature_selection.tests.test_from_model.py",
+    "feature_selection.tests.test_rfe.py",
+    "feature_selection.tests.test_sequential.py",
+    "feature_selection.tests.test_variance_threshold.py",
+    "frozen.tests.test_frozen.py",
+    "gaussian_process.tests.test_gpc.py",
+    "gaussian_process.tests.test_gpr.py",
+    "impute.tests.test_common.py",
+    "impute.tests.test_impute.py",
+    "impute.tests.test_knn.py",
+    "inspection._plot.tests.test_boundary_decision_display.py",
+    "inspection.tests.test_partial_dependence.py",
+    "linear_model.tests.test_coordinate_descent.py",
+    "linear_model.tests.test_common.py",
+    "linear_model.tests.test_huber.py",
+    "linear_model.tests.test_logistic.py",
+    "linear_model.tests.test_omp.py",
+    "linear_model.tests.test_passive_aggressive.py",
+    "linear_model.tests.test_quantile.py",
+    "linear_model.tests.test_ridge.py",
+    "linear_model.tests.test_sparse_coordinate_descent.py",
+    "manifold.tests.test_isomap.py",
+    "manifold.tests.test_spectral_embedding.py",
+    "metrics.tests.test_classification.py",
+    "metrics.tests.test_common.py",
+    "metrics.tests.test_pairwise.py",
+    "metrics.tests.test_ranking.py",
+    "metrics.tests.test_regression.py",
+    "metrics.tests.test_score_objects.py",
+    "mixture.tests.test_bayesian_mixture.py",
+    "mixture.tests.test_gaussian_mixture.py",
+    "mixture.tests.test_mixture.py",
+    "model_selection.tests.test_search.py",
+    "model_selection.tests.test_split.py",
+    "model_selection.tests.test_successive_halving.py",
+    "model_selection.tests.test_validation.py",
+    "neighbors.tests.test_lof.py",
+    "neighbors.tests.test_nca.py",
+    "neighbors.tests.test_nearest_centroid.py",
+    "neighbors.tests.test_neighbors.py",
+    "neighbors.tests.test_neighbors_pipeline.py",
+    "neural_network.tests.test_mlp.py",
+    "preprocessing.tests.test_common.py",
+    "preprocessing.tests.test_data.py",
+    "preprocessing.tests.test_discretization.py",
+    "preprocessing.tests.test_encoders.py",
+    "preprocessing.tests.test_label.py",
+    "svm.tests.test_svm.py",
+    "tests.test_calibration.py",
+    "tests.test_common.py",
+    "tests.test_discriminant_analysis.py",
+    "tests.test_docstring_parameters.py",
+    "tests.test_metaestimators.py",
+    "tests.test_metaestimators_metadata_routing.py",
+    "tests.test_multiclass.py",
+    "tests.test_multioutput.py",
+    "tests.test_naive_bayes.py",
+    "tests.test_pipeline.py",
+    "tree.tests.test_tree.py",
+    "utils.tests.test_array_api.py",
+    "utils.tests.test_estimator_checks.py",
+    "utils.tests.test_estimator_html_repr.py",
+    "utils.tests.test_graph.py",
+    "utils.tests.test_multiclass.py",
+    "utils.tests.test_optimize.py",
+    "utils.tests.test_parallel.py",
+    "utils.tests.test_response.py",
+    "utils.tests.test_testing.py",
+    "utils.tests.test_validation.py",
+    # doctests
+    "calibration.py",
+    "datasets._base.py",
+    "decomposition._fastica.py",
+    "decomposition._nmf.py",
+    "gaussian_process._gpr.py",
+    "gaussian_process.kernels.py",
+    "inspection._plot.decision_boundary.py",
+    "inspection._plot.partial_dependence.py",
+    "kernel_approximation.py",
+    "linear_model._logistic.py",
+    "metrics._classification.py",
+    "metrics._plot.confusion_matrix.py",
+    "metrics._plot.det_curve.py",
+    "metrics._plot.precision_recall_curve.py",
+    "metrics._plot.regression.py",
+    "metrics._plot.roc_curve.py",
+    "metrics._regression.py",
+    "metrics.pairwise.py",
+    "model_selection._plot.py",
+    "neighbors._base.py",
+    "neighbors._regression.py",
+    "neural_network._multilayer_perceptron.py",
+    "utils.tests.test_testing.py",
+    "utils.estimator_checks.py",
+]
 
 
 def pytest_collection_modifyitems(config, items):
@@ -251,6 +378,30 @@ def pytest_collection_modifyitems(config, items):
                 "sklearn.feature_extraction.image.extract_patches_2d",
             ]:
                 item.add_marker(skip_marker)
+
+    # Turn all warnings into errors. TODO: when the TEST_MODULES_EXCEPTIONS list is
+    # empty, remove this and add a config warning filter Warning("error") in
+    # sklearn.utils._testing.py::_get_warnings_filters_info_list
+    if environ.get("SKLEARN_WARNINGS_AS_ERRORS", "0") != "0":
+        error_mark = pytest.mark.filterwarnings("error")
+        for item in items:
+            if _get_item_module(item) not in TEST_MODULES_EXCEPTIONS:
+                # When markers overlap, the last one has priority. Thus we need to
+                # insert this global one at the beginning to be able to keep module or
+                # test-level markers.
+                item.own_markers.insert(0, error_mark)
+
+
+def _get_item_module(item):
+    """Get the full module name of a test item."""
+    path, _, _ = item.reportinfo()
+    parts = list(Path(path).parts)
+
+    module = parts.pop()
+    while parts[-1] != "sklearn":
+        module = parts.pop() + "." + module
+
+    return module
 
 
 @pytest.fixture(scope="function")
