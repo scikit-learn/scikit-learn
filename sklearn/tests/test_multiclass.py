@@ -1,3 +1,4 @@
+import warnings
 from re import escape
 
 import numpy as np
@@ -6,7 +7,7 @@ import scipy.sparse as sp
 from numpy.testing import assert_allclose
 
 from sklearn import datasets, svm
-from sklearn.datasets import load_breast_cancer
+from sklearn.datasets import load_breast_cancer, load_digits, make_classification
 from sklearn.exceptions import NotFittedError
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import (
@@ -19,11 +20,12 @@ from sklearn.linear_model import (
     SGDClassifier,
 )
 from sklearn.metrics import precision_score, recall_score
-from sklearn.model_selection import GridSearchCV, cross_val_score
+from sklearn.model_selection import GridSearchCV, StratifiedKFold, cross_val_score
 from sklearn.multiclass import (
     OneVsOneClassifier,
     OneVsRestClassifier,
     OutputCodeClassifier,
+    _ConstantPredictor,
 )
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
@@ -684,42 +686,18 @@ def test_ovo_float_y():
         ovo.fit(X, y)
 
 
-def test_ecoc_exceptions():
-    ecoc = OutputCodeClassifier(LinearSVC(random_state=0))
-    with pytest.raises(NotFittedError):
-        ecoc.predict([])
-
-
-def test_ecoc_fit_predict():
-    # A classifier which implements decision_function.
-    ecoc = OutputCodeClassifier(LinearSVC(random_state=0), code_size=2, random_state=0)
-    ecoc.fit(iris.data, iris.target).predict(iris.data)
-    assert len(ecoc.estimators_) == n_classes * 2
-
-    # A classifier which implements predict_proba.
-    ecoc = OutputCodeClassifier(MultinomialNB(), code_size=2, random_state=0)
-    ecoc.fit(iris.data, iris.target).predict(iris.data)
-    assert len(ecoc.estimators_) == n_classes * 2
-
-
-def test_ecoc_gridsearch():
-    ecoc = OutputCodeClassifier(LinearSVC(random_state=0), random_state=0)
-    Cs = [0.1, 0.5, 0.8]
-    cv = GridSearchCV(ecoc, {"estimator__C": Cs})
+@pytest.mark.parametrize("decoding", ["cityblock", "hamming", "loss"])
+def test_ecoc_gridsearch(decoding):
+    ecoc = OutputCodeClassifier(
+        DecisionTreeClassifier(random_state=0), decoding=decoding, random_state=0
+    )
+    max_depth = [2, 3, 5]
+    cv = GridSearchCV(ecoc, {"estimator__max_depth": max_depth})
     cv.fit(iris.data, iris.target)
-    best_C = cv.best_estimator_.estimators_[0].C
-    assert best_C in Cs
-
-
-def test_ecoc_float_y():
-    # Test that the OCC errors on float targets
-    X = iris.data
-    y = iris.data[:, 0]
-
-    ovo = OutputCodeClassifier(LinearSVC())
-    msg = "Unknown label type"
-    with pytest.raises(ValueError, match=msg):
-        ovo.fit(X, y)
+    best_max_depth = cv.best_estimator_.estimators_[0].max_depth
+    assert best_max_depth in max_depth
+    y_pred = cv.predict(iris.data)
+    assert y_pred.shape == iris.target.shape
 
 
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
@@ -744,9 +722,202 @@ def test_ecoc_delegate_sparse_base_estimator(csc_container):
         ecoc.predict(X_sp)
 
     # smoke test to check when sparse input should be supported
-    ecoc = OutputCodeClassifier(LinearSVC(random_state=0))
+    ecoc = OutputCodeClassifier(DecisionTreeClassifier(random_state=0))
     ecoc.fit(X_sp, y).predict(X_sp)
     assert len(ecoc.estimators_) == 4
+
+
+def test_ecoc_codebook():
+    """Check that the generation of the code works as expected."""
+    n_classes = 4
+    X, y = make_classification(
+        n_samples=50, n_classes=n_classes, n_clusters_per_class=1, random_state=0
+    )
+
+    # A single column is enough to generate non-redundant codes and no warning should
+    # be raised.
+    code_size = 0.5
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        ecoc = OutputCodeClassifier(
+            DecisionTreeClassifier(random_state=0), code_size=code_size, random_state=0
+        ).fit(X, y)
+    assert ecoc.code_book_.shape == (n_classes, int(n_classes * code_size))
+    unique_codes = np.unique(ecoc.code_book_, axis=0)
+    assert unique_codes.shape == ecoc.code_book_.shape
+
+    # check the common case where we will have more columns than needed to encode
+    # the classes.
+    code_size = 2
+    ecoc = OutputCodeClassifier(
+        DecisionTreeClassifier(random_state=0), code_size=code_size, random_state=0
+    ).fit(X, y)
+    assert ecoc.code_book_.shape == (n_classes, int(n_classes * code_size))
+    unique_codes = np.unique(ecoc.code_book_, axis=0)
+    assert unique_codes.shape == ecoc.code_book_.shape
+
+    # error when the code size is too small
+    code_size = 0.1
+    err_msg = "The code book size is not big enough to encode all classes."
+    with pytest.raises(ValueError, match=err_msg):
+        OutputCodeClassifier(
+            DecisionTreeClassifier(random_state=0), code_size=code_size, random_state=0
+        ).fit(X, y)
+
+
+def test_ecoc_fit():
+    """General check for the fit method."""
+    n_classes = 4
+    X, y = make_classification(
+        n_samples=50, n_classes=n_classes, n_clusters_per_class=1, random_state=0
+    )
+    # use non-trivial classes to make sure that the inner encoding will be correct
+    classes = np.array([3, 10, 4, 1])
+    y = classes[y]
+    assert_array_equal(np.unique(y), np.sort(classes))
+
+    ecoc = OutputCodeClassifier(
+        DecisionTreeClassifier(random_state=0), code_size=2.0, random_state=0
+    )
+
+    # classes_ is a property and we check it raises an `AttributeError` when the
+    # estimator is not fitted
+    err_msg = "OutputCodeClassifier object has no attribute 'classes_'"
+    with pytest.raises(AttributeError, match=err_msg):
+        ecoc.classes_
+
+    ecoc.fit(X, y)
+    assert_array_equal(ecoc.classes_, np.sort(classes))
+
+    for estimator in ecoc.estimators_:
+        # all estimators but _ConstantPredictor should be fit on a binary problem
+        if isinstance(estimator, _ConstantPredictor):
+            continue
+        assert_array_equal(estimator.classes_, [0, 1])
+    assert len(ecoc.estimators_) == ecoc.code_book_.shape[1]
+
+
+def test_ecoc_requested_prediction_method():
+    """Check that we raise an appropriate error message when the estimator does not
+    implement the requested prediction method.
+    """
+    X, y = make_classification(
+        n_samples=50, n_classes=4, n_clusters_per_class=1, random_state=0
+    )
+
+    err_msg = (
+        "The estimator does not have a `predict_proba` method. Thus, the 'cityblock' "
+        "decoding strategy is not supported."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        OutputCodeClassifier(
+            LinearSVC(), code_size=2.0, random_state=0, decoding="cityblock"
+        ).fit(X, y)
+
+    err_msg = (
+        "The estimator does not have either a `predict_proba` or `decision_function` "
+        "method. Thus, the 'loss' decoding strategy is not supported."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        OutputCodeClassifier(
+            LinearRegression(), code_size=2.0, decoding="loss", random_state=0
+        ).fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"decoding": "cityblock"},
+        {"decoding": "hamming"},
+        {"decoding": "loss", "loss": "exponential"},
+    ],
+    ids=["cityblock", "hamming", "loss"],
+)
+def test_ecoc_outperform_multiclass(params, global_random_seed):
+    """Check that the ECOC strategy significantly outperforms a single tree on
+    the digits dataset. This would be inline with the results reported in [1]_.
+
+    [1] Dietterich, T. G., & Bakiri, G. (1994).
+    Solving multiclass learning problems via error-correcting output codes.
+    Journal of artificial intelligence research, 2, 263-286.
+    """
+    X, y = load_digits(return_X_y=True)
+
+    single_tree = DecisionTreeClassifier(random_state=global_random_seed)
+    ecoc = OutputCodeClassifier(single_tree, **params, random_state=0)
+
+    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=global_random_seed)
+    cv_results_single_tree = cross_val_score(single_tree, X, y, cv=cv)
+    cv_results_ecoc = cross_val_score(ecoc, X, y, cv=cv)
+
+    assert cv_results_ecoc.mean() > cv_results_single_tree.mean()
+
+
+# We limit the number of iterations to speed up the test
+@pytest.mark.filterwarnings("ignore: Liblinear failed to converge")
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"decoding": "loss", "loss": "linear"},
+        {"decoding": "loss", "loss": "exponential"},
+        {"decoding": "loss", "loss": "hinge"},
+        {"decoding": "loss", "loss": "logistic"},
+        {"decoding": "loss", "loss": "square"},
+    ],
+    ids=["linear", "exponential", "hinge", "logistic", "square"],
+)
+def test_ecoc_loss_outperform_hamming(params, global_random_seed):
+    """Check that the ECOC loss strategy significantly outperforms the Hamming approach.
+    Even if the loss is not chosing according to the estimator, it will anyway be better
+    than the Hamming approach. It is inline with the results reported in [1]_.
+
+    [1] Allwein, E. L., Schapire, R. E., & Singer, Y. (2000).
+    Reducing multiclass to binary: A unifying approach for margin classifiers.
+    Journal of machine learning research, 1(Dec), 113-141.
+    """
+    X, y = load_digits(return_X_y=True)
+
+    svc = LinearSVC(max_iter=10, random_state=global_random_seed)
+    ecoc_hamming = OutputCodeClassifier(
+        svc, decoding="hamming", random_state=global_random_seed
+    )
+    ecoc_loss = OutputCodeClassifier(svc, **params, random_state=global_random_seed)
+
+    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=global_random_seed)
+    cv_results_hamming = cross_val_score(ecoc_hamming, X, y, cv=cv)
+    cv_results_loss = cross_val_score(ecoc_loss, X, y, cv=cv)
+
+    assert cv_results_loss.mean() > cv_results_hamming.mean()
+
+
+def test_ecoc_large_code_size():
+    """Check that we can request a large number of code size.
+
+    A large number of columns should not be an issue with a low number of classes.
+    The matrix will only be sparse. However, if the internal implementation does not
+    rely on generator, generating the radom codebook could result in a memory error
+    because all the potential integer between 0 and 2 ** `n_requested_columns` will
+    be stored in memory. A generator will only store the current integer.
+    """
+    X, y = make_classification(
+        n_samples=100,
+        n_features=30,
+        n_classes=10,
+        n_informative=20,
+        n_clusters_per_class=1,
+        random_state=0,
+    )
+
+    # code_size=3 will results in 30 columns in the codebook and code will be sampled
+    # from 0 to 2 ** 30 - 1
+    ecoc = OutputCodeClassifier(
+        DecisionTreeClassifier(max_depth=2, random_state=0),
+        code_size=3,
+        random_state=0,
+    ).fit(X, y)
+    assert ecoc.code_book_.shape == (10, 30)
+    y_pred = ecoc.predict(X)
+    assert y_pred.shape == y.shape
 
 
 def test_pairwise_indices():
