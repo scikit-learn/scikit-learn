@@ -333,9 +333,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
             estimator.fit(X[:, features], y, **fit_params)
 
-            # Compute step values on the previous selection iteration
-            # because 'estimator' must use features
-            # that have not been eliminated yet
+            # Compute step values on the previous selection iteration because
+            # 'estimator' must use features that have not been eliminated yet
             if step_score:
                 self.step_n_features_.append(len(features))
                 self.step_scores_.append(step_score(estimator, features))
