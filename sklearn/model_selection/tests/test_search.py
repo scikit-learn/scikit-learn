@@ -96,6 +96,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
     set_random_state,
 )
+from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
 from sklearn.utils.fixes import CSR_CONTAINERS
 from sklearn.utils.validation import _num_samples
 
@@ -1358,6 +1359,9 @@ def test_search_cv_sample_weight_equivalence(estimator):
     groups_repeated = groups_weighted.repeat(repeats=sw)
     splits_repeated = list(LeaveOneGroupOut().split(X_repeated, groups=groups_repeated))
     estimator_repeated.set_params(cv=splits_repeated)
+
+    y_weighted = _enforce_estimator_tags_y(estimator_weighted, y_weighted)
+    y_repeated = _enforce_estimator_tags_y(estimator_repeated, y_repeated)
 
     estimator_repeated.fit(X_repeated, y=y_repeated, sample_weight=None)
     estimator_weighted.fit(X_weighted, y=y_weighted, sample_weight=sw)
