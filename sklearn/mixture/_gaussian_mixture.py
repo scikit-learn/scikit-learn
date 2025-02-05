@@ -7,6 +7,7 @@ import numpy as np
 from scipy import linalg
 
 from ..utils import check_array
+from ..utils._array_api import get_namespace
 from ..utils._param_validation import StrOptions
 from ..utils.extmath import row_norms
 from ._base import BaseMixture, _check_shape
@@ -170,12 +171,14 @@ def _estimate_gaussian_covariances_full(resp, X, nk, means, reg_covar):
     covariances : array, shape (n_components, n_features, n_features)
         The covariance matrix of the current components.
     """
+    xp, _ = get_namespace(X)
     n_components, n_features = means.shape
-    covariances = np.empty((n_components, n_features, n_features), dtype=X.dtype)
+    covariances = xp.empty((n_components, n_features, n_features), dtype=X.dtype)
     for k in range(n_components):
         diff = X - means[k]
-        covariances[k] = np.dot(resp[:, k] * diff.T, diff) / nk[k]
-        covariances[k].flat[:: n_features + 1] += reg_covar
+        covariances[k] = ((resp[:, k] * diff.T) @ diff) / nk[k]
+        my_flat = xp.reshape(covariances[k], (-1,))
+        my_flat[:: n_features + 1] += reg_covar
     return covariances
 
 
@@ -284,8 +287,9 @@ def _estimate_gaussian_parameters(X, resp, reg_covar, covariance_type):
         The covariance matrix of the current components.
         The shape depends of the covariance_type.
     """
-    nk = resp.sum(axis=0) + 10 * np.finfo(resp.dtype).eps
-    means = np.dot(resp.T, X) / nk[:, np.newaxis]
+    xp, _ = get_namespace(X)
+    nk = resp.sum(axis=0) + 10 * xp.finfo(resp.dtype).eps
+    means = (resp.T @ X) / nk[:, xp.newaxis]
     covariances = {
         "full": _estimate_gaussian_covariances_full,
         "tied": _estimate_gaussian_covariances_tied,
@@ -313,6 +317,8 @@ def _compute_precision_cholesky(covariances, covariance_type):
         The cholesky decomposition of sample precisions of the current
         components. The shape depends of the covariance_type.
     """
+    xp, _ = get_namespace(covariances)
+
     estimate_precision_error_message = (
         "Fitting the mixture model failed because some components have "
         "ill-defined empirical covariance (for instance caused by singleton "
@@ -320,7 +326,7 @@ def _compute_precision_cholesky(covariances, covariance_type):
         "increase reg_covar, or scale the input data."
     )
     dtype = covariances.dtype
-    if dtype == np.float32:
+    if dtype == xp.float32:
         estimate_precision_error_message += (
             " The numerical accuracy can also be improved by passing float64"
             " data instead of float32."
@@ -328,14 +334,14 @@ def _compute_precision_cholesky(covariances, covariance_type):
 
     if covariance_type == "full":
         n_components, n_features, _ = covariances.shape
-        precisions_chol = np.empty((n_components, n_features, n_features), dtype=dtype)
+        precisions_chol = xp.empty((n_components, n_features, n_features), dtype=dtype)
         for k, covariance in enumerate(covariances):
             try:
                 cov_chol = linalg.cholesky(covariance, lower=True)
             except linalg.LinAlgError:
                 raise ValueError(estimate_precision_error_message)
             precisions_chol[k] = linalg.solve_triangular(
-                cov_chol, np.eye(n_features, dtype=dtype), lower=True
+                cov_chol, xp.eye(n_features, dtype=dtype), lower=True
             ).T
     elif covariance_type == "tied":
         _, n_features = covariances.shape
@@ -344,12 +350,12 @@ def _compute_precision_cholesky(covariances, covariance_type):
         except linalg.LinAlgError:
             raise ValueError(estimate_precision_error_message)
         precisions_chol = linalg.solve_triangular(
-            cov_chol, np.eye(n_features, dtype=dtype), lower=True
+            cov_chol, xp.eye(n_features, dtype=dtype), lower=True
         ).T
     else:
-        if np.any(np.less_equal(covariances, 0.0)):
+        if xp.any(xp.less_equal(covariances, 0.0)):
             raise ValueError(estimate_precision_error_message)
-        precisions_chol = 1.0 / np.sqrt(covariances)
+        precisions_chol = 1.0 / xp.sqrt(covariances)
     return precisions_chol
 
 
@@ -759,7 +765,7 @@ class GaussianMixture(BaseMixture):
                 n_features,
             )
 
-    def _initialize_parameters(self, X, random_state):
+    def _initialize_parameters(self, X, random_state, xp):
         # If all the initial parameters are all provided, then there is no need to run
         # the initialization.
         compute_resp = (
@@ -768,7 +774,7 @@ class GaussianMixture(BaseMixture):
             or self.precisions_init is None
         )
         if compute_resp:
-            super()._initialize_parameters(X, random_state)
+            super()._initialize_parameters(X, random_state, xp)
         else:
             self._initialize(X, None)
 
