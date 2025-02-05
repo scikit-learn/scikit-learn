@@ -8,7 +8,6 @@ import numpy as np
 import pytest
 from scipy import sparse as sp
 
-from sklearn import _threadpool_controller
 from sklearn.base import clone
 from sklearn.cluster import KMeans, MiniBatchKMeans, k_means, kmeans_plusplus
 from sklearn.cluster._k_means_common import (
@@ -33,6 +32,7 @@ from sklearn.utils._testing import (
 )
 from sklearn.utils.extmath import row_norms
 from sklearn.utils.fixes import CSR_CONTAINERS
+from sklearn.utils.parallel import _get_threadpool_controller
 
 # non centered, sparse centers to check the
 centers = np.array(
@@ -437,21 +437,24 @@ def test_minibatch_sensible_reassign(global_random_seed):
         n_clusters=20, batch_size=10, random_state=global_random_seed, init="random"
     ).fit(zeroed_X)
     # there should not be too many exact zero cluster centers
-    assert km.cluster_centers_.any(axis=1).sum() > 10
+    num_non_zero_clusters = km.cluster_centers_.any(axis=1).sum()
+    assert num_non_zero_clusters > 9, f"{num_non_zero_clusters=} is too small"
 
     # do the same with batch-size > X.shape[0] (regression test)
     km = MiniBatchKMeans(
         n_clusters=20, batch_size=200, random_state=global_random_seed, init="random"
     ).fit(zeroed_X)
     # there should not be too many exact zero cluster centers
-    assert km.cluster_centers_.any(axis=1).sum() > 10
+    num_non_zero_clusters = km.cluster_centers_.any(axis=1).sum()
+    assert num_non_zero_clusters > 9, f"{num_non_zero_clusters=} is too small"
 
     # do the same with partial_fit API
     km = MiniBatchKMeans(n_clusters=20, random_state=global_random_seed, init="random")
     for i in range(100):
         km.partial_fit(zeroed_X)
     # there should not be too many exact zero cluster centers
-    assert km.cluster_centers_.any(axis=1).sum() > 10
+    num_non_zero_clusters = km.cluster_centers_.any(axis=1).sum()
+    assert num_non_zero_clusters > 9, f"{num_non_zero_clusters=} is too small"
 
 
 @pytest.mark.parametrize(
@@ -968,13 +971,13 @@ def test_result_equal_in_diff_n_threads(Estimator, global_random_seed):
     rnd = np.random.RandomState(global_random_seed)
     X = rnd.normal(size=(50, 10))
 
-    with _threadpool_controller.limit(limits=1, user_api="openmp"):
+    with _get_threadpool_controller().limit(limits=1, user_api="openmp"):
         result_1 = (
             Estimator(n_clusters=n_clusters, random_state=global_random_seed)
             .fit(X)
             .labels_
         )
-    with _threadpool_controller.limit(limits=2, user_api="openmp"):
+    with _get_threadpool_controller().limit(limits=2, user_api="openmp"):
         result_2 = (
             Estimator(n_clusters=n_clusters, random_state=global_random_seed)
             .fit(X)

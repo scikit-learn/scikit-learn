@@ -153,7 +153,7 @@ In general, it is about to learn a rough, close frontier delimiting
 the contour of the initial observations distribution, plotted in
 embedding :math:`p`-dimensional space. Then, if further observations
 lay within the frontier-delimited subspace, they are considered as
-coming from the same population than the initial
+coming from the same population as the initial
 observations. Otherwise, if they lay outside the frontier, we can say
 that they are abnormal with a given confidence in our assessment.
 
@@ -230,7 +230,7 @@ points, ignoring points outside the central mode.
 For instance, assuming that the inlier data are Gaussian distributed, it
 will estimate the inlier location and covariance in a robust way (i.e.
 without being influenced by outliers). The Mahalanobis distances
-obtained from this estimate is used to derive a measure of outlyingness.
+obtained from this estimate are used to derive a measure of outlyingness.
 This strategy is illustrated below.
 
 .. figure:: ../auto_examples/covariance/images/sphx_glr_plot_mahalanobis_distances_001.png
@@ -245,6 +245,10 @@ This strategy is illustrated below.
   (:class:`covariance.EmpiricalCovariance`) or a robust estimate
   (:class:`covariance.MinCovDet`) of location and covariance to
   assess the degree of outlyingness of an observation.
+
+* See :ref:`sphx_glr_auto_examples_applications_plot_outlier_detection_wine.py`
+  for an example of robust covariance estimation on a real data set.
+
 
 .. rubric:: References
 
@@ -400,7 +404,7 @@ set to ``True`` before fitting the estimator::
 
 Note that ``fit_predict`` is not available in this case to avoid inconsistencies.
 
-.. warning:: **Novelty detection with Local Outlier Factor`**
+.. warning:: **Novelty detection with Local Outlier Factor**
 
   When ``novelty`` is set to ``True`` be aware that you must only use
   ``predict``, ``decision_function`` and ``score_samples`` on new unseen data

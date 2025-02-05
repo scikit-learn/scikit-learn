@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numpy as np
 
 from ...base import is_regressor
@@ -23,15 +26,14 @@ def _check_boundary_response_method(estimator, response_method, class_of_interes
     estimator : object
         Fitted estimator to check.
 
-    response_method : {'auto', 'predict_proba', 'decision_function', 'predict'}
-        Specifies whether to use :term:`predict_proba`,
-        :term:`decision_function`, :term:`predict` as the target response.
-        If set to 'auto', the response method is tried in the following order:
-        :term:`decision_function`, :term:`predict_proba`, :term:`predict`.
+    response_method : {'auto', 'decision_function', 'predict_proba', 'predict'}
+        Specifies whether to use :term:`decision_function`, :term:`predict_proba`,
+        :term:`predict` as the target response. If set to 'auto', the response method is
+        tried in the before mentioned order.
 
     class_of_interest : int, float, bool, str or None
-        The class considered when plotting the decision. If the label is specified, it
-        is then possible to plot the decision boundary in multiclass settings.
+        The class considered when plotting the decision. Cannot be None if
+        multiclass and `response_method` is 'predict_proba' or 'decision_function'.
 
         .. versionadded:: 1.4
 
@@ -245,20 +247,19 @@ class DecisionBoundaryDisplay:
             :func:`contour <matplotlib.pyplot.contour>`,
             :func:`pcolormesh <matplotlib.pyplot.pcolormesh>`.
 
-        response_method : {'auto', 'predict_proba', 'decision_function', \
+        response_method : {'auto', 'decision_function', 'predict_proba', \
                 'predict'}, default='auto'
-            Specifies whether to use :term:`predict_proba`,
-            :term:`decision_function`, :term:`predict` as the target response.
-            If set to 'auto', the response method is tried in the following order:
-            :term:`decision_function`, :term:`predict_proba`, :term:`predict`.
-            For multiclass problems, :term:`predict` is selected when
-            `response_method="auto"`.
+            Specifies whether to use :term:`decision_function`, :term:`predict_proba`
+            or :term:`predict` as the target response. If set to 'auto', the response
+            method is tried in the before mentioned order. For multiclass problems,
+            :term:`predict` is selected when `response_method="auto"`.
 
         class_of_interest : int, float, bool or str, default=None
             The class considered when plotting the decision. If None,
             `estimator.classes_[1]` is considered as the positive class
-            for binary classifiers. For multiclass classifiers, passing
-            an explicit value for `class_of_interest` is mandatory.
+            for binary classifiers. Must have an explicit value for
+            multiclass classifiers when `response_method` is 'predict_proba'
+            or 'decision_function'.
 
             .. versionadded:: 1.4
 

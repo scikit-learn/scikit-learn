@@ -23,8 +23,9 @@ achieve a better V-measure than clusters found by MiniBatchKMeans.
 
 """
 
-import operator
-from collections import defaultdict
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+from collections import Counter
 from time import time
 
 import numpy as np
@@ -92,19 +93,19 @@ start_time = time()
 cocluster.fit(X)
 y_cocluster = cocluster.row_labels_
 print(
-    "Done in {:.2f}s. V-measure: {:.4f}".format(
-        time() - start_time, v_measure_score(y_cocluster, y_true)
-    )
+    f"Done in {time() - start_time:.2f}s. V-measure: \
+{v_measure_score(y_cocluster, y_true):.4f}"
 )
+
 
 print("MiniBatchKMeans...")
 start_time = time()
 y_kmeans = kmeans.fit_predict(X)
 print(
-    "Done in {:.2f}s. V-measure: {:.4f}".format(
-        time() - start_time, v_measure_score(y_kmeans, y_true)
-    )
+    f"Done in {time() - start_time:.2f}s. V-measure: \
+{v_measure_score(y_kmeans, y_true):.4f}"
 )
+
 
 feature_names = vectorizer.get_feature_names_out()
 document_names = list(newsgroups.target_names[i] for i in newsgroups.target)
@@ -125,14 +126,6 @@ def bicluster_ncut(i):
     return cut / weight
 
 
-def most_common(d):
-    """Items of a defaultdict(int) with the highest values.
-
-    Like Counter.most_common in Python >=2.7.
-    """
-    return sorted(d.items(), key=operator.itemgetter(1), reverse=True)
-
-
 bicluster_ncuts = list(bicluster_ncut(i) for i in range(len(newsgroups.target_names)))
 best_idx = np.argsort(bicluster_ncuts)[:5]
 
@@ -146,12 +139,10 @@ for idx, cluster in enumerate(best_idx):
         continue
 
     # categories
-    counter = defaultdict(int)
-    for i in cluster_docs:
-        counter[document_names[i]] += 1
+    counter = Counter(document_names[doc] for doc in cluster_docs)
+
     cat_string = ", ".join(
-        "{:.0f}% {}".format(float(c) / n_rows * 100, name)
-        for name, c in most_common(counter)[:3]
+        f"{(c / n_rows * 100):.0f}% {name}" for name, c in counter.most_common(3)
     )
 
     # words
@@ -167,6 +158,6 @@ for idx, cluster in enumerate(best_idx):
         feature_names[cluster_words[i]] for i in word_scores.argsort()[:-11:-1]
     )
 
-    print("bicluster {} : {} documents, {} words".format(idx, n_rows, n_cols))
-    print("categories   : {}".format(cat_string))
-    print("words        : {}\n".format(", ".join(important_words)))
+    print(f"bicluster {idx} : {n_rows} documents, {n_cols} words")
+    print(f"categories   : {cat_string}")
+    print(f"words        : {', '.join(important_words)}\n")

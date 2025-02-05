@@ -24,6 +24,9 @@ regularization properties of the inference algorithm.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import itertools
 
 import matplotlib as mpl

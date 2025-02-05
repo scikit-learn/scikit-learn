@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numpy as np
 
 from ..utils._optional_dependencies import check_matplotlib_support
@@ -366,7 +369,7 @@ class LearningCurveDisplay(_BaseCurveDisplay):
         scoring : str or callable, default=None
             A string (see :ref:`scoring_parameter`) or
             a scorer callable object / function with signature
-            `scorer(estimator, X, y)` (see :ref:`scoring`).
+            `scorer(estimator, X, y)` (see :ref:`scoring_callable`).
 
         exploit_incremental_learning : bool, default=False
             If the estimator supports incremental learning, this will be
@@ -749,7 +752,7 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
         scoring : str or callable, default=None
             A string (see :ref:`scoring_parameter`) or
             a scorer callable object / function with signature
-            `scorer(estimator, X, y)` (see :ref:`scoring`).
+            `scorer(estimator, X, y)` (see :ref:`scoring_callable`).
 
         n_jobs : int, default=None
             Number of jobs to run in parallel. Training the estimator and

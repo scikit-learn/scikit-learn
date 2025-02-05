@@ -1,5 +1,4 @@
 import os
-import warnings
 from os import environ
 from os.path import exists, join
 
@@ -10,7 +9,7 @@ from sklearn.datasets import get_data_home
 from sklearn.datasets._base import _pkl_filepath
 from sklearn.datasets._twenty_newsgroups import CACHE_NAME
 from sklearn.utils._testing import SkipTest, check_skip_network
-from sklearn.utils.fixes import np_base_version, parse_version
+from sklearn.utils.fixes import np_base_version, parse_version, sp_version
 
 
 def setup_labeled_faces():
@@ -79,22 +78,8 @@ def setup_grid_search():
 def setup_preprocessing():
     try:
         import pandas  # noqa
-
-        if parse_version(pandas.__version__) < parse_version("1.1.0"):
-            raise SkipTest("Skipping preprocessing.rst, pandas version < 1.1.0")
     except ImportError:
         raise SkipTest("Skipping preprocessing.rst, pandas not installed")
-
-
-def setup_unsupervised_learning():
-    try:
-        import skimage  # noqa
-    except ImportError:
-        raise SkipTest("Skipping unsupervised_learning.rst, scikit-image not installed")
-    # ignore deprecation warnings from scipy.misc.face
-    warnings.filterwarnings(
-        "ignore", "The binary mode of fromstring", DeprecationWarning
-    )
 
 
 def skip_if_matplotlib_not_installed(fname):
@@ -136,8 +121,6 @@ def pytest_runtest_setup(item):
         setup_grid_search()
     elif fname.endswith("modules/preprocessing.rst"):
         setup_preprocessing()
-    elif fname.endswith("statistical_inference/unsupervised_learning.rst"):
-        setup_unsupervised_learning()
 
     rst_files_requiring_matplotlib = [
         "modules/partial_dependence.rst",
@@ -170,11 +153,15 @@ def pytest_collection_modifyitems(config, items):
     items : list of collected items
     """
     skip_doctests = False
-    if np_base_version >= parse_version("2"):
-        # Skip doctests when using numpy 2 for now. See the following discussion
-        # to decide what to do in the longer term:
-        # https://github.com/scikit-learn/scikit-learn/issues/27339
+    if np_base_version < parse_version("2"):
+        # TODO: configure numpy to output scalar arrays as regular Python scalars
+        # once possible to improve readability of the tests docstrings.
+        # https://numpy.org/neps/nep-0051-scalar-representation.html#implementation
         reason = "Due to NEP 51 numpy scalar repr has changed in numpy 2"
+        skip_doctests = True
+
+    if sp_version < parse_version("1.14"):
+        reason = "Scipy sparse matrix repr has changed in scipy 1.14"
         skip_doctests = True
 
     # Normally doctest has the entire module's scope. Here we set globs to an empty dict

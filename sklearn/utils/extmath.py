@@ -1,14 +1,7 @@
 """Utilities to perform optimal mathematical operations in scikit-learn."""
 
-# Authors: Gael Varoquaux
-#          Alexandre Gramfort
-#          Alexandre T. Passos
-#          Olivier Grisel
-#          Lars Buitinck
-#          Stefan van der Walt
-#          Kyle Kastner
-#          Giorgio Patrini
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from functools import partial
@@ -18,8 +11,7 @@ import numpy as np
 from scipy import linalg, sparse
 
 from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.deprecation import deprecated
-from ._array_api import _is_numpy_namespace, device, get_namespace
+from ._array_api import _average, _is_numpy_namespace, _nanmean, device, get_namespace
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array, check_random_state
 
@@ -121,7 +113,7 @@ def fast_logdet(A):
     >>> from sklearn.utils.extmath import fast_logdet
     >>> a = np.array([[5, 1], [2, 8]])
     >>> fast_logdet(a)
-    3.6375861597263857
+    np.float64(3.6375861597263857)
     """
     xp, _ = get_namespace(A)
     sign, ld = xp.linalg.slogdet(A)
@@ -185,6 +177,7 @@ def safe_sparse_dot(a, b, *, dense_output=False):
            [11, 25, 39],
            [17, 39, 61]])
     """
+    xp, _ = get_namespace(a, b)
     if a.ndim > 2 or b.ndim > 2:
         if sparse.issparse(a):
             # sparse is always 2D. Implies b is 3D+
@@ -200,7 +193,12 @@ def safe_sparse_dot(a, b, *, dense_output=False):
             ret = a_2d @ b
             ret = ret.reshape(*a.shape[:-1], b.shape[1])
         else:
-            ret = np.dot(a, b)
+            # Alternative for `np.dot` when dealing with a or b having
+            # more than 2 dimensions, that works with the array api.
+            # If b is 1-dim then the last axis for b is taken otherwise
+            # if b is >= 2-dim then the second to last axis is taken.
+            b_axis = -1 if b.ndim == 1 else -2
+            ret = xp.tensordot(a, b, axes=[-1, b_axis])
     else:
         ret = a @ b
 
@@ -375,6 +373,12 @@ def randomized_svd(
     This method solves the fixed-rank approximation problem described in [1]_
     (problem (1.5), p5).
 
+    Refer to
+    :ref:`sphx_glr_auto_examples_applications_wikipedia_principal_eigenvector.py`
+    for a typical example where the power iteration algorithm is used to rank web pages.
+    This algorithm is also known to be used as a building block in Google's PageRank
+    algorithm.
+
     Parameters
     ----------
     M : {ndarray, sparse matrix}
@@ -533,7 +537,7 @@ def randomized_svd(
     if is_array_api_compliant:
         Uhat, s, Vt = xp.linalg.svd(B, full_matrices=False)
     else:
-        # When when array_api_dispatch is disabled, rely on scipy.linalg
+        # When array_api_dispatch is disabled, rely on scipy.linalg
         # instead of numpy.linalg to avoid introducing a behavior change w.r.t.
         # previous versions of scikit-learn.
         Uhat, s, Vt = linalg.svd(
@@ -906,46 +910,6 @@ def svd_flip(u, v, u_based_decision=True):
     return u, v
 
 
-# TODO(1.6): remove
-@deprecated(  # type: ignore
-    "The function `log_logistic` is deprecated and will be removed in 1.6. "
-    "Use `-np.logaddexp(0, -x)` instead."
-)
-def log_logistic(X, out=None):
-    """Compute the log of the logistic function, ``log(1 / (1 + e ** -x))``.
-
-    This implementation is numerically stable and uses `-np.logaddexp(0, -x)`.
-
-    For the ordinary logistic function, use ``scipy.special.expit``.
-
-    Parameters
-    ----------
-    X : array-like of shape (M, N) or (M,)
-        Argument to the logistic function.
-
-    out : array-like of shape (M, N) or (M,), default=None
-        Preallocated output array.
-
-    Returns
-    -------
-    out : ndarray of shape (M, N) or (M,)
-        Log of the logistic function evaluated at every point in x.
-
-    Notes
-    -----
-    See the blog post describing this implementation:
-    http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression/
-    """
-    X = check_array(X, dtype=np.float64, ensure_2d=False)
-
-    if out is None:
-        out = np.empty_like(X)
-
-    np.logaddexp(0, -X, out=out)
-    out *= -1
-    return out
-
-
 def softmax(X, copy=True):
     """
     Calculate the softmax function.
@@ -1264,24 +1228,24 @@ def _nanaverage(a, weights=None):
     that :func:`np.nan` values are ignored from the average and weights can
     be passed. Note that when possible, we delegate to the prime methods.
     """
+    xp, _ = get_namespace(a)
+    if a.shape[0] == 0:
+        return xp.nan
 
-    if len(a) == 0:
-        return np.nan
-
-    mask = np.isnan(a)
-    if mask.all():
-        return np.nan
+    mask = xp.isnan(a)
+    if xp.all(mask):
+        return xp.nan
 
     if weights is None:
-        return np.nanmean(a)
+        return _nanmean(a, xp=xp)
 
-    weights = np.asarray(weights)
+    weights = xp.asarray(weights)
     a, weights = a[~mask], weights[~mask]
     try:
-        return np.average(a, weights=weights)
+        return _average(a, weights=weights)
     except ZeroDivisionError:
         # this is when all weights are zero, then ignore them
-        return np.average(a)
+        return _average(a)
 
 
 def safe_sqr(X, *, copy=True):

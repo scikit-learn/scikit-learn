@@ -6,12 +6,8 @@ This module contains:
  - A Voting regressor for regression estimators.
 """
 
-# Authors: Sebastian Raschka <se.raschka@gmail.com>,
-#          Gilles Louppe <g.louppe@gmail.com>,
-#          Ramil Nugmanov <stsouko@live.ru>
-#          Mohamed Ali Jamaoui <m.ali.jamaoui@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from abc import abstractmethod
 from numbers import Integral
@@ -551,6 +547,11 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         ]
         return np.asarray(names_out, dtype=object)
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = []
+        return tags
+
 
 class VotingRegressor(RegressorMixin, _BaseVoting):
     """Prediction voting regressor for unfitted estimators.
@@ -558,6 +559,9 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     A voting regressor is an ensemble meta-estimator that fits several base
     regressors, each on the whole dataset. Then it averages the individual
     predictions to form a final prediction.
+
+    For a detailed example, refer to
+    :ref:`sphx_glr_auto_examples_ensemble_plot_voting_regressor.py`.
 
     Read more in the :ref:`User Guide <voting_regressor>`.
 

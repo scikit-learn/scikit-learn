@@ -13,6 +13,9 @@ the :class:`sklearn.preprocessing.SplineTransformer` class and its
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Data exploration on the Bike Sharing Demand dataset
 # ---------------------------------------------------
@@ -195,7 +198,7 @@ print("Categorical features:", categorical_columns.tolist())
 
 # %%
 #
-# Lets evaluate our gradient boosting model with the mean absolute error of the
+# Let's evaluate our gradient boosting model with the mean absolute error of the
 # relative demand averaged across our 5 time-based cross-validation splits:
 import numpy as np
 
