@@ -1,8 +1,0 @@
-- :class:`linear_model.RidgeCV` now properly uses predictions on the same scale as
-  the target seen during `fit`. These predictions are stored in `cv_results_` when
-  `scoring != None`. Previously, the predictions were rescaled by the square root of the
-  sample weights and offset by the mean of the target, leading to an incorrect estimate
-  of the score.
-  By :user:`Guillaume Lemaitre <glemaitre>`,
-  :user:`Jérôme Dockes <jeromedockes>` and
-  :user:`Hanmin Qin <qinhanmin2014>`

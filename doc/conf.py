@@ -207,6 +207,11 @@ add_function_parentheses = False
 # Sphinx are currently 'default' and 'sphinxdoc'.
 html_theme = "pydata_sphinx_theme"
 
+# This config option is used to generate the canonical links in the header
+# of every page. The canonical link is needed to prevent search engines from
+# returning results pointing to old scikit-learn versions.
+html_baseurl = "https://scikit-learn.org/stable/"
+
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
@@ -346,6 +351,7 @@ html_additional_pages = {"index": "index.html"}
 html_js_files = [
     "scripts/dropdown.js",
     "scripts/version-switcher.js",
+    "scripts/sg_plotly_resize.js",
 ]
 
 # Compile scss files into css files using sphinxcontrib-sass
@@ -373,7 +379,7 @@ def add_js_css_files(app, pagename, templatename, context, doctree):
         app.add_css_file(
             "https://cdn.datatables.net/2.0.0/css/dataTables.dataTables.min.css"
         )
-        # Internal: API search intialization and styling
+        # Internal: API search initialization and styling
         app.add_js_file("scripts/api-search.js")
         app.add_css_file("styles/api-search.css")
     elif pagename == "index":

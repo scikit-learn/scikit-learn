@@ -64,7 +64,7 @@ _LOSSES.update(
 
 def _safe_divide(numerator, denominator):
     """Prevents overflow and division by zero."""
-    # This is used for classifiers where the denominator might become zero exatly.
+    # This is used for classifiers where the denominator might become zero exactly.
     # For instance for log loss, HalfBinomialLoss, if proba=0 or proba=1 exactly, then
     # denominator = hessian = 0, and we should set the node value in the line search to
     # zero as there is no improvement of the loss possible.
@@ -1116,6 +1116,11 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 leaves[:, i, j] = estimator.apply(X, check_input=False)
 
         return leaves
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
 
 
 class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):

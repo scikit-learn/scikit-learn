@@ -37,9 +37,9 @@ solves a problem of the form:
    :align: center
    :scale: 50%
 
-:class:`LinearRegression` will take in its ``fit`` method arrays ``X``, ``y``
-and will store the coefficients :math:`w` of the linear model in its
-``coef_`` member::
+:class:`LinearRegression` takes in its ``fit`` method arguments ``X``, ``y``,
+``sample_weight`` and stores the coefficients :math:`w` of the linear model in its
+``coef_`` and ``intercept_`` attributes::
 
     >>> from sklearn import linear_model
     >>> reg = linear_model.LinearRegression()
@@ -47,9 +47,11 @@ and will store the coefficients :math:`w` of the linear model in its
     LinearRegression()
     >>> reg.coef_
     array([0.5, 0.5])
+    >>> reg.intercept_
+    0.0
 
 The coefficient estimates for Ordinary Least Squares rely on the
-independence of the features. When features are correlated and the
+independence of the features. When features are correlated and some
 columns of the design matrix :math:`X` have an approximately linear
 dependence, the design matrix becomes close to singular
 and as a result, the least-squares estimate becomes highly sensitive
@@ -79,7 +81,7 @@ Ordinary Least Squares Complexity
 ---------------------------------
 
 The least squares solution is computed using the singular value
-decomposition of X. If X is a matrix of shape `(n_samples, n_features)`
+decomposition of :math:`X`. If :math:`X` is a matrix of shape `(n_samples, n_features)`
 this method has a cost of
 :math:`O(n_{\text{samples}} n_{\text{features}}^2)`, assuming that
 :math:`n_{\text{samples}} \geq n_{\text{features}}`.
@@ -124,7 +126,7 @@ its ``coef_`` member::
     >>> reg.coef_
     array([0.34545455, 0.34545455])
     >>> reg.intercept_
-    0.13636...
+    np.float64(0.13636...)
 
 Note that the class :class:`Ridge` allows for the user to specify that the
 solver be automatically chosen by setting `solver="auto"`. When this option
@@ -168,7 +170,7 @@ The :class:`RidgeClassifier` can be significantly faster than e.g.
 compute the projection matrix :math:`(X^T X)^{-1} X^T` only once.
 
 This classifier is sometimes referred to as a `Least Squares Support Vector
-Machines
+Machine
 <https://en.wikipedia.org/wiki/Least-squares_support-vector_machine>`_ with
 a linear kernel.
 
@@ -209,7 +211,7 @@ Usage example::
     RidgeCV(alphas=array([1.e-06, 1.e-05, 1.e-04, 1.e-03, 1.e-02, 1.e-01, 1.e+00, 1.e+01,
           1.e+02, 1.e+03, 1.e+04, 1.e+05, 1.e+06]))
     >>> reg.alpha_
-    0.01
+    np.float64(0.01)
 
 Specifying the value of the :term:`cv` attribute will trigger the use of
 cross-validation with :class:`~sklearn.model_selection.GridSearchCV`, for
@@ -367,7 +369,7 @@ scikit-learn.
   :math:`d` is the number of parameters (as well referred to as degrees of
   freedom in the previous section).
 
-  The definition of BIC replace the constant :math:`2` by :math:`\log(N)`:
+  The definition of BIC replaces the constant :math:`2` by :math:`\log(N)`:
 
   .. math::
       BIC = -2 \log(\hat{L}) + \log(N) d
@@ -627,7 +629,7 @@ function of the norm of its coefficients.
 
 * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_lasso_lars_elasticnet_path.py`
 
-The Lars algorithm provides the full path of the coefficients along
+The LARS algorithm provides the full path of the coefficients along
 the regularization parameter almost for free, thus a common operation
 is to retrieve the path with one of the functions :func:`lars_path`
 or :func:`lars_path_gram`.
@@ -657,7 +659,7 @@ Orthogonal Matching Pursuit (OMP)
 =================================
 :class:`OrthogonalMatchingPursuit` and :func:`orthogonal_mp` implement the OMP
 algorithm for approximating the fit of a linear model with constraints imposed
-on the number of non-zero coefficients (ie. the :math:`\ell_0` pseudo-norm).
+on the number of non-zero coefficients (i.e. the :math:`\ell_0` pseudo-norm).
 
 Being a forward feature selection method like :ref:`least_angle_regression`,
 orthogonal matching pursuit can approximate the optimum solution vector with a
@@ -788,7 +790,7 @@ The coefficients :math:`w` of the model can be accessed::
     >>> reg.coef_
     array([0.49999993, 0.49999993])
 
-Due to the Bayesian framework, the weights found are slightly different to the
+Due to the Bayesian framework, the weights found are slightly different from the
 ones found by :ref:`ordinary_least_squares`. However, Bayesian Ridge Regression
 is more robust to ill-posed problems.
 
@@ -847,7 +849,7 @@ Ridge Regression`_, see the example below.
 
 .. [3] Michael E. Tipping: `Sparse Bayesian Learning and the Relevance Vector Machine <https://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_
 
-.. [4] Tristan Fletcher: `Relevance Vector Machines Explained <https://citeseerx.ist.psu.edu/doc_view/pid/3dc9d625404fdfef6eaccc3babddefe4c176abd4>`_
+.. [4] Tristan Fletcher: `Relevance Vector Machines Explained <https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=3dc9d625404fdfef6eaccc3babddefe4c176abd4>`_
 
 .. _Logistic_regression:
 
@@ -1055,7 +1057,7 @@ are zeroes. This is because for the sample(s) with ``decision_function`` zero,
 :class:`LogisticRegression` and :class:`~sklearn.svm.LinearSVC` predict the
 negative class, while liblinear predicts the positive class. Note that a model
 with ``fit_intercept=False`` and having many samples with ``decision_function``
-zero, is likely to be a underfit, bad model and you are advised to set
+zero, is likely to be an underfit, bad model and you are advised to set
 ``fit_intercept=True`` and increase the ``intercept_scaling``.
 
 .. dropdown:: Solvers' details
@@ -1278,7 +1280,7 @@ Usage example::
     >>> reg.coef_
     array([0.2463..., 0.4337...])
     >>> reg.intercept_
-    -0.7638...
+    np.float64(-0.7638...)
 
 
 .. rubric:: Examples
@@ -1437,7 +1439,7 @@ in these settings.
 
   * :ref:`HuberRegressor <huber_regression>` should be faster than
     :ref:`RANSAC <ransac_regression>` and :ref:`Theil Sen <theil_sen_regression>`
-    unless the number of samples are very large, i.e. ``n_samples`` >> ``n_features``.
+    unless the number of samples is very large, i.e. ``n_samples`` >> ``n_features``.
     This is because :ref:`RANSAC <ransac_regression>` and :ref:`Theil Sen <theil_sen_regression>`
     fit on smaller subsets of the data. However, both :ref:`Theil Sen <theil_sen_regression>`
     and :ref:`RANSAC <ransac_regression>` are unlikely to be as robust as
@@ -1585,10 +1587,10 @@ better than an ordinary least squares in high dimension.
 Huber Regression
 ----------------
 
-The :class:`HuberRegressor` is different to :class:`Ridge` because it applies a
-linear loss to samples that are classified as outliers.
+The :class:`HuberRegressor` is different from :class:`Ridge` because it applies a
+linear loss to samples that are defined as outliers by the `epsilon` parameter.
 A sample is classified as an inlier if the absolute error of that sample is
-lesser than a certain threshold. It differs from :class:`TheilSenRegressor`
+less than the threshold `epsilon`. It differs from :class:`TheilSenRegressor`
 and :class:`RANSACRegressor` because it does not ignore the effect of the outliers
 but gives a lesser weight to them.
 
@@ -1603,13 +1605,13 @@ but gives a lesser weight to them.
 
 .. dropdown:: Mathematical details
 
-  The loss function that :class:`HuberRegressor` minimizes is given by
+  :class:`HuberRegressor` minimizes
 
   .. math::
 
     \min_{w, \sigma} {\sum_{i=1}^n\left(\sigma + H_{\epsilon}\left(\frac{X_{i}w - y_{i}}{\sigma}\right)\sigma\right) + \alpha {||w||_2}^2}
 
-  where
+  where the loss function is given by
 
   .. math::
 
@@ -1624,7 +1626,7 @@ but gives a lesser weight to them.
   .. rubric:: References
 
   * Peter J. Huber, Elvezio M. Ronchetti: Robust Statistics, Concomitant scale
-    estimates, pg 172
+    estimates, p. 172.
 
 The :class:`HuberRegressor` differs from using :class:`SGDRegressor` with loss set to `huber`
 in the following ways.
@@ -1638,10 +1640,10 @@ in the following ways.
   samples while :class:`SGDRegressor` needs a number of passes on the training data to
   produce the same robustness.
 
-Note that this estimator is different from the R implementation of Robust Regression
-(https://stats.oarc.ucla.edu/r/dae/robust-regression/) because the R implementation does a weighted least
-squares implementation with weights given to each sample on the basis of how much the residual is
-greater than a certain threshold.
+Note that this estimator is different from the `R implementation of Robust
+Regression <https://stats.oarc.ucla.edu/r/dae/robust-regression/>`_  because the R
+implementation does a weighted least squares implementation with weights given to each
+sample on the basis of how much the residual is greater than a certain threshold.
 
 .. _quantile_regression:
 

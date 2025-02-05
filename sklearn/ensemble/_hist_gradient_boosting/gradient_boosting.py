@@ -767,7 +767,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     )
 
                     # If the scorer is a predefined string, then we optimize
-                    # the evaluation by re-using the incrementally updated raw
+                    # the evaluation by reusing the incrementally updated raw
                     # predictions.
                     if scoring_is_predefined_string:
                         raw_predictions_small_train = raw_predictions[
@@ -945,7 +945,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
                 else:
                     # If the scorer is a predefined string, then we optimize the
-                    # evaluation by re-using the incrementally computed raw predictions.
+                    # evaluation by reusing the incrementally computed raw predictions.
                     if scoring_is_predefined_string:
                         raw_predictions_small_train = raw_predictions[
                             indices_small_train
@@ -1579,7 +1579,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     scoring : str or callable or None, default='loss'
         Scoring parameter to use for early stopping. It can be a single
         string (see :ref:`scoring_parameter`) or a callable (see
-        :ref:`scoring`). If None, the estimator's default scorer is used. If
+        :ref:`scoring_callable`). If None, the estimator's default scorer is used. If
         ``scoring='loss'``, early stopping is checked w.r.t the loss value.
         Only used if early stopping is performed.
     validation_fraction : int or float or None, default=0.1
@@ -1708,7 +1708,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         verbose=0,
         random_state=None,
     ):
-        super(HistGradientBoostingRegressor, self).__init__(
+        super().__init__(
             loss=loss,
             learning_rate=learning_rate,
             max_iter=max_iter,
@@ -1961,7 +1961,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
     scoring : str or callable or None, default='loss'
         Scoring parameter to use for early stopping. It can be a single
         string (see :ref:`scoring_parameter`) or a callable (see
-        :ref:`scoring`). If None, the estimator's default scorer
+        :ref:`scoring_callable`). If None, the estimator's default scorer
         is used. If ``scoring='loss'``, early stopping is checked
         w.r.t the loss value. Only used if early stopping is performed.
     validation_fraction : int or float or None, default=0.1
@@ -2091,7 +2091,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         random_state=None,
         class_weight=None,
     ):
-        super(HistGradientBoostingClassifier, self).__init__(
+        super().__init__(
             loss=loss,
             learning_rate=learning_rate,
             max_iter=max_iter,
@@ -2170,7 +2170,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         """
         for raw_predictions in self._staged_raw_predict(X):
             if raw_predictions.shape[1] == 1:
-                # np.argmax([0, 0]) is 0, not 1, therefor "> 0" not ">= 0"
+                # np.argmax([0, 0]) is 0, not 1, therefore "> 0" not ">= 0"
                 encoded_classes = (raw_predictions.ravel() > 0).astype(int)
             else:
                 encoded_classes = np.argmax(raw_predictions, axis=1)

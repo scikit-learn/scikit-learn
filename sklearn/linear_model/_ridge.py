@@ -665,10 +665,8 @@ def _ridge_regression(
     if y.ndim > 2:
         raise ValueError("Target y has the wrong shape %s" % str(y.shape))
 
-    ravel = False
     if y.ndim == 1:
         y = xp.reshape(y, (-1, 1))
-        ravel = True
 
     n_samples_, n_targets = y.shape
 
@@ -1253,6 +1251,9 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.array_api_support = True
+        tags.input_tags.sparse = (self.solver != "svd") and (
+            self.solver != "cholesky" or not self.fit_intercept
+        )
         return tags
 
 
@@ -1569,6 +1570,13 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
 
         super().fit(X, Y, sample_weight=sample_weight)
         return self
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = (self.solver != "svd") and (
+            self.solver != "cholesky" or not self.fit_intercept
+        )
+        return tags
 
 
 def _check_gcv_mode(X, gcv_mode):
@@ -2180,7 +2188,7 @@ class _RidgeGCV(LinearModel):
             else:
                 predictions = y - (c / G_inverse_diag)
                 # Rescale predictions back to original scale
-                if sample_weight is not None:  # avoid the unecessary division by ones
+                if sample_weight is not None:  # avoid the unnecessary division by ones
                     if predictions.ndim > 1:
                         predictions /= sqrt_sw[:, None]
                     else:
@@ -2534,6 +2542,11 @@ class _BaseRidgeCV(LinearModel):
     def cv_values_(self):
         return self.cv_results_
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     """Ridge regression with built-in cross-validation.
@@ -2597,7 +2610,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
 
     store_cv_results : bool, default=False
         Flag indicating if the cross-validation values corresponding to
-        each alpha should be stored in the ``cv_values_`` attribute (see
+        each alpha should be stored in the ``cv_results_`` attribute (see
         below). This flag is only compatible with ``cv=None`` (i.e. using
         Leave-One-Out Cross-Validation).
 

@@ -397,7 +397,8 @@ def _num_samples(x):
     if hasattr(x, "shape") and x.shape is not None:
         if len(x.shape) == 0:
             raise TypeError(
-                "Singleton array %r cannot be considered a valid collection." % x
+                "Input should have at least 1 dimension i.e. satisfy "
+                f"`len(x.shape) > 0`, got scalar `{x!r}` instead."
             )
         # Check that shape is returning an integer or default to len
         # Dask dataframes may not return numeric shape[0] value
@@ -467,10 +468,8 @@ def check_consistent_length(*arrays):
     >>> b = [2, 3, 4]
     >>> check_consistent_length(a, b)
     """
-
     lengths = [_num_samples(X) for X in arrays if X is not None]
-    uniques = np.unique(lengths)
-    if len(uniques) > 1:
+    if len(set(lengths)) > 1:
         raise ValueError(
             "Found input variables with inconsistent numbers of samples: %r"
             % [int(l) for l in lengths]
@@ -1098,8 +1097,8 @@ def check_array(
             )
         if not allow_nd and array.ndim >= 3:
             raise ValueError(
-                "Found array with dim %d. %s expected <= 2."
-                % (array.ndim, estimator_name)
+                f"Found array with dim {array.ndim},"
+                f" while dim <= 2 is required{context}."
             )
 
         if ensure_all_finite:
@@ -1413,7 +1412,7 @@ def _check_y(y, multi_output=False, y_numeric=False, estimator=None):
     return y
 
 
-def column_or_1d(y, *, dtype=None, warn=False):
+def column_or_1d(y, *, dtype=None, warn=False, device=None):
     """Ravel column or 1d numpy array, else raises an error.
 
     Parameters
@@ -1428,6 +1427,12 @@ def column_or_1d(y, *, dtype=None, warn=False):
 
     warn : bool, default=False
        To control display of warnings.
+
+    device : device, default=None
+        `device` object.
+        See the :ref:`Array API User Guide <array_api>` for more details.
+
+        .. versionadded:: 1.6
 
     Returns
     -------
@@ -1457,7 +1462,9 @@ def column_or_1d(y, *, dtype=None, warn=False):
 
     shape = y.shape
     if len(shape) == 1:
-        return _asarray_with_order(xp.reshape(y, (-1,)), order="C", xp=xp)
+        return _asarray_with_order(
+            xp.reshape(y, (-1,)), order="C", xp=xp, device=device
+        )
     if len(shape) == 2 and shape[1] == 1:
         if warn:
             warnings.warn(
@@ -1469,7 +1476,9 @@ def column_or_1d(y, *, dtype=None, warn=False):
                 DataConversionWarning,
                 stacklevel=2,
             )
-        return _asarray_with_order(xp.reshape(y, (-1,)), order="C", xp=xp)
+        return _asarray_with_order(
+            xp.reshape(y, (-1,)), order="C", xp=xp, device=device
+        )
 
     raise ValueError(
         "y should be a 1d array, got an array of shape {} instead.".format(shape)
@@ -1672,7 +1681,7 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     :ref:`sphx_glr_auto_examples_developing_estimators_sklearn_is_fitted.py`
     for an example on how to use the API.
 
-    If no `attributes` are passed, this fuction will pass if an estimator is stateless.
+    If no `attributes` are passed, this function will pass if an estimator is stateless.
     An estimator can indicate it's stateless by setting the `requires_fit` tag. See
     :ref:`estimator_tags` for more information. Note that the `requires_fit` tag
     is ignored if `attributes` are passed.
