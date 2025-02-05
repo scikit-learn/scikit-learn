@@ -118,7 +118,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
             # score from being affected by 0-weighted NaN elements.
             average_weight = np.asarray(average_weight)
             score[average_weight == 0] = 0
-        return np.average(score, weights=average_weight)
+        return float(np.average(score, weights=average_weight))
     else:
         return score
 
