@@ -1390,7 +1390,7 @@ def _get_warnings_filters_info_list():
         # https://github.com/plotly/plotly.py/issues/4997
         WarningInfo(
             "ignore",
-            message="*scattermapbox* is deprecated! Use *scattermap* instead.",
+            message="scattermapbox.+deprecated.+scattermap.+instead",
             category=DeprecationWarning,
         ),
     ]
