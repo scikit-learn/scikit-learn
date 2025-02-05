@@ -405,8 +405,8 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         y_pred,
         *,
         sample_weight=None,
-        pos_label=None,
         drop_intermediate=False,
+        pos_label=None,
         name=None,
         ax=None,
         plot_chance_level=False,
@@ -427,16 +427,16 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
-        pos_label : int, float, bool or str, default=None
-            The class considered as the positive class when computing the
-            precision and recall metrics.
-
         drop_intermediate : bool, default=False
             Whether to drop some suboptimal thresholds which would not appear
             on a plotted precision-recall curve. This is useful in order to
             create lighter precision-recall curves.
 
             .. versionadded:: 1.3
+
+        pos_label : int, float, bool or str, default=None
+            The class considered as the positive class when computing the
+            precision and recall metrics.
 
         name : str, default=None
             Name for labeling curve. If `None`, name will be set to
