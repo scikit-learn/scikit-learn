@@ -20,7 +20,7 @@
 .. |API| replace:: :raw-html:`<span class="badge text-bg-warning">API Change</span>` :raw-latex:`{\small\sc [API Change]}`
 
 
-.. _Olivier Grisel: https://twitter.com/ogrisel
+.. _Olivier Grisel: https://bsky.app/profile/ogrisel.bsky.social
 
 .. _Gael Varoquaux: http://gael-varoquaux.info
 
