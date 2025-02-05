@@ -1103,10 +1103,12 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
 class TimeSeriesSplit(_BaseKFold):
     """Time Series cross-validator.
 
-    Provides train/test indices to split time series data samples
-    that are observed at fixed time intervals, in train/test sets.
-    In each split, test indices must be higher than before, and thus shuffling
-    in cross validator is inappropriate.
+    Provides train/test indices to split time-ordered data, where other
+    cross-validation methods are inappropriate, as they would lead to training
+    on future data and evaluating on past data.
+    To ensure comparable metrics across folds, samples must be equally spaced.
+    Once this condition is met, each test set covers the same time duration,
+    while the train set size accumulates data from previous splits.
 
     This cross-validation object is a variation of :class:`KFold`.
     In the kth split, it returns first k folds as train set and the
