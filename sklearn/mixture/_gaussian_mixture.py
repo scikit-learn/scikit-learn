@@ -337,10 +337,10 @@ def _compute_precision_cholesky(covariances, covariance_type):
         precisions_chol = xp.empty((n_components, n_features, n_features), dtype=dtype)
         for k, covariance in enumerate(covariances):
             try:
-                cov_chol = linalg.cholesky(covariance, lower=True)
-            except linalg.LinAlgError:
+                cov_chol = xp.linalg.cholesky(covariance, upper=False)
+            except xp.linalg.LinAlgError:
                 raise ValueError(estimate_precision_error_message)
-            precisions_chol[k] = linalg.solve_triangular(
+            precisions_chol[k] = xp.linalg.solve_triangular(
                 cov_chol, xp.eye(n_features, dtype=dtype), lower=True
             ).T
     elif covariance_type == "tied":
