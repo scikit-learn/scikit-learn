@@ -568,11 +568,6 @@ Python and CPython ecosystem, for example :user:`Nathan Goldbaum <ngoldbaum>`,
   removed in 1.8. In the meantime, `None` is equivalent to `"predict"`.
   By :user:`Jérémie du Boisberranger <jeremiedb>` :pr:`30001`
 
-- |Fix| :func:`metrics.det_curve` and :class:`metrics.DetCurveDisplay` now
-  return an extra threshold at infinity where the classifier always predicts the
-  negative class i.e. tps = fps = 0.
-  :pr:`29151` by :user:`Arturo Amor <ArturoAmorQ>`.
-
 :mod:`sklearn.model_selection`
 ------------------------------
 
