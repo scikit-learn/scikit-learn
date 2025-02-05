@@ -596,7 +596,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
         # Note: we use default n_jobs value, i.e. sequential computation, which
         # we expect to be more performant that parallelizing for small number
-        # of samples, e.g. < 1k samples. Default n_jobs value can be overriden
+        # of samples, e.g. < 1k samples. Default n_jobs value can be overridden
         # by using joblib.parallel_backend context manager around
         # ._compute_score_samples. Using a higher n_jobs may speed up the
         # computation of the scores, e.g. for > 1k samples. See

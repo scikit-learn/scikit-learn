@@ -99,7 +99,7 @@ evaluated and the best combination is retained.
 
   - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`
     for an example of using ``refit=callable`` interface in
-    :class:`GridSearchCV`. The example shows how this interface adds certain
+    :class:`GridSearchCV`. The example shows how this interface adds a certain
     amount of flexibility in identifying the "best" estimator. This interface
     can also be used in multiple metrics evaluation.
 
@@ -424,7 +424,7 @@ The sections below dive into technical aspects of successive halving.
 
   `min_resources` was here automatically set to 250, which results in the last
   iteration using all the resources. The exact value that is used depends on
-  the number of candidate parameter, on `max_resources` and on `factor`.
+  the number of candidate parameters, on `max_resources` and on `factor`.
 
   For :class:`HalvingRandomSearchCV`, exhausting the resources can be done in 2
   ways:
@@ -724,7 +724,7 @@ model selection:
 Out of Bag Estimates
 --------------------
 
-When using ensemble methods base upon bagging, i.e. generating new
+When using ensemble methods based upon bagging, i.e. generating new
 training sets using sampling with replacement, part of the training set
 remains unused.  For each classifier in the ensemble, a different part
 of the training set is left out.

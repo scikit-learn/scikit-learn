@@ -37,6 +37,11 @@ from sklearn.utils.fixes import (
     sp_version,
 )
 
+try:
+    from scipy_doctest.conftest import dt_config
+except ModuleNotFoundError:
+    dt_config = None
+
 if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
     raise ImportError(
         f"Your version of pytest is too old. Got version {pytest.__version__}, you"
@@ -356,3 +361,8 @@ def print_changed_only_false():
     set_config(print_changed_only=False)
     yield
     set_config(print_changed_only=True)  # reset to default
+
+
+if dt_config is not None:
+    # Strict mode to differentiate between 3.14 and np.float64(3.14)
+    dt_config.strict_check = True
