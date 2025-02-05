@@ -643,12 +643,12 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
     >>> print(classification_report(y_test, classifier.predict(X_test)))
                   precision    recall  f1-score   support
     <BLANKLINE>
-               0       0.94      0.99      0.96       224
-               1       0.80      0.46      0.59        26
+               0       0.94      0.99      0.96    224.00
+               1       0.80      0.46      0.59     26.00
     <BLANKLINE>
-        accuracy                           0.93       250
-       macro avg       0.87      0.72      0.77       250
-    weighted avg       0.93      0.93      0.92       250
+        accuracy                           0.93    250.00
+       macro avg       0.87      0.72      0.77    250.00
+    weighted avg       0.93      0.93      0.92    250.00
     <BLANKLINE>
     >>> classifier_tuned = TunedThresholdClassifierCV(
     ...     classifier, scoring="balanced_accuracy"
@@ -660,12 +660,12 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
     >>> print(classification_report(y_test, classifier_tuned.predict(X_test)))
                   precision    recall  f1-score   support
     <BLANKLINE>
-               0       0.96      0.95      0.96       224
-               1       0.61      0.65      0.63        26
+               0       0.96      0.95      0.96    224.00
+               1       0.61      0.65      0.63     26.00
     <BLANKLINE>
-        accuracy                           0.92       250
-       macro avg       0.78      0.80      0.79       250
-    weighted avg       0.92      0.92      0.92       250
+        accuracy                           0.92    250.00
+       macro avg       0.78      0.80      0.79    250.00
+    weighted avg       0.92      0.92      0.92    250.00
     <BLANKLINE>
     """
 
