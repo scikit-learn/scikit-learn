@@ -271,10 +271,13 @@ def average_precision_score(
         "y_score": ["array-like"],
         "pos_label": [Real, str, "boolean", None],
         "sample_weight": ["array-like", None],
+        "drop_intermediate": ["boolean"],
     },
     prefer_skip_nested_validation=True,
 )
-def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
+def det_curve(
+    y_true, y_score, pos_label=None, sample_weight=None, drop_intermediate=False
+):
     """Compute Detection Error Tradeoff (DET) for different probability thresholds.
 
     .. note::
@@ -310,6 +313,13 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
+
+    drop_intermediate : bool, default=False
+        Whether to drop some suboptimal thresholds which would not appear on a
+        plotted detection-error tradeoff curve. This is useful in order to
+        create lighter detection-error tradeoff curves.
+
+        .. versionadded:: 1.7
 
     Returns
     -------
@@ -361,6 +371,21 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     tps = np.concatenate(([0], tps))
     fps = np.concatenate(([0], fps))
     thresholds = np.concatenate(([np.inf], thresholds))
+
+    if drop_intermediate and len(fps) > 2:
+        # Drop thresholds corresponding to points where true positives (tps)
+        # do not change from the previous or subsequent point. This will keep
+        # only the first and last point for each tps value. All points
+        # with the same tps value have the same recall and thus x coordinate.
+        # They appear as a vertical line on the plot.
+        optimal_idxs = np.where(
+            np.concatenate(
+                [[True], np.logical_or(np.diff(tps[:-1]), np.diff(tps[1:])), [True]]
+            )
+        )[0]
+        fps = fps[optimal_idxs]
+        tps = tps[optimal_idxs]
+        thresholds = thresholds[optimal_idxs]
 
     if len(np.unique(y_true)) != 2:
         raise ValueError(

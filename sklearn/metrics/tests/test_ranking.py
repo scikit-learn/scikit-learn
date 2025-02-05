@@ -1271,6 +1271,31 @@ def test_det_curve_toydata(y_true, y_score, expected_fpr, expected_fnr):
 
 
 @pytest.mark.parametrize(
+    "y_true,y_score,expected_fpr,expected_fnr,drop_intermediate",
+    [
+        # drop when true positives do not change from the previous or subsequent point
+        ([1, 0, 0], [0, 0.5, 1], [1, 1, 0.5, 0.0], [0, 1, 1, 1.0], False),
+        ([1, 0, 0], [0, 0.5, 1], [1, 1, 0.0], [0, 1, 1], True),
+        ([1, 0, 0], [0, 0.25, 0.5], [1, 1, 0.5, 0.0], [0, 1, 1, 1.0], False),
+        ([1, 0, 0], [0, 0.25, 0.5], [1, 1, 0.0], [0, 1, 1], True),
+        # do nothing otherwise
+        ([1, 0, 1], [0, 0.5, 1], [1, 1, 0], [0, 0.5, 0.5], False),
+        ([1, 0, 1], [0, 0.5, 1], [1, 1, 0], [0, 0.5, 0.5], True),
+        ([1, 0, 1], [0, 0.25, 0.5], [1, 1, 0], [0, 0.5, 0.5], False),
+        ([1, 0, 1], [0, 0.25, 0.5], [1, 1, 0], [0, 0.5, 0.5], True),
+    ],
+)
+def test_det_curve_drop_intermediate(
+    y_true, y_score, expected_fpr, expected_fnr, drop_intermediate
+):
+    # Check on a batch of small examples.
+    fpr, fnr, _ = det_curve(y_true, y_score, drop_intermediate=drop_intermediate)
+
+    assert_allclose(fpr, expected_fpr)
+    assert_allclose(fnr, expected_fnr)
+
+
+@pytest.mark.parametrize(
     "y_true,y_score,expected_fpr,expected_fnr",
     [
         ([1, 0], [0.5, 0.5], [1.0, 0.0], [0.0, 1.0]),
