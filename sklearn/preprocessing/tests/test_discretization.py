@@ -690,7 +690,7 @@ def test_KBD_inverse_transform_Xt_deprecation(strategy, quantile_method):
         kbd.inverse_transform(Xt=X)
 
 
-# TODO(1.7): remove this test if minimum numpy version is updated
+# TODO: remove this test when numpy min version >= 1.22
 @pytest.mark.skipif(
     condition=np_version >= parse_version("1.22"),
     reason="newer numpy versions do support the 'method' parameter",
