@@ -58,7 +58,7 @@ def html_template(data):
         <div class="estimator-params">
              <ul>
             <details>
-                <summary>Estimator x</summary>
+                <summary>Parameters</summary>
                 <ul>
         """
     out = ""
