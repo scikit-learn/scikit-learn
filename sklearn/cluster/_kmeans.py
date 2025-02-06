@@ -2144,8 +2144,8 @@ class MiniBatchKMeans(_BaseKMeans):
         self._n_since_last_reassign = 0
 
         n_steps = (self.max_iter * n_samples) // self._batch_size
-        sample_weight = sample_weight / np.sum(sample_weight)
-        sample_weight_minibatch_step = np.ones(self._batch_size).astype(X.dtype)
+        normalized_sample_weight = sample_weight / np.sum(sample_weight)
+        unit_sample_weight = np.ones_like(sample_weights, shape=(self._batch_size,))
         with _get_threadpool_controller().limit(limits=1, user_api="blas"):
             # Perform the iterative optimization until convergence
             for i in range(n_steps):
@@ -2153,7 +2153,7 @@ class MiniBatchKMeans(_BaseKMeans):
                 minibatch_indices = random_state.choice(
                     n_samples,
                     self._batch_size,
-                    p=sample_weight,
+                    p=normalized_sample_weight,
                     replace=True,
                 )
 
@@ -2164,7 +2164,7 @@ class MiniBatchKMeans(_BaseKMeans):
                 # _minibatch_update_dense/sparse code
                 batch_inertia = _mini_batch_step(
                     X=X[minibatch_indices],
-                    sample_weight=sample_weight_minibatch_step,
+                    sample_weight=unit_sample_weight,
                     centers=centers,
                     centers_new=centers_new,
                     weight_sums=self._counts,
