@@ -57,14 +57,14 @@ from sklearn.metrics import (
 )
 from sklearn.metrics._base import _average_binary_score
 from sklearn.metrics.pairwise import (
+    _paired_cosine_distances,
+    _paired_euclidean_distances,
     additive_chi2_kernel,
     chi2_kernel,
     cosine_distances,
     cosine_similarity,
     euclidean_distances,
     linear_kernel,
-    paired_cosine_distances,
-    paired_euclidean_distances,
     polynomial_kernel,
     rbf_kernel,
     sigmoid_kernel,
@@ -2157,7 +2157,7 @@ array_api_metric_checkers = {
     d2_tweedie_score: [
         check_array_api_regression_metric,
     ],
-    paired_cosine_distances: [check_array_api_metric_pairwise],
+    _paired_cosine_distances: [check_array_api_metric_pairwise],
     mean_poisson_deviance: [check_array_api_regression_metric],
     additive_chi2_kernel: [check_array_api_metric_pairwise],
     mean_gamma_deviance: [check_array_api_regression_metric],
@@ -2167,7 +2167,7 @@ array_api_metric_checkers = {
         check_array_api_regression_metric_multioutput,
     ],
     chi2_kernel: [check_array_api_metric_pairwise],
-    paired_euclidean_distances: [check_array_api_metric_pairwise],
+    _paired_euclidean_distances: [check_array_api_metric_pairwise],
     cosine_distances: [check_array_api_metric_pairwise],
     euclidean_distances: [check_array_api_metric_pairwise],
     linear_kernel: [check_array_api_metric_pairwise],

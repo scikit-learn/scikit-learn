@@ -38,7 +38,7 @@ from ..utils._param_validation import (
     StrOptions,
     validate_params,
 )
-from ..utils.deprecation import _deprecate_force_all_finite
+from ..utils.deprecation import _deprecate_force_all_finite, deprecated
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.fixes import parse_version, sp_base_version
 from ..utils.parallel import Parallel, delayed
@@ -1187,6 +1187,13 @@ def cosine_distances(X, Y=None):
 
 
 # Paired distances
+
+
+# TODO(1.9): Remove in 1.9
+@deprecated(
+    "The public function `sklearn.pairwise.paired_euclidean_distances` has been "
+    "deprecated in 1.7 and will be removed in 1.9."
+)
 @validate_params(
     {"X": ["array-like", "sparse matrix"], "Y": ["array-like", "sparse matrix"]},
     prefer_skip_nested_validation=True,
@@ -1212,16 +1219,53 @@ def paired_euclidean_distances(X, Y):
 
     Examples
     --------
-    >>> from sklearn.metrics.pairwise import paired_euclidean_distances
+    >>> from sklearn.metrics.pairwise import _paired_euclidean_distances
     >>> X = [[0, 0, 0], [1, 1, 1]]
     >>> Y = [[1, 0, 0], [1, 1, 0]]
-    >>> paired_euclidean_distances(X, Y)
+    >>> _paired_euclidean_distances(X, Y)
     array([1., 1.])
     """
+
+    return _paired_euclidean_distances(X, Y)
+
+
+def _paired_euclidean_distances(X, Y):
+    """Compute the paired euclidean distances between X and Y.
+
+    Read more in the :ref:`User Guide <metrics>`.
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        Input array/matrix X.
+
+    Y : {array-like, sparse matrix} of shape (n_samples, n_features)
+        Input array/matrix Y.
+
+    Returns
+    -------
+    distances : ndarray of shape (n_samples,)
+        Output array/matrix containing the calculated paired euclidean
+        distances.
+
+    Examples
+    --------
+    >>> from sklearn.metrics.pairwise import _paired_euclidean_distances
+    >>> X = [[0, 0, 0], [1, 1, 1]]
+    >>> Y = [[1, 0, 0], [1, 1, 0]]
+    >>> _paired_euclidean_distances(X, Y)
+    array([1., 1.])
+    """
+
     X, Y = check_paired_arrays(X, Y)
     return row_norms(X - Y)
 
 
+# TODO(1.9): Remove in 1.9
+@deprecated(
+    "The public function `sklearn.pairwise.paired_manhattan_distances` has been "
+    "deprecated in 1.7 and will be removed in 1.9."
+)
 @validate_params(
     {"X": ["array-like", "sparse matrix"], "Y": ["array-like", "sparse matrix"]},
     prefer_skip_nested_validation=True,
@@ -1250,11 +1294,46 @@ def paired_manhattan_distances(X, Y):
 
     Examples
     --------
-    >>> from sklearn.metrics.pairwise import paired_manhattan_distances
+    >>> from sklearn.metrics.pairwise import _paired_manhattan_distances
     >>> import numpy as np
     >>> X = np.array([[1, 1, 0], [0, 1, 0], [0, 0, 1]])
     >>> Y = np.array([[0, 1, 0], [0, 0, 1], [0, 0, 0]])
-    >>> paired_manhattan_distances(X, Y)
+    >>> _paired_manhattan_distances(X, Y)
+    array([1., 2., 1.])
+    """
+
+    return _paired_manhattan_distances(X, Y)
+
+
+def _paired_manhattan_distances(X, Y):
+    """Compute the paired L1 distances between X and Y.
+
+    Distances are calculated between (X[0], Y[0]), (X[1], Y[1]), ...,
+    (X[n_samples], Y[n_samples]).
+
+    Read more in the :ref:`User Guide <metrics>`.
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        An array-like where each row is a sample and each column is a feature.
+
+    Y : {array-like, sparse matrix} of shape (n_samples, n_features)
+        An array-like where each row is a sample and each column is a feature.
+
+    Returns
+    -------
+    distances : ndarray of shape (n_samples,)
+        L1 paired distances between the row vectors of `X`
+        and the row vectors of `Y`.
+
+    Examples
+    --------
+    >>> from sklearn.metrics.pairwise import _paired_manhattan_distances
+    >>> import numpy as np
+    >>> X = np.array([[1, 1, 0], [0, 1, 0], [0, 0, 1]])
+    >>> Y = np.array([[0, 1, 0], [0, 0, 1], [0, 0, 0]])
+    >>> _paired_manhattan_distances(X, Y)
     array([1., 2., 1.])
     """
     X, Y = check_paired_arrays(X, Y)
@@ -1266,6 +1345,11 @@ def paired_manhattan_distances(X, Y):
         return np.abs(diff).sum(axis=-1)
 
 
+# TODO(1.9): Remove in 1.9
+@deprecated(
+    "The public function `sklearn.pairwise.paired_cosine_distances` has been "
+    "deprecated in 1.7 and will be removed in 1.9."
+)
 @validate_params(
     {"X": ["array-like", "sparse matrix"], "Y": ["array-like", "sparse matrix"]},
     prefer_skip_nested_validation=True,
@@ -1298,16 +1382,55 @@ def paired_cosine_distances(X, Y):
 
     Examples
     --------
-    >>> from sklearn.metrics.pairwise import paired_cosine_distances
+    >>> from sklearn.metrics.pairwise import _paired_cosine_distances
     >>> X = [[0, 0, 0], [1, 1, 1]]
     >>> Y = [[1, 0, 0], [1, 1, 0]]
-    >>> paired_cosine_distances(X, Y)
+    >>> _paired_cosine_distances(X, Y)
+    array([0.5       , 0.18...])
+    """
+    return _paired_cosine_distances(X, Y)
+
+
+def _paired_cosine_distances(X, Y):
+    """
+    Compute the paired cosine distances between X and Y.
+
+    Read more in the :ref:`User Guide <metrics>`.
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        An array where each row is a sample and each column is a feature.
+
+    Y : {array-like, sparse matrix} of shape (n_samples, n_features)
+        An array where each row is a sample and each column is a feature.
+
+    Returns
+    -------
+    distances : ndarray of shape (n_samples,)
+        Returns the distances between the row vectors of `X`
+        and the row vectors of `Y`, where `distances[i]` is the
+        distance between `X[i]` and `Y[i]`.
+
+    Notes
+    -----
+    The cosine distance is equivalent to the half the squared
+    euclidean distance if each sample is normalized to unit norm.
+
+    Examples
+    --------
+    >>> from sklearn.metrics.pairwise import _paired_cosine_distances
+    >>> X = [[0, 0, 0], [1, 1, 1]]
+    >>> Y = [[1, 0, 0], [1, 1, 0]]
+    >>> _paired_cosine_distances(X, Y)
     array([0.5       , 0.18...])
     """
     X, Y = check_paired_arrays(X, Y)
     return 0.5 * row_norms(normalize(X) - normalize(Y), squared=True)
 
 
+# TODO(1.9): Remove PAIRED_DISTANCES dictionary since pairwise_*_distance public
+# functions are deprecated in 1.9
 PAIRED_DISTANCES = {
     "cosine": paired_cosine_distances,
     "euclidean": paired_euclidean_distances,
@@ -1317,7 +1440,21 @@ PAIRED_DISTANCES = {
     "cityblock": paired_manhattan_distances,
 }
 
+_PAIRED_DISTANCES = {
+    "cosine": _paired_cosine_distances,
+    "euclidean": _paired_euclidean_distances,
+    "l2": _paired_euclidean_distances,
+    "l1": _paired_manhattan_distances,
+    "manhattan": _paired_manhattan_distances,
+    "cityblock": _paired_manhattan_distances,
+}
 
+
+# TODO(1.9): Remove in 1.9
+@deprecated(
+    "The public function `sklearn.pairwise.paired_distances` has been "
+    "deprecated in 1.7 and will be removed in 1.9."
+)
 @validate_params(
     {
         "X": ["array-like"],
@@ -1368,15 +1505,66 @@ def paired_distances(X, Y, *, metric="euclidean", **kwds):
 
     Examples
     --------
-    >>> from sklearn.metrics.pairwise import paired_distances
+    >>> from sklearn.metrics.pairwise import _paired_distances
     >>> X = [[0, 1], [1, 1]]
     >>> Y = [[0, 1], [2, 1]]
-    >>> paired_distances(X, Y)
+    >>> _paired_distances(X, Y)
     array([0., 1.])
     """
 
-    if metric in PAIRED_DISTANCES:
-        func = PAIRED_DISTANCES[metric]
+    return _paired_distances(X, Y, metric=metric, **kwds)
+
+
+def _paired_distances(X, Y, *, metric="euclidean", **kwds):
+    """
+    Compute the paired distances between X and Y.
+
+    Compute the distances between (X[0], Y[0]), (X[1], Y[1]), etc...
+
+    Read more in the :ref:`User Guide <metrics>`.
+
+    Parameters
+    ----------
+    X : ndarray of shape (n_samples, n_features)
+        Array 1 for distance computation.
+
+    Y : ndarray of shape (n_samples, n_features)
+        Array 2 for distance computation.
+
+    metric : str or callable, default="euclidean"
+        The metric to use when calculating distance between instances in a
+        feature array. If metric is a string, it must be one of the options
+        specified in PAIRED_DISTANCES, including "euclidean",
+        "manhattan", or "cosine".
+        Alternatively, if metric is a callable function, it is called on each
+        pair of instances (rows) and the resulting value recorded. The callable
+        should take two arrays from `X` as input and return a value indicating
+        the distance between them.
+
+    **kwds : dict
+        Unused parameters.
+
+    Returns
+    -------
+    distances : ndarray of shape (n_samples,)
+        Returns the distances between the row vectors of `X`
+        and the row vectors of `Y`.
+
+    See Also
+    --------
+    sklearn.metrics.pairwise_distances : Computes the distance between every pair of
+        samples.
+
+    Examples
+    --------
+    >>> from sklearn.metrics.pairwise import _paired_distances
+    >>> X = [[0, 1], [1, 1]]
+    >>> Y = [[0, 1], [2, 1]]
+    >>> _paired_distances(X, Y)
+    array([0., 1.])
+    """
+    if metric in _PAIRED_DISTANCES:
+        func = _PAIRED_DISTANCES[metric]
         return func(X, Y)
     elif callable(metric):
         # Check the matrix first (it is usually done by the metric)
