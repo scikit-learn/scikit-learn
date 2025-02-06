@@ -261,5 +261,3 @@ fig
 #
 # The best accuracy scores are obtained when `alpha` is between :math:`10^{-6}`
 # and :math:`10^0`, regardless of the hyperparameter `norm`.
-#
-# added comment to trigger CircleCI run
