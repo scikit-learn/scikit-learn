@@ -1513,6 +1513,7 @@ def _check_sample_weight_equivalence(name, estimator_orig, sparse_container):
     n_samples = 15
     X = rng.rand(n_samples, n_samples * 2)
     y = rng.randint(0, 3, size=n_samples)
+    y = _enforce_estimator_tags_X(estimator_orig, y)
     # Use random integers (including zero) as weights.
     sw = rng.randint(0, 5, size=n_samples)
 
@@ -1547,9 +1548,6 @@ def _check_sample_weight_equivalence(name, estimator_orig, sparse_container):
             LeaveOneGroupOut().split(X_repeated, groups=groups_repeated)
         )
         estimator_repeated.set_params(cv=splits_repeated)
-
-    y_weighted = _enforce_estimator_tags_y(estimator_weighted, y_weighted)
-    y_repeated = _enforce_estimator_tags_y(estimator_repeated, y_repeated)
 
     # convert to sparse X if needed
     if sparse_container is not None:
