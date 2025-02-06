@@ -165,10 +165,8 @@ def _yield_checks(estimator):
             yield check_sample_weights_shape
             yield check_sample_weights_not_overwritten
             yield check_sample_weight_equivalence_on_dense_data
-            # FIXME: filter on tags.input_tags.sparse
-            # (estimator accepts sparse arrays)
-            # once issue #30139 is fixed.
-            yield check_sample_weight_equivalence_on_sparse_data
+            if tags.input_tags.sparse:
+                yield check_sample_weight_equivalence_on_sparse_data
 
     # Check that all estimator yield informative messages when
     # trained on empty datasets
@@ -1582,11 +1580,7 @@ def check_sample_weight_equivalence_on_sparse_data(name, estimator_orig):
         sparse_container = sparse.csr_array
     else:
         sparse_container = sparse.csr_matrix
-    # FIXME: remove the catch once issue #30139 is fixed.
-    try:
-        _check_sample_weight_equivalence(name, estimator_orig, sparse_container)
-    except TypeError:
-        return
+    _check_sample_weight_equivalence(name, estimator_orig, sparse_container)
 
 
 def check_sample_weights_not_overwritten(name, estimator_orig):

@@ -8,7 +8,7 @@ PYTHON_VERSION=$1
 FREE_THREADED_BUILD="$(python -c"import sysconfig; print(bool(sysconfig.get_config_var('Py_GIL_DISABLED')))")"
 
 if [[ $FREE_THREADED_BUILD == "False" ]]; then
-    # Prepare a minimal Windows environement without any developer runtime libraries
+    # Prepare a minimal Windows environment without any developer runtime libraries
     # installed to check that the scikit-learn wheel does not implicitly rely on
     # external DLLs when running the tests.
     TEMP_FOLDER="$HOME/AppData/Local/Temp"
