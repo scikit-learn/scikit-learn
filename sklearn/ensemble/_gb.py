@@ -1454,8 +1454,9 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
     See :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_oob.py` for
     an example on using Out-of-Bag estimates to estimate the optimal number of
-    iterations for Gradient Boosting. For a detailed example of utilizing
-    regularization with
+    iterations for Gradient Boosting.
+
+    For a detailed example of utilizing regularization with
     :class:`~sklearn.ensemble.GradientBoostingClassifier`, please refer to
     :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regularization.py`.
     """
