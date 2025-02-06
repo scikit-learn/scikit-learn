@@ -103,6 +103,7 @@ class _VisualBlock:
 
 def _write_label_html(
     out,
+    params,
     name,
     name_details,
     name_caption=None,
@@ -195,8 +196,13 @@ def _write_label_html(
             f'<input class="sk-toggleable__control sk-hidden--visually" id="{est_id}" '
             f'type="checkbox" {checked_str}>{label_html}<div '
             f'class="sk-toggleable__content {is_fitted_css_class}"><pre>{name_details}'
+            f"{params}"
             "</pre></div> "
         )
+        output_path = "get_params_estimator.html"
+        with open(output_path, "w") as f:
+            f.write(params)
+        breakpoint()
         out.write(fmt_str)
     else:
         out.write(f"<label>{name}</label>")
@@ -339,8 +345,12 @@ def _write_estimator_html(
 
         out.write("</div></div>")
     elif est_block.kind == "single":
+
+        params = estimator.get_params()._repr_html_inner()
+        breakpoint()
         _write_label_html(
             out,
+            params,
             est_block.names,
             est_block.name_details,
             est_block.name_caption,
@@ -426,7 +436,6 @@ def estimator_html_repr(estimator):
         )
 
         out.write(html_template)
-
         _write_estimator_html(
             out,
             estimator,
