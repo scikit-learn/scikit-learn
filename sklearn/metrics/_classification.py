@@ -3635,7 +3635,7 @@ def brier_score_loss(
     if scale_by_half:
         brier_score *= 0.5
 
-    return brier_score
+    return float(brier_score)
 
 
 @validate_params(
