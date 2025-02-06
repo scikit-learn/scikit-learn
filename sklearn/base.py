@@ -461,7 +461,6 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         `hasattr(estimator, "_repr_html_") return `True` or `False` depending
         on `get_config()["display"]`.
         """
-        breakpoint()
         return estimator_html_repr(self)
 
     def _repr_mimebundle_(self, **kwargs):
@@ -469,7 +468,6 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         output = {"text/plain": repr(self)}
         if get_config()["display"] == "diagram":
             output["text/html"] = estimator_html_repr(self)
-        breakpoint()
         return output
 
     # TODO(1.7): Remove this method

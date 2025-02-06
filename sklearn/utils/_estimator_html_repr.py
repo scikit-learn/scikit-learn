@@ -196,13 +196,8 @@ def _write_label_html(
             f'<input class="sk-toggleable__control sk-hidden--visually" id="{est_id}" '
             f'type="checkbox" {checked_str}>{label_html}<div '
             f'class="sk-toggleable__content {is_fitted_css_class}"><pre>{name_details}'
-            f"{params}"
-            "</pre></div> "
+            f"</pre>{params}</div>"
         )
-        output_path = "get_params_estimator.html"
-        with open(output_path, "w") as f:
-            f.write(params)
-        breakpoint()
         out.write(fmt_str)
     else:
         out.write(f"<label>{name}</label>")
@@ -347,7 +342,7 @@ def _write_estimator_html(
     elif est_block.kind == "single":
 
         params = estimator.get_params()._repr_html_inner()
-        breakpoint()
+
         _write_label_html(
             out,
             params,
