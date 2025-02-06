@@ -15,7 +15,7 @@ single feature and observing the resulting degradation of the model's score
 determine how much the model relies on such particular feature.
 
 In the following figures, we observe the effect of permuting features on the correlation
-between the feature and the target and consequently on the model statistical
+between the feature and the target and consequently on the model's statistical
 performance.
 
 .. image:: ../images/permuted_predictive_feature.png
@@ -25,9 +25,10 @@ performance.
    :align: center
 
 On the top figure, we observe that permuting a predictive feature breaks the
-correlation between the feature and the target, and consequently the model
+correlation between the feature and the target, and consequently the model's
 statistical performance decreases. On the bottom figure, we observe that permuting
-a non-predictive feature does not significantly degrade the model statistical performance.
+a non-predictive feature does not significantly degrade the model's statistical
+performance.
 
 One key advantage of permutation feature importance is that it is
 model-agnostic, i.e. it can be applied to any fitted estimator. Moreover, it can
@@ -38,7 +39,7 @@ specific trained model.
 The figure below shows the permutation feature importance of a
 :class:`~sklearn.ensemble.RandomForestClassifier` trained on an augmented
 version of the titanic dataset that contains a `random_cat` and a `random_num`
-features, i.e. a categrical and a numerical feature that are not correlated in
+features, i.e. a categorical and a numerical feature that are not correlated in
 any way with the target variable:
 
 .. figure:: ../auto_examples/inspection/images/sphx_glr_plot_permutation_importance_002.png
@@ -52,7 +53,7 @@ any way with the target variable:
   cross-validation score) could be **very important for a good model**.
   Therefore it is always important to evaluate the predictive power of a model
   using a held-out set (or better with cross-validation) prior to computing
-  importances. Permutation importance does not reflect to the intrinsic
+  importances. Permutation importance does not reflect the intrinsic
   predictive value of a feature by itself but **how important this feature is
   for a particular model**.
 
@@ -181,7 +182,7 @@ importance to features that may not be predictive on unseen data when the model
 is overfitting. Permutation-based feature importance, on the other hand, avoids
 this issue, since it can be computed on unseen data.
 
-Furthermore, impurity-based feature importance for trees are **strongly
+Furthermore, impurity-based feature importance for trees is **strongly
 biased** and **favor high cardinality features** (typically numerical features)
 over low cardinality features such as binary features or categorical variables
 with a small number of possible categories.
