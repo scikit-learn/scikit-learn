@@ -833,7 +833,8 @@ def check_estimator(
     if generate_only:
         warnings.warn(
             "`generate_only` is deprecated in 1.6 and will be removed in 1.8. "
-            "Use :func:`~sklearn.utils.estimator_checks.estimator_checks` instead.",
+            "Use :func:`~sklearn.utils.estimator_checks.estimator_checks_generator` "
+            "instead.",
             FutureWarning,
         )
         return estimator_checks_generator(
