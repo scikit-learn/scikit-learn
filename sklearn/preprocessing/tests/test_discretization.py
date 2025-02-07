@@ -478,7 +478,7 @@ def test_percentile_numeric_stability():
         strategy="quantile",
         quantile_method="linear",
     )
-    ## TO DO: change to averaged inverted cdf, but that means we only get bin
+    ## TODO: change to averaged inverted cdf, but that means we only get bin
     ## edges of 0.05 and 0.95 and nothing in between
 
     warning_message = "Consider decreasing the number of bins."
