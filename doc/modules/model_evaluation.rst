@@ -132,7 +132,7 @@ hyperparameters or in comparing to other models like
     Journal of the American Statistical Association 106 (2009): 746 - 762.
 
 .. [Gneiting2014] T. Gneiting and M. Katzfuss. :doi:`Probabilistic Forecasting
-    <10.1146/annurev-st atistics-062713-085831>`. In: Annual Review of Statistics and Its Application 1.1 (2014), pp. 125–151.
+    <10.1146/annurev-statistics-062713-085831>`. In: Annual Review of Statistics and Its Application 1.1 (2014), pp. 125–151.
 
 .. [Fissler2022] T. Fissler, C. Lorentzen and M. Mayer. :arxiv:`Model
     Comparison and Calibration Assessment: User Guide for Consistent Scoring
