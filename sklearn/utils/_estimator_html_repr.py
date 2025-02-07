@@ -195,7 +195,7 @@ def _write_label_html(
         fmt_str = (
             f'<input class="sk-toggleable__control sk-hidden--visually" id="{est_id}" '
             f'type="checkbox" {checked_str}>{label_html}<div '
-            f'class="sk-toggleable__content {is_fitted_css_class}"><pre>{name_details}'
+            f'class="sk-toggleable__content {is_fitted_css_class}">'
             f"</pre>{params}</div>"
         )
         out.write(fmt_str)

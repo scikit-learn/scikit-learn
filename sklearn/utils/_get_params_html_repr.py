@@ -40,7 +40,6 @@ def _get_css_style():
 
 def html_template(data):
 
-    num_parameters = len(data)
     style_template = _get_css_style()
     html_start = f"""
         <head><style>{style_template}</style>
@@ -48,7 +47,7 @@ def html_template(data):
         <script>
             function copyToClipboard(text) {{
                 navigator.clipboard.writeText(text)
-                    .then(() => console.log('Copied!'))
+                    .then(() => console.log('Copied ' + text))
                     .catch(err => console.error('Failed to copy:', err));
                 return false;
             }}
