@@ -125,7 +125,7 @@ hyperparameters or in comparing to other models like
     Scoring Rules, Prediction, and Estimation <10.1198/016214506000001437>`
     In: Journal of the American Statistical Association 102 (2007),
     pp. 359– 378.
-    `link to pdf <www.stat.washington.edu/people/raftery/Research/PDF/Gneiting2007jasa.pdf>`_
+    `link to pdf <https://sites.stat.washington.edu/raftery/Research/PDF/Gneiting2007jasa.pdf>`_
 
 .. [Gneiting2009] T. Gneiting. :arxiv:`Making and Evaluating Point Forecasts
     <0912.0902>`
