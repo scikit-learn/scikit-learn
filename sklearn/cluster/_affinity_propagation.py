@@ -258,8 +258,10 @@ def affinity_propagation(
 
     Notes
     -----
-    For an example, see :ref:`examples/cluster/plot_affinity_propagation.py
-    <sphx_glr_auto_examples_cluster_plot_affinity_propagation.py>`.
+    For an example usage,
+    see :ref:`sphx_glr_auto_examples_cluster_plot_affinity_propagation.py`.
+    You may also check out,
+    :ref:`sphx_glr_auto_examples_applications_plot_stock_market.py`
 
     When the algorithm does not converge, it will still return a arrays of
     ``cluster_center_indices`` and labels if there are any exemplars/clusters,
@@ -396,8 +398,8 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
     Notes
     -----
-    For an example, see :ref:`examples/cluster/plot_affinity_propagation.py
-    <sphx_glr_auto_examples_cluster_plot_affinity_propagation.py>`.
+    For an example usage,
+    see :ref:`sphx_glr_auto_examples_cluster_plot_affinity_propagation.py`.
 
     The algorithmic complexity of affinity propagation is quadratic
     in the number of points.
@@ -481,6 +483,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.pairwise = self.affinity == "precomputed"
+        tags.input_tags.sparse = self.affinity != "precomputed"
         return tags
 
     @_fit_context(prefer_skip_nested_validation=True)

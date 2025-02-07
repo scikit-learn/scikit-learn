@@ -433,7 +433,7 @@ def fast_mcd(
 
     # minimum breakdown value
     if support_fraction is None:
-        n_support = int(np.ceil(0.5 * (n_samples + n_features + 1)))
+        n_support = min(int(np.ceil(0.5 * (n_samples + n_features + 1))), n_samples)
     else:
         n_support = int(support_fraction * n_samples)
 

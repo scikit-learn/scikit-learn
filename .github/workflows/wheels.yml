@@ -1,5 +1,7 @@
 # Workflow to build and test wheels
 name: Wheel builder
+permissions:
+  contents: read
 
 on:
   schedule:
@@ -73,8 +75,10 @@ jobs:
           - os: windows-latest
             python: 313
             platform_id: win_amd64
-            # TODO: remove next line when Python 3.13 is released
-            prerelease_pythons: True
+          - os: windows-latest
+            python: 313t
+            platform_id: win_amd64
+            free_threaded_support: True
 
           # Linux 64 bit manylinux2014
           - os: ubuntu-latest
@@ -105,6 +109,28 @@ jobs:
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
             free_threaded_support: True
+
+          # # Linux 64 bit manylinux2014
+          - os: ubuntu-24.04-arm
+            python: 39
+            platform_id: manylinux_aarch64
+            manylinux_image: manylinux2014
+          - os: ubuntu-24.04-arm
+            python: 310
+            platform_id: manylinux_aarch64
+            manylinux_image: manylinux2014
+          - os: ubuntu-24.04-arm
+            python: 311
+            platform_id: manylinux_aarch64
+            manylinux_image: manylinux2014
+          - os: ubuntu-24.04-arm
+            python: 312
+            platform_id: manylinux_aarch64
+            manylinux_image: manylinux2014
+          - os: ubuntu-24.04-arm
+            python: 313
+            platform_id: manylinux_aarch64
+            manylinux_image: manylinux2014
 
           # MacOS x86_64
           - os: macos-13
