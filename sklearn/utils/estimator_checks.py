@@ -1125,10 +1125,10 @@ def check_array_api_input(
         # now since array-api-strict seems a bit too strict ...
         numpy_asarray_works = xp.__name__ != "array_api_strict"
 
-    except TypeError:
+    except (TypeError, RuntimeError):
         # PyTorch with CUDA device and CuPy raise TypeError consistently.
-        # Exception type may need to be updated in the future for other
-        # libraries.
+        # array-api-strict chose to raise RuntimeError instead. Exception type
+        # may need to be updated in the future for other libraries.
         numpy_asarray_works = False
 
     if numpy_asarray_works:
