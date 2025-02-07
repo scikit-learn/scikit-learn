@@ -1577,8 +1577,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         .. versionadded:: 0.23
 
     scoring : str or callable or None, default='loss'
-        Scoring method to use for early stopping. Only used if early stopping
-        is performed. Options:
+        Scoring method to use for early stopping. Only used if `early_stopping`
+        is enabled. Options:
 
         - str: see :ref:`scoring_string_names` for options.
         - callable: a scorer callable object (e.g., function) with signature
@@ -1964,8 +1964,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         .. versionadded:: 0.23
 
     scoring : str or callable or None, default='loss'
-        Scoring parameter to use for early stopping. Only used if early stopping
-        is performed. Options:
+        Scoring method to use for early stopping. Only used if `early_stopping`
+        is enabled. Options:
 
         - str: see :ref:`scoring_string_names` for options.
         - callable: a scorer callable object (e.g., function) with signature

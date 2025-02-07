@@ -168,8 +168,8 @@ def cross_validate(
             ``cross_validate(..., params={'groups': groups})``.
 
     scoring : str, callable, list, tuple, or dict, default=None
-        Strategy to evaluate the performance of the cross-validated model on
-        the test set.
+        Strategy to evaluate the performance of the `estimator` across cross-validation
+        splits.
 
         If `scoring` represents a single score, one can use:
 
@@ -588,8 +588,8 @@ def cross_val_score(
             ``cross_val_score(..., params={'groups': groups})``.
 
     scoring : str or callable, default=None
-        Strategy to evaluate the performance of the cross-validated model on
-        the test set.
+        Strategy to evaluate the performance of the `estimator` across cross-validation
+        splits.
 
         - str: see :ref:`scoring_string_names` for options.
         - callable: a scorer callable object (e.g., function) with signature
@@ -1568,7 +1568,7 @@ def permutation_test_score(
         The verbosity level.
 
     scoring : str or callable, default=None
-        Scoring method to use to evaluate the predictions on the test set.
+        Scoring method to use to evaluate the predictions on the validation set.
 
         - str: see :ref:`scoring_string_names` for options.
         - callable: a scorer callable object (e.g., function) with signature

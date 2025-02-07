@@ -2581,7 +2581,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         - callable: a scorer callable object (e.g., function) with signature
           ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
         - `None`: negative :ref:`mean squared error <mean_squared_error>` if cv is
-          None (i.e. when using leave-one-out cross-validation), and
+          None (i.e. when using leave-one-out cross-validation), or
           :ref:`coefficient of determination <r2_score>` (:math:`R^2`) otherwise.
 
     cv : int, cross-validation generator or an iterable, default=None
@@ -2775,7 +2775,7 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         - callable: a scorer callable object (e.g., function) with signature
           ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
         - `None`: negative :ref:`mean squared error <mean_squared_error>` if cv is
-          or None (i.e. when using leave-one-out cross-validation), and
+          None (i.e. when using leave-one-out cross-validation), or
           :ref:`accuracy <accuracy_score>` otherwise.
 
     cv : int, cross-validation generator or an iterable, default=None
