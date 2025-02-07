@@ -64,7 +64,7 @@ def html_template(data):
     out = ""
     for x, y in data.items():
         out += f"""
-                      <li>{x}:{y}
+                      <li>{x}:{y}&nbsp;
                         <i class="fa-regular fa-copy"
                        onclick="copyToClipboard('{x}')"
                        style="color: #B197FC; cursor: pointer;">

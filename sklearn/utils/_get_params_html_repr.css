@@ -5,27 +5,31 @@
 */
 .estimator-params ul{
     list-style: none;
-    line-height: 1em; /*separates each line in the list so the horizontal tree line shows in the middle */
+    line-height: 1.1em; /*separates each line in the list so the horizontal tree line shows in the middle */
+    color: gray;
+    font-size: .9em;
 }
 
 .estimator-params ul li{
     cursor: pointer; /* pointer with a hand */
+
 }
 
 .estimator-params li{
 
     position:relative; /* to position the lines using sudo elements absolutely */
     padding-left: 3em;
+    padding-right: 3em;
     padding-bottom: 0%;
     display: flex;
-    outline:.2em solid green; /*USE THIS LINE to see the green lines */
+    /*outline:.2em solid green; /*USE THIS LINE to see the green lines */
 }
 .estimator-params li::before{ /* before the content */
     position:absolute;
     left:-10px;
     top:0px;
-    border-left:.2em solid rgb(211, 18, 18);
-    border-bottom:.2em solid rgb(211, 36, 36);
+    border-left:.2em solid currentColor;
+    border-bottom:.2em solid currentColor;
     content: "";
     width: 3em;
     height: .5em;
@@ -35,7 +39,7 @@
     position:absolute;
     left:-10px;
     bottom:0px;
-    border-left:2px solid rgb(167, 27, 214);
+    border-left:2px solid currentColor;
     content: "";
     width: 8px;
     height: 100%;
