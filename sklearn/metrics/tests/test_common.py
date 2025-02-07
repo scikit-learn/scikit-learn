@@ -552,7 +552,6 @@ NOT_SYMMETRIC_METRICS = {
 
 # No Sample weight support
 METRICS_WITHOUT_SAMPLE_WEIGHT = {
-    "median_absolute_error",
     "max_error",
     "ovo_roc_auc",
     "weighted_ovo_roc_auc",
@@ -1556,6 +1555,8 @@ def test_regression_sample_weight_invariance(name):
     y_true = random_state.random_sample(size=(n_samples,))
     y_pred = random_state.random_sample(size=(n_samples,))
     metric = ALL_METRICS[name]
+    print(f'XX {metric=}')
+
     check_sample_weight_invariance(name, metric, y_true, y_pred)
 
 
