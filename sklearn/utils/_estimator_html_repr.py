@@ -303,8 +303,10 @@ def _write_estimator_html(
         out.write(f'<div class="sk-item{dash_cls}">')
 
         if estimator_label:
+            params = estimator.get_params()._repr_html_inner()
             _write_label_html(
                 out,
+                params,
                 estimator_label,
                 estimator_label_details,
                 doc_link=doc_link,
