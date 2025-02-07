@@ -907,9 +907,11 @@ def median_absolute_error(
     >>> median_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.85
     """
-    y_type, y_true, y_pred, multioutput = _check_reg_targets(
+    _, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
     )
+    check_consistent_length(y_true, y_pred, sample_weight)
+
     if sample_weight is None:
         output_errors = np.median(np.abs(y_pred - y_true), axis=0)
     else:
