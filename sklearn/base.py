@@ -197,6 +197,25 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
     array([3, 3, 3])
     """
 
+    def freeze(self):
+        """Return a :term:`frozen` version of this estimator.
+
+        This method wraps the estimator in a :class:`~sklearn.frozen.FrozenEstimator`
+        object, and returns the frozen object. This method does NOT freeze this object
+        itself.
+
+        The return frozen object will prevent changes to this estimator's instance
+        parameters; however, direct changes to this estimator are still possible.
+
+        Returns
+        -------
+        frozen : :class:`~sklearn.frozen.Frozen`
+            A frozen version of this estimator.
+        """
+        from sklearn.frozen import FrozenEstimator
+
+        return FrozenEstimator(self)
+
     @classmethod
     def _get_param_names(cls):
         """Get parameter names for the estimator"""
