@@ -2158,10 +2158,12 @@ class MiniBatchKMeans(_BaseKMeans):
                 )
 
                 # Perform the actual update step on the minibatch data
-                # Note, I am not sure how sample weights are used here
-                # So left it in, it seems like the weight sums are updated using
-                # sample weights so need some help here to understand the
-                # _minibatch_update_dense/sparse code
+                # Note: since the sampling of the minibatch is sample_weight aware,
+                # we pass fixed unit weights to the `_mini_batch_step` call to avoid
+                # accounting for the weights twice. Also note that `_mini_batch_step`
+                # can be called with non-unit weights when the caller constructs
+                # the batches explicitly by calling the public `partial_fit` method
+                # instead.
                 batch_inertia = _mini_batch_step(
                     X=X[minibatch_indices],
                     sample_weight=unit_sample_weight,
