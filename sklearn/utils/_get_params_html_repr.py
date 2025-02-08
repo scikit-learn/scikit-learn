@@ -44,14 +44,6 @@ def html_template(data):
     html_start = f"""
         <head><style>{style_template}</style>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-        <script>
-            function copyToClipboard(text) {{
-                navigator.clipboard.writeText(text)
-                    .then(() => console.log('Copied ' + text))
-                    .catch(err => console.error('Failed to copy:', err));
-                return false;
-            }}
-        </script>
         </head>
         <body>
         <div class="estimator-params">
@@ -74,6 +66,14 @@ def html_template(data):
             </details>
             </ul>
         </div>
+        <script>
+            function copyToClipboard(text) {{
+                navigator.clipboard.writeText(text)
+                    .then(() => console.log('Copied ' + text))
+                    .catch(err => console.error('Failed to copy:', err));
+                return false;
+            }}
+        </script>
         </body>
     """
     html_template = f"{html_start}{out}{html_end}"
