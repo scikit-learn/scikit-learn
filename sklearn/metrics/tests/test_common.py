@@ -1549,13 +1549,12 @@ def check_sample_weight_invariance(name, metric, y1, y2):
     ),
 )
 def test_regression_sample_weight_invariance(name):
-    n_samples = 50
-    random_state = check_random_state(0)
+    n_samples = 51
+    random_state = check_random_state(1)
     # regression
     y_true = random_state.random_sample(size=(n_samples,))
     y_pred = random_state.random_sample(size=(n_samples,))
     metric = ALL_METRICS[name]
-    print(f'XX {metric=}')
 
     check_sample_weight_invariance(name, metric, y_true, y_pred)
 
