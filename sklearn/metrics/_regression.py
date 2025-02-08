@@ -221,7 +221,8 @@ def mean_absolute_error(
 ):
     """Mean absolute error regression loss.
 
-    Read more in the :ref:`User Guide <mean_absolute_error>`.
+    Mean absolute error output is non-negative floating point. The best value
+    is 0.0. Read more in the :ref:`User Guide <mean_absolute_error>`.
 
     Parameters
     ----------
