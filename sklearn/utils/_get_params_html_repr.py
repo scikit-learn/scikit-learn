@@ -75,7 +75,6 @@ def html_template(data):
                     .then(() => {
                         parent.innerHTML = originalHTML + "&nbsp;Copied";
                         setTimeout(() => {
-                            console.log(parent.innerHTML);
                             parent.innerHTML = originalHTML;
                         }, 2000);
                     })
