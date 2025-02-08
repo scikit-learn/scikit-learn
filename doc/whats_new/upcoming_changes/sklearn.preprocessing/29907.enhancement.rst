@@ -1,0 +1,6 @@
+- :class:`preprocessing.KBinsDiscretizer` with `strategy="uniform"` now
+  accepts `sample_weight`. Additionally with `strategy="quantile"` the
+  `quantile_method` can now be specified (in the future
+  `quantile_method="averaged_inverted_cdf"` will become the default)
+  :pr:`29907` by :user:`Shruti Nath <snath-xoc>` and :user:`Olivier Grisel
+  <ogrisel>`
