@@ -25,6 +25,7 @@ from sklearn.datasets import (
     make_sparse_spd_matrix,
     make_sparse_uncorrelated,
     make_spd_matrix,
+    make_spirals,
     make_swiss_roll,
 )
 from sklearn.utils._testing import (
@@ -735,3 +736,28 @@ def test_make_circles_unbalanced():
         match="When a tuple, n_samples must have exactly two elements.",
     ):
         make_circles(n_samples=(10,))
+
+
+def test_make_spirals():
+    X, y = make_spirals(100, shuffle=False)
+    dist_sqr = np.inner(X, X)
+    assert_almost_equal(
+        +dist_sqr[y == 0],
+        -dist_sqr[y != 0],
+        err_msg="Points are not on expected spiral mirror",
+    )
+
+
+def test_make_spirals_unbalanced():
+    X, y = make_spirals(n_samples=(7, 5))
+    assert (
+        np.sum(y == 0) == 7 and np.sum(y == 1) == 5
+    ), "Number of samples in a spiral is wrong"
+    assert X.shape == (12, 2), "X shape mismatch"
+    assert y.shape == (12,), "y shape mismatch"
+
+    with pytest.raises(
+        ValueError,
+        match=r"`n_samples` can be either an int " r"or a two-element tuple.",
+    ):
+        make_spirals(n_samples=(10,))

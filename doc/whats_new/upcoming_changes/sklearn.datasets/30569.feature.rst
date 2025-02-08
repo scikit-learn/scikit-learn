@@ -1,0 +1,3 @@
+- Added :func:`~datasets.make_spirals` that allows generating 2-D points
+  arranged in the shape of two interleaving spirals.
+  By :user:`Sergiu Deitsch <sergiud>`
