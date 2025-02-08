@@ -666,7 +666,7 @@ dual coefficients :math:`\alpha_i` are zero for the other samples.
 These parameters can be accessed through the attributes ``dual_coef_``
 which holds the product :math:`y_i \alpha_i`, ``support_vectors_`` which
 holds the support vectors, and ``intercept_`` which holds the independent
-term :math:`b`
+term :math:`b`.
 
 .. note::
 
@@ -675,7 +675,7 @@ term :math:`b`
     equivalence between the amount of regularization of two models depends on
     the exact objective function optimized by the model. For example, when the
     estimator used is :class:`~sklearn.linear_model.Ridge` regression,
-    the relation between them is given as :math:`C = \frac{1}{alpha}`.
+    the relation between them is given as :math:`C = \frac{1}{\alpha}`.
 
 .. dropdown:: LinearSVC
 
@@ -801,7 +801,7 @@ used, please refer to their respective papers.
 
 .. [#5] Bishop, `Pattern recognition and machine learning
   <https://www.microsoft.com/en-us/research/uploads/prod/2006/01/Bishop-Pattern-Recognition-and-Machine-Learning-2006.pdf>`_,
-  chapter 7 Sparse Kernel Machines
+  chapter 7 Sparse Kernel Machines.
 
 .. [#6] :doi:`"A Tutorial on Support Vector Regression"
   <10.1023/B:STCO.0000035301.49549.88>`
@@ -809,7 +809,8 @@ used, please refer to their respective papers.
   Volume 14 Issue 3, August 2004, p. 199-222.
 
 .. [#7] Schölkopf et. al `New Support Vector Algorithms
-  <https://www.stat.purdue.edu/~yuzhu/stat598m3/Papers/NewSVM.pdf>`_
+  <https://www.stat.purdue.edu/~yuzhu/stat598m3/Papers/NewSVM.pdf>`_, 
+  Neural Computation 12, 1207-1245 (2000).
 
 .. [#8] Crammer and Singer `On the Algorithmic Implementation of Multiclass
   Kernel-based Vector Machines
