@@ -360,7 +360,7 @@ def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=Fals
 
 # TODO: Remove when Scipy 1.12 is the minimum supported version
 if sp_version < parse_version("1.12"):
-    from ..externals._scipy.sparse.csgraph import laplacian  # type: ignore  # noqa
+    from ..externals._scipy.sparse.csgraph import laplacian  # type: ignore
 else:
     from scipy.sparse.csgraph import laplacian  # type: ignore  # noqa  # pragma: no cover
 

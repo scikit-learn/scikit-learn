@@ -38,7 +38,7 @@ from .utils.metaestimators import _BaseComposition, available_if
 from .utils.parallel import Parallel, delayed
 from .utils.validation import check_is_fitted, check_memory
 
-__all__ = ["Pipeline", "FeatureUnion", "make_pipeline", "make_union"]
+__all__ = ["FeatureUnion", "Pipeline", "make_pipeline", "make_union"]
 
 
 @contextmanager

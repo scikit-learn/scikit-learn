@@ -1576,7 +1576,7 @@ def process_routing(_obj, _method, /, **kwargs):
 
     if not (hasattr(_obj, "get_metadata_routing") or isinstance(_obj, MetadataRouter)):
         raise AttributeError(
-            f"The given object ({repr(_obj.__class__.__name__)}) needs to either"
+            f"The given object ({_obj.__class__.__name__!r}) needs to either"
             " implement the routing method `get_metadata_routing` or be a"
             " `MetadataRouter` instance."
         )

@@ -195,7 +195,7 @@ def _get_response_values(
         If the response method can be applied to a classifier only and
         `estimator` is a regressor.
     """
-    from sklearn.base import is_classifier, is_outlier_detector  # noqa
+    from sklearn.base import is_classifier, is_outlier_detector
 
     if is_classifier(estimator):
         prediction_method = _check_response_method(estimator, response_method)

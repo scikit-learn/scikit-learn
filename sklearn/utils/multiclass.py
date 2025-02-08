@@ -185,9 +185,8 @@ def is_multilabel(y):
         if y.format in ("dok", "lil"):
             y = y.tocsr()
         labels = xp.unique_values(y.data)
-        return (
-            len(y.data) == 0
-            or (labels.size == 1 or (labels.size == 2) and (0 in labels))
+        return len(y.data) == 0 or (
+            (labels.size == 1 or ((labels.size == 2) and (0 in labels)))
             and (y.dtype.kind in "biu" or _is_integral_float(labels))  # bool, int, uint
         )
     else:
@@ -318,8 +317,7 @@ def type_of_target(y, input_name="", raise_unknown=False):
     valid = (
         (isinstance(y, Sequence) or issparse(y) or hasattr(y, "__array__"))
         and not isinstance(y, str)
-        or is_array_api_compliant
-    )
+    ) or is_array_api_compliant
 
     if not valid:
         raise ValueError(
