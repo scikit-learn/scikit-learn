@@ -60,6 +60,13 @@ The last estimator may be any type (transformer, classifier, etc.).
     as a classifier. If the last estimator is a transformer, again, so is the
     pipeline.
 
+The diagram below shows a Pipeline, where data flows sequentially through multiple
+steps, such as `Transformer`,before reaching the final `Estimator`.
+
+.. image:: ../images/pipeline_image.png
+   :alt: Pipeline
+   :align: center
+   :scale: 75%
 
 Usage
 -----
