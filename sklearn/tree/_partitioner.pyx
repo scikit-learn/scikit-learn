@@ -702,9 +702,17 @@ cdef inline void shift_missing_values_to_left_if_required(
         best.pos += best.n_missing
 
 
-def _py_sort(float32_t[::1] feature_values, intp_t[::1] samples, intp_t n):
-    """Used for testing sort."""
-    sort(&feature_values[0], &samples[0], n)
+def _py_sort(float32_t[::1] feature_values, object samples, intp_t n):
+    """
+    Used for testing sort.
+    Automatically converts samples to a contiguous array of type np.intp.
+    """
+    # Convert samples to a contiguous numpy array with dtype=np.intp.
+    samples = np.ascontiguousarray(samples, dtype=np.intp)
+    # Create a memoryview of the converted array.
+    cdef intp_t[::1] samples_view = samples
+    # Now call the internal sort using the correctly typed memoryview.
+    sort(&feature_values[0], &samples_view[0], n)
 
 
 # Sort n-element arrays pointed to by feature_values and samples, simultaneously,
