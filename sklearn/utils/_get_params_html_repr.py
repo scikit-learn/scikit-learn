@@ -57,7 +57,7 @@ def html_template(data):
         out += f"""
                       <li>{x}:{y}&nbsp;
                         <i class="fa-regular fa-copy"
-                       onclick="copyToClipboard('{x}')"
+                       onclick="copyToClipboard('{x}', this)"
                        style="color: #B197FC; cursor: pointer;">
                       </i>
                       </li>
@@ -67,9 +67,18 @@ def html_template(data):
             </ul>
         </div>
         <script>
-            function copyToClipboard(text) {{
+            function copyToClipboard(text, element) {{
+                const parent = element.parentNode;
+                const originalHTML = parent.innerHTML;
+
                 navigator.clipboard.writeText(text)
-                    .then(() => console.log('Copied ' + text))
+                    .then(() => {
+                        parent.innerHTML = originalHTML + "&nbsp;Copied";
+                        setTimeout(() => {
+                            console.log(parent.innerHTML);
+                            parent.innerHTML = originalHTML;
+                        }, 2000);
+                    })
                     .catch(err => console.error('Failed to copy:', err));
                 return false;
             }}
