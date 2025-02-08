@@ -140,7 +140,9 @@ def make_constraint(constraint):
         constraint = make_constraint(constraint.constraint)
         constraint.hidden = True
         return constraint
-    if isinstance(constraint, str) and constraint == "nan":
+    if (isinstance(constraint, str) and constraint == "nan") or (
+        isinstance(constraint, float) and np.isnan(constraint)
+    ):
         return _NanConstraint()
     raise ValueError(f"Unknown constraint type: {constraint}")
 

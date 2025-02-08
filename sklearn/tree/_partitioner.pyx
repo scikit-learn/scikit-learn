@@ -11,7 +11,7 @@ and sparse data stored in a Compressed Sparse Column (CSC) format.
 # SPDX-License-Identifier: BSD-3-Clause
 
 from cython cimport final
-from libc.math cimport isnan, log
+from libc.math cimport isnan, log2
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy
 
@@ -503,8 +503,8 @@ cdef class SparsePartitioner:
         # O(n_samples * log(n_indices)) is the running time of binary
         # search and O(n_indices) is the running time of index_to_samples
         # approach.
-        if ((1 - self.is_samples_sorted) * n_samples * log(n_samples) +
-                n_samples * log(n_indices) < EXTRACT_NNZ_SWITCH * n_indices):
+        if ((1 - self.is_samples_sorted) * n_samples * log2(n_samples) +
+                n_samples * log2(n_indices) < EXTRACT_NNZ_SWITCH * n_indices):
             extract_nnz_binary_search(X_indices, X_data,
                                       indptr_start, indptr_end,
                                       samples, self.start, self.end,
@@ -702,12 +702,17 @@ cdef inline void shift_missing_values_to_left_if_required(
         best.pos += best.n_missing
 
 
+def _py_sort(float32_t[::1] feature_values, intp_t[::1] samples, intp_t n):
+    """Used for testing sort."""
+    sort(&feature_values[0], &samples[0], n)
+
+
 # Sort n-element arrays pointed to by feature_values and samples, simultaneously,
 # by the values in feature_values. Algorithm: Introsort (Musser, SP&E, 1997).
 cdef inline void sort(float32_t* feature_values, intp_t* samples, intp_t n) noexcept nogil:
     if n == 0:
         return
-    cdef intp_t maxd = 2 * <intp_t>log(n)
+    cdef intp_t maxd = 2 * <intp_t>log2(n)
     introsort(feature_values, samples, n, maxd)
 
 
