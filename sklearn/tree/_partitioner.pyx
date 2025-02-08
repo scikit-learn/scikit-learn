@@ -713,7 +713,6 @@ def _py_sort(float32_t[::1] feature_values, object samples, intp_t n):
     sort(&feature_values[0], &samples_view[0], n)
 
 
-
 # Sort n-element arrays pointed to by feature_values and samples, simultaneously,
 # by the values in feature_values. Algorithm: Introsort (Musser, SP&E, 1997).
 cdef inline void sort(float32_t* feature_values, intp_t* samples, intp_t n) noexcept nogil:
