@@ -224,9 +224,6 @@ class DecisionBoundaryDisplay:
 
         Read more in the :ref:`User Guide <visualizations>`.
 
-        For a usage example,
-        see :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_multinomial.py`.
-
         Parameters
         ----------
         estimator : object
@@ -317,6 +314,10 @@ class DecisionBoundaryDisplay:
         >>> disp.ax_.scatter(X[:, 0], X[:, 1], c=iris.target, edgecolor="k")
         <...>
         >>> plt.show()
+
+        For a detailed example comparing the decision boundaries of multinomial and
+        one-vs-rest logistic regression, please see
+        :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_multinomial.py`.
         """
         check_matplotlib_support(f"{cls.__name__}.from_estimator")
         check_is_fitted(estimator)
