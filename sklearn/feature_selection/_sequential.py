@@ -8,6 +8,7 @@ Sequential feature selection
 from numbers import Integral, Real
 
 import numpy as np
+import pandas as pd
 
 from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone, is_classifier
 from ..metrics import check_scoring, get_scorer_names
