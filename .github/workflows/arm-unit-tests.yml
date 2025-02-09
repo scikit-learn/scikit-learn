@@ -1,4 +1,3 @@
-# Unit test for ARM
 name: Unit test for ARM
 permissions:
   contents: read
