@@ -22,17 +22,6 @@ setup_ccache() {
     ccache -M 0
 }
 
-# Install Miniforge
-MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-aarch64.sh"
-curl -L --retry 10 $MINIFORGE_URL -o miniconda.sh
-MINIFORGE_PATH=$HOME/miniforge3
-bash ./miniconda.sh -b -p $MINIFORGE_PATH
-source $MINIFORGE_PATH/etc/profile.d/conda.sh
-conda activate
-
-create_conda_environment_from_lock_file $CONDA_ENV_NAME $LOCK_FILE
-conda activate $CONDA_ENV_NAME
-
 setup_ccache
 
 python --version
@@ -44,7 +33,7 @@ pip install --verbose --no-build-isolation .
 # Report cache usage
 ccache -s --verbose
 
-mamba list
+micromamba list
 
 # Changing directory not to have module resolution use scikit-learn source
 # directory but to the installed package.
