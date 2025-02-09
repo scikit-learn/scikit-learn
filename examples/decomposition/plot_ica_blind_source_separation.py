@@ -12,6 +12,9 @@ ie. what is played by each instrument. Importantly, PCA fails
 at recovering our `instruments` since the related signals reflect
 non-Gaussian processes.
 
+See
+:ref:`sphx_glr_auto_examples_decomposition_plot_ica_vs_pca.py`
+for an example comparing the component analysis by ICA and PCA.
 """
 
 # Authors: The scikit-learn developers
