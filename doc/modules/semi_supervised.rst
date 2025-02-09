@@ -40,8 +40,8 @@ this algorithm, a given supervised classifier can function as a semi-supervised
 classifier, allowing it to learn from unlabeled data.
 
 :class:`SelfTrainingClassifier` can be called with any classifier that
-implements `predict_proba`, passed as the parameter `base_classifier`. In
-each iteration, the `base_classifier` predicts labels for the unlabeled
+implements `predict_proba`, passed as the parameter `estimator`. In
+each iteration, the `estimator` predicts labels for the unlabeled
 samples and adds a subset of these labels to the labeled dataset.
 
 The choice of this subset is determined by the selection criterion. This
