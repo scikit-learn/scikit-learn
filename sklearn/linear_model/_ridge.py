@@ -255,6 +255,7 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
                 "Singular matrix in solving dual problem. Using "
                 "least-squares solution instead."
             )
+            # TODO: always pass an explicit value of cond to lstsq.
             dual_coef = linalg.lstsq(K, y)[0]
 
         # K is expensive to compute and store in memory so change it back in
@@ -272,6 +273,7 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
         for dual_coef, target, current_alpha in zip(dual_coefs, y.T, alpha):
             K.flat[:: n_samples + 1] += current_alpha
 
+            # TODO: handle np.linalg.LinAlgError as done for one_alpha case.
             dual_coef[:] = linalg.solve(
                 K, target, assume_a="pos", overwrite_a=False
             ).ravel()
@@ -1015,7 +1017,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
     Minimizes the objective function::
 
-    ||y - Xw||^2_2 + alpha * ||w||^2_2
+    ||y - Xw + w_0||^2_2 + alpha * ||w||^2_2
 
     This model solves a regression model where the loss function is
     the linear least squares function and regularization is given by
@@ -1032,9 +1034,15 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         strength. `alpha` must be a non-negative float i.e. in `[0, inf)`.
 
         When `alpha = 0`, the objective is equivalent to ordinary least
-        squares, solved by the :class:`LinearRegression` object. For numerical
-        reasons, using `alpha = 0` with the `Ridge` object is not advised.
-        Instead, you should use the :class:`LinearRegression` object.
+        squares, solved by the :class:`LinearRegression` class. If `X.T @ X` is
+        singular (typically when `n_features > n_samples` or in the presence of
+        collinear features) then both classes should converge to the minimum
+        norm solution where the intercept does not participate in the
+        computation of the norm.
+
+        Some solvers of the `Ridge` class are known to be unstable or fail for
+        `alpha = 0`. Instead, you should use the :class:`LinearRegression`
+        class.
 
         If an array is passed, penalties are assumed to be specific to the
         targets. Hence they must correspond in number.
@@ -1042,7 +1050,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     fit_intercept : bool, default=True
         Whether to fit the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (i.e. ``X`` and ``y`` are expected to be centered).
+        (i.e. ``X`` and ``y`` are expected to be centered for
+        the model to be well-specified).
 
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
@@ -1083,11 +1092,13 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         - 'auto' chooses the solver automatically based on the type of data.
 
         - 'svd' uses a Singular Value Decomposition of X to compute the Ridge
-          coefficients. It is the most stable solver, in particular more stable
+          coefficients. It is a stable solver, in particular more stable
           for singular matrices than 'cholesky' at the cost of being slower.
 
-        - 'cholesky' uses the standard scipy.linalg.solve function to
-          obtain a closed-form solution.
+        - 'cholesky' uses the standard `scipy.linalg.solve` function to obtain
+          a closed-form solution. This solver can fail when the regularization
+          is too small on highly correlated data. In this case, the 'svd' solver
+          is automatically used instead.
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
           scipy.sparse.linalg.cg. As an iterative algorithm, this solver is
@@ -1095,13 +1106,14 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
           (possibility to set `tol` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
-          scipy.sparse.linalg.lsqr. It is the fastest and uses an iterative
-          procedure.
+          `scipy.sparse.linalg.lsqr`. It is often one of the fastest solvers and
+          uses an iterative procedure. It can handle training data with
+          singular `X.T @ X` even with low regularization very efficiently.
 
         - 'sag' uses a Stochastic Average Gradient descent, and 'saga' uses
           its improved, unbiased version named SAGA. Both methods also use an
           iterative procedure, and are often faster than other solvers when
-          both n_samples and n_features are large. Note that 'sag' and
+          both n_samples and n_features are very large. Note that 'sag' and
           'saga' fast convergence is only guaranteed on features with
           approximately the same scale. You can preprocess the data with a
           scaler from sklearn.preprocessing.
@@ -1164,6 +1176,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
     See Also
     --------
+    LinearRegression : Ordinary least squares Linear Regression, equivalent to
+        `Ridge(alpha=0)`.
     RidgeClassifier : Ridge classifier.
     RidgeCV : Ridge regression with built-in cross validation.
     :class:`~sklearn.kernel_ridge.KernelRidge` : Kernel ridge regression
