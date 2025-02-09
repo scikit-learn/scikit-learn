@@ -563,6 +563,37 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     IncrementalPCA: {"check_dict_unchanged": dict(batch_size=10, n_components=1)},
     Isomap: {"check_dict_unchanged": dict(n_components=1)},
     KMeans: {"check_dict_unchanged": dict(max_iter=5, n_clusters=1, n_init=2)},
+    # TODO(1.9) simplify when averaged_inverted_cdf is the default
+    KBinsDiscretizer: {
+        "check_sample_weight_equivalence_on_dense_data": [
+            # Using subsample != None leads to a stochastic fit that is not
+            # handled by the check_sample_weight_equivalence_on_dense_data test.
+            dict(strategy="quantile", subsample=None, quantile_method="inverted_cdf"),
+            dict(
+                strategy="quantile",
+                subsample=None,
+                quantile_method="averaged_inverted_cdf",
+            ),
+            dict(strategy="uniform", subsample=None),
+            # The "kmeans" strategy leads to a stochastic fit that is not
+            # handled by the check_sample_weight_equivalence test.
+        ],
+        "check_sample_weights_list": dict(
+            strategy="quantile", quantile_method="averaged_inverted_cdf"
+        ),
+        "check_sample_weights_pandas_series": dict(
+            strategy="quantile", quantile_method="averaged_inverted_cdf"
+        ),
+        "check_sample_weights_shape": dict(
+            strategy="quantile", quantile_method="averaged_inverted_cdf"
+        ),
+        "check_sample_weights_not_an_array": dict(
+            strategy="quantile", quantile_method="averaged_inverted_cdf"
+        ),
+        "check_sample_weights_not_overwritten": dict(
+            strategy="quantile", quantile_method="averaged_inverted_cdf"
+        ),
+    },
     KernelPCA: {"check_dict_unchanged": dict(n_components=1)},
     LassoLars: {"check_non_transformer_estimators_n_iter": dict(alpha=0.0)},
     LatentDirichletAllocation: {
@@ -575,6 +606,7 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             dict(positive=False),
             dict(positive=True),
         ],
+        "check_sample_weight_equivalence_on_sparse_data": [dict(tol=1e-12)],
     },
     LocallyLinearEmbedding: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     LogisticRegression: {
@@ -589,6 +621,16 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
         ],
     },
     MDS: {"check_dict_unchanged": dict(max_iter=5, n_components=1, n_init=2)},
+    MLPClassifier: {
+        "check_sample_weight_equivalence_on_dense_data": [
+            dict(solver="lbfgs"),
+        ]
+    },
+    MLPRegressor: {
+        "check_sample_weight_equivalence_on_dense_data": [
+            dict(solver="sgd", tol=1e-2, random_state=42),
+        ]
+    },
     MiniBatchDictionaryLearning: {
         "check_dict_unchanged": dict(batch_size=10, max_iter=5, n_components=1)
     },
@@ -825,15 +867,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
-    BayesianRidge: {
-        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
-        "check_sample_weight_equivalence_on_dense_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-        "check_sample_weight_equivalence_on_sparse_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-    },
     BernoulliRBM: {
         "check_methods_subset_invariance": ("fails for the decision_function method"),
         "check_methods_sample_order_invariance": ("fails for the score_samples method"),
@@ -957,15 +990,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
-    KBinsDiscretizer: {
-        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
-        "check_sample_weight_equivalence_on_dense_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-        "check_sample_weight_equivalence_on_sparse_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-    },
     KernelDensity: {
         "check_sample_weight_equivalence_on_dense_data": (
             "sample_weight must have positive values"
@@ -982,18 +1006,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     KNeighborsTransformer: {
         "check_methods_sample_order_invariance": "check is not applicable."
-    },
-    LinearRegression: {
-        # TODO: this model should converge to the minimum norm solution of the
-        # least squares problem and as result be numerically stable enough when
-        # running the equivalence check even if n_features > n_samples. Maybe
-        # this is is not the case and a different choice of solver could fix
-        # this problem. This might require setting a low enough value for the
-        # tolerance of the lsqr solver:
-        # https://github.com/scikit-learn/scikit-learn/issues/30131
-        "check_sample_weight_equivalence_on_sparse_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
     },
     LinearSVC: {
         # TODO: replace by a statistical test when _dual=True, see meta-issue #16298
