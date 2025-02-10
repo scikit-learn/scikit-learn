@@ -284,7 +284,9 @@ class PartialDependenceDisplay:
         marks on the x-axes for one-way plots, and on both axes for two-way
         plots.
 
-        Read more in the :ref:`User Guide <partial_dependence>`.
+        Read more in
+        :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
+        and the :ref:`User Guide <partial_dependence>`.
 
         .. note::
 
