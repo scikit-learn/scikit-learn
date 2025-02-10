@@ -983,6 +983,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         initialization, otherwise, just erase the previous solution.
         Useless for liblinear solver. See :term:`the Glossary <warm_start>`.
 
+        For a usage example, see
+        :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_path.py`.
+
         .. versionadded:: 0.17
            *warm_start* to support *lbfgs*, *newton-cg*, *sag*, *saga* solvers.
 
@@ -1100,6 +1103,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
     For a comparison of the LogisticRegression with other classifiers see:
     :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`.
+    For a comparison of decision boundaries of multinomial and
+    one-vs-rest logistic regression, please see
+    :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_multinomial.py`.
     """
 
     _parameter_constraints: dict = {
