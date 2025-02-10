@@ -229,13 +229,18 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         """
         _raise_for_params(params, self, "fit")
         tags = self.__sklearn_tags__()
-        X = validate_data(
-            self,
-            X,
-            accept_sparse="csc",
-            ensure_min_features=2,
-            ensure_all_finite=not tags.input_tags.allow_nan,
-        )
+        #check whether estimator explicitly supports categorical data
+        estimator_supports_categorical = getattr(self.estimator, 'enable_categorical', False)
+
+        if not estimator_supports_categorical:
+            X = validate_data(
+                self,
+                X,
+                accept_sparse="csc",
+                ensure_min_features=2,
+                ensure_all_finite=not tags.input_tags.allow_nan,
+            )
+        
         n_features = X.shape[1]
 
         if self.n_features_to_select == "auto":

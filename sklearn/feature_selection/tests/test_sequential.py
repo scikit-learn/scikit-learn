@@ -3,7 +3,8 @@ import pytest
 from numpy.testing import assert_array_equal
 
 from sklearn.cluster import KMeans
-from sklearn.datasets import make_blobs, make_classification, make_regression
+from sklearn.datasets import make_blobs, make_classification, make_regression, load_diabetes
+from xgboost import XGBRegressor
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.feature_selection import SequentialFeatureSelector
 from sklearn.linear_model import LinearRegression
@@ -330,3 +331,53 @@ def test_fit_rejects_params_with_no_routing_enabled():
 
     with pytest.raises(ValueError, match="is only supported if"):
         sfs.fit(X, y, sample_weight=np.ones_like(y))
+
+
+def dataset():
+    """ Load and prepare the diabetes dataset with categorical and numerical features. """
+    X, y = load_diabetes(return_X_y=True, as_frame=True, scaled=False)
+    
+    # Add a categorical column to simulate real-world scenarios
+    X['sex'] = X['sex'].apply(lambda x: 'M' if x == 1.0 else 'F').astype('category')
+
+    return X, y
+
+# Test model for estimators that handle categorical data explicitly
+def test_sequential_feature_selector_with_xgb(dataset):
+    """ Test SequentialFeatureSelector with XGBoost, which supports categorical features. """
+    X, y = dataset
+    model = XGBRegressor(enable_categorical=True, random_state=0)
+
+    selector = SequentialFeatureSelector(
+        estimator=model,
+        n_features_to_select=5,
+        direction="forward"
+    )
+
+    try:
+        selector.fit(X, y)
+        assert selector.support_.sum() == 5  # Expect 5 features to be selected
+        print("[PASS] XGBoost test passed!")
+    except Exception as e:
+        print(f"[FAIL] XGBoost test failed: {e}")
+        raise e
+
+# Test model for estimators that does not handle categorical data explicitly
+def test_sequential_feature_selector_with_linear_regression(dataset):
+    """ Test SequentialFeatureSelector with Linear Regression, which does not support categorical features. """
+    X, y = dataset
+    model_lr = LinearRegression()
+
+    selector = SequentialFeatureSelector(
+        estimator=model_lr,
+        n_features_to_select=5,
+        direction="forward"
+    )
+
+    try:
+        selector.fit(X, y)
+        assert selector.support_.sum() == 5  # Expect 5 features to be selected
+        print("[PASS] Linear Regression test passed!")
+    except Exception as e:
+        print(f"[FAIL] Linear Regression test failed: {e}")
+        raise e
