@@ -1,10 +1,10 @@
 import numpy as np
-from numpy.testing import assert_allclose, assert_array_equal
 import pytest
+from numpy.testing import assert_allclose, assert_array_equal
 from pytest import approx
 
 from sklearn.utils.fixes import np_version, parse_version
-from sklearn.utils.stats import _weighted_percentile, _averaged_weighted_percentile
+from sklearn.utils.stats import _averaged_weighted_percentile, _weighted_percentile
 
 
 def test_averaged_weighted_median():
