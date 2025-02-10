@@ -600,6 +600,17 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
         "check_dict_unchanged": dict(batch_size=10, max_iter=5, n_components=1)
     },
     LinearDiscriminantAnalysis: {"check_dict_unchanged": dict(n_components=1)},
+    LinearSVC: {
+        "check_sample_weight_equivalence": [
+            # TODO: dual=True is a stochastic solver: we cannot rely on
+            # check_sample_weight_equivalence to check the correct handling of
+            # sample_weight and we would need a statistical test instead, see
+            # meta-issue #162298.
+            # dict(max_iter=20, dual=True, tol=1e-12),
+            dict(dual=False, tol=1e-12),
+            dict(dual=False, tol=1e-12, class_weight="balanced"),
+        ]
+    },
     LinearRegression: {
         "check_estimator_sparse_tag": [dict(positive=False), dict(positive=True)],
         "check_sample_weight_equivalence_on_dense_data": [
@@ -615,6 +626,14 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             dict(solver="liblinear"),
             dict(solver="newton-cg"),
             dict(solver="newton-cholesky"),
+            dict(solver="newton-cholesky", class_weight="balanced"),
+        ]
+    },
+    LogisticRegressionCV: {
+        "check_sample_weight_equivalence": [
+            dict(solver="lbfgs"),
+            dict(solver="newton-cholesky"),
+            dict(solver="newton-cholesky", class_weight="balanced"),
         ],
         "check_sample_weight_equivalence_on_sparse_data": [
             dict(solver="liblinear"),
