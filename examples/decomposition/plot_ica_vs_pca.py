@@ -26,11 +26,6 @@ represented by orange vectors. We represent the signal in the PCA space,
 after whitening by the variance corresponding to the PCA vectors (lower
 left). Running ICA corresponds to finding a rotation in this space to
 identify the directions of largest non-Gaussianity (lower right).
-
-See
-:ref:`sphx_glr_auto_examples_decomposition_plot_ica_blind_source_separation.py`
-for an example comparing the performance of ICA and PCA in estimating sources
-from noisy data.
 """
 
 # Authors: The scikit-learn developers
