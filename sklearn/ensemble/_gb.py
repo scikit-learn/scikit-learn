@@ -1451,6 +1451,14 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     ...     max_depth=1, random_state=0).fit(X_train, y_train)
     >>> clf.score(X_test, y_test)
     0.913...
+
+    See :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_oob.py` for
+    an example on using Out-of-Bag estimates to estimate the optimal number of
+    iterations for Gradient Boosting.
+
+    For a detailed example of utilizing regularization with
+    :class:`~sklearn.ensemble.GradientBoostingClassifier`, please refer to
+    :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regularization.py`.
     """
 
     _parameter_constraints: dict = {
