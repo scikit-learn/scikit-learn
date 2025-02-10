@@ -1,7 +1,5 @@
 
 - :func: `resample` now handles sample weights which allows
   weighted resampling.
-- :func: `_averaged_weighted_percentile` now added which implements
-  an averaged inverted cdf calculation of percentiles.
   :pr:`29907` by :user:`Shruti Nath <snath-xoc>` and :user:`Olivier Grisel
   <ogrisel>`

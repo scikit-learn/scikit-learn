@@ -3934,7 +3934,7 @@ def _enforce_estimator_tags_y(estimator, y):
         and not tags.classifier_tags.multi_class
         and y.size > 0
     ):
-        y = np.where(y == y.flat[0], y, y.flat[0] + 1)
+        y = np.where(y == y.min(), y, y.min() + 1)
     # Estimators in mono_output_task_error raise ValueError if y is of 1-D
     # Convert into a 2-D y for those estimators.
     if tags.target_tags.multi_output and not tags.target_tags.single_output:
