@@ -201,30 +201,52 @@ pd.DataFrame(results).set_index("model").style.apply(highlight_min)
 # We can also evaluate the ability of the two extreme quantile estimators at
 # producing a well-calibrated conditional 90%-confidence interval.
 #
-# To do this we can compute the fraction of observations that fall between the
-# predictions:
+# To do this we can define two functions:
+#
+# - one to compute the fraction of observations that fall between the
+#   predictions;
+# - one to wrap those metrics in a cross-validation loop and assess their
+#   variability under data resampling.
+
+from sklearn.model_selection import KFold
+
+
 def coverage_fraction(y, y_low, y_high):
     return np.mean(np.logical_and(y >= y_low, y <= y_high))
 
 
-coverage_fraction(
-    y_train,
-    all_models["q 0.05"].predict(X_train),
-    all_models["q 0.95"].predict(X_train),
+def cross_val_coverage_fraction(models_dict, X, y, cv):
+    coverage_results = []
+    for _, test_index in cv.split(y):
+        y_low = models_dict["q 0.05"].predict(X[test_index])
+        y_high = models_dict["q 0.95"].predict(X[test_index])
+        y_true = y[test_index]
+
+        coverage = coverage_fraction(y_true, y_low, y_high)
+        coverage_results.append(coverage)
+
+    mean_coverage = np.mean(coverage_results)
+    std_coverage = np.std(coverage_results)
+
+    return mean_coverage, std_coverage
+
+
+cv = KFold(n_splits=5)
+mean_coverage, std_coverage = cross_val_coverage_fraction(
+    all_models, X_train, y_train, cv
 )
+print(f"Train coverage: {mean_coverage:.1%} ± {std_coverage:.1%}")
 
 # %%
 # On the training set the calibration is very close to the expected coverage
 # value for a 90% confidence interval.
-coverage_fraction(
-    y_test, all_models["q 0.05"].predict(X_test), all_models["q 0.95"].predict(X_test)
+mean_coverage, std_coverage = cross_val_coverage_fraction(
+    all_models, X_test, y_test, cv
 )
-
+print(f"Test coverage: {mean_coverage:.1%} ± {std_coverage:.1%}")
 
 # %%
 # On the test set, the estimated confidence interval is slightly too narrow.
-# Note, however, that we would need to wrap those metrics in a cross-validation
-# loop to assess their variability under data resampling.
 #
 # Tuning the hyper-parameters of the quantile regressors
 # ------------------------------------------------------
@@ -326,12 +348,17 @@ plt.show()
 #
 # We now quantitatively evaluate the joint-calibration of the pair of
 # estimators:
-coverage_fraction(y_train, search_05p.predict(X_train), search_95p.predict(X_train))
+tuned_models = {"q 0.05": search_05p, "q 0.95": search_95p}
+
+mean_coverage, std_coverage = cross_val_coverage_fraction(
+    tuned_models, X_train, y_train, cv
+)
+print(f"Train coverage: {mean_coverage:.1%} ± {std_coverage:.1%}")
 # %%
-coverage_fraction(y_test, search_05p.predict(X_test), search_95p.predict(X_test))
+mean_coverage, std_coverage = cross_val_coverage_fraction(
+    tuned_models, X_test, y_test, cv
+)
+print(f"Test coverage: {mean_coverage:.1%} ± {std_coverage:.1%}")
 # %%
 # The calibration of the tuned pair is sadly not better on the test set: the
 # width of the estimated confidence interval is still too narrow.
-#
-# Again, we would need to wrap this study in a cross-validation loop to
-# better assess the variability of those estimates.
