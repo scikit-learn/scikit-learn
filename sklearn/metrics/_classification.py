@@ -365,7 +365,7 @@ def confusion_matrix(
     else:
         if not _is_numpy_namespace(get_namespace(labels)[0]):
             labels = _convert_to_numpy(labels, xp)
-        else:  # input is a list
+        else:
             labels = np.asarray(labels)
         n_labels = labels.size
         if n_labels == 0:
