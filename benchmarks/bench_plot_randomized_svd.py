@@ -74,6 +74,7 @@ from time import time
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import scipy as sp
 
 from sklearn.datasets import (
@@ -119,7 +120,9 @@ SVHN_FOLDER = "./SVHN/"
 
 datasets = [
     "low rank matrix",
-    "lfw_people",
+    # "lfw_people",  # temporarily skipped
+    # (raises ValueError with `n_iter = 5 on sklearn - none` due to overflow)
+    # TODO: fix benchmark to not crash here
     "olivetti_faces",
     "20newsgroups",
     "mnist_784",
@@ -194,6 +197,8 @@ def get_data(dataset_name):
         del col
     else:
         X = fetch_openml(dataset_name).data
+        if isinstance(X, pd.DataFrame):
+            X = X.to_numpy()
     return X
 
 
