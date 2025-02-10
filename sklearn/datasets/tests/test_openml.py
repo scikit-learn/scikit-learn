@@ -8,6 +8,7 @@ from functools import partial
 from importlib import resources
 from io import BytesIO
 from urllib.error import HTTPError
+from urllib.parse import urlparse
 
 import numpy as np
 import pytest
@@ -17,7 +18,6 @@ import sklearn
 from sklearn import config_context
 from sklearn.datasets import fetch_openml as fetch_openml_orig
 from sklearn.datasets._openml import (
-    _OPENML_PREFIX,
     _get_local_path,
     _open_openml_url,
     _retry_with_clean_cache,
@@ -33,6 +33,7 @@ from sklearn.utils._testing import (
 OPENML_TEST_DATA_MODULE = "sklearn.datasets.tests.data.openml"
 # if True, urlopen will be monkey patched to only use local files
 test_offline = True
+_DATA_FILE = "data/v1/download/{}"
 
 
 class _MockHTTPResponse:
@@ -72,10 +73,12 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
     # monkey patches the urlopen function. Important note: Do NOT use this
     # in combination with a regular cache directory, as the files that are
     # stored as cache should not be mixed up with real openml datasets
-    url_prefix_data_description = "https://api.openml.org/api/v1/json/data/"
-    url_prefix_data_features = "https://api.openml.org/api/v1/json/data/features/"
-    url_prefix_download_data = "https://api.openml.org/data/v1/"
-    url_prefix_data_list = "https://api.openml.org/api/v1/json/data/list/"
+    url_prefix_data_description = re.escape("https://api.openml.org/api/v1/json/data/")
+    url_prefix_data_features = re.escape(
+        "https://api.openml.org/api/v1/json/data/features/"
+    )
+    url_prefix_download_data = r"https://(api\.|www\.)openml\.org/data/v1/download"
+    url_prefix_data_list = re.escape("https://api.openml.org/api/v1/json/data/list/")
 
     path_suffix = ".gz"
     read_fn = gzip.open
@@ -105,7 +108,9 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
         )
 
     def _mock_urlopen_shared(url, has_gzip_header, expected_prefix, suffix):
-        assert url.startswith(expected_prefix)
+        assert re.match(
+            expected_prefix, url
+        ), f"{expected_prefix!r} does not match {url!r}"
 
         data_file_name = _file_name(url, suffix)
         data_file_path = resources.files(data_module) / data_file_name
@@ -136,15 +141,26 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
         )
 
     def _mock_urlopen_download_data(url, has_gzip_header):
+        # TODO `_mock_urlopen_shared` expect that the `url` does not contain the
+        # filename and only the path to the ARFF file.
+        # However, the `url` is nowadays containing the filename as well and we need to
+        # modify it for `_mock_urlopen_shared` to work.
+        url_arff_data = urlparse(url)
+        # remove the filename of the ARFF file
+        path = url_arff_data.path.rsplit("/", 1)[0]
+        url_arff_data = url_arff_data._replace(path=path).geturl()
+
         return _mock_urlopen_shared(
-            url=url,
+            url=url_arff_data,
             has_gzip_header=has_gzip_header,
             expected_prefix=url_prefix_download_data,
             suffix=".arff",
         )
 
     def _mock_urlopen_data_list(url, has_gzip_header):
-        assert url.startswith(url_prefix_data_list)
+        assert re.match(
+            url_prefix_data_list, url
+        ), f"{url_prefix_data_list!r} does not match {url!r}"
 
         data_file_name = _file_name(url, ".json")
         data_file_path = resources.files(data_module) / data_file_name
@@ -171,13 +187,13 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
     def _mock_urlopen(request, *args, **kwargs):
         url = request.get_full_url()
         has_gzip_header = request.get_header("Accept-encoding") == "gzip"
-        if url.startswith(url_prefix_data_list):
+        if re.match(url_prefix_data_list, url):
             return _mock_urlopen_data_list(url, has_gzip_header)
-        elif url.startswith(url_prefix_data_features):
+        elif re.match(url_prefix_data_features, url):
             return _mock_urlopen_data_features(url, has_gzip_header)
-        elif url.startswith(url_prefix_download_data):
+        elif re.match(url_prefix_download_data, url):
             return _mock_urlopen_download_data(url, has_gzip_header)
-        elif url.startswith(url_prefix_data_description):
+        elif re.match(url_prefix_data_description, url):
             return _mock_urlopen_data_description(url, has_gzip_header)
         else:
             raise ValueError("Unknown mocking URL pattern: %s" % url)
@@ -1343,22 +1359,24 @@ def test_open_openml_url_cache(monkeypatch, gzip_response, tmpdir):
     data_id = 61
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
-    openml_path = sklearn.datasets._openml._DATA_FILE.format(data_id)
+    openml_path = _DATA_FILE.format(data_id) + "/filename.arff"
+    url = f"https://api.openml.org/{openml_path}"
     cache_directory = str(tmpdir.mkdir("scikit_learn_data"))
     # first fill the cache
-    response1 = _open_openml_url(openml_path, cache_directory)
+    response1 = _open_openml_url(url, cache_directory)
     # assert file exists
     location = _get_local_path(openml_path, cache_directory)
     assert os.path.isfile(location)
     # redownload, to utilize cache
-    response2 = _open_openml_url(openml_path, cache_directory)
+    response2 = _open_openml_url(url, cache_directory)
     assert response1.read() == response2.read()
 
 
 @pytest.mark.parametrize("write_to_disk", [True, False])
 def test_open_openml_url_unlinks_local_path(monkeypatch, tmpdir, write_to_disk):
     data_id = 61
-    openml_path = sklearn.datasets._openml._DATA_FILE.format(data_id)
+    openml_path = _DATA_FILE.format(data_id) + "/filename.arff"
+    url = f"https://api.openml.org/{openml_path}"
     cache_directory = str(tmpdir.mkdir("scikit_learn_data"))
     location = _get_local_path(openml_path, cache_directory)
 
@@ -1371,14 +1389,14 @@ def test_open_openml_url_unlinks_local_path(monkeypatch, tmpdir, write_to_disk):
     monkeypatch.setattr(sklearn.datasets._openml, "urlopen", _mock_urlopen)
 
     with pytest.raises(ValueError, match="Invalid request"):
-        _open_openml_url(openml_path, cache_directory)
+        _open_openml_url(url, cache_directory)
 
     assert not os.path.exists(location)
 
 
 def test_retry_with_clean_cache(tmpdir):
     data_id = 61
-    openml_path = sklearn.datasets._openml._DATA_FILE.format(data_id)
+    openml_path = _DATA_FILE.format(data_id)
     cache_directory = str(tmpdir.mkdir("scikit_learn_data"))
     location = _get_local_path(openml_path, cache_directory)
     os.makedirs(os.path.dirname(location))
@@ -1401,7 +1419,7 @@ def test_retry_with_clean_cache(tmpdir):
 
 def test_retry_with_clean_cache_http_error(tmpdir):
     data_id = 61
-    openml_path = sklearn.datasets._openml._DATA_FILE.format(data_id)
+    openml_path = _DATA_FILE.format(data_id)
     cache_directory = str(tmpdir.mkdir("scikit_learn_data"))
 
     @_retry_with_clean_cache(openml_path, cache_directory)
@@ -1487,7 +1505,8 @@ def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir, pars
 
     def swap_file_mock(request, *args, **kwargs):
         url = request.get_full_url()
-        if url.endswith("data/v1/download/1666876"):
+        print("full_url:", url)
+        if url.endswith("data/v1/download/1666876/anneal.arff"):
             with open(corrupt_copy_path, "rb") as f:
                 corrupted_data = f.read()
             return _MockHTTPResponse(BytesIO(corrupted_data), is_gzip=True)
@@ -1515,13 +1534,13 @@ def test_open_openml_url_retry_on_network_error(monkeypatch):
         sklearn.datasets._openml, "urlopen", _mock_urlopen_network_error
     )
 
-    invalid_openml_url = "invalid-url"
+    invalid_openml_url = "https://api.openml.org/invalid-url"
 
     with pytest.warns(
         UserWarning,
         match=re.escape(
             "A network error occurred while downloading"
-            f" {_OPENML_PREFIX + invalid_openml_url}. Retrying..."
+            f" {invalid_openml_url}. Retrying..."
         ),
     ) as record:
         with pytest.raises(HTTPError, match="Simulated network error"):
