@@ -178,9 +178,7 @@ clickable and can be expanded/collapsed.
 /* Toggleable content - dropdown */
 
 #$id div.sk-toggleable__content {
-  max-height: 0;
-  max-width: 0;
-  overflow: hidden;
+  display: none;
   text-align: left;
   /* unfitted */
   background-color: var(--sklearn-color-unfitted-level-0);
@@ -206,9 +204,9 @@ clickable and can be expanded/collapsed.
 
 #$id input.sk-toggleable__control:checked~div.sk-toggleable__content {
   /* Expand drop-down */
-  max-height: 200px;
-  max-width: 100%;
-  overflow: auto;
+  display: block;
+  width: 100%;
+  overflow: visible;
 }
 
 #$id input.sk-toggleable__control:checked~label.sk-toggleable__label-arrow:before {
