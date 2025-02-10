@@ -69,7 +69,7 @@ def html_template(data):
         <script>
             function copyToClipboard(text, element) {{
                 const parent = element.parentNode;
-                const originalHTML = parent.innerHTML;
+                const originalHTML = parent.innerHTML.replace('&nbsp;Copied', '');
 
                 navigator.clipboard.writeText(text)
                     .then(() => {
