@@ -11,7 +11,15 @@ import numpy as np
 from scipy import linalg, sparse
 
 from ..utils._param_validation import Interval, StrOptions, validate_params
-from ._array_api import _average, _is_numpy_namespace, _nanmean, device, get_namespace
+from ._array_api import (
+    _average,
+    _conj_transpose,
+    _is_numpy_namespace,
+    _iscomplexobj,
+    _nanmean,
+    device,
+    get_namespace,
+)
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array, check_random_state
 
@@ -333,7 +341,8 @@ def randomized_range_finder(
     # singular vectors of A in Q
     for _ in range(n_iter):
         Q, _ = normalizer(A @ Q)
-        Q, _ = normalizer(A.T @ Q)
+        # Conjugate transpose for complex input (normal transpose for real)
+        Q, _ = normalizer(_conj_transpose(A, xp=xp) @ Q)
 
     # Sample the range of A using by linear projection of Q
     # Extract an orthonormal basis
@@ -506,6 +515,7 @@ def randomized_svd(
             sparse.SparseEfficiencyWarning,
         )
 
+    xp, is_array_api_compliant = get_namespace(M)
     random_state = check_random_state(random_state)
     n_random = n_components + n_oversamples
     n_samples, n_features = M.shape
@@ -519,7 +529,8 @@ def randomized_svd(
         transpose = n_samples < n_features
     if transpose:
         # this implementation is a bit faster with smaller shape[1]
-        M = M.T
+        # Conjugate transpose for complex input (normal transpose for real)
+        M = _conj_transpose(M, xp=xp)
 
     Q = randomized_range_finder(
         M,
@@ -530,10 +541,9 @@ def randomized_svd(
     )
 
     # project M to the (k + p) dimensional space using the basis vectors
-    B = Q.T @ M
+    B = _conj_transpose(Q, xp=xp) @ M
 
     # compute the SVD on the thin matrix: (k + p) wide
-    xp, is_array_api_compliant = get_namespace(B)
     if is_array_api_compliant:
         Uhat, s, Vt = xp.linalg.svd(B, full_matrices=False)
     else:
@@ -546,7 +556,9 @@ def randomized_svd(
     del B
     U = Q @ Uhat
 
-    if flip_sign:
+    # can't flip sign for complex valued input, since complex svd is unique only up to
+    # phase shifts.
+    if flip_sign and not _iscomplexobj(M, xp=xp):
         if not transpose:
             U, Vt = svd_flip(U, Vt)
         else:
@@ -556,7 +568,11 @@ def randomized_svd(
 
     if transpose:
         # transpose back the results according to the input convention
-        return Vt[:n_components, :].T, s[:n_components], U[:, :n_components].T
+        return (
+            _conj_transpose(Vt[:n_components, :], xp=xp),
+            s[:n_components],
+            _conj_transpose(U[:, :n_components], xp=xp),
+        )
     else:
         return U[:, :n_components], s[:n_components], Vt[:n_components, :]
 

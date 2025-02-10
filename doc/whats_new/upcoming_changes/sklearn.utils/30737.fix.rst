@@ -1,0 +1,2 @@
+- :func:`utils.extmath.randomized_svd` now handles complex valued inputs. By
+    :user:`Connor Lane <clane9>`.
