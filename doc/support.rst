@@ -119,6 +119,6 @@ documentation.
 
 If you want a PDF, we don't provide one anymore, but you can still generate it
 locally by following the :ref:`building documentation instructions
-<building_documentation>`. The latest version with a `PDF documentation
-<https://scikit-learn.org/0.23/_downloads/scikit-learn-docs.pdf>`_ is 0.23.2,
-which was released in August 2020.
+<building_documentation>`. The most recent version with a PDF documentation is
+0.23.2 (released in August 2020) and its PDF documentation is available `here
+<https://scikit-learn.org/0.23/_downloads/scikit-learn-docs.pdf>`__.
