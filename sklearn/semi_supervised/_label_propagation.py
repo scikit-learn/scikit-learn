@@ -497,6 +497,12 @@ class LabelSpreading(BaseLabelPropagation):
     but uses affinity matrix based on the normalized graph Laplacian
     and soft clamping across the labels.
 
+    For a usage example in active learning on the digits dataset,
+    see :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_digits_active_learning.py`.
+
+    For a usage example in manifold learning on the circles dataset,
+    see :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_structure.py`.
+
     Read more in the :ref:`User Guide <label_propagation>`.
 
     Parameters
@@ -584,7 +590,7 @@ class LabelSpreading(BaseLabelPropagation):
     >>> labels[random_unlabeled_points] = -1
     >>> label_prop_model.fit(iris.data, labels)
     LabelSpreading(...)
-    """
+    """  # noqa: E501
 
     _variant = "spreading"
 
