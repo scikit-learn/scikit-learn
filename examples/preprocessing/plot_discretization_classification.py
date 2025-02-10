@@ -72,7 +72,9 @@ classifiers = [
     (
         make_pipeline(
             StandardScaler(),
-            KBinsDiscretizer(encode="onehot", random_state=0),
+            KBinsDiscretizer(
+                encode="onehot", quantile_method="averaged_inverted_cdf", random_state=0
+            ),
             LogisticRegression(random_state=0),
         ),
         {
@@ -83,7 +85,9 @@ classifiers = [
     (
         make_pipeline(
             StandardScaler(),
-            KBinsDiscretizer(encode="onehot", random_state=0),
+            KBinsDiscretizer(
+                encode="onehot", quantile_method="averaged_inverted_cdf", random_state=0
+            ),
             LinearSVC(random_state=0),
         ),
         {
