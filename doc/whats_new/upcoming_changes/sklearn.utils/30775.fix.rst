@@ -1,7 +1,5 @@
--  :func:`utils.estimator_checks._enforce_estimator_tags_y` enforces a binary `y`
-   by taking the minimum as the negative class instead of the first element, which
-   makes it robust to `y` shuffling. It prevents
-   :func:`utils.estimator_checks.check_sample_weight_equivalence_on_dense_data` and
-   :func:`utils.estimator_checks.check_sample_weight_equivalence_on_sparse_data` to
-   wrongly fail on binary classifiers.
+-  In :mod:`utils.estimator_checks` we now enforce for binary classifiers a
+   binary `y` by taking the minimum as the negative class instead of the first
+   element, which makes it robust to `y` shuffling. It prevents two checks from
+   wrongly failing on binary classifiers.
    By :user:`Antoine Baker <antoinebaker>`.
