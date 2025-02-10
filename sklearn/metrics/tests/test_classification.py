@@ -3239,8 +3239,8 @@ def test_d2_log_loss_score_raises():
     "array_namespace, device, _", yield_namespace_device_dtype_combinations()
 )
 def test_confusion_matrix_array_api(array_namespace, device, _):
-    """Test that `confusion_matrix` works for all array types if need_index_conversion
-    evaluates to `True` and with labels passed."""
+    """Test that `confusion_matrix` works for all array types when `labels` are passed
+    such that the inner boolean `need_index_conversion` evaluates to `True`."""
     xp = _array_api_for_tests(array_namespace, device)
 
     y_true = xp.asarray([1, 2, 3], device=device)
