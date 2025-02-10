@@ -1374,13 +1374,13 @@ def test_search_cv_sample_weight_equivalence(estimator):
     for key in score_keys:
         s1 = estimator_repeated.cv_results_[key]
         s2 = estimator_weighted.cv_results_[key]
-        err_msg = f"{key} are not equal for weighted/repeated datasets"
+        err_msg = f"{key} values are not equal for weighted/repeated datasets"
         assert_allclose(s1, s2, err_msg=err_msg)
 
     for key in ["best_score_", "best_index_"]:
         s1 = getattr(estimator_repeated, key)
         s2 = getattr(estimator_weighted, key)
-        err_msg = f"{key} are not equal for weighted/repeated datasets"
+        err_msg = f"{key} values are not equal for weighted/repeated datasets"
         assert_almost_equal(s1, s2, err_msg=err_msg)
 
     for method in ["predict_proba", "decision_function", "predict", "transform"]:
