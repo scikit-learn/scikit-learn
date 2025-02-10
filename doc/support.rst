@@ -114,7 +114,11 @@ Documentation Resources
 This documentation is for |release|. Find documentation for other versions
 `here <https://scikit-learn.org/dev/versions.html>`__.
 
-The printable PDF documentation is available for 0.23.2 (released in August 2020) `here
-<https://scikit-learn.org/0.23/_downloads/scikit-learn-docs.pdf>`__.
-We don't build PDF documentation any more, but you can still generate it
-locally by following the :ref:`building documentation instructions <building_documentation>`.
+In case offline access is important, you can download a zipped bundle of the
+documentation.
+
+If you want a PDF, we don't provide one anymore, but you can still generate it
+locally by following the :ref:`building documentation instructions
+<building_documentation>`. The latest version with a `PDF documentation
+<https://scikit-learn.org/0.23/_downloads/scikit-learn-docs.pdf>`_ is 0.23.2,
+which was released in August 2020.
