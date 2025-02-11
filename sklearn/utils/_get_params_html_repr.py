@@ -39,7 +39,7 @@ def _get_css_style():
 
 
 def html_template(data):
-    print(data.non_default)
+
     style_template = _get_css_style()
     html_start = f"""
         <head><style>{style_template}</style>
@@ -54,14 +54,24 @@ def html_template(data):
         """
     out = ""
     for x, y in data.items():
-        out += f"""
-                      <li>{x}:{y}&nbsp;
+        if x in data.non_default:
+            out += f"""
+                      <li><span style="color: black;">{x}:{y}</span>&nbsp;
                         <i class="fa-regular fa-copy"
                        onclick="copyToClipboard('{x}', this)"
                        style="color: #B197FC; cursor: pointer;">
                       </i>
                       </li>
-           """
+            """
+        else:
+            out += f"""
+                          <li>{x}:{y}&nbsp;
+                            <i class="fa-regular fa-copy"
+                           onclick="copyToClipboard('{x}', this)"
+                           style="color: #B197FC; cursor: pointer;">
+                          </i>
+                          </li>
+               """
     html_end = """
             </details>
             </ul>
@@ -69,14 +79,14 @@ def html_template(data):
         <script>
             function copyToClipboard(text, element) {{
                 const parent = element.parentNode;
-                const originalHTML = parent.innerHTML.replace('&nbsp;Copied', '');
+                const originalHTML = parent.innerHTML.replace('&nbsp;Copied!', '');
 
                 navigator.clipboard.writeText(text)
                     .then(() => {
-                        parent.innerHTML = originalHTML + "&nbsp;Copied";
+                        parent.innerHTML = originalHTML + "&nbsp;Copied!";
                         setTimeout(() => {
                             parent.innerHTML = originalHTML;
-                        }, 2000);
+                        }, 1000);
                     })
                     .catch(err => console.error('Failed to copy:', err));
                 return false;

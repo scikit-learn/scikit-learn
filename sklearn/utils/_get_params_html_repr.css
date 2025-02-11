@@ -17,7 +17,8 @@
     padding-right: 3em;
     padding-bottom: 0%;
     display: flex;
-    /*outline:.2em solid green; /*USE THIS LINE to see the green lines */
+    /*width: max-content; */
+    /*outline:.2em solid green; /*USE THIS LINE to see the green lines*/
 }
 .estimator-params li::before{ /* before the content */
     position:absolute;
