@@ -395,10 +395,10 @@ build_metadata_list = [
         },
     },
     {
-        "name": "pymin_conda_forge",
+        "name": "pymin_conda_forge_arm",
         "type": "conda",
-        "tag": "arm",
-        "folder": "build_tools/cirrus",
+        "tag": "main-ci",
+        "folder": "build_tools/github",
         "platform": "linux-aarch64",
         "channels": ["conda-forge"],
         "conda_dependencies": remove_from(
