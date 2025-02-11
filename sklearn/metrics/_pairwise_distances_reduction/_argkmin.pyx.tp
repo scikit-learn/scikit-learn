@@ -36,6 +36,7 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
         cls,
         X,
         Y,
+        precomputed,
         intp_t k,
         metric="euclidean",
         chunk_size=None,
@@ -87,7 +88,7 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
               # Fall back on a generic implementation that handles most scipy
               # metrics by computing the distances between 2 vectors at a time.
               pda = ArgKmin{{name_suffix}}(
-                  datasets_pair=DatasetsPair{{name_suffix}}.get_for(X, Y, metric, metric_kwargs),
+                  datasets_pair=DatasetsPair{{name_suffix}}.get_for(X, Y, precomputed, metric, metric_kwargs),
                   k=k,
                   chunk_size=chunk_size,
                   strategy=strategy,
