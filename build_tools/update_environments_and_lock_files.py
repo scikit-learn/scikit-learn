@@ -397,7 +397,7 @@ build_metadata_list = [
     {
         "name": "pymin_conda_forge",
         "type": "conda",
-        "tag": "arm",
+        "tag": "main-ci",
         "folder": "build_tools/github",
         "platform": "linux-aarch64",
         "channels": ["conda-forge"],

@@ -25,8 +25,6 @@ jobs:
           - name: free-threaded
             update_script_args: "--select-tag free-threaded"
             additional_commit_message: "[free-threaded]"
-          - name: arm
-            update_script_args: "--select-tag arm"
           - name: array-api
             update_script_args: "--select-tag cuda"
 
