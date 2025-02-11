@@ -39,7 +39,7 @@ def _get_css_style():
 
 
 def html_template(data):
-
+    print(data.non_default)
     style_template = _get_css_style()
     html_start = f"""
         <head><style>{style_template}</style>
@@ -85,6 +85,7 @@ def html_template(data):
         </body>
     """
     html_template = f"{html_start}{out}{html_end}"
+    # Remove the following:
     try:
         output_path = "get_params.html"
         with open(output_path, "w") as f:
