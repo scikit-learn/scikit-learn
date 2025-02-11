@@ -45,7 +45,7 @@ jobs:
         uses: actions/checkout@v4
       - uses: mamba-org/setup-micromamba@v2
         with:
-          environment-file: build_tools/github/pymin_conda_forge_linux-aarch64_conda.lock
+          environment-file: build_tools/github/pymin_conda_forge_arm_linux-aarch64_conda.lock
           environment-name: ci
           cache-environment: true
 
