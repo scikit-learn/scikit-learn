@@ -7,6 +7,7 @@ import numpy as np
 from scipy import sparse
 
 from ._param_validation import StrOptions, validate_params
+from .validation import _check_sample_weight
 
 
 @validate_params(
@@ -75,6 +76,7 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
         if not all(np.isin(classes, le.classes_)):
             raise ValueError("classes should have valid labels that are in y")
 
+        sample_weight = _check_sample_weight(sample_weight, y)
         weighted_class_counts = np.bincount(y_ind, weights=sample_weight)
         recip_freq = weighted_class_counts.sum() / (
             len(le.classes_) * weighted_class_counts
