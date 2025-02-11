@@ -1348,13 +1348,13 @@ def test_classification_report_multiclass():
     expected_report = """\
               precision    recall  f1-score   support
 
-      setosa       0.83      0.79      0.81        24
-  versicolor       0.33      0.10      0.15        31
-   virginica       0.42      0.90      0.57        20
+      setosa       0.83      0.79      0.81     24.00
+  versicolor       0.33      0.10      0.15     31.00
+   virginica       0.42      0.90      0.57     20.00
 
-    accuracy                           0.53        75
-   macro avg       0.53      0.60      0.51        75
-weighted avg       0.51      0.53      0.47        75
+    accuracy                           0.53     75.00
+   macro avg       0.53      0.60      0.51     75.00
+weighted avg       0.51      0.53      0.47     75.00
 """
     report = classification_report(
         y_true,
@@ -1371,13 +1371,13 @@ def test_classification_report_multiclass_balanced():
     expected_report = """\
               precision    recall  f1-score   support
 
-           0       0.33      0.33      0.33         3
-           1       0.33      0.33      0.33         3
-           2       0.33      0.33      0.33         3
+           0       0.33      0.33      0.33      3.00
+           1       0.33      0.33      0.33      3.00
+           2       0.33      0.33      0.33      3.00
 
-    accuracy                           0.33         9
-   macro avg       0.33      0.33      0.33         9
-weighted avg       0.33      0.33      0.33         9
+    accuracy                           0.33      9.00
+   macro avg       0.33      0.33      0.33      9.00
+weighted avg       0.33      0.33      0.33      9.00
 """
     report = classification_report(y_true, y_pred)
     assert report == expected_report
@@ -1391,13 +1391,13 @@ def test_classification_report_multiclass_with_label_detection():
     expected_report = """\
               precision    recall  f1-score   support
 
-           0       0.83      0.79      0.81        24
-           1       0.33      0.10      0.15        31
-           2       0.42      0.90      0.57        20
+           0       0.83      0.79      0.81     24.00
+           1       0.33      0.10      0.15     31.00
+           2       0.42      0.90      0.57     20.00
 
-    accuracy                           0.53        75
-   macro avg       0.53      0.60      0.51        75
-weighted avg       0.51      0.53      0.47        75
+    accuracy                           0.53     75.00
+   macro avg       0.53      0.60      0.51     75.00
+weighted avg       0.51      0.53      0.47     75.00
 """
     report = classification_report(y_true, y_pred)
     assert report == expected_report
@@ -1412,13 +1412,13 @@ def test_classification_report_multiclass_with_digits():
     expected_report = """\
               precision    recall  f1-score   support
 
-      setosa    0.82609   0.79167   0.80851        24
-  versicolor    0.33333   0.09677   0.15000        31
-   virginica    0.41860   0.90000   0.57143        20
+      setosa    0.82609   0.79167   0.80851  24.00000
+  versicolor    0.33333   0.09677   0.15000  31.00000
+   virginica    0.41860   0.90000   0.57143  20.00000
 
-    accuracy                        0.53333        75
-   macro avg    0.52601   0.59615   0.50998        75
-weighted avg    0.51375   0.53333   0.47310        75
+    accuracy                        0.53333  75.00000
+   macro avg    0.52601   0.59615   0.50998  75.00000
+weighted avg    0.51375   0.53333   0.47310  75.00000
 """
     report = classification_report(
         y_true,
@@ -1439,13 +1439,13 @@ def test_classification_report_multiclass_with_string_label():
     expected_report = """\
               precision    recall  f1-score   support
 
-        blue       0.83      0.79      0.81        24
-       green       0.33      0.10      0.15        31
-         red       0.42      0.90      0.57        20
+        blue       0.83      0.79      0.81     24.00
+       green       0.33      0.10      0.15     31.00
+         red       0.42      0.90      0.57     20.00
 
-    accuracy                           0.53        75
-   macro avg       0.53      0.60      0.51        75
-weighted avg       0.51      0.53      0.47        75
+    accuracy                           0.53     75.00
+   macro avg       0.53      0.60      0.51     75.00
+weighted avg       0.51      0.53      0.47     75.00
 """
     report = classification_report(y_true, y_pred)
     assert report == expected_report
@@ -1453,13 +1453,13 @@ weighted avg       0.51      0.53      0.47        75
     expected_report = """\
               precision    recall  f1-score   support
 
-           a       0.83      0.79      0.81        24
-           b       0.33      0.10      0.15        31
-           c       0.42      0.90      0.57        20
+           a       0.83      0.79      0.81     24.00
+           b       0.33      0.10      0.15     31.00
+           c       0.42      0.90      0.57     20.00
 
-    accuracy                           0.53        75
-   macro avg       0.53      0.60      0.51        75
-weighted avg       0.51      0.53      0.47        75
+    accuracy                           0.53     75.00
+   macro avg       0.53      0.60      0.51     75.00
+weighted avg       0.51      0.53      0.47     75.00
 """
     report = classification_report(y_true, y_pred, target_names=["a", "b", "c"])
     assert report == expected_report
@@ -1475,13 +1475,13 @@ def test_classification_report_multiclass_with_unicode_label():
     expected_report = """\
               precision    recall  f1-score   support
 
-       blue\xa2       0.83      0.79      0.81        24
-      green\xa2       0.33      0.10      0.15        31
-        red\xa2       0.42      0.90      0.57        20
+       blue\xa2       0.83      0.79      0.81     24.00
+      green\xa2       0.33      0.10      0.15     31.00
+        red\xa2       0.42      0.90      0.57     20.00
 
-    accuracy                           0.53        75
-   macro avg       0.53      0.60      0.51        75
-weighted avg       0.51      0.53      0.47        75
+    accuracy                           0.53     75.00
+   macro avg       0.53      0.60      0.51     75.00
+weighted avg       0.51      0.53      0.47     75.00
 """
     report = classification_report(y_true, y_pred)
     assert report == expected_report
@@ -1497,13 +1497,13 @@ def test_classification_report_multiclass_with_long_string_label():
     expected_report = """\
                            precision    recall  f1-score   support
 
-                     blue       0.83      0.79      0.81        24
-greengreengreengreengreen       0.33      0.10      0.15        31
-                      red       0.42      0.90      0.57        20
+                     blue       0.83      0.79      0.81     24.00
+greengreengreengreengreen       0.33      0.10      0.15     31.00
+                      red       0.42      0.90      0.57     20.00
 
-                 accuracy                           0.53        75
-                macro avg       0.53      0.60      0.51        75
-             weighted avg       0.51      0.53      0.47        75
+                 accuracy                           0.53     75.00
+                macro avg       0.53      0.60      0.51     75.00
+             weighted avg       0.51      0.53      0.47     75.00
 """
 
     report = classification_report(y_true, y_pred)
@@ -1550,15 +1550,15 @@ def test_multilabel_classification_report():
     expected_report = """\
               precision    recall  f1-score   support
 
-           0       0.50      0.67      0.57        24
-           1       0.51      0.74      0.61        27
-           2       0.29      0.08      0.12        26
-           3       0.52      0.56      0.54        27
+           0       0.50      0.67      0.57     24.00
+           1       0.51      0.74      0.61     27.00
+           2       0.29      0.08      0.12     26.00
+           3       0.52      0.56      0.54     27.00
 
-   micro avg       0.50      0.51      0.50       104
-   macro avg       0.45      0.51      0.46       104
-weighted avg       0.45      0.51      0.46       104
- samples avg       0.46      0.42      0.40       104
+   micro avg       0.50      0.51      0.50    104.00
+   macro avg       0.45      0.51      0.46    104.00
+weighted avg       0.45      0.51      0.46    104.00
+ samples avg       0.46      0.42      0.40    104.00
 """
 
     report = classification_report(y_true, y_pred)
