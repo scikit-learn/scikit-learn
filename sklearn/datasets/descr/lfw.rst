@@ -114,7 +114,7 @@ Features            real, between 0 and 255
 
 * `Labeled Faces in the Wild: A Database for Studying Face Recognition
   in Unconstrained Environments.
-  <http://www.tamaraberg.com/papers/Huang_eccv2008-lfw.pdf>`_
+  <https://people.cs.umass.edu/~elm/papers/lfw.pdf>`_
   Gary B. Huang, Manu Ramesh, Tamara Berg, and Erik Learned-Miller.
   University of Massachusetts, Amherst, Technical Report 07-49, October, 2007.
 
