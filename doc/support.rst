@@ -111,14 +111,12 @@ mentioned in this document.
 Documentation Resources
 =======================
 
-This documentation is for |release|. Find documentation for other versions
-`here <https://scikit-learn.org/dev/versions.html>`__.
+This documentation is for |release|. Documentation for other versions can be found `here
+<https://scikit-learn.org/dev/versions.html>`__, including zip archives which can be
+downloaded for offline access.
 
-In case offline access is important, you can download a zipped bundle of the
-documentation.
-
-If you want a PDF, we don't provide one anymore, but you can still generate it
-locally by following the :ref:`building documentation instructions
-<building_documentation>`. The most recent version with a PDF documentation is
-0.23.2 (released in August 2020) and its PDF documentation is available `here
+We no longer provide a PDF version of the documentation, but you can still generate it
+locally by following the :ref:`building documentation instructions <building_documentation>`.
+The most recent version with a PDF documentation is quite old, 0.23.2 (released
+in August 2020), but the PDF is available `here
 <https://scikit-learn.org/0.23/_downloads/scikit-learn-docs.pdf>`__.
