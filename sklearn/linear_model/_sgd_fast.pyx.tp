@@ -323,7 +323,7 @@ def _plain_sgd{{name_suffix}}(
     alpha : float
         The regularization parameter.
     C : float
-        Maximum step size for passive aggressive.
+        Maximum step size for passive aggressive. See [1].
     l1_ratio : float
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
@@ -361,8 +361,8 @@ def _plain_sgd{{name_suffix}}(
         (2) optimal, eta = 1.0/(alpha * t).
         (3) inverse scaling, eta = eta0 / pow(t, power_t)
         (4) adaptive decrease
-        (5) Passive Aggressive-I, eta = min(alpha, loss/norm(x))
-        (6) Passive Aggressive-II, eta = 1.0 / (norm(x) + 0.5*alpha)
+        (5) Passive Aggressive-I, eta = min(alpha, loss/norm(x)), see [1]
+        (6) Passive Aggressive-II, eta = 1.0 / (norm(x) + 0.5*alpha), see [1]
     eta0 : double
         The initial learning rate.
     power_t : double
@@ -392,6 +392,12 @@ def _plain_sgd{{name_suffix}}(
         Values are valid only if average > 0.
     n_iter_ : int
         The actual number of iter (epochs).
+
+    References
+    ----------
+    .. [1] Online Passive-Aggressive Algorithms
+       <https://jmlr.org/papers/volume7/crammer06a/crammer06a.pdf>
+       K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
     """
 
     # get the data information into easy vars
