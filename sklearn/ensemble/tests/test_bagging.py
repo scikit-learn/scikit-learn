@@ -10,9 +10,10 @@ from itertools import cycle, product
 import joblib
 import numpy as np
 import pytest
+from numpy.testing import assert_allclose
 
 import sklearn
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, is_classifier
 from sklearn.datasets import load_diabetes, load_iris, make_hastie_10_2
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.ensemble import (
@@ -24,6 +25,10 @@ from sklearn.ensemble import (
     HistGradientBoostingRegressor,
     RandomForestClassifier,
     RandomForestRegressor,
+)
+from sklearn.ensemble._forest import (
+    _generate_unsampled_indices,
+    _get_n_samples_bootstrap,
 )
 from sklearn.feature_selection import SelectKBest
 from sklearn.linear_model import LogisticRegression, Perceptron
@@ -37,6 +42,7 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_array_almost_equal, assert_array_equal
 from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
+from sklearn.utils.multiclass import type_of_target
 
 rng = check_random_state(0)
 
@@ -975,3 +981,154 @@ def test_bagging_without_support_metadata_routing(model):
     """Make sure that we still can use an estimator that does not implement the
     metadata routing."""
     model.fit(iris.data, iris.target)
+
+
+def test_classifier_error_oob_score_multiclass_multioutput():
+    """Check that we raise an error with when requesting OOB score with
+    multiclass-multioutput classification target.
+    """
+    rng = np.random.RandomState(42)
+    X = iris.data
+    y = rng.randint(low=0, high=5, size=(iris.data.shape[0], 2))
+    y_type = type_of_target(y)
+    assert y_type == "multiclass-multioutput"
+    estimator = BaggingClassifier(oob_score=True, bootstrap=True)
+    err_msg = "The type of target cannot be used to compute OOB estimates"
+    with pytest.raises(ValueError, match=err_msg):
+        estimator.fit(X, y)
+
+
+def test_forest_multioutput_integral_regression_target():
+    """Check that multioutput regression with integral values is not interpreted
+    as a multiclass-multioutput target and OOB score can be computed.
+    """
+    rng = np.random.RandomState(42)
+    X = iris.data
+    y = rng.randint(low=0, high=10, size=(iris.data.shape[0], 2))
+    estimator = BaggingRegressor(
+        n_estimators=30, oob_score=True, bootstrap=True, random_state=0
+    )
+    estimator.fit(X, y)
+
+    n_samples_bootstrap = _get_n_samples_bootstrap(len(X), estimator.max_samples)
+    n_samples_test = X.shape[0] // 4
+    oob_pred = np.zeros([n_samples_test, 2])
+    for sample_idx, sample in enumerate(X[:n_samples_test]):
+        n_samples_oob = 0
+        oob_pred_sample = np.zeros(2)
+        for tree in estimator.estimators_:
+            oob_unsampled_indices = _generate_unsampled_indices(
+                tree.random_state, len(X), n_samples_bootstrap
+            )
+            if sample_idx in oob_unsampled_indices:
+                n_samples_oob += 1
+                oob_pred_sample += tree.predict(sample.reshape(1, -1)).squeeze()
+        oob_pred[sample_idx] = oob_pred_sample / n_samples_oob
+    assert_allclose(oob_pred, estimator.oob_prediction_[:n_samples_test])
+
+
+@pytest.mark.parametrize("estimator", [BaggingClassifier, BaggingRegressor])
+def test_multioutput(estimator):
+    # Check estimators on multi-output problems.
+
+    X_train = [
+        [-2, -1],
+        [-1, -1],
+        [-1, -2],
+        [1, 1],
+        [1, 2],
+        [2, 1],
+        [-2, 1],
+        [-1, 1],
+        [-1, 2],
+        [2, -1],
+        [1, -1],
+        [1, -2],
+    ]
+    y_train = [
+        [-1, 0],
+        [-1, 0],
+        [-1, 0],
+        [1, 1],
+        [1, 1],
+        [1, 1],
+        [-1, 2],
+        [-1, 2],
+        [-1, 2],
+        [1, 3],
+        [1, 3],
+        [1, 3],
+    ]
+    X_test = [[-1, -1], [1, 1], [-1, 1], [1, -1]]
+    y_test = [[-1, 0], [1, 1], [-1, 2], [1, 3]]
+
+    est = estimator(random_state=0, bootstrap=False)
+    y_pred = est.fit(X_train, y_train).predict(X_test)
+    assert_array_almost_equal(y_pred, y_test)
+
+    if is_classifier(estimator):
+        with np.errstate(divide="ignore"):
+            proba = est.predict_proba(X_test)
+            assert len(proba) == 2
+            assert proba[0].shape == (4, 2)
+            assert proba[1].shape == (4, 4)
+
+            log_proba = est.predict_log_proba(X_test)
+            assert len(log_proba) == 2
+            assert log_proba[0].shape == (4, 2)
+            assert log_proba[1].shape == (4, 4)
+
+
+def test_multioutput_string():
+    # Check estimators on multi-output problems with string outputs.
+
+    X_train = [
+        [-2, -1],
+        [-1, -1],
+        [-1, -2],
+        [1, 1],
+        [1, 2],
+        [2, 1],
+        [-2, 1],
+        [-1, 1],
+        [-1, 2],
+        [2, -1],
+        [1, -1],
+        [1, -2],
+    ]
+    y_train = [
+        ["red", "blue"],
+        ["red", "blue"],
+        ["red", "blue"],
+        ["green", "green"],
+        ["green", "green"],
+        ["green", "green"],
+        ["red", "purple"],
+        ["red", "purple"],
+        ["red", "purple"],
+        ["green", "yellow"],
+        ["green", "yellow"],
+        ["green", "yellow"],
+    ]
+    X_test = [[-1, -1], [1, 1], [-1, 1], [1, -1]]
+    y_test = [
+        ["red", "blue"],
+        ["green", "green"],
+        ["red", "purple"],
+        ["green", "yellow"],
+    ]
+
+    est = BaggingClassifier(random_state=0, bootstrap=False)
+    y_pred = est.fit(X_train, y_train).predict(X_test)
+    assert_array_equal(y_pred, y_test)
+
+    with np.errstate(divide="ignore"):
+        proba = est.predict_proba(X_test)
+        assert len(proba) == 2
+        assert proba[0].shape == (4, 2)
+        assert proba[1].shape == (4, 4)
+
+        log_proba = est.predict_log_proba(X_test)
+        assert len(log_proba) == 2
+        assert log_proba[0].shape == (4, 2)
+        assert log_proba[1].shape == (4, 4)
