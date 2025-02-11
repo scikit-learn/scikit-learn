@@ -25,20 +25,20 @@ class ParamsDict(UserDict):
         return self._repr_html_inner
 
     def _repr_html_inner(self):
-        return html_template(self)
+        return _html_template(self)
 
     def _repr_mimebundle_(self, **kwargs):
         """Mime bundle used by jupyter kernels to display estimator"""
         output = {"text/plain": repr(self)}
         if get_config()["display"] == "diagram":
-            output["text/html"] = html_template(self)
+            output["text/html"] = _html_template(self)
 
 
 def _get_css_style():
     return Path(__file__).with_suffix(".css").read_text(encoding="utf-8")
 
 
-def html_template(data):
+def _html_template(data):
 
     style_template = _get_css_style()
     html_start = f"""

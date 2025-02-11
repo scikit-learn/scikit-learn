@@ -5,6 +5,10 @@
     font-size: .9em;
 }
 
+.estimator-params summary {
+    padding-right: 3em;
+}
+
 .estimator-params ul li{
     cursor: pointer; /* pointer with a hand */
 
@@ -17,7 +21,7 @@
     padding-right: 3em;
     padding-bottom: 0%;
     display: flex;
-    /*width: max-content; */
+    /*width: 20em; */
     /*outline:.2em solid green; /*USE THIS LINE to see the green lines*/
 }
 .estimator-params li::before{ /* before the content */
