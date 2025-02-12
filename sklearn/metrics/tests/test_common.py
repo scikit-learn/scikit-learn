@@ -1444,9 +1444,10 @@ def test_averaging_multilabel_all_ones(name):
     check_averaging(name, y_true, y_true_binarize, y_pred, y_pred_binarize, y_score)
 
 
-def check_sample_weight_invariance(name, metric, y1, y2):
+def check_sample_weight_invariance(name, metric, y1, y2, sample_weight=None):
     rng = np.random.RandomState(0)
-    sample_weight = rng.randint(1, 10, size=len(y1))
+    if sample_weight is None:
+        sample_weight = rng.randint(1, 10, size=len(y1))
 
     # top_k_accuracy_score always lead to a perfect score for k > 1 in the
     # binary case
@@ -1550,13 +1551,14 @@ def check_sample_weight_invariance(name, metric, y1, y2):
 )
 def test_regression_sample_weight_invariance(name):
     n_samples = 51
-    random_state = check_random_state(1)
+    random_state = check_random_state(0)
     # regression
     y_true = random_state.random_sample(size=(n_samples,))
     y_pred = random_state.random_sample(size=(n_samples,))
+    sample_weight = np.arange(len(y_true))
     metric = ALL_METRICS[name]
 
-    check_sample_weight_invariance(name, metric, y_true, y_pred)
+    check_sample_weight_invariance(name, metric, y_true, y_pred, sample_weight)
 
 
 @pytest.mark.parametrize(
