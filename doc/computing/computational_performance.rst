@@ -208,6 +208,9 @@ mentioned above. For instance a non-linearly separable problem can be handled
 with a speedy linear model but prediction power will very likely suffer in
 the process.
 
+For more information about model complexity influence, please see:
+:ref:`sphx_glr_auto_examples_applications_plot_model_complexity_influence.py`
+
 Feature Extraction Latency
 ..........................
 
