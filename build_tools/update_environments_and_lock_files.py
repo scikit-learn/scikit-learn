@@ -372,7 +372,7 @@ build_metadata_list = [
             "memory_profiler",
             "compilers",
             "sphinx",
-            "sphinx-gallery",
+            # "sphinx-gallery",
             "sphinx-copybutton",
             "numpydoc",
             "sphinx-prompt",
@@ -389,6 +389,7 @@ build_metadata_list = [
             "jupyterlite-sphinx",
             "jupyterlite-pyodide-kernel",
             "sphinxcontrib-sass",
+            "git+https://github.com/sphinx-gallery/sphinx-gallery",
         ],
         "package_constraints": {
             "python": "3.9",
