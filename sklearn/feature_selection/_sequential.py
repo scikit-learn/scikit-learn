@@ -77,13 +77,14 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         Whether to perform forward selection or backward selection.
 
     scoring : str or callable, default=None
-        A single str (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring_callable`) to evaluate the predictions on the test set.
+        Scoring method to use for cross-validation. Options:
 
-        NOTE that when using a custom scorer, it should return a single
-        value.
-
-        If None, the estimator's score method is used.
+        - str: see :ref:`scoring_string_names` for options.
+        - callable: a scorer callable object (e.g., function) with signature
+          ``scorer(estimator, X, y)`` that returns a single value.
+          See :ref:`scoring_callable` for details.
+        - `None`: the `estimator`'s
+          :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.

@@ -528,9 +528,10 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
     scoring : str or callable, default="balanced_accuracy"
         The objective metric to be optimized. Can be one of:
 
-        * a string associated to a scoring function for binary classification
-          (see :ref:`scoring_parameter`);
-        * a scorer callable object created with :func:`~sklearn.metrics.make_scorer`;
+        - str: string associated to a scoring function for binary classification,
+          see :ref:`scoring_string_names` for options.
+        - callable: a scorer callable object (e.g., function) with signature
+          ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
 
     response_method : {"auto", "decision_function", "predict_proba"}, default="auto"
         Methods by the classifier `estimator` corresponding to the
