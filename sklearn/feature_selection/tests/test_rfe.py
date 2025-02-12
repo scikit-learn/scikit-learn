@@ -729,6 +729,10 @@ def test_rfe_with_joblib_threading_backend(global_random_seed):
 
 
 def test_results_per_cv_in_rfecv(global_random_seed):
+    """
+    Test that the results of RFECV are consistent across the different folds
+    in terms of length of the arrays.
+    """
     X, y = make_classification(random_state=global_random_seed)
 
     clf = LogisticRegression()
