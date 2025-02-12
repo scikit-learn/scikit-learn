@@ -194,7 +194,7 @@ iteration, which will be allocated more resources. For parameter tuning, the
 resource is typically the number of training samples, but it can also be an
 arbitrary numeric parameter such as `n_estimators` in a random forest.
 
-.. note:: 
+.. note::
 
     The resource increase chosen should be large enough so that a large improvement
     in scores is obtained when taking into account statistical significance.
@@ -555,14 +555,15 @@ Tips for parameter search
 Specifying an objective metric
 ------------------------------
 
-By default, parameter search uses the ``score`` function of the estimator
-to evaluate a parameter setting. These are the
+By default, parameter search uses the ``score`` function of the estimator to
+evaluate a parameter setting. These are the
 :func:`sklearn.metrics.accuracy_score` for classification and
-:func:`sklearn.metrics.r2_score` for regression.  For some applications,
-other scoring functions are better suited (for example in unbalanced
-classification, the accuracy score is often uninformative). An alternative
-scoring function can be specified via the ``scoring`` parameter of most
-parameter search tools. See :ref:`scoring_parameter` for more details.
+:func:`sklearn.metrics.r2_score` for regression.  For some applications, other
+scoring functions are better suited (for example in unbalanced classification,
+the accuracy score is often uninformative), see :ref:`which_scoring_function`
+for some guidance. An alternative scoring function can be specified via the
+``scoring`` parameter of most parameter search tools, see
+:ref:`scoring_parameter` for more details.
 
 .. _multimetric_grid_search:
 
