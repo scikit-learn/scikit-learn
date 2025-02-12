@@ -73,12 +73,10 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
     # monkey patches the urlopen function. Important note: Do NOT use this
     # in combination with a regular cache directory, as the files that are
     # stored as cache should not be mixed up with real openml datasets
-    url_prefix_data_description = re.escape("https://api.openml.org/api/v1/json/data/")
-    url_prefix_data_features = re.escape(
-        "https://api.openml.org/api/v1/json/data/features/"
-    )
-    url_prefix_download_data = r"https://(api\.|www\.)openml\.org/data/v1/download"
-    url_prefix_data_list = re.escape("https://api.openml.org/api/v1/json/data/list/")
+    url_prefix_data_description = "https://api.openml.org/api/v1/json/data/"
+    url_prefix_data_features = "https://api.openml.org/api/v1/json/data/features/"
+    url_prefix_download_data = "https://www.openml.org/data/v1/download"
+    url_prefix_data_list = "https://api.openml.org/api/v1/json/data/list/"
 
     path_suffix = ".gz"
     read_fn = gzip.open
@@ -108,8 +106,8 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
         )
 
     def _mock_urlopen_shared(url, has_gzip_header, expected_prefix, suffix):
-        assert re.match(
-            expected_prefix, url
+        assert url.startswith(
+            expected_prefix
         ), f"{expected_prefix!r} does not match {url!r}"
 
         data_file_name = _file_name(url, suffix)
@@ -158,8 +156,8 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
         )
 
     def _mock_urlopen_data_list(url, has_gzip_header):
-        assert re.match(
-            url_prefix_data_list, url
+        assert url.startswith(
+            url_prefix_data_list
         ), f"{url_prefix_data_list!r} does not match {url!r}"
 
         data_file_name = _file_name(url, ".json")
@@ -187,13 +185,13 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
     def _mock_urlopen(request, *args, **kwargs):
         url = request.get_full_url()
         has_gzip_header = request.get_header("Accept-encoding") == "gzip"
-        if re.match(url_prefix_data_list, url):
+        if url.startswith(url_prefix_data_list):
             return _mock_urlopen_data_list(url, has_gzip_header)
-        elif re.match(url_prefix_data_features, url):
+        elif url.startswith(url_prefix_data_features):
             return _mock_urlopen_data_features(url, has_gzip_header)
-        elif re.match(url_prefix_download_data, url):
+        elif url.startswith(url_prefix_download_data):
             return _mock_urlopen_download_data(url, has_gzip_header)
-        elif re.match(url_prefix_data_description, url):
+        elif url.startswith(url_prefix_data_description):
             return _mock_urlopen_data_description(url, has_gzip_header)
         else:
             raise ValueError("Unknown mocking URL pattern: %s" % url)
@@ -1360,7 +1358,7 @@ def test_open_openml_url_cache(monkeypatch, gzip_response, tmpdir):
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     openml_path = _DATA_FILE.format(data_id) + "/filename.arff"
-    url = f"https://api.openml.org/{openml_path}"
+    url = f"https://www.openml.org/{openml_path}"
     cache_directory = str(tmpdir.mkdir("scikit_learn_data"))
     # first fill the cache
     response1 = _open_openml_url(url, cache_directory)
@@ -1376,7 +1374,7 @@ def test_open_openml_url_cache(monkeypatch, gzip_response, tmpdir):
 def test_open_openml_url_unlinks_local_path(monkeypatch, tmpdir, write_to_disk):
     data_id = 61
     openml_path = _DATA_FILE.format(data_id) + "/filename.arff"
-    url = f"https://api.openml.org/{openml_path}"
+    url = f"https://www.openml.org/{openml_path}"
     cache_directory = str(tmpdir.mkdir("scikit_learn_data"))
     location = _get_local_path(openml_path, cache_directory)
 
@@ -1505,7 +1503,6 @@ def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir, pars
 
     def swap_file_mock(request, *args, **kwargs):
         url = request.get_full_url()
-        print("full_url:", url)
         if url.endswith("data/v1/download/1666876/anneal.arff"):
             with open(corrupt_copy_path, "rb") as f:
                 corrupted_data = f.read()
