@@ -1512,7 +1512,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         converted to floating point numbers. This means that categorical values
         of 1.0 and 1 are treated as the same category.
 
-        Read more in the :ref:`User Guide <categorical_support_gbdt>`.
+        Read more in the :ref:`User Guide <categorical_support_gbdt>` and
+        :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`.
 
         .. versionadded:: 0.24
 
@@ -1664,9 +1665,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     >>> est = HistGradientBoostingRegressor().fit(X, y)
     >>> est.score(X, y)
     0.92...
-
-    See :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`
-    for an example using histogram-based gradient boosting on categorical features.
     """
 
     _parameter_constraints: dict = {

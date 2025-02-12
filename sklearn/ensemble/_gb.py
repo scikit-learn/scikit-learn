@@ -1152,6 +1152,10 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         There is a trade-off between learning_rate and n_estimators.
         Values must be in the range `[0.0, inf)`.
 
+        For an example of the effects of this parameter and its interaction with
+        ``subsample``, see
+        :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regularization.py`.
+
     n_estimators : int, default=100
         The number of boosting stages to perform. Gradient boosting
         is fairly robust to over-fitting so a large number usually
@@ -1451,14 +1455,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     ...     max_depth=1, random_state=0).fit(X_train, y_train)
     >>> clf.score(X_test, y_test)
     0.913...
-
-    See :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_oob.py` for
-    an example on using Out-of-Bag estimates to estimate the optimal number of
-    iterations for Gradient Boosting.
-
-    For a detailed example of utilizing regularization with
-    :class:`~sklearn.ensemble.GradientBoostingClassifier`, please refer to
-    :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regularization.py`.
     """
 
     _parameter_constraints: dict = {

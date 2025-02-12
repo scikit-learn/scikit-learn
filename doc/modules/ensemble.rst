@@ -821,9 +821,6 @@ see :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_early_stopping.
 for a more detailed discussion of the interaction between
 ``learning_rate`` and ``n_estimators`` see [R2007]_.
 
-Also see :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regularization.py`
-for an example on how regularization via shrinkage impacts Gradient Boosting.
-
 Subsampling
 ^^^^^^^^^^^^
 
