@@ -24,7 +24,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/ccache-3.7.9-hfe4627d_0.conda#bef6f
 https://repo.anaconda.com/pkgs/main/linux-64/readline-8.2-h5eee18b_0.conda#be42180685cce6e6b0329201d9f48efb
 https://repo.anaconda.com/pkgs/main/linux-64/tk-8.6.14-h39e8969_0.conda#78dbc5e3c69143ebc037fc5d5b22e597
 https://repo.anaconda.com/pkgs/main/linux-64/sqlite-3.45.3-h5eee18b_0.conda#acf93d6aceb74d6110e20b44cc45939e
-https://repo.anaconda.com/pkgs/main/linux-64/python-3.13.1-hf623796_100_cp313.conda#9159d14122892f226415ae401c2d12bd
+https://repo.anaconda.com/pkgs/main/linux-64/python-3.13.2-hf623796_100_cp313.conda#bf836f30ac4c16fd3d71c1aaa25da08c
 https://repo.anaconda.com/pkgs/main/linux-64/setuptools-75.8.0-py313h06a4308_0.conda#45420d536cdd6c3f76b3ea1e4a7fbeac
 https://repo.anaconda.com/pkgs/main/linux-64/wheel-0.44.0-py313h06a4308_0.conda#0d8e57ed81bb23b971817beeb3d49606
 https://repo.anaconda.com/pkgs/main/linux-64/pip-24.2-py313h06a4308_0.conda#59f806485e89cb8721847b5857f6df2b
@@ -32,7 +32,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/pip-24.2-py313h06a4308_0.conda#59f8
 # pip babel @ https://files.pythonhosted.org/packages/b7/b8/3fe70c75fe32afc4bb507f75563d39bc5642255d1d94f1f23604725780bf/babel-2.17.0-py3-none-any.whl#sha256=4d0b53093fdfb4b21c92b5213dba5a1b23885afa8383709427046b21c366e5f2
 # pip certifi @ https://files.pythonhosted.org/packages/38/fc/bce832fd4fd99766c04d1ee0eead6b0ec6486fb100ae5e74c1d91292b982/certifi-2025.1.31-py3-none-any.whl#sha256=ca78db4565a652026a4db2bcdf68f2fb589ea80d0be70e03929ed730746b84fe
 # pip charset-normalizer @ https://files.pythonhosted.org/packages/52/ed/b7f4f07de100bdb95c1756d3a4d17b90c1a3c53715c1a476f8738058e0fa/charset_normalizer-3.4.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=955f8851919303c92343d2f66165294848d57e9bba6cf6e3625485a70a038d11
-# pip coverage @ https://files.pythonhosted.org/packages/9a/0b/7797d4193f5adb4b837207ed87fecf5fc38f7cc612b369a8e8e12d9fa114/coverage-7.6.10-cp313-cp313-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=26bcf5c4df41cad1b19c84af71c22cbc9ea9a547fc973f1f2cc9a290002c8b3c
+# pip coverage @ https://files.pythonhosted.org/packages/29/08/978e14dca15fec135b13246cd5cbbedc6506d8102854f4bdde73038efaa3/coverage-7.6.11-cp313-cp313-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=4cf96beb05d004e4c51cd846fcdf9eee9eb2681518524b66b2e7610507944c2f
 # pip docutils @ https://files.pythonhosted.org/packages/8f/d7/9322c609343d929e75e7e5e6255e614fcc67572cfd083959cdef3b7aad79/docutils-0.21.2-py3-none-any.whl#sha256=dafca5b9e384f0e419294eb4d2ff9fa826435bf15f15b7bd45723e8ad76811b2
 # pip execnet @ https://files.pythonhosted.org/packages/43/09/2aea36ff60d16dd8879bdb2f5b3ee0ba8d08cbbdcdfe870e695ce3784385/execnet-2.1.1-py3-none-any.whl#sha256=26dee51f1b80cebd6d0ca8e74dd8745419761d3bef34163928cbebbdc4749fdc
 # pip idna @ https://files.pythonhosted.org/packages/76/c6/c88e154df9c4e1a2a66ccf0005a88dfb2650c1dffb6f5ce603dfbd452ce3/idna-3.10-py3-none-any.whl#sha256=946d195a0d259cbba61165e88e65941f16e9b36ea6ddb97f00452bae8b1287d3

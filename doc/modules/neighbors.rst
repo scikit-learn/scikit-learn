@@ -835,7 +835,7 @@ added space complexity in the operation.
 .. rubric:: References
 
 .. [1] `"Neighbourhood Components Analysis"
-  <http://www.cs.nyu.edu/~roweis/papers/ncanips.pdf>`_,
+  <https://papers.nips.cc/paper_files/paper/2004/file/42fe880812925e520249e808937738d2-Paper.pdf>`_,
   J. Goldberger, S. Roweis, G. Hinton, R. Salakhutdinov, Advances in
   Neural Information Processing Systems, Vol. 17, May 2005, pp. 513-520.
 
