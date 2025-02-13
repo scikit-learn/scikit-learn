@@ -1563,6 +1563,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         and specifies that each branch of a tree will either only split
         on features 0 and 1 or only split on features 2, 3 and 4.
 
+        See :ref:`this example<ice-vs-pdp>` on how to use `interaction_cst`.
+
         .. versionadded:: 1.2
 
     warm_start : bool, default=False
@@ -1908,8 +1910,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         .. versionchanged:: 1.4
            Added `"from_dtype"` option.
 
-        .. versionchanged::1.6
-           The default will changed from `None` to `"from_dtype"`.
+        .. versionchanged:: 1.6
+           The default value changed from `None` to `"from_dtype"`.
 
     monotonic_cst : array-like of int of shape (n_features) or dict, default=None
         Monotonic constraint to enforce on each feature are specified using the
@@ -1949,6 +1951,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         is equivalent to `interaction_cst=[{0, 1}, {2, 3, 4}]`,
         and specifies that each branch of a tree will either only split
         on features 0 and 1 or only split on features 2, 3 and 4.
+
+        See :ref:`this example<ice-vs-pdp>` on how to use `interaction_cst`.
 
         .. versionadded:: 1.2
 
