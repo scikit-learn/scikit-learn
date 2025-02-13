@@ -25,7 +25,6 @@ dependencies:
   - memory_profiler
   - compilers
   - sphinx
-  - sphinx-gallery
   - sphinx-copybutton
   - numpydoc
   - sphinx-prompt
@@ -42,3 +41,4 @@ dependencies:
     - jupyterlite-sphinx
     - jupyterlite-pyodide-kernel
     - sphinxcontrib-sass
+    - git+https://github.com/sphinx-gallery/sphinx-gallery
