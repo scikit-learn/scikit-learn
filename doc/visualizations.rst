@@ -9,9 +9,10 @@ learning. The key feature of this API is to allow for quick plotting and
 visual adjustments without recalculation. We provide `Display` classes that
 expose two methods for creating plots: `from_estimator` and
 `from_predictions`. The `from_estimator` method will take a fitted estimator
-and some data (`X` and `y`) and create a `Display` object. Sometimes, we would
-like to only compute the predictions once and one should use `from_predictions`
-instead. In the following example, we plot a ROC curve for a fitted support
+and some data (`X` and `y`) and create a `Display` object. The `from_predictions``
+method creates a `Display` object when given the true and predicted values.
+We should use the latter when we want to compute the predictions only once.
+In the following example, we plot a ROC curve for a fitted support
 vector machine:
 
 .. plot::
