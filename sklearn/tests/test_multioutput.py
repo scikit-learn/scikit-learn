@@ -866,6 +866,7 @@ def test_multioutput_regressor_has_partial_fit():
         getattr(est, "partial_fit")
 
 
+
 # TODO Remove in 2.1
 def test_multioutput_classifier_fit_dependency_warning():
     """Test that using both y and Y raises ValueError and Y alone raises warning."""
@@ -896,3 +897,19 @@ def test_multioutput_classifier_fit_dependency_warning():
         match="estimator requires y to be passed, but the target y is None.",
     ):
         est.fit(X)
+
+# TODO(1.9):  remove when deprecated `base_estimator` is removed
+@pytest.mark.parametrize("Estimator", [ClassifierChain, RegressorChain])
+def test_base_estimator_deprecation(Estimator):
+    """Check that we warn about the deprecation of `base_estimator`."""
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([[1, 0], [0, 1]])
+
+    estimator = LogisticRegression()
+
+    with pytest.warns(FutureWarning):
+        Estimator(base_estimator=estimator).fit(X, y)
+
+    with pytest.raises(ValueError):
+        Estimator(base_estimator=estimator, estimator=estimator).fit(X, y)
+

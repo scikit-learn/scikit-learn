@@ -142,7 +142,7 @@ forest.predict(X)
 # giving the flexibility to work with data from arbitrary online sources and file
 # formats.
 #
-# The dowloaded file can then be loaded with generic or domain specific functions such
+# The downloaded file can then be loaded with generic or domain specific functions such
 # as `pandas.read_csv`, `pandas.read_parquet`, etc.
 
 # %%

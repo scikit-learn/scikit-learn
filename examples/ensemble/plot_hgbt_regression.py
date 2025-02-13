@@ -78,7 +78,7 @@ y = df["transfer"]
 
 fig, ax = plt.subplots(figsize=(15, 10))
 pointplot = sns.lineplot(x=df["period"], y=df["transfer"], hue=df["day"], ax=ax)
-handles, lables = ax.get_legend_handles_labels()
+handles, labels = ax.get_legend_handles_labels()
 ax.set(
     title="Hourly energy transfer for different days of the week",
     xlabel="Normalized time of the day",
