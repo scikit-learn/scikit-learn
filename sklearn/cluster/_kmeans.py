@@ -2143,7 +2143,7 @@ class MiniBatchKMeans(_BaseKMeans):
         # Initialize number of samples seen since last reassignment
         self._n_since_last_reassign = 0
 
-        n_steps = (self.max_iter * n_samples) // self._batch_size
+        n_steps = int(self.max_iter * sample_weight.sum()) // self._batch_size
         normalized_sample_weight = sample_weight / np.sum(sample_weight)
         unit_sample_weight = np.ones_like(sample_weight, shape=(self._batch_size,))
         with _get_threadpool_controller().limit(limits=1, user_api="blas"):
