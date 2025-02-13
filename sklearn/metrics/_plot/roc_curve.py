@@ -1,11 +1,10 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from ...utils import _safe_indexing, deprecated
+from ...utils import _safe_indexing
 from ...utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
     _check_param_lengths,
-    _deprecate_singular,
     _despine,
     _process_fold_names_line_kwargs,
     _validate_style_kwargs,
@@ -29,24 +28,27 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
     Parameters
     ----------
-    fprs : list of ndarray
+    fpr : ndarray or list of ndarrays
         False positive rates. Each ndarray should contain values for a single curve.
         If plotting multiple curves, list should be of same length as
-        and `tprs`.
+        and `tpr`.
 
-    tprs : list of ndarray
+    tpr : ndarray list of ndarrays
         True positive rates. Each ndarray should contain values for a single curve.
         If plotting multiple curves, list should be of same length as
-        and `fprs`.
+        and `fpr`.
 
-    roc_aucs : list of floats, default=None
-        Area under ROC curve. Should be list of the same length as `fprs` and
-        `tprs` or None, in which case no area under ROC curve score is shown.
+    roc_auc : float or list of floats, default=None
+        Area under ROC curve, used for labeling curves in the legend.
+        If plotting multiple curves, should be a list of the same length as `fpr`
+        and `tpr`. If `None`, no area under ROC curve score is shown. If `name`
+        is also `None` no legend is added.
 
-    names : list of str, default=None
-        Names of each ROC curve, used for labeling curves in the legend.
-        Should be list of the same length as `fprs` and `tprs`, or None, in which
-        case no legend is added.
+    name : str or list of str, default=None
+        Name of each ROC curve, used for labeling curves in the legend.
+        If plotting multiple curves, should be a list of the same length as `fpr`
+        and `tpr`. If `None`, no name is not shown in the legend. If `roc_auc`
+        is also `None` no legend is added.
 
     pos_label : int, float, bool or str, default=None
         The class considered as the positive class when computing the roc auc
@@ -55,44 +57,14 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         .. versionadded:: 0.24
 
-    fpr : ndarray
-        False positive rate. When plotting multiple ROC curves, `fpr` and `tpr` should
-        lists of the same length.
-
-        .. deprecated:: 1.7
-            `fpr` is deprecated in 1.7 and will be removed in 1.9.
-            Use `fprs` instead.
-
-    tpr : ndarray
-        True positive rate. When plotting multiple ROC curves, `fpr` and `tpr` should
-        lists of the same length.
-
-        .. deprecated:: 1.7
-            `tpr` is deprecated in 1.7 and will be removed in 1.9.
-            Use `tprs` instead.
-
-    roc_auc : float, default=None
-        Area under ROC curve. When plotting multiple ROC curves, can be a list
-        of the same length as `fpr` and `tpr`.
-        If None, no roc_auc score is shown.
-
-        .. deprecated:: 1.7
-            `roc_auc` is deprecated in 1.7 and will be removed in 1.9.
-            Use `roc_aucs` instead.
-
-    name : str, default=None
-        Label for the ROC curve. For multiple ROC curves, `name` can be a list
-        of the same length as `tpr` and `fpr`.
-        If None, no name is shown.
-
-        .. deprecated:: 1.7
-            `name` is deprecated in 1.7 and will be removed in 1.9.
-            Use `names` instead.
-
     Attributes
     ----------
-    lines_ : list of matplotlib Artists
+    line_ : matplotlib Artist or list of matplotlib Artists
         ROC Curves.
+
+        .. versionchanged:: 1.7
+            This attribute can now be a list of Artists, when multiple curves are
+            plotted.
 
     chance_level_ : matplotlib Artist or None
         The chance level line. It is `None` if the chance level is not plotted.
@@ -104,13 +76,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
     figure_ : matplotlib Figure
         Figure containing the curve.
-
-    line_ : matplotlib Artist
-        ROC Curve.
-
-        .. deprecated:: 1.7
-            `line_` is deprecated in 1.7 and will be removed in 1.9. Use `lines_`
-            instead.
 
     See Also
     --------
@@ -130,8 +95,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     >>> pred = np.array([0.1, 0.4, 0.35, 0.8])
     >>> fpr, tpr, thresholds = metrics.roc_curve(y, pred)
     >>> roc_auc = metrics.auc(fpr, tpr)
-    >>> display = metrics.RocCurveDisplay(fprs=[fpr], tprs=[tpr], roc_aucs=[roc_auc],
-    ...                                   names=['example estimator'])
+    >>> display = metrics.RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc,
+    ...                                   name='example estimator')
     >>> display.plot()
     <...>
     >>> plt.show()
@@ -140,32 +105,51 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     def __init__(
         self,
         *,
-        fprs,
-        tprs,
-        roc_aucs=None,
-        names=None,
+        fpr,
+        tpr,
+        roc_auc=None,
+        name=None,
         pos_label=None,
-        fpr="deprecated",
-        tpr="deprecated",
-        roc_auc="deprecated",
-        name="deprecated",
     ):
-        self.fprs = _deprecate_singular(fpr, fprs, "fpr")
-        self.tprs = _deprecate_singular(tpr, tprs, "tpr")
-        self.roc_aucs = _deprecate_singular(roc_auc, roc_aucs, "roc_auc")
-        self.names = _deprecate_singular(name, names, "name")
+        self.fpr_ = (
+            fpr
+            if isinstance(fpr, list)
+            else [
+                fpr,
+            ]
+        )
+        self.tpr_ = (
+            tpr
+            if isinstance(tpr, list)
+            else [
+                tpr,
+            ]
+        )
+        self.roc_auc_ = (
+            roc_auc
+            if isinstance(roc_auc, list)
+            else [
+                roc_auc,
+            ]
+        )
+        self.name_ = (
+            name
+            if isinstance(name, list)
+            else [
+                name,
+            ]
+        )
         self.pos_label = pos_label
 
     def plot(
         self,
         ax=None,
         *,
-        names=None,
+        name=None,
         plot_chance_level=False,
         chance_level_kw=None,
         despine=False,
         fold_line_kwargs=None,
-        name="deprecated",
         **kwargs,
     ):
         """Plot visualization.
@@ -179,10 +163,10 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Axes object to plot on. If `None`, a new figure and axes is
             created.
 
-        names : list of str, default=None
-            Names of each ROC curve, used for labeling curves in the legend.
-            If `None`, use `names` provided at `RocCurveDisplay` initialization. If
-            also not provided at initialization, no legend is added.
+        name : str or list of str, default=None
+            Name of each ROC curve, used for labeling curves in the legend.
+            If `None`, use `name` provided at `RocCurveDisplay` initialization. If
+            also not provided at initialization, no name is shown in the legend.
 
             .. versionadded:: 1.7
 
@@ -212,14 +196,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
             .. versionadded:: 1.7
 
-        name : str, default=None
-            Name of ROC Curve for labeling. If `None`, use `estimator_name` if
-            not `None`, otherwise no labeling is shown.
-
-            .. deprecated:: 1.7
-                `name` is deprecated in 1.7 and will be removed in 1.9.
-                Use `names` instead.
-
         **kwargs : dict
             For a single curve plots only, keyword arguments to be passed to
             matplotlib's `plot`. Ignored for multi-curve plots - use `fold_line_kwargs`
@@ -230,18 +206,18 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         display : :class:`~sklearn.metrics.RocCurveDisplay`
             Object that stores computed values.
         """
-        names = _deprecate_singular(name, names, "name")
-        # Not sure about this, as ideally we would check params are correct first??
-        self.ax_, self.figure_, names_ = self._validate_plot_params(ax=ax, name=names)
+        # TODO: Not sure about this, as ideally we would check params are correct
+        # first??
+        self.ax_, self.figure_, name_ = self._validate_plot_params(ax=ax, name=name)
         _check_param_lengths(
-            {"self.fprs": self.fprs, "self.tprs": self.tprs},
-            {"roc_aucs": self.roc_aucs, "self.names (or names from `plot`)": names_},
+            {"self.fpr": self.fpr_, "self.tpr": self.tpr_},
+            {"self.roc_auc": self.roc_auc_, "`name` from `plot` (or self.name)": name_},
             "RocCurveDisplay",
         )
 
-        n_curves = len(self.fprs)
+        n_curves = len(self.fpr_)
         line_kwargs = self._get_line_kwargs(
-            n_curves, names_, self.roc_aucs, "AUC", fold_line_kwargs, **kwargs
+            n_curves, name_, self.roc_auc_, "AUC", fold_line_kwargs, **kwargs
         )
 
         default_chance_level_line_kw = {
@@ -257,9 +233,12 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             default_chance_level_line_kw, chance_level_kw
         )
 
-        self.lines_ = []
-        for fpr, tpr, line_kw in zip(self.fprs, self.tprs, line_kwargs):
-            self.lines_.extend(self.ax_.plot(fpr, tpr, **line_kw))
+        self.line_ = []
+        for fpr, tpr, line_kw in zip(self.fpr_, self.tpr_, line_kwargs):
+            self.line_.extend(self.ax_.plot(fpr, tpr, **line_kw))
+        # Return single artist if only one curve is plotted
+        if len(self.line_) == 1:
+            self.line_ = self.line_[0]
 
         info_pos_label = (
             f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
@@ -290,17 +269,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             self.ax_.legend(loc="lower right")
 
         return self
-
-    # TODO(1.9): Remove
-    # Is it worth adding a global ignore for mypy error?
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `line_` is deprecated in 1.7 and will be removed in "
-        "1.9. Use `lines_` instead."
-    )
-    @property
-    def line_(self):
-        return self.lines_[0]
 
     @classmethod
     def from_estimator(
@@ -477,7 +445,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             error will be raised.
 
         name : str, default=None
-            Name of ROC curve for labeling. If `None`, name will be set to
+            Name of ROC curve for legend labeling. If `None`, name will be set to
             `"Classifier"`.
 
         ax : matplotlib axes, default=None
@@ -546,17 +514,17 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         roc_auc = auc(fpr, tpr)
 
         viz = cls(
-            fprs=[fpr],
-            tprs=[tpr],
-            roc_aucs=[roc_auc],
-            names=[name],
+            fpr=fpr,
+            tpr=tpr,
+            roc_auc=roc_auc,
+            name=name,
             pos_label=pos_label_validated,
         )
 
         return viz.plot(
             ax=ax,
             # Should we provide `name` to both `cls` and `plot` or just `cls`?
-            names=[name],
+            name=name,
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
             despine=despine,
@@ -720,10 +688,10 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             auc_all.append(roc_auc)
 
         viz = cls(
-            fprs=fpr_all,
-            tprs=tpr_all,
-            names=fold_names_,
-            roc_aucs=auc_all,
+            fpr=fpr_all,
+            tpr=tpr_all,
+            name=fold_names_,
+            roc_auc=auc_all,
             pos_label=pos_label,
         )
         return viz.plot(

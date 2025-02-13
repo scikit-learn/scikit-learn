@@ -26,11 +26,12 @@ class _BinaryClassifierCurveDisplayMixin:
         if ax is None:
             _, ax = plt.subplots()
 
-        # write better comment
+        # We are changing from `estimator_name` to `name`, Display objects will
+        # have one or the other. Try old attr name: `estimator_name` first.
         if name is None:
             name = getattr(self, "estimator_name", None)
         if name is None:
-            name = getattr(self, "names", None)
+            name = getattr(self, "name", None)
         return ax, ax.figure, name
 
     @classmethod
@@ -281,8 +282,8 @@ def _check_param_lengths(required, optional, class_name):
         )
         raise ValueError(
             f"{required_formatted}, and optional parameters {optional_formatted} "
-            f"from `{class_name}` initialization, should all be lists of the same "
-            f"length. Got: {lengths_formatted}"
+            f"from `{class_name}` initialization (or `plot`) should all be lists of "
+            f"the same length. Got: {lengths_formatted}"
         )
 
 
