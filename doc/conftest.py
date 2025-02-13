@@ -1,5 +1,4 @@
 import os
-import warnings
 from os import environ
 from os.path import exists, join
 
@@ -79,22 +78,8 @@ def setup_grid_search():
 def setup_preprocessing():
     try:
         import pandas  # noqa
-
-        if parse_version(pandas.__version__) < parse_version("1.1.0"):
-            raise SkipTest("Skipping preprocessing.rst, pandas version < 1.1.0")
     except ImportError:
         raise SkipTest("Skipping preprocessing.rst, pandas not installed")
-
-
-def setup_unsupervised_learning():
-    try:
-        import skimage  # noqa
-    except ImportError:
-        raise SkipTest("Skipping unsupervised_learning.rst, scikit-image not installed")
-    # ignore deprecation warnings from scipy.misc.face
-    warnings.filterwarnings(
-        "ignore", "The binary mode of fromstring", DeprecationWarning
-    )
 
 
 def skip_if_matplotlib_not_installed(fname):
@@ -136,8 +121,6 @@ def pytest_runtest_setup(item):
         setup_grid_search()
     elif fname.endswith("modules/preprocessing.rst"):
         setup_preprocessing()
-    elif fname.endswith("statistical_inference/unsupervised_learning.rst"):
-        setup_unsupervised_learning()
 
     rst_files_requiring_matplotlib = [
         "modules/partial_dependence.rst",

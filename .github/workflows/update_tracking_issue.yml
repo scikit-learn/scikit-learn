@@ -11,6 +11,9 @@
 # Where JOB_NAME is contains the status of the job you are interested in
 
 name: "Update tracking issue"
+permissions:
+  contents: read
+
 on:
   workflow_call:
     inputs:
