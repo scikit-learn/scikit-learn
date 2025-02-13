@@ -17,7 +17,6 @@ to diagnose issues with model performance.
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_inspection_plot_causal_interpretation.py`
 * :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
 
 .. toctree::
