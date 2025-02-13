@@ -403,7 +403,7 @@ Leave One Out (LOO)
 :class:`LeaveOneOut` (or LOO) is a simple cross-validation. Each learning
 set is created by taking all the samples except one, the test set being
 the sample left out. Thus, for :math:`n` samples, we have :math:`n` different
-training sets and :math:`n` different tests set. This cross-validation
+training sets and :math:`n` different test sets. This cross-validation
 procedure does not waste much data as only one sample is removed from the
 training set::
 
@@ -450,7 +450,7 @@ fold cross validation should be preferred to LOO.
     <https://www.ijcai.org/Proceedings/95-2/Papers/016.pdf>`_, Intl. Jnt. Conf. AI
   * R. Bharat Rao, G. Fung, R. Rosales, `On the Dangers of Cross-Validation. An Experimental Evaluation
     <https://people.csail.mit.edu/romer/papers/CrossVal_SDM08.pdf>`_, SIAM 2008;
-  * G. James, D. Witten, T. Hastie, R Tibshirani, `An Introduction to
+  * G. James, D. Witten, T. Hastie, R. Tibshirani, `An Introduction to
     Statistical Learning <https://www.statlearning.com>`_, Springer 2013.
 
 .. _leave_p_out:
@@ -523,12 +523,33 @@ the proportion of samples on each side of the train / test split.
 Cross-validation iterators with stratification based on class labels
 --------------------------------------------------------------------
 
-Some classification problems can exhibit a large imbalance in the distribution
-of the target classes: for instance there could be several times more negative
-samples than positive samples. In such cases it is recommended to use
-stratified sampling as implemented in :class:`StratifiedKFold` and
-:class:`StratifiedShuffleSplit` to ensure that relative class frequencies is
-approximately preserved in each train and validation fold.
+Some classification tasks can naturally exhibit rare classes: for instance,
+there could be orders of magnitude more negative observations than positive
+observations (e.g. medical screening, fraud detection, etc). As a result,
+cross-validation splitting can generate train or validation folds without any
+occurence of a particular class. This typically leads to undefined
+classification metrics (e.g. ROC AUC), exceptions raised when attempting to
+call :term:`fit` or missing columns in the output of the `predict_proba` or
+`decision_function` methods of multiclass classifiers trained on different
+folds.
+
+To mitigate such problems, splitters such as :class:`StratifiedKFold` and
+:class:`StratifiedShuffleSplit` implement stratified sampling to ensure that
+relative class frequencies are approximately preserved in each fold.
+
+.. note::
+
+  Stratified sampling was introduced in scikit-learn to workaround the
+  aforementioned engineering problems rather than solve a statistical one.
+
+  Stratification makes cross-validation folds more homogeneous, and as a result
+  hides some of the variability inherent to fitting models with a limited
+  number of observations.
+
+  As a result, stratification can artificially shrink the spread of the metric
+  measured across cross-validation iterations: the inter-fold variability does
+  no longer reflect the uncertainty in the performance of classifiers in the
+  presence of rare classes.
 
 .. _stratified_k_fold:
 
@@ -562,7 +583,7 @@ two unbalanced classes.  We show the number of samples in each class and compare
   train -  [34]   |   test -  [11  5]
 
 We can see that :class:`StratifiedKFold` preserves the class ratios
-(approximately 1 / 10) in both train and test dataset.
+(approximately 1 / 10) in both train and test datasets.
 
 Here is a visualization of the cross-validation behavior.
 
@@ -580,7 +601,7 @@ Stratified Shuffle Split
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 :class:`StratifiedShuffleSplit` is a variation of *ShuffleSplit*, which returns
-stratified splits, *i.e* which creates splits by preserving the same
+stratified splits, *i.e.* which creates splits by preserving the same
 percentage for each target class as in the complete set.
 
 Here is a visualization of the cross-validation behavior.
@@ -668,8 +689,8 @@ Similar to :class:`KFold`, the test sets from :class:`GroupKFold` will form a
 complete partition of all the data.
 
 While :class:`GroupKFold` attempts to place the same number of samples in each
-fold when ``shuffle=False``, when ``shuffle=True`` it attempts to place equal
-number of distinct groups in each fold (but doesn not account for group sizes).
+fold when ``shuffle=False``, when ``shuffle=True`` it attempts to place an equal
+number of distinct groups in each fold (but does not account for group sizes).
 
 .. _stratified_group_k_fold:
 
@@ -763,7 +784,7 @@ for cross-validation against time-based splits.
 Leave P Groups Out
 ^^^^^^^^^^^^^^^^^^
 
-:class:`LeavePGroupsOut` is similar as :class:`LeaveOneGroupOut`, but removes
+:class:`LeavePGroupsOut` is similar to :class:`LeaveOneGroupOut`, but removes
 samples related to :math:`P` groups for each training/test set. All possible
 combinations of :math:`P` groups are left out, meaning test sets will overlap
 for :math:`P>1`.
@@ -881,7 +902,8 @@ Also, it adds all surplus data to the first training partition, which
 is always used to train the model.
 
 This class can be used to cross-validate time series data samples
-that are observed at fixed time intervals.
+that are observed at fixed time intervals. Indeed, the folds must
+represent the same duration, in order to have comparable metrics accross folds.
 
 Example of 3-split time series cross-validation on a dataset with 6 samples::
 

@@ -125,14 +125,14 @@ hyperparameters or in comparing to other models like
     Scoring Rules, Prediction, and Estimation <10.1198/016214506000001437>`
     In: Journal of the American Statistical Association 102 (2007),
     pp. 359– 378.
-    `link to pdf <www.stat.washington.edu/people/raftery/Research/PDF/Gneiting2007jasa.pdf>`_
+    `link to pdf <https://sites.stat.washington.edu/raftery/Research/PDF/Gneiting2007jasa.pdf>`_
 
 .. [Gneiting2009] T. Gneiting. :arxiv:`Making and Evaluating Point Forecasts
     <0912.0902>`
     Journal of the American Statistical Association 106 (2009): 746 - 762.
 
 .. [Gneiting2014] T. Gneiting and M. Katzfuss. :doi:`Probabilistic Forecasting
-    <10.1146/annurev-st atistics-062713-085831>`. In: Annual Review of Statistics and Its Application 1.1 (2014), pp. 125–151.
+    <10.1146/annurev-statistics-062713-085831>`. In: Annual Review of Statistics and Its Application 1.1 (2014), pp. 125–151.
 
 .. [Fissler2022] T. Fissler, C. Lorentzen and M. Mayer. :arxiv:`Model
     Comparison and Calibration Assessment: User Guide for Consistent Scoring
@@ -377,7 +377,7 @@ You can create your own custom scorer object using
       >>> import numpy as np
       >>> def my_custom_loss_func(y_true, y_pred):
       ...     diff = np.abs(y_true - y_pred).max()
-      ...     return np.log1p(diff)
+      ...     return float(np.log1p(diff))
       ...
       >>> # score will negate the return value of my_custom_loss_func,
       >>> # which will be np.log(2), 0.693, given the values for X
@@ -389,9 +389,9 @@ You can create your own custom scorer object using
       >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
       >>> clf = clf.fit(X, y)
       >>> my_custom_loss_func(y, clf.predict(X))
-      np.float64(0.69...)
+      0.69...
       >>> score(clf, X, y)
-      np.float64(-0.69...)
+      -0.69...
 
 .. dropdown:: Custom scorer objects from scratch
 
@@ -673,10 +673,10 @@ where :math:`k` is the number of guesses allowed and :math:`1(x)` is the
   ...                     [0.2, 0.4, 0.3],
   ...                     [0.7, 0.2, 0.1]])
   >>> top_k_accuracy_score(y_true, y_score, k=2)
-  np.float64(0.75)
+  0.75
   >>> # Not normalizing gives the number of "correctly" classified samples
   >>> top_k_accuracy_score(y_true, y_score, k=2, normalize=False)
-  np.int64(3)
+  3.0
 
 .. _balanced_accuracy_score:
 
@@ -709,7 +709,7 @@ In contrast, if the conventional accuracy is above chance only because the
 classifier takes advantage of an imbalanced test set, then the balanced
 accuracy, as appropriate, will drop to :math:`\frac{1}{n\_classes}`.
 
-The score ranges from 0 to 1, or when ``adjusted=True`` is used, it rescaled to
+The score ranges from 0 to 1, or when ``adjusted=True`` is used, it is rescaled to
 the range :math:`\frac{1}{1 - n\_classes}` to 1, inclusive, with
 performance at random scoring 0.
 
@@ -786,7 +786,7 @@ and not for more than two annotators.
   >>> labeling1 = [2, 0, 2, 2, 0, 1]
   >>> labeling2 = [0, 0, 2, 2, 0, 2]
   >>> cohen_kappa_score(labeling1, labeling2)
-  np.float64(0.4285714285714286)
+  0.4285714285714286
 
 .. _confusion_matrix:
 
@@ -837,9 +837,9 @@ false negatives and true positives as follows::
 
   >>> y_true = [0, 0, 0, 1, 1, 1, 1, 1]
   >>> y_pred = [0, 1, 0, 1, 0, 1, 0, 1]
-  >>> tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+  >>> tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel().tolist()
   >>> tn, fp, fn, tp
-  (np.int64(2), np.int64(1), np.int64(2), np.int64(3))
+  (2, 1, 2, 3)
 
 .. rubric:: Examples
 
@@ -1115,7 +1115,7 @@ Here are some small examples in binary classification::
   >>> threshold
   array([0.1 , 0.35, 0.4 , 0.8 ])
   >>> average_precision_score(y_true, y_scores)
-  np.float64(0.83...)
+  0.83...
 
 
 
@@ -1234,19 +1234,19 @@ In the binary case::
   >>> y_pred = np.array([[1, 1, 1],
   ...                    [1, 0, 0]])
   >>> jaccard_score(y_true[0], y_pred[0])
-  np.float64(0.6666...)
+  0.6666...
 
 In the 2D comparison case (e.g. image similarity):
 
   >>> jaccard_score(y_true, y_pred, average="micro")
-  np.float64(0.6)
+  0.6
 
 In the multilabel case with binary label indicators::
 
   >>> jaccard_score(y_true, y_pred, average='samples')
-  np.float64(0.5833...)
+  0.5833...
   >>> jaccard_score(y_true, y_pred, average='macro')
-  np.float64(0.6666...)
+  0.6666...
   >>> jaccard_score(y_true, y_pred, average=None)
   array([0.5, 0.5, 1. ])
 
@@ -1258,9 +1258,9 @@ multilabel problem::
   >>> jaccard_score(y_true, y_pred, average=None)
   array([1. , 0. , 0.33...])
   >>> jaccard_score(y_true, y_pred, average='macro')
-  np.float64(0.44...)
+  0.44...
   >>> jaccard_score(y_true, y_pred, average='micro')
-  np.float64(0.33...)
+  0.33...
 
 .. _hinge_loss:
 
@@ -1315,7 +1315,7 @@ with a svm classifier in a binary class problem::
   >>> pred_decision
   array([-2.18...,  2.36...,  0.09...])
   >>> hinge_loss([-1, 1, 1], pred_decision)
-  np.float64(0.3...)
+  0.3...
 
 Here is an example demonstrating the use of the :func:`hinge_loss` function
 with a svm classifier in a multiclass problem::
@@ -1329,7 +1329,7 @@ with a svm classifier in a multiclass problem::
   >>> pred_decision = est.decision_function([[-1], [2], [3]])
   >>> y_true = [0, 2, 3]
   >>> hinge_loss(y_true, pred_decision, labels=labels)
-  np.float64(0.56...)
+  0.56...
 
 .. _log_loss:
 
@@ -1434,7 +1434,7 @@ Then the multiclass MCC is defined as:
 
 When there are more than two labels, the value of the MCC will no longer range
 between -1 and +1. Instead the minimum value will be somewhere between -1 and 0
-depending on the number and distribution of ground true labels. The maximum
+depending on the number and distribution of ground truth labels. The maximum
 value is always +1.
 For additional information, see [WikipediaMCC2021]_.
 
@@ -1445,7 +1445,7 @@ function:
     >>> y_true = [+1, +1, +1, -1]
     >>> y_pred = [+1, -1, +1, +1]
     >>> matthews_corrcoef(y_true, y_pred)
-    np.float64(-0.33...)
+    -0.33...
 
 .. rubric:: References
 
@@ -1640,12 +1640,12 @@ We can use the probability estimates corresponding to `clf.classes_[1]`.
 
   >>> y_score = clf.predict_proba(X)[:, 1]
   >>> roc_auc_score(y, y_score)
-  np.float64(0.99...)
+  0.99...
 
 Otherwise, we can use the non-thresholded decision values
 
   >>> roc_auc_score(y, clf.decision_function(X))
-  np.float64(0.99...)
+  0.99...
 
 .. _roc_auc_multiclass:
 
@@ -1860,7 +1860,7 @@ same classification task:
     `The DET Curve in Assessment of Detection Task Performance
     <https://ccc.inaoep.mx/~villasen/bib/martin97det.pdf>`_, NIST 1997.
 
-.. [Navratil2007] J. Navractil and D. Klusacek,
+.. [Navratil2007] J. Navratil and D. Klusacek,
     `"On Linear DETs" <https://ieeexplore.ieee.org/document/4218079>`_,
     2007 IEEE International Conference on Acoustics,
     Speech and Signal Processing - ICASSP '07, Honolulu,
@@ -1951,13 +1951,13 @@ Here is a small example of usage of this function::
     >>> y_prob = np.array([0.1, 0.9, 0.8, 0.4])
     >>> y_pred = np.array([0, 1, 1, 0])
     >>> brier_score_loss(y_true, y_prob)
-    np.float64(0.055)
+    0.055
     >>> brier_score_loss(y_true, 1 - y_prob, pos_label=0)
-    np.float64(0.055)
+    0.055
     >>> brier_score_loss(y_true_categorical, y_prob, pos_label="ham")
-    np.float64(0.055)
+    0.055
     >>> brier_score_loss(y_true, y_prob > 0.5)
-    np.float64(0.0)
+    0.0
 
 The Brier score can be used to assess how well a classifier is calibrated.
 However, a lower Brier score loss does not always mean a better calibration.
@@ -1992,7 +1992,7 @@ the same does a lower Brier score loss always mean better calibration"
 
 .. [Flach2008] Flach, Peter, and Edson Matsubara. `"On classification, ranking,
   and probability estimation." <https://drops.dagstuhl.de/opus/volltexte/2008/1382/>`_
-  Dagstuhl Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum fr Informatik (2008).
+  Dagstuhl Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum für Informatik (2008).
 
 .. _class_likelihood_ratios:
 
@@ -2207,7 +2207,7 @@ The :func:`coverage_error` function computes the average number of labels that
 have to be included in the final prediction such that all true labels
 are predicted. This is useful if you want to know how many top-scored-labels
 you have to predict in average without missing any true one. The best value
-of this metrics is thus the average number of true labels.
+of this metric is thus the average number of true labels.
 
 .. note::
 
@@ -2236,7 +2236,7 @@ Here is a small example of usage of this function::
     >>> y_true = np.array([[1, 0, 0], [0, 0, 1]])
     >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
     >>> coverage_error(y_true, y_score)
-    np.float64(2.5)
+    2.5
 
 .. _label_ranking_average_precision:
 
@@ -2283,7 +2283,7 @@ Here is a small example of usage of this function::
     >>> y_true = np.array([[1, 0, 0], [0, 0, 1]])
     >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
     >>> label_ranking_average_precision_score(y_true, y_score)
-    np.float64(0.416...)
+    0.416...
 
 .. _label_ranking_loss:
 
@@ -2318,11 +2318,11 @@ Here is a small example of usage of this function::
     >>> y_true = np.array([[1, 0, 0], [0, 0, 1]])
     >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
     >>> label_ranking_loss(y_true, y_score)
-    np.float64(0.75...)
+    0.75...
     >>> # With the following prediction, we have perfect and minimal loss
     >>> y_score = np.array([[1.0, 0.1, 0.2], [0.1, 0.2, 0.9]])
     >>> label_ranking_loss(y_true, y_score)
-    np.float64(0.0)
+    0.0
 
 
 .. dropdown:: References
@@ -2579,7 +2579,7 @@ function::
   for an example of mean squared error usage to evaluate gradient boosting regression.
 
 Taking the square root of the MSE, called the root mean squared error (RMSE), is another
-common metric that provides a measure in the same units as the target variable. RSME is
+common metric that provides a measure in the same units as the target variable. RMSE is
 available through the :func:`root_mean_squared_error` function.
 
 .. _mean_squared_log_error:
@@ -2700,7 +2700,7 @@ function::
   >>> y_true = [3, -0.5, 2, 7]
   >>> y_pred = [2.5, 0.0, 2, 8]
   >>> median_absolute_error(y_true, y_pred)
-  np.float64(0.5)
+  0.5
 
 
 
@@ -2732,7 +2732,7 @@ Here is a small example of usage of the :func:`max_error` function::
   >>> y_true = [3, 2, 7, 1]
   >>> y_pred = [9, 2, 7, 1]
   >>> max_error(y_true, y_pred)
-  np.int64(6)
+  6.0
 
 The :func:`max_error` does not support multioutput.
 
@@ -3011,15 +3011,15 @@ of 0.0.
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> d2_absolute_error_score(y_true, y_pred)
-    np.float64(0.764...)
+    0.764...
     >>> y_true = [1, 2, 3]
     >>> y_pred = [1, 2, 3]
     >>> d2_absolute_error_score(y_true, y_pred)
-    np.float64(1.0)
+    1.0
     >>> y_true = [1, 2, 3]
     >>> y_pred = [2, 2, 2]
     >>> d2_absolute_error_score(y_true, y_pred)
-    np.float64(0.0)
+    0.0
 
 
 .. _visualization_regression_evaluation:

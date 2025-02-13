@@ -239,7 +239,9 @@ column_trans = ColumnTransformer(
     [
         (
             "binned_numeric",
-            KBinsDiscretizer(n_bins=10, random_state=0),
+            KBinsDiscretizer(
+                n_bins=10, quantile_method="averaged_inverted_cdf", random_state=0
+            ),
             ["VehAge", "DrivAge"],
         ),
         (
@@ -689,8 +691,7 @@ ax.plot([0, 1], [0, 1], linestyle="--", color="black", label="Random baseline")
 ax.set(
     title="Lorenz Curves",
     xlabel=(
-        "Cumulative proportion of exposure\n"
-        "(ordered by model from safest to riskiest)"
+        "Cumulative proportion of exposure\n(ordered by model from safest to riskiest)"
     ),
     ylabel="Cumulative proportion of claim amounts",
 )

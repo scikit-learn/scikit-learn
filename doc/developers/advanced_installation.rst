@@ -59,7 +59,7 @@ feature, code or documentation improvement).
    instead.
 
 #. Install a recent version of Python (3.9 or later at the time of writing) for
-   instance using Condaforge_. Conda-forge provides a conda-based distribution of
+   instance using conda-forge_. Conda-forge provides a conda-based distribution of
    Python and the most popular scientific libraries.
 
    If you installed Python with conda, we recommend to create a dedicated
@@ -79,7 +79,7 @@ feature, code or documentation improvement).
 
 #. **Alternative to conda:** You can use alternative installations of Python
    provided they are recent enough (3.9 or higher at the time of writing).
-   Here is an example on how to create a build environment for a Linux system's
+   Here is an example of how to create a build environment for a Linux system's
    Python. Build dependencies are installed with `pip` in a dedicated virtualenv_
    to avoid disrupting other Python programs installed on the system:
 
@@ -117,7 +117,7 @@ feature, code or documentation improvement).
     to avoid surprises when you import `sklearn`. `meson-python` implements
     editable installs by rebuilding `sklearn` when executing `import sklearn`.
     With the recommended setting you will see a message when this happens,
-    rather than potentially waiting without feed-back and wondering
+    rather than potentially waiting without feedback and wondering
     what is taking so long. Bonus: this means you only have to run the `pip
     install` command once, `sklearn` will automatically be rebuilt when
     importing `sklearn`.
@@ -482,4 +482,4 @@ the base system and these steps will not be necessary.
 .. _Homebrew: https://brew.sh
 .. _virtualenv: https://docs.python.org/3/tutorial/venv.html
 .. _conda environment: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
-.. _Condaforge: https://conda-forge.org/download/
+.. _conda-forge: https://conda-forge.org/download/

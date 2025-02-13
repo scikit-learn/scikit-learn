@@ -1097,11 +1097,7 @@ def test_check_dataframe_mixed_float_dtypes(dtype, bool_dtype):
     # this situation
     # https://github.com/scikit-learn/scikit-learn/issues/15787
 
-    if bool_dtype == "boolean":
-        # boolean extension arrays was introduced in 1.0
-        pd = importorskip("pandas", minversion="1.0")
-    else:
-        pd = importorskip("pandas")
+    pd = importorskip("pandas")
 
     df = pd.DataFrame(
         {
@@ -1141,7 +1137,7 @@ def test_check_dataframe_with_only_bool():
 
 def test_check_dataframe_with_only_boolean():
     """Check that dataframe with boolean return a float array with dtype=None"""
-    pd = importorskip("pandas", minversion="1.0")
+    pd = importorskip("pandas")
     df = pd.DataFrame({"bool": pd.Series([True, False, True], dtype="boolean")})
 
     array = check_array(df, dtype=None)
