@@ -11,7 +11,7 @@ expose two methods for creating plots: `from_estimator` and
 `from_predictions`.
 
 The `from_estimator` method generates a `Display` object from a fitted estimator and input data (X, y).
-And the `from_predictions` method creates a `Display` object when given the true and predicted values.
+The `from_predictions` method creates a `Display` object when given the true and predicted values.
 This is useful when predictions should only be computed once.
 
 The `Display` object stores the computed values required for plotting with Matplotlib.
