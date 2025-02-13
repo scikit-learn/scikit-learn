@@ -127,7 +127,7 @@ def _brute_mst(mutual_reachability, min_samples):
     if n_components > 1:
         raise ValueError(
             f"Sparse mutual reachability matrix has {n_components} connected"
-            " components. HDBSCAN cannot be perfomed on a disconnected graph. Ensure"
+            " components. HDBSCAN cannot be performed on a disconnected graph. Ensure"
             " that the sparse distance matrix has only one connected component."
         )
 

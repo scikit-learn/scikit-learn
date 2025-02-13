@@ -125,6 +125,7 @@ build_metadata_list = [
             "pyarrow",
             "array-api-compat",
             "array-api-strict",
+            "scipy-doctest",
         ],
         "package_constraints": {
             "blas": "[build=mkl]",
@@ -223,6 +224,8 @@ build_metadata_list = [
             + ["lightgbm", "scikit-image"]
             # Test array API on CPU without PyTorch
             + ["array-api-compat", "array-api-strict"]
+            # doctests dependencies
+            + ["scipy-doctest"]
         ),
     },
     {
@@ -392,10 +395,10 @@ build_metadata_list = [
         },
     },
     {
-        "name": "pymin_conda_forge",
+        "name": "pymin_conda_forge_arm",
         "type": "conda",
-        "tag": "arm",
-        "folder": "build_tools/cirrus",
+        "tag": "main-ci",
+        "folder": "build_tools/github",
         "platform": "linux-aarch64",
         "channels": ["conda-forge"],
         "conda_dependencies": remove_from(
