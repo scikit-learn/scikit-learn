@@ -139,17 +139,20 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
         )
 
     def _mock_urlopen_download_data(url, has_gzip_header):
-        # TODO `_mock_urlopen_shared` expect that the `url` does not contain the
-        # filename and only the path to the ARFF file.
-        # However, the `url` is nowadays containing the filename as well and we need to
-        # modify it for `_mock_urlopen_shared` to work.
-        url_arff_data = urlparse(url)
-        # remove the filename of the ARFF file
-        path = url_arff_data.path.rsplit("/", 1)[0]
-        url_arff_data = url_arff_data._replace(path=path).geturl()
+        # For simplicity the mock filenames don't contain the filename, i.e.
+        # the last part of the data description url after the last /.
+        # For example for id_1, data description download url is:
+        # gunzip -c sklearn/datasets/tests/data/openml/id_1/api-v1-jd-1.json.gz | grep '"url" # noqa: E501
+        # "https:\/\/www.openml.org\/data\/v1\/download\/1\/anneal.arff"
+        # but the mock filename does not contain anneal.arff and is
+        # sklearn/datasets/tests/data/openml/id_1/data-v1-dl-1.arff.gz
+        parsed_url = urlparse(url)
+        # We only keep the part of the url before the last /
+        path_without_filename = parsed_url.path.rsplit("/", 1)[0]
+        url_without_filename = parsed_url._replace(path=path_without_filename).geturl()
 
         return _mock_urlopen_shared(
-            url=url_arff_data,
+            url=url_without_filename,
             has_gzip_header=has_gzip_header,
             expected_prefix=url_prefix_download_data,
             suffix=".arff",
