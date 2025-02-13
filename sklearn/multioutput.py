@@ -542,7 +542,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
             The target values.
 
             .. deprecated:: 1.9
-               `Y` is deprecated in 1.9 and will be removed in 2.1. Use `y` instead.
+               `Y` is deprecated in 1.7 and will be removed in 1.9. Use `y` instead.
 
         **fit_params : dict of string -> object
             Parameters passed to the ``estimator.fit`` method of each step.
