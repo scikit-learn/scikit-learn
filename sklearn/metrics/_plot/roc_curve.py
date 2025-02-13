@@ -5,6 +5,7 @@ from ...utils import _safe_indexing
 from ...utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
     _check_param_lengths,
+    _convert_to_list_leaving_none,
     _despine,
     _process_fold_names_line_kwargs,
     _validate_style_kwargs,
@@ -111,10 +112,10 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         name=None,
         pos_label=None,
     ):
-        self.fpr_ = fpr if isinstance(fpr, list) else [fpr]
-        self.tpr_ = tpr if isinstance(tpr, list) else [tpr]
-        self.roc_auc_ = roc_auc if isinstance(roc_auc, list) else [roc_auc]
-        self.name_ = name if isinstance(name, list) else [name]
+        self.fpr_ = _convert_to_list_leaving_none(fpr)
+        self.tpr_ = _convert_to_list_leaving_none(tpr)
+        self.roc_auc_ = _convert_to_list_leaving_none(roc_auc)
+        self.name_ = _convert_to_list_leaving_none(name)
         self.pos_label = pos_label
 
     def plot(
@@ -185,6 +186,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         # TODO: Not sure about this, as ideally we would check params are correct
         # first??
         self.ax_, self.figure_, name_ = self._validate_plot_params(ax=ax, name=name)
+        name_ = _convert_to_list_leaving_none(name_)
         _check_param_lengths(
             {"self.fpr": self.fpr_, "self.tpr": self.tpr_},
             {"self.roc_auc": self.roc_auc_, "`name` from `plot` (or self.name)": name_},

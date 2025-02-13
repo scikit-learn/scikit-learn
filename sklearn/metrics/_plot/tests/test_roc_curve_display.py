@@ -99,24 +99,24 @@ def test_roc_curve_display_plotting(
         pos_label=pos_label,
     )
 
-    assert_allclose(display.roc_aucs[0], auc(fpr, tpr))
-    assert_allclose(display.fprs[0], fpr)
-    assert_allclose(display.tprs[0], tpr)
+    assert_allclose(display.roc_auc_[0], auc(fpr, tpr))
+    assert_allclose(display.fpr_[0], fpr)
+    assert_allclose(display.tpr_[0], tpr)
 
-    assert display.names[0] == default_name
+    assert display.name_[0] == default_name
 
     import matplotlib as mpl  # noqa
 
-    assert isinstance(display.lines_[0], mpl.lines.Line2D)
-    assert display.lines_[0].get_alpha() == 0.8
+    assert isinstance(display.line_, mpl.lines.Line2D)
+    assert display.line_.get_alpha() == 0.8
     assert isinstance(display.ax_, mpl.axes.Axes)
     assert isinstance(display.figure_, mpl.figure.Figure)
     assert display.ax_.get_adjustable() == "box"
     assert display.ax_.get_aspect() in ("equal", 1.0)
     assert display.ax_.get_xlim() == display.ax_.get_ylim() == (-0.01, 1.01)
 
-    expected_label = f"{default_name} (AUC = {display.roc_aucs[0]:.2f})"
-    assert display.lines_[0].get_label() == expected_label
+    expected_label = f"{default_name} (AUC = {display.roc_auc_[0]:.2f})"
+    assert display.line_.get_label() == expected_label
 
     expected_pos_label = 1 if pos_label is None else pos_label
     expected_ylabel = f"True Positive Rate (Positive label: {expected_pos_label})"
@@ -180,8 +180,8 @@ def test_roc_curve_chance_level_line(
 
     import matplotlib as mpl  # noqa
 
-    assert isinstance(display.lines_[0], mpl.lines.Line2D)
-    assert display.lines_[0].get_alpha() == 0.8
+    assert isinstance(display.line_, mpl.lines.Line2D)
+    assert display.line_.get_alpha() == 0.8
     assert isinstance(display.ax_, mpl.axes.Axes)
     assert isinstance(display.figure_, mpl.figure.Figure)
 
@@ -253,12 +253,12 @@ def test_roc_curve_display_complex_pipeline(pyplot, data_binary, clf, constructo
         display = RocCurveDisplay.from_predictions(y, y)
         name = "Classifier"
 
-    assert name in display.lines_[0].get_label()
-    assert display.names[0] == name
+    assert name in display.line_.get_label()
+    assert display.name_[0] == name
 
 
 @pytest.mark.parametrize(
-    "roc_aucs, names, expected_labels",
+    "roc_auc, name, expected_labels",
     [
         ([0.9, 0.8], None, ["AUC = 0.90", "AUC = 0.80"]),
         ([0.8, 0.7], [None, None], ["AUC = 0.80", "AUC = 0.70"]),
@@ -270,13 +270,13 @@ def test_roc_curve_display_complex_pipeline(pyplot, data_binary, clf, constructo
         ),
     ],
 )
-def test_roc_curve_display_default_labels(pyplot, roc_aucs, names, expected_labels):
+def test_roc_curve_display_default_labels(pyplot, roc_auc, name, expected_labels):
     """Check the default labels used in the display."""
-    fprs = [np.array([0, 0.5, 1]), np.array([0, 0.3, 1])]
-    tprs = [np.array([0, 0.5, 1]), np.array([0, 0.3, 1])]
-    disp = RocCurveDisplay(fprs=fprs, tprs=tprs, roc_aucs=roc_aucs, names=names).plot()
+    fpr = [np.array([0, 0.5, 1]), np.array([0, 0.3, 1])]
+    tpr = [np.array([0, 0.5, 1]), np.array([0, 0.3, 1])]
+    disp = RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc, name=name).plot()
     for idx, expected_label in enumerate(expected_labels):
-        assert disp.lines_[idx].get_label() == expected_label
+        assert disp.line_[idx].get_label() == expected_label
 
 
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
@@ -331,8 +331,8 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
 
     roc_auc_limit = 0.95679
 
-    assert display.roc_aucs[0] == pytest.approx(roc_auc_limit)
-    assert trapezoid(display.tprs[0], display.fprs[0]) == pytest.approx(roc_auc_limit)
+    assert display.roc_auc_[0] == pytest.approx(roc_auc_limit)
+    assert trapezoid(display.tpr_[0], display.fpr_[0]) == pytest.approx(roc_auc_limit)
 
     if constructor_name == "from_estimator":
         display = RocCurveDisplay.from_estimator(
@@ -349,8 +349,8 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
             pos_label="not cancer",
         )
 
-    assert display.roc_aucs[0] == pytest.approx(roc_auc_limit)
-    assert trapezoid(display.tprs[0], display.fprs[0]) == pytest.approx(roc_auc_limit)
+    assert display.roc_auc_[0] == pytest.approx(roc_auc_limit)
+    assert trapezoid(display.tpr_[0], display.fpr_[0]) == pytest.approx(roc_auc_limit)
 
 
 @pytest.mark.parametrize("despine", [True, False])

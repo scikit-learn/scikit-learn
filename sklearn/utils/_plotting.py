@@ -1,6 +1,5 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
-import warnings
 from collections.abc import Mapping
 
 import numpy as np
@@ -31,7 +30,7 @@ class _BinaryClassifierCurveDisplayMixin:
         if name is None:
             name = getattr(self, "estimator_name", None)
         if name is None:
-            name = getattr(self, "name", None)
+            name = getattr(self, "name_", None)
         return ax, ax.figure, name
 
     @classmethod
@@ -57,11 +56,7 @@ class _BinaryClassifierCurveDisplayMixin:
             fold_line_kws = [kwargs]
         else:
             if fold_line_kws is None:
-                # We should not set color to be the same, otherwise legend is
-                # meaningless
-                fold_line_kws = [
-                    {"alpha": 0.5, "color": "tab:blue", "linestyle": "--"}
-                ] * n_curves
+                fold_line_kws = [{"alpha": 0.5, "linestyle": "--"}] * n_curves
             elif isinstance(fold_line_kws, Mapping):
                 fold_line_kws = [fold_line_kws] * n_curves
             elif len(fold_line_kws) != n_curves:
@@ -244,25 +239,13 @@ def _despine(ax):
 
 # TODO(1.9): remove
 # Should this be a parent class method?
-def _deprecate_singular(singular, plural, name):
-    """Deprecate the singular version of Display parameters.
-
-    If only `singular` parameter passed, it will be returned as a list with a warning.
-    """
-    if singular != "deprecated":
-        warnings.warn(
-            f"`{name}` was passed to `{name}s` in a list because `{name}` is "
-            f"deprecated in 1.7 and will be removed in 1.9. Use "
-            f"`{name}s` instead.",
-            FutureWarning,
-        )
-        if plural:
-            raise ValueError(
-                f"Cannot use both `{name}` and `{name}s`. Use only `{name}s` as "
-                f"`{name}` is deprecated."
-            )
-        return [singular]
-    return plural
+def _convert_to_list_leaving_none(param):
+    """Convert parameters to a list, leaving `None` as is."""
+    if param is None:
+        return None
+    if isinstance(param, list):
+        return param
+    return [param]
 
 
 # Should this be a parent class/mixin method?
