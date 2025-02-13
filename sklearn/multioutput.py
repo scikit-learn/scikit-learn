@@ -33,7 +33,6 @@ from .utils._param_validation import (
     StrOptions,
 )
 from .utils._response import _get_response_values
-from .utils._tags import get_tags
 from .utils._user_interface import _print_elapsed_time
 from .utils.metadata_routing import (
     MetadataRouter,
