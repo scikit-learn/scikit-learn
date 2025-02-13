@@ -14,6 +14,7 @@ from ._array_api import _is_numpy_namespace, get_namespace
 from ._param_validation import Interval, validate_params
 from .extmath import _approximate_mode
 from .validation import (
+    _check_sample_weight,
     _is_arraylike_not_scalar,
     _is_pandas_df,
     _is_polars_df_or_series,
@@ -414,10 +415,18 @@ def _get_column_indices_interchange(X_interchange, key, key_dtype):
         "n_samples": [Interval(numbers.Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
         "stratify": ["array-like", "sparse matrix", None],
+        "sample_weight": ["array-like", None],
     },
     prefer_skip_nested_validation=True,
 )
-def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=None):
+def resample(
+    *arrays,
+    replace=True,
+    n_samples=None,
+    random_state=None,
+    stratify=None,
+    sample_weight=None,
+):
     """Resample arrays or sparse matrices in a consistent way.
 
     The default strategy implements one step of the bootstrapping
@@ -431,7 +440,10 @@ def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=
         sparse matrices with consistent first dimension.
 
     replace : bool, default=True
-        Implements resampling with replacement. If False, this will implement
+        Implements resampling with replacement. It must be set to True
+        whenever sampling with non-uniform weights: a few data points with very large
+        weights are expected to be sampled several times with probability to preserve
+        the distribution induced by the weights. If False, this will implement
         (sliced) random permutations.
 
     n_samples : int, default=None
@@ -450,6 +462,13 @@ def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=
             (n_samples, n_outputs), default=None
         If not None, data is split in a stratified fashion, using this as
         the class labels.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Contains weight values to be associated with each sample. Values are
+        normalized to sum to one and interpreted as probability for sampling
+        each data point.
+
+        .. versionadded:: 1.7
 
     Returns
     -------
@@ -521,9 +540,29 @@ def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=
 
     check_consistent_length(*arrays)
 
+    if sample_weight is not None and not replace:
+        raise NotImplementedError(
+            "Resampling with sample_weight is only implemented for replace=True."
+        )
+    if sample_weight is not None and stratify is not None:
+        raise NotImplementedError(
+            "Resampling with sample_weight is only implemented for stratify=None."
+        )
     if stratify is None:
         if replace:
-            indices = random_state.randint(0, n_samples, size=(max_n_samples,))
+            if sample_weight is not None:
+                sample_weight = _check_sample_weight(
+                    sample_weight, first, dtype=np.float64
+                )
+                p = sample_weight / sample_weight.sum()
+            else:
+                p = None
+            indices = random_state.choice(
+                n_samples,
+                size=max_n_samples,
+                p=p,
+                replace=True,
+            )
         else:
             indices = np.arange(n_samples)
             random_state.shuffle(indices)

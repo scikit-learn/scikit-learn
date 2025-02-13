@@ -1,8 +1,46 @@
 import numpy as np
+import pytest
 from numpy.testing import assert_allclose
 from pytest import approx
 
-from sklearn.utils.stats import _weighted_percentile
+from sklearn.utils.fixes import np_version, parse_version
+from sklearn.utils.stats import _averaged_weighted_percentile, _weighted_percentile
+
+
+def test_averaged_weighted_median():
+    y = np.array([0, 1, 2, 3, 4, 5])
+    sw = np.array([1, 1, 1, 1, 1, 1])
+
+    score = _averaged_weighted_percentile(y, sw, 50)
+
+    assert score == np.median(y)
+
+
+# TODO: remove @pytest.mark.skipif when numpy min version >= 1.22.
+@pytest.mark.skipif(
+    condition=np_version < parse_version("1.22"),
+    reason="older numpy do not support the 'method' parameter",
+)
+def test_averaged_weighted_percentile():
+    rng = np.random.RandomState(0)
+    y = rng.randint(20, size=10)
+
+    sw = np.ones(10)
+
+    score = _averaged_weighted_percentile(y, sw, 20)
+
+    assert score == np.percentile(y, 20, method="averaged_inverted_cdf")
+
+
+def test_averaged_and_weighted_percentile():
+    y = np.array([0, 1, 2])
+    sw = np.array([5, 1, 5])
+    q = 50
+
+    score_averaged = _averaged_weighted_percentile(y, sw, q)
+    score = _weighted_percentile(y, sw, q)
+
+    assert score_averaged == score
 
 
 def test_weighted_percentile():
