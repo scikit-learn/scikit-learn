@@ -11,7 +11,7 @@ jobs:
 - job: git_commit
   displayName: Get Git Commit
   pool:
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-24.04
   steps:
     - bash: python build_tools/azure/get_commit_message.py
       name: commit
@@ -27,7 +27,7 @@ jobs:
     )
   displayName: Linting
   pool:
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-24.04
   steps:
     - task: UsePythonVersion@0
       inputs:
@@ -49,7 +49,7 @@ jobs:
 - template: build_tools/azure/posix.yml
   parameters:
     name: Linux_Nightly
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-22.04
     dependsOn: [git_commit, linting]
     condition: |
       and(
@@ -126,7 +126,7 @@ jobs:
 - template: build_tools/azure/posix.yml
   parameters:
     name: Linux_Runs
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-22.04
     dependsOn: [git_commit]
     condition: |
       and(
@@ -232,7 +232,7 @@ jobs:
 - template: build_tools/azure/posix-docker.yml
   parameters:
     name: Linux_Docker
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-24.04
     dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
     # Runs when dependencies succeeded or skipped
     condition: |

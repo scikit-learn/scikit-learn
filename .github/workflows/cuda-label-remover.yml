@@ -16,7 +16,7 @@ jobs:
   label-remover:
     if: contains(github.event.pull_request.labels.*.name, 'CUDA CI')
     name: Remove "CUDA CI" Label
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions-ecosystem/action-remove-labels@v1
         with:
