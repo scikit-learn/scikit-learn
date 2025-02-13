@@ -111,34 +111,10 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         name=None,
         pos_label=None,
     ):
-        self.fpr_ = (
-            fpr
-            if isinstance(fpr, list)
-            else [
-                fpr,
-            ]
-        )
-        self.tpr_ = (
-            tpr
-            if isinstance(tpr, list)
-            else [
-                tpr,
-            ]
-        )
-        self.roc_auc_ = (
-            roc_auc
-            if isinstance(roc_auc, list)
-            else [
-                roc_auc,
-            ]
-        )
-        self.name_ = (
-            name
-            if isinstance(name, list)
-            else [
-                name,
-            ]
-        )
+        self.fpr_ = fpr if isinstance(fpr, list) else [fpr]
+        self.tpr_ = tpr if isinstance(tpr, list) else [tpr]
+        self.roc_auc_ = roc_auc if isinstance(roc_auc, list) else [roc_auc]
+        self.name_ = name if isinstance(name, list) else [name]
         self.pos_label = pos_label
 
     def plot(
