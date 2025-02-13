@@ -556,7 +556,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         """
         if Y is not None:
             warnings.warn(
-                "`Y` was renamed to `y` in 1.9 and will be removed in 2.1",
+                "`Y` was renamed to `y` in 1.7 and will be removed in 1.9",
                 FutureWarning,
             )
             if y is not None:

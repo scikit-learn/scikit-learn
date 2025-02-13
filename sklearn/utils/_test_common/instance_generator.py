@@ -1072,9 +1072,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_estimator_sparse_matrix": (
             "predict_proba returns a list of arrays, test expects array"
         ),
-        "check_classifiers_train": (
-            "predict returns (n_samples, n_outputs) test expects (n_samples,)"
-        ),
         "check_methods_sample_order_invariance": (
             "predict_proba returns a list of arrays, test expects array"
         ),

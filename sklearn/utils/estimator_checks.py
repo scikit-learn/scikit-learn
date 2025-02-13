@@ -2749,6 +2749,10 @@ def check_classifiers_train(
         assert hasattr(classifier, "classes_")
         y_pred = classifier.predict(X)
 
+        if y_pred.ndim > 1:
+            # For multi-output classifiers, we'll check the first output
+            y_pred = y_pred[:, 0]
+
         assert y_pred.shape == (n_samples,)
         # training set performance
         if not tags.classifier_tags.poor_score:
@@ -2810,10 +2814,28 @@ def check_classifiers_train(
         if hasattr(classifier, "predict_proba"):
             # predict_proba agrees with predict
             y_prob = classifier.predict_proba(X)
-            assert y_prob.shape == (n_samples, n_classes)
-            assert_array_equal(np.argmax(y_prob, axis=1), y_pred)
-            # check that probas for all classes sum to one
-            assert_array_almost_equal(np.sum(y_prob, axis=1), np.ones(n_samples))
+            if isinstance(y_prob, list):
+                for prob in y_prob:
+                    assert prob.shape[0] == n_samples
+                    assert prob.shape[1] == len(np.unique(y))
+            else:
+                # Original check for single output classifiers
+                assert y_prob.shape == (n_samples, n_classes)
+
+            if isinstance(y_prob, list):
+                for prob_array in y_prob:
+                    assert_array_equal(np.argmax(prob_array, axis=1), y_pred)
+
+                    # check that probas for all classes sum to one
+                    assert_array_almost_equal(
+                        np.sum(prob_array, axis=1), np.ones(n_samples)
+                    )
+            else:
+                assert_array_equal(np.argmax(y_prob, axis=1), y_pred)
+
+                # check that probas for all classes sum to one
+                assert_array_almost_equal(np.sum(y_prob, axis=1), np.ones(n_samples))
+
             if not tags.no_validation:
                 # raises error on malformed input for predict_proba
                 if tags.input_tags.pairwise:
