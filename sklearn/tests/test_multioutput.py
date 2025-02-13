@@ -867,7 +867,7 @@ def test_multioutput_regressor_has_partial_fit():
 
 
 
-# TODO Remove in 2.1
+# TODO Remove in 1.9
 def test_multioutput_classifier_fit_dependency_warning():
     """Test that using both y and Y raises ValueError and Y alone raises warning."""
     X = [[1, 0], [0, 1], [1, 1]]
