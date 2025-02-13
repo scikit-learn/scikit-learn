@@ -1642,6 +1642,10 @@ computationally expensive.
     ...       .format(multi_layer_regressor.score(X_test, y_test)))
     R2 score: 0.53
 
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_ensemble_plot_stack_predictors.py`
+
 .. rubric:: References
 
 .. [W1992] Wolpert, David H. "Stacked generalization." Neural networks 5.2
