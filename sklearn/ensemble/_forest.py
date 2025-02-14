@@ -1185,11 +1185,11 @@ class RandomForestClassifier(ForestClassifier):
     `bootstrap=True` (default), otherwise the whole dataset is used to build
     each tree.
 
-    This estimator has native support for missing values (NaNs). During training, 
-    the tree grower learns at each split point whether samples with missing values 
-    should go to the left or right child, based on the potential gain. When predicting, 
-    samples with missing values are assigned to the left or right child consequently. 
-    If no missing values were encountered for a given feature during training, then 
+    This estimator has native support for missing values (NaNs). During training,
+    the tree grower learns at each split point whether samples with missing values
+    should go to the left or right child, based on the potential gain. When predicting,
+    samples with missing values are assigned to the left or right child consequently.
+    If no missing values were encountered for a given feature during training, then
     samples with missing values are mapped to whichever child has the most samples.
 
     For a comparison between tree-based ensemble models see the example
@@ -1579,11 +1579,11 @@ class RandomForestRegressor(ForestRegressor):
     `bootstrap=True` (default), otherwise the whole dataset is used to build
     each tree.
 
-    This estimator has native support for missing values (NaNs). During training, 
-    the tree grower learns at each split point whether samples with missing values 
-    should go to the left or right child, based on the potential gain. When predicting, 
-    samples with missing values are assigned to the left or right child consequently. 
-    If no missing values were encountered for a given feature during training, then 
+    This estimator has native support for missing values (NaNs). During training,
+    the tree grower learns at each split point whether samples with missing values
+    should go to the left or right child, based on the potential gain. When predicting,
+    samples with missing values are assigned to the left or right child consequently.
+    If no missing values were encountered for a given feature during training, then
     samples with missing values are mapped to whichever child has the most samples.
 
     For a comparison between tree-based ensemble models see the example
@@ -2316,11 +2316,11 @@ class ExtraTreesRegressor(ForestRegressor):
     of the dataset and uses averaging to improve the predictive accuracy
     and control over-fitting.
 
-    This estimator has native support for missing values (NaNs). During training, 
-    the tree grower learns at each split point whether samples with missing values 
-    should go to the left or right child, based on the potential gain. When predicting, 
-    samples with missing values are assigned to the left or right child consequently. 
-    If no missing values were encountered for a given feature during training, then 
+    This estimator has native support for missing values (NaNs). During training,
+    the tree grower learns at each split point whether samples with missing values
+    should go to the left or right child, based on the potential gain. When predicting,
+    samples with missing values are assigned to the left or right child consequently.
+    If no missing values were encountered for a given feature during training, then
     samples with missing values are mapped to whichever child has the most samples.
 
     Read more in the :ref:`User Guide <forest>`.
