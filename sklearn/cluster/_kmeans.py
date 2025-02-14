@@ -2146,7 +2146,7 @@ class MiniBatchKMeans(_BaseKMeans):
 
         n_effective_samples = np.sum(sample_weight)
         # Rescaling step for sample weights otherwise doesn not pass test_scaled_weights
-        if (n_effective_samples % n_samples) != 0:
+        if (n_effective_samples % n_samples) != 0 and sample_weight.min() < 1:
             n_effective_samples = np.sum(
                 MinMaxScaler().fit_transform(sample_weight.reshape(-1, 1))
             )
