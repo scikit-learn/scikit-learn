@@ -2147,7 +2147,7 @@ class MiniBatchKMeans(_BaseKMeans):
         n_effective_samples = np.sum(sample_weight)
         scaling_factor = 1
         # Rescaling step for sample weights otherwise doesn not pass test_scaled_weights
-        scaling_factor = MinMaxScaler().fit(sample_weight.reshape(-1, 1)).scale_
+        scaling_factor = MinMaxScaler().fit(sample_weight.reshape(-1, 1)).scale_[0]
         n_steps = int((self.max_iter * n_effective_samples * scaling_factor)) // (
             self._batch_size
         )
