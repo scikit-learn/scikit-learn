@@ -340,8 +340,8 @@ def _compute_precision_cholesky(covariances, covariance_type):
                 cov_chol = xp.linalg.cholesky(covariance, upper=False)
             except xp.linalg.LinAlgError:
                 raise ValueError(estimate_precision_error_message)
-            precisions_chol[k] = xp.linalg.solve_triangular(
-                cov_chol, xp.eye(n_features, dtype=dtype), lower=True
+            precisions_chol[k] = xp.linalg.solve(
+                cov_chol, xp.eye(n_features, dtype=dtype)
             ).T
     elif covariance_type == "tied":
         _, n_features = covariances.shape
@@ -438,20 +438,21 @@ def _compute_log_det_cholesky(matrix_chol, covariance_type, n_features):
     log_det_precision_chol : array-like of shape (n_components,)
         The determinant of the precision matrix for each component.
     """
+    xp, _ = get_namespace(matrix_chol)
     if covariance_type == "full":
         n_components, _, _ = matrix_chol.shape
-        log_det_chol = np.sum(
-            np.log(matrix_chol.reshape(n_components, -1)[:, :: n_features + 1]), axis=1
+        log_det_chol = xp.sum(
+            xp.log(matrix_chol.reshape(n_components, -1)[:, :: n_features + 1]), axis=1
         )
 
     elif covariance_type == "tied":
-        log_det_chol = np.sum(np.log(np.diag(matrix_chol)))
+        log_det_chol = xp.sum(xp.log(xp.diagonal(matrix_chol)))
 
     elif covariance_type == "diag":
-        log_det_chol = np.sum(np.log(matrix_chol), axis=1)
+        log_det_chol = xp.sum(xp.log(matrix_chol), axis=1)
 
     else:
-        log_det_chol = n_features * np.log(matrix_chol)
+        log_det_chol = n_features * xp.log(matrix_chol)
 
     return log_det_chol
 
@@ -478,6 +479,7 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
     -------
     log_prob : array, shape (n_samples, n_components)
     """
+    xp, _ = get_namespace(X, means, precisions_chol)
     n_samples, n_features = X.shape
     n_components, _ = means.shape
     # The determinant of the precision matrix from the Cholesky decomposition
@@ -487,35 +489,38 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
     log_det = _compute_log_det_cholesky(precisions_chol, covariance_type, n_features)
 
     if covariance_type == "full":
-        log_prob = np.empty((n_samples, n_components), dtype=X.dtype)
+        log_prob = xp.empty((n_samples, n_components), dtype=X.dtype)
         for k, (mu, prec_chol) in enumerate(zip(means, precisions_chol)):
-            y = np.dot(X, prec_chol) - np.dot(mu, prec_chol)
-            log_prob[:, k] = np.sum(np.square(y), axis=1)
+            y = (X @ prec_chol) - (mu @ prec_chol)
+            log_prob[:, k] = xp.sum(xp.square(y), axis=1)
 
     elif covariance_type == "tied":
-        log_prob = np.empty((n_samples, n_components), dtype=X.dtype)
+        log_prob = xp.empty((n_samples, n_components), dtype=X.dtype)
         for k, mu in enumerate(means):
-            y = np.dot(X, precisions_chol) - np.dot(mu, precisions_chol)
-            log_prob[:, k] = np.sum(np.square(y), axis=1)
+            y = (X @ precisions_chol) - (mu @ precisions_chol)
+            log_prob[:, k] = xp.sum(xp.square(y), axis=1)
 
     elif covariance_type == "diag":
         precisions = precisions_chol**2
         log_prob = (
-            np.sum((means**2 * precisions), 1)
-            - 2.0 * np.dot(X, (means * precisions).T)
-            + np.dot(X**2, precisions.T)
+            xp.sum((means**2 * precisions), 1)
+            - 2.0 * (X @ (means * precisions).T)
+            + (X**2 @ precisions.T)
         )
 
     elif covariance_type == "spherical":
         precisions = precisions_chol**2
         log_prob = (
-            np.sum(means**2, 1) * precisions
-            - 2 * np.dot(X, means.T * precisions)
-            + np.outer(row_norms(X, squared=True), precisions)
+            xp.sum(means**2, 1) * precisions
+            - 2 * (X @ means.T * precisions)
+            + xp.outer(row_norms(X, squared=True), precisions)
         )
     # Since we are using the precision of the Cholesky decomposition,
     # `- 0.5 * log_det_precision` becomes `+ log_det_precision_chol`
-    return -0.5 * (n_features * np.log(2 * np.pi).astype(X.dtype) + log_prob) + log_det
+    return (
+        -0.5 * (n_features * xp.log(xp.asarray(2 * xp.pi, dtype=X.dtype)) + log_prob)
+        + log_det
+    )
 
 
 class GaussianMixture(BaseMixture):

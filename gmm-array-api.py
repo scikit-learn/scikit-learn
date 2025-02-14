@@ -11,7 +11,7 @@ from sklearn.mixture import GaussianMixture
 os.environ["SCIPY_ARRAY_API"] = "1"
 
 X, y = make_blobs(n_samples=int(1e3), n_features=2, centers=3, random_state=0)
-X, y = torch.asarray(X), torch.asarray(y)
+X_torch, y_torch = torch.asarray(X), torch.asarray(y)
 
 sklearn.set_config(array_api_dispatch=True)
 
@@ -56,3 +56,5 @@ def make_ellipses(gmm, ax):
 
 
 make_ellipses(gmm, ax)
+
+# %%
