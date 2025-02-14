@@ -1611,13 +1611,13 @@ def test_multiclass_sample_weight_invariance(name):
 @pytest.mark.parametrize(
     "name",
     sorted(
-        (MULTILABELS_METRICS | THRESHOLDED_MULTILABEL_METRICS | MULTIOUTPUT_METRICS)
+        (MULTILABELS_METRICS | THRESHOLDED_MULTILABEL_METRICS)
         - METRICS_WITHOUT_SAMPLE_WEIGHT
     ),
 )
 def test_multilabel_sample_weight_invariance(name):
-    random_state = check_random_state(0)
     # multilabel indicator
+    random_state = check_random_state(0)
     _, ya = make_multilabel_classification(
         n_features=1, n_classes=10, random_state=0, n_samples=50, allow_unlabeled=False
     )
@@ -1627,20 +1627,28 @@ def test_multilabel_sample_weight_invariance(name):
     y_true = np.vstack([ya, yb])
     y_pred = np.vstack([ya, ya])
     y_score = random_state.uniform(size=y_true.shape)
-    # multioutput regression data
-    y_true_reg = random_state.uniform(0, 2, size=(20, 5))
-    y_pred_reg = random_state.uniform(0, 2, size=(20, 5))
 
     # Some metrics (e.g. log_loss) require y_score to be probabilities (sum to 1)
     y_score /= y_score.sum(axis=1, keepdims=True)
 
     metric = ALL_METRICS[name]
-    if name in MULTIOUTPUT_METRICS:
-        check_sample_weight_invariance(name, metric, y_true_reg, y_pred_reg)
-    elif name in THRESHOLDED_METRICS:
+    if name in THRESHOLDED_METRICS:
         check_sample_weight_invariance(name, metric, y_true, y_score)
     else:
         check_sample_weight_invariance(name, metric, y_true, y_pred)
+
+
+@pytest.mark.parametrize(
+    "name",
+    sorted(MULTIOUTPUT_METRICS - METRICS_WITHOUT_SAMPLE_WEIGHT),
+)
+def test_multioutput_sample_weight_invariance(name):
+    random_state = check_random_state(0)
+    y_true = random_state.uniform(0, 2, size=(20, 5))
+    y_pred = random_state.uniform(0, 2, size=(20, 5))
+
+    metric = ALL_METRICS[name]
+    check_sample_weight_invariance(name, metric, y_true, y_pred)
 
 
 def test_no_averaging_labels():
