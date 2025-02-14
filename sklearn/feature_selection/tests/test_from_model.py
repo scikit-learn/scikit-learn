@@ -57,7 +57,6 @@ class NaNTagRandomForest(RandomForestClassifier):
 
 iris = datasets.load_iris()
 data, y = iris.data, iris.target
-rng = np.random.RandomState(0)
 
 
 def test_invalid_input():
