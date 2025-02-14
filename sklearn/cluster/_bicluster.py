@@ -18,7 +18,7 @@ from ..utils.extmath import make_nonnegative, randomized_svd, safe_sparse_dot
 from ..utils.validation import assert_all_finite, validate_data
 from ._kmeans import KMeans, MiniBatchKMeans
 
-__all__ = ["SpectralCoclustering", "SpectralBiclustering"]
+__all__ = ["SpectralBiclustering", "SpectralCoclustering"]
 
 
 def _scale_normalize(X):

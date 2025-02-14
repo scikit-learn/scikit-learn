@@ -20,7 +20,7 @@ from .utils._param_validation import Interval, StrOptions, validate_params
 from .utils.fixes import parse_version, sp_base_version
 from .utils.validation import _check_sample_weight, check_is_fitted
 
-__all__ = ["check_increasing", "isotonic_regression", "IsotonicRegression"]
+__all__ = ["IsotonicRegression", "check_increasing", "isotonic_regression"]
 
 
 @validate_params(
