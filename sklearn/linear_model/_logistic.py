@@ -1105,6 +1105,14 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
     For a comparison of the LogisticRegression with other classifiers see:
     :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`.
+
+    For a comparison of decision boundaries of multinomial and
+    one-vs-rest logistic regression, please see
+    :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_multinomial.py`.
+
+    For a detailed example showing how `l1`-regularisation affects the
+    trained coefficients, please see
+    :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_path.py`.
     """
 
     _parameter_constraints: dict = {

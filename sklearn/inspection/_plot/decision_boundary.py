@@ -77,6 +77,10 @@ class DecisionBoundaryDisplay:
 
     Read more in the :ref:`User Guide <visualizations>`.
 
+    For a detailed example comparing the decision boundaries of multinomial and
+    one-vs-rest logistic regression, please see
+    :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_multinomial.py`.
+
     .. versionadded:: 1.1
 
     Parameters
