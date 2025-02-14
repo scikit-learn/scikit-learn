@@ -2145,12 +2145,12 @@ class MiniBatchKMeans(_BaseKMeans):
         self._n_since_last_reassign = 0
 
         n_effective_samples = np.sum(sample_weight)
+        scaling_factor = 1
         # Rescaling step for sample weights otherwise doesn not pass test_scaled_weights
-        if sample_weight.min() < 1:
-            n_effective_samples = np.sum(
-                MinMaxScaler().fit_transform(sample_weight.reshape(-1, 1))
-            )
-        n_steps = int(self.max_iter * n_effective_samples) // self._batch_size
+        scaling_factor = MinMaxScaler().fit(sample_weight.reshape(-1, 1)).scale_
+        n_steps = int((self.max_iter * n_effective_samples * scaling_factor)) // (
+            self._batch_size
+        )
         normalized_sample_weight = sample_weight / np.sum(sample_weight)
         unit_sample_weight = np.ones_like(sample_weight, shape=(self._batch_size,))
         with _get_threadpool_controller().limit(limits=1, user_api="blas"):
