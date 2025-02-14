@@ -11,7 +11,7 @@ jobs:
 - job: git_commit
   displayName: Get Git Commit
   pool:
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-24.04
   steps:
     - bash: python build_tools/azure/get_commit_message.py
       name: commit
@@ -27,7 +27,7 @@ jobs:
     )
   displayName: Linting
   pool:
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-24.04
   steps:
     - task: UsePythonVersion@0
       inputs:
@@ -49,7 +49,7 @@ jobs:
 - template: build_tools/azure/posix.yml
   parameters:
     name: Linux_Nightly
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-22.04
     dependsOn: [git_commit, linting]
     condition: |
       and(
@@ -94,11 +94,11 @@ jobs:
     vmImage: ubuntu-22.04
   variables:
     # Need to match Python version and Emscripten version for the correct
-    # Pyodide version. For example, for Pyodide version 0.25.1, see
-    # https://github.com/pyodide/pyodide/blob/0.25.1/Makefile.envs
-    PYODIDE_VERSION: '0.26.0'
+    # Pyodide version. For example, for Pyodide version 0.27.2, see
+    # https://github.com/pyodide/pyodide/blob/0.27.2/Makefile.envs
+    PYODIDE_VERSION: '0.27.2'
     EMSCRIPTEN_VERSION: '3.1.58'
-    PYTHON_VERSION: '3.12.1'
+    PYTHON_VERSION: '3.12.7'
 
   dependsOn: [git_commit, linting]
   condition: |
@@ -126,7 +126,7 @@ jobs:
 - template: build_tools/azure/posix.yml
   parameters:
     name: Linux_Runs
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-22.04
     dependsOn: [git_commit]
     condition: |
       and(
@@ -232,7 +232,7 @@ jobs:
 - template: build_tools/azure/posix-docker.yml
   parameters:
     name: Linux_Docker
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-24.04
     dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
     # Runs when dependencies succeeded or skipped
     condition: |
