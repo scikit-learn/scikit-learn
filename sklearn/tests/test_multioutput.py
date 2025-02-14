@@ -866,7 +866,6 @@ def test_multioutput_regressor_has_partial_fit():
         getattr(est, "partial_fit")
 
 
-
 # TODO Remove in 1.9
 def test_multioutput_classifier_fit_dependency_warning():
     """Test that using both y and Y raises ValueError and Y alone raises warning."""
@@ -877,7 +876,7 @@ def test_multioutput_classifier_fit_dependency_warning():
 
     # Test that using both y and Y raises ValueError
     with pytest.warns(
-        FutureWarning, match="`Y` was renamed to `y` in 1.9 and will be removed in 2.1"
+        FutureWarning, match="`Y` was renamed to `y` in 1.7 and will be removed in 1.9"
     ):
         with pytest.raises(
             ValueError,
@@ -887,7 +886,7 @@ def test_multioutput_classifier_fit_dependency_warning():
 
     # Test that using Y alone raises FutureWarning
     with pytest.warns(
-        FutureWarning, match="`Y` was renamed to `y` in 1.9 and will be removed in 2.1"
+        FutureWarning, match="`Y` was renamed to `y` in 1.7 and will be removed in 1.9"
     ):
         est.fit(X, Y=Y)
 
@@ -897,6 +896,7 @@ def test_multioutput_classifier_fit_dependency_warning():
         match="estimator requires y to be passed, but the target y is None.",
     ):
         est.fit(X)
+
 
 # TODO(1.9):  remove when deprecated `base_estimator` is removed
 @pytest.mark.parametrize("Estimator", [ClassifierChain, RegressorChain])
@@ -912,4 +912,3 @@ def test_base_estimator_deprecation(Estimator):
 
     with pytest.raises(ValueError):
         Estimator(base_estimator=estimator, estimator=estimator).fit(X, y)
-
