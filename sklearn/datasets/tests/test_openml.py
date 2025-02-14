@@ -8,7 +8,6 @@ from functools import partial
 from importlib import resources
 from io import BytesIO
 from urllib.error import HTTPError
-from urllib.parse import urlparse
 
 import numpy as np
 import pytest
@@ -144,12 +143,10 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
         # For example for id_1, data description download url is:
         # gunzip -c sklearn/datasets/tests/data/openml/id_1/api-v1-jd-1.json.gz | grep '"url" # noqa: E501
         # "https:\/\/www.openml.org\/data\/v1\/download\/1\/anneal.arff"
-        # but the mock filename does not contain anneal.arff and is
-        # sklearn/datasets/tests/data/openml/id_1/data-v1-dl-1.arff.gz
-        parsed_url = urlparse(url)
+        # but the mock filename does not contain anneal.arff and is:
+        # sklearn/datasets/tests/data/openml/id_1/data-v1-dl-1.arff.gz.
         # We only keep the part of the url before the last /
-        path_without_filename = parsed_url.path.rsplit("/", 1)[0]
-        url_without_filename = parsed_url._replace(path=path_without_filename).geturl()
+        url_without_filename = url.rsplit("/", 1)[0]
 
         return _mock_urlopen_shared(
             url=url_without_filename,
