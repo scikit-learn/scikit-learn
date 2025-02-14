@@ -2031,7 +2031,7 @@ class MiniBatchKMeans(_BaseKMeans):
 
         If there are empty clusters we always want to reassign.
         """
-        self._n_since_last_reassign += self._batch_size
+        self._n_since_last_reassign += self._effective_batch_size
         if (self._counts == 0).any() or self._n_since_last_reassign >= (
             10 * self.n_clusters
         ):
@@ -2143,9 +2143,9 @@ class MiniBatchKMeans(_BaseKMeans):
         # Initialize number of samples seen since last reassignment
         self._n_since_last_reassign = 0
 
-        n_steps = int(self.max_iter * sample_weight.sum()) // self._batch_size
-        normalized_sample_weight = sample_weight / np.sum(sample_weight)
         n_effective_samples = np.sum(sample_weight)
+        n_steps = int(self.max_iter * n_effective_samples) // self._batch_size
+        normalized_sample_weight = sample_weight / np.sum(sample_weight)
         unit_sample_weight = np.ones_like(sample_weight, shape=(self._batch_size,))
         with _get_threadpool_controller().limit(limits=1, user_api="blas"):
             # Perform the iterative optimization until convergence
@@ -2157,6 +2157,8 @@ class MiniBatchKMeans(_BaseKMeans):
                     p=normalized_sample_weight,
                     replace=True,
                 )
+
+                self._effective_batch_size = sample_weight[minibatch_indices].sum()
 
                 # Perform the actual update step on the minibatch data
                 # Note: since the sampling of the minibatch is sample_weight aware,
