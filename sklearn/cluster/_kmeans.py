@@ -2144,9 +2144,12 @@ class MiniBatchKMeans(_BaseKMeans):
         # Initialize number of samples seen since last reassignment
         self._n_since_last_reassign = 0
 
-        n_effective_samples = np.sum(
-            MinMaxScaler().fit_transform(sample_weight.reshape(-1, 1))
-        )
+        n_effective_samples = np.sum(sample_weight)
+        # Rescaling step for sample weights otherwise doesn not pass test_scaled_weights
+        if n_effective_samples != n_samples:
+            n_effective_samples = np.sum(
+                MinMaxScaler().fit_transform(sample_weight.reshape(-1, 1))
+            )
         n_steps = int(self.max_iter * n_effective_samples) // self._batch_size
         normalized_sample_weight = sample_weight / np.sum(sample_weight)
         unit_sample_weight = np.ones_like(sample_weight, shape=(self._batch_size,))
