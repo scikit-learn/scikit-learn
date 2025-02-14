@@ -18,7 +18,7 @@ The `Display` object stores the computed values required for plotting with Matpl
 These values can either be passed directly via `from_predictions`, or derived from an estimator
 and sample data using `from_estimator`.
 Additionally, the plot method allows adding to an existing plot by passing the existing
-plots :class`matplotlib.axes.Axes` to the `ax` parameter.
+plots :class:`matplotlib.axes.Axes` to the `ax` parameter.
 
 In the following example, we plot a ROC curve for a fitted support
 vector machine using `from_estimator`:
