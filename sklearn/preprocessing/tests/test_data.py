@@ -41,10 +41,6 @@ from sklearn.utils._array_api import (
     _convert_to_numpy,
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._test_common.instance_generator import _get_check_estimator_ids
-from sklearn.utils.estimator_checks import (
-    _array_api_for_tests,
-)
 from sklearn.utils._testing import (
     _array_api_for_tests,
     _convert_container,
