@@ -2997,15 +2997,22 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
 
+    xp, _, device = get_namespace_and_device(y_true, y_pred, sample_weight)
+
     if sample_weight is None:
         weight_average = 1.0
     else:
-        weight_average = np.mean(sample_weight)
+        weight_average = xp.mean(sample_weight)
 
     if y_type.startswith("multilabel"):
-        n_differences = count_nonzero(y_true - y_pred, sample_weight=sample_weight)
+        if _is_numpy_namespace(xp):
+            n_differences = count_nonzero(y_true - y_pred, sample_weight=sample_weight)
+        else:
+            n_differences = _count_nonzero(
+                y_true - y_pred, xp=xp, device=device, sample_weight=sample_weight
+            )
         return float(
-            n_differences / (y_true.shape[0] * y_true.shape[1] * weight_average)
+            int(n_differences) / (y_true.shape[0] * y_true.shape[1] * weight_average)
         )
 
     elif y_type in ["binary", "multiclass"]:
