@@ -3002,6 +3002,10 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
     if sample_weight is None:
         weight_average = 1.0
     else:
+        if _is_numpy_namespace(xp):
+            # calling np.mean(torch.tensor([...])) crashes
+            # workaround for now
+            sample_weight = xp.asarray(sample_weight)
         weight_average = xp.mean(sample_weight)
 
     if y_type.startswith("multilabel"):
@@ -3011,8 +3015,8 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
             n_differences = _count_nonzero(
                 y_true - y_pred, xp=xp, device=device, sample_weight=sample_weight
             )
-        return float(
-            int(n_differences) / (y_true.shape[0] * y_true.shape[1] * weight_average)
+        return float(n_differences) / (
+            y_true.shape[0] * y_true.shape[1] * weight_average
         )
 
     elif y_type in ["binary", "multiclass"]:
