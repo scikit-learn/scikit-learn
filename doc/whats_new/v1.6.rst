@@ -522,10 +522,6 @@ Python and CPython ecosystem, for example :user:`Nathan Goldbaum <ngoldbaum>`,
   sparse matrices in the Hessian, Modified and LTSA methods.
   By :user:`Giorgio Angelotti <giorgioangel>` :pr:`28096`
 
-- |Enhancement| Added a function :func:`base.is_clusterer` which determines
-  whether a given estimator is of category clusterer.
-  :pr:`28936` by :user:`Christian Veenhuis <ChVeen>`.
-
 :mod:`sklearn.metrics`
 ----------------------
 
