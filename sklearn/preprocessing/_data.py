@@ -1056,7 +1056,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X_tr : {array, sparse matrix} of shape (n_samples, n_features)
+        X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
             Transformed array.
         """
         xp, _, X_device = get_namespace_and_device(X)
