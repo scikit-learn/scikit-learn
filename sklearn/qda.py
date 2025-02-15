@@ -1,23 +1,10 @@
 """
 Quadratic Discriminant Analysis
 """
-
-# Author: Matthieu Perrot <matthieu.perrot@gmail.com>
-#
-# License: BSD Style.
-
 import warnings
-
 import numpy as np
 import scipy.ndimage as ndimage
-
 from .base import BaseEstimator, ClassifierMixin
-
-
-# FIXME :
-# - in fit(X, y) method, many checks are common with other models
-#   (in particular LDA model) and should be factorized:
-#   maybe in BaseEstimator ?
 
 class QDA(BaseEstimator, ClassifierMixin):
     """
@@ -61,9 +48,10 @@ class QDA(BaseEstimator, ClassifierMixin):
     """
 
     def __init__(self, priors=None):
+        """Auto-generated docstring for function __init__."""
         self.priors = np.asarray(priors) if priors is not None else None
 
-    def fit(self, X, y, store_covariances=False, tol=1.0e-4):
+    def fit(self, X, y, store_covariances=False, tol=0.0001):
         """
         Fit the QDA model according to the given training data and parameters.
 
@@ -83,16 +71,8 @@ class QDA(BaseEstimator, ClassifierMixin):
         if X.ndim != 2:
             raise ValueError('X must be a 2D array')
         if X.shape[0] != y.shape[0]:
-            raise ValueError(
-                'Incompatible shapes: X has %s samples, while y '
-                'has %s' % (X.shape[0], y.shape[0]))
+            raise ValueError('Incompatible shapes: X has %s samples, while y has %s' % (X.shape[0], y.shape[0]))
         if y.dtype.char.lower() not in ('b', 'h', 'i'):
-            # We need integer values to be able to use
-            # ndimage.measurements and np.bincount on numpy >= 2.0.
-            # We currently support (u)int8, (u)int16 and (u)int32.
-            # Note that versions of scipy >= 0.8 can also accept
-            # (u)int64. We however don't support it for backwards
-            # compatibility.
             y = y.astype(np.int32)
         n_samples, n_features = X.shape
         classes = np.unique(y)
@@ -101,12 +81,10 @@ class QDA(BaseEstimator, ClassifierMixin):
             raise ValueError('y has less than 2 classes')
         classes_indices = [(y == c).ravel() for c in classes]
         if self.priors is None:
-            counts = np.array(ndimage.measurements.sum(
-                np.ones(n_samples, dtype=y.dtype), y, index=classes))
+            counts = np.array(ndimage.measurements.sum(np.ones(n_samples, dtype=y.dtype), y, index=classes))
             self.priors_ = counts / float(n_samples)
         else:
             self.priors_ = self.priors
-
         cov = None
         if store_covariances:
             cov = []
@@ -118,14 +96,12 @@ class QDA(BaseEstimator, ClassifierMixin):
             meang = Xg.mean(0)
             means.append(meang)
             Xgc = Xg - meang
-            # Xgc = U * S * V.T
             U, S, Vt = np.linalg.svd(Xgc, full_matrices=False)
             rank = np.sum(S > tol)
             if rank < n_features:
-                warnings.warn("Variables are collinear")
-            S2 = (S ** 2) / (len(Xg) - 1)
+                warnings.warn('Variables are collinear')
+            S2 = S ** 2 / (len(Xg) - 1)
             if store_covariances:
-                # cov = V * (S^2 / (n-1)) * V.T
                 cov.append(np.dot(S2 * Vt.T, Vt))
             scalings.append(S2)
             rotations.append(Vt.T)
@@ -156,11 +132,10 @@ class QDA(BaseEstimator, ClassifierMixin):
             R = self.rotations[i]
             S = self.scalings[i]
             Xm = X - self.means_[i]
-            X2 = np.dot(Xm, R * (S ** (-0.5)))
+            X2 = np.dot(Xm, R * S ** (-0.5))
             norm2.append(np.sum(X2 ** 2, 1))
-        norm2 = np.array(norm2).T   # shape = [len(X), n_classes]
-        return (-0.5 * (norm2 + np.sum(np.log(self.scalings), 1))
-                + np.log(self.priors_))
+        norm2 = np.array(norm2).T
+        return -0.5 * (norm2 + np.sum(np.log(self.scalings), 1)) + np.log(self.priors_)
 
     def predict(self, X):
         """Perform classification on an array of test vectors X.
@@ -193,10 +168,7 @@ class QDA(BaseEstimator, ClassifierMixin):
             Posterior probabilities of classification per class.
         """
         values = self.decision_function(X)
-        # compute the likelihood of the underlying gaussian models
-        # up to a multiplicative constant.
         likelihood = np.exp(values - values.min(axis=1)[:, np.newaxis])
-        # compute posterior probabilities
         return likelihood / likelihood.sum(axis=1)[:, np.newaxis]
 
     def predict_log_proba(self, X):
@@ -212,6 +184,5 @@ class QDA(BaseEstimator, ClassifierMixin):
         C : array, shape = [n_samples, n_classes]
             Posterior log-probabilities of classification per class.
         """
-        # XXX : can do better to avoid precision overflows
         probas_ = self.predict_proba(X)
         return np.log(probas_)
