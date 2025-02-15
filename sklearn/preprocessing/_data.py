@@ -10,7 +10,7 @@ from scipy import optimize, sparse, stats
 from scipy.special import boxcox, inv_boxcox
 
 from sklearn.utils import metadata_routing
-
+from ._encoders import OneHotEncoder
 from ..base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
@@ -41,7 +41,6 @@ from ..utils.validation import (
     check_random_state,
     validate_data,
 )
-from ._encoders import OneHotEncoder
 
 BOUNDS_THRESHOLD = 1e-7
 
