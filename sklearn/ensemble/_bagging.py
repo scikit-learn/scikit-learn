@@ -231,7 +231,9 @@ def _parallel_predict_proba(
     return proba
 
 
-def _parallel_predict_log_proba(estimators, estimators_features, X, n_classes):
+def _parallel_predict_log_proba(
+    estimators, estimators_features, X, n_classes, predict_params
+):
     """Private function used to compute log probabilities within a job."""
     n_samples = X.shape[0]
     log_proba = np.empty((n_samples, n_classes))
@@ -239,7 +241,9 @@ def _parallel_predict_log_proba(estimators, estimators_features, X, n_classes):
     all_classes = np.arange(n_classes, dtype=int)
 
     for estimator, features in zip(estimators, estimators_features):
-        log_proba_estimator = estimator.predict_log_proba(X[:, features])
+        log_proba_estimator = estimator.predict_log_proba(
+            X[:, features], **predict_params
+        )
 
         if n_classes == len(estimator.classes_):
             log_proba = np.logaddexp(log_proba, log_proba_estimator)
@@ -256,10 +260,10 @@ def _parallel_predict_log_proba(estimators, estimators_features, X, n_classes):
     return log_proba
 
 
-def _parallel_decision_function(estimators, estimators_features, X):
+def _parallel_decision_function(estimators, estimators_features, X, predict_params):
     """Private function used to compute decisions within a job."""
     return sum(
-        estimator.decision_function(X[:, features])
+        estimator.decision_function(X[:, features], **predict_params)
         for estimator, features in zip(estimators, estimators_features)
     )
 
@@ -617,14 +621,27 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             routing information.
         """
         router = MetadataRouter(owner=self.__class__.__name__)
-        router.add(
-            estimator=self._get_estimator(),
-            method_mapping=MethodMapping()
-            .add(caller="fit", callee="fit")
-            .add(caller="predict", callee="predict")
-            .add(caller="predict_proba", callee="predict")
-            .add(caller="predict_proba", callee="predict_proba"),
-        )
+
+        method_mapping = MethodMapping()
+        method_mapping.add(caller="fit", callee="fit").add(
+            caller="predict_log_proba", callee="predict_log_proba"
+        ).add(caller="decision_function", callee="decision_function")
+
+        if hasattr(self._get_estimator(), "predict_proba"):
+            (
+                method_mapping.add(caller="predict", callee="predict_proba").add(
+                    caller="predict_proba", callee="predict_proba"
+                )
+            )
+
+        else:
+            (
+                method_mapping.add(caller="predict", callee="predict").add(
+                    caller="predict_proba", callee="predict"
+                )
+            )
+
+        router.add(estimator=self._get_estimator(), method_mapping=method_mapping)
         return router
 
     @abstractmethod
@@ -972,7 +989,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             routed_params = process_routing(self, "predict_proba", **predict_params)
         else:
             routed_params = Bunch()
-            routed_params.estimator = Bunch(predict=predict_params)
+            routed_params.estimator = Bunch(predict_proba=predict_params)
 
         # Parallel loop
         n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
@@ -985,7 +1002,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
                 self.estimators_features_[starts[i] : starts[i + 1]],
                 X,
                 self.n_classes_,
-                predict_params=routed_params.estimator.predict,
+                predict_params=routed_params.estimator.predict_proba,
             )
             for i in range(n_jobs)
         )
@@ -995,7 +1012,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
         return proba
 
-    def predict_log_proba(self, X):
+    def predict_log_proba(self, X, **predict_params):
         """Predict class log-probabilities for X.
 
         The predicted class log-probabilities of an input sample is computed as
@@ -1008,6 +1025,17 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             The training input samples. Sparse matrices are accepted only if
             they are supported by the base estimator.
 
+        **predict_params : dict
+            Parameters routed to the `predict_log_proba` or `predict_proba` method of
+            the sub-estimators via the metadata routing API.
+
+            .. versionadded:: 1.7
+
+                Only available if
+                `sklearn.set_config(enable_metadata_routing=True)` is set. See
+                :ref:`Metadata Routing User Guide <metadata_routing>` for more
+                details.
+
         Returns
         -------
         p : ndarray of shape (n_samples, n_classes)
@@ -1015,6 +1043,9 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             classes corresponds to that in the attribute :term:`classes_`.
         """
         check_is_fitted(self)
+
+        _raise_for_params(predict_params, self, "predict_log_proba")
+
         if hasattr(self.estimator_, "predict_log_proba"):
             # Check data
             X = validate_data(
@@ -1026,6 +1057,14 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
                 reset=False,
             )
 
+            if _routing_enabled():
+                routed_params = process_routing(
+                    self, "predict_log_proba", **predict_params
+                )
+            else:
+                routed_params = Bunch()
+                routed_params.estimator = Bunch(predict_log_proba=predict_params)
+
             # Parallel loop
             n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
@@ -1035,6 +1074,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
                     self.estimators_features_[starts[i] : starts[i + 1]],
                     X,
                     self.n_classes_,
+                    predict_params=routed_params.estimator.predict_log_proba,
                 )
                 for i in range(n_jobs)
             )
@@ -1048,14 +1088,14 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             log_proba -= np.log(self.n_estimators)
 
         else:
-            log_proba = np.log(self.predict_proba(X))
+            log_proba = np.log(self.predict_proba(X, **predict_params))
 
         return log_proba
 
     @available_if(
         _estimator_has("decision_function", delegates=("estimators_", "estimator"))
     )
-    def decision_function(self, X):
+    def decision_function(self, X, **predict_params):
         """Average of the decision functions of the base classifiers.
 
         Parameters
@@ -1063,6 +1103,17 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The training input samples. Sparse matrices are accepted only if
             they are supported by the base estimator.
+
+        **predict_params : dict
+            Parameters routed to the `decision_function` method of the sub-estimators
+            via the metadata routing API.
+
+            .. versionadded:: 1.7
+
+                Only available if
+                `sklearn.set_config(enable_metadata_routing=True)` is set. See
+                :ref:`Metadata Routing User Guide <metadata_routing>` for more
+                details.
 
         Returns
         -------
@@ -1074,6 +1125,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         """
         check_is_fitted(self)
 
+        _raise_for_params(predict_params, self, "decision_function")
+
         # Check data
         X = validate_data(
             self,
@@ -1084,6 +1137,12 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             reset=False,
         )
 
+        if _routing_enabled():
+            routed_params = process_routing(self, "decision_function", **predict_params)
+        else:
+            routed_params = Bunch()
+            routed_params.estimator = Bunch(decision_function=predict_params)
+
         # Parallel loop
         n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
@@ -1092,6 +1151,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
                 self.estimators_[starts[i] : starts[i + 1]],
                 self.estimators_features_[starts[i] : starts[i + 1]],
                 X,
+                predict_params=routed_params.estimator.decision_function,
             )
             for i in range(n_jobs)
         )
