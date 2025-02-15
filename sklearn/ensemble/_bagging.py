@@ -264,10 +264,10 @@ def _parallel_decision_function(estimators, estimators_features, X):
     )
 
 
-def _parallel_predict_regression(estimators, estimators_features, X):
+def _parallel_predict_regression(estimators, estimators_features, X, predict_params):
     """Private function used to compute predictions within a job."""
     return sum(
-        estimator.predict(X[:, features])
+        estimator.predict(X[:, features], **predict_params)
         for estimator, features in zip(estimators, estimators_features)
     )
 
@@ -620,7 +620,8 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         router.add(
             estimator=self._get_estimator(),
             method_mapping=MethodMapping()
-            .add(callee="fit", caller="fit")
+            .add(caller="fit", callee="fit")
+            .add(caller="predict", callee="predict")
             .add(caller="predict_proba", callee="predict")
             .add(caller="predict_proba", callee="predict_proba"),
         )
@@ -901,8 +902,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             they are supported by the base estimator.
 
         **predict_params : dict
-            Parameters routed to the `predict` method of the sub-estimators via
-            the metadata routing API.
+            Parameters routed to the `predict` or `predict_proba` method of the
+            sub-estimators via the metadata routing API.
 
             .. versionadded:: 1.7
 
@@ -938,8 +939,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             they are supported by the base estimator.
 
         **predict_params : dict
-            Parameters routed to the `predict` method of the sub-estimators via
-            the metadata routing API.
+            Parameters routed to the `predict` or `predict_proba` method of the
+            sub-estimators via the metadata routing API.
 
             .. versionadded:: 1.7
 
@@ -1289,7 +1290,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
             verbose=verbose,
         )
 
-    def predict(self, X):
+    def predict(self, X, **predict_params):
         """Predict regression target for X.
 
         The predicted regression target of an input sample is computed as the
@@ -1300,6 +1301,17 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The training input samples. Sparse matrices are accepted only if
             they are supported by the base estimator.
+
+        **predict_params : dict
+            Parameters routed to the `predict` method of the sub-estimators via the
+            metadata routing API.
+
+            .. versionadded:: 1.7
+
+                Only available if
+                `sklearn.set_config(enable_metadata_routing=True)` is set. See
+                :ref:`Metadata Routing User Guide <metadata_routing>` for more
+                details.
 
         Returns
         -------
@@ -1317,6 +1329,14 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
             reset=False,
         )
 
+        _raise_for_params(predict_params, self, "predict")
+
+        if _routing_enabled():
+            routed_params = process_routing(self, "predict", **predict_params)
+        else:
+            routed_params = Bunch()
+            routed_params.estimator = Bunch(predict=predict_params)
+
         # Parallel loop
         n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
@@ -1325,6 +1345,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
                 self.estimators_[starts[i] : starts[i + 1]],
                 self.estimators_features_[starts[i] : starts[i + 1]],
                 X,
+                predict_params=routed_params.estimator.predict,
             )
             for i in range(n_jobs)
         )

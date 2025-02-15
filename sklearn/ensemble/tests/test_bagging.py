@@ -972,7 +972,7 @@ def test_bagging_with_metadata_routing(model):
 
 @config_context(enable_metadata_routing=True)
 def test_metadata_routing_without_predict_proba():
-    """Test that metadata routing works in `predict` if the
+    """Test that metadata routing works in `BaggingClassifier.predict` if the
     sub-estimator doesn't implement `predict_proba`. (The main test in
     sklearn/tests/test_metaestimators_metadata_routing.py only tests with
     `ConsumingClassifier`, which has both methods (`predict` and `predict_proba`), but
@@ -990,14 +990,18 @@ def test_metadata_routing_without_predict_proba():
     bagging.predict(X=np.array([[1, 1], [1, 3], [0, 2]]))
 
     assert len(registry)
-    for _trs in registry:
+    for estimator in registry:
         check_recorded_metadata(
-            obj=_trs,
+            obj=estimator,
             method="predict",
             parent="predict",
             sample_weight=sample_weight,
             metadata=metadata,
         )
+
+
+# End of Metadata Routing Tests
+# =============================
 
 
 @pytest.mark.parametrize(
@@ -1014,7 +1018,3 @@ def test_bagging_without_support_metadata_routing(model):
     """Make sure that we still can use an estimator that does not implement the
     metadata routing."""
     model.fit(iris.data, iris.target)
-
-
-# End of Metadata Routing Tests
-# =============================

@@ -340,7 +340,6 @@ METAESTIMATORS: list = [
         "y": y,
         "preserves_metadata": False,
         "estimator_routing_methods": ["fit", "predict"],
-        "method_mapping": {"predict": ["predict", "predict_proba"]},
     },
     {
         "metaestimator": RidgeCV,

@@ -1,0 +1,4 @@
+- :class:`ensemble.BaggingClassifier` and :class:`ensemble.BeggingRegressor` now support
+  metadata routing through their `predict` and `predict_proba` methods and pass
+  ``**predict_params`` to the underlying estimators. By :user:`Stefanie Senger
+  <StefanieSenger>`.
