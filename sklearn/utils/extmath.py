@@ -1031,7 +1031,7 @@ def _safe_accumulator_op(op, x, *args, **kwargs):
         # We need to upcast. Some ops support this natively; others don't.
         target_dtype = max_precision_float_dtype(xp, device=x_device)
 
-        def convert_(arr):
+        def convert_dtype(arr):
             return xp.astype(arr, target_dtype, copy=False)
 
         try:
@@ -1041,8 +1041,8 @@ def _safe_accumulator_op(op, x, *args, **kwargs):
             # type promotion, at the cost of memory allocations.
             # xp.matmul is the most commonly used op that lacks a dtype kwarg at
             # the time of writing.
-            x = convert_(x)
-            args = [(convert_(arg) if hasattr(arg, "dtype") else arg) for arg in args]
+            x = convert_dtype(x)
+            args = [(convert_dtype(arg) if hasattr(arg, "dtype") else arg) for arg in args]
     return op(x, *args, **kwargs)
 
 
