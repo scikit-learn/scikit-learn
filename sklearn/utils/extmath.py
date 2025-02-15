@@ -10,10 +10,11 @@ from numbers import Integral
 import numpy as np
 from scipy import linalg, sparse
 
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ._array_api import (
     _average,
-    _nanmean,
     _is_numpy_namespace,
+    _nanmean,
     _nansum,
     device,
     get_namespace,
@@ -22,7 +23,6 @@ from ._array_api import (
 )
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array, check_random_state
-from ..utils._param_validation import Interval, StrOptions, validate_params
 
 
 def squared_norm(x):
