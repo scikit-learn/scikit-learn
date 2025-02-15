@@ -1131,7 +1131,7 @@ def _incremental_mean_and_var(
     else:
         new_sum = _safe_accumulator_op(sum_op, X, axis=0)
         n_samples = X.shape[0]
-        new_sample_count = n_samples - xp.sum(xp.astype(X_nan_mask, X.dtype), axis=0)
+        new_sample_count = n_samples - _safe_accumulator_op(sum_op, X_nan_mask, axis=0)
 
     updated_sample_count = last_sample_count + new_sample_count
 
