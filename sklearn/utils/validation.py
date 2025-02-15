@@ -2146,10 +2146,10 @@ def _check_sample_weight(
 
     Parameters
     ----------
-    sample_weight : {array, Number or None}, shape (n_samples,)
+    sample_weight : {ndarray, Number or None}, shape (n_samples,)
         Input sample weights.
 
-    X : {array, list, sparse matrix}
+    X : {ndarray, list, sparse matrix}
         Input data.
 
     ensure_non_negative : bool, default=False,

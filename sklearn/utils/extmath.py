@@ -1080,12 +1080,12 @@ def _incremental_mean_and_var(
 
     Returns
     -------
-    updated_mean : array of shape (n_features,)
+    updated_mean : ndarray of shape (n_features,)
 
-    updated_variance : array of shape (n_features,)
+    updated_variance : ndarray of shape (n_features,)
         None if last_variance was None.
 
-    updated_sample_count : array of shape (n_features,)
+    updated_sample_count : ndarray of shape (n_features,)
 
     Notes
     -----
