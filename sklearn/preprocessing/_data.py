@@ -20,8 +20,12 @@ from ..base import (
 )
 from ..utils import _array_api, check_array, resample
 from ..utils._array_api import (
-    _modify_in_place_if_numpy, device, get_namespace, size,
-    get_namespace_and_device)
+    _modify_in_place_if_numpy,
+    device,
+    get_namespace,
+    size,
+    get_namespace_and_device,
+)
 from ..utils._param_validation import Interval, Options, StrOptions, validate_params
 from ..utils.extmath import _incremental_mean_and_var, row_norms
 from ..utils.sparsefuncs import (

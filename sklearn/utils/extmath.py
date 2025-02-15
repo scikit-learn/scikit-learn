@@ -1042,8 +1042,9 @@ def _safe_accumulator_op(op, x, *args, **kwargs):
             # xp.matmul is the most commonly used op that lacks a dtype kwarg at
             # the time of writing.
             x = convert_dtype(x)
-            args = [(convert_dtype(arg) if hasattr(arg, "dtype") else arg)
-                    for arg in args]
+            args = [
+                (convert_dtype(arg) if hasattr(arg, "dtype") else arg) for arg in args
+            ]
     return op(x, *args, **kwargs)
 
 
