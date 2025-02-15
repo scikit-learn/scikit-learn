@@ -726,7 +726,7 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
 
 
 def get_namespace_and_device(
-        *array_list, remove_none=True, remove_types=(str,), xp=None
+    *array_list, remove_none=True, remove_types=(str,), xp=None
 ):
     """Combination into one single function of `get_namespace` and `device`.
 
