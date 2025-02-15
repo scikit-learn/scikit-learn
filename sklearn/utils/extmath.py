@@ -10,7 +10,6 @@ from numbers import Integral
 import numpy as np
 from scipy import linalg, sparse
 
-from ..utils._param_validation import Interval, StrOptions, validate_params
 from ._array_api import (
     _average,
     _nanmean,
@@ -23,6 +22,7 @@ from ._array_api import (
 )
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array, check_random_state
+from ..utils._param_validation import Interval, StrOptions, validate_params
 
 
 def squared_norm(x):
@@ -1042,7 +1042,8 @@ def _safe_accumulator_op(op, x, *args, **kwargs):
             # xp.matmul is the most commonly used op that lacks a dtype kwarg at
             # the time of writing.
             x = convert_dtype(x)
-            args = [(convert_dtype(arg) if hasattr(arg, "dtype") else arg) for arg in args]
+            args = [(convert_dtype(arg) if hasattr(arg, "dtype") else arg)
+                    for arg in args]
     return op(x, *args, **kwargs)
 
 
