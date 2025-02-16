@@ -267,6 +267,35 @@ def test_warning_bounds():
         )
 
 
+def test_std_of_f_size():
+    gpc = GaussianProcessClassifier()
+
+    # Let's test it with something similar to the XOR operation
+    X = np.array([[0.0, 0.0], [1.0, 0.0], [0.0, 1.0], [1.0, 1.0]])
+    y = np.array([0.0, 1.0, 1.0, 0.0])
+    gpc.fit(X, y)
+
+    # Let's check the uncertainties of these.
+    # the point at the middle should be higher?
+    X_test = np.array([[0.5, 0.5], [0.4, 0.5], [0.5, 0.4]])
+    _, f_std = gpc.predict_proba(X_test, return_std_of_f=True)
+
+    assert f_std.shape == (X_test.shape[0],)
+
+
+def test_std_error_when_not_binary():
+    gpc_multiclass = GaussianProcessClassifier()
+
+    X = np.array([[0.0, 0.0], [1.0, 0.0], [0.0, 1.0], [1.0, 1.0]])
+    y = np.array([0.0, 1.0, 1.0, 2.0])
+    gpc_multiclass.fit(X, y)
+
+    X_test = np.array([[0.5, 0.5], [0.4, 0.5], [0.5, 0.4]])
+
+    with pytest.raises(ValueError):
+        _, _ = gpc_multiclass.predict_proba(X_test, return_std_of_f=True)
+
+
 @pytest.mark.parametrize(
     "params, error_type, err_msg",
     [
