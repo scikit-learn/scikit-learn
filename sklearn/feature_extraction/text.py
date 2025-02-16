@@ -28,9 +28,9 @@ from ._hash import FeatureHasher
 from ._stop_words import ENGLISH_STOP_WORDS
 
 __all__ = [
-    "HashingVectorizer",
-    "CountVectorizer",
     "ENGLISH_STOP_WORDS",
+    "CountVectorizer",
+    "HashingVectorizer",
     "TfidfTransformer",
     "TfidfVectorizer",
     "strip_accents_ascii",

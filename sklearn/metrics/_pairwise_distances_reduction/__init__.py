@@ -101,10 +101,10 @@ from ._dispatcher import (
 )
 
 __all__ = [
-    "BaseDistancesReductionDispatcher",
     "ArgKmin",
-    "RadiusNeighbors",
     "ArgKminClassMode",
+    "BaseDistancesReductionDispatcher",
+    "RadiusNeighbors",
     "RadiusNeighborsClassMode",
     "sqeuclidean_row_norms",
 ]

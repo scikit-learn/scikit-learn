@@ -179,7 +179,7 @@ class DecisionBoundaryDisplay:
             Object that stores computed values.
         """
         check_matplotlib_support("DecisionBoundaryDisplay.plot")
-        import matplotlib.pyplot as plt  # noqa
+        import matplotlib.pyplot as plt
 
         if plot_method not in ("contourf", "contour", "pcolormesh"):
             raise ValueError(
