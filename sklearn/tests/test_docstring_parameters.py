@@ -224,6 +224,10 @@ def test_fit_docstring_attributes(name, Estimator):
     elif Estimator.__name__ == "TSNE":
         # default raises an error, perplexity must be less than n_samples
         est.set_params(perplexity=2)
+    # TODO(1.9) remove
+    elif Estimator.__name__ == "KBinsDiscretizer":
+        # default raises an FutureWarning if quantile method is at default "warn"
+        est.set_params(quantile_method="averaged_inverted_cdf")
 
     # Low max iter to speed up tests: we are only interested in checking the existence
     # of fitted attributes. This should be invariant to whether it has converged or not.
@@ -359,7 +363,7 @@ def test_precision_recall_f_score_docstring_consistency():
             by support \(the number of true instances for each label\)\. This
             alters 'macro' to account for label imbalance; it can result in an
             F-score that is not between precision and recall\."""
-        + r"[\s\w]*\.*"  # optionally match additonal sentence
+        + r"[\s\w]*\.*"  # optionally match additional sentence
         + r"""
         ``'samples'``:
             Calculate metrics for each instance, and find their average \(only

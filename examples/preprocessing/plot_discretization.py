@@ -44,7 +44,9 @@ y = np.sin(X) + rnd.normal(size=len(X)) / 3
 X = X.reshape(-1, 1)
 
 # transform the dataset with KBinsDiscretizer
-enc = KBinsDiscretizer(n_bins=10, encode="onehot")
+enc = KBinsDiscretizer(
+    n_bins=10, encode="onehot", quantile_method="averaged_inverted_cdf"
+)
 X_binned = enc.fit_transform(X)
 
 # predict with original dataset

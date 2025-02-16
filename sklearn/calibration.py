@@ -28,11 +28,7 @@ from .isotonic import IsotonicRegression
 from .model_selection import LeaveOneOut, check_cv, cross_val_predict
 from .preprocessing import LabelEncoder, label_binarize
 from .svm import LinearSVC
-from .utils import (
-    _safe_indexing,
-    column_or_1d,
-    indexable,
-)
+from .utils import _safe_indexing, column_or_1d, get_tags, indexable
 from .utils._param_validation import (
     HasMethods,
     Hidden,
@@ -452,7 +448,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 if len(self.classes_) == 2:
                     # Ensure shape (n_samples, 1) in the binary case
                     if method_name == "predict_proba":
-                        # Select the probability column of the postive class
+                        # Select the probability column of the positive class
                         predictions = _process_predict_proba(
                             y_pred=predictions,
                             target_type="binary",
@@ -553,6 +549,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             )
         )
         return router
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = get_tags(self._get_estimator()).input_tags.sparse
+        return tags
 
 
 def _fit_classifier_calibrator_pair(
@@ -1195,8 +1196,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         strategy="uniform",
         pos_label=None,
         name=None,
-        ref_line=True,
         ax=None,
+        ref_line=True,
         **kwargs,
     ):
         """Plot calibration curve using a binary classifier and data.
@@ -1250,13 +1251,13 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             Name for labeling curve. If `None`, the name of the estimator is
             used.
 
-        ref_line : bool, default=True
-            If `True`, plots a reference line representing a perfectly
-            calibrated classifier.
-
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
             created.
+
+        ref_line : bool, default=True
+            If `True`, plots a reference line representing a perfectly
+            calibrated classifier.
 
         **kwargs : dict
             Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.
@@ -1318,8 +1319,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         strategy="uniform",
         pos_label=None,
         name=None,
-        ref_line=True,
         ax=None,
+        ref_line=True,
         **kwargs,
     ):
         """Plot calibration curve using true labels and predicted probabilities.
@@ -1366,13 +1367,13 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         name : str, default=None
             Name for labeling curve.
 
-        ref_line : bool, default=True
-            If `True`, plots a reference line representing a perfectly
-            calibrated classifier.
-
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
             created.
+
+        ref_line : bool, default=True
+            If `True`, plots a reference line representing a perfectly
+            calibrated classifier.
 
         **kwargs : dict
             Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.
