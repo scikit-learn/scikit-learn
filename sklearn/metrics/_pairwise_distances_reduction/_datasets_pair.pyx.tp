@@ -98,6 +98,12 @@ cdef class DatasetsPair{{name_suffix}}:
             metric_kwargs = copy.copy(metric_kwargs)
             metric_kwargs.pop("X_norm_squared", None)
             metric_kwargs.pop("Y_norm_squared", None)
+
+        if metric == 'precomputed':
+            return PrecomputedDistanceMatrix{{name_suffix}}(
+                distance_matrix=Y,
+            )
+
         cdef:
             {{DistanceMetric}} distance_metric = DistanceMetric.get_metric(
                 metric,
@@ -157,6 +163,47 @@ cdef class DatasetsPair{{name_suffix}}:
         # This _must_ always be overwritten in subclasses.
         # TODO: add "with gil: raise" here when supporting Cython 3.0
         return -1
+
+
+@final
+cdef class PrecomputedDistanceMatrix{{name_suffix}}(DatasetsPair{{name_suffix}}):
+    """A precomputed distance matrix between row vectors of two arrays.
+
+    Parameters
+    ----------
+    distance_matrix: ndarray of shape (n_samples_X, n_samples_Y)
+        Rows represent vectors. Must be C-contiguous.
+    """
+
+    def __init__(
+        self,
+        const {{INPUT_DTYPE_t}}[:, ::1] distance_matrix,
+    ):
+        super().__init__(
+            # This DistanceMetric is necessary for conversion between
+            # reduced distance and distance (it performs no-ops).
+            distance_metric={{DistanceMetric}}(),
+            n_features=0,
+        )
+        # Arrays have already been checked
+        self.distance_matrix = distance_matrix
+
+    @final
+    cdef ITYPE_t n_samples_X(self) noexcept nogil:
+        return self.distance_matrix.shape[0]
+
+    @final
+    cdef ITYPE_t n_samples_Y(self) noexcept nogil:
+        return self.distance_matrix.shape[1]
+
+    @final
+    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) noexcept nogil:
+        return self.distance_matrix[i, j]
+
+    @final
+    cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) noexcept nogil:
+        return self.distance_matrix[i, j]
+
 
 @final
 cdef class DenseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
