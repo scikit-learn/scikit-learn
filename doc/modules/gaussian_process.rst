@@ -185,6 +185,9 @@ hyperparameters used in the first figure by black dots.
    :target: ../auto_examples/gaussian_process/plot_gpc.html
    :align: center
 
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_gaussian_process_plot_gpc_isoprobability.py`
 
 Illustration of GPC on the XOR dataset
 --------------------------------------
@@ -204,6 +207,9 @@ often obtain better results.
 
 .. currentmodule:: sklearn.gaussian_process
 
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_gaussian_process_plot_gpc_xor.py`
 
 Gaussian process classification (GPC) on iris dataset
 -----------------------------------------------------
@@ -218,6 +224,10 @@ assigning different length-scales to the two feature dimensions.
    :target: ../auto_examples/gaussian_process/plot_gpc_iris.html
    :align: center
 
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_gaussian_process_plot_gpc.py`
+* :ref:`sphx_glr_auto_examples_gaussian_process_plot_gpc_iris.py`
 
 .. _gp_kernels:
 
