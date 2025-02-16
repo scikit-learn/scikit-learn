@@ -6,9 +6,10 @@ from operator import attrgetter
 
 import numpy as np
 import pytest
+from joblib import parallel_backend
 from numpy.testing import assert_allclose, assert_array_almost_equal, assert_array_equal
 
-from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.base import BaseEstimator, ClassifierMixin, is_classifier
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.cross_decomposition import CCA, PLSCanonical, PLSRegression
 from sklearn.datasets import load_iris, make_classification, make_friedman1
@@ -22,12 +23,11 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC, SVR, LinearSVR
 from sklearn.utils import check_random_state
-from sklearn.utils._tags import default_tags
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.fixes import CSR_CONTAINERS
 
 
-class MockClassifier(ClassifierMixin):
+class MockClassifier(ClassifierMixin, BaseEstimator):
     """
     Dummy classifier to test recursive feature elimination
     """
@@ -58,7 +58,7 @@ class MockClassifier(ClassifierMixin):
         return self
 
     def __sklearn_tags__(self):
-        tags = default_tags(self)
+        tags = super().__sklearn_tags__()
         tags.input_tags.allow_nan = True
         return tags
 
@@ -325,7 +325,7 @@ def test_rfecv_cv_results_size(global_random_seed):
 
 def test_rfe_estimator_tags():
     rfe = RFE(SVC(kernel="linear"))
-    assert rfe._estimator_type == "classifier"
+    assert is_classifier(rfe)
     # make sure that cross-validation is stratified
     iris = load_iris()
     score = cross_val_score(rfe, iris.data, iris.target)
@@ -703,3 +703,21 @@ def test_rfe_with_sample_weight():
     rfe_sw_2.fit(X, y, sample_weight=sample_weight_2)
 
     assert not np.array_equal(rfe_sw_2.ranking_, rfe.ranking_)
+
+
+def test_rfe_with_joblib_threading_backend(global_random_seed):
+    X, y = make_classification(random_state=global_random_seed)
+
+    clf = LogisticRegression()
+    rfe = RFECV(
+        estimator=clf,
+        n_jobs=2,
+    )
+
+    rfe.fit(X, y)
+    ranking_ref = rfe.ranking_
+
+    with parallel_backend("threading"):
+        rfe.fit(X, y)
+
+    assert_array_equal(ranking_ref, rfe.ranking_)

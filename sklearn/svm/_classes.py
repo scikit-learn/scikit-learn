@@ -351,15 +351,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # TODO: replace by a statistical test when _dual=True, see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-            "check_non_transformer_estimators_n_iter": (
-                "n_iter_ cannot be easily accessed."
-            ),
-        }
+        tags.input_tags.sparse = True
         return tags
 
 
@@ -615,12 +607,7 @@ class LinearSVR(RegressorMixin, LinearModel):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # TODO: replace by a statistical test, see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
+        tags.input_tags.sparse = True
         return tags
 
 
@@ -856,7 +843,7 @@ class SVC(BaseSVC):
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
-    For a comaprison of the SVC with other classifiers see:
+    For a comparison of the SVC with other classifiers see:
     :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`.
     """
 
@@ -899,18 +886,6 @@ class SVC(BaseSVC):
             break_ties=break_ties,
             random_state=random_state,
         )
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            # TODO: fix sample_weight handling of this estimator when probability=False
-            # TODO: replace by a statistical test when probability=True
-            # see meta-issue #16298
-            "check_sample_weight_equivalence": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
-        return tags
 
 
 class NuSVC(BaseSVC):
@@ -1175,25 +1150,6 @@ class NuSVC(BaseSVC):
             random_state=random_state,
         )
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_methods_subset_invariance": (
-                "fails for the decision_function method"
-            ),
-            "check_class_weight_classifiers": "class_weight is ignored.",
-            # TODO: fix sample_weight handling of this estimator when probability=False
-            # TODO: replace by a statistical test when probability=True
-            # see meta-issue #16298
-            "check_sample_weight_equivalence": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-            "check_classifiers_one_label_sample_weights": (
-                "specified nu is infeasible for the fit."
-            ),
-        }
-        return tags
-
 
 class SVR(RegressorMixin, BaseLibSVM):
     """Epsilon-Support Vector Regression.
@@ -1217,6 +1173,8 @@ class SVR(RegressorMixin, BaseLibSVM):
          Specifies the kernel type to be used in the algorithm.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
+         For an intuitive visualization of different kernel types
+         see :ref:`sphx_glr_auto_examples_svm_plot_svm_regression.py`
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
@@ -1386,16 +1344,6 @@ class SVR(RegressorMixin, BaseLibSVM):
             random_state=None,
         )
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
-        return tags
-
 
 class NuSVR(RegressorMixin, BaseLibSVM):
     """Nu Support Vector Regression.
@@ -1425,6 +1373,8 @@ class NuSVR(RegressorMixin, BaseLibSVM):
          Specifies the kernel type to be used in the algorithm.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
+         For an intuitive visualization of different kernel types see
+         See :ref:`sphx_glr_auto_examples_svm_plot_svm_regression.py`
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
@@ -1580,16 +1530,6 @@ class NuSVR(RegressorMixin, BaseLibSVM):
             max_iter=max_iter,
             random_state=None,
         )
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
-        return tags
 
 
 class OneClassSVM(OutlierMixin, BaseLibSVM):
@@ -1847,13 +1787,3 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         """
         y = super().predict(X)
         return np.asarray(y, dtype=np.intp)
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
-        return tags

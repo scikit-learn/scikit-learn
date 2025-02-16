@@ -991,8 +991,7 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
         >>> print(digits.data.shape)
         (1797, 64)
         >>> import matplotlib.pyplot as plt
-        >>> plt.gray()
-        >>> plt.matshow(digits.images[0])
+        >>> plt.matshow(digits.images[0], cmap="gray")
         <...>
         >>> plt.show()
     """

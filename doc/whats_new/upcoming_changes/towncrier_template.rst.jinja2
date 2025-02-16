@@ -1,3 +1,6 @@
+{% set version_underscore = versiondata.version.replace('.', '_') %}
+.. _changes_{{ version_underscore }}:
+
 {% set title = "Version " + versiondata.version %}
 {{ title }}
 {{ top_underline * title|length }}

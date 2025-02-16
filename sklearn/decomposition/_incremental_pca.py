@@ -306,11 +306,11 @@ class IncrementalPCA(_BasePCA):
                 "more rows than columns for IncrementalPCA "
                 "processing" % (self.n_components, n_features)
             )
-        elif not self.n_components <= n_samples:
+        elif self.n_components > n_samples and first_pass:
             raise ValueError(
-                "n_components=%r must be less or equal to "
-                "the batch number of samples "
-                "%d." % (self.n_components, n_samples)
+                f"n_components={self.n_components} must be less or equal to "
+                f"the batch number of samples {n_samples} for the first "
+                "partial_fit call."
             )
         else:
             self.n_components_ = self.n_components
@@ -418,3 +418,9 @@ class IncrementalPCA(_BasePCA):
             return np.vstack(output)
         else:
             return super().transform(X)
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # Beware that fit accepts sparse data but partial_fit doesn't
+        tags.input_tags.sparse = True
+        return tags

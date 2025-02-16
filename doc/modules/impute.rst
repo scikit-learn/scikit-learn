@@ -110,9 +110,9 @@ imputation round are returned.
    This estimator is still **experimental** for now: default parameters or
    details of behaviour might change without any deprecation cycle. Resolving
    the following issues would help stabilize :class:`IterativeImputer`:
-   convergence criteria (:issue:`14338`), default estimators (:issue:`13286`),
-   and use of random state (:issue:`15611`). To use it, you need to explicitly
-   import ``enable_iterative_imputer``.
+   convergence criteria (:issue:`14338`) and default estimators
+   (:issue:`13286`). To use it, you need to explicitly import
+   ``enable_iterative_imputer``.
 
 ::
 
@@ -250,7 +250,7 @@ imputation. While this feature will not help in predictive setting, dropping
 the columns will change the shape of `X` which could be problematic when using
 imputers in a more complex machine-learning pipeline. The parameter
 `keep_empty_features` offers the option to keep the empty features by imputing
-with a constant values. In most of the cases, this constant value is zero::
+with a constant value. In most of the cases, this constant value is zero::
 
   >>> imputer.set_params(keep_empty_features=True)
   SimpleImputer(keep_empty_features=True)

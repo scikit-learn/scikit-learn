@@ -2337,6 +2337,38 @@ def test_regressor_predict_on_arraylikes():
     assert_allclose(est.predict([[0, 2.5]]), [6])
 
 
+@pytest.mark.parametrize(
+    "Estimator, params",
+    [
+        (neighbors.KNeighborsClassifier, {"n_neighbors": 2}),
+        (neighbors.KNeighborsRegressor, {"n_neighbors": 2}),
+        (neighbors.RadiusNeighborsRegressor, {}),
+        (neighbors.RadiusNeighborsClassifier, {}),
+        (neighbors.KNeighborsTransformer, {"n_neighbors": 2}),
+        (neighbors.RadiusNeighborsTransformer, {"radius": 1.5}),
+        (neighbors.LocalOutlierFactor, {"n_neighbors": 1}),
+    ],
+)
+def test_nan_euclidean_support(Estimator, params):
+    """Check that the different neighbor estimators are lenient towards `nan`
+    values if using `metric="nan_euclidean"`.
+    """
+
+    X = [[0, 1], [1, np.nan], [2, 3], [3, 5]]
+    y = [0, 0, 1, 1]
+
+    params.update({"metric": "nan_euclidean"})
+    estimator = Estimator().set_params(**params).fit(X, y)
+
+    for response_method in ("kneighbors", "predict", "transform", "fit_predict"):
+        if hasattr(estimator, response_method):
+            output = getattr(estimator, response_method)(X)
+            if hasattr(output, "toarray"):
+                assert not np.isnan(output.data).any()
+            else:
+                assert not np.isnan(output).any()
+
+
 def test_predict_dataframe():
     """Check that KNN predict works with dataframes
 

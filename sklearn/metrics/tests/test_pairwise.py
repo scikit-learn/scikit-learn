@@ -1583,6 +1583,33 @@ def test_numeric_pairwise_distances_datatypes(metric, global_dtype, y_is_x):
 
 
 @pytest.mark.parametrize(
+    "pairwise_distances_func",
+    [pairwise_distances, pairwise_distances_argmin, pairwise_distances_argmin_min],
+)
+def test_nan_euclidean_support(pairwise_distances_func):
+    """Check that `nan_euclidean` is lenient with `nan` values."""
+
+    X = [[0, 1], [1, np.nan], [2, 3], [3, 5]]
+    output = pairwise_distances_func(X, X, metric="nan_euclidean")
+
+    assert not np.isnan(output).any()
+
+
+def test_nan_euclidean_constant_input_argmin():
+    """Check that the behavior of constant input is the same in the case of
+    full of nan vector and full of zero vector.
+    """
+
+    X_nan = [[np.nan, np.nan], [np.nan, np.nan], [np.nan, np.nan]]
+    argmin_nan = pairwise_distances_argmin(X_nan, X_nan, metric="nan_euclidean")
+
+    X_const = [[0, 0], [0, 0], [0, 0]]
+    argmin_const = pairwise_distances_argmin(X_const, X_const, metric="nan_euclidean")
+
+    assert_allclose(argmin_nan, argmin_const)
+
+
+@pytest.mark.parametrize(
     "X,Y,expected_distance",
     [
         (
