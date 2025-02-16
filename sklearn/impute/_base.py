@@ -769,7 +769,14 @@ class SimpleImputer(_BaseImputer):
         input_features = _check_feature_names_in(self, input_features)
         non_missing_mask = np.logical_not(_get_mask(self.statistics_, np.nan))
         names = input_features[non_missing_mask]
-        return self._concatenate_indicator_feature_names_out(names, input_features)
+        return self._concatenate_indicator_feature_names_out(names, input_features
+
+    def _drop_empty_columns(self, X):
+        """Check and drop columns full of np.nan when keep_empty_features=False."""
+        if not self.keep_empty_features:
+            non_empty_columns = np.any(~np.isnan(X), axis=0)
+            return X[:, non_empty_columns], non_empty_columns
+        return X
 
 
 class MissingIndicator(TransformerMixin, BaseEstimator):
