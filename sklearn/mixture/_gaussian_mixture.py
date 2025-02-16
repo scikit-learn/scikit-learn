@@ -537,6 +537,9 @@ class GaussianMixture(BaseMixture):
         - 'diag': each component has its own diagonal covariance matrix.
         - 'spherical': each component has its own single variance.
 
+        For an example of using `covariance_type`, refer to
+        :ref:`sphx_glr_auto_examples_mixture_plot_gmm_selection.py`.
+
     tol : float, default=1e-3
         The convergence threshold. EM iterations will stop when the
         lower bound average gain is below this threshold.
@@ -884,6 +887,9 @@ class GaussianMixture(BaseMixture):
 
         You can refer to this :ref:`mathematical section <aic_bic>` for more
         details regarding the formulation of the BIC used.
+
+        For an example of GMM selection using `bic` information criterion,
+        refer to :ref:`sphx_glr_auto_examples_mixture_plot_gmm_selection.py`.
 
         Parameters
         ----------
