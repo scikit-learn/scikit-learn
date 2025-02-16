@@ -1,0 +1,4 @@
+- :class:`sklearn.linear_model.LogisticRegressionCV` now properly uses sample_weights in
+  :func:`sklearn.linear_model.LogisticRegressionCV.score` when called with
+  :func:`sklearn.set_config` with enable_metadata_routing=True
+  By :user:`David Leonardo Espinosa <Dalesrox>`
