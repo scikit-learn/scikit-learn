@@ -1873,6 +1873,9 @@ class MiniBatchKMeans(_BaseKMeans):
            [1.06896552, 1.        ]])
     >>> kmeans.predict([[0, 0], [4, 4]])
     array([1, 0], dtype=int32)
+
+    For a comparison of Mini-Batch K-Means clustering with other clustering algorithms,
+    see :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
     """
 
     _parameter_constraints: dict = {
