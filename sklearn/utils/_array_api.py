@@ -50,7 +50,9 @@ def yield_namespaces(include_numpy_namespaces=True):
         yield array_namespace
 
 
-def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
+def yield_namespace_device_dtype_combinations(
+    include_numpy_namespaces=True, include_float16=False
+):
     """Yield supported namespace, device, dtype tuples for testing.
 
     Use this to test that an estimator works with all combinations.
@@ -59,6 +61,9 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
     ----------
     include_numpy_namespaces : bool, default=True
         If True, also yield numpy namespaces.
+
+    include_float16: bool, default=False
+        If True, yield float16 dtypes with torch namespaces.
 
     Returns
     -------
@@ -77,9 +82,10 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
         include_numpy_namespaces=include_numpy_namespaces
     ):
         if array_namespace == "torch":
-            for device, dtype in itertools.product(
-                ("cpu", "cuda"), ("float64", "float32")
-            ):
+            dtypes = ("float64", "float32")
+            if include_float16:
+                dtypes = (*dtypes, "float16")
+            for device, dtype in itertools.product(("cpu", "cuda"), dtypes):
                 yield array_namespace, device, dtype
             yield array_namespace, "mps", "float32"
         else:
@@ -223,10 +229,58 @@ def _union1d(a, b, xp):
 
 
 def isdtype(dtype, kind, *, xp):
-    """Returns a boolean indicating whether a provided dtype is of type "kind".
+    """Return a boolean indicating whether a provided dtype is of type "kind".
 
     Included in the v2022.12 of the Array API spec.
     https://data-apis.org/array-api/latest/API_specification/generated/array_api.isdtype.html
+
+    Parameters
+    ----------
+    dtype : dtype
+        The input dtype (e.g. ``np.float32``, ``torch.int16``, ``xp.complex64``).
+
+    kind : str or dtype or tuple[str | dtype]
+        Data type kind.
+
+        - If ``kind`` is a dtype, then ``dtype`` is compared to the dtype specified
+          by ``kind``.
+        - If ``kind`` is a string, ``dtype`` is checked to be included in a set of
+          dtypes determined by ``kind``. ``kind`` must be one of:
+
+          - "bool": boolean data types (i.e. ``bool``).
+          - "signed integer": signed integer data types (e.g. ``int8``, ``int16``).
+          - "unsigned integer": unsigned integer data types (e.g. ``uint8``,
+            ``uint16``).
+          - "integral": integer data types. Shorthand for
+            ``("signed integer", "unsigned integer")``.
+          - "real floating": real-valued floating-point data types (i.e., ``float32``,
+            ``float64``). This will include ``float16`` if the array namespace ``xp``
+            supports it.
+          - "complex floating": complex floating-point data types (e.g. ``complex64``,
+            ``complex128``).
+          - "numeric": numeric data types. Shorthand for ``("integral",
+            "real floating", "complex floating")``. Note this excludes the ``bool``
+            data type.
+        - If ``kind`` is a tuple, the tuple is a union of dtypes and/or kinds, and
+          ``dtype`` is checked to be either equal to a specified dtype or
+          belongs to at least one specified data type kind.
+
+    xp : module
+        The array namespace to which ``dtype`` belongs.
+
+    Returns
+    -------
+    flag : bool
+        True if ``dtype`` is of type ``kind``, and False otherwise.
+
+    Notes
+    -----
+    Consumers outside the `utils._array_api` module should use `xp.isdtype` instead,
+    which will behave correctly for array namespaces which define a different
+    set of valid data types
+
+    E.g., `torch` does not have the standard ``uint16`` data type, but does include
+    the non-standard ``bfloat16`` data type.
     """
     if isinstance(kind, tuple):
         return any(_isdtype_single(dtype, k, xp=xp) for k in kind)
@@ -268,19 +322,103 @@ def _isdtype_single(dtype, kind, *, xp):
         return dtype == kind
 
 
-def supported_float_dtypes(xp):
-    """Supported floating point types for the namespace.
+def supported_float_dtypes(xp, device=None):
+    """Supported floating point types for the namespace/device pair.
 
-    Note: float16 is not officially part of the Array API spec at the
+    Parameters
+    ----------
+    xp : module
+        Array namespace to inspect.
+
+    device : str or device instance from xp, default=None
+        Device to use for dtype selection. If ``None``, then a default device
+        is assumed.
+
+    Returns
+    -------
+    supported_dtypes : tuple
+        Tuple of real floating data types supported by the provided array namespace,
+        ordered from the highest precision to lowest.
+
+    See Also
+    --------
+    max_precision_float_dtype : Maximum float dtype for a namespace/device pair.
+
+    Notes
+    -----
+    `float16` is not officially part of the Array API spec at the
     time of writing but scikit-learn estimators and functions can choose
     to accept it when xp.float16 is defined.
 
+    Additionally, some devices available within a namespace may not support
+    all floating-point types that the namespace provides.
+
     https://data-apis.org/array-api/latest/API_specification/data_types.html
     """
-    if hasattr(xp, "float16"):
-        return (xp.float64, xp.float32, xp.float16)
+    # TODO: Update to use `__array_namespace__info__()` from array-api v2023.12
+    #       when/if that becomes more widespread.
+    if (
+        xp.__name__ in {"array_api_compat.torch", "torch"}
+        and getattr(device, "type", device) == "mps"
+    ):
+        # N.B. Yanked from pull/27232
+        dtypes = (xp.float32,)
     else:
-        return (xp.float64, xp.float32)
+        dtypes = (xp.float64, xp.float32)
+
+    if hasattr(xp, "float16"):
+        return (*dtypes, xp.float16)
+
+    return dtypes
+
+
+def max_precision_float_dtype(xp, device=None):
+    """Get the maximum precision real-floating type for the namespace and device.
+
+    Parameters
+    ----------
+    xp : module
+        Array namespace.
+
+    device : str, default=None
+        Device to use for dtype selection. If ``None``, then the maximum
+        precision in the namespace is returned.
+
+    Returns
+    -------
+    dtype: data-type
+        The maximum precision real-floating data type supported by the namespace
+        and device.
+
+    See Also
+    --------
+    supported_float_dtypes : All supported real floating dtypes for a namespace.
+    """
+    return supported_float_dtypes(xp, device=device)[0]
+
+
+def default_precision_float_dtype(xp, device=None):
+    """Get the default precision real-floating type for the namespace/device pair.
+
+    Parameters
+    ----------
+    xp : module
+        Array namespace.
+
+    device : str, default=None
+        Device to use for dtype selection. If ``None``, then the default
+        precision for the default device is returned.
+
+    Returns
+    -------
+    dtype: data-type
+        The default precision real-floating data type for the namespace and device.
+
+    See Also
+    --------
+    supported_float_dtypes : All supported real floating dtypes for a namespace.
+    """
+    return xp.asarray(1.0, device=device).dtype
 
 
 def ensure_common_namespace_device(reference, *arrays):
@@ -587,7 +725,9 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     return namespace, is_array_api_compliant
 
 
-def get_namespace_and_device(*array_list, remove_none=True, remove_types=(str,)):
+def get_namespace_and_device(
+    *array_list, remove_none=True, remove_types=(str,), xp=None
+):
     """Combination into one single function of `get_namespace` and `device`.
 
     Parameters
@@ -598,6 +738,10 @@ def get_namespace_and_device(*array_list, remove_none=True, remove_types=(str,))
         Whether to ignore None objects passed in arrays.
     remove_types : tuple or list, default=(str,)
         Types to ignore in the arrays.
+    xp : module, default=None
+        Precomputed array namespace module. When passed, typically from a caller
+        that has already performed inspection of its own inputs, skips array
+        namespace inspection.
 
     Returns
     -------
@@ -609,6 +753,7 @@ def get_namespace_and_device(*array_list, remove_none=True, remove_types=(str,))
         Always False when array_api_dispatch=False.
     device : device
         `device` object (see the "Device Support" section of the array API spec).
+        Will be `None` if the array-api dispatch is disabled.
     """
     array_list = _remove_non_arrays(
         *array_list,
@@ -618,7 +763,7 @@ def get_namespace_and_device(*array_list, remove_none=True, remove_types=(str,))
 
     skip_remove_kwargs = dict(remove_none=False, remove_types=[])
 
-    xp, is_array_api = get_namespace(*array_list, **skip_remove_kwargs)
+    xp, is_array_api = get_namespace(*array_list, xp=xp, **skip_remove_kwargs)
     arrays_device = device(*array_list, **skip_remove_kwargs)
     if is_array_api:
         return xp, is_array_api, arrays_device
@@ -814,6 +959,19 @@ def _nanmean(X, axis=None, xp=None):
         total = xp.sum(xp.where(mask, xp.asarray(0.0, device=device(X)), X), axis=axis)
         count = xp.sum(xp.astype(xp.logical_not(mask), X.dtype), axis=axis)
         return total / count
+
+
+def _nansum(X, axis=None, xp=None, keepdims=False, dtype=None):
+    # TODO: refactor once nan-aware reductions are standardized:
+    # https://github.com/data-apis/array-api/issues/621
+    xp, _, X_device = get_namespace_and_device(X, xp=xp)
+
+    if _is_numpy_namespace(xp):
+        return xp.asarray(numpy.nansum(X, axis=axis, keepdims=keepdims, dtype=dtype))
+
+    mask = xp.isnan(X)
+    masked_arr = xp.where(mask, xp.asarray(0, device=X_device, dtype=X.dtype), X)
+    return xp.sum(masked_arr, axis=axis, keepdims=keepdims, dtype=dtype)
 
 
 def _asarray_with_order(
