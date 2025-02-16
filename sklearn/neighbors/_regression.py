@@ -195,13 +195,6 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         tags = super().__sklearn_tags__()
         # For cross-validation routines to split data correctly
         tags.input_tags.pairwise = self.metric == "precomputed"
-        if tags.input_tags.pairwise:
-            tags._xfail_checks.update(
-                {
-                    "check_n_features_in_after_fitting": "FIXME",
-                    "check_dataframe_column_names_consistency": "FIXME",
-                }
-            )
         return tags
 
     @_fit_context(

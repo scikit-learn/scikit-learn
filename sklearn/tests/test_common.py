@@ -19,6 +19,7 @@ from scipy.linalg import LinAlgWarning
 import sklearn
 from sklearn.base import BaseEstimator
 from sklearn.compose import ColumnTransformer
+from sklearn.datasets import make_classification
 from sklearn.exceptions import ConvergenceWarning
 
 # make it possible to discover experimental estimators when calling `all_estimators`
@@ -35,9 +36,9 @@ from sklearn.preprocessing import (
     StandardScaler,
 )
 from sklearn.utils import all_estimators
-from sklearn.utils._tags import get_tags
 from sklearn.utils._test_common.instance_generator import (
     _get_check_estimator_ids,
+    _get_expected_failed_checks,
     _tested_estimators,
 )
 from sklearn.utils._testing import (
@@ -111,7 +112,9 @@ def test_get_check_estimator_ids(val, expected):
     assert _get_check_estimator_ids(val) == expected
 
 
-@parametrize_with_checks(list(_tested_estimators()))
+@parametrize_with_checks(
+    list(_tested_estimators()), expected_failed_checks=_get_expected_failed_checks
+)
 def test_estimators(estimator, check, request):
     # Common tests for estimator instances
     with ignore_warnings(
@@ -120,8 +123,14 @@ def test_estimators(estimator, check, request):
         check(estimator)
 
 
-def test_check_estimator_generate_only():
-    all_instance_gen_checks = check_estimator(LogisticRegression(), generate_only=True)
+# TODO(1.8): remove test when generate_only is removed
+def test_check_estimator_generate_only_deprecation():
+    """Check that check_estimator with generate_only=True raises a deprecation
+    warning."""
+    with pytest.warns(FutureWarning, match="`generate_only` is deprecated in 1.6"):
+        all_instance_gen_checks = check_estimator(
+            LogisticRegression(), generate_only=True
+        )
     assert isgenerator(all_instance_gen_checks)
 
 
@@ -212,36 +221,6 @@ def test_class_support_removed():
         parametrize_with_checks([LogisticRegression])
 
 
-@pytest.mark.parametrize(
-    "estimator", _tested_estimators(), ids=_get_check_estimator_ids
-)
-def test_valid_tag_types(estimator):
-    """Check that estimator tags are valid."""
-    from dataclasses import fields
-
-    from ..utils._tags import default_tags
-
-    def check_field_types(tags, defaults):
-        if tags is None:
-            return
-        tags_fields = fields(tags)
-        for field in tags_fields:
-            correct_tags = type(getattr(defaults, field.name))
-            if field.name == "_xfail_checks":
-                # _xfail_checks can be a dictionary
-                correct_tags = (correct_tags, dict)
-            assert isinstance(getattr(tags, field.name), correct_tags)
-
-    tags = get_tags(estimator)
-    defaults = default_tags(estimator)
-    check_field_types(tags, defaults)
-    check_field_types(tags.input_tags, defaults.input_tags)
-    check_field_types(tags.target_tags, defaults.target_tags)
-    check_field_types(tags.classifier_tags, defaults.classifier_tags)
-    check_field_types(tags.regressor_tags, defaults.regressor_tags)
-    check_field_types(tags.transformer_tags, defaults.transformer_tags)
-
-
 def _estimators_that_predict_in_fit():
     for estimator in _tested_estimators():
         est_params = set(estimator.get_params())
@@ -278,8 +257,9 @@ column_name_estimators = list(
 def test_pandas_column_name_consistency(estimator):
     if isinstance(estimator, ColumnTransformer):
         pytest.skip("ColumnTransformer is not tested here")
-    tags = get_tags(estimator)
-    if "check_dataframe_column_names_consistency" in tags._xfail_checks:
+    if "check_dataframe_column_names_consistency" in _get_expected_failed_checks(
+        estimator
+    ):
         pytest.skip(
             "Estimator does not support check_dataframe_column_names_consistency"
         )
@@ -424,3 +404,37 @@ def test_check_inplace_ensure_writeable(estimator):
         estimator.set_params(kernel="precomputed")
 
     check_inplace_ensure_writeable(name, estimator)
+
+
+# TODO(1.7): Remove this test when the deprecation cycle is over
+def test_transition_public_api_deprecations():
+    """This test checks that we raised deprecation warning explaining how to transition
+    to the new developer public API from 1.5 to 1.6.
+    """
+
+    class OldEstimator(BaseEstimator):
+        def fit(self, X, y=None):
+            X = self._validate_data(X)
+            self._check_n_features(X, reset=True)
+            self._check_feature_names(X, reset=True)
+            return self
+
+        def transform(self, X):
+            return X  # pragma: no cover
+
+    X, y = make_classification(n_samples=10, n_features=5, random_state=0)
+
+    old_estimator = OldEstimator()
+    with pytest.warns(FutureWarning) as warning_list:
+        old_estimator.fit(X)
+
+    assert len(warning_list) == 3
+    assert str(warning_list[0].message).startswith(
+        "`BaseEstimator._validate_data` is deprecated"
+    )
+    assert str(warning_list[1].message).startswith(
+        "`BaseEstimator._check_n_features` is deprecated"
+    )
+    assert str(warning_list[2].message).startswith(
+        "`BaseEstimator._check_feature_names` is deprecated"
+    )

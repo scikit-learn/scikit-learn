@@ -334,7 +334,7 @@ def test_decision_boundary_display_regressor(pyplot, response_method, plot_metho
 def test_error_bad_response(pyplot, response_method, msg):
     """Check errors for bad response."""
 
-    class MyClassifier(BaseEstimator, ClassifierMixin):
+    class MyClassifier(ClassifierMixin, BaseEstimator):
         def fit(self, X, y):
             self.fitted_ = True
             self.classes_ = [0, 1]

@@ -1,3 +1,0 @@
-- Escape double quotes for labels and feature names when exporting trees to Graphviz
-  format.
-  By :user:`Santiago M. Mola <smola>`.

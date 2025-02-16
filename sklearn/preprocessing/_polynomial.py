@@ -392,7 +392,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 )
             raise ValueError(msg)
         # We also record the number of output features for
-        # _max_degree = 0
+        # _min_degree = 0
         self._n_out_full = self._num_combinations(
             n_features=n_features,
             min_degree=0,
@@ -584,6 +584,11 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                     Xout = XP[:, n_XP - n_Xout :].copy()
                 XP = Xout
         return XP
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
 
 
 class SplineTransformer(TransformerMixin, BaseEstimator):
@@ -1171,13 +1176,3 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             # We chose the last one.
             indices = [j for j in range(XBS.shape[1]) if (j + 1) % n_splines != 0]
             return XBS[:, indices]
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_estimators_pickle": (
-                "Current Scipy implementation of _bsplines does not"
-                "support const memory views."
-            ),
-        }
-        return tags

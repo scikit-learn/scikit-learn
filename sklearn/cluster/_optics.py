@@ -2,12 +2,6 @@
 
 These routines execute the OPTICS algorithm, and implement various
 cluster extraction methods of the ordered list.
-
-Authors: Shane Grigsby <refuge@rocktalus.com>
-         Adrin Jalali <adrinjalali@gmail.com>
-         Erich Schubert <erich@debian.org>
-         Hanmin Qin <qinhanmin2005@sina.com>
-License: BSD 3 clause
 """
 
 # Authors: The scikit-learn developers

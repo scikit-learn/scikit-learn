@@ -11,7 +11,7 @@ import numpy as np
 from scipy import linalg, sparse
 
 from ..utils._param_validation import Interval, StrOptions, validate_params
-from ._array_api import _is_numpy_namespace, device, get_namespace
+from ._array_api import _average, _is_numpy_namespace, _nanmean, device, get_namespace
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array, check_random_state
 
@@ -1228,24 +1228,24 @@ def _nanaverage(a, weights=None):
     that :func:`np.nan` values are ignored from the average and weights can
     be passed. Note that when possible, we delegate to the prime methods.
     """
+    xp, _ = get_namespace(a)
+    if a.shape[0] == 0:
+        return xp.nan
 
-    if len(a) == 0:
-        return np.nan
-
-    mask = np.isnan(a)
-    if mask.all():
-        return np.nan
+    mask = xp.isnan(a)
+    if xp.all(mask):
+        return xp.nan
 
     if weights is None:
-        return np.nanmean(a)
+        return _nanmean(a, xp=xp)
 
-    weights = np.asarray(weights)
+    weights = xp.asarray(weights)
     a, weights = a[~mask], weights[~mask]
     try:
-        return np.average(a, weights=weights)
+        return _average(a, weights=weights)
     except ZeroDivisionError:
         # this is when all weights are zero, then ignore them
-        return np.average(a)
+        return _average(a)
 
 
 def safe_sqr(X, *, copy=True):

@@ -16,6 +16,8 @@ import numpy as np
 from scipy import linalg, optimize, sparse
 from scipy.sparse import linalg as sp_linalg
 
+from sklearn.base import BaseEstimator
+
 from ..base import MultiOutputMixin, RegressorMixin, _fit_context, is_classifier
 from ..exceptions import ConvergenceWarning
 from ..metrics import check_scoring, get_scorer_names
@@ -663,10 +665,8 @@ def _ridge_regression(
     if y.ndim > 2:
         raise ValueError("Target y has the wrong shape %s" % str(y.shape))
 
-    ravel = False
     if y.ndim == 1:
         y = xp.reshape(y, (-1, 1))
-        ravel = True
 
     n_samples_, n_targets = y.shape
 
@@ -1251,12 +1251,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.array_api_support = True
-        tags._xfail_checks.update(
-            {
-                "check_non_transformer_estimators_n_iter": (
-                    "n_iter_ cannot be easily accessed."
-                )
-            }
+        tags.input_tags.sparse = (self.solver != "svd") and (
+            self.solver != "cholesky" or not self.fit_intercept
         )
         return tags
 
@@ -1577,12 +1573,8 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags._xfail_checks.update(
-            {
-                "check_non_transformer_estimators_n_iter": (
-                    "n_iter_ cannot be easily accessed."
-                )
-            }
+        tags.input_tags.sparse = (self.solver != "svd") and (
+            self.solver != "cholesky" or not self.fit_intercept
         )
         return tags
 
@@ -1682,7 +1674,7 @@ class _XT_CenterStackOp(sparse.linalg.LinearOperator):
         return res
 
 
-class _IdentityRegressor:
+class _IdentityRegressor(RegressorMixin, BaseEstimator):
     """Fake regressor which will directly output the prediction."""
 
     def decision_function(self, y_predict):
@@ -1692,7 +1684,7 @@ class _IdentityRegressor:
         return y_predict
 
 
-class _IdentityClassifier(LinearClassifierMixin):
+class _IdentityClassifier(LinearClassifierMixin, BaseEstimator):
     """Fake classifier which will directly output the prediction.
 
     We inherit from LinearClassifierMixin to get the proper shape for the
@@ -2196,7 +2188,7 @@ class _RidgeGCV(LinearModel):
             else:
                 predictions = y - (c / G_inverse_diag)
                 # Rescale predictions back to original scale
-                if sample_weight is not None:  # avoid the unecessary division by ones
+                if sample_weight is not None:  # avoid the unnecessary division by ones
                     if predictions.ndim > 1:
                         predictions /= sqrt_sw[:, None]
                     else:
@@ -2372,7 +2364,7 @@ class _BaseRidgeCV(LinearModel):
         Notes
         -----
         When sample_weight is provided, the selected hyperparameter may depend
-        on whether we use leave-one-out cross-validation (cv=None or cv='auto')
+        on whether we use leave-one-out cross-validation (cv=None)
         or another form of cross-validation, because only leave-one-out
         cross-validation takes the sample weights into account when computing
         the validation score.
@@ -2550,6 +2542,11 @@ class _BaseRidgeCV(LinearModel):
     def cv_values_(self):
         return self.cv_results_
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     """Ridge regression with built-in cross-validation.
@@ -2578,10 +2575,14 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         (i.e. data is expected to be centered).
 
     scoring : str, callable, default=None
-        A string (see :ref:`scoring_parameter`) or a scorer callable object /
-        function with signature ``scorer(estimator, X, y)``. If None, the
-        negative mean squared error if cv is 'auto' or None (i.e. when using
-        leave-one-out cross-validation), and r2 score otherwise.
+        The scoring method to use for cross-validation. Options:
+
+        - str: see :ref:`scoring_string_names` for options.
+        - callable: a scorer callable object (e.g., function) with signature
+          ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
+        - `None`: negative :ref:`mean squared error <mean_squared_error>` if cv is
+          None (i.e. when using leave-one-out cross-validation), or
+          :ref:`coefficient of determination <r2_score>` (:math:`R^2`) otherwise.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -2613,7 +2614,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
 
     store_cv_results : bool, default=False
         Flag indicating if the cross-validation values corresponding to
-        each alpha should be stored in the ``cv_values_`` attribute (see
+        each alpha should be stored in the ``cv_results_`` attribute (see
         below). This flag is only compatible with ``cv=None`` (i.e. using
         Leave-One-Out Cross-Validation).
 
@@ -2731,22 +2732,13 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         Notes
         -----
         When sample_weight is provided, the selected hyperparameter may depend
-        on whether we use leave-one-out cross-validation (cv=None or cv='auto')
+        on whether we use leave-one-out cross-validation (cv=None)
         or another form of cross-validation, because only leave-one-out
         cross-validation takes the sample weights into account when computing
         the validation score.
         """
         super().fit(X, y, sample_weight=sample_weight, **params)
         return self
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "GridSearchCV does not forward the weights to the scorer by default."
-            ),
-        }
-        return tags
 
 
 class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
@@ -2777,8 +2769,14 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         (i.e. data is expected to be centered).
 
     scoring : str, callable, default=None
-        A string (see :ref:`scoring_parameter`) or a scorer callable object /
-        function with signature ``scorer(estimator, X, y)``.
+        The scoring method to use for cross-validation. Options:
+
+        - str: see :ref:`scoring_string_names` for options.
+        - callable: a scorer callable object (e.g., function) with signature
+          ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
+        - `None`: negative :ref:`mean squared error <mean_squared_error>` if cv is
+          None (i.e. when using leave-one-out cross-validation), or
+          :ref:`accuracy <accuracy_score>` otherwise.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
