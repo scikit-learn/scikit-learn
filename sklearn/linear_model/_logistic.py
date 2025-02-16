@@ -2240,6 +2240,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 sample_weight=sample_weight,
                 **score_params,
             )
+            if sample_weight is not None:
+                routed_params.scorer.score["sample_weight"] = (
+                    sample_weight  # Add sample_weight to scorer if passed
+                )
         else:
             routed_params = Bunch()
             routed_params.scorer = Bunch(score={})
