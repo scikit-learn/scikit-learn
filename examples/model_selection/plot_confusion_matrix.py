@@ -1,7 +1,7 @@
 """
-================
-Confusion matrix
-================
+==============================================================
+Evaluate the performance of a classifier with Confusion Matrix
+==============================================================
 
 Example of confusion matrix usage to evaluate the quality
 of the output of a classifier on the iris data set. The
@@ -67,5 +67,54 @@ for title, normalize in titles_options:
 
     print(title)
     print(disp.confusion_matrix)
+
+plt.show()
+
+# %%
+# Binary Classification
+# =====================
+#
+# For binary problems, :func:`sklearn.metrics.confusion_matrix` has the ``ravel`` method
+# we can use get counts of true negatives, false positives, false negatives and
+# true positives.
+#
+# :func:`sklearn.metrics.binary_classification_curve`
+# can be used to count true negatives, true positives, false positives, false negatives
+# for different threshold values. It is fundamental for binary classification metrics
+# like :func:`sklearn.metrics.roc_auc_score` and :func:`sklearn.metrics.det_curve`.
+
+from sklearn.datasets import make_classification
+from sklearn.metrics import binary_classification_curve
+
+X, y = make_classification(
+    n_samples=100,
+    n_features=20,
+    n_informative=20,
+    n_redundant=0,
+    n_classes=2,
+    random_state=42,
+)
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, random_state=42
+)
+
+classifier = svm.SVC(kernel="linear", C=0.01, probability=True)
+classifier.fit(X_train, y_train)
+
+y_score = classifier.predict_proba(X_test)[:, 1]
+
+tps, fps, threshold = binary_classification_curve(y_test, y_score)
+
+# Plot TPs and FPs vs Thresholds
+plt.figure(figsize=(10, 6))
+
+plt.plot(threshold, tps, label="True Positives (TPs)", color="blue")
+plt.plot(threshold, fps, label="False Positives (FPs)", color="red")
+plt.xlabel("Thresholds")
+plt.ylabel("Count")
+plt.title("TPs and FPs vs Thresholds")
+plt.legend()
+plt.grid()
 
 plt.show()
