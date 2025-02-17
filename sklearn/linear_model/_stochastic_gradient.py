@@ -156,12 +156,15 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             )
         if self.penalty == "elasticnet" and self.l1_ratio is None:
             raise ValueError("l1_ratio must be set when penalty is 'elasticnet'")
-        # fastSGD is expecting a float for l1_ratio, but it is not necessarily used
-        self.l1_ratio = 0 if self.l1_ratio is None else self.l1_ratio
 
         # raises ValueError if not registered
         self._get_penalty_type(self.penalty)
         self._get_learning_rate_type(self.learning_rate)
+
+    def _get_l1_ratio(self):
+        if self.l1_ratio is None:
+            return 0.0
+        return self.l1_ratio
 
     def _get_loss_function(self, loss):
         """Get concrete ``LossFunction`` object for str ``loss``."""
@@ -466,7 +469,7 @@ def fit_binary(
         penalty_type,
         alpha,
         C,
-        est.l1_ratio,
+        est._get_l1_ratio(),
         dataset,
         validation_mask,
         est.early_stopping,
@@ -1742,7 +1745,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             penalty_type,
             alpha,
             C,
-            self.l1_ratio,
+            self._get_l1_ratio(),
             dataset,
             validation_mask,
             self.early_stopping,
