@@ -1485,6 +1485,11 @@ Optionally, weights can be provided for the individual classifiers::
     >>> grid = GridSearchCV(estimator=eclf, param_grid=params, cv=5)
     >>> grid = grid.fit(iris.data, iris.target)
 
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_ensemble_plot_voting_decision_regions.py`
+* :ref:`sphx_glr_auto_examples_ensemble_plot_voting_probas.py`
+
 .. _voting_regressor:
 
 Voting Regressor
