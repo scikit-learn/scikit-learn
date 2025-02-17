@@ -242,7 +242,8 @@ clickable and can be expanded/collapsed.
 #$id div.sk-label label.sk-toggleable__label,
 #$id div.sk-label label {
   /* The background is the default theme color */
-  color: var(--sklearn-color-text-on-default-background);
+  color: var(--sklearn-color-text);
+  background-color: var(--sklearn-color-unfitted-level-2);
 }
 
 /* On hover, darken the color of the background */
