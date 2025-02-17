@@ -627,7 +627,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             caller="predict_log_proba", callee="predict_log_proba"
         ).add(caller="decision_function", callee="decision_function")
 
-        # the router needs to be build depending of whether the sub-estimator has a
+        # the router needs to be built depending on whether the sub-estimator has a
         # `predict_proba` method (as BaggingClassifier decides dynamically at runtime):
         if hasattr(self._get_estimator(), "predict_proba"):
             (
