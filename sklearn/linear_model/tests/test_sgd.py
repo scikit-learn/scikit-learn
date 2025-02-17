@@ -509,7 +509,9 @@ def test_sgd_passing_validation(klass, kwargs):
 )
 def test_sgd_failing_validation(klass, kwargs):
     clf = klass(**kwargs)
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match="l1_ratio must be set when penalty is 'elasticnet'"
+    ):
         clf.fit(X, Y)
 
 
