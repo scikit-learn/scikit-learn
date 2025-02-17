@@ -785,10 +785,10 @@ def test_compare_to_ELKI():
     assert_allclose(clust1.core_distances_[index], clust2.core_distances_[index])
 
 
-def test_extract_dbscan(global_dtype):
+def test_extract_dbscan(global_dtype, global_random_seed):
     # testing an easy dbscan case. Not including clusters with different
     # densities.
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_points_per_cluster = 20
     C1 = [-5, -2] + 0.2 * rng.randn(n_points_per_cluster, 2)
     C2 = [4, -1] + 0.2 * rng.randn(n_points_per_cluster, 2)
@@ -797,7 +797,9 @@ def test_extract_dbscan(global_dtype):
     X = np.vstack((C1, C2, C3, C4)).astype(global_dtype, copy=False)
 
     clust = OPTICS(cluster_method="dbscan", eps=0.5).fit(X)
-    assert_array_equal(np.sort(np.unique(clust.labels_)), [0, 1, 2, 3])
+    assert_array_equal(
+        np.sort(np.unique(clust.labels_[clust.labels_ != -1])), [0, 1, 2, 3]
+    )
 
 
 @pytest.mark.parametrize("csr_container", [None] + CSR_CONTAINERS)
