@@ -476,14 +476,41 @@ def test_n_iter_no_change(klass):
         assert_array_equal(n_iter_list, sorted(n_iter_list))
 
 
-@pytest.mark.parametrize(
-    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
-)
+@pytest.mark.parametrize("klass", [SGDClassifier, SGDRegressor])
 def test_not_enough_sample_for_early_stopping(klass):
     # test an error is raised if the training or validation set is empty
     clf = klass(early_stopping=True, validation_fraction=0.99)
     with pytest.raises(ValueError):
         clf.fit(X3, Y3)
+
+
+@pytest.mark.parametrize("klass", [SGDClassifier, SGDRegressor])
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"penalty": "elasticnet", "l1_ratio": 0.5},
+        {"penalty": "l1", "l1_ratio": None},
+    ],
+)
+def test_sgd_passing_validation(klass, kwargs):
+    clf = klass(**kwargs)
+    clf.fit(X, Y)
+
+
+@pytest.mark.parametrize(
+    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
+)
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"l1_ratio": 1.1},
+        {"penalty": "elasticnet", "l1_ratio": None},
+    ],
+)
+def test_sgd_failing_validation(klass, kwargs):
+    clf = klass(**kwargs)
+    with pytest.raises(ValueError):
+        clf.fit(X, Y)
 
 
 ###############################################################################
