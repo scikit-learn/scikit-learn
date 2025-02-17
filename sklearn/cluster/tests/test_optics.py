@@ -819,12 +819,14 @@ def test_precomputed_dists(global_dtype, csr_container):
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_optics_input_not_modified_precomputed_sparse_nodiag(csr_container):
+def test_optics_input_not_modified_precomputed_sparse_nodiag(
+    csr_container, global_random_seed
+):
     """Check that we don't modify in-place the pre-computed sparse matrix.
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/27508
     """
-    X = np.random.RandomState(0).rand(6, 6)
+    X = np.random.RandomState(global_random_seed).rand(6, 6)
     # Add zeros on the diagonal that will be implicit when creating
     # the sparse matrix. If `X` is modified in-place, the zeros from
     # the diagonal will be made explicit.
