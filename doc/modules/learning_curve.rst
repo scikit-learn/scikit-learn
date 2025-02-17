@@ -44,7 +44,7 @@ this reason, it is often helpful to use the tools described below.
 * :ref:`sphx_glr_auto_examples_model_selection_plot_underfitting_overfitting.py`
 * :ref:`sphx_glr_auto_examples_model_selection_plot_train_error_vs_test_error.py`
 * :ref:`sphx_glr_auto_examples_model_selection_plot_learning_curve.py`
-
+* :ref:`sphx_glr_auto_examples_ensemble_plot_bias_variance.py`
 
 .. _validation_curve:
 

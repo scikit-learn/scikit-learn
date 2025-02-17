@@ -17,3 +17,4 @@ Developer's Guide
    bug_triaging
    maintainer
    plotting
+   learning_curve
