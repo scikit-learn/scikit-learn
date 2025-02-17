@@ -8,7 +8,7 @@ set -e
 
 if [[ -z "${REPO_DIR}" ]]; then
     echo "This script was written for repo2docker and the REPO_DIR environment variable is supposed to be set."
-    echo "Exiting because this script can delete data if run outside of a docker container."
+    echo "Exiting because this script can delete data if run outside of a repo2docker context."
     exit 1
 fi
 
