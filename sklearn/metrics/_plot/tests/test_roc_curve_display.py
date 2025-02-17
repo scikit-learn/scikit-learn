@@ -51,7 +51,7 @@ def test_roc_curve_display_plotting(
     constructor_name,
     default_name,
 ):
-    """Check the overall plotting behaviour."""
+    """Check the overall plotting behaviour for single curve."""
     X, y = data_binary
 
     pos_label = None
@@ -99,11 +99,16 @@ def test_roc_curve_display_plotting(
         pos_label=pos_label,
     )
 
+    # Both processed and unprocessed attributes should be the same for single curve
     assert_allclose(display.roc_auc_[0], auc(fpr, tpr))
+    assert_allclose(display.roc_auc, auc(fpr, tpr))
     assert_allclose(display.fpr_[0], fpr)
+    assert_allclose(display.fpr, fpr)
     assert_allclose(display.tpr_[0], tpr)
+    assert_allclose(display.tpr, tpr)
 
     assert display.name_[0] == default_name
+    assert display.name == default_name
 
     import matplotlib as mpl  # noqa
 
@@ -116,6 +121,7 @@ def test_roc_curve_display_plotting(
     assert display.ax_.get_xlim() == display.ax_.get_ylim() == (-0.01, 1.01)
 
     expected_label = f"{default_name} (AUC = {display.roc_auc_[0]:.2f})"
+    expected_label = f"{default_name} (AUC = {display.roc_auc:.2f})"
     assert display.line_.get_label() == expected_label
 
     expected_pos_label = 1 if pos_label is None else pos_label
@@ -254,7 +260,7 @@ def test_roc_curve_display_complex_pipeline(pyplot, data_binary, clf, constructo
         name = "Classifier"
 
     assert name in display.line_.get_label()
-    assert display.name_[0] == name
+    assert display.name == name
 
 
 @pytest.mark.parametrize(
@@ -331,8 +337,8 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
 
     roc_auc_limit = 0.95679
 
-    assert display.roc_auc_[0] == pytest.approx(roc_auc_limit)
-    assert trapezoid(display.tpr_[0], display.fpr_[0]) == pytest.approx(roc_auc_limit)
+    assert display.roc_auc == pytest.approx(roc_auc_limit)
+    assert trapezoid(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)
 
     if constructor_name == "from_estimator":
         display = RocCurveDisplay.from_estimator(
@@ -349,8 +355,8 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
             pos_label="not cancer",
         )
 
-    assert display.roc_auc_[0] == pytest.approx(roc_auc_limit)
-    assert trapezoid(display.tpr_[0], display.fpr_[0]) == pytest.approx(roc_auc_limit)
+    assert display.roc_auc == pytest.approx(roc_auc_limit)
+    assert trapezoid(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)
 
 
 @pytest.mark.parametrize("despine", [True, False])

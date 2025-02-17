@@ -30,7 +30,7 @@ class _BinaryClassifierCurveDisplayMixin:
         if name is None:
             name = getattr(self, "estimator_name", None)
         if name is None:
-            name = getattr(self, "name_", None)
+            name = getattr(self, "name", None)
         return ax, ax.figure, name
 
     @classmethod

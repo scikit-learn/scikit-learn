@@ -112,10 +112,10 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         name=None,
         pos_label=None,
     ):
-        self.fpr_ = _convert_to_list_leaving_none(fpr)
-        self.tpr_ = _convert_to_list_leaving_none(tpr)
-        self.roc_auc_ = _convert_to_list_leaving_none(roc_auc)
-        self.name_ = _convert_to_list_leaving_none(name)
+        self.fpr = fpr
+        self.tpr = tpr
+        self.roc_auc = roc_auc
+        self.name = name
         self.pos_label = pos_label
 
     def plot(
@@ -183,19 +183,27 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         display : :class:`~sklearn.metrics.RocCurveDisplay`
             Object that stores computed values.
         """
+        self.fpr_ = _convert_to_list_leaving_none(self.fpr)
+        self.tpr_ = _convert_to_list_leaving_none(self.tpr)
+        self.roc_auc_ = _convert_to_list_leaving_none(self.roc_auc)
         # TODO: Not sure about this, as ideally we would check params are correct
         # first??
-        self.ax_, self.figure_, name_ = self._validate_plot_params(ax=ax, name=name)
-        name_ = _convert_to_list_leaving_none(name_)
+        self.ax_, self.figure_, self.name_ = self._validate_plot_params(
+            ax=ax, name=name
+        )
+        self.name_ = _convert_to_list_leaving_none(self.name_)
         _check_param_lengths(
             {"self.fpr": self.fpr_, "self.tpr": self.tpr_},
-            {"self.roc_auc": self.roc_auc_, "`name` from `plot` (or self.name)": name_},
+            {
+                "self.roc_auc": self.roc_auc_,
+                "`name` from `plot` (or self.name)": self.name_,
+            },
             "RocCurveDisplay",
         )
 
         n_curves = len(self.fpr_)
         line_kwargs = self._get_line_kwargs(
-            n_curves, name_, self.roc_auc_, "AUC", fold_line_kwargs, **kwargs
+            n_curves, self.name_, self.roc_auc_, "AUC", fold_line_kwargs, **kwargs
         )
 
         default_chance_level_line_kw = {
