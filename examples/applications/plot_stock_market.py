@@ -187,7 +187,7 @@ embedding = node_position_model.fit_transform(X.T).T
 # - the 2D embedding is used to position the nodes in the plan
 #
 # This example has a fair amount of visualization-related code, as
-# visualization is crucial here to display the graph. One of the challenge
+# visualization is crucial here to display the graph. One of the challenges
 # is to position the labels minimizing overlap. For this, we use an
 # heuristic based on the direction of the nearest neighbor along each
 # axis.
