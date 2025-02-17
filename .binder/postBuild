@@ -7,7 +7,7 @@ set -e
 # generating notebooks from the scikit-learn python examples.
 
 if [[ -z "${REPO_DIR}" ]]; then
-    echo "This script was written for repo2docker and is supposed to run inside a docker container."
+    echo "This script was written for repo2docker and is supposed to have REPO_DIR environment variable set."
     echo "Exiting because this script can delete data if run outside of a docker container."
     exit 1
 fi
