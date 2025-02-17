@@ -154,6 +154,10 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
                 "learning_rate is 'optimal'. alpha is used "
                 "to compute the optimal learning rate."
             )
+        if self.penalty == "elasticnet" and self.l1_ratio is None:
+            raise ValueError("l1_ratio must be set when penalty is 'elasticnet'")
+        # fastSGD is expecting a float for l1_ratio, but it is not necessarily used
+        self.l1_ratio = 0 if self.l1_ratio is None else self.l1_ratio
 
         # raises ValueError if not registered
         self._get_penalty_type(self.penalty)
