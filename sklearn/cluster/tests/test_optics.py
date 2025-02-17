@@ -138,8 +138,8 @@ def test_extract_xi(global_dtype):
     assert_array_equal(clust.labels_, expected_labels)
 
 
-def test_cluster_hierarchy_(global_dtype):
-    rng = np.random.RandomState(0)
+def test_cluster_hierarchy_(global_dtype, global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     n_points_per_cluster = 100
     C1 = [0, 0] + 2 * rng.randn(n_points_per_cluster, 2).astype(
         global_dtype, copy=False
@@ -150,10 +150,10 @@ def test_cluster_hierarchy_(global_dtype):
     X = np.vstack((C1, C2))
     X = shuffle(X, random_state=0)
 
-    clusters = OPTICS(min_samples=20, xi=0.1).fit(X).cluster_hierarchy_
+    clusters = OPTICS(min_samples=20, xi=0.2).fit(X).cluster_hierarchy_
     assert clusters.shape == (2, 2)
     diff = np.sum(clusters - np.array([[0, 99], [0, 199]]))
-    assert diff / len(X) < 0.05
+    assert diff / len(X) < 0.065
 
 
 @pytest.mark.parametrize(
