@@ -21,8 +21,8 @@ def test_averaged_weighted_median():
     condition=np_version < parse_version("1.22"),
     reason="older numpy do not support the 'method' parameter",
 )
-def test_averaged_weighted_percentile():
-    rng = np.random.RandomState(0)
+def test_averaged_weighted_percentile(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     y = rng.randint(20, size=10)
 
     sw = np.ones(10)
