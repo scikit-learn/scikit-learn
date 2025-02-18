@@ -505,7 +505,7 @@ def test_sgd_passing_validation(klass, kwargs):
     [
         (
             {"l1_ratio": 1.1},
-            "*must be a float in the range [0.0, 1.0] or None. Got 1.1 instead.",
+            r"must be a float in the range \[0.0, 1.0\] or None. Got 1.1 instead.",
         ),
         (
             {"penalty": "elasticnet", "l1_ratio": None},
