@@ -980,11 +980,11 @@ def test_matthews_corrcoef_against_numpy_corrcoef(global_random_seed):
     )
 
 
-def test_matthews_corrcoef_against_jurman():
+def test_matthews_corrcoef_against_jurman(global_random_seed):
     # Check that the multiclass matthews_corrcoef agrees with the definition
     # presented in Jurman, Riccadonna, Furlanello, (2012). A Comparison of MCC
     # and CEN Error Measures in MultiClass Prediction
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     y_true = rng.randint(0, 2, size=20)
     y_pred = rng.randint(0, 2, size=20)
     sample_weight = rng.rand(20)
