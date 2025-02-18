@@ -55,7 +55,7 @@ from sklearn.utils.validation import check_random_state
 # Utilities for testing
 
 
-def make_prediction(dataset=None, binary=False):
+def make_prediction(global_random_seed, dataset=None, binary=False):
     """Make some classification predictions on a toy dataset using a SVC
 
     If binary is True restrict to a binary classification problem instead of a
@@ -82,7 +82,7 @@ def make_prediction(dataset=None, binary=False):
     half = int(n_samples / 2)
 
     # add noisy features to make the problem harder and avoid perfect results
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = np.c_[X, rng.randn(n_samples, 200 * n_features)]
 
     # run classifier, get class probabilities and label predictions
