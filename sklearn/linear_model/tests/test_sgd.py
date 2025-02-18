@@ -501,17 +501,21 @@ def test_sgd_passing_validation(klass, kwargs):
     "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
 )
 @pytest.mark.parametrize(
-    "kwargs",
+    "kwargs, err_msg",
     [
-        {"l1_ratio": 1.1},
-        {"penalty": "elasticnet", "l1_ratio": None},
+        (
+            {"l1_ratio": 1.1},
+            "must be a float in the range [0.0, 1.0] or None. Got 1.1 instead.",
+        ),
+        (
+            {"penalty": "elasticnet", "l1_ratio": None},
+            "l1_ratio must be set when penalty is 'elasticnet'",
+        ),
     ],
 )
-def test_sgd_failing_validation(klass, kwargs):
+def test_sgd_failing_validation(klass, kwargs, err_msg):
     clf = klass(**kwargs)
-    with pytest.raises(
-        ValueError, match="l1_ratio must be set when penalty is 'elasticnet'"
-    ):
+    with pytest.raises(ValueError, match=err_msg):
         clf.fit(X, Y)
 
 
