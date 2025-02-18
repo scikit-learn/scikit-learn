@@ -1111,9 +1111,9 @@ def test_matthews_corrcoef_multiclass(global_random_seed):
 
 
 @pytest.mark.parametrize("n_points", [100, 10000])
-def test_matthews_corrcoef_overflow(n_points):
+def test_matthews_corrcoef_overflow(n_points, global_random_seed):
     # https://github.com/scikit-learn/scikit-learn/issues/9622
-    rng = np.random.RandomState(20170906)
+    rng = np.random.RandomState(global_random_seed)
 
     def mcc_safe(y_true, y_pred):
         conf_matrix = confusion_matrix(y_true, y_pred)
