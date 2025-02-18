@@ -1019,8 +1019,8 @@ def test_matthews_corrcoef_against_jurman(global_random_seed):
     assert_almost_equal(mcc_ours, mcc_jurman, 10)
 
 
-def test_matthews_corrcoef():
-    rng = np.random.RandomState(0)
+def test_matthews_corrcoef(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     y_true = ["a" if i == 0 else "b" for i in rng.randint(0, 2, size=20)]
 
     # corrcoef of same vectors must be 1
