@@ -618,8 +618,8 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
 
         method_mapping = MethodMapping()
         method_mapping.add(caller="fit", callee="fit").add(
-            caller="predict_log_proba", callee="predict_log_proba"
-        ).add(caller="decision_function", callee="decision_function")
+            caller="decision_function", callee="decision_function"
+        )
 
         # the router needs to be built depending on whether the sub-estimator has a
         # `predict_proba` method (as BaggingClassifier decides dynamically at runtime):
@@ -636,6 +636,24 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
                     caller="predict_proba", callee="predict"
                 )
             )
+
+        # the router needs to be built depending on whether the sub-estimator has a
+        # `predict_log_proba` method (as BaggingClassifier decides dynamically at
+        # runtime):
+        if hasattr(self._get_estimator(), "predict_log_proba"):
+            method_mapping.add(caller="predict_log_proba", callee="predict_log_proba")
+
+        else:
+            # if `predict_log_proba` is not available in BaggingClassifier's
+            # sub-estimator, the routing should go to its `predict_proba` if it is
+            # available or else to its `predict` method; according to how
+            # `sample_weight` is passed to the respective methods dynamically at
+            # runtime:
+            if hasattr(self._get_estimator(), "predict_proba"):
+                method_mapping.add(caller="predict_log_proba", callee="predict_proba")
+
+            else:
+                method_mapping.add(caller="predict_log_proba", callee="predict")
 
         router.add(estimator=self._get_estimator(), method_mapping=method_mapping)
         return router

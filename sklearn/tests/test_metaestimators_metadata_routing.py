@@ -339,6 +339,7 @@ METAESTIMATORS: list = [
         "method_mapping": {
             "predict": ["predict", "predict_proba"],
             "predict_proba": ["predict", "predict_proba"],
+            "predict_log_proba": ["predict", "predict_proba", "predict_log_proba"],
         },
     },
     {
