@@ -1054,8 +1054,8 @@ def test_matthews_corrcoef(global_random_seed):
         assert_almost_equal(matthews_corrcoef(y_1, y_2, sample_weight=mask), 0.0)
 
 
-def test_matthews_corrcoef_multiclass():
-    rng = np.random.RandomState(0)
+def test_matthews_corrcoef_multiclass(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     ord_a = ord("a")
     n_classes = 4
     y_true = [chr(ord_a + i) for i in rng.randint(0, n_classes, size=20)]
