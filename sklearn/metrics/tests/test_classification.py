@@ -2946,13 +2946,13 @@ def test_balanced_accuracy_score(y_true, y_pred):
 @pytest.mark.parametrize(
     "classes", [(False, True), (0, 1), (0.0, 1.0), ("zero", "one")]
 )
-def test_classification_metric_pos_label_types(metric, classes):
+def test_classification_metric_pos_label_types(metric, classes, global_random_seed):
     """Check that the metric works with different types of `pos_label`.
 
     We can expect `pos_label` to be a bool, an integer, a float, a string.
     No error should be raised for those types.
     """
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     n_samples, pos_label = 10, classes[-1]
     y_true = rng.choice(classes, size=n_samples, replace=True)
     if metric is brier_score_loss:
