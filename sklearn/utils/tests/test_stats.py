@@ -86,9 +86,9 @@ def test_weighted_percentile_zero_weight_zero_percentile():
     assert approx(score) == 4
 
 
-def test_weighted_median_equal_weights():
+def test_weighted_median_equal_weights(global_random_seed):
     # Checks weighted percentile=0.5 is same as median when weights equal
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     # Odd size as _weighted_percentile takes lower weighted percentile
     x = rng.randint(10, size=11)
     weights = np.ones(x.shape)
