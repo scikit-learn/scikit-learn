@@ -181,6 +181,19 @@ class NeighborhoodComponentsAnalysis(
     KNeighborsClassifier(...)
     >>> print(knn.score(nca.transform(X_test), y_test))
     0.961904...
+
+    For detailed examples demonstrating the use of
+    :class:`~sklearn.neighbors.NeighborhoodComponentsAnalysis` in different
+    scenarios, please refer to:
+
+    - Illustration of how NCA transforms distances for classification:
+      :ref:`sphx_glr_auto_examples_neighbors_plot_nca_illustration.py`
+
+    - Comparison of NCA, PCA, and LDA for dimensionality reduction:
+      :ref:`sphx_glr_auto_examples_neighbors_plot_nca_dim_reduction.py`
+
+    - Comparing nearest neighbors classification with and without NCA:
+      :ref:`sphx_glr_auto_examples_neighbors_plot_nca_classification.py`
     """
 
     _parameter_constraints: dict = {
@@ -201,16 +214,16 @@ class NeighborhoodComponentsAnalysis(
     }
 
     def __init__(
-        self,
-        n_components=None,
-        *,
-        init="auto",
-        warm_start=False,
-        max_iter=50,
-        tol=1e-5,
-        callback=None,
-        verbose=0,
-        random_state=None,
+            self,
+            n_components=None,
+            *,
+            init="auto",
+            warm_start=False,
+            max_iter=50,
+            tol=1e-5,
+            callback=None,
+            verbose=0,
+            random_state=None,
     ):
         self.n_components = n_components
         self.init = init
@@ -253,9 +266,9 @@ class NeighborhoodComponentsAnalysis(
             )
         # If warm_start is enabled, check that the inputs are consistent
         if (
-            self.warm_start
-            and hasattr(self, "components_")
-            and self.components_.shape[1] != X.shape[1]
+                self.warm_start
+                and hasattr(self, "components_")
+                and self.components_.shape[1] != X.shape[1]
         ):
             raise ValueError(
                 f"The new inputs dimensionality ({X.shape[1]}) does not "

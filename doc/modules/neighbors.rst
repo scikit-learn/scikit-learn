@@ -757,6 +757,7 @@ by each method. Each data sample belongs to one of 10 classes.
 
 * :ref:`sphx_glr_auto_examples_neighbors_plot_nca_classification.py`
 * :ref:`sphx_glr_auto_examples_neighbors_plot_nca_dim_reduction.py`
+* :ref:`sphx_glr_auto_examples_neighbors_plot_nca_illustration.py`
 * :ref:`sphx_glr_auto_examples_manifold_plot_lle_digits.py`
 
 .. _nca_mathematical_formulation:
