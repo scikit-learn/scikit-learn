@@ -25,7 +25,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     a :class:`~sklearn.metrics.RocCurveDisplay`. All parameters are
     stored as attributes.
 
-    Read more in the :ref:`User Guide <visualizations>`.
+    For more about the ROC metric, see :ref:`roc_metrics`.
+    For more about scikit-learn visualization classes, see :ref:`visualizations`.
 
     Parameters
     ----------
