@@ -970,8 +970,8 @@ def test_zero_division_nan_warning(metric, y_true, y_pred):
     assert result == 0.0
 
 
-def test_matthews_corrcoef_against_numpy_corrcoef():
-    rng = np.random.RandomState(0)
+def test_matthews_corrcoef_against_numpy_corrcoef(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     y_true = rng.randint(0, 2, size=20)
     y_pred = rng.randint(0, 2, size=20)
 
