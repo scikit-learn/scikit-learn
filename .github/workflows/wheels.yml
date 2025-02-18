@@ -1,5 +1,7 @@
 # Workflow to build and test wheels
 name: Wheel builder
+permissions:
+  contents: read
 
 on:
   schedule:

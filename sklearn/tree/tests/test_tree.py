@@ -2722,7 +2722,7 @@ def test_regression_extra_tree_missing_values_toy(global_random_seed):
 
 
 def test_classification_tree_missing_values_toy():
-    """Check that we properly handle missing values in clasification trees using a toy
+    """Check that we properly handle missing values in classification trees using a toy
     dataset.
 
     The test is more involved because we use a case where we detected a regression

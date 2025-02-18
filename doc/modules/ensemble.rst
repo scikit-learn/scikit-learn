@@ -43,7 +43,7 @@ classification, in particular for tabular data.
   imputation.
 
   :class:`GradientBoostingClassifier` and
-  :class:`GradientBoostingRegressor`, might be preferred for small sample
+  :class:`GradientBoostingRegressor` might be preferred for small sample
   sizes since binning may lead to split points that are too approximate
   in this setting.
 
@@ -391,7 +391,7 @@ done by the parameter ``interaction_cst``, where one can specify the indices
 of features that are allowed to interact.
 For instance, with 3 features in total, ``interaction_cst=[{0}, {1}, {2}]``
 forbids all interactions.
-The constraints ``[{0, 1}, {1, 2}]`` specifies two groups of possibly
+The constraints ``[{0, 1}, {1, 2}]`` specify two groups of possibly
 interacting features. Features 0 and 1 may interact with each other, as well
 as features 1 and 2. But note that features 0 and 2 are forbidden to interact.
 The following depicts a tree and the possible splits of the tree:
@@ -564,7 +564,7 @@ parameters of these estimators are `n_estimators` and `learning_rate`.
   The plot shows the train and test error at each iteration.
   The train error at each iteration is stored in the
   `train_score_` attribute of the gradient boosting model.
-  The test error at each iterations can be obtained
+  The test error at each iteration can be obtained
   via the :meth:`~GradientBoostingRegressor.staged_predict` method which returns a
   generator that yields the predictions at each stage. Plots like these can be used
   to determine the optimal number of trees (i.e. ``n_estimators``) by early stopping.
@@ -806,7 +806,7 @@ the contribution of each weak learner by a constant factor :math:`\nu`:
     F_m(x) = F_{m-1}(x) + \nu h_m(x)
 
 The parameter :math:`\nu` is also called the **learning rate** because
-it scales the step length the gradient descent procedure; it can
+it scales the step length of the gradient descent procedure; it can
 be set via the ``learning_rate`` parameter.
 
 The parameter ``learning_rate`` strongly interacts with the parameter
@@ -879,7 +879,7 @@ Often features do not contribute equally to predict the target
 response; in many situations the majority of the features are in fact
 irrelevant.
 When interpreting a model, the first question usually is: what are
-those important features and how do they contributing in predicting
+those important features and how do they contribute in predicting
 the target response?
 
 Individual decision trees intrinsically perform feature selection by selecting
@@ -1395,7 +1395,7 @@ and averaged. The final class label is then derived from the class label
 with the highest average probability.
 
 To illustrate this with a simple example, let's assume we have 3
-classifiers and a 3-class classification problems where we assign
+classifiers and a 3-class classification problem where we assign
 equal weights to all classifiers: w1=1, w2=1, w3=1.
 
 The weighted average probabilities for a sample would then be
@@ -1641,6 +1641,10 @@ computationally expensive.
     >>> print('R2 score: {:.2f}'
     ...       .format(multi_layer_regressor.score(X_test, y_test)))
     R2 score: 0.53
+
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_ensemble_plot_stack_predictors.py`
 
 .. rubric:: References
 

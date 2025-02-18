@@ -29,6 +29,7 @@ from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.validation import _num_samples, check_non_negative, validate_data
 
+# mypy error: Module 'sklearn.manifold' has no attribute '_utils'
 # mypy error: Module 'sklearn.manifold' has no attribute '_barnes_hut_tsne'
 from . import _barnes_hut_tsne, _utils  # type: ignore
 

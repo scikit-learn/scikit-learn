@@ -1385,6 +1385,14 @@ def _get_warnings_filters_info_list():
         WarningInfo(
             "ignore", message="Attribute s is deprecated", category=DeprecationWarning
         ),
+        # Plotly deprecated something which we're not using, but internally it's used
+        # and needs to be fixed on their side.
+        # https://github.com/plotly/plotly.py/issues/4997
+        WarningInfo(
+            "ignore",
+            message=".+scattermapbox.+deprecated.+scattermap.+instead",
+            category=DeprecationWarning,
+        ),
     ]
 
 

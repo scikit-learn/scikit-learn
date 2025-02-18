@@ -34,7 +34,9 @@ from ..utils._param_validation import (
 )
 from ..utils.graph import _fix_connected_components
 from ..utils.validation import check_memory, validate_data
-from . import _hierarchical_fast as _hierarchical
+
+# mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
+from . import _hierarchical_fast as _hierarchical  # type: ignore
 from ._feature_agglomeration import AgglomerationTransform
 
 ###############################################################################
@@ -923,6 +925,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     AgglomerativeClustering()
     >>> clustering.labels_
     array([1, 1, 1, 0, 0, 0])
+
+    For a comparison of Agglomerative clustering with other clustering algorithms, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
     """
 
     _parameter_constraints: dict = {
