@@ -616,6 +616,17 @@ def test_randomized_svd_lapack_driver(n, m, k, seed):
     assert_allclose(vt1, vt2, atol=0, rtol=1e-3)
 
 
+def test_randomized_svd_complex_raises():
+    n_samples = 20
+    n_features = 10
+    k = 5
+    rng = np.random.RandomState(42)
+    X = rng.randn(n_samples, n_features) + 1j * rng.randn(n_samples, n_features)
+
+    with pytest.raises(ValueError):
+        randomized_svd(X, k, random_state=0)
+
+
 def test_cartesian():
     # Check if cartesian product delivers the right results
 
