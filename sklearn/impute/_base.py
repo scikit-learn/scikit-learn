@@ -16,7 +16,7 @@ from ..utils._mask import _get_mask
 from ..utils._missing import is_pandas_na, is_scalar_nan
 from ..utils._param_validation import MissingValues, StrOptions
 from ..utils.fixes import _mode
-from ..utils.sparsefuncs import _get_median
+from ..utils.sparsefuncs import _get_median, count_nonzero
 from ..utils.validation import (
     FLOAT_DTYPES,
     _check_feature_names_in,
@@ -906,7 +906,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             imputer_mask.eliminate_zeros()
 
             if self.features == "missing-only":
-                n_missing = imputer_mask.count_nonzero(axis=0)
+                n_missing = count_nonzero(imputer_mask, axis=0)
 
             if self.sparse is False:
                 imputer_mask = imputer_mask.toarray()
