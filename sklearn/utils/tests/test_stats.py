@@ -112,9 +112,9 @@ def test_weighted_median_integer_weights(global_random_seed):
     assert median == approx(w_median)
 
 
-def test_weighted_percentile_2d():
+def test_weighted_percentile_2d(global_random_seed):
     # Check for when array 2D and sample_weight 1D
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     x1 = rng.randint(10, size=10)
     w1 = rng.choice(5, size=10)
 
