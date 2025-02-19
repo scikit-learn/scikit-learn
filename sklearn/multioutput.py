@@ -540,7 +540,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         Y : array-like of shape (n_samples, n_classes)
             The target values.
 
-            .. deprecated:: 1.9
+            .. deprecated:: 1.7
                `Y` is deprecated in 1.7 and will be removed in 1.9. Use `y` instead.
 
         **fit_params : dict of string -> object
