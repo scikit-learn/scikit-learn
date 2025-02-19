@@ -46,11 +46,11 @@ from ..utils.validation import _check_method_params, _num_samples
 from ._split import check_cv
 
 __all__ = [
-    "cross_validate",
-    "cross_val_score",
     "cross_val_predict",
-    "permutation_test_score",
+    "cross_val_score",
+    "cross_validate",
     "learning_curve",
+    "permutation_test_score",
     "validation_curve",
 ]
 
