@@ -549,7 +549,7 @@ def test_column_transformer_mixed_cols_sparse():
     # this shouldn't fail, since boolean can be coerced into a numeric
     # See: https://github.com/scikit-learn/scikit-learn/issues/11912
     X_trans = ct.fit_transform(df)
-    assert X_trans.getformat() == "csr"
+    assert X_trans.format == "csr"
     assert_array_equal(X_trans.toarray(), np.array([[1, 0, 1, 1], [0, 1, 2, 0]]))
 
     ct = make_column_transformer(
