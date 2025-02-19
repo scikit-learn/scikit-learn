@@ -123,7 +123,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             resp = xp.asarray(
                 random_state.uniform(size=(n_samples, self.n_components)), dtype=X.dtype
             )
-            resp /= resp.sum(axis=1)[:, xp.newaxis]
+            resp /= xp.sum(resp, axis=1)[:, xp.newaxis]
         elif self.init_params == "random_from_data":
             resp = xp.zeros((n_samples, self.n_components), dtype=X.dtype)
             indices = random_state.choice(
@@ -306,8 +306,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             Logarithm of the posterior probabilities (or responsibilities) of
             the point of each sample in X.
         """
+        xp, _ = get_namespace(X)
         log_prob_norm, log_resp = self._estimate_log_prob_resp(X)
-        return np.mean(log_prob_norm), log_resp
+        return xp.mean(log_prob_norm), log_resp
 
     @abstractmethod
     def _m_step(self, X, log_resp):
@@ -403,8 +404,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         """
         check_is_fitted(self)
         X = validate_data(self, X, reset=False)
+        xp, _ = get_namespace(X)
         _, log_resp = self._estimate_log_prob_resp(X)
-        return np.exp(log_resp)
+        return xp.exp(log_resp)
 
     def sample(self, n_samples=1):
         """Generate random samples from the fitted Gaussian distribution.
@@ -526,11 +528,12 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         log_responsibilities : array, shape (n_samples, n_components)
             logarithm of the responsibilities
         """
+        xp, _ = get_namespace(X)
         weighted_log_prob = self._estimate_weighted_log_prob(X)
         log_prob_norm = logsumexp(weighted_log_prob, axis=1)
         with np.errstate(under="ignore"):
             # ignore underflow
-            log_resp = weighted_log_prob - log_prob_norm[:, np.newaxis]
+            log_resp = weighted_log_prob - log_prob_norm[:, xp.newaxis]
         return log_prob_norm, log_resp
 
     def _print_verbose_msg_init_beg(self, n_init):

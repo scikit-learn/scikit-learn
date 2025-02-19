@@ -230,7 +230,8 @@ def _estimate_gaussian_covariances_diag(resp, X, nk, means, reg_covar):
     covariances : array, shape (n_components, n_features)
         The covariance vector of the current components.
     """
-    avg_X2 = np.dot(resp.T, X * X) / nk[:, np.newaxis]
+    xp, _ = get_namespace(X)
+    avg_X2 = (resp.T @ (X * X)) / nk[:, xp.newaxis]
     avg_means2 = means**2
     return avg_X2 - avg_means2 + reg_covar
 
@@ -288,7 +289,7 @@ def _estimate_gaussian_parameters(X, resp, reg_covar, covariance_type):
         The shape depends of the covariance_type.
     """
     xp, _ = get_namespace(X)
-    nk = resp.sum(axis=0) + 10 * xp.finfo(resp.dtype).eps
+    nk = xp.sum(resp, axis=0) + 10 * xp.finfo(resp.dtype).eps
     means = (resp.T @ X) / nk[:, xp.newaxis]
     covariances = {
         "full": _estimate_gaussian_covariances_full,
@@ -353,7 +354,7 @@ def _compute_precision_cholesky(covariances, covariance_type):
             cov_chol, xp.eye(n_features, dtype=dtype), lower=True
         ).T
     else:
-        if xp.any(xp.less_equal(covariances, 0.0)):
+        if xp.any(covariances <= 0.0):
             raise ValueError(estimate_precision_error_message)
         precisions_chol = 1.0 / xp.sqrt(covariances)
     return precisions_chol
@@ -503,7 +504,7 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
     elif covariance_type == "diag":
         precisions = precisions_chol**2
         log_prob = (
-            xp.sum((means**2 * precisions), 1)
+            xp.sum((means**2 * precisions), axis=1)
             - 2.0 * (X @ (means * precisions).T)
             + (X**2 @ precisions.T)
         )
@@ -814,6 +815,7 @@ class GaussianMixture(BaseMixture):
                 self.precisions_init, self.covariance_type
             )
 
+
     def _m_step(self, X, log_resp):
         """M step.
 
@@ -825,8 +827,9 @@ class GaussianMixture(BaseMixture):
             Logarithm of the posterior probabilities (or responsibilities) of
             the point of each sample in X.
         """
+        xp, _ = get_namespace(X, log_resp)
         self.weights_, self.means_, self.covariances_ = _estimate_gaussian_parameters(
-            X, np.exp(log_resp), self.reg_covar, self.covariance_type
+            X, xp.exp(log_resp), self.reg_covar, self.covariance_type
         )
         self.weights_ /= self.weights_.sum()
         self.precisions_cholesky_ = _compute_precision_cholesky(
@@ -839,7 +842,8 @@ class GaussianMixture(BaseMixture):
         )
 
     def _estimate_log_weights(self):
-        return np.log(self.weights_)
+        xp, _ = get_namespace(self.weights_)
+        return xp.log(self.weights_)
 
     def _compute_lower_bound(self, _, log_prob_norm):
         return log_prob_norm

@@ -5,23 +5,25 @@ import numpy as np
 import torch
 
 import sklearn
-from sklearn.datasets import make_blobs
+from sklearn.datasets import make_blobs, load_iris
 from sklearn.mixture import GaussianMixture
+import array_api_strict
 
 os.environ["SCIPY_ARRAY_API"] = "1"
 
 X, y = make_blobs(n_samples=int(1e3), n_features=2, centers=3, random_state=0)
-X_torch, y_torch = torch.asarray(X), torch.asarray(y)
+# X, y = torch.asarray(X), torch.asarray(y)
+X, y = array_api_strict.asarray(X), array_api_strict.asarray(y)
 
 sklearn.set_config(array_api_dispatch=True)
 
 gmm = GaussianMixture(
-    n_components=3, covariance_type="full", random_state=0, init_params="random"
+    n_components=3, covariance_type="diag", random_state=0, init_params="random",
+    tol=1e-5, max_iter=1000
 ).fit(X)
 print(gmm.means_)
 print(gmm.covariances_)
 
-# %%
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
@@ -57,4 +59,4 @@ def make_ellipses(gmm, ax):
 
 make_ellipses(gmm, ax)
 
-# %%
+ # %%
