@@ -612,6 +612,7 @@ iterating only once over a mini-batch. This can be used for online learning
 when the data is not readily available from the start, or for when the data
 does not fit into memory.
 
+
 .. currentmodule:: sklearn.cluster
 
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_dict_face_patches_001.png
@@ -630,6 +631,11 @@ does not fit into memory.
    Example: :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
 
 .. currentmodule:: sklearn.decomposition
+
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_decomposition_plot_image_denoising.py`
+
 
 .. _FA:
 
