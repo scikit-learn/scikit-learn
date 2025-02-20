@@ -1411,7 +1411,8 @@ weighted average  0.37	        0.4             0.23
 ================  ==========    ==========      ==========
 
 Here, the predicted class label is 2, since it has the
-highest average probability.
+highest average probability. See :ref:`plot probabilities <sphx_glr_auto_examples_ensemble_plot_voting_probas.py>` for  
+a detailed illustration of class probabilities averaged by soft voting.
 
 The following example illustrates how the decision regions may change
 when a soft :class:`VotingClassifier` is used based on a linear Support
@@ -1485,10 +1486,6 @@ Optionally, weights can be provided for the individual classifiers::
     >>> grid = GridSearchCV(estimator=eclf, param_grid=params, cv=5)
     >>> grid = grid.fit(iris.data, iris.target)
 
-.. rubric:: Examples
-
-* :ref:`sphx_glr_auto_examples_ensemble_plot_voting_decision_regions.py`
-* :ref:`sphx_glr_auto_examples_ensemble_plot_voting_probas.py`
 
 .. _voting_regressor:
 
