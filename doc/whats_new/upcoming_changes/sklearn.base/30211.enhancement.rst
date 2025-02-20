@@ -1,0 +1,4 @@
+- All estimators, i.e. anything inheriting from :class:`~sklearn.base.BaseEstimator`,
+  now have a :func:`~sklearn.base.BaseEstimator.freeze` method that returns a
+  :class:`~sklearn.frozen.FrozenEstimator` object, wrapping the estimator instance.
+  By `Adrin Jalali`_
