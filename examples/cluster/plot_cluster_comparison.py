@@ -48,6 +48,13 @@ noisy_circles = datasets.make_circles(
     n_samples=n_samples, factor=0.5, noise=0.05, random_state=seed
 )
 noisy_moons = datasets.make_moons(n_samples=n_samples, noise=0.05, random_state=seed)
+noisy_spirals = datasets.make_spirals(
+    n_samples=n_samples,
+    noise=0.05,
+    initial_radius=0.2,
+    linear_speed=1.5,
+    random_state=seed,
+)
 blobs = datasets.make_blobs(n_samples=n_samples, random_state=seed)
 rng = np.random.RandomState(seed)
 no_structure = rng.rand(n_samples, 2), None
@@ -107,6 +114,16 @@ datasets = [
         {
             "damping": 0.75,
             "preference": -220,
+            "n_clusters": 2,
+            "min_samples": 7,
+            "xi": 0.1,
+        },
+    ),
+    (
+        noisy_spirals,
+        {
+            "damping": 0.95,
+            "preference": -250,
             "n_clusters": 2,
             "min_samples": 7,
             "xi": 0.1,
