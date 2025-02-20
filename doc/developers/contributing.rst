@@ -284,11 +284,11 @@ how to set up your git repository:
 7. Check that the `upstream` and `origin` remote aliases are configured correctly
    by running:
 
-  .. prompt:: bash
+   .. prompt:: bash
 
-        git remote -v`
+        git remote -v
 
-  This should display:
+   This should display:
 
    .. code-block:: text
 
