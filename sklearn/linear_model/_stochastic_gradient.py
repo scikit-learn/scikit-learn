@@ -113,6 +113,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         n_iter_no_change=5,
         warm_start=False,
         average=False,
+        gradient_clip_norm=0,
     ):
         self.loss = loss
         self.penalty = penalty
@@ -132,6 +133,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         self.n_iter_no_change = n_iter_no_change
         self.warm_start = warm_start
         self.average = average
+        self.gradient_clip_norm = gradient_clip_norm
         self.max_iter = max_iter
         self.tol = tol
 
@@ -1427,6 +1429,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         n_iter_no_change=5,
         warm_start=False,
         average=False,
+        gradient_clip_norm=0,
     ):
         super().__init__(
             loss=loss,
@@ -1448,6 +1451,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             n_iter_no_change=n_iter_no_change,
             warm_start=warm_start,
             average=average,
+            gradient_clip_norm=gradient_clip_norm,
         )
 
     def _partial_fit(
@@ -1758,6 +1762,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             self.t_,
             intercept_decay,
             self.average,
+            self.gradient_clip_norm,
         )
 
         self.t_ += self.n_iter_ * X.shape[0]
@@ -1960,6 +1965,10 @@ class SGDRegressor(BaseSGDRegressor):
         samples seen reaches `average`. So ``average=10`` will begin
         averaging after seeing 10 samples.
 
+    gradient_clip_norm : float, default=0
+        If greater than 0, the gradient norms are clipped to the value of
+        `gradient_clip_norm` before updating the weights each step.
+
     Attributes
     ----------
     coef_ : ndarray of shape (n_features,)
@@ -2026,6 +2035,7 @@ class SGDRegressor(BaseSGDRegressor):
         ],
         "epsilon": [Interval(Real, 0, None, closed="left")],
         "eta0": [Interval(Real, 0, None, closed="left")],
+        "gradient_clip_norm": [Interval(Real, 0, None, closed="left")],
     }
 
     def __init__(
@@ -2050,6 +2060,7 @@ class SGDRegressor(BaseSGDRegressor):
         n_iter_no_change=5,
         warm_start=False,
         average=False,
+        gradient_clip_norm=0,
     ):
         super().__init__(
             loss=loss,
@@ -2071,6 +2082,7 @@ class SGDRegressor(BaseSGDRegressor):
             n_iter_no_change=n_iter_no_change,
             warm_start=warm_start,
             average=average,
+            gradient_clip_norm=gradient_clip_norm,
         )
 
 
