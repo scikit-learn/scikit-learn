@@ -33,7 +33,7 @@ https://repo.anaconda.com/pkgs/main/osx-64/mkl-2023.1.0-h8e150cf_43560.conda#85d
 https://repo.anaconda.com/pkgs/main/osx-64/sqlite-3.45.3-h6c40b1e_0.conda#2edf909b937b3aad48322c9cb2e8f1a0
 https://repo.anaconda.com/pkgs/main/osx-64/zstd-1.5.6-h138b38a_0.conda#f4d15d7d0054d39e6a24fe8d7d1e37c5
 https://repo.anaconda.com/pkgs/main/osx-64/libtiff-4.5.1-h6fa9cd1_1.conda#3d7e2cea5c733721750160acb997a90b
-https://repo.anaconda.com/pkgs/main/osx-64/python-3.12.8-hcd54a6c_0.conda#54c4f4421ae085eb9e9d63643c272cf3
+https://repo.anaconda.com/pkgs/main/osx-64/python-3.12.9-hcd54a6c_0.conda#1bf9af06f3e476df1f72e8674a9224df
 https://repo.anaconda.com/pkgs/main/osx-64/brotli-python-1.0.9-py312h6d0c2b6_9.conda#425936421fe402074163ac3ffe33a060
 https://repo.anaconda.com/pkgs/main/osx-64/coverage-7.6.9-py312h46256e1_0.conda#f8c1547bbf522a600ee795901240a7b0
 https://repo.anaconda.com/pkgs/main/noarch/cycler-0.11.0-pyhd3eb1b0_0.conda#f5e365d2cdb66d547eb8c3ab93843aab
@@ -60,7 +60,7 @@ https://repo.anaconda.com/pkgs/main/osx-64/fonttools-4.55.3-py312h46256e1_0.cond
 https://repo.anaconda.com/pkgs/main/osx-64/numpy-base-1.26.4-py312h6f81483_0.conda#87f73efbf26ab2e2ea7c32481a71bd47
 https://repo.anaconda.com/pkgs/main/osx-64/pillow-11.1.0-py312h47bf62f_0.conda#56484cc67963212898552539482aa6b5
 https://repo.anaconda.com/pkgs/main/osx-64/pip-25.0-py312hecd8cb5_0.conda#ece07a868514de9803e7a3c8aec1909f
-https://repo.anaconda.com/pkgs/main/osx-64/pytest-7.4.4-py312hecd8cb5_0.conda#d4dda983900b045cd27ae836cad670de
+https://repo.anaconda.com/pkgs/main/osx-64/pytest-8.3.4-py312hecd8cb5_0.conda#b15ee02022967632dfa1672669228bee
 https://repo.anaconda.com/pkgs/main/osx-64/python-dateutil-2.9.0post0-py312hecd8cb5_2.conda#1047dde28f78127dd9f6121e882926dd
 https://repo.anaconda.com/pkgs/main/osx-64/pytest-cov-6.0.0-py312hecd8cb5_0.conda#db697e319a4d1145363246a51eef0352
 https://repo.anaconda.com/pkgs/main/osx-64/pytest-xdist-3.6.1-py312hecd8cb5_0.conda#38df9520774ee82bf143218f1271f936

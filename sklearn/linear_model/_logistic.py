@@ -305,7 +305,9 @@ def _logistic_regression_path(
     if isinstance(class_weight, dict) or (
         multi_class == "multinomial" and class_weight is not None
     ):
-        class_weight_ = compute_class_weight(class_weight, classes=classes, y=y)
+        class_weight_ = compute_class_weight(
+            class_weight, classes=classes, y=y, sample_weight=sample_weight
+        )
         sample_weight *= class_weight_[le.fit_transform(y)]
 
     # For doing a ovr, we need to mask the labels first. For the
@@ -326,7 +328,10 @@ def _logistic_regression_path(
         # for compute_class_weight
         if class_weight == "balanced":
             class_weight_ = compute_class_weight(
-                class_weight, classes=mask_classes, y=y_bin
+                class_weight,
+                classes=mask_classes,
+                y=y_bin,
+                sample_weight=sample_weight,
             )
             sample_weight *= class_weight_[le.fit_transform(y_bin)]
 
@@ -1981,7 +1986,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         # compute the class weights for the entire dataset y
         if class_weight == "balanced":
             class_weight = compute_class_weight(
-                class_weight, classes=np.arange(len(self.classes_)), y=y
+                class_weight,
+                classes=np.arange(len(self.classes_)),
+                y=y,
+                sample_weight=sample_weight,
             )
             class_weight = dict(enumerate(class_weight))
 
