@@ -32,8 +32,8 @@ solves a problem of the form:
 
 .. math:: \min_{w} || X w - y||_2^2
 
-.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_ols_001.png
-   :target: ../auto_examples/linear_model/plot_ols.html
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_ols_ridge_001.png
+   :target: ../auto_examples/linear_model/plot_ols_ridge.html
    :align: center
    :scale: 50%
 
@@ -61,7 +61,7 @@ example, when data are collected without an experimental design.
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_linear_model_plot_ols.py`
+* :ref:`sphx_glr_auto_examples_linear_model_plot_ols_ridge.py`
 
 Non-Negative Least Squares
 --------------------------
@@ -145,6 +145,11 @@ the corresponding solver is chosen.
 | 'sparse_cg' | None of the above conditions are fulfilled.        |
 +-------------+----------------------------------------------------+
 
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_linear_model_plot_ols_ridge.py`
+* :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_path.py`
+* :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
 
 Classification
 --------------
@@ -176,9 +181,8 @@ a linear kernel.
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_path.py`
 * :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
-* :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
+
 
 Ridge Complexity
 ----------------

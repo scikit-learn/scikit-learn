@@ -498,6 +498,10 @@ redirects = {
         "auto_examples/linear_model/plot_logistic_multinomial"
     ),
     "auto_examples/linear_model/plot_ols_3d": ("auto_examples/linear_model/plot_ols"),
+    "auto_examples/linear_model/plot_ols": "auto_examples/linear_model/plot_ols_ridge",
+    "auto_examples/linear_model/plot_ols_ridge_variance": (
+        "auto_examples/linear_model/plot_ols_ridge"
+    ),
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
