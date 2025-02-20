@@ -798,6 +798,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         "single" and affinity is not "precomputed" any valid pairwise distance
         metric can be assigned.
 
+        For an example of agglomerative clustering with different metrics,
+        see :ref:`plot_agglomerative_clustering_metrics.py`.
+
         .. versionadded:: 1.2
 
     memory : str or object with the joblib.Memory interface, default=None
