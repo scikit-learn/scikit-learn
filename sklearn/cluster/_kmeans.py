@@ -1177,6 +1177,11 @@ class _BaseKMeans(
         )
         return -scores
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 class KMeans(_BaseKMeans):
     """K-Means clustering.
@@ -1868,6 +1873,9 @@ class MiniBatchKMeans(_BaseKMeans):
            [1.06896552, 1.        ]])
     >>> kmeans.predict([[0, 0], [4, 4]])
     array([1, 0], dtype=int32)
+
+    For a comparison of Mini-Batch K-Means clustering with other clustering algorithms,
+    see :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
     """
 
     _parameter_constraints: dict = {

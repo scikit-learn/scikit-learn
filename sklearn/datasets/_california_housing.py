@@ -15,7 +15,7 @@ References
 ----------
 
 Pace, R. Kelley and Ronald Barry, Sparse Spatial Autoregressions,
-Statistics and Probability Letters, 33 (1997) 291-297.
+Statistics and Probability Letters, 33:291-297, 1997.
 
 """
 

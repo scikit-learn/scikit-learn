@@ -767,7 +767,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     )
 
                     # If the scorer is a predefined string, then we optimize
-                    # the evaluation by re-using the incrementally updated raw
+                    # the evaluation by reusing the incrementally updated raw
                     # predictions.
                     if scoring_is_predefined_string:
                         raw_predictions_small_train = raw_predictions[
@@ -945,7 +945,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
                 else:
                     # If the scorer is a predefined string, then we optimize the
-                    # evaluation by re-using the incrementally computed raw predictions.
+                    # evaluation by reusing the incrementally computed raw predictions.
                     if scoring_is_predefined_string:
                         raw_predictions_small_train = raw_predictions[
                             indices_small_train
@@ -1492,7 +1492,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
         is always reserved for missing values. Must be no larger than 255.
     categorical_features : array-like of {bool, int, str} of shape (n_features) \
-            or shape (n_categorical_features,), default=None
+            or shape (n_categorical_features,), default='from_dtype'
         Indicates the categorical features.
 
         - None : no feature will be considered categorical.
@@ -1512,7 +1512,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         converted to floating point numbers. This means that categorical values
         of 1.0 and 1 are treated as the same category.
 
-        Read more in the :ref:`User Guide <categorical_support_gbdt>`.
+        Read more in the :ref:`User Guide <categorical_support_gbdt>` and
+        :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`.
 
         .. versionadded:: 0.24
 
@@ -1562,6 +1563,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         and specifies that each branch of a tree will either only split
         on features 0 and 1 or only split on features 2, 3 and 4.
 
+        See :ref:`this example<ice-vs-pdp>` on how to use `interaction_cst`.
+
         .. versionadded:: 1.2
 
     warm_start : bool, default=False
@@ -1577,11 +1580,16 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         .. versionadded:: 0.23
 
     scoring : str or callable or None, default='loss'
-        Scoring parameter to use for early stopping. It can be a single
-        string (see :ref:`scoring_parameter`) or a callable (see
-        :ref:`scoring_callable`). If None, the estimator's default scorer is used. If
-        ``scoring='loss'``, early stopping is checked w.r.t the loss value.
-        Only used if early stopping is performed.
+        Scoring method to use for early stopping. Only used if `early_stopping`
+        is enabled. Options:
+
+        - str: see :ref:`scoring_string_names` for options.
+        - callable: a scorer callable object (e.g., function) with signature
+          ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
+        - `None`: the :ref:`coefficient of determination <r2_score>`
+          (:math:`R^2`) is used.
+        - 'loss': early stopping is checked w.r.t the loss value.
+
     validation_fraction : int or float or None, default=0.1
         Proportion (or absolute size) of training data to set aside as
         validation data for early stopping. If None, early stopping is done on
@@ -1872,7 +1880,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
         is always reserved for missing values. Must be no larger than 255.
     categorical_features : array-like of {bool, int, str} of shape (n_features) \
-            or shape (n_categorical_features,), default=None
+            or shape (n_categorical_features,), default='from_dtype'
         Indicates the categorical features.
 
         - None : no feature will be considered categorical.
@@ -1902,8 +1910,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         .. versionchanged:: 1.4
            Added `"from_dtype"` option.
 
-        .. versionchanged::1.6
-           The default will changed from `None` to `"from_dtype"`.
+        .. versionchanged:: 1.6
+           The default value changed from `None` to `"from_dtype"`.
 
     monotonic_cst : array-like of int of shape (n_features) or dict, default=None
         Monotonic constraint to enforce on each feature are specified using the
@@ -1944,6 +1952,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         and specifies that each branch of a tree will either only split
         on features 0 and 1 or only split on features 2, 3 and 4.
 
+        See :ref:`this example<ice-vs-pdp>` on how to use `interaction_cst`.
+
         .. versionadded:: 1.2
 
     warm_start : bool, default=False
@@ -1959,11 +1969,15 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         .. versionadded:: 0.23
 
     scoring : str or callable or None, default='loss'
-        Scoring parameter to use for early stopping. It can be a single
-        string (see :ref:`scoring_parameter`) or a callable (see
-        :ref:`scoring_callable`). If None, the estimator's default scorer
-        is used. If ``scoring='loss'``, early stopping is checked
-        w.r.t the loss value. Only used if early stopping is performed.
+        Scoring method to use for early stopping. Only used if `early_stopping`
+        is enabled. Options:
+
+        - str: see :ref:`scoring_string_names` for options.
+        - callable: a scorer callable object (e.g., function) with signature
+          ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
+        - `None`: :ref:`accuracy <accuracy_score>` is used.
+        - 'loss': early stopping is checked w.r.t the loss value.
+
     validation_fraction : int or float or None, default=0.1
         Proportion (or absolute size) of training data to set aside as
         validation data for early stopping. If None, early stopping is done on
@@ -2170,7 +2184,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         """
         for raw_predictions in self._staged_raw_predict(X):
             if raw_predictions.shape[1] == 1:
-                # np.argmax([0, 0]) is 0, not 1, therefor "> 0" not ">= 0"
+                # np.argmax([0, 0]) is 0, not 1, therefore "> 0" not ">= 0"
                 encoded_classes = (raw_predictions.ravel() > 0).astype(int)
             else:
                 encoded_classes = np.argmax(raw_predictions, axis=1)

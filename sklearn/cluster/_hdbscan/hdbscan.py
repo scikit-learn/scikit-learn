@@ -127,7 +127,7 @@ def _brute_mst(mutual_reachability, min_samples):
     if n_components > 1:
         raise ValueError(
             f"Sparse mutual reachability matrix has {n_components} connected"
-            " components. HDBSCAN cannot be perfomed on a disconnected graph. Ensure"
+            " components. HDBSCAN cannot be performed on a disconnected graph. Ensure"
             " that the sparse distance matrix has only one connected component."
         )
 
@@ -426,10 +426,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     This allows HDBSCAN to find clusters of varying densities (unlike
     :class:`~sklearn.cluster.DBSCAN`), and be more robust to parameter selection.
     Read more in the :ref:`User Guide <hdbscan>`.
-
-    For an example of how to use HDBSCAN, as well as a comparison to
-    :class:`~sklearn.cluster.DBSCAN`, please see the :ref:`plotting demo
-    <sphx_glr_auto_examples_cluster_plot_hdbscan.py>`.
 
     .. versionadded:: 1.3
 
@@ -999,5 +995,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.input_tags.allow_nan = self.metric != "precomputed"
         return tags
