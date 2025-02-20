@@ -251,7 +251,7 @@ def test_loss_gradients_hessp_intercept(
     g_inter_corrected.T[-1] += l2_reg_strength * coef.T[-1]
     assert_allclose(g, g_inter_corrected)
 
-    s = np.random.RandomState(42).randn(*coef.shape)
+    s = np.random.RandomState(global_random_seed).randn(*coef.shape)
     h = hessp(s)
     h_inter = hessp_inter(s)
     h_inter_corrected = h_inter
@@ -358,7 +358,7 @@ def test_multinomial_coef_shape(fit_intercept, global_random_seed):
         n_features=n_features,
         seed=global_random_seed,
     )
-    s = np.random.RandomState(42).randn(*coef.shape)
+    s = np.random.RandomState(global_random_seed).randn(*coef.shape)
 
     l, g = loss.loss_gradient(coef, X, y)
     g1 = loss.gradient(coef, X, y)

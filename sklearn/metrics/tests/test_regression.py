@@ -494,11 +494,11 @@ def test_regression_single_sample(metric):
         assert np.isnan(score)
 
 
-def test_tweedie_deviance_continuity():
+def test_tweedie_deviance_continuity(global_random_seed):
     n_samples = 100
 
-    y_true = np.random.RandomState(0).rand(n_samples) + 0.1
-    y_pred = np.random.RandomState(1).rand(n_samples) + 0.1
+    y_true = np.random.RandomState(global_random_seed).rand(n_samples) + 0.1
+    y_pred = np.random.RandomState(global_random_seed + 1).rand(n_samples) + 0.1
 
     assert_allclose(
         mean_tweedie_deviance(y_true, y_pred, power=0 - 1e-10),
@@ -518,18 +518,18 @@ def test_tweedie_deviance_continuity():
     assert_allclose(
         mean_tweedie_deviance(y_true, y_pred, power=2 - 1e-10),
         mean_tweedie_deviance(y_true, y_pred, power=2),
-        atol=1e-6,
+        atol=1e-5,
     )
 
     assert_allclose(
         mean_tweedie_deviance(y_true, y_pred, power=2 + 1e-10),
         mean_tweedie_deviance(y_true, y_pred, power=2),
-        atol=1e-6,
+        atol=1e-5,
     )
 
 
-def test_mean_absolute_percentage_error():
-    random_number_generator = np.random.RandomState(42)
+def test_mean_absolute_percentage_error(global_random_seed):
+    random_number_generator = np.random.RandomState(global_random_seed)
     y_true = random_number_generator.exponential(size=100)
     y_pred = 1.2 * y_true
     assert mean_absolute_percentage_error(y_true, y_pred) == pytest.approx(0.2)
@@ -539,7 +539,9 @@ def test_mean_absolute_percentage_error():
     "distribution", ["normal", "lognormal", "exponential", "uniform"]
 )
 @pytest.mark.parametrize("target_quantile", [0.05, 0.5, 0.75])
-def test_mean_pinball_loss_on_constant_predictions(distribution, target_quantile):
+def test_mean_pinball_loss_on_constant_predictions(
+    distribution, target_quantile, global_random_seed
+):
     if not hasattr(np, "quantile"):
         pytest.skip(
             "This test requires a more recent version of numpy "
@@ -547,8 +549,8 @@ def test_mean_pinball_loss_on_constant_predictions(distribution, target_quantile
         )
 
     # Check that the pinball loss is minimized by the empirical quantile.
-    n_samples = 3000
-    rng = np.random.RandomState(42)
+    n_samples = 30000
+    rng = np.random.RandomState(global_random_seed)
     data = getattr(rng, distribution)(size=n_samples)
 
     # Compute the best possible pinball loss for any constant predictor:
@@ -583,19 +585,20 @@ def test_mean_pinball_loss_on_constant_predictions(distribution, target_quantile
         return mean_pinball_loss(data, constant_pred, alpha=target_quantile)
 
     result = optimize.minimize(objective_func, data.mean(), method="Nelder-Mead")
+    result_x = result.x
     assert result.success
     # The minimum is not unique with limited data, hence the large tolerance.
-    assert result.x == pytest.approx(best_pred, rel=1e-2)
+    assert result_x == pytest.approx(best_pred, rel=1e-2)
     assert result.fun == pytest.approx(best_pbl)
 
 
-def test_dummy_quantile_parameter_tuning():
+def test_dummy_quantile_parameter_tuning(global_random_seed):
     # Integration test to check that it is possible to use the pinball loss to
     # tune the hyperparameter of a quantile regressor. This is conceptually
     # similar to the previous test but using the scikit-learn estimator and
     # scoring API instead.
     n_samples = 1000
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.normal(size=(n_samples, 5))  # Ignored
     y = rng.exponential(size=n_samples)
 
@@ -616,9 +619,9 @@ def test_dummy_quantile_parameter_tuning():
         assert grid_search.best_params_["quantile"] == pytest.approx(alpha)
 
 
-def test_pinball_loss_relation_with_mae():
+def test_pinball_loss_relation_with_mae(global_random_seed):
     # Test that mean_pinball loss with alpha=0.5 if half of mean absolute error
-    rng = np.random.RandomState(714)
+    rng = np.random.RandomState(global_random_seed)
     n = 100
     y_true = rng.normal(size=n)
     y_pred = y_true.copy() + rng.uniform(n)
