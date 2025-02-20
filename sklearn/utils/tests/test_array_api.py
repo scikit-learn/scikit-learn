@@ -4,6 +4,7 @@ from functools import partial
 import numpy
 import pytest
 from numpy.testing import assert_allclose
+from scipy import sparse
 
 from sklearn._config import config_context
 from sklearn.base import BaseEstimator
@@ -27,6 +28,7 @@ from sklearn.utils._array_api import (
     get_namespace,
     get_namespace_and_device,
     indexing_dtype,
+    move_to_namespace_and_device,
     supported_float_dtypes,
     yield_namespace_device_dtype_combinations,
 )
@@ -635,3 +637,30 @@ def test_sparse_device(csr_container, dispatch):
             assert get_namespace_and_device(a, numpy.array([1]))[2] is None
     except ImportError:
         raise SkipTest("array_api_compat is not installed")
+
+
+@skip_if_array_api_compat_not_configured
+def test_move_to_namespace_and_device():
+    with config_context(array_api_dispatch=True):
+        xp = pytest.importorskip("array_api_strict")
+        x = xp.asarray([1], device=xp.Device("device1"))
+        a = xp.asarray([2], device=xp.Device("device1"))
+        b = xp.asarray([3], device=xp.Device("device2"))
+        c = 0
+        d = None
+
+        # ref is an array api array
+        conv_a, conv_b, conv_c, conv_d = move_to_namespace_and_device(a, b, c, d, ref=x)
+        assert conv_a.device == x.device
+        assert conv_b.device == x.device
+        assert conv_c is c
+        assert conv_d is d
+
+        # ref is _not_ an array api array
+        conv_a, conv_b, conv_c, conv_d = move_to_namespace_and_device(
+            a, b, c, d, ref=sparse.csr_array([0])
+        )
+        assert conv_a is a
+        assert conv_b is b
+        assert conv_c is c
+        assert conv_d is d
