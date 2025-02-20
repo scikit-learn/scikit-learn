@@ -326,7 +326,7 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
 
 
 class ConsumingClassifierWithoutPredictProba(ConsumingClassifier):
-    """ConsumingClassifier without a predict_proba() method.
+    """ConsumingClassifier without a predict_proba method, but with predict_log_proba.
 
     Used to mimic dynamic method selection such as in the `_parallel_predict_proba()`
     function called by `BaggingClassifier`.
@@ -335,6 +335,34 @@ class ConsumingClassifierWithoutPredictProba(ConsumingClassifier):
     @property
     def predict_proba(self):
         raise AttributeError("This estimator does not support predict_proba")
+
+
+class ConsumingClassifierWithoutPredictLogProba(ConsumingClassifier):
+    """ConsumingClassifier without a predict_log_proba method, but with predict_proba.
+
+    Used to mimic dynamic method selection such as in
+    `BaggingClassifier.predict_log_proba()`.
+    """
+
+    @property
+    def predict_log_proba(self):
+        raise AttributeError("This estimator does not support predict_log_proba")
+
+
+class ConsumingClassifierWithOnlyPredict(ConsumingClassifier):
+    """ConsumingClassifier with only a predict method.
+
+    Used to mimic dynamic method selection such as in
+    `BaggingClassifier.predict_log_proba()`.
+    """
+
+    @property
+    def predict_proba(self):
+        raise AttributeError("This estimator does not support predict_proba")
+
+    @property
+    def predict_log_proba(self):
+        raise AttributeError("This estimator does not support predict_log_proba")
 
 
 class ConsumingTransformer(TransformerMixin, BaseEstimator):

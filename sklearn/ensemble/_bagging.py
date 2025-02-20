@@ -1003,7 +1003,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             routed_params = process_routing(self, "predict_proba", **params)
         else:
             routed_params = Bunch()
-            routed_params.estimator = Bunch(predict_proba=params)
+            routed_params.estimator = Bunch(predict_proba=Bunch())
 
         # Parallel loop
         n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
@@ -1042,8 +1042,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         **params : dict
             Parameters routed to the `predict_log_proba`, the `predict_proba` or the
             `proba` method of the sub-estimators via the metadata routing API. The
-            routing is tried in the before mentioned order depending on whether this
-            method is available on the sub-estimator.
+            routing is tried in the mentioned order depending on whether this method is
+            available on the sub-estimator.
 
             .. versionadded:: 1.7
 
@@ -1077,7 +1077,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
                 routed_params = process_routing(self, "predict_log_proba", **params)
             else:
                 routed_params = Bunch()
-                routed_params.estimator = Bunch(predict_log_proba=params)
+                routed_params.estimator = Bunch(predict_log_proba=Bunch())
 
             # Parallel loop
             n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
@@ -1155,7 +1155,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             routed_params = process_routing(self, "decision_function", **params)
         else:
             routed_params = Bunch()
-            routed_params.estimator = Bunch(decision_function=params)
+            routed_params.estimator = Bunch(decision_function=Bunch())
 
         # Parallel loop
         n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
@@ -1409,7 +1409,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
             routed_params = process_routing(self, "predict", **params)
         else:
             routed_params = Bunch()
-            routed_params.estimator = Bunch(predict=params)
+            routed_params.estimator = Bunch(predict=Bunch())
 
         # Parallel loop
         n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)

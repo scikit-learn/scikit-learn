@@ -34,6 +34,8 @@ from sklearn.preprocessing import FunctionTransformer, scale
 from sklearn.random_projection import SparseRandomProjection
 from sklearn.svm import SVC, SVR
 from sklearn.tests.metadata_routing_common import (
+    ConsumingClassifierWithOnlyPredict,
+    ConsumingClassifierWithoutPredictLogProba,
     ConsumingClassifierWithoutPredictProba,
     _Registry,
     check_recorded_metadata,
@@ -970,21 +972,38 @@ def test_bagging_with_metadata_routing(model):
     model.fit(iris.data, iris.target)
 
 
+@pytest.mark.parametrize(
+    "sub_estimator, caller, callee",
+    [
+        (ConsumingClassifierWithoutPredictProba, "predict", "predict"),
+        (
+            ConsumingClassifierWithoutPredictLogProba,
+            "predict_log_proba",
+            "predict_proba",
+        ),
+        (ConsumingClassifierWithOnlyPredict, "predict_log_proba", "proba"),
+    ],
+)
 @config_context(enable_metadata_routing=True)
-def test_metadata_routing_without_predict_proba():
-    """Test that metadata routing works in `BaggingClassifier.predict` if the
-    sub-estimator doesn't implement `predict_proba`. (The main test in
-    sklearn/tests/test_metaestimators_metadata_routing.py only tests with
-    `ConsumingClassifier`, which has both methods (`predict` and `predict_proba`), but
-    only its `predict_proba` method gets chosen to be used by the
-    `_parallel_predict_proba` function.)"""
+def test_metadata_routing_without_dynamic_method_selection(
+    sub_estimator, caller, callee
+):
+    """Test that metadata routing works in `BaggingClassifier` with dynamic selection of
+    the sub-estimator's methods. Here we test only specific test cases, that cannot be
+    tested with `ConsumingClassifier` in
+    sklearn/tests/test_metaestimators_metadata_routing.py: `BaggingClassifier.predict()`
+    dynamically routes to `predict` if the sub-estimator doesn't have `predict_proba`
+    and `BaggingClassifier.predict_log_proba()` dynamically routes to `predict_proba` if
+    the sub-estimator doesn't have `predict_log_proba`, but `predict_proba` is
+    available, or to `predict` otherwise.
+    """
     X = np.array([[0, 2], [1, 4], [2, 6]])
     y = [1, 2, 3]
     sample_weight, metadata = [1], "a"
     registry = _Registry()
-    estimator = ConsumingClassifierWithoutPredictProba(
-        registry=registry
-    ).set_predict_request(sample_weight=True, metadata=True)
+    estimator = sub_estimator(registry=registry).set_predict_request(
+        sample_weight=True, metadata=True
+    )
     bagging = BaggingClassifier(estimator=estimator)
     bagging.fit(X, y)
     bagging.predict(X=np.array([[1, 1], [1, 3], [0, 2]]))
@@ -993,8 +1012,8 @@ def test_metadata_routing_without_predict_proba():
     for estimator in registry:
         check_recorded_metadata(
             obj=estimator,
-            method="predict",
-            parent="predict",
+            method=callee,
+            parent=caller,
             sample_weight=sample_weight,
             metadata=metadata,
         )
