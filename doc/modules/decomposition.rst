@@ -636,7 +636,6 @@ does not fit into memory.
 
 * :ref:`sphx_glr_auto_examples_decomposition_plot_image_denoising.py`
 
-
 .. _FA:
 
 Factor Analysis
