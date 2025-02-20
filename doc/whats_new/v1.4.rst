@@ -872,6 +872,12 @@ Changelog
 :mod:`sklearn.neighbors`
 ........................
 
+- |MajorFeature| :class:`neighbors.NearestNeighborOutlierDetection` adds the
+  kNN and kNN weight anomaly detection methods. :pr:`27337` by `Erich Schubert`_.
+
+- |MajorFeature| :class:`neighbors.LocalOutlierProbabilities` adds the LoOP
+  anomaly detection method. :pr:`27337` by `Erich Schubert`_.
+
 - |Efficiency| :meth:`sklearn.neighbors.KNeighborsRegressor.predict` and
   :meth:`sklearn.neighbors.KNeighborsClassifier.predict_proba` now efficiently support
   pairs of dense and sparse datasets.
