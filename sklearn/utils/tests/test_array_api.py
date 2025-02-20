@@ -269,7 +269,7 @@ def test_device_inspection():
 
     # Sanity check: ensure our Device mock class is non hashable, to
     # accurately account for non-hashable device objects in some array
-    # libraries, because of which the `device` inspection function should'nt
+    # libraries, because of which the `device` inspection function shouldn't
     # make use of hash lookup tables (in particular, not use `set`)
     with pytest.raises(TypeError):
         hash(Array("device").device)

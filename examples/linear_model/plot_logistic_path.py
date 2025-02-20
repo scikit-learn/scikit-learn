@@ -37,11 +37,12 @@ from sklearn import datasets
 iris = datasets.load_iris()
 X = iris.data
 y = iris.target
+feature_names = iris.feature_names
 
+# %%
+# Here we remove the third class to make the problem a binary classification
 X = X[y != 2]
 y = y[y != 2]
-
-X /= X.max()  # Normalize X to speed-up convergence
 
 # %%
 # Compute regularization path
@@ -49,24 +50,34 @@ X /= X.max()  # Normalize X to speed-up convergence
 
 import numpy as np
 
-from sklearn import linear_model
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.svm import l1_min_c
 
-cs = l1_min_c(X, y, loss="log") * np.logspace(0, 10, 16)
+cs = l1_min_c(X, y, loss="log") * np.logspace(0, 1, 16)
 
-clf = linear_model.LogisticRegression(
-    penalty="l1",
-    solver="liblinear",
-    tol=1e-6,
-    max_iter=int(1e6),
-    warm_start=True,
-    intercept_scaling=10000.0,
+# %%
+# Create a pipeline with `StandardScaler` and `LogisticRegression`, to normalize
+# the data before fitting a linear model, in order to speed-up convergence and
+# make the coefficients comparable. Also, as a side effect, since the data is now
+# centered around 0, we don't need to fit an intercept.
+clf = make_pipeline(
+    StandardScaler(),
+    LogisticRegression(
+        penalty="l1",
+        solver="liblinear",
+        tol=1e-6,
+        max_iter=int(1e6),
+        warm_start=True,
+        fit_intercept=False,
+    ),
 )
 coefs_ = []
 for c in cs:
-    clf.set_params(C=c)
+    clf.set_params(logisticregression__C=c)
     clf.fit(X, y)
-    coefs_.append(clf.coef_.ravel().copy())
+    coefs_.append(clf["logisticregression"].coef_.ravel().copy())
 
 coefs_ = np.array(coefs_)
 
@@ -76,10 +87,17 @@ coefs_ = np.array(coefs_)
 
 import matplotlib.pyplot as plt
 
-plt.plot(np.log10(cs), coefs_, marker="o")
+# Colorblind-friendly palette (IBM Color Blind Safe palette)
+colors = ["#648FFF", "#785EF0", "#DC267F", "#FE6100"]
+
+plt.figure(figsize=(10, 6))
+for i in range(coefs_.shape[1]):
+    plt.semilogx(cs, coefs_[:, i], marker="o", color=colors[i], label=feature_names[i])
+
 ymin, ymax = plt.ylim()
-plt.xlabel("log(C)")
+plt.xlabel("C")
 plt.ylabel("Coefficients")
 plt.title("Logistic Regression Path")
+plt.legend()
 plt.axis("tight")
 plt.show()

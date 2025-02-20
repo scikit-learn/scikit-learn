@@ -414,7 +414,7 @@ def test_hdbscan_sparse_distances_disconnected_graph(csr_container):
     X[5:, 15:] = 1
     X = X + X.T
     X = csr_container(X)
-    msg = "HDBSCAN cannot be perfomed on a disconnected graph"
+    msg = "HDBSCAN cannot be performed on a disconnected graph"
     with pytest.raises(ValueError, match=msg):
         HDBSCAN(metric="precomputed").fit(X)
 
