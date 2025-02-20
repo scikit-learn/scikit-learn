@@ -745,6 +745,13 @@ Python and CPython ecosystem, for example :user:`Nathan Goldbaum <ngoldbaum>`,
 
 .. rubric:: Code and documentation contributors
 
+:mod:`sklearn.model_selection`
+..............................
+
+- |Feature| added :class:`model_selection.RepeatedStratifiedGroupKFold`, that repeats
+  the :class:`model_selection.StratifiedGroupKFold` N times.
+  :pr:`24227` by :user:`Kevin Arvai <arvkevi>`.
+
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
 
