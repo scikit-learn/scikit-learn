@@ -99,3 +99,12 @@ def _weighted_percentile(array, sample_weight, percentile=50):
         percentile.append(array[percentile_in_sorted[i], col_index[i]])
     percentile = xp.asarray(percentile)
     return percentile[0] if n_dim == 1 else percentile
+
+
+# TODO: refactor to do the symmetrisation inside _weighted_percentile to avoid
+# sorting the input array twice.
+def _averaged_weighted_percentile(array, sample_weight, percentile=50):
+    return (
+        _weighted_percentile(array, sample_weight, percentile)
+        - _weighted_percentile(-array, sample_weight, 100 - percentile)
+    ) / 2

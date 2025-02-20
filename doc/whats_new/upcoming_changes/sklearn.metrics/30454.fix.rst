@@ -1,3 +1,0 @@
-- Fix regression when scikit-learn metric called on PyTorch CPU tensors would
-  raise an error (with array API dispatch disabled which is the default).
-  By :user:`Loïc Estève <lesteve>`
