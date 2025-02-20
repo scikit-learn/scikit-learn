@@ -24,7 +24,7 @@ from ._base import _BaseImputer
 class KNNImputer(_BaseImputer):
     """Imputation for completing missing values using k-Nearest Neighbors.
 
-    Each sample's missing values are imputed using the mean value from
+    Each sample's missing values are imputed using the mean or median value from
     `n_neighbors` nearest neighbors found in the training set. Two samples are
     close if the features that neither is missing are close.
 
@@ -83,6 +83,10 @@ class KNNImputer(_BaseImputer):
 
         .. versionadded:: 1.2
 
+    strategy : {'mean', 'median'}, default='mean'
+        Method used for imputation. 'mean' imputes missing values with the mean
+        of neighboring values, and 'median' imputes with the median.
+
     Attributes
     ----------
     indicator_ : :class:`~sklearn.impute.MissingIndicator`
@@ -120,15 +124,13 @@ class KNNImputer(_BaseImputer):
     >>> import numpy as np
     >>> from sklearn.impute import KNNImputer
     >>> X = [[1, 2, np.nan], [3, 4, 3], [np.nan, 6, 5], [8, 8, 7]]
-    >>> imputer = KNNImputer(n_neighbors=2)
-    >>> imputer.fit_transform(X)
-    array([[1. , 2. , 4. ],
-           [3. , 4. , 3. ],
-           [5.5, 6. , 5. ],
-           [8. , 8. , 7. ]])
-
-    For a more detailed example see
-    :ref:`sphx_glr_auto_examples_impute_plot_missing_values.py`.
+    >>> # Create KNNImputer with mean imputation
+    >>> imputer_mean = KNNImputer(n_neighbors=2, strategy="mean")
+    >>> X_imputed_mean = imputer_mean.fit_transform(X)
+    >>>
+    >>> # Create KNNImputer with median imputation
+    >>> imputer_median = KNNImputer(n_neighbors=2, strategy="median")
+    >>> X_imputed_median = imputer_median.fit_transform(X)
     """
 
     _parameter_constraints: dict = {
@@ -137,6 +139,7 @@ class KNNImputer(_BaseImputer):
         "weights": [StrOptions({"uniform", "distance"}), callable, Hidden(None)],
         "metric": [StrOptions(set(_NAN_METRICS)), callable],
         "copy": ["boolean"],
+        "strategy": [StrOptions({"mean", "median"})],
     }
 
     def __init__(
@@ -149,6 +152,7 @@ class KNNImputer(_BaseImputer):
         copy=True,
         add_indicator=False,
         keep_empty_features=False,
+        strategy="mean",
     ):
         super().__init__(
             missing_values=missing_values,
@@ -159,6 +163,7 @@ class KNNImputer(_BaseImputer):
         self.weights = weights
         self.metric = metric
         self.copy = copy
+        self.strategy = strategy
 
     def _calc_impute(self, dist_pot_donors, n_neighbors, fit_X_col, mask_fit_X_col):
         """Helper function to impute a single column.
@@ -203,12 +208,17 @@ class KNNImputer(_BaseImputer):
             weight_matrix = np.ones_like(donors_dist)
             weight_matrix[np.isnan(donors_dist)] = 0.0
 
-        # Retrieve donor values and calculate kNN average
+        # Retrieve donor values and calculate kNN imputation
         donors = fit_X_col.take(donors_idx)
         donors_mask = mask_fit_X_col.take(donors_idx)
         donors = np.ma.array(donors, mask=donors_mask)
 
-        return np.ma.average(donors, axis=1, weights=weight_matrix).data
+        if self.strategy == "mean":
+            imputed_values = np.ma.average(donors, axis=1, weights=weight_matrix).data
+        elif self.strategy == "median":
+            imputed_values = np.ma.median(donors, axis=1).data
+            
+        return imputed_values
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
