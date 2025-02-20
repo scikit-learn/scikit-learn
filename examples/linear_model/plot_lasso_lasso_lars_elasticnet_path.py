@@ -1,136 +1,461 @@
-"""
-========================================
-Lasso, Lasso-LARS, and Elastic Net paths
-========================================
-
-This example shows how to compute the "paths" of coefficients along the Lasso,
-Lasso-LARS, and Elastic Net regularization paths. In other words, it shows the
-relationship between the regularization parameter (alpha) and the coefficients.
-
-Lasso and Lasso-LARS impose a sparsity constraint on the coefficients,
-encouraging some of them to be zero. Elastic Net is a generalization of
-Lasso that adds an L2 penalty term to the L1 penalty term. This allows for
-some coefficients to be non-zero while still encouraging sparsity.
-
-Lasso and Elastic Net use a coordinate descent method to compute the paths, while
-Lasso-LARS uses the LARS algorithm to compute the paths.
-
-The paths are computed using :func:`~sklearn.linear_model.lasso_path`,
-:func:`~sklearn.linear_model.lars_path`, and :func:`~sklearn.linear_model.enet_path`.
-
-The results show different comparison plots:
-
-- Compare Lasso and Lasso-LARS
-- Compare Lasso and Elastic Net
-- Compare Lasso with positive Lasso
-- Compare LARS and Positive LARS
-- Compare Elastic Net and positive Elastic Net
-
-Each plot shows how the model coefficients vary as the regularization strength changes,
-offering insight into the behavior of these models
-under different constraints.
-"""
-
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from itertools import cycle
+"""
+=================================================
+Regularization in Linear and Logistic Regressions
+=================================================
+
+This example explores regularization techniques for linear and logistic regression
+in both regression and classification tasks. It demonstrates how the
+regularization parameter :math:`\\alpha` can be adjusted to control the complexity
+of the trained coefficients :math:`w` and reduce overfitting.
+"""
 
 import matplotlib.pyplot as plt
+import numpy as np
 
-from sklearn.datasets import load_diabetes
-from sklearn.linear_model import enet_path, lars_path, lasso_path
+from sklearn.datasets import make_classification, make_regression
+from sklearn.linear_model import (
+    LogisticRegression,
+    Ridge,
+    enet_path,
+    lars_path,
+    lasso_path,
+)
+from sklearn.metrics import mean_squared_error
+from sklearn.svm import l1_min_c
 
-X, y = load_diabetes(return_X_y=True)
-X /= X.std(axis=0)  # Standardize data (easier to set the l1_ratio parameter)
+# %%
+#
+# Regularization in Linear Regression
+# -----------------------------------
+#
+# When performing linear regression on a given dataset
+# :math:`(X, y)`, regularization terms can be added to
+# control the model's complexity and mitigate overfitting.
+# Scikit-learn provides the following regularization techniques:
+#
+# - :func:`~sklearn.linear_model.Lasso`
+# - :func:`~sklearn.linear_model.LassoLars`
+# - :func:`~sklearn.linear_model.Ridge`
+# - :func:`~sklearn.linear_model.ElasticNet` (with `l1_ratio=0.8`
+#   in this example)
+#
+# Mathematically, these are formulated by minimizing the constrained
+# least-squares penalty:
+#
+# .. math::
+#
+#     \min_{w} \frac{1}{2n_{\operatorname{sample}}}
+#     \Vert Xw - y \Vert^2_2 +
+#     \left\{
+#     \begin{array}{cl}
+#     \alpha \Vert w \Vert_1 & \mbox{Lasso(-LARS)} \\
+#     \alpha \Vert w \Vert_2^2 & \mbox{Ridge} \\
+#     \frac{4\alpha}{5} \Vert w \Vert_1  +
+#     \frac{\alpha}{10} \Vert w \Vert^2_2& \mbox{Elastic Net} \\
+#     \end{array}
+#     \right.
+#
+# Thus, the Lasso model (resp. Ridge model) includes the :math:`\ell^1`-norm
+# (resp. :math:`\ell^2`-norm) of the regression
+# coefficients in the penalty, while the Elastic Net model
+# incorporates both :math:`\ell^1`- and :math:`\ell^2`-norms.
+#
+# We can interpret the :math:`\ell^p`-norms as minimising the least squares penalty
+# under different geometries. This is illustrated by plotting the unit circles
+#
+# .. math::
+#
+#     \left\{
+#     \begin{array}{cl}
+#     \Vert w \Vert_1 &=1 \\
+#     \Vert w \Vert_2^2 &=1 \\
+#     0.8 \Vert w \Vert_1 + 0.1 \Vert w \Vert_2^2 &= 1 \\
+#     \end{array}
+#     \right.
+#
+# in :math:`\mathbb{R}^2`:
+line = np.linspace(-1.2, 1.2, 1001)
+xx, yy = np.meshgrid(line, line)
 
-# Compute paths
+l1 = np.abs(xx) + np.abs(yy)
+l2 = xx**2 + yy**2
+elastic_net = 0.8 * l1 + 0.1 * l2
 
-eps = 5e-3  # the smaller it is the longer is the path
+plt.figure()
+ax = plt.gca()
 
-print("Computing regularization path using the lasso...")
+l1_contour = plt.contour(xx, yy, l1, levels=[1], colors="#0072B2")
+l2_contour = plt.contour(xx, yy, l2, levels=[1], colors="#D55E00")
+elastic_net_contour = plt.contour(xx, yy, elastic_net, levels=[1], colors="#009E73")
+
+ax.set_aspect("equal")
+ax.spines["left"].set_position("center")
+ax.spines["right"].set_color("none")
+ax.spines["bottom"].set_position("center")
+ax.spines["top"].set_color("none")
+
+plt.clabel(l1_contour, inline=1, fmt={1.0: r"$\ell^1$"}, manual=[(-1, -1)])
+plt.clabel(l2_contour, inline=1, fmt={1.0: r"$\ell^2$"}, manual=[(-1, -1)])
+plt.clabel(
+    elastic_net_contour,
+    inline=1,
+    fmt={1.0: "Elastic Net"},
+    manual=[(1, -1)],
+)
+
+plt.title(r"Unit Circles in $\mathbb{R}^2$")
+
+plt.tight_layout()
+_ = plt.show()
+
+# %%
+# Algebraically, any solution to this optimization problem depends
+# on :math:`\alpha`. For example, in Lasso, a large :math:`\alpha` forces
+# the least-squares penalty to stay small, which in turn keeps the norm
+# :math:`\Vert w \Vert_1`
+# small. Conversely, a smaller :math:`\alpha` allows the norm
+# :math:`\Vert w \Vert_1`
+# to grow larger.
+#
+# This suggests that the regression coefficients :math:`w` evolve as
+# :math:`\alpha` increases, and we are interested in knowing
+# :math:`w` across a range of :math:`\alpha` values. This is known
+# as the **regularization path**: a list of :math:`w` values corresponding to
+# different :math:`\alpha` values, ranging from small to large.
+#
+# In this example, we plot the regularization paths to show how the magnitudes of
+# the coefficients change as the regularization parameter :math:`\alpha` increases.
+# This demonstrates how model complexity varies with :math:`\alpha`. We then compare
+# the trained coefficients with the true coefficients used to generate the training set,
+# illustrating how regularization helps mitigate overfitting.
+#
+# Creating a Noise-free Regression Dataset
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+#
+# We generate a toy dataset with 400 samples and 10 features, suitable for
+# regression analysis. Since the data is noise-free in this example,
+# we can expect our regression model to recover the true coefficients `w` exactly.
+
+X, y, w = make_regression(n_samples=400, n_features=10, coef=True, random_state=42)
+
+# %%
+#
+# Impact of Regularization Parameter on Model Complexity
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+#
+# Lasso(-LARS) and Elastic Net Models
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# Scikit-learn provides the following functions to compute multiple
+# :math:`w` values for various :math:`\alpha` values efficiently:
+#
+# - :func:`~sklearn.linear_model.lasso_path`
+# - :func:`~sklearn.linear_model.lars_path`
+# - :func:`~sklearn.linear_model.enet_path` with `l1_ratio=0.8`
+#
+
+eps = 3e-4  # the smaller it is the longer is the path
+
 alphas_lasso, coefs_lasso, _ = lasso_path(X, y, eps=eps)
 
-print("Computing regularization path using the positive lasso...")
-alphas_positive_lasso, coefs_positive_lasso, _ = lasso_path(
-    X, y, eps=eps, positive=True
-)
-
-print("Computing regularization path using the LARS...")
-alphas_lars, _, coefs_lars = lars_path(X, y, method="lasso")
-
-print("Computing regularization path using the positive LARS...")
-alphas_positive_lars, _, coefs_positive_lars = lars_path(
-    X, y, method="lasso", positive=True
-)
-
-print("Computing regularization path using the elastic net...")
 alphas_enet, coefs_enet, _ = enet_path(X, y, eps=eps, l1_ratio=0.8)
 
-print("Computing regularization path using the positive elastic net...")
-alphas_positive_enet, coefs_positive_enet, _ = enet_path(
-    X, y, eps=eps, l1_ratio=0.8, positive=True
+# %%
+# The :func:`~sklearn.linear_model.lasso_path` and
+# :func:`~sklearn.linear_model.enet_path` functions compute
+# :math:`w` with **coordinate decent**: for each entry of :math:`w`,
+# the function solves for it optimal value while keeping the others
+# fixed. Since the algorithm iterates until convergence,
+# Lasso doesn't operate in a fixed number of steps based solely
+# on the dataset's size, which can make it take longer to run.
+# In contrast, the Lasso-LARS model computes the Lasso solution in fewer steps.
+
+alphas_lars, _, coefs_lars = lars_path(X, y, method="lasso")
+
+# %%
+# The Lasso-LARS model uses the **Least Angle Regression (LARS)** algorithm
+# (see [1]_ Algorithm 3.2 on page 74) to compute the Lasso solution in
+# :math:`\min \left\{
+# n_{\operatorname{sample}}-1,n_{\operatorname{feature}}
+# \right\}`
+# steps. This provides an efficient algorithm for computing the entire Lasso path, and
+# is implemented as :func:`~sklearn.linear_model.LassoLars`
+# and :func:`~sklearn.linear_model.lars_path`.
+#
+# Ridge Model
+# ~~~~~~~~~~~
+#
+# Next, we compute the coefficients for the Ridge model using the :math:`\alpha`
+# from Elastic Net:
+
+coefs_ridge = []
+for a in alphas_enet:
+    ridge = Ridge(alpha=a)
+    ridge.fit(X, y)
+    coefs_ridge.append(ridge.coef_)
+
+coefs_ridge = np.asarray(coefs_ridge)
+
+# %%
+# Plotting the Regularization Paths
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# We now present the visualization of the regularization paths for the dataset.
+# Each model is represented by 10 curves, corresponding to the number of features in the
+# dataset. Each curve shows how a particular coefficient :math:`w_i` changes as
+# :math:`\alpha` increases.
+
+model_names = ["Lasso", "Lasso-LARS", "Elastic Net", "Ridge"]
+
+model_coefficients = [coefs_lasso.T, coefs_lars.T, coefs_enet.T, coefs_ridge]
+
+model_alphas = [alphas_lasso, alphas_lars, alphas_enet, alphas_enet]
+
+fig, axes = plt.subplots(4, 4, sharex=True, sharey=True, figsize=(25, 10))
+
+for i in range(len(model_names)):
+    for j in range(len(model_names)):
+        if i == j:
+            axes[i, i].semilogx(model_alphas[i], model_coefficients[i], c="#0072B2")
+
+            axes[i, i].set_title(f"{model_names[i]} Paths", fontsize=14)
+
+        elif j < i:
+            l1 = axes[i, j].semilogx(
+                model_alphas[i], model_coefficients[i], c="#0072B2"
+            )
+
+            l2 = axes[i, j].semilogx(
+                model_alphas[j], model_coefficients[j], linestyle="--", c="#D55E00"
+            )
+
+            axes[i, j].set_title(
+                f"{model_names[j]} vs {model_names[i]} Paths", fontsize=14
+            )
+
+            axes[i, j].legend(
+                (l1[-1], l2[-1]),
+                (f"{model_names[i]}", f"{model_names[j]}"),
+                loc="upper right",
+            )
+
+        else:
+            fig.delaxes(axes[i, j])
+
+fig.supxlabel(r"$\alpha$", fontsize=18)
+fig.supylabel("Coefficients", fontsize=18)
+
+fig.suptitle(
+    "Comparing Regularization Paths: Lasso(-LARS), Ridge, and Elastic Net", fontsize=20
 )
 
-# Display results
+fig.tight_layout(pad=3.0)
+_ = plt.show()
 
-plt.figure(1)
-colors = cycle(["b", "r", "g", "c", "k"])
-for coef_lasso, coef_lars, c in zip(coefs_lasso, coefs_lars, colors):
-    l1 = plt.semilogx(alphas_lasso, coef_lasso, c=c)
-    l2 = plt.semilogx(alphas_lars, coef_lars, linestyle="--", c=c)
+# %%
+#
+# * In the "Lasso vs Lasso-LARS Paths" visual,
+#   the Lasso and Lasso-LARS paths appear identical towards the end
+#   because both models solve the same constrained problem.
+#   However, Lasso-LARS reaches the solution faster than Lasso.
+#
+# * The "Lasso vs Elastic-Net Paths" visual is more notable.
+#   Elastic Net's coefficients tend to have smaller absolute values than those of Lasso.
+#   Additionally, Elastic Net maintains more non-zero coefficients than Lasso towards
+#   the end.
+#
+# * In the "Lasso(-LARS) vs Ridge Paths" and "Elastic Net vs Ridge Paths" visuals, the
+#   Ridge model focuses on shrinking all coefficients uniformly, rather than setting
+#   some to exactly zero. As a result, the Ridge model retains all features after
+#   training, unlike the Lasso(-LARS) or Elastic Net models.
+#
+# This demonstrates how different regularization techniques govern
+# the model's complexity:
+#
+# 1. the :math:`\ell^1`-norm constraint encourages sparsity in the solution.
+#
+# 2. the :math:`\ell^2`-norm constraint focuses on shrinkage of the magnitude
+#    of the solution.
+#
+# 3. the Elastic Net constraint provides a balanced compromise.
+#
+# Mitigating Overfitting with Regularization
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+#
+# Recall that the true coefficient `w` refers to the coefficients of the linear model
+# used to generate the training dataset. In this section, we compare the trained
+# coefficients of Lasso(-LARS), Ridge, and Elastic Net with `w` to demonstrate how
+# regularization can mitigate overfitting. This is achieved by computing the
+# :func:`~sklearn.metrics.mean_squared_error` (MSE) between the true and trained
+# coefficients.
 
-plt.xlabel("alpha")
-plt.ylabel("coefficients")
-plt.title("Lasso and LARS Paths")
-plt.legend((l1[-1], l2[-1]), ("Lasso", "LARS"), loc="lower right")
+lasso_mse, lars_mse, enet_mse, ridge_mse = [], [], [], []
+
+for coef_lasso, coef_enet, coef_ridge in zip(coefs_lasso.T, coefs_enet.T, coefs_ridge):
+    lasso_mse.append(mean_squared_error(coef_lasso, w))
+    enet_mse.append(mean_squared_error(coef_enet, w))
+    ridge_mse.append(mean_squared_error(coef_ridge, w))
+
+for coef_lars in coefs_lars.T:
+    lars_mse.append(mean_squared_error(coef_lars, w))
+
+lasso_mse = np.asarray(lasso_mse)
+lars_mse = np.asarray(lars_mse)
+enet_mse = np.asarray(enet_mse)
+ridge_mse = np.asarray(ridge_mse)
+
+# %%
+#
+# The idea is that a smaller MSE between the true and trained coefficients implies
+# greater similarity between the coefficients. Thus, if the MSE is small, the
+# trained model captures the underlying pattern of the training data well.
+# However, this can also indicate that the trained model may not perform well on
+# generalised data, as the pattern may not hold for unseen data.
+# This is essentially the overfitting problem.
+#
+# The following visualization demonstrates how the MSE changes for different trained
+# models as the regularization parameter :math:`\alpha` increases.
+
+plt.figure()
+l1 = plt.semilogx(alphas_lasso, lasso_mse.T, c="#0072B2")
+l2 = plt.semilogx(alphas_lars, lars_mse.T, c="#D55E00")
+l3 = plt.semilogx(alphas_enet, enet_mse.T, c="#009E73")
+l4 = plt.semilogx(alphas_enet, ridge_mse, c="#F0E442")
+
+plt.xlabel(r"$\alpha$")
+plt.ylabel("Mean Squared Error")
+plt.title("Coefficient Error Across Regularization Strengths")
+plt.legend(
+    (l1[-1], l2[-1], l3[-1], l4[-1]),
+    ("Lasso", "LARS", "Elastic Net", "Ridge"),
+    loc="upper left",
+)
+
 plt.axis("tight")
+_ = plt.show()
 
-plt.figure(2)
-colors = cycle(["b", "r", "g", "c", "k"])
-for coef_l, coef_e, c in zip(coefs_lasso, coefs_enet, colors):
-    l1 = plt.semilogx(alphas_lasso, coef_l, c=c)
-    l2 = plt.semilogx(alphas_enet, coef_e, linestyle="--", c=c)
+# %%
+#
+# In the visualization, for small values of :math:`\alpha`, since our synthetic data is
+# noise-free, the trained coefficients of Lasso(-LARS), Ridge, and Elastic Net are
+# similar to the true coefficient `w` (with MSE close to 0). This indicates that the
+# models capture the intricate details of the training data well.
+#
+# As :math:`\alpha` increases, the MSE also increases. This improves the models' ability
+# to generalise to unseen data (e.g., if the data were noisy), but it also risks
+# degrading model performance if the regularization becomes too strong.
+#
+# Regularization in Logistic Regression
+# -------------------------------------
+#
+# Regularization can also be applied to Logistic Regression when working on
+# classification tasks. scikit-learn's :func:`~sklearn.linear_model.LogisticRegression`
+# enables users to apply regularization using the `penalty` parameter:
+#
+# * `l1`: :math:`\ell^1`-regularization, similar to the Lasso model
+# * `l2`: :math:`\ell^2`-regularization, similar to the Ridge model
+# * `elasticnet`: Combined with the `l1_ratio` parameter for a mix of :math:`\ell^1`
+#   and :math:`\ell^2`
+#
+# Additionally, the `C` parameter controls the inverse of the regularization strength.
+# Smaller values of `C` apply stronger regularization.
+#
+# We demonstrate the effect of regularization by creating a synthetic classification
+# dataset.
+#
 
-plt.xlabel("alpha")
-plt.ylabel("coefficients")
-plt.title("Lasso and Elastic-Net Paths")
-plt.legend((l1[-1], l2[-1]), ("Lasso", "Elastic-Net"), loc="lower right")
-plt.axis("tight")
+X, y = make_classification(
+    n_samples=400,
+    n_features=64,
+    n_informative=64,
+    n_redundant=0,
+    n_classes=2,
+    n_clusters_per_class=1,
+    random_state=42,
+)
 
+# %%
+#
+# In this synthetic binary classification dataset, there are 400 samples,
+# each with 64 features. This toy dataset is noise-free to maintain consistency with
+# our earlier regression example.
+#
+# As noted in the regression example, :math:`\ell^1`-regularization may set some
+# coefficients exactly to zero. For extreme values of `C`, the trained coefficients
+# may even become the zero vector. To address this, scikit-learn provides the
+# :func:`~sklearn.svm.l1_min_c` function, which computes the minimum value of the
+# regularization strength `C` at which the model begins to learn meaningful patterns
+# (i.e., some coefficients become non-zero).
+#
 
-plt.figure(3)
-for coef_l, coef_pl, c in zip(coefs_lasso, coefs_positive_lasso, colors):
-    l1 = plt.semilogy(alphas_lasso, coef_l, c=c)
-    l2 = plt.semilogy(alphas_positive_lasso, coef_pl, linestyle="--", c=c)
+cs = l1_min_c(X, y, loss="log") * np.logspace(0, 10, 16)
 
-plt.xlabel("alpha")
-plt.ylabel("coefficients")
-plt.title("Lasso and positive Lasso")
-plt.legend((l1[-1], l2[-1]), ("Lasso", "positive Lasso"), loc="lower right")
-plt.axis("tight")
+# %%
+#
+# We now plot blah-blah-blah
+#
 
+l1_ratio = 0.8  # L1 weight in the Elastic-Net regularization
 
-plt.figure(4)
-colors = cycle(["b", "r", "g", "c", "k"])
-for coef_lars, coef_positive_lars, c in zip(coefs_lars, coefs_positive_lars, colors):
-    l1 = plt.semilogx(alphas_lars, coef_lars, c=c)
-    l2 = plt.semilogx(alphas_positive_lars, coef_positive_lars, linestyle="--", c=c)
+fig, axes = plt.subplots(3, 3)
 
-plt.xlabel("alpha")
-plt.ylabel("coefficients")
-plt.title("LARS and Positive LARS")
-plt.legend((l1[-1], l2[-1]), ("LARS", "Positive LARS"), loc="lower right")
-plt.axis("tight")
+# Set regularization parameter
+for i, (C, axes_row) in enumerate(zip((1, 0.1, 0.01), axes)):
+    # Increase tolerance for short training time
+    clf_l1_LR = LogisticRegression(C=C, penalty="l1", tol=0.01, solver="saga")
+    clf_l2_LR = LogisticRegression(C=C, penalty="l2", tol=0.01, solver="saga")
+    clf_en_LR = LogisticRegression(
+        C=C, penalty="elasticnet", solver="saga", l1_ratio=l1_ratio, tol=0.01
+    )
+    clf_l1_LR.fit(X, y)
+    clf_l2_LR.fit(X, y)
+    clf_en_LR.fit(X, y)
 
-plt.figure(5)
-for coef_e, coef_pe, c in zip(coefs_enet, coefs_positive_enet, colors):
-    l1 = plt.semilogx(alphas_enet, coef_e, c=c)
-    l2 = plt.semilogx(alphas_positive_enet, coef_pe, linestyle="--", c=c)
+    coef_l1_LR = clf_l1_LR.coef_.ravel()
+    coef_l2_LR = clf_l2_LR.coef_.ravel()
+    coef_en_LR = clf_en_LR.coef_.ravel()
 
-plt.xlabel("alpha")
-plt.ylabel("coefficients")
-plt.title("Elastic-Net and positive Elastic-Net")
-plt.legend((l1[-1], l2[-1]), ("Elastic-Net", "positive Elastic-Net"), loc="lower right")
-plt.axis("tight")
-plt.show()
+    # coef_l1_LR contains zeros due to the
+    # L1 sparsity inducing norm
+
+    sparsity_l1_LR = np.mean(coef_l1_LR == 0) * 100
+    sparsity_l2_LR = np.mean(coef_l2_LR == 0) * 100
+    sparsity_en_LR = np.mean(coef_en_LR == 0) * 100
+
+    print(f"C={C:.2f}")
+    print(f"{'Sparsity with L1 penalty:':<40} {sparsity_l1_LR:.2f}%")
+    print(f"{'Sparsity with Elastic-Net penalty:':<40} {sparsity_en_LR:.2f}%")
+    print(f"{'Sparsity with L2 penalty:':<40} {sparsity_l2_LR:.2f}%")
+    print(f"{'Score with L1 penalty:':<40} {clf_l1_LR.score(X, y):.2f}")
+    print(f"{'Score with Elastic-Net penalty:':<40} {clf_en_LR.score(X, y):.2f}")
+    print(f"{'Score with L2 penalty:':<40} {clf_l2_LR.score(X, y):.2f}")
+
+    if i == 0:
+        axes_row[0].set_title(r"$\ell^1$ penalty")
+        axes_row[1].set_title(f"Elastic-Net\n {l1_ratio = }")
+        axes_row[2].set_title(r"$\ell^2$ penalty")
+
+    for ax, coefs in zip(axes_row, [coef_l1_LR, coef_en_LR, coef_l2_LR]):
+        ax.imshow(
+            np.abs(coefs.reshape(8, 8)),
+            interpolation="nearest",
+            cmap="binary",
+            vmax=1,
+            vmin=0,
+        )
+        ax.set_xticks(())
+        ax.set_yticks(())
+
+    axes_row[0].set_ylabel(f"C = {C:.2f}")
+
+_ = plt.show()
+# %%
+#
+# .. rubric:: References
+#
+# .. [1] Hastie, T., Tibshirani, R., & Friedman, J. (2009). The Elements of Statistical
+#        Learning: Data Mining, Inference, and Prediction. New York,
+#        NY: Springer New York.
