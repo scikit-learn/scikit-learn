@@ -1,7 +1,12 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 import os
 
 import array_api_strict
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
 
 import sklearn
@@ -26,9 +31,6 @@ gmm = GaussianMixture(
 ).fit(X)
 print(gmm.means_)
 print(gmm.covariances_)
-
-import matplotlib as mpl
-import matplotlib.pyplot as plt
 
 fig, ax = plt.subplots()
 
