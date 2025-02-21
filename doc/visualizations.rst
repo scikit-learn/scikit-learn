@@ -10,8 +10,8 @@ visual adjustments without recalculation. We provide `Display` classes that
 expose two methods for creating plots: `from_estimator` and
 `from_predictions`.
 
-The `from_estimator` method generates a `Display` object from a fitted estimator and input data (X, y).
-The `from_predictions` method creates a `Display` object from true and predicted values, which
+The `from_estimator` method generates a `Display` object from a fitted estimator and input data (`X`, `y`).
+The `from_predictions` method creates a `Display` object from true and predicted values (`y_test`, `y_pred`), which
 is useful when you only want to compute the predictions once.
 
 The `Display` object stores the computed values required for plotting with Matplotlib.
@@ -87,7 +87,6 @@ the previously computed ROC curve again by using the `plot` method of the
 
 Notice that we pass `alpha=0.8` to the plot functions to adjust the alpha
 values of the curves.
-
 
 
 .. rubric:: Examples
