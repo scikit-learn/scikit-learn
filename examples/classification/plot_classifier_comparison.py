@@ -6,6 +6,7 @@ Classifier comparison
 A comparison of several classifiers in scikit-learn on synthetic datasets.
 The point of this example is to illustrate the nature of decision boundaries
 of different classifiers.
+
 This should be taken with a grain of salt, as the intuition conveyed by
 these examples does not necessarily carry over to real datasets.
 
@@ -17,7 +18,14 @@ The plots show training points in solid colors and testing points
 semi-transparent. The lower right shows the classification accuracy on the test
 set.
 
+**References**
+--------------
+- :ref:`sphx_glr_auto_examples_tree_plot_iris_dtc.py`: Example of training and visualizing a Decision Tree classifier.
+- :ref:`sphx_glr_auto_examples_svm_plot_svm_margin.py`: Understanding SVM decision boundaries.
+- :ref:`sphx_glr_auto_examples_classification_plot_classifier_comparison.py`: Comparing multiple classifiers.
+
 """
+
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause

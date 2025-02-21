@@ -1,0 +1,39 @@
+Metadata-Version: 2.1
+Name: meson
+Version: 1.7.0
+Summary: A high performance build system
+Home-page: https://mesonbuild.com
+Author: Jussi Pakkanen
+Author-email: jpakkane@gmail.com
+License: Apache License, Version 2.0
+Project-URL: Source, https://github.com/mesonbuild/meson
+Keywords: meson,mesonbuild,build system,cmake
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Natural Language :: English
+Classifier: Operating System :: MacOS :: MacOS X
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: POSIX :: BSD
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Software Development :: Build Tools
+Requires-Python: >=3.7
+License-File: COPYING
+Provides-Extra: ninja
+Requires-Dist: ninja>=1.8.2; extra == "ninja"
+Provides-Extra: progress
+Requires-Dist: tqdm; extra == "progress"
+Provides-Extra: typing
+Requires-Dist: mypy; extra == "typing"
+Requires-Dist: typing_extensions; python_version < "3.8" and extra == "typing"
+
+Meson is a cross-platform build system designed to be both as fast and as user friendly as possible. It supports many languages and compilers, including GCC, Clang, PGI, Intel, and Visual Studio. Its build definitions are written in a simple non-Turing complete DSL.

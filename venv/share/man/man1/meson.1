@@ -1,0 +1,679 @@
+.TH MESON "1" "January 2025" "meson 1.7.0" "User Commands"
+.SH NAME
+meson - a high productivity build system
+.SH DESCRIPTION
+
+Meson is a build system designed to optimize programmer
+productivity. It aims to do this by providing simple, out-of-the-box
+support for modern software development tools and practices, such as
+unit tests, coverage reports, Valgrind, Ccache and the like.
+
+The main Meson executable provides many subcommands to access all
+the functionality.
+
+.SH The setup command
+
+Using Meson is simple and follows the common two-phase
+process of most build systems. First you run Meson to
+configure your build:
+
+.B meson setup [
+.I options
+.B ] [
+.I build directory
+.B ] [
+.I source directory
+.B ]
+
+Note that the build directory must be different from the source
+directory. Meson does not support building inside the source directory
+and attempting to do that leads to an error.
+
+After a successful configuration step you can build the source by
+running the actual build command in the build directory. The default
+backend of Meson is Ninja, which can be invoked like this.
+
+\fBninja [\fR \fItarget\fR \fB]\fR
+
+You only need to run the Meson command once: when you first configure
+your build dir. After that you just run the build command. Meson will
+autodetect changes in your source tree and regenerate all files
+needed to build the project.
+
+The setup command is the default operation. If no actual command is
+specified, Meson will assume you meant to do a setup. That means
+that you can set up a build directory without the setup command
+like this:
+
+.B meson [
+.I options
+.B ] [
+.I build directory
+.B ] [
+.I source directory
+.B ]
+
+.SS "options:"
+.TP
+\fB\-\-version\fR
+print version number
+.TP
+\fB\-\-help\fR
+print command line help
+
+.SH The configure command
+
+.B meson configure
+provides a way to configure a Meson project from the command line.
+Its usage is simple:
+
+.B meson configure [
+.I build directory
+.B ] [
+.I options to set
+.B ]
+
+If build directory is omitted, the current directory is used instead.
+
+If no parameters are set,
+.B meson configure
+will print the value of all build options to the console.
+
+To set values, use the \-D command line argument like this.
+
+.B meson configure \-Dopt1=value1 \-Dopt2=value2
+
+.SH The dist command
+
+.B meson dist
+generates a release archive.
+
+.B meson dist [
+.I options
+.B ]
+
+.SS "options:"
+.TP
+\fB\-h, \-\-help\fR
+show this help message and exit
+
+.TP
+\fB\-C WD\fR
+directory to cd into before running
+
+.TP
+\fB\-\-allow-dirty\fR
+Allow even when repository contains uncommitted changes.
+
+.TP
+\fB\-\-formats FORMATS\fR
+Comma separated list of archive types to create.  Supports xztar
+(default), gztar, and zip.
+
+.TP
+\fB\-\-include\-subprojects\fR
+Include source code of subprojects that have been used for the build.
+
+.TP
+\fB\-\-no\-tests\fR
+Do not build and test generated packages.
+
+.SH The install command
+
+.B meson install
+installs the project.
+
+.B meson install [
+.I options
+.B ]
+
+.SS "options:"
+
+.TP
+\fB\-h, \-\-help\fR
+show this help message and exit
+
+.TP
+\fB\-C WD\fR
+directory to cd into before running
+
+.TP
+\fB\-\-no-rebuild\fR
+Do not rebuild before installing.
+
+.TP
+\fB\-\-only\-changed\fR
+Only overwrite files that are older than the copied file.
+
+.TP
+\fB\-\-quiet\fR
+Do not print every file that was installed.
+
+.TP
+\fB\-\-destdir DESTDIR\fR
+Sets or overrides DESTDIR environment.  (Since 0.57.0)
+
+.TP
+\fB\-\-dry\-run, \-n\fR
+Doesn't actually install, but print logs. (Since 0.57.0)
+
+.TP
+\fB\-\-skip\-subprojects [SKIP_SUBPROJECTS]\fR
+Do not install files from given subprojects. (Since 0.58.0)
+
+.TP
+\fB\-\-tags TAGS\fR
+Install only targets having one of the given tags. (Since 0.60.0)
+
+.TP
+\fB\-\-strip\fR
+Strip targets even if strip option was not set during
+configure. (Since 0.62.0)
+
+.SH The introspect command
+
+Meson introspect is a command designed to make it simple to  integrate with
+other tools, such as IDEs. The output of this command is in JSON.
+
+.B meson introspect [
+.I build directory
+.B ] [
+.I option
+.B ]
+
+If build directory is omitted, the current directory is used instead.
+
+.SS "options:"
+.TP
+\fB\-\-targets\fR
+print all top level targets (executables, libraries, etc)
+.TP
+\fB\-\-target\-files\fR
+print the source files of the given target
+.TP
+\fB\-\-buildsystem\-files\fR
+print all files that make up the build system (meson.build, meson.options, meson_options.txt etc)
+.TP
+\fB\-\-tests\fR
+print all unit tests
+.TP
+\fB\-\-help\fR
+print command line help
+
+.SH The init command
+
+.B meson init
+creates a new project
+
+.B meson init [
+.I options
+.B ] [
+.I sourcefile...
+.B ]
+
+.SS "positional arguments:"
+.TP
+sourcefile...
+source files. default: all recognized files in current directory
+
+.SS "options:"
+.TP
+\fB\-h, \-\-help\fR
+show this help message and exit
+
+.TP
+\fB\-C WD\fR
+directory to cd into before running
+
+.TP
+\fB\-n NAME, \-\-name NAME\fR
+project name. default: name of current directory
+
+.TP
+\fB\-e EXECUTABLE, \-\-executable EXECUTABLE\fR
+executable name. default: project name
+
+.TP
+\fB\-d DEPS, \-\-deps DEPS\fR
+dependencies, comma-separated
+
+.TP
+\fB\-l {c,cpp,cs,cuda,d,fortran,java,objc,objcpp,rust,vala}, \
+\-\-language {c,cpp,cs,cuda,d,fortran,java,objc,objcpp,rust,vala}\fR
+project language. default: autodetected based on source files
+
+.TP
+\fB\-b, \-\-build
+build after generation
+
+.TP
+\fB\-\-builddir BUILDDIR\fR
+directory for build
+
+.TP
+\fB\-f, \-\-force\fR
+force overwrite of existing files and directories.
+
+.TP
+\fB\-\-type {executable,library}\fR
+project type. default: executable based project
+
+.TP
+\fB\-\-version VERSION\fR
+project version. default: 0.1
+
+.SH The test command
+
+.B meson test
+is a helper tool for running test suites of projects using Meson.
+The default way of running tests is to invoke the default build command:
+
+\fBninja [\fR \fItest\fR \fB]\fR
+
+.B meson test
+provides a richer set of tools for invoking tests.
+
+.B meson test
+automatically rebuilds the necessary targets to run tests when used with the Ninja backend.
+Upon build failure,
+.B meson test
+will return an exit code of 125.
+This return code tells
+.B git bisect run
+to skip the current commit.
+Thus bisecting using git can be done conveniently like this.
+
+.B git bisect run meson test -C build_dir
+
+.SS "options:"
+.TP
+\fB\-\-repeat\fR
+run tests as many times as specified
+.TP
+\fB\-\-gdb\fR
+run tests under gdb
+.TP
+\fB\-\-list\fR
+list all available tests
+.TP
+\fB\-\-wrapper\fR
+invoke all tests via the given wrapper (e.g. valgrind)
+.TP
+\fB\-C\fR
+Change into the given directory before running tests (must be root of build directory).
+.TP
+\fB\-\-suite\fR
+run tests in this suite
+.TP
+\fB\-\-no\-suite\fR
+do not run tests in this suite
+.TP
+\fB\-\-no\-stdsplit\fR
+do not split stderr and stdout in test logs
+.TP
+\fB\-\-benchmark\fR
+run benchmarks instead of tests
+.TP
+\fB\-\-logbase\fR
+base of file name to use for writing test logs
+.TP
+\fB\-\-num-processes\fR
+how many parallel processes to use to run tests
+.TP
+\fB\-\-verbose\fR
+do not redirect stdout and stderr
+.TP
+\fB\-t\fR
+a multiplier to use for test timeout values (usually something like 100 for Valgrind)
+.TP
+\fB\-\-setup\fR
+use the specified test setup
+
+.SH The wrap command
+
+Wraptool is a helper utility to manage source dependencies
+using the online wrapdb service.
+
+.B meson wrap <
+.I command
+.B > [
+.I options
+.B ]
+
+You should run this command in the top level source directory
+of your project.
+
+.SS "Commands:"
+.TP
+\fBlist\fR
+list all available projects
+.TP
+\fBsearch\fR
+search projects by name
+.TP
+\fBinstall\fR
+install a project with the given name
+.TP
+\fBupdate\fR
+update the specified project to latest available version
+.TP
+\fBinfo\fR
+show available versions of the specified project
+.TP
+\fBstatus\fR
+show installed and available versions of currently used subprojects
+
+.SH The subprojects command
+
+.B meson subprojects
+is used to manage subprojects.
+
+.B meson subprojects [
+.I options
+.B ] [
+.I command
+.B ]
+
+.SS "options:"
+.TP
+\fB\-h, \-\-help\fR
+show this help message and exit
+
+.SS "commands:"
+.TP
+\fBupdate\fR
+Update all subprojects from wrap files
+
+.TP
+\fBcheckout\fR
+Checkout a branch (git only)
+
+.TP
+\fBdownload\fR
+Ensure subprojects are fetched, even if not in use. Already downloaded
+subprojects are not modified. This can be used to pre-fetch all
+subprojects and avoid downloads during configure.
+
+.TP
+\fBforeach\fR
+Execute a command in each subproject directory.
+
+.TP
+\fBpurge\fR
+Remove all wrap-based subproject artifacts
+
+.TP
+\fBpackagefiles\fR
+Manage the packagefiles overlay
+
+.SH The rewrite command
+
+.B meson rewrite
+modifies the project definition.
+ 
+.B meson rewrite [
+.I options
+.B ] [
+.I command
+.B ]
+
+.SS "options:"
+
+.TP
+\fB\-h, \-\-help\fR
+show this help message and exit
+
+.TP
+\fB\-s SRCDIR, \-\-sourcedir SRCDIR\fR
+Path to source directory.
+
+.TP
+\fB\-V, \-\-verbose\fR
+Enable verbose output
+
+.TP
+\fB\-S, \-\-skip\-errors\fR
+Skip errors instead of aborting
+
+.SS "commands:"
+
+.TP
+\fBtarget (tgt)\fR
+Modify a target
+
+.TP
+\fBkwargs\fR
+Modify keyword arguments
+
+.TP
+\fBdefault-options (def)\fR
+Modify the project default options
+
+.TP
+\fBcommand (cmd)\fR
+Execute a JSON array of commands
+
+.SH The compile command
+
+.B meson compile
+builds the project.
+
+.B meson compile [
+.I options
+.B ] [
+.I TARGET...
+.B ]
+
+.SS "positional arguments:"
+.TP
+\fBTARGET\fR
+Targets to build. Target has the following format:
+[PATH_TO_TARGET/]TARGET_NAME.TARGET_SUFFIX[:TARGET_TYPE].
+
+.SS "options:"
+
+.TP
+\fB\-h, \-\-help\fR
+show this help message and exit
+
+.TP
+\fB\-\-clean\fR
+Clean the build directory.
+
+.TP
+\fB\-C WD\fR
+directory to cd into before running
+
+.TP
+\fB\-j JOBS, \-\-jobs JOBS\fR
+The number of worker jobs to run (if supported). If the value is less
+than 1 the build program will guess.
+
+.TP
+\fB\-l LOAD_AVERAGE, \-\-load-average LOAD_AVERAGE\fR
+The system load average to try to maintain (if supported).
+
+.TP
+\fB\-v, \-\-verbose\fR
+Show more verbose output.
+
+.TP
+\fB\-\-ninja\-args NINJA_ARGS\fR
+Arguments to pass to `ninja` (applied only on `ninja` backend).
+
+.TP
+\fB\-\-vs\-args VS_ARGS\fR
+Arguments to pass to `msbuild` (applied only on `vs` backend).
+
+.TP
+\fB\-\-xcode\-args XCODE_ARGS\fR
+Arguments to pass to `xcodebuild` (applied only on `xcode` backend).
+
+.SH The devenv command
+
+.B meson devenv
+runs commands in the developer environment.
+
+.B meson devenv [
+.I options
+.B ] [
+.I command
+.B ]
+
+.SS "positional arguments:"
+
+.TP
+\fBcommand\fR
+Command to run in developer environment (default: interactive shell)
+
+.SS "options:"
+
+.TP
+\fB\-h, \-\-help\fR
+show this help message and exit
+
+.TP
+\fB\-C BUILDDIR\fR
+Path to build directory
+
+.TP
+\fB\-\-workdir WORKDIR, \-w WORKDIR\fR
+Directory to cd into before running (default: builddir, Since 1.0.0)
+
+.TP
+\fB\-\-dump [DUMP]\fR
+Only print required environment (Since 0.62.0) Takes an optional file
+path (Since 1.1.0)
+
+.TP
+\fB\-\-dump-format {sh,export,vscode}\fR
+Format used with --dump (Since 1.1.0)
+
+.SH The env2mfile command
+
+.B meson env2mfile
+converts the current environment to a cross or native file.
+
+.B meson env2mfile [
+.I options
+.B ]
+
+.SS "options:"
+
+.TP
+\fB\-h, \-\-help\fR
+show this help message and exit
+
+.TP
+\fB\-\-debarch DEBARCH\fR
+The dpkg architecture to generate.
+
+.TP
+\fB\-\-gccsuffix GCCSUFFIX\fR
+A particular gcc version suffix if necessary.
+
+.TP
+\fB\-o OUTFILE\fR
+The output file.
+
+.TP
+\fB\-\-cross\fR
+Generate a cross compilation file.
+
+.TP
+\fB\-\-native\fR
+Generate a native compilation file.
+
+.TP
+\fB\-\-system SYSTEM\fR
+Define system for cross compilation.
+
+.TP
+\fB\-\-subsystem SUBSYSTEM\fR
+Define subsystem for cross compilation.
+
+.TP
+\fB\-\-kernel KERNEL\fR
+Define kernel for cross compilation.
+
+.TP
+\fB\-\-cpu CPU\fR
+Define cpu for cross compilation.
+
+.TP
+\fB\-\-cpu-family CPU_FAMILY\fR
+Define cpu family for cross compilation.
+
+.TP
+\fB\-\-endian {big,little}\fR
+Define endianness for cross compilation.
+
+.SH The format command
+
+.B meson format
+formats a meson source file.
+
+.B meson format [
+.I options
+.B ] [
+.I sources...
+.B ]
+
+.SS "positional arguments:"
+
+.TP
+\fBsources...\fR
+meson source files
+
+.SS "options:"
+
+.TP
+\fB-h, --help\fR
+show this help message and exit
+
+.TP
+\fB-q, --check-only\fR
+exit with 1 if files would be modified by meson format
+
+.TP
+\fB-i, --inplace\fR
+format files in-place
+
+.TP
+\fB-r, --recursive\fR
+recurse subdirs (requires --check-only or --inplace option)
+
+.TP
+\fB-c meson.format, --configuration meson.format\fR
+read configuration from meson.format
+
+.TP
+\fB-e, --editor-config\fR
+try to read configuration from .editorconfig
+
+.TP
+\fB-o OUTPUT, --output OUTPUT\fR
+output file (implies having exactly one input)
+
+.SH EXIT STATUS
+
+.TP
+.B 0
+Successful.
+.TP
+.B 1
+Usage error, or an error parsing or executing meson.build.
+.TP
+.B 2
+Internal error.
+.TP
+.B 125
+.B meson test
+could not rebuild the required targets.
+.TP
+
+.SH SEE ALSO
+
+http://mesonbuild.com/
+
+https://wrapdb.mesonbuild.com/
