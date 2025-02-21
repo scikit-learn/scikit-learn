@@ -17,6 +17,7 @@ import sklearn
 from sklearn.cluster import KMeans
 from sklearn.covariance import EmpiricalCovariance
 from sklearn.datasets import make_spd_matrix
+from sklearn.datasets._samples_generator import make_blobs
 from sklearn.exceptions import ConvergenceWarning, NotFittedError
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.mixture import GaussianMixture
@@ -29,7 +30,9 @@ from sklearn.mixture._gaussian_mixture import (
     _estimate_gaussian_covariances_tied,
     _estimate_gaussian_parameters,
 )
+from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
@@ -1470,3 +1473,22 @@ def test_gaussian_mixture_all_init_does_not_estimate_gaussian_parameters(
     # The initial gaussian parameters are not estimated. They are estimated for every
     # m_step.
     assert mock.call_count == gm.n_iter_
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+)
+def test_gaussian_mixture_array_api_compliance(array_namespace, device, dtype):
+    X, y = make_blobs(n_samples=int(1e3), n_features=2, centers=3, random_state=0)
+    xp = _array_api_for_tests(array_namespace, device)
+    X = xp.asarray(X, device=device)
+    y = xp.asarray(y, device=device)
+    with sklearn.config_context(array_api_dispatch=True):
+        gmm = GaussianMixture(
+            n_components=3,
+            covariance_type="diag",
+            random_state=0,
+            init_params="random",
+            tol=1e-5,
+            max_iter=1000,
+        ).fit(X)
