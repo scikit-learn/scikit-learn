@@ -875,6 +875,10 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     1.451...
     >>> print(regr.predict([[0, 0]]))
     [1.451...]
+
+    For an example showcasing Elastic-Net alongside Lasso and ARD Regression for sparse
+    signal recovery in the presence of noise and feature correlation, see:
+    :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`.
     """
 
     # "check_input" is used for optimisation and isn't something to be passed
@@ -1306,6 +1310,10 @@ class Lasso(ElasticNet):
     [0.85 0.  ]
     >>> print(clf.intercept_)
     0.15...
+
+    For an example comparing Lasso with other L1-based regression models
+    (Elastic-Net and ARD Regression) on sparse and noisy data, see:
+    :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`.
     """
 
     _parameter_constraints: dict = {
