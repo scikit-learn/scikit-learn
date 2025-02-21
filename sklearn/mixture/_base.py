@@ -288,7 +288,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         # for any value of max_iter and tol (and any random_state).
         _, log_resp = self._e_step(X)
 
-        return log_resp.argmax(axis=1)
+        return xp.argmax(log_resp, axis=1)
 
     def _e_step(self, X):
         """E step.

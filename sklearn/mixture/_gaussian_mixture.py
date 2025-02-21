@@ -815,7 +815,6 @@ class GaussianMixture(BaseMixture):
                 self.precisions_init, self.covariance_type
             )
 
-
     def _m_step(self, X, log_resp):
         """M step.
 
@@ -831,7 +830,7 @@ class GaussianMixture(BaseMixture):
         self.weights_, self.means_, self.covariances_ = _estimate_gaussian_parameters(
             X, xp.exp(log_resp), self.reg_covar, self.covariance_type
         )
-        self.weights_ /= self.weights_.sum()
+        self.weights_ /= xp.sum(self.weights_)
         self.precisions_cholesky_ = _compute_precision_cholesky(
             self.covariances_, self.covariance_type
         )

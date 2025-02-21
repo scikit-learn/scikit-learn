@@ -1,13 +1,12 @@
 # %%
 import os
 
+import array_api_strict
 import numpy as np
-import torch
 
 import sklearn
-from sklearn.datasets import make_blobs, load_iris
+from sklearn.datasets import make_blobs
 from sklearn.mixture import GaussianMixture
-import array_api_strict
 
 os.environ["SCIPY_ARRAY_API"] = "1"
 
@@ -18,8 +17,12 @@ X, y = array_api_strict.asarray(X), array_api_strict.asarray(y)
 sklearn.set_config(array_api_dispatch=True)
 
 gmm = GaussianMixture(
-    n_components=3, covariance_type="diag", random_state=0, init_params="random",
-    tol=1e-5, max_iter=1000
+    n_components=3,
+    covariance_type="diag",
+    random_state=0,
+    init_params="random",
+    tol=1e-5,
+    max_iter=1000,
 ).fit(X)
 print(gmm.means_)
 print(gmm.covariances_)
@@ -29,10 +32,14 @@ import matplotlib.pyplot as plt
 
 fig, ax = plt.subplots()
 
+X = np.asarray(X)
+y = np.asarray(y)
+
 ax.scatter(X[:, 0], X[:, 1], c=y)
 
 
 def make_ellipses(gmm, ax):
+    gmm.covariances_ = np.asarray(gmm.covariances_)
     colors = ["navy", "turquoise", "darkorange"]
     for n, color in enumerate(colors):
         if gmm.covariance_type == "full":
@@ -59,4 +66,4 @@ def make_ellipses(gmm, ax):
 
 make_ellipses(gmm, ax)
 
- # %%
+# %%
