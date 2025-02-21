@@ -1492,7 +1492,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
         is always reserved for missing values. Must be no larger than 255.
     categorical_features : array-like of {bool, int, str} of shape (n_features) \
-            or shape (n_categorical_features,), default=None
+            or shape (n_categorical_features,), default='from_dtype'
         Indicates the categorical features.
 
         - None : no feature will be considered categorical.
@@ -1880,7 +1880,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
         is always reserved for missing values. Must be no larger than 255.
     categorical_features : array-like of {bool, int, str} of shape (n_features) \
-            or shape (n_categorical_features,), default=None
+            or shape (n_categorical_features,), default='from_dtype'
         Indicates the categorical features.
 
         - None : no feature will be considered categorical.
