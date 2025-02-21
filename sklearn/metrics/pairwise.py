@@ -1990,6 +1990,7 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
 
 def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
     """Handle the callable case for pairwise_{distances,kernels}."""
+    xp, _ = get_namespace(X)
     X, Y = check_pairwise_arrays(
         X,
         Y,
@@ -2000,7 +2001,7 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
 
     if X is Y:
         # Only calculate metric for upper triangle
-        out = np.zeros((X.shape[0], Y.shape[0]), dtype="float")
+        out = xp.zeros((X.shape[0], Y.shape[0]), dtype="float")
         iterator = itertools.combinations(range(X.shape[0]), 2)
         for i, j in iterator:
             # scipy has not yet implemented 1D sparse slices; once implemented this can
@@ -2023,7 +2024,7 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
 
     else:
         # Calculate all cells
-        out = np.empty((X.shape[0], Y.shape[0]), dtype="float")
+        out = xp.empty((X.shape[0], Y.shape[0]), dtype="float")
         iterator = itertools.product(range(X.shape[0]), range(Y.shape[0]))
         for i, j in iterator:
             # scipy has not yet implemented 1D sparse slices; once implemented this can
