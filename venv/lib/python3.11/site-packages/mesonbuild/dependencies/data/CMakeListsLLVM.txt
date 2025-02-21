@@ -1,0 +1,204 @@
+# fail noisily if attempt to use this file without setting:
+# cmake_minimum_required(VERSION ${CMAKE_VERSION})
+# project(... LANGUAGES ...)
+
+cmake_policy(SET CMP0000 NEW)
+
+set(PACKAGE_FOUND FALSE)
+
+list(REMOVE_DUPLICATES LLVM_MESON_VERSIONS)
+
+while(TRUE)
+  #Activate CMake version selection
+  foreach(i IN LISTS LLVM_MESON_VERSIONS)
+    find_package(LLVM ${i}
+      CONFIG
+      NAMES ${LLVM_MESON_PACKAGE_NAMES}
+      QUIET)
+    if(LLVM_FOUND)
+      break()
+    endif()
+  endforeach()
+
+  # ARCHS has to be set via the CMD interface
+  if(LLVM_FOUND OR "${ARCHS}" STREQUAL "")
+    break()
+  endif()
+
+  list(GET       ARCHS 0 CMAKE_LIBRARY_ARCHITECTURE)
+  list(REMOVE_AT ARCHS 0)
+endwhile()
+
+function(meson_llvm_cmake_dynamic_available mod out)
+  # Check if we can only compare LLVM_DYLIB_COMPONENTS, because
+  # we do not need complex component translation logic, if all
+  # is covered by one variable
+  if(mod IN_LIST LLVM_DYLIB_COMPONENTS)
+    set(${out} TRUE PARENT_SCOPE)
+    return()
+  elseif((NOT (mod IN_LIST LLVM_DYLIB_COMPONENTS))
+      AND (NOT("${LLVM_DYLIB_COMPONENTS}" STREQUAL "all")))
+    set(${out} FALSE PARENT_SCOPE)
+    return()
+  endif()
+
+  # Complex heuristic to filter all pseudo-components and skip invalid names
+  # LLVM_DYLIB_COMPONENTS will be 'all', because in other case we returned
+  # in previous check. 'all' is also handled there.
+  set(llvm_pseudo_components "native" "backend" "engine" "all-targets")
+  is_llvm_target_specifier(${mod} mod_spec INCLUDED_TARGETS)
+  string(TOUPPER "${LLVM_AVAILABLE_LIBS}" capitalized_libs)
+  string(TOUPPER "${LLVM_TARGETS_TO_BUILD}" capitalized_tgts)
+  if(mod_spec)
+    set(${out} TRUE PARENT_SCOPE)
+  elseif(mod IN_LIST capitalized_tgts)
+    set(${out} TRUE PARENT_SCOPE)
+  elseif(mod IN_LIST llvm_pseudo_components)
+    set(${out} TRUE PARENT_SCOPE)
+  elseif(LLVM${mod} IN_LIST capitalized_libs)
+    set(${out} TRUE PARENT_SCOPE)
+  else()
+    set(${out} FALSE PARENT_SCOPE)
+  endif()
+endfunction()
+
+function(is_static target ret)
+  if(TARGET ${target})
+    get_target_property(target_type ${target} TYPE)
+    if(target_type STREQUAL "STATIC_LIBRARY")
+      set(${ret} TRUE PARENT_SCOPE)
+      return()
+    endif()
+  endif()
+  set(${ret} FALSE PARENT_SCOPE)
+endfunction()
+
+# Concatenate LLVM_MESON_REQUIRED_MODULES and LLVM_MESON_OPTIONAL_MODULES
+set(LLVM_MESON_MODULES ${LLVM_MESON_REQUIRED_MODULES} ${LLVM_MESON_OPTIONAL_MODULES})
+
+
+# Check if LLVM exists in dynamic world
+# Initialization before modules checking
+if(LLVM_FOUND)
+  if(LLVM_MESON_DYLIB AND TARGET LLVM)
+    set(PACKAGE_FOUND TRUE)
+  elseif(NOT LLVM_MESON_DYLIB)
+    # Use LLVMSupport to check if static targets exist
+    set(static_tg FALSE)
+    is_static(LLVMCore static_tg)
+    if(static_tg)
+      set(PACKAGE_FOUND TRUE)
+    endif(static_tg)
+  endif()
+endif()
+
+if(PACKAGE_FOUND)
+  foreach(mod IN LISTS LLVM_MESON_MODULES)
+    # Reset variables
+    set(out_mods)
+    set(real_mods)
+
+    # Generate a lower and upper case version
+    string(TOLOWER "${mod}" mod_L)
+    string(TOUPPER "${mod}" mod_U)
+
+    # Special case - "all-targets" pseudo target
+    # Just append all targets, if pseudo-target exists
+    if("${mod}" STREQUAL "all-targets")
+      set(mod_L  ${LLVM_TARGETS_TO_BUILD})
+      string(TOUPPER "${LLVM_TARGETS_TO_BUILD}" mod_U)
+    endif()
+
+    # Check if required module is linked is inside libLLVM.so.
+    # If not, skip this module
+    if(LLVM_MESON_DYLIB
+       AND DEFINED LLVM_DYLIB_COMPONENTS)
+        meson_llvm_cmake_dynamic_available(${mod} MOD_F)
+        meson_llvm_cmake_dynamic_available(${mod_L} MOD_L_F)
+        meson_llvm_cmake_dynamic_available(${mod_U} MOD_U_F)
+        if(MOD_F OR MOD_L_F OR MOD_U_F)
+          set(MESON_LLVM_TARGETS_${mod} LLVM)
+        endif()
+    elseif(LLVM_MESON_DYLIB AND (mod IN_LIST LLVM_MESON_REQUIRED_MODULES))
+      # Dynamic was requested, but no required variables set, we cannot continue
+      set(PACKAGE_FOUND FALSE)
+      break()
+    elseif(LLVM_MESON_DYLIB)
+      # Dynamic was requested, and we request optional modules only. Continue
+      continue()
+    else()
+      # CMake only do this for static components, and we
+      # replicate its behaviour
+      # Get the mapped components
+      llvm_map_components_to_libnames(out_mods ${mod} ${mod_L} ${mod_U})
+      list(SORT              out_mods)
+      list(REMOVE_DUPLICATES out_mods)
+
+      # Make sure that the modules exist
+      foreach(i IN LISTS out_mods)
+        set(static_tg FALSE)
+        is_static(${i} static_tg)
+        if(static_tg)
+          list(APPEND real_mods ${i})
+        endif()
+      endforeach()
+
+      # Set the output variables
+      set(MESON_LLVM_TARGETS_${mod} ${real_mods})
+      foreach(i IN LISTS real_mods)
+        set(MESON_TARGET_TO_LLVM_${i} ${mod})
+      endforeach()
+    endif()
+  endforeach()
+
+  # Check the following variables:
+  # LLVM_PACKAGE_VERSION
+  # LLVM_VERSION
+  # LLVM_VERSION_STRING
+  if(NOT DEFINED PACKAGE_VERSION)
+    if(DEFINED LLVM_PACKAGE_VERSION)
+      set(PACKAGE_VERSION "${LLVM_PACKAGE_VERSION}")
+    elseif(DEFINED LLVM_VERSION)
+      set(PACKAGE_VERSION "${LLVM_VERSION}")
+    elseif(DEFINED LLVM_VERSION_STRING)
+      set(PACKAGE_VERSION "${LLVM_VERSION_STRING}")
+    endif()
+  endif()
+
+  # Check the following variables:
+  # LLVM_LIBRARIES
+  # LLVM_LIBS
+  set(libs)
+  #Hardcode LLVM, because we links with libLLVM.so when dynamic
+  if(LLVM_MESON_DYLIB)
+    get_target_property(libs LLVM IMPORTED_LOCATION)
+  elseif(DEFINED LLVM_LIBRARIES)
+    set(libs LLVM_LIBRARIES)
+  elseif(DEFINED LLVM_LIBS)
+    set(libs LLVM_LIBS)
+  endif()
+
+  # Check the following variables:
+  # LLVM_INCLUDE_DIRS
+  # LLVM_INCLUDES
+  # LLVM_INCLUDE_DIR
+  set(includes)
+  if(DEFINED LLVM_INCLUDE_DIRS)
+    set(includes LLVM_INCLUDE_DIRS)
+  elseif(DEFINED LLVM_INCLUDES)
+    set(includes LLVM_INCLUDES)
+  elseif(DEFINED LLVM_INCLUDE_DIR)
+    set(includes LLVM_INCLUDE_DIR)
+  endif()
+
+  # Check the following variables:
+  # LLVM_DEFINITIONS
+  set(definitions)
+  if(DEFINED LLVM_DEFINITIONS)
+    set(definitions LLVM_DEFINITIONS)
+  endif()
+
+  set(PACKAGE_INCLUDE_DIRS "${${includes}}")
+  set(PACKAGE_DEFINITIONS  "${${definitions}}")
+  set(PACKAGE_LIBRARIES    "${${libs}}")
+endif()
