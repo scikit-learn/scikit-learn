@@ -607,7 +607,6 @@ iterating only once over a mini-batch. This can be used for online learning
 when the data is not readily available from the start, or for when the data
 does not fit into memory.
 
-
 .. currentmodule:: sklearn.cluster
 
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_dict_face_patches_001.png
