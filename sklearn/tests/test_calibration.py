@@ -1077,20 +1077,43 @@ def test_sigmoid_calibration_max_abs_prediction_threshold(global_random_seed):
     assert_allclose(b2, b3, atol=atol)
 
 
-def test_float32_predict_proba(data):
+@pytest.mark.parametrize("use_sample_weight", [True, False])
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
+def test_float32_predict_proba(data, use_sample_weight, method):
     """Check that CalibratedClassifierCV works with float32 predict proba.
 
-    Non-regression test for gh-28245.
+    Non-regression test for gh-28245 and gh-28247.
     """
+    if use_sample_weight:
+        # Use dtype=np.float64 to check that this does not trigger an
+        # unintentional upcasting: the dtype of the base estimator should
+        # control the dtype of the final model.
+        sample_weight = np.ones_like(data[1], dtype=np.float64)
+    else:
+        sample_weight = None
 
     class DummyClassifer32(DummyClassifier):
         def predict_proba(self, X):
             return super().predict_proba(X).astype(np.float32)
 
     model = DummyClassifer32()
-    calibrator = CalibratedClassifierCV(model)
-    # Does not raise an error
-    calibrator.fit(*data)
+    calibrator = CalibratedClassifierCV(model, method=method)
+    # Does not raise an error.
+    calibrator.fit(*data, sample_weight=sample_weight)
+
+    # Check with frozen prefit model
+    model = DummyClassifer32().fit(*data, sample_weight=sample_weight)
+    calibrator = CalibratedClassifierCV(FrozenEstimator(model), method=method)
+    # Does not raise an error.
+    calibrator.fit(*data, sample_weight=sample_weight)
+
+    # TODO(1.8): remove me once the deprecation period is over.
+    # Check with prefit model using the deprecated cv="prefit" argument:
+    model = DummyClassifer32().fit(*data, sample_weight=sample_weight)
+    calibrator = CalibratedClassifierCV(model, method=method, cv="prefit")
+    # Does not raise an error.
+    with pytest.warns(FutureWarning):
+        calibrator.fit(*data, sample_weight=sample_weight)
 
 
 def test_error_less_class_samples_than_folds():
