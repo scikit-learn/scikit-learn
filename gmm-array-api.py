@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 # %%
+
 import os
 
 import array_api_strict
