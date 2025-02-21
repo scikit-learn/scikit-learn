@@ -1,0 +1,15 @@
+
+.estimator-params table td {
+    border: 2px solid rgba(106, 105, 104, 0.232);
+    min-width: 8em;
+
+}
+
+.user-set td {
+    color:black;
+}
+
+
+.default td {
+    color: gray;
+}

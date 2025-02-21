@@ -56,24 +56,26 @@ def _html_template(data):
     for x, y in data.items():
         if x in data.non_default:
             out += f"""
-                    <tr>
-                      <td><span style="color: black;">{x}</span>&nbsp;
-                      <td>{y}</td>
+                    <tr class="user-set">
+
                       <td><i class="fa-regular fa-copy"
                        onclick="copyToClipboard('{x}', this)"
                        style="color: gray; cursor: pointer;">
                       </i></td>
+                      <td>{x}&nbsp;</td>
+                      <td>{y}</td>
                     </tr>
             """
         else:
             out += f"""
-                    <tr>
-                          <td><span style="color: grey;">{x}&nbsp;</td>
-                          <td><span style="color: grey;">{y}</td>
+                    <tr class="default">
+
                           <td><i class="fa-regular fa-copy"
                            onclick="copyToClipboard('{x}', this)"
-                           style="color: gray; cursor: pointer;">
+                           style="color: gray; cursor: pointer; min-with: 5em">
                           </i></td>
+                          <td>{x}&nbsp;</td>
+                          <td>{y}</td>
                     </tr>
                """
     html_end = """
