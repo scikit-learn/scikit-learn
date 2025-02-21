@@ -47,34 +47,40 @@ def _html_template(data):
         </head>
         <body>
         <div class="estimator-params">
-             <ul>
             <details>
                 <summary>Parameters</summary>
-                <ul>
+                <table>
+                  <tbody>
         """
     out = ""
     for x, y in data.items():
         if x in data.non_default:
             out += f"""
-                      <li><span style="color: black;">{x}:{y}</span>&nbsp;
-                        <i class="fa-regular fa-copy"
+                    <tr>
+                      <td><span style="color: black;">{x}</span>&nbsp;
+                      <td>{y}</td>
+                      <td><i class="fa-regular fa-copy"
                        onclick="copyToClipboard('{x}', this)"
-                       style="color: #B197FC; cursor: pointer;">
-                      </i>
-                      </li>
+                       style="color: gray; cursor: pointer;">
+                      </i></td>
+                    </tr>
             """
         else:
             out += f"""
-                          <li>{x}:{y}&nbsp;
-                            <i class="fa-regular fa-copy"
+                    <tr>
+                          <td><span style="color: grey;">{x}&nbsp;</td>
+                          <td><span style="color: grey;">{y}</td>
+                          <td><i class="fa-regular fa-copy"
                            onclick="copyToClipboard('{x}', this)"
-                           style="color: #B197FC; cursor: pointer;">
-                          </i>
-                          </li>
+                           style="color: gray; cursor: pointer;">
+                          </i></td>
+                    </tr>
                """
     html_end = """
+                  <tbody>
+                </table>
             </details>
-            </ul>
+
         </div>
         <script>
             function copyToClipboard(text, element) {{
