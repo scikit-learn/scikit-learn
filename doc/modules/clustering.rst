@@ -140,6 +140,11 @@ model with equal covariance per component.
 :term:`inductive` clustering methods) are not designed to be applied to new,
 unseen data.
 
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_cluster_plot_inductive_clustering.py`: An example
+  of an inductive clustering model for handling new data.
+
 .. _k_means:
 
 K-means
