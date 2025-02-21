@@ -579,8 +579,12 @@ def test_calibration_attributes(clf, cv):
     X, y = make_classification(n_samples=10, n_features=5, n_classes=2, random_state=7)
     if cv == "prefit":
         clf = clf.fit(X, y)
-    calib_clf = CalibratedClassifierCV(clf, cv=cv)
-    calib_clf.fit(X, y)
+        calib_clf = CalibratedClassifierCV(clf, cv=cv)
+        with pytest.warns(FutureWarning):
+            calib_clf.fit(X, y)
+    else:
+        calib_clf = CalibratedClassifierCV(clf, cv=cv)
+        calib_clf.fit(X, y)
 
     if cv == "prefit":
         assert_array_equal(calib_clf.classes_, clf.classes_)
