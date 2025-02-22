@@ -798,6 +798,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         "single" and affinity is not "precomputed" any valid pairwise distance
         metric can be assigned.
 
+        For an example of agglomerative clustering with different metrics, see
+        :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering_metrics.py`.
+
         .. versionadded:: 1.2
 
     memory : str or object with the joblib.Memory interface, default=None
@@ -925,6 +928,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     AgglomerativeClustering()
     >>> clustering.labels_
     array([1, 1, 1, 0, 0, 0])
+
+    For a comparison of Agglomerative clustering with other clustering algorithms, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
     """
 
     _parameter_constraints: dict = {
