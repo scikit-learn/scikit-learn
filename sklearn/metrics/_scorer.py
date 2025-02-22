@@ -335,6 +335,26 @@ class _BaseScorer(_MetadataRequester):
             self._metadata_request.score.add_request(param=param, alias=alias)
         return self
 
+    def get_metadata_routing(self):
+        """Get requested data properties.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        Returns
+        -------
+        request : MetadataRequest
+            A :class:`~sklearn.utils.metadata_routing.MetadataRequest` instance.
+        """
+        if hasattr(self, "_metadata_request"):
+            requests = get_routing_for_object(self._metadata_request)
+        else:
+            requests = self._get_default_requests(
+                score_method="__call__", ignore_params={"estimator"}
+            )
+
+        return requests
+
 
 class _Scorer(_BaseScorer):
     def _score(self, method_caller, estimator, X, y_true, **kwargs):
