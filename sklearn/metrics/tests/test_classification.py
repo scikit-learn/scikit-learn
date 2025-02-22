@@ -2946,7 +2946,7 @@ def test_balanced_accuracy_score(y_true, y_pred):
 @pytest.mark.parametrize(
     "classes", [(False, True), (0, 1), (0.0, 1.0), ("zero", "one")]
 )
-def test_classification_metric_pos_label_types(metric, classes, global_random_seed):
+def test_classification_metric_pos_label_types(metric, classes):
     """Check that the metric works with different types of `pos_label`.
 
     We can expect `pos_label` to be a bool, an integer, a float, a string.
