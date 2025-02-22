@@ -26,11 +26,10 @@ def _check_boundary_response_method(estimator, response_method, class_of_interes
     estimator : object
         Fitted estimator to check.
 
-    response_method : {'auto', 'predict_proba', 'decision_function', 'predict'}
-        Specifies whether to use :term:`predict_proba`,
-        :term:`decision_function`, :term:`predict` as the target response.
-        If set to 'auto', the response method is tried in the following order:
-        :term:`decision_function`, :term:`predict_proba`, :term:`predict`.
+    response_method : {'auto', 'decision_function', 'predict_proba', 'predict'}
+        Specifies whether to use :term:`decision_function`, :term:`predict_proba`,
+        :term:`predict` as the target response. If set to 'auto', the response method is
+        tried in the before mentioned order.
 
     class_of_interest : int, float, bool, str or None
         The class considered when plotting the decision. Cannot be None if
@@ -77,6 +76,10 @@ class DecisionBoundaryDisplay:
     attributes.
 
     Read more in the :ref:`User Guide <visualizations>`.
+
+    For a detailed example comparing the decision boundaries of multinomial and
+    one-vs-rest logistic regression, please see
+    :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_multinomial.py`.
 
     .. versionadded:: 1.1
 
@@ -248,14 +251,12 @@ class DecisionBoundaryDisplay:
             :func:`contour <matplotlib.pyplot.contour>`,
             :func:`pcolormesh <matplotlib.pyplot.pcolormesh>`.
 
-        response_method : {'auto', 'predict_proba', 'decision_function', \
+        response_method : {'auto', 'decision_function', 'predict_proba', \
                 'predict'}, default='auto'
-            Specifies whether to use :term:`predict_proba`,
-            :term:`decision_function`, :term:`predict` as the target response.
-            If set to 'auto', the response method is tried in the following order:
-            :term:`decision_function`, :term:`predict_proba`, :term:`predict`.
-            For multiclass problems, :term:`predict` is selected when
-            `response_method="auto"`.
+            Specifies whether to use :term:`decision_function`, :term:`predict_proba`
+            or :term:`predict` as the target response. If set to 'auto', the response
+            method is tried in the before mentioned order. For multiclass problems,
+            :term:`predict` is selected when `response_method="auto"`.
 
         class_of_interest : int, float, bool or str, default=None
             The class considered when plotting the decision. If None,

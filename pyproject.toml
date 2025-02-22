@@ -93,7 +93,7 @@ tests = [
     "numpydoc>=1.2.0",
     "pooch>=1.6.0",
 ]
-maintenance = ["conda-lock==2.5.6"]
+maintenance = ["conda-lock==2.5.7"]
 
 [build-system]
 build-backend = "mesonpy"

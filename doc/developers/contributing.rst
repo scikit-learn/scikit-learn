@@ -184,7 +184,7 @@ Contributing code
   If in doubt about duplicated work, or if you want to work on a non-trivial
   feature, it's recommended to first open an issue in
   the `issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_
-  to get some feedbacks from core developers.
+  to get some feedback from core developers.
 
   One easy way to find an issue to work on is by applying the "help wanted"
   label in your search. This lists all the issues that have been unclaimed
@@ -282,7 +282,13 @@ how to set up your git repository:
         git remote add upstream git@github.com:scikit-learn/scikit-learn.git
 
 7. Check that the `upstream` and `origin` remote aliases are configured correctly
-   by running `git remote -v` which should display:
+   by running:
+
+   .. prompt:: bash
+
+        git remote -v
+
+   This should display:
 
    .. code-block:: text
 
@@ -344,8 +350,8 @@ The next steps now describe the process of modifying code and submitting a PR:
 
 12. Follow `these
     <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
-    instructions to create a pull request from your fork. This will send an
-    notification to potential reviewers. You may want to consider sending an message to
+    instructions to create a pull request from your fork. This will send a
+    notification to potential reviewers. You may want to consider sending a message to
     the `discord <https://discord.com/invite/h9qyrK8Jc8>`_ in the development
     channel for more visibility if your pull request does not receive attention after
     a couple of days (instant replies are not guaranteed though).
@@ -531,14 +537,13 @@ Continuous Integration (CI)
 * CircleCI is used to build the docs for viewing.
 * Github Actions are used for various tasks, including building wheels and
   source distributions.
-* Cirrus CI is used to build on ARM.
 
 .. _commit_markers:
 
 Commit message markers
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Please note that if one of the following markers appear in the latest commit
+Please note that if one of the following markers appears in the latest commit
 message, the following actions are taken.
 
 ====================== ===================
@@ -546,14 +551,11 @@ Commit Message Marker  Action Taken by CI
 ====================== ===================
 [ci skip]              CI is skipped completely
 [cd build]             CD is run (wheels and source distribution are built)
-[cd build gh]          CD is run only for GitHub Actions
-[cd build cirrus]      CD is run only for Cirrus CI
 [lint skip]            Azure pipeline skips linting
 [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc.) development builds
 [free-threaded]        Build & test with CPython 3.13 free-threaded
 [pyodide]              Build & test with Pyodide
 [azure parallel]       Run Azure CI jobs in parallel
-[cirrus arm]           Run Cirrus CI ARM test
 [float32]              Run float32 tests by setting `SKLEARN_RUN_FLOAT32_TESTS=1`. See :ref:`environment_variable` for more details
 [doc skip]             Docs are not built
 [doc quick]            Docs built, but excludes example gallery plots
@@ -644,7 +646,7 @@ using the following guidelines:
 
 * If a contributor comments on an issue to say they are working on it,
   a pull request is expected within 2 weeks (new contributor) or 4 weeks
-  (contributor or core dev), unless an larger time frame is explicitly given.
+  (contributor or core dev), unless a larger time frame is explicitly given.
   Beyond that time, another contributor can take the issue and make a
   pull request for it. We encourage contributors to comment directly on the
   stalled or unclaimed issue to let community members know that they will be
@@ -671,7 +673,7 @@ underestimate how easy an issue is to solve!
   A great way to start contributing to scikit-learn is to pick an item from
   the list of `good first issues
   <https://github.com/scikit-learn/scikit-learn/labels/good%20first%20issue>`_
-  in the issue tracker. Resolving these issues allow you to start contributing
+  in the issue tracker. Resolving these issues allows you to start contributing
   to the project without much prior knowledge. If you have already contributed
   to scikit-learn, you should look at Easy issues instead.
 
@@ -701,9 +703,9 @@ Documentation
 We are glad to accept any sort of documentation:
 
 * **Function/method/class docstrings:** Also known as "API documentation", these
-  describe what the object does and details any parameters, attributes and
+  describe what the object does and detail any parameters, attributes and
   methods. Docstrings live alongside the code in `sklearn/
-  <https://github.com/scikit-learn/scikit-learn/tree/main/sklearn>`_, and are generated
+  <https://github.com/scikit-learn/scikit-learn/tree/main/sklearn>`_, and are
   generated according to `doc/api_reference.py
   <https://github.com/scikit-learn/scikit-learn/blob/main/doc/api_reference.py>`_. To
   add, update, remove, or deprecate a public API that is listed in :ref:`api_ref`, this
@@ -1127,7 +1129,7 @@ You can also specify a whole module to benchmark:
   asv continuous -b linear_model upstream/main HEAD
 
 You can replace `HEAD` by any local branch. By default it will only report the
-benchmarks that have change by at least 10%. You can control this ratio with
+benchmarks that have changed by at least 10%. You can control this ratio with
 the `-f` flag.
 
 To run the full benchmark suite, simply remove the `-b` flag :

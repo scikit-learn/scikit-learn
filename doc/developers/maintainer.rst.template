@@ -99,7 +99,7 @@ Reference Steps
         and `DOC`. They should at least include all the commits of the merged PRs that
         were milestoned for this release.
       - Commits to `drop` for a bug-fix release are *generally* prefixed with `FEAT`,
-        `MAINT`, `ENH`, and `API`. Reasons for not including them is to prevent change
+        `MAINT`, `ENH`, and `API`. Reasons for not including them are to prevent change
         of behavior (which should only happen in major/minor releases).
       - After having dropped or picked commits, **do not exit** but paste the content of
         the `git-rebase-todo` message in the PR. This file is located at
@@ -136,7 +136,7 @@ Reference Steps
         {%- if key != "rc" %}
         * [ ] Publish to https://github.com/scikit-learn/scikit-learn/releases
         {%- endif %}
-        * [ ] Announce on mailing list and on LinkedIn, Bluesky, Twitter
+        * [ ] Announce on mailing list and on social media platforms (LinkedIn, Bluesky, etc.) 
         {%- if key != "rc" %}
         * [ ] Update SECURITY.md in main branch
         {%- endif %}

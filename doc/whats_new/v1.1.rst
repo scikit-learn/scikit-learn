@@ -256,7 +256,7 @@ random sampling procedures.
   stability of the solver, but may result in a different model.
 
 - |Fix| :func:`feature_selection.f_regression` and
-  :func:`feature_selection.r_regression` will now returned finite score by
+  :func:`feature_selection.r_regression` will now return finite score by
   default instead of `np.nan` and `np.inf` for some corner case. You can use
   `force_finite=False` if you really want to get non-finite values and keep
   the old behavior.
@@ -498,7 +498,7 @@ Changelog
 :mod:`sklearn.datasets`
 .......................
 
-- |Feature| :func:`datasets.load_files` now accepts a ignore list and
+- |Feature| :func:`datasets.load_files` now accepts an ignore list and
   an allow list based on file extensions.
   :pr:`19747` by :user:`Tony Attalla <tonyattalla>` and :pr:`22498` by
   :user:`Meekail Zain <micky774>`.
@@ -514,7 +514,7 @@ Changelog
 - |Enhancement| :func:`datasets.load_diabetes` now accepts the parameter
   ``scaled``, to allow loading unscaled data. The scaled version of this
   dataset is now computed from the unscaled data, and can produce slightly
-  different results that in previous version (within a 1e-4 absolute
+  different results than in previous version (within a 1e-4 absolute
   tolerance).
   :pr:`16605` by :user:`Mandy Gu <happilyeverafter95>`.
 
@@ -720,7 +720,7 @@ Changelog
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |Fix| :class:`ensemble.HistGradientBoostingClassifier` and
-  :class:`ensemble.HistGradientBoostingRegressor` no longer warns when
+  :class:`ensemble.HistGradientBoostingRegressor` no longer warn when
   fitting on a pandas DataFrame with a non-default `scoring` parameter and
   early_stopping enabled. :pr:`22908` by `Thomas Fan`_.
 
@@ -784,7 +784,7 @@ Changelog
 - |Enhancement| Add a parameter `force_finite` to
   :func:`feature_selection.f_regression` and
   :func:`feature_selection.r_regression`. This parameter allows to force the
-  output to be finite in the case where a feature or a the target is constant
+  output to be finite in the case where a feature or the target is constant
   or that the feature and target are perfectly correlated (only for the
   F-statistic).
   :pr:`17819` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
@@ -909,7 +909,7 @@ Changelog
   :pr:`22062` by :user:`Adrian Trujillo <trujillo9616>`.
 
 - |Enhancement| :func:`linear_model.ElasticNet` and
-  and other linear model classes using coordinate descent show error
+  other linear model classes using coordinate descent show error
   messages when non-finite parameter weights are produced. :pr:`22148`
   by :user:`Christian Ritter <chritter>` and :user:`Norbert Preining <norbusan>`.
 
@@ -936,7 +936,7 @@ Changelog
   `max_iter` and `tol`.
   :pr:`21341` by :user:`Arturo Amor <ArturoAmorQ>`.
 
-- |Enhancement| :func:`linear_model.orthogonal_mp_gram` preservse dtype for
+- |Enhancement| :func:`linear_model.orthogonal_mp_gram` preserves dtype for
   `numpy.float32`.
   :pr:`22002` by :user:`Takeshi Oura <takoika>`.
 
@@ -979,7 +979,7 @@ Changelog
   :pr:`22899` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |Fix| :class:`linear_model.SGDRegressor` and :class:`linear_model.SGDClassifier` now
-  computes the validation error correctly when early stopping is enabled.
+  compute the validation error correctly when early stopping is enabled.
   :pr:`23256` by :user:`Zhehao Liu <MaxwellLZH>`.
 
 - |API| :class:`linear_model.LassoLarsIC` now exposes `noise_variance` as
@@ -996,7 +996,7 @@ Changelog
   :pr:`19794` by :user:`Zhehao Liu <MaxwellLZH>`.
 
 - |Enhancement| :func:`manifold.spectral_embedding` and
-  :class:`manifold.SpectralEmbedding` supports `np.float32` dtype and will
+  :class:`manifold.SpectralEmbedding` support `np.float32` dtype and will
   preserve this dtype.
   :pr:`21534` by :user:`Andrew Knyazev <lobpcg>`.
 
@@ -1089,7 +1089,7 @@ Changelog
   :user:`Gordon Walsh <g-walsh>`, :user:`Alberto Ceballos<alceballosa>`
   and :user:`Andres Rios<ariosramirez>`.
 
-- |Fix| Fix a bug that correctly initialize `precisions_cholesky_` in
+- |Fix| Fix a bug that correctly initializes `precisions_cholesky_` in
   :class:`mixture.GaussianMixture` when providing `precisions_init` by taking
   its square root.
   :pr:`22058` by :user:`Guillaume Lemaitre <glemaitre>`.
@@ -1114,7 +1114,7 @@ Changelog
 
 - |Fix| :class:`model_selection.GridSearchCV`,
   :class:`model_selection.HalvingGridSearchCV`
-  now validate input parameters in `fit` instead of `__init__`.
+  now validates input parameters in `fit` instead of `__init__`.
   :pr:`21880` by :user:`Mrinal Tyagi <MrinalTyagi>`.
 
 - |Fix| :func:`model_selection.learning_curve` now supports `partial_fit`
@@ -1237,7 +1237,7 @@ Changelog
   `inverse_components_`. :pr:`21701` by :user:`Aurélien Geron <ageron>`.
 
 - |Enhancement| :class:`random_projection.SparseRandomProjection` and
-  :class:`random_projection.GaussianRandomProjection` preserves dtype for
+  :class:`random_projection.GaussianRandomProjection` preserve dtype for
   `numpy.float32`. :pr:`22114` by :user:`Takeshi Oura <takoika>`.
 
 - |Enhancement| Adds :term:`get_feature_names_out` to all transformers in the
@@ -1256,7 +1256,7 @@ Changelog
 
 - |Enhancement| :func:`svm.SVR`, :func:`svm.SVC`, :func:`svm.NuSVR`,
   :func:`svm.OneClassSVM`, :func:`svm.NuSVC` now raise an error
-  when the dual-gap estimation produce non-finite parameter weights.
+  when the dual-gap estimation produces non-finite parameter weights.
   :pr:`22149` by :user:`Christian Ritter <chritter>` and
   :user:`Norbert Preining <norbusan>`.
 

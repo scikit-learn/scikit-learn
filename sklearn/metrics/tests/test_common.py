@@ -1611,7 +1611,7 @@ def test_multiclass_sample_weight_invariance(name):
 @pytest.mark.parametrize(
     "name",
     sorted(
-        (MULTILABELS_METRICS | THRESHOLDED_MULTILABEL_METRICS | MULTIOUTPUT_METRICS)
+        (MULTILABELS_METRICS | THRESHOLDED_MULTILABEL_METRICS)
         - METRICS_WITHOUT_SAMPLE_WEIGHT
     ),
 )
@@ -1636,6 +1636,19 @@ def test_multilabel_sample_weight_invariance(name):
         check_sample_weight_invariance(name, metric, y_true, y_score)
     else:
         check_sample_weight_invariance(name, metric, y_true, y_pred)
+
+
+@pytest.mark.parametrize(
+    "name",
+    sorted(MULTIOUTPUT_METRICS - METRICS_WITHOUT_SAMPLE_WEIGHT),
+)
+def test_multioutput_sample_weight_invariance(name):
+    random_state = check_random_state(0)
+    y_true = random_state.uniform(0, 2, size=(20, 5))
+    y_pred = random_state.uniform(0, 2, size=(20, 5))
+
+    metric = ALL_METRICS[name]
+    check_sample_weight_invariance(name, metric, y_true, y_pred)
 
 
 def test_no_averaging_labels():
@@ -2235,3 +2248,34 @@ def _get_metric_kwargs_for_array_api_testing(metric, params):
         metric_kwargs_combinations = new_combinations
 
     return metric_kwargs_combinations
+
+
+@pytest.mark.parametrize("name", sorted(ALL_METRICS))
+def test_returned_value_consistency(name):
+    """Ensure that the returned values of all metrics are consistent.
+
+    It can either be a float, a numpy array, or a tuple of floats or numpy arrays.
+    It should not be a numpy float64 or float32.
+    """
+
+    rng = np.random.RandomState(0)
+    y_true = rng.randint(0, 2, size=(20,))
+    y_pred = rng.randint(0, 2, size=(20,))
+
+    if name in METRICS_REQUIRE_POSITIVE_Y:
+        y_true, y_pred = _require_positive_targets(y_true, y_pred)
+
+    if name in METRIC_UNDEFINED_BINARY:
+        y_true = rng.randint(0, 2, size=(20, 3))
+        y_pred = rng.randint(0, 2, size=(20, 3))
+
+    metric = ALL_METRICS[name]
+    score = metric(y_true, y_pred)
+
+    assert isinstance(score, (float, np.ndarray, tuple))
+    assert not isinstance(score, (np.float64, np.float32))
+
+    if isinstance(score, tuple):
+        assert all(isinstance(v, float) for v in score) or all(
+            isinstance(v, np.ndarray) for v in score
+        )
