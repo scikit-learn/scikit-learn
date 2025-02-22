@@ -11,7 +11,14 @@ import numpy as np
 from scipy import linalg, sparse
 
 from ..utils._param_validation import Interval, StrOptions, validate_params
-from ._array_api import _average, _is_numpy_namespace, _nanmean, device, get_namespace
+from ._array_api import (
+    _allclose,
+    _average,
+    _is_numpy_namespace,
+    _nanmean,
+    device,
+    get_namespace,
+)
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array, check_random_state
 
@@ -1189,10 +1196,21 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
     out : ndarray
         Array with the cumulative sums along the chosen axis.
     """
-    out = np.cumsum(arr, axis=axis, dtype=np.float64)
-    expected = np.sum(arr, axis=axis, dtype=np.float64)
-    if not np.allclose(
-        out.take(-1, axis=axis), expected, rtol=rtol, atol=atol, equal_nan=True
+    xp, _ = get_namespace(arr)
+    out = xp.cumulative_sum(arr, axis=axis, dtype=xp.float64)
+    expected = xp.sum(arr, axis=axis, dtype=xp.float64)
+    # workaround to get last element
+    # (negative indices, e.g. -1, behavior is undefined)
+    if axis is None:
+        last_elem_idx = xp.asarray(out.shape[0] - 1)
+    else:
+        last_elem_idx = xp.asarray(out.shape[axis] - 1)
+    # TODO: equal_nan should be true here!
+    if not _allclose(
+        xp.take(out, xp.asarray([last_elem_idx]), axis=axis),
+        expected,
+        rtol=rtol,
+        atol=atol,
     ):
         warnings.warn(
             (
