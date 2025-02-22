@@ -2,6 +2,17 @@
 
 .. currentmodule:: sklearn
 
+============
+Version 0.20
+============
+
+.. warning::
+
+    Version 0.20 is the last version of scikit-learn to support Python 2.7 and Python 3.4.
+    Scikit-learn 0.21 will require Python 3.5 or higher.
+
+.. include:: changelog_legend.inc
+
 .. _changes_0_20_4:
 
 Version 0.20.4
@@ -53,7 +64,7 @@ The bundled version of joblib was upgraded from 0.13.0 to 0.13.2.
   restored from a pickle if ``sample_weight`` had been used.
   :issue:`13772` by :user:`Aditya Vyas <aditya1702>`.
 
- .. _changes_0_20_3:
+.. _changes_0_20_3:
 
 Version 0.20.3
 ==============
@@ -480,11 +491,6 @@ Thanks to our contributors!
 
 This release is dedicated to the memory of Raghav Rajagopalan.
 
-.. warning::
-
-    Version 0.20 is the last version of scikit-learn to support Python 2.7 and Python 3.4.
-    Scikit-learn 0.21 will require Python 3.5 or higher.
-
 Highlights
 ----------
 
@@ -590,7 +596,7 @@ Support for Python 3.3 has been officially dropped.
   :issue:`10933` by :user:`Johannes Hansen <jnhansen>`.
 
 - |Efficiency| :class:`cluster.KMeans`, :class:`cluster.MiniBatchKMeans` and
-  :func:`cluster.k_means` passed with ``algorithm='full'`` now enforces
+  :func:`cluster.k_means` passed with ``algorithm='full'`` now enforce
   row-major ordering, improving runtime.
   :issue:`10471` by :user:`Gaurav Dhingra <gxyd>`.
 

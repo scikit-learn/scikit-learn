@@ -39,11 +39,11 @@ easy to see whether the estimator suffers from bias or variance. However, in
 high-dimensional spaces, models can become very difficult to visualize. For
 this reason, it is often helpful to use the tools described below.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-   * :ref:`sphx_glr_auto_examples_model_selection_plot_underfitting_overfitting.py`
-   * :ref:`sphx_glr_auto_examples_model_selection_plot_validation_curve.py`
-   * :ref:`sphx_glr_auto_examples_model_selection_plot_learning_curve.py`
+* :ref:`sphx_glr_auto_examples_model_selection_plot_underfitting_overfitting.py`
+* :ref:`sphx_glr_auto_examples_model_selection_plot_train_error_vs_test_error.py`
+* :ref:`sphx_glr_auto_examples_model_selection_plot_learning_curve.py`
 
 
 .. _validation_curve:
@@ -115,14 +115,7 @@ to :func:`validation_curve` to generate and plot the validation curve:
 If the training score and the validation score are both low, the estimator will
 be underfitting. If the training score is high and the validation score is low,
 the estimator is overfitting and otherwise it is working very well. A low
-training score and a high validation score is usually not possible. Underfitting,
-overfitting, and a working model are shown in the in the plot below where we vary
-the parameter `gamma` of an SVM with an RBF kernel on the digits dataset.
-
-.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_validation_curve_001.png
-   :target: ../auto_examples/model_selection/plot_validation_curve.html
-   :align: center
-   :scale: 50%
+training score and a high validation score is usually not possible.
 
 .. _learning_curve:
 
@@ -187,3 +180,8 @@ to :func:`learning_curve` to generate and plot the learning curve:
       X, y = shuffle(X, y, random_state=0)
       LearningCurveDisplay.from_estimator(
          SVC(kernel="linear"), X, y, train_sizes=[50, 80, 110], cv=5)
+
+.. rubric:: Examples
+
+* See :ref:`sphx_glr_auto_examples_model_selection_plot_learning_curve.py` for an
+  example of using learning curves to check the scalability of a predictive model.

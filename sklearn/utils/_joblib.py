@@ -1,3 +1,8 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+# TODO(1.7): remove this file
+
 import warnings as _warnings
 
 with _warnings.catch_warnings():

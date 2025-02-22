@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import functools
 import math
 import operator
@@ -137,7 +140,9 @@ def make_constraint(constraint):
         constraint = make_constraint(constraint.constraint)
         constraint.hidden = True
         return constraint
-    if isinstance(constraint, str) and constraint == "nan":
+    if (isinstance(constraint, str) and constraint == "nan") or (
+        isinstance(constraint, float) and np.isnan(constraint)
+    ):
         return _NanConstraint()
     raise ValueError(f"Unknown constraint type: {constraint}")
 
@@ -578,7 +583,7 @@ class _Booleans(_Constraint):
     """Constraint representing boolean likes.
 
     Convenience class for
-    [bool, np.bool_, Integral (deprecated)]
+    [bool, np.bool_]
     """
 
     def __init__(self):

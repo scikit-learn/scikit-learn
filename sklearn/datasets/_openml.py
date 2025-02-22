@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import gzip
 import hashlib
 import json
@@ -15,10 +18,8 @@ from warnings import warn
 
 import numpy as np
 
-from ..utils import (
-    Bunch,
-    check_pandas_support,  # noqa  # noqa
-)
+from ..utils import Bunch
+from ..utils._optional_dependencies import check_pandas_support  # noqa
 from ..utils._param_validation import (
     Integral,
     Interval,
@@ -761,7 +762,7 @@ def _valid_data_column_names(features_list, target_columns):
         "return_X_y": [bool],
         "as_frame": [bool, StrOptions({"auto"})],
         "n_retries": [Interval(Integral, 1, None, closed="left")],
-        "delay": [Interval(Real, 0, None, closed="right")],
+        "delay": [Interval(Real, 0.0, None, closed="neither")],
         "parser": [
             StrOptions({"auto", "pandas", "liac-arff"}),
         ],
@@ -959,6 +960,34 @@ def fetch_openml(
     returns ordinally encoded data where the categories are provided in the
     attribute `categories` of the `Bunch` instance. Instead, `"pandas"` returns
     a NumPy array were the categories are not encoded.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import fetch_openml
+    >>> adult = fetch_openml("adult", version=2)  # doctest: +SKIP
+    >>> adult.frame.info()  # doctest: +SKIP
+    <class 'pandas.core.frame.DataFrame'>
+    RangeIndex: 48842 entries, 0 to 48841
+    Data columns (total 15 columns):
+     #   Column          Non-Null Count  Dtype
+    ---  ------          --------------  -----
+     0   age             48842 non-null  int64
+     1   workclass       46043 non-null  category
+     2   fnlwgt          48842 non-null  int64
+     3   education       48842 non-null  category
+     4   education-num   48842 non-null  int64
+     5   marital-status  48842 non-null  category
+     6   occupation      46033 non-null  category
+     7   relationship    48842 non-null  category
+     8   race            48842 non-null  category
+     9   sex             48842 non-null  category
+     10  capital-gain    48842 non-null  int64
+     11  capital-loss    48842 non-null  int64
+     12  hours-per-week  48842 non-null  int64
+     13  native-country  47985 non-null  category
+     14  class           48842 non-null  category
+    dtypes: category(9), int64(6)
+    memory usage: 2.7 MB
     """
     if cache is False:
         # no caching will be applied
@@ -1037,7 +1066,7 @@ def fetch_openml(
                 )
             else:
                 err_msg = (
-                    f"Using `parser={parser!r}` wit dense data requires pandas to be "
+                    f"Using `parser={parser!r}` with dense data requires pandas to be "
                     "installed. Alternatively, explicitly set `parser='liac-arff'`."
                 )
             raise ImportError(err_msg) from exc

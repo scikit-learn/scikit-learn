@@ -1,0 +1,2 @@
+- :class:`ensemble.VotingClassifier` and :class:`ensemble.VotingRegressor`
+  validate `estimators` to make sure it is a list of tuples. By `Thomas Fan`_.

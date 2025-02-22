@@ -53,6 +53,8 @@ new data. You don't need to re-train the estimator::
   >>> clf.predict([[4, 5, 6], [14, 15, 16]])  # predict classes of new data
   array([0, 1])
 
+You can check :ref:`ml_map` on how to choose the right model for your use case.
+
 Transformers and pre-processors
 -------------------------------
 
@@ -227,6 +229,3 @@ provide. You can also find an exhaustive list of the public API in the
 
 You can also look at our numerous :ref:`examples <general_examples>` that
 illustrate the use of ``scikit-learn`` in many different contexts.
-
-The :ref:`tutorials <tutorial_menu>` also contain additional learning
-resources.

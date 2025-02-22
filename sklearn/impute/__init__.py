@@ -1,4 +1,8 @@
-"""Transformers for missing value imputation"""
+"""Transformers for missing value imputation."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import typing
 
 from ._base import MissingIndicator, SimpleImputer

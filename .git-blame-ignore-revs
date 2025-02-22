@@ -31,3 +31,6 @@ d4aad64b1eb2e42e76f49db2ccfbe4b4660d092b
 
 # PR 26649: Add isort and ruff rules
 42173fdb34b5aded79664e045cada719dfbe39dc
+
+# PR #28802: Update black to 24.3.0
+c4c546355667b070edd5c892b206aa4a97af9a0b

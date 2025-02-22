@@ -2,6 +2,17 @@
 
 .. currentmodule:: sklearn
 
+.. _release_notes_0_22:
+
+============
+Version 0.22
+============
+
+For a short description of the main highlights of the release, please refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_22_0.py`.
+
+.. include:: changelog_legend.inc
+
 .. _changes_0_22_2:
 
 Version 0.22.2.post1
@@ -146,7 +157,7 @@ Changelog
 - |Fix| :func:`utils.validation.check_is_fitted` accepts back an explicit ``attributes``
   argument to check for specific attributes as explicit markers of a fitted
   estimator. When no explicit ``attributes`` are provided, only the attributes
-  that end with a underscore and do not start with double underscore are used
+  that end with an underscore and do not start with double underscore are used
   as "fitted" markers. The ``all_or_any`` argument is also no longer
   deprecated. This change is made to restore some backward compatibility with
   the behavior of this utility in version 0.21. :pr:`15947` by `Thomas Fan`_.
@@ -157,12 +168,6 @@ Version 0.22.0
 ==============
 
 **December 3 2019**
-
-For a short description of the main highlights of the release, please
-refer to
-:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_22_0.py`.
-
-.. include:: changelog_legend.inc
 
 Website update
 --------------
@@ -419,7 +424,7 @@ Changelog
 ....................
 
 - |Fix| :class:`dummy.DummyClassifier` now handles checking the existence
-  of the provided constant in multiouput cases.
+  of the provided constant in multioutput cases.
   :pr:`14908` by :user:`Martina G. Vilas <martinagvilas>`.
 
 - |API| The default value of the `strategy` parameter in
@@ -603,7 +608,7 @@ Changelog
 - |Fix| :class:`impute.IterativeImputer` now works when there is only one feature.
   By :user:`Sergey Feldman <sergeyf>`.
 
-- |Fix| Fixed a bug in :class:`impute.IterativeImputer` where features where
+- |Fix| Fixed a bug in :class:`impute.IterativeImputer` where features were
   imputed in the reverse desired order with ``imputation_order`` either
   ``"ascending"`` or ``"descending"``. :pr:`15393` by
   :user:`Venkatachalam N <venkyyuvy>`.
@@ -1103,8 +1108,7 @@ These changes mostly affect library developers.
   to be overridable only once. :pr:`14884` by `Andreas Müller`_.
 
 
-Code and Documentation Contributors
------------------------------------
+.. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of the
 project since version 0.21, including:

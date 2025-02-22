@@ -4,6 +4,7 @@ Tests for LinearModelLoss
 Note that correctness of losses (which compose LinearModelLoss) is already well
 covered in the _loss module.
 """
+
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
@@ -114,6 +115,7 @@ def test_loss_grad_hess_are_the_same(
     X, y, coef = random_X_y_coef(
         linear_model_loss=loss, n_samples=10, n_features=5, seed=42
     )
+    X_old, y_old, coef_old = X.copy(), y.copy(), coef.copy()
 
     if sample_weight == "range":
         sample_weight = np.linspace(1, y.shape[0], num=y.shape[0])
@@ -130,55 +132,65 @@ def test_loss_grad_hess_are_the_same(
     g3, h3 = loss.gradient_hessian_product(
         coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
     )
-    if not base_loss.is_multiclass:
-        g4, h4, _ = loss.gradient_hessian(
-            coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
-        )
-    else:
-        with pytest.raises(NotImplementedError):
-            loss.gradient_hessian(
-                coef,
-                X,
-                y,
-                sample_weight=sample_weight,
-                l2_reg_strength=l2_reg_strength,
-            )
-
+    g4, h4, _ = loss.gradient_hessian(
+        coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
+    )
     assert_allclose(l1, l2)
     assert_allclose(g1, g2)
     assert_allclose(g1, g3)
-    if not base_loss.is_multiclass:
-        assert_allclose(g1, g4)
-        assert_allclose(h4 @ g4, h3(g3))
+    assert_allclose(g1, g4)
+    # The ravelling only takes effect for multiclass.
+    assert_allclose(h4 @ g4.ravel(order="F"), h3(g3).ravel(order="F"))
+    # Test that gradient_out and hessian_out are considered properly.
+    g_out = np.empty_like(coef)
+    h_out = np.empty_like(coef, shape=(coef.size, coef.size))
+    g5, h5, _ = loss.gradient_hessian(
+        coef,
+        X,
+        y,
+        sample_weight=sample_weight,
+        l2_reg_strength=l2_reg_strength,
+        gradient_out=g_out,
+        hessian_out=h_out,
+    )
+    assert np.shares_memory(g5, g_out)
+    assert np.shares_memory(h5, h_out)
+    assert_allclose(g5, g_out)
+    assert_allclose(h5, h_out)
+    assert_allclose(g1, g5)
+    assert_allclose(h5, h4)
 
     # same for sparse X
-    X = csr_container(X)
+    Xs = csr_container(X)
     l1_sp = loss.loss(
-        coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
+        coef, Xs, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
     )
     g1_sp = loss.gradient(
-        coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
+        coef, Xs, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
     )
     l2_sp, g2_sp = loss.loss_gradient(
-        coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
+        coef, Xs, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
     )
     g3_sp, h3_sp = loss.gradient_hessian_product(
-        coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
+        coef, Xs, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
     )
-    if not base_loss.is_multiclass:
-        g4_sp, h4_sp, _ = loss.gradient_hessian(
-            coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
-        )
-
+    g4_sp, h4_sp, _ = loss.gradient_hessian(
+        coef, Xs, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
+    )
     assert_allclose(l1, l1_sp)
     assert_allclose(l1, l2_sp)
     assert_allclose(g1, g1_sp)
     assert_allclose(g1, g2_sp)
     assert_allclose(g1, g3_sp)
     assert_allclose(h3(g1), h3_sp(g1_sp))
-    if not base_loss.is_multiclass:
-        assert_allclose(g1, g4_sp)
-        assert_allclose(h4 @ g4, h4_sp @ g1_sp)
+    assert_allclose(g1, g4_sp)
+    assert_allclose(h4, h4_sp)
+
+    # X, y and coef should not have changed
+    assert_allclose(X, X_old)
+    assert_allclose(Xs.toarray(), X_old)
+    assert_allclose(y, y_old)
+    assert_allclose(coef, coef_old)
 
 
 @pytest.mark.parametrize("base_loss", LOSSES)
@@ -340,6 +352,10 @@ def test_multinomial_coef_shape(fit_intercept):
     assert h.shape == coef.shape
     assert_allclose(g, g1)
     assert_allclose(g, g2)
+    g3, hess, _ = loss.gradient_hessian(coef, X, y)
+    assert g3.shape == coef.shape
+    # But full hessian is always 2d.
+    assert hess.shape == (coef.size, coef.size)
 
     coef_r = coef.ravel(order="F")
     s_r = s.ravel(order="F")
@@ -354,3 +370,122 @@ def test_multinomial_coef_shape(fit_intercept):
 
     assert_allclose(g, g_r.reshape(loss.base_loss.n_classes, -1, order="F"))
     assert_allclose(h, h_r.reshape(loss.base_loss.n_classes, -1, order="F"))
+
+
+@pytest.mark.parametrize("sample_weight", [None, "range"])
+def test_multinomial_hessian_3_classes(sample_weight):
+    """Test multinomial hessian for 3 classes and 2 points.
+
+    For n_classes = 3 and n_samples = 2, we have
+      p0 = [p0_0, p0_1]
+      p1 = [p1_0, p1_1]
+      p2 = [p2_0, p2_1]
+    and with 2 x 2 diagonal subblocks
+      H = [p0 * (1-p0),    -p0 * p1,    -p0 * p2]
+          [   -p0 * p1, p1 * (1-p1),    -p1 * p2]
+          [   -p0 * p2,    -p1 * p2, p2 * (1-p2)]
+      hess = X' H X
+    """
+    n_samples, n_features, n_classes = 2, 5, 3
+    loss = LinearModelLoss(
+        base_loss=HalfMultinomialLoss(n_classes=n_classes), fit_intercept=False
+    )
+    X, y, coef = random_X_y_coef(
+        linear_model_loss=loss, n_samples=n_samples, n_features=n_features, seed=42
+    )
+    coef = coef.ravel(order="F")  # this is important only for multinomial loss
+
+    if sample_weight == "range":
+        sample_weight = np.linspace(1, y.shape[0], num=y.shape[0])
+
+    grad, hess, _ = loss.gradient_hessian(
+        coef,
+        X,
+        y,
+        sample_weight=sample_weight,
+        l2_reg_strength=0,
+    )
+    # Hessian must be a symmetrix matrix.
+    assert_allclose(hess, hess.T)
+
+    weights, intercept, raw_prediction = loss.weight_intercept_raw(coef, X)
+    grad_pointwise, proba = loss.base_loss.gradient_proba(
+        y_true=y,
+        raw_prediction=raw_prediction,
+        sample_weight=sample_weight,
+    )
+    p0d, p1d, p2d, oned = (
+        np.diag(proba[:, 0]),
+        np.diag(proba[:, 1]),
+        np.diag(proba[:, 2]),
+        np.diag(np.ones(2)),
+    )
+    h = np.block(
+        [
+            [p0d * (oned - p0d), -p0d * p1d, -p0d * p2d],
+            [-p0d * p1d, p1d * (oned - p1d), -p1d * p2d],
+            [-p0d * p2d, -p1d * p2d, p2d * (oned - p2d)],
+        ]
+    )
+    h = h.reshape((n_classes, n_samples, n_classes, n_samples))
+    if sample_weight is None:
+        h /= n_samples
+    else:
+        h *= sample_weight / np.sum(sample_weight)
+    # hess_expected.shape = (n_features, n_classes, n_classes, n_features)
+    hess_expected = np.einsum("ij, mini, ik->jmnk", X, h, X)
+    hess_expected = np.moveaxis(hess_expected, 2, 3)
+    hess_expected = hess_expected.reshape(
+        n_classes * n_features, n_classes * n_features, order="C"
+    )
+    assert_allclose(hess_expected, hess_expected.T)
+    assert_allclose(hess, hess_expected)
+
+
+def test_linear_loss_gradient_hessian_raises_wrong_out_parameters():
+    """Test that wrong gradient_out and hessian_out raises errors."""
+    n_samples, n_features, n_classes = 5, 2, 3
+    loss = LinearModelLoss(base_loss=HalfBinomialLoss(), fit_intercept=False)
+    X = np.ones((n_samples, n_features))
+    y = np.ones(n_samples)
+    coef = loss.init_zero_coef(X)
+    gradient_out = np.zeros(1)
+    with pytest.raises(
+        ValueError, match="gradient_out is required to have shape coef.shape"
+    ):
+        loss.gradient_hessian(
+            coef=coef,
+            X=X,
+            y=y,
+            gradient_out=gradient_out,
+            hessian_out=None,
+        )
+    hessian_out = np.zeros(1)
+    with pytest.raises(ValueError, match="hessian_out is required to have shape"):
+        loss.gradient_hessian(
+            coef=coef,
+            X=X,
+            y=y,
+            gradient_out=None,
+            hessian_out=hessian_out,
+        )
+
+    loss = LinearModelLoss(base_loss=HalfMultinomialLoss(), fit_intercept=False)
+    coef = loss.init_zero_coef(X)
+    gradient_out = np.zeros((2 * n_classes, n_features))[::2]
+    with pytest.raises(ValueError, match="gradient_out must be F-contiguous"):
+        loss.gradient_hessian(
+            coef=coef,
+            X=X,
+            y=y,
+            gradient_out=gradient_out,
+        )
+    hessian_out = np.zeros((2 * n_classes * n_features, n_classes * n_features))[::2]
+    with pytest.raises(ValueError, match="hessian_out must be contiguous"):
+        loss.gradient_hessian(
+            coef=coef,
+            X=X,
+            y=y,
+            gradient_out=None,
+            hessian_out=hessian_out,
+        )

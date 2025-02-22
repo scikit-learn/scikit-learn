@@ -1,5 +1,7 @@
 """Bisecting K-means clustering."""
-# Author: Michal Krawczyk <mkrwczyk.1@gmail.com>
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 
@@ -10,7 +12,12 @@ from ..base import _fit_context
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils._param_validation import Integral, Interval, StrOptions
 from ..utils.extmath import row_norms
-from ..utils.validation import _check_sample_weight, check_is_fitted, check_random_state
+from ..utils.validation import (
+    _check_sample_weight,
+    check_is_fitted,
+    check_random_state,
+    validate_data,
+)
 from ._k_means_common import _inertia_dense, _inertia_sparse
 from ._kmeans import (
     _BaseKMeans,
@@ -145,16 +152,16 @@ class BisectingKMeans(_BaseKMeans):
             default="biggest_inertia"
         Defines how bisection should be performed:
 
-         - "biggest_inertia" means that BisectingKMeans will always check
-            all calculated cluster for cluster with biggest SSE
-            (Sum of squared errors) and bisect it. This approach concentrates on
-            precision, but may be costly in terms of execution time (especially for
-            larger amount of data points).
+        - "biggest_inertia" means that BisectingKMeans will always check
+          all calculated cluster for cluster with biggest SSE
+          (Sum of squared errors) and bisect it. This approach concentrates on
+          precision, but may be costly in terms of execution time (especially for
+          larger amount of data points).
 
-         - "largest_cluster" - BisectingKMeans will always split cluster with
-            largest amount of points assigned to it from all clusters
-            previously calculated. That should work faster than picking by SSE
-            ('biggest_inertia') and may produce similar results in most cases.
+        - "largest_cluster" - BisectingKMeans will always split cluster with
+          largest amount of points assigned to it from all clusters
+          previously calculated. That should work faster than picking by SSE
+          ('biggest_inertia') and may produce similar results in most cases.
 
     Attributes
     ----------
@@ -202,6 +209,9 @@ class BisectingKMeans(_BaseKMeans):
     array([[ 2., 1.],
            [10., 9.],
            [10., 1.]])
+
+    For a comparison between BisectingKMeans and K-Means refer to example
+    :ref:`sphx_glr_auto_examples_cluster_plot_bisect_kmeans.py`.
     """
 
     _parameter_constraints: dict = {
@@ -376,7 +386,8 @@ class BisectingKMeans(_BaseKMeans):
         self
             Fitted estimator.
         """
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse="csr",
             dtype=[np.float64, np.float32],
@@ -525,5 +536,8 @@ class BisectingKMeans(_BaseKMeans):
 
         return labels
 
-    def _more_tags(self):
-        return {"preserves_dtype": [np.float64, np.float32]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags

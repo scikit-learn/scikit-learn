@@ -2,6 +2,7 @@
 
 The input data is mostly low rank but is a fat infinite tail.
 """
+
 import gc
 import sys
 from collections import defaultdict

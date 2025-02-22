@@ -1,6 +1,5 @@
-# Authors: Nicolas Goix <nicolas.goix@telecom-paristech.fr>
-#          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import re
 from math import sqrt
@@ -164,15 +163,24 @@ def test_novelty_errors():
     clf.fit(X)
     # predict, decision_function and score_samples raise ValueError
     for method in ["predict", "decision_function", "score_samples"]:
-        msg = "{} is not available when novelty=False".format(method)
-        with pytest.raises(AttributeError, match=msg):
+        outer_msg = f"'LocalOutlierFactor' has no attribute '{method}'"
+        inner_msg = "{} is not available when novelty=False".format(method)
+        with pytest.raises(AttributeError, match=outer_msg) as exec_info:
             getattr(clf, method)
+
+        assert isinstance(exec_info.value.__cause__, AttributeError)
+        assert inner_msg in str(exec_info.value.__cause__)
 
     # check errors for novelty=True
     clf = neighbors.LocalOutlierFactor(novelty=True)
-    msg = "fit_predict is not available when novelty=True"
-    with pytest.raises(AttributeError, match=msg):
+
+    outer_msg = "'LocalOutlierFactor' has no attribute 'fit_predict'"
+    inner_msg = "fit_predict is not available when novelty=True"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
         getattr(clf, "fit_predict")
+
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg in str(exec_info.value.__cause__)
 
 
 def test_novelty_training_scores(global_dtype):
@@ -350,3 +358,37 @@ def test_lof_dtype_equivalence(algorithm, novelty, contamination):
             y_pred_32 = getattr(lof_32, method)(X_32)
             y_pred_64 = getattr(lof_64, method)(X_64)
             assert_allclose(y_pred_32, y_pred_64, atol=0.0002)
+
+
+def test_lof_duplicate_samples():
+    """
+    Check that LocalOutlierFactor raises a warning when duplicate values
+    in the training data cause inaccurate results.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27839
+    """
+
+    rng = np.random.default_rng(0)
+
+    x = rng.permutation(
+        np.hstack(
+            [
+                [0.1] * 1000,  # constant values
+                np.linspace(0.1, 0.3, num=3000),
+                rng.random(500) * 100,  # the clear outliers
+            ]
+        )
+    )
+    X = x.reshape(-1, 1)
+
+    error_msg = (
+        "Duplicate values are leading to incorrect results. "
+        "Increase the number of neighbors for more accurate results."
+    )
+
+    lof = neighbors.LocalOutlierFactor(n_neighbors=5, contamination=0.1)
+
+    # Catch the warning
+    with pytest.warns(UserWarning, match=re.escape(error_msg)):
+        lof.fit_predict(X)

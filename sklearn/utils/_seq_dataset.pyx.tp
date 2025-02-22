@@ -8,30 +8,26 @@ Template file for easily generate fused types consistent code using Tempita
 Generated file: _seq_dataset.pyx
 
 Each class is duplicated for all dtypes (float and double). The keywords
-between double braces are substituted in setup.py.
-
-Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-        Arthur Imbert <arthurimbert05@gmail.com>
-        Joan Massich <mailsik@gmail.com>
-
-License: BSD 3 clause
+between double braces are substituted during the build.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # name_suffix, c_type, np_type
-dtypes = [('64', 'double', 'np.float64'),
-          ('32', 'float', 'np.float32')]
+dtypes = [('64', 'float64_t', 'np.float64'),
+          ('32', 'float32_t', 'np.float32')]
 
 }}
 """Dataset abstractions for sequential data access."""
 
-cimport cython
-from libc.limits cimport INT_MAX
-cimport numpy as cnp
 import numpy as np
 
-cnp.import_array()
+cimport cython
+from libc.limits cimport INT_MAX
 
 from ._random cimport our_rand_r
+from ._typedefs cimport float32_t, float64_t, uint32_t
 
 {{for name_suffix, c_type, np_type in dtypes}}
 
@@ -62,7 +58,7 @@ cdef class SequentialDataset{{name_suffix}}:
     n_samples : Py_ssize_t
         Number of samples in the dataset.
 
-    seed : cnp.uint32_t
+    seed : uint32_t
         Seed used for random sampling. This attribute is modified at each call to the
         `random` method.
     """
@@ -138,7 +134,7 @@ cdef class SequentialDataset{{name_suffix}}:
                      current_index)
         return current_index
 
-    cdef void shuffle(self, cnp.uint32_t seed) noexcept nogil:
+    cdef void shuffle(self, uint32_t seed) noexcept nogil:
         """Permutes the ordering of examples."""
         # Fisher-Yates shuffle
         cdef int *ind = self.index_data_ptr
@@ -168,7 +164,7 @@ cdef class SequentialDataset{{name_suffix}}:
                       int current_index) noexcept nogil:
         pass
 
-    def _shuffle_py(self, cnp.uint32_t seed):
+    def _shuffle_py(self, uint32_t seed):
         """python function used for easy testing"""
         self.shuffle(seed)
 
@@ -224,7 +220,7 @@ cdef class ArrayDataset{{name_suffix}}(SequentialDataset{{name_suffix}}):
         const {{c_type}}[:, ::1] X,
         const {{c_type}}[::1] Y,
         const {{c_type}}[::1] sample_weights,
-        cnp.uint32_t seed=1,
+        uint32_t seed=1,
     ):
         """A ``SequentialDataset`` backed by a two-dimensional numpy array.
 
@@ -290,7 +286,7 @@ cdef class CSRDataset{{name_suffix}}(SequentialDataset{{name_suffix}}):
         const int[::1] X_indices,
         const {{c_type}}[::1] Y,
         const {{c_type}}[::1] sample_weights,
-        cnp.uint32_t seed=1,
+        uint32_t seed=1,
     ):
         """Dataset backed by a scipy sparse CSR matrix.
 

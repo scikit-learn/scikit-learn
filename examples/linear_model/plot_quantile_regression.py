@@ -14,10 +14,8 @@ namely the Pareto distribution.
 
 """
 
-# Authors: David Dale <dale.david@mail.ru>
-#          Christian Lorentzen <lorentzen.ch@gmail.com>
-#          Guillaume Lemaitre <glemaitre58@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Dataset generation
@@ -111,11 +109,6 @@ _ = axs[1, 1].set_xlabel("Residuals")
 #
 # We will use the quantiles at 5% and 95% to find the outliers in the training
 # sample beyond the central 90% interval.
-from sklearn.utils.fixes import parse_version, sp_version
-
-# This is line is to avoid incompatibility if older SciPy version.
-# You should use `solver="highs"` with recent version of SciPy.
-solver = "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
 
 # %%
 from sklearn.linear_model import QuantileRegressor
@@ -124,7 +117,7 @@ quantiles = [0.05, 0.5, 0.95]
 predictions = {}
 out_bounds_predictions = np.zeros_like(y_true_mean, dtype=np.bool_)
 for quantile in quantiles:
-    qr = QuantileRegressor(quantile=quantile, alpha=0, solver=solver)
+    qr = QuantileRegressor(quantile=quantile, alpha=0)
     y_pred = qr.fit(X, y_normal).predict(X)
     predictions[quantile] = y_pred
 
@@ -186,7 +179,7 @@ quantiles = [0.05, 0.5, 0.95]
 predictions = {}
 out_bounds_predictions = np.zeros_like(y_true_mean, dtype=np.bool_)
 for quantile in quantiles:
-    qr = QuantileRegressor(quantile=quantile, alpha=0, solver=solver)
+    qr = QuantileRegressor(quantile=quantile, alpha=0)
     y_pred = qr.fit(X, y_pareto).predict(X)
     predictions[quantile] = y_pred
 
@@ -256,19 +249,21 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 linear_regression = LinearRegression()
-quantile_regression = QuantileRegressor(quantile=0.5, alpha=0, solver=solver)
+quantile_regression = QuantileRegressor(quantile=0.5, alpha=0)
 
 y_pred_lr = linear_regression.fit(X, y_pareto).predict(X)
 y_pred_qr = quantile_regression.fit(X, y_pareto).predict(X)
 
-print(f"""Training error (in-sample performance)
+print(
+    f"""Training error (in-sample performance)
     {linear_regression.__class__.__name__}:
     MAE = {mean_absolute_error(y_pareto, y_pred_lr):.3f}
     MSE = {mean_squared_error(y_pareto, y_pred_lr):.3f}
     {quantile_regression.__class__.__name__}:
     MAE = {mean_absolute_error(y_pareto, y_pred_qr):.3f}
     MSE = {mean_squared_error(y_pareto, y_pred_qr):.3f}
-    """)
+    """
+)
 
 # %%
 # On the training set, we see that MAE is lower for
@@ -298,14 +293,16 @@ cv_results_qr = cross_validate(
     cv=3,
     scoring=["neg_mean_absolute_error", "neg_mean_squared_error"],
 )
-print(f"""Test error (cross-validated performance)
+print(
+    f"""Test error (cross-validated performance)
     {linear_regression.__class__.__name__}:
     MAE = {-cv_results_lr["test_neg_mean_absolute_error"].mean():.3f}
     MSE = {-cv_results_lr["test_neg_mean_squared_error"].mean():.3f}
     {quantile_regression.__class__.__name__}:
     MAE = {-cv_results_qr["test_neg_mean_absolute_error"].mean():.3f}
     MSE = {-cv_results_qr["test_neg_mean_squared_error"].mean():.3f}
-    """)
+    """
+)
 
 # %%
 # We reach similar conclusions on the out-of-sample evaluation.

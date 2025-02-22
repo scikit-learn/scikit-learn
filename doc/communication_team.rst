@@ -7,10 +7,10 @@
     </style>
     <div>
     <a href='https://github.com/laurburke'><img src='https://avatars.githubusercontent.com/u/35973528?v=4' class='avatar' /></a> <br />
-    <p>Lauren Burke</p>
+    <p>Lauren Burke-McCarthy</p>
     </div>
     <div>
     <a href='https://github.com/francoisgoupil'><img src='https://avatars.githubusercontent.com/u/98105626?v=4' class='avatar' /></a> <br />
-    <p>francoisgoupil</p>
+    <p>François Goupil</p>
     </div>
     </div>

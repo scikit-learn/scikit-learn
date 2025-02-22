@@ -7,12 +7,8 @@ We illustrate various embedding techniques on the digits dataset.
 
 """
 
-# Authors: Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#          Olivier Grisel <olivier.grisel@ensta.org>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Gael Varoquaux
-#          Guillaume Lemaitre <g.lemaitre58@gmail.com>
-# License: BSD 3 clause (C) INRIA 2011
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 # %%
@@ -145,7 +141,7 @@ embeddings = {
     ),
     "t-SNE embedding": TSNE(
         n_components=2,
-        n_iter=500,
+        max_iter=500,
         n_iter_without_progress=150,
         n_jobs=2,
         random_state=0,

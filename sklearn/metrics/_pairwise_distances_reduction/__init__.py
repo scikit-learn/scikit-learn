@@ -1,9 +1,9 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 #
 # Pairwise Distances Reductions
 # =============================
-#
-#   Authors: The scikit-learn developers.
-#   License: BSD 3 clause
 #
 # Overview
 # --------

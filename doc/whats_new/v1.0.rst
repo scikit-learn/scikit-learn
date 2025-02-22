@@ -2,12 +2,23 @@
 
 .. currentmodule:: sklearn
 
+.. _release_notes_1_0:
+
+===========
+Version 1.0
+===========
+
+For a short description of the main highlights of the release, please refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_0_0.py`.
+
+.. include:: changelog_legend.inc
+
 .. _changes_1_0_2:
 
 Version 1.0.2
 =============
 
-**In Development**
+**December 2021**
 
 - |Fix| :class:`cluster.Birch`,
   :class:`feature_selection.RFECV`, :class:`ensemble.RandomForestRegressor`,
@@ -98,9 +109,9 @@ Changelog
 
 - |Fix| All `sklearn.metrics.MinkowskiDistance` now accepts a weight
   parameter that makes it possible to write code that behaves consistently both
-  with scipy 1.8 and earlier versions. In turns this means that all
+  with scipy 1.8 and earlier versions. In turn this means that all
   neighbors-based estimators (except those that use `algorithm="kd_tree"`) now
-  accept a weight parameter with `metric="minknowski"` to yield results that
+  accept a weight parameter with `metric="minkowski"` to yield results that
   are always consistent with `scipy.spatial.distance.cdist`.
   :pr:`21741` by :user:`Olivier Grisel <ogrisel>`.
 
@@ -113,7 +124,7 @@ Changelog
 :mod:`sklearn.neighbors`
 ........................
 
-- |Fix| :class:`neighbors.KDTree` and :class:`neighbors.BallTree` correctly supports
+- |Fix| :class:`neighbors.KDTree` and :class:`neighbors.BallTree` correctly support
   read-only buffer attributes. :pr:`21845` by `Thomas Fan`_.
 
 :mod:`sklearn.preprocessing`
@@ -147,9 +158,6 @@ Version 1.0.1
 
 **October 2021**
 
-Changelog
----------
-
 Fixed models
 ------------
 
@@ -171,7 +179,7 @@ Fixed models
 
 - |Fix| Fixed a bug in :class:`calibration.CalibratedClassifierCV` with
   `method="sigmoid"` that was ignoring the `sample_weight` when computing the
-  the Bayesian priors.
+  Bayesian priors.
   :pr:`21179` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.cluster`
@@ -280,12 +288,6 @@ Version 1.0.0
 =============
 
 **September 2021**
-
-For a short description of the main highlights of the release, please
-refer to
-:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_0_0.py`.
-
-.. include:: changelog_legend.inc
 
 Minimal dependencies
 --------------------
@@ -776,7 +778,7 @@ Changelog
 - |Feature| The new :class:`linear_model.SGDOneClassSVM` provides an SGD
   implementation of the linear One-Class SVM. Combined with kernel
   approximation techniques, this implementation approximates the solution of
-  a kernelized One Class SVM while benefitting from a linear
+  a kernelized One Class SVM while benefiting from a linear
   complexity in the number of samples.
   :pr:`10027` by :user:`Albert Thomas <albertcthomas>`.
 
@@ -1026,7 +1028,7 @@ Changelog
 - |FIX| :class:`neighbors.NearestNeighbors`, :class:`neighbors.KNeighborsClassifier`,
   :class:`neighbors.RadiusNeighborsClassifier`, :class:`neighbors.KNeighborsRegressor`
   and :class:`neighbors.RadiusNeighborsRegressor` do not validate `weights` in
-  `__init__` and validates `weights` in `fit` instead. :pr:`20072` by
+  `__init__` and validate `weights` in `fit` instead. :pr:`20072` by
   :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
 - |API| The parameter `kwargs` of :class:`neighbors.RadiusNeighborsClassifier` is
@@ -1212,8 +1214,7 @@ Changelog
   now deprecated. Use `scipy.sparse.csgraph.shortest_path` instead. :pr:`20531`
   by `Tom Dupre la Tour`_.
 
-Code and Documentation Contributors
------------------------------------
+.. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 0.24, including:

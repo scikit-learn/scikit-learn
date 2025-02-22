@@ -1,15 +1,7 @@
 """K-means clustering."""
 
-# Authors: Gael Varoquaux <gael.varoquaux@normalesup.org>
-#          Thomas Rueckstiess <ruecksti@in.tum.de>
-#          James Bergstra <james.bergstra@umontreal.ca>
-#          Jan Schlueter <scikit-learn@jan-schlueter.de>
-#          Nelle Varoquaux
-#          Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#          Olivier Grisel <olivier.grisel@ensta.org>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Robert Layton <robertlayton@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from abc import ABC, abstractmethod
@@ -31,13 +23,17 @@ from ..utils import check_array, check_random_state
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import row_norms, stable_cumsum
-from ..utils.fixes import threadpool_info, threadpool_limits
+from ..utils.parallel import (
+    _get_threadpool_controller,
+    _threadpool_controller_decorator,
+)
 from ..utils.sparsefuncs import mean_variance_axis
 from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.validation import (
     _check_sample_weight,
     _is_arraylike_not_scalar,
     check_is_fitted,
+    validate_data,
 )
 from ._k_means_common import (
     CHUNK_SIZE,
@@ -389,15 +385,12 @@ def k_means(
         `copy_x` is False. If the original data is sparse, but not in CSR format,
         a copy will be made even if `copy_x` is False.
 
-    algorithm : {"lloyd", "elkan", "auto", "full"}, default="lloyd"
+    algorithm : {"lloyd", "elkan"}, default="lloyd"
         K-means algorithm to use. The classical EM-style algorithm is `"lloyd"`.
         The `"elkan"` variation can be more efficient on some datasets with
         well-defined clusters, by using the triangle inequality. However it's
         more memory intensive due to the allocation of an extra array of shape
         `(n_samples, n_clusters)`.
-
-        `"auto"` and `"full"` are deprecated and they will be removed in
-        Scikit-Learn 1.3. They are both aliases for `"lloyd"`.
 
         .. versionchanged:: 0.18
             Added Elkan algorithm
@@ -425,6 +418,23 @@ def k_means(
     best_n_iter : int
         Number of iterations corresponding to the best results.
         Returned only if `return_n_iter` is set to True.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.cluster import k_means
+    >>> X = np.array([[1, 2], [1, 4], [1, 0],
+    ...               [10, 2], [10, 4], [10, 0]])
+    >>> centroid, label, inertia = k_means(
+    ...     X, n_clusters=2, n_init="auto", random_state=0
+    ... )
+    >>> centroid
+    array([[10.,  2.],
+           [ 1.,  2.]])
+    >>> label
+    array([1, 1, 1, 0, 0, 0], dtype=int32)
+    >>> inertia
+    16.0
     """
     est = KMeans(
         n_clusters=n_clusters,
@@ -608,6 +618,9 @@ def _kmeans_single_elkan(
     return labels, inertia, centers, i + 1
 
 
+# Threadpoolctl context to limit the number of threads in second level of
+# nested parallelism (i.e. BLAS) to avoid oversubscription.
+@_threadpool_controller_decorator(limits=1, user_api="blas")
 def _kmeans_single_lloyd(
     X,
     sample_weight,
@@ -683,59 +696,56 @@ def _kmeans_single_lloyd(
 
     strict_convergence = False
 
-    # Threadpoolctl context to limit the number of threads in second level of
-    # nested parallelism (i.e. BLAS) to avoid oversubscription.
-    with threadpool_limits(limits=1, user_api="blas"):
-        for i in range(max_iter):
-            lloyd_iter(
-                X,
-                sample_weight,
-                centers,
-                centers_new,
-                weight_in_clusters,
-                labels,
-                center_shift,
-                n_threads,
-            )
+    for i in range(max_iter):
+        lloyd_iter(
+            X,
+            sample_weight,
+            centers,
+            centers_new,
+            weight_in_clusters,
+            labels,
+            center_shift,
+            n_threads,
+        )
 
+        if verbose:
+            inertia = _inertia(X, sample_weight, centers, labels, n_threads)
+            print(f"Iteration {i}, inertia {inertia}.")
+
+        centers, centers_new = centers_new, centers
+
+        if np.array_equal(labels, labels_old):
+            # First check the labels for strict convergence.
             if verbose:
-                inertia = _inertia(X, sample_weight, centers, labels, n_threads)
-                print(f"Iteration {i}, inertia {inertia}.")
-
-            centers, centers_new = centers_new, centers
-
-            if np.array_equal(labels, labels_old):
-                # First check the labels for strict convergence.
+                print(f"Converged at iteration {i}: strict convergence.")
+            strict_convergence = True
+            break
+        else:
+            # No strict convergence, check for tol based convergence.
+            center_shift_tot = (center_shift**2).sum()
+            if center_shift_tot <= tol:
                 if verbose:
-                    print(f"Converged at iteration {i}: strict convergence.")
-                strict_convergence = True
+                    print(
+                        f"Converged at iteration {i}: center shift "
+                        f"{center_shift_tot} within tolerance {tol}."
+                    )
                 break
-            else:
-                # No strict convergence, check for tol based convergence.
-                center_shift_tot = (center_shift**2).sum()
-                if center_shift_tot <= tol:
-                    if verbose:
-                        print(
-                            f"Converged at iteration {i}: center shift "
-                            f"{center_shift_tot} within tolerance {tol}."
-                        )
-                    break
 
-            labels_old[:] = labels
+        labels_old[:] = labels
 
-        if not strict_convergence:
-            # rerun E-step so that predicted labels match cluster centers
-            lloyd_iter(
-                X,
-                sample_weight,
-                centers,
-                centers,
-                weight_in_clusters,
-                labels,
-                center_shift,
-                n_threads,
-                update_centers=False,
-            )
+    if not strict_convergence:
+        # rerun E-step so that predicted labels match cluster centers
+        lloyd_iter(
+            X,
+            sample_weight,
+            centers,
+            centers,
+            weight_in_clusters,
+            labels,
+            center_shift,
+            n_threads,
+            update_centers=False,
+        )
 
     inertia = _inertia(X, sample_weight, centers, labels, n_threads)
 
@@ -812,14 +822,10 @@ def _labels_inertia(X, sample_weight, centers, n_threads=1, return_inertia=True)
     return labels
 
 
-def _labels_inertia_threadpool_limit(
-    X, sample_weight, centers, n_threads=1, return_inertia=True
-):
-    """Same as _labels_inertia but in a threadpool_limits context."""
-    with threadpool_limits(limits=1, user_api="blas"):
-        result = _labels_inertia(X, sample_weight, centers, n_threads, return_inertia)
-
-    return result
+# Same as _labels_inertia but in a threadpool_limits context.
+_labels_inertia_threadpool_limit = _threadpool_controller_decorator(
+    limits=1, user_api="blas"
+)(_labels_inertia)
 
 
 class _BaseKMeans(
@@ -912,7 +918,7 @@ class _BaseKMeans(
 
         n_active_threads = int(np.ceil(n_samples / CHUNK_SIZE))
         if n_active_threads < self._n_threads:
-            modules = threadpool_info()
+            modules = _get_threadpool_controller().info()
             has_vcomp = "vcomp" in [module["prefix"] for module in modules]
             has_mkl = ("mkl", "intel") in [
                 (module["internal_api"], module.get("threading_layer", None))
@@ -935,7 +941,8 @@ class _BaseKMeans(
             )
 
     def _check_test_data(self, X):
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse="csr",
             reset=False,
@@ -1056,7 +1063,7 @@ class _BaseKMeans(
         """
         return self.fit(X, sample_weight=sample_weight).labels_
 
-    def predict(self, X, sample_weight="deprecated"):
+    def predict(self, X):
         """Predict the closest cluster each sample in X belongs to.
 
         In the vector quantization literature, `cluster_centers_` is called
@@ -1068,14 +1075,6 @@ class _BaseKMeans(
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data to predict.
 
-        sample_weight : array-like of shape (n_samples,), default=None
-            The weights for each observation in X. If None, all observations
-            are assigned equal weight.
-
-            .. deprecated:: 1.3
-               The parameter `sample_weight` is deprecated in version 1.3
-               and will be removed in 1.5.
-
         Returns
         -------
         labels : ndarray of shape (n_samples,)
@@ -1084,17 +1083,9 @@ class _BaseKMeans(
         check_is_fitted(self)
 
         X = self._check_test_data(X)
-        if not (isinstance(sample_weight, str) and sample_weight == "deprecated"):
-            warnings.warn(
-                (
-                    "'sample_weight' was deprecated in version 1.3 and "
-                    "will be removed in 1.5."
-                ),
-                FutureWarning,
-            )
-            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-        else:
-            sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
+
+        # sample weights are not used by predict but cython helpers expect an array
+        sample_weight = np.ones(X.shape[0], dtype=X.dtype)
 
         labels = _labels_inertia_threadpool_limit(
             X,
@@ -1186,14 +1177,10 @@ class _BaseKMeans(
         )
         return -scores
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            },
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
 
 
 class KMeans(_BaseKMeans):
@@ -1207,6 +1194,9 @@ class KMeans(_BaseKMeans):
     n_clusters : int, default=8
         The number of clusters to form as well as the number of
         centroids to generate.
+
+        For an example of how to choose an optimal value for `n_clusters` refer to
+        :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py`.
 
     init : {'k-means++', 'random'}, callable or array-like of shape \
             (n_clusters, n_features), default='k-means++'
@@ -1228,8 +1218,11 @@ class KMeans(_BaseKMeans):
         * If a callable is passed, it should take arguments X, n_clusters and a\
         random state and return an initialization.
 
-        For an example of how to use the different `init` strategy, see the example
-        entitled :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`.
+        For an example of how to use the different `init` strategies, see
+        :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`.
+
+        For an evaluation of the impact of initialization, see the example
+        :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_stability_low_dim_dense.py`.
 
     n_init : 'auto' or int, default='auto'
         Number of times the k-means algorithm is run with different centroid
@@ -1274,15 +1267,12 @@ class KMeans(_BaseKMeans):
         copy_x is False. If the original data is sparse, but not in CSR format,
         a copy will be made even if copy_x is False.
 
-    algorithm : {"lloyd", "elkan", "auto", "full"}, default="lloyd"
+    algorithm : {"lloyd", "elkan"}, default="lloyd"
         K-means algorithm to use. The classical EM-style algorithm is `"lloyd"`.
         The `"elkan"` variation can be more efficient on some datasets with
         well-defined clusters, by using the triangle inequality. However it's
         more memory intensive due to the allocation of an extra array of shape
         `(n_samples, n_clusters)`.
-
-        `"auto"` and `"full"` are deprecated and they will be removed in
-        Scikit-Learn 1.3. They are both aliases for `"lloyd"`.
 
         .. versionchanged:: 0.18
             Added Elkan algorithm
@@ -1364,14 +1354,24 @@ class KMeans(_BaseKMeans):
     >>> kmeans.cluster_centers_
     array([[10.,  2.],
            [ 1.,  2.]])
+
+    For examples of common problems with K-Means and how to address them see
+    :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_assumptions.py`.
+
+    For a demonstration of how K-Means can be used to cluster text documents see
+    :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`.
+
+    For a comparison between K-Means and MiniBatchKMeans refer to example
+    :ref:`sphx_glr_auto_examples_cluster_plot_mini_batch_kmeans.py`.
+
+    For a comparison between K-Means and BisectingKMeans refer to example
+    :ref:`sphx_glr_auto_examples_cluster_plot_bisect_kmeans.py`.
     """
 
     _parameter_constraints: dict = {
         **_BaseKMeans._parameter_constraints,
         "copy_x": ["boolean"],
-        "algorithm": [
-            StrOptions({"lloyd", "elkan", "auto", "full"}, deprecated={"auto", "full"})
-        ],
+        "algorithm": [StrOptions({"lloyd", "elkan"})],
     }
 
     def __init__(
@@ -1404,15 +1404,6 @@ class KMeans(_BaseKMeans):
         super()._check_params_vs_input(X, default_n_init=10)
 
         self._algorithm = self.algorithm
-        if self._algorithm in ("auto", "full"):
-            warnings.warn(
-                (
-                    f"algorithm='{self._algorithm}' is deprecated, it will be "
-                    "removed in 1.3. Using 'lloyd' instead."
-                ),
-                FutureWarning,
-            )
-            self._algorithm = "lloyd"
         if self._algorithm == "elkan" and self.n_clusters == 1:
             warnings.warn(
                 (
@@ -1460,7 +1451,8 @@ class KMeans(_BaseKMeans):
         self : object
             Fitted estimator.
         """
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse="csr",
             dtype=[np.float64, np.float32],
@@ -1716,6 +1708,9 @@ class MiniBatchKMeans(_BaseKMeans):
         If a callable is passed, it should take arguments X, n_clusters and a
         random state and return an initialization.
 
+        For an evaluation of the impact of initialization, see the example
+        :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_stability_low_dim_dense.py`.
+
     max_iter : int, default=100
         Maximum number of iterations over the complete dataset before
         stopping independently of any early stopping criterion heuristics.
@@ -1844,6 +1839,9 @@ class MiniBatchKMeans(_BaseKMeans):
     always match. One solution is to set `reassignment_ratio=0`, which
     prevents reassignments of clusters that are too small.
 
+    See :ref:`sphx_glr_auto_examples_cluster_plot_birch_vs_minibatchkmeans.py` for a
+    comparison with :class:`~sklearn.cluster.BIRCH`.
+
     Examples
     --------
     >>> from sklearn.cluster import MiniBatchKMeans
@@ -1875,6 +1873,9 @@ class MiniBatchKMeans(_BaseKMeans):
            [1.06896552, 1.        ]])
     >>> kmeans.predict([[0, 0], [4, 4]])
     array([1, 0], dtype=int32)
+
+    For a comparison of Mini-Batch K-Means clustering with other clustering algorithms,
+    see :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
     """
 
     _parameter_constraints: dict = {
@@ -2069,7 +2070,8 @@ class MiniBatchKMeans(_BaseKMeans):
         self : object
             Fitted estimator.
         """
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse="csr",
             dtype=[np.float64, np.float32],
@@ -2146,7 +2148,7 @@ class MiniBatchKMeans(_BaseKMeans):
 
         n_steps = (self.max_iter * n_samples) // self._batch_size
 
-        with threadpool_limits(limits=1, user_api="blas"):
+        with _get_threadpool_controller().limit(limits=1, user_api="blas"):
             # Perform the iterative optimization until convergence
             for i in range(n_steps):
                 # Sample a minibatch from the full dataset
@@ -2225,7 +2227,8 @@ class MiniBatchKMeans(_BaseKMeans):
         """
         has_centers = hasattr(self, "cluster_centers_")
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse="csr",
             dtype=[np.float64, np.float32],
@@ -2272,7 +2275,7 @@ class MiniBatchKMeans(_BaseKMeans):
             # Initialize number of samples seen since last reassignment
             self._n_since_last_reassign = 0
 
-        with threadpool_limits(limits=1, user_api="blas"):
+        with _get_threadpool_controller().limit(limits=1, user_api="blas"):
             _mini_batch_step(
                 X,
                 sample_weight=sample_weight,

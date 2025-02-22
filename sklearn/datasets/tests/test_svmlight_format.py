@@ -16,7 +16,7 @@ from sklearn.utils._testing import (
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
-    fails_if_pypy,
+    create_memmap_backed_data,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS
 
@@ -25,8 +25,6 @@ datafile = "svmlight_classification.txt"
 multifile = "svmlight_multilabel.txt"
 invalidfile = "svmlight_invalid.txt"
 invalidfile2 = "svmlight_invalid_order.txt"
-
-pytestmark = fails_if_pypy
 
 
 def _svmlight_local_test_file_path(filename):
@@ -261,7 +259,7 @@ def test_invalid_filename():
 def test_dump(csr_container):
     X_sparse, y_dense = _load_svmlight_local_test_file(datafile)
     X_dense = X_sparse.toarray()
-    y_sparse = csr_container(y_dense)
+    y_sparse = csr_container(np.atleast_2d(y_dense))
 
     # slicing a csr_matrix can unsort its .indices, so test that we sort
     # those correctly
@@ -596,3 +594,20 @@ def test_multilabel_y_explicit_zeros(tmp_path, csr_container):
     _, y_load = load_svmlight_file(save_path, multilabel=True)
     y_true = [(2.0,), (2.0,), (0.0, 1.0)]
     assert y_load == y_true
+
+
+def test_dump_read_only(tmp_path):
+    """Ensure that there is no ValueError when dumping a read-only `X`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28026
+    """
+    rng = np.random.RandomState(42)
+    X = rng.randn(5, 2)
+    y = rng.randn(5)
+
+    # Convert to memmap-backed which are read-only
+    X, y = create_memmap_backed_data([X, y])
+
+    save_path = str(tmp_path / "svm_read_only")
+    dump_svmlight_file(X, y, save_path)

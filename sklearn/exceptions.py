@@ -1,7 +1,7 @@
-"""
-The :mod:`sklearn.exceptions` module includes all custom warnings and error
-classes used across scikit-learn.
-"""
+"""Custom warnings and errors used across scikit-learn."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 __all__ = [
     "NotFittedError",
@@ -14,12 +14,13 @@ __all__ = [
     "UndefinedMetricWarning",
     "PositiveSpectrumWarning",
     "UnsetMetadataPassedError",
+    "EstimatorCheckFailedWarning",
 ]
 
 
 class UnsetMetadataPassedError(ValueError):
     """Exception class to raise if a metadata is passed which is not explicitly \
-        requested.
+        requested (metadata=True) or not requested (metadata=False).
 
     .. versionadded:: 1.3
 
@@ -189,3 +190,60 @@ class InconsistentVersionWarning(UserWarning):
             "https://scikit-learn.org/stable/model_persistence.html"
             "#security-maintainability-limitations"
         )
+
+
+class EstimatorCheckFailedWarning(UserWarning):
+    """Warning raised when an estimator check from the common tests fails.
+
+    Parameters
+    ----------
+    estimator : estimator object
+        Estimator instance for which the test failed.
+
+    check_name : str
+        Name of the check that failed.
+
+    exception : Exception
+        Exception raised by the failed check.
+
+    status : str
+        Status of the check.
+
+    expected_to_fail : bool
+        Whether the check was expected to fail.
+
+    expected_to_fail_reason : str
+        Reason for the expected failure.
+    """
+
+    def __init__(
+        self,
+        *,
+        estimator,
+        check_name: str,
+        exception: Exception,
+        status: str,
+        expected_to_fail: bool,
+        expected_to_fail_reason: str,
+    ):
+        self.estimator = estimator
+        self.check_name = check_name
+        self.exception = exception
+        self.status = status
+        self.expected_to_fail = expected_to_fail
+        self.expected_to_fail_reason = expected_to_fail_reason
+
+    def __repr__(self):
+        expected_to_fail_str = (
+            f"Expected to fail: {self.expected_to_fail_reason}"
+            if self.expected_to_fail
+            else "Not expected to fail"
+        )
+        return (
+            f"Test {self.check_name} failed for estimator {self.estimator!r}.\n"
+            f"Expected to fail reason: {expected_to_fail_str}\n"
+            f"Exception: {self.exception}"
+        )
+
+    def __str__(self):
+        return self.__repr__()

@@ -8,7 +8,7 @@ soon as Scipy 1.12 becomes the minimum supported version.
 Laplacian of a compressed-sparse graph
 """
 
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 from scipy.sparse import issparse

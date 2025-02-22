@@ -15,7 +15,7 @@ do our best to keep this pattern.
 This release includes some new key features as well as many improvements and
 bug fixes. We detail below a few of the major features of this release. **For
 an exhaustive list of all the changes**, please refer to the :ref:`release
-notes <changes_1_0>`.
+notes <release_notes_1_0>`.
 
 To install the latest version (with pip)::
 

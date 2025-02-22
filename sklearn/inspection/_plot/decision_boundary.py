@@ -1,11 +1,18 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numpy as np
 
 from ...base import is_regressor
 from ...preprocessing import LabelEncoder
-from ...utils import _safe_indexing, check_matplotlib_support
+from ...utils import _safe_indexing
+from ...utils._optional_dependencies import check_matplotlib_support
 from ...utils._response import _get_response_values
+from ...utils._set_output import _get_adapter_from_container
 from ...utils.validation import (
     _is_arraylike_not_scalar,
+    _is_pandas_df,
+    _is_polars_df,
     _num_features,
     check_is_fitted,
 )
@@ -19,15 +26,14 @@ def _check_boundary_response_method(estimator, response_method, class_of_interes
     estimator : object
         Fitted estimator to check.
 
-    response_method : {'auto', 'predict_proba', 'decision_function', 'predict'}
-        Specifies whether to use :term:`predict_proba`,
-        :term:`decision_function`, :term:`predict` as the target response.
-        If set to 'auto', the response method is tried in the following order:
-        :term:`decision_function`, :term:`predict_proba`, :term:`predict`.
+    response_method : {'auto', 'decision_function', 'predict_proba', 'predict'}
+        Specifies whether to use :term:`decision_function`, :term:`predict_proba`,
+        :term:`predict` as the target response. If set to 'auto', the response method is
+        tried in the before mentioned order.
 
     class_of_interest : int, float, bool, str or None
-        The class considered when plotting the decision. If the label is specified, it
-        is then possible to plot the decision boundary in multiclass settings.
+        The class considered when plotting the decision. Cannot be None if
+        multiclass and `response_method` is 'predict_proba' or 'decision_function'.
 
         .. versionadded:: 1.4
 
@@ -70,6 +76,10 @@ class DecisionBoundaryDisplay:
     attributes.
 
     Read more in the :ref:`User Guide <visualizations>`.
+
+    For a detailed example comparing the decision boundaries of multinomial and
+    one-vs-rest logistic regression, please see
+    :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_multinomial.py`.
 
     .. versionadded:: 1.1
 
@@ -241,20 +251,19 @@ class DecisionBoundaryDisplay:
             :func:`contour <matplotlib.pyplot.contour>`,
             :func:`pcolormesh <matplotlib.pyplot.pcolormesh>`.
 
-        response_method : {'auto', 'predict_proba', 'decision_function', \
+        response_method : {'auto', 'decision_function', 'predict_proba', \
                 'predict'}, default='auto'
-            Specifies whether to use :term:`predict_proba`,
-            :term:`decision_function`, :term:`predict` as the target response.
-            If set to 'auto', the response method is tried in the following order:
-            :term:`decision_function`, :term:`predict_proba`, :term:`predict`.
-            For multiclass problems, :term:`predict` is selected when
-            `response_method="auto"`.
+            Specifies whether to use :term:`decision_function`, :term:`predict_proba`
+            or :term:`predict` as the target response. If set to 'auto', the response
+            method is tried in the before mentioned order. For multiclass problems,
+            :term:`predict` is selected when `response_method="auto"`.
 
         class_of_interest : int, float, bool or str, default=None
             The class considered when plotting the decision. If None,
             `estimator.classes_[1]` is considered as the positive class
-            for binary classifiers. For multiclass classifiers, passing
-            an explicit value for `class_of_interest` is mandatory.
+            for binary classifiers. Must have an explicit value for
+            multiclass classifiers when `response_method` is 'predict_proba'
+            or 'decision_function'.
 
             .. versionadded:: 1.4
 
@@ -344,13 +353,15 @@ class DecisionBoundaryDisplay:
             np.linspace(x0_min, x0_max, grid_resolution),
             np.linspace(x1_min, x1_max, grid_resolution),
         )
-        if hasattr(X, "iloc"):
-            # we need to preserve the feature names and therefore get an empty dataframe
-            X_grid = X.iloc[[], :].copy()
-            X_grid.iloc[:, 0] = xx0.ravel()
-            X_grid.iloc[:, 1] = xx1.ravel()
-        else:
-            X_grid = np.c_[xx0.ravel(), xx1.ravel()]
+
+        X_grid = np.c_[xx0.ravel(), xx1.ravel()]
+        if _is_pandas_df(X) or _is_polars_df(X):
+            adapter = _get_adapter_from_container(X)
+            X_grid = adapter.create_container(
+                X_grid,
+                X_grid,
+                columns=X.columns,
+            )
 
         prediction_method = _check_boundary_response_method(
             estimator, response_method, class_of_interest
@@ -396,7 +407,7 @@ class DecisionBoundaryDisplay:
         if ylabel is None:
             ylabel = X.columns[1] if hasattr(X, "columns") else ""
 
-        display = DecisionBoundaryDisplay(
+        display = cls(
             xx0=xx0,
             xx1=xx1,
             response=response.reshape(xx0.shape),

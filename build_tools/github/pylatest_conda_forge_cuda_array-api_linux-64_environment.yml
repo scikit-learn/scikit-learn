@@ -1,0 +1,33 @@
+# DO NOT EDIT: this file is generated from the specification found in the
+# following script to centralize the configuration for CI builds:
+# build_tools/update_environments_and_lock_files.py
+channels:
+  - conda-forge
+  - pytorch
+  - nvidia
+dependencies:
+  - python
+  - numpy
+  - blas
+  - scipy
+  - cython
+  - joblib
+  - threadpoolctl
+  - matplotlib
+  - pandas
+  - pyamg
+  - pytest
+  - pytest-xdist
+  - pillow
+  - pip
+  - ninja
+  - meson-python
+  - pytest-cov
+  - coverage
+  - ccache
+  - pytorch-gpu
+  - polars
+  - pyarrow
+  - cupy
+  - array-api-compat
+  - array-api-strict

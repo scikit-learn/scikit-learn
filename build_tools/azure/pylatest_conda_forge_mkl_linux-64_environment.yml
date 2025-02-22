@@ -15,14 +15,18 @@ dependencies:
   - pandas
   - pyamg
   - pytest
-  - pytest-xdist=2.5.0
+  - pytest-xdist
   - pillow
-  - setuptools
+  - pip
+  - ninja
+  - meson-python
   - pytest-cov
   - coverage
   - ccache
-  - pytorch=1.13
+  - pytorch
   - pytorch-cpu
   - polars
   - pyarrow
   - array-api-compat
+  - array-api-strict
+  - scipy-doctest

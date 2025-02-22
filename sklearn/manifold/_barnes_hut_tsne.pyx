@@ -1,6 +1,6 @@
-# Author: Christopher Moody <chrisemoody@gmail.com>
-# Author: Nick Travers <nickt@squareup.com>
-# Implementation by Chris Moody & Nick Travers
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # See http://homepage.tudelft.nl/19j49/t-SNE.html for reference
 # implementations and papers describing the technique
 
@@ -10,6 +10,7 @@ cimport numpy as cnp
 from libc.stdio cimport printf
 from libc.math cimport log
 from libc.stdlib cimport malloc, free
+from libc.time cimport clock, clock_t
 from cython.parallel cimport prange, parallel
 
 from ..neighbors._quad_tree cimport _QuadTree
@@ -18,9 +19,6 @@ cnp.import_array()
 
 
 cdef char* EMPTY_STRING = ""
-
-cdef extern from "math.h":
-    float fabsf(float x) nogil
 
 # Smallest strictly positive value that can be represented by floating
 # point numbers for different precision levels. This is useful to avoid
@@ -36,13 +34,6 @@ cdef float FLOAT64_EPS = np.finfo(np.float64).eps
 cdef enum:
     DEBUGFLAG = 0
 
-cdef extern from "time.h":
-    # Declare only what is necessary from `tm` structure.
-    ctypedef long clock_t
-    clock_t clock() nogil
-    double CLOCKS_PER_SEC
-
-
 cdef float compute_gradient(float[:] val_P,
                             float[:, :] pos_reference,
                             cnp.int64_t[:] neighbors,
@@ -52,7 +43,6 @@ cdef float compute_gradient(float[:] val_P,
                             float theta,
                             int dof,
                             long start,
-                            long stop,
                             bint compute_error,
                             int num_threads) noexcept nogil:
     # Having created the tree, calculate the gradient
@@ -76,7 +66,7 @@ cdef float compute_gradient(float[:] val_P,
     if take_timing:
         t1 = clock()
     sQ = compute_gradient_negative(pos_reference, neg_f, qt, dof, theta, start,
-                                   stop, num_threads)
+                                   num_threads)
     if take_timing:
         t2 = clock()
         printf("[t-SNE] Computing negative gradient: %e ticks\n", ((float) (t2 - t1)))
@@ -175,16 +165,14 @@ cdef double compute_gradient_negative(float[:, :] pos_reference,
                                       int dof,
                                       float theta,
                                       long start,
-                                      long stop,
                                       int num_threads) noexcept nogil:
-    if stop == -1:
-        stop = pos_reference.shape[0]
     cdef:
         int ax
         int n_dimensions = qt.n_dimensions
         int offset = n_dimensions + 2
         long i, j, idx
-        long n = stop - start
+        long n_samples = pos_reference.shape[0]
+        long n = n_samples - start
         long dta = 0
         long dtb = 0
         float size, dist2s, mult
@@ -204,7 +192,7 @@ cdef double compute_gradient_negative(float[:, :] pos_reference,
         force = <float *> malloc(sizeof(float) * n_dimensions)
         neg_force = <float *> malloc(sizeof(float) * n_dimensions)
 
-        for i in prange(start, stop, schedule='static'):
+        for i in prange(start, n_samples, schedule='static'):
             # Clear the arrays
             for ax in range(n_dimensions):
                 force[ax] = 0.0
@@ -292,7 +280,7 @@ def gradient(float[:] val_P,
         printf("[t-SNE] Computing gradient\n%s", EMPTY_STRING)
 
     C = compute_gradient(val_P, pos_output, neighbors, indptr, forces,
-                         qt, theta, dof, skip_num_points, -1, compute_error,
+                         qt, theta, dof, skip_num_points, compute_error,
                          num_threads)
 
     if verbose > 10:

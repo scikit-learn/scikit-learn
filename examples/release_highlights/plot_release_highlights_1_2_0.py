@@ -9,7 +9,7 @@ Release Highlights for scikit-learn 1.2
 We are pleased to announce the release of scikit-learn 1.2! Many bug fixes
 and improvements were added, as well as some new key features. We detail
 below a few of the major features of this release. **For an exhaustive list of
-all the changes**, please refer to the :ref:`release notes <changes_1_2>`.
+all the changes**, please refer to the :ref:`release notes <release_notes_1_2>`.
 
 To install the latest version (with pip)::
 
@@ -42,7 +42,11 @@ petal_cols = ["petal length (cm)", "petal width (cm)"]
 preprocessor = ColumnTransformer(
     [
         ("scaler", StandardScaler(), sepal_cols),
-        ("kbin", KBinsDiscretizer(encode="ordinal"), petal_cols),
+        (
+            "kbin",
+            KBinsDiscretizer(encode="ordinal", quantile_method="averaged_inverted_cdf"),
+            petal_cols,
+        ),
     ],
     verbose_feature_names_out=False,
 ).set_output(transform="pandas")
@@ -163,4 +167,4 @@ X.head()
 # the sparse-dense and dense-sparse combinations for the Euclidean and Squared
 # Euclidean Distance metrics.
 # A detailed list of the impacted estimators can be found in the
-# :ref:`changelog <changes_1_2>`.
+# :ref:`changelog <release_notes_1_2>`.

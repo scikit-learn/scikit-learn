@@ -1,9 +1,10 @@
 """Tests for Incremental PCA."""
+
 import warnings
 
 import numpy as np
 import pytest
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_allclose, assert_array_equal
 
 from sklearn import datasets
 from sklearn.decomposition import PCA, IncrementalPCA
@@ -138,14 +139,13 @@ def test_incremental_pca_validation():
     ):
         IncrementalPCA(n_components, batch_size=10).fit(X)
 
-    # Tests that n_components is also <= n_samples.
+    # Test that n_components is also <= n_samples in first call to partial fit.
     n_components = 3
     with pytest.raises(
         ValueError,
         match=(
-            "n_components={} must be"
-            " less or equal to the batch number of"
-            " samples {}".format(n_components, n_samples)
+            f"n_components={n_components} must be less or equal to the batch "
+            f"number of samples {n_samples} for the first partial_fit call."
         ),
     ):
         IncrementalPCA(n_components=n_components).partial_fit(X)
@@ -230,6 +230,27 @@ def test_incremental_pca_batch_signs():
 
     for i, j in zip(all_components[:-1], all_components[1:]):
         assert_almost_equal(np.sign(i), np.sign(j), decimal=6)
+
+
+def test_incremental_pca_partial_fit_small_batch():
+    # Test that there is no minimum batch size after the first partial_fit
+    # Non-regression test
+    rng = np.random.RandomState(1999)
+    n, p = 50, 3
+    X = rng.randn(n, p)  # spherical data
+    X[:, 1] *= 0.00001  # make middle component relatively small
+    X += [5, 4, 3]  # make a large mean
+
+    n_components = p
+    pipca = IncrementalPCA(n_components=n_components)
+    pipca.partial_fit(X[:n_components])
+    for idx in range(n_components, n):
+        pipca.partial_fit(X[idx : idx + 1])
+
+    pca = PCA(n_components=n_components)
+    pca.fit(X)
+
+    assert_allclose(pca.components_, pipca.components_, atol=1e-3)
 
 
 def test_incremental_pca_batch_values():
@@ -383,25 +404,38 @@ def test_singular_values():
     assert_array_almost_equal(ipca.singular_values_, [3.142, 2.718, 1.0], 14)
 
 
-def test_whitening():
+def test_whitening(global_random_seed):
     # Test that PCA and IncrementalPCA transforms match to sign flip.
     X = datasets.make_low_rank_matrix(
-        1000, 10, tail_strength=0.0, effective_rank=2, random_state=1999
+        1000, 10, tail_strength=0.0, effective_rank=2, random_state=global_random_seed
     )
-    prec = 3
-    n_samples, n_features = X.shape
+    atol = 1e-3
     for nc in [None, 9]:
         pca = PCA(whiten=True, n_components=nc).fit(X)
         ipca = IncrementalPCA(whiten=True, n_components=nc, batch_size=250).fit(X)
 
+        # Since the data is rank deficient, some components are pure noise. We
+        # should not expect those dimensions to carry any signal and their
+        # values might be arbitrarily changed by implementation details of the
+        # internal SVD solver. We therefore filter them out before comparison.
+        stable_mask = pca.explained_variance_ratio_ > 1e-12
+
         Xt_pca = pca.transform(X)
         Xt_ipca = ipca.transform(X)
-        assert_almost_equal(np.abs(Xt_pca), np.abs(Xt_ipca), decimal=prec)
+        assert_allclose(
+            np.abs(Xt_pca)[:, stable_mask],
+            np.abs(Xt_ipca)[:, stable_mask],
+            atol=atol,
+        )
+
+        # The noisy dimensions are in the null space of the inverse transform,
+        # so they are not influencing the reconstruction. We therefore don't
+        # need to apply the mask here.
         Xinv_ipca = ipca.inverse_transform(Xt_ipca)
         Xinv_pca = pca.inverse_transform(Xt_pca)
-        assert_almost_equal(X, Xinv_ipca, decimal=prec)
-        assert_almost_equal(X, Xinv_pca, decimal=prec)
-        assert_almost_equal(Xinv_pca, Xinv_ipca, decimal=prec)
+        assert_allclose(X, Xinv_ipca, atol=atol)
+        assert_allclose(X, Xinv_pca, atol=atol)
+        assert_allclose(Xinv_pca, Xinv_ipca, atol=atol)
 
 
 def test_incremental_pca_partial_fit_float_division():

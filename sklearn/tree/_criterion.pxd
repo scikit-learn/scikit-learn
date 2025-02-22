@@ -1,16 +1,8 @@
-# Authors: Gilles Louppe <g.louppe@gmail.com>
-#          Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#          Brian Holt <bdholt1@gmail.com>
-#          Joel Nothman <joel.nothman@gmail.com>
-#          Arnaud Joly <arnaud.v.joly@gmail.com>
-#          Jacob Schreiber <jmschreiber91@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # See _criterion.pyx for implementation details.
-cimport numpy as cnp
-
-from ..utils._typedefs cimport float64_t, intp_t
+from ..utils._typedefs cimport float64_t, int8_t, intp_t
 
 
 cdef class Criterion:
@@ -82,13 +74,13 @@ cdef class Criterion:
     cdef float64_t proxy_impurity_improvement(self) noexcept nogil
     cdef bint check_monotonicity(
             self,
-            cnp.int8_t monotonic_cst,
+            int8_t monotonic_cst,
             float64_t lower_bound,
             float64_t upper_bound,
     ) noexcept nogil
     cdef inline bint _check_monotonicity(
             self,
-            cnp.int8_t monotonic_cst,
+            int8_t monotonic_cst,
             float64_t lower_bound,
             float64_t upper_bound,
             float64_t sum_left,

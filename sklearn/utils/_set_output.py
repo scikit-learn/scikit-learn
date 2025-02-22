@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import importlib
 from functools import wraps
 from typing import Protocol, runtime_checkable
@@ -7,6 +10,7 @@ from scipy.sparse import issparse
 
 from .._config import get_config
 from ._available_if import available_if
+from .fixes import _create_pandas_dataframe_from_non_pandas_container
 
 
 def check_library_installed(library):
@@ -33,7 +37,7 @@ def get_columns(columns):
 class ContainerAdapterProtocol(Protocol):
     container_lib: str
 
-    def create_container(self, X_output, X_original, columns):
+    def create_container(self, X_output, X_original, columns, inplace=False):
         """Create container from `X_output` with additional metadata.
 
         Parameters
@@ -49,6 +53,11 @@ class ContainerAdapterProtocol(Protocol):
             The column names or a callable that returns the column names. The
             callable is useful if the column names require some computation. If `None`,
             then no columns are passed to the container's constructor.
+
+        inplace : bool, default=False
+            Whether or not we intend to modify `X_output` in-place. However, it does
+            not guarantee that we return the same object if the in-place operation
+            is not possible.
 
         Returns
         -------
@@ -105,24 +114,41 @@ class ContainerAdapterProtocol(Protocol):
 class PandasAdapter:
     container_lib = "pandas"
 
-    def create_container(self, X_output, X_original, columns):
+    def create_container(self, X_output, X_original, columns, inplace=True):
         pd = check_library_installed("pandas")
         columns = get_columns(columns)
-        index = X_original.index if isinstance(X_original, pd.DataFrame) else None
 
-        if isinstance(X_output, pd.DataFrame):
-            if columns is not None:
-                X_output.columns = columns
-            return X_output
+        if not inplace or not isinstance(X_output, pd.DataFrame):
+            # In all these cases, we need to create a new DataFrame
 
-        return pd.DataFrame(X_output, index=index, columns=columns, copy=False)
+            # Unfortunately, we cannot use `getattr(container, "index")`
+            # because `list` exposes an `index` attribute.
+            if isinstance(X_output, pd.DataFrame):
+                index = X_output.index
+            elif isinstance(X_original, pd.DataFrame):
+                index = X_original.index
+            else:
+                index = None
+
+            # We don't pass columns here because it would intend columns selection
+            # instead of renaming.
+            X_output = _create_pandas_dataframe_from_non_pandas_container(
+                X=X_output, index=index, copy=not inplace
+            )
+
+        if columns is not None:
+            return self.rename_columns(X_output, columns)
+        return X_output
 
     def is_supported_container(self, X):
         pd = check_library_installed("pandas")
         return isinstance(X, pd.DataFrame)
 
     def rename_columns(self, X, columns):
-        return X.rename(columns=dict(zip(X.columns, columns)))
+        # we cannot use `rename` since it takes a dictionary and at this stage we have
+        # potentially duplicate column names in `X`
+        X.columns = columns
+        return X
 
     def hstack(self, Xs):
         pd = check_library_installed("pandas")
@@ -132,26 +158,28 @@ class PandasAdapter:
 class PolarsAdapter:
     container_lib = "polars"
 
-    def create_container(self, X_output, X_original, columns):
+    def create_container(self, X_output, X_original, columns, inplace=True):
         pl = check_library_installed("polars")
         columns = get_columns(columns)
+        columns = columns.tolist() if isinstance(columns, np.ndarray) else columns
 
-        if isinstance(columns, np.ndarray):
-            columns = columns.tolist()
+        if not inplace or not isinstance(X_output, pl.DataFrame):
+            # In all these cases, we need to create a new DataFrame
+            return pl.DataFrame(X_output, schema=columns, orient="row")
 
-        if isinstance(X_output, pl.DataFrame):
-            if columns is not None:
-                return self.rename_columns(X_output, columns)
-            return X_output
-
-        return pl.DataFrame(X_output, schema=columns, orient="row")
+        if columns is not None:
+            return self.rename_columns(X_output, columns)
+        return X_output
 
     def is_supported_container(self, X):
         pl = check_library_installed("polars")
         return isinstance(X, pl.DataFrame)
 
     def rename_columns(self, X, columns):
-        return X.rename(dict(zip(X.columns, columns)))
+        # we cannot use `rename` since it takes a dictionary and at this stage we have
+        # potentially duplicate column names in `X`
+        X.columns = columns
+        return X
 
     def hstack(self, Xs):
         pl = check_library_installed("polars")
@@ -173,6 +201,24 @@ class ContainerAdaptersManager:
 ADAPTERS_MANAGER = ContainerAdaptersManager()
 ADAPTERS_MANAGER.register(PandasAdapter())
 ADAPTERS_MANAGER.register(PolarsAdapter())
+
+
+def _get_adapter_from_container(container):
+    """Get the adapter that knows how to handle such container.
+
+    See :class:`sklearn.utils._set_output.ContainerAdapterProtocol` for more
+    details.
+    """
+    module_name = container.__class__.__module__.split(".")[0]
+    try:
+        return ADAPTERS_MANAGER.adapters[module_name]
+    except KeyError as exc:
+        available_adapters = list(ADAPTERS_MANAGER.adapters.keys())
+        raise ValueError(
+            "The container does not have a registered adapter in scikit-learn. "
+            f"Available adapters are: {available_adapters} while the container "
+            f"provided is: {container!r}."
+        ) from exc
 
 
 def _get_container_adapter(method, estimator=None):
@@ -352,7 +398,7 @@ class _SetOutputMixin:
 
         Parameters
         ----------
-        transform : {"default", "pandas"}, default=None
+        transform : {"default", "pandas", "polars"}, default=None
             Configure output of `transform` and `fit_transform`.
 
             - `"default"`: Default output format of a transformer
@@ -388,7 +434,7 @@ def _safe_set_output(estimator, *, transform=None):
     estimator : estimator instance
         Estimator instance.
 
-    transform : {"default", "pandas"}, default=None
+    transform : {"default", "pandas", "polars"}, default=None
         Configure output of the following estimator's methods:
 
         - `"transform"`

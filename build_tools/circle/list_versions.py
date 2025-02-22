@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 
-# List all available versions of the documentation
+# Write the available versions page (--rst) and the version switcher JSON (--json).
+# Version switcher see:
+# https://pydata-sphinx-theme.readthedocs.io/en/stable/user_guide/version-dropdown.html
+# https://pydata-sphinx-theme.readthedocs.io/en/stable/user_guide/announcements.html#announcement-banners
+
+import argparse
 import json
 import re
 import sys
@@ -52,14 +57,19 @@ def get_file_size(version):
             return human_readable_data_quantity(path_details["size"], 1000)
 
 
-print(":orphan:")
-print()
-heading = "Available documentation for Scikit-learn"
-print(heading)
-print("=" * len(heading))
-print()
-print("Web-based documentation is available for versions listed below:")
-print()
+parser = argparse.ArgumentParser()
+parser.add_argument("--rst", type=str, required=True)
+parser.add_argument("--json", type=str, required=True)
+args = parser.parse_args()
+
+heading = "Available documentation for scikit-learn"
+json_content = []
+rst_content = [
+    ":orphan:\n",
+    heading,
+    "=" * len(heading) + "\n",
+    "Web-based documentation is available for versions listed below:\n",
+]
 
 ROOT_URL = (
     "https://api.github.com/repos/scikit-learn/scikit-learn.github.io/contents/"  # noqa
@@ -93,8 +103,9 @@ for src, dst in symlinks.items():
 
 # Output in order: dev, stable, decreasing other version
 seen = set()
-for name in NAMED_DIRS + sorted(
-    (k for k in dirs if k[:1].isdigit()), key=parse_version, reverse=True
+for i, name in enumerate(
+    NAMED_DIRS
+    + sorted((k for k in dirs if k[:1].isdigit()), key=parse_version, reverse=True)
 ):
     version_num, file_size = dirs[name]
     if version_num in seen:
@@ -102,17 +113,32 @@ for name in NAMED_DIRS + sorted(
         continue
     else:
         seen.add(version_num)
-    name_display = "" if name[:1].isdigit() else " (%s)" % name
-    path = "https://scikit-learn.org/%s/" % name
-    out = "* `Scikit-learn %s%s documentation <%s>`_" % (
-        version_num,
-        name_display,
-        path,
-    )
+
+    full_name = f"{version_num}" if name[:1].isdigit() else f"{version_num} ({name})"
+    path = f"https://scikit-learn.org/{name}/"
+
+    # Update JSON for the version switcher; only keep the 8 latest versions to avoid
+    # overloading the version switcher dropdown
+    if i < 8:
+        info = {"name": full_name, "version": version_num, "url": path}
+        if name == "stable":
+            info["preferred"] = True
+        json_content.append(info)
+
+    # Printout for the historical version page
+    out = f"* `scikit-learn {full_name} documentation <{path}>`_"
     if file_size is not None:
         file_extension = get_file_extension(version_num)
         out += (
             f" (`{file_extension.upper()} {file_size} <{path}/"
             f"_downloads/scikit-learn-docs.{file_extension}>`_)"
         )
-    print(out)
+    rst_content.append(out)
+
+with open(args.rst, "w", encoding="utf-8") as f:
+    f.write("\n".join(rst_content) + "\n")
+print(f"Written {args.rst}")
+
+with open(args.json, "w", encoding="utf-8") as f:
+    json.dump(json_content, f, indent=2)
+print(f"Written {args.json}")

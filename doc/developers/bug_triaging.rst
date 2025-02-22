@@ -19,18 +19,18 @@ A third party can give useful feedback or even add
 comments on the issue.
 The following actions are typically useful:
 
-  - documenting issues that are missing elements to reproduce the problem
-    such as code samples
+- documenting issues that are missing elements to reproduce the problem
+  such as code samples
 
-  - suggesting better use of code formatting
+- suggesting better use of code formatting
 
-  - suggesting to reformulate the title and description to make them more
-    explicit about the problem to be solved
+- suggesting to reformulate the title and description to make them more
+  explicit about the problem to be solved
 
-  - linking to related issues or discussions while briefly describing how
-    they are related, for instance "See also #xyz for a similar attempt
-    at this" or "See also #xyz where the same thing happened in
-    SomeEstimator" provides context and helps the discussion.
+- linking to related issues or discussions while briefly describing how
+  they are related, for instance "See also #xyz for a similar attempt
+  at this" or "See also #xyz where the same thing happened in
+  SomeEstimator" provides context and helps the discussion.
 
 .. topic:: Fruitful discussions
 
@@ -47,7 +47,7 @@ Working on PRs to help review
 -----------------------------
 
 Reviewing code is also encouraged. Contributors and users are welcome to
-participate to the review process following our :ref:`review guidelines
+participate in the review process following our :ref:`review guidelines
 <code_review>`.
 
 Triaging operations for members of the core and contributor experience teams
@@ -136,7 +136,7 @@ The following workflow [1]_ is a good way to approach issue triaging:
    <https://matthewrocklin.com/blog/work/2018/02/28/minimal-bug-reports>`_
    by Matthew Rocklin for a good explanation. If the example is not
    reproducible, or if it's clearly not minimal, feel free to ask the reporter
-   if they can provide and example or simplify the provided one.
+   if they can provide an example or simplify the provided one.
    Do acknowledge that writing minimal reproducible examples is hard work.
    If the reporter is struggling, you can try to write one yourself.
 

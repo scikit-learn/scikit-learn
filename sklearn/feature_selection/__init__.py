@@ -1,8 +1,11 @@
+"""Feature selection algorithms.
+
+These include univariate filter selection methods and the recursive feature elimination
+algorithm.
 """
-The :mod:`sklearn.feature_selection` module implements feature selection
-algorithms. It currently includes univariate filter selection methods and the
-recursive feature elimination algorithm.
-"""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from ._base import SelectorMixin
 from ._from_model import SelectFromModel

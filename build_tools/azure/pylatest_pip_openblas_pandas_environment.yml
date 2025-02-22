@@ -4,7 +4,7 @@
 channels:
   - defaults
 dependencies:
-  - python=3.9
+  - python
   - ccache
   - pip
   - pip:
@@ -17,12 +17,16 @@ dependencies:
     - pandas
     - pyamg
     - pytest
-    - pytest-xdist==2.5.0
+    - pytest-xdist
     - pillow
-    - setuptools
+    - ninja
+    - meson-python
     - pytest-cov
     - coverage
     - sphinx
     - numpydoc
     - lightgbm
     - scikit-image
+    - array-api-compat
+    - array-api-strict
+    - scipy-doctest

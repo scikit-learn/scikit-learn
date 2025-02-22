@@ -1,4 +1,4 @@
-""" test the label propagation module """
+"""test the label propagation module"""
 
 import warnings
 

@@ -52,7 +52,6 @@ class LogisticRegressionBenchmark(Predictor, Estimator, Benchmark):
         estimator = LogisticRegression(
             solver=solver,
             penalty=penalty,
-            multi_class="multinomial",
             tol=0.01,
             n_jobs=n_jobs,
             random_state=0,

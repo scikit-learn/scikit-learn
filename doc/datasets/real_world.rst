@@ -1,7 +1,3 @@
-.. Places parent toc into the sidebar
-
-:parenttoc: True
-
 .. _real_world_datasets:
 
 Real world datasets
@@ -25,6 +21,7 @@ They can be loaded using the following functions:
    fetch_rcv1
    fetch_kddcup99
    fetch_california_housing
+   fetch_species_distributions
 
 .. include:: ../../sklearn/datasets/descr/olivetti_faces.rst
 
@@ -39,3 +36,5 @@ They can be loaded using the following functions:
 .. include:: ../../sklearn/datasets/descr/kddcup99.rst
 
 .. include:: ../../sklearn/datasets/descr/california_housing.rst
+
+.. include:: ../../sklearn/datasets/descr/species_distributions.rst

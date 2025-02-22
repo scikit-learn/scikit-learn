@@ -2,8 +2,8 @@
 Testing for Multi-layer Perceptron module (sklearn.neural_network)
 """
 
-# Author: Issam H. Laradji
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import re
 import sys
@@ -13,11 +13,6 @@ from io import StringIO
 import joblib
 import numpy as np
 import pytest
-from numpy.testing import (
-    assert_allclose,
-    assert_almost_equal,
-    assert_array_equal,
-)
 
 from sklearn.datasets import (
     load_digits,
@@ -29,7 +24,12 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics import roc_auc_score
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 from sklearn.preprocessing import LabelBinarizer, MinMaxScaler, scale
-from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+)
 from sklearn.utils.fixes import CSR_CONTAINERS
 
 ACTIVATION_TYPES = ["identity", "logistic", "tanh", "relu"]
@@ -203,7 +203,9 @@ def test_gradient():
                 max_iter=1,
                 random_state=1,
             )
-            mlp.fit(X, y)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", ConvergenceWarning)
+                mlp.fit(X, y)
 
             theta = np.hstack([l.ravel() for l in mlp.coefs_ + mlp.intercepts_])
 
@@ -227,7 +229,7 @@ def test_gradient():
             # analytically compute the gradients
             def loss_grad_fun(t):
                 return mlp._loss_grad_lbfgs(
-                    t, X, Y, activations, deltas, coef_grads, intercept_grads
+                    t, X, Y, None, activations, deltas, coef_grads, intercept_grads
                 )
 
             [value, grad] = loss_grad_fun(theta)
@@ -276,7 +278,8 @@ def test_lbfgs_regression(X, y):
         mlp = MLPRegressor(
             solver="lbfgs",
             hidden_layer_sizes=50,
-            max_iter=150,
+            max_iter=200,
+            tol=1e-3,
             shuffle=True,
             random_state=1,
             activation=activation,
@@ -397,9 +400,9 @@ def test_multilabel_classification():
 
 def test_multioutput_regression():
     # Test that multi-output regression works as expected
-    X, y = make_regression(n_samples=200, n_targets=5)
+    X, y = make_regression(n_samples=200, n_targets=5, random_state=11)
     mlp = MLPRegressor(
-        solver="lbfgs", hidden_layer_sizes=50, max_iter=200, random_state=1
+        solver="lbfgs", hidden_layer_sizes=50, max_iter=200, tol=1e-2, random_state=1
     )
     mlp.fit(X, y)
     assert mlp.score(X, y) > 0.9
@@ -468,8 +471,8 @@ def test_partial_fit_regression():
             batch_size=X.shape[0],
             momentum=momentum,
         )
-        with warnings.catch_warnings(record=True):
-            # catch convergence warning
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", ConvergenceWarning)
             mlp.fit(X, y)
         pred1 = mlp.predict(X)
         mlp = MLPRegressor(
@@ -517,7 +520,10 @@ def test_nonfinite_params():
         " values and need to be preprocessed."
     )
     with pytest.raises(ValueError, match=msg):
-        clf.fit(X, y)
+        with warnings.catch_warnings():
+            # RuntimeWarning: overflow encountered in square
+            warnings.simplefilter("ignore")
+            clf.fit(X, y)
 
 
 def test_predict_proba_binary():
@@ -608,8 +614,10 @@ def test_shuffle():
             random_state=0,
             shuffle=shuffle,
         )
-        mlp1.fit(X, y)
-        mlp2.fit(X, y)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", ConvergenceWarning)
+            mlp1.fit(X, y)
+            mlp2.fit(X, y)
 
         assert np.array_equal(mlp1.coefs_[0], mlp2.coefs_[0])
 
@@ -620,8 +628,10 @@ def test_shuffle():
     mlp2 = MLPRegressor(
         hidden_layer_sizes=1, max_iter=1, batch_size=1, random_state=0, shuffle=False
     )
-    mlp1.fit(X, y)
-    mlp2.fit(X, y)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", ConvergenceWarning)
+        mlp1.fit(X, y)
+        mlp2.fit(X, y)
 
     assert not np.array_equal(mlp1.coefs_[0], mlp2.coefs_[0])
 
@@ -709,7 +719,6 @@ def test_adaptive_learning_rate():
     assert 1e-6 > clf._optimizer.learning_rate
 
 
-@ignore_warnings(category=RuntimeWarning)
 def test_warm_start():
     X = X_iris
     y = y_iris
@@ -721,19 +730,24 @@ def test_warm_start():
     y_5classes = np.array([0] * 30 + [1] * 30 + [2] * 30 + [3] * 30 + [4] * 30)
 
     # No error raised
-    clf = MLPClassifier(hidden_layer_sizes=2, solver="lbfgs", warm_start=True).fit(X, y)
+    clf = MLPClassifier(
+        hidden_layer_sizes=2, solver="lbfgs", warm_start=True, random_state=42, tol=1e-2
+    ).fit(X, y)
     clf.fit(X, y)
     clf.fit(X, y_3classes)
 
     for y_i in (y_2classes, y_3classes_alt, y_4classes, y_5classes):
-        clf = MLPClassifier(hidden_layer_sizes=2, solver="lbfgs", warm_start=True).fit(
-            X, y
-        )
+        clf = MLPClassifier(
+            hidden_layer_sizes=2,
+            solver="lbfgs",
+            warm_start=True,
+            random_state=42,
+            tol=1e-2,
+        ).fit(X, y)
         message = (
             "warm_start can only be used where `y` has the same "
             "classes as in the previous call to fit."
-            " Previously got [0 1 2], `y` has %s"
-            % np.unique(y_i)
+            " Previously got [0 1 2], `y` has %s" % np.unique(y_i)
         )
         with pytest.raises(ValueError, match=re.escape(message)):
             clf.fit(X, y_i)
@@ -750,10 +764,12 @@ def test_warm_start_full_iteration(MLPEstimator):
     clf = MLPEstimator(
         hidden_layer_sizes=2, solver="sgd", warm_start=True, max_iter=max_iter
     )
-    clf.fit(X, y)
-    assert max_iter == clf.n_iter_
-    clf.fit(X, y)
-    assert max_iter == clf.n_iter_
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", ConvergenceWarning)
+        clf.fit(X, y)
+        assert max_iter == clf.n_iter_
+        clf.fit(X, y)
+        assert max_iter == clf.n_iter_
 
 
 def test_n_iter_no_change():
@@ -776,7 +792,7 @@ def test_n_iter_no_change():
         assert max_iter > clf.n_iter_
 
 
-@ignore_warnings(category=ConvergenceWarning)
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_n_iter_no_change_inf():
     # test n_iter_no_change using binary data set
     # the fitting process should go to max_iter iterations
@@ -817,14 +833,14 @@ def test_early_stopping_stratified():
 def test_mlp_classifier_dtypes_casting():
     # Compare predictions for different dtypes
     mlp_64 = MLPClassifier(
-        alpha=1e-5, hidden_layer_sizes=(5, 3), random_state=1, max_iter=50
+        alpha=1e-5, hidden_layer_sizes=(5, 3), random_state=1, max_iter=100, tol=1e-1
     )
     mlp_64.fit(X_digits[:300], y_digits[:300])
     pred_64 = mlp_64.predict(X_digits[300:])
     proba_64 = mlp_64.predict_proba(X_digits[300:])
 
     mlp_32 = MLPClassifier(
-        alpha=1e-5, hidden_layer_sizes=(5, 3), random_state=1, max_iter=50
+        alpha=1e-5, hidden_layer_sizes=(5, 3), random_state=1, max_iter=100, tol=1e-1
     )
     mlp_32.fit(X_digits[:300].astype(np.float32), y_digits[:300])
     pred_32 = mlp_32.predict(X_digits[300:].astype(np.float32))
@@ -836,18 +852,18 @@ def test_mlp_classifier_dtypes_casting():
 
 def test_mlp_regressor_dtypes_casting():
     mlp_64 = MLPRegressor(
-        alpha=1e-5, hidden_layer_sizes=(5, 3), random_state=1, max_iter=50
+        alpha=1e-5, hidden_layer_sizes=(5, 3), random_state=1, max_iter=150, tol=1e-3
     )
     mlp_64.fit(X_digits[:300], y_digits[:300])
     pred_64 = mlp_64.predict(X_digits[300:])
 
     mlp_32 = MLPRegressor(
-        alpha=1e-5, hidden_layer_sizes=(5, 3), random_state=1, max_iter=50
+        alpha=1e-5, hidden_layer_sizes=(5, 3), random_state=1, max_iter=150, tol=1e-3
     )
     mlp_32.fit(X_digits[:300].astype(np.float32), y_digits[:300])
     pred_32 = mlp_32.predict(X_digits[300:].astype(np.float32))
 
-    assert_allclose(pred_64, pred_32, rtol=1e-04)
+    assert_allclose(pred_64, pred_32, rtol=5e-04)
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
@@ -856,7 +872,9 @@ def test_mlp_param_dtypes(dtype, Estimator):
     # Checks if input dtype is used for network parameters
     # and predictions
     X, y = X_digits.astype(dtype), y_digits
-    mlp = Estimator(alpha=1e-5, hidden_layer_sizes=(5, 3), random_state=1, max_iter=50)
+    mlp = Estimator(
+        alpha=1e-5, hidden_layer_sizes=(5, 3), random_state=1, max_iter=50, tol=1e-1
+    )
     mlp.fit(X[:300], y[:300])
     pred = mlp.predict(X[300:])
 
@@ -922,10 +940,12 @@ def test_mlp_warm_start_with_early_stopping(MLPEstimator):
     mlp = MLPEstimator(
         max_iter=10, random_state=0, warm_start=True, early_stopping=True
     )
-    mlp.fit(X_iris, y_iris)
-    n_validation_scores = len(mlp.validation_scores_)
-    mlp.set_params(max_iter=20)
-    mlp.fit(X_iris, y_iris)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", ConvergenceWarning)
+        mlp.fit(X_iris, y_iris)
+        n_validation_scores = len(mlp.validation_scores_)
+        mlp.set_params(max_iter=20)
+        mlp.fit(X_iris, y_iris)
     assert len(mlp.validation_scores_) > n_validation_scores
 
 
@@ -967,3 +987,62 @@ def test_mlp_partial_fit_after_fit(MLPEstimator):
     msg = "partial_fit does not support early_stopping=True"
     with pytest.raises(ValueError, match=msg):
         mlp.partial_fit(X_iris, y_iris)
+
+
+def test_mlp_diverging_loss():
+    """Test that a diverging model does not raise errors when early stopping is enabled.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/29504
+    """
+    mlp = MLPRegressor(
+        hidden_layer_sizes=100,
+        activation="identity",
+        solver="sgd",
+        alpha=0.0001,
+        learning_rate="constant",
+        learning_rate_init=1,
+        shuffle=True,
+        max_iter=20,
+        early_stopping=True,
+        n_iter_no_change=10,
+        random_state=0,
+    )
+
+    with warnings.catch_warnings():
+        # RuntimeWarning: overflow encountered in matmul
+        # ConvergenceWarning: Stochastic Optimizer: Maximum iteration
+        warnings.simplefilter("ignore", RuntimeWarning)
+        warnings.simplefilter("ignore", ConvergenceWarning)
+        mlp.fit(X_iris, y_iris)
+
+    # In python, float("nan") != float("nan")
+    assert str(mlp.validation_scores_[-1]) == str(np.nan)
+    assert isinstance(mlp.validation_scores_[-1], float)
+
+
+def test_mlp_sample_weight_with_early_stopping():
+    # Test code path for inner validation set splitting.
+    X, y = make_regression(
+        n_samples=100,
+        n_features=2,
+        n_informative=2,
+        random_state=42,
+    )
+    sw = np.ones_like(y)
+    params = dict(
+        hidden_layer_sizes=10,
+        solver="adam",
+        early_stopping=True,
+        tol=1e-2,
+        learning_rate_init=0.01,
+        batch_size=10,
+        random_state=42,
+    )
+    m1 = MLPRegressor(
+        **params,
+    )
+    m1.fit(X, y, sample_weight=sw)
+
+    m2 = MLPRegressor(**params).fit(X, y, sample_weight=None)
+    assert_allclose(m1.predict(X), m2.predict(X))

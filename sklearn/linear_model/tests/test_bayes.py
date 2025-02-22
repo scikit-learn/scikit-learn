@@ -1,7 +1,5 @@
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from math import log
 
@@ -12,6 +10,7 @@ from sklearn import datasets
 from sklearn.linear_model import ARDRegression, BayesianRidge, Ridge
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import (
+    _convert_container,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_less,
@@ -209,7 +208,8 @@ def test_ard_accuracy_on_easy_problem(global_random_seed, n_samples, n_features)
     assert abs_coef_error < 1e-10
 
 
-def test_return_std():
+@pytest.mark.parametrize("constructor_name", ["array", "dataframe"])
+def test_return_std(constructor_name):
     # Test return_std option for both Bayesian regressors
     def f(X):
         return np.dot(X, w) + b
@@ -225,7 +225,10 @@ def test_return_std():
     b = 1.0
 
     X = np.random.random((n_train, d))
+    X = _convert_container(X, constructor_name)
+
     X_test = np.random.random((n_test, d))
+    X_test = _convert_container(X_test, constructor_name)
 
     for decimal, noise_mult in enumerate([1, 0.1, 0.01]):
         y = f_noise(X, noise_mult)
@@ -292,33 +295,3 @@ def test_dtype_correctness(Estimator):
     coef_32 = model.fit(X.astype(np.float32), y).coef_
     coef_64 = model.fit(X.astype(np.float64), y).coef_
     np.testing.assert_allclose(coef_32, coef_64, rtol=1e-4)
-
-
-# TODO(1.5) remove
-@pytest.mark.parametrize("Estimator", [BayesianRidge, ARDRegression])
-def test_bayesian_ridge_ard_n_iter_deprecated(Estimator):
-    """Check the deprecation warning of `n_iter`."""
-    depr_msg = (
-        "'n_iter' was renamed to 'max_iter' in version 1.3 and will be removed in 1.5"
-    )
-    X, y = diabetes.data, diabetes.target
-    model = Estimator(n_iter=5)
-
-    with pytest.warns(FutureWarning, match=depr_msg):
-        model.fit(X, y)
-
-
-# TODO(1.5) remove
-@pytest.mark.parametrize("Estimator", [BayesianRidge, ARDRegression])
-def test_bayesian_ridge_ard_max_iter_and_n_iter_both_set(Estimator):
-    """Check that a ValueError is raised when both `max_iter` and `n_iter` are set."""
-    err_msg = (
-        "Both `n_iter` and `max_iter` attributes were set. Attribute"
-        " `n_iter` was deprecated in version 1.3 and will be removed in"
-        " 1.5. To avoid this error, only set the `max_iter` attribute."
-    )
-    X, y = diabetes.data, diabetes.target
-    model = Estimator(n_iter=5, max_iter=5)
-
-    with pytest.raises(ValueError, match=err_msg):
-        model.fit(X, y)

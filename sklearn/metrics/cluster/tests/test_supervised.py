@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_almost_equal, assert_array_equal
 
+from sklearn.base import config_context
 from sklearn.metrics.cluster import (
     adjusted_mutual_info_score,
     adjusted_rand_score,
@@ -22,7 +23,8 @@ from sklearn.metrics.cluster import (
 )
 from sklearn.metrics.cluster._supervised import _generalized_average, check_clusterings
 from sklearn.utils import assert_all_finite
-from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
+from sklearn.utils._testing import _array_api_for_tests, assert_almost_equal
 
 score_funcs = [
     adjusted_rand_score,
@@ -254,10 +256,23 @@ def test_int_overflow_mutual_info_fowlkes_mallows_score():
 
 
 def test_entropy():
-    ent = entropy([0, 0, 42.0])
-    assert_almost_equal(ent, 0.6365141, 5)
+    assert_almost_equal(entropy([0, 0, 42.0]), 0.6365141, 5)
     assert_almost_equal(entropy([]), 1)
     assert entropy([1, 1, 1, 1]) == 0
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_entropy_array_api(array_namespace, device, dtype_name):
+    xp = _array_api_for_tests(array_namespace, device)
+    float_labels = xp.asarray(np.asarray([0, 0, 42.0], dtype=dtype_name), device=device)
+    empty_int32_labels = xp.asarray([], dtype=xp.int32, device=device)
+    int_labels = xp.asarray([1, 1, 1, 1], device=device)
+    with config_context(array_api_dispatch=True):
+        assert entropy(float_labels) == pytest.approx(0.6365141, abs=1e-5)
+        assert entropy(empty_int32_labels) == 1
+        assert entropy(int_labels) == 0
 
 
 def test_contingency_matrix():

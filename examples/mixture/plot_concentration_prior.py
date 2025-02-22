@@ -29,8 +29,8 @@ tends to divide natural clusters into unnecessary sub-components.
 
 """
 
-# Author: Thierry Guillemot <thierry.guillemot.work@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib as mpl
 import matplotlib.gridspec as gridspec

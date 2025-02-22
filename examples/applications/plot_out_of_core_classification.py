@@ -14,9 +14,8 @@ features (words) may appear in each batch.
 
 """
 
-# Authors: Eustache Diemert <eustache@diemert.fr>
-#          @FedericoV <https://github.com/FedericoV/>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import itertools
 import re
@@ -175,7 +174,8 @@ def stream_reuters_documents(data_path=None):
         assert sha256(archive_path.read_bytes()).hexdigest() == ARCHIVE_SHA256
 
         print("untarring Reuters dataset...")
-        tarfile.open(archive_path, "r:gz").extractall(data_path)
+        with tarfile.open(archive_path, "r:gz") as fp:
+            fp.extractall(data_path, filter="data")
         print("done.")
 
     parser = ReutersParser()

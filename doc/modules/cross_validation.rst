@@ -86,10 +86,10 @@ the training set is split into *k* smaller sets
 but generally follow the same principles).
 The following procedure is followed for each of the *k* "folds":
 
- * A model is trained using :math:`k-1` of the folds as training data;
- * the resulting model is validated on the remaining part of the data
-   (i.e., it is used as a test set to compute a performance measure
-   such as accuracy).
+* A model is trained using :math:`k-1` of the folds as training data;
+* the resulting model is validated on the remaining part of the data
+  (i.e., it is used as a test set to compute a performance measure
+  such as accuracy).
 
 The performance measure reported by *k*-fold cross-validation
 is then the average of the values computed in the loop.
@@ -170,32 +170,32 @@ indices, for example::
   >>> cross_val_score(clf, X, y, cv=custom_cv)
   array([1.        , 0.973...])
 
-.. topic:: Data transformation with held out data
+.. dropdown:: Data transformation with held-out data
 
-    Just as it is important to test a predictor on data held-out from
-    training, preprocessing (such as standardization, feature selection, etc.)
-    and similar :ref:`data transformations <data-transforms>` similarly should
-    be learnt from a training set and applied to held-out data for prediction::
+  Just as it is important to test a predictor on data held-out from
+  training, preprocessing (such as standardization, feature selection, etc.)
+  and similar :ref:`data transformations <data-transforms>` similarly should
+  be learnt from a training set and applied to held-out data for prediction::
 
-      >>> from sklearn import preprocessing
-      >>> X_train, X_test, y_train, y_test = train_test_split(
-      ...     X, y, test_size=0.4, random_state=0)
-      >>> scaler = preprocessing.StandardScaler().fit(X_train)
-      >>> X_train_transformed = scaler.transform(X_train)
-      >>> clf = svm.SVC(C=1).fit(X_train_transformed, y_train)
-      >>> X_test_transformed = scaler.transform(X_test)
-      >>> clf.score(X_test_transformed, y_test)
-      0.9333...
+    >>> from sklearn import preprocessing
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     X, y, test_size=0.4, random_state=0)
+    >>> scaler = preprocessing.StandardScaler().fit(X_train)
+    >>> X_train_transformed = scaler.transform(X_train)
+    >>> clf = svm.SVC(C=1).fit(X_train_transformed, y_train)
+    >>> X_test_transformed = scaler.transform(X_test)
+    >>> clf.score(X_test_transformed, y_test)
+    0.9333...
 
-    A :class:`Pipeline <sklearn.pipeline.Pipeline>` makes it easier to compose
-    estimators, providing this behavior under cross-validation::
+  A :class:`Pipeline <sklearn.pipeline.Pipeline>` makes it easier to compose
+  estimators, providing this behavior under cross-validation::
 
-      >>> from sklearn.pipeline import make_pipeline
-      >>> clf = make_pipeline(preprocessing.StandardScaler(), svm.SVC(C=1))
-      >>> cross_val_score(clf, X, y, cv=cv)
-      array([0.977..., 0.933..., 0.955..., 0.933..., 0.977...])
+    >>> from sklearn.pipeline import make_pipeline
+    >>> clf = make_pipeline(preprocessing.StandardScaler(), svm.SVC(C=1))
+    >>> cross_val_score(clf, X, y, cv=cv)
+    array([0.977..., 0.933..., 0.955..., 0.933..., 0.977...])
 
-    See :ref:`combining_estimators`.
+  See :ref:`combining_estimators`.
 
 
 .. _multimetric_cross_validation:
@@ -291,14 +291,14 @@ The function :func:`cross_val_predict` is appropriate for:
 The available cross validation iterators are introduced in the following
 section.
 
-.. topic:: Examples
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_model_selection_plot_roc_crossval.py`,
-    * :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`,
-    * :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`,
-    * :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`,
-    * :ref:`sphx_glr_auto_examples_model_selection_plot_cv_predict.py`,
-    * :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`.
+* :ref:`sphx_glr_auto_examples_model_selection_plot_roc_crossval.py`,
+* :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`,
+* :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`,
+* :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`,
+* :ref:`sphx_glr_auto_examples_model_selection_plot_cv_predict.py`,
+* :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`.
 
 Cross validation iterators
 ==========================
@@ -403,7 +403,7 @@ Leave One Out (LOO)
 :class:`LeaveOneOut` (or LOO) is a simple cross-validation. Each learning
 set is created by taking all the samples except one, the test set being
 the sample left out. Thus, for :math:`n` samples, we have :math:`n` different
-training sets and :math:`n` different tests set. This cross-validation
+training sets and :math:`n` different test sets. This cross-validation
 procedure does not waste much data as only one sample is removed from the
 training set::
 
@@ -439,20 +439,19 @@ then 5- or 10- fold cross validation can overestimate the generalization error.
 As a general rule, most authors, and empirical evidence, suggest that 5- or 10-
 fold cross validation should be preferred to LOO.
 
+.. dropdown:: References
 
-.. topic:: References:
-
- * `<http://www.faqs.org/faqs/ai-faq/neural-nets/part3/section-12.html>`_;
- * T. Hastie, R. Tibshirani, J. Friedman,  `The Elements of Statistical Learning
-   <https://web.stanford.edu/~hastie/ElemStatLearn/>`_, Springer 2009
- * L. Breiman, P. Spector `Submodel selection and evaluation in regression: The X-random case
-   <https://digitalassets.lib.berkeley.edu/sdtr/ucb/text/197.pdf>`_, International Statistical Review 1992;
- * R. Kohavi, `A Study of Cross-Validation and Bootstrap for Accuracy Estimation and Model Selection
-   <https://www.ijcai.org/Proceedings/95-2/Papers/016.pdf>`_, Intl. Jnt. Conf. AI
- * R. Bharat Rao, G. Fung, R. Rosales, `On the Dangers of Cross-Validation. An Experimental Evaluation
-   <https://people.csail.mit.edu/romer/papers/CrossVal_SDM08.pdf>`_, SIAM 2008;
- * G. James, D. Witten, T. Hastie, R Tibshirani, `An Introduction to
-   Statistical Learning <https://www.statlearning.com>`_, Springer 2013.
+  * `<http://www.faqs.org/faqs/ai-faq/neural-nets/part3/section-12.html>`_;
+  * T. Hastie, R. Tibshirani, J. Friedman,  `The Elements of Statistical Learning
+    <https://web.stanford.edu/~hastie/ElemStatLearn/>`_, Springer 2009
+  * L. Breiman, P. Spector `Submodel selection and evaluation in regression: The X-random case
+    <https://digitalassets.lib.berkeley.edu/sdtr/ucb/text/197.pdf>`_, International Statistical Review 1992;
+  * R. Kohavi, `A Study of Cross-Validation and Bootstrap for Accuracy Estimation and Model Selection
+    <https://www.ijcai.org/Proceedings/95-2/Papers/016.pdf>`_, Intl. Jnt. Conf. AI
+  * R. Bharat Rao, G. Fung, R. Rosales, `On the Dangers of Cross-Validation. An Experimental Evaluation
+    <https://people.csail.mit.edu/romer/papers/CrossVal_SDM08.pdf>`_, SIAM 2008;
+  * G. James, D. Witten, T. Hastie, R. Tibshirani, `An Introduction to
+    Statistical Learning <https://www.statlearning.com>`_, Springer 2013.
 
 .. _leave_p_out:
 
@@ -524,12 +523,33 @@ the proportion of samples on each side of the train / test split.
 Cross-validation iterators with stratification based on class labels
 --------------------------------------------------------------------
 
-Some classification problems can exhibit a large imbalance in the distribution
-of the target classes: for instance there could be several times more negative
-samples than positive samples. In such cases it is recommended to use
-stratified sampling as implemented in :class:`StratifiedKFold` and
-:class:`StratifiedShuffleSplit` to ensure that relative class frequencies is
-approximately preserved in each train and validation fold.
+Some classification tasks can naturally exhibit rare classes: for instance,
+there could be orders of magnitude more negative observations than positive
+observations (e.g. medical screening, fraud detection, etc). As a result,
+cross-validation splitting can generate train or validation folds without any
+occurence of a particular class. This typically leads to undefined
+classification metrics (e.g. ROC AUC), exceptions raised when attempting to
+call :term:`fit` or missing columns in the output of the `predict_proba` or
+`decision_function` methods of multiclass classifiers trained on different
+folds.
+
+To mitigate such problems, splitters such as :class:`StratifiedKFold` and
+:class:`StratifiedShuffleSplit` implement stratified sampling to ensure that
+relative class frequencies are approximately preserved in each fold.
+
+.. note::
+
+  Stratified sampling was introduced in scikit-learn to workaround the
+  aforementioned engineering problems rather than solve a statistical one.
+
+  Stratification makes cross-validation folds more homogeneous, and as a result
+  hides some of the variability inherent to fitting models with a limited
+  number of observations.
+
+  As a result, stratification can artificially shrink the spread of the metric
+  measured across cross-validation iterations: the inter-fold variability does
+  no longer reflect the uncertainty in the performance of classifiers in the
+  presence of rare classes.
 
 .. _stratified_k_fold:
 
@@ -563,7 +583,7 @@ two unbalanced classes.  We show the number of samples in each class and compare
   train -  [34]   |   test -  [11  5]
 
 We can see that :class:`StratifiedKFold` preserves the class ratios
-(approximately 1 / 10) in both train and test dataset.
+(approximately 1 / 10) in both train and test datasets.
 
 Here is a visualization of the cross-validation behavior.
 
@@ -581,7 +601,7 @@ Stratified Shuffle Split
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 :class:`StratifiedShuffleSplit` is a variation of *ShuffleSplit*, which returns
-stratified splits, *i.e* which creates splits by preserving the same
+stratified splits, *i.e.* which creates splits by preserving the same
 percentage for each target class as in the complete set.
 
 Here is a visualization of the cross-validation behavior.
@@ -591,12 +611,25 @@ Here is a visualization of the cross-validation behavior.
    :align: center
    :scale: 75%
 
+.. _predefined_split:
+
+Predefined fold-splits / Validation-sets
+----------------------------------------
+
+For some datasets, a pre-defined split of the data into training- and
+validation fold or into several cross-validation folds already
+exists. Using :class:`PredefinedSplit` it is possible to use these folds
+e.g. when searching for hyperparameters.
+
+For example, when using a validation set, set the ``test_fold`` to 0 for all
+samples that are part of the validation set, and to -1 for all other samples.
+
 .. _group_cv:
 
 Cross-validation iterators for grouped data
 -------------------------------------------
 
-The i.i.d. assumption is broken if the underlying generative process yield
+The i.i.d. assumption is broken if the underlying generative process yields
 groups of dependent samples.
 
 Such a grouping of data is domain specific. An example would be when there is
@@ -653,9 +686,11 @@ Here is a visualization of the cross-validation behavior.
    :scale: 75%
 
 Similar to :class:`KFold`, the test sets from :class:`GroupKFold` will form a
-complete partition of all the data. Unlike :class:`KFold`, :class:`GroupKFold`
-is not randomized at all, whereas :class:`KFold` is randomized when
-``shuffle=True``.
+complete partition of all the data.
+
+While :class:`GroupKFold` attempts to place the same number of samples in each
+fold when ``shuffle=False``, when ``shuffle=True`` it attempts to place an equal
+number of distinct groups in each fold (but does not account for group sizes).
 
 .. _stratified_group_k_fold:
 
@@ -681,26 +716,27 @@ Example::
   [ 0  1  4  5  6  7  8  9 11 12 13 14] [ 2  3 10 15 16 17]
   [ 1  2  3  8  9 10 12 13 14 15 16 17] [ 0  4  5  6  7 11]
 
-Implementation notes:
+.. dropdown:: Implementation notes
 
-- With the current implementation full shuffle is not possible in most
-  scenarios. When shuffle=True, the following happens:
+  - With the current implementation full shuffle is not possible in most
+    scenarios. When shuffle=True, the following happens:
 
-  1. All groups are shuffled.
-  2. Groups are sorted by standard deviation of classes using stable sort.
-  3. Sorted groups are iterated over and assigned to folds.
+    1. All groups are shuffled.
+    2. Groups are sorted by standard deviation of classes using stable sort.
+    3. Sorted groups are iterated over and assigned to folds.
 
-  That means that only groups with the same standard deviation of class
-  distribution will be shuffled, which might be useful when each group has only
-  a single class.
-- The algorithm greedily assigns each group to one of n_splits test sets,
-  choosing the test set that minimises the variance in class distribution
-  across test sets. Group assignment proceeds from groups with highest to
-  lowest variance in class frequency, i.e. large groups peaked on one or few
-  classes are assigned first.
-- This split is suboptimal in a sense that it might produce imbalanced splits
-  even if perfect stratification is possible. If you have relatively close
-  distribution of classes in each group, using :class:`GroupKFold` is better.
+    That means that only groups with the same standard deviation of class
+    distribution will be shuffled, which might be useful when each group has only
+    a single class.
+  - The algorithm greedily assigns each group to one of n_splits test sets,
+    choosing the test set that minimises the variance in class distribution
+    across test sets. Group assignment proceeds from groups with highest to
+    lowest variance in class frequency, i.e. large groups peaked on one or few
+    classes are assigned first.
+  - This split is suboptimal in a sense that it might produce imbalanced splits
+    even if perfect stratification is possible. If you have relatively close
+    distribution of classes in each group, using :class:`GroupKFold` is better.
+
 
 Here is a visualization of cross-validation behavior for uneven groups:
 
@@ -748,7 +784,7 @@ for cross-validation against time-based splits.
 Leave P Groups Out
 ^^^^^^^^^^^^^^^^^^
 
-:class:`LeavePGroupsOut` is similar as :class:`LeaveOneGroupOut`, but removes
+:class:`LeavePGroupsOut` is similar to :class:`LeaveOneGroupOut`, but removes
 samples related to :math:`P` groups for each training/test set. All possible
 combinations of :math:`P` groups are left out, meaning test sets will overlap
 for :math:`P>1`.
@@ -808,19 +844,6 @@ expensive. In such a scenario, :class:`GroupShuffleSplit` provides
 a random sample (with replacement) of the train / test splits
 generated by :class:`LeavePGroupsOut`.
 
-.. _predefined_split:
-
-Predefined fold-splits / Validation-sets
-----------------------------------------
-
-For some datasets, a pre-defined split of the data into training- and
-validation fold or into several cross-validation folds already
-exists. Using :class:`PredefinedSplit` it is possible to use these folds
-e.g. when searching for hyperparameters.
-
-For example, when using a validation set, set the ``test_fold`` to 0 for all
-samples that are part of the validation set, and to -1 for all other samples.
-
 Using cross-validation iterators to split train and test
 --------------------------------------------------------
 
@@ -879,7 +902,8 @@ Also, it adds all surplus data to the first training partition, which
 is always used to train the model.
 
 This class can be used to cross-validate time series data samples
-that are observed at fixed time intervals.
+that are observed at fixed time intervals. Indeed, the folds must
+represent the same duration, in order to have comparable metrics accross folds.
 
 Example of 3-split time series cross-validation on a dataset with 6 samples::
 
@@ -945,56 +969,59 @@ Permutation test score
 ======================
 
 :func:`~sklearn.model_selection.permutation_test_score` offers another way
-to evaluate the performance of classifiers. It provides a permutation-based
-p-value, which represents how likely an observed performance of the
-classifier would be obtained by chance. The null hypothesis in this test is
-that the classifier fails to leverage any statistical dependency between the
-features and the labels to make correct predictions on left out data.
+to evaluate the performance of a :term:`predictor`. It provides a
+permutation-based p-value, which represents how likely an observed performance of the
+estimator would be obtained by chance. The null hypothesis in this test is
+that the estimator fails to leverage any statistical dependency between the
+features and the targets to make correct predictions on left-out data.
 :func:`~sklearn.model_selection.permutation_test_score` generates a null
 distribution by calculating `n_permutations` different permutations of the
-data. In each permutation the labels are randomly shuffled, thereby removing
-any dependency between the features and the labels. The p-value output
-is the fraction of permutations for which the average cross-validation score
-obtained by the model is better than the cross-validation score obtained by
-the model using the original data. For reliable results ``n_permutations``
-should typically be larger than 100 and ``cv`` between 3-10 folds.
+data. In each permutation the target values are randomly shuffled, thereby removing
+any dependency between the features and the targets. The p-value output is the fraction
+of permutations whose cross-validation score is better or equal than the true score
+without permuting targets. For reliable results ``n_permutations`` should typically be
+larger than 100 and ``cv`` between 3-10 folds.
 
-A low p-value provides evidence that the dataset contains real dependency
-between features and labels and the classifier was able to utilize this
-to obtain good results. A high p-value could be due to a lack of dependency
-between features and labels (there is no difference in feature values between
-the classes) or because the classifier was not able to use the dependency in
-the data. In the latter case, using a more appropriate classifier that
-is able to utilize the structure in the data, would result in a lower
-p-value.
+A low p-value provides evidence that the dataset contains some real dependency between
+features and targets **and** that the estimator was able to utilize this dependency to
+obtain good results. A high p-value, in reverse, could be due to either one of these:
 
-Cross-validation provides information about how well a classifier generalizes,
-specifically the range of expected errors of the classifier. However, a
-classifier trained on a high dimensional dataset with no structure may still
+- a lack of dependency between features and targets (i.e., there is no systematic
+  relationship and any observed patterns are likely due to random chance)
+- **or** because the estimator was not able to use the dependency in the data (for
+  instance because it underfit).
+
+In the latter case, using a more appropriate estimator that is able to use the
+structure in the data, would result in a lower p-value.
+
+Cross-validation provides information about how well an estimator generalizes
+by estimating the range of its expected scores. However, an
+estimator trained on a high dimensional dataset with no structure may still
 perform better than expected on cross-validation, just by chance.
 This can typically happen with small datasets with less than a few hundred
 samples.
 :func:`~sklearn.model_selection.permutation_test_score` provides information
-on whether the classifier has found a real class structure and can help in
-evaluating the performance of the classifier.
+on whether the estimator has found a real dependency between features and targets and
+can help in evaluating the performance of the estimator.
 
 It is important to note that this test has been shown to produce low
 p-values even if there is only weak structure in the data because in the
 corresponding permutated datasets there is absolutely no structure. This
-test is therefore only able to show when the model reliably outperforms
+test is therefore only able to show whether the model reliably outperforms
 random guessing.
 
 Finally, :func:`~sklearn.model_selection.permutation_test_score` is computed
 using brute force and internally fits ``(n_permutations + 1) * n_cv`` models.
 It is therefore only tractable with small datasets for which fitting an
-individual model is very fast.
+individual model is very fast. Using the `n_jobs` parameter parallelizes the
+computation and thus speeds it up.
 
-.. topic:: Examples
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_model_selection_plot_permutation_tests_for_classification.py`
+* :ref:`sphx_glr_auto_examples_model_selection_plot_permutation_tests_for_classification.py`
 
-.. topic:: References:
+.. dropdown:: References
 
- * Ojala and Garriga. `Permutation Tests for Studying Classifier Performance
-   <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_.
-   J. Mach. Learn. Res. 2010.
+  * Ojala and Garriga. `Permutation Tests for Studying Classifier Performance
+    <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_.
+    J. Mach. Learn. Res. 2010.
