@@ -970,8 +970,8 @@ def test_zero_division_nan_warning(metric, y_true, y_pred):
     assert result == 0.0
 
 
-def test_matthews_corrcoef_against_numpy_corrcoef():
-    rng = np.random.RandomState(0)
+def test_matthews_corrcoef_against_numpy_corrcoef(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     y_true = rng.randint(0, 2, size=20)
     y_pred = rng.randint(0, 2, size=20)
 
@@ -980,11 +980,11 @@ def test_matthews_corrcoef_against_numpy_corrcoef():
     )
 
 
-def test_matthews_corrcoef_against_jurman():
+def test_matthews_corrcoef_against_jurman(global_random_seed):
     # Check that the multiclass matthews_corrcoef agrees with the definition
     # presented in Jurman, Riccadonna, Furlanello, (2012). A Comparison of MCC
     # and CEN Error Measures in MultiClass Prediction
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     y_true = rng.randint(0, 2, size=20)
     y_pred = rng.randint(0, 2, size=20)
     sample_weight = rng.rand(20)
@@ -1019,8 +1019,8 @@ def test_matthews_corrcoef_against_jurman():
     assert_almost_equal(mcc_ours, mcc_jurman, 10)
 
 
-def test_matthews_corrcoef():
-    rng = np.random.RandomState(0)
+def test_matthews_corrcoef(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     y_true = ["a" if i == 0 else "b" for i in rng.randint(0, 2, size=20)]
 
     # corrcoef of same vectors must be 1
@@ -1054,8 +1054,8 @@ def test_matthews_corrcoef():
         assert_almost_equal(matthews_corrcoef(y_1, y_2, sample_weight=mask), 0.0)
 
 
-def test_matthews_corrcoef_multiclass():
-    rng = np.random.RandomState(0)
+def test_matthews_corrcoef_multiclass(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     ord_a = ord("a")
     n_classes = 4
     y_true = [chr(ord_a + i) for i in rng.randint(0, n_classes, size=20)]
@@ -1111,9 +1111,9 @@ def test_matthews_corrcoef_multiclass():
 
 
 @pytest.mark.parametrize("n_points", [100, 10000])
-def test_matthews_corrcoef_overflow(n_points):
+def test_matthews_corrcoef_overflow(n_points, global_random_seed):
     # https://github.com/scikit-learn/scikit-learn/issues/9622
-    rng = np.random.RandomState(20170906)
+    rng = np.random.RandomState(global_random_seed)
 
     def mcc_safe(y_true, y_pred):
         conf_matrix = confusion_matrix(y_true, y_pred)
