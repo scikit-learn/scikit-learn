@@ -1170,7 +1170,7 @@ def test_tsne_perplexity_validation(perplexity):
         perplexity=perplexity,
         random_state=random_state,
     )
-    msg = r"perplexity \(20\) must be less than n_samples \(20\)"
+    msg = rf"perplexity \({perplexity}\) must be less than n_samples \(20\)"
     with pytest.raises(ValueError, match=msg):
         est.fit_transform(X)
 
