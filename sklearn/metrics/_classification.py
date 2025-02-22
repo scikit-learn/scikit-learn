@@ -1050,10 +1050,11 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     cov_ypyp = n_samples**2 - np.dot(p_sum, p_sum)
     cov_ytyt = n_samples**2 - np.dot(t_sum, t_sum)
 
-    if cov_ypyp * cov_ytyt == 0:
+    cov_ypyp_ytyt = cov_ypyp * cov_ytyt
+    if cov_ypyp_ytyt == 0:
         return 0.0
     else:
-        return cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
+        return cov_ytyp / np.sqrt(cov_ypyp_ytyt)
 
 
 @validate_params(
