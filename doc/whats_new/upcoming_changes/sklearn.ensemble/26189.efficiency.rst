@@ -1,0 +1,6 @@
+- :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` are faster, roughly
+  `1 - 1/n_features` faster to before with a single thread. The estimators now reuse
+  the parent's node histogram for the single feature that was split on, i.e. just copy
+  the parent's node histogram values for the corresponding bins.
+  :pr:`26189` by :user:`Christian Lorentzen <lorentzenchr>`.

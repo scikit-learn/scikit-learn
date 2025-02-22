@@ -645,13 +645,6 @@ Changelog
   In effect, less memory has to be allocated and deallocated.
   :pr:`27865` by :user:`Christian Lorentzen <lorentzenchr>`.
 
-- |Efficiency| :class:`ensemble.HistGradientBoostingClassifier` and
-  :class:`ensemble.HistGradientBoostingRegressor` are faster, roughly
-  `1 - 1/n_features` faster to before with a single thread. The estimators now reuse
-  the parent's node histogram for the single feature that was split on, i.e. just copy
-  the parent's node histogram values for the corresponding bins.
-  :pr:`26189` by :user:`Christian Lorentzen <lorentzenchr>`.
-
 - |Efficiency| :class:`ensemble.GradientBoostingClassifier` is faster,
   for binary and in particular for multiclass problems thanks to the private loss
   function module.
