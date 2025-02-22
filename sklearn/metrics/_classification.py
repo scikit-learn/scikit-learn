@@ -3002,11 +3002,7 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
     if sample_weight is None:
         weight_average = 1.0
     else:
-        if _is_numpy_namespace(xp):
-            # calling np.mean(torch.tensor([...])) crashes
-            # workaround for now
-            sample_weight = xp.asarray(sample_weight)
-        weight_average = xp.mean(sample_weight)
+        weight_average = _average(sample_weight, xp=xp)
 
     if y_type.startswith("multilabel"):
         if _is_numpy_namespace(xp):
