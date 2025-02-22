@@ -414,7 +414,7 @@ class TreeGrower:
             arbitrary_feature = 0
 
         # TreeNode init needs the total sum of gradients and hessians. Therefore, we
-        # first compute the histograms und then compute the total grad/hess on an
+        # first compute the histograms and then compute the total grad/hess on an
         # arbitrary feature histogram. This way we replace a loop over n_samples by a
         # loop over n_bins.
         histograms = self.histogram_builder.compute_histograms_brute(
