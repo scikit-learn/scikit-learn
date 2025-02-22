@@ -157,26 +157,25 @@ cdef class HistogramBuilder:
             )
             bint has_interaction_cst = allowed_features is not None
             # Feature index of the feature that the parent node was split on.
-            int split_feature_idx
+            int parent_split_feature_idx
             # Start of the bin indices belonging to the feature that was split on.
-            unsigned int split_bin_start
+            unsigned int parent_split_bin_start
             # End (+1) of the bin indices belonging to the feature that was split on.
-            unsigned int split_bin_end
+            unsigned int parent_split_bin_end
             unsigned char is_categorical
             BITSET_INNER_DTYPE_C [:] left_cat_bitset
-            bint has_parent_hist = False
+            bint has_parent_hist = parent_split_info is not None
             int n_threads = self.n_threads
 
-        if parent_split_info is not None:
-            has_parent_hist = True
-            split_feature_idx = parent_split_info.feature_idx
+        if has_parent_hist:
+            parent_split_feature_idx = parent_split_info.feature_idx
             is_categorical = parent_split_info.is_categorical
             if is_left_child:
-                split_bin_start = 0
-                split_bin_end = parent_split_info.bin_idx + 1
+                parent_split_bin_start = 0
+                parent_split_bin_end = parent_split_info.bin_idx + 1
             else:
-                split_bin_start = parent_split_info.bin_idx + 1
-                split_bin_end = self.n_bins
+                parent_split_bin_start = parent_split_info.bin_idx + 1
+                parent_split_bin_end = self.n_bins
             if is_categorical:
                 left_cat_bitset = parent_split_info.left_cat_bitset
 
@@ -209,11 +208,11 @@ cdef class HistogramBuilder:
                 else:
                     feature_idx = f_idx
 
-                if has_parent_hist and feature_idx == split_feature_idx:
+                if has_parent_hist and feature_idx == parent_split_feature_idx:
                     self._compute_histogram_single_feature_from_parent(
                         feature_idx=feature_idx,
-                        split_bin_start=split_bin_start,
-                        split_bin_end=split_bin_end,
+                        split_bin_start=parent_split_bin_start,
+                        split_bin_end=parent_split_bin_end,
                         is_categorical=is_categorical,
                         left_cat_bitset=left_cat_bitset,
                         is_left_child=is_left_child,

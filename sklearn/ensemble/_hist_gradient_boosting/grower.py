@@ -581,14 +581,13 @@ class TreeGrower:
             # (using histogram subtraction).
             n_samples_left = left_child_node.sample_indices.shape[0]
             n_samples_right = right_child_node.sample_indices.shape[0]
-            if n_samples_left < n_samples_right:
-                smallest_child = left_child_node
-                largest_child = right_child_node
-                is_left_child = True
-            else:
-                smallest_child = right_child_node
-                largest_child = left_child_node
-                is_left_child = False
+            is_left_child = n_samples_left < n_samples_right
+        if is_left_child:
+            smallest_child = left_child_node
+            largest_child = right_child_node
+        else:
+            smallest_child = right_child_node
+            largest_child = left_child_node
 
             # We use the brute O(n_samples) method on the child that has the
             # smallest number of samples, and the subtraction trick O(n_bins)
