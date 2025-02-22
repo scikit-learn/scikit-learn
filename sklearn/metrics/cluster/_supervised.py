@@ -115,7 +115,7 @@ def contingency_matrix(
         If ``None``, nothing is adjusted.
 
     sparse : bool, default=False
-        If `True`, return a sparse CSR continency matrix. If `eps` is not
+        If `True`, return a sparse CSR contingency matrix. If `eps` is not
         `None` and `sparse` is `True` will raise ValueError.
 
         .. versionadded:: 0.18
