@@ -2952,7 +2952,7 @@ def test_classification_metric_pos_label_types(metric, classes, global_random_se
     We can expect `pos_label` to be a bool, an integer, a float, a string.
     No error should be raised for those types.
     """
-    rng = np.random.RandomState(global_random_seed)
+    rng = np.random.RandomState(42)
     n_samples, pos_label = 10, classes[-1]
     y_true = rng.choice(classes, size=n_samples, replace=True)
     if metric is brier_score_loss:
