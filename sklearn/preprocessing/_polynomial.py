@@ -17,6 +17,7 @@ from scipy.special import comb
 
 from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import check_array
+from ..utils._mask import _get_mask
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.fixes import parse_version, sp_version
 from ..utils.stats import _weighted_percentile
@@ -656,6 +657,14 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         Order of output array in the dense case. `'F'` order is faster to compute, but
         may slow down subsequent estimators.
 
+    handle_missing : {'error', 'zeros'}, default='error'
+        Specifies the way missing values are handled.
+
+        - 'error' : Raise an error if np.nan values are present during :meth:`fit`
+        - 'zeros' : Encode missing values as splines with value `0`.
+
+        .. versionadded:: 1.5
+
     sparse_output : bool, default=False
         Will return sparse CSR matrix if set True else will return an array. This
         option is only available with `scipy>=1.8`.
@@ -723,6 +732,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         ],
         "include_bias": ["boolean"],
         "order": [StrOptions({"C", "F"})],
+        "handle_missing": [StrOptions({"error", "zeros"})],
         "sparse_output": ["boolean"],
     }
 
@@ -735,6 +745,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         extrapolation="constant",
         include_bias=True,
         order="C",
+        handle_missing="error",
         sparse_output=False,
     ):
         self.n_knots = n_knots
@@ -743,11 +754,12 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         self.extrapolation = extrapolation
         self.include_bias = include_bias
         self.order = order
+        self.handle_missing = handle_missing
         self.sparse_output = sparse_output
 
     @staticmethod
     def _get_base_knot_positions(X, n_knots=10, knots="uniform", sample_weight=None):
-        """Calculate base knot positions.
+        """Calculate base knot positions for `knots` either "uniform" or "quantile".
 
         Base knots such that first knot <= feature <= last knot. For the
         B-spline construction with scipy.interpolate.BSpline, 2*degree knots
@@ -764,8 +776,15 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             )
 
             if sample_weight is None:
-                knots = np.percentile(X, percentiles, axis=0)
+                knots = np.nanpercentile(X, percentiles, axis=0)
             else:
+                # TODO: exclude possible nan values from _weighted_percentile:
+                if np.any(_get_mask(X, np.nan)):
+                    raise NotImplementedError(
+                        "Passing `sample_weight` to SplineTransformer when there are "
+                        "also np.nan values present in `X`, is currently not "
+                        "implemented."
+                    )
                 knots = np.array(
                     [
                         _weighted_percentile(X, sample_weight, percentile)
@@ -779,8 +798,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             # `else` is therefore safe.
             # Disregard observations with zero weight.
             mask = slice(None, None, 1) if sample_weight is None else sample_weight > 0
-            x_min = np.amin(X[mask], axis=0)
-            x_max = np.amax(X[mask], axis=0)
+            x_min = np.nanmin(X[mask], axis=0)
+            x_max = np.nanmax(X[mask], axis=0)
 
             knots = np.linspace(
                 start=x_min,
@@ -851,15 +870,28 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             accept_sparse=False,
             ensure_min_samples=2,
             ensure_2d=True,
+            ensure_all_finite=False,
         )
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         _, n_features = X.shape
 
+        if self.handle_missing == "error":
+            if np.isnan(X).any():
+                raise ValueError(
+                    "X contains missing values (np.nan) and SplineTransformer is "
+                    "configured with `handle_missing='error'`. Set "
+                    "`handle_missing='zeros'` to encode missing values as splines with "
+                    "value `0` or ensure no missing values in `X`."
+                )
+
         if isinstance(self.knots, str):
             base_knots = self._get_base_knot_positions(
-                X, n_knots=self.n_knots, knots=self.knots, sample_weight=sample_weight
+                X,
+                n_knots=self.n_knots,
+                knots=self.knots,
+                sample_weight=sample_weight,
             )
         else:
             base_knots = check_array(self.knots, dtype=np.float64)
@@ -973,14 +1005,21 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = validate_data(self, X, reset=False, accept_sparse=False, ensure_2d=True)
+        X = validate_data(
+            self,
+            X,
+            reset=False,
+            accept_sparse=False,
+            ensure_2d=True,
+            ensure_all_finite=False,
+        )
 
         n_samples, n_features = X.shape
         n_splines = self.bsplines_[0].c.shape[1]
         degree = self.degree
 
         # TODO: Remove this condition, once scipy 1.10 is the minimum version.
-        #       Only scipy => 1.10 supports design_matrix(.., extrapolate=..).
+        #       Only scipy >= 1.10 supports design_matrix(.., extrapolate=..).
         #       The default (implicit in scipy < 1.10) is extrapolate=False.
         scipy_1_10 = sp_version >= parse_version("1.10.0")
         # Note: self.bsplines_[0].extrapolate is True for extrapolation in
@@ -1006,8 +1045,11 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         for i in range(n_features):
             spl = self.bsplines_[i]
+            # Get indicator for nan values in the current column.
+            nan_indicator = _get_mask(X[:, i], np.nan)
 
             if self.extrapolation in ("continue", "error", "periodic"):
+
                 if self.extrapolation == "periodic":
                     # With periodic extrapolation we map x to the segment
                     # [spl.t[k], spl.t[n]].
@@ -1018,13 +1060,39 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     x = spl.t[spl.k] + (X[:, i] - spl.t[spl.k]) % (
                         spl.t[n] - spl.t[spl.k]
                     )
-                else:
+                else:  # self.extrapolation in ("continue", "error")
                     x = X[:, i]
 
                 if use_sparse:
+                    # Copy the current column to avoid mutation of the user provided
+                    # input data when doing inplace operations.
+                    x = x.copy()
+                    # We replace the nan values in the input column by some
+                    # arbitrary, in-range, numerical value since
+                    # BSpline.design_matrix() would otherwise raise on any nan
+                    # value in its input. The spline encoded values in
+                    # the output of that function that correspond to missing
+                    # values in the original input will be replaced by 0.0
+                    # afterwards.
+                    #
+                    # Note that in the following we use np.nanmin(x) as the
+                    # input replacement to make sure that this code works even
+                    # when `extrapolation == "error"`. Any other choice of
+                    # in-range value would have worked work since the
+                    # corresponding values in the array are replaced by zeros.
+
+                    nanmin_x = np.nanmin(x)
+                    if np.isnan(nanmin_x):
+                        # The column is all np.nan valued. Replace it by a constant
+                        # column with an arbitrary non-nan value inside: the minimum
+                        # value within the whole feature space:
+                        x[:] = np.nanmin(X)
+                    else:
+                        x[nan_indicator] = nanmin_x
                     XBS_sparse = BSpline.design_matrix(
                         x, spl.t, spl.k, **kwargs_extrapolate
                     )
+
                     if self.extrapolation == "periodic":
                         # See the construction of coef in fit. We need to add the last
                         # degree spline basis function to the first degree ones and
@@ -1033,29 +1101,54 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         XBS_sparse = XBS_sparse.tolil()
                         XBS_sparse[:, :degree] += XBS_sparse[:, -degree:]
                         XBS_sparse = XBS_sparse[:, :-degree]
+
+                    # Replace any indicated values with 0:
+                    extended_nan_indicator = np.repeat(
+                        nan_indicator,
+                        n_splines,
+                    ).reshape(x.shape[0], n_splines)
+                    XBS_sparse[extended_nan_indicator] = 0
+
                 else:
                     XBS[:, (i * n_splines) : ((i + 1) * n_splines)] = spl(x)
+                    # Replace any output that corresponds to a missing input value
+                    # by zero.
+                    extended_nan_indicator = np.repeat(
+                        nan_indicator, n_splines
+                    ).reshape(x.shape[0], n_splines)
+                    XBS[:, n_splines * i : n_splines * (i + 1)][
+                        extended_nan_indicator
+                    ] = 0
+
             else:  # extrapolation in ("constant", "linear")
                 xmin, xmax = spl.t[degree], spl.t[-degree - 1]
                 # spline values at boundaries
                 f_min, f_max = spl(xmin), spl(xmax)
-                mask = (xmin <= X[:, i]) & (X[:, i] <= xmax)
+                # Values outside of the feature space during `fit` and nan values get
+                # masked out:
+                inside_range_mask = (xmin <= X[:, i]) & (X[:, i] <= xmax)
+
                 if use_sparse:
-                    mask_inv = ~mask
+                    outside_range_mask = ~inside_range_mask
                     x = X[:, i].copy()
-                    # Set some arbitrary values outside boundary that will be reassigned
-                    # later.
-                    x[mask_inv] = spl.t[self.degree]
+                    # Set to some arbitrary value within the range of values
+                    # observed on the training set before calling
+                    # BSpline.design_matrix. Those transformed will be
+                    # reassigned later when handling extrapolation.
+                    x[outside_range_mask] = xmin
                     XBS_sparse = BSpline.design_matrix(x, spl.t, spl.k)
                     # Note: Without converting to lil_matrix we would get:
                     # scipy.sparse._base.SparseEfficiencyWarning: Changing the sparsity
                     # structure of a csr_matrix is expensive. lil_matrix is more
                     # efficient.
-                    if np.any(mask_inv):
+                    if np.any(outside_range_mask):
                         XBS_sparse = XBS_sparse.tolil()
-                        XBS_sparse[mask_inv, :] = 0
+                        XBS_sparse[outside_range_mask, :] = 0
+
                 else:
-                    XBS[mask, (i * n_splines) : ((i + 1) * n_splines)] = spl(X[mask, i])
+                    XBS[inside_range_mask, (i * n_splines) : ((i + 1) * n_splines)] = (
+                        spl(X[inside_range_mask, i])
+                    )
 
             # Note for extrapolation:
             # 'continue' is already returned as is by scipy BSplines
@@ -1077,27 +1170,27 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 # Only the first degree and last degree number of splines
                 # have non-zero values at the boundaries.
 
-                mask = X[:, i] < xmin
-                if np.any(mask):
+                below_xmin_mask = X[:, i] < xmin
+                if np.any(below_xmin_mask):
                     if use_sparse:
                         # Note: See comment about SparseEfficiencyWarning above.
                         XBS_sparse = XBS_sparse.tolil()
-                        XBS_sparse[mask, :degree] = f_min[:degree]
+                        XBS_sparse[below_xmin_mask, :degree] = f_min[:degree]
 
-                    else:
-                        XBS[mask, (i * n_splines) : (i * n_splines + degree)] = f_min[
-                            :degree
-                        ]
-
-                mask = X[:, i] > xmax
-                if np.any(mask):
-                    if use_sparse:
-                        # Note: See comment about SparseEfficiencyWarning above.
-                        XBS_sparse = XBS_sparse.tolil()
-                        XBS_sparse[mask, -degree:] = f_max[-degree:]
                     else:
                         XBS[
-                            mask,
+                            below_xmin_mask, (i * n_splines) : (i * n_splines + degree)
+                        ] = f_min[:degree]
+
+                above_xmax_mask = X[:, i] > xmax
+                if np.any(above_xmax_mask):
+                    if use_sparse:
+                        # Note: See comment about SparseEfficiencyWarning above.
+                        XBS_sparse = XBS_sparse.tolil()
+                        XBS_sparse[above_xmax_mask, -degree:] = f_max[-degree:]
+                    else:
+                        XBS[
+                            above_xmax_mask,
                             ((i + 1) * n_splines - degree) : ((i + 1) * n_splines),
                         ] = f_max[-degree:]
 
@@ -1166,7 +1259,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 )
             XBS = sparse.hstack(output_list, format="csr")
         elif self.sparse_output:
-            # TODO: Remove ones scipy 1.10 is the minimum version. See comments above.
+            # Adjust format of XBS to sparse, for scipy versions < 1.10.0:
+            # TODO: Remove once scipy 1.10 is the minimum version:
             XBS = sparse.csr_matrix(XBS)
 
         if self.include_bias:
