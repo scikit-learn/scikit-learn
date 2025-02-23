@@ -82,7 +82,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         The number of base estimators in the ensemble.
 
     max_samples : "auto", int or float, default="auto"
-        The number of samples to draw from X to train each base estimator.
+        The number of instances to draw from X to train each base estimator.
 
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` samples.
