@@ -18,6 +18,7 @@ from scipy.special import comb
 from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import check_array
 from ..utils._param_validation import Interval, StrOptions
+from ..utils.extmath import _incremental_mean_and_var
 from ..utils.fixes import parse_version, sp_version
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import (
@@ -32,6 +33,7 @@ from ._csr_polynomial_expansion import (
     _calc_total_nnz,
     _csr_polynomial_expansion,
 )
+from ._data import _is_constant_feature
 
 __all__ = [
     "PolynomialFeatures",
@@ -979,6 +981,13 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         n_splines = self.bsplines_[0].c.shape[1]
         degree = self.degree
 
+        mean_X, var_X, _ = _incremental_mean_and_var(
+            X,
+            last_mean=0.0,
+            last_variance=0.0,
+            last_sample_count=np.repeat(0, n_features),
+        )
+
         # TODO: Remove this condition, once scipy 1.10 is the minimum version.
         #       Only scipy => 1.10 supports design_matrix(.., extrapolate=..).
         #       The default (implicit in scipy < 1.10) is extrapolate=False.
@@ -1014,10 +1023,14 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     # This is equivalent to BSpline(.., extrapolate="periodic")
                     # for scipy>=1.0.0.
                     n = spl.t.size - spl.k - 1
-                    # Assign to new array to avoid inplace operation
-                    x = spl.t[spl.k] + (X[:, i] - spl.t[spl.k]) % (
-                        spl.t[n] - spl.t[spl.k]
+                    check_constant_feature = _is_constant_feature(
+                        var_X[i], mean_X[i], n_samples
                     )
+                    denominator = spl.t[n] - spl.t[spl.k]
+                    x = X[:, i]
+                    if check_constant_feature is not True and denominator != 0:
+                        # Assign to new array to avoid inplace operation
+                        x = spl.t[spl.k] + (X[:, i] - spl.t[spl.k]) % (denominator)
                 else:
                     x = X[:, i]
 
