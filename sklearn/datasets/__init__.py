@@ -46,6 +46,7 @@ from ._samples_generator import (
     make_sparse_spd_matrix,
     make_sparse_uncorrelated,
     make_spd_matrix,
+    make_spirals,
     make_swiss_roll,
 )
 from ._species_distributions import fetch_species_distributions
@@ -102,6 +103,7 @@ __all__ = [
     "make_sparse_spd_matrix",
     "make_sparse_uncorrelated",
     "make_spd_matrix",
+    "make_spirals",
     "make_swiss_roll",
 ]
 
