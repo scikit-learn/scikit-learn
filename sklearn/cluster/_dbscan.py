@@ -6,7 +6,7 @@ DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
-from numbers import Integral, Real
+from numbers import Integral, Number, Real
 
 import numpy as np
 from scipy import sparse
@@ -14,6 +14,7 @@ from scipy import sparse
 from ..base import BaseEstimator, ClusterMixin, _fit_context
 from ..metrics.pairwise import _VALID_METRICS
 from ..neighbors import NearestNeighbors
+from ..utils import check_random_state
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.validation import _check_sample_weight, validate_data
 from ._dbscan_inner import dbscan_inner
@@ -23,6 +24,8 @@ from ._dbscan_inner import dbscan_inner
     {
         "X": ["array-like", "sparse matrix"],
         "sample_weight": ["array-like", None],
+        "subsample": [Interval(Real, 0, 1, closed="neither"), None],
+        "random_state": ["random_state"],
     },
     prefer_skip_nested_validation=False,
 )
@@ -38,6 +41,8 @@ def dbscan(
     p=2,
     sample_weight=None,
     n_jobs=None,
+    subsample=None,
+    random_state=None,
 ):
     """Perform DBSCAN clustering from vector array or distance matrix.
 
@@ -103,6 +108,20 @@ def dbscan(
         using all processors. See :term:`Glossary <n_jobs>` for more details.
         If precomputed distance are used, parallel execution is not available
         and thus n_jobs will have no effect.
+
+    subsample : float, default=None
+        Should be between [0, 1]. By default, no sampling is done.
+        Sampling probability, representing the proportion of the dataset
+        that can be labeled a core sample. The lower the subsample, the
+        less memory and computation is used.
+        See: Jang, J. and Jiang, H. "DBSCAN++: Towards fast and scalable
+        density clustering". Proceedings of the 36th International Conference
+        on Machine Learning, 2019.
+
+    random_state : int, RandomState instance or None, default=None
+        Only relevant when ``subsample`` is set. Controls the randomness
+        of the subsampling. Pass an int for reproducible output across
+        multiple function calls. See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -174,7 +193,9 @@ def dbscan(
         p=p,
         n_jobs=n_jobs,
     )
-    est.fit(X, sample_weight=sample_weight)
+    est.fit(
+        X, sample_weight=sample_weight, subsample=subsample, random_state=random_state
+    )
     return est.core_sample_indices_, est.labels_
 
 
@@ -292,6 +313,9 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     Another way to reduce memory and computation time is to remove
     (near-)duplicate points and use ``sample_weight`` instead.
 
+    Yet another way is to use ``subsample`` in order to reduce the core
+    samples search space.
+
     :class:`~sklearn.cluster.OPTICS` provides a similar clustering with lower memory
     usage.
 
@@ -366,7 +390,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         # DBSCAN.metric is not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y=None, sample_weight=None):
+    def fit(self, X, y=None, sample_weight=None, subsample=None, random_state=None):
         """Perform DBSCAN clustering from features, or distance matrix.
 
         Parameters
@@ -386,6 +410,20 @@ class DBSCAN(ClusterMixin, BaseEstimator):
             negative weight may inhibit its eps-neighbor from being core.
             Note that weights are absolute, and default to 1.
 
+        subsample : float, default=None
+            Should be between [0, 1]. By default, no sampling is done.
+            Sampling probability, representing the proportion of the dataset
+            that can be labeled a core sample. The lower the subsample, the
+            less memory and computation is used.
+            See: Jang, J. and Jiang, H. "DBSCAN++: Towards fast and scalable
+            density clustering". Proceedings of the 36th International Conference
+            on Machine Learning, 2019.
+
+        random_state : int, RandomState instance or None, default=None
+            Only relevant when ``subsample`` is set. Controls the randomness
+            of the subsampling. Pass an int for reproducible output across
+            multiple function calls. See :term:`Glossary <random_state>`.
+
         Returns
         -------
         self : object
@@ -395,6 +433,9 @@ class DBSCAN(ClusterMixin, BaseEstimator):
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
+        if subsample is not None:
+            if not isinstance(subsample, Number) or not 0 < subsample < 1:
+                raise ValueError("Subsample needs to be float between 0 and 1.")
 
         # Calculate neighborhood for all samples. This leaves the original
         # point in, which needs to be considered later (i.e. point i is in the
@@ -416,19 +457,40 @@ class DBSCAN(ClusterMixin, BaseEstimator):
             p=self.p,
             n_jobs=self.n_jobs,
         )
+
+        n = X.shape[0]
         neighbors_model.fit(X)
-        # This has worst case O(n^2) memory complexity
-        neighborhoods = neighbors_model.radius_neighbors(X, return_distance=False)
+
+        if subsample:
+            rng = check_random_state(random_state)
+            mask = np.full(n, False)
+            mask[: int(n * subsample)] = True
+            rng.shuffle(mask)
+            neighborhoods = np.full(n, None)
+            neighborhoods[mask] = neighbors_model.radius_neighbors(
+                X[mask], return_distance=False
+            )
+        else:
+            # This has worst case O(n^2) memory complexity
+            neighborhoods = neighbors_model.radius_neighbors(X, return_distance=False)
 
         if sample_weight is None:
-            n_neighbors = np.array([len(neighbors) for neighbors in neighborhoods])
+            n_neighbors = np.array(
+                [
+                    0 if neighbors is None else len(neighbors)
+                    for neighbors in neighborhoods
+                ]
+            )
         else:
             n_neighbors = np.array(
-                [np.sum(sample_weight[neighbors]) for neighbors in neighborhoods]
+                [
+                    0 if neighbors is None else np.sum(sample_weight[neighbors])
+                    for neighbors in neighborhoods
+                ]
             )
 
         # Initially, all samples are noise.
-        labels = np.full(X.shape[0], -1, dtype=np.intp)
+        labels = np.full(n, -1, dtype=np.intp)
 
         # A list of all core samples found.
         core_samples = np.asarray(n_neighbors >= self.min_samples, dtype=np.uint8)
@@ -445,7 +507,9 @@ class DBSCAN(ClusterMixin, BaseEstimator):
             self.components_ = np.empty((0, X.shape[1]))
         return self
 
-    def fit_predict(self, X, y=None, sample_weight=None):
+    def fit_predict(
+        self, X, y=None, sample_weight=None, subsample=None, random_state=None
+    ):
         """Compute clusters from a data or distance matrix and predict labels.
 
         Parameters
@@ -465,12 +529,31 @@ class DBSCAN(ClusterMixin, BaseEstimator):
             negative weight may inhibit its eps-neighbor from being core.
             Note that weights are absolute, and default to 1.
 
+        subsample : float, default=None
+            Should be between [0, 1]. By default, no sampling is done.
+            Sampling probability, representing the proportion of the dataset
+            that can be labeled a core sample. The lower the subsample, the
+            less memory and computation is used.
+            See: Jang, J. and Jiang, H. "DBSCAN++: Towards fast and scalable
+            density clustering". Proceedings of the 36th International Conference
+            on Machine Learning, 2019.
+
+        random_state : int, RandomState instance or None, default=None
+            Only relevant when ``subsample`` is set. Controls the randomness
+            of the subsampling. Pass an int for reproducible output across
+            multiple function calls. See :term:`Glossary <random_state>`.
+
         Returns
         -------
         labels : ndarray of shape (n_samples,)
             Cluster labels. Noisy samples are given the label -1.
         """
-        self.fit(X, sample_weight=sample_weight)
+        self.fit(
+            X,
+            sample_weight=sample_weight,
+            subsample=subsample,
+            random_state=random_state,
+        )
         return self.labels_
 
     def __sklearn_tags__(self):
