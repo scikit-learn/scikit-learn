@@ -12,9 +12,18 @@ import numpy.ma as ma
 from scipy import sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils._mask import _get_mask
-from ..utils._missing import is_pandas_na, is_scalar_nan
-from ..utils._param_validation import MissingValues, StrOptions
+from ..utils._mask import _get_mask, _get_mask_from_many_values
+from ..utils._missing import (
+    array_like_has_any_na,
+    has_only_number_or_none,
+    is_pandas_na,
+    is_scalar_nan,
+)
+from ..utils._param_validation import (
+    MissingValues,
+    MissingValuesOrArrayOfMissingValues,
+    StrOptions,
+)
 from ..utils.fixes import _mode
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import (
@@ -31,6 +40,19 @@ def _check_inputs_dtype(X, missing_values):
         # Allow using `pd.NA` as missing values to impute numerical arrays.
         return
     if X.dtype.kind in ("f", "i", "u") and not isinstance(missing_values, numbers.Real):
+        raise ValueError(
+            "'X' and 'missing_values' types are expected to be"
+            " both numerical. Got X.dtype={} and "
+            " type(missing_values)={}.".format(X.dtype, type(missing_values))
+        )
+
+
+def _check_inputs_dtype_array(X, missing_values):
+    if is_pandas_na(missing_values):
+        # Allow using `pd.NA` as missing values to impute numerical arrays.
+        return
+
+    if X.dtype.kind in ("f", "i", "u") and not has_only_number_or_none(missing_values):
         raise ValueError(
             "'X' and 'missing_values' types are expected to be"
             " both numerical. Got X.dtype={} and "
@@ -82,7 +104,7 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
     """
 
     _parameter_constraints: dict = {
-        "missing_values": [MissingValues()],
+        "missing_values": [MissingValuesOrArrayOfMissingValues()],
         "add_indicator": ["boolean"],
         "keep_empty_features": ["boolean"],
     }
@@ -289,6 +311,7 @@ class SimpleImputer(_BaseImputer):
 
     _parameter_constraints: dict = {
         **_BaseImputer._parameter_constraints,
+        # "missing_values": [MissingValuesOrArrayOfMissingValues()],
         "strategy": [
             StrOptions({"mean", "median", "most_frequent", "constant"}),
             callable,
@@ -335,7 +358,11 @@ class SimpleImputer(_BaseImputer):
             # Use object dtype if fitted on object dtypes
             dtype = self._fit_dtype
 
-        if is_pandas_na(self.missing_values) or is_scalar_nan(self.missing_values):
+        if (
+            is_pandas_na(self.missing_values)
+            or is_scalar_nan(self.missing_values)
+            or array_like_has_any_na(self.missing_values)
+        ):
             ensure_all_finite = "allow-nan"
         else:
             ensure_all_finite = True
@@ -366,7 +393,8 @@ class SimpleImputer(_BaseImputer):
             # Use the dtype seen in `fit` for non-`fit` conversion
             self._fit_dtype = X.dtype
 
-        _check_inputs_dtype(X, self.missing_values)
+        _check_inputs_dtype_array(X, self.missing_values)
+
         if X.dtype.kind not in ("i", "u", "f", "O"):
             raise ValueError(
                 "SimpleImputer does not support data with dtype "
@@ -514,7 +542,8 @@ class SimpleImputer(_BaseImputer):
 
     def _dense_fit(self, X, strategy, missing_values, fill_value):
         """Fit the transformer on dense data."""
-        missing_mask = _get_mask(X, missing_values)
+        missing_mask = _get_mask_from_many_values(X, missing_values)
+
         masked_X = ma.masked_array(X, mask=missing_mask)
 
         super()._fit_indicator(missing_mask)
@@ -614,7 +643,7 @@ class SimpleImputer(_BaseImputer):
             )
 
         # compute mask before eliminating invalid features
-        missing_mask = _get_mask(X, self.missing_values)
+        missing_mask = _get_mask_from_many_values(X, self.missing_values)
 
         # Decide whether to keep missing features
         if self.strategy == "constant" or self.keep_empty_features:

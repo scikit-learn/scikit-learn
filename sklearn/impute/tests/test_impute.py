@@ -1404,6 +1404,57 @@ def test_simple_imputation_string_list(strategy, expected):
     assert_array_equal(X_trans, X_true)
 
 
+def test_simple_imputer_many_missing_values_each_columns():
+    pd = pytest.importorskip("pandas")
+
+    fill_value = 999
+
+    X = pd.DataFrame([[1, np.nan, 3], [None, 4, 5], [6, 7, pd.NA]])
+
+    X_true = np.array([[1, fill_value, 3], [fill_value, 4, 5], [6, 7, fill_value]])
+
+    imputer = SimpleImputer(
+        strategy="constant", fill_value=fill_value, missing_values=[np.nan, None, pd.NA]
+    )
+    X_trans = imputer.fit_transform(X)
+
+    assert_array_equal(X_trans, X_true)
+
+
+def test_simple_imputer_many_missing_values_each_same_column():
+    pd = pytest.importorskip("pandas")
+
+    fill_value = 999
+
+    X = pd.DataFrame([[1, 2, None], [3, 4, np.nan], [5, 6, pd.NA]])
+
+    X_true = np.array([[1, 2, fill_value], [3, 4, fill_value], [5, 6, fill_value]])
+
+    imputer = SimpleImputer(
+        strategy="constant", fill_value=fill_value, missing_values=[np.nan, None, pd.NA]
+    )
+    X_trans = imputer.fit_transform(X)
+
+    assert_array_equal(X_trans, X_true)
+
+
+def test_simple_imputer_many_missing_values_without_pandas_na():
+    pd = pytest.importorskip("pandas")
+
+    fill_value = 999
+
+    X = pd.DataFrame([[1, 2, None], [3, 4, np.nan], [5, 6, 7]])
+
+    X_true = np.array([[1, 2, fill_value], [3, 4, fill_value], [5, 6, 7]])
+
+    imputer = SimpleImputer(
+        strategy="constant", fill_value=fill_value, missing_values=[np.nan, None]
+    )
+    X_trans = imputer.fit_transform(X)
+
+    assert_array_equal(X_trans, X_true)
+
+
 @pytest.mark.parametrize(
     "order, idx_order",
     [("ascending", [3, 4, 2, 0, 1]), ("descending", [1, 0, 2, 4, 3])],
