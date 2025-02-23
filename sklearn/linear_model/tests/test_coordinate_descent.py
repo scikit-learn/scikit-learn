@@ -241,6 +241,10 @@ def build_dataset(n_samples=50, n_features=200, n_informative_features=10, n_tar
     return X, y, X_test, y_test
 
 
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `alphas` will change:FutureWarning"
+)
 def test_lasso_cv():
     X, y, X_test, y_test = build_dataset()
     max_iter = 150
@@ -271,6 +275,10 @@ def test_lasso_cv():
     assert clf.score(X_test, y_test) > 0.99
 
 
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `alphas` will change:FutureWarning"
+)
 def test_lasso_cv_with_some_model_selection():
     from sklearn import datasets
     from sklearn.model_selection import ShuffleSplit
@@ -283,6 +291,10 @@ def test_lasso_cv_with_some_model_selection():
     pipe.fit(X, y)
 
 
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `alphas` will change:FutureWarning"
+)
 def test_lasso_cv_positive_constraint():
     X, y, X_test, y_test = build_dataset()
     max_iter = 500
@@ -300,6 +312,10 @@ def test_lasso_cv_positive_constraint():
     assert min(clf_constrained.coef_) >= 0
 
 
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `alphas` will change:FutureWarning"
+)
 @pytest.mark.parametrize(
     "alphas, err_type, err_msg",
     [
@@ -360,6 +376,10 @@ def _scale_alpha_inplace(estimator, n_samples):
     estimator.set_params(alpha=alpha)
 
 
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `alphas` will change:FutureWarning"
+)
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize(
     "LinearModel, params",
@@ -435,6 +455,10 @@ def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
     )
 
 
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `alphas` will change:FutureWarning"
+)
 def test_enet_path():
     # We use a large number of samples and of informative features so that
     # the l1_ratio selected is more toward ridge than lasso
@@ -499,6 +523,10 @@ def test_enet_path():
     assert_almost_equal(clf1.alpha_, clf2.alpha_)
 
 
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `alphas` will change:FutureWarning"
+)
 def test_path_parameters():
     X, y, _, _ = build_dataset()
     max_iter = 100
@@ -557,6 +585,10 @@ def test_enet_positive_constraint():
     assert min(enet.coef_) >= 0
 
 
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `alphas` will change:FutureWarning"
+)
 def test_enet_cv_positive_constraint():
     X, y, X_test, y_test = build_dataset()
     max_iter = 500
@@ -576,6 +608,10 @@ def test_enet_cv_positive_constraint():
     assert min(enetcv_constrained.coef_) >= 0
 
 
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `alphas` will change:FutureWarning"
+)
 def test_uniform_targets():
     enet = ElasticNetCV(n_alphas=3)
     m_enet = MultiTaskElasticNetCV(n_alphas=3)
@@ -673,6 +709,10 @@ def test_enet_multitarget():
         assert_array_almost_equal(dual_gap[k], estimator.dual_gap_)
 
 
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `alphas` will change:FutureWarning"
+)
 def test_multioutput_enetcv_error():
     rng = np.random.RandomState(0)
     X = rng.randn(10, 2)
@@ -682,6 +722,10 @@ def test_multioutput_enetcv_error():
         clf.fit(X, y)
 
 
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `alphas` will change:FutureWarning"
+)
 def test_multitask_enet_and_lasso_cv():
     X, y, _, _ = build_dataset(n_features=50, n_targets=3)
     clf = MultiTaskElasticNetCV(cv=3).fit(X, y)
@@ -709,6 +753,10 @@ def test_multitask_enet_and_lasso_cv():
     assert 10 == len(clf.alphas_)
 
 
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `alphas` will change:FutureWarning"
+)
 def test_1d_multioutput_enet_and_multitask_enet_cv():
     X, y, _, _ = build_dataset(n_features=10)
     y = y[:, np.newaxis]
@@ -722,6 +770,10 @@ def test_1d_multioutput_enet_and_multitask_enet_cv():
     assert_almost_equal(clf.intercept_, clf1.intercept_[0])
 
 
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `alphas` will change:FutureWarning"
+)
 def test_1d_multioutput_lasso_and_multitask_lasso_cv():
     X, y, _, _ = build_dataset(n_features=10)
     y = y[:, np.newaxis]
@@ -734,6 +786,10 @@ def test_1d_multioutput_lasso_and_multitask_lasso_cv():
     assert_almost_equal(clf.intercept_, clf1.intercept_[0])
 
 
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `alphas` will change:FutureWarning"
+)
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_sparse_input_dtype_enet_and_lassocv(csr_container):
     X, y, _, _ = build_dataset(n_features=10)
@@ -1067,6 +1123,10 @@ def test_enet_float_precision():
             )
 
 
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `alphas` will change:FutureWarning"
+)
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_enet_l1_ratio():
     # Test that an error message is raised if an estimator that
@@ -1179,6 +1239,10 @@ def test_sparse_input_convergence_warning(csr_container):
         Lasso().fit(csr_container(X, dtype=np.float32), y)
 
 
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `alphas` will change:FutureWarning"
+)
 @pytest.mark.parametrize(
     "precompute, inner_precompute",
     [
@@ -1204,6 +1268,10 @@ def test_lassoCV_does_not_set_precompute(monkeypatch, precompute, inner_precompu
     assert calls > 0
 
 
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `alphas` will change:FutureWarning"
+)
 def test_multi_task_lasso_cv_dtype():
     n_samples, n_features = 10, 3
     rng = np.random.RandomState(42)
@@ -1303,6 +1371,10 @@ def test_enet_sample_weight_consistency(
     assert_allclose(reg1.coef_, reg2.coef_, rtol=1e-6)
 
 
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `alphas` will change:FutureWarning"
+)
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS)
 def test_enet_cv_sample_weight_correctness(
@@ -1379,6 +1451,10 @@ def test_enet_cv_sample_weight_correctness(
     assert reg_with_weights.intercept_ == pytest.approx(reg_with_repetitions.intercept_)
 
 
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `alphas` will change:FutureWarning"
+)
 @pytest.mark.parametrize("sample_weight", [False, True])
 def test_enet_cv_grid_search(sample_weight):
     """Test that ElasticNetCV gives same result as GridSearchCV."""
@@ -1414,6 +1490,10 @@ def test_enet_cv_grid_search(sample_weight):
     assert reg.alpha_ == pytest.approx(gs.best_params_["alpha"])
 
 
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `alphas` will change:FutureWarning"
+)
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("l1_ratio", [0, 0.5, 1])
 @pytest.mark.parametrize("precompute", [False, True])
@@ -1468,6 +1548,10 @@ def test_enet_cv_sample_weight_consistency(
         assert_allclose(reg.intercept_, intercept)
 
 
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `alphas` will change:FutureWarning"
+)
 @pytest.mark.parametrize("X_is_sparse", [False, True])
 @pytest.mark.parametrize("fit_intercept", [False, True])
 @pytest.mark.parametrize("sample_weight", [np.array([10, 1, 10, 1]), None])
@@ -1488,6 +1572,10 @@ def test_enet_alpha_max_sample_weight(X_is_sparse, fit_intercept, sample_weight)
     assert_array_less(1e-3, np.max(np.abs(reg.coef_)))
 
 
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `alphas` will change:FutureWarning"
+)
 @pytest.mark.parametrize("estimator", [ElasticNetCV, LassoCV])
 def test_linear_models_cv_fit_with_loky(estimator):
     # LinearModelsCV.fit performs operations on fancy-indexed memmapped
@@ -1622,6 +1710,10 @@ def test_read_only_buffer():
     clf.fit(X, y)
 
 
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `alphas` will change:FutureWarning"
+)
 @pytest.mark.parametrize(
     "EstimatorCV",
     [ElasticNetCV, LassoCV, MultiTaskElasticNetCV, MultiTaskLassoCV],
@@ -1638,6 +1730,10 @@ def test_cv_estimators_reject_params_with_no_routing_enabled(EstimatorCV):
         estimator.fit(X, y, groups=groups)
 
 
+@pytest.mark.filterwarnings("ignore:`n_alphas` was deprecated in 1.7:FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `alphas` will change:FutureWarning"
+)
 @pytest.mark.parametrize(
     "MultiTaskEstimatorCV",
     [MultiTaskElasticNetCV, MultiTaskLassoCV],
@@ -1680,3 +1776,89 @@ def test_multitask_cv_estimators_with_sample_weight(MultiTaskEstimatorCV):
     )
     estimator = MultiTaskEstimatorCV(cv=splitter)
     estimator.fit(X, y, sample_weight=sample_weight)
+
+
+@pytest.mark.parametrize(
+    "model, n_alphas",
+    [
+        (LassoCV, 5),
+        (ElasticNetCV, 5),
+        (MultiTaskLassoCV, 5),
+        (MultiTaskElasticNetCV, 5),
+    ],
+)
+def test_LinearModelCV_deprecated_n_alphas(model, n_alphas):
+
+    n_samples, n_features = 100, 3
+    X = np.random.random((n_samples, n_features))
+    y = np.random.random((n_samples))
+
+    mX = np.random.random((n_samples, n_features))
+    my = np.random.random((n_samples, 2))
+
+    msg = (
+        "`n_alphas` was deprecated in 1.7 and will be removed in 1.9"
+        " use `alphas` to set number of alphas values to test along"
+        " regularization path"
+    )
+
+    # Asses warning message raised by LinearModelCV given n_alphas is used
+    with pytest.warns(FutureWarning, match=msg):
+        clf = model(n_alphas=n_alphas)
+        if clf._is_multitask():
+            clf = clf.fit(mX, my)
+        else:
+            clf = clf.fit(X, y)
+
+    # Asses no warning message raised when n_alphas is not used
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        clf = model(alphas=n_alphas)
+        if clf._is_multitask():
+            clf = clf.fit(mX, my)
+        else:
+            clf = clf.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "model, alphas",
+    [
+        (LassoCV, 5),
+        (LassoCV, [1, 100, 1000]),
+        (ElasticNetCV, 5),
+        (ElasticNetCV, [1, 100, 1000]),
+        (MultiTaskLassoCV, 5),
+        (MultiTaskLassoCV, [1, 100, 1000]),
+        (MultiTaskElasticNetCV, 5),
+        (MultiTaskElasticNetCV, [1, 100, 1000]),
+    ],
+)
+def test_LinearModelCV_warning_default_alphas(model, alphas):
+
+    n_samples, n_features = 100, 3
+    X = np.random.random((n_samples, n_features))
+    y = np.random.random((n_samples))
+    mX = np.random.random((n_samples, n_features))
+    my = np.random.random((n_samples, 2))
+
+    msg = (
+        "The default value of `alphas` will change from None to 100 in 1.7"
+        " Since 1.7, ``alphas`` supports an integer argument which generates"
+        " ``alphas`` number of alpha values along the regularization path."
+    )
+
+    with pytest.warns(FutureWarning, match=msg):
+        clf = model()
+        if clf._is_multitask():
+            clf.fit(mX, my)
+        else:
+            clf.fit(X, y)
+
+    # Asses no warning message raised when value passed into alphas
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        clf = model(alphas=alphas)
+        if clf._is_multitask():
+            clf.fit(mX, my)
+        else:
+            clf.fit(X, y)
