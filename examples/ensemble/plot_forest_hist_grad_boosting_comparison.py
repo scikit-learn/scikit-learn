@@ -143,7 +143,7 @@ colors_list = colors.qualitative.Plotly * (
 for idx, result in enumerate(results):
     cv_results = result["cv_results"].round(3)
     model_name = result["model"]
-    param_name = list(param_grids[model_name].keys())[0]
+    param_name = next(iter(param_grids[model_name].keys()))
     cv_results[param_name] = cv_results["param_" + param_name]
     cv_results["model"] = model_name
 

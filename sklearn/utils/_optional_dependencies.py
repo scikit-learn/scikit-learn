@@ -39,7 +39,7 @@ def check_pandas_support(caller_name):
         The pandas package.
     """
     try:
-        import pandas  # noqa
+        import pandas
 
         return pandas
     except ImportError as e:

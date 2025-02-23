@@ -28,23 +28,23 @@ from ._univariate_selection import (
 from ._variance_threshold import VarianceThreshold
 
 __all__ = [
-    "GenericUnivariateSelect",
-    "SequentialFeatureSelector",
     "RFE",
     "RFECV",
+    "GenericUnivariateSelect",
     "SelectFdr",
     "SelectFpr",
+    "SelectFromModel",
     "SelectFwe",
     "SelectKBest",
-    "SelectFromModel",
     "SelectPercentile",
+    "SelectorMixin",
+    "SequentialFeatureSelector",
     "VarianceThreshold",
     "chi2",
     "f_classif",
     "f_oneway",
     "f_regression",
-    "r_regression",
     "mutual_info_classif",
     "mutual_info_regression",
-    "SelectorMixin",
+    "r_regression",
 ]

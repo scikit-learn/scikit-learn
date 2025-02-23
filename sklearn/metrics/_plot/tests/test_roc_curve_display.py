@@ -105,7 +105,7 @@ def test_roc_curve_display_plotting(
 
     assert display.estimator_name == default_name
 
-    import matplotlib as mpl  # noqal
+    import matplotlib as mpl
 
     assert isinstance(display.line_, mpl.lines.Line2D)
     assert display.line_.get_alpha() == 0.8
@@ -178,7 +178,7 @@ def test_roc_curve_chance_level_line(
             chance_level_kw=chance_level_kw,
         )
 
-    import matplotlib as mpl  # noqa
+    import matplotlib as mpl
 
     assert isinstance(display.line_, mpl.lines.Line2D)
     assert display.line_.get_alpha() == 0.8
