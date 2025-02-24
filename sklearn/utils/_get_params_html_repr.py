@@ -62,8 +62,8 @@ def _html_template(data):
                        onclick="copyToClipboard('{x}', this)"
                        style="color: gray; cursor: pointer;">
                       </i></td>
-                      <td>{x}&nbsp;</td>
-                      <td>{y}</td>
+                      <td class="param">{x}&nbsp;</td>
+                      <td class="value">{y}</td>
                     </tr>
             """
         else:
@@ -74,8 +74,8 @@ def _html_template(data):
                            onclick="copyToClipboard('{x}', this)"
                            style="color: gray; cursor: pointer; min-with: 5em">
                           </i></td>
-                          <td>{x}&nbsp;</td>
-                          <td>{y}</td>
+                          <td class="param">{x}&nbsp;</td>
+                          <td class="value">{y}</td>
                     </tr>
                """
     html_end = """
