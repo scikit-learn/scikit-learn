@@ -318,9 +318,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         """
         check_classification_targets(y)
         X, y = indexable(X, y)
-        if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X)
-
         estimator = self._get_estimator()
 
         _ensemble = self.ensemble
@@ -638,10 +635,10 @@ def _fit_classifier_calibrator_pair(
         predictions = predictions.reshape(-1, 1)
 
     if sample_weight is not None:
-        sw_test = _safe_indexing(sample_weight, test)
         # Check that the sample_weight dtype is consistent with the predictions
         # to avoid unintentional upcasts.
-        sw_test = _check_sample_weight(sw_test, predictions, dtype=predictions.dtype)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=predictions.dtype)
+        sw_test = _safe_indexing(sample_weight, test)
     else:
         sw_test = None
     calibrated_classifier = _fit_calibrator(
