@@ -1853,11 +1853,10 @@ See concept :term:`sample property`.
         evaluation.
 
         This argument gives a relative weight for each sample. Intuitively, if
-        all weights are integers, a weighted model or score should be
-        equivalent to that calculated when repeating the sample the number of
-        times specified in the weight.  Weights may be specified as floats, so
-        that sample weights are usually equivalent up to a constant positive
-        scaling factor.
+        all weights are integers, using them in a model or scorer is like
+        duplicating each sample as many times as the weight value. Weights may
+        be specified as floats, so that sample weights are usually equivalent
+        up to a constant positive scaling factor.
 
         Weighting samples can be useful in several contexts. For instance, if
         the training data is not uniformly sampled from the target population,
