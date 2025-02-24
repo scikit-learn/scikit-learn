@@ -347,6 +347,7 @@ def test_imputation_most_frequent(csc_container):
 
 
 @pytest.mark.parametrize("marker", [None, np.nan, "NAN", "", 0])
+# @pytest.mark.parametrize("marker", [None])
 def test_imputation_most_frequent_objects(marker):
     # Test imputation using the most-frequent strategy.
     X = np.array(
@@ -1409,7 +1410,7 @@ def test_simple_imputer_many_missing_values_each_columns():
 
     fill_value = 999
 
-    X = pd.DataFrame([[1, np.nan, 3], [None, 4, 5], [6, 7, pd.NA]])
+    X = [[1, np.nan, 3], [None, 4, 5], [6, 7, pd.NA]]
 
     X_true = np.array([[1, fill_value, 3], [fill_value, 4, 5], [6, 7, fill_value]])
 
@@ -1426,7 +1427,7 @@ def test_simple_imputer_many_missing_values_each_same_column():
 
     fill_value = 999
 
-    X = pd.DataFrame([[1, 2, None], [3, 4, np.nan], [5, 6, pd.NA]])
+    X = [[1, 2, None], [3, 4, np.nan], [5, 6, pd.NA]]
 
     X_true = np.array([[1, 2, fill_value], [3, 4, fill_value], [5, 6, fill_value]])
 
@@ -1443,7 +1444,7 @@ def test_simple_imputer_many_missing_values_without_pandas_na():
 
     fill_value = 999
 
-    X = pd.DataFrame([[1, 2, None], [3, 4, np.nan], [5, 6, 7]])
+    X = [[1, 2, None], [3, 4, np.nan], [5, 6, 7]]
 
     X_true = np.array([[1, 2, fill_value], [3, 4, fill_value], [5, 6, 7]])
 

@@ -7,7 +7,7 @@ from functools import reduce
 import numpy as np
 from scipy import sparse as sp
 
-from ._missing import is_scalar_nan
+from ._missing import is_pandas_na_only, is_scalar_nan
 from ._param_validation import validate_params
 from .fixes import _object_dtype_isnan
 
@@ -28,8 +28,8 @@ def _get_dense_mask(X, value_to_mask):
             # can't have NaNs in integer array.
             Xt = np.zeros(X.shape, dtype=bool)
         elif X.dtype.kind == "O":
-            Xt = _convert_pandas_na_to(X, False)
-            Xt = Xt == value_to_mask
+            Xt = np.where(is_pandas_na_only(X), False, X)
+            Xt = _object_dtype_isnan(Xt)
         else:
             # np.isnan does not work on object dtypes.
             Xt = _object_dtype_isnan(X)
@@ -37,15 +37,6 @@ def _get_dense_mask(X, value_to_mask):
         Xt = X == value_to_mask
 
     return Xt
-
-
-def _convert_pandas_na_to(X, value_to_convert):
-    try:
-        import pandas
-
-        return np.where(pandas.isna(X), value_to_convert, X)
-    except ImportError:
-        return X
 
 
 def _get_mask(X, value_to_mask):

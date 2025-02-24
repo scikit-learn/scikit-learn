@@ -652,6 +652,7 @@ class SimpleImputer(_BaseImputer):
         else:
             # same as np.isnan but also works for object dtypes
             invalid_mask = _get_mask(statistics, np.nan)
+
             valid_mask = np.logical_not(invalid_mask)
             valid_statistics = statistics[valid_mask]
             valid_statistics_indexes = np.flatnonzero(valid_mask)
