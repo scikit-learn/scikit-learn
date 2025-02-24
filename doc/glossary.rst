@@ -1857,7 +1857,7 @@ See concept :term:`sample property`.
         Weighting samples can be useful in several contexts. For instance, if
         the training data is not uniformly sampled from the target population,
         it can be corrected by weighting the training data points based on the
-        inverse probability of their selection for training. It is also useful
+        `inverse probability <https://en.wikipedia.org/wiki/Inverse_probability_weighting>`_ of their selection for training (eg inverse propensity weighting). It is also useful
         to model the frequency of an event of interest per unit of time on a
         dataset of observations with different exposure durations per
         individual (see
@@ -1897,7 +1897,7 @@ See concept :term:`sample property`.
         for model training or a parameter of a :term:`scorer` for model
         evaluation.
 
-        At the time of writing, not all scikit-learn estimators correctly
+        At the time of writing (version 1.7), not all scikit-learn estimators correctly
         implement the weight-repetition equivalence property. The `#16298 meta
         issue <https://github.com/scikit-learn/scikit-learn/issues/16298>`_
         tracks ongoing work to detect and fix remaining discrepancies.
