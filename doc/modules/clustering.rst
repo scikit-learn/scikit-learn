@@ -733,7 +733,7 @@ may wish to cluster web pages by only merging pages with a link pointing
 from one to another. It can also be learned from the data, for instance
 using :func:`sklearn.neighbors.kneighbors_graph` to restrict
 merging to nearest neighbors as in :ref:`this example
-<sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py>`, or
+<sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py>`, or
 using :func:`sklearn.feature_extraction.image.grid_to_graph` to
 enable only merging of neighboring pixels on an image, as in the
 :ref:`coin <sphx_glr_auto_examples_cluster_plot_coin_ward_segmentation.py>` example.
@@ -746,23 +746,23 @@ enable only merging of neighboring pixels on an image, as in the
     :func:`sklearn.neighbors.kneighbors_graph`. In the limit of a small
     number of clusters, they tend to give a few macroscopically occupied
     clusters and almost empty ones. (see the discussion in
-    :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`).
+    :ref:`sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py`).
     Single linkage is the most brittle linkage option with regard to this issue.
 
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_001.png
-    :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_ward_structured_vs_unstructured_001.png
+    :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
     :scale: 38
 
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_002.png
-    :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_ward_structured_vs_unstructured_002.png
+    :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
     :scale: 38
 
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_003.png
-    :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_ward_structured_vs_unstructured_003.png
+    :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
     :scale: 38
 
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_004.png
-    :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_ward_structured_vs_unstructured_004.png
+    :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
     :scale: 38
 
 .. rubric:: Examples
@@ -778,7 +778,7 @@ enable only merging of neighboring pixels on an image, as in the
   of dimensionality reduction with feature agglomeration based on Ward
   hierarchical clustering.
 
-* :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`
+* :ref:`sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py`
 
 
 Varying the metric
@@ -800,21 +800,21 @@ The guidelines for choosing a metric is to use one that maximizes the
 distance between samples in different classes, and minimizes that within
 each class.
 
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_metrics_005.png
-    :target: ../auto_examples/cluster/plot_agglomerative_clustering_metrics.html
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_ward_structured_vs_unstructured_metrics_005.png
+    :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured_metrics.html
     :scale: 32
 
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_metrics_006.png
-    :target: ../auto_examples/cluster/plot_agglomerative_clustering_metrics.html
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_ward_structured_vs_unstructured_metrics_006.png
+    :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured_metrics.html
     :scale: 32
 
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_metrics_007.png
-    :target: ../auto_examples/cluster/plot_agglomerative_clustering_metrics.html
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_ward_structured_vs_unstructured_metrics_007.png
+    :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured_metrics.html
     :scale: 32
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering_metrics.py`
+* :ref:`sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured_metrics.py`
 
 
 Bisecting K-Means
