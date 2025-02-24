@@ -816,9 +816,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         `kneighbors_graph`. Default is ``None``, i.e, the
         hierarchical clustering algorithm is unstructured.
 
-        For examples of connectivity matrix using
+        For an example of connectivity matrix using
         :class:`~sklearn.neighbors.kneighbors_graph`, see
-        :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py` and
         :ref:`sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py`.
 
     compute_full_tree : 'auto' or bool, default='auto'
