@@ -757,14 +757,6 @@ enable only merging of neighboring pixels on an image, as in the
     :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
     :scale: 38
 
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_ward_structured_vs_unstructured_003.png
-    :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
-    :scale: 38
-
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_ward_structured_vs_unstructured_004.png
-    :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
-    :scale: 38
-
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_cluster_plot_coin_ward_segmentation.py`: Ward
