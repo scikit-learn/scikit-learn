@@ -232,5 +232,5 @@ def test_frozen_ignores_sample_weight(regression_dataset):
     frozen.fit(X, y, sample_weight=np.ones(len(y)))
 
     # FrozenEstimator should have sample_weight in its signature to make it
-    # explicit that sample_weight are accepted and ignored intentionally.
+    # explicit that sample_weight is accepted and ignored intentionally.
     assert has_fit_parameter(frozen, "sample_weight")
