@@ -1093,7 +1093,7 @@ def test_float32_predict_proba(data, use_sample_weight, method):
         # unintentional upcasting: the dtype of the base estimator should
         # control the dtype of the final model. In particular, the
         # sigmoid calibrator relies on inputs (predictions and sample weights)
-        # with consistent dtypes because it is partially written in Cython. 
+        # with consistent dtypes because it is partially written in Cython.
         # As this test forces the predictions to be `float32`, we want to check
         # that `CalibratedClassifierCV` internally converts `sample_weight` to
         # the same dtype to avoid crashing the Cython call.
