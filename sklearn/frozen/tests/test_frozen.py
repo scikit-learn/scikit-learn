@@ -228,9 +228,9 @@ def test_frozen_ignores_sample_weight(regression_dataset):
     estimator = LinearRegression().fit(X, y)
     frozen = FrozenEstimator(estimator)
 
-    # Should not raise: sample_weight are just ignored as they are not used.
+    # Should not raise: sample_weight is just ignored as it are not used.
     frozen.fit(X, y, sample_weight=np.ones(len(y)))
 
-    # FrozenEstimator should not have sample_weight in its signature to make it
+    # FrozenEstimator should have sample_weight in its signature to make it
     # explicit that sample_weight are accepted and ignored intentionally.
     assert has_fit_parameter(frozen, "sample_weight")
