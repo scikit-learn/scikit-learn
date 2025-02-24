@@ -99,6 +99,8 @@ def contingency_matrix(
 ):
     """Build a contingency matrix describing the relationship between labels.
 
+    Read more in the :ref:`User Guide <contingency_matrix>`.
+
     Parameters
     ----------
     labels_true : array-like of shape (n_samples,)
@@ -113,7 +115,7 @@ def contingency_matrix(
         If ``None``, nothing is adjusted.
 
     sparse : bool, default=False
-        If `True`, return a sparse CSR continency matrix. If `eps` is not
+        If `True`, return a sparse CSR contingency matrix. If `eps` is not
         `None` and `sparse` is `True` will raise ValueError.
 
         .. versionadded:: 0.18
