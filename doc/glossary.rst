@@ -1848,15 +1848,18 @@ See concept :term:`sample property`.
         See :ref:`group_cv`.
 
     ``sample_weight``
+        A relative weight for each sample. Intuitively, if all weights are
+        integers, using them in a model or scorer is like duplicating each
+        sample as many times as the weight value. Weights may be specified as
+        floats, so that sample weights are usually equivalent up to a constant
+        positive scaling factor.
+
         `sample_weight` can be both an argument of the estimator's `fit` method
         for model training or a parameter of a :term:`scorer` for model
-        evaluation.
-
-        This argument gives a relative weight for each sample. Intuitively, if
-        all weights are integers, using them in a model or scorer is like
-        duplicating each sample as many times as the weight value. Weights may
-        be specified as floats, so that sample weights are usually equivalent
-        up to a constant positive scaling factor.
+        evaluation. These callables are said to *consume* the sample weights
+        while other components of scikit-learn can *route*  the weights to the
+        underlying estimators or scorers (see
+        :ref:`glossary_metadata_routing`).
 
         Weighting samples can be useful in several contexts. For instance, if
         the training data is not uniformly sampled from the target population,
