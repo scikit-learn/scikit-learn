@@ -800,21 +800,21 @@ The guidelines for choosing a metric is to use one that maximizes the
 distance between samples in different classes, and minimizes that within
 each class.
 
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_ward_structured_vs_unstructured_metrics_005.png
-    :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured_metrics.html
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_metrics_005.png
+    :target: ../auto_examples/cluster/plot_agglomerative_clustering_metrics.html
     :scale: 32
 
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_ward_structured_vs_unstructured_metrics_006.png
-    :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured_metrics.html
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_metrics_006.png
+    :target: ../auto_examples/cluster/plot_agglomerative_clustering_metrics.html
     :scale: 32
 
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_ward_structured_vs_unstructured_metrics_007.png
-    :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured_metrics.html
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_metrics_007.png
+    :target: ../auto_examples/cluster/plot_agglomerative_clustering_metrics.html
     :scale: 32
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured_metrics.py`
+* :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering_metrics.py`
 
 
 Bisecting K-Means
