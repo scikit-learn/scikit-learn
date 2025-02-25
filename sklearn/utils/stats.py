@@ -105,7 +105,5 @@ def _weighted_percentile(array, sample_weight, percentile=50, symmetrize=False):
     return sym_percentile[0] if n_dim == 1 else sym_percentile
 
 
-# TODO: refactor to do the symmetrisation inside _weighted_percentile to avoid
-# sorting the input array twice.
 def _averaged_weighted_percentile(array, sample_weight, percentile=50):
     return _weighted_percentile(array, sample_weight, percentile, symmetrize=True)
