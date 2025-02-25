@@ -1,12 +1,10 @@
 """A small collection of auxiliary functions that operate on arrays."""
 
 from cython cimport floating
-from cython.parallel cimport prange
 from libc.math cimport fabs
 from libc.float cimport DBL_MAX, FLT_MAX
 
 from ._cython_blas cimport _copy, _rotg, _rot
-from ._typedefs cimport float64_t
 
 
 ctypedef fused real_numeric:
@@ -118,17 +116,3 @@ def cholesky_delete(floating[:, :] L, int go_out):
         L1 += m
 
         _rot(n - i - 2, L1 + i, m, L1 + i + 1, m, c, s)
-
-
-def sum_parallel(const floating [:] array, int n_threads):
-    """Parallel sum, always using float64 internally."""
-    cdef:
-        float64_t out = 0.
-        int i = 0
-
-    for i in prange(
-        array.shape[0], schedule='static', nogil=True, num_threads=n_threads
-    ):
-        out += array[i]
-
-    return out
