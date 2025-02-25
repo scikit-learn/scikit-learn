@@ -877,14 +877,13 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             params = params.copy()
             groups = params.pop("groups", None)
-            score = {}
-            if "sample_weight" in params:
-                score["sample_weight"] = params["sample_weight"]
             routed_params = Bunch(
                 estimator=Bunch(fit=params),
                 splitter=Bunch(split={"groups": groups}),
-                scorer=Bunch(score=score),
+                scorer=Bunch(score={}),
             )
+            if "sample_weight" in params:
+                routed_params.scorer.score["sample_weight"] = params["sample_weight"]
         return routed_params
 
     @_fit_context(
