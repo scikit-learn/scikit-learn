@@ -55,8 +55,10 @@ __ALL__ = [
 ]
 
 
-def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric", xp=None):
-    """Check that y_true and y_pred belong to the same regression task.
+def _check_reg_targets(
+    y_true, y_pred, sample_weight, multioutput, dtype="numeric", xp=None
+):
+    """Check that y_true, y_pred and sample_weight belong to the same regression task.
 
     To reduce redundancy when calling `_find_matching_floating_dtype`,
     please use `_check_reg_targets_with_floating_dtype` instead.
@@ -68,6 +70,9 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric", xp=None):
 
     y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
+
+    sample_weight : array-like of shape (n_samples,) or None
+        Sample weights.
 
     multioutput : array-like or string in ['raw_values', uniform_average',
         'variance_weighted'] or None
@@ -93,6 +98,9 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric", xp=None):
     y_pred : array-like of shape (n_samples, n_outputs)
         Estimated target values.
 
+    sample_weight : array-like of shape (n_samples,) or None
+        Sample weights.
+
     multioutput : array-like of shape (n_outputs) or string in ['raw_values',
         uniform_average', 'variance_weighted'] or None
         Custom output weights if ``multioutput`` is array-like or
@@ -101,9 +109,11 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric", xp=None):
     """
     xp, _ = get_namespace(y_true, y_pred, multioutput, xp=xp)
 
-    check_consistent_length(y_true, y_pred)
+    check_consistent_length(y_true, y_pred, sample_weight)
     y_true = check_array(y_true, ensure_2d=False, dtype=dtype)
     y_pred = check_array(y_pred, ensure_2d=False, dtype=dtype)
+    if sample_weight is not None:
+        sample_weight = _check_sample_weight(sample_weight, y_true, dtype=dtype)
 
     if y_true.ndim == 1:
         y_true = xp.reshape(y_true, (-1, 1))
@@ -139,14 +149,13 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric", xp=None):
             )
     y_type = "continuous" if n_outputs == 1 else "continuous-multioutput"
 
-    return y_type, y_true, y_pred, multioutput
+    return y_type, y_true, y_pred, sample_weight, multioutput
 
 
 def _check_reg_targets_with_floating_dtype(
     y_true, y_pred, sample_weight, multioutput, xp=None
 ):
-    """Ensures that y_true, y_pred, and sample_weight correspond to the same
-    regression task.
+    """Ensures y_true, y_pred, and sample_weight correspond to same regression task.
 
     Extends `_check_reg_targets` by automatically selecting a suitable floating-point
     data type for inputs using `_find_matching_floating_dtype`.
@@ -195,14 +204,9 @@ def _check_reg_targets_with_floating_dtype(
     """
     dtype_name = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
 
-    y_type, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput, dtype=dtype_name, xp=xp
+    y_type, y_true, y_pred, sample_weight, multioutput = _check_reg_targets(
+        y_true, y_pred, sample_weight, multioutput, dtype=dtype_name, xp=xp
     )
-
-    # _check_reg_targets does not accept sample_weight as input.
-    # Convert sample_weight's data type separately to match dtype_name.
-    if sample_weight is not None:
-        sample_weight = xp.asarray(sample_weight, dtype=dtype_name)
 
     return y_type, y_true, y_pred, sample_weight, multioutput
 
@@ -279,8 +283,6 @@ def mean_absolute_error(
             y_true, y_pred, sample_weight, multioutput, xp=xp
         )
     )
-
-    check_consistent_length(y_true, y_pred, sample_weight)
 
     output_errors = _average(
         xp.abs(y_pred - y_true), weights=sample_weight, axis=0, xp=xp
@@ -381,7 +383,6 @@ def mean_pinball_loss(
         )
     )
 
-    check_consistent_length(y_true, y_pred, sample_weight)
     diff = y_true - y_pred
     sign = xp.astype(diff >= 0, diff.dtype)
     loss = alpha * sign * diff - (1 - alpha) * (1 - sign) * diff
@@ -485,7 +486,7 @@ def mean_absolute_percentage_error(
             y_true, y_pred, sample_weight, multioutput, xp=xp
         )
     )
-    check_consistent_length(y_true, y_pred, sample_weight)
+
     epsilon = xp.asarray(xp.finfo(xp.float64).eps, dtype=y_true.dtype)
     y_true_abs = xp.abs(y_true)
     mape = xp.abs(y_pred - y_true) / xp.maximum(y_true_abs, epsilon)
@@ -577,7 +578,6 @@ def mean_squared_error(
             y_true, y_pred, sample_weight, multioutput, xp=xp
         )
     )
-    check_consistent_length(y_true, y_pred, sample_weight)
     output_errors = _average((y_true - y_pred) ** 2, axis=0, weights=sample_weight)
 
     if isinstance(multioutput, str):
@@ -749,8 +749,10 @@ def mean_squared_log_error(
     """
     xp, _ = get_namespace(y_true, y_pred)
 
-    _, y_true, y_pred, _, _ = _check_reg_targets_with_floating_dtype(
-        y_true, y_pred, sample_weight, multioutput, xp=xp
+    _, y_true, y_pred, sample_weight, multioutput = (
+        _check_reg_targets_with_floating_dtype(
+            y_true, y_pred, sample_weight, multioutput, xp=xp
+        )
     )
 
     if xp.any(y_true <= -1) or xp.any(y_pred <= -1):
@@ -825,8 +827,10 @@ def root_mean_squared_log_error(
     """
     xp, _ = get_namespace(y_true, y_pred)
 
-    _, y_true, y_pred, _, _ = _check_reg_targets_with_floating_dtype(
-        y_true, y_pred, sample_weight, multioutput, xp=xp
+    _, y_true, y_pred, sample_weight, multioutput = (
+        _check_reg_targets_with_floating_dtype(
+            y_true, y_pred, sample_weight, multioutput, xp=xp
+        )
     )
 
     if xp.any(y_true <= -1) or xp.any(y_pred <= -1):
@@ -908,13 +912,12 @@ def median_absolute_error(
     >>> median_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.85
     """
-    y_type, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput
+    _, y_true, y_pred, sample_weight, multioutput = _check_reg_targets(
+        y_true, y_pred, sample_weight, multioutput
     )
     if sample_weight is None:
         output_errors = np.median(np.abs(y_pred - y_true), axis=0)
     else:
-        sample_weight = _check_sample_weight(sample_weight, y_pred)
         output_errors = _weighted_percentile(
             np.abs(y_pred - y_true), sample_weight=sample_weight
         )
@@ -1102,8 +1105,6 @@ def explained_variance_score(
         )
     )
 
-    check_consistent_length(y_true, y_pred, sample_weight)
-
     y_diff_avg = _average(y_true - y_pred, weights=sample_weight, axis=0)
     numerator = _average(
         (y_true - y_pred - y_diff_avg) ** 2, weights=sample_weight, axis=0
@@ -1274,8 +1275,6 @@ def r2_score(
         )
     )
 
-    check_consistent_length(y_true, y_pred, sample_weight)
-
     if _num_samples(y_pred) < 2:
         msg = "R^2 score is not well-defined with less than two samples."
         warnings.warn(msg, UndefinedMetricWarning)
@@ -1339,7 +1338,7 @@ def max_error(y_true, y_pred):
     1.0
     """
     xp, _ = get_namespace(y_true, y_pred)
-    y_type, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred, None, xp=xp)
+    y_type, y_true, y_pred, _, _ = _check_reg_targets(y_true, y_pred, None, None, xp=xp)
     if y_type == "continuous-multioutput":
         raise ValueError("Multioutput not supported in max_error")
     return float(xp.max(xp.abs(y_true - y_pred)))
@@ -1442,7 +1441,6 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     )
     if y_type == "continuous-multioutput":
         raise ValueError("Multioutput not supported in mean_tweedie_deviance")
-    check_consistent_length(y_true, y_pred, sample_weight)
 
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
@@ -1767,10 +1765,9 @@ def d2_pinball_score(
     >>> d2_pinball_score(y_true, y_true, alpha=0.1)
     1.0
     """
-    y_type, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput
+    _, y_true, y_pred, sample_weight, multioutput = _check_reg_targets(
+        y_true, y_pred, sample_weight, multioutput
     )
-    check_consistent_length(y_true, y_pred, sample_weight)
 
     if _num_samples(y_pred) < 2:
         msg = "D^2 score is not well-defined with less than two samples."
@@ -1790,7 +1787,6 @@ def d2_pinball_score(
             np.percentile(y_true, q=alpha * 100, axis=0), (len(y_true), 1)
         )
     else:
-        sample_weight = _check_sample_weight(sample_weight, y_true)
         y_quantile = np.tile(
             _weighted_percentile(
                 y_true, sample_weight=sample_weight, percentile=alpha * 100
