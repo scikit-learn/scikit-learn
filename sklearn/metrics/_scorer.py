@@ -195,7 +195,19 @@ class _MultimetricScorer:
         )
 
 
-class _BaseScorer(_MetadataRequester):
+class _SampleWeightScorerMixin(_MetadataRequester):
+    """A Mixin to request ``sample_weight`` by default.
+
+    This Mixin makes the object to request ``sample_weight`` by default as ``True``
+    for the ``score`` method.
+
+    .. versionadded:: 1.7
+    """
+
+    __metadata_request__score = {"sample_weight": True}
+
+
+class _BaseScorer(_SampleWeightScorerMixin):
     """Base scorer that is used as `scorer(estimator, X, y_true)`.
 
     Parameters
