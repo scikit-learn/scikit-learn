@@ -36,7 +36,7 @@ def _scale_normalize(X):
         n_rows, n_cols = X.shape
         r = dia_matrix((row_diag, [0]), shape=(n_rows, n_rows))
         c = dia_matrix((col_diag, [0]), shape=(n_cols, n_cols))
-        an = r * X * c
+        an = r @ X @ c
     else:
         an = row_diag[:, np.newaxis] * X * col_diag
     return an, row_diag, col_diag
