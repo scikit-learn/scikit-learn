@@ -203,13 +203,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_estimators_dtypes": "raises nan error",
-            "check_fit2d_1sample": "_scale_normalize fails",
-            "check_fit2d_1feature": "raises apply_along_axis error",
-            "check_estimator_sparse_matrix": "does not fail gracefully",
-            "check_estimator_sparse_array": "does not fail gracefully",
-        }
+        tags.input_tags.sparse = True
         return tags
 
 

@@ -19,10 +19,12 @@ from sklearn.base import (
     clone,
     is_classifier,
     is_clusterer,
+    is_outlier_detector,
     is_regressor,
 )
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
+from sklearn.ensemble import IsolationForest
 from sklearn.exceptions import InconsistentVersionWarning
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
@@ -264,6 +266,21 @@ def test_get_params():
 
     with pytest.raises(ValueError):
         test.set_params(a__a=2)
+
+
+# TODO(1.8): Remove this test when the deprecation is removed
+def test_is_estimator_type_class():
+    with pytest.warns(FutureWarning, match="passing a class to.*is deprecated"):
+        assert is_classifier(SVC)
+
+    with pytest.warns(FutureWarning, match="passing a class to.*is deprecated"):
+        assert is_regressor(SVR)
+
+    with pytest.warns(FutureWarning, match="passing a class to.*is deprecated"):
+        assert is_clusterer(KMeans)
+
+    with pytest.warns(FutureWarning, match="passing a class to.*is deprecated"):
+        assert is_outlier_detector(IsolationForest)
 
 
 @pytest.mark.parametrize(
@@ -925,7 +942,7 @@ def test_dataframe_protocol(constructor_name, minversion):
         no_op.transform(df_bad)
 
 
-@pytest.mark.usefixtures("enable_slep006")
+@config_context(enable_metadata_routing=True)
 def test_transformer_fit_transform_with_metadata_in_transform():
     """Test that having a transformer with metadata for transform raises a
     warning when calling fit_transform."""
@@ -951,7 +968,7 @@ def test_transformer_fit_transform_with_metadata_in_transform():
         assert len(record) == 0
 
 
-@pytest.mark.usefixtures("enable_slep006")
+@config_context(enable_metadata_routing=True)
 def test_outlier_mixin_fit_predict_with_metadata_in_predict():
     """Test that having an OutlierMixin with metadata for predict raises a
     warning when calling fit_predict."""

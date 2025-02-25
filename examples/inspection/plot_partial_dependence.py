@@ -365,8 +365,11 @@ _ = display.figure_.suptitle(
 # However, it is worth noting that we are creating potential meaningless
 # synthetic samples if features are correlated.
 #
+# .. _ice-vs-pdp:
+#
 # ICE vs. PDP
 # ~~~~~~~~~~~
+#
 # PDP is an average of the marginal effects of the features. We are averaging the
 # response of all samples of the provided set. Thus, some effects could be hidden. In
 # this regard, it is possible to plot each individual response. This representation is
@@ -539,6 +542,7 @@ _ = display.figure_.suptitle(
 #
 # Let's make the same partial dependence plot for the 2 features interaction,
 # this time in 3 dimensions.
+
 # unused but required import for doing 3d projections with matplotlib < 3.2
 import mpl_toolkits.mplot3d  # noqa: F401
 import numpy as np
@@ -570,3 +574,45 @@ clb.ax.set_title("Partial\ndependence")
 plt.show()
 
 # %%
+# .. _plt_partial_dependence_custom_values:
+#
+# Custom Inspection Points
+# ~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# None of the examples so far specify _which_ points are evaluated to create the
+# partial dependence plots. By default we use percentiles defined by the input dataset.
+# In some cases it can be helpful to specify the exact points where you would like the
+# model evaluated. For instance, if a user wants to test the model behavior on
+# out-of-distribution data or compare two models that were fit on slightly different
+# data. The `custom_values` parameter allows the user to pass in the values that they
+# want the model to be evaluated on. This overrides the `grid_resolution` and
+# `percentiles` parameters. Let's return to our gradient boosting example above
+# but with custom values
+
+print("Computing partial dependence plots with custom evaluation values...")
+tic = time()
+_, ax = plt.subplots(ncols=2, figsize=(6, 4), sharey=True, constrained_layout=True)
+
+features_info = {
+    "features": ["temp", "humidity"],
+    "kind": "both",
+}
+
+display = PartialDependenceDisplay.from_estimator(
+    hgbdt_model,
+    X_train,
+    **features_info,
+    ax=ax,
+    **common_params,
+    # we set custom values for temp feature -
+    # all other features are evaluated based on the data
+    custom_values={"temp": np.linspace(0, 40, 10)},
+)
+print(f"done in {time() - tic:.3f}s")
+_ = display.figure_.suptitle(
+    (
+        "Partial dependence of the number of bike rentals\n"
+        "for the bike rental dataset with a gradient boosting"
+    ),
+    fontsize=16,
+)

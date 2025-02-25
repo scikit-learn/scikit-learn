@@ -243,7 +243,7 @@ def _locally_linear_embedding(
             M = M.T * M
         else:
             M = (W.T * W - W.T - W).toarray()
-            M.flat[:: M.shape[0] + 1] += 1  # W = W - I = W - I
+            M.flat[:: M.shape[0] + 1] += 1  # M = W' W - W' - W + I
 
     elif method == "hessian":
         dp = n_components * (n_components + 1) // 2

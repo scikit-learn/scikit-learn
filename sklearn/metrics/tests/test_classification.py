@@ -667,21 +667,13 @@ def test_confusion_matrix_single_label():
 @pytest.mark.parametrize(
     "params, warn_msg",
     [
-        # When y_test contains one class only and y_test==y_pred, LR+ is undefined
-        (
-            {
-                "y_true": np.array([0, 0, 0, 0, 0, 0]),
-                "y_pred": np.array([0, 0, 0, 0, 0, 0]),
-            },
-            "samples of only one class were seen during testing",
-        ),
         # When `fp == 0` and `tp != 0`, LR+ is undefined
         (
             {
                 "y_true": np.array([1, 1, 1, 0, 0, 0]),
                 "y_pred": np.array([1, 1, 1, 0, 0, 0]),
             },
-            "positive_likelihood_ratio ill-defined and being set to nan",
+            "`positive_likelihood_ratio` is ill-defined and set to `np.nan`.",
         ),
         # When `fp == 0` and `tp == 0`, LR+ is undefined
         (
@@ -689,7 +681,10 @@ def test_confusion_matrix_single_label():
                 "y_true": np.array([1, 1, 1, 0, 0, 0]),
                 "y_pred": np.array([0, 0, 0, 0, 0, 0]),
             },
-            "no samples predicted for the positive class",
+            (
+                "No samples were predicted for the positive class and "
+                "`positive_likelihood_ratio` is set to `np.nan`."
+            ),
         ),
         # When `tn == 0`, LR- is undefined
         (
@@ -697,7 +692,7 @@ def test_confusion_matrix_single_label():
                 "y_true": np.array([1, 1, 1, 0, 0, 0]),
                 "y_pred": np.array([0, 0, 0, 1, 1, 1]),
             },
-            "negative_likelihood_ratio ill-defined and being set to nan",
+            "`negative_likelihood_ratio` is ill-defined and set to `np.nan`.",
         ),
         # When `tp + fn == 0` both ratios are undefined
         (
@@ -705,7 +700,7 @@ def test_confusion_matrix_single_label():
                 "y_true": np.array([0, 0, 0, 0, 0, 0]),
                 "y_pred": np.array([1, 1, 1, 0, 0, 0]),
             },
-            "no samples of the positive class were present in the testing set",
+            "No samples of the positive class are present in `y_true`.",
         ),
     ],
 )
@@ -714,7 +709,9 @@ def test_likelihood_ratios_warnings(params, warn_msg):
     # least one of the ratios is ill-defined.
 
     with pytest.warns(UserWarning, match=warn_msg):
-        class_likelihood_ratios(**params)
+        # TODO(1.9): remove setting `replace_undefined_by` since this will be set by
+        # default
+        class_likelihood_ratios(replace_undefined_by=1.0, **params)
 
 
 @pytest.mark.parametrize(
@@ -739,6 +736,7 @@ def test_likelihood_ratios_errors(params, err_msg):
         class_likelihood_ratios(**params)
 
 
+# TODO(1.9): remove setting `replace_undefined_by` since this will be set by default
 def test_likelihood_ratios():
     # Build confusion matrix with tn=9, fp=8, fn=1, tp=2,
     # sensitivity=2/3, specificity=9/17, prevalence=3/20,
@@ -746,12 +744,14 @@ def test_likelihood_ratios():
     y_true = np.array([1] * 3 + [0] * 17)
     y_pred = np.array([1] * 2 + [0] * 10 + [1] * 8)
 
-    pos, neg = class_likelihood_ratios(y_true, y_pred)
+    pos, neg = class_likelihood_ratios(y_true, y_pred, replace_undefined_by=np.nan)
     assert_allclose(pos, 34 / 24)
     assert_allclose(neg, 17 / 27)
 
     # Build limit case with y_pred = y_true
-    pos, neg = class_likelihood_ratios(y_true, y_true)
+    pos, neg = class_likelihood_ratios(y_true, y_true, replace_undefined_by=np.nan)
+    # TODO(1.9): replace next line with `assert_array_equal(pos, 1.0)`, since
+    # `replace_undefined_by` has a new default:
     assert_array_equal(pos, np.nan * 2)
     assert_allclose(neg, np.zeros(2), rtol=1e-12)
 
@@ -759,9 +759,140 @@ def test_likelihood_ratios():
     # sensitivity=2/3, specificity=9/12, prevalence=3/20,
     # LR+=24/9, LR-=12/27
     sample_weight = np.array([1.0] * 15 + [0.0] * 5)
-    pos, neg = class_likelihood_ratios(y_true, y_pred, sample_weight=sample_weight)
+    pos, neg = class_likelihood_ratios(
+        y_true, y_pred, sample_weight=sample_weight, replace_undefined_by=np.nan
+    )
     assert_allclose(pos, 24 / 9)
     assert_allclose(neg, 12 / 27)
+
+
+# TODO(1.9): remove test
+@pytest.mark.parametrize("raise_warning", [True, False])
+def test_likelihood_ratios_raise_warning_deprecation(raise_warning):
+    """Test that class_likelihood_ratios raises a `FutureWarning` when `raise_warning`
+    param is set."""
+    y_true = np.array([1, 0])
+    y_pred = np.array([1, 0])
+
+    msg = "`raise_warning` was deprecated in version 1.7 and will be removed in 1.9."
+    with pytest.warns(FutureWarning, match=msg):
+        class_likelihood_ratios(y_true, y_pred, raise_warning=raise_warning)
+
+
+# TODO(1.9): remove test
+def test_likelihood_ratios_raise_default_deprecation():
+    """Test that class_likelihood_ratios raises a `FutureWarning` when `raise_warning`
+    and `replace_undefined_by` are both default."""
+    y_true = np.array([1, 0])
+    y_pred = np.array([1, 0])
+
+    msg = "The default return value of `class_likelihood_ratios` in case of a"
+    with pytest.warns(FutureWarning, match=msg):
+        class_likelihood_ratios(y_true, y_pred)
+
+
+def test_likelihood_ratios_replace_undefined_by_worst():
+    """Test that class_likelihood_ratios returns the worst scores `1.0` for both LR+ and
+    LR- when `replace_undefined_by=1` is set."""
+    # This data causes fp=0 (0 false positives) in the confusion_matrix and a division
+    # by zero that affects the positive_likelihood_ratio:
+    y_true = np.array([1, 1, 0])
+    y_pred = np.array([1, 0, 0])
+
+    positive_likelihood_ratio, _ = class_likelihood_ratios(
+        y_true, y_pred, replace_undefined_by=1
+    )
+    assert positive_likelihood_ratio == pytest.approx(1.0)
+
+    # This data causes tn=0 (0 true negatives) in the confusion_matrix and a division
+    # by zero that affects the negative_likelihood_ratio:
+    y_true = np.array([1, 0, 0])
+    y_pred = np.array([1, 1, 1])
+
+    _, negative_likelihood_ratio = class_likelihood_ratios(
+        y_true, y_pred, replace_undefined_by=1
+    )
+    assert negative_likelihood_ratio == pytest.approx(1.0)
+
+
+@pytest.mark.parametrize(
+    "replace_undefined_by",
+    [
+        {"LR+": 0.0},
+        {"LR-": 0.0},
+        {"LR+": -5.0, "LR-": 0.0},
+        {"LR+": 1.0, "LR-": "nan"},
+        {"LR+": 0.0, "LR-": 0.0},
+        {"LR+": 1.0, "LR-": 2.0},
+    ],
+)
+def test_likelihood_ratios_wrong_dict_replace_undefined_by(replace_undefined_by):
+    """Test that class_likelihood_ratios raises a `ValueError` if the input dict for
+    `replace_undefined_by` is in the wrong format or contains impossible values."""
+    y_true = np.array([1, 0])
+    y_pred = np.array([1, 0])
+
+    msg = "The dictionary passed as `replace_undefined_by` needs to be in the form"
+    with pytest.raises(ValueError, match=msg):
+        class_likelihood_ratios(
+            y_true, y_pred, replace_undefined_by=replace_undefined_by
+        )
+
+
+@pytest.mark.parametrize(
+    "replace_undefined_by, expected",
+    [
+        ({"LR+": 1.0, "LR-": 1.0}, 1.0),
+        ({"LR+": np.inf, "LR-": 0.0}, np.inf),
+        ({"LR+": 2.0, "LR-": 0.0}, 2.0),
+        ({"LR+": np.nan, "LR-": np.nan}, np.nan),
+        (np.nan, np.nan),
+    ],
+)
+def test_likelihood_ratios_replace_undefined_by_0_fp(replace_undefined_by, expected):
+    """Test that the `replace_undefined_by` param returns the right value for the
+    positive_likelihood_ratio as defined by the user."""
+    # This data causes fp=0 (0 false positives) in the confusion_matrix and a division
+    # by zero that affects the positive_likelihood_ratio:
+    y_true = np.array([1, 1, 0])
+    y_pred = np.array([1, 0, 0])
+
+    positive_likelihood_ratio, _ = class_likelihood_ratios(
+        y_true, y_pred, replace_undefined_by=replace_undefined_by
+    )
+
+    if np.isnan(expected):
+        assert np.isnan(positive_likelihood_ratio)
+    else:
+        assert positive_likelihood_ratio == pytest.approx(expected)
+
+
+@pytest.mark.parametrize(
+    "replace_undefined_by, expected",
+    [
+        ({"LR+": 1.0, "LR-": 1.0}, 1.0),
+        ({"LR+": np.inf, "LR-": 0.0}, 0.0),
+        ({"LR+": np.inf, "LR-": 0.5}, 0.5),
+        ({"LR+": np.nan, "LR-": np.nan}, np.nan),
+        (np.nan, np.nan),
+    ],
+)
+def test_likelihood_ratios_replace_undefined_by_0_tn(replace_undefined_by, expected):
+    """Test that the `replace_undefined_by` param returns the right value for the
+    negative_likelihood_ratio as defined by the user."""
+    # This data causes tn=0 (0 true negatives) in the confusion_matrix and a division
+    # by zero that affects the negative_likelihood_ratio:
+    y_true = np.array([1, 0, 0])
+    y_pred = np.array([1, 1, 1])
+
+    _, negative_likelihood_ratio = class_likelihood_ratios(
+        y_true, y_pred, replace_undefined_by=replace_undefined_by
+    )
+
+    if np.isnan(expected):
+        assert np.isnan(negative_likelihood_ratio)
+    else:
+        assert negative_likelihood_ratio == pytest.approx(expected)
 
 
 def test_cohen_kappa():
@@ -795,13 +926,8 @@ def test_cohen_kappa():
     )
 
 
-def test_matthews_corrcoef_nan():
-    assert matthews_corrcoef([0], [1]) == 0.0
-    assert matthews_corrcoef([0, 0], [0, 1]) == 0.0
-
-
 @pytest.mark.parametrize("zero_division", [0, 1, np.nan])
-@pytest.mark.parametrize("y_true, y_pred", [([0], [0]), ([], [])])
+@pytest.mark.parametrize("y_true, y_pred", [([0], [0])])
 @pytest.mark.parametrize(
     "metric",
     [
@@ -809,7 +935,6 @@ def test_matthews_corrcoef_nan():
         partial(fbeta_score, beta=1),
         precision_score,
         recall_score,
-        partial(cohen_kappa_score, labels=[0, 1]),
     ],
 )
 def test_zero_division_nan_no_warning(metric, y_true, y_pred, zero_division):
@@ -826,7 +951,7 @@ def test_zero_division_nan_no_warning(metric, y_true, y_pred, zero_division):
         assert result == zero_division
 
 
-@pytest.mark.parametrize("y_true, y_pred", [([0], [0]), ([], [])])
+@pytest.mark.parametrize("y_true, y_pred", [([0], [0])])
 @pytest.mark.parametrize(
     "metric",
     [
@@ -834,7 +959,6 @@ def test_zero_division_nan_no_warning(metric, y_true, y_pred, zero_division):
         partial(fbeta_score, beta=1),
         precision_score,
         recall_score,
-        cohen_kappa_score,
     ],
 )
 def test_zero_division_nan_warning(metric, y_true, y_pred):

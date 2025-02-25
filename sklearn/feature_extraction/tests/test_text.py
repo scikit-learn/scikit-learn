@@ -1,5 +1,6 @@
 import pickle
 import re
+import uuid
 import warnings
 from collections import defaultdict
 from collections.abc import Mapping
@@ -1613,3 +1614,15 @@ def test_tfidf_transformer_copy(csr_container):
     assert X_transform is X_csr
     with pytest.raises(AssertionError):
         assert_allclose_dense_sparse(X_csr, X_csr_original)
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_tfidf_vectorizer_perserve_dtype_idf(dtype):
+    """Check that `idf_` has the same dtype as the input data.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/30016
+    """
+    X = [str(uuid.uuid4()) for i in range(100_000)]
+    vectorizer = TfidfVectorizer(dtype=dtype).fit(X)
+    assert vectorizer.idf_.dtype == dtype

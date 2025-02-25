@@ -225,6 +225,11 @@ class SimpleImputer(_BaseImputer):
 
         .. versionadded:: 1.2
 
+        .. versionchanged:: 1.6
+            Currently, when `keep_empty_feature=False` and `strategy="constant"`,
+            empty features are not dropped. This behaviour will change in version
+            1.8. Set `keep_empty_feature=True` to preserve this behaviour.
+
     Attributes
     ----------
     statistics_ : array of shape (n_features,)
@@ -458,6 +463,19 @@ class SimpleImputer(_BaseImputer):
         statistics = np.empty(X.shape[1])
 
         if strategy == "constant":
+            # TODO(1.8): Remove FutureWarning and add `np.nan` as a statistic
+            # for empty features to drop them later.
+            if not self.keep_empty_features and any(
+                [all(missing_mask[:, i].data) for i in range(missing_mask.shape[1])]
+            ):
+                warnings.warn(
+                    "Currently, when `keep_empty_feature=False` and "
+                    '`strategy="constant"`, empty features are not dropped. '
+                    "This behaviour will change in version 1.8. Set "
+                    "`keep_empty_feature=True` to preserve this behaviour.",
+                    FutureWarning,
+                )
+
             # for constant strategy, self.statistics_ is used to store
             # fill_value in each column
             statistics.fill(fill_value)
@@ -548,6 +566,17 @@ class SimpleImputer(_BaseImputer):
 
         # Constant
         elif strategy == "constant":
+            # TODO(1.8): Remove FutureWarning and add `np.nan` as a statistic
+            # for empty features to drop them later.
+            if not self.keep_empty_features and ma.getmask(masked_X).all(axis=0).any():
+                warnings.warn(
+                    "Currently, when `keep_empty_feature=False` and "
+                    '`strategy="constant"`, empty features are not dropped. '
+                    "This behaviour will change in version 1.8. Set "
+                    "`keep_empty_feature=True` to preserve this behaviour.",
+                    FutureWarning,
+                )
+
             # for constant strategy, self.statistcs_ is used to store
             # fill_value in each column
             return np.full(X.shape[1], fill_value, dtype=X.dtype)
@@ -710,6 +739,7 @@ class SimpleImputer(_BaseImputer):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.input_tags.allow_nan = is_pandas_na(self.missing_values) or is_scalar_nan(
             self.missing_values
         )
@@ -1101,5 +1131,6 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         tags = super().__sklearn_tags__()
         tags.input_tags.allow_nan = True
         tags.input_tags.string = True
+        tags.input_tags.sparse = True
         tags.transformer_tags.preserves_dtype = []
         return tags

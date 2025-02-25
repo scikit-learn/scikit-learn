@@ -10,11 +10,10 @@ If available, the example uses
 `basemap <https://matplotlib.org/basemap/>`_
 to plot the coast lines and national boundaries of South America.
 
-This example does not perform any learning over the data
-(see :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py` for
-an example of classification based on the attributes in this dataset).  It
-simply shows the kernel density estimate of observed data points in
-geospatial coordinates.
+This example does not perform any learning over the data (see
+:ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py` for an
+example of classification based on the attributes in this dataset).  It simply shows the
+kernel density estimate of observed data points in geospatial coordinates.
 
 The two species are:
 

@@ -965,7 +965,7 @@ def test_bagging_with_metadata_routing(model):
     "model",
     [
         BaggingClassifier(
-            estimator=AdaBoostClassifier(n_estimators=1, algorithm="SAMME"),
+            estimator=AdaBoostClassifier(n_estimators=1),
             n_estimators=1,
         ),
         BaggingRegressor(estimator=AdaBoostRegressor(n_estimators=1), n_estimators=1),

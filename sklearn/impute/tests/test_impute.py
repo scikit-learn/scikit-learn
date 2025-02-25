@@ -410,18 +410,24 @@ def test_imputation_constant_error_invalid_type(X_data, missing_value):
         imputer.fit_transform(X)
 
 
+# TODO (1.8): check that `keep_empty_features=False` drop the
+# empty features due to the behaviour change.
 def test_imputation_constant_integer():
     # Test imputation using the constant strategy on integers
     X = np.array([[-1, 2, 3, -1], [4, -1, 5, -1], [6, 7, -1, -1], [8, 9, 0, -1]])
 
     X_true = np.array([[0, 2, 3, 0], [4, 0, 5, 0], [6, 7, 0, 0], [8, 9, 0, 0]])
 
-    imputer = SimpleImputer(missing_values=-1, strategy="constant", fill_value=0)
+    imputer = SimpleImputer(
+        missing_values=-1, strategy="constant", fill_value=0, keep_empty_features=True
+    )
     X_trans = imputer.fit_transform(X)
 
     assert_array_equal(X_trans, X_true)
 
 
+# TODO (1.8): check that `keep_empty_features=False` drop the
+# empty features due to the behaviour change.
 @pytest.mark.parametrize("array_constructor", CSR_CONTAINERS + [np.asarray])
 def test_imputation_constant_float(array_constructor):
     # Test imputation using the constant strategy on floats
@@ -442,12 +448,16 @@ def test_imputation_constant_float(array_constructor):
 
     X_true = array_constructor(X_true)
 
-    imputer = SimpleImputer(strategy="constant", fill_value=-1)
+    imputer = SimpleImputer(
+        strategy="constant", fill_value=-1, keep_empty_features=True
+    )
     X_trans = imputer.fit_transform(X)
 
     assert_allclose_dense_sparse(X_trans, X_true)
 
 
+# TODO (1.8): check that `keep_empty_features=False` drop the
+# empty features due to the behaviour change.
 @pytest.mark.parametrize("marker", [None, np.nan, "NAN", "", 0])
 def test_imputation_constant_object(marker):
     # Test imputation using the constant strategy on objects
@@ -472,13 +482,18 @@ def test_imputation_constant_object(marker):
     )
 
     imputer = SimpleImputer(
-        missing_values=marker, strategy="constant", fill_value="missing"
+        missing_values=marker,
+        strategy="constant",
+        fill_value="missing",
+        keep_empty_features=True,
     )
     X_trans = imputer.fit_transform(X)
 
     assert_array_equal(X_trans, X_true)
 
 
+# TODO (1.8): check that `keep_empty_features=False` drop the
+# empty features due to the behaviour change.
 @pytest.mark.parametrize("dtype", [object, "category"])
 def test_imputation_constant_pandas(dtype):
     # Test imputation using the constant strategy on pandas df
@@ -498,7 +513,7 @@ def test_imputation_constant_pandas(dtype):
         dtype=object,
     )
 
-    imputer = SimpleImputer(strategy="constant")
+    imputer = SimpleImputer(strategy="constant", keep_empty_features=True)
     X_trans = imputer.fit_transform(df)
 
     assert_array_equal(X_trans, X_true)
@@ -1013,6 +1028,7 @@ def test_iterative_imputer_min_max_array_like(min_value, max_value, correct_outp
         (100, 0, "min_value >= max_value."),
         (np.inf, -np.inf, "min_value >= max_value."),
         ([-5, 5], [100, 200, 0], "_value' should be of shape"),
+        ([-5, 5, 5], [100, 200], "_value' should be of shape"),
     ],
 )
 def test_iterative_imputer_catch_min_max_error(min_value, max_value, err_msg):
@@ -1531,6 +1547,8 @@ def test_iterative_imputer_keep_empty_features(initial_strategy):
     assert_allclose(X_imputed[:, 1], 0)
 
 
+# TODO (1.8): check that `keep_empty_features=False` drop the
+# empty features due to the behaviour change.
 def test_iterative_imputer_constant_fill_value():
     """Check that we propagate properly the parameter `fill_value`."""
     X = np.array([[-1, 2, 3, -1], [4, -1, 5, -1], [6, 7, -1, -1], [8, 9, 0, -1]])
@@ -1541,9 +1559,65 @@ def test_iterative_imputer_constant_fill_value():
         initial_strategy="constant",
         fill_value=fill_value,
         max_iter=0,
+        keep_empty_features=True,
     )
     imputer.fit_transform(X)
     assert_array_equal(imputer.initial_imputer_.statistics_, fill_value)
+
+
+def test_iterative_imputer_min_max_value_remove_empty():
+    """Check that we properly apply the empty feature mask to `min_value` and
+    `max_value`.
+
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/29355
+    """
+    # Intentionally make column 2 as a missing column, then the bound of the imputed
+    # value of column 3 should be (4, 5)
+    X = np.array(
+        [
+            [1, 2, np.nan, np.nan],
+            [4, 5, np.nan, 6],
+            [7, 8, np.nan, np.nan],
+            [10, 11, np.nan, 12],
+        ]
+    )
+    min_value = [-np.inf, -np.inf, -np.inf, 4]
+    max_value = [np.inf, np.inf, np.inf, 5]
+
+    X_imputed = IterativeImputer(
+        min_value=min_value,
+        max_value=max_value,
+        keep_empty_features=False,
+    ).fit_transform(X)
+
+    X_without_missing_column = np.delete(X, 2, axis=1)
+    assert X_imputed.shape == X_without_missing_column.shape
+    assert np.min(X_imputed[np.isnan(X_without_missing_column)]) == pytest.approx(4)
+    assert np.max(X_imputed[np.isnan(X_without_missing_column)]) == pytest.approx(5)
+
+    # Intentionally make column 3 as a missing column, then the bound of the imputed
+    # value of column 2 should be (3.5, 6)
+    X = np.array(
+        [
+            [1, 2, np.nan, np.nan],
+            [4, 5, 6, np.nan],
+            [7, 8, np.nan, np.nan],
+            [10, 11, 12, np.nan],
+        ]
+    )
+    min_value = [-np.inf, -np.inf, 3.5, -np.inf]
+    max_value = [np.inf, np.inf, 6, np.inf]
+
+    X_imputed = IterativeImputer(
+        min_value=min_value,
+        max_value=max_value,
+        keep_empty_features=False,
+    ).fit_transform(X)
+
+    X_without_missing_column = X[:, :3]
+    assert X_imputed.shape == X_without_missing_column.shape
+    assert np.min(X_imputed[np.isnan(X_without_missing_column)]) == pytest.approx(3.5)
+    assert np.max(X_imputed[np.isnan(X_without_missing_column)]) == pytest.approx(6)
 
 
 @pytest.mark.parametrize("keep_empty_features", [True, False])
@@ -1684,7 +1758,13 @@ def test_simple_imputer_constant_keep_empty_features(array_type, keep_empty_feat
     )
 
     for method in ["fit_transform", "transform"]:
-        X_imputed = getattr(imputer, method)(X)
+        # TODO(1.8): Remove the condition and still call getattr(imputer, method)(X)
+        if method.startswith("fit") and not keep_empty_features:
+            warn_msg = '`strategy="constant"`, empty features are not dropped. '
+            with pytest.warns(FutureWarning, match=warn_msg):
+                X_imputed = getattr(imputer, method)(X)
+        else:
+            X_imputed = getattr(imputer, method)(X)
         assert X_imputed.shape == X.shape
         constant_feature = (
             X_imputed[:, 0].toarray() if array_type == "sparse" else X_imputed[:, 0]
@@ -1786,3 +1866,70 @@ def test_simple_imputer_constant_fill_value_casting():
         )
         X_trans = imputer.fit_transform(X_float32)
         assert X_trans.dtype == X_float32.dtype
+
+
+@pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent", "constant"])
+def test_iterative_imputer_no_empty_features(strategy):
+    """Check the behaviour of `keep_empty_features` with no empty features.
+
+    With no-empty features, we should get the same imputation whatever the
+    parameter `keep_empty_features`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/29375
+    """
+    X = np.array([[np.nan, 0, 1], [2, np.nan, 3], [4, 5, np.nan]])
+
+    imputer_drop_empty_features = IterativeImputer(
+        initial_strategy=strategy, fill_value=1, keep_empty_features=False
+    )
+
+    imputer_keep_empty_features = IterativeImputer(
+        initial_strategy=strategy, fill_value=1, keep_empty_features=True
+    )
+
+    assert_allclose(
+        imputer_drop_empty_features.fit_transform(X),
+        imputer_keep_empty_features.fit_transform(X),
+    )
+
+
+@pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent", "constant"])
+@pytest.mark.parametrize(
+    "X_test",
+    [
+        np.array([[1, 2, 3, 4], [5, 6, 7, 8]]),  # without empty feature
+        np.array([[np.nan, 2, 3, 4], [np.nan, 6, 7, 8]]),  # empty feature at column 0
+        np.array([[1, 2, 3, np.nan], [5, 6, 7, np.nan]]),  # empty feature at column 3
+    ],
+)
+def test_iterative_imputer_with_empty_features(strategy, X_test):
+    """Check the behaviour of `keep_empty_features` in the presence of empty features.
+
+    With `keep_empty_features=True`, the empty feature will be imputed with the value
+    defined by the initial imputation.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/29375
+    """
+    X_train = np.array(
+        [[np.nan, np.nan, 0, 1], [np.nan, 2, np.nan, 3], [np.nan, 4, 5, np.nan]]
+    )
+
+    imputer_drop_empty_features = IterativeImputer(
+        initial_strategy=strategy, fill_value=0, keep_empty_features=False
+    )
+    X_train_drop_empty_features = imputer_drop_empty_features.fit_transform(X_train)
+    X_test_drop_empty_features = imputer_drop_empty_features.transform(X_test)
+
+    imputer_keep_empty_features = IterativeImputer(
+        initial_strategy=strategy, fill_value=0, keep_empty_features=True
+    )
+    X_train_keep_empty_features = imputer_keep_empty_features.fit_transform(X_train)
+    X_test_keep_empty_features = imputer_keep_empty_features.transform(X_test)
+
+    assert_allclose(X_train_drop_empty_features, X_train_keep_empty_features[:, 1:])
+    assert_allclose(X_train_keep_empty_features[:, 0], 0)
+
+    assert X_train_drop_empty_features.shape[1] == X_test_drop_empty_features.shape[1]
+    assert X_train_keep_empty_features.shape[1] == X_test_keep_empty_features.shape[1]
