@@ -2139,6 +2139,11 @@ array_api_metric_checkers = {
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
     ],
+    hamming_loss: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
     mean_tweedie_deviance: [check_array_api_regression_metric],
     partial(mean_tweedie_deviance, power=-0.5): [check_array_api_regression_metric],
     partial(mean_tweedie_deviance, power=1.5): [check_array_api_regression_metric],
