@@ -26,7 +26,7 @@ from sklearn.neighbors import LocalOutlierFactor
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import RobustScaler, StandardScaler
 from sklearn.utils._testing import set_random_state
-from sklearn.utils.validation import check_is_fitted, has_fit_parameter
+from sklearn.utils.validation import check_is_fitted
 
 
 @pytest.fixture
@@ -221,16 +221,3 @@ def test_frozen_params():
     other_est = LocalOutlierFactor()
     frozen.set_params(estimator=other_est)
     assert frozen.get_params() == {"estimator": other_est}
-
-
-def test_frozen_ignores_sample_weight(regression_dataset):
-    X, y = regression_dataset
-    estimator = LinearRegression().fit(X, y)
-    frozen = FrozenEstimator(estimator)
-
-    # Should not raise: sample_weight is just ignored as it is not used.
-    frozen.fit(X, y, sample_weight=np.ones(len(y)))
-
-    # FrozenEstimator should have sample_weight in its signature to make it
-    # explicit that sample_weight is accepted and ignored intentionally.
-    assert has_fit_parameter(frozen, "sample_weight")

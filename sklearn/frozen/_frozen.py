@@ -86,7 +86,7 @@ class FrozenEstimator(BaseEstimator):
         except NotFittedError:
             return False
 
-    def fit(self, X, y, sample_weight=None, *args, **kwargs):
+    def fit(self, X, y, *args, **kwargs):
         """No-op.
 
         As a frozen estimator, calling `fit` has no effect.
@@ -97,9 +97,6 @@ class FrozenEstimator(BaseEstimator):
             Ignored.
 
         y : object
-            Ignored.
-
-        sample_weight : object
             Ignored.
 
         *args : tuple

@@ -1,3 +1,0 @@
-- :class:`~frozen.FrozenEstimator` now explicitly accepts a `sample_weight`
-  argument in `fit` (and ignores it explicitly) to make it inspectable by
-  meta-estimators and testing frameworks. By :user:`Olivier Grisel <ogrisel>`
