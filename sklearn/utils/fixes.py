@@ -34,27 +34,13 @@ sp_base_version = parse_version(sp_version.base_version)
 
 # TODO: We can consider removing the containers and importing
 # directly from SciPy when sparse matrices will be deprecated.
-CSR_CONTAINERS = [scipy.sparse.csr_matrix]
-CSC_CONTAINERS = [scipy.sparse.csc_matrix]
-COO_CONTAINERS = [scipy.sparse.coo_matrix]
-LIL_CONTAINERS = [scipy.sparse.lil_matrix]
-DOK_CONTAINERS = [scipy.sparse.dok_matrix]
-BSR_CONTAINERS = [scipy.sparse.bsr_matrix]
-DIA_CONTAINERS = [scipy.sparse.dia_matrix]
-
-if parse_version(scipy.__version__) >= parse_version("1.8"):
-    # Sparse Arrays have been added in SciPy 1.8
-    # TODO: When SciPy 1.8 is the minimum supported version,
-    # those list can be created directly without this condition.
-    # See: https://github.com/scikit-learn/scikit-learn/issues/27090
-    CSR_CONTAINERS.append(scipy.sparse.csr_array)
-    CSC_CONTAINERS.append(scipy.sparse.csc_array)
-    COO_CONTAINERS.append(scipy.sparse.coo_array)
-    LIL_CONTAINERS.append(scipy.sparse.lil_array)
-    DOK_CONTAINERS.append(scipy.sparse.dok_array)
-    BSR_CONTAINERS.append(scipy.sparse.bsr_array)
-    DIA_CONTAINERS.append(scipy.sparse.dia_array)
-
+CSR_CONTAINERS = [scipy.sparse.csr_matrix, scipy.sparse.csr_array]
+CSC_CONTAINERS = [scipy.sparse.csc_matrix, scipy.sparse.csc_array]
+COO_CONTAINERS = [scipy.sparse.coo_matrix, scipy.sparse.coo_array]
+LIL_CONTAINERS = [scipy.sparse.lil_matrix, scipy.sparse.lil_array]
+DOK_CONTAINERS = [scipy.sparse.dok_matrix, scipy.sparse.dok_array]
+BSR_CONTAINERS = [scipy.sparse.bsr_matrix, scipy.sparse.bsr_array]
+DIA_CONTAINERS = [scipy.sparse.dia_matrix, scipy.sparse.dia_array]
 
 # Remove when minimum scipy version is 1.11.0
 try:
@@ -63,21 +49,6 @@ try:
     SPARRAY_PRESENT = True
 except ImportError:
     SPARRAY_PRESENT = False
-
-
-# Remove when minimum scipy version is 1.8
-try:
-    from scipy.sparse import csr_array  # noqa
-
-    SPARSE_ARRAY_PRESENT = True
-except ImportError:
-    SPARSE_ARRAY_PRESENT = False
-
-
-try:
-    from scipy.optimize._linesearch import line_search_wolfe1, line_search_wolfe2
-except ImportError:  # SciPy < 1.8
-    from scipy.optimize.linesearch import line_search_wolfe2, line_search_wolfe1  # type: ignore  # noqa
 
 
 def _object_dtype_isnan(X):
