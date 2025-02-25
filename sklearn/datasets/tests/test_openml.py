@@ -32,7 +32,7 @@ from sklearn.utils._testing import (
 OPENML_TEST_DATA_MODULE = "sklearn.datasets.tests.data.openml"
 # if True, urlopen will be monkey patched to only use local files
 test_offline = True
-_DATA_FILE = "data/v1/download/{}"
+_MONKEY_PATCH_LOCAL_OPENML_PATH = "data/v1/download/{}"
 
 
 class _MockHTTPResponse:
@@ -1357,7 +1357,7 @@ def test_open_openml_url_cache(monkeypatch, gzip_response, tmpdir):
     data_id = 61
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
-    openml_path = _DATA_FILE.format(data_id) + "/filename.arff"
+    openml_path = _MONKEY_PATCH_LOCAL_OPENML_PATH.format(data_id) + "/filename.arff"
     url = f"https://www.openml.org/{openml_path}"
     cache_directory = str(tmpdir.mkdir("scikit_learn_data"))
     # first fill the cache
@@ -1373,7 +1373,7 @@ def test_open_openml_url_cache(monkeypatch, gzip_response, tmpdir):
 @pytest.mark.parametrize("write_to_disk", [True, False])
 def test_open_openml_url_unlinks_local_path(monkeypatch, tmpdir, write_to_disk):
     data_id = 61
-    openml_path = _DATA_FILE.format(data_id) + "/filename.arff"
+    openml_path = _MONKEY_PATCH_LOCAL_OPENML_PATH.format(data_id) + "/filename.arff"
     url = f"https://www.openml.org/{openml_path}"
     cache_directory = str(tmpdir.mkdir("scikit_learn_data"))
     location = _get_local_path(openml_path, cache_directory)
@@ -1394,7 +1394,7 @@ def test_open_openml_url_unlinks_local_path(monkeypatch, tmpdir, write_to_disk):
 
 def test_retry_with_clean_cache(tmpdir):
     data_id = 61
-    openml_path = _DATA_FILE.format(data_id)
+    openml_path = _MONKEY_PATCH_LOCAL_OPENML_PATH.format(data_id)
     cache_directory = str(tmpdir.mkdir("scikit_learn_data"))
     location = _get_local_path(openml_path, cache_directory)
     os.makedirs(os.path.dirname(location))
@@ -1417,7 +1417,7 @@ def test_retry_with_clean_cache(tmpdir):
 
 def test_retry_with_clean_cache_http_error(tmpdir):
     data_id = 61
-    openml_path = _DATA_FILE.format(data_id)
+    openml_path = _MONKEY_PATCH_LOCAL_OPENML_PATH.format(data_id)
     cache_directory = str(tmpdir.mkdir("scikit_learn_data"))
 
     @_retry_with_clean_cache(openml_path, cache_directory)
