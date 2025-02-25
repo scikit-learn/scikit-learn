@@ -30,13 +30,13 @@
    :target: https://scikit-learn.org/scikit-learn-benchmarks
 
 .. |PythonMinVersion| replace:: 3.10
-.. |NumPyMinVersion| replace:: 1.22
-.. |SciPyMinVersion| replace:: 1.8
+.. |NumPyMinVersion| replace:: 1.22.0
+.. |SciPyMinVersion| replace:: 1.8.0
 .. |JoblibMinVersion| replace:: 1.2.0
 .. |ThreadpoolctlMinVersion| replace:: 3.1.0
-.. |MatplotlibMinVersion| replace:: 3.5
-.. |Scikit-ImageMinVersion| replace:: 0.19
-.. |PandasMinVersion| replace:: 1.4
+.. |MatplotlibMinVersion| replace:: 3.5.0
+.. |Scikit-ImageMinVersion| replace:: 0.19.0
+.. |PandasMinVersion| replace:: 1.4.0
 .. |SeabornMinVersion| replace:: 0.9.0
 .. |PytestMinVersion| replace:: 7.1.2
 .. |PlotlyMinVersion| replace:: 5.14.0
