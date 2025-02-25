@@ -31,7 +31,7 @@ jobs:
   steps:
     - task: UsePythonVersion@0
       inputs:
-        versionSpec: '3.9'
+        versionSpec: '3.12'
     - bash: |
         source build_tools/shared.sh
         # Include pytest compatibility with mypy
@@ -173,7 +173,7 @@ jobs:
 - template: build_tools/azure/posix.yml
   parameters:
     name: Ubuntu_Atlas
-    vmImage: ubuntu-22.04
+    vmImage: ubuntu-24.04
     dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
     # Runs when dependencies succeeded or skipped
     condition: |
@@ -183,8 +183,8 @@ jobs:
       )
     matrix:
       # Linux environment to test that scikit-learn can be built against
-      # versions of numpy, scipy with ATLAS that comes with Ubuntu Jammy Jellyfish 22.04
-      # i.e. numpy 1.21.5 and scipy 1.8.0
+      # versions of numpy, scipy with ATLAS that comes with Ubuntu 24.04 Noble Numbat
+      # i.e. numpy 1.26.4 and scipy 1.11.4
       ubuntu_atlas:
         DISTRIB: 'ubuntu'
         LOCK_FILE: './build_tools/azure/ubuntu_atlas_lock.txt'
@@ -203,7 +203,7 @@ jobs:
         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
-      # Linux + Python 3.9 build with minimum supported version of dependencies
+      # Linux build with minimum supported version of dependencies
       pymin_conda_forge_openblas_min_dependencies:
         DISTRIB: 'conda'
         LOCK_FILE: './build_tools/azure/pymin_conda_forge_openblas_min_dependencies_linux-64_conda.lock'

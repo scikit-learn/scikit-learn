@@ -743,8 +743,6 @@ def test_logistic_regression_solvers_multiclass_unpenalized(
     fit_intercept, global_random_seed
 ):
     """Test and compare solver results for unpenalized multinomial multiclass."""
-    # Our use of numpy.random.multinomial requires numpy >= 1.22
-    pytest.importorskip("numpy", minversion="1.22.0")
     # We want to avoid perfect separation.
     n_samples, n_features, n_classes = 100, 4, 3
     rng = np.random.RandomState(global_random_seed)

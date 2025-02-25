@@ -13,7 +13,6 @@ from sklearn.utils._testing import (
     assert_array_equal,
     ignore_warnings,
 )
-from sklearn.utils.fixes import np_version, parse_version
 
 X = [[-2, 1.5, -4, -1], [-1, 2.5, -3, -0.5], [0, 3.5, -2, 0.5], [1, 4.5, -1, 2]]
 
@@ -688,18 +687,3 @@ def test_KBD_inverse_transform_Xt_deprecation(strategy, quantile_method):
 
     with pytest.warns(FutureWarning, match="Xt was renamed X in version 1.5"):
         kbd.inverse_transform(Xt=X)
-
-
-# TODO: remove this test when numpy min version >= 1.22
-@pytest.mark.skipif(
-    condition=np_version >= parse_version("1.22"),
-    reason="newer numpy versions do support the 'method' parameter",
-)
-def test_invalid_quantile_method_on_old_numpy():
-    expected_msg = (
-        "quantile_method='closest_observation' is not supported with numpy < 1.22"
-    )
-    with pytest.raises(ValueError, match=expected_msg):
-        KBinsDiscretizer(
-            quantile_method="closest_observation", strategy="quantile"
-        ).fit(X)
