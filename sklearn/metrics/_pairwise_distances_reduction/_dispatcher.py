@@ -109,7 +109,7 @@ class BaseDistancesReductionDispatcher:
         -------
         True if the dispatcher can be used, else False.
         """
-        is_usable = (bool(X) and bool(Y)) ^ bool(precomputed)
+        is_usable = (X is not None and Y is not None) ^ bool(precomputed)
         if is_usable == False:
             return is_usable
         # FIXME: the current Cython implementation is too slow for a large number of

@@ -132,20 +132,7 @@ def assert_precomputed(precomputed, n_samples_X, n_samples_Y):
             f"Expected: {expected_shape}, Got: {precomputed.shape}."
         )
 
-'''
-def assert_precomputed(precomputed, n_samples_X, n_samples_Y):
-    if isinstance(precomputed, np.ndarray) is False:
-        raise AssertionError("Input must be a numpy array")
-    if precomputed.dtype not in [np.float32, np.float64]:
-        raise AssertionError("Precomputed matrix must be of type float 32 or 64")
-    if precomputed.size == 0: 
-        raise AssertionError("Precomputed matrix should not be empty")
-    if precomputed.shape != (n_samples_X, n_samples_Y):
-        raise AssertionError(
-     f"Incorrect dimensions for precomputed matrix. "
-     f"Expected: ({n_samples_X}, {n_samples_Y}), "
-     f"Got: {precomputed.shape}")
-'''    
+
 def assert_no_missing_neighbors(
     query_idx,
     dist_row_a,
@@ -438,6 +425,16 @@ def test_assert_precomputed():
     incorrect_shape = np.random.rand(n_samples_X, n_samples_X).astype(np.float32)
     with pytest.raises(AssertionError, match="Incorrect dimensions for precomputed matrix"):
         assert_precomputed(incorrect_shape, n_samples_X, n_samples_Y)
+
+def test_my_function_precomputed():
+    X = np.array([[1, 2], [3, 4], [5, 6]])  # Small sample data
+    Y = np.array([[7, 8], [9, 10]])
+    D = pairwise_distances(X, Y)  # Compute distances ONCE
+
+    result_precomputed = pairwise_distances(D, metric='precomputed')
+    result_computed = pairwise_distances(X, Y)
+
+    np.testing.assert_allclose(result_precomputed, result_computed)
 
 def test_assert_compatible_argkmin_results():
     atol = 1e-7
