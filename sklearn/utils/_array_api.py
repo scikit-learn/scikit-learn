@@ -406,6 +406,13 @@ class _NumPyAPIWrapper:
         else:
             return numpy.asarray(x, dtype=dtype)
 
+    def argsort(
+        self, a, axis=-1, kind=None, order=None, *, stable=None, descending=False
+    ):
+        res = numpy.argsort(a, axis, kind, order, stable=stable)
+        if descending:
+            return res[::-1]
+
     def unique_inverse(self, x):
         return numpy.unique(x, return_inverse=True)
 
@@ -1108,3 +1115,10 @@ def _tolist(array, xp=None):
         return array.tolist()
     array_np = _convert_to_numpy(array, xp=xp)
     return [element.item() for element in array_np]
+
+
+def _allclose(a, b, rtol=1e-5, atol=1e-8):
+    xp, _ = get_namespace(a, b)
+    return xp.all(
+        xp.abs(a - b) <= atol + xp.abs(b) * rtol,
+    )
