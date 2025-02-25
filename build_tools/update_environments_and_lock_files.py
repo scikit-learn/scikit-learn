@@ -7,7 +7,7 @@ Two scenarios where this script can be useful:
 - make sure that the latest versions of all the dependencies are used in the CI.
   There is a scheduled workflow that does this, see
   .github/workflows/update-lock-files.yml. This is still useful to run this
-  script when when the automated PR fails and for example some packages need to
+  script when the automated PR fails and for example some packages need to
   be pinned. You can add the pins to this script, run it, and open a PR with
   the changes.
 - bump minimum dependencies in sklearn/_min_dependencies.py. Running this
@@ -26,6 +26,7 @@ scipy) with apt-get and the rest of the dependencies (e.g. pytest and joblib)
 with pip.
 
 To run this script you need:
+- conda
 - conda-lock. The version should match the one used in the CI in
   sklearn/_min_dependencies.py
 - pip-tools
@@ -100,9 +101,7 @@ build_metadata_list = [
         "conda_dependencies": common_dependencies
         + [
             "ccache",
-            # Make sure pytorch comes from the pytorch channel and not conda-forge
-            "pytorch::pytorch",
-            "pytorch-cuda",
+            "pytorch-gpu",
             "polars",
             "pyarrow",
             "cupy",
@@ -126,6 +125,7 @@ build_metadata_list = [
             "pyarrow",
             "array-api-compat",
             "array-api-strict",
+            "scipy-doctest",
         ],
         "package_constraints": {
             "blas": "[build=mkl]",
@@ -224,13 +224,9 @@ build_metadata_list = [
             + ["lightgbm", "scikit-image"]
             # Test array API on CPU without PyTorch
             + ["array-api-compat", "array-api-strict"]
+            # doctests dependencies
+            + ["scipy-doctest"]
         ),
-        "package_constraints": {
-            # XXX: we would like to use the latest Python version, but for now using
-            # Python 3.12 makes the CI much slower so we use Python 3.11. See
-            # https://github.com/scikit-learn/scikit-learn/pull/29444#issuecomment-2219550662.
-            "python": "3.11",
-        },
     },
     {
         "name": "pylatest_pip_scipy_dev",
@@ -265,6 +261,31 @@ build_metadata_list = [
             # the environment.yml. Adding python-dateutil so it is pinned
             + ["python-dateutil"]
         ),
+    },
+    {
+        "name": "pylatest_free_threaded",
+        "type": "conda",
+        "tag": "free-threaded",
+        "folder": "build_tools/azure",
+        "platform": "linux-64",
+        "channels": ["conda-forge"],
+        "conda_dependencies": [
+            "python-freethreading",
+            "numpy",
+            # TODO add cython and scipy when there are conda-forge packages for
+            # them and remove dev version install in
+            # build_tools/azure/install.sh. Note that for now conda-lock does
+            # not deal with free-threaded wheels correctly, see
+            # https://github.com/conda/conda-lock/issues/754.
+            "joblib",
+            "threadpoolctl",
+            "pytest",
+            "pytest-xdist",
+            "ninja",
+            "meson-python",
+            "ccache",
+            "pip",
+        ],
     },
     {
         "name": "pymin_conda_forge_mkl",
@@ -307,6 +328,7 @@ build_metadata_list = [
             "sphinx-remove-toctrees",
             "sphinx-design",
             "pydata-sphinx-theme",
+            "towncrier",
         ],
         "pip_dependencies": [
             "sphinxext-opengraph",
@@ -333,6 +355,7 @@ build_metadata_list = [
             "sphinxcontrib-sass": "min",
             "sphinx-remove-toctrees": "min",
             "pydata-sphinx-theme": "min",
+            "towncrier": "min",
         },
     },
     {
@@ -360,6 +383,7 @@ build_metadata_list = [
             "sphinx-remove-toctrees",
             "sphinx-design",
             "pydata-sphinx-theme",
+            "towncrier",
         ],
         "pip_dependencies": [
             "jupyterlite-sphinx",
@@ -371,10 +395,10 @@ build_metadata_list = [
         },
     },
     {
-        "name": "pymin_conda_forge",
+        "name": "pymin_conda_forge_arm",
         "type": "conda",
-        "tag": "arm",
-        "folder": "build_tools/cirrus",
+        "tag": "main-ci",
+        "folder": "build_tools/github",
         "platform": "linux-aarch64",
         "channels": ["conda-forge"],
         "conda_dependencies": remove_from(

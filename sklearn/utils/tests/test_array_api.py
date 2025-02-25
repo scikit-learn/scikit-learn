@@ -19,6 +19,7 @@ from sklearn.utils._array_api import (
     _isin,
     _max_precision_float_dtype,
     _nanmax,
+    _nanmean,
     _nanmin,
     _NumPyAPIWrapper,
     _ravel,
@@ -62,18 +63,21 @@ def test_get_namespace_ndarray_creation_device():
 def test_get_namespace_ndarray_with_dispatch():
     """Test get_namespace on NumPy ndarrays."""
     array_api_compat = pytest.importorskip("array_api_compat")
+    if parse_version(array_api_compat.__version__) < parse_version("1.9"):
+        pytest.skip(
+            reason="array_api_compat was temporarily reporting NumPy as API compliant "
+            "and this test would fail"
+        )
 
     X_np = numpy.asarray([[1, 2, 3]])
 
     with config_context(array_api_dispatch=True):
         xp_out, is_array_api_compliant = get_namespace(X_np)
         assert is_array_api_compliant
-        if np_version >= parse_version("2.0.0"):
-            # NumPy 2.0+ is an array API compliant library.
-            assert xp_out is numpy
-        else:
-            # Older NumPy versions require the compatibility layer.
-            assert xp_out is array_api_compat.numpy
+
+        # In the future, NumPy should become API compliant library and we should have
+        # assert xp_out is numpy
+        assert xp_out is array_api_compat.numpy
 
 
 @skip_if_array_api_compat_not_configured
@@ -244,6 +248,7 @@ def test_device_none_if_no_input():
     assert device(None, "name") is None
 
 
+@skip_if_array_api_compat_not_configured
 def test_device_inspection():
     class Device:
         def __init__(self, name):
@@ -264,23 +269,31 @@ def test_device_inspection():
 
     # Sanity check: ensure our Device mock class is non hashable, to
     # accurately account for non-hashable device objects in some array
-    # libraries, because of which the `device` inspection function should'nt
+    # libraries, because of which the `device` inspection function shouldn't
     # make use of hash lookup tables (in particular, not use `set`)
     with pytest.raises(TypeError):
         hash(Array("device").device)
 
-    # Test raise if on different devices
+    # If array API dispatch is disabled the device should be ignored. Erroring
+    # early for different devices would prevent the np.asarray conversion to
+    # happen. For example, `r2_score(np.ones(5), torch.ones(5))` should work
+    # fine with array API disabled.
+    assert device(Array("cpu"), Array("mygpu")) is None
+
+    # Test that ValueError is raised if on different devices and array API dispatch is
+    # enabled.
     err_msg = "Input arrays use different devices: cpu, mygpu"
-    with pytest.raises(ValueError, match=err_msg):
-        device(Array("cpu"), Array("mygpu"))
+    with config_context(array_api_dispatch=True):
+        with pytest.raises(ValueError, match=err_msg):
+            device(Array("cpu"), Array("mygpu"))
 
-    # Test expected value is returned otherwise
-    array1 = Array("device")
-    array2 = Array("device")
+        # Test expected value is returned otherwise
+        array1 = Array("device")
+        array2 = Array("device")
 
-    assert array1.device == device(array1)
-    assert array1.device == device(array1, array2)
-    assert array1.device == device(array1, array1, array2)
+        assert array1.device == device(array1)
+        assert array1.device == device(array1, array2)
+        assert array1.device == device(array1, array1, array2)
 
 
 # TODO: add cupy to the list of libraries once the the following upstream issue
@@ -316,6 +329,19 @@ def test_device_inspection():
             [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
             partial(_nanmax, axis=1),
             [3.0, numpy.nan, 6.0],
+        ),
+        ([1, 2, numpy.nan], _nanmean, 1.5),
+        ([1, -2, -numpy.nan], _nanmean, -0.5),
+        ([-numpy.inf, -numpy.inf], _nanmean, -numpy.inf),
+        (
+            [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
+            partial(_nanmean, axis=0),
+            [2.5, 3.5, 4.5],
+        ),
+        (
+            [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
+            partial(_nanmean, axis=1),
+            [2.0, numpy.nan, 5.0],
         ),
     ],
 )
@@ -536,7 +562,7 @@ def test_get_namespace_and_device():
     namespace, is_array_api, device = get_namespace_and_device(some_torch_tensor)
     assert namespace is get_namespace(some_numpy_array)[0]
     assert not is_array_api
-    assert device.type == "cpu"
+    assert device is None
 
     # Otherwise, expose the torch namespace and device via array API compat
     # wrapper.
@@ -573,7 +599,7 @@ def test_count_nonzero(
 
     with config_context(array_api_dispatch=True):
         result = _count_nonzero(
-            array_xp, xp=xp, device=device_, axis=axis, sample_weight=sample_weight
+            array_xp, axis=axis, sample_weight=sample_weight, xp=xp, device=device_
         )
 
     assert_allclose(_convert_to_numpy(result, xp=xp), expected)
@@ -604,8 +630,8 @@ def test_sparse_device(csr_container, dispatch):
     try:
         with config_context(array_api_dispatch=dispatch):
             assert device(a, b) is None
-            assert device(a, numpy.array([1])) == "cpu"
+            assert device(a, numpy.array([1])) is None
             assert get_namespace_and_device(a, b)[2] is None
-            assert get_namespace_and_device(a, numpy.array([1]))[2] == "cpu"
+            assert get_namespace_and_device(a, numpy.array([1]))[2] is None
     except ImportError:
         raise SkipTest("array_api_compat is not installed")

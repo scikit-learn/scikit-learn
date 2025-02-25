@@ -23,13 +23,6 @@ References
 `"Maximum entropy modeling of species geographic distributions"
 <http://rob.schapire.net/papers/ecolmod.pdf>`_ S. J. Phillips,
 R. P. Anderson, R. E. Schapire - Ecological Modelling, 190:231-259, 2006.
-
-Notes
------
-
-For an example of using this dataset, see
-:ref:`examples/applications/plot_species_distribution_modeling.py
-<sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py>`.
 """
 
 # Authors: The scikit-learn developers
@@ -216,10 +209,6 @@ def fetch_species_distributions(
       also known as the Forest Small Rice Rat, a rodent that lives in Peru,
       Colombia, Ecuador, Peru, and Venezuela.
 
-    - For an example of using this dataset with scikit-learn, see
-      :ref:`examples/applications/plot_species_distribution_modeling.py
-      <sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py>`.
-
     References
     ----------
 
@@ -239,6 +228,9 @@ def fetch_species_distributions(
            (b'microryzomys_minutus', -67.8   , -16.2667),
            (b'microryzomys_minutus', -67.9833, -15.9   )],
           dtype=[('species', 'S22'), ('dd long', '<f4'), ('dd lat', '<f4')])
+
+    For a more extended example,
+    see :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`
     """
     data_home = get_data_home(data_home)
     if not exists(data_home):

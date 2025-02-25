@@ -941,6 +941,11 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             sample_weight=sample_weight,
         )
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 class SGDClassifier(BaseSGDClassifier):
     """Linear classifiers (SVM, logistic regression, etc.) with SGD training.
@@ -985,14 +990,19 @@ class SGDClassifier(BaseSGDClassifier):
           in classification as well; see
           :class:`~sklearn.linear_model.SGDRegressor` for a description.
 
-        More details about the losses formulas can be found in the
-        :ref:`User Guide <sgd_mathematical_formulation>`.
+        More details about the losses formulas can be found in the :ref:`User Guide
+        <sgd_mathematical_formulation>` and you can find a visualisation of the loss
+        functions in
+        :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_loss_functions.py`.
 
     penalty : {'l2', 'l1', 'elasticnet', None}, default='l2'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
         which is the standard regularizer for linear SVM models. 'l1' and
         'elasticnet' might bring sparsity to the model (feature selection)
         not achievable with 'l2'. No penalty is added when set to `None`.
+
+        You can see a visualisation of the penalties in
+        :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_penalties.py`.
 
     alpha : float, default=0.0001
         Constant that multiplies the regularization term. The higher the
@@ -1088,6 +1098,9 @@ class SGDClassifier(BaseSGDClassifier):
         a stratified fraction of training data as validation and terminate
         training when validation score returned by the `score` method is not
         improving by at least tol for n_iter_no_change consecutive epochs.
+
+        See :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_early_stopping.py` for an
+        example of the effects of early stopping.
 
         .. versionadded:: 0.20
             Added 'early_stopping' option
@@ -1373,15 +1386,6 @@ class SGDClassifier(BaseSGDClassifier):
             `self.classes_`.
         """
         return np.log(self.predict_proba(X))
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_sample_weights_invariance": (
-                "zero sample_weight is not equivalent to removing samples"
-            ),
-        }
-        return tags
 
 
 class BaseSGDRegressor(RegressorMixin, BaseSGD):
@@ -1773,6 +1777,11 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         else:
             self.intercept_ = np.atleast_1d(intercept)
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 class SGDRegressor(BaseSGDRegressor):
     """Linear model fitted by minimizing a regularized empirical loss with SGD.
@@ -1815,6 +1824,9 @@ class SGDRegressor(BaseSGDRegressor):
         which is the standard regularizer for linear SVM models. 'l1' and
         'elasticnet' might bring sparsity to the model (feature selection)
         not achievable with 'l2'. No penalty is added when set to `None`.
+
+        You can see a visualisation of the penalties in
+        :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_penalties.py`.
 
     alpha : float, default=0.0001
         Constant that multiplies the regularization term. The higher the
@@ -1902,6 +1914,9 @@ class SGDRegressor(BaseSGDRegressor):
         training when validation score returned by the `score` method is not
         improving by at least `tol` for `n_iter_no_change` consecutive
         epochs.
+
+        See :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_early_stopping.py` for an
+        example of the effects of early stopping.
 
         .. versionadded:: 0.20
             Added 'early_stopping' option
@@ -2058,17 +2073,8 @@ class SGDRegressor(BaseSGDRegressor):
             average=average,
         )
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_sample_weights_invariance": (
-                "zero sample_weight is not equivalent to removing samples"
-            ),
-        }
-        return tags
 
-
-class SGDOneClassSVM(BaseSGD, OutlierMixin):
+class SGDOneClassSVM(OutlierMixin, BaseSGD):
     """Solves linear One-Class SVM using Stochastic Gradient Descent.
 
     This implementation is meant to be used with a kernel approximation
@@ -2239,7 +2245,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         average=False,
     ):
         self.nu = nu
-        super(SGDOneClassSVM, self).__init__(
+        super().__init__(
             loss="hinge",
             penalty="l2",
             C=1.0,
@@ -2640,9 +2646,5 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_sample_weights_invariance": (
-                "zero sample_weight is not equivalent to removing samples"
-            ),
-        }
+        tags.input_tags.sparse = True
         return tags

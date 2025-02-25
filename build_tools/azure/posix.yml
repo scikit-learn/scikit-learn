@@ -36,11 +36,8 @@ jobs:
     - bash: $(pyTools.pythonLocation)/bin/python build_tools/azure/get_selected_tests.py
       displayName: Check selected tests for all random seeds
       condition: eq(variables['Build.Reason'], 'PullRequest')
-    - bash: echo "##vso[task.prependpath]$CONDA/bin"
-      displayName: Add conda to PATH
-      condition: startsWith(variables['DISTRIB'], 'conda')
-    - bash: sudo chown -R $USER $CONDA
-      displayName: Take ownership of conda installation
+    - bash: build_tools/azure/install_setup_conda.sh
+      displayName: Install conda if necessary and set it up
       condition: startsWith(variables['DISTRIB'], 'conda')
     - task: Cache@2
       inputs:
