@@ -6,7 +6,7 @@ import numpy as np
 from .extmath import stable_cumsum
 
 
-def _weighted_percentile(array, sample_weight, percentile=50):
+def _weighted_percentile(array, sample_weight, percentile=50, symmetrize=False):
     """Compute weighted percentile
 
     Computes lower weighted percentile. If `array` is a 2D array, the
@@ -27,10 +27,16 @@ def _weighted_percentile(array, sample_weight, percentile=50):
     percentile: int or float, default=50
         Percentile to compute. Must be value between 0 and 100.
 
+    symmetrize : bool, default=False
+        If True, compute the averaged weighted percentile using symmetrisation,
+        i.e. return (_weighted_percentile(array, percentile) -
+        _weighted_percentile(-array, 100 - percentile)) / 2. This avoids sorting
+        the input array twice.
+
     Returns
     -------
     percentile : int if `array` 1D, ndarray if `array` 2D
-        Weighted percentile.
+        Weighted percentile (or averaged weighted percentile if symmetrize is True).
     """
     n_dim = array.ndim
     if n_dim == 0:
@@ -59,7 +65,6 @@ def _weighted_percentile(array, sample_weight, percentile=50):
             for i in range(weight_cdf.shape[1])
         ]
     )
-    percentile_idx = np.array(percentile_idx)
     # In rare cases, percentile_idx equals to sorted_idx.shape[0]
     max_idx = sorted_idx.shape[0] - 1
     percentile_idx = np.apply_along_axis(
@@ -67,15 +72,40 @@ def _weighted_percentile(array, sample_weight, percentile=50):
     )
 
     col_index = np.arange(array.shape[1])
-    percentile_in_sorted = sorted_idx[percentile_idx, col_index]
-    percentile = array[percentile_in_sorted, col_index]
-    return percentile[0] if n_dim == 1 else percentile
+    pos_percentile = array[sorted_idx[percentile_idx, col_index], col_index]
+
+    if not symmetrize:
+        return pos_percentile[0] if n_dim == 1 else pos_percentile
+
+    # Compute weighted percentile for -array using the already sorted order (reversed)
+    # This avoids sorting the input array twice.
+    sorted_idx_rev = np.flip(sorted_idx, axis=0)
+    sorted_weights_rev = np.flip(sorted_weights, axis=0)
+    weight_cdf_rev = stable_cumsum(sorted_weights_rev, axis=0)
+    adjusted_percentile_rev = (100 - percentile) / 100 * weight_cdf_rev[-1]
+
+    # For percentile=0, ignore leading observations with sample_weight=0.
+    mask_rev = adjusted_percentile_rev == 0
+    adjusted_percentile_rev[mask_rev] = np.nextafter(
+        adjusted_percentile_rev[mask_rev], adjusted_percentile_rev[mask_rev] + 1
+    )
+
+    percentile_idx_rev = np.array(
+        [
+            np.searchsorted(weight_cdf_rev[:, i], adjusted_percentile_rev[i])
+            for i in range(weight_cdf_rev.shape[1])
+        ]
+    )
+    percentile_idx_rev = np.apply_along_axis(
+        lambda x: np.clip(x, 0, max_idx), axis=0, arr=percentile_idx_rev
+    )
+    neg_percentile = -array[sorted_idx_rev[percentile_idx_rev, col_index], col_index]
+
+    sym_percentile = (pos_percentile - neg_percentile) / 2
+    return sym_percentile[0] if n_dim == 1 else sym_percentile
 
 
 # TODO: refactor to do the symmetrisation inside _weighted_percentile to avoid
 # sorting the input array twice.
 def _averaged_weighted_percentile(array, sample_weight, percentile=50):
-    return (
-        _weighted_percentile(array, sample_weight, percentile)
-        - _weighted_percentile(-array, sample_weight, 100 - percentile)
-    ) / 2
+    return _weighted_percentile(array, sample_weight, percentile, symmetrize=True)
