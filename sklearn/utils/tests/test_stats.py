@@ -21,8 +21,8 @@ def test_averaged_weighted_median():
     condition=np_version < parse_version("1.22"),
     reason="older numpy do not support the 'method' parameter",
 )
-def test_averaged_weighted_percentile():
-    rng = np.random.RandomState(0)
+def test_averaged_weighted_percentile(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     y = rng.randint(20, size=10)
 
     sw = np.ones(10)
@@ -86,9 +86,9 @@ def test_weighted_percentile_zero_weight_zero_percentile():
     assert approx(score) == 4
 
 
-def test_weighted_median_equal_weights():
+def test_weighted_median_equal_weights(global_random_seed):
     # Checks weighted percentile=0.5 is same as median when weights equal
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     # Odd size as _weighted_percentile takes lower weighted percentile
     x = rng.randint(10, size=11)
     weights = np.ones(x.shape)
@@ -98,10 +98,10 @@ def test_weighted_median_equal_weights():
     assert median == approx(w_median)
 
 
-def test_weighted_median_integer_weights():
+def test_weighted_median_integer_weights(global_random_seed):
     # Checks weighted percentile=0.5 is same as median when manually weight
     # data
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     x = rng.randint(20, size=10)
     weights = rng.choice(5, size=10)
     x_manual = np.repeat(x, weights)
@@ -112,9 +112,9 @@ def test_weighted_median_integer_weights():
     assert median == approx(w_median)
 
 
-def test_weighted_percentile_2d():
+def test_weighted_percentile_2d(global_random_seed):
     # Check for when array 2D and sample_weight 1D
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     x1 = rng.randint(10, size=10)
     w1 = rng.choice(5, size=10)
 
