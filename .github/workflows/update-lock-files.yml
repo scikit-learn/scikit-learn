@@ -8,7 +8,7 @@ on:
 
 jobs:
   update_lock_files:
-    if: github.repository == 'scikit-learn/scikit-learn'
+    # if: github.repository == 'scikit-learn/scikit-learn'
     runs-on: ubuntu-latest
 
     strategy:
