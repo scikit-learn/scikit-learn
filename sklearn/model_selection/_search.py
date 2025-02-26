@@ -15,6 +15,7 @@ from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 from copy import deepcopy
 from functools import partial, reduce
+from inspect import signature
 from itertools import product
 
 import numpy as np
@@ -866,6 +867,21 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         return scorers, refit_metric
 
+    def _check_scorers_accept_sample_weight(self):
+        scorers, _ = self._get_scorers()
+        # In most cases, scorers is a Scorer object
+        # But it's a function when user passes scoring=function
+        if hasattr(scorers, "_accept_sample_weight"):
+            accept = scorers._accept_sample_weight()
+        else:
+            accept = "sample_weight" in signature(scorers).parameters
+        if not accept:
+            raise ValueError(
+                f"The scoring {scorers} does not support sample_weight, which is"
+                "required for fitting {self} with sample_weight. Please use a scorer"
+                "that supports sample_weight or do not pass sample_weight to fit."
+            )
+
     def _get_routed_params_for_fit(self, params):
         """Get the parameters to be used for routing.
 
@@ -883,6 +899,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 scorer=Bunch(score={}),
             )
             if "sample_weight" in params:
+                self._check_scorers_accept_sample_weight()
                 routed_params.scorer.score["sample_weight"] = params["sample_weight"]
         return routed_params
 

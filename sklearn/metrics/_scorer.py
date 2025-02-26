@@ -154,6 +154,9 @@ class _MultimetricScorer:
         scorers = ", ".join([f'"{s}"' for s in self._scorers])
         return f"MultiMetricScorer({scorers})"
 
+    def _accept_sample_weight(self):
+        return all(scorer._accept_sample_weight() for scorer in self._scorers.values())
+
     def _use_cache(self, estimator):
         """Return True if using a cache is beneficial, thus when a response method will
         be called several time.
@@ -230,6 +233,9 @@ class _BaseScorer(_MetadataRequester):
         if "pos_label" in score_func_params:
             return score_func_params["pos_label"].default
         return None
+
+    def _accept_sample_weight(self):
+        return "sample_weight" in signature(self._score_func).parameters
 
     def __repr__(self):
         sign_string = "" if self._sign > 0 else ", greater_is_better=False"
@@ -473,6 +479,9 @@ class _PassthroughScorer(_MetadataRequester):
 
     def __repr__(self):
         return f"{self._estimator.__class__}.score"
+
+    def _accept_sample_weight(self):
+        return "sample_weight" in signature(self._estimator.score).parameters
 
     def get_metadata_routing(self):
         """Get requested data properties.
