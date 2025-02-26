@@ -3006,12 +3006,9 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
         weight_average = _average(sample_weight, xp=xp)
 
     if y_type.startswith("multilabel"):
-        if _is_numpy_namespace(xp):
-            n_differences = count_nonzero(y_true - y_pred, sample_weight=sample_weight)
-        else:
-            n_differences = _count_nonzero(
-                y_true - y_pred, xp=xp, device=device, sample_weight=sample_weight
-            )
+        n_differences = _count_nonzero(
+            y_true - y_pred, xp=xp, device=device, sample_weight=sample_weight
+        )
         return float(n_differences) / (
             y_true.shape[0] * y_true.shape[1] * weight_average
         )
