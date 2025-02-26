@@ -3002,6 +3002,7 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
     if sample_weight is None:
         weight_average = 1.0
     else:
+        sample_weight = xp.asarray(sample_weight, device=device)
         weight_average = _average(sample_weight, xp=xp)
 
     if y_type.startswith("multilabel"):
