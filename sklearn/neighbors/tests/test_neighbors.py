@@ -54,6 +54,8 @@ from sklearn.utils.fixes import (
     DIA_CONTAINERS,
     DOK_CONTAINERS,
     LIL_CONTAINERS,
+    parse_version,
+    sp_version,
 )
 from sklearn.utils.validation import check_random_state
 
@@ -118,13 +120,13 @@ def _generate_test_params_for(metric: str, n_features: int):
     rng = np.random.RandomState(1)
 
     if metric == "minkowski":
-        return [
-            dict(p=1.5),
-            dict(p=2),
-            dict(p=3),
-            dict(p=np.inf),
-            dict(p=3, w=rng.rand(n_features)),
-        ]
+        minkowski_kwargs = [dict(p=1.5), dict(p=2), dict(p=3), dict(p=np.inf)]
+        if sp_version >= parse_version("1.8.0.dev0"):
+            # TODO: remove the test once we no longer support scipy < 1.8.0.
+            # Recent scipy versions accept weights in the Minkowski metric directly:
+            # type: ignore
+            minkowski_kwargs.append(dict(p=3, w=rng.rand(n_features)))
+        return minkowski_kwargs
 
     if metric == "seuclidean":
         return [dict(V=rng.rand(n_features))]

@@ -50,6 +50,8 @@ from sklearn.utils.fixes import (
     _IS_32BIT,
     VisibleDeprecationWarning,
     _in_unstable_openblas_configuration,
+    parse_version,
+    sp_version,
 )
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
@@ -1014,6 +1016,11 @@ def _convert_container(
             # https://github.com/scipy/scipy/pull/18530#issuecomment-1878005149
             container = np.atleast_2d(container)
 
+        if "array" in constructor_name and sp_version < parse_version("1.8"):
+            raise ValueError(
+                f"{constructor_name} is only available with scipy>=1.8.0, got "
+                f"{sp_version}"
+            )
         if constructor_name in ("sparse", "sparse_csr"):
             # sparse and sparse_csr are equivalent for legacy reasons
             return sp.sparse.csr_matrix(container, dtype=dtype)

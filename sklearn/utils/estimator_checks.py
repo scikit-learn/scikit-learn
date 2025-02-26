@@ -105,6 +105,7 @@ from ._testing import (
     raises,
     set_random_state,
 )
+from .fixes import SPARSE_ARRAY_PRESENT
 from .validation import _num_samples, check_is_fitted, has_fit_parameter
 
 REGRESSION_DATASET = None
@@ -1232,7 +1233,10 @@ def check_array_api_input_and_values(
 
 def check_estimator_sparse_tag(name, estimator_orig):
     """Check that estimator tag related with accepting sparse data is properly set."""
-    sparse_container = sparse.csr_array
+    if SPARSE_ARRAY_PRESENT:
+        sparse_container = sparse.csr_array
+    else:
+        sparse_container = sparse.csr_matrix
     estimator = clone(estimator_orig)
 
     rng = np.random.RandomState(0)
@@ -1342,7 +1346,8 @@ def check_estimator_sparse_matrix(name, estimator_orig):
 
 
 def check_estimator_sparse_array(name, estimator_orig):
-    _check_estimator_sparse_container(name, estimator_orig, sparse.csr_array)
+    if SPARSE_ARRAY_PRESENT:
+        _check_estimator_sparse_container(name, estimator_orig, sparse.csr_array)
 
 
 def check_f_contiguous_array_estimator(name, estimator_orig):
@@ -1572,7 +1577,10 @@ def check_sample_weight_equivalence_on_dense_data(name, estimator_orig):
 
 
 def check_sample_weight_equivalence_on_sparse_data(name, estimator_orig):
-    sparse_container = sparse.csr_array
+    if SPARSE_ARRAY_PRESENT:
+        sparse_container = sparse.csr_array
+    else:
+        sparse_container = sparse.csr_matrix
     _check_sample_weight_equivalence(name, estimator_orig, sparse_container)
 
 
