@@ -318,9 +318,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         """
         check_classification_targets(y)
         X, y = indexable(X, y)
-        if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X)
-
         estimator = self._get_estimator()
 
         _ensemble = self.ensemble
@@ -333,7 +330,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             warnings.warn(
                 "The `cv='prefit'` option is deprecated in 1.6 and will be removed in"
                 " 1.8. You can use CalibratedClassifierCV(FrozenEstimator(estimator))"
-                " instead."
+                " instead.",
+                category=FutureWarning,
             )
             # `classes_` should be consistent with that of estimator
             check_is_fitted(self.estimator, attributes=["classes_"])
@@ -347,6 +345,13 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             if predictions.ndim == 1:
                 # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
                 predictions = predictions.reshape(-1, 1)
+
+            if sample_weight is not None:
+                # Check that the sample_weight dtype is consistent with the predictions
+                # to avoid unintentional upcasts.
+                sample_weight = _check_sample_weight(
+                    sample_weight, predictions, dtype=predictions.dtype
+                )
 
             calibrated_classifier = _fit_calibrator(
                 estimator,
@@ -456,6 +461,13 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                             pos_label=self.classes_[1],
                         )
                     predictions = predictions.reshape(-1, 1)
+
+                if sample_weight is not None:
+                    # Check that the sample_weight dtype is consistent with the
+                    # predictions to avoid unintentional upcasts.
+                    sample_weight = _check_sample_weight(
+                        sample_weight, predictions, dtype=predictions.dtype
+                    )
 
                 this_estimator.fit(X, y, **routed_params.estimator.fit)
                 # Note: Here we don't pass on fit_params because the supported
@@ -622,7 +634,13 @@ def _fit_classifier_calibrator_pair(
         # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
         predictions = predictions.reshape(-1, 1)
 
-    sw_test = None if sample_weight is None else _safe_indexing(sample_weight, test)
+    if sample_weight is not None:
+        # Check that the sample_weight dtype is consistent with the predictions
+        # to avoid unintentional upcasts.
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=predictions.dtype)
+        sw_test = _safe_indexing(sample_weight, test)
+    else:
+        sw_test = None
     calibrated_classifier = _fit_calibrator(
         estimator, predictions, y_test, classes, method, sample_weight=sw_test
     )
