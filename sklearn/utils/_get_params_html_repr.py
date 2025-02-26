@@ -89,12 +89,16 @@ def _html_template(data):
 
                 const parent = element;
                 const originalStyle = parent.style
-                const originalHTML = parent.innerHTML.replace('&nbsp;Copied!', '');
+                const computedStyle = window.getComputedStyle(parent);
+                const originalWidth = computedStyle.width;
+                const originalHTML = parent.innerHTML.replace('Copied!', '');
 
                 navigator.clipboard.writeText(text)
                     .then(() => {
-                        parent.innerHTML = "&nbsp;Copied!";
-                        parent.style.color= 'green';
+                        parent.style.width = originalWidth;
+                        parent.style.color = 'green';
+                        parent.innerHTML = "Copied!";
+
                         setTimeout(() => {
                             parent.innerHTML = originalHTML;
                             parent.style = originalStyle;
