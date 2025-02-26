@@ -118,7 +118,13 @@ def _generate_test_params_for(metric: str, n_features: int):
     rng = np.random.RandomState(1)
 
     if metric == "minkowski":
-        return [dict(p=1.5), dict(p=2), dict(p=3), dict(p=np.inf)]
+        return [
+            dict(p=1.5),
+            dict(p=2),
+            dict(p=3),
+            dict(p=np.inf),
+            dict(p=3, w=rng.rand(n_features)),
+        ]
 
     if metric == "seuclidean":
         return [dict(V=rng.rand(n_features))]
