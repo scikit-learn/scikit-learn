@@ -15,7 +15,7 @@ from scipy.special import gammaln
 from ..base import _fit_context
 from ..utils import check_random_state
 from ..utils._arpack import _init_arpack_v0
-from ..utils._array_api import _convert_to_numpy, get_namespace
+from ..utils._array_api import _convert_to_numpy, device, get_namespace
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
 from ..utils.extmath import fast_logdet, randomized_svd, stable_cumsum, svd_flip
 from ..utils.sparsefuncs import _implicit_column_offset, mean_variance_axis
@@ -93,7 +93,7 @@ def _assess_dimension(spectrum, rank, n_samples):
                 (spectrum[i] - spectrum[j]) * (1.0 / spectrum_[j] - 1.0 / spectrum_[i])
             ) + log(n_samples)
 
-    pu = xp.asarray(pu, device=spectrum.device)
+    pu = xp.asarray(pu, device=device(spectrum), dtype=spectrum.dtype)
     ll = pu + pl + pv + pp - pa / 2.0 - rank * log(n_samples) / 2.0
 
     return ll

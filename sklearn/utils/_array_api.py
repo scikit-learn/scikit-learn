@@ -791,11 +791,14 @@ def _nanmin(X, axis=None, xp=None):
 
     else:
         mask = xp.isnan(X)
-        X = xp.min(xp.where(mask, xp.asarray(+xp.inf, device=device(X)), X), axis=axis)
+        X = xp.min(
+            xp.where(mask, xp.asarray(+xp.inf, device=device(X), dtype=X.dtype), X),
+            axis=axis,
+        )
         # Replace Infs from all NaN slices with NaN again
         mask = xp.all(mask, axis=axis)
         if xp.any(mask):
-            X = xp.where(mask, xp.asarray(xp.nan), X)
+            X = xp.where(mask, xp.asarray(xp.nan, dtype=X.dtype, device=device(X)), X)
         return X
 
 
@@ -808,11 +811,14 @@ def _nanmax(X, axis=None, xp=None):
 
     else:
         mask = xp.isnan(X)
-        X = xp.max(xp.where(mask, xp.asarray(-xp.inf, device=device(X)), X), axis=axis)
+        X = xp.max(
+            xp.where(mask, xp.asarray(-xp.inf, device=device(X), dtype=X.dtype), X),
+            axis=axis,
+        )
         # Replace Infs from all NaN slices with NaN again
         mask = xp.all(mask, axis=axis)
         if xp.any(mask):
-            X = xp.where(mask, xp.asarray(xp.nan), X)
+            X = xp.where(mask, xp.asarray(xp.nan, dtype=X.dtype, device=device(X)), X)
         return X
 
 
