@@ -877,8 +877,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             accept = "sample_weight" in signature(scorers).parameters
         if not accept:
             raise ValueError(
-                f"The scoring {scorers} does not support sample_weight, which is"
-                "required for fitting {self} with sample_weight. Please use a scorer"
+                f"The scoring {scorers} does not support sample_weight, which is "
+                f"required for fitting {self} with sample_weight. Please use a scorer "
                 "that supports sample_weight or do not pass sample_weight to fit."
             )
 
