@@ -1,8 +1,7 @@
 
 .estimator-params table td {
     border: 2px solid rgba(106, 105, 104, 0.232);
-    min-width: 2em;
-
+    min-width: 1em;
 }
 
 .user-set td {
@@ -13,4 +12,9 @@
 .default td {
     color: gray;
     text-align: left;
+}
+
+.user-set td i,
+.default td i {
+    color: gray;
 }

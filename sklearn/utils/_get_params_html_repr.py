@@ -59,8 +59,9 @@ def _html_template(data):
                     <tr class="user-set">
 
                       <td><i class="fa-regular fa-copy"
-                       onclick="copyToClipboard('{x}', this)"
-                       style="color: gray; cursor: pointer;">
+                       onclick="copyToClipboard('{x}',
+                                this.parentElement.nextElementSibling)"
+
                       </i></td>
                       <td class="param">{x}&nbsp;</td>
                       <td class="value">{y}</td>
@@ -69,13 +70,12 @@ def _html_template(data):
         else:
             out += f"""
                     <tr class="default">
-
-                          <td><i class="fa-regular fa-copy"
-                           onclick="copyToClipboard('{x}', this)"
-                           style="color: gray; cursor: pointer; min-with: 5em">
-                          </i></td>
-                          <td class="param">{x}&nbsp;</td>
-                          <td class="value">{y}</td>
+                        <td><i class="fa-regular fa-copy"
+                         onclick="copyToClipboard('{x}',
+                                  this.parentElement.nextElementSibling)"
+                        </i></td>
+                        <td class="param">{x}&nbsp;</td>
+                        <td class="value">{y}</td>
                     </tr>
                """
     html_end = """
@@ -86,15 +86,19 @@ def _html_template(data):
         </div>
         <script>
             function copyToClipboard(text, element) {{
-                const parent = element.parentNode;
+
+                const parent = element;
+                const originalStyle = parent.style
                 const originalHTML = parent.innerHTML.replace('&nbsp;Copied!', '');
 
                 navigator.clipboard.writeText(text)
                     .then(() => {
-                        parent.innerHTML = originalHTML + "&nbsp;Copied!";
+                        parent.innerHTML = "&nbsp;Copied!";
+                        parent.style.color= 'green';
                         setTimeout(() => {
                             parent.innerHTML = originalHTML;
-                        }, 1000);
+                            parent.style = originalStyle;
+                        }, 2000);
                     })
                     .catch(err => console.error('Failed to copy:', err));
                 return false;
