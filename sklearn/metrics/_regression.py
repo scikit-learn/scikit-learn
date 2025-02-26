@@ -14,7 +14,6 @@ import warnings
 from numbers import Real
 
 import numpy as np
-from scipy.special import xlogy
 
 from ..exceptions import UndefinedMetricWarning
 from ..utils._array_api import (
@@ -23,6 +22,9 @@ from ..utils._array_api import (
     get_namespace,
     get_namespace_and_device,
     size,
+)
+from ..utils._array_api import (
+    _xlogy as xlogy,
 )
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.stats import _weighted_percentile

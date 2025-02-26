@@ -782,6 +782,17 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
     return sum_ / scale
 
 
+def _xlogy(x, y, xp=None):
+    # TODO: Remove this once https://github.com/scipy/scipy/issues/21736 is fixed
+    xp, _ = get_namespace(x, y, xp=xp)
+
+    with numpy.errstate(divide="ignore", invalid="ignore"):
+        temp = x * xp.log(y)
+    return xp.where(
+        x == 0.0, xp.asarray(0.0, dtype=temp.dtype, device=device(temp)), temp
+    )
+
+
 def _nanmin(X, axis=None, xp=None):
     # TODO: refactor once nan-aware reductions are standardized:
     # https://github.com/data-apis/array-api/issues/621
