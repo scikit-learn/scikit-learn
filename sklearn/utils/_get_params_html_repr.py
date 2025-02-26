@@ -87,21 +87,21 @@ def _html_template(data):
         <script>
             function copyToClipboard(text, element) {{
 
-                const parent = element;
-                const originalStyle = parent.style
-                const computedStyle = window.getComputedStyle(parent);
+
+                const originalStyle = element.style
+                const computedStyle = window.getComputedStyle(element);
                 const originalWidth = computedStyle.width;
-                const originalHTML = parent.innerHTML.replace('Copied!', '');
+                const originalHTML = element.innerHTML.replace('Copied!', '');
 
                 navigator.clipboard.writeText(text)
                     .then(() => {
-                        parent.style.width = originalWidth;
-                        parent.style.color = 'green';
-                        parent.innerHTML = "Copied!";
+                        element.style.width = originalWidth;
+                        element.style.color = 'green';
+                        element.innerHTML = "Copied!";
 
                         setTimeout(() => {
-                            parent.innerHTML = originalHTML;
-                            parent.style = originalStyle;
+                            element.innerHTML = originalHTML;
+                            element.style = originalStyle;
                         }, 2000);
                     })
                     .catch(err => console.error('Failed to copy:', err));
