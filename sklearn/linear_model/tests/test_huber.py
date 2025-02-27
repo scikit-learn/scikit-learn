@@ -20,8 +20,10 @@ def make_regression_with_outliers(global_random_seed, n_samples=50, n_features=2
     rng = np.random.RandomState(global_random_seed)
     # Generate data with outliers by replacing 10% of the samples with noise.
     X, y = make_regression(
-        n_samples=n_samples, n_features=n_features, random_state=global_random_seed,
-        noise=0.05
+        n_samples=n_samples,
+        n_features=n_features,
+        random_state=global_random_seed,
+        noise=0.05,
     )
 
     # Replace 10% of the sample with noise.
