@@ -127,7 +127,21 @@ def _routing_enabled():
         Whether metadata routing is enabled. If the config is not set, it
         defaults to False.
     """
-    return get_config().get("enable_metadata_routing", False)
+    setting = get_config().get("enable_metadata_routing", False)
+    return setting in (True, "default_routing")
+
+
+def _default_routing_enabled():
+    """Return whether default metadata routing is enabled.
+
+    .. versionadded:: 1.7
+
+    Returns
+    -------
+    enabled : bool
+        Whether default metadata routing is enabled.
+    """
+    return get_config().get("enable_metadata_routing", False) == "default_routing"
 
 
 def _raise_for_params(params, owner, method):
@@ -1433,12 +1447,15 @@ class _MetadataRequester:
         return mmr
 
     @classmethod
-    def _get_default_requests(cls):
-        """Collect default request values.
+    def _get_class_requests(cls):
+        """Collect class level request values.
 
         This method combines the information present in ``__metadata_request__*``
         class attributes, as well as determining request keys from method
         signatures.
+
+        This is also used in `__init_subclass__` to get required info to create
+        `set_{method}_request` methods. It doesn't
         """
         requests = MetadataRequest(owner=cls.__name__)
 
@@ -1475,6 +1492,29 @@ class _MetadataRequester:
                     getattr(requests, method).add_request(param=prop, alias=alias)
 
         return requests
+
+    def _get_default_requests(self):
+        """This is a private method and not to be used by estimator developers."""
+        requests = self._get_class_requests()
+        if _default_routing_enabled():
+            defaults = self.__sklearn_default_request__()
+            for method, requests in defaults.items():
+                for pname, value in requests.items():
+                    getattr(requests, method).add_request(param=pname, alias=value)
+        return requests
+
+    def __sklearn_default_request__(self):
+        """Return default request values for this object.
+
+        This method should be overriden by objects (estimators, scorers, cv splitters)
+        which want to have a default request on a specific metadata.
+
+        Could return `"fit": {"sample_weight": True}` for instance.
+
+        This is a part of our "developer" API, and to be overriden by estimator
+        developers.
+        """
+        return {}
 
     def _get_metadata_request(self):
         """Get requested data properties.

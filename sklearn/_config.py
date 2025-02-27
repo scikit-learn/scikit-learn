@@ -151,7 +151,7 @@ def set_config(
         .. versionadded:: 1.4
             `"polars"` option was added.
 
-    enable_metadata_routing : bool, default=None
+    enable_metadata_routing : bool, str, default=None
         Enable metadata routing. By default this feature is disabled.
 
         Refer to :ref:`metadata routing user guide <metadata_routing>` for more
@@ -160,8 +160,16 @@ def set_config(
         - `True`: Metadata routing is enabled
         - `False`: Metadata routing is disabled, use the old syntax.
         - `None`: Configuration is unchanged
+        - `"default_routing"`: Enable default routing. This means
+          `sample_weight` and `groups` are requested by default in scikit-learn.
+           This also means `sample_weight` is requested by default on third party
+           estimators if their corresponding method, e.g. `fit`, has `sample_weight`
+           in their signature.
 
         .. versionadded:: 1.3
+
+        .. versionchanged:: 1.7
+            The `"default_routing"` option was added.
 
     skip_parameter_validation : bool, default=None
         If `True`, disable the validation of the hyper-parameters' types and values in
@@ -306,7 +314,7 @@ def config_context(
         .. versionadded:: 1.4
             `"polars"` option was added.
 
-    enable_metadata_routing : bool, default=None
+    enable_metadata_routing : bool, str, default=None
         Enable metadata routing. By default this feature is disabled.
 
         Refer to :ref:`metadata routing user guide <metadata_routing>` for more
@@ -315,8 +323,16 @@ def config_context(
         - `True`: Metadata routing is enabled
         - `False`: Metadata routing is disabled, use the old syntax.
         - `None`: Configuration is unchanged
+        - `"default_routing"`: Enable default routing. This means
+          `sample_weight` and `groups` are requested by default in scikit-learn.
+           This also means `sample_weight` is requested by default on third party
+           estimators if their corresponding method, e.g. `fit`, has `sample_weight`
+           in their signature.
 
         .. versionadded:: 1.3
+
+        .. versionchanged:: 1.7
+            The `"default_routing"` option was added.
 
     skip_parameter_validation : bool, default=None
         If `True`, disable the validation of the hyper-parameters' types and values in
