@@ -385,7 +385,9 @@ def partial_dependence(
     the average response of an estimator for each possible value of the
     feature.
 
-    Read more in the :ref:`User Guide <partial_dependence>`.
+    Read more in
+    :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
+    and the :ref:`User Guide <partial_dependence>`.
 
     .. warning::
 

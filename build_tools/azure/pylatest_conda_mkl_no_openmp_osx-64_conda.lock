@@ -13,7 +13,7 @@ https://repo.anaconda.com/pkgs/main/osx-64/libwebp-base-1.3.2-h46256e1_1.conda#3
 https://repo.anaconda.com/pkgs/main/osx-64/llvm-openmp-14.0.6-h0dcd299_0.conda#b5804d32b87dc61ca94561ade33d5f2d
 https://repo.anaconda.com/pkgs/main/osx-64/ncurses-6.4-hcec6c5f_0.conda#0214d1ee980e217fabc695f1e40662aa
 https://repo.anaconda.com/pkgs/main/noarch/tzdata-2025a-h04d1e81_0.conda#885caf42f821b98b3321dc4108511a3d
-https://repo.anaconda.com/pkgs/main/osx-64/xz-5.4.6-h6c40b1e_1.conda#b40d69768d28133d8be1843def4f82f5
+https://repo.anaconda.com/pkgs/main/osx-64/xz-5.6.4-h46256e1_1.conda#ce989a528575ad332a650bb7c7f7e5d5
 https://repo.anaconda.com/pkgs/main/osx-64/zlib-1.2.13-h4b97444_1.conda#38e35f7c817fac0973034bfce6706ec2
 https://repo.anaconda.com/pkgs/main/osx-64/ccache-3.7.9-hf120daa_0.conda#a01515a32e721c51d631283f991bc8ea
 https://repo.anaconda.com/pkgs/main/osx-64/expat-2.6.4-h6d0c2b6_0.conda#337f85e792486001ba7aed0fa2f93e64
@@ -75,7 +75,7 @@ https://repo.anaconda.com/pkgs/main/osx-64/numexpr-2.8.7-py312hac873b0_0.conda#6
 https://repo.anaconda.com/pkgs/main/osx-64/scipy-1.11.4-py312h81688c2_0.conda#7d57b4c21a9261f97fa511e0940c5d93
 https://repo.anaconda.com/pkgs/main/osx-64/pandas-2.2.3-py312h6d0c2b6_0.conda#84ce5b8ec4a986d13a5df17811f556a2
 https://repo.anaconda.com/pkgs/main/osx-64/pyamg-4.2.3-py312h44cbcf4_0.conda#3bdc7be74087b3a5a83c520a74e1e8eb
-# pip cython @ https://files.pythonhosted.org/packages/58/50/fbb23239efe2183e4eaf76689270d6f5b3bbcf9be9ad1eb97cc34349e6fc/Cython-3.0.11-cp312-cp312-macosx_10_9_x86_64.whl#sha256=11996c40c32abf843ba652a6d53cb15944c88d91f91fc4e6f0028f5df8a8f8a1
+# pip cython @ https://files.pythonhosted.org/packages/e6/6c/3be501a6520a93449b1e7e6f63e598ec56f3b5d1bc7ad14167c72a22ddf7/Cython-3.0.12-cp312-cp312-macosx_10_9_x86_64.whl#sha256=fe030d4a00afb2844f5f70896b7f2a1a0d7da09bf3aa3d884cbe5f73fff5d310
 # pip meson @ https://files.pythonhosted.org/packages/ab/3b/63fdad828b4cbeb49cef3aad26f3edfbc72f37a0ab54917d445ec0b9d9ff/meson-1.7.0-py3-none-any.whl#sha256=ae3f12953045f3c7c60e27f2af1ad862f14dee125b4ed9bcb8a842a5080dbf85
 # pip threadpoolctl @ https://files.pythonhosted.org/packages/4b/2c/ffbf7a134b9ab11a67b0cf0726453cedd9c5043a4fe7a35d1cefa9a1bcfb/threadpoolctl-3.5.0-py3-none-any.whl#sha256=56c1e26c150397e58c4926da8eeee87533b1e32bef131bd4bf6a2f45f3185467
 # pip pyproject-metadata @ https://files.pythonhosted.org/packages/e8/61/9dd3e68d2b6aa40a5fc678662919be3c3a7bf22cba5a6b4437619b77e156/pyproject_metadata-0.9.0-py3-none-any.whl#sha256=fc862aab066a2e87734333293b0af5845fe8ac6cb69c451a41551001e923be0b
