@@ -2151,7 +2151,7 @@ def _check_sample_weight(
 
     dtype : dtype, default=None
         dtype of the validated `sample_weight`.
-        If None, and the input `sample_weight` is an array, conversion to the
+        If None, and `sample_weight` is an array, conversion to the
         default numpy dtype (np.float64) will be performed, unless input dtype
         is one of (np.float64, np.float32), in which case dtype is preserved.
         If `dtype` is not one of `float32`, `float64` or `None`, the output will
