@@ -876,11 +876,12 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             accept = "sample_weight" in signature(scorers).parameters
         if not accept:
-            raise ValueError(
-                f"The scoring {scorers} does not support sample_weight, which is "
-                f"required for fitting {self} with sample_weight. Please use a scorer "
-                "that supports sample_weight or do not pass sample_weight to fit."
+            warnings.warn(
+                f"The scoring {scorers} does not support sample_weight, "
+                "which may lead to statistically incorrect results when "
+                f"fitting {self} with sample_weight. "
             )
+        return accept
 
     def _get_routed_params_for_fit(self, params):
         """Get the parameters to be used for routing.
@@ -898,8 +899,13 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 splitter=Bunch(split={"groups": groups}),
                 scorer=Bunch(score={}),
             )
-            if "sample_weight" in params:
-                self._check_scorers_accept_sample_weight()
+            # NOTE: sample_weight is forwarded to the scorer if sample_weight
+            # is not None and scorers accept sample_weight. For _MultimetricScorer,
+            # sample_weight is forwarded only when all scorers accept sample_weight
+            if (
+                params.get("sample_weight") is not None
+                and self._check_scorers_accept_sample_weight()
+            ):
                 routed_params.scorer.score["sample_weight"] = params["sample_weight"]
         return routed_params
 

@@ -1322,7 +1322,7 @@ def test_search_cv_score_samples_error(search_cv):
 
 
 def test_unsupported_sample_weight_scorer():
-    """Checks that fitting with sample_weight raises an error if the scorer does not
+    """Checks that fitting with sample_weight raises a warning if the scorer does not
     support sample_weight"""
 
     def fake_score_func(y_true, y_pred):
@@ -1336,17 +1336,17 @@ def test_unsupported_sample_weight_scorer():
     search_cv = GridSearchCV(estimator=LogisticRegression(), param_grid={"C": [1, 10]})
     # function
     search_cv.set_params(scoring=fake_score_func)
-    with pytest.raises(ValueError, match="does not support sample_weight"):
+    with pytest.warns(UserWarning, match="does not support sample_weight"):
         search_cv.fit(X, y, sample_weight=sw)
     # scorer
     search_cv.set_params(scoring=fake_scorer)
-    with pytest.raises(ValueError, match="does not support sample_weight"):
+    with pytest.warns(UserWarning, match="does not support sample_weight"):
         search_cv.fit(X, y, sample_weight=sw)
     # multi-metric evalutation
     search_cv.set_params(
         scoring=dict(fake=fake_scorer, accuracy="accuracy"), refit=False
     )
-    with pytest.raises(ValueError, match="does not support sample_weight"):
+    with pytest.warns(UserWarning, match="does not support sample_weight"):
         search_cv.fit(X, y, sample_weight=sw)
 
 
