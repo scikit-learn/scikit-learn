@@ -155,6 +155,7 @@ class _MultimetricScorer:
         return f"MultiMetricScorer({scorers})"
 
     def _accept_sample_weight(self):
+        # TODO(slep006): remove when metadata routing is the only way
         return all(scorer._accept_sample_weight() for scorer in self._scorers.values())
 
     def _use_cache(self, estimator):
@@ -235,6 +236,7 @@ class _BaseScorer(_MetadataRequester):
         return None
 
     def _accept_sample_weight(self):
+        # TODO(slep006): remove when metadata routing is the only way
         return "sample_weight" in signature(self._score_func).parameters
 
     def __repr__(self):
@@ -481,6 +483,7 @@ class _PassthroughScorer(_MetadataRequester):
         return f"{self._estimator.__class__}.score"
 
     def _accept_sample_weight(self):
+        # TODO(slep006): remove when metadata routing is the only way
         return "sample_weight" in signature(self._estimator.score).parameters
 
     def get_metadata_routing(self):

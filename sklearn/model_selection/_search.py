@@ -868,6 +868,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         return scorers, refit_metric
 
     def _check_scorers_accept_sample_weight(self):
+        # TODO(slep006): remove when metadata routing is the only way
         scorers, _ = self._get_scorers()
         # In most cases, scorers is a Scorer object
         # But it's a function when user passes scoring=function
