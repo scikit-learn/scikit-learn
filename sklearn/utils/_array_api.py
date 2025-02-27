@@ -629,21 +629,19 @@ def get_namespace_and_device(
     device : device
         `device` object (see the "Device Support" section of the array API spec).
     """
+    skip_remove_kwargs = dict(remove_none=False, remove_types=[])
+
+    array_list = _remove_non_arrays(
+        *array_list,
+        remove_none=remove_none,
+        remove_types=remove_types,
+    )
+    arrays_device = device(*array_list, **skip_remove_kwargs)
+
     if xp is None:
-        array_list = _remove_non_arrays(
-            *array_list,
-            remove_none=remove_none,
-            remove_types=remove_types,
-        )
-
-        skip_remove_kwargs = dict(remove_none=False, remove_types=[])
-
         xp, is_array_api = get_namespace(*array_list, **skip_remove_kwargs)
     else:
-        xp = xp
-        is_array_api = True
-
-    arrays_device = device(*array_list, **skip_remove_kwargs)
+        xp, is_array_api = xp, True
 
     if is_array_api:
         return xp, is_array_api, arrays_device
