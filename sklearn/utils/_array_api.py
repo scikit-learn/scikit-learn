@@ -784,64 +784,62 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
 
 def _xlogy(x, y, xp=None):
     # TODO: Remove this once https://github.com/scipy/scipy/issues/21736 is fixed
-    xp, _ = get_namespace(x, y, xp=xp)
+    xp, _, device_ = get_namespace_and_device(x, y, xp=xp)
 
     with numpy.errstate(divide="ignore", invalid="ignore"):
         temp = x * xp.log(y)
-    return xp.where(
-        x == 0.0, xp.asarray(0.0, dtype=temp.dtype, device=device(temp)), temp
-    )
+    return xp.where(x == 0.0, xp.asarray(0.0, dtype=temp.dtype, device=device_), temp)
 
 
 def _nanmin(X, axis=None, xp=None):
     # TODO: refactor once nan-aware reductions are standardized:
     # https://github.com/data-apis/array-api/issues/621
-    xp, _ = get_namespace(X, xp=xp)
+    xp, _, device_ = get_namespace_and_device(X, xp=xp)
     if _is_numpy_namespace(xp):
         return xp.asarray(numpy.nanmin(X, axis=axis))
 
     else:
         mask = xp.isnan(X)
         X = xp.min(
-            xp.where(mask, xp.asarray(+xp.inf, device=device(X), dtype=X.dtype), X),
+            xp.where(mask, xp.asarray(+xp.inf, device=device_, dtype=X.dtype), X),
             axis=axis,
         )
         # Replace Infs from all NaN slices with NaN again
         mask = xp.all(mask, axis=axis)
         if xp.any(mask):
-            X = xp.where(mask, xp.asarray(xp.nan, dtype=X.dtype, device=device(X)), X)
+            X = xp.where(mask, xp.asarray(xp.nan, dtype=X.dtype, device=device_), X)
         return X
 
 
 def _nanmax(X, axis=None, xp=None):
     # TODO: refactor once nan-aware reductions are standardized:
     # https://github.com/data-apis/array-api/issues/621
-    xp, _ = get_namespace(X, xp=xp)
+    xp, _, device_ = get_namespace_and_device(X, xp=xp)
     if _is_numpy_namespace(xp):
         return xp.asarray(numpy.nanmax(X, axis=axis))
 
     else:
         mask = xp.isnan(X)
         X = xp.max(
-            xp.where(mask, xp.asarray(-xp.inf, device=device(X), dtype=X.dtype), X),
+            xp.where(mask, xp.asarray(-xp.inf, device=device_, dtype=X.dtype), X),
             axis=axis,
         )
         # Replace Infs from all NaN slices with NaN again
         mask = xp.all(mask, axis=axis)
         if xp.any(mask):
-            X = xp.where(mask, xp.asarray(xp.nan, dtype=X.dtype, device=device(X)), X)
+            X = xp.where(mask, xp.asarray(xp.nan, dtype=X.dtype, device=device_), X)
         return X
 
 
 def _nanmean(X, axis=None, xp=None):
     # TODO: refactor once nan-aware reductions are standardized:
     # https://github.com/data-apis/array-api/issues/621
-    xp, _ = get_namespace(X, xp=xp)
+    xp, _, device_ = get_namespace_and_device(X, xp=xp)
     if _is_numpy_namespace(xp):
         return xp.asarray(numpy.nanmean(X, axis=axis))
     else:
         mask = xp.isnan(X)
-        total = xp.sum(xp.where(mask, xp.asarray(0.0, device=device(X)), X), axis=axis)
+        total = xp.sum(xp.where(mask, xp.asarray(0.0, device=device_), X), axis=axis)
         count = xp.sum(xp.astype(xp.logical_not(mask), X.dtype), axis=axis)
         return total / count
 
