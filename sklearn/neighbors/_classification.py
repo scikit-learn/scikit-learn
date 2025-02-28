@@ -362,7 +362,11 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
                     # https://github.com/scikit-learn/scikit-learn/pull/24076#issuecomment-1445258342  # noqa
                     # TODO: adapt the heuristic for `strategy="auto"` for
                     # `ArgKminClassMode` and use `strategy="auto"`.
-                    strategy="parallel_on_X",
+                    strategy=(
+                        "auto"
+                        if metric in ("euclidean", "seuclidean")
+                        else "parallel_on_X"
+                    ),
                 )
                 return probabilities
 
