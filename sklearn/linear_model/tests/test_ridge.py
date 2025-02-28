@@ -1294,15 +1294,16 @@ def test_ridge_array_api_compliance(
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace", yield_namespaces(include_numpy_namespaces=False)
 )
-def test_multilabel_array_api(array_namespace, device, dtype_name):
+def test_multilabel_array_api(array_namespace):
     with config_context(array_api_dispatch=True):
         X, y = make_multilabel_classification(n_classes=2, random_state=0)
-        xp = _array_api_for_tests(array_namespace, device)
+        xp = _array_api_for_tests(array_namespace, None)
         X, y = xp.asarray(X), xp.asarray(y)
         ridge = RidgeClassifierCV().fit(X, y)
         pred = ridge.predict(X)
+        assert pred.shape == y.shape
 
 
 @pytest.mark.parametrize(
