@@ -664,3 +664,11 @@ def test_move_to_namespace_and_device():
         assert conv_b is b
         assert conv_c is c
         assert conv_d is d
+
+        # specific case where direct conversion with asarray fails:
+        # torch.asarray(array_api_strict.asarray([0])) raises an exception.
+        torch = pytest.importorskip("torch")
+        a = xp.asarray([0, 1])
+        b = torch.asarray([2, 3])
+        (conv_a,) = move_to_namespace_and_device(a, ref=b)
+        assert conv_a.device == b.device
