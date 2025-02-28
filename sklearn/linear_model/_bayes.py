@@ -558,11 +558,6 @@ class ARDRegression(RegressorMixin, LinearModel):
     --------
     BayesianRidge : Bayesian ridge regression.
 
-    Notes
-    -----
-    For an example, see :ref:`examples/linear_model/plot_ard.py
-    <sphx_glr_auto_examples_linear_model_plot_ard.py>`.
-
     References
     ----------
     D. J. C. MacKay, Bayesian nonlinear modeling for the prediction
@@ -584,6 +579,16 @@ class ARDRegression(RegressorMixin, LinearModel):
     ARDRegression()
     >>> clf.predict([[1, 1]])
     array([1.])
+
+    For examples, refer to:
+
+    - :ref:`sphx_glr_auto_examples_linear_model_plot_ard.py`:
+     Demonstrates ARD Regression.
+
+    - :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`:
+     Showcases ARD Regression alongside Lasso and Elastic-Net for sparse signal
+     recovery, addressing noise and feature correlation.
+
     """
 
     _parameter_constraints: dict = {
