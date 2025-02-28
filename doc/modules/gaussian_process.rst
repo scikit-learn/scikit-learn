@@ -106,11 +106,11 @@ The :class:`GaussianProcessClassifier` implements Gaussian processes (GP) for
 classification purposes, more specifically for probabilistic classification,
 where test predictions take the form of class probabilities.
 GaussianProcessClassifier places a GP prior on a latent function :math:`f`,
-which is then squashed through a link function to obtain the probabilistic
+which is then squashed through a link function :math:`\pi` to obtain the probabilistic
 classification. The latent function :math:`f` is a so-called nuisance function,
 whose values are not observed and are not relevant by themselves.
 Its purpose is to allow a convenient formulation of the model, and :math:`f`
-is removed (integrated out) during prediction. GaussianProcessClassifier
+is removed (integrated out) during prediction. :class:`GaussianProcessClassifier`
 implements the logistic link function, for which the integral cannot be
 computed analytically but is easily approximated in the binary case.
 
@@ -133,6 +133,16 @@ of the kernel; subsequent runs are conducted from hyperparameter values
 that have been chosen randomly from the range of allowed values.
 If the initial hyperparameters should be kept fixed, `None` can be passed as
 optimizer.
+
+In some scenarios, information about the uncertainty of the latent function
+:math:`f` is desired (i.e. the variance :math:`\text{Var}[f_*]` described in
+Eq. (3.24) of [RW2006]_). The :class:`GaussianProcessClassifier` provides
+access to this uncertainty on the `predict_proba` method:
+setting the keyword argument `return_std_of_f` to `True` will also return the
+standard deviation of the latent function :math:`f` at the query points. It
+must be emphasized that this uncertainty is **not** an uncertainty over the
+class probabilities :math:`\pi(f)`, but rather the uncertainties of the latent
+variable :math:`f`.
 
 :class:`GaussianProcessClassifier` supports multi-class classification
 by performing either one-versus-rest or one-versus-one based training and
