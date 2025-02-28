@@ -129,10 +129,22 @@ class _MultimetricScorer:
         if _routing_enabled():
             routed_params = process_routing(self, "score", **kwargs)
         else:
-            # they all get the same args, and they all get them all
+            # They all get the same args and get all of them all except sample_weight.
+            # Only the ones having `sample_weight` in their signature will receive it.
+            # This does not work for metadata other than sample_weight, and for those
+            # users have to enable metadata routing.
+            common_kwargs = {
+                arg: value for arg, value in kwargs.items() if arg != "sample_weight"
+            }
             routed_params = Bunch(
-                **{name: Bunch(score=kwargs) for name in self._scorers}
+                **{name: Bunch(score=common_kwargs.copy()) for name in self._scorers}
             )
+            if "sample_weight" in kwargs:
+                for name, scorer in self._scorers.items():
+                    if scorer._accept_sample_weight():
+                        routed_params[name].score["sample_weight"] = kwargs[
+                            "sample_weight"
+                        ]
 
         for name, scorer in self._scorers.items():
             try:

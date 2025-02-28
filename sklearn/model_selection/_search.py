@@ -870,6 +870,16 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     def _check_scorers_accept_sample_weight(self):
         # TODO(slep006): remove when metadata routing is the only way
         scorers, _ = self._get_scorers()
+        # In the multimetric case, warn the user for each scorer separately
+        if isinstance(scorers, _MultimetricScorer):
+            for name, scorer in scorers._scorers.items():
+                if not scorer._accept_sample_weight():
+                    warnings.warn(
+                        f"The scoring {name}={scorer} does not support sample_weight, "
+                        "which may lead to statistically incorrect results when "
+                        f"fitting {self} with sample_weight. "
+                    )
+            return scorers._accept_sample_weight()
         # In most cases, scorers is a Scorer object
         # But it's a function when user passes scoring=function
         if hasattr(scorers, "_accept_sample_weight"):
@@ -902,7 +912,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             )
             # NOTE: sample_weight is forwarded to the scorer if sample_weight
             # is not None and scorers accept sample_weight. For _MultimetricScorer,
-            # sample_weight is forwarded only when all scorers accept sample_weight
+            # sample_weight is forwarded if any scorer accepts sample_weight
             if (
                 params.get("sample_weight") is not None
                 and self._check_scorers_accept_sample_weight()
