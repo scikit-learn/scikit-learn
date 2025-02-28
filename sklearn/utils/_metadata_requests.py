@@ -754,10 +754,9 @@ class MethodMapping:
         obj : list
             A serialized version of the instance in the form of a list.
         """
-        result = list()
-        for route in self._routes:
-            result.append({"caller": route.caller, "callee": route.callee})
-        return result
+        return [
+            {"caller": route.caller, "callee": route.callee} for route in self._routes
+        ]
 
     def __repr__(self):
         return str(self._serialize())
@@ -882,7 +881,7 @@ class MetadataRouter:
         if self._self_request:
             res = res | self._self_request.consumes(method=method, params=params)
 
-        for _, route_mapping in self._route_mappings.items():
+        for route_mapping in self._route_mappings.values():
             for caller, callee in route_mapping.mapping:
                 if caller == method:
                     res = res | route_mapping.router.consumes(
@@ -925,7 +924,7 @@ class MetadataRouter:
                 )
             )
 
-        for name, route_mapping in self._route_mappings.items():
+        for route_mapping in self._route_mappings.values():
             for caller, callee in route_mapping.mapping:
                 if caller == method:
                     res = res.union(
