@@ -1480,15 +1480,21 @@ def test_gaussian_mixture_all_init_does_not_estimate_gaussian_parameters(
 )
 def test_gaussian_mixture_array_api_compliance(array_namespace, device, dtype):
     X, y = make_blobs(n_samples=int(1e3), n_features=2, centers=3, random_state=0)
+    gmm = GaussianMixture(
+        n_components=3,
+        covariance_type="diag",
+        random_state=0,
+        init_params="random",
+    )
+    gmm.fit(X)
+    means_ref = gmm.means_
+    covariances_ref = gmm.covariances_
+
     xp = _array_api_for_tests(array_namespace, device)
     X = xp.asarray(X, device=device)
     y = xp.asarray(y, device=device)
     with sklearn.config_context(array_api_dispatch=True):
-        gmm = GaussianMixture(
-            n_components=3,
-            covariance_type="diag",
-            random_state=0,
-            init_params="random",
-            tol=1e-5,
-            max_iter=1000,
-        ).fit(X)
+        gmm.fit(X)
+
+    assert_allclose(means_ref, gmm.means_)
+    assert_allclose(covariances_ref, gmm.covariances_)
