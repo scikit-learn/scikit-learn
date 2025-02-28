@@ -129,7 +129,7 @@ class _MultimetricScorer:
         if _routing_enabled():
             routed_params = process_routing(self, "score", **kwargs)
         else:
-            # They all get the same args and get all of them all except sample_weight.
+            # Scorers all get the same args, and get all of them except sample_weight.
             # Only the ones having `sample_weight` in their signature will receive it.
             # This does not work for metadata other than sample_weight, and for those
             # users have to enable metadata routing.
