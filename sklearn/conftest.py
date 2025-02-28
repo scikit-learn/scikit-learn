@@ -185,7 +185,7 @@ def pytest_collection_modifyitems(config, items):
             marker = pytest.mark.xfail(
                 reason=(
                     "know failure. See "
-                    "https://github.com/scikit-learn/scikit-learn/issues/17797"  # noqa
+                    "https://github.com/scikit-learn/scikit-learn/issues/17797"
                 )
             )
             item.add_marker(marker)

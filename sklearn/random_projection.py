@@ -47,8 +47,8 @@ from .utils.random import sample_without_replacement
 from .utils.validation import check_array, check_is_fitted, validate_data
 
 __all__ = [
-    "SparseRandomProjection",
     "GaussianRandomProjection",
+    "SparseRandomProjection",
     "johnson_lindenstrauss_min_dim",
 ]
 
