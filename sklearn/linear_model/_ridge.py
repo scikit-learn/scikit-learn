@@ -2152,6 +2152,10 @@ class _RidgeGCV(LinearModel):
             # attributes will be stored in the dtype chosen by validate_data, ie
             # np.float64
             original_dtype = None
+        # Using float32 can be numerically unstable for this estimator. So,
+        # if the array API namespace and device allow, convert the input values
+        # to float64 whenever possible before converting back the results to
+        # float32 to keep prediction on float32 inputs efficient.
         dtype = _max_precision_float_dtype(xp, device=device_)
         X, y = validate_data(
             self,
@@ -2279,7 +2283,7 @@ class _RidgeGCV(LinearModel):
             dual_T = self.dual_coef_.T
         else:
             dual_T = self.dual_coef_
-        self.coef_ = safe_sparse_dot(dual_T, X)
+        self.coef_ = dual_T @ X
         if y.ndim == 1 or y.shape[1] == 1:
             self.coef_ = _ravel(self.coef_)
 
