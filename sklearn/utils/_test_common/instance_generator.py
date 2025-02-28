@@ -706,6 +706,14 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             dict(solver="sparse_cg"),
             dict(solver="lsqr"),
         ],
+        "check_sample_weights_scaled": [
+            dict(alpha=0),
+            dict(solver="svd"),
+            dict(solver="cholesky"),
+            dict(solver="sparse_cg"),
+            dict(solver="lsqr"),
+            dict(solver="lbfgs", positive=True),
+        ],
     },
     RidgeClassifier: {
         "check_sample_weight_equivalence_on_dense_data": [
