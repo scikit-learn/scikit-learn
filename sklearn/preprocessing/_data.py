@@ -3443,20 +3443,23 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         """Return inverse-transformed input x following Yeo-Johnson inverse
         transform with parameter lambda.
         """
+        if lmbda == 1:
+            return x
+
         x_inv = np.zeros_like(x)
         pos = x >= 0
 
         # when x >= 0
         if abs(lmbda) < np.spacing(1.0):
-            x_inv[pos] = np.exp(x[pos]) - 1
+            x_inv[pos] = np.expm1(x[pos])
         else:  # lmbda != 0
-            x_inv[pos] = np.power(x[pos] * lmbda + 1, 1 / lmbda) - 1
+            x_inv[pos] = np.expm1(np.log1p(x[pos] * lmbda) / lmbda)
 
         # when x < 0
         if abs(lmbda - 2) > np.spacing(1.0):
-            x_inv[~pos] = 1 - np.power(-(2 - lmbda) * x[~pos] + 1, 1 / (2 - lmbda))
+            x_inv[~pos] = -np.expm1(np.log1p((lmbda - 2) * x[~pos]) / (2 - lmbda))
         else:  # lmbda == 2
-            x_inv[~pos] = 1 - np.exp(-x[~pos])
+            x_inv[~pos] = -np.expm1(-x[~pos])
 
         return x_inv
 
@@ -3464,6 +3467,8 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         """Return transformed input x following Yeo-Johnson transform with
         parameter lambda.
         """
+        if lmbda == 1:
+            return x
 
         out = np.zeros_like(x)
         pos = x >= 0  # binary mask
@@ -3472,11 +3477,11 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         if abs(lmbda) < np.spacing(1.0):
             out[pos] = np.log1p(x[pos])
         else:  # lmbda != 0
-            out[pos] = (np.power(x[pos] + 1, lmbda) - 1) / lmbda
+            out[pos] = np.expm1(lmbda * np.log1p(x[pos])) / lmbda
 
         # when x < 0
         if abs(lmbda - 2) > np.spacing(1.0):
-            out[~pos] = -(np.power(-x[~pos] + 1, 2 - lmbda) - 1) / (2 - lmbda)
+            out[~pos] = -np.expm1((2 - lmbda) * np.log1p(-x[~pos])) / (2 - lmbda)
         else:  # lmbda == 2
             out[~pos] = -np.log1p(-x[~pos])
 
