@@ -1349,10 +1349,11 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
             # Threshold such that the negative label is -1 and positive label
             # is 1 to use the inverse transform of the label binarizer fitted
             # during fit.
-            scores = 2 * (self.decision_function(X) > 0) - 1
-            xp, is_array_api = get_namespace(scores)
+            decision = self.decision_function(X)
+            xp, is_array_api = get_namespace(decision)
+            scores = 2.0 * xp.astype(decision > 0, xp.float32) - 1.0
             if is_array_api:
-                scores = _convert_to_numpy(scores)
+                scores = _convert_to_numpy(scores, xp)
             return self._label_binarizer.inverse_transform(scores)
         return super().predict(X)
 

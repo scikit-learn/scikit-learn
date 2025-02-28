@@ -658,12 +658,9 @@ def move_to_namespace_and_device(*arrays_to_move, ref):
         if array is None or isinstance(array, (numbers.Number, str)):
             new_arrays.append(array)
             continue
-        array_xp, array_is_array_api, array_device = get_namespace_and_device(array)
+        array_xp, _, array_device = get_namespace_and_device(array)
         if array_xp == xp and array_device == device_:
             new_arrays.append(array)
-            continue
-        if not array_is_array_api:
-            new_arrays.append(xp.asarray(array, device=device_))
             continue
         try:
             new_arrays.append(xp.asarray(array, device=device_))
