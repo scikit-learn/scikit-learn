@@ -1478,12 +1478,16 @@ def test_gaussian_mixture_all_init_does_not_estimate_gaussian_parameters(
 @pytest.mark.parametrize(
     "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
 )
-def test_gaussian_mixture_array_api_compliance(array_namespace, device, dtype):
-    X, y = make_blobs(n_samples=int(1e3), n_features=2, centers=3, random_state=0)
+def test_gaussian_mixture_array_api_compliance(
+    array_namespace, device, dtype, global_random_seed
+):
+    X, y = make_blobs(
+        n_samples=int(1e3), n_features=2, centers=3, random_state=global_random_seed
+    )
     gmm = GaussianMixture(
         n_components=3,
         covariance_type="diag",
-        random_state=0,
+        random_state=global_random_seed,
         init_params="random",
     )
     gmm.fit(X)
