@@ -605,7 +605,7 @@ def count_nonzero(X, axis=None, sample_weight=None):
     Parameters
     ----------
     X : sparse matrix of shape (n_samples, n_labels)
-        Input data. It should be of CSR format.
+        Input data. It should be of CSR or CSC format.
 
     axis : {0, 1}, default=None
         The axis on which the data is aggregated.
@@ -623,36 +623,44 @@ def count_nonzero(X, axis=None, sample_weight=None):
         axis = 1
     elif axis == -2:
         axis = 0
-    elif X.format == "csc":
-        X = X.T
-        if axis is not None:
-            axis = 1 - axis
-    elif X.format != "csr":
-        raise TypeError("Expected CSR sparse format, got {0}".format(X.format))
+    elif X.format not in ("csr", "csc"):
+        raise TypeError(f"Expected CSR or CSC sparse format, got {X.format}")
 
     # We rely here on the fact that np.diff(Y.indptr) for a CSR
     # will return the number of nonzero entries in each row.
     # A bincount over Y.indices will return the number of nonzeros
     # in each column. See ``csr_matrix.getnnz`` in scipy >= 0.14.
-    if axis is None:
-        if sample_weight is None:
+    # For CSC, the diff is for columns and the bincount is for rows.
+    match (X.format, axis, sample_weight):
+        case (_, None, None):
             return X.nnz
-        else:
-            return np.dot(np.diff(X.indptr), sample_weight)
-    elif axis == 1:
-        out = np.diff(X.indptr)
-        if sample_weight is None:
-            # astype here is for consistency with axis=0 dtype
-            return out.astype("intp")
-        return out * sample_weight
-    elif axis == 0:
-        if sample_weight is None:
+        case ("csr", 1, None) | ("csc", 0, None):
+            # astype here is for consistency with bincount style dtype
+            return np.diff(X.indptr).astype("intp")
+        case ("csr", 0, None):
             return np.bincount(X.indices, minlength=X.shape[1])
-        else:
+        case ("csc", 1, None):
+            return np.bincount(X.indices, minlength=X.shape[0])
+
+        case ("csr", None, _):
+            return np.dot(np.diff(X.indptr), sample_weight)
+        case ("csr", 1, _):
+            return np.diff(X.indptr) * sample_weight
+        case ("csr", 0, _):
             weights = np.repeat(sample_weight, np.diff(X.indptr))
             return np.bincount(X.indices, minlength=X.shape[1], weights=weights)
-    else:
-        raise ValueError("Unsupported axis: {0}".format(axis))
+
+        case ("csc", None, _):
+            return np.asarray(sample_weight)[X.indices].sum()
+        case ("csc", 1, _):
+            return np.bincount(X.indices) * sample_weight
+        case ("csc", 0, _):
+            return np.add.reduceat(
+                np.asarray(sample_weight)[X.indices],
+                X.indptr[np.flatnonzero(np.diff(X.indptr))],
+            )
+        case _:
+            raise ValueError(f"Unsupported axis: {axis}")
 
 
 def _get_median(data, n_zeros):
