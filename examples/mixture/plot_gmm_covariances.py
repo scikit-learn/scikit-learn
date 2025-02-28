@@ -1,4 +1,3 @@
-# %%
 """
 ===============
 GMM covariances
@@ -137,5 +136,3 @@ plt.legend(scatterpoints=1, loc="lower right", prop=dict(size=12))
 
 
 plt.show()
-
-# %%
