@@ -1055,7 +1055,7 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     if cov_ypyp_ytyt == 0:
         return 0.0
     else:
-        return cov_ytyp / np.sqrt(cov_ypyp_ytyt)
+        return float(cov_ytyp / np.sqrt(cov_ypyp_ytyt))
 
 
 @validate_params(
