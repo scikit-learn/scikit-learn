@@ -838,10 +838,10 @@ def test_count_nonzero(csc_container, csr_container, lil_container):
     for axis in [0, 1, -1, -2, None]:
         for X in [X_csr, X_csc]:
             assert_array_almost_equal(
-                count_nonzero(X_csr, axis=axis), X_nonzero.sum(axis=axis)
+                count_nonzero(X, axis=axis), X_nonzero.sum(axis=axis)
             )
             assert_array_almost_equal(
-                count_nonzero(X_csr, axis=axis, sample_weight=sample_weight),
+                count_nonzero(X, axis=axis, sample_weight=sample_weight),
                 X_nonzero_weighted.sum(axis=axis),
             )
 
