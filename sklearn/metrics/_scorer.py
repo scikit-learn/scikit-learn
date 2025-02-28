@@ -156,7 +156,7 @@ class _MultimetricScorer:
 
     def _accept_sample_weight(self):
         # TODO(slep006): remove when metadata routing is the only way
-        return all(scorer._accept_sample_weight() for scorer in self._scorers.values())
+        return any(scorer._accept_sample_weight() for scorer in self._scorers.values())
 
     def _use_cache(self, estimator):
         """Return True if using a cache is beneficial, thus when a response method will
