@@ -932,8 +932,10 @@ def check_scoring(estimator=None, scoring=None, *, allow_none=False, raise_exc=T
     scoring : str, callable, list, tuple, set, or dict, default=None
         Scorer to use. If `scoring` represents a single score, one can use:
 
-        - a single string (see :ref:`scoring_parameter`);
-        - a callable (see :ref:`scoring_callable`) that returns a single value.
+        - a single string (see :ref:`scoring_string_names`);
+        - a callable (see :ref:`scoring_callable`) that returns a single value;
+        - `None`, the `estimator`'s
+          :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
         If `scoring` represents multiple scores, one can use:
 
@@ -942,8 +944,6 @@ def check_scoring(estimator=None, scoring=None, *, allow_none=False, raise_exc=T
           values are the metric scorers;
         - a dictionary with metric names as keys and callables a values. The callables
           need to have the signature `callable(estimator, X, y)`.
-
-        If None, the provided estimator object's `score` method is used.
 
     allow_none : bool, default=False
         Whether to return None or raise an error if no `scoring` is specified and the

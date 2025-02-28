@@ -32,14 +32,14 @@ solves a problem of the form:
 
 .. math:: \min_{w} || X w - y||_2^2
 
-.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_ols_001.png
-   :target: ../auto_examples/linear_model/plot_ols.html
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_ols_ridge_001.png
+   :target: ../auto_examples/linear_model/plot_ols_ridge.html
    :align: center
    :scale: 50%
 
-:class:`LinearRegression` will take in its ``fit`` method arrays ``X``, ``y``
-and will store the coefficients :math:`w` of the linear model in its
-``coef_`` member::
+:class:`LinearRegression` takes in its ``fit`` method arguments ``X``, ``y``,
+``sample_weight`` and stores the coefficients :math:`w` of the linear model in its
+``coef_`` and ``intercept_`` attributes::
 
     >>> from sklearn import linear_model
     >>> reg = linear_model.LinearRegression()
@@ -47,9 +47,11 @@ and will store the coefficients :math:`w` of the linear model in its
     LinearRegression()
     >>> reg.coef_
     array([0.5, 0.5])
+    >>> reg.intercept_
+    0.0
 
 The coefficient estimates for Ordinary Least Squares rely on the
-independence of the features. When features are correlated and the
+independence of the features. When features are correlated and some
 columns of the design matrix :math:`X` have an approximately linear
 dependence, the design matrix becomes close to singular
 and as a result, the least-squares estimate becomes highly sensitive
@@ -59,7 +61,7 @@ example, when data are collected without an experimental design.
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_linear_model_plot_ols.py`
+* :ref:`sphx_glr_auto_examples_linear_model_plot_ols_ridge.py`
 
 Non-Negative Least Squares
 --------------------------
@@ -79,7 +81,7 @@ Ordinary Least Squares Complexity
 ---------------------------------
 
 The least squares solution is computed using the singular value
-decomposition of X. If X is a matrix of shape `(n_samples, n_features)`
+decomposition of :math:`X`. If :math:`X` is a matrix of shape `(n_samples, n_features)`
 this method has a cost of
 :math:`O(n_{\text{samples}} n_{\text{features}}^2)`, assuming that
 :math:`n_{\text{samples}} \geq n_{\text{features}}`.
@@ -143,6 +145,11 @@ the corresponding solver is chosen.
 | 'sparse_cg' | None of the above conditions are fulfilled.        |
 +-------------+----------------------------------------------------+
 
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_linear_model_plot_ols_ridge.py`
+* :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_path.py`
+* :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
 
 Classification
 --------------
@@ -174,9 +181,8 @@ a linear kernel.
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_path.py`
 * :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
-* :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
+
 
 Ridge Complexity
 ----------------
@@ -847,7 +853,7 @@ Ridge Regression`_, see the example below.
 
 .. [3] Michael E. Tipping: `Sparse Bayesian Learning and the Relevance Vector Machine <https://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_
 
-.. [4] Tristan Fletcher: `Relevance Vector Machines Explained <https://citeseerx.ist.psu.edu/doc_view/pid/3dc9d625404fdfef6eaccc3babddefe4c176abd4>`_
+.. [4] Tristan Fletcher: `Relevance Vector Machines Explained <https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=3dc9d625404fdfef6eaccc3babddefe4c176abd4>`_
 
 .. _Logistic_regression:
 

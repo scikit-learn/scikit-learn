@@ -277,9 +277,6 @@ class DBSCAN(ClusterMixin, BaseEstimator):
 
     Notes
     -----
-    For an example, see
-    :ref:`sphx_glr_auto_examples_cluster_plot_dbscan.py`.
-
     This implementation bulk-computes all neighborhood queries, which increases
     the memory complexity to O(n.d) where d is the average number of neighbors,
     while original DBSCAN had memory complexity O(n). It may attract a higher
@@ -322,6 +319,12 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     array([ 0,  0,  0,  1,  1, -1])
     >>> clustering
     DBSCAN(eps=3, min_samples=2)
+
+    For an example, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_dbscan.py`.
+
+    For a comparison of DBSCAN with other clustering algorithms, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
     """
 
     _parameter_constraints: dict = {
