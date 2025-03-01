@@ -482,7 +482,7 @@ class AdaBoostClassifier(
     as weaklearners, please refer to
     :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_multiclass.py`.
 
-    For a detailed example of using AdaBoost to fit a non-linearly seperable
+    For a detailed example of using AdaBoost to fit a non-linearly separable
     classification dataset composed of two Gaussian quantiles clusters, please
     refer to :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_twoclass.py`.
     """

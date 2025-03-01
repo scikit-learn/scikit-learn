@@ -392,7 +392,7 @@ each case**:
   be the same across all folds.
 - Since `rf_inst` was passed a `RandomState` instance, each call to `fit`
   starts from a different RNG. As a result, the random subset of features
-  will be different for each folds.
+  will be different for each fold.
 
 While having a constant estimator RNG across folds isn't inherently wrong, we
 usually want CV results that are robust w.r.t. the estimator's randomness. As
@@ -424,7 +424,7 @@ it will allow the estimator RNG to vary for each fold.
     Since a `RandomState` instance was passed to `a`, `a` and `b` are not clones
     in the strict sense, but rather clones in the statistical sense: `a` and `b`
     will still be different models, even when calling `fit(X, y)` on the same
-    data. Moreover, `a` and `b` will influence each-other since they share the
+    data. Moreover, `a` and `b` will influence each other since they share the
     same internal RNG: calling `a.fit` will consume `b`'s RNG, and calling
     `b.fit` will consume `a`'s RNG, since they are the same. This bit is true for
     any estimators that share a `random_state` parameter; it is not specific to
@@ -549,10 +549,10 @@ When we evaluate a randomized estimator performance by cross-validation, we
 want to make sure that the estimator can yield accurate predictions for new
 data, but we also want to make sure that the estimator is robust w.r.t. its
 random initialization. For example, we would like the random weights
-initialization of a :class:`~sklearn.linear_model.SGDClassifier` to be
+initialization of an :class:`~sklearn.linear_model.SGDClassifier` to be
 consistently good across all folds: otherwise, when we train that estimator
 on new data, we might get unlucky and the random initialization may lead to
-bad performance. Similarly, we want a random forest to be robust w.r.t the
+bad performance. Similarly, we want a random forest to be robust w.r.t. the
 set of randomly selected features that each tree will be using.
 
 For these reasons, it is preferable to evaluate the cross-validation
