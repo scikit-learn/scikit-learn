@@ -244,9 +244,9 @@ class BaseTransformedTarget(BaseEstimator):
 
         estimator = self._get_estimator()
         estimator_tags = get_tags(estimator)
-        if estimator_tags.classifier_tags is not None:
+        if tags.classifier_tags is not None:
             tags.classifier_tags.poor_score = True
-        if estimator_tags.regressor_tags is not None:
+        if tags.regressor_tags is not None:
             tags.regressor_tags.poor_score = True
 
         tags.input_tags.sparse = estimator_tags.input_tags.sparse
