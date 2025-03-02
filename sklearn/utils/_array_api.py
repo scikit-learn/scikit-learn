@@ -459,6 +459,34 @@ class _NumPyAPIWrapper:
     def pow(self, x1, x2):
         return numpy.power(x1, x2)
 
+    def cumulative_sum(self, x, axis=None, dtype=None, include_initial=False):
+        # This is copy pasted from array-api-compat
+        # numpy has this implemented from 2.1 onwards
+        if axis is None:
+            if x.ndim > 1:
+                raise ValueError(
+                    "axis must be specified in cumulative_sum for"
+                    "more than one dimension"
+                )
+            axis = 0
+
+        res = numpy.cumsum(x, axis=axis, dtype=dtype)
+
+        # np.cumsum does not support include_initial
+        if include_initial:
+            initial_shape = list(x.shape)
+            initial_shape[axis] = 1
+            res = numpy.concatenate(
+                [
+                    numpy.zeros(
+                        shape=initial_shape, dtype=res.dtype, device=device(res)
+                    ),
+                    res,
+                ],
+                axis=axis,
+            )
+        return res
+
 
 _NUMPY_API_WRAPPER_INSTANCE = _NumPyAPIWrapper()
 
