@@ -1197,6 +1197,12 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
         Array with the cumulative sums along the chosen axis.
     """
     xp, _ = get_namespace(arr)
+    if axis is None:
+        # np.cumsum calculates cumsum across flattened array
+        # for axis=None
+        # Let's also flatten to match
+        # (if we don't flatten, cumulative_sum below will raise error)
+        arr = xp.reshape(arr, (-1,))
     out = xp.cumulative_sum(arr, axis=axis, dtype=xp.float64)
     expected = xp.sum(arr, axis=axis, dtype=xp.float64)
     # workaround to get last element
