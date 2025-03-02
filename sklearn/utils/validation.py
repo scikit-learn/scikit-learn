@@ -2127,7 +2127,7 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
 
 
 def _check_sample_weight(
-    sample_weight, X, dtype=None, copy=False, ensure_non_negative=False
+    sample_weight, X, *, dtype=None, ensure_non_negative=False, copy=False
 ):
     """Validate sample weights.
 
@@ -2144,17 +2144,21 @@ def _check_sample_weight(
     X : {ndarray, list, sparse matrix}
         Input data.
 
+    dtype : dtype, default=None
+        dtype of the validated `sample_weight`.
+        If None, and `sample_weight` is an array:
+
+            - If `sample_weight.dtype` is one of `{np.float64, np.float32}`,
+              then the dtype is preserved.
+            - Else the output has NumPy's default dtype: `np.float64`.
+
+        If `dtype` is not `{np.float32, np.float64, None}`, then output will
+        be `np.float64`.
+
     ensure_non_negative : bool, default=False,
         Whether or not the weights are expected to be non-negative.
 
         .. versionadded:: 1.0
-
-    dtype : dtype, default=None
-        dtype of the validated `sample_weight`.
-        If None, and the input `sample_weight` is an array, the dtype of the
-        input is preserved; otherwise an array with the default numpy dtype
-        is be allocated.  If `dtype` is not one of `float32`, `float64`,
-        `None`, the output will be of dtype `float64`.
 
     copy : bool, default=False
         If True, a copy of sample_weight will be created.
