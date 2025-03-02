@@ -51,7 +51,6 @@ from ..utils._param_validation import (
 from ..utils._unique import attach_unique
 from ..utils.extmath import _nanaverage
 from ..utils.multiclass import type_of_target, unique_labels
-from ..utils.sparsefuncs import count_nonzero
 from ..utils.validation import (
     _check_pos_label_consistency,
     _check_sample_weight,
