@@ -406,12 +406,11 @@ class _NumPyAPIWrapper:
         else:
             return numpy.asarray(x, dtype=dtype)
 
-    def argsort(
-        self, a, axis=-1, kind=None, order=None, *, stable=None, descending=False
-    ):
-        res = numpy.argsort(a, axis, kind, order, stable=stable)
+    def argsort(self, a, axis=-1, descending=False, stable=True):
+        res = numpy.argsort(a, axis, kind="stable" if stable else None)
         if descending:
             return res[::-1]
+        return res
 
     def unique_inverse(self, x):
         return numpy.unique(x, return_inverse=True)
