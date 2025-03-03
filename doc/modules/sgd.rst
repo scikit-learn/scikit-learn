@@ -194,7 +194,6 @@ algorithm, available as a solver in :class:`LogisticRegression`.
 - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_separating_hyperplane.py`
 - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_iris.py`
 - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_weighted_samples.py`
-- :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_comparison.py`
 - :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane_unbalanced.py`
   (See the Note in the example)
 
