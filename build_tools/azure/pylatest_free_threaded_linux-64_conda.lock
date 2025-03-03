@@ -42,7 +42,7 @@ https://conda.anaconda.org/conda-forge/linux-64/libhiredis-1.0.2-h2cc385e_0.tar.
 https://conda.anaconda.org/conda-forge/noarch/packaging-24.2-pyhd8ed1ab_2.conda#3bfed7e6228ebf2f7b9eaa47f1b4e2aa
 https://conda.anaconda.org/conda-forge/noarch/pip-25.0.1-pyh145f28c_0.conda#9ba21d75dc722c29827988a575a65707
 https://conda.anaconda.org/conda-forge/noarch/pluggy-1.5.0-pyhd8ed1ab_1.conda#e9dcbce5f45f9ee500e728ae58b605b6
-https://conda.anaconda.org/conda-forge/noarch/setuptools-75.8.0-pyhff2d567_0.conda#8f28e299c11afdd79e0ec1e279dcdc52
+https://conda.anaconda.org/conda-forge/noarch/setuptools-75.8.2-pyhff2d567_0.conda#9bddfdbf4e061821a1a443f93223be61
 https://conda.anaconda.org/conda-forge/noarch/threadpoolctl-3.5.0-pyhc1e730c_0.conda#df68d78237980a159bd7149f33c0e8fd
 https://conda.anaconda.org/conda-forge/noarch/tomli-2.2.1-pyhd8ed1ab_1.conda#ac944244f1fed2eb49bae07193ae8215
 https://conda.anaconda.org/conda-forge/linux-64/ccache-4.10.1-h065aff2_0.conda#d6b48c138e0c8170a6fe9c136e063540
@@ -51,7 +51,7 @@ https://conda.anaconda.org/conda-forge/linux-64/libcblas-3.9.0-31_he106b2a_openb
 https://conda.anaconda.org/conda-forge/linux-64/liblapack-3.9.0-31_h7ac8fdf_openblas.conda#452b98eafe050ecff932f0ec832dd03f
 https://conda.anaconda.org/conda-forge/noarch/meson-1.7.0-pyhd8ed1ab_0.conda#6d4bbcce47061d2f9f2636409a8fe7c0
 https://conda.anaconda.org/conda-forge/noarch/pyproject-metadata-0.9.0-pyhd8ed1ab_1.conda#1239146a53a383a84633800294120f17
-https://conda.anaconda.org/conda-forge/noarch/pytest-8.3.4-pyhd8ed1ab_1.conda#799ed216dc6af62520f32aa39bc1c2bb
+https://conda.anaconda.org/conda-forge/noarch/pytest-8.3.5-pyhd8ed1ab_0.conda#c3c9316209dec74a705a36797970c6be
 https://conda.anaconda.org/conda-forge/noarch/python-freethreading-3.13.2-h92d6c8b_1.conda#e113f67f0de399caeaa57693237f2fd2
 https://conda.anaconda.org/conda-forge/noarch/meson-python-0.17.1-pyh70fd9c4_1.conda#7a02679229c6c2092571b4c025055440
 https://conda.anaconda.org/conda-forge/linux-64/numpy-2.2.3-py313h103f029_0.conda#d530b933f4e26dfe7f0e545b2743b5b7
