@@ -129,10 +129,22 @@ class _MultimetricScorer:
         if _routing_enabled():
             routed_params = process_routing(self, "score", **kwargs)
         else:
-            # they all get the same args, and they all get them all
+            # Scorers all get the same args, and get all of them except sample_weight.
+            # Only the ones having `sample_weight` in their signature will receive it.
+            # This does not work for metadata other than sample_weight, and for those
+            # users have to enable metadata routing.
+            common_kwargs = {
+                arg: value for arg, value in kwargs.items() if arg != "sample_weight"
+            }
             routed_params = Bunch(
-                **{name: Bunch(score=kwargs) for name in self._scorers}
+                **{name: Bunch(score=common_kwargs.copy()) for name in self._scorers}
             )
+            if "sample_weight" in kwargs:
+                for name, scorer in self._scorers.items():
+                    if scorer._accept_sample_weight():
+                        routed_params[name].score["sample_weight"] = kwargs[
+                            "sample_weight"
+                        ]
 
         for name, scorer in self._scorers.items():
             try:
@@ -153,6 +165,10 @@ class _MultimetricScorer:
     def __repr__(self):
         scorers = ", ".join([f'"{s}"' for s in self._scorers])
         return f"MultiMetricScorer({scorers})"
+
+    def _accept_sample_weight(self):
+        # TODO(slep006): remove when metadata routing is the only way
+        return any(scorer._accept_sample_weight() for scorer in self._scorers.values())
 
     def _use_cache(self, estimator):
         """Return True if using a cache is beneficial, thus when a response method will
@@ -230,6 +246,10 @@ class _BaseScorer(_MetadataRequester):
         if "pos_label" in score_func_params:
             return score_func_params["pos_label"].default
         return None
+
+    def _accept_sample_weight(self):
+        # TODO(slep006): remove when metadata routing is the only way
+        return "sample_weight" in signature(self._score_func).parameters
 
     def __repr__(self):
         sign_string = "" if self._sign > 0 else ", greater_is_better=False"
@@ -473,6 +493,10 @@ class _PassthroughScorer(_MetadataRequester):
 
     def __repr__(self):
         return f"{self._estimator.__class__}.score"
+
+    def _accept_sample_weight(self):
+        # TODO(slep006): remove when metadata routing is the only way
+        return "sample_weight" in signature(self._estimator.score).parameters
 
     def get_metadata_routing(self):
         """Get requested data properties.
