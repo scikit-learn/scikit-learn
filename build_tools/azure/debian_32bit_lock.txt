@@ -27,7 +27,7 @@ pluggy==1.5.0
     # via pytest
 pyproject-metadata==0.9.0
     # via meson-python
-pytest==8.3.4
+pytest==8.3.5
     # via
     #   -r build_tools/azure/debian_32bit_requirements.txt
     #   pytest-cov
