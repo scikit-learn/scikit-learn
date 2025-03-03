@@ -688,7 +688,7 @@ def _get_diff_msg(docstrings_grouped):
 
 
 def _check_consistency_items(
-    items_docs, type_or_desc, section, n_objects, descr_regex_pattern=""
+    items_docs, type_or_desc, section, n_objects, descr_regex_patterns={}
 ):
     """Helper to check docstring consistency of all `items_docs`.
 
@@ -700,20 +700,31 @@ def _check_consistency_items(
         # If item not found in all objects, skip
         if sum([len(objs) for objs in docstrings_grouped.values()]) < n_objects:
             skipped.append(item_name)
-        # If regex provided, match to all descriptions
-        elif type_or_desc == "description" and descr_regex_pattern:
-            not_matched = []
+            continue
+        # If regex provided, update docstring to be matched
+        if type_or_desc == "description" and item_name in descr_regex_patterns:
+            regex = descr_regex_patterns[item_name]
+            docstrings_regrouped = {}
             for docstring, group in docstrings_grouped.items():
-                if not re.search(descr_regex_pattern, docstring):
-                    not_matched.extend(group)
-            if not_matched:
-                msg = textwrap.fill(
-                    f"The description of {section[:-1]} '{item_name}' in {not_matched}"
-                    f" does not match 'descr_regex_pattern': {descr_regex_pattern} "
-                )
-                raise AssertionError(msg)
-        # Otherwise, if more than one key, docstrings not consistent between objects
-        elif len(docstrings_grouped.keys()) > 1:
+                match = re.search(regex, docstring)
+                # regex did not match description text
+                if match is None:
+                    raise ValueError(
+                        f"The 'descr_regex_patterns' for {section[:-1]} '{item_name}'"
+                        f" ('{regex}'),\ndid not match it's description:\n'{docstring}'"
+                    )
+                if matched_groups := match.groups():
+                    # Join captured groups, allows us to discard non-capturing groups
+                    matched_groups = [g for g in matched_groups if g is not None]
+                    matched_docstring = "".join(matched_groups)
+                else:
+                    matched_docstring = match.group()
+                docstrings_regrouped.setdefault(matched_docstring, []).extend(group)
+            # Set `docstrings_grouped` to updated dict
+            docstrings_grouped = docstrings_regrouped
+
+        # If more than one key, docstrings not consistent between objects
+        if len(docstrings_grouped.keys()) > 1:
             msg_diff = _get_diff_msg(docstrings_grouped)
             obj_groups = " and ".join(
                 str(group) for group in docstrings_grouped.values()
@@ -739,7 +750,7 @@ def assert_docstring_consistency(
     exclude_attrs=None,
     include_returns=False,
     exclude_returns=None,
-    descr_regex_pattern=None,
+    descr_regex_patterns={},
 ):
     r"""Check consistency between docstring parameters/attributes/returns of objects.
 
@@ -783,10 +794,13 @@ def assert_docstring_consistency(
         List of returns to be excluded. If None, no returns are excluded.
         Can only be set if `include_returns` is True.
 
-    descr_regex_pattern : str, default=None
-        Regular expression to match to all descriptions of included
-        parameters/attributes/returns. If None, will revert to default behavior
-        of comparing descriptions between objects.
+    descr_regex_patterns : dict, default={}
+        Dictionary of parameter/attribute/return name to the regular expression to
+        capture the part of the description to match between objects.
+        If match contains subgroups, matching subgroups are joined together, this
+        enables us to discard non-capturing groups.
+        If match does not contain subgroups, whole match is used.
+        If an empty dictionary, complete descriptions will be matched for all items.
 
     Examples
     --------
@@ -857,7 +871,7 @@ def assert_docstring_consistency(
             "description",
             section,
             n_objects,
-            descr_regex_pattern=descr_regex_pattern,
+            descr_regex_patterns=descr_regex_patterns,
         )
 
 
