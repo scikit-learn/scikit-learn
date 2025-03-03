@@ -146,7 +146,7 @@ def test_weighted_percentile_2d():
 def test_weighted_percentile_nan_filtered(sample_weight_ndim):
     """Test that calling _weighted_percentile on an array with nan values returns
     the same results as calling _weighted_percentile on a filtered version of the data.
-    We test both with sample_weight of the same shape as the data and for
+    We test both with sample_weight of the same shape as the data and with
     one-dimensional sample_weight."""
 
     rng = np.random.RandomState(42)
@@ -213,28 +213,20 @@ def test_weighted_percentile_all_nan_column():
     np_version < parse_version("2.0"),
     reason="np.quantile only accepts weights since version 2.0",
 )
-@pytest.mark.parametrize(
-    "percentile, arr, weights",
-    [
-        (66, np.array([[3, 30], [2, 20], [1, 10]]), np.array([[1, 1], [1, 1], [1, 1]])),
-        (
-            10,
-            np.array([[3, 30], [2, 20], [1, 10]]),
-            np.array([[1, 100], [1, 10], [1, 1]]),
-        ),
-        (
-            50,
-            np.array([[3, 30], [2, 20], [1, 10]]),
-            np.array([[100, 1], [1, 1], [1, 1]]),
-        ),
-    ],
-)
-def test_weighted_percentile_like_numpy_quantile(percentile, arr, weights):
-    """Check that weighted_percentile delivers equivalent results as np.quantile with
-    weights."""
-    percentile_weighted_percentile = _weighted_percentile(arr, weights, percentile)
+@pytest.mark.parametrize("percentile", [66, 10, 50])
+def test_weighted_percentile_like_numpy_quantile(percentile):
+    """Check that _weighted_percentile delivers equivalent results as np.quantile
+    with weights."""
+
+    rng = np.random.RandomState(42)
+    array = rng.rand(10, 100)
+    sample_weight = rng.randint(1, 6, size=(10, 100))
+
+    percentile_weighted_percentile = _weighted_percentile(
+        array, sample_weight, percentile
+    )
     percentile_numpy_quantile = np.quantile(
-        arr, percentile / 100, weights=weights, axis=0, method="inverted_cdf"
+        array, percentile / 100, weights=sample_weight, axis=0, method="inverted_cdf"
     )
 
     assert_array_equal(percentile_weighted_percentile, percentile_numpy_quantile)
@@ -244,32 +236,25 @@ def test_weighted_percentile_like_numpy_quantile(percentile, arr, weights):
     np_version < parse_version("2.0"),
     reason="np.nanquantile only accepts weights since version 2.0",
 )
-@pytest.mark.parametrize(
-    "percentile, arr, weights",
-    [
-        (
-            66,
-            np.array([[3, np.nan], [np.nan, 20], [1, 10]]),
-            np.array([[1, 1], [1, 1], [1, 1]]),
-        ),
-        (
-            10,
-            np.array([[3, np.nan], [2, np.nan], [1, 10]]),
-            np.array([[1, 100], [1, 10], [1, 1]]),
-        ),
-        (
-            50,
-            np.array([[np.nan, np.nan], [2, 20], [1, 10]]),
-            np.array([[100, 1], [1, 1], [1, 1]]),
-        ),
-    ],
-)
-def test_weighted_percentile_like_numpy_nanquantile(percentile, arr, weights):
-    """Check that weighted_percentile delivers equivalent results as np.nanquantile with
-    weights."""
-    percentile_weighted_percentile = _weighted_percentile(arr, weights, percentile)
+@pytest.mark.parametrize("percentile", [66, 10, 50])
+def test_weighted_percentile_like_numpy_nanquantile(percentile):
+    """Check that _weighted_percentile delivers equivalent results as np.nanquantile
+    with weights."""
+
+    rng = np.random.RandomState(42)
+    array_with_nans = rng.rand(10, 100)
+    array_with_nans[rng.rand(*array_with_nans.shape) < 0.5] = np.nan
+    sample_weight = rng.randint(1, 6, size=(10, 100))
+
+    percentile_weighted_percentile = _weighted_percentile(
+        array_with_nans, sample_weight, percentile
+    )
     percentile_numpy_nanquantile = np.nanquantile(
-        arr, percentile / 100, weights=weights, axis=0, method="inverted_cdf"
+        array_with_nans,
+        percentile / 100,
+        weights=sample_weight,
+        axis=0,
+        method="inverted_cdf",
     )
 
     assert_array_equal(percentile_weighted_percentile, percentile_numpy_nanquantile)
