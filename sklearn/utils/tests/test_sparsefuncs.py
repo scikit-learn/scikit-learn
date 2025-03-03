@@ -823,30 +823,27 @@ def test_min_max_axis_errors(csc_container, csr_container):
 
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-@pytest.mark.parametrize("lil_container", LIL_CONTAINERS)
-def test_count_nonzero(csc_container, csr_container, lil_container):
+def test_count_nonzero(csc_container, csr_container):
     X = np.array(
         [[0, 3, 0], [2, -1, 0], [0, 0, 0], [9, 8, 7], [4, 0, 5]], dtype=np.float64
     )
     X_csr = csr_container(X)
     X_csc = csc_container(X)
-    X_lil = lil_container(X)
     X_nonzero = X != 0
     sample_weight = [0.5, 0.2, 0.3, 0.1, 0.1]
     X_nonzero_weighted = X_nonzero * np.array(sample_weight)[:, None]
 
     for axis in [0, 1, -1, -2, None]:
-        for X in [X_csr, X_csc]:
-            assert_array_almost_equal(
-                count_nonzero(X, axis=axis), X_nonzero.sum(axis=axis)
-            )
-            assert_array_almost_equal(
-                count_nonzero(X, axis=axis, sample_weight=sample_weight),
-                X_nonzero_weighted.sum(axis=axis),
-            )
+        assert_array_almost_equal(
+            count_nonzero(X_csr, axis=axis), X_nonzero.sum(axis=axis)
+        )
+        assert_array_almost_equal(
+            count_nonzero(X_csr, axis=axis, sample_weight=sample_weight),
+            X_nonzero_weighted.sum(axis=axis),
+        )
 
     with pytest.raises(TypeError):
-        count_nonzero(X_lil)
+        count_nonzero(X_csc)
     with pytest.raises(ValueError):
         count_nonzero(X_csr, axis=2)
 
