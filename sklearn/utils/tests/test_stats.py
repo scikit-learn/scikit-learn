@@ -102,8 +102,8 @@ def test_weighted_median_integer_weights(global_random_seed):
     # Checks weighted percentile=0.5 is same as median when manually weight
     # data
     rng = np.random.RandomState(global_random_seed)
-    x = rng.randint(20, size=10)
-    weights = rng.choice(5, size=10)
+    x = rng.randint(20, size=1000)
+    weights = rng.choice(5, size=1000)
     x_manual = np.repeat(x, weights)
 
     median = np.median(x_manual)
