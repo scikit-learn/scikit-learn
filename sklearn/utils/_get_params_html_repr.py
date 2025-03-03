@@ -39,7 +39,6 @@ def _get_css_style():
 
 
 def _html_template(data):
-
     style_template = _get_css_style()
     html_start = f"""
         <head><style>{style_template}</style>
@@ -57,11 +56,9 @@ def _html_template(data):
         if x in data.non_default:
             out += f"""
                     <tr class="user-set">
-
                       <td><i class="fa-regular fa-copy"
                        onclick="copyToClipboard('{x}',
                                 this.parentElement.nextElementSibling)"
-
                       </i></td>
                       <td class="param">{x}&nbsp;</td>
                       <td class="value">{y}</td>
@@ -82,18 +79,20 @@ def _html_template(data):
                   <tbody>
                 </table>
             </details>
-
         </div>
         <script>
-            function copyToClipboard(text, element) {{
+            function copyToClipboard(text, element) {
+                // Get the parameter prefix from the closest toggleable content
+                const toggleableContent = element.closest('.sk-toggleable__content');
+                const paramPrefix = toggleableContent ? toggleableContent.dataset.paramPrefix : '';
+                const fullParamName = paramPrefix ? `${paramPrefix}${text}` : text;
 
-
-                const originalStyle = element.style
+                const originalStyle = element.style;
                 const computedStyle = window.getComputedStyle(element);
                 const originalWidth = computedStyle.width;
                 const originalHTML = element.innerHTML.replace('Copied!', '');
 
-                navigator.clipboard.writeText(text)
+                navigator.clipboard.writeText(fullParamName)
                     .then(() => {
                         element.style.width = originalWidth;
                         element.style.color = 'green';
@@ -106,12 +105,11 @@ def _html_template(data):
                     })
                     .catch(err => console.error('Failed to copy:', err));
                 return false;
-            }}
+            }
         </script>
         </body>
     """
     html_template = f"{html_start}{out}{html_end}"
-    # Remove the following:
     try:
         output_path = "get_params.html"
         with open(output_path, "w") as f:
