@@ -91,7 +91,7 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
                 yield array_namespace, array_api_strict.Device("device1"), "float32"
             except ImportError:
                 # Those combinations will typically be skipped by pytest if
-                # array_api_strict is not installed but we still to see them in
+                # array_api_strict is not installed but we still need to see them in
                 # the test output.
                 yield array_namespace, "CPU_DEVICE", "float64"
                 yield array_namespace, "device1", "float32"
