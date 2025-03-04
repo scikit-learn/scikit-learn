@@ -8,7 +8,7 @@ History
 =======
 
 This project was started in 2007 as a Google Summer of Code project by
-David Cournapeau. Later that year, Matthieu Brucher started working on this project 
+David Cournapeau. Later that year, Matthieu Brucher started working on this project
 as part of his thesis.
 
 In 2010 Fabian Pedregosa, Gael Varoquaux, Alexandre Gramfort and Vincent
@@ -627,6 +627,6 @@ Infrastructure support
 ======================
 
 We would also like to thank `Microsoft Azure <https://azure.microsoft.com/en-us/>`_,
-`Cirrus Cl <https://cirrus-ci.org>`_, `CircleCl <https://circleci.com/>`_ for free CPU
+`CircleCl <https://circleci.com/>`_ for free CPU
 time on their Continuous Integration servers, and `Anaconda Inc. <https://www.anaconda.com>`_
 for the storage they provide for our staging and nightly builds.

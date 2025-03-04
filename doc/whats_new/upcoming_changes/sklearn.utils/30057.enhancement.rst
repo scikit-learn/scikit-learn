@@ -1,0 +1,3 @@
+- :func:`utils.class_weight.compute_class_weight` now properly accounts for
+  sample weights when using strategy "balanced" to calculate class weights.
+  By :user:`Shruti Nath <snath-xoc>`
