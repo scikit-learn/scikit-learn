@@ -76,26 +76,29 @@ def _html_template(data):
                     </tr>
 
                 """
-    out += """ <tbody>
+    out += """ </tbody>
                 </table>
             </details>
-        </div>"""
-
-    out += f"""
-    <div class="estimator-table">
+        </div>
+        <div class="estimator-table">
             <details>
                 <summary>Methods</summary>
                 <table>
                   <tbody>
-                  {data.methods}
-                  <tbody>
-                </table>
-            </details>
-    </div>
-    """
+        """
+    for x in data.methods:
+
+        out += f"""
+            <tr>
+                <td>{x}</td>
+            </tr>
+        """
 
     html_end = """
-
+        </tbody>
+                </table>
+            </details>
+        </div>
         <script>
             function copyToClipboard(text, element) {
                 // Get the parameter prefix from the closest toggleable content
