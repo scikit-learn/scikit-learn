@@ -241,6 +241,8 @@ def grid_to_graph(
       Coords	Values
       (0, 0)    1
       (1, 1)    1
+
+    see also: :ref:`sphx_glr_auto_examples_cluster_plot_coin_ward_segmentation.py`.
     """
     return _to_graph(n_x, n_y, n_z, mask=mask, return_as=return_as, dtype=dtype)
 
