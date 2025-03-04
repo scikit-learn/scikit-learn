@@ -31,8 +31,8 @@ can mitigate those limitations.
 # %%
 # Data Loading and Feature Engineering
 # ------------------------------------
-# Let's use pandas to load a copy of the titanic dataset. The following shows
-# how to apply separate preprocessing on numerical and categorical features.
+# Let us use pandas to load a copy of the titanic dataset. The following shows
+# how to apply a separate preprocessing on numerical and categorical features.
 #
 # We further include two random variables that are not correlated in any way
 # with the target variable (``survived``):
@@ -95,11 +95,14 @@ rf.fit(X_train, y_train)
 # %%
 # Accuracy of the Model
 # ---------------------
-# Prior to inspecting the feature importances, it is important to check that
-# the model predictive performance is high enough. Indeed there would be little
-# interest of inspecting the important features of a non-predictive model.
-#
-# Here one can observe that the train accuracy is very high (the forest model
+# Before inspecting the feature importances, it is important to check that
+# the model predictive performance is high enough. Indeed, there would be little
+# interest in inspecting the important features of a non-predictive model.
+print(f"RF train accuracy: {rf.score(X_train, y_train):.3f}")
+print(f"RF test accuracy: {rf.score(X_test, y_test):.3f}")
+
+# %%
+# Here, one can observe that the train accuracy is very high (the forest model
 # has enough capacity to completely memorize the training set) but it can still
 # generalize well enough to the test set thanks to the built-in bagging of
 # random forests.
@@ -107,20 +110,17 @@ rf.fit(X_train, y_train)
 # It might be possible to trade some accuracy on the training set for a
 # slightly better accuracy on the test set by limiting the capacity of the
 # trees (for instance by setting ``min_samples_leaf=5`` or
-# ``min_samples_leaf=10``) so as to limit overfitting while not introducing too
+# ``min_samples_leaf=10``) in order to limit overfitting while not introducing too
 # much underfitting.
 #
-# However let's keep our high capacity random forest model for now so as to
-# illustrate some pitfalls with feature importance on variables with many
+# However, let us keep our high capacity random forest model for now so that we can
+# illustrate some pitfalls about feature importance on variables with many
 # unique values.
-print(f"RF train accuracy: {rf.score(X_train, y_train):.3f}")
-print(f"RF test accuracy: {rf.score(X_test, y_test):.3f}")
-
 
 # %%
 # Tree's Feature Importance from Mean Decrease in Impurity (MDI)
 # --------------------------------------------------------------
-# The impurity-based feature importance ranks the numerical features to be the
+# The impurity-based feature importance ranks the numerical features as the
 # most important features. As a result, the non-predictive ``random_num``
 # variable is ranked as one of the most important features!
 #
@@ -129,13 +129,13 @@ print(f"RF test accuracy: {rf.score(X_test, y_test):.3f}")
 #
 # - impurity-based importances are biased towards high cardinality features;
 # - impurity-based importances are computed on training set statistics and
-#   therefore do not reflect the ability of feature to be useful to make
-#   predictions that generalize to the test set (when the model has enough
+#   therefore do not reflect the ability of the feature to be useful in making
+#   predictions that generalize well to the test set (when the model has enough
 #   capacity).
 #
 # The bias towards high cardinality features explains why the `random_num` has
 # a really large importance in comparison with `random_cat` while we would
-# expect both random features to have a null importance.
+# expect that both random features have a null importance.
 #
 # The fact that we use training set statistics explains why both the
 # `random_num` and `random_cat` features have a non-null importance.
@@ -155,11 +155,11 @@ ax.figure.tight_layout()
 # %%
 # As an alternative, the permutation importances of ``rf`` are computed on a
 # held out test set. This shows that the low cardinality categorical feature,
-# `sex` and `pclass` are the most important feature. Indeed, permuting the
-# values of these features will lead to most decrease in accuracy score of the
+# `sex` and `pclass` are the most important features. Indeed, permuting the
+# values of these features will lead to the most decrease in accuracy score of the
 # model on the test set.
 #
-# Also note that both random features have very low importances (close to 0) as
+# Also, note that both random features have very low importances (close to 0) as
 # expected.
 from sklearn.inspection import permutation_importance
 
