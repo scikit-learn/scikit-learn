@@ -516,7 +516,7 @@ def fetch_lfw_pairs(
     the experimenter should not use the name of a person to infer
     the equivalence or non-equivalence of two face images that
     are not explicitly given in the training set.
-    
+
     The original images are 250 x 250 pixels, but the default slice and resize
     arguments reduce them to 62 x 47.
 
