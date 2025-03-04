@@ -406,6 +406,12 @@ class _NumPyAPIWrapper:
         else:
             return numpy.asarray(x, dtype=dtype)
 
+    def argsort(self, a, axis=-1, descending=False, stable=True):
+        res = numpy.argsort(a, axis, kind="stable" if stable else None)
+        if descending:
+            return res[::-1]
+        return res
+
     def unique_inverse(self, x):
         return numpy.unique(x, return_inverse=True)
 
@@ -451,6 +457,34 @@ class _NumPyAPIWrapper:
 
     def pow(self, x1, x2):
         return numpy.power(x1, x2)
+
+    def cumulative_sum(self, x, axis=None, dtype=None, include_initial=False):
+        # This is copy pasted from array-api-compat
+        # numpy has this implemented from 2.1 onwards
+        if axis is None:
+            if x.ndim > 1:
+                raise ValueError(
+                    "axis must be specified in cumulative_sum for"
+                    "more than one dimension"
+                )
+            axis = 0
+
+        res = numpy.cumsum(x, axis=axis, dtype=dtype)
+
+        # np.cumsum does not support include_initial
+        if include_initial:
+            initial_shape = list(x.shape)
+            initial_shape[axis] = 1
+            res = numpy.concatenate(
+                [
+                    numpy.zeros(
+                        shape=initial_shape, dtype=res.dtype, device=device(res)
+                    ),
+                    res,
+                ],
+                axis=axis,
+            )
+        return res
 
 
 _NUMPY_API_WRAPPER_INSTANCE = _NumPyAPIWrapper()
@@ -1108,3 +1142,10 @@ def _tolist(array, xp=None):
         return array.tolist()
     array_np = _convert_to_numpy(array, xp=xp)
     return [element.item() for element in array_np]
+
+
+def _allclose(a, b, rtol=1e-5, atol=1e-8):
+    xp, _ = get_namespace(a, b)
+    return xp.all(
+        xp.abs(a - b) <= atol + xp.abs(b) * rtol,
+    )

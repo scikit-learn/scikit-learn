@@ -1867,11 +1867,20 @@ def check_array_api_metric(
     with config_context(array_api_dispatch=True):
         metric_xp = metric(a_xp, b_xp, **metric_kwargs)
 
-        assert_allclose(
-            _convert_to_numpy(xp.asarray(metric_xp), xp),
-            metric_np,
-            atol=_atol_for_type(dtype_name),
-        )
+        def _check_metric_matches(xp_val, np_val):
+            assert_allclose(
+                _convert_to_numpy(xp.asarray(xp_val), xp),
+                np_val,
+                atol=_atol_for_type(dtype_name),
+            )
+
+        # Handle case where there is multiple return
+        # values, e.g. roc_curve
+        if isinstance(metric_xp, tuple):
+            for metric_xp_val, metric_np_val in zip(metric_xp, metric_np):
+                _check_metric_matches(metric_xp_val, metric_np_val)
+        else:
+            _check_metric_matches(metric_xp, metric_np)
 
 
 def check_array_api_binary_classification_metric(
@@ -2195,6 +2204,9 @@ array_api_metric_checkers = {
         check_array_api_regression_metric_multioutput,
     ],
     sigmoid_kernel: [check_array_api_metric_pairwise],
+    roc_curve: [
+        check_array_api_binary_classification_metric,
+    ],
 }
 
 
