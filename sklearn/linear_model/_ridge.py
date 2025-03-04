@@ -33,11 +33,14 @@ from ..utils import (
     deprecated,
 )
 from ..utils._array_api import (
+    _convert_to_numpy,
     _is_numpy_namespace,
+    _max_precision_float_dtype,
     _ravel,
     device,
     get_namespace,
     get_namespace_and_device,
+    move_to_namespace_and_device,
 )
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.extmath import row_norms, safe_sparse_dot
@@ -1291,6 +1294,8 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
             The binarized version of `y`.
         """
         accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
+        (sample_weight,) = move_to_namespace_and_device(sample_weight, ref=X)
+        original_X = X
         X, y = validate_data(
             self,
             X,
@@ -1302,13 +1307,25 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         )
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
-        Y = self._label_binarizer.fit_transform(y)
+        y_xp, y_is_array_api = get_namespace(y)
+        Y = self._label_binarizer.fit_transform(
+            _convert_to_numpy(y, y_xp) if y_is_array_api else y
+        )
+        (Y,) = move_to_namespace_and_device(Y, ref=original_X)
+        if y_is_array_api and y_xp.isdtype(y.dtype, "numeric"):
+            (self.classes_,) = move_to_namespace_and_device(
+                self._label_binarizer.classes_, ref=original_X
+            )
+        else:
+            self.classes_ = self._label_binarizer.classes_
         if not self._label_binarizer.y_type_.startswith("multilabel"):
             y = column_or_1d(y, warn=True)
 
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         if self.class_weight:
-            sample_weight = sample_weight * compute_sample_weight(self.class_weight, y)
+            reweighting = compute_sample_weight(self.class_weight, y)
+            (reweighting,) = move_to_namespace_and_device(reweighting, ref=original_X)
+            sample_weight = sample_weight * reweighting
         return X, y, sample_weight, Y
 
     def predict(self, X):
@@ -1332,14 +1349,13 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
             # Threshold such that the negative label is -1 and positive label
             # is 1 to use the inverse transform of the label binarizer fitted
             # during fit.
-            scores = 2 * (self.decision_function(X) > 0) - 1
+            decision = self.decision_function(X)
+            xp, is_array_api = get_namespace(decision)
+            scores = 2.0 * xp.astype(decision > 0, xp.float32) - 1.0
+            if is_array_api:
+                scores = _convert_to_numpy(scores, xp)
             return self._label_binarizer.inverse_transform(scores)
         return super().predict(X)
-
-    @property
-    def classes_(self):
-        """Classes labels."""
-        return self._label_binarizer.classes_
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -1602,8 +1618,9 @@ def _find_smallest_angle(query, vectors):
     vectors : ndarray of shape (n_samples, n_features)
         Vectors to which we compare query, as columns. Must be normalized.
     """
-    abs_cosine = np.abs(query.dot(vectors))
-    index = np.argmax(abs_cosine)
+    xp, _ = get_namespace(query)
+    abs_cosine = xp.abs(query @ vectors)
+    index = xp.argmax(abs_cosine)
     return index
 
 
@@ -1785,14 +1802,16 @@ class _RidgeGCV(LinearModel):
     @staticmethod
     def _decomp_diag(v_prime, Q):
         # compute diagonal of the matrix: dot(Q, dot(diag(v_prime), Q^T))
-        return (v_prime * Q**2).sum(axis=-1)
+        xp, _ = get_namespace(v_prime, Q)
+        return xp.sum(v_prime * Q**2, axis=1)
 
     @staticmethod
     def _diag_dot(D, B):
+        xp, _ = get_namespace(D, B)
         # compute dot(diag(D), B)
         if len(B.shape) > 1:
             # handle case where B is > 1-d
-            D = D[(slice(None),) + (np.newaxis,) * (len(B.shape) - 1)]
+            D = D[(slice(None),) + (None,) * (len(B.shape) - 1)]
         return D * B
 
     def _compute_gram(self, X, sqrt_sw):
@@ -1826,13 +1845,14 @@ class _RidgeGCV(LinearModel):
         The centered X is never actually computed because centering would break
         the sparsity of X.
         """
+        xp, _ = get_namespace(X)
         center = self.fit_intercept and sparse.issparse(X)
         if not center:
             # in this case centering has been done in preprocessing
             # or we are not fitting an intercept.
-            X_mean = np.zeros(X.shape[1], dtype=X.dtype)
+            X_mean = xp.zeros(X.shape[1], dtype=X.dtype)
             return safe_sparse_dot(X, X.T, dense_output=True), X_mean
-        # X is sparse
+        # X is sparse, xp is _NumPyAPIWrapper
         n_samples = X.shape[0]
         sample_weight_matrix = sparse.dia_matrix(
             (sqrt_sw, 0), shape=(n_samples, n_samples)
@@ -1935,15 +1955,16 @@ class _RidgeGCV(LinearModel):
     def _eigen_decompose_gram(self, X, y, sqrt_sw):
         """Eigendecomposition of X.X^T, used when n_samples <= n_features."""
         # if X is dense it has already been centered in preprocessing
+        xp, is_array_api = get_namespace(X)
         K, X_mean = self._compute_gram(X, sqrt_sw)
         if self.fit_intercept:
             # to emulate centering X with sample weights,
             # ie removing the weighted average, we add a column
             # containing the square roots of the sample weights.
             # by centering, it is orthogonal to the other columns
-            K += np.outer(sqrt_sw, sqrt_sw)
-        eigvals, Q = linalg.eigh(K)
-        QT_y = np.dot(Q.T, y)
+            K += xp.linalg.outer(sqrt_sw, sqrt_sw)
+        eigvals, Q = xp.linalg.eigh(K)
+        QT_y = Q.T @ y
         return X_mean, eigvals, Q, QT_y
 
     def _solve_eigen_gram(self, alpha, y, sqrt_sw, X_mean, eigvals, Q, QT_y):
@@ -1951,6 +1972,7 @@ class _RidgeGCV(LinearModel):
 
         Used when we have a decomposition of X.X^T (n_samples <= n_features).
         """
+        xp, is_array_api = get_namespace(eigvals)
         w = 1.0 / (eigvals + alpha)
         if self.fit_intercept:
             # the vector containing the square roots of the sample weights (1
@@ -1958,15 +1980,16 @@ class _RidgeGCV(LinearModel):
             # corresponds to the intercept; we cancel the regularization on
             # this dimension. the corresponding eigenvalue is
             # sum(sample_weight).
-            normalized_sw = sqrt_sw / np.linalg.norm(sqrt_sw)
+            norm = xp.linalg.vector_norm if is_array_api else np.linalg.norm
+            normalized_sw = sqrt_sw / norm(sqrt_sw)
             intercept_dim = _find_smallest_angle(normalized_sw, Q)
             w[intercept_dim] = 0  # cancel regularization for the intercept
 
-        c = np.dot(Q, self._diag_dot(w, QT_y))
+        c = Q @ self._diag_dot(w, QT_y)
         G_inverse_diag = self._decomp_diag(w, Q)
         # handle case where y is 2-d
         if len(y.shape) != 1:
-            G_inverse_diag = G_inverse_diag[:, np.newaxis]
+            G_inverse_diag = G_inverse_diag[:, None]
         return G_inverse_diag, c
 
     def _eigen_decompose_covariance(self, X, y, sqrt_sw):
@@ -2058,17 +2081,18 @@ class _RidgeGCV(LinearModel):
         )
 
     def _svd_decompose_design_matrix(self, X, y, sqrt_sw):
+        xp, _, device_ = get_namespace_and_device(X)
         # X already centered
-        X_mean = np.zeros(X.shape[1], dtype=X.dtype)
+        X_mean = xp.zeros(X.shape[1], dtype=X.dtype, device=device_)
         if self.fit_intercept:
             # to emulate fit_intercept=True situation, add a column
             # containing the square roots of the sample weights
             # by centering, the other columns are orthogonal to that one
             intercept_column = sqrt_sw[:, None]
-            X = np.hstack((X, intercept_column))
-        U, singvals, _ = linalg.svd(X, full_matrices=0)
+            X = xp.concat((X, intercept_column), axis=1)
+        U, singvals, _ = xp.linalg.svd(X, full_matrices=False)
         singvals_sq = singvals**2
-        UT_y = np.dot(U.T, y)
+        UT_y = U.T @ y
         return X_mean, singvals_sq, U, UT_y
 
     def _solve_svd_design_matrix(self, alpha, y, sqrt_sw, X_mean, singvals_sq, U, UT_y):
@@ -2077,18 +2101,19 @@ class _RidgeGCV(LinearModel):
         Used when we have an SVD decomposition of X
         (n_samples > n_features and X is dense).
         """
+        xp, is_array_api = get_namespace(U)
         w = ((singvals_sq + alpha) ** -1) - (alpha**-1)
         if self.fit_intercept:
             # detect intercept column
-            normalized_sw = sqrt_sw / np.linalg.norm(sqrt_sw)
+            normalized_sw = sqrt_sw / xp.linalg.vector_norm(sqrt_sw)
             intercept_dim = _find_smallest_angle(normalized_sw, U)
             # cancel the regularization for the intercept
             w[intercept_dim] = -(alpha**-1)
-        c = np.dot(U, self._diag_dot(w, UT_y)) + (alpha**-1) * y
+        c = U @ self._diag_dot(w, UT_y) + (alpha**-1) * y
         G_inverse_diag = self._decomp_diag(w, U) + (alpha**-1)
         if len(y.shape) != 1:
             # handle case where y is 2-d
-            G_inverse_diag = G_inverse_diag[:, np.newaxis]
+            G_inverse_diag = G_inverse_diag[:, None]
         return G_inverse_diag, c
 
     def fit(self, X, y, sample_weight=None, score_params=None):
@@ -2119,12 +2144,26 @@ class _RidgeGCV(LinearModel):
         -------
         self : object
         """
+        xp, is_array_api, device_ = get_namespace_and_device(X)
+        y, sample_weight = move_to_namespace_and_device(y, sample_weight, ref=X)
+        if is_array_api or hasattr(getattr(X, "dtype", None), "kind"):
+            original_dtype = X.dtype
+        else:
+            # for X that does not have a simple dtype (eg pandas dataframe) the
+            # attributes will be stored in the dtype chosen by validate_data, ie
+            # np.float64
+            original_dtype = None
+        # Using float32 can be numerically unstable for this estimator. So,
+        # if the array API namespace and device allow, convert the input values
+        # to float64 whenever possible before converting back the results to
+        # float32 to keep prediction on float32 inputs efficient.
+        dtype = _max_precision_float_dtype(xp, device=device_)
         X, y = validate_data(
             self,
             X,
             y,
             accept_sparse=["csr", "csc", "coo"],
-            dtype=[np.float64],
+            dtype=dtype,
             multi_output=True,
             y_numeric=True,
         )
@@ -2166,25 +2205,34 @@ class _RidgeGCV(LinearModel):
         if sample_weight is not None:
             X, y, sqrt_sw = _rescale_data(X, y, sample_weight)
         else:
-            sqrt_sw = np.ones(n_samples, dtype=X.dtype)
+            sqrt_sw = xp.ones(n_samples, dtype=X.dtype, device=device_)
 
         X_mean, *decomposition = decompose(X, y, sqrt_sw)
 
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
-        n_alphas = 1 if np.ndim(self.alphas) == 0 else len(self.alphas)
+        if (
+            isinstance(self.alphas, numbers.Number)
+            or getattr(self.alphas, "ndim", None) == 0
+        ):
+            alphas = [float(self.alphas)]
+        else:
+            alphas = list(map(float, self.alphas))
+        n_alphas = len(alphas)
 
         if self.store_cv_results:
-            self.cv_results_ = np.empty((n_samples * n_y, n_alphas), dtype=X.dtype)
+            self.cv_results_ = xp.empty(
+                (n_samples * n_y, n_alphas), dtype=original_dtype, device=device_
+            )
 
         best_coef, best_score, best_alpha = None, None, None
 
-        for i, alpha in enumerate(np.atleast_1d(self.alphas)):
+        for i, alpha in enumerate(alphas):
             G_inverse_diag, c = solve(float(alpha), y, sqrt_sw, X_mean, *decomposition)
             if self.scoring is None:
                 squared_errors = (c / G_inverse_diag) ** 2
                 alpha_score = self._score_without_scorer(squared_errors=squared_errors)
                 if self.store_cv_results:
-                    self.cv_results_[:, i] = squared_errors.ravel()
+                    self.cv_results_[:, i] = _ravel(squared_errors)
             else:
                 predictions = y - (c / G_inverse_diag)
                 # Rescale predictions back to original scale
@@ -2196,7 +2244,7 @@ class _RidgeGCV(LinearModel):
                 predictions += y_offset
 
                 if self.store_cv_results:
-                    self.cv_results_[:, i] = predictions.ravel()
+                    self.cv_results_[:, i] = xp.reshape(predictions, shape=(-1,))
 
                 score_params = score_params or {}
                 alpha_score = self._score(
@@ -2212,8 +2260,8 @@ class _RidgeGCV(LinearModel):
                 # initialize
                 if self.alpha_per_target and n_y > 1:
                     best_coef = c
-                    best_score = np.atleast_1d(alpha_score)
-                    best_alpha = np.full(n_y, alpha)
+                    best_score = xp.reshape(alpha_score, shape=(-1,))
+                    best_alpha = xp.full(n_y, alpha, device=device_)
                 else:
                     best_coef = c
                     best_score = alpha_score
@@ -2222,7 +2270,7 @@ class _RidgeGCV(LinearModel):
                 # update
                 if self.alpha_per_target and n_y > 1:
                     to_update = alpha_score > best_score
-                    best_coef[:, to_update] = c[:, to_update]
+                    best_coef.T[to_update] = c.T[to_update]
                     best_score[to_update] = alpha_score[to_update]
                     best_alpha[to_update] = alpha
                 elif alpha_score > best_score:
@@ -2231,9 +2279,14 @@ class _RidgeGCV(LinearModel):
         self.alpha_ = best_alpha
         self.best_score_ = best_score
         self.dual_coef_ = best_coef
-        self.coef_ = safe_sparse_dot(self.dual_coef_.T, X)
+        # avoid torch warning about x.T for x with ndim != 2
+        if self.dual_coef_.ndim > 1:
+            dual_T = self.dual_coef_.T
+        else:
+            dual_T = self.dual_coef_
+        self.coef_ = dual_T @ X
         if y.ndim == 1 or y.shape[1] == 1:
-            self.coef_ = self.coef_.ravel()
+            self.coef_ = _ravel(self.coef_)
 
         if sparse.issparse(X):
             X_offset = X_mean * X_scale
@@ -2246,16 +2299,22 @@ class _RidgeGCV(LinearModel):
                 cv_results_shape = n_samples, n_alphas
             else:
                 cv_results_shape = n_samples, n_y, n_alphas
-            self.cv_results_ = self.cv_results_.reshape(cv_results_shape)
+            self.cv_results_ = xp.reshape(self.cv_results_, shape=cv_results_shape)
 
+        if original_dtype is not None:
+            if type(self.intercept_) is not float:  # noqa: E721
+                self.intercept_ = xp.astype(self.intercept_, original_dtype, copy=False)
+            self.dual_coef_ = xp.astype(self.dual_coef_, original_dtype, copy=False)
+            self.coef_ = xp.astype(self.coef_, original_dtype, copy=False)
         return self
 
     def _score_without_scorer(self, squared_errors):
         """Performs scoring using squared errors when the scorer is None."""
+        xp, _ = get_namespace(squared_errors)
         if self.alpha_per_target:
-            _score = -squared_errors.mean(axis=0)
+            _score = xp.mean(-squared_errors, axis=0)
         else:
-            _score = -squared_errors.mean()
+            _score = xp.mean(-squared_errors)
 
         return _score
 
@@ -2263,18 +2322,21 @@ class _RidgeGCV(LinearModel):
         """Performs scoring with the specified scorer using the
         predictions and the true y values.
         """
+        xp, _, device_ = get_namespace_and_device(y)
         if self.is_clf:
-            identity_estimator = _IdentityClassifier(classes=np.arange(n_y))
+            identity_estimator = _IdentityClassifier(
+                classes=xp.arange(n_y, device=device_)
+            )
             _score = scorer(
                 identity_estimator,
                 predictions,
-                y.argmax(axis=1),
+                xp.argmax(y, axis=1),
                 **score_params,
             )
         else:
             identity_estimator = _IdentityRegressor()
             if self.alpha_per_target:
-                _score = np.array(
+                _score = xp.asarray(
                     [
                         scorer(
                             identity_estimator,
@@ -2283,10 +2345,16 @@ class _RidgeGCV(LinearModel):
                             **score_params,
                         )
                         for j in range(n_y)
-                    ]
+                    ],
+                    device=device_,
                 )
             else:
-                _score = scorer(identity_estimator, predictions, y, **score_params)
+                _score = scorer(
+                    identity_estimator,
+                    predictions,
+                    y,
+                    **score_params,
+                )
 
         return _score
 
@@ -2544,6 +2612,7 @@ class _BaseRidgeCV(LinearModel):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.array_api_support = True
         tags.input_tags.sparse = True
         return tags
 

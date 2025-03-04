@@ -5,6 +5,7 @@
 
 import itertools
 import math
+import numbers
 import os
 from functools import wraps
 
@@ -268,7 +269,7 @@ def _isdtype_single(dtype, kind, *, xp):
         return dtype == kind
 
 
-def supported_float_dtypes(xp):
+def supported_float_dtypes(xp, device=None):
     """Supported floating point types for the namespace.
 
     Note: float16 is not officially part of the Array API spec at the
@@ -326,6 +327,17 @@ def _accept_device_cpu(func):
     return wrapped_func
 
 
+class _NumPyLinalgAPIWrapper:
+    def __getattr__(self, attr):
+        return getattr(numpy.linalg, attr)
+
+    def vector_norm(self, x, /, *, axis=None, keepdims=False, ord=2):
+        return numpy.linalg.norm(x, ord - ord, axis=axis, keepdims=keepdims)
+
+    def outer(self, x1, x2, /):
+        return numpy.outer(x1, x2)
+
+
 class _NumPyAPIWrapper:
     """Array API compat wrapper for any numpy version
 
@@ -377,6 +389,8 @@ class _NumPyAPIWrapper:
         "complex64",
         "complex128",
     }
+
+    linalg = _NumPyLinalgAPIWrapper()
 
     def __getattr__(self, name):
         attr = getattr(numpy, name)
@@ -624,6 +638,40 @@ def get_namespace_and_device(*array_list, remove_none=True, remove_types=(str,))
         return xp, is_array_api, arrays_device
     else:
         return xp, False, arrays_device
+
+
+def move_to_namespace_and_device(*arrays_to_move, ref):
+    """Helper to implement the 'y follows X' rule.
+
+    Convert arrays to the namespace and device of ``ref``.
+
+    When ``ref`` is not an array api array, the inputs are returned unchanged.
+    """
+    xp, is_array_api = get_namespace(ref)
+    if not is_array_api:
+        return arrays_to_move
+
+    device_ = device(ref)
+
+    new_arrays = []
+    for array in arrays_to_move:
+        if array is None or isinstance(array, (numbers.Number, str)):
+            new_arrays.append(array)
+            continue
+        array_xp, _, array_device = get_namespace_and_device(array)
+        if array_xp == xp and array_device == device_:
+            new_arrays.append(array)
+            continue
+        try:
+            new_arrays.append(xp.asarray(array, device=device_))
+            continue
+        except Exception:
+            # direct conversion to a different library may fail in which
+            # case we try converting to numpy first
+            array = _convert_to_numpy(array, array_xp)
+            new_arrays.append(xp.asarray(array, device=device_))
+
+    return tuple(new_arrays)
 
 
 def _expit(X, xp=None):
