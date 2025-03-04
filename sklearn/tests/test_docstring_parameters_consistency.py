@@ -4,7 +4,13 @@
 import pytest
 
 from sklearn import metrics
-from sklearn.ensemble import StackingClassifier, StackingRegressor
+from sklearn.ensemble import (
+    BaggingClassifier,
+    BaggingRegressor,
+    IsolationForest,
+    StackingClassifier,
+    StackingRegressor,
+)
 from sklearn.utils._testing import assert_docstring_consistency, skip_if_no_numpydoc
 
 CLASS_DOCSTRING_CONSISTENCY_CASES = [
@@ -17,6 +23,17 @@ CLASS_DOCSTRING_CONSISTENCY_CASES = [
         "include_returns": False,
         "exclude_returns": None,
         "descr_regex_pattern": None,
+    },
+    {
+        "objects": [BaggingClassifier, BaggingRegressor, IsolationForest],
+        "include_params": ["max_samples"],
+        "exclude_params": None,
+        "include_attrs": False,
+        "exclude_attrs": None,
+        "include_returns": False,
+        "exclude_returns": None,
+        "descr_regex_pattern": r"The number of samples to draw from X to train each.*",
+        "flexible_types": {"max_samples": 2},
     },
 ]
 
