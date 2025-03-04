@@ -1,5 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
+from collections.abc import Mapping
 
 import numpy as np
 
@@ -24,8 +25,65 @@ class _BinaryClassifierCurveDisplayMixin:
         if ax is None:
             _, ax = plt.subplots()
 
-        name = self.estimator_name if name is None else name
+        # We are changing from `estimator_name` to `name`, Display objects will
+        # have one or the other. Try old attr name: `estimator_name` first.
+        if name is None:
+            name = getattr(self, "estimator_name", None)
+        if name is None:
+            name = getattr(self, "name", None)
         return ax, ax.figure, name
+
+    @classmethod
+    def _get_line_kwargs(
+        cls,
+        n_curves,
+        names,
+        summary_values,
+        summary_value_name,
+        fold_line_kws,
+        default_line_kwargs={},
+        **kwargs,
+    ):
+        """Get validated line kwargs for each curve."""
+        # Ensure parameters are of the correct length
+        names_ = [None] * n_curves if names is None else names
+        summary_values_ = (
+            [None] * n_curves if summary_values is None else summary_values
+        )
+        # `fold_line_kws` ignored for single curve plots
+        # `kwargs` ignored for multi-curve plots
+        if n_curves == 1:
+            fold_line_kws = [kwargs]
+        else:
+            if fold_line_kws is None:
+                fold_line_kws = [{"alpha": 0.5, "linestyle": "--"}] * n_curves
+            elif isinstance(fold_line_kws, Mapping):
+                fold_line_kws = [fold_line_kws] * n_curves
+            elif len(fold_line_kws) != n_curves:
+                raise ValueError(
+                    "When `fold_line_kws` is a list, it must have the same length as "
+                    "the number of curves to be plotted."
+                )
+
+        line_kwargs = []
+        for fold_idx, (curve_summary_value, curve_name) in enumerate(
+            zip(summary_values_, names_)
+        ):
+            if curve_summary_value is not None and curve_name is not None:
+                default_line_kwargs["label"] = (
+                    f"{curve_name} ({summary_value_name} = {curve_summary_value:0.2f})"
+                )
+            elif curve_summary_value is not None:
+                default_line_kwargs["label"] = (
+                    f"{summary_value_name} = {curve_summary_value:0.2f}"
+                )
+            elif curve_name is not None:
+                default_line_kwargs["label"] = curve_name
+
+            line_kwargs.append(
+                _validate_style_kwargs(default_line_kwargs, fold_line_kws[fold_idx])
+            )
+        return line_kwargs
 
     @classmethod
     def _validate_and_get_response_values(
@@ -177,3 +235,70 @@ def _despine(ax):
         ax.spines[s].set_visible(False)
     for s in ["bottom", "left"]:
         ax.spines[s].set_bounds(0, 1)
+
+
+# TODO(1.9): remove
+# Should this be a parent class method?
+def _convert_to_list_leaving_none(param):
+    """Convert parameters to a list, leaving `None` as is."""
+    if param is None:
+        return None
+    if isinstance(param, list):
+        return param
+    return [param]
+
+
+# Should this be a parent class/mixin method?
+def _check_param_lengths(required, optional, class_name):
+    """Check required and optional parameters are of the same length."""
+    optional_provided = {}
+    for name, param in optional.items():
+        if isinstance(param, list):
+            optional_provided[name] = param
+
+    all_params = {**required, **optional_provided}
+    if len({len(param) for param in all_params.values()}) > 1:
+        required_formatted = ", ".join(f"'{key}'" for key in required.keys())
+        optional_formatted = ", ".join(f"'{key}'" for key in optional_provided.keys())
+        lengths_formatted = ", ".join(
+            f"{key}: {len(value)}" for key, value in all_params.items()
+        )
+        raise ValueError(
+            f"{required_formatted}, and optional parameters {optional_formatted} "
+            f"from `{class_name}` initialization (or `plot`) should all be lists of "
+            f"the same length. Got: {lengths_formatted}"
+        )
+
+
+def _process_fold_names_line_kwargs(n_curves, fold_names, fold_line_kwargs):
+    """Ensure that `fold_names` and `fold_line_kwargs` are of correct length."""
+    msg = (
+        "When `{param}` is provided, it must have the same length as "
+        "the number of curves to be plotted. Got {len_param} "
+        "instead of {n_curves}."
+    )
+
+    if fold_names is None:
+        # "<estimator> fold <idx> ?"
+        fold_names_ = [f"Fold: {idx}" for idx in range(n_curves)]
+    elif len(fold_names) != n_curves:
+        raise ValueError(
+            msg.format(param="fold_names", len_param=len(fold_names), n_curves=n_curves)
+        )
+    else:
+        fold_names_ = fold_names
+
+    if isinstance(fold_line_kwargs, Mapping):
+        fold_line_kws_ = [fold_line_kwargs] * n_curves
+    elif fold_names is not None and len(fold_line_kwargs) != n_curves:
+        raise ValueError(
+            msg.format(
+                param="fold_line_kwargs",
+                len_param=len(fold_line_kwargs),
+                n_curves=n_curves,
+            )
+        )
+    else:
+        fold_line_kws_ = fold_line_kwargs
+
+    return fold_names_, fold_line_kws_
