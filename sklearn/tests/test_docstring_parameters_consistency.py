@@ -1,6 +1,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+from typing import Any
+
 import pytest
 
 from sklearn import metrics
@@ -13,7 +15,7 @@ from sklearn.ensemble import (
 from sklearn.mixture import BayesianGaussianMixture, GaussianMixture
 from sklearn.utils._testing import assert_docstring_consistency, skip_if_no_numpydoc
 
-CLASS_DOCSTRING_CONSISTENCY_CASES = [
+CLASS_DOCSTRING_CONSISTENCY_CASES: list[dict[str, Any]] = [
     {
         "objects": [AdaBoostClassifier, AdaBoostRegressor],
         "include_params": True,
