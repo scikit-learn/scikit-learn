@@ -102,10 +102,10 @@ class BayesianGaussianMixture(BaseMixture):
         String describing the type of covariance parameters to use.
         Must be one of:
 
-        - 'full' (each component has its own general covariance matrix),
-        - 'tied' (all components share the same general covariance matrix),
-        - 'diag' (each component has its own diagonal covariance matrix),
-        - 'spherical' (each component has its own single variance).
+        - 'full': each component has its own general covariance matrix,
+        - 'tied': all components share the same general covariance matrix,
+        - 'diag': each component has its own diagonal covariance matrix,
+        - 'spherical': each component has its own single variance.
 
     tol : float, default=1e-3
         The convergence threshold. EM iterations will stop when the
@@ -128,9 +128,9 @@ class BayesianGaussianMixture(BaseMixture):
         The method used to initialize the weights, the means and the
         covariances. String must be one of:
 
-        - 'kmeans': responsibilities are initialized using kmeans.
-        - 'k-means++': use the k-means++ method to initialize.
-        - 'random': responsibilities are initialized randomly.
+        - 'kmeans': responsibilities are initialized using kmeans,
+        - 'k-means++': use the k-means++ method to initialize,
+        - 'random': responsibilities are initialized randomly,
         - 'random_from_data': initial means are randomly selected data points.
 
         .. versionchanged:: v1.1
@@ -187,6 +187,8 @@ class BayesianGaussianMixture(BaseMixture):
         If 'warm_start' is True, the solution of the last fitting is used as
         initialization for the next call of fit(). This can speed up
         convergence when fit is called several times on similar problems.
+        In that case, 'n_init' is ignored and only a single initialization
+        occurs upon the first call.
         See :term:`the Glossary <warm_start>`.
 
     verbose : int, default=0
@@ -196,7 +198,7 @@ class BayesianGaussianMixture(BaseMixture):
         for each step.
 
     verbose_interval : int, default=10
-        Number of iteration done before the next print.
+        Number of iterations done before the next print.
 
     Attributes
     ----------
@@ -222,7 +224,7 @@ class BayesianGaussianMixture(BaseMixture):
         equivalently parameterized by the precision matrices. Storing the
         precision matrices instead of the covariance matrices makes it more
         efficient to compute the log-likelihood of new samples at test time.
-        The shape depends on ``covariance_type``::
+        The shape depends on `covariance_type`::
 
             (n_components,)                        if 'spherical',
             (n_features, n_features)               if 'tied',
@@ -236,7 +238,7 @@ class BayesianGaussianMixture(BaseMixture):
         Gaussian can be equivalently parameterized by the precision matrices.
         Storing the precision matrices instead of the covariance matrices makes
         it more efficient to compute the log-likelihood of new samples at test
-        time. The shape depends on ``covariance_type``::
+        time. The shape depends on `covariance_type`::
 
             (n_components,)                        if 'spherical',
             (n_features, n_features)               if 'tied',
@@ -247,7 +249,7 @@ class BayesianGaussianMixture(BaseMixture):
         True when convergence of the best fit of inference was reached, False otherwise.
 
     n_iter_ : int
-        Number of step used by the best fit of inference to reach the
+        Number of steps used by the best fit of inference to reach the
         convergence.
 
     lower_bound_ : float

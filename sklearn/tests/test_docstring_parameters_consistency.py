@@ -4,10 +4,59 @@
 import pytest
 
 from sklearn import metrics
-from sklearn.ensemble import StackingClassifier, StackingRegressor
+from sklearn.ensemble import (
+    AdaBoostClassifier,
+    AdaBoostRegressor,
+    StackingClassifier,
+    StackingRegressor,
+)
+from sklearn.mixture import BayesianGaussianMixture, GaussianMixture
 from sklearn.utils._testing import assert_docstring_consistency, skip_if_no_numpydoc
 
 CLASS_DOCSTRING_CONSISTENCY_CASES = [
+    {
+        "objects": [AdaBoostClassifier, AdaBoostRegressor],
+        "include_params": True,
+        "exclude_params": None,
+        "include_attrs": True,
+        "exclude_attrs": [
+            # type differs
+            "estimators_",
+            "",
+        ],
+        "include_returns": False,
+        "exclude_returns": None,
+        "descr_regex_patterns": {
+            # Excludes 2nd sentence if present, matches last sentence until "."
+            "estimator": r"^([^.]+\.)(?:\s+[^.]+\.)?\s+([^.]+\.)",
+            "learning_rate": (
+                r"^(.*?)(?:regressor |classifier )(.*?)(?:regressor|classifier)(.*)$"
+            ),
+            # Excludes 3rd sentence if present.
+            "random_state": r"([^.]+\.[^.]+\.)(?:\s+[^.]+\.)?(\s[^.]+\.[^.]+\.)",
+            # Excludes words "Classification "/"Regression "
+            "estimator_errors_": r"^(?:Classification |Regression )(.*)$",
+        },
+    },
+    {
+        "objects": [GaussianMixture, BayesianGaussianMixture],
+        "include_params": True,
+        "exclude_params": None,
+        "include_attrs": True,
+        "exclude_attrs": ["lower_bound_"],
+        "include_returns": False,
+        "exclude_returns": None,
+        "descr_regex_patterns": {
+            # Match first sentence only
+            "n_components": r"^[^.?!]*[.]",
+            # Excludes words "precisions" or "covariances"
+            "init_params": r"^(.*?)(?:precisions.|covariances.)(.*)$",
+            # Excludes words "inference " or "EM "
+            "converged_": r"^(.*?)(?:inference |EM )(.*)$",
+            # Excludes words "inference " or "EM "
+            "n_iter_": r"^(.*?)(?:inference |EM )(.*)$",
+        },
+    },
     {
         "objects": [StackingClassifier, StackingRegressor],
         "include_params": ["cv", "n_jobs", "passthrough", "verbose"],
@@ -38,10 +87,7 @@ FUNCTION_DOCSTRING_CONSISTENCY_CASES = [
         "include_returns": False,
         "exclude_returns": None,
         "descr_regex_patterns": {
-            # Non-greedily matches anything until non-capturing group
-            # "Weighted recall is equal to accuracy. " is found, then
-            # matches anything until end of line. If not found first group
-            # matches everything.
+            # Matches everything, excluding "Weighted recall is equal to accuracy. "
             "average": r"^(.+?)(?:Weighted recall is equal to accuracy\.\s(.*))?$",
         },
     },

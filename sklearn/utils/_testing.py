@@ -796,7 +796,7 @@ def assert_docstring_consistency(
 
     descr_regex_patterns : dict, default={}
         Dictionary of parameter/attribute/return name to the regular expression to
-        capture the part of the description to match between objects.
+        capture the portion of the description to match between objects.
         If match contains subgroups, matching subgroups are joined together, this
         enables us to discard non-capturing groups.
         If match does not contain subgroups, whole match is used.

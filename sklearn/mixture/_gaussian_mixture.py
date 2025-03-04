@@ -532,17 +532,15 @@ class GaussianMixture(BaseMixture):
         String describing the type of covariance parameters to use.
         Must be one of:
 
-        - 'full': each component has its own general covariance matrix.
-        - 'tied': all components share the same general covariance matrix.
-        - 'diag': each component has its own diagonal covariance matrix.
+        - 'full': each component has its own general covariance matrix,
+        - 'tied': all components share the same general covariance matrix,
+        - 'diag': each component has its own diagonal covariance matrix,
         - 'spherical': each component has its own single variance.
-
-        For an example of using `covariance_type`, refer to
-        :ref:`sphx_glr_auto_examples_mixture_plot_gmm_selection.py`.
 
     tol : float, default=1e-3
         The convergence threshold. EM iterations will stop when the
-        lower bound average gain is below this threshold.
+        lower bound average gain on the likelihood (of the training data with
+        respect to the model) is below this threshold.
 
     reg_covar : float, default=1e-6
         Non-negative regularization added to the diagonal of covariance.
@@ -552,7 +550,8 @@ class GaussianMixture(BaseMixture):
         The number of EM iterations to perform.
 
     n_init : int, default=1
-        The number of initializations to perform. The best results are kept.
+        The number of initializations to perform. The result with the highest
+        lower bound value on the likelihood is kept.
 
     init_params : {'kmeans', 'k-means++', 'random', 'random_from_data'}, \
     default='kmeans'
@@ -560,10 +559,10 @@ class GaussianMixture(BaseMixture):
         precisions.
         String must be one of:
 
-        - 'kmeans' : responsibilities are initialized using kmeans.
-        - 'k-means++' : use the k-means++ method to initialize.
-        - 'random' : responsibilities are initialized randomly.
-        - 'random_from_data' : initial means are randomly selected data points.
+        - 'kmeans': responsibilities are initialized using kmeans,
+        - 'k-means++': use the k-means++ method to initialize,
+        - 'random': responsibilities are initialized randomly,
+        - 'random_from_data': initial means are randomly selected data points.
 
         .. versionchanged:: v1.1
             `init_params` now accepts 'random_from_data' and 'k-means++' as
@@ -612,7 +611,7 @@ class GaussianMixture(BaseMixture):
         for each step.
 
     verbose_interval : int, default=10
-        Number of iteration done before the next print.
+        Number of iterations done before the next print.
 
     Attributes
     ----------
@@ -663,7 +662,7 @@ class GaussianMixture(BaseMixture):
         True when convergence of the best fit of EM was reached, False otherwise.
 
     n_iter_ : int
-        Number of step used by the best fit of EM to reach the convergence.
+        Number of steps used by the best fit of EM to reach the convergence.
 
     lower_bound_ : float
         Lower bound value on the log-likelihood (of the training data with
