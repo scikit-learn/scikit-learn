@@ -114,6 +114,7 @@ def _write_label_html(
     doc_link="",
     is_fitted_css_class="",
     is_fitted_icon="",
+    param_prefix="",
 ):
     """Write labeled html with or without a dropdown with named details.
 
@@ -152,6 +153,8 @@ def _write_label_html(
     is_fitted_icon : str, default=""
         The HTML representation to show the fitted information in the diagram. An empty
         string means that no information is shown.
+    param_prefix : str, default=""
+        The prefix to prepend to parameter names for nested estimators.
     """
     out.write(
         f'<div class="{outer_class}"><div'
@@ -195,7 +198,8 @@ def _write_label_html(
         fmt_str = (
             f'<input class="sk-toggleable__control sk-hidden--visually" id="{est_id}" '
             f'type="checkbox" {checked_str}>{label_html}<div '
-            f'class="sk-toggleable__content {is_fitted_css_class}">'
+            f'class="sk-toggleable__content {is_fitted_css_class}" '
+            f'data-param-prefix="{param_prefix}">'
             f"</pre>{params}</div>"
         )
         out.write(fmt_str)
@@ -255,6 +259,7 @@ def _write_estimator_html(
     is_fitted_css_class,
     is_fitted_icon="",
     first_call=False,
+    param_prefix="",
 ):
     """Write estimator to html in serial, parallel, or by itself (single).
 
@@ -285,6 +290,9 @@ def _write_estimator_html(
         empty string.
     first_call : bool, default=False
         Whether this is the first time this function is called.
+    param_prefix : str, default=""
+        The prefix to prepend to parameter names for nested estimators.
+        For example, in a pipeline this might be "pipeline__stepname__".
     """
     if first_call:
         est_block = _get_visual_block(estimator)
@@ -303,7 +311,7 @@ def _write_estimator_html(
         out.write(f'<div class="sk-item{dash_cls}">')
 
         if estimator_label:
-            params = estimator.get_params()._repr_html_inner()
+            params = estimator.get_params(deep=False)._repr_html_inner()
             _write_label_html(
                 out,
                 params,
@@ -312,6 +320,7 @@ def _write_estimator_html(
                 doc_link=doc_link,
                 is_fitted_css_class=is_fitted_css_class,
                 is_fitted_icon=is_fitted_icon,
+                param_prefix=param_prefix,
             )
 
         kind = est_block.kind
@@ -319,6 +328,14 @@ def _write_estimator_html(
         est_infos = zip(est_block.estimators, est_block.names, est_block.name_details)
 
         for est, name, name_details in est_infos:
+            # Build the parameter prefix for nested estimators
+            if param_prefix:
+                # If we already have a prefix, append the new component
+                new_prefix = f"{param_prefix}{name.split(':')[0]}__"
+            else:
+                # If this is the first level, start the prefix
+                new_prefix = f"{name.split(':')[0]}__" if name else ""
+
             if kind == "serial":
                 _write_estimator_html(
                     out,
@@ -326,6 +343,7 @@ def _write_estimator_html(
                     name,
                     name_details,
                     is_fitted_css_class=is_fitted_css_class,
+                    param_prefix=new_prefix,
                 )
             else:  # parallel
                 out.write('<div class="sk-parallel-item">')
@@ -337,6 +355,7 @@ def _write_estimator_html(
                     name,
                     name_details,
                     is_fitted_css_class=is_fitted_css_class,
+                    param_prefix=new_prefix,
                 )
                 out.write("</div>")  # sk-parallel-item
 
@@ -358,6 +377,7 @@ def _write_estimator_html(
             doc_link=doc_link,
             is_fitted_css_class=is_fitted_css_class,
             is_fitted_icon=is_fitted_icon,
+            param_prefix=param_prefix,
         )
 
 
