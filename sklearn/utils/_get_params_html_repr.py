@@ -40,18 +40,19 @@ def _get_css_style():
 
 def _html_template(data):
     style_template = _get_css_style()
+    out = ""
     html_start = f"""
         <head><style>{style_template}</style>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         </head>
         <body>
-        <div class="estimator-params">
+        <div class="estimator-table">
             <details>
                 <summary>Parameters</summary>
                 <table>
                   <tbody>
         """
-    out = ""
+
     for x, y in data.items():
 
         if y != "deprecated" and isinstance(y, str):
@@ -75,11 +76,26 @@ def _html_template(data):
                     </tr>
 
                 """
-    html_end = """
+    out += """ <tbody>
+                </table>
+            </details>
+        </div>"""
+
+    out += f"""
+    <div class="estimator-table">
+            <details>
+                <summary>Methods</summary>
+                <table>
+                  <tbody>
+                  {data.methods}
                   <tbody>
                 </table>
             </details>
-        </div>
+    </div>
+    """
+
+    html_end = """
+
         <script>
             function copyToClipboard(text, element) {
                 // Get the parameter prefix from the closest toggleable content
