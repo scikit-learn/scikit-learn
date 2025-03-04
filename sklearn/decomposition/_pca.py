@@ -3,19 +3,18 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from math import log, sqrt
+from math import lgamma, log, sqrt
 from numbers import Integral, Real
 
 import numpy as np
 from scipy import linalg
 from scipy.sparse import issparse
 from scipy.sparse.linalg import svds
-from scipy.special import gammaln
 
 from ..base import _fit_context
 from ..utils import check_random_state
 from ..utils._arpack import _init_arpack_v0
-from ..utils._array_api import _convert_to_numpy, device, get_namespace
+from ..utils._array_api import _convert_to_numpy, get_namespace
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
 from ..utils.extmath import fast_logdet, randomized_svd, stable_cumsum, svd_flip
 from ..utils.sparsefuncs import _implicit_column_offset, mean_variance_axis
@@ -71,8 +70,7 @@ def _assess_dimension(spectrum, rank, n_samples):
     pu = -rank * log(2.0)
     for i in range(1, rank + 1):
         pu += (
-            gammaln((n_features - i + 1) / 2.0)
-            - log(xp.pi) * (n_features - i + 1) / 2.0
+            lgamma((n_features - i + 1) / 2.0) - log(xp.pi) * (n_features - i + 1) / 2.0
         )
 
     pl = xp.sum(xp.log(spectrum[:rank]))
@@ -93,7 +91,6 @@ def _assess_dimension(spectrum, rank, n_samples):
                 (spectrum[i] - spectrum[j]) * (1.0 / spectrum_[j] - 1.0 / spectrum_[i])
             ) + log(n_samples)
 
-    pu = xp.asarray(pu, device=device(spectrum), dtype=spectrum.dtype)
     ll = pu + pl + pv + pp - pa / 2.0 - rank * log(n_samples) / 2.0
 
     return ll
