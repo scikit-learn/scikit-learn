@@ -165,7 +165,7 @@ def discretize(
                 shape=(n_samples, n_components),
             )
 
-            t_svd = vectors_discrete.T * vectors
+            t_svd = vectors_discrete.T @ vectors
 
             try:
                 U, S, Vh = np.linalg.svd(t_svd)
