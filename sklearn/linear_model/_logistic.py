@@ -1105,6 +1105,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
     For a comparison of the LogisticRegression with other classifiers see:
     :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`.
+
+    For a visual example of how Logistic Regression models a classification problem using the logistic curve, see:
+    :ref:`sphx_glr_auto_examples_linear_model_plot_logistic.py`.
     """
 
     _parameter_constraints: dict = {
