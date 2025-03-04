@@ -53,20 +53,19 @@ def _html_template(data):
         """
     out = ""
     for x, y in data.items():
+
+        if y != "deprecated" and isinstance(y, str):
+            y = "".join(['"', y, '"'])
+
         if x in data.non_default:
-            out += f"""
+            out += """
                     <tr class="user-set">
-                      <td><i class="fa-regular fa-copy"
-                       onclick="copyToClipboard('{x}',
-                                this.parentElement.nextElementSibling)"
-                      </i></td>
-                      <td class="param">{x}&nbsp;</td>
-                      <td class="value">{y}</td>
-                    </tr>
             """
         else:
-            out += f"""
+            out += """
                     <tr class="default">
+               """
+        out += f"""
                         <td><i class="fa-regular fa-copy"
                          onclick="copyToClipboard('{x}',
                                   this.parentElement.nextElementSibling)"
@@ -74,7 +73,8 @@ def _html_template(data):
                         <td class="param">{x}&nbsp;</td>
                         <td class="value">{y}</td>
                     </tr>
-               """
+
+                """
     html_end = """
                   <tbody>
                 </table>
@@ -84,7 +84,8 @@ def _html_template(data):
             function copyToClipboard(text, element) {
                 // Get the parameter prefix from the closest toggleable content
                 const toggleableContent = element.closest('.sk-toggleable__content');
-                const paramPrefix = toggleableContent ? toggleableContent.dataset.paramPrefix : '';
+                const paramPrefix = toggleableContent ?
+                                    toggleableContent.dataset.paramPrefix : '';
                 const fullParamName = paramPrefix ? `${paramPrefix}${text}` : text;
 
                 const originalStyle = element.style;
