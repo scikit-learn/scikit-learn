@@ -86,7 +86,9 @@ class BaseDistancesReductionDispatcher:
         )
 
     @classmethod
-    def is_usable_for(cls, X = None, Y = None, precomputed = None, metric = "euclidean") -> bool:
+    def is_usable_for(
+        cls, X=None, Y=None, metric="euclidean"
+    ) -> bool:
         """Return True if the dispatcher can be used for the
         given parameters.
 
@@ -109,7 +111,13 @@ class BaseDistancesReductionDispatcher:
         -------
         True if the dispatcher can be used, else False.
         """
-        is_usable = (X is not None and Y is not None) ^ bool(precomputed)
+        if metric == 'precomputed':
+            if X is not None and Y is None:
+                is_usable = True
+            else:
+                is_usable = False
+        
+        #is_usable = (X is not None and Y is not None) ^ bool(precomputed)
         if is_usable == False:
             return is_usable
         # FIXME: the current Cython implementation is too slow for a large number of
@@ -196,7 +204,6 @@ class ArgKmin(BaseDistancesReductionDispatcher):
         cls,
         X=None,
         Y=None,
-        precomputed_matrix=None,
         k=None,
         metric="euclidean",
         chunk_size=None,
