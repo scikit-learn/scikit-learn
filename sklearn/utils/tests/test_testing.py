@@ -702,6 +702,12 @@ def f_four(labels):  # pragma: no cover
     labels : array-like, default=None
         The set of labels to include when `average != 'binary'`, and their
         order if `average is None`. Labels present in the data can be excluded.
+
+    second_param : int, default=None
+        This is a second parameter 'second_param'.
+
+        .. versionadded:: 1.2
+            Stuff.
     """
     pass
 
@@ -716,6 +722,9 @@ def f_five(labels):  # pragma: no cover
         The set of labels to include when `average != 'binary'`, and their
         order if `average is None`. This is an extra line. Labels present in the
         data can be excluded.
+
+    second_param : int, default=None
+        This is a second parameter 'second_param'. This is a second line.
     """
     pass
 
@@ -729,6 +738,28 @@ def f_six(labels):  # pragma: no cover
     labels : array-like, default=None
         The group of labels to add when `average != 'binary'`, and the
         order if `average is None`. Labels present on them datas can be excluded.
+
+    second_param : int, default=None
+        This is a second parameter 'second_param', more stuff. This is a second line.
+    """
+    pass
+
+
+def f_seven(labels):  # pragma: no cover
+    """Function seven.
+
+    Parameters
+    ----------
+
+    labels : array-like, default=None
+        The set of labels to include when `average != 'binary'`, and their
+        order if `average is None`. Labels present in the data can be excluded.
+
+    second_param : int, default=None
+        This is a second parameter 'second_param'.
+
+        .. versionadded:: 1.5
+            Stuff.
     """
     pass
 
@@ -779,45 +810,53 @@ def test_assert_docstring_consistency_error_msg():
   can be excluded."""
 
     with pytest.raises(AssertionError, match=msg):
-        assert_docstring_consistency([f_four, f_five, f_six], include_params=True)
+        assert_docstring_consistency([f_four, f_five, f_six], include_params=["labels"])
 
 
 @skip_if_no_numpydoc
-def test_assert_docstring_consistency_descr_regex_pattern():
-    """Check `assert_docstring_consistency` `descr_regex_pattern` works."""
-    # Check regex that matches full parameter descriptions
-    regex_full = (
-        r"The (set|group) "  # match 'set' or 'group'
-        + r"of labels to (include|add) "  # match 'include' or 'add'
-        + r"when `average \!\= 'binary'`, and (their|the) "  #  match 'their' or 'the'
-        + r"order if `average is None`\."
-        + r"[\s\w]*\.* "  # optionally match additional sentence
-        + r"Labels present (on|in) "  # match 'on' or 'in'
-        + r"(them|the) "  # match 'them' or 'the'
-        + r"datas? can be excluded\."  # match 'data' or 'datas'
-    )
-
-    assert_docstring_consistency(
-        [f_four, f_five, f_six],
-        include_params=True,
-        descr_regex_pattern=" ".join(regex_full.split()),
-    )
-    # Check we can just match a few alternate words
-    regex_words = r"(labels|average|binary)"  # match any of these 3 words
-    assert_docstring_consistency(
-        [f_four, f_five, f_six],
-        include_params=True,
-        descr_regex_pattern=" ".join(regex_words.split()),
-    )
-    # Check error raised when regex doesn't match
-    regex_error = r"The set of labels to include when.+"
-    msg = r"The description of Parameter 'labels' in \['f_six'\] does not match"
-    with pytest.raises(AssertionError, match=msg):
+def test_descr_regex_patterns_no_match():
+    """Check a non-matching regex pattern raises the correct error."""
+    descr_patterns = {"second_param": r"^[\w\s]*[.]"}
+    with pytest.raises(
+        ValueError, match=r"The 'descr_regex_patterns' for Parameter 'second_param'"
+    ):
         assert_docstring_consistency(
-            [f_four, f_five, f_six],
-            include_params=True,
-            descr_regex_pattern=" ".join(regex_error.split()),
+            [f_four, f_five],
+            include_params=["second_param"],
+            descr_regex_patterns=descr_patterns,
         )
+
+
+@skip_if_no_numpydoc
+def test_descr_regex_patterns_match():
+    """Check `descr_regex_patterns` is applied correctly."""
+    # Matches first sentence
+    assert_docstring_consistency(
+        [f_four, f_five],
+        include_params=["second_param"],
+        descr_regex_patterns={
+            # Match any non sentence-ending character until "."
+            "second_param": r"^[^.?!]*[.]"
+        },
+    )
+    # Match everything except specific section
+    assert_docstring_consistency(
+        [f_five, f_six],
+        include_params=["second_param"],
+        descr_regex_patterns={
+            # Matches everything, excluding ", more stuff"
+            "second_param": r"^(.+?)(?:, more stuff(.*))?$"
+        },
+    )
+    # Match everything except "versionadded" at end
+    assert_docstring_consistency(
+        [f_four, f_seven],
+        include_params=["second_param"],
+        descr_regex_patterns={
+            # Matches everything, excluding ", more stuff"
+            "second_param": r"(.*?)(?:\.\. versionadded::.*)"
+        },
+    )
 
 
 class RegistrationCounter:
