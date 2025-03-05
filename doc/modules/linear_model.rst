@@ -869,7 +869,8 @@ model, the probabilities describing the possible outcomes of a single trial
 are modeled using a `logistic function
 <https://en.wikipedia.org/wiki/Logistic_function>`_.
 
-For a visual example of how Logistic Regression models a classification problem using the logistic curve, see:
+For a visual example of how :class:`LogisticRegression` models a 
+classification problem using the logistic curve, see:
 :ref:`sphx_glr_auto_examples_linear_model_plot_logistic.py`.
 
 This implementation can fit binary, One-vs-Rest, or multinomial logistic
