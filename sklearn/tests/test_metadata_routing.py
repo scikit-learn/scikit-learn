@@ -6,6 +6,7 @@ Metadata Routing Utility Tests
 # SPDX-License-Identifier: BSD-3-Clause
 
 import re
+from typing import override
 
 import numpy as np
 import pytest
@@ -39,6 +40,7 @@ from sklearn.utils._metadata_requests import (
     SIMPLE_METHODS,
     MethodMetadataRequest,
     MethodPair,
+    _default_routing_enabled,
     _MetadataRequester,
     request_is_alias,
     request_is_valid,
@@ -1156,3 +1158,39 @@ def test_unbound_set_methods_work():
     # Test positional arguments error after making the descriptor method unbound.
     with pytest.raises(TypeError, match=error_message):
         A().set_fit_request(True)
+
+
+@pytest.mark.parametrize(
+    "enable_metadata_routing, default_routing",
+    [
+        (True, False),
+        (False, False),
+        ("default_routing", True),
+    ],
+)
+def test_default_routing_disabled(enable_metadata_routing, default_routing):
+    """Check correctness of _default_routing_enabled."""
+    with config_context(enable_metadata_routing=enable_metadata_routing):
+        assert _default_routing_enabled() == default_routing
+
+
+def test_default_instance_routing_overrides_class_level():
+    """Test that instance-level default routing overrides class-level."""
+
+    class DefaultRoutingEstimator(BaseEstimator):
+        __metadata_request__fit = {"prop": False}
+
+        @override
+        def __sklearn_default_request__(self):
+            values = super().__sklearn_default_request__()
+            values["fit"]["prop"] = True  # Override class-level False with True
+            values["predict"]["prop"] = True  # Add new method request
+            return values
+
+    est = DefaultRoutingEstimator()
+
+    with config_context(enable_metadata_routing="default_routing"):
+        # Instance-level True should override class-level False
+        assert est.get_metadata_routing().fit.requests["prop"] is True
+        # New method request should be present
+        assert est.get_metadata_routing().predict.requests["prop"] is True

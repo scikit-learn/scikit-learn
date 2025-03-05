@@ -91,22 +91,14 @@ class _UnsupportedGroupCVMixin:
 
 
 class GroupsConsumerMixin(_MetadataRequester):
-    """A Mixin to request ``groups`` when default routing policy is enabled.
+    """A Mixin to ``groups`` by default.
 
-    This Mixin makes the object to request ``groups`` by default as ``True``,
-    when `sklearn.set_config(enable_metadata_routing="default_routing")`` is called.
+    This Mixin makes the object to request ``groups`` by default as ``True``.
 
     .. versionadded:: 1.3
-
-    .. versionchanged:: 1.7
-        ``groups`` is requested by default only on
-        `enable_metadata_routing="default_routing"`, instead of
-        `enable_metadata_routing=True`.
-
     """
 
-    def __sklearn_default_request__(self):
-        return {"split": {"groups": True}}
+    __metadata_request__split = {"groups": True}
 
 
 class BaseCrossValidator(_MetadataRequester, metaclass=ABCMeta):
