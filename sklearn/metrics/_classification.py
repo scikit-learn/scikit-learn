@@ -336,6 +336,9 @@ def confusion_matrix(
     >>> tn, fp, fn, tp = confusion_matrix([0, 1, 0, 1], [1, 1, 1, 0]).ravel().tolist()
     >>> (tn, fp, fn, tp)
     (0, 2, 1, 1)
+
+    For an example using the Iris dataset, Refer to
+    :ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py`
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
