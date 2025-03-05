@@ -86,11 +86,11 @@ def _html_template(data):
                 <table>
                   <tbody>
         """
-    for x in data.methods:
+    for x, y in data.methods.items():
 
         out += f"""
             <tr class="default">
-                <td>{x}</td>
+                <td>{x} {y}</td>
             </tr>
         """
 
