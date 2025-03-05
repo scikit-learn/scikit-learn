@@ -89,7 +89,7 @@ def _html_template(data):
     for x in data.methods:
 
         out += f"""
-            <tr>
+            <tr class="default">
                 <td>{x}</td>
             </tr>
         """
