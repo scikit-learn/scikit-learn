@@ -907,14 +907,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
             if self.features == "missing-only":
                 # count number of True values in each row.
-                # Once scipy.sparse v1.15+ is min supported replace with:
-                # n_missing = imputer_mask.count_nonzero(axis=0)
-                if imputer_mask.format == "csr":
-                    n_missing = np.bincount(
-                        imputer_mask.indices, minlength=imputer_mask.shape[1]
-                    )
-                elif imputer_mask.format == "csc":
-                    n_missing = np.diff(imputer_mask.indptr)
+                n_missing = imputer_mask.sum(axis=0)
 
             if self.sparse is False:
                 imputer_mask = imputer_mask.toarray()
