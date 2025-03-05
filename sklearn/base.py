@@ -279,11 +279,11 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         methods = {}
         for method in dir(self):
             if (
-                hasattr(self, method)
-                and not method.startswith("_")
-                and callable(getattr(self, method))
+                # hasattr(self, method)
+                not method.startswith("_")
+                and callable(getattr(self.__class__, method, None))
             ):
-                method_obj = getattr(self, method)
+                method_obj = getattr(self.__class__, method)
                 sig = inspect.signature(method_obj)
                 methods[method] = tuple(
                     [param.name for param in sig.parameters.values()]
