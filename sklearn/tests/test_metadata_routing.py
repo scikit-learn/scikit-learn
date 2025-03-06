@@ -6,7 +6,6 @@ Metadata Routing Utility Tests
 # SPDX-License-Identifier: BSD-3-Clause
 
 import re
-from typing import override
 
 import numpy as np
 import pytest
@@ -1180,7 +1179,6 @@ def test_default_instance_routing_overrides_class_level():
     class DefaultRoutingEstimator(BaseEstimator):
         __metadata_request__fit = {"prop": False}
 
-        @override
         def __sklearn_default_request__(self):
             values = super().__sklearn_default_request__()
             values["fit"]["prop"] = True  # Override class-level False with True
