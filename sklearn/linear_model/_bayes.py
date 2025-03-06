@@ -18,6 +18,8 @@ from ..utils._param_validation import Interval
 from ..utils.extmath import fast_logdet
 from ..utils.validation import _check_sample_weight, validate_data
 from ._base import LinearModel, _preprocess_data, _rescale_data
+from ..preprocessing import StandardScaler
+from ..utils import check_array
 
 ###############################################################################
 # BayesianRidge regression
@@ -495,9 +497,14 @@ class ARDRegression(RegressorMixin, LinearModel):
     compute_score : bool, default=False
         If True, compute the objective function at each step of the model.
 
-    threshold_lambda : float, default=10 000
-        Threshold for removing (pruning) weights with high precision from
-        the computation.
+    min_significance : float, default=2.0
+        Minimum statistical significance (|beta|/sigma) required to keep a feature.
+        Default of 2.0 corresponds roughly to a 95% confidence interval.
+        This replaces the threshold_lambda parameter for more interpretable feature pruning.
+        
+    standardize : bool, default=True
+        Whether to standardize features before fitting. Recommended for
+        consistent feature selection behavior regardless of feature scales.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
@@ -523,6 +530,12 @@ class ARDRegression(RegressorMixin, LinearModel):
 
     sigma_ : array-like of shape (n_features, n_features)
         estimated variance-covariance matrix of the weights
+        
+    feature_significance_ : array-like of shape (n_features,)
+        Statistical significance of each feature (|beta|/sigma).
+        
+    selected_features_ : array-like of shape (n_features,) of bool
+        Boolean mask indicating which features were selected by the model.
 
     scores_ : float
         if computed, value of the objective function (to be maximized)
@@ -573,7 +586,7 @@ class ARDRegression(RegressorMixin, LinearModel):
     Their beta is our ``self.alpha_``
     Their alpha is our ``self.lambda_``
     ARD is a little different than the slide: only dimensions/features for
-    which ``self.lambda_ < self.threshold_lambda`` are kept and the rest are
+    which have statistical significance above ``self.min_significance`` are kept and the rest are
     discarded.
 
     Examples
@@ -594,7 +607,8 @@ class ARDRegression(RegressorMixin, LinearModel):
         "lambda_1": [Interval(Real, 0, None, closed="left")],
         "lambda_2": [Interval(Real, 0, None, closed="left")],
         "compute_score": ["boolean"],
-        "threshold_lambda": [Interval(Real, 0, None, closed="left")],
+        "min_significance": [Interval(Real, 0, None, closed="left")],
+        "standardize": ["boolean"],
         "fit_intercept": ["boolean"],
         "copy_X": ["boolean"],
         "verbose": ["verbose"],
@@ -610,7 +624,8 @@ class ARDRegression(RegressorMixin, LinearModel):
         lambda_1=1.0e-6,
         lambda_2=1.0e-6,
         compute_score=False,
-        threshold_lambda=1.0e4,
+        min_significance=2.0,
+        standardize=True,
         fit_intercept=True,
         copy_X=True,
         verbose=False,
@@ -623,7 +638,8 @@ class ARDRegression(RegressorMixin, LinearModel):
         self.lambda_1 = lambda_1
         self.lambda_2 = lambda_2
         self.compute_score = compute_score
-        self.threshold_lambda = threshold_lambda
+        self.min_significance = min_significance
+        self.standardize = standardize
         self.copy_X = copy_X
         self.verbose = verbose
 
@@ -660,6 +676,12 @@ class ARDRegression(RegressorMixin, LinearModel):
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features, dtype=dtype)
 
+        # Apply standardization if requested
+        if self.standardize:
+            self.scaler_ = StandardScaler()
+            X = self.scaler_.fit_transform(X)
+        
+        # Handle intercept
         X, y, X_offset_, y_offset_, X_scale_ = _preprocess_data(
             X, y, fit_intercept=self.fit_intercept, copy=self.copy_X
         )
@@ -668,7 +690,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         self.X_scale_ = X_scale_
 
         # Launch the convergence loop
-        keep_lambda = np.ones(n_features, dtype=bool)
+        keep_features = np.ones(n_features, dtype=bool)
 
         lambda_1 = self.lambda_1
         lambda_2 = self.lambda_2
@@ -687,9 +709,9 @@ class ARDRegression(RegressorMixin, LinearModel):
         self.scores_ = list()
         coef_old_ = None
 
-        def update_coeff(X, y, coef_, alpha_, keep_lambda, sigma_):
-            coef_[keep_lambda] = alpha_ * np.linalg.multi_dot(
-                [sigma_, X[:, keep_lambda].T, y]
+        def update_coeff(X, y, coef_, alpha_, keep_features, sigma_):
+            coef_[keep_features] = alpha_ * np.linalg.multi_dot(
+                [sigma_, X[:, keep_features].T, y]
             )
             return coef_
 
@@ -698,23 +720,28 @@ class ARDRegression(RegressorMixin, LinearModel):
             if n_samples >= n_features
             else self._update_sigma_woodbury
         )
+        
+        # Initialize significance array
+        significance = np.zeros(n_features, dtype=dtype)
+        
         # Iterative procedure of ARDRegression
         for iter_ in range(self.max_iter):
-            sigma_ = update_sigma(X, alpha_, lambda_, keep_lambda)
-            coef_ = update_coeff(X, y, coef_, alpha_, keep_lambda, sigma_)
+            sigma_ = update_sigma(X, alpha_, lambda_, keep_features)
+            coef_ = update_coeff(X, y, coef_, alpha_, keep_features, sigma_)
 
             # Update alpha and lambda
-            sse_ = np.sum((y - np.dot(X, coef_)) ** 2)
-            gamma_ = 1.0 - lambda_[keep_lambda] * np.diag(sigma_)
-            lambda_[keep_lambda] = (gamma_ + 2.0 * lambda_1) / (
-                (coef_[keep_lambda]) ** 2 + 2.0 * lambda_2
+            residuals = y - np.dot(X[:, keep_features], coef_[keep_features])
+            sse_ = np.sum(residuals ** 2)
+            gamma_ = 1.0 - lambda_[keep_features] * np.diag(sigma_)
+            lambda_[keep_features] = (gamma_ + 2.0 * lambda_1) / (
+                (coef_[keep_features]) ** 2 + 2.0 * lambda_2
             )
             alpha_ = (n_samples - gamma_.sum() + 2.0 * alpha_1) / (sse_ + 2.0 * alpha_2)
 
-            # Prune the weights with a precision over a threshold
-            keep_lambda = lambda_ < self.threshold_lambda
-            coef_[~keep_lambda] = 0
-
+            # Calculate statistical significance for feature pruning
+            significance[keep_features] = np.abs(coef_[keep_features]) * np.sqrt(lambda_[keep_features])
+            keep_features_new = significance > self.min_significance
+            
             # Compute the objective function
             if self.compute_score:
                 s = (lambda_1 * np.log(lambda_) - lambda_2 * lambda_).sum()
@@ -722,9 +749,9 @@ class ARDRegression(RegressorMixin, LinearModel):
                 s += 0.5 * (
                     fast_logdet(sigma_)
                     + n_samples * log(alpha_)
-                    + np.sum(np.log(lambda_))
+                    + np.sum(np.log(lambda_[keep_features]))
                 )
-                s -= 0.5 * (alpha_ * sse_ + (lambda_ * coef_**2).sum())
+                s -= 0.5 * (alpha_ * sse_ + (lambda_[keep_features] * coef_[keep_features]**2).sum())
                 self.scores_.append(s)
 
             # Check for convergence
@@ -733,16 +760,22 @@ class ARDRegression(RegressorMixin, LinearModel):
                     print("Converged after %s iterations" % iter_)
                 break
             coef_old_ = np.copy(coef_)
+            
+            # Update coefficients and features for next iteration
+            coef_[~keep_features_new] = 0.0
+            keep_features = keep_features_new
 
-            if not keep_lambda.any():
+            if not keep_features.any():
+                if verbose:
+                    print("No features selected. Stopping.")
                 break
 
         self.n_iter_ = iter_ + 1
 
-        if keep_lambda.any():
+        if keep_features.any():
             # update sigma and mu using updated params from the last iteration
-            sigma_ = update_sigma(X, alpha_, lambda_, keep_lambda)
-            coef_ = update_coeff(X, y, coef_, alpha_, keep_lambda, sigma_)
+            sigma_ = update_sigma(X, alpha_, lambda_, keep_features)
+            coef_ = update_coeff(X, y, coef_, alpha_, keep_features, sigma_)
         else:
             sigma_ = np.array([]).reshape(0, 0)
 
@@ -750,35 +783,56 @@ class ARDRegression(RegressorMixin, LinearModel):
         self.alpha_ = alpha_
         self.sigma_ = sigma_
         self.lambda_ = lambda_
+        
+        # Store feature significance and selected features
+        self.feature_significance_ = significance
+        self.selected_features_ = keep_features
+        
+        # Set intercept using the internal method
         self._set_intercept(X_offset_, y_offset_, X_scale_)
+        
+        # If standardization was applied, transform coefficients back to original scale
+        if self.standardize:
+            # Get the mean and scale used by the scaler
+            mean_ = self.scaler_.mean_
+            scale_ = self.scaler_.scale_
+            
+            # Transform coefficients: coef_orig = coef_std / std
+            # Note: Unselected features will have coef_=0, so dividing by scale is safe
+            self.coef_ = self.coef_ / scale_
+            
+            # Correct the intercept: intercept_orig = intercept_std - sum(coef_orig_i * mean_i)
+            # Only use selected features for the sum to avoid numerical issues
+            self.intercept_ = self.intercept_ - np.sum(self.coef_[keep_features] * mean_[keep_features])
+        
         return self
 
-    def _update_sigma_woodbury(self, X, alpha_, lambda_, keep_lambda):
+    def _update_sigma_woodbury(self, X, alpha_, lambda_, keep_features):
         # See slides as referenced in the docstring note
         # this function is used when n_samples < n_features and will invert
         # a matrix of shape (n_samples, n_samples) making use of the
         # woodbury formula:
         # https://en.wikipedia.org/wiki/Woodbury_matrix_identity
         n_samples = X.shape[0]
-        X_keep = X[:, keep_lambda]
-        inv_lambda = 1 / lambda_[keep_lambda].reshape(1, -1)
+        X_keep = X[:, keep_features]
+        inv_lambda = 1 / lambda_[keep_features].reshape(1, -1)
         sigma_ = pinvh(
             np.eye(n_samples, dtype=X.dtype) / alpha_
             + np.dot(X_keep * inv_lambda, X_keep.T)
         )
         sigma_ = np.dot(sigma_, X_keep * inv_lambda)
         sigma_ = -np.dot(inv_lambda.reshape(-1, 1) * X_keep.T, sigma_)
-        sigma_[np.diag_indices(sigma_.shape[1])] += 1.0 / lambda_[keep_lambda]
+        sigma_[np.diag_indices(sigma_.shape[1])] += 1.0 / lambda_[keep_features]
         return sigma_
 
-    def _update_sigma(self, X, alpha_, lambda_, keep_lambda):
+    def _update_sigma(self, X, alpha_, lambda_, keep_features):
         # See slides as referenced in the docstring note
         # this function is used when n_samples >= n_features and will
         # invert a matrix of shape (n_features, n_features)
-        X_keep = X[:, keep_lambda]
+        X_keep = X[:, keep_features]
         gram = np.dot(X_keep.T, X_keep)
         eye = np.eye(gram.shape[0], dtype=X.dtype)
-        sigma_inv = lambda_[keep_lambda] * eye + alpha_ * gram
+        sigma_inv = lambda_[keep_features] * eye + alpha_ * gram
         sigma_ = pinvh(sigma_inv)
         return sigma_
 
@@ -804,12 +858,23 @@ class ARDRegression(RegressorMixin, LinearModel):
         y_std : array-like of shape (n_samples,)
             Standard deviation of predictive distribution of query points.
         """
+        X = check_array(X)
+        
+        # Apply standardization if it was used during training
+        if hasattr(self, 'scaler_') and self.standardize:
+            X = self.scaler_.transform(X)
+            
         y_mean = self._decision_function(X)
         if return_std is False:
             return y_mean
         else:
-            col_index = self.lambda_ < self.threshold_lambda
-            X = _safe_indexing(X, indices=col_index, axis=1)
-            sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
-            y_std = np.sqrt(sigmas_squared_data + (1.0 / self.alpha_))
+            # Use selected features based on significance
+            selected = self.selected_features_
+            if selected.any():
+                X_selected = X[:, selected]
+                sigmas_squared_data = (np.dot(X_selected, self.sigma_) * X_selected).sum(axis=1)
+                y_std = np.sqrt(sigmas_squared_data + (1.0 / self.alpha_))
+            else:
+                y_std = np.full(X.shape[0], 1.0 / np.sqrt(self.alpha_))
+                
             return y_mean, y_std
