@@ -811,7 +811,7 @@ def _nanmin(X, axis=None, xp=None):
     else:
         mask = xp.isnan(X)
         X = xp.min(
-            xp.where(mask, xp.asarray(+xp.inf, device=device_, dtype=X.dtype), X),
+            xp.where(mask, xp.asarray(+xp.inf, dtype=X.dtype, device=device_), X),
             axis=axis,
         )
         # Replace Infs from all NaN slices with NaN again
@@ -831,7 +831,7 @@ def _nanmax(X, axis=None, xp=None):
     else:
         mask = xp.isnan(X)
         X = xp.max(
-            xp.where(mask, xp.asarray(-xp.inf, device=device_, dtype=X.dtype), X),
+            xp.where(mask, xp.asarray(-xp.inf, dtype=X.dtype, device=device_), X),
             axis=axis,
         )
         # Replace Infs from all NaN slices with NaN again
@@ -849,7 +849,9 @@ def _nanmean(X, axis=None, xp=None):
         return xp.asarray(numpy.nanmean(X, axis=axis))
     else:
         mask = xp.isnan(X)
-        total = xp.sum(xp.where(mask, xp.asarray(0.0, device=device_), X), axis=axis)
+        total = xp.sum(
+            xp.where(mask, xp.asarray(0.0, dtype=X.dtype, device=device_), X), axis=axis
+        )
         count = xp.sum(xp.astype(xp.logical_not(mask), X.dtype), axis=axis)
         return total / count
 
