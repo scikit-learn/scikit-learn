@@ -31,8 +31,8 @@ can mitigate those limitations.
 # %%
 # Data Loading and Feature Engineering
 # ------------------------------------
-# Let us use pandas to load a copy of the titanic dataset. The following shows
-# how to apply a separate preprocessing on numerical and categorical features.
+# Let's use pandas to load a copy of the titanic dataset. The following shows
+# how to apply separate preprocessing on numerical and categorical features.
 #
 # We further include two random variables that are not correlated in any way
 # with the target variable (``survived``):
@@ -111,7 +111,7 @@ print(f"RF test accuracy: {rf.score(X_test, y_test):.3f}")
 # It might be possible to trade some accuracy on the training set for a
 # slightly better accuracy on the test set by limiting the capacity of the
 # trees (for instance by setting ``min_samples_leaf=5`` or
-# ``min_samples_leaf=10``) in order to limit overfitting while not introducing too
+# ``min_samples_leaf=10``) so as to limit overfitting while not introducing too
 # much underfitting.
 #
 # However, let us keep our high capacity random forest model for now so that we can
@@ -121,7 +121,7 @@ print(f"RF test accuracy: {rf.score(X_test, y_test):.3f}")
 # %%
 # Tree's Feature Importance from Mean Decrease in Impurity (MDI)
 # --------------------------------------------------------------
-# The impurity-based feature importance ranks the numerical features as the
+# The impurity-based feature importance ranks the numerical features to be the
 # most important features. As a result, the non-predictive ``random_num``
 # variable is ranked as one of the most important features!
 #
@@ -130,8 +130,8 @@ print(f"RF test accuracy: {rf.score(X_test, y_test):.3f}")
 #
 # - impurity-based importances are biased towards high cardinality features;
 # - impurity-based importances are computed on training set statistics and
-#   therefore do not reflect the ability of the feature to be useful in making
-#   predictions that generalize well to the test set (when the model has enough
+#   therefore do not reflect the ability of feature to be useful to make
+#   predictions that generalize to the test set (when the model has enough
 #   capacity).
 #
 # The bias towards high cardinality features explains why the `random_num` has
