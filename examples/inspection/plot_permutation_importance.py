@@ -98,6 +98,7 @@ rf.fit(X_train, y_train)
 # Before inspecting the feature importances, it is important to check that
 # the model predictive performance is high enough. Indeed, there would be little
 # interest in inspecting the important features of a non-predictive model.
+
 print(f"RF train accuracy: {rf.score(X_train, y_train):.3f}")
 print(f"RF test accuracy: {rf.score(X_test, y_test):.3f}")
 
