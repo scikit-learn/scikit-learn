@@ -595,7 +595,7 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     if namespace.__name__ == "array_api_strict" and hasattr(
         namespace, "set_array_api_strict_flags"
     ):
-        namespace.set_array_api_strict_flags(api_version="2023.12")
+        namespace.set_array_api_strict_flags(api_version="2024.12")
 
     return namespace, is_array_api_compliant
 
