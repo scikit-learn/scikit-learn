@@ -230,8 +230,8 @@ differences = model_1_scores - model_2_scores
 
 n = differences.shape[0]  # number of test sets
 df = n - 1
-n_train = len(list(cv.split(X, y))[0][0])
-n_test = len(list(cv.split(X, y))[0][1])
+n_train = len(next(iter(cv.split(X, y)))[0])
+n_test = len(next(iter(cv.split(X, y)))[1])
 
 t_stat, p_val = compute_corrected_ttest(differences, df, n_train, n_test)
 print(f"Corrected t-value: {t_stat:.3f}\nCorrected p-value: {p_val:.3f}")

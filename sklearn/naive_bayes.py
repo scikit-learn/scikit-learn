@@ -33,10 +33,10 @@ from .utils.validation import (
 
 __all__ = [
     "BernoulliNB",
+    "CategoricalNB",
+    "ComplementNB",
     "GaussianNB",
     "MultinomialNB",
-    "ComplementNB",
-    "CategoricalNB",
 ]
 
 

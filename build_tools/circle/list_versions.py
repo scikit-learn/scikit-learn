@@ -71,10 +71,8 @@ rst_content = [
     "Web-based documentation is available for versions listed below:\n",
 ]
 
-ROOT_URL = (
-    "https://api.github.com/repos/scikit-learn/scikit-learn.github.io/contents/"  # noqa
-)
-RAW_FMT = "https://raw.githubusercontent.com/scikit-learn/scikit-learn.github.io/master/%s/index.html"  # noqa
+ROOT_URL = "https://api.github.com/repos/scikit-learn/scikit-learn.github.io/contents/"
+RAW_FMT = "https://raw.githubusercontent.com/scikit-learn/scikit-learn.github.io/master/%s/index.html"
 VERSION_RE = re.compile(r"scikit-learn ([\w\.\-]+) documentation</title>")
 NAMED_DIRS = ["dev", "stable"]
 

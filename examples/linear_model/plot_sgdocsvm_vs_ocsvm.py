@@ -17,7 +17,7 @@ number of samples. It is not the purpose of this example to illustrate the
 benefits of such an approximation in terms of computation time but rather to
 show that we obtain similar results on a toy dataset.
 
-"""  # noqa: E501
+"""
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
