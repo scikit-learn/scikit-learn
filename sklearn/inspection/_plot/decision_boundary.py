@@ -101,7 +101,7 @@ class DecisionBoundaryDisplay:
         colors taken from the colormap and passed to the `cmap` parameter of
         the `plot_method`.
 
-        .. versionadded:: 1.6
+        .. versionadded:: 1.7
 
     xlabel : str, default=None
         Default label to place on x axis.
@@ -369,7 +369,7 @@ class DecisionBoundaryDisplay:
             colors taken from the colormap, and passed to the `cmap` parameter of
             the `plot_method`.
 
-            .. versionadded:: 1.6
+            .. versionadded:: 1.7
 
         xlabel : str, default=None
             The label used for the x-axis. If `None`, an attempt is made to
