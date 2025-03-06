@@ -117,6 +117,12 @@ class DecisionBoundaryDisplay:
         `plot_method` is 'pcolormesh', `surface_` is
         :class:`QuadMesh <matplotlib.collections.QuadMesh>`.
 
+    multiclass_colors_ : array of shape (n_classes, 4)
+        Colors used to plot each class in multiclass problems.
+        Only defined when `color_of_interest` is None.
+
+        .. versionadded:: 1.7
+
     ax_ : matplotlib Axes
         Axes with decision boundary.
 
@@ -200,7 +206,8 @@ class DecisionBoundaryDisplay:
 
         if plot_method not in ("contourf", "contour", "pcolormesh"):
             raise ValueError(
-                "plot_method must be 'contourf', 'contour', or 'pcolormesh'"
+                "plot_method must be 'contourf', 'contour', or 'pcolormesh'. "
+                f"Got {plot_method} instead."
             )
 
         if ax is None:
@@ -210,19 +217,36 @@ class DecisionBoundaryDisplay:
         if self.response.ndim == 2:
             self.surface_ = plot_func(self.xx0, self.xx1, self.response, **kwargs)
         else:  # self.response.ndim == 3
+            n_responses = self.response.shape[-1]
             if (
                 isinstance(self.multiclass_colors, str)
                 or self.multiclass_colors is None
             ):
-                cmap = (
-                    "viridis"
-                    if self.multiclass_colors is None
-                    else self.multiclass_colors
-                )
-                colors = plt.get_cmap(cmap, self.response.shape[-1]).colors
+                if isinstance(self.multiclass_colors, str):
+                    cmap = self.multiclass_colors
+                else:
+                    if n_responses <= 10:
+                        cmap = "tab10"
+                    else:
+                        cmap = "gist_rainbow"
+
+                # Special case for the tab10 and tab20 colormaps that encode a
+                # discret set of colors that are easily distinguishable
+                # contrary to other colormaps that are continuous.
+                if cmap == "tab10" and n_responses <= 10:
+                    colors = plt.get_cmap("tab10", 10).colors[:n_responses]
+                elif cmap == "tab20" and n_responses <= 20:
+                    colors = plt.get_cmap("tab20", 20).colors[:n_responses]
+                else:
+                    colors = plt.get_cmap(cmap, n_responses).colors
+            elif isinstance(self.multiclass_colors, str):
+                colors = colors = plt.get_cmap(
+                    self.multiclass_colors, n_responses
+                ).colors
             else:
                 colors = [mpl.colors.to_rgba(color) for color in self.multiclass_colors]
 
+            self.multiclass_colors_ = colors
             multiclass_cmaps = [
                 mpl.colors.LinearSegmentedColormap.from_list(
                     f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
@@ -337,7 +361,9 @@ class DecisionBoundaryDisplay:
               `color <https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def>`_
               strings, of length `n_classes`
             * str: name of :class:`matplotlib.colors.Colormap`
-            * None: 'viridis' colormap is used to sample colors
+            * None: 'tab10' colormap is used to sample colors if the number of
+                classes is less than or equal to 10, otherwise 'gist_rainbow'
+                colormap.
 
             Single color colormaps will be generated from the colors in the list or
             colors taken from the colormap, and passed to the `cmap` parameter of
