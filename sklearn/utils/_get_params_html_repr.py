@@ -1,6 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import html
 from collections import UserDict
 from pathlib import Path
 
@@ -87,14 +88,13 @@ def _html_template(data):
                   <tbody>
         """
     for x, y in data.methods.items():
-        # for element in y:
-        #    escaped_y = html.escape(element)
-
+        escaped_y = ", ".join(html.escape(i) for i in y)
         out += f"""
-            <tr class="default">
-                <td>{x}{y}</td>
-            </tr>
-        """
+        <tr class="default">
+            <td>{x}</td>
+            <td>{escaped_y}</td>
+        </tr>
+    """
 
     html_end = """
         </tbody>

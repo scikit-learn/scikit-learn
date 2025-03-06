@@ -286,7 +286,11 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
                 method_obj = getattr(self.__class__, method)
                 sig = inspect.signature(method_obj)
                 methods[method] = tuple(
-                    [param.name for param in sig.parameters.values()]
+                    [
+                        param.name
+                        for param in sig.parameters.values()
+                        if param.name != "self"
+                    ]
                 )
 
         out.methods = methods
