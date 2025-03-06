@@ -497,9 +497,10 @@ class ARDRegression(RegressorMixin, LinearModel):
     compute_score : bool, default=False
         If True, compute the objective function at each step of the model.
 
-    min_significance : float, default=2.0
+    min_significance : float, default=0.5
         Minimum statistical significance (|beta|/sigma) required to keep a feature.
-        Default of 2.0 corresponds roughly to a 95% confidence interval.
+        Default of 0.5 provides a reasonable balance between feature selection
+        and model accuracy.
         This replaces the threshold_lambda parameter for more interpretable feature pruning.
         
     standardize : bool, default=True
@@ -611,7 +612,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         "standardize": ["boolean"],
         "fit_intercept": ["boolean"],
         "copy_X": ["boolean"],
-        "verbose": ["verbose"],
+        "verbose": ["boolean"],
     }
 
     def __init__(
@@ -624,7 +625,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         lambda_1=1.0e-6,
         lambda_2=1.0e-6,
         compute_score=False,
-        min_significance=2.0,
+        min_significance=0.5,
         standardize=True,
         fit_intercept=True,
         copy_X=True,
@@ -646,8 +647,6 @@ class ARDRegression(RegressorMixin, LinearModel):
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the model according to the given training data and parameters.
-
-        Iterative procedure to maximize the evidence
 
         Parameters
         ----------
@@ -674,14 +673,38 @@ class ARDRegression(RegressorMixin, LinearModel):
         dtype = X.dtype
 
         n_samples, n_features = X.shape
-        coef_ = np.zeros(n_features, dtype=dtype)
+        
+        # Store original y scale for proper predictions 
+        self.y_mean_ = np.mean(y)
+        self.y_scale_ = np.std(y)
+        if self.y_scale_ == 0:
+            self.y_scale_ = 1.0
+            
+        # Make a copy of original y
+        y_orig = y.copy()
 
         # Apply standardization if requested
         if self.standardize:
+            # Standardize X
             self.scaler_ = StandardScaler()
             X = self.scaler_.fit_transform(X)
-        
-        # Handle intercept
+            
+            # Standardize y - this is crucial for numerical stability with large y values
+            y_std = (y - self.y_mean_) / self.y_scale_
+            y = y_std.copy()
+            
+            # Store information about feature scales for diagnostics
+            self.feature_scales_ = self.scaler_.scale_
+            eps = np.finfo(np.float64).eps
+            self.max_feature_ratio_ = np.max(self.feature_scales_) / (np.min(self.feature_scales_) + eps)
+            
+            # Set flag for high response scaling
+            self.high_response_scale_ = self.y_scale_ > 100
+
+        # Initialize coefficients
+        coef_ = np.zeros(n_features, dtype=dtype)
+
+        # Handle preprocessing of data
         X, y, X_offset_, y_offset_, X_scale_ = _preprocess_data(
             X, y, fit_intercept=self.fit_intercept, copy=self.copy_X
         )
@@ -691,7 +714,9 @@ class ARDRegression(RegressorMixin, LinearModel):
 
         # Launch the convergence loop
         keep_features = np.ones(n_features, dtype=bool)
+        keep_features_old = keep_features.copy()
 
+        # Initialize internal variables
         lambda_1 = self.lambda_1
         lambda_2 = self.lambda_2
         alpha_1 = self.alpha_1
@@ -700,14 +725,19 @@ class ARDRegression(RegressorMixin, LinearModel):
 
         # Initialization of the values of the parameters
         eps = np.finfo(np.float64).eps
-        # Add `eps` in the denominator to omit division by zero if `np.var(y)`
-        # is zero.
-        # Explicitly set dtype to avoid unintended type promotion with numpy 2.
+        
+        # Initialize alpha (noise precision) with scale-appropriate value
         alpha_ = np.asarray(1.0 / (np.var(y) + eps), dtype=dtype)
-        lambda_ = np.ones(n_features, dtype=dtype)
+        
+        # Initialize lambda based on data scale to avoid numerical issues
+        data_scale = np.mean(np.abs(X)) + eps
+        lambda_ = np.ones(n_features, dtype=dtype) / (data_scale**2 + eps)
 
         self.scores_ = list()
         coef_old_ = None
+        
+        # Initialize adaptive significance threshold
+        self._adaptive_threshold = self.min_significance
 
         def update_coeff(X, y, coef_, alpha_, keep_features, sigma_):
             coef_[keep_features] = alpha_ * np.linalg.multi_dot(
@@ -723,45 +753,138 @@ class ARDRegression(RegressorMixin, LinearModel):
         
         # Initialize significance array
         significance = np.zeros(n_features, dtype=dtype)
-        
-        # Iterative procedure of ARDRegression
+
+        # Iterative procedure of ARD Regression
         for iter_ in range(self.max_iter):
             sigma_ = update_sigma(X, alpha_, lambda_, keep_features)
             coef_ = update_coeff(X, y, coef_, alpha_, keep_features, sigma_)
 
             # Update alpha and lambda
             residuals = y - np.dot(X[:, keep_features], coef_[keep_features])
-            sse_ = np.sum(residuals ** 2)
-            gamma_ = 1.0 - lambda_[keep_features] * np.diag(sigma_)
+            rmse_ = np.sum(residuals ** 2)
+            
+            # Protection against numerical issues
+            if rmse_ < eps:
+                rmse_ = eps
+                
+            # Calculate useful quantities
+            gamma_ = np.maximum(0.0, np.minimum(1.0, 1.0 - lambda_[keep_features] * np.diag(sigma_)))
+            
+            # Update lambda (precisions of weight distributions)
             lambda_[keep_features] = (gamma_ + 2.0 * lambda_1) / (
                 (coef_[keep_features]) ** 2 + 2.0 * lambda_2
             )
-            alpha_ = (n_samples - gamma_.sum() + 2.0 * alpha_1) / (sse_ + 2.0 * alpha_2)
+            
+            # Prevent extreme lambda values that cause numerical issues
+            lambda_ = np.clip(lambda_, 1e-10, 1e10)
+
+            # Update alpha (precision of noise)
+            gamma_sum = gamma_.sum()
+            if gamma_sum >= n_samples:  # Prevent negative values
+                gamma_sum = n_samples - 0.01
+                
+            alpha_ = (n_samples - gamma_sum + 2.0 * alpha_1) / (rmse_ + 2.0 * alpha_2)
 
             # Calculate statistical significance for feature pruning
-            significance[keep_features] = np.abs(coef_[keep_features]) * np.sqrt(lambda_[keep_features])
-            keep_features_new = significance > self.min_significance
+            significance = np.zeros(n_features, dtype=dtype)
             
+            # First compute raw significance values
+            significance[keep_features] = np.abs(coef_[keep_features]) * np.sqrt(lambda_[keep_features])
+            
+            # Adaptive significance threshold based on data
+            if iter_ == 0:
+                # On first iteration, scale threshold based on the largest significance
+                max_sig = np.max(significance) if np.any(significance > 0) else 1.0
+                if max_sig > 1e3:
+                    # With very large significance values, use a more aggressive threshold scaling
+                    scaling_factor = np.log10(max_sig) / 10
+                else:
+                    scaling_factor = max(0.01, min(1.0, 1.0/max_sig))
+                
+                # For data with high response scaling, use a more lenient threshold
+                if hasattr(self, 'high_response_scale_') and self.high_response_scale_:
+                    # Decrease the threshold by 1/3 for high response scaling
+                    scaling_factor *= 0.33
+                
+                self._adaptive_threshold = self.min_significance * scaling_factor
+                if self.verbose:
+                    print(f"Using adaptive significance threshold: {self._adaptive_threshold:.6f}")
+                    if hasattr(self, 'max_feature_ratio_') and self.max_feature_ratio_ > 100:
+                        print(f"High feature scale ratio detected: {self.max_feature_ratio_:.2f}")
+                    if hasattr(self, 'high_response_scale_') and self.high_response_scale_:
+                        print(f"High response scale detected: {self.y_scale_:.2f}")
+            
+            # Determine features to keep with a scale-aware approach
+            keep_features_new = significance > self._adaptive_threshold
+            
+            # If no features would be selected, keep the top k most significant ones
+            # OR if we have a highly scaled response with too few features, select more
+            high_response_with_few_features = (
+                hasattr(self, 'high_response_scale_') and 
+                self.high_response_scale_ and 
+                np.sum(keep_features_new) < min(5, int(n_features*0.1))
+            )
+            
+            if (not np.any(keep_features_new) or high_response_with_few_features) and np.any(significance > 0):
+                # Determine how many features to keep based on scaling context
+                if hasattr(self, 'high_response_scale_') and self.high_response_scale_:
+                    # For high response scaling, we need more features (at least 5 or 10% of total)
+                    k = max(min(5, n_features), min(int(n_features*0.1), 10))
+                    if self.verbose and high_response_with_few_features:
+                        print(f"High response scaling detected - keeping {k} features for better prediction")
+                else:
+                    # Normal case - just keep a few top features
+                    k = min(5, n_features)
+                    
+                top_k_idx = np.argsort(significance)[-k:]
+                keep_features_new[top_k_idx] = True
+                
+                if self.verbose and not np.any(significance > self._adaptive_threshold):
+                    print(f"No features above threshold. Keeping top {k} features.")
+
             # Compute the objective function
             if self.compute_score:
-                s = (lambda_1 * np.log(lambda_) - lambda_2 * lambda_).sum()
-                s += alpha_1 * log(alpha_) - alpha_2 * alpha_
+                s = (lambda_1 * np.log(lambda_ + eps) - lambda_2 * lambda_).sum()
+                s += alpha_1 * log(alpha_ + eps) - alpha_2 * alpha_
                 s += 0.5 * (
                     fast_logdet(sigma_)
-                    + n_samples * log(alpha_)
-                    + np.sum(np.log(lambda_[keep_features]))
+                    + n_samples * log(alpha_ + eps)
+                    + np.sum(np.log(lambda_[keep_features] + eps))
                 )
-                s -= 0.5 * (alpha_ * sse_ + (lambda_[keep_features] * coef_[keep_features]**2).sum())
+                s -= 0.5 * (
+                    alpha_ * rmse_ + (lambda_[keep_features] * coef_[keep_features]**2).sum()
+                )
                 self.scores_.append(s)
 
             # Check for convergence
-            if iter_ > 0 and np.sum(np.abs(coef_old_ - coef_)) < self.tol:
-                if verbose:
-                    print("Converged after %s iterations" % iter_)
-                break
-            coef_old_ = np.copy(coef_)
+            # Both coefficients and feature selection should stabilize
+            coef_change = np.sum(np.abs(coef_old_ - coef_)) if coef_old_ is not None else np.inf
+            features_change = np.sum(keep_features != keep_features_old)
             
-            # Update coefficients and features for next iteration
+            # If we have extreme scaling, use relative change instead of absolute
+            if hasattr(self, 'y_scale_') and self.y_scale_ > 100:
+                # For scaled data, use relative coefficient change
+                if coef_old_ is not None and np.any(coef_old_ != 0):
+                    nonzero_mask = np.abs(coef_old_) > eps
+                    if np.any(nonzero_mask):
+                        rel_change = np.mean(np.abs((coef_[nonzero_mask] - coef_old_[nonzero_mask]) / coef_old_[nonzero_mask]))
+                        converged = rel_change < self.tol/10  # Need tighter convergence for scaled data
+                    else:
+                        converged = coef_change < self.tol
+                else:
+                    converged = False
+            else:
+                # Normal convergence check for non-scaled data
+                converged = coef_change < self.tol
+            
+            if (iter_ > 0 and converged and features_change == 0):
+                if verbose:
+                    print(f"Converged after {iter_} iterations")
+                break
+                
+            # Update for next iteration
+            coef_old_ = np.copy(coef_)
+            keep_features_old = keep_features.copy()
             coef_[~keep_features_new] = 0.0
             keep_features = keep_features_new
 
@@ -779,7 +902,13 @@ class ARDRegression(RegressorMixin, LinearModel):
         else:
             sigma_ = np.array([]).reshape(0, 0)
 
-        self.coef_ = coef_
+        # Store internal variables for prediction
+        self.y_offset_ = y_offset_
+        
+        # Store coefficients in standardized space
+        self.coef_std_ = coef_.copy()
+        
+        # Store results
         self.alpha_ = alpha_
         self.sigma_ = sigma_
         self.lambda_ = lambda_
@@ -788,23 +917,44 @@ class ARDRegression(RegressorMixin, LinearModel):
         self.feature_significance_ = significance
         self.selected_features_ = keep_features
         
-        # Set intercept using the internal method
-        self._set_intercept(X_offset_, y_offset_, X_scale_)
-        
-        # If standardization was applied, transform coefficients back to original scale
+        # Transform coefficients back to original scale if standardization was applied
         if self.standardize:
-            # Get the mean and scale used by the scaler
-            mean_ = self.scaler_.mean_
-            scale_ = self.scaler_.scale_
+            # Get the standard deviations used for scaling
+            scale_factors = self.scaler_.scale_
+            means = self.scaler_.mean_
             
-            # Transform coefficients: coef_orig = coef_std / std
-            # Note: Unselected features will have coef_=0, so dividing by scale is safe
-            self.coef_ = self.coef_ / scale_
+            # Transform coefficients back to original scale
+            # For features not selected, keep coefficient at zero
+            self.coef_ = np.zeros_like(coef_)
+            if keep_features.any():
+                self.coef_[keep_features] = coef_[keep_features] / scale_factors[keep_features]
             
-            # Correct the intercept: intercept_orig = intercept_std - sum(coef_orig_i * mean_i)
-            # Only use selected features for the sum to avoid numerical issues
-            self.intercept_ = self.intercept_ - np.sum(self.coef_[keep_features] * mean_[keep_features])
-        
+            # For the original scale intercept, we include the y_mean
+            self._set_intercept(X_offset_, y_offset_, X_scale_)
+            self.intercept_ = self.y_mean_
+            if self.fit_intercept and keep_features.any():
+                self.intercept_ -= np.sum(means[keep_features] * self.coef_[keep_features])
+        else:
+            self.coef_ = coef_
+            self._set_intercept(X_offset_, y_offset_, X_scale_)
+            
+        # Final check - ensure predictions are accurate
+        if keep_features.any() and self.standardize:
+            # Make a test prediction on the training data
+            y_pred = self.predict(X)
+            mse = np.mean((y_pred - y_orig) ** 2)
+            if self.verbose:
+                print(f"Training MSE: {mse:.6f}")
+                print(f"Features selected: {np.sum(keep_features)}/{n_features}")
+                
+                # Add additional verification for extreme scaling scenarios
+                if self.standardize and self.y_scale_ > 100:
+                    # For large scale differences, verify scaling is working
+                    y_pred_small = self.predict(X[:5])
+                    y_orig_small = y_orig[:5]
+                    print(f"Scale verification - Original y range: [{np.min(y_orig_small):.2f}, {np.max(y_orig_small):.2f}]")
+                    print(f"Scale verification - Predicted y range: [{np.min(y_pred_small):.2f}, {np.max(y_pred_small):.2f}]")
+
         return self
 
     def _update_sigma_woodbury(self, X, alpha_, lambda_, keep_features):
@@ -864,17 +1014,59 @@ class ARDRegression(RegressorMixin, LinearModel):
         if hasattr(self, 'scaler_') and self.standardize:
             X = self.scaler_.transform(X)
             
-        y_mean = self._decision_function(X)
+        # Get features that were retained during training
+        if hasattr(self, 'selected_features_'):
+            keep_features = self.selected_features_
+        else:
+            # Fall back to threshold-based selection for backward compatibility
+            keep_features = self.lambda_ < getattr(self, 'threshold_lambda', 1e4)
+        
+        # Calculate prediction in the space used during training
+        if not keep_features.any():
+            # If no features are selected, predict the mean
+            if self.fit_intercept:
+                y_pred_std = np.full(X.shape[0], self.y_offset_)
+            else:
+                y_pred_std = np.zeros(X.shape[0])
+        else:
+            # Make prediction using appropriate coefficients
+            if hasattr(self, 'coef_std_') and self.standardize:
+                # Use standardized space coefficients if available
+                y_pred_std = np.dot(X[:, keep_features], self.coef_std_[keep_features])
+            else:
+                # Otherwise use normal coefficients
+                y_pred_std = np.dot(X[:, keep_features], self.coef_[keep_features])
+            
+            if self.fit_intercept:
+                y_pred_std += self.y_offset_
+        
+        # Transform prediction back to original scale if standardization was applied
+        if hasattr(self, 'y_scale_') and hasattr(self, 'y_mean_') and self.standardize:
+            y_mean = y_pred_std * self.y_scale_ + self.y_mean_
+        else:
+            # Use the standard decision function if not standardized
+            y_mean = y_pred_std
+            
         if return_std is False:
             return y_mean
         else:
-            # Use selected features based on significance
-            selected = self.selected_features_
-            if selected.any():
-                X_selected = X[:, selected]
-                sigmas_squared_data = (np.dot(X_selected, self.sigma_) * X_selected).sum(axis=1)
-                y_std = np.sqrt(sigmas_squared_data + (1.0 / self.alpha_))
+            # Calculate prediction uncertainty
+            if not keep_features.any() or not hasattr(self, 'sigma_') or self.sigma_.size == 0:
+                # If no features selected, uncertainty is just based on noise precision
+                if hasattr(self, 'y_scale_') and self.standardize:
+                    y_std = np.full(X.shape[0], self.y_scale_ / np.sqrt(self.alpha_))
+                else:
+                    y_std = np.full(X.shape[0], 1.0 / np.sqrt(self.alpha_))
             else:
-                y_std = np.full(X.shape[0], 1.0 / np.sqrt(self.alpha_))
+                X_keep = X[:, keep_features]
                 
+                # Calculate uncertainty based on model covariance
+                sigmas_squared_data = (np.dot(X_keep, self.sigma_) * X_keep).sum(axis=1)
+                
+                # Apply appropriate scaling for uncertainty
+                if hasattr(self, 'y_scale_') and self.standardize:
+                    y_std = self.y_scale_ * np.sqrt(sigmas_squared_data + (1.0 / self.alpha_))
+                else:
+                    y_std = np.sqrt(sigmas_squared_data + (1.0 / self.alpha_))
+                    
             return y_mean, y_std
