@@ -77,7 +77,7 @@ classifiers = {
         PolynomialFeatures(interaction_only=True),
         LogisticRegression(C=10),
     ),
-    "Logistic regression\n(interacting spline features)": make_pipeline(
+    "Logistic regression\n(spline features)": make_pipeline(
         SplineTransformer(n_knots=5),
         PolynomialFeatures(interaction_only=True),
         LogisticRegression(C=10),
@@ -203,21 +203,19 @@ pd.DataFrame(evaluation_results).round(2)
 # Analysis
 # --------
 #
-# The two logistic regression models fit on with the original features display
+# The two logistic regression models fitted on the original features display
 # linear decision boundaries as expected. For this particular problem, this
-# does not seem to be limiting as both models are competitive with the other
-# models. We can observe that the amount of regularization (lower C values
-# means stronger regularization) influences both the model confidence (lighter
-# colors for the strongly regularized model) and the decision boundary
-# (slightly different slopes, hence slightly different ROC AUC). The ROC AUC
-# only evaluates the sharpness of the predictions, not their calibration: it is
-# invariant to scaling and shifting of the predicted probabilities as long as
-# the rank ordering is preserved.
+# does not seem to be detrimental as both models are competitive with the
+# non-linear models when quantitatively evaluated on the test set. We can
+# observe that the amount of regularization influences the model confidence:
+# lighter colors for the strongly regularized model with a lower value of `C`.
+# Regularization also impacts the orientation of decision boundary leading to
+# slightly different ROC AUC.
 #
-# The log-loss on the other hand evaluate both sharpness and calibration and as
-# a result favors the weakly regularized logistic-regression model, probably
-# because the strongly regularized model is under-confident. This could be
-# confirmed by looking at the calibration curve using
+# The log-loss on the other hand evaluates both sharpness and calibration and
+# as a result strongly favors the weakly regularized logistic-regression model,
+# probably because the strongly regularized model is under-confident. This
+# could be confirmed by looking at the calibration curve using
 # :class:`sklearn.calibration.CalibrationDisplay`.
 #
 # The logistic regression model with RBF features has a "blobby" decision
@@ -225,18 +223,19 @@ pd.DataFrame(evaluation_results).round(2)
 # similar to the decision boundary of the Gaussian process classifier which is
 # configured to use an RBF kernel.
 #
-# The logistic regression model fit on interacting binned features has a
-# decision boundary that is non-linear in the original feature space and is
+# The logistic regression model fitted on binned features with interactions has
+# a decision boundary that is non-linear in the original feature space and is
 # quite similar to the decision boundary of the gradient boosting classifier:
 # both models favor axis-aligned decisions when extrapolating to unseen region
 # of the feature space.
 #
-# The logistic regression model fit on interacting spline features has a
-# similar axis-aligned extrapolation behavior but a smoother decision boundary
-# in the dense region of the feature space than the two previous models.
+# The logistic regression model fitted on spline features with interactions
+# has a similar axis-aligned extrapolation behavior but a smoother decision
+# boundary in the dense region of the feature space than the two previous
+# models.
 #
 # To conclude, it is interesting to observe that feature engineering for
-# logistic regression models can be used to mimic the inductive bias of more
-# complex models. However, for this particular dataset, using the raw features
-# is train a competitive model. This would not necessarily the case for other
-# datasets.
+# logistic regression models can be used to mimic some of the inductive bias of
+# various non-linear models. However, for this particular dataset, using the
+# raw features is enough to train a competitive model. This would not
+# necessarily the case for other datasets.
