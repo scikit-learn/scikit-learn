@@ -130,11 +130,5 @@ def _html_template(data):
         </script>
         </body>
     """
-    html_template = f"{html_start}{out}{html_end}"
-    try:
-        output_path = "get_params.html"
-        with open(output_path, "w") as f:
-            f.write(html_template)
-    except Exception as e:
-        print(f"Error saving HTML: {e}")
-    return html_template
+
+    return f"{html_start}{out}{html_end}"

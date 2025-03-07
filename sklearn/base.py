@@ -272,25 +272,23 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
                 return True
             return False
 
-        non_default = list({k for k, v in out.items() if has_changed(k, v)})
+        non_default = [k for k, v in out.items() if has_changed(k, v)]
         out = ParamsDict(out)
         out.non_default = non_default
 
         methods = {}
-        for method in dir(self):
+        for attribute in dir(self):
             if (
                 # hasattr(self, method)
-                not method.startswith("_")
-                and callable(getattr(self.__class__, method, None))
+                not attribute.startswith("_")
+                and callable(getattr(self.__class__, attribute, None))
             ):
-                method_obj = getattr(self.__class__, method)
+                method_obj = getattr(self.__class__, attribute)
                 sig = inspect.signature(method_obj)
-                methods[method] = tuple(
-                    [
-                        param.name
-                        for param in sig.parameters.values()
-                        if param.name != "self"
-                    ]
+                methods[attribute] = tuple(
+                    param.name
+                    for param in sig.parameters.values()
+                    if param.name != "self"
                 )
 
         out.methods = methods
