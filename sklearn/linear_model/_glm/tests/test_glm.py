@@ -728,7 +728,16 @@ def test_glm_log_regression(solver, fit_intercept, estimator):
 @pytest.mark.parametrize("solver", SOLVERS)
 @pytest.mark.parametrize("fit_intercept", [True, False])
 def test_warm_start(solver, fit_intercept, global_random_seed):
-    """Test that warm_start works as expected."""
+    """
+    Test that `warm_start=True` enables incremental fitting in PoissonRegressor.
+
+    This test verifies that when using `warm_start=True`, the model continues
+    optimizing from previous coefficients instead of restarting from scratch.
+    It ensures that after an initial fit with `max_iter=1`, the model has a
+    higher objective function value (indicating incomplete optimization).
+    The test then checks whether allowing additional iterations enables
+    convergence to a solution comparable to a fresh training run (`warm_start=False`).
+    """
     n_samples, n_features = 100, 10
     X, y = make_regression(
         n_samples=n_samples,
