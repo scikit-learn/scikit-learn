@@ -14,7 +14,6 @@ import warnings
 from numbers import Real
 
 import numpy as np
-from scipy.special import xlogy
 
 from ..exceptions import UndefinedMetricWarning
 from ..utils._array_api import (
@@ -23,6 +22,9 @@ from ..utils._array_api import (
     get_namespace,
     get_namespace_and_device,
     size,
+)
+from ..utils._array_api import (
+    _xlogy as xlogy,
 )
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.stats import _weighted_percentile
@@ -479,14 +481,16 @@ def mean_absolute_percentage_error(
     >>> mean_absolute_percentage_error(y_true, y_pred)
     112589990684262.48
     """
-    xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
+    xp, _, device_ = get_namespace_and_device(
+        y_true, y_pred, sample_weight, multioutput
+    )
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
             y_true, y_pred, sample_weight, multioutput, xp=xp
         )
     )
     check_consistent_length(y_true, y_pred, sample_weight)
-    epsilon = xp.asarray(xp.finfo(xp.float64).eps, dtype=y_true.dtype)
+    epsilon = xp.asarray(xp.finfo(xp.float64).eps, dtype=y_true.dtype, device=device_)
     y_true_abs = xp.abs(y_true)
     mape = xp.abs(y_pred - y_true) / xp.maximum(y_true_abs, epsilon)
     output_errors = _average(mape, weights=sample_weight, axis=0)
@@ -1347,16 +1351,18 @@ def max_error(y_true, y_pred):
 
 def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
     """Mean Tweedie deviance regression loss."""
-    xp, _ = get_namespace(y_true, y_pred)
+    xp, _, device_ = get_namespace_and_device(y_true, y_pred)
     p = power
-    zero = xp.asarray(0, dtype=y_true.dtype)
     if p < 0:
         # 'Extreme stable', y any real number, y_pred > 0
         dev = 2 * (
-            xp.pow(xp.where(y_true > 0, y_true, zero), xp.asarray(2 - p))
+            xp.pow(
+                xp.where(y_true > 0, y_true, 0.0),
+                2 - p,
+            )
             / ((1 - p) * (2 - p))
-            - y_true * xp.pow(y_pred, xp.asarray(1 - p)) / (1 - p)
-            + xp.pow(y_pred, xp.asarray(2 - p)) / (2 - p)
+            - y_true * xp.pow(y_pred, 1 - p) / (1 - p)
+            + xp.pow(y_pred, 2 - p) / (2 - p)
         )
     elif p == 0:
         # Normal distribution, y and y_pred any real number
@@ -1369,9 +1375,9 @@ def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
         dev = 2 * (xp.log(y_pred / y_true) + y_true / y_pred - 1)
     else:
         dev = 2 * (
-            xp.pow(y_true, xp.asarray(2 - p)) / ((1 - p) * (2 - p))
-            - y_true * xp.pow(y_pred, xp.asarray(1 - p)) / (1 - p)
-            + xp.pow(y_pred, xp.asarray(2 - p)) / (2 - p)
+            xp.pow(y_true, 2 - p) / ((1 - p) * (2 - p))
+            - y_true * xp.pow(y_pred, 1 - p) / (1 - p)
+            + xp.pow(y_pred, 2 - p) / (2 - p)
         )
     return float(_average(dev, weights=sample_weight))
 
@@ -1793,7 +1799,7 @@ def d2_pinball_score(
         sample_weight = _check_sample_weight(sample_weight, y_true)
         y_quantile = np.tile(
             _weighted_percentile(
-                y_true, sample_weight=sample_weight, percentile=alpha * 100
+                y_true, sample_weight=sample_weight, percentile_rank=alpha * 100
             ),
             (len(y_true), 1),
         )
