@@ -954,12 +954,10 @@ def test_linalg_warning_with_newton_solver(global_random_seed):
     This test assess the behavior of `PoissonRegressor` with the "newton-cholesky"
     solver.
     It verifies the following:-
-    - No warnings occur on the well-conditioned dataset.
     - The model significantly improves upon the constant baseline deviance.
     - LBFGS remains robust on collinear data.
     - The Newton solver raises a `LinAlgWarning` on collinear data and falls
       back to LBFGS.
-    - Adding a small regularization term (`alpha=1e-10`) stabilizes the Newton solver.
     """
     newton_solver = "newton-cholesky"
     rng = np.random.RandomState(global_random_seed)
