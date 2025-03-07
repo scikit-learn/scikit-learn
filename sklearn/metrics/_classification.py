@@ -337,7 +337,8 @@ def confusion_matrix(
     >>> (tn, fp, fn, tp)
     (0, 2, 1, 1)
 
-    For an example using the Iris dataset, Refer to
+    For a detailed example of using a confusion matrix to evaluate a
+    Support Vector Classifier, please see
     :ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py`
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
