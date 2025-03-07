@@ -202,7 +202,7 @@ def test_roc_curve_from_cv_results_param_validation(pyplot, data_binary, data):
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
 @pytest.mark.parametrize("with_sample_weight", [True, False])
 @pytest.mark.parametrize("with_strings", [True, False])
-def test_test_roc_curve_display_plotting_from_cv_results(
+def test_roc_curve_display_plotting_from_cv_results(
     pyplot,
     data_binary,
     with_strings,
@@ -274,7 +274,7 @@ def test_test_roc_curve_display_plotting_from_cv_results(
         # Default alpha for `from_cv_results`
         line.get_alpha() == 0.5
         expected_label = f"{fold_names[idx]} (AUC = {display.roc_auc_[idx]:.2f})"
-        assert display.line_.get_label() == expected_label
+        assert line.get_label() == expected_label
 
 
 @pytest.mark.parametrize("fold_names", [None, ["one", "two", "three"]])
@@ -459,7 +459,7 @@ def test_roc_curve_chance_level_line_from_cv_results(
         X,
         y,
         plot_chance_level=plot_chance_level,
-        chance_level_kw=chance_level_kw,
+        chance_level_kwargs=chance_level_kw,
         fold_line_kwargs=fold_line_kwargs,
     )
 

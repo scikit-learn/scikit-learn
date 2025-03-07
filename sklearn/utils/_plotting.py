@@ -33,12 +33,10 @@ class _BinaryClassifierCurveDisplayMixin:
         if ax is None:
             _, ax = plt.subplots()
 
-        # We are changing from `estimator_name` to `name`, Display objects will
-        # have one or the other. Try old attr name: `estimator_name` first.
+        # Display classes are in process of changing from `estimator_name` to `name`.
+        # Try old attr name: `estimator_name` first.
         if name is None:
-            name = getattr(self, "estimator_name", None)
-        if name is None:
-            name = getattr(self, "name", None)
+            name = getattr(self, "estimator_name", getattr(self, "name", None))
         return ax, ax.figure, name
 
     @classmethod

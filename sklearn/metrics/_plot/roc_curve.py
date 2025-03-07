@@ -47,6 +47,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         is also `None` no legend is added.
 
     name : str or list of str, default=None
+        (Do we prefer curve_name) ?
         Name of each ROC curve, used for labeling curves in the legend.
         If plotting multiple curves, should be a list of the same length as `fpr`
         and `tpr`. If `None`, no name is not shown in the legend. If `roc_auc`
@@ -261,9 +262,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         if despine:
             _despine(self.ax_)
 
-        if (
-            line_kwargs[0].get("label") is not None
-            or chance_level_kw.get("label") is not None
+        if line_kwargs[0].get("label") is not None or (
+            plot_chance_level and chance_level_kw.get("label") is not None
         ):
             self.ax_.legend(loc="lower right")
 
@@ -556,7 +556,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         ----------
         cv_results : dict
             Dictionary as returned by :func:`~sklearn.model_selection.cross_validate`
-            using `return_estimator=True` and `return_indices=True`.
+            using `return_estimator=True` and `return_indices=True` (i.e., dictionary
+            should contain the keys "estimator" and "indices").
 
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Input values.
