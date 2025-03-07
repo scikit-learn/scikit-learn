@@ -10,13 +10,19 @@ visual adjustments without recalculation. We provide `Display` classes that
 expose two methods for creating plots: `from_estimator` and
 `from_predictions`.
 
-The `from_estimator` method generates a `Display` object from a fitted estimator and input data (`X`, `y`).
-The `from_predictions` method creates a `Display` object from true and predicted values (`y_test`, `y_pred`), which
-is useful when you only want to compute the predictions once.
+The `from_estimator` method generates a `Display` object from a fitted estimator and
+input data (`X`, `y`).
+The `from_predictions` method creates a `Display` object from true and predicted
+values (`y_test`, `y_pred`), which
+is useful when you only want to compute the predictions once. Using `from_predictions`
+avoids us to recompute the predictions, but does not automatically resolve some
+ambiguities.
 
-The `Display` object stores the computed values required for plotting with Matplotlib.
-These values can either be passed directly via `from_predictions`, or derived from an estimator
-and sample data using `from_estimator`.
+The `Display` object stores the computed values (e. g. metric values) required for
+plotting with Matplotlib. These computed values are the results of some derivatives
+after we pass the raw predictions to `from_predictions`, or we get them from
+an estimator via `from_estimator`.
+
 Additionally, the plot method allows adding to an existing plot by passing the existing
 plots :class:`matplotlib.axes.Axes` to the `ax` parameter.
 
