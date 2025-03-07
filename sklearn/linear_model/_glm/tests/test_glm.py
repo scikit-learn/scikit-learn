@@ -607,6 +607,15 @@ def test_sample_weights_validation():
     ],
 )
 def test_glm_wrong_y_range(glm):
+    """
+    Test that fitting a GLM model raises a ValueError when `y` contains
+    values outside the valid range for the given distribution.
+
+    Generalized Linear Models (GLMs) with certain distributions, such as
+    Poisson, Gamma, and Tweedie (with power > 1), require `y` to be
+    non-negative. This test ensures that passing a `y` array containing
+    negative values triggers the expected ValueError with the correct message.
+    """
     y = np.array([-1, 2])
     X = np.array([[1], [1]])
     msg = r"Some value\(s\) of y are out of the valid range of the loss"
@@ -719,6 +728,7 @@ def test_glm_log_regression(solver, fit_intercept, estimator):
 @pytest.mark.parametrize("solver", SOLVERS)
 @pytest.mark.parametrize("fit_intercept", [True, False])
 def test_warm_start(solver, fit_intercept, global_random_seed):
+    """Test that warm_start works as expected."""
     n_samples, n_features = 100, 10
     X, y = make_regression(
         n_samples=n_samples,
