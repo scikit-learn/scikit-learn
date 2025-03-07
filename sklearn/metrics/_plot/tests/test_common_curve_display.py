@@ -164,6 +164,8 @@ def test_display_curve_estimator_name_multiple_calls(
     assert clf_name in disp.line_.get_label()
 
 
+# TODO: remove this test once classes moved to using `name_` instead of
+# `estimator_name`
 @pytest.mark.parametrize(
     "clf",
     [
@@ -190,7 +192,6 @@ def test_display_curve_not_fitted_errors_old_name(pyplot, data_binary, clf, Disp
     assert disp.estimator_name == model.__class__.__name__
 
 
-# This uses the new `name` para
 @pytest.mark.parametrize(
     "clf",
     [

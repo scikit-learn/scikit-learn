@@ -122,7 +122,8 @@ def test_roc_curve_display_plotting(
         pos_label=pos_label,
     )
 
-    # Both processed and unprocessed attributes should be the same for single curve
+    # Both processed (e.g., `roc_auc_`) and unprocessed (e.g., `roc_auc`) attributes
+    # should be the same for single curve
     assert_allclose(display.roc_auc_[0], auc(fpr, tpr))
     assert_allclose(display.roc_auc, auc(fpr, tpr))
     assert_allclose(display.fpr_[0], fpr)
