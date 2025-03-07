@@ -193,6 +193,11 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
         labels = model.labels_
         return centroid, labels
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 class SpectralCoclustering(BaseSpectral):
     """Spectral Co-Clustering algorithm (Dhillon, 2001).
