@@ -6,12 +6,12 @@ from ...utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
     _check_param_lengths,
     _convert_to_list_leaving_none,
+    _deprecate_estimator_name,
     _despine,
-    _process_fold_names_line_kwargs,
+    _validate_line_kwargs,
     _validate_style_kwargs,
 )
 from ...utils._response import _get_response_values_binary
-from ...utils.validation import _num_samples
 from .._ranking import auc, roc_curve
 
 
@@ -59,13 +59,18 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         .. versionadded:: 0.24
 
+    estimator_name : str, default=None
+        Name of estimator. If None, the estimator name is not shown.
+
+        .. deprecated:: 1.7
+
     Attributes
     ----------
     line_ : matplotlib Artist or list of matplotlib Artists
         ROC Curves.
 
         .. versionchanged:: 1.7
-            This attribute can now be a list of Artists, when multiple curves are
+            This attribute can now be a list of Artists, for when multiple curves are
             plotted.
 
     chance_level_ : matplotlib Artist or None
@@ -112,12 +117,30 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         roc_auc=None,
         name=None,
         pos_label=None,
+        estimator_name="deprecated",
     ):
         self.fpr = fpr
         self.tpr = tpr
         self.roc_auc = roc_auc
-        self.name = name
+        self.name = _deprecate_estimator_name(estimator_name, name, "1.7")
         self.pos_label = pos_label
+
+    def _validate_plot_params(self, *, ax=None, name=None):
+        self.ax_, self.figure_, name_ = super()._validate_plot_params(ax=ax, name=name)
+
+        self.fpr_ = _convert_to_list_leaving_none(self.fpr)
+        self.tpr_ = _convert_to_list_leaving_none(self.tpr)
+        self.roc_auc_ = _convert_to_list_leaving_none(self.roc_auc)
+        self.name_ = _convert_to_list_leaving_none(name_)
+
+        _check_param_lengths(
+            required={"self.fpr": self.fpr_, "self.tpr": self.tpr_},
+            optional={
+                "self.roc_auc": self.roc_auc_,
+                "`name` from `plot` (or self.name)": self.name_,
+            },
+            class_name="RocCurveDisplay",
+        )
 
     def plot(
         self,
@@ -184,27 +207,16 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         display : :class:`~sklearn.metrics.RocCurveDisplay`
             Object that stores computed values.
         """
-        self.fpr_ = _convert_to_list_leaving_none(self.fpr)
-        self.tpr_ = _convert_to_list_leaving_none(self.tpr)
-        self.roc_auc_ = _convert_to_list_leaving_none(self.roc_auc)
-        # TODO: Not sure about this, as ideally we would check params are correct
-        # first??
-        self.ax_, self.figure_, self.name_ = self._validate_plot_params(
-            ax=ax, name=name
-        )
-        self.name_ = _convert_to_list_leaving_none(self.name_)
-        _check_param_lengths(
-            {"self.fpr": self.fpr_, "self.tpr": self.tpr_},
-            {
-                "self.roc_auc": self.roc_auc_,
-                "`name` from `plot` (or self.name)": self.name_,
-            },
-            "RocCurveDisplay",
-        )
+        self._validate_plot_params(ax=ax, name=name)
 
         n_curves = len(self.fpr_)
         line_kwargs = self._get_line_kwargs(
-            n_curves, self.name_, self.roc_auc_, "AUC", fold_line_kwargs, **kwargs
+            n_curves,
+            self.name_,
+            self.roc_auc_,
+            "AUC",
+            fold_line_kwargs=fold_line_kwargs,
+            **kwargs,
         )
 
         default_chance_level_line_kw = {
@@ -533,7 +545,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         fold_names=None,
         fold_line_kwargs=None,
         plot_chance_level=False,
-        chance_level_kw=None,
+        chance_level_kwargs=None,
+        despine=False,
     ):
         """Create a multi-fold ROC curve display given cross-validation results.
 
@@ -590,9 +603,12 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         plot_chance_level : bool, default=False
             Whether to plot the chance level.
 
-        chance_level_kw : dict, default=None
+        chance_level_kwargs : dict, default=None
             Keyword arguments to be passed to matplotlib's `plot` for rendering
             the chance level line.
+
+        despine : bool, default=False
+            Whether to remove the top and right spines from the plot.
 
         Returns
         -------
@@ -623,27 +639,18 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        required_keys = {"estimator", "indices"}
-        if not all(key in cv_results for key in required_keys):
-            raise ValueError(
-                "cv_results does not contain one of the following required keys: "
-                f"{required_keys}. Set explicitly the parameters return_estimator=True "
-                "and return_indices=True to the function cross_validate."
-            )
-
-        train_size, test_size = (
-            len(cv_results["indices"]["train"][0]),
-            len(cv_results["indices"]["test"][0]),
+        pos_label, fold_names_ = cls._validate_from_cv_results_params(
+            cv_results,
+            X,
+            y,
+            sample_weight=sample_weight,
+            pos_label=pos_label,
+            fold_names=fold_names,
         )
-
-        if _num_samples(X) != train_size + test_size:
-            raise ValueError(
-                "X does not contain the correct number of samples. "
-                f"Expected {train_size + test_size}, got {_num_samples(X)}."
-            )
-
-        fold_names_, fold_line_kwargs_ = _process_fold_names_line_kwargs(
-            len(cv_results["estimator"]), fold_names, fold_line_kwargs
+        fold_line_kwargs_ = _validate_line_kwargs(
+            len(cv_results["estimator"]),
+            fold_line_kwargs,
+            default_line_kwargs={"alpha": 0.5, "linestyle": "--"},
         )
 
         fpr_all = []
@@ -659,17 +666,20 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
                 response_method=response_method,
                 pos_label=pos_label,
             )[0]
-            # Should we use `_validate_from_predictions_params` here?
-            # The check would technically only be needed once though
+            sample_weight_fold = (
+                None
+                if sample_weight is None
+                else _safe_indexing(sample_weight, test_indices)
+            )
             fpr, tpr, _ = roc_curve(
                 y_true,
                 y_pred,
                 pos_label=pos_label,
-                sample_weight=sample_weight,
+                sample_weight=sample_weight_fold,
                 drop_intermediate=drop_intermediate,
             )
             roc_auc = auc(fpr, tpr)
-            # Append all
+
             fpr_all.append(fpr)
             tpr_all.append(tpr)
             auc_all.append(roc_auc)
@@ -677,13 +687,15 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         viz = cls(
             fpr=fpr_all,
             tpr=tpr_all,
+            # Should we provide `name` to both `cls` and `plot` or just `cls`?
             name=fold_names_,
             roc_auc=auc_all,
             pos_label=pos_label,
         )
         return viz.plot(
             ax=ax,
-            fold_line_kwargs=fold_line_kwargs_,
             plot_chance_level=plot_chance_level,
-            chance_level_kw=chance_level_kw,
+            chance_level_kw=chance_level_kwargs,
+            despine=despine,
+            fold_line_kwargs=fold_line_kwargs_,
         )

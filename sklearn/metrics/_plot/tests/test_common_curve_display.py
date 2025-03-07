@@ -174,10 +174,8 @@ def test_display_curve_estimator_name_multiple_calls(
         ),
     ],
 )
-# Add separate test for displays that have converted to names?,
-# add note to remove this one in 1.9
 @pytest.mark.parametrize("Display", [DetCurveDisplay, PrecisionRecallDisplay])
-def test_display_curve_not_fitted_errors(pyplot, data_binary, clf, Display):
+def test_display_curve_not_fitted_errors_old_name(pyplot, data_binary, clf, Display):
     """Check that a proper error is raised when the classifier is not
     fitted."""
     X, y = data_binary
@@ -190,6 +188,32 @@ def test_display_curve_not_fitted_errors(pyplot, data_binary, clf, Display):
     disp = Display.from_estimator(model, X, y)
     assert model.__class__.__name__ in disp.line_.get_label()
     assert disp.estimator_name == model.__class__.__name__
+
+
+# This uses the new `name` para
+@pytest.mark.parametrize(
+    "clf",
+    [
+        LogisticRegression(),
+        make_pipeline(StandardScaler(), LogisticRegression()),
+        make_pipeline(
+            make_column_transformer((StandardScaler(), [0, 1])), LogisticRegression()
+        ),
+    ],
+)
+@pytest.mark.parametrize("Display", [RocCurveDisplay])
+def test_display_curve_not_fitted_errors(pyplot, data_binary, clf, Display):
+    """Check that a proper error is raised when the classifier not fitted."""
+    X, y = data_binary
+    # clone since we parametrize the test and the classifier will be fitted
+    # when testing the second and subsequent plotting function
+    model = clone(clf)
+    with pytest.raises(NotFittedError):
+        Display.from_estimator(model, X, y)
+    model.fit(X, y)
+    disp = Display.from_estimator(model, X, y)
+    assert model.__class__.__name__ in disp.line_.get_label()
+    assert disp.name_[0] == model.__class__.__name__
 
 
 @pytest.mark.parametrize(

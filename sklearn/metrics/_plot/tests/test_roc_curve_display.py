@@ -1,3 +1,5 @@
+from collections.abc import Mapping
+
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
@@ -9,10 +11,11 @@ from sklearn.datasets import load_breast_cancer, load_iris
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import RocCurveDisplay, auc, roc_curve
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_validate, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.utils import shuffle
+from sklearn.utils import _safe_indexing, shuffle
+from sklearn.utils._response import _get_response_values_binary
 
 
 @pytest.fixture(scope="module")
@@ -24,10 +27,30 @@ def data():
     return X, y
 
 
+# This data always (with and without `drop_intermediate`)
+# results in an AUC of 1.0, should we consider changing the data used??
 @pytest.fixture(scope="module")
 def data_binary(data):
     X, y = data
     return X[y < 2], y[y < 2]
+
+
+def _check_figure_axes_and_labels(display, pos_label):
+    """Check mpl axes and figure defaults are correct."""
+    import matplotlib as mpl  # noqa
+
+    assert isinstance(display.ax_, mpl.axes.Axes)
+    assert isinstance(display.figure_, mpl.figure.Figure)
+    assert display.ax_.get_adjustable() == "box"
+    assert display.ax_.get_aspect() in ("equal", 1.0)
+    assert display.ax_.get_xlim() == display.ax_.get_ylim() == (-0.01, 1.01)
+
+    expected_pos_label = 1 if pos_label is None else pos_label
+    expected_ylabel = f"True Positive Rate (Positive label: {expected_pos_label})"
+    expected_xlabel = f"False Positive Rate (Positive label: {expected_pos_label})"
+
+    assert display.ax_.get_ylabel() == expected_ylabel
+    assert display.ax_.get_xlabel() == expected_xlabel
 
 
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
@@ -112,24 +135,222 @@ def test_roc_curve_display_plotting(
 
     import matplotlib as mpl  # noqa
 
+    _check_figure_axes_and_labels(display, pos_label)
     assert isinstance(display.line_, mpl.lines.Line2D)
     assert display.line_.get_alpha() == 0.8
-    assert isinstance(display.ax_, mpl.axes.Axes)
-    assert isinstance(display.figure_, mpl.figure.Figure)
-    assert display.ax_.get_adjustable() == "box"
-    assert display.ax_.get_aspect() in ("equal", 1.0)
-    assert display.ax_.get_xlim() == display.ax_.get_ylim() == (-0.01, 1.01)
 
     expected_label = f"{default_name} (AUC = {display.roc_auc_[0]:.2f})"
     expected_label = f"{default_name} (AUC = {display.roc_auc:.2f})"
     assert display.line_.get_label() == expected_label
 
-    expected_pos_label = 1 if pos_label is None else pos_label
-    expected_ylabel = f"True Positive Rate (Positive label: {expected_pos_label})"
-    expected_xlabel = f"False Positive Rate (Positive label: {expected_pos_label})"
 
-    assert display.ax_.get_ylabel() == expected_ylabel
-    assert display.ax_.get_xlabel() == expected_xlabel
+def test_roc_curve_from_cv_results_param_validation(pyplot, data_binary, data):
+    """Check parameter validation is correct."""
+    X, y = data_binary
+
+    # `cv_results` missing key
+    cv_results_no_est = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=False
+    )
+    cv_results_no_indices = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=False
+    )
+    for cv_results in (cv_results_no_est, cv_results_no_indices):
+        with pytest.raises(
+            ValueError,
+            match="'cv_results' does not contain one of the following required",
+        ):
+            RocCurveDisplay.from_cv_results(cv_results, X, y)
+
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+    )
+
+    # `X` wrong length
+    with pytest.raises(ValueError, match="'X' does not contain the correct"):
+        RocCurveDisplay.from_cv_results(cv_results, X[:10, :], y)
+
+    # `y` not binary
+    X_mutli, y_multi = data
+    with pytest.raises(ValueError, match="The target y is not binary."):
+        RocCurveDisplay.from_cv_results(cv_results, X, y_multi)
+
+    # input inconsistent length
+    with pytest.raises(ValueError, match="Found input variables with inconsistent"):
+        RocCurveDisplay.from_cv_results(cv_results, X, y[:10])
+    with pytest.raises(ValueError, match="Found input variables with inconsistent"):
+        RocCurveDisplay.from_cv_results(cv_results, X, y, sample_weight=[1, 2])
+
+    # `pos_label` inconsistency
+    X_bad_pos_label, y_bad_pos_label = X_mutli[y_multi > 0], y_multi[y_multi > 0]
+    with pytest.raises(ValueError, match=r"y takes value in \{1, 2\}"):
+        RocCurveDisplay.from_cv_results(cv_results, X_bad_pos_label, y_bad_pos_label)
+
+    # `fold_names` incorrect length
+    with pytest.raises(ValueError, match="When 'fold_names' is provided, it must"):
+        RocCurveDisplay.from_cv_results(cv_results, X, y, fold_names=["fold"])
+    # `fold_line_kwargs` incorrect length
+    with pytest.raises(
+        ValueError, match="When 'fold_line_kwargs' is provided, it must"
+    ):
+        RocCurveDisplay.from_cv_results(
+            cv_results, X, y, fold_line_kwargs=[{"alpha": 1}]
+        )
+
+
+@pytest.mark.parametrize("drop_intermediate", [True, False])
+@pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
+@pytest.mark.parametrize("with_sample_weight", [True, False])
+@pytest.mark.parametrize("with_strings", [True, False])
+def test_test_roc_curve_display_plotting_from_cv_results(
+    pyplot,
+    data_binary,
+    with_strings,
+    with_sample_weight,
+    response_method,
+    drop_intermediate,
+):
+    """Check overall plotting of `from_cv_results`."""
+    X, y = data_binary
+
+    pos_label = None
+    if with_strings:
+        y = np.array(["c", "b"])[y]
+        pos_label = "c"
+
+    if with_sample_weight:
+        rng = np.random.RandomState(42)
+        sample_weight = rng.randint(1, 4, size=(X.shape[0]))
+    else:
+        sample_weight = None
+
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+    )
+    display = RocCurveDisplay.from_cv_results(
+        cv_results,
+        X,
+        y,
+        sample_weight=sample_weight,
+        drop_intermediate=drop_intermediate,
+        response_method=response_method,
+        pos_label=pos_label,
+    )
+
+    for idx, (estimator, test_indices) in enumerate(
+        zip(cv_results["estimator"], cv_results["indices"]["test"])
+    ):
+        y_true = _safe_indexing(y, test_indices)
+        y_pred = _get_response_values_binary(
+            estimator,
+            _safe_indexing(X, test_indices),
+            response_method=response_method,
+            pos_label=pos_label,
+        )[0]
+        sample_weight_fold = (
+            None
+            if sample_weight is None
+            else _safe_indexing(sample_weight, test_indices)
+        )
+        fpr, tpr, _ = roc_curve(
+            y_true,
+            y_pred,
+            sample_weight=sample_weight_fold,
+            drop_intermediate=drop_intermediate,
+            pos_label=pos_label,
+        )
+        assert_allclose(display.roc_auc_[idx], auc(fpr, tpr))
+        assert_allclose(display.fpr_[idx], fpr)
+        assert_allclose(display.tpr_[idx], tpr)
+
+    fold_names = ["Fold 0", "Fold 1", "Fold 2"]
+    assert display.name_ == fold_names
+
+    import matplotlib as mpl  # noqa
+
+    _check_figure_axes_and_labels(display, pos_label)
+    for idx, line in enumerate(display.line_):
+        assert isinstance(line, mpl.lines.Line2D)
+        # Default alpha for `from_cv_results`
+        line.get_alpha() == 0.5
+        expected_label = f"{fold_names[idx]} (AUC = {display.roc_auc_[idx]:.2f})"
+        assert display.line_.get_label() == expected_label
+
+
+@pytest.mark.parametrize("fold_names", [None, ["one", "two", "three"]])
+def test_roc_curve_from_cv_results_fold_names(pyplot, data_binary, fold_names):
+    """Check fold names behaviour correct in `from_cv_results`."""
+    X, y = data_binary
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+    )
+    display = RocCurveDisplay.from_cv_results(cv_results, X, y, fold_names=fold_names)
+    legend = display.ax_.get_legend()
+    legend_labels = [text.get_text() for text in legend.get_texts()]
+    expected_names = (
+        ["Fold 0", "Fold 1", "Fold 2"] if fold_names is None else fold_names
+    )
+    assert display.name_ == expected_names
+    expected_labels = [name + " (AUC = 1.00)" for name in expected_names]
+    assert legend_labels == expected_labels
+
+
+@pytest.mark.parametrize(
+    "fold_line_kwargs",
+    [None, {"color": "red"}, [{"c": "red"}, {"c": "green"}, {"c": "yellow"}]],
+)
+def test_roc_curve_from_cv_results_line_kwargs(pyplot, data_binary, fold_line_kwargs):
+    """Check line kwargs passed correctly in `from_cv_results`."""
+    import matplotlib as mpl  # noqa
+
+    X, y = data_binary
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+    )
+    display = RocCurveDisplay.from_cv_results(
+        cv_results, X, y, fold_line_kwargs=fold_line_kwargs
+    )
+
+    mpl_default_colors = mpl.rcParams["axes.prop_cycle"].by_key()["color"]
+    for idx, line in enumerate(display.line_):
+        color = line.get_color()
+        if fold_line_kwargs is None:
+            assert color == mpl_default_colors[idx]
+        elif isinstance(fold_line_kwargs, Mapping):
+            assert color == "red"
+        else:
+            assert color == fold_line_kwargs[idx]["c"]
+
+
+def _check_chance_level(plot_chance_level, chance_level_kw, display):
+    """Check chance level line and line styles correct."""
+    import matplotlib as mpl  # noqa
+
+    if plot_chance_level:
+        assert isinstance(display.chance_level_, mpl.lines.Line2D)
+        assert tuple(display.chance_level_.get_xdata()) == (0, 1)
+        assert tuple(display.chance_level_.get_ydata()) == (0, 1)
+    else:
+        assert display.chance_level_ is None
+
+    # Checking for chance level line styles
+    if plot_chance_level and chance_level_kw is None:
+        assert display.chance_level_.get_color() == "k"
+        assert display.chance_level_.get_linestyle() == "--"
+        assert display.chance_level_.get_label() == "Chance level (AUC = 0.5)"
+    elif plot_chance_level:
+        if "c" in chance_level_kw:
+            assert display.chance_level_.get_color() == chance_level_kw["c"]
+        else:
+            assert display.chance_level_.get_color() == chance_level_kw["color"]
+        if "lw" in chance_level_kw:
+            assert display.chance_level_.get_linewidth() == chance_level_kw["lw"]
+        else:
+            assert display.chance_level_.get_linewidth() == chance_level_kw["linewidth"]
+        if "ls" in chance_level_kw:
+            assert display.chance_level_.get_linestyle() == chance_level_kw["ls"]
+        else:
+            assert display.chance_level_.get_linestyle() == chance_level_kw["linestyle"]
 
 
 @pytest.mark.parametrize("plot_chance_level", [True, False])
@@ -155,7 +376,7 @@ def test_roc_curve_chance_level_line(
     label,
     constructor_name,
 ):
-    """Check the chance level line plotting behaviour."""
+    """Check chance level plotting behavior of `from_predictions`, `from_estimator`."""
     X, y = data_binary
 
     lr = LogisticRegression()
@@ -191,32 +412,10 @@ def test_roc_curve_chance_level_line(
     assert isinstance(display.ax_, mpl.axes.Axes)
     assert isinstance(display.figure_, mpl.figure.Figure)
 
-    if plot_chance_level:
-        assert isinstance(display.chance_level_, mpl.lines.Line2D)
-        assert tuple(display.chance_level_.get_xdata()) == (0, 1)
-        assert tuple(display.chance_level_.get_ydata()) == (0, 1)
-    else:
-        assert display.chance_level_ is None
+    _check_chance_level(plot_chance_level, chance_level_kw, display)
 
-    # Checking for chance level line styles
-    if plot_chance_level and chance_level_kw is None:
-        assert display.chance_level_.get_color() == "k"
-        assert display.chance_level_.get_linestyle() == "--"
-        assert display.chance_level_.get_label() == "Chance level (AUC = 0.5)"
-    elif plot_chance_level:
-        if "c" in chance_level_kw:
-            assert display.chance_level_.get_color() == chance_level_kw["c"]
-        else:
-            assert display.chance_level_.get_color() == chance_level_kw["color"]
-        if "lw" in chance_level_kw:
-            assert display.chance_level_.get_linewidth() == chance_level_kw["lw"]
-        else:
-            assert display.chance_level_.get_linewidth() == chance_level_kw["linewidth"]
-        if "ls" in chance_level_kw:
-            assert display.chance_level_.get_linestyle() == chance_level_kw["ls"]
-        else:
-            assert display.chance_level_.get_linestyle() == chance_level_kw["linestyle"]
-        # Checking for legend behaviour
+    # Checking for legend behaviour
+    if plot_chance_level and chance_level_kw is not None:
         if label is not None or chance_level_kw.get("label") is not None:
             legend = display.ax_.get_legend()
             assert legend is not None  #  Legend should be present if any label is set
@@ -227,6 +426,62 @@ def test_roc_curve_chance_level_line(
                 assert chance_level_kw["label"] in legend_labels
         else:
             assert display.ax_.get_legend() is None
+
+
+@pytest.mark.parametrize("plot_chance_level", [True, False])
+@pytest.mark.parametrize(
+    "chance_level_kw",
+    [
+        None,
+        {"linewidth": 1, "color": "red", "linestyle": "-", "label": "DummyEstimator"},
+        {"lw": 1, "c": "red", "ls": "-", "label": "DummyEstimator"},
+        {"lw": 1, "color": "blue", "ls": "-", "label": None},
+    ],
+)
+# To ensure both curve line kwargs and change line kwargs passed correctly
+@pytest.mark.parametrize("fold_line_kwargs", [None, {"alpha": 0.8}])
+def test_roc_curve_chance_level_line_from_cv_results(
+    pyplot,
+    data_binary,
+    plot_chance_level,
+    chance_level_kw,
+    fold_line_kwargs,
+):
+    """Check chance level plotting behavior with `from_cv_results`."""
+    X, y = data_binary
+    n_cv = 3
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=n_cv, return_estimator=True, return_indices=True
+    )
+
+    display = RocCurveDisplay.from_cv_results(
+        cv_results,
+        X,
+        y,
+        plot_chance_level=plot_chance_level,
+        chance_level_kw=chance_level_kw,
+        fold_line_kwargs=fold_line_kwargs,
+    )
+
+    import matplotlib as mpl  # noqa
+
+    assert all(isinstance(line, mpl.lines.Line2D) for line in display.line_)
+    if fold_line_kwargs:
+        assert all(line.get_alpha() == 0.8 for line in display.line_)
+    assert isinstance(display.ax_, mpl.axes.Axes)
+    assert isinstance(display.figure_, mpl.figure.Figure)
+
+    _check_chance_level(plot_chance_level, chance_level_kw, display)
+
+    legend = display.ax_.get_legend()
+    # There is always a legend, to indicate each 'Fold' curve
+    assert legend is not None
+    legend_labels = [text.get_text() for text in legend.get_texts()]
+    if plot_chance_level and chance_level_kw is not None:
+        if chance_level_kw.get("label") is not None:
+            assert chance_level_kw["label"] in legend_labels
+        else:
+            assert len(legend_labels) == n_cv
 
 
 @pytest.mark.parametrize(
@@ -285,8 +540,22 @@ def test_roc_curve_display_default_labels(pyplot, roc_auc, name, expected_labels
         assert disp.line_[idx].get_label() == expected_label
 
 
+def _check_auc(display, constructor_name):
+    roc_auc_limit = 0.95679
+    roc_auc_limit_multi = [0.97007, 0.985915, 0.980952]
+
+    if constructor_name == "from_cv_results":
+        for idx, roc_auc in enumerate(display.roc_auc_):
+            assert roc_auc == pytest.approx(roc_auc_limit_multi[idx])
+    else:
+        assert display.roc_auc == pytest.approx(roc_auc_limit)
+        assert trapezoid(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)
+
+
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
-@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
+@pytest.mark.parametrize(
+    "constructor_name", ["from_estimator", "from_predictions", "from_cv_results"]
+)
 def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
     # check that we can provide the positive label and display the proper
     # statistics
@@ -309,9 +578,13 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
 
     classifier = LogisticRegression()
     classifier.fit(X_train, y_train)
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+    )
 
-    # sanity check to be sure the positive class is `classes_[0]` and that we
-    # are betrayed by the class imbalance
+    # Sanity check to be sure the positive class is `classes_[0]`
+    # Class imbalance ensures a large difference in prediction values between classes,
+    # allowing us to catch errors when we switch `pos_label`
     assert classifier.classes_.tolist() == ["cancer", "not cancer"]
 
     y_pred = getattr(classifier, response_method)(X_test)
@@ -320,63 +593,86 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
     y_pred_cancer = -1 * y_pred if y_pred.ndim == 1 else y_pred[:, 0]
     y_pred_not_cancer = y_pred if y_pred.ndim == 1 else y_pred[:, 1]
 
+    pos_label = "cancer"
+    y_pred = y_pred_cancer
     if constructor_name == "from_estimator":
         display = RocCurveDisplay.from_estimator(
             classifier,
             X_test,
             y_test,
-            pos_label="cancer",
+            pos_label=pos_label,
             response_method=response_method,
         )
-    else:
+    elif constructor_name == "from_predictions":
         display = RocCurveDisplay.from_predictions(
             y_test,
-            y_pred_cancer,
-            pos_label="cancer",
+            y_pred,
+            pos_label=pos_label,
+        )
+    else:
+        display = RocCurveDisplay.from_cv_results(
+            cv_results,
+            X,
+            y,
+            response_method=response_method,
+            pos_label=pos_label,
         )
 
-    roc_auc_limit = 0.95679
+    _check_auc(display, constructor_name)
 
-    assert display.roc_auc == pytest.approx(roc_auc_limit)
-    assert trapezoid(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)
-
+    pos_label = "not cancer"
+    y_pred = y_pred_not_cancer
     if constructor_name == "from_estimator":
         display = RocCurveDisplay.from_estimator(
             classifier,
             X_test,
             y_test,
             response_method=response_method,
-            pos_label="not cancer",
+            pos_label=pos_label,
         )
-    else:
+    elif constructor_name == "from_predictions":
         display = RocCurveDisplay.from_predictions(
             y_test,
-            y_pred_not_cancer,
-            pos_label="not cancer",
+            y_pred,
+            pos_label=pos_label,
+        )
+    else:
+        display = RocCurveDisplay.from_cv_results(
+            cv_results,
+            X,
+            y,
+            response_method=response_method,
+            pos_label=pos_label,
         )
 
-    assert display.roc_auc == pytest.approx(roc_auc_limit)
-    assert trapezoid(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)
+    _check_auc(display, constructor_name)
 
 
 @pytest.mark.parametrize("despine", [True, False])
-@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
+@pytest.mark.parametrize(
+    "constructor_name", ["from_estimator", "from_predictions", "from_cv_results"]
+)
 def test_plot_roc_curve_despine(pyplot, data_binary, despine, constructor_name):
     # Check that the despine keyword is working correctly
     X, y = data_binary
 
     lr = LogisticRegression().fit(X, y)
     lr.fit(X, y)
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+    )
 
     y_pred = lr.decision_function(X)
 
-    # safe guard for the binary if/else construction
-    assert constructor_name in ("from_estimator", "from_predictions")
+    # safe guard for the if/else construction
+    assert constructor_name in ("from_estimator", "from_predictions", "from_cv_results")
 
     if constructor_name == "from_estimator":
         display = RocCurveDisplay.from_estimator(lr, X, y, despine=despine)
-    else:
+    elif constructor_name == "from_predictions":
         display = RocCurveDisplay.from_predictions(y, y_pred, despine=despine)
+    else:
+        display = RocCurveDisplay.from_cv_results(cv_results, X, y, despine=despine)
 
     for s in ["top", "right"]:
         assert display.ax_.spines[s].get_visible() is not despine
