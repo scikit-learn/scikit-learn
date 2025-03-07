@@ -942,6 +942,7 @@ def test_tweedie_score(regression_data, power, link):
     ],
 )
 def test_tags(estimator, value):
+    """Test that `positive_only` tag is correctly set for different estimators."""
     assert estimator.__sklearn_tags__().target_tags.positive_only is value
 
 
