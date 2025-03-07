@@ -73,7 +73,7 @@ classifiers = {
     ),
     "Gradient Boosting": HistGradientBoostingClassifier(),
     "Logistic regression\n(binned features)": make_pipeline(
-        KBinsDiscretizer(n_bins=5),
+        KBinsDiscretizer(n_bins=5, quantile_method="averaged_inverted_cdf"),
         PolynomialFeatures(interaction_only=True),
         LogisticRegression(C=10),
     ),
