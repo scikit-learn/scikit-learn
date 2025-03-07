@@ -1,3 +1,7 @@
+.estimator-table summary {
+    padding: .5rem;
+
+}
 
 .estimator-table table td {
     border: 1px solid rgba(106, 105, 104, 0.232);*/
