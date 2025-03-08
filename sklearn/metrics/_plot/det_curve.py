@@ -1,6 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import numpy as np
 import scipy as sp
 
 from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
@@ -8,7 +9,7 @@ from .._ranking import det_curve
 
 
 class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
-    """DET curve visualization.
+    """Detection Error Tradeoff (DET) curve visualization.
 
     It is recommend to use :func:`~sklearn.metrics.DetCurveDisplay.from_estimator`
     or :func:`~sklearn.metrics.DetCurveDisplay.from_predictions` to create a
@@ -302,6 +303,14 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         line_kwargs = {} if name is None else {"label": name}
         line_kwargs.update(**kwargs)
+
+        # We have the following bounds:
+        # sp.stats.norm.ppf(0.0) = -np.inf
+        # sp.stats.norm.ppf(1.0) = np.inf
+        # We therefore clip to eps and 1 - eps to not provide infinity to matplotlib.
+        eps = np.finfo(self.fpr.dtype).eps
+        self.fpr = self.fpr.clip(eps, 1 - eps)
+        self.fnr = self.fnr.clip(eps, 1 - eps)
 
         (self.line_,) = self.ax_.plot(
             sp.stats.norm.ppf(self.fpr),
