@@ -1,7 +1,7 @@
 """Evaluation metrics for cluster analysis results.
 
 - Supervised evaluation uses a ground truth class values for each sample.
-- Unsupervised evaluation does use ground truths and measures the "quality" of the
+- Unsupervised evaluation does not use ground truths and measures the "quality" of the
   model itself.
 """
 
