@@ -348,10 +348,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
                 step = (col_max_frac - col_min_frac) / n_bins_frac
                 bin_edges[jj] = np.array(
-                    [
-                        float(col_min_frac + i * step)
-                        for i in range(int(n_bins[jj]) + 1)
-                    ],
+                    [col_min_frac + i * step for i in range(int(n_bins[jj]) + 1)],
                     dtype=np.float64,
                 )
 
