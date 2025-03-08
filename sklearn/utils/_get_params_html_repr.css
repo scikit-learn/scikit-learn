@@ -1,0 +1,22 @@
+.estimator-table summary {
+    padding: .5rem;
+}
+
+.estimator-table table td {
+    border: 1px solid rgba(106, 105, 104, 0.232);*/
+}
+
+.user-set td {
+    color:black;
+    text-align: left;
+}
+
+.default td {
+    color: gray;
+    text-align: left;
+}
+
+.user-set td i,
+.default td i {
+    color: gray;
+}
