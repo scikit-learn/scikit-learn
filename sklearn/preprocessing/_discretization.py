@@ -3,6 +3,7 @@
 
 
 import warnings
+from fractions import Fraction
 from numbers import Integral
 
 import numpy as np
@@ -341,7 +342,18 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 continue
 
             if self.strategy == "uniform":
-                bin_edges[jj] = np.linspace(col_min, col_max, n_bins[jj] + 1)
+                col_min_frac = Fraction(col_min)
+                col_max_frac = Fraction(col_max)
+                n_bins_frac = Fraction(n_bins[jj])
+
+                step = (col_max_frac - col_min_frac) / n_bins_frac
+                bin_edges[jj] = np.array(
+                    [
+                        float(col_min_frac + i * step)
+                        for i in range(int(n_bins[jj]) + 1)
+                    ],
+                    dtype=np.float64,
+                )
 
             elif self.strategy == "quantile":
                 percentile_levels = np.linspace(0, 100, n_bins[jj] + 1)
