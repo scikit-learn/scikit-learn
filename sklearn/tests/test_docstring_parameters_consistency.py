@@ -1,13 +1,64 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+from typing import Any
+
 import pytest
 
 from sklearn import metrics
-from sklearn.ensemble import StackingClassifier, StackingRegressor
+from sklearn.ensemble import (
+    AdaBoostClassifier,
+    AdaBoostRegressor,
+    StackingClassifier,
+    StackingRegressor,
+)
+from sklearn.mixture import BayesianGaussianMixture, GaussianMixture
 from sklearn.utils._testing import assert_docstring_consistency, skip_if_no_numpydoc
 
-CLASS_DOCSTRING_CONSISTENCY_CASES = [
+CLASS_DOCSTRING_CONSISTENCY_CASES: list[dict[str, Any]] = [
+    {
+        "objects": [AdaBoostClassifier, AdaBoostRegressor],
+        "include_params": True,
+        "exclude_params": None,
+        "include_attrs": True,
+        "exclude_attrs": [
+            # type differs
+            "estimators_",
+            "",
+        ],
+        "include_returns": False,
+        "exclude_returns": None,
+        "descr_regex_patterns": {
+            # Excludes 2nd sentence if present, matches last sentence until "."
+            "estimator": r"^([^.]+\.)(?:\s+[^.]+\.)?\s+([^.]+\.)",
+            "learning_rate": (
+                r"^(.*?)(?:regressor |classifier )(.*?)(?:regressor|classifier)(.*)$"
+            ),
+            # Excludes 3rd sentence if present.
+            "random_state": r"([^.]+\.[^.]+\.)(?:\s+[^.]+\.)?(\s[^.]+\.[^.]+\.)",
+            # Excludes words "Classification "/"Regression "
+            "estimator_errors_": r"^(?:Classification |Regression )(.*)$",
+        },
+    },
+    {
+        "objects": [GaussianMixture, BayesianGaussianMixture],
+        "include_params": True,
+        "exclude_params": None,
+        "include_attrs": True,
+        "exclude_attrs": ["lower_bound_"],
+        "include_returns": False,
+        "exclude_returns": None,
+        "descr_regex_patterns": {
+            # Match first sentence only
+            "n_components": r"^[^.?!]*[.]",
+            # Excludes words "precisions" or "covariances"
+            "init_params": r"^(.*?)(?:precisions.|covariances.)(.*)$",
+            # Excludes words "inference " or "EM "
+            "converged_": r"^(.*?)(?:inference |EM )(.*)$",
+            # Excludes words "inference " or "EM "
+            "n_iter_": r"^(.*?)(?:inference |EM )(.*)$",
+        },
+    },
     {
         "objects": [StackingClassifier, StackingRegressor],
         "include_params": ["cv", "n_jobs", "passthrough", "verbose"],
@@ -16,7 +67,7 @@ CLASS_DOCSTRING_CONSISTENCY_CASES = [
         "exclude_attrs": ["final_estimator_"],
         "include_returns": False,
         "exclude_returns": None,
-        "descr_regex_pattern": None,
+        "descr_regex_patterns": {},
     },
 ]
 
@@ -30,54 +81,17 @@ FUNCTION_DOCSTRING_CONSISTENCY_CASES = [
             metrics.recall_score,
         ],
         "include_params": True,
-        "exclude_params": ["average", "zero_division"],
-        "include_attrs": False,
-        "exclude_attrs": None,
-        "include_returns": False,
-        "exclude_returns": None,
-        "descr_regex_pattern": None,
-    },
-    {
-        "objects": [
-            metrics.precision_recall_fscore_support,
-            metrics.f1_score,
-            metrics.fbeta_score,
-            metrics.precision_score,
-            metrics.recall_score,
+        "exclude_params": [
+            "zero_division",
         ],
-        "include_params": ["average"],
-        "exclude_params": None,
         "include_attrs": False,
         "exclude_attrs": None,
         "include_returns": False,
         "exclude_returns": None,
-        "descr_regex_pattern": " ".join(
-            (
-                r"""This parameter is required for multiclass/multilabel targets\.
-            If ``None``, the metrics for each class are returned\. Otherwise, this
-            determines the type of averaging performed on the data:
-            ``'binary'``:
-                Only report results for the class specified by ``pos_label``\.
-                This is applicable only if targets \(``y_\{true,pred\}``\) are binary\.
-            ``'micro'``:
-                Calculate metrics globally by counting the total true positives,
-                false negatives and false positives\.
-            ``'macro'``:
-                Calculate metrics for each label, and find their unweighted
-                mean\.  This does not take label imbalance into account\.
-            ``'weighted'``:
-                Calculate metrics for each label, and find their average weighted
-                by support \(the number of true instances for each label\)\. This
-                alters 'macro' to account for label imbalance; it can result in an
-                F-score that is not between precision and recall\."""
-                + r"[\s\w]*\.*"  # optionally match additional sentence
-                + r"""
-            ``'samples'``:
-                Calculate metrics for each instance, and find their average \(only
-                meaningful for multilabel classification where this differs from
-                :func:`accuracy_score`\)\."""
-            ).split()
-        ),
+        "descr_regex_patterns": {
+            # Matches everything, excluding "Weighted recall is equal to accuracy. "
+            "average": r"^(.+?)(?:Weighted recall is equal to accuracy\.\s(.*))?$",
+        },
     },
 ]
 
