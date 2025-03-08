@@ -3178,6 +3178,75 @@ def test_d2_log_loss_score():
     d2_score = d2_log_loss_score(y_true, y_pred, sample_weight=sample_weight)
     assert d2_score < 0
 
+    # check that d2 scores are correct when labels argument is used but not all of them
+    # appear in y_true
+    # non-regression test for https://github.com/scikit-learn/scikit-learn/issues/30713
+    y_true = [0, 0, 1, 1]
+    labels = [0, 1, 2]
+    sample_weight = [1.4, 0.6, 0.8, 0.2]
+
+    y_pred = np.array(
+        [
+            [0.8, 0.1, 0.1],
+            [0.8, 0.1, 0.1],
+            [0.1, 0.8, 0.1],
+            [0.1, 0.8, 0.1],
+        ]
+    )
+    d2_score = d2_log_loss_score(y_true, y_pred, labels=labels)
+    assert 0.5 < d2_score < 1.0
+    d2_score = d2_log_loss_score(
+        y_true, y_pred, labels=labels, sample_weight=sample_weight
+    )
+    assert 0.5 < d2_score < 1.0
+
+    y_pred = np.array(
+        [
+            [0.1, 0.8, 0.1],
+            [0.2, 0.7, 0.1],
+            [0.4, 0.4, 0.2],
+            [0.3, 0.3, 0.4],
+        ]
+    )
+    d2_score = d2_log_loss_score(y_true, y_pred, labels=labels)
+    assert d2_score < 0
+    d2_score = d2_log_loss_score(
+        y_true, y_pred, labels=labels, sample_weight=sample_weight
+    )
+    assert d2_score < 0
+
+    # check that d2 scores are correct independently of the order of the labels
+    labels = ["a", "b", "c"]
+    y_true = ["a", "a", "b", "c"]
+
+    # labels of y_pred are in alphabetical order
+    y_pred = np.array(
+        [
+            [0.8, 0.1, 0.1],
+            [0.8, 0.1, 0.1],
+            [0.1, 0.8, 0.1],
+            [0.1, 0.1, 0.8],
+        ]
+    )
+
+    d2_score = d2_log_loss_score(y_true, y_pred, labels=labels)
+    d2_score_reversed = d2_log_loss_score(y_true, y_pred, labels=labels[::-1])
+    assert 0.5 < d2_score < 1.0
+    assert d2_score_reversed == pytest.approx(d2_score)
+
+    y_pred = np.array(
+        [
+            [0.1, 0.8, 0.1],
+            [0.2, 0.7, 0.1],
+            [0.4, 0.4, 0.2],
+            [0.3, 0.4, 0.3],
+        ]
+    )
+    d2_score = d2_log_loss_score(y_true, y_pred, labels=labels)
+    d2_score_reversed = d2_log_loss_score(y_true, y_pred, labels=labels[::-1])
+    assert d2_score < 0
+    assert d2_score_reversed == pytest.approx(d2_score)
+
 
 def test_d2_log_loss_score_raises():
     """Test that d2_log_loss_score raises the appropriate errors on
