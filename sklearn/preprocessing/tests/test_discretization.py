@@ -1,5 +1,4 @@
 import warnings
-from fractions import Fraction
 
 import numpy as np
 import pytest
@@ -709,58 +708,58 @@ def test_invalid_quantile_method_on_old_numpy():
 @pytest.mark.parametrize(
     "X, n_bins, expected_edges",
     [
-        # Case 1: Simple range 1 to 5 with 3 bins
         (
             np.array([[1], [2], [3], [4], [5]], dtype=np.float64),
             3,
-            np.array(
-                [
-                    float(Fraction(1) + i * (Fraction(5) - Fraction(1)) / Fraction(3))
-                    for i in range(4)
-                ],
-                dtype=np.float64,
-            ),
+            np.linspace(1, 5, 4, dtype=np.float64),
         ),
-        # Case 2: Larger range 0 to 10 with 4 bins
         (
             np.array([[0], [2], [4], [6], [8], [10]], dtype=np.float64),
             4,
-            np.array(
-                [
-                    float(Fraction(0) + i * (Fraction(10) - Fraction(0)) / Fraction(4))
-                    for i in range(5)
-                ],
-                dtype=np.float64,
-            ),
+            np.linspace(0, 10, 5, dtype=np.float64),
         ),
-        # Case 3: Negative range -5 to 5 with 3 bins
         (
             np.array([[-5], [-3], [0], [3], [5]], dtype=np.float64),
             3,
-            np.array(
-                [
-                    float(Fraction(-5) + i * (Fraction(5) - Fraction(-5)) / Fraction(3))
-                    for i in range(4)
-                ],
-                dtype=np.float64,
-            ),
+            np.linspace(-5, 5, 4, dtype=np.float64),
         ),
     ],
 )
 def test_kbinsdiscretizer_uniform_strategy(X, n_bins, expected_edges):
-    """Test KBinsDiscretizer with 'uniform' strategy using Fraction for
-    precise division."""
-    discretizer = KBinsDiscretizer(n_bins=n_bins, strategy="uniform")
-    discretizer.fit(X)
+    """Test KBinsDiscretizer with 'uniform' strategy to check
+    - Correct bin edges
+    - Uniform bin widths
+    - Transformation and inverse transformation work correctly
+    """
+    discretizer = KBinsDiscretizer(n_bins=n_bins, strategy="uniform", encode="ordinal")
 
-    # Ensure bin edges match the expected values
+    Xt = discretizer.fit_transform(X)
+
+    # Ensure bin edges match expected values
     np.testing.assert_allclose(discretizer.bin_edges_[0], expected_edges, rtol=1e-8)
 
-    # Ensure transformation runs without errors
-    Xt = discretizer.fit_transform(X)
-    assert Xt is not None
+    # Ensure uniform bin width
+    bin_widths = np.diff(discretizer.bin_edges_[0])
+    np.testing.assert_allclose(bin_widths, bin_widths[0], rtol=1e-8)
 
     # Check transformed output shape
-    assert (
-        Xt.shape[0] == X.shape[0]
-    ), "Transformed output should have same number of rows as input."
+    assert Xt.shape == (
+        X.shape[0],
+        1,
+    ), "Transformed output should match input row count."
+
+    # Compute expected midpoints
+    expected_midpoints = (expected_edges[:-1] + expected_edges[1:]) / 2
+
+    # Ensure inverse transformation matches bin midpoints
+    X_inv = discretizer.inverse_transform(Xt).flatten()
+    for x_inv, bin_idx in zip(X_inv, Xt.flatten().astype(int)):
+        expected_value = expected_midpoints[bin_idx]
+        np.testing.assert_allclose(
+            x_inv,
+            expected_value,
+            rtol=1e-8,
+            atol=1e-15,
+            err_msg=f"Inverse transform {x_inv} should match bin "
+            + f"midpoint{expected_value}.",
+        )
