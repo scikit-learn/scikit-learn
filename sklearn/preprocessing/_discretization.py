@@ -3,7 +3,7 @@
 
 
 import warnings
-from fractions import Fraction
+from decimal import Decimal
 from numbers import Integral
 
 import numpy as np
@@ -342,13 +342,13 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 continue
 
             if self.strategy == "uniform":
-                col_min_frac = Fraction(col_min)
-                col_max_frac = Fraction(col_max)
-                n_bins_frac = Fraction(n_bins[jj])
+                col_min_dec = Decimal(str(col_min))
+                col_max_dec = Decimal(str(col_max))
+                n_bins_dec = Decimal(str(n_bins[jj]))
 
-                step = (col_max_frac - col_min_frac) / n_bins_frac
+                step = (col_max_dec - col_min_dec) / n_bins_dec
                 bin_edges[jj] = np.array(
-                    [col_min_frac + i * step for i in range(int(n_bins[jj]) + 1)],
+                    [float(col_min_dec + i * step) for i in range(int(n_bins[jj]) + 1)],
                     dtype=np.float64,
                 )
 
