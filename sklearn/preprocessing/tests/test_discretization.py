@@ -731,7 +731,9 @@ def test_kbinsdiscretizer_uniform_strategy(X, n_bins, expected_edges):
     - Uniform bin widths
     - Transformation and inverse transformation work correctly
     """
-    discretizer = KBinsDiscretizer(n_bins=n_bins, strategy="uniform", encode="ordinal")
+    discretizer = KBinsDiscretizer(
+        n_bins=n_bins, strategy="uniform", encode="ordinal", subsample=None
+    )
 
     Xt = discretizer.fit_transform(X)
 
