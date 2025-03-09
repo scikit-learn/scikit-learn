@@ -580,7 +580,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 raise ValueError("X_val is provided, but y_val was not provided.")
             if X_val is None:
                 raise ValueError("y_val is provided, but X_val was not provided.")
-            X_val, _ = self._preprocess_X(X_val, reset=False)
+            X_val = self._preprocess_X(X_val, reset=False)
             y_val = _check_y(y_val, estimator=self)
             y_val = self._encode_y_val(y_val)
             check_consistent_length(X_val, y_val)
