@@ -532,6 +532,9 @@ additional information related to the successive halving process.
   since it has reached the last iteration (3) with the highest score:
   0.96.
 
+  For an in-depth statistical comparison of multiple parameter settings
+  from :class:`GridSearchCV`, see :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`.
+
   .. rubric:: References
 
   .. [1] K. Jamieson, A. Talwalkar,
