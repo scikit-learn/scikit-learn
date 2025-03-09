@@ -2091,10 +2091,11 @@ def learning_curve(
         )
         out = np.asarray(out).transpose((2, 1, 0))
     else:
-        train_test_proportions = []
-        for train, test in cv_iter:
-            for n_train_samples in train_sizes_abs:
-                train_test_proportions.append((train[:n_train_samples], test))
+        train_test_proportions = [
+            (train[:n_train_samples], test)
+            for train, test in cv_iter
+            for n_train_samples in train_sizes_abs
+        ]
 
         results = parallel(
             delayed(_fit_and_score)(
