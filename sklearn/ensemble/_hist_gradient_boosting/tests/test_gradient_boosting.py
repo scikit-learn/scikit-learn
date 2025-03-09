@@ -1458,7 +1458,7 @@ def test_unknown_category_that_are_negative():
     ],
 )
 @pytest.mark.parametrize("sample_weight", [False, True])
-def test_X_val_in_fit(GradientBoosting, make_X_y, sample_weight):
+def test_X_val_in_fit(GradientBoosting, make_X_y, sample_weight, global_random_seed):
     """Test that passing X_val, y_val in fit is same as validation fraction."""
     rng = np.random.RandomState(42)
     n_samples = 100
@@ -1469,7 +1469,7 @@ def test_X_val_in_fit(GradientBoosting, make_X_y, sample_weight):
     else:
         sample_weight = None
         data = (X, y)
-    rng_seed = 12
+    rng_seed = global_random_seed
 
     # Fit with validation fraction and early stopping.
     m1 = GradientBoosting(

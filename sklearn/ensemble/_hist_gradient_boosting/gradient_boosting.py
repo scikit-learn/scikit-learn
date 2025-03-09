@@ -535,6 +535,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         X_val : array-like of shape (n_val, n_features)
             Additional sample of features for validation used in early stopping.
+            In a `Pipeline`, `X_val` can be transformed the same way as `X` with
+            `Pipeline(..., transform_input=["X_val"])`.
 
             .. versionadded:: 1.4
 
@@ -1452,6 +1454,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         pass  # pragma: no cover
 
     def _del_encoder_y(self):
+        """Delete the label encoder self._label_encoder if present (classicication)."""
         pass
 
     @property
@@ -2332,10 +2335,13 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             yield staged_decision
 
     def _encode_y(self, y):
+        """Create self._label_encoder and encode y correspondingly."""
         # encode classes into 0 ... n_classes - 1 and sets attributes classes_
         # and n_trees_per_iteration_
         check_classification_targets(y)
 
+        # We need to store the label encoder in case y_val needs to be label encoded,
+        # too.
         self._label_encoder = LabelEncoder()
         encoded_y = self._label_encoder.fit_transform(y)
         self.classes_ = self._label_encoder.classes_
@@ -2351,6 +2357,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         return encoded_y.astype(Y_DTYPE, copy=False)
 
     def _del_encoder_y(self):
+        """Delete the label encoder, self._label_encoder."""
         if hasattr(self, "_label_encoder"):
             del self._label_encoder
 
