@@ -165,10 +165,8 @@ def _yield_checks(estimator):
             yield check_sample_weights_shape
             yield check_sample_weights_not_overwritten
             yield check_sample_weight_equivalence_on_dense_data
-            # FIXME: filter on tags.input_tags.sparse
-            # (estimator accepts sparse arrays)
-            # once issue #30139 is fixed.
-            yield check_sample_weight_equivalence_on_sparse_data
+            if tags.input_tags.sparse:
+                yield check_sample_weight_equivalence_on_sparse_data
 
     # Check that all estimator yield informative messages when
     # trained on empty datasets
@@ -192,6 +190,7 @@ def _yield_checks(estimator):
     if hasattr(estimator, "sparsify"):
         yield check_sparsify_coefficients
 
+    yield check_estimator_sparse_tag
     yield check_estimator_sparse_array
     yield check_estimator_sparse_matrix
 
@@ -834,7 +833,8 @@ def check_estimator(
     if generate_only:
         warnings.warn(
             "`generate_only` is deprecated in 1.6 and will be removed in 1.8. "
-            "Use :func:`~sklearn.utils.estimator_checks.estimator_checks` instead.",
+            "Use :func:`~sklearn.utils.estimator_checks.estimator_checks_generator` "
+            "instead.",
             FutureWarning,
         )
         return estimator_checks_generator(
@@ -1125,10 +1125,10 @@ def check_array_api_input(
         # now since array-api-strict seems a bit too strict ...
         numpy_asarray_works = xp.__name__ != "array_api_strict"
 
-    except TypeError:
+    except (TypeError, RuntimeError):
         # PyTorch with CUDA device and CuPy raise TypeError consistently.
-        # Exception type may need to be updated in the future for other
-        # libraries.
+        # array-api-strict chose to raise RuntimeError instead. Exception type
+        # may need to be updated in the future for other libraries.
         numpy_asarray_works = False
 
     if numpy_asarray_works:
@@ -1229,6 +1229,62 @@ def check_array_api_input_and_values(
         dtype_name=dtype_name,
         check_values=True,
     )
+
+
+def check_estimator_sparse_tag(name, estimator_orig):
+    """Check that estimator tag related with accepting sparse data is properly set."""
+    if SPARSE_ARRAY_PRESENT:
+        sparse_container = sparse.csr_array
+    else:
+        sparse_container = sparse.csr_matrix
+    estimator = clone(estimator_orig)
+
+    rng = np.random.RandomState(0)
+    n_samples = 15 if name == "SpectralCoclustering" else 40
+    X = rng.uniform(size=(n_samples, 3))
+    X[X < 0.6] = 0
+    y = rng.randint(0, 3, size=n_samples)
+    X = _enforce_estimator_tags_X(estimator, X)
+    y = _enforce_estimator_tags_y(estimator, y)
+    X = sparse_container(X)
+
+    tags = get_tags(estimator)
+    if tags.input_tags.sparse:
+        try:
+            estimator.fit(X, y)  # should pass
+        except Exception as e:
+            err_msg = (
+                f"Estimator {name} raised an exception. "
+                f"The tag self.input_tags.sparse={tags.input_tags.sparse} "
+                "might not be consistent with the estimator's ability to "
+                "handle sparse data (i.e. controlled by the parameter `accept_sparse`"
+                " in `validate_data` or `check_array` functions)."
+            )
+            raise AssertionError(err_msg) from e
+    else:
+        err_msg = (
+            f"Estimator {name} raised an exception. "
+            "The estimator failed when fitted on sparse data in accordance "
+            f"with its tag self.input_tags.sparse={tags.input_tags.sparse} "
+            "but didn't raise the appropriate error: error message should "
+            "state explicitly that sparse input is not supported if this is "
+            "not the case, e.g. by using check_array(X, accept_sparse=False)."
+        )
+        try:
+            estimator.fit(X, y)  # should fail with appropriate error
+        except (ValueError, TypeError) as e:
+            if re.search("[Ss]parse", str(e)):
+                # Got the right error type and mentioning sparse issue
+                return
+            raise AssertionError(err_msg) from e
+        except Exception as e:
+            raise AssertionError(err_msg) from e
+        raise AssertionError(
+            f"Estimator {name} didn't fail when fitted on sparse data "
+            "but should have according to its tag "
+            f"self.input_tags.sparse={tags.input_tags.sparse}. "
+            f"The tag is inconsistent and must be fixed."
+        )
 
 
 def _check_estimator_sparse_container(name, estimator_orig, sparse_type):
@@ -1525,11 +1581,7 @@ def check_sample_weight_equivalence_on_sparse_data(name, estimator_orig):
         sparse_container = sparse.csr_array
     else:
         sparse_container = sparse.csr_matrix
-    # FIXME: remove the catch once issue #30139 is fixed.
-    try:
-        _check_sample_weight_equivalence(name, estimator_orig, sparse_container)
-    except TypeError:
-        return
+    _check_sample_weight_equivalence(name, estimator_orig, sparse_container)
 
 
 def check_sample_weights_not_overwritten(name, estimator_orig):
@@ -3882,7 +3934,7 @@ def _enforce_estimator_tags_y(estimator, y):
         and not tags.classifier_tags.multi_class
         and y.size > 0
     ):
-        y = np.where(y == y.flat[0], y, y.flat[0] + 1)
+        y = np.where(y == y.min(), y, y.min() + 1)
     # Estimators in mono_output_task_error raise ValueError if y is of 1-D
     # Convert into a 2-D y for those estimators.
     if tags.target_tags.multi_output and not tags.target_tags.single_output:

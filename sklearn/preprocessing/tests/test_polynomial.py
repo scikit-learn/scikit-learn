@@ -374,9 +374,9 @@ def test_spline_transformer_extrapolation(bias, intercept, degree):
         splt.transform([[5]])
 
 
-def test_spline_transformer_kbindiscretizer():
+def test_spline_transformer_kbindiscretizer(global_random_seed):
     """Test that a B-spline of degree=0 is equivalent to KBinsDiscretizer."""
-    rng = np.random.RandomState(97531)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.randn(200).reshape(200, 1)
     n_bins = 5
     n_knots = n_bins + 1
@@ -386,7 +386,12 @@ def test_spline_transformer_kbindiscretizer():
     )
     splines = splt.fit_transform(X)
 
-    kbd = KBinsDiscretizer(n_bins=n_bins, encode="onehot-dense", strategy="quantile")
+    kbd = KBinsDiscretizer(
+        n_bins=n_bins,
+        encode="onehot-dense",
+        strategy="quantile",
+        quantile_method="averaged_inverted_cdf",
+    )
     kbins = kbd.fit_transform(X)
 
     # Though they should be exactly equal, we test approximately with high
@@ -713,9 +718,9 @@ def test_polynomial_feature_names():
 )
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 def test_polynomial_features_csc_X(
-    deg, include_bias, interaction_only, dtype, csc_container
+    deg, include_bias, interaction_only, dtype, csc_container, global_random_seed
 ):
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.randint(0, 2, (100, 2))
     X_csc = csc_container(X)
 
@@ -743,9 +748,9 @@ def test_polynomial_features_csc_X(
 )
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_polynomial_features_csr_X(
-    deg, include_bias, interaction_only, dtype, csr_container
+    deg, include_bias, interaction_only, dtype, csr_container, global_random_seed
 ):
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.randint(0, 2, (100, 2))
     X_csr = csr_container(X)
 
@@ -803,9 +808,9 @@ def test_num_combinations(
 )
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_polynomial_features_csr_X_floats(
-    deg, include_bias, interaction_only, dtype, csr_container
+    deg, include_bias, interaction_only, dtype, csr_container, global_random_seed
 ):
-    X_csr = csr_container(sparse_random(1000, 10, 0.5, random_state=0))
+    X_csr = csr_container(sparse_random(1000, 10, 0.5, random_state=global_random_seed))
     X = X_csr.toarray()
 
     est = PolynomialFeatures(
@@ -838,9 +843,9 @@ def test_polynomial_features_csr_X_floats(
 )
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_polynomial_features_csr_X_zero_row(
-    zero_row_index, deg, interaction_only, csr_container
+    zero_row_index, deg, interaction_only, csr_container, global_random_seed
 ):
-    X_csr = csr_container(sparse_random(3, 10, 1.0, random_state=0))
+    X_csr = csr_container(sparse_random(3, 10, 1.0, random_state=global_random_seed))
     X_csr[zero_row_index, :] = 0.0
     X = X_csr.toarray()
 
@@ -861,9 +866,9 @@ def test_polynomial_features_csr_X_zero_row(
 )
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_polynomial_features_csr_X_degree_4(
-    include_bias, interaction_only, csr_container
+    include_bias, interaction_only, csr_container, global_random_seed
 ):
-    X_csr = csr_container(sparse_random(1000, 10, 0.5, random_state=0))
+    X_csr = csr_container(sparse_random(1000, 10, 0.5, random_state=global_random_seed))
     X = X_csr.toarray()
 
     est = PolynomialFeatures(
@@ -893,8 +898,12 @@ def test_polynomial_features_csr_X_degree_4(
     ],
 )
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_polynomial_features_csr_X_dim_edges(deg, dim, interaction_only, csr_container):
-    X_csr = csr_container(sparse_random(1000, dim, 0.5, random_state=0))
+def test_polynomial_features_csr_X_dim_edges(
+    deg, dim, interaction_only, csr_container, global_random_seed
+):
+    X_csr = csr_container(
+        sparse_random(1000, dim, 0.5, random_state=global_random_seed)
+    )
     X = X_csr.toarray()
 
     est = PolynomialFeatures(deg, interaction_only=interaction_only)

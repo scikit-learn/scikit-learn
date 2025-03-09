@@ -45,7 +45,7 @@ create_conda_environment_from_lock_file() {
     if [[ "$lock_file_has_pip_packages" == "false" ]]; then
         conda create --name $ENV_NAME --file $LOCK_FILE
     else
-        conda install "$(get_dep conda-lock min)" -y
+        python -m pip install "$(get_dep conda-lock min)"
         conda-lock install --name $ENV_NAME $LOCK_FILE
     fi
 }
