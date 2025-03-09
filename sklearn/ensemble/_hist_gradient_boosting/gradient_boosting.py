@@ -421,8 +421,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 )
 
         n_features = X.shape[1]
-        # At this point `_validate_data` was not called yet because we want to use the
-        # dtypes are used to discover the categorical features. Thus `feature_names_in_`
+        # At this point `validate_data` was not called yet because we use the original
+        # dtypes to discover the categorical features. Thus `feature_names_in_`
         # is not defined yet.
         feature_names_in_ = getattr(X, "columns", None)
 
@@ -578,8 +578,13 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 raise ValueError("X_val is provided, but y_val was not provided.")
             if X_val is None:
                 raise ValueError("y_val is provided, but X_val was not provided.")
-            X_val, y_val = self._validate_data(
-                X_val, y_val, dtype=X_DTYPE, force_all_finite=False, reset=False
+            X_val, y_val = validate_data(
+                self,
+                X_val,
+                y_val,
+                reset=False,
+                dtype=X_DTYPE,
+                force_all_finite=False,
             )
             y_val = self._encode_y_val(y_val)
             if sample_weight_val is not None:
