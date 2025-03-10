@@ -2242,13 +2242,14 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             Score of self.predict(X) w.r.t. y.
         """
         _raise_for_params(score_params, self, "score")
+        if sample_weight is not None:
+            score_params["sample_weight"] = sample_weight
 
         scoring = self._get_scorer()
         if _routing_enabled():
             routed_params = process_routing(
                 self,
                 "score",
-                sample_weight=sample_weight,
                 **score_params,
             )
         else:

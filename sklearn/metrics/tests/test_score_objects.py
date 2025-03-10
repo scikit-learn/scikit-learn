@@ -4,6 +4,7 @@ import re
 import warnings
 from copy import deepcopy
 from functools import partial
+from inspect import signature
 
 import joblib
 import numpy as np
@@ -1248,7 +1249,7 @@ def test_scorer_metadata_request(name):
     # Some scoring functions accept sample_weight, some don't. We need to cover both
     # cases.
     scorer = get_scorer(name)
-    accepts_sample_weight = scorer._has_sample_weight_in_signature()
+    accepts_sample_weight = "sample_weight" in signature(scorer._score_func).parameters
 
     router = MetadataRouter(owner="test").add(
         scorer=scorer,

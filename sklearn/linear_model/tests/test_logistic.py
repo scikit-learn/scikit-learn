@@ -2262,18 +2262,18 @@ def test_lr_cv_scores_differ_when_sample_weight_is_requested():
     sample_weight[: len(y) // 2] = 2
     kwargs = {"sample_weight": sample_weight}
 
-    scorer1 = get_scorer("accuracy")
+    scorer1 = get_scorer("accuracy").set_score_request(sample_weight=False)
     lr_cv1 = LogisticRegressionCV(scoring=scorer1)
     lr_cv1.fit(X, y, **kwargs)
 
-    scorer2 = get_scorer("accuracy")
-    scorer2.set_score_request(sample_weight=True)
+    scorer2 = get_scorer("accuracy").set_score_request(sample_weight=True)
     lr_cv2 = LogisticRegressionCV(scoring=scorer2)
     lr_cv2.fit(X, y, **kwargs)
 
     assert not np.allclose(lr_cv1.scores_[1], lr_cv2.scores_[1])
 
-    score_1 = lr_cv1.score(X_t, y_t, **kwargs)
+    # sample_weight cannot be passed to lr_cv1.score since it's unrequested.
+    score_1 = lr_cv1.score(X_t, y_t)
     score_2 = lr_cv2.score(X_t, y_t, **kwargs)
 
     assert not np.allclose(score_1, score_2)

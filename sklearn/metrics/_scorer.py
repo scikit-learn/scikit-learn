@@ -231,9 +231,6 @@ class _BaseScorer(_MetadataRequester):
             return score_func_params["pos_label"].default
         return None
 
-    def _has_sample_weight_in_signature(self):
-        return "sample_weight" in signature(self._score_func).parameters
-
     def __repr__(self):
         sign_string = "" if self._sign > 0 else ", greater_is_better=False"
         response_method_string = f", response_method={self._response_method!r}"
