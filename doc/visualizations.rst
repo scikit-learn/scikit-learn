@@ -23,8 +23,9 @@ plotting with Matplotlib. These computed values are the results of some derivati
 after we pass the raw predictions to `from_predictions`, or we get them from
 an estimator via `from_estimator`.
 
-Additionally, the plot method allows adding to an existing plot by passing the existing
-plots :class:`matplotlib.axes.Axes` to the `ax` parameter.
+Display objects have a plot method which will create a matplotlib plot once the display
+object has been initialised. Additionally, the plot method allows adding to an existing
+plot by passing the existing plots :class:`matplotlib.axes.Axes` to the `ax` parameter.
 
 In the following example, we plot a ROC curve for a fitted support
 vector machine using `from_estimator`:
