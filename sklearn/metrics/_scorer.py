@@ -40,7 +40,7 @@ from ..utils.metadata_routing import (
     get_routing_for_object,
     process_routing,
 )
-from ..utils.validation import _check_response_method
+from ..utils.validation import _check_response_method, _deprecate_positional_args
 from . import (
     accuracy_score,
     average_precision_score,
@@ -231,6 +231,9 @@ class _BaseScorer(_MetadataRequester):
             return score_func_params["pos_label"].default
         return None
 
+    def _has_sample_weight_in_signature(self):
+        return "sample_weight" in signature(self._score_func).parameters
+
     def __repr__(self):
         sign_string = "" if self._sign > 0 else ", greater_is_better=False"
         response_method_string = f", response_method={self._response_method!r}"
@@ -241,7 +244,9 @@ class _BaseScorer(_MetadataRequester):
             f"{response_method_string}{kwargs_string})"
         )
 
-    def __call__(self, estimator, X, y_true, sample_weight=None, **kwargs):
+    # TODO (1.9): remove in 1.9
+    @_deprecate_positional_args(version="1.9")
+    def __call__(self, estimator, X, y_true, *, sample_weight=None, **kwargs):
         """Evaluate predicted target values for X relative to y_true.
 
         Parameters
@@ -350,7 +355,8 @@ class _BaseScorer(_MetadataRequester):
             requests = get_routing_for_object(self._metadata_request)
         else:
             requests = self._get_default_requests(
-                score_method="__call__", ignore_params={"estimator"}
+                score_method=self._score_func,
+                ignore_params={"y_true", "y_pred"},
             )
 
         return requests

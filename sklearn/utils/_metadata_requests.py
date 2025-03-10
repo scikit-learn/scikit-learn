@@ -1098,8 +1098,9 @@ class MetadataRouter:
             method_mapping = MethodMapping()
             for method in METHODS:
                 method_mapping.add(caller=method, callee=method)
-            yield "$self_request", RouterMappingPair(
-                mapping=method_mapping, router=self._self_request
+            yield (
+                "$self_request",
+                RouterMappingPair(mapping=method_mapping, router=self._self_request),
             )
         for name, route_mapping in self._route_mappings.items():
             yield (name, route_mapping)
@@ -1395,7 +1396,9 @@ class _MetadataRequester:
         super().__init_subclass__(**kwargs)
 
     @classmethod
-    def _build_request_for_signature(cls, router, method, ignore_params=None):
+    def _build_request_for_signature(
+        cls, method_name, method_obj=None, ignore_params=None
+    ):
         """Build the `MethodMetadataRequest` for a method using its signature.
 
         This method takes all arguments from the method signature and uses
@@ -1404,27 +1407,35 @@ class _MetadataRequester:
 
         Parameters
         ----------
-        router : MetadataRequest
-            The parent object for the created `MethodMetadataRequest`.
-        method : str
+        method_name : str
             The name of the method.
+        method_obj : callable, optional
+            The method object. If provided, it will be used to get the signature.
+        ignore_params : set, optional
+            A set of parameters to ignore.
 
         Returns
         -------
         method_request : MethodMetadataRequest
             The prepared request using the method's signature.
         """
-        mmr = MethodMetadataRequest(owner=cls.__name__, method=method)
+        mmr = MethodMetadataRequest(owner=cls.__name__, method=method_name)
         if ignore_params is None:
             ignore_params = set()
         ignore_params.update({"X", "y", "Y", "Xt", "yt"})
 
         # Here we use `isfunction` instead of `ismethod` because calling `getattr`
         # on a class instead of an instance returns an unbound function.
-        if not hasattr(cls, method) or not inspect.isfunction(getattr(cls, method)):
+        if method_obj is None and (
+            not hasattr(cls, method_name)
+            or not inspect.isfunction(method_obj := getattr(cls, method_name))
+        ):
             return mmr
+
         # ignore the first parameter of the method, which is usually "self"
-        params = list(inspect.signature(getattr(cls, method)).parameters.items())[1:]
+        # in case of a callable which is usually passed from a scorer, we can still
+        # safely ignore the first argument which is "y_true"
+        params = list(inspect.signature(method_obj).parameters.items())[1:]
         for pname, param in params:
             if pname in ignore_params:
                 continue
@@ -1443,6 +1454,15 @@ class _MetadataRequester:
         This method combines the information present in ``__metadata_request__*``
         class attributes, as well as determining request keys from method
         signatures.
+
+        Parameters
+        ----------
+        score_method : str or callable, default="score"
+            The name of the score method or the score method itself. This is
+            particularly used in scorers to determine the signature of the
+            score method.
+        ignore_params : set, optional
+            A set of parameters to ignore.
         """
         requests = MetadataRequest(owner=cls.__name__)
 
@@ -1451,8 +1471,8 @@ class _MetadataRequester:
                 requests,
                 method,
                 cls._build_request_for_signature(
-                    router=requests,
-                    method=method if method != "score" else score_method,
+                    method_name=method,
+                    method_obj=score_method if score_method != "score" else None,
                     ignore_params=ignore_params,
                 ),
             )
