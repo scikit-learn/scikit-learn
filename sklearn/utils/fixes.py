@@ -186,7 +186,7 @@ else:
                 dtype=X.dtype,
                 shape=(M, 1),
             )
-        return res.A.ravel()
+        return res.toarray().ravel()
 
     def _sparse_min_or_max(X, axis, min_or_max):
         if axis is None:

@@ -1355,7 +1355,7 @@ def test_missing_indicator_sparse_no_explicit_zeros(csr_container):
     mi = MissingIndicator(features="all", missing_values=1)
     Xt = mi.fit_transform(X)
 
-    assert Xt.getnnz() == Xt.sum()
+    assert Xt.nnz == Xt.sum()
 
 
 @pytest.mark.parametrize("imputer_constructor", [SimpleImputer, IterativeImputer])
