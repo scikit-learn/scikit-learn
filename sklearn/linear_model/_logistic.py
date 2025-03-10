@@ -14,6 +14,7 @@ from joblib import effective_n_jobs
 from scipy import optimize
 
 from sklearn.metrics import get_scorer_names
+from sklearn.utils import metadata_routing
 
 from .._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
 from ..base import _fit_context
@@ -43,6 +44,7 @@ from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
     _check_method_params,
     _check_sample_weight,
+    _deprecate_positional_args,
     check_is_fitted,
     validate_data,
 )
@@ -1762,6 +1764,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     0.98...
     """
 
+    # TODO(1.9): remove this when sample_weight is removed from the `score` signature
+    __metadata_request__score = {"sample_weight": metadata_routing.UNUSED}
     _parameter_constraints: dict = {**LogisticRegression._parameter_constraints}
 
     for param in ["C", "warm_start", "l1_ratio"]:
@@ -2206,7 +2210,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         return self
 
-    def score(self, X, y, sample_weight=None, **score_params):
+    # TODO(1.9): remove this when sample_weight is removed from the `score` signature
+    # and remove `sample_weight` from the `score` signature
+    @_deprecate_positional_args(version="1.9")
+    def score(self, X, y, *, sample_weight=None, **score_params):
         """Score using the `scoring` option on the given test data and labels.
 
         Parameters
@@ -2219,6 +2226,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
+
+            .. deprecated:: 1.7
+              `sample_weight` needs to be passed as a keyword argument and not as a
+              positional argument.
 
         **score_params : dict
             Parameters to pass to the `score` method of the underlying scorer.

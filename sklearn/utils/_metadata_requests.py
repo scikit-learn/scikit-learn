@@ -1395,7 +1395,7 @@ class _MetadataRequester:
         super().__init_subclass__(**kwargs)
 
     @classmethod
-    def _build_request_for_signature(cls, router, method):
+    def _build_request_for_signature(cls, router, method, ignore_params=None):
         """Build the `MethodMetadataRequest` for a method using its signature.
 
         This method takes all arguments from the method signature and uses
@@ -1415,6 +1415,10 @@ class _MetadataRequester:
             The prepared request using the method's signature.
         """
         mmr = MethodMetadataRequest(owner=cls.__name__, method=method)
+        if ignore_params is None:
+            ignore_params = set()
+        ignore_params.update({"X", "y", "Y", "Xt", "yt"})
+
         # Here we use `isfunction` instead of `ismethod` because calling `getattr`
         # on a class instead of an instance returns an unbound function.
         if not hasattr(cls, method) or not inspect.isfunction(getattr(cls, method)):
@@ -1422,7 +1426,7 @@ class _MetadataRequester:
         # ignore the first parameter of the method, which is usually "self"
         params = list(inspect.signature(getattr(cls, method)).parameters.items())[1:]
         for pname, param in params:
-            if pname in {"X", "y", "Y", "Xt", "yt"}:
+            if pname in ignore_params:
                 continue
             if param.kind in {param.VAR_POSITIONAL, param.VAR_KEYWORD}:
                 continue
@@ -1433,7 +1437,7 @@ class _MetadataRequester:
         return mmr
 
     @classmethod
-    def _get_default_requests(cls):
+    def _get_default_requests(cls, score_method="score", ignore_params=None):
         """Collect default request values.
 
         This method combines the information present in ``__metadata_request__*``
@@ -1446,7 +1450,11 @@ class _MetadataRequester:
             setattr(
                 requests,
                 method,
-                cls._build_request_for_signature(router=requests, method=method),
+                cls._build_request_for_signature(
+                    router=requests,
+                    method=method if method != "score" else score_method,
+                    ignore_params=ignore_params,
+                ),
             )
 
         # Then overwrite those defaults with the ones provided in
