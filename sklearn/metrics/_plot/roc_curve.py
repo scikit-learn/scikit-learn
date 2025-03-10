@@ -1,11 +1,17 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+from ...utils import _safe_indexing
 from ...utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
+    _check_param_lengths,
+    _convert_to_list_leaving_none,
+    _deprecate_estimator_name,
     _despine,
+    _validate_line_kwargs,
     _validate_style_kwargs,
 )
+from ...utils._response import _get_response_values_binary
 from .._ranking import auc, roc_curve
 
 
@@ -14,25 +20,38 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
     It is recommend to use
     :func:`~sklearn.metrics.RocCurveDisplay.from_estimator` or
-    :func:`~sklearn.metrics.RocCurveDisplay.from_predictions` to create
+    :func:`~sklearn.metrics.RocCurveDisplay.from_predictions` or
+    :func:`~sklearn.metrics.RocCurveDisplay.from_cv_results` to create
     a :class:`~sklearn.metrics.RocCurveDisplay`. All parameters are
     stored as attributes.
 
-    Read more in the :ref:`User Guide <visualizations>`.
+    For more about the ROC metric, see :ref:`roc_metrics`.
+    For more about scikit-learn visualization classes, see :ref:`visualizations`.
 
     Parameters
     ----------
-    fpr : ndarray
-        False positive rate.
+    fpr : ndarray or list of ndarrays
+        False positive rates. Each ndarray should contain values for a single curve.
+        If plotting multiple curves, list should be of same length as
+        and `tpr`.
 
-    tpr : ndarray
-        True positive rate.
+    tpr : ndarray list of ndarrays
+        True positive rates. Each ndarray should contain values for a single curve.
+        If plotting multiple curves, list should be of same length as
+        and `fpr`.
 
-    roc_auc : float, default=None
-        Area under ROC curve. If None, the roc_auc score is not shown.
+    roc_auc : float or list of floats, default=None
+        Area under ROC curve, used for labeling curves in the legend.
+        If plotting multiple curves, should be a list of the same length as `fpr`
+        and `tpr`. If `None`, no area under ROC curve score is shown. If `name`
+        is also `None` no legend is added.
 
-    estimator_name : str, default=None
-        Name of estimator. If None, the estimator name is not shown.
+    name : str or list of str, default=None
+        (Do we prefer curve_name) ?
+        Name of each ROC curve, used for labeling curves in the legend.
+        If plotting multiple curves, should be a list of the same length as `fpr`
+        and `tpr`. If `None`, no name is not shown in the legend. If `roc_auc`
+        is also `None` no legend is added.
 
     pos_label : int, float, bool or str, default=None
         The class considered as the positive class when computing the roc auc
@@ -41,10 +60,19 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         .. versionadded:: 0.24
 
+    estimator_name : str, default=None
+        Name of estimator. If None, the estimator name is not shown.
+
+        .. deprecated:: 1.7
+
     Attributes
     ----------
-    line_ : matplotlib Artist
-        ROC Curve.
+    line_ : matplotlib Artist or list of matplotlib Artists
+        ROC Curves.
+
+        .. versionchanged:: 1.7
+            This attribute can now be a list of Artists, for when multiple curves are
+            plotted.
 
     chance_level_ : matplotlib Artist or None
         The chance level line. It is `None` if the chance level is not plotted.
@@ -76,18 +104,44 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     >>> fpr, tpr, thresholds = metrics.roc_curve(y, pred)
     >>> roc_auc = metrics.auc(fpr, tpr)
     >>> display = metrics.RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc,
-    ...                                   estimator_name='example estimator')
+    ...                                   name='example estimator')
     >>> display.plot()
     <...>
     >>> plt.show()
     """
 
-    def __init__(self, *, fpr, tpr, roc_auc=None, estimator_name=None, pos_label=None):
-        self.estimator_name = estimator_name
+    def __init__(
+        self,
+        *,
+        fpr,
+        tpr,
+        roc_auc=None,
+        name=None,
+        pos_label=None,
+        estimator_name="deprecated",
+    ):
         self.fpr = fpr
         self.tpr = tpr
         self.roc_auc = roc_auc
+        self.name = _deprecate_estimator_name(estimator_name, name, "1.7")
         self.pos_label = pos_label
+
+    def _validate_plot_params(self, *, ax=None, name=None):
+        self.ax_, self.figure_, name_ = super()._validate_plot_params(ax=ax, name=name)
+
+        self.fpr_ = _convert_to_list_leaving_none(self.fpr)
+        self.tpr_ = _convert_to_list_leaving_none(self.tpr)
+        self.roc_auc_ = _convert_to_list_leaving_none(self.roc_auc)
+        self.name_ = _convert_to_list_leaving_none(name_)
+
+        _check_param_lengths(
+            required={"self.fpr": self.fpr_, "self.tpr": self.tpr_},
+            optional={
+                "self.roc_auc": self.roc_auc_,
+                "`name` from `plot` (or self.name)": self.name_,
+            },
+            class_name="RocCurveDisplay",
+        )
 
     def plot(
         self,
@@ -97,11 +151,13 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         plot_chance_level=False,
         chance_level_kw=None,
         despine=False,
+        fold_line_kwargs=None,
         **kwargs,
     ):
         """Plot visualization.
 
-        Extra keyword arguments will be passed to matplotlib's ``plot``.
+        For single curve plots, extra keyword arguments will be passed to
+        matplotlib's ``plot``.
 
         Parameters
         ----------
@@ -109,9 +165,12 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Axes object to plot on. If `None`, a new figure and axes is
             created.
 
-        name : str, default=None
-            Name of ROC Curve for labeling. If `None`, use `estimator_name` if
-            not `None`, otherwise no labeling is shown.
+        name : str or list of str, default=None
+            Name of each ROC curve, used for labeling curves in the legend.
+            If `None`, use `name` provided at `RocCurveDisplay` initialization. If
+            also not provided at initialization, no name is shown in the legend.
+
+            .. versionadded:: 1.7
 
         plot_chance_level : bool, default=False
             Whether to plot the chance level.
@@ -129,25 +188,37 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
             .. versionadded:: 1.6
 
+        fold_line_kwargs : dict or list of dict, default=None
+            Dictionary with keywords passed to the matplotlib's `plot` function
+            to draw the individual ROC curves. If a list is provided, the
+            parameters are applied to the ROC curves sequentially. If a single
+            dictionary is provided, the same parameters are applied to all ROC
+            curves. Ignored for single curve plots - pass as `**kwargs` for
+            single curve plots.
+
+            .. versionadded:: 1.7
+
         **kwargs : dict
-            Keyword arguments to be passed to matplotlib's `plot`.
+            For a single curve plots only, keyword arguments to be passed to
+            matplotlib's `plot`. Ignored for multi-curve plots - use `fold_line_kwargs`
+            for multi-curve plots.
 
         Returns
         -------
         display : :class:`~sklearn.metrics.RocCurveDisplay`
             Object that stores computed values.
         """
-        self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
+        self._validate_plot_params(ax=ax, name=name)
 
-        default_line_kwargs = {}
-        if self.roc_auc is not None and name is not None:
-            default_line_kwargs["label"] = f"{name} (AUC = {self.roc_auc:0.2f})"
-        elif self.roc_auc is not None:
-            default_line_kwargs["label"] = f"AUC = {self.roc_auc:0.2f}"
-        elif name is not None:
-            default_line_kwargs["label"] = name
-
-        line_kwargs = _validate_style_kwargs(default_line_kwargs, kwargs)
+        n_curves = len(self.fpr_)
+        line_kwargs = self._get_line_kwargs(
+            n_curves,
+            self.name_,
+            self.roc_auc_,
+            "AUC",
+            fold_line_kwargs=fold_line_kwargs,
+            **kwargs,
+        )
 
         default_chance_level_line_kw = {
             "label": "Chance level (AUC = 0.5)",
@@ -162,7 +233,13 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             default_chance_level_line_kw, chance_level_kw
         )
 
-        (self.line_,) = self.ax_.plot(self.fpr, self.tpr, **line_kwargs)
+        self.line_ = []
+        for fpr, tpr, line_kw in zip(self.fpr_, self.tpr_, line_kwargs):
+            self.line_.extend(self.ax_.plot(fpr, tpr, **line_kw))
+        # Return single artist if only one curve is plotted
+        if len(self.line_) == 1:
+            self.line_ = self.line_[0]
+
         info_pos_label = (
             f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
         )
@@ -185,9 +262,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         if despine:
             _despine(self.ax_)
 
-        if (
-            line_kwargs.get("label") is not None
-            or chance_level_kw.get("label") is not None
+        if line_kwargs[0].get("label") is not None or (
+            plot_chance_level and chance_level_kw.get("label") is not None
         ):
             self.ax_.legend(loc="lower right")
 
@@ -368,7 +444,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             error will be raised.
 
         name : str, default=None
-            Name of ROC curve for labeling. If `None`, name will be set to
+            Name of ROC curve for legend labeling. If `None`, name will be set to
             `"Classifier"`.
 
         ax : matplotlib axes, default=None
@@ -440,15 +516,187 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             fpr=fpr,
             tpr=tpr,
             roc_auc=roc_auc,
-            estimator_name=name,
+            name=name,
             pos_label=pos_label_validated,
         )
 
         return viz.plot(
             ax=ax,
+            # Should we provide `name` to both `cls` and `plot` or just `cls`?
             name=name,
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
             despine=despine,
             **kwargs,
+        )
+
+    @classmethod
+    def from_cv_results(
+        cls,
+        cv_results,
+        X,
+        y,
+        *,
+        sample_weight=None,
+        drop_intermediate=True,
+        response_method="auto",
+        pos_label=None,
+        ax=None,
+        fold_names=None,
+        fold_line_kwargs=None,
+        plot_chance_level=False,
+        chance_level_kwargs=None,
+        despine=False,
+    ):
+        """Create a multi-fold ROC curve display given cross-validation results.
+
+        .. versionadded:: 1.7
+
+        Parameters
+        ----------
+        cv_results : dict
+            Dictionary as returned by :func:`~sklearn.model_selection.cross_validate`
+            using `return_estimator=True` and `return_indices=True` (i.e., dictionary
+            should contain the keys "estimator" and "indices").
+
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Input values.
+
+        y : array-like of shape (n_samples,)
+            Target values.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights.
+
+        drop_intermediate : bool, default=True
+            Whether to drop some suboptimal thresholds which would not appear
+            on a plotted ROC curve. This is useful in order to create lighter
+            ROC curves.
+
+        response_method : {'predict_proba', 'decision_function', 'auto'} \
+                default='auto'
+            Specifies whether to use :term:`predict_proba` or
+            :term:`decision_function` as the target response. If set to 'auto',
+            :term:`predict_proba` is tried first and if it does not exist
+            :term:`decision_function` is tried next.
+
+        pos_label : str or int, default=None
+            The class considered as the positive class when computing the roc auc
+            metrics. By default, `estimators.classes_[1]` is considered
+            as the positive class.
+
+        ax : matplotlib axes, default=None
+            Axes object to plot on. If `None`, a new figure and axes is
+            created.
+
+        fold_names : list of str, default=None
+            Names of each ROC curve, used for labeling curves in the legend.
+            If `None`, the name will be set to "Fold <N>" where N is the index of
+            the CV fold.
+
+        fold_line_kwargs : dict or list of dict, default=None
+            Dictionary with keywords passed to the matplotlib's `plot` function
+            to draw the individual ROC curves. If a list is provided, the
+            parameters are applied to the ROC curves of each CV fold
+            sequentially. If a single dictionary is provided, the same
+            parameters are applied to all ROC curves.
+
+        plot_chance_level : bool, default=False
+            Whether to plot the chance level.
+
+        chance_level_kwargs : dict, default=None
+            Keyword arguments to be passed to matplotlib's `plot` for rendering
+            the chance level line.
+
+        despine : bool, default=False
+            Whether to remove the top and right spines from the plot.
+
+        Returns
+        -------
+        display : :class:`~sklearn.metrics.RocCurveDisplay`
+            The multi-fold ROC curve display.
+
+        See Also
+        --------
+        roc_curve : Compute Receiver operating characteristic (ROC) curve.
+            RocCurveDisplay.from_estimator : ROC Curve visualization given an
+            estimator and some data.
+        RocCurveDisplay.from_predictions : ROC Curve visualization given the
+            probabilities of scores of a classifier.
+        roc_auc_score : Compute the area under the ROC curve.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> from sklearn.datasets import make_classification
+        >>> from sklearn.metrics import RocCurveDisplay
+        >>> from sklearn.model_selection import cross_validate
+        >>> from sklearn.svm import SVC
+        >>> X, y = make_classification(random_state=0)
+        >>> clf = SVC(random_state=0)
+        >>> cv_results = cross_validate(
+        ...     clf, X, y, cv=3, return_estimator=True, return_indices=True)
+        >>> RocCurveDisplay.from_cv_results(cv_results, X, y)
+        <...>
+        >>> plt.show()
+        """
+        pos_label, fold_names_ = cls._validate_from_cv_results_params(
+            cv_results,
+            X,
+            y,
+            sample_weight=sample_weight,
+            pos_label=pos_label,
+            fold_names=fold_names,
+        )
+        fold_line_kwargs_ = _validate_line_kwargs(
+            len(cv_results["estimator"]),
+            fold_line_kwargs,
+            default_line_kwargs={"alpha": 0.5, "linestyle": "--"},
+        )
+
+        fpr_all = []
+        tpr_all = []
+        auc_all = []
+        for estimator, test_indices in zip(
+            cv_results["estimator"], cv_results["indices"]["test"]
+        ):
+            y_true = _safe_indexing(y, test_indices)
+            y_pred = _get_response_values_binary(
+                estimator,
+                _safe_indexing(X, test_indices),
+                response_method=response_method,
+                pos_label=pos_label,
+            )[0]
+            sample_weight_fold = (
+                None
+                if sample_weight is None
+                else _safe_indexing(sample_weight, test_indices)
+            )
+            fpr, tpr, _ = roc_curve(
+                y_true,
+                y_pred,
+                pos_label=pos_label,
+                sample_weight=sample_weight_fold,
+                drop_intermediate=drop_intermediate,
+            )
+            roc_auc = auc(fpr, tpr)
+
+            fpr_all.append(fpr)
+            tpr_all.append(tpr)
+            auc_all.append(roc_auc)
+
+        viz = cls(
+            fpr=fpr_all,
+            tpr=tpr_all,
+            # Should we provide `name` to both `cls` and `plot` or just `cls`?
+            name=fold_names_,
+            roc_auc=auc_all,
+            pos_label=pos_label,
+        )
+        return viz.plot(
+            ax=ax,
+            plot_chance_level=plot_chance_level,
+            chance_level_kw=chance_level_kwargs,
+            despine=despine,
+            fold_line_kwargs=fold_line_kwargs_,
         )
