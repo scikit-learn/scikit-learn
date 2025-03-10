@@ -86,9 +86,7 @@ class BaseDistancesReductionDispatcher:
         )
 
     @classmethod
-    def is_usable_for(
-        cls, X=None, Y=None, metric="euclidean"
-    ) -> bool:
+    def is_usable_for(cls, X=None, Y=None, metric="euclidean") -> bool:
         """Return True if the dispatcher can be used for the
         given parameters.
 
@@ -111,13 +109,13 @@ class BaseDistancesReductionDispatcher:
         -------
         True if the dispatcher can be used, else False.
         """
-        if metric == 'precomputed':
+        if metric == "precomputed":
             if X is not None and Y is None:
                 is_usable = True
             else:
                 is_usable = False
-        
-        #is_usable = (X is not None and Y is not None) ^ bool(precomputed)
+
+        # is_usable = (X is not None and Y is not None) ^ bool(precomputed)
         if is_usable == False:
             return is_usable
         # FIXME: the current Cython implementation is too slow for a large number of
@@ -291,6 +289,7 @@ class ArgKmin(BaseDistancesReductionDispatcher):
         for the concrete implementation are therefore freed when this classmethod
         returns.
         """
+        """
         if X is None and Y is None and precomputed_matrix is None:
             raise ValueError("Either X and Y or precomputed_matrix must be provided.")
         elif X is not None and Y is not None and precomputed_matrix is not None:
@@ -301,12 +300,18 @@ class ArgKmin(BaseDistancesReductionDispatcher):
             raise ValueError("Y should not be provided without X.")
         elif X is not None and Y is None:
             raise ValueError("X should not be provided without Y.")
+        """
+
+        if metric == "precomputed":
+            if X is None:
+                raise ValueError("X should be provided as a precomputed value")
+            if Y is not None:
+                raise ValueError("Y should not be provided as a precomputed value")
 
         if X.dtype == Y.dtype == np.float64:
             return ArgKmin64.compute(
                 X=X,
                 Y=Y,
-                precomputed=precomputed_matrix,
                 k=k,
                 metric=metric,
                 chunk_size=chunk_size,
@@ -319,7 +324,6 @@ class ArgKmin(BaseDistancesReductionDispatcher):
             return ArgKmin32.compute(
                 X=X,
                 Y=Y,
-                precomputed=precomputed_matrix,
                 k=k,
                 metric=metric,
                 chunk_size=chunk_size,
@@ -355,7 +359,6 @@ class RadiusNeighbors(BaseDistancesReductionDispatcher):
         cls,
         X=None,
         Y=None,
-        precomputed=None,
         radius=None,
         metric="euclidean",
         chunk_size=None,
@@ -449,6 +452,7 @@ class RadiusNeighbors(BaseDistancesReductionDispatcher):
         for the concrete implementation are therefore freed when this classmethod
         returns.
         """
+        """
         if X is None and Y is None and precomputed is None:
             raise ValueError("Either X and Y or precomputed must be provided.")
         elif X is not None and Y is not None and precomputed is not None:
@@ -459,6 +463,12 @@ class RadiusNeighbors(BaseDistancesReductionDispatcher):
             raise ValueError("X should not be provided without Y.")
         elif precomputed:
             return precomputed
+        """
+        if metric == "precomputed":
+            if X is None:
+                raise ValueError("X should be provided as a precomputed value")
+            if Y is not None:
+                raise ValueError("Y should not be provided as a precomputed value")
 
         if X.dtype == Y.dtype == np.float64:
             return RadiusNeighbors64.compute(
