@@ -68,35 +68,6 @@ steps, such as `Transformer`,before reaching the final `Estimator`.
    :align: center
    :scale: 75%
 
-The diagram below illustrates a `Feature Union`, where data is processed in parallel 
-through multiple transformers (Transformer_A, Transformer_B) before being combined 
-into a final transformed dataset
-
-.. image:: ../images/PIPELINE.png
-   :alt: FEATUREUNION
-   :align: center
-   :scale: 75%
-
-As shown in the figure below, `ColumnTransformer`:
-
-- Splits the features of the original dataset based on the column names or indices 
-provided. This can be done with the help of a `make_column_selector`. Here, the 
-color code keeps trace of the selected features for each of the transformers.
-
-- A specific transformer is applied to each subset of features, i.e. it internally 
-calls `fit_transform` or `transform`. The output of this step is a set of transformed 
-datasets.
-
-- The `remainder` parameter controls the behavior on non-specified columns: they can
-remain untransformed if set to "passthrough", or those columns are dropped if `remainder="drop"`.
-
-- The `ColumnTransformer` concatenates the transformed datasets into a single dataset.
-
-.. image:: ../images/PIPELINE.png
-   :alt: columntransfor
-   :align: center
-   :scale: 75%
-   
 Usage
 -----
 
@@ -415,6 +386,14 @@ might produce identical features. It only produces a union when the
 feature sets are disjoint, and making sure they are is the caller's
 responsibility.)
 
+The diagram below illustrates a `Feature Union`, where data is processed in parallel 
+through multiple transformers (Transformer_A, Transformer_B) before being combined 
+into a final transformed dataset
+
+.. image:: ../images/PIPELINE.png
+   :alt: FEATUREUNION
+   :align: center
+   :scale: 75%
 
 Usage
 -----
@@ -474,6 +453,22 @@ transformations for different columns of the data, within a
 be parametrized. :class:`~sklearn.compose.ColumnTransformer` works on
 arrays, sparse matrices, and
 `pandas DataFrames <https://pandas.pydata.org/pandas-docs/stable/>`__.
+
+As shown in the figure below, `ColumnTransformer`:
+Splits the features of the original dataset based on the column names or indices 
+provided. This can be done with the help of a `make_column_selector`. Here, the 
+color code keeps trace of the selected features for each of the transformers.
+A specific transformer is applied to each subset of features, i.e. it internally 
+calls `fit_transform` or `transform`. The output of this step is a set of transformed 
+datasets.
+The `remainder` parameter controls the behavior on non-specified columns: they can
+remain untransformed if set to "passthrough", or those columns are dropped if `remainder="drop"`.
+The `ColumnTransformer` concatenates the transformed datasets into a single dataset.
+
+.. image:: ../images/PIPELINE.png
+   :alt: columntransfor
+   :align: center
+   :scale: 75%
 
 To each column, a different transformation can be applied, such as
 preprocessing or a specific feature extraction method::
