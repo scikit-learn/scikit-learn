@@ -27,7 +27,7 @@ Display objects have a plot method that creates a matplotlib plot once the displ
 object has been initialized. Additionally, the plot method allows adding to an existing
 plot by passing the existing plots :class:`matplotlib.axes.Axes` to the `ax` parameter.
 
-In the following example, we plot a ROC curve for a fitted Logistic LogisticRegression
+In the following example, we plot a ROC curve for a fitted Logistic Regression
 model `from_estimator`:
 
 .. plot::
