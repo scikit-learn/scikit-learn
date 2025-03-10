@@ -116,7 +116,7 @@ https://conda.anaconda.org/conda-forge/linux-aarch64/xorg-libxext-1.3.6-h57736b2
 https://conda.anaconda.org/conda-forge/linux-aarch64/xorg-libxfixes-6.0.1-h57736b2_0.conda#78f8715c002cc66991d7c11e3cf66039
 https://conda.anaconda.org/conda-forge/linux-aarch64/xorg-libxrender-0.9.12-h86ecc28_0.conda#ae2c2dd0e2d38d249887727db2af960e
 https://conda.anaconda.org/conda-forge/noarch/zipp-3.21.0-pyhd8ed1ab_1.conda#0c3cc595284c5e8f0f9900a9b228a332
-https://conda.anaconda.org/conda-forge/linux-aarch64/cairo-1.18.2-h83712da_1.conda#e7b46975d2c9a4666da0e9bb8a087f28
+https://conda.anaconda.org/conda-forge/linux-aarch64/cairo-1.18.4-h83712da_0.conda#cd55953a67ec727db5dc32b167201aa6
 https://conda.anaconda.org/conda-forge/linux-aarch64/ccache-4.10.1-ha3bccff_0.conda#7cd24a038d2727b5e6377975237a6cfa
 https://conda.anaconda.org/conda-forge/linux-aarch64/dbus-1.13.6-h12b9eeb_3.tar.bz2#f3d63805602166bac09386741e00935e
 https://conda.anaconda.org/conda-forge/linux-aarch64/fonttools-4.56.0-py39hbebea31_0.conda#cb620ec254151f5c12046b10e821896e
@@ -143,7 +143,7 @@ https://conda.anaconda.org/conda-forge/linux-aarch64/xorg-libxdamage-1.1.6-h86ec
 https://conda.anaconda.org/conda-forge/linux-aarch64/xorg-libxi-1.8.2-h57736b2_0.conda#eeee3bdb31c6acde2b81ad1b8c287087
 https://conda.anaconda.org/conda-forge/linux-aarch64/xorg-libxrandr-1.5.4-h86ecc28_0.conda#dd3e74283a082381aa3860312e3c721e
 https://conda.anaconda.org/conda-forge/linux-aarch64/xorg-libxxf86vm-1.1.6-h86ecc28_0.conda#d745faa2d7c15092652e40a22bb261ed
-https://conda.anaconda.org/conda-forge/linux-aarch64/harfbuzz-10.3.0-hb5e3f52_0.conda#4575cba227f2e4b5d0f23c9adc390f83
+https://conda.anaconda.org/conda-forge/linux-aarch64/harfbuzz-10.4.0-hb5e3f52_0.conda#f28b4d75b1ee821c768311613d3dd225
 https://conda.anaconda.org/conda-forge/noarch/importlib-resources-6.5.2-pyhd8ed1ab_0.conda#e376ea42e9ae40f3278b0f79c9bf9826
 https://conda.anaconda.org/conda-forge/linux-aarch64/libclang-cpp19.1-19.1.7-default_he324ac1_1.conda#56e9f61513f98a790bb6dae8759986fa
 https://conda.anaconda.org/conda-forge/linux-aarch64/libclang13-19.1.7-default_h4390ef5_1.conda#a6baf52f08271bba2599ac6e1064dde4
