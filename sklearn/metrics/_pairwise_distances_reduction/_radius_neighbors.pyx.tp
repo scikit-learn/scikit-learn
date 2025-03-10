@@ -57,7 +57,6 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
         cls,
         X,
         Y,
-        precomputed,
         float64_t radius,
         str metric="euclidean",
         chunk_size=None,

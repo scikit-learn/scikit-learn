@@ -35,7 +35,6 @@ cdef class RadiusNeighborsClassMode{{name_suffix}}(RadiusNeighbors{{name_suffix}
         cls,
         X,
         Y,
-        precomputed,
         float64_t radius,
         weights,
         Y_labels,
