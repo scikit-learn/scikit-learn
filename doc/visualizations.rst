@@ -35,17 +35,19 @@ vector machine using `from_estimator`:
    :align: center
 
     from sklearn.model_selection import train_test_split
-    from sklearn.svm import SVC
+    from sklearn.linear_model import LogisticRegression
     from sklearn.metrics import RocCurveDisplay
-    from sklearn.datasets import load_wine
+    from sklearn.datasets import load_iris
 
-    X, y = load_wine(return_X_y=True)
+    X, y = load_iris(return_X_y=True)
     y = y == 2  # make binary
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
-    svc = SVC(random_state=42)
-    svc.fit(X_train, y_train)
+    X_train, X_test, y_train, y_test = train_test_split(
+                                       X, y, test_size=.8, random_state=42
+                                       )
+    clf = LogisticRegression(random_state=42, C=.01)
+    clf.fit(X_train, y_train)
 
-    svc_disp = RocCurveDisplay.from_estimator(svc, X_test, y_test)
+    clf_disp = RocCurveDisplay.from_estimator(clf, X_test, y_test)
 
 If you already have the prediction values, you could instead use
 `from_predictions` to do the same thing:
@@ -55,18 +57,20 @@ If you already have the prediction values, you could instead use
    :context: close-figs
    :align: center
 
-   from sklearn.model_selection import train_test_split
-   from sklearn.svm import SVC
-   from sklearn.metrics import RocCurveDisplay
-   from sklearn.datasets import load_wine
+    from sklearn.model_selection import train_test_split
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.metrics import RocCurveDisplay
+    from sklearn.datasets import load_iris
 
-   X, y = load_wine(return_X_y=True)
-   y = y == 2  # make binary
-   X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
-   svc = SVC(random_state=42).fit(X_train, y_train)
-   y_pred = svc.decision_function(X_test)
+    X, y = load_iris(return_X_y=True)
+    y = y == 2  # make binary
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.8, random_state=0)
+    clf = LogisticRegression(random_state=42, C=.01)
+    clf.fit(X_train, y_train)
 
-   svc_disp = RocCurveDisplay.from_predictions(y_test, y_pred)
+    y_pred = clf.predict_proba(X_test)[:, 1]
+
+    clf_disp = RocCurveDisplay.from_predictions(y_test, y_pred)
 
 
 The returned `svc_disp` object allows us to continue using the already computed
