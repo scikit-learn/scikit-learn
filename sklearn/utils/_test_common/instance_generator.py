@@ -111,7 +111,6 @@ from sklearn.linear_model import (
     RANSACRegressor,
     Ridge,
     RidgeClassifier,
-    RidgeCV,
     SGDClassifier,
     SGDOneClassSVM,
     SGDRegressor,
@@ -1174,14 +1173,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_non_transformer_estimators_n_iter": (
             "n_iter_ cannot be easily accessed."
         )
-    },
-    RidgeCV: {
-        "check_sample_weight_equivalence_on_dense_data": (
-            "GridSearchCV does not forward the weights to the scorer by default."
-        ),
-        "check_sample_weight_equivalence_on_sparse_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
     },
     SelfTrainingClassifier: {
         "check_non_transformer_estimators_n_iter": "n_iter_ can be 0."

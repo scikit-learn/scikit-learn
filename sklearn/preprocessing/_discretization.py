@@ -383,7 +383,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                     }[quantile_method]
                     bin_edges[jj] = np.asarray(
                         [
-                            percentile_func(column, sample_weight, percentile=p)
+                            percentile_func(column, sample_weight, percentile_rank=p)
                             for p in percentile_levels
                         ],
                         dtype=np.float64,

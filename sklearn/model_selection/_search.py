@@ -15,6 +15,7 @@ from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 from copy import deepcopy
 from functools import partial, reduce
+from inspect import signature
 from itertools import product
 
 import numpy as np
@@ -866,6 +867,33 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         return scorers, refit_metric
 
+    def _check_scorers_accept_sample_weight(self):
+        # TODO(slep006): remove when metadata routing is the only way
+        scorers, _ = self._get_scorers()
+        # In the multimetric case, warn the user for each scorer separately
+        if isinstance(scorers, _MultimetricScorer):
+            for name, scorer in scorers._scorers.items():
+                if not scorer._accept_sample_weight():
+                    warnings.warn(
+                        f"The scoring {name}={scorer} does not support sample_weight, "
+                        "which may lead to statistically incorrect results when "
+                        f"fitting {self} with sample_weight. "
+                    )
+            return scorers._accept_sample_weight()
+        # In most cases, scorers is a Scorer object
+        # But it's a function when user passes scoring=function
+        if hasattr(scorers, "_accept_sample_weight"):
+            accept = scorers._accept_sample_weight()
+        else:
+            accept = "sample_weight" in signature(scorers).parameters
+        if not accept:
+            warnings.warn(
+                f"The scoring {scorers} does not support sample_weight, "
+                "which may lead to statistically incorrect results when "
+                f"fitting {self} with sample_weight. "
+            )
+        return accept
+
     def _get_routed_params_for_fit(self, params):
         """Get the parameters to be used for routing.
 
@@ -882,6 +910,14 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 splitter=Bunch(split={"groups": groups}),
                 scorer=Bunch(score={}),
             )
+            # NOTE: sample_weight is forwarded to the scorer if sample_weight
+            # is not None and scorers accept sample_weight. For _MultimetricScorer,
+            # sample_weight is forwarded if any scorer accepts sample_weight
+            if (
+                params.get("sample_weight") is not None
+                and self._check_scorers_accept_sample_weight()
+            ):
+                routed_params.scorer.score["sample_weight"] = params["sample_weight"]
         return routed_params
 
     @_fit_context(

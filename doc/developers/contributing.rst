@@ -282,7 +282,13 @@ how to set up your git repository:
         git remote add upstream git@github.com:scikit-learn/scikit-learn.git
 
 7. Check that the `upstream` and `origin` remote aliases are configured correctly
-   by running `git remote -v` which should display:
+   by running:
+
+   .. prompt:: bash
+
+        git remote -v
+
+   This should display:
 
    .. code-block:: text
 
