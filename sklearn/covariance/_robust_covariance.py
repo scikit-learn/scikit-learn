@@ -314,35 +314,33 @@ def select_candidates(
         )
 
     # compute `n_trials` location and shape estimates candidates in the subset
-    all_estimates = []
     if not run_from_estimates:
         # perform `n_trials` computations from random initial supports
-        for j in range(n_trials):
-            all_estimates.append(
-                _c_step(
-                    X,
-                    n_support,
-                    remaining_iterations=n_iter,
-                    verbose=verbose,
-                    cov_computation_method=cov_computation_method,
-                    random_state=random_state,
-                )
+        all_estimates = [
+            _c_step(
+                X,
+                n_support,
+                remaining_iterations=n_iter,
+                verbose=verbose,
+                cov_computation_method=cov_computation_method,
+                random_state=random_state,
             )
+            for j in range(n_trials)
+        ]
     else:
         # perform computations from every given initial estimates
-        for j in range(n_trials):
-            initial_estimates = (estimates_list[0][j], estimates_list[1][j])
-            all_estimates.append(
-                _c_step(
-                    X,
-                    n_support,
-                    remaining_iterations=n_iter,
-                    initial_estimates=initial_estimates,
-                    verbose=verbose,
-                    cov_computation_method=cov_computation_method,
-                    random_state=random_state,
-                )
+        all_estimates = [
+            _c_step(
+                X,
+                n_support,
+                remaining_iterations=n_iter,
+                initial_estimates=(estimates_list[0][j], estimates_list[1][j]),
+                verbose=verbose,
+                cov_computation_method=cov_computation_method,
+                random_state=random_state,
             )
+            for j in range(n_trials)
+        ]
     all_locs_sub, all_covs_sub, all_dets_sub, all_supports_sub, all_ds_sub = zip(
         *all_estimates
     )
