@@ -63,7 +63,7 @@ The last estimator may be any type (transformer, classifier, etc.).
 The diagram below shows a Pipeline, where data flows sequentially through multiple
 steps, such as `Transformer`,before reaching the final `Estimator`.
 
-.. image:: ../images/PIPELINE.png
+.. image:: ../images/pipeline.png
    :alt: pipeline
    :align: center
    :scale: 75%
@@ -390,7 +390,7 @@ The diagram below illustrates a `Feature Union`, where data is processed in para
 through multiple transformers (Transformer_A, Transformer_B) before being combined 
 into a final transformed dataset
 
-.. image:: ../images/PIPELINE.png
+.. image:: ../images/feature_union.png
    :alt: feature_union
    :align: center
    :scale: 75%
@@ -465,7 +465,7 @@ The `remainder` parameter controls the behavior on non-specified columns: they c
 remain untransformed if set to "passthrough", or those columns are dropped if `remainder="drop"`.
 The `ColumnTransformer` concatenates the transformed datasets into a single dataset.
 
-.. image:: ../images/PIPELINE.png
+.. image:: ../images/column_transformer.png
    :alt: column_transformer
    :align: center
    :scale: 75%
