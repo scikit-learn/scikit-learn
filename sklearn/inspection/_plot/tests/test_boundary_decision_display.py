@@ -656,7 +656,7 @@ def test_multiclass_colors_cmap(pyplot, plot_method, multiclass_colors):
         assert quad.cmap == cmaps[idx]
 
 
-def test_multiclass_plot_max_class_cmap_kwarg():
+def test_multiclass_plot_max_class_cmap_kwarg(pyplot):
     """Check `cmap` kwarg ignored when using plotting max multiclass class."""
     X, y = load_iris_2d_scaled()
     clf = LogisticRegression().fit(X, y)
