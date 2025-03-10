@@ -1412,7 +1412,7 @@ class _MetadataRequester:
         method_obj : callable, optional
             The method object. If provided, it will be used to get the signature.
         ignore_params : set, optional
-            A set of parameters to ignore.
+            An extra set of parameters to ignore.
 
         Returns
         -------
@@ -1462,7 +1462,7 @@ class _MetadataRequester:
             particularly used in scorers to determine the signature of the
             score method.
         ignore_params : set, optional
-            A set of parameters to ignore.
+            An extra set of parameters to ignore.
         """
         requests = MetadataRequest(owner=cls.__name__)
 
