@@ -64,7 +64,7 @@ The diagram below shows a Pipeline, where data flows sequentially through multip
 steps, such as `Transformer`,before reaching the final `Estimator`.
 
 .. image:: ../images/PIPELINE.png
-   :alt: PIPELINE
+   :alt: pipeline
    :align: center
    :scale: 75%
 
@@ -391,7 +391,7 @@ through multiple transformers (Transformer_A, Transformer_B) before being combin
 into a final transformed dataset
 
 .. image:: ../images/PIPELINE.png
-   :alt: FEATUREUNION
+   :alt: feature_union
    :align: center
    :scale: 75%
 
@@ -466,7 +466,7 @@ remain untransformed if set to "passthrough", or those columns are dropped if `r
 The `ColumnTransformer` concatenates the transformed datasets into a single dataset.
 
 .. image:: ../images/PIPELINE.png
-   :alt: columntransfor
+   :alt: column_transformer
    :align: center
    :scale: 75%
 
