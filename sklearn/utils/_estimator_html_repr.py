@@ -445,6 +445,7 @@ def estimator_html_repr(estimator):
         )
         html_template = (
             f"<style>{style_with_id}</style>"
+            f"<body>"
             f'<div id="{container_id}" class="sk-top-container">'
             '<div class="sk-text-repr-fallback">'
             f"<pre>{html.escape(estimator_str)}</pre><b>{fallback_msg}</b>"
@@ -462,7 +463,15 @@ def estimator_html_repr(estimator):
             is_fitted_css_class=is_fitted_css_class,
             is_fitted_icon=is_fitted_icon,
         )
-        out.write("</div></div>")
+
+        html_end = (
+            "</div></div>"
+            "<script src="
+            f'"{Path(__file__).with_suffix(".js")}"'
+            "></script>"
+            "</body>"
+        )
+        out.write(html_end)
 
         html_output = out.getvalue()
         return html_output

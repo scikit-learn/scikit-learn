@@ -46,7 +46,7 @@ def _html_template(data):
         <head><style>{style_template}</style>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         </head>
-        <body>
+
         <div class="estimator-table">
             <details>
                 <summary>Parameters</summary>
@@ -100,47 +100,7 @@ def _html_template(data):
                 </table>
             </details>
         </div>
-        <script>
-            function copyToClipboard(text, element) {
-                // Get the parameter prefix from the closest toggleable content
-                const toggleableContent = element.closest('.sk-toggleable__content');
-                const paramPrefix = toggleableContent ?
-                                    toggleableContent.dataset.paramPrefix : '';
-                const fullParamName = paramPrefix ? `${paramPrefix}${text}` : text;
 
-                const originalStyle = element.style;
-                const computedStyle = window.getComputedStyle(element);
-                const originalWidth = computedStyle.width;
-                const originalHTML = element.innerHTML.replace('Copied!', '');
-
-                navigator.clipboard.writeText(fullParamName)
-                    .then(() => {
-                        element.style.width = originalWidth;
-                        element.style.color = 'green';
-                        element.innerHTML = "Copied!";
-
-                        setTimeout(() => {
-                            element.innerHTML = originalHTML;
-                            element.style = originalStyle;
-                        }, 2000);
-                    })
-                    .catch(err => console.error('Failed to copy:', err));
-                return false;
-            }
-
-            document.querySelectorAll('.fa-regular.fa-copy').forEach(function(element)
-                {
-                const toggleableContent = element.closest('.sk-toggleable__content');
-                const paramPrefix = toggleableContent ?
-                                    toggleableContent.dataset.paramPrefix : '';
-                const paramName = element.parentElement.nextElementSibling
-                                  .textContent.trim();
-                const fullParamName = paramPrefix ? `${paramPrefix}${paramName}` :
-                                  paramName;
-                element.setAttribute('title', fullParamName);
-            });
-        </script>
-        </body>
     """
 
     return f"{html_start}{out}{html_end}"
