@@ -85,7 +85,7 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
 
         elif array_namespace == "array_api_strict":
             try:
-                import array_api_strict  # noqa
+                import array_api_strict
 
                 yield array_namespace, array_api_strict.Device("CPU_DEVICE"), "float64"
                 yield array_namespace, array_api_strict.Device("device1"), "float32"
