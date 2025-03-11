@@ -146,7 +146,7 @@ exclude=[
 preview = true
 # This enables us to use the explicit preview rules that we want only
 explicit-preview-rules = true
-# all rules can be found here: https://beta.ruff.rs/docs/rules/
+# all rules can be found here: https://docs.astral.sh/ruff/rules/
 select = ["E", "F", "W", "I", "CPY001", "RUF"]
 ignore=[
     # space before : (needed for how black formats slicing)
@@ -155,11 +155,11 @@ ignore=[
     "E731",
     # do not use variables named 'l', 'O', or 'I'
     "E741",
-    # E721 is in preview (july 2024) and gives many false positives.
+    # E721 gives many false positives.
     # Use `is` and `is not` for type comparisons, or `isinstance()` for
     # isinstance checks
     "E721",
-    # F841 is in preview (july 2024), and we don't care much about it.
+    # We don't care much about F841.
     # Local variable ... is assigned to but never used
     "F841",
     # some RUF rules trigger too many changes
