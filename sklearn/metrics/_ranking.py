@@ -344,6 +344,10 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     array([0. , 0.5, 0.5])
     >>> thresholds
     array([0.35, 0.4 , 0.8 ])
+
+    For a detailed example of using a Detection error tradeoff (DET) curve,
+    please see
+    :ref:`sphx_glr_auto_examples_model_selection_plot_det.py`
     """
     fps, tps, thresholds = _binary_clf_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
