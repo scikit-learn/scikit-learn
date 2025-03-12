@@ -655,6 +655,11 @@ considers at each step all the possible merges.
    number of features. It is a dimensionality reduction tool, see
    :ref:`data_reduction`.
 
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_cluster_plot_digits_agglomeration.py`: This
+  example shows how similar features are merged together using feature
+  agglomeration
 Different linkage type: Ward, complete, average, and single linkage
 -------------------------------------------------------------------
 
