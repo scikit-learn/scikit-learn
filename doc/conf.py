@@ -491,6 +491,9 @@ redirects = {
     "auto_examples/ensemble/plot_forest_importances_faces": (
         "auto_examples/ensemble/plot_forest_importances"
     ),
+    "auto_examples/ensemble/plot_voting_probas": (
+        "auto_examples/ensemble/plot_voting_decision_regions"
+    ),
     "auto_examples/datasets/plot_iris_dataset": (
         "auto_examples/decomposition/plot_pca_iris"
     ),
