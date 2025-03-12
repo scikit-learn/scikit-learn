@@ -446,10 +446,10 @@ Changelog
 :mod:`sklearn.cluster`
 ......................
 
-- |Efficiency| The ``"k-means++"`` initialization of :class:`cluster.KMeans`
-  and :class:`cluster.MiniBatchKMeans` is now faster, especially in multicore
-  settings. :pr:`19002` by :user:`Jon Crall <Erotemic>` and :user:`Jérémie du
-  Boisberranger <jeremiedbb>`.
+- |Efficiency| The "k-means++" initialization of :class:`cluster.KMeans` and
+  :class:`cluster.MiniBatchKMeans` is now faster, especially in multicore
+  settings. :pr:`19002` by :user:`Jon Crall <Erotemic>` and
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |Efficiency| :class:`cluster.KMeans` with `algorithm='elkan'` is now faster
   in multicore settings. :pr:`19052` by
