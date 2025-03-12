@@ -444,6 +444,8 @@ def estimator_html_repr(estimator):
             " with nbviewer.org."
         )
         html_template = (
+            '<link rel="stylesheet" '
+            'href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">'
             f"<style>{style_with_id}</style>"
             f"<body>"
             f'<div id="{container_id}" class="sk-top-container">'
@@ -464,13 +466,49 @@ def estimator_html_repr(estimator):
             is_fitted_icon=is_fitted_icon,
         )
 
-        html_end = (
-            "</div></div>"
-            "<script src="
-            f'"{Path(__file__).with_suffix(".js")}"'
-            "></script>"
-            "</body>"
-        )
+        html_end = """</div></div>
+            <script>
+            function copyToClipboard(text, element) {
+            // Get the parameter prefix from the closest toggleable content
+            const toggleableContent = element.closest('.sk-toggleable__content');
+            const paramPrefix = toggleableContent ?
+                                toggleableContent.dataset.paramPrefix : '';
+            const fullParamName = paramPrefix ? `${paramPrefix}${text}` : text;
+
+            const originalStyle = element.style;
+            const computedStyle = window.getComputedStyle(element);
+            const originalWidth = computedStyle.width;
+            const originalHTML = element.innerHTML.replace('Copied!', '');
+
+            navigator.clipboard.writeText(fullParamName)
+                .then(() => {
+                    element.style.width = originalWidth;
+                    element.style.color = 'green';
+                    element.innerHTML = "Copied!";
+
+                    setTimeout(() => {
+                        element.innerHTML = originalHTML;
+                        element.style = originalStyle;
+                    }, 2000);
+                })
+                .catch(err => console.error('Failed to copy:', err));
+            return false;
+            }
+
+            document.querySelectorAll('.fa-regular.fa-copy').forEach(function(element)
+                {
+                const toggleableContent = element.closest('.sk-toggleable__content');
+                const paramPrefix = toggleableContent ?
+                                    toggleableContent.dataset.paramPrefix : '';
+                const paramName = element.parentElement.nextElementSibling
+                                  .textContent.trim();
+                const fullParamName = paramPrefix ? `${paramPrefix}${paramName}` :
+                                  paramName;
+                element.setAttribute('title', fullParamName);
+            });
+            </script>
+            </body>
+            """
         out.write(html_end)
 
         html_output = out.getvalue()
