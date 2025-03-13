@@ -721,7 +721,7 @@ def test_sample_weight_effect(problem, global_random_seed):
     # giving it weight of 2.
 
     # Uses subsampling for > int(2e5) without weighting
-    # keep samples >255 to make sure bin sampling is used
+    # keep n_samples > 255 to make sure bin sampling is used.
     # sure only unique values are used so SW have no effect on binning.
     n_samples = 500
     n_features = 2
