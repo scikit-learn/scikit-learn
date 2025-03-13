@@ -36,7 +36,7 @@ def test_transform_target_regressor_error():
     )
     with pytest.raises(
         TypeError,
-        match=r"fit\(\) got an unexpected " "keyword argument 'sample_weight'",
+        match=r"fit\(\) got an unexpected keyword argument 'sample_weight'",
     ):
         regr.fit(X, y, sample_weight=sample_weight)
 

@@ -56,9 +56,8 @@ def get_step_message(log, start, end, title, message, details):
         return ""
     res = (
         "-----------------------------------------------\n"
-        + f"### {title}\n\n"
-        + message
-        + "\n\n"
+        f"### {title}\n\n"
+        f"{message}\n\n"
     )
     if details:
         res += (
