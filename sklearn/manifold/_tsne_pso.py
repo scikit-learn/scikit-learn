@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
+from numbers import Integral, Real
 
 import numpy as np
 from scipy.spatial.distance import pdist, squareform
@@ -11,9 +12,10 @@ from scipy.spatial.distance import pdist, squareform
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.decomposition import PCA
 from sklearn.manifold import _utils
-from sklearn.manifold._t_sne import TSNE
+from sklearn.manifold._t_sne import TSNE, _VALID_METRICS
 from sklearn.metrics import pairwise_distances
 from sklearn.utils import check_array, check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions
 
 try:
     import umap
@@ -308,13 +310,16 @@ class TSNEPSO(BaseEstimator, TransformerMixin):
         processors. Currently not used (placeholder for future implementation).
 
     metric : str or callable, default='euclidean'
-        The metric to use when calculating distance between instances in the
-        input space. If metric is a string, it must be one of the options
-        allowed by scipy.spatial.distance.pdist for its metric parameter,
-        or a metric listed in sklearn.pairwise.PAIRWISE_DISTANCE_FUNCTIONS.
+        The metric to use when calculating distance between instances in a
+        feature array. If metric is a string, it must be one of the options
+        allowed by scipy.spatial.distance.pdist for its metric parameter, or
+        a metric listed in pairwise.PAIRWISE_DISTANCE_FUNCTIONS.
         If metric is "precomputed", X is assumed to be a distance matrix.
-        Alternatively, if metric is a callable function, it takes two arrays
-        as input and returns one value indicating the distance.
+        Alternatively, if metric is a callable function, it is called on each
+        pair of instances (rows) and the resulting value recorded. The callable
+        should take two arrays from X as input and return a value indicating
+        the distance between them. The default is "euclidean" which is
+        interpreted as squared euclidean distance.
 
     metric_params : dict, default=None
         Additional keyword arguments for the metric function.
@@ -361,6 +366,34 @@ class TSNEPSO(BaseEstimator, TransformerMixin):
     >>> Y.shape
     (4, 2)
     """
+
+    _parameter_constraints: dict = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "perplexity": [Interval(Real, 0, None, closed="neither")],
+        "early_exaggeration": [Interval(Real, 0, None, closed="neither")],
+        "learning_rate": [
+            StrOptions({"auto"}),
+            Interval(Real, 0, None, closed="neither"),
+        ],
+        "n_iter": [Interval(Integral, 0, None, closed="neither")],
+        "n_particles": [Interval(Integral, 1, None, closed="left")],
+        "inertia_weight": [Interval(Real, 0, 1, closed="both")],
+        "cognitive_weight": [Interval(Real, 0, None, closed="left")],
+        "social_weight": [Interval(Real, 0, None, closed="left")],
+        "use_hybrid": ["boolean"],
+        "degrees_of_freedom": [Interval(Real, 0, None, closed="neither")],
+        "init": [
+            StrOptions({"pca", "tsne", "umap", "random"}),
+            np.ndarray,
+        ],
+        "verbose": ["verbose"],
+        "random_state": ["random_state"],
+        "method": [StrOptions({"pso"})],
+        "angle": [Interval(Real, 0, 1, closed="both")],
+        "n_jobs": [None, Integral],
+        "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
+        "metric_params": [dict, None],
+    }
 
     def __init__(
         self,
@@ -412,48 +445,12 @@ class TSNEPSO(BaseEstimator, TransformerMixin):
         ValueError
             If any parameter is invalid.
         """
-        if self.n_components <= 0:
-            raise ValueError("n_components must be positive")
-
-        if self.perplexity <= 0:
-            raise ValueError("perplexity must be positive")
-
-        if self.early_exaggeration <= 0:
-            raise ValueError("early_exaggeration must be positive")
-
-        if self.n_iter <= 0:
-            raise ValueError("n_iter must be positive")
-
-        if self.n_particles <= 0:
-            raise ValueError("n_particles must be positive")
-
-        if self.inertia_weight < 0 or self.inertia_weight > 1:
-            raise ValueError("inertia_weight must be between 0 and 1")
-
-        if self.cognitive_weight < 0:
-            raise ValueError("cognitive_weight must be non-negative")
-
-        if self.social_weight < 0:
-            raise ValueError("social_weight must be non-negative")
-
-        if self.degrees_of_freedom <= 0:
-            raise ValueError("degrees_of_freedom must be positive")
-
-        if isinstance(self.init, str) and self.init not in [
-            "pca",
-            "tsne",
-            "umap",
-            "random",
-        ]:
-            raise ValueError("init must be one of 'pca', 'tsne', 'umap', 'random'")
+        self._check_params()
 
         if isinstance(self.init, str) and self.init == "umap" and not _UMAP_AVAILABLE:
             warnings.warn(
                 "UMAP is not available. Using PCA initialization instead.", UserWarning
             )
-
-        if self.method != "pso":
-            raise ValueError("Only 'pso' method is currently supported")
 
     def _initialize_particles(self, X, random_state):
         """Initialize particles for PSO optimization.
