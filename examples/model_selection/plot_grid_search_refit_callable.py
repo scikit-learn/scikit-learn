@@ -136,7 +136,6 @@ grid = GridSearchCV(
     scoring="accuracy",
     refit=best_low_complexity,
     return_train_score=True,
-    random_state=42,  # For reproducibility
 )
 
 # %%
@@ -194,15 +193,15 @@ results_df = results_df.with_columns(
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
 
 # Plot 1: Test scores with error bars
-components = results_df["n_components"].to_numpy()
+components = results_df["n_components"]
 colors = ["green" if comp == best_components else "skyblue" for comp in components]
 
 bars = ax1.bar(
     components,
-    results_df["mean_test_score"].to_numpy(),
+    results_df["mean_test_score"],
     width=1.0,
     color=colors,
-    yerr=results_df["std_test_score"].to_numpy(),
+    yerr=results_df["std_test_score"],
     capsize=10,
 )
 
@@ -215,14 +214,14 @@ ax1.axhline(lower, linestyle="--", color="red", label="Best score - 1 std", line
 # Plot 2: Train vs Test scores
 ax2.plot(
     components,
-    results_df["mean_train_score"].to_numpy(),
+    results_df["mean_train_score"],
     "o-",
     color="green",
     label="Train Score",
 )
 ax2.plot(
     components,
-    results_df["mean_test_score"].to_numpy(),
+    results_df["mean_test_score"],
     "o-",
     color="blue",
     label="Test Score",
@@ -232,10 +231,10 @@ ax2.plot(
 for i, (comp, train_score, test_score, train_std, test_std) in enumerate(
     zip(
         components,
-        results_df["mean_train_score"].to_numpy(),
-        results_df["mean_test_score"].to_numpy(),
-        results_df["std_train_score"].to_numpy(),
-        results_df["std_test_score"].to_numpy(),
+        results_df["mean_train_score"],
+        results_df["mean_test_score"],
+        results_df["std_train_score"],
+        results_df["std_test_score"],
     )
 ):
     ax2.fill_between(
