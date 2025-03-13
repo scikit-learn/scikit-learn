@@ -1,54 +1,23 @@
-"""
-t-Distributed Stochastic Neighbor Embedding with Particle Swarm Optimization.
+"""t-Distributed Stochastic Neighbor Embedding with Particle Swarm Optimization."""
 
-This module contains an implementation of t-SNE that uses Particle Swarm
-Optimization (PSO) for the optimization step instead of gradient descent.
-This approach can help avoid local minima and provide better cluster
-separation for some datasets.
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-References
-----------
-.. [1] van der Maaten, L.J.P. and Hinton, G.E., 2008. Visualizing High-Dimensional
-   Data Using t-SNE. Journal of Machine Learning Research, 9(Nov), pp.2579-2605.
-
-.. [2] Kennedy, J. and Eberhart, R., 1995. Particle swarm optimization.
-   In Proceedings of ICNN'95 - International Conference on Neural Networks,
-   Vol. 4, pp. 1942-1948.
-
-.. [3] Shi, Y. and Eberhart, R., 1998. A modified particle swarm optimizer.
-   In 1998 IEEE International Conference on Evolutionary Computation Proceedings,
-   pp. 69-73.
-
-.. [4] Van Der Maaten, L., 2014. Accelerating t-SNE using tree-based algorithms.
-   The Journal of Machine Learning Research, 15(1), pp.3221-3245.
-
-.. [5] Allaoui, M., Belhaouari, S.B., Hedjam, R., Bouanane, K., Kherfi, M.L., 2025.
-   t-SNE-PSO: A PSO-based optimization approach for t-distributed Stochastic Neighbor 
-   Embedding. Expert Systems with Applications.
-"""
-
-# Authors: Mebarka Allaoui
-#          Samir Brahim Belhaouari
-#          Rachid Hedjam
-#          Khadra Bouanane
-#          Mohammed Lamine Kherfi
-#          Otmane Fatteh
-# License: BSD 3 clause
+import warnings
 
 import numpy as np
 from scipy.spatial.distance import pdist, squareform
-import warnings
 
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.utils import check_array, check_random_state
-from sklearn.utils.validation import check_is_fitted, _check_sample_weight
-from sklearn.metrics import pairwise_distances
 from sklearn.decomposition import PCA
 from sklearn.manifold import _utils
 from sklearn.manifold._t_sne import TSNE
+from sklearn.metrics import pairwise_distances
+from sklearn.utils import check_array, check_random_state
 
 try:
     import umap
+
     _UMAP_AVAILABLE = True
 except ImportError:
     _UMAP_AVAILABLE = False
@@ -59,20 +28,20 @@ MACHINE_EPSILON = np.finfo(np.double).eps
 
 def _joint_probabilities(distances, perplexity, verbose=False):
     """Convert distances to joint probabilities P_ij.
-    
+
     Parameters
     ----------
     distances : ndarray of shape (n_samples, n_samples)
         Pairwise distance matrix.
-    
+
     perplexity : float
         Perplexity parameter (related to the number of nearest neighbors).
         Larger datasets usually require a larger perplexity. Consider
         selecting a value between 5 and 50.
-    
+
     verbose : bool, default=False
         Whether to print progress messages.
-        
+
     Returns
     -------
     P : ndarray of shape (n_samples*(n_samples-1)/2,)
@@ -80,54 +49,59 @@ def _joint_probabilities(distances, perplexity, verbose=False):
     """
     # Convert distances to float32 for compatibility with _binary_search_perplexity
     distances = distances.astype(np.float32, copy=False)
-    
+
     # Use scikit-learn's binary search for finding optimal sigma values
-    conditional_P = _utils._binary_search_perplexity(
-        distances, perplexity, verbose
-    )
-    
+    conditional_P = _utils._binary_search_perplexity(distances, perplexity, verbose)
+
     # Symmetrize the probability matrix
     P = conditional_P + conditional_P.T
-    
+
     # Normalize
     sum_P = np.maximum(np.sum(P), MACHINE_EPSILON)
     P = np.maximum(squareform(P) / sum_P, MACHINE_EPSILON)
-    
+
     return P
 
 
-def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
-                  skip_num_points=0, compute_error=True):
+def _kl_divergence(
+    params,
+    P,
+    degrees_of_freedom,
+    n_samples,
+    n_components,
+    skip_num_points=0,
+    compute_error=True,
+):
     """Compute KL divergence between P and Q distributions and its gradient.
-    
+
     Parameters
     ----------
     params : ndarray of shape (n_samples * n_components,)
         Flattened array of current embeddings.
-    
+
     P : ndarray of shape (n_samples*(n_samples-1)/2,)
         Condensed joint probability matrix from high-dimensional space.
-    
+
     degrees_of_freedom : float
         Degrees of freedom of the Student's t-distribution.
-    
+
     n_samples : int
         Number of samples.
-    
+
     n_components : int
         Dimension of the embedded space.
-    
+
     skip_num_points : int, default=0
         Number of points to skip in gradient computation.
-    
+
     compute_error : bool, default=True
         Whether to compute the KL divergence.
-        
+
     Returns
     -------
     kl_divergence : float
         KL divergence between P and Q.
-    
+
     grad : ndarray of shape (n_samples * n_components,)
         Gradient of the KL divergence with respect to the embedding.
     """
@@ -152,7 +126,7 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
     for i in range(skip_num_points, n_samples):
         grad[i] = np.dot(np.ravel(PQd[i], order="K"), X_embedded[i] - X_embedded)
     grad = grad.ravel()
-    
+
     # Scale the gradient
     c = 2.0 * (degrees_of_freedom + 1.0) / degrees_of_freedom
     grad *= c
@@ -160,54 +134,63 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
     return kl_divergence, grad
 
 
-def _gradient_descent_step(params, P, degrees_of_freedom, n_samples, n_components,
-                          momentum=0.8, learning_rate=200.0, min_gain=0.01,
-                          update=None, gains=None):
+def _gradient_descent_step(
+    params,
+    P,
+    degrees_of_freedom,
+    n_samples,
+    n_components,
+    momentum=0.8,
+    learning_rate=200.0,
+    min_gain=0.01,
+    update=None,
+    gains=None,
+):
     """Perform one step of gradient descent with momentum and adaptive gains.
-    
+
     Parameters
     ----------
     params : ndarray of shape (n_samples * n_components,)
         Flattened array of current embeddings.
-    
+
     P : ndarray of shape (n_samples*(n_samples-1)/2,)
         Condensed joint probability matrix from high-dimensional space.
-    
+
     degrees_of_freedom : float
         Degrees of freedom of the Student's t-distribution.
-    
+
     n_samples : int
         Number of samples.
-    
+
     n_components : int
         Dimension of the embedded space.
-    
+
     momentum : float, default=0.8
         Momentum for gradient descent.
-    
+
     learning_rate : float, default=200.0
         Learning rate for gradient descent.
-    
+
     min_gain : float, default=0.01
         Minimum gain for gradient descent.
-    
+
     update : ndarray of shape (n_samples * n_components,), default=None
         Previous update for momentum calculation.
-    
+
     gains : ndarray of shape (n_samples * n_components,), default=None
         Previous gains for adaptive learning rates.
-        
+
     Returns
     -------
     params : ndarray of shape (n_samples * n_components,)
         Updated embeddings.
-    
+
     error : float
         KL divergence between P and Q.
-    
+
     update : ndarray of shape (n_samples * n_components,)
         Updated gradients.
-    
+
     gains : ndarray of shape (n_samples * n_components,)
         Updated gains.
     """
@@ -228,10 +211,10 @@ def _gradient_descent_step(params, P, degrees_of_freedom, n_samples, n_component
     gains[inc] += 0.2
     gains[dec] *= 0.8
     np.clip(gains, min_gain, np.inf, out=gains)
-    
+
     # Apply gains to gradient
     grad *= gains
-    
+
     # Update parameters with momentum
     update = momentum * update - learning_rate * grad
     params += update
@@ -241,62 +224,62 @@ def _gradient_descent_step(params, P, degrees_of_freedom, n_samples, n_component
 
 class TSNEPSO(BaseEstimator, TransformerMixin):
     """t-SNE with Particle Swarm Optimization.
-    
+
     t-Distributed Stochastic Neighbor Embedding (t-SNE) with Particle Swarm
-    Optimization (PSO) for the optimization step instead of gradient descent. 
-    This approach can be more effective at avoiding local minima and often 
+    Optimization (PSO) for the optimization step instead of gradient descent.
+    This approach can be more effective at avoiding local minima and often
     produces embeddings with better cluster separation.
-    
+
     Parameters
     ----------
     n_components : int, default=2
         Dimension of the embedded space.
-    
+
     perplexity : float, default=30.0
         The perplexity is related to the number of nearest neighbors used.
         Larger datasets usually require a larger perplexity. Consider
         selecting a value between 5 and 50.
-        
+
     early_exaggeration : float, default=12.0
         Controls how tight natural clusters in the original space are in
         the embedded space. Larger values ensure more widely separated
         embedding clusters. Only used during the early exaggeration phase.
-        
+
     learning_rate : float or "auto", default="auto"
         The learning rate for t-SNE optimization. If "auto", the learning
         rate is set to max(N / early_exaggeration / 4, 50) where N is the
         sample size. Only used during gradient descent steps in the hybrid
         PSO approach.
-        
+
     n_iter : int, default=1000
         Maximum number of iterations for optimization.
-        
+
     n_particles : int, default=10
         Number of particles for PSO optimization. Larger values can provide
         better exploration at the cost of computational efficiency.
-        
+
     inertia_weight : float, default=0.5
         Inertia weight for PSO. Controls how much of the previous velocity
         is preserved. Values closer to 0 accelerate convergence, while values
         closer to 1 encourage exploration.
-        
+
     cognitive_weight : float, default=1.0
         Cognitive weight for PSO. Controls how much particles are influenced
         by their personal best position.
-        
+
     social_weight : float, default=1.0
         Social weight for PSO. Controls how much particles are influenced
         by the global best position.
-        
+
     use_hybrid : bool, default=True
         Whether to use hybrid PSO with gradient descent steps. When True,
         alternates between PSO updates and gradient descent steps for
         improved convergence.
-        
+
     degrees_of_freedom : float, default=1.0
         Degrees of freedom of the Student's t-distribution. Lower values
         emphasize the separation between clusters.
-        
+
     init : str or ndarray of shape (n_samples, n_components), default='pca'
         Initialization method. Valid options are:
         - 'pca': Principal Component Analysis initialization
@@ -304,26 +287,26 @@ class TSNEPSO(BaseEstimator, TransformerMixin):
         - 'umap': Initialization from UMAP (if available)
         - 'random': Random initialization
         - ndarray: ndarray of shape (n_samples, n_components) to use for initialization
-        
+
     verbose : int, default=0
         Verbosity level. If greater than 0, progress messages are printed.
-        
+
     random_state : int, RandomState instance or None, default=None
         Determines the random number generator for initialization.
         Pass an int for reproducible results across multiple function calls.
-        
+
     method : str, default='pso'
         Method to use for optimization. Currently only 'pso' is supported.
-        
+
     angle : float, default=0.5
         Only used if method='barnes_hut'. This is the trade-off between speed
         and accuracy for Barnes-Hut T-SNE. 'angle' is the angular size (referred
         to as theta in [3]) of a distant node as measured from a point.
-        
+
     n_jobs : int, default=None
         The number of parallel jobs to run for computation. -1 means using all
         processors. Currently not used (placeholder for future implementation).
-        
+
     metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in the
         input space. If metric is a string, it must be one of the options
@@ -332,42 +315,42 @@ class TSNEPSO(BaseEstimator, TransformerMixin):
         If metric is "precomputed", X is assumed to be a distance matrix.
         Alternatively, if metric is a callable function, it takes two arrays
         as input and returns one value indicating the distance.
-        
+
     metric_params : dict, default=None
         Additional keyword arguments for the metric function.
-    
+
     Attributes
     ----------
     embedding_ : ndarray of shape (n_samples, n_components)
         Stores the embedding vectors.
-        
+
     kl_divergence_ : float
         Final KL divergence value (cost function).
-        
+
     n_iter_ : int
         Number of iterations run.
-        
+
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-        
+
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
-        
+
     References
     ----------
     .. [1] van der Maaten, L.J.P. and Hinton, G.E., 2008. "Visualizing
-       High-Dimensional Data Using t-SNE." Journal of Machine Learning 
+       High-Dimensional Data Using t-SNE." Journal of Machine Learning
        Research, 9(Nov), pp.2579-2605.
-       
+
     .. [2] Kennedy, J. and Eberhart, R., 1995. "Particle swarm optimization."
        In Proceedings of ICNN'95 - International Conference on Neural Networks,
        Vol. 4, pp. 1942-1948.
-       
+
     .. [3] Shi, Y. and Eberhart, R., 1998. "A modified particle swarm
-       optimizer." In 1998 IEEE International Conference on Evolutionary 
+       optimizer." In 1998 IEEE International Conference on Evolutionary
        Computation Proceedings, pp. 69-73.
-    
+
     Examples
     --------
     >>> import numpy as np
@@ -378,14 +361,29 @@ class TSNEPSO(BaseEstimator, TransformerMixin):
     >>> Y.shape
     (4, 2)
     """
-    
-    def __init__(self, n_components=2, perplexity=30.0, early_exaggeration=12.0,
-                learning_rate="auto", n_iter=1000, n_particles=10, 
-                inertia_weight=0.5, cognitive_weight=1.0, social_weight=1.0,
-                use_hybrid=True, degrees_of_freedom=1.0, init='pca', 
-                verbose=0, random_state=None, method='pso',
-                angle=0.5, n_jobs=None, metric='euclidean', 
-                metric_params=None):
+
+    def __init__(
+        self,
+        n_components=2,
+        perplexity=30.0,
+        early_exaggeration=12.0,
+        learning_rate="auto",
+        n_iter=1000,
+        n_particles=10,
+        inertia_weight=0.5,
+        cognitive_weight=1.0,
+        social_weight=1.0,
+        use_hybrid=True,
+        degrees_of_freedom=1.0,
+        init="pca",
+        verbose=0,
+        random_state=None,
+        method="pso",
+        angle=0.5,
+        n_jobs=None,
+        metric="euclidean",
+        metric_params=None,
+    ):
         self.n_components = n_components
         self.perplexity = perplexity
         self.early_exaggeration = early_exaggeration
@@ -405,10 +403,10 @@ class TSNEPSO(BaseEstimator, TransformerMixin):
         self.n_jobs = n_jobs
         self.metric = metric
         self.metric_params = metric_params
-    
+
     def _validate_parameters(self):
         """Validate input parameters.
-        
+
         Raises
         ------
         ValueError
@@ -416,54 +414,58 @@ class TSNEPSO(BaseEstimator, TransformerMixin):
         """
         if self.n_components <= 0:
             raise ValueError("n_components must be positive")
-        
+
         if self.perplexity <= 0:
             raise ValueError("perplexity must be positive")
-        
+
         if self.early_exaggeration <= 0:
             raise ValueError("early_exaggeration must be positive")
-        
+
         if self.n_iter <= 0:
             raise ValueError("n_iter must be positive")
-        
+
         if self.n_particles <= 0:
             raise ValueError("n_particles must be positive")
-        
+
         if self.inertia_weight < 0 or self.inertia_weight > 1:
             raise ValueError("inertia_weight must be between 0 and 1")
-        
+
         if self.cognitive_weight < 0:
             raise ValueError("cognitive_weight must be non-negative")
-        
+
         if self.social_weight < 0:
             raise ValueError("social_weight must be non-negative")
-            
+
         if self.degrees_of_freedom <= 0:
             raise ValueError("degrees_of_freedom must be positive")
-            
-        if isinstance(self.init, str) and self.init not in ['pca', 'tsne', 'umap', 'random']:
+
+        if isinstance(self.init, str) and self.init not in [
+            "pca",
+            "tsne",
+            "umap",
+            "random",
+        ]:
             raise ValueError("init must be one of 'pca', 'tsne', 'umap', 'random'")
-            
-        if self.init == 'umap' and not _UMAP_AVAILABLE:
+
+        if self.init == "umap" and not _UMAP_AVAILABLE:
             warnings.warn(
-                "UMAP is not available. Using PCA initialization instead.",
-                UserWarning
+                "UMAP is not available. Using PCA initialization instead.", UserWarning
             )
-            
-        if self.method != 'pso':
+
+        if self.method != "pso":
             raise ValueError("Only 'pso' method is currently supported")
-    
+
     def _initialize_particles(self, X, random_state):
         """Initialize particles for PSO optimization.
-        
+
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
             Input data.
-            
+
         random_state : RandomState instance
             Random number generator.
-            
+
         Returns
         -------
         particles : list of dict
@@ -472,23 +474,22 @@ class TSNEPSO(BaseEstimator, TransformerMixin):
         """
         n_samples = X.shape[0]
         particles = []
-        
+
         # Compute pairwise distances in high-dimensional space
-        if self.metric == 'precomputed':
+        if self.metric == "precomputed":
             distances = X
         else:
             metric_params = self.metric_params or {}
             distances = pairwise_distances(
-                X, metric=self.metric, squared=True, n_jobs=self.n_jobs,
-                **metric_params
+                X, metric=self.metric, squared=True, n_jobs=self.n_jobs, **metric_params
             )
-        
+
         # Compute joint probabilities
         P = _joint_probabilities(distances, self.perplexity, self.verbose > 0)
-        
+
         # Method for initializing embeddings
         embeddings = []
-        
+
         # Generate initial embeddings based on init strategy
         if isinstance(self.init, np.ndarray):
             # Check shape of user-provided initialization
@@ -499,240 +500,261 @@ class TSNEPSO(BaseEstimator, TransformerMixin):
                 )
             # Use provided initialization for the first particle
             embeddings.append(self.init.copy())
-            
-            # For remaining particles, apply small perturbations to the provided embedding
+
+            # For remaining particles, apply small perturbations to the provided
+            # embedding
             for i in range(1, self.n_particles):
                 noise = random_state.normal(0, 0.01, self.init.shape)
                 embeddings.append(self.init + noise)
-                
-        elif self.init == 'tsne':
+
+        elif self.init == "tsne":
             # Use scikit-learn's TSNE for initialization of the first particle
             tsne = TSNE(
                 n_components=self.n_components,
                 perplexity=self.perplexity,
                 n_iter=250,
-                random_state=random_state.randint(0, 2**32 - 1)
+                random_state=random_state.randint(0, 2**32 - 1),
             )
             first_embedding = tsne.fit_transform(X)
             embeddings.append(first_embedding)
-            
+
             # For remaining particles, apply small perturbations to the first embedding
             for i in range(1, self.n_particles):
                 noise = random_state.normal(0, 0.01, first_embedding.shape)
                 embeddings.append(first_embedding + noise)
-                
-        elif self.init == 'umap' and _UMAP_AVAILABLE:
+
+        elif self.init == "umap" and _UMAP_AVAILABLE:
             # Use UMAP for initialization of the first particle
             reducer = umap.UMAP(
                 n_components=self.n_components,
                 n_neighbors=min(int(self.perplexity), n_samples - 1),
                 min_dist=0.1,
-                random_state=random_state.randint(0, 2**32 - 1)
+                random_state=random_state.randint(0, 2**32 - 1),
             )
             first_embedding = reducer.fit_transform(X)
             embeddings.append(first_embedding)
-            
+
             # For remaining particles, apply small perturbations to the first embedding
             for i in range(1, self.n_particles):
                 noise = random_state.normal(0, 0.01, first_embedding.shape)
                 embeddings.append(first_embedding + noise)
-                
-        elif self.init == 'pca':
+
+        elif self.init == "pca":
             # Use PCA for initialization of first particle
             pca = PCA(
                 n_components=self.n_components,
-                random_state=random_state.randint(0, 2**32 - 1)
+                random_state=random_state.randint(0, 2**32 - 1),
             )
             first_embedding = pca.fit_transform(X)
-            
+
             # Normalize to ensure appropriate scaling
             first_embedding = first_embedding / np.std(first_embedding[:, 0]) * 0.0001
             embeddings.append(first_embedding)
-            
+
             # For remaining particles, apply small perturbations
             for i in range(1, self.n_particles):
                 noise = random_state.normal(0, 0.01, first_embedding.shape)
                 embeddings.append(first_embedding + noise)
-                
+
         else:  # 'random'
             for i in range(self.n_particles):
-                embedding = random_state.normal(0, 0.0001, (n_samples, self.n_components))
+                embedding = random_state.normal(
+                    0, 0.0001, (n_samples, self.n_components)
+                )
                 embeddings.append(embedding)
-                
+
         # Initialize particles
-        best_score = float('inf')
+        best_score = float("inf")
         best_position = None
-        
+
         for i in range(self.n_particles):
             # Initial position and velocity
             position = embeddings[i].ravel().copy()
             velocity = random_state.normal(0, 0.0001, position.shape)
-            
+
             # Evaluate fitness
             score, _ = _kl_divergence(
                 position, P, self.degrees_of_freedom, n_samples, self.n_components
             )
-            
+
             # Store particle
             particle = {
-                'position': position.copy(),
-                'velocity': velocity.copy(),
-                'best_position': position.copy(),
-                'best_score': score,
-                'P': P,
-                'grad_update': np.zeros_like(position),
-                'gains': np.ones_like(position)
+                "position": position.copy(),
+                "velocity": velocity.copy(),
+                "best_position": position.copy(),
+                "best_score": score,
+                "P": P,
+                "grad_update": np.zeros_like(position),
+                "gains": np.ones_like(position),
             }
-            
+
             particles.append(particle)
-            
+
             # Update global best
             if score < best_score:
                 best_score = score
                 best_position = position.copy()
-                
+
         # Store global best in all particles
         for particle in particles:
-            particle['global_best_position'] = best_position.copy()
-            particle['global_best_score'] = best_score
-            
+            particle["global_best_position"] = best_position.copy()
+            particle["global_best_score"] = best_score
+
         return particles
-    
+
     def _optimize_embedding(self, X, random_state):
         """Optimize embedding using Particle Swarm Optimization.
-        
+
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
             Input data.
-            
+
         random_state : RandomState instance
             Random number generator.
-            
+
         Returns
         -------
         best_position : ndarray of shape (n_samples, n_components)
             Optimized embedding.
-            
+
         best_cost : float
             Final KL divergence value.
-            
+
         n_iter : int
             Number of iterations run.
         """
         n_samples = X.shape[0]
-        
+
         # Initialize particles
         particles = self._initialize_particles(X, random_state)
-        
+
         # Get global best
-        global_best_position = particles[0]['global_best_position'].copy()
-        global_best_score = particles[0]['global_best_score']
-        
+        global_best_position = particles[0]["global_best_position"].copy()
+        global_best_score = particles[0]["global_best_score"]
+
         # PSO parameters that can be adjusted over iterations
         inertia_weight = self.inertia_weight
         cognitive_weight = self.cognitive_weight
         social_weight = self.social_weight
-        
+
         # Determine learning rate if auto
         if self.learning_rate == "auto":
             learning_rate = max(n_samples / self.early_exaggeration / 4, 50)
         else:
             learning_rate = self.learning_rate
-        
+
         # Optimization loop
         n_iter_without_progress = 0
         best_error = global_best_score
-        
+
         try:
             from tqdm import tqdm
-            iterator = tqdm(range(self.n_iter)) if self.verbose > 0 else range(self.n_iter)
+
+            iterator = (
+                tqdm(range(self.n_iter)) if self.verbose > 0 else range(self.n_iter)
+            )
         except ImportError:
             iterator = range(self.n_iter)
             if self.verbose:
-                print(f"tqdm not available. Not showing progress bar.")
-        
+                print("tqdm not available. Not showing progress bar.")
+
         for iter_num in iterator:
             # Adjust parameters over iterations
             inertia_factor = 1.0 - (iter_num / self.n_iter)
             current_inertia = inertia_weight * inertia_factor
-            
+
             # Optional: adjust cognitive and social weights over time
-            # cognitive_weight = self.cognitive_weight * (1.0 - 0.5 * (iter_num / self.n_iter))
-            # social_weight = self.social_weight * (0.5 + 0.5 * (iter_num / self.n_iter))
-            
+            # cognitive_weight = self.cognitive_weight * (1.0 - 0.5 *
+            #                   (iter_num / self.n_iter))
+            # social_weight = self.social_weight * (0.5 + 0.5 *
+            #               (iter_num / self.n_iter))
+
             for i, particle in enumerate(particles):
                 # Random coefficients for cognitive and social components
-                r1 = random_state.uniform(0, 1, particle['position'].shape)
-                r2 = random_state.uniform(0, 1, particle['position'].shape)
-                
+                r1 = random_state.uniform(0, 1, particle["position"].shape)
+                r2 = random_state.uniform(0, 1, particle["position"].shape)
+
                 # Update velocity
-                cognitive_component = cognitive_weight * r1 * (
-                    particle['best_position'] - particle['position']
+                cognitive_component = (
+                    cognitive_weight
+                    * r1
+                    * (particle["best_position"] - particle["position"])
                 )
-                social_component = social_weight * r2 * (
-                    global_best_position - particle['position']
+                social_component = (
+                    social_weight * r2 * (global_best_position - particle["position"])
                 )
-                
-                particle['velocity'] = (
-                    current_inertia * particle['velocity'] +
-                    cognitive_component +
-                    social_component
+
+                particle["velocity"] = (
+                    current_inertia * particle["velocity"]
+                    + cognitive_component
+                    + social_component
                 )
-                
+
                 # Update position
-                old_position = particle['position'].copy()
-                particle['position'] = particle['position'] + particle['velocity']
-                
+                old_position = particle["position"].copy()
+                particle["position"] = particle["position"] + particle["velocity"]
+
                 # Hybrid approach: Apply gradient descent
                 if self.use_hybrid and i % 2 == 0:  # Apply to every other particle
-                    particle['position'], _, particle['grad_update'], particle['gains'] = _gradient_descent_step(
-                        particle['position'],
-                        particle['P'],
+                    (
+                        particle["position"],
+                        _,
+                        particle["grad_update"],
+                        particle["gains"],
+                    ) = _gradient_descent_step(
+                        particle["position"],
+                        particle["P"],
                         self.degrees_of_freedom,
                         n_samples,
                         self.n_components,
                         momentum=0.5,
                         learning_rate=learning_rate,
                         min_gain=0.01,
-                        update=particle['grad_update'],
-                        gains=particle['gains']
+                        update=particle["grad_update"],
+                        gains=particle["gains"],
                     )
-                
+
                 # Evaluate fitness
                 score, _ = _kl_divergence(
-                    particle['position'],
-                    particle['P'],
+                    particle["position"],
+                    particle["P"],
                     self.degrees_of_freedom,
                     n_samples,
-                    self.n_components
+                    self.n_components,
                 )
-                
+
                 # Update personal best
-                if score < particle['best_score']:
-                    particle['best_position'] = particle['position'].copy()
-                    particle['best_score'] = score
-                    
+                if score < particle["best_score"]:
+                    particle["best_position"] = particle["position"].copy()
+                    particle["best_score"] = score
+
                     # Update global best
                     if score < global_best_score:
-                        global_best_position = particle['position'].copy()
+                        global_best_position = particle["position"].copy()
                         global_best_score = score
-                        
+
                         # Report progress if verbose
                         if self.verbose > 0:
-                            if 'tqdm' in globals():
-                                tqdm.write(f"Iteration {iter_num}: New best score = {score:.4f}")
+                            if "tqdm" in globals():
+                                tqdm.write(
+                                    f"Iteration {iter_num}: New best score = "
+                                    f"{score:.4f}"
+                                )
                             else:
-                                print(f"Iteration {iter_num}: New best score = {score:.4f}")
-                        
+                                print(
+                                    f"Iteration {iter_num}: New best score = "
+                                    f"{score:.4f}"
+                                )
+
                         # Reset progress counter
                         n_iter_without_progress = 0
-                
+
             # Update global best for all particles
             for particle in particles:
-                particle['global_best_position'] = global_best_position.copy()
-                particle['global_best_score'] = global_best_score
-            
+                particle["global_best_position"] = global_best_position.copy()
+                particle["global_best_score"] = global_best_score
+
             # Check for convergence
             if global_best_score < best_error:
                 best_error = global_best_score
@@ -743,36 +765,40 @@ class TSNEPSO(BaseEstimator, TransformerMixin):
                     if self.verbose > 0:
                         print(f"Converged after {iter_num + 1} iterations")
                     break
-        
+
         # Reshape best position to embedding
         best_position = global_best_position.reshape(n_samples, self.n_components)
         best_cost = global_best_score
-        
+
         return best_position, best_cost, iter_num + 1
-    
+
     def fit(self, X, y=None):
         """Fit t-SNE model to X.
-        
+
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features) or (n_samples, n_samples)
             If the metric is 'precomputed' X must be a square distance
             matrix. Otherwise it contains a sample per row.
-            
+
         y : Ignored
             Not used, present for API consistency by convention.
-            
+
         Returns
         -------
         self : object
             Returns the instance itself.
         """
         self._validate_parameters()
-        
+
         # Validate input
         if self.metric == "precomputed":
-            X = check_array(X, ensure_min_samples=2, dtype=np.float64,
-                           accept_sparse=['csr', 'csc', 'coo'])
+            X = check_array(
+                X,
+                ensure_min_samples=2,
+                dtype=np.float64,
+                accept_sparse=["csr", "csc", "coo"],
+            )
             if X.shape[0] != X.shape[1]:
                 raise ValueError(
                     f"X should be a square distance matrix but has shape {X.shape}"
@@ -780,12 +806,16 @@ class TSNEPSO(BaseEstimator, TransformerMixin):
             if np.any(X < 0):
                 raise ValueError("Precomputed distance contains negative values")
         else:
-            X = check_array(X, ensure_min_samples=2, dtype=np.float64,
-                           accept_sparse=['csr', 'csc', 'coo'])
-            
+            X = check_array(
+                X,
+                ensure_min_samples=2,
+                dtype=np.float64,
+                accept_sparse=["csr", "csc", "coo"],
+            )
+
         # Store number of features
         self.n_features_in_ = X.shape[1]
-            
+
         # Check perplexity
         n_samples = X.shape[0]
         if n_samples - 1 < 3 * self.perplexity:
@@ -795,28 +825,29 @@ class TSNEPSO(BaseEstimator, TransformerMixin):
                 f"Using perplexity = {perplexity} instead."
             )
             self.perplexity = perplexity
-        
+
         # Initialize random state
         random_state = check_random_state(self.random_state)
-        
+
         # Run optimization
         self.embedding_, self.kl_divergence_, self.n_iter_ = self._optimize_embedding(
-            X, random_state)
-        
+            X, random_state
+        )
+
         return self
-    
+
     def fit_transform(self, X, y=None):
         """Fit t-SNE model to X and return the embedding.
-        
+
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features) or (n_samples, n_samples)
             If the metric is 'precomputed' X must be a square distance
             matrix. Otherwise it contains a sample per row.
-            
+
         y : Ignored
             Not used, present for API consistency by convention.
-            
+
         Returns
         -------
         embedding : ndarray of shape (n_samples, n_components)
@@ -824,19 +855,19 @@ class TSNEPSO(BaseEstimator, TransformerMixin):
         """
         self.fit(X)
         return self.embedding_
-    
+
     def transform(self, X):
         """Transform X to the embedded space.
-        
+
         This is not implemented for t-SNE, as it does not support the transform
         method. New data points cannot be transformed to the embedded space
         without recomputing the full embedding.
-        
+
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
             New data to be transformed.
-            
+
         Raises
         ------
         NotImplementedError
@@ -847,4 +878,4 @@ class TSNEPSO(BaseEstimator, TransformerMixin):
             "New data points cannot be transformed to the embedded space "
             "without recomputing the full embedding. "
             "Use fit_transform(X) on the full dataset instead."
-        ) 
+        )
