@@ -11,7 +11,6 @@ from sklearn.cluster._optics import _extend_region, _extract_xi_labels
 from sklearn.cluster.tests.common import generate_clustered_data
 from sklearn.datasets import make_blobs
 from sklearn.exceptions import DataConversionWarning, EfficiencyWarning
-from sklearn.metrics import adjusted_rand_score
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.utils import shuffle
@@ -82,10 +81,10 @@ def test_the_extract_xi_labels(ordering, clusters, expected):
     assert_array_equal(labels, expected)
 
 
-def test_extract_xi(global_dtype, global_random_seed):
+def test_extract_xi(global_dtype):
     # small and easy test (no clusters around other clusters)
     # but with a clear noise data.
-    rng = np.random.RandomState(global_random_seed % 10)
+    rng = np.random.RandomState(0)
     n_points_per_cluster = 5
 
     C1 = [-5, -2] + 0.8 * rng.randn(n_points_per_cluster, 2)
@@ -104,15 +103,13 @@ def test_extract_xi(global_dtype, global_random_seed):
     clust = OPTICS(
         min_samples=3, min_cluster_size=2, max_eps=20, cluster_method="xi", xi=0.4
     ).fit(X)
-    ari_score = adjusted_rand_score(expected_labels, clust.labels_)
-    assert ari_score > 0.65
+    assert_array_equal(clust.labels_, expected_labels)
 
     # check float min_samples and min_cluster_size
     clust = OPTICS(
         min_samples=0.1, min_cluster_size=0.08, max_eps=20, cluster_method="xi", xi=0.4
     ).fit(X)
-    ari_score = adjusted_rand_score(expected_labels, clust.labels_)
-    assert ari_score > 0.65
+    assert_array_equal(clust.labels_, expected_labels)
 
     X = np.vstack((C1, C2, C3, C4, C5, np.array([[100, 100]] * 2), C6)).astype(
         global_dtype, copy=False
@@ -126,8 +123,7 @@ def test_extract_xi(global_dtype, global_random_seed):
         min_samples=3, min_cluster_size=3, max_eps=20, cluster_method="xi", xi=0.3
     ).fit(X)
     # this may fail if the predecessor correction is not at work!
-    ari_score = adjusted_rand_score(expected_labels, clust.labels_)
-    assert ari_score > 0.65
+    assert_array_equal(clust.labels_, expected_labels)
 
     C1 = [[0, 0], [0, 0.1], [0, -0.1], [0.1, 0]]
     C2 = [[10, 10], [10, 9], [10, 11], [9, 10]]
@@ -139,8 +135,7 @@ def test_extract_xi(global_dtype, global_random_seed):
     clust = OPTICS(
         min_samples=2, min_cluster_size=2, max_eps=np.inf, cluster_method="xi", xi=0.04
     ).fit(X)
-    ari_score = adjusted_rand_score(expected_labels, clust.labels_)
-    assert ari_score > 0.65
+    assert_array_equal(clust.labels_, expected_labels)
 
 
 def test_cluster_hierarchy_(global_dtype, global_random_seed):
