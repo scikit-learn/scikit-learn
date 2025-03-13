@@ -204,8 +204,8 @@ class DecisionBoundaryDisplay:
             Object that stores computed values.
         """
         check_matplotlib_support("DecisionBoundaryDisplay.plot")
-        import matplotlib as mpl  # noqa
-        import matplotlib.pyplot as plt  # noqa
+        import matplotlib as mpl
+        import matplotlib.pyplot as plt
 
         if plot_method not in ("contourf", "contour", "pcolormesh"):
             raise ValueError(
@@ -425,7 +425,7 @@ class DecisionBoundaryDisplay:
         """
         check_matplotlib_support(f"{cls.__name__}.from_estimator")
         check_is_fitted(estimator)
-        import matplotlib as mpl  # noqa
+        import matplotlib as mpl
 
         if not grid_resolution > 1:
             raise ValueError(

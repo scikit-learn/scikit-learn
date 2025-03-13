@@ -53,9 +53,9 @@ from .utils.validation import (
 )
 
 __all__ = [
-    "MultiOutputRegressor",
-    "MultiOutputClassifier",
     "ClassifierChain",
+    "MultiOutputClassifier",
+    "MultiOutputRegressor",
     "RegressorChain",
 ]
 

@@ -643,9 +643,9 @@ def write_pip_lock_file(build_metadata):
 
     json_output = execute_command(["conda", "info", "--json"])
     conda_info = json.loads(json_output)
-    environment_folder = [
+    environment_folder = next(
         each for each in conda_info["envs"] if each.endswith(environment_name)
-    ][0]
+    )
     environment_path = Path(environment_folder)
     pip_compile_path = environment_path / "bin" / "pip-compile"
 
