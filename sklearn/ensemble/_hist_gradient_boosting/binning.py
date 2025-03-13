@@ -15,14 +15,14 @@ from ...base import BaseEstimator, TransformerMixin
 from ...utils import check_array, check_random_state
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils.parallel import Parallel, delayed
-from ...utils.stats import _weighted_percentile
+from ...utils.stats import _averaged_weighted_percentile
 from ...utils.validation import check_is_fitted
 from ._binning import _map_to_bins
 from ._bitset import set_bitset_memoryview
 from .common import ALMOST_INF, X_BINNED_DTYPE, X_BITSET_INNER_DTYPE, X_DTYPE
 
 
-def _find_binning_thresholds(col_data, sample_weight, max_bins):
+def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
     """Extract quantiles from a continuous feature.
 
     Missing values are ignored for finding the thresholds.
@@ -52,23 +52,29 @@ def _find_binning_thresholds(col_data, sample_weight, max_bins):
     # here. Sorting also returns a contiguous array.
     sort_idx = np.argsort(col_data)
     col_data = col_data[sort_idx]
-    sample_weight = sample_weight[sort_idx]
     distinct_values = np.unique(col_data).astype(X_DTYPE)
     if sample_weight is None and len(distinct_values) <= max_bins:
         midpoints = distinct_values[:-1] + distinct_values[1:]
         midpoints *= 0.5
+    elif sample_weight is None:
+        percentiles = np.linspace(0, 100, num=max_bins + 1)
+        percentiles = percentiles[1:-1]
+        midpoints = np.percentile(col_data, percentiles, method="averaged_inverted_cdf")
+        assert midpoints.shape[0] == max_bins - 1
+
     else:
         # We could compute approximate midpoint percentiles using the output of
         # np.unique(col_data, return_counts) instead but this is more
         # work and the performance benefit will be limited because we
         # work on a fixed-size subsample of the full data.
+        sample_weight = sample_weight[sort_idx]
         percentiles = np.linspace(0, 100, num=max_bins + 1)
         percentiles = percentiles[1:-1]
         midpoints = np.array(
             [
-                _weighted_percentile(col_data, sample_weight, percentile).astype(
-                    X_DTYPE
-                )
+                _averaged_weighted_percentile(
+                    col_data, sample_weight, percentile
+                ).astype(X_DTYPE)
                 for percentile in percentiles
             ]
         )
@@ -206,17 +212,17 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         X = check_array(X, dtype=[X_DTYPE], ensure_all_finite=False)
         max_bins = self.n_bins - 1
 
-        sample_weight_bin = np.ones(X.shape[0])
+        subsampling_probabilities = np.ones(X.shape[0])
         if sample_weight is not None:
-            sample_weight_bin = sample_weight / np.sum(sample_weight)
+            subsampling_probabilities = sample_weight / np.sum(sample_weight)
 
         rng = check_random_state(self.random_state)
         if self.subsample is not None and X.shape[0] > self.subsample:
             subset = rng.choice(
-                X.shape[0], self.subsample, p=sample_weight_bin, replace=False
+                X.shape[0], self.subsample, p=subsampling_probabilities, replace=False
             )
             X = X.take(subset, axis=0)
-            # TO DO: add switch so that weighted percentile is not used
+            sample_weight = None
 
         if self.is_categorical is None:
             self.is_categorical_ = np.zeros(X.shape[1], dtype=np.uint8)
@@ -248,7 +254,9 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         n_bins_non_missing = [None] * n_features
 
         non_cat_thresholds = Parallel(n_jobs=self.n_threads, backend="threading")(
-            delayed(_find_binning_thresholds)(X[:, f_idx], sample_weight_bin, max_bins)
+            delayed(_find_binning_thresholds)(
+                X[:, f_idx], max_bins, sample_weight=sample_weight
+            )
             for f_idx in range(n_features)
             if not self.is_categorical_[f_idx]
         )

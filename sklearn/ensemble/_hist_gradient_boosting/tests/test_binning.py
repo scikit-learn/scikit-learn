@@ -36,6 +36,12 @@ def test_find_binning_thresholds_regular_data():
     )
     assert_allclose(bin_thresholds, [2, 4, 6, 8])
 
+    bin_thresholds = _find_binning_thresholds(data, sample_weight=None, max_bins=10)
+    assert_allclose(bin_thresholds, [1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+    bin_thresholds = _find_binning_thresholds(data, sample_weight=None, max_bins=5)
+    assert_allclose(bin_thresholds, [2, 4, 6, 8])
+
 
 def test_find_binning_thresholds_small_regular_data():
     data = np.linspace(0, 10, 11)
