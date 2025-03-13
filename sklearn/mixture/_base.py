@@ -16,7 +16,7 @@ from ..base import BaseEstimator, DensityMixin, _fit_context
 from ..cluster import kmeans_plusplus
 from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state
-from ..utils._array_api import get_namespace
+from ..utils._array_api import get_namespace, get_namespace_and_device
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.validation import check_is_fitted, validate_data
 
@@ -120,8 +120,11 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             )
             resp[xp.arange(n_samples), label] = 1
         elif self.init_params == "random":
+            xp, _, device = get_namespace_and_device(X)
             resp = xp.asarray(
-                random_state.uniform(size=(n_samples, self.n_components)), dtype=X.dtype
+                random_state.uniform(size=(n_samples, self.n_components)),
+                dtype=X.dtype,
+                device=device,
             )
             resp /= xp.sum(resp, axis=1)[:, xp.newaxis]
         elif self.init_params == "random_from_data":

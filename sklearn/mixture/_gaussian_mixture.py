@@ -7,7 +7,7 @@ import numpy as np
 from scipy import linalg
 
 from ..utils import check_array
-from ..utils._array_api import get_namespace
+from ..utils._array_api import get_namespace, get_namespace_and_device
 from ..utils._param_validation import StrOptions
 from ..utils.extmath import row_norms
 from ._base import BaseMixture, _check_shape
@@ -485,7 +485,7 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
     -------
     log_prob : array, shape (n_samples, n_components)
     """
-    xp, _ = get_namespace(X, means, precisions_chol)
+    xp, _, device = get_namespace_and_device(X, means, precisions_chol)
     n_samples, n_features = X.shape
     n_components, _ = means.shape
     # The determinant of the precision matrix from the Cholesky decomposition
@@ -524,7 +524,11 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
     # Since we are using the precision of the Cholesky decomposition,
     # `- 0.5 * log_det_precision` becomes `+ log_det_precision_chol`
     return (
-        -0.5 * (n_features * xp.log(xp.asarray(2 * xp.pi, dtype=X.dtype)) + log_prob)
+        -0.5
+        * (
+            n_features * xp.log(xp.asarray(2 * xp.pi, dtype=X.dtype, device=device))
+            + log_prob
+        )
         + log_det
     )
 
