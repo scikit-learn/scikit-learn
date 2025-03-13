@@ -447,7 +447,6 @@ class TSNEPSO(BaseEstimator, TransformerMixin):
         ]:
             raise ValueError("init must be one of 'pca', 'tsne', 'umap', 'random'")
 
-        # Only check for UMAP availability if init is the string "umap"
         if isinstance(self.init, str) and self.init == "umap" and not _UMAP_AVAILABLE:
             warnings.warn(
                 "UMAP is not available. Using PCA initialization instead.", UserWarning
