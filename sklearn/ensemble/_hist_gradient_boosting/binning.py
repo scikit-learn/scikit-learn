@@ -6,7 +6,8 @@ Bin thresholds are computed with the quantiles so that each bin contains
 approximately the same number of samples.
 """
 
-# Author: Nicolas Hug
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 
@@ -202,7 +203,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
                 )
             )
 
-        X = check_array(X, dtype=[X_DTYPE], force_all_finite=False)
+        X = check_array(X, dtype=[X_DTYPE], ensure_all_finite=False)
         max_bins = self.n_bins - 1
 
         sample_weight_bin = np.ones(X.shape[0])
@@ -289,7 +290,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         X_binned : array-like of shape (n_samples, n_features)
             The binned data (fortran-aligned).
         """
-        X = check_array(X, dtype=[X_DTYPE], force_all_finite=False)
+        X = check_array(X, dtype=[X_DTYPE], ensure_all_finite=False)
         check_is_fitted(self)
         if X.shape[1] != self.n_bins_non_missing_.shape[0]:
             raise ValueError(

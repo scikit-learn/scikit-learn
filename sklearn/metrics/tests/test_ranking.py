@@ -1,5 +1,5 @@
+import math
 import re
-import warnings
 
 import numpy as np
 import pytest
@@ -34,7 +34,6 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
-    ignore_warnings,
 )
 from sklearn.utils.extmath import softmax
 from sklearn.utils.fixes import CSR_CONTAINERS
@@ -356,6 +355,7 @@ def test_roc_curve_toydata():
     assert_array_almost_equal(fpr, [0, 1])
     assert_almost_equal(roc_auc, 0.5)
 
+    # case with no positive samples
     y_true = [0, 0]
     y_score = [0.25, 0.75]
     # assert UndefinedMetricWarning because of no positive sample in y_true
@@ -364,12 +364,17 @@ def test_roc_curve_toydata():
     )
     with pytest.warns(UndefinedMetricWarning, match=expected_message):
         tpr, fpr, _ = roc_curve(y_true, y_score)
-
-    with pytest.raises(ValueError):
-        roc_auc_score(y_true, y_score)
     assert_array_almost_equal(tpr, [0.0, 0.5, 1.0])
     assert_array_almost_equal(fpr, [np.nan, np.nan, np.nan])
+    expected_message = (
+        "Only one class is present in y_true. "
+        "ROC AUC score is not defined in that case."
+    )
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
+        auc = roc_auc_score(y_true, y_score)
+    assert math.isnan(auc)
 
+    # case with no negative samples
     y_true = [1, 1]
     y_score = [0.25, 0.75]
     # assert UndefinedMetricWarning because of no negative sample in y_true
@@ -378,27 +383,31 @@ def test_roc_curve_toydata():
     )
     with pytest.warns(UndefinedMetricWarning, match=expected_message):
         tpr, fpr, _ = roc_curve(y_true, y_score)
-
-    with pytest.raises(ValueError):
-        roc_auc_score(y_true, y_score)
     assert_array_almost_equal(tpr, [np.nan, np.nan, np.nan])
     assert_array_almost_equal(fpr, [0.0, 0.5, 1.0])
+    expected_message = (
+        "Only one class is present in y_true. "
+        "ROC AUC score is not defined in that case."
+    )
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
+        auc = roc_auc_score(y_true, y_score)
+    assert math.isnan(auc)
 
     # Multi-label classification task
     y_true = np.array([[0, 1], [0, 1]])
     y_score = np.array([[0, 1], [0, 1]])
-    with pytest.raises(ValueError):
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
         roc_auc_score(y_true, y_score, average="macro")
-    with pytest.raises(ValueError):
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
         roc_auc_score(y_true, y_score, average="weighted")
     assert_almost_equal(roc_auc_score(y_true, y_score, average="samples"), 1.0)
     assert_almost_equal(roc_auc_score(y_true, y_score, average="micro"), 1.0)
 
     y_true = np.array([[0, 1], [0, 1]])
     y_score = np.array([[0, 1], [1, 0]])
-    with pytest.raises(ValueError):
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
         roc_auc_score(y_true, y_score, average="macro")
-    with pytest.raises(ValueError):
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
         roc_auc_score(y_true, y_score, average="weighted")
     assert_almost_equal(roc_auc_score(y_true, y_score, average="samples"), 0.5)
     assert_almost_equal(roc_auc_score(y_true, y_score, average="micro"), 0.5)
@@ -815,29 +824,18 @@ def test_auc_score_non_binary_class():
     y_pred = rng.rand(10)
     # y_true contains only one class value
     y_true = np.zeros(10, dtype="int")
-    err_msg = "ROC AUC score is not defined"
-    with pytest.raises(ValueError, match=err_msg):
+    warn_message = (
+        "Only one class is present in y_true. "
+        "ROC AUC score is not defined in that case."
+    )
+    with pytest.warns(UndefinedMetricWarning, match=warn_message):
         roc_auc_score(y_true, y_pred)
     y_true = np.ones(10, dtype="int")
-    with pytest.raises(ValueError, match=err_msg):
+    with pytest.warns(UndefinedMetricWarning, match=warn_message):
         roc_auc_score(y_true, y_pred)
     y_true = np.full(10, -1, dtype="int")
-    with pytest.raises(ValueError, match=err_msg):
+    with pytest.warns(UndefinedMetricWarning, match=warn_message):
         roc_auc_score(y_true, y_pred)
-
-    with warnings.catch_warnings(record=True):
-        rng = check_random_state(404)
-        y_pred = rng.rand(10)
-        # y_true contains only one class value
-        y_true = np.zeros(10, dtype="int")
-        with pytest.raises(ValueError, match=err_msg):
-            roc_auc_score(y_true, y_pred)
-        y_true = np.ones(10, dtype="int")
-        with pytest.raises(ValueError, match=err_msg):
-            roc_auc_score(y_true, y_pred)
-        y_true = np.full(10, -1, dtype="int")
-        with pytest.raises(ValueError, match=err_msg):
-            roc_auc_score(y_true, y_pred)
 
 
 @pytest.mark.parametrize("curve_func", CURVE_FUNCS)
@@ -876,7 +874,7 @@ def test_binary_clf_curve_implicit_pos_label(curve_func):
 
 
 # TODO(1.7): Update test to check for error when bytes support is removed.
-@ignore_warnings(category=FutureWarning)
+@pytest.mark.filterwarnings("ignore:Support for labels represented as bytes")
 @pytest.mark.parametrize("curve_func", [precision_recall_curve, roc_curve])
 @pytest.mark.parametrize("labels_type", ["list", "array"])
 def test_binary_clf_curve_implicit_bytes_pos_label(curve_func, labels_type):
@@ -1333,8 +1331,8 @@ def test_det_curve_perfect_scores(y_true):
     [
         ([0, 1], [0, 0.5, 1], "inconsistent numbers of samples"),
         ([0, 1, 1], [0, 0.5], "inconsistent numbers of samples"),
-        ([0, 0, 0], [0, 0.5, 1], "Only one class present in y_true"),
-        ([1, 1, 1], [0, 0.5, 1], "Only one class present in y_true"),
+        ([0, 0, 0], [0, 0.5, 1], "Only one class is present in y_true"),
+        ([1, 1, 1], [0, 0.5, 1], "Only one class is present in y_true"),
         (
             ["cancer", "cancer", "not cancer"],
             [0.2, 0.3, 0.8],

@@ -419,21 +419,23 @@ def test_loss_dtype(
         if sample_weight is not None:
             sample_weight = create_memmap_backed_data(sample_weight)
 
-    loss.loss(
+    l = loss.loss(
         y_true=y_true,
         raw_prediction=raw_prediction,
         sample_weight=sample_weight,
         loss_out=out1,
         n_threads=n_threads,
     )
-    loss.gradient(
+    assert l is out1 if out1 is not None else True
+    g = loss.gradient(
         y_true=y_true,
         raw_prediction=raw_prediction,
         sample_weight=sample_weight,
         gradient_out=out2,
         n_threads=n_threads,
     )
-    loss.loss_gradient(
+    assert g is out2 if out2 is not None else True
+    l, g = loss.loss_gradient(
         y_true=y_true,
         raw_prediction=raw_prediction,
         sample_weight=sample_weight,
@@ -441,9 +443,11 @@ def test_loss_dtype(
         gradient_out=out2,
         n_threads=n_threads,
     )
+    assert l is out1 if out1 is not None else True
+    assert g is out2 if out2 is not None else True
     if out1 is not None and loss.is_multiclass:
         out1 = np.empty_like(raw_prediction, dtype=dtype_out)
-    loss.gradient_hessian(
+    g, h = loss.gradient_hessian(
         y_true=y_true,
         raw_prediction=raw_prediction,
         sample_weight=sample_weight,
@@ -451,13 +455,15 @@ def test_loss_dtype(
         hessian_out=out2,
         n_threads=n_threads,
     )
+    assert g is out1 if out1 is not None else True
+    assert h is out2 if out2 is not None else True
     loss(y_true=y_true, raw_prediction=raw_prediction, sample_weight=sample_weight)
     loss.fit_intercept_only(y_true=y_true, sample_weight=sample_weight)
     loss.constant_to_optimal_zero(y_true=y_true, sample_weight=sample_weight)
     if hasattr(loss, "predict_proba"):
         loss.predict_proba(raw_prediction=raw_prediction)
     if hasattr(loss, "gradient_proba"):
-        loss.gradient_proba(
+        g, p = loss.gradient_proba(
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
@@ -465,6 +471,8 @@ def test_loss_dtype(
             proba_out=out2,
             n_threads=n_threads,
         )
+        assert g is out1 if out1 is not None else True
+        assert p is out2 if out2 is not None else True
 
 
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
@@ -1066,6 +1074,36 @@ def test_multinomial_loss_fit_intercept_only():
         baseline_prediction = loss.fit_intercept_only(y_true=y_train)
         assert baseline_prediction.dtype == y_train.dtype
         assert_all_finite(baseline_prediction)
+
+
+def test_multinomial_cy_gradient(global_random_seed):
+    """Test that Multinomial cy_gradient gives the same result as gradient.
+
+    CyHalfMultinomialLoss does not inherit from CyLossFunction and has a different API.
+    As a consequence, the functions like `loss` and `gradient` do not rely on `cy_loss`
+    and `cy_gradient`.
+    """
+    n_samples = 100
+    n_classes = 5
+    loss = HalfMultinomialLoss(n_classes=n_classes)
+    y_true, raw_prediction = random_y_true_raw_prediction(
+        loss=loss,
+        n_samples=n_samples,
+        seed=global_random_seed,
+    )
+    sample_weight = np.linspace(0.1, 2, num=n_samples)
+
+    grad1 = loss.closs._test_cy_gradient(
+        y_true=y_true,
+        raw_prediction=raw_prediction,  # needs to be C-contiguous
+        sample_weight=sample_weight,
+    )
+    grad2 = loss.gradient(
+        y_true=y_true,
+        raw_prediction=raw_prediction,
+        sample_weight=sample_weight,
+    )
+    assert_allclose(grad1, grad2)
 
 
 def test_binomial_and_multinomial_loss(global_random_seed):

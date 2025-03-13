@@ -34,6 +34,7 @@ from sklearn.utils import (
     check_X_y,
     deprecated,
 )
+from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
 from sklearn.utils._mocking import (
     MockDataFrame,
     _MockEstimatorOnOffPrediction,
@@ -41,13 +42,12 @@ from sklearn.utils._mocking import (
 from sklearn.utils._testing import (
     SkipTest,
     TempMemmap,
+    _array_api_for_tests,
     _convert_container,
     assert_allclose,
     assert_allclose_dense_sparse,
     assert_array_equal,
-    assert_no_warnings,
     create_memmap_backed_data,
-    ignore_warnings,
     skip_if_array_api_compat_not_configured,
 )
 from sklearn.utils.estimator_checks import _NotAnArray
@@ -57,7 +57,6 @@ from sklearn.utils.fixes import (
     CSR_CONTAINERS,
     DIA_CONTAINERS,
     DOK_CONTAINERS,
-    parse_version,
 )
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
@@ -69,6 +68,7 @@ from sklearn.utils.validation import (
     _check_sample_weight,
     _check_y,
     _deprecate_positional_args,
+    _estimator_has,
     _get_feature_names,
     _is_fitted,
     _is_pandas_df,
@@ -85,6 +85,7 @@ from sklearn.utils.validation import (
     check_scalar,
     column_or_1d,
     has_fit_parameter,
+    validate_data,
 )
 
 
@@ -152,7 +153,7 @@ def test_as_float_array():
 def test_as_float_array_nan(X):
     X[5, 0] = np.nan
     X[6, 1] = np.nan
-    X_converted = as_float_array(X, force_all_finite="allow-nan")
+    X_converted = as_float_array(X, ensure_all_finite="allow-nan")
     assert_allclose_dense_sparse(X_converted, X)
 
 
@@ -200,18 +201,19 @@ def test_ordering():
 
 
 @pytest.mark.parametrize(
-    "value, force_all_finite", [(np.inf, False), (np.nan, "allow-nan"), (np.nan, False)]
+    "value, ensure_all_finite",
+    [(np.inf, False), (np.nan, "allow-nan"), (np.nan, False)],
 )
 @pytest.mark.parametrize("retype", [np.asarray, sp.csr_matrix])
-def test_check_array_force_all_finite_valid(value, force_all_finite, retype):
+def test_check_array_ensure_all_finite_valid(value, ensure_all_finite, retype):
     X = retype(np.arange(4).reshape(2, 2).astype(float))
     X[0, 0] = value
-    X_checked = check_array(X, force_all_finite=force_all_finite, accept_sparse=True)
+    X_checked = check_array(X, ensure_all_finite=ensure_all_finite, accept_sparse=True)
     assert_allclose_dense_sparse(X, X_checked)
 
 
 @pytest.mark.parametrize(
-    "value, input_name, force_all_finite, match_msg",
+    "value, input_name, ensure_all_finite, match_msg",
     [
         (np.inf, "", True, "Input contains infinity"),
         (np.inf, "X", True, "Input X contains infinity"),
@@ -224,14 +226,14 @@ def test_check_array_force_all_finite_valid(value, force_all_finite, retype):
             np.nan,
             "",
             "allow-inf",
-            'force_all_finite should be a bool or "allow-nan"',
+            "ensure_all_finite should be a bool or 'allow-nan'",
         ),
         (np.nan, "", 1, "Input contains NaN"),
     ],
 )
 @pytest.mark.parametrize("retype", [np.asarray, sp.csr_matrix])
-def test_check_array_force_all_finiteinvalid(
-    value, input_name, force_all_finite, match_msg, retype
+def test_check_array_ensure_all_finite_invalid(
+    value, input_name, ensure_all_finite, match_msg, retype
 ):
     X = retype(np.arange(4).reshape(2, 2).astype(np.float64))
     X[0, 0] = value
@@ -239,7 +241,7 @@ def test_check_array_force_all_finiteinvalid(
         check_array(
             X,
             input_name=input_name,
-            force_all_finite=force_all_finite,
+            ensure_all_finite=ensure_all_finite,
             accept_sparse=True,
         )
 
@@ -286,17 +288,17 @@ def test_check_array_links_to_imputer_doc_only_for_X(input_name, retype):
         assert extended_msg in ctx.value.args[0]
 
 
-def test_check_array_force_all_finite_object():
+def test_check_array_ensure_all_finite_object():
     X = np.array([["a", "b", np.nan]], dtype=object).T
 
-    X_checked = check_array(X, dtype=None, force_all_finite="allow-nan")
+    X_checked = check_array(X, dtype=None, ensure_all_finite="allow-nan")
     assert X is X_checked
 
-    X_checked = check_array(X, dtype=None, force_all_finite=False)
+    X_checked = check_array(X, dtype=None, ensure_all_finite=False)
     assert X is X_checked
 
     with pytest.raises(ValueError, match="Input contains NaN"):
-        check_array(X, dtype=None, force_all_finite=True)
+        check_array(X, dtype=None, ensure_all_finite=True)
 
 
 @pytest.mark.parametrize(
@@ -317,14 +319,14 @@ def test_check_array_force_all_finite_object():
         (np.array([[1, np.nan]], dtype=object), "cannot convert float NaN to integer"),
     ],
 )
-@pytest.mark.parametrize("force_all_finite", [True, False])
-def test_check_array_force_all_finite_object_unsafe_casting(
-    X, err_msg, force_all_finite
+@pytest.mark.parametrize("ensure_all_finite", [True, False])
+def test_check_array_ensure_all_finite_object_unsafe_casting(
+    X, err_msg, ensure_all_finite
 ):
     # casting a float array containing NaN or inf to int dtype should
-    # raise an error irrespective of the force_all_finite parameter.
+    # raise an error irrespective of the ensure_all_finite parameter.
     with pytest.raises(ValueError, match=err_msg):
-        check_array(X, dtype=int, force_all_finite=force_all_finite)
+        check_array(X, dtype=int, ensure_all_finite=ensure_all_finite)
 
 
 def test_check_array_series_err_msg():
@@ -342,7 +344,7 @@ def test_check_array_series_err_msg():
         check_array(ser, ensure_2d=True)
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings("ignore:Can't check dok sparse matrix for nan or inf")
 def test_check_array():
     # accept_sparse == False
     # raise error on sparse inputs
@@ -463,6 +465,17 @@ def test_check_array():
     result = check_array(X_no_array)
     assert isinstance(result, np.ndarray)
 
+    # check negative values when ensure_non_negative=True
+    X_neg = check_array([[1, 2], [-3, 4]])
+    err_msg = "Negative values in data passed to X in RandomForestRegressor"
+    with pytest.raises(ValueError, match=err_msg):
+        check_array(
+            X_neg,
+            ensure_non_negative=True,
+            input_name="X",
+            estimator=RandomForestRegressor(),
+        )
+
 
 @pytest.mark.parametrize(
     "X",
@@ -509,17 +522,17 @@ def test_check_array_pandas_na_support(pd_dtype, dtype, expected_dtype):
     X = pd.DataFrame(X_np, dtype=pd_dtype, columns=["a", "b", "c"])
     # column c has no nans
     X["c"] = X["c"].astype("float")
-    X_checked = check_array(X, force_all_finite="allow-nan", dtype=dtype)
+    X_checked = check_array(X, ensure_all_finite="allow-nan", dtype=dtype)
     assert_allclose(X_checked, X_np)
     assert X_checked.dtype == expected_dtype
 
-    X_checked = check_array(X, force_all_finite=False, dtype=dtype)
+    X_checked = check_array(X, ensure_all_finite=False, dtype=dtype)
     assert_allclose(X_checked, X_np)
     assert X_checked.dtype == expected_dtype
 
     msg = "Input contains NaN"
     with pytest.raises(ValueError, match=msg):
-        check_array(X, force_all_finite=True)
+        check_array(X, ensure_all_finite=True)
 
 
 def test_check_array_panadas_na_support_series():
@@ -530,14 +543,14 @@ def test_check_array_panadas_na_support_series():
 
     msg = "Input contains NaN"
     with pytest.raises(ValueError, match=msg):
-        check_array(X_int64, force_all_finite=True, ensure_2d=False)
+        check_array(X_int64, ensure_all_finite=True, ensure_2d=False)
 
-    X_out = check_array(X_int64, force_all_finite=False, ensure_2d=False)
+    X_out = check_array(X_int64, ensure_all_finite=False, ensure_2d=False)
     assert_allclose(X_out, [1, 2, np.nan])
     assert X_out.dtype == np.float64
 
     X_out = check_array(
-        X_int64, force_all_finite=False, ensure_2d=False, dtype=np.float32
+        X_int64, ensure_all_finite=False, ensure_2d=False, dtype=np.float32
     )
     assert_allclose(X_out, [1, 2, np.nan])
     assert X_out.dtype == np.float32
@@ -605,39 +618,38 @@ def test_check_array_dtype_warning():
     X_csc_int32 = sp.csc_matrix(X_int64, dtype=np.int32)
     integer_data = [X_int64, X_csc_int32]
     float32_data = [X_float32, X_csr_float32, X_csc_float32]
-    for X in integer_data:
-        X_checked = assert_no_warnings(
-            check_array, X, dtype=np.float64, accept_sparse=True
-        )
-        assert X_checked.dtype == np.float64
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
 
-    for X in float32_data:
-        X_checked = assert_no_warnings(
-            check_array, X, dtype=[np.float64, np.float32], accept_sparse=True
-        )
-        assert X_checked.dtype == np.float32
-        assert X_checked is X
+        for X in integer_data:
+            X_checked = check_array(X, dtype=np.float64, accept_sparse=True)
+            assert X_checked.dtype == np.float64
 
-        X_checked = assert_no_warnings(
-            check_array,
-            X,
+        for X in float32_data:
+            X_checked = check_array(
+                X, dtype=[np.float64, np.float32], accept_sparse=True
+            )
+            assert X_checked.dtype == np.float32
+            assert X_checked is X
+
+            X_checked = check_array(
+                X,
+                dtype=[np.float64, np.float32],
+                accept_sparse=["csr", "dok"],
+                copy=True,
+            )
+            assert X_checked.dtype == np.float32
+            assert X_checked is not X
+
+        X_checked = check_array(
+            X_csc_float32,
             dtype=[np.float64, np.float32],
             accept_sparse=["csr", "dok"],
-            copy=True,
+            copy=False,
         )
         assert X_checked.dtype == np.float32
-        assert X_checked is not X
-
-    X_checked = assert_no_warnings(
-        check_array,
-        X_csc_float32,
-        dtype=[np.float64, np.float32],
-        accept_sparse=["csr", "dok"],
-        copy=False,
-    )
-    assert X_checked.dtype == np.float32
-    assert X_checked is not X_csc_float32
-    assert X_checked.format == "csr"
+        assert X_checked is not X_csc_float32
+        assert X_checked.format == "csr"
 
 
 def test_check_array_accept_sparse_type_exception():
@@ -732,7 +744,12 @@ def test_check_array_min_samples_and_features_messages():
         check_array([], ensure_2d=False)
 
     # Invalid edge case when checking the default minimum sample of a scalar
-    msg = r"Singleton array array\(42\) cannot be considered a valid" " collection."
+    msg = re.escape(
+        (
+            "Input should have at least 1 dimension i.e. satisfy "
+            "`len(x.shape) > 0`, got scalar `array(42)` instead."
+        )
+    )
     with pytest.raises(TypeError, match=msg):
         check_array(42, ensure_2d=False)
 
@@ -884,6 +901,21 @@ def test_check_is_fitted_with_is_fitted():
     check_is_fitted(Estimator().fit())
 
 
+def test_check_is_fitted_stateless():
+    """Check that check_is_fitted passes for stateless estimators."""
+
+    class StatelessEstimator(BaseEstimator):
+        def fit(self, **kwargs):
+            return self  # pragma: no cover
+
+        def __sklearn_tags__(self):
+            tags = super().__sklearn_tags__()
+            tags.requires_fit = False
+            return tags
+
+    check_is_fitted(StatelessEstimator())
+
+
 def test_check_is_fitted():
     # Check is TypeError raised when non estimator instance passed
     with pytest.raises(TypeError):
@@ -921,7 +953,7 @@ def test_check_is_fitted():
 
 
 def test_check_is_fitted_attributes():
-    class MyEstimator:
+    class MyEstimator(BaseEstimator):
         def fit(self, X, y):
             return self
 
@@ -976,6 +1008,8 @@ def test_check_is_fitted_with_attributes(wrap):
 
 
 def test_check_consistent_length():
+    """Test that `check_consistent_length` raises on inconsistent lengths and wrong
+    input types trigger TypeErrors."""
     check_consistent_length([1], [2], [3], [4], [5])
     check_consistent_length([[1, 2], [[1, 2]]], [1, 2], ["a", "b"])
     check_consistent_length([1], (2,), np.array([3]), sp.csr_matrix((1, 2)))
@@ -985,14 +1019,35 @@ def test_check_consistent_length():
         check_consistent_length([1, 2], 1)
     with pytest.raises(TypeError, match=r"got <\w+ 'object'>"):
         check_consistent_length([1, 2], object())
-
     with pytest.raises(TypeError):
         check_consistent_length([1, 2], np.array(1))
-
     # Despite ensembles having __len__ they must raise TypeError
     with pytest.raises(TypeError, match="Expected sequence or array-like"):
         check_consistent_length([1, 2], RandomForestRegressor())
     # XXX: We should have a test with a string, but what is correct behaviour?
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, _", yield_namespace_device_dtype_combinations()
+)
+def test_check_consistent_length_array_api(array_namespace, device, _):
+    """Test that check_consistent_length works with different array types."""
+    xp = _array_api_for_tests(array_namespace, device)
+
+    with config_context(array_api_dispatch=True):
+        check_consistent_length(
+            xp.asarray([1, 2, 3], device=device),
+            xp.asarray([[1, 1], [2, 2], [3, 3]], device=device),
+            [1, 2, 3],
+            ["a", "b", "c"],
+            np.asarray(("a", "b", "c"), dtype=object),
+            sp.csr_array([[0, 1], [1, 0], [0, 0]]),
+        )
+
+        with pytest.raises(ValueError, match="inconsistent numbers of samples"):
+            check_consistent_length(
+                xp.asarray([1, 2], device=device), xp.asarray([1], device=device)
+            )
 
 
 def test_check_dataframe_fit_attribute():
@@ -1042,11 +1097,7 @@ def test_check_dataframe_mixed_float_dtypes(dtype, bool_dtype):
     # this situation
     # https://github.com/scikit-learn/scikit-learn/issues/15787
 
-    if bool_dtype == "boolean":
-        # boolean extension arrays was introduced in 1.0
-        pd = importorskip("pandas", minversion="1.0")
-    else:
-        pd = importorskip("pandas")
+    pd = importorskip("pandas")
 
     df = pd.DataFrame(
         {
@@ -1086,7 +1137,7 @@ def test_check_dataframe_with_only_bool():
 
 def test_check_dataframe_with_only_boolean():
     """Check that dataframe with boolean return a float array with dtype=None"""
-    pd = importorskip("pandas", minversion="1.0")
+    pd = importorskip("pandas")
     df = pd.DataFrame({"bool": pd.Series([True, False, True], dtype="boolean")})
 
     array = check_array(df, dtype=None)
@@ -1136,6 +1187,93 @@ def test_check_array_memmap(copy):
         X_checked = check_array(X_memmap, copy=copy)
         assert np.may_share_memory(X_memmap, X_checked) == (not copy)
         assert X_checked.flags["WRITEABLE"] == copy
+
+
+@pytest.mark.parametrize(
+    "estimator_name, estimator_value, delegates, expected_result, expected_exception",
+    [
+        (
+            "estimator_",
+            type("SubEstimator", (), {"attribute_present": True}),
+            None,  # default delegates - ["estimator_", "estimator"]
+            True,  # expected_result is True b/c delegate and attribute are present
+            None,  # expected_exception not relevant for this case
+        ),
+        (
+            "estimator",
+            type("SubEstimator", (), {"attribute_present": True}),
+            None,  # default delegates - ["estimator_", "estimator"]
+            True,  # expected_result is True b/c delegate and attribute are present
+            None,  # expected_exception not relevant for this case
+        ),
+        (
+            "estimators_",
+            [
+                type("SubEstimator", (), {"attribute_present": True})
+            ],  # list of sub-estimators
+            ["estimators_"],
+            True,  # expected_result is True b/c delegate and attribute are present
+            None,  # expected_exception not relevant for this case
+        ),
+        (
+            "custom_estimator",  # custom estimator attribute name
+            type("SubEstimator", (), {"attribute_present": True}),
+            ["custom_estimator"],  # custom delegates
+            True,  # expected_result is True b/c delegate and attribute are present
+            None,  # expected_exception not relevant for this case
+        ),
+        (
+            "no_estimator",  # no estimator attribute name
+            type("SubEstimator", (), {"attribute_present": True}),
+            None,  # default delegates - ["estimator_", "estimator"]
+            None,  # expected_result is not relevant for this case
+            ValueError,  # should raise ValueError b/c no estimator found from delegates
+        ),
+        (
+            "estimator",
+            type("SubEstimator", (), {"attribute_absent": True}),  # attribute_absent
+            None,  # default delegates - ["estimator_", "estimator"]
+            None,  # expected_result is not relevant for this case
+            AttributeError,  # should raise AttributeError b/c attribute is absent
+        ),
+    ],
+    ids=[
+        "fitted_estimator_with_default_delegates",
+        "estimator_with_default_delegates",
+        "list_of_estimators_with_estimators_",
+        "custom_estimator_with_custom_delegates",
+        "no_estimator_with_default_delegates",
+        "estimator_with_default_delegates_but_absent_attribute",
+    ],
+)
+def test_estimator_has(
+    estimator_name, estimator_value, delegates, expected_result, expected_exception
+):
+    """
+    Tests the _estimator_has function by verifying:
+    - Functionality with default and custom delegates.
+    - Raises ValueError if delegates are missing.
+    - Raises AttributeError if the specified attribute is missing.
+    """
+
+    # always checks for attribute - "attribute_present"
+    # ["estimator_", "estimator"] is default value for delegates
+    if delegates is None:
+        check = _estimator_has("attribute_present")
+    else:
+        check = _estimator_has("attribute_present", delegates=delegates)
+
+    class MockEstimator:
+        pass
+
+    a = MockEstimator()
+    setattr(a, estimator_name, estimator_value)
+
+    if expected_exception:
+        with pytest.raises(expected_exception):
+            check(a)
+    else:
+        assert check(a) == expected_result
 
 
 @pytest.mark.parametrize(
@@ -1341,7 +1479,7 @@ def test_check_scalar_invalid(
             include_boundaries=include_boundaries,
         )
     assert str(raised_error.value) == str(err_msg)
-    assert type(raised_error.value) == type(err_msg)
+    assert isinstance(raised_error.value, type(err_msg))
 
 
 _psd_cases_valid = {
@@ -1482,13 +1620,13 @@ def test_check_sample_weight():
     sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
     assert sample_weight.dtype == np.float64
 
-    # check negative weight when only_non_negative=True
+    # check negative weight when ensure_non_negative=True
     X = np.ones((5, 2))
     sample_weight = np.ones(_num_samples(X))
     sample_weight[-1] = -10
     err_msg = "Negative values in data passed to `sample_weight`"
     with pytest.raises(ValueError, match=err_msg):
-        _check_sample_weight(sample_weight, X, only_non_negative=True)
+        _check_sample_weight(sample_weight, X, ensure_non_negative=True)
 
 
 @pytest.mark.parametrize("toarray", [np.array, sp.csr_matrix, sp.csc_matrix])
@@ -1635,11 +1773,9 @@ def test_check_sparse_pandas_sp_format(sp_format):
         ("uint8", "int8"),
     ],
 )
-def test_check_pandas_sparse_invalid(ntype1, ntype2):
-    """check that we raise an error with dataframe having
-    sparse extension arrays with unsupported mixed dtype
-    and pandas version below 1.1. pandas versions 1.1 and
-    above fixed this issue so no error will be raised."""
+def test_check_pandas_sparse_mixed_dtypes(ntype1, ntype2):
+    """Check that pandas dataframes having sparse extension arrays with mixed dtypes
+    works."""
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame(
         {
@@ -1647,15 +1783,7 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
             "col2": pd.arrays.SparseArray([1, 0, 1], dtype=ntype2, fill_value=0),
         }
     )
-
-    if parse_version(pd.__version__) < parse_version("1.1"):
-        err_msg = "Pandas DataFrame with mixed sparse extension arrays"
-        with pytest.raises(ValueError, match=err_msg):
-            check_array(df, accept_sparse=["csr", "csc"])
-    else:
-        # pandas fixed this issue at 1.1 so from here on,
-        # no error will be raised.
-        check_array(df, accept_sparse=["csr", "csc"])
+    check_array(df, accept_sparse=["csr", "csc"])
 
 
 @pytest.mark.parametrize(
@@ -1720,19 +1848,19 @@ def test_num_features_errors_1d_containers(X, constructor_name):
     if constructor_name == "array":
         expected_type_name = "numpy.ndarray"
     elif constructor_name == "series":
-        expected_type_name = "pandas.core.series.Series"
+        expected_type_name = "pandas.*Series"
     else:
         expected_type_name = constructor_name
     message = (
         f"Unable to find the number of features from X of type {expected_type_name}"
     )
     if hasattr(X, "shape"):
-        message += " with shape (3,)"
+        message += re.escape(" with shape (3,)")
     elif isinstance(X[0], str):
         message += " where the samples are of type str"
     elif isinstance(X[0], dict):
         message += " where the samples are of type dict"
-    with pytest.raises(TypeError, match=re.escape(message)):
+    with pytest.raises(TypeError, match=message):
         _num_features(X)
 
 
@@ -1879,7 +2007,7 @@ def test_get_feature_names_invalid_dtypes(names, dtypes):
 
 class PassthroughTransformer(BaseEstimator):
     def fit(self, X, y=None):
-        self._validate_data(X, reset=True)
+        validate_data(self, X, reset=True)
         return self
 
     def transform(self, X):
@@ -1995,17 +2123,16 @@ def test_pandas_array_returns_ndarray(input_values):
         dtype=None,
         ensure_2d=False,
         allow_nd=False,
-        force_all_finite=False,
+        ensure_all_finite=False,
     )
     assert np.issubdtype(result.dtype.kind, np.floating)
     assert_allclose(result, input_values)
 
 
 @skip_if_array_api_compat_not_configured
-@pytest.mark.parametrize("array_namespace", ["array_api_strict", "cupy.array_api"])
-def test_check_array_array_api_has_non_finite(array_namespace):
+def test_check_array_array_api_has_non_finite():
     """Checks that Array API arrays checks non-finite correctly."""
-    xp = pytest.importorskip(array_namespace)
+    xp = pytest.importorskip("array_api_strict")
 
     X_nan = xp.asarray([[xp.nan, 1, 0], [0, xp.nan, 3]], dtype=xp.float32)
     with config_context(array_api_dispatch=True):
@@ -2189,3 +2316,51 @@ def test_check_array_writeable_df():
     # df is backed by a read-only array, a copy is made
     assert not np.may_share_memory(out, df)
     assert out.flags.writeable
+
+
+@skip_if_array_api_compat_not_configured
+def test_check_array_on_sparse_inputs_with_array_api_enabled():
+    X_sp = sp.csr_array([[0, 1, 0], [1, 0, 1]])
+    with config_context(array_api_dispatch=True):
+        assert sp.issparse(check_array(X_sp, accept_sparse=True))
+
+        with pytest.raises(TypeError):
+            check_array(X_sp)
+
+
+# TODO(1.8): remove
+def test_force_all_finite_rename_warning():
+    X = np.random.uniform(size=(10, 10))
+    y = np.random.randint(1, size=(10,))
+
+    msg = "'force_all_finite' was renamed to 'ensure_all_finite'"
+
+    with pytest.warns(FutureWarning, match=msg):
+        check_array(X, force_all_finite=True)
+
+    with pytest.warns(FutureWarning, match=msg):
+        check_X_y(X, y, force_all_finite=True)
+
+    with pytest.warns(FutureWarning, match=msg):
+        as_float_array(X, force_all_finite=True)
+
+
+@pytest.mark.parametrize(
+    ["X", "estimator", "expected_error_message"],
+    [
+        (
+            np.array([[[1, 2], [3, 4]], [[1, 2], [3, 4]]]),
+            RandomForestRegressor(),
+            "Found array with dim 3, while dim <= 2 is required by "
+            "RandomForestRegressor.",
+        ),
+        (
+            np.array([[[1, 2], [3, 4]], [[1, 2], [3, 4]]]),
+            None,
+            "Found array with dim 3, while dim <= 2 is required.",
+        ),
+    ],
+)
+def test_check_array_allow_nd_errors(X, estimator, expected_error_message):
+    with pytest.raises(ValueError, match=expected_error_message):
+        check_array(X, estimator=estimator)

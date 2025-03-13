@@ -17,7 +17,7 @@ from ..cluster import kmeans_plusplus
 from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state
 from ..utils._param_validation import Interval, StrOptions
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 
 
 def _check_shape(param, param_shape, name):
@@ -109,7 +109,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         n_samples, _ = X.shape
 
         if self.init_params == "kmeans":
-            resp = np.zeros((n_samples, self.n_components))
+            resp = np.zeros((n_samples, self.n_components), dtype=X.dtype)
             label = (
                 cluster.KMeans(
                     n_clusters=self.n_components, n_init=1, random_state=random_state
@@ -119,16 +119,18 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             )
             resp[np.arange(n_samples), label] = 1
         elif self.init_params == "random":
-            resp = random_state.uniform(size=(n_samples, self.n_components))
+            resp = np.asarray(
+                random_state.uniform(size=(n_samples, self.n_components)), dtype=X.dtype
+            )
             resp /= resp.sum(axis=1)[:, np.newaxis]
         elif self.init_params == "random_from_data":
-            resp = np.zeros((n_samples, self.n_components))
+            resp = np.zeros((n_samples, self.n_components), dtype=X.dtype)
             indices = random_state.choice(
                 n_samples, size=self.n_components, replace=False
             )
             resp[indices, np.arange(self.n_components)] = 1
         elif self.init_params == "k-means++":
-            resp = np.zeros((n_samples, self.n_components))
+            resp = np.zeros((n_samples, self.n_components), dtype=X.dtype)
             _, indices = kmeans_plusplus(
                 X,
                 self.n_components,
@@ -208,7 +210,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         labels : array, shape (n_samples,)
             Component labels.
         """
-        X = self._validate_data(X, dtype=[np.float64, np.float32], ensure_min_samples=2)
+        X = validate_data(self, X, dtype=[np.float64, np.float32], ensure_min_samples=2)
         if X.shape[0] < self.n_components:
             raise ValueError(
                 "Expected n_samples >= n_components "
@@ -342,7 +344,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             Log-likelihood of each sample in `X` under the current model.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
 
         return logsumexp(self._estimate_weighted_log_prob(X), axis=1)
 
@@ -380,7 +382,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             Component labels.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
         return self._estimate_weighted_log_prob(X).argmax(axis=1)
 
     def predict_proba(self, X):
@@ -398,7 +400,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             Density of each Gaussian component for each sample in X.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
         _, log_resp = self._estimate_log_prob_resp(X)
         return np.exp(log_resp)
 

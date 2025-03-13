@@ -1,5 +1,8 @@
 """This module contains utility routines."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from ...base import is_classifier
 from .binning import _BinMapper
 

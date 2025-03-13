@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import builtins
 import platform
 import sys
@@ -12,7 +15,7 @@ import pytest
 from _pytest.doctest import DoctestItem
 from threadpoolctl import threadpool_limits
 
-from sklearn import config_context, set_config
+from sklearn import set_config
 from sklearn._min_dependencies import PYTEST_MIN_VERSION
 from sklearn.datasets import (
     fetch_20newsgroups,
@@ -34,6 +37,11 @@ from sklearn.utils.fixes import (
     sp_version,
 )
 
+try:
+    from scipy_doctest.conftest import dt_config
+except ModuleNotFoundError:
+    dt_config = None
+
 if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
     raise ImportError(
         f"Your version of pytest is too old. Got version {pytest.__version__}, you"
@@ -41,13 +49,6 @@ if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
     )
 
 scipy_datasets_require_network = sp_version >= parse_version("1.10")
-
-
-@pytest.fixture
-def enable_slep006():
-    """Enable SLEP006 for all tests."""
-    with config_context(enable_metadata_routing=True):
-        yield
 
 
 def raccoon_face_or_skip():
@@ -206,8 +207,15 @@ def pytest_collection_modifyitems(config, items):
         )
         skip_doctests = True
 
-    if np_base_version >= parse_version("2"):
+    if np_base_version < parse_version("2"):
+        # TODO: configure numpy to output scalar arrays as regular Python scalars
+        # once possible to improve readability of the tests docstrings.
+        # https://numpy.org/neps/nep-0051-scalar-representation.html#implementation
         reason = "Due to NEP 51 numpy scalar repr has changed in numpy 2"
+        skip_doctests = True
+
+    if sp_version < parse_version("1.14"):
+        reason = "Scipy sparse matrix repr has changed in scipy 1.14"
         skip_doctests = True
 
     # Normally doctest has the entire module's scope. Here we set globs to an empty dict
@@ -353,3 +361,8 @@ def print_changed_only_false():
     set_config(print_changed_only=False)
     yield
     set_config(print_changed_only=True)  # reset to default
+
+
+if dt_config is not None:
+    # Strict mode to differentiate between 3.14 and np.float64(3.14)
+    dt_config.strict_check = True

@@ -20,7 +20,8 @@ traditional (l2-penalised) logistic regression model.
 
 """
 
-# Author: Arthur Mensch
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import timeit
 import warnings

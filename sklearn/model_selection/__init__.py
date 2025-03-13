@@ -1,5 +1,8 @@
 """Tools for model selection, such as cross validation and hyper-parameter tuning."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import typing
 
 from ._classification_threshold import (

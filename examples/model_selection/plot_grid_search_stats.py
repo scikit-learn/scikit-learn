@@ -8,6 +8,9 @@ trained and evaluated using :class:`~sklearn.model_selection.GridSearchCV`.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # We will start by simulating moon shaped data (where the ideal separation
 # between classes is non-linear), adding to it a moderate degree of noise.

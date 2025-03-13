@@ -28,7 +28,24 @@ There are different ways to install scikit-learn:
 Installing the latest release
 =============================
 
-.. `scss/install.scss` overrides some default sphinx-design styling for the tabs
+.. raw:: html
+
+  <style>
+    /* Show caption on large screens */
+    @media screen and (min-width: 960px) {
+      .install-instructions .sd-tab-set {
+        --tab-caption-width: 20%;
+      }
+
+      .install-instructions .sd-tab-set.tabs-os::before {
+        content: "Operating System";
+      }
+
+      .install-instructions .sd-tab-set.tabs-package-manager::before {
+        content: "Package Manager";
+      }
+    }
+  </style>
 
 .. div:: install-instructions
 
@@ -90,7 +107,7 @@ Installing the latest release
           Now create a `virtual environment (venv)
           <https://docs.python.org/3/tutorial/venv.html>`_ and install scikit-learn.
           Note that the virtual environment is optional but strongly recommended, in
-          order to avoid potential conflicts with other packges.
+          order to avoid potential conflicts with other packages.
 
           .. prompt:: bash
 
@@ -238,14 +255,14 @@ Debian/Ubuntu
 
 The Debian/Ubuntu package is split in three different packages called
 ``python3-sklearn`` (python modules), ``python3-sklearn-lib`` (low-level
-implementations and bindings), ``python3-sklearn-doc`` (documentation).
+implementations and bindings), ``python-sklearn-doc`` (documentation).
 Note that scikit-learn requires Python 3, hence the need to use the `python3-`
 suffixed package names.
 Packages can be installed using ``apt-get``:
 
 .. prompt:: bash
 
-  sudo apt-get install python3-sklearn python3-sklearn-lib python3-sklearn-doc
+  sudo apt-get install python3-sklearn python3-sklearn-lib python-sklearn-doc
 
 
 Fedora

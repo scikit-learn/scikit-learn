@@ -6,8 +6,10 @@ different columns.
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
+
 import warnings
 from collections import Counter, UserList
+from functools import partial
 from itertools import chain
 from numbers import Integral, Real
 
@@ -27,6 +29,7 @@ from ..utils._set_output import (
     _get_output_config,
     _safe_set_output,
 )
+from ..utils._tags import get_tags
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -37,7 +40,9 @@ from ..utils.metadata_routing import (
 from ..utils.metaestimators import _BaseComposition
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
+    _check_feature_names,
     _check_feature_names_in,
+    _check_n_features,
     _get_feature_names,
     _is_pandas_df,
     _num_samples,
@@ -132,15 +137,29 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
 
-    verbose_feature_names_out : bool, default=True
-        If True, :meth:`ColumnTransformer.get_feature_names_out` will prefix
-        all feature names with the name of the transformer that generated that
-        feature.
-        If False, :meth:`ColumnTransformer.get_feature_names_out` will not
-        prefix any feature names and will error if feature names are not
-        unique.
+    verbose_feature_names_out : bool, str or Callable[[str, str], str], default=True
+
+        - If True, :meth:`ColumnTransformer.get_feature_names_out` will prefix
+          all feature names with the name of the transformer that generated that
+          feature. It is equivalent to setting
+          `verbose_feature_names_out="{transformer_name}__{feature_name}"`.
+        - If False, :meth:`ColumnTransformer.get_feature_names_out` will not
+          prefix any feature names and will error if feature names are not
+          unique.
+        - If ``Callable[[str, str], str]``,
+          :meth:`ColumnTransformer.get_feature_names_out` will rename all the features
+          using the name of the transformer. The first argument of the callable is the
+          transformer name and the second argument is the feature name. The returned
+          string will be the new feature name.
+        - If ``str``, it must be a string ready for formatting. The given string will
+          be formatted using two field names: ``transformer_name`` and ``feature_name``.
+          e.g. ``"{feature_name}__{transformer_name}"``. See :meth:`str.format` method
+          from the standard library for more info.
 
         .. versionadded:: 1.0
+
+        .. versionchanged:: 1.6
+            `verbose_feature_names_out` can be a callable or a string to be formatted.
 
     force_int_remainder_cols : bool, default=True
         Force the columns of the last entry of `transformers_`, which
@@ -269,8 +288,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`.
     """
 
-    _required_parameters = ["transformers"]
-
     _parameter_constraints: dict = {
         "transformers": [list, Hidden(tuple)],
         "remainder": [
@@ -282,7 +299,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         "n_jobs": [Integral, None],
         "transformer_weights": [dict, None],
         "verbose": ["verbose"],
-        "verbose_feature_names_out": ["boolean"],
+        "verbose_feature_names_out": ["boolean", str, callable],
         "force_int_remainder_cols": ["boolean"],
     }
 
@@ -654,11 +671,25 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         feature_names_out : ndarray of shape (n_features,), dtype=str
             Transformed feature names.
         """
-        if self.verbose_feature_names_out:
+        feature_names_out_callable = None
+        if callable(self.verbose_feature_names_out):
+            feature_names_out_callable = self.verbose_feature_names_out
+        elif isinstance(self.verbose_feature_names_out, str):
+            feature_names_out_callable = partial(
+                _feature_names_out_with_str_format,
+                str_format=self.verbose_feature_names_out,
+            )
+        elif self.verbose_feature_names_out is True:
+            feature_names_out_callable = partial(
+                _feature_names_out_with_str_format,
+                str_format="{transformer_name}__{feature_name}",
+            )
+
+        if feature_names_out_callable is not None:
             # Prefix the feature names out with the transformers name
             names = list(
                 chain.from_iterable(
-                    (f"{name}__{i}" for i in feature_names_out)
+                    (feature_names_out_callable(name, i) for i in feature_names_out)
                     for name, feature_names_out in transformer_with_feature_names_out
                 )
             )
@@ -759,22 +790,17 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 if pd.NA not in Xs[col_name].values:
                     continue
                 class_name = self.__class__.__name__
-                # TODO(1.6): replace warning with ValueError
-                warnings.warn(
-                    (
-                        f"The output of the '{name}' transformer for column"
-                        f" '{col_name}' has dtype {dtype} and uses pandas.NA to"
-                        " represent null values. Storing this output in a numpy array"
-                        " can cause errors in downstream scikit-learn estimators, and"
-                        " inefficiencies. Starting with scikit-learn version 1.6, this"
-                        " will raise a ValueError. To avoid this problem you can (i)"
-                        " store the output in a pandas DataFrame by using"
-                        f" {class_name}.set_output(transform='pandas') or (ii) modify"
-                        f" the input data or the '{name}' transformer to avoid the"
-                        " presence of pandas.NA (for example by using"
-                        " pandas.DataFrame.astype)."
-                    ),
-                    FutureWarning,
+                raise ValueError(
+                    f"The output of the '{name}' transformer for column"
+                    f" '{col_name}' has dtype {dtype} and uses pandas.NA to"
+                    " represent null values. Storing this output in a numpy array"
+                    " can cause errors in downstream scikit-learn estimators, and"
+                    " inefficiencies. To avoid this problem you can (i)"
+                    " store the output in a pandas DataFrame by using"
+                    f" {class_name}.set_output(transform='pandas') or (ii) modify"
+                    f" the input data or the '{name}' transformer to avoid the"
+                    " presence of pandas.NA (for example by using"
+                    " pandas.DataFrame.astype)."
                 )
 
     def _record_output_indices(self, Xs):
@@ -956,11 +982,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             sparse matrices.
         """
         _raise_for_params(params, self, "fit_transform")
-        self._check_feature_names(X, reset=True)
+        _check_feature_names(self, X, reset=True)
 
         X = _check_X(X)
         # set n_features_in_ attribute
-        self._check_n_features(X, reset=True)
+        _check_n_features(self, X, reset=True)
         self._validate_transformers()
         n_samples = _num_samples(X)
 
@@ -1065,7 +1091,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         else:
             # ndarray was used for fitting or transforming, thus we only
             # check that n_features_in_ is consistent
-            self._check_n_features(X, reset=False)
+            _check_n_features(self, X, reset=False)
 
         if _routing_enabled():
             routed_params = process_routing(self, "transform", **params)
@@ -1107,7 +1133,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 # in a sparse matrix, `check_array` is used for the
                 # dtype conversion if necessary.
                 converted_Xs = [
-                    check_array(X, accept_sparse=True, force_all_finite=False)
+                    check_array(X, accept_sparse=True, ensure_all_finite=False)
                     for X in Xs
                 ]
             except ValueError as e:
@@ -1290,12 +1316,31 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         return router
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        try:
+            tags.input_tags.sparse = all(
+                get_tags(trans).input_tags.sparse
+                for name, trans, _ in self.transformers
+                if trans not in {"passthrough", "drop"}
+            )
+        except Exception:
+            # If `transformers` does not comply with our API (list of tuples)
+            # then it will fail. In this case, we assume that `sparse` is False
+            # but the parameter validation will raise an error during `fit`.
+            pass  # pragma: no cover
+        return tags
+
 
 def _check_X(X):
     """Use check_array only when necessary, e.g. on lists and other non-array-likes."""
-    if hasattr(X, "__array__") or hasattr(X, "__dataframe__") or sparse.issparse(X):
+    if (
+        (hasattr(X, "__array__") and hasattr(X, "shape"))
+        or hasattr(X, "__dataframe__")
+        or sparse.issparse(X)
+    ):
         return X
-    return check_array(X, force_all_finite="allow-nan", dtype=object)
+    return check_array(X, ensure_all_finite="allow-nan", dtype=object)
 
 
 def _is_empty_column_selection(column):
@@ -1650,3 +1695,11 @@ def _with_dtype_warning_enabled_set_to(warning_enabled, transformers):
             )
         result.append((name, trans, columns))
     return result
+
+
+def _feature_names_out_with_str_format(
+    transformer_name: str, feature_name: str, str_format: str
+) -> str:
+    return str_format.format(
+        transformer_name=transformer_name, feature_name=feature_name
+    )

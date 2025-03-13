@@ -48,6 +48,12 @@ if [[ "$COVERAGE" == "true" ]]; then
     # report that otherwise hides the test failures and forces long scrolls in
     # the CI logs.
     export COVERAGE_PROCESS_START="$BUILD_SOURCESDIRECTORY/.coveragerc"
+
+    # Use sys.monitoring to make coverage faster for Python >= 3.12
+    HAS_SYSMON=$(python -c 'import sys; print(sys.version_info >= (3, 12))')
+    if [[ "$HAS_SYSMON" == "True" ]]; then
+        export COVERAGE_CORE=sysmon
+    fi
     TEST_CMD="$TEST_CMD --cov-config='$COVERAGE_PROCESS_START' --cov sklearn --cov-report="
 fi
 
@@ -61,6 +67,12 @@ if [[ -n "$SELECTED_TESTS" ]]; then
 
     # Override to make selected tests run on all random seeds
     export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
+fi
+
+if which lscpu ; then
+    lscpu
+else
+    echo "Could not inspect CPU architecture."
 fi
 
 TEST_CMD="$TEST_CMD --pyargs sklearn"

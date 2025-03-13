@@ -70,11 +70,11 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
     >>> le.fit(["paris", "paris", "tokyo", "amsterdam"])
     LabelEncoder()
     >>> list(le.classes_)
-    ['amsterdam', 'paris', 'tokyo']
+    [np.str_('amsterdam'), np.str_('paris'), np.str_('tokyo')]
     >>> le.transform(["tokyo", "tokyo", "paris"])
     array([2, 2, 1]...)
     >>> list(le.inverse_transform([2, 2, 1]))
-    ['tokyo', 'tokyo', 'paris']
+    [np.str_('tokyo'), np.str_('tokyo'), np.str_('paris')]
     """
 
     def fit(self, y):
@@ -163,8 +163,12 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
         y = xp.asarray(y)
         return xp.take(self.classes_, y, axis=0)
 
-    def _more_tags(self):
-        return {"X_types": ["1dlabels"], "array_api_support": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.array_api_support = True
+        tags.input_tags.two_d_array = False
+        tags.target_tags.one_d_labels = True
+        return tags
 
 
 class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
@@ -415,8 +419,11 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
 
         return y_inv
 
-    def _more_tags(self):
-        return {"X_types": ["1dlabels"]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.two_d_array = False
+        tags.target_tags.one_d_labels = True
+        return tags
 
 
 @validate_params(
@@ -949,5 +956,8 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys
                 )
             return [tuple(self.classes_.compress(indicators)) for indicators in yt]
 
-    def _more_tags(self):
-        return {"X_types": ["2dlabels"]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.two_d_array = False
+        tags.target_tags.two_d_labels = True
+        return tags

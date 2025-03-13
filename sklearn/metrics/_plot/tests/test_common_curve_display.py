@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from sklearn.base import ClassifierMixin, clone
+from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.calibration import CalibrationDisplay
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_iris
@@ -121,7 +121,7 @@ def test_display_curve_error_no_response(
     is not defined for the given trained classifier."""
     X, y = data_binary
 
-    class MyClassifier(ClassifierMixin):
+    class MyClassifier(ClassifierMixin, BaseEstimator):
         def fit(self, X, y):
             self.classes_ = [0, 1]
             return self

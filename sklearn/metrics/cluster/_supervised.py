@@ -15,7 +15,7 @@ from numbers import Real
 import numpy as np
 from scipy import sparse as sp
 
-from ...utils._array_api import get_namespace
+from ...utils._array_api import _max_precision_float_dtype, get_namespace_and_device
 from ...utils._param_validation import Interval, StrOptions, validate_params
 from ...utils.multiclass import type_of_target
 from ...utils.validation import check_array, check_consistent_length
@@ -99,6 +99,8 @@ def contingency_matrix(
 ):
     """Build a contingency matrix describing the relationship between labels.
 
+    Read more in the :ref:`User Guide <contingency_matrix>`.
+
     Parameters
     ----------
     labels_true : array-like of shape (n_samples,)
@@ -113,7 +115,7 @@ def contingency_matrix(
         If ``None``, nothing is adjusted.
 
     sparse : bool, default=False
-        If `True`, return a sparse CSR continency matrix. If `eps` is not
+        If `True`, return a sparse CSR contingency matrix. If `eps` is not
         `None` and `sparse` is `True` will raise ValueError.
 
         .. versionadded:: 0.18
@@ -275,6 +277,8 @@ def rand_score(labels_true, labels_pred):
 
     The raw RI score [3]_ is:
 
+    .. code-block:: text
+
         RI = (number of agreeing pairs) / (number of pairs)
 
     Read more in the :ref:`User Guide <rand_score>`.
@@ -333,7 +337,7 @@ def rand_score(labels_true, labels_pred):
         # cluster. These are perfect matches hence return 1.0.
         return 1.0
 
-    return numerator / denominator
+    return float(numerator / denominator)
 
 
 @validate_params(
@@ -433,6 +437,9 @@ def adjusted_rand_score(labels_true, labels_pred):
 
       >>> adjusted_rand_score([0, 0, 1, 1], [0, 1, 0, 1])
       -0.5
+
+    See :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`
+    for a more detailed example.
     """
     (tn, fp), (fn, tp) = pair_confusion_matrix(labels_true, labels_pred)
     # convert to Python integer types, to avoid overflow or underflow
@@ -543,7 +550,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
             / (beta * homogeneity + completeness)
         )
 
-    return homogeneity, completeness, v_measure_score
+    return float(homogeneity), float(completeness), float(v_measure_score)
 
 
 @validate_params(
@@ -915,7 +922,7 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
         + contingency_nm * log_outer
     )
     mi = np.where(np.abs(mi) < np.finfo(mi.dtype).eps, 0.0, mi)
-    return np.clip(mi.sum(), 0.0, None)
+    return float(np.clip(mi.sum(), 0.0, None))
 
 
 @validate_params(
@@ -1003,17 +1010,14 @@ def adjusted_mutual_info_score(
 
       >>> from sklearn.metrics.cluster import adjusted_mutual_info_score
       >>> adjusted_mutual_info_score([0, 0, 1, 1], [0, 0, 1, 1])
-      ... # doctest: +SKIP
       1.0
       >>> adjusted_mutual_info_score([0, 0, 1, 1], [1, 1, 0, 0])
-      ... # doctest: +SKIP
       1.0
 
     If classes members are completely split across different clusters,
     the assignment is totally in-complete, hence the AMI is null::
 
       >>> adjusted_mutual_info_score([0, 0, 0, 0], [0, 1, 2, 3])
-      ... # doctest: +SKIP
       0.0
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -1048,7 +1052,7 @@ def adjusted_mutual_info_score(
     else:
         denominator = max(denominator, np.finfo("float64").eps)
     ami = (mi - emi) / denominator
-    return ami
+    return float(ami)
 
 
 @validate_params(
@@ -1122,17 +1126,14 @@ def normalized_mutual_info_score(
 
       >>> from sklearn.metrics.cluster import normalized_mutual_info_score
       >>> normalized_mutual_info_score([0, 0, 1, 1], [0, 0, 1, 1])
-      ... # doctest: +SKIP
       1.0
       >>> normalized_mutual_info_score([0, 0, 1, 1], [1, 1, 0, 0])
-      ... # doctest: +SKIP
       1.0
 
     If classes members are completely split across different clusters,
     the assignment is totally in-complete, hence the NMI is null::
 
       >>> normalized_mutual_info_score([0, 0, 0, 0], [0, 1, 2, 3])
-      ... # doctest: +SKIP
       0.0
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -1163,7 +1164,7 @@ def normalized_mutual_info_score(
     h_true, h_pred = entropy(labels_true), entropy(labels_pred)
 
     normalizer = _generalized_average(h_true, h_pred, average_method)
-    return mi / normalizer
+    return float(mi / normalizer)
 
 
 @validate_params(
@@ -1179,18 +1180,18 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
 
     .. versionadded:: 0.18
 
-    The Fowlkes-Mallows index (FMI) is defined as the geometric mean between of
+    The Fowlkes-Mallows index (FMI) is defined as the geometric mean of
     the precision and recall::
 
         FMI = TP / sqrt((TP + FP) * (TP + FN))
 
-    Where ``TP`` is the number of **True Positive** (i.e. the number of pair of
-    points that belongs in the same clusters in both ``labels_true`` and
+    Where ``TP`` is the number of **True Positive** (i.e. the number of pairs of
+    points that belong to the same cluster in both ``labels_true`` and
     ``labels_pred``), ``FP`` is the number of **False Positive** (i.e. the
-    number of pair of points that belongs in the same clusters in
-    ``labels_true`` and not in ``labels_pred``) and ``FN`` is the number of
-    **False Negative** (i.e. the number of pair of points that belongs in the
-    same clusters in ``labels_pred`` and not in ``labels_True``).
+    number of pairs of points that belong to the same cluster in
+    ``labels_pred`` but not in ``labels_true``) and ``FN`` is the number of
+    **False Negative** (i.e. the number of pairs of points that belong to the
+    same cluster in ``labels_true`` but not in ``labels_pred``).
 
     The score ranges from 0 to 1. A high value indicates a good similarity
     between two clusters.
@@ -1249,7 +1250,7 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     tk = np.dot(c.data, c.data) - n_samples
     pk = np.sum(np.asarray(c.sum(axis=0)).ravel() ** 2) - n_samples
     qk = np.sum(np.asarray(c.sum(axis=1)).ravel() ** 2) - n_samples
-    return np.sqrt(tk / pk) * np.sqrt(tk / qk) if tk != 0.0 else 0.0
+    return float(np.sqrt(tk / pk) * np.sqrt(tk / qk)) if tk != 0.0 else 0.0
 
 
 @validate_params(
@@ -1275,12 +1276,12 @@ def entropy(labels):
     -----
     The logarithm used is the natural logarithm (base-e).
     """
-    xp, is_array_api_compliant = get_namespace(labels)
+    xp, is_array_api_compliant, device_ = get_namespace_and_device(labels)
     labels_len = labels.shape[0] if is_array_api_compliant else len(labels)
     if labels_len == 0:
         return 1.0
 
-    pi = xp.astype(xp.unique_counts(labels)[1], xp.float64)
+    pi = xp.astype(xp.unique_counts(labels)[1], _max_precision_float_dtype(xp, device_))
 
     # single cluster => zero entropy
     if pi.size == 1:

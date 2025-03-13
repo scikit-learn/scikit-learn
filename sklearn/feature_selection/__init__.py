@@ -4,6 +4,9 @@ These include univariate filter selection methods and the recursive feature elim
 algorithm.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from ._base import SelectorMixin
 from ._from_model import SelectFromModel
 from ._mutual_info import mutual_info_classif, mutual_info_regression

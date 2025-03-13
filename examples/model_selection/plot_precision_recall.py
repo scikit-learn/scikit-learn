@@ -10,7 +10,7 @@ classes are very imbalanced. In information retrieval, precision is a
 measure of the fraction of relevant items among actually returned items while recall
 is a measure of the fraction of items that were returned among all items that should
 have been returned. 'Relevancy' here refers to items that are
-postively labeled, i.e., true positives and false negatives.
+positively labeled, i.e., true positives and false negatives.
 
 Precision (:math:`P`) is defined as the number of true positives (:math:`T_p`)
 over the number of true positives plus the number of false positives
@@ -92,6 +92,9 @@ matrix as a binary prediction (:ref:`micro-averaging <average>`).
              :func:`sklearn.metrics.f1_score`
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # In binary classification settings
 # ---------------------------------
@@ -144,7 +147,7 @@ classifier.fit(X_train, y_train)
 from sklearn.metrics import PrecisionRecallDisplay
 
 display = PrecisionRecallDisplay.from_estimator(
-    classifier, X_test, y_test, name="LinearSVC", plot_chance_level=True
+    classifier, X_test, y_test, name="LinearSVC", plot_chance_level=True, despine=True
 )
 _ = display.ax_.set_title("2-class Precision-Recall curve")
 
@@ -155,7 +158,7 @@ _ = display.ax_.set_title("2-class Precision-Recall curve")
 y_score = classifier.decision_function(X_test)
 
 display = PrecisionRecallDisplay.from_predictions(
-    y_test, y_score, name="LinearSVC", plot_chance_level=True
+    y_test, y_score, name="LinearSVC", plot_chance_level=True, despine=True
 )
 _ = display.ax_.set_title("2-class Precision-Recall curve")
 
@@ -225,7 +228,7 @@ display = PrecisionRecallDisplay(
     average_precision=average_precision["micro"],
     prevalence_pos_label=Counter(Y_test.ravel())[1] / Y_test.size,
 )
-display.plot(plot_chance_level=True)
+display.plot(plot_chance_level=True, despine=True)
 _ = display.ax_.set_title("Micro-averaged over all classes")
 
 # %%
@@ -261,7 +264,9 @@ for i, color in zip(range(n_classes), colors):
         precision=precision[i],
         average_precision=average_precision[i],
     )
-    display.plot(ax=ax, name=f"Precision-recall for class {i}", color=color)
+    display.plot(
+        ax=ax, name=f"Precision-recall for class {i}", color=color, despine=True
+    )
 
 # add the legend for the iso-f1 curves
 handles, labels = display.ax_.get_legend_handles_labels()

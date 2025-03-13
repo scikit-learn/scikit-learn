@@ -12,13 +12,13 @@ Even if tree based models are (almost) not affected by scaling, many other
 algorithms require features to be normalized, often for different reasons: to
 ease the convergence (such as a non-penalized logistic regression), to create a
 completely different model fit compared to the fit with unscaled data (such as
-KNeighbors models). The latter is demoed on the first part of the present
+KNeighbors models). The latter is demonstrated on the first part of the present
 example.
 
 On the second part of the example we show how Principal Component Analysis (PCA)
 is impacted by normalization of features. To illustrate this, we compare the
 principal components found using :class:`~sklearn.decomposition.PCA` on unscaled
-data with those obatined when using a
+data with those obtained when using a
 :class:`~sklearn.preprocessing.StandardScaler` to scale data first.
 
 In the last part of the example we show the effect of the normalization on the

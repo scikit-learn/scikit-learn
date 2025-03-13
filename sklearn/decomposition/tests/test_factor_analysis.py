@@ -9,15 +9,9 @@ import pytest
 from sklearn.decomposition import FactorAnalysis
 from sklearn.decomposition._factor_analysis import _ortho_rotation
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils._testing import (
-    assert_almost_equal,
-    assert_array_almost_equal,
-    ignore_warnings,
-)
+from sklearn.utils._testing import assert_almost_equal, assert_array_almost_equal
 
 
-# Ignore warnings from switching to more power iterations in randomized_svd
-@ignore_warnings
 def test_factor_analysis(global_random_seed):
     # Test FactorAnalysis ability to recover the data covariance structure
     rng = np.random.RandomState(global_random_seed)

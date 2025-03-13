@@ -33,7 +33,7 @@ missing values imputed using different techniques.
 
 # %%
 # Download the data and make missing values sets
-################################################
+# ##############################################
 #
 # First we download the two datasets. Diabetes dataset is shipped with
 # scikit-learn. It has 442 entries, each with 10 features. California Housing

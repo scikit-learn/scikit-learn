@@ -12,6 +12,9 @@ regression and ridge regression complete the lower half of those faces.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.pyplot as plt
 import numpy as np
 

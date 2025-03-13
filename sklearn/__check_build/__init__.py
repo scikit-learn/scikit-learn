@@ -2,6 +2,9 @@
 compile scikit-learn properly.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import os
 
 INPLACE_MSG = """

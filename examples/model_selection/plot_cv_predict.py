@@ -9,6 +9,9 @@ This example shows how to use
 errors.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # We will load the diabetes dataset and create an instance of a linear
 # regression model.
