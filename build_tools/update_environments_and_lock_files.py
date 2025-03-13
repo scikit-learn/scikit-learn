@@ -200,7 +200,7 @@ build_metadata_list = [
         "platform": "linux-64",
         "channels": ["conda-forge"],
         "conda_dependencies": (
-            common_dependencies_without_coverage
+            remove_from(common_dependencies_without_coverage, ["matplotlib"])
             + docstring_test_dependencies
             + ["ccache"]
         ),
