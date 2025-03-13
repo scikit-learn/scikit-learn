@@ -799,6 +799,13 @@ def disable_plot_gallery_for_linkcheck(app):
         sphinx_gallery_conf["plot_gallery"] = "False"
 
 
+def skip_properties(app, what, name, obj, skip, options):
+    """Do not list @property in the auto generated API documentation."""
+    if isinstance(obj, property):
+        return True
+    return skip
+
+
 def setup(app):
     # do not run the examples when using linkcheck by using a small priority
     # (default priority is 500 and sphinx-gallery using builder-inited event too)
@@ -810,6 +817,8 @@ def setup(app):
     # to hide/show the prompt in code examples
     app.connect("build-finished", make_carousel_thumbs)
     app.connect("build-finished", filter_search_index)
+
+    app.connect("autodoc-skip-member", skip_properties)
 
 
 # The following is used by sphinx.ext.linkcode to provide links to github
