@@ -1413,33 +1413,9 @@ weighted average  0.37	        0.4             0.23
 Here, the predicted class label is 2, since it has the
 highest average probability.
 
-The following example illustrates how the decision regions may change
-when a soft :class:`VotingClassifier` is used based on a linear Support
-Vector Machine, a Decision Tree, and a K-nearest neighbor classifier::
-
-   >>> from sklearn import datasets
-   >>> from sklearn.tree import DecisionTreeClassifier
-   >>> from sklearn.neighbors import KNeighborsClassifier
-   >>> from sklearn.svm import SVC
-   >>> from itertools import product
-   >>> from sklearn.ensemble import VotingClassifier
-
-   >>> # Loading some example data
-   >>> iris = datasets.load_iris()
-   >>> X = iris.data[:, [0, 2]]
-   >>> y = iris.target
-
-   >>> # Training classifiers
-   >>> clf1 = DecisionTreeClassifier(max_depth=4)
-   >>> clf2 = KNeighborsClassifier(n_neighbors=7)
-   >>> clf3 = SVC(kernel='rbf', probability=True)
-   >>> eclf = VotingClassifier(estimators=[('dt', clf1), ('knn', clf2), ('svc', clf3)],
-   ...                         voting='soft', weights=[2, 1, 2])
-
-   >>> clf1 = clf1.fit(X, y)
-   >>> clf2 = clf2.fit(X, y)
-   >>> clf3 = clf3.fit(X, y)
-   >>> eclf = eclf.fit(X, y)
+The following figure illustrates how the decision regions may change when
+a soft :class:`VotingClassifier` is trained with weights on three linear
+models::
 
 .. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_voting_decision_regions_001.png
     :target: ../auto_examples/ensemble/plot_voting_decision_regions.html
