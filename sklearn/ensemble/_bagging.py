@@ -701,7 +701,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         a whole new ensemble. See :term:`the Glossary <warm_start>`.
 
         .. versionadded:: 0.17
-           *warm_start* constructor parameter.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel for both :meth:`fit` and
@@ -1130,6 +1129,8 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         When set to True, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit
         a whole new ensemble. See :term:`the Glossary <warm_start>`.
+
+        .. versionadded:: 0.17
 
     n_jobs : int, default=None
         The number of jobs to run in parallel for both :meth:`fit` and
