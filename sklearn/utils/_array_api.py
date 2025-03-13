@@ -82,6 +82,19 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
             ):
                 yield array_namespace, device, dtype
             yield array_namespace, "mps", "float32"
+
+        elif array_namespace == "array_api_strict":
+            try:
+                import array_api_strict  # noqa
+
+                yield array_namespace, array_api_strict.Device("CPU_DEVICE"), "float64"
+                yield array_namespace, array_api_strict.Device("device1"), "float32"
+            except ImportError:
+                # Those combinations will typically be skipped by pytest if
+                # array_api_strict is not installed but we still need to see them in
+                # the test output.
+                yield array_namespace, "CPU_DEVICE", "float64"
+                yield array_namespace, "device1", "float32"
         else:
             yield array_namespace, None, None
 
@@ -582,12 +595,14 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     if namespace.__name__ == "array_api_strict" and hasattr(
         namespace, "set_array_api_strict_flags"
     ):
-        namespace.set_array_api_strict_flags(api_version="2023.12")
+        namespace.set_array_api_strict_flags(api_version="2024.12")
 
     return namespace, is_array_api_compliant
 
 
-def get_namespace_and_device(*array_list, remove_none=True, remove_types=(str,)):
+def get_namespace_and_device(
+    *array_list, remove_none=True, remove_types=(str,), xp=None
+):
     """Combination into one single function of `get_namespace` and `device`.
 
     Parameters
@@ -598,6 +613,10 @@ def get_namespace_and_device(*array_list, remove_none=True, remove_types=(str,))
         Whether to ignore None objects passed in arrays.
     remove_types : tuple or list, default=(str,)
         Types to ignore in the arrays.
+    xp : module, default=None
+        Precomputed array namespace module. When passed, typically from a caller
+        that has already performed inspection of its own inputs, skips array
+        namespace inspection.
 
     Returns
     -------
@@ -610,16 +629,20 @@ def get_namespace_and_device(*array_list, remove_none=True, remove_types=(str,))
     device : device
         `device` object (see the "Device Support" section of the array API spec).
     """
+    skip_remove_kwargs = dict(remove_none=False, remove_types=[])
+
     array_list = _remove_non_arrays(
         *array_list,
         remove_none=remove_none,
         remove_types=remove_types,
     )
-
-    skip_remove_kwargs = dict(remove_none=False, remove_types=[])
-
-    xp, is_array_api = get_namespace(*array_list, **skip_remove_kwargs)
     arrays_device = device(*array_list, **skip_remove_kwargs)
+
+    if xp is None:
+        xp, is_array_api = get_namespace(*array_list, **skip_remove_kwargs)
+    else:
+        xp, is_array_api = xp, True
+
     if is_array_api:
         return xp, is_array_api, arrays_device
     else:
@@ -769,49 +792,66 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
     return sum_ / scale
 
 
+def _xlogy(x, y, xp=None):
+    # TODO: Remove this once https://github.com/scipy/scipy/issues/21736 is fixed
+    xp, _, device_ = get_namespace_and_device(x, y, xp=xp)
+
+    with numpy.errstate(divide="ignore", invalid="ignore"):
+        temp = x * xp.log(y)
+    return xp.where(x == 0.0, xp.asarray(0.0, dtype=temp.dtype, device=device_), temp)
+
+
 def _nanmin(X, axis=None, xp=None):
     # TODO: refactor once nan-aware reductions are standardized:
     # https://github.com/data-apis/array-api/issues/621
-    xp, _ = get_namespace(X, xp=xp)
+    xp, _, device_ = get_namespace_and_device(X, xp=xp)
     if _is_numpy_namespace(xp):
         return xp.asarray(numpy.nanmin(X, axis=axis))
 
     else:
         mask = xp.isnan(X)
-        X = xp.min(xp.where(mask, xp.asarray(+xp.inf, device=device(X)), X), axis=axis)
+        X = xp.min(
+            xp.where(mask, xp.asarray(+xp.inf, dtype=X.dtype, device=device_), X),
+            axis=axis,
+        )
         # Replace Infs from all NaN slices with NaN again
         mask = xp.all(mask, axis=axis)
         if xp.any(mask):
-            X = xp.where(mask, xp.asarray(xp.nan), X)
+            X = xp.where(mask, xp.asarray(xp.nan, dtype=X.dtype, device=device_), X)
         return X
 
 
 def _nanmax(X, axis=None, xp=None):
     # TODO: refactor once nan-aware reductions are standardized:
     # https://github.com/data-apis/array-api/issues/621
-    xp, _ = get_namespace(X, xp=xp)
+    xp, _, device_ = get_namespace_and_device(X, xp=xp)
     if _is_numpy_namespace(xp):
         return xp.asarray(numpy.nanmax(X, axis=axis))
 
     else:
         mask = xp.isnan(X)
-        X = xp.max(xp.where(mask, xp.asarray(-xp.inf, device=device(X)), X), axis=axis)
+        X = xp.max(
+            xp.where(mask, xp.asarray(-xp.inf, dtype=X.dtype, device=device_), X),
+            axis=axis,
+        )
         # Replace Infs from all NaN slices with NaN again
         mask = xp.all(mask, axis=axis)
         if xp.any(mask):
-            X = xp.where(mask, xp.asarray(xp.nan), X)
+            X = xp.where(mask, xp.asarray(xp.nan, dtype=X.dtype, device=device_), X)
         return X
 
 
 def _nanmean(X, axis=None, xp=None):
     # TODO: refactor once nan-aware reductions are standardized:
     # https://github.com/data-apis/array-api/issues/621
-    xp, _ = get_namespace(X, xp=xp)
+    xp, _, device_ = get_namespace_and_device(X, xp=xp)
     if _is_numpy_namespace(xp):
         return xp.asarray(numpy.nanmean(X, axis=axis))
     else:
         mask = xp.isnan(X)
-        total = xp.sum(xp.where(mask, xp.asarray(0.0, device=device(X)), X), axis=axis)
+        total = xp.sum(
+            xp.where(mask, xp.asarray(0.0, dtype=X.dtype, device=device_), X), axis=axis
+        )
         count = xp.sum(xp.astype(xp.logical_not(mask), X.dtype), axis=axis)
         return total / count
 
@@ -868,6 +908,8 @@ def _convert_to_numpy(array, xp):
         return array.cpu().numpy()
     elif xp_name in {"array_api_compat.cupy", "cupy"}:  # pragma: nocover
         return array.get()
+    elif xp_name in {"array_api_strict"}:
+        return numpy.asarray(xp.asarray(array, device=xp.Device("CPU_DEVICE")))
 
     return numpy.asarray(array)
 

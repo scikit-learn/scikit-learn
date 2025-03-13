@@ -3,7 +3,7 @@
 # input_hash: 45bccf0e77c6967a2f49b8c304ef02337f7bd84c59e63221f8c0cb0e75dfe269
 @EXPLICIT
 https://repo.anaconda.com/pkgs/main/linux-64/_libgcc_mutex-0.1-main.conda#c3473ff8bdb3d124ed5ff11ec380d6f9
-https://repo.anaconda.com/pkgs/main/linux-64/ca-certificates-2024.12.31-h06a4308_0.conda#3208a05dc81c1e3a788fd6e5a5a38295
+https://repo.anaconda.com/pkgs/main/linux-64/ca-certificates-2025.2.25-h06a4308_0.conda#495015d24da8ad929e3ae2d18571016d
 https://repo.anaconda.com/pkgs/main/linux-64/ld_impl_linux-64-2.40-h12ee557_0.conda#ee672b5f635340734f58d618b7bca024
 https://repo.anaconda.com/pkgs/main/linux-64/python_abi-3.13-0_cp313.conda#d4009c49dd2b54ffded7f1365b5f6505
 https://repo.anaconda.com/pkgs/main/noarch/tzdata-2025a-h04d1e81_0.conda#885caf42f821b98b3321dc4108511a3d
@@ -59,12 +59,12 @@ https://repo.anaconda.com/pkgs/main/linux-64/pip-25.0-py313h06a4308_0.conda#cbe2
 # pip urllib3 @ https://files.pythonhosted.org/packages/c8/19/4ec628951a74043532ca2cf5d97b7b14863931476d117c471e8e2b1eb39f/urllib3-2.3.0-py3-none-any.whl#sha256=1cee9ad369867bfdbbb48b7dd50374c0967a0bb7710050facf0dd6911440e3df
 # pip jinja2 @ https://files.pythonhosted.org/packages/bd/0f/2ba5fbcd631e3e88689309dbe978c5769e883e4b84ebfe7da30b43275c5a/jinja2-3.1.5-py3-none-any.whl#sha256=aba0f4dc9ed8013c424088f68a5c226f7d6097ed89b246d7749c2ec4175c6adb
 # pip pyproject-metadata @ https://files.pythonhosted.org/packages/e8/61/9dd3e68d2b6aa40a5fc678662919be3c3a7bf22cba5a6b4437619b77e156/pyproject_metadata-0.9.0-py3-none-any.whl#sha256=fc862aab066a2e87734333293b0af5845fe8ac6cb69c451a41551001e923be0b
-# pip pytest @ https://files.pythonhosted.org/packages/11/92/76a1c94d3afee238333bc0a42b82935dd8f9cf8ce9e336ff87ee14d9e1cf/pytest-8.3.4-py3-none-any.whl#sha256=50e16d954148559c9a74109af1eaf0c945ba2d8f30f0a3d3335edde19788b6f6
+# pip pytest @ https://files.pythonhosted.org/packages/30/3d/64ad57c803f1fa1e963a7946b6e0fea4a70df53c1a7fed304586539c2bac/pytest-8.3.5-py3-none-any.whl#sha256=c69214aa47deac29fad6c2a4f590b9c4a9fdb16a403176fe154b79c0b4d4d820
 # pip python-dateutil @ https://files.pythonhosted.org/packages/ec/57/56b9bcc3c9c6a792fcbaf139543cee77261f3651ca9da0c93f5c1221264b/python_dateutil-2.9.0.post0-py2.py3-none-any.whl#sha256=a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427
 # pip requests @ https://files.pythonhosted.org/packages/f9/9b/335f9764261e915ed497fcdeb11df5dfd6f7bf257d4a6a2a686d80da4d54/requests-2.32.3-py3-none-any.whl#sha256=70761cfe03c773ceb22aa2f671b4757976145175cdfca038c02654d061d6dcc6
 # pip meson-python @ https://files.pythonhosted.org/packages/7d/ec/40c0ddd29ef4daa6689a2b9c5ced47d5b58fa54ae149b19e9a97f4979c8c/meson_python-0.17.1-py3-none-any.whl#sha256=30a75c52578ef14aff8392677b09c39346e0a24d2b2c6204b8ed30583c11269c
 # pip pooch @ https://files.pythonhosted.org/packages/a8/87/77cc11c7a9ea9fd05503def69e3d18605852cd0d4b0d3b8f15bbeb3ef1d1/pooch-1.8.2-py3-none-any.whl#sha256=3529a57096f7198778a5ceefd5ac3ef0e4d06a6ddaf9fc2d609b806f25302c47
 # pip pytest-cov @ https://files.pythonhosted.org/packages/36/3b/48e79f2cd6a61dbbd4807b4ed46cb564b4fd50a76166b1c4ea5c1d9e2371/pytest_cov-6.0.0-py3-none-any.whl#sha256=eee6f1b9e61008bd34975a4d5bab25801eb31898b032dd55addc93e96fcaaa35
 # pip pytest-xdist @ https://files.pythonhosted.org/packages/6d/82/1d96bf03ee4c0fdc3c0cbe61470070e659ca78dc0086fb88b66c185e2449/pytest_xdist-3.6.1-py3-none-any.whl#sha256=9ed4adfb68a016610848639bb7e02c9352d5d9f03d04809919e2dafc3be4cca7
-# pip sphinx @ https://files.pythonhosted.org/packages/cf/aa/282768cff0039b227a923cb65686539bb606e448c594d4fdee4d2c7765a1/sphinx-8.2.1-py3-none-any.whl#sha256=b5d2bb3cdf6207fcacde9f92085d2b97667b05b9c346eaec426ca4be8af505e9
+# pip sphinx @ https://files.pythonhosted.org/packages/2f/72/9a437a9dc5393c0eabba447bdb6233a7b02bb23e84975f17ad9a9ca86677/sphinx-8.3.0-py3-none-any.whl#sha256=bd8fcf35ab2c4240b01c74a411c948350a3aebd6aa175579363754ed380d350a
 # pip numpydoc @ https://files.pythonhosted.org/packages/6c/45/56d99ba9366476cd8548527667f01869279cedb9e66b28eb4dfb27701679/numpydoc-1.8.0-py3-none-any.whl#sha256=72024c7fd5e17375dec3608a27c03303e8ad00c81292667955c6fea7a3ccf541
