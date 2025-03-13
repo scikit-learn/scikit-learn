@@ -12,7 +12,7 @@ from scipy.spatial.distance import pdist, squareform
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.decomposition import PCA
 from sklearn.manifold import _utils
-from sklearn.manifold._t_sne import TSNE, _VALID_METRICS
+from sklearn.manifold._t_sne import _VALID_METRICS, TSNE
 from sklearn.metrics import pairwise_distances
 from sklearn.utils import check_array, check_random_state
 from sklearn.utils._param_validation import Interval, StrOptions
