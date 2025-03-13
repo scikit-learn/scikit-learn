@@ -96,7 +96,8 @@ class BaseMKL(BaseEstimator, MetaEstimatorMixin, TransformerMixin, metaclass=ABC
             self,
             msg=(
                 "This %(name)s instance needs to be fitted before calling it. "
-                "Call 'fit' with appropriate arguments before calling this instance."
+                "Please call 'fit' with appropriate arguments before using this "
+                "instance as a callable."
             ),
         )
         return self.transform(X)
