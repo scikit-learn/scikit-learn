@@ -9,14 +9,13 @@ from numbers import Integral, Real
 from time import time
 
 import numpy as np
-from scipy.special import logsumexp
 
 from .. import cluster
 from ..base import BaseEstimator, DensityMixin, _fit_context
 from ..cluster import kmeans_plusplus
 from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state
-from ..utils._array_api import get_namespace, get_namespace_and_device
+from ..utils._array_api import _logsumexp, get_namespace, get_namespace_and_device
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.validation import check_is_fitted, validate_data
 
@@ -352,7 +351,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         X = validate_data(self, X, reset=False)
 
-        return logsumexp(self._estimate_weighted_log_prob(X), axis=1)
+        return _logsumexp(self._estimate_weighted_log_prob(X), axis=1)
 
     def score(self, X, y=None):
         """Compute the per-sample average log-likelihood of the given data X.
@@ -534,7 +533,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         xp, _ = get_namespace(X)
         weighted_log_prob = self._estimate_weighted_log_prob(X)
         # TODO scipy.special.logsumexp needs scipy >= 1.15 for array API support
-        log_prob_norm = logsumexp(weighted_log_prob, axis=1)
+        log_prob_norm = _logsumexp(weighted_log_prob, axis=1)
         with np.errstate(under="ignore"):
             # ignore underflow
             log_resp = weighted_log_prob - log_prob_norm[:, xp.newaxis]

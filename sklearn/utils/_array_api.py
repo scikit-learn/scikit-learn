@@ -1150,3 +1150,10 @@ def _tolist(array, xp=None):
         return array.tolist()
     array_np = _convert_to_numpy(array, xp=xp)
     return [element.item() for element in array_np]
+
+
+def _logsumexp(array, axis=None, xp=None):
+    # TODO replace by scipy.special.logsumexp when
+    # https://github.com/scipy/scipy/pull/22683 is in a relase
+    xp, _ = get_namespace(array, xp=xp)
+    return xp.log(xp.sum(xp.exp(array), axis=axis))
