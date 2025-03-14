@@ -659,7 +659,7 @@ considers at each step all the possible merges.
 
 * :ref:`sphx_glr_auto_examples_cluster_plot_digits_agglomeration.py`: This
   example shows how similar features are merged together using feature
-  agglomeration
+  agglomeration.
 Different linkage type: Ward, complete, average, and single linkage
 -------------------------------------------------------------------
 
