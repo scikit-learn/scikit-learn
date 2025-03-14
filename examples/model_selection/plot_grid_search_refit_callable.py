@@ -188,88 +188,136 @@ results_df = results_df.with_columns(
     .alias("model_type")
 )
 
-# Create a figure with two subplots: one for test scores and one for train vs
-# test comparison
+# Get the number of CV splits from the results
+n_splits = sum(
+    1
+    for key in grid.cv_results_.keys()
+    if key.startswith("split") and key.endswith("test_score")
+)
+
+# Extract individual scores for each split
+test_scores = np.array(
+    [
+        [grid.cv_results_[f"split{i}_test_score"][j] for i in range(n_splits)]
+        for j in range(len(n_components))
+    ]
+)
+train_scores = np.array(
+    [
+        [grid.cv_results_[f"split{i}_train_score"][j] for i in range(n_splits)]
+        for j in range(len(n_components))
+    ]
+)
+
+# Calculate mean and std of test scores
+mean_test_scores = np.mean(test_scores, axis=1)
+std_test_scores = np.std(test_scores, axis=1)
+
+# Find best score and threshold
+best_mean_score = np.max(mean_test_scores)
+threshold = best_mean_score - std_test_scores[np.argmax(mean_test_scores)]
+
+# Create figure with two subplots
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
 
-# Plot 1: Test scores with error bars
-components = results_df["n_components"]
-colors = ["green" if comp == best_components else "skyblue" for comp in components]
+# Plot 1: Individual test scores with mean line and thresholds
+for i, comp in enumerate(n_components):
+    # Plot individual points with lower opacity
+    ax1.scatter(
+        [comp] * n_splits,
+        test_scores[i],
+        alpha=0.2,  # Lower alpha for individual points
+        color="lightgray",
+        label="Individual scores" if i == 0 else "",
+    )
 
-bars = ax1.bar(
-    components,
-    results_df["mean_test_score"],
-    width=1.0,
-    color=colors,
-    yerr=results_df["std_test_score"],
-    capsize=10,
+# Add mean line with error bars
+ax1.errorbar(
+    n_components,
+    mean_test_scores,
+    yerr=std_test_scores,
+    color="blue",
+    fmt="o-",
+    capsize=5,
+    label="Mean test score",
+    linewidth=2,
+    markersize=8,
 )
 
-# Add threshold lines to the first subplot
+# Add threshold lines
 ax1.axhline(
-    np.max(test_scores), linestyle="--", color="orange", label="Best score", linewidth=2
+    best_mean_score,
+    color="#9b59b6",  # Purple
+    linestyle="--",
+    label="Best score",
+    linewidth=2,
 )
-ax1.axhline(lower, linestyle="--", color="red", label="Best score - 1 std", linewidth=2)
+ax1.axhline(
+    threshold,
+    color="#e67e22",  # Orange
+    linestyle="--",
+    label="Best score - 1 std",
+    linewidth=2,
+)
+
+# Highlight selected model
+ax1.axvline(
+    best_components,
+    color="#9b59b6",  # Purple
+    alpha=0.2,
+    linewidth=8,
+    label="Selected model",
+)
 
 # Plot 2: Train vs Test scores
-ax2.plot(
-    components,
-    results_df["mean_train_score"],
-    "o-",
-    color="green",
-    label="Train Score",
-)
-ax2.plot(
-    components,
-    results_df["mean_test_score"],
-    "o-",
-    color="blue",
-    label="Test Score",
-)
-
-# Add error bands for train and test scores
-for i, (comp, train_score, test_score, train_std, test_std) in enumerate(
-    zip(
-        components,
-        results_df["mean_train_score"],
-        results_df["mean_test_score"],
-        results_df["std_train_score"],
-        results_df["std_test_score"],
+for i, comp in enumerate(n_components):
+    # Plot individual points
+    ax2.scatter(
+        [comp] * n_splits,
+        train_scores[i],
+        alpha=0.5,
+        color="#ffd700",  # Yellow for train scores
+        label="Train scores" if i == 0 else "",
     )
-):
-    ax2.fill_between(
-        [comp - 0.2, comp + 0.2],
-        [train_score - train_std, train_score - train_std],
-        [train_score + train_std, train_score + train_std],
-        color="green",
-        alpha=0.2,
-    )
-    ax2.fill_between(
-        [comp - 0.2, comp + 0.2],
-        [test_score - test_std, test_score - test_std],
-        [test_score + test_std, test_score + test_std],
+    ax2.scatter(
+        [comp] * n_splits,
+        test_scores[i],
+        alpha=0.5,
         color="blue",
-        alpha=0.2,
+        label="Test scores" if i == 0 else "",
     )
 
-# Mark the best model in the second plot
+# Add mean lines
 ax2.plot(
-    best_components, best_score, "o", color="red", markersize=10, label="Selected model"
+    n_components,
+    np.mean(train_scores, axis=1),
+    "-",
+    color="#ffd700",  # Yellow for train scores
+    linewidth=2,
+    label="Mean train score",
+)
+ax2.plot(
+    n_components,
+    np.mean(test_scores, axis=1),
+    "-",
+    color="blue",
+    linewidth=2,
+    label="Mean test score",
 )
 
 # Set titles and labels for both subplots
 for ax in (ax1, ax2):
     ax.set_xlabel("Number of PCA components", fontsize=12)
-    ax.set_xticks(components)
-    ax.set_ylim((0.7, 1.0))  # Adjust as needed for better visualization
+    ax.set_xticks(n_components)
+    ax.set_ylim((0.7, 1.0))
+    ax.grid(True, linestyle="--", alpha=0.7)
     ax.legend(loc="lower right")
 
-ax1.set_title("Model Complexity vs. Test Score", fontsize=14)
-ax1.set_ylabel("Digit classification accuracy", fontsize=12)
-ax1.grid(axis="y", linestyle="--", alpha=0.7)
-ax2.set_title("Train vs. Test Performance", fontsize=14)
+ax1.set_title("Model Selection Criteria", fontsize=14)
+ax1.set_ylabel("Test accuracy", fontsize=12)
+
+ax2.set_title("Train vs. Test Scores", fontsize=14)
 ax2.set_ylabel("Score", fontsize=12)
-ax2.grid(axis="both", linestyle="--", alpha=0.7)
 
 # Add a main title for the entire figure
 fig.suptitle("Balance model complexity and cross-validated score", fontsize=16, y=1.05)
