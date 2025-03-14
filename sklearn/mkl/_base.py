@@ -14,18 +14,38 @@ from ..base import (
     TransformerMixin,
     _fit_context,
 )
+from ..metrics.pairwise import (
+    laplacian_kernel,
+    linear_kernel,
+    polynomial_kernel,
+    rbf_kernel,
+    sigmoid_kernel,
+)
 from ..utils._param_validation import Interval, StrOptions
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, check_X_y
 from ._algo import (
     _average_mkl,
     _simple_mkl,
     _sum_mkl,
 )
+from ._utils import kernel_generator, number_of_kernels
 
 ALGORITHMS = {
     "average": _average_mkl,
     "simple": _simple_mkl,
     "sum": _sum_mkl,
+}
+
+
+KERNELS = {
+    "laplace": laplacian_kernel,
+    "laplacian": laplacian_kernel,
+    "linear": linear_kernel,
+    "poly": polynomial_kernel,
+    "polynomial": polynomial_kernel,
+    "rbf": rbf_kernel,
+    "gaussian": rbf_kernel,
+    "sigmoid": sigmoid_kernel,
 }
 
 
@@ -50,6 +70,7 @@ class BaseMKL(BaseEstimator, MetaEstimatorMixin, TransformerMixin, metaclass=ABC
         self,
         kernels,
         kernels_params,
+        precompute_kernels,
         algo,
         epsilon,
         tol,
@@ -57,8 +78,9 @@ class BaseMKL(BaseEstimator, MetaEstimatorMixin, TransformerMixin, metaclass=ABC
         max_iter,
         random_state,
     ):
-        self.kernels = kernels
+        self.kernels = self._check_and_prepare_kernels(kernels)
         self.kernels_params = kernels_params
+        self.precompute_kernels = precompute_kernels
         self.algo = algo
         self.epsilon = epsilon
         self.tol = tol
@@ -105,9 +127,8 @@ class BaseMKL(BaseEstimator, MetaEstimatorMixin, TransformerMixin, metaclass=ABC
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         # TODO: DOC: X : list of kernels matrices (n, n) or array-like of shape (n, m)
-        # TODO: Use utils check functions
-        X_fit = np.asarray(X, dtype=np.float64)
-        y_fit = y
+        self.n_kernels_ = number_of_kernels(X, self.kernels, self.kernels_params)
+        X_fit, y_fit = self._check_and_prepare_X_y(X, y)
 
         if self.epsilon is None:
             if self._svm.__class__.__name__ == "SVC" and np.unique(y).shape[0] > 2:
@@ -117,13 +138,71 @@ class BaseMKL(BaseEstimator, MetaEstimatorMixin, TransformerMixin, metaclass=ABC
 
         # TODO: Manage kernels and kernels_params
         self.weights_, self._svm = ALGORITHMS[self.algo].learn(
-            self._svm,
-            X_fit,
-            y_fit,
-            self.epsilon,
-            self.tol,
-            self.max_iter,
-            self.verbose,
+            X=X_fit,
+            y=y_fit,
+            svm=self._svm,
+            kernels=self.kernels,
+            kernels_params=self.kernels_params,
+            precompute_kernels=self.precompute_kernels,
+            n_kernels=self.n_kernels_,
+            epsilon=self.epsilon,
+            tol=self.tol,
+            verbose=self.verbose,
+            max_iter=self.max_iter,
         )
 
         return self
+
+    @staticmethod
+    def _check_and_prepare_kernels(kernels):  # TODO: Take kernels_params as input
+        if kernels == "precomputed":
+            return kernels
+
+        if isinstance(kernels, list):
+            kernel_list = []
+            for kernel in kernels:
+                if callable(kernel):
+                    kernel_list.append(kernel)
+                elif isinstance(kernel, str):
+                    if kernel in KERNELS:
+                        kernel_list.append(KERNELS[kernel])
+                    else:
+                        raise ValueError(
+                            f"Invalid kernel '{kernel}'. "
+                            f"Valid kernels are {set(KERNELS)}."
+                        )
+                else:
+                    raise ValueError(
+                        "Invalid kernel. Kernels must be callables or strings."
+                    )
+            return kernel_list
+
+        raise ValueError(
+            "Invalid kernels. Kernels must be 'precomputed' "
+            "or a list of callables and/or strings."
+        )
+
+    def _check_and_prepare_X_y(self, X, y):
+        X = np.asarray(X, dtype=np.float64)
+
+        if isinstance(self.kernels, str) and self.kernels == "precomputed":
+            if len(X.shape) != 3 or X.shape[1] != X.shape[2]:
+                raise ValueError(
+                    "X must be a 3D array of shape (n_kernels, n_samples, n_samples) "
+                    "when using precomputed kernels."
+                )
+            for i in range(X.shape[0]):
+                X[i, :, :], y = check_X_y(X[i, :, :], y)
+        else:
+            X, y = check_X_y(X, y)
+            if self.precompute_kernels:
+                new_X = np.empty(
+                    (self.n_kernels_, X.shape[0], X.shape[0]), dtype=np.float64
+                )
+                for i, kernel in enumerate(
+                    kernel_generator(X, self.kernels, self.kernels_params)
+                ):
+                    new_X[i, :, :] = kernel
+                return new_X, y
+
+        return X, y

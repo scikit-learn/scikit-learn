@@ -18,6 +18,7 @@ class MKLC(BaseMKL, ClassifierMixin):
         *,
         kernels="precomputed",  # None or list of functions or list of strings
         kernels_params=None,  # None or list of (str, dict)
+        precompute_kernels=True,
         algo="simple",
         epsilon=None,  # TODO: DOC: 1e-1 if multiclass else 1e-2
         tol=1e-8,
@@ -29,6 +30,7 @@ class MKLC(BaseMKL, ClassifierMixin):
         super().__init__(
             kernels=kernels,
             kernels_params=kernels_params,
+            precompute_kernels=precompute_kernels,
             algo=algo,
             epsilon=epsilon,
             tol=tol,
@@ -51,6 +53,7 @@ class MKLR(BaseMKL, RegressorMixin):
         *,
         kernels="precomputed",
         kernels_params=None,
+        precompute_kernels=True,
         algo="simple",
         epsilon=1e-2,
         tol=1e-8,
@@ -62,6 +65,7 @@ class MKLR(BaseMKL, RegressorMixin):
         super().__init__(
             kernels=kernels,
             kernels_params=kernels_params,
+            precompute_kernels=precompute_kernels,
             algo=algo,
             epsilon=epsilon,
             tol=tol,
@@ -83,6 +87,7 @@ class OneClassMKL(BaseMKL, OutlierMixin):
         *,
         kernels="precomputed",
         kernels_params=None,
+        precompute_kernels=True,
         algo="simple",
         epsilon=1e-2,
         tol=1e-8,
@@ -94,6 +99,7 @@ class OneClassMKL(BaseMKL, OutlierMixin):
         super().__init__(
             kernels=kernels,
             kernels_params=kernels_params,
+            precompute_kernels=precompute_kernels,
             algo=algo,
             epsilon=epsilon,
             tol=tol,
@@ -115,4 +121,5 @@ def _check_and_prepare_svm_params(svm_params):
     assert (
         "svm__random_state" not in svm_params
     ), "Internal SVM random state can be set with MKL random state."
+
     return {k.removeprefix("svm__"): v for k, v in svm_params.items()}

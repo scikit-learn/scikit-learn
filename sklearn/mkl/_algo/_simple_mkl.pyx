@@ -1,22 +1,30 @@
 import numpy as np
 
+from .._utils import kernel_generator
+
 from ...utils._typedefs cimport float64_t, int32_t, int64_t, intp_t
-from .._utils cimport BINARY, MULTICLASS, REGRESSION, ONECLASS
-from .._utils cimport combine_kernels, fix_precision
+from ._utils cimport BINARY, MULTICLASS, REGRESSION, ONECLASS
+from ._utils cimport combine_kernels, fix_precision
 
 
 def learn(
-    object svm,
-    const float64_t[:, :, ::1] kernels,
+    object X,
     object y,
+    object svm,
+    object kernels,
+    object kernels_params,
+    const bint precompute_kernels,
+    const int n_kernels,
     const double epsilon,
     const double tol=1e-8,
-    const int max_iter=-1,
     const int verbose=1,
+    const int max_iter=-1,
 ):
-    cdef intp_t mu
-    cdef double J, J_dagger, J_prev, gamma_max = 0.0
-    cdef double goldensearch_precision = 1e-1, max_goldensearch_precision = 1e-08
+    cdef intp_t mu, M = n_kernels
+    cdef double J, J_dagger, J_prev, gamma_max = 0.0, stopping_crit, \
+        goldensearch_precision = 1e-1, max_goldensearch_precision = 1e-8
+    cdef bint stopping_cond
+
     cdef str svm_name = svm.__class__.__name__
     cdef int64_t[::1] classes = np.unique(y) if svm_name == "SVC" else \
         np.empty(0, dtype=np.int64)
@@ -26,10 +34,10 @@ def learn(
         REGRESSION if svm_name == "SVR" else \
         ONECLASS if svm_name == "OneClassSVM" \
         else -1
-    cdef int32_t[::1] alpha_lengths
+
     cdef float64_t[:, ::1] alpha
+    cdef int32_t[::1] alpha_lengths
     cdef float64_t[::1] delta_J, D, D_dagger, d_dagger
-    cdef intp_t M = kernels.shape[0]
     cdef float64_t[::1] d = np.full(M, 1.0 / M, dtype=np.float64)
 
     if verbose:
@@ -40,12 +48,12 @@ def learn(
     while True:
         old_d = np.copy(d)
 
-        J = objective_value(svm, d, kernels, y)
+        J = _objective_value(svm, d, kernel_generator(X, kernels, kernels_params), y)
         alpha, alpha_lengths = np.copy(svm.alpha_raw_), np.copy(svm.alpha_raw_lengths_)
-        delta_J = gradient(svm_type, kernels, y, classes, alpha, alpha_lengths)
+        delta_J = _gradient(svm_type, X, y, classes, alpha, alpha_lengths)
 
         mu = np.argmax(d)
-        D = gradient_direction(d, delta_J, mu, M, tol)
+        D = _gradient_direction(d, delta_J, mu, M, tol)
         J_prev, J_dagger, d_dagger, D_dagger = J, float('-inf'), d, D
 
         while J_dagger < J:
@@ -54,26 +62,28 @@ def learn(
             if J_dagger != float('-inf'):
                 J = J_dagger
 
-            gamma_max = compute_gamma_max(d, D, M)
+            gamma_max = _compute_gamma_max(d, D, M)
             d_dagger = np.add(d, np.multiply(gamma_max, D))
-            J_dagger = objective_value(svm, d_dagger, kernels, y)
+            J_dagger = _objective_value(
+                svm, d_dagger, kernel_generator(X, kernels, kernels_params), y
+            )
             if J_dagger < J:
-                D_dagger = update_gradient_direction(D, d_dagger, mu, M, tol)
+                D_dagger = _update_gradient_direction(D, d_dagger, mu, M, tol)
 
         # Line search for the optimal step size
-        d, J, alpha, alpha_lengths = gamma_linesearch(
-            svm, 0.0, gamma_max, gamma_max, J, J_dagger, d, D, kernels,
+        d, J, alpha, alpha_lengths = _gamma_linesearch(
+            svm, 0.0, gamma_max, gamma_max, J, J_dagger, d, D, X,
             J_prev, y, alpha, alpha_lengths, goldensearch_precision
         )
         d = fix_precision(d, tol)
-        delta_J = gradient(svm_type, kernels, y, classes, alpha, alpha_lengths)
+        delta_J = _gradient(svm_type, X, y, classes, alpha, alpha_lengths)
 
         # Precision enhancement for line search
         if max(abs(d-old_d))<tol and goldensearch_precision>max_goldensearch_precision:
             goldensearch_precision = goldensearch_precision/10
 
         # Stopping criterion (DualGap or KKT Constraint for Multi-Classification)
-        stopping_crit, stopping_cond = stopping_criterion(
+        stopping_crit, stopping_cond = _stopping_criterion(
             svm_type, J, d, delta_J, y, alpha, M, getattr(svm, "epsilon", None), epsilon
         )
 
@@ -92,7 +102,9 @@ def learn(
 
         # Stopping conditions
         if iterations == max_iter or stopping_cond:
-            J = objective_value(svm, d, kernels, y)  # It fits the final SVM
+            J = _objective_value(
+                svm, d, kernel_generator(X, kernels, kernels_params), y
+            )  # It fits the final SVM
 
             if verbose:
                 print("└──────┴────────────┴───────────┴─────────────┘")
@@ -107,10 +119,10 @@ def learn(
         iterations += 1
 
 
-def objective_value(
+cdef double _objective_value(
     object svm,
     const float64_t[::1] d,
-    const float64_t[:, :, ::1] kernels,
+    object kernels,
     object y,
 ):
     if hasattr(svm, "alpha_raw_"):
@@ -120,7 +132,7 @@ def objective_value(
     return svm.objective_val_
 
 
-def gradient_direction(
+cdef float64_t[::1] _gradient_direction(
     const float64_t[::1] d,
     const float64_t[::1] delta_J,
     const intp_t mu,
@@ -141,7 +153,7 @@ def gradient_direction(
     return D
 
 
-def compute_gamma_max(
+cdef double _compute_gamma_max(
     const float64_t[::1] d,
     const float64_t[::1] D,
     const intp_t M,
@@ -157,7 +169,7 @@ def compute_gamma_max(
     return gamma_max
 
 
-def update_gradient_direction(
+cdef float64_t[::1] _update_gradient_direction(
     float64_t[::1] D,
     const float64_t[::1] d,
     const intp_t mu,
@@ -174,7 +186,7 @@ def update_gradient_direction(
     return D
 
 
-def gamma_linesearch(
+def _gamma_linesearch(
     object svm,
     const double gamma_min,
     const double gamma_max,
@@ -208,12 +220,12 @@ def gamma_linesearch(
         gamma_medl = gamma_min + (gamma_medr - gamma_min) / gold_ratio
 
         tmp_d_r = np.add(d, np.multiply(gamma_medr, D))
-        cost_medr = objective_value(svm, tmp_d_r, kernels, y)
+        cost_medr = _objective_value(svm, tmp_d_r, kernels, y)
         alpha_r = np.copy(svm.alpha_raw_)
         alpha_lengths_r = np.copy(svm.alpha_raw_lengths_)
 
         tmp_d_l = np.add(d, np.multiply(gamma_medl, D))
-        cost_medl = objective_value(svm, tmp_d_l, kernels, y)
+        cost_medl = _objective_value(svm, tmp_d_l, kernels, y)
         alpha_l = np.copy(svm.alpha_raw_)
         alpha_lengths_l = np.copy(svm.alpha_raw_lengths_)
 
@@ -250,7 +262,7 @@ def gamma_linesearch(
         return d, cost_min, alpha, alpha_lengths
 
 
-def stopping_criterion(
+cpdef tuple _stopping_criterion(
     const int svm_type,
     const double J,
     const float64_t[::1] d,
@@ -262,19 +274,19 @@ def stopping_criterion(
     const double cond_epsilon,
 ):
     if svm_type == MULTICLASS:
-        return kkt_constraint(d, delta_J, M, cond_epsilon)
+        return _kkt_constraint(d, delta_J, M, cond_epsilon)
     else:
-        return dual_gap(svm_type, J, delta_J, y, alpha, epsilon, cond_epsilon)
+        return _dual_gap(svm_type, J, delta_J, y, alpha, epsilon, cond_epsilon)
 
 
-def dual_gap(
+cpdef tuple _dual_gap(
     const int svm_type,
     const double J,
     const float64_t[::1] delta_J,
     object y,
     const float64_t[:, ::1] alpha,
     const double epsilon,
-    const double dual_gap_epsilon = 0.01,
+    const double dual_gap_epsilon,
 ):
     cdef double duality_gap
 
@@ -295,11 +307,11 @@ def dual_gap(
     return duality_gap, duality_gap < dual_gap_epsilon
 
 
-def kkt_constraint(
+cpdef tuple _kkt_constraint(
     const float64_t[::1] d,
     const float64_t[::1] delta_J,
     const intp_t M,
-    const double kkt_epsilon = 0.1,
+    const double kkt_epsilon,
 ):
     cdef intp_t m
     cdef double min_dJ_eq_0, min_dJ_gt_0, max_dJ_gt_0
@@ -316,11 +328,11 @@ def kkt_constraint(
             if delta_J[m] < min_dJ_eq_0:
                 min_dJ_eq_0 = delta_J[m]
 
-    cdef double kkt_cons = np.abs((min_dJ_gt_0 - max_dJ_gt_0) / min_dJ_gt_0)
-    return kkt_cons, kkt_cons <= kkt_epsilon and min_dJ_eq_0 >= max_dJ_gt_0
+    cdef double kkt_const = np.abs((min_dJ_gt_0 - max_dJ_gt_0) / min_dJ_gt_0)
+    return kkt_const, kkt_const <= kkt_epsilon and min_dJ_eq_0 >= max_dJ_gt_0
 
 
-def gradient(
+cdef float64_t[::1] _gradient(
     object svm_type,
     const float64_t[:, :, ::1] kernels,
     object y,
@@ -329,25 +341,26 @@ def gradient(
     const int32_t[::1] alpha_lengths,
 ):
     if svm_type == BINARY or svm_type == MULTICLASS:
-        return svc_gradient(kernels, y, classes, alpha, alpha_lengths)
+        return _svc_gradient(kernels, y, classes, alpha, alpha_lengths)
     elif svm_type == REGRESSION:
-        return svr_gradient(kernels, alpha)
+        return _svr_gradient(kernels, alpha)
     elif svm_type == ONECLASS:
-        return one_class_gradient(kernels, alpha)
+        return _one_class_gradient(kernels, alpha)
     else:
         raise ValueError("Unknown SVM type.")
 
 
-def svc_gradient(
+cdef float64_t[::1] _svc_gradient(
     const float64_t[:, :, ::1] kernels,
     const int64_t[::1] y,
     const int64_t[::1] classes,
     const float64_t[:, ::1] alpha,
     const int32_t[::1] alpha_lengths,
 ):
-    cdef intp_t c1, c2, i, j, p, l, l_c1, idx_i, idx_j
+    cdef intp_t c1, c2, i, j, p, l, l_c1, idx_i, idx_j, k
     cdef double s
     cdef int yi_x_yj
+    cdef const float64_t[:, ::1] kernel
 
     # LibSVM orders its x, y, and consequently alpha, by class
     # We need to retrieve the real indices in order to compute the kernel
@@ -367,7 +380,7 @@ def svc_gradient(
 
     # ∂J/∂dₘ = -1/2·ΣₚΣᵢΣⱼαₚᵢ·αₚⱼ·yᵢ·yⱼ·Kₘ(xᵢ, xⱼ)
     cdef float64_t[::1] delta_J = np.empty(kernels.shape[0], dtype=np.float64)
-    for k in range(kernels.shape[0]):
+    for k, kernel in enumerate(kernels):
         p = 0
         s = 0.
         for c1 in range(len(classes)):
@@ -378,24 +391,25 @@ def svc_gradient(
                     for j in range(l):
                         yi_x_yj = 1 if (i < l_c1) == (j < l_c1) else -1
                         s += (alpha[p, i] * alpha[p, j] * yi_x_yj *
-                              kernels[k, indices[p, i], indices[p, j]])
+                              kernel[indices[p, i], indices[p, j]])
                 p += 1
         delta_J[k] = -0.5 * s
 
     return delta_J
 
 
-def svr_gradient(
+cdef float64_t[::1] _svr_gradient(
     const float64_t[:, :, ::1] kernels,
     const float64_t[:, ::1] alpha_raw_,
 ):
-    cdef intp_t i, j, l
+    cdef intp_t i, j, l, k
     cdef double s
+    cdef const float64_t[:, ::1] kernel
 
     # ∂J/∂dₘ = -1/2·ΣᵢΣⱼ(βᵢ - αᵢ)·(βⱼ - αⱼ)·Kₘ(xᵢ, xⱼ)
     cdef float64_t[::1] delta_J = np.empty(kernels.shape[0], dtype=np.float64)
     l = kernels.shape[1]
-    for k in range(kernels.shape[0]):
+    for k, kernel in enumerate(kernels):
         s = 0.
         for i in range(l):
             for j in range(l):
@@ -407,17 +421,18 @@ def svr_gradient(
     return delta_J
 
 
-def one_class_gradient(
+cdef float64_t[::1] _one_class_gradient(
     const float64_t[:, :, ::1] kernels,
     const float64_t[:, ::1] alpha_raw_,
 ):
-    cdef intp_t i, j, l
+    cdef intp_t i, j, l, k
     cdef double s
+    cdef const float64_t[:, ::1] kernel
 
     # ∂J/∂dₘ = -1/2·ΣᵢΣⱼαᵢ·αⱼ·Kₘ(xᵢ, xⱼ)
     cdef float64_t[::1] delta_J = np.empty(kernels.shape[0], dtype=np.float64)
     l = kernels.shape[1]
-    for k in range(kernels.shape[0]):
+    for k, kernel in enumerate(kernels):
         s = 0.
         for i in range(l):
             for j in range(l):
