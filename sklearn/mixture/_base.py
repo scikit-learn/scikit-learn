@@ -532,8 +532,8 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         """
         xp, _ = get_namespace(X)
         weighted_log_prob = self._estimate_weighted_log_prob(X)
-        # TODO scipy.special.logsumexp needs scipy >= 1.15 for array API support
         log_prob_norm = _logsumexp(weighted_log_prob, axis=1)
+
         with np.errstate(under="ignore"):
             # ignore underflow
             log_resp = weighted_log_prob - log_prob_norm[:, xp.newaxis]
