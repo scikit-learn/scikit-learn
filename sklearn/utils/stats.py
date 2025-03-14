@@ -2,10 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from ..utils._array_api import (
-    _cumsum,
     _find_matching_floating_dtype,
-    _nextafter,
-    _take_along_axis,
     get_namespace_and_device,
 )
 
@@ -62,7 +59,7 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50):
         sample_weight = xp.tile(sample_weight, (array.shape[1], 1)).T
     # Sort `array` and `sample_weight` along axis=0:
     sorted_idx = xp.argsort(array, axis=0)
-    sorted_weights = _take_along_axis(sample_weight, sorted_idx, xp)
+    sorted_weights = xp.take_along_axis(sample_weight, sorted_idx, xp)
 
     # Set NaN values in `sample_weight` to 0. We only perform this operation if NaN
     # values are present at all to avoid temporary allocations of size `(n_samples,
@@ -71,12 +68,12 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50):
     n_features = array.shape[1]
     largest_value_per_column = array[sorted_idx[-1, ...], xp.arange(n_features)]
     if xp.isnan(largest_value_per_column).any():
-        sorted_nan_mask = _take_along_axis(xp.isnan(array), sorted_idx, xp=xp)
+        sorted_nan_mask = xp.take_along_axis(xp.isnan(array), sorted_idx, xp=xp)
         sorted_weights[sorted_nan_mask] = 0
 
     # Compute the weighted cumulative distribution function (CDF) based on
     # sample_weight and scale percentile_rank along it:
-    weight_cdf = _cumsum(sorted_weights, axis=0)
+    weight_cdf = xp.cumulative_sum(sorted_weights, axis=0)
     adjusted_percentile_rank = percentile_rank / 100 * weight_cdf[-1]
     weight_cdf = xp.asarray(
         weight_cdf, dtype=_find_matching_floating_dtype(weight_cdf, xp=xp)
@@ -88,7 +85,7 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50):
     # For percentile_rank=0, ignore leading observations with sample_weight=0; see
     # PR #20528:
     mask = adjusted_percentile_rank == 0
-    adjusted_percentile_rank[mask] = _nextafter(
+    adjusted_percentile_rank[mask] = xp.nextafter(
         adjusted_percentile_rank[mask], adjusted_percentile_rank[mask] + 1, xp=xp
     )
     # Find index (i) of `adjusted_percentile_rank` in `weight_cdf`,
