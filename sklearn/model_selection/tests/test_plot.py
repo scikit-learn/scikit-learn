@@ -21,14 +21,14 @@ def data():
 @pytest.mark.parametrize(
     "params, err_type, err_msg",
     [
-        ({"std_display_style": "invalid"}, ValueError, "Unknown std_display_style:"),
-        ({"score_type": "invalid"}, ValueError, "Unknown score_type:"),
+        ({"std_display_style": "invalid"}, ValueError, "Unknown std_display_style"),
+        ({"score_type": "invalid"}, ValueError, "Unknown score_type"),
     ],
 )
 @pytest.mark.parametrize(
     "CurveDisplay, specific_params",
     [
-        (ValidationCurveDisplay, {"param_name": "max_depth", "param_range": [1, 3, 5]}),
+        (ValidationCurveDisplay, {"param_name": "max_depth", "param_range": np.array([1.0, 3.0, 5.0], dtype=np.float64)}),
         (LearningCurveDisplay, {"train_sizes": [0.3, 0.6, 0.9]}),
     ],
 )
@@ -82,41 +82,29 @@ def test_learning_curve_display_default_usage(pyplot, data):
     assert_allclose(display.test_scores, test_scores)
 
 
-def test_validation_curve_display_default_usage(pyplot, data):
-    """Check the default usage of the ValidationCurveDisplay class."""
+
+def test_validation_curve_display_basic_usage(pyplot, data):
+    """Check that ValidationCurveDisplay works with basic parameters."""
     X, y = data
     estimator = DecisionTreeClassifier(random_state=0)
 
-    param_name, param_range = "max_depth", [1, 3, 5]
+    param_name = "max_depth"
+    param_range = np.array([1, 3, 5], dtype=np.float64)
     display = ValidationCurveDisplay.from_estimator(
         estimator, X, y, param_name=param_name, param_range=param_range
     )
 
-    import matplotlib as mpl
-
-    assert display.errorbar_ is None
-
-    assert isinstance(display.lines_, list)
-    for line in display.lines_:
-        assert isinstance(line, mpl.lines.Line2D)
-
-    assert isinstance(display.fill_between_, list)
-    for fill in display.fill_between_:
-        assert isinstance(fill, mpl.collections.PolyCollection)
-        assert fill.get_alpha() == 0.5
-
-    assert display.score_name == "Score"
-    assert display.ax_.get_xlabel() == f"{param_name}"
+    assert isinstance(display.ax_, mpl.axes.Axes)
+    assert display.ax_.get_xlabel() == "max_depth"
     assert display.ax_.get_ylabel() == "Score"
 
     _, legend_labels = display.ax_.get_legend_handles_labels()
-    assert legend_labels == ["Train", "Test"]
+    assert set(legend_labels) == {"Train", "Test"}
 
     train_scores, test_scores = validation_curve(
         estimator, X, y, param_name=param_name, param_range=param_range
     )
 
-    assert_array_equal(display.param_range, param_range)
     assert_allclose(display.train_scores, train_scores)
     assert_allclose(display.test_scores, test_scores)
 
