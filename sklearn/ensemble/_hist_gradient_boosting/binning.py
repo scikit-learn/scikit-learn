@@ -212,7 +212,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         X = check_array(X, dtype=[X_DTYPE], ensure_all_finite=False)
         max_bins = self.n_bins - 1
 
-        subsampling_probabilities = np.ones(X.shape[0])
+        subsampling_probabilities = None
         if sample_weight is not None:
             subsampling_probabilities = sample_weight / np.sum(sample_weight)
 
