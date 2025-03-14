@@ -3,7 +3,6 @@
 
 import html
 from collections import UserDict
-from pathlib import Path
 
 from sklearn._config import get_config
 
@@ -35,15 +34,11 @@ class ParamsDict(UserDict):
             output["text/html"] = _html_template(self)
 
 
-def _get_css_style():
-    return Path(__file__).with_suffix(".css").read_text(encoding="utf-8")
-
-
 def _html_template(data):
-    style_template = _get_css_style()
+
     out = ""
-    html_start = f"""
-        <style>{style_template}</style>
+    html_start = """
+
         <div class="estimator-table">
             <details>
                 <summary>Parameters</summary>
