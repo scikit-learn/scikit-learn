@@ -997,6 +997,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """
+        _raise_for_params(params, self, "predict_proba")
+
         check_is_fitted(self)
         # Check data
         X = validate_data(
@@ -1007,8 +1009,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             ensure_all_finite=False,
             reset=False,
         )
-
-        _raise_for_params(params, self, "predict_proba")
 
         if _routing_enabled():
             routed_params = process_routing(self, "predict_proba", **params)
@@ -1070,9 +1070,9 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             The class log-probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """
-        check_is_fitted(self)
-
         _raise_for_params(params, self, "predict_log_proba")
+
+        check_is_fitted(self)
 
         if hasattr(self.estimator_, "predict_log_proba"):
             # Check data
@@ -1149,9 +1149,9 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             ``classes_``. Regression and binary classification are special
             cases with ``k == 1``, otherwise ``k==n_classes``.
         """
-        check_is_fitted(self)
-
         _raise_for_params(params, self, "decision_function")
+
+        check_is_fitted(self)
 
         # Check data
         X = validate_data(
@@ -1404,6 +1404,8 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         y : ndarray of shape (n_samples,)
             The predicted values.
         """
+        _raise_for_params(params, self, "predict")
+
         check_is_fitted(self)
         # Check data
         X = validate_data(
@@ -1414,8 +1416,6 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
             ensure_all_finite=False,
             reset=False,
         )
-
-        _raise_for_params(params, self, "predict")
 
         if _routing_enabled():
             routed_params = process_routing(self, "predict", **params)
