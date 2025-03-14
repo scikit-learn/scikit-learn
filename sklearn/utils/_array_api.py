@@ -1157,7 +1157,7 @@ def _logsumexp(array, axis=None, xp=None):
     # https://github.com/scipy/scipy/pull/22683 is in a relase
     # The following code is strongly inspired and simplified from
     # scipy.special._logsumexp.logsumexp
-    xp, _ = get_namespace(array, xp=xp)
+    xp, _, device = get_namespace_and_device(array, xp=xp)
     axis = tuple(range(array.ndim)) if axis is None else axis
 
     supported_dtypes = supported_float_dtypes(xp)
@@ -1170,11 +1170,11 @@ def _logsumexp(array, axis=None, xp=None):
     array[index_max] = -xp.inf
     i_max_dt = xp.astype(index_max, array.dtype)
     m = xp.sum(i_max_dt, axis=axis, keepdims=True, dtype=array.dtype)
-    # device=a_max.device is needed to avoid https://github.com/scipy/scipy/issues/22680
+    # Specifying device explicitly is the fix for https://github.com/scipy/scipy/issues/22680
     shift = xp.where(
         xp.isfinite(array_max),
         array_max,
-        xp.asarray(0, dtype=array_max.dtype, device=array_max.device),
+        xp.asarray(0, dtype=array_max.dtype, device=device),
     )
     exp = xp.exp(array - shift)
     s = xp.sum(exp, axis=axis, keepdims=True, dtype=exp.dtype)

@@ -340,7 +340,7 @@ def _compute_precision_cholesky(covariances, covariance_type):
             try:
                 # TODO we are using xp.linalg instead of scipy.linalg.cholesky,
                 # maybe separate branches for array API and numpy?
-                cov_chol = xp.linalg.cholesky(covariance, upper=False)
+                cov_chol = xp.linalg.cholesky(covariance)
             except xp.linalg.LinAlgError:
                 raise ValueError(estimate_precision_error_message)
 
