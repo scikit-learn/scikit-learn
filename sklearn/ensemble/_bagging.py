@@ -202,14 +202,23 @@ def _parallel_build_estimators(
     return estimators, estimators_features
 
 
-def _parallel_predict_proba(estimators, estimators_features, X, n_classes, params):
+def _parallel_predict_proba(
+    estimators,
+    estimators_features,
+    X,
+    n_classes,
+    predict_params=None,
+    predict_proba_params=None,
+):
     """Private function used to compute (proba-)predictions within a job."""
     n_samples = X.shape[0]
     proba = np.zeros((n_samples, n_classes))
 
     for estimator, features in zip(estimators, estimators_features):
         if hasattr(estimator, "predict_proba"):
-            proba_estimator = estimator.predict_proba(X[:, features], **params)
+            proba_estimator = estimator.predict_proba(
+                X[:, features], **(predict_params or {})
+            )
 
             if n_classes == len(estimator.classes_):
                 proba += proba_estimator
@@ -221,7 +230,9 @@ def _parallel_predict_proba(estimators, estimators_features, X, n_classes, param
 
         else:
             # Resort to voting
-            predictions = estimator.predict(X[:, features], **params)
+            predictions = estimator.predict(
+                X[:, features], **(predict_proba_params or {})
+            )
 
             for i in range(n_samples):
                 proba[i, predictions[i]] += 1
@@ -1016,7 +1027,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
                 self.estimators_features_[starts[i] : starts[i + 1]],
                 X,
                 self.n_classes_,
-                params=routed_params.estimator.predict_proba,
+                predict_params=routed_params.estimator.get("predict", None),
+                predict_proba_params=routed_params.estimator.get("predict_proba", None),
             )
             for i in range(n_jobs)
         )

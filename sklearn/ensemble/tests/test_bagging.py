@@ -987,13 +987,14 @@ def test_bagging_with_metadata_routing(model):
 @config_context(enable_metadata_routing=True)
 def test_metadata_routing_with_dynamic_method_selection(sub_estimator, caller, callee):
     """Test that metadata routing works in `BaggingClassifier` with dynamic selection of
-    the sub-estimator's methods. Here we test only specific test cases, that cannot be
-    tested with `ConsumingClassifier` in
+    the sub-estimator's methods. Here we test only specific test cases, where
+    sub-estimator methods are not present and are not tested with `ConsumingClassifier`
+    (which possesses all the methods) in
     sklearn/tests/test_metaestimators_metadata_routing.py: `BaggingClassifier.predict()`
     dynamically routes to `predict` if the sub-estimator doesn't have `predict_proba`
     and `BaggingClassifier.predict_log_proba()` dynamically routes to `predict_proba` if
-    the sub-estimator doesn't have `predict_log_proba`, but `predict_proba` is
-    available, or to `predict` otherwise.
+    the sub-estimator doesn't have `predict_log_proba`, or to `predict`, if it doesn't
+    have it.
     """
     X = np.array([[0, 2], [1, 4], [2, 6]])
     y = [1, 2, 3]
