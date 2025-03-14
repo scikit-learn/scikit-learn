@@ -118,7 +118,7 @@ pipe = Pipeline(
     ]
 )
 
-param_grid = {"reduce_dim__n_components": [6, 8, 10, 12, 14]}
+param_grid = {"reduce_dim__n_components": [6, 8, 10, 12, 14, 16, 20, 25, 35, 45, 55]}
 
 # %%
 # Perform the search with GridSearchCV
@@ -303,6 +303,15 @@ ax2.plot(
     color="blue",
     linewidth=2,
     label="Mean test score",
+)
+
+# Highlight selected model in second plot
+ax2.axvline(
+    best_components,
+    color="#9b59b6",  # Purple
+    alpha=0.2,
+    linewidth=8,
+    label="Selected model",
 )
 
 # Set titles and labels for both subplots
