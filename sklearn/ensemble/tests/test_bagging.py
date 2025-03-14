@@ -981,13 +981,11 @@ def test_bagging_with_metadata_routing(model):
             "predict_log_proba",
             "predict_proba",
         ),
-        (ConsumingClassifierWithOnlyPredict, "predict_log_proba", "proba"),
+        (ConsumingClassifierWithOnlyPredict, "predict_log_proba", "predict"),
     ],
 )
 @config_context(enable_metadata_routing=True)
-def test_metadata_routing_without_dynamic_method_selection(
-    sub_estimator, caller, callee
-):
+def test_metadata_routing_with_dynamic_method_selection(sub_estimator, caller, callee):
     """Test that metadata routing works in `BaggingClassifier` with dynamic selection of
     the sub-estimator's methods. Here we test only specific test cases, that cannot be
     tested with `ConsumingClassifier` in
@@ -1001,12 +999,17 @@ def test_metadata_routing_without_dynamic_method_selection(
     y = [1, 2, 3]
     sample_weight, metadata = [1], "a"
     registry = _Registry()
-    estimator = sub_estimator(registry=registry).set_predict_request(
-        sample_weight=True, metadata=True
-    )
+    estimator = sub_estimator(registry=registry)
+    set_callee_request = "set_" + callee + "_request"
+    getattr(estimator, set_callee_request)(sample_weight=True, metadata=True)
+
     bagging = BaggingClassifier(estimator=estimator)
     bagging.fit(X, y)
-    bagging.predict(X=np.array([[1, 1], [1, 3], [0, 2]]))
+    getattr(bagging, caller)(
+        X=np.array([[1, 1], [1, 3], [0, 2]]),
+        sample_weight=sample_weight,
+        metadata=metadata,
+    )
 
     assert len(registry)
     for estimator in registry:
