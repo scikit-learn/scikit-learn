@@ -262,7 +262,6 @@ def test_weighted_percentile_2d():
     assert_allclose(w_median, p_axis_0)
 
 
-"""
 @pytest.mark.parametrize(
     "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
 )
@@ -296,7 +295,6 @@ def test_weighted_percentile_2d_array_api(array_namespace, device, dtype_name):
             _weighted_percentile(x_2d[:, i], w_2d[:, i]) for i in range(x_2d.shape[1])
         ]
         assert_allclose(w_median, p_axis_0)
-"""
 
 
 @pytest.mark.parametrize("sample_weight_ndim", [1, 2])

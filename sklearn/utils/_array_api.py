@@ -1128,7 +1128,11 @@ def _modify_in_place_if_numpy(xp, func, *args, out=None, **kwargs):
     return out
 
 
-def _apply_along_axis(func1d, axis, arr, xp=None, *args, **kwargs):
+def _apply_along_axis(func1d, axis, arr, xp, *args, **kwargs):
+    """Variant of numpy.apply_along_axis that works with the Array API.
+
+    This function only works with 1D and 2D arrays.
+    """
     if _is_numpy_namespace(xp):
         return numpy.apply_along_axis(func1d, axis, arr, *args, **kwargs)
     else:
