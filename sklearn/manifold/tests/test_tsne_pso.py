@@ -65,40 +65,39 @@ def test_tsnepso_init_params():
 
 def test_tsnepso_validation():
     """Test parameter validation in TSNEPSO."""
-    # We need to directly call the validation method since the constructor
-    # doesn't do validation
+    # Test invalid n_components
     tsne_pso = TSNEPSO(n_components=0)
-    with pytest.raises(ValueError, match="n_components must be positive"):
+    with pytest.raises(ValueError, match="n_components.*range.*Got 0"):
         tsne_pso._validate_parameters()
 
     # Test invalid perplexity
     tsne_pso = TSNEPSO(perplexity=0)
-    with pytest.raises(ValueError, match="perplexity must be positive"):
+    with pytest.raises(ValueError, match="perplexity.*positive"):
         tsne_pso._validate_parameters()
 
     # Test invalid n_iter
     tsne_pso = TSNEPSO(n_iter=0)
-    with pytest.raises(ValueError, match="n_iter must be positive"):
+    with pytest.raises(ValueError, match="n_iter.*range"):
         tsne_pso._validate_parameters()
 
     # Test invalid method
     tsne_pso = TSNEPSO(method="invalid")
-    with pytest.raises(ValueError, match="Only 'pso' method is currently supported"):
+    with pytest.raises(ValueError, match="must be .+ 'pso'"):
         tsne_pso._validate_parameters()
 
     # Test invalid early exaggeration
     tsne_pso = TSNEPSO(early_exaggeration=0)
-    with pytest.raises(ValueError, match="early_exaggeration must be positive"):
+    with pytest.raises(ValueError, match="early_exaggeration.*positive"):
         tsne_pso._validate_parameters()
 
     # Test invalid n_particles
     tsne_pso = TSNEPSO(n_particles=0)
-    with pytest.raises(ValueError, match="n_particles must be positive"):
+    with pytest.raises(ValueError, match="n_particles.*range"):
         tsne_pso._validate_parameters()
 
     # Test invalid inertia_weight
     tsne_pso = TSNEPSO(inertia_weight=1.5)
-    with pytest.raises(ValueError, match="inertia_weight must be between 0 and 1"):
+    with pytest.raises(ValueError, match="inertia_weight.*range"):
         tsne_pso._validate_parameters()
 
 

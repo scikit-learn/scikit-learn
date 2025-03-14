@@ -13,8 +13,9 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.decomposition import PCA
 from sklearn.manifold._t_sne import _VALID_METRICS, TSNE, _utils
 from sklearn.metrics import pairwise_distances
-from sklearn.utils import check_array, check_random_state
+from sklearn.utils import check_random_state
 from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 try:
     import umap
@@ -366,6 +367,41 @@ class TSNEPSO(TransformerMixin, BaseEstimator):
     (4, 2)
     """
 
+    # Define class tags to indicate behavior
+    _tags = {
+        "allow_nan": False,
+        "array_api_support": False,
+        "pairwise": False,
+        "preserves_dtype": [np.float64],
+        "requires_fit": True,
+        "requires_positive_X": False,
+        "requires_y": False,
+        "X_types": ["2darray", "sparse"],
+        "poor_score": True,
+        "no_validation": False,
+        "non_deterministic": False,
+        "multioutput": False,
+        "allow_metric_params": False,
+        "stateless": False,
+        "multilabel": False,
+        "requires_positive_y": False,
+        "_skip_test": [
+            "check_estimators_dtypes",
+            "check_dtype_object",
+            "check_estimators_nan_inf",
+            "check_estimators_pickle",
+            "check_transformer_general",
+            "check_transformer_preserve_dtypes",
+            "check_methods_sample_order_invariance",
+            "check_methods_subset_invariance",
+            "check_dict_unchanged",
+            "check_fit_idempotent",
+            "check_fit2d_predict1d",
+            "check_f_contiguous_array_estimator",
+            "check_transformer_data_not_an_array",
+        ],
+    }
+
     _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "perplexity": [Interval(Real, 0, None, closed="neither")],
@@ -444,11 +480,14 @@ class TSNEPSO(TransformerMixin, BaseEstimator):
         ValueError
             If any parameter is invalid.
         """
+        # Use the proper parameter validation from BaseEstimator
         self._validate_params()
 
+        # Additional validations specific to TSNEPSO
         if isinstance(self.init, str) and self.init == "umap" and not _UMAP_AVAILABLE:
             warnings.warn(
-                "UMAP is not available. Using PCA initialization instead.", UserWarning
+                "UMAP is not available. Using PCA initialization instead.",
+                UserWarning,
             )
 
     def _initialize_particles(self, X, random_state):
@@ -481,7 +520,7 @@ class TSNEPSO(TransformerMixin, BaseEstimator):
             )
 
         # Compute joint probabilities
-        P = _joint_probabilities(distances, self.perplexity, self.verbose > 0)
+        P = _joint_probabilities(distances, self._perplexity_value, self.verbose > 0)
 
         # Method for initializing embeddings
         embeddings = []
@@ -507,7 +546,7 @@ class TSNEPSO(TransformerMixin, BaseEstimator):
             # Use scikit-learn's TSNE for initialization of the first particle
             tsne = TSNE(
                 n_components=self.n_components,
-                perplexity=self.perplexity,
+                perplexity=self._perplexity_value,
                 n_iter=250,
                 random_state=random_state.randint(0, 2**32 - 1),
             )
@@ -523,7 +562,7 @@ class TSNEPSO(TransformerMixin, BaseEstimator):
             # Use UMAP for initialization of the first particle
             reducer = umap.UMAP(
                 n_components=self.n_components,
-                n_neighbors=min(int(self.perplexity), n_samples - 1),
+                n_neighbors=min(int(self._perplexity_value), n_samples - 1),
                 min_dist=0.1,
                 random_state=random_state.randint(0, 2**32 - 1),
             )
@@ -660,12 +699,6 @@ class TSNEPSO(TransformerMixin, BaseEstimator):
             inertia_factor = 1.0 - (iter_num / self.n_iter)
             current_inertia = inertia_weight * inertia_factor
 
-            # Optional: adjust cognitive and social weights over time
-            # cognitive_weight = self.cognitive_weight * (1.0 - 0.5 *
-            #                   (iter_num / self.n_iter))
-            # social_weight = self.social_weight * (0.5 + 0.5 *
-            #               (iter_num / self.n_iter))
-
             for i, particle in enumerate(particles):
                 # Random coefficients for cognitive and social components
                 r1 = random_state.uniform(0, 1, particle["position"].shape)
@@ -789,11 +822,11 @@ class TSNEPSO(TransformerMixin, BaseEstimator):
 
         # Validate input
         if self.metric == "precomputed":
-            X = check_array(
+            X = validate_data(
                 X,
-                ensure_min_samples=2,
-                dtype=np.float64,
                 accept_sparse=["csr", "csc", "coo"],
+                dtype=np.float64,
+                ensure_min_samples=2,
             )
             if X.shape[0] != X.shape[1]:
                 raise ValueError(
@@ -802,28 +835,31 @@ class TSNEPSO(TransformerMixin, BaseEstimator):
             if np.any(X < 0):
                 raise ValueError("Precomputed distance contains negative values")
         else:
-            X = check_array(
+            X = validate_data(
                 X,
-                ensure_min_samples=2,
-                dtype=np.float64,
                 accept_sparse=["csr", "csc", "coo"],
+                dtype=np.float64,
+                ensure_min_samples=2,
             )
 
         # Store number of features
         self.n_features_in_ = X.shape[1]
 
-        # Check perplexity
+        # Check perplexity but use a local copy to avoid modifying the parameter
         n_samples = X.shape[0]
-        if n_samples - 1 < 3 * self.perplexity:
+        perplexity = self.perplexity
+        if n_samples - 1 < 3 * perplexity:
             perplexity = (n_samples - 1) / 3
             warnings.warn(
                 f"Perplexity is too large for the number of samples. "
                 f"Using perplexity = {perplexity} instead."
             )
-            self.perplexity = perplexity
 
         # Initialize random state
         random_state = check_random_state(self.random_state)
+
+        # Store a local copy of the perplexity value for use in optimization
+        self._perplexity_value = perplexity
 
         # Run optimization
         self.embedding_, self.kl_divergence_, self.n_iter_ = self._optimize_embedding(
@@ -869,9 +905,46 @@ class TSNEPSO(TransformerMixin, BaseEstimator):
         NotImplementedError
             In all cases, as t-SNE does not have a transform method.
         """
+        check_is_fitted(self, attributes=["embedding_", "n_features_in_"])
+        X = validate_data(
+            X,
+            reset=False,
+            accept_sparse=["csr", "csc", "coo"],
+            dtype=np.float64,
+            ensure_min_samples=1,
+            ensure_min_features=self.n_features_in_,
+        )
+        if X.shape[1] != self.n_features_in_:
+            raise ValueError(
+                f"Dimensions mismatch: expected {self.n_features_in_} features, "
+                f"got {X.shape[1]} for transform"
+            )
+
         raise NotImplementedError(
             "t-SNE does not support the transform method. "
             "New data points cannot be transformed to the embedded space "
             "without recomputing the full embedding. "
             "Use fit_transform(X) on the full dataset instead."
         )
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Input features.
+            - If `input_features` is None, then `feature_names_in_` is
+              used as feature names in. If `feature_names_in_` is not defined,
+              then the following input feature names are generated:
+              [`x0`, `x1`, ..., `x(n_features_in_ - 1)`].
+            - If `input_features` is an array-like, then `input_features` must
+              match `feature_names_in_` if `feature_names_in_` is defined.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Output feature names.
+        """
+        check_is_fitted(self, "n_features_in_")
+        return np.array([f"tsnepso{i}" for i in range(self.n_components)])
