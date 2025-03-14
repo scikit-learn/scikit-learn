@@ -11,8 +11,7 @@ from scipy.spatial.distance import pdist, squareform
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.decomposition import PCA
-from sklearn.manifold import _utils
-from sklearn.manifold._t_sne import _VALID_METRICS, TSNE
+from sklearn.manifold._t_sne import _VALID_METRICS, TSNE, _utils
 from sklearn.metrics import pairwise_distances
 from sklearn.utils import check_array, check_random_state
 from sklearn.utils._param_validation import Interval, StrOptions
@@ -224,7 +223,7 @@ def _gradient_descent_step(
     return params, error, update, gains
 
 
-class TSNEPSO(BaseEstimator, TransformerMixin):
+class TSNEPSO(TransformerMixin, BaseEstimator):
     """t-SNE with Particle Swarm Optimization.
 
     t-Distributed Stochastic Neighbor Embedding (t-SNE) with Particle Swarm
@@ -445,7 +444,7 @@ class TSNEPSO(BaseEstimator, TransformerMixin):
         ValueError
             If any parameter is invalid.
         """
-        self._check_params()
+        self._validate_params()
 
         if isinstance(self.init, str) and self.init == "umap" and not _UMAP_AVAILABLE:
             warnings.warn(
