@@ -203,7 +203,9 @@ class LearningCurveDisplay(_BaseCurveDisplay):
     >>> plt.show()
     """
 
-    def __init__(self, *, train_sizes, train_scores, test_scores, score_name=None):
+    def __init__(
+        self, *, train_sizes, train_scores, test_scores, score_name=None
+    ):
         self.train_sizes = train_sizes
         self.train_scores = train_scores
         self.test_scores = test_scores
@@ -276,7 +278,11 @@ class LearningCurveDisplay(_BaseCurveDisplay):
         self.ax_ = ax
 
         # Handle categorical and numerical parameter ranges
-        x_values = self.param_range if self.is_categorical else np.asarray(self.param_range)
+        x_values = (
+            self.param_range
+            if self.is_categorical
+            else np.asarray(self.param_range)
+        )
 
         # Default styling
         line_kw = {} if line_kw is None else line_kw
@@ -295,23 +301,63 @@ class LearningCurveDisplay(_BaseCurveDisplay):
 
         # Plot for categorical parameters
         if self.is_categorical:
-            ax.bar(x_values, train_mean, alpha=0.6, label="Train Score", color="b")
-            ax.bar(x_values, test_mean, alpha=0.6, label="Test Score", color="r")
+            ax.bar(
+                x_values, train_mean, alpha=0.6, label="Train Score", color="b"
+            )
+            ax.bar(
+                x_values, test_mean, alpha=0.6, label="Test Score", color="r"
+            )
         else:
             # Plot for numerical parameters
             if score_type in ("both", "train"):
-                ax.plot(x_values, train_mean, marker="o", label="Train Score", **line_kw)
+                ax.plot(
+                    x_values,
+                    train_mean,
+                    marker="o",
+                    label="Train Score",
+                    **line_kw,
+                )
                 if std_display_style == "fill_between":
-                    ax.fill_between(x_values, train_mean - train_std, train_mean + train_std, alpha=0.2, **fill_between_kw)
+                    ax.fill_between(
+                        x_values,
+                        train_mean - train_std,
+                        train_mean + train_std,
+                        alpha=0.2,
+                        **fill_between_kw,
+                    )
                 elif std_display_style == "errorbar":
-                    ax.errorbar(x_values, train_mean, yerr=train_std, fmt="o", **errorbar_kw)
+                    ax.errorbar(
+                        x_values,
+                        train_mean,
+                        yerr=train_std,
+                        fmt="o",
+                        **errorbar_kw,
+                    )
 
             if score_type in ("both", "test"):
-                ax.plot(x_values, test_mean, marker="s", label="Test Score", **line_kw)
+                ax.plot(
+                    x_values,
+                    test_mean,
+                    marker="s",
+                    label="Test Score",
+                    **line_kw,
+                )
                 if std_display_style == "fill_between":
-                    ax.fill_between(x_values, test_mean - test_std, test_mean + test_std, alpha=0.2, **fill_between_kw)
+                    ax.fill_between(
+                        x_values,
+                        test_mean - test_std,
+                        test_mean + test_std,
+                        alpha=0.2,
+                        **fill_between_kw,
+                    )
                 elif std_display_style == "errorbar":
-                    ax.errorbar(x_values, test_mean, yerr=test_std, fmt="s", **errorbar_kw)
+                    ax.errorbar(
+                        x_values,
+                        test_mean,
+                        yerr=test_std,
+                        fmt="s",
+                        **errorbar_kw,
+                    )
 
         # Labels and legend
         ax.set_xlabel(f"{self.param_name}")
@@ -639,10 +685,18 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
     """
 
     def __init__(
-        self, *, param_name, param_range, train_scores, test_scores, score_name=None
+        self,
+        *,
+        param_name,
+        param_range,
+        train_scores,
+        test_scores,
+        score_name=None,
     ):
         self.param_name = param_name
-        self.param_range = np.array(param_range, dtype=object)  # Preserve strings
+        self.param_range = np.array(
+            param_range, dtype=object
+        )  # Preserve strings
         self.train_scores = train_scores
         self.test_scores = test_scores
         self.score_name = score_name
@@ -730,7 +784,11 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
         self.ax_ = ax
 
         # Handle categorical and numerical parameter ranges
-        x_values = self.param_range if self.is_categorical else np.asarray(self.param_range)
+        x_values = (
+            self.param_range
+            if self.is_categorical
+            else np.asarray(self.param_range)
+        )
 
         # Default styling
         line_kw = {} if line_kw is None else line_kw
@@ -749,23 +807,63 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
 
         # Plot for categorical parameters
         if self.is_categorical:
-            ax.bar(x_values, train_mean, alpha=0.6, label="Train Score", color="b")
-            ax.bar(x_values, test_mean, alpha=0.6, label="Test Score", color="r")
+            ax.bar(
+                x_values, train_mean, alpha=0.6, label="Train Score", color="b"
+            )
+            ax.bar(
+                x_values, test_mean, alpha=0.6, label="Test Score", color="r"
+            )
         else:
             # Plot for numerical parameters
             if score_type in ("both", "train"):
-                ax.plot(x_values, train_mean, marker="o", label="Train Score", **line_kw)
+                ax.plot(
+                    x_values,
+                    train_mean,
+                    marker="o",
+                    label="Train Score",
+                    **line_kw,
+                )
                 if std_display_style == "fill_between":
-                    ax.fill_between(x_values, train_mean - train_std, train_mean + train_std, alpha=0.2, **fill_between_kw)
+                    ax.fill_between(
+                        x_values,
+                        train_mean - train_std,
+                        train_mean + train_std,
+                        alpha=0.2,
+                        **fill_between_kw,
+                    )
                 elif std_display_style == "errorbar":
-                    ax.errorbar(x_values, train_mean, yerr=train_std, fmt="o", **errorbar_kw)
+                    ax.errorbar(
+                        x_values,
+                        train_mean,
+                        yerr=train_std,
+                        fmt="o",
+                        **errorbar_kw,
+                    )
 
             if score_type in ("both", "test"):
-                ax.plot(x_values, test_mean, marker="s", label="Test Score", **line_kw)
+                ax.plot(
+                    x_values,
+                    test_mean,
+                    marker="s",
+                    label="Test Score",
+                    **line_kw,
+                )
                 if std_display_style == "fill_between":
-                    ax.fill_between(x_values, test_mean - test_std, test_mean + test_std, alpha=0.2, **fill_between_kw)
+                    ax.fill_between(
+                        x_values,
+                        test_mean - test_std,
+                        test_mean + test_std,
+                        alpha=0.2,
+                        **fill_between_kw,
+                    )
                 elif std_display_style == "errorbar":
-                    ax.errorbar(x_values, test_mean, yerr=test_std, fmt="s", **errorbar_kw)
+                    ax.errorbar(
+                        x_values,
+                        test_mean,
+                        yerr=test_std,
+                        fmt="s",
+                        **errorbar_kw,
+                    )
 
         # Labels and legend
         ax.set_xlabel(f"{self.param_name}")
