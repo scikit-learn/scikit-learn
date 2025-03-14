@@ -800,9 +800,11 @@ def disable_plot_gallery_for_linkcheck(app):
 
 
 def skip_properties(app, what, name, obj, skip, options):
-    """Do not list @property in the auto generated API documentation."""
+    """Skip properties that are fitted attributes"""
     if isinstance(obj, property):
-        return True
+        if name.endswith("_") and not name.startswith("_"):
+            return True
+
     return skip
 
 
