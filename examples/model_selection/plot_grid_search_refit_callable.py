@@ -258,21 +258,18 @@ ax2.plot(
 )
 
 # Set titles and labels for both subplots
-ax1.set_title("Model Complexity vs. Test Score", fontsize=14)
-ax1.set_xlabel("Number of PCA components", fontsize=12)
-ax1.set_ylabel("Digit classification accuracy", fontsize=12)
-ax1.set_xticks(components)
-ax1.set_ylim((0.7, 1.0))  # Adjust as needed for better visualization
-ax1.grid(axis="y", linestyle="--", alpha=0.7)
-ax1.legend(loc="lower right")
+for ax in (ax1, ax2):
+    ax.set_xlabel("Number of PCA components", fontsize=12)
+    ax.set_xticks(components)
+    ax.set_ylim((0.7, 1.0))  # Adjust as needed for better visualization
+    ax.legend(loc="lower right")
 
+ax1.set_title("Model Complexity vs. Test Score", fontsize=14)
+ax1.set_ylabel("Digit classification accuracy", fontsize=12)
+ax1.grid(axis="y", linestyle="--", alpha=0.7)
 ax2.set_title("Train vs. Test Performance", fontsize=14)
-ax2.set_xlabel("Number of PCA components", fontsize=12)
 ax2.set_ylabel("Score", fontsize=12)
-ax2.set_xticks(components)
-ax2.set_ylim((0.7, 1.0))  # Adjust as needed for better visualization
 ax2.grid(axis="both", linestyle="--", alpha=0.7)
-ax2.legend(loc="lower right")
 
 # Add a main title for the entire figure
 fig.suptitle("Balance model complexity and cross-validated score", fontsize=16, y=1.05)

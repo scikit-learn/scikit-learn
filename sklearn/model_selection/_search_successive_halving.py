@@ -502,8 +502,8 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         attribute and permits using ``predict`` directly on this
         ``HalvingGridSearchCV`` instance.
 
-        See
-        :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`
+        See :ref:`this example
+        <sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py>`
         for an example of how to use ``refit=callable`` to balance model
         complexity and cross-validated score.
 
@@ -859,8 +859,8 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         attribute and permits using ``predict`` directly on this
         ``HalvingRandomSearchCV`` instance.
 
-        See
-        :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`
+        See :ref:`this example
+        <sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py>`
         for an example of how to use ``refit=callable`` to balance model
         complexity and cross-validated score.
 
