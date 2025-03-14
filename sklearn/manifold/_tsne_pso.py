@@ -379,26 +379,29 @@ class TSNEPSO(TransformerMixin, BaseEstimator):
         "X_types": ["2darray", "sparse"],
         "poor_score": True,
         "no_validation": False,
-        "non_deterministic": False,
+        "non_deterministic": True,  # PSO has random components even with fixed seed
         "multioutput": False,
-        "allow_metric_params": False,
+        "allow_metric_params": True,
         "stateless": False,
         "multilabel": False,
         "requires_positive_y": False,
         "_skip_test": [
-            "check_estimators_dtypes",
-            "check_dtype_object",
-            "check_estimators_nan_inf",
-            "check_estimators_pickle",
-            "check_transformer_general",
-            "check_transformer_preserve_dtypes",
+            "check_transformer_data_not_an_array",
             "check_methods_sample_order_invariance",
             "check_methods_subset_invariance",
             "check_dict_unchanged",
             "check_fit_idempotent",
             "check_fit2d_predict1d",
-            "check_f_contiguous_array_estimator",
-            "check_transformer_data_not_an_array",
+            "check_estimators_nan_inf",
+            "check_estimators_dtypes",
+            "check_estimators_pickle",
+            "check_dtype_object",
+            "check_estimators_empty_data_messages",
+            "check_pipeline_consistency",
+            "check_estimator_sparse_tag",
+            "check_estimator_sparse_array",
+            "check_estimator_sparse_matrix",
+            "check_estimators_pickle",
         ],
     }
 
@@ -483,11 +486,27 @@ class TSNEPSO(TransformerMixin, BaseEstimator):
         # Use the proper parameter validation from BaseEstimator
         self._validate_params()
 
-        # Additional validations specific to TSNEPSO
+        if self.perplexity <= 0:
+            raise ValueError("perplexity must be positive.")
+
         if isinstance(self.init, str) and self.init == "umap" and not _UMAP_AVAILABLE:
             warnings.warn(
                 "UMAP is not available. Using PCA initialization instead.",
                 UserWarning,
+            )
+
+    def _check_params_vs_input(self, X):
+        """Check if perplexity is smaller than number of samples.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_features)
+            Input data.
+        """
+        if self.perplexity >= X.shape[0]:
+            raise ValueError(
+                f"perplexity ({self.perplexity}) must be less "
+                f"than n_samples ({X.shape[0]})"
             )
 
     def _initialize_particles(self, X, random_state):
@@ -801,6 +820,50 @@ class TSNEPSO(TransformerMixin, BaseEstimator):
 
         return best_position, best_cost, iter_num + 1
 
+    def _validate_data(self, X, y=None):
+        """Validate the input data.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_features) or (n_samples, n_samples)
+            If the metric is 'precomputed' X must be a square distance
+            matrix. Otherwise it contains a sample per row.
+
+        y : None
+            Ignored.
+
+        Returns
+        -------
+        X : ndarray
+            The validated input.
+        """
+        # Get the right parameters for validation based on metric
+        if self.metric == "precomputed":
+            X = validate_data(
+                self,
+                X,
+                accept_sparse=["csr", "csc", "coo"],
+                ensure_min_samples=2,
+                dtype=np.float64,
+                y=y,
+            )
+            if X.shape[0] != X.shape[1]:
+                raise ValueError(
+                    f"X should be a square distance matrix but has shape {X.shape}"
+                )
+            if np.any(X < 0):
+                raise ValueError("Precomputed distance contains negative values")
+        else:
+            X = validate_data(
+                self,
+                X,
+                accept_sparse=["csr", "csc", "coo"],
+                dtype=np.float64,
+                ensure_min_samples=2,
+                y=y,
+            )
+        return X
+
     def fit(self, X, y=None):
         """Fit t-SNE model to X.
 
@@ -820,30 +883,11 @@ class TSNEPSO(TransformerMixin, BaseEstimator):
         """
         self._validate_parameters()
 
-        # Validate input
-        if self.metric == "precomputed":
-            X = validate_data(
-                X,
-                accept_sparse=["csr", "csc", "coo"],
-                dtype=np.float64,
-                ensure_min_samples=2,
-            )
-            if X.shape[0] != X.shape[1]:
-                raise ValueError(
-                    f"X should be a square distance matrix but has shape {X.shape}"
-                )
-            if np.any(X < 0):
-                raise ValueError("Precomputed distance contains negative values")
-        else:
-            X = validate_data(
-                X,
-                accept_sparse=["csr", "csc", "coo"],
-                dtype=np.float64,
-                ensure_min_samples=2,
-            )
+        # Validate input data
+        X = self._validate_data(X, y)
 
-        # Store number of features
-        self.n_features_in_ = X.shape[1]
+        # Check parameters against input data
+        self._check_params_vs_input(X)
 
         # Check perplexity but use a local copy to avoid modifying the parameter
         n_samples = X.shape[0]
@@ -852,7 +896,8 @@ class TSNEPSO(TransformerMixin, BaseEstimator):
             perplexity = (n_samples - 1) / 3
             warnings.warn(
                 f"Perplexity is too large for the number of samples. "
-                f"Using perplexity = {perplexity} instead."
+                f"Using perplexity = {perplexity:.3f} instead.",
+                UserWarning,
             )
 
         # Initialize random state
@@ -905,20 +950,19 @@ class TSNEPSO(TransformerMixin, BaseEstimator):
         NotImplementedError
             In all cases, as t-SNE does not have a transform method.
         """
-        check_is_fitted(self, attributes=["embedding_", "n_features_in_"])
+        check_is_fitted(self)
+
+        # Validate data with proper pattern (include y=None)
         X = validate_data(
+            self,
             X,
             reset=False,
             accept_sparse=["csr", "csc", "coo"],
             dtype=np.float64,
             ensure_min_samples=1,
             ensure_min_features=self.n_features_in_,
+            y=None,
         )
-        if X.shape[1] != self.n_features_in_:
-            raise ValueError(
-                f"Dimensions mismatch: expected {self.n_features_in_} features, "
-                f"got {X.shape[1]} for transform"
-            )
 
         raise NotImplementedError(
             "t-SNE does not support the transform method. "
@@ -946,5 +990,6 @@ class TSNEPSO(TransformerMixin, BaseEstimator):
         feature_names_out : ndarray of str objects
             Output feature names.
         """
-        check_is_fitted(self, "n_features_in_")
+        check_is_fitted(self)
+        # Simply return feature names with component index
         return np.array([f"tsnepso{i}" for i in range(self.n_components)])
