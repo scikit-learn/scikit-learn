@@ -319,7 +319,11 @@ def _write_estimator_html(
         out.write(f'<div class="sk-item{dash_cls}">')
 
         if estimator_label:
-            params = estimator.get_params(deep=False)._repr_html_inner()
+            if hasattr(estimator, "get_params"):
+                params = estimator.get_params(deep=False)._repr_html_inner()
+            else:
+                params = ""
+
             _write_label_html(
                 out,
                 params,
@@ -337,7 +341,8 @@ def _write_estimator_html(
 
         for est, name, name_details in est_infos:
             # Build the parameter prefix for nested estimators
-            if param_prefix:
+
+            if param_prefix and hasattr(name, "split"):
                 # If we already have a prefix, append the new component
                 new_prefix = f"{param_prefix}{name.split(':')[0]}__"
             else:
