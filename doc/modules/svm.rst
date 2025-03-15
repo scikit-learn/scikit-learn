@@ -406,6 +406,9 @@ Tips on Practical Use
   choice.  If you have a lot of noisy observations you should decrease it:
   decreasing C corresponds to more regularization.
 
+For a visual illustration of how `C` affects the margin in SVM classification, see:
+:ref:`sphx_glr_auto_examples_svm_plot_svm_margin.py`.
+
   :class:`LinearSVC` and :class:`LinearSVR` are less sensitive to ``C`` when
   it becomes large, and prediction results stop improving after a certain
   threshold. Meanwhile, larger ``C`` values will take more time to train,
