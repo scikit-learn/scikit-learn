@@ -79,6 +79,9 @@ enhance the functionality of scikit-learn's estimators.
   experiment tracking and Jupyter notebook analysis. Visual analysis, model
   selection, evaluation and diagnostics.
 
+- `model-diagnostics <https://lorentzenchr.github.io/model-diagnostics/>` Tools for
+  diagnostics and assessment of (machine learning) models (in Python).
+
 - `yellowbrick <https://github.com/DistrictDataLabs/yellowbrick>`_ A suite of
   custom matplotlib visualizers for scikit-learn estimators to support visual feature
   analysis, model selection, evaluation, and diagnostics.
