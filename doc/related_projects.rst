@@ -241,6 +241,10 @@ Note scikit-learn own modern gradient boosting estimators
   As of scikit-learn version 1.3.0, there is
   :class:`~sklearn.preprocessing.TargetEncoder`.
 
+- `skrub <https://skrub-data.org>`_ : facilitate learning on dataframes,
+  with sklearn compatible encoders (of categories, dates, strings) and
+  more.
+
 - `imbalanced-learn
   <https://github.com/scikit-learn-contrib/imbalanced-learn>`_ Various
   methods to under- and over-sample datasets.
