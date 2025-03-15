@@ -169,7 +169,6 @@ def _write_label_html(
         f' class="{inner_class} {is_fitted_css_class} sk-toggleable">'
     )
     name = html.escape(name)
-
     if name_details is not None:
         name_details = html.escape(str(name_details))
         checked_str = "checked" if checked else ""
@@ -345,9 +344,11 @@ def _write_estimator_html(
             if param_prefix and hasattr(name, "split"):
                 # If we already have a prefix, append the new component
                 new_prefix = f"{param_prefix}{name.split(':')[0]}__"
-            else:
+            elif hasattr(name, "split"):
                 # If this is the first level, start the prefix
                 new_prefix = f"{name.split(':')[0]}__" if name else ""
+            else:
+                new_prefix = param_prefix
 
             if kind == "serial":
                 _write_estimator_html(
