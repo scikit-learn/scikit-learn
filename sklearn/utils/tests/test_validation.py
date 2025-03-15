@@ -149,7 +149,9 @@ def test_as_float_array():
         assert not np.isnan(M).any()
 
 
-@pytest.mark.parametrize("X", [(np.random.random((10, 2))), (sp.rand(10, 2).tocsr())])
+@pytest.mark.parametrize(
+    "X", [np.random.random((10, 2)), sp.random(10, 2, format="csr")]
+)
 def test_as_float_array_nan(X):
     X[5, 0] = np.nan
     X[6, 1] = np.nan
@@ -695,7 +697,7 @@ def test_check_array_accept_sparse_no_exception():
 
 @pytest.fixture(params=["csr", "csc", "coo", "bsr"])
 def X_64bit(request):
-    X = sp.rand(20, 10, format=request.param)
+    X = sp.random(20, 10, format=request.param)
 
     if request.param == "coo":
         if hasattr(X, "coords"):
