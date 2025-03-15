@@ -503,13 +503,15 @@ class TSNEPSO(TransformerMixin, BaseEstimator):
         if self.perplexity >= X.shape[0]:
             # Adjust perplexity to be slightly less than n_samples
             n_samples = X.shape[0]
-            self._perplexity_value = max(1.0, n_samples - 1) / 3
+            self._perplexity_value = max(1.0, (n_samples - 1) / 3.0)
             warnings.warn(
                 f"Perplexity ({self.perplexity}) should be less than "
                 f"n_samples ({n_samples}). "
                 f"Using perplexity = {self._perplexity_value:.3f} instead.",
                 UserWarning,
             )
+        else:
+            self._perplexity_value = self.perplexity
 
     def _initialize_particles(self, X, random_state):
         """Initialize particles for PSO optimization.
@@ -890,7 +892,7 @@ class TSNEPSO(TransformerMixin, BaseEstimator):
             self._perplexity_value = self.perplexity
 
             if n_samples - 1 < 3 * self._perplexity_value:
-                self._perplexity_value = (n_samples - 1) / 3
+                self._perplexity_value = (n_samples - 1) / 3.0
                 warnings.warn(
                     f"Perplexity is too large for the number of samples. "
                     f"Using perplexity = {self._perplexity_value:.3f} instead.",

@@ -72,7 +72,7 @@ def test_tsnepso_validation():
 
     # Test invalid perplexity
     tsne_pso = TSNEPSO(perplexity=0)
-    with pytest.raises(ValueError, match="perplexity.*positive"):
+    with pytest.raises(ValueError, match="perplexity must be greater than 0"):
         tsne_pso._validate_parameters()
 
     # Test invalid n_iter
@@ -217,7 +217,9 @@ def test_tsnepso_perplexity_warning():
     tsne_pso = TSNEPSO(perplexity=5)
 
     # Check that warning is raised
-    with pytest.warns(UserWarning, match="Perplexity is too large"):
+    with pytest.warns(
+        UserWarning, match="Perplexity is too large for the number of samples"
+    ):
         tsne_pso.fit_transform(X)
 
 
