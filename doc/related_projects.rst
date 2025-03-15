@@ -201,9 +201,6 @@ Note scikit-learn own modern gradient boosting estimators
 
 **Other regression and classification**
 
-- `py-earth <https://github.com/scikit-learn-contrib/py-earth>`_ Multivariate
-  adaptive regression splines
-
 - `gplearn <https://github.com/trevorstephens/gplearn>`_ Genetic Programming
   for symbolic regression tasks.
 
