@@ -376,7 +376,7 @@ class TSNEPSO(TransformerMixin, BaseEstimator):
         "requires_fit": True,
         "requires_positive_X": False,
         "requires_y": False,
-        "X_types": ["2darray", "sparse"],
+        "X_types": ["2darray"],
         "poor_score": True,
         "no_validation": False,
         "non_deterministic": True,
@@ -398,10 +398,8 @@ class TSNEPSO(TransformerMixin, BaseEstimator):
             "check_dtype_object",
             "check_estimators_empty_data_messages",
             "check_pipeline_consistency",
-            "check_estimator_sparse_tag",
             "check_estimator_sparse_array",
             "check_estimator_sparse_matrix",
-            "check_estimators_pickle",
         ],
     }
 
@@ -484,7 +482,7 @@ class TSNEPSO(TransformerMixin, BaseEstimator):
             If any parameter is invalid.
         """
         if self.perplexity <= 0:
-            raise ValueError("perplexity must be positive.")
+            raise ValueError("perplexity must be greater than 0.")
 
         self._validate_params()
 
@@ -843,9 +841,8 @@ class TSNEPSO(TransformerMixin, BaseEstimator):
         """
         if self.metric == "precomputed":
             X = validate_data(
-                self,
                 X,
-                accept_sparse=["csr", "csc", "coo"],
+                accept_sparse=False,
                 ensure_min_samples=2,
                 dtype=np.float64,
             )
@@ -855,15 +852,15 @@ class TSNEPSO(TransformerMixin, BaseEstimator):
                 )
             if np.any(X < 0):
                 raise ValueError("Precomputed distance contains negative values")
+            return X
         else:
             X = validate_data(
-                self,
                 X,
-                accept_sparse=["csr", "csc", "coo"],
+                accept_sparse=False,
                 dtype=np.float64,
                 ensure_min_samples=2,
             )
-        return X
+            return X
 
     def fit(self, X, y=None):
         """Fit t-SNE model to X.
@@ -885,6 +882,7 @@ class TSNEPSO(TransformerMixin, BaseEstimator):
         self._validate_parameters()
 
         X = self._validate_data(X)
+        self.n_features_in_ = X.shape[1] if self.metric != "precomputed" else None
         self._check_params_vs_input(X)
 
         n_samples = X.shape[0]
@@ -929,10 +927,6 @@ class TSNEPSO(TransformerMixin, BaseEstimator):
     def transform(self, X):
         """Transform X to the embedded space.
 
-        This is not implemented for t-SNE, as it does not support the transform
-        method. New data points cannot be transformed to the embedded space
-        without recomputing the full embedding.
-
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
@@ -943,22 +937,8 @@ class TSNEPSO(TransformerMixin, BaseEstimator):
         NotImplementedError
             In all cases, as t-SNE does not have a transform method.
         """
-        check_is_fitted(self, ["embedding_", "n_features_in_"])
-
-        X = validate_data(
-            self,
-            X,
-            reset=False,
-            accept_sparse=["csr", "csc", "coo"],
-            dtype=np.float64,
-            ensure_min_samples=1,
-            ensure_min_features=self.n_features_in_,
-        )
-
         raise NotImplementedError(
             "t-SNE does not support the transform method. "
-            "New data points cannot be transformed to the embedded space "
-            "without recomputing the full embedding. "
             "Use fit_transform(X) on the full dataset instead."
         )
 
@@ -981,5 +961,5 @@ class TSNEPSO(TransformerMixin, BaseEstimator):
         feature_names_out : ndarray of str objects
             Output feature names.
         """
-        check_is_fitted(self, ["embedding_", "n_features_in_"])
+        check_is_fitted(self, ["embedding_"])
         return np.array([f"tsnepso{i}" for i in range(self.n_components)])
