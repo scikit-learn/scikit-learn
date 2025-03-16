@@ -475,7 +475,7 @@ def test_old_tags():
         "requires_y": False,
         "requires_positive_y": True,
         "_skip_test": False,
-        "stateless": True,
+        "stateless": False,
         "X_types": [
             "1darray",
             "3darray",
@@ -550,7 +550,7 @@ def test_old_tags():
         "requires_y": False,
         "requires_positive_y": True,
         "_skip_test": False,
-        "stateless": True,
+        "stateless": False,
         "X_types": [
             "1darray",
             "3darray",
@@ -627,7 +627,7 @@ def test_old_tags():
         "requires_y": False,
         "requires_positive_y": True,
         "_skip_test": False,
-        "stateless": True,
+        "stateless": False,
         "X_types": [
             "1darray",
             "3darray",

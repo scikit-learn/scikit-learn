@@ -587,7 +587,7 @@ def _to_old_tags(new_tags):
         "requires_y": new_tags.target_tags.required,
         "requires_positive_y": new_tags.target_tags.positive_only,
         "_skip_test": new_tags._skip_test,
-        "stateless": new_tags.requires_fit,
+        "stateless": not new_tags.requires_fit,
     }
     X_types = []
     if new_tags.input_tags.one_d_array:
