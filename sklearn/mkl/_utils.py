@@ -2,15 +2,14 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 
-def number_of_kernels(X, kernels, kernels_params):
-    if kernels == "precomputed":
+def number_of_kernels(X, kernels, kernels_scope, kernels_params, precomputed_kernels):
+    if precomputed_kernels or kernels is None:
         return len(X)
 
     number = 0
-    for kernel, kernel_params in zip(kernels, kernels_params):
-        dct = kernel_params[1]
-        for i in range(len(dct[next(iter(dct))]) if len(dct) > 0 else 1):
-            if kernel_params[0] == "all":
+    for scope, params in zip(kernels_scope, kernels_params):
+        for _ in range(len(params[next(iter(params))]) if len(params) > 0 else 1):
+            if scope == "all":
                 number += 1
             else:
                 number += X.shape[1]
@@ -18,18 +17,18 @@ def number_of_kernels(X, kernels, kernels_params):
     return number
 
 
-def kernel_generator(X, kernels, kernels_params):
-    if kernels == "precomputed":
+def kernel_generator(X, kernels, kernels_scope, kernels_params, precomputed_kernels):
+    if precomputed_kernels or kernels is None:
         for kernel in X:
             yield kernel
     else:
-        for kernel, kernel_params in zip(kernels, kernels_params):
-            dct = kernel_params[1]
-            for i in range(len(dct[next(iter(dct))]) if len(dct) > 0 else 1):
-                if kernel_params[0] == "all":
-                    yield kernel(X, **{k: v[i] for k, v in dct.items()})
+        for kernel, scope, params in zip(kernels, kernels_scope, kernels_params):
+            for i in range(len(params[next(iter(params))]) if len(params) > 0 else 1):
+                if scope == "all":
+                    yield kernel(X, **{k: v[i] for k, v in params.items()})
                 else:
                     for j in range(X.shape[1]):
                         yield kernel(
-                            X[:, j].reshape(-1, 1), **{k: v[i] for k, v in dct.items()}
+                            X[:, j].reshape(-1, 1),
+                            **{k: v[i] for k, v in params.items()},
                         )

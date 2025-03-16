@@ -16,9 +16,10 @@ class MKLC(BaseMKL, ClassifierMixin):
     def __init__(
         self,
         *,
-        kernels="precomputed",  # None or list of functions or list of strings
+        kernels=None,  # None or list of functions or list of strings
+        kernels_scope=None,  # None or list of {"single", "all"}
         kernels_params=None,  # None or list of (str, dict)
-        precompute_kernels=True,
+        precompute_kernels=None,  # If none, it tries to compute the kernels
         algo="simple",
         epsilon=None,  # TODO: DOC: 1e-1 if multiclass else 1e-2
         tol=1e-8,
@@ -29,6 +30,7 @@ class MKLC(BaseMKL, ClassifierMixin):
     ):
         super().__init__(
             kernels=kernels,
+            kernels_scope=kernels_scope,
             kernels_params=kernels_params,
             precompute_kernels=precompute_kernels,
             algo=algo,
@@ -51,9 +53,10 @@ class MKLR(BaseMKL, RegressorMixin):
     def __init__(
         self,
         *,
-        kernels="precomputed",
+        kernels=None,
+        kernels_scope=None,
         kernels_params=None,
-        precompute_kernels=True,
+        precompute_kernels=None,
         algo="simple",
         epsilon=1e-2,
         tol=1e-8,
@@ -64,6 +67,7 @@ class MKLR(BaseMKL, RegressorMixin):
     ):
         super().__init__(
             kernels=kernels,
+            kernels_scope=kernels_scope,
             kernels_params=kernels_params,
             precompute_kernels=precompute_kernels,
             algo=algo,
@@ -85,9 +89,10 @@ class OneClassMKL(BaseMKL, OutlierMixin):
     def __init__(
         self,
         *,
-        kernels="precomputed",
+        kernels=None,
+        kernels_scope=None,
         kernels_params=None,
-        precompute_kernels=True,
+        precompute_kernels=None,
         algo="simple",
         epsilon=1e-2,
         tol=1e-8,
@@ -98,6 +103,7 @@ class OneClassMKL(BaseMKL, OutlierMixin):
     ):
         super().__init__(
             kernels=kernels,
+            kernels_scope=kernels_scope,
             kernels_params=kernels_params,
             precompute_kernels=precompute_kernels,
             algo=algo,

@@ -12,9 +12,11 @@ def learn(
     object y,
     object svm,
     object kernels,
+    object kernels_scope,
     object kernels_params,
-    const bint precompute_kernels,
-    const int n_kernels,
+    const bint precomputed_kernels,
+    const intp_t n_kernels,
+    const intp_t n_samples,
     const double epsilon,
     const double tol=1e-8,
     const int verbose=1,
@@ -48,9 +50,36 @@ def learn(
     while True:
         old_d = np.copy(d)
 
-        J = _objective_value(svm, d, kernel_generator(X, kernels, kernels_params), y)
+        J = _objective_value(
+            svm,
+            d,
+            kernel_generator(
+                X,
+                kernels,
+                kernels_scope,
+                kernels_params,
+                precomputed_kernels,
+            ),
+            n_samples,
+            y,
+        )
         alpha, alpha_lengths = np.copy(svm.alpha_raw_), np.copy(svm.alpha_raw_lengths_)
-        delta_J = _gradient(svm_type, X, y, classes, alpha, alpha_lengths)
+        delta_J = _gradient(
+            svm_type,
+            kernel_generator(
+                X,
+                kernels,
+                kernels_scope,
+                kernels_params,
+                precomputed_kernels,
+            ),
+            n_kernels,
+            n_samples,
+            y,
+            classes,
+            alpha,
+            alpha_lengths,
+        )
 
         mu = np.argmax(d)
         D = _gradient_direction(d, delta_J, mu, M, tol)
@@ -65,18 +94,60 @@ def learn(
             gamma_max = _compute_gamma_max(d, D, M)
             d_dagger = np.add(d, np.multiply(gamma_max, D))
             J_dagger = _objective_value(
-                svm, d_dagger, kernel_generator(X, kernels, kernels_params), y
+                svm,
+                d_dagger,
+                kernel_generator(
+                    X,
+                    kernels,
+                    kernels_scope,
+                    kernels_params,
+                    precomputed_kernels,
+                ),
+                n_samples,
+                y,
             )
             if J_dagger < J:
                 D_dagger = _update_gradient_direction(D, d_dagger, mu, M, tol)
 
         # Line search for the optimal step size
         d, J, alpha, alpha_lengths = _gamma_linesearch(
-            svm, 0.0, gamma_max, gamma_max, J, J_dagger, d, D, X,
-            J_prev, y, alpha, alpha_lengths, goldensearch_precision
+            svm,
+            0.0,
+            gamma_max,
+            gamma_max,
+            J,
+            J_dagger,
+            d,
+            D,
+            X,
+            kernels,
+            kernels_scope,
+            kernels_params,
+            precomputed_kernels,
+            y,
+            n_samples,
+            J_prev,
+            alpha,
+            alpha_lengths,
+            goldensearch_precision,
         )
         d = fix_precision(d, tol)
-        delta_J = _gradient(svm_type, X, y, classes, alpha, alpha_lengths)
+        delta_J = _gradient(
+            svm_type,
+            kernel_generator(
+                X,
+                kernels,
+                kernels_scope,
+                kernels_params,
+                precomputed_kernels,
+            ),
+            n_kernels,
+            n_samples,
+            y,
+            classes,
+            alpha,
+            alpha_lengths,
+        )
 
         # Precision enhancement for line search
         if max(abs(d-old_d))<tol and goldensearch_precision>max_goldensearch_precision:
@@ -103,7 +174,17 @@ def learn(
         # Stopping conditions
         if iterations == max_iter or stopping_cond:
             J = _objective_value(
-                svm, d, kernel_generator(X, kernels, kernels_params), y
+                svm,
+                d,
+                kernel_generator(
+                    X,
+                    kernels,
+                    kernels_scope,
+                    kernels_params,
+                    precomputed_kernels,
+                ),
+                n_samples,
+                y,
             )  # It fits the final SVM
 
             if verbose:
@@ -123,11 +204,12 @@ cdef double _objective_value(
     object svm,
     const float64_t[::1] d,
     object kernels,
+    const intp_t n_samples,
     object y,
 ):
     if hasattr(svm, "alpha_raw_"):
         svm.alpha_init_ = svm.alpha_raw_
-    svm.fit(combine_kernels(d, kernels), y)
+    svm.fit(combine_kernels(d, kernels, n_samples), y)
 
     return svm.objective_val_
 
@@ -195,9 +277,14 @@ def _gamma_linesearch(
     const double cost_max,
     const float64_t[::1] d,
     const float64_t[::1] D,
-    const float64_t[:, :, ::1] kernels,
-    const double J_prev,
+    object X,
+    object kernels,
+    object kernels_scope,
+    object kernels_params,
+    const bint precomputed_kernels,
     object y,
+    const intp_t n_samples,
+    const double J_prev,
     float64_t[:, ::1] alpha,
     int32_t[::1] alpha_lengths,
     const double goldensearch_precision_factor,
@@ -220,12 +307,36 @@ def _gamma_linesearch(
         gamma_medl = gamma_min + (gamma_medr - gamma_min) / gold_ratio
 
         tmp_d_r = np.add(d, np.multiply(gamma_medr, D))
-        cost_medr = _objective_value(svm, tmp_d_r, kernels, y)
+        cost_medr = _objective_value(
+            svm,
+            tmp_d_r,
+            kernel_generator(
+                X,
+                kernels,
+                kernels_scope,
+                kernels_params,
+                precomputed_kernels,
+            ),
+            n_samples,
+            y,
+        )
         alpha_r = np.copy(svm.alpha_raw_)
         alpha_lengths_r = np.copy(svm.alpha_raw_lengths_)
 
         tmp_d_l = np.add(d, np.multiply(gamma_medl, D))
-        cost_medl = _objective_value(svm, tmp_d_l, kernels, y)
+        cost_medl = _objective_value(
+            svm,
+            tmp_d_l,
+            kernel_generator(
+                X,
+                kernels,
+                kernels_scope,
+                kernels_params,
+                precomputed_kernels,
+            ),
+            n_samples,
+            y,
+        )
         alpha_l = np.copy(svm.alpha_raw_)
         alpha_lengths_l = np.copy(svm.alpha_raw_lengths_)
 
@@ -334,24 +445,27 @@ cpdef tuple _kkt_constraint(
 
 cdef float64_t[::1] _gradient(
     object svm_type,
-    const float64_t[:, :, ::1] kernels,
+    object kernels,
+    const intp_t n_kernels,
+    const intp_t n_samples,
     object y,
     const int64_t[::1] classes,
     const float64_t[:, ::1] alpha,
     const int32_t[::1] alpha_lengths,
 ):
     if svm_type == BINARY or svm_type == MULTICLASS:
-        return _svc_gradient(kernels, y, classes, alpha, alpha_lengths)
+        return _svc_gradient(kernels, n_kernels, y, classes, alpha, alpha_lengths)
     elif svm_type == REGRESSION:
-        return _svr_gradient(kernels, alpha)
+        return _svr_gradient(kernels, n_kernels, n_samples, alpha)
     elif svm_type == ONECLASS:
-        return _one_class_gradient(kernels, alpha)
+        return _one_class_gradient(kernels, n_kernels, n_samples, alpha)
     else:
         raise ValueError("Unknown SVM type.")
 
 
 cdef float64_t[::1] _svc_gradient(
-    const float64_t[:, :, ::1] kernels,
+    object kernels,
+    const intp_t n_kernels,
     const int64_t[::1] y,
     const int64_t[::1] classes,
     const float64_t[:, ::1] alpha,
@@ -379,7 +493,7 @@ cdef float64_t[::1] _svc_gradient(
             p += 1
 
     # ∂J/∂dₘ = -1/2·ΣₚΣᵢΣⱼαₚᵢ·αₚⱼ·yᵢ·yⱼ·Kₘ(xᵢ, xⱼ)
-    cdef float64_t[::1] delta_J = np.empty(kernels.shape[0], dtype=np.float64)
+    cdef float64_t[::1] delta_J = np.empty(n_kernels, dtype=np.float64)
     for k, kernel in enumerate(kernels):
         p = 0
         s = 0.
@@ -399,44 +513,46 @@ cdef float64_t[::1] _svc_gradient(
 
 
 cdef float64_t[::1] _svr_gradient(
-    const float64_t[:, :, ::1] kernels,
+    object kernels,
+    const intp_t n_kernels,
+    const intp_t n_samples,
     const float64_t[:, ::1] alpha_raw_,
 ):
-    cdef intp_t i, j, l, k
+    cdef intp_t i, j, k
     cdef double s
     cdef const float64_t[:, ::1] kernel
 
     # ∂J/∂dₘ = -1/2·ΣᵢΣⱼ(βᵢ - αᵢ)·(βⱼ - αⱼ)·Kₘ(xᵢ, xⱼ)
-    cdef float64_t[::1] delta_J = np.empty(kernels.shape[0], dtype=np.float64)
-    l = kernels.shape[1]
+    cdef float64_t[::1] delta_J = np.empty(n_kernels, dtype=np.float64)
     for k, kernel in enumerate(kernels):
         s = 0.
-        for i in range(l):
-            for j in range(l):
-                s += ((alpha_raw_[0, i] - alpha_raw_[0, i+l]) *
-                      (alpha_raw_[0, j] - alpha_raw_[0, j+l]) *
-                      kernels[k, i, j])
+        for i in range(n_samples):
+            for j in range(n_samples):
+                s += ((alpha_raw_[0, i] - alpha_raw_[0, i+n_samples]) *
+                      (alpha_raw_[0, j] - alpha_raw_[0, j+n_samples]) *
+                      kernel[i, j])
         delta_J[k] = -0.5 * s
 
     return delta_J
 
 
 cdef float64_t[::1] _one_class_gradient(
-    const float64_t[:, :, ::1] kernels,
+    object kernels,
+    const intp_t n_kernels,
+    const intp_t n_samples,
     const float64_t[:, ::1] alpha_raw_,
 ):
-    cdef intp_t i, j, l, k
+    cdef intp_t i, j, k
     cdef double s
     cdef const float64_t[:, ::1] kernel
 
     # ∂J/∂dₘ = -1/2·ΣᵢΣⱼαᵢ·αⱼ·Kₘ(xᵢ, xⱼ)
-    cdef float64_t[::1] delta_J = np.empty(kernels.shape[0], dtype=np.float64)
-    l = kernels.shape[1]
+    cdef float64_t[::1] delta_J = np.empty(n_kernels, dtype=np.float64)
     for k, kernel in enumerate(kernels):
         s = 0.
-        for i in range(l):
-            for j in range(l):
-                s += (alpha_raw_[0, i] * alpha_raw_[0, j] * kernels[k, i, j])
+        for i in range(n_samples):
+            for j in range(n_samples):
+                s += (alpha_raw_[0, i] * alpha_raw_[0, j] * kernel[i, j])
         delta_J[k] = -0.5 * s
 
     return delta_J

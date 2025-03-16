@@ -3,6 +3,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
 
@@ -55,8 +56,10 @@ class BaseMKL(BaseEstimator, MetaEstimatorMixin, TransformerMixin, metaclass=ABC
     # TODO: DOC: kernels_params list of ({"single", "all"}, dict)
 
     _parameter_constraints: dict = {
-        "kernels": [list, StrOptions({"precomputed"})],
+        "kernels": [list, None],
+        "kernels_scope": [list, None],
         "kernels_params": [list, None],
+        "precompute_kernels": [bool, None],
         "algo": [StrOptions({algo for algo in ALGORITHMS})],
         "epsilon": [Interval(Real, 0.0, None, closed="neither"), None],
         "tol": [Interval(Real, 0.0, None, closed="neither")],
@@ -69,6 +72,7 @@ class BaseMKL(BaseEstimator, MetaEstimatorMixin, TransformerMixin, metaclass=ABC
     def __init__(
         self,
         kernels,
+        kernels_scope,
         kernels_params,
         precompute_kernels,
         algo,
@@ -79,7 +83,8 @@ class BaseMKL(BaseEstimator, MetaEstimatorMixin, TransformerMixin, metaclass=ABC
         random_state,
     ):
         self.kernels = self._check_and_prepare_kernels(kernels)
-        self.kernels_params = kernels_params
+        self.kernels_scope = self._check_and_prepare_kernels_scope(kernels_scope)
+        self.kernels_params = self._check_and_prepare_kernels_params(kernels_params)
         self.precompute_kernels = precompute_kernels
         self.algo = algo
         self.epsilon = epsilon
@@ -127,8 +132,15 @@ class BaseMKL(BaseEstimator, MetaEstimatorMixin, TransformerMixin, metaclass=ABC
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         # TODO: DOC: X : list of kernels matrices (n, n) or array-like of shape (n, m)
-        self.n_kernels_ = number_of_kernels(X, self.kernels, self.kernels_params)
-        X_fit, y_fit = self._check_and_prepare_X_y(X, y)
+        self.n_kernels_ = number_of_kernels(
+            X=X,
+            kernels=self.kernels,
+            kernels_scope=self.kernels_scope,
+            kernels_params=self.kernels_params,
+            precomputed_kernels=False,  # Kernels are not precomputed yet
+        )
+        self.n_samples_ = len(y)
+        X, y = self._check_and_prepare_X_y(X, y)
 
         if self.epsilon is None:
             if self._svm.__class__.__name__ == "SVC" and np.unique(y).shape[0] > 2:
@@ -138,13 +150,15 @@ class BaseMKL(BaseEstimator, MetaEstimatorMixin, TransformerMixin, metaclass=ABC
 
         # TODO: Manage kernels and kernels_params
         self.weights_, self._svm = ALGORITHMS[self.algo].learn(
-            X=X_fit,
-            y=y_fit,
+            X=X,
+            y=y,
             svm=self._svm,
             kernels=self.kernels,
+            kernels_scope=self.kernels_scope,
             kernels_params=self.kernels_params,
-            precompute_kernels=self.precompute_kernels,
+            precomputed_kernels=self._precomputed_kernels,
             n_kernels=self.n_kernels_,
+            n_samples=self.n_samples_,
             epsilon=self.epsilon,
             tol=self.tol,
             verbose=self.verbose,
@@ -153,9 +167,8 @@ class BaseMKL(BaseEstimator, MetaEstimatorMixin, TransformerMixin, metaclass=ABC
 
         return self
 
-    @staticmethod
-    def _check_and_prepare_kernels(kernels):  # TODO: Take kernels_params as input
-        if kernels == "precomputed":
+    def _check_and_prepare_kernels(self, kernels):
+        if kernels is None:
             return kernels
 
         if isinstance(kernels, list):
@@ -178,14 +191,79 @@ class BaseMKL(BaseEstimator, MetaEstimatorMixin, TransformerMixin, metaclass=ABC
             return kernel_list
 
         raise ValueError(
-            "Invalid kernels. Kernels must be 'precomputed' "
-            "or a list of callables and/or strings."
+            "Invalid kernels. Kernels must be a list of "
+            "callables and/or strings, or None."
+        )
+
+    def _check_and_prepare_kernels_scope(self, kernels_scope):
+        if self.kernels is None:
+            if kernels_scope is not None:
+                warnings.warn(
+                    "Attribute 'kernels_scope' is not None while 'kernels' is None. "
+                    "'kernels_scope' will be ignored."
+                )
+            return kernels_scope
+
+        if kernels_scope is None:
+            return ["all" for _ in range(len(self.kernels))]
+
+        if len(kernels_scope) == len(self.kernels) and all(
+            scope in {"single", "all"} for scope in kernels_scope
+        ):
+            return kernels_scope
+
+        raise ValueError(
+            "Invalid 'kernels_scope'. Attribute 'kernels_scope' must be a list of "
+            "{'all', 'single'} with the same size as 'kernels', or None."
+        )
+
+    def _check_and_prepare_kernels_params(self, kernels_params):
+        if self.kernels is None:
+            if kernels_params is not None:
+                warnings.warn(
+                    "Attribute 'kernels_params' is not None while 'kernels' is None. "
+                    "'kernels_params' will be ignored."
+                )
+            return kernels_params
+
+        if kernels_params is None:
+            return [{} for _ in range(len(self.kernels))]
+
+        if len(kernels_params) == len(self.kernels) and all(
+            isinstance(params, dict) for params in kernels_params
+        ):
+            for params in kernels_params:
+                prev_size = -1
+                for key, value in params.items():
+                    if not isinstance(key, str):
+                        raise ValueError(
+                            "Invalid 'kernels_params'. Keys must be strings "
+                            "identifying the parameter name."
+                        )
+                    if not isinstance(value, list):
+                        raise ValueError(
+                            "Invalid 'kernels_params'. Values must be lists of the "
+                            "values the parameter (identified by the key) will take."
+                        )
+                    if prev_size == -1:
+                        prev_size = len(value)
+                    elif prev_size != len(value):
+                        raise ValueError(
+                            "Invalid 'kernels_params'. All lists of "
+                            "parameter values must have the same size."
+                        )
+            return kernels_params
+
+        raise ValueError(
+            "Invalid 'kernels_params'. Attribute 'kernels_params' must be a list of "
+            "dictionaries with the same size as 'kernels', or None."
         )
 
     def _check_and_prepare_X_y(self, X, y):
         X = np.asarray(X, dtype=np.float64)
+        self._precomputed_kernels = self.precompute_kernels
 
-        if isinstance(self.kernels, str) and self.kernels == "precomputed":
+        if self.kernels is None:
             if len(X.shape) != 3 or X.shape[1] != X.shape[2]:
                 raise ValueError(
                     "X must be a 3D array of shape (n_kernels, n_samples, n_samples) "
@@ -195,14 +273,41 @@ class BaseMKL(BaseEstimator, MetaEstimatorMixin, TransformerMixin, metaclass=ABC
                 X[i, :, :], y = check_X_y(X[i, :, :], y)
         else:
             X, y = check_X_y(X, y)
-            if self.precompute_kernels:
-                new_X = np.empty(
-                    (self.n_kernels_, X.shape[0], X.shape[0]), dtype=np.float64
-                )
-                for i, kernel in enumerate(
-                    kernel_generator(X, self.kernels, self.kernels_params)
-                ):
-                    new_X[i, :, :] = kernel
-                return new_X, y
+            if self.precompute_kernels or self.precompute_kernels is None:
+                try:
+                    new_X = np.empty(
+                        (self.n_kernels_, X.shape[0], X.shape[0]),
+                        dtype=np.float64,
+                    )
+                    self._precomputed_kernels = True
+
+                    if self.verbose:
+                        print(f"[{self.__class__.__name__}] Precomputing kernels...")
+
+                    for i, kernel in enumerate(
+                        kernel_generator(
+                            X=X,
+                            kernels=self.kernels,
+                            kernels_scope=self.kernels_scope,
+                            kernels_params=self.kernels_params,
+                            precomputed_kernels=False,  # We are precomputing kernels
+                        )
+                    ):
+                        new_X[i, :, :] = kernel
+
+                    return new_X, y
+                except MemoryError:
+                    if self.precompute_kernels:
+                        raise MemoryError(
+                            "Memory error occurred while precomputing kernels. "
+                            "Try setting 'precompute_kernels=False'."
+                        )
+                    if self.verbose:
+                        print(
+                            f"[{self.__class__.__name__}] Not enough memory to "
+                            "precompute kernels. Kernels will be computed on-the-fly. "
+                            "This may significantly slow down the computation."
+                        )
+                    self._precomputed_kernels = False
 
         return X, y

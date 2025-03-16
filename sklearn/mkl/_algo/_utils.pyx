@@ -11,16 +11,19 @@ cdef int ONECLASS = 3
 cdef float64_t[:, ::1] combine_kernels(
     const float64_t[::1] d,
     object kernels,
+    const intp_t n_samples,
 ):
-    cdef intp_t k
+    cdef intp_t i, j, k
     cdef const float64_t[:, ::1] kernel
-    cdef float64_t[:, ::1] result
+    cdef float64_t[:, ::1] result = np.empty((n_samples, n_samples), dtype=np.float64)
 
     for k, kernel in enumerate(kernels):
-        if k == 0:
-            result = np.multiply(d[k], kernel)
-        else:
-            result = np.add(result, np.multiply(d[k], kernel))
+        for i in range(n_samples):
+            for j in range(n_samples):
+                if k == 0:
+                    result[i, j] = d[k] * kernel[i, j]
+                else:
+                    result[i, j] += d[k] * kernel[i, j]
 
     return result
 
