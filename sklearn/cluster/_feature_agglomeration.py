@@ -19,7 +19,7 @@ from ..utils.validation import check_is_fitted, validate_data
 # Mixin class for feature agglomeration.
 
 
-class AgglomerationTransform(TransformerMixin):
+class AgglomerationTransform(TransformerMixin, auto_wrap_output_keys=("transform",)):
     """
     A class for feature agglomeration via the transform interface.
     """
@@ -84,6 +84,9 @@ class AgglomerationTransform(TransformerMixin):
             A vector of size `n_samples` with the values of `Xred` assigned to
             each of the cluster of samples.
         """
+        # because this method takes X and Xt(deprecated),
+        # auto_wrap_output is not configured for this method.
+
         X = _deprecate_Xt_in_inverse_transform(X, Xt)
 
         check_is_fitted(self)
