@@ -5,6 +5,16 @@
 
 from ._bagging import BaggingClassifier, BaggingRegressor
 from ._base import BaseEnsemble
+from ._bagging import BaggingClassifier
+from ._bagging import BaggingRegressor
+from ._iforest import IsolationForest
+from ._weight_boosting import AdaBoostClassifier
+from ._weight_boosting import AdaBoostRegressor
+from ._voting import VotingClassifier
+from ._voting import VotingRegressor
+from ._stacking import StackingClassifier
+from ._stacking import StackingRegressor
+from ._ensemble_selection import EnsembleSelection
 from ._forest import (
     ExtraTreesClassifier,
     ExtraTreesRegressor,
@@ -13,6 +23,7 @@ from ._forest import (
     RandomTreesEmbedding,
 )
 from ._gb import GradientBoostingClassifier, GradientBoostingRegressor
+
 from ._hist_gradient_boosting.gradient_boosting import (
     HistGradientBoostingClassifier,
     HistGradientBoostingRegressor,
@@ -40,6 +51,7 @@ __all__ = [
     "VotingRegressor",
     "StackingClassifier",
     "StackingRegressor",
+    "EnsembleSelection",
     "HistGradientBoostingClassifier",
     "HistGradientBoostingRegressor",
 ]
