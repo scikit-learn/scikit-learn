@@ -279,6 +279,10 @@ class BaseMKL(BaseEstimator, MetaEstimatorMixin, TransformerMixin, metaclass=ABC
                         (self.n_kernels_, X.shape[0], X.shape[0]),
                         dtype=np.float64,
                     )
+                    kernel = np.empty(
+                        (X.shape[0], X.shape[0]),
+                        dtype=np.float64,
+                    )  # Used to check if enough memory is available for computing
                     self._precomputed_kernels = True
 
                     if self.verbose:
