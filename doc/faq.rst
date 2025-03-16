@@ -282,6 +282,33 @@ usually a major and lengthy undertaking, it is recommended to start with
 :ref:`known issues <new_contributors>`. Please do not contact the contributors
 of scikit-learn directly regarding contributing to scikit-learn.
 
+How can I be active within the community?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+You can be an active member of the Scikit-Learn community by `:ref:contributing` to 
+open issues, whether they're documentation improvements, code enhancements, or bug fixes. 
+Scikit-Learn often tags issues with “good first issue” or “help wanted,” 
+which are excellent starting points for new contributors.
+
+Engaging in the `Discussions <https://github.com/scikit-learn/scikit-learn/discussions>` 
+forum is another valuable way to participate, where you can ask questions, share insights, 
+answer others' questions, and contribute ideas to help solve challenges together. 
+If you're new to contributing, joining discussions is a great way to learn about community 
+practices and see which areas align with your interests. Don’t hesitate to suggest ideas 
+or give feedback on proposed features; fresh perspectives are always welcome.
+
+Additionally, reviewing and providing feedback on pull requests submitted by others is 
+a great way to support the maintainers and learn best practices. You don’t need to be an 
+expert—even small comments on code readability or documentation clarity can be valuable 
+and appreciated by other contributors.
+
+For beginners, small contributions like fixing typos, clarifying documentation, or adding 
+examples are impactful ways to get started. Scikit-Learn also hosts occasional sprints and 
+community meetings, which are great opportunities to collaborate in real-time with other 
+contributors.
+
+Don’t hesitate to contribute even small fixes or suggestions—every contribution helps 
+improve Scikit-Learn and strengthens the community!
+
 Why is my pull request not getting any attention?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
