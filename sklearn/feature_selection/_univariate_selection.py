@@ -361,6 +361,9 @@ def r_regression(X, y, *, center=True, force_finite=True):
     ... )
     >>> r_regression(X, y)
     array([-0.15...,  1.        , -0.22...])
+
+    For more information about univariate feature selection:
+    :ref:`sphx_glr_auto_examples_feature_selection_plot_deature_selection.py`
     """
     X, y = check_X_y(X, y, accept_sparse=["csr", "csc", "coo"], dtype=np.float64)
     n_samples = X.shape[0]
