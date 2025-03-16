@@ -84,7 +84,7 @@ class ConfusionMatrixDisplay:
         self.im_ = None
         self.text_ = None
         self.ax_ = None
-        self.figure_ = None 
+        self.figure_ = None
 
     def plot(
         self,
