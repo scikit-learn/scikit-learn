@@ -7,7 +7,7 @@ import pytest
 from sklearn import config_context
 from sklearn.base import BaseEstimator, is_classifier
 from sklearn.calibration import CalibratedClassifierCV
-from sklearn.compose import TransformedTargetRegressor
+from sklearn.compose import TransformedTargetClassifier, TransformedTargetRegressor
 from sklearn.covariance import GraphicalLassoCV
 from sklearn.ensemble import (
     AdaBoostClassifier,
@@ -380,9 +380,23 @@ METAESTIMATORS: list = [
         "cv_routing_methods": ["fit"],
     },
     {
+        "metaestimator": TransformedTargetClassifier,
+        "estimator": "classifier",
+        "estimator_name": "estimator",
+        "X": X,
+        "y": y,
+        "estimator_routing_methods": [
+            "fit",
+            "predict",
+            "predict_proba",
+            "predict_log_proba",
+            "decision_function",
+        ],
+    },
+    {
         "metaestimator": TransformedTargetRegressor,
         "estimator": "regressor",
-        "estimator_name": "regressor",
+        "estimator_name": "estimator",
         "X": X,
         "y": y,
         "estimator_routing_methods": ["fit", "predict"],

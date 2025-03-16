@@ -3,24 +3,39 @@ import warnings
 import numpy as np
 import pytest
 
-from sklearn import config_context, datasets
+from sklearn import config_context
 from sklearn.base import BaseEstimator, TransformerMixin, clone
-from sklearn.compose import TransformedTargetRegressor
-from sklearn.dummy import DummyRegressor
-from sklearn.linear_model import LinearRegression, OrthogonalMatchingPursuit
+from sklearn.compose import TransformedTargetClassifier, TransformedTargetRegressor
+from sklearn.datasets import make_blobs, make_friedman1, make_regression
+from sklearn.dummy import DummyClassifier, DummyRegressor
+from sklearn.linear_model import (
+    LinearRegression,
+    LogisticRegression,
+    OrthogonalMatchingPursuit,
+)
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import FunctionTransformer, StandardScaler
+from sklearn.preprocessing import FunctionTransformer, LabelEncoder, StandardScaler
 from sklearn.utils._testing import assert_allclose
 
-friedman = datasets.make_friedman1(random_state=0)
+friedman = make_friedman1(random_state=0)
+binary = make_blobs(centers=2, random_state=0)
 
 
-def test_transform_target_regressor_error():
+@pytest.mark.parametrize(
+    "transformed_target_estimator_class, transformer",
+    [
+        (TransformedTargetRegressor, StandardScaler()),
+        (TransformedTargetClassifier, LabelEncoder()),
+    ],
+)
+def test_transform_target_estimator_error(
+    transformed_target_estimator_class, transformer
+):
     X, y = friedman
     # provide a transformer and functions at the same time
-    regr = TransformedTargetRegressor(
-        regressor=LinearRegression(),
-        transformer=StandardScaler(),
+    est = transformed_target_estimator_class(
+        estimator=LogisticRegression(),
+        transformer=transformer,
         func=np.exp,
         inverse_func=np.log,
     )
@@ -28,38 +43,42 @@ def test_transform_target_regressor_error():
         ValueError,
         match="'transformer' and functions 'func'/'inverse_func' cannot both be set.",
     ):
-        regr.fit(X, y)
+        est.fit(X, y)
     # fit with sample_weight with a regressor which does not support it
     sample_weight = np.ones((y.shape[0],))
-    regr = TransformedTargetRegressor(
-        regressor=OrthogonalMatchingPursuit(), transformer=StandardScaler()
+    est = transformed_target_estimator_class(
+        estimator=OrthogonalMatchingPursuit(), transformer=transformer
     )
     with pytest.raises(
         TypeError,
         match=r"fit\(\) got an unexpected " "keyword argument 'sample_weight'",
     ):
-        regr.fit(X, y, sample_weight=sample_weight)
+        est.fit(X, y, sample_weight=sample_weight)
 
     # one of (func, inverse_func) is given but the other one is not
-    regr = TransformedTargetRegressor(func=np.exp)
+    est = transformed_target_estimator_class(func=np.exp)
     with pytest.raises(
         ValueError,
         match="When 'func' is provided, 'inverse_func' must also be provided",
     ):
-        regr.fit(X, y)
+        est.fit(X, y)
 
-    regr = TransformedTargetRegressor(inverse_func=np.log)
+    est = transformed_target_estimator_class(inverse_func=np.log)
     with pytest.raises(
         ValueError,
         match="When 'inverse_func' is provided, 'func' must also be provided",
     ):
-        regr.fit(X, y)
+        est.fit(X, y)
 
 
-def test_transform_target_regressor_invertible():
+@pytest.mark.parametrize(
+    "transformed_target_estimator_class",
+    [TransformedTargetRegressor, TransformedTargetClassifier],
+)
+def test_transform_target_estimator_invertible(transformed_target_estimator_class):
     X, y = friedman
-    regr = TransformedTargetRegressor(
-        regressor=LinearRegression(),
+    regr = transformed_target_estimator_class(
+        estimator=LinearRegression(),
         func=np.sqrt,
         inverse_func=np.log,
         check_inverse=True,
@@ -69,8 +88,8 @@ def test_transform_target_regressor_invertible():
         match=(r"The provided functions.* are not strictly inverse of each other"),
     ):
         regr.fit(X, y)
-    regr = TransformedTargetRegressor(
-        regressor=LinearRegression(), func=np.sqrt, inverse_func=np.log
+    regr = transformed_target_estimator_class(
+        estimator=LinearRegression(), func=np.sqrt, inverse_func=np.log
     )
     regr.set_params(check_inverse=False)
 
@@ -92,7 +111,7 @@ def _check_shifted_by_one(y, y_pred):
 def test_transform_target_regressor_functions():
     X, y = friedman
     regr = TransformedTargetRegressor(
-        regressor=LinearRegression(), func=np.log, inverse_func=np.exp
+        estimator=LinearRegression(), func=np.log, inverse_func=np.exp
     )
     y_pred = regr.fit(X, y).predict(X)
     # check the transformer output
@@ -102,17 +121,39 @@ def test_transform_target_regressor_functions():
         y, regr.transformer_.inverse_transform(y_tran.reshape(-1, 1)).squeeze()
     )
     assert y.shape == y_pred.shape
-    assert_allclose(y_pred, regr.inverse_func(regr.regressor_.predict(X)))
+    assert_allclose(y_pred, regr.inverse_func(regr.estimator_.predict(X)))
     # check the regressor output
     lr = LinearRegression().fit(X, regr.func(y))
-    assert_allclose(regr.regressor_.coef_.ravel(), lr.coef_.ravel())
+    assert_allclose(regr.estimator_.coef_.ravel(), lr.coef_.ravel())
+
+
+def test_transform_target_classifier_functions():
+    X, y = binary
+    func = lambda x: 1 - x
+    clf = TransformedTargetClassifier(
+        estimator=LogisticRegression(),
+        func=func,
+        inverse_func=func,
+    )
+    y_pred = clf.fit(X, y).predict(X)
+    # check the transformer output
+    y_tran = clf.transformer_.transform(y.reshape(-1, 1)).squeeze()
+    assert_allclose(func(y), y_tran)
+    assert_allclose(
+        y, clf.transformer_.inverse_transform(y_tran.reshape(-1, 1)).squeeze()
+    )
+    assert y.shape == y_pred.shape
+    assert_allclose(y_pred, clf.inverse_func(clf.estimator_.predict(X)))
+    # check the classfier output
+    lr = LogisticRegression().fit(X, clf.func(y))
+    assert_allclose(clf.estimator_.coef_.ravel(), lr.coef_.ravel())
 
 
 def test_transform_target_regressor_functions_multioutput():
     X = friedman[0]
     y = np.vstack((friedman[1], friedman[1] ** 2 + 1)).T
     regr = TransformedTargetRegressor(
-        regressor=LinearRegression(), func=np.log, inverse_func=np.exp
+        estimator=LinearRegression(), func=np.log, inverse_func=np.exp
     )
     y_pred = regr.fit(X, y).predict(X)
     # check the transformer output
@@ -120,10 +161,10 @@ def test_transform_target_regressor_functions_multioutput():
     assert_allclose(np.log(y), y_tran)
     assert_allclose(y, regr.transformer_.inverse_transform(y_tran))
     assert y.shape == y_pred.shape
-    assert_allclose(y_pred, regr.inverse_func(regr.regressor_.predict(X)))
+    assert_allclose(y_pred, regr.inverse_func(regr.estimator_.predict(X)))
     # check the regressor output
     lr = LinearRegression().fit(X, regr.func(y))
-    assert_allclose(regr.regressor_.coef_.ravel(), lr.coef_.ravel())
+    assert_allclose(regr.estimator_.coef_.ravel(), lr.coef_.ravel())
 
 
 @pytest.mark.parametrize(
@@ -138,7 +179,7 @@ def test_transform_target_regressor_1d_transformer(X, y):
         func=lambda x: x + 1, inverse_func=lambda x: x - 1
     )
     regr = TransformedTargetRegressor(
-        regressor=LinearRegression(), transformer=transformer
+        estimator=LinearRegression(), transformer=transformer
     )
     y_pred = regr.fit(X, y).predict(X)
     assert y.shape == y_pred.shape
@@ -154,7 +195,37 @@ def test_transform_target_regressor_1d_transformer(X, y):
     lr.fit(X, transformer2.fit_transform(y))
     y_lr_pred = lr.predict(X)
     assert_allclose(y_pred, transformer2.inverse_transform(y_lr_pred))
-    assert_allclose(regr.regressor_.coef_, lr.coef_)
+    assert_allclose(regr.estimator_.coef_, lr.coef_)
+
+
+def test_transform_target_classifier_1d_transformer():
+    # All transformer in scikit-learn expect 2D data. FunctionTransformer with
+    # validate=False lift this constraint without checking that the input is a
+    # 2D vector. We check the consistency of the data shape using a 1D and 2D y
+    # array.
+    X, y = binary
+
+    transformer = FunctionTransformer(
+        func=lambda x: 1 - x, inverse_func=lambda x: 1 - x
+    )
+    regr = TransformedTargetRegressor(
+        estimator=LogisticRegression(), transformer=transformer
+    )
+    y_pred = regr.fit(X, y).predict(X)
+    assert y.shape == y_pred.shape
+    # consistency forward transform
+    y_tran = regr.transformer_.transform(y)
+    assert_allclose(1 - y, y_tran)
+    assert y.shape == y_pred.shape
+    # consistency inverse transform
+    assert_allclose(y, regr.transformer_.inverse_transform(y_tran).squeeze())
+    # consistency of the regressor
+    lr = LogisticRegression()
+    transformer2 = clone(transformer)
+    lr.fit(X, transformer2.fit_transform(y))
+    y_lr_pred = lr.predict(X)
+    assert_allclose(y_pred, transformer2.inverse_transform(y_lr_pred))
+    assert_allclose(regr.estimator_.coef_, lr.coef_)
 
 
 @pytest.mark.parametrize(
@@ -165,7 +236,7 @@ def test_transform_target_regressor_2d_transformer(X, y):
     # array.
     transformer = StandardScaler()
     regr = TransformedTargetRegressor(
-        regressor=LinearRegression(), transformer=transformer
+        estimator=LinearRegression(), transformer=transformer
     )
     y_pred = regr.fit(X, y).predict(X)
     assert y.shape == y_pred.shape
@@ -191,7 +262,7 @@ def test_transform_target_regressor_2d_transformer(X, y):
         y_pred2 = transformer2.inverse_transform(y_lr_pred)
 
     assert_allclose(y_pred, y_pred2)
-    assert_allclose(regr.regressor_.coef_, lr.coef_)
+    assert_allclose(regr.estimator_.coef_, lr.coef_)
 
 
 def test_transform_target_regressor_2d_transformer_multioutput():
@@ -201,7 +272,7 @@ def test_transform_target_regressor_2d_transformer_multioutput():
     y = np.vstack((friedman[1], friedman[1] ** 2 + 1)).T
     transformer = StandardScaler()
     regr = TransformedTargetRegressor(
-        regressor=LinearRegression(), transformer=transformer
+        estimator=LinearRegression(), transformer=transformer
     )
     y_pred = regr.fit(X, y).predict(X)
     assert y.shape == y_pred.shape
@@ -217,7 +288,7 @@ def test_transform_target_regressor_2d_transformer_multioutput():
     lr.fit(X, transformer2.fit_transform(y))
     y_lr_pred = lr.predict(X)
     assert_allclose(y_pred, transformer2.inverse_transform(y_lr_pred))
-    assert_allclose(regr.regressor_.coef_, lr.coef_)
+    assert_allclose(regr.estimator_.coef_, lr.coef_)
 
 
 def test_transform_target_regressor_3d_target():
@@ -235,7 +306,7 @@ def test_transform_target_regressor_3d_target():
 
     transformer = FunctionTransformer(func=flatten_data, inverse_func=unflatten_data)
     regr = TransformedTargetRegressor(
-        regressor=LinearRegression(), transformer=transformer
+        estimator=LinearRegression(), transformer=transformer
     )
     y_pred = regr.fit(X, y).predict(X)
     assert y.shape == y_pred.shape
@@ -297,6 +368,16 @@ class DummyCheckerListRegressor(DummyRegressor):
         return super().predict(X)
 
 
+class DummyCheckerListClassifier(DummyClassifier):
+    def fit(self, X, y, sample_weight=None):
+        assert isinstance(X, list)
+        return super().fit(X, y, sample_weight)
+
+    def predict(self, X):
+        assert isinstance(X, list)
+        return super().predict(X)
+
+
 def test_transform_target_regressor_ensure_y_array():
     # check that the target ``y`` passed to the transformer will always be a
     # numpy array. Similarly, if ``X`` is passed as a list, we check that the
@@ -304,7 +385,25 @@ def test_transform_target_regressor_ensure_y_array():
     X, y = friedman
     tt = TransformedTargetRegressor(
         transformer=DummyCheckerArrayTransformer(),
-        regressor=DummyCheckerListRegressor(),
+        estimator=DummyCheckerListRegressor(),
+        check_inverse=False,
+    )
+    tt.fit(X.tolist(), y.tolist())
+    tt.predict(X.tolist())
+    with pytest.raises(AssertionError):
+        tt.fit(X, y.tolist())
+    with pytest.raises(AssertionError):
+        tt.predict(X)
+
+
+def test_transform_target_classifier_ensure_y_array():
+    # check that the target ``y`` passed to the transformer will always be a
+    # numpy array. Similarly, if ``X`` is passed as a list, we check that the
+    # predictor receive as it is.
+    X, y = binary
+    tt = TransformedTargetClassifier(
+        transformer=DummyCheckerArrayTransformer(),
+        estimator=DummyCheckerListClassifier(),
         check_inverse=False,
     )
     tt.fit(X.tolist(), y.tolist())
@@ -333,11 +432,18 @@ class DummyTransformer(TransformerMixin, BaseEstimator):
 
 
 @pytest.mark.parametrize("check_inverse", [False, True])
-def test_transform_target_regressor_count_fit(check_inverse):
+def test_transform_target_estimator_count_fit(check_inverse):
     # regression test for gh-issue #11618
     # check that we only call a single time fit for the transformer
     X, y = friedman
     ttr = TransformedTargetRegressor(
+        transformer=DummyTransformer(), check_inverse=check_inverse
+    )
+    ttr.fit(X, y)
+    assert ttr.transformer_.fit_counter == 1
+
+    X, y = binary
+    ttr = TransformedTargetClassifier(
         transformer=DummyTransformer(), check_inverse=check_inverse
     )
     ttr.fit(X, y)
@@ -352,10 +458,26 @@ class DummyRegressorWithExtraFitParams(DummyRegressor):
         return super().fit(X, y, sample_weight)
 
 
-def test_transform_target_regressor_pass_fit_parameters():
+class DummyClassifierWithExtraFitParams(DummyClassifier):
+    def fit(self, X, y, sample_weight=None, check_input=True):
+        # on the test below we force this to false, we make sure this is
+        # actually passed to the classifier
+        assert not check_input
+        return super().fit(X, y, sample_weight)
+
+
+def test_transform_target_estimator_pass_fit_parameters():
     X, y = friedman
     regr = TransformedTargetRegressor(
-        regressor=DummyRegressorWithExtraFitParams(), transformer=DummyTransformer()
+        estimator=DummyRegressorWithExtraFitParams(), transformer=DummyTransformer()
+    )
+
+    regr.fit(X, y, check_input=False)
+    assert regr.transformer_.fit_counter == 1
+
+    X, y = binary
+    regr = TransformedTargetClassifier(
+        estimator=DummyClassifierWithExtraFitParams(), transformer=DummyTransformer()
     )
 
     regr.fit(X, y, check_input=False)
@@ -366,7 +488,21 @@ def test_transform_target_regressor_route_pipeline():
     X, y = friedman
 
     regr = TransformedTargetRegressor(
-        regressor=DummyRegressorWithExtraFitParams(), transformer=DummyTransformer()
+        estimator=DummyRegressorWithExtraFitParams(), transformer=DummyTransformer()
+    )
+    estimators = [("normalize", StandardScaler()), ("est", regr)]
+
+    pip = Pipeline(estimators)
+    pip.fit(X, y, **{"est__check_input": False})
+
+    assert regr.transformer_.fit_counter == 1
+
+
+def test_transform_target_classifier_route_pipeline():
+    X, y = binary
+
+    regr = TransformedTargetClassifier(
+        estimator=DummyClassifierWithExtraFitParams(), transformer=DummyTransformer()
     )
     estimators = [("normalize", StandardScaler()), ("est", regr)]
 
@@ -385,16 +521,64 @@ class DummyRegressorWithExtraPredictParams(DummyRegressor):
         return super().predict(X)
 
 
-def test_transform_target_regressor_pass_extra_predict_parameters():
+class DummyClassifierWithExtraPredictParams(DummyClassifier):
+    def predict(self, X, check_input=True):
+        # In the test below we make sure that the check input parameter is
+        # passed as false
+        self.predict_called = True
+        assert not check_input
+        return super().predict(X)
+
+    def predict_proba(self, X, check_input=True):
+        # In the test below we make sure that the check input parameter is
+        # passed as false
+        self.predict_proba_called = True
+        assert not check_input
+        return super().predict_proba(X)
+
+    def predict_log_proba(self, X, check_input=True):
+        # In the test below we make sure that the check input parameter is
+        # passed as false
+        self.predict_log_proba_called = True
+        assert not check_input
+        return np.log(super().predict_proba(X))
+
+    def decision_function(self, X, check_input=True):
+        # In the test below we make sure that the check input parameter is
+        # passed as false
+        self.decision_function_called = True
+        assert not check_input
+        # DummyClassifier has no decision_function
+        return False
+
+
+def test_transform_target_estimator_pass_extra_predict_parameters():
     # Checks that predict kwargs are passed to regressor.
     X, y = friedman
     regr = TransformedTargetRegressor(
-        regressor=DummyRegressorWithExtraPredictParams(), transformer=DummyTransformer()
+        estimator=DummyRegressorWithExtraPredictParams(), transformer=DummyTransformer()
     )
 
     regr.fit(X, y)
     regr.predict(X, check_input=False)
-    assert regr.regressor_.predict_called
+    assert regr.estimator_.predict_called
+
+    # Checks that predict kwargs are passed to classifier.
+    X, y = binary
+    regr = TransformedTargetClassifier(
+        estimator=DummyClassifierWithExtraPredictParams(),
+        transformer=DummyTransformer(),
+    )
+
+    regr.fit(X, y)
+    regr.predict(X, check_input=False)
+    assert regr.estimator_.predict_called
+    regr.predict_proba(X, check_input=False)
+    assert regr.estimator_.predict_proba_called
+    regr.predict_log_proba(X, check_input=False)
+    assert regr.estimator_.predict_log_proba_called
+    regr.decision_function(X, check_input=False)
+    assert regr.estimator_.decision_function_called
 
 
 @pytest.mark.parametrize("output_format", ["pandas", "polars"])
@@ -402,11 +586,36 @@ def test_transform_target_regressor_not_warns_with_global_output_set(output_form
     """Test that TransformedTargetRegressor will not raise warnings if
     set_config(transform_output="pandas"/"polars") is set globally; regression test for
     issue #29361."""
-    X, y = datasets.make_regression()
+    X, y = make_regression()
     y = np.abs(y) + 1
     with config_context(transform_output=output_format):
         with warnings.catch_warnings():
             warnings.simplefilter("error")
             TransformedTargetRegressor(
-                regressor=LinearRegression(), func=np.log, inverse_func=np.exp
+                estimator=LinearRegression(), func=np.log, inverse_func=np.exp
             ).fit(X, y)
+
+    X, y = binary
+    func = lambda x: 1 - x
+    with config_context(transform_output=output_format):
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            TransformedTargetClassifier(
+                estimator=LogisticRegression(), func=func, inverse_func=func
+            ).fit(X, y)
+
+
+# TODO(1.8): remove in 1.8
+def test_deprecation_warning_regressor():
+    X_train = np.arange(4).reshape(-1, 1)
+    y_train = np.arange(4)
+
+    warn_msg = "`regressor` has been deprecated in 1.6 and will be removed"
+    with pytest.warns(FutureWarning, match=warn_msg):
+        TransformedTargetRegressor(regressor=LinearRegression()).fit(X_train, y_train)
+
+    error_msg = "You must pass only one estimator to TransformedTargetRegressor."
+    with pytest.raises(ValueError, match=error_msg):
+        TransformedTargetRegressor(
+            regressor=LinearRegression(), estimator=LinearRegression()
+        ).fit(X_train, y_train)

@@ -13,11 +13,12 @@ from ._column_transformer import (
     make_column_selector,
     make_column_transformer,
 )
-from ._target import TransformedTargetRegressor
+from ._target import TransformedTargetClassifier, TransformedTargetRegressor
 
 __all__ = [
     "ColumnTransformer",
     "make_column_transformer",
+    "TransformedTargetClassifier",
     "TransformedTargetRegressor",
     "make_column_selector",
 ]
