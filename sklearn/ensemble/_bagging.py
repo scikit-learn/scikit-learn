@@ -13,14 +13,14 @@ from warnings import warn
 
 import numpy as np
 
-from ..base import ClassifierMixin, RegressorMixin, _fit_context
+from ..base import ClassifierMixin, RegressorMixin, _fit_context, is_classifier
+from ..exceptions import DataConversionWarning
 from ..metrics import accuracy_score, r2_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import (
     Bunch,
     _safe_indexing,
     check_random_state,
-    column_or_1d,
 )
 from ..utils._mask import indices_to_mask
 from ..utils._param_validation import HasMethods, Interval, RealNotInt
@@ -438,8 +438,23 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         random_state = check_random_state(self.random_state)
 
         # Remap output
-        n_samples = X.shape[0]
-        self._n_samples = n_samples
+        y = np.atleast_1d(y)
+        if y.ndim == 2 and y.shape[1] == 1:
+            warn(
+                (
+                    "A column-vector y was passed when a 1d array was"
+                    " expected. Please change the shape of y to "
+                    "(n_samples,), for example using ravel()."
+                ),
+                DataConversionWarning,
+                stacklevel=2,
+            )
+
+        if y.ndim == 1:
+            # reshape is necessary to preserve the data contiguity against vs
+            # [:, np.newaxis] that does not.
+            y = np.reshape(y, (-1, 1))
+        self._n_samples, self.n_outputs_ = y.shape
         y = self._validate_y(y)
 
         # Check parameters
@@ -557,6 +572,11 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         if self.oob_score:
             self._set_oob_score(X, y)
 
+        # Decapsulate classes_ attributes
+        if hasattr(self, "classes_") and self.n_outputs_ == 1:
+            self.n_classes_ = self.n_classes_[0]
+            self.classes_ = self.classes_[0]
+
         return self
 
     @abstractmethod
@@ -564,8 +584,6 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         """Calculate out of bag predictions and score."""
 
     def _validate_y(self, y):
-        if len(y.shape) == 1 or y.shape[1] == 1:
-            return column_or_1d(y, warn=True)
         return y
 
     def _get_estimators_indices(self):
@@ -739,6 +757,9 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
         .. versionadded:: 1.0
 
+    n_outputs_ : int
+        The number of outputs when ``fit`` is performed.
+
     estimators_ : list of estimators
         The collection of fitted base estimators.
 
@@ -837,9 +858,20 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
     def _set_oob_score(self, X, y):
         n_samples = y.shape[0]
-        n_classes_ = self.n_classes_
+        n_outputs = self.n_outputs_
 
-        predictions = np.zeros((n_samples, n_classes_))
+        # TODO: Fix how predictions are set to handle multi-output
+        if is_classifier(self) and hasattr(self, "n_classes_"):
+            # n_classes_ is a ndarray at this stage
+            # all the supported type of target will have the same number of
+            # classes in all outputs
+            oob_pred_shape = (n_samples, self.n_classes_[0], n_outputs)
+        else:
+            # for regression, n_classes_ does not exist and we create an empty
+            # axis to be consistent with the classification case and make
+            # the array operations compatible with the 2 settings
+            oob_pred_shape = (n_samples, 1, n_outputs)
+        predictions = np.zeros(oob_pred_shape)
 
         for estimator, samples, features in zip(
             self.estimators_, self.estimators_samples_, self.estimators_features_
@@ -875,10 +907,18 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         self.oob_score_ = oob_score
 
     def _validate_y(self, y):
-        y = column_or_1d(y, warn=True)
         check_classification_targets(y)
-        self.classes_, y = np.unique(y, return_inverse=True)
-        self.n_classes_ = len(self.classes_)
+        self.classes_ = []
+        self.n_classes_ = []
+
+        y_store_unique_indices = np.zeros(y.shape, dtype=int)
+        for k in range(self.n_outputs_):
+            classes_k, y_store_unique_indices[:, k] = np.unique(
+                y[:, k], return_inverse=True
+            )
+            self.classes_.append(classes_k)
+            self.n_classes_.append(classes_k.shape[0])
+        y = y_store_unique_indices
 
         return y
 
@@ -1166,6 +1206,9 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
+
+    n_outputs_ : int
+        The number of outputs when ``fit`` is performed.
 
     estimators_ : list of estimators
         The collection of fitted sub-estimators.
