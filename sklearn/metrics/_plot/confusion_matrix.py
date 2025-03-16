@@ -81,6 +81,10 @@ class ConfusionMatrixDisplay:
     def __init__(self, confusion_matrix, *, display_labels=None):
         self.confusion_matrix = confusion_matrix
         self.display_labels = display_labels
+        self.im_ = None
+        self.text_ = None
+        self.ax_ = None
+        self.figure_ = None 
 
     def plot(
         self,
