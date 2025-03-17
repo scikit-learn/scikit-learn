@@ -74,13 +74,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "_svm_cython_blas_helpers.h"
 #include "../newrand/newrand.h"
 
-#ifdef _DENSE_REP // TODO: Delete
-#include <iostream>
-#include <chrono>
-#include <stdarg.h>
-#include <stdio.h>
-#endif
-
 #ifndef _LIBSVM_CPP
 typedef float Qfloat;
 typedef signed char schar;
@@ -697,9 +690,6 @@ void Solver::Solve(int l, const QMatrix& Q, const double *p_, const schar *y_,
 	}
 
 	// initialize gradient
-#ifdef _DENSE_REP // TODO: Delete
-	auto start_grad = std::chrono::high_resolution_clock::now();
-#endif
 	{
 		G = new double[l];
 		G_bar = new double[l];
@@ -722,20 +712,11 @@ void Solver::Solve(int l, const QMatrix& Q, const double *p_, const schar *y_,
 						G_bar[j] += get_C(i) * Q_i[j];
 			}
 	}
-#ifdef _DENSE_REP // TODO: Delete
-	auto end_grad = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<double> elapsed_grad = end_grad - start_grad;
-	info("\nElapsed time for gradient initialization: %f\n", elapsed_grad.count());
-#endif
-
 	// optimization step
 
 	int iter = 0;
 	int counter = min(l,1000)+1;
 
-#ifdef _DENSE_REP // TODO: Delete
-	auto start_opt = std::chrono::high_resolution_clock::now();
-#endif
 	while(1)
 	{
                 // set max_iter to -1 to disable the mechanism
@@ -909,12 +890,6 @@ void Solver::Solve(int l, const QMatrix& Q, const double *p_, const schar *y_,
 			}
 		}
 	}
-#ifdef _DENSE_REP // TODO: Delete
-	auto end_opt = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<double> elapsed_opt = end_opt - start_opt;
-	info("\nElapsed time for optimization: %f\n", elapsed_opt.count());
-#endif
-
 	// calculate rho
 
 	si->rho = calculate_rho();
@@ -2422,12 +2397,6 @@ static void remove_zero_weight(PREFIX(problem) *newprob, const PREFIX(problem) *
 PREFIX(model) *PREFIX(train)(PREFIX(problem) *prob, const svm_parameter *param,
         int *status, BlasFunctions *blas_functions)
 {
-#ifdef _DENSE_REP // TODO: Delete
-	double s = 0;
-	std::chrono::time_point<std::chrono::high_resolution_clock> start_t, end_t;
-	std::chrono::duration<double> elapsed_t;
-	double total_elapsed_t = 0.0;
-#endif
 	PREFIX(problem) newprob;
 	remove_zero_weight(&newprob, prob);
 	prob = &newprob;
@@ -2501,24 +2470,6 @@ PREFIX(model) *PREFIX(train)(PREFIX(problem) *prob, const svm_parameter *param,
 		{
 			model->alpha_raw[0][i] = prob->alpha[0][i];
 		}
-
-#ifdef _DENSE_REP // TODO: Delete
-		for (i=0; i<prob->l; i++)
-		{
-			for (j=0; j<prob->l; j++)
-			{
-				if (param->svm_type != ONE_CLASS)
-					s += (prob->alpha[0][i] - prob->alpha[0][i+prob->l]) *
-						 (prob->alpha[0][j] - prob->alpha[0][j+prob->l]) *
-						 prob->x[i].values[j];
-				else
-					s += prob->alpha[0][i] *
-						 prob->alpha[0][j] *
-						 prob->x[i].values[j];
-			}
-		}
-		info("Sum : %f\n", -0.5 * s);
-#endif
 
 		free(prob->alpha);
 		free(f.alpha);
@@ -2636,38 +2587,12 @@ PREFIX(model) *PREFIX(train)(PREFIX(problem) *prob, const svm_parameter *param,
 					model->alpha_raw[p][k] = sub_prob.alpha[0][k];
 				obj_value += f[p].obj;
 
-#ifdef _DENSE_REP // TODO: Delete
-				start_t = std::chrono::high_resolution_clock::now();
-                int m;
-                for (k=0; k<sub_prob.l; k++)
-                {
-                    for (m=0; m<sub_prob.l; m++)
-                    {
-						/* ("i : %d, j : %d, idx[i] : %d, idx[j] : %d, k : %f\n",
-							 k, m, sub_prob.x[k].ind, sub_prob.x[m].ind,
-							 sub_prob.x[k].values[sub_prob.x[m].ind]); */
-                        s += sub_prob.alpha[0][k]
-                             * sub_prob.alpha[0][m]
-                             * sub_prob.y[k]
-                             * sub_prob.y[m]
-							 * sub_prob.x[k].values[sub_prob.x[m].ind];
-                    }
-                }
-				end_t = std::chrono::high_resolution_clock::now();
-				elapsed_t = end_t - start_t;
-				total_elapsed_t += elapsed_t.count();
-#endif
-
 				free(sub_prob.x);
 				free(sub_prob.y);
 				free(sub_prob.W);
 				free(sub_prob.alpha);
 				++p;
 			}
-#ifdef _DENSE_REP // TODO: Delete
-		info("Obj : %f\n", obj_value);
-		info("Sum : %f, Time : %fs\n", -0.5*s, total_elapsed_t);
-#endif
 		// build output
 
 		model->nr_class = nr_class;
