@@ -13,6 +13,12 @@ from ._svm import SVC, SVR, OneClassSVM
 class MKLC(BaseMKL, ClassifierMixin):
     """Multiple Kernel Learning for Classification."""
 
+    # # If some algorithms aren't made for Classification, add:
+    # _parameter_constraints: dict = {
+    #     **BaseMKL._parameter_constraints,
+    #     "algo": [StrOptions({"algo1", "algo2", ...})]
+    # }
+
     def __init__(
         self,
         *,
@@ -50,6 +56,12 @@ class MKLC(BaseMKL, ClassifierMixin):
 class MKLR(BaseMKL, RegressorMixin):
     """Multiple Kernel Learning for Regression."""
 
+    # # If some algorithms aren't made for Regression, add:
+    # _parameter_constraints: dict = {
+    #     **BaseMKL._parameter_constraints,
+    #     "algo": [StrOptions({"algo1", "algo2", ...})]
+    # }
+
     def __init__(
         self,
         *,
@@ -85,6 +97,12 @@ class MKLR(BaseMKL, RegressorMixin):
 
 class OneClassMKL(BaseMKL, OutlierMixin):
     """Multiple Kernel Learning for Outlier Detection."""
+
+    # # If some algorithms aren't made for Clustering, add:
+    # _parameter_constraints: dict = {
+    #     **BaseMKL._parameter_constraints,
+    #     "algo": [StrOptions({"algo1", "algo2", ...})]
+    # }
 
     def __init__(
         self,
