@@ -47,7 +47,7 @@ enhance the functionality of scikit-learn's estimators.
   the objects that EvalML creates use an sklearn-compatible API.
 
 - `MLJAR AutoML <https://github.com/mljar/mljar-supervised>`_
-  Python package for AutoML on Tabular Data with Feature Engineering, 
+  Python package for AutoML on Tabular Data with Feature Engineering,
   Hyper-Parameters Tuning, Explanations and Automatic Documentation.
 
 **Experimentation and model registry frameworks**
@@ -74,13 +74,13 @@ enhance the functionality of scikit-learn's estimators.
 - `dtreeviz <https://github.com/parrt/dtreeviz/>`_ A python library for
   decision tree visualization and model interpretation.
 
+- `model-diagnostics <https://lorentzenchr.github.io/model-diagnostics/>` Tools for
+  diagnostics and assessment of (machine learning) models (in Python).
+
 - `sklearn-evaluation <https://github.com/ploomber/sklearn-evaluation>`_
   Machine learning model evaluation made easy: plots, tables, HTML reports,
   experiment tracking and Jupyter notebook analysis. Visual analysis, model
   selection, evaluation and diagnostics.
-
-- `model-diagnostics <https://lorentzenchr.github.io/model-diagnostics/>` Tools for
-  diagnostics and assessment of (machine learning) models (in Python).
 
 - `yellowbrick <https://github.com/DistrictDataLabs/yellowbrick>`_ A suite of
   custom matplotlib visualizers for scikit-learn estimators to support visual feature
@@ -124,7 +124,7 @@ enhance the functionality of scikit-learn's estimators.
 
 - `BiocSklearn <https://bioconductor.org/packages/BiocSklearn>`_
   Exposes a small number of dimension reduction facilities as an illustration
-  of the basilisk protocol for interfacing python with R. Intended as a 
+  of the basilisk protocol for interfacing python with R. Intended as a
   springboard for more complete interop.
 
 
@@ -209,9 +209,6 @@ Note scikit-learn own modern gradient boosting estimators
 
 **Other regression and classification**
 
-- `py-earth <https://github.com/scikit-learn-contrib/py-earth>`_ Multivariate
-  adaptive regression splines
-
 - `gplearn <https://github.com/trevorstephens/gplearn>`_ Genetic Programming
   for symbolic regression tasks.
 
@@ -243,6 +240,10 @@ Note scikit-learn own modern gradient boosting estimators
   library of sklearn compatible categorical variable encoders.
   As of scikit-learn version 1.3.0, there is
   :class:`~sklearn.preprocessing.TargetEncoder`.
+
+- `skrub <https://skrub-data.org>`_ : facilitate learning on dataframes,
+  with sklearn compatible encoders (of categories, dates, strings) and
+  more.
 
 - `imbalanced-learn
   <https://github.com/scikit-learn-contrib/imbalanced-learn>`_ Various
