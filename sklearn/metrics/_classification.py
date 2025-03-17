@@ -51,7 +51,6 @@ from ..utils._param_validation import (
 from ..utils._unique import attach_unique
 from ..utils.extmath import _nanaverage
 from ..utils.multiclass import type_of_target, unique_labels
-from ..utils.sparsefuncs import count_nonzero
 from ..utils.validation import (
     _check_pos_label_consistency,
     _check_sample_weight,
@@ -229,12 +228,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     check_consistent_length(y_true, y_pred, sample_weight)
 
     if y_type.startswith("multilabel"):
-        if _is_numpy_namespace(xp):
-            differing_labels = count_nonzero(y_true - y_pred, axis=1)
-        else:
-            differing_labels = _count_nonzero(
-                y_true - y_pred, xp=xp, device=device, axis=1
-            )
+        differing_labels = _count_nonzero(y_true - y_pred, xp=xp, device=device, axis=1)
         score = xp.asarray(differing_labels == 0, device=device)
     else:
         score = y_true == y_pred
