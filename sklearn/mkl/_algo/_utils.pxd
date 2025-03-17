@@ -8,13 +8,21 @@ cdef int ONECLASS
 
 
 cdef float64_t[:, ::1] combine_kernels(
-    const float64_t[::1] d,
+    const float64_t[::1] weights,
     object kernels,
     const intp_t n_samples,
 )
 
 
+cpdef float64_t[:, ::1] combine_kernels_nonsym(
+    const float64_t[::1] weights,
+    object kernels,
+    const intp_t n_samples,
+    const intp_t m_samples,
+)
+
+
 cdef float64_t[::1] fix_precision(
-    float64_t[::1] d,
+    float64_t[::1] weights,
     const double tol,
 )

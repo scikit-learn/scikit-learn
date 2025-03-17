@@ -23,12 +23,13 @@ from ..metrics.pairwise import (
     sigmoid_kernel,
 )
 from ..utils._param_validation import Interval, StrOptions
-from ..utils.validation import check_is_fitted, check_X_y
+from ..utils.validation import check_array, check_is_fitted, check_X_y
 from ._algo import (
     _average_mkl,
     _simple_mkl,
     _sum_mkl,
 )
+from ._algo._utils import combine_kernels_nonsym
 from ._utils import kernel_generator, number_of_kernels
 
 ALGORITHMS = {
@@ -40,12 +41,9 @@ ALGORITHMS = {
 
 KERNELS = {
     "laplace": laplacian_kernel,
-    "laplacian": laplacian_kernel,
     "linear": linear_kernel,
     "poly": polynomial_kernel,
-    "polynomial": polynomial_kernel,
     "rbf": rbf_kernel,
-    "gaussian": rbf_kernel,
     "sigmoid": sigmoid_kernel,
 }
 
@@ -118,6 +116,14 @@ class BaseMKL(BaseEstimator, MetaEstimatorMixin, TransformerMixin, metaclass=ABC
         ------
         NotFittedError
             If the instance has not been fitted yet.
+
+        Notes
+        -----
+        Most estimators check the consistency of the number of samples between `X`
+        and `y`. This method is primarily designed for dynamically computed kernels
+        and may not work correctly when using precomputed kernels (i.e., when `kernels`
+        is set to None). In such cases, shape mismatches can occur, making it
+        impractical to use as a kernel argument.
         """
         check_is_fitted(
             self,
@@ -139,33 +145,91 @@ class BaseMKL(BaseEstimator, MetaEstimatorMixin, TransformerMixin, metaclass=ABC
             kernels_params=self.kernels_params,
             precomputed_kernels=False,  # Kernels are not precomputed yet
         )
-        self.n_samples_ = len(y)
+        self.n_samples_ = X[0].shape[0] if self.kernels is None else X.shape[0]
+
+        if self.kernels is not None:
+            # Reference to X to compute the kernel in predict/transform
+            self.__Xfit = X
+
         X, y = self._check_and_prepare_X_y(X, y)
 
-        if self.epsilon is None:
-            if self._svm.__class__.__name__ == "SVC" and np.unique(y).shape[0] > 2:
-                self.epsilon = 1e-1
-            else:
-                self.epsilon = 1e-2
-
-        # TODO: Manage kernels and kernels_params
-        self.weights_, self._svm = ALGORITHMS[self.algo].learn(
-            X=X,
-            y=y,
-            svm=self._svm,
-            kernels=self.kernels,
-            kernels_scope=self.kernels_scope,
-            kernels_params=self.kernels_params,
-            precomputed_kernels=self._precomputed_kernels,
-            n_kernels=self.n_kernels_,
-            n_samples=self.n_samples_,
-            epsilon=self.epsilon,
-            tol=self.tol,
-            verbose=self.verbose,
-            max_iter=self.max_iter,
-        )
+        self._learn(X, y)
 
         return self
+
+    def transform(self, X):
+        check_is_fitted(
+            self,
+            msg=(
+                "This %(name)s instance needs to be fitted before calling `tranform` "
+                "method. Please call 'fit' or 'fit_transform' with appropriate "
+                "arguments."
+            ),
+        )
+        if self.kernels is None:
+            return combine_kernels_nonsym(
+                weights=self.weights_,
+                kernels=X,
+                n_samples=X[0].shape[0],
+                m_samples=X[0].shape[1],
+            ).base
+        else:
+            return combine_kernels_nonsym(
+                weights=self.weights_,
+                kernels=kernel_generator(
+                    X=X,
+                    Y=self.__Xfit,
+                    kernels=self.kernels,
+                    kernels_scope=self.kernels_scope,
+                    kernels_params=self.kernels_params,
+                    precomputed_kernels=False,  # We need to compute the kernels
+                ),
+                n_samples=X.shape[0],
+                m_samples=self.__Xfit.shape[0],
+            ).base
+
+    def predict(self, X):
+        return self._svm.predict(self.transform(X))
+
+    def _learn(self, X, y=None):
+        if self.algo in ["average", "sum"]:
+
+            self.weights_, self._svm = ALGORITHMS[self.algo].learn(
+                X=X,
+                y=y,
+                svm=self._svm,
+                kernels=self.kernels,
+                kernels_scope=self.kernels_scope,
+                kernels_params=self.kernels_params,
+                precomputed_kernels=self._precomputed_kernels,
+                n_kernels=self.n_kernels_,
+                n_samples=self.n_samples_,
+                verbose=self.verbose,
+            )
+
+        elif self.algo == "simple":
+
+            if self.epsilon is None:
+                if self._svm.__class__.__name__ == "SVC" and np.unique(y).shape[0] > 2:
+                    self.epsilon = 1e-1
+                else:
+                    self.epsilon = 1e-2
+
+            self.weights_, self._svm = ALGORITHMS[self.algo].learn(
+                X=X,
+                y=y,
+                svm=self._svm,
+                kernels=self.kernels,
+                kernels_scope=self.kernels_scope,
+                kernels_params=self.kernels_params,
+                precomputed_kernels=self._precomputed_kernels,
+                n_kernels=self.n_kernels_,
+                n_samples=self.n_samples_,
+                epsilon=self.epsilon,
+                tol=self.tol,
+                verbose=self.verbose,
+                max_iter=self.max_iter,
+            )
 
     def _check_and_prepare_kernels(self, kernels):
         if kernels is None:
@@ -259,7 +323,7 @@ class BaseMKL(BaseEstimator, MetaEstimatorMixin, TransformerMixin, metaclass=ABC
             "dictionaries with the same size as 'kernels', or None."
         )
 
-    def _check_and_prepare_X_y(self, X, y):
+    def _check_and_prepare_X_y(self, X, y=None):
         X = np.asarray(X, dtype=np.float64)
         self._precomputed_kernels = self.precompute_kernels
 
@@ -270,9 +334,15 @@ class BaseMKL(BaseEstimator, MetaEstimatorMixin, TransformerMixin, metaclass=ABC
                     "when using precomputed kernels."
                 )
             for i in range(X.shape[0]):
-                X[i, :, :], y = check_X_y(X[i, :, :], y)
+                if y is None:
+                    X[i, :, :] = check_array(X[i, :, :])
+                else:
+                    X[i, :, :], y = check_X_y(X[i, :, :], y)
         else:
-            X, y = check_X_y(X, y)
+            if y is None:
+                X = check_array(X)
+            else:
+                X, y = check_X_y(X, y)
             if self.precompute_kernels or self.precompute_kernels is None:
                 try:
                     new_X = np.empty(

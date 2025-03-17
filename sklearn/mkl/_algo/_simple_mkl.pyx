@@ -19,7 +19,7 @@ def learn(
     const intp_t n_samples,
     const double epsilon,
     const double tol=1e-8,
-    const int verbose=1,
+    const int verbose=0,
     const int max_iter=-1,
 ):
     cdef intp_t mu, M = n_kernels
@@ -167,7 +167,7 @@ def learn(
                     print("├──────┼────────────┼───────────┼─────────────┤")
                 print("│ Iter │    Obj.    │ DiffBetas │ Stop. crit. │")
                 print("├──────┼────────────┼───────────┼─────────────┤")
-            print("│ {:4d} │ {:10.4f} │ {:9.6f} │ {:11.6f} │".format(
+            print("│ {:4d} │ {:10.3e} │ {:9.6f} │ {:11.6f} │".format(
                 iterations, J, np.max(np.abs(np.subtract(d, old_d))), stopping_crit
             ))
 
@@ -192,7 +192,8 @@ def learn(
                 if iterations == max_iter:
                     print("Maximum number of iterations reached.")
                 else:
-                    print("Converged: stopping criterion reached.")
+                    print("Converged: Stopping criterion reached.")
+                print("Final objective value:", J)
                 print("Optimal weights:", d.base)
 
             return d.base, svm
@@ -415,7 +416,7 @@ cpdef tuple _dual_gap(
     else:
         raise ValueError("Unknown SVM type.")
 
-    return duality_gap, duality_gap < dual_gap_epsilon
+    return duality_gap, np.abs(duality_gap) < dual_gap_epsilon
 
 
 cpdef tuple _kkt_constraint(

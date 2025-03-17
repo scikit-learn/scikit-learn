@@ -12,7 +12,7 @@ class BaseLibSVMforMKL(BaseLibSVM):
         if callable(self.kernel):
             # you must store a reference to X to compute the kernel in predict
             # TODO: add keyword copy to copy on demand
-            self.__Xfit = X
+            self._BaseLibSVM__Xfit = X
             X = self._compute_kernel(X)
 
             if X.shape[0] != X.shape[1]:

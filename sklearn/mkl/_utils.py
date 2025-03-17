@@ -17,18 +17,28 @@ def number_of_kernels(X, kernels, kernels_scope, kernels_params, precomputed_ker
     return number
 
 
-def kernel_generator(X, kernels, kernels_scope, kernels_params, precomputed_kernels):
+def kernel_generator(
+    X,
+    kernels,
+    kernels_scope,
+    kernels_params,
+    precomputed_kernels,
+    Y=None,
+):
     if precomputed_kernels or kernels is None:
         for kernel in X:
             yield kernel
     else:
+        if Y is None:
+            Y = X
         for kernel, scope, params in zip(kernels, kernels_scope, kernels_params):
             for i in range(len(params[next(iter(params))]) if len(params) > 0 else 1):
                 if scope == "all":
-                    yield kernel(X, **{k: v[i] for k, v in params.items()})
+                    yield kernel(X, Y, **{k: v[i] for k, v in params.items()})
                 else:
                     for j in range(X.shape[1]):
                         yield kernel(
                             X[:, j].reshape(-1, 1),
+                            Y[:, j].reshape(-1, 1),
                             **{k: v[i] for k, v in params.items()},
                         )

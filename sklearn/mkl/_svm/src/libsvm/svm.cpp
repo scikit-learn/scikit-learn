@@ -1969,7 +1969,7 @@ static decision_function svm_train_one(
 	decision_function f;
 	f.alpha = alpha;
 	f.rho = si.rho;
-	f.obj = -si.obj;
+	f.obj = -si.obj;  // We retrieve the objective value for the maximum problem
 	f.n_iter = si.n_iter;
 	return f;
 }

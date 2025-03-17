@@ -21,7 +21,7 @@ class MKLC(BaseMKL, ClassifierMixin):
         kernels_params=None,  # None or list of (str, dict)
         precompute_kernels=None,  # If none, it tries to compute the kernels
         algo="simple",
-        epsilon=None,  # TODO: DOC: 1e-1 if multiclass else 1e-2
+        epsilon=None,  # DOC: auto depending on algo
         tol=1e-8,
         verbose=False,
         max_iter=-1,
@@ -58,7 +58,7 @@ class MKLR(BaseMKL, RegressorMixin):
         kernels_params=None,
         precompute_kernels=None,
         algo="simple",
-        epsilon=1e-2,
+        epsilon=None,
         tol=1e-8,
         verbose=False,
         max_iter=-1,
@@ -94,7 +94,7 @@ class OneClassMKL(BaseMKL, OutlierMixin):
         kernels_params=None,
         precompute_kernels=None,
         algo="simple",
-        epsilon=1e-2,
+        epsilon=None,
         tol=1e-8,
         verbose=False,
         max_iter=-1,
