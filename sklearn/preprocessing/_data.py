@@ -492,6 +492,12 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             ensure_all_finite="allow-nan",
         )
 
+        device_ = device(X)
+        feature_range = (
+            xp.asarray(feature_range[0], dtype=X.dtype, device=device_),
+            xp.asarray(feature_range[1], dtype=X.dtype, device=device_),
+        )
+
         data_min = _array_api._nanmin(X, axis=0, xp=xp)
         data_max = _array_api._nanmax(X, axis=0, xp=xp)
 
