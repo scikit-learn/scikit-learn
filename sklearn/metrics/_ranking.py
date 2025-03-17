@@ -28,7 +28,11 @@ from ..utils import (
     check_consistent_length,
     column_or_1d,
 )
-from ..utils._array_api import get_namespace
+from ..utils._array_api import (
+    _max_precision_float_dtype,
+    get_namespace_and_device,
+    size,
+)
 from ..utils._encode import _encode, _unique
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.extmath import stable_cumsum
@@ -818,7 +822,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     if not (y_type == "binary" or (y_type == "multiclass" and pos_label is not None)):
         raise ValueError("{0} format is not supported".format(y_type))
 
-    xp, _ = get_namespace(y_true, y_score, sample_weight)
+    xp, _, device = get_namespace_and_device(y_true, y_score, sample_weight)
 
     check_consistent_length(y_true, y_score, sample_weight)
     y_true = column_or_1d(y_true)
@@ -855,19 +859,18 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     distinct_value_indices = xp.nonzero(y_score[1:] - y_score[:-1])[0]
     # can't use size since PyTorch size is a method and not a property
     # as specified by the array API spec
-    threshold_idxs = xp.concat(
-        [distinct_value_indices, xp.asarray([xp.prod(xp.asarray(y_true.shape)) - 1])]
-    )
+    threshold_idxs = xp.concat([distinct_value_indices, xp.asarray([size(y_true) - 1])])
 
     # accumulate the true positives with decreasing threshold
-    y_true = xp.astype(y_true, xp.float64)
+    max_float_dtype = _max_precision_float_dtype(xp, device)
+    y_true = xp.astype(y_true, max_float_dtype)
     tps = xp.take(stable_cumsum(y_true * weight), threshold_idxs)
     if sample_weight is not None:
         # express fps as a cumsum to ensure fps is increasing even in
         # the presence of floating point errors
         fps = xp.take(stable_cumsum((1 - y_true) * weight), threshold_idxs)
     else:
-        fps = 1 + xp.astype(threshold_idxs, xp.float64) - tps
+        fps = 1 + xp.astype(threshold_idxs, max_float_dtype) - tps
     return fps, tps, xp.take(y_score, threshold_idxs)
 
 
@@ -1155,7 +1158,7 @@ def roc_curve(
     >>> thresholds
     array([ inf, 0.8 , 0.4 , 0.35, 0.1 ])
     """
-    xp, _ = get_namespace(y_true, y_score)
+    xp, _, device = get_namespace_and_device(y_true, y_score)
     fps, tps, thresholds = _binary_clf_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
@@ -1173,9 +1176,9 @@ def roc_curve(
         optimal_idxs = xp.where(
             xp.concat(
                 [
-                    xp.asarray(True),
+                    xp.asarray(True, device=device),
                     xp.logical_or(np.diff(fps, 2), np.diff(tps, 2)),
-                    xp.asarray(True),
+                    xp.asarray(True, device=device),
                 ]
             )
         )[0]
@@ -1188,9 +1191,7 @@ def roc_curve(
     tps = xp.concat([xp.asarray([0.0]), tps])
     fps = xp.concat([xp.asarray([0.0]), fps])
     # get dtype of `y_score` even if it is an array-like
-    # thresholds = np.r_[np.inf, thresholds]
-    # TODO: maybe just cast y_score in _binary_clf_curve?
-    thresholds = xp.astype(thresholds, xp.float64)
+    thresholds = xp.astype(thresholds, _max_precision_float_dtype(xp, device))
     thresholds = xp.concat([xp.asarray([xp.inf]), thresholds])
 
     if fps[-1] <= 0:

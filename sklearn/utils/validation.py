@@ -18,7 +18,13 @@ import scipy.sparse as sp
 
 from .. import get_config as _get_config
 from ..exceptions import DataConversionWarning, NotFittedError, PositiveSpectrumWarning
-from ..utils._array_api import _asarray_with_order, _is_numpy_namespace, get_namespace
+from ..utils._array_api import (
+    _asarray_with_order,
+    _is_numpy_namespace,
+    _max_precision_float_dtype,
+    get_namespace,
+    get_namespace_and_device,
+)
 from ..utils.deprecation import _deprecate_force_all_finite
 from ..utils.fixes import ComplexWarning, _preserve_dia_indices_dtype
 from ._isfinite import FiniteStatus, cy_isfinite
@@ -2165,11 +2171,10 @@ def _check_sample_weight(
         Validated sample weight. It is guaranteed to be "C" contiguous.
     """
     n_samples = _num_samples(X)
-    # TODO: check sample_weight and X are same namespace
-    xp, _ = get_namespace(X)
+    xp, _, device = get_namespace_and_device(X, sample_weight)
 
     if dtype is not None and dtype not in [xp.float32, xp.float64]:
-        dtype = xp.float64
+        dtype = _max_precision_float_dtype(xp, device)
 
     if sample_weight is None:
         sample_weight = xp.ones(n_samples, dtype=dtype)
