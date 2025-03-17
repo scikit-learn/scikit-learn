@@ -72,25 +72,11 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50):
         sorted_weights[sorted_nan_mask] = 0
 
     # Compute the weighted cumulative distribution function (CDF) based on
-    # sample_weight and scale percentile_rank along it:
+    # `sample_weight` and scale `percentile_rank` along it:
     weight_cdf = xp.cumulative_sum(sorted_weights, axis=0)
     adjusted_percentile_rank = percentile_rank / 100 * weight_cdf[-1]
-    # AFAICT passing only 1 array to `_find_matching_floating_dtype` simply
-    # returns the default floating point dtype *if* the array is not floating point.
-    # Is this necessary for `weight_cdf` to be a float?
-    #
-    # weight_cdf = xp.asarray(
-    #     weight_cdf, dtype=_find_matching_floating_dtype(weight_cdf, xp=xp)
-    # )
-    #
-    # This may be req as nextafter returns float
-    #
-    # adjusted_percentile_rank = xp.asarray(
-    #     adjusted_percentile_rank,
-    #     dtype=_find_matching_floating_dtype(adjusted_percentile_rank, xp=xp),
-    # )
-    # For percentile_rank=0, ignore leading observations with sample_weight=0; see
-    # PR #20528:
+
+    # Ignore leading `sample_weight=0` observations when `percentile_rank=0` (#20528)
     mask = adjusted_percentile_rank == 0
     adjusted_percentile_rank[mask] = xp.nextafter(
         adjusted_percentile_rank[mask], adjusted_percentile_rank[mask] + 1
@@ -107,28 +93,13 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50):
 
     # In rare cases, `percentile_idx` equals to `sorted_idx.shape[0]`
     max_idx = sorted_idx.shape[0] - 1
-    # We are only ever calculating one percentile_rank, so only need one
-    # value per column, `percentile_idx` is always 1D (see above list comprehension)
-    # we never needed `apply_along_axis`
     percentile_idx = xp.clip(percentile_idx, 0, max_idx)
 
     col_indices = xp.arange(array.shape[1])
-    # percentile_in_sorted = sorted_idx[percentile_idx, col_index]
-    percentile_in_sorted = []
-    for i in range(percentile_idx.shape[0]):
-        percentile_in_sorted.append(sorted_idx[percentile_idx[i], col_indices[i]])
+    percentile_in_sorted = sorted_idx[percentile_idx, col_indices]
 
-    # Not sure why this was needed??
-    # array = xp.asarray(array)
-    print(type(percentile_in_sorted))
     result = array[percentile_in_sorted, col_indices]
-    # I think integer array indexing is supported
-    # https://data-apis.org/array-api/latest/API_specification/indexing.html#integer-array-indexing
 
-    # result = []
-    # for i in range(len(percentile_in_sorted)):
-    #     result.append(array[percentile_in_sorted[i], col_indices[i]])
-    # result = xp.asarray(result)
     return result[0] if n_dim == 1 else result
 
 
