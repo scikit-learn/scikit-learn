@@ -2777,7 +2777,7 @@ def test_log_loss():
     with pytest.raises(ValueError):
         log_loss(y_true, y_pred)
 
-    # raise error if labels does not contains all values of y_true
+    # raise error if labels do not contain all values of y_true
     y_true = ["a", "b", "c"]
     y_pred = [[0.9, 0.1, 0.0], [0.1, 0.9, 0.0], [0.1, 0.1, 0.8]]
     labels = ["a", "c", "d"]

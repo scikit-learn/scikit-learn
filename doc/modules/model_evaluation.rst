@@ -1924,27 +1924,29 @@ Brier score loss
 ----------------
 
 The :func:`brier_score_loss` function computes the `Brier score
-<https://en.wikipedia.org/wiki/Brier_score>`_ for binary or multiclass
-probabilistic predictions. Quoting Wikipedia:
+<https://en.wikipedia.org/wiki/Brier_score>`_ for binary and multiclass
+probabilistic predictions and is equivalent to the mean squared error.
+Quoting Wikipedia:
 
-    "The Brier score is a proper score function that measures the accuracy of
-    probabilistic predictions. It is applicable to tasks in which predictions
-    must assign probabilities to a set of mutually exclusive discrete outcomes."
+    "The Brier score is a strictly proper scoring rule that measures the accuracy of
+    probabilistic predictions. [...] [It] is applicable to tasks in which predictions
+    must assign probabilities to a set of mutually exclusive discrete outcomes or
+    classes."
 
 Let the true labels for a set of :math:`N` data points be encoded as a 1-of-K binary
 indicator matrix :math:`Y`, i.e., :math:`y_{i,k} = 1` if sample :math:`i` has
 label :math:`k` taken from a set of :math:`K` labels. Let :math:`P` be a matrix
-of probability estimates :math:`p_{i,k} = \operatorname{Pr}(y_{i,k} = 1)`.
+of probability estimates :math:`p_{i,k} \approx \operatorname{Pr}(y_{i,k} = 1)`.
 Following the original definition by [Brier1950]_, the Brier score is given by:
 
 .. math::
 
   BS(Y, P) = \frac{1}{N}\sum_{i=0}^{N-1}\sum_{k=0}^{K-1}(y_{i,k} - p_{i,k})^{2}
 
-The Brier score lies in the :math:`[0, 2]` range and the lower the value the
+The Brier score lies in the interval :math:`[0, 2]` and the lower the value the
 better the probability estimates are (the mean squared difference is smaller).
-Actually the Brier score is a strictly proper scoring rule, meaning that it
-achieves the best score only when the estimated probabilities are equal to the
+Actually, the Brier score is a strictly proper scoring rule, meaning that it
+achieves the best score only when the estimated probabilities equal the
 true ones.
 
 Note that in the binary case, the Brier score is usually divided by two and
@@ -1976,7 +1978,7 @@ two above definitions to follow.
     >>> brier_score_loss(
     ...    ["eggs", "ham", "spam"],
     ...    [[0.8, 0.1, 0.1], [0.2, 0.7, 0.1], [0.2, 0.2, 0.6]],
-    ...    labels=["eggs", "ham", "spam"]
+    ...    labels=["eggs", "ham", "spam"],
     ... )
     0.146...
 

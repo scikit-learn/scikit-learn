@@ -3488,7 +3488,7 @@ def brier_score_loss(
     The smaller the Brier score loss, the better, hence the naming with "loss".
     The Brier score measures the mean squared difference between the predicted
     probability and the actual outcome. The Brier score is a stricly proper scoring
-    rule and can be decomposed as the sum of refinement loss and calibration loss.
+    rule.
 
     For :math:`N` observations labeled from :math:`C` possible classes, the Brier
     score is defined as:
@@ -3547,7 +3547,7 @@ def brier_score_loss(
         .. versionadded:: 1.7
 
     scale_by_half : bool or "auto", default="auto"
-        When True, scale the Brier score by half to lie in the [0, 1] range instead
+        When True, scale the Brier score by 1/2 to lie in the [0, 1] range instead
         of the [0, 2] range. The default "auto" option implements the rescaling to
         [0, 1] only for binary classification (as customary) but keeps the
         original [0, 2] range for multiclasss classification.
