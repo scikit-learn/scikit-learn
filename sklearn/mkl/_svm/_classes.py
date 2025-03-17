@@ -6,25 +6,20 @@ from ._base import BaseLibSVMforMKL
 
 
 class SVC(BaseLibSVMforMKL, _classes.SVC):
-    def __init__(self, shrinking=False, **kwargs):
-        super().__init__(shrinking=shrinking, **kwargs)
+    pass
 
 
 class SVR(BaseLibSVMforMKL, _classes.SVR):
-    def __init__(self, shrinking=False, **kwargs):
-        super().__init__(shrinking=shrinking, **kwargs)
+    pass
 
 
 class OneClassSVM(BaseLibSVMforMKL, _classes.OneClassSVM):
-    def __init__(self, shrinking=False, **kwargs):
-        super().__init__(shrinking=shrinking, **kwargs)
+    pass
 
 
 class NuSVC(BaseLibSVMforMKL, _classes.NuSVC):
-    def __init__(self, shrinking=False, **kwargs):
-        super().__init__(shrinking=shrinking, **kwargs)
+    pass
 
 
 class NuSVR(BaseLibSVMforMKL, _classes.NuSVR):
-    def __init__(self, shrinking=False, **kwargs):
-        super().__init__(shrinking=shrinking, **kwargs)
+    pass
