@@ -154,7 +154,14 @@ class BaseMKL(BaseEstimator, MetaEstimatorMixin, TransformerMixin, metaclass=ABC
 
         X, y = self._check_and_prepare_X_y(X, y)
 
+        # Optimal kernel weights learning
         self._learn(X, y)
+
+        # SVM Cleanup
+        if hasattr(self._svm, "alpha_init_"):
+            del self._svm.alpha_init_
+        if hasattr(self._svm, "alpha_raw_"):
+            del self._svm.alpha_raw_
 
         return self
 

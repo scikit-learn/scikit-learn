@@ -39,4 +39,4 @@ def learn(
         y,
     )
 
-    return d, svm
+    return d.base, svm

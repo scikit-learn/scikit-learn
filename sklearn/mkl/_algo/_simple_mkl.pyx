@@ -173,6 +173,7 @@ def learn(
 
         # Stopping conditions
         if iterations == max_iter or stopping_cond:
+            # It fits the final SVM
             J = _objective_value(
                 svm,
                 d,
@@ -185,8 +186,9 @@ def learn(
                 ),
                 n_samples,
                 y,
-            )  # It fits the final SVM
+            )
 
+            # Final verbose output
             if verbose:
                 print("└──────┴────────────┴───────────┴─────────────┘")
                 if iterations == max_iter:
