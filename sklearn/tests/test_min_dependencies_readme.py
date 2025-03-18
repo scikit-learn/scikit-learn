@@ -34,7 +34,6 @@ def test_min_dependencies_readme():
     pattern = re.compile(
         r"(\.\. \|)"
         r"(([A-Za-z]+\-?)+)"
-        r"(([A-Za-z]+(?:-[A-Za-z]+)*)?)"
         r"(MinVersion\| replace::)"
         r"( [0-9]+\.[0-9]+(\.[0-9]+)?)"
     )
