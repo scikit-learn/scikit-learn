@@ -3554,6 +3554,25 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
     return float(1 - (numerator / denominator))
 
 
+@validate_params(
+    {
+        "y_true": ["array-like", "sparse matrix"],
+        "y_pred": ["array-like", "sparse matrix"],
+        "labels": ["array-like", None],
+        "pos_label": [Real, str, "boolean", None],
+        "average": [
+            StrOptions({"binary", "macro", "micro", "samples", "weighted"}),
+            None,
+        ],
+        "warn_for": : [list, tuple, set],
+        "sample_weight": ["array-like", None],
+        "zero_division": [
+            Options(Real, {0, 1}),
+            StrOptions({"warn"}),
+        ],
+    },
+    prefer_skip_nested_validation=True,
+)
 def tpr_fpr_tnr_fnr_score(
     y_true,
     y_pred,
@@ -3607,13 +3626,13 @@ def tpr_fpr_tnr_fnr_score(
         labels are column indices. By default, all labels in `y_true` and
         `y_pred` are used in sorted order.
 
-    pos_label : str or int, default=1
-        The class to report if `average="binary"` and the data is binary.
-        If the data are multiclass or multilabel, this will be ignored;
-        setting `labels=[pos_label]` and `average != "binary"` will report
-        scores for that label only.
+    pos_label : int, float, bool or str, default=1
+        The class to report if `average='binary'` and the data is binary,
+        otherwise this parameter is ignored.
+        For multiclass or multilabel targets, set `labels=[pos_label]` and
+        `average != 'binary'` to report metrics for one label only.
 
-    average : {"binary", "micro", "macro", "samples", "weighted"} or None, \
+    average : {"binary", "macro", "micro", "samples", "weighted"} or None, \
             default=None
         If `None`, the scores for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
@@ -3621,22 +3640,22 @@ def tpr_fpr_tnr_fnr_score(
         `"binary"`:
             Only report results for the class specified by `pos_label`.
             This is applicable only if targets (`y_{true,pred}`) are binary.
-        `"micro"`:
-            Calculate metrics globally by counting the total true positives,
-            false negatives and false positives.
         `"macro"`:
             Calculate metrics for each label, and find their unweighted
             mean.  This does not take label imbalance into account.
-        `"weighted"`:
-            Calculate metrics for each label, and find their average weighted
-            by support (the number of true instances for each label). This
-            alters 'macro' to account for label imbalance.
+        `"micro"`:
+            Calculate metrics globally by counting the total true positives,
+            false negatives and false positives.
         `"samples"`:
             Calculate metrics for each instance, and find their average (only
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
+        `"weighted"`:
+            Calculate metrics for each label, and find their average weighted
+            by support (the number of true instances for each label). This
+            alters 'macro' to account for label imbalance.
 
-    warn_for : tuple or set, for internal use
+    warn_for : list, tuple or set, for internal use
         This determines which warnings will be made in the case that this
         function is being used to return only one of its metrics.
 
@@ -3759,8 +3778,11 @@ def tpr_fpr_tnr_fnr_score(
     fnr = _prf_divide(
         fn_sum, pos_sum, "FNR", "positives", average, warn_for, zero_division
     )
+    if average is None:
+        return tpr, fpr, tnr, fnr
+
     # Average the results
-    if average == "weighted":
+    elif average == "weighted":
         weights = pos_sum
         if weights.sum() == 0:
             zero_division_value = 0.0 if zero_division in ["warn", 0] else 1.0
@@ -3772,21 +3794,36 @@ def tpr_fpr_tnr_fnr_score(
                 zero_division_value if neg_sum.sum() == 0 else 0,
                 zero_division_value if pos_sum.sum() == 0 else 0,
             )
-
-    elif average == "samples":
+    elif average == "samples" and sample_weight is not None:
         weights = sample_weight
     else:
         weights = None
-
-    if average is not None:
-        assert average != "binary" or len(fpr) == 1, "Non-binary target."
-        tpr = np.average(tpr, weights=weights)
-        fpr = np.average(fpr, weights=weights)
-        tnr = np.average(tnr, weights=weights)
-        fnr = np.average(fnr, weights=weights)
-    return float(tpr), float(fpr), float(tnr), float(fnr)
+    assert average != "binary" or len(fpr) == 1, "Non-binary target."
+    tpr = float(np.average(tpr, weights=weights))
+    fpr = float(np.average(fpr, weights=weights))
+    tnr = float(np.average(tnr, weights=weights))
+    fnr = float(np.average(fnr, weights=weights))
+    return tpr, fpr, tnr, fnr
 
 
+@validate_params(
+    {
+        "y_true": ["array-like", "sparse matrix"],
+        "y_pred": ["array-like", "sparse matrix"],
+        "labels": ["array-like", None],
+        "pos_label": [Real, str, "boolean", None],
+        "average": [
+            StrOptions({"binary", "macro", "micro", "samples", "weighted"}),
+            None,
+        ],
+        "sample_weight": ["array-like", None],
+        "zero_division": [
+            Options(Real, {0, 1}),
+            StrOptions({"warn"}),
+        ],
+    },
+    prefer_skip_nested_validation=True,
+)
 def specificity_score(
     y_true,
     y_pred,
@@ -3829,13 +3866,13 @@ def specificity_score(
         labels are column indices. By default, all labels in `y_true` and
         `y_pred` are used in sorted order.
 
-    pos_label : str or int, default=1
-        The class to report if `average="binary"` and the data is binary.
-        If the data are multiclass or multilabel, this will be ignored;
-        setting `labels=[pos_label]` and `average != "binary"` will report
-        scores for that label only.
+    pos_label : int, float, bool or str, default=1
+        The class to report if `average='binary'` and the data is binary,
+        otherwise this parameter is ignored.
+        For multiclass or multilabel targets, set `labels=[pos_label]` and
+        `average != 'binary'` to report metrics for one label only.
 
-    average : {"binary", "micro", "macro", "samples", "weighted"} or None \
+    average : {"binary", "macro", "micro", "samples", "weighted"} or None \
             default="binary"
         This parameter is required for multiclass/multilabel targets.
         If `None`, the scores for each class are returned. Otherwise, this
@@ -3844,21 +3881,21 @@ def specificity_score(
         `"binary"`:
             Only report results for the class specified by `pos_label`.
             This is applicable only if targets (`y_{true,pred}`) are binary.
-        `"micro"`:
-            Calculate metrics globally by counting the total true positives,
-            false negatives and false positives.
         `"macro"`:
             Calculate metrics for each label, and find their unweighted
             mean.  This does not take label imbalance into account.
+        `"micro"`:
+            Calculate metrics globally by counting the total true positives,
+            false negatives and false positives.
+        `"samples"`:
+            Calculate metrics for each instance, and find their average (only
+            meaningful for multilabel classification where this differs from
+            :func:`accuracy_score`).
         `"weighted"`:
             Calculate metrics for each label, and find their average weighted
             by support (the number of true instances for each label). This
             alters 'macro' to account for label imbalance; it can result in an
             F-score that is not between precision and recall.
-        `"samples"`:
-            Calculate metrics for each instance, and find their average (only
-            meaningful for multilabel classification where this differs from
-            :func:`accuracy_score`).
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -3923,6 +3960,24 @@ def specificity_score(
     return tnr
 
 
+@validate_params(
+    {
+        "y_true": ["array-like", "sparse matrix"],
+        "y_pred": ["array-like", "sparse matrix"],
+        "labels": ["array-like", None],
+        "pos_label": [Real, str, "boolean", None],
+        "average": [
+            StrOptions({"binary", "macro", "micro", "samples", "weighted"}),
+            None,
+        ],
+        "sample_weight": ["array-like", None],
+        "zero_division": [
+            Options(Real, {0, 1}),
+            StrOptions({"warn"}),
+        ],
+    },
+    prefer_skip_nested_validation=True,
+)
 def npv_score(
     y_true,
     y_pred,
@@ -3963,13 +4018,13 @@ def npv_score(
         labels are column indices. By default, all labels in `y_true` and
         `y_pred` are used in sorted order.
 
-    pos_label : str or int, default=1
-        The class to report if `average="binary"` and the data is binary.
-        If the data are multiclass or multilabel, this will be ignored;
-        setting `labels=[pos_label]` and `average != "binary"` will report
-        scores for that label only.
+    pos_label : int, float, bool or str, default=1
+        The class to report if `average='binary'` and the data is binary,
+        otherwise this parameter is ignored.
+        For multiclass or multilabel targets, set `labels=[pos_label]` and
+        `average != 'binary'` to report metrics for one label only.
 
-    average : {"binary", "micro", "macro", "samples", "weighted"}, None \
+    average : {"binary", "macro", "micro", "samples", "weighted"}, None \
             default="binary"
         This parameter is required for multiclass/multilabel targets.
         If `None`, the scores for each class are returned. Otherwise, this
@@ -3978,21 +4033,21 @@ def npv_score(
         `"binary"`:
             Only report results for the class specified by `pos_label`.
             This is applicable only if targets (`y_{true,pred}`) are binary.
-        `"micro"`:
-            Calculate metrics globally by counting the total true positives,
-            false negatives and false positives.
         `"macro"`:
             Calculate metrics for each label, and find their unweighted
             mean.  This does not take label imbalance into account.
+        `"micro"`:
+            Calculate metrics globally by counting the total true positives,
+            false negatives and false positives.
+        `"samples"`:
+            Calculate metrics for each instance, and find their average (only
+            meaningful for multilabel classification where this differs from
+            :func:`accuracy_score`).
         `"weighted"`:
             Calculate metrics for each label, and find their average weighted
             by support (the number of true instances for each label). This
             alters 'macro' to account for label imbalance; it can result in an
             F-score that is not between precision and recall.
-        `"samples"`:
-            Calculate metrics for each instance, and find their average (only
-            meaningful for multilabel classification where this differs from
-            :func:`accuracy_score`).
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -4066,7 +4121,6 @@ def npv_score(
 
     if average == "micro":
         tn_sum = np.array([tn_sum.sum()])
-        fn_sum = np.array([fn_sum.sum()])
         neg_calls_sum = np.array([neg_calls_sum.sum()])
 
     # Divide, and on zero-division, set scores and/or warn according to
@@ -4074,9 +4128,10 @@ def npv_score(
     NPV = _prf_divide(
         tn_sum, neg_calls_sum, "NPV", "negative call", average, "NPV", zero_division
     )
-
+    if average is None:
+        return NPV
     # Average the results
-    if average == "weighted":
+    elif average == "weighted":
         weights = pos_sum
         if weights.sum() == 0:
             zero_division_value = 0.0 if zero_division in ["warn", 0] else 1.0
@@ -4086,8 +4141,5 @@ def npv_score(
         weights = sample_weight
     else:
         weights = None
-    if average is not None:
-        assert average != "binary" or len(NPV) == 1, "Non-binary target."
-        NPV = np.average(NPV, weights=weights)
-
-    return float(NPV)
+    assert average != "binary" or len(NPV) == 1, "Non-binary target."
+    return float(np.average(NPV, weights=weights))
