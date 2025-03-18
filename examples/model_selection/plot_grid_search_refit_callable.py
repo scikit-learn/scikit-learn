@@ -22,16 +22,6 @@ NY, USA: Springer New York Inc..
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-# %%
-# Introduction
-# ------------
-#
-# When tuning hyperparameters, we often want to balance model complexity and
-# performance. The "one-standard-error" rule is a common approach: select the simplest
-# model whose performance is within one standard error of the best model's performance.
-# This helps to avoid overfitting by preferring simpler models when their performance is
-# statistically comparable to more complex ones.
-
 import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
@@ -41,6 +31,16 @@ from sklearn.decomposition import PCA
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV, ShuffleSplit
 from sklearn.pipeline import Pipeline
+
+# %%
+# Introduction
+# ------------
+#
+# When tuning hyperparameters, we often want to balance model complexity and
+# performance. The "one-standard-error" rule is a common approach: select the simplest
+# model whose performance is within one standard error of the best model's performance.
+# This helps to avoid overfitting by preferring simpler models when their performance is
+# statistically comparable to more complex ones.
 
 # %%
 # Helper functions
@@ -219,42 +219,72 @@ std_test_scores = np.std(test_scores, axis=1)
 best_mean_score = np.max(mean_test_scores)
 threshold = best_mean_score - std_test_scores[np.argmax(mean_test_scores)]
 
-# Create figure with two subplots
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6), constrained_layout=True)
+# Create a single figure for visualization
+fig, ax = plt.subplots(figsize=(12, 8))
 
-# Plot 1: Individual test scores with mean line and thresholds
+# Plot individual points
 for i, comp in enumerate(n_components):
-    # Plot individual points with lower opacity
-    ax1.scatter(
+    # Plot individual test points
+    plt.scatter(
         [comp] * n_splits,
         test_scores[i],
-        alpha=0.2,  # Lower alpha for individual points
-        color="lightgray",
-        label="Individual scores" if i == 0 else "",
+        alpha=0.2,
+        color="blue",
+        s=20,
+        label="Individual test scores" if i == 0 else "",
+    )
+    # Plot individual train points
+    plt.scatter(
+        [comp] * n_splits,
+        train_scores[i],
+        alpha=0.2,
+        color="green",
+        s=20,
+        label="Individual train scores" if i == 0 else "",
     )
 
-# Add mean line with error bars
-ax1.errorbar(
+# Plot mean lines with error bands
+plt.plot(
     n_components,
-    mean_test_scores,
-    yerr=std_test_scores,
+    np.mean(test_scores, axis=1),
+    "-",
     color="blue",
-    fmt="o-",
-    capsize=5,
-    label="Mean test score",
     linewidth=2,
-    markersize=8,
+    label="Mean test score",
+)
+plt.fill_between(
+    n_components,
+    np.mean(test_scores, axis=1) - np.std(test_scores, axis=1),
+    np.mean(test_scores, axis=1) + np.std(test_scores, axis=1),
+    alpha=0.15,
+    color="blue",
+)
+
+plt.plot(
+    n_components,
+    np.mean(train_scores, axis=1),
+    "-",
+    color="green",
+    linewidth=2,
+    label="Mean train score",
+)
+plt.fill_between(
+    n_components,
+    np.mean(train_scores, axis=1) - np.std(train_scores, axis=1),
+    np.mean(train_scores, axis=1) + np.std(train_scores, axis=1),
+    alpha=0.15,
+    color="green",
 )
 
 # Add threshold lines
-ax1.axhline(
+plt.axhline(
     best_mean_score,
     color="#9b59b6",  # Purple
     linestyle="--",
     label="Best score",
     linewidth=2,
 )
-ax1.axhline(
+plt.axhline(
     threshold,
     color="#e67e22",  # Orange
     linestyle="--",
@@ -263,7 +293,7 @@ ax1.axhline(
 )
 
 # Highlight selected model
-ax1.axvline(
+plt.axvline(
     best_components,
     color="#9b59b6",  # Purple
     alpha=0.2,
@@ -271,69 +301,23 @@ ax1.axvline(
     label="Selected model",
 )
 
-# Plot 2: Train vs Test scores
-for i, comp in enumerate(n_components):
-    # Plot individual points
-    ax2.scatter(
-        [comp] * n_splits,
-        train_scores[i],
-        alpha=0.5,
-        color="#ffd700",  # Yellow for train scores
-        label="Train scores" if i == 0 else "",
-    )
-    ax2.scatter(
-        [comp] * n_splits,
-        test_scores[i],
-        alpha=0.5,
-        color="blue",
-        label="Test scores" if i == 0 else "",
-    )
-
-# Add mean lines
-ax2.plot(
-    n_components,
-    np.mean(train_scores, axis=1),
-    "-",
-    color="#ffd700",  # Yellow for train scores
-    linewidth=2,
-    label="Mean train score",
-)
-ax2.plot(
-    n_components,
-    np.mean(test_scores, axis=1),
-    "-",
-    color="blue",
-    linewidth=2,
-    label="Mean test score",
+# Set titles and labels
+plt.xlabel("Number of PCA components", fontsize=12)
+plt.ylabel("Score", fontsize=12)
+plt.title("Model Selection: Balancing Complexity and Performance", fontsize=14)
+plt.grid(True, linestyle="--", alpha=0.7)
+plt.legend(
+    bbox_to_anchor=(1.02, 1),
+    loc="upper left",
+    borderaxespad=0,
 )
 
-# Highlight selected model in second plot
-ax2.axvline(
-    best_components,
-    color="#9b59b6",  # Purple
-    alpha=0.2,
-    linewidth=8,
-    label="Selected model",
-)
+# Set axis properties
+plt.xticks(n_components)
+plt.ylim((0.85, 1.0))
 
-# Set titles and labels for both subplots
-for ax in (ax1, ax2):
-    ax.set_xlabel("Number of PCA components", fontsize=12)
-    ax.set_xticks(n_components)
-    ax.set_ylim((0.85, 1.0))
-    ax.grid(True, linestyle="--", alpha=0.7)
-    ax.legend(loc="lower right")
-
-ax1.set_title("Model Selection Criteria", fontsize=14)
-ax1.set_ylabel("Test accuracy", fontsize=12)
-
-ax2.set_title("Train vs. Test Scores", fontsize=14)
-ax2.set_ylabel("Score", fontsize=12)
-
-# Add a main title for the entire figure
-_ = fig.suptitle(
-    "Balancing model complexity and cross-validated score", fontsize=16, y=1.05
-)
+# # Adjust layout
+# plt.tight_layout()
 
 # %%
 # Print the results
