@@ -6,8 +6,8 @@ Balance model complexity and cross-validated score
 This example demonstrates how to balance model complexity and cross-validated score by
 finding a decent accuracy within 1 standard deviation of the best accuracy score while
 minimising the number of :class:`~sklearn.decomposition.PCA` components [1]. It uses
-:class:`~sklearn.model_selection.GridSearchCV` with a custom refit callable to select the
-optimal model.
+:class:`~sklearn.model_selection.GridSearchCV` with a custom refit callable to select
+the optimal model.
 
 The figure shows the trade-off between cross-validated score and the number
 of PCA components. The balanced case is when `n_components=10` and `accuracy=0.88`,
@@ -38,9 +38,9 @@ import polars as pl
 
 from sklearn.datasets import load_digits
 from sklearn.decomposition import PCA
-from sklearn.model_selection import GridSearchCV
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV, ShuffleSplit
 from sklearn.pipeline import Pipeline
-from sklearn.svm import LinearSVC
 
 # %%
 # Helper functions
@@ -107,18 +107,18 @@ def best_low_complexity(cv_results):
 #
 # We create a pipeline with two steps:
 # 1. Dimensionality reduction using PCA
-# 2. Classification using LinearSVC
+# 2. Classification using LogisticRegression
 #
 # We'll search over different numbers of PCA components to find the optimal complexity.
 
 pipe = Pipeline(
     [
         ("reduce_dim", PCA(random_state=42)),
-        ("classify", LinearSVC(random_state=42, C=0.01)),
+        ("classify", LogisticRegression(random_state=42, C=0.01, max_iter=1000)),
     ]
 )
 
-param_grid = {"reduce_dim__n_components": [6, 8, 10, 12, 14, 16, 20, 25, 35, 45, 55]}
+param_grid = {"reduce_dim__n_components": [6, 8, 10, 15, 20, 25, 35, 45, 55]}
 
 # %%
 # Perform the search with GridSearchCV
@@ -132,7 +132,7 @@ grid = GridSearchCV(
     pipe,
     # Use a non-stratified CV strategy to make sure that the inter-fold
     # standard deviation of the test scores is informative.
-    cv=ShuffleSplit(n_splits=10, random_state=0),
+    cv=ShuffleSplit(n_splits=30, random_state=0),
     n_jobs=1,  # increase this on your machine to use more physical cores
     param_grid=param_grid,
     scoring="accuracy",
@@ -320,7 +320,7 @@ ax2.axvline(
 for ax in (ax1, ax2):
     ax.set_xlabel("Number of PCA components", fontsize=12)
     ax.set_xticks(n_components)
-    ax.set_ylim((0.7, 1.0))
+    ax.set_ylim((0.85, 1.0))
     ax.grid(True, linestyle="--", alpha=0.7)
     ax.legend(loc="lower right")
 
@@ -331,7 +331,9 @@ ax2.set_title("Train vs. Test Scores", fontsize=14)
 ax2.set_ylabel("Score", fontsize=12)
 
 # Add a main title for the entire figure
-_ = fig.suptitle("Balancing model complexity and cross-validated score", fontsize=16, y=1.05)
+_ = fig.suptitle(
+    "Balancing model complexity and cross-validated score", fontsize=16, y=1.05
+)
 
 # %%
 # Print the results
@@ -381,7 +383,7 @@ print(summary_df)
 # callable with :class:`~sklearn.model_selection.GridSearchCV`.
 #
 # Key takeaways:
-# 1. The one-standard-error rule provides a principled way to select simpler models
+# 1. The one-standard-error rule provides a rule of thumb to select simpler models
 # 2. Custom refit callables in :class:`~sklearn.model_selection.GridSearchCV` allow for
 #    flexible model selection strategies
 # 3. Visualizing both train and test scores helps identify potential overfitting
@@ -390,6 +392,5 @@ print(summary_df)
 # complexity and performance is important, or in cases where a use-case specific
 # selection of the "best" model is desired.
 
-# Adjust layout and display the figure
-plt.tight_layout()
+# Display the figure
 plt.show()
