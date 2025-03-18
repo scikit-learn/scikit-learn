@@ -92,33 +92,31 @@ def get_message(log_file, repo, pr_number, sha, run_id, details, versions):
 
     message = ""
 
-    # black
+    # ruff check
     message += get_step_message(
         log,
-        start="### Running black ###",
-        end="Problems detected by black",
-        title="`black`",
-        message=(
-            "`black` detected issues. Please run `black .` locally and push "
-            "the changes. Here you can see the detected issues. Note that "
-            "running black might also fix some of the issues which might be "
-            "detected by `ruff`. Note that the installed `black` version is "
-            f"`black={versions['black']}`."
-        ),
-        details=details,
-    )
-
-    # ruff
-    message += get_step_message(
-        log,
-        start="### Running ruff ###",
-        end="Problems detected by ruff",
-        title="`ruff`",
+        start="### Running the ruff linter ###",
+        end="Problems detected by ruff check",
+        title="`ruff check`",
         message=(
             "`ruff` detected issues. Please run "
             "`ruff check --fix --output-format=full` locally, fix the remaining "
             "issues, and push the changes. Here you can see the detected issues. Note "
             f"that the installed `ruff` version is `ruff={versions['ruff']}`."
+        ),
+        details=details,
+    )
+
+    # ruff format
+    message += get_step_message(
+        log,
+        start="### Running the ruff formatter ###",
+        end="Problems detected by ruff format",
+        title="`ruff format`",
+        message=(
+            "`ruff` detected issues. Please run `ruff format` locally and push "
+            "the changes. Here you can see the detected issues. Note that the "
+            f"installed `ruff` version is `ruff={versions['ruff']}`."
         ),
         details=details,
     )
