@@ -106,7 +106,7 @@ requires = [
 
 [tool.black]
 line-length = 88
-target-version = ['py310', 'py311']
+target-version = ['py310', 'py311', 'py312']
 preview = true
 exclude = '''
 /(
@@ -126,7 +126,7 @@ exclude = '''
 [tool.ruff]
 # max line length for black
 line-length = 88
-target-version = "py38"
+target-version = "py310"
 exclude=[
     ".git",
     "__pycache__",
