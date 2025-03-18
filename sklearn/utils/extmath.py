@@ -15,9 +15,11 @@ from ._array_api import (
     _allclose,
     _average,
     _is_numpy_namespace,
+    _max_precision_float_dtype,
     _nanmean,
     device,
     get_namespace,
+    get_namespace_and_device,
 )
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array, check_random_state
@@ -1196,15 +1198,16 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
     out : ndarray
         Array with the cumulative sums along the chosen axis.
     """
-    xp, _ = get_namespace(arr)
+    xp, _, device = get_namespace_and_device(arr)
     if axis is None:
         # np.cumsum calculates cumsum across flattened array
         # for axis=None
         # Let's also flatten to match
         # (if we don't flatten, cumulative_sum below will raise error)
         arr = xp.reshape(arr, (-1,))
-    out = xp.cumulative_sum(arr, axis=axis, dtype=xp.float64)
-    expected = xp.sum(arr, axis=axis, dtype=xp.float64)
+    max_float_dtype = _max_precision_float_dtype(xp, device)
+    out = xp.cumulative_sum(arr, axis=axis, dtype=max_float_dtype)
+    expected = xp.sum(arr, axis=axis, dtype=max_float_dtype)
     # workaround to get last element
     # (negative indices, e.g. -1, behavior is undefined)
     if axis is None:
@@ -1213,7 +1216,7 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
         last_elem_idx = xp.asarray(out.shape[axis] - 1)
     # TODO: equal_nan should be true here!
     if not _allclose(
-        xp.take(out, xp.asarray([last_elem_idx]), axis=axis),
+        xp.take(out, xp.asarray([last_elem_idx], device=device), axis=axis),
         expected,
         rtol=rtol,
         atol=atol,

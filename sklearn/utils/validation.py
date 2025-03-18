@@ -2634,13 +2634,14 @@ def _check_pos_label_consistency(pos_label, y_true):
     # when elements in the two arrays are not comparable.
     if pos_label is None:
         # Compute classes only if pos_label is not specified:
-        classes = np.unique(y_true)
-        if classes.dtype.kind in "OUS" or not (
-            np.array_equal(classes, [0, 1])
-            or np.array_equal(classes, [-1, 1])
-            or np.array_equal(classes, [0])
-            or np.array_equal(classes, [-1])
-            or np.array_equal(classes, [1])
+        xp, _, device = get_namespace_and_device(y_true)
+        classes = xp.unique_values(y_true)
+        if (_is_numpy_namespace(xp) and classes.dtype.kind in "OUS") or not (
+            xp.all(classes == xp.asarray([0, 1], device=device))
+            or xp.all(classes == xp.asarray([-1, 1], device=device))
+            or xp.all(classes == xp.asarray([0], device=device))
+            or xp.all(classes == xp.asarray([-1], device=device))
+            or xp.all(classes == xp.asarray([1], device=device))
         ):
             classes_repr = ", ".join([repr(c) for c in classes.tolist()])
             raise ValueError(

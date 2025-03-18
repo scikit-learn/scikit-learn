@@ -859,7 +859,9 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     distinct_value_indices = xp.nonzero(y_score[1:] - y_score[:-1])[0]
     # can't use size since PyTorch size is a method and not a property
     # as specified by the array API spec
-    threshold_idxs = xp.concat([distinct_value_indices, xp.asarray([size(y_true) - 1])])
+    threshold_idxs = xp.concat(
+        [distinct_value_indices, xp.asarray([size(y_true) - 1], device=device)]
+    )
 
     # accumulate the true positives with decreasing threshold
     max_float_dtype = _max_precision_float_dtype(xp, device)
@@ -1188,11 +1190,11 @@ def roc_curve(
 
     # Add an extra threshold position
     # to make sure that the curve starts at (0, 0)
-    tps = xp.concat([xp.asarray([0.0]), tps])
-    fps = xp.concat([xp.asarray([0.0]), fps])
+    tps = xp.concat([xp.asarray([0.0], device=device), tps])
+    fps = xp.concat([xp.asarray([0.0], device=device), fps])
     # get dtype of `y_score` even if it is an array-like
     thresholds = xp.astype(thresholds, _max_precision_float_dtype(xp, device))
-    thresholds = xp.concat([xp.asarray([xp.inf]), thresholds])
+    thresholds = xp.concat([xp.asarray([xp.inf], device=device), thresholds])
 
     if fps[-1] <= 0:
         warnings.warn(
