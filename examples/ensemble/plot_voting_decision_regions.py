@@ -148,7 +148,8 @@ plt.show()
 
 test_sample = pd.DataFrame({"Feature #0": [-0.5], "Feature #1": [1.5]})
 predict_probas = [est.predict_proba(test_sample).ravel() for est in eclf.estimators_]
-print(f"Individual predicted probabilities: {predict_probas}")
+for (est_name, _), est_probas in zip(eclf.estimators, predict_probas):
+    print(f"{est_name}'s predicted probabilities: {est_probas}")
 print(
     "Weighted average of soft-predictions: "
     f"{np.dot(weights, predict_probas)/np.sum(weights)}"
