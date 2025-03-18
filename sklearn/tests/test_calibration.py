@@ -660,7 +660,7 @@ def test_calibration_display_compute(pyplot, iris_data_binary, n_bins, strategy)
     assert viz.estimator_name == "LogisticRegression"
 
     # cannot fail thanks to pyplot fixture
-    import matplotlib as mpl  # noqa
+    import matplotlib as mpl
 
     assert isinstance(viz.line_, mpl.lines.Line2D)
     assert viz.line_.get_alpha() == 0.8

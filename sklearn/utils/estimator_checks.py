@@ -4011,7 +4011,7 @@ def check_positive_only_tag_during_fit(name, estimator_orig):
             estimator.fit(X, y)
         except Exception as e:
             err_msg = (
-                f"Estimator {repr(name)} raised {e.__class__.__name__} unexpectedly."
+                f"Estimator {name!r} raised {e.__class__.__name__} unexpectedly."
                 " This happens when passing negative input values as X."
                 " If negative values are not supported for this estimator instance,"
                 " then the tags.input_tags.positive_only tag needs to be set to True."
