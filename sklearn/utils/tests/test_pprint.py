@@ -12,10 +12,6 @@ from sklearn.feature_selection import SelectKBest, chi2
 from sklearn import config_context
 
 
-# Ignore flake8 (lots of line too long issues)
-# ruff: noqa
-
-
 # Constructors excerpted to test pprinting
 class LogisticRegression(BaseEstimator):
     def __init__(

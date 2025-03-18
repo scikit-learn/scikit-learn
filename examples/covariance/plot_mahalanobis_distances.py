@@ -60,7 +60,7 @@ observation ranking and clustering.
     Proceedings of the National Academy of Sciences of the United States
     of America, 17, 684-688.
 
-"""  # noqa: E501
+"""
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause

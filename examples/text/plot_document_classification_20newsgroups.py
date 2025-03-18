@@ -356,7 +356,7 @@ def benchmark(clf, custom_name=False):
 # Notice that the most important hyperparameters values were tuned using a grid
 # search procedure not shown in this notebook for the sake of simplicity. See
 # the example script
-# :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`  # noqa: E501
+# :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`
 # for a demo on how such tuning can be done.
 
 from sklearn.ensemble import RandomForestClassifier
