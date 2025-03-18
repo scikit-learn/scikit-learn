@@ -193,11 +193,11 @@ The main advantage of using `ensemble=False` is computational: it reduces the
 overall fit time by training only a single base classifier and calibrator
 pair, decreases the final model size and increases prediction speed.
 
-Alternatively an already fitted classifier can be calibrated by setting
-`cv="prefit"`. In this case, the data is not split and all of it is used to
-fit the regressor. It is up to the user to
-make sure that the data used for fitting the classifier is disjoint from the
-data used for fitting the regressor.
+Alternatively an already fitted classifier can be calibrated by using a
+:class:`~sklearn.frozen.FrozenEstimator` as
+``CalibratedClassifierCV(estimator=FrozenEstimator(estimator))``.
+It is up to the user to make sure that the data used for fitting the classifier
+is disjoint from the data used for fitting the regressor.
 
 :class:`CalibratedClassifierCV` supports the use of two regression techniques
 for calibration via the `method` parameter: `"sigmoid"` and `"isotonic"`.
@@ -292,7 +292,7 @@ one, a postprocessing is performed to normalize them.
 
 .. [2] `On the combination of forecast probabilities for
        consecutive precipitation periods.
-       <https://journals.ametsoc.org/waf/article/5/4/640/40179>`_
+       <https://doi.org/10.1175/1520-0434(1990)005%3C0640:OTCOFP%3E2.0.CO;2>`_
        Wea. Forecasting, 5, 640–650., Wilks, D. S., 1990a
 
 .. [3] `Predicting Good Probabilities with Supervised Learning

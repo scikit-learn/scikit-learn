@@ -15,7 +15,7 @@ import pytest
 from scipy.stats import bernoulli, expon, uniform
 
 from sklearn import config_context
-from sklearn.base import BaseEstimator, ClassifierMixin, is_classifier
+from sklearn.base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from sklearn.cluster import KMeans
 from sklearn.compose import ColumnTransformer
 from sklearn.datasets import (
@@ -90,17 +90,20 @@ from sklearn.utils._testing import (
     MinimalTransformer,
     _array_api_for_tests,
     assert_allclose,
+    assert_allclose_dense_sparse,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
+    set_random_state,
 )
+from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
 from sklearn.utils.fixes import CSR_CONTAINERS
 from sklearn.utils.validation import _num_samples
 
 
 # Neither of the following two estimators inherit from BaseEstimator,
 # to test hyperparameter search on user-defined classifiers.
-class MockClassifier:
+class MockClassifier(ClassifierMixin, BaseEstimator):
     """Dummy classifier to test the parameter search algorithms"""
 
     def __init__(self, foo_param=0):
@@ -213,7 +216,7 @@ def test_parameter_grid():
 def test_grid_search():
     # Test that the best estimator contains the right value for foo_param
     clf = MockClassifier()
-    grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]}, cv=3, verbose=3)
+    grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]}, cv=2, verbose=3)
     # make sure it selects the smallest parameter in case of ties
     old_stdout = sys.stdout
     sys.stdout = StringIO()
@@ -383,11 +386,11 @@ def test_classes__property():
 def test_trivial_cv_results_attr():
     # Test search over a "grid" with only one point.
     clf = MockClassifier()
-    grid_search = GridSearchCV(clf, {"foo_param": [1]}, cv=3)
+    grid_search = GridSearchCV(clf, {"foo_param": [1]}, cv=2)
     grid_search.fit(X, y)
     assert hasattr(grid_search, "cv_results_")
 
-    random_search = RandomizedSearchCV(clf, {"foo_param": [0]}, n_iter=1, cv=3)
+    random_search = RandomizedSearchCV(clf, {"foo_param": [0]}, n_iter=1, cv=2)
     random_search.fit(X, y)
     assert hasattr(grid_search, "cv_results_")
 
@@ -396,7 +399,7 @@ def test_no_refit():
     # Test that GSCV can be used for model selection alone without refitting
     clf = MockClassifier()
     for scoring in [None, ["accuracy", "precision"]]:
-        grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]}, refit=False, cv=3)
+        grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]}, refit=False, cv=2)
         grid_search.fit(X, y)
         assert (
             not hasattr(grid_search, "best_estimator_")
@@ -463,7 +466,7 @@ def test_grid_search_when_param_grid_includes_range():
     # Test that the best estimator contains the right value for foo_param
     clf = MockClassifier()
     grid_search = None
-    grid_search = GridSearchCV(clf, {"foo_param": range(1, 4)}, cv=3)
+    grid_search = GridSearchCV(clf, {"foo_param": range(1, 4)}, cv=2)
     grid_search.fit(X, y)
     assert grid_search.best_estimator_.foo_param == 2
 
@@ -1318,6 +1321,112 @@ def test_search_cv_score_samples_error(search_cv):
     assert inner_msg == str(exec_info.value.__cause__)
 
 
+def test_unsupported_sample_weight_scorer():
+    """Checks that fitting with sample_weight raises a warning if the scorer does not
+    support sample_weight"""
+
+    def fake_score_func(y_true, y_pred):
+        "Fake scoring function that does not support sample_weight"
+        return 0.5
+
+    fake_scorer = make_scorer(fake_score_func)
+
+    X, y = make_classification(n_samples=10, n_features=4, random_state=42)
+    sw = np.ones_like(y)
+    search_cv = GridSearchCV(estimator=LogisticRegression(), param_grid={"C": [1, 10]})
+    # function
+    search_cv.set_params(scoring=fake_score_func)
+    with pytest.warns(UserWarning, match="does not support sample_weight"):
+        search_cv.fit(X, y, sample_weight=sw)
+    # scorer
+    search_cv.set_params(scoring=fake_scorer)
+    with pytest.warns(UserWarning, match="does not support sample_weight"):
+        search_cv.fit(X, y, sample_weight=sw)
+    # multi-metric evalutation
+    search_cv.set_params(
+        scoring=dict(fake=fake_scorer, accuracy="accuracy"), refit=False
+    )
+    # only fake scorer does not support sample_weight
+    with pytest.warns(
+        UserWarning, match=r"The scoring fake=.* does not support sample_weight"
+    ):
+        search_cv.fit(X, y, sample_weight=sw)
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [
+        GridSearchCV(estimator=LogisticRegression(), param_grid={"C": [1, 10, 100]}),
+        RandomizedSearchCV(
+            estimator=Ridge(), param_distributions={"alpha": [1, 0.1, 0.01]}
+        ),
+    ],
+)
+def test_search_cv_sample_weight_equivalence(estimator):
+    estimator_weighted = clone(estimator)
+    estimator_repeated = clone(estimator)
+    set_random_state(estimator_weighted, random_state=0)
+    set_random_state(estimator_repeated, random_state=0)
+
+    rng = np.random.RandomState(42)
+    n_classes = 3
+    n_samples_per_group = 30
+    n_groups = 4
+    n_samples = n_groups * n_samples_per_group
+    X = rng.rand(n_samples, n_samples * 2)
+    y = rng.randint(0, n_classes, size=n_samples)
+    sw = rng.randint(0, 5, size=n_samples)
+    # we use groups with LeaveOneGroupOut to ensure that
+    # the splits are the same in the repeated/weighted datasets
+    groups = np.tile(np.arange(n_groups), n_samples_per_group)
+
+    X_weighted = X
+    y_weighted = y
+    groups_weighted = groups
+    splits_weighted = list(LeaveOneGroupOut().split(X_weighted, groups=groups_weighted))
+    estimator_weighted.set_params(cv=splits_weighted)
+    # repeat samples according to weights
+    X_repeated = X_weighted.repeat(repeats=sw, axis=0)
+    y_repeated = y_weighted.repeat(repeats=sw)
+    groups_repeated = groups_weighted.repeat(repeats=sw)
+    splits_repeated = list(LeaveOneGroupOut().split(X_repeated, groups=groups_repeated))
+    estimator_repeated.set_params(cv=splits_repeated)
+
+    y_weighted = _enforce_estimator_tags_y(estimator_weighted, y_weighted)
+    y_repeated = _enforce_estimator_tags_y(estimator_repeated, y_repeated)
+
+    estimator_repeated.fit(X_repeated, y=y_repeated, sample_weight=None)
+    estimator_weighted.fit(X_weighted, y=y_weighted, sample_weight=sw)
+
+    # check that scores stored in cv_results_
+    # are equal for the weighted/repeated datasets
+    score_keys = [
+        key for key in estimator_repeated.cv_results_ if key.endswith("score")
+    ]
+    for key in score_keys:
+        s1 = estimator_repeated.cv_results_[key]
+        s2 = estimator_weighted.cv_results_[key]
+        err_msg = f"{key} values are not equal for weighted/repeated datasets"
+        assert_allclose(s1, s2, err_msg=err_msg)
+
+    for key in ["best_score_", "best_index_"]:
+        s1 = getattr(estimator_repeated, key)
+        s2 = getattr(estimator_weighted, key)
+        err_msg = f"{key} values are not equal for weighted/repeated datasets"
+        assert_almost_equal(s1, s2, err_msg=err_msg)
+
+    for method in ["predict_proba", "decision_function", "predict", "transform"]:
+        if hasattr(estimator, method):
+            s1 = getattr(estimator_repeated, method)(X)
+            s2 = getattr(estimator_weighted, method)(X)
+            err_msg = (
+                f"Comparing the output of {method} revealed that fitting "
+                "with `sample_weight` is not equivalent to fitting with removed "
+                "or repeated data points."
+            )
+            assert_allclose_dense_sparse(s1, s2, err_msg=err_msg)
+
+
 @pytest.mark.parametrize(
     "search_cv",
     [
@@ -1496,13 +1605,13 @@ def test_grid_search_correct_score_results():
 def test_pickle():
     # Test that a fit search can be pickled
     clf = MockClassifier()
-    grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]}, refit=True, cv=3)
+    grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]}, refit=True, cv=2)
     grid_search.fit(X, y)
     grid_search_pickled = pickle.loads(pickle.dumps(grid_search))
     assert_array_almost_equal(grid_search.predict(X), grid_search_pickled.predict(X))
 
     random_search = RandomizedSearchCV(
-        clf, {"foo_param": [1, 2, 3]}, refit=True, n_iter=3, cv=3
+        clf, {"foo_param": [1, 2, 3]}, refit=True, n_iter=3, cv=2
     )
     random_search.fit(X, y)
     random_search_pickled = pickle.loads(pickle.dumps(random_search))
@@ -1901,7 +2010,7 @@ def test_grid_search_cv_splits_consistency():
 
 def test_transform_inverse_transform_round_trip():
     clf = MockClassifier()
-    grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]}, cv=3, verbose=3)
+    grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]}, cv=2, verbose=3)
 
     grid_search.fit(X, y)
     X_round_trip = grid_search.inverse_transform(grid_search.transform(X))
@@ -2571,7 +2680,7 @@ def test_search_html_repr():
 @pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
 def test_inverse_transform_Xt_deprecation(SearchCV):
     clf = MockClassifier()
-    search = SearchCV(clf, {"foo_param": [1, 2, 3]}, cv=3, verbose=3)
+    search = SearchCV(clf, {"foo_param": [1, 2, 3]}, cv=2, verbose=3)
 
     X2 = search.fit(X, y).transform(X)
 
@@ -2593,7 +2702,6 @@ def test_inverse_transform_Xt_deprecation(SearchCV):
 # ======================
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
     "SearchCV, param_search",
     [
@@ -2601,6 +2709,7 @@ def test_inverse_transform_Xt_deprecation(SearchCV):
         (RandomizedSearchCV, "param_distributions"),
     ],
 )
+@config_context(enable_metadata_routing=True)
 def test_multi_metric_search_forwards_metadata(SearchCV, param_search):
     """Test that *SearchCV forwards metadata correctly when passed multiple metrics."""
     X, y = make_classification(random_state=42)
@@ -2864,3 +2973,11 @@ def test_yield_masked_array_for_each_param(candidate_params, expected):
         assert value.dtype == expected_value.dtype
         np.testing.assert_array_equal(value, expected_value)
         np.testing.assert_array_equal(value.mask, expected_value.mask)
+
+
+def test_yield_masked_array_no_runtime_warning():
+    # non-regression test for https://github.com/scikit-learn/scikit-learn/issues/29929
+    candidate_params = [{"param": i} for i in range(1000)]
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        list(_yield_masked_array_for_each_param(candidate_params))

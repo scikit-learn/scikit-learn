@@ -360,7 +360,7 @@ def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=Fals
 
 # TODO: Remove when Scipy 1.12 is the minimum supported version
 if sp_version < parse_version("1.12"):
-    from ..externals._scipy.sparse.csgraph import laplacian  # type: ignore  # noqa
+    from ..externals._scipy.sparse.csgraph import laplacian  # type: ignore
 else:
     from scipy.sparse.csgraph import laplacian  # type: ignore  # noqa  # pragma: no cover
 
@@ -426,3 +426,10 @@ else:
 
     def _create_pandas_dataframe_from_non_pandas_container(X, *, index, copy):
         return pd.DataFrame(X, index=index, copy=copy)
+
+
+# TODO: Remove when python>=3.10 is the minimum supported version
+def _dataclass_args():
+    if sys.version_info < (3, 10):
+        return {}
+    return {"slots": True}

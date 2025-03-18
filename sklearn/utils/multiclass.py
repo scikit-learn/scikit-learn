@@ -185,9 +185,8 @@ def is_multilabel(y):
         if y.format in ("dok", "lil"):
             y = y.tocsr()
         labels = xp.unique_values(y.data)
-        return (
-            len(y.data) == 0
-            or (labels.size == 1 or (labels.size == 2) and (0 in labels))
+        return len(y.data) == 0 or (
+            (labels.size == 1 or ((labels.size == 2) and (0 in labels)))
             and (y.dtype.kind in "biu" or _is_integral_float(labels))  # bool, int, uint
         )
     else:
@@ -226,7 +225,7 @@ def check_classification_targets(y):
         )
 
 
-def type_of_target(y, input_name=""):
+def type_of_target(y, input_name="", raise_unknown=False):
     """Determine the type of data indicated by the target.
 
     Note that this type is the most specific type that can be inferred.
@@ -247,6 +246,12 @@ def type_of_target(y, input_name=""):
         The data name used to construct the error message.
 
         .. versionadded:: 1.1.0
+
+    raise_unknown : bool, default=False
+        If `True`, raise an error when the type of target returned by
+        :func:`~sklearn.utils.multiclass.type_of_target` is `"unknown"`.
+
+        .. versionadded:: 1.6
 
     Returns
     -------
@@ -298,11 +303,21 @@ def type_of_target(y, input_name=""):
     'multilabel-indicator'
     """
     xp, is_array_api_compliant = get_namespace(y)
+
+    def _raise_or_return():
+        """Depending on the value of raise_unknown, either raise an error or return
+        'unknown'.
+        """
+        if raise_unknown:
+            input = input_name if input_name else "data"
+            raise ValueError(f"Unknown label type for {input}: {y!r}")
+        else:
+            return "unknown"
+
     valid = (
         (isinstance(y, Sequence) or issparse(y) or hasattr(y, "__array__"))
         and not isinstance(y, str)
-        or is_array_api_compliant
-    )
+    ) or is_array_api_compliant
 
     if not valid:
         raise ValueError(
@@ -374,17 +389,17 @@ def type_of_target(y, input_name=""):
     # Invalid inputs
     if y.ndim not in (1, 2):
         # Number of dimension greater than 2: [[[1, 2]]]
-        return "unknown"
+        return _raise_or_return()
     if not min(y.shape):
         # Empty ndarray: []/[[]]
         if y.ndim == 1:
             # 1-D empty array: []
             return "binary"  # []
         # 2-D empty array: [[]]
-        return "unknown"
+        return _raise_or_return()
     if not issparse(y) and y.dtype == object and not isinstance(y.flat[0], str):
         # [obj_1] and not ["label_1"]
-        return "unknown"
+        return _raise_or_return()
 
     # Check if multioutput
     if y.ndim == 2 and y.shape[1] > 1:

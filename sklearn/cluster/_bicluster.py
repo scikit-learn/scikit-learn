@@ -18,7 +18,7 @@ from ..utils.extmath import make_nonnegative, randomized_svd, safe_sparse_dot
 from ..utils.validation import assert_all_finite, validate_data
 from ._kmeans import KMeans, MiniBatchKMeans
 
-__all__ = ["SpectralCoclustering", "SpectralBiclustering"]
+__all__ = ["SpectralBiclustering", "SpectralCoclustering"]
 
 
 def _scale_normalize(X):
@@ -195,16 +195,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_estimators_dtypes": "raises nan error",
-            "check_fit2d_1sample": "_scale_normalize fails",
-            "check_fit2d_1feature": "raises apply_along_axis error",
-            "check_estimator_sparse_matrix": "does not fail gracefully",
-            "check_estimator_sparse_array": "does not fail gracefully",
-            "check_methods_subset_invariance": "empty array passed inside",
-            "check_dont_overwrite_parameters": "empty array passed inside",
-            "check_fit2d_predict1d": "empty array passed inside",
-        }
+        tags.input_tags.sparse = True
         return tags
 
 
@@ -361,17 +352,6 @@ class SpectralCoclustering(BaseSpectral):
         self.columns_ = np.vstack(
             [self.column_labels_ == c for c in range(self.n_clusters)]
         )
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags._xfail_checks.update(
-            {
-                # ValueError: Found array with 0 feature(s) (shape=(23, 0))
-                # while a minimum of 1 is required.
-                "check_dict_unchanged": "FIXME",
-            }
-        )
-        return tags
 
 
 class SpectralBiclustering(BaseSpectral):

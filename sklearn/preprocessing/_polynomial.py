@@ -392,7 +392,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 )
             raise ValueError(msg)
         # We also record the number of output features for
-        # _max_degree = 0
+        # _min_degree = 0
         self._n_out_full = self._num_combinations(
             n_features=n_features,
             min_degree=0,
@@ -585,6 +585,11 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 XP = Xout
         return XP
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 class SplineTransformer(TransformerMixin, BaseEstimator):
     """Generate univariate B-spline bases for features.
@@ -754,17 +759,17 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             Knot positions (points) of base interval.
         """
         if knots == "quantile":
-            percentiles = 100 * np.linspace(
+            percentile_ranks = 100 * np.linspace(
                 start=0, stop=1, num=n_knots, dtype=np.float64
             )
 
             if sample_weight is None:
-                knots = np.percentile(X, percentiles, axis=0)
+                knots = np.percentile(X, percentile_ranks, axis=0)
             else:
                 knots = np.array(
                     [
-                        _weighted_percentile(X, sample_weight, percentile)
-                        for percentile in percentiles
+                        _weighted_percentile(X, sample_weight, percentile_rank)
+                        for percentile_rank in percentile_ranks
                     ]
                 )
 
@@ -1171,13 +1176,3 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             # We chose the last one.
             indices = [j for j in range(XBS.shape[1]) if (j + 1) % n_splines != 0]
             return XBS[:, indices]
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_estimators_pickle": (
-                "Current Scipy implementation of _bsplines does not"
-                "support const memory views."
-            ),
-        }
-        return tags

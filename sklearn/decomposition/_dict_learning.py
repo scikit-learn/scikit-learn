@@ -7,7 +7,6 @@ import itertools
 import sys
 import time
 from numbers import Integral, Real
-from warnings import warn
 
 import numpy as np
 from joblib import effective_n_jobs
@@ -21,7 +20,7 @@ from ..base import (
 )
 from ..linear_model import Lars, Lasso, LassoLars, orthogonal_mp_gram
 from ..utils import check_array, check_random_state, gen_batches, gen_even_slices
-from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import check_is_fitted, validate_data
@@ -729,10 +728,6 @@ def dict_learning_online(
 
         .. versionadded:: 1.1
 
-        .. deprecated:: 1.4
-           `max_iter=None` is deprecated in 1.4 and will be removed in 1.6.
-           Use the default value (i.e. `100`) instead.
-
     return_code : bool, default=True
         Whether to also return the code U or just the dictionary `V`.
 
@@ -857,17 +852,6 @@ def dict_learning_online(
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
     np.float64(0.05...)
     """
-    # TODO(1.6): remove in 1.6
-    if max_iter is None:
-        warn(
-            (
-                "`max_iter=None` is deprecated in version 1.4 and will be removed in "
-                "version 1.6. Use the default value (i.e. `100`) instead."
-            ),
-            FutureWarning,
-        )
-        max_iter = 100
-
     transform_algorithm = "lasso_" + method
 
     est = MiniBatchDictionaryLearning(
@@ -1158,6 +1142,44 @@ class _BaseSparseCoding(ClassNamePrefixFeaturesOutMixin, TransformerMixin):
         check_is_fitted(self)
         return self._transform(X, self.components_)
 
+    def _inverse_transform(self, code, dictionary):
+        """Private method allowing to accommodate both DictionaryLearning and
+        SparseCoder."""
+        code = check_array(code)
+        # compute number of expected features in code
+        expected_n_components = dictionary.shape[0]
+        if self.split_sign:
+            expected_n_components += expected_n_components
+        if not code.shape[1] == expected_n_components:
+            raise ValueError(
+                "The number of components in the code is different from the "
+                "number of components in the dictionary."
+                f"Expected {expected_n_components}, got {code.shape[1]}."
+            )
+        if self.split_sign:
+            n_samples, n_features = code.shape
+            n_features //= 2
+            code = code[:, :n_features] - code[:, n_features:]
+
+        return code @ dictionary
+
+    def inverse_transform(self, X):
+        """Transform data back to its original space.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_components)
+            Data to be transformed back. Must have the same number of
+            components as the data used to train the model.
+
+        Returns
+        -------
+        X_new : ndarray of shape (n_samples, n_features)
+            Transformed data.
+        """
+        check_is_fitted(self)
+        return self._inverse_transform(X, self.components_)
+
 
 class SparseCoder(_BaseSparseCoding, BaseEstimator):
     """Sparse coding.
@@ -1345,6 +1367,22 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         """
         return super()._transform(X, self.dictionary)
 
+    def inverse_transform(self, X):
+        """Transform data back to its original space.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_components)
+            Data to be transformed back. Must have the same number of
+            components as the data used to train the model.
+
+        Returns
+        -------
+        X_new : ndarray of shape (n_samples, n_features)
+            Transformed data.
+        """
+        return self._inverse_transform(X, self.dictionary)
+
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.requires_fit = False
@@ -1529,7 +1567,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     ----------
 
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
-    for sparse coding (https://www.di.ens.fr/sierra/pdfs/icml09.pdf)
+    for sparse coding (https://www.di.ens.fr/~fbach/mairal_icml09.pdf)
 
     Examples
     --------
@@ -1742,10 +1780,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         .. versionadded:: 1.1
 
-        .. deprecated:: 1.4
-           `max_iter=None` is deprecated in 1.4 and will be removed in 1.6.
-           Use the default value (i.e. `1_000`) instead.
-
     fit_algorithm : {'lars', 'cd'}, default='lars'
         The algorithm used:
 
@@ -1894,7 +1928,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     ----------
 
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
-    for sparse coding (https://www.di.ens.fr/sierra/pdfs/icml09.pdf)
+    for sparse coding (https://www.di.ens.fr/~fbach/mairal_icml09.pdf)
 
     Examples
     --------
@@ -1926,7 +1960,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left"), None],
         "alpha": [Interval(Real, 0, None, closed="left")],
-        "max_iter": [Interval(Integral, 0, None, closed="left"), Hidden(None)],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
         "fit_algorithm": [StrOptions({"cd", "lars"})],
         "n_jobs": [None, Integral],
         "batch_size": [Interval(Integral, 1, None, closed="left")],
@@ -2202,19 +2236,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         )
         self._B = np.zeros((n_features, self._n_components), dtype=X_train.dtype)
 
-        # TODO(1.6): remove in 1.6
-        if self.max_iter is None:
-            warn(
-                (
-                    "`max_iter=None` is deprecated in version 1.4 and will be removed"
-                    " in version 1.6. Use the default value (i.e. `1_000`) instead."
-                ),
-                FutureWarning,
-            )
-            max_iter = 1_000
-        else:
-            max_iter = self.max_iter
-
         # Attributes to monitor the convergence
         self._ewa_cost = None
         self._ewa_cost_min = None
@@ -2223,7 +2244,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         batches = gen_batches(n_samples, self._batch_size)
         batches = itertools.cycle(batches)
         n_steps_per_iter = int(np.ceil(n_samples / self._batch_size))
-        n_steps = max_iter * n_steps_per_iter
+        n_steps = self.max_iter * n_steps_per_iter
 
         i = -1  # to allow max_iter = 0
 

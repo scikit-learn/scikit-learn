@@ -1,0 +1,3 @@
+- :func:`sklearn.metrics.explained_variance_score` and
+  :func:`sklearn.metrics.mean_pinball_loss` now support Array API compatible inputs.
+  By :user:`Virgil Chan <virchan>`

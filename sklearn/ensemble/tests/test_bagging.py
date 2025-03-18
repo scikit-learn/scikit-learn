@@ -909,12 +909,12 @@ def test_bagging_small_max_features():
     bagging.fit(X, y)
 
 
-def test_bagging_get_estimators_indices():
+def test_bagging_get_estimators_indices(global_random_seed):
     # Check that Bagging estimator can generate sample indices properly
     # Non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/16436
 
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.randn(13, 4)
     y = np.arange(13)
 
@@ -965,7 +965,7 @@ def test_bagging_with_metadata_routing(model):
     "model",
     [
         BaggingClassifier(
-            estimator=AdaBoostClassifier(n_estimators=1, algorithm="SAMME"),
+            estimator=AdaBoostClassifier(n_estimators=1),
             n_estimators=1,
         ),
         BaggingRegressor(estimator=AdaBoostRegressor(n_estimators=1), n_estimators=1),

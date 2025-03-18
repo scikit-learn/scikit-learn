@@ -228,6 +228,8 @@ in which cell [i, j] indicates the presence of label j in sample i.
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multilabel.py`
+* :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`
+* :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_multinomial.py`
 
 .. _ovo_classification:
 

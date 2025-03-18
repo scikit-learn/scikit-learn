@@ -179,6 +179,7 @@ exclude_patterns = [
     "templates",
     "includes",
     "**/sg_execution_times.rst",
+    "whats_new/upcoming_changes",
 ]
 
 # The reST default role (used for this markup: `text`) to use for all
@@ -205,6 +206,11 @@ add_function_parentheses = False
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
 html_theme = "pydata_sphinx_theme"
+
+# This config option is used to generate the canonical links in the header
+# of every page. The canonical link is needed to prevent search engines from
+# returning results pointing to old scikit-learn versions.
+html_baseurl = "https://scikit-learn.org/stable/"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -291,10 +297,7 @@ html_theme_options = {
         ],
     },
     "show_version_warning_banner": True,
-    "announcement": (
-        '<a href="https://forms.gle/zUXvWjGUN1nWhJ2V6">Help us make '
-        "<code>scikit-learn</code> better! The 2024 user survey is now live.</a>"
-    ),
+    "announcement": None,
 }
 
 # Add any paths that contain custom themes here, relative to this directory.
@@ -348,6 +351,7 @@ html_additional_pages = {"index": "index.html"}
 html_js_files = [
     "scripts/dropdown.js",
     "scripts/version-switcher.js",
+    "scripts/sg_plotly_resize.js",
 ]
 
 # Compile scss files into css files using sphinxcontrib-sass
@@ -375,7 +379,7 @@ def add_js_css_files(app, pagename, templatename, context, doctree):
         app.add_css_file(
             "https://cdn.datatables.net/2.0.0/css/dataTables.dataTables.min.css"
         )
-        # Internal: API search intialization and styling
+        # Internal: API search initialization and styling
         app.add_js_file("scripts/api-search.js")
         app.add_css_file("styles/api-search.css")
     elif pagename == "index":
@@ -444,11 +448,14 @@ redirects = {
     "auto_examples/linear_model/plot_bayesian_ridge": (
         "auto_examples/linear_model/plot_ard"
     ),
-    "auto_examples/model_selection/grid_search_text_feature_extraction.py": (
-        "auto_examples/model_selection/plot_grid_search_text_feature_extraction.py"
+    "auto_examples/model_selection/grid_search_text_feature_extraction": (
+        "auto_examples/model_selection/plot_grid_search_text_feature_extraction"
     ),
-    "auto_examples/datasets/plot_digits_last_image.py": (
-        "auto_examples/exercises/plot_digits_classification_exercises.py"
+    "auto_examples/model_selection/plot_validation_curve": (
+        "auto_examples/model_selection/plot_train_error_vs_test_error"
+    ),
+    "auto_examples/datasets/plot_digits_last_image": (
+        "auto_examples/exercises/plot_digits_classification_exercises"
     ),
     "auto_examples/datasets/plot_random_dataset": (
         "auto_examples/classification/plot_classifier_comparison"
@@ -466,14 +473,37 @@ redirects = {
     "auto_examples/decomposition/plot_pca_3d": (
         "auto_examples/decomposition/plot_pca_iris"
     ),
-    "auto_examples/exercises/plot_cv_digits.py": (
-        "auto_examples/model_selection/plot_nested_cross_validation_iris.py"
+    "auto_examples/exercises/plot_cv_digits": (
+        "auto_examples/model_selection/plot_nested_cross_validation_iris"
     ),
-    "auto_examples/linear_model/plot_lasso_lars.py": (
-        "auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.py"
+    "auto_examples/linear_model/plot_lasso_lars": (
+        "auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path"
     ),
-    "auto_examples/linear_model/plot_lasso_coordinate_descent_path.py": (
-        "auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.py"
+    "auto_examples/linear_model/plot_lasso_coordinate_descent_path": (
+        "auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path"
+    ),
+    "auto_examples/cluster/plot_color_quantization": (
+        "auto_examples/cluster/plot_face_compress"
+    ),
+    "auto_examples/cluster/plot_cluster_iris": (
+        "auto_examples/cluster/plot_kmeans_assumptions"
+    ),
+    "auto_examples/ensemble/plot_forest_importances_faces": (
+        "auto_examples/ensemble/plot_forest_importances"
+    ),
+    "auto_examples/datasets/plot_iris_dataset": (
+        "auto_examples/decomposition/plot_pca_iris"
+    ),
+    "auto_examples/linear_model/plot_iris_logistic": (
+        "auto_examples/linear_model/plot_logistic_multinomial"
+    ),
+    "auto_examples/linear_model/plot_ols_3d": ("auto_examples/linear_model/plot_ols"),
+    "auto_examples/linear_model/plot_ols": "auto_examples/linear_model/plot_ols_ridge",
+    "auto_examples/linear_model/plot_ols_ridge_variance": (
+        "auto_examples/linear_model/plot_ols_ridge"
+    ),
+    "auto_examples/linear_model/plot_sgd_comparison": (
+        "auto_examples/linear_model/plot_sgd_loss_functions"
     ),
 }
 html_context["redirects"] = redirects
@@ -772,6 +802,15 @@ def disable_plot_gallery_for_linkcheck(app):
         sphinx_gallery_conf["plot_gallery"] = "False"
 
 
+def skip_properties(app, what, name, obj, skip, options):
+    """Skip properties that are fitted attributes"""
+    if isinstance(obj, property):
+        if name.endswith("_") and not name.startswith("_"):
+            return True
+
+    return skip
+
+
 def setup(app):
     # do not run the examples when using linkcheck by using a small priority
     # (default priority is 500 and sphinx-gallery using builder-inited event too)
@@ -783,6 +822,8 @@ def setup(app):
     # to hide/show the prompt in code examples
     app.connect("build-finished", make_carousel_thumbs)
     app.connect("build-finished", filter_search_index)
+
+    app.connect("autodoc-skip-member", skip_properties)
 
 
 # The following is used by sphinx.ext.linkcode to provide links to github
