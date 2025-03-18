@@ -104,6 +104,16 @@ requires = [
     "scipy>=1.8.0",
 ]
 
+[tool.pytest.ini_options]
+# disable-pytest-warnings should be removed once we rewrite tests
+# using yield with parametrize
+doctest_optionflags = "NORMALIZE_WHITESPACE ELLIPSIS"
+testpaths = "sklearn"
+addopts = [
+    "--disable-pytest-warnings",
+    "--color=yes",
+]
+
 [tool.black]
 line-length = 88
 target-version = ['py310', 'py311']
@@ -274,6 +284,10 @@ package = "sklearn"  # name of your package
         verify_pr_number = true
         changelog_noop_label = "No Changelog Needed"
         whatsnew_pattern = 'doc/whatsnew/upcoming_changes/[^/]+/\d+\.[^.]+\.rst'
+
+[tool.codespell]
+skip = ["./.git", "./.mypy_cache", "./sklearn/feature_extraction/_stop_words.py", "./doc/_build", "./doc/auto_examples", "./doc/modules/generated"]
+ignore-words = "build_tools/codespell_ignore_words.txt"
 
 [tool.towncrier]
     package = "sklearn"
