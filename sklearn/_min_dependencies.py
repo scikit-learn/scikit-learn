@@ -27,7 +27,7 @@ dependent_packages = {
     "meson-python": ("0.16.0", "build"),
     "matplotlib": ("3.3.4", "benchmark, docs, examples, tests"),
     "scikit-image": ("0.17.2", "docs, examples, tests"),
-    "pandas": ("1.1.5", "benchmark, docs, examples, tests"),
+    "pandas": ("1.2.0", "benchmark, docs, examples, tests"),
     "seaborn": ("0.9.0", "docs, examples"),
     "memory_profiler": ("0.57.0", "benchmark, docs"),
     "pytest": (PYTEST_MIN_VERSION, "tests"),
@@ -40,7 +40,7 @@ dependent_packages = {
     "pyarrow": ("12.0.0", "tests"),
     "sphinx": ("7.3.7", "docs"),
     "sphinx-copybutton": ("0.5.2", "docs"),
-    "sphinx-gallery": ("0.16.0", "docs"),
+    "sphinx-gallery": ("0.17.1", "docs"),
     "numpydoc": ("1.2.0", "docs, tests"),
     "Pillow": ("7.1.2", "docs"),
     "pooch": ("1.6.0", "docs, examples, tests"),
@@ -51,9 +51,10 @@ dependent_packages = {
     "sphinx-remove-toctrees": ("1.0.0.post1", "docs"),
     "sphinx-design": ("0.6.0", "docs"),
     "pydata-sphinx-theme": ("0.15.3", "docs"),
+    "towncrier": ("24.8.0", "docs"),
     # XXX: Pin conda-lock to the latest released version (needs manual update
     # from time to time)
-    "conda-lock": ("2.5.6", "maintenance"),
+    "conda-lock": ("2.5.7", "maintenance"),
 }
 
 

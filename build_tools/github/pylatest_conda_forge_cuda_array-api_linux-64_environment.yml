@@ -25,8 +25,7 @@ dependencies:
   - pytest-cov
   - coverage
   - ccache
-  - pytorch::pytorch
-  - pytorch-cuda
+  - pytorch-gpu
   - polars
   - pyarrow
   - cupy

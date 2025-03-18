@@ -27,7 +27,7 @@ from ..neighbors import NearestNeighbors
 from ..utils import check_random_state
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
-from ..utils.validation import _num_samples, check_non_negative
+from ..utils.validation import _num_samples, check_non_negative, validate_data
 
 # mypy error: Module 'sklearn.manifold' has no attribute '_utils'
 # mypy error: Module 'sklearn.manifold' has no attribute '_barnes_hut_tsne'
@@ -859,7 +859,10 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
     def _check_params_vs_input(self, X):
         if self.perplexity >= X.shape[0]:
-            raise ValueError("perplexity must be less than n_samples")
+            raise ValueError(
+                f"perplexity ({self.perplexity}) must be less "
+                f"than n_samples ({X.shape[0]})"
+            )
 
     def _fit(self, X, skip_num_points=0):
         """Private function to fit the model using X as training data."""
@@ -879,15 +882,19 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             self.learning_rate_ = self.learning_rate
 
         if self.method == "barnes_hut":
-            X = self._validate_data(
+            X = validate_data(
+                self,
                 X,
                 accept_sparse=["csr"],
                 ensure_min_samples=2,
                 dtype=[np.float32, np.float64],
             )
         else:
-            X = self._validate_data(
-                X, accept_sparse=["csr", "csc", "coo"], dtype=[np.float32, np.float64]
+            X = validate_data(
+                self,
+                X,
+                accept_sparse=["csr", "csc", "coo"],
+                dtype=[np.float32, np.float64],
             )
         if self.metric == "precomputed":
             if isinstance(self.init, str) and self.init == "pca":
@@ -1208,5 +1215,7 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         """Number of transformed output features."""
         return self.embedding_.shape[1]
 
-    def _more_tags(self):
-        return {"pairwise": self.metric == "precomputed"}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.pairwise = self.metric == "precomputed"
+        return tags

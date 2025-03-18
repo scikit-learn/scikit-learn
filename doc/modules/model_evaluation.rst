@@ -6,18 +6,158 @@
 Metrics and scoring: quantifying the quality of predictions
 ===========================================================
 
+.. _which_scoring_function:
+
+Which scoring function should I use?
+====================================
+
+Before we take a closer look into the details of the many scores and
+:term:`evaluation metrics`, we want to give some guidance, inspired by statistical
+decision theory, on the choice of **scoring functions** for **supervised learning**,
+see [Gneiting2009]_:
+
+- *Which scoring function should I use?*
+- *Which scoring function is a good one for my task?*
+
+In a nutshell, if the scoring function is given, e.g. in a kaggle competition
+or in a business context, use that one.
+If you are free to choose, it starts by considering the ultimate goal and application
+of the prediction. It is useful to distinguish two steps:
+
+* Predicting
+* Decision making
+
+**Predicting:**
+Usually, the response variable :math:`Y` is a random variable, in the sense that there
+is *no deterministic* function :math:`Y = g(X)` of the features :math:`X`.
+Instead, there is a probability distribution :math:`F` of :math:`Y`.
+One can aim to predict the whole distribution, known as *probabilistic prediction*,
+or---more the focus of scikit-learn---issue a *point prediction* (or point forecast)
+by choosing a property or functional of that distribution :math:`F`.
+Typical examples are the mean (expected value), the median or a quantile of the
+response variable :math:`Y` (conditionally on :math:`X`).
+
+Once that is settled, use a **strictly consistent** scoring function for that
+(target) functional, see [Gneiting2009]_.
+This means using a scoring function that is aligned with *measuring the distance
+between predictions* `y_pred` *and the true target functional using observations of*
+:math:`Y`, i.e. `y_true`.
+For classification **strictly proper scoring rules**, see
+`Wikipedia entry for Scoring rule <https://en.wikipedia.org/wiki/Scoring_rule>`_
+and [Gneiting2007]_, coincide with strictly consistent scoring functions.
+The table further below provides examples.
+One could say that consistent scoring functions act as *truth serum* in that
+they guarantee *"that truth telling [. . .] is an optimal strategy in
+expectation"* [Gneiting2014]_.
+
+Once a strictly consistent scoring function is chosen, it is best used for both: as
+loss function for model training and as metric/score in model evaluation and model
+comparison.
+
+Note that for regressors, the prediction is done with :term:`predict` while for
+classifiers it is usually :term:`predict_proba`.
+
+**Decision Making:**
+The most common decisions are done on binary classification tasks, where the result of
+:term:`predict_proba` is turned into a single outcome, e.g., from the predicted
+probability of rain a decision is made on how to act (whether to take mitigating
+measures like an umbrella or not).
+For classifiers, this is what :term:`predict` returns.
+See also :ref:`TunedThresholdClassifierCV`.
+There are many scoring functions which measure different aspects of such a
+decision, most of them are covered with or derived from the
+:func:`metrics.confusion_matrix`.
+
+**List of strictly consistent scoring functions:**
+Here, we list some of the most relevant statistical functionals and corresponding
+strictly consistent scoring functions for tasks in practice. Note that the list is not
+complete and that there are more of them.
+For further criteria on how to select a specific one, see [Fissler2022]_.
+
+==================  ===================================================  ====================  =================================
+functional          scoring or loss function                             response `y`          prediction
+==================  ===================================================  ====================  =================================
+**Classification**
+mean                :ref:`Brier score <brier_score_loss>` :sup:`1`       multi-class           ``predict_proba``
+mean                :ref:`log loss <log_loss>`                           multi-class           ``predict_proba``
+mode                :ref:`zero-one loss <zero_one_loss>` :sup:`2`        multi-class           ``predict``, categorical
+**Regression**
+mean                :ref:`squared error <mean_squared_error>` :sup:`3`   all reals             ``predict``, all reals
+mean                :ref:`Poisson deviance <mean_tweedie_deviance>`      non-negative          ``predict``, strictly positive
+mean                :ref:`Gamma deviance <mean_tweedie_deviance>`        strictly positive     ``predict``, strictly positive
+mean                :ref:`Tweedie deviance <mean_tweedie_deviance>`      depends on ``power``  ``predict``, depends on ``power``
+median              :ref:`absolute error <mean_absolute_error>`          all reals             ``predict``, all reals
+quantile            :ref:`pinball loss <pinball_loss>`                   all reals             ``predict``, all reals
+mode                no consistent one exists                             reals
+==================  ===================================================  ====================  =================================
+
+:sup:`1` The Brier score is just a different name for the squared error in case of
+classification.
+
+:sup:`2` The zero-one loss is only consistent but not strictly consistent for the mode.
+The zero-one loss is equivalent to one minus the accuracy score, meaning it gives
+different score values but the same ranking.
+
+:sup:`3` R² gives the same ranking as squared error.
+
+**Fictitious Example:**
+Let's make the above arguments more tangible. Consider a setting in network reliability
+engineering, such as maintaining stable internet or Wi-Fi connections.
+As provider of the network, you have access to the dataset of log entries of network
+connections containing network load over time and many interesting features.
+Your goal is to improve the reliability of the connections.
+In fact, you promise your customers that on at least 99% of all days there are no
+connection discontinuities larger than 1 minute.
+Therefore, you are interested in a prediction of the 99% quantile (of longest
+connection interruption duration per day) in order to know in advance when to add
+more bandwidth and thereby satisfy your customers. So the *target functional* is the
+99% quantile. From the table above, you choose the pinball loss as scoring function
+(fair enough, not much choice given), for model training (e.g.
+`HistGradientBoostingRegressor(loss="quantile", quantile=0.99)`) as well as model
+evaluation (`mean_pinball_loss(..., alpha=0.99)` - we apologize for the different
+argument names, `quantile` and `alpha`) be it in grid search for finding
+hyperparameters or in comparing to other models like
+`QuantileRegressor(quantile=0.99)`.
+
+.. rubric:: References
+
+.. [Gneiting2007] T. Gneiting and A. E. Raftery. :doi:`Strictly Proper
+    Scoring Rules, Prediction, and Estimation <10.1198/016214506000001437>`
+    In: Journal of the American Statistical Association 102 (2007),
+    pp. 359– 378.
+    `link to pdf <https://sites.stat.washington.edu/raftery/Research/PDF/Gneiting2007jasa.pdf>`_
+
+.. [Gneiting2009] T. Gneiting. :arxiv:`Making and Evaluating Point Forecasts
+    <0912.0902>`
+    Journal of the American Statistical Association 106 (2009): 746 - 762.
+
+.. [Gneiting2014] T. Gneiting and M. Katzfuss. :doi:`Probabilistic Forecasting
+    <10.1146/annurev-statistics-062713-085831>`. In: Annual Review of Statistics and Its Application 1.1 (2014), pp. 125–151.
+
+.. [Fissler2022] T. Fissler, C. Lorentzen and M. Mayer. :arxiv:`Model
+    Comparison and Calibration Assessment: User Guide for Consistent Scoring
+    Functions in Machine Learning and Actuarial Practice. <2202.12780>`
+
+.. _scoring_api_overview:
+
+Scoring API overview
+====================
+
 There are 3 different APIs for evaluating the quality of a model's
 predictions:
 
 * **Estimator score method**: Estimators have a ``score`` method providing a
   default evaluation criterion for the problem they are designed to solve.
-  This is not discussed on this page, but in each estimator's documentation.
+  Most commonly this is :ref:`accuracy <accuracy_score>` for classifiers and the
+  :ref:`coefficient of determination <r2_score>` (:math:`R^2`) for regressors.
+  Details for each estimator can be found in its documentation.
 
-* **Scoring parameter**: Model-evaluation tools using
+* **Scoring parameter**: Model-evaluation tools that use
   :ref:`cross-validation <cross_validation>` (such as
-  :func:`model_selection.cross_val_score` and
-  :class:`model_selection.GridSearchCV`) rely on an internal *scoring* strategy.
-  This is discussed in the section :ref:`scoring_parameter`.
+  :class:`model_selection.GridSearchCV`, :func:`model_selection.validation_curve` and
+  :class:`linear_model.LogisticRegressionCV`) rely on an internal *scoring* strategy.
+  This can be specified using the `scoring` parameter of that tool and is discussed
+  in the section :ref:`scoring_parameter`.
 
 * **Metric functions**: The :mod:`sklearn.metrics` module implements functions
   assessing prediction error for specific purposes. These metrics are detailed
@@ -38,24 +178,39 @@ value of those metrics for random predictions.
 The ``scoring`` parameter: defining model evaluation rules
 ==========================================================
 
-Model selection and evaluation using tools, such as
-:class:`model_selection.GridSearchCV` and
-:func:`model_selection.cross_val_score`, take a ``scoring`` parameter that
+Model selection and evaluation tools that internally use
+:ref:`cross-validation <cross_validation>` (such as
+:class:`model_selection.GridSearchCV`, :func:`model_selection.validation_curve` and
+:class:`linear_model.LogisticRegressionCV`) take a ``scoring`` parameter that
 controls what metric they apply to the estimators evaluated.
 
-Common cases: predefined values
--------------------------------
+They can be specified in several ways:
+
+* `None`: the estimator's default evaluation criterion (i.e., the metric used in the
+  estimator's `score` method) is used.
+* :ref:`String name <scoring_string_names>`: common metrics can be passed via a string
+  name.
+* :ref:`Callable <scoring_callable>`: more complex metrics can be passed via a custom
+  metric callable (e.g., function).
+
+Some tools do also accept multiple metric evaluation. See :ref:`multimetric_scoring`
+for details.
+
+.. _scoring_string_names:
+
+String name scorers
+-------------------
 
 For the most common use cases, you can designate a scorer object with the
-``scoring`` parameter; the table below shows all possible values.
+``scoring`` parameter via a string name; the table below shows all possible values.
 All scorer objects follow the convention that **higher return values are better
-than lower return values**.  Thus metrics which measure the distance between
+than lower return values**. Thus metrics which measure the distance between
 the model and the data, like :func:`metrics.mean_squared_error`, are
-available as neg_mean_squared_error which return the negated value
+available as 'neg_mean_squared_error' which return the negated value
 of the metric.
 
 ====================================   ==============================================     ==================================
-Scoring                                Function                                           Comment
+Scoring string name                    Function                                           Comment
 ====================================   ==============================================     ==================================
 **Classification**
 'accuracy'                             :func:`metrics.accuracy_score`
@@ -123,12 +278,23 @@ Usage examples:
 
 .. currentmodule:: sklearn.metrics
 
-.. _scoring:
+.. _scoring_callable:
 
-Defining your scoring strategy from metric functions
------------------------------------------------------
+Callable scorers
+----------------
 
-The following metrics functions are not implemented as named scorers,
+For more complex use cases and more flexibility, you can pass a callable to
+the `scoring` parameter. This can be done by:
+
+* :ref:`scoring_adapt_metric`
+* :ref:`scoring_custom` (most flexible)
+
+.. _scoring_adapt_metric:
+
+Adapting predefined metrics via `make_scorer`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The following metric functions are not implemented as named scorers,
 sometimes because they require additional parameters, such as
 :func:`fbeta_score`. They cannot be passed to the ``scoring``
 parameters; instead their callable needs to be passed to
@@ -166,15 +332,22 @@ measuring a prediction error given ground truth and prediction:
   maximize, the higher the better.
 
 - functions ending with ``_error``, ``_loss``, or ``_deviance`` return a
-  value to minimize, the lower the better.  When converting
+  value to minimize, the lower the better. When converting
   into a scorer object using :func:`make_scorer`, set
   the ``greater_is_better`` parameter to ``False`` (``True`` by default; see the
   parameter description below).
 
+.. _scoring_custom:
 
-.. dropdown:: Custom scorer objects
+Creating a custom scorer object
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  The second use case is to build a completely custom scorer object
+You can create your own custom scorer object using
+:func:`make_scorer` or for the most flexibility, from scratch. See below for details.
+
+.. dropdown:: Custom scorer objects using `make_scorer`
+
+  You can build a completely custom scorer object
   from a simple python function using :func:`make_scorer`, which can
   take several parameters:
 
@@ -182,21 +355,21 @@ measuring a prediction error given ground truth and prediction:
     in the example below)
 
   * whether the python function returns a score (``greater_is_better=True``,
-    the default) or a loss (``greater_is_better=False``).  If a loss, the output
+    the default) or a loss (``greater_is_better=False``). If a loss, the output
     of the python function is negated by the scorer object, conforming to
     the cross validation convention that scorers return higher values for better models.
 
   * for classification metrics only: whether the python function you provided requires
     continuous decision certainties. If the scoring function only accepts probability
-    estimates (e.g. :func:`metrics.log_loss`) then one needs to set the parameter
-    `response_method`, thus in this case `response_method="predict_proba"`. Some scoring
-    function do not necessarily require probability estimates but rather non-thresholded
-    decision values (e.g. :func:`metrics.roc_auc_score`). In this case, one provides a
-    list such as `response_method=["decision_function", "predict_proba"]`. In this case,
-    the scorer will use the first available method, in the order given in the list,
+    estimates (e.g. :func:`metrics.log_loss`), then one needs to set the parameter
+    `response_method="predict_proba"`. Some scoring
+    functions do not necessarily require probability estimates but rather non-thresholded
+    decision values (e.g. :func:`metrics.roc_auc_score`). In this case, one can provide a
+    list (e.g., `response_method=["decision_function", "predict_proba"]`),
+    and scorer will use the first available method, in the order given in the list,
     to compute the scores.
 
-  * any additional parameters, such as ``beta`` or ``labels`` in :func:`f1_score`.
+  * any additional parameters of the scoring function, such as ``beta`` or ``labels``.
 
   Here is an example of building custom scorers, and of using the
   ``greater_is_better`` parameter::
@@ -204,7 +377,7 @@ measuring a prediction error given ground truth and prediction:
       >>> import numpy as np
       >>> def my_custom_loss_func(y_true, y_pred):
       ...     diff = np.abs(y_true - y_pred).max()
-      ...     return np.log1p(diff)
+      ...     return float(np.log1p(diff))
       ...
       >>> # score will negate the return value of my_custom_loss_func,
       >>> # which will be np.log(2), 0.693, given the values for X
@@ -220,16 +393,10 @@ measuring a prediction error given ground truth and prediction:
       >>> score(clf, X, y)
       -0.69...
 
-.. _diy_scoring:
+.. dropdown:: Custom scorer objects from scratch
 
-Implementing your own scoring object
-------------------------------------
-
-You can generate even more flexible model scorers by constructing your own
-scoring object from scratch, without using the :func:`make_scorer` factory.
-
-
-.. dropdown:: How to build a scorer from scratch
+  You can generate even more flexible model scorers by constructing your own
+  scoring object from scratch, without using the :func:`make_scorer` factory.
 
   For a callable to be a scorer, it needs to meet the protocol specified by
   the following two rules:
@@ -252,24 +419,24 @@ scoring object from scratch, without using the :func:`make_scorer` factory.
     more details.
 
 
-  .. note:: **Using custom scorers in functions where n_jobs > 1**
+.. dropdown:: Using custom scorers in functions where n_jobs > 1
 
-      While defining the custom scoring function alongside the calling function
-      should work out of the box with the default joblib backend (loky),
-      importing it from another module will be a more robust approach and work
-      independently of the joblib backend.
+    While defining the custom scoring function alongside the calling function
+    should work out of the box with the default joblib backend (loky),
+    importing it from another module will be a more robust approach and work
+    independently of the joblib backend.
 
-      For example, to use ``n_jobs`` greater than 1 in the example below,
-      ``custom_scoring_function`` function is saved in a user-created module
-      (``custom_scorer_module.py``) and imported::
+    For example, to use ``n_jobs`` greater than 1 in the example below,
+    ``custom_scoring_function`` function is saved in a user-created module
+    (``custom_scorer_module.py``) and imported::
 
-          >>> from custom_scorer_module import custom_scoring_function # doctest: +SKIP
-          >>> cross_val_score(model,
-          ...  X_train,
-          ...  y_train,
-          ...  scoring=make_scorer(custom_scoring_function, greater_is_better=False),
-          ...  cv=5,
-          ...  n_jobs=-1) # doctest: +SKIP
+        >>> from custom_scorer_module import custom_scoring_function # doctest: +SKIP
+        >>> cross_val_score(model,
+        ...  X_train,
+        ...  y_train,
+        ...  scoring=make_scorer(custom_scoring_function, greater_is_better=False),
+        ...  cv=5,
+        ...  n_jobs=-1) # doctest: +SKIP
 
 .. _multimetric_scoring:
 
@@ -283,13 +450,15 @@ There are three ways to specify multiple scoring metrics for the ``scoring``
 parameter:
 
 - As an iterable of string metrics::
-      >>> scoring = ['accuracy', 'precision']
+
+    >>> scoring = ['accuracy', 'precision']
 
 - As a ``dict`` mapping the scorer name to the scoring function::
-      >>> from sklearn.metrics import accuracy_score
-      >>> from sklearn.metrics import make_scorer
-      >>> scoring = {'accuracy': make_scorer(accuracy_score),
-      ...            'prec': 'precision'}
+
+    >>> from sklearn.metrics import accuracy_score
+    >>> from sklearn.metrics import make_scorer
+    >>> scoring = {'accuracy': make_scorer(accuracy_score),
+    ...            'prec': 'precision'}
 
   Note that the dict values can either be scorer functions or one of the
   predefined metric strings.
@@ -507,7 +676,7 @@ where :math:`k` is the number of guesses allowed and :math:`1(x)` is the
   0.75
   >>> # Not normalizing gives the number of "correctly" classified samples
   >>> top_k_accuracy_score(y_true, y_score, k=2, normalize=False)
-  3
+  3.0
 
 .. _balanced_accuracy_score:
 
@@ -540,7 +709,7 @@ In contrast, if the conventional accuracy is above chance only because the
 classifier takes advantage of an imbalanced test set, then the balanced
 accuracy, as appropriate, will drop to :math:`\frac{1}{n\_classes}`.
 
-The score ranges from 0 to 1, or when ``adjusted=True`` is used, it rescaled to
+The score ranges from 0 to 1, or when ``adjusted=True`` is used, it is rescaled to
 the range :math:`\frac{1}{1 - n\_classes}` to 1, inclusive, with
 performance at random scoring 0.
 
@@ -668,7 +837,7 @@ false negatives and true positives as follows::
 
   >>> y_true = [0, 0, 0, 1, 1, 1, 1, 1]
   >>> y_pred = [0, 1, 0, 1, 0, 1, 0, 1]
-  >>> tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+  >>> tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel().tolist()
   >>> tn, fp, fn, tp
   (2, 1, 2, 3)
 
@@ -1265,7 +1434,7 @@ Then the multiclass MCC is defined as:
 
 When there are more than two labels, the value of the MCC will no longer range
 between -1 and +1. Instead the minimum value will be somewhere between -1 and 0
-depending on the number and distribution of ground true labels. The maximum
+depending on the number and distribution of ground truth labels. The maximum
 value is always +1.
 For additional information, see [WikipediaMCC2021]_.
 
@@ -1278,12 +1447,12 @@ function:
     >>> matthews_corrcoef(y_true, y_pred)
     -0.33...
 
-.. topic:: References:
+.. rubric:: References
 
-  .. [WikipediaMCC2021] Wikipedia contributors. Phi coefficient.
-     Wikipedia, The Free Encyclopedia. April 21, 2021, 12:21 CEST.
-     Available at: https://en.wikipedia.org/wiki/Phi_coefficient
-     Accessed April 21, 2021.
+.. [WikipediaMCC2021] Wikipedia contributors. Phi coefficient.
+   Wikipedia, The Free Encyclopedia. April 21, 2021, 12:21 CEST.
+   Available at: https://en.wikipedia.org/wiki/Phi_coefficient
+   Accessed April 21, 2021.
 
 .. _multilabel_confusion_matrix:
 
@@ -1691,7 +1860,7 @@ same classification task:
     `The DET Curve in Assessment of Detection Task Performance
     <https://ccc.inaoep.mx/~villasen/bib/martin97det.pdf>`_, NIST 1997.
 
-.. [Navratil2007] J. Navractil and D. Klusacek,
+.. [Navratil2007] J. Navratil and D. Klusacek,
     `"On Linear DETs" <https://ieeexplore.ieee.org/document/4218079>`_,
     2007 IEEE International Conference on Acoustics,
     Speech and Signal Processing - ICASSP '07, Honolulu,
@@ -1823,7 +1992,7 @@ the same does a lower Brier score loss always mean better calibration"
 
 .. [Flach2008] Flach, Peter, and Edson Matsubara. `"On classification, ranking,
   and probability estimation." <https://drops.dagstuhl.de/opus/volltexte/2008/1382/>`_
-  Dagstuhl Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum fr Informatik (2008).
+  Dagstuhl Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum für Informatik (2008).
 
 .. _class_likelihood_ratios:
 
@@ -1917,26 +2086,31 @@ the actual formulas).
 
 .. dropdown:: Mathematical divergences
 
-  The positive likelihood ratio is undefined when :math:`fp = 0`, which can be
-  interpreted as the classifier perfectly identifying positive cases. If :math:`fp
-  = 0` and additionally :math:`tp = 0`, this leads to a zero/zero division. This
-  happens, for instance, when using a `DummyClassifier` that always predicts the
-  negative class and therefore the interpretation as a perfect classifier is lost.
+  The positive likelihood ratio (`LR+`) is undefined when :math:`fp=0`, meaning the
+  classifier does not misclassify any negative labels as positives. This condition can
+  either indicate a perfect identification of all the negative cases or, if there are
+  also no true positive predictions (:math:`tp=0`), that the classifier does not predict
+  the positive class at all. In the first case, `LR+` can be interpreted as `np.inf`, in
+  the second case (for instance, with highly imbalanced data) it can be interpreted as
+  `np.nan`.
 
-  The negative likelihood ratio is undefined when :math:`tn = 0`. Such divergence
-  is invalid, as :math:`LR_- > 1` would indicate an increase in the odds of a
-  sample belonging to the positive class after being classified as negative, as if
-  the act of classifying caused the positive condition. This includes the case of
-  a `DummyClassifier` that always predicts the positive class (i.e. when
-  :math:`tn=fn=0`).
+  The negative likelihood ratio (`LR-`) is undefined when :math:`tn=0`. Such
+  divergence is invalid, as :math:`LR_- > 1.0` would indicate an increase in the odds of
+  a sample belonging to the positive class after being classified as negative, as if the
+  act of classifying caused the positive condition. This includes the case of a
+  :class:`~sklearn.dummy.DummyClassifier` that always predicts the positive class
+  (i.e. when :math:`tn=fn=0`).
 
-  Both class likelihood ratios are undefined when :math:`tp=fn=0`, which means
-  that no samples of the positive class were present in the testing set. This can
-  also happen when cross-validating highly imbalanced data.
+  Both class likelihood ratios (`LR+ and LR-`) are undefined when :math:`tp=fn=0`, which
+  means that no samples of the positive class were present in the test set. This can
+  happen when cross-validating on highly imbalanced data and also leads to a division by
+  zero.
 
-  In all the previous cases the :func:`class_likelihood_ratios` function raises by
-  default an appropriate warning message and returns `nan` to avoid pollution when
-  averaging over cross-validation folds.
+  If a division by zero occurs and `raise_warning` is set to `True` (default),
+  :func:`class_likelihood_ratios` raises an `UndefinedMetricWarning` and returns
+  `np.nan` by default to avoid pollution when averaging over cross-validation folds.
+  Users can set return values in case of a division by zero with the
+  `replace_undefined_by` param.
 
   For a worked-out demonstration of the :func:`class_likelihood_ratios` function,
   see the example below.
@@ -1948,8 +2122,7 @@ the actual formulas).
 
   * Brenner, H., & Gefeller, O. (1997).
     Variation of sensitivity, specificity, likelihood ratios and predictive
-    values with disease prevalence.
-    Statistics in medicine, 16(9), 981-991.
+    values with disease prevalence. Statistics in medicine, 16(9), 981-991.
 
 
 .. _d2_score_classification:
@@ -2034,7 +2207,7 @@ The :func:`coverage_error` function computes the average number of labels that
 have to be included in the final prediction such that all true labels
 are predicted. This is useful if you want to know how many top-scored-labels
 you have to predict in average without missing any true one. The best value
-of this metrics is thus the average number of true labels.
+of this metric is thus the average number of true labels.
 
 .. note::
 
@@ -2374,7 +2547,7 @@ Here is a small example of usage of the :func:`mean_absolute_error` function::
 Mean squared error
 -------------------
 
-The :func:`mean_squared_error` function computes `mean square
+The :func:`mean_squared_error` function computes `mean squared
 error <https://en.wikipedia.org/wiki/Mean_squared_error>`_, a risk
 metric corresponding to the expected value of the squared (quadratic) error or
 loss.
@@ -2406,7 +2579,7 @@ function::
   for an example of mean squared error usage to evaluate gradient boosting regression.
 
 Taking the square root of the MSE, called the root mean squared error (RMSE), is another
-common metric that provides a measure in the same units as the target variable. RSME is
+common metric that provides a measure in the same units as the target variable. RMSE is
 available through the :func:`root_mean_squared_error` function.
 
 .. _mean_squared_log_error:
@@ -2485,6 +2658,22 @@ the small magnitude values and only reflected the error in prediction of highest
 magnitude value. But that problem is resolved in case of MAPE because it calculates
 relative percentage error with respect to actual output.
 
+.. note::
+
+    The MAPE formula here does not represent the common "percentage" definition: the
+    percentage in the range [0, 100] is converted to a relative value in the range [0,
+    1] by dividing by 100. Thus, an error of 200% corresponds to a relative error of 2.
+    The motivation here is to have a range of values that is more consistent with other
+    error metrics in scikit-learn, such as `accuracy_score`.
+
+    To obtain the mean absolute percentage error as per the Wikipedia formula,
+    multiply the `mean_absolute_percentage_error` computed here by 100.
+
+.. dropdown:: References
+
+  * `Wikipedia entry for Mean Absolute Percentage Error
+    <https://en.wikipedia.org/wiki/Mean_absolute_percentage_error>`_
+
 .. _median_absolute_error:
 
 Median absolute error
@@ -2543,7 +2732,7 @@ Here is a small example of usage of the :func:`max_error` function::
   >>> y_true = [3, 2, 7, 1]
   >>> y_pred = [9, 2, 7, 1]
   >>> max_error(y_true, y_pred)
-  6
+  6.0
 
 The :func:`max_error` does not support multioutput.
 
@@ -2569,7 +2758,7 @@ The best possible score is 1.0, lower values are worse.
 .. topic:: Link to :ref:`r2_score`
 
     The difference between the explained variance score and the :ref:`r2_score`
-    is that when the explained variance score does not account for
+    is that the explained variance score does not account for
     systematic offset in the prediction. For this reason, the
     :ref:`r2_score` should be preferred in general.
 
@@ -2911,15 +3100,14 @@ display.
 .. _clustering_metrics:
 
 Clustering metrics
-======================
+==================
 
 .. currentmodule:: sklearn.metrics
 
 The :mod:`sklearn.metrics` module implements several loss, score, and utility
-functions. For more information see the :ref:`clustering_evaluation`
-section for instance clustering, and :ref:`biclustering_evaluation` for
-biclustering.
-
+functions to measure clustering performance. For more information see the
+:ref:`clustering_evaluation` section for instance clustering, and
+:ref:`biclustering_evaluation` for biclustering.
 
 .. _dummy_estimators:
 

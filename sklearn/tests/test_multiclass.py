@@ -843,10 +843,10 @@ def test_pairwise_tag(MultiClassClassifier):
     clf_notprecomputed = svm.SVC()
 
     ovr_false = MultiClassClassifier(clf_notprecomputed)
-    assert not ovr_false._get_tags()["pairwise"]
+    assert not ovr_false.__sklearn_tags__().input_tags.pairwise
 
     ovr_true = MultiClassClassifier(clf_precomputed)
-    assert ovr_true._get_tags()["pairwise"]
+    assert ovr_true.__sklearn_tags__().input_tags.pairwise
 
 
 @pytest.mark.parametrize(

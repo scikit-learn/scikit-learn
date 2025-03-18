@@ -70,7 +70,7 @@ from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import safe_sparse_dot
 from ..utils.fixes import laplacian as csgraph_laplacian
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 
 
 class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
@@ -210,7 +210,8 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         """
         check_is_fitted(self)
 
-        X_2d = self._validate_data(
+        X_2d = validate_data(
+            self,
             X,
             accept_sparse=["csc", "csr", "coo", "dok", "bsr", "lil", "dia"],
             reset=False,
@@ -255,7 +256,8 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         self : object
             Returns the instance itself.
         """
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=["csr", "csc"],
@@ -334,6 +336,11 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         self.transduction_ = transduction.ravel()
         return self
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 class LabelPropagation(BaseLabelPropagation):
     """Label Propagation classifier.
@@ -357,7 +364,7 @@ class LabelPropagation(BaseLabelPropagation):
     max_iter : int, default=1000
         Change maximum number of iterations allowed.
 
-    tol : float, 1e-3
+    tol : float, default=1e-3
         Convergence tolerance: threshold to consider the system at steady
         state.
 

@@ -6,10 +6,10 @@ Multilabel classification
 This example simulates a multi-label document classification problem. The
 dataset is generated randomly based on the following process:
 
-    - pick the number of labels: n ~ Poisson(n_labels)
-    - n times, choose a class c: c ~ Multinomial(theta)
-    - pick the document length: k ~ Poisson(length)
-    - k times, choose a word: w ~ Multinomial(theta_c)
+- pick the number of labels: n ~ Poisson(n_labels)
+- n times, choose a class c: c ~ Multinomial(theta)
+- pick the document length: k ~ Poisson(length)
+- k times, choose a word: w ~ Multinomial(theta_c)
 
 In the above process, rejection sampling is used to make sure that n is more
 than 2, and that the document length is never zero. Likewise, we reject classes

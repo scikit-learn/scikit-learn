@@ -26,6 +26,15 @@ from ._indexing import (
     shuffle,
 )
 from ._mask import safe_mask
+from ._tags import (
+    ClassifierTags,
+    InputTags,
+    RegressorTags,
+    Tags,
+    TargetTags,
+    TransformerTags,
+    get_tags,
+)
 from .class_weight import compute_class_weight, compute_sample_weight
 from .deprecation import deprecated
 from .discovery import all_estimators
@@ -83,6 +92,13 @@ __all__ = [
     "safe_mask",
     "gen_batches",
     "gen_even_slices",
+    "Tags",
+    "InputTags",
+    "TargetTags",
+    "ClassifierTags",
+    "RegressorTags",
+    "TransformerTags",
+    "get_tags",
 ]
 
 

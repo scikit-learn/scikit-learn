@@ -12,7 +12,12 @@ from ..neighbors._base import _get_weights
 from ..utils._mask import _get_mask
 from ..utils._missing import is_scalar_nan
 from ..utils._param_validation import Hidden, Interval, StrOptions
-from ..utils.validation import FLOAT_DTYPES, _check_feature_names_in, check_is_fitted
+from ..utils.validation import (
+    FLOAT_DTYPES,
+    _check_feature_names_in,
+    check_is_fitted,
+    validate_data,
+)
 from ._base import _BaseImputer
 
 
@@ -55,9 +60,9 @@ class KNNImputer(_BaseImputer):
 
         - 'nan_euclidean'
         - callable : a user-defined function which conforms to the definition
-          of ``_pairwise_callable(X, Y, metric, **kwds)``. The function
-          accepts two arrays, X and Y, and a `missing_values` keyword in
-          `kwds` and returns a scalar distance value.
+          of ``func_metric(x, y, *, missing_values=np.nan)``. `x` and `y`
+          corresponds to a row (i.e. 1-D arrays) of `X` and `Y`, respectively.
+          The callable should returns a scalar distance value.
 
     copy : bool, default=True
         If True, a copy of X will be created. If False, imputation will
@@ -229,7 +234,8 @@ class KNNImputer(_BaseImputer):
         else:
             ensure_all_finite = "allow-nan"
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=False,
             dtype=FLOAT_DTYPES,
@@ -265,7 +271,8 @@ class KNNImputer(_BaseImputer):
             ensure_all_finite = True
         else:
             ensure_all_finite = "allow-nan"
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=False,
             dtype=FLOAT_DTYPES,

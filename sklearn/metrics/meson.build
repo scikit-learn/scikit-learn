@@ -41,6 +41,7 @@ _dist_metrics = py.extension_module(
 py.extension_module(
   '_pairwise_fast',
   ['_pairwise_fast.pyx', metrics_cython_tree],
+  dependencies: [openmp_dep],
   cython_args: cython_args,
   subdir: 'sklearn/metrics',
   install: true

@@ -48,7 +48,7 @@ if not meson.is_cross_build()
   # meson-python is required only when going through pip. Using meson directly
   # should not check meson-python version.
   meson_python_version_command_result = run_command(py,
-    ['-c', 'import mesonpy; print(mesonpy.__version__)'], check: false)
+    ['-c', 'import importlib.metadata; print(importlib.metadata.version("meson-python"))'], check: false)
   meson_python_installed = meson_python_version_command_result.returncode() == 0
   if meson_python_installed
     meson_python_version = meson_python_version_command_result.stdout().strip()

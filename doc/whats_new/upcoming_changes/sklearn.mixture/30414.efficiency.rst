@@ -1,0 +1,4 @@
+- Simplified redundant computation when estimating covariances in
+  :class:`~mixture.GaussianMixture` with a `covariance_type="spherical"` or
+  `covariance_type="diag"`.
+  By :user:`Leonce Mekinda <mekleo>` and :user:`Olivier Grisel <ogrisel>`

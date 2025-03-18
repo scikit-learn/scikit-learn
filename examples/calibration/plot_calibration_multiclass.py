@@ -64,10 +64,11 @@ clf.fit(X_train_valid, y_train_valid)
 # using the valid data subset (400 samples) in a 2-stage process.
 
 from sklearn.calibration import CalibratedClassifierCV
+from sklearn.frozen import FrozenEstimator
 
 clf = RandomForestClassifier(n_estimators=25)
 clf.fit(X_train, y_train)
-cal_clf = CalibratedClassifierCV(clf, method="sigmoid", cv="prefit")
+cal_clf = CalibratedClassifierCV(FrozenEstimator(clf), method="sigmoid")
 cal_clf.fit(X_valid, y_valid)
 
 # %%
