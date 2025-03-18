@@ -759,17 +759,17 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             Knot positions (points) of base interval.
         """
         if knots == "quantile":
-            percentiles = 100 * np.linspace(
+            percentile_ranks = 100 * np.linspace(
                 start=0, stop=1, num=n_knots, dtype=np.float64
             )
 
             if sample_weight is None:
-                knots = np.percentile(X, percentiles, axis=0)
+                knots = np.percentile(X, percentile_ranks, axis=0)
             else:
                 knots = np.array(
                     [
-                        _weighted_percentile(X, sample_weight, percentile)
-                        for percentile in percentiles
+                        _weighted_percentile(X, sample_weight, percentile_rank)
+                        for percentile_rank in percentile_ranks
                     ]
                 )
 

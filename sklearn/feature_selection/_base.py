@@ -70,7 +70,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
             values are indices into the input feature vector.
         """
         mask = self._get_support_mask()
-        return mask if not indices else np.where(mask)[0]
+        return mask if not indices else np.nonzero(mask)[0]
 
     @abstractmethod
     def _get_support_mask(self):

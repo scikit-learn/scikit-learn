@@ -61,13 +61,13 @@ from sklearn.utils.validation import (
 )
 
 __all__ = [
-    "assert_array_equal",
+    "SkipTest",
+    "assert_allclose",
     "assert_almost_equal",
     "assert_array_almost_equal",
+    "assert_array_equal",
     "assert_array_less",
-    "assert_allclose",
     "assert_run_python_script_without_output",
-    "SkipTest",
 ]
 
 SkipTest = unittest.case.SkipTest
@@ -1273,7 +1273,7 @@ def _array_api_for_tests(array_namespace, device):
             f"{array_namespace} is not installed: not checking array_api input"
         )
     try:
-        import array_api_compat  # noqa
+        import array_api_compat
     except ImportError:
         raise SkipTest(
             "array_api_compat is not installed: not checking array_api input"
