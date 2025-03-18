@@ -6,7 +6,7 @@ Balance model complexity and cross-validated score
 This example demonstrates how to balance model complexity and cross-validated score by
 finding a decent accuracy within 1 standard deviation of the best accuracy score while
 minimising the number of :class:`~sklearn.decomposition.PCA` components [1]. It uses
-:class:`~sklearn.model_selection.GridSearchCV with a custom refit callable to select the
+:class:`~sklearn.model_selection.GridSearchCV` with a custom refit callable to select the
 optimal model.
 
 The figure shows the trade-off between cross-validated score and the number
@@ -29,7 +29,7 @@ NY, USA: Springer New York Inc..
 # When tuning hyperparameters, we often want to balance model complexity and
 # performance. The "one-standard-error" rule is a common approach: select the simplest
 # model whose performance is within one standard error of the best model's performance.
-# This helps avoid overfitting by preferring simpler models when their performance is
+# This helps to avoid overfitting by preferring simpler models when their performance is
 # statistically comparable to more complex ones.
 
 import matplotlib.pyplot as plt
@@ -124,13 +124,15 @@ param_grid = {"reduce_dim__n_components": [6, 8, 10, 12, 14, 16, 20, 25, 35, 45,
 # Perform the search with GridSearchCV
 # -----------------------------------------
 #
-# We use GridSearchCV with our custom `best_low_complexity` function as the refit
+# We use `GridSearchCV` with our custom `best_low_complexity` function as the refit
 # parameter. This function will select the model with the fewest PCA components that
 # still performs within one standard deviation of the best model.
 
 grid = GridSearchCV(
     pipe,
-    cv=10,
+    # Use a non-stratified CV strategy to make sure that the inter-fold
+    # standard deviation of the test scores is informative.
+    cv=ShuffleSplit(n_splits=10, random_state=0),
     n_jobs=1,  # increase this on your machine to use more physical cores
     param_grid=param_grid,
     scoring="accuracy",
@@ -218,7 +220,7 @@ best_mean_score = np.max(mean_test_scores)
 threshold = best_mean_score - std_test_scores[np.argmax(mean_test_scores)]
 
 # Create figure with two subplots
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6), constrained_layout=True)
 
 # Plot 1: Individual test scores with mean line and thresholds
 for i, comp in enumerate(n_components):
@@ -329,7 +331,7 @@ ax2.set_title("Train vs. Test Scores", fontsize=14)
 ax2.set_ylabel("Score", fontsize=12)
 
 # Add a main title for the entire figure
-fig.suptitle("Balance model complexity and cross-validated score", fontsize=16, y=1.05)
+_ = fig.suptitle("Balancing model complexity and cross-validated score", fontsize=16, y=1.05)
 
 # %%
 # Print the results
@@ -376,7 +378,7 @@ print(summary_df)
 # and efficiency.
 #
 # In this example, we've seen how to implement this rule using a custom refit
-# callable with :class:`~sklearn.model_selectoin.GridSearchCV`.
+# callable with :class:`~sklearn.model_selection.GridSearchCV`.
 #
 # Key takeaways:
 # 1. The one-standard-error rule provides a principled way to select simpler models
