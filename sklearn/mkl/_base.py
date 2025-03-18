@@ -34,15 +34,18 @@ ALGORITHMS = {
 
 
 class BaseMKL(BaseEstimator, MetaEstimatorMixin, TransformerMixin, metaclass=ABCMeta):
-    """Multiple Kernel Learning base class."""
+    """Base class for Multiple Kernel Learning (MKL) estimators.
 
-    # TODO: DOC: kernels_params list of ({"single", "all"}, dict)
+    This class provides a framework for learning a combination of multiple kernels
+    for classification and regression tasks. It implements different MKL algorithms
+    to optimize kernel-based learning models.
+    """
 
     _parameter_constraints: dict = {
-        "kernels": [list, None],
-        "kernels_scope": [list, None],
-        "kernels_params": [list, None],
-        "precompute_kernels": [bool, None],
+        "kernels": ["array-like", None],
+        "kernels_scope": ["array-like", None],
+        "kernels_params": ["array-like", None],
+        "precompute_kernels": ["boolean", None],
         "algo": [StrOptions({algo for algo in ALGORITHMS})],
         "epsilon": [Interval(Real, 0.0, None, closed="neither"), None],
         "tol": [Interval(Real, 0.0, None, closed="neither")],
