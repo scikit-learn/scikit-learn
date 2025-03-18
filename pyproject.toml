@@ -126,7 +126,6 @@ exclude = '''
 [tool.ruff]
 # max line length for black
 line-length = 88
-target-version = "py38"
 exclude=[
     ".git",
     "__pycache__",
