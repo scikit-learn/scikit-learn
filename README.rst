@@ -20,8 +20,8 @@
 .. |PyPi| image:: https://img.shields.io/pypi/v/scikit-learn
    :target: https://pypi.org/project/scikit-learn
 
-.. |Black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
-   :target: https://github.com/psf/black
+.. |Ruff| image:: https://img.shields.io/badge/code%20style-ruff-000000.svg
+   :target: https://github.com/astral-sh/ruff
 
 .. |DOI| image:: https://zenodo.org/badge/21369/scikit-learn/scikit-learn.svg
    :target: https://zenodo.org/badge/latestdoi/21369/scikit-learn/scikit-learn
