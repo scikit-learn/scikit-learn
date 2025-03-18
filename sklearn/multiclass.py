@@ -72,8 +72,8 @@ from .utils.validation import (
 )
 
 __all__ = [
-    "OneVsRestClassifier",
     "OneVsOneClassifier",
+    "OneVsRestClassifier",
     "OutputCodeClassifier",
 ]
 
@@ -605,6 +605,7 @@ class OneVsRestClassifier(
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
         tags = super().__sklearn_tags__()
         tags.input_tags.pairwise = get_tags(self.estimator).input_tags.pairwise
+        tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
         return tags
 
     def get_metadata_routing(self):
@@ -1008,6 +1009,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
         tags = super().__sklearn_tags__()
         tags.input_tags.pairwise = get_tags(self.estimator).input_tags.pairwise
+        tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
         return tags
 
     def get_metadata_routing(self):
@@ -1280,3 +1282,8 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
         return router
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
+        return tags

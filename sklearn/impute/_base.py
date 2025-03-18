@@ -739,6 +739,7 @@ class SimpleImputer(_BaseImputer):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.input_tags.allow_nan = is_pandas_na(self.missing_values) or is_scalar_nan(
             self.missing_values
         )
@@ -905,7 +906,8 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             imputer_mask.eliminate_zeros()
 
             if self.features == "missing-only":
-                n_missing = imputer_mask.getnnz(axis=0)
+                # count number of True values in each row.
+                n_missing = imputer_mask.sum(axis=0)
 
             if self.sparse is False:
                 imputer_mask = imputer_mask.toarray()
@@ -1130,5 +1132,6 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         tags = super().__sklearn_tags__()
         tags.input_tags.allow_nan = True
         tags.input_tags.string = True
+        tags.input_tags.sparse = True
         tags.transformer_tags.preserves_dtype = []
         return tags

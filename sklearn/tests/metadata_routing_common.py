@@ -218,9 +218,9 @@ class NonConsumingClassifier(ClassifierMixin, BaseEstimator):
 
     def predict_proba(self, X):
         # dummy probabilities to support predict_proba
-        y_proba = np.empty(shape=(len(X), 2))
-        y_proba[: len(X) // 2, :] = np.asarray([1.0, 0.0])
-        y_proba[len(X) // 2 :, :] = np.asarray([0.0, 1.0])
+        y_proba = np.empty(shape=(len(X), len(self.classes_)), dtype=np.float32)
+        # each row sums up to 1.0:
+        y_proba[:] = np.random.dirichlet(alpha=np.ones(len(self.classes_)), size=len(X))
         return y_proba
 
     def predict_log_proba(self, X):
@@ -298,16 +298,16 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         record_metadata_not_default(
             self, sample_weight=sample_weight, metadata=metadata
         )
-        y_proba = np.empty(shape=(len(X), 2))
-        y_proba[: len(X) // 2, :] = np.asarray([1.0, 0.0])
-        y_proba[len(X) // 2 :, :] = np.asarray([0.0, 1.0])
+        y_proba = np.empty(shape=(len(X), len(self.classes_)), dtype=np.float32)
+        # each row sums up to 1.0:
+        y_proba[:] = np.random.dirichlet(alpha=np.ones(len(self.classes_)), size=len(X))
         return y_proba
 
     def predict_log_proba(self, X, sample_weight="default", metadata="default"):
         record_metadata_not_default(
             self, sample_weight=sample_weight, metadata=metadata
         )
-        return np.zeros(shape=(len(X), 2))
+        return self.predict_proba(X)
 
     def decision_function(self, X, sample_weight="default", metadata="default"):
         record_metadata_not_default(
@@ -323,6 +323,46 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
             self, sample_weight=sample_weight, metadata=metadata
         )
         return 1
+
+
+class ConsumingClassifierWithoutPredictProba(ConsumingClassifier):
+    """ConsumingClassifier without a predict_proba method, but with predict_log_proba.
+
+    Used to mimic dynamic method selection such as in the `_parallel_predict_proba()`
+    function called by `BaggingClassifier`.
+    """
+
+    @property
+    def predict_proba(self):
+        raise AttributeError("This estimator does not support predict_proba")
+
+
+class ConsumingClassifierWithoutPredictLogProba(ConsumingClassifier):
+    """ConsumingClassifier without a predict_log_proba method, but with predict_proba.
+
+    Used to mimic dynamic method selection such as in
+    `BaggingClassifier.predict_log_proba()`.
+    """
+
+    @property
+    def predict_log_proba(self):
+        raise AttributeError("This estimator does not support predict_log_proba")
+
+
+class ConsumingClassifierWithOnlyPredict(ConsumingClassifier):
+    """ConsumingClassifier with only a predict method.
+
+    Used to mimic dynamic method selection such as in
+    `BaggingClassifier.predict_log_proba()`.
+    """
+
+    @property
+    def predict_proba(self):
+        raise AttributeError("This estimator does not support predict_proba")
+
+    @property
+    def predict_log_proba(self):
+        raise AttributeError("This estimator does not support predict_log_proba")
 
 
 class ConsumingTransformer(TransformerMixin, BaseEstimator):

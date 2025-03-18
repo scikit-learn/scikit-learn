@@ -28,11 +28,7 @@ from .isotonic import IsotonicRegression
 from .model_selection import LeaveOneOut, check_cv, cross_val_predict
 from .preprocessing import LabelEncoder, label_binarize
 from .svm import LinearSVC
-from .utils import (
-    _safe_indexing,
-    column_or_1d,
-    indexable,
-)
+from .utils import _safe_indexing, column_or_1d, get_tags, indexable
 from .utils._param_validation import (
     HasMethods,
     Hidden,
@@ -328,9 +324,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         """
         check_classification_targets(y)
         X, y = indexable(X, y)
-        if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X)
-
         estimator = self._get_estimator()
 
         _ensemble = self.ensemble
@@ -343,7 +336,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             warnings.warn(
                 "The `cv='prefit'` option is deprecated in 1.6 and will be removed in"
                 " 1.8. You can use CalibratedClassifierCV(FrozenEstimator(estimator))"
-                " instead."
+                " instead.",
+                category=FutureWarning,
             )
             # `classes_` should be consistent with that of estimator
             check_is_fitted(self.estimator, attributes=["classes_"])
@@ -357,6 +351,13 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             if predictions.ndim == 1:
                 # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
                 predictions = predictions.reshape(-1, 1)
+
+            if sample_weight is not None:
+                # Check that the sample_weight dtype is consistent with the predictions
+                # to avoid unintentional upcasts.
+                sample_weight = _check_sample_weight(
+                    sample_weight, predictions, dtype=predictions.dtype
+                )
 
             calibrated_classifier = _fit_calibrator(
                 estimator,
@@ -458,7 +459,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 if len(self.classes_) == 2:
                     # Ensure shape (n_samples, 1) in the binary case
                     if method_name == "predict_proba":
-                        # Select the probability column of the postive class
+                        # Select the probability column of the positive class
                         predictions = _process_predict_proba(
                             y_pred=predictions,
                             target_type="binary",
@@ -466,6 +467,13 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                             pos_label=self.classes_[1],
                         )
                     predictions = predictions.reshape(-1, 1)
+
+                if sample_weight is not None:
+                    # Check that the sample_weight dtype is consistent with the
+                    # predictions to avoid unintentional upcasts.
+                    sample_weight = _check_sample_weight(
+                        sample_weight, predictions, dtype=predictions.dtype
+                    )
 
                 this_estimator.fit(X, y, **routed_params.estimator.fit)
                 # Note: Here we don't pass on fit_params because the supported
@@ -560,6 +568,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         )
         return router
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = get_tags(self._get_estimator()).input_tags.sparse
+        return tags
+
 
 def _fit_classifier_calibrator_pair(
     estimator,
@@ -627,7 +640,13 @@ def _fit_classifier_calibrator_pair(
         # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
         predictions = predictions.reshape(-1, 1)
 
-    sw_test = None if sample_weight is None else _safe_indexing(sample_weight, test)
+    if sample_weight is not None:
+        # Check that the sample_weight dtype is consistent with the predictions
+        # to avoid unintentional upcasts.
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=predictions.dtype)
+        sw_test = _safe_indexing(sample_weight, test)
+    else:
+        sw_test = None
     calibrated_classifier = _fit_calibrator(
         estimator, predictions, y_test, classes, method, sample_weight=sw_test
     )
@@ -1201,8 +1220,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         strategy="uniform",
         pos_label=None,
         name=None,
-        ref_line=True,
         ax=None,
+        ref_line=True,
         **kwargs,
     ):
         """Plot calibration curve using a binary classifier and data.
@@ -1256,13 +1275,13 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             Name for labeling curve. If `None`, the name of the estimator is
             used.
 
-        ref_line : bool, default=True
-            If `True`, plots a reference line representing a perfectly
-            calibrated classifier.
-
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
             created.
+
+        ref_line : bool, default=True
+            If `True`, plots a reference line representing a perfectly
+            calibrated classifier.
 
         **kwargs : dict
             Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.
@@ -1324,8 +1343,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         strategy="uniform",
         pos_label=None,
         name=None,
-        ref_line=True,
         ax=None,
+        ref_line=True,
         **kwargs,
     ):
         """Plot calibration curve using true labels and predicted probabilities.
@@ -1372,13 +1391,13 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         name : str, default=None
             Name for labeling curve.
 
-        ref_line : bool, default=True
-            If `True`, plots a reference line representing a perfectly
-            calibrated classifier.
-
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
             created.
+
+        ref_line : bool, default=True
+            If `True`, plots a reference line representing a perfectly
+            calibrated classifier.
 
         **kwargs : dict
             Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.

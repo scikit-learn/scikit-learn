@@ -93,15 +93,15 @@ __all__ = [
     "gen_even_slices",
     "get_tags",
     "indexable",
+    "metadata_routing",
+    "murmurhash3_32",
     "parallel_backend",
+    "register_parallel_backend",
     "resample",
     "safe_mask",
     "safe_sqr",
     "shuffle",
     "tosequence",
-    "metadata_routing",
-    "murmurhash3_32",
-    "_safe_indexing",
 ]
 
 

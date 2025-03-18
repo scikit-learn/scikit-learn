@@ -19,8 +19,8 @@ __all__ = [
     "ExtraTreeClassifier",
     "ExtraTreeRegressor",
     "export_graphviz",
-    "plot_tree",
     "export_text",
+    "plot_tree",
 ]
 
 

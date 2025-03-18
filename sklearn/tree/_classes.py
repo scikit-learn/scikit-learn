@@ -358,7 +358,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             )
 
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, DOUBLE)
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=DOUBLE)
 
         if expanded_class_weight is not None:
             if sample_weight is not None:
@@ -689,6 +689,11 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
 
         return self.tree_.compute_feature_importances()
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
 
 
 # =============================================================================

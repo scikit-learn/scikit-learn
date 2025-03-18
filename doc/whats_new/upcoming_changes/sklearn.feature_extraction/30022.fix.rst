@@ -1,3 +1,0 @@
-- :class:`feature_extraction.text.TfidfVectorizer` now correctly preserves the
-  `dtype` of `idf_` based on the input data.
-  By :user:`Guillaume Lemaitre <glemaitre>`

@@ -26,6 +26,7 @@ scipy) with apt-get and the rest of the dependencies (e.g. pytest and joblib)
 with pip.
 
 To run this script you need:
+- conda
 - conda-lock. The version should match the one used in the CI in
   sklearn/_min_dependencies.py
 - pip-tools
@@ -100,9 +101,7 @@ build_metadata_list = [
         "conda_dependencies": common_dependencies
         + [
             "ccache",
-            # Make sure pytorch comes from the pytorch channel and not conda-forge
-            "pytorch::pytorch",
-            "pytorch-cuda",
+            "pytorch-gpu",
             "polars",
             "pyarrow",
             "cupy",
@@ -126,6 +125,7 @@ build_metadata_list = [
             "pyarrow",
             "array-api-compat",
             "array-api-strict",
+            "scipy-doctest",
         ],
         "package_constraints": {
             "blas": "[build=mkl]",
@@ -179,7 +179,7 @@ build_metadata_list = [
         "channels": ["conda-forge"],
         "conda_dependencies": common_dependencies + ["ccache", "polars"],
         "package_constraints": {
-            "python": "3.9",
+            "python": "3.10",
             "blas": "[build=openblas]",
             "numpy": "min",
             "scipy": "min",
@@ -200,12 +200,12 @@ build_metadata_list = [
         "platform": "linux-64",
         "channels": ["conda-forge"],
         "conda_dependencies": (
-            common_dependencies_without_coverage
+            remove_from(common_dependencies_without_coverage, ["matplotlib"])
             + docstring_test_dependencies
             + ["ccache"]
         ),
         "package_constraints": {
-            "python": "3.9",
+            "python": "3.10",
             "blas": "[build=openblas]",
         },
     },
@@ -224,13 +224,9 @@ build_metadata_list = [
             + ["lightgbm", "scikit-image"]
             # Test array API on CPU without PyTorch
             + ["array-api-compat", "array-api-strict"]
+            # doctests dependencies
+            + ["scipy-doctest"]
         ),
-        "package_constraints": {
-            # XXX: we would like to use the latest Python version, but for now using
-            # Python 3.12 makes the CI much slower so we use Python 3.11. See
-            # https://github.com/scikit-learn/scikit-learn/pull/29444#issuecomment-2219550662.
-            "python": "3.11",
-        },
     },
     {
         "name": "pylatest_pip_scipy_dev",
@@ -304,7 +300,7 @@ build_metadata_list = [
             "pip",
         ],
         "package_constraints": {
-            "python": "3.9",
+            "python": "3.10",
             "blas": "[build=mkl]",
         },
     },
@@ -339,7 +335,7 @@ build_metadata_list = [
             "sphinxcontrib-sass",
         ],
         "package_constraints": {
-            "python": "3.9",
+            "python": "3.10",
             "numpy": "min",
             "scipy": "min",
             "matplotlib": "min",
@@ -395,14 +391,14 @@ build_metadata_list = [
             "sphinxcontrib-sass",
         ],
         "package_constraints": {
-            "python": "3.9",
+            "python": "3.10",
         },
     },
     {
-        "name": "pymin_conda_forge",
+        "name": "pymin_conda_forge_arm",
         "type": "conda",
-        "tag": "arm",
-        "folder": "build_tools/cirrus",
+        "tag": "main-ci",
+        "folder": "build_tools/github",
         "platform": "linux-aarch64",
         "channels": ["conda-forge"],
         "conda_dependencies": remove_from(
@@ -410,7 +406,7 @@ build_metadata_list = [
         )
         + ["pip", "ccache"],
         "package_constraints": {
-            "python": "3.9",
+            "python": "3.10",
         },
     },
     {
@@ -647,9 +643,9 @@ def write_pip_lock_file(build_metadata):
 
     json_output = execute_command(["conda", "info", "--json"])
     conda_info = json.loads(json_output)
-    environment_folder = [
+    environment_folder = next(
         each for each in conda_info["envs"] if each.endswith(environment_name)
-    ][0]
+    )
     environment_path = Path(environment_folder)
     pip_compile_path = environment_path / "bin" / "pip-compile"
 

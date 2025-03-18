@@ -365,8 +365,11 @@ _ = display.figure_.suptitle(
 # However, it is worth noting that we are creating potential meaningless
 # synthetic samples if features are correlated.
 #
+# .. _ice-vs-pdp:
+#
 # ICE vs. PDP
 # ~~~~~~~~~~~
+#
 # PDP is an average of the marginal effects of the features. We are averaging the
 # response of all samples of the provided set. Thus, some effects could be hidden. In
 # this regard, it is possible to plot each individual response. This representation is
@@ -539,6 +542,7 @@ _ = display.figure_.suptitle(
 #
 # Let's make the same partial dependence plot for the 2 features interaction,
 # this time in 3 dimensions.
+
 # unused but required import for doing 3d projections with matplotlib < 3.2
 import mpl_toolkits.mplot3d  # noqa: F401
 import numpy as np

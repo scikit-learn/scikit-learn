@@ -4,18 +4,18 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 __all__ = [
-    "NotFittedError",
     "ConvergenceWarning",
     "DataConversionWarning",
     "DataDimensionalityWarning",
     "EfficiencyWarning",
+    "EstimatorCheckFailedWarning",
     "FitFailedWarning",
+    "InconsistentVersionWarning",
+    "NotFittedError",
+    "PositiveSpectrumWarning",
     "SkipTestWarning",
     "UndefinedMetricWarning",
-    "PositiveSpectrumWarning",
     "UnsetMetadataPassedError",
-    "EstimatorCheckFailedWarning",
-    "InconsistentVersionWarning",
 ]
 
 
