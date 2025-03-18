@@ -217,8 +217,7 @@ class SelfTrainingClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         # TODO(1.8) remove
         elif self.estimator is None and self.base_estimator == "deprecated":
             raise ValueError(
-                "You must pass an estimator to SelfTrainingClassifier."
-                " Use `estimator`."
+                "You must pass an estimator to SelfTrainingClassifier. Use `estimator`."
             )
         elif self.estimator is not None and self.base_estimator != "deprecated":
             raise ValueError(
