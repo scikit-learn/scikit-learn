@@ -444,7 +444,11 @@ def _check_partial_fit_first_call(clf, classes=None):
 
     elif classes is not None:
         if getattr(clf, "classes_", None) is not None:
-            if not np.array_equal(clf.classes_, unique_labels(classes)):
+            xp, _ = get_namespace(classes)
+            unique_classes = unique_labels(classes)
+            if clf.classes_.shape != unique_classes.shape or not xp.all(
+                clf.classes_ == unique_classes
+            ):
                 raise ValueError(
                     "`classes=%r` is not the same as on last call "
                     "to partial_fit, was: %r" % (classes, clf.classes_)
