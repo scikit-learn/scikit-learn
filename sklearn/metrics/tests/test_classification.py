@@ -387,7 +387,10 @@ def test_tpr_fpr_tnr_fnr_score_binary_averaged():
     assert_array_almost_equal(tnrs, [0.68, 0.88], 2)
     assert_array_almost_equal(fnrs, [0.12, 0.32], 2)
 
-    tn, fp, fn, tp = assert_no_warnings(confusion_matrix, y_true, y_pred).ravel()
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+
     assert_array_almost_equal(tp / (tp + fn), 0.68, 2)
     assert_array_almost_equal(fp / (tn + fp), 0.12, 2)
     assert_array_almost_equal(tn / (tn + fp), 0.88, 2)
@@ -2715,13 +2718,14 @@ def test_fscore_warnings(zero_division):
 
 @pytest.mark.parametrize("zero_division", ["warn", 0, 1])
 def test_specificity_warnings(zero_division):
-    assert_no_warnings(
-        specificity_score,
-        np.array([[0, 0], [0, 0]]),
-        np.array([[1, 1], [1, 1]]),
-        average="micro",
-        zero_division=zero_division,
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        specificity_score(
+            np.array([[0, 0], [0, 0]]),
+            np.array([[1, 1], [1, 1]]),
+            average="micro",
+            zero_division=zero_division,
+        )
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter("always")
         specificity_score(
@@ -2878,13 +2882,14 @@ def test_npv_multiclass():
 
 @pytest.mark.parametrize("zero_division", ["warn", 0, 1])
 def test_npv_warnings(zero_division):
-    assert_no_warnings(
-        npv_score,
-        np.array([[1, 1], [1, 1]]),
-        np.array([[0, 0], [0, 0]]),
-        average="micro",
-        zero_division=zero_division,
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        npv_score(
+            np.array([[1, 1], [1, 1]]),
+            np.array([[0, 0], [0, 0]]),
+            average="micro",
+            zero_division=zero_division,
+        )
 
     msg = (
         "Npv is ill-defined and being set to 0.0 due to no negative call samples."
