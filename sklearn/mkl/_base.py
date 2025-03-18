@@ -15,13 +15,7 @@ from ..base import (
     TransformerMixin,
     _fit_context,
 )
-from ..metrics.pairwise import (
-    laplacian_kernel,
-    linear_kernel,
-    polynomial_kernel,
-    rbf_kernel,
-    sigmoid_kernel,
-)
+from ..metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.validation import check_array, check_is_fitted, check_X_y
 from ._algo import (
@@ -36,15 +30,6 @@ ALGORITHMS = {
     "average": _average_mkl,
     "simple": _simple_mkl,
     "sum": _sum_mkl,
-}
-
-
-KERNELS = {
-    "laplace": laplacian_kernel,
-    "linear": linear_kernel,
-    "poly": polynomial_kernel,
-    "rbf": rbf_kernel,
-    "sigmoid": sigmoid_kernel,
 }
 
 
@@ -249,12 +234,12 @@ class BaseMKL(BaseEstimator, MetaEstimatorMixin, TransformerMixin, metaclass=ABC
                 if callable(kernel):
                     kernel_list.append(kernel)
                 elif isinstance(kernel, str):
-                    if kernel in KERNELS:
-                        kernel_list.append(KERNELS[kernel])
+                    if kernel in PAIRWISE_KERNEL_FUNCTIONS:
+                        kernel_list.append(PAIRWISE_KERNEL_FUNCTIONS[kernel])
                     else:
                         raise ValueError(
                             f"Invalid kernel '{kernel}'. "
-                            f"Valid kernels are {set(KERNELS)}."
+                            f"Valid kernels are {set(PAIRWISE_KERNEL_FUNCTIONS)}."
                         )
                 else:
                     raise ValueError(
