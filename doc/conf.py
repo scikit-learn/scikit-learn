@@ -502,6 +502,9 @@ redirects = {
     "auto_examples/linear_model/plot_ols_ridge_variance": (
         "auto_examples/linear_model/plot_ols_ridge"
     ),
+    "auto_examples/linear_model/plot_sgd_comparison": (
+        "auto_examples/linear_model/plot_sgd_loss_functions"
+    ),
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
