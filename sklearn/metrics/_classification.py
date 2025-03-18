@@ -51,7 +51,6 @@ from ..utils._param_validation import (
 from ..utils._unique import attach_unique
 from ..utils.extmath import _nanaverage
 from ..utils.multiclass import type_of_target, unique_labels
-from ..utils.sparsefuncs import count_nonzero
 from ..utils.validation import (
     _check_pos_label_consistency,
     _check_sample_weight,
@@ -229,12 +228,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     check_consistent_length(y_true, y_pred, sample_weight)
 
     if y_type.startswith("multilabel"):
-        if _is_numpy_namespace(xp):
-            differing_labels = count_nonzero(y_true - y_pred, axis=1)
-        else:
-            differing_labels = _count_nonzero(
-                y_true - y_pred, xp=xp, device=device, axis=1
-            )
+        differing_labels = _count_nonzero(y_true - y_pred, xp=xp, device=device, axis=1)
         score = xp.asarray(differing_labels == 0, device=device)
     else:
         score = y_true == y_pred
@@ -1051,10 +1045,11 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     cov_ypyp = n_samples**2 - np.dot(p_sum, p_sum)
     cov_ytyt = n_samples**2 - np.dot(t_sum, t_sum)
 
-    if cov_ypyp * cov_ytyt == 0:
+    cov_ypyp_ytyt = cov_ypyp * cov_ytyt
+    if cov_ypyp_ytyt == 0:
         return 0.0
     else:
-        return float(cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp))
+        return float(cov_ytyp / np.sqrt(cov_ypyp_ytyt))
 
 
 @validate_params(
@@ -2997,15 +2992,20 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
 
+    xp, _, device = get_namespace_and_device(y_true, y_pred, sample_weight)
+
     if sample_weight is None:
         weight_average = 1.0
     else:
-        weight_average = np.mean(sample_weight)
+        sample_weight = xp.asarray(sample_weight, device=device)
+        weight_average = _average(sample_weight, xp=xp)
 
     if y_type.startswith("multilabel"):
-        n_differences = count_nonzero(y_true - y_pred, sample_weight=sample_weight)
-        return float(
-            n_differences / (y_true.shape[0] * y_true.shape[1] * weight_average)
+        n_differences = _count_nonzero(
+            y_true - y_pred, xp=xp, device=device, sample_weight=sample_weight
+        )
+        return float(n_differences) / (
+            y_true.shape[0] * y_true.shape[1] * weight_average
         )
 
     elif y_type in ["binary", "multiclass"]:

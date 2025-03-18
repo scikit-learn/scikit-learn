@@ -361,7 +361,7 @@ def test_column_transformer_empty_columns(pandas, column_selection, callable_col
         X = X_array
 
     if callable_column:
-        column = lambda X: column_selection  # noqa
+        column = lambda X: column_selection
     else:
         column = column_selection
 
