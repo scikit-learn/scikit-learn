@@ -795,7 +795,7 @@ class LinearModelLoss:
             #   = sum_{i, m} (X')_{ji} * p_i_k
             #                * (X_{im} * s_k_m - sum_l p_i_l * X_{im} * s_l_m)
             #
-            # See also https://github.com/scikit-learn/scikit-learn/pull/3646#discussion_r17461411  # noqa
+            # See also https://github.com/scikit-learn/scikit-learn/pull/3646#discussion_r17461411
             def hessp(s):
                 s = s.reshape((n_classes, -1), order="F")  # shape = (n_classes, n_dof)
                 if self.fit_intercept:

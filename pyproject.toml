@@ -133,7 +133,7 @@ preview = true
 # This enables us to use the explicit preview rules that we want only
 explicit-preview-rules = true
 # all rules can be found here: https://docs.astral.sh/ruff/rules/
-select = ["E", "F", "W", "I", "CPY001", "RUF"]
+extend-select = ["W", "I", "CPY001", "RUF"]
 ignore=[
     # do not assign a lambda expression, use a def
     "E731",
@@ -153,6 +153,19 @@ ignore=[
     "RUF012",
     "RUF015",
     "RUF021",
+    # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+    "W191",
+    "E111",
+    "E114",
+    "E117",
+    "D206",
+    "D300",
+    "Q000",
+    "Q001",
+    "Q002",
+    "Q003",
+    "COM812",
+    "COM819",
 ]
 
 [tool.ruff.lint.flake8-copyright]

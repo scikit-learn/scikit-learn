@@ -141,7 +141,7 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
         # For simplicity the mock filenames don't contain the filename, i.e.
         # the last part of the data description url after the last /.
         # For example for id_1, data description download url is:
-        # gunzip -c sklearn/datasets/tests/data/openml/id_1/api-v1-jd-1.json.gz | grep '"url" # noqa: E501
+        # gunzip -c sklearn/datasets/tests/data/openml/id_1/api-v1-jd-1.json.gz | grep '"url"
         # "https:\/\/www.openml.org\/data\/v1\/download\/1\/anneal.arff"
         # but the mock filename does not contain anneal.arff and is:
         # sklearn/datasets/tests/data/openml/id_1/data-v1-dl-1.arff.gz.
