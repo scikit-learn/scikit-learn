@@ -138,6 +138,7 @@ class BaseMKL(BaseEstimator, MetaEstimatorMixin, TransformerMixin, metaclass=ABC
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         # TODO: DOC: X : list of kernels matrices (n, n) or array-like of shape (n, m)
+        X = np.asarray(X, dtype=np.float64)
         self.n_kernels_ = number_of_kernels(
             X=X,
             kernels=self.kernels,
@@ -324,7 +325,6 @@ class BaseMKL(BaseEstimator, MetaEstimatorMixin, TransformerMixin, metaclass=ABC
         )
 
     def _check_and_prepare_X_y(self, X, y=None):
-        X = np.asarray(X, dtype=np.float64)
         self._precomputed_kernels = self.precompute_kernels
 
         if self.kernels is None:
