@@ -2325,7 +2325,7 @@ class ExtraTreesRegressor(ForestRegressor):
     and control over-fitting.
 
     This estimator has native support for missing values (NaNs) for
-    `splitter = "random"`. During training, a random threshold will be chosen
+    random splits. During training, a random threshold will be chosen
     to split the non-missing values on. Then the non-missing values will be sent
     to the left and right child based on the randomly selected threshold, while
     the missing values will also be randomly sent to the left or right child.
