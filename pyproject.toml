@@ -83,8 +83,7 @@ tests = [
     "pandas>=1.4.0",
     "pytest>=7.1.2",
     "pytest-cov>=2.9.0",
-    "ruff>=0.11.0",
-    "black>=24.3.0",
+    "ruff>=0.11.2",
     "mypy>=1.15",
     "pyamg>=4.2.1",
     "polars>=0.20.30",
@@ -112,27 +111,7 @@ addopts = [
     "--color=yes",
 ]
 
-[tool.black]
-line-length = 88
-target-version = ['py310', 'py311']
-preview = true
-exclude = '''
-/(
-    \.eggs         # exclude a few common directories in the
-  | \.git          # root of the project
-  | \.mypy_cache
-  | \.vscode
-  | build
-  | dist
-  | doc/_build
-  | doc/auto_examples
-  | sklearn/externals
-  | asv_benchmarks/env
-)/
-'''
-
 [tool.ruff]
-# max line length for black
 line-length = 88
 exclude=[
     ".git",
@@ -156,8 +135,6 @@ explicit-preview-rules = true
 # all rules can be found here: https://docs.astral.sh/ruff/rules/
 select = ["E", "F", "W", "I", "CPY001", "RUF"]
 ignore=[
-    # space before : (needed for how black formats slicing)
-    "E203",
     # do not assign a lambda expression, use a def
     "E731",
     # do not use variables named 'l', 'O', or 'I'
@@ -217,8 +194,6 @@ follow_imports = "skip"
 ignore = [
     # multiple spaces/tab after comma
     'E24',
-    # space before : (needed for how black formats slicing)
-    'E203',
     # line too long
     'E501',
     # do not assign a lambda expression, use a def
