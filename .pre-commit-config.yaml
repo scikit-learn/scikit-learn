@@ -1,3 +1,4 @@
+exclude: '^(.git/|sklearn/externals/|asv_benchmarks/env/)'
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
