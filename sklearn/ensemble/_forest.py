@@ -2329,7 +2329,7 @@ class ExtraTreesRegressor(ForestRegressor):
     to split the non-missing values on. Then the non-missing values will be sent
     to the left and right child based on the randomly selected threshold, while
     the missing values will also be randomly sent to the left or right child.
-    This is repeated for every feature considered at each split.The best split
+    This is repeated for every feature considered at each split. The best split
     among these is chosen.
 
     Read more in the :ref:`User Guide <forest>`.
