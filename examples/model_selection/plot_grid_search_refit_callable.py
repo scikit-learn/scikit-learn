@@ -317,7 +317,7 @@ plt.xticks(n_components)
 plt.ylim((0.85, 1.0))
 
 # # Adjust layout
-# plt.tight_layout()
+plt.tight_layout()
 
 # %%
 # Print the results
