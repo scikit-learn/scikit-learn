@@ -3784,7 +3784,7 @@ def tpr_fpr_tnr_fnr_score(
         fpr = np.average(fpr, weights=weights)
         tnr = np.average(tnr, weights=weights)
         fnr = np.average(fnr, weights=weights)
-    return tpr, fpr, tnr, fnr
+    return float(tpr), float(fpr), float(tnr), float(fnr)
 
 
 def specificity_score(
@@ -4090,4 +4090,4 @@ def npv_score(
         assert average != "binary" or len(NPV) == 1, "Non-binary target."
         NPV = np.average(NPV, weights=weights)
 
-    return NPV
+    return float(NPV)
