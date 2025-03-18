@@ -23,7 +23,7 @@ from ._algo import (
     _simple_mkl,
     _sum_mkl,
 )
-from ._algo._utils import combine_kernels_nonsym
+from ._algo._utils import combine_kernels_nonsym  # type: ignore
 from ._utils import kernel_generator, number_of_kernels
 
 ALGORITHMS = {
