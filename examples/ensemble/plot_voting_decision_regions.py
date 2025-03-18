@@ -31,12 +31,20 @@ predictions.
 # %%
 # We first generate a noisy XOR dataset, which is a binary classification task.
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib.colors import ListedColormap
 
 n_samples = 500
 rng = np.random.default_rng(0)
 feature_names = ["Feature #0", "Feature #1"]
+common_scatter_plot_params = dict(
+    cmap=ListedColormap(["tab:red", "tab:blue"]),
+    edgecolor="white",
+    linewidth=1,
+)
+
 xor = pd.DataFrame(
     np.random.RandomState(0).uniform(low=-1, high=1, size=(n_samples, 2)),
     columns=feature_names,
@@ -48,6 +56,11 @@ target_xor = np.logical_xor(
 
 X = xor[feature_names]
 y = target_xor.astype(np.int32)
+
+fig, ax = plt.subplots()
+ax.scatter(X["Feature #0"], X["Feature #1"], c=y, **common_scatter_plot_params)
+ax.set_title("The XOR dataset")
+plt.show()
 
 # %%
 # We define and fit the models on the whole dataset.
@@ -80,7 +93,11 @@ clf3 = make_pipeline(
 )
 weights = [2, 1, 3]
 eclf = VotingClassifier(
-    estimators=[("constant", clf1), ("periodic", clf2), ("nystroem", clf3)],
+    estimators=[
+        ("constant splines model", clf1),
+        ("periodic splines model", clf2),
+        ("nystroem model", clf3),
+    ],
     voting="soft",
     weights=weights,
 )
@@ -97,9 +114,6 @@ eclf.fit(X, y)
 # or 1.
 
 from itertools import product
-
-import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap
 
 from sklearn.inspection import DecisionBoundaryDisplay
 
@@ -127,9 +141,7 @@ for idx, clf, title in zip(
         X["Feature #0"],
         X["Feature #1"],
         c=y,
-        cmap=ListedColormap(["tab:red", "tab:blue"]),
-        edgecolor="white",
-        linewidth=1,
+        **common_scatter_plot_params,
     )
     axarr[idx[0], idx[1]].set_title(title)
     fig.colorbar(disp.surface_, ax=axarr[idx[0], idx[1]], label="Probability estimate")
@@ -150,10 +162,14 @@ test_sample = pd.DataFrame({"Feature #0": [-0.5], "Feature #1": [1.5]})
 predict_probas = [est.predict_proba(test_sample).ravel() for est in eclf.estimators_]
 for (est_name, _), est_probas in zip(eclf.estimators, predict_probas):
     print(f"{est_name}'s predicted probabilities: {est_probas}")
+
+# %%
 print(
     "Weighted average of soft-predictions: "
     f"{np.dot(weights, predict_probas)/np.sum(weights)}"
 )
+
+# %%
 print(
     "Predicted probability of VotingClassifier: "
     f"{eclf.predict_proba(test_sample).ravel()}"
