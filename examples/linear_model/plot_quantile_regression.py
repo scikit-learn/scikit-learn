@@ -241,9 +241,9 @@ _ = plt.title("Quantiles of asymmetric Pareto distributed target")
 # :class:`~sklearn.linear_model.QuantileRegressor` with `quantile=0.5`
 # minimizes the mean absolute error (MAE) instead.
 #
-# What does it matter? The loss functions specifies what exactly the model is aiming
+# Why does it matter? The loss functions specify what exactly the model is aiming
 # to predict, see
-# :ref:`user guide on the choice of scoring function<which_scoring_function>.
+# :ref:`user guide on the choice of scoring function<which_scoring_function>`.
 # In short, a model minimizing MSE predicts the mean (expectation) and a model
 # minimizing MAE predicts the median.
 #
