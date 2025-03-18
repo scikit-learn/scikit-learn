@@ -3564,7 +3564,7 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
             StrOptions({"binary", "macro", "micro", "samples", "weighted"}),
             None,
         ],
-        "warn_for": : [list, tuple, set],
+        "warn_for": [list, tuple, set],
         "sample_weight": ["array-like", None],
         "zero_division": [
             Options(Real, {0, 1}),
