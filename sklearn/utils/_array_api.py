@@ -471,8 +471,6 @@ _NUMPY_API_WRAPPER_INSTANCE = _NumPyAPIWrapper()
 def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
     """Filter arrays to exclude None and/or specific types.
 
-    Raise ValueError if no arrays are left after filtering.
-
     Sparse arrays are always filtered out.
 
     Parameters
