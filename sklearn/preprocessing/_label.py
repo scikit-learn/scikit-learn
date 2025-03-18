@@ -20,10 +20,10 @@ from ..utils.sparsefuncs import min_max_axis
 from ..utils.validation import _num_samples, check_array, check_is_fitted
 
 __all__ = [
-    "label_binarize",
     "LabelBinarizer",
     "LabelEncoder",
     "MultiLabelBinarizer",
+    "label_binarize",
 ]
 
 
