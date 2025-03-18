@@ -673,7 +673,7 @@ def load_iris(*, return_X_y=False, as_frame=False):
             a pandas Series.
         feature_names: list
             The names of the dataset columns.
-        target_names: list
+        target_names: ndarray of shape (3, )
             The names of target classes.
         frame: DataFrame of shape (150, 5)
             Only present when `as_frame=True`. DataFrame with `data` and
