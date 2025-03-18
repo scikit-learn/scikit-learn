@@ -21,7 +21,7 @@ from ._estimator_html_repr import estimator_html_repr
 # _safe_indexing was included in our public API documentation despite the leading
 # `_` in its name.
 from ._indexing import (
-    _safe_indexing,  # noqa
+    _safe_indexing,
     resample,
     shuffle,
 )
@@ -74,6 +74,7 @@ __all__ = [
     "Tags",
     "TargetTags",
     "TransformerTags",
+    "_safe_indexing",
     "all_estimators",
     "as_float_array",
     "assert_all_finite",

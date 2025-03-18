@@ -1,6 +1,7 @@
 import importlib
 from collections import defaultdict
 from importlib import import_module
+from itertools import chain
 from pathlib import Path
 
 import pytest
@@ -15,7 +16,6 @@ from sklearn.experimental import (  # noqa
 # - A submodule  (This is okay)
 # - Reimported from somewhere else, and is documented there
 # - Importable but not documented
-# - deprecated
 OBJECTS_NOT_IN_API_REFERENCE = {
     "sklearn": [
         "clone",  # reimport: base
@@ -97,7 +97,6 @@ OBJECTS_NOT_IN_API_REFERENCE = {
     ],
     "sklearn.utils": [
         "metadata_routing",  # module
-        "parallel_backend",  # deprecated
         "check_symmetric",  # reimport: utils.validation
         "compute_sample_weight",  # reimport: utils.class_weight
         "default_tags",  # undocumented
@@ -129,18 +128,30 @@ def yield_all_public_apis():
     module_to_public_names = defaultdict(list)
     module_to_public_names.update(OBJECTS_NOT_IN_API_REFERENCE)
 
-    for module_name, info in api_reference.API_REFERENCE.items():
-        for section in info["sections"]:
-            for public_name in section["autosummary"]:
-                if "." in public_name:
-                    assert public_name.count(".") == 1
-                    submodule, public_name = public_name.split(".")
-                    module_to_public_names[f"{module_name}.{submodule}"].append(
-                        public_name
-                    )
-                else:
-                    # Part of the parent module
-                    module_to_public_names[module_name].append(public_name)
+    def yield_public_names_api_reference():
+        for parent_module, info in api_reference.API_REFERENCE.items():
+            for section in info["sections"]:
+                for public_name in section["autosummary"]:
+                    yield parent_module, public_name
+
+    def yield_public_names_deprecated():
+        for modules in api_reference.DEPRECATED_API_REFERENCE.values():
+            for module in modules:
+                yield "sklearn", module
+
+    all_public_names = chain(
+        yield_public_names_api_reference(), yield_public_names_deprecated()
+    )
+    for parent_module, public_name in all_public_names:
+        public_name_split = public_name.split(".")
+        if len(public_name_split) == 1:
+            full_module_name = parent_module
+        else:
+            submodule_joined = ".".join(public_name_split[:-1])
+            full_module_name = f"{parent_module}.{submodule_joined}"
+            public_name = public_name_split[-1]
+
+        module_to_public_names[full_module_name].append(public_name)
 
     for mod_name, public_names in module_to_public_names.items():
         yield mod_name, sorted(public_names)
