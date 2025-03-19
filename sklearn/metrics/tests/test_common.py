@@ -1801,7 +1801,7 @@ def test_metrics_pos_label_error_str(metric, y_pred_threshold, dtype_y_str):
         "pass pos_label explicit"
     )
     err_msg_pos_label_1 = (
-        r"pos_label=1 is not a valid label. It should be one of " r"\['eggs', 'spam'\]"
+        r"pos_label=1 is not a valid label. It should be one of \['eggs', 'spam'\]"
     )
 
     pos_label_default = signature(metric).parameters["pos_label"].default
@@ -1838,10 +1838,10 @@ def check_array_api_metric(
         np.asarray(a_xp)
         np.asarray(b_xp)
         numpy_as_array_works = True
-    except TypeError:
+    except (TypeError, RuntimeError):
         # PyTorch with CUDA device and CuPy raise TypeError consistently.
-        # Exception type may need to be updated in the future for other
-        # libraries.
+        # array-api-strict chose to raise RuntimeError instead. Exception type
+        # may need to be updated in the future for other libraries.
         numpy_as_array_works = False
 
     if numpy_as_array_works:
@@ -2135,6 +2135,11 @@ array_api_metric_checkers = {
         check_array_api_multilabel_classification_metric,
     ],
     zero_one_loss: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
+    hamming_loss: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,

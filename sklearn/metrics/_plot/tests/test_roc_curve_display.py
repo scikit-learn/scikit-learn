@@ -37,7 +37,7 @@ def data_binary(data):
 
 def _check_figure_axes_and_labels(display, pos_label):
     """Check mpl axes and figure defaults are correct."""
-    import matplotlib as mpl  # noqa
+    import matplotlib as mpl
 
     assert isinstance(display.ax_, mpl.axes.Axes)
     assert isinstance(display.figure_, mpl.figure.Figure)
@@ -134,7 +134,7 @@ def test_roc_curve_display_plotting(
     assert display.name_[0] == default_name
     assert display.name == default_name
 
-    import matplotlib as mpl  # noqa
+    import matplotlib as mpl
 
     _check_figure_axes_and_labels(display, pos_label)
     assert isinstance(display.line_, mpl.lines.Line2D)
@@ -267,7 +267,7 @@ def test_roc_curve_display_plotting_from_cv_results(
     fold_names = ["Fold 0", "Fold 1", "Fold 2"]
     assert display.name_ == fold_names
 
-    import matplotlib as mpl  # noqa
+    import matplotlib as mpl
 
     _check_figure_axes_and_labels(display, pos_label)
     for idx, line in enumerate(display.line_):
@@ -302,7 +302,7 @@ def test_roc_curve_from_cv_results_fold_names(pyplot, data_binary, fold_names):
 )
 def test_roc_curve_from_cv_results_line_kwargs(pyplot, data_binary, fold_line_kwargs):
     """Check line kwargs passed correctly in `from_cv_results`."""
-    import matplotlib as mpl  # noqa
+    import matplotlib as mpl
 
     X, y = data_binary
     cv_results = cross_validate(
@@ -325,7 +325,7 @@ def test_roc_curve_from_cv_results_line_kwargs(pyplot, data_binary, fold_line_kw
 
 def _check_chance_level(plot_chance_level, chance_level_kw, display):
     """Check chance level line and line styles correct."""
-    import matplotlib as mpl  # noqa
+    import matplotlib as mpl
 
     if plot_chance_level:
         assert isinstance(display.chance_level_, mpl.lines.Line2D)
@@ -406,7 +406,7 @@ def test_roc_curve_chance_level_line(
             chance_level_kw=chance_level_kw,
         )
 
-    import matplotlib as mpl  # noqa
+    import matplotlib as mpl
 
     assert isinstance(display.line_, mpl.lines.Line2D)
     assert display.line_.get_alpha() == 0.8
@@ -464,7 +464,7 @@ def test_roc_curve_chance_level_line_from_cv_results(
         fold_line_kwargs=fold_line_kwargs,
     )
 
-    import matplotlib as mpl  # noqa
+    import matplotlib as mpl
 
     assert all(isinstance(line, mpl.lines.Line2D) for line in display.line_)
     if fold_line_kwargs:
