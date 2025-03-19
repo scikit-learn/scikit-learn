@@ -7,7 +7,7 @@ Files: sklearn\.libs\*.dll
 Availability: https://learn.microsoft.com/en-us/visualstudio/releases/2015/2015-redistribution-vs
 
 Subject to the License Terms for the software, you may copy and distribute with your
-program any of the files within the followng folder and its subfolders except as noted
+program any of the files within the following folder and its subfolders except as noted
 below. You may not modify these files.
 
 C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\redist
