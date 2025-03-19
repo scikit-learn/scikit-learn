@@ -49,6 +49,7 @@ def test_averaged_and_weighted_percentile():
 
 
 def test_weighted_percentile():
+    """Check `weighted_percentile` on artificial data with obvious median."""
     y = np.empty(102, dtype=np.float64)
     y[:50] = 0
     y[-51:] = 2
@@ -60,26 +61,8 @@ def test_weighted_percentile():
     assert approx(value) == 1
 
 
-@pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
-)
-def test_weighted_percentile_array_api(array_namespace, device, dtype_name):
-    with config_context(array_api_dispatch=True):
-        xp = _array_api_for_tests(array_namespace, device)
-        y_np = np.empty(102, dtype=dtype_name)
-        y_np[:50] = 0
-        y_np[-51:] = 2
-        y_np[-1] = 100000
-        y_np[50] = 1
-        y = xp.asarray(y_np, device=device)
-        sw_np = np.ones(102, dtype=dtype_name)
-        sw = xp.asarray(sw_np, device=device)
-        sw[-1] = 0.0
-        score = _weighted_percentile(y, sw, 50)
-        assert approx(score) == 1
-
-
 def test_weighted_percentile_equal():
+    """Check `weighted_percentile` with all weights equal to 1."""
     y = np.empty(102, dtype=np.float64)
     y.fill(0.0)
     sw = np.ones(102, dtype=np.float64)
@@ -87,22 +70,8 @@ def test_weighted_percentile_equal():
     assert approx(score) == 0
 
 
-"""
-@pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
-)
-def test_weighted_percentile_equal_array_api(array_namespace, device, dtype_name):
-    xp = _array_api_for_tests(array_namespace, device)
-    y = xp.full(102, 0.0, dtype=xp.float64)
-    sw = xp.ones(102, dtype=xp.float64)
-    sw[-1] = 0.0
-    with config_context(array_api_dispatch=True):
-        value = _weighted_percentile(y, sw, 50)
-        assert value == 0
-"""
-
-
 def test_weighted_percentile_zero_weight():
+    """Check `weighted_percentile` with all weights equal to 0."""
     y = np.empty(102, dtype=np.float64)
     y.fill(1.0)
     sw = np.ones(102, dtype=np.float64)
@@ -111,21 +80,12 @@ def test_weighted_percentile_zero_weight():
     assert approx(value) == 1.0
 
 
-"""
-@pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
-)
-def test_weighted_percentile_zero_weight_array_api(array_namespace, device, dtype_name):
-    xp = _array_api_for_tests(array_namespace, device)
-    y = xp.full(102, 1.0, dtype=xp.float64)
-    sw = xp.full(102, 0.0, dtype=xp.float64)
-    with config_context(array_api_dispatch=True):
-        score = _weighted_percentile(y, sw, 50)
-        assert approx(score) == 1.0
-"""
-
-
 def test_weighted_percentile_zero_weight_zero_percentile():
+    """Check `weighted_percentile(percentile_rank=0)` behaves correctly.
+
+    Ensures that (leading)zero-weight observations ignored when `percentile_rank=0`.
+    See #20528 for details.
+    """
     y = np.array([0, 1, 2, 3, 4, 5])
     sw = np.array([0, 0, 1, 1, 1, 0])
     value = _weighted_percentile(y, sw, 0)
@@ -138,67 +98,22 @@ def test_weighted_percentile_zero_weight_zero_percentile():
     assert approx(value) == 4
 
 
-"""
-@pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
-)
-def test_weighted_percentile_zero_weight_zero_percentile_array_api(
-    array_namespace, device, dtype_name
-):
-    xp = _array_api_for_tests(array_namespace, device)
-    y = xp.asarray([0, 1, 2, 3, 4, 5], device=device)
-    sw = xp.asarray([0, 0, 1, 1, 1, 0], device=device)
-
-    with config_context(array_api_dispatch=True):
-        score = _weighted_percentile(y, sw, 0)
-        assert approx(score) == 2
-
-        score = _weighted_percentile(y, sw, 50)
-        assert approx(score) == 3
-
-        score = _weighted_percentile(y, sw, 100)
-        assert approx(score) == 4
-
-"""
-
-
 def test_weighted_median_equal_weights():
-    # Checks that `_weighted_percentile` and `np.median` (both at probability level=0.5
-    # and with `sample_weights` being all 1s) return the same percentiles if the number
-    # of the samples in the data is odd. In this special case, `_weighted_percentile`
-    # always falls on a precise value (not on the next lower value) and is thus equal to
-    # `np.median`.
-    # As discussed in #17370, a similar check with an even number of samples does not
-    # consistently hold, since then the lower of two percentiles might be selected,
-    # while the median might lie in between.
+    """Checks `_weighted_percentile(percentile_rank=50)` is the same as `np.median`.
+
+    `sample_weights` are all 1s and the number of samples is odd.
+    When number of samples is odd, `_weighted_percentile` always falls on a single
+    observation (not between 2 values, in which case the lower value would be taken)
+    and is thus equal to `np.median`.
+    For an even number of samples, this check will not always hold as (note that
+    for some other percentile methods it will always hold). See #17370 for details.
+    """
     rng = np.random.RandomState(0)
     x = rng.randint(10, size=11)
     weights = np.ones(x.shape)
     median = np.median(x)
     w_median = _weighted_percentile(x, weights)
     assert median == approx(w_median)
-
-
-"""
-@pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
-)
-def test_weighted_median_equal_weights_array_api(array_namespace, device, dtype_name):
-    xp = _array_api_for_tests(array_namespace, device)
-    # Checks weighted percentile=0.5 is same as median when weights equal
-    rng = np.random.RandomState(0)
-    # Odd size as _weighted_percentile takes lower weighted percentile
-    x = rng.randint(10, size=11)
-    x = x.astype(dtype_name, copy=False)
-    x = xp.asarray(x, device=device)
-    weights = xp.ones(x.shape, device=device)
-    median = np.median(x)
-
-    with config_context(array_api_dispatch=True):
-        w_median = _weighted_percentile(x, weights)
-        assert median == approx(w_median)
-
-"""
 
 
 def test_weighted_median_integer_weights():
@@ -213,32 +128,6 @@ def test_weighted_median_integer_weights():
     assert median == approx(w_median)
 
 
-"""
-@pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
-)
-def test_weighted_median_integer_weights_array_api(array_namespace, device, dtype_name):
-    with config_context(array_api_dispatch=True):
-        xp = _array_api_for_tests(array_namespace, device)
-        # Checks weighted percentile=0.5 is same as median when manually weight
-        # data
-        rng = np.random.RandomState(0)
-        x = rng.randint(20, size=10)
-        x = x.astype(dtype_name, copy=False)
-        x = xp.asarray(x, device=device)
-        weights = rng.choice(5, size=10)
-        weights = weights.astype(dtype_name, copy=False)
-        weights = xp.asarray(weights, device=device)
-        x_manual = xp.repeat(x, weights)
-
-        median = np.median(x_manual)
-        w_median = _weighted_percentile(x, weights)
-
-        assert median == approx(w_median)
-
-"""
-
-
 def test_weighted_percentile_2d():
     # Check for when array 2D and sample_weight 1D
     rng = np.random.RandomState(0)
@@ -251,7 +140,7 @@ def test_weighted_percentile_2d():
     w_median = _weighted_percentile(x_2d, w1)
     p_axis_0 = [_weighted_percentile(x_2d[:, i], w1) for i in range(x_2d.shape[1])]
     assert_allclose(w_median, p_axis_0)
-    # Check when array and sample_weight boht 2D
+    # Check when array and sample_weight both 2D
     w2 = rng.choice(5, size=10)
     w_2d = np.vstack((w1, w2)).T
 
@@ -265,36 +154,40 @@ def test_weighted_percentile_2d():
 @pytest.mark.parametrize(
     "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
 )
-def test_weighted_percentile_2d_array_api(array_namespace, device, dtype_name):
+@pytest.mark.parametrize(
+    "data, weights, percentile",
+    [
+        # Random 1D array
+        (lambda rng: rng.rand(50), np.ones(50), 50),
+        # Random 1D array and random 1D weights
+        (lambda rng: rng.rand(50), lambda rng: rng.rand(50), 75),
+        # 2D array with 2D weights
+        (lambda rng: rng.rand(20, 3), lambda rng: rng.rand(20, 3), 25),
+        # zero-weights and `rank_percentile=0` (#20528)
+        (np.array([0, 1, 2, 3, 4, 5]), np.array([0, 0, 1, 1, 1, 0]), 0),
+    ],
+)
+def test_weighted_percentile_array_api_consistency(
+    global_random_seed, array_namespace, device, dtype_name, data, weights, percentile
+):
+    """Check `_weighted_percentile` gives results with Array APIs vs numpy arrays."""
     with config_context(array_api_dispatch=True):
         xp = _array_api_for_tests(array_namespace, device)
-        # Check for when array 2D and sample_weight 1D
-        rng = np.random.RandomState(0)
-        x1 = rng.randint(10, size=10)
-        w1 = rng.choice(5, size=10)
-        w1 = w1.astype(dtype_name, copy=False)
-        w1 = xp.asarray(w1, device=device)
 
-        x2 = rng.randint(20, size=10)
-        x_2d = np.vstack((x1, x2)).T
-        x_2d = x_2d.astype(dtype_name, copy=False)
-        x_2d = xp.asarray(x_2d, device=device)
+        rng = np.random.RandomState(global_random_seed)
+        x_np = data(rng) if callable(data) else data
+        weights_np = weights(rng) if callable(weights) else weights
+        x_np = x_np.astype(dtype_name)
+        weights_np = weights_np.astype(dtype_name)
 
-        w_median = _weighted_percentile(x_2d, w1)
-        p_axis_0 = [_weighted_percentile(x_2d[:, i], w1) for i in range(x_2d.shape[1])]
-        assert_allclose(w_median, p_axis_0)
+        x_xp = xp.asarray(x_np, device=device)
+        weights_xp = xp.asarray(weights_np, device=device)
 
-        # Check when array and sample_weight boht 2D
-        w2 = rng.choice(5, size=10)
-        w_2d = np.vstack((w1, w2)).T
-        w_2d = w_2d.astype(dtype_name, copy=False)
-        w_2d = xp.asarray(w_2d, device=device)
+        # Compute percentiles with both array types
+        result_np = _weighted_percentile(x_np, weights_np, percentile)
+        result_xp = _weighted_percentile(x_xp, weights_xp, percentile)
 
-        w_median = _weighted_percentile(x_2d, w_2d)
-        p_axis_0 = [
-            _weighted_percentile(x_2d[:, i], w_2d[:, i]) for i in range(x_2d.shape[1])
-        ]
-        assert_allclose(w_median, p_axis_0)
+        assert_allclose(result_np, result_xp)
 
 
 @pytest.mark.parametrize("sample_weight_ndim", [1, 2])
