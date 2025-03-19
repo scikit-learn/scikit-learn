@@ -201,7 +201,7 @@ exclude = "^sklearn/externals"
 
 [[tool.mypy.overrides]]
 module = ["joblib.*", "sklearn.externals.*"]
-follow_imports = "silent"
+follow_imports = "skip"
 
 [tool.cython-lint]
 # Ignore the same error codes as ruff
