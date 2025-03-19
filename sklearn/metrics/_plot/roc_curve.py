@@ -8,7 +8,6 @@ from ...utils._plotting import (
     _convert_to_list_leaving_none,
     _deprecate_estimator_name,
     _despine,
-    _validate_line_kwargs,
     _validate_style_kwargs,
 )
 from ...utils._response import _get_response_values_binary
@@ -522,8 +521,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         return viz.plot(
             ax=ax,
-            # Should we provide `name` to both `cls` and `plot` or just `cls`?
-            name=name,
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
             despine=despine,
@@ -595,8 +592,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             the CV fold.
 
         fold_line_kwargs : dict or list of dict, default=None
-            Dictionary with keywords passed to the matplotlib's `plot` function
-            to draw the individual ROC curves. If a list is provided, the
+            Keywords arguments to be passed to matplotlib's `plot` function
+            to draw individual ROC curves. If a list is provided, the
             parameters are applied to the ROC curves of each CV fold
             sequentially. If a single dictionary is provided, the same
             parameters are applied to all ROC curves.
@@ -648,7 +645,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             pos_label=pos_label,
             fold_names=fold_names,
         )
-        fold_line_kwargs_ = _validate_line_kwargs(
+        fold_line_kwargs_ = cls._validate_line_kwargs(
             len(cv_results["estimator"]),
             fold_line_kwargs,
             default_line_kwargs={"alpha": 0.5, "linestyle": "--"},
@@ -688,7 +685,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         viz = cls(
             fpr=fpr_all,
             tpr=tpr_all,
-            # Should we provide `name` to both `cls` and `plot` or just `cls`?
             name=fold_names_,
             roc_auc=auc_all,
             pos_label=pos_label,

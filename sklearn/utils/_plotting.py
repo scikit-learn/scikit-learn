@@ -181,7 +181,7 @@ class _BinaryClassifierCurveDisplayMixin:
         if n_curves == 1:
             fold_line_kwargs = [kwargs]
         else:
-            fold_line_kwargs = _validate_line_kwargs(n_curves, fold_line_kwargs)
+            fold_line_kwargs = cls._validate_line_kwargs(n_curves, fold_line_kwargs)
 
         if default_line_kwargs is None:
             default_line_kwargs = {}
@@ -204,6 +204,71 @@ class _BinaryClassifierCurveDisplayMixin:
                 _validate_style_kwargs(default_line_kwargs, fold_line_kwargs[fold_idx])
             )
         return line_kwargs
+
+    # TODO: if useful for non binary displays (e.g.,`LearningCurveDisplay`,
+    # `ValidationCurveDisplay`) amend to function
+    @classmethod
+    def _validate_line_kwargs(
+        cls, n_curves, fold_line_kwargs=None, default_line_kwargs=None
+    ):
+        """Ensure `fold_line_kwargs` length and incorporate default kwargs.
+
+        * If `fold_line_kwargs` is None:
+          * If `default_line_kwargs` is None, list of `n_curves` empty dictionaries
+            is returned.
+          * If `default_line_kwargs` is not None, list of `n_curves` dictionaries
+            of `default_line_kwargs` returned.
+        * If `fold_line_kwargs` is a single dictionary, it is incorporated with
+          `default_line_kwargs` using `_validate_style_kwargs`, and the resulting
+          dictionary is repeated `n_curves` times and returned.
+        * If `fold_line_kwargs` is a list of length `n_curves`, each dict is
+          incorporated with `default_line_kwargs` using `_validate_style_kwargs` and
+          returned as list of `n_curves` dictionaries.
+
+        If `fold_line_kwargs` is a list not of length `n_curves`, an error is raised.
+
+        Parameters
+        ----------
+        n_curves : int
+            Number of curves.
+
+        fold_line_kwargs : dict or list of dict, default=None
+            Keywords arguments to be passed to matplotlib's `plot` function
+            to draw ROC curves.
+
+        default_line_kwargs : dict, default=None
+            Default line kwargs to be used in all curves, unless overridden by
+            `fold_line_kwargs`.
+
+        Returns
+        -------
+        fold_line_kwargs : list of dict
+            List of `n_curves` dictionaries.
+        """
+        if fold_line_kwargs is None and default_line_kwargs is None:
+            fold_line_kwargs = [{}] * n_curves
+        elif fold_line_kwargs is None and default_line_kwargs is not None:
+            fold_line_kwargs = default_line_kwargs
+
+        if isinstance(fold_line_kwargs, Mapping):
+            fold_line_kwargs = [fold_line_kwargs] * n_curves
+        elif len(fold_line_kwargs) != n_curves:
+            raise ValueError(
+                MULTI_PARAM_ERROR_MSG.format(
+                    param="fold_line_kwargs",
+                    len_param=len(fold_line_kwargs),
+                    n_curves=n_curves,
+                )
+            )
+        else:
+            fold_line_kwargs = fold_line_kwargs
+
+        if default_line_kwargs is not None:
+            fold_line_kwargs = [
+                _validate_style_kwargs(default_line_kwargs, single_kwargs)
+                for single_kwargs in fold_line_kwargs
+            ]
+        return fold_line_kwargs
 
 
 def _validate_score_name(score_name, scoring, negate_score):
@@ -324,8 +389,6 @@ def _despine(ax):
 def _deprecate_estimator_name(old, new, version):
     """Deprecate `estimator_name` in favour of `name`."""
     version = parse_version(version)
-    # Not sure if I should hard code this because this wouldn't work if we release
-    # a new major version ?
     version_remove = f"{version.major}.{version.minor + 2}"
     if old != "deprecated":
         if new:
@@ -335,9 +398,9 @@ def _deprecate_estimator_name(old, new, version):
                 f"in {version_remove}."
             )
         warnings.warn(
-            f"'estimator_name' was passed to 'name' as 'estimator_name' is deprecated "
-            f"in {version} and will be removed in {version_remove}. Please use "
-            f"'name' in future.",
+            f"'estimator_name' is deprecated in {version} and will be removed in "
+            f"{version_remove}. The value of 'estimator_name' was passed to 'name'"
+            "but please use 'name' in future.",
             FutureWarning,
         )
         return old
@@ -372,27 +435,3 @@ def _check_param_lengths(required, optional, class_name):
             f"from `{class_name}` initialization (or `plot`) should all be lists of "
             f"the same length. Got: {lengths_formatted}"
         )
-
-
-# Potentially useful for non binary displays `LearningCurveDisplay` and
-# `ValidationCurveDisplay`, so not placed under `_BinaryClassifierCurveDisplayMixin`
-def _validate_line_kwargs(n_curves, fold_line_kwargs=None, default_line_kwargs=None):
-    """Ensure that `fold_names` and `fold_line_kwargs` are of correct length."""
-    if fold_line_kwargs is None and default_line_kwargs is not None:
-        fold_line_kwargs = default_line_kwargs
-    elif fold_line_kwargs is None:
-        fold_line_kwargs = [{}] * n_curves
-    elif isinstance(fold_line_kwargs, Mapping):
-        fold_line_kwargs = [fold_line_kwargs] * n_curves
-    elif len(fold_line_kwargs) != n_curves:
-        raise ValueError(
-            MULTI_PARAM_ERROR_MSG.format(
-                param="fold_line_kwargs",
-                len_param=len(fold_line_kwargs),
-                n_curves=n_curves,
-            )
-        )
-    else:
-        fold_line_kwargs = fold_line_kwargs
-
-    return fold_line_kwargs
