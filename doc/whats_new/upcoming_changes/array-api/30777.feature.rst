@@ -1,5 +1,3 @@
-- :class:`sklearn.gaussian_mixture.GaussianMixture` with
-  `initialization="random"` (TODO double-check which parameters actually are
-  supported, for example kmeans-based initialization will not work for now) now
-  support Array API compatible inputs.
-  By :user:`Stefanie Senger <StefanieSenger>` and :user:`Loïc Estève <lesteve>`
+- :class:`sklearn.gaussian_mixture.GaussianMixture` with `initialization="random"`,
+  `covariance_type="diag"` and `warm_start=False` now supports Array API compatible
+  inputs. By :user:`Stefanie Senger <StefanieSenger>` and :user:`Loïc Estève <lesteve>`

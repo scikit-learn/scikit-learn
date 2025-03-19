@@ -1484,7 +1484,7 @@ def test_gaussian_mixture_all_init_does_not_estimate_gaussian_parameters(
 def test_gaussian_mixture_array_api_compliance(
     array_namespace, device, dtype, global_random_seed
 ):
-    X, y = make_blobs(
+    X, _ = make_blobs(
         n_samples=int(1e3), n_features=2, centers=3, random_state=global_random_seed
     )
     gmm = GaussianMixture(
@@ -1493,19 +1493,28 @@ def test_gaussian_mixture_array_api_compliance(
         random_state=global_random_seed,
         init_params="random",
     )
+
+    gmm_dispatch = copy.deepcopy(gmm)
+
     gmm.fit(X)
-    means_ref = gmm.means_
-    covariances_ref = gmm.covariances_
 
     xp = _array_api_for_tests(array_namespace, device)
     X = xp.asarray(X, device=device)
-    y = xp.asarray(y, device=device)
-    with sklearn.config_context(array_api_dispatch=True):
-        gmm.fit(X)
 
-    # TODO is there an easy way to test device? device can be None or 'cpu' in
-    # the numpy case ...
-    # assert gmm.means_.device == device
-    # assert gmm.covariances_.device == device
-    assert_allclose(means_ref, _convert_to_numpy(gmm.means_, xp=xp))
-    assert_allclose(covariances_ref, _convert_to_numpy(gmm.covariances_, xp=xp))
+    with sklearn.config_context(array_api_dispatch=True):
+        gmm_dispatch.fit(X)
+
+        if array_namespace == "numpy":
+            assert gmm_dispatch.means_.device in ["cpu", None]
+            assert gmm_dispatch.covariances_.device in ["cpu", None]
+        elif array_namespace == "torch":
+            assert gmm_dispatch.means_.device.type == device
+            assert gmm_dispatch.covariances_.device.type == device
+        else:
+            assert gmm_dispatch.means_.device == device
+            assert gmm_dispatch.covariances_.device == device
+
+    assert_allclose(gmm.means_, _convert_to_numpy(gmm_dispatch.means_, xp=xp))
+    assert_allclose(
+        gmm.covariances_, _convert_to_numpy(gmm_dispatch.covariances_, xp=xp)
+    )

@@ -119,7 +119,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             )
             resp[xp.arange(n_samples), label] = 1
         elif self.init_params == "random":
-            xp, _, device = get_namespace_and_device(X)
+            xp, _, device = get_namespace_and_device(X, xp=xp)
             resp = xp.asarray(
                 random_state.uniform(size=(n_samples, self.n_components)),
                 dtype=X.dtype,
