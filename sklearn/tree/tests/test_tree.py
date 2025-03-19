@@ -2826,7 +2826,7 @@ def test_sort_log2_build():
     rng = np.random.default_rng(75)
     some = rng.normal(loc=0.0, scale=10.0, size=10).astype(np.float32)
     feature_values = np.concatenate([some] * 5)
-    samples = np.arange(50)
+    samples = np.arange(50, dtype=np.intp)
     _py_sort(feature_values, samples, 50)
     # fmt: off
     # no black reformatting for this specific array

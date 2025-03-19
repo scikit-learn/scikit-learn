@@ -125,14 +125,14 @@ hyperparameters or in comparing to other models like
     Scoring Rules, Prediction, and Estimation <10.1198/016214506000001437>`
     In: Journal of the American Statistical Association 102 (2007),
     pp. 359– 378.
-    `link to pdf <www.stat.washington.edu/people/raftery/Research/PDF/Gneiting2007jasa.pdf>`_
+    `link to pdf <https://sites.stat.washington.edu/raftery/Research/PDF/Gneiting2007jasa.pdf>`_
 
 .. [Gneiting2009] T. Gneiting. :arxiv:`Making and Evaluating Point Forecasts
     <0912.0902>`
     Journal of the American Statistical Association 106 (2009): 746 - 762.
 
 .. [Gneiting2014] T. Gneiting and M. Katzfuss. :doi:`Probabilistic Forecasting
-    <10.1146/annurev-st atistics-062713-085831>`. In: Annual Review of Statistics and Its Application 1.1 (2014), pp. 125–151.
+    <10.1146/annurev-statistics-062713-085831>`. In: Annual Review of Statistics and Its Application 1.1 (2014), pp. 125–151.
 
 .. [Fissler2022] T. Fissler, C. Lorentzen and M. Mayer. :arxiv:`Model
     Comparison and Calibration Assessment: User Guide for Consistent Scoring

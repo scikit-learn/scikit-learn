@@ -167,7 +167,7 @@ cdef class DensePartitioner:
         self.n_missing = n_missing
 
     cdef inline void next_p(self, intp_t* p_prev, intp_t* p) noexcept nogil:
-        """Compute the next p_prev and p for iteratiing over feature values.
+        """Compute the next p_prev and p for iterating over feature values.
 
         The missing values are not included when iterating through the feature values.
         """
@@ -397,7 +397,7 @@ cdef class SparsePartitioner:
         max_feature_value_out[0] = max_feature_value
 
     cdef inline void next_p(self, intp_t* p_prev, intp_t* p) noexcept nogil:
-        """Compute the next p_prev and p for iteratiing over feature values."""
+        """Compute the next p_prev and p for iterating over feature values."""
         cdef:
             intp_t p_next
             float32_t[::1] feature_values = self.feature_values
