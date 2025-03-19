@@ -2898,23 +2898,29 @@ def test_log_loss_warnings():
 def test_brier_score_loss_binary():
     # Check brier_score_loss function
     y_true = np.array([0, 1, 1, 0, 1, 1])
-    y_pred = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
-    true_score = linalg.norm(y_true - y_pred) ** 2 / len(y_true)
+    y_prob = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
+    true_score = linalg.norm(y_true - y_prob) ** 2 / len(y_true)
 
     assert_almost_equal(brier_score_loss(y_true, y_true), 0.0)
-    assert_almost_equal(brier_score_loss(y_true, y_pred), true_score)
-    assert_almost_equal(brier_score_loss(1.0 + y_true, y_pred), true_score)
-    assert_almost_equal(brier_score_loss(2 * y_true - 1, y_pred), true_score)
+    assert_almost_equal(brier_score_loss(y_true, y_prob), true_score)
+    assert_almost_equal(brier_score_loss(1.0 + y_true, y_prob), true_score)
+    assert_almost_equal(brier_score_loss(2 * y_true - 1, y_prob), true_score)
+
+    # check that using (n_samples, 2) y_prob or y_true gives the same score
+    y_prob_reshaped = np.column_stack((1 - y_prob, y_prob))
+    y_true_reshaped = np.column_stack((1 - y_true, y_true))
+    assert_almost_equal(brier_score_loss(y_true, y_prob_reshaped), true_score)
+    assert_almost_equal(brier_score_loss(y_true_reshaped, y_prob_reshaped), true_score)
 
     # check scale_by_half argument
     assert_almost_equal(
-        brier_score_loss(y_true, y_pred, scale_by_half="auto"), true_score
+        brier_score_loss(y_true, y_prob, scale_by_half="auto"), true_score
     )
     assert_almost_equal(
-        brier_score_loss(y_true, y_pred, scale_by_half=True), true_score
+        brier_score_loss(y_true, y_prob, scale_by_half=True), true_score
     )
     assert_almost_equal(
-        brier_score_loss(y_true, y_pred, scale_by_half=False), 2 * true_score
+        brier_score_loss(y_true, y_prob, scale_by_half=False), 2 * true_score
     )
 
     # calculate correctly when there's only one class in y_true
@@ -2966,43 +2972,43 @@ def test_brier_score_loss_multiclass():
 def test_brier_score_loss_invalid_inputs():
     # binary case
     y_true = np.array([0, 1, 1, 0, 1, 1])
-    y_pred = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
+    y_prob = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
     with pytest.raises(ValueError):
-        # bad length of y_pred
-        brier_score_loss(y_true, y_pred[1:])
+        # bad length of y_prob
+        brier_score_loss(y_true, y_prob[1:])
     with pytest.raises(ValueError):
         # y_pred has value greater than 1
-        brier_score_loss(y_true, y_pred + 1.0)
+        brier_score_loss(y_true, y_prob + 1.0)
     with pytest.raises(ValueError):
         # y_pred has value less than 0
-        brier_score_loss(y_true, y_pred - 1.0)
+        brier_score_loss(y_true, y_prob - 1.0)
 
     # multiclass case
     y_true = np.array([1, 0, 2])
-    y_pred = np.array([[0.2, 0.7, 0.1], [0.6, 0.2, 0.2], [0.6, 0.1, 0.3]])
+    y_prob = np.array([[0.2, 0.7, 0.1], [0.6, 0.2, 0.2], [0.6, 0.1, 0.3]])
     with pytest.raises(ValueError):
         # bad length of y_pred
-        brier_score_loss(y_true, y_pred[1:])
+        brier_score_loss(y_true, y_prob[1:])
     with pytest.raises(ValueError):
         # y_pred has value greater than 1
-        brier_score_loss(y_true, y_pred + 1.0)
+        brier_score_loss(y_true, y_prob + 1.0)
     with pytest.raises(ValueError):
         # y_pred has value less than 0
-        brier_score_loss(y_true, y_pred - 1.0)
+        brier_score_loss(y_true, y_prob - 1.0)
 
-    # raise an error for multiclass y_true and binary y_pred
+    # raise an error for multiclass y_true and binary y_prob
     y_true = np.array([0, 1, 2, 0])
-    y_pred = np.array([0.8, 0.6, 0.4, 0.2])
+    y_prob = np.array([0.8, 0.6, 0.4, 0.2])
     error_message = re.escape(
         "The type of the target inferred from y_true is multiclass "
         "but should be binary according to the shape of y_prob."
     )
     with pytest.raises(ValueError, match=error_message):
-        brier_score_loss(y_true, y_pred)
+        brier_score_loss(y_true, y_prob)
 
     # raise an error for wrong number of classes
     y_true = [0, 1, 2]
-    y_pred = [[1, 0], [0, 1], [0, 1]]
+    y_prob = [[1, 0], [0, 1], [0, 1]]
     error_message = (
         "y_true and y_prob contain different number of "
         "classes: 3 vs 2. Please provide the true "
@@ -3011,10 +3017,10 @@ def test_brier_score_loss_invalid_inputs():
         "y_true: [0 1 2]"
     )
     with pytest.raises(ValueError, match=re.escape(error_message)):
-        brier_score_loss(y_true, y_pred)
+        brier_score_loss(y_true, y_prob)
 
     y_true = ["eggs", "spam", "ham"]
-    y_pred = [[1, 0, 0], [0, 1, 0], [0, 1, 0]]
+    y_prob = [[1, 0, 0], [0, 1, 0], [0, 1, 0]]
     labels = ["eggs", "spam", "ham", "yams"]
     error_message = (
         "The number of classes in labels is different "
@@ -3022,21 +3028,21 @@ def test_brier_score_loss_invalid_inputs():
         "labels: ['eggs' 'ham' 'spam' 'yams']"
     )
     with pytest.raises(ValueError, match=re.escape(error_message)):
-        brier_score_loss(y_true, y_pred, labels=labels)
+        brier_score_loss(y_true, y_prob, labels=labels)
 
     # raise error message when there's only one class in y_true
     y_true = ["eggs"]
-    y_pred = [[0.9, 0.1]]
+    y_prob = [[0.9, 0.1]]
     error_message = (
         "y_true contains only one label (eggs). Please "
         "provide the list of all expected class labels explicitly through the "
         "labels argument."
     )
     with pytest.raises(ValueError, match=re.escape(error_message)):
-        brier_score_loss(y_true, y_pred)
+        brier_score_loss(y_true, y_prob)
 
     # error is fixed when labels is specified
-    assert_almost_equal(brier_score_loss(y_true, y_pred, labels=["eggs", "ham"]), 0.01)
+    assert_almost_equal(brier_score_loss(y_true, y_prob, labels=["eggs", "ham"]), 0.01)
 
 
 def test_brier_score_loss_warnings():
