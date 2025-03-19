@@ -197,11 +197,11 @@ notice-rgx = "\\#\\ Authors:\\ The\\ scikit\\-learn\\ developers\\\r?\\\n\\#\\ S
 [tool.mypy]
 ignore_missing_imports = true
 allow_redefinition = true
-exclude = "sklearn/externals"
+exclude = "^sklearn/externals"
 
 [[tool.mypy.overrides]]
-module = ["joblib.*"]
-follow_imports = "skip"
+module = ["joblib.*", "sklearn.externals.*"]
+follow_imports = "silent"
 
 [tool.cython-lint]
 # Ignore the same error codes as ruff
