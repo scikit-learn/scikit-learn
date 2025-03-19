@@ -41,19 +41,19 @@ if [[ $OSTYPE == *"linux"* ]]; then
     SHA256SUM="39dd112393680356daf701c07f375303aef5de62f06fc80b466b5c3571336014  codecov"
     echo "$SHA256SUM" | shasum -a256 -c
     chmod +x codecov
-    ./codecov upload-coverage -t ${CODECOV_TOKEN} -R $BUILD_REPOSITORY_LOCALPATH -f coverage.xml -Z --verbose
+    ./codecov upload-coverage -t ${CODECOV_TOKEN} -r $BUILD_REPOSITORY_LOCALPATH -f coverage.xml -Z --verbose
     ./codecov do-upload --disable-search --report-type test_results --file $JUNIT_FILE
 elif [[ $OSTYPE == *"darwin"* ]]; then
     curl -Os "$CODECOV_BASE_URL/macos/codecov"
     SHA256SUM="01183f6367c7baff4947cce389eaa511b7a6d938e37ae579b08a86b51f769fd9  codecov"
     echo "$SHA256SUM" | shasum -a256 -c
     chmod +x codecov
-    ./codecov upload-coverage -t ${CODECOV_TOKEN} -R $BUILD_REPOSITORY_LOCALPATH -f coverage.xml -Z --verbose
+    ./codecov upload-coverage -t ${CODECOV_TOKEN} -r $BUILD_REPOSITORY_LOCALPATH -f coverage.xml -Z --verbose
     ./codecov do-upload --disable-search --report-type test_results --file $JUNIT_FILE
 else
     curl -Os "$CODECOV_BASE_URL/windows/codecov.exe"
     SHA256SUM="e54e9520428701a510ef451001db56b56fb17f9b0484a266f184b73dd27b77e7  codecov.exe"
     echo "$SHA256SUM" | sha256sum -c
-    ./codecov.exe upload-coverage -t ${CODECOV_TOKEN} -R $BUILD_REPOSITORY_LOCALPATH -f coverage.xml -Z --verbose
+    ./codecov.exe upload-coverage -t ${CODECOV_TOKEN} -r $BUILD_REPOSITORY_LOCALPATH -f coverage.xml -Z --verbose
     ./codecov.exe do-upload --disable-search --report-type test_results --file $JUNIT_FILE
 fi
