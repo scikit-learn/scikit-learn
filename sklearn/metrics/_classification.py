@@ -3483,33 +3483,12 @@ def brier_score_loss(
     scale_by_half="auto",
     y_prob="deprecated",
 ):
-    """Compute the Brier score loss.
+    r"""Compute the Brier score loss.
 
     The smaller the Brier score loss, the better, hence the naming with "loss".
     The Brier score measures the mean squared difference between the predicted
     probability and the actual outcome. The Brier score is a stricly proper scoring
     rule.
-
-    For :math:`N` observations labeled from :math:`C` possible classes, the Brier
-    score is defined as:
-
-    .. math::
-        \\frac{1}{N}\\sum_{i=1}^{N}\\sum_{c=1}^{C}(y_{ic} - \\hat{p}_{ic})^{2}
-
-    where :math:`y_{ic}` is 1 if observation `i` belongs to class `c`,
-    otherwise 0 and :math:`\\hat{p}_{ic}` is the predicted probability for
-    observation `i` to belong to class `c`.
-    The Brier score then ranges between :math:`[0, 2]`.
-
-    In binary classification tasks the Brier score is usually divided by
-    two and then ranges between :math:`[0, 1]`. It can be alternatively
-    written as:
-
-    .. math::
-        \\frac{1}{N}\\sum_{i=1}^{N}(y_{i} - \\hat{p}_{i})^{2}
-
-    where :math:`y_{i}` is the binary target and :math:`\\hat{p}_{i}`
-    is the predicted probability of the positive class.
 
     Read more in the :ref:`User Guide <brier_score_loss>`.
 
@@ -3519,18 +3498,18 @@ def brier_score_loss(
         True targets.
 
     y_proba : array-like of shape (n_samples,) or (n_samples, n_classes)
-        Predicted probabilities. If `y_pred.shape = (n_samples,)`
+        Predicted probabilities. If `y_proba.shape = (n_samples,)`
         the probabilities provided are assumed to be that of the
-        positive class. If `y_pred.shape = (n_samples, n_classes)`
-        the labels in `y_pred` are assumed to be
-        ordered alphabetically, as done by
+        positive class. If `y_proba.shape = (n_samples, n_classes)`
+        the columns in `y_proba` are assumed to correspond to the
+        labels in alphabetical order, as done by
         :class:`~sklearn.preprocessing.LabelBinarizer`.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     pos_label : int, float, bool or str, default=None
-        Label of the positive class when `y_pred.shape = (n_samples,)`.
+        Label of the positive class when `y_proba.shape = (n_samples,)`.
         If not provided, `pos_label` will be inferred in the
         following manner:
 
@@ -3541,7 +3520,7 @@ def brier_score_loss(
           i.e. `np.unique(y_true)[-1]`.
 
     labels : array-like of shape (n_classes,), default=None
-        Class labels when `y_pred.shape = (n_samples, n_classes)`.
+        Class labels when `y_proba.shape = (n_samples, n_classes)`.
         If not provided, labels will be inferred from `y_true`.
 
         .. versionadded:: 1.7
@@ -3565,6 +3544,30 @@ def brier_score_loss(
     -------
     score : float
         Brier score loss.
+
+    Notes
+    -----
+
+    For :math:`N` observations labeled from :math:`C` possible classes, the Brier
+    score is defined as:
+
+    .. math::
+        \frac{1}{N}\sum_{i=1}^{N}\sum_{c=1}^{C}(y_{ic} - \hat{p}_{ic})^{2}
+
+    where :math:`y_{ic}` is 1 if observation `i` belongs to class `c`,
+    otherwise 0 and :math:`\hat{p}_{ic}` is the predicted probability for
+    observation `i` to belong to class `c`.
+    The Brier score then ranges between :math:`[0, 2]`.
+
+    In binary classification tasks the Brier score is usually divided by
+    two and then ranges between :math:`[0, 1]`. It can be alternatively
+    written as:
+
+    .. math::
+        \frac{1}{N}\sum_{i=1}^{N}(y_{i} - \hat{p}_{i})^{2}
+
+    where :math:`y_{i}` is the binary target and :math:`\hat{p}_{i}`
+    is the predicted probability of the positive class.
 
     References
     ----------
