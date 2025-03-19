@@ -693,7 +693,7 @@ def _check_consistency_items(
     section,
     n_objects,
     descr_regex_pattern="",
-    ignore_types=[],
+    ignore_types=tuple(),
 ):
     """Helper to check docstring consistency of all `items_docs`.
 
@@ -748,7 +748,7 @@ def assert_docstring_consistency(
     include_returns=False,
     exclude_returns=None,
     descr_regex_pattern=None,
-    ignore_types=[],
+    ignore_types=tuple(),
 ):
     r"""Check consistency between docstring parameters/attributes/returns of objects.
 
@@ -797,7 +797,7 @@ def assert_docstring_consistency(
         parameters/attributes/returns. If None, will revert to default behavior
         of comparing descriptions between objects.
 
-    ignore_types : list, default=[]
+    ignore_types : list, default=tuple()
         List of parameter/attribute/return names to exclude from matching type
         between objects.
 
