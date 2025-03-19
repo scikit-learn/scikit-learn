@@ -186,7 +186,7 @@ else:
                 dtype=X.dtype,
                 shape=(M, 1),
             )
-        return res.A.ravel()
+        return res.toarray().ravel()
 
     def _sparse_min_or_max(X, axis, min_or_max):
         if axis is None:
@@ -360,7 +360,7 @@ def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=Fals
 
 # TODO: Remove when Scipy 1.12 is the minimum supported version
 if sp_version < parse_version("1.12"):
-    from ..externals._scipy.sparse.csgraph import laplacian  # type: ignore  # noqa
+    from ..externals._scipy.sparse.csgraph import laplacian  # type: ignore
 else:
     from scipy.sparse.csgraph import laplacian  # type: ignore  # noqa  # pragma: no cover
 

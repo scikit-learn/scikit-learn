@@ -1125,10 +1125,10 @@ def check_array_api_input(
         # now since array-api-strict seems a bit too strict ...
         numpy_asarray_works = xp.__name__ != "array_api_strict"
 
-    except TypeError:
+    except (TypeError, RuntimeError):
         # PyTorch with CUDA device and CuPy raise TypeError consistently.
-        # Exception type may need to be updated in the future for other
-        # libraries.
+        # array-api-strict chose to raise RuntimeError instead. Exception type
+        # may need to be updated in the future for other libraries.
         numpy_asarray_works = False
 
     if numpy_asarray_works:
@@ -2317,7 +2317,7 @@ def check_estimators_empty_data_messages(name, estimator_orig):
     # the following y should be accepted by both classifiers and regressors
     # and ignored by unsupervised models
     y = _enforce_estimator_tags_y(e, np.array([1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]))
-    msg = r"0 feature\(s\) \(shape=\(\d*, 0\)\) while a minimum of \d* " "is required."
+    msg = r"0 feature\(s\) \(shape=\(\d*, 0\)\) while a minimum of \d* is required."
     with raises(ValueError, match=msg):
         e.fit(X_zero_features, y)
 
@@ -4011,7 +4011,7 @@ def check_positive_only_tag_during_fit(name, estimator_orig):
             estimator.fit(X, y)
         except Exception as e:
             err_msg = (
-                f"Estimator {repr(name)} raised {e.__class__.__name__} unexpectedly."
+                f"Estimator {name!r} raised {e.__class__.__name__} unexpectedly."
                 " This happens when passing negative input values as X."
                 " If negative values are not supported for this estimator instance,"
                 " then the tags.input_tags.positive_only tag needs to be set to True."
