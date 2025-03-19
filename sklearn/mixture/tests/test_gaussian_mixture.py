@@ -32,6 +32,7 @@ from sklearn.mixture._gaussian_mixture import (
 )
 from sklearn.utils._array_api import (
     _convert_to_numpy,
+    device,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -1479,10 +1480,10 @@ def test_gaussian_mixture_all_init_does_not_estimate_gaussian_parameters(
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+    "array_namespace, device_, dtype", yield_namespace_device_dtype_combinations()
 )
 def test_gaussian_mixture_array_api_compliance(
-    array_namespace, device, dtype, global_random_seed
+    array_namespace, device_, dtype, global_random_seed
 ):
     X, _ = make_blobs(
         n_samples=int(1e3), n_features=2, centers=3, random_state=global_random_seed
@@ -1498,21 +1499,17 @@ def test_gaussian_mixture_array_api_compliance(
 
     gmm.fit(X)
 
-    xp = _array_api_for_tests(array_namespace, device)
-    X = xp.asarray(X, device=device)
+    xp = _array_api_for_tests(array_namespace, device_)
+    X = xp.asarray(X, device=device_)
 
     with sklearn.config_context(array_api_dispatch=True):
         gmm_dispatch.fit(X)
 
-        if array_namespace == "numpy":
-            assert gmm_dispatch.means_.device in ["cpu", None]
-            assert gmm_dispatch.covariances_.device in ["cpu", None]
-        elif array_namespace == "torch":
-            assert gmm_dispatch.means_.device.type == device
-            assert gmm_dispatch.covariances_.device.type == device
-        else:
-            assert gmm_dispatch.means_.device == device
-            assert gmm_dispatch.covariances_.device == device
+        assert (
+            device(X)
+            == device(gmm_dispatch.means_)
+            == device(gmm_dispatch.covariances_)
+        )
 
     assert_allclose(gmm.means_, _convert_to_numpy(gmm_dispatch.means_, xp=xp))
     assert_allclose(
