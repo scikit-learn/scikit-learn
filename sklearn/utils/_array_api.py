@@ -15,10 +15,10 @@ import scipy.special as special
 
 from .._config import get_config
 from ..externals import array_api_extra as xpx  # noqa: F401
+from ..externals.array_api_compat import numpy as np_compat
 from .fixes import parse_version
 
 _NUMPY_NAMESPACE_NAMES = {"numpy", "sklearn.externals.array_api_compat.numpy"}
-_MIN_NUMPY_VERSION = "1.21"
 
 
 def yield_namespaces(include_numpy_namespaces=True):
@@ -109,14 +109,6 @@ def _check_array_api_dispatch(array_api_dispatch):
     """
     if not array_api_dispatch:
         return
-
-    numpy_version = parse_version(numpy.__version__)
-    if numpy_version < parse_version(_MIN_NUMPY_VERSION):
-        raise ImportError(
-            f"NumPy must be {_MIN_NUMPY_VERSION} or newer (found"
-            f" {numpy.__version__}) to dispatch array using"
-            " the array API specification"
-        )
 
     scipy_version = parse_version(scipy.__version__)
     min_scipy_version = "1.14.0"
@@ -331,156 +323,6 @@ def _accept_device_cpu(func):
         return func(*args, **kwargs)
 
     return wrapped_func
-
-
-class _NumPyAPIWrapper:
-    """Compatability wrapper for old NumPy versions
-    This is only needed for versions of NumPy which are
-    unsupported by array-api-compat.
-    """
-
-    # if scikit-learn drops NumPy versions in sync with array-api-compat,
-    # this wrapper is not needed.
-
-    # Creation functions in spec:
-    # https://data-apis.org/array-api/latest/API_specification/creation_functions.html
-    _CREATION_FUNCS = {
-        "arange",
-        "empty",
-        "empty_like",
-        "eye",
-        "full",
-        "full_like",
-        "linspace",
-        "ones",
-        "ones_like",
-        "zeros",
-        "zeros_like",
-    }
-    # Data types in spec
-    # https://data-apis.org/array-api/latest/API_specification/data_types.html
-    _DTYPES = {
-        "int8",
-        "int16",
-        "int32",
-        "int64",
-        "uint8",
-        "uint16",
-        "uint32",
-        "uint64",
-        # XXX: float16 is not part of the Array API spec but exposed by
-        # some namespaces.
-        "float16",
-        "float32",
-        "float64",
-        "complex64",
-        "complex128",
-    }
-
-    def __getattr__(self, name):
-        attr = getattr(numpy, name)
-
-        # Support device kwargs and make sure they are on the CPU
-        if name in self._CREATION_FUNCS:
-            return _accept_device_cpu(attr)
-
-        # Convert to dtype objects
-        if name in self._DTYPES:
-            return numpy.dtype(attr)
-        return attr
-
-    @property
-    def bool(self):
-        return numpy.bool_
-
-    def astype(self, x, dtype, *, copy=True, casting="unsafe"):
-        # astype is not defined in the top level NumPy namespace
-        return x.astype(dtype, copy=copy, casting=casting)
-
-    def asarray(self, x, *, dtype=None, device=None, copy=None):
-        _check_device_cpu(device)
-        # Support copy in NumPy namespace
-        if copy is True:
-            return numpy.array(x, copy=True, dtype=dtype)
-        else:
-            return numpy.asarray(x, dtype=dtype)
-
-    def unique_inverse(self, x):
-        return numpy.unique(x, return_inverse=True)
-
-    def unique_counts(self, x):
-        return numpy.unique(x, return_counts=True)
-
-    def unique_values(self, x):
-        return numpy.unique(x)
-
-    def unique_all(self, x):
-        return numpy.unique(
-            x, return_index=True, return_inverse=True, return_counts=True
-        )
-
-    def concat(self, arrays, *, axis=None):
-        return numpy.concatenate(arrays, axis=axis)
-
-    def reshape(self, x, shape, *, copy=None):
-        """Gives a new shape to an array without changing its data.
-        The Array API specification requires shape to be a tuple.
-        https://data-apis.org/array-api/latest/API_specification/generated/array_api.reshape.html
-        """
-        if not isinstance(shape, tuple):
-            raise TypeError(
-                f"shape must be a tuple, got {shape!r} of type {type(shape)}"
-            )
-
-        if copy is True:
-            x = x.copy()
-        return numpy.reshape(x, shape)
-
-    def isdtype(self, dtype, kind):
-        try:
-            return isdtype(dtype, kind, xp=self)
-        except TypeError:
-            # In older versions of numpy, data types that arise from outside
-            # numpy like from a Polars Series raise a TypeError.
-            # e.g. TypeError: Cannot interpret 'Int64' as a data type.
-            # Therefore, we return False.
-            # TODO: Remove when minimum supported version of numpy is >= 1.21.
-            return False
-
-    def pow(self, x1, x2):
-        return numpy.power(x1, x2)
-
-    # from array-api-compat
-    def argsort(self, x, axis=-1, descending=False, stable=True, **kwargs):
-        if stable:
-            kwargs["kind"] = "stable"
-        if not descending:
-            res = numpy.argsort(x, axis=axis, **kwargs)
-        else:
-            # As NumPy has no native descending sort, we imitate it here. Note that
-            # simply flipping the results of numpy.argsort(x, ...) would not
-            # respect the relative order like it would in native descending sorts.
-            res = numpy.flip(
-                numpy.argsort(numpy.flip(x, axis=axis), axis=axis, **kwargs),
-                axis=axis,
-            )
-            # Rely on flip()/argsort() to validate axis
-            normalised_axis = axis if axis >= 0 else x.ndim + axis
-            max_i = x.shape[normalised_axis] - 1
-            res = max_i - res
-        return res
-
-
-_NUMPY_API_WRAPPER_INSTANCE = _NumPyAPIWrapper()
-
-
-numpy_version = parse_version(numpy.__version__)
-if numpy_version < parse_version(_MIN_NUMPY_VERSION):
-    np_compat = _NUMPY_API_WRAPPER_INSTANCE
-else:
-    from ..externals.array_api_compat import (  # type: ignore[assignment,no-redef]
-        numpy as np_compat,
-    )
 
 
 def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
