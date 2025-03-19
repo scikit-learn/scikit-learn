@@ -234,7 +234,7 @@ class DecisionBoundaryDisplay:
                         cmap = "gist_rainbow"
 
                 # Special case for the tab10 and tab20 colormaps that encode a
-                # discret set of colors that are easily distinguishable
+                # discrete set of colors that are easily distinguishable
                 # contrary to other colormaps that are continuous.
                 if cmap == "tab10" and n_responses <= 10:
                     colors = plt.get_cmap("tab10", 10).colors[:n_responses]
