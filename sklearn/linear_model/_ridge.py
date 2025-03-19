@@ -5,7 +5,6 @@ Ridge regression
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 import numbers
 import warnings
 from abc import ABCMeta, abstractmethod
@@ -325,8 +324,18 @@ def _solve_lbfgs(
         "jac": True,
         "options": options,
     }
-    if positive:
-        config["bounds"] = [(0, np.inf)] * n_features
+
+    if isinstance(positive, bool):
+        if positive:
+            config["bounds"] = [(0, np.inf)] * n_features
+    elif isinstance(positive, list):
+        if len(positive) != n_features:
+            raise ValueError(
+                "Length of 'positive' list must be equal to the number of features"
+            )
+        config["bounds"] = [(0, np.inf) if p else (None, None) for p in positive]
+    else:
+        raise ValueError("'positive' must be either a boolean or a list of booleans")
 
     if X_offset is not None and X_scale is not None:
         X_offset_scale = X_offset / X_scale
@@ -392,7 +401,7 @@ def _get_valid_accept_sparse(is_X_sparse, solver):
         "max_iter": [Interval(Integral, 0, None, closed="left"), None],
         "tol": [Interval(Real, 0, None, closed="left")],
         "verbose": ["verbose"],
-        "positive": ["boolean"],
+        "positive": ["boolean", "array-like"],
         "random_state": ["random_state"],
         "return_n_iter": ["boolean"],
         "return_intercept": ["boolean"],
@@ -622,7 +631,16 @@ def _ridge_regression(
 
     has_sw = sample_weight is not None
 
-    solver = resolve_solver(solver, positive, return_intercept, X_is_sparse, xp)
+    if isinstance(positive, bool):
+        _positive = positive
+    elif isinstance(positive, list):
+        if len(positive) != X.shape[1]:
+            raise ValueError(
+                "Length of 'positive' list must be equal to the number of features"
+            )
+        _positive = True
+
+    solver = resolve_solver(solver, _positive, return_intercept, X_is_sparse, xp)
 
     if is_numpy_namespace and not X_is_sparse:
         X = np.asarray(X)
@@ -633,14 +651,14 @@ def _ridge_regression(
             f"solver 'svd'. Got '{solver}'."
         )
 
-    if positive and solver != "lbfgs":
+    if _positive and solver != "lbfgs":
         raise ValueError(
             "When positive=True, only 'lbfgs' solver can be used. "
             f"Please change solver {solver} to 'lbfgs' "
             "or set positive=False."
         )
 
-    if solver == "lbfgs" and not positive:
+    if solver == "lbfgs" and not _positive:
         raise ValueError(
             "'lbfgs' solver can be used only when positive=True. "
             "Please use another solver."
@@ -882,7 +900,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 {"auto", "svd", "cholesky", "lsqr", "sparse_cg", "sag", "saga", "lbfgs"}
             )
         ],
-        "positive": ["boolean"],
+        "positive": ["boolean", "array-like"],
         "random_state": ["random_state"],
     }
 
