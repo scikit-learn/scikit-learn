@@ -130,13 +130,17 @@ and tasks.
 
 **Time series and forecasting**
 
+- `aeon <https://github.com/aeon-toolkit/aeon>`_ A
+  scikit-learn compatible toolbox for machine learning with time series
+  (fork of `sktime`_).
+
 - `Darts <https://unit8co.github.io/darts/>`_ Darts is a Python library for
   user-friendly forecasting and anomaly detection on time series. It contains a variety
   of models, from classics such as ARIMA to deep neural networks. The forecasting
   models can all be used in the same way, using fit() and predict() functions, similar
   to scikit-learn.
 
-- `sktime <https://github.com/alan-turing-institute/sktime>`_ A scikit-learn compatible
+- `sktime <https://github.com/sktime/sktime>`_ A scikit-learn compatible
   toolbox for machine learning with time series including time series
   classification/regression and (supervised/panel) forecasting.
 
