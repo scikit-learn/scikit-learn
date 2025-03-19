@@ -41,27 +41,27 @@ enhance the functionality of scikit-learn's estimators.
   machine learning.
 
 - `EvalML <https://github.com/alteryx/evalml>`_
-  EvalML is an AutoML library which builds, optimizes, and evaluates
+  An AutoML library which builds, optimizes, and evaluates
   machine learning pipelines using domain-specific objective functions.
   It incorporates multiple modeling libraries under one API, and
   the objects that EvalML creates use an sklearn-compatible API.
 
 - `MLJAR AutoML <https://github.com/mljar/mljar-supervised>`_
-  Python package for AutoML on Tabular Data with Feature Engineering,
+  A Python package for AutoML on Tabular Data with Feature Engineering,
   Hyper-Parameters Tuning, Explanations and Automatic Documentation.
 
 **Experimentation and model registry frameworks**
 
-- `MLFlow <https://mlflow.org/>`_ MLflow is an open source platform to manage the ML
+- `MLFlow <https://mlflow.org/>`_ An open source platform to manage the ML
   lifecycle, including experimentation, reproducibility, deployment, and a central
   model registry.
 
-- `Neptune <https://neptune.ai/>`_ Metadata store for MLOps,
+- `Neptune <https://neptune.ai/>`_ A metadata store for MLOps,
   built for teams that run a lot of experiments. It gives you a single
   place to log, store, display, organize, compare, and query all your
   model building metadata.
 
-- `Sacred <https://github.com/IDSIA/Sacred>`_ Tool to help you configure,
+- `Sacred <https://github.com/IDSIA/Sacred>`_ A tool to help you configure,
   organize, log and reproduce experiments
 
 - `Scikit-Learn Laboratory
@@ -71,7 +71,7 @@ enhance the functionality of scikit-learn's estimators.
 
 **Model inspection and visualization**
 
-- `dtreeviz <https://github.com/parrt/dtreeviz/>`_ A python library for
+- `dtreeviz <https://github.com/parrt/dtreeviz/>`_ A Python library for
   decision tree visualization and model interpretation.
 
 - `yellowbrick <https://github.com/DistrictDataLabs/yellowbrick>`_ A suite of
@@ -116,7 +116,7 @@ enhance the functionality of scikit-learn's estimators.
 
 - `BiocSklearn <https://bioconductor.org/packages/BiocSklearn>`_
   Exposes a small number of dimension reduction facilities as an illustration
-  of the basilisk protocol for interfacing python with R. Intended as a
+  of the basilisk protocol for interfacing Python with R. Intended as a
   springboard for more complete interop.
 
 
@@ -134,7 +134,7 @@ and tasks.
   scikit-learn compatible toolbox for machine learning with time series
   (fork of `sktime`_).
 
-- `Darts <https://unit8co.github.io/darts/>`_ Darts is a Python library for
+- `Darts <https://unit8co.github.io/darts/>`_ A Python library for
   user-friendly forecasting and anomaly detection on time series. It contains a variety
   of models, from classics such as ARIMA to deep neural networks. The forecasting
   models can all be used in the same way, using fit() and predict() functions, similar
@@ -144,7 +144,7 @@ and tasks.
   toolbox for machine learning with time series including time series
   classification/regression and (supervised/panel) forecasting.
 
-- `skforecast <https://github.com/JoaquinAmatRodrigo/skforecast>`_ A python library
+- `skforecast <https://github.com/JoaquinAmatRodrigo/skforecast>`_ A Python library
   that eases using scikit-learn regressors as multi-step forecasters. It also works
   with any regressor compatible with the scikit-learn API.
 
@@ -276,7 +276,7 @@ Other packages useful for data analysis and machine learning.
 - `PyMC <https://www.pymc.io/>`_ Bayesian statistical models and
   fitting algorithms.
 
-- `Seaborn <https://stanford.edu/~mwaskom/software/seaborn/>`_ Visualization library based on
+- `Seaborn <https://stanford.edu/~mwaskom/software/seaborn/>`_ A visualization library based on
   matplotlib. It provides a high-level interface for drawing attractive statistical graphics.
 
 - `scikit-survival <https://scikit-survival.readthedocs.io/>`_ A library implementing
@@ -301,7 +301,7 @@ Domain specific packages
 - `scikit-network <https://scikit-network.readthedocs.io/>`_ Machine learning on graphs.
 
 - `scikit-image <https://scikit-image.org/>`_ Image processing and computer
-  vision in python.
+  vision in Python.
 
 - `Natural language toolkit (nltk) <https://www.nltk.org/>`_ Natural language
   processing and some machine learning.
