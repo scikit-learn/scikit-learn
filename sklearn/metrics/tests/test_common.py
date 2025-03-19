@@ -645,6 +645,9 @@ def test_not_symmetric_metric(name):
     random_state = check_random_state(0)
     metric = ALL_METRICS[name]
 
+    # The metric can be accidentally symmetric on a random draw.
+    # We run several random draws to check that at least of them
+    # gives an asymmetric result.
     always_symmetric = True
     for _ in range(5):
         y_true = random_state.randint(0, 2, size=(20,))
@@ -659,8 +662,24 @@ def test_not_symmetric_metric(name):
             always_symmetric = False
             break
 
-    if always_symmetric:  # pragma: no cover
+    if always_symmetric:
         raise ValueError(f"{name} seems to be symmetric")
+
+
+def test_symmetry_tests():
+    # check test_symmetric_metric and test_not_symmetric_metric
+    sym = "accuracy_score"
+    not_sym = "recall_score"
+    # test_symmetric_metric passes on a symmetric metric
+    # but fails on a not symmetric metric
+    test_symmetric_metric(sym)
+    with pytest.raises(AssertionError, match=f"{not_sym} is not symmetric"):
+        test_symmetric_metric(not_sym)
+    # test_not_symmetric_metric passes on a not symmetric metric
+    # but fails on a symmetric metric
+    test_not_symmetric_metric(not_sym)
+    with pytest.raises(ValueError, match=f"{sym} seems to be symmetric"):
+        test_not_symmetric_metric(sym)
 
 
 @pytest.mark.parametrize(
