@@ -27,9 +27,9 @@ packaging==24.2
     #   pytest
 pluggy==1.5.0
     # via pytest
-pyproject-metadata==0.9.0
+pyproject-metadata==0.9.1
     # via meson-python
-pytest==8.3.4
+pytest==8.3.5
     # via
     #   -r build_tools/azure/ubuntu_atlas_requirements.txt
     #   pytest-xdist
