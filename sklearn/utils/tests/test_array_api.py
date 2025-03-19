@@ -3,6 +3,7 @@ from functools import partial
 
 import numpy
 import pytest
+import scipy
 from numpy.testing import assert_allclose
 
 from sklearn._config import config_context
@@ -17,6 +18,7 @@ from sklearn.utils._array_api import (
     _fill_or_add_to_diagonal,
     _is_numpy_namespace,
     _isin,
+    _logsumexp,
     _max_precision_float_dtype,
     _nanmax,
     _nanmean,
@@ -635,3 +637,29 @@ def test_sparse_device(csr_container, dispatch):
             assert get_namespace_and_device(a, numpy.array([1]))[2] is None
     except ImportError:
         raise SkipTest("array_api_compat is not installed")
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize("axis", [0, 1, None])
+def test_logsumexp_like_scipy_logsumexp(array_namespace, device_, dtype_name, axis):
+    xp = _array_api_for_tests(array_namespace, device_)
+    array_np = numpy.asarray(
+        [
+            [0, 3, 1000],
+            [2, -1, 1000],
+            [numpy.inf, 0, 0],
+            [numpy.nan, 8, -numpy.inf],
+            [4, 0, 5],
+        ],
+        dtype=dtype_name,
+    )
+    array_xp = xp.asarray(array_np, device=device_)
+
+    res_np = scipy.special.logsumexp(array_np, axis=axis)
+
+    with config_context(array_api_dispatch=True):
+        res_xp = _logsumexp(array_xp, axis=axis)
+        res_xp = _convert_to_numpy(res_xp, xp)
+        assert_array_equal(res_np, res_xp)
