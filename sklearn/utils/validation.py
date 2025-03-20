@@ -988,7 +988,7 @@ def check_array(
     # When all dataframe columns are sparse, convert to a sparse array
     if hasattr(array, "sparse") and array.ndim > 1:
         with suppress(ImportError):
-            from pandas import SparseDtype  # noqa: F811
+            from pandas import SparseDtype
 
             def is_sparse(dtype):
                 return isinstance(dtype, SparseDtype)
@@ -1916,7 +1916,7 @@ def check_scalar(
     expected_include_boundaries = ("left", "right", "both", "neither")
     if include_boundaries not in expected_include_boundaries:
         raise ValueError(
-            f"Unknown value for `include_boundaries`: {repr(include_boundaries)}. "
+            f"Unknown value for `include_boundaries`: {include_boundaries!r}. "
             f"Possible values are: {expected_include_boundaries}."
         )
 
@@ -2315,10 +2315,8 @@ def _check_method_params(X, params, indices=None):
     method_params_validated = {}
     for param_key, param_value in params.items():
         if (
-            not _is_arraylike(param_value)
-            and not sp.issparse(param_value)
-            or _num_samples(param_value) != _num_samples(X)
-        ):
+            not _is_arraylike(param_value) and not sp.issparse(param_value)
+        ) or _num_samples(param_value) != _num_samples(X):
             # Non-indexable pass-through (for now for backward-compatibility).
             # https://github.com/scikit-learn/scikit-learn/issues/15805
             method_params_validated[param_key] = param_value
@@ -2927,7 +2925,7 @@ def validate_data(
         )
 
     no_val_X = isinstance(X, str) and X == "no_validation"
-    no_val_y = y is None or isinstance(y, str) and y == "no_validation"
+    no_val_y = y is None or (isinstance(y, str) and y == "no_validation")
 
     if no_val_X and no_val_y:
         raise ValueError("Validation should be done on X, y or both.")

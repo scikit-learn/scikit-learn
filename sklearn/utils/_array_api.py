@@ -85,7 +85,7 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
 
         elif array_namespace == "array_api_strict":
             try:
-                import array_api_strict  # noqa
+                import array_api_strict
 
                 yield array_namespace, array_api_strict.Device("CPU_DEVICE"), "float64"
                 yield array_namespace, array_api_strict.Device("device1"), "float32"
@@ -196,8 +196,7 @@ def device(*array_list, remove_none=True, remove_types=(str,)):
         device_other = _single_array_device(array)
         if device_ != device_other:
             raise ValueError(
-                f"Input arrays use different devices: {str(device_)}, "
-                f"{str(device_other)}"
+                f"Input arrays use different devices: {device_}, {device_other}"
             )
 
     return device_
@@ -325,7 +324,7 @@ def ensure_common_namespace_device(reference, *arrays):
         return arrays
 
 
-def _check_device_cpu(device):  # noqa
+def _check_device_cpu(device):
     if device not in {"cpu", None}:
         raise ValueError(f"Unsupported device for NumPy: {device!r}")
 
@@ -411,7 +410,7 @@ class _NumPyAPIWrapper:
         # astype is not defined in the top level NumPy namespace
         return x.astype(dtype, copy=copy, casting=casting)
 
-    def asarray(self, x, *, dtype=None, device=None, copy=None):  # noqa
+    def asarray(self, x, *, dtype=None, device=None, copy=None):
         _check_device_cpu(device)
         # Support copy in NumPy namespace
         if copy is True:
@@ -471,8 +470,6 @@ _NUMPY_API_WRAPPER_INSTANCE = _NumPyAPIWrapper()
 
 def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
     """Filter arrays to exclude None and/or specific types.
-
-    Raise ValueError if no arrays are left after filtering.
 
     Sparse arrays are always filtered out.
 

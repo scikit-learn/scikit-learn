@@ -165,7 +165,7 @@ WEIGHTS = ["uniform", "distance", _weight_func]
     ],
 )
 @pytest.mark.parametrize("query_is_train", [False, True])
-@pytest.mark.parametrize("metric", COMMON_VALID_METRICS + DISTANCE_METRIC_OBJS)  # type: ignore # noqa
+@pytest.mark.parametrize("metric", COMMON_VALID_METRICS + DISTANCE_METRIC_OBJS)  # type: ignore
 def test_unsupervised_kneighbors(
     global_dtype,
     n_samples,
@@ -250,7 +250,7 @@ def test_unsupervised_kneighbors(
         (1000, 5, 100),
     ],
 )
-@pytest.mark.parametrize("metric", COMMON_VALID_METRICS + DISTANCE_METRIC_OBJS)  # type: ignore # noqa
+@pytest.mark.parametrize("metric", COMMON_VALID_METRICS + DISTANCE_METRIC_OBJS)  # type: ignore
 @pytest.mark.parametrize("n_neighbors, radius", [(1, 100), (50, 500), (100, 1000)])
 @pytest.mark.parametrize(
     "NeighborsMixinSubclass",
