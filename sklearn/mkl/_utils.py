@@ -2,12 +2,18 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 
-def number_of_kernels(X, kernels, kernels_scope, kernels_params, precomputed_kernels):
+def number_of_kernels(
+    X,
+    kernels,
+    kernels_scopes,
+    kernels_param_grids,
+    precomputed_kernels,
+):
     if precomputed_kernels or kernels is None:
         return len(X)
 
     number = 0
-    for scope, params in zip(kernels_scope, kernels_params):
+    for scope, params in zip(kernels_scopes, kernels_param_grids):
         for _ in range(len(params[next(iter(params))]) if len(params) > 0 else 1):
             if scope == "all":
                 number += 1
@@ -20,8 +26,8 @@ def number_of_kernels(X, kernels, kernels_scope, kernels_params, precomputed_ker
 def kernel_generator(
     X,
     kernels,
-    kernels_scope,
-    kernels_params,
+    kernels_scopes,
+    kernels_param_grids,
     precomputed_kernels,
     Y=None,
 ):
@@ -31,7 +37,7 @@ def kernel_generator(
     else:
         if Y is None:
             Y = X
-        for kernel, scope, params in zip(kernels, kernels_scope, kernels_params):
+        for kernel, scope, params in zip(kernels, kernels_scopes, kernels_param_grids):
             for i in range(len(params[next(iter(params))]) if len(params) > 0 else 1):
                 if scope == "all":
                     yield kernel(X, Y, **{k: v[i] for k, v in params.items()})

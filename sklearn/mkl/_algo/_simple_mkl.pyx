@@ -12,24 +12,24 @@ def learn(
     object y,
     object svm,
     object kernels,
-    object kernels_scope,
-    object kernels_params,
+    object kernels_scopes,
+    object kernels_param_grids,
     const bint precomputed_kernels,
     const intp_t n_kernels,
     const intp_t n_samples,
-    const double epsilon,
-    const double tol=1e-8,
+    const double tol,
+    const double numeric_tol=1e-8,
     const int verbose=0,
     const int max_iter=-1,
 ):
+    classes = np.unique(y) if svm.__class__.__name__ == "SVC" else np.empty(0)
+
     cdef intp_t mu, M = n_kernels
     cdef double J, J_dagger, J_prev, gamma_max = 0.0, stopping_crit, \
         goldensearch_precision = 1e-1, max_goldensearch_precision = 1e-8
     cdef bint stopping_cond
 
     cdef str svm_name = svm.__class__.__name__
-    cdef int64_t[::1] classes = np.unique(y) if svm_name == "SVC" else \
-        np.empty(0, dtype=np.int64)
     cdef int n_classes = classes.shape[0]
     cdef int svm_type = BINARY if svm_name == "SVC" and n_classes == 2 else \
         MULTICLASS if svm_name == "SVC" else \
@@ -56,8 +56,8 @@ def learn(
             kernel_generator(
                 X,
                 kernels,
-                kernels_scope,
-                kernels_params,
+                kernels_scopes,
+                kernels_param_grids,
                 precomputed_kernels,
             ),
             n_samples,
@@ -69,8 +69,8 @@ def learn(
             kernel_generator(
                 X,
                 kernels,
-                kernels_scope,
-                kernels_params,
+                kernels_scopes,
+                kernels_param_grids,
                 precomputed_kernels,
             ),
             n_kernels,
@@ -82,7 +82,7 @@ def learn(
         )
 
         mu = np.argmax(d)
-        D = _gradient_direction(d, delta_J, mu, M, tol)
+        D = _gradient_direction(d, delta_J, mu, M, numeric_tol)
         J_prev, J_dagger, d_dagger, D_dagger = J, float('-inf'), d, D
 
         while J_dagger < J:
@@ -99,15 +99,15 @@ def learn(
                 kernel_generator(
                     X,
                     kernels,
-                    kernels_scope,
-                    kernels_params,
+                    kernels_scopes,
+                    kernels_param_grids,
                     precomputed_kernels,
                 ),
                 n_samples,
                 y,
             )
             if J_dagger < J:
-                D_dagger = _update_gradient_direction(D, d_dagger, mu, M, tol)
+                D_dagger = _update_gradient_direction(D, d_dagger, mu, M, numeric_tol)
 
         # Line search for the optimal step size
         d, J, alpha, alpha_lengths = _gamma_linesearch(
@@ -121,8 +121,8 @@ def learn(
             D,
             X,
             kernels,
-            kernels_scope,
-            kernels_params,
+            kernels_scopes,
+            kernels_param_grids,
             precomputed_kernels,
             y,
             n_samples,
@@ -131,14 +131,14 @@ def learn(
             alpha_lengths,
             goldensearch_precision,
         )
-        d = fix_precision(d, tol)
+        d = fix_precision(d, numeric_tol)
         delta_J = _gradient(
             svm_type,
             kernel_generator(
                 X,
                 kernels,
-                kernels_scope,
-                kernels_params,
+                kernels_scopes,
+                kernels_param_grids,
                 precomputed_kernels,
             ),
             n_kernels,
@@ -150,12 +150,15 @@ def learn(
         )
 
         # Precision enhancement for line search
-        if max(abs(d-old_d))<tol and goldensearch_precision>max_goldensearch_precision:
+        if (
+            max(abs(d - old_d)) < numeric_tol
+            and goldensearch_precision > max_goldensearch_precision
+        ):
             goldensearch_precision = goldensearch_precision/10
 
         # Stopping criterion (DualGap or KKT Constraint for Multi-Classification)
         stopping_crit, stopping_cond = _stopping_criterion(
-            svm_type, J, d, delta_J, y, alpha, M, getattr(svm, "epsilon", None), epsilon
+            svm_type, J, d, delta_J, y, alpha, M, getattr(svm, "epsilon", None), tol
         )
 
         # Verbose output
@@ -180,8 +183,8 @@ def learn(
                 kernel_generator(
                     X,
                     kernels,
-                    kernels_scope,
-                    kernels_params,
+                    kernels_scopes,
+                    kernels_param_grids,
                     precomputed_kernels,
                 ),
                 n_samples,
@@ -198,7 +201,7 @@ def learn(
                 print("Final objective value:", J)
                 print("Optimal weights:", d.base)
 
-            return d.base, svm
+            return d.base, svm, iterations
 
         iterations += 1
 
@@ -222,14 +225,14 @@ cdef float64_t[::1] _gradient_direction(
     const float64_t[::1] delta_J,
     const intp_t mu,
     const intp_t M,
-    const double tol,
+    const double numeric_tol,
 ):
     cdef delta_J_norm = np.divide(delta_J, np.linalg.norm(delta_J))
     cdef float64_t[::1] reduced_grad = np.subtract(delta_J_norm, delta_J_norm[mu])
 
     cdef float64_t[::1] D = np.empty(M, dtype=np.float64)
     for m in range(M):
-        if d[m] < tol and reduced_grad[m] > 0.0:
+        if d[m] < numeric_tol and reduced_grad[m] > 0.0:
             D[m] = 0.0
         else:
             D[m] = -reduced_grad[m]
@@ -259,12 +262,12 @@ cdef float64_t[::1] _update_gradient_direction(
     const float64_t[::1] d,
     const intp_t mu,
     const intp_t M,
-    const double tol,
+    const double numeric_tol,
 ):
     cdef intp_t m
 
     for m in range(M):
-        if D[m] < 0.0 and d[m] < tol:
+        if D[m] < 0.0 and d[m] < numeric_tol:
             D[m] = 0.0
     D[mu] = -np.sum(D[:mu]) - np.sum(D[mu+1:])
 
@@ -282,8 +285,8 @@ def _gamma_linesearch(
     const float64_t[::1] D,
     object X,
     object kernels,
-    object kernels_scope,
-    object kernels_params,
+    object kernels_scopes,
+    object kernels_param_grids,
     const bint precomputed_kernels,
     object y,
     const intp_t n_samples,
@@ -316,8 +319,8 @@ def _gamma_linesearch(
             kernel_generator(
                 X,
                 kernels,
-                kernels_scope,
-                kernels_params,
+                kernels_scopes,
+                kernels_param_grids,
                 precomputed_kernels,
             ),
             n_samples,
@@ -333,8 +336,8 @@ def _gamma_linesearch(
             kernel_generator(
                 X,
                 kernels,
-                kernels_scope,
-                kernels_params,
+                kernels_scopes,
+                kernels_param_grids,
                 precomputed_kernels,
             ),
             n_samples,
@@ -385,12 +388,12 @@ cpdef tuple _stopping_criterion(
     const float64_t[:, ::1] alpha,
     const intp_t M,
     const double epsilon,
-    const double cond_epsilon,
+    const double tol,
 ):
     if svm_type == MULTICLASS:
-        return _kkt_constraint(d, delta_J, M, cond_epsilon)
+        return _kkt_constraint(d, delta_J, M, tol)
     else:
-        return _dual_gap(svm_type, J, delta_J, y, alpha, epsilon, cond_epsilon)
+        return _dual_gap(svm_type, J, delta_J, y, alpha, epsilon, tol)
 
 
 cpdef tuple _dual_gap(
@@ -414,11 +417,11 @@ cpdef tuple _dual_gap(
         duality_gap = (J - np.min(delta_J) - np.dot(alpha, vec)) / J
     elif svm_type == ONECLASS:
         # (J(d) + max(-∂J/∂dₘ)) / J(d)
-        duality_gap = (J - np.min(delta_J)) / J
+        duality_gap = np.abs(J - np.min(delta_J)) / J
     else:
         raise ValueError("Unknown SVM type.")
 
-    return duality_gap, np.abs(duality_gap) < dual_gap_epsilon
+    return duality_gap, duality_gap < dual_gap_epsilon
 
 
 cpdef tuple _kkt_constraint(
@@ -452,7 +455,7 @@ cdef float64_t[::1] _gradient(
     const intp_t n_kernels,
     const intp_t n_samples,
     object y,
-    const int64_t[::1] classes,
+    object classes,
     const float64_t[:, ::1] alpha,
     const int32_t[::1] alpha_lengths,
 ):
@@ -469,8 +472,8 @@ cdef float64_t[::1] _gradient(
 cdef float64_t[::1] _svc_gradient(
     object kernels,
     const intp_t n_kernels,
-    const int64_t[::1] y,
-    const int64_t[::1] classes,
+    object y,
+    object classes,
     const float64_t[:, ::1] alpha,
     const int32_t[::1] alpha_lengths,
 ):

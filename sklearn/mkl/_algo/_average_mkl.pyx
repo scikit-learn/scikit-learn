@@ -11,8 +11,8 @@ def learn(
     object y,
     object svm,
     object kernels,
-    object kernels_scope,
-    object kernels_params,
+    object kernels_scopes,
+    object kernels_param_grids,
     const bint precomputed_kernels,
     const intp_t n_kernels,
     const intp_t n_samples,
@@ -30,8 +30,8 @@ def learn(
             kernel_generator(
                 X,
                 kernels,
-                kernels_scope,
-                kernels_params,
+                kernels_scopes,
+                kernels_param_grids,
                 precomputed_kernels,
             ),
             n_samples
@@ -39,4 +39,4 @@ def learn(
         y,
     )
 
-    return d.base, svm
+    return d.base, svm, 1
