@@ -47,6 +47,10 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50):
         return array[()]
     if array.ndim == 1:
         array = array.reshape((-1, 1))
+
+    if np.all(sample_weight == 0):
+        raise ValueError("Invalid input: sample_weight cannot be all zeros")
+
     # When sample_weight 1D, repeat for each array.shape[1]
     if array.shape != sample_weight.shape and array.shape[0] == sample_weight.shape[0]:
         sample_weight = np.tile(sample_weight, (array.shape[1], 1)).T
