@@ -140,7 +140,7 @@ class BaseMKL(TransformerMixin, MetaEstimatorMixin, BaseEstimator, metaclass=ABC
             kernels_param_grids=self._kernels_param_grids,
             precomputed_kernels=False,  # Kernels are not precomputed yet
         )
-        self.n_samples_ = X[0].shape[0] if self._kernels is None else X.shape[0]
+        self.n_samples_in_ = X[0].shape[0] if self._kernels is None else X.shape[0]
 
         if self._kernels is not None:
             # Reference to X to compute the kernel in predict/transform
@@ -200,7 +200,7 @@ class BaseMKL(TransformerMixin, MetaEstimatorMixin, BaseEstimator, metaclass=ABC
                 kernels_param_grids=self._kernels_param_grids,
                 precomputed_kernels=self._precomputed_kernels,
                 n_kernels=self.n_kernels_,
-                n_samples=self.n_samples_,
+                n_samples=self.n_samples_in_,
                 verbose=self.verbose,
             )
         elif self.algo == "simple":
@@ -221,7 +221,7 @@ class BaseMKL(TransformerMixin, MetaEstimatorMixin, BaseEstimator, metaclass=ABC
                 kernels_param_grids=self._kernels_param_grids,
                 precomputed_kernels=self._precomputed_kernels,
                 n_kernels=self.n_kernels_,
-                n_samples=self.n_samples_,
+                n_samples=self.n_samples_in_,
                 tol=self._tol,
                 numeric_tol=self.numeric_tol,
                 verbose=self.verbose,
@@ -335,7 +335,7 @@ class BaseMKL(TransformerMixin, MetaEstimatorMixin, BaseEstimator, metaclass=ABC
                     "n_samples) when using precomputed kernels."
                 )
             elif not fit and (
-                len(np.shape(X[0])) != 2 or np.shape(X[0])[1] != self.n_samples_
+                len(np.shape(X[0])) != 2 or np.shape(X[0])[1] != self.n_samples_in_
             ):
                 raise ValueError(
                     "X must be a 3D array of shape (n_kernels, n_samples, "

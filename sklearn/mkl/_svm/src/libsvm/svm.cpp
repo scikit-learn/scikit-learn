@@ -124,30 +124,16 @@ static void info(const char *fmt,...)
 #define _LIBSVM_CPP
 
 
-/* yeah, this is ugly.  It helps us to have unique names for both sparse
-and dense versions of this library */
-#ifdef _DENSE_REP
-  #ifdef PREFIX
-    #undef PREFIX
-  #endif
-  #ifdef NAMESPACE
-    #undef NAMESPACE
-  #endif
-  #define PREFIX(name) svm_##name
-  #define NAMESPACE svm
-  namespace svm {
-#else
-  /* sparse representation */
-  #ifdef PREFIX
-    #undef PREFIX
-  #endif
-  #ifdef NAMESPACE
-    #undef NAMESPACE
-  #endif
-  #define PREFIX(name) svm_csr_##name
-  #define NAMESPACE svm_csr
-  namespace svm_csr {
+#ifdef PREFIX
+  #undef PREFIX
 #endif
+#ifdef NAMESPACE
+  #undef NAMESPACE
+#endif
+#define PREFIX(name) svm_##name
+#define NAMESPACE svm
+namespace svm {
+
 
 
 //
@@ -293,11 +279,7 @@ public:
 
 class Kernel: public QMatrix {
 public:
-#ifdef _DENSE_REP
 	Kernel(int l, PREFIX(node) * x, const svm_parameter& param, BlasFunctions *blas_functions);
-#else
-	Kernel(int l, PREFIX(node) * const * x, const svm_parameter& param, BlasFunctions *blas_functions);
-#endif
 	virtual ~Kernel();
 
 	static double k_function(const PREFIX(node) *x, const PREFIX(node) *y,
@@ -314,11 +296,7 @@ protected:
 	double (Kernel::*kernel_function)(int i, int j) const;
 
 private:
-#ifdef _DENSE_REP
 	PREFIX(node) *x;
-#else
-	const PREFIX(node) **x;
-#endif
 	double *x_square;
 	// scipy blas pointer
 	BlasFunctions *m_blas;
@@ -330,9 +308,7 @@ private:
 	const double coef0;
 
 	static double dot(const PREFIX(node) *px, const PREFIX(node) *py, BlasFunctions *blas_functions);
-#ifdef _DENSE_REP
 	static double dot(const PREFIX(node) &px, const PREFIX(node) &py, BlasFunctions *blas_functions);
-#endif
 
 	double kernel_linear(int i, int j) const
 	{
@@ -352,19 +328,11 @@ private:
 	}
 	double kernel_precomputed(int i, int j) const
 	{
-#ifdef _DENSE_REP
 		return (x+i)->values[x[j].ind];
-#else
-		return x[i][(int)(x[j][0].value)].value;
-#endif
 	}
 };
 
-#ifdef _DENSE_REP
 Kernel::Kernel(int l, PREFIX(node) * x_, const svm_parameter& param, BlasFunctions *blas_functions)
-#else
-Kernel::Kernel(int l, PREFIX(node) * const * x_, const svm_parameter& param, BlasFunctions *blas_functions)
-#endif
 :kernel_type(param.kernel_type), degree(param.degree),
  gamma(param.gamma), coef0(param.coef0)
 {
@@ -406,7 +374,6 @@ Kernel::~Kernel()
 	delete[] x_square;
 }
 
-#ifdef _DENSE_REP
 double Kernel::dot(const PREFIX(node) *px, const PREFIX(node) *py, BlasFunctions *blas_functions)
 {
 	double sum = 0;
@@ -424,29 +391,6 @@ double Kernel::dot(const PREFIX(node) &px, const PREFIX(node) &py, BlasFunctions
 	sum = blas_functions->dot(dim, px.values, 1, py.values, 1);
 	return sum;
 }
-#else
-double Kernel::dot(const PREFIX(node) *px, const PREFIX(node) *py, BlasFunctions *blas_functions)
-{
-	double sum = 0;
-	while(px->index != -1 && py->index != -1)
-	{
-		if(px->index == py->index)
-		{
-			sum += px->value * py->value;
-			++px;
-			++py;
-		}
-		else
-		{
-			if(px->index > py->index)
-				++py;
-			else
-				++px;
-		}
-	}
-	return sum;
-}
-#endif
 
 double Kernel::k_function(const PREFIX(node) *x, const PREFIX(node) *y,
 			  const svm_parameter& param, BlasFunctions *blas_functions)
@@ -460,7 +404,6 @@ double Kernel::k_function(const PREFIX(node) *x, const PREFIX(node) *y,
 		case RBF:
 		{
 			double sum = 0;
-#ifdef _DENSE_REP
 			int dim = min(x->dim, y->dim), i;
 			double* m_array = (double*)malloc(sizeof(double)*dim);
 			for (i = 0; i < dim; i++)
@@ -473,54 +416,13 @@ double Kernel::k_function(const PREFIX(node) *x, const PREFIX(node) *y,
 				sum += x->values[i] * x->values[i];
 			for (; i < y->dim; i++)
 				sum += y->values[i] * y->values[i];
-#else
-			while(x->index != -1 && y->index !=-1)
-			{
-				if(x->index == y->index)
-				{
-					double d = x->value - y->value;
-					sum += d*d;
-					++x;
-					++y;
-				}
-				else
-				{
-					if(x->index > y->index)
-					{
-						sum += y->value * y->value;
-						++y;
-					}
-					else
-					{
-						sum += x->value * x->value;
-						++x;
-					}
-				}
-			}
-
-			while(x->index != -1)
-			{
-				sum += x->value * x->value;
-				++x;
-			}
-
-			while(y->index != -1)
-			{
-				sum += y->value * y->value;
-				++y;
-			}
-#endif
 			return exp(-param.gamma*sum);
 		}
 		case SIGMOID:
 			return tanh(param.gamma*dot(x,y,blas_functions)+param.coef0);
 		case PRECOMPUTED:  //x: test (validation), y: SV
                     {
-#ifdef _DENSE_REP
 			return x->values[y->ind];
-#else
-			return x[(int)(y->value)].value;
-#endif
                     }
 		default:
 			return 0;  // Unreachable
@@ -2163,11 +2065,7 @@ static void svm_binary_svc_probability(
 
 		subprob.l = prob->l-(end-begin);
 		subprob.alpha = NULL;
-#ifdef _DENSE_REP
 		subprob.x = Malloc(struct PREFIX(node),subprob.l);
-#else
-		subprob.x = Malloc(struct PREFIX(node)*,subprob.l);
-#endif
 		subprob.y = Malloc(double,subprob.l);
                 subprob.W = Malloc(double,subprob.l);
 
@@ -2217,11 +2115,7 @@ static void svm_binary_svc_probability(
 			struct PREFIX(model) *submodel = PREFIX(train)(&subprob,&subparam, status, blas_functions);
 			for(j=begin;j<end;j++)
 			{
-#ifdef _DENSE_REP
                                 PREFIX(predict_values)(submodel,(prob->x+perm[j]),&(dec_values[perm[j]]), blas_functions);
-#else
-				PREFIX(predict_values)(submodel,prob->x[perm[j]],&(dec_values[perm[j]]), blas_functions);
-#endif
 				// ensure +1 -1 order; reason not using CV subroutine
 				dec_values[perm[j]] *= submodel->label[0];
 			}
@@ -2372,11 +2266,7 @@ static void remove_zero_weight(PREFIX(problem) *newprob, const PREFIX(problem) *
 		if(prob->W[i] > 0) l++;
 	*newprob = *prob;
 	newprob->l = l;
-#ifdef _DENSE_REP
 	newprob->x = Malloc(PREFIX(node),l);
-#else
-      	newprob->x = Malloc(PREFIX(node) *,l);
-#endif
 	newprob->y = Malloc(double,l);
 	newprob->W = Malloc(double,l);
 
@@ -2440,11 +2330,7 @@ PREFIX(model) *PREFIX(train)(PREFIX(problem) *prob, const svm_parameter *param,
 		for(i=0;i<prob->l;i++)
 			if(fabs(f.alpha[i]) > 0) ++nSV;
 		model->l = nSV;
-#ifdef _DENSE_REP
 		model->SV = Malloc(PREFIX(node),nSV);
-#else
-		model->SV = Malloc(PREFIX(node) *,nSV);
-#endif
                 model->sv_ind = Malloc(int, nSV);
 		model->sv_coef[0] = Malloc(double, nSV);
 		int j = 0;
@@ -2486,11 +2372,7 @@ PREFIX(model) *PREFIX(train)(PREFIX(problem) *prob, const svm_parameter *param,
 
 		// group training data of the same class
                 NAMESPACE::svm_group_classes(prob,&nr_class,&label,&start,&count,perm);
-#ifdef _DENSE_REP
 		PREFIX(node) *x = Malloc(PREFIX(node),l);
-#else
-		PREFIX(node) **x = Malloc(PREFIX(node) *,l);
-#endif
                 double *W = Malloc(double, l);
 
 		int i;
@@ -2550,11 +2432,7 @@ PREFIX(model) *PREFIX(train)(PREFIX(problem) *prob, const svm_parameter *param,
 				}
 				else
 					sub_prob.alpha = NULL;
-#ifdef _DENSE_REP
 				sub_prob.x = Malloc(PREFIX(node),sub_prob.l);
-#else
-				sub_prob.x = Malloc(PREFIX(node) *,sub_prob.l);
-#endif
 				sub_prob.W = Malloc(double,sub_prob.l);
 				sub_prob.y = Malloc(double,sub_prob.l);
 				for(k=0;k<ci;k++)
@@ -2646,11 +2524,7 @@ PREFIX(model) *PREFIX(train)(PREFIX(problem) *prob, const svm_parameter *param,
 
 		model->l = total_sv;
                 model->sv_ind = Malloc(int, total_sv);
-#ifdef _DENSE_REP
 		model->SV = Malloc(PREFIX(node),total_sv);
-#else
-		model->SV = Malloc(PREFIX(node) *,total_sv);
-#endif
 		p = 0;
 		for(i=0;i<l;i++) {
 			if(nonzero[i]) {
@@ -2801,11 +2675,7 @@ void PREFIX(cross_validation)(const PREFIX(problem) *prob, const svm_parameter *
 
 		subprob.l = l-(end-begin);
 		subprob.alpha = NULL;
-#ifdef _DENSE_REP
 		subprob.x = Malloc(struct PREFIX(node),subprob.l);
-#else
-		subprob.x = Malloc(struct PREFIX(node)*,subprob.l);
-#endif
 		subprob.y = Malloc(double,subprob.l);
 		subprob.W = Malloc(double,subprob.l);
 
@@ -2831,20 +2701,12 @@ void PREFIX(cross_validation)(const PREFIX(problem) *prob, const svm_parameter *
 		{
 			double *prob_estimates=Malloc(double, PREFIX(get_nr_class)(submodel));
 			for(j=begin;j<end;j++)
-#ifdef _DENSE_REP
 				target[perm[j]] = PREFIX(predict_probability)(submodel,(prob->x + perm[j]),prob_estimates, blas_functions);
-#else
-                                target[perm[j]] = PREFIX(predict_probability)(submodel,prob->x[perm[j]],prob_estimates, blas_functions);
-#endif
 			free(prob_estimates);
 		}
 		else
 			for(j=begin;j<end;j++)
-#ifdef _DENSE_REP
 				target[perm[j]] = PREFIX(predict)(submodel,prob->x+perm[j],blas_functions);
-#else
-                target[perm[j]] = PREFIX(predict)(submodel,prob->x[perm[j]],blas_functions);
-#endif
 		PREFIX(free_and_destroy_model)(&submodel);
 		free(subprob.x);
 		free(subprob.y);
@@ -2895,11 +2757,7 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 		double sum = 0;
 
 		for(i=0;i<model->l;i++)
-#ifdef _DENSE_REP
-                    sum += sv_coef[i] * NAMESPACE::Kernel::k_function(x,model->SV+i,model->param,blas_functions);
-#else
-                sum += sv_coef[i] * NAMESPACE::Kernel::k_function(x,model->SV[i],model->param,blas_functions);
-#endif
+        	sum += sv_coef[i] * NAMESPACE::Kernel::k_function(x,model->SV+i,model->param,blas_functions);
 		sum -= model->rho[0];
 		*dec_values = sum;
 
@@ -2915,11 +2773,7 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 
 		double *kvalue = Malloc(double,l);
 		for(i=0;i<l;i++)
-#ifdef _DENSE_REP
-                    kvalue[i] = NAMESPACE::Kernel::k_function(x,model->SV+i,model->param,blas_functions);
-#else
-                kvalue[i] = NAMESPACE::Kernel::k_function(x,model->SV[i],model->param,blas_functions);
-#endif
+            kvalue[i] = NAMESPACE::Kernel::k_function(x,model->SV+i,model->param,blas_functions);
 
 		int *start = Malloc(int,nr_class);
 		start[0] = 0;
@@ -3027,12 +2881,8 @@ double PREFIX(predict_probability)(
 void PREFIX(free_model_content)(PREFIX(model)* model_ptr)
 {
 	if(model_ptr->free_sv && model_ptr->l > 0 && model_ptr->SV != NULL)
-#ifdef _DENSE_REP
 		for (int i = 0; i < model_ptr->l; i++)
 			free(model_ptr->SV[i].values);
-#else
-		free((void *)(model_ptr->SV[0]));
-#endif
 
 	if(model_ptr->sv_coef)
 	{

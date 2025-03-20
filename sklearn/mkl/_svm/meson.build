@@ -3,7 +3,7 @@ libsvm_include = include_directories('src/libsvm')
 
 libsvm_skl = static_library(
   'libsvm-skl',
-  ['src/libsvm/libsvm_template.cpp'],
+  ['src/libsvm/svm.cpp'],
 )
 
 py.extension_module(

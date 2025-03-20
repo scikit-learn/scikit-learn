@@ -11,5 +11,6 @@ This is here mainly as checklist for incorporation of new versions of libsvm.
 The changes made with respect to upstream are detailed in the heading of svm.cpp
 
 Note: This libsvm version is not a new version of LibSVM, but a modified version that:
+  * Does not support sparse input
   * Allows alpha seeding (initialization of Lagrange multipliers)
   * Returns additional information in the final model.
