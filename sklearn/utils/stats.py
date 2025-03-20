@@ -67,13 +67,13 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50):
     # observe from `sorted_idx`).
     n_features = array.shape[1]
     largest_value_per_column = array[sorted_idx[-1, ...], xp.arange(n_features)]
-    if xp.isnan(largest_value_per_column).any():
+    if xp.any(xp.isnan(largest_value_per_column)):
         sorted_nan_mask = xp.take_along_axis(xp.isnan(array), sorted_idx, axis=0)
         sorted_weights[sorted_nan_mask] = 0
 
     # Compute the weighted cumulative distribution function (CDF) based on
     # `sample_weight` and scale `percentile_rank` along it:
-    weight_cdf = xp.cumulative_sum(sorted_weights, axis=0)
+    weight_cdf = xp.cumsum(sorted_weights, axis=0)
     adjusted_percentile_rank = percentile_rank / 100 * weight_cdf[-1]
 
     # Ignore leading `sample_weight=0` observations when `percentile_rank=0` (#20528)
@@ -90,7 +90,6 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50):
             for i in range(weight_cdf.shape[1])
         ]
     )
-
     # In rare cases, `percentile_idx` equals to `sorted_idx.shape[0]`
     max_idx = sorted_idx.shape[0] - 1
     percentile_idx = xp.clip(percentile_idx, 0, max_idx)
