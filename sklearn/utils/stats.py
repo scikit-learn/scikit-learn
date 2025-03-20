@@ -66,7 +66,9 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50):
     # n_features)`. If NaN values were present, they would sort to the end (which we can
     # observe from `sorted_idx`).
     n_features = array.shape[1]
-    largest_value_per_column = array[sorted_idx[-1, ...], xp.arange(n_features)]
+    largest_value_per_column = array[
+        sorted_idx[-1, ...], xp.arange(n_features, device=device)
+    ]
     if xp.any(xp.isnan(largest_value_per_column)):
         sorted_nan_mask = xp.take_along_axis(xp.isnan(array), sorted_idx, axis=0)
         sorted_weights[sorted_nan_mask] = 0
@@ -86,15 +88,16 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50):
     # (Needs to be an array as we pass to `clip` later)
     percentile_idx = xp.asarray(
         [
-            xp.searchsorted(weight_cdf[:, i], adjusted_percentile_rank[i])
+            xp.searchsorted(weight_cdf[..., i], adjusted_percentile_rank[i])
             for i in range(weight_cdf.shape[1])
-        ]
+        ],
+        device=device,
     )
     # In rare cases, `percentile_idx` equals to `sorted_idx.shape[0]`
     max_idx = sorted_idx.shape[0] - 1
     percentile_idx = xp.clip(percentile_idx, 0, max_idx)
 
-    col_indices = xp.arange(array.shape[1])
+    col_indices = xp.arange(array.shape[1], device=device)
     percentile_in_sorted = sorted_idx[percentile_idx, col_indices]
 
     result = array[percentile_in_sorted, col_indices]
