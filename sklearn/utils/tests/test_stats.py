@@ -5,8 +5,10 @@ from pytest import approx
 
 from sklearn._config import config_context
 from sklearn.utils._array_api import (
+    _convert_to_numpy,
     yield_namespace_device_dtype_combinations,
 )
+from sklearn.utils._array_api import device as array_device
 from sklearn.utils.estimator_checks import _array_api_for_tests
 from sklearn.utils.fixes import np_version, parse_version
 from sklearn.utils.stats import _averaged_weighted_percentile, _weighted_percentile
@@ -170,25 +172,29 @@ def test_weighted_percentile_2d():
 def test_weighted_percentile_array_api_consistency(
     global_random_seed, array_namespace, device, dtype_name, data, weights, percentile
 ):
-    """Check `_weighted_percentile` gives results with Array APIs vs numpy arrays."""
+    """Check `_weighted_percentile` gives consistent results with array API."""
+    xp = _array_api_for_tests(array_namespace, device)
+
+    rng = np.random.RandomState(global_random_seed)
+    X_np = data(rng) if callable(data) else data
+    weights_np = weights(rng) if callable(weights) else weights
+    # Ensure all inputs are the correct dtype
+    X_np = X_np.astype(dtype_name)
+    weights_np = weights_np.astype(dtype_name)
+
+    result_np = _weighted_percentile(X_np, weights_np, percentile)
+    # Convert to Array API arrays
+    X_xp = xp.asarray(X_np, device=device)
+    weights_xp = xp.asarray(weights_np, device=device)
+
     with config_context(array_api_dispatch=True):
-        xp = _array_api_for_tests(array_namespace, device)
+        result_xp = _weighted_percentile(X_xp, weights_xp, percentile)
+        assert array_device(result_xp) == array_device(X_xp)
+        result_xp_np = _convert_to_numpy(result_xp, xp=xp)
 
-        rng = np.random.RandomState(global_random_seed)
-        x_np = data(rng) if callable(data) else data
-        weights_np = weights(rng) if callable(weights) else weights
-        # Ensure all inputs are the correct dtype
-        x_np = x_np.astype(dtype_name)
-        weights_np = weights_np.astype(dtype_name)
-        # Convert to Array API arrays
-        x_xp = xp.asarray(x_np, device=device)
-        weights_xp = xp.asarray(weights_np, device=device)
-
-        # Compute percentiles with both array types
-        result_np = _weighted_percentile(x_np, weights_np, percentile)
-        result_xp = _weighted_percentile(x_xp, weights_xp, percentile)
-
-        assert_allclose(result_np, result_xp)
+    assert result_xp_np.dtype == result_np.dtype
+    assert result_xp_np.shape == result_np.shape
+    assert_allclose(result_np, result_xp_np)
 
 
 @pytest.mark.parametrize("sample_weight_ndim", [1, 2])
