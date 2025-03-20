@@ -2025,11 +2025,7 @@ def test_ridge_positive_list_type_error_test(positive):
 
     with pytest.raises(
         ValueError,
-        match="""
-                If providing a list limiting specific coefficients to positive values,
-                'positive' parameter must be a list of booleans
-                the same length as the number of expected coefficients.
-                """,
+        match="'positive' must be either a boolean or a list of booleans",
     ):
         model.fit(X, y)
 
@@ -2060,7 +2056,7 @@ def test_ridge_positive_list_length_error_test(positive):
 
     with pytest.raises(
         ValueError,
-        match="Parameter positive should be a boolean or a list of booleans",
+        match="Length of 'positive' list must be equal to the number of features",
     ):
         model.fit(X, y)
 
