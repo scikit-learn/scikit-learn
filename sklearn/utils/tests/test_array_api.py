@@ -491,6 +491,9 @@ def test_isin(
     assert_array_equal(_convert_to_numpy(result, xp=xp), expected)
 
 
+@pytest.mark.skipif(
+    os.environ.get("SCIPY_ARRAY_API") != "1", reason="SCIPY_ARRAY_API not set to 1."
+)
 def test_get_namespace_and_device():
     # Use torch as a library with custom Device objects:
     torch = pytest.importorskip("torch")
