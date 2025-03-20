@@ -578,7 +578,7 @@ class _DOTTreeExporter(_BaseTreeExporter):
 
     def str_escape(self, string):
         # override default escaping for graphviz
-        return string.replace('"', r"\"")
+        return str(string).replace('"', r"\"")
 
 
 class _MPLTreeExporter(_BaseTreeExporter):
