@@ -417,7 +417,7 @@ cpdef tuple _dual_gap(
         duality_gap = (J - np.min(delta_J) - np.dot(alpha, vec)) / J
     elif svm_type == ONECLASS:
         # (J(d) + max(-∂J/∂dₘ)) / J(d)
-        duality_gap = np.abs(J - np.min(delta_J)) / J
+        duality_gap = np.abs((J - np.min(delta_J)) / J)
     else:
         raise ValueError("Unknown SVM type.")
 

@@ -327,13 +327,15 @@ class BaseMKL(TransformerMixin, MetaEstimatorMixin, BaseEstimator, metaclass=ABC
             check_is_fitted(self)
 
         if self._kernels is None:
-            if fit and (len(np.shape(X)) != 3 or np.shape(X)[1] != np.shape(X)[2]):
+            if fit and (
+                len(np.shape(X[0])) != 2 or np.shape(X[0])[0] != np.shape(X[0])[1]
+            ):
                 raise ValueError(
                     "X must be a 3D array of shape (n_kernels, n_samples, "
                     "n_samples) when using precomputed kernels."
                 )
             elif not fit and (
-                len(np.shape(X)) != 3 or np.shape(X)[2] != self.n_samples_
+                len(np.shape(X[0])) != 2 or np.shape(X[0])[1] != self.n_samples_
             ):
                 raise ValueError(
                     "X must be a 3D array of shape (n_kernels, n_samples, "
