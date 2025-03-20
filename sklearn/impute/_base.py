@@ -392,8 +392,7 @@ class SimpleImputer(_BaseImputer):
                 err_msg = (
                     f"fill_value={self.fill_value!r} (of type {fill_value_dtype!r}) "
                     f"cannot be cast to the input data that is {X.dtype!r}. "
-                    "It appears that fill_value is a Python scalar. "
-                    "One possible solution is to use a NumPy scalar "
+                    "If fill_value is a Python scalar, instead pass  a numpy scalar "
                     "(e.g. fill_value=np.uint8(0) if your data is of type np.uint8). "
                     "Make sure that both dtypes are of the same kind."
                 )
