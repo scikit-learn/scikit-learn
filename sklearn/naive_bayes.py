@@ -450,15 +450,20 @@ class GaussianNB(_BaseNB):
         # will cause numerical errors. To address this, we artificially
         # boost the variance by epsilon, a small fraction of the standard
         # deviation of the largest dimension.
-        self.epsilon_ = self.var_smoothing * xp.var(X, axis=0).max()
+        self.epsilon_ = xp.max(self.var_smoothing * xp.var(X, axis=0))
 
         if first_call:
             # This is the first call to partial_fit:
             # initialize various cumulative counters
             n_features = X.shape[1]
-            n_classes = len(self.classes_)
-            self.theta_ = xp.zeros((n_classes, n_features), device=device)
-            self.var_ = xp.zeros((n_classes, n_features), device=device)
+            n_classes = self.classes_.shape[0]
+            max_float_dtype = _max_precision_float_dtype(xp, device)
+            self.theta_ = xp.zeros(
+                (n_classes, n_features), device=device, dtype=max_float_dtype
+            )
+            self.var_ = xp.zeros(
+                (n_classes, n_features), device=device, dtype=max_float_dtype
+            )
 
             max_float_dtype = _max_precision_float_dtype(xp, device)
             self.class_count_ = xp.zeros(
@@ -482,7 +487,7 @@ class GaussianNB(_BaseNB):
             else:
                 # Initialize the priors to zeros for each class
                 self.class_prior_ = xp.zeros(
-                    len(self.classes_), dtype=max_float_dtype, device=device
+                    self.classes_.shape[0], dtype=max_float_dtype, device=device
                 )
         else:
             if X.shape[1] != self.theta_.shape[1]:
@@ -504,7 +509,10 @@ class GaussianNB(_BaseNB):
 
         for y_i in unique_y:
             i = _searchsorted(classes, y_i)
-            X_i = X[y == y_i, :]
+            # cast to int since array API standard allows only
+            # Python ints in indexing
+            i = int(i)
+            X_i = X[y == y_i]
 
             if sample_weight is not None:
                 sw_i = sample_weight[y == y_i]
@@ -536,14 +544,18 @@ class GaussianNB(_BaseNB):
         for i in range(size(self.classes_)):
             jointi = xp.log(self.class_prior_[i])
             n_ij = -0.5 * xp.sum(xp.log(2.0 * xp.pi * self.var_[i, :]))
-            n_ij -= 0.5 * xp.sum(((X - self.theta_[i, :]) ** 2) / (self.var_[i, :]), 1)
+            n_ij = n_ij - 0.5 * xp.sum(
+                ((X - self.theta_[i, :]) ** 2) / (self.var_[i, :]), axis=1
+            )
             joint_log_likelihood.append(jointi + n_ij)
 
-        joint_log_likelihood = xp.asarray(joint_log_likelihood).T
+        joint_log_likelihood = xp.stack(joint_log_likelihood, axis=1)
         return joint_log_likelihood
 
-    def _more_tags(self):
-        return {"array_api_support": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.array_api_support = True
+        return tags
 
 
 class _BaseDiscreteNB(_BaseNB):
