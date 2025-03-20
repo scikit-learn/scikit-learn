@@ -1358,7 +1358,7 @@ be encoded as a 1-of-K binary indicator matrix :math:`Y`,
 i.e., :math:`y_{i,k} = 1` if sample :math:`i` has label :math:`k`
 taken from a set of :math:`K` labels.
 Let :math:`\hat{P}` be a matrix of probability estimates,
-with :math:`\hat{p}_{i,k} \approx \operatorname{Pr}(y_{i,k} = 1)`.
+with elements :math:`\hat{p}_{i,k} \approx \operatorname{Pr}(y_{i,k} = 1)`.
 Then the log loss of the whole set is
 
 .. math::
@@ -1936,7 +1936,7 @@ Quoting Wikipedia:
 Let the true labels for a set of :math:`N` data points be encoded as a 1-of-K binary
 indicator matrix :math:`Y`, i.e., :math:`y_{i,k} = 1` if sample :math:`i` has
 label :math:`k` taken from a set of :math:`K` labels. Let :math:`\hat{P}` be a matrix
-of probability estimates :math:`\hat{p}_{i,k} \approx \operatorname{Pr}(y_{i,k} = 1)`.
+of probability estimates with elements :math:`\hat{p}_{i,k} \approx \operatorname{Pr}(y_{i,k} = 1)`.
 Following the original definition by [Brier1950]_, the Brier score is given by:
 
 .. math::
