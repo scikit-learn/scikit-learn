@@ -255,3 +255,6 @@ print(
     f"Kernel parameters after fit: \n{gpr.kernel_} \n"
     f"Log-likelihood: {gpr.log_marginal_likelihood(gpr.kernel_.theta):.3f}"
 )
+
+plt.show()
+
