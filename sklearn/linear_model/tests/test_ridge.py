@@ -2012,6 +2012,100 @@ def test_ridge_positive_regression_test(solver, fit_intercept, alpha):
     assert np.all(model.coef_ >= 0)
 
 
+@pytest.mark.parametrize("positive", [[True, "foo"], [True, "True"], [0, True]])
+def test_ridge_positive_list_type_error_test(positive):
+    """
+    Test that Ridge raises ValueError when positive is List
+    and all values within positive list are not boolean.
+    """
+    X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+    coef = np.array([1, -10])
+    y = X.dot(coef)
+    model = Ridge(positive=positive, solver="lbfgs")
+
+    with pytest.raises(
+        ValueError,
+        match="""
+                If providing a list limiting specific coefficients to positive values,
+                'positive' parameter must be a list of booleans
+                the same length as the number of expected coefficients.
+                """,
+    ):
+        model.fit(X, y)
+
+
+@pytest.mark.parametrize("positive", [[True, True]])
+def test_ridge_positive_list_type_test(positive):
+    """
+    Test that Ridge raises ValueError when positive is List
+    and all values within positive list are boolean.
+    """
+    X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+    coef = np.array([1, -10])
+    y = X.dot(coef)
+    model = Ridge(positive=positive, solver="lbfgs")
+    model.fit(X, y)
+
+
+@pytest.mark.parametrize("positive", [[True], [True, True, True]])
+def test_ridge_positive_list_length_error_test(positive):
+    """
+    Test that Ridge raises ValueError when positive is List
+    and X.shape[1] != len(positive).
+    """
+    X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+    coef = np.array([1, -10])
+    y = X.dot(coef)
+    model = Ridge(positive=positive, solver="lbfgs")
+
+    with pytest.raises(
+        ValueError,
+        match="Parameter positive should be a boolean or a list of booleans",
+    ):
+        model.fit(X, y)
+
+
+@pytest.mark.parametrize("positive", [[True, True]])
+def test_ridge_positive_list_length_test(positive):
+    """
+    Test that Ridge does not raise ValueError when positive is List
+    and X.shape[1] == len(positive).
+    """
+    X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+    coef = np.array([1, -10])
+    y = X.dot(coef)
+    model = Ridge(positive=positive, solver="lbfgs")
+    model.fit(X, y)
+
+
+@pytest.mark.parametrize("solver", ["auto", "lbfgs"])
+@pytest.mark.parametrize("fit_intercept", [True, False])
+@pytest.mark.parametrize("alpha", [1e-3, 1e-2, 0.1, 1.0])
+@pytest.mark.parametrize(
+    "positive", [[True, True], [False, False], [True, False], [False, True]]
+)
+@pytest.mark.parametrize("_coefs", [[-10, 1], [-10, -10], [10, 10], [1, -10]])
+def test_ridge_positive_list_regression_test(
+    solver, fit_intercept, alpha, positive, _coefs
+):
+    """Test that positive Ridge finds true positive coefficients."""
+    X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+    coef = np.array(_coefs)
+    if fit_intercept:
+        intercept = 20
+        y = X.dot(coef) + intercept
+    else:
+        y = X.dot(coef)
+
+    model = Ridge(
+        alpha=alpha, positive=positive, solver=solver, fit_intercept=fit_intercept
+    )
+    model.fit(X, y)
+    for i, pos in enumerate(positive):
+        if pos:
+            assert model.coef_[i] >= 0
+
+
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("alpha", [1e-3, 1e-2, 0.1, 1.0])
 def test_ridge_ground_truth_positive_test(fit_intercept, alpha):
