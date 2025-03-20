@@ -74,7 +74,7 @@ https://repo.anaconda.com/pkgs/main/osx-64/numpy-1.26.4-py312hac873b0_0.conda#31
 https://repo.anaconda.com/pkgs/main/osx-64/numexpr-2.8.7-py312hac873b0_0.conda#6303ba071636ef57fddf69eb6f440ec1
 https://repo.anaconda.com/pkgs/main/osx-64/scipy-1.11.4-py312h81688c2_0.conda#7d57b4c21a9261f97fa511e0940c5d93
 https://repo.anaconda.com/pkgs/main/osx-64/pandas-2.2.3-py312h6d0c2b6_0.conda#84ce5b8ec4a986d13a5df17811f556a2
-https://repo.anaconda.com/pkgs/main/osx-64/pyamg-4.2.3-py312h44cbcf4_0.conda#3bdc7be74087b3a5a83c520a74e1e8eb
+https://repo.anaconda.com/pkgs/main/osx-64/pyamg-5.2.1-py312h1962661_0.conda#58881950d4ce74c9302b56961f97a43c
 # pip cython @ https://files.pythonhosted.org/packages/e6/6c/3be501a6520a93449b1e7e6f63e598ec56f3b5d1bc7ad14167c72a22ddf7/Cython-3.0.12-cp312-cp312-macosx_10_9_x86_64.whl#sha256=fe030d4a00afb2844f5f70896b7f2a1a0d7da09bf3aa3d884cbe5f73fff5d310
 # pip meson @ https://files.pythonhosted.org/packages/ab/3b/63fdad828b4cbeb49cef3aad26f3edfbc72f37a0ab54917d445ec0b9d9ff/meson-1.7.0-py3-none-any.whl#sha256=ae3f12953045f3c7c60e27f2af1ad862f14dee125b4ed9bcb8a842a5080dbf85
 # pip threadpoolctl @ https://files.pythonhosted.org/packages/32/d5/f9a850d79b0851d1d4ef6456097579a9005b31fea68726a4ae5f2d82ddd9/threadpoolctl-3.6.0-py3-none-any.whl#sha256=43a0b8fd5a2928500110039e43a5eed8480b918967083ea48dc3ab9f13c4a7fb
