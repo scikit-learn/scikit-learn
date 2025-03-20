@@ -636,7 +636,15 @@ def _ridge_regression(
     elif isinstance(positive, list):
         if len(positive) != X.shape[1]:
             raise ValueError(
-                "Length of 'positive' list must be equal to the number of features"
+                "Parameter positive should be a boolean or a list of booleans"
+            )
+        if not all(isinstance(p, bool) for p in positive):
+            raise ValueError(
+                """
+                If providing a list limiting specific coefficients to positive values,
+                'positive' parameter must be a list of booleans
+                the same length as the number of expected coefficients.
+                """
             )
         _positive = True
 
