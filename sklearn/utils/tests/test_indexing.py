@@ -156,7 +156,9 @@ def test_safe_indexing_1d_container(array_type, indices_type):
     assert_allclose_dense_sparse(subset, _convert_container([2, 3], array_type))
 
 
-@pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe", "polars"])
+@pytest.mark.parametrize(
+    "array_type", ["array", "sparse", "dataframe", "pyarrow", "polars"]
+)
 @pytest.mark.parametrize("indices_type", ["list", "tuple", "array", "series", "slice"])
 @pytest.mark.parametrize("indices", [[1, 2], ["col_1", "col_2"]])
 def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
@@ -172,7 +174,11 @@ def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
     )
     indices_converted = _convert_container(indices_converted, indices_type)
 
-    if isinstance(indices[0], str) and array_type not in ("dataframe", "polars"):
+    if isinstance(indices[0], str) and array_type not in (
+        "dataframe",
+        "pyarrow",
+        "polars",
+    ):
         err_msg = (
             "Specifying the columns using strings is only supported for dataframes"
         )
@@ -187,7 +193,9 @@ def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
 
 @pytest.mark.parametrize("array_read_only", [True, False])
 @pytest.mark.parametrize("indices_read_only", [True, False])
-@pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe", "polars"])
+@pytest.mark.parametrize(
+    "array_type", ["array", "sparse", "dataframe", "pyarrow", "polars"]
+)
 @pytest.mark.parametrize("indices_type", ["array", "series"])
 @pytest.mark.parametrize(
     "axis, expected_array", [(0, [[4, 5, 6], [7, 8, 9]]), (1, [[2, 3], [5, 6], [8, 9]])]
@@ -195,6 +203,8 @@ def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
 def test_safe_indexing_2d_read_only_axis_1(
     array_read_only, indices_read_only, array_type, indices_type, axis, expected_array
 ):
+    if array_type == "pyarrow" and axis == 0:
+        pytest.skip()
     array = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     if array_read_only:
         array.setflags(write=False)
@@ -339,6 +349,16 @@ def test_safe_indexing_container_axis_0_unsupported_type():
     indices = ["col_1", "col_2"]
     array = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
     err_msg = "String indexing is not supported with 'axis=0'"
+    with pytest.raises(ValueError, match=err_msg):
+        _safe_indexing(array, indices, axis=0)
+
+
+def test_safe_indexing_container_axis_0_unsupported_dataframe():
+    # If X is not pandas nor polars, but has the __dataframe__ interchange protocol,
+    # indexing on axis=0 is not supported.
+    indices = [0, 1]
+    array = _convert_container([[1, 2, 3], [4, 5, 6], [7, 8, 9]], "pyarrow")
+    err_msg = "axis=0 is not supported for dataframe interchange protocol"
     with pytest.raises(ValueError, match=err_msg):
         _safe_indexing(array, indices, axis=0)
 
