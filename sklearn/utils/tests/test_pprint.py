@@ -4,12 +4,12 @@ from pprint import PrettyPrinter
 import numpy as np
 import pytest
 
-from sklearn.utils._pprint import _EstimatorPrettyPrinter
-from sklearn.linear_model import LogisticRegressionCV
-from sklearn.pipeline import make_pipeline
+from sklearn import config_context
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.feature_selection import SelectKBest, chi2
-from sklearn import config_context
+from sklearn.linear_model import LogisticRegressionCV
+from sklearn.pipeline import make_pipeline
+from sklearn.utils._pprint import _EstimatorPrettyPrinter
 
 
 # Constructors excerpted to test pprinting
