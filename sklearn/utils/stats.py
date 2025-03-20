@@ -73,7 +73,7 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50):
 
     # Compute the weighted cumulative distribution function (CDF) based on
     # `sample_weight` and scale `percentile_rank` along it:
-    weight_cdf = xp.cumsum(sorted_weights, axis=0)
+    weight_cdf = xp.cumulative_sum(sorted_weights, axis=0)
     adjusted_percentile_rank = percentile_rank / 100 * weight_cdf[-1]
 
     # Ignore leading `sample_weight=0` observations when `percentile_rank=0` (#20528)

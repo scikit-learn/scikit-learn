@@ -177,9 +177,10 @@ def test_weighted_percentile_array_api_consistency(
         rng = np.random.RandomState(global_random_seed)
         x_np = data(rng) if callable(data) else data
         weights_np = weights(rng) if callable(weights) else weights
+        # Ensure all inputs are the correct dtype
         x_np = x_np.astype(dtype_name)
         weights_np = weights_np.astype(dtype_name)
-
+        # Convert to Array API arrays
         x_xp = xp.asarray(x_np, device=device)
         weights_xp = xp.asarray(weights_np, device=device)
 
