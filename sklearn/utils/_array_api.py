@@ -419,6 +419,33 @@ class _NumPyAPIWrapper:
         else:
             return numpy.asarray(x, dtype=dtype)
 
+    # def cumulative_sum(self, x, axis=None, dtype=None, include_initial=False):
+    #     """Reimplementation as `cumulative_sum` added in numpy 2.1.
+
+    #     `cumulative_sum` is an alias of `cumsum` as per name improvement in array API.
+    #     Code adapted from array-api-compat.
+    #     """
+
+    #     if axis is None:
+    #         if x.ndim > 1:
+    #             raise ValueError(
+    #                 "axis must be specified in cumulative_sum
+    #  for more than one dimension")
+    #         axis = 0
+
+    #     res = numpy.cumsum(x, axis=axis, dtype=dtype)
+
+    #     # np.cumsum does not support include_initial
+    #     if include_initial:
+    #         initial_shape = list(x.shape)
+    #         initial_shape[axis] = 1
+    #         res = numpy.concatenate(
+    #             [numpy.zeros(
+    # shape=initial_shape, dtype=res.dtype, device=device(res)), res],
+    #             axis=axis,
+    #         )
+    #     return res
+
     def unique_inverse(self, x):
         return numpy.unique(x, return_inverse=True)
 
@@ -1126,34 +1153,6 @@ def _modify_in_place_if_numpy(xp, func, *args, out=None, **kwargs):
     else:
         out = func(*args, **kwargs)
     return out
-
-
-def _apply_along_axis(func1d, axis, arr, xp, *args, **kwargs):
-    """Variant of numpy.apply_along_axis that works with the Array API.
-
-    This function only works with 1D and 2D arrays.
-    """
-    if _is_numpy_namespace(xp):
-        return numpy.apply_along_axis(func1d, axis, arr, *args, **kwargs)
-    else:
-        if arr.ndim == 1:
-            result = [func1d(arr[i], *args, **kwargs) for i in range(arr.shape[0])]
-        elif arr.ndim == 2:
-            if axis == 0:
-                result = [
-                    func1d([arr[i][j] for i in range(arr.shape[1])], *args, **kwargs)
-                    for j in range(arr.shape[0])
-                ]
-            elif axis == 1:
-                result = [func1d(arr[i], *args, **kwargs) for i in range(arr.shape[1])]
-            else:
-                raise ValueError(
-                    "Only 1D and 2D arrays are allowed; axis must be 0 or 1"
-                )
-        else:
-            raise ValueError("array must be 1D or 2D")
-    result = xp.asarray(result, dtype=xp.int64)
-    return result
 
 
 def _bincount(array, weights=None, minlength=None, xp=None):

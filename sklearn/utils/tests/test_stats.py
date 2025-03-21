@@ -6,6 +6,7 @@ from pytest import approx
 from sklearn._config import config_context
 from sklearn.utils._array_api import (
     _convert_to_numpy,
+    get_namespace,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._array_api import device as array_device
@@ -190,6 +191,7 @@ def test_weighted_percentile_array_api_consistency(
     with config_context(array_api_dispatch=True):
         result_xp = _weighted_percentile(X_xp, weights_xp, percentile)
         assert array_device(result_xp) == array_device(X_xp)
+        assert get_namespace(result_xp)[0] == get_namespace(X_xp)[0]
         result_xp_np = _convert_to_numpy(result_xp, xp=xp)
 
     assert result_xp_np.dtype == result_np.dtype
