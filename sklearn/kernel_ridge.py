@@ -13,6 +13,12 @@ from .metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS, pairwise_kernels
 from .utils._param_validation import Interval, StrOptions
 from .utils.validation import _check_sample_weight, check_is_fitted, validate_data
 
+__all__ = ["KernelRidge"]
+
+
+def __dir__():
+    return __all__
+
 
 class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
     """Kernel ridge regression.

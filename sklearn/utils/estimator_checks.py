@@ -110,6 +110,12 @@ from .validation import _num_samples, check_is_fitted, has_fit_parameter
 
 REGRESSION_DATASET = None
 
+__all__ = ["check_estimator", "parametrize_with_checks", "estimator_checks_generator"]
+
+
+def __dir__():
+    return __all__
+
 
 def _raise_for_missing_tags(estimator, tag_name, Mixin):
     tags = get_tags(estimator)

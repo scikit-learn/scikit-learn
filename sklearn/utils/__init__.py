@@ -21,7 +21,7 @@ from ._estimator_html_repr import estimator_html_repr
 # _safe_indexing was included in our public API documentation despite the leading
 # `_` in its name.
 from ._indexing import (
-    _safe_indexing,  # noqa
+    _safe_indexing,
     resample,
     shuffle,
 )
@@ -33,6 +33,7 @@ from ._tags import (
     Tags,
     TargetTags,
     TransformerTags,
+    default_tags,
     get_tags,
 )
 from .class_weight import compute_class_weight, compute_sample_weight
@@ -73,6 +74,7 @@ __all__ = [
     "Tags",
     "TargetTags",
     "TransformerTags",
+    "_safe_indexing",
     "all_estimators",
     "as_float_array",
     "assert_all_finite",
@@ -85,6 +87,7 @@ __all__ = [
     "column_or_1d",
     "compute_class_weight",
     "compute_sample_weight",
+    "default_tags",
     "deprecated",
     "estimator_html_repr",
     "gen_batches",
@@ -99,7 +102,12 @@ __all__ = [
     "safe_mask",
     "safe_sqr",
     "shuffle",
+    "tosequence",
 ]
+
+
+def __dir__():
+    return __all__
 
 
 # TODO(1.7): remove

@@ -29,6 +29,10 @@ from .utils.validation import check_is_fitted, validate_data
 __all__ = ["LinearDiscriminantAnalysis", "QuadraticDiscriminantAnalysis"]
 
 
+def __dir__():
+    return __all__
+
+
 def _cov(X, shrinkage=None, covariance_estimator=None):
     """Estimate covariance matrix (using optional covariance_estimator).
     Parameters

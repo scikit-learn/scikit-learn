@@ -18,6 +18,12 @@ _MODULE_TO_IGNORE = {
     "estimator_checks",
 }
 
+__all__ = ["all_displays", "all_estimators", "all_functions"]
+
+
+def __dir__():
+    return __all__
+
 
 def all_estimators(type_filter=None):
     """Get a list of all estimators from `sklearn`.

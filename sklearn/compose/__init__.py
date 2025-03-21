@@ -21,3 +21,7 @@ __all__ = [
     "make_column_selector",
     "make_column_transformer",
 ]
+
+
+def __dir__():
+    return __all__

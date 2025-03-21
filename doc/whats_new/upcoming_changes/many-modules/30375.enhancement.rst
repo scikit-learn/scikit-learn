@@ -1,0 +1,2 @@
+- `__dir__` and `__all__` added to all modules for a better auto-complete experience.
+  By `Thomas Fan`_

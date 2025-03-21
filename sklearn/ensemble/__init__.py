@@ -4,7 +4,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from ._bagging import BaggingClassifier, BaggingRegressor
-from ._base import BaseEnsemble
 from ._forest import (
     ExtraTreesClassifier,
     ExtraTreesRegressor,
@@ -27,7 +26,6 @@ __all__ = [
     "AdaBoostRegressor",
     "BaggingClassifier",
     "BaggingRegressor",
-    "BaseEnsemble",
     "ExtraTreesClassifier",
     "ExtraTreesRegressor",
     "GradientBoostingClassifier",
@@ -43,3 +41,7 @@ __all__ = [
     "VotingClassifier",
     "VotingRegressor",
 ]
+
+
+def __dir__():
+    return __all__

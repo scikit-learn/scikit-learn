@@ -14,3 +14,7 @@ __all__ = [
     "partial_dependence",
     "permutation_importance",
 ]
+
+
+def __dir__():
+    return __all__

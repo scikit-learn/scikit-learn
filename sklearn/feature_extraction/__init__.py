@@ -16,3 +16,7 @@ __all__ = [
     "img_to_graph",
     "text",
 ]
+
+
+def __dir__():
+    return __all__

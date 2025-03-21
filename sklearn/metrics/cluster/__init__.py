@@ -53,3 +53,7 @@ __all__ = [
     "silhouette_score",
     "v_measure_score",
 ]
+
+
+def __dir__():
+    return __all__
