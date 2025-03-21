@@ -10,7 +10,7 @@ from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.linalg import svd
+from scipy.linalg import pinv, svd
 
 from ..base import (
     BaseEstimator,
@@ -24,18 +24,9 @@ from ..exceptions import ConvergenceWarning
 from ..utils import check_array, check_consistent_length
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import svd_flip
-from ..utils.fixes import parse_version, sp_version
 from ..utils.validation import FLOAT_DTYPES, check_is_fitted, validate_data
 
 __all__ = ["PLSSVD", "PLSCanonical", "PLSRegression"]
-
-
-if sp_version >= parse_version("1.7"):
-    # Starting in scipy 1.7 pinv2 was deprecated in favor of pinv.
-    # pinv now uses the svd to compute the pseudo-inverse.
-    from scipy.linalg import pinv as pinv2
-else:
-    from scipy.linalg import pinv2
 
 
 def _pinv2_old(a):
@@ -393,11 +384,11 @@ class _PLS(
         # Compute transformation matrices (rotations_). See User Guide.
         self.x_rotations_ = np.dot(
             self.x_weights_,
-            pinv2(np.dot(self.x_loadings_.T, self.x_weights_), check_finite=False),
+            pinv(np.dot(self.x_loadings_.T, self.x_weights_), check_finite=False),
         )
         self.y_rotations_ = np.dot(
             self.y_weights_,
-            pinv2(np.dot(self.y_loadings_.T, self.y_weights_), check_finite=False),
+            pinv(np.dot(self.y_loadings_.T, self.y_weights_), check_finite=False),
         )
         self.coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
         self.coef_ = (self.coef_ * self._y_std).T / self._x_std
