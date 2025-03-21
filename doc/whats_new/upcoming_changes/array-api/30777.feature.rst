@@ -1,0 +1,3 @@
+- :class:`sklearn.gaussian_mixture.GaussianMixture` with `initialization="random"`,
+  `covariance_type="diag"` and `warm_start=False` now supports Array API compatible
+  inputs. By :user:`Stefanie Senger <StefanieSenger>` and :user:`Loïc Estève <lesteve>`

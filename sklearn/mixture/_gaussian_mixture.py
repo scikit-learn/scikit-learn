@@ -7,6 +7,7 @@ import numpy as np
 from scipy import linalg
 
 from ..utils import check_array
+from ..utils._array_api import get_namespace, get_namespace_and_device
 from ..utils._param_validation import StrOptions
 from ..utils.extmath import row_norms
 from ._base import BaseMixture, _check_shape
@@ -150,7 +151,7 @@ def _check_precisions(precisions, covariance_type, n_components, n_features):
 # Gaussian mixture parameters estimators (used by the M-Step)
 
 
-def _estimate_gaussian_covariances_full(resp, X, nk, means, reg_covar):
+def _estimate_gaussian_covariances_full(resp, X, nk, means, reg_covar, xp=None):
     """Estimate the full covariance matrices.
 
     Parameters
@@ -170,16 +171,18 @@ def _estimate_gaussian_covariances_full(resp, X, nk, means, reg_covar):
     covariances : array, shape (n_components, n_features, n_features)
         The covariance matrix of the current components.
     """
+    xp, _ = get_namespace(X, xp=xp)
     n_components, n_features = means.shape
-    covariances = np.empty((n_components, n_features, n_features), dtype=X.dtype)
+    covariances = xp.empty((n_components, n_features, n_features), dtype=X.dtype)
     for k in range(n_components):
         diff = X - means[k]
-        covariances[k] = np.dot(resp[:, k] * diff.T, diff) / nk[k]
-        covariances[k].flat[:: n_features + 1] += reg_covar
+        covariances[k] = ((resp[:, k] * diff.T) @ diff) / nk[k]
+        my_flat = xp.reshape(covariances[k], (-1,))
+        my_flat[:: n_features + 1] += reg_covar
     return covariances
 
 
-def _estimate_gaussian_covariances_tied(resp, X, nk, means, reg_covar):
+def _estimate_gaussian_covariances_tied(resp, X, nk, means, reg_covar, xp=None):
     """Estimate the tied covariance matrix.
 
     Parameters
@@ -199,6 +202,7 @@ def _estimate_gaussian_covariances_tied(resp, X, nk, means, reg_covar):
     covariance : array, shape (n_features, n_features)
         The tied covariance matrix of the components.
     """
+    # TODO still using np here ...
     avg_X2 = np.dot(X.T, X)
     avg_means2 = np.dot(nk * means.T, means)
     covariance = avg_X2 - avg_means2
@@ -207,7 +211,7 @@ def _estimate_gaussian_covariances_tied(resp, X, nk, means, reg_covar):
     return covariance
 
 
-def _estimate_gaussian_covariances_diag(resp, X, nk, means, reg_covar):
+def _estimate_gaussian_covariances_diag(resp, X, nk, means, reg_covar, xp=None):
     """Estimate the diagonal covariance vectors.
 
     Parameters
@@ -227,12 +231,13 @@ def _estimate_gaussian_covariances_diag(resp, X, nk, means, reg_covar):
     covariances : array, shape (n_components, n_features)
         The covariance vector of the current components.
     """
-    avg_X2 = np.dot(resp.T, X * X) / nk[:, np.newaxis]
+    xp, _ = get_namespace(X, xp=xp)
+    avg_X2 = (resp.T @ (X * X)) / nk[:, xp.newaxis]
     avg_means2 = means**2
     return avg_X2 - avg_means2 + reg_covar
 
 
-def _estimate_gaussian_covariances_spherical(resp, X, nk, means, reg_covar):
+def _estimate_gaussian_covariances_spherical(resp, X, nk, means, reg_covar, xp=None):
     """Estimate the spherical variance values.
 
     Parameters
@@ -252,10 +257,12 @@ def _estimate_gaussian_covariances_spherical(resp, X, nk, means, reg_covar):
     variances : array, shape (n_components,)
         The variance values of each components.
     """
-    return _estimate_gaussian_covariances_diag(resp, X, nk, means, reg_covar).mean(1)
+    return _estimate_gaussian_covariances_diag(
+        resp, X, nk, means, reg_covar, xp=xp
+    ).mean(1)
 
 
-def _estimate_gaussian_parameters(X, resp, reg_covar, covariance_type):
+def _estimate_gaussian_parameters(X, resp, reg_covar, covariance_type, xp=None):
     """Estimate the Gaussian distribution parameters.
 
     Parameters
@@ -284,18 +291,19 @@ def _estimate_gaussian_parameters(X, resp, reg_covar, covariance_type):
         The covariance matrix of the current components.
         The shape depends of the covariance_type.
     """
-    nk = resp.sum(axis=0) + 10 * np.finfo(resp.dtype).eps
-    means = np.dot(resp.T, X) / nk[:, np.newaxis]
+    xp, _ = get_namespace(X, xp=xp)
+    nk = xp.sum(resp, axis=0) + 10 * xp.finfo(resp.dtype).eps
+    means = (resp.T @ X) / nk[:, xp.newaxis]
     covariances = {
         "full": _estimate_gaussian_covariances_full,
         "tied": _estimate_gaussian_covariances_tied,
         "diag": _estimate_gaussian_covariances_diag,
         "spherical": _estimate_gaussian_covariances_spherical,
-    }[covariance_type](resp, X, nk, means, reg_covar)
+    }[covariance_type](resp, X, nk, means, reg_covar, xp=xp)
     return nk, means, covariances
 
 
-def _compute_precision_cholesky(covariances, covariance_type):
+def _compute_precision_cholesky(covariances, covariance_type, xp=None):
     """Compute the Cholesky decomposition of the precisions.
 
     Parameters
@@ -313,6 +321,8 @@ def _compute_precision_cholesky(covariances, covariance_type):
         The cholesky decomposition of sample precisions of the current
         components. The shape depends of the covariance_type.
     """
+    xp, _ = get_namespace(covariances, xp=xp)
+
     estimate_precision_error_message = (
         "Fitting the mixture model failed because some components have "
         "ill-defined empirical covariance (for instance caused by singleton "
@@ -320,7 +330,7 @@ def _compute_precision_cholesky(covariances, covariance_type):
         "increase reg_covar, or scale the input data."
     )
     dtype = covariances.dtype
-    if dtype == np.float32:
+    if dtype == xp.float32:
         estimate_precision_error_message += (
             " The numerical accuracy can also be improved by passing float64"
             " data instead of float32."
@@ -328,14 +338,19 @@ def _compute_precision_cholesky(covariances, covariance_type):
 
     if covariance_type == "full":
         n_components, n_features, _ = covariances.shape
-        precisions_chol = np.empty((n_components, n_features, n_features), dtype=dtype)
+        precisions_chol = xp.empty((n_components, n_features, n_features), dtype=dtype)
         for k, covariance in enumerate(covariances):
             try:
-                cov_chol = linalg.cholesky(covariance, lower=True)
-            except linalg.LinAlgError:
+                # TODO we are using xp.linalg instead of scipy.linalg.cholesky,
+                # maybe separate branches for array API and numpy?
+                cov_chol = xp.linalg.cholesky(covariance)
+            except xp.linalg.LinAlgError:
                 raise ValueError(estimate_precision_error_message)
-            precisions_chol[k] = linalg.solve_triangular(
-                cov_chol, np.eye(n_features, dtype=dtype), lower=True
+
+            # TODO we are using xp.linalg.solve instead of scipy.linalg.solve_triangular
+            # probably separate branches for array API and numpy?
+            precisions_chol[k] = xp.linalg.solve(
+                cov_chol, xp.eye(n_features, dtype=dtype)
             ).T
     elif covariance_type == "tied":
         _, n_features = covariances.shape
@@ -344,12 +359,12 @@ def _compute_precision_cholesky(covariances, covariance_type):
         except linalg.LinAlgError:
             raise ValueError(estimate_precision_error_message)
         precisions_chol = linalg.solve_triangular(
-            cov_chol, np.eye(n_features, dtype=dtype), lower=True
+            cov_chol, xp.eye(n_features, dtype=dtype), lower=True
         ).T
     else:
-        if np.any(np.less_equal(covariances, 0.0)):
+        if xp.any(covariances <= 0.0):
             raise ValueError(estimate_precision_error_message)
-        precisions_chol = 1.0 / np.sqrt(covariances)
+        precisions_chol = 1.0 / xp.sqrt(covariances)
     return precisions_chol
 
 
@@ -358,7 +373,7 @@ def _flipudlr(array):
     return np.flipud(np.fliplr(array))
 
 
-def _compute_precision_cholesky_from_precisions(precisions, covariance_type):
+def _compute_precision_cholesky_from_precisions(precisions, covariance_type, xp=None):
     r"""Compute the Cholesky decomposition of precisions using precisions themselves.
 
     As implemented in :func:`_compute_precision_cholesky`, the `precisions_cholesky_` is
@@ -392,6 +407,7 @@ def _compute_precision_cholesky_from_precisions(precisions, covariance_type):
         The cholesky decomposition of sample precisions of the current
         components. The shape depends on the covariance_type.
     """
+    # TODO still using np here ...
     if covariance_type == "full":
         precisions_cholesky = np.array(
             [
@@ -410,7 +426,7 @@ def _compute_precision_cholesky_from_precisions(precisions, covariance_type):
 
 ###############################################################################
 # Gaussian mixture probability estimators
-def _compute_log_det_cholesky(matrix_chol, covariance_type, n_features):
+def _compute_log_det_cholesky(matrix_chol, covariance_type, n_features, xp=None):
     """Compute the log-det of the cholesky decomposition of matrices.
 
     Parameters
@@ -432,25 +448,26 @@ def _compute_log_det_cholesky(matrix_chol, covariance_type, n_features):
     log_det_precision_chol : array-like of shape (n_components,)
         The determinant of the precision matrix for each component.
     """
+    xp, _ = get_namespace(matrix_chol, xp=xp)
     if covariance_type == "full":
         n_components, _, _ = matrix_chol.shape
-        log_det_chol = np.sum(
-            np.log(matrix_chol.reshape(n_components, -1)[:, :: n_features + 1]), axis=1
+        log_det_chol = xp.sum(
+            xp.log(matrix_chol.reshape(n_components, -1)[:, :: n_features + 1]), axis=1
         )
 
     elif covariance_type == "tied":
-        log_det_chol = np.sum(np.log(np.diag(matrix_chol)))
+        log_det_chol = xp.sum(xp.log(xp.diagonal(matrix_chol)))
 
     elif covariance_type == "diag":
-        log_det_chol = np.sum(np.log(matrix_chol), axis=1)
+        log_det_chol = xp.sum(xp.log(matrix_chol), axis=1)
 
     else:
-        log_det_chol = n_features * np.log(matrix_chol)
+        log_det_chol = n_features * xp.log(matrix_chol)
 
     return log_det_chol
 
 
-def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
+def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type, xp=None):
     """Estimate the log Gaussian probability.
 
     Parameters
@@ -472,6 +489,7 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
     -------
     log_prob : array, shape (n_samples, n_components)
     """
+    xp, _, device = get_namespace_and_device(X, means, precisions_chol, xp=xp)
     n_samples, n_features = X.shape
     n_components, _ = means.shape
     # The determinant of the precision matrix from the Cholesky decomposition
@@ -481,35 +499,42 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
     log_det = _compute_log_det_cholesky(precisions_chol, covariance_type, n_features)
 
     if covariance_type == "full":
-        log_prob = np.empty((n_samples, n_components), dtype=X.dtype)
+        log_prob = xp.empty((n_samples, n_components), dtype=X.dtype)
         for k, (mu, prec_chol) in enumerate(zip(means, precisions_chol)):
-            y = np.dot(X, prec_chol) - np.dot(mu, prec_chol)
-            log_prob[:, k] = np.sum(np.square(y), axis=1)
+            y = (X @ prec_chol) - (mu @ prec_chol)
+            log_prob[:, k] = xp.sum(xp.square(y), axis=1)
 
     elif covariance_type == "tied":
-        log_prob = np.empty((n_samples, n_components), dtype=X.dtype)
+        log_prob = xp.empty((n_samples, n_components), dtype=X.dtype)
         for k, mu in enumerate(means):
-            y = np.dot(X, precisions_chol) - np.dot(mu, precisions_chol)
-            log_prob[:, k] = np.sum(np.square(y), axis=1)
+            y = (X @ precisions_chol) - (mu @ precisions_chol)
+            log_prob[:, k] = xp.sum(xp.square(y), axis=1)
 
     elif covariance_type == "diag":
         precisions = precisions_chol**2
         log_prob = (
-            np.sum((means**2 * precisions), 1)
-            - 2.0 * np.dot(X, (means * precisions).T)
-            + np.dot(X**2, precisions.T)
+            xp.sum((means**2 * precisions), axis=1)
+            - 2.0 * (X @ (means * precisions).T)
+            + (X**2 @ precisions.T)
         )
 
     elif covariance_type == "spherical":
         precisions = precisions_chol**2
         log_prob = (
-            np.sum(means**2, 1) * precisions
-            - 2 * np.dot(X, means.T * precisions)
-            + np.outer(row_norms(X, squared=True), precisions)
+            xp.sum(means**2, 1) * precisions
+            - 2 * (X @ means.T * precisions)
+            + xp.outer(row_norms(X, squared=True), precisions)
         )
     # Since we are using the precision of the Cholesky decomposition,
     # `- 0.5 * log_det_precision` becomes `+ log_det_precision_chol`
-    return -0.5 * (n_features * np.log(2 * np.pi).astype(X.dtype) + log_prob) + log_det
+    return (
+        -0.5
+        * (
+            n_features * xp.log(xp.asarray(2 * xp.pi, dtype=X.dtype, device=device))
+            + log_prob
+        )
+        + log_det
+    )
 
 
 class GaussianMixture(BaseMixture):
@@ -765,7 +790,7 @@ class GaussianMixture(BaseMixture):
                 n_features,
             )
 
-    def _initialize_parameters(self, X, random_state):
+    def _initialize_parameters(self, X, random_state, xp=None):
         # If all the initial parameters are all provided, then there is no need to run
         # the initialization.
         compute_resp = (
@@ -774,11 +799,11 @@ class GaussianMixture(BaseMixture):
             or self.precisions_init is None
         )
         if compute_resp:
-            super()._initialize_parameters(X, random_state)
+            super()._initialize_parameters(X, random_state, xp=xp)
         else:
-            self._initialize(X, None)
+            self._initialize(X, None, xp=xp)
 
-    def _initialize(self, X, resp):
+    def _initialize(self, X, resp, xp=None):
         """Initialization of the Gaussian mixture parameters.
 
         Parameters
@@ -791,7 +816,7 @@ class GaussianMixture(BaseMixture):
         weights, means, covariances = None, None, None
         if resp is not None:
             weights, means, covariances = _estimate_gaussian_parameters(
-                X, resp, self.reg_covar, self.covariance_type
+                X, resp, self.reg_covar, self.covariance_type, xp=xp
             )
             if self.weights_init is None:
                 weights /= n_samples
@@ -802,14 +827,14 @@ class GaussianMixture(BaseMixture):
         if self.precisions_init is None:
             self.covariances_ = covariances
             self.precisions_cholesky_ = _compute_precision_cholesky(
-                covariances, self.covariance_type
+                covariances, self.covariance_type, xp=xp
             )
         else:
             self.precisions_cholesky_ = _compute_precision_cholesky_from_precisions(
-                self.precisions_init, self.covariance_type
+                self.precisions_init, self.covariance_type, xp=xp
             )
 
-    def _m_step(self, X, log_resp):
+    def _m_step(self, X, log_resp, xp=None):
         """M step.
 
         Parameters
@@ -820,21 +845,23 @@ class GaussianMixture(BaseMixture):
             Logarithm of the posterior probabilities (or responsibilities) of
             the point of each sample in X.
         """
+        xp, _ = get_namespace(X, log_resp, xp=xp)
         self.weights_, self.means_, self.covariances_ = _estimate_gaussian_parameters(
-            X, np.exp(log_resp), self.reg_covar, self.covariance_type
+            X, xp.exp(log_resp), self.reg_covar, self.covariance_type, xp=xp
         )
-        self.weights_ /= self.weights_.sum()
+        self.weights_ /= xp.sum(self.weights_)
         self.precisions_cholesky_ = _compute_precision_cholesky(
-            self.covariances_, self.covariance_type
+            self.covariances_, self.covariance_type, xp=xp
         )
 
-    def _estimate_log_prob(self, X):
+    def _estimate_log_prob(self, X, xp=None):
         return _estimate_log_gaussian_prob(
-            X, self.means_, self.precisions_cholesky_, self.covariance_type
+            X, self.means_, self.precisions_cholesky_, self.covariance_type, xp=xp
         )
 
-    def _estimate_log_weights(self):
-        return np.log(self.weights_)
+    def _estimate_log_weights(self, xp=None):
+        xp, _ = get_namespace(self.weights_, xp=xp)
+        return xp.log(self.weights_)
 
     def _compute_lower_bound(self, _, log_prob_norm):
         return log_prob_norm
