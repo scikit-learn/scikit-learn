@@ -14,9 +14,13 @@ import scipy.sparse as sp
 import scipy.special as special
 
 from .._config import get_config
-from ..externals import array_api_extra as xpx  # noqa: F401
+from ..externals import array_api_compat
+from ..externals import array_api_extra as xpx
 from ..externals.array_api_compat import numpy as np_compat
 from .fixes import parse_version
+
+# TODO: complete __all__
+__all__ = ["xpx"]  # we import xpx here just to re-export it, need this to appease ruff
 
 _NUMPY_NAMESPACE_NAMES = {"numpy", "sklearn.externals.array_api_compat.numpy"}
 
@@ -437,9 +441,7 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
 
     _check_array_api_dispatch(array_api_dispatch)
 
-    from sklearn.externals.array_api_compat import get_namespace
-
-    namespace, is_array_api_compliant = get_namespace(*arrays), True
+    namespace, is_array_api_compliant = array_api_compat.get_namespace(*arrays), True
 
     if namespace.__name__ == "array_api_strict" and hasattr(
         namespace, "set_array_api_strict_flags"
