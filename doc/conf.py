@@ -1039,14 +1039,14 @@ rst_templates = [
 ]
 
 # Convert each module API reference page
-for module in API_REFERENCE:
-    rst_templates.append(
-        (
-            "api/module",
-            f"api/{module}",
-            {"module": module, "module_info": API_REFERENCE[module]},
-        )
+rst_templates.extend(
+    (
+        "api/module",
+        f"api/{module}",
+        {"module": module, "module_info": API_REFERENCE[module]},
     )
+    for module in API_REFERENCE
+)
 
 # Convert the deprecated API reference page (if there exists any)
 if DEPRECATED_API_REFERENCE:

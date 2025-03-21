@@ -147,7 +147,7 @@ preview = true
 # This enables us to use the explicit preview rules that we want only
 explicit-preview-rules = true
 # all rules can be found here: https://beta.ruff.rs/docs/rules/
-select = ["E", "F", "W", "I", "CPY001", "RUF"]
+select = ["E", "F", "W", "I", "CPY001", "PERF", "RUF"]
 ignore=[
     # space before : (needed for how black formats slicing)
     "E203",
@@ -162,6 +162,8 @@ ignore=[
     # F841 is in preview (july 2024), and we don't care much about it.
     # Local variable ... is assigned to but never used
     "F841",
+    # `try`-`except` within a loop incurs performance overhead
+    "PERF203",
     # some RUF rules trigger too many changes
     "RUF002",
     "RUF003",

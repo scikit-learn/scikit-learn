@@ -414,7 +414,9 @@ class IncrementalPCA(_BasePCA):
             for batch in gen_batches(
                 n_samples, self.batch_size_, min_batch_size=self.n_components or 0
             ):
-                output.append(super().transform(X[batch].toarray()))
+                output.append(  # noqa: PERF401 # FIXME
+                    super().transform(X[batch].toarray())
+                )
             return np.vstack(output)
         else:
             return super().transform(X)
