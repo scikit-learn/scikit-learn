@@ -26,32 +26,83 @@ DATA = (
 
 def test_find_binning_thresholds_regular_data():
     data = np.linspace(0, 10, 1001)
-    bin_thresholds = _find_binning_thresholds(data, max_bins=10)
+    bin_thresholds = _find_binning_thresholds(
+        data, sample_weight=np.ones_like(data), max_bins=10
+    )
     assert_allclose(bin_thresholds, [1, 2, 3, 4, 5, 6, 7, 8, 9])
 
-    bin_thresholds = _find_binning_thresholds(data, max_bins=5)
+    bin_thresholds = _find_binning_thresholds(
+        data, sample_weight=np.ones_like(data), max_bins=5
+    )
     assert_allclose(bin_thresholds, [2, 4, 6, 8])
 
 
 def test_find_binning_thresholds_small_regular_data():
     data = np.linspace(0, 10, 11)
 
-    bin_thresholds = _find_binning_thresholds(data, max_bins=5)
+    bin_thresholds = _find_binning_thresholds(
+        data, sample_weight=np.ones_like(data), max_bins=5
+    )
     assert_allclose(bin_thresholds, [2, 4, 6, 8])
 
-    bin_thresholds = _find_binning_thresholds(data, max_bins=10)
+    bin_thresholds = _find_binning_thresholds(
+        data, sample_weight=np.ones_like(data), max_bins=10
+    )
     assert_allclose(bin_thresholds, [1, 2, 3, 4, 5, 6, 7, 8, 9])
 
-    bin_thresholds = _find_binning_thresholds(data, max_bins=11)
+    bin_thresholds = _find_binning_thresholds(
+        data, sample_weight=np.ones_like(data), max_bins=11
+    )
     assert_allclose(bin_thresholds, np.arange(10) + 0.5)
 
-    bin_thresholds = _find_binning_thresholds(data, max_bins=255)
+    bin_thresholds = _find_binning_thresholds(
+        data, sample_weight=np.ones_like(data), max_bins=255
+    )
     assert_allclose(bin_thresholds, np.arange(10) + 0.5)
+
+
+def test_find_binning_sw_none_equivalent_to_ones():
+    data = np.linspace(0, 10, 1001)
+    bin_thresholds_sw_None = _find_binning_thresholds(
+        data, sample_weight=None, max_bins=10
+    )
+    bin_thresholds_sw_ones = _find_binning_thresholds(
+        data, sample_weight=np.ones_like(data), max_bins=10
+    )
+    assert_allclose(bin_thresholds_sw_None, bin_thresholds_sw_ones)
+
+    bin_thresholds_sw_None = _find_binning_thresholds(
+        data, sample_weight=None, max_bins=5
+    )
+    bin_thresholds_sw_ones = _find_binning_thresholds(
+        data, sample_weight=np.ones_like(data), max_bins=5
+    )
+    assert_allclose(bin_thresholds_sw_None, bin_thresholds_sw_ones)
+
+    data = np.linspace(0, 10, 11)
+    bin_thresholds_sw_None = _find_binning_thresholds(
+        data, sample_weight=None, max_bins=10
+    )
+    bin_thresholds_sw_ones = _find_binning_thresholds(
+        data, sample_weight=np.ones_like(data), max_bins=10
+    )
+    assert_allclose(bin_thresholds_sw_None, bin_thresholds_sw_ones)
+
+    bin_thresholds_sw_None = _find_binning_thresholds(
+        data, sample_weight=None, max_bins=5
+    )
+    bin_thresholds_sw_ones = _find_binning_thresholds(
+        data, sample_weight=np.ones_like(data), max_bins=5
+    )
+    assert_allclose(bin_thresholds_sw_None, bin_thresholds_sw_ones)
 
 
 def test_find_binning_thresholds_random_data():
     bin_thresholds = [
-        _find_binning_thresholds(DATA[:, i], max_bins=255) for i in range(2)
+        _find_binning_thresholds(
+            DATA[:, i], sample_weight=np.ones_like(DATA[:, i]), max_bins=255
+        )
+        for i in range(2)
     ]
     for i in range(len(bin_thresholds)):
         assert bin_thresholds[i].shape == (254,)  # 255 - 1
@@ -68,7 +119,10 @@ def test_find_binning_thresholds_random_data():
 
 def test_find_binning_thresholds_low_n_bins():
     bin_thresholds = [
-        _find_binning_thresholds(DATA[:, i], max_bins=128) for i in range(2)
+        _find_binning_thresholds(
+            DATA[:, i], sample_weight=np.ones_like(DATA[:, i]), max_bins=128
+        )
+        for i in range(2)
     ]
     for i in range(len(bin_thresholds)):
         assert bin_thresholds[i].shape == (127,)  # 128 - 1
@@ -94,7 +148,10 @@ def test_bin_mapper_n_features_transform():
 @pytest.mark.parametrize("max_bins", [16, 128, 255])
 def test_map_to_bins(max_bins):
     bin_thresholds = [
-        _find_binning_thresholds(DATA[:, i], max_bins=max_bins) for i in range(2)
+        _find_binning_thresholds(
+            DATA[:, i], sample_weight=np.ones_like(DATA[:, i]), max_bins=max_bins
+        )
+        for i in range(2)
     ]
     binned = np.zeros_like(DATA, dtype=X_BINNED_DTYPE, order="F")
     is_categorical = np.zeros(2, dtype=np.uint8)
@@ -196,6 +253,25 @@ def test_bin_mapper_repeated_values_invariance(n_distinct):
 
     assert_allclose(mapper_1.bin_thresholds_[0], mapper_2.bin_thresholds_[0])
     assert_array_equal(binned_1, binned_2)
+
+
+def test_binmapper_weighted_vs_repeated_equivalence(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
+
+    n_samples = 500
+    X = rng.rand(n_samples, 10)
+    sw = rng.randint(0, 10, size=n_samples)
+
+    X_repeated = np.repeat(X, sw, axis=0)
+
+    est_weighted = _BinMapper(n_bins=50).fit(X, sample_weight=sw)
+
+    est_repeated = _BinMapper(n_bins=50).fit(X_repeated, sample_weight=None)
+
+    bin_thresholds_weighted = est_weighted.transform(X)
+    bin_thresholds_repeated = est_repeated.transform(X)
+
+    assert_array_equal(bin_thresholds_weighted, bin_thresholds_repeated)
 
 
 @pytest.mark.parametrize(
