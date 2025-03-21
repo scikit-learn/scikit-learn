@@ -7,4 +7,4 @@ from . import kernels
 from ._gpc import GaussianProcessClassifier
 from ._gpr import GaussianProcessRegressor
 
-__all__ = ["GaussianProcessRegressor", "GaussianProcessClassifier", "kernels"]
+__all__ = ["GaussianProcessClassifier", "GaussianProcessRegressor", "kernels"]

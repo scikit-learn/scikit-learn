@@ -9,8 +9,8 @@ from .glm import (
 )
 
 __all__ = [
-    "_GeneralizedLinearRegressor",
-    "PoissonRegressor",
     "GammaRegressor",
+    "PoissonRegressor",
     "TweedieRegressor",
+    "_GeneralizedLinearRegressor",
 ]

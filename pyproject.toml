@@ -7,12 +7,12 @@ maintainers = [
     {name = "scikit-learn developers", email="scikit-learn@python.org"},
 ]
 dependencies = [
-  "numpy>=1.19.5",
-  "scipy>=1.6.0",
+  "numpy>=1.22.0",
+  "scipy>=1.8.0",
   "joblib>=1.2.0",
   "threadpoolctl>=3.1.0",
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = {file = "COPYING"}
 classifiers=[
   "Intended Audience :: Science/Research",
@@ -28,7 +28,6 @@ classifiers=[
   "Operating System :: Unix",
   "Operating System :: MacOS",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
@@ -44,20 +43,20 @@ tracker = "https://github.com/scikit-learn/scikit-learn/issues"
 "release notes" = "https://scikit-learn.org/stable/whats_new"
 
 [project.optional-dependencies]
-build = ["numpy>=1.19.5", "scipy>=1.6.0", "cython>=3.0.10", "meson-python>=0.16.0"]
-install = ["numpy>=1.19.5", "scipy>=1.6.0", "joblib>=1.2.0", "threadpoolctl>=3.1.0"]
-benchmark = ["matplotlib>=3.3.4", "pandas>=1.2.0", "memory_profiler>=0.57.0"]
+build = ["numpy>=1.22.0", "scipy>=1.8.0", "cython>=3.0.10", "meson-python>=0.16.0"]
+install = ["numpy>=1.22.0", "scipy>=1.8.0", "joblib>=1.2.0", "threadpoolctl>=3.1.0"]
+benchmark = ["matplotlib>=3.5.0", "pandas>=1.4.0", "memory_profiler>=0.57.0"]
 docs = [
-    "matplotlib>=3.3.4",
-    "scikit-image>=0.17.2",
-    "pandas>=1.2.0",
+    "matplotlib>=3.5.0",
+    "scikit-image>=0.19.0",
+    "pandas>=1.4.0",
     "seaborn>=0.9.0",
     "memory_profiler>=0.57.0",
     "sphinx>=7.3.7",
     "sphinx-copybutton>=0.5.2",
     "sphinx-gallery>=0.17.1",
     "numpydoc>=1.2.0",
-    "Pillow>=7.1.2",
+    "Pillow>=8.4.0",
     "pooch>=1.6.0",
     "sphinx-prompt>=1.4.0",
     "sphinxext-opengraph>=0.9.1",
@@ -71,23 +70,23 @@ docs = [
     "towncrier>=24.8.0",
 ]
 examples = [
-    "matplotlib>=3.3.4",
-    "scikit-image>=0.17.2",
-    "pandas>=1.2.0",
+    "matplotlib>=3.5.0",
+    "scikit-image>=0.19.0",
+    "pandas>=1.4.0",
     "seaborn>=0.9.0",
     "pooch>=1.6.0",
     "plotly>=5.14.0",
 ]
 tests = [
-    "matplotlib>=3.3.4",
-    "scikit-image>=0.17.2",
-    "pandas>=1.2.0",
+    "matplotlib>=3.5.0",
+    "scikit-image>=0.19.0",
+    "pandas>=1.4.0",
     "pytest>=7.1.2",
     "pytest-cov>=2.9.0",
     "ruff>=0.5.1",
     "black>=24.3.0",
     "mypy>=1.9",
-    "pyamg>=4.0.0",
+    "pyamg>=5.0.0",
     "polars>=0.20.30",
     "pyarrow>=12.0.0",
     "numpydoc>=1.2.0",
@@ -102,12 +101,12 @@ requires = [
     "meson-python>=0.16.0",
     "Cython>=3.0.10",
     "numpy>=2",
-    "scipy>=1.6.0",
+    "scipy>=1.8.0",
 ]
 
 [tool.black]
 line-length = 88
-target-version = ['py39', 'py310', 'py311']
+target-version = ['py310', 'py311']
 preview = true
 exclude = '''
 /(
@@ -148,7 +147,7 @@ preview = true
 # This enables us to use the explicit preview rules that we want only
 explicit-preview-rules = true
 # all rules can be found here: https://beta.ruff.rs/docs/rules/
-select = ["E", "F", "W", "I", "CPY001"]
+select = ["E", "F", "W", "I", "CPY001", "RUF"]
 ignore=[
     # space before : (needed for how black formats slicing)
     "E203",
@@ -163,6 +162,13 @@ ignore=[
     # F841 is in preview (july 2024), and we don't care much about it.
     # Local variable ... is assigned to but never used
     "F841",
+    # some RUF rules trigger too many changes
+    "RUF002",
+    "RUF003",
+    "RUF005",
+    "RUF012",
+    "RUF015",
+    "RUF021",
 ]
 
 [tool.ruff.lint.flake8-copyright]
