@@ -95,7 +95,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         """
         pass
 
-    def _initialize_parameters(self, X, random_state, xp):
+    def _initialize_parameters(self, X, random_state, xp=None):
         """Initialize the model parameters.
 
         Parameters
@@ -249,8 +249,8 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                 for n_iter in range(1, self.max_iter + 1):
                     prev_lower_bound = lower_bound
 
-                    log_prob_norm, log_resp = self._e_step(X)
-                    self._m_step(X, log_resp)
+                    log_prob_norm, log_resp = self._e_step(X, xp=xp)
+                    self._m_step(X, log_resp, xp=xp)
                     lower_bound = self._compute_lower_bound(log_resp, log_prob_norm)
 
                     change = lower_bound - prev_lower_bound
@@ -288,11 +288,11 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         # Always do a final e-step to guarantee that the labels returned by
         # fit_predict(X) are always consistent with fit(X).predict(X)
         # for any value of max_iter and tol (and any random_state).
-        _, log_resp = self._e_step(X)
+        _, log_resp = self._e_step(X, xp=xp)
 
         return xp.argmax(log_resp, axis=1)
 
-    def _e_step(self, X):
+    def _e_step(self, X, xp=None):
         """E step.
 
         Parameters
@@ -308,8 +308,8 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             Logarithm of the posterior probabilities (or responsibilities) of
             the point of each sample in X.
         """
-        xp, _ = get_namespace(X)
-        log_prob_norm, log_resp = self._estimate_log_prob_resp(X)
+        xp, _ = get_namespace(X, xp=xp)
+        log_prob_norm, log_resp = self._estimate_log_prob_resp(X, xp=xp)
         return xp.mean(log_prob_norm), log_resp
 
     @abstractmethod
@@ -407,7 +407,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         X = validate_data(self, X, reset=False)
         xp, _ = get_namespace(X)
-        _, log_resp = self._estimate_log_prob_resp(X)
+        _, log_resp = self._estimate_log_prob_resp(X, xp=xp)
         return xp.exp(log_resp)
 
     def sample(self, n_samples=1):
@@ -472,7 +472,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         return (X, y)
 
-    def _estimate_weighted_log_prob(self, X):
+    def _estimate_weighted_log_prob(self, X, xp=None):
         """Estimate the weighted log-probabilities, log P(X | Z) + log weights.
 
         Parameters
@@ -483,10 +483,10 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         -------
         weighted_log_prob : array, shape (n_samples, n_component)
         """
-        return self._estimate_log_prob(X) + self._estimate_log_weights()
+        return self._estimate_log_prob(X, xp=xp) + self._estimate_log_weights(xp=xp)
 
     @abstractmethod
-    def _estimate_log_weights(self):
+    def _estimate_log_weights(self, xp=None):
         """Estimate log-weights in EM algorithm, E[ log pi ] in VB algorithm.
 
         Returns
@@ -496,7 +496,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def _estimate_log_prob(self, X):
+    def _estimate_log_prob(self, X, xp=None):
         """Estimate the log-probabilities log P(X | Z).
 
         Compute the log-probabilities per each component for each sample.
@@ -511,7 +511,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         """
         pass
 
-    def _estimate_log_prob_resp(self, X):
+    def _estimate_log_prob_resp(self, X, xp=None):
         """Estimate log probabilities and responsibilities for each sample.
 
         Compute the log probabilities, weighted log probabilities per
@@ -530,9 +530,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         log_responsibilities : array, shape (n_samples, n_components)
             logarithm of the responsibilities
         """
-        xp, _ = get_namespace(X)
-        weighted_log_prob = self._estimate_weighted_log_prob(X)
-        log_prob_norm = _logsumexp(weighted_log_prob, axis=1)
+        xp, _ = get_namespace(X, xp=xp)
+        weighted_log_prob = self._estimate_weighted_log_prob(X, xp=xp)
+        log_prob_norm = _logsumexp(weighted_log_prob, axis=1, xp=xp)
 
         with np.errstate(under="ignore"):
             # ignore underflow
