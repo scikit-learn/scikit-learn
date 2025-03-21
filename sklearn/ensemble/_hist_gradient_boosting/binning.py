@@ -53,33 +53,37 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
     sort_idx = np.argsort(col_data)
     col_data = col_data[sort_idx]
     distinct_values = np.unique(col_data).astype(X_DTYPE)
-    if sample_weight is None and len(distinct_values) <= max_bins:
-        midpoints = distinct_values[:-1] + distinct_values[1:]
-        midpoints *= 0.5
-    elif sample_weight is None:
-        percentiles = np.linspace(0, 100, num=max_bins + 1)
-        percentiles = percentiles[1:-1]
-        midpoints = np.percentile(col_data, percentiles, method="averaged_inverted_cdf")
-        assert midpoints.shape[0] == max_bins - 1
+    if sample_weight is None:
+        if len(distinct_values) <= max_bins:
+            midpoints = distinct_values[:-1] + distinct_values[1:]
+            midpoints *= 0.5
+        else:
+            percentiles = np.linspace(0, 100, num=max_bins + 1)
+            percentiles = percentiles[1:-1]
+            midpoints = np.percentile(
+                col_data, percentiles, method="averaged_inverted_cdf"
+            )
+            assert midpoints.shape[0] == max_bins - 1
 
     else:
         # We could compute approximate midpoint percentiles using the output of
         # np.unique(col_data, return_counts) instead but this is more
         # work and the performance benefit will be limited because we
         # work on a fixed-size subsample of the full data.
+        # We reset to max_bins if there are less distinct values
+        # TO DO: check if there is a better way to implement this
+        if len(distinct_values) <= max_bins:
+            max_bins = len(distinct_values)
         sample_weight = sample_weight[sort_idx]
         percentiles = np.linspace(0, 100, num=max_bins + 1)
         percentiles = percentiles[1:-1]
         midpoints = np.array(
             [
-                _averaged_weighted_percentile(
-                    col_data, sample_weight, percentile
-                ).astype(X_DTYPE)
+                _averaged_weighted_percentile(col_data, sample_weight, percentile)
                 for percentile in percentiles
             ]
         )
         assert midpoints.shape[0] == max_bins - 1
-
     # We avoid having +inf thresholds: +inf thresholds are only allowed in
     # a "split on nan" situation.
     np.clip(midpoints, a_min=None, a_max=ALMOST_INF, out=midpoints)

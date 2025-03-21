@@ -1301,7 +1301,7 @@ def test_check_interaction_cst(interaction_cst, n_features, result):
 def test_interaction_cst_numerically():
     """Check that interaction constraints have no forbidden interactions."""
     rng = np.random.RandomState(42)
-    n_samples = 1000
+    n_samples = 10000
     X = rng.uniform(size=(n_samples, 2))
     # Construct y with a strong interaction term
     # y = x0 + x1 + 5 * x0 * x1
