@@ -115,7 +115,7 @@ def strip_newsgroup_header(text):
 
 
 _QUOTE_RE = re.compile(
-    r"(writes in|writes:|wrote:|says:|said:" r"|^In article|^Quoted from|^\||^>)"
+    r"(writes in|writes:|wrote:|says:|said:|^In article|^Quoted from|^\||^>)"
 )
 
 
