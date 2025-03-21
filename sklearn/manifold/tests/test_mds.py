@@ -30,7 +30,7 @@ def test_smacof_error():
     # Not squared similarity matrix:
     sim = np.array([[0, 5, 9, 4], [5, 0, 2, 2], [4, 2, 1, 0]])
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         mds.smacof(sim)
 
     # init not None and not correct format:
