@@ -527,7 +527,7 @@ Some classification tasks can naturally exhibit rare classes: for instance,
 there could be orders of magnitude more negative observations than positive
 observations (e.g. medical screening, fraud detection, etc). As a result,
 cross-validation splitting can generate train or validation folds without any
-occurence of a particular class. This typically leads to undefined
+occurrence of a particular class. This typically leads to undefined
 classification metrics (e.g. ROC AUC), exceptions raised when attempting to
 call :term:`fit` or missing columns in the output of the `predict_proba` or
 `decision_function` methods of multiclass classifiers trained on different
@@ -903,7 +903,7 @@ is always used to train the model.
 
 This class can be used to cross-validate time series data samples
 that are observed at fixed time intervals. Indeed, the folds must
-represent the same duration, in order to have comparable metrics accross folds.
+represent the same duration, in order to have comparable metrics across folds.
 
 Example of 3-split time series cross-validation on a dataset with 6 samples::
 

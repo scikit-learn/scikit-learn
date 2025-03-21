@@ -318,7 +318,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             )
 
         if self.strategy != "quantile" and sample_weight is not None:
-            # Preprare a mask to filter out zero-weight samples when extracting
+            # Prepare a mask to filter out zero-weight samples when extracting
             # the min and max values of each columns which are needed for the
             # "uniform" and "kmeans" strategies.
             nnz_weight_mask = sample_weight != 0

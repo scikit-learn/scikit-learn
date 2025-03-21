@@ -1342,7 +1342,7 @@ def test_unsupported_sample_weight_scorer():
     search_cv.set_params(scoring=fake_scorer)
     with pytest.warns(UserWarning, match="does not support sample_weight"):
         search_cv.fit(X, y, sample_weight=sw)
-    # multi-metric evalutation
+    # multi-metric evaluation
     search_cv.set_params(
         scoring=dict(fake=fake_scorer, accuracy="accuracy"), refit=False
     )
