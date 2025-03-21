@@ -333,6 +333,10 @@ def _solve_lbfgs(
             raise ValueError(
                 "Length of 'positive' list must be equal to the number of features"
             )
+        elif not all(isinstance(p, bool) for p in positive):
+            raise ValueError(
+                "'positive' must be either a boolean or a list of booleans"
+            )
         config["bounds"] = [(0, np.inf) if p else (None, None) for p in positive]
     else:
         raise ValueError("'positive' must be either a boolean or a list of booleans")
@@ -519,8 +523,13 @@ def ridge_regression(
         Verbosity level. Setting verbose > 0 will display additional
         information depending on the solver used.
 
-    positive : bool, default=False
+    positive : bool or list of bool, default=False
         When set to ``True``, forces the coefficients to be positive.
+        When set to ``[True, True, False]``, forces the first two
+        coefficients to be positive and the third one to be negative.
+        When set to ``False``, no specific constraint is enforced.
+        When positive is list, the list must have the same length as the number
+        of expected coefficients. (X.shape[1])
         Only 'lbfgs' solver is supported in this case.
 
     random_state : int, RandomState instance, default=None

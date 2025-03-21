@@ -2221,6 +2221,87 @@ def test_lbfgs_solver_error():
         model.fit(X, y)
 
 
+@pytest.mark.parametrize("alpha", [1e-3, 1e-2, 0.1, 1.0])
+@pytest.mark.parametrize("positive", [[True, True, True]])
+def test_lbfgs_positive_list(alpha, positive):
+    """
+    Test that LBGFS gets almost the same coef when
+    positive=True and positive=List[*True].
+    """
+    X, y = make_regression(n_samples=100, n_features=3, random_state=42)
+    y = np.expand_dims(y, 1)
+    alpha = np.asarray([alpha])
+    config_single_bool = {
+        "positive": True,
+        "tol": 1e-16,
+        "max_iter": 500000,
+    }
+
+    config_list_bool = {
+        "positive": positive,
+        "tol": 1e-16,
+        "max_iter": 500000,
+    }
+
+    coef_lbfgs_single_bool = _solve_lbfgs(X, y, alpha, **config_single_bool)
+    coef_lbfgs_list_bool = _solve_lbfgs(X, y, alpha, **config_list_bool)
+    assert_allclose(coef_lbfgs_single_bool, coef_lbfgs_list_bool, atol=1e-4, rtol=0)
+
+
+@pytest.mark.parametrize("positive", [[True], [True, True, True]])
+def test_lbfgs_positive_list_error_length(positive):
+    """Test that LBGFS returns error when list length does not equal features."""
+    X, y = make_regression(n_samples=100, n_features=2, random_state=42)
+    y = np.expand_dims(y, 1)
+    config_list_bool = {
+        "positive": positive,
+        "tol": 1e-16,
+        "max_iter": 500000,
+    }
+
+    with pytest.raises(
+        ValueError,
+        match="Length of 'positive' list must be equal to the number of features",
+    ):
+        _ = _solve_lbfgs(X, y, alpha=1.0, **config_list_bool)
+
+
+@pytest.mark.parametrize(
+    "positive", [["foo", True], [0, 1], [False, "foo"], [1, False]]
+)
+def test_lbfgs_positive_list_error_type(positive):
+    """Test that LBGFS returns error when positive is list but not all bool."""
+    X, y = make_regression(n_samples=100, n_features=2, random_state=42)
+    y = np.expand_dims(y, 1)
+    config_list_bool = {
+        "positive": positive,
+        "tol": 1e-16,
+        "max_iter": 500000,
+    }
+
+    with pytest.raises(
+        ValueError, match="'positive' must be either a boolean or a list of booleans"
+    ):
+        _ = _solve_lbfgs(X, y, alpha=1.0, **config_list_bool)
+
+
+@pytest.mark.parametrize("positive", ["foo", 0, 1.334, {"key": "value"}])
+def test_lbfgs_positive_error_type(positive):
+    """Test that LBGFS returns error when positive is not bool or list"""
+    X, y = make_regression(n_samples=100, n_features=2, random_state=42)
+    y = np.expand_dims(y, 1)
+    config_list_bool = {
+        "positive": positive,
+        "tol": 1e-16,
+        "max_iter": 500000,
+    }
+
+    with pytest.raises(
+        ValueError, match="'positive' must be either a boolean or a list of booleans"
+    ):
+        _ = _solve_lbfgs(X, y, alpha=1.0, **config_list_bool)
+
+
 @pytest.mark.parametrize("fit_intercept", [False, True])
 @pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
 @pytest.mark.parametrize("data", ["tall", "wide"])
