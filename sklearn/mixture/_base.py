@@ -237,7 +237,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             self._print_verbose_msg_init_beg(init)
 
             if do_init:
-                self._initialize_parameters(X, random_state, xp)
+                self._initialize_parameters(X, random_state, xp=xp)
 
             lower_bound = -xp.inf if do_init else self.lower_bound_
 
