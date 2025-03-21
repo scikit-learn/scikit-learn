@@ -1495,23 +1495,18 @@ def test_gaussian_mixture_array_api_compliance(
         init_params="random",
     )
 
-    gmm_dispatch = copy.deepcopy(gmm)
-
     gmm.fit(X)
+    means_ = gmm.means_
+    covariances_ = gmm.covariances_
 
     xp = _array_api_for_tests(array_namespace, device_)
     X = xp.asarray(X, device=device_)
 
     with sklearn.config_context(array_api_dispatch=True):
-        gmm_dispatch.fit(X)
+        gmm.fit(X)
 
-        assert (
-            device(X)
-            == device(gmm_dispatch.means_)
-            == device(gmm_dispatch.covariances_)
-        )
+        assert device(X) == device(gmm.means_)
+        assert device(X) == device(gmm.covariances_)
 
-    assert_allclose(gmm.means_, _convert_to_numpy(gmm_dispatch.means_, xp=xp))
-    assert_allclose(
-        gmm.covariances_, _convert_to_numpy(gmm_dispatch.covariances_, xp=xp)
-    )
+    assert_allclose(means_, _convert_to_numpy(gmm.means_, xp=xp))
+    assert_allclose(covariances_, _convert_to_numpy(gmm.covariances_, xp=xp))
