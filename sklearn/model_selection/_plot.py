@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 from ..utils._optional_dependencies import check_matplotlib_support
 from ..utils._plotting import _interval_max_min_ratio, _validate_score_name
@@ -597,10 +598,14 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
         self, *, param_name, param_range, train_scores, test_scores, score_name=None
     ):
         self.param_name = param_name
-        self.param_range = param_range
+        self.param_range = np.array(
+            param_range, dtype=object
+        )
         self.train_scores = train_scores
         self.test_scores = test_scores
         self.score_name = score_name
+
+        self.is_categorical = isinstance(param_range[0], str)
 
     def plot(
         self,
@@ -663,18 +668,91 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
         display : :class:`~sklearn.model_selection.ValidationCurveDisplay`
             Object that stores computed values.
         """
-        self._plot_curve(
-            self.param_range,
-            ax=ax,
-            negate_score=negate_score,
-            score_name=score_name,
-            score_type=score_type,
-            std_display_style=std_display_style,
-            line_kw=line_kw,
-            fill_between_kw=fill_between_kw,
-            errorbar_kw=errorbar_kw,
+        if ax is None:
+            _, ax = plt.subplots()
+
+        self.ax_ = ax
+        
+        x_values = (
+            self.param_range
+            if self.is_categorical
+            else np.asarray(self.param_range)
         )
-        self.ax_.set_xlabel(f"{self.param_name}")
+
+        line_kw = {} if line_kw is None else line_kw
+        fill_between_kw = {} if fill_between_kw is None else fill_between_kw
+        errorbar_kw = {} if errorbar_kw is None else errorbar_kw
+
+        train_mean = np.mean(self.train_scores, axis=1)
+        train_std = np.std(self.train_scores, axis=1)
+        test_mean = np.mean(self.test_scores, axis=1)
+        test_std = np.std(self.test_scores, axis=1)
+
+        if negate_score:
+            train_mean, test_mean = -train_mean, -test_mean
+
+        if self.is_categorical:
+            ax.bar(
+                x_values, train_mean, alpha=0.6, label="Train Score", color="b"
+            )
+            ax.bar(
+                x_values, test_mean, alpha=0.6, label="Test Score", color="r"
+            )
+        else:
+            if score_type in ("both", "train"):
+                ax.plot(
+                    x_values,
+                    train_mean,
+                    marker="o",
+                    label="Train Score",
+                    **line_kw,
+                )
+                if std_display_style == "fill_between":
+                    ax.fill_between(
+                        x_values,
+                        train_mean - train_std,
+                        train_mean + train_std,
+                        alpha=0.2,
+                        **fill_between_kw,
+                    )
+                elif std_display_style == "errorbar":
+                    ax.errorbar(
+                        x_values,
+                        train_mean,
+                        yerr=train_std,
+                        fmt="o",
+                        **errorbar_kw,
+                    )
+
+            if score_type in ("both", "test"):
+                ax.plot(
+                    x_values,
+                    test_mean,
+                    marker="s",
+                    label="Test Score",
+                    **line_kw,
+                )
+                if std_display_style == "fill_between":
+                    ax.fill_between(
+                        x_values,
+                        test_mean - test_std,
+                        test_mean + test_std,
+                        alpha=0.2,
+                        **fill_between_kw,
+                    )
+                elif std_display_style == "errorbar":
+                    ax.errorbar(
+                        x_values,
+                        test_mean,
+                        yerr=test_std,
+                        fmt="s",
+                        **errorbar_kw,
+                    )
+
+        ax.set_xlabel(f"{self.param_name}")
+        ax.set_ylabel(score_name if score_name else "Score")
+        ax.legend()
+
         return self
 
     @classmethod
@@ -866,6 +944,8 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
             error_score=error_score,
             fit_params=fit_params,
         )
+
+        param_range = np.array(param_range, dtype=object)
 
         viz = cls(
             param_name=param_name,
