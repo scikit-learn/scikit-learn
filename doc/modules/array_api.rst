@@ -200,16 +200,17 @@ common tests to verify that the estimators' results are the same when using
 vanilla NumPy and Array API inputs.
 
 To run these checks you need to install
-`array_api_compat <https://github.com/data-apis/array-api-compat>`_ in your
-test environment. To run the full set of checks you need to install both
-`PyTorch <https://pytorch.org/>`_ and `CuPy <https://cupy.dev/>`_ and have
+`array-api-strict <https://data-apis.org/array-api-strict/>`_ in your
+test environment. This allows you to run checks without having a
+GPU. To run the full set of checks you also need to install
+`PyTorch <https://pytorch.org/>`_, `CuPy <https://cupy.dev/>`_ and have
 a GPU. Checks that can not be executed or have missing dependencies will be
 automatically skipped. Therefore it's important to run the tests with the
 `-v` flag to see which checks are skipped:
 
 .. prompt:: bash $
 
-    pip install array-api-compat  # and other libraries as needed
+    pip install array-api-strict  # and other libraries as needed
     pytest -k "array_api" -v
 
 .. _mps_support:
