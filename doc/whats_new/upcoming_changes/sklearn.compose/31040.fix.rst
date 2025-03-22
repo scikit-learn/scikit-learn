@@ -1,0 +1,3 @@
+- Passing a pyarrow `Table` as `X` in a :class:`compose.ColumnTransformer` is now
+  possible. A bug in the private function :func:`utils._safe_indexing` was fixed.
+  By :user:`Christian Lorentzen <lorentzenchr>`
