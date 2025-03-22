@@ -1,13 +1,14 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from libc.stdlib cimport free
-from libc.stdlib cimport realloc
-from libc.math cimport log as ln
 from libc.math cimport isnan
+from libc.math cimport log as ln
+from libc.stdlib cimport free, realloc
 
 import numpy as np
+
 cimport numpy as cnp
+
 cnp.import_array()
 
 from ..utils._random cimport our_rand_r
@@ -48,6 +49,12 @@ cdef inline cnp.ndarray sizet_ptr_to_ndarray(intp_t* data, intp_t size):
     shape[0] = <cnp.npy_intp> size
     return cnp.PyArray_SimpleNewFromData(1, shape, cnp.NPY_INTP, data).copy()
 
+
+cdef inline cnp.ndarray int32t_ptr_to_ndarray(int32_t* data, intp_t size):
+    """Encapsulate data into a 1D numpy array of int32's."""
+    cdef cnp.npy_intp shape[1]
+    shape[0] = <cnp.npy_intp> size
+    return cnp.PyArray_SimpleNewFromData(1, shape, cnp.NPY_INT32, data)
 
 cdef inline intp_t rand_int(intp_t low, intp_t high,
                             uint32_t* random_state) noexcept nogil:
@@ -458,3 +465,78 @@ def _any_isnan_axis0(const float32_t[:, :] X):
                     isnan_out[j] = True
                     break
     return np.asarray(isnan_out)
+
+
+cdef inline void setup_cat_cache(
+    BITSET_t[:] cachebits,
+    BITSET_t cat_split,
+    int32_t n_categories
+) noexcept nogil:
+    """Populate the bits of the category cache from a split.
+    Attributes
+    ----------
+    cachebits : BITSET_t[::1]
+        This is a pointer to the output array. The size of the array should be
+        ``ceil(n_categories / 64)``. This function assumes the required
+        memory is allocated for the array by the caller.
+    cat_split : BITSET_t
+        If ``least significant bit == 0``:
+            It stores the split of the maximum 64 categories in its bits.
+            This is used in `BestSplitter`, and without loss of generality it
+            is assumed to be even, i.e. for any odd value there is an
+            equivalent even ``cat_split``.
+        If ``least significant bit == 1``:
+            It is a random split, and the 32 most significant bits of
+            ``cat_split`` contain the random seed of the split. The
+            ``n_categories`` lowest bits of ``cachebits`` are then filled with
+            random zeros and ones given the random seed.
+    n_categories : int32_t
+        The number of categories.
+    """
+    cdef int32_t j
+    cdef uint32_t rng_seed, val
+    cdef intp_t cache_size = (n_categories + 63) // 64
+    if n_categories > 0:
+        if cat_split & 1:
+            # RandomSplitter
+            for j in range(cache_size):
+                cachebits[j] = 0
+            rng_seed = cat_split >> 32
+            for j in range(n_categories):
+                val = rand_int(0, 2, &rng_seed)
+                if not val:
+                    continue
+                cachebits[j // 64] = bs_set(cachebits[j // 64], j % 64)
+        else:
+            # BestSplitter
+            # In practice, cache_size here should ALWAYS be 1
+            # XXX TODO: check cache_size == 1?
+            cachebits[0] = cat_split
+
+
+cdef inline BITSET_t bs_set(BITSET_t value, intp_t i) noexcept nogil:
+    return value | (<uint64_t> 1) << i
+
+cdef inline BITSET_t bs_reset(BITSET_t value, intp_t i) noexcept nogil:
+    return value & ~((<uint64_t> 1) << i)
+
+cdef inline BITSET_t bs_flip(BITSET_t value, intp_t i) noexcept nogil:
+    return value ^ (<uint64_t> 1) << i
+
+cdef inline BITSET_t bs_flip_all(BITSET_t value, intp_t n_low_bits) noexcept nogil:
+    return (~value) & ((~(<uint64_t> 0)) >> (64 - n_low_bits))
+
+cdef inline bint bs_get(BITSET_t value, intp_t i) noexcept nogil:
+    return (value >> i) & (<uint64_t> 1)
+
+cdef inline BITSET_t bs_from_template(
+    uint64_t template,
+    int32_t[:] cat_offs,
+    intp_t ncats_present
+) noexcept nogil:
+    cdef intp_t i
+    cdef BITSET_t value = 0
+    for i in range(ncats_present):
+        value |= (template &
+                  ((<uint64_t> 1) << i)) << cat_offs[i]
+    return value
