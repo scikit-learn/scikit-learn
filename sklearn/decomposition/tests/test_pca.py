@@ -1,3 +1,4 @@
+import os
 import re
 import warnings
 
@@ -1114,8 +1115,10 @@ def test_pca_mle_array_api_compliance(
         assert all(np.abs(extra_variance_xp_np - reference_variance) < atol)
 
 
+@pytest.mark.skipif(
+    os.environ.get("SCIPY_ARRAY_API") != "1", reason="SCIPY_ARRAY_API not set to 1."
+)
 def test_array_api_error_and_warnings_on_unsupported_params():
-    pytest.importorskip("array_api_compat")
     xp = pytest.importorskip("array_api_strict")
     iris_xp = xp.asarray(iris.data)
 

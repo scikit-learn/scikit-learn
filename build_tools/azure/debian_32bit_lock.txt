@@ -8,7 +8,7 @@ coverage[toml]==7.7.0
     # via pytest-cov
 cython==3.0.12
     # via -r build_tools/azure/debian_32bit_requirements.txt
-iniconfig==2.0.0
+iniconfig==2.1.0
     # via pytest
 joblib==1.4.2
     # via -r build_tools/azure/debian_32bit_requirements.txt
