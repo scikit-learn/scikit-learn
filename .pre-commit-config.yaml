@@ -7,8 +7,7 @@ repos:
     -   id: end-of-file-fixer
     -   id: trailing-whitespace
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    # Ruff version.
-    rev: v0.5.1
+    rev: v0.11.0
     hooks:
     -   id: ruff
         args: ["--fix", "--output-format=full"]

@@ -255,7 +255,7 @@ def test_load_diabetes_raw():
     get an unscaled version when setting `scaled=False`."""
     diabetes_raw = load_diabetes(scaled=False)
     assert diabetes_raw.data.shape == (442, 10)
-    assert diabetes_raw.target.size, 442
+    assert diabetes_raw.target.size == 442
     assert len(diabetes_raw.feature_names) == 10
     assert diabetes_raw.DESCR
 
