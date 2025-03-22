@@ -34,7 +34,7 @@ dependent_packages = {
     "pytest-cov": ("2.9.0", "tests"),
     "ruff": ("0.5.1", "tests"),
     "black": ("24.3.0", "tests"),
-    "mypy": ("1.9", "tests"),
+    "mypy": ("1.15", "tests"),
     "pyamg": ("5.0.0", "tests"),
     "polars": ("0.20.30", "docs, tests"),
     "pyarrow": ("12.0.0", "tests"),
