@@ -27,7 +27,7 @@ jobs:
         run: |
           source build_tools/shared.sh
           # Include pytest compatibility with mypy
-          pip install pytest $(get_dep ruff min) $(get_dep mypy min) $(get_dep black min) cython-lint
+          pip install pytest $(get_dep ruff min) $(get_dep mypy min) cython-lint
       - name: Run linters
         run: ./build_tools/linting.sh
       - name: Run Meson OpenMP checks

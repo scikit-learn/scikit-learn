@@ -5339,9 +5339,7 @@ def check_classifier_not_supporting_multiclass(name, estimator_orig):
                 'Only binary classification is supported. The type of the target '
                 f'is {{y_type}}.'
         )
-    """.format(
-        name=name
-    )
+    """.format(name=name)
     err_msg = textwrap.dedent(err_msg)
 
     with raises(

@@ -152,9 +152,9 @@ _ = display.ax_.set(
 #
 # We can briefly demo the effect of :func:`numpy.ravel`:
 
-print(f"y_score:\n{y_score[0:2,:]}")
+print(f"y_score:\n{y_score[0:2, :]}")
 print()
-print(f"y_score.ravel():\n{y_score[0:2,:].ravel()}")
+print(f"y_score.ravel():\n{y_score[0:2, :].ravel()}")
 
 # %%
 # In a multi-class classification setup with highly imbalanced classes,
@@ -359,7 +359,7 @@ for ix, (label_a, label_b) in enumerate(pair_list):
     plt.plot(
         fpr_grid,
         mean_tpr[ix],
-        label=f"Mean {label_a} vs {label_b} (AUC = {mean_score :.2f})",
+        label=f"Mean {label_a} vs {label_b} (AUC = {mean_score:.2f})",
         linestyle=":",
         linewidth=4,
     )
