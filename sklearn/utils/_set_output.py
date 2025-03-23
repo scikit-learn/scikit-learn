@@ -341,27 +341,30 @@ def _auto_wrap_is_configured(estimator):
     is manually disabled.
     """
     auto_wrap_output_keys = getattr(estimator, "_sklearn_auto_wrap_output_keys", set())
-    return (
-        hasattr(estimator, "get_feature_names_out")
-        and "transform" in auto_wrap_output_keys
+    return hasattr(estimator, "get_feature_names_out") and (
+        "transform" in auto_wrap_output_keys
+        or "inverse_transform" in auto_wrap_output_keys
     )
 
 
 class _SetOutputMixin:
     """Mixin that dynamically wraps methods to return container based on config.
 
-    Currently `_SetOutputMixin` wraps `transform` and `fit_transform` and configures
-    it based on `set_output` of the global configuration.
+    Currently `_SetOutputMixin` wraps `transform`, `fit_transform` and
+    `inverse_transform` and configures it based on `set_output` of the global
+    configuration.
 
     `set_output` is only defined if `get_feature_names_out` is defined and
     `auto_wrap_output_keys` is the default value.
     """
 
-    def __init_subclass__(cls, auto_wrap_output_keys=("transform",), **kwargs):
+    def __init_subclass__(
+        cls, auto_wrap_output_keys=("transform", "inverse_transform"), **kwargs
+    ):
         super().__init_subclass__(**kwargs)
 
         # Dynamically wraps `transform` and `fit_transform` and configure it's
-        # output based on `set_output`.
+        # `inverse_transform` output based on `set_output`.
         if not (
             isinstance(auto_wrap_output_keys, tuple) or auto_wrap_output_keys is None
         ):
@@ -375,6 +378,7 @@ class _SetOutputMixin:
         method_to_key = {
             "transform": "transform",
             "fit_transform": "transform",
+            "inverse_transform": "inverse_transform",
         }
         cls._sklearn_auto_wrap_output_keys = set()
 
@@ -390,7 +394,7 @@ class _SetOutputMixin:
             setattr(cls, method, wrapped_method)
 
     @available_if(_auto_wrap_is_configured)
-    def set_output(self, *, transform=None):
+    def set_output(self, *, inverse_transform=None, transform=None):
         """Set output container.
 
         See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
@@ -414,13 +418,14 @@ class _SetOutputMixin:
         self : estimator instance
             Estimator instance.
         """
-        if transform is None:
-            return self
+        if transform is not None or inverse_transform is not None:
+            if not hasattr(self, "_sklearn_output_config"):
+                self._sklearn_output_config = {}
 
-        if not hasattr(self, "_sklearn_output_config"):
-            self._sklearn_output_config = {}
-
-        self._sklearn_output_config["transform"] = transform
+            if inverse_transform is not None:
+                self._sklearn_output_config["inverse_transform"] = inverse_transform
+            if transform is not None:
+                self._sklearn_output_config["transform"] = transform
         return self
 
 
