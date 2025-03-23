@@ -69,8 +69,9 @@ def test_weighted_percentile_zero_weight():
     y.fill(1.0)
     sw = np.ones(102, dtype=np.float64)
     sw.fill(0.0)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as exc_info:
         _weighted_percentile(y, sw, 50)
+    assert str(exc_info.value) == "Invalid input: sample_weight cannot be all zeros"
 
 
 def test_weighted_percentile_zero_weight_zero_percentile():
