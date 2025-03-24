@@ -23,7 +23,7 @@ else
 fi
 
 echo -e "### Running ruff ###\n"
-ruff check --output-format=full .
+ruff check --output-format=full
 status=$?
 if [[ $status -eq 0 ]]
 then
