@@ -2575,7 +2575,11 @@ def test_cross_validate_params_none(func, extra_args):
 def test_passed_unrequested_metadata(func, extra_args):
     """Check that we raise an error when passing metadata that is not
     requested."""
-    err_msg = "but are not explicitly set as requested or not requested"
+
+    err_msg = re.escape(
+        "[metadata] are passed but are not explicitly set as requested or not "
+        "requested for ConsumingClassifier.fit, which is used within"
+    )
     with pytest.raises(UnsetMetadataPassedError, match=err_msg):
         func(
             estimator=ConsumingClassifier(),
@@ -2591,7 +2595,9 @@ def test_passed_unrequested_metadata(func, extra_args):
     )
     with pytest.raises(UnsetMetadataPassedError, match=err_msg):
         func(
-            estimator=ConsumingClassifier().set_fit_request(metadata=True),
+            estimator=ConsumingClassifier()
+            .set_fit_request(metadata=True)
+            .set_partial_fit_request(metadata=True),
             X=X,
             y=y2,
             params=dict(metadata=[]),
