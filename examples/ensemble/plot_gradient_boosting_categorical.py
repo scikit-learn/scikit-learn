@@ -168,53 +168,68 @@ import matplotlib.pyplot as plt
 
 from sklearn.model_selection import cross_validate
 
-scoring = "neg_mean_absolute_percentage_error"
-n_cv_folds = 3
+common_params = {"cv": 5, "scoring": "neg_mean_absolute_percentage_error", "n_jobs": -1}
 
-dropped_result = cross_validate(hist_dropped, X, y, cv=n_cv_folds, scoring=scoring)
-one_hot_result = cross_validate(hist_one_hot, X, y, cv=n_cv_folds, scoring=scoring)
-ordinal_result = cross_validate(hist_ordinal, X, y, cv=n_cv_folds, scoring=scoring)
-native_result = cross_validate(hist_native, X, y, cv=n_cv_folds, scoring=scoring)
+dropped_result = cross_validate(hist_dropped, X, y, **common_params)
+one_hot_result = cross_validate(hist_one_hot, X, y, **common_params)
+ordinal_result = cross_validate(hist_ordinal, X, y, **common_params)
+native_result = cross_validate(hist_native, X, y, **common_params)
+results = [
+    ("Dropped", dropped_result),
+    ("One Hot", one_hot_result),
+    ("Ordinal", ordinal_result),
+    ("Native", native_result),
+]
 
 
-def plot_results(figure_title):
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
+# %%
+def plot_performance_tradeoff(results, title):
+    fig, ax = plt.subplots()
+    markers = ["s", "o", "^", "x"]
 
-    plot_info = [
-        ("fit_time", "Fit times (s)", ax1, None),
-        ("test_score", "Mean Absolute Percentage Error", ax2, None),
-    ]
+    for idx, (name, result) in enumerate(results):
+        test_error = -result["test_score"]
+        mean_fit_time = np.mean(result["fit_time"])
+        mean_score = np.mean(test_error)
+        std_fit_time = np.std(result["fit_time"])
+        std_score = np.std(test_error)
 
-    x, width = np.arange(4), 0.9
-    for key, title, ax, y_limit in plot_info:
-        items = [
-            dropped_result[key],
-            one_hot_result[key],
-            ordinal_result[key],
-            native_result[key],
-        ]
-
-        mape_cv_mean = [np.mean(np.abs(item)) for item in items]
-        mape_cv_std = [np.std(item) for item in items]
-
-        ax.bar(
-            x=x,
-            height=mape_cv_mean,
-            width=width,
-            yerr=mape_cv_std,
-            color=["C0", "C1", "C2", "C3"],
+        ax.scatter(
+            result["fit_time"],
+            test_error,
+            label=name,
+            marker=markers[idx],
         )
-        ax.set(
-            xlabel="Model",
-            title=title,
-            xticks=x,
-            xticklabels=["Dropped", "One Hot", "Ordinal", "Native"],
-            ylim=y_limit,
+        ax.scatter(
+            mean_fit_time,
+            mean_score,
+            color="k",
+            marker=markers[idx],
         )
-    fig.suptitle(figure_title)
+        ax.errorbar(
+            x=mean_fit_time,
+            y=mean_score,
+            yerr=std_score,
+            c="k",
+            capsize=2,
+        )
+        ax.errorbar(
+            x=mean_fit_time,
+            y=mean_score,
+            xerr=std_fit_time,
+            c="k",
+            capsize=2,
+        )
+        ax.set_xscale("log")
+        ax.set_xlabel("Time to fit (seconds)")
+        ax.set_ylabel("Mean Absolute Percentage Error")
+        ax.set_title(title)
+
+    ax.legend()
+    plt.show()
 
 
-plot_results("Gradient Boosting on Ames Housing")
+plot_performance_tradeoff(results, "Gradient Boosting on Ames Housing")
 
 # %%
 # We see that the model with one-hot-encoded data is by far the slowest. This
@@ -264,14 +279,20 @@ for pipe in (hist_dropped, hist_one_hot, hist_ordinal, hist_native):
             histgradientboostingregressor__max_iter=15,
         )
 
-dropped_result = cross_validate(hist_dropped, X, y, cv=n_cv_folds, scoring=scoring)
-one_hot_result = cross_validate(hist_one_hot, X, y, cv=n_cv_folds, scoring=scoring)
-ordinal_result = cross_validate(hist_ordinal, X, y, cv=n_cv_folds, scoring=scoring)
-native_result = cross_validate(hist_native, X, y, cv=n_cv_folds, scoring=scoring)
+dropped_result = cross_validate(hist_dropped, X, y, **common_params)
+one_hot_result = cross_validate(hist_one_hot, X, y, **common_params)
+ordinal_result = cross_validate(hist_ordinal, X, y, **common_params)
+native_result = cross_validate(hist_native, X, y, **common_params)
+results = [
+    ("Dropped", dropped_result),
+    ("One Hot", one_hot_result),
+    ("Ordinal", ordinal_result),
+    ("Native", native_result),
+]
 
-plot_results("Gradient Boosting on Ames Housing (few and small trees)")
-
-plt.show()
+plot_performance_tradeoff(
+    results, "Gradient Boosting on Ames Housing (few and small trees)"
+)
 
 # %%
 # The results for these under-fitting models confirm our previous intuition:
