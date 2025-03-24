@@ -1173,7 +1173,7 @@ def cross_val_predict(
         # methods. For these router methods, we create the router to use
         # `process_routing` on it.
         router = (
-            MetadataRouter(owner="cross_validate")
+            MetadataRouter(owner="cross_val_predict")
             .add(
                 splitter=cv,
                 method_mapping=MethodMapping().add(caller="fit", callee="split"),

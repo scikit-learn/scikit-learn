@@ -2589,6 +2589,10 @@ def test_passed_unrequested_metadata(func, extra_args):
             **extra_args,
         )
 
+    # cross_val_predict doesn't use scoring
+    if func == cross_val_predict:
+        return
+
     err_msg = re.escape(
         "[metadata] are passed but are not explicitly set as requested or not "
         "requested for ConsumingClassifier.score, which is used within"
