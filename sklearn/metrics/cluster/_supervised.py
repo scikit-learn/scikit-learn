@@ -1052,7 +1052,7 @@ def adjusted_mutual_info_score(
     else:
         denominator = max(denominator, np.finfo("float64").eps)
     nominator = mi - emi
-    # We repeat the same process for the nominator to make trnaformation symmetric
+    # We repeat the same process for the nominator to make transformation symmetric.
     if nominator < 0:
         nominator = min(nominator, -np.finfo("float64").eps)
     else:
