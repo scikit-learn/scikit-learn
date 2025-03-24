@@ -751,7 +751,7 @@ def load_iris(*, return_X_y=False, as_frame=False):
     prefer_skip_nested_validation=True,
 )
 def load_breast_cancer(*, return_X_y=False, as_frame=False):
-    """Load and return the breast cancer wisconsin dataset (classification).
+    """Load and return the breast cancer Wisconsin dataset (classification).
 
     The breast cancer dataset is a classic and very easy binary classification
     dataset.
