@@ -92,6 +92,7 @@ dropper = make_column_transformer(
     ("drop", make_column_selector(dtype_include="category")), remainder="passthrough"
 )
 hist_dropped = make_pipeline(dropper, HistGradientBoostingRegressor(random_state=42))
+hist_dropped
 
 # %%
 # Gradient boosting estimator with one-hot encoding
@@ -112,6 +113,7 @@ one_hot_encoder = make_column_transformer(
 hist_one_hot = make_pipeline(
     one_hot_encoder, HistGradientBoostingRegressor(random_state=42)
 )
+hist_one_hot
 
 # %%
 # Gradient boosting estimator with ordinal encoding
@@ -139,6 +141,7 @@ ordinal_encoder = make_column_transformer(
 hist_ordinal = make_pipeline(
     ordinal_encoder, HistGradientBoostingRegressor(random_state=42)
 )
+hist_ordinal
 
 # %%
 # Gradient boosting estimator with native categorical support
@@ -156,15 +159,13 @@ hist_ordinal = make_pipeline(
 hist_native = HistGradientBoostingRegressor(
     random_state=42, categorical_features="from_dtype"
 )
+hist_native
 
 # %%
 # Model comparison
 # ----------------
-# Finally, we evaluate the models using cross validation. Here we compare the
-# models performance in terms of
+# Here we use cross validation to compare the models performance in terms of
 # :func:`~metrics.mean_absolute_percentage_error` and fit times.
-
-import matplotlib.pyplot as plt
 
 from sklearn.model_selection import cross_validate
 
@@ -181,8 +182,10 @@ results = [
     ("Native", native_result),
 ]
 
-
 # %%
+import matplotlib.pyplot as plt
+
+
 def plot_performance_tradeoff(results, title):
     fig, ax = plt.subplots()
     markers = ["s", "o", "^", "x"]
