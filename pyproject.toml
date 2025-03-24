@@ -83,7 +83,7 @@ tests = [
     "pandas>=1.4.0",
     "pytest>=7.1.2",
     "pytest-cov>=2.9.0",
-    "ruff>=0.5.1",
+    "ruff>=0.11.0",
     "black>=24.3.0",
     "mypy>=1.15",
     "pyamg>=5.0.0",
@@ -126,7 +126,6 @@ exclude = '''
 [tool.ruff]
 # max line length for black
 line-length = 88
-target-version = "py38"
 exclude=[
     ".git",
     "__pycache__",
@@ -146,7 +145,7 @@ exclude=[
 preview = true
 # This enables us to use the explicit preview rules that we want only
 explicit-preview-rules = true
-# all rules can be found here: https://beta.ruff.rs/docs/rules/
+# all rules can be found here: https://docs.astral.sh/ruff/rules/
 select = ["E", "F", "W", "I", "CPY001", "RUF"]
 ignore=[
     # space before : (needed for how black formats slicing)
@@ -155,11 +154,11 @@ ignore=[
     "E731",
     # do not use variables named 'l', 'O', or 'I'
     "E741",
-    # E721 is in preview (july 2024) and gives many false positives.
+    # E721 gives many false positives.
     # Use `is` and `is not` for type comparisons, or `isinstance()` for
     # isinstance checks
     "E721",
-    # F841 is in preview (july 2024), and we don't care much about it.
+    # We don't care much about F841.
     # Local variable ... is assigned to but never used
     "F841",
     # some RUF rules trigger too many changes
