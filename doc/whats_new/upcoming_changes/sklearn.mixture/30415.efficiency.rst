@@ -1,0 +1,5 @@
+- :class:`~mixture.GaussianMixture` now consistently operates at `float32`
+  precision when fitted with `float32` data to improve training speed and
+  memory efficiency. Previously, part of the computation would be implicitly
+  cast to `float64`. By :user:`Olivier Grisel <ogrisel>` and :user:`Omar Salman
+  <OmarManzoor>`.

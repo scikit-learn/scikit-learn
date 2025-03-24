@@ -833,7 +833,8 @@ def check_estimator(
     if generate_only:
         warnings.warn(
             "`generate_only` is deprecated in 1.6 and will be removed in 1.8. "
-            "Use :func:`~sklearn.utils.estimator_checks.estimator_checks` instead.",
+            "Use :func:`~sklearn.utils.estimator_checks.estimator_checks_generator` "
+            "instead.",
             FutureWarning,
         )
         return estimator_checks_generator(
@@ -1124,10 +1125,10 @@ def check_array_api_input(
         # now since array-api-strict seems a bit too strict ...
         numpy_asarray_works = xp.__name__ != "array_api_strict"
 
-    except TypeError:
+    except (TypeError, RuntimeError):
         # PyTorch with CUDA device and CuPy raise TypeError consistently.
-        # Exception type may need to be updated in the future for other
-        # libraries.
+        # array-api-strict chose to raise RuntimeError instead. Exception type
+        # may need to be updated in the future for other libraries.
         numpy_asarray_works = False
 
     if numpy_asarray_works:
@@ -2316,7 +2317,7 @@ def check_estimators_empty_data_messages(name, estimator_orig):
     # the following y should be accepted by both classifiers and regressors
     # and ignored by unsupervised models
     y = _enforce_estimator_tags_y(e, np.array([1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]))
-    msg = r"0 feature\(s\) \(shape=\(\d*, 0\)\) while a minimum of \d* " "is required."
+    msg = r"0 feature\(s\) \(shape=\(\d*, 0\)\) while a minimum of \d* is required."
     with raises(ValueError, match=msg):
         e.fit(X_zero_features, y)
 
@@ -3933,7 +3934,7 @@ def _enforce_estimator_tags_y(estimator, y):
         and not tags.classifier_tags.multi_class
         and y.size > 0
     ):
-        y = np.where(y == y.flat[0], y, y.flat[0] + 1)
+        y = np.where(y == y.min(), y, y.min() + 1)
     # Estimators in mono_output_task_error raise ValueError if y is of 1-D
     # Convert into a 2-D y for those estimators.
     if tags.target_tags.multi_output and not tags.target_tags.single_output:
@@ -4010,7 +4011,7 @@ def check_positive_only_tag_during_fit(name, estimator_orig):
             estimator.fit(X, y)
         except Exception as e:
             err_msg = (
-                f"Estimator {repr(name)} raised {e.__class__.__name__} unexpectedly."
+                f"Estimator {name!r} raised {e.__class__.__name__} unexpectedly."
                 " This happens when passing negative input values as X."
                 " If negative values are not supported for this estimator instance,"
                 " then the tags.input_tags.positive_only tag needs to be set to True."

@@ -579,8 +579,12 @@ def test_calibration_attributes(clf, cv):
     X, y = make_classification(n_samples=10, n_features=5, n_classes=2, random_state=7)
     if cv == "prefit":
         clf = clf.fit(X, y)
-    calib_clf = CalibratedClassifierCV(clf, cv=cv)
-    calib_clf.fit(X, y)
+        calib_clf = CalibratedClassifierCV(clf, cv=cv)
+        with pytest.warns(FutureWarning):
+            calib_clf.fit(X, y)
+    else:
+        calib_clf = CalibratedClassifierCV(clf, cv=cv)
+        calib_clf.fit(X, y)
 
     if cv == "prefit":
         assert_array_equal(calib_clf.classes_, clf.classes_)
@@ -656,7 +660,7 @@ def test_calibration_display_compute(pyplot, iris_data_binary, n_bins, strategy)
     assert viz.estimator_name == "LogisticRegression"
 
     # cannot fail thanks to pyplot fixture
-    import matplotlib as mpl  # noqa
+    import matplotlib as mpl
 
     assert isinstance(viz.line_, mpl.lines.Line2D)
     assert viz.line_.get_alpha() == 0.8
@@ -1077,20 +1081,48 @@ def test_sigmoid_calibration_max_abs_prediction_threshold(global_random_seed):
     assert_allclose(b2, b3, atol=atol)
 
 
-def test_float32_predict_proba(data):
+@pytest.mark.parametrize("use_sample_weight", [True, False])
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
+def test_float32_predict_proba(data, use_sample_weight, method):
     """Check that CalibratedClassifierCV works with float32 predict proba.
 
-    Non-regression test for gh-28245.
+    Non-regression test for gh-28245 and gh-28247.
     """
+    if use_sample_weight:
+        # Use dtype=np.float64 to check that this does not trigger an
+        # unintentional upcasting: the dtype of the base estimator should
+        # control the dtype of the final model. In particular, the
+        # sigmoid calibrator relies on inputs (predictions and sample weights)
+        # with consistent dtypes because it is partially written in Cython.
+        # As this test forces the predictions to be `float32`, we want to check
+        # that `CalibratedClassifierCV` internally converts `sample_weight` to
+        # the same dtype to avoid crashing the Cython call.
+        sample_weight = np.ones_like(data[1], dtype=np.float64)
+    else:
+        sample_weight = None
 
     class DummyClassifer32(DummyClassifier):
         def predict_proba(self, X):
             return super().predict_proba(X).astype(np.float32)
 
     model = DummyClassifer32()
-    calibrator = CalibratedClassifierCV(model)
-    # Does not raise an error
-    calibrator.fit(*data)
+    calibrator = CalibratedClassifierCV(model, method=method)
+    # Does not raise an error.
+    calibrator.fit(*data, sample_weight=sample_weight)
+
+    # Check with frozen prefit model
+    model = DummyClassifer32().fit(*data, sample_weight=sample_weight)
+    calibrator = CalibratedClassifierCV(FrozenEstimator(model), method=method)
+    # Does not raise an error.
+    calibrator.fit(*data, sample_weight=sample_weight)
+
+    # TODO(1.8): remove me once the deprecation period is over.
+    # Check with prefit model using the deprecated cv="prefit" argument:
+    model = DummyClassifer32().fit(*data, sample_weight=sample_weight)
+    calibrator = CalibratedClassifierCV(model, method=method, cv="prefit")
+    # Does not raise an error.
+    with pytest.warns(FutureWarning):
+        calibrator.fit(*data, sample_weight=sample_weight)
 
 
 def test_error_less_class_samples_than_folds():
