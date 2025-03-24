@@ -1,4 +1,4 @@
-name: Unit test for Pyodide/WASM
+name: Unit test for Pyodide
 on:
   push:
   pull_request:
@@ -30,4 +30,5 @@ jobs:
           CIBW_PLATFORM: pyodide
           SKLEARN_SKIP_OPENMP_TEST: "true"
           SKLEARN_SKIP_NETWORK_TESTS: 1
+          CIBW_TEST_REQUIRES: "pytest pandas"
           CIBW_TEST_COMMAND: "python -m pytest svra --pyargs sklearn --durations 20 --showlocals"
