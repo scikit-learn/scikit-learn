@@ -1051,8 +1051,13 @@ def adjusted_mutual_info_score(
         denominator = min(denominator, -np.finfo("float64").eps)
     else:
         denominator = max(denominator, np.finfo("float64").eps)
-    ami = (mi - emi) / denominator
-    return float(ami)
+    nominator = mi - emi
+    # We repeat the same process for the nominator to make trnaformation symmetric
+    if nominator < 0:
+        nominator = min(nominator, -np.finfo("float64").eps)
+    else:
+        nominator = max(nominator, np.finfo("float64").eps)
+    return float(nominator / denominator)
 
 
 @validate_params(
