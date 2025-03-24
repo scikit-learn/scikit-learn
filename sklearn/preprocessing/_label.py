@@ -600,7 +600,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
 
     if y_type == "binary":
         if sparse_output:
-            Y = Y.getcol(-1)
+            Y = Y[:, [-1]]
         else:
             Y = Y[:, -1].reshape((-1, 1))
 
