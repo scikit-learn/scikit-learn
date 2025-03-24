@@ -857,8 +857,6 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     # the indices associated with the distinct values. We also
     # concatenate a value for the end of the curve.
     distinct_value_indices = xp.nonzero(y_score[1:] - y_score[:-1])[0]
-    # can't use size since PyTorch size is a method and not a property
-    # as specified by the array API spec
     threshold_idxs = xp.concat(
         [distinct_value_indices, xp.asarray([size(y_true) - 1], device=device)]
     )
