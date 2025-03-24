@@ -20,6 +20,28 @@ def test_smacof():
     assert_array_almost_equal(X, X_true, decimal=3)
 
 
+def test_nonmetric_lower_normalized_stress():
+    # Testing that nonmetric MDS results in lower normalized stess compared
+    # compared to metric MDS
+    sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
+    Z = np.array([[-0.266, -0.539], [0.451, 0.252], [0.016, -0.238], [-0.200, 0.524]])
+
+    _, stress1 = mds.smacof(
+        sim, init=Z, n_components=2, max_iter=1000, n_init=1, normalized_stress=True
+    )
+
+    _, stress2 = mds.smacof(
+        sim,
+        init=Z,
+        n_components=2,
+        max_iter=1000,
+        n_init=1,
+        normalized_stress=True,
+        metric=False,
+    )
+    assert stress1 > stress2
+
+
 def test_smacof_error():
     # Not symmetric similarity matrix:
     sim = np.array([[0, 5, 9, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
@@ -74,3 +96,37 @@ def test_normalized_stress_auto(metric, monkeypatch):
 
     mds.smacof(dist, metric=metric, normalized_stress="auto", random_state=rng)
     assert mock.call_args[1]["normalized_stress"] != metric
+
+
+def test_isotonic_outofbounds():
+    # This particular configuration can trigger out of bounds error
+    # in the isotonic regression (was fixed in PR 30514)
+    dis = np.array(
+        [
+            [0.0, 1.732050807568877, 1.7320508075688772],
+            [1.732050807568877, 0.0, 6.661338147750939e-16],
+            [1.7320508075688772, 6.661338147750939e-16, 0.0],
+        ]
+    )
+    init = np.array(
+        [
+            [0.08665881585055124, 0.7939114643387546],
+            [0.9959834154297658, 0.7555546025640025],
+            [0.8766008278401566, 0.4227358815811242],
+        ]
+    )
+    mds.smacof(dis, init=init, metric=False, n_init=1)
+
+
+def test_returned_stress():
+    X = np.array([[1, 1], [1, 4], [1, 5], [3, 3]])
+    D = euclidean_distances(X)
+
+    mds_est = mds.MDS(n_components=2).fit(X)
+    Z = mds_est.embedding_
+    stress = mds_est.stress_
+
+    D_mds = euclidean_distances(Z)
+    stress_Z = ((D_mds.ravel() - D.ravel()) ** 2).sum() / 2
+
+    assert_allclose(stress, stress_Z)
