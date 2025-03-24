@@ -29,6 +29,7 @@ from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.validation import _num_samples, check_non_negative, validate_data
 
+# mypy error: Module 'sklearn.manifold' has no attribute '_utils'
 # mypy error: Module 'sklearn.manifold' has no attribute '_barnes_hut_tsne'
 from . import _barnes_hut_tsne, _utils  # type: ignore
 
@@ -858,7 +859,10 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
     def _check_params_vs_input(self, X):
         if self.perplexity >= X.shape[0]:
-            raise ValueError("perplexity must be less than n_samples")
+            raise ValueError(
+                f"perplexity ({self.perplexity}) must be less "
+                f"than n_samples ({X.shape[0]})"
+            )
 
     def _fit(self, X, skip_num_points=0):
         """Private function to fit the model using X as training data."""

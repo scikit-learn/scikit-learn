@@ -61,13 +61,13 @@ from sklearn.utils.validation import (
 )
 
 __all__ = [
-    "assert_array_equal",
+    "SkipTest",
+    "assert_allclose",
     "assert_almost_equal",
     "assert_array_almost_equal",
+    "assert_array_equal",
     "assert_array_less",
-    "assert_allclose",
     "assert_run_python_script_without_output",
-    "SkipTest",
 ]
 
 SkipTest = unittest.case.SkipTest
@@ -1273,7 +1273,7 @@ def _array_api_for_tests(array_namespace, device):
             f"{array_namespace} is not installed: not checking array_api input"
         )
     try:
-        import array_api_compat  # noqa
+        import array_api_compat
     except ImportError:
         raise SkipTest(
             "array_api_compat is not installed: not checking array_api input"
@@ -1384,6 +1384,14 @@ def _get_warnings_filters_info_list():
         ),
         WarningInfo(
             "ignore", message="Attribute s is deprecated", category=DeprecationWarning
+        ),
+        # Plotly deprecated something which we're not using, but internally it's used
+        # and needs to be fixed on their side.
+        # https://github.com/plotly/plotly.py/issues/4997
+        WarningInfo(
+            "ignore",
+            message=".+scattermapbox.+deprecated.+scattermap.+instead",
+            category=DeprecationWarning,
         ),
     ]
 

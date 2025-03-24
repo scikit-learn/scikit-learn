@@ -100,7 +100,7 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution, custom_values)
     custom_values = {k: _convert_custom_values(v) for k, v in custom_values.items()}
     if any(v.ndim != 1 for v in custom_values.values()):
         error_string = ", ".join(
-            f"Feature {str(k)}: {v.ndim} dimensions"
+            f"Feature {k}: {v.ndim} dimensions"
             for k, v in custom_values.items()
             if v.ndim != 1
         )
@@ -385,7 +385,9 @@ def partial_dependence(
     the average response of an estimator for each possible value of the
     feature.
 
-    Read more in the :ref:`User Guide <partial_dependence>`.
+    Read more in
+    :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
+    and the :ref:`User Guide <partial_dependence>`.
 
     .. warning::
 

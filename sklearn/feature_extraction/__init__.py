@@ -10,9 +10,9 @@ from .image import grid_to_graph, img_to_graph
 
 __all__ = [
     "DictVectorizer",
+    "FeatureHasher",
+    "grid_to_graph",
     "image",
     "img_to_graph",
-    "grid_to_graph",
     "text",
-    "FeatureHasher",
 ]

@@ -160,7 +160,7 @@ def _get_threadpool_controller():
 def _threadpool_controller_decorator(limits=1, user_api="blas"):
     """Decorator to limit the number of threads used at the function level.
 
-    It should be prefered over `threadpoolctl.ThreadpoolController.wrap` because this
+    It should be preferred over `threadpoolctl.ThreadpoolController.wrap` because this
     one only loads the shared libraries when the function is called while the latter
     loads them at import time.
     """

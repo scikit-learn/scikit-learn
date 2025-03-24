@@ -112,7 +112,7 @@ def test_precision_recall_chance_level_line(
             chance_level_kw=chance_level_kw,
         )
 
-    import matplotlib as mpl  # noqa
+    import matplotlib as mpl
 
     assert isinstance(display.chance_level_, mpl.lines.Line2D)
     assert tuple(display.chance_level_.get_xdata()) == (0, 1)
@@ -326,7 +326,7 @@ def test_precision_recall_prevalence_pos_label_reusable(pyplot, constructor_name
         )
     assert display.chance_level_ is None
 
-    import matplotlib as mpl  # noqa
+    import matplotlib as mpl
 
     # When calling from_estimator or from_predictions,
     # prevalence_pos_label should have been set, so that directly

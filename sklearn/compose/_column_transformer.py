@@ -50,7 +50,7 @@ from ..utils.validation import (
     check_is_fitted,
 )
 
-__all__ = ["ColumnTransformer", "make_column_transformer", "make_column_selector"]
+__all__ = ["ColumnTransformer", "make_column_selector", "make_column_transformer"]
 
 
 _ERR_MSG_1DCOLUMN = (
@@ -1352,10 +1352,8 @@ def _is_empty_column_selection(column):
     if hasattr(column, "dtype") and np.issubdtype(column.dtype, np.bool_):
         return not column.any()
     elif hasattr(column, "__len__"):
-        return (
-            len(column) == 0
-            or all(isinstance(col, bool) for col in column)
-            and not any(column)
+        return len(column) == 0 or (
+            all(isinstance(col, bool) for col in column) and not any(column)
         )
     else:
         return False
