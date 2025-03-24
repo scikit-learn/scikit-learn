@@ -1,8 +1,4 @@
 name: Test Emscripten/Pyodide build
-# TODO: move the relevant workflow items to Azure Pipelines
-# when the build and tests pass on GitHub Actions here
-# and then remove this workflow file altogether.
-
 on:
   pull_request:
   push:
