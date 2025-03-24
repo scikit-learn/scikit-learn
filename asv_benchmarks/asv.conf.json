@@ -102,15 +102,12 @@
     //     cases: 'linux2', 'win32', 'cygwin', 'darwin'.
     //
     // "exclude": [
-    //     {"python": "3.2", "sys_platform": "win32"}, // skip py3.2 on windows
-    //     {"environment_type": "conda", "six": null}, // don't run without six on conda
+    //     {"python": "3.8", "sys_platform": "win32"}, // skip py38 on windows
     // ],
     //
     // "include": [
-    //     // additional env for python2.7
-    //     {"python": "2.7", "numpy": "1.8"},
     //     // additional env if run on windows+conda
-    //     {"platform": "win32", "environment_type": "conda", "python": "2.7", "libpython": ""},
+    //     {"sys_platform": "win32", "environment_type": "conda", "python": "3.8", "libpython": ""},
     // ],
 
     // The directory (relative to the current directory) that benchmarks are
