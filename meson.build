@@ -48,10 +48,6 @@ py = import('python').find_installation(pure: false)
 
 # Copy all the .py files to the install dir, rather than using
 # py.install_sources and needing to list them explicitly one by one
-# Exclude the _build_utils directory, which is not needed at runtime
-install_subdir('sklearn',
-  install_dir: py.get_install_dir(),
-  exclude_directories: ['_build_utils']
-)
+install_subdir('sklearn', install_dir: py.get_install_dir())
 
 subdir('sklearn')
