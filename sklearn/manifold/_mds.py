@@ -75,6 +75,9 @@ def _smacof_single(
 
         .. versionadded:: 1.2
 
+        .. versionchanged:: 1.7
+           Normalized stress is now supported for metric MDS as well.
+
     Returns
     -------
     X : ndarray of shape (n_samples, n_components)
@@ -293,6 +296,10 @@ def smacof(
         .. versionchanged:: 1.4
            The default value changed from `False` to `"auto"` in version 1.4.
 
+        .. versionchanged:: 1.7
+           Normalized stress is now supported for metric MDS as well.
+
+
     Returns
     -------
     X : ndarray of shape (n_samples, n_components)
@@ -462,6 +469,9 @@ class MDS(BaseEstimator):
 
         .. versionchanged:: 1.4
            The default value changed from `False` to `"auto"` in version 1.4.
+
+        .. versionchanged:: 1.7
+           Normalized stress is now supported for metric MDS as well.
 
     Attributes
     ----------

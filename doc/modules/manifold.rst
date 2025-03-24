@@ -476,9 +476,7 @@ stress, is then defined by :math:`\sum_{i < j} d_{ij}(X) - \hat{d}_{ij}(X)`
   .. math::
       \sqrt{\frac{\sum_{i < j} (d_{ij} - \hat{d}_{ij})^2}{\sum_{i < j} d_{ij}^2}}.
 
-  The use of normalized Stress-1 can be enabled by setting `normalized_stress=True`,
-  however it is only compatible with the non-metric MDS problem and will be ignored
-  in the metric case.
+  The use of normalized Stress-1 can be enabled by setting `normalized_stress=True`.
 
   .. figure:: ../auto_examples/manifold/images/sphx_glr_plot_mds_001.png
     :target: ../auto_examples/manifold/plot_mds.html
