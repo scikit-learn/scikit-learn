@@ -18,7 +18,7 @@ def number_of_kernels(
             if scope == "all":
                 number += 1
             else:
-                number += X.shape[1]
+                number += X.shape[1] if len(X.shape) > 1 else 1
 
     return number
 
@@ -42,9 +42,16 @@ def kernel_generator(
                 if scope == "all":
                     yield kernel(X, Y, **{k: v[i] for k, v in params.items()})
                 else:
-                    for j in range(X.shape[1]):
+                    if len(X.shape) == 1:
                         yield kernel(
-                            X[:, j].reshape(-1, 1),
-                            Y[:, j].reshape(-1, 1),
+                            X.reshape(-1, 1),
+                            Y.reshape(-1, 1),
                             **{k: v[i] for k, v in params.items()},
                         )
+                    else:
+                        for j in range(X.shape[1]):
+                            yield kernel(
+                                X[:, j].reshape(-1, 1),
+                                Y[:, j].reshape(-1, 1),
+                                **{k: v[i] for k, v in params.items()},
+                            )

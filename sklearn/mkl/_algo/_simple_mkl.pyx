@@ -413,7 +413,7 @@ cpdef tuple _dual_gap(
     elif svm_type == REGRESSION:
         # (J(d) + max(-∂J/∂dₘ) - Σᵢ(βᵢ - αᵢ)·yᵢ - ε·Σᵢ(βᵢ + αᵢ)) / J(d)
         # Here, alpha = [β, α]
-        vec = np.concatenate([np.subtract(y, epsilon), np.subtract(-y, epsilon)])
+        vec = np.concatenate([np.subtract(y, epsilon), -np.add(y, epsilon)])
         duality_gap = (J - np.min(delta_J) - np.dot(alpha, vec)) / J
     elif svm_type == ONECLASS:
         # (J(d) + max(-∂J/∂dₘ)) / J(d)

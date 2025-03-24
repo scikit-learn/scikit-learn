@@ -17,7 +17,12 @@ from ..base import (
 )
 from ..metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS
 from ..utils._param_validation import Interval, StrOptions
-from ..utils.validation import check_is_fitted, validate_data
+from ..utils.validation import (
+    _check_n_features,
+    check_consistent_length,
+    check_is_fitted,
+    validate_data,
+)
 from ._algo import (
     _average_mkl,
     _simple_mkl,
@@ -140,7 +145,11 @@ class BaseMKL(TransformerMixin, MetaEstimatorMixin, BaseEstimator, metaclass=ABC
             kernels_param_grids=self._kernels_param_grids,
             precomputed_kernels=False,  # Kernels are not precomputed yet
         )
-        self.n_samples_in_ = X[0].shape[0] if self._kernels is None else X.shape[0]
+        self.n_samples_in_ = (
+            X[0].shape[0]
+            if self._kernels is None
+            else X.shape[0] if hasattr(X, "shape") else len(X)
+        )
 
         if self._kernels is not None:
             # Reference to X to compute the kernel in predict/transform
@@ -181,8 +190,12 @@ class BaseMKL(TransformerMixin, MetaEstimatorMixin, BaseEstimator, metaclass=ABC
                     kernels_param_grids=self._kernels_param_grids,
                     precomputed_kernels=False,  # We need to compute the kernels
                 ),
-                n_samples=X.shape[0],
-                m_samples=self.__Xfit.shape[0],
+                n_samples=(X.shape[0] if hasattr(X, "shape") else len(X)),
+                m_samples=(
+                    self.__Xfit.shape[0]
+                    if hasattr(self.__Xfit, "shape")
+                    else len(self.__Xfit)
+                ),
             ).base
 
     def predict(self, X):
@@ -342,10 +355,13 @@ class BaseMKL(TransformerMixin, MetaEstimatorMixin, BaseEstimator, metaclass=ABC
                     "n_fit_samples) when using precomputed kernels."
                 )
             for i in range(np.shape(X)[0]):
+                check_consistent_length(X[i], y)
+        else:
+            try:
                 if y is None:
-                    X[i] = validate_data(
+                    X = validate_data(
                         self,
-                        X[i],
+                        X,
                         reset=fit,
                         dtype=np.float64,
                         order="C",
@@ -354,9 +370,9 @@ class BaseMKL(TransformerMixin, MetaEstimatorMixin, BaseEstimator, metaclass=ABC
                         ensure_min_samples=(2 if fit else 1),
                     )
                 else:
-                    X[i], y = validate_data(
+                    X, y = validate_data(
                         self,
-                        X[i],
+                        X,
                         y,
                         reset=fit,
                         dtype=np.float64,
@@ -365,30 +381,9 @@ class BaseMKL(TransformerMixin, MetaEstimatorMixin, BaseEstimator, metaclass=ABC
                         accept_large_sparse=False,
                         ensure_min_samples=(2 if fit else 1),
                     )
-        else:
-            if y is None:
-                X = validate_data(
-                    self,
-                    X,
-                    reset=fit,
-                    dtype=np.float64,
-                    order="C",
-                    accept_sparse="csr",
-                    accept_large_sparse=False,
-                    ensure_min_samples=(2 if fit else 1),
-                )
-            else:
-                X, y = validate_data(
-                    self,
-                    X,
-                    y,
-                    reset=fit,
-                    dtype=np.float64,
-                    order="C",
-                    accept_sparse="csr",
-                    accept_large_sparse=False,
-                    ensure_min_samples=(2 if fit else 1),
-                )
+            except ValueError:
+                check_consistent_length(X, y)
+                _check_n_features(self, X, reset=fit)
 
         return X, y
 
@@ -398,12 +393,13 @@ class BaseMKL(TransformerMixin, MetaEstimatorMixin, BaseEstimator, metaclass=ABC
             self.precompute_kernels or self.precompute_kernels is None
         ):
             try:
+                shape = X.shape[0] if hasattr(X, "shape") else len(X)
                 new_X = np.empty(
-                    (self.n_kernels_, X.shape[0], X.shape[0]),
+                    (self.n_kernels_, shape, shape),
                     dtype=np.float64,
                 )
                 kernel = np.empty(
-                    (X.shape[0], X.shape[0]),
+                    (shape, shape),
                     dtype=np.float64,
                 )  # Used to check if enough memory is available for computing
                 self._precomputed_kernels = True
