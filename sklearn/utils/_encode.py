@@ -77,7 +77,7 @@ def _unique_np(values, return_inverse=False, return_counts=False):
     # np.unique will have duplicate missing values at the end of `uniques`
     # here we clip the nans and remove it from uniques
     if uniques.size and is_scalar_nan(uniques[-1]):
-        nan_idx = _searchsorted(xp, uniques, xp.nan)
+        nan_idx = _searchsorted(uniques, xp.nan, xp=xp)
         uniques = uniques[: nan_idx + 1]
         if return_inverse:
             inverse[inverse > nan_idx] = nan_idx
@@ -234,13 +234,13 @@ def _encode(values, *, uniques, check_unknown=True):
         try:
             return _map_to_integer(values, uniques)
         except KeyError as e:
-            raise ValueError(f"y contains previously unseen labels: {str(e)}")
+            raise ValueError(f"y contains previously unseen labels: {e}")
     else:
         if check_unknown:
             diff = _check_unknown(values, uniques)
             if diff:
-                raise ValueError(f"y contains previously unseen labels: {str(diff)}")
-        return _searchsorted(xp, uniques, values)
+                raise ValueError(f"y contains previously unseen labels: {diff}")
+        return _searchsorted(uniques, values, xp=xp)
 
 
 def _check_unknown(values, known_values, return_mask=False):
@@ -285,10 +285,8 @@ def _check_unknown(values, known_values, return_mask=False):
         def is_valid(value):
             return (
                 value in uniques_set
-                or missing_in_uniques.none
-                and value is None
-                or missing_in_uniques.nan
-                and is_scalar_nan(value)
+                or (missing_in_uniques.none and value is None)
+                or (missing_in_uniques.nan and is_scalar_nan(value))
             )
 
         if return_mask:

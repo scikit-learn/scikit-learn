@@ -21,7 +21,7 @@ from ..utils._metadata_requests import (
 )
 from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
 from ..utils._tags import get_tags
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 from ._base import SelectorMixin
 
 
@@ -77,13 +77,14 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         Whether to perform forward selection or backward selection.
 
     scoring : str or callable, default=None
-        A single str (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring`) to evaluate the predictions on the test set.
+        Scoring method to use for cross-validation. Options:
 
-        NOTE that when using a custom scorer, it should return a single
-        value.
-
-        If None, the estimator's score method is used.
+        - str: see :ref:`scoring_string_names` for options.
+        - callable: a scorer callable object (e.g., function) with signature
+          ``scorer(estimator, X, y)`` that returns a single value.
+          See :ref:`scoring_callable` for details.
+        - `None`: the `estimator`'s
+          :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -228,7 +229,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         """
         _raise_for_params(params, self, "fit")
         tags = self.__sklearn_tags__()
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse="csc",
             ensure_min_features=2,
@@ -328,6 +330,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.allow_nan = get_tags(self.estimator).input_tags.allow_nan
+        tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
         return tags
 
     def get_metadata_routing(self):

@@ -9,6 +9,8 @@ from operator import itemgetter
 import numpy as np
 import scipy.sparse as sp
 
+from sklearn.utils import metadata_routing
+
 from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
@@ -90,6 +92,9 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     >>> v.transform({'foo': 4, 'unseen_feature': 3})
     array([[0., 0., 4.]])
     """
+
+    # This isn't something that people should be routing / using in a pipeline.
+    __metadata_request__inverse_transform = {"dict_type": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         "dtype": "no_validation",  # validation delegated to numpy,

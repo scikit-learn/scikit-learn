@@ -41,17 +41,6 @@ pre_python_environment_install() {
         apt-get install -y python3-dev python3-numpy python3-scipy \
                 python3-matplotlib libopenblas-dev \
                 python3-virtualenv python3-pandas ccache git
-
-    # TODO for now we use CPython 3.13 from Ubuntu deadsnakes PPA. When CPython
-    # 3.13 is released (scheduled October 2024) we can use something more
-    # similar to other conda+pip based builds
-    elif [[ "$DISTRIB" == "pip-free-threaded" ]]; then
-        sudo apt-get -yq update
-        sudo apt-get install -yq ccache
-        sudo apt-get install -yq software-properties-common
-        sudo add-apt-repository --yes ppa:deadsnakes/nightly
-        sudo apt-get update -yq
-        sudo apt-get install -yq --no-install-recommends python3.13-dev python3.13-venv python3.13-nogil
     fi
 }
 
@@ -68,30 +57,27 @@ check_packages_dev_version() {
 python_environment_install_and_activate() {
     if [[ "$DISTRIB" == "conda"* ]]; then
         create_conda_environment_from_lock_file $VIRTUALENV $LOCK_FILE
-        source activate $VIRTUALENV
+        activate_environment
 
     elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
         python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
-        source $VIRTUALENV/bin/activate
+        activate_environment
         pip install -r "${LOCK_FILE}"
 
-    elif [[ "$DISTRIB" == "pip-free-threaded" ]]; then
-        python3.13t -m venv $VIRTUALENV
-        source $VIRTUALENV/bin/activate
-        pip install -r "${LOCK_FILE}"
-        # TODO you need pip>=24.1 to find free-threaded wheels. This may be
-        # removed when the underlying Ubuntu image has pip>=24.1.
-        pip install 'pip>=24.1'
-        # TODO When there are CPython 3.13 free-threaded wheels for numpy,
-        # scipy and cython move them to
-        # build_tools/azure/cpython_free_threaded_requirements.txt. For now we
-        # install them from scientific-python-nightly-wheels
-        dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
-        dev_packages="numpy scipy Cython"
-        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages --only-binary :all:
     fi
 
-    if [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
+    # Install additional packages on top of the lock-file in specific cases
+    if [[ "$DISTRIB" == "conda-free-threaded" ]]; then
+        # TODO: we install scipy with pip. When there is a conda-forge package,
+        # we can update build_tools/update_environments_and_lock_files.py and
+        # remove the line below
+        pip install scipy --only-binary :all:
+        # TODO: we install cython 3.1 alpha from pip. When there is a conda-forge package,
+        # we can update build_tools/update_environments_and_lock_files.py and
+        # remove the line below
+        pip install --pre cython --only-binary :all:
+
+    elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
         echo "Installing development dependency wheels"
         dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
         dev_packages="numpy scipy pandas Cython"
@@ -120,6 +106,11 @@ scikit_learn_install() {
         # brings in openmp so that you end up having the omp.h include inside
         # the conda environment.
         find $CONDA_PREFIX -name omp.h -delete -print
+        # meson >= 1.5 detects OpenMP installed with brew and OpenMP may be installed
+        # with brew in CI runner. OpenMP was installed with brew in macOS-12 CI
+        # runners which doesn't seem to be the case in macOS-13 runners anymore,
+        # but we keep the next line just to be safe ...
+        brew uninstall --ignore-dependencies --force libomp
     fi
 
     if [[ "$UNAMESTR" == "Linux" ]]; then

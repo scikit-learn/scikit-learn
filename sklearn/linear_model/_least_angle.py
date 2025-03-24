@@ -35,6 +35,7 @@ from ..utils._metadata_requests import (
 )
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.parallel import Parallel, delayed
+from ..utils.validation import validate_data
 from ._base import LinearModel, LinearRegression, _preprocess_data
 
 SOLVE_TRIANGULAR_ARGS = {"check_finite": False}
@@ -90,8 +91,8 @@ def lars_path(
     Parameters
     ----------
     X : None or ndarray of shape (n_samples, n_features)
-        Input data. Note that if X is `None` then the Gram matrix must be
-        specified, i.e., cannot be `None` or `False`.
+        Input data. If X is `None`, Gram must also be `None`.
+        If only the Gram matrix is available, use `lars_path_gram` instead.
 
     y : None or ndarray of shape (n_samples,)
         Input targets.
@@ -553,7 +554,7 @@ def _lars_path_solver(
         Gram = None
         if X is None:
             raise ValueError("X and Gram cannot both be unspecified.")
-    elif isinstance(Gram, str) and Gram == "auto" or Gram is True:
+    elif (isinstance(Gram, str) and Gram == "auto") or Gram is True:
         if Gram is True or X.shape[0] > X.shape[1]:
             Gram = np.dot(X.T, X)
         else:
@@ -1177,8 +1178,8 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
-        X, y = self._validate_data(
-            X, y, force_writeable=True, y_numeric=True, multi_output=True
+        X, y = validate_data(
+            self, X, y, force_writeable=True, y_numeric=True, multi_output=True
         )
 
         alpha = getattr(self, "alpha", 0.0)
@@ -1722,7 +1723,7 @@ class LarsCV(Lars):
         """
         _raise_for_params(params, self, "fit")
 
-        X, y = self._validate_data(X, y, force_writeable=True, y_numeric=True)
+        X, y = validate_data(self, X, y, force_writeable=True, y_numeric=True)
         X = as_float_array(X, copy=self.copy_X)
         y = as_float_array(y, copy=self.copy_X)
 
@@ -1760,7 +1761,7 @@ class LarsCV(Lars):
             )
             for train, test in cv.split(X, y, **routed_params.splitter.split)
         )
-        all_alphas = np.concatenate(list(zip(*cv_paths))[0])
+        all_alphas = np.concatenate(next(zip(*cv_paths)))
         # Unique also sorts
         all_alphas = np.unique(all_alphas)
         # Take at most max_n_alphas values
@@ -2241,7 +2242,7 @@ class LassoLarsIC(LassoLars):
         """
         if copy_X is None:
             copy_X = self.copy_X
-        X, y = self._validate_data(X, y, force_writeable=True, y_numeric=True)
+        X, y = validate_data(self, X, y, force_writeable=True, y_numeric=True)
 
         X, y, Xmean, ymean, Xstd = _preprocess_data(
             X, y, fit_intercept=self.fit_intercept, copy=copy_X

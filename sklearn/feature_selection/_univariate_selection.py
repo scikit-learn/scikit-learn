@@ -16,7 +16,7 @@ from ..preprocessing import LabelBinarizer
 from ..utils import as_float_array, check_array, check_X_y, safe_mask, safe_sqr
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import row_norms, safe_sparse_dot
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 from ._base import SelectorMixin
 
 
@@ -203,8 +203,11 @@ def chi2(X, y):
 
     This score can be used to select the `n_features` features with the
     highest values for the test chi-squared statistic from X, which must
-    contain only **non-negative features** such as booleans or frequencies
+    contain only **non-negative integer feature values** such as booleans or frequencies
     (e.g., term counts in document classification), relative to the classes.
+
+    If some of your features are continuous, you need to bin them, for
+    example by using :class:`~sklearn.preprocessing.KBinsDiscretizer`.
 
     Recall that the chi-square test measures dependence between stochastic
     variables, so using this function "weeds out" the features that are the
@@ -556,10 +559,10 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
             Returns the instance itself.
         """
         if y is None:
-            X = self._validate_data(X, accept_sparse=["csr", "csc"])
+            X = validate_data(self, X, accept_sparse=["csr", "csc"])
         else:
-            X, y = self._validate_data(
-                X, y, accept_sparse=["csr", "csc"], multi_output=True
+            X, y = validate_data(
+                self, X, y, accept_sparse=["csr", "csc"], multi_output=True
             )
 
         self._check_params(X, y)
@@ -581,6 +584,7 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.target_tags.required = True
+        tags.input_tags.sparse = True
         return tags
 
 

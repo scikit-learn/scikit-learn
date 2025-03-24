@@ -197,7 +197,7 @@ conditionally to the class. If these assumptions hold, using LDA with
 the OAS estimator of covariance will yield a better classification
 accuracy than if Ledoit and Wolf or the empirical covariance estimator is used.
 
-The covariance estimator can be chosen using with the ``covariance_estimator``
+The covariance estimator can be chosen using the ``covariance_estimator``
 parameter of the :class:`discriminant_analysis.LinearDiscriminantAnalysis`
 class. A covariance estimator should have a :term:`fit` method and a
 ``covariance_`` attribute like all covariance estimators in the

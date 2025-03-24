@@ -3,6 +3,7 @@
 
 import functools
 import warnings
+from inspect import signature
 
 __all__ = ["deprecated"]
 
@@ -64,17 +65,21 @@ class deprecated:
             msg += "; %s" % self.extra
 
         new = cls.__new__
+        sig = signature(cls)
 
         def wrapped(cls, *args, **kwargs):
             warnings.warn(msg, category=FutureWarning)
             if new is object.__new__:
                 return object.__new__(cls)
+
             return new(cls, *args, **kwargs)
 
         cls.__new__ = wrapped
 
         wrapped.__name__ = "__new__"
         wrapped.deprecated_original = new
+        # Restore the original signature, see PEP 362.
+        cls.__signature__ = sig
 
         return cls
 

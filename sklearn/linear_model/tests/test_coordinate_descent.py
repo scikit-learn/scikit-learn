@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 from scipy import interpolate, sparse
 
-from sklearn.base import clone, is_classifier
+from sklearn.base import clone, config_context, is_classifier
 from sklearn.datasets import load_diabetes, make_regression
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import (
@@ -48,6 +48,7 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
+    assert_array_less,
     ignore_warnings,
 )
 from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, CSR_CONTAINERS
@@ -1223,7 +1224,7 @@ def test_enet_sample_weight_consistency(
     """Test that the impact of sample_weight is consistent.
 
     Note that this test is stricter than the common test
-    check_sample_weights_invariance alone and also tests sparse X.
+    check_sample_weight_equivalence alone and also tests sparse X.
     """
     rng = np.random.RandomState(global_random_seed)
     n_samples, n_features = 10, 5
@@ -1304,55 +1305,78 @@ def test_enet_sample_weight_consistency(
 
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS)
-def test_enet_cv_sample_weight_correctness(fit_intercept, sparse_container):
-    """Test that ElasticNetCV with sample weights gives correct results."""
-    rng = np.random.RandomState(42)
-    n_splits, n_samples, n_features = 3, 10, 5
-    X = rng.rand(n_splits * n_samples, n_features)
+def test_enet_cv_sample_weight_correctness(
+    fit_intercept, sparse_container, global_random_seed
+):
+    """Test that ElasticNetCV with sample weights gives correct results.
+
+    We fit the same model twice, once with weighted training data, once with repeated
+    data points in the training data and check that both models converge to the
+    same solution.
+
+    Since this model uses an internal cross-validation scheme to tune the alpha
+    regularization parameter, we make sure that the repetitions only occur within
+    a specific CV group. Data points belonging to other CV groups stay
+    unit-weighted / "unrepeated".
+    """
+    rng = np.random.RandomState(global_random_seed)
+    n_splits, n_samples_per_cv, n_features = 3, 10, 5
+    X_with_weights = rng.rand(n_splits * n_samples_per_cv, n_features)
     beta = rng.rand(n_features)
     beta[0:2] = 0
-    y = X @ beta + rng.rand(n_splits * n_samples)
-    sw = np.ones_like(y)
+    y_with_weights = X_with_weights @ beta + rng.rand(n_splits * n_samples_per_cv)
+
     if sparse_container is not None:
-        X = sparse_container(X)
+        X_with_weights = sparse_container(X_with_weights)
     params = dict(tol=1e-6)
 
-    # Set alphas, otherwise the two cv models might use different ones.
-    if fit_intercept:
-        alphas = np.linspace(0.001, 0.01, num=91)
-    else:
-        alphas = np.linspace(0.01, 0.1, num=91)
+    # Assign random integer weights only to the first cross-validation group.
+    # The samples in the other cross-validation groups are left with unit
+    # weights.
 
-    # We weight the first fold 2 times more.
-    sw[:n_samples] = 2
-    groups_sw = np.r_[
-        np.full(n_samples, 0), np.full(n_samples, 1), np.full(n_samples, 2)
-    ]
-    splits_sw = list(LeaveOneGroupOut().split(X, groups=groups_sw))
-    reg_sw = ElasticNetCV(
-        alphas=alphas, cv=splits_sw, fit_intercept=fit_intercept, **params
+    sw = np.ones_like(y_with_weights)
+    sw[:n_samples_per_cv] = rng.randint(0, 5, size=n_samples_per_cv)
+    groups_with_weights = np.concatenate(
+        [
+            np.full(n_samples_per_cv, 0),
+            np.full(n_samples_per_cv, 1),
+            np.full(n_samples_per_cv, 2),
+        ]
     )
-    reg_sw.fit(X, y, sample_weight=sw)
+    splits_with_weights = list(
+        LeaveOneGroupOut().split(X_with_weights, groups=groups_with_weights)
+    )
+    reg_with_weights = ElasticNetCV(
+        cv=splits_with_weights, fit_intercept=fit_intercept, **params
+    )
 
-    # We repeat the first fold 2 times and provide splits ourselves
-    if sparse_container is not None:
-        X = X.toarray()
-    X = np.r_[X[:n_samples], X]
-    if sparse_container is not None:
-        X = sparse_container(X)
-    y = np.r_[y[:n_samples], y]
-    groups = np.r_[
-        np.full(2 * n_samples, 0), np.full(n_samples, 1), np.full(n_samples, 2)
-    ]
-    splits = list(LeaveOneGroupOut().split(X, groups=groups))
-    reg = ElasticNetCV(alphas=alphas, cv=splits, fit_intercept=fit_intercept, **params)
-    reg.fit(X, y)
+    reg_with_weights.fit(X_with_weights, y_with_weights, sample_weight=sw)
 
-    # ensure that we chose meaningful alphas, i.e. not boundaries
-    assert alphas[0] < reg.alpha_ < alphas[-1]
-    assert reg_sw.alpha_ == reg.alpha_
-    assert_allclose(reg_sw.coef_, reg.coef_)
-    assert reg_sw.intercept_ == pytest.approx(reg.intercept_)
+    if sparse_container is not None:
+        X_with_weights = X_with_weights.toarray()
+    X_with_repetitions = np.repeat(X_with_weights, sw.astype(int), axis=0)
+    if sparse_container is not None:
+        X_with_repetitions = sparse_container(X_with_repetitions)
+
+    y_with_repetitions = np.repeat(y_with_weights, sw.astype(int), axis=0)
+    groups_with_repetitions = np.repeat(groups_with_weights, sw.astype(int), axis=0)
+
+    splits_with_repetitions = list(
+        LeaveOneGroupOut().split(X_with_repetitions, groups=groups_with_repetitions)
+    )
+    reg_with_repetitions = ElasticNetCV(
+        cv=splits_with_repetitions, fit_intercept=fit_intercept, **params
+    )
+    reg_with_repetitions.fit(X_with_repetitions, y_with_repetitions)
+
+    # Check that the alpha selection process is the same:
+    assert_allclose(reg_with_weights.mse_path_, reg_with_repetitions.mse_path_)
+    assert_allclose(reg_with_weights.alphas_, reg_with_repetitions.alphas_)
+    assert reg_with_weights.alpha_ == pytest.approx(reg_with_repetitions.alpha_)
+
+    # Check that the final model coefficients are the same:
+    assert_allclose(reg_with_weights.coef_, reg_with_repetitions.coef_, atol=1e-10)
+    assert reg_with_weights.intercept_ == pytest.approx(reg_with_repetitions.intercept_)
 
 
 @pytest.mark.parametrize("sample_weight", [False, True])
@@ -1444,9 +1468,29 @@ def test_enet_cv_sample_weight_consistency(
         assert_allclose(reg.intercept_, intercept)
 
 
+@pytest.mark.parametrize("X_is_sparse", [False, True])
+@pytest.mark.parametrize("fit_intercept", [False, True])
+@pytest.mark.parametrize("sample_weight", [np.array([10, 1, 10, 1]), None])
+def test_enet_alpha_max_sample_weight(X_is_sparse, fit_intercept, sample_weight):
+    X = np.array([[3.0, 1.0], [2.0, 5.0], [5.0, 3.0], [1.0, 4.0]])
+    beta = np.array([1, 1])
+    y = X @ beta
+    if X_is_sparse:
+        X = sparse.csc_matrix(X)
+    # Test alpha_max makes coefs zero.
+    reg = ElasticNetCV(n_alphas=1, cv=2, eps=1, fit_intercept=fit_intercept)
+    reg.fit(X, y, sample_weight=sample_weight)
+    assert_allclose(reg.coef_, 0, atol=1e-5)
+    alpha_max = reg.alpha_
+    # Test smaller alpha makes coefs nonzero.
+    reg = ElasticNet(alpha=0.99 * alpha_max, fit_intercept=fit_intercept)
+    reg.fit(X, y, sample_weight=sample_weight)
+    assert_array_less(1e-3, np.max(np.abs(reg.coef_)))
+
+
 @pytest.mark.parametrize("estimator", [ElasticNetCV, LassoCV])
 def test_linear_models_cv_fit_with_loky(estimator):
-    # LinearModelsCV.fit performs inplace operations on fancy-indexed memmapped
+    # LinearModelsCV.fit performs operations on fancy-indexed memmapped
     # data when using the loky backend, causing an error due to unexpected
     # behavior of fancy indexing of read-only memmaps (cf. numpy#14132).
 
@@ -1594,11 +1638,11 @@ def test_cv_estimators_reject_params_with_no_routing_enabled(EstimatorCV):
         estimator.fit(X, y, groups=groups)
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
     "MultiTaskEstimatorCV",
     [MultiTaskElasticNetCV, MultiTaskLassoCV],
 )
+@config_context(enable_metadata_routing=True)
 def test_multitask_cv_estimators_with_sample_weight(MultiTaskEstimatorCV):
     """Check that for :class:`MultiTaskElasticNetCV` and
     class:`MultiTaskLassoCV` if `sample_weight` is passed and the

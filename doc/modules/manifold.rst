@@ -7,16 +7,14 @@
 Manifold learning
 =================
 
-.. rst-class:: quote
-
-                 | Look for the bare necessities
-                 | The simple bare necessities
-                 | Forget about your worries and your strife
-                 | I mean the bare necessities
-                 | Old Mother Nature's recipes
-                 | That bring the bare necessities of life
-                 |
-                 |             -- Baloo's song [The Jungle Book]
+| Look for the bare necessities
+| The simple bare necessities
+| Forget about your worries and your strife
+| I mean the bare necessities
+| Old Mother Nature's recipes
+| That bring the bare necessities of life
+|
+|             -- Baloo's song [The Jungle Book]
 
 
 
@@ -109,6 +107,10 @@ from the data itself, without the use of predetermined classifications.
 
 * See :ref:`sphx_glr_auto_examples_manifold_plot_compare_methods.py` for an example of
   dimensionality reduction on a toy "S-curve" dataset.
+
+* See :ref:`sphx_glr_auto_examples_applications_plot_stock_market.py` for an example of
+  using manifold learning to map the stock market structure based on historical stock
+  prices.
 
 The manifold learning implementations available in scikit-learn are
 summarized below
@@ -291,7 +293,7 @@ It requires ``n_neighbors > n_components * (n_components + 3) / 2``.
 
 .. dropdown:: Complexity
 
-The HLLE algorithm comprises three stages:
+  The HLLE algorithm comprises three stages:
 
   1. **Nearest Neighbors Search**.  Same as standard LLE
 
@@ -300,7 +302,7 @@ The HLLE algorithm comprises three stages:
      cost to that of standard LLE.  The second term comes from a QR
      decomposition of the local hessian estimator.
 
-  3. **Partial Eigenvalue Decomposition**. Same as standard LLE
+  3. **Partial Eigenvalue Decomposition**. Same as standard LLE.
 
   The overall complexity of standard HLLE is
   :math:`O[D \log(k) N \log(N)] + O[D N k^3] + O[N d^6] + O[d N^2]`.
@@ -418,11 +420,11 @@ distances in the original high-dimensional space.
 
 In general, :class:`MDS` is a technique used for analyzing similarity or
 dissimilarity data. It attempts to model similarity or dissimilarity data as
-distances in a geometric spaces. The data can be ratings of similarity between
+distances in a geometric space. The data can be ratings of similarity between
 objects, interaction frequencies of molecules, or trade indices between
 countries.
 
-There exists two types of MDS algorithm: metric and non metric. In
+There exist two types of MDS algorithm: metric and non-metric. In
 scikit-learn, the class :class:`MDS` implements both. In Metric MDS, the input
 similarity matrix arises from a metric (and thus respects the triangular
 inequality), the distances between output two points are then set to be as
@@ -611,13 +613,13 @@ The disadvantages to using t-SNE are roughly:
     parameterized with the angle parameter, therefore the angle parameter is
     unused when method="exact"
   * Barnes-Hut is significantly more scalable. Barnes-Hut can be used to embed
-    hundred of thousands of data points while the exact method can handle
+    hundreds of thousands of data points while the exact method can handle
     thousands of samples before becoming computationally intractable
 
   For visualization purpose (which is the main use case of t-SNE), using the
   Barnes-Hut method is strongly recommended. The exact t-SNE method is useful
-  for checking the theoretically properties of the embedding possibly in higher
-  dimensional space but limit to small datasets due to computational constraints.
+  for checking the theoretical properties of the embedding possibly in higher
+  dimensional space but limited to small datasets due to computational constraints.
 
   Also note that the digits labels roughly match the natural grouping found by
   t-SNE while the linear 2D projection of the PCA model yields a representation

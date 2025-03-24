@@ -1,0 +1,25 @@
+This binary distribution of scikit-learn also bundles the following software:
+
+----
+
+Name: Microsoft Visual C++ Runtime Files
+Files: sklearn\.libs\*.dll
+Availability: https://learn.microsoft.com/en-us/visualstudio/releases/2015/2015-redistribution-vs
+
+Subject to the License Terms for the software, you may copy and distribute with your
+program any of the files within the followng folder and its subfolders except as noted
+below. You may not modify these files.
+
+C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\redist
+
+You may not distribute the contents of the following folders:
+
+C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\redist\debug_nonredist
+C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\redist\onecore\debug_nonredist
+
+Subject to the License Terms for the software, you may copy and distribute the following
+files with your program in your program’s application local folder or by deploying them
+into the Global Assembly Cache (GAC):
+
+VC\atlmfc\lib\mfcmifc80.dll
+VC\atlmfc\lib\amd64\mfcmifc80.dll

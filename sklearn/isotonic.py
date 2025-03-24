@@ -11,6 +11,8 @@ import numpy as np
 from scipy import interpolate, optimize
 from scipy.stats import spearmanr
 
+from sklearn.utils import metadata_routing
+
 from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
 from .base import BaseEstimator, RegressorMixin, TransformerMixin, _fit_context
 from .utils import check_array, check_consistent_length
@@ -18,7 +20,7 @@ from .utils._param_validation import Interval, StrOptions, validate_params
 from .utils.fixes import parse_version, sp_base_version
 from .utils.validation import _check_sample_weight, check_is_fitted
 
-__all__ = ["check_increasing", "isotonic_regression", "IsotonicRegression"]
+__all__ = ["IsotonicRegression", "check_increasing", "isotonic_regression"]
 
 
 @validate_params(
@@ -271,6 +273,10 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     >>> iso_reg.predict([.1, .2])
     array([1.8628..., 3.7256...])
     """
+
+    # T should have been called X
+    __metadata_request__predict = {"T": metadata_routing.UNUSED}
+    __metadata_request__transform = {"T": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         "y_min": [Interval(Real, None, None, closed="both"), None],
