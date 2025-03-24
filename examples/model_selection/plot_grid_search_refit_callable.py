@@ -367,9 +367,9 @@ print(summary_df)
 # callable with :class:`~sklearn.model_selection.GridSearchCV`.
 #
 # Key takeaways:
-# 1. The one-standard-error rule provides a rule of thumb to select simpler models
+# 1. The one-standard-error rule provides a good rule of thumb to select simpler models
 # 2. Custom refit callables in :class:`~sklearn.model_selection.GridSearchCV` allow for
-#    flexible model selection strategies
+#  flexible model selection strategies
 # 3. Visualizing both train and test scores helps identify potential overfitting
 #
 # This approach can be applied to other model selection scenarios where balancing
