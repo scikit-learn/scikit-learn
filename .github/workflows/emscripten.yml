@@ -30,3 +30,4 @@ jobs:
           CIBW_PLATFORM: pyodide
           SKLEARN_SKIP_OPENMP_TEST: "true"
           SKLEARN_SKIP_NETWORK_TESTS: 1
+          CIBW_TEST_COMMAND: "python -m pytest svra --pyargs sklearn --durations 20 --showlocals"
