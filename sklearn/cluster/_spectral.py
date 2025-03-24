@@ -388,6 +388,11 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
     If the affinity matrix is the adjacency matrix of a graph, this method
     can be used to find normalized graph cuts [1]_, [2]_.
 
+    For an example of spectral clustering applied to image segmentation
+    using normalized cuts, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_segmentation_toy.py`
+
+
     When calling ``fit``, an affinity matrix is constructed using either
     a kernel function such the Gaussian (aka RBF) kernel with Euclidean
     distance ``d(X, X)``::
