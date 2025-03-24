@@ -401,7 +401,7 @@ def test_verbose(init_name, capsys):
             line,
         )
     assert re.match(
-        r"\[NeighborhoodComponentsAnalysis\] Training took\ *" r"\d+\.\d{2}s\.",
+        r"\[NeighborhoodComponentsAnalysis\] Training took\ *\d+\.\d{2}s\.",
         lines[-2],
     )
     assert lines[-1] == ""

@@ -207,6 +207,11 @@ add_function_parentheses = False
 # Sphinx are currently 'default' and 'sphinxdoc'.
 html_theme = "pydata_sphinx_theme"
 
+# This config option is used to generate the canonical links in the header
+# of every page. The canonical link is needed to prevent search engines from
+# returning results pointing to old scikit-learn versions.
+html_baseurl = "https://scikit-learn.org/stable/"
+
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
@@ -374,7 +379,7 @@ def add_js_css_files(app, pagename, templatename, context, doctree):
         app.add_css_file(
             "https://cdn.datatables.net/2.0.0/css/dataTables.dataTables.min.css"
         )
-        # Internal: API search intialization and styling
+        # Internal: API search initialization and styling
         app.add_js_file("scripts/api-search.js")
         app.add_css_file("styles/api-search.css")
     elif pagename == "index":
@@ -493,6 +498,13 @@ redirects = {
         "auto_examples/linear_model/plot_logistic_multinomial"
     ),
     "auto_examples/linear_model/plot_ols_3d": ("auto_examples/linear_model/plot_ols"),
+    "auto_examples/linear_model/plot_ols": "auto_examples/linear_model/plot_ols_ridge",
+    "auto_examples/linear_model/plot_ols_ridge_variance": (
+        "auto_examples/linear_model/plot_ols_ridge"
+    ),
+    "auto_examples/linear_model/plot_sgd_comparison": (
+        "auto_examples/linear_model/plot_sgd_loss_functions"
+    ),
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
@@ -790,6 +802,15 @@ def disable_plot_gallery_for_linkcheck(app):
         sphinx_gallery_conf["plot_gallery"] = "False"
 
 
+def skip_properties(app, what, name, obj, skip, options):
+    """Skip properties that are fitted attributes"""
+    if isinstance(obj, property):
+        if name.endswith("_") and not name.startswith("_"):
+            return True
+
+    return skip
+
+
 def setup(app):
     # do not run the examples when using linkcheck by using a small priority
     # (default priority is 500 and sphinx-gallery using builder-inited event too)
@@ -801,6 +822,8 @@ def setup(app):
     # to hide/show the prompt in code examples
     app.connect("build-finished", make_carousel_thumbs)
     app.connect("build-finished", filter_search_index)
+
+    app.connect("autodoc-skip-member", skip_properties)
 
 
 # The following is used by sphinx.ext.linkcode to provide links to github
