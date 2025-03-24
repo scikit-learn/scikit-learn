@@ -79,12 +79,11 @@ jobs:
           # Activate the virtual environment and install the built scikit-learn wheel
           source .venv-pyodide/bin/activate
           pip install dist/*.whl
+          pip install pytest
 
           # Change to a different directory to avoid importing the local scikit-learn
           # package instead of the installed one
           cd maint_tools
-          pip install pytest
-
           # Try importing sklearn to see if the build is successful
           python -c "import sklearn; print(sklearn.__version__)"
 
