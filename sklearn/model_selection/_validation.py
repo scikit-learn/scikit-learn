@@ -287,8 +287,8 @@ def cross_validate(
             set for each cv split.
         ``score_time``
             The time for scoring the estimator on the test set for each
-            cv split. (Note time for scoring on the train set is not
-            included even if ``return_train_score`` is set to ``True``
+            cv split. (Note: time for scoring on the train set is not
+            included even if ``return_train_score`` is set to ``True``).
         ``estimator``
             The estimator objects for each cv split.
             This is available only if ``return_estimator`` parameter
