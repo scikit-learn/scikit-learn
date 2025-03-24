@@ -42,6 +42,21 @@ def test_nonmetric_lower_normalized_stress():
     assert stress1 > stress2
 
 
+@pytest.mark.parametrize("metric", [True, False])
+def test_mds_recovers_true_data(metric):
+    X = np.array([[1, 1], [1, 4], [1, 5], [3, 3]])
+    mds_est = mds.MDS(
+        n_components=2,
+        n_init=1,
+        eps=1e-15,
+        max_iter=1000,
+        metric=metric,
+        random_state=42,
+    ).fit(X)
+    stress = mds_est.stress_
+    assert_allclose(stress, 0, atol=1e-10)
+
+
 def test_smacof_error():
     # Not symmetric similarity matrix:
     sim = np.array([[0, 5, 9, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
