@@ -30,8 +30,7 @@ jobs:
   check_build_trigger:
     name: Check build trigger
     runs-on: ubuntu-latest
-    # To enable this workflow on a fork, comment out:
-    # if: github.repository == 'scikit-learn/scikit-learn'
+    if: github.repository == 'scikit-learn/scikit-learn'
     outputs:
       build: ${{ steps.check_build_trigger.outputs.build }}
     steps:
@@ -74,7 +73,7 @@ jobs:
           SKLEARN_SKIP_OPENMP_TEST: "true"
           SKLEARN_SKIP_NETWORK_TESTS: 1
           CIBW_TEST_REQUIRES: "pytest pandas"
-          CIBW_TEST_COMMAND: "echo test" # python -m pytest -svra --pyargs sklearn --durations 20 --showlocals"
+          CIBW_TEST_COMMAND: "python -m pytest -svra --pyargs sklearn --durations 20 --showlocals"
 
       - name: Upload wheel artifact
         uses: actions/upload-artifact@v4
@@ -90,8 +89,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions: {}
     needs: [build_wasm_wheel]
-    if: >-
-      github.event_name != 'pull_request'
+    if: github.repository == 'scikit-learn/scikit-learn' && github.event_name != 'pull_request'
     steps:
       - name: Download wheel artifact
         uses: actions/download-artifact@v4
