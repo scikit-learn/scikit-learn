@@ -37,7 +37,7 @@ ROC curve for SVC in future plots. In this case, the `svc_disp` is a
 attributes called `roc_auc`, `fpr`, and `tpr`. Be aware that we could get
 the predictions from the support vector machine and then use `from_predictions`
 instead of `from_estimator`. Next, we train a random forest classifier and plot
-the previously computed roc curve again by using the `plot` method of the
+the previously computed ROC curve again by using the `plot` method of the
 `Display` object.
 
 .. plot::
