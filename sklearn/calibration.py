@@ -100,10 +100,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
     method : {'sigmoid', 'isotonic', 'temperature'}, default='sigmoid'
         The method to use for calibration. Can be
+
         - 'sigmoid', which corresponds to Platt's method
-          (i.e. a logistic regression model).
+           (i.e. a logistic regression model).
         - 'isotonic', which is a non-parametric approach,
-        -  `temperature`, temperature scaling.
+        - 'temperature', temperature scaling.
 
         It is not advised to
         use isotonic calibration with too few calibration samples
