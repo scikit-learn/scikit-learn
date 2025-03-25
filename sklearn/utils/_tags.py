@@ -3,7 +3,7 @@ from __future__ import annotations
 import warnings
 from collections import OrderedDict
 from dataclasses import dataclass, field
-from itertools import chain
+from itertools import chain, pairwise
 
 from .fixes import _dataclass_args
 
@@ -437,7 +437,7 @@ def get_tags(estimator) -> Tags:
         # inheritance
         sklearn_tags_diff = {}
         items = list(sklearn_tags_provider.items())
-        for current_item, next_item in zip(items[:-1], items[1:]):
+        for current_item, next_item in pairwise(items):
             current_name, current_tags = current_item
             next_name, next_tags = next_item
             current_tags = _to_old_tags(current_tags)

@@ -5,7 +5,7 @@
 
 import warnings
 from abc import ABC, abstractmethod
-from itertools import chain
+from itertools import chain, pairwise
 from numbers import Integral, Real
 
 import numpy as np
@@ -491,7 +491,7 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
 
         coef_grads = [
             np.empty((n_fan_in_, n_fan_out_), dtype=X.dtype)
-            for n_fan_in_, n_fan_out_ in zip(layer_units[:-1], layer_units[1:])
+            for n_fan_in_, n_fan_out_ in pairwise(layer_units)
         ]
 
         intercept_grads = [
