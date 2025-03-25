@@ -1,0 +1,2 @@
+- In :mod:`preprocessing._discretization` updated KBinsDiscretizer fit method to raise an value error when all weights are zero.
+- In :mod:`preprocessing._polynomial` updated SplineTransformer fit method to raise an value error when all weights are zero and when knots is quantile or uniform.

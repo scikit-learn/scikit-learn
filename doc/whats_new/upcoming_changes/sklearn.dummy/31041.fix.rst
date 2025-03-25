@@ -1,0 +1,2 @@
+- In :mod:`dummy` made it so that if you use the median strategy with all zero weights it will raise a value error.
+- In :mod:`dummy` made it so that if you use the quantile strategy with all zero weights it will raise a value error.
