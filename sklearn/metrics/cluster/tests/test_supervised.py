@@ -477,16 +477,16 @@ def test_adjusted_rand_score_overflow():
         adjusted_rand_score(y_true, y_pred)
 
 
-@pytest.mark.parametrize(
-    "y_true,y_pred", [([0, 1], [0, 1]), ([0, 1, 2, 3], [0, 1, 2, 3])]
-)
+@pytest.mark.parametrize("inputs", [[0, 1], [0, 1, 2, 3]])
 @pytest.mark.parametrize("average_method", ["min", "arithmetic", "geometric", "max"])
-def test_adjusted_mi_score_low_class_count(y_true, y_pred, average_method):
+def test_adjusted_mi_score_low_class_count(inputs, average_method):
     """Check that 2 and 4 samples and classes will return correct values
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/30950
     """
-    assert adjusted_mutual_info_score(y_true, y_pred, average_method) == 1.0
+    assert (
+        adjusted_mutual_info_score(inputs, inputs, average_method=average_method) == 1.0
+    )
 
 
 @pytest.mark.parametrize("average_method", ["min", "arithmetic", "geometric", "max"])
