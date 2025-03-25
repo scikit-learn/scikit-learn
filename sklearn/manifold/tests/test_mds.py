@@ -171,7 +171,7 @@ def test_returned_stress():
     X = np.array([[1, 1], [1, 4], [1, 5], [3, 3]])
     D = euclidean_distances(X)
 
-    mds_est = mds.MDS(n_components=2).fit(X)
+    mds_est = mds.MDS(n_components=2, random_state=42).fit(X)
     Z = mds_est.embedding_
     stress = mds_est.stress_
 
