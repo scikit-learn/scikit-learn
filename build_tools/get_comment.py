@@ -56,9 +56,8 @@ def get_step_message(log, start, end, title, message, details):
         return ""
     res = (
         "-----------------------------------------------\n"
-        + f"### {title}\n\n"
-        + message
-        + "\n\n"
+        f"### {title}\n\n"
+        f"{message}\n\n"
     )
     if details:
         res += (
@@ -117,7 +116,7 @@ def get_message(log_file, repo, pr_number, sha, run_id, details, versions):
         title="`ruff`",
         message=(
             "`ruff` detected issues. Please run "
-            "`ruff check --fix --output-format=full .` locally, fix the remaining "
+            "`ruff check --fix --output-format=full` locally, fix the remaining "
             "issues, and push the changes. Here you can see the detected issues. Note "
             f"that the installed `ruff` version is `ruff={versions['ruff']}`."
         ),
