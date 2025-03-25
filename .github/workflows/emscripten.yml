@@ -57,7 +57,7 @@ jobs:
               echo "build=true" >> $GITHUB_OUTPUT
           fi
 
-  run-tests:
+  build_wasm_wheel:
     name: Run tests
     runs-on: ubuntu-latest
     needs: check_build_trigger
@@ -68,10 +68,39 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: pypa/cibuildwheel@v2.23.2
+      - uses: pypa/cibuildwheel@v2.23
         env:
           CIBW_PLATFORM: pyodide
           SKLEARN_SKIP_OPENMP_TEST: "true"
           SKLEARN_SKIP_NETWORK_TESTS: 1
           CIBW_TEST_REQUIRES: "pytest pandas"
           CIBW_TEST_COMMAND: "python -m pytest -svra --pyargs sklearn --durations 20 --showlocals"
+
+      - name: Upload wheel artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cp312-pyodide_wasm32
+          path: ./wheelhouse/*.whl
+          if-no-files-found: error
+
+  # Push to https://anaconda.org/scientific-python-nightly-wheels/scikit-learn
+  # WARNING: this job will overwrite any existing WASM wheels.
+  upload-wheels:
+    name: Upload scikit-learn WASM wheels to Anaconda.org
+    runs-on: ubuntu-latest
+    permissions: {}
+    needs: [build_wasm_wheel]
+    if: >-
+      (github.repository == 'scikit-learn/scikit-learn') && (github.event_name != 'pull_request')
+    steps:
+      - name: Download wheel artifact
+        uses: actions/download-artifact@v4
+        with:
+          path: wheelhouse/
+          merge-multiple: true
+
+      - name: Push to Anaconda PyPI index
+        uses: scientific-python/upload-nightly-action@v0.6
+        with:
+          artifacts_path: wheelhouse/
+          anaconda_nightly_upload_token: ${{ secrets.SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN }}
