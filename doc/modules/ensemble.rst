@@ -1410,10 +1410,12 @@ classifier 3      w3 * 0.3      w3 * 0.4        w3 * 0.3
 weighted average  0.37	        0.4             0.23
 ================  ==========    ==========      ==========
 
-Here, the predicted class label is 2, since it has the
-highest average probability.
+Here, the predicted class label is 2, since it has the highest average probability. See
+this example on :ref:`Visualising class probabilities in a Voting Classifier
+<sphx_glr_auto_examples_ensemble_plot_voting_probas.py>` for a detailed illustration of
+class probabilities averaged by soft voting.
 
-The following example illustrates how the decision regions may change
+Also, the following example illustrates how the decision regions may change
 when a soft :class:`VotingClassifier` is used based on a linear Support
 Vector Machine, a Decision Tree, and a K-nearest neighbor classifier::
 
