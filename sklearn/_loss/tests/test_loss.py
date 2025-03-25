@@ -502,7 +502,7 @@ def test_loss_same_as_C_functions(loss, sample_weight):
         raw_prediction=raw_prediction,
         sample_weight=sample_weight,
         loss_out=out_l2,
-    ),
+    )
     assert_allclose(out_l1, out_l2)
     loss.gradient(
         y_true=y_true,
