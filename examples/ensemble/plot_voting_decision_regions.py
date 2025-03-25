@@ -1,7 +1,7 @@
 """
-==================================================
-Plot the decision boundaries of a VotingClassifier
-==================================================
+=====================================================
+Visualizing class probabilities in a VotingClassifier
+=====================================================
 
 .. currentmodule:: sklearn
 
