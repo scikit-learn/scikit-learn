@@ -287,8 +287,8 @@ def cross_validate(
             set for each cv split.
         ``score_time``
             The time for scoring the estimator on the test set for each
-            cv split. (Note time for scoring on the train set is not
-            included even if ``return_train_score`` is set to ``True``
+            cv split. (Note: time for scoring on the train set is not
+            included even if ``return_train_score`` is set to ``True``).
         ``estimator``
             The estimator objects for each cv split.
             This is available only if ``return_estimator`` parameter
@@ -378,19 +378,8 @@ def cross_validate(
             # `process_routing` code, we pass `fit` as the caller. However,
             # the user is not calling `fit` directly, so we change the message
             # to make it more suitable for this case.
-            unrequested_params = sorted(e.unrequested_params)
             raise UnsetMetadataPassedError(
-                message=(
-                    f"{unrequested_params} are passed to cross validation but are not"
-                    " explicitly set as requested or not requested for cross_validate's"
-                    f" estimator: {estimator.__class__.__name__}. Call"
-                    " `.set_fit_request({{metadata}}=True)` on the estimator for"
-                    f" each metadata in {unrequested_params} that you"
-                    " want to use and `metadata=False` for not using it. See the"
-                    " Metadata Routing User guide"
-                    " <https://scikit-learn.org/stable/metadata_routing.html> for more"
-                    " information."
-                ),
+                message=str(e).replace("cross_validate.fit", "cross_validate"),
                 unrequested_params=e.unrequested_params,
                 routed_params=e.routed_params,
             )
@@ -1184,7 +1173,7 @@ def cross_val_predict(
         # methods. For these router methods, we create the router to use
         # `process_routing` on it.
         router = (
-            MetadataRouter(owner="cross_validate")
+            MetadataRouter(owner="cross_val_predict")
             .add(
                 splitter=cv,
                 method_mapping=MethodMapping().add(caller="fit", callee="split"),
@@ -1202,18 +1191,8 @@ def cross_val_predict(
             # `process_routing` code, we pass `fit` as the caller. However,
             # the user is not calling `fit` directly, so we change the message
             # to make it more suitable for this case.
-            unrequested_params = sorted(e.unrequested_params)
             raise UnsetMetadataPassedError(
-                message=(
-                    f"{unrequested_params} are passed to `cross_val_predict` but are"
-                    " not explicitly set as requested or not requested for"
-                    f" cross_validate's estimator: {estimator.__class__.__name__} Call"
-                    " `.set_fit_request({{metadata}}=True)` on the estimator for"
-                    f" each metadata in {unrequested_params} that you want to use and"
-                    " `metadata=False` for not using it. See the Metadata Routing User"
-                    " guide <https://scikit-learn.org/stable/metadata_routing.html>"
-                    " for more information."
-                ),
+                message=str(e).replace("cross_val_predict.fit", "cross_val_predict"),
                 unrequested_params=e.unrequested_params,
                 routed_params=e.routed_params,
             )
@@ -1677,19 +1656,9 @@ def permutation_test_score(
             # `process_routing` code, we pass `fit` as the caller. However,
             # the user is not calling `fit` directly, so we change the message
             # to make it more suitable for this case.
-            unrequested_params = sorted(e.unrequested_params)
             raise UnsetMetadataPassedError(
-                message=(
-                    f"{unrequested_params} are passed to `permutation_test_score`"
-                    " but are not explicitly set as requested or not requested"
-                    " for permutation_test_score's"
-                    f" estimator: {estimator.__class__.__name__}. Call"
-                    " `.set_fit_request({{metadata}}=True)` on the estimator for"
-                    f" each metadata in {unrequested_params} that you"
-                    " want to use and `metadata=False` for not using it. See the"
-                    " Metadata Routing User guide"
-                    " <https://scikit-learn.org/stable/metadata_routing.html> for more"
-                    " information."
+                message=str(e).replace(
+                    "permutation_test_score.fit", "permutation_test_score"
                 ),
                 unrequested_params=e.unrequested_params,
                 routed_params=e.routed_params,
@@ -2029,19 +1998,8 @@ def learning_curve(
             # `process_routing` code, we pass `fit` as the caller. However,
             # the user is not calling `fit` directly, so we change the message
             # to make it more suitable for this case.
-            unrequested_params = sorted(e.unrequested_params)
             raise UnsetMetadataPassedError(
-                message=(
-                    f"{unrequested_params} are passed to `learning_curve` but are not"
-                    " explicitly set as requested or not requested for learning_curve's"
-                    f" estimator: {estimator.__class__.__name__}. Call"
-                    " `.set_fit_request({{metadata}}=True)` on the estimator for"
-                    f" each metadata in {unrequested_params} that you"
-                    " want to use and `metadata=False` for not using it. See the"
-                    " Metadata Routing User guide"
-                    " <https://scikit-learn.org/stable/metadata_routing.html> for more"
-                    " information."
-                ),
+                message=str(e).replace("learning_curve.fit", "learning_curve"),
                 unrequested_params=e.unrequested_params,
                 routed_params=e.routed_params,
             )
@@ -2485,19 +2443,8 @@ def validation_curve(
             # `process_routing` code, we pass `fit` as the caller. However,
             # the user is not calling `fit` directly, so we change the message
             # to make it more suitable for this case.
-            unrequested_params = sorted(e.unrequested_params)
             raise UnsetMetadataPassedError(
-                message=(
-                    f"{unrequested_params} are passed to `validation_curve` but are not"
-                    " explicitly set as requested or not requested for"
-                    f" validation_curve's estimator: {estimator.__class__.__name__}."
-                    " Call `.set_fit_request({{metadata}}=True)` on the estimator for"
-                    f" each metadata in {unrequested_params} that you"
-                    " want to use and `metadata=False` for not using it. See the"
-                    " Metadata Routing User guide"
-                    " <https://scikit-learn.org/stable/metadata_routing.html> for more"
-                    " information."
-                ),
+                message=str(e).replace("validation_curve.fit", "validation_curve"),
                 unrequested_params=e.unrequested_params,
                 routed_params=e.routed_params,
             )
