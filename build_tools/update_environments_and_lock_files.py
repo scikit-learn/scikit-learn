@@ -200,7 +200,7 @@ build_metadata_list = [
         "platform": "linux-64",
         "channels": ["conda-forge"],
         "conda_dependencies": (
-            common_dependencies_without_coverage
+            remove_from(common_dependencies_without_coverage, ["matplotlib"])
             + docstring_test_dependencies
             + ["ccache"]
         ),
@@ -643,9 +643,9 @@ def write_pip_lock_file(build_metadata):
 
     json_output = execute_command(["conda", "info", "--json"])
     conda_info = json.loads(json_output)
-    environment_folder = [
+    environment_folder = next(
         each for each in conda_info["envs"] if each.endswith(environment_name)
-    ][0]
+    )
     environment_path = Path(environment_folder)
     pip_compile_path = environment_path / "bin" / "pip-compile"
 
