@@ -105,8 +105,6 @@ requires = [
 ]
 
 [tool.pytest.ini_options]
-# disable-pytest-warnings should be removed once we rewrite tests
-# using yield with parametrize
 doctest_optionflags = "NORMALIZE_WHITESPACE ELLIPSIS"
 testpaths = "sklearn"
 addopts = [
