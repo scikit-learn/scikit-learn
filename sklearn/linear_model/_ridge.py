@@ -38,7 +38,7 @@ from ..utils._array_api import (
     get_namespace,
     get_namespace_and_device,
 )
-from ..utils._attribute import FittedAttribute
+from ..utils._attribute_validation import FittedAttribute
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.fixes import _sparse_linalg_cg

@@ -15,7 +15,7 @@ class FittedAttribute:
         if self.condition:
             msg = f"Call `fit` with {self.condition} to define '{self.name}'"
         else:
-            msg = f"Call `fit` {self.name} to define '{self.name}'"
+            msg = f"Call `fit` to define '{self.name}'"
         raise AttributeError(msg)
 
     def __set_name__(self, owner, name):
