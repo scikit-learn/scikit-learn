@@ -31,7 +31,7 @@ jobs:
     name: Check build trigger
     runs-on: ubuntu-latest
     # To enable this workflow on a fork, comment out:
-    if: github.repository == 'scikit-learn/scikit-learn'
+    # if: github.repository == 'scikit-learn/scikit-learn'
     outputs:
       build: ${{ steps.check_build_trigger.outputs.build }}
     steps:
@@ -91,7 +91,7 @@ jobs:
     permissions: {}
     needs: [build_wasm_wheel]
     if: >-
-      (github.repository == 'scikit-learn/scikit-learn') && (github.event_name != 'pull_request')
+      github.event_name != 'pull_request'
     steps:
       - name: Download wheel artifact
         uses: actions/download-artifact@v4
