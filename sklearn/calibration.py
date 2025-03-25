@@ -38,6 +38,7 @@ from .utils._param_validation import (
 )
 from .utils._plotting import _BinaryClassifierCurveDisplayMixin, _validate_style_kwargs
 from .utils._response import _get_response_values, _process_predict_proba
+from .utils.extmath import softmax
 from .utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -58,7 +59,7 @@ from .utils.validation import (
 
 
 class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
-    """Probability calibration with isotonic regression or logistic regression.
+    """Calibrate probabilities using isotonic, logistic, or temperature scaling.
 
     This class uses cross-validation to both estimate the parameters of a
     classifier and subsequently calibrate a classifier. With default
@@ -97,12 +98,19 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
         .. versionadded:: 1.2
 
-    method : {'sigmoid', 'isotonic'}, default='sigmoid'
-        The method to use for calibration. Can be 'sigmoid' which
-        corresponds to Platt's method (i.e. a logistic regression model) or
-        'isotonic' which is a non-parametric approach. It is not advised to
+    method : {'sigmoid', 'isotonic', 'temperature'}, default='sigmoid'
+        The method to use for calibration. Can be
+        - 'sigmoid', which corresponds to Platt's method
+          (i.e. a logistic regression model).
+        - 'isotonic', which is a non-parametric approach,
+        -  `temperature`, temperature scaling.
+
+        It is not advised to
         use isotonic calibration with too few calibration samples
         ``(<<1000)`` since it tends to overfit.
+
+        .. versionchanged:: 1.7
+           Added option 'temperature'.
 
     cv : int, cross-validation generator, or iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -255,7 +263,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             HasMethods(["fit", "decision_function"]),
             None,
         ],
-        "method": [StrOptions({"isotonic", "sigmoid"})],
+        "method": [StrOptions({"isotonic", "sigmoid", "temperature"})],
         "cv": ["cv_object", Hidden(StrOptions({"prefit"}))],
         "n_jobs": [Integral, None],
         "ensemble": ["boolean", StrOptions({"auto"})],
@@ -602,7 +610,7 @@ def _fit_classifier_calibrator_pair(
     test : ndarray, shape (n_test_indices,)
         Indices of the testing subset.
 
-    method : {'sigmoid', 'isotonic'}
+    method : {'sigmoid', 'isotonic', 'temperature'}
         Method to use for calibration.
 
     classes : ndarray, shape (n_classes,)
@@ -669,7 +677,7 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
     classes : ndarray, shape (n_classes,)
         All the prediction classes.
 
-    method : {'sigmoid', 'isotonic'}
+    method : {'sigmoid', 'isotonic', 'temperature'}
         The method to use for calibration.
 
     sample_weight : ndarray, shape (n_samples,), default=None
@@ -683,12 +691,19 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
     label_encoder = LabelEncoder().fit(classes)
     pos_class_indices = label_encoder.transform(clf.classes_)
     calibrators = []
-    for class_idx, this_pred in zip(pos_class_indices, predictions.T):
-        if method == "isotonic":
-            calibrator = IsotonicRegression(out_of_bounds="clip")
-        else:  # "sigmoid"
-            calibrator = _SigmoidCalibration()
-        calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
+
+    if (method == "isotonic") or (method == "sigmoid"):
+        for class_idx, this_pred in zip(pos_class_indices, predictions.T):
+            if method == "isotonic":
+                calibrator = IsotonicRegression(out_of_bounds="clip")
+            elif method == "sigmoid":
+                calibrator = _SigmoidCalibration()
+            calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
+            calibrators.append(calibrator)
+
+    elif method == "temperature":
+        calibrator = _TemperatureScaling()
+        calibrator.fit(predictions, Y, sample_weight)
         calibrators.append(calibrator)
 
     pipeline = _CalibratedClassifier(clf, calibrators, method=method, classes=classes)
@@ -712,10 +727,11 @@ class _CalibratedClassifier:
     classes : array-like of shape (n_classes,)
         All the prediction classes.
 
-    method : {'sigmoid', 'isotonic'}, default='sigmoid'
-        The method to use for calibration. Can be 'sigmoid' which
-        corresponds to Platt's method or 'isotonic' which is a
-        non-parametric approach based on isotonic regression.
+    method : {'sigmoid', 'isotonic', 'temperature'}, default='sigmoid'
+        The method to use for calibration. Can be
+        - 'sigmoid' which corresponds to Platt's method.
+        - 'isotonic' which is a non-parametric approach based on isotonic regression.
+        - 'temperature' which is temperature scaling.
     """
 
     def __init__(self, estimator, calibrators, *, classes, method="sigmoid"):
@@ -755,27 +771,32 @@ class _CalibratedClassifier:
         pos_class_indices = label_encoder.transform(self.estimator.classes_)
 
         proba = np.zeros((_num_samples(X), n_classes))
-        for class_idx, this_pred, calibrator in zip(
-            pos_class_indices, predictions.T, self.calibrators
-        ):
-            if n_classes == 2:
-                # When binary, `predictions` consists only of predictions for
-                # clf.classes_[1] but `pos_class_indices` = 0
-                class_idx += 1
-            proba[:, class_idx] = calibrator.predict(this_pred)
 
-        # Normalize the probabilities
-        if n_classes == 2:
-            proba[:, 0] = 1.0 - proba[:, 1]
-        else:
-            denominator = np.sum(proba, axis=1)[:, np.newaxis]
-            # In the edge case where for each class calibrator returns a null
-            # probability for a given sample, use the uniform distribution
-            # instead.
-            uniform_proba = np.full_like(proba, 1 / n_classes)
-            proba = np.divide(
-                proba, denominator, out=uniform_proba, where=denominator != 0
-            )
+        if (self.method == "sigmoid") or (self.method == "isotonic"):
+            for class_idx, this_pred, calibrator in zip(
+                pos_class_indices, predictions.T, self.calibrators
+            ):
+                if n_classes == 2:
+                    # When binary, `predictions` consists only of predictions for
+                    # clf.classes_[1] but `pos_class_indices` = 0
+                    class_idx += 1
+                proba[:, class_idx] = calibrator.predict(this_pred)
+
+            # Normalize the probabilities
+            if n_classes == 2:
+                proba[:, 0] = 1.0 - proba[:, 1]
+            else:
+                denominator = np.sum(proba, axis=1)[:, np.newaxis]
+                # In the edge case where for each class calibrator returns a null
+                # probability for a given sample, use the uniform distribution
+                # instead.
+                uniform_proba = np.full_like(proba, 1 / n_classes)
+                proba = np.divide(
+                    proba, denominator, out=uniform_proba, where=denominator != 0
+                )
+
+        elif self.method == "temperature":
+            proba = self.calibrators[0].predict(predictions)
 
         # Deal with cases where the predicted probability minimally exceeds 1.0
         proba[(1.0 < proba) & (proba <= 1.0 + 1e-5)] = 1.0
@@ -887,6 +908,149 @@ def _sigmoid_calibration(
     return AB_[0] / scale_constant, AB_[1]
 
 
+def _convert_decision_values_to_2d_array(decision_values):
+    """Convert decision function outputs into a 2D array
+
+    This function ensures that the output of `decision_function` is
+    converted into a (n_samples, n_classes) array. For binary classification,
+    each row contains logits for the negative and positive classes as (-x, x).
+
+    Parameters
+    ----------
+    decision_values : array-like of shape (n_samples,) or (n_samples, 1)
+        or (n_samples, n_classes)
+        The decision function values or probability estimates.
+        - If shape is (n_samples,), converts to (n_samples, 2) with (-x, x).
+        - If shape is (n_samples, 1), converts to (n_samples, 2) with (-x, x).
+        - If shape is (n_samples, n_classes), returns unchanged.
+
+    Returns
+    -------
+    logits : ndarray of shape (n_samples, n_classes)
+    """
+    if (decision_values.ndim == 2) and (decision_values.shape[1] > 1):
+        return decision_values
+    elif (decision_values.ndim == 2) and (decision_values.shape[1] == 1):
+        return np.hstack([-decision_values, decision_values])
+
+    elif decision_values.ndim == 1:
+        decision_values = decision_values.reshape(-1, 1)
+        return np.hstack([-decision_values, decision_values])
+
+
+def _temperature_scaling(predictions, labels, sample_weight=None, beta_0=1.0):
+    """Probability Calibration with temperature scaling
+
+    Parameters
+    ----------
+    predictions : ndarray of shape (n_samples,) or (n_samples, n_classes)
+        The decision function or predict proba for the samples.
+
+    labels : ndarray of shape (n_samples, 1) or (n_samples, n_classes)
+        True labels for the samples. For binary classification, it
+        is given by a binary column vector. For multi-class classification,
+        it is given by one-hot vectors.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights. If None, then samples are equally weighted.
+
+    beta_0 : float, default=1.0
+       Initial inverse temperature to start the optimisation.
+
+    Returns
+    -------
+    beta : float
+        The optimised inverse temperature parameter for probability calibration,
+        with a value in the range (0, 1].
+
+    References
+    ----------
+    Guo, Pleiss, Sun & Weinberger, "On Calibration of Modern Neural Networks"
+    """
+
+    logits = _convert_decision_values_to_2d_array(predictions)
+    labels = labels.astype(int)
+    max_logits = np.reshape(np.max(logits, axis=1), (-1, 1))
+
+    def negative_log_likelihood(beta, logits, labels, max_logits):
+        """Compute the negative log likelihood loss and its derivative
+            with respect  to temperature.
+
+        Parameters
+        ----------
+        beta : float
+            The current inverse temperature value during optimisation.
+
+        logits : ndarray of shape (n_samples, n_classes)
+            The decision function or predict proba for the samples.
+
+        labels : ndarray of shape (n_samples, 1) or (n_samples, n_classes)
+            True labels for the samples. For binary classification, it
+            is given by a binary column vector. For multi-class classification,
+            it is given by one-hot vectors.
+
+        max_logits : ndarray of shape (n_samples, 1)
+            Maximum value in each row of logits
+
+        Returns
+        -------
+        negative_log_likelihood_loss : float
+            The negative log likelihood loss.
+
+        negative_log_likelihood_loss_derivative : float
+            The derivative of the negative log likelihood loss with respect to
+            the inverse temperature.
+        """
+
+        # Select the logit and the softmax output of the correct class
+        softmax_output = softmax(beta * logits)
+
+        # multi-class classification
+        if (labels.ndim == 2) and (labels.shape[1] > 1):
+            correct_class_probas = np.sum(softmax_output * labels, axis=1)
+            correct_class_logits = np.sum(logits * labels, axis=1)
+
+        # binary classification
+        elif (labels.ndim == 2) and (labels.shape[1] == 1):
+            correct_class_probas = np.take_along_axis(
+                softmax_output, labels, axis=1
+            ).ravel()
+
+            correct_class_logits = np.take_along_axis(logits, labels, axis=1).ravel()
+
+        # Compute the losses
+        losses = np.log(correct_class_probas)
+
+        # Derivatives with respect to beta
+        numerator = np.sum(logits * np.exp(beta * (logits - max_logits)), axis=1)
+
+        denominator = np.sum(np.exp(beta * (logits - max_logits)), axis=1)
+
+        derivatives = correct_class_logits - numerator / denominator
+
+        # Apply sample weight
+        if sample_weight is not None:
+            losses *= sample_weight
+            derivatives *= sample_weight
+
+        return -np.sum(losses), -np.sum(derivatives)
+
+    beta_minimizer = minimize(
+        negative_log_likelihood,
+        np.array([beta_0]),
+        args=(logits, labels, max_logits),
+        method="L-BFGS-B",
+        bounds=[(1e-8, None)],
+        jac=True,
+        options={
+            "gtol": 1e-6,
+            "ftol": 64 * np.finfo(float).eps,
+        },
+    )
+
+    return beta_minimizer.x[0]
+
+
 class _SigmoidCalibration(RegressorMixin, BaseEstimator):
     """Sigmoid regression model.
 
@@ -940,6 +1104,67 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
         """
         T = column_or_1d(T)
         return expit(-(self.a_ * T + self.b_))
+
+
+class _TemperatureScaling(RegressorMixin, BaseEstimator):
+    """Temperature scaling model.
+
+    Attributes
+    ----------
+    T_initial_ : float
+        The initial temperature for optimization.
+
+    T_ : float
+        The optimized temperature.
+    """
+
+    def __init__(self, T_initial=1.0):
+        self.T_initial_ = T_initial
+        self._beta_0 = np.divide(1.0, self.T_initial_)
+
+    def fit(self, X, y, sample_weight=None):
+        """Fit the model using X, y as training data.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples,)
+            Training data.
+
+        y : array-like of shape (n_samples, n_classes)
+            Training target.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then samples are equally weighted.
+
+        Returns
+        -------
+        self : object
+            Returns an instance of self.
+        """
+        X = _convert_decision_values_to_2d_array(X)
+
+        X, y = indexable(X, y)
+
+        self._beta = _temperature_scaling(X, y, sample_weight, self._beta_0)
+        self.T_ = np.divide(1.0, self._beta)
+        return self
+
+    def predict(self, X):
+        """Predict new data by linear interpolation.
+
+        Parameters
+        ----------
+        T : array-like of shape (n_samples,)
+            Data to predict from.
+
+        Returns
+        -------
+        T_ : ndarray of shape (n_samples, n_classes)
+            The predicted data.
+        """
+        X = _convert_decision_values_to_2d_array(X)
+
+        return softmax(self._beta * X)
 
 
 @validate_params(

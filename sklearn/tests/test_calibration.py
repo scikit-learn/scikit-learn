@@ -12,6 +12,7 @@ from sklearn.calibration import (
     _CalibratedClassifier,
     _sigmoid_calibration,
     _SigmoidCalibration,
+    _TemperatureScaling,
     calibration_curve,
 )
 from sklearn.datasets import load_iris, make_blobs, make_classification
@@ -26,7 +27,7 @@ from sklearn.frozen import FrozenEstimator
 from sklearn.impute import SimpleImputer
 from sklearn.isotonic import IsotonicRegression
 from sklearn.linear_model import LogisticRegression, SGDClassifier
-from sklearn.metrics import brier_score_loss
+from sklearn.metrics import accuracy_score, brier_score_loss
 from sklearn.model_selection import (
     KFold,
     LeaveOneOut,
@@ -37,10 +38,11 @@ from sklearn.model_selection import (
 )
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline, make_pipeline
-from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.preprocessing import LabelEncoder, StandardScaler, label_binarize
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._mocking import CheckingClassifier
+from sklearn.utils._response import _get_response_values
 from sklearn.utils._testing import (
     _convert_container,
     assert_almost_equal,
@@ -64,7 +66,7 @@ def data():
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
 @pytest.mark.parametrize("ensemble", [True, False])
 def test_calibration(data, method, csr_container, ensemble):
-    # Test calibration objects with isotonic and sigmoid
+    # Test calibration objects with isotonic, sigmoid
     n_samples = N_SAMPLES // 2
     X, y = data
     sample_weight = np.random.RandomState(seed=42).uniform(size=y.size)
@@ -162,7 +164,7 @@ def test_calibration_cv_nfold(data):
         calib_clf.fit(X, y)
 
 
-@pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic", "temperature"])
 @pytest.mark.parametrize("ensemble", [True, False])
 def test_sample_weight(data, method, ensemble):
     n_samples = N_SAMPLES // 2
@@ -186,7 +188,7 @@ def test_sample_weight(data, method, ensemble):
     assert diff > 0.1
 
 
-@pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic", "temperature"])
 @pytest.mark.parametrize("ensemble", [True, False])
 def test_parallel_execution(data, method, ensemble):
     """Test parallel calibration"""
@@ -210,7 +212,7 @@ def test_parallel_execution(data, method, ensemble):
     assert_allclose(probs_parallel, probs_sequential)
 
 
-@pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic", "temperature"])
 @pytest.mark.parametrize("ensemble", [True, False])
 # increase the number of RNG seeds to assess the statistical stability of this
 # test:
@@ -359,7 +361,7 @@ def test_calibration_prefit(csr_container):
                 )
 
 
-@pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic", "temperature"])
 def test_calibration_ensemble_false(data, method):
     # Test that `ensemble=False` is the same as using predictions from
     # `cross_val_predict` to train calibrator.
@@ -374,13 +376,23 @@ def test_calibration_ensemble_false(data, method):
     unbiased_preds = cross_val_predict(clf, X, y, cv=3, method="decision_function")
     if method == "isotonic":
         calibrator = IsotonicRegression(out_of_bounds="clip")
-    else:
+        calibrator.fit(unbiased_preds, y)
+    elif method == "sigmoid":
         calibrator = _SigmoidCalibration()
-    calibrator.fit(unbiased_preds, y)
+        calibrator.fit(unbiased_preds, y)
+    else:
+        calibrator = _TemperatureScaling()
+        Y = label_binarize(y, classes=np.unique(y))
+        calibrator.fit(unbiased_preds, Y)
     # Use `clf` fit on all data
     clf.fit(X, y)
     clf_df = clf.decision_function(X)
     manual_probas = calibrator.predict(clf_df)
+
+    if method == "temperature":
+        if (manual_probas.ndim == 2) and (manual_probas.shape[1] == 2):
+            manual_probas = manual_probas[:, 1]
+
     assert_allclose(cal_probas[:, 1], manual_probas)
 
 
@@ -399,6 +411,44 @@ def test_sigmoid_calibration():
     # arrays
     with pytest.raises(ValueError):
         _SigmoidCalibration().fit(np.vstack((exF, exF)), exY)
+
+
+def test_temperature_scaling(data):
+    """Check temperature scaling calibration"""
+    X, y = data
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+
+    clfs = [
+        make_pipeline(StandardScaler(), LinearSVC(random_state=42)),
+        LogisticRegression(),
+    ]
+
+    for clf in clfs:
+        clf.fit(X_train, y_train)
+        cal_clf = CalibratedClassifierCV(clf, method="temperature").fit(
+            X_train, y_train
+        )
+
+        clf_preds = clf.predict(X_test)
+
+        clf_logits, _ = _get_response_values(
+            clf,
+            X_test,
+            response_method=["decision_function", "predict_proba"],
+        )
+
+        cal_clf_preds = np.argmax(
+            cal_clf.calibrated_classifiers_[0].calibrators[0].predict(clf_logits),
+            axis=1,
+        )
+
+        # Temperature scaling does not affect accuracy
+        assert accuracy_score(y_test, clf_preds) == accuracy_score(
+            y_test, cal_clf_preds
+        )
+
+        # The optimized temperature should always be positive
+        assert cal_clf.calibrated_classifiers_[0].calibrators[0].T_ > 0
 
 
 def test_calibration_curve():
@@ -432,8 +482,9 @@ def test_calibration_curve():
         calibration_curve(y_true2, y_pred2, strategy="percentile")
 
 
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic", "temperature"])
 @pytest.mark.parametrize("ensemble", [True, False])
-def test_calibration_nan_imputer(ensemble):
+def test_calibration_nan_imputer(method, ensemble):
     """Test that calibration can accept nan"""
     X, y = make_classification(
         n_samples=10, n_features=2, n_informative=2, n_redundant=0, random_state=42
@@ -442,13 +493,14 @@ def test_calibration_nan_imputer(ensemble):
     clf = Pipeline(
         [("imputer", SimpleImputer()), ("rf", RandomForestClassifier(n_estimators=1))]
     )
-    clf_c = CalibratedClassifierCV(clf, cv=2, method="isotonic", ensemble=ensemble)
+    clf_c = CalibratedClassifierCV(clf, cv=2, method=method, ensemble=ensemble)
     clf_c.fit(X, y)
     clf_c.predict(X)
 
 
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic", "temperature"])
 @pytest.mark.parametrize("ensemble", [True, False])
-def test_calibration_prob_sum(ensemble):
+def test_calibration_prob_sum(method, ensemble):
     # Test that sum of probabilities is (max) 1. A non-regression test for
     # issue #7796 - when test has fewer classes than train
     X, _ = make_classification(n_samples=10, n_features=5, n_classes=2)
@@ -456,7 +508,7 @@ def test_calibration_prob_sum(ensemble):
     clf = LinearSVC(C=1.0, random_state=7)
     # In the first and last fold, test will have 1 class while train will have 2
     clf_prob = CalibratedClassifierCV(
-        clf, method="sigmoid", cv=KFold(n_splits=3), ensemble=ensemble
+        clf, method=method, cv=KFold(n_splits=3), ensemble=ensemble
     )
     clf_prob.fit(X, y)
     assert_allclose(clf_prob.predict_proba(X).sum(axis=1), 1.0)
@@ -867,7 +919,7 @@ def test_calibration_display_pos_label(
         assert labels.get_text() in expected_legend_labels
 
 
-@pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic", "temperature"])
 @pytest.mark.parametrize("ensemble", [True, False])
 def test_calibrated_classifier_cv_double_sample_weights_equivalence(method, ensemble):
     """Check that passing repeating twice the dataset `X` is equivalent to
@@ -1082,7 +1134,7 @@ def test_sigmoid_calibration_max_abs_prediction_threshold(global_random_seed):
 
 
 @pytest.mark.parametrize("use_sample_weight", [True, False])
-@pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic", "temperature"])
 def test_float32_predict_proba(data, use_sample_weight, method):
     """Check that CalibratedClassifierCV works with float32 predict proba.
 
