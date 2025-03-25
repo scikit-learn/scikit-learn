@@ -1,4 +1,4 @@
-name: Unit test for Pyodide
+name: Test Emscripten/Pyodide build
 
 on:
   schedule:
