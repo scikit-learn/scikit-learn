@@ -105,7 +105,6 @@ build_metadata_list = [
             "polars",
             "pyarrow",
             "cupy",
-            "array-api-compat",
             "array-api-strict",
         ],
     },
@@ -123,7 +122,6 @@ build_metadata_list = [
             "pytorch-cpu",
             "polars",
             "pyarrow",
-            "array-api-compat",
             "array-api-strict",
             "scipy-doctest",
         ],
@@ -179,7 +177,7 @@ build_metadata_list = [
         "channels": ["conda-forge"],
         "conda_dependencies": common_dependencies + ["ccache", "polars"],
         "package_constraints": {
-            "python": "3.9",
+            "python": "3.10",
             "blas": "[build=openblas]",
             "numpy": "min",
             "scipy": "min",
@@ -205,7 +203,7 @@ build_metadata_list = [
             + ["ccache"]
         ),
         "package_constraints": {
-            "python": "3.9",
+            "python": "3.10",
             "blas": "[build=openblas]",
         },
     },
@@ -223,7 +221,7 @@ build_metadata_list = [
             # Test with some optional dependencies
             + ["lightgbm", "scikit-image"]
             # Test array API on CPU without PyTorch
-            + ["array-api-compat", "array-api-strict"]
+            + ["array-api-strict"]
             # doctests dependencies
             + ["scipy-doctest"]
         ),
@@ -300,7 +298,7 @@ build_metadata_list = [
             "pip",
         ],
         "package_constraints": {
-            "python": "3.9",
+            "python": "3.10",
             "blas": "[build=mkl]",
         },
     },
@@ -335,7 +333,7 @@ build_metadata_list = [
             "sphinxcontrib-sass",
         ],
         "package_constraints": {
-            "python": "3.9",
+            "python": "3.10",
             "numpy": "min",
             "scipy": "min",
             "matplotlib": "min",
@@ -391,7 +389,7 @@ build_metadata_list = [
             "sphinxcontrib-sass",
         ],
         "package_constraints": {
-            "python": "3.9",
+            "python": "3.10",
         },
     },
     {
@@ -406,7 +404,7 @@ build_metadata_list = [
         )
         + ["pip", "ccache"],
         "package_constraints": {
-            "python": "3.9",
+            "python": "3.10",
         },
     },
     {
