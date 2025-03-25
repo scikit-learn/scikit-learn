@@ -4,14 +4,20 @@
     "version": 1,
 
     // The name of the project being benchmarked
-    "project": "asv",
+    "project": "scikit-learn",
 
     // The project's homepage
-    "project_url": "https://github.com/airspeed-velocity/asv/",
+    "project_url": "https://scikit-learn.org/",
 
     // The URL or local path of the source code repository for the
     // project being benchmarked
-    "repo": ".",
+    "repo": "..",
+
+    // Customizable commands for building, installing, and
+    // uninstalling the project. See asv.conf.json documentation.
+    "install_command": ["python -mpip install {wheel_file}"],
+    "uninstall_command": ["return-code=any python -mpip uninstall -y {project}"],
+    "build_command": ["python -m build --wheel -o {build_cache_dir} {build_dir}"],
 
     // List of branches to benchmark. If not provided, defaults to "main"
     // (for git) or "default" (for mercurial).
@@ -21,14 +27,14 @@
     // determined from "repo" by looking at the protocol in the URL
     // (if remote), or by looking for special directories, such as
     // ".git" (if local).
-    "dvcs": "git",
+    // "dvcs": "git",
 
     // The tool to use to create environments.  May be "conda",
     // "virtualenv" or other value depending on the plugins in use.
     // If missing or the empty string, the tool will be automatically
     // determined by looking for tools on the PATH environment
     // variable.
-    "environment_type": "virtualenv",
+    "environment_type": "conda",
 
     // timeout in seconds for installing any dependencies in environment
     // defaults to 10 min
@@ -39,11 +45,11 @@
     //"default_benchmark_timeout": 60,
 
     // the base URL to show a commit for the project.
-    "show_commit_url": "http://github.com/airspeed-velocity/asv/commit/",
+    "show_commit_url": "https://github.com/scikit-learn/scikit-learn/commit/",
 
     // The Pythons you'd like to test against.  If not provided, defaults
     // to the current version of Python used to run `asv`.
-    "pythons": ["3.12"],
+    // "pythons": ["3.12"],
 
     // The matrix of dependencies to test.  Each key is the name of a
     // package (in PyPI) and the values are version numbers.  An empty
@@ -55,8 +61,17 @@
     // pip (with all the conda available packages installed first,
     // followed by the pip installed packages).
     //
+    // The versions of the dependencies should be bumped in a dedicated commit
+    // to easily identify regressions/improvements due to code changes from
+    // those due to dependency changes.
+    //
     "matrix": {
-    	"six": []
+        "numpy": ["2.0.0"],
+        "scipy": ["1.14.0"],
+        "cython": ["3.0.10"],
+        "joblib": ["1.3.2"],
+        "threadpoolctl": ["3.2.0"],
+        "pandas": ["2.2.2"]
     },
 
     // Combinations of libraries/python versions can be excluded/included
@@ -98,15 +113,15 @@
 
     // The directory (relative to the current directory) to cache the Python
     // environments in.  If not provided, defaults to "env"
-    "env_dir": ".asv/env",
+    // "env_dir": "env",
 
     // The directory (relative to the current directory) that raw benchmark
     // results are stored in.  If not provided, defaults to "results".
-    "results_dir": ".asv/results",
+    // "results_dir": "results",
 
     // The directory (relative to the current directory) that the html tree
     // should be written to.  If not provided, defaults to "html".
-    "html_dir": ".asv/html",
+    // "html_dir": "html",
 
     // The number of characters to retain in the commit hashes.
     // "hash_length": 8,
