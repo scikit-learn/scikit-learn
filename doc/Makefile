@@ -78,8 +78,9 @@ html:
 # Default to SPHINX_NUMJOBS=auto (except on MacOS and CI) since this makes
 # html-noplot build faster
 html-noplot: SPHINX_NUMJOBS ?= $(SPHINX_NUMJOBS_NOPLOT_DEFAULT)
+html-noplot: SPHINXOPTS += -D plot_gallery=0
 html-noplot:
-	$(SPHINXBUILD) -D plot_gallery=0 -b html $(ALLSPHINXOPTS) -j$(SPHINX_NUMJOBS) \
+	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) -j$(SPHINX_NUMJOBS) \
     $(BUILDDIR)/html/stable
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html/stable."
