@@ -21,13 +21,12 @@ from sklearn.utils._array_api import (
     _nanmax,
     _nanmean,
     _nanmin,
-    _NumPyAPIWrapper,
     _ravel,
     device,
     get_namespace,
     get_namespace_and_device,
     indexing_dtype,
-    supported_float_dtypes,
+    np_compat,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -43,7 +42,7 @@ from sklearn.utils.fixes import _IS_32BIT, CSR_CONTAINERS, np_version, parse_ver
 def test_get_namespace_ndarray_default(X):
     """Check that get_namespace returns NumPy wrapper"""
     xp_out, is_array_api_compliant = get_namespace(X)
-    assert isinstance(xp_out, _NumPyAPIWrapper)
+    assert xp_out is np_compat
     assert not is_array_api_compliant
 
 
@@ -62,12 +61,6 @@ def test_get_namespace_ndarray_creation_device():
 @skip_if_array_api_compat_not_configured
 def test_get_namespace_ndarray_with_dispatch():
     """Test get_namespace on NumPy ndarrays."""
-    array_api_compat = pytest.importorskip("array_api_compat")
-    if parse_version(array_api_compat.__version__) < parse_version("1.9"):
-        pytest.skip(
-            reason="array_api_compat was temporarily reporting NumPy as API compliant "
-            "and this test would fail"
-        )
 
     X_np = numpy.asarray([[1, 2, 3]])
 
@@ -77,7 +70,7 @@ def test_get_namespace_ndarray_with_dispatch():
 
         # In the future, NumPy should become API compliant library and we should have
         # assert xp_out is numpy
-        assert xp_out is array_api_compat.numpy
+        assert xp_out is np_compat
 
 
 @skip_if_array_api_compat_not_configured
@@ -443,56 +436,6 @@ def test_convert_estimator_to_array_api():
     assert hasattr(new_est.X_, "__array_namespace__")
 
 
-def test_reshape_behavior():
-    """Check reshape behavior with copy and is strict with non-tuple shape."""
-    xp = _NumPyAPIWrapper()
-    X = xp.asarray([[1, 2, 3], [3, 4, 5]])
-
-    X_no_copy = xp.reshape(X, (-1,), copy=False)
-    assert X_no_copy.base is X
-
-    X_copy = xp.reshape(X, (6, 1), copy=True)
-    assert X_copy.base is not X.base
-
-    with pytest.raises(TypeError, match="shape must be a tuple"):
-        xp.reshape(X, -1)
-
-
-def test_get_namespace_array_api_isdtype():
-    """Test isdtype implementation from _NumPyAPIWrapper."""
-    xp = _NumPyAPIWrapper()
-
-    assert xp.isdtype(xp.float32, xp.float32)
-    assert xp.isdtype(xp.float32, "real floating")
-    assert xp.isdtype(xp.float64, "real floating")
-    assert not xp.isdtype(xp.int32, "real floating")
-
-    for dtype in supported_float_dtypes(xp):
-        assert xp.isdtype(dtype, "real floating")
-
-    assert xp.isdtype(xp.bool, "bool")
-    assert not xp.isdtype(xp.float32, "bool")
-
-    assert xp.isdtype(xp.int16, "signed integer")
-    assert not xp.isdtype(xp.uint32, "signed integer")
-
-    assert xp.isdtype(xp.uint16, "unsigned integer")
-    assert not xp.isdtype(xp.int64, "unsigned integer")
-
-    assert xp.isdtype(xp.int64, "numeric")
-    assert xp.isdtype(xp.float32, "numeric")
-    assert xp.isdtype(xp.uint32, "numeric")
-
-    assert not xp.isdtype(xp.float32, "complex floating")
-
-    assert not xp.isdtype(xp.int8, "complex floating")
-    assert xp.isdtype(xp.complex64, "complex floating")
-    assert xp.isdtype(xp.complex128, "complex floating")
-
-    with pytest.raises(ValueError, match="Unrecognized data type"):
-        assert xp.isdtype(xp.int16, "unknown")
-
-
 @pytest.mark.parametrize(
     "namespace, _device, _dtype", yield_namespace_device_dtype_combinations()
 )
@@ -548,10 +491,15 @@ def test_isin(
     assert_array_equal(_convert_to_numpy(result, xp=xp), expected)
 
 
+@pytest.mark.skipif(
+    os.environ.get("SCIPY_ARRAY_API") != "1", reason="SCIPY_ARRAY_API not set to 1."
+)
 def test_get_namespace_and_device():
     # Use torch as a library with custom Device objects:
     torch = pytest.importorskip("torch")
-    xp_torch = pytest.importorskip("array_api_compat.torch")
+
+    from sklearn.externals.array_api_compat import torch as torch_compat
+
     some_torch_tensor = torch.arange(3, device="cpu")
     some_numpy_array = numpy.arange(3)
 
@@ -568,7 +516,7 @@ def test_get_namespace_and_device():
     # wrapper.
     with config_context(array_api_dispatch=True):
         namespace, is_array_api, device = get_namespace_and_device(some_torch_tensor)
-        assert namespace is xp_torch
+        assert namespace is torch_compat
         assert is_array_api
         assert device == some_torch_tensor.device
 
@@ -627,11 +575,10 @@ def test_fill_or_add_to_diagonal(array_namespace, device_, dtype_name, wrap):
 @pytest.mark.parametrize("dispatch", [True, False])
 def test_sparse_device(csr_container, dispatch):
     a, b = csr_container(numpy.array([[1]])), csr_container(numpy.array([[2]]))
-    try:
-        with config_context(array_api_dispatch=dispatch):
-            assert device(a, b) is None
-            assert device(a, numpy.array([1])) is None
-            assert get_namespace_and_device(a, b)[2] is None
-            assert get_namespace_and_device(a, numpy.array([1]))[2] is None
-    except ImportError:
-        raise SkipTest("array_api_compat is not installed")
+    if dispatch and os.environ.get("SCIPY_ARRAY_API") is None:
+        raise SkipTest("SCIPY_ARRAY_API is not set: not checking array_api input")
+    with config_context(array_api_dispatch=dispatch):
+        assert device(a, b) is None
+        assert device(a, numpy.array([1])) is None
+        assert get_namespace_and_device(a, b)[2] is None
+        assert get_namespace_and_device(a, numpy.array([1]))[2] is None
