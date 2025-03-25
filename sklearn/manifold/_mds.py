@@ -142,6 +142,8 @@ def _smacof_single(
 
             # Compute the disparities using isotonic regression.
             # For the first SMACOF iteration, use scaled original dissimilarities.
+            # (This choice follows the R implementation described in this paper:
+            # https://www.jstatsoft.org/article/view/v102i10)
             if it < 1:
                 disparities_flat = sim_flat_w
             else:
