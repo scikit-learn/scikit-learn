@@ -104,7 +104,7 @@
     //     // additional env for python3.12
     //     {"python": "3.12", "numpy": "1.26"},
     //     // additional env if run on windows+conda
-    //     {"platform": "win32", "environment_type": "conda", "python": "3.12", "libpython": ""},
+    //     {"sys_platform": "win32", "environment_type": "conda", "python": "3.12", "libpython": ""},
     // ],
 
     // The directory (relative to the current directory) that benchmarks are
