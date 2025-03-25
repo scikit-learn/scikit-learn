@@ -1033,12 +1033,16 @@ def adjusted_mutual_info_score(
         or classes.shape[0] == clusters.shape[0] == 0
     ):
         return 1.0
+    # if there is only one class or one cluster return 0.0.
+    elif classes.shape[0] == 1 or clusters.shape[0] == 1:
+        return 0.0
 
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
     # Calculate the MI for the two clusterings
     mi = mutual_info_score(labels_true, labels_pred, contingency=contingency)
     # Calculate the expected value for the mutual information
     emi = expected_mutual_information(contingency, n_samples)
+    nominator = mi - emi
     # Calculate entropy for each labeling
     h_true, h_pred = entropy(labels_true), entropy(labels_pred)
     normalizer = _generalized_average(h_true, h_pred, average_method)
@@ -1051,7 +1055,6 @@ def adjusted_mutual_info_score(
         denominator = min(denominator, -np.finfo("float64").eps)
     else:
         denominator = max(denominator, np.finfo("float64").eps)
-    nominator = mi - emi
     # We repeat the same process for the nominator to make transformation symmetric.
     if nominator < 0:
         nominator = min(nominator, -np.finfo("float64").eps)
