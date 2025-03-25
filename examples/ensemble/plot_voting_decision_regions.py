@@ -191,3 +191,17 @@ print(
 # classification. Equivalently:
 
 print(f"Predicted class of VotingClassifier: {eclf.predict(test_sample).ravel()}")
+
+# %%
+# Soft votes can be thresholded as for any other probabilistic classifier.
+
+# %%
+from sklearn.model_selection import FixedThresholdClassifier
+
+eclf_other_threshold = FixedThresholdClassifier(
+    eclf, threshold=0.7, response_method="predict_proba"
+).fit(X, y)
+print(
+    "Predicted class of thresholded VotingClassifier: "
+    f"{eclf_other_threshold.predict(test_sample)}"
+)
