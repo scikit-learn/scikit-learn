@@ -1,6 +1,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import numpy as np
+
 from ...utils import _safe_indexing
 from ...utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
@@ -40,17 +42,32 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         and `fpr`.
 
     roc_auc : float or list of floats, default=None
-        Area under ROC curve, used for labeling curves in the legend.
+        Area under ROC curve, used for labeling each curve in the legend.
         If plotting multiple curves, should be a list of the same length as `fpr`
-        and `tpr`. If `None`, no area under ROC curve score is shown. If `name`
-        is also `None` no legend is added.
+        and `tpr`. If `None`, individual ROC AUC scores are not shown. See
+        `roc_auc_aggregate` for alternative.
+        If `name` and `roc_auc_aggregate` are also `None` no legend is added.
+
+    roc_auc_aggregate : tuple(float), default=None
+        ROC AUC mean and standard deviation. An alternative to `roc_auc` when
+        plotting multiple curves and a single legend entry showing ROC AUC mean and
+        standard deviation for all curves is desired.
+        If `True`, `name` cannot be a list of length >1.
 
     name : str or list of str, default=None
         (Do we prefer curve_name) ?
-        Name of each ROC curve, used for labeling curves in the legend.
-        If plotting multiple curves, should be a list of the same length as `fpr`
-        and `tpr`. If `None`, no name is not shown in the legend. If `roc_auc`
-        is also `None` no legend is added.
+        Name for labeling legend entries. For single ROC curve, should be a str or
+        list of length one. For multiple ROC curves:
+
+        * if list of names provided, should be the same length as `fpr`
+          and `tpr`. Each individual curve will be labeled in the legend. Cannot
+          be used in conjunction with `roc_auc_aggregate`.
+        * if a single name provided (as str or list of length one), a single legend
+          entry will be used to label all curves. Cannot be used in conjunction with
+          `roc_auc`.
+
+        If `None`, no name is not shown in the legend. If `roc_auc`
+        and `roc_auc_aggregate` are also `None` no legend is added.
 
     pos_label : int, float, bool or str, default=None
         The class considered as the positive class when computing the roc auc
@@ -115,6 +132,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         fpr,
         tpr,
         roc_auc=None,
+        roc_auc_aggregate=None,
         name=None,
         pos_label=None,
         estimator_name="deprecated",
@@ -122,25 +140,46 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         self.fpr = fpr
         self.tpr = tpr
         self.roc_auc = roc_auc
+        self.roc_auc_aggregate = roc_auc_aggregate
         self.name = _deprecate_estimator_name(estimator_name, name, "1.7")
         self.pos_label = pos_label
 
     def _validate_plot_params(self, *, ax=None, name=None):
         self.ax_, self.figure_, name_ = super()._validate_plot_params(ax=ax, name=name)
 
+        if self.roc_auc_aggregate:
+            if self.roc_auc is not None:
+                raise ValueError(
+                    "'self.roc_auc' and 'self.roc_auc_aggregate' cannot both be "
+                    "provided."
+                )
+            if isinstance(name_, list) and len(name_) != 1:
+                raise ValueError(
+                    "When 'roc_auc_aggregate' is True, 'name' (or self.name) "
+                    "must be a string or a list of length one."
+                )
+
         self.fpr_ = _convert_to_list_leaving_none(self.fpr)
         self.tpr_ = _convert_to_list_leaving_none(self.tpr)
         self.roc_auc_ = _convert_to_list_leaving_none(self.roc_auc)
         self.name_ = _convert_to_list_leaving_none(name_)
 
+        optional = {"self.roc_auc": self.roc_auc_}
+        if self.name_ is not None and len(self.name_) != 1:
+            optional.update({"'name' (or self.name)": self.name_})
+
         _check_param_lengths(
             required={"self.fpr": self.fpr_, "self.tpr": self.tpr_},
-            optional={
-                "self.roc_auc": self.roc_auc_,
-                "`name` from `plot` (or self.name)": self.name_,
-            },
+            optional=optional,
             class_name="RocCurveDisplay",
         )
+
+        if self.roc_auc:
+            if isinstance(name_, list) and len(name_) == 1:
+                raise ValueError(
+                    "When 'roc_auc' is provided, 'name' (or self.name) "
+                    f"must be None or a list of length {len(self.fpr_)}."
+                )
 
     def plot(
         self,
@@ -208,13 +247,20 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Object that stores computed values.
         """
         self._validate_plot_params(ax=ax, name=name)
+        summary_value, summary_value_name = self.roc_auc_, "AUC"
+        if self.roc_auc_aggregate:
+            summary_value, summary_value_name = self.roc_auc_aggregate, "AUC"
+        elif self.roc_auc:
+            summary_value, summary_value_name = self.roc_auc_, "AUC"
+        else:
+            summary_value, summary_value_name = None, None
 
         n_curves = len(self.fpr_)
         line_kwargs = self._get_line_kwargs(
             n_curves,
             self.name_,
-            self.roc_auc_,
-            "AUC",
+            summary_value,
+            summary_value_name,
             fold_line_kwargs=fold_line_kwargs,
             **kwargs,
         )
@@ -539,8 +585,9 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         response_method="auto",
         pos_label=None,
         ax=None,
-        fold_names=None,
+        name=None,
         fold_line_kwargs=None,
+        show_aggregate_score=True,
         plot_chance_level=False,
         chance_level_kwargs=None,
         despine=False,
@@ -586,10 +633,12 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Axes object to plot on. If `None`, a new figure and axes is
             created.
 
-        fold_names : list of str, default=None
-            Names of each ROC curve, used for labeling curves in the legend.
-            If `None`, the name will be set to "Fold <N>" where N is the index of
-            the CV fold.
+        name : list of str or str, default=None
+            Name for labeling legend entries. To label each individual curve,
+            provide a list of names the same length as the number of cross-validation
+            folds. In this case `show_aggregate_score` cannot be `True`.
+            To label all curves using a single legend entry, provide a str
+            or list of length one. If `None`, no name is shown in the legend.
 
         fold_line_kwargs : dict or list of dict, default=None
             Keywords arguments to be passed to matplotlib's `plot` function
@@ -597,6 +646,13 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             parameters are applied to the ROC curves of each CV fold
             sequentially. If a single dictionary is provided, the same
             parameters are applied to all ROC curves.
+
+        show_aggregate_score : bool, default=True
+            Whether to show the ROC AUC mean and standard deviation of curves from
+            all folds as a single legend entry. If `True`, `name` should be a single
+            string and `fold_line_kwargs` should be a single dictionary, to prevent
+            confusion in the legend. If `False`, `name` should be None or a list the
+            same length as the number of cross-validation folds.
 
         plot_chance_level : bool, default=False
             Whether to plot the chance level.
@@ -637,14 +693,17 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        pos_label, fold_names_ = cls._validate_from_cv_results_params(
+        pos_label, name_ = cls._validate_from_cv_results_params(
             cv_results,
             X,
             y,
             sample_weight=sample_weight,
             pos_label=pos_label,
-            fold_names=fold_names,
+            name=name,
+            fold_line_kwargs=fold_line_kwargs,
+            show_aggregate_score=show_aggregate_score,
         )
+
         fold_line_kwargs_ = cls._validate_line_kwargs(
             len(cv_results["estimator"]),
             fold_line_kwargs,
@@ -682,11 +741,17 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             tpr_all.append(tpr)
             auc_all.append(roc_auc)
 
+        roc_auc_aggregate = None
+        if show_aggregate_score:
+            roc_auc_aggregate = (np.mean(auc_all), np.std(auc_all))
+            auc_all = None
+
         viz = cls(
             fpr=fpr_all,
             tpr=tpr_all,
-            name=fold_names_,
+            name=name_,
             roc_auc=auc_all,
+            roc_auc_aggregate=roc_auc_aggregate,
             pos_label=pos_label,
         )
         return viz.plot(

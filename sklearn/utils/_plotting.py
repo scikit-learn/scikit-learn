@@ -12,10 +12,9 @@ from .fixes import parse_version
 from .multiclass import type_of_target
 from .validation import _check_pos_label_consistency, _num_samples
 
-MULTI_PARAM_ERROR_MSG = (
-    "When '{param}' is provided, it must have the same length as "
-    "the number of curves to be plotted. Got: {len_param}; "
-    "expected: {n_curves}."
+AGGREGATE_ERROR_MESSAGE = (
+    "'fold_line_kwargs' must be a single dictionary to be applied to all curves "
+    "when {param_value}, as only one legend entry will be added."
 )
 
 
@@ -77,7 +76,16 @@ class _BinaryClassifierCurveDisplayMixin:
 
     @classmethod
     def _validate_from_cv_results_params(
-        cls, cv_results, X, y, *, sample_weight=None, pos_label=None, fold_names=None
+        cls,
+        cv_results,
+        X,
+        y,
+        *,
+        sample_weight,
+        pos_label,
+        name,
+        fold_line_kwargs,
+        show_aggregate_score,
     ):
         check_matplotlib_support(f"{cls.__name__}.from_predictions")
 
@@ -114,25 +122,48 @@ class _BinaryClassifierCurveDisplayMixin:
             raise ValueError(str(e).replace("y_true", "y"))
 
         n_curves = len(cv_results["estimator"])
-        if fold_names is None:
-            fold_names = [f"Fold {idx}" for idx in range(n_curves)]
-        elif len(fold_names) != n_curves:
-            raise ValueError(
-                MULTI_PARAM_ERROR_MSG.format(
-                    param="fold_names", len_param=len(fold_names), n_curves=n_curves
+        if show_aggregate_score:
+            if isinstance(name, list) and len(name) != 1:
+                raise ValueError(
+                    "'name' must be a string or list of length one when "
+                    "'show_aggregate_score' is True, as only one legend entry "
+                    "will be added."
                 )
-            )
+            # Should we allow a list of length 1 (in addition to single dict) ??
+            if isinstance(fold_line_kwargs, list):
+                raise ValueError(
+                    AGGREGATE_ERROR_MESSAGE.format(
+                        param_value="'show_aggregate_score' is True"
+                    )
+                )
         else:
-            fold_names = fold_names
+            # Individual ROC AUC scores shown
+            if name is not None and (isinstance(name, list) and len(name) != n_curves):
+                raise ValueError(
+                    f"'name' must be None or list of length {n_curves} when "
+                    f"'show_aggregate_score' is False."
+                )
+            if name is None:
+                name = [f"Fold {idx}" for idx in range(n_curves)]
+        return pos_label, name
 
-        return pos_label, fold_names
+    @classmethod
+    def _get_legend_label(cls, curve_summary_value, curve_name, summary_value_name):
+        """Helper to get legend label using `name_` and `summary_value_`"""
+        if curve_summary_value is not None and curve_name is not None:
+            label = f"{curve_name} ({summary_value_name} = {curve_summary_value:0.2f})"
+        elif curve_summary_value is not None:
+            label = f"{summary_value_name} = {curve_summary_value:0.2f}"
+        elif curve_name is not None:
+            label = curve_name
+        return label
 
     @classmethod
     def _get_line_kwargs(
         cls,
         n_curves,
-        names,
-        summary_values,
+        name,
+        summary_value,
         summary_value_name,
         fold_line_kwargs,
         default_line_kwargs=None,
@@ -145,13 +176,14 @@ class _BinaryClassifierCurveDisplayMixin:
         n_curves : int
             Number of curves.
 
-        names : list[str]
-            Names of each curve.
+        name : list[str] or None
+            Name for labeling legend entries.
 
-        summary_values : list[float]
-            List of summary values for each curve (e.g., ROC AUC, average precision).
+        summary_value : list[float] or tuple(float, float) or None
+            Either list of `n_curves` summary values for each curve (e.g., ROC AUC,
+            average precision) or a single float summary value for all curves.
 
-        summary_value_name : str
+        summary_value_name : str or None
             Name of the summary value provided in `summary_values`.
 
         fold_line_kwargs : dict or list of dict
@@ -172,34 +204,40 @@ class _BinaryClassifierCurveDisplayMixin:
             for multi-curve plots.
         """
         # Ensure parameters are of the correct length
-        names_ = [None] * n_curves if names is None else names
-        summary_values_ = (
-            [None] * n_curves if summary_values is None else summary_values
-        )
+        name_ = [None] * n_curves if name is None else name
+        summary_value_ = [None] * n_curves if summary_value is None else summary_value
         # `fold_line_kwargs` ignored for single curve plots
         # `kwargs` ignored for multi-curve plots
         if n_curves == 1:
             fold_line_kwargs = [kwargs]
         else:
+            # Should we add an extra check ensuring `fold_line_kwargs` is the
+            # same when `summary_value` is (mean, std) ? or allow this flexibility
+            # when using `plot` - note this is checked and prevented in
+            # `from_cv_results`
             fold_line_kwargs = cls._validate_line_kwargs(n_curves, fold_line_kwargs)
 
         if default_line_kwargs is None:
             default_line_kwargs = {}
-        line_kwargs = []
-        for fold_idx, (curve_summary_value, curve_name) in enumerate(
-            zip(summary_values_, names_)
-        ):
-            if curve_summary_value is not None and curve_name is not None:
-                default_line_kwargs["label"] = (
-                    f"{curve_name} ({summary_value_name} = {curve_summary_value:0.2f})"
-                )
-            elif curve_summary_value is not None:
-                default_line_kwargs["label"] = (
-                    f"{summary_value_name} = {curve_summary_value:0.2f}"
-                )
-            elif curve_name is not None:
-                default_line_kwargs["label"] = curve_name
 
+        labels = []
+        if isinstance(summary_value_, tuple):
+            label_aggregate = cls._get_legend_label(
+                summary_value_[0], name_[0], summary_value_name
+            )
+            label_aggregate = label_aggregate + f" +/- {summary_value_[1]:0.2f}"
+            labels.extend([label_aggregate] + [None] * (n_curves - 1))
+        else:
+            for curve_summary_value, curve_name in zip(summary_value_, name_):
+                labels.append(
+                    cls._get_legend_label(
+                        curve_summary_value, curve_name, summary_value_name
+                    )
+                )
+
+        line_kwargs = []
+        for fold_idx, label in enumerate(labels):
+            default_line_kwargs["label"] = label
             line_kwargs.append(
                 _validate_style_kwargs(default_line_kwargs, fold_line_kwargs[fold_idx])
             )
@@ -209,7 +247,11 @@ class _BinaryClassifierCurveDisplayMixin:
     # `ValidationCurveDisplay`) amend to function
     @classmethod
     def _validate_line_kwargs(
-        cls, n_curves, fold_line_kwargs=None, default_line_kwargs=None
+        cls,
+        n_curves,
+        fold_line_kwargs=None,
+        default_line_kwargs=None,
+        aggregate_error=False,
     ):
         """Ensure `fold_line_kwargs` length and incorporate default kwargs.
 
@@ -254,11 +296,8 @@ class _BinaryClassifierCurveDisplayMixin:
             fold_line_kwargs = [fold_line_kwargs] * n_curves
         elif len(fold_line_kwargs) != n_curves:
             raise ValueError(
-                MULTI_PARAM_ERROR_MSG.format(
-                    param="fold_line_kwargs",
-                    len_param=len(fold_line_kwargs),
-                    n_curves=n_curves,
-                )
+                f"'fold_line_kwargs' must be a list of length {n_curves} or a "
+                f"single dictionary. Got list of length: {len(fold_line_kwargs)}."
             )
         else:
             fold_line_kwargs = fold_line_kwargs
@@ -268,6 +307,7 @@ class _BinaryClassifierCurveDisplayMixin:
                 _validate_style_kwargs(default_line_kwargs, single_kwargs)
                 for single_kwargs in fold_line_kwargs
             ]
+
         return fold_line_kwargs
 
 
