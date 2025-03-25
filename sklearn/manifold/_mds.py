@@ -301,7 +301,6 @@ def smacof(
         .. versionchanged:: 1.7
            Normalized stress is now supported for metric MDS as well.
 
-
     Returns
     -------
     X : ndarray of shape (n_samples, n_components)
