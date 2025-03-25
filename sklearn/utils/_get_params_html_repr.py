@@ -10,6 +10,7 @@ from sklearn._config import get_config
 class ParamsDict(UserDict):
     @property
     def _repr_html_(self):
+        # Taken from sklearn.base.BaseEstimator - (written 5 yrs ago)
         """HTML representation of estimator.
 
         This is redundant with the logic of `_repr_mimebundle_`. The latter
@@ -49,7 +50,11 @@ def _html_template(data):
     for x, y in data.items():
 
         if y != "deprecated" and isinstance(y, str):
-            y = "".join(['"', y, '"'])
+            modified_y = "".join(['"', y, '"'])
+        elif isinstance(y, list):
+            modified_y = ", ".join(f"<pre>{html.escape(str(i))}</pre>" for i in y)
+        else:
+            modified_y = y
 
         if x in data.non_default:
             out += """
@@ -65,7 +70,7 @@ def _html_template(data):
                                   this.parentElement.nextElementSibling)"
                         </i></td>
                         <td class="param">{x}&nbsp;</td>
-                        <td class="value">{y}</td>
+                        <td class="value">{modified_y}</td>
                     </tr>
 
                 """
@@ -94,5 +99,4 @@ def _html_template(data):
         </div>
 
     """
-
     return f"{html_start}{out}{html_end}"
