@@ -58,7 +58,7 @@ jobs:
           fi
 
   build_wasm_wheel:
-    name: Run tests
+    name: Build WASM wheel
     runs-on: ubuntu-latest
     needs: check_build_trigger
     if: needs.check_build_trigger.outputs.build
@@ -100,7 +100,7 @@ jobs:
           merge-multiple: true
 
       - name: Push to Anaconda PyPI index
-        uses: scientific-python/upload-nightly-action@v0.6
+        uses: scientific-python/upload-nightly-action@v0.6.1
         with:
           artifacts_path: wheelhouse/
           anaconda_nightly_upload_token: ${{ secrets.SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN }}
