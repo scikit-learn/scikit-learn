@@ -5,7 +5,6 @@ Ridge regression
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 import numbers
 import warnings
 from abc import ABCMeta, abstractmethod
@@ -39,6 +38,7 @@ from ..utils._array_api import (
     get_namespace,
     get_namespace_and_device,
 )
+from ..utils._attribute import FittedAttribute
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.fixes import _sparse_linalg_cg
@@ -2298,6 +2298,14 @@ class _RidgeGCV(LinearModel):
 
 
 class _BaseRidgeCV(LinearModel):
+    cv_results_ = FittedAttribute("store_cv_results=True and cv=None")
+    coef_ = FittedAttribute()
+    intercept_ = FittedAttribute()
+    alpha_ = FittedAttribute()
+    best_score_ = FittedAttribute()
+    n_features_in_ = FittedAttribute()
+    feature_names_in_ = FittedAttribute()
+
     _parameter_constraints: dict = {
         "alphas": ["array-like", Interval(Real, 0, None, closed="neither")],
         "fit_intercept": ["boolean"],
