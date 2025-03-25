@@ -48,14 +48,10 @@ def _html_template(data):
         """
 
     for x, y in data.items():
-
         if y != "deprecated" and isinstance(y, str):
             modified_y = "".join(['"', y, '"'])
-        elif isinstance(y, list):
-            escaped_y = ", ".join(f"{html.escape(str(i))}" for i in y)
-            modified_y = f"<pre>{escaped_y}</pre>"
         else:
-            modified_y = y
+            modified_y = html.escape(str(y))
 
         if x in data.non_default:
             out += """
