@@ -3,6 +3,7 @@
 
 
 import warnings
+from decimal import Decimal
 from numbers import Integral
 
 import numpy as np
@@ -341,7 +342,15 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 continue
 
             if self.strategy == "uniform":
-                bin_edges[jj] = np.linspace(col_min, col_max, n_bins[jj] + 1)
+                col_min_dec = Decimal(str(col_min))
+                col_max_dec = Decimal(str(col_max))
+                n_bins_dec = Decimal(str(n_bins[jj]))
+
+                step = (col_max_dec - col_min_dec) / n_bins_dec
+                bin_edges[jj] = np.array(
+                    [float(col_min_dec + i * step) for i in range(int(n_bins[jj]) + 1)],
+                    dtype=np.float64,
+                )
 
             elif self.strategy == "quantile":
                 percentile_levels = np.linspace(0, 100, n_bins[jj] + 1)
