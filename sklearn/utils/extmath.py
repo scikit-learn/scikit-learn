@@ -12,7 +12,6 @@ from scipy import linalg, sparse
 
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ._array_api import (
-    _allclose,
     _average,
     _is_numpy_namespace,
     _max_precision_float_dtype,
@@ -20,6 +19,7 @@ from ._array_api import (
     device,
     get_namespace,
     get_namespace_and_device,
+    xpx,
 )
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array, check_random_state
@@ -1215,11 +1215,14 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
     else:
         last_elem_idx = xp.asarray(out.shape[axis] - 1)
     # TODO: equal_nan should be true here!
-    if not _allclose(
-        xp.take(out, xp.asarray([last_elem_idx], device=device), axis=axis),
-        expected,
-        rtol=rtol,
-        atol=atol,
+    if not xp.all(
+        xpx.isclose(
+            xp.take(out, xp.asarray([last_elem_idx], device=device), axis=axis),
+            expected,
+            rtol=rtol,
+            atol=atol,
+            equal_nan=True,
+        )
     ):
         warnings.warn(
             (

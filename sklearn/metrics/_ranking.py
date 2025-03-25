@@ -856,7 +856,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     # y_score typically has many tied values. Here we extract
     # the indices associated with the distinct values. We also
     # concatenate a value for the end of the curve.
-    distinct_value_indices = xp.nonzero(y_score[1:] - y_score[:-1])[0]
+    distinct_value_indices = xp.nonzero(xp.diff(y_score))[0]
     threshold_idxs = xp.concat(
         [distinct_value_indices, xp.asarray([size(y_true) - 1], device=device)]
     )
@@ -1176,9 +1176,9 @@ def roc_curve(
         optimal_idxs = xp.where(
             xp.concat(
                 [
-                    xp.asarray(True, device=device),
-                    xp.logical_or(np.diff(fps, 2), np.diff(tps, 2)),
-                    xp.asarray(True, device=device),
+                    xp.asarray([True], device=device),
+                    xp.logical_or(xp.diff(fps, 2), xp.diff(tps, 2)),
+                    xp.asarray([True], device=device),
                 ]
             )
         )[0]

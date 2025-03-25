@@ -985,10 +985,3 @@ def _tolist(array, xp=None):
         return array.tolist()
     array_np = _convert_to_numpy(array, xp=xp)
     return [element.item() for element in array_np]
-
-
-def _allclose(a, b, rtol=1e-5, atol=1e-8):
-    xp, _ = get_namespace(a, b)
-    return xp.all(
-        xp.abs(a - b) <= atol + xp.abs(b) * rtol,
-    )

@@ -552,7 +552,7 @@ def isclose(
             xp=xp,
         )
         if equal_nan:
-            out = xp.where(xp.isnan(a) & xp.isnan(b), xp.asarray(True), out)
+            out = xp.where(xp.isnan(a) & xp.isnan(b), True, out)
         return out
 
     if xp.isdtype(a.dtype, "bool") or xp.isdtype(b.dtype, "bool"):
