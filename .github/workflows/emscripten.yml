@@ -78,7 +78,7 @@ jobs:
       - name: Upload wheel artifact
         uses: actions/upload-artifact@v4
         with:
-          name: cp312-pyodide_wasm32
+          name: pyodide_wheel
           path: ./wheelhouse/*.whl
           if-no-files-found: error
 
