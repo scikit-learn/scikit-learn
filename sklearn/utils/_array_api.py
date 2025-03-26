@@ -418,33 +418,6 @@ class _NumPyAPIWrapper:
         else:
             return numpy.asarray(x, dtype=dtype)
 
-    # def cumulative_sum(self, x, axis=None, dtype=None, include_initial=False):
-    #     """Reimplementation as `cumulative_sum` added in numpy 2.1.
-
-    #     `cumulative_sum` is an alias of `cumsum` as per name improvement in array API.
-    #     Code adapted from array-api-compat.
-    #     """
-
-    #     if axis is None:
-    #         if x.ndim > 1:
-    #             raise ValueError(
-    #                 "axis must be specified in cumulative_sum
-    #  for more than one dimension")
-    #         axis = 0
-
-    #     res = numpy.cumsum(x, axis=axis, dtype=dtype)
-
-    #     # np.cumsum does not support include_initial
-    #     if include_initial:
-    #         initial_shape = list(x.shape)
-    #         initial_shape[axis] = 1
-    #         res = numpy.concatenate(
-    #             [numpy.zeros(
-    # shape=initial_shape, dtype=res.dtype, device=device(res)), res],
-    #             axis=axis,
-    #         )
-    #     return res
-
     def unique_inverse(self, x):
         return numpy.unique(x, return_inverse=True)
 
