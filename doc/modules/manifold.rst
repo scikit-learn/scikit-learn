@@ -444,8 +444,8 @@ Let :math:`d_{ij}` be the disimilarity matrix between the
 the coordinates :math:`X` of the input points).
 Disparities :math:`\hat{d}_{ij}` are some transformation of
 the dissimilarities. The MDS objective, called the
-stress, is then defined by :math:`\sum_{i < j} delta_{ij} - \hat{d}_{ij}`,
-where :math:`delta_{ij}` are the pairwise distances between points
+stress, is then defined by :math:`\sum_{i < j} \delta_{ij} - \hat{d}_{ij}`,
+where :math:`\delta_{ij}` are the pairwise distances between points
 in the embedding space.
 
 
