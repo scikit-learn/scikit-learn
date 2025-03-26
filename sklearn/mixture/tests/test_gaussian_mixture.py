@@ -1510,3 +1510,28 @@ def test_gaussian_mixture_array_api_compliance(
 
     assert_allclose(means_, _convert_to_numpy(gmm.means_, xp=xp))
     assert_allclose(covariances_, _convert_to_numpy(gmm.covariances_, xp=xp))
+
+
+# TODO: remove when gmm works with `init_params` are `kmeans` or `k-means++`
+@pytest.mark.parametrize("init_params", ["kmeans", "k-means++"])
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype", yield_namespace_device_dtype_combinations()
+)
+def test_gaussian_mixture_raises_where_array_api_not_implemented(
+    init_params, array_namespace, device_, dtype
+):
+    X, _ = make_blobs(
+        n_samples=int(1e3),
+        n_features=2,
+        centers=3,
+    )
+    gmm = GaussianMixture(
+        n_components=3, covariance_type="diag", init_params=init_params
+    )
+
+    with sklearn.config_context(array_api_dispatch=True):
+        with pytest.raises(
+            NotImplementedError,
+            match="Allowed `init_params`.+if 'array_api_dispatch' is enabled",
+        ):
+            gmm.fit(X)

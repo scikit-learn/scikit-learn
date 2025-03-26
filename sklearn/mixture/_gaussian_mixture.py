@@ -6,6 +6,7 @@
 import numpy as np
 from scipy import linalg
 
+from .._config import get_config
 from ..utils import check_array
 from ..utils._array_api import get_namespace, get_namespace_and_device
 from ..utils._param_validation import StrOptions
@@ -788,6 +789,19 @@ class GaussianMixture(BaseMixture):
                 self.covariance_type,
                 self.n_components,
                 n_features,
+            )
+
+        allowed_init_values = ["random", "random_from_data"]
+        if (
+            get_config()["array_api_dispatch"]
+            and self.init_params not in allowed_init_values
+        ):
+            raise NotImplementedError(
+                f"Allowed `init_params` are {allowed_init_values} if "
+                f"'array_api_dispatch' is enabled. You passed "
+                f"init_params={self.init_params!r}, which are not implemented to work "
+                "with 'array_api_dispatch' enabled. Please disable "
+                f"'array_api_dispatch' to use init_params={self.init_params!r}."
             )
 
     def _initialize_parameters(self, X, random_state, xp=None):
