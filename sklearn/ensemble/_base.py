@@ -4,14 +4,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from abc import ABCMeta, abstractmethod
-from typing import List
 
 import numpy as np
 from joblib import effective_n_jobs
 
 from ..base import BaseEstimator, MetaEstimatorMixin, clone, is_classifier, is_regressor
 from ..utils import Bunch, check_random_state
-from ..utils._tags import _safe_tags
+from ..utils._tags import get_tags
 from ..utils._user_interface import _print_elapsed_time
 from ..utils.metadata_routing import _routing_enabled
 from ..utils.metaestimators import _BaseComposition
@@ -106,9 +105,6 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         The collection of fitted base estimators.
     """
 
-    # overwrite _required_parameters from MetaEstimatorMixin
-    _required_parameters: List[str] = []
-
     @abstractmethod
     def __init__(
         self,
@@ -200,8 +196,6 @@ class _BaseHeterogeneousEnsemble(
         appear in `estimators_`.
     """
 
-    _required_parameters = ["estimators"]
-
     @property
     def named_estimators(self):
         """Dictionary to access any fitted sub-estimators by name.
@@ -217,7 +211,10 @@ class _BaseHeterogeneousEnsemble(
         self.estimators = estimators
 
     def _validate_estimators(self):
-        if len(self.estimators) == 0:
+        if len(self.estimators) == 0 or not all(
+            isinstance(item, (tuple, list)) and isinstance(item[0], str)
+            for item in self.estimators
+        ):
             raise ValueError(
                 "Invalid 'estimators' attribute, 'estimators' should be a "
                 "non-empty list of (string, estimator) tuples."
@@ -291,15 +288,20 @@ class _BaseHeterogeneousEnsemble(
         """
         return super()._get_params("estimators", deep=deep)
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         try:
-            allow_nan = all(
-                _safe_tags(est[1])["allow_nan"] if est[1] != "drop" else True
+            tags.input_tags.allow_nan = all(
+                get_tags(est[1]).input_tags.allow_nan if est[1] != "drop" else True
+                for est in self.estimators
+            )
+            tags.input_tags.sparse = all(
+                get_tags(est[1]).input_tags.sparse if est[1] != "drop" else True
                 for est in self.estimators
             )
         except Exception:
             # If `estimators` does not comply with our API (list of tuples) then it will
-            # fail. In this case, we assume that `allow_nan` is False but the parameter
-            # validation will raise an error during `fit`.
-            allow_nan = False
-        return {"preserves_dtype": [], "allow_nan": allow_nan}
+            # fail. In this case, we assume that `allow_nan` and `sparse` are False but
+            # the parameter validation will raise an error during `fit`.
+            pass  # pragma: no cover
+        return tags

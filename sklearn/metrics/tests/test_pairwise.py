@@ -212,6 +212,9 @@ def test_pairwise_distances_for_sparse_data(
         pairwise_distances(X, Y_sparse, metric="minkowski")
 
 
+# Some scipy metrics are deprecated (depending on the scipy version) but we
+# still want to test them.
+@ignore_warnings(category=DeprecationWarning)
 @pytest.mark.parametrize("metric", PAIRWISE_BOOLEAN_FUNCTIONS)
 def test_pairwise_boolean_distance(metric):
     # test that we convert to boolean arrays for boolean distances
@@ -1525,7 +1528,7 @@ def test_pairwise_distances_data_derived_params_error(metric):
 
     with pytest.raises(
         ValueError,
-        match=rf"The '(V|VI)' parameter is required for the " rf"{metric} metric",
+        match=rf"The '(V|VI)' parameter is required for the {metric} metric",
     ):
         pairwise_distances(X, Y, metric=metric)
 
@@ -1577,6 +1580,33 @@ def test_numeric_pairwise_distances_datatypes(metric, global_dtype, y_is_x):
     dist = pairwise_distances(X, Y, metric=metric, **params)
 
     assert_allclose(dist, expected_dist)
+
+
+@pytest.mark.parametrize(
+    "pairwise_distances_func",
+    [pairwise_distances, pairwise_distances_argmin, pairwise_distances_argmin_min],
+)
+def test_nan_euclidean_support(pairwise_distances_func):
+    """Check that `nan_euclidean` is lenient with `nan` values."""
+
+    X = [[0, 1], [1, np.nan], [2, 3], [3, 5]]
+    output = pairwise_distances_func(X, X, metric="nan_euclidean")
+
+    assert not np.isnan(output).any()
+
+
+def test_nan_euclidean_constant_input_argmin():
+    """Check that the behavior of constant input is the same in the case of
+    full of nan vector and full of zero vector.
+    """
+
+    X_nan = [[np.nan, np.nan], [np.nan, np.nan], [np.nan, np.nan]]
+    argmin_nan = pairwise_distances_argmin(X_nan, X_nan, metric="nan_euclidean")
+
+    X_const = [[0, 0], [0, 0], [0, 0]]
+    argmin_const = pairwise_distances_argmin(X_const, X_const, metric="nan_euclidean")
+
+    assert_allclose(argmin_nan, argmin_const)
 
 
 @pytest.mark.parametrize(

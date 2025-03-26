@@ -204,7 +204,7 @@ Y_PRED_PARAMS = [
 
 
 @pytest.mark.parametrize(
-    "loss, y_true_success, y_true_fail", Y_COMMON_PARAMS + Y_TRUE_PARAMS
+    "loss, y_true_success, y_true_fail", Y_COMMON_PARAMS + Y_TRUE_PARAMS  # type: ignore[operator]
 )
 def test_loss_boundary_y_true(loss, y_true_success, y_true_fail):
     """Test boundaries of y_true for loss functions."""
@@ -215,7 +215,7 @@ def test_loss_boundary_y_true(loss, y_true_success, y_true_fail):
 
 
 @pytest.mark.parametrize(
-    "loss, y_pred_success, y_pred_fail", Y_COMMON_PARAMS + Y_PRED_PARAMS  # type: ignore
+    "loss, y_pred_success, y_pred_fail", Y_COMMON_PARAMS + Y_PRED_PARAMS  # type: ignore[operator]
 )
 def test_loss_boundary_y_pred(loss, y_pred_success, y_pred_fail):
     """Test boundaries of y_pred for loss functions."""
@@ -419,21 +419,23 @@ def test_loss_dtype(
         if sample_weight is not None:
             sample_weight = create_memmap_backed_data(sample_weight)
 
-    loss.loss(
+    l = loss.loss(
         y_true=y_true,
         raw_prediction=raw_prediction,
         sample_weight=sample_weight,
         loss_out=out1,
         n_threads=n_threads,
     )
-    loss.gradient(
+    assert l is out1 if out1 is not None else True
+    g = loss.gradient(
         y_true=y_true,
         raw_prediction=raw_prediction,
         sample_weight=sample_weight,
         gradient_out=out2,
         n_threads=n_threads,
     )
-    loss.loss_gradient(
+    assert g is out2 if out2 is not None else True
+    l, g = loss.loss_gradient(
         y_true=y_true,
         raw_prediction=raw_prediction,
         sample_weight=sample_weight,
@@ -441,9 +443,11 @@ def test_loss_dtype(
         gradient_out=out2,
         n_threads=n_threads,
     )
+    assert l is out1 if out1 is not None else True
+    assert g is out2 if out2 is not None else True
     if out1 is not None and loss.is_multiclass:
         out1 = np.empty_like(raw_prediction, dtype=dtype_out)
-    loss.gradient_hessian(
+    g, h = loss.gradient_hessian(
         y_true=y_true,
         raw_prediction=raw_prediction,
         sample_weight=sample_weight,
@@ -451,13 +455,15 @@ def test_loss_dtype(
         hessian_out=out2,
         n_threads=n_threads,
     )
+    assert g is out1 if out1 is not None else True
+    assert h is out2 if out2 is not None else True
     loss(y_true=y_true, raw_prediction=raw_prediction, sample_weight=sample_weight)
     loss.fit_intercept_only(y_true=y_true, sample_weight=sample_weight)
     loss.constant_to_optimal_zero(y_true=y_true, sample_weight=sample_weight)
     if hasattr(loss, "predict_proba"):
         loss.predict_proba(raw_prediction=raw_prediction)
     if hasattr(loss, "gradient_proba"):
-        loss.gradient_proba(
+        g, p = loss.gradient_proba(
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
@@ -465,6 +471,8 @@ def test_loss_dtype(
             proba_out=out2,
             n_threads=n_threads,
         )
+        assert g is out1 if out1 is not None else True
+        assert p is out2 if out2 is not None else True
 
 
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)

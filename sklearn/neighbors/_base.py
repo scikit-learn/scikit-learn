@@ -25,12 +25,13 @@ from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import (
     check_array,
     gen_even_slices,
+    get_tags,
 )
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.fixes import parse_version, sp_base_version
 from ..utils.multiclass import check_classification_targets
 from ..utils.parallel import Parallel, delayed
-from ..utils.validation import _to_object_array, check_is_fitted
+from ..utils.validation import _to_object_array, check_is_fitted, validate_data
 from ._ball_tree import BallTree
 from ._kd_tree import KDTree
 
@@ -48,11 +49,13 @@ SCIPY_METRICS = [
     "rogerstanimoto",
     "russellrao",
     "seuclidean",
-    "sokalmichener",
     "sokalsneath",
     "sqeuclidean",
     "yule",
 ]
+if sp_base_version < parse_version("1.17"):
+    # Deprecated in SciPy 1.15 and removed in SciPy 1.17
+    SCIPY_METRICS += ["sokalmichener"]
 if sp_base_version < parse_version("1.11"):
     # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     SCIPY_METRICS += ["kulsinski"]
@@ -469,15 +472,22 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 )
 
     def _fit(self, X, y=None):
-        if self._get_tags()["requires_y"]:
+        ensure_all_finite = "allow-nan" if get_tags(self).input_tags.allow_nan else True
+        if self.__sklearn_tags__().target_tags.required:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-                X, y = self._validate_data(
-                    X, y, accept_sparse="csr", multi_output=True, order="C"
+                X, y = validate_data(
+                    self,
+                    X,
+                    y,
+                    accept_sparse="csr",
+                    multi_output=True,
+                    order="C",
+                    ensure_all_finite=ensure_all_finite,
                 )
 
             if is_classifier(self):
                 # Classification targets require a specific format
-                if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
+                if y.ndim == 1 or (y.ndim == 2 and y.shape[1] == 1):
                     if y.ndim != 1:
                         warnings.warn(
                             (
@@ -513,7 +523,13 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         else:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-                X = self._validate_data(X, accept_sparse="csr", order="C")
+                X = validate_data(
+                    self,
+                    X,
+                    ensure_all_finite=ensure_all_finite,
+                    accept_sparse="csr",
+                    order="C",
+                )
 
         self._check_algorithm_metric()
         if self.metric_params is None:
@@ -689,9 +705,15 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         return self
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         # For cross-validation routines to split data correctly
-        return {"pairwise": self.metric == "precomputed"}
+        tags.input_tags.pairwise = self.metric == "precomputed"
+        # when input is precomputed metric values, all those values need to be positive
+        tags.input_tags.positive_only = tags.input_tags.pairwise
+        tags.input_tags.allow_nan = self.metric == "nan_euclidean"
+        return tags
 
 
 class KNeighborsMixin:
@@ -802,6 +824,7 @@ class KNeighborsMixin:
                 % type(n_neighbors)
             )
 
+        ensure_all_finite = "allow-nan" if get_tags(self).input_tags.allow_nan else True
         query_is_train = X is None
         if query_is_train:
             X = self._fit_X
@@ -812,7 +835,14 @@ class KNeighborsMixin:
             if self.metric == "precomputed":
                 X = _check_precomputed(X)
             else:
-                X = self._validate_data(X, accept_sparse="csr", reset=False, order="C")
+                X = validate_data(
+                    self,
+                    X,
+                    ensure_all_finite=ensure_all_finite,
+                    accept_sparse="csr",
+                    reset=False,
+                    order="C",
+                )
 
         n_samples_fit = self.n_samples_fit_
         if n_neighbors > n_samples_fit:
@@ -1141,6 +1171,7 @@ class RadiusNeighborsMixin:
         if sort_results and not return_distance:
             raise ValueError("return_distance must be True if sort_results is True.")
 
+        ensure_all_finite = "allow-nan" if get_tags(self).input_tags.allow_nan else True
         query_is_train = X is None
         if query_is_train:
             X = self._fit_X
@@ -1148,7 +1179,14 @@ class RadiusNeighborsMixin:
             if self.metric == "precomputed":
                 X = _check_precomputed(X)
             else:
-                X = self._validate_data(X, accept_sparse="csr", reset=False, order="C")
+                X = validate_data(
+                    self,
+                    X,
+                    ensure_all_finite=ensure_all_finite,
+                    accept_sparse="csr",
+                    reset=False,
+                    order="C",
+                )
 
         if radius is None:
             radius = self.radius
@@ -1211,13 +1249,13 @@ class RadiusNeighborsMixin:
             )
             if return_distance:
                 neigh_dist_chunks, neigh_ind_chunks = zip(*chunked_results)
-                neigh_dist_list = sum(neigh_dist_chunks, [])
-                neigh_ind_list = sum(neigh_ind_chunks, [])
+                neigh_dist_list = list(itertools.chain.from_iterable(neigh_dist_chunks))
+                neigh_ind_list = list(itertools.chain.from_iterable(neigh_ind_chunks))
                 neigh_dist = _to_object_array(neigh_dist_list)
                 neigh_ind = _to_object_array(neigh_ind_list)
                 results = neigh_dist, neigh_ind
             else:
-                neigh_ind_list = sum(chunked_results, [])
+                neigh_ind_list = list(itertools.chain.from_iterable(chunked_results))
                 results = _to_object_array(neigh_ind_list)
 
             if sort_results:
@@ -1359,3 +1397,8 @@ class RadiusNeighborsMixin:
         A_indptr = np.concatenate((np.zeros(1, dtype=int), np.cumsum(n_neighbors)))
 
         return csr_matrix((A_data, A_ind, A_indptr), shape=(n_queries, n_samples_fit))
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = self.metric == "nan_euclidean"
+        return tags

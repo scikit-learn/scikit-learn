@@ -159,6 +159,8 @@ def load_files(
     Individual samples are assumed to be files stored a two levels folder
     structure such as the following:
 
+    .. code-block:: text
+
         container_folder/
             category_1_folder/
                 file_1.txt
@@ -636,6 +638,11 @@ def load_iris(*, return_X_y=False, as_frame=False):
 
     Read more in the :ref:`User Guide <iris_dataset>`.
 
+    .. versionchanged:: 0.20
+        Fixed two wrong data points according to Fisher's paper.
+        The new version is the same as in R, but not as in the UCI
+        Machine Learning Repository.
+
     Parameters
     ----------
     return_X_y : bool, default=False
@@ -666,7 +673,7 @@ def load_iris(*, return_X_y=False, as_frame=False):
             a pandas Series.
         feature_names: list
             The names of the dataset columns.
-        target_names: list
+        target_names: ndarray of shape (3, )
             The names of target classes.
         frame: DataFrame of shape (150, 5)
             Only present when `as_frame=True`. DataFrame with `data` and
@@ -688,13 +695,6 @@ def load_iris(*, return_X_y=False, as_frame=False):
 
         .. versionadded:: 0.18
 
-    Notes
-    -----
-        .. versionchanged:: 0.20
-            Fixed two wrong data points according to Fisher's paper.
-            The new version is the same as in R, but not as in the UCI
-            Machine Learning Repository.
-
     Examples
     --------
     Let's say you are interested in the samples 10, 25, and 50, and want to
@@ -707,7 +707,7 @@ def load_iris(*, return_X_y=False, as_frame=False):
     >>> list(data.target_names)
     [np.str_('setosa'), np.str_('versicolor'), np.str_('virginica')]
 
-    See :ref:`sphx_glr_auto_examples_datasets_plot_iris_dataset.py` for a more
+    See :ref:`sphx_glr_auto_examples_decomposition_plot_pca_iris.py` for a more
     detailed example of how to work with the iris dataset.
     """
     data_file_name = "iris.csv"
@@ -751,7 +751,7 @@ def load_iris(*, return_X_y=False, as_frame=False):
     prefer_skip_nested_validation=True,
 )
 def load_breast_cancer(*, return_X_y=False, as_frame=False):
-    """Load and return the breast cancer wisconsin dataset (classification).
+    """Load and return the breast cancer Wisconsin dataset (classification).
 
     The breast cancer dataset is a classic and very easy binary classification
     dataset.
@@ -991,8 +991,7 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
         >>> print(digits.data.shape)
         (1797, 64)
         >>> import matplotlib.pyplot as plt
-        >>> plt.gray()
-        >>> plt.matshow(digits.images[0])
+        >>> plt.matshow(digits.images[0], cmap="gray")
         <...>
         >>> plt.show()
     """
