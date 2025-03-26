@@ -88,22 +88,24 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50):
     adjusted_percentile_rank[mask] = xp.nextafter(
         adjusted_percentile_rank[mask], adjusted_percentile_rank[mask] + 1
     )
-    # Find index (i) of `adjusted_percentile_rank` in `weight_cdf`,
-    # such that weight_cdf[i-1] < percentile <= weight_cdf[i]
-    # (Needs to be an array as we pass to `clip` later)
-    percentile_idx = xp.asarray(
+    # For each feature with index j, find sample index i of the scalar value
+    # `adjusted_percentile_rank[j]` in 1D array `weight_cdf[j]`, such that:
+    # weight_cdf[j, i-1] < adjusted_percentile_rank[j] <= weight_cdf[j, i].
+    percentile_indices = xp.asarray(
         [
-            xp.searchsorted(weight_cdf[i], adjusted_percentile_rank[i])
-            for i in range(weight_cdf.shape[0])
+            xp.searchsorted(
+                weight_cdf[feature_idx], adjusted_percentile_rank[feature_idx]
+            )
+            for feature_idx in range(weight_cdf.shape[0])
         ],
         device=device,
     )
-    # In rare cases, `percentile_idx` equals to `sorted_idx.shape[0]`
+    # In rare cases, `percentile_indices` equals to `sorted_idx.shape[0]`
     max_idx = sorted_idx.shape[0] - 1
-    percentile_idx = xp.clip(percentile_idx, 0, max_idx)
+    percentile_indices = xp.clip(percentile_indices, 0, max_idx)
 
     col_indices = xp.arange(array.shape[1], device=device)
-    percentile_in_sorted = sorted_idx[percentile_idx, col_indices]
+    percentile_in_sorted = sorted_idx[percentile_indices, col_indices]
 
     result = array[percentile_in_sorted, col_indices]
 
