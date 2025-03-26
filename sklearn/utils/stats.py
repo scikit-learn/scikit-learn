@@ -94,7 +94,7 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50):
     percentile_indices = xp.asarray(
         [
             xp.searchsorted(
-                weight_cdf[feature_idx], adjusted_percentile_rank[feature_idx]
+                weight_cdf[feature_idx, ...], adjusted_percentile_rank[feature_idx]
             )
             for feature_idx in range(weight_cdf.shape[0])
         ],
