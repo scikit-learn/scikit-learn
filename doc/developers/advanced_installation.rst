@@ -3,6 +3,11 @@
 
 .. include:: ../min_dependency_substitutions.rst
 
+..
+   TODO Add |PythonMinVersion| to min_dependency_substitutions.rst one day.
+   Probably would need to change a bit sklearn/_min_dependencies.py since Python is not really a package ...
+.. |PythonMinVersion| replace:: 3.10
+
 ==================================================
 Installing the development version of scikit-learn
 ==================================================
