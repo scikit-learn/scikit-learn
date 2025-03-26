@@ -30,8 +30,6 @@ from sklearn.utils.fixes import (
     _IS_WASM,
     CSC_CONTAINERS,
     CSR_CONTAINERS,
-    parse_version,
-    sp_version,
 )
 from sklearn.utils.metaestimators import available_if
 
@@ -854,7 +852,6 @@ def test_tempmemmap(monkeypatch):
     assert registration_counter.nb_calls == 2
 
 
-@pytest.mark.xfail(_IS_WASM, reason="memmap not fully supported")
 def test_create_memmap_backed_data(monkeypatch):
     registration_counter = RegistrationCounter()
     monkeypatch.setattr(atexit, "register", registration_counter)
@@ -960,24 +957,6 @@ def test_convert_container_categories_pyarrow():
     pa = pytest.importorskip("pyarrow")
     df = _convert_container([["x"]], "pyarrow", ["A"], categorical_feature_names=["A"])
     assert type(df.schema[0].type) is pa.DictionaryType
-
-
-@pytest.mark.skipif(
-    sp_version >= parse_version("1.8"),
-    reason="sparse arrays are available as of scipy 1.8.0",
-)
-@pytest.mark.parametrize("constructor_name", ["sparse_csr_array", "sparse_csc_array"])
-@pytest.mark.parametrize("dtype", [np.int32, np.int64, np.float32, np.float64])
-def test_convert_container_raise_when_sparray_not_available(constructor_name, dtype):
-    """Check that if we convert to sparse array but sparse array are not supported
-    (scipy<1.8.0), we should raise an explicit error."""
-    container = [0, 1]
-
-    with pytest.raises(
-        ValueError,
-        match=f"only available with scipy>=1.8.0, got {sp_version}",
-    ):
-        _convert_container(container, constructor_name, dtype=dtype)
 
 
 def test_raises():
@@ -1099,17 +1078,9 @@ def test_assert_run_python_script_without_output():
         "sparse_csc",
         pytest.param(
             "sparse_csr_array",
-            marks=pytest.mark.skipif(
-                sp_version < parse_version("1.8"),
-                reason="sparse arrays are available as of scipy 1.8.0",
-            ),
         ),
         pytest.param(
             "sparse_csc_array",
-            marks=pytest.mark.skipif(
-                sp_version < parse_version("1.8"),
-                reason="sparse arrays are available as of scipy 1.8.0",
-            ),
         ),
     ],
 )

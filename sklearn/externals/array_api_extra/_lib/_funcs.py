@@ -1,8 +1,5 @@
 """Array-agnostic implementations for the public API."""
 
-# https://github.com/scikit-learn/scikit-learn/pull/27910#issuecomment-2568023972
-from __future__ import annotations
-
 import math
 import warnings
 from collections.abc import Callable, Sequence
@@ -263,7 +260,7 @@ def broadcast_shapes(*shapes: tuple[float | None, ...]) -> tuple[int | None, ...
     (4, 2, 3)
     """
     if not shapes:
-        return ()  # Match numpy output
+        return ()  # Match NumPy output
 
     ndim = max(len(shape) for shape in shapes)
     out: list[int | None] = []
@@ -541,7 +538,7 @@ def isclose(
     a_inexact = xp.isdtype(a.dtype, ("real floating", "complex floating"))
     b_inexact = xp.isdtype(b.dtype, ("real floating", "complex floating"))
     if a_inexact or b_inexact:
-        # prevent warnings on numpy and dask on inf - inf
+        # prevent warnings on NumPy and Dask on inf - inf
         mxp = meta_namespace(a, b, xp=xp)
         out = apply_where(
             xp.isinf(a) | xp.isinf(b),
@@ -565,12 +562,11 @@ def isclose(
     if rtol == 0:
         return xp.abs(a - b) <= atol
 
-    try:
-        nrtol = xp.asarray(int(1.0 / rtol), dtype=b.dtype)
-    except OverflowError:
-        # rtol * max_int(dtype) < 1, so it's inconsequential
+    # Don't rely on OverflowError, as it is not guaranteed by the Array API.
+    nrtol = int(1.0 / rtol)
+    if nrtol > xp.iinfo(b.dtype).max:
+        # rtol * max_int < 1, so it's inconsequential
         return xp.abs(a - b) <= atol
-
     return xp.abs(a - b) <= (atol + xp.abs(b) // nrtol)
 
 
