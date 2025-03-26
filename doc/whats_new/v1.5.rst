@@ -127,14 +127,6 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123455 is the *pull request* number, not the issue number.
 
-:mod:`sklearn.mixture`
-......................
-
-- |Feature| Added the ability to store and access the list of lower bounds for
-  each iteration in the `BaseMixture` class, providing insights into the convergence
-  behavior of mixture models like `GaussianMixture`.
-  :pr:`28559` by :user:`Manideep Yenugula <myenugula>`.
-
 :mod:`sklearn.cluster`
 ......................
 
