@@ -160,14 +160,16 @@ def test_weighted_percentile_2d():
 @pytest.mark.parametrize(
     "data, weights, percentile",
     [
-        # Random 1D array
+        # Random 1D array, constant weights
         (lambda rng: rng.rand(50), np.ones(50), 50),
         # Random 1D array and random 1D weights
         (lambda rng: rng.rand(50), lambda rng: rng.rand(50), 75),
-        # 2D array with 2D weights
+        # Random 2D array and random 2D weights
         (lambda rng: rng.rand(20, 3), lambda rng: rng.rand(20, 3), 25),
         # zero-weights and `rank_percentile=0` (#20528)
         (np.array([0, 1, 2, 3, 4, 5]), np.array([0, 0, 1, 1, 1, 0]), 0),
+        # np.nan's in data and some zero-weights
+        (np.array([np.nan, np.nan, 0, 3, 4, 5]), np.array([0, 1, 1, 1, 1, 0]), 0),
     ],
 )
 def test_weighted_percentile_array_api_consistency(
