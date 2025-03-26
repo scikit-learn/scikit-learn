@@ -186,6 +186,14 @@ def test_weighted_percentile_array_api_consistency(
 
     xp = _array_api_for_tests(array_namespace, device)
 
+    # Skip test for percentile=0 edge case (#20528) on namespace/device where
+    # xp.nextafter is broken (e.g. torch with MPS device at the time of
+    # writing).
+    zero = xp.zeros(1, device=device)
+    one = xp.ones(1, device=device)
+    if percentile == 0 and xp.all(xp.nextafter(zero, one) == zero):
+        pytest.xfail(f"xp.nextafter is broken on {device}")
+
     rng = np.random.RandomState(global_random_seed)
     X_np = data(rng) if callable(data) else data
     weights_np = weights(rng) if callable(weights) else weights
