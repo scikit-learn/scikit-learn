@@ -74,9 +74,14 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50):
         sorted_weights[sorted_nan_mask] = 0
 
     # Compute the weighted cumulative distribution function (CDF) based on
-    # `sample_weight` and scale `percentile_rank` along it:
-    weight_cdf = xp.cumulative_sum(sorted_weights, axis=0)
-    adjusted_percentile_rank = percentile_rank / 100 * weight_cdf[-1, ...]
+    # `sample_weight` and scale `percentile_rank` along it.
+    #
+    # Note: we call `xp.cumulative_sum` on the transposed `sorted_weights` to
+    # ensure that the result is of shape `(n_features, n_samples)` that the
+    # `xp.searchsorted` calls take contiguous inputs as a result (for
+    # performance reasons).
+    weight_cdf = xp.cumulative_sum(sorted_weights.T, axis=1)
+    adjusted_percentile_rank = percentile_rank / 100 * weight_cdf[..., -1]
 
     # Ignore leading `sample_weight=0` observations when `percentile_rank=0` (#20528)
     mask = adjusted_percentile_rank == 0
@@ -88,8 +93,8 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50):
     # (Needs to be an array as we pass to `clip` later)
     percentile_idx = xp.asarray(
         [
-            xp.searchsorted(weight_cdf[..., i], adjusted_percentile_rank[i])
-            for i in range(weight_cdf.shape[1])
+            xp.searchsorted(weight_cdf[i], adjusted_percentile_rank[i])
+            for i in range(weight_cdf.shape[0])
         ],
         device=device,
     )
