@@ -82,10 +82,9 @@ def _html_template(data):
                   <tbody>
         """
     for x, y in data.methods.items():
-        escaped_y = ", ".join(html.escape(i) for i in y)
         out += f"""
         <tr class="default">
-            <td>{x}({escaped_y})</td>
+            <td>{x}{y}</td>
         </tr>
     """
 
