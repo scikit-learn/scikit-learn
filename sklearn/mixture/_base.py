@@ -106,6 +106,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             A random number generator instance that controls the random seed
             used for the method chosen to initialize the parameters.
         """
+        xp, _, device = get_namespace_and_device(X, xp=xp)
         n_samples, _ = X.shape
 
         if self.init_params == "kmeans":
@@ -119,7 +120,6 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             )
             resp[xp.arange(n_samples), label] = 1
         elif self.init_params == "random":
-            xp, _, device = get_namespace_and_device(X, xp=xp)
             resp = xp.asarray(
                 random_state.uniform(size=(n_samples, self.n_components)),
                 dtype=X.dtype,
@@ -127,11 +127,16 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             )
             resp /= xp.sum(resp, axis=1)[:, xp.newaxis]
         elif self.init_params == "random_from_data":
-            resp = xp.zeros((n_samples, self.n_components), dtype=X.dtype)
+            resp = xp.zeros(
+                (n_samples, self.n_components), dtype=X.dtype, device=device
+            )
             indices = random_state.choice(
                 n_samples, size=self.n_components, replace=False
             )
-            resp[indices, xp.arange(self.n_components)] = 1
+            # TODO: instead of for-loop, find something more efficient; previous code:
+            # resp[indices, xp.arange(self.n_components)] = 1
+            for count, index in enumerate(indices):
+                resp[index, count] = 1
         elif self.init_params == "k-means++":
             resp = xp.zeros((n_samples, self.n_components), dtype=X.dtype)
             _, indices = kmeans_plusplus(
