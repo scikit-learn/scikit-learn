@@ -109,8 +109,8 @@ def _smacof_single(
     n_samples = dissimilarities.shape[0]
     random_state = check_random_state(random_state)
 
-    sim_flat = ((1 - np.tri(n_samples)) * dissimilarities).ravel()
-    sim_flat_w = sim_flat[sim_flat != 0]
+    dissimilarities_flat = ((1 - np.tri(n_samples)) * dissimilarities).ravel()
+    dissimilarities_flat_w = dissimilarities_flat[dissimilarities_flat != 0]
     if init is None:
         # Randomly choose initial configuration
         X = random_state.uniform(size=n_samples * n_components)
@@ -123,7 +123,7 @@ def _smacof_single(
                 "init matrix should be of shape (%d, %d)" % (n_samples, n_components)
             )
         X = init
-    dis = euclidean_distances(X)
+    distances = euclidean_distances(X)
 
     # Out of bounds condition cannot happen because we are transforming
     # the training set here, but does sometimes get triggered in
@@ -136,20 +136,22 @@ def _smacof_single(
         if metric:
             disparities = dissimilarities
         else:
-            dis_flat = dis.ravel()
+            distances_flat = distances.ravel()
             # dissimilarities with 0 are considered as missing values
-            dis_flat_w = dis_flat[sim_flat != 0]
+            distances_flat_w = distances_flat[dissimilarities_flat != 0]
 
             # Compute the disparities using isotonic regression.
             # For the first SMACOF iteration, use scaled original dissimilarities.
             # (This choice follows the R implementation described in this paper:
             # https://www.jstatsoft.org/article/view/v102i10)
             if it < 1:
-                disparities_flat = sim_flat_w
+                disparities_flat = dissimilarities_flat_w
             else:
-                disparities_flat = ir.fit_transform(sim_flat_w, dis_flat_w)
-            disparities = np.zeros_like(dis_flat)
-            disparities[sim_flat != 0] = disparities_flat
+                disparities_flat = ir.fit_transform(
+                    dissimilarities_flat_w, distances_flat_w
+                )
+            disparities = np.zeros_like(distances_flat)
+            disparities[dissimilarities_flat != 0] = disparities_flat
             disparities = disparities.reshape((n_samples, n_samples))
             disparities *= np.sqrt(
                 (n_samples * (n_samples - 1) / 2) / (disparities**2).sum()
@@ -157,21 +159,21 @@ def _smacof_single(
             disparities = disparities + disparities.T
 
         # Update X using the Guttman transform
-        dis[dis == 0] = 1e-5
-        ratio = disparities / dis
+        distances[distances == 0] = 1e-5
+        ratio = disparities / distances
         B = -ratio
         B[np.arange(len(B)), np.arange(len(B))] += ratio.sum(axis=1)
         X = 1.0 / n_samples * np.dot(B, X)
 
         # Compute stress
-        dis = euclidean_distances(X)
-        stress = ((dis.ravel() - disparities.ravel()) ** 2).sum() / 2
+        distances = euclidean_distances(X)
+        stress = ((distances.ravel() - disparities.ravel()) ** 2).sum() / 2
         if normalized_stress:
             stress = np.sqrt(stress / ((disparities.ravel() ** 2).sum() / 2))
 
         normalization = np.sqrt((X**2).sum(axis=1)).sum()
         if verbose >= 2:
-            print(f"Iteration {it + 1:{len(str(max_iter))}}, stress {stress:.4f}")
+            print(f"Iteration {it}, stress {stress:.4f}")
         if old_stress is not None:
             if (old_stress - stress / normalization) < eps:
                 if verbose:
@@ -289,9 +291,9 @@ def smacof(
         Whether or not to return the number of iterations.
 
     normalized_stress : bool or "auto" default="auto"
-        Whether use and return normalized stress value (Stress-1) instead of raw
-        stress. By default, metric MDS uses raw stress while non-metric MDS uses
-        normalized stress.
+        Whether to return normalized stress value (Stress-1) instead of raw
+        stress. By default, metric MDS returns raw stress while non-metric MDS
+        returns normalized stress.
 
         .. versionadded:: 1.2
 
