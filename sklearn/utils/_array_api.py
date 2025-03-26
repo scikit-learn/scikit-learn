@@ -105,6 +105,25 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
             yield array_namespace, None, None
 
 
+def _get_namespace_device_dtype_ids(param):
+    """Get pytest parametrization IDs for `yield_namespace_device_dtype_combinations`"""
+    # See #31042 for details
+    try:
+        import array_api_strict
+    except ImportError:
+        return f"{param}"
+    else:
+        if param == array_api_strict.Device("CPU_DEVICE"):
+            return "CPU_DEVICE"
+        if param == array_api_strict.Device("device1"):
+            return "device1"
+
+    # Alternative that does not require importing array_api_strict
+    # if str(param).startswith("array_api_strict.Device"):
+    #     param = str(param)[25:-2]
+    # return f"{param}"
+
+
 def _check_array_api_dispatch(array_api_dispatch):
     """Check that array_api_compat is installed and NumPy version is compatible.
 
