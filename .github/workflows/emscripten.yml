@@ -88,6 +88,7 @@ jobs:
     name: Upload scikit-learn WASM wheels to Anaconda.org
     runs-on: ubuntu-latest
     permissions: {}
+    environment: upload_anaconda
     needs: [build_wasm_wheel]
     if: github.repository == 'scikit-learn/scikit-learn' && github.event_name != 'pull_request'
     steps:
