@@ -30,7 +30,7 @@ if [[ "$COMMIT_MESSAGE" =~ \[float32\] ]]; then
 fi
 
 mkdir -p $TEST_DIR
-cp setup.cfg $TEST_DIR
+cp pyproject.toml $TEST_DIR
 cd $TEST_DIR
 
 python -c "import joblib; print(f'Number of cores (physical): \
