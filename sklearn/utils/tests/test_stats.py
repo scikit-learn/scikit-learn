@@ -187,8 +187,8 @@ def test_weighted_percentile_array_api_consistency(
     xp = _array_api_for_tests(array_namespace, device)
 
     # Skip test for percentile=0 edge case (#20528) on namespace/device where
-    # xp.nextafter is broken (e.g. torch with MPS device at the time of
-    # writing).
+    # xp.nextafter is broken. This is the case for torch with MPS device:
+    # https://github.com/pytorch/pytorch/issues/150027
     zero = xp.zeros(1, device=device)
     one = xp.ones(1, device=device)
     if percentile == 0 and xp.all(xp.nextafter(zero, one) == zero):
