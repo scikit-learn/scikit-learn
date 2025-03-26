@@ -13,6 +13,7 @@ import pytest
 
 from ._utils._compat import (
     array_namespace,
+    is_array_api_strict_namespace,
     is_cupy_namespace,
     is_dask_namespace,
     is_pydata_sparse_namespace,
@@ -105,8 +106,18 @@ def xp_assert_equal(actual: Array, desired: Array, err_msg: str = "") -> None:
             actual = actual.todense()  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
             desired = desired.todense()  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
 
-        # JAX uses `np.testing`
-        np.testing.assert_array_equal(actual, desired, err_msg=err_msg)  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
+        actual_np = None
+        desired_np = None
+        if is_array_api_strict_namespace(xp):
+            # __array__ doesn't work on array-api-strict device arrays
+            # We need to convert to the CPU device first
+            actual_np = np.asarray(xp.asarray(actual, device=xp.Device("CPU_DEVICE")))
+            desired_np = np.asarray(xp.asarray(desired, device=xp.Device("CPU_DEVICE")))
+
+        # JAX/Dask arrays work with `np.testing`
+        actual_np = actual if actual_np is None else actual_np
+        desired_np = desired if desired_np is None else desired_np
+        np.testing.assert_array_equal(actual_np, desired_np, err_msg=err_msg)  # pyright: ignore[reportUnknownArgumentType]
 
 
 def xp_assert_close(
@@ -169,14 +180,25 @@ def xp_assert_close(
             actual = actual.todense()  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
             desired = desired.todense()  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
 
-        # JAX uses `np.testing`
+        actual_np = None
+        desired_np = None
+        if is_array_api_strict_namespace(xp):
+            # __array__ doesn't work on array-api-strict device arrays
+            # We need to convert to the CPU device first
+            actual_np = np.asarray(xp.asarray(actual, device=xp.Device("CPU_DEVICE")))
+            desired_np = np.asarray(xp.asarray(desired, device=xp.Device("CPU_DEVICE")))
+
+        # JAX/Dask arrays work with `np.testing`
+        actual_np = actual if actual_np is None else actual_np
+        desired_np = desired if desired_np is None else desired_np
+
         assert isinstance(rtol, float)
         np.testing.assert_allclose(  # pyright: ignore[reportCallIssue]
-            actual,  # pyright: ignore[reportArgumentType]
-            desired,  # pyright: ignore[reportArgumentType]
+            actual_np,  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
+            desired_np,  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
             rtol=rtol,
             atol=atol,
-            err_msg=err_msg,  # type: ignore[call-overload]
+            err_msg=err_msg,
         )
 
 
