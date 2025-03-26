@@ -1521,6 +1521,8 @@ def test_gaussian_mixture_array_api_compliance(
 def test_gaussian_mixture_raises_where_array_api_not_implemented(
     init_params, array_namespace, device_, dtype
 ):
+    # TODO skips tests if dependencies are not installed
+    _array_api_for_tests(array_namespace, device=None)
     X, _ = make_blobs(
         n_samples=int(1e3),
         n_features=2,
