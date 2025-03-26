@@ -1,13 +1,12 @@
 """Public API Functions."""
 
-# https://github.com/scikit-learn/scikit-learn/pull/27910#issuecomment-2568023972
 from __future__ import annotations
 
 import math
 from collections.abc import Callable, Sequence
 from functools import partial, wraps
 from types import ModuleType
-from typing import TYPE_CHECKING, Any, cast, overload
+from typing import TYPE_CHECKING, Any, ParamSpec, TypeAlias, cast, overload
 
 from ._funcs import broadcast_shapes
 from ._utils import _compat
@@ -20,23 +19,15 @@ from ._utils._helpers import is_python_scalar
 from ._utils._typing import Array, DType
 
 if TYPE_CHECKING:  # pragma: no cover
-    # TODO move outside TYPE_CHECKING
-    # depends on scikit-learn abandoning Python 3.9
-    # https://github.com/scikit-learn/scikit-learn/pull/27910#issuecomment-2568023972
-    from typing import ParamSpec, TypeAlias
-
     import numpy as np
     from numpy.typing import ArrayLike
 
     NumPyObject: TypeAlias = np.ndarray[Any, Any] | np.generic  # type: ignore[explicit-any]
-    P = ParamSpec("P")
 else:
-    # Sphinx hacks
+    # Sphinx hack
     NumPyObject = Any
 
-    class P:  # pylint: disable=missing-class-docstring
-        args: tuple
-        kwargs: dict
+P = ParamSpec("P")
 
 
 @overload
@@ -95,7 +86,7 @@ def lazy_apply(  # type: ignore[valid-type]  # numpydoc ignore=GL07,SA04
         One or more Array API compliant arrays, Python scalars, or None's.
 
         If `as_numpy=True`, you need to be able to apply :func:`numpy.asarray` to
-        non-None args to convert them to numpy; read notes below about specific
+        non-None args to convert them to NumPy; read notes below about specific
         backends.
     shape : tuple[int | None, ...] | Sequence[tuple[int | None, ...]], optional
         Output shape or sequence of output shapes, one for each output of `func`.
@@ -106,7 +97,7 @@ def lazy_apply(  # type: ignore[valid-type]  # numpydoc ignore=GL07,SA04
         Default: infer the result type(s) from the input arrays.
     as_numpy : bool, optional
         If True, convert the input arrays to NumPy before passing them to `func`.
-        This is particularly useful to make numpy-only functions, e.g. written in Cython
+        This is particularly useful to make NumPy-only functions, e.g. written in Cython
        or Numba, work transparently with array API-compliant arrays.
         Default: False.
     xp : array_namespace, optional
@@ -152,8 +143,8 @@ def lazy_apply(  # type: ignore[valid-type]  # numpydoc ignore=GL07,SA04
         <https://sparse.pydata.org/en/stable/operations.html#package-configuration>`_.
 
     Dask
-        This allows applying eager functions to dask arrays.
-        The dask graph won't be computed.
+        This allows applying eager functions to Dask arrays.
+        The Dask graph won't be computed.
 
         `lazy_apply` doesn't know if `func` reduces along any axes; also, shape
         changes are non-trivial in chunked Dask arrays. For these reasons, all inputs
@@ -347,7 +338,7 @@ def _lazy_apply_wrapper(  # type: ignore[explicit-any]  # numpydoc ignore=PR01,R
                 if as_numpy:
                     import numpy as np
 
-                    arg = cast(Array, np.asarray(arg))  # type: ignore[bad-cast]  # noqa: PLW2901  # pyright: ignore[reportInvalidCast]
+                    arg = cast(Array, np.asarray(arg))  # type: ignore[bad-cast]  # noqa: PLW2901
             args_list.append(arg)
         assert device is not None
 
