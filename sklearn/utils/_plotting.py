@@ -138,10 +138,10 @@ class _BinaryClassifierCurveDisplayMixin:
                 )
         else:
             # Individual ROC AUC scores shown
-            if name is not None and (isinstance(name, list) and len(name) != n_curves):
+            if isinstance(name, list) and len(name) != n_curves:
                 raise ValueError(
                     f"'name' must be None or list of length {n_curves} when "
-                    f"'show_aggregate_score' is False."
+                    f"'show_aggregate_score' is False. Got list of length {len(name)}"
                 )
             if name is None:
                 name = [f"Fold {idx}" for idx in range(n_curves)]
