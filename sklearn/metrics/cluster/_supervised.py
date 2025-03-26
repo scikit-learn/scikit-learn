@@ -89,7 +89,7 @@ def _generalized_average(U, V, average_method):
         "labels_true": ["array-like", None],
         "labels_pred": ["array-like", None],
         "eps": [Interval(Real, 0, None, closed="left"), None],
-        "sparse": ["boolean"],
+        "sparse": ["boolean", StrOptions({"sparray", "spmatrix"})],
         "dtype": "no_validation",  # delegate the validation to SciPy
     },
     prefer_skip_nested_validation=True,
@@ -114,9 +114,14 @@ def contingency_matrix(
         matrix. This helps to stop NaN propagation.
         If ``None``, nothing is adjusted.
 
-    sparse : bool, default=False
-        If `True`, return a sparse CSR contingency matrix. If `eps` is not
-        `None` and `sparse` is `True` will raise ValueError.
+    sparse : bool or str, default=False
+        If `False`, return a NumPy array contingency matrix.
+        If "sparray", return a SciPy sparse array CSR format contingency matrix.
+        If "spmatrix", return a SciPy sparse matrix CSR format contingency matrix.
+        If `True`, return a SciPy sparse matrix CSR format contingency matrix.
+        The result for `True` will change from spmatrix to sparray alongside the
+        deprecation of spmatrix.
+        If `eps` is not `None` and `sparse` is not `False`, will raise ValueError.
 
         .. versionadded:: 0.18
 
@@ -133,7 +138,7 @@ def contingency_matrix(
         ``eps is None``, the dtype of this array will be integer unless set
         otherwise with the ``dtype`` argument. If ``eps`` is given, the dtype
         will be float.
-        Will be a ``sklearn.sparse.csr_matrix`` if ``sparse=True``.
+        Will be a sparse array if `sparse` is True.
 
     Examples
     --------
@@ -147,16 +152,17 @@ def contingency_matrix(
     """
 
     if eps is not None and sparse:
-        raise ValueError("Cannot set 'eps' when sparse=True")
+        raise ValueError("Cannot set 'eps' when sparse is not False")
 
     classes, class_idx = np.unique(labels_true, return_inverse=True)
     clusters, cluster_idx = np.unique(labels_pred, return_inverse=True)
     n_classes = classes.shape[0]
     n_clusters = clusters.shape[0]
-    # Using coo_matrix to accelerate simple histogram calculation,
+    # Using COO to accelerate simple histogram calculation,
     # i.e. bins are consecutive integers
-    # Currently, coo_matrix is faster than histogram2d for simple cases
-    contingency = sp.coo_matrix(
+    # Currently, COO is faster than histogram2d for simple cases
+    coo = sp.coo_array if (sparse is True or sparse == "spmatrix") else sp.coo_matrix
+    contingency = coo(
         (np.ones(class_idx.shape[0]), (class_idx, cluster_idx)),
         shape=(n_classes, n_clusters),
         dtype=dtype,
@@ -247,7 +253,7 @@ def pair_confusion_matrix(labels_true, labels_pred):
 
     # Computation using the contingency data
     contingency = contingency_matrix(
-        labels_true, labels_pred, sparse=True, dtype=np.int64
+        labels_true, labels_pred, sparse="sparray", dtype=np.int64
     )
     n_c = np.ravel(contingency.sum(axis=1))
     n_k = np.ravel(contingency.sum(axis=0))
@@ -534,7 +540,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     entropy_C = entropy(labels_true)
     entropy_K = entropy(labels_pred)
 
-    contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
+    contingency = contingency_matrix(labels_true, labels_pred, sparse="sparray")
     MI = mutual_info_score(None, None, contingency=contingency)
 
     homogeneity = MI / (entropy_C) if entropy_C else 1.0
@@ -885,7 +891,7 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     """
     if contingency is None:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
-        contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
+        contingency = contingency_matrix(labels_true, labels_pred, sparse="sparray")
     else:
         contingency = check_array(
             contingency,
@@ -1034,7 +1040,7 @@ def adjusted_mutual_info_score(
     ):
         return 1.0
 
-    contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
+    contingency = contingency_matrix(labels_true, labels_pred, sparse="sparray")
     # Calculate the MI for the two clusterings
     mi = mutual_info_score(labels_true, labels_pred, contingency=contingency)
     # Calculate the expected value for the mutual information
@@ -1149,7 +1155,7 @@ def normalized_mutual_info_score(
     ):
         return 1.0
 
-    contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
+    contingency = contingency_matrix(labels_true, labels_pred, sparse="sparray")
     contingency = contingency.astype(np.float64, copy=False)
     # Calculate the MI for the two clusterings
     mi = mutual_info_score(labels_true, labels_pred, contingency=contingency)
@@ -1171,11 +1177,10 @@ def normalized_mutual_info_score(
     {
         "labels_true": ["array-like"],
         "labels_pred": ["array-like"],
-        "sparse": ["boolean"],
     },
     prefer_skip_nested_validation=True,
 )
-def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
+def fowlkes_mallows_score(labels_true, labels_pred):
     """Measure the similarity of two clusterings of a set of points.
 
     .. versionadded:: 0.18
@@ -1205,9 +1210,6 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
 
     labels_pred : array-like of shape (n_samples,), dtype=int
         A clustering of the data into disjoint subsets.
-
-    sparse : bool, default=False
-        Compute contingency matrix internally with sparse matrix.
 
     Returns
     -------
@@ -1245,7 +1247,7 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     (n_samples,) = labels_true.shape
 
-    c = contingency_matrix(labels_true, labels_pred, sparse=True)
+    c = contingency_matrix(labels_true, labels_pred, sparse="sparray")
     c = c.astype(np.int64, copy=False)
     tk = np.dot(c.data, c.data) - n_samples
     pk = np.sum(np.asarray(c.sum(axis=0)).ravel() ** 2) - n_samples
