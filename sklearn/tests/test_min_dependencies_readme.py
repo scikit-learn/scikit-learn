@@ -1,7 +1,6 @@
 """Tests for the minimum dependencies in README.rst and pyproject.toml"""
 
 import os
-import platform
 import re
 from collections import defaultdict
 from pathlib import Path
@@ -32,14 +31,11 @@ def test_min_dependencies_readme():
     # consistent with the minimum dependencies defined at the file:
     # sklearn/_min_dependencies.py
 
-    if platform.python_implementation() == "PyPy":
-        pytest.skip("PyPy does not always share the same minimum deps")
-
     pattern = re.compile(
         r"(\.\. \|)"
-        + r"(([A-Za-z]+\-?)+)"
-        + r"(MinVersion\| replace::)"
-        + r"( [0-9]+\.[0-9]+(\.[0-9]+)?)"
+        r"(([A-Za-z]+\-?)+)"
+        r"(MinVersion\| replace::)"
+        r"( [0-9]+\.[0-9]+(\.[0-9]+)?)"
     )
 
     readme_path = Path(sklearn.__file__).parent.parent

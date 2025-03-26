@@ -1,6 +1,5 @@
-# Authors: Andreas Mueller <andreas.mueller@columbia.edu>
-#          Guillaume Lemaitre <guillaume.lemaitre@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 
@@ -8,22 +7,23 @@ import numpy as np
 
 from ..base import BaseEstimator, RegressorMixin, _fit_context, clone
 from ..exceptions import NotFittedError
+from ..linear_model import LinearRegression
 from ..preprocessing import FunctionTransformer
-from ..utils import _safe_indexing, check_array
-from ..utils._param_validation import HasMethods
-from ..utils._tags import _safe_tags
-from ..utils.metadata_routing import (
-    _raise_for_unsupported_routing,
-    _RoutingNotSupportedMixin,
+from ..utils import Bunch, _safe_indexing, check_array
+from ..utils._metadata_requests import (
+    MetadataRouter,
+    MethodMapping,
+    _routing_enabled,
+    process_routing,
 )
+from ..utils._param_validation import HasMethods
+from ..utils._tags import get_tags
 from ..utils.validation import check_is_fitted
 
 __all__ = ["TransformedTargetRegressor"]
 
 
-class TransformedTargetRegressor(
-    _RoutingNotSupportedMixin, RegressorMixin, BaseEstimator
-):
+class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     """Meta-estimator to regress on a transformed target.
 
     Useful for applying a non-linear transformation to the target `y` in
@@ -193,6 +193,10 @@ class TransformedTargetRegressor(
                 validate=True,
                 check_inverse=self.check_inverse,
             )
+            # We are transforming the target here and not the features, so we set the
+            # output of FunctionTransformer() to be a numpy array (default) and to not
+            # depend on the global configuration:
+            self.transformer_.set_output(transform="default")
         # XXX: sample_weight is not currently passed to the
         # transformer. However, if transformer starts using sample_weight, the
         # code should be modified accordingly. At the time to consider the
@@ -230,15 +234,21 @@ class TransformedTargetRegressor(
             Target values.
 
         **fit_params : dict
-            Parameters passed to the `fit` method of the underlying
-            regressor.
+            - If `enable_metadata_routing=False` (default): Parameters directly passed
+              to the `fit` method of the underlying regressor.
+
+            - If `enable_metadata_routing=True`: Parameters safely routed to the `fit`
+              method of the underlying regressor.
+
+            .. versionchanged:: 1.6
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
 
         Returns
         -------
         self : object
             Fitted estimator.
         """
-        _raise_for_unsupported_routing(self, "fit", **fit_params)
         if y is None:
             raise ValueError(
                 f"This {self.__class__.__name__} estimator "
@@ -248,7 +258,7 @@ class TransformedTargetRegressor(
             y,
             input_name="y",
             accept_sparse=False,
-            force_all_finite=True,
+            ensure_all_finite=True,
             ensure_2d=False,
             dtype="numeric",
             allow_nd=True,
@@ -274,14 +284,13 @@ class TransformedTargetRegressor(
         if y_trans.ndim == 2 and y_trans.shape[1] == 1:
             y_trans = y_trans.squeeze(axis=1)
 
-        if self.regressor is None:
-            from ..linear_model import LinearRegression
-
-            self.regressor_ = LinearRegression()
+        self.regressor_ = self._get_regressor(get_clone=True)
+        if _routing_enabled():
+            routed_params = process_routing(self, "fit", **fit_params)
         else:
-            self.regressor_ = clone(self.regressor)
+            routed_params = Bunch(regressor=Bunch(fit=fit_params))
 
-        self.regressor_.fit(X, y_trans, **fit_params)
+        self.regressor_.fit(X, y_trans, **routed_params.regressor.fit)
 
         if hasattr(self.regressor_, "feature_names_in_"):
             self.feature_names_in_ = self.regressor_.feature_names_in_
@@ -300,8 +309,15 @@ class TransformedTargetRegressor(
             Samples.
 
         **predict_params : dict of str -> object
-            Parameters passed to the `predict` method of the underlying
-            regressor.
+            - If `enable_metadata_routing=False` (default): Parameters directly passed
+              to the `predict` method of the underlying regressor.
+
+            - If `enable_metadata_routing=True`: Parameters safely routed to the
+              `predict` method of the underlying regressor.
+
+            .. versionchanged:: 1.6
+                See :ref:`Metadata Routing User Guide <metadata_routing>`
+                for more details.
 
         Returns
         -------
@@ -309,7 +325,12 @@ class TransformedTargetRegressor(
             Predicted values.
         """
         check_is_fitted(self)
-        pred = self.regressor_.predict(X, **predict_params)
+        if _routing_enabled():
+            routed_params = process_routing(self, "predict", **predict_params)
+        else:
+            routed_params = Bunch(regressor=Bunch(predict=predict_params))
+
+        pred = self.regressor_.predict(X, **routed_params.regressor.predict)
         if pred.ndim == 1:
             pred_trans = self.transformer_.inverse_transform(pred.reshape(-1, 1))
         else:
@@ -323,17 +344,13 @@ class TransformedTargetRegressor(
 
         return pred_trans
 
-    def _more_tags(self):
-        regressor = self.regressor
-        if regressor is None:
-            from ..linear_model import LinearRegression
-
-            regressor = LinearRegression()
-
-        return {
-            "poor_score": True,
-            "multioutput": _safe_tags(regressor, key="multioutput"),
-        }
+    def __sklearn_tags__(self):
+        regressor = self._get_regressor()
+        tags = super().__sklearn_tags__()
+        tags.regressor_tags.poor_score = True
+        tags.input_tags.sparse = get_tags(regressor).input_tags.sparse
+        tags.target_tags.multi_output = get_tags(regressor).target_tags.multi_output
+        return tags
 
     @property
     def n_features_in_(self):
@@ -350,3 +367,31 @@ class TransformedTargetRegressor(
             ) from nfe
 
         return self.regressor_.n_features_in_
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.6
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self.__class__.__name__).add(
+            regressor=self._get_regressor(),
+            method_mapping=MethodMapping()
+            .add(caller="fit", callee="fit")
+            .add(caller="predict", callee="predict"),
+        )
+        return router
+
+    def _get_regressor(self, get_clone=False):
+        if self.regressor is None:
+            return LinearRegression()
+
+        return clone(self.regressor) if get_clone else self.regressor

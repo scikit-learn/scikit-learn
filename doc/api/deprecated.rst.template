@@ -1,0 +1,24 @@
+:html_theme.sidebar_secondary.remove:
+
+.. _api_depr_ref:
+
+Recently Deprecated
+===================
+
+.. currentmodule:: sklearn
+
+{% for ver, objs in DEPRECATED_API_REFERENCE %}
+.. _api_depr_ref-{{ ver|replace(".", "-") }}:
+
+.. rubric:: To be removed in {{ ver }}
+
+.. autosummary::
+  :nosignatures:
+  :toctree: ../modules/generated/
+  :template: base.rst
+
+{% for obj in objs %}
+  {{ obj }}
+{%- endfor %}
+
+{% endfor %}

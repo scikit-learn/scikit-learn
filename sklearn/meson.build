@@ -18,6 +18,48 @@ if is_mingw
   add_project_arguments('-mlong-double-64', language: 'c')
 endif
 
+# Only check build dependencies version when not cross-compiling, as running
+# Python interpreter can be tricky in cross-compilation settings. For more
+# details, see https://docs.scipy.org/doc/scipy/building/cross_compilation.html
+if not meson.is_cross_build()
+  if not py.version().version_compare('>=3.10')
+    error('scikit-learn requires Python>=3.10, got ' + py.version() + ' instead')
+  endif
+
+  cython_min_version = run_command(py, ['_min_dependencies.py', 'cython'], check: true).stdout().strip()
+  if not cython.version().version_compare('>=' + cython_min_version)
+    error('scikit-learn requires Cython>=' + cython_min_version + ', got ' + cython.version() + ' instead')
+  endif
+
+  numpy_version = run_command(py,
+    ['-c', 'import numpy; print(numpy.__version__)'], check: true).stdout().strip()
+  numpy_min_version = run_command(py, ['_min_dependencies.py', 'numpy'], check: true).stdout().strip()
+  if not numpy_version.version_compare('>=' + numpy_min_version)
+    error('scikit-learn requires numpy>=' + numpy_min_version + ', got ' + numpy_version + ' instead')
+  endif
+
+  scipy_version = run_command(py,
+    ['-c', 'import scipy; print(scipy.__version__)'], check: true).stdout().strip()
+  scipy_min_version = run_command(py, ['_min_dependencies.py', 'scipy'], check: true).stdout().strip()
+  if not scipy_version.version_compare('>=' + scipy_min_version)
+    error('scikit-learn requires scipy>=' + scipy_min_version + ', got ' + scipy_version + ' instead')
+  endif
+
+  # meson-python is required only when going through pip. Using meson directly
+  # should not check meson-python version.
+  meson_python_version_command_result = run_command(py,
+    ['-c', 'import importlib.metadata; print(importlib.metadata.version("meson-python"))'], check: false)
+  meson_python_installed = meson_python_version_command_result.returncode() == 0
+  if meson_python_installed
+    meson_python_version = meson_python_version_command_result.stdout().strip()
+    meson_python_min_version = run_command(py, ['_min_dependencies.py', 'meson-python'], check: true).stdout().strip()
+    if not meson_python_version.version_compare('>=' + meson_python_min_version)
+      error('scikit-learn requires meson-python>=' + meson_python_min_version + ', got ' + meson_python_version + ' instead')
+    endif
+  endif
+
+endif
+
 # Adapted from scipy, each project seems to have its own tweaks for this. One
 # day using dependency('numpy') will be a thing, see
 # https://github.com/mesonbuild/meson/issues/9598.
@@ -55,11 +97,36 @@ print(incdir)
 endif
 
 inc_np = include_directories(incdir_numpy)
-np_dep = declare_dependency(include_directories: inc_np)
+# Don't use the deprecated NumPy C API. Define this to a fixed version instead of
+# NPY_API_VERSION in order not to break compilation for released SciPy versions
+# when NumPy introduces a new deprecation.
+numpy_no_deprecated_api = ['-DNPY_NO_DEPRECATED_API=NPY_1_9_API_VERSION']
+np_dep = declare_dependency(include_directories: inc_np, compile_args: numpy_no_deprecated_api)
 
 openmp_dep = dependency('OpenMP', language: 'c', required: false)
 
 if not openmp_dep.found()
+  warn_about_missing_openmp = true
+  # On Apple Clang avoid a misleading warning if compiler variables are set.
+  # See https://github.com/scikit-learn/scikit-learn/issues/28710 for more
+  # details. This may be removed if the OpenMP detection on Apple Clang improves,
+  # see https://github.com/mesonbuild/meson/issues/7435#issuecomment-2047585466.
+  if host_machine.system() == 'darwin' and cc.get_id() == 'clang'
+    compiler_env_vars_with_openmp = run_command(py,
+      [
+        '-c',
+        '''
+import os
+
+compiler_env_vars_to_check = ["CPPFLAGS", "CFLAGS", "CXXFLAGS"]
+
+compiler_env_vars_with_openmp = [
+    var for var in compiler_env_vars_to_check if "-fopenmp" in os.getenv(var, "")]
+print(compiler_env_vars_with_openmp)
+'''], check: true).stdout().strip()
+      warn_about_missing_openmp = compiler_env_vars_with_openmp == '[]'
+  endif
+  if warn_about_missing_openmp
     warning(
 '''
                 ***********
@@ -84,6 +151,13 @@ It seems that scikit-learn cannot be built with OpenMP.
 
                     ***
 ''')
+  else
+    warning(
+'''It looks like compiler environment variables were set to enable OpenMP support.
+Check the output of "import sklearn; sklearn.show_versions()" after the build
+to make sure that scikit-learn was actually built with OpenMP support.
+''')
+  endif
 endif
 
 # For now, we keep supporting SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES variable
@@ -127,7 +201,6 @@ custom_target('write_built_with_meson_file',
     install: true,
     install_dir: py.get_install_dir() / 'sklearn'
 )
-# endif
 
 extensions = ['_isotonic']
 
@@ -141,7 +214,9 @@ py.extension_module(
 
 # Need for Cython cimports across subpackages to work, i.e. avoid errors like
 # relative cimport from non-package directory is not allowed
-fs.copyfile('__init__.py')
+sklearn_root_cython_tree = [
+  fs.copyfile('__init__.py')
+]
 
 sklearn_dir = py.get_install_dir() / 'sklearn'
 

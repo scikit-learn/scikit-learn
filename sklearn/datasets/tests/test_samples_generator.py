@@ -33,7 +33,6 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
-    ignore_warnings,
 )
 from sklearn.utils.validation import assert_all_finite
 
@@ -113,7 +112,7 @@ def test_make_classification_informative_features():
         (2, [1 / 2] * 2, 2),
         (2, [3 / 4, 1 / 4], 2),
         (10, [1 / 3] * 3, 10),
-        (int(64), [1], 1),
+        (64, [1], 1),
     ]:
         n_classes = len(weights)
         n_clusters = n_classes * n_clusters_per_class
@@ -183,6 +182,57 @@ def test_make_classification_informative_features():
         make(n_features=2, n_informative=2, n_classes=5, n_clusters_per_class=1)
     with pytest.raises(ValueError):
         make(n_features=2, n_informative=2, n_classes=3, n_clusters_per_class=2)
+
+
+def test_make_classification_return_x_y():
+    """
+    Test that make_classification returns a Bunch when return_X_y is False.
+
+    Also that bunch.X is the same as X
+    """
+
+    kwargs = {
+        "n_samples": 100,
+        "n_features": 20,
+        "n_informative": 5,
+        "n_redundant": 1,
+        "n_repeated": 1,
+        "n_classes": 3,
+        "n_clusters_per_class": 2,
+        "weights": None,
+        "flip_y": 0.01,
+        "class_sep": 1.0,
+        "hypercube": True,
+        "shift": 0.0,
+        "scale": 1.0,
+        "shuffle": True,
+        "random_state": 42,
+        "return_X_y": True,
+    }
+
+    X, y = make_classification(**kwargs)
+
+    kwargs["return_X_y"] = False
+    bunch = make_classification(**kwargs)
+
+    assert (
+        hasattr(bunch, "DESCR")
+        and hasattr(bunch, "parameters")
+        and hasattr(bunch, "feature_info")
+        and hasattr(bunch, "X")
+        and hasattr(bunch, "y")
+    )
+
+    def count(str_):
+        return bunch.feature_info.count(str_)
+
+    assert np.array_equal(X, bunch.X)
+    assert np.array_equal(y, bunch.y)
+    assert bunch.DESCR == make_classification.__doc__
+    assert bunch.parameters == kwargs
+    assert count("informative") == kwargs["n_informative"]
+    assert count("redundant") == kwargs["n_redundant"]
+    assert count("repeated") == kwargs["n_repeated"]
 
 
 @pytest.mark.parametrize(
@@ -500,41 +550,6 @@ def test_make_sparse_coded_signal():
     assert_allclose(np.sqrt((D**2).sum(axis=1)), np.ones(D.shape[0]))
 
 
-# TODO(1.5): remove
-@ignore_warnings(category=FutureWarning)
-def test_make_sparse_coded_signal_transposed():
-    Y, D, X = make_sparse_coded_signal(
-        n_samples=5,
-        n_components=8,
-        n_features=10,
-        n_nonzero_coefs=3,
-        random_state=0,
-        data_transposed=True,
-    )
-    assert Y.shape == (10, 5), "Y shape mismatch"
-    assert D.shape == (10, 8), "D shape mismatch"
-    assert X.shape == (8, 5), "X shape mismatch"
-    for col in X.T:
-        assert len(np.flatnonzero(col)) == 3, "Non-zero coefs mismatch"
-    assert_allclose(Y, D @ X)
-    assert_allclose(np.sqrt((D**2).sum(axis=0)), np.ones(D.shape[1]))
-
-
-# TODO(1.5): remove
-def test_make_sparse_code_signal_deprecation_warning():
-    """Check the message for future deprecation."""
-    warn_msg = "data_transposed was deprecated in version 1.3"
-    with pytest.warns(FutureWarning, match=warn_msg):
-        make_sparse_coded_signal(
-            n_samples=1,
-            n_components=1,
-            n_features=1,
-            n_nonzero_coefs=1,
-            random_state=0,
-            data_transposed=True,
-        )
-
-
 def test_make_sparse_uncorrelated():
     X, y = make_sparse_uncorrelated(n_samples=5, n_features=10, random_state=0)
 
@@ -586,26 +601,6 @@ def test_make_sparse_spd_matrix(norm_diag, sparse_format, global_random_seed):
     if norm_diag:
         # Check that leading diagonal elements are 1
         assert_array_almost_equal(Xarr.diagonal(), np.ones(n_dim))
-
-
-# TODO(1.6): remove
-def test_make_sparse_spd_matrix_deprecation_warning():
-    """Check the message for future deprecation."""
-    warn_msg = "dim was deprecated in version 1.4"
-    with pytest.warns(FutureWarning, match=warn_msg):
-        make_sparse_spd_matrix(
-            dim=1,
-        )
-
-    error_msg = "`dim` and `n_dim` cannot be both specified"
-    with pytest.raises(ValueError, match=error_msg):
-        make_sparse_spd_matrix(
-            dim=1,
-            n_dim=1,
-        )
-
-    X = make_sparse_spd_matrix()
-    assert X.shape[1] == 1
 
 
 @pytest.mark.parametrize("hole", [False, True])
@@ -694,7 +689,7 @@ def test_make_moons_unbalanced():
 
     with pytest.raises(
         ValueError,
-        match=r"`n_samples` can be either an int " r"or a two-element tuple.",
+        match=r"`n_samples` can be either an int or a two-element tuple.",
     ):
         make_moons(n_samples=(10,))
 

@@ -11,7 +11,10 @@ if [[ "$BUILD_REASON" == "Schedule" ]]; then
     # Enable global random seed randomization to discover seed-sensitive tests
     # only on nightly builds.
     # https://scikit-learn.org/stable/computing/parallelism.html#environment-variables
-    export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="any"
+    export SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$(($RANDOM % 100))
+    echo "To reproduce this test run, set the following environment variable:"
+    echo "    SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$SKLEARN_TESTS_GLOBAL_RANDOM_SEED",
+    echo "See: https://scikit-learn.org/dev/computing/parallelism.html#sklearn-tests-global-random-seed"
 
     # Enable global dtype fixture for all nightly builds to discover
     # numerical-sensitive tests.
@@ -36,7 +39,7 @@ python -c "import sklearn; sklearn.show_versions()"
 
 show_installed_libraries
 
-TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML"
+TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML -o junit_family=legacy"
 
 if [[ "$COVERAGE" == "true" ]]; then
     # Note: --cov-report= is used to disable to long text output report in the
@@ -45,6 +48,12 @@ if [[ "$COVERAGE" == "true" ]]; then
     # report that otherwise hides the test failures and forces long scrolls in
     # the CI logs.
     export COVERAGE_PROCESS_START="$BUILD_SOURCESDIRECTORY/.coveragerc"
+
+    # Use sys.monitoring to make coverage faster for Python >= 3.12
+    HAS_SYSMON=$(python -c 'import sys; print(sys.version_info >= (3, 12))')
+    if [[ "$HAS_SYSMON" == "True" ]]; then
+        export COVERAGE_CORE=sysmon
+    fi
     TEST_CMD="$TEST_CMD --cov-config='$COVERAGE_PROCESS_START' --cov sklearn --cov-report="
 fi
 
@@ -60,14 +69,13 @@ if [[ -n "$SELECTED_TESTS" ]]; then
     export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
 fi
 
-TEST_CMD="$TEST_CMD --pyargs sklearn"
-if [[ "$DISTRIB" == "conda-pypy3" ]]; then
-    # Run only common tests for PyPy. Running the full test suite uses too
-    # much memory and causes the test to time out sometimes. See
-    # https://github.com/scikit-learn/scikit-learn/issues/27662 for more
-    # details.
-    TEST_CMD="$TEST_CMD.tests.test_common"
+if which lscpu ; then
+    lscpu
+else
+    echo "Could not inspect CPU architecture."
 fi
+
+TEST_CMD="$TEST_CMD --pyargs sklearn"
 
 set -x
 eval "$TEST_CMD"

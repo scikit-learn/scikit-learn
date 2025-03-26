@@ -234,6 +234,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.consensus_score",
     "sklearn.metrics.coverage_error",
     "sklearn.metrics.d2_absolute_error_score",
+    "sklearn.metrics.d2_log_loss_score",
     "sklearn.metrics.d2_pinball_score",
     "sklearn.metrics.d2_tweedie_score",
     "sklearn.metrics.davies_bouldin_score",

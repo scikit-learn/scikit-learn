@@ -480,6 +480,17 @@ def test_n_components_upper_bounds(Estimator):
         est.fit(X, Y)
 
 
+def test_n_components_upper_PLSRegression():
+    """Check the validation of `n_components` upper bounds for PLSRegression."""
+    rng = np.random.RandomState(0)
+    X = rng.randn(20, 64)
+    Y = rng.randn(20, 3)
+    est = PLSRegression(n_components=30)
+    err_msg = "`n_components` upper bound is 20. Got 30 instead. Reduce `n_components`."
+    with pytest.raises(ValueError, match=err_msg):
+        est.fit(X, Y)
+
+
 @pytest.mark.parametrize("n_samples, n_features", [(100, 10), (100, 200)])
 def test_singular_value_helpers(n_samples, n_features, global_random_seed):
     # Make sure SVD and power method give approximately the same results
@@ -589,8 +600,6 @@ def test_pls_prediction(PLSEstimator, scale):
 
     y_mean = Y.mean(axis=0)
     X_trans = X - X.mean(axis=0)
-    if scale:
-        X_trans /= X.std(axis=0, ddof=1)
 
     assert_allclose(pls.intercept_, y_mean)
     assert_allclose(Y_pred, X_trans @ pls.coef_.T + pls.intercept_)
@@ -644,6 +653,28 @@ def test_pls_regression_fit_1d_y():
     y_pred = vr.fit(X, y).predict(X)
     assert y_pred.shape == expected.shape
     assert_allclose(y_pred, expected)
+
+
+def test_pls_regression_scaling_coef():
+    """Check that when using `scale=True`, the coefficients are using the std. dev. from
+    both `X` and `Y`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27964
+    """
+    # handcrafted data where we can predict Y from X with an additional scaling factor
+    rng = np.random.RandomState(0)
+    coef = rng.uniform(size=(3, 5))
+    X = rng.normal(scale=10, size=(30, 5))  # add a std of 10
+    Y = X @ coef.T
+
+    # we need to make sure that the dimension of the latent space is large enough to
+    # perfectly predict `Y` from `X` (no information loss)
+    pls = PLSRegression(n_components=5, scale=True).fit(X, Y)
+    assert_allclose(pls.coef_, coef)
+
+    # we therefore should be able to predict `Y` from `X`
+    assert_allclose(pls.predict(X), Y)
 
 
 # TODO(1.7): Remove

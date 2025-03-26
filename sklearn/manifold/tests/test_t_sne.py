@@ -1,3 +1,4 @@
+import re
 import sys
 from io import StringIO
 
@@ -10,7 +11,6 @@ from scipy.spatial.distance import pdist, squareform
 
 from sklearn import config_context
 from sklearn.datasets import make_blobs
-from sklearn.exceptions import EfficiencyWarning
 
 # mypy error: Module 'sklearn.manifold' has no attribute '_barnes_hut_tsne'
 from sklearn.manifold import (  # type: ignore
@@ -37,7 +37,6 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
-    ignore_warnings,
     skip_if_32bit,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS, LIL_CONTAINERS
@@ -442,7 +441,10 @@ def test_high_perplexity_precomputed_sparse_distances(csr_container):
         tsne.fit_transform(bad_dist)
 
 
-@ignore_warnings(category=EfficiencyWarning)
+@pytest.mark.filterwarnings(
+    "ignore:Precomputed sparse input was not sorted by "
+    "row values:sklearn.exceptions.EfficiencyWarning"
+)
 @pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + LIL_CONTAINERS)
 def test_sparse_precomputed_distance(sparse_container):
     """Make sure that TSNE works identically for sparse and dense matrix"""
@@ -1169,7 +1171,7 @@ def test_tsne_perplexity_validation(perplexity):
         perplexity=perplexity,
         random_state=random_state,
     )
-    msg = "perplexity must be less than n_samples"
+    msg = re.escape(f"perplexity ({perplexity}) must be less than n_samples (20)")
     with pytest.raises(ValueError, match=msg):
         est.fit_transform(X)
 

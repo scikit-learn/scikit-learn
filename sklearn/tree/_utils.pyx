@@ -1,11 +1,5 @@
-# Authors: Gilles Louppe <g.louppe@gmail.com>
-#          Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#          Arnaud Joly <arnaud.v.joly@gmail.com>
-#          Jacob Schreiber <jmschreiber91@gmail.com>
-#          Nelson Liu <nelson@nelsonliu.me>
-#
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from libc.stdlib cimport free
 from libc.stdlib cimport realloc
@@ -453,7 +447,7 @@ def _any_isnan_axis0(const float32_t[:, :] X):
         intp_t i, j
         intp_t n_samples = X.shape[0]
         intp_t n_features = X.shape[1]
-        unsigned char[::1] isnan_out = np.zeros(X.shape[1], dtype=np.bool_)
+        uint8_t[::1] isnan_out = np.zeros(X.shape[1], dtype=np.bool_)
 
     with nogil:
         for i in range(n_samples):

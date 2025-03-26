@@ -4,17 +4,16 @@
 channels:
   - conda-forge
 dependencies:
-  - python=3.9
+  - python=3.10
   - numpy
   - blas[build=openblas]
   - scipy
   - cython
   - joblib
   - threadpoolctl
-  - matplotlib
   - pandas
   - pyamg
-  - pytest<8
+  - pytest
   - pytest-xdist
   - pillow
   - pip

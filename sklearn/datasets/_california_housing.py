@@ -15,12 +15,12 @@ References
 ----------
 
 Pace, R. Kelley and Ronald Barry, Sparse Spatial Autoregressions,
-Statistics and Probability Letters, 33 (1997) 291-297.
+Statistics and Probability Letters, 33:291-297, 1997.
 
 """
 
-# Authors: Peter Prettenhofer
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import logging
 import tarfile
