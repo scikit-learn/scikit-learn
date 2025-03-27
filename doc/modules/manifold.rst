@@ -439,14 +439,11 @@ space and the input dissimilarities.
    :scale: 50
 
 
-Let :math:`d_{ij}` be the disimilarity matrix between the
-:math:`n` input points (possibly arising as some pairwise distances between
-the coordinates :math:`X` of the input points).
-Disparities :math:`\hat{d}_{ij}` are some transformation of
-the dissimilarities. The MDS objective, called the
-stress, is then defined by :math:`\sum_{i < j} \delta_{ij} - \hat{d}_{ij}`,
-where :math:`\delta_{ij}` are the pairwise distances between points
-in the embedding space.
+Let :math:`\delta_{ij}` be the dissimilarity matrix between the
+:math:`n` input points (possibly arising as some pairwise distances :math:`d_{ij}(X)` between the coordinates :math:`X` of the input points).
+Disparities :math:`\hat{d}_{ij} = f(\delta_{ij})` are some transformation of
+the dissimilarities. The MDS objective, called the raw stress, is then defined by :math:`\sum_{i < j} (\hat{d}_{ij} - d_{ij}(Z))^2`,
+where :math:`d_{ij}(Z)` are the pairwise distances between the coordinates :math:`Z` of the embedded points.
 
 
 .. dropdown:: Metric MDS
