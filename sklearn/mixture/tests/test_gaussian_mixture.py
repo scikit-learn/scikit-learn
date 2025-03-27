@@ -41,6 +41,7 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
+    skip_if_array_api_compat_not_configured,
 )
 from sklearn.utils.extmath import fast_logdet
 
@@ -1514,6 +1515,7 @@ def test_gaussian_mixture_array_api_compliance(
 
 
 # TODO: remove when gmm works with `init_params` are `kmeans` or `k-means++`
+@skip_if_array_api_compat_not_configured
 @pytest.mark.parametrize("init_params", ["kmeans", "k-means++"])
 @pytest.mark.parametrize(
     "array_namespace, device_, dtype", yield_namespace_device_dtype_combinations()
@@ -1521,8 +1523,6 @@ def test_gaussian_mixture_array_api_compliance(
 def test_gaussian_mixture_raises_where_array_api_not_implemented(
     init_params, array_namespace, device_, dtype
 ):
-    # TODO skips tests if dependencies are not installed
-    _array_api_for_tests(array_namespace, device=None)
     X, _ = make_blobs(
         n_samples=int(1e3),
         n_features=2,
