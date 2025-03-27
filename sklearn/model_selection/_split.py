@@ -37,22 +37,22 @@ from ..utils.validation import _num_samples, check_array, column_or_1d
 
 __all__ = [
     "BaseCrossValidator",
-    "KFold",
     "GroupKFold",
+    "GroupShuffleSplit",
+    "KFold",
     "LeaveOneGroupOut",
     "LeaveOneOut",
     "LeavePGroupsOut",
     "LeavePOut",
-    "RepeatedStratifiedKFold",
-    "RepeatedKFold",
-    "ShuffleSplit",
-    "GroupShuffleSplit",
-    "StratifiedKFold",
-    "StratifiedGroupKFold",
-    "StratifiedShuffleSplit",
     "PredefinedSplit",
-    "train_test_split",
+    "RepeatedKFold",
+    "RepeatedStratifiedKFold",
+    "ShuffleSplit",
+    "StratifiedGroupKFold",
+    "StratifiedKFold",
+    "StratifiedShuffleSplit",
     "check_cv",
+    "train_test_split",
 ]
 
 
@@ -1088,9 +1088,8 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
             y_counts_per_fold[i] -= group_y_counts
             fold_eval = np.mean(std_per_class)
             samples_in_fold = np.sum(y_counts_per_fold[i])
-            is_current_fold_better = (
-                fold_eval < min_eval
-                or np.isclose(fold_eval, min_eval)
+            is_current_fold_better = fold_eval < min_eval or (
+                np.isclose(fold_eval, min_eval)
                 and samples_in_fold < min_samples_in_fold
             )
             if is_current_fold_better:
@@ -1103,10 +1102,12 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
 class TimeSeriesSplit(_BaseKFold):
     """Time Series cross-validator.
 
-    Provides train/test indices to split time series data samples
-    that are observed at fixed time intervals, in train/test sets.
-    In each split, test indices must be higher than before, and thus shuffling
-    in cross validator is inappropriate.
+    Provides train/test indices to split time-ordered data, where other
+    cross-validation methods are inappropriate, as they would lead to training
+    on future data and evaluating on past data.
+    To ensure comparable metrics across folds, samples must be equally spaced.
+    Once this condition is met, each test set covers the same time duration,
+    while the train set size accumulates data from previous splits.
 
     This cross-validation object is a variation of :class:`KFold`.
     In the kth split, it returns first k folds as train set and the
@@ -2440,11 +2441,8 @@ def _validate_shuffle_split(n_samples, test_size, train_size, default_test_size=
     test_size_type = np.asarray(test_size).dtype.kind
     train_size_type = np.asarray(train_size).dtype.kind
 
-    if (
-        test_size_type == "i"
-        and (test_size >= n_samples or test_size <= 0)
-        or test_size_type == "f"
-        and (test_size <= 0 or test_size >= 1)
+    if (test_size_type == "i" and (test_size >= n_samples or test_size <= 0)) or (
+        test_size_type == "f" and (test_size <= 0 or test_size >= 1)
     ):
         raise ValueError(
             "test_size={0} should be either positive and smaller"
@@ -2452,11 +2450,8 @@ def _validate_shuffle_split(n_samples, test_size, train_size, default_test_size=
             "(0, 1) range".format(test_size, n_samples)
         )
 
-    if (
-        train_size_type == "i"
-        and (train_size >= n_samples or train_size <= 0)
-        or train_size_type == "f"
-        and (train_size <= 0 or train_size >= 1)
+    if (train_size_type == "i" and (train_size >= n_samples or train_size <= 0)) or (
+        train_size_type == "f" and (train_size <= 0 or train_size >= 1)
     ):
         raise ValueError(
             "train_size={0} should be either positive and smaller"
@@ -2863,6 +2858,56 @@ def train_test_split(
 
     >>> train_test_split(y, shuffle=False)
     [[0, 1, 2], [3, 4]]
+
+    >>> from sklearn import datasets
+    >>> iris = datasets.load_iris(as_frame=True)
+    >>> X, y = iris['data'], iris['target']
+    >>> X.head()
+        sepal length (cm)  sepal width (cm)  petal length (cm)  petal width (cm)
+    0                5.1               3.5                1.4               0.2
+    1                4.9               3.0                1.4               0.2
+    2                4.7               3.2                1.3               0.2
+    3                4.6               3.1                1.5               0.2
+    4                5.0               3.6                1.4               0.2
+    >>> y.head()
+    0    0
+    1    0
+    2    0
+    3    0
+    4    0
+    ...
+
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ... X, y, test_size=0.33, random_state=42)
+    ...
+    >>> X_train.head()
+        sepal length (cm)  sepal width (cm)  petal length (cm)  petal width (cm)
+    96                 5.7               2.9                4.2               1.3
+    105                7.6               3.0                6.6               2.1
+    66                 5.6               3.0                4.5               1.5
+    0                  5.1               3.5                1.4               0.2
+    122                7.7               2.8                6.7               2.0
+    >>> y_train.head()
+    96     1
+    105    2
+    66     1
+    0      0
+    122    2
+    ...
+    >>> X_test.head()
+        sepal length (cm)  sepal width (cm)  petal length (cm)  petal width (cm)
+    73                 6.1               2.8                4.7               1.2
+    18                 5.7               3.8                1.7               0.3
+    118                7.7               2.6                6.9               2.3
+    78                 6.0               2.9                4.5               1.5
+    76                 6.8               2.8                4.8               1.4
+    >>> y_test.head()
+    73     1
+    18     0
+    118    2
+    78     1
+    76     1
+    ...
     """
     n_arrays = len(arrays)
     if n_arrays == 0:

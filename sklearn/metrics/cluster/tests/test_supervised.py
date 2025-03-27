@@ -40,7 +40,7 @@ score_funcs = [
 def test_error_messages_on_wrong_input():
     for score_func in score_funcs:
         expected = (
-            r"Found input variables with inconsistent numbers " r"of samples: \[2, 3\]"
+            r"Found input variables with inconsistent numbers of samples: \[2, 3\]"
         )
         with pytest.raises(ValueError, match=expected):
             score_func([0, 1], [1, 1, 1])
