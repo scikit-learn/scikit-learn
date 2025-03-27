@@ -729,9 +729,12 @@ def test_sample_weight_effect(problem, global_random_seed):
     # High level test to make sure that duplicating a sample is equivalent to
     # giving it weight of 2.
 
-    # Uses subsampling for > int(2e5) without weighting
-    # keep n_samples > 255 to make sure bin sampling is used.
-    # sure only unique values are used so SW have no effect on binning.
+    # This test assumes that subsampling in `_BinMapper` is disabled
+    # (when `n_samples < 2e5`) and therefore the binning results should be
+    # deterministic.
+    # Otherwise, this test would require being rewritten as a statistical test.
+    # We also set `n_samples` large enough to ensure that columns have more than
+    # 255 distinct values and that we test the impact of weight-aware binning.
     n_samples = 500
     n_features = 2
     rng = np.random.RandomState(global_random_seed)
@@ -1310,7 +1313,7 @@ def test_check_interaction_cst(interaction_cst, n_features, result):
 def test_interaction_cst_numerically():
     """Check that interaction constraints have no forbidden interactions."""
     rng = np.random.RandomState(42)
-    n_samples = 10000
+    n_samples = 2000
     X = rng.uniform(size=(n_samples, 2))
     # Construct y with a strong interaction term
     # y = x0 + x1 + 5 * x0 * x1

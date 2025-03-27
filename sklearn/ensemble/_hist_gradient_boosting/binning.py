@@ -222,7 +222,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         rng = check_random_state(self.random_state)
         if self.subsample is not None and X.shape[0] > self.subsample:
             subset = rng.choice(
-                X.shape[0], self.subsample, p=subsampling_probabilities, replace=False
+                X.shape[0], self.subsample, p=subsampling_probabilities, replace=True
             )
             X = X.take(subset, axis=0)
             sample_weight = None
