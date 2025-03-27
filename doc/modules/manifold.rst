@@ -425,9 +425,8 @@ objects, interaction frequencies of molecules, or trade indices between
 countries.
 
 There exist two types of MDS algorithm: metric and non-metric. In
-scikit-learn, the class :class:`MDS` implements both. In metric MDS, the input
-dissimilarity matrix arises from a metric (and thus respects the triangular
-inequality), the distances between output two points are then set to be as
+scikit-learn, the class :class:`MDS` implements both. In metric MDS,
+the distances in the embedding space are set as
 close as possible to the dissimilarity data. In the non-metric
 version, the algorithm will try to preserve the order of the distances, and
 hence seek for a monotonic relationship between the distances in the embedded
