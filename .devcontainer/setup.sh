@@ -8,7 +8,7 @@ conda init --all
 micromamba shell init -s bash
 
 micromamba env create -f build_tools/circle/doc_environment.yml -n sklearn-dev --yes
-# echo "conda activate sklearn-dev >> ~/.bashrc
+echo "micromamba activate sklearn-dev" >> $HOME/.bashrc
 
 # Note that `micromamba activate sklearn-dev` doesn't work, it must be run by the
 # user (same applies to `conda activate`)
