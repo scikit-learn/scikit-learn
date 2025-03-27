@@ -13,7 +13,7 @@ dependencies:
   - threadpoolctl
   - matplotlib=3.5.0  # min
   - pandas=1.4.0  # min
-  - pyamg
+  - pyamg=4.2.1  # min
   - pytest
   - pytest-xdist
   - pillow

@@ -188,6 +188,7 @@ build_metadata_list = [
             "meson-python": "min",
             "pandas": "min",
             "polars": "min",
+            "pyamg": "min",
         },
     },
     {
@@ -349,6 +350,7 @@ build_metadata_list = [
             "plotly": "min",
             "polars": "min",
             "pooch": "min",
+            "pyamg": "min",
             "sphinx-design": "min",
             "sphinxcontrib-sass": "min",
             "sphinx-remove-toctrees": "min",
