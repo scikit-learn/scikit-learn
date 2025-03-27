@@ -444,12 +444,10 @@ def test_get_column_indices_pandas_nonunique_columns_error(key):
 
 def test_get_column_indices_interchange():
     """Check _get_column_indices for edge cases with the interchange"""
-    pd = pytest.importorskip("pandas", minversion="1.5")
+    pl = pytest.importorskip("polars")
 
-    df = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=["a", "b", "c"])
+    df = pl.DataFrame([[1, 2, 3], [4, 5, 6]], schema=["a", "b", "c"])
 
-    # Hide the fact that this is a pandas dataframe to trigger the dataframe protocol
-    # code path.
     class MockDataFrame:
         def __init__(self, df):
             self._df = df
