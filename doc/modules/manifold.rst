@@ -472,8 +472,8 @@ coordinates :math:`Z` of the embedded points.
   normalized stress, also known as Stress-1, defined as
 
   .. math::
-      \sqrt{\frac{\sum_{i < j} (\d_{ij} - \hat{d}_{ij})^2}{\sum_{i < j}
-      d_{ij}^2}}.
+      \sqrt{\frac{\sum_{i < j} (\hat{d}_{ij} - d_{ij}(Z))^2}{\sum_{i < j}
+      d_{ij}(Z)^2}}.
 
   Normalized Stress-1 is returned if `normalized_stress=True`.
 
