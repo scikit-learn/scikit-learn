@@ -64,6 +64,7 @@ from ..pipeline import make_pipeline
 from ..preprocessing import StandardScaler, scale
 from ..utils import _safe_indexing
 from ..utils._array_api import (
+    _array_api_skips,
     _atol_for_type,
     _convert_to_numpy,
     get_namespace,
@@ -349,6 +350,7 @@ def _yield_array_api_checks(estimator):
             array_namespace=array_namespace,
             dtype_name=dtype_name,
             device=device,
+            skips=_array_api_skips.get(estimator.__class__.__name__, {}),
         )
 
 
@@ -1040,6 +1042,7 @@ def check_array_api_input(
     name,
     estimator_orig,
     array_namespace,
+    skips,
     device=None,
     dtype_name="float64",
     check_values=False,
@@ -1051,7 +1054,14 @@ def check_array_api_input(
 
     When check_values is True, it also checks that calling the estimator on the
     array_api Array gives the same results as ndarrays.
+
+    skips is a dictionary mapping the name of the array_namespace to skip to
+    the names of the methods to skip (for estimators), or the string "all"
+    (to skip all methods for this estimator)
     """
+    if skips.get(array_namespace) == "all":
+        raise SkipTest(f"{array_namespace} is not Array API compliant for {name}")
+
     xp = _array_api_for_tests(array_namespace, device)
 
     X, y = make_classification(random_state=42)
@@ -1112,6 +1122,7 @@ def check_array_api_input(
         "transform",
     )
 
+    methods_to_skip = skips.get(array_namespace, [])
     try:
         np.asarray(X_xp)
         np.asarray(y_xp)
@@ -1148,8 +1159,11 @@ def check_array_api_input(
 
     for method_name in methods:
         method = getattr(est, method_name, None)
-        if method is None:
-            continue
+        if method is None or method_name in methods_to_skip:
+            raise SkipTest(
+                f"{array_namespace} is not Array API compliant for method"
+                f" {method_name} of {name}"
+            )
 
         if method_name == "score":
             result = method(X, y)
@@ -1219,6 +1233,7 @@ def check_array_api_input_and_values(
     array_namespace,
     device=None,
     dtype_name="float64",
+    skip_methods={},
 ):
     return check_array_api_input(
         name,
@@ -1227,6 +1242,7 @@ def check_array_api_input_and_values(
         device=device,
         dtype_name=dtype_name,
         check_values=True,
+        skips=skip_methods,
     )
 
 

@@ -36,6 +36,8 @@ from sklearn.utils.multiclass import (
 multilabel_explicit_zero = np.array([[0, 1], [1, 0]])
 multilabel_explicit_zero[:, 0] = 0
 
+skip_dask = pytest.mark.usefixtures("skip_dask_array_api_compliance")
+
 
 def _generate_sparse(
     data,
@@ -379,6 +381,7 @@ def test_is_multilabel():
             ), f"is_multilabel({example!r}) should be {dense_exp}"
 
 
+@skip_dask  # lazy evaluation semantics for value-dependent shape values
 @pytest.mark.parametrize(
     "array_namespace, device, dtype_name",
     yield_namespace_device_dtype_combinations(),

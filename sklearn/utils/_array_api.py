@@ -22,6 +22,23 @@ from .fixes import parse_version
 # TODO: complete __all__
 __all__ = ["xpx"]  # we import xpx here just to re-export it, need this to appease ruff
 
+# Dictionary listing the methods/estimators to skip
+# testing for a certain array api namespace
+
+# use "all" to skip all testing for an estimator/method
+# for a namespace (not just specific methods)
+# (see the dask.array skip in LinearDiscriminantAnalysis for an example of this)
+_array_api_skips = {
+    # Dask doesn't implement slogdet from the Array API
+    # which is used in score/score_samples
+    "PCA": {"dask.array": ["score", "score_samples"]},
+    # Lazy evaluation semantics: value-dependent shape item value (nan):
+    "LinearDiscriminantAnalysis": {"dask.array": "all"},
+    # Lazy evaluation semantics: cannot assign to an array using a value-dependent
+    # boolean mask.
+    "r2_score": {"dask.array": "all"},
+}
+
 _NUMPY_NAMESPACE_NAMES = {"numpy", "sklearn.externals.array_api_compat.numpy"}
 
 
@@ -50,6 +67,7 @@ def yield_namespaces(include_numpy_namespaces=True):
         "array_api_strict",
         "cupy",
         "torch",
+        "dask.array",
     ]:
         if not include_numpy_namespaces and array_namespace in _NUMPY_NAMESPACE_NAMES:
             continue

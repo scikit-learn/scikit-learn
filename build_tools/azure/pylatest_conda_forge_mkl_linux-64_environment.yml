@@ -23,6 +23,7 @@ dependencies:
   - pytest-cov
   - coverage
   - ccache
+  - dask
   - pytorch
   - pytorch-cpu
   - polars
