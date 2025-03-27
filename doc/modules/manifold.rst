@@ -460,7 +460,7 @@ coordinates :math:`Z` of the embedded points.
   :math:`\delta_{ij} > \delta_{kl}`, then the embedding
   seeks to enforce :math:`d_{ij}(Z) > d_{kl}(Z)`. A simple algorithm
   to enforce proper ordination is to use an
-  isotonic regression of :math:`\delta_{ij}(Z)` on :math:`d_{ij}(Z)`, yielding
+  isotonic regression of :math:`\delta_{ij}` on :math:`d_{ij}(Z)`, yielding
   disparities :math:`\hat{d}_{ij}` on the same order as :math:`d_{ij}(Z)`.
   This is done repeatedly after every step of the optimization algorithm.
   In order to avoid the trivial solution where all embedding points are
@@ -472,8 +472,8 @@ coordinates :math:`Z` of the embedded points.
   normalized stress, also known as Stress-1, defined as
 
   .. math::
-      \sqrt{\frac{\sum_{i < j} (\d_{ij} - \hat{d}_{ij})^2}{\sum_{i < j}
-      d_{ij}^2}}.
+      \sqrt{\frac{\sum_{i < j} (\hat{d}_{ij} - d_{ij}(Z))^2}{\sum_{i < j}
+      d_{ij}(Z)^2}}.
 
   Normalized Stress-1 is returned if `normalized_stress=True`.
 
