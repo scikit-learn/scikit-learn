@@ -611,7 +611,7 @@ def test_logsumexp_like_scipy_logsumexp(array_namespace, device_, dtype_name, ax
         res_xp = _convert_to_numpy(res_xp, xp)
         assert_array_equal(res_np, res_xp)
 
-    # Test with NaNs and np.inf
+    # Test with NaNs and +np.inf
     array_np_2 = numpy.asarray(
         [
             [0, numpy.nan, 1000],
