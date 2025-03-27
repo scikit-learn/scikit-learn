@@ -2414,3 +2414,34 @@ def test_newton_cholesky_fallback_to_lbfgs(global_random_seed):
             n_iter_nc_limited = lr_nc_limited.n_iter_[0]
 
     assert n_iter_nc_limited == lr_nc_limited.max_iter - 1
+
+
+def test_logistic_regression_cv_insufficient_samples(global_random_seed):
+    """Tests if there is any class in the target variable 'y' that has fewer
+    samples than the number of splits in Logistic Regression. If such a class
+    exists, it raises a ValueError, as cross-validation cannot proceed
+    with fewer samples in a class than the specified number of folds.q
+    """
+    X, y = make_classification(
+        n_samples=100,
+        n_features=5,
+        n_informative=3,
+        n_redundant=0,
+        n_classes=3,
+        weights=[0.02, 0.49, 0.49],
+        random_state=global_random_seed,
+    )
+
+    # We define the number of folds (cv) to be greater than
+    # the number of samples in the least populated class.
+    cv = 5
+    min_samples_class = min(np.bincount(y))
+    lr_cv = LogisticRegressionCV(cv=cv)
+    with pytest.raises(ValueError) as excinfo:
+        lr_cv.fit(X, y)
+
+    err_msg = str(excinfo.value)
+    assert f"The least populated class in y has only {min_samples_class}" in err_msg
+    assert "sample(s)" in err_msg
+    assert f"n_splits={cv}" in err_msg
+    assert cv > min_samples_class
