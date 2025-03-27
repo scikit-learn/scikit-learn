@@ -293,16 +293,18 @@ class BayesianRidge(RegressorMixin, LinearModel):
         coef_old_ = None
 
         XT_y = np.dot(X.T, y)
-        # The full SVD is needed for the covariance matrix
-        # U_full: (M, M), S: K, Vh_full: (N, N)
-        U_full, S, Vh_full = linalg.svd(X, full_matrices=True)
+        # Let M, N = n_samples, n_features and K = min(M, N).
+        # The posterior covariance matrix needs Vh_full: (N, N).
+        # The full SVD is only required when n_samples < n_features.
+        # When n_samples < n_features, K=M and full_matrices=True
+        # U: (M, M), S: M, Vh_full: (N, N), Vh: (M, N)
+        # When n_samples > n_features, K=N and full_matrices=False
+        # U: (M, N), S: N, Vh_full: (N, N), Vh: (N, N)
+        U, S, Vh_full = linalg.svd(X, full_matrices=(n_samples < n_features))
         K = len(S)
         eigen_vals_ = S**2
         eigen_vals_full = np.zeros(n_features, dtype=dtype)
         eigen_vals_full[0:K] = eigen_vals_
-        # The reduced SVD is enough for the updates
-        # U: (M, K), S: K, Vh: (K, N)
-        U = U_full[:, 0:K]
         Vh = Vh_full[0:K, :]
 
         # Convergence loop of the bayesian ridge regression
