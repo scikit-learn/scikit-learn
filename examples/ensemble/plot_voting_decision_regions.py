@@ -1,7 +1,7 @@
 """
-=====================================================
-Visualizing class probabilities in a VotingClassifier
-=====================================================
+===============================================================
+Visualizing the probabilistic predictions of a VotingClassifier
+===============================================================
 
 .. currentmodule:: sklearn
 
