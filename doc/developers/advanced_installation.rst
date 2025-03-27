@@ -83,7 +83,7 @@ feature, code or documentation improvement).
      conda activate sklearn-env
 
 #. **Alternative to conda:** You can use alternative installations of Python
-   provided they are recent enough (|PythonMinVersion| or higher at the time of writing).
+   provided they are recent enough (|PythonMinVersion| or higher).
    Here is an example of how to create a build environment for a Linux system's
    Python. Build dependencies are installed with `pip` in a dedicated virtualenv_
    to avoid disrupting other Python programs installed on the system:
