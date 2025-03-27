@@ -15,7 +15,7 @@ from ...base import BaseEstimator, TransformerMixin
 from ...utils import check_array, check_random_state
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils.parallel import Parallel, delayed
-from ...utils.stats import _averaged_weighted_percentile, _weighted_percentile
+from ...utils.stats import _averaged_weighted_percentile
 from ...utils.validation import check_is_fitted
 from ._binning import _map_to_bins
 from ._bitset import set_bitset_memoryview
@@ -72,15 +72,16 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
         # work on a fixed-size subsample of the full data.
         # We reset to max_bins if there are less distinct values
         # TO DO: check if there is a better way to implement this
-        func = _averaged_weighted_percentile
         if len(distinct_values) <= max_bins:
             max_bins = len(distinct_values)
-            func = _weighted_percentile
         sample_weight = sample_weight[sort_idx]
         percentiles = np.linspace(0, 100, num=max_bins + 1)
         percentiles = percentiles[1:-1]
         midpoints = np.array(
-            [func(col_data, sample_weight, percentile) for percentile in percentiles]
+            [
+                _averaged_weighted_percentile(col_data, sample_weight, percentile)
+                for percentile in percentiles
+            ]
         )
         assert midpoints.shape[0] == max_bins - 1
     # We avoid having +inf thresholds: +inf thresholds are only allowed in
@@ -263,11 +264,6 @@ class _BinMapper(TransformerMixin, BaseEstimator):
             for f_idx in range(n_features)
             if not self.is_categorical_[f_idx]
         )
-        if weighted_thresholds is not None:
-            np.testing.assert_allclose(
-                np.stack(weighted_thresholds), np.stack(non_cat_thresholds)
-            )
-
         non_cat_idx = 0
         for f_idx in range(n_features):
             if self.is_categorical_[f_idx]:
