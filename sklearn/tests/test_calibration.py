@@ -413,42 +413,39 @@ def test_sigmoid_calibration():
         _SigmoidCalibration().fit(np.vstack((exF, exF)), exY)
 
 
-def test_temperature_scaling(data):
+@pytest.mark.parametrize(
+    "clf",
+    [
+        make_pipeline(StandardScaler(), LinearSVC(random_state=42)),
+        LogisticRegression(),
+    ],
+)
+def test_temperature_scaling(data, clf):
     """Check temperature scaling calibration"""
     X, y = data
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
-    clfs = [
-        make_pipeline(StandardScaler(), LinearSVC(random_state=42)),
-        LogisticRegression(),
-    ]
+    clf.fit(X_train, y_train)
+    cal_clf = CalibratedClassifierCV(clf, method="temperature").fit(X_train, y_train)
 
-    for clf in clfs:
-        clf.fit(X_train, y_train)
-        cal_clf = CalibratedClassifierCV(clf, method="temperature").fit(
-            X_train, y_train
-        )
+    clf_preds = clf.predict(X_test)
 
-        clf_preds = clf.predict(X_test)
+    clf_logits, _ = _get_response_values(
+        clf,
+        X_test,
+        response_method=["decision_function", "predict_proba"],
+    )
 
-        clf_logits, _ = _get_response_values(
-            clf,
-            X_test,
-            response_method=["decision_function", "predict_proba"],
-        )
+    cal_clf_preds = np.argmax(
+        cal_clf.calibrated_classifiers_[0].calibrators[0].predict(clf_logits),
+        axis=1,
+    )
 
-        cal_clf_preds = np.argmax(
-            cal_clf.calibrated_classifiers_[0].calibrators[0].predict(clf_logits),
-            axis=1,
-        )
+    # Temperature scaling does not affect accuracy
+    assert accuracy_score(y_test, clf_preds) == accuracy_score(y_test, cal_clf_preds)
 
-        # Temperature scaling does not affect accuracy
-        assert accuracy_score(y_test, clf_preds) == accuracy_score(
-            y_test, cal_clf_preds
-        )
-
-        # The optimized temperature should always be positive
-        assert cal_clf.calibrated_classifiers_[0].calibrators[0].T_ > 0
+    # The optimized temperature should always be positive
+    assert cal_clf.calibrated_classifiers_[0].calibrators[0].beta > 0
 
 
 def test_calibration_curve():

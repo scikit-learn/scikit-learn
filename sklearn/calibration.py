@@ -71,8 +71,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     via :func:`~sklearn.model_selection.cross_val_predict`, which are then
     used for calibration. For prediction, the base estimator, trained using all
     the data, is used. This is the prediction method implemented when
-    `probabilities=True` for :class:`~sklearn.svm.SVC` and :class:`~sklearn.svm.NuSVC`
-    estimators (see :ref:`User Guide <scores_probabilities>` for details).
+    `probabilities=True` for :class:`~sklearn.svm.SVC` and
+    :class:`~sklearn.svm.NuSVC` estimators
+    (see :ref:`User Guide <scores_probabilities>` for details).
 
     Already fitted classifiers can be calibrated by wrapping the model in a
     :class:`~sklearn.frozen.FrozenEstimator`. In this case all provided
@@ -99,16 +100,31 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         .. versionadded:: 1.2
 
     method : {'sigmoid', 'isotonic', 'temperature'}, default='sigmoid'
-        The method to use for calibration. Can be
+        The method to use for calibration. Can be:
 
-        - 'sigmoid', which corresponds to Platt's method
-           (i.e. a logistic regression model).
+        - 'sigmoid', which corresponds to Platt's method (i.e. a logistic
+          regression model).
         - 'isotonic', which is a non-parametric approach,
         - 'temperature', temperature scaling.
 
-        It is not advised to
-        use isotonic calibration with too few calibration samples
-        ``(<<1000)`` since it tends to overfit.
+        Sigmoid and isotonic calibration methods natively support only binary
+        classifiers and extend to multi-class classification using a
+        One-vs-Rest (OvR) strategy with post-hoc renormalization.
+        (I.e., adjusting the probabilities after calibration to ensure
+        they sum up to 1.)
+
+        In contrast, temperature scaling naturally supports multi-class
+        calibration by applying `softmax(beta * classifier_logits)`.
+
+        For imbalanced binary classification, sigmoid calibration is
+        generally preferred because it fits an additional intercept
+        parameter. This helps shift decision boundaries appropriately
+        when the classifier being calibrated is biased toward
+        the majority class.
+
+        Isotonic calibration is not recommended when the number of
+        calibration samples is too low ``(≪1000)`` since it tends
+        to overfit.
 
         .. versionchanged:: 1.7
            Added option 'temperature'.
@@ -219,6 +235,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
+
+    .. [5] On Calibration of Modern Neural Networks,
+           C. Guo, G. Pleiss, Y. Sun, & K. Q. Weinberger, ICML 2017.
 
     Examples
     --------
@@ -720,19 +739,52 @@ class _CalibratedClassifier:
         Fitted classifier.
 
     calibrators : list of fitted estimator instances
-        List of fitted calibrators (either 'IsotonicRegression' or
-        '_SigmoidCalibration'). The number of calibrators equals the number of
-        classes. However, if there are 2 classes, the list contains only one
-        fitted calibrator.
+        List of fitted calibrators, which can be either 'IsotonicRegression',
+        '_SigmoidCalibration' or '_TemperatureScaling', corresponds
+        to isotonic calibration, sigmoid calibration, and temperature
+        scaling, respectively.
+
+        For isotonic and sigmoid calibration, the number of calibrators
+        equals the number of classes. Each calibrator is a binary classifier,
+        assembled into a multi-class classifier using the One-vs-Rest (OvR)
+        strategy with post-hoc renormalization (i.e., adjusting probabilities
+        after calibration to ensure they sum to 1). However, if there are
+        only two classes, the list contains a single fitted calibrator.
+
+        In contrast, the list in temperature scaling always contains a single
+        fitted calibrator for both binary and multi-class classification,
+        as it naturally supports multi-class calibration by applying
+        `softmax(beta * classifier_logits)`.
 
     classes : array-like of shape (n_classes,)
         All the prediction classes.
 
     method : {'sigmoid', 'isotonic', 'temperature'}, default='sigmoid'
-        The method to use for calibration. Can be
-        - 'sigmoid' which corresponds to Platt's method.
-        - 'isotonic' which is a non-parametric approach based on isotonic regression.
-        - 'temperature' which is temperature scaling.
+        The method to use for calibration. Can be:
+
+        - 'sigmoid', which corresponds to Platt's method (i.e. a logistic
+          regression model).
+        - 'isotonic', which is a non-parametric approach,
+        - 'temperature', temperature scaling.
+
+        Sigmoid and isotonic calibration methods natively support only binary
+        classifiers and extend to multi-class classification using a
+        One-vs-Rest (OvR) strategy with post-hoc renormalization.
+        (I.e., adjusting the probabilities after calibration to ensure
+        they sum up to 1.)
+
+        In contrast, temperature scaling naturally supports multi-class
+        calibration by applying `softmax(beta * classifier_logits)`.
+
+        For imbalanced binary classification, sigmoid calibration is
+        generally preferred because it fits an additional intercept
+        parameter. This helps shift decision boundaries appropriately
+        when the classifier being calibrated is biased toward
+        the majority class.
+
+        Isotonic calibration is not recommended when the number of
+        calibration samples is too low ``(≪1000)`` since it tends
+        to overfit.
     """
 
     def __init__(self, estimator, calibrators, *, classes, method="sigmoid"):
@@ -966,7 +1018,8 @@ def _temperature_scaling(predictions, labels, sample_weight=None, beta_0=1.0):
 
     References
     ----------
-    Guo, Pleiss, Sun & Weinberger, "On Calibration of Modern Neural Networks"
+    On Calibration of Modern Neural Networks,
+    C. Guo, G. Pleiss, Y. Sun, & K. Q. Weinberger, ICML 2017.
     """
 
     logits = _convert_decision_values_to_2d_array(predictions)
@@ -1112,16 +1165,15 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
 
     Attributes
     ----------
-    T_initial_ : float
-        The initial temperature for optimization.
+    beta_0 : float
+        The initial inverse temperature for optimization.
 
-    T_ : float
-        The optimized temperature.
+    beta : float
+        The optimized inverse temperature.
     """
 
-    def __init__(self, T_initial=1.0):
-        self.T_initial_ = T_initial
-        self._beta_0 = np.divide(1.0, self.T_initial_)
+    def __init__(self, beta_0=1.0):
+        self.beta_0 = beta_0
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model using X, y as training data.
@@ -1146,8 +1198,7 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
 
         X, y = indexable(X, y)
 
-        self._beta = _temperature_scaling(X, y, sample_weight, self._beta_0)
-        self.T_ = np.divide(1.0, self._beta)
+        self.beta = _temperature_scaling(X, y, sample_weight, self.beta_0)
         return self
 
     def predict(self, X):
@@ -1165,7 +1216,13 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         """
         X = _convert_decision_values_to_2d_array(X)
 
-        return softmax(self._beta * X)
+        return softmax(self.beta * X)
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.one_d_array = True
+        tags.input_tags.two_d_array = True
+        return tags
 
 
 @validate_params(
