@@ -96,9 +96,9 @@ def test_bayesian_ridge_parameter():
 
 def test_bayesian_covariance_matrix():
     # Check the posterior covariance matrix sigma_
-    X, y = diabetes.data, diabetes.target
-    reg = BayesianRidge().fit(X, y)
-    n_samples, n_features = X.shape
+    X, y = datasets.make_regression(n_samples=10, n_features=20)
+    n_features = X.shape[1]
+    reg = BayesianRidge(fit_intercept=False).fit(X, y)
     covariance_matrix = np.linalg.inv(
         reg.lambda_ * np.identity(n_features) + reg.alpha_ * np.dot(X.T, X)
     )
