@@ -1,6 +1,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import itertools
+
 import numpy as np
 import pytest
 from scipy import linalg, sparse
@@ -905,7 +907,7 @@ def test_incremental_variance_ddof():
         if steps[-1] != X.shape[0]:
             steps = np.hstack([steps, n_samples])
 
-        for i, j in zip(steps[:-1], steps[1:]):
+        for i, j in itertools.pairwise(steps):
             batch = X[i:j, :]
             if i == 0:
                 incremental_means = batch.mean(axis=0)
