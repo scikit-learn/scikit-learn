@@ -293,8 +293,17 @@ class BayesianRidge(RegressorMixin, LinearModel):
         coef_old_ = None
 
         XT_y = np.dot(X.T, y)
-        U, S, Vh = linalg.svd(X, full_matrices=False)
+        # The full SVD is needed for the covariance matrix
+        # U_full: (M, M), S: K, Vh_full: (N, N)
+        U_full, S, Vh_full = linalg.svd(X, full_matrices=True)
+        K = len(S)
         eigen_vals_ = S**2
+        eigen_vals_full = np.zeros(n_features, dtype=dtype)
+        eigen_vals_full[0:K] = eigen_vals_
+        # The reduced SVD is enough for the updates
+        # U: (M, K), S: K, Vh: (K, N)
+        U = U_full[:, 0:K]
+        Vh = Vh_full[0:K, :]
 
         # Convergence loop of the bayesian ridge regression
         for iter_ in range(self.max_iter):
@@ -353,11 +362,10 @@ class BayesianRidge(RegressorMixin, LinearModel):
             self.scores_.append(s)
             self.scores_ = np.array(self.scores_)
 
-        # posterior covariance is given by 1/alpha_ * scaled_sigma_
-        scaled_sigma_ = np.dot(
-            Vh.T, Vh / (eigen_vals_ + lambda_ / alpha_)[:, np.newaxis]
+        # posterior covariance
+        self.sigma_ = np.dot(
+            Vh_full.T, Vh_full / (alpha_ * eigen_vals_full + lambda_)[:, np.newaxis]
         )
-        self.sigma_ = (1.0 / alpha_) * scaled_sigma_
 
         self._set_intercept(X_offset_, y_offset_, X_scale_)
 
