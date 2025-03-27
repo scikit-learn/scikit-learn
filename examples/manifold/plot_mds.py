@@ -44,7 +44,7 @@ mds = manifold.MDS(
     n_components=2,
     max_iter=3000,
     eps=1e-9,
-    random_state=seed,
+    random_state=42,
     dissimilarity="precomputed",
     n_jobs=1,
 )
@@ -56,7 +56,7 @@ nmds = manifold.MDS(
     max_iter=3000,
     eps=1e-12,
     dissimilarity="precomputed",
-    random_state=seed,
+    random_state=42,
     n_jobs=1,
     n_init=1,
 )
