@@ -450,7 +450,7 @@ where :math:`d_{ij}(Z)` are the pairwise distances between the coordinates :math
 
   In the metric :class:`MDS` model (sometimes also called *absolute MDS*),
   disparities are simply equal to the input dissimilarities
-  :math:`\hat{d}_{ij} = d_{ij}`.
+  :math:`\hat{d}_{ij} = \delta_{ij}`.
 
 .. dropdown:: Nonmetric MDS
 
