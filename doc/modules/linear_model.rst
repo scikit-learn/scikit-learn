@@ -895,6 +895,7 @@ regularization.
 * :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_l1_l2_sparsity.py`
 * :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_path.py`
 * :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_multinomial.py`
+* :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_comparison.py`
 * :ref:`sphx_glr_auto_examples_linear_model_plot_sparse_logistic_regression_20newsgroups.py`
 * :ref:`sphx_glr_auto_examples_linear_model_plot_sparse_logistic_regression_mnist.py`
 * :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`
