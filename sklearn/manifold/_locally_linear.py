@@ -7,7 +7,7 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy.linalg import eigh, qr, solve, svd
-from scipy.sparse import csr_matrix, eye, lil_matrix
+from scipy.sparse import csr_array, csr_matrix, eye_array, lil_array
 from scipy.sparse.linalg import eigsh
 
 from ..base import (
@@ -79,7 +79,9 @@ def barycenter_weights(X, Y, indices, reg=1e-3):
     return B
 
 
-def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
+def barycenter_kneighbors_graph(
+    X, n_neighbors, reg=1e-3, n_jobs=None, *, spmatrix=True
+):
     """Computes the barycenter weighted graph of k-Neighbors for points in X
 
     Parameters
@@ -102,6 +104,10 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+    spmatrix : bool
+        Indicates whether to return a SciPy sparse matrix (True) or array (False).
+        Default is sparse matrix but will change as SciPy deprecates spmatrix.
+
     Returns
     -------
     A : sparse matrix in CSR format, shape = [n_samples, n_samples]
@@ -118,7 +124,8 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
     ind = knn.kneighbors(X, return_distance=False)[:, 1:]
     data = barycenter_weights(X, X, ind, reg=reg)
     indptr = np.arange(0, n_samples * n_neighbors + 1, n_neighbors)
-    return csr_matrix((data.ravel(), ind.ravel(), indptr), shape=(n_samples, n_samples))
+    csr = csr_matrix if spmatrix else csr_array
+    return csr((data.ravel(), ind.ravel(), indptr), shape=(n_samples, n_samples))
 
 
 def null_space(
@@ -229,17 +236,17 @@ def _locally_linear_embedding(
         )
 
     M_sparse = eigen_solver != "dense"
-    M_container_constructor = lil_matrix if M_sparse else np.zeros
+    M_container_constructor = lil_array if M_sparse else np.zeros
 
     if method == "standard":
         W = barycenter_kneighbors_graph(
-            nbrs, n_neighbors=n_neighbors, reg=reg, n_jobs=n_jobs
+            nbrs, n_neighbors=n_neighbors, reg=reg, n_jobs=n_jobs, spmatrix=False
         )
 
         # we'll compute M = (I-W)'(I-W)
         # depending on the solver, we'll do this differently
         if M_sparse:
-            M = eye(*W.shape, format=W.format) - W
+            M = eye_array(*W.shape, format=W.format) - W
             M = M.T @ M
         else:
             M = (W.T @ W - W.T - W).toarray()
