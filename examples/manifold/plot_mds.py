@@ -35,9 +35,9 @@ X_true -= X_true.mean()
 distances = euclidean_distances(X_true)
 
 # Add noise to the distances
-noise = np.random.rand(n_samples, n_samples)
+noise = rng.rand(n_samples, n_samples)
 noise = noise + noise.T
-noise[np.arange(noise.shape[0]), np.arange(noise.shape[0])] = 0
+np.fill_diagonal(noise, 0)
 distances += noise
 
 mds = manifold.MDS(
