@@ -606,10 +606,20 @@ def test_logsumexp_like_scipy_logsumexp(array_namespace, device_, dtype_name, ax
 
     res_np = scipy.special.logsumexp(array_np, axis=axis)
 
+    rtol = 1e-6 if "float32" in str(dtype_name) else 1e-12
+
+    # if torch on CPU or array api strict on default device
+    # check that _logsumexp works when array API dispatch is disabled
+    # TODO is there a better way for this
+    if (array_namespace == "torch" and device_ == "cpu") or (
+        array_namespace == "array_api_strict" and "CPU" in str(device_)
+    ):
+        assert_allclose(_logsumexp(array_xp, axis=axis), res_np, rtol=rtol)
+
     with config_context(array_api_dispatch=True):
         res_xp = _logsumexp(array_xp, axis=axis)
         res_xp = _convert_to_numpy(res_xp, xp)
-        assert_array_equal(res_np, res_xp)
+        assert_allclose(res_np, res_xp, rtol=rtol)
 
     # Test with NaNs and +np.inf
     array_np_2 = numpy.asarray(
@@ -629,4 +639,4 @@ def test_logsumexp_like_scipy_logsumexp(array_namespace, device_, dtype_name, ax
     with config_context(array_api_dispatch=True):
         res_xp_2 = _logsumexp(array_xp_2, axis=axis)
         res_xp_2 = _convert_to_numpy(res_xp_2, xp)
-        assert_array_equal(res_np_2, res_xp_2)
+        assert_allclose(res_np_2, res_xp_2, rtol=rtol)

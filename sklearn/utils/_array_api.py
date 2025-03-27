@@ -998,6 +998,7 @@ def _logsumexp(array, axis=None, xp=None):
     supported_dtypes = supported_float_dtypes(xp)
     if array.dtype not in supported_dtypes:
         array = xp.asarray(array, dtype=supported_dtypes[0])
+
     array_max = xp.max(array, axis=axis, keepdims=True)
     index_max = array == array_max
 
