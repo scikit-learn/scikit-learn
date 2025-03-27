@@ -94,6 +94,17 @@ def test_bayesian_ridge_parameter():
     assert_almost_equal(rr_model.intercept_, br_model.intercept_)
 
 
+def test_bayesian_covariance_matrix():
+    # Check the posterior covariance matrix sigma_
+    X, y = diabetes.data, diabetes.target
+    reg = BayesianRidge().fit(X, y)
+    n_samples, n_features = X.shape
+    covariance_matrix = np.linalg.inv(
+        reg.lambda_ * np.identity(n_features) + reg.alpha_ * np.dot(X.T, X)
+    )
+    assert_array_almost_equal(reg.sigma_, covariance_matrix)
+
+
 def test_bayesian_sample_weights():
     # Test correctness of the sample_weights method
     X = np.array([[1, 1], [3, 4], [5, 7], [4, 1], [2, 6], [3, 10], [3, 2]])
