@@ -1411,7 +1411,7 @@ weighted average  0.37	        0.4             0.23
 ================  ==========    ==========      ==========
 
 Here, the predicted class label is 2, since it has the highest average
-probability. See the example on
+predicted probability. See the example on
 :ref:`sphx_glr_auto_examples_ensemble_plot_voting_decision_regions.py` for a
 demonstration of how the predicted class label can be obtained from the weighted
 average of predicted probabilities.
