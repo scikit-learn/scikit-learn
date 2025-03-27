@@ -43,7 +43,7 @@ classification, in particular for tabular data.
   imputation.
 
   :class:`GradientBoostingClassifier` and
-  :class:`GradientBoostingRegressor`, might be preferred for small sample
+  :class:`GradientBoostingRegressor` might be preferred for small sample
   sizes since binning may lead to split points that are too approximate
   in this setting.
 
@@ -241,7 +241,7 @@ The following toy example demonstrates that samples with a sample weight of zero
     >>> gb.predict([[1, 0]])
     array([1])
     >>> gb.predict_proba([[1, 0]])[0, 1]
-    0.99...
+    np.float64(0.999...)
 
 As you can see, the `[1, 0]` is comfortably classified as `1` since the first
 two samples are ignored due to their sample weights.
@@ -391,7 +391,7 @@ done by the parameter ``interaction_cst``, where one can specify the indices
 of features that are allowed to interact.
 For instance, with 3 features in total, ``interaction_cst=[{0}, {1}, {2}]``
 forbids all interactions.
-The constraints ``[{0, 1}, {1, 2}]`` specifies two groups of possibly
+The constraints ``[{0, 1}, {1, 2}]`` specify two groups of possibly
 interacting features. Features 0 and 1 may interact with each other, as well
 as features 1 and 2. But note that features 0 and 2 are forbidden to interact.
 The following depicts a tree and the possible splits of the tree:
@@ -564,7 +564,7 @@ parameters of these estimators are `n_estimators` and `learning_rate`.
   The plot shows the train and test error at each iteration.
   The train error at each iteration is stored in the
   `train_score_` attribute of the gradient boosting model.
-  The test error at each iterations can be obtained
+  The test error at each iteration can be obtained
   via the :meth:`~GradientBoostingRegressor.staged_predict` method which returns a
   generator that yields the predictions at each stage. Plots like these can be used
   to determine the optimal number of trees (i.e. ``n_estimators``) by early stopping.
@@ -806,7 +806,7 @@ the contribution of each weak learner by a constant factor :math:`\nu`:
     F_m(x) = F_{m-1}(x) + \nu h_m(x)
 
 The parameter :math:`\nu` is also called the **learning rate** because
-it scales the step length the gradient descent procedure; it can
+it scales the step length of the gradient descent procedure; it can
 be set via the ``learning_rate`` parameter.
 
 The parameter ``learning_rate`` strongly interacts with the parameter
@@ -879,7 +879,7 @@ Often features do not contribute equally to predict the target
 response; in many situations the majority of the features are in fact
 irrelevant.
 When interpreting a model, the first question usually is: what are
-those important features and how do they contributing in predicting
+those important features and how do they contribute in predicting
 the target response?
 
 Individual decision trees intrinsically perform feature selection by selecting
@@ -1035,19 +1035,19 @@ in bias::
     ...     random_state=0)
     >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean()
-    0.98...
+    np.float64(0.98...)
 
     >>> clf = RandomForestClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=2, random_state=0)
     >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean()
-    0.999...
+    np.float64(0.999...)
 
     >>> clf = ExtraTreesClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=2, random_state=0)
     >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean() > 0.999
-    True
+    np.True_
 
 .. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_forest_iris_001.png
     :target: ../auto_examples/ensemble/plot_forest_iris.html
@@ -1395,7 +1395,7 @@ and averaged. The final class label is then derived from the class label
 with the highest average probability.
 
 To illustrate this with a simple example, let's assume we have 3
-classifiers and a 3-class classification problems where we assign
+classifiers and a 3-class classification problem where we assign
 equal weights to all classifiers: w1=1, w2=1, w3=1.
 
 The weighted average probabilities for a sample would then be
@@ -1410,10 +1410,12 @@ classifier 3      w3 * 0.3      w3 * 0.4        w3 * 0.3
 weighted average  0.37	        0.4             0.23
 ================  ==========    ==========      ==========
 
-Here, the predicted class label is 2, since it has the
-highest average probability.
+Here, the predicted class label is 2, since it has the highest average probability. See
+this example on :ref:`Visualising class probabilities in a Voting Classifier
+<sphx_glr_auto_examples_ensemble_plot_voting_probas.py>` for a detailed illustration of
+class probabilities averaged by soft voting.
 
-The following example illustrates how the decision regions may change
+Also, the following example illustrates how the decision regions may change
 when a soft :class:`VotingClassifier` is used based on a linear Support
 Vector Machine, a Decision Tree, and a K-nearest neighbor classifier::
 
@@ -1642,6 +1644,10 @@ computationally expensive.
     ...       .format(multi_layer_regressor.score(X_test, y_test)))
     R2 score: 0.53
 
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_ensemble_plot_stack_predictors.py`
+
 .. rubric:: References
 
 .. [W1992] Wolpert, David H. "Stacked generalization." Neural networks 5.2
@@ -1701,7 +1707,7 @@ learners::
     >>> clf = AdaBoostClassifier(n_estimators=100)
     >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean()
-    0.9...
+    np.float64(0.9...)
 
 The number of weak learners is controlled by the parameter ``n_estimators``. The
 ``learning_rate`` parameter controls the contribution of the weak learners in

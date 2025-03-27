@@ -15,6 +15,7 @@ from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 from copy import deepcopy
 from functools import partial, reduce
+from inspect import signature
 from itertools import product
 
 import numpy as np
@@ -488,8 +489,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         tags.classifier_tags = deepcopy(sub_estimator_tags.classifier_tags)
         tags.regressor_tags = deepcopy(sub_estimator_tags.regressor_tags)
         # allows cross-validation to see 'precomputed' metrics
-        tags.input_tags.pairwise = get_tags(self.estimator).input_tags.pairwise
-        tags.array_api_support = get_tags(self.estimator).array_api_support
+        tags.input_tags.pairwise = sub_estimator_tags.input_tags.pairwise
+        tags.input_tags.sparse = sub_estimator_tags.input_tags.sparse
+        tags.array_api_support = sub_estimator_tags.array_api_support
         return tags
 
     def score(self, X, y=None, **params):
@@ -771,8 +773,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 - an optional `cv` parameter which can be used to e.g.
                   evaluate candidates on different dataset splits, or
                   evaluate candidates on subsampled data (as done in the
-                  SucessiveHaling estimators). By default, the original `cv`
-                  parameter is used, and it is available as a private
+                  Successive Halving estimators). By default, the original
+                  `cv` parameter is used, and it is available as a private
                   `_checked_cv_orig` attribute.
                 - an optional `more_results` dict. Each key will be added to
                   the `cv_results_` attribute. Values should be lists of
@@ -865,6 +867,33 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         return scorers, refit_metric
 
+    def _check_scorers_accept_sample_weight(self):
+        # TODO(slep006): remove when metadata routing is the only way
+        scorers, _ = self._get_scorers()
+        # In the multimetric case, warn the user for each scorer separately
+        if isinstance(scorers, _MultimetricScorer):
+            for name, scorer in scorers._scorers.items():
+                if not scorer._accept_sample_weight():
+                    warnings.warn(
+                        f"The scoring {name}={scorer} does not support sample_weight, "
+                        "which may lead to statistically incorrect results when "
+                        f"fitting {self} with sample_weight. "
+                    )
+            return scorers._accept_sample_weight()
+        # In most cases, scorers is a Scorer object
+        # But it's a function when user passes scoring=function
+        if hasattr(scorers, "_accept_sample_weight"):
+            accept = scorers._accept_sample_weight()
+        else:
+            accept = "sample_weight" in signature(scorers).parameters
+        if not accept:
+            warnings.warn(
+                f"The scoring {scorers} does not support sample_weight, "
+                "which may lead to statistically incorrect results when "
+                f"fitting {self} with sample_weight. "
+            )
+        return accept
+
     def _get_routed_params_for_fit(self, params):
         """Get the parameters to be used for routing.
 
@@ -881,6 +910,14 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 splitter=Bunch(split={"groups": groups}),
                 scorer=Bunch(score={}),
             )
+            # NOTE: sample_weight is forwarded to the scorer if sample_weight
+            # is not None and scorers accept sample_weight. For _MultimetricScorer,
+            # sample_weight is forwarded if any scorer accepts sample_weight
+            if (
+                params.get("sample_weight") is not None
+                and self._check_scorers_accept_sample_weight()
+            ):
+                routed_params.scorer.score["sample_weight"] = params["sample_weight"]
         return routed_params
 
     @_fit_context(
@@ -1246,8 +1283,10 @@ class GridSearchCV(BaseSearchCV):
 
         If `scoring` represents a single score, one can use:
 
-        - a single string (see :ref:`scoring_parameter`);
-        - a callable (see :ref:`scoring_callable`) that returns a single value.
+        - a single string (see :ref:`scoring_string_names`);
+        - a callable (see :ref:`scoring_callable`) that returns a single value;
+        - `None`, the `estimator`'s
+          :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
         If `scoring` represents multiple scores, one can use:
 
@@ -1622,8 +1661,10 @@ class RandomizedSearchCV(BaseSearchCV):
 
         If `scoring` represents a single score, one can use:
 
-        - a single string (see :ref:`scoring_parameter`);
-        - a callable (see :ref:`scoring_callable`) that returns a single value.
+        - a single string (see :ref:`scoring_string_names`);
+        - a callable (see :ref:`scoring_callable`) that returns a single value;
+        - `None`, the `estimator`'s
+          :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
         If `scoring` represents multiple scores, one can use:
 

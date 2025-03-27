@@ -2279,7 +2279,7 @@ def test_power_transformer_shape_exception(method):
     # Exceptions should be raised for arrays with different num_columns
     # than during fitting
     wrong_shape_message = (
-        r"X has \d+ features, but PowerTransformer is " r"expecting \d+ features"
+        r"X has \d+ features, but PowerTransformer is expecting \d+ features"
     )
 
     with pytest.raises(ValueError, match=wrong_shape_message):

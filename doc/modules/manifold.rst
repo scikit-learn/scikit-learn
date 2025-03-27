@@ -614,13 +614,13 @@ The disadvantages to using t-SNE are roughly:
     parameterized with the angle parameter, therefore the angle parameter is
     unused when method="exact"
   * Barnes-Hut is significantly more scalable. Barnes-Hut can be used to embed
-    hundred of thousands of data points while the exact method can handle
+    hundreds of thousands of data points while the exact method can handle
     thousands of samples before becoming computationally intractable
 
   For visualization purpose (which is the main use case of t-SNE), using the
   Barnes-Hut method is strongly recommended. The exact t-SNE method is useful
-  for checking the theoretically properties of the embedding possibly in higher
-  dimensional space but limit to small datasets due to computational constraints.
+  for checking the theoretical properties of the embedding possibly in higher
+  dimensional space but limited to small datasets due to computational constraints.
 
   Also note that the digits labels roughly match the natural grouping found by
   t-SNE while the linear 2D projection of the PCA model yields a representation
