@@ -690,9 +690,8 @@ def notebook_modification_function(notebook_content, notebook_filename):
             "import piplite",
             "await piplite.install(['joblib', 'threadpoolctl', 'scipy'])",
             "await piplite.install(\n"
-            "   'scikit-learn',\n"
+            f"  'scikit-learn=={release}',\n"
             "   index_urls='https://pypi.anaconda.org/scientific-python-nightly-wheels/simple',\n"
-            "   pre=True,\n"
             ")",
         ]
 
