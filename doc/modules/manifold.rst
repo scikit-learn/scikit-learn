@@ -439,10 +439,13 @@ space and the input dissimilarities.
 
 
 Let :math:`\delta_{ij}` be the dissimilarity matrix between the
-:math:`n` input points (possibly arising as some pairwise distances :math:`d_{ij}(X)` between the coordinates :math:`X` of the input points).
+:math:`n` input points (possibly arising as some pairwise distances
+:math:`d_{ij}(X)` between the coordinates :math:`X` of the input points).
 Disparities :math:`\hat{d}_{ij} = f(\delta_{ij})` are some transformation of
-the dissimilarities. The MDS objective, called the raw stress, is then defined by :math:`\sum_{i < j} (\hat{d}_{ij} - d_{ij}(Z))^2`,
-where :math:`d_{ij}(Z)` are the pairwise distances between the coordinates :math:`Z` of the embedded points.
+the dissimilarities. The MDS objective, called the raw stress, is then
+defined by :math:`\sum_{i < j} (\hat{d}_{ij} - d_{ij}(Z))^2`,
+where :math:`d_{ij}(Z)` are the pairwise distances between the
+coordinates :math:`Z` of the embedded points.
 
 
 .. dropdown:: Metric MDS
@@ -454,10 +457,11 @@ where :math:`d_{ij}(Z)` are the pairwise distances between the coordinates :math
 .. dropdown:: Nonmetric MDS
 
   Non metric :class:`MDS` focuses on the ordination of the data. If
-  :math:`\delta_{ij} > \delta_{kl}`, then the embedding seeks to enforce :math:`d_{ij}(Z) >
-  d_{kl}(Z)`. A simple algorithm to enforce proper ordination is to use an
-  isotonic regression of :math:`d_{ij}(Z)` on :math:`\delta_{ij}`, yielding
-  disparities :math:`\hat{d}_{ij}` in the same order as :math:`\delta_{ij}`.
+  :math:`\delta_{ij} > \delta_{kl}`, then the embedding
+  seeks to enforce :math:`d_{ij}(Z) > d_{kl}(Z)`. A simple algorithm
+  to enforce proper ordination is to use an
+  isotonic regression of :math:`\delta_{ij}(Z)` on :math:`d_{ij}(Z)`, yielding
+  disparities :math:`\hat{d}_{ij}` on the same order as :math:`d_{ij}(Z)`.
   This is done repeatedly after every step of the optimization algorithm.
   In order to avoid the trivial solution where all embedding points are
   overlapping, the disparities :math:`\hat{d}_{ij}` are normalized.
@@ -468,8 +472,8 @@ where :math:`d_{ij}(Z)` are the pairwise distances between the coordinates :math
   normalized stress, also known as Stress-1, defined as
 
   .. math::
-      \sqrt{\frac{\sum_{i < j} (\delta_{ij} - \hat{d}_{ij})^2}{\sum_{i < j}
-      \delta_{ij}^2}}.
+      \sqrt{\frac{\sum_{i < j} (\d_{ij} - \hat{d}_{ij})^2}{\sum_{i < j}
+      d_{ij}^2}}.
 
   Normalized Stress-1 is returned if `normalized_stress=True`.
 
