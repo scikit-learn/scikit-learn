@@ -687,9 +687,9 @@ def notebook_modification_function(notebook_content, notebook_filename):
     # dependencies first, and then scikit-learn from Anaconda.org.
     if "dev" in release:
         dev_docs_specific_code = [
-            "import micropip",
-            "await micropip.install(['joblib', 'threadpoolctl', 'scipy'])",
-            "await micropip.install(\n"
+            "import piplite",
+            "await piplite.install(['joblib', 'threadpoolctl', 'scipy'])",
+            "await piplite.install(\n"
             "   'scikit-learn',\n"
             "   index_urls='https://pypi.anaconda.org/scientific-python-nightly-wheels/simple',\n"
             "   pre=True,\n"
