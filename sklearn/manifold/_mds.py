@@ -172,11 +172,11 @@ def _smacof_single(
             stress = np.sqrt(stress / ((disparities.ravel() ** 2).sum() / 2))
 
         normalization = np.sqrt((X**2).sum(axis=1)).sum()
-        if verbose >= 2:
+        if verbose >= 2:  # pragma: no cover
             print(f"Iteration {it}, stress {stress:.4f}")
         if old_stress is not None:
             if (old_stress - stress / normalization) < eps:
-                if verbose:
+                if verbose:  # pragma: no cover
                     print("Convergence criterion reached.")
                 break
         old_stress = stress / normalization
