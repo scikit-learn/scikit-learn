@@ -1206,12 +1206,12 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
 
         Parameters
         ----------
-        T : array-like of shape (n_samples,)
+        X : array-like of shape (n_samples,)
             Data to predict from.
 
         Returns
         -------
-        T_ : ndarray of shape (n_samples, n_classes)
+        X_ : ndarray of shape (n_samples, n_classes)
             The predicted data.
         """
         X = _convert_decision_values_to_2d_array(X)
