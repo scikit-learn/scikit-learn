@@ -596,8 +596,8 @@ def test_logsumexp_like_scipy_logsumexp(array_namespace, device_, dtype_name, ax
         [
             [0, 3, 1000],
             [2, -1, 1000],
-            [numpy.inf, 0, 0],
-            [numpy.nan, 8, -numpy.inf],
+            [-10, 0, 0],
+            [-50, 8, -numpy.inf],
             [4, 0, 5],
         ],
         dtype=dtype_name,
@@ -610,3 +610,23 @@ def test_logsumexp_like_scipy_logsumexp(array_namespace, device_, dtype_name, ax
         res_xp = _logsumexp(array_xp, axis=axis)
         res_xp = _convert_to_numpy(res_xp, xp)
         assert_array_equal(res_np, res_xp)
+
+    # Test with NaNs and np.inf
+    array_np_2 = numpy.asarray(
+        [
+            [0, numpy.nan, 1000],
+            [2, -1, 1000],
+            [numpy.inf, 0, 0],
+            [-50, 8, -numpy.inf],
+            [4, 0, 5],
+        ],
+        dtype=dtype_name,
+    )
+    array_xp_2 = xp.asarray(array_np_2, device=device_)
+
+    res_np_2 = scipy.special.logsumexp(array_np_2, axis=axis)
+
+    with config_context(array_api_dispatch=True):
+        res_xp_2 = _logsumexp(array_xp_2, axis=axis)
+        res_xp_2 = _convert_to_numpy(res_xp_2, xp)
+        assert_array_equal(res_np_2, res_xp_2)
