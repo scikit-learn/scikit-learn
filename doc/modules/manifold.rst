@@ -455,9 +455,9 @@ where :math:`d_{ij}(Z)` are the pairwise distances between the coordinates :math
 .. dropdown:: Nonmetric MDS
 
   Non metric :class:`MDS` focuses on the ordination of the data. If
-  :math:`d_{ij} > d_{jk}`, then the embedding should enforce :math:`\delta_{ij} >
-  \delta_{jk}`. A simple algorithm to enforce proper ordination is to use an
-  isotonic regression of :math:`d_{ij}` on :math:`\delta_{ij}`, yielding
+  :math:`\delta_{ij} > \delta_{kl}`, then the embedding seeks to enforce :math:`d_{ij}(Z) >
+  d_{kl}(Z)`. A simple algorithm to enforce proper ordination is to use an
+  isotonic regression of :math:`d_{ij}(Z)` on :math:`\delta_{ij}`, yielding
   disparities :math:`\hat{d}_{ij}` in the same order as :math:`\delta_{ij}`.
   This is done repeatedly after every step of the optimization algorithm.
   In order to avoid the trivial solution where all embedding points are
