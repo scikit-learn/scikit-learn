@@ -77,6 +77,7 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
         sample_weight = sample_weight[sort_idx]
         percentiles = np.linspace(0, 100, num=max_bins + 1)
         percentiles = percentiles[1:-1]
+
         midpoints = np.array(
             [
                 _averaged_weighted_percentile(col_data, sample_weight, percentile)
