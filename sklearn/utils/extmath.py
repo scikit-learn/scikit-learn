@@ -273,7 +273,7 @@ def randomized_range_finder(
            [-0.52...,  0.24...],
            [-0.82..., -0.38...]])
     """
-    A = check_array(A, accept_sparse=True)
+    check_array(A, accept_sparse=True)
     xp, is_array_api_compliant = get_namespace(A)
     random_state = check_random_state(random_state)
 
