@@ -3,6 +3,11 @@
 
 .. include:: ../min_dependency_substitutions.rst
 
+..
+   TODO Add |PythonMinVersion| to min_dependency_substitutions.rst one day.
+   Probably would need to change a bit sklearn/_min_dependencies.py since Python is not really a package ...
+.. |PythonMinVersion| replace:: 3.10
+
 ==================================================
 Installing the development version of scikit-learn
 ==================================================
@@ -58,7 +63,7 @@ feature, code or documentation improvement).
    If you plan on submitting a pull-request, you should clone from your fork
    instead.
 
-#. Install a recent version of Python (3.9 or later at the time of writing) for
+#. Install a recent version of Python (|PythonMinVersion| or later) for
    instance using conda-forge_. Conda-forge provides a conda-based distribution of
    Python and the most popular scientific libraries.
 
@@ -78,7 +83,7 @@ feature, code or documentation improvement).
      conda activate sklearn-env
 
 #. **Alternative to conda:** You can use alternative installations of Python
-   provided they are recent enough (3.9 or higher at the time of writing).
+   provided they are recent enough (|PythonMinVersion| or higher).
    Here is an example of how to create a build environment for a Linux system's
    Python. Build dependencies are installed with `pip` in a dedicated virtualenv_
    to avoid disrupting other Python programs installed on the system:
@@ -134,7 +139,7 @@ Runtime dependencies
 Scikit-learn requires the following dependencies both at build time and at
 runtime:
 
-- Python (>= 3.8),
+- Python (>= |PythonMinVersion|),
 - NumPy (>= |NumpyMinVersion|),
 - SciPy (>= |ScipyMinVersion|),
 - Joblib (>= |JoblibMinVersion|),
