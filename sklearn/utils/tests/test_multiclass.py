@@ -545,7 +545,7 @@ def test_safe_split_with_precomputed_kernel():
     K = np.dot(X, X.T)
 
     cv = ShuffleSplit(test_size=0.25, random_state=0)
-    train, test = list(cv.split(X))[0]
+    train, test = next(iter(cv.split(X)))
 
     X_train, y_train = _safe_split(clf, X, y, train)
     K_train, y_train2 = _safe_split(clfp, K, y, train)

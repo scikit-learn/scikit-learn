@@ -8,7 +8,7 @@ API Reference
 
 This is the class and function reference of scikit-learn. Please refer to the
 :ref:`full user guide <user_guide>` for further details, as the raw specifications of
-classes and functions may not be enough to give full guidelines on their uses. For
+classes and functions may not be enough to give full guidelines on their use. For
 reference on concepts repeated across the API, see :ref:`glossary`.
 
 .. toctree::
