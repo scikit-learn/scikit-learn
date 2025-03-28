@@ -1042,7 +1042,7 @@ def adjusted_mutual_info_score(
     mi = mutual_info_score(labels_true, labels_pred, contingency=contingency)
     # Calculate the expected value for the mutual information
     emi = expected_mutual_information(contingency, n_samples)
-    nominator = mi - emi
+    numerator = mi - emi
     # Calculate entropy for each labeling
     h_true, h_pred = entropy(labels_true), entropy(labels_pred)
     normalizer = _generalized_average(h_true, h_pred, average_method)
@@ -1056,11 +1056,11 @@ def adjusted_mutual_info_score(
     else:
         denominator = max(denominator, np.finfo("float64").eps)
     # We repeat the same process for the nominator to make transformation symmetric.
-    if nominator < 0:
-        nominator = min(nominator, -np.finfo("float64").eps)
+    if numerator < 0:
+        numerator = min(numerator, -np.finfo("float64").eps)
     else:
-        nominator = max(nominator, np.finfo("float64").eps)
-    return float(nominator / denominator)
+        numerator = max(numerator, np.finfo("float64").eps)
+    return float(numerator / denominator)
 
 
 @validate_params(
