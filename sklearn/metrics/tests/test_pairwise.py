@@ -48,7 +48,9 @@ from sklearn.metrics.pairwise import (
     sigmoid_kernel,
 )
 from sklearn.preprocessing import normalize
+from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     assert_allclose,
     assert_almost_equal,
     assert_array_equal,
@@ -332,6 +334,47 @@ def test_pairwise_parallel(func, metric, kwds, dtype):
     S = func(X, Y, metric=metric, n_jobs=1, **kwds)
     S2 = func(X, Y, metric=metric, n_jobs=2, **kwds)
     assert_allclose(S, S2)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize(
+    "func, metric, kwds",
+    [
+        (pairwise_distances, "euclidean", {}),
+        (
+            pairwise_distances,
+            minkowski,
+            _minkowski_kwds,
+        ),
+        (
+            pairwise_distances,
+            "minkowski",
+            _minkowski_kwds,
+        ),
+        (pairwise_kernels, "polynomial", {"degree": 1}),
+        (pairwise_kernels, callable_rbf_kernel, {"gamma": 0.1}),
+    ],
+)
+def test_pairwise_parallel_array_api(
+    func, metric, kwds, array_namespace, device, dtype_name
+):
+    with config_context(array_api_dispatch=True):
+        xp = _array_api_for_tests(array_namespace, device)
+        rng = np.random.RandomState(0)
+        X_np = np.array(5 * rng.random_sample((5, 4)), dtype=dtype_name)
+        Y_np = np.array(5 * rng.random_sample((3, 4)), dtype=dtype_name)
+        X = xp.asarray(X_np, device=device)
+        Y = xp.asarray(Y_np, device=device)
+
+        S = func(X, metric=metric, n_jobs=1, **kwds)
+        S2 = func(X, metric=metric, n_jobs=2, **kwds)
+        assert_allclose(S, S2)
+
+        S = func(X, Y, metric=metric, n_jobs=1, **kwds)
+        S2 = func(X, Y, metric=metric, n_jobs=2, **kwds)
+        assert_allclose(S, S2)
 
 
 def test_pairwise_callable_nonstrict_metric():
