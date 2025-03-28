@@ -301,12 +301,13 @@ def test_exactly_zero_info_score():
         labels_a, labels_b = (np.ones(i, dtype=int), np.arange(i, dtype=int))
         assert normalized_mutual_info_score(labels_a, labels_b) == pytest.approx(0.0)
         assert v_measure_score(labels_a, labels_b) == pytest.approx(0.0)
-        assert adjusted_mutual_info_score(labels_a, labels_b) == pytest.approx(0.0)
+        assert adjusted_mutual_info_score(labels_a, labels_b) == 0.0
         assert normalized_mutual_info_score(labels_a, labels_b) == pytest.approx(0.0)
         for method in ["min", "geometric", "arithmetic", "max"]:
-            assert adjusted_mutual_info_score(
-                labels_a, labels_b, average_method=method
-            ) == pytest.approx(0.0)
+            assert (
+                adjusted_mutual_info_score(labels_a, labels_b, average_method=method)
+                == 0.0
+            )
             assert normalized_mutual_info_score(
                 labels_a, labels_b, average_method=method
             ) == pytest.approx(0.0)
@@ -475,6 +476,18 @@ def test_adjusted_rand_score_overflow():
     with warnings.catch_warnings():
         warnings.simplefilter("error", RuntimeWarning)
         adjusted_rand_score(y_true, y_pred)
+
+
+@pytest.mark.parametrize("inputs", [[0, 1], [0, 1, 2, 3]])
+@pytest.mark.parametrize("average_method", ["min", "arithmetic", "geometric", "max"])
+def test_adjusted_mi_score_low_class_count(inputs, average_method):
+    """Check that 2 and 4 samples and classes will return correct values
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/30950
+    """
+    assert (
+        adjusted_mutual_info_score(inputs, inputs, average_method=average_method) == 1.0
+    )
 
 
 @pytest.mark.parametrize("average_method", ["min", "arithmetic", "geometric", "max"])
