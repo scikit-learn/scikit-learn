@@ -40,7 +40,7 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50):
 
     Returns
     -------
-    percentile : int if `array` 1D, ndarray if `array` 2D
+    percentile : scalar or 0D array if `array` 1D (or 0D), array if `array` 2D
         Weighted percentile at the requested probability level.
     """
     xp, _, device = get_namespace_and_device(array)
