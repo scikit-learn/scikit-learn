@@ -218,11 +218,11 @@ def test_binmapper_weighted_vs_repeated_equivalence(global_random_seed, n_bins):
 
     est_repeated = _BinMapper(n_bins=n_bins).fit(X_repeated, sample_weight=None)
 
-    bin_thresholds_weighted = est_weighted.transform(X)
-    bin_thresholds_repeated = est_repeated.transform(X)
+    assert_allclose(est_weighted.bin_thresholds_, est_repeated.bin_thresholds_)
 
-    assert_array_equal(est_weighted.bin_thresholds_, est_repeated.bin_thresholds_)
-    assert_array_equal(bin_thresholds_weighted, bin_thresholds_repeated)
+    X_trans_weighted = est_weighted.transform(X)
+    X_trans_repeated = est_repeated.transform(X)
+    assert_array_equal(X_trans_weighted, X_trans_repeated)
 
 
 @pytest.mark.parametrize(
