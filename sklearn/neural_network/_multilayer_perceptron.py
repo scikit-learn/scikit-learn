@@ -1387,7 +1387,8 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         "squared error" and "poisson" losses actually implement
         "half squares error" and "half poisson deviance" to simplify the
         computation of the gradient. Furthermore, the "poisson" loss internally uses
-        a log-link (exponential as output activation function) and requires ``y >= 0``.
+        a log-link (exponential as the output activation function) and requires
+        ``y >= 0``.
 
         .. versionchanged:: 1.7
            Added parameter `loss` and option 'poisson'.
