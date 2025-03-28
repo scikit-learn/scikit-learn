@@ -93,3 +93,7 @@ __all__ = [
     "orthogonal_mp_gram",
     "ridge_regression",
 ]
+
+
+def __dir__():
+    return __all__

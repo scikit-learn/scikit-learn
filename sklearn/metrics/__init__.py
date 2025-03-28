@@ -179,3 +179,7 @@ __all__ = [
     "v_measure_score",
     "zero_one_loss",
 ]
+
+
+def __dir__():
+    return __all__

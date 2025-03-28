@@ -97,3 +97,7 @@ def __getattr__(name):
             "from sklearn.experimental import enable_halving_search_cv"
         )
     raise AttributeError(f"module {__name__} has no attribute {name}")
+
+
+def __dir__():
+    return __all__
