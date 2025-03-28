@@ -1,8 +1,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from ..utils._optional_dependencies import check_matplotlib_support
 from ..utils._plotting import _interval_max_min_ratio, _validate_score_name
@@ -598,9 +598,7 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
         self, *, param_name, param_range, train_scores, test_scores, score_name=None
     ):
         self.param_name = param_name
-        self.param_range = np.array(
-            param_range, dtype=object
-        )
+        self.param_range = np.array(param_range, dtype=object)
         self.train_scores = train_scores
         self.test_scores = test_scores
         self.score_name = score_name
@@ -672,11 +670,9 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
             _, ax = plt.subplots()
 
         self.ax_ = ax
-        
+
         x_values = (
-            self.param_range
-            if self.is_categorical
-            else np.asarray(self.param_range)
+            self.param_range if self.is_categorical else np.asarray(self.param_range)
         )
 
         line_kw = {} if line_kw is None else line_kw
@@ -692,12 +688,8 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
             train_mean, test_mean = -train_mean, -test_mean
 
         if self.is_categorical:
-            ax.bar(
-                x_values, train_mean, alpha=0.6, label="Train Score", color="b"
-            )
-            ax.bar(
-                x_values, test_mean, alpha=0.6, label="Test Score", color="r"
-            )
+            ax.bar(x_values, train_mean, alpha=0.6, label="Train Score", color="b")
+            ax.bar(x_values, test_mean, alpha=0.6, label="Test Score", color="r")
         else:
             if score_type in ("both", "train"):
                 ax.plot(
