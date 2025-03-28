@@ -7,7 +7,7 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy.linalg import eigh, qr, solve, svd
-from scipy.sparse import csr_array, csr_matrix, eye_array, lil_array
+from scipy.sparse import csr_array, csr_matrix, eye, lil_array
 from scipy.sparse.linalg import eigsh
 
 from ..base import (
@@ -246,7 +246,9 @@ def _locally_linear_embedding(
         # we'll compute M = (I-W)'(I-W)
         # depending on the solver, we'll do this differently
         if M_sparse:
-            M = eye_array(*W.shape, format=W.format) - W
+            # change when SciPy 1.12+ is guaranteed to
+            # M = eye_array(*W.shape, format=W.format) - W
+            M = csr_array(eye(*W.shape)).asformat(W.format) - W
             M = M.T @ M
         else:
             M = (W.T @ W - W.T - W).toarray()
