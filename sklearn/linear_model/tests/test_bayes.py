@@ -94,10 +94,10 @@ def test_bayesian_ridge_parameter():
     assert_almost_equal(rr_model.intercept_, br_model.intercept_)
 
 
-def test_bayesian_covariance_matrix():
+@pytest.mark.parametrize("n_samples, n_features", [(10, 20), (20, 10)])
+def test_bayesian_covariance_matrix(n_samples, n_features):
     # Check the posterior covariance matrix sigma_
-    X, y = datasets.make_regression(n_samples=10, n_features=20)
-    n_features = X.shape[1]
+    X, y = datasets.make_regression(n_samples, n_features)
     reg = BayesianRidge(fit_intercept=False).fit(X, y)
     covariance_matrix = np.linalg.inv(
         reg.lambda_ * np.identity(n_features) + reg.alpha_ * np.dot(X.T, X)
