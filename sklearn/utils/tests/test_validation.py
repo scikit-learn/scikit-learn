@@ -34,7 +34,10 @@ from sklearn.utils import (
     check_X_y,
     deprecated,
 )
-from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
+from sklearn.utils._array_api import (
+    _get_namespace_device_dtype_ids,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._mocking import (
     MockDataFrame,
     _MockEstimatorOnOffPrediction,
@@ -1030,7 +1033,9 @@ def test_check_consistent_length():
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, _", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, _",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 def test_check_consistent_length_array_api(array_namespace, device, _):
     """Test that check_consistent_length works with different array types."""

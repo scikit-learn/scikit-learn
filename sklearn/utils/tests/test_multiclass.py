@@ -7,7 +7,10 @@ from scipy.sparse import issparse
 from sklearn import config_context, datasets
 from sklearn.model_selection import ShuffleSplit
 from sklearn.svm import SVC
-from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
+from sklearn.utils._array_api import (
+    _get_namespace_device_dtype_ids,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._testing import (
     _array_api_for_tests,
     _convert_container,
@@ -382,6 +385,7 @@ def test_is_multilabel():
 @pytest.mark.parametrize(
     "array_namespace, device, dtype_name",
     yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 def test_is_multilabel_array_api_compliance(array_namespace, device, dtype_name):
     xp = _array_api_for_tests(array_namespace, device)

@@ -23,7 +23,10 @@ from sklearn.metrics.cluster import (
 )
 from sklearn.metrics.cluster._supervised import _generalized_average, check_clusterings
 from sklearn.utils import assert_all_finite
-from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
+from sklearn.utils._array_api import (
+    _get_namespace_device_dtype_ids,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._testing import _array_api_for_tests, assert_almost_equal
 
 score_funcs = [
@@ -262,7 +265,9 @@ def test_entropy():
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 def test_entropy_array_api(array_namespace, device, dtype_name):
     xp = _array_api_for_tests(array_namespace, device)

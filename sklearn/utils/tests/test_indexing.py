@@ -9,7 +9,10 @@ from scipy.stats import kstest
 import sklearn
 from sklearn.externals._packaging.version import parse as parse_version
 from sklearn.utils import _safe_indexing, resample, shuffle
-from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
+from sklearn.utils._array_api import (
+    _get_namespace_device_dtype_ids,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._indexing import (
     _determine_key_type,
     _get_column_indices,
@@ -105,7 +108,9 @@ def test_determine_key_type_slice_error():
 
 @skip_if_array_api_compat_not_configured
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 def test_determine_key_type_array_api(array_namespace, device, dtype_name):
     xp = _array_api_for_tests(array_namespace, device)
