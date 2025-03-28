@@ -107,10 +107,12 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
 
 def _get_namespace_device_dtype_ids(param):
     """Get pytest parametrization IDs for `yield_namespace_device_dtype_combinations`"""
+    # Gives clearer IDs for array-api-strict devices
     # See #31042 for details
     try:
         import array_api_strict
     except ImportError:
+        # `None` results in the default pytest representation
         return None
     else:
         if param == array_api_strict.Device("CPU_DEVICE"):
