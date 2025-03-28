@@ -681,5 +681,5 @@ Tips on practical use
 .. seealso::
 
    :ref:`random_trees_embedding` can also be useful to derive non-linear
-   representations of feature space, also it does not perform
+   representations of feature space, but it does not perform
    dimensionality reduction.

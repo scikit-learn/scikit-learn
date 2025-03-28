@@ -105,7 +105,6 @@ build_metadata_list = [
             "polars",
             "pyarrow",
             "cupy",
-            "array-api-compat",
             "array-api-strict",
         ],
     },
@@ -123,7 +122,6 @@ build_metadata_list = [
             "pytorch-cpu",
             "polars",
             "pyarrow",
-            "array-api-compat",
             "array-api-strict",
             "scipy-doctest",
         ],
@@ -223,7 +221,7 @@ build_metadata_list = [
             # Test with some optional dependencies
             + ["lightgbm", "scikit-image"]
             # Test array API on CPU without PyTorch
-            + ["array-api-compat", "array-api-strict"]
+            + ["array-api-strict"]
             # doctests dependencies
             + ["scipy-doctest"]
         ),
