@@ -68,6 +68,11 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+    normalize : bool, default=False
+        If True, returns the pseudo-likelihood normalized by the number
+        of visible units (features). This is useful for comparing models
+        trained on inputs of different dimensionalities.
+
     Attributes
     ----------
     intercept_hidden_ : array-like of shape (n_components,)
@@ -135,6 +140,7 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
         "n_iter": [Interval(Integral, 0, None, closed="left")],
         "verbose": ["verbose"],
         "random_state": ["random_state"],
+        "normalize": ["boolean"],
     }
 
     def __init__(
@@ -146,6 +152,7 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
         n_iter=10,
         verbose=0,
         random_state=None,
+        normalize=False,
     ):
         self.n_components = n_components
         self.learning_rate = learning_rate
@@ -153,6 +160,7 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
         self.n_iter = n_iter
         self.verbose = verbose
         self.random_state = random_state
+        self.normalize = normalize
 
     def transform(self, X):
         """Compute the hidden layer activation probabilities, P(h=1|v=X).
@@ -341,13 +349,18 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
         h_neg[rng.uniform(size=h_neg.shape) < h_neg] = 1.0  # sample binomial
         self.h_samples_ = np.floor(h_neg, h_neg)
 
-    def score_samples(self, X):
+    def score_samples(self, X, normalize=False):
         """Compute the pseudo-likelihood of X.
 
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Values of the visible layer. Must be all-boolean (not checked).
+
+        normalize : bool, default=False
+            If True, returns the pseudo-likelihood normalized by the number
+            of visible units (features). This is useful for comparing models
+            trained on inputs of different dimensionalities.
 
         Returns
         -------
@@ -380,7 +393,10 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
         fe = self._free_energy(v)
         fe_ = self._free_energy(v_)
         # log(expit(x)) = log(1 / (1 + exp(-x)) = -np.logaddexp(0, -x)
-        return -v.shape[1] * np.logaddexp(0, -(fe_ - fe))
+        if normalize:
+            return -np.logaddexp(0, -(fe_ - fe))
+        else:
+            return -v.shape[1] * np.logaddexp(0, -(fe_ - fe))
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
@@ -430,7 +446,7 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
                     % (
                         type(self).__name__,
                         iteration,
-                        self.score_samples(X).mean(),
+                        self.score_samples(X, normalize=self.normalize).mean(),
                         end - begin,
                     )
                 )
