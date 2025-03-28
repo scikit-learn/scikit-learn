@@ -1,0 +1,17 @@
+{
+	// More info about Features: https://containers.dev/features
+	"image": "mcr.microsoft.com/devcontainers/universal:2",
+	"features": {},
+
+	"onCreateCommand": ".devcontainer/setup.sh",
+	"postCreateCommand": "",
+
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-python.python"
+			],
+			"settings": {}
+		}
+	}
+}
