@@ -70,7 +70,7 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
         # np.unique(col_data, return_counts) instead but this is more
         # work and the performance benefit will be limited because we
         # work on a fixed-size subsample of the full data.
-        # TO DO: check if there is a better way to implement this
+        # TODO: check if there is a better way to implement this
         sample_weight = sample_weight[sort_idx]
         percentiles = np.linspace(0, 100, num=max_bins + 1)
         percentiles = percentiles[1:-1]

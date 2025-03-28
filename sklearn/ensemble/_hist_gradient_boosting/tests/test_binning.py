@@ -36,23 +36,22 @@ def test_find_binning_thresholds_regular_data():
 def test_find_binning_thresholds_small_regular_data():
     data = np.linspace(0, 10, 11)
 
-    bin_thresholds = _find_binning_thresholds(data, sample_weight=None, max_bins=5)
+    bin_thresholds = _find_binning_thresholds(data, max_bins=5)
     assert_allclose(bin_thresholds, [2, 4, 6, 8])
 
-    bin_thresholds = _find_binning_thresholds(data, sample_weight=None, max_bins=10)
+    bin_thresholds = _find_binning_thresholds(data, max_bins=10)
     assert_allclose(bin_thresholds, [1, 2, 3, 4, 5, 6, 7, 8, 9])
 
-    bin_thresholds = _find_binning_thresholds(data, sample_weight=None, max_bins=11)
+    bin_thresholds = _find_binning_thresholds(data, max_bins=11)
     assert_allclose(bin_thresholds, np.arange(10) + 0.5)
 
-    bin_thresholds = _find_binning_thresholds(data, sample_weight=None, max_bins=255)
+    bin_thresholds = _find_binning_thresholds(data, max_bins=255)
     assert_allclose(bin_thresholds, np.arange(10) + 0.5)
 
 
 def test_find_binning_thresholds_random_data():
     bin_thresholds = [
-        _find_binning_thresholds(DATA[:, i], sample_weight=None, max_bins=255)
-        for i in range(2)
+        _find_binning_thresholds(DATA[:, i], max_bins=255) for i in range(2)
     ]
     for i in range(len(bin_thresholds)):
         assert bin_thresholds[i].shape == (254,)  # 255 - 1
@@ -69,8 +68,7 @@ def test_find_binning_thresholds_random_data():
 
 def test_find_binning_thresholds_low_n_bins():
     bin_thresholds = [
-        _find_binning_thresholds(DATA[:, i], sample_weight=None, max_bins=128)
-        for i in range(2)
+        _find_binning_thresholds(DATA[:, i], max_bins=128) for i in range(2)
     ]
     for i in range(len(bin_thresholds)):
         assert bin_thresholds[i].shape == (127,)  # 128 - 1
@@ -96,8 +94,7 @@ def test_bin_mapper_n_features_transform():
 @pytest.mark.parametrize("max_bins", [16, 128, 255])
 def test_map_to_bins(max_bins):
     bin_thresholds = [
-        _find_binning_thresholds(DATA[:, i], sample_weight=None, max_bins=max_bins)
-        for i in range(2)
+        _find_binning_thresholds(DATA[:, i], max_bins=max_bins) for i in range(2)
     ]
     binned = np.zeros_like(DATA, dtype=X_BINNED_DTYPE, order="F")
     is_categorical = np.zeros(2, dtype=np.uint8)
