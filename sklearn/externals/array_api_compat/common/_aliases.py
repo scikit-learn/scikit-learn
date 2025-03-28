@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 from typing import NamedTuple
 import inspect
 
-from ._helpers import array_namespace, _check_device, device, is_torch_array, is_cupy_namespace
+from ._helpers import array_namespace, _check_device, device, is_cupy_namespace
 
 # These functions are modified from the NumPy versions.
 
@@ -363,28 +363,29 @@ def clip(
 
     # At least handle the case of Python integers correctly (see
     # https://github.com/numpy/numpy/pull/26892).
-    if type(min) is int and min <= wrapped_xp.iinfo(x.dtype).min:
-        min = None
-    if type(max) is int and max >= wrapped_xp.iinfo(x.dtype).max:
-        max = None
+    if wrapped_xp.isdtype(x.dtype, "integral"):
+        if type(min) is int and min <= wrapped_xp.iinfo(x.dtype).min:
+            min = None
+        if type(max) is int and max >= wrapped_xp.iinfo(x.dtype).max:
+            max = None
 
+    dev = device(x)
     if out is None:
-        out = wrapped_xp.asarray(xp.broadcast_to(x, result_shape),
-                                 copy=True, device=device(x))
+        out = wrapped_xp.empty(result_shape, dtype=x.dtype, device=dev)
+    out[()] = x
+
     if min is not None:
-        if is_torch_array(x) and x.dtype == xp.float64 and _isscalar(min):
-            # Avoid loss of precision due to torch defaulting to float32
-            min = wrapped_xp.asarray(min, dtype=xp.float64)
-        a = xp.broadcast_to(wrapped_xp.asarray(min, device=device(x)), result_shape)
+        a = wrapped_xp.asarray(min, dtype=x.dtype, device=dev)
+        a = xp.broadcast_to(a, result_shape)
         ia = (out < a) | xp.isnan(a)
-        # torch requires an explicit cast here
-        out[ia] = wrapped_xp.astype(a[ia], out.dtype)
+        out[ia] = a[ia]
+
     if max is not None:
-        if is_torch_array(x) and x.dtype == xp.float64 and _isscalar(max):
-            max = wrapped_xp.asarray(max, dtype=xp.float64)
-        b = xp.broadcast_to(wrapped_xp.asarray(max, device=device(x)), result_shape)
+        b = wrapped_xp.asarray(max, dtype=x.dtype, device=dev)
+        b = xp.broadcast_to(b, result_shape)
         ib = (out > b) | xp.isnan(b)
-        out[ib] = wrapped_xp.astype(b[ib], out.dtype)
+        out[ib] = b[ib]
+
     # Return a scalar for 0-D
     return out[()]
 
