@@ -3,15 +3,13 @@ from __future__ import annotations
 import warnings
 from collections import OrderedDict
 from dataclasses import dataclass, field
-from itertools import chain
-
-from .fixes import _dataclass_args
+from itertools import chain, pairwise
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 
-@dataclass(**_dataclass_args())
+@dataclass(slots=True)
 class InputTags:
     """Tags for the input data.
 
@@ -76,7 +74,7 @@ class InputTags:
     pairwise: bool = False
 
 
-@dataclass(**_dataclass_args())
+@dataclass(slots=True)
 class TargetTags:
     """Tags for the target data.
 
@@ -117,7 +115,7 @@ class TargetTags:
     single_output: bool = True
 
 
-@dataclass(**_dataclass_args())
+@dataclass(slots=True)
 class TransformerTags:
     """Tags for the transformer.
 
@@ -137,7 +135,7 @@ class TransformerTags:
     preserves_dtype: list[str] = field(default_factory=lambda: ["float64"])
 
 
-@dataclass(**_dataclass_args())
+@dataclass(slots=True)
 class ClassifierTags:
     """Tags for the classifier.
 
@@ -170,7 +168,7 @@ class ClassifierTags:
     multi_label: bool = False
 
 
-@dataclass(**_dataclass_args())
+@dataclass(slots=True)
 class RegressorTags:
     """Tags for the regressor.
 
@@ -188,7 +186,7 @@ class RegressorTags:
     poor_score: bool = False
 
 
-@dataclass(**_dataclass_args())
+@dataclass(slots=True)
 class Tags:
     """Tags for the estimator.
 
@@ -437,7 +435,7 @@ def get_tags(estimator) -> Tags:
         # inheritance
         sklearn_tags_diff = {}
         items = list(sklearn_tags_provider.items())
-        for current_item, next_item in zip(items[:-1], items[1:]):
+        for current_item, next_item in pairwise(items):
             current_name, current_tags = current_item
             next_name, next_tags = next_item
             current_tags = _to_old_tags(current_tags)
