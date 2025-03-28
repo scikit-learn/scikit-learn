@@ -15,8 +15,8 @@ from sklearn.utils._testing import assert_allclose
 friedman = datasets.make_friedman1(random_state=0)
 
 
-def test_transform_target_regressor_error():
-    X, y = friedman
+def test_transform_target_regressor_error(global_random_seed):
+    X, y = datasets.make_friedman1(random_state=global_random_seed)
     # provide a transformer and functions at the same time
     regr = TransformedTargetRegressor(
         regressor=LinearRegression(),
