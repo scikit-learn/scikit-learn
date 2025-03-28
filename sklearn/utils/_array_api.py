@@ -111,17 +111,14 @@ def _get_namespace_device_dtype_ids(param):
     try:
         import array_api_strict
     except ImportError:
-        return f"{param}"
+        return None
     else:
         if param == array_api_strict.Device("CPU_DEVICE"):
             return "CPU_DEVICE"
         if param == array_api_strict.Device("device1"):
             return "device1"
-
-    # Alternative that does not require importing array_api_strict
-    # if str(param).startswith("array_api_strict.Device"):
-    #     param = str(param)[25:-2]
-    # return f"{param}"
+        if param == array_api_strict.Device("device2"):
+            return "device2"
 
 
 def _check_array_api_dispatch(array_api_dispatch):
