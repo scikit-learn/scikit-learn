@@ -241,8 +241,10 @@ def _locally_linear_embedding(
         # we'll compute M = (I-W)'(I-W)
         # depending on the solver, we'll do this differently
         if M_sparse:
-            M = eye(*W.shape, format=W.format) - W
-            M = M.T @ M
+            # change when SciPy 1.12+ is minimal supported version
+            # M = eye_array(W.shape, format=W.format, dtype=W.dtype) - W
+            M = W.__class__(eye(*W.shape, format=W.format, dtype=W.dtype)) - W
+            M = M.T @ M  # M = (I - W)' (I - W) = W' W - W' - W + I
         else:
             M = (W.T @ W - W.T - W).toarray()
             M.flat[:: M.shape[0] + 1] += 1  # M = W' W - W' - W + I
@@ -397,7 +399,7 @@ def _locally_linear_embedding(
             nbrs_x, nbrs_y = np.meshgrid(neighbors[i], neighbors[i])
             M[nbrs_x, nbrs_y] += np.dot(Wi, Wi.T)
             Wi_sum1 = Wi.sum(1)
-            M[i, neighbors[i]] -= Wi_sum1
+            M[[i], neighbors[i]] -= Wi_sum1
             M[neighbors[i], [i]] -= Wi_sum1
             M[i, i] += s_i
 
