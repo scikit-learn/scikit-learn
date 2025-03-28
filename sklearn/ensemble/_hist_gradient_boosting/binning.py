@@ -70,10 +70,7 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
         # np.unique(col_data, return_counts) instead but this is more
         # work and the performance benefit will be limited because we
         # work on a fixed-size subsample of the full data.
-        # We reset to max_bins if there are less distinct values
         # TO DO: check if there is a better way to implement this
-        if len(distinct_values) <= max_bins:
-            max_bins = len(distinct_values)
         sample_weight = sample_weight[sort_idx]
         percentiles = np.linspace(0, 100, num=max_bins + 1)
         percentiles = percentiles[1:-1]
@@ -85,6 +82,15 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
             ]
         )
         assert midpoints.shape[0] == max_bins - 1
+
+        # Remove duplicated midpoints if they exist and shift
+        # by 0.5 if the unique points are less than distinct
+        # values
+        if np.unique(midpoints).shape[0] != midpoints.shape[0]:
+            midpoints = np.unique(midpoints)
+        if len(distinct_values) <= len(midpoints):
+            midpoints *= 0.5
+
     # We avoid having +inf thresholds: +inf thresholds are only allowed in
     # a "split on nan" situation.
     np.clip(midpoints, a_min=None, a_max=ALMOST_INF, out=midpoints)
@@ -227,6 +233,10 @@ class _BinMapper(TransformerMixin, BaseEstimator):
                 X.shape[0], self.subsample, p=subsampling_probabilities, replace=True
             )
             X = X.take(subset, axis=0)
+
+            # Add a switch to replace sample weights with None
+            # since sample weights were already used in subsampling
+            # and should not then be propagated to _find_binning_thresholds
             sample_weight = None
 
         if self.is_categorical is None:

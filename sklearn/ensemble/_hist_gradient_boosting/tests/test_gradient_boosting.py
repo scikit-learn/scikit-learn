@@ -704,17 +704,9 @@ def test_zero_sample_weights_classification():
     gb.fit(X, y, sample_weight=sample_weight)
     assert_array_equal(gb.predict([[1, 0]]), [1])
 
-    # X = [[1, 0], [1, 0], [1, 0], [0, 1], [1, 1]]
-    # y = [0, 0, 1, 0, 2]
-    # The above is a special broken case, since distinct values
-    # are less than 3, mid-points are automatically calculated
-    # and return different values as compared to when using weights
-    # since the extra 1 breakes the tie. For now the test is slightly
-    # modified, in future we need to decide what to do when
-    # distinct_values<=max_bins but sample weights are supplied
+    X = [[1, 0], [1, 0], [1, 0], [0, 1], [1, 1]]
+    y = [0, 0, 1, 0, 2]
 
-    X = [[1, 0], [1, 0], [1, 0], [0, 1], [1, 1], [0, 0]]
-    y = [0, 0, 1, 0, 2, -1]
     # ignore the first 2 training samples by setting their weight to 0
     sample_weight = [0, 0, 1, 1, 1, 1]
     gb = HistGradientBoostingClassifier(loss="log_loss", min_samples_leaf=1)
@@ -775,7 +767,7 @@ def test_sample_weight_effect(problem, global_random_seed):
     est_dup = clone(est).fit(X_resampled_by_weights, y_resampled_by_weights)
 
     # checking raw_predict is stricter than just predict for classification
-    assert np.allclose(est_sw._raw_predict(X), est_dup._raw_predict(X))
+    assert_allclose(est_sw._raw_predict(X), est_dup._raw_predict(X))
 
 
 @pytest.mark.parametrize("Loss", (HalfSquaredError, AbsoluteError))
