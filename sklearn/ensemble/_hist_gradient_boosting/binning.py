@@ -53,17 +53,19 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
     sort_idx = np.argsort(col_data)
     col_data = col_data[sort_idx]
     distinct_values = np.unique(col_data).astype(X_DTYPE)
-    if sample_weight is None:
-        if len(distinct_values) <= max_bins:
-            midpoints = distinct_values[:-1] + distinct_values[1:]
-            midpoints *= 0.5
-        else:
-            percentiles = np.linspace(0, 100, num=max_bins + 1)
-            percentiles = percentiles[1:-1]
-            midpoints = np.percentile(
-                col_data, percentiles, method="averaged_inverted_cdf"
-            )
-            assert midpoints.shape[0] == max_bins - 1
+
+    # Calculate midpoints if distinct values <= max_bins
+    if len(distinct_values) <= max_bins:
+        midpoints = distinct_values[:-1] + distinct_values[1:]
+        bin_thresholds = midpoints * 0.5
+
+    elif sample_weight is None:
+        percentiles = np.linspace(0, 100, num=max_bins + 1)
+        percentiles = percentiles[1:-1]
+        bin_thresholds = np.percentile(
+            col_data, percentiles, method="averaged_inverted_cdf"
+        )
+        assert bin_thresholds.shape[0] == max_bins - 1
 
     else:
         # We could compute approximate midpoint percentiles using the output of
@@ -75,26 +77,25 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
         percentiles = np.linspace(0, 100, num=max_bins + 1)
         percentiles = percentiles[1:-1]
 
-        midpoints = np.array(
+        bin_thresholds = np.array(
             [
                 _averaged_weighted_percentile(col_data, sample_weight, percentile)
                 for percentile in percentiles
             ]
         )
-        assert midpoints.shape[0] == max_bins - 1
+        assert bin_thresholds.shape[0] == max_bins - 1
 
         # Remove duplicated midpoints if they exist and shift
         # by 0.5 if the unique points are less than distinct
         # values
-        if np.unique(midpoints).shape[0] != midpoints.shape[0]:
-            midpoints = np.unique(midpoints)
-        if len(distinct_values) <= len(midpoints):
-            midpoints *= 0.5
+        unique_bin_values = np.unique(bin_thresholds)
+        if unique_bin_values.shape[0] != bin_thresholds.shape[0]:
+            bin_thresholds = unique_bin_values
 
     # We avoid having +inf thresholds: +inf thresholds are only allowed in
     # a "split on nan" situation.
-    np.clip(midpoints, a_min=None, a_max=ALMOST_INF, out=midpoints)
-    return midpoints
+    np.clip(bin_thresholds, a_min=None, a_max=ALMOST_INF, out=bin_thresholds)
+    return bin_thresholds
 
 
 class _BinMapper(TransformerMixin, BaseEstimator):
