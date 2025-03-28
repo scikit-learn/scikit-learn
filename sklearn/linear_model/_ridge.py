@@ -525,11 +525,11 @@ def ridge_regression(
 
     positive : bool or list of bool, default=False
         When set to ``True``, forces the coefficients to be positive.
-        When set to ``[True, True, False]``, forces the first two
-        coefficients to be positive and the third one to be negative.
-        When set to ``False``, no specific constraint is enforced.
-        When positive is list, the list must have the same length as the number
-        of expected coefficients. (X.shape[1])
+        Positivity constraint on the coefficients. 
+        If True, forces all coefficients to be positive.
+        If False, no constraint is enforced.
+        If list of length `n_features`, the positivity constraint is specified 
+        for each feature, forcing the corresponding coefficient to be positive.
         Only 'lbfgs' solver is supported in this case.
 
     random_state : int, RandomState instance, default=None

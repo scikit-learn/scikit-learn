@@ -2225,8 +2225,8 @@ def test_lbfgs_solver_error():
 @pytest.mark.parametrize("positive", [[True, True, True]])
 def test_lbfgs_positive_list(alpha, positive):
     """
-    Test that LBGFS gets almost the same coef when
-    positive=True and positive=List[*True].
+    Test that LBGFS gets the same coef when
+    positive=True and positive=[True]*n_features.
     """
     X, y = make_regression(n_samples=100, n_features=3, random_state=42)
     y = np.expand_dims(y, 1)
@@ -2250,7 +2250,7 @@ def test_lbfgs_positive_list(alpha, positive):
 
 @pytest.mark.parametrize("positive", [[True], [True, True, True]])
 def test_lbfgs_positive_list_error_length(positive):
-    """Test that LBGFS returns error when list length does not equal features."""
+    """Test that LBGFS raises an error when len(positive) != n_features."""
     X, y = make_regression(n_samples=100, n_features=2, random_state=42)
     y = np.expand_dims(y, 1)
     config_list_bool = {
