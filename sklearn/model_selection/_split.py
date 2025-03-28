@@ -2940,7 +2940,7 @@ def train_test_split(
 
         uid_hashes = np.array(
             [
-                int(hashlib.md5(str(u).encode("utf-8")).hexdigest(), 16) % (10**8)
+                int(hashlib.sha256(str(u).encode("utf-8")).hexdigest(), 16) % (10**8)
                 for u in uid
             ],
             dtype=np.float64,
