@@ -399,7 +399,11 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
 
         # Output for regression
         if not is_classifier(self):
-            self.out_activation_ = "identity"
+            if self.loss == "poisson":
+                self.out_activation_ = "exp"
+            else:
+                # loss = "squared_error"
+                self.out_activation_ = "identity"
         # Output for multi class
         elif self._label_binarizer.y_type_ == "multiclass":
             self.out_activation_ = "softmax"
@@ -1378,6 +1382,17 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     Parameters
     ----------
+    loss : {'squared_error', 'poisson'}, default='squared_error'
+        The loss function to use when training the weights. Note that the
+        "squared error" and "poisson" losses actually implement
+        "half squares error" and "half poisson deviance" to simplify the
+        computation of the gradient. Furthermore, the "poisson" loss internally uses
+        a log-link (exponential as the output activation function) and requires
+        ``y >= 0``.
+
+        .. versionchanged:: 1.7
+           Added parameter `loss` and option 'poisson'.
+
     hidden_layer_sizes : array-like of shape(n_layers - 2,), default=(100,)
         The ith element represents the number of neurons in the ith
         hidden layer.
@@ -1646,8 +1661,14 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     0.98...
     """
 
+    _parameter_constraints: dict = {
+        **BaseMultilayerPerceptron._parameter_constraints,
+        "loss": [StrOptions({"squared_error", "poisson"})],
+    }
+
     def __init__(
         self,
+        loss="squared_error",
         hidden_layer_sizes=(100,),
         activation="relu",
         *,
@@ -1683,7 +1704,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
             learning_rate_init=learning_rate_init,
             power_t=power_t,
             max_iter=max_iter,
-            loss="squared_error",
+            loss=loss,
             shuffle=shuffle,
             random_state=random_state,
             tol=tol,
