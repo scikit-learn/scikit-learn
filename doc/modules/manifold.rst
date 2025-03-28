@@ -461,7 +461,8 @@ coordinates :math:`Z` of the embedded points.
   seeks to enforce :math:`d_{ij}(Z) > d_{kl}(Z)`. A simple algorithm
   to enforce proper ordination is to use an
   isotonic regression of :math:`d_{ij}(Z)` on :math:`\delta_{ij}`, yielding
-  disparities :math:`\hat{d}_{ij}` on the same order as :math:`\delta_{ij}`.
+  disparities :math:`\hat{d}_{ij}` that are a monotonic transformation
+  of dissimilarities :math:`\delta_{ij}` and hence having the same ordering.
   This is done repeatedly after every step of the optimization algorithm.
   In order to avoid the trivial solution where all embedding points are
   overlapping, the disparities :math:`\hat{d}_{ij}` are normalized.
