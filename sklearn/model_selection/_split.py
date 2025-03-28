@@ -2774,6 +2774,7 @@ def train_test_split(
     random_state=None,
     shuffle=True,
     stratify=None,
+    uid=None,
 ):
     """Split arrays or matrices into random train and test subsets.
 
@@ -2816,6 +2817,13 @@ def train_test_split(
         If not None, data is split in a stratified fashion, using this as
         the class labels.
         Read more in the :ref:`User Guide <stratification>`.
+
+    uid : array-like of shape (n_samples,), default=None
+        If provided, a deterministic split will be performed based on hashing
+        the UID values. Useful for reproducible splits across different datasets
+        with identical samples in different orders. Setting `uid` overrides
+        `random_state`, `shuffle`, and `stratify`.
+
 
     Returns
     -------
@@ -2916,6 +2924,43 @@ def train_test_split(
     arrays = indexable(*arrays)
 
     n_samples = _num_samples(arrays[0])
+
+    # UID based deterministic split
+    if uid is not None:
+        if stratify is not None:
+            raise ValueError("Cannot use `uid` and `stratify` together.")
+
+        if shuffle is False:
+            raise ValueError("`uid` cannot be used with `shuffle=False`.")
+
+        if len(uid) != n_samples:
+            raise ValueError("`uid` must be same length as input arrays")
+
+        import hashlib
+
+        uid_hashes = np.array(
+            [
+                int(hashlib.md5(str(u).encode("utf-8")).hexdigest(), 16) % (10**8)
+                for u in uid
+            ],
+            dtype=np.float64,
+        )
+        uid_hashes /= uid_hashes.max()
+
+        threshold = test_size if test_size is not None else 0.25
+        test_mask = uid_hashes < threshold
+
+        test = np.where(test_mask)[0]
+        train = np.where(~test_mask)[0]
+
+        train, test = ensure_common_namespace_device(arrays[0], train, test)
+
+        return list(
+            chain.from_iterable(
+                (_safe_indexing(a, train), _safe_indexing(a, test)) for a in arrays
+            )
+        )
+
     n_train, n_test = _validate_shuffle_split(
         n_samples, test_size, train_size, default_test_size=0.25
     )
