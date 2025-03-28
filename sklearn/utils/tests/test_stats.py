@@ -180,7 +180,7 @@ def test_weighted_percentile_array_api_consistency(
             if device == array_api_strict.Device("device1"):
                 # See https://github.com/data-apis/array-api-strict/issues/134
                 pytest.xfail(
-                    "array_api_strict bug with indexing with tuple of arrays "
+                    "array_api_strict has bug when indexing with tuple of arrays "
                     "on non-'CPU_DEVICE' devices."
                 )
 
