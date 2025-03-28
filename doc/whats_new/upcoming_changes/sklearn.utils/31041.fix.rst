@@ -1,0 +1,2 @@
+- In :mod:`utils.stats` updated _weighted_percentile raise an value error when all weights are zero.
+    Also changed test_weighted_percentile_zero_weight to check for that error.
