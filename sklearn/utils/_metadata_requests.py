@@ -458,7 +458,10 @@ class MethodMetadataRequest:
                 f" {self.owner}.{self.method}, which is used within"
                 f" {parent}.{caller}. Call `{self.owner}"
                 + set_requests_on
-                + "` for each metadata you want to request/ignore."
+                + "` for each metadata you want to request/ignore. See the"
+                " Metadata Routing User guide"
+                " <https://scikit-learn.org/stable/metadata_routing.html> for more"
+                " information."
             )
             raise UnsetMetadataPassedError(
                 message=message,
