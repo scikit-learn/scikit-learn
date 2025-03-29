@@ -1509,6 +1509,45 @@ def test_train_test_split_list_input():
         np.testing.assert_equal(y_test3, y_test2)
 
 
+def test_train_test_split_with_uid_deterministic():
+    X = np.arange(100).reshape((50, 2))
+    uids = np.array([f"user_{i}" for i in range(50)])
+
+    split1 = train_test_split(X, uid=uids, test_size=0.3)
+    split2 = train_test_split(X, uid=uids, test_size=0.3)
+
+    # Split must be identical for same UID input
+    for a, b in zip(split1, split2):
+        np.testing.assert_array_equal(a, b)
+
+    # Check test set size is approximately correct
+    X_train, X_test = split1
+    test_ratio = len(X_test) / len(X)
+    assert abs(test_ratio - 0.3) < 0.1  # Allow a 10% tolerance
+
+
+def test_train_test_split_uid_with_shuffle_false_raises():
+    X = np.arange(10)
+    uids = [str(i) for i in range(10)]
+    with pytest.raises(ValueError, match="`uid` cannot be used with `shuffle=False`"):
+        train_test_split(X, uid=uids, shuffle=False)
+
+
+def test_train_test_split_uid_with_stratify_raises():
+    X = np.arange(10)
+    y = [0, 1] * 5
+    uids = [str(i) for i in range(10)]
+    with pytest.raises(ValueError, match="Cannot use `uid` and `stratify` together"):
+        train_test_split(X, uid=uids, stratify=y)
+
+
+def test_train_test_split_uid_wrong_length():
+    X = np.arange(10)
+    uids = [str(i) for i in range(9)]  # 1 short
+    with pytest.raises(ValueError, match="uid must be same length as input arrays"):
+        train_test_split(X, uid=uids)
+
+
 @pytest.mark.parametrize(
     "test_size, train_size",
     [(2.0, None), (1.0, None), (0.1, 0.95), (None, 1j), (11, None), (10, None), (8, 3)],
