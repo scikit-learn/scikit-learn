@@ -65,7 +65,7 @@ data = fetch_20newsgroups(
 print(
     f"Dataset contains {len(data.filenames)} documents from "
     f"{len(data.target_names)} categories\n"
-       )
+)
 
 # Parameters
 sdg_params = dict(alpha=1e-5, penalty="l2", loss="log_loss")
@@ -98,6 +98,7 @@ ls_pipeline = Pipeline(
     ]
 )
 
+
 def eval_and_get_f1(clf, X_train, y_train, X_test, y_test):
     """Evaluate model performance and return F1 score"""
     print(f"   Number of training samples: {len(X_train)}")
@@ -109,6 +110,7 @@ def eval_and_get_f1(clf, X_train, y_train, X_test, y_test):
     print("\n")
     return f1
 
+
 X, y = data.data, data.target
 X_train, X_test, y_train, y_test = train_test_split(X, y)
 
@@ -116,7 +118,7 @@ f1_scores = {}
 
 # Evaluate supervised model with 100% of training data
 print("1. Supervised SGDClassifier on 100% of the data:")
-f1_scores['Supervised (100%)'] = eval_and_get_f1(
+f1_scores["Supervised (100%)"] = eval_and_get_f1(
     pipeline, X_train, y_train, X_test, y_test
 )
 
@@ -124,25 +126,21 @@ f1_scores['Supervised (100%)'] = eval_and_get_f1(
 print("2. Supervised SGDClassifier on 20% of the training data:")
 y_mask = np.random.rand(len(y_train)) < 0.2
 # X_20 and y_20 are the subset of the train dataset indicated by the mask
-X_20, y_20 = map(
-    list, zip(*((x, y) for x, y, m in zip(X_train, y_train, y_mask) if m))
-)
-f1_scores['Supervised (20%)'] = eval_and_get_f1(
-    pipeline, X_20, y_20, X_test, y_test
-)
+X_20, y_20 = map(list, zip(*((x, y) for x, y, m in zip(X_train, y_train, y_mask) if m)))
+f1_scores["Supervised (20%)"] = eval_and_get_f1(pipeline, X_20, y_20, X_test, y_test)
 
 # Evaluate semi-supervised approaches
 print(
     "3. SelfTrainingClassifier (semi-supervised) using 20% labeled "
     "+ 80% unlabeled data):"
-    )
+)
 y_train_semi = y_train.copy()
 y_train_semi[~y_mask] = -1  # Mark unlabeled data with -1
-f1_scores['SelfTraining'] = eval_and_get_f1(
+f1_scores["SelfTraining"] = eval_and_get_f1(
     st_pipeline, X_train, y_train_semi, X_test, y_test
 )
 print("4. LabelSpreading (semi-supervised) using 20% labeled + 80% unlabeled data:")
-f1_scores['LabelSpreading'] = eval_and_get_f1(
+f1_scores["LabelSpreading"] = eval_and_get_f1(
     ls_pipeline, X_train, y_train_semi, X_test, y_test
 )
 
@@ -153,27 +151,36 @@ models = list(f1_scores.keys())
 scores = list(f1_scores.values())
 
 # Define colors for each bar
-colors = ['royalblue', 'royalblue', 'forestgreen', 'royalblue']
+colors = ["royalblue", "royalblue", "forestgreen", "royalblue"]
 bars = plt.bar(models, scores, color=colors)
 
 # Customize plot
-plt.title('Comparison of Classification Approaches')
-plt.ylabel('Micro-averaged F1 Score')
+plt.title("Comparison of Classification Approaches")
+plt.ylabel("Micro-averaged F1 Score")
 plt.xticks()
 
 # Add value labels on bars
 for bar in bars:
     height = bar.get_height()
-    plt.text(bar.get_x() + bar.get_width()/2., height,
-            f"{height:.2f}",
-            ha="center", va="bottom")
+    plt.text(
+        bar.get_x() + bar.get_width() / 2.0,
+        height,
+        f"{height:.2f}",
+        ha="center",
+        va="bottom",
+    )
 
 # Add note below plot
-plt.figtext(0.5, 0.02,
-            "SelfTraining classifier shows improved performance over "
-            "supervised learning with limited data",
-            ha='center', va='bottom',
-            fontsize=10, style='italic')
+plt.figtext(
+    0.5,
+    0.02,
+    "SelfTraining classifier shows improved performance over "
+    "supervised learning with limited data",
+    ha="center",
+    va="bottom",
+    fontsize=10,
+    style="italic",
+)
 
 plt.tight_layout()
 plt.subplots_adjust(bottom=0.15)
