@@ -203,6 +203,12 @@ def test_adjusted_mutual_info_score():
     C = contingency_matrix(labels_a, labels_b, sparse=True)
     mi = mutual_info_score(labels_a, labels_b, contingency=C)
     assert_almost_equal(mi, 0.41022, 5)
+    C = contingency_matrix(labels_a, labels_b, sparse="sparray")
+    mi = mutual_info_score(labels_a, labels_b, contingency=C)
+    assert_almost_equal(mi, 0.41022, 5)
+    C = contingency_matrix(labels_a, labels_b, sparse="spmatrix")
+    mi = mutual_info_score(labels_a, labels_b, contingency=C)
+    assert_almost_equal(mi, 0.41022, 5)
     # with provided dense contingency
     C = contingency_matrix(labels_a, labels_b)
     mi = mutual_info_score(labels_a, labels_b, contingency=C)
@@ -291,8 +297,16 @@ def test_contingency_matrix_sparse():
     C = contingency_matrix(labels_a, labels_b)
     C_sparse = contingency_matrix(labels_a, labels_b, sparse=True).toarray()
     assert_array_almost_equal(C, C_sparse)
-    with pytest.raises(ValueError, match="Cannot set 'eps' when sparse=True"):
+    C_sparse = contingency_matrix(labels_a, labels_b, sparse="spmatrix").toarray()
+    assert_array_almost_equal(C, C_sparse)
+    C_sparse = contingency_matrix(labels_a, labels_b, sparse="sparray").toarray()
+    assert_array_almost_equal(C, C_sparse)
+    with pytest.raises(ValueError, match="Cannot set 'eps' when sparse is not False"):
         contingency_matrix(labels_a, labels_b, eps=1e-10, sparse=True)
+    with pytest.raises(ValueError, match="Cannot set 'eps' when sparse is not False"):
+        contingency_matrix(labels_a, labels_b, eps=1e-10, sparse="sparray")
+    with pytest.raises(ValueError, match="Cannot set 'eps' when sparse is not False"):
+        contingency_matrix(labels_a, labels_b, eps=1e-10, sparse="spmatrix")
 
 
 def test_exactly_zero_info_score():
