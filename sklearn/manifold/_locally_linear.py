@@ -404,7 +404,7 @@ def _locally_linear_embedding(
             nbrs_x, nbrs_y = np.meshgrid(neighbors[i], neighbors[i])
             M[nbrs_x, nbrs_y] += np.dot(Wi, Wi.T)
             Wi_sum1 = Wi.sum(1)
-            M[i, neighbors[i]] -= Wi_sum1
+            M[[i], neighbors[i]] -= Wi_sum1
             M[neighbors[i], [i]] -= Wi_sum1
             M[i, i] += s_i
 
