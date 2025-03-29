@@ -1446,6 +1446,9 @@ class GridSearchCV(BaseSearchCV):
             'params'             : [{'kernel': 'poly', 'degree': 2}, ...],
             }
 
+        For an example of visualization and interpretation of GridSearch results,
+        see :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`.
+
         NOTE
 
         The key ``'params'`` is used to store a list of parameter
