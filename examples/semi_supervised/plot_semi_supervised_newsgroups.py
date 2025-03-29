@@ -3,8 +3,9 @@
 Semi-supervised Classification on a Text Dataset
 ================================================
 
-This example demonstrates the effectiveness of semi-supervised learning in text classification
-when labeled data is scarce. We compare four different approaches:
+This example demonstrates the effectiveness of semi-supervised learning
+in text classification when labeled data is scarce.
+We compare four different approaches:
 
 1. Supervised learning using 100% of labeled data (baseline)
    - Uses SGDClassifier with TF-IDF features
@@ -24,9 +25,10 @@ when labeled data is scarce. We compare four different approaches:
    - Propagates labels through the data manifold
    - Shows how graph-based methods can leverage unlabeled data
 
-The example uses the 20 newsgroups dataset, focusing on five computer-related categories.
-The results demonstrate how semi-supervised methods can achieve better performance than
-supervised learning with limited labeled data by effectively utilizing unlabeled samples.
+The example uses the 20 newsgroups dataset, focusing on five computer-related
+categories. The results demonstrate how semi-supervised methods can achieve
+better performance than supervised learning with limited labeled data by
+effectively utilizing unlabeled samples.
 
 You can adjust the number of categories by giving their names to the dataset
 loader or setting them to `None` to get all 20 of them.
@@ -36,8 +38,8 @@ loader or setting them to `None` to get all 20 of them.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
@@ -60,7 +62,10 @@ data = fetch_20newsgroups(
     ],
 )
 
-print(f"Dataset contains {len(data.filenames)} documents from {len(data.target_names)} categories\n")
+print(
+    f"Dataset contains {len(data.filenames)} documents from "
+    f"{len(data.target_names)} categories\n"
+       )
 
 # Parameters
 sdg_params = dict(alpha=1e-5, penalty="l2", loss="log_loss")
@@ -96,9 +101,7 @@ ls_pipeline = Pipeline(
 def eval_and_get_f1(clf, X_train, y_train, X_test, y_test):
     """Evaluate model performance and return F1 score"""
     print(f"   Number of training samples: {len(X_train)}")
-    unlabeled_count = sum(1 for x in y_train if x == -1)
-    print(f"   Unlabeled samples in training set: {unlabeled_count}")
-    
+    print(f"   Unlabeled samples in training set: {sum(1 for x in y_train if x == -1)}")
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
     f1 = f1_score(y_test, y_pred, average="micro")
@@ -129,7 +132,10 @@ f1_scores['Supervised (20%)'] = eval_and_get_f1(
 )
 
 # Evaluate semi-supervised approaches
-print("3. SelfTrainingClassifier (semi-supervised) using 20% labeled + 80% unlabeled data):")
+print(
+    "3. SelfTrainingClassifier (semi-supervised) using 20% labeled "
+    "+ 80% unlabeled data):"
+    )
 y_train_semi = y_train.copy()
 y_train_semi[~y_mask] = -1  # Mark unlabeled data with -1
 f1_scores['SelfTraining'] = eval_and_get_f1(
@@ -140,10 +146,9 @@ f1_scores['LabelSpreading'] = eval_and_get_f1(
     ls_pipeline, X_train, y_train_semi, X_test, y_test
 )
 
-# Create the plot 
+# Create the plot
 plt.figure(figsize=(10, 6))
 
-# Create bar chart
 models = list(f1_scores.keys())
 scores = list(f1_scores.values())
 
