@@ -16,6 +16,7 @@ import scipy.special as special
 from .._config import get_config
 from ..externals import array_api_compat
 from ..externals import array_api_extra as xpx
+from ..externals.array_api_compat import is_dask_namespace, is_lazy_array
 from ..externals.array_api_compat import numpy as np_compat
 from .fixes import parse_version
 
@@ -544,6 +545,10 @@ def _fill_or_add_to_diagonal(array, value, xp, add_value=True, wrap=False):
         )
 
     value = xp.asarray(value, dtype=array.dtype, device=device(array))
+
+    # TODO: candidate for upstreaming to array-api-extra
+    # This can't work in-place for dask/jax
+
     end = None
     # Explicit, fast formula for the common case.  For 2-d arrays, we
     # accept rectangular ones.
@@ -556,6 +561,10 @@ def _fill_or_add_to_diagonal(array, value, xp, add_value=True, wrap=False):
         array_flat[:end:step] += value
     else:
         array_flat[:end:step] = value
+    if is_dask_namespace(xp):
+        # hack to make sure correct value is returned for dask
+        return xp.reshape(array_flat, array.shape)
+    return array
 
 
 def _is_xp_namespace(xp, name):
@@ -622,13 +631,15 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
         weights = xp.asarray(weights, device=device_)
 
     if weights is not None and a.shape != weights.shape:
-        if axis is None:
+        # shape checks are disabled here for dask
+        # TODO: figure out a strategy for doing this across sklearn
+        if axis is None and not is_lazy_array(a):
             raise TypeError(
                 f"Axis must be specified when the shape of a {tuple(a.shape)} and "
                 f"weights {tuple(weights.shape)} differ."
             )
 
-        if tuple(weights.shape) != (a.shape[axis],):
+        if tuple(weights.shape) != (a.shape[axis],) and not is_lazy_array(a):
             raise ValueError(
                 f"Shape of weights weights.shape={tuple(weights.shape)} must be "
                 f"consistent with a.shape={tuple(a.shape)} and {axis=}."
@@ -911,6 +922,10 @@ def _in1d(ar1, ar2, xp, assume_unique=False, invert=False):
     present in numpy:
     https://github.com/numpy/numpy/blob/v1.26.0/numpy/lib/arraysetops.py#L524-L758
     """
+    if is_dask_namespace(xp):
+        import dask.array as da
+
+        return da.isin(ar1, ar2, assume_unique, invert)
     xp, _ = get_namespace(ar1, ar2, xp=xp)
 
     # This code is run to make the code significantly faster

@@ -1173,6 +1173,8 @@ def check_array_api_input(
             assert isinstance(result, float)
             assert isinstance(result_xp, float)
             if check_values:
+                print(result)
+                print(result_xp)
                 assert abs(result - result_xp) < _atol_for_type(X.dtype)
             continue
         else:
