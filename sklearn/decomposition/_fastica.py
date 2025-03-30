@@ -747,6 +747,7 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         copy : bool, default=True
             If False, data passed to fit can be overwritten. Defaults to True.
+            See the :term:`Glossary <copy>`.
 
         Returns
         -------
@@ -778,6 +779,7 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             and `n_components` is the number of components.
         copy : bool, default=True
             If False, data passed to fit are overwritten. Defaults to True.
+            See the :term:`Glossary <copy>`.
 
         Returns
         -------

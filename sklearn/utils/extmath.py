@@ -927,7 +927,7 @@ def softmax(X, copy=True):
         Argument to the logistic function.
 
     copy : bool, default=True
-        Copy X or not.
+        Copy X or not. See the :term:`Glossary <copy>`.
 
     Returns
     -------
@@ -1258,6 +1258,7 @@ def safe_sqr(X, *, copy=True):
     copy : bool, default=True
         Whether to create a copy of X and operate on it or to perform
         inplace computation (default behaviour).
+        See the :term:`Glossary <copy>`.
 
     Returns
     -------

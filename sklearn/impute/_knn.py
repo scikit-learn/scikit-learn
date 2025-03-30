@@ -67,6 +67,7 @@ class KNNImputer(_BaseImputer):
     copy : bool, default=True
         If True, a copy of X will be created. If False, imputation will
         be done in-place whenever possible.
+        See the :term:`Glossary <copy>`.
 
     add_indicator : bool, default=False
         If True, a :class:`MissingIndicator` transform will stack onto the

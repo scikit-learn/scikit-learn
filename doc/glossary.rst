@@ -1545,6 +1545,14 @@ functions or non-estimator constructors.
         The ``class_weight`` parameter is validated and interpreted with
         :func:`utils.class_weight.compute_class_weight`.
 
+    ``copy``
+        This parameter is used to specify the nature of the input operated
+        during computation. If False, try to avoid a copy and modify the input
+        in place.
+        This is not guaranteed to always work in place. If the input is not an
+        array of floating values or encoded as a CSR matrix, a new copy will
+        always be made, even if `copy=False`.
+
     ``cv``
         Determines a cross validation splitting strategy, as used in
         cross-validation based routines. ``cv`` is also available in estimators
