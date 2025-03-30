@@ -852,7 +852,6 @@ def test_tempmemmap(monkeypatch):
     assert registration_counter.nb_calls == 2
 
 
-@pytest.mark.xfail(_IS_WASM, reason="memmap not fully supported")
 def test_create_memmap_backed_data(monkeypatch):
     registration_counter = RegistrationCounter()
     monkeypatch.setattr(atexit, "register", registration_counter)
