@@ -45,6 +45,7 @@ from sklearn.utils._array_api import (
     _NUMPY_NAMESPACE_NAMES,
     _atol_for_type,
     _convert_to_numpy,
+    _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
     yield_namespaces,
 )
@@ -524,7 +525,7 @@ def test_ridge_regression_convergence_fail():
     rng = np.random.RandomState(0)
     y = rng.randn(5)
     X = rng.randn(5, 10)
-    warning_message = r"sparse_cg did not converge after" r" [0-9]+ iterations."
+    warning_message = r"sparse_cg did not converge after [0-9]+ iterations."
     with pytest.warns(ConvergenceWarning, match=warning_message):
         ridge_regression(
             X, y, alpha=1.0, solver="sparse_cg", tol=0.0, max_iter=None, verbose=1
@@ -1256,7 +1257,9 @@ def check_array_api_attributes(name, estimator, array_namespace, device, dtype_n
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "check",
