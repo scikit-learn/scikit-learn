@@ -19,6 +19,7 @@ def test_config_context():
         "pairwise_dist_chunk_size": 256,
         "enable_cython_pairwise_dist": True,
         "transform_output": "default",
+        "inverse_transform_output": "default",
         "enable_metadata_routing": False,
         "skip_parameter_validation": False,
     }
@@ -37,6 +38,7 @@ def test_config_context():
             "pairwise_dist_chunk_size": 256,
             "enable_cython_pairwise_dist": True,
             "transform_output": "default",
+            "inverse_transform_output": "default",
             "enable_metadata_routing": False,
             "skip_parameter_validation": False,
         }
@@ -72,6 +74,7 @@ def test_config_context():
         "pairwise_dist_chunk_size": 256,
         "enable_cython_pairwise_dist": True,
         "transform_output": "default",
+        "inverse_transform_output": "default",
         "enable_metadata_routing": False,
         "skip_parameter_validation": False,
     }

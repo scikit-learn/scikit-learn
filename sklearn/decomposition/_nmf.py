@@ -1132,7 +1132,13 @@ def non_negative_factorization(
     return W, H, n_iter
 
 
-class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator, ABC):
+class _BaseNMF(
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    BaseEstimator,
+    ABC,
+    auto_wrap_output_keys=("transform",),
+):
     """Base class for NMF and MiniBatchNMF."""
 
     # This prevents ``set_split_inverse_transform`` to be generated for the
@@ -1318,6 +1324,8 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
             Returns a data matrix of the original shape.
         """
 
+        # because this method takes X and Xt(deprecated),
+        # auto_wrap_output is not configured for this method.
         X = _deprecate_Xt_in_inverse_transform(X, Xt)
 
         check_is_fitted(self)
