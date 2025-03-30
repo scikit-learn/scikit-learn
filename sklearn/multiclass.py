@@ -78,6 +78,10 @@ __all__ = [
 ]
 
 
+def __dir__():
+    return __all__
+
+
 def _fit_binary(estimator, X, y, fit_params, classes=None):
     """Fit a single binary estimator."""
     unique_y = np.unique(y)

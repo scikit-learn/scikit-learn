@@ -17,6 +17,10 @@ from ._available_if import available_if
 __all__ = ["available_if"]
 
 
+def __dir__():
+    return __all__
+
+
 class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
     """Handles parameter management for classifiers composed of named estimators."""
 

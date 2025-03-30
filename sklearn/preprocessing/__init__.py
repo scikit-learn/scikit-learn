@@ -61,3 +61,7 @@ __all__ = [
     "robust_scale",
     "scale",
 ]
+
+
+def __dir__():
+    return __all__

@@ -8,7 +8,6 @@ extends single output estimators to multioutput estimators.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral
@@ -58,6 +57,10 @@ __all__ = [
     "MultiOutputRegressor",
     "RegressorChain",
 ]
+
+
+def __dir__():
+    return __all__
 
 
 def _fit_estimator(estimator, X, y, sample_weight=None, **fit_params):
@@ -687,7 +690,6 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             )
 
         if self.base_estimator != "deprecated":
-
             warning_msg = (
                 "`base_estimator` as an argument was deprecated in 1.7 and will be"
                 " removed in 1.9. Use `estimator` instead."

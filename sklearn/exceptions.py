@@ -10,12 +10,17 @@ __all__ = [
     "EfficiencyWarning",
     "EstimatorCheckFailedWarning",
     "FitFailedWarning",
+    "InconsistentVersionWarning",
     "NotFittedError",
     "PositiveSpectrumWarning",
     "SkipTestWarning",
     "UndefinedMetricWarning",
     "UnsetMetadataPassedError",
 ]
+
+
+def __dir__():
+    return __all__
 
 
 class UnsetMetadataPassedError(ValueError):

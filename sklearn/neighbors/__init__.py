@@ -40,3 +40,7 @@ __all__ = [
     "radius_neighbors_graph",
     "sort_graph_by_row_values",
 ]
+
+
+def __dir__():
+    return __all__

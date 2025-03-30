@@ -53,6 +53,10 @@ __all__ = [
 ]
 
 
+def __dir__():
+    return __all__
+
+
 @validate_params(
     {
         "n_samples": ["array-like", Interval(Real, 1, None, closed="left")],

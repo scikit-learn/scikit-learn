@@ -26,3 +26,7 @@ def __getattr__(name):
             "from sklearn.experimental import enable_iterative_imputer"
         )
     raise AttributeError(f"module {__name__} has no attribute {name}")
+
+
+def __dir__():
+    return __all__

@@ -52,3 +52,7 @@ __all__ = [
     "randomized_svd",
     "sparse_encode",
 ]
+
+
+def __dir__():
+    return __all__

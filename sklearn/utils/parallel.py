@@ -14,6 +14,13 @@ from threadpoolctl import ThreadpoolController
 
 from .._config import config_context, get_config
 
+__all__ = ["Parallel", "delayed"]
+
+
+def __dir__():
+    return __all__
+
+
 # Global threadpool controller instance that can be used to locally limit the number of
 # threads without looping through all shared libraries every time.
 # It should not be accessed directly and _get_threadpool_controller should be used

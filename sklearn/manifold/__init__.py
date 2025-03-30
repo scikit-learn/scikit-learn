@@ -20,3 +20,7 @@ __all__ = [
     "spectral_embedding",
     "trustworthiness",
 ]
+
+
+def __dir__():
+    return __all__

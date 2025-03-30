@@ -15,6 +15,26 @@ from ._array_api import _average, _is_numpy_namespace, _nanmean, device, get_nam
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array, check_random_state
 
+__all__ = [
+    "cartesian",
+    "density",
+    "fast_logdet",
+    "make_nonnegative",
+    "randomized_range_finder",
+    "randomized_svd",
+    "row_norms",
+    "safe_sparse_dot",
+    "softmax",
+    "squared_norm",
+    "stable_cumsum",
+    "svd_flip",
+    "weighted_mode",
+]
+
+
+def __dir__():
+    return __all__
+
 
 def squared_norm(x):
     """Squared Euclidean or Frobenius norm of x.

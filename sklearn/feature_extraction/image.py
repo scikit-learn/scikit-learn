@@ -13,6 +13,7 @@ from scipy import sparse
 from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import check_array, check_random_state
 from ..utils._param_validation import Hidden, Interval, RealNotInt, validate_params
+from ..utils.validation import validate_data
 
 __all__ = [
     "PatchExtractor",
@@ -22,7 +23,10 @@ __all__ = [
     "reconstruct_from_patches_2d",
 ]
 
-from ..utils.validation import validate_data
+
+def __dir__():
+    return __all__
+
 
 ###############################################################################
 # From an image to a graph

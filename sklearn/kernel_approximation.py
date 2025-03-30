@@ -27,6 +27,18 @@ from .utils.validation import (
     validate_data,
 )
 
+__all__ = [
+    "PolynomialCountSketch",
+    "SkewedChi2Sampler",
+    "AdditiveChi2Sampler",
+    "RBFSampler",
+    "Nystroem",
+]
+
+
+def __dir__():
+    return __all__
+
 
 class PolynomialCountSketch(
     ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator

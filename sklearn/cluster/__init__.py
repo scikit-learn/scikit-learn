@@ -54,3 +54,7 @@ __all__ = [
     "spectral_clustering",
     "ward_tree",
 ]
+
+
+def __dir__():
+    return __all__
