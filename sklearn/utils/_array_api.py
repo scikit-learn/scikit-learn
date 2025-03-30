@@ -34,10 +34,7 @@ _array_api_skips = {
     # which is used in score/score_samples
     "PCA": {"dask.array": ["score", "score_samples"]},
     # Lazy evaluation semantics: value-dependent shape item value (nan):
-    "LinearDiscriminantAnalysis": {"dask.array": "all"},
-    # Lazy evaluation semantics: cannot assign to an array using a value-dependent
-    # boolean mask.
-    "r2_score": {"dask.array": "all"},
+    # "LinearDiscriminantAnalysis": {"dask.array": "all"},
 }
 
 _NUMPY_NAMESPACE_NAMES = {"numpy", "sklearn.externals.array_api_compat.numpy"}

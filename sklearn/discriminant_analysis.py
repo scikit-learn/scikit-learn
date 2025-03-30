@@ -20,7 +20,7 @@ from .base import (
 from .covariance import empirical_covariance, ledoit_wolf, shrunk_covariance
 from .linear_model._base import LinearClassifierMixin
 from .preprocessing import StandardScaler
-from .utils._array_api import _expit, device, get_namespace, size
+from .utils._array_api import _expit, device, get_namespace, size, xpx
 from .utils._param_validation import HasMethods, Interval, StrOptions
 from .utils.extmath import softmax
 from .utils.multiclass import check_classification_targets, unique_labels
@@ -106,11 +106,12 @@ def _class_means(X, y):
         Class means.
     """
     xp, is_array_api_compliant = get_namespace(X)
-    classes, y = xp.unique_inverse(y)
-    means = xp.zeros((classes.shape[0], X.shape[1]), device=device(X), dtype=X.dtype)
+    n_classes = xpx.nunique(y)
+    _, y = xp.unique_inverse(y)
+    means = xp.zeros((n_classes, X.shape[1]), device=device(X), dtype=X.dtype)
 
     if is_array_api_compliant:
-        for i in range(classes.shape[0]):
+        for i in range(n_classes):
             means[i, :] = xp.mean(X[y == i], axis=0)
     else:
         # TODO: Explore the choice of using bincount + add.at as it seems sub optimal
@@ -577,20 +578,29 @@ class LinearDiscriminantAnalysis(
             svd = scipy.linalg.svd
 
         n_samples, n_features = X.shape
-        n_classes = self.classes_.shape[0]
+        # TODO: this is a duplicate computation
+        # in
+        n_classes = int(xpx.nunique(y))
 
         self.means_ = _class_means(X, y)
         if self.store_covariance:
             self.covariance_ = _class_cov(X, y, self.priors_)
 
-        Xc = []
-        for idx, group in enumerate(self.classes_):
-            Xg = X[y == group]
-            Xc.append(Xg - self.means_[idx, :])
+        def calc_xc(classes):
+            Xc = []
+            for idx, group in enumerate(classes):
+                Xg = X[y == group]
+                Xc.append(Xg - self.means_[idx, :])
+            Xc = xp.concat(Xc, axis=0)
+            return Xc
 
-        self.xbar_ = self.priors_ @ self.means_
-
-        Xc = xp.concat(Xc, axis=0)
+        Xc = xpx.lazy_apply(calc_xc, self.classes_, shape=(n_samples, n_features))
+        self.xbar_ = xpx.lazy_apply(
+            lambda priors, means: priors @ means,
+            self.priors_,
+            self.means_,
+            shape=(n_classes, n_features),
+        )
 
         # 1) within (univariate) scaling by with classes std-dev
         std = xp.std(Xc, axis=0)
