@@ -1,4 +1,6 @@
 name: CUDA GPU
+permissions:
+  contents: read
 
 # Only run this workflow when a Pull Request is labeled with the
 # 'CUDA CI' label.

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from functools import wraps as _wraps
+from functools import reduce as _reduce, wraps as _wraps
 from builtins import all as _builtin_all, any as _builtin_any
 
 from ..common import _aliases
@@ -124,25 +124,43 @@ _py_scalars = (bool, int, float, complex)
 
 
 def result_type(*arrays_and_dtypes: Union[array, Dtype, bool, int, float, complex]) -> Dtype:
-    if len(arrays_and_dtypes) == 0:
-        raise TypeError("At least one array or dtype must be provided")
-    if len(arrays_and_dtypes) == 1:
+    num = len(arrays_and_dtypes)
+
+    if num == 0:
+        raise ValueError("At least one array or dtype must be provided")
+
+    elif num == 1:
         x = arrays_and_dtypes[0]
         if isinstance(x, torch.dtype):
             return x
         return x.dtype
-    if len(arrays_and_dtypes) > 2:
-        return result_type(arrays_and_dtypes[0], result_type(*arrays_and_dtypes[1:]))
 
-    x, y = arrays_and_dtypes
-    if isinstance(x, _py_scalars) or isinstance(y, _py_scalars):
-        return torch.result_type(x, y)
+    if num == 2:
+        x, y = arrays_and_dtypes
+        return _result_type(x, y)
 
-    xdt = x.dtype if not isinstance(x, torch.dtype) else x
-    ydt = y.dtype if not isinstance(y, torch.dtype) else y
+    else:
+        # sort scalars so that they are treated last
+        scalars, others = [], []
+        for x in arrays_and_dtypes:
+            if isinstance(x, _py_scalars):
+                scalars.append(x)
+            else:
+                others.append(x)
+        if not others:
+            raise ValueError("At least one array or dtype must be provided")
 
-    if (xdt, ydt) in _promotion_table:
-        return _promotion_table[xdt, ydt]
+        # combine left-to-right
+        return _reduce(_result_type, others + scalars)
+
+
+def _result_type(x, y):
+    if not (isinstance(x, _py_scalars) or isinstance(y, _py_scalars)):
+        xdt = x.dtype if not isinstance(x, torch.dtype) else x
+        ydt = y.dtype if not isinstance(y, torch.dtype) else y
+
+        if (xdt, ydt) in _promotion_table:
+            return _promotion_table[xdt, ydt]
 
     # This doesn't result_type(dtype, dtype) for non-array API dtypes
     # because torch.result_type only accepts tensors. This does however, allow
@@ -150,6 +168,7 @@ def result_type(*arrays_and_dtypes: Union[array, Dtype, bool, int, float, comple
     x = torch.tensor([], dtype=x) if isinstance(x, torch.dtype) else x
     y = torch.tensor([], dtype=y) if isinstance(y, torch.dtype) else y
     return torch.result_type(x, y)
+
 
 def can_cast(from_: Union[Dtype, array], to: Dtype, /) -> bool:
     if not isinstance(from_, torch.dtype):
