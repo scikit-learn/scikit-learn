@@ -6,7 +6,6 @@ import itertools
 import re
 import shutil
 import time
-import warnings
 from tempfile import mkdtemp
 
 import joblib

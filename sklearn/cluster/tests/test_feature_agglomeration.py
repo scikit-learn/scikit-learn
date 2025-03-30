@@ -2,7 +2,6 @@
 Tests for sklearn.cluster._feature_agglomeration
 """
 
-
 import numpy as np
 from numpy.testing import assert_array_equal
 
