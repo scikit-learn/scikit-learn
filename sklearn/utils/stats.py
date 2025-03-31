@@ -44,14 +44,14 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50):
         Weighted percentile at the requested probability level.
     """
     xp, _, device = get_namespace_and_device(array)
-    sample_weight = xp.asarray(
-        sample_weight,
-        dtype=_find_matching_floating_dtype(sample_weight, xp=xp),
-        device=device,
-    )
+    # `sample_weight` should follow `array` for dtypes
+    floating_dtype = _find_matching_floating_dtype(array, xp=xp)
+    array = xp.asarray(array, dtype=floating_dtype, device=device)
+    sample_weight = xp.asarray(sample_weight, dtype=floating_dtype, device=device)
+
     n_dim = array.ndim
     if n_dim == 0:
-        return array[()]
+        return array
     if array.ndim == 1:
         array = xp.reshape(array, (-1, 1))
     # When sample_weight 1D, repeat for each array.shape[1]

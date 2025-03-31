@@ -155,16 +155,22 @@ def test_weighted_percentile_2d():
 @pytest.mark.parametrize(
     "data, weights, percentile",
     [
-        # Random 1D array, constant weights
+        # Random 1D array, constant weights (`sample_weight` dtype: float64)
         (lambda rng: rng.rand(50), np.ones(50), 50),
-        # Random 1D array and random 1D weights
+        # Random 1D array and random 1D weights (`sample_weight` dtype: float64)
         (lambda rng: rng.rand(50), lambda rng: rng.rand(50), 75),
-        # Random 2D array and random 2D weights
+        # Random 2D array and random 2D weights (`sample_weight` dtype: float64)
         (lambda rng: rng.rand(20, 3), lambda rng: rng.rand(20, 3), 25),
-        # zero-weights and `rank_percentile=0` (#20528)
+        # zero-weights and `rank_percentile=0` (#20528) (`sample_weight` dtype: int64)
         (np.array([0, 1, 2, 3, 4, 5]), np.array([0, 0, 1, 1, 1, 0]), 0),
-        # np.nan's in data and some zero-weights
+        # np.nan's in data and some zero-weights (`sample_weight` dtype: int64)
         (np.array([np.nan, np.nan, 0, 3, 4, 5]), np.array([0, 1, 1, 1, 1, 0]), 0),
+        # `sample_weight` dtype: int32
+        (
+            np.array([0, 1, 2, 3, 4, 5]),
+            np.array([0, 1, 1, 1, 1, 0], dtype=np.int32),
+            25,
+        ),
     ],
 )
 def test_weighted_percentile_array_api_consistency(
@@ -197,9 +203,8 @@ def test_weighted_percentile_array_api_consistency(
     rng = np.random.RandomState(global_random_seed)
     X_np = data(rng) if callable(data) else data
     weights_np = weights(rng) if callable(weights) else weights
-    # Ensure all inputs are the correct dtype
+    # Ensure `data` of correct dtype
     X_np = X_np.astype(dtype_name)
-    weights_np = weights_np.astype(dtype_name)
 
     result_np = _weighted_percentile(X_np, weights_np, percentile)
     # Convert to Array API arrays
@@ -215,6 +220,12 @@ def test_weighted_percentile_array_api_consistency(
     assert result_xp_np.dtype == result_np.dtype
     assert result_xp_np.shape == result_np.shape
     assert_allclose(result_np, result_xp_np)
+
+    # Check dtype correct (`sample_weight` should follow `array`)
+    if dtype_name == "float32":
+        assert result_xp_np.dtype == result_np.dtype == np.float32
+    else:
+        assert result_xp_np.dtype == np.float64
 
 
 @pytest.mark.parametrize("sample_weight_ndim", [1, 2])
