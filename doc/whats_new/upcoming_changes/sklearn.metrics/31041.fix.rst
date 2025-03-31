@@ -1,3 +1,4 @@
-- In :mod:`metrics._regession` updated set_huber_delta raise an value error when all weights are zero.
+- Updated :func:`~metrics._regession.set_huber_delta` to raise a value error when
+  `sample_weight` are all zeros.
 - In :mod:`metrics._regession` updated median_absolute_error raise an value error when all weights are zero.
 - In :mod:`metrics._regession` updated d2_pinball_score raise an value error when all weights are zero.
