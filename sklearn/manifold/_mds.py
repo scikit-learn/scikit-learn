@@ -27,7 +27,7 @@ def _smacof_single(
     init=None,
     max_iter=300,
     verbose=0,
-    eps=1e-3,
+    eps=1e-6,
     random_state=None,
     normalized_stress=False,
 ):
@@ -59,10 +59,9 @@ def _smacof_single(
     verbose : int, default=0
         Level of verbosity.
 
-    eps : float, default=1e-3
-        Relative tolerance with respect to stress at which to declare
-        convergence. The value of `eps` should be tuned separately depending
-        on whether or not `normalized_stress` is being used.
+    eps : float, default=1e-6
+        The tolerance with respect to stress (normalized by the sum of squared
+        embedding distances) at which to declare convergence.
 
     random_state : int, RandomState instance or None, default=None
         Determines the random number generator used to initialize the centers.
@@ -70,7 +69,7 @@ def _smacof_single(
         See :term:`Glossary <random_state>`.
 
     normalized_stress : bool, default=False
-        Whether use and return normalized stress value (Stress-1) instead of raw
+        Whether to return normalized stress value (Stress-1) instead of raw
         stress.
 
         .. versionadded:: 1.2
@@ -168,18 +167,18 @@ def _smacof_single(
         # Compute stress
         distances = euclidean_distances(X)
         stress = ((distances.ravel() - disparities.ravel()) ** 2).sum() / 2
-        if normalized_stress:
-            stress = np.sqrt(stress / ((disparities.ravel() ** 2).sum() / 2))
 
-        normalization = np.sqrt((X**2).sum(axis=1)).sum()
         if verbose >= 2:  # pragma: no cover
             print(f"Iteration {it}, stress {stress:.4f}")
         if old_stress is not None:
-            if (old_stress - stress / normalization) < eps:
+            if ((old_stress - stress) / ((distances.ravel() ** 2).sum() / 2)) < eps:
                 if verbose:  # pragma: no cover
                     print("Convergence criterion reached.")
                 break
-        old_stress = stress / normalization
+        old_stress = stress
+
+    if normalized_stress:
+        stress = np.sqrt(stress / ((distances.ravel() ** 2).sum() / 2))
 
     return X, stress, it + 1
 
@@ -207,11 +206,11 @@ def smacof(
     metric=True,
     n_components=2,
     init=None,
-    n_init=8,
+    n_init=1,
     n_jobs=None,
     max_iter=300,
     verbose=0,
-    eps=1e-3,
+    eps=1e-6,
     random_state=None,
     return_n_iter=False,
     normalized_stress="auto",
@@ -256,7 +255,7 @@ def smacof(
         Starting configuration of the embedding to initialize the algorithm. By
         default, the algorithm is initialized with a randomly chosen array.
 
-    n_init : int, default=8
+    n_init : int, default=1
         Number of times the SMACOF algorithm will be run with different
         initializations. The final results will be the best output of the runs,
         determined by the run with the smallest final stress. If ``init`` is
@@ -277,10 +276,9 @@ def smacof(
     verbose : int, default=0
         Level of verbosity.
 
-    eps : float, default=1e-3
-        Relative tolerance with respect to stress at which to declare
-        convergence. The value of `eps` should be tuned separately depending
-        on whether or not `normalized_stress` is being used.
+    eps : float, default=1e-6
+        The tolerance with respect to stress (normalized by the sum of squared
+        embedding distances) at which to declare convergence.
 
     random_state : int, RandomState instance or None, default=None
         Determines the random number generator used to initialize the centers.
@@ -423,7 +421,7 @@ class MDS(BaseEstimator):
         When ``False`` (i.e. non-metric MDS), dissimilarities with 0 are considered as
         missing values.
 
-    n_init : int, default=4
+    n_init : int, default=1
         Number of times the SMACOF algorithm will be run with different
         initializations. The final results will be the best output of the runs,
         determined by the run with the smallest final stress.
@@ -434,10 +432,9 @@ class MDS(BaseEstimator):
     verbose : int, default=0
         Level of verbosity.
 
-    eps : float, default=1e-3
-        Relative tolerance with respect to stress at which to declare
-        convergence. The value of `eps` should be tuned separately depending
-        on whether or not `normalized_stress` is being used.
+    eps : float, default=1e-6
+        The tolerance with respect to stress (normalized by the sum of squared
+        embedding distances) at which to declare convergence.
 
     n_jobs : int, default=None
         The number of jobs to use for the computation. If multiple
@@ -464,9 +461,9 @@ class MDS(BaseEstimator):
             ``fit_transform``.
 
     normalized_stress : bool or "auto" default="auto"
-        Whether use and return normalized stress value (Stress-1) instead of raw
-        stress. By default, metric MDS uses raw stress while non-metric MDS uses
-        normalized stress.
+        Whether to return normalized stress value (Stress-1) instead of raw
+        stress. By default, metric MDS returns raw stress while non-metric MDS
+        returns normalized stress.
 
         .. versionadded:: 1.2
 
@@ -569,10 +566,10 @@ class MDS(BaseEstimator):
         n_components=2,
         *,
         metric=True,
-        n_init=4,
+        n_init=1,
         max_iter=300,
         verbose=0,
-        eps=1e-3,
+        eps=1e-6,
         n_jobs=None,
         random_state=None,
         dissimilarity="euclidean",
@@ -649,7 +646,7 @@ class MDS(BaseEstimator):
         X = validate_data(self, X)
         if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
             warnings.warn(
-                "The MDS API has changed. ``fit`` now constructs an"
+                "The MDS API has changed. ``fit`` now constructs a"
                 " dissimilarity matrix from data. To use a custom "
                 "dissimilarity matrix, set "
                 "``dissimilarity='precomputed'``."
