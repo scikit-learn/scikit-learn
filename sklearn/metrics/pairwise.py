@@ -2578,12 +2578,14 @@ def pairwise_kernels(
     This method takes one or two vector arrays or a kernel matrix, and returns
     a kernel matrix.
 
-    * If `X` is a vector array, of shape (n_samples_X, n_features), and:
+    - If `X` is a vector array, of shape (n_samples_X, n_features), and:
+
       - `Y` is `None` and `metric` is not 'precomputed', the pairwise kernels
         between `X` and itself are computed.
       - `Y` is a vector array of shape (n_samples_Y, n_features), the pairwise
         kernels between arrays `X` and `Y` is returned.
-    * If `X` is a kernel matrix, of shape (n_samples_X, n_samples_X), `metric`
+
+    - If `X` is a kernel matrix, of shape (n_samples_X, n_samples_X), `metric`
       should be 'precomputed'. `Y` is thus ignored and `X` is returned as is.
 
     This method provides a safe way to take a kernel matrix as input, while
