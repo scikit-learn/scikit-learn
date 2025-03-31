@@ -792,9 +792,9 @@ problems which are currently outside of the scope of scikit-learn.
 Vectorizing a large text corpus with the hashing trick
 ------------------------------------------------------
 
-The above vectorization scheme is simple but the fact that it holds an **in-
-memory mapping from the string tokens to the integer feature indices** (the
-``vocabulary_`` attribute) causes several **problems when dealing with large
+The above vectorization scheme is simple but the fact that it holds an
+**in-memory mapping from the string tokens to the integer feature indices**
+(the ``vocabulary_`` attribute) causes several **problems when dealing with large
 datasets**:
 
 - the larger the corpus, the larger the vocabulary will grow and hence the
