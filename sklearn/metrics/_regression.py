@@ -951,8 +951,8 @@ def _assemble_r2_explained_variance(
         # Non-zero Numerator and Non-zero Denominator: use the formula
         valid_score = nonzero_denominator & nonzero_numerator
 
-        output_scores[valid_score] = 1 - (
-            numerator[valid_score] / denominator[valid_score]
+        output_scores = xp.where(
+            valid_score, 1 - numerator / denominator, output_scores
         )
 
         # Non-zero Numerator and Zero Denominator:

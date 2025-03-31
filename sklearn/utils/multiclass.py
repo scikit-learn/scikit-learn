@@ -10,7 +10,7 @@ from itertools import chain
 import numpy as np
 from scipy.sparse import issparse
 
-from ..utils._array_api import get_namespace
+from ..utils._array_api import get_namespace, xpx
 from ..utils.fixes import VisibleDeprecationWarning
 from ._unique import attach_unique, cached_unique
 from .validation import _assert_all_finite, check_array
@@ -190,11 +190,12 @@ def is_multilabel(y):
             and (y.dtype.kind in "biu" or _is_integral_float(labels))  # bool, int, uint
         )
     else:
-        labels = cached_unique(y, xp=xp)
+        # TODO: caching?
+        # labels = cached_unique(y, xp=xp)
 
-        return labels.shape[0] < 3 and (
+        return int(xpx.nunique(y)) < 3 and (
             xp.isdtype(y.dtype, ("bool", "signed integer", "unsigned integer"))
-            or _is_integral_float(labels)
+            or _is_integral_float(y)
         )
 
 
@@ -418,7 +419,8 @@ def type_of_target(y, input_name="", raise_unknown=False):
     # Check multiclass
     if issparse(first_row_or_val):
         first_row_or_val = first_row_or_val.data
-    if cached_unique(y).shape[0] > 2 or (y.ndim == 2 and len(first_row_or_val) > 1):
+    # cast to int to force computation for Dask
+    if int(xpx.nunique(y)) > 2 or (y.ndim == 2 and len(first_row_or_val) > 1):
         # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
         return "multiclass" + suffix
     else:

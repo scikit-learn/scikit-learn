@@ -47,7 +47,7 @@ class _BasePCA(
             xp.asarray(0.0, device=device(exp_var), dtype=exp_var.dtype),
         )
         cov = (components_.T * exp_var_diff) @ components_
-        _fill_or_add_to_diagonal(cov, self.noise_variance_, xp)
+        cov = _fill_or_add_to_diagonal(cov, self.noise_variance_, xp)
         return cov
 
     def get_precision(self):
@@ -89,10 +89,10 @@ class _BasePCA(
             xp.asarray(0.0, device=device(exp_var)),
         )
         precision = components_ @ components_.T / self.noise_variance_
-        _fill_or_add_to_diagonal(precision, 1.0 / exp_var_diff, xp)
+        precision = _fill_or_add_to_diagonal(precision, 1.0 / exp_var_diff, xp)
         precision = components_.T @ linalg_inv(precision) @ components_
         precision /= -(self.noise_variance_**2)
-        _fill_or_add_to_diagonal(precision, 1.0 / self.noise_variance_, xp)
+        precision = _fill_or_add_to_diagonal(precision, 1.0 / self.noise_variance_, xp)
         return precision
 
     @abstractmethod
