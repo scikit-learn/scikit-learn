@@ -192,7 +192,7 @@ def test_returned_stress(normalized_stress):
 
 @pytest.mark.parametrize("metric", [True, False])
 def test_convergence_does_not_depend_on_scale(metric):
-    # Test that the number of iterations until convergence does not depend
+    # Test that the number of iterations until convergence does not depend on
     # the scale of the input data
     X = np.array([[1, 1], [1, 4], [1, 5], [3, 3]])
 
