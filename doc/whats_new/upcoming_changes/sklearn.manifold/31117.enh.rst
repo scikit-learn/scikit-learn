@@ -1,0 +1,4 @@
+:class:`manifold.MDS` now runs with `n_init=1` by default, and the convergence
+criterion has been changed to ensure good convergence of both metric and
+non-metric MDS, following the reference R implementation.
+By :user:`Dmitry Kobak <dkobak>`
