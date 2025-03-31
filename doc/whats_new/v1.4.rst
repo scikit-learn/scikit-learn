@@ -1010,7 +1010,7 @@ David Brochart, Deborah L. Haar, DevanshKyada27, Dimitri Papadopoulos Orfanos,
 Dmitry Nesterov, DUONG, Edoardo Abati, Eitan Hemed, Elabonga Atuo, Elisabeth
 Günther, Emma Carballal, Emmanuel Ferdman, epimorphic, Erwan Le Floch, Fabian
 Egli, Filip Karlo Došilović, Florian Idelberger, Franck Charras, Gael
-Varoquaux, Ganesh Tata, Gleb Levitski, Guillaume Lemaitre, Haoying Zhang,
+Varoquaux, Ganesh Tata, Hleb Levitski, Guillaume Lemaitre, Haoying Zhang,
 Harmanan Kohli, Ily, ioangatop, IsaacTrost, Isaac Virshup, Iwona Zdzieblo,
 Jakub Kaczmarzyk, James McDermott, Jarrod Millman, JB Mountford, Jérémie du
 Boisberranger, Jérôme Dockès, Jiawei Zhang, Joel Nothman, John Cant, John
