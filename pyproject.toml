@@ -83,9 +83,9 @@ tests = [
     "pandas>=1.4.0",
     "pytest>=7.1.2",
     "pytest-cov>=2.9.0",
-    "ruff>=0.5.1",
+    "ruff>=0.11.0",
     "black>=24.3.0",
-    "mypy>=1.9",
+    "mypy>=1.15",
     "pyamg>=5.0.0",
     "polars>=0.20.30",
     "pyarrow>=12.0.0",
@@ -102,6 +102,14 @@ requires = [
     "Cython>=3.0.10",
     "numpy>=2",
     "scipy>=1.8.0",
+]
+
+[tool.pytest.ini_options]
+doctest_optionflags = "NORMALIZE_WHITESPACE ELLIPSIS"
+testpaths = "sklearn"
+addopts = [
+    "--disable-pytest-warnings",
+    "--color=yes",
 ]
 
 [tool.black]
@@ -126,7 +134,6 @@ exclude = '''
 [tool.ruff]
 # max line length for black
 line-length = 88
-target-version = "py38"
 exclude=[
     ".git",
     "__pycache__",
@@ -146,7 +153,7 @@ exclude=[
 preview = true
 # This enables us to use the explicit preview rules that we want only
 explicit-preview-rules = true
-# all rules can be found here: https://beta.ruff.rs/docs/rules/
+# all rules can be found here: https://docs.astral.sh/ruff/rules/
 select = ["E", "F", "W", "I", "CPY001", "RUF"]
 ignore=[
     # space before : (needed for how black formats slicing)
@@ -155,11 +162,11 @@ ignore=[
     "E731",
     # do not use variables named 'l', 'O', or 'I'
     "E741",
-    # E721 is in preview (july 2024) and gives many false positives.
+    # E721 gives many false positives.
     # Use `is` and `is not` for type comparisons, or `isinstance()` for
     # isinstance checks
     "E721",
-    # F841 is in preview (july 2024), and we don't care much about it.
+    # We don't care much about F841.
     # Local variable ... is assigned to but never used
     "F841",
     # some RUF rules trigger too many changes
@@ -194,6 +201,14 @@ notice-rgx = "\\#\\ Authors:\\ The\\ scikit\\-learn\\ developers\\\r?\\\n\\#\\ S
 # __all__ has un-imported names
 "sklearn/__init__.py"=["F822"]
 
+[tool.mypy]
+ignore_missing_imports = true
+allow_redefinition = true
+exclude = "^sklearn/externals"
+
+[[tool.mypy.overrides]]
+module = ["joblib.*", "sklearn.externals.*"]
+follow_imports = "skip"
 
 [tool.cython-lint]
 # Ignore the same error codes as ruff
@@ -267,6 +282,10 @@ package = "sklearn"  # name of your package
         verify_pr_number = true
         changelog_noop_label = "No Changelog Needed"
         whatsnew_pattern = 'doc/whatsnew/upcoming_changes/[^/]+/\d+\.[^.]+\.rst'
+
+[tool.codespell]
+skip = ["./.git", "./.mypy_cache", "./sklearn/feature_extraction/_stop_words.py", "./doc/_build", "./doc/auto_examples", "./doc/modules/generated"]
+ignore-words = "build_tools/codespell_ignore_words.txt"
 
 [tool.towncrier]
     package = "sklearn"

@@ -16,11 +16,6 @@ def test_averaged_weighted_median():
     assert score == np.median(y)
 
 
-# TODO: remove @pytest.mark.skipif when numpy min version >= 1.22.
-@pytest.mark.skipif(
-    condition=np_version < parse_version("1.22"),
-    reason="older numpy do not support the 'method' parameter",
-)
 def test_averaged_weighted_percentile():
     rng = np.random.RandomState(0)
     y = rng.randint(20, size=10)

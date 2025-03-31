@@ -34,12 +34,12 @@ from ..utils._array_api import (
     _is_numpy_namespace,
     _max_precision_float_dtype,
     _searchsorted,
-    _setdiff1d,
     _tolist,
     _union1d,
     device,
     get_namespace,
     get_namespace_and_device,
+    xpx,
 )
 from ..utils._param_validation import (
     Hidden,
@@ -673,7 +673,7 @@ def multilabel_confusion_matrix(
         labels = xp.asarray(labels, device=device_)
         n_labels = labels.shape[0]
         labels = xp.concat(
-            [labels, _setdiff1d(present_labels, labels, assume_unique=True, xp=xp)],
+            [labels, xpx.setdiff1d(present_labels, labels, assume_unique=True, xp=xp)],
             axis=-1,
         )
 

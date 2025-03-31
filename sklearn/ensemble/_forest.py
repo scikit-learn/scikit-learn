@@ -1188,6 +1188,13 @@ class RandomForestClassifier(ForestClassifier):
     For a comparison between tree-based ensemble models see the example
     :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`.
 
+    This estimator has native support for missing values (NaNs). During training,
+    the tree grower learns at each split point whether samples with missing values
+    should go to the left or right child, based on the potential gain. When predicting,
+    samples with missing values are assigned to the left or right child consequently.
+    If no missing values were encountered for a given feature during training, then
+    samples with missing values are mapped to whichever child has the most samples.
+
     Read more in the :ref:`User Guide <forest>`.
 
     Parameters
@@ -1572,6 +1579,13 @@ class RandomForestRegressor(ForestRegressor):
     `bootstrap=True` (default), otherwise the whole dataset is used to build
     each tree.
 
+    This estimator has native support for missing values (NaNs). During training,
+    the tree grower learns at each split point whether samples with missing values
+    should go to the left or right child, based on the potential gain. When predicting,
+    samples with missing values are assigned to the left or right child consequently.
+    If no missing values were encountered for a given feature during training, then
+    samples with missing values are mapped to whichever child has the most samples.
+
     For a comparison between tree-based ensemble models see the example
     :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`.
 
@@ -1928,6 +1942,14 @@ class ExtraTreesClassifier(ForestClassifier):
     randomized decision trees (a.k.a. extra-trees) on various sub-samples
     of the dataset and uses averaging to improve the predictive accuracy
     and control over-fitting.
+
+    This estimator has native support for missing values (NaNs) for
+    random splits. During training, a random threshold will be chosen
+    to split the non-missing values on. Then the non-missing values will be sent
+    to the left and right child based on the randomly selected threshold, while
+    the missing values will also be randomly sent to the left or right child.
+    This is repeated for every feature considered at each split. The best split
+    among these is chosen.
 
     Read more in the :ref:`User Guide <forest>`.
 
@@ -2301,6 +2323,14 @@ class ExtraTreesRegressor(ForestRegressor):
     randomized decision trees (a.k.a. extra-trees) on various sub-samples
     of the dataset and uses averaging to improve the predictive accuracy
     and control over-fitting.
+
+    This estimator has native support for missing values (NaNs) for
+    random splits. During training, a random threshold will be chosen
+    to split the non-missing values on. Then the non-missing values will be sent
+    to the left and right child based on the randomly selected threshold, while
+    the missing values will also be randomly sent to the left or right child.
+    This is repeated for every feature considered at each split. The best split
+    among these is chosen.
 
     Read more in the :ref:`User Guide <forest>`.
 
