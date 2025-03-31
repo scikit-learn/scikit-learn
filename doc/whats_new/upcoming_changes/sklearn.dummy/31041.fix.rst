@@ -1,2 +1,3 @@
 - In :mod:`dummy` made it so that if you use the median strategy with all zero weights it will raise a value error.
-- In :mod:`dummy` made it so that if you use the quantile strategy with all zero weights it will raise a value error.
+- Updated :mod:`dummy` to raise a value error if `strategy="quantile"` and `fit` with
+  `sample_weight` being all zeros.
