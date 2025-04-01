@@ -12,9 +12,11 @@ iniconfig==2.1.0
     # via pytest
 joblib==1.4.2
     # via -r build_tools/azure/debian_32bit_requirements.txt
-meson==1.7.0
+meson==1.7.1
     # via meson-python
 meson-python==0.17.1
+    # via -r build_tools/azure/debian_32bit_requirements.txt
+narwhals==1.33.0
     # via -r build_tools/azure/debian_32bit_requirements.txt
 ninja==1.11.1.4
     # via -r build_tools/azure/debian_32bit_requirements.txt
@@ -31,7 +33,7 @@ pytest==8.3.5
     # via
     #   -r build_tools/azure/debian_32bit_requirements.txt
     #   pytest-cov
-pytest-cov==6.0.0
+pytest-cov==6.1.0
     # via -r build_tools/azure/debian_32bit_requirements.txt
 threadpoolctl==3.6.0
     # via -r build_tools/azure/debian_32bit_requirements.txt

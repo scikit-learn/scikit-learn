@@ -10,6 +10,7 @@ from collections import defaultdict
 NUMPY_MIN_VERSION = "1.22.0"
 SCIPY_MIN_VERSION = "1.8.0"
 JOBLIB_MIN_VERSION = "1.2.0"
+NARWHALS_MIN_VERSION = "1.30.0"
 THREADPOOLCTL_MIN_VERSION = "3.1.0"
 PYTEST_MIN_VERSION = "7.1.2"
 CYTHON_MIN_VERSION = "3.0.10"
@@ -22,6 +23,7 @@ dependent_packages = {
     "numpy": (NUMPY_MIN_VERSION, "build, install"),
     "scipy": (SCIPY_MIN_VERSION, "build, install"),
     "joblib": (JOBLIB_MIN_VERSION, "install"),
+    "narwhals": (NARWHALS_MIN_VERSION, "install"),
     "threadpoolctl": (THREADPOOLCTL_MIN_VERSION, "install"),
     "cython": (CYTHON_MIN_VERSION, "build"),
     "meson-python": ("0.16.0", "build"),

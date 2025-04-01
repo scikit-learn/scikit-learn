@@ -10,6 +10,7 @@ dependencies:
   - scipy=1.8.0  # min
   - cython=3.0.10  # min
   - joblib
+  - narwhals
   - threadpoolctl
   - matplotlib=3.5.0  # min
   - pandas=1.4.0  # min

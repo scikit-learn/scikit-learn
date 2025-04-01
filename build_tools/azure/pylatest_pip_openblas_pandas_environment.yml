@@ -12,6 +12,7 @@ dependencies:
     - scipy
     - cython
     - joblib
+    - narwhals
     - threadpoolctl
     - matplotlib
     - pandas

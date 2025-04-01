@@ -64,6 +64,7 @@ common_dependencies_without_coverage = [
     "scipy",
     "cython",
     "joblib",
+    "narwhals",
     "threadpoolctl",
     "matplotlib",
     "pandas",
@@ -184,6 +185,7 @@ build_metadata_list = [
             "matplotlib": "min",
             "cython": "min",
             "joblib": "min",
+            "narwhals": "min",
             "threadpoolctl": "min",
             "meson-python": "min",
             "pandas": "min",
@@ -251,6 +253,7 @@ build_metadata_list = [
                     "pandas",
                     "cython",
                     "joblib",
+                    "narwhals",
                     "pillow",
                 ],
             )
@@ -277,6 +280,7 @@ build_metadata_list = [
             # not deal with free-threaded wheels correctly, see
             # https://github.com/conda/conda-lock/issues/754.
             "joblib",
+            "narwhals",
             "threadpoolctl",
             "pytest",
             "pytest-xdist",
@@ -417,6 +421,7 @@ build_metadata_list = [
         "pip_dependencies": [
             "cython",
             "joblib",
+            "narwhals",
             "threadpoolctl",
             "pytest",
             "pytest-cov",
@@ -435,6 +440,7 @@ build_metadata_list = [
         "pip_dependencies": [
             "cython",
             "joblib",
+            "narwhals",
             "threadpoolctl",
             "pytest",
             "pytest-xdist",
@@ -443,6 +449,7 @@ build_metadata_list = [
         ],
         "package_constraints": {
             "joblib": "min",
+            "narwhals": "min",
             "threadpoolctl": "min",
             "cython": "min",
         },
