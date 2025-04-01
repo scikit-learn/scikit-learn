@@ -65,6 +65,9 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     RocCurveDisplay.from_predictions : Plot Receiver Operating Characteristic
         (ROC) curve given the true and predicted values.
     roc_auc_score : Compute the area under the ROC curve.
+    PrecisionRecallDisplay : Precision-Recall curve.
+    CAPCurveDisplay : Cumulative Accuracy Profile (CAP) curve.
+    DetCurveDisplay : Detection Error Tradeoff (DET) curve.
 
     Examples
     --------

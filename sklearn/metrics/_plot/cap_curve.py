@@ -47,6 +47,28 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
     figure_ : matplotlib Figure
         Figure containing the curve.
+
+    See Also
+    --------
+    CAPCurveDisplay.from_estimator : Plot Cumulative Accuracy Profile
+        (CAP) curve given the estimator and data.
+    CAPCurveDisplay.from_predictions : Plot Cumulative Accuracy Profile
+        (CAP) curve given the observations and predicted values.
+    RocCurveDisplay : Receiver Operating Characteristic (ROC) curve.
+    PrecisionRecallDisplay : Precision-Recall curve.
+    DetCurveDisplay : Detection Error Tradeoff (DET) curve.
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> import numpy as np
+    >>> from sklearn import metrics
+    >>> y_observed = np.array([0, 0, 1, 1])
+    >>> y_pred = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> display = metrics.CAPCurveDisplay.from_predictions(y_observed, y_pred)
+    >>> display.plot()
+    <...>
+    >>> plt.show()
     """
 
     def __init__(
