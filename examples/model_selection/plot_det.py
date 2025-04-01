@@ -84,7 +84,7 @@ classifiers = {
 
 # %%
 # Plot ROC, DET and CAP curves
-# -----------------------
+# ----------------------------
 #
 # DET curves are commonly plotted in normal deviate scale. To achieve this the
 # DET display transforms the error rates as returned by the
