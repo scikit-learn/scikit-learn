@@ -48,6 +48,8 @@ to focus on differences closer to the origin.
 # Generate synthetic data
 # -----------------------
 
+import numpy as np
+
 from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -60,6 +62,10 @@ X, y = make_classification(
     random_state=1,
     n_clusters_per_class=1,
 )
+# Use string labels for the classes to make to illustrate the use of the
+# `pos_label` parameter to identify which class should be considered as the
+# "positive" class.
+y = np.array(["Class A", "Class B"])[y]
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4, random_state=0)
 
@@ -99,7 +105,7 @@ from sklearn.metrics import CAPCurveDisplay, DetCurveDisplay, RocCurveDisplay
 fig, [ax_roc, ax_cap, ax_det] = plt.subplots(
     1, 3, figsize=(15, 5), constrained_layout=True
 )
-
+pos_label = "Class A"
 for name, clf in classifiers.items():
     plot_chance_level = name == "Random Forest"
     clf.fit(X_train, y_train)
@@ -110,12 +116,21 @@ for name, clf in classifiers.items():
         y_test,
         ax=ax_roc,
         name=name,
+        pos_label=pos_label,
         plot_chance_level=plot_chance_level,
     )
     CAPCurveDisplay.from_estimator(
-        clf, X_test, y_test, ax=ax_cap, name=name, plot_chance_level=plot_chance_level
+        clf,
+        X_test,
+        y_test,
+        ax=ax_cap,
+        name=name,
+        pos_label=pos_label,
+        plot_chance_level=plot_chance_level,
     )
-    DetCurveDisplay.from_estimator(clf, X_test, y_test, ax=ax_det, name=name)
+    DetCurveDisplay.from_estimator(
+        clf, X_test, y_test, ax=ax_det, name=name, pos_label=pos_label
+    )
 
 ax_roc.set_title("Receiver Operating Characteristic (ROC) curves")
 ax_det.set_title("Detection Error Tradeoff (DET) curves")
