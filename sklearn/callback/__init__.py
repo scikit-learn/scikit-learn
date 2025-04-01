@@ -14,9 +14,9 @@ from ._task_tree import TaskNode
 
 __all__ = [
     "AutoPropagatedProtocol",
-    "CallbackProtocol",
     "CallbackContext",
+    "CallbackProtocol",
     "CallbackSupportMixin",
-    "TaskNode",
     "ProgressBar",
+    "TaskNode",
 ]
