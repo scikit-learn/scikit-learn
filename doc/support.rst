@@ -128,5 +128,5 @@ Companies in the following list (listed in alphabetical order) offer support
 services related to scikit-learn and have a proven track record of employing
 long-term maintainers of scikit-learn and related open source projects:
 
-- `:probabl <https://support.probabl.ai>`__
+- `:probabl. <https://support.probabl.ai>`__
 - `Quansight <https://quansight.com/open-source-services>`__
