@@ -337,11 +337,11 @@ def smacof(
     >>> dissimilarities = euclidean_distances(X)
     >>> mds_result, stress = smacof(dissimilarities, n_components=2, random_state=42)
     >>> np.round(mds_result, 5)
-    array([[ 0.05352, -1.07253],
-           [ 1.74231, -0.75675],
-           [-1.79583,  1.82928]])
-    >>> np.round(stress, 5).item()
-    0.00128
+    array([[-0.03166,  1.10996],
+           [ 1.6829 ,  0.84601],
+           [-1.65124, -1.95597]])
+    >>> np.round(stress, 6).item()
+    3.2e-05
     """
 
     dissimilarities = check_array(dissimilarities)
@@ -536,7 +536,7 @@ class MDS(BaseEstimator):
     >>> X, _ = load_digits(return_X_y=True)
     >>> X.shape
     (1797, 64)
-    >>> embedding = MDS(n_components=2, normalized_stress='auto')
+    >>> embedding = MDS(n_components=2)
     >>> X_transformed = embedding.fit_transform(X[:100])
     >>> X_transformed.shape
     (100, 2)
