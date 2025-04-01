@@ -1,0 +1,5 @@
+- :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` now properly pass sample weights to
+  :func:`utils.class_weight.compute_class_weight` when fit with
+  `class_weight="balanced"`.
+  By :user:`Shruti Nath <snath-xoc>` and :user:`Olivier Grisel <ogrisel>`

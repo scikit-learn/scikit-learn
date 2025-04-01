@@ -173,12 +173,12 @@ Valid :term:`multiclass` representations for
     >>> y_sparse = sparse.csr_matrix(y_dense)
     >>> print(y_sparse)
     <Compressed Sparse Row sparse matrix of dtype 'int64'
-    	with 4 stored elements and shape (4, 3)>
-      Coords	Values
-      (0, 0)	1
-      (1, 2)	1
-      (2, 0)	1
-      (3, 1)	1
+      with 4 stored elements and shape (4, 3)>
+      Coords Values
+      (0, 0) 1
+      (1, 2) 1
+      (2, 0) 1
+      (3, 1) 1
 
 For more information about :class:`~sklearn.preprocessing.LabelBinarizer`,
 refer to :ref:`preprocessing_targets`.
@@ -229,6 +229,7 @@ in which cell [i, j] indicates the presence of label j in sample i.
 
 * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multilabel.py`
 * :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`
+* :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_multinomial.py`
 
 .. _ovo_classification:
 
@@ -383,11 +384,11 @@ An example of the same ``y`` in sparse matrix form:
   >>> print(y_sparse)
   <Compressed Sparse Row sparse matrix of dtype 'int64'
     with 4 stored elements and shape (3, 4)>
-    Coords	Values
-    (0, 0)	1
-    (0, 3)	1
-    (1, 2)	1
-    (1, 3)	1
+    Coords Values
+    (0, 0) 1
+    (0, 3) 1
+    (1, 2) 1
+    (1, 3) 1
 
 .. _multioutputclassfier:
 
