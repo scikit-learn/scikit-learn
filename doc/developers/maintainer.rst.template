@@ -362,8 +362,8 @@ Guideline for bumping minimum versions of our dependencies
 ----------------------------------------------------------
 
 - **minimum Python version**: at the time of a minor scikit-learn release (`X.Y.0`),
-  we drop the Python version with an initial release date of more than 4 years ago. In other words,
-  our minimum Python version is between 3 and 4 years old.
+  we drop the Python version with an initial release date of more than 4 years
+  ago. In other words, our minimum Python version is between 3 and 4 years old.
 - **compiled dependencies** (numpy, scipy, as well as compiled optional
   dependencies (pandas, matplotlib, pyamg, pillow, ...): we take the oldest minor
   release (`X.Y.0`) that has wheels for our minimum Python version. In practice
