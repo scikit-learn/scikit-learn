@@ -2233,32 +2233,6 @@ def test_ridge_sample_weight_consistency(
         assert_allclose(reg1.intercept_, reg2.intercept_)
 
 
-# TODO(1.7): Remove
-def test_ridge_store_cv_values_deprecated():
-    """Check `store_cv_values` parameter deprecated."""
-    X, y = make_regression(n_samples=6, random_state=42)
-    ridge = RidgeCV(store_cv_values=True)
-    msg = "'store_cv_values' is deprecated"
-    with pytest.warns(FutureWarning, match=msg):
-        ridge.fit(X, y)
-
-    # Error when both set
-    ridge = RidgeCV(store_cv_results=True, store_cv_values=True)
-    msg = "Both 'store_cv_values' and 'store_cv_results' were"
-    with pytest.raises(ValueError, match=msg):
-        ridge.fit(X, y)
-
-
-def test_ridge_cv_values_deprecated():
-    """Check `cv_values_` deprecated."""
-    X, y = make_regression(n_samples=6, random_state=42)
-    ridge = RidgeCV(store_cv_results=True)
-    msg = "Attribute `cv_values_` is deprecated"
-    with pytest.warns(FutureWarning, match=msg):
-        ridge.fit(X, y)
-        ridge.cv_values_
-
-
 @pytest.mark.parametrize("with_sample_weight", [False, True])
 @pytest.mark.parametrize("fit_intercept", [False, True])
 @pytest.mark.parametrize("n_targets", [1, 2])
