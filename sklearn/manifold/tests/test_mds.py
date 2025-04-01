@@ -14,7 +14,7 @@ def test_smacof():
     # Borg & Groenen, p 154
     sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
     Z = np.array([[-0.266, -0.539], [0.451, 0.252], [0.016, -0.238], [-0.200, 0.524]])
-    X, _ = mds.smacof(sim, init=Z, n_components=2, max_iter=1, n_init=1)
+    X, _ = mds.smacof(sim, init=Z, n_components=2, max_iter=1, n_init=1, eps=1e-6)
     X_true = np.array(
         [[-1.415, -2.471], [1.633, 1.107], [0.249, -0.067], [-0.468, 1.431]]
     )
@@ -28,7 +28,13 @@ def test_nonmetric_lower_normalized_stress():
     Z = np.array([[-0.266, -0.539], [0.451, 0.252], [0.016, -0.238], [-0.200, 0.524]])
 
     _, stress1 = mds.smacof(
-        sim, init=Z, n_components=2, max_iter=1000, n_init=1, normalized_stress=True
+        sim,
+        init=Z,
+        n_components=2,
+        max_iter=1000,
+        n_init=1,
+        normalized_stress=True,
+        eps=1e-6,
     )
 
     _, stress2 = mds.smacof(
@@ -39,6 +45,7 @@ def test_nonmetric_lower_normalized_stress():
         n_init=1,
         normalized_stress=True,
         metric=False,
+        eps=1e-6,
     )
     assert stress1 > stress2
 
@@ -54,7 +61,7 @@ def test_nonmetric_mds_optimization():
     mds_est = mds.MDS(
         n_components=2,
         n_init=1,
-        eps=1e-15,
+        eps=1e-6,
         max_iter=2,
         metric=False,
         random_state=42,
@@ -64,7 +71,7 @@ def test_nonmetric_mds_optimization():
     mds_est = mds.MDS(
         n_components=2,
         n_init=1,
-        eps=1e-15,
+        eps=1e-6,
         max_iter=3,
         metric=False,
         random_state=42,
@@ -94,28 +101,36 @@ def test_smacof_error():
     sim = np.array([[0, 5, 9, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
 
     with pytest.raises(ValueError):
-        mds.smacof(sim)
+        mds.smacof(sim, eps=1e-6, n_init=1)
 
     # Not squared similarity matrix:
     sim = np.array([[0, 5, 9, 4], [5, 0, 2, 2], [4, 2, 1, 0]])
 
     with pytest.raises(ValueError):
-        mds.smacof(sim)
+        mds.smacof(sim, eps=1e-6, n_init=1)
 
     # init not None and not correct format:
     sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
 
     Z = np.array([[-0.266, -0.539], [0.016, -0.238], [-0.200, 0.524]])
     with pytest.raises(ValueError):
-        mds.smacof(sim, init=Z, n_init=1)
+        mds.smacof(sim, init=Z, n_init=1, eps=1e-6)
 
 
 def test_MDS():
     sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
-    mds_clf = mds.MDS(metric=False, n_jobs=3, dissimilarity="precomputed")
+    mds_clf = mds.MDS(
+        metric=False,
+        n_jobs=3,
+        n_init=3,
+        eps=1e-6,
+        dissimilarity="precomputed",
+    )
     mds_clf.fit(sim)
 
 
+# TODO(1.9): remove warning filter
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("k", [0.5, 1.5, 2])
 def test_normed_stress(k):
     """Test that non-metric MDS normalized stress is scale-invariant."""
@@ -128,6 +143,8 @@ def test_normed_stress(k):
     assert_allclose(X1, X2, rtol=1e-5)
 
 
+# TODO(1.9): remove warning filter
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("metric", [True, False])
 def test_normalized_stress_auto(metric, monkeypatch):
     rng = np.random.RandomState(0)
@@ -162,9 +179,11 @@ def test_isotonic_outofbounds():
             [0.8766008278401566, 0.4227358815811242],
         ]
     )
-    mds.smacof(dis, init=init, metric=False, n_init=1)
+    mds.smacof(dis, init=init, metric=False, n_init=1, eps=1e-6)
 
 
+# TODO(1.9): remove warning filter
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("normalized_stress", [True, False])
 def test_returned_stress(normalized_stress):
     # Test that the final stress corresponds to the final embedding
@@ -190,6 +209,8 @@ def test_returned_stress(normalized_stress):
     assert_allclose(stress, stress_Z)
 
 
+# TODO(1.9): remove warning filter
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("metric", [True, False])
 def test_convergence_does_not_depend_on_scale(metric):
     # Test that the number of iterations until convergence does not depend on
@@ -210,3 +231,32 @@ def test_convergence_does_not_depend_on_scale(metric):
     n_iter2 = mds_est.n_iter_
 
     assert_equal(n_iter1, n_iter2)
+
+
+# TODO(1.9): delete this test
+def test_future_warning_eps():
+    X = np.array([[1, 1], [1, 4], [1, 5], [3, 3]])
+    sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
+
+    mds.smacof(sim, n_init=1)
+
+    with pytest.warns(FutureWarning):
+        mds.smacof(sim, n_init=1)
+
+    with pytest.warns(FutureWarning):
+        mds._smacof_single(sim)
+
+    with pytest.warns(FutureWarning):
+        mds.MDS(n_init=1).fit(X)
+
+
+# TODO(1.9): delete this test
+def test_future_warning_n_init():
+    X = np.array([[1, 1], [1, 4], [1, 5], [3, 3]])
+    sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
+
+    with pytest.warns(FutureWarning):
+        mds.smacof(sim, eps=1e-6)
+
+    with pytest.warns(FutureWarning):
+        mds.MDS(eps=1e-6).fit(X)
