@@ -101,10 +101,20 @@ fig, [ax_roc, ax_cap, ax_det] = plt.subplots(
 )
 
 for name, clf in classifiers.items():
+    plot_chance_level = name == "Random Forest"
     clf.fit(X_train, y_train)
 
-    RocCurveDisplay.from_estimator(clf, X_test, y_test, ax=ax_roc, name=name)
-    CAPCurveDisplay.from_estimator(clf, X_test, y_test, ax=ax_cap, name=name)
+    RocCurveDisplay.from_estimator(
+        clf,
+        X_test,
+        y_test,
+        ax=ax_roc,
+        name=name,
+        plot_chance_level=plot_chance_level,
+    )
+    CAPCurveDisplay.from_estimator(
+        clf, X_test, y_test, ax=ax_cap, name=name, plot_chance_level=plot_chance_level
+    )
     DetCurveDisplay.from_estimator(clf, X_test, y_test, ax=ax_det, name=name)
 
 ax_roc.set_title("Receiver Operating Characteristic (ROC) curves")
