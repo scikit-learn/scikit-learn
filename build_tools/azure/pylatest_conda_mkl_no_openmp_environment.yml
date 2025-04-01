@@ -11,6 +11,7 @@ dependencies:
   - joblib
   - matplotlib
   - pandas
+  - rich
   - pyamg
   - pytest
   - pytest-xdist
