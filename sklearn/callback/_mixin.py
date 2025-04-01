@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from ._base import CallbackProtocol
 from ._callback_context import CallbackContext
 

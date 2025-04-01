@@ -1,15 +1,14 @@
-# License: BSD 3 clause
-# Authors: the scikit-learn developers
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import re
 
 import pytest
 
 from sklearn.callback import ProgressBar
+from sklearn.callback.tests._utils import Estimator, MetaEstimator, WhileEstimator
 from sklearn.utils._optional_dependencies import check_rich_support
 from sklearn.utils._testing import SkipTest
-
-from ._utils import Estimator, MetaEstimator, WhileEstimator
 
 
 @pytest.mark.parametrize("n_jobs", [1, 2])

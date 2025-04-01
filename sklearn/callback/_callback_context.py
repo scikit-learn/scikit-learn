@@ -1,5 +1,5 @@
-# License: BSD 3 clause
-# Authors: the scikit-learn developers
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from . import AutoPropagatedProtocol
 from ._task_tree import TaskNode
@@ -9,6 +9,9 @@ class CallbackContext:
     """Task level context for the callbacks.
 
     This class is responsible for managing the callbacks and task tree of an estimator.
+
+    Instances of this class should be created using the `init_callback_context` method
+    of the estimator.
     """
 
     @classmethod

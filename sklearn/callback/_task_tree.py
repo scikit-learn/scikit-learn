@@ -1,9 +1,47 @@
-# License: BSD 3 clause
-# Authors: the scikit-learn developers
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 class TaskNode:
     """A node in a task tree.
+
+    The computations that an estimator performs has an inherent tree structure, each
+    loop representing a parent task and each iteration representing a child task. A
+    task node represents a task in this tree. Usually the root task node represents the
+    whole fit task and leaves the innermost loop iterations.
+
+    For instance KMeans as two nested loops: the outer loop is controlled by `n_init`
+    and the inner loop is controlled by `max_iter`. Its task tree looks like this:
+
+    KMeans fit
+    ├── init 0
+    │   ├── iter 0
+    │   ├── iter 1
+    │   ├── ...
+    │   └── iter n
+    ├── init 1
+    │   ├── iter 0
+    │   ├── ...
+    │   └── iter n
+    └── init 2
+        ├── iter 0
+        ├── ...
+        └── iter n
+
+    When the estimator is a meta-estimator, a task leaf usually correspond to fitting
+    a sub-estimator. So this leaf and the root task of the sub-estimator actually
+    represent the same task. In this case the leaf task node of the meta-estimator and
+    the root task node of the sub-estimator are merged into a single task node.
+
+    For instance a `Pipeline` would have a task tree that looks like this:
+    Pipeline fit
+    ├── step 0 | preprocessor fit
+    │   └── <insert preprocessor task tree here>
+    └──  step 1 | estimator fit
+        └── <insert estimator task tree here>
+
+    The task tree is built by the `CallbackContext` class. It creates a root task node
+    and then the child tasks are created dynamically as the fitting process goes on.
 
     Parameters
     ----------

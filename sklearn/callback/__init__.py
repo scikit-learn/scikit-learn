@@ -3,8 +3,8 @@ The :mod:`sklearn.callback` module implements the framework and off the shelf
 callbacks for scikit-learn estimators.
 """
 
-# License: BSD 3 clause
-# Authors: the scikit-learn developers
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from ._base import AutoPropagatedProtocol, CallbackProtocol
 from ._callback_context import CallbackContext
