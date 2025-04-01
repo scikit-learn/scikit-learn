@@ -120,3 +120,12 @@ locally by following the :ref:`building documentation instructions <building_doc
 The most recent version with a PDF documentation is quite old, 0.23.2 (released
 in August 2020), but the PDF is available `here
 <https://scikit-learn.org/0.23/_downloads/scikit-learn-docs.pdf>`__.
+
+Paid support
+============
+
+In addition to the previous options, paid support is available from the
+following organizations (listed in alphabetical order):
+
+- `:probabl <https://support.probabl.ai>`__
+- `QuanSight <https://quansight.com/open-source-services>`__
