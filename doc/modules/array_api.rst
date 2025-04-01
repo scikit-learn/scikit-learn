@@ -8,21 +8,39 @@ Array API support (experimental)
 
 The `Array API <https://data-apis.org/array-api/latest/>`_ specification defines
 a standard API for all array manipulation libraries with a NumPy-like API.
-Scikit-learn's Array API support requires
-`array-api-compat <https://github.com/data-apis/array-api-compat>`__ to be installed.
+Scikit-learn vendors pinned copies of
+`array-api-compat <https://github.com/data-apis/array-api-compat>`__
+and `array-api-extra <https://github.com/data-apis/array-api-extra>`__.
+
+Scikit-learn's support for the array API standard requires the environment variable
+`SCIPY_ARRAY_API` to be set to `1` before importing `scipy` and `scikit-learn`:
+
+.. prompt:: bash $
+
+   export SCIPY_ARRAY_API=1
+
+Please note that this environment variable is intended for temporary use.
+For more details, refer to SciPy's `Array API documentation
+<https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html#using-array-api-standard-support>`_.
 
 Some scikit-learn estimators that primarily rely on NumPy (as opposed to using
 Cython) to implement the algorithmic logic of their `fit`, `predict` or
 `transform` methods can be configured to accept any Array API compatible input
-datastructures and automatically dispatch operations to the underlying namespace
+data structures and automatically dispatch operations to the underlying namespace
 instead of relying on NumPy.
 
 At this stage, this support is **considered experimental** and must be enabled
 explicitly as explained in the following.
 
 .. note::
-    Currently, only `cupy.array_api`, `array-api-strict`, `cupy`, and `PyTorch`
-    are known to work with scikit-learn's estimators.
+    Currently, only `array-api-strict`, `cupy`, and `PyTorch` are known to work
+    with scikit-learn's estimators.
+
+The following video provides an overview of the standard's design principles
+and how it facilitates interoperability between array libraries:
+
+- `Scikit-learn on GPUs with Array API <https://www.youtube.com/watch?v=c_s8tr1AizA>`_
+  by :user:`Thomas Fan <thomasjpfan>` at PyData NYC 2023.
 
 Example usage
 =============
@@ -51,7 +69,7 @@ Here is an example code snippet to demonstrate how to use `CuPy
 After the model is trained, fitted attributes that are arrays will also be
 from the same Array API namespace as the training data. For example, if CuPy's
 Array API namespace was used for training, then fitted attributes will be on the
-GPU. We provide a experimental `_estimator_with_converted_arrays` utility that
+GPU. We provide an experimental `_estimator_with_converted_arrays` utility that
 transfers an estimator attributes from Array API to a ndarray::
 
     >>> from sklearn.utils._array_api import _estimator_with_converted_arrays
@@ -94,6 +112,7 @@ Estimators
 - :class:`linear_model.Ridge` (with `solver="svd"`)
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
 - :class:`preprocessing.KernelCenterer`
+- :class:`preprocessing.LabelEncoder`
 - :class:`preprocessing.MaxAbsScaler`
 - :class:`preprocessing.MinMaxScaler`
 - :class:`preprocessing.Normalizer`
@@ -112,20 +131,47 @@ base estimator also does:
 Metrics
 -------
 
+- :func:`sklearn.metrics.cluster.entropy`
 - :func:`sklearn.metrics.accuracy_score`
 - :func:`sklearn.metrics.d2_tweedie_score`
+- :func:`sklearn.metrics.explained_variance_score`
+- :func:`sklearn.metrics.f1_score`
+- :func:`sklearn.metrics.fbeta_score`
+- :func:`sklearn.metrics.hamming_loss`
+- :func:`sklearn.metrics.max_error`
 - :func:`sklearn.metrics.mean_absolute_error`
+- :func:`sklearn.metrics.mean_absolute_percentage_error`
+- :func:`sklearn.metrics.mean_gamma_deviance`
+- :func:`sklearn.metrics.mean_pinball_loss`
+- :func:`sklearn.metrics.mean_poisson_deviance` (requires `enabling array API support for SciPy <https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html#using-array-api-standard-support>`_)
 - :func:`sklearn.metrics.mean_squared_error`
+- :func:`sklearn.metrics.mean_squared_log_error`
 - :func:`sklearn.metrics.mean_tweedie_deviance`
+- :func:`sklearn.metrics.multilabel_confusion_matrix`
+- :func:`sklearn.metrics.pairwise.additive_chi2_kernel`
+- :func:`sklearn.metrics.pairwise.chi2_kernel`
 - :func:`sklearn.metrics.pairwise.cosine_similarity`
+- :func:`sklearn.metrics.pairwise.cosine_distances`
+- :func:`sklearn.metrics.pairwise.euclidean_distances` (see :ref:`device_support_for_float64`)
+- :func:`sklearn.metrics.pairwise.linear_kernel`
 - :func:`sklearn.metrics.pairwise.paired_cosine_distances`
+- :func:`sklearn.metrics.pairwise.paired_euclidean_distances`
+- :func:`sklearn.metrics.pairwise.polynomial_kernel`
+- :func:`sklearn.metrics.pairwise.rbf_kernel` (see :ref:`device_support_for_float64`)
+- :func:`sklearn.metrics.pairwise.sigmoid_kernel`
+- :func:`sklearn.metrics.precision_score`
+- :func:`sklearn.metrics.precision_recall_fscore_support`
 - :func:`sklearn.metrics.r2_score`
+- :func:`sklearn.metrics.recall_score`
+- :func:`sklearn.metrics.root_mean_squared_error`
+- :func:`sklearn.metrics.root_mean_squared_log_error`
 - :func:`sklearn.metrics.zero_one_loss`
 
 Tools
 -----
 
 - :func:`model_selection.train_test_split`
+- :func:`utils.check_consistent_length`
 
 Coverage is expected to grow over time. Please follow the dedicated `meta-issue on GitHub
 <https://github.com/scikit-learn/scikit-learn/issues/22352>`_ to track progress.
@@ -151,12 +197,10 @@ Common estimator checks
 
 Add the `array_api_support` tag to an estimator's set of tags to indicate that
 it supports the Array API. This will enable dedicated checks as part of the
-common tests to verify that the estimators result's are the same when using
+common tests to verify that the estimators' results are the same when using
 vanilla NumPy and Array API inputs.
 
-To run these checks you need to install
-`array_api_compat <https://github.com/data-apis/array-api-compat>`_ in your
-test environment. To run the full set of checks you need to install both
+To run the full set of checks you need to install both
 `PyTorch <https://pytorch.org/>`_ and `CuPy <https://cupy.dev/>`_ and have
 a GPU. Checks that can not be executed or have missing dependencies will be
 automatically skipped. Therefore it's important to run the tests with the
@@ -164,8 +208,10 @@ automatically skipped. Therefore it's important to run the tests with the
 
 .. prompt:: bash $
 
-    pip install array-api-compat  # and other libraries as needed
+    pip install ... # selected libraries as needed
     pytest -k "array_api" -v
+
+.. _mps_support:
 
 Note on MPS device support
 --------------------------
@@ -186,3 +232,17 @@ To enable the MPS support in PyTorch, set the environment variable
 
 At the time of writing all scikit-learn tests should pass, however, the
 computational speed is not necessarily better than with the CPU device.
+
+.. _device_support_for_float64:
+
+Note on device support for ``float64``
+--------------------------------------
+
+Certain operations within scikit-learn will automatically perform operations
+on floating-point values with `float64` precision to prevent overflows and ensure
+correctness (e.g., :func:`metrics.pairwise.euclidean_distances`). However,
+certain combinations of array namespaces and devices, such as `PyTorch on MPS`
+(see :ref:`mps_support`) do not support the `float64` data type. In these cases,
+scikit-learn will revert to using the `float32` data type instead. This can result in
+different behavior (typically numerically unstable results) compared to not using array
+API dispatching or using a device with `float64` support.

@@ -13,7 +13,7 @@ from scipy import stats
 from sklearn.decomposition import PCA, FastICA, fastica
 from sklearn.decomposition._fastica import _gs_decorrelation
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_allclose, ignore_warnings
 
 
 def center_and_norm(x, axis=-1):
@@ -80,7 +80,7 @@ def test_fastica_simple(add_noise, global_random_seed, global_dtype):
         pytest.xfail(
             "FastICA instability with Ubuntu Atlas build with float32 "
             "global_dtype. For more details, see "
-            "https://github.com/scikit-learn/scikit-learn/issues/24131#issuecomment-1208091119"  # noqa
+            "https://github.com/scikit-learn/scikit-learn/issues/24131#issuecomment-1208091119"
         )
 
     # Test the FastICA algorithm on very simple data.
@@ -367,7 +367,7 @@ def test_fastica_errors():
     with pytest.raises(ValueError, match=r"alpha must be in \[1,2\]"):
         fastica(X, fun_args={"alpha": 0})
     with pytest.raises(
-        ValueError, match="w_init has invalid shape.+" r"should be \(3L?, 3L?\)"
+        ValueError, match=r"w_init has invalid shape.+should be \(3L?, 3L?\)"
     ):
         fastica(X, w_init=w_init)
 
@@ -448,5 +448,10 @@ def test_fastica_eigh_low_rank_warning(global_random_seed):
     X = A @ A.T
     ica = FastICA(random_state=0, whiten="unit-variance", whiten_solver="eigh")
     msg = "There are some small singular values"
+
     with pytest.warns(UserWarning, match=msg):
-        ica.fit(X)
+        with ignore_warnings(category=ConvergenceWarning):
+            # The FastICA solver may not converge for some data with specific
+            # random seeds but this happens after the whiten step so this is
+            # not want we want to test here.
+            ica.fit(X)

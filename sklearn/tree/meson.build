@@ -5,6 +5,9 @@ tree_extension_metadata = {
   '_splitter':
     {'sources': ['_splitter.pyx'],
      'override_options': ['optimization=3']},
+  '_partitioner':
+    {'sources': ['_partitioner.pyx'],
+     'override_options': ['optimization=3']},
   '_criterion':
     {'sources': ['_criterion.pyx'],
      'override_options': ['optimization=3']},

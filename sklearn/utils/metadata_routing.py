@@ -3,8 +3,8 @@
 # This module is not a separate sub-folder since that would result in a circular
 # import issue.
 #
-# Author: Adrin Jalali <adrin.jalali@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from ._metadata_requests import WARN, UNUSED, UNCHANGED  # noqa
 from ._metadata_requests import get_routing_for_object  # noqa

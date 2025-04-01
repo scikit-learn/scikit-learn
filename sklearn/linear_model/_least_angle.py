@@ -3,11 +3,8 @@ Least Angle Regression algorithm. See the documentation on the
 Generalized Linear Model for a complete discussion.
 """
 
-# Author: Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#         Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Gael Varoquaux
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import sys
 import warnings
@@ -38,6 +35,7 @@ from ..utils._metadata_requests import (
 )
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.parallel import Parallel, delayed
+from ..utils.validation import validate_data
 from ._base import LinearModel, LinearRegression, _preprocess_data
 
 SOLVE_TRIANGULAR_ARGS = {"check_finite": False}
@@ -93,8 +91,8 @@ def lars_path(
     Parameters
     ----------
     X : None or ndarray of shape (n_samples, n_features)
-        Input data. Note that if X is `None` then the Gram matrix must be
-        specified, i.e., cannot be `None` or `False`.
+        Input data. If X is `None`, Gram must also be `None`.
+        If only the Gram matrix is available, use `lars_path_gram` instead.
 
     y : None or ndarray of shape (n_samples,)
         Input targets.
@@ -556,7 +554,7 @@ def _lars_path_solver(
         Gram = None
         if X is None:
             raise ValueError("X and Gram cannot both be unspecified.")
-    elif isinstance(Gram, str) and Gram == "auto" or Gram is True:
+    elif (isinstance(Gram, str) and Gram == "auto") or Gram is True:
         if Gram is True or X.shape[0] > X.shape[1]:
             Gram = np.dot(X.T, X)
         else:
@@ -1180,7 +1178,9 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
-        X, y = self._validate_data(X, y, y_numeric=True, multi_output=True)
+        X, y = validate_data(
+            self, X, y, force_writeable=True, y_numeric=True, multi_output=True
+        )
 
         alpha = getattr(self, "alpha", 0.0)
         if hasattr(self, "n_nonzero_coefs"):
@@ -1644,7 +1644,7 @@ class LarsCV(Lars):
     >>> reg.score(X, y)
     0.9996...
     >>> reg.alpha_
-    0.2961...
+    np.float64(0.2961...)
     >>> reg.predict(X[:1,])
     array([154.3996...])
     """
@@ -1689,8 +1689,10 @@ class LarsCV(Lars):
             fit_path=True,
         )
 
-    def _more_tags(self):
-        return {"multioutput": False}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.multi_output = False
+        return tags
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, **params):
@@ -1721,7 +1723,7 @@ class LarsCV(Lars):
         """
         _raise_for_params(params, self, "fit")
 
-        X, y = self._validate_data(X, y, y_numeric=True)
+        X, y = validate_data(self, X, y, force_writeable=True, y_numeric=True)
         X = as_float_array(X, copy=self.copy_X)
         y = as_float_array(y, copy=self.copy_X)
 
@@ -1759,7 +1761,7 @@ class LarsCV(Lars):
             )
             for train, test in cv.split(X, y, **routed_params.splitter.split)
         )
-        all_alphas = np.concatenate(list(zip(*cv_paths))[0])
+        all_alphas = np.concatenate(next(zip(*cv_paths)))
         # Unique also sorts
         all_alphas = np.unique(all_alphas)
         # Take at most max_n_alphas values
@@ -1984,7 +1986,7 @@ class LassoLarsCV(LarsCV):
     >>> reg.score(X, y)
     0.9993...
     >>> reg.alpha_
-    0.3972...
+    np.float64(0.3972...)
     >>> reg.predict(X[:1,])
     array([-78.4831...])
     """
@@ -2211,8 +2213,10 @@ class LassoLarsIC(LassoLars):
         self.fit_path = True
         self.noise_variance = noise_variance
 
-    def _more_tags(self):
-        return {"multioutput": False}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.multi_output = False
+        return tags
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, copy_X=None):
@@ -2238,7 +2242,7 @@ class LassoLarsIC(LassoLars):
         """
         if copy_X is None:
             copy_X = self.copy_X
-        X, y = self._validate_data(X, y, y_numeric=True)
+        X, y = validate_data(self, X, y, force_writeable=True, y_numeric=True)
 
         X, y, Xmean, ymean, Xstd = _preprocess_data(
             X, y, fit_intercept=self.fit_intercept, copy=copy_X

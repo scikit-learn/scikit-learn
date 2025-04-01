@@ -1,5 +1,8 @@
 """Popular unsupervised clustering algorithms."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from ._affinity_propagation import AffinityPropagation, affinity_propagation
 from ._agglomerative import (
     AgglomerativeClustering,
@@ -23,21 +26,24 @@ from ._optics import (
 from ._spectral import SpectralClustering, spectral_clustering
 
 __all__ = [
+    "DBSCAN",
+    "HDBSCAN",
+    "OPTICS",
     "AffinityPropagation",
     "AgglomerativeClustering",
     "Birch",
-    "DBSCAN",
-    "OPTICS",
+    "BisectingKMeans",
+    "FeatureAgglomeration",
+    "KMeans",
+    "MeanShift",
+    "MiniBatchKMeans",
+    "SpectralBiclustering",
+    "SpectralClustering",
+    "SpectralCoclustering",
+    "affinity_propagation",
     "cluster_optics_dbscan",
     "cluster_optics_xi",
     "compute_optics_graph",
-    "KMeans",
-    "BisectingKMeans",
-    "FeatureAgglomeration",
-    "MeanShift",
-    "MiniBatchKMeans",
-    "SpectralClustering",
-    "affinity_propagation",
     "dbscan",
     "estimate_bandwidth",
     "get_bin_seeds",
@@ -47,7 +53,4 @@ __all__ = [
     "mean_shift",
     "spectral_clustering",
     "ward_tree",
-    "SpectralBiclustering",
-    "SpectralCoclustering",
-    "HDBSCAN",
 ]

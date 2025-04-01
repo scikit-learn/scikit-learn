@@ -1,5 +1,8 @@
 """Utilities to discover scikit-learn objects."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import inspect
 import pkgutil
 from importlib import import_module
@@ -138,7 +141,7 @@ def all_estimators(type_filter=None):
                 "Parameter type_filter must be 'classifier', "
                 "'regressor', 'transformer', 'cluster' or "
                 "None, got"
-                f" {repr(type_filter)}."
+                f" {type_filter!r}."
             )
 
     # drop duplicates, sort for reproducibility

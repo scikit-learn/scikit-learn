@@ -2,9 +2,8 @@
 A Theil-Sen Estimator for Multiple Linear Regression Model
 """
 
-# Author: Florian Wilhelm <florian.wilhelm@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import warnings
@@ -22,6 +21,7 @@ from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state
 from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.parallel import Parallel, delayed
+from ..utils.validation import validate_data
 from ._base import LinearModel
 
 _EPSILON = np.finfo(np.double).eps
@@ -424,7 +424,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
             )
 
         random_state = check_random_state(self.random_state)
-        X, y = self._validate_data(X, y, y_numeric=True)
+        X, y = validate_data(self, X, y, y_numeric=True)
         n_samples, n_features = X.shape
         n_subsamples, self.n_subpopulation_ = self._check_subparams(
             n_samples, n_features

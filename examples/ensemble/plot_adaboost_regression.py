@@ -23,9 +23,8 @@ as :class:`~ensemble.HistGradientBoostingRegressor`.
 # ------------------
 # First, we prepare dummy data with a sinusoidal relationship and some gaussian noise.
 
-# Author: Noel Dawe <noel.dawe@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 

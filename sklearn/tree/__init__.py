@@ -1,5 +1,8 @@
 """Decision tree based models for classification and regression."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from ._classes import (
     BaseDecisionTree,
     DecisionTreeClassifier,
@@ -16,6 +19,6 @@ __all__ = [
     "ExtraTreeClassifier",
     "ExtraTreeRegressor",
     "export_graphviz",
-    "plot_tree",
     "export_text",
+    "plot_tree",
 ]

@@ -3,6 +3,11 @@
 
 .. include:: ../min_dependency_substitutions.rst
 
+..
+   TODO Add |PythonMinVersion| to min_dependency_substitutions.rst one day.
+   Probably would need to change a bit sklearn/_min_dependencies.py since Python is not really a package ...
+.. |PythonMinVersion| replace:: 3.10
+
 ==================================================
 Installing the development version of scikit-learn
 ==================================================
@@ -52,14 +57,14 @@ feature, code or documentation improvement).
 
    .. prompt:: bash $
 
-     git clone git://github.com/scikit-learn/scikit-learn.git  # add --depth 1 if your connection is slow
+     git clone git@github.com:scikit-learn/scikit-learn.git  # add --depth 1 if your connection is slow
      cd scikit-learn
 
    If you plan on submitting a pull-request, you should clone from your fork
    instead.
 
-#. Install a recent version of Python (3.9 or later at the time of writing) for
-   instance using Miniforge3_. Miniforge provides a conda-based distribution of
+#. Install a recent version of Python (|PythonMinVersion| or later) for
+   instance using conda-forge_. Conda-forge provides a conda-based distribution of
    Python and the most popular scientific libraries.
 
    If you installed Python with conda, we recommend to create a dedicated
@@ -78,8 +83,8 @@ feature, code or documentation improvement).
      conda activate sklearn-env
 
 #. **Alternative to conda:** You can use alternative installations of Python
-   provided they are recent enough (3.9 or higher at the time of writing).
-   Here is an example on how to create a build environment for a Linux system's
+   provided they are recent enough (|PythonMinVersion| or higher).
+   Here is an example of how to create a build environment for a Linux system's
    Python. Build dependencies are installed with `pip` in a dedicated virtualenv_
    to avoid disrupting other Python programs installed on the system:
 
@@ -99,7 +104,6 @@ feature, code or documentation improvement).
 
      pip install --editable . \
         --verbose --no-build-isolation \
-        --check-build-dependencies \
         --config-settings editable-verbose=true
 
 #. Check that the installed scikit-learn has a version number ending with
@@ -118,10 +122,13 @@ feature, code or documentation improvement).
     to avoid surprises when you import `sklearn`. `meson-python` implements
     editable installs by rebuilding `sklearn` when executing `import sklearn`.
     With the recommended setting you will see a message when this happens,
-    rather than potentially waiting without feed-back and wondering
+    rather than potentially waiting without feedback and wondering
     what is taking so long. Bonus: this means you only have to run the `pip
     install` command once, `sklearn` will automatically be rebuilt when
     importing `sklearn`.
+
+    Note that `--config-settings` is only supported in `pip` version 23.1 or
+    later. To upgrade `pip` to a compatible version, run `pip install -U pip`.
 
 Dependencies
 ------------
@@ -132,7 +139,7 @@ Runtime dependencies
 Scikit-learn requires the following dependencies both at build time and at
 runtime:
 
-- Python (>= 3.8),
+- Python (>= |PythonMinVersion|),
 - NumPy (>= |NumpyMinVersion|),
 - SciPy (>= |ScipyMinVersion|),
 - Joblib (>= |JoblibMinVersion|),
@@ -256,8 +263,8 @@ to enable OpenMP support:
 
 For Apple Silicon M1 hardware, only the conda-forge method below is known to
 work at the time of writing (January 2021). You can install the `macos/arm64`
-distribution of conda using the `miniforge installer
-<https://github.com/conda-forge/miniforge#miniforge>`_
+distribution of conda using the `conda-forge installer
+<https://conda-forge.org/download/>`_
 
 macOS compilers from conda-forge
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -480,45 +487,4 @@ the base system and these steps will not be necessary.
 .. _Homebrew: https://brew.sh
 .. _virtualenv: https://docs.python.org/3/tutorial/venv.html
 .. _conda environment: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
-.. _Miniforge3: https://github.com/conda-forge/miniforge#miniforge3
-
-Alternative compilers
-=====================
-
-The following command will build scikit-learn using your default C/C++ compiler.
-
-.. prompt:: bash $
-
-    pip install --editable . \
-        --verbose --no-build-isolation \
-        --config-settings editable-verbose=true
-
-If you want to build scikit-learn with another compiler handled by ``setuptools``,
-use the following command:
-
-.. prompt:: bash $
-
-    python setup.py build_ext --compiler=<compiler> -i build_clib --compiler=<compiler>
-
-To see the list of available compilers run:
-
-.. prompt:: bash $
-
-    python setup.py build_ext --help-compiler
-
-If your compiler is not listed here, you can specify it through some environment
-variables (does not work on windows). This `section
-<https://setuptools.pypa.io/en/stable/userguide/ext_modules.html#compiler-and-linker-options>`_
-of the setuptools documentation explains in details which environment variables
-are used by ``setuptools``, and at which stage of the compilation, to set the
-compiler and linker options.
-
-When setting these environment variables, it is advised to first check their
-``sysconfig`` counterparts variables and adapt them to your compiler. For instance::
-
-    import sysconfig
-    print(sysconfig.get_config_var('CC'))
-    print(sysconfig.get_config_var('LDFLAGS'))
-
-In addition, since Scikit-learn uses OpenMP, you need to include the appropriate OpenMP
-flag of your compiler into the ``CFLAGS`` and ``CPPFLAGS`` environment variables.
+.. _conda-forge: https://conda-forge.org/download/

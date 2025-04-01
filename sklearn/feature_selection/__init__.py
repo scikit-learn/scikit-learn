@@ -4,6 +4,9 @@ These include univariate filter selection methods and the recursive feature elim
 algorithm.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from ._base import SelectorMixin
 from ._from_model import SelectFromModel
 from ._mutual_info import mutual_info_classif, mutual_info_regression
@@ -25,23 +28,23 @@ from ._univariate_selection import (
 from ._variance_threshold import VarianceThreshold
 
 __all__ = [
-    "GenericUnivariateSelect",
-    "SequentialFeatureSelector",
     "RFE",
     "RFECV",
+    "GenericUnivariateSelect",
     "SelectFdr",
     "SelectFpr",
+    "SelectFromModel",
     "SelectFwe",
     "SelectKBest",
-    "SelectFromModel",
     "SelectPercentile",
+    "SelectorMixin",
+    "SequentialFeatureSelector",
     "VarianceThreshold",
     "chi2",
     "f_classif",
     "f_oneway",
     "f_regression",
-    "r_regression",
     "mutual_info_classif",
     "mutual_info_regression",
-    "SelectorMixin",
+    "r_regression",
 ]

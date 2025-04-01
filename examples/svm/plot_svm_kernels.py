@@ -36,8 +36,8 @@ linear kernel (`"linear"`), the polynomial kernel (`"poly"`), the radial basis f
 kernel (`"rbf"`) and the sigmoid kernel (`"sigmoid"`).
 """
 
-# Code source: Gaël Varoquaux
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Creating a dataset
@@ -203,7 +203,7 @@ plot_training_data_with_decision_boundary("linear")
 plot_training_data_with_decision_boundary("poly")
 
 # %%
-# The polynomial kernel with `gamma=2`` adapts well to the training data,
+# The polynomial kernel with `gamma=2` adapts well to the training data,
 # causing the margins on both sides of the hyperplane to bend accordingly.
 #
 # RBF kernel

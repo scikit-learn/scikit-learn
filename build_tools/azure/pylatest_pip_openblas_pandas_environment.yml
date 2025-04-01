@@ -4,7 +4,7 @@
 channels:
   - defaults
 dependencies:
-  - python=3.9
+  - python
   - ccache
   - pip
   - pip:
@@ -28,3 +28,5 @@ dependencies:
     - numpydoc
     - lightgbm
     - scikit-image
+    - array-api-strict
+    - scipy-doctest

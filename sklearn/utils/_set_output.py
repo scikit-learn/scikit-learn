@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import importlib
 from functools import wraps
 from typing import Protocol, runtime_checkable
@@ -441,10 +444,8 @@ def _safe_set_output(estimator, *, transform=None):
     estimator : estimator instance
         Estimator instance.
     """
-    set_output_for_transform = (
-        hasattr(estimator, "transform")
-        or hasattr(estimator, "fit_transform")
-        and transform is not None
+    set_output_for_transform = hasattr(estimator, "transform") or (
+        hasattr(estimator, "fit_transform") and transform is not None
     )
     if not set_output_for_transform:
         # If estimator can not transform, then `set_output` does not need to be

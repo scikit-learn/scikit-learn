@@ -1,12 +1,7 @@
 """Principal Component Analysis Base Classes"""
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Mathieu Blondel <mathieu@mblondel.org>
-#         Denis A. Engemann <denis-alexander.engemann@inria.fr>
-#         Kyle Kastner <kastnerkyle@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from abc import ABCMeta, abstractmethod
 
@@ -14,8 +9,8 @@ import numpy as np
 from scipy import linalg
 
 from ..base import BaseEstimator, ClassNamePrefixFeaturesOutMixin, TransformerMixin
-from ..utils._array_api import _add_to_diagonal, device, get_namespace
-from ..utils.validation import check_is_fitted
+from ..utils._array_api import _fill_or_add_to_diagonal, device, get_namespace
+from ..utils.validation import check_is_fitted, validate_data
 
 
 class _BasePCA(
@@ -49,10 +44,10 @@ class _BasePCA(
         exp_var_diff = xp.where(
             exp_var > self.noise_variance_,
             exp_var_diff,
-            xp.asarray(0.0, device=device(exp_var)),
+            xp.asarray(0.0, device=device(exp_var), dtype=exp_var.dtype),
         )
         cov = (components_.T * exp_var_diff) @ components_
-        _add_to_diagonal(cov, self.noise_variance_, xp)
+        _fill_or_add_to_diagonal(cov, self.noise_variance_, xp)
         return cov
 
     def get_precision(self):
@@ -94,10 +89,10 @@ class _BasePCA(
             xp.asarray(0.0, device=device(exp_var)),
         )
         precision = components_ @ components_.T / self.noise_variance_
-        _add_to_diagonal(precision, 1.0 / exp_var_diff, xp)
+        _fill_or_add_to_diagonal(precision, 1.0 / exp_var_diff, xp)
         precision = components_.T @ linalg_inv(precision) @ components_
         precision /= -(self.noise_variance_**2)
-        _add_to_diagonal(precision, 1.0 / self.noise_variance_, xp)
+        _fill_or_add_to_diagonal(precision, 1.0 / self.noise_variance_, xp)
         return precision
 
     @abstractmethod
@@ -140,8 +135,12 @@ class _BasePCA(
 
         check_is_fitted(self)
 
-        X = self._validate_data(
-            X, dtype=[xp.float64, xp.float32], accept_sparse=("csr", "csc"), reset=False
+        X = validate_data(
+            self,
+            X,
+            dtype=[xp.float64, xp.float32],
+            accept_sparse=("csr", "csc"),
+            reset=False,
         )
         return self._transform(X, xp=xp, x_is_centered=False)
 

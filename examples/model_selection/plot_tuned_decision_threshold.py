@@ -14,6 +14,9 @@ This example shows how to use the
 threshold, depending on a metric of interest.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # The diabetes dataset
 # --------------------

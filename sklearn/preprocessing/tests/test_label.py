@@ -13,13 +13,13 @@ from sklearn.preprocessing._label import (
 )
 from sklearn.utils._array_api import (
     _convert_to_numpy,
+    _get_namespace_device_dtype_ids,
     get_namespace,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
     _array_api_for_tests,
     assert_array_equal,
-    ignore_warnings,
 )
 from sklearn.utils.fixes import (
     COO_CONTAINERS,
@@ -143,7 +143,6 @@ def test_label_binarizer_pandas_nullable(dtype, unique_first):
     assert_array_equal(y_out, [[1], [0]])
 
 
-@ignore_warnings
 def test_label_binarizer_errors():
     # Check that invalid arguments yield ValueError
     one_class = np.array([0, 0, 0, 0])
@@ -709,7 +708,9 @@ def test_label_encoders_do_not_have_set_output(encoder):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "y",

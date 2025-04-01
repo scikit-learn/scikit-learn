@@ -1,0 +1,2 @@
+- Support for ``n_samples == n_features`` in `sklearn.covariance.MinCovDet` has
+  been restored.  By :user:`Antony Lee <anntzer>`.

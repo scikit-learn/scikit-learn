@@ -1,8 +1,13 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import warnings
+from functools import partial
 
 import numpy as np
 
 from ..base import BaseEstimator, TransformerMixin, _fit_context
+from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import StrOptions
 from ..utils._set_output import (
     _get_adapter_from_container,
@@ -11,11 +16,14 @@ from ..utils._set_output import (
 from ..utils.metaestimators import available_if
 from ..utils.validation import (
     _allclose_dense_sparse,
+    _check_feature_names,
     _check_feature_names_in,
+    _check_n_features,
     _get_feature_names,
     _is_pandas_df,
     _is_polars_df,
     check_array,
+    validate_data,
 )
 
 
@@ -172,13 +180,13 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
     def _check_input(self, X, *, reset):
         if self.validate:
-            return self._validate_data(X, accept_sparse=self.accept_sparse, reset=reset)
+            return validate_data(self, X, accept_sparse=self.accept_sparse, reset=reset)
         elif reset:
             # Set feature_names_in_ and n_features_in_ even if validate=False
             # We run this only when reset==True to store the attributes but not
             # validate them, because validate=False
-            self._check_n_features(X, reset=reset)
-            self._check_feature_names(X, reset=reset)
+            _check_n_features(self, X, reset=reset)
+            _check_feature_names(self, X, reset=reset)
         return X
 
     def _check_inverse_transform(self, X):
@@ -382,8 +390,12 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         """Return True since FunctionTransfomer is stateless."""
         return True
 
-    def _more_tags(self):
-        return {"no_validation": not self.validate, "stateless": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.no_validation = not self.validate
+        tags.requires_fit = False
+        tags.input_tags.sparse = not self.validate or self.accept_sparse
+        return tags
 
     def set_output(self, *, transform=None):
         """Set output container.
@@ -414,3 +426,21 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
         self._sklearn_output_config["transform"] = transform
         return self
+
+    def _get_function_name(self):
+        """Get the name display of the `func` used in HTML representation."""
+        if hasattr(self.func, "__name__"):
+            return self.func.__name__
+        if isinstance(self.func, partial):
+            return self.func.func.__name__
+        return f"{self.func.__class__.__name__}(...)"
+
+    def _sk_visual_block_(self):
+        return _VisualBlock(
+            "single",
+            self,
+            names=self._get_function_name(),
+            name_details=str(self),
+            name_caption="FunctionTransformer",
+            doc_link_label="FunctionTransformer",
+        )
