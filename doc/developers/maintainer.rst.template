@@ -377,24 +377,13 @@ Guideline for bumping minimum versions of our dependencies
   critical bugfix in one of our dependencies makes it too costly to support it in
   terms of maintenance.
 
+`maint_tools/bump-dependencies-versions.py` implements these rules and can be
+used to give the new minimum dependency versions. It takes as input the
+expected scikit-learn release date, for example:
 
-Example for the upcoming scikit-learn 1.8 release
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. code:: bash
 
-The upcoming 1.8 release is scheduled around November/December, let's pretend
-it will happen on 2025-12-01, Python 3.10 (released in October 2021) will be
-more than 4 years old and will be dropped so our minimum supported Python will
-be Python 3.11 (a bit more than 3 years old).
-
-The dependencies minimum versions will be bumped as follow:
-
-- python: 3.10 -> 3.11
-- numpy: 1.22.0 -> 1.24.0 (oldest version with Python 3.11 wheels)
-- scipy: 1.8.0 -> 1.10.0 (oldest scipy version with Python 3.11 wheels)
-- pandas: 1.4.0 -> 1.5.0 (oldest pandas version with Python 3.11 wheels)
-- matplotlib: 3.5.0 -> 3.6.0 (oldest matplotlib version with Python 3.11 wheels)
-- joblib: 1.2.0 -> 1.3.0 (1.3.0 will be ~2 years 5 month old, 1.4.0 will be less than 2 years old)
-- threadpoolctl: 3.1.0 -> 3.2.0 (3.2.0 will be ~2 years 5 months old, 3.3.0 will be less than 2 years old)
+    python maint_tools/bump-dependencies-versions.py 2025-12-01
 
 Merging Pull Requests
 ---------------------
