@@ -1387,7 +1387,7 @@ class _MetadataRequester:
 
         for method in SIMPLE_METHODS:
             mmr = getattr(requests, method)
-            # set ``set_{method}_request``` methods
+            # set ``set_{method}_request`` methods
             if not len(mmr.requests):
                 continue
             setattr(
