@@ -182,7 +182,7 @@ def test_check_weights():
     g.weights_init = weights_bad_shape
     msg = re.escape(
         "The parameter 'weights' should have the shape of "
-        f"({n_components},), but got {str(weights_bad_shape.shape)}"
+        f"({n_components},), but got {weights_bad_shape.shape}"
     )
     with pytest.raises(ValueError, match=msg):
         g.fit(X)
@@ -1236,6 +1236,7 @@ def test_gaussian_mixture_setting_best_params():
         "precisions_cholesky_",
         "n_iter_",
         "lower_bound_",
+        "lower_bounds_",
     ]:
         assert hasattr(gmm, attr)
 

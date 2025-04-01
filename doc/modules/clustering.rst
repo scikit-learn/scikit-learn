@@ -140,6 +140,11 @@ model with equal covariance per component.
 :term:`inductive` clustering methods) are not designed to be applied to new,
 unseen data.
 
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_cluster_plot_inductive_clustering.py`: An example
+  of an inductive clustering model for handling new data.
+
 .. _k_means:
 
 K-means
@@ -1323,7 +1328,7 @@ labels, rename 2 to 3, and get the same score::
   >>> metrics.adjusted_rand_score(labels_true, labels_pred)
   0.24...
 
-Furthermore, both :func:`rand_score` :func:`adjusted_rand_score` are
+Furthermore, both :func:`rand_score` and :func:`adjusted_rand_score` are
 **symmetric**: swapping the argument does not change the scores. They can
 thus be used as **consensus measures**::
 
@@ -1343,7 +1348,7 @@ Perfect labeling is scored 1.0::
 Poorly agreeing labels (e.g. independent labelings) have lower scores,
 and for the adjusted Rand index the score will be negative or close to
 zero. However, for the unadjusted Rand index the score, while lower,
-will not necessarily be close to zero.::
+will not necessarily be close to zero::
 
   >>> labels_true = [0, 0, 0, 0, 0, 0, 1, 1]
   >>> labels_pred = [0, 1, 2, 3, 4, 5, 5, 6]
