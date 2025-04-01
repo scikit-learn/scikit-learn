@@ -124,8 +124,9 @@ in August 2020), but the PDF is available `here
 Paid support
 ============
 
-In addition to the previous options, paid support is available from the
-following organizations (listed in alphabetical order):
+Companies in the following list (listed in alphabetical order) offer support
+services related to scikit-learn and have a proven track record of employing
+long-term maintainers of scikit-learn and related open source projects:
 
 - `:probabl <https://support.probabl.ai>`__
 - `Quansight <https://quansight.com/open-source-services>`__
