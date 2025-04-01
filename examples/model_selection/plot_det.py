@@ -12,24 +12,25 @@ ROC curves feature true positive rate (TPR) on the Y axis, and false positive
 rate (FPR) on the X axis. This means that the top left corner of the plot is the
 "ideal" point - a FPR of zero, and a TPR of one.
 
-DET curves are a variation of ROC curves where False Negative Rate (FNR) is
-plotted on the y-axis instead of the TPR. In this case the origin (bottom left
-corner) is the "ideal" point.
-
 CAP curves display the cumulative proportion of true positives on the Y axis
 versus the cumulative proportion of the dataset (ranked by predicted probability)
 on the X axis.
+
+DET curves are a variation of ROC curves where False Negative Rate (FNR) is
+plotted on the y-axis instead of the TPR. In this case the origin (bottom left
+corner) is the "ideal" point. Furthermore, the axis use a normal deviate scale
+to focus on differences closer to the origin.
 
 .. note::
 
     - See :func:`sklearn.metrics.roc_curve` for further information about ROC
       curves.
 
-    - See :func:`sklearn.metrics.det_curve` for further information about
-      DET curves.
-
     - See :func:`sklearn.metrics.cap_curve` for further information about
       CAP curves.
+
+    - See :func:`sklearn.metrics.det_curve` for further information about
+      DET curves.
 
     - This example is loosely based on
       :ref:`sphx_glr_auto_examples_classification_plot_classifier_comparison.py`
@@ -67,7 +68,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4, random_
 # ----------------------
 #
 # Here we define two different classifiers. The goal is to visually compare their
-# statistical performance across thresholds using the ROC, DET and CAP curves. There
+# statistical performance across thresholds using the ROC, CAP and DET curves. There
 # is no particular reason why these classifiers are chosen over other classifiers
 # available in scikit-learn.
 
@@ -83,7 +84,7 @@ classifiers = {
 }
 
 # %%
-# Plot ROC, DET and CAP curves
+# Plot ROC, CAP and DET curves
 # ----------------------------
 #
 # DET curves are commonly plotted in normal deviate scale. To achieve this the
