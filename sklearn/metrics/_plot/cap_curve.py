@@ -89,7 +89,9 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             not `None`, otherwise no labeling is shown.
 
         plot_chance_level : bool, default=True
-            Whether to plot the chance level.
+            Whether to plot the expected curve of a classifier whose
+            predictions are independent of the feature values passed to
+            `decision_function` or `predict_proba`.
 
         chance_level_kw : dict, default=None
             Keyword arguments to be passed to matplotlib's `plot` for rendering
@@ -196,6 +198,11 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         normalize_scale : bool, default=True
             Whether to normalize values between 0 and 1 for the plot.
 
+        plot_chance_level : bool, default=True
+            Whether to plot the expected curve of a classifier whose
+            predictions are independent of the feature values passed to
+            `decision_function` or `predict_proba`.
+
         name : str, default=None
             Name of CAP curve for labeling. If `None`, name will be set to
             `"Classifier"`.
@@ -297,6 +304,11 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         normalize_scale : bool, default=True
             Whether to normalize values between 0 and 1 for the plot.
+
+        plot_chance_level : bool, default=True
+            Whether to plot the expected curve of a classifier whose
+            predictions are independent of the feature values passed to
+            `decision_function` or `predict_proba`.
 
         name : str, default=None
             Name of CAP Curve for labeling. If `None`, use the name of the estimator.
