@@ -388,8 +388,6 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             sample_weight = _check_sample_weight(sample_weight, X, dtype=None)
             fit_params["sample_weight"] = sample_weight
 
-        if sample_weight is not None:
-            fit_params["sample_weight"] = sample_weight
         return self._fit(X, y, max_samples=self.max_samples, **fit_params)
 
     def _parallel_args(self):
