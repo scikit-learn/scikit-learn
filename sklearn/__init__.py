@@ -97,6 +97,7 @@ _submodules = [
     "manifold",
     "metrics",
     "mixture",
+    "mkl",
     "model_selection",
     "multiclass",
     "multioutput",
