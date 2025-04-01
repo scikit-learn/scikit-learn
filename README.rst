@@ -33,6 +33,7 @@
 .. |NumPyMinVersion| replace:: 1.24.1
 .. |SciPyMinVersion| replace:: 1.10.0
 .. |JoblibMinVersion| replace:: 1.3.0
+.. |NarwhalsMinVersion| replace:: 1.30.0
 .. |ThreadpoolctlMinVersion| replace:: 3.2.0
 .. |MatplotlibMinVersion| replace:: 3.6.1
 .. |Scikit-ImageMinVersion| replace:: 0.22.0
@@ -68,6 +69,7 @@ scikit-learn requires:
 - NumPy (>= |NumPyMinVersion|)
 - SciPy (>= |SciPyMinVersion|)
 - joblib (>= |JoblibMinVersion|)
+- Narwhals (>= |NarwhalsMinVersion|)
 - threadpoolctl (>= |ThreadpoolctlMinVersion|)
 
 =======
