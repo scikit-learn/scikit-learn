@@ -40,7 +40,6 @@ from ..utils.random import sample_without_replacement
 from ..utils.validation import (
     _check_method_params,
     _check_sample_weight,
-    _deprecate_positional_args,
     _estimator_has,
     check_is_fitted,
     has_fit_parameter,
@@ -338,15 +337,11 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self.random_state = random_state
         self.verbose = verbose
 
-    # TODO(1.7): remove `sample_weight` from the signature after deprecation
-    # cycle; pop it from `fit_params` before the `_raise_for_params` check and
-    # reinsert later, for backwards compatibility
-    @_deprecate_positional_args(version="1.7")
     @_fit_context(
         # BaseBagging.estimator is not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y, *, sample_weight=None, **fit_params):
+    def fit(self, X, y, **fit_params):
         """Build a Bagging ensemble of estimators from the training set (X, y).
 
         Parameters
@@ -358,11 +353,6 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         y : array-like of shape (n_samples,)
             The target values (class labels in classification, real numbers in
             regression).
-
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If None, then samples are equally weighted.
-            Note that this is supported only if the base estimator supports
-            sample weighting.
 
         **fit_params : dict
             Parameters to pass to the underlying estimators.
@@ -380,6 +370,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
+        sample_weight = fit_params.pop("sample_weight", None)
         _raise_for_params(fit_params, self, "fit")
 
         # Convert data (X is required to be 2d and indexable)
@@ -397,6 +388,8 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             sample_weight = _check_sample_weight(sample_weight, X, dtype=None)
             fit_params["sample_weight"] = sample_weight
 
+        if sample_weight is not None:
+            fit_params["sample_weight"] = sample_weight
         return self._fit(X, y, max_samples=self.max_samples, **fit_params)
 
     def _parallel_args(self):
