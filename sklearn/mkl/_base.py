@@ -62,22 +62,22 @@ class BaseMKL(TransformerMixin, MetaEstimatorMixin, BaseEstimator, metaclass=ABC
     @abstractmethod
     def __init__(
         self,
+        algo,
         kernels,
         kernels_scopes,
         kernels_param_grids,
         precompute_kernels,
-        algo,
         tol,
         numeric_tol,
         verbose,
         max_iter,
         random_state,
     ):
+        self.algo = algo
         self.kernels = kernels
         self.kernels_scopes = kernels_scopes
         self.kernels_param_grids = kernels_param_grids
         self.precompute_kernels = precompute_kernels
-        self.algo = algo
         self.tol = tol
         self.numeric_tol = numeric_tol
         self.verbose = verbose
@@ -130,42 +130,10 @@ class BaseMKL(TransformerMixin, MetaEstimatorMixin, BaseEstimator, metaclass=ABC
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
-        # TODO: DOC: X : list of kernels matrices (n, n) or array-like of shape (n, m)
-        self._kernels, self._kernels_scopes, self._kernels_param_grids = (
-            self._validate_kernels(self.kernels),
-            self._validate_kernels_scopes(self.kernels_scopes),
-            self._validate_kernels_param_grids(self.kernels_param_grids),
-        )
-        X, y = self._validate_data(X, y)
-
-        self.n_kernels_ = number_of_kernels(
-            X=X,
-            kernels=self._kernels,
-            kernels_scopes=self._kernels_scopes,
-            kernels_param_grids=self._kernels_param_grids,
-            precomputed_kernels=False,  # Kernels are not precomputed yet
-        )
-        self.n_samples_in_ = (
-            X[0].shape[0]
-            if self._kernels is None
-            else X.shape[0] if hasattr(X, "shape") else len(X)
-        )
-
-        if self._kernels is not None:
-            # Reference to X to compute the kernel in predict/transform
-            self.__Xfit = X
-
-        X = self._precompute_kernels_if_needed(X)
-
-        # Optimal kernel weights learning
+        X, y = self._prepare_X_y_for_learning(X, y)
+        self._set_svm()  # Defined in subclasses
         self._learn(X, y)
-
-        # SVM post-processing
-        if hasattr(self._svm, "alpha_init_"):
-            del self._svm.alpha_init_
-        if hasattr(self._svm, "alpha_raw_"):
-            del self._svm.alpha_raw_
-
+        self._post_learning_processing()
         return self
 
     def transform(self, X):
@@ -240,6 +208,41 @@ class BaseMKL(TransformerMixin, MetaEstimatorMixin, BaseEstimator, metaclass=ABC
                 verbose=self.verbose,
                 max_iter=self.max_iter,
             )
+
+    def _prepare_X_y_for_learning(self, X, y=None):
+        self._kernels, self._kernels_scopes, self._kernels_param_grids = (
+            self._validate_kernels(self.kernels),
+            self._validate_kernels_scopes(self.kernels_scopes),
+            self._validate_kernels_param_grids(self.kernels_param_grids),
+        )
+        X, y = self._validate_data(X, y)
+
+        self.n_kernels_ = number_of_kernels(
+            X=X,
+            kernels=self._kernels,
+            kernels_scopes=self._kernels_scopes,
+            kernels_param_grids=self._kernels_param_grids,
+            precomputed_kernels=False,  # Kernels are not precomputed yet
+        )
+        self.n_samples_in_ = (
+            X[0].shape[0]
+            if self._kernels is None
+            else X.shape[0] if hasattr(X, "shape") else len(X)
+        )
+
+        if self._kernels is not None:
+            # Reference to X to compute the kernel in predict/transform
+            self.__Xfit = X
+
+        X = self._precompute_kernels_if_needed(X)
+
+        return X, y
+
+    def _post_learning_processing(self):
+        if hasattr(self._svm, "alpha_init_"):
+            del self._svm.alpha_init_
+        if hasattr(self._svm, "alpha_raw_"):
+            del self._svm.alpha_raw_
 
     def _validate_kernels(self, kernels):
         if kernels is None:

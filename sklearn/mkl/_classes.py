@@ -27,46 +27,47 @@ class MKLC(ClassifierMixin, BaseMKL):
         kernels=None,  # None or list of functions or list of strings
         kernels_scopes=None,  # None or list of {"single", "all"}
         kernels_param_grids=None,  # None or list of (str, dict)
+        C=1.0,
         algo="simple",
         svm_params=None,
         precompute_kernels=None,  # If none, it tries to compute the kernels
         tol=None,  # DOC: auto depending on algo
         numeric_tol=1e-8,
         verbose=False,
-        max_iter=-1,
+        max_iter=200,
         random_state=None,
     ):
         super().__init__(
+            algo=algo,
             kernels=kernels,
             kernels_scopes=kernels_scopes,
             kernels_param_grids=kernels_param_grids,
             precompute_kernels=precompute_kernels,
-            algo=algo,
             tol=tol,
             numeric_tol=numeric_tol,
             verbose=verbose,
             max_iter=max_iter,
             random_state=random_state,
         )
-        _warn_svm_params(svm_params)
+        self.C = C
+        _warn_svm_params(svm_params, ["C", "random_state"])
         self.svm_params = svm_params
-
-    def fit(self, X, y=None):
-        self._svm = SVC(
-            kernel="precomputed",
-            random_state=self.random_state,
-            **(self.svm_params if self.svm_params is not None else {}),
-        )
-
-        super().fit(X, y)
-
-        self.classes_ = self._svm.classes_
-
-        return self
 
     def decision_function(self, X):
         kernel = self.transform(X)
         return self._svm.decision_function(kernel)
+
+    def _set_svm(self):
+        self._svm = SVC(
+            kernel="precomputed",
+            C=self.C,
+            random_state=self.random_state,
+            **({} if self.svm_params is None else self.svm_params),
+        )
+
+    def _post_learning_processing(self):
+        super()._post_learning_processing()
+        self.classes_ = self._svm.classes_
 
 
 class MKLR(RegressorMixin, BaseMKL):
@@ -84,39 +85,41 @@ class MKLR(RegressorMixin, BaseMKL):
         kernels=None,
         kernels_scopes=None,
         kernels_param_grids=None,
+        C=1.0,
+        epsilon=0.1,
         algo="simple",
         svm_params=None,
         precompute_kernels=None,
         tol=None,
         numeric_tol=1e-8,
         verbose=False,
-        max_iter=-1,
+        max_iter=200,
         random_state=None,
     ):
         super().__init__(
+            algo=algo,
             kernels=kernels,
             kernels_scopes=kernels_scopes,
             kernels_param_grids=kernels_param_grids,
             precompute_kernels=precompute_kernels,
-            algo=algo,
             tol=tol,
             numeric_tol=numeric_tol,
             verbose=verbose,
             max_iter=max_iter,
             random_state=random_state,
         )
-        _warn_svm_params(svm_params)
+        self.C = C
+        self.epsilon = epsilon
+        _warn_svm_params(svm_params, ["C", "epsilon"])
         self.svm_params = svm_params
 
-    def fit(self, X, y=None):
+    def _set_svm(self):
         self._svm = SVR(
             kernel="precomputed",
-            **(self.svm_params if self.svm_params is not None else {}),
+            C=self.C,
+            epsilon=self.epsilon,
+            **({} if self.svm_params is None else self.svm_params),
         )
-
-        super().fit(X, y)
-
-        return self
 
 
 class OneClassMKL(OutlierMixin, BaseMKL):
@@ -134,41 +137,31 @@ class OneClassMKL(OutlierMixin, BaseMKL):
         kernels=None,
         kernels_scopes=None,
         kernels_param_grids=None,
+        nu=0.5,
         algo="simple",
         svm_params=None,
         precompute_kernels=None,
         tol=None,
         numeric_tol=1e-8,
         verbose=False,
-        max_iter=-1,
+        max_iter=200,
         random_state=None,
     ):
         super().__init__(
+            algo=algo,
             kernels=kernels,
             kernels_scopes=kernels_scopes,
             kernels_param_grids=kernels_param_grids,
             precompute_kernels=precompute_kernels,
-            algo=algo,
             tol=tol,
             numeric_tol=numeric_tol,
             verbose=verbose,
             max_iter=max_iter,
             random_state=random_state,
         )
-        _warn_svm_params(svm_params)
+        self.nu = nu
+        _warn_svm_params(svm_params, ["nu"])
         self.svm_params = svm_params
-
-    def fit(self, X, y=None):
-        self._svm = OneClassSVM(
-            kernel="precomputed",
-            **(self.svm_params if self.svm_params is not None else {}),
-        )
-
-        super().fit(X, y)
-
-        self.offset_ = self._svm.offset_
-
-        return self
 
     def decision_function(self, X):
         kernel = self.transform(X)
@@ -178,10 +171,27 @@ class OneClassMKL(OutlierMixin, BaseMKL):
         kernel = self.transform(X)
         return self._svm.score_samples(kernel)
 
+    def _set_svm(self):
+        svm_params = {} if self.svm_params is None else self.svm_params
+        self._svm = OneClassSVM(
+            kernel="precomputed",
+            nu=self.nu,
+            **svm_params,
+        )
 
-def _warn_svm_params(svm_params):
+    def _post_learning_processing(self):
+        super()._post_learning_processing()
+        self.offset_ = self._svm.offset_
+
+
+def _warn_svm_params(svm_params, params_to_warn):
     if isinstance(svm_params, dict):
         if "kernel" in svm_params:
             warnings.warn("Internal SVM kernel should not be set with MKL.")
-        if "random_state" in svm_params:
-            warnings.warn("Internal SVM random state can be set with MKL random state.")
+        for param in params_to_warn:
+            if param in svm_params:
+                warnings.warn(
+                    f"Warning: The SVM parameter '{param}' is set internally. "
+                    "It should be configured via the corresponding MKL parameter "
+                    "with the same name."
+                )
