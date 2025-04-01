@@ -18,7 +18,7 @@ on the X axis.
 
 DET curves are a variation of ROC curves where False Negative Rate (FNR) is
 plotted on the y-axis instead of the TPR. In this case the origin (bottom left
-corner) is the "ideal" point. Furthermore, the axis use a normal deviate scale
+corner) is the "ideal" point. Furthermore, the axes use a normal deviate scale
 to focus on differences closer to the origin.
 
 .. note::
