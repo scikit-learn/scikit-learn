@@ -142,6 +142,23 @@ API_REFERENCE = {
             },
         ],
     },
+    "sklearn.callback": {
+        "short_summary": "Callbacks.",
+        "description": None,
+        "sections": [
+            {
+                "title": None,
+                "autosummary": [
+                    "AutoPropagatedProtocol",
+                    "CallbackContext",
+                    "CallbackProtocol",
+                    "CallbackSupportMixin",
+                    "ProgressBar",
+                    "TaskNode",
+                ],
+            },
+        ],
+    },
     "sklearn.cluster": {
         "short_summary": "Clustering.",
         "description": _get_guide("clustering", "biclustering"),
