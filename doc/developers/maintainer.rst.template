@@ -369,7 +369,7 @@ Guideline for bumping minimum versions of our dependencies
   release (`X.Y.0`) that has wheels for our minimum Python version. In practice
   this means that our minimum supported version is around 3 years old, maybe a
   bit less.
-- pure Python dependencies (joblib, threadpoolctl): at the time of the
+- **pure Python dependencies** (joblib, threadpoolctl): at the time of the
   scikit-learn release our minimum supported version is the most recent minor
   release (`X.Y.0`) that is at least 2 years old.
 - we may decide to be less conservative than this guideline in some edge cases.
