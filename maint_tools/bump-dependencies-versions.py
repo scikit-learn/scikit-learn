@@ -1,14 +1,12 @@
 import re
-from datetime import datetime
-from pathlib import Path
 import subprocess
 import sys
-
-import requests
-from packaging import version
+from datetime import datetime
+from pathlib import Path
 
 import pandas as pd
-
+import requests
+from packaging import version
 
 df_list = pd.read_html("https://devguide.python.org/versions/")
 df = pd.concat(df_list).astype({"Branch": str})
@@ -24,7 +22,8 @@ python_version_info = {
 
 
 def get_min_version_with_wheel(package_name, python_version):
-    # For compiled dependencies we want the oldest minor version that has wheels for 'python_version'
+    # For compiled dependencies we want the oldest minor version that has
+    # wheels for 'python_version'
     url = f"https://pypi.org/pypi/{package_name}/json"
     response = requests.get(url)
     if response.status_code != 200:
@@ -76,7 +75,8 @@ def get_min_python_version(scikit_learn_release_date_str="today"):
 
 
 def get_min_version_pure_python(package_name, scikit_learn_release_date_str="today"):
-    # for pure Python dependencies we want the most recent minor release that is at least 2 years old
+    # for pure Python dependencies we want the most recent minor release that
+    # is at least 2 years old
     if scikit_learn_release_date_str == "today":
         scikit_learn_release_date = pd.to_datetime(datetime.now().date())
     else:
@@ -152,7 +152,6 @@ def show_versions_update(scikit_learn_release_date="today"):
         }
     )
 
-
     current_versions = {"python": get_current_min_python_version()}
     current_versions.update(
         {
@@ -165,7 +164,6 @@ def show_versions_update(scikit_learn_release_date="today"):
     for k in future_versions:
         if future_versions[k] != current_versions[k]:
             print(f"- {k}: {current_versions[k]} -> {future_versions[k]}")
-
 
 
 if __name__ == "__main__":
