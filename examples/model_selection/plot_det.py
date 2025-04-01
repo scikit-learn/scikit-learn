@@ -68,7 +68,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4, random_
 #
 # Here we define two different classifiers. The goal is to visually compare their
 # statistical performance across thresholds using the ROC, DET and CAP curves. There
-# is no particular reason why these classifiers are chosen other classifiers
+# is no particular reason why these classifiers are chosen over other classifiers
 # available in scikit-learn.
 
 from sklearn.ensemble import RandomForestClassifier
@@ -95,14 +95,16 @@ import matplotlib.pyplot as plt
 
 from sklearn.metrics import CAPCurveDisplay, DetCurveDisplay, RocCurveDisplay
 
-fig, [ax_roc, ax_det, ax_cap] = plt.subplots(1, 3, figsize=(11, 5))
+fig, [ax_roc, ax_cap, ax_det] = plt.subplots(
+    1, 3, figsize=(15, 5), constrained_layout=True
+)
 
 for name, clf in classifiers.items():
     clf.fit(X_train, y_train)
 
     RocCurveDisplay.from_estimator(clf, X_test, y_test, ax=ax_roc, name=name)
-    DetCurveDisplay.from_estimator(clf, X_test, y_test, ax=ax_det, name=name)
     CAPCurveDisplay.from_estimator(clf, X_test, y_test, ax=ax_cap, name=name)
+    DetCurveDisplay.from_estimator(clf, X_test, y_test, ax=ax_det, name=name)
 
 ax_roc.set_title("Receiver Operating Characteristic (ROC) curves")
 ax_det.set_title("Detection Error Tradeoff (DET) curves")
@@ -116,9 +118,21 @@ plt.legend()
 plt.show()
 
 # %%
-# Notice that it is easier to visually assess the overall performance of
-# different classification algorithms using DET curves than using ROC curves. As
-# ROC curves are plot in a linear scale, different classifiers usually appear
+# Analysis
+# --------
+#
+# All curves agree that the Random Forest classifier is has more discriminative
+# power than the Linear SVM:
+# - the area under the ROC and CAP curves is larger for the Random Forest
+#   classifier,
+# - the ROC and CAP curves are uniformly closer to the top left corner for the
+#   Random Forest classifier,
+# - the DET curve is uniformly closer to the origin for the Random Forest
+#   classifier.
+#
+# Notice that it is easier to visually assess that the Random Forest classifier
+# performs better than the Linear SVM classifier using DET curves. As ROC and
+# CAP curves are plot with a linear scale, different classifiers usually appear
 # similar for a large part of the plot and differ the most in the top left
 # corner of the graph. On the other hand, because DET curves represent straight
 # lines in normal deviate scale, they tend to be distinguishable as a whole and
