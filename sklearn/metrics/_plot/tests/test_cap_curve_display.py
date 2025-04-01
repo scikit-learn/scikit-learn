@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
@@ -37,6 +36,7 @@ def logistic_regression_model(data_binary):
 @pytest.mark.parametrize("name", ["Logistic Regression", None])
 @pytest.mark.parametrize("chance_level_kw", [{"color": "red", "lw": 3}, None])
 def test_cumulative_accuracy_display_from_predictions(
+    pyplot,
     data_binary,
     normalize_scale,
     plot_chance_level,
@@ -70,10 +70,6 @@ def test_cumulative_accuracy_display_from_predictions(
             cap_display.chance_level_ is not None
         ), "Chance level line should be present"
 
-    # Matplotlib raises a warning when opening a large number
-    # of figures without closing them.
-    plt.close()
-
 
 @pytest.mark.parametrize(
     "response_method", ["auto", "predict_proba", "decision_function"]
@@ -82,6 +78,7 @@ def test_cumulative_accuracy_display_from_predictions(
 @pytest.mark.parametrize("plot_chance_level", [True, False])
 @pytest.mark.parametrize("name", ["Logistic Regression", None])
 def test_cumulative_accuracy_display_from_estimator(
+    pyplot,
     logistic_regression_model,
     data_binary,
     normalize_scale,
@@ -119,10 +116,6 @@ def test_cumulative_accuracy_display_from_estimator(
             cap_display.chance_level_ is not None
         ), "Chance level line should be present"
 
-    # Matplotlib raises a warning when opening a large number
-    # of figures without closing them.
-    plt.close()
-
 
 @pytest.mark.parametrize(
     "response_method", ["auto", "predict_proba", "decision_function"]
@@ -130,6 +123,7 @@ def test_cumulative_accuracy_display_from_estimator(
 @pytest.mark.parametrize("normalize_scale", [True, False])
 @pytest.mark.parametrize("name", ["Logistic Regression", None])
 def test_display_from_estimator_and_from_prediction(
+    pyplot,
     logistic_regression_model,
     data_binary,
     normalize_scale,
@@ -164,6 +158,7 @@ def test_display_from_estimator_and_from_prediction(
 
 
 def test_invalid_response_method(
+    pyplot,
     logistic_regression_model,
     data_binary,
 ):
@@ -189,6 +184,7 @@ def test_invalid_response_method(
     ["from_estimator", "from_predictions"],
 )
 def test_cap_curve_chance_level_line(
+    pyplot,
     logistic_regression_model,
     data_binary,
     constructor_name,
@@ -217,7 +213,7 @@ def test_cap_curve_chance_level_line(
             chance_level_kw=chance_level_kw,
         )
 
-    import matplotlib as mpl  # noqa
+    import matplotlib as mpl
 
     assert isinstance(display.line_, mpl.lines.Line2D)
     assert display.line_.get_alpha() == 0.8
@@ -263,6 +259,7 @@ def test_cap_curve_chance_level_line(
     ],
 )
 def test_roc_curve_display_plotting(
+    pyplot,
     logistic_regression_model,
     data_binary,
     response_method,
