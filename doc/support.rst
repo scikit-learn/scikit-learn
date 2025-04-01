@@ -128,4 +128,4 @@ In addition to the previous options, paid support is available from the
 following organizations (listed in alphabetical order):
 
 - `:probabl <https://support.probabl.ai>`__
-- `QuanSight <https://quansight.com/open-source-services>`__
+- `Quansight <https://quansight.com/open-source-services>`__
