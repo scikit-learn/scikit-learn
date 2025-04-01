@@ -120,6 +120,10 @@ def fit(
             default=np.empty(0)
         Weights assigned to each sample.
 
+    alpha_init : array, dtype=float64, shape ((n_class * (n_class - 1) // 2, any), \
+            default=np.empty((0, 0))
+        Initial values for the dual variables.
+
     shrinking : int, default=1
         Whether to use the shrinking heuristic.
 
