@@ -55,9 +55,7 @@ def get_step_message(log, start, end, title, message, details):
     if end not in log:
         return ""
     res = (
-        "-----------------------------------------------\n"
-        f"### {title}\n\n"
-        f"{message}\n\n"
+        f"-----------------------------------------------\n### {title}\n\n{message}\n\n"
     )
     if details:
         res += (

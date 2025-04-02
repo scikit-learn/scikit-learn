@@ -203,7 +203,8 @@ Y_PRED_PARAMS = [
 
 
 @pytest.mark.parametrize(
-    "loss, y_true_success, y_true_fail", Y_COMMON_PARAMS + Y_TRUE_PARAMS  # type: ignore[operator]
+    "loss, y_true_success, y_true_fail",
+    Y_COMMON_PARAMS + Y_TRUE_PARAMS,  # type: ignore[operator]
 )
 def test_loss_boundary_y_true(loss, y_true_success, y_true_fail):
     """Test boundaries of y_true for loss functions."""
@@ -214,7 +215,8 @@ def test_loss_boundary_y_true(loss, y_true_success, y_true_fail):
 
 
 @pytest.mark.parametrize(
-    "loss, y_pred_success, y_pred_fail", Y_COMMON_PARAMS + Y_PRED_PARAMS  # type: ignore[operator]
+    "loss, y_pred_success, y_pred_fail",
+    Y_COMMON_PARAMS + Y_PRED_PARAMS,  # type: ignore[operator]
 )
 def test_loss_boundary_y_pred(loss, y_pred_success, y_pred_fail):
     """Test boundaries of y_pred for loss functions."""

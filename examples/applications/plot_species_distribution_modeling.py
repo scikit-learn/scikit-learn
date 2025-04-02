@@ -109,7 +109,7 @@ def create_species_bunch(species_name, train, test, coverages, xgrid, ygrid):
 
 
 def plot_species_distribution(
-    species=("bradypus_variegatus_0", "microryzomys_minutus_0")
+    species=("bradypus_variegatus_0", "microryzomys_minutus_0"),
 ):
     """
     Plot the species distribution.
