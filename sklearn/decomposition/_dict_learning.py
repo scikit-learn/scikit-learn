@@ -1174,7 +1174,7 @@ class _BaseSparseCoding(ClassNamePrefixFeaturesOutMixin, TransformerMixin):
 
         Returns
         -------
-        X_new : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Transformed data.
         """
         check_is_fitted(self)
@@ -1378,7 +1378,7 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
 
         Returns
         -------
-        X_new : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Transformed data.
         """
         return self._inverse_transform(X, self.dictionary)

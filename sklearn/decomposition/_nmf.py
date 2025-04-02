@@ -1302,7 +1302,7 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
 
         Returns
         -------
-        X : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Returns a data matrix of the original shape.
         """
 
