@@ -86,7 +86,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         self.verbose_interval = verbose_interval
 
     @abstractmethod
-    def _check_parameters(self, X):
+    def _check_parameters(self, X, xp=None):
         """Check initial parameters of the derived class.
 
         Parameters

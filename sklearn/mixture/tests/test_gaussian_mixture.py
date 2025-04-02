@@ -1522,6 +1522,8 @@ def test_gaussian_mixture_array_api_compliance(
 def test_gaussian_mixture_array_api_with_weights_init(
     array_namespace, device_, dtype, global_random_seed
 ):
+    """Check that passing `weights_init` during instantiation correctly converts to the
+    same namespace as X."""
     X, _ = make_blobs(
         n_samples=int(1e3), n_features=2, centers=3, random_state=global_random_seed
     )
@@ -1539,6 +1541,8 @@ def test_gaussian_mixture_array_api_with_weights_init(
 
     with sklearn.config_context(array_api_dispatch=True):
         gmm.fit(X)
+
+        assert device(X) == device(gmm.weights_)
 
 
 # TODO: remove when gmm works with `init_params` `kmeans` or `k-means++`
