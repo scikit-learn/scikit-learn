@@ -238,8 +238,6 @@ def test_future_warning_eps():
     X = np.array([[1, 1], [1, 4], [1, 5], [3, 3]])
     sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
 
-    mds.smacof(sim, n_init=1)
-
     with pytest.warns(FutureWarning):
         mds.smacof(sim, n_init=1)
 
