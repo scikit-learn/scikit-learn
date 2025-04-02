@@ -88,6 +88,16 @@ Include in your report:
 
 **Tip**: Gists are Git repositories; you can push data files to them using Git.
 
+Paid support
+============
+
+The following companies (listed in alphabetical order) offer support services
+related to scikit-learn and have a proven track record of employing long-term
+maintainers of scikit-learn and related open source projects:
+
+- `:probabl. <https://support.probabl.ai>`__
+- `Quansight <https://quansight.com/open-source-services>`__
+
 .. _social_media:
 
 Social Media
@@ -120,13 +130,3 @@ locally by following the :ref:`building documentation instructions <building_doc
 The most recent version with a PDF documentation is quite old, 0.23.2 (released
 in August 2020), but the PDF is available `here
 <https://scikit-learn.org/0.23/_downloads/scikit-learn-docs.pdf>`__.
-
-Paid support
-============
-
-Companies in the following list (listed in alphabetical order) offer support
-services related to scikit-learn and have a proven track record of employing
-long-term maintainers of scikit-learn and related open source projects:
-
-- `:probabl. <https://support.probabl.ai>`__
-- `Quansight <https://quansight.com/open-source-services>`__
