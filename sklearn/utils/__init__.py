@@ -3,14 +3,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import platform
-import warnings
-from collections.abc import Sequence
-
-import numpy as np
-
 from ..exceptions import DataConversionWarning
-from . import _joblib, metadata_routing
+from . import metadata_routing
 from ._bunch import Bunch
 from ._chunking import gen_batches, gen_even_slices
 from ._estimator_html_repr import estimator_html_repr
@@ -53,17 +47,6 @@ from .validation import (
     indexable,
 )
 
-# TODO(1.7): remove parallel_backend and register_parallel_backend
-msg = "deprecated in 1.5 to be removed in 1.7. Use joblib.{} instead."
-register_parallel_backend = deprecated(msg)(_joblib.register_parallel_backend)
-
-
-# if a class, deprecated will change the object in _joblib module so we need to subclass
-@deprecated(msg)
-class parallel_backend(_joblib.parallel_backend):
-    pass
-
-
 __all__ = [
     "Bunch",
     "ClassifierTags",
@@ -93,46 +76,8 @@ __all__ = [
     "indexable",
     "metadata_routing",
     "murmurhash3_32",
-    "parallel_backend",
-    "register_parallel_backend",
     "resample",
     "safe_mask",
     "safe_sqr",
     "shuffle",
 ]
-
-
-# TODO(1.7): remove
-def __getattr__(name):
-    if name == "IS_PYPY":
-        warnings.warn(
-            "IS_PYPY is deprecated and will be removed in 1.7.",
-            FutureWarning,
-        )
-        return platform.python_implementation() == "PyPy"
-    raise AttributeError(f"module {__name__} has no attribute {name}")
-
-
-# TODO(1.7): remove tosequence
-@deprecated("tosequence was deprecated in 1.5 and will be removed in 1.7")
-def tosequence(x):
-    """Cast iterable x to a Sequence, avoiding a copy if possible.
-
-    Parameters
-    ----------
-    x : iterable
-        The iterable to be converted.
-
-    Returns
-    -------
-    x : Sequence
-        If `x` is a NumPy array, it returns it as a `ndarray`. If `x`
-        is a `Sequence`, `x` is returned as-is. If `x` is from any other
-        type, `x` is returned casted as a list.
-    """
-    if isinstance(x, np.ndarray):
-        return np.asarray(x)
-    elif isinstance(x, Sequence):
-        return x
-    else:
-        return list(x)

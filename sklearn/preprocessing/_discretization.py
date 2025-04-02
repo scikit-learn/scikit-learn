@@ -11,7 +11,6 @@ from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import resample
 from ..utils._param_validation import Interval, Options, StrOptions
 from ..utils.deprecation import _deprecate_Xt_in_inverse_transform
-from ..utils.fixes import np_version, parse_version
 from ..utils.stats import _averaged_weighted_percentile, _weighted_percentile
 from ..utils.validation import (
     _check_feature_names_in,
@@ -318,7 +317,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             )
 
         if self.strategy != "quantile" and sample_weight is not None:
-            # Preprare a mask to filter out zero-weight samples when extracting
+            # Prepare a mask to filter out zero-weight samples when extracting
             # the min and max values of each columns which are needed for the
             # "uniform" and "kmeans" strategies.
             nnz_weight_mask = sample_weight != 0
@@ -346,26 +345,12 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             elif self.strategy == "quantile":
                 percentile_levels = np.linspace(0, 100, n_bins[jj] + 1)
 
-                # TODO: simplify the following when numpy min version >= 1.22.
-
                 # method="linear" is the implicit default for any numpy
                 # version. So we keep it version independent in that case by
                 # using an empty param dict.
                 percentile_kwargs = {}
                 if quantile_method != "linear" and sample_weight is None:
-                    if np_version < parse_version("1.22"):
-                        if quantile_method in ["averaged_inverted_cdf", "inverted_cdf"]:
-                            # The method parameter is not supported in numpy <
-                            # 1.22 but we can define unit sample weight to use
-                            # our own implementation instead:
-                            sample_weight = np.ones(X.shape[0], dtype=X.dtype)
-                        else:
-                            raise ValueError(
-                                f"quantile_method='{quantile_method}' is not "
-                                "supported with numpy < 1.22"
-                            )
-                    else:
-                        percentile_kwargs["method"] = quantile_method
+                    percentile_kwargs["method"] = quantile_method
 
                 if sample_weight is None:
                     bin_edges[jj] = np.asarray(
