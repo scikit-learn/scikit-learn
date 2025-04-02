@@ -64,7 +64,7 @@ def _smacof_single(
         embedding distances) at which to declare convergence.
 
         .. versionchanged:: 1.9
-        The default value for `eps` will change from 1e-3 to 1e-6 in version 1.9.
+           The default value for `eps` will change from 1e-3 to 1e-6 in version 1.9.
 
     random_state : int, RandomState instance or None, default=None
         Determines the random number generator used to initialize the centers.
@@ -272,7 +272,7 @@ def smacof(
         provided, this option is overridden and a single run is performed.
 
         .. versionchanged:: 1.9
-        The default value for `n_iter` will change from 8 to 1 in version 1.9.
+           The default value for `n_iter` will change from 8 to 1 in version 1.9.
 
     n_jobs : int, default=None
         The number of jobs to use for the computation. If multiple
@@ -294,7 +294,7 @@ def smacof(
         embedding distances) at which to declare convergence.
 
         .. versionchanged:: 1.9
-        The default value for `eps` will change from 1e-3 to 1e-6 in version 1.9.
+           The default value for `eps` will change from 1e-3 to 1e-6 in version 1.9.
 
     random_state : int, RandomState instance or None, default=None
         Determines the random number generator used to initialize the centers.
@@ -457,7 +457,7 @@ class MDS(BaseEstimator):
         determined by the run with the smallest final stress.
 
         .. versionchanged:: 1.9
-        The default value for `n_init` will change from 4 to 1 in version 1.9.
+           The default value for `n_init` will change from 4 to 1 in version 1.9.
 
     max_iter : int, default=300
         Maximum number of iterations of the SMACOF algorithm for a single run.
@@ -470,7 +470,7 @@ class MDS(BaseEstimator):
         embedding distances) at which to declare convergence.
 
         .. versionchanged:: 1.9
-        The default value for `eps` will change from 1e-3 to 1e-6 in version 1.9.
+           The default value for `eps` will change from 1e-3 to 1e-6 in version 1.9.
 
     n_jobs : int, default=None
         The number of jobs to use for the computation. If multiple
