@@ -33,13 +33,11 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     ----------
     fpr : ndarray or list of ndarrays
         False positive rates. Each ndarray should contain values for a single curve.
-        If plotting multiple curves, list should be of same length as
-        and `tpr`.
+        If plotting multiple curves, list should be of same length as `tpr`.
 
-    tpr : ndarray list of ndarrays
+    tpr : ndarray or list of ndarrays
         True positive rates. Each ndarray should contain values for a single curve.
-        If plotting multiple curves, list should be of same length as
-        and `fpr`.
+        If plotting multiple curves, list should be of same length as `fpr`.
 
     roc_auc : float or list of floats, default=None
         Area under ROC curve, used for labeling each curve in the legend.
