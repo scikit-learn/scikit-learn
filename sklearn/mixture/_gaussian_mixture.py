@@ -537,6 +537,9 @@ class GaussianMixture(BaseMixture):
         - 'diag': each component has its own diagonal covariance matrix.
         - 'spherical': each component has its own single variance.
 
+        For an example of using `covariance_type`, refer to
+        :ref:`sphx_glr_auto_examples_mixture_plot_gmm_selection.py`.
+
     tol : float, default=1e-3
         The convergence threshold. EM iterations will stop when the
         lower bound average gain is below this threshold.
@@ -666,6 +669,10 @@ class GaussianMixture(BaseMixture):
         Lower bound value on the log-likelihood (of the training data with
         respect to the model) of the best fit of EM.
 
+    lower_bounds_ : array-like of shape (`n_iter_`,)
+        The list of lower bound values on the log-likelihood from each
+        iteration of the best fit of EM.
+
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -693,6 +700,9 @@ class GaussianMixture(BaseMixture):
            [ 1.,  2.]])
     >>> gm.predict([[0, 0], [12, 3]])
     array([1, 0])
+
+    For a comparison of Gaussian Mixture with other clustering algorithms, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
     """
 
     _parameter_constraints: dict = {
@@ -884,6 +894,9 @@ class GaussianMixture(BaseMixture):
 
         You can refer to this :ref:`mathematical section <aic_bic>` for more
         details regarding the formulation of the BIC used.
+
+        For an example of GMM selection using `bic` information criterion,
+        refer to :ref:`sphx_glr_auto_examples_mixture_plot_gmm_selection.py`.
 
         Parameters
         ----------

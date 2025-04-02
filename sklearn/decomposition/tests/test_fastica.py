@@ -80,7 +80,7 @@ def test_fastica_simple(add_noise, global_random_seed, global_dtype):
         pytest.xfail(
             "FastICA instability with Ubuntu Atlas build with float32 "
             "global_dtype. For more details, see "
-            "https://github.com/scikit-learn/scikit-learn/issues/24131#issuecomment-1208091119"  # noqa
+            "https://github.com/scikit-learn/scikit-learn/issues/24131#issuecomment-1208091119"
         )
 
     # Test the FastICA algorithm on very simple data.
@@ -367,7 +367,7 @@ def test_fastica_errors():
     with pytest.raises(ValueError, match=r"alpha must be in \[1,2\]"):
         fastica(X, fun_args={"alpha": 0})
     with pytest.raises(
-        ValueError, match="w_init has invalid shape.+" r"should be \(3L?, 3L?\)"
+        ValueError, match=r"w_init has invalid shape.+should be \(3L?, 3L?\)"
     ):
         fastica(X, w_init=w_init)
 

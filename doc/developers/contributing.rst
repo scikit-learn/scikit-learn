@@ -282,14 +282,20 @@ how to set up your git repository:
         git remote add upstream git@github.com:scikit-learn/scikit-learn.git
 
 7. Check that the `upstream` and `origin` remote aliases are configured correctly
-   by running `git remote -v` which should display:
+   by running:
+
+   .. prompt:: bash
+
+        git remote -v
+
+   This should display:
 
    .. code-block:: text
 
-        origin	git@github.com:YourLogin/scikit-learn.git (fetch)
-        origin	git@github.com:YourLogin/scikit-learn.git (push)
-        upstream	git@github.com:scikit-learn/scikit-learn.git (fetch)
-        upstream	git@github.com:scikit-learn/scikit-learn.git (push)
+        origin    git@github.com:YourLogin/scikit-learn.git (fetch)
+        origin    git@github.com:YourLogin/scikit-learn.git (push)
+        upstream  git@github.com:scikit-learn/scikit-learn.git (fetch)
+        upstream  git@github.com:scikit-learn/scikit-learn.git (push)
 
 You should now have a working installation of scikit-learn, and your git repository
 properly configured. It could be useful to run some test to verify your installation.
