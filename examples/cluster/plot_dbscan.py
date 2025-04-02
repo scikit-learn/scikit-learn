@@ -44,7 +44,7 @@ plt.show()
 # --------------
 #
 # One can access the labels assigned by :class:`~sklearn.cluster.DBSCAN` using
-# the `labels_` attribute. Noisy samples are given the label math:`-1`.
+# the `labels_` attribute. Noisy samples are given the label :math:`-1`.
 
 import numpy as np
 
