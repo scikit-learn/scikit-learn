@@ -31,7 +31,7 @@ def _check_shape(param, param_shape, name):
 
     name : str
     """
-    param = np.array(param)
+    # param = xp.array(param)
     if param.shape != param_shape:
         raise ValueError(
             "The parameter '%s' should have the shape of %s, but got %s"
@@ -226,7 +226,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                 f"but got n_components = {self.n_components}, "
                 f"n_samples = {X.shape[0]}"
             )
-        self._check_parameters(X)
+        self._check_parameters(X, xp=xp)
 
         # if we enable warm_start, we will have a unique initialisation
         do_init = not (self.warm_start and hasattr(self, "converged_"))

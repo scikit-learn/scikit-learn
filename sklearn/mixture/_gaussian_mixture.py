@@ -7,6 +7,7 @@ import numpy as np
 from scipy import linalg
 
 from .._config import get_config
+from ..externals import array_api_extra as xpx
 from ..utils import check_array
 from ..utils._array_api import get_namespace, get_namespace_and_device
 from ..utils._param_validation import StrOptions
@@ -17,7 +18,7 @@ from ._base import BaseMixture, _check_shape
 # Gaussian mixture shape checkers used by the GaussianMixture class
 
 
-def _check_weights(weights, n_components):
+def _check_weights(weights, n_components, xp=None):
     """Check the user provided 'weights'.
 
     Parameters
@@ -32,23 +33,23 @@ def _check_weights(weights, n_components):
     -------
     weights : array, shape (n_components,)
     """
-    weights = check_array(weights, dtype=[np.float64, np.float32], ensure_2d=False)
+    weights = check_array(weights, dtype=[xp.float64, xp.float32], ensure_2d=False)
     _check_shape(weights, (n_components,), "weights")
 
     # check range
-    if any(np.less(weights, 0.0)) or any(np.greater(weights, 1.0)):
+    if any(xp.less(weights, 0.0)) or any(xp.greater(weights, 1.0)):
         raise ValueError(
             "The parameter 'weights' should be in the range "
             "[0, 1], but got max value %.5f, min value %.5f"
-            % (np.min(weights), np.max(weights))
+            % (xp.min(weights), xp.max(weights))
         )
 
     # check normalization
-    atol = 1e-6 if weights.dtype == np.float32 else 1e-8
-    if not np.allclose(np.abs(1.0 - np.sum(weights)), 0.0, atol=atol):
+    atol = 1e-6 if weights.dtype == xp.float32 else 1e-8
+    if not xpx.isclose(xp.abs(1.0 - xp.sum(weights)), 0.0, atol=atol, xp=xp):
         raise ValueError(
             "The parameter 'weights' should be normalized, but got sum(weights) = %.5f"
-            % np.sum(weights)
+            % xp.sum(weights)
         )
     return weights
 
@@ -342,14 +343,15 @@ def _compute_precision_cholesky(covariances, covariance_type, xp=None):
         precisions_chol = xp.empty((n_components, n_features, n_features), dtype=dtype)
         for k, covariance in enumerate(covariances):
             try:
-                # TODO we are using xp.linalg instead of scipy.linalg.cholesky,
-                # maybe separate branches for array API and numpy?
+                # TODO we are using xp.linalg instead of scipy.linalg.cholesky, maybe
+                # separate branches for array API and numpy?
                 cov_chol = xp.linalg.cholesky(covariance)
             except xp.linalg.LinAlgError:
                 raise ValueError(estimate_precision_error_message)
 
             # TODO we are using xp.linalg.solve instead of scipy.linalg.solve_triangular
-            # probably separate branches for array API and numpy?
+            # probably separate branches for array API and numpy? maybe
+            # https://github.com/scikit-learn/scikit-learn/pull/29318 is relevant
             precisions_chol[k] = xp.linalg.solve(
                 cov_chol, xp.eye(n_features, dtype=dtype)
             ).T
@@ -775,12 +777,14 @@ class GaussianMixture(BaseMixture):
         self.means_init = means_init
         self.precisions_init = precisions_init
 
-    def _check_parameters(self, X):
+    def _check_parameters(self, X, xp=None):
         """Check the Gaussian mixture parameters are well defined."""
         _, n_features = X.shape
 
         if self.weights_init is not None:
-            self.weights_init = _check_weights(self.weights_init, self.n_components)
+            self.weights_init = _check_weights(
+                self.weights_init, self.n_components, xp=xp
+            )
 
         if self.means_init is not None:
             self.means_init = _check_means(
@@ -795,13 +799,13 @@ class GaussianMixture(BaseMixture):
                 n_features,
             )
 
-        allowed_init_values = ["random", "random_from_data"]
+        allowed_init_params = ["random", "random_from_data"]
         if (
             get_config()["array_api_dispatch"]
-            and self.init_params not in allowed_init_values
+            and self.init_params not in allowed_init_params
         ):
             raise NotImplementedError(
-                f"Allowed `init_params` are {allowed_init_values} if "
+                f"Allowed `init_params` are {allowed_init_params} if "
                 f"'array_api_dispatch' is enabled. You passed "
                 f"init_params={self.init_params!r}, which are not implemented to work "
                 "with 'array_api_dispatch' enabled. Please disable "
@@ -830,6 +834,9 @@ class GaussianMixture(BaseMixture):
 
         resp : array-like of shape (n_samples, n_components)
         """
+        # TODO: check if device_ should be computed in fit_predict and passed down the
+        # call chain
+        xp, _, device_ = get_namespace_and_device(X, xp=xp)
         n_samples, _ = X.shape
         weights, means, covariances = None, None, None
         if resp is not None:
@@ -840,6 +847,8 @@ class GaussianMixture(BaseMixture):
                 weights /= n_samples
 
         self.weights_ = weights if self.weights_init is None else self.weights_init
+        self.weights_ = xp.asarray(self.weights_, device=device_)
+
         self.means_ = means if self.means_init is None else self.means_init
 
         if self.precisions_init is None:
