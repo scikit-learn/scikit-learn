@@ -44,6 +44,7 @@ mds = manifold.MDS(
     n_components=2,
     max_iter=3000,
     eps=1e-9,
+    n_init=1,
     random_state=42,
     dissimilarity="precomputed",
     n_jobs=1,

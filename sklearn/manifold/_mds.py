@@ -679,20 +679,24 @@ class MDS(BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             X transformed in the new space.
         """
-        print("MDS", self.eps)
+
         if self.eps == "warn":
             warnings.warn(
                 "The default value of `eps` will change from 1e-3 to 1e-6 in 1.9.",
                 FutureWarning,
             )
-            self.eps = 1e-3
+            self._eps = 1e-3
+        else:
+            self._eps = self.eps
 
         if self.n_init == "warn":
             warnings.warn(
                 "The default value of `n_init` will change from 4 to 1 in 1.9.",
                 FutureWarning,
             )
-            self.n_init = 4
+            self._n_init = 4
+        else:
+            self._n_init = self.n_init
 
         X = validate_data(self, X)
         if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
@@ -713,11 +717,11 @@ class MDS(BaseEstimator):
             metric=self.metric,
             n_components=self.n_components,
             init=init,
-            n_init=self.n_init,
+            n_init=self._n_init,
             n_jobs=self.n_jobs,
             max_iter=self.max_iter,
             verbose=self.verbose,
-            eps=self.eps,
+            eps=self._eps,
             random_state=self.random_state,
             return_n_iter=True,
             normalized_stress=self.normalized_stress,
