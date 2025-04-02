@@ -13,6 +13,12 @@ shifted to avoid overlapping.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+# %%
+# Dataset preparation
+# -------------------
+#
+# We start by uniformly generating 20 points in a 2D space.
+
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.collections import LineCollection
@@ -31,6 +37,11 @@ X_true = X_true.reshape((n_samples, 2))
 # Center the data
 X_true -= X_true.mean()
 
+# %%
+# Now we compute pairwise distances between all points and add
+# a small amount of noise to the distance matrix. We make sure
+# to keep the noisy distance matrix symmetric.
+
 # Compute pairwise Euclidean distances
 distances = euclidean_distances(X_true)
 
@@ -39,6 +50,9 @@ noise = rng.rand(n_samples, n_samples)
 noise = noise + noise.T
 np.fill_diagonal(noise, 0)
 distances += noise
+
+# %%
+# Here we compute metric and non-metric MDS of the noisy distance matrix.
 
 mds = manifold.MDS(
     n_components=2,
@@ -63,9 +77,15 @@ nmds = manifold.MDS(
 )
 X_nmds = nmds.fit_transform(distances)
 
-# Rescale the data
-X_mds *= np.sqrt((X_true**2).sum()) / np.sqrt((X_mds**2).sum())
+# %%
+# Rescaling the non-metric MDS solution to match the spread of the original data.
+
 X_nmds *= np.sqrt((X_true**2).sum()) / np.sqrt((X_nmds**2).sum())
+
+# %%
+# To make the visual comparisons easier, we rotate the original data and both MDS
+# solutions to their PCA axes. And flip horizontal and vertical MDS axes, if needed,
+# to match the original data orientation.
 
 # Rotate the data
 pca = PCA(n_components=2)
@@ -79,6 +99,9 @@ for i in [0, 1]:
         X_mds[:, i] *= -1
     if np.corrcoef(X_nmds[:, i], X_true[:, i])[0, 1] < 0:
         X_nmds[:, i] *= -1
+
+# %%
+# Finally, we plot the original data and both MDS reconstructions.
 
 fig = plt.figure(1)
 ax = plt.axes([0.0, 0.0, 1.0, 1.0])
