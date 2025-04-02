@@ -37,6 +37,7 @@ class EmptyRegressor(RegressorMixin, BaseEstimator):
     pass
 
 
+# TODO(1.8): Update when implementing __sklearn_tags__ is required
 @pytest.mark.filterwarnings(
     "ignore:.*no __sklearn_tags__ attribute.*:DeprecationWarning"
 )
