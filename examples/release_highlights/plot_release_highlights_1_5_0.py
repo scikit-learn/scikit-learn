@@ -147,7 +147,7 @@ print(f"Explained variance: {pca.explained_variance_ratio_.sum():.2f}")
 
 # %%
 # The `"full"` solver has also been improved to use less memory and allows
-# faster transformation. The default `svd_solver="auto"`` option takes
+# faster transformation. The default `svd_solver="auto"` option takes
 # advantage of the new solver and is now able to select an appropriate solver
 # for sparse datasets.
 #
