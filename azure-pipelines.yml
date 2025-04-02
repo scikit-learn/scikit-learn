@@ -161,7 +161,7 @@ jobs:
 - template: build_tools/azure/posix.yml
   parameters:
     name: Linux
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-22.04
     dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
     # Runs when dependencies succeeded or skipped
     condition: |
