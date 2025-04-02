@@ -1,4 +1,6 @@
-:class:`manifold.MDS` now runs with `n_init=1` by default, and the convergence
-criterion has been changed to ensure good convergence of both metric and
-non-metric MDS, following the reference R implementation.
+:class:`manifold.MDS` will switch to use `n_init=1` and `eps=1e-6` by default,
+starting from version 1.9. The convergence criterion has been adjusted to
+make sense for both metric and non-metric MDS and to follow the reference
+R implementation. The formula for normalized stress was adjusted to follow
+the original definition by Kruskal.
 By :user:`Dmitry Kobak <dkobak>`
