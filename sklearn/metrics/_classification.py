@@ -3487,7 +3487,7 @@ def brier_score_loss(
 
     The smaller the Brier score loss, the better, hence the naming with "loss".
     The Brier score measures the mean squared difference between the predicted
-    probability and the actual outcome. The Brier score is a stricly proper scoring
+    probability and the actual outcome. The Brier score is a strictly proper scoring
     rule.
 
     Read more in the :ref:`User Guide <brier_score_loss>`.
