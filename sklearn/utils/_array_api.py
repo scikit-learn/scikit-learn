@@ -1166,4 +1166,4 @@ def _fill_diagonal(a, val, wrap=False, xp=None):
             end = a.shape[1] * a.shape[1]
     else:
         raise ValueError("`_fill_diagonal` only supports 2D arrays")
-    a.reshape(-1)[:end:step] = val
+    xp.reshape(a, (-1))[:end:step] = val
