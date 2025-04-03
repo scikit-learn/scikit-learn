@@ -74,6 +74,7 @@ class BaseMKL(TransformerMixin, MetaEstimatorMixin, BaseEstimator, metaclass=ABC
         random_state,
     ):
         self.algo = algo
+        self._warn_kernels_params(kernels, kernels_scopes, kernels_param_grids)
         self.kernels = kernels
         self.kernels_scopes = kernels_scopes
         self.kernels_param_grids = kernels_param_grids
@@ -244,42 +245,56 @@ class BaseMKL(TransformerMixin, MetaEstimatorMixin, BaseEstimator, metaclass=ABC
         if hasattr(self._svm, "alpha_raw_"):
             del self._svm.alpha_raw_
 
+    def _warn_kernels_params(self, kernels, kernels_scopes, kernels_param_grids):
+        if kernels is None and kernels_scopes is not None:
+            warnings.warn(
+                "Attribute 'kernels_scopes' is not None while 'kernels' is None. "
+                "'kernels_scopes' will be ignored."
+            )
+        if kernels is None and kernels_param_grids is not None:
+            warnings.warn(
+                "Attribute 'kernels_param_grids' is not None while 'kernels' is "
+                "None. 'kernels_param_grids' will be ignored."
+            )
+
+    def _warn_svm_params(self, svm_params, params_to_warn):
+        if isinstance(svm_params, dict):
+            if "kernel" in svm_params:
+                warnings.warn("Internal SVM kernel should not be set with MKL.")
+            for param in params_to_warn:
+                if param in svm_params:
+                    warnings.warn(
+                        f"Warning: The SVM parameter '{param}' is set internally. "
+                        "It should be configured via the corresponding MKL parameter "
+                        "with the same name."
+                    )
+
     def _validate_kernels(self, kernels):
         if kernels is None:
             return kernels
 
-        if isinstance(kernels, list):
-            kernel_list = []
-            for kernel in kernels:
-                if callable(kernel):
-                    kernel_list.append(kernel)
-                elif isinstance(kernel, str):
-                    if kernel in PAIRWISE_KERNEL_FUNCTIONS:
-                        kernel_list.append(PAIRWISE_KERNEL_FUNCTIONS[kernel])
-                    else:
-                        raise ValueError(
-                            f"Invalid kernel '{kernel}'. "
-                            f"Valid kernels are {set(PAIRWISE_KERNEL_FUNCTIONS)}."
-                        )
+        # If 'kernels' is not None, then it is a list of kernels
+        kernel_list = []
+        for kernel in kernels:
+            if callable(kernel):
+                kernel_list.append(kernel)
+            elif isinstance(kernel, str):
+                if kernel in PAIRWISE_KERNEL_FUNCTIONS:
+                    kernel_list.append(PAIRWISE_KERNEL_FUNCTIONS[kernel])
                 else:
                     raise ValueError(
-                        "Invalid kernel. Kernels must be callables or strings, "
-                        f"not `{type(kernel)}`."
+                        f"Invalid kernel '{kernel}'. "
+                        f"Valid kernels are {set(PAIRWISE_KERNEL_FUNCTIONS)}."
                     )
-            return kernel_list
-
-        raise ValueError(
-            "Invalid kernels. Kernels must be a list of "
-            f"callables and/or strings, or None, not `{type(kernels)}`."
-        )
+            else:
+                raise ValueError(
+                    "Invalid kernel. Kernels must be callables or strings, "
+                    f"not `{type(kernel)}`."
+                )
+        return kernel_list
 
     def _validate_kernels_scopes(self, kernels_scopes):
         if self.kernels is None:
-            if kernels_scopes is not None:
-                warnings.warn(
-                    "Attribute 'kernels_scopes' is not None while 'kernels' is None. "
-                    "'kernels_scopes' will be ignored."
-                )
             return kernels_scopes
 
         if kernels_scopes is None:
@@ -297,11 +312,6 @@ class BaseMKL(TransformerMixin, MetaEstimatorMixin, BaseEstimator, metaclass=ABC
 
     def _validate_kernels_param_grids(self, kernels_param_grids):
         if self.kernels is None:
-            if kernels_param_grids is not None:
-                warnings.warn(
-                    "Attribute 'kernels_param_grids' is not None while 'kernels' is "
-                    "None. 'kernels_param_grids' will be ignored."
-                )
             return kernels_param_grids
 
         if kernels_param_grids is None:

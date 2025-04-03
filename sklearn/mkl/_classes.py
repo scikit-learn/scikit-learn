@@ -1,7 +1,7 @@
+"""Multiple Kernel Learning (MKL) classes."""
+
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
-
-import warnings
 
 from ..base import (
     ClassifierMixin,
@@ -50,7 +50,7 @@ class MKLC(ClassifierMixin, BaseMKL):
             random_state=random_state,
         )
         self.C = C
-        _warn_svm_params(svm_params, ["C", "random_state"])
+        self._warn_svm_params(svm_params, ["C", "random_state"])
         self.svm_params = svm_params
 
     def decision_function(self, X):
@@ -110,7 +110,7 @@ class MKLR(RegressorMixin, BaseMKL):
         )
         self.C = C
         self.epsilon = epsilon
-        _warn_svm_params(svm_params, ["C", "epsilon"])
+        self._warn_svm_params(svm_params, ["C", "epsilon"])
         self.svm_params = svm_params
 
     def _set_svm(self):
@@ -160,7 +160,7 @@ class OneClassMKL(OutlierMixin, BaseMKL):
             random_state=random_state,
         )
         self.nu = nu
-        _warn_svm_params(svm_params, ["nu"])
+        self._warn_svm_params(svm_params, ["nu"])
         self.svm_params = svm_params
 
     def decision_function(self, X):
@@ -182,16 +182,3 @@ class OneClassMKL(OutlierMixin, BaseMKL):
     def _post_learning_processing(self):
         super()._post_learning_processing()
         self.offset_ = self._svm.offset_
-
-
-def _warn_svm_params(svm_params, params_to_warn):
-    if isinstance(svm_params, dict):
-        if "kernel" in svm_params:
-            warnings.warn("Internal SVM kernel should not be set with MKL.")
-        for param in params_to_warn:
-            if param in svm_params:
-                warnings.warn(
-                    f"Warning: The SVM parameter '{param}' is set internally. "
-                    "It should be configured via the corresponding MKL parameter "
-                    "with the same name."
-                )
