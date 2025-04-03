@@ -439,7 +439,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         # TODO what is a cleaner way to do this, should we have a self.xp_?
         # TODO we probably want to use the device as well
-        xp, _, device = get_namespace(self.means_)
+        xp, _ = get_namespace(self.means_)
 
         if n_samples < 1:
             raise ValueError(

@@ -46,7 +46,7 @@ def _check_weights(weights, n_components, xp=None):
 
     # check normalization
     atol = 1e-6 if weights.dtype == xp.float32 else 1e-8
-    if not xpx.isclose(xp.abs(1.0 - xp.sum(weights)), 0.0, atol=atol, xp=xp):
+    if not xp.all(xpx.isclose(xp.abs(1.0 - xp.sum(weights)), 0.0, atol=atol, xp=xp)):
         raise ValueError(
             "The parameter 'weights' should be normalized, but got sum(weights) = %.5f"
             % xp.sum(weights)
@@ -89,7 +89,7 @@ def _check_precision_matrix(precision, covariance_type, xp=None):
     """Check a precision matrix is symmetric and positive-definite."""
     xp, _ = get_namespace(precision, xp=xp)
     if not (
-        xpx.isclose(precision, precision.T)
+        xp.all(xpx.isclose(precision, precision.T))
         and xp.all(xp.linalg.eigvalsh(precision) > 0.0)
     ):
         raise ValueError(
@@ -210,6 +210,7 @@ def _estimate_gaussian_covariances_tied(resp, X, nk, means, reg_covar, xp=None):
     covariance : array, shape (n_features, n_features)
         The tied covariance matrix of the components.
     """
+    xp, _ = get_namespace(X, means, xp=xp)
     avg_X2 = X.T @ X
     avg_means2 = nk * means.T @ means
     covariance = avg_X2 - avg_means2

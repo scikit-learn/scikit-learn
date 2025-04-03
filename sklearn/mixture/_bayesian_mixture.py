@@ -850,7 +850,7 @@ class BayesianGaussianMixture(BaseMixture):
             self.precisions_cholesky_,
         )
 
-    def _set_parameters(self, params):
+    def _set_parameters(self, params, xp=None):
         (
             self.weight_concentration_,
             self.mean_precision_,
