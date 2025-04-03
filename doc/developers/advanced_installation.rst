@@ -69,11 +69,11 @@ feature, code or documentation improvement).
 
    If you installed Python with conda, we recommend to create a dedicated
    `conda environment`_ with all the build dependencies of scikit-learn
-   (namely NumPy_, SciPy_, Cython_ and meson-python_):
+   (namely NumPy_, SciPy_, Cython_, meson-python_ and Ninja_):
 
    .. prompt:: bash $
 
-     conda create -n sklearn-env -c conda-forge python numpy scipy cython meson-python
+     conda create -n sklearn-env -c conda-forge python numpy scipy cython meson-python ninja
 
    It is not always necessary but it is safer to open a new prompt before
    activating the newly created conda environment.
