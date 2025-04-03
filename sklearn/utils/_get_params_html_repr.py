@@ -41,45 +41,42 @@ class ParamsDict(UserDict):
 
 def _html_template(data):
 
-    out = ""
-    html_start = """
-
+    HTML_TEMPLATE = """
         <div class="estimator-table">
             <details>
                 <summary>Parameters</summary>
                 <table>
                   <tbody>
-        """
-
-    for x, y in data.items():
-        if y != "deprecated" and isinstance(y, str):
-            modified_y = "".join(['"', y, '"'])
-        else:
-            modified_y = html.escape(str(y))
-
-        if x in data.non_default:
-            out += """
-                    <tr class="user-set">
-            """
-        else:
-            out += """
-                    <tr class="default">
-               """
-        out += f"""
-                        <td><i class="fa-regular fa-copy"
-                         onclick="copyToClipboard('{x}',
-                                  this.parentElement.nextElementSibling)"
-                        </i></td>
-                        <td class="param">{x}&nbsp;</td>
-                        <td class="value">{modified_y}</td>
-                    </tr>
-
-                """
-    html_end = """
-        </tbody>
+                    {rows}
+                  </tbody>
                 </table>
             </details>
         </div>
-
     """
-    return f"{html_start}{out}{html_end}"
+
+    ROW_TEMPLATE = """
+        <tr class="{row_class}">
+            <td><i class="fa-regular fa-copy"
+                 onclick="copyToClipboard('{param_name}',
+                          this.parentElement.nextElementSibling)"
+            ></i></td>
+            <td class="param">{param_name}&nbsp;</td>
+            <td class="value">{param_value}</td>
+        </tr>
+    """
+
+    rows = []
+    for x, y in data.items():
+        if y != "deprecated" and isinstance(y, str):
+            modified_y = f'"{y}"'
+        else:
+            modified_y = html.escape(str(y))
+
+        row_class = "user-set" if x in data.non_default else "default"
+        rows.append(
+            ROW_TEMPLATE.format(
+                row_class=row_class, param_name=x, param_value=modified_y
+            )
+        )
+
+    return HTML_TEMPLATE.format(rows="\n".join(rows))
