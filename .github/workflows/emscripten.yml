@@ -73,8 +73,10 @@ jobs:
           SKLEARN_SKIP_OPENMP_TEST: "true"
           SKLEARN_SKIP_NETWORK_TESTS: 1
           CIBW_TEST_REQUIRES: "pytest pandas"
-          # need cd otherwise some confusion between installed sklearn package and sklearn folder
-          # -s is needed in pytest to avoid issue in pytest output capturing 
+          # need cd before pytest, otherwise there is an error at pytest
+          # collection time, likely a confusion between installed sklearn
+          # package and sklearn folder.
+          # -s pytest argument is needed to avoid issue in pytest output capturing
           CIBW_TEST_COMMAND: "cd && python -m pytest -svra --pyargs sklearn --durations 20 --showlocals"
 
       - name: Upload wheel artifact
