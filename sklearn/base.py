@@ -110,8 +110,8 @@ def _clone_parametrized(estimator, *, safe=True):
             if isinstance(estimator, type):
                 raise TypeError(
                     "Cannot clone object. "
-                    + "You should provide an instance of "
-                    + "scikit-learn estimator instead of a class."
+                    "You should provide an instance of "
+                    "scikit-learn estimator instead of a class."
                 )
             else:
                 raise TypeError(
