@@ -276,17 +276,6 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         out = ParamsDict(out)
         out.non_default = non_default
 
-        methods = {}
-        for attribute in dir(self):
-            if not attribute.startswith("_") and callable(
-                getattr(self.__class__, attribute, None)
-            ):
-                method_obj = getattr(self.__class__, attribute)
-                sig = inspect.signature(method_obj)
-                sig_string = str(sig)
-                methods[attribute] = re.sub(r"self,*\s*", "", sig_string)
-
-        out.methods = methods
         return out
 
     def set_params(self, **params):

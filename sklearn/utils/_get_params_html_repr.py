@@ -71,23 +71,6 @@ def _html_template(data):
                     </tr>
 
                 """
-    out += """ </tbody>
-                </table>
-            </details>
-        </div>
-        <div class="estimator-table">
-            <details>
-                <summary>Methods</summary>
-                <table>
-                  <tbody>
-        """
-    for x, y in data.methods.items():
-        out += f"""
-        <tr class="default">
-            <td>{x}{y}</td>
-        </tr>
-    """
-
     html_end = """
         </tbody>
                 </table>
