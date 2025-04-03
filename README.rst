@@ -40,7 +40,6 @@
 .. |SeabornMinVersion| replace:: 0.9.0
 .. |PytestMinVersion| replace:: 7.1.2
 .. |PlotlyMinVersion| replace:: 5.14.0
-.. |CythonMinVersion| replace:: 3.0.10
 
 .. image:: https://raw.githubusercontent.com/scikit-learn/scikit-learn/main/doc/logos/scikit-learn-logo.png
   :target: https://scikit-learn.org/
