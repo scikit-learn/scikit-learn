@@ -379,8 +379,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         self : object
             Returns the instance itself.
         """
-        sample_weight = fit_params.pop("sample_weight", None)
-        _raise_for_params(fit_params, self, "fit")
+        _raise_for_params(fit_params, self, "fit", allow=["sample_weight"])
 
         y_type = type_of_target(y, input_name="y")
         if y_type in ("unknown", "continuous"):
@@ -402,9 +401,6 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         self.le_ = LabelEncoder().fit(y)
         self.classes_ = self.le_.classes_
         transformed_y = self.le_.transform(y)
-
-        if sample_weight is not None:
-            fit_params["sample_weight"] = sample_weight
 
         return super().fit(X, transformed_y, **fit_params)
 
@@ -675,13 +671,10 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         self : object
             Fitted estimator.
         """
-        sample_weight = fit_params.pop("sample_weight", None)
-        _raise_for_params(fit_params, self, "fit")
+        _raise_for_params(fit_params, self, "fit", allow=["sample_weight"])
 
         y = column_or_1d(y, warn=True)
 
-        if sample_weight is not None:
-            fit_params["sample_weight"] = sample_weight
         return super().fit(X, y, **fit_params)
 
     def predict(self, X):

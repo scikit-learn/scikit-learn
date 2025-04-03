@@ -370,8 +370,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
-        sample_weight = fit_params.pop("sample_weight", None)
-        _raise_for_params(fit_params, self, "fit")
+        _raise_for_params(fit_params, self, "fit", allow=["sample_weight"])
 
         # Convert data (X is required to be 2d and indexable)
         X, y = validate_data(
@@ -383,10 +382,6 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             ensure_all_finite=False,
             multi_output=True,
         )
-
-        if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, dtype=None)
-            fit_params["sample_weight"] = sample_weight
 
         return self._fit(X, y, max_samples=self.max_samples, **fit_params)
 

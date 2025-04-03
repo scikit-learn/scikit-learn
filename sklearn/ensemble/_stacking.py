@@ -686,8 +686,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         self : object
             Returns a fitted instance of estimator.
         """
-        sample_weight = fit_params.pop("sample_weight", None)
-        _raise_for_params(fit_params, self, "fit")
+        _raise_for_params(fit_params, self, "fit", allow=["sample_weight"])
 
         check_classification_targets(y)
         if type_of_target(y) == "multilabel-indicator":
@@ -704,8 +703,6 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             self.classes_ = self._label_encoder.classes_
             y_encoded = self._label_encoder.transform(y)
 
-        if sample_weight is not None:
-            fit_params["sample_weight"] = sample_weight
         return super().fit(X, y_encoded, **fit_params)
 
     @available_if(
@@ -1039,13 +1036,10 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         self : object
             Returns a fitted instance.
         """
-        sample_weight = fit_params.pop("sample_weight", None)
-        _raise_for_params(fit_params, self, "fit")
+        _raise_for_params(fit_params, self, "fit", allow=["sample_weight"])
 
         y = column_or_1d(y, warn=True)
 
-        if sample_weight is not None:
-            fit_params["sample_weight"] = sample_weight
         return super().fit(X, y, **fit_params)
 
     def transform(self, X):
@@ -1091,11 +1085,8 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         y_preds : ndarray of shape (n_samples, n_estimators)
             Prediction outputs for each estimator.
         """
-        sample_weight = fit_params.pop("sample_weight", None)
-        _raise_for_params(fit_params, self, "fit")
+        _raise_for_params(fit_params, self, "fit", allow=["sample_weight"])
 
-        if sample_weight is not None:
-            fit_params["sample_weight"] = sample_weight
         return super().fit_transform(X, y, **fit_params)
 
     @available_if(
