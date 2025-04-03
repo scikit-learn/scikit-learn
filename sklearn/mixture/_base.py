@@ -290,7 +290,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                 ConvergenceWarning,
             )
 
-        self._set_parameters(best_params)
+        self._set_parameters(best_params, xp=xp)
         self.n_iter_ = best_n_iter
         self.lower_bound_ = max_lower_bound
         self.lower_bounds_ = best_lower_bounds
@@ -437,6 +437,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             Component labels.
         """
         check_is_fitted(self)
+        # TODO what is a cleaner way to do this, should we have a self.xp_?
+        # TODO we probably want to use the device as well
+        xp, _, device = get_namespace(self.means_)
 
         if n_samples < 1:
             raise ValueError(
@@ -449,7 +452,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         n_samples_comp = rng.multinomial(n_samples, self.weights_)
 
         if self.covariance_type == "full":
-            X = np.vstack(
+            X = xp.concat(
                 [
                     rng.multivariate_normal(mean, covariance, int(sample))
                     for (mean, covariance, sample) in zip(
@@ -458,26 +461,26 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                 ]
             )
         elif self.covariance_type == "tied":
-            X = np.vstack(
+            X = xp.concat(
                 [
                     rng.multivariate_normal(mean, self.covariances_, int(sample))
                     for (mean, sample) in zip(self.means_, n_samples_comp)
                 ]
             )
         else:
-            X = np.vstack(
+            X = xp.concat(
                 [
                     mean
                     + rng.standard_normal(size=(sample, n_features))
-                    * np.sqrt(covariance)
+                    * xp.sqrt(covariance)
                     for (mean, covariance, sample) in zip(
                         self.means_, self.covariances_, n_samples_comp
                     )
                 ]
             )
 
-        y = np.concatenate(
-            [np.full(sample, j, dtype=int) for j, sample in enumerate(n_samples_comp)]
+        y = xp.concat(
+            [xp.full(sample, j, dtype=int) for j, sample in enumerate(n_samples_comp)]
         )
 
         return (X, y)
@@ -544,6 +547,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         weighted_log_prob = self._estimate_weighted_log_prob(X, xp=xp)
         log_prob_norm = _logsumexp(weighted_log_prob, axis=1, xp=xp)
 
+        # TODO np.errstate not in the array API spec, decide what to do here
+        # maybe something like this
+        #  context_manager = np.errstate(under="ignore") if xp is np else nullcontext
         with np.errstate(under="ignore"):
             # ignore underflow
             log_resp = weighted_log_prob - log_prob_norm[:, xp.newaxis]

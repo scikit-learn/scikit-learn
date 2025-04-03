@@ -9,7 +9,6 @@ import warnings
 from io import StringIO
 from unittest.mock import Mock
 
-import array_api_strict
 import numpy as np
 import pytest
 from scipy import linalg, stats
@@ -1515,6 +1514,9 @@ def test_gaussian_mixture_array_api_compliance(
     assert_allclose(means_, _convert_to_numpy(gmm.means_, xp=xp))
     assert_allclose(covariances_, _convert_to_numpy(gmm.covariances_, xp=xp))
 
+    # TODO Maybe we should test the sample method
+    # TODO test means_init and precisions_init
+
 
 @pytest.mark.parametrize(
     "array_namespace, device_, dtype", yield_namespace_device_dtype_combinations()
@@ -1545,42 +1547,45 @@ def test_gaussian_mixture_array_api_with_weights_init(
         assert device(X) == device(gmm.weights_)
 
 
-@pytest.mark.parametrize(
-    "array_namespace, device_, dtype", yield_namespace_device_dtype_combinations()
-)
-def test_gaussian_mixture_array_api_different_namespaces(
-    array_namespace, device_, dtype, global_random_seed
-):
-    """Check that passing `weights_init` in a different namespace during instantiation
-    correctly converts to the same namespace as X."""
-    X, _ = make_blobs(
-        n_samples=int(1e3), n_features=2, centers=3, random_state=global_random_seed
-    )
+# TODO What is the expected behavior when weights init
+# and X are not in the same namespace/device?
+# It feels like check_array would need a xp argument?
+# @pytest.mark.parametrize(
+#     "array_namespace, device_, dtype", yield_namespace_device_dtype_combinations()
+# )
+# def test_gaussian_mixture_array_api_different_namespaces(
+#     array_namespace, device_, dtype, global_random_seed
+# ):
+#     """Check that passing `weights_init` in a different namespace during instantiation
+#     correctly converts to the same namespace as X."""
+#     X, _ = make_blobs(
+#         n_samples=int(1e3), n_features=2, centers=3, random_state=global_random_seed
+#     )
 
-    xp = _array_api_for_tests(array_namespace, device_)
-    X = xp.asarray(X, device=device_)
+#     xp = _array_api_for_tests(array_namespace, device_)
+#     X = xp.asarray(X, device=device_)
 
-    """# check with weights_init being a numpy array
-    with sklearn.config_context(array_api_dispatch=True):
-        gmm = GaussianMixture(
-            n_components=3,
-            covariance_type="diag",
-            random_state=global_random_seed,
-            init_params="random",
-            weights_init=np.asarray([0.1, 0.4, 0.5]),
-        )
-        gmm.fit(X)"""
+#     # check with weights_init being a numpy array
+#     with sklearn.config_context(array_api_dispatch=True):
+#         gmm = GaussianMixture(
+#             n_components=3,
+#             covariance_type="diag",
+#             random_state=global_random_seed,
+#             init_params="random",
+#             weights_init=np.asarray([0.1, 0.4, 0.5]),
+#         )
+#         gmm.fit(X)
 
-    # check with weights_init being an array_api_strict array
-    with sklearn.config_context(array_api_dispatch=True):
-        gmm = GaussianMixture(
-            n_components=3,
-            covariance_type="diag",
-            random_state=global_random_seed,
-            init_params="random",
-            weights_init=array_api_strict.asarray([0.1, 0.4, 0.5]),
-        )
-        gmm.fit(X)
+#     # check with weights_init being an array_api_strict array
+#     with sklearn.config_context(array_api_dispatch=True):
+#         gmm = GaussianMixture(
+#             n_components=3,
+#             covariance_type="diag",
+#             random_state=global_random_seed,
+#             init_params="random",
+#             weights_init=array_api_strict.asarray([0.1, 0.4, 0.5]),
+#         )
+#         gmm.fit(X)
 
 
 # TODO: remove when gmm works with `init_params` `kmeans` or `k-means++`
@@ -1607,3 +1612,37 @@ def test_gaussian_mixture_raises_where_array_api_not_implemented(
             match="Allowed `init_params`.+if 'array_api_dispatch' is enabled",
         ):
             gmm.fit(X)
+
+
+@pytest.mark.parametrize("init_params", ["random", "random_from_data"])
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype", yield_namespace_device_dtype_combinations()
+)
+def test_gaussian_mixture_array_api_compliance_covariance_type_tied(
+    init_params, array_namespace, device_, dtype, global_random_seed
+):
+    X, _ = make_blobs(
+        n_samples=int(1e3), n_features=2, centers=3, random_state=global_random_seed
+    )
+    gmm = GaussianMixture(
+        n_components=3,
+        covariance_type="tied",
+        random_state=global_random_seed,
+        init_params=init_params,
+    )
+
+    gmm.fit(X)
+    means_ = gmm.means_
+    covariances_ = gmm.covariances_
+
+    xp = _array_api_for_tests(array_namespace, device_)
+    X = xp.asarray(X, device=device_)
+
+    with sklearn.config_context(array_api_dispatch=True):
+        gmm.fit(X)
+
+        assert device(X) == device(gmm.means_)
+        assert device(X) == device(gmm.covariances_)
+
+    assert_allclose(means_, _convert_to_numpy(gmm.means_, xp=xp))
+    assert_allclose(covariances_, _convert_to_numpy(gmm.covariances_, xp=xp))
