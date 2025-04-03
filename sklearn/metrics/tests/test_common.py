@@ -2229,6 +2229,7 @@ array_api_metric_checkers = {
         check_array_api_regression_metric_multioutput,
     ],
     sigmoid_kernel: [check_array_api_metric_pairwise],
+    # Tested elsewhere but is it worth adding here for completeness?
     pairwise_kernels: [check_array_api_metric_pairwise],
 }
 
