@@ -150,12 +150,6 @@ Build dependencies
 
 Building Scikit-learn also requires:
 
-..
-    # The following places need to be in sync with regard to Cython version:
-    # - .circleci config file
-    # - sklearn/_build_utils/__init__.py
-    # - advanced installation guide
-
 - Cython >= |CythonMinVersion|
 - A C/C++ compiler and a matching OpenMP_ runtime library. See the
   :ref:`platform system specific instructions
