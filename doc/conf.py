@@ -682,6 +682,23 @@ def notebook_modification_function(notebook_content, notebook_filename):
     # imports inside functions
     code_lines.extend(["import matplotlib", "import pandas"])
 
+    # Work around https://github.com/jupyterlite/pyodide-kernel/issues/166
+    # and https://github.com/pyodide/micropip/issues/223 by installing the
+    # dependencies first, and then scikit-learn from Anaconda.org.
+    if "dev" in release:
+        dev_docs_specific_code = [
+            "import piplite",
+            "import joblib",
+            "import threadpoolctl",
+            "import scipy",
+            "await piplite.install(\n"
+            f"  'scikit-learn=={release}',\n"
+            "   index_urls='https://pypi.anaconda.org/scientific-python-nightly-wheels/simple',\n"
+            ")",
+        ]
+
+        code_lines.extend(dev_docs_specific_code)
+
     if code_lines:
         code_lines = ["# JupyterLite-specific code"] + code_lines
         code = "\n".join(code_lines)

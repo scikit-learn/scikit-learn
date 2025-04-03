@@ -82,7 +82,10 @@ from sklearn.tests.metadata_routing_common import (
     check_recorded_metadata,
 )
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
+from sklearn.utils._array_api import (
+    _get_namespace_device_dtype_ids,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 from sklearn.utils._testing import (
     MinimalClassifier,
@@ -2676,28 +2679,6 @@ def test_search_html_repr():
         assert "<pre>LogisticRegression()</pre>" in repr_html
 
 
-# TODO(1.7): remove this test
-@pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
-def test_inverse_transform_Xt_deprecation(SearchCV):
-    clf = MockClassifier()
-    search = SearchCV(clf, {"foo_param": [1, 2, 3]}, cv=2, verbose=3)
-
-    X2 = search.fit(X, y).transform(X)
-
-    with pytest.raises(TypeError, match="Missing required positional argument"):
-        search.inverse_transform()
-
-    with pytest.raises(TypeError, match="Cannot use both X and Xt. Use X only"):
-        search.inverse_transform(X=X2, Xt=X2)
-
-    with warnings.catch_warnings(record=True):
-        warnings.simplefilter("error")
-        search.inverse_transform(X2)
-
-    with pytest.warns(FutureWarning, match="Xt was renamed X in version 1.5"):
-        search.inverse_transform(Xt=X2)
-
-
 # Metadata Routing Tests
 # ======================
 
@@ -2876,7 +2857,9 @@ def test_cv_results_multi_size_array():
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
 def test_array_api_search_cv_classifier(SearchCV, array_namespace, device, dtype):
