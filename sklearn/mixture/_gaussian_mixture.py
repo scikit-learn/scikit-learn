@@ -215,7 +215,8 @@ def _estimate_gaussian_covariances_tied(resp, X, nk, means, reg_covar, xp=None):
     avg_means2 = nk * means.T @ means
     covariance = avg_X2 - avg_means2
     covariance /= xp.sum(nk)
-    covariance[:, 0] += reg_covar
+    my_flat = xp.reshape(covariance, (-1,))
+    my_flat[:: covariance.shape[0] + 1] += reg_covar
     return covariance
 
 
