@@ -417,6 +417,9 @@ class BayesianGaussianMixture(BaseMixture):
         ----------
         X : array-like of shape (n_samples, n_features)
         """
+        # TODO should we pass xp to the check functions in other words
+        # should we test BayesianGaussianMixture array API support?
+        # Maybe we should leave it for a further PR
         self._check_weights_parameters()
         self._check_means_parameters(X)
         self._check_precision_parameters(X)
