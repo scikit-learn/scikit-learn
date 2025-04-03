@@ -319,7 +319,8 @@ def _write_estimator_html(
 
         if estimator_label:
             if hasattr(estimator, "get_params"):
-                params = estimator.get_params(deep=False)._repr_html_inner()
+
+                params = estimator._get_params_html(deep=False)._repr_html_inner()
             else:
                 params = ""
 
@@ -376,7 +377,7 @@ def _write_estimator_html(
         out.write("</div></div>")
     elif est_block.kind == "single":
 
-        params = estimator.get_params()._repr_html_inner()
+        params = estimator._get_params_html()._repr_html_inner()
 
         _write_label_html(
             out,
