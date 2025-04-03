@@ -19,6 +19,7 @@ from ..exceptions import DataConversionWarning
 from ..preprocessing import normalize
 from ..utils import check_array, gen_batches, gen_even_slices
 from ..utils._array_api import (
+    _fill_diagonal,
     _fill_or_add_to_diagonal,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
@@ -1961,17 +1962,22 @@ def _dist_wrapper(dist_func, dist_matrix, slice_, *args, **kwargs):
 def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     """Break the pairwise matrix in n_jobs even slices
     and compute them using multithreading."""
+    xp, _ = get_namespace(X, Y)
 
     if Y is None:
         Y = X
-    X, Y, dtype = _return_float_dtype(X, Y)
+
+    if any([issparse(X), issparse(Y)]) or _is_numpy_namespace(xp):
+        X, Y, dtype_float = _return_float_dtype(X, Y)
+    else:
+        dtype_float = _find_matching_floating_dtype(X, Y, xp=xp)
 
     if effective_n_jobs(n_jobs) == 1:
         return func(X, Y, **kwds)
 
     # enforce a threading backend to prevent data communication overhead
     fd = delayed(_dist_wrapper)
-    ret = np.empty((X.shape[0], Y.shape[0]), dtype=dtype, order="F")
+    ret = xp.empty((X.shape[0], Y.shape[0]), dtype=dtype_float, order="F")
     Parallel(backend="threading", n_jobs=n_jobs)(
         fd(func, ret, s, X, Y[s], **kwds)
         for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs))
@@ -1980,7 +1986,7 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     if (X is Y or Y is None) and func is euclidean_distances:
         # zeroing diagonal for euclidean norm.
         # TODO: do it also for other norms.
-        np.fill_diagonal(ret, 0)
+        _fill_diagonal(ret, 0, xp=xp)
 
     return ret
 
@@ -1998,7 +2004,7 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
 
     if X is Y:
         # Only calculate metric for upper triangle
-        out = xp.zeros((X.shape[0], Y.shape[0]), dtype="float")
+        out = xp.zeros((X.shape[0], Y.shape[0]), dtype=X.dtype)
         iterator = itertools.combinations(range(X.shape[0]), 2)
         for i, j in iterator:
             # scipy has not yet implemented 1D sparse slices; once implemented this can
@@ -2021,7 +2027,7 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
 
     else:
         # Calculate all cells
-        out = xp.empty((X.shape[0], Y.shape[0]), dtype="float")
+        out = xp.empty((X.shape[0], Y.shape[0]), dtype=X.dtype)
         iterator = itertools.product(range(X.shape[0]), range(Y.shape[0]))
         for i, j in iterator:
             # scipy has not yet implemented 1D sparse slices; once implemented this can
