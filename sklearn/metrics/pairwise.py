@@ -74,6 +74,15 @@ def _return_float_dtype(X, Y):
     return X, Y, dtype
 
 
+def _find_floating_dtype_allow_sparse(X, Y, xp=None):
+    """Find matching floating type, allowing for sparse input."""
+    if any([issparse(X), issparse(Y)]) or _is_numpy_namespace(xp):
+        X, Y, dtype_float = _return_float_dtype(X, Y)
+    else:
+        dtype_float = _find_matching_floating_dtype(X, Y, xp=xp)
+    return dtype_float
+
+
 def check_pairwise_arrays(
     X,
     Y,
@@ -179,10 +188,7 @@ def check_pairwise_arrays(
     ensure_all_finite = _deprecate_force_all_finite(force_all_finite, ensure_all_finite)
 
     xp, _ = get_namespace(X, Y)
-    if any([issparse(X), issparse(Y)]) or _is_numpy_namespace(xp):
-        X, Y, dtype_float = _return_float_dtype(X, Y)
-    else:
-        dtype_float = _find_matching_floating_dtype(X, Y, xp=xp)
+    dtype_float = _find_floating_dtype_allow_sparse(X, Y, xp=xp)
 
     estimator = "check_pairwise_arrays"
     if dtype == "infer_float":
@@ -1963,14 +1969,10 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     """Break the pairwise matrix in n_jobs even slices
     and compute them using multithreading."""
     xp, _ = get_namespace(X, Y)
+    dtype_float = _find_matching_floating_dtype(X, Y, xp=xp)
 
     if Y is None:
         Y = X
-
-    if any([issparse(X), issparse(Y)]) or _is_numpy_namespace(xp):
-        X, Y, dtype_float = _return_float_dtype(X, Y)
-    else:
-        dtype_float = _find_matching_floating_dtype(X, Y, xp=xp)
 
     if effective_n_jobs(n_jobs) == 1:
         return func(X, Y, **kwds)
