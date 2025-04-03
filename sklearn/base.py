@@ -256,7 +256,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
 
     def _get_params_html(self, deep=True):
         """
-        Get parameters for this estimator.
+        Get parameters for this estimator to build an HTML block.
 
         Parameters
         ----------
@@ -297,8 +297,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
             return False
 
         non_default = [k for k, v in out.items() if has_changed(k, v)]
-        out = ParamsDict(out)
-        out.non_default = non_default
+        out = ParamsDict(out, non_default)
 
         return out
 

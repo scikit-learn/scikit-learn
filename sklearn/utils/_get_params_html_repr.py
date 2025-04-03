@@ -8,6 +8,10 @@ from sklearn._config import get_config
 
 
 class ParamsDict(UserDict):
+    def __init__(self, data=None, non_default=tuple()):
+        super().__init__(data or {})
+        self.non_default = non_default
+
     @property
     def _repr_html_(self):
         # Taken from sklearn.base.BaseEstimator - (written 5 yrs ago)
