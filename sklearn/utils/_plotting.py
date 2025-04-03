@@ -12,9 +12,11 @@ from .fixes import parse_version
 from .multiclass import type_of_target
 from .validation import _check_pos_label_consistency, _num_samples
 
-AGGREGATE_ERROR_MESSAGE = (
-    "'fold_line_kwargs' must be a single dictionary to be applied to all curves "
-    "when {param_value}, as only one legend entry will be added."
+MULTICURVE_LABELLING_ERROR = (
+    "To avoid labeling individual curves that have the same appearance, "
+    "`fold_line_kwargs` should be a list of {n_curves} dictionaries. Alternatively, "
+    "set `name` to `None` or a single string to add a single legend entry with mean "
+    "ROC AUC score of all curves."
 )
 
 
@@ -85,7 +87,6 @@ class _BinaryClassifierCurveDisplayMixin:
         pos_label,
         name,
         fold_line_kwargs,
-        show_aggregate_score,
     ):
         check_matplotlib_support(f"{cls.__name__}.from_predictions")
 
@@ -122,30 +123,19 @@ class _BinaryClassifierCurveDisplayMixin:
             raise ValueError(str(e).replace("y_true", "y"))
 
         n_curves = len(cv_results["estimator"])
-        if show_aggregate_score:
-            if isinstance(name, list) and len(name) != 1:
-                raise ValueError(
-                    "'name' must be a string or list of length one when "
-                    "'show_aggregate_score' is True, as only one legend entry "
-                    "will be added."
-                )
-            # Should we allow a list of length 1 (in addition to single dict) ??
-            if isinstance(fold_line_kwargs, list):
-                raise ValueError(
-                    AGGREGATE_ERROR_MESSAGE.format(
-                        param_value="'show_aggregate_score' is True"
-                    )
-                )
+        if (
+            isinstance(name, list)
+            and len(name) != 1
+            and (isinstance(fold_line_kwargs, Mapping) or fold_line_kwargs is None)
+        ):
+            raise ValueError(MULTICURVE_LABELLING_ERROR.format(n_curves=n_curves))
         else:
-            # Individual ROC AUC scores shown
-            if isinstance(name, list) and len(name) != n_curves:
+            if isinstance(name, list) and len(name) not in (1, n_curves):
                 raise ValueError(
-                    f"'name' must be None or list of length {n_curves} when "
-                    f"'show_aggregate_score' is False. Got list of length {len(name)}"
+                    f"`name` must be a list of length {n_curves} or a string. "
+                    f"Got list of length: {len(name)}."
                 )
-            if name is None:
-                name = [f"Fold {idx}" for idx in range(n_curves)]
-        return pos_label, name
+        return pos_label
 
     @classmethod
     def _get_legend_label(cls, curve_summary_value, curve_name, summary_value_name):
@@ -211,10 +201,6 @@ class _BinaryClassifierCurveDisplayMixin:
         if n_curves == 1:
             fold_line_kwargs = [kwargs]
         else:
-            # Should we add an extra check ensuring `fold_line_kwargs` is the
-            # same when `summary_value` is (mean, std) ? or allow this flexibility
-            # when using `plot` - note this is checked and prevented in
-            # `from_cv_results`
             fold_line_kwargs = cls._validate_line_kwargs(n_curves, fold_line_kwargs)
 
         if default_line_kwargs is None:
@@ -226,6 +212,7 @@ class _BinaryClassifierCurveDisplayMixin:
                 summary_value_[0], name_[0], summary_value_name
             )
             label_aggregate = label_aggregate + f" +/- {summary_value_[1]:0.2f}"
+            # Add `label` for first curve only, set to `None` for remaining curves
             labels.extend([label_aggregate] + [None] * (n_curves - 1))
         else:
             for curve_summary_value, curve_name in zip(summary_value_, name_):
@@ -244,14 +231,13 @@ class _BinaryClassifierCurveDisplayMixin:
         return line_kwargs
 
     # TODO: if useful for non binary displays (e.g.,`LearningCurveDisplay`,
-    # `ValidationCurveDisplay`) amend to function
+    # `ValidationCurveDisplay`) change to function
     @classmethod
     def _validate_line_kwargs(
         cls,
         n_curves,
         fold_line_kwargs=None,
         default_line_kwargs=None,
-        aggregate_error=False,
     ):
         """Ensure `fold_line_kwargs` length and incorporate default kwargs.
 
@@ -294,10 +280,11 @@ class _BinaryClassifierCurveDisplayMixin:
 
         if isinstance(fold_line_kwargs, Mapping):
             fold_line_kwargs = [fold_line_kwargs] * n_curves
+        # Should we allow list with single dict?
         elif len(fold_line_kwargs) != n_curves:
             raise ValueError(
                 f"'fold_line_kwargs' must be a list of length {n_curves} or a "
-                f"single dictionary. Got list of length: {len(fold_line_kwargs)}."
+                f"dictionary. Got list of length: {len(fold_line_kwargs)}."
             )
         else:
             fold_line_kwargs = fold_line_kwargs
@@ -465,13 +452,17 @@ def _check_param_lengths(required, optional, class_name):
 
     all_params = {**required, **optional_provided}
     if len({len(param) for param in all_params.values()}) > 1:
-        required_formatted = ", ".join(f"'{key}'" for key in required.keys())
-        optional_formatted = ", ".join(f"'{key}'" for key in optional_provided.keys())
+        param_keys = [key for key in all_params.keys()]
+        # Note: below code requires `len(param_keys) >= 2`, which is the case for all
+        # display classes
+        params_formatted = " and ".join([", ".join(param_keys[:-1]), param_keys[-1]])
+        or_plot = ""
+        if "'name' (or self.name)" in param_keys:
+            or_plot = " (or `plot`)"
         lengths_formatted = ", ".join(
             f"{key}: {len(value)}" for key, value in all_params.items()
         )
         raise ValueError(
-            f"{required_formatted}, and optional parameters {optional_formatted} "
-            f"from `{class_name}` initialization (or `plot`) should all be lists of "
-            f"the same length. Got: {lengths_formatted}"
+            f"{params_formatted} from `{class_name}` initialization{or_plot}, "
+            f"should all be lists of the same length. Got: {lengths_formatted}"
         )
