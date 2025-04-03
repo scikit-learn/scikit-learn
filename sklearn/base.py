@@ -230,7 +230,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         # Extract and sort argument names excluding 'self'
         return sorted([p.name for p in parameters])
 
-    def get_params(self, deep=True):
+    def _get_params(self, deep=True):
         """
         Get parameters for this estimator.
 
