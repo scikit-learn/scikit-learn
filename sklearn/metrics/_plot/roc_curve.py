@@ -63,8 +63,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         To label each curve, provide a list of strings. To avoid labeling
         individual curves that have the same appearance, this cannot be used in
         conjunction with `fold_line_kwargs` being a list. If a string is
-        provided, either label the single legend entry or if there are
-        multiple legend entries, label each individual curve with the
+        provided, it will be used to either label the single legend entry or if
+        there are multiple legend entries, label each individual curve with the
         same name. If `None`, no name is shown in the legend.
 
         .. versionadded:: 1.7
@@ -144,7 +144,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         self.name = _deprecate_estimator_name(estimator_name, name, "1.7")
         self.pos_label = pos_label
 
-    def _validate_plot_params(self, *, ax=None, name=None, fold_line_kwargs=None):
+    def _validate_plot_params(self, *, ax, name, fold_line_kwargs):
         self.ax_, self.figure_, name_ = super()._validate_plot_params(ax=ax, name=name)
 
         self.fpr_ = _convert_to_list_leaving_none(self.fpr)
@@ -152,12 +152,12 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         self.roc_auc_ = _convert_to_list_leaving_none(self.roc_auc)
         self.name_ = _convert_to_list_leaving_none(name_)
 
+        optional = {"self.roc_auc": self.roc_auc_}
+        if isinstance(self.name_, list) and len(self.name_) != 1:
+            optional.update({"'name' (or self.name)": self.name_})
         _check_param_lengths(
             required={"self.fpr": self.fpr_, "self.tpr": self.tpr_},
-            optional={
-                "self.roc_auc": self.roc_auc_,
-                "'name' (or self.name)": self.name_,
-            },
+            optional=optional,
             class_name="RocCurveDisplay",
         )
 
@@ -195,8 +195,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             To label each curve, provide a list of strings. To avoid labeling
             individual curves that have the same appearance, this cannot be used in
             conjunction with `fold_line_kwargs` being a list. If a string is
-            provided, either label the single legend entry or if there are
-            multiple legend entries, label each individual curve with the
+            provided, it will be used to either label the single legend entry or
+            if there are multiple legend entries, label each individual curve with the
             same name. If `None`, set to `name` provided at `RocCurveDisplay`
             initialization. If still `None`, no name is shown in the legend.
 
@@ -239,14 +239,14 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         display : :class:`~sklearn.metrics.RocCurveDisplay`
             Object that stores computed values.
         """
-        self._validate_plot_params(ax=ax, name=name)
+        self._validate_plot_params(ax=ax, name=name, fold_line_kwargs=fold_line_kwargs)
+        n_curves = len(self.fpr_)
         summary_value, summary_value_name = self.roc_auc_, "AUC"
-        if (
-            self.roc_auc_
-            and isinstance(fold_line_kwargs, list)
-            and len(fold_line_kwargs) != 1
-        ):
-            summary_value = (np.mean(self.roc_auc_), np.std(self.roc_auc_))
+        if not isinstance(fold_line_kwargs, list) and n_curves > 1:
+            if self.roc_auc_:
+                summary_value = (np.mean(self.roc_auc_), np.std(self.roc_auc_))
+            else:
+                summary_value = (None, None)
 
         n_curves = len(self.fpr_)
         line_kwargs = self._get_line_kwargs(
@@ -631,8 +631,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             To label each curve, provide a list of strings. To avoid labeling
             individual curves that have the same appearance, this cannot be used in
             conjunction with `fold_line_kwargs` being a list. If a string is
-            provided, either label the single legend entry or if there are
-            multiple legend entries, label each individual curve with the
+            provided, it will be used to either label the single legend entry or
+            if there are multiple legend entries, label each individual curve with the
             same name. If `None`, no name is shown in the legend.
 
         fold_line_kwargs : dict or list of dict, default=None
@@ -683,7 +683,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        pos_label = cls._validate_from_cv_results_params(
+        pos_label_, fold_line_kwargs_ = cls._validate_from_cv_results_params(
             cv_results,
             X,
             y,
@@ -692,26 +692,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             name=name,
             fold_line_kwargs=fold_line_kwargs,
         )
-
-        n_curves = len(cv_results["estimator"])
-        default_curve_kwargs = {"alpha": 0.5, "linestyle": "--"}
-        if fold_line_kwargs is None:
-            fold_line_kwargs = default_curve_kwargs
-        elif isinstance(fold_line_kwargs, Mapping):
-            fold_line_kwargs = _validate_style_kwargs(
-                default_curve_kwargs, fold_line_kwargs
-            )
-        elif isinstance(fold_line_kwargs, list):
-            if len(fold_line_kwargs) != n_curves:
-                raise ValueError(
-                    f"'fold_line_kwargs' must be a list of length {n_curves} or a "
-                    f"dictionary. Got list of length: {len(fold_line_kwargs)}."
-                )
-            else:
-                fold_line_kwargs = [
-                    _validate_style_kwargs(default_curve_kwargs, single_kwargs)
-                    for single_kwargs in fold_line_kwargs
-                ]
 
         fpr_all = []
         tpr_all = []
@@ -724,7 +704,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
                 estimator,
                 _safe_indexing(X, test_indices),
                 response_method=response_method,
-                pos_label=pos_label,
+                pos_label=pos_label_,
             )[0]
             sample_weight_fold = (
                 None
@@ -734,7 +714,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             fpr, tpr, _ = roc_curve(
                 y_true,
                 y_pred,
-                pos_label=pos_label,
+                pos_label=pos_label_,
                 sample_weight=sample_weight_fold,
                 drop_intermediate=drop_intermediate,
             )
@@ -749,12 +729,12 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             tpr=tpr_all,
             name=name,
             roc_auc=auc_all,
-            pos_label=pos_label,
+            pos_label=pos_label_,
         )
         return viz.plot(
             ax=ax,
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kwargs,
             despine=despine,
-            fold_line_kwargs=fold_line_kwargs,
+            fold_line_kwargs=fold_line_kwargs_,
         )

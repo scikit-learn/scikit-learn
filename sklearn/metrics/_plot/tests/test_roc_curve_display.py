@@ -187,17 +187,27 @@ def test_roc_curve_from_cv_results_param_validation(pyplot, data_binary, data):
     with pytest.raises(ValueError, match=r"y takes value in \{1, 2\}"):
         RocCurveDisplay.from_cv_results(cv_results, X_bad_pos_label, y_bad_pos_label)
 
-    # `fold_names` incorrect length
-    with pytest.raises(ValueError, match="'name' must be None or list of length"):
-        RocCurveDisplay.from_cv_results(
-            cv_results, X, y, name=["fold"], show_aggregate_score=False
-        )
+    # `name` is list while `fold_line_kwargs` is None or dict
+    for fold_line_kwargs in (None, {"alpha": 0.2}):
+        with pytest.raises(ValueError, match="To avoid labeling individual curves"):
+            RocCurveDisplay.from_cv_results(
+                cv_results,
+                X,
+                y,
+                name=["one", "two", "three"],
+                fold_line_kwargs=fold_line_kwargs,
+            )
+
     # `fold_line_kwargs` incorrect length
-    with pytest.raises(
-        ValueError, match="'fold_line_kwargs' must be a single dictionary to"
-    ):
+    with pytest.raises(ValueError, match="`fold_line_kwargs` must be None, a list"):
         RocCurveDisplay.from_cv_results(
             cv_results, X, y, fold_line_kwargs=[{"alpha": 1}]
+        )
+
+    # `fold_line_kwargs` both alias provided
+    with pytest.raises(TypeError, match="Got both c and"):
+        RocCurveDisplay.from_cv_results(
+            cv_results, X, y, fold_line_kwargs={"c": "blue", "color": "red"}
         )
 
 
@@ -246,7 +256,11 @@ def test_roc_curve_display_estimator_name_deprecation(pyplot):
 
 @pytest.mark.parametrize(
     "fold_line_kwargs",
-    [None, [{"color": "blue"}, {"color": "green"}, {"color": "red"}]],
+    [
+        None,
+        {"color": "blue"},
+        [{"color": "blue"}, {"color": "green"}, {"color": "red"}],
+    ],
 )
 @pytest.mark.parametrize("drop_intermediate", [True, False])
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
@@ -325,13 +339,12 @@ def test_roc_curve_display_plotting_from_cv_results(
         assert isinstance(line, mpl.lines.Line2D)
         # Default alpha for `from_cv_results`
         line.get_alpha() == 0.5
-        if fold_line_kwargs is None:
-            print(line.get_label())
-            # assert line.get_label() == aggregate_expected_labels[idx]
+        if isinstance(fold_line_kwargs, list):
+            # Each individual curve labelled
+            assert line.get_label() == f"AUC = {display.roc_auc_[idx]:.2f}"
         else:
-            # expected_label = f"AUC = {display.roc_auc_[idx]:.2f}"
-            # assert line.get_label() == expected_label
-            print(line.get_label())
+            # Single aggregate label
+            assert line.get_label() == aggregate_expected_labels[idx]
 
 
 # @pytest.mark.parametrize("fold_names", [None, ["one", "two", "three"]])
@@ -365,7 +378,7 @@ def test_roc_curve_from_cv_results_line_kwargs(pyplot, data_binary, fold_line_kw
         LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
     )
     display = RocCurveDisplay.from_cv_results(
-        cv_results, X, y, fold_line_kwargs=fold_line_kwargs, show_aggregate_score=False
+        cv_results, X, y, fold_line_kwargs=fold_line_kwargs
     )
 
     mpl_default_colors = mpl.rcParams["axes.prop_cycle"].by_key()["color"]
@@ -576,23 +589,28 @@ def test_roc_curve_display_complex_pipeline(pyplot, data_binary, clf, constructo
 
 
 @pytest.mark.parametrize(
-    "roc_auc, name, expected_labels",
+    "roc_auc, name, fold_line_kwargs, expected_labels",
     [
-        ([0.9, 0.8], None, ["AUC = 0.90", "AUC = 0.80"]),
-        ([0.8, 0.7], [None, None], ["AUC = 0.80", "AUC = 0.70"]),
-        (None, ["fold1", "fold2"], ["fold1", "fold2"]),
+        ([0.9, 0.8], None, None, ["AUC = 0.85 +/- 0.05", "_child1"]),
+        ([0.9, 0.8], "Est name", None, ["Est name (AUC = 0.85 +/- 0.05)", "_child1"]),
         (
             [0.8, 0.7],
-            ["my_est2", "my_est2"],
-            ["my_est2 (AUC = 0.80)", "my_est2 (AUC = 0.70)"],
+            ["fold1", "fold2"],
+            [{"c": "blue"}, {"c": "red"}],
+            ["fold1 (AUC = 0.80)", "fold2 (AUC = 0.70)"],
         ),
+        (None, ["fold1", "fold2"], [{"c": "blue"}, {"c": "red"}], ["fold1", "fold2"]),
     ],
 )
-def test_roc_curve_display_default_labels(pyplot, roc_auc, name, expected_labels):
+def test_roc_curve_display_default_labels(
+    pyplot, roc_auc, name, fold_line_kwargs, expected_labels
+):
     """Check the default labels used in the display."""
     fpr = [np.array([0, 0.5, 1]), np.array([0, 0.3, 1])]
     tpr = [np.array([0, 0.5, 1]), np.array([0, 0.3, 1])]
-    disp = RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc, name=name).plot()
+    disp = RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc, name=name).plot(
+        fold_line_kwargs=fold_line_kwargs
+    )
     for idx, expected_label in enumerate(expected_labels):
         assert disp.line_[idx].get_label() == expected_label
 
