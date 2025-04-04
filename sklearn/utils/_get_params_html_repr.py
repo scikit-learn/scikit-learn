@@ -8,13 +8,19 @@ from sklearn._config import get_config
 
 
 class ParamsDict(UserDict):
+    """Dictionary-like class to visualize parameters in HTML.
+
+    It builds an HTML structure to be used with Jupyter notebooks or similar
+    environments. It allows storing metadata to track non-default parameters.
+    """
+
     def __init__(self, params=None, non_default=tuple()):
         super().__init__(params or {})
         self.non_default = non_default
 
     @property
     def _repr_html_(self):
-        # Taken from sklearn.base.BaseEstimator - (written 5 yrs ago)
+        # Taken from sklearn.base.BaseEstimator
         """HTML representation of estimator.
 
         This is redundant with the logic of `_repr_mimebundle_`. The latter
@@ -53,7 +59,6 @@ def _html_template(params):
             </details>
         </div>
     """
-
     ROW_TEMPLATE = """
         <tr class="{param_type}">
             <td><i class="fa-regular fa-copy"
@@ -73,6 +78,7 @@ def _html_template(params):
             cleaned_value = html.escape(str(value))
 
         param_type = "user-set" if param in params.non_default else "default"
+
         rows.append(
             ROW_TEMPLATE.format(
                 param_type=param_type, param_name=param, param_value=cleaned_value
