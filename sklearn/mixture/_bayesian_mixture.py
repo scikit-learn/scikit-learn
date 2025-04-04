@@ -254,6 +254,10 @@ class BayesianGaussianMixture(BaseMixture):
         Lower bound value on the model evidence (of the training data) of the
         best fit of inference.
 
+    lower_bounds_ : array-like of shape (`n_iter_`,)
+        The list of lower bound values on the model evidence from each iteration
+        of the best fit of inference.
+
     weight_concentration_prior_ : tuple or float
         The dirichlet concentration of each component on the weight
         distribution (Dirichlet). The type depends on

@@ -93,10 +93,10 @@ predicted class is the one that maximises this log-posterior.
 
 .. note:: **Relation with Gaussian Naive Bayes**
 
-	  If in the QDA model one assumes that the covariance matrices are diagonal,
-	  then the inputs are assumed to be conditionally independent in each class,
-	  and the resulting classifier is equivalent to the Gaussian Naive Bayes
-	  classifier :class:`naive_bayes.GaussianNB`.
+    If in the QDA model one assumes that the covariance matrices are diagonal,
+    then the inputs are assumed to be conditionally independent in each class,
+    and the resulting classifier is equivalent to the Gaussian Naive Bayes
+    classifier :class:`naive_bayes.GaussianNB`.
 
 LDA
 ---

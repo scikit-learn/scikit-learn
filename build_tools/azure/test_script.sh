@@ -30,7 +30,7 @@ if [[ "$COMMIT_MESSAGE" =~ \[float32\] ]]; then
 fi
 
 mkdir -p $TEST_DIR
-cp setup.cfg $TEST_DIR
+cp pyproject.toml $TEST_DIR
 cd $TEST_DIR
 
 python -c "import joblib; print(f'Number of cores (physical): \
@@ -39,7 +39,7 @@ python -c "import sklearn; sklearn.show_versions()"
 
 show_installed_libraries
 
-TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML"
+TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML -o junit_family=legacy"
 
 if [[ "$COVERAGE" == "true" ]]; then
     # Note: --cov-report= is used to disable to long text output report in the

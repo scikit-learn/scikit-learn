@@ -1,0 +1,7 @@
+
+- Sparse update: As part of the SciPy change from spmatrix to sparray, all
+  internal use of sparse now supports both sparray and spmatrix.
+  All manipulations of sparse objects should work for either spmatrix or sparray.
+  This is pass 1 of a migration toward sparray (see
+  `SciPy migration to sparray <https://docs.scipy.org/doc/scipy/reference/sparse.migration_to_sparray.html>`_
+  By :user:`Dan Schult <dschult>`

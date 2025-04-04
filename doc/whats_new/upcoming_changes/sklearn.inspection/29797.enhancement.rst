@@ -1,0 +1,4 @@
+- :class:`inspection.DecisionBoundaryDisplay` now supports
+  plotting all classes for multi-class problems when `response_method` is
+  'decision_function', 'predict_proba' or 'auto'.
+  By :user:`Lucy Liu <lucyleeow>`

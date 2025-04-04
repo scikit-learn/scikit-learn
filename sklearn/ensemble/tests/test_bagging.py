@@ -11,7 +11,7 @@ import joblib
 import numpy as np
 import pytest
 
-import sklearn
+from sklearn import config_context
 from sklearn.base import BaseEstimator
 from sklearn.datasets import load_diabetes, load_iris, make_hastie_10_2
 from sklearn.dummy import DummyClassifier, DummyRegressor
@@ -33,6 +33,13 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer, scale
 from sklearn.random_projection import SparseRandomProjection
 from sklearn.svm import SVC, SVR
+from sklearn.tests.metadata_routing_common import (
+    ConsumingClassifierWithOnlyPredict,
+    ConsumingClassifierWithoutPredictLogProba,
+    ConsumingClassifierWithoutPredictProba,
+    _Registry,
+    check_recorded_metadata,
+)
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_array_almost_equal, assert_array_equal
@@ -909,12 +916,12 @@ def test_bagging_small_max_features():
     bagging.fit(X, y)
 
 
-def test_bagging_get_estimators_indices():
+def test_bagging_get_estimators_indices(global_random_seed):
     # Check that Bagging estimator can generate sample indices properly
     # Non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/16436
 
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.randn(13, 4)
     y = np.arange(13)
 
@@ -944,6 +951,11 @@ def test_bagging_allow_nan_tag(bagging, expected_allow_nan):
     assert bagging.__sklearn_tags__().input_tags.allow_nan == expected_allow_nan
 
 
+# Metadata Routing Tests
+# ======================
+
+
+@config_context(enable_metadata_routing=True)
 @pytest.mark.parametrize(
     "model",
     [
@@ -957,8 +969,62 @@ def test_bagging_allow_nan_tag(bagging, expected_allow_nan):
 )
 def test_bagging_with_metadata_routing(model):
     """Make sure that metadata routing works with non-default estimator."""
-    with sklearn.config_context(enable_metadata_routing=True):
-        model.fit(iris.data, iris.target)
+    model.fit(iris.data, iris.target)
+
+
+@pytest.mark.parametrize(
+    "sub_estimator, caller, callee",
+    [
+        (ConsumingClassifierWithoutPredictProba, "predict", "predict"),
+        (
+            ConsumingClassifierWithoutPredictLogProba,
+            "predict_log_proba",
+            "predict_proba",
+        ),
+        (ConsumingClassifierWithOnlyPredict, "predict_log_proba", "predict"),
+    ],
+)
+@config_context(enable_metadata_routing=True)
+def test_metadata_routing_with_dynamic_method_selection(sub_estimator, caller, callee):
+    """Test that metadata routing works in `BaggingClassifier` with dynamic selection of
+    the sub-estimator's methods. Here we test only specific test cases, where
+    sub-estimator methods are not present and are not tested with `ConsumingClassifier`
+    (which possesses all the methods) in
+    sklearn/tests/test_metaestimators_metadata_routing.py: `BaggingClassifier.predict()`
+    dynamically routes to `predict` if the sub-estimator doesn't have `predict_proba`
+    and `BaggingClassifier.predict_log_proba()` dynamically routes to `predict_proba` if
+    the sub-estimator doesn't have `predict_log_proba`, or to `predict`, if it doesn't
+    have it.
+    """
+    X = np.array([[0, 2], [1, 4], [2, 6]])
+    y = [1, 2, 3]
+    sample_weight, metadata = [1], "a"
+    registry = _Registry()
+    estimator = sub_estimator(registry=registry)
+    set_callee_request = "set_" + callee + "_request"
+    getattr(estimator, set_callee_request)(sample_weight=True, metadata=True)
+
+    bagging = BaggingClassifier(estimator=estimator)
+    bagging.fit(X, y)
+    getattr(bagging, caller)(
+        X=np.array([[1, 1], [1, 3], [0, 2]]),
+        sample_weight=sample_weight,
+        metadata=metadata,
+    )
+
+    assert len(registry)
+    for estimator in registry:
+        check_recorded_metadata(
+            obj=estimator,
+            method=callee,
+            parent=caller,
+            sample_weight=sample_weight,
+            metadata=metadata,
+        )
+
+
+# End of Metadata Routing Tests
+# =============================
 
 
 @pytest.mark.parametrize(

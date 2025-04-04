@@ -203,7 +203,7 @@ plot_training_data_with_decision_boundary("linear")
 plot_training_data_with_decision_boundary("poly")
 
 # %%
-# The polynomial kernel with `gamma=2`` adapts well to the training data,
+# The polynomial kernel with `gamma=2` adapts well to the training data,
 # causing the margins on both sides of the hyperplane to bend accordingly.
 #
 # RBF kernel

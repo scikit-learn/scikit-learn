@@ -926,7 +926,7 @@ def test_parallel_train():
 
     X_test = rng.randn(n_samples, n_features)
     probas = [clf.predict_proba(X_test) for clf in clfs]
-    for proba1, proba2 in zip(probas, probas[1:]):
+    for proba1, proba2 in itertools.pairwise(probas):
         assert_array_almost_equal(proba1, proba2)
 
 

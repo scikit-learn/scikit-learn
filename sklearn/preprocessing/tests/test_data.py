@@ -38,6 +38,7 @@ from sklearn.preprocessing._data import BOUNDS_THRESHOLD, _handle_zeros_in_scale
 from sklearn.svm import SVR
 from sklearn.utils import gen_batches, shuffle
 from sklearn.utils._array_api import (
+    _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._test_common.instance_generator import _get_check_estimator_ids
@@ -689,7 +690,9 @@ def test_standard_check_array_of_inverse_transform():
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "check",
@@ -2279,7 +2282,7 @@ def test_power_transformer_shape_exception(method):
     # Exceptions should be raised for arrays with different num_columns
     # than during fitting
     wrong_shape_message = (
-        r"X has \d+ features, but PowerTransformer is " r"expecting \d+ features"
+        r"X has \d+ features, but PowerTransformer is expecting \d+ features"
     )
 
     with pytest.raises(ValueError, match=wrong_shape_message):

@@ -19,7 +19,6 @@ from joblib import Memory
 
 from ..utils import Bunch
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
-from ..utils.fixes import tarfile_extractall
 from ._base import (
     RemoteFileMetadata,
     _fetch_remote,
@@ -118,7 +117,11 @@ def _check_fetch_lfw(
 
         logger.debug("Decompressing the data archive to %s", data_folder_path)
         with tarfile.open(archive_path, "r:gz") as fp:
-            tarfile_extractall(fp, path=lfw_home)
+            # Use filter="data" to prevent the most dangerous security issues.
+            # For more details, see
+            # https://docs.python.org/3.9/library/tarfile.html#tarfile.TarFile.extractall
+            fp.extractall(path=lfw_home, filter="data")
+
         remove(archive_path)
 
     return lfw_home, data_folder_path

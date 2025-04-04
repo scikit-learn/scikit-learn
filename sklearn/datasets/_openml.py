@@ -20,7 +20,7 @@ from warnings import warn
 import numpy as np
 
 from ..utils import Bunch
-from ..utils._optional_dependencies import check_pandas_support  # noqa
+from ..utils._optional_dependencies import check_pandas_support
 from ..utils._param_validation import (
     Integral,
     Interval,

@@ -1,0 +1,4 @@
+- :class:`ensemble.BaggingClassifier` and :class:`ensemble.BaggingRegressor` now support
+  metadata routing through their `predict`, `predict_proba`, `predict_log_proba` and
+  `decision_function` methods and pass `**params` to the underlying estimators.
+  By :user:`Stefanie Senger <StefanieSenger>`.

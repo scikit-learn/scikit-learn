@@ -46,23 +46,23 @@ BOUNDS_THRESHOLD = 1e-7
 __all__ = [
     "Binarizer",
     "KernelCenterer",
-    "MinMaxScaler",
     "MaxAbsScaler",
+    "MinMaxScaler",
     "Normalizer",
     "OneHotEncoder",
+    "PowerTransformer",
+    "QuantileTransformer",
     "RobustScaler",
     "StandardScaler",
-    "QuantileTransformer",
-    "PowerTransformer",
     "add_dummy_feature",
     "binarize",
-    "normalize",
-    "scale",
-    "robust_scale",
     "maxabs_scale",
     "minmax_scale",
-    "quantile_transform",
+    "normalize",
     "power_transform",
+    "quantile_transform",
+    "robust_scale",
+    "scale",
 ]
 
 
@@ -490,6 +490,12 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             reset=first_pass,
             dtype=_array_api.supported_float_dtypes(xp),
             ensure_all_finite="allow-nan",
+        )
+
+        device_ = device(X)
+        feature_range = (
+            xp.asarray(feature_range[0], dtype=X.dtype, device=device_),
+            xp.asarray(feature_range[1], dtype=X.dtype, device=device_),
         )
 
         data_min = _array_api._nanmin(X, axis=0, xp=xp)

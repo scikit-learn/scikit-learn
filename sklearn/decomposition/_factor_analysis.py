@@ -295,8 +295,8 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         else:
             warnings.warn(
                 "FactorAnalysis did not converge."
-                + " You might want"
-                + " to increase the number of iterations.",
+                " You might want"
+                " to increase the number of iterations.",
                 ConvergenceWarning,
             )
 

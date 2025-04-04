@@ -208,6 +208,7 @@ purpose.
     Scikit-learn 1.0 supported Python 3.7-3.10.
     Scikit-learn 1.1, 1.2 and 1.3 support Python 3.8-3.12
     Scikit-learn 1.4 requires Python 3.9 or newer.
+    Scikit-learn 1.7 requires Python 3.10 or newer.
 
 .. _install_by_distribution:
 
@@ -294,7 +295,7 @@ command:
 
 .. prompt:: bash
 
-  sudo port install py39-scikit-learn
+  sudo port install py312-scikit-learn
 
 
 Anaconda and Enthought Deployment Manager for all supported platforms

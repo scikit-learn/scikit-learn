@@ -419,7 +419,8 @@ Changelog
 
 - |API| All estimators store `feature_names_in_` when fitted on pandas Dataframes.
   These feature names are compared to names seen in non-`fit` methods, e.g.
-  `transform` and will raise a `FutureWarning` if they are not consistent.
+  `transform` and will raise a `FutureWarning` if they are not consistent, see also
+  :ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_0_0.py`.
   These ``FutureWarning`` s will become ``ValueError`` s in 1.2. :pr:`18010` by
   `Thomas Fan`_.
 
@@ -1080,7 +1081,7 @@ Changelog
 
 - |Efficiency| Changed ``algorithm`` argument for :class:`cluster.KMeans` in
   :class:`preprocessing.KBinsDiscretizer` from ``auto`` to ``full``.
-  :pr:`19934` by :user:`Gleb Levitskiy <GLevV>`.
+  :pr:`19934` by :user:`Hleb Levitski <glevv>`.
 
 - |Efficiency| The implementation of `fit` for
   :class:`preprocessing.PolynomialFeatures` transformer is now faster. This is
@@ -1236,7 +1237,7 @@ Markou, EricEllwanger, Eric Fiegel, Erich Schubert, Ezri-Mudde, Fatos Morina,
 Felipe Rodrigues, Felix Hafner, Fenil Suchak, flyingdutchman23, Flynn, Fortune
 Uwha, Francois Berenger, Frankie Robertson, Frans Larsson, Frederick Robinson,
 frellwan, Gabriel S Vicente, Gael Varoquaux, genvalen, Geoffrey Thomas,
-geroldcsendes, Gleb Levitskiy, Glen, Glòria Macià Muñoz, gregorystrubel,
+geroldcsendes, Hleb Levitski, Glen, Glòria Macià Muñoz, gregorystrubel,
 groceryheist, Guillaume Lemaitre, guiweber, Haidar Almubarak, Hans Moritz
 Günther, Haoyin Xu, Harris Mirza, Harry Wei, Harutaka Kawamura, Hassan
 Alsawadi, Helder Geovane Gomes de Lima, Hugo DEFOIS, Igor Ilic, Ikko Ashimine,

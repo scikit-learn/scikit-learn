@@ -1475,7 +1475,7 @@ def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
         (False, "pandas"),
     ],
 )
-def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir, parser):
+def test_fetch_openml_verify_checksum(monkeypatch, as_frame, tmpdir, parser):
     """Check that the checksum is working as expected."""
     if as_frame or parser == "pandas":
         pytest.importorskip("pandas")

@@ -1,6 +1,6 @@
 .. _breast_cancer_dataset:
 
-Breast cancer wisconsin (diagnostic) dataset
+Breast cancer Wisconsin (diagnostic) dataset
 --------------------------------------------
 
 **Data Set Characteristics:**

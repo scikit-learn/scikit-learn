@@ -1,6 +1,5 @@
 import re
 import sys
-import warnings
 from io import StringIO
 
 import numpy as np
@@ -917,33 +916,6 @@ def test_minibatch_nmf_verbose():
         nmf.fit(A)
     finally:
         sys.stdout = old_stdout
-
-
-# TODO(1.7): remove this test
-@pytest.mark.parametrize("Estimator", [NMF, MiniBatchNMF])
-def test_NMF_inverse_transform_Xt_deprecation(Estimator):
-    rng = np.random.RandomState(42)
-    A = np.abs(rng.randn(6, 5))
-    est = Estimator(
-        n_components=3,
-        init="random",
-        random_state=0,
-        tol=1e-6,
-    )
-    X = est.fit_transform(A)
-
-    with pytest.raises(TypeError, match="Missing required positional argument"):
-        est.inverse_transform()
-
-    with pytest.raises(TypeError, match="Cannot use both X and Xt. Use X only"):
-        est.inverse_transform(X=X, Xt=X)
-
-    with warnings.catch_warnings(record=True):
-        warnings.simplefilter("error")
-        est.inverse_transform(X)
-
-    with pytest.warns(FutureWarning, match="Xt was renamed X in version 1.5"):
-        est.inverse_transform(Xt=X)
 
 
 @pytest.mark.parametrize("Estimator", [NMF, MiniBatchNMF])

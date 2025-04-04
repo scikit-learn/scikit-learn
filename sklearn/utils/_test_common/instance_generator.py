@@ -176,7 +176,7 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import all_estimators
 from sklearn.utils._tags import get_tags
 from sklearn.utils._testing import SkipTest
-from sklearn.utils.fixes import parse_version, sp_base_version
+from sklearn.utils.fixes import _IS_32BIT, parse_version, sp_base_version
 
 CROSS_DECOMPOSITION = ["PLSCanonical", "PLSRegression", "CCA", "PLSSVD"]
 
@@ -1281,6 +1281,18 @@ def _get_expected_failed_checks(estimator):
                 {
                     "check_n_features_in_after_fitting": "FIXME",
                     "check_dataframe_column_names_consistency": "FIXME",
+                }
+            )
+    if type(estimator) == LinearRegression:
+        if _IS_32BIT:
+            failed_checks.update(
+                {
+                    "check_sample_weight_equivalence_on_dense_data": (
+                        "Issue #31098. Fails on 32-bit platforms with recent scipy."
+                    ),
+                    "check_sample_weight_equivalence_on_sparse_data": (
+                        "Issue #31098. Fails on 32-bit platforms with recent scipy."
+                    ),
                 }
             )
 

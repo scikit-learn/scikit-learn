@@ -112,7 +112,7 @@ def test_make_classification_informative_features():
         (2, [1 / 2] * 2, 2),
         (2, [3 / 4, 1 / 4], 2),
         (10, [1 / 3] * 3, 10),
-        (int(64), [1], 1),
+        (64, [1], 1),
     ]:
         n_classes = len(weights)
         n_clusters = n_classes * n_clusters_per_class
@@ -689,7 +689,7 @@ def test_make_moons_unbalanced():
 
     with pytest.raises(
         ValueError,
-        match=r"`n_samples` can be either an int " r"or a two-element tuple.",
+        match=r"`n_samples` can be either an int or a two-element tuple.",
     ):
         make_moons(n_samples=(10,))
 

@@ -27,6 +27,5 @@ dependencies:
     - numpydoc
     - lightgbm
     - scikit-image
-    - array-api-compat
     - array-api-strict
     - scipy-doctest

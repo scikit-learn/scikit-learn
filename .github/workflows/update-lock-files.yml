@@ -1,5 +1,7 @@
 # Workflow to update lock files
 name: Update lock files
+permissions:
+  contents: read
 
 on:
   workflow_dispatch:

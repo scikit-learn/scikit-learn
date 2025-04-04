@@ -43,7 +43,6 @@ from .. import preprocessing
 from ..feature_extraction.text import CountVectorizer
 from ..utils import Bunch, check_random_state
 from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.fixes import tarfile_extractall
 from . import get_data_home, load_files
 from ._base import (
     RemoteFileMetadata,
@@ -82,7 +81,10 @@ def _download_20newsgroups(target_dir, cache_path, n_retries, delay):
 
     logger.debug("Decompressing %s", archive_path)
     with tarfile.open(archive_path, "r:gz") as fp:
-        tarfile_extractall(fp, path=target_dir)
+        # Use filter="data" to prevent the most dangerous security issues.
+        # For more details, see
+        # https://docs.python.org/3.9/library/tarfile.html#tarfile.TarFile.extractall
+        fp.extractall(path=target_dir, filter="data")
 
     with suppress(FileNotFoundError):
         os.remove(archive_path)
@@ -115,7 +117,7 @@ def strip_newsgroup_header(text):
 
 
 _QUOTE_RE = re.compile(
-    r"(writes in|writes:|wrote:|says:|said:" r"|^In article|^Quoted from|^\||^>)"
+    r"(writes in|writes:|wrote:|says:|said:|^In article|^Quoted from|^\||^>)"
 )
 
 
