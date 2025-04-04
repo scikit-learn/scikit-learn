@@ -287,8 +287,8 @@ class TProcessRegressor(GaussianProcessRegressor):
                 + "return_tShapeMatrix can be requested."
             )
 
-        self._n = getattr(self, "n", 0)
-        self._vn = self.v + self._n
+        n = getattr(self, "n", 0)
+        v_n = self.v + n
 
         ### Spread may be either std or cov ###
         if not any([return_std, return_cov, return_tShape, return_tShapeMatrix]):
@@ -299,19 +299,19 @@ class TProcessRegressor(GaussianProcessRegressor):
             y_mean, y_spread = super().predict(X, return_std=True)
 
         ### Adjust depending on desired posterior ###
-        if self._n > 0 and (return_tShape or return_tShapeMatrix):
-            scailing_factor = (self._mdis + self.v - 2) / self._vn
-        elif self._n > 0 and (return_std or return_cov):
-            scailing_factor = (self._mdis + self.v - 2) / (self._vn - 2)
-        elif self._n == 0 and (return_tShape or return_tShapeMatrix):
-            scailing_factor = (self._vn - 2) / self._vn
+        if n > 0 and (return_tShape or return_tShapeMatrix):
+            scaling_factor = (self._mdis + self.v - 2) / v_n
+        elif n > 0 and (return_std or return_cov):
+            scaling_factor = (self._mdis + self.v - 2) / (v_n - 2)
+        elif n == 0 and (return_tShape or return_tShapeMatrix):
+            scaling_factor = (v_n - 2) / v_n
         else:
-            scailing_factor = 1
+            scaling_factor = 1
 
         if return_std:
-            y_spread = y_spread * np.sqrt(scailing_factor)
+            y_spread = y_spread * np.sqrt(scaling_factor)
         else:
-            y_spread = y_spread * scailing_factor
+            y_spread = y_spread * scaling_factor
 
         return y_mean, y_spread
 
