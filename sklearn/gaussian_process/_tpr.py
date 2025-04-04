@@ -381,11 +381,11 @@ class TProcessRegressor(GaussianProcessRegressor):
         """
         X, y = super()._preliminary_data_check(X, y)
         self._n = y.shape[0] if isinstance(y, np.ndarray) else 1
-        self.v_n = self.v + self.n
+        self._vn = self.v + self._n
         self._log_likelihood_dims_const = (
             gamma(self._vn / 2)
             - gamma(self.v / 2)
-            - self.n / 2 * np.log(self.v * np.pi)
+            - self._n / 2 * np.log(self.v * np.pi)
         )
         return X, y
 
@@ -417,7 +417,7 @@ class TProcessRegressor(GaussianProcessRegressor):
         self._shape_m_dism_dis = self._mdis * self.v / (self.v - 2)
         log_likelihood_dims = self._log_likelihood_dims_const
         log_likelihood_dims -= (
-            self.v_n / 2 * np.log(1 + self._shape_m_dism_dis / self.v)
+            self._vn / 2 * np.log(1 + self._shape_m_dism_dis / self.v)
         )
         log_likelihood_dims -= np.log(np.diag(L)).sum()
         log_likelihood = log_likelihood_dims.sum(axis=-1)
