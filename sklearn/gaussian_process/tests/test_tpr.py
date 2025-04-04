@@ -893,8 +893,8 @@ def test_degrees_of_freedom():
     # Tests degrees of freedom are being added to given observations
     tpr_default.fit(X, y)
     tpr_5.fit(X, y)
-    assert tpr_default.v_n == 9
-    assert tpr_5.v_n == 11
+    assert tpr_default._vn == 9
+    assert tpr_5._vn == 11
 
 
 def test_multi_output_degrees_of_freedom():
@@ -908,7 +908,7 @@ def test_multi_output_degrees_of_freedom():
     tpr_1 = TProcessRegressor(kernel=kernel, optimizer=None, normalize_y=False)
     assert tpr_1.v == 3
     tpr_1.fit(X, y)
-    assert tpr_1.v_n == 9
+    assert tpr_1._vn == 9
 
 
 def test_measn_match_gp():

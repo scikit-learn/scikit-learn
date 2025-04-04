@@ -340,24 +340,24 @@ class TProcessRegressor(GaussianProcessRegressor):
             evaluated at query points.
         """
         rng = check_random_state(random_state)
+        n = getattr(self, "n", 0)
+        v_n = self.v + n
 
         y_mean, y_tShapeMatrix = self.predict(X, return_tShapeMatrix=True)
         if y_mean.ndim == 0:
             y_samples = (
-                multivariate_t(np.array([0]), y_tShapeMatrix, self.v_n, seed=rng)
+                multivariate_t(np.array([0]), y_tShapeMatrix, v_n, seed=rng)
                 .rvs(n_samples)
                 .T
             )
         elif y_mean.ndim == 1:
             y_samples = (
-                multivariate_t(y_mean, y_tShapeMatrix, self.v_n, seed=rng)
-                .rvs(n_samples)
-                .T
+                multivariate_t(y_mean, y_tShapeMatrix, v_n, seed=rng).rvs(n_samples).T
             )
         else:
             y_samples = [
                 multivariate_t(
-                    y_mean[:, target], y_tShapeMatrix[..., target], self.v_n, seed=rng
+                    y_mean[:, target], y_tShapeMatrix[..., target], v_n, seed=rng
                 )
                 .rvs(n_samples)
                 .T[:, np.newaxis]
