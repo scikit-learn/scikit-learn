@@ -703,8 +703,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         Returns
         -------
-        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
-            Result of the `inverse_transform` function for `Xt` based on the
+        X_original : {ndarray, sparse matrix} of shape (n_samples, n_features)
+            Result of the `inverse_transform` function for `X` based on the
             estimator with the best found parameters.
         """
         check_is_fitted(self)
