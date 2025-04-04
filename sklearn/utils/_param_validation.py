@@ -127,7 +127,15 @@ def make_constraint(constraint):
     if isinstance(constraint, type):
         return _InstancesOf(constraint)
     if isinstance(
-        constraint, (Interval, StrOptions, Options, HasMethods, MissingValues)
+        constraint,
+        (
+            Interval,
+            StrOptions,
+            Options,
+            HasMethods,
+            MissingValues,
+            MissingValuesOrArrayOfMissingValues,
+        ),
     ):
         return constraint
     if isinstance(constraint, str) and constraint == "boolean":
@@ -671,6 +679,43 @@ class MissingValues(_Constraint):
             f"{', '.join([str(c) for c in self._constraints[:-1]])} or"
             f" {self._constraints[-1]}"
         )
+
+
+class MissingValuesOrArrayOfMissingValues(_Constraint):
+    """Helper constraint for the `missing_values` parameters.
+
+    Convenience for
+    [
+        Integral,
+        Interval(Real, None, None, closed="both"),
+        str,   # when numeric_only is False
+        None,  # when numeric_only is False
+        _NanConstraint(),
+        _PandasNAConstraint(),
+    ]
+
+    Parameters
+    ----------
+    numeric_only : bool, default=False
+        Whether to consider only numeric missing value markers.
+
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+        self._missing = MissingValues(*args, **kwargs)
+        self._array_like = _ArrayLikes()
+
+    def is_satisfied_by(self, val):
+        if self._missing.is_satisfied_by(val):
+            return True
+        if self._array_like.is_satisfied_by(val):
+            return all(self._missing.is_satisfied_by(c) for c in val)
+        return False
+
+    def __str__(self):
+        missing_str = self._missing.__str__()
+        return f"{missing_str} or " f"({self._array_like} of [{missing_str}])"
 
 
 class HasMethods(_Constraint):
