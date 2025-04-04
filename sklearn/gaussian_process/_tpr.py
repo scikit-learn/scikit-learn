@@ -451,7 +451,7 @@ class TProcessRegressor(GaussianProcessRegressor):
         K_gradient = K_gradient * (self.v - 2) / self.v
 
         inner_term = np.einsum("ik,jk->ijk", alpha, alpha)
-        inner_term = self.v_n / (self.v + self._shape_m_dism_dis) * inner_term
+        inner_term = self._vn / (self.v + self._shape_m_dism_dis) * inner_term
         # compute K^-1 of shape (n_samples, n_samples)
         K_inv = cho_solve(
             (L, GPR_CHOLESKY_LOWER), np.eye(K.shape[0]), check_finite=False
