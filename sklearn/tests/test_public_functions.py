@@ -278,10 +278,6 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.pairwise.linear_kernel",
     "sklearn.metrics.pairwise.manhattan_distances",
     "sklearn.metrics.pairwise.nan_euclidean_distances",
-    "sklearn.metrics.pairwise.paired_cosine_distances",
-    "sklearn.metrics.pairwise.paired_distances",
-    "sklearn.metrics.pairwise.paired_euclidean_distances",
-    "sklearn.metrics.pairwise.paired_manhattan_distances",
     "sklearn.metrics.pairwise.pairwise_distances_argmin_min",
     "sklearn.metrics.pairwise.pairwise_kernels",
     "sklearn.metrics.pairwise.polynomial_kernel",
@@ -346,6 +342,31 @@ def test_function_param_validation(func_module):
     _check_function_param_validation(
         func, func_name, func_params, required_params, parameter_constraints
     )
+
+
+# TODO(1.9): Remove when paired_distances and paired_*_distances are removed
+DEPRECATED_PARAM_VALIDATION_FUNCTION_LIST = [
+    "sklearn.metrics.pairwise.paired_cosine_distances",
+    "sklearn.metrics.pairwise.paired_distances",
+    "sklearn.metrics.pairwise.paired_euclidean_distances",
+    "sklearn.metrics.pairwise.paired_manhattan_distances",
+]
+
+
+# TODO(1.9): Remove when paired_distances and paired_*_distances are removed
+@pytest.mark.parametrize("func_module", DEPRECATED_PARAM_VALIDATION_FUNCTION_LIST)
+def test_deprecated_function_param_validation(func_module):
+    """Check param validation for deprecated public functions that are not wrappers
+    around estimators.
+    """
+    func, func_name, func_params, required_params = _get_func_info(func_module)
+
+    parameter_constraints = getattr(func, "_skl_parameter_constraints")
+
+    with pytest.warns(FutureWarning):
+        _check_function_param_validation(
+            func, func_name, func_params, required_params, parameter_constraints
+        )
 
 
 PARAM_VALIDATION_CLASS_WRAPPER_LIST = [
