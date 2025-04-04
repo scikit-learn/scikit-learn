@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import html
+import pprint
 from collections import UserDict
 
 from sklearn._config import get_config
@@ -78,7 +79,13 @@ def _html_template(params):
             cleaned_value = html.escape(str(value))
 
         if len(cleaned_value) > 50:
-            cleaned_value = "(...)"
+
+            if param == "param_distributions":
+
+                formatted_value = pprint.pformat(cleaned_value)
+                cleaned_value = f"<pre>{formatted_value}</pre>"
+            else:
+                cleaned_value = "(...)"
 
         param_type = "user-set" if param in params.non_default else "default"
 
