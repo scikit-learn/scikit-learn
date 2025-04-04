@@ -77,6 +77,9 @@ def _html_template(params):
         else:
             cleaned_value = html.escape(str(value))
 
+        if len(cleaned_value) > 50:
+            cleaned_value = "(...)"
+
         param_type = "user-set" if param in params.non_default else "default"
 
         rows.append(
