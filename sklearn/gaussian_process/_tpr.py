@@ -178,6 +178,11 @@ class TProcessRegressor(GaussianProcessRegressor):
     (array([754.5..., 526.2...]), array([147.8..., 148.0...]))
     """
 
+    _parameter_constraints: dict = {
+        **GaussianProcessRegressor._parameter_constraints,
+        "v": [Interval(Real, 3, None, closed="left"), np.ndarray],
+    }
+
     def __init__(
         self,
         kernel=None,
@@ -202,9 +207,6 @@ class TProcessRegressor(GaussianProcessRegressor):
             random_state=random_state,
         )
         self.v = v
-        super()._parameter_constraints.update(
-            v=[Interval(Real, 3, None, closed="left"), np.ndarray]
-        )
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
