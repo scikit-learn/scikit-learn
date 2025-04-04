@@ -237,7 +237,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self : object
             GaussianProcessRegressor class instance.
         """
-        self._preliminary_data_check(X, y)
+        X, y = self._preliminary_data_check(X, y)
 
         # Normalize target value
         if self.normalize_y:
@@ -622,6 +622,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 "The number of targets seen in `y` is different from the parameter "
                 f"`n_targets`. Got {n_targets_seen} != {self.n_targets}."
             )
+        return X, y
 
     def _log_likelihood_calc(self, y_train, alpha, L, K):
         """Returns the log-likelihood of the multivariate Gaussian distribution.

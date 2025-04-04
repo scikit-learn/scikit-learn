@@ -4,6 +4,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 
+from numbers import Real
+
 import numpy as np
 from scipy.linalg import cho_solve
 from scipy.special import gamma
@@ -11,6 +13,7 @@ from scipy.stats import multivariate_t
 
 from ..base import _fit_context
 from ..utils import check_random_state
+from ..utils._param_validation import Interval
 from ._gpr import GPR_CHOLESKY_LOWER, GaussianProcessRegressor
 
 
@@ -199,6 +202,9 @@ class TProcessRegressor(GaussianProcessRegressor):
             random_state=random_state,
         )
         self.v = v
+        super()._parameter_constraints.update(
+            v=[Interval(Real, 3, None, closed="left"), np.ndarray]
+        )
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
@@ -373,15 +379,15 @@ class TProcessRegressor(GaussianProcessRegressor):
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values.
         """
-        super()._preliminary_data_check(X, y)
-
-        self.n = y.shape[0]
+        X, y = super()._preliminary_data_check(X, y)
+        self.n = y.shape[0] if isinstance(y, np.ndarray) else 1
         self.v_n = self.v + self.n
         self.log_likelihood_dims_const = (
             gamma(self.v_n / 2)
             - gamma(self.v / 2)
             - self.n / 2 * np.log(self.v * np.pi)
         )
+        return X, y
 
     def _log_likelihood_calc(self, y_train, alpha, L, K):
         """Returns the log-likelihood given L and the training points.
