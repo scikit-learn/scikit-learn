@@ -72,7 +72,7 @@ classifiers = {
     "Random Forest": RandomForestClassifier(
         max_depth=5, n_estimators=10, max_features=1, random_state=0
     ),
-    "Chance level": DummyClassifier(),
+    "Non-informative baseline": DummyClassifier(),
 }
 
 # %%
@@ -98,7 +98,9 @@ ax_roc.grid(linestyle="--")
 ax_det.grid(linestyle="--")
 
 for name, clf in classifiers.items():
-    (color, linestyle) = ("black", "--") if name == "Chance level" else (None, None)
+    (color, linestyle) = (
+        ("black", "--") if name == "Non-informative baseline" else (None, None)
+    )
     clf.fit(X_train, y_train)
     RocCurveDisplay.from_estimator(
         clf, X_test, y_test, ax=ax_roc, name=name, color=color, linestyle=linestyle
@@ -123,17 +125,17 @@ plt.show()
 # operating point analysis. The user can then decide the FNR they are willing to
 # accept at the expense of the FPR (or vice-versa).
 #
-# Chance level of the ROC and DET curves
-# --------------------------------------
+# Non-informative classifier baseline for the ROC and DET curves
+# --------------------------------------------------------------
 #
-# Chance level is in general not easy to define, as it depends on what is the
-# model considered as representative of pure chance. In this case, it is a
-# :class:`~sklearn.dummy.DummyClassifier` with the default "prior" strategy.
-# This is a non-informative classifier with a constant prediction for any
-# value of the input features in `X`.
+# The diagonal black-dotted lines in the plots above correspond to a
+# :class:`~sklearn.dummy.DummyClassifier` using the default "prior" strategy, to
+# serve as baseline for comparison with other classifiers. This classifier makes
+# constant predictions, independent of the input features in `X`, making it a
+# non-informative classifier.
 #
-# To understand the chance level of the curves above, we recall the following
-# mathematical definitions:
+# To further understand the non-informative baseline of the ROC and DET curves,
+# we recall the following mathematical definitions:
 #
 # :math:`\text{FPR} = \frac{\text{FP}}{\text{FP} + \text{TN}}`
 #
