@@ -1221,7 +1221,7 @@ class Pipeline(_BaseComposition):
             tags.input_tags.sparse = all(
                 get_tags(step).input_tags.sparse
                 for name, step in self.steps
-                if step != "passthrough"
+                if step is not None and step != "passthrough"
             )
         except (ValueError, AttributeError, TypeError):
             # This happens when the `steps` is not a list of (name, estimator)
