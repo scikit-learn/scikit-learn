@@ -340,7 +340,7 @@ def test_sample_weight(global_random_seed):
     )
     sample_weight = np.random.RandomState(global_random_seed).uniform(size=(len(y),))
     eclf3 = VotingClassifier(estimators=[("lr", clf1)], voting="soft")
-    eclf3.fit(X_scaled, y, sample_weight)
+    eclf3.fit(X_scaled, y, sample_weight=sample_weight)
     clf1.fit(X_scaled, y, sample_weight)
     assert_array_equal(eclf3.predict(X_scaled), clf1.predict(X_scaled))
     assert_array_almost_equal(
@@ -355,7 +355,7 @@ def test_sample_weight(global_random_seed):
     )
     msg = "Underlying estimator KNeighborsClassifier does not support sample weights."
     with pytest.raises(TypeError, match=msg):
-        eclf3.fit(X_scaled, y, sample_weight)
+        eclf3.fit(X_scaled, y, sample_weight=sample_weight)
 
     # check that _fit_single_estimator will raise the right error
     # it should raise the original error if this is not linked to sample_weight
