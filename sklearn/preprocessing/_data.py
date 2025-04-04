@@ -2786,7 +2786,22 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         self.random_state = random_state
         self.copy = copy
 
-    def _dense_fit(self, X, random_state):
+    def _weighted_quantile(self, values, quantiles, sample_weight=None):
+        """
+        Compute weighted quantiles of 1D numpy array.
+        """
+        sorter = np.argsort(values)
+        values = values[sorter]
+        if sample_weight is None:
+            sample_weight = np.ones(len(values))
+        else:
+            sample_weight = sample_weight[sorter]
+
+        weighted_cdf = np.cumsum(sample_weight)
+        weighted_cdf /= weighted_cdf[-1]
+        return np.interp(quantiles, weighted_cdf, values)
+
+    def _dense_fit(self, X, random_state, sample_weight=None):
         """Compute percentiles for dense matrices.
 
         Parameters
@@ -2808,6 +2823,27 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             X = resample(
                 X, replace=False, n_samples=self.subsample, random_state=random_state
             )
+            if sample_weight is not None:
+                sample_weight = sample_weight[: X.shape[0]]
+
+        self.quantiles_ = np.zeros((len(references), n_features))
+
+        for i in range(n_features):
+            col = X[:, i]
+            mask = ~np.isnan(col)
+            col_clean = col[mask]
+
+            if col_clean.size == 0:
+                self.quantiles_[:, i] = np.nan
+                continue
+
+            if sample_weight is not None:
+                weights_clean = sample_weight[mask]
+                self.quantiles_[:, i] = self._weighted_quantile(
+                    col_clean, references / 100.0, weights_clean
+                )
+            else:
+                self.quantiles_[:, i] = np.nanpercentile(col_clean, references)
 
         self.quantiles_ = np.nanpercentile(X, references, axis=0)
 
@@ -2894,9 +2930,11 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         # Create the quantiles of reference
         self.references_ = np.linspace(0, 1, self.n_quantiles_, endpoint=True)
         if sparse.issparse(X):
+            if sample_weight is not None:
+                raise ValueError("sample_weight is not supported for sparse input.")
             self._sparse_fit(X, rng)
         else:
-            self._dense_fit(X, rng)
+            self._dense_fit(X, rng, sample_weight=sample_weight)
 
         return self
 
