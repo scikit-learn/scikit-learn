@@ -7,7 +7,7 @@ from ..utils._array_api import (
 )
 
 
-def _weighted_percentile(array, sample_weight, percentile_rank=50):
+def _weighted_percentile(array, sample_weight, percentile_rank=50, xp=None):
     """Compute the weighted percentile with method 'inverted_cdf'.
 
     When the percentile lies between two data points of `array`, the function returns
@@ -37,6 +37,9 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50):
     percentile_rank: int or float, default=50
         The probability level of the percentile to compute, in percent. Must be between
         0 and 100.
+
+    xp : array_namespace, default=None
+        The standard-compatible namespace for `array`. Default: infer.
 
     Returns
     -------
