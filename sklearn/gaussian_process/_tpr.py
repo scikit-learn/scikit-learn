@@ -172,7 +172,7 @@ class TProcessRegressor(GaussianProcessRegressor):
     >>> tpr.score(X, y)
     0.8690...
     >>> tpr.predict(X[:2,:], return_std=True)
-    (array([[754.5..., 526.2...]), array([147.8..., 148.0...]))
+    (array([754.5..., 526.2...]), array([147.8..., 148.0...]))
     """
 
     def __init__(

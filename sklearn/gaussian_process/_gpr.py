@@ -623,7 +623,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 f"`n_targets`. Got {n_targets_seen} != {self.n_targets}."
             )
 
-    def _log_likelihood_calc(slef, y_train, alpha, L, K):
+    def _log_likelihood_calc(self, y_train, alpha, L, K):
         """Returns the log-likelihood of the multivariate Gaussian distribution.
 
         Parameters
