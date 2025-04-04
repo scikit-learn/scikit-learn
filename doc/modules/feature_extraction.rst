@@ -1041,6 +1041,8 @@ implemented as a scikit-learn transformer, so it can be used in pipelines. See::
     >>> patches.shape
     (45, 2, 2, 3)
 
+.. _connectivity_graph_image:
+
 Connectivity graph of an image
 -------------------------------
 
