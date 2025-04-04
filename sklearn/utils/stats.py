@@ -116,8 +116,8 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50, xp=None):
 
 # TODO: refactor to do the symmetrisation inside _weighted_percentile to avoid
 # sorting the input array twice.
-def _averaged_weighted_percentile(array, sample_weight, percentile_rank=50):
+def _averaged_weighted_percentile(array, sample_weight, percentile_rank=50, xp=None):
     return (
-        _weighted_percentile(array, sample_weight, percentile_rank)
-        - _weighted_percentile(-array, sample_weight, 100 - percentile_rank)
+        _weighted_percentile(array, sample_weight, percentile_rank, xp=xp)
+        - _weighted_percentile(-array, sample_weight, 100 - percentile_rank, xp=xp)
     ) / 2
