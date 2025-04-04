@@ -8,7 +8,7 @@ import pytest
 from sklearn import datasets
 from sklearn.base import BaseEstimator
 from sklearn.cross_decomposition import CCA, PLSCanonical, PLSRegression
-from sklearn.datasets import make_friedman1
+from sklearn.datasets import make_friedman1, make_regression
 from sklearn.decomposition import PCA
 from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
 from sklearn.exceptions import NotFittedError
@@ -687,3 +687,42 @@ def test_from_model_estimator_attribute_error():
         from_model.fit(data, y).partial_fit(data)
     assert isinstance(exec_info.value.__cause__, AttributeError)
     assert inner_msg in str(exec_info.value.__cause__)
+
+def test_is_l1_ratio_one():
+    """Test _is_l1_ratio_one helper function"""
+    from sklearn.feature_selection._from_model import _is_l1_ratio_one
+    # Test single values
+    assert _is_l1_ratio_one(1.0) == True
+    assert _is_l1_ratio_one(0.9) == False
+    assert _is_l1_ratio_one(0.0) == False
+    # Test lists
+    assert _is_l1_ratio_one([0.5, 1.0, 0.8]) == True
+    assert _is_l1_ratio_one([0.5, 0.8]) == False
+    # Test numpy arrays
+    assert _is_l1_ratio_one(np.array([0.5, 1.0])) == True
+    assert _is_l1_ratio_one(np.array([0.5, 0.8])) == False
+    # Test empty sequences
+    assert _is_l1_ratio_one([]) == False
+    assert _is_l1_ratio_one(np.array([])) == False
+
+def test_invalid_l1_ratio():
+    """Test that invalid l1_ratio values are handled correctly"""
+    # Values outside [0,1] should work but return False
+    clf = ElasticNetCV(l1_ratio=[0.5, 1.1])
+    model = SelectFromModel(estimator=clf)
+    X, y = make_regression(n_samples=100, n_features=10)
+    model.fit(X, y)
+    # Model should still work, just ignoring invalid l1_ratio
+    assert model.transform(X).shape[1] < X.shape[1]
+
+def test_l1_ratio_edge_cases():
+    """Test edge cases for l1_ratio detection"""
+    from sklearn.feature_selection._from_model import _is_l1_ratio_one
+    # Test values very close to 1
+    assert _is_l1_ratio_one(1.0 + 1e-10) == True
+    assert _is_l1_ratio_one([0.5, 1.0 + 1e-10]) == True
+    # Test mixed valid/invalid values
+    assert _is_l1_ratio_one([0.5, 1.1, 1.0]) == True
+    # Test non-numeric values
+    with pytest.raises(TypeError):
+        _is_l1_ratio_one(['a', 'b'])
