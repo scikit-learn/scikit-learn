@@ -1482,18 +1482,20 @@ def test_gaussian_mixture_all_init_does_not_estimate_gaussian_parameters(
 
 
 @pytest.mark.parametrize("init_params", ["random", "random_from_data"])
+@pytest.mark.parametrize("covariance_type", ["full", "tied", "diag"])
 @pytest.mark.parametrize(
     "array_namespace, device_, dtype", yield_namespace_device_dtype_combinations()
 )
 def test_gaussian_mixture_array_api_compliance(
-    init_params, array_namespace, device_, dtype, global_random_seed
+    init_params, covariance_type, array_namespace, device_, dtype, global_random_seed
 ):
+    """Test that array api works in GaussianMixtrue.fit."""
     X, _ = make_blobs(
         n_samples=int(1e3), n_features=2, centers=3, random_state=global_random_seed
     )
     gmm = GaussianMixture(
         n_components=3,
-        covariance_type="diag",
+        covariance_type=covariance_type,
         random_state=global_random_seed,
         init_params=init_params,
     )
@@ -1521,7 +1523,7 @@ def test_gaussian_mixture_array_api_compliance(
 @pytest.mark.parametrize(
     "array_namespace, device_, dtype", yield_namespace_device_dtype_combinations()
 )
-def test_gaussian_mixture_array_api_with_weights_init(
+def test_gaussian_mixture_array_api_compliance_with_weights_init(
     array_namespace, device_, dtype, global_random_seed
 ):
     """Check that array api works with `weights_init`, which unlike other passed arrays
@@ -1612,37 +1614,3 @@ def test_gaussian_mixture_raises_where_array_api_not_implemented(
             match="Allowed `init_params`.+if 'array_api_dispatch' is enabled",
         ):
             gmm.fit(X)
-
-
-@pytest.mark.parametrize("init_params", ["random", "random_from_data"])
-@pytest.mark.parametrize(
-    "array_namespace, device_, dtype", yield_namespace_device_dtype_combinations()
-)
-def test_gaussian_mixture_array_api_compliance_covariance_type_tied(
-    init_params, array_namespace, device_, dtype, global_random_seed
-):
-    X, _ = make_blobs(
-        n_samples=int(1e3), n_features=2, centers=3, random_state=global_random_seed
-    )
-    gmm = GaussianMixture(
-        n_components=3,
-        covariance_type="tied",
-        random_state=global_random_seed,
-        init_params=init_params,
-    )
-
-    gmm.fit(X)
-    means_ = gmm.means_
-    covariances_ = gmm.covariances_
-
-    xp = _array_api_for_tests(array_namespace, device_)
-    X = xp.asarray(X, device=device_)
-
-    with sklearn.config_context(array_api_dispatch=True):
-        gmm.fit(X)
-
-        assert device(X) == device(gmm.means_)
-        assert device(X) == device(gmm.covariances_)
-
-    assert_allclose(means_, _convert_to_numpy(gmm.means_, xp=xp))
-    assert_allclose(covariances_, _convert_to_numpy(gmm.covariances_, xp=xp))
