@@ -8,8 +8,8 @@ from sklearn._config import get_config
 
 
 class ParamsDict(UserDict):
-    def __init__(self, data=None, non_default=tuple()):
-        super().__init__(data or {})
+    def __init__(self, params=None, non_default=tuple()):
+        super().__init__(params or {})
         self.non_default = non_default
 
     @property
@@ -39,7 +39,7 @@ class ParamsDict(UserDict):
             output["text/html"] = _html_template(self)
 
 
-def _html_template(data):
+def _html_template(params):
 
     HTML_TEMPLATE = """
         <div class="estimator-table">
@@ -55,7 +55,7 @@ def _html_template(data):
     """
 
     ROW_TEMPLATE = """
-        <tr class="{row_class}">
+        <tr class="{param_type}">
             <td><i class="fa-regular fa-copy"
                  onclick="copyToClipboard('{param_name}',
                           this.parentElement.nextElementSibling)"
@@ -66,16 +66,16 @@ def _html_template(data):
     """
 
     rows = []
-    for x, y in data.items():
-        if y != "deprecated" and isinstance(y, str):
-            modified_y = f'"{y}"'
+    for param, value in params.items():
+        if value != "deprecated" and isinstance(value, str):
+            cleaned_value = f'"{value}"'
         else:
-            modified_y = html.escape(str(y))
+            cleaned_value = html.escape(str(value))
 
-        row_class = "user-set" if x in data.non_default else "default"
+        param_type = "user-set" if param in params.non_default else "default"
         rows.append(
             ROW_TEMPLATE.format(
-                row_class=row_class, param_name=x, param_value=modified_y
+                param_type=param_type, param_name=param, param_value=cleaned_value
             )
         )
 
