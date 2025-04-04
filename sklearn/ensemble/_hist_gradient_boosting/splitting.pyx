@@ -19,32 +19,14 @@ from libc.string cimport memcpy
 from ...utils._typedefs cimport uint8_t
 from .common cimport X_BINNED_DTYPE_C
 from .common cimport Y_DTYPE_C
-from .common cimport hist_struct
 from .common cimport BITSET_INNER_DTYPE_C
 from .common cimport BITSET_DTYPE_C
 from .common cimport MonotonicConstraint
+from .common cimport hist_struct
+from .common cimport split_info_struct
 from ._bitset cimport init_bitset
 from ._bitset cimport set_bitset
 from ._bitset cimport in_bitset
-
-
-cdef struct split_info_struct:
-    # Same as the SplitInfo class, but we need a C struct to use it in the
-    # nogil sections and to use in arrays.
-    Y_DTYPE_C gain
-    int feature_idx
-    unsigned int bin_idx
-    uint8_t missing_go_to_left
-    Y_DTYPE_C sum_gradient_left
-    Y_DTYPE_C sum_gradient_right
-    Y_DTYPE_C sum_hessian_left
-    Y_DTYPE_C sum_hessian_right
-    unsigned int n_samples_left
-    unsigned int n_samples_right
-    Y_DTYPE_C value_left
-    Y_DTYPE_C value_right
-    uint8_t is_categorical
-    BITSET_DTYPE_C left_cat_bitset
 
 
 # used in categorical splits for sorting categories by increasing values of
