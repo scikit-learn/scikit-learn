@@ -76,7 +76,7 @@ jobs:
           # need cd before pytest, otherwise there is an error at pytest
           # collection time, likely a confusion between installed sklearn
           # package and sklearn folder.
-          # -s pytest argument is needed to avoid issue in pytest output capturing
+          # -s pytest argument is needed to avoid an issue in pytest output capturing with Pyodide
           CIBW_TEST_COMMAND: "cd && python -m pytest -svra --pyargs sklearn --durations 20 --showlocals"
 
       - name: Upload wheel artifact
