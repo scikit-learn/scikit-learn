@@ -9,6 +9,7 @@ dependencies:
   - blas[build=mkl]
   - scipy<1.12
   - joblib
+  - narwhals
   - matplotlib
   - pandas
   - pyamg

@@ -143,6 +143,7 @@ runtime:
 - NumPy (>= |NumpyMinVersion|),
 - SciPy (>= |ScipyMinVersion|),
 - Joblib (>= |JoblibMinVersion|),
+- Narwhals (>= |NarwhalsMinVersion|),
 - threadpoolctl (>= |ThreadpoolctlMinVersion|).
 
 Build dependencies
