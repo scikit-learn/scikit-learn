@@ -7,7 +7,6 @@ better.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 import warnings
 from math import log
 from numbers import Real

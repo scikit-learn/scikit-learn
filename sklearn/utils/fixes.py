@@ -337,7 +337,7 @@ def _in_unstable_openblas_configuration():
         return False
 
     # OpenBLAS 0.3.16 fixed instability for arm64, see:
-    # https://github.com/xianyi/OpenBLAS/blob/1b6db3dbba672b4f8af935bd43a1ff6cff4d20b7/Changelog.txt#L56-L58 # noqa
+    # https://github.com/xianyi/OpenBLAS/blob/1b6db3dbba672b4f8af935bd43a1ff6cff4d20b7/Changelog.txt#L56-L58
     openblas_arm64_stable_version = parse_version("0.3.16")
     for info in modules_info:
         if info["internal_api"] != "openblas":

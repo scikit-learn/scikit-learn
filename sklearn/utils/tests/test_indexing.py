@@ -583,7 +583,6 @@ def test_resample_stratify_2dy():
 
 
 def test_notimplementederror():
-
     with pytest.raises(
         NotImplementedError,
         match="Resampling with sample_weight is only implemented for replace=True.",
