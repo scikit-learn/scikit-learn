@@ -693,11 +693,25 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             fold_line_kwargs=fold_line_kwargs,
         )
 
-        fold_line_kwargs_ = cls._validate_line_kwargs(
-            len(cv_results["estimator"]),
-            fold_line_kwargs,
-            default_line_kwargs={"alpha": 0.5, "linestyle": "--"},
-        )
+        n_curves = len(cv_results["estimator"])
+        default_curve_kwargs = {"alpha": 0.5, "linestyle": "--"}
+        if fold_line_kwargs is None:
+            fold_line_kwargs = default_curve_kwargs
+        elif isinstance(fold_line_kwargs, Mapping):
+            fold_line_kwargs = _validate_style_kwargs(
+                default_curve_kwargs, fold_line_kwargs
+            )
+        elif isinstance(fold_line_kwargs, list):
+            if len(fold_line_kwargs) != n_curves:
+                raise ValueError(
+                    f"'fold_line_kwargs' must be a list of length {n_curves} or a "
+                    f"dictionary. Got list of length: {len(fold_line_kwargs)}."
+                )
+            else:
+                fold_line_kwargs = [
+                    _validate_style_kwargs(default_curve_kwargs, single_kwargs)
+                    for single_kwargs in fold_line_kwargs
+                ]
 
         fpr_all = []
         tpr_all = []
@@ -742,5 +756,5 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kwargs,
             despine=despine,
-            fold_line_kwargs=fold_line_kwargs_,
+            fold_line_kwargs=fold_line_kwargs,
         )

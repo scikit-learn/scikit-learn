@@ -184,10 +184,6 @@ class _BinaryClassifierCurveDisplayMixin:
             curves. Ignored for single curve plots - pass as `**kwargs` for
             single curve plots.
 
-        default_line_kwargs : dict, default=None
-            Default line kwargs to be used in all curves, unless overridden by
-            `fold_line_kwargs`.
-
         **kwargs : dict
             For a single curve plots only, keyword arguments to be passed to
             matplotlib's `plot`. Ignored for multi-curve plots - use `fold_line_kwargs`
@@ -202,9 +198,6 @@ class _BinaryClassifierCurveDisplayMixin:
             fold_line_kwargs = [kwargs]
         else:
             fold_line_kwargs = cls._validate_line_kwargs(n_curves, fold_line_kwargs)
-
-        if default_line_kwargs is None:
-            default_line_kwargs = {}
 
         labels = []
         if isinstance(summary_value_, tuple):
@@ -223,10 +216,11 @@ class _BinaryClassifierCurveDisplayMixin:
                 )
 
         line_kwargs = []
+        label_kwarg = {}
         for fold_idx, label in enumerate(labels):
-            default_line_kwargs["label"] = label
+            label_kwarg["label"] = label
             line_kwargs.append(
-                _validate_style_kwargs(default_line_kwargs, fold_line_kwargs[fold_idx])
+                _validate_style_kwargs(label_kwarg, fold_line_kwargs[fold_idx])
             )
         return line_kwargs
 
