@@ -1,6 +1,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+from itertools import product
+
 
 def number_of_kernels(
     X,
@@ -14,11 +16,12 @@ def number_of_kernels(
 
     number = 0
     for scope, params in zip(kernels_scopes, kernels_param_grids):
-        for _ in range(len(params[next(iter(params))]) if len(params) > 0 else 1):
-            if scope == "all":
-                number += 1
-            else:
-                number += X.shape[1] if len(X.shape) > 1 else 1
+        if scope == "all":
+            number += len(list(product(*params.values())))
+        else:
+            number += (X.shape[1] if len(X.shape) > 1 else 1) * len(
+                list(product(*params.values()))
+            )
 
     return number
 
@@ -38,20 +41,26 @@ def kernel_generator(
         if Y is None:
             Y = X
         for kernel, scope, params in zip(kernels, kernels_scopes, kernels_param_grids):
-            for i in range(len(params[next(iter(params))]) if len(params) > 0 else 1):
+            for params_prod in (
+                dict(zip(params.keys(), values)) for values in product(*params.values())
+            ):
                 if scope == "all":
-                    yield kernel(X, Y, **{k: v[i] for k, v in params.items()})
+                    yield kernel(
+                        X,
+                        Y,
+                        **params_prod,
+                    )
                 else:
                     if len(X.shape) == 1:
                         yield kernel(
                             X.reshape(-1, 1),
                             Y.reshape(-1, 1),
-                            **{k: v[i] for k, v in params.items()},
+                            **params_prod,
                         )
                     else:
                         for j in range(X.shape[1]):
                             yield kernel(
                                 X[:, j].reshape(-1, 1),
                                 Y[:, j].reshape(-1, 1),
-                                **{k: v[i] for k, v in params.items()},
+                                **params_prod,
                             )

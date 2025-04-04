@@ -321,7 +321,6 @@ class BaseMKL(TransformerMixin, MetaEstimatorMixin, BaseEstimator, metaclass=ABC
             isinstance(params, dict) for params in kernels_param_grids
         ):
             for params in kernels_param_grids:
-                prev_size = -1
                 for key, value in params.items():
                     if not isinstance(key, str):
                         raise ValueError(
@@ -333,13 +332,6 @@ class BaseMKL(TransformerMixin, MetaEstimatorMixin, BaseEstimator, metaclass=ABC
                             "Invalid 'kernels_param_grids'. "
                             "Values must be lists of the values the "
                             "parameter (identified by the key) will take."
-                        )
-                    if prev_size == -1:
-                        prev_size = len(value)
-                    elif prev_size != len(value):
-                        raise ValueError(
-                            "Invalid 'kernels_param_grids'. All lists of "
-                            "parameter values must have the same size."
                         )
             return kernels_param_grids
 
