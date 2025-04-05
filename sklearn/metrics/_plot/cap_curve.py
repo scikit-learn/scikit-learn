@@ -372,7 +372,14 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             class_index = np.where(estimator.classes_ == pos_label)[0][0]
             y_pred = probabilities[:, class_index]
         elif response_method == "decision_function":
-            y_pred = estimator.decision_function(X)
+            decision = estimator.decision_function(X)
+            if pos_label is None:
+                pos_label = 1
+            class_index = np.where(estimator.classes_ == pos_label)[0][0]
+            if class_index == 1:
+                y_pred = decision
+            else:
+                y_pred = -decision
         else:
             raise ValueError(
                 "response_method must be in: "
