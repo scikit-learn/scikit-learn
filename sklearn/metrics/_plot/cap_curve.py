@@ -92,6 +92,8 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         name=None,
         plot_chance_level=True,
         chance_level_kw=None,
+        plot_perfect=True,
+        perfect_level_kw=None,
         **kwargs,
     ):
         """Plot visualization.
@@ -119,6 +121,12 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Keyword arguments to be passed to matplotlib's `plot` for rendering
             the chance level line.
 
+        plot_perfect : bool, default=True
+            Whether to plot the perfect model line.
+
+        perfect_level_kw : dict, default=None
+            Keyword arguments for the perfect model line.
+
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
 
@@ -143,6 +151,18 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         line_kwargs = {"label": name} if name is not None else {}
         line_kwargs.update(**kwargs)
+
+        default_perfect_level_line_kw = {
+            "label": "Perfect predictions",
+            "linestyle": "--",
+        }
+
+        if perfect_level_kw is None:
+            perfect_level_kw = {}
+
+        perfect_level_line_kw = _validate_style_kwargs(
+            default_perfect_level_line_kw, perfect_level_kw
+        )
 
         default_chance_level_line_kw = {
             "label": "Chance level",
@@ -171,6 +191,21 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             )
         else:
             self.chance_level_ = None
+
+        if plot_perfect:
+            pos_rate = y_max / x_max
+            if normalize_scale:
+                x_perfect = [0.0, pos_rate, 1.0]
+                y_perfect = [0.0, 1.0, 1.0]
+            else:
+                x_perfect = [0, y_max, x_max]
+                y_perfect = [0, y_max, y_max]
+
+            (self.perfect_level_,) = self.ax_.plot(
+                x_perfect, y_perfect, **perfect_level_line_kw
+            )
+        else:
+            self.perfect_level_ = None
 
         info_pos_label = (
             f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
