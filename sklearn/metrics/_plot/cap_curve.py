@@ -172,8 +172,12 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         else:
             self.chance_level_ = None
 
+        info_pos_label = (
+            f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
+        )
+
         xlabel = "Total Cases Examined"
-        ylabel = "Cumulative True Positives"
+        ylabel = "Cumulative True Positives" + info_pos_label
         self.ax_.set(xlabel=xlabel, ylabel=ylabel, aspect="equal")
 
         if "label" in line_kwargs:
