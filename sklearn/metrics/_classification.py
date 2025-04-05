@@ -3464,30 +3464,28 @@ def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos
 @validate_params(
     {
         "y_true": ["array-like"],
-        "y_proba": ["array-like", Hidden(None)],
+        "y_proba": ["array-like"],
         "sample_weight": ["array-like", None],
         "pos_label": [Real, str, "boolean", None],
         "labels": ["array-like", None],
         "scale_by_half": ["boolean", StrOptions({"auto"})],
-        "y_prob": ["array-like", Hidden(StrOptions({"deprecated"}))],
     },
     prefer_skip_nested_validation=True,
 )
 def brier_score_loss(
     y_true,
-    y_proba=None,
+    y_proba,
     *,
     sample_weight=None,
     pos_label=None,
     labels=None,
     scale_by_half="auto",
-    y_prob="deprecated",
 ):
     r"""Compute the Brier score loss.
 
     The smaller the Brier score loss, the better, hence the naming with "loss".
     The Brier score measures the mean squared difference between the predicted
-    probability and the actual outcome. The Brier score is a stricly proper scoring
+    probability and the actual outcome. The Brier score is a strictly proper scoring
     rule.
 
     Read more in the :ref:`User Guide <brier_score_loss>`.
@@ -3532,13 +3530,6 @@ def brier_score_loss(
         original [0, 2] range for multiclasss classification.
 
         .. versionadded:: 1.7
-
-    y_prob : array-like of shape (n_samples,)
-        Probabilities of the positive class.
-
-        .. deprecated:: 1.5
-            `y_prob` is deprecated and will be removed in 1.7. Use
-            `y_proba` instead.
 
     Returns
     -------
@@ -3598,24 +3589,6 @@ def brier_score_loss(
     ... )
     0.146...
     """
-    # TODO(1.7): remove in 1.7 and reset y_proba to be required
-    # Note: validate params will raise an error if y_prob is not array-like,
-    # or "deprecated"
-    if y_proba is not None and not isinstance(y_prob, str):
-        raise ValueError(
-            "`y_prob` and `y_proba` cannot be both specified. Please use `y_proba` only"
-            " as `y_prob` is deprecated in v1.5 and will be removed in v1.7."
-        )
-    if y_proba is None:
-        warnings.warn(
-            (
-                "y_prob was deprecated in version 1.5 and will be removed in 1.7."
-                "Please use ``y_proba`` instead."
-            ),
-            FutureWarning,
-        )
-        y_proba = y_prob
-
     y_proba = check_array(
         y_proba, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
     )
