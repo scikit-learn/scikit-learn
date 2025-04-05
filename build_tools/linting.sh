@@ -89,16 +89,15 @@ else
 fi
 
 # Check for joblib.delayed and joblib.Parallel imports
-# TODO(1.7): remove ":!sklearn/utils/_joblib.py"
 echo -e "### Checking for joblib imports ###\n"
 joblib_status=0
-joblib_delayed_import="$(git grep -l -A 10 -E "joblib import.+delayed" -- "*.py" ":!sklearn/utils/_joblib.py" ":!sklearn/utils/parallel.py")"
+joblib_delayed_import="$(git grep -l -A 10 -E "joblib import.+delayed" -- "*.py" ":!sklearn/utils/parallel.py")"
 if [ ! -z "$joblib_delayed_import" ]; then
     echo "Use from sklearn.utils.parallel import delayed instead of joblib delayed. The following files contains imports to joblib.delayed:"
     echo "$joblib_delayed_import"
     joblib_status=1
 fi
-joblib_Parallel_import="$(git grep -l -A 10 -E "joblib import.+Parallel" -- "*.py" ":!sklearn/utils/_joblib.py" ":!sklearn/utils/parallel.py")"
+joblib_Parallel_import="$(git grep -l -A 10 -E "joblib import.+Parallel" -- "*.py" ":!sklearn/utils/parallel.py")"
 if [ ! -z "$joblib_Parallel_import" ]; then
     echo "Use from sklearn.utils.parallel import Parallel instead of joblib Parallel. The following files contains imports to joblib.Parallel:"
     echo "$joblib_Parallel_import"
