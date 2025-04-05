@@ -327,7 +327,7 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         pos_label : int, float, bool or str, default=None
             The class considered as the positive class when computing CAP.
-            By default, `estimators.classes_[1]` is considered as the positive class.
+            By default, `estimator.classes_[1]` is considered as the positive class.
 
         normalize_scale : bool, default=True
             Whether to normalize values between 0 and 1 for the plot.
