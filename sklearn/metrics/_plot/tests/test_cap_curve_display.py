@@ -332,6 +332,10 @@ def test_roc_curve_display_plotting(
         else:
             class_index = -1
         y_pred = y_pred[:, class_index]
+    else:
+        if pos_label is not None:
+            if pos_label != lr.classes_[1]:
+                y_pred = -y_pred
 
     if constructor_name == "from_estimator":
         display = CAPCurveDisplay.from_estimator(
@@ -354,3 +358,12 @@ def test_roc_curve_display_plotting(
     assert (
         display.estimator_name == default_name
     ), f"{display.estimator_name} != {default_name}"
+
+    # Check that CAP curve is on or above the chance level line
+    cumulative_total = display.cumulative_total
+    y_true_cumulative = display.y_true_cumulative
+    assert np.all(y_true_cumulative >= cumulative_total - 1e-8), (
+        f"CAP curve dips below the chance line.\n"
+        f"x: {cumulative_total}\n"
+        f"y: {y_true_cumulative}"
+    )
