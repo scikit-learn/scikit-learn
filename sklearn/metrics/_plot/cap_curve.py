@@ -4,7 +4,6 @@
 import numpy as np
 
 from sklearn.base import is_classifier
-from sklearn.utils.validation import _is_fitted
 
 from ...utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
@@ -351,6 +350,8 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         display : :class:`~sklearn.metrics.CAPCurveDisplay`
             The CAP Curve display.
         """
+        if not is_classifier(estimator):
+            raise NotImplementedError
 
         if response_method == "auto":
             if hasattr(estimator, "predict_proba"):
@@ -363,39 +364,20 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
                     " method."
                 )
 
-        if not is_classifier(estimator):
-            y_pred = estimator.predict(X)
-        elif response_method == "predict_proba":
-            probabilities = estimator.predict_proba(X)
-            if pos_label is None:
-                pos_label = 1
-            class_index = np.where(estimator.classes_ == pos_label)[0][0]
-            y_pred = probabilities[:, class_index]
-        elif response_method == "decision_function":
-            decision = estimator.decision_function(X)
-            if pos_label is None:
-                pos_label = 1
-            class_index = np.where(estimator.classes_ == pos_label)[0][0]
-            if class_index == 1:
-                y_pred = decision
-            else:
-                y_pred = -decision
-        else:
+        if response_method not in ["predict_proba", "decision_function", "auto"]:
             raise ValueError(
                 "response_method must be in: "
                 "{'predict_proba', 'decision_function', 'auto'}."
             )
 
-        if not _is_fitted(estimator):
-            raise ValueError("The estimator must be fitted.")
-
-        if len(estimator.classes_) >= 3:
-            raise ValueError(
-                "The estimator must be adjusted on less than 3 distinct classes."
-            )
-
-        if name is None:
-            name = estimator.__class__.__name__
+        y_pred, pos_label, name = cls._validate_and_get_response_values(
+            estimator,
+            X,
+            y,
+            response_method=response_method,
+            pos_label=pos_label,
+            name=name,
+        )
 
         return cls.from_predictions(
             y_true=y,
