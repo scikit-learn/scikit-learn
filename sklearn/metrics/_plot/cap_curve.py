@@ -386,8 +386,6 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             raise ValueError(
                 "The estimator must be adjusted on less than 3 distinct classes."
             )
-        else:
-            print(estimator.classes_)
 
         if name is None:
             name = estimator.__class__.__name__
