@@ -294,7 +294,6 @@ def test_cap_curve_chance_level_line(
 )
 def test_roc_curve_display_plotting(
     pyplot,
-    logistic_regression_model,
     data_binary,
     response_method,
     constructor_name,
