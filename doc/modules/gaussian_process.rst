@@ -94,6 +94,7 @@ the API of standard scikit-learn estimators, :class:`GaussianProcessRegressor`:
 * :ref:`sphx_glr_auto_examples_gaussian_process_plot_gpr_noisy.py`
 * :ref:`sphx_glr_auto_examples_gaussian_process_plot_compare_gpr_krr.py`
 * :ref:`sphx_glr_auto_examples_gaussian_process_plot_gpr_co2.py`
+* :ref:`sphx_glr_auto_examples_gaussian_process_plot_gpr_on_structured_data.py`
 
 .. _gpc:
 
