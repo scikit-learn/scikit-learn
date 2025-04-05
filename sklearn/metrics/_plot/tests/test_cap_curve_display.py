@@ -277,7 +277,14 @@ def test_cap_curve_chance_level_line(
 
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
 @pytest.mark.parametrize("with_sample_weight", [True, False])
-@pytest.mark.parametrize("with_strings", [True, False])
+@pytest.mark.parametrize(
+    ("pos_label", "with_strings"),
+    [
+        ("a", True),
+        ("b", True),
+        (None, False),
+    ],
+)
 @pytest.mark.parametrize(
     "constructor_name, default_name",
     [
@@ -294,13 +301,12 @@ def test_roc_curve_display_plotting(
     default_name,
     with_sample_weight,
     with_strings,
+    pos_label,
 ):
     X, y = data_binary
 
-    pos_label = None
     if with_strings:
-        y = np.array(["c", "b"])[y]
-        pos_label = "c"
+        y = np.array(["a", "b"])[y]
 
     if with_sample_weight:
         rng = np.random.RandomState(42)
