@@ -190,6 +190,30 @@ scikit_learn_cython_args = [
 ]
 cython_args += scikit_learn_cython_args
 
+if cython.version().version_compare('>=3.1.0')
+  cy = find_program(cython.cmd_array()[0])
+  cython_shared_src = custom_target(
+    install: false,
+    output: '_cyutility.c',
+    command: [
+      cy, '-3', '--fast-fail',
+      '--generate-shared=' + meson.current_build_dir()/'_cyutility.c'
+    ],
+  )
+
+  cython_shared_module = py.extension_module('_cyutility',
+    cython_shared_src,
+    subdir: 'sklearn',
+    cython_args: cython_args,
+    install: true,
+    install_tag: 'python-runtime',
+  )
+
+  cython_args += ['--shared=sklearn._cyutility']
+else
+  cython_shared_module = []
+endif
+
 # Write file in Meson build dir to be able to figure out from Python code
 # whether scikit-learn was built with Meson. Adapted from pandas
 # _version_meson.py.
