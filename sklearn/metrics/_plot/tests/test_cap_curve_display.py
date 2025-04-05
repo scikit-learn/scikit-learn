@@ -157,17 +157,44 @@ def test_display_from_estimator_and_from_prediction(
     )
 
 
-def test_invalid_response_method(
-    pyplot,
-    logistic_regression_model,
-    data_binary,
-):
+def test_invalid_response_method(pyplot, logistic_regression_model, data_binary):
     with pytest.raises(ValueError):
         X, y = data_binary
 
         _ = CAPCurveDisplay.from_estimator(
             logistic_regression_model, X, y, response_method="invalid input"
         )
+
+
+def test_unfitted_estimator(pyplot, data_binary):
+    with pytest.raises(ValueError):
+        X, y = make_classification(
+            n_samples=100,
+            n_features=2,
+            n_informative=2,
+            n_redundant=0,
+            n_repeated=0,
+            n_classes=2,
+            random_state=42,
+        )
+
+        lr_model_nofit = LogisticRegression(max_iter=1000)
+        _ = CAPCurveDisplay.from_estimator(lr_model_nofit, X, y)
+
+
+def test_estimator_has_too_many_classes(pyplot):
+    with pytest.raises(ValueError):
+        X, y = make_classification(
+            n_samples=100,
+            n_features=5,
+            n_informative=3,
+            n_classes=3,
+            random_state=42,
+        )
+
+        lr_model_n_classes = LogisticRegression(max_iter=1000)
+        lr_model_n_classes.fit(X, y)
+        _ = CAPCurveDisplay.from_estimator(lr_model_n_classes, X, y)
 
 
 @pytest.mark.parametrize("plot_chance_level", [True, False])

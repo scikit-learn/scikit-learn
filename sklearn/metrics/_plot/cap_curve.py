@@ -4,6 +4,7 @@
 import numpy as np
 
 from sklearn.base import is_classifier
+from sklearn.utils.validation import _is_fitted
 
 from ...utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
@@ -377,6 +378,16 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
                 "response_method must be in: "
                 "{'predict_proba', 'decision_function', 'auto'}."
             )
+
+        if not _is_fitted(estimator):
+            raise ValueError("The estimator must be fitted.")
+
+        if len(estimator.classes_) >= 3:
+            raise ValueError(
+                "The estimator must be adjusted on less than 3 distinct classes."
+            )
+        else:
+            print(estimator.classes_)
 
         if name is None:
             name = estimator.__class__.__name__
