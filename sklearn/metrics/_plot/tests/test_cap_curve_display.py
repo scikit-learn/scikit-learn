@@ -210,6 +210,7 @@ def test_estimator_has_too_many_classes(pyplot):
     "constructor_name",
     ["from_estimator", "from_predictions"],
 )
+@pytest.mark.parametrize("pos_label", [1, 0, None])
 def test_cap_curve_chance_level_line(
     pyplot,
     logistic_regression_model,
@@ -217,10 +218,18 @@ def test_cap_curve_chance_level_line(
     constructor_name,
     plot_chance_level,
     chance_level_kw,
+    pos_label,
 ):
     X, y = data_binary
     y_pred = getattr(logistic_regression_model, "predict_proba")(X)
-    y_pred = y_pred if y_pred.ndim == 1 else y_pred[:, 1]
+    if y_pred.ndim != 1:
+        if pos_label is not None:
+            class_index = np.where(logistic_regression_model.classes_ == pos_label)[0][
+                0
+            ]
+        else:
+            class_index = -1
+        y_pred = y_pred[:, class_index]
 
     if constructor_name == "from_estimator":
         display = CAPCurveDisplay.from_estimator(
@@ -317,7 +326,12 @@ def test_roc_curve_display_plotting(
     lr.fit(X, y)
 
     y_pred = getattr(lr, response_method)(X)
-    y_pred = y_pred if y_pred.ndim == 1 else y_pred[:, 1]
+    if y_pred.ndim != 1:
+        if pos_label is not None:
+            class_index = np.where(lr.classes_ == pos_label)[0][0]
+        else:
+            class_index = -1
+        y_pred = y_pred[:, class_index]
 
     if constructor_name == "from_estimator":
         display = CAPCurveDisplay.from_estimator(
