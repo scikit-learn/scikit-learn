@@ -1201,15 +1201,14 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
     xp, _, device = get_namespace_and_device(arr)
     if axis is None:
         # np.cumsum calculates cumsum across flattened array
-        # for axis=None
-        # Let's also flatten to match
+        # for axis=None, which is why we flatten here.
         # (if we don't flatten, cumulative_sum below will raise error)
         arr = xp.reshape(arr, (-1,))
     max_float_dtype = _max_precision_float_dtype(xp, device)
     out = xp.cumulative_sum(arr, axis=axis, dtype=max_float_dtype)
     expected = xp.sum(arr, axis=axis, dtype=max_float_dtype)
     # workaround to get last element
-    # (negative indices, e.g. -1, behavior is undefined)
+    # (behavior of negative indices, e.g. -1, is undefined)
     if axis is None:
         last_elem_idx = xp.asarray(out.shape[0] - 1)
     else:
