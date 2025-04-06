@@ -1213,7 +1213,6 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
         last_elem_idx = xp.asarray(out.shape[0] - 1)
     else:
         last_elem_idx = xp.asarray(out.shape[axis] - 1)
-    # TODO: equal_nan should be true here!
     if not xp.all(
         xpx.isclose(
             xp.take(out, xp.asarray([last_elem_idx], device=device), axis=axis),
