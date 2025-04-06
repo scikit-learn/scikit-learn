@@ -174,15 +174,7 @@ def test_unfitted_estimator(pyplot, data_binary):
         r"appropriate arguments before using this estimator\."
     )
     with pytest.raises(NotFittedError, match=pattern):
-        X, y = make_classification(
-            n_samples=100,
-            n_features=2,
-            n_informative=2,
-            n_redundant=0,
-            n_repeated=0,
-            n_classes=2,
-            random_state=42,
-        )
+        X, y = data_binary
 
         lr_model_nofit = LogisticRegression(max_iter=1000)
         _ = CAPCurveDisplay.from_estimator(lr_model_nofit, X, y)
@@ -209,12 +201,26 @@ def test_estimator_has_too_many_classes(pyplot):
 
 
 @pytest.mark.parametrize("plot_chance_level", [True, False])
+@pytest.mark.parametrize("plot_perfect", [True, False])
 @pytest.mark.parametrize(
     "chance_level_kw",
     [
         None,
         {"linewidth": 1, "color": "red", "linestyle": "-", "label": "DummyEstimator"},
         {"lw": 1, "c": "red", "ls": "-", "label": "DummyEstimator"},
+    ],
+)
+@pytest.mark.parametrize(
+    "perfect_level_kw",
+    [
+        None,
+        {
+            "linewidth": 2,
+            "color": "green",
+            "linestyle": "-.",
+            "label": "PerfectEstimator",
+        },
+        {"lw": 1.5, "c": "blue", "ls": "-", "label": "PerfectEstimator"},
     ],
 )
 @pytest.mark.parametrize(
@@ -229,6 +235,8 @@ def test_cap_curve_chance_level_line(
     constructor_name,
     plot_chance_level,
     chance_level_kw,
+    plot_perfect,
+    perfect_level_kw,
     pos_label,
 ):
     X, y = data_binary
@@ -250,6 +258,8 @@ def test_cap_curve_chance_level_line(
             alpha=0.8,
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
+            plot_perfect=plot_perfect,
+            perfect_level_kw=perfect_level_kw,
         )
     else:
         display = CAPCurveDisplay.from_predictions(
@@ -258,6 +268,8 @@ def test_cap_curve_chance_level_line(
             alpha=0.8,
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
+            plot_perfect=plot_perfect,
+            perfect_level_kw=perfect_level_kw,
         )
 
     import matplotlib as mpl
@@ -274,7 +286,6 @@ def test_cap_curve_chance_level_line(
     else:
         assert display.chance_level_ is None
 
-    # Checking for chance level line styles
     if plot_chance_level and chance_level_kw is None:
         assert display.chance_level_.get_color() == "k"
         assert display.chance_level_.get_linestyle() == "--"
@@ -293,6 +304,40 @@ def test_cap_curve_chance_level_line(
             assert display.chance_level_.get_linestyle() == chance_level_kw["ls"]
         else:
             assert display.chance_level_.get_linestyle() == chance_level_kw["linestyle"]
+
+    if plot_perfect:
+        assert isinstance(display.perfect_level_, mpl.lines.Line2D)
+        xdata = tuple(display.perfect_level_.get_xdata())
+        assert xdata[0] == 0
+        assert xdata[-1] == 1
+        ydata = tuple(display.perfect_level_.get_ydata())
+        assert ydata[0] == 0
+        assert ydata[-1] == 1
+    else:
+        assert display.perfect_level_ is None
+
+    if plot_perfect and perfect_level_kw is None:
+        assert display.perfect_level_.get_color() == "#ff7f0e"
+        assert display.perfect_level_.get_linestyle() == "--"
+        assert display.perfect_level_.get_label() == "Perfect predictions"
+    elif plot_perfect:
+        assert display.perfect_level_.get_label() == perfect_level_kw["label"]
+        if "c" in perfect_level_kw:
+            assert display.perfect_level_.get_color() == perfect_level_kw["c"]
+        else:
+            assert display.perfect_level_.get_color() == perfect_level_kw["color"]
+        if "lw" in perfect_level_kw:
+            assert display.perfect_level_.get_linewidth() == perfect_level_kw["lw"]
+        else:
+            assert (
+                display.perfect_level_.get_linewidth() == perfect_level_kw["linewidth"]
+            )
+        if "ls" in perfect_level_kw:
+            assert display.perfect_level_.get_linestyle() == perfect_level_kw["ls"]
+        else:
+            assert (
+                display.perfect_level_.get_linestyle() == perfect_level_kw["linestyle"]
+            )
 
 
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
