@@ -149,11 +149,11 @@ class TProcessRegressor(GaussianProcessRegressor):
     ----------
     .. [SW2014] `Amar Shah, Andrew Gordon Wilson, Zoubin Ghahramani,
        "Student-t Processes as Alternatives to Gaussian Processes",
-       arxiv > stat > arXiv:1402.4306 <https://arxiv.org/abs/1402.4306>`_
+       arxiv > stat > arXiv:1402.4306 2014 <https://arxiv.org/abs/1402.4306>`_
 
     .. [TW2018] `Brendan D. Tracey, David H. Wolpert,
        "Upgrading from Gaussian Processes to Student's-T Processes"
-        arxiv > stat > arXiv:1801.06147 <https://arxiv.org/abs/1801.06147>`_
+        arxiv > stat > arXiv:1801.06147 2018 <https://arxiv.org/abs/1801.06147>`_
 
     .. [RW2006] `Carl E. Rasmussen and Christopher K.I. Williams,
        "Gaussian Processes for Machine Learning",
@@ -161,7 +161,7 @@ class TProcessRegressor(GaussianProcessRegressor):
 
     .. [S2024] `Stevens Conrad
        "Towards Analytic Informative Path Planning",
-       The University of Sydney Library <https://hdl.handle.net/2123/33299>`_
+       The University of Sydney Library 2024 <https://hdl.handle.net/2123/33299>`_
 
     Examples
     --------
