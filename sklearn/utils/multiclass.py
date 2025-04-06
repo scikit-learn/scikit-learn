@@ -360,7 +360,7 @@ def type_of_target(y, input_name="", raise_unknown=False):
     try:
         # TODO(1.7): Change to ValueError when byte labels is deprecated.
         # labels in bytes format
-        first_row_or_val = y[[0], :] if issparse(y) else y[0]
+        first_row_or_val = y[[0], :] if issparse(y) else y[0, ...]
         if isinstance(first_row_or_val, bytes):
             warnings.warn(
                 (
@@ -383,7 +383,7 @@ def type_of_target(y, input_name="", raise_unknown=False):
                 " matrix instead - the MultiLabelBinarizer"
                 " transformer can convert to this format."
             )
-    except IndexError:
+    except IndexError as e:
         pass
 
     # Invalid inputs
