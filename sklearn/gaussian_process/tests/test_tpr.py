@@ -343,7 +343,9 @@ def test_large_variance_y():
     # Standard TP with normalize_y=True
     RBF_params = {"length_scale": 1.0}
     kernel = RBF(**RBF_params)
-    tpr = TProcessRegressor(kernel=kernel, normalize_y=True, v=1_000)
+    tpr = TProcessRegressor(
+        kernel=kernel, normalize_y=True, degrees_of_freedom_init=1_000
+    )
     tpr.fit(X, y_large)
     y_pred, y_pred_std = tpr.predict(X2, return_std=True)
 
@@ -708,8 +710,8 @@ def test_tpr_predict_error():
     tpr = TProcessRegressor(kernel=RBF()).fit(X, y)
 
     err_msg = (
-        "At most one of return_std, return_cov, return_tShape "
-        "or return_tShapeMatrix can be requested."
+        "At most one of return_std, return_cov, return_t_shape "
+        "or return_t_shape_matrix can be requested."
     )
     with pytest.raises(RuntimeError, match=err_msg):
         tpr.predict(X, return_cov=True, return_std=True)
@@ -886,15 +888,15 @@ def test_degrees_of_freedom():
     # Tests starting degrees of freedom
     kernel = RBF(length_scale=1.0)
     tpr_default = TProcessRegressor(kernel, optimizer=None)
-    tpr_5 = TProcessRegressor(kernel, v=5, optimizer=None)
-    assert tpr_default.v == 3
-    assert tpr_5.v == 5
+    tpr_5 = TProcessRegressor(kernel, degrees_of_freedom_init=5, optimizer=None)
+    assert tpr_default.degrees_of_freedom_init == 3
+    assert tpr_5.degrees_of_freedom_init == 5
 
     # Tests degrees of freedom are being added to given observations
     tpr_default.fit(X, y)
     tpr_5.fit(X, y)
-    assert tpr_default._vn == 9
-    assert tpr_5._vn == 11
+    assert tpr_default._degrees_of_freedom == 9
+    assert tpr_5._degrees_of_freedom == 11
 
 
 def test_multi_output_degrees_of_freedom():
@@ -906,9 +908,9 @@ def test_multi_output_degrees_of_freedom():
     kernel = RBF(length_scale=1.0)
 
     tpr_1 = TProcessRegressor(kernel=kernel, optimizer=None, normalize_y=False)
-    assert tpr_1.v == 3
+    assert tpr_1.degrees_of_freedom_init == 3
     tpr_1.fit(X, y)
-    assert tpr_1._vn == 9
+    assert tpr_1._degrees_of_freedom == 9
 
 
 def test_measn_match_gp():

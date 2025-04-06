@@ -180,13 +180,13 @@ class TProcessRegressor(GaussianProcessRegressor):
 
     _parameter_constraints: dict = {
         **GaussianProcessRegressor._parameter_constraints,
-        "v": [Interval(Real, 3, None, closed="left"), np.ndarray],
+        "degrees_of_freedom_init": [Interval(Real, 3, None, closed="left"), np.ndarray],
     }
 
     def __init__(
         self,
         kernel=None,
-        v=3,
+        degrees_of_freedom_init=3,
         *,
         alpha=1e-10,
         optimizer="fmin_l_bfgs_b",
@@ -206,7 +206,7 @@ class TProcessRegressor(GaussianProcessRegressor):
             n_targets=n_targets,
             random_state=random_state,
         )
-        self.v = v
+        self.degrees_of_freedom_init = degrees_of_freedom_init
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
@@ -233,8 +233,8 @@ class TProcessRegressor(GaussianProcessRegressor):
         X,
         return_std=False,
         return_cov=False,
-        return_tShape=False,
-        return_tShapeMatrix=False,
+        return_t_shape=False,
+        return_t_shape_matrix=False,
     ):
         """Predict using the T process regression model.
 
@@ -256,11 +256,11 @@ class TProcessRegressor(GaussianProcessRegressor):
             If True, the covariance of the joint predictive distribution at
             the query points is returned along with the mean.
 
-        return_tShape : bool, default=False
+        return_t_shape : bool, default=False
             If True, the shape parameter of the predictive t distribution at
             the query points is returned along with the mean.
 
-        return_tShapeMatrix : bool, default=False
+        return_t_shape_matrix : bool, default=False
             If True, the shape parameter of the joint predictive t distribution
             the query points is returned along with the mean.
 
@@ -278,35 +278,41 @@ class TProcessRegressor(GaussianProcessRegressor):
             Covariance of joint predictive distribution at query points.
             Only returned when `return_cov` is True.
 
-        y_tShape : ndarray of shape (n_samples, n_samples) or \
+        y_t_shape : ndarray of shape (n_samples, n_samples) or \
                 (n_samples, n_samples, n_targets), optional
             Shape of joint predictive t distribution at query points.
             Only returned when `return_cov` is True.
         """
-        if [return_std, return_cov, return_tShape, return_tShapeMatrix].count(True) > 1:
+        if [return_std, return_cov, return_t_shape, return_t_shape_matrix].count(
+            True
+        ) > 1:
             raise RuntimeError(
-                "At most one of return_std, return_cov, return_tShape or "
-                + "return_tShapeMatrix can be requested."
+                "At most one of return_std, return_cov, return_t_shape or "
+                + "return_t_shape_matrix can be requested."
             )
 
         n = getattr(self, "n", 0)
-        v_n = self.v + n
+        degrees_of_freedom = self.degrees_of_freedom_init + n
 
         ### Spread may be either std or cov ###
-        if not any([return_std, return_cov, return_tShape, return_tShapeMatrix]):
+        if not any([return_std, return_cov, return_t_shape, return_t_shape_matrix]):
             return super().predict(X, return_std, return_cov)
-        elif return_cov or return_tShapeMatrix:  # Return a matrix:
+        elif return_cov or return_t_shape_matrix:  # Return a matrix:
             y_mean, y_spread = super().predict(X, return_cov=True)
         else:  # Return spread metric at points
             y_mean, y_spread = super().predict(X, return_std=True)
 
         ### Adjust depending on desired posterior ###
-        if n > 0 and (return_tShape or return_tShapeMatrix):
-            scaling_factor = (self._mdis + self.v - 2) / v_n
+        if n > 0 and (return_t_shape or return_t_shape_matrix):
+            scaling_factor = (
+                self._mdis + self.degrees_of_freedom_init - 2
+            ) / degrees_of_freedom
         elif n > 0 and (return_std or return_cov):
-            scaling_factor = (self._mdis + self.v - 2) / (v_n - 2)
-        elif n == 0 and (return_tShape or return_tShapeMatrix):
-            scaling_factor = (v_n - 2) / v_n
+            scaling_factor = (self._mdis + self.degrees_of_freedom_init - 2) / (
+                degrees_of_freedom - 2
+            )
+        elif n == 0 and (return_t_shape or return_t_shape_matrix):
+            scaling_factor = (degrees_of_freedom - 2) / degrees_of_freedom
         else:
             scaling_factor = 1
 
@@ -343,23 +349,30 @@ class TProcessRegressor(GaussianProcessRegressor):
         """
         rng = check_random_state(random_state)
         n = getattr(self, "n", 0)
-        v_n = self.v + n
+        degrees_of_freedom = self.degrees_of_freedom_init + n
 
-        y_mean, y_tShapeMatrix = self.predict(X, return_tShapeMatrix=True)
+        y_mean, y_t_shape_matrix = self.predict(X, return_t_shape_matrix=True)
         if y_mean.ndim == 0:
             y_samples = (
-                multivariate_t(np.array([0]), y_tShapeMatrix, v_n, seed=rng)
+                multivariate_t(
+                    np.array([0]), y_t_shape_matrix, degrees_of_freedom, seed=rng
+                )
                 .rvs(n_samples)
                 .T
             )
         elif y_mean.ndim == 1:
             y_samples = (
-                multivariate_t(y_mean, y_tShapeMatrix, v_n, seed=rng).rvs(n_samples).T
+                multivariate_t(y_mean, y_t_shape_matrix, degrees_of_freedom, seed=rng)
+                .rvs(n_samples)
+                .T
             )
         else:
             y_samples = [
                 multivariate_t(
-                    y_mean[:, target], y_tShapeMatrix[..., target], v_n, seed=rng
+                    y_mean[:, target],
+                    y_t_shape_matrix[..., target],
+                    degrees_of_freedom,
+                    seed=rng,
                 )
                 .rvs(n_samples)
                 .T[:, np.newaxis]
@@ -383,11 +396,11 @@ class TProcessRegressor(GaussianProcessRegressor):
         """
         X, y = super()._preliminary_data_check(X, y)
         self._n = y.shape[0] if isinstance(y, np.ndarray) else 1
-        self._vn = self.v + self._n
+        self._degrees_of_freedom = self.degrees_of_freedom_init + self._n
         self._log_likelihood_dims_const = (
-            gamma(self._vn / 2)
-            - gamma(self.v / 2)
-            - self._n / 2 * np.log(self.v * np.pi)
+            gamma(self._degrees_of_freedom / 2)
+            - gamma(self.degrees_of_freedom_init / 2)
+            - self._n / 2 * np.log(self.degrees_of_freedom_init * np.pi)
         )
         return X, y
 
@@ -413,13 +426,22 @@ class TProcessRegressor(GaussianProcessRegressor):
         """
         # Log-likelihood function can be found in [TW2018]
         ### Change to shape of kernel Parameter ###
-        L = L * ((self.v - 2) / self.v) ** 0.5
+        L = (
+            L
+            * ((self.degrees_of_freedom_init - 2) / self.degrees_of_freedom_init) ** 0.5
+        )
 
         self._mdis = np.einsum("ik,ik->k", y_train, alpha)
-        self._shape_m_dism_dis = self._mdis * self.v / (self.v - 2)
+        self._shape_m_dism_dis = (
+            self._mdis
+            * self.degrees_of_freedom_init
+            / (self.degrees_of_freedom_init - 2)
+        )
         log_likelihood_dims = self._log_likelihood_dims_const
         log_likelihood_dims -= (
-            self._vn / 2 * np.log(1 + self._shape_m_dism_dis / self.v)
+            self._degrees_of_freedom
+            / 2
+            * np.log(1 + self._shape_m_dism_dis / self.degrees_of_freedom_init)
         )
         log_likelihood_dims -= np.log(np.diag(L)).sum()
         log_likelihood = log_likelihood_dims.sum(axis=-1)
@@ -448,12 +470,25 @@ class TProcessRegressor(GaussianProcessRegressor):
         # Optimization is based of [S2024] building off algorithms from
         # [RW2006] used for Gaussian Processes (._gpr.GaussianProcessRegressor)
         ### Change to shape of kernel Parameter ###
-        L = L * ((self.v - 2) / self.v) ** 0.5
-        alpha = alpha * self.v / (self.v - 2)
-        K_gradient = K_gradient * (self.v - 2) / self.v
+        L = (
+            L
+            * ((self.degrees_of_freedom_init - 2) / self.degrees_of_freedom_init) ** 0.5
+        )
+        alpha = (
+            alpha * self.degrees_of_freedom_init / (self.degrees_of_freedom_init - 2)
+        )
+        K_gradient = (
+            K_gradient
+            * (self.degrees_of_freedom_init - 2)
+            / self.degrees_of_freedom_init
+        )
 
         inner_term = np.einsum("ik,jk->ijk", alpha, alpha)
-        inner_term = self._vn / (self.v + self._shape_m_dism_dis) * inner_term
+        inner_term = (
+            self._degrees_of_freedom
+            / (self.degrees_of_freedom_init + self._shape_m_dism_dis)
+            * inner_term
+        )
         # compute K^-1 of shape (n_samples, n_samples)
         K_inv = cho_solve(
             (L, GPR_CHOLESKY_LOWER), np.eye(K.shape[0]), check_finite=False
