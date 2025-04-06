@@ -378,3 +378,13 @@ def test_roc_curve_display_plotting(
         f"x: {cumulative_total}\n"
         f"y: {y_true_cumulative}"
     )
+
+    # Check that CAP curve is on or below the perfect prediction line
+    perfect_y = np.interp(
+        display.cumulative_total, display._perfect_x, display._perfect_y
+    )
+    assert np.all(y_true_cumulative <= perfect_y + 1e-8), (
+        "CAP curve rises above the perfect prediction line."
+        f"x: {perfect_y}\n"
+        f"y: {y_true_cumulative}"
+    )
