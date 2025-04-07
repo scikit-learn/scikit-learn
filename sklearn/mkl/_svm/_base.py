@@ -8,6 +8,32 @@ from . import _libsvm as libsvm  # type: ignore
 
 
 class BaseLibSVMforMKL(BaseLibSVM):
+    """
+    Base class for Multiple Kernel Learning (MKL) with SVM. Inherits from
+    `BaseLibSVM` and adds functionality for working with support vector machines in a
+    multiple kernel learning context.
+
+    This class is responsible for fitting the SVM model using MKL, with various
+    attributes to handle the optimization process.
+
+    Added Attributes
+    ----------------
+    objective_val_ : float
+        The value of the objective function from the maximization problem during
+        optimization. This value reflects the current objective at the end of the
+        fitting process.
+
+    alpha_raw_ : ndarray of shape (any, any)
+        The raw dual coefficients returned by the LibSVM solver.
+
+    alpha_raw_lengths_ : ndarray (any,)
+        The lengths of the arrays of `alpha_raw_`.
+
+    alpha_init_ : ndarray (any, any)
+        Initializes the dual coefficients before the fitting process. If not provided,
+        the coefficients are initialized automatically in LivSVM.
+    """
+
     def _dense_fit(self, X, y, sample_weight, solver_type, kernel, random_seed):
         if callable(self.kernel):
             # you must store a reference to X to compute the kernel in predict

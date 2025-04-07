@@ -1,3 +1,10 @@
+"""
+SimpleMKL algorithm.
+
+Optimizes kernel weights for a Multiple Kernel Learning (MKL) model using
+gradient-based methods.
+"""
+
 import numpy as np
 
 from .._utils import kernel_generator

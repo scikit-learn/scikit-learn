@@ -11,6 +11,9 @@ def number_of_kernels(
     kernels_param_grids,
     precomputed_kernels,
 ):
+    """
+    Returns the number of kernels based on the input data and kernels configuration.
+    """
     if precomputed_kernels or kernels is None:
         return len(X)
 
@@ -34,6 +37,10 @@ def kernel_generator(
     precomputed_kernels,
     Y=None,
 ):
+    """
+    Generates kernels based on the input data and kernels configuration, yielding
+    one kernel at a time.
+    """
     if precomputed_kernels or kernels is None:
         for kernel in X:
             yield kernel

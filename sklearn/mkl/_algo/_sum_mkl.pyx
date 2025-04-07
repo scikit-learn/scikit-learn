@@ -1,3 +1,10 @@
+"""
+SumMKL algorithm.
+
+Computes a weighted sum of the kernel matrices, where each kernel has a fixed
+weight of 1.
+"""
+
 import numpy as np
 
 from .._utils import kernel_generator
