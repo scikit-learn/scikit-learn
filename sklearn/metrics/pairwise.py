@@ -1960,9 +1960,12 @@ def distance_metrics():
     return PAIRWISE_DISTANCE_FUNCTIONS
 
 
-def _dist_wrapper(dist_func, dist_matrix, slice_, *args, **kwargs):
+def _dist_wrapper(dist_func, dist_matrix, slice_, *args, transpose=False, **kwargs):
     """Write in-place to a slice of a distance matrix."""
-    dist_matrix[:, slice_] = dist_func(*args, **kwargs)
+    if transpose:
+        dist_matrix[slice_, :] = dist_func(*args, **kwargs)
+    else:
+        dist_matrix[:, slice_] = dist_func(*args, **kwargs)
 
 
 def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
@@ -1979,9 +1982,9 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
 
     # enforce a threading backend to prevent data communication overhead
     fd = delayed(_dist_wrapper)
-    ret = xp.empty((X.shape[0], Y.shape[0]), dtype=dtype_float, order="F")
+    ret = xp.empty((X.shape[0], Y.shape[0]), dtype=dtype_float).T
     Parallel(backend="threading", n_jobs=n_jobs)(
-        fd(func, ret, s, X, Y[s], **kwds)
+        fd(func, ret, s, X, Y[s], transpose=True, **kwds)
         for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs))
     )
 
