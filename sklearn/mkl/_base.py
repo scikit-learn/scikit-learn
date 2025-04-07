@@ -94,7 +94,8 @@ class BaseMKL(TransformerMixin, MetaEstimatorMixin, BaseEstimator, metaclass=ABC
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features) \
+            or (n_kernels, n_samples, n_samples)
             The input data to transform.
 
         Xfit : None, default=None
@@ -131,6 +132,30 @@ class BaseMKL(TransformerMixin, MetaEstimatorMixin, BaseEstimator, metaclass=ABC
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
+        """
+        Learn the kernel combination and fit the underlying SVM.
+
+        This method performs the Multiple Kernel Learning (MKL) process by computing
+        or validating the kernels, initializing the SVM, and applying the selected MKL
+        algorithm (average, sum, or simple). The fitted model can then be used for
+        prediction or kernel matrix computation.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features) or \
+            (n_kernels, n_samples, n_samples)
+            Input data. Can be feature vectors or precomputed kernels depending
+            on the value of the `kernels` parameter.
+
+        y : array-like of shape (n_samples,), default=None
+            Target values (labels for classification, real values for regression).
+            For `OneClassMKL`, this is not used.
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
+        """
         X, y = self._prepare_X_y_for_learning(X, y)
         self._set_svm()  # Defined in subclasses
         self._learn(X, y)
@@ -138,6 +163,32 @@ class BaseMKL(TransformerMixin, MetaEstimatorMixin, BaseEstimator, metaclass=ABC
         return self
 
     def transform(self, X):
+        """
+        Compute the combined kernel matrix for new data X.
+
+        This method combines the individual kernels (either precomputed or computed
+        from `X` and training data) using the weights learned during `fit`.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features) or \
+            (n_kernels, n_samples, n_fitted_samples)
+            Input data. If kernels were precomputed, X must be a 3D array of
+            kernel matrices. Otherwise, it must be raw input features.
+
+        Returns
+        -------
+        K : ndarray of shape (n_samples, n_fitted_samples)
+            The combined kernel matrix based on learned weights.
+
+        Raises
+        ------
+        NotFittedError
+            If the instance is not fitted yet.
+        ValueError
+            If X does not match the expected input format based on precomputed or
+            learned kernels.
+        """
         check_is_fitted(self)
         X, _ = self._validate_data(X, fit=False)
 
@@ -168,6 +219,32 @@ class BaseMKL(TransformerMixin, MetaEstimatorMixin, BaseEstimator, metaclass=ABC
             ).base
 
     def predict(self, X):
+        """
+        Predict outputs for samples in X using the trained MKL model.
+
+        For standard estimators, this returns predicted labels (classification)
+        or values (regression). For OneClassMKL, it returns +1 for inliers and -1
+        for outliers.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features) or \
+            (n_kernels, n_samples, n_fitted_samples)
+            Input data. If precomputed kernels are used, X must be a 3D array of
+            kernel matrices. Otherwise, it must be raw input features.
+
+        Returns
+        -------
+        y_pred : ndarray of shape (n_samples,)
+            Predicted labels or values.
+
+        Raises
+        ------
+        NotFittedError
+            If the estimator has not been fitted yet.
+        ValueError
+            If X is not in the expected format.
+        """
         kernel = self.transform(X)
         return self._svm.predict(kernel)
 

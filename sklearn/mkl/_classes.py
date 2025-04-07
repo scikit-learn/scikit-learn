@@ -209,8 +209,9 @@ class MKLC(ClassifierMixin, BaseMKL):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            The input samples.
+        X : array-like of shape (n_samples, n_features) \
+            or (n_kernels, n_samples, n_samples)
+            The input data.
 
         Returns
         -------
@@ -641,8 +642,9 @@ class OneClassMKL(OutlierMixin, BaseMKL):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            The data matrix.
+        X : array-like of shape (n_samples, n_features) \
+            or (n_kernels, n_samples, n_samples)
+            The input data.
 
         Returns
         -------
@@ -662,8 +664,9 @@ class OneClassMKL(OutlierMixin, BaseMKL):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            The data matrix.
+        X : array-like of shape (n_samples, n_features) \
+            or (n_kernels, n_samples, n_samples)
+            The input data.
 
         Returns
         -------
