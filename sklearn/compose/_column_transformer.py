@@ -989,7 +989,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         Notes
         -----
         If `X` is a sparse matrix and not row-wise indexable by default, it will
-        be internally converted to the CSR format for efficient processing.
+        be internally converted to the CSR format.
         """
         _raise_for_params(params, self, "fit_transform")
         _check_feature_names(self, X, reset=True)
@@ -1348,13 +1348,15 @@ def _check_X(X):
     Converts non-subscriptable sparse formats to CSR format.
 
     """
-    if sparse.issparse(X):
-        if not hasattr(X, "__getitem__"):
-            X = sparse.csr_matrix(X)
+    if (hasattr(X, "__array__") and hasattr(X, "shape")
+        or hasattr(X, "__dataframe__")):
         return X
-    if hasattr(X, "__dataframe__") or (hasattr(X, "__array__") and hasattr(X, "shape")):
+    elif sparse.issparse(X):
+        if X.format not in ("csr", "csc", "lil", "dok"):
+            return sparse.csr_matrix(X)
         return X
-    return check_array(X, ensure_all_finite="allow-nan", dtype=object)
+    else:
+        return check_array(X, ensure_all_finite="allow-nan", dtype=object)
 
 
 def _is_empty_column_selection(column):
