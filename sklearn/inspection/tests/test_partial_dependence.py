@@ -11,7 +11,7 @@ import pytest
 import sklearn
 from sklearn.base import BaseEstimator, ClassifierMixin, clone, is_regressor
 from sklearn.cluster import KMeans
-from sklearn.compose import make_column_transformer, ColumnTransformer
+from sklearn.compose import ColumnTransformer, make_column_transformer
 from sklearn.datasets import load_iris, make_classification, make_regression
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import (
@@ -1204,23 +1204,21 @@ def test_partial_dependence_empty_categorical_features():
     pd = pytest.importorskip("pandas")
     iris, Species = load_iris(return_X_y=True)
     iris = pd.DataFrame(
-        iris,
-        columns=["sepal_length", "sepal_width", "petal_length", "petal_width"]
+        iris, columns=["sepal_length", "sepal_width", "petal_length", "petal_width"]
     )
     iris["species"] = pd.Series(Species).map({0: "A", 1: "B", 2: "C"})
 
     species_encoder = make_pipeline(
         SimpleImputer(strategy="constant", fill_value="A"),
-        OneHotEncoder(drop=["A"], sparse_output=False)
+        OneHotEncoder(drop=["A"], sparse_output=False),
     )
 
     preprocessor = ColumnTransformer(
         transformers=[
             ("species_encoder", species_encoder, ["species"]),
-            ("other", SimpleImputer(), ["sepal_width", "petal_width",
-                                        "petal_length"])
+            ("other", SimpleImputer(), ["sepal_width", "petal_width", "petal_length"]),
         ],
-        verbose_feature_names_out=False
+        verbose_feature_names_out=False,
     ).set_output(transform="pandas")
 
     model = make_pipeline(preprocessor, LinearRegression())
@@ -1232,7 +1230,8 @@ def test_partial_dependence_empty_categorical_features():
             "Passing an empty list (`[]`) to `categorical_features` is not "
             "supported. Use `None` instead to indicate that there are no "
             "categorical features."
-        )
+        ),
     ):
-        partial_dependence(estimator=model, X=iris, features=["sepal_length"],
-                           categorical_features=[])
+        partial_dependence(
+            estimator=model, X=iris, features=["sepal_length"], categorical_features=[]
+        )
