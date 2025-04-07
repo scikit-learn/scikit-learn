@@ -33,6 +33,7 @@ from sklearn.mixture._gaussian_mixture import (
 from sklearn.utils._array_api import (
     _convert_to_numpy,
     device,
+    get_namespace,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -1489,7 +1490,7 @@ def test_gaussian_mixture_all_init_does_not_estimate_gaussian_parameters(
 def test_gaussian_mixture_array_api_compliance(
     init_params, covariance_type, array_namespace, device_, dtype, global_random_seed
 ):
-    """Test that array api works in GaussianMixtrue.fit."""
+    """Test that array api works in GaussianMixture.fit()."""
     X, _ = make_blobs(
         n_samples=int(1e3), n_features=2, centers=3, random_state=global_random_seed
     )
@@ -1516,7 +1517,6 @@ def test_gaussian_mixture_array_api_compliance(
     assert_allclose(means_, _convert_to_numpy(gmm.means_, xp=xp))
     assert_allclose(covariances_, _convert_to_numpy(gmm.covariances_, xp=xp))
 
-    # TODO Maybe we should test the sample method
     # TODO test means_init and precisions_init
 
 
@@ -1614,3 +1614,34 @@ def test_gaussian_mixture_raises_where_array_api_not_implemented(
             match="Allowed `init_params`.+if 'array_api_dispatch' is enabled",
         ):
             gmm.fit(X)
+
+
+@pytest.mark.parametrize("covariance_type", ["full", "tied", "diag"])
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype", yield_namespace_device_dtype_combinations()
+)
+def test_gaussian_mixture_sample_array_api_compliance(
+    covariance_type, array_namespace, device_, dtype, global_random_seed
+):
+    """Test that array api works in GaussianMixture.sample()."""
+    xp = _array_api_for_tests(array_namespace, device_)
+    X, _ = make_blobs(
+        n_samples=int(1e3), n_features=2, centers=3, random_state=global_random_seed
+    )
+    X = xp.asarray(X, device=device_)
+
+    with sklearn.config_context(array_api_dispatch=True):
+        gmm = GaussianMixture(
+            n_components=3,
+            covariance_type=covariance_type,
+            random_state=global_random_seed,
+            init_params="random",
+        )
+        gmm.fit(X)
+        X_sample, y_sample = gmm.sample()
+
+        assert get_namespace(X_sample)[0] == xp
+        assert get_namespace(y_sample)[0] == xp
+
+        assert device(X_sample) == device(X)
+        assert device(y_sample) == device(X)

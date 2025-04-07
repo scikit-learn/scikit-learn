@@ -31,7 +31,6 @@ def _check_shape(param, param_shape, name):
 
     name : str
     """
-    # param = xp.array(param)
     if param.shape != param_shape:
         raise ValueError(
             "The parameter '%s' should have the shape of %s, but got %s"
@@ -438,8 +437,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         """
         check_is_fitted(self)
         # TODO what is a cleaner way to do this, should we have a self.xp_?
-        # TODO we probably want to use the device as well
-        xp, _ = get_namespace(self.means_)
+        xp, _, device_ = get_namespace_and_device(self.means_)
 
         if n_samples < 1:
             raise ValueError(
