@@ -1,0 +1,3 @@
+-  Rows with zero `sample_weight` are removed from the call to scipy `nnls` used
+   when fitting :class:`linear_model.LinearRegression` with `positive=True`.
+   By :user:`Antoine Baker <antoinebaker>`.
