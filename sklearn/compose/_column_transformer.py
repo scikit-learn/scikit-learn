@@ -1348,7 +1348,7 @@ def _check_X(X):
     Converts non-subscriptable sparse formats to CSR format.
 
     """
-    if (hasattr(X, "__array__") and hasattr(X, "shape") or hasattr(X, "__dataframe__")):
+    if hasattr(X, "__array__") and hasattr(X, "shape") or hasattr(X, "__dataframe__"):
         return X
     elif sparse.issparse(X):
         if X.format not in ("csr", "csc", "lil", "dok"):
