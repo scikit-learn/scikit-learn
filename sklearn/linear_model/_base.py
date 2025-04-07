@@ -649,17 +649,20 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             )
 
         if self.positive:
+            X_nnls, y_nnls = X, y
             # nnls fails on X with allzeros rows for scipy 1.5 on 32-bit platform.
             # See CI faliure reported in issue #31098.
             # nnls fixed in https://github.com/scipy/scipy/pull/22802
             # Removing the allzeros rows fixes issue #31098.
-            nonzero_sw = sample_weight > 0
+            if has_sw:
+                X_nnls = X[sample_weight > 0, :]
+                y_nnls = y[sample_weight > 0] if y.ndim < 2 else y[sample_weight > 0, :]
             if y.ndim < 2:
-                self.coef_ = optimize.nnls(X[nonzero_sw, :], y[nonzero_sw])[0]
+                self.coef_ = optimize.nnls(X_nnls, y_nnls)[0]
             else:
                 # scipy.optimize.nnls cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
-                    delayed(optimize.nnls)(X[nonzero_sw, :], y[nonzero_sw, j])
+                    delayed(optimize.nnls)(X_nnls, y_nnls[:, j])
                     for j in range(y.shape[1])
                 )
                 self.coef_ = np.vstack([out[0] for out in outs])
