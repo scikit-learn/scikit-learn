@@ -437,7 +437,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         """
         check_is_fitted(self)
         # TODO what is a cleaner way to do this, should we have a self.xp_?
-        xp, _, device_ = get_namespace_and_device(self.means_)
+        xp, _ = get_namespace(self.means_)
 
         if n_samples < 1:
             raise ValueError(
@@ -487,10 +487,16 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                 ]
             )
 
+        """y = xp.concat(
+            [
+                xp.full(int(sample), j, dtype=xp.int32)
+                for j, sample in enumerate(n_samples_comp)
+            ]
+        )"""
         y = xp.concat(
             [
-                xp.full(sample, j, dtype=xp.int32)
-                for j, sample in enumerate(n_samples_comp)
+                xp.full(int(n_samples_comp[i]), i, dtype=xp.int32)
+                for i in range(len(n_samples_comp))
             ]
         )
 
