@@ -452,10 +452,15 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         if self.covariance_type == "full":
             X = xp.concat(
                 [
-                    rng.multivariate_normal(mean, covariance, int(sample))
-                    for (mean, covariance, sample) in zip(
-                        self.means_, self.covariances_, n_samples_comp
+                    xp.asarray(
+                        rng.multivariate_normal(
+                            self.means_[i, ...],
+                            self.covariances_[i, ...],
+                            int(n_samples_comp[i]),
+                        )
                     )
+                    for i in range(len(n_samples_comp))
+                    if n_samples_comp[i] > 0
                 ]
             )
         elif self.covariance_type == "tied":
@@ -478,7 +483,10 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             )
 
         y = xp.concat(
-            [xp.full(sample, j, dtype=int) for j, sample in enumerate(n_samples_comp)]
+            [
+                xp.full(sample, j, dtype=xp.int32)
+                for j, sample in enumerate(n_samples_comp)
+            ]
         )
 
         return (X, y)
