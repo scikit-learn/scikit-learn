@@ -9,6 +9,7 @@ import pytest
 from sklearn import mkl, svm
 from sklearn.datasets import make_classification, make_regression
 from sklearn.metrics.pairwise import linear_kernel, rbf_kernel
+from sklearn.mkl._base import MKL_ALGORITHMS
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
@@ -42,7 +43,7 @@ ten_kernels_single_params = {
 
 
 def assert_fit_predict_works_for_all_algorithms(clf, X_ok, X_not_ok, y, n_kernels=2):
-    for algo in mkl.MKL_ALGORITHMS:
+    for algo in MKL_ALGORITHMS:
         clf.set_params(algo=algo)
 
         with pytest.raises(ValueError):
@@ -270,7 +271,7 @@ def test_mkl_svm_parameters_through_svm_params():
 
 
 def assert_valid_number_of_kernels_for_all_algorithms(clf, n_kernels, X, y):
-    for algo in mkl.MKL_ALGORITHMS:
+    for algo in MKL_ALGORITHMS:
         clf.set_params(algo=algo)
         clf.fit(X, y)
 
@@ -315,7 +316,7 @@ def test_mklc_wrong_number_of_kernels_when_predicting():
     # Test MKLC with wrong number of kernels when predicting.
     clf = mkl.MKLC(C=1.0, random_state=42)
 
-    for algo in mkl.MKL_ALGORITHMS:
+    for algo in MKL_ALGORITHMS:
         clf.set_params(algo=algo)
         clf.fit([K_linear_class, K_rbf_class], y_class)
 
@@ -327,7 +328,7 @@ def test_mklr_wrong_number_of_kernels_when_predicting():
     # Test MKLR with wrong number of kernels when predicting.
     reg = mkl.MKLR(C=1.0, epsilon=0.1, random_state=42)
 
-    for algo in mkl.MKL_ALGORITHMS:
+    for algo in MKL_ALGORITHMS:
         reg.set_params(algo=algo)
         reg.fit([K_linear_reg, K_rbf_reg], y_reg)
 
@@ -339,7 +340,7 @@ def test_oneclassmkl_wrong_number_of_kernels_when_predicting():
     # Test OneClassMKL with wrong number of kernels when predicting.
     oc = mkl.OneClassMKL(nu=0.5, random_state=42)
 
-    for algo in mkl.MKL_ALGORITHMS:
+    for algo in MKL_ALGORITHMS:
         oc.set_params(algo=algo)
         oc.fit([K_linear_oc, K_rbf_oc])
 
@@ -353,7 +354,7 @@ def test_mklc_pipeline_as_a_transformer():
     clf_svm = svm.SVC(C=1.0, kernel="precomputed")
     pipe = Pipeline([("mkl", clf_mkl), ("svm", clf_svm)])
 
-    for algo in mkl.MKL_ALGORITHMS:
+    for algo in MKL_ALGORITHMS:
         pipe.set_params(mkl__algo=algo)
         pipe.fit([K_linear_class, K_rbf_class], y_class)
         pipe.predict([K_linear_class, K_rbf_class])
@@ -365,7 +366,7 @@ def test_mklr_pipeline_as_a_transformer():
     reg_svm = svm.SVR(C=1.0, kernel="precomputed")
     pipe = Pipeline([("mkl", reg_mkl), ("svm", reg_svm)])
 
-    for algo in mkl.MKL_ALGORITHMS:
+    for algo in MKL_ALGORITHMS:
         pipe.set_params(mkl__algo=algo)
         pipe.fit([K_linear_reg, K_rbf_reg], y_reg)
         pipe.predict([K_linear_reg, K_rbf_reg])
@@ -377,7 +378,7 @@ def test_oneclassmkl_pipeline_as_a_transformer():
     oc_svm = svm.OneClassSVM(nu=0.5, kernel="precomputed")
     pipe = Pipeline([("mkl", oc_mkl), ("svm", oc_svm)])
 
-    for algo in mkl.MKL_ALGORITHMS:
+    for algo in MKL_ALGORITHMS:
         pipe.set_params(mkl__algo=algo)
         pipe.fit([K_linear_oc, K_rbf_oc])
         pipe.predict([K_linear_oc, K_rbf_oc])
@@ -389,7 +390,7 @@ def test_mklc_pipeline_as_an_estimator():
     clf = mkl.MKLC(kernels=["linear", "rbf"], C=1.0, random_state=42)
     pipe = Pipeline([("sc", sc), ("mkl", clf)])
 
-    for algo in mkl.MKL_ALGORITHMS:
+    for algo in MKL_ALGORITHMS:
         pipe.set_params(mkl__algo=algo)
         pipe.fit(X_class, y_class)
         pipe.predict(X_class)
@@ -401,7 +402,7 @@ def test_mklr_pipeline_as_an_estimator():
     reg = mkl.MKLR(kernels=["linear", "rbf"], C=1.0, epsilon=0.1, random_state=42)
     pipe = Pipeline([("sc", sc), ("mkl", reg)])
 
-    for algo in mkl.MKL_ALGORITHMS:
+    for algo in MKL_ALGORITHMS:
         pipe.set_params(mkl__algo=algo)
         pipe.fit(X_reg, y_reg)
         pipe.predict(X_reg)
@@ -413,7 +414,7 @@ def test_oneclassmkl_pipeline_as_an_estimator():
     oc = mkl.OneClassMKL(kernels=["linear", "rbf"], nu=0.5, random_state=42)
     pipe = Pipeline([("sc", sc), ("mkl", oc)])
 
-    for algo in mkl.MKL_ALGORITHMS:
+    for algo in MKL_ALGORITHMS:
         pipe.set_params(mkl__algo=algo)
         pipe.fit(X_oc)
         pipe.predict(X_oc)
@@ -423,7 +424,7 @@ def test_mklc_as_a_callable_kernel():
     # Test MKLC as a callable kernel.
     clf_mkl = mkl.MKLC(kernels=["linear", "rbf"], C=1.0, random_state=42)
 
-    for algo in mkl.MKL_ALGORITHMS:
+    for algo in MKL_ALGORITHMS:
         clf_mkl.set_params(algo=algo)
         clf_mkl.fit(X_class, y_class)
 
@@ -437,7 +438,7 @@ def test_mklr_as_a_callable_kernel():
     # Test MKLR as a callable kernel.
     reg_mkl = mkl.MKLR(kernels=["linear", "rbf"], C=1.0, epsilon=0.1, random_state=42)
 
-    for algo in mkl.MKL_ALGORITHMS:
+    for algo in MKL_ALGORITHMS:
         reg_mkl.set_params(algo=algo)
         reg_mkl.fit(X_reg, y_reg)
 
@@ -451,7 +452,7 @@ def test_oneclassmkl_as_a_callable_kernel():
     # Test OneClassMKL as a callable kernel.
     oc_mkl = mkl.OneClassMKL(kernels=["linear", "rbf"], nu=0.5, random_state=42)
 
-    for algo in mkl.MKL_ALGORITHMS:
+    for algo in MKL_ALGORITHMS:
         oc_mkl.set_params(algo=algo)
         oc_mkl.fit(X_oc)
 
