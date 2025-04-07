@@ -1482,7 +1482,7 @@ def test_gaussian_mixture_all_init_does_not_estimate_gaussian_parameters(
 
 
 @pytest.mark.parametrize("init_params", ["random", "random_from_data"])
-@pytest.mark.parametrize("covariance_type", ["full", "tied", "diag"])
+@pytest.mark.parametrize("covariance_type", ["full", "tied", "diag", "spherical"])
 @pytest.mark.parametrize(
     "array_namespace, device_, dtype", yield_namespace_device_dtype_combinations()
 )

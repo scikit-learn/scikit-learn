@@ -268,9 +268,11 @@ def _estimate_gaussian_covariances_spherical(resp, X, nk, means, reg_covar, xp=N
     variances : array, shape (n_components,)
         The variance values of each components.
     """
-    return _estimate_gaussian_covariances_diag(
-        resp, X, nk, means, reg_covar, xp=xp
-    ).mean(1)
+    xp, _ = get_namespace(X)
+    return xp.mean(
+        _estimate_gaussian_covariances_diag(resp, X, nk, means, reg_covar, xp=xp),
+        axis=1,
+    )
 
 
 def _estimate_gaussian_parameters(X, resp, reg_covar, covariance_type, xp=None):
@@ -545,9 +547,9 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type, xp=N
     elif covariance_type == "spherical":
         precisions = precisions_chol**2
         log_prob = (
-            xp.sum(means**2, 1) * precisions
+            xp.sum(means**2, axis=1) * precisions
             - 2 * (X @ means.T * precisions)
-            + xp.outer(row_norms(X, squared=True), precisions)
+            + xp.linalg.outer(row_norms(X, squared=True), precisions)
         )
     # Since we are using the precision of the Cholesky decomposition,
     # `- 0.5 * log_det_precision` becomes `+ log_det_precision_chol`
