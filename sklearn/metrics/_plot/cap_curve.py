@@ -316,7 +316,7 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         if pos_label is None:
             pos_label = 1
         if sample_weight is None:
-            sample_weight = np.ones_like(y_true, dtype=float)
+            sample_weight = np.ones_like(y_true, dtype=y_pred.dtype)
 
         pos_label_validated, name = cls._validate_from_predictions_params(
             y_true, y_pred, sample_weight=sample_weight, pos_label=pos_label, name=name
