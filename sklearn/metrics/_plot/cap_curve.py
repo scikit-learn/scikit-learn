@@ -25,7 +25,9 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     Parameters
     ----------
     y_true_cumulative : ndarray
-        Cumulative number of true positives.
+        Cumulative number of true positives, ordered by predictions. If
+        `sample_weight is not `None`, the positive cases are multiplied by
+        their weight before being included into the cumulative sum.
 
     cumulative_total : ndarray
         Cumulative number of cases examined.
