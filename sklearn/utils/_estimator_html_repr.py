@@ -480,50 +480,11 @@ def estimator_html_repr(estimator):
             is_fitted_css_class=is_fitted_css_class,
             is_fitted_icon=is_fitted_icon,
         )
+        with open("./sklearn/utils/_estimator_html_repr.js", "r") as f:
+            script = f.read()
 
-        html_end = """</div></div>
-            <script>
-            function copyToClipboard(text, element) {
-            // Get the parameter prefix from the closest toggleable content
-            const toggleableContent = element.closest('.sk-toggleable__content');
-            const paramPrefix = toggleableContent ?
-                                toggleableContent.dataset.paramPrefix : '';
-            const fullParamName = paramPrefix ? `${paramPrefix}${text}` : text;
+        html_end = f"</div></div><script>{script}</script></body>"
 
-            const originalStyle = element.style;
-            const computedStyle = window.getComputedStyle(element);
-            const originalWidth = computedStyle.width;
-            const originalHTML = element.innerHTML.replace('Copied!', '');
-
-            navigator.clipboard.writeText(fullParamName)
-                .then(() => {
-                    element.style.width = originalWidth;
-                    element.style.color = 'green';
-                    element.innerHTML = "Copied!";
-
-                    setTimeout(() => {
-                        element.innerHTML = originalHTML;
-                        element.style = originalStyle;
-                    }, 2000);
-                })
-                .catch(err => console.error('Failed to copy:', err));
-            return false;
-            }
-
-            document.querySelectorAll('.fa-regular.fa-copy').forEach(function(element)
-                {
-                const toggleableContent = element.closest('.sk-toggleable__content');
-                const paramPrefix = toggleableContent ?
-                                    toggleableContent.dataset.paramPrefix : '';
-                const paramName = element.parentElement.nextElementSibling
-                                  .textContent.trim();
-                const fullParamName = paramPrefix ? `${paramPrefix}${paramName}` :
-                                  paramName;
-                element.setAttribute('title', fullParamName);
-            });
-            </script>
-            </body>
-            """
         out.write(html_end)
 
         html_output = out.getvalue()
