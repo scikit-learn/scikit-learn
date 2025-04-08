@@ -192,8 +192,8 @@ def test_estimator_has_too_many_classes(pyplot):
     lr_model_n_classes = LogisticRegression(max_iter=1000)
     lr_model_n_classes.fit(X, y)
 
-    pattern = (
-        r"Expected 'estimator' to be a binary classifier\. Got \d+ classes instead\."
+    pattern = re.escape(
+        "Expected 'estimator' to be a binary classifier. Got 3 classes instead."
     )
 
     with pytest.raises(ValueError, match=pattern):
