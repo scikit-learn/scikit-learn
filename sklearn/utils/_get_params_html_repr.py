@@ -81,7 +81,6 @@ def _html_template(params):
         if len(cleaned_value) > 50:
 
             if param == "param_distributions":
-
                 formatted_value = pprint.pformat(cleaned_value)
                 cleaned_value = f"<pre>{formatted_value}</pre>"
             else:
