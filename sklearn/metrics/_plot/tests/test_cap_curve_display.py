@@ -319,8 +319,8 @@ def test_cap_curve_chance_level_line(
         assert display.perfect_level_ is None
 
     if plot_perfect and perfect_level_kw is None:
-        assert display.perfect_level_.get_color() == "#ff7f0e"
-        assert display.perfect_level_.get_linestyle() == "--"
+        assert display.perfect_level_.get_color() == "black"
+        assert display.perfect_level_.get_linestyle() == ":"
         assert display.perfect_level_.get_label() == "Perfect predictions"
     elif plot_perfect:
         assert display.perfect_level_.get_label() == perfect_level_kw["label"]

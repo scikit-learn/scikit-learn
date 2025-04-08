@@ -166,7 +166,8 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         default_perfect_level_line_kw = {
             "label": "Perfect predictions",
-            "linestyle": "--",
+            "linestyle": ":",
+            "color": "black",
         }
 
         if perfect_level_kw is None:
