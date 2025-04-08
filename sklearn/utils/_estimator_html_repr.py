@@ -207,7 +207,7 @@ def _write_label_html(
             f'type="checkbox" {checked_str}>{label_html}<div '
             f'class="sk-toggleable__content {is_fitted_css_class}" '
             f'data-param-prefix="{param_prefix}">'
-            f"</pre>{params}</div>"
+            f"{params}</div>"
         )
         out.write(fmt_str)
     else:
