@@ -7,6 +7,7 @@ from sklearn.datasets import make_classification
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
+from sklearn.svm import LinearSVC
 
 from ..cap_curve import CAPCurveDisplay
 
@@ -458,3 +459,21 @@ def test_cap_curve_between_chance_and_perfect(
         f"x: {perfect_y}\n"
         f"y: {y_true_cumulative}"
     )
+
+
+@pytest.mark.parametrize(
+    "response_method", ["predict_proba", "decision_function", "auto"]
+)
+def test_with_linear_svc(pyplot, data_binary, response_method):
+    X, y = data_binary
+    svc = LinearSVC().fit(X, y)
+
+    if response_method == "predict_proba":
+        match = "LinearSVC has none of the following attributes: predict_proba."
+        with pytest.raises(
+            AttributeError,
+            match=match,
+        ):
+            CAPCurveDisplay.from_estimator(svc, X, y, response_method=response_method)
+    else:
+        CAPCurveDisplay.from_estimator(svc, X, y, response_method=response_method)
