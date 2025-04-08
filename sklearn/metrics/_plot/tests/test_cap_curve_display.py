@@ -342,7 +342,9 @@ def test_cap_curve_chance_level_line(
             )
 
 
-@pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
+@pytest.mark.parametrize(
+    "response_method", ["predict_proba", "decision_function", "auto"]
+)
 @pytest.mark.parametrize("with_sample_weight", [True, False])
 @pytest.mark.parametrize(
     ("pos_label", "with_strings"),
@@ -382,6 +384,12 @@ def test_roc_curve_display_plotting(
 
     lr = LogisticRegression()
     lr.fit(X, y)
+
+    if response_method == "auto":
+        if hasattr(lr, "predict_proba"):
+            response_method = "predict_proba"
+        elif hasattr(lr, "decision_function"):
+            response_method = "decision_function"
 
     y_pred = getattr(lr, response_method)(X)
     if y_pred.ndim != 1:
