@@ -46,6 +46,25 @@ class ParamsDict(UserDict):
             output["text/html"] = _html_template(self)
 
 
+def _read_params(param, value, non_default_params, row_template):
+
+    if value != "deprecated" and isinstance(value, str):
+        cleaned_value = f'"{value}"'
+    else:
+        cleaned_value = html.escape(str(value))
+    if len(cleaned_value) > 50:
+        if param == "param_distributions":
+            formatted_value = pprint.pformat(cleaned_value)
+            cleaned_value = f"<pre>{formatted_value}</pre>"
+        else:
+            cleaned_value = "(...)"
+    param_type = "user-set" if param in non_default_params else "default"
+
+    return row_template.format(
+        param_type=param_type, param_name=param, param_value=cleaned_value
+    )
+
+
 def _html_template(params):
 
     HTML_TEMPLATE = """
@@ -71,27 +90,9 @@ def _html_template(params):
         </tr>
     """
 
-    rows = []
-    for param, value in params.items():
-        if value != "deprecated" and isinstance(value, str):
-            cleaned_value = f'"{value}"'
-        else:
-            cleaned_value = html.escape(str(value))
-
-        if len(cleaned_value) > 50:
-
-            if param == "param_distributions":
-                formatted_value = pprint.pformat(cleaned_value)
-                cleaned_value = f"<pre>{formatted_value}</pre>"
-            else:
-                cleaned_value = "(...)"
-
-        param_type = "user-set" if param in params.non_default else "default"
-
-        rows.append(
-            ROW_TEMPLATE.format(
-                param_type=param_type, param_name=param, param_value=cleaned_value
-            )
-        )
+    rows = [
+        _read_params(param, value, params.non_default, ROW_TEMPLATE)
+        for param, value in params.items()
+    ]
 
     return HTML_TEMPLATE.format(rows="\n".join(rows))
