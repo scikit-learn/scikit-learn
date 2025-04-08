@@ -361,7 +361,7 @@ def test_cap_curve_chance_level_line(
         ("from_predictions", "Classifier"),
     ],
 )
-def test_roc_curve_display_plotting(
+def test_cap_curve_between_chance_and_perfect(
     pyplot,
     data_binary,
     response_method,
