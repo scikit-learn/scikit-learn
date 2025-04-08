@@ -108,6 +108,7 @@ fig, [ax_roc, ax_cap, ax_det] = plt.subplots(
 pos_label = "Class A"
 for name, clf in classifiers.items():
     plot_chance_level = name == "Random Forest"
+    plot_perfect = name == "Random Forest"
     clf.fit(X_train, y_train)
 
     RocCurveDisplay.from_estimator(
@@ -127,6 +128,7 @@ for name, clf in classifiers.items():
         name=name,
         pos_label=pos_label,
         plot_chance_level=plot_chance_level,
+        plot_perfect=plot_perfect,
     )
     DetCurveDisplay.from_estimator(
         clf, X_test, y_test, ax=ax_det, name=name, pos_label=pos_label
