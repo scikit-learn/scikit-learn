@@ -47,6 +47,12 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     line_ : matplotlib Artist
         CAP Curve.
 
+    chance_level_ : matplotlib Artist
+        Curve of the independent classifier.
+
+    perfect_level_ : matplotlib Artist
+        Curve of the perfect classifier.
+
     ax_ : matplotlib Axes
         Axes with CAP Curve.
 
