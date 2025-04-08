@@ -1998,7 +1998,8 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
         # TODO: do it also for other norms.
         _fill_diagonal(ret, 0, xp=xp)
 
-    return ret
+    # Transform output back
+    return ret.T
 
 
 def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
