@@ -38,6 +38,7 @@ def logistic_regression_model(data_binary):
 @pytest.mark.parametrize("plot_chance_level", [True, False])
 @pytest.mark.parametrize("name", ["Logistic Regression", None])
 @pytest.mark.parametrize("chance_level_kw", [{"color": "red", "lw": 3}, None])
+@pytest.mark.parametrize("y_pred_dtype", [np.float32, np.float64])
 def test_cumulative_accuracy_display_from_predictions(
     pyplot,
     data_binary,
@@ -45,9 +46,10 @@ def test_cumulative_accuracy_display_from_predictions(
     plot_chance_level,
     name,
     chance_level_kw,
+    y_pred_dtype,
 ):
     _, y = data_binary
-    y_scores = np.random.rand(len(y))
+    y_scores = np.random.rand(len(y)).astype(y_pred_dtype)
 
     cap_display = CAPCurveDisplay.from_predictions(
         y,
@@ -59,6 +61,12 @@ def test_cumulative_accuracy_display_from_predictions(
     )
 
     assert cap_display is not None
+    assert hasattr(
+        cap_display, "y_true_cumulative"
+    ), "The display must have a y_true_cumulative attribute"
+    assert hasattr(
+        cap_display, "cumulative_total"
+    ), "The display must have a cumulative_total attribute"
     assert hasattr(cap_display, "line_"), "The display must have a line attribute"
     assert hasattr(cap_display, "ax_"), "The display must have an ax attribute"
     assert hasattr(cap_display, "figure_"), "The display must have a figure attribute"
@@ -72,6 +80,13 @@ def test_cumulative_accuracy_display_from_predictions(
         assert (
             cap_display.chance_level_ is not None
         ), "Chance level line should be present"
+
+    y_true_cumulative = cap_display.y_true_cumulative
+    cumulative_total = cap_display.cumulative_total
+    assert y_true_cumulative.dtype == cumulative_total.dtype, (
+        f"Dtype mismatch: y_true_cumulative.dtype={y_true_cumulative.dtype}, "
+        f"cumulative_total.dtype={cumulative_total.dtype}"
+    )
 
 
 @pytest.mark.parametrize(
