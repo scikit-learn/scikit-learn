@@ -442,7 +442,7 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         if not is_classifier(estimator):
             raise NotImplementedError
 
-        if response_method == "auto":
+        if is_classifier(estimator) and response_method == "auto":
             if hasattr(estimator, "predict_proba"):
                 response_method = "predict_proba"
             elif hasattr(estimator, "decision_function"):
