@@ -30,7 +30,10 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         their weight before being included into the cumulative sum.
 
     cumulative_total : ndarray
-        Cumulative number of cases examined.
+        Cumulative number or fraction of cases examined, ordered by
+        predictions. If `sample_weight` is `None`, each case contributes
+        equally. Otherwise this is the (possibly normalized) cumulative sum
+        of weights.
 
     estimator_name : str, default=None
         Name of estimator. If None, the estimator name is not shown.
