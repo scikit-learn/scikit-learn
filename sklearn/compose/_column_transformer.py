@@ -944,7 +944,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         Notes
         -----
         If `X` is a sparse matrix and not row-wise indexable by default, it will
-        be internally converted to the CSR format for efficient processing.
+        be internally converted to the CSR format.
         """
         _raise_for_params(params, self, "fit")
         # we use fit_transform to make sure to set sparse_output_ (for which we
