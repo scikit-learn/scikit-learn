@@ -389,7 +389,10 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Target values.
 
         sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights.
+            Sample weights. If not `None`, the `y_true_cumulative` array is the
+            cumulative sum of the weights of the positive cases (ordered by
+            predictions) and `cumulative_total` is the cumulative sum of all
+            cases (ordered by predictions).
 
         response_method : {'predict_proba', 'decision_function', 'auto'} \
                 default='auto'
