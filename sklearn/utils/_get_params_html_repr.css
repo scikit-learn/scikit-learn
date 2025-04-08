@@ -6,9 +6,13 @@
     border: 1px solid rgba(106, 105, 104, 0.232);
 }
 
-.user-set td, .user-set td.value pre {
-    color:rgb(255, 94, 0) !important;
+.user-set td {
+    color:rgb(255, 94, 0);
     text-align: left;
+}
+
+.user-set td.value pre {
+    color:rgb(255, 94, 0) !important;
 }
 
 .default td {

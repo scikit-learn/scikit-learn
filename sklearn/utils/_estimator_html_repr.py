@@ -480,7 +480,7 @@ def estimator_html_repr(estimator):
             is_fitted_css_class=is_fitted_css_class,
             is_fitted_icon=is_fitted_icon,
         )
-        with open("./sklearn/utils/_estimator_html_repr.js", "r") as f:
+        with open(str(Path(__file__).with_name("_estimator_html_repr.js")), "r") as f:
             script = f.read()
 
         html_end = f"</div></div><script>{script}</script></body>"
