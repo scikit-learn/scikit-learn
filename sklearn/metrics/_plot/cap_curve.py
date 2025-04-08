@@ -323,15 +323,15 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         )
 
         # ensure y_true is boolean for positive class identification
-        y_bool = y_true == pos_label_validated
+        y_true_bool = y_true == pos_label_validated
 
         # sort predictions and true values based on the predictions
         sorted_indices = np.argsort(y_pred)[::-1]
-        y_true_sorted = y_bool[sorted_indices]
+        y_true_bool_sorted = y_true_bool[sorted_indices]
         sample_weight_sorted = sample_weight[sorted_indices]
 
         # compute cumulative sums for true positives and all cases
-        y_true_cumulative = np.cumsum(y_true_sorted * sample_weight_sorted)
+        y_true_cumulative = np.cumsum(y_true_bool_sorted * sample_weight_sorted)
         cumulative_total = np.cumsum(sample_weight_sorted)
 
         viz = cls(
