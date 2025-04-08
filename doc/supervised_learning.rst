@@ -11,6 +11,7 @@ Supervised learning
     modules/kernel_ridge.rst
     modules/svm
     modules/sgd
+    modules/mkl
     modules/neighbors
     modules/gaussian_process
     modules/cross_decomposition.rst

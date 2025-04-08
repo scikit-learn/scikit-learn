@@ -49,8 +49,13 @@ class MKLC(ClassifierMixin, BaseMKL):
     kernels_param_grids : list of dict, default=None
         List of dictionaries specifying parameter grids for each kernel. Must have the
         same length as `kernels`. Keys must be strings matching parameter names, and
-        values must be lists or arrays of values to test. If None, default parameter
-        search is performed.
+        values must be lists or arrays of values to test.
+
+        If the kernel's associated element is a callable, the keys refer to its function
+        parameters; if it is a string, the keys refer to parameters of the
+        corresponding function in `sklearn.metrics.pairwise.PAIRWISE_KERNEL_FUNCTIONS`.
+
+        If None, the default kernel function parameters are used.
 
     C : float, default=1.0
         Regularization parameter of the internal SVM classifier.
@@ -285,8 +290,13 @@ class MKLR(RegressorMixin, BaseMKL):
     kernels_param_grids : list of dict, default=None
         List of dictionaries specifying parameter grids for each kernel. Must have the
         same length as `kernels`. Keys must be strings matching parameter names, and
-        values must be lists or arrays of values to test. If None, default parameter
-        search is performed.
+        values must be lists or arrays of values to test.
+
+        If the kernel's associated element is a callable, the keys refer to its function
+        parameters; if it is a string, the keys refer to parameters of the
+        corresponding function in `sklearn.metrics.pairwise.PAIRWISE_KERNEL_FUNCTIONS`.
+
+        If None, the default kernel function parameters are used.
 
     C : float, default=1.0
         Regularization parameter of the internal SVM regressor.
@@ -487,8 +497,13 @@ class OneClassMKL(OutlierMixin, BaseMKL):
     kernels_param_grids : list of dict, default=None
         List of dictionaries specifying parameter grids for each kernel. Must have the
         same length as `kernels`. Keys must be strings matching parameter names, and
-        values must be lists or arrays of values to test. If None, default parameter
-        search is performed.
+        values must be lists or arrays of values to test.
+
+        If the kernel's associated element is a callable, the keys refer to its function
+        parameters; if it is a string, the keys refer to parameters of the
+        corresponding function in `sklearn.metrics.pairwise.PAIRWISE_KERNEL_FUNCTIONS`.
+
+        If None, the default kernel function parameters are used.
 
     nu : float, default=0.5
         Anomaly proportion parameter of the internal One-Class SVM.
