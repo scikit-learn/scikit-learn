@@ -456,7 +456,8 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         if response_method not in ["predict_proba", "decision_function", "auto"]:
             raise ValueError(
                 "response_method must be in: "
-                "{'predict_proba', 'decision_function', 'auto'}."
+                "{'predict_proba', 'decision_function', 'auto'}. "
+                f"Got '{response_method}' instead."
             )
 
         y_pred, pos_label, name = cls._validate_and_get_response_values(
