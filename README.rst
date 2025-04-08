@@ -29,14 +29,14 @@
 .. |Benchmark| image:: https://img.shields.io/badge/Benchmarked%20by-asv-blue
    :target: https://scikit-learn.org/scikit-learn-benchmarks
 
-.. |PythonMinVersion| replace:: 3.9
-.. |NumPyMinVersion| replace:: 1.19.5
-.. |SciPyMinVersion| replace:: 1.6.0
+.. |PythonMinVersion| replace:: 3.10
+.. |NumPyMinVersion| replace:: 1.22.0
+.. |SciPyMinVersion| replace:: 1.8.0
 .. |JoblibMinVersion| replace:: 1.2.0
 .. |ThreadpoolctlMinVersion| replace:: 3.1.0
-.. |MatplotlibMinVersion| replace:: 3.3.4
-.. |Scikit-ImageMinVersion| replace:: 0.17.2
-.. |PandasMinVersion| replace:: 1.2.0
+.. |MatplotlibMinVersion| replace:: 3.5.0
+.. |Scikit-ImageMinVersion| replace:: 0.19.0
+.. |PandasMinVersion| replace:: 1.4.0
 .. |SeabornMinVersion| replace:: 0.9.0
 .. |PytestMinVersion| replace:: 7.1.2
 .. |PlotlyMinVersion| replace:: 5.14.0
@@ -71,10 +71,6 @@ scikit-learn requires:
 - threadpoolctl (>= |ThreadpoolctlMinVersion|)
 
 =======
-
-**Scikit-learn 0.20 was the last version to support Python 2.7 and Python 3.4.**
-scikit-learn 1.0 and later require Python 3.7 or newer.
-scikit-learn 1.1 and later require Python 3.8 or newer.
 
 Scikit-learn plotting capabilities (i.e., functions start with ``plot_`` and
 classes end with ``Display``) require Matplotlib (>= |MatplotlibMinVersion|).

@@ -143,7 +143,7 @@ for n_components in N_COMPONENTS:
     }
     print(
         f"Linear SVM score on {n_components} PolynomialCountSketch "
-        + f"features: {ps_lsvm_score:.2f}%"
+        f"features: {ps_lsvm_score:.2f}%"
     )
 
 # %%

@@ -329,7 +329,18 @@ METAESTIMATORS: list = [
         "X": X,
         "y": y,
         "preserves_metadata": False,
-        "estimator_routing_methods": ["fit"],
+        "estimator_routing_methods": [
+            "fit",
+            "predict",
+            "predict_proba",
+            "predict_log_proba",
+            "decision_function",
+        ],
+        "method_mapping": {
+            "predict": ["predict", "predict_proba"],
+            "predict_proba": ["predict", "predict_proba"],
+            "predict_log_proba": ["predict", "predict_proba", "predict_log_proba"],
+        },
     },
     {
         "metaestimator": BaggingRegressor,
@@ -338,7 +349,7 @@ METAESTIMATORS: list = [
         "X": X,
         "y": y,
         "preserves_metadata": False,
-        "estimator_routing_methods": ["fit"],
+        "estimator_routing_methods": ["fit", "predict"],
     },
     {
         "metaestimator": RidgeCV,
