@@ -132,7 +132,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         fpr,
         tpr,
         roc_auc=None,
-        roc_auc_aggregate=None,
         name=None,
         pos_label=None,
         estimator_name="deprecated",
@@ -140,7 +139,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         self.fpr = fpr
         self.tpr = tpr
         self.roc_auc = roc_auc
-        self.roc_auc_aggregate = roc_auc_aggregate
         self.name = _deprecate_estimator_name(estimator_name, name, "1.7")
         self.pos_label = pos_label
 
