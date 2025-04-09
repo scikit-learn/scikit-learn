@@ -341,7 +341,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         # BaseBagging.estimator is not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y, **fit_params):
+    def fit(self, X, y, sample_weight=None, **fit_params):
         """Build a Bagging ensemble of estimators from the training set (X, y).
 
         Parameters
@@ -354,6 +354,10 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             The target values (class labels in classification, real numbers in
             regression).
 
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then samples are equally weighted.
+            Note that this is supported only if the base estimator supports
+            sample weighting.
         **fit_params : dict
             Parameters to pass to the underlying estimators.
 
@@ -370,7 +374,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
-        _raise_for_params(fit_params, self, "fit", allow=["sample_weight"])
+        _raise_for_params(fit_params, self, "fit")
 
         # Convert data (X is required to be 2d and indexable)
         X, y = validate_data(
@@ -383,7 +387,13 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             multi_output=True,
         )
 
-        return self._fit(X, y, max_samples=self.max_samples, **fit_params)
+        return self._fit(
+            X,
+            y,
+            max_samples=self.max_samples,
+            sample_weight=sample_weight,
+            **fit_params,
+        )
 
     def _parallel_args(self):
         return {}
@@ -395,6 +405,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         max_samples=None,
         max_depth=None,
         check_input=True,
+        sample_weight=None,
         **fit_params,
     ):
         """Build a Bagging ensemble of estimators from the training
@@ -423,6 +434,11 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             If the meta-estimator already checks the input, set this value to
             False to prevent redundant input validation.
 
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then samples are equally weighted.
+            Note that this is supported only if the base estimator supports
+            sample weighting.
+
         **fit_params : dict, default=None
             Parameters to pass to the :term:`fit` method of the underlying
             estimator.
@@ -441,6 +457,9 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
 
         # Check parameters
         self._validate_estimator(self._get_estimator())
+
+        if sample_weight is not None:
+            fit_params["sample_weight"] = sample_weight
 
         if _routing_enabled():
             routed_params = process_routing(self, "fit", **fit_params)
