@@ -441,7 +441,6 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             Component labels.
         """
         check_is_fitted(self)
-        # TODO what is a cleaner way to do this, should we have a self.xp_?
         xp, _, device_ = get_namespace_and_device(self.means_)
 
         if n_samples < 1:
