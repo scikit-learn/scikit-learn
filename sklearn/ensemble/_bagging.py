@@ -95,6 +95,8 @@ def _generate_bagging_indices(
             replace=bootstrap_samples,
             p=normalized_sample_weight,
         )
+    print(f"{feature_indices=}")
+    print(f"{sample_indices=}")
     return feature_indices, sample_indices
 
 

@@ -887,8 +887,9 @@ def test_bagging_classifier_with_missing_inputs():
 def test_bagging_small_max_features():
     # Check that Bagging estimator can accept low fractional max_features
 
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
+    rng = np.random.RandomState(42)
+    X = rng.randn(10, 2)
+    y = rng.randint(2, size=X.shape[0])
 
     bagging = BaggingClassifier(LogisticRegression(), max_features=0.3, random_state=1)
     bagging.fit(X, y)
