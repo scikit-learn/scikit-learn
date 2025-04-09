@@ -80,7 +80,7 @@ def _find_floating_dtype_allow_sparse(X, Y, xp=None):
         X, Y, dtype_float = _return_float_dtype(X, Y)
     else:
         dtype_float = _find_matching_floating_dtype(X, Y, xp=xp)
-    return dtype_float
+    return X, Y, dtype_float
 
 
 def check_pairwise_arrays(
@@ -188,7 +188,7 @@ def check_pairwise_arrays(
     ensure_all_finite = _deprecate_force_all_finite(force_all_finite, ensure_all_finite)
 
     xp, _ = get_namespace(X, Y)
-    dtype_float = _find_floating_dtype_allow_sparse(X, Y, xp=xp)
+    X, Y, dtype_float = _find_floating_dtype_allow_sparse(X, Y, xp=xp)
 
     estimator = "check_pairwise_arrays"
     if dtype == "infer_float":
@@ -1963,7 +1963,7 @@ def distance_metrics():
 def _dist_wrapper(dist_func, dist_matrix, slice_, *args, transpose=False, **kwargs):
     """Write in-place to a slice of a distance matrix."""
     if transpose:
-        dist_matrix[slice_, :] = dist_func(*args, **kwargs)
+        dist_matrix[slice_, :] = dist_func(*args, **kwargs).T
     else:
         dist_matrix[:, slice_] = dist_func(*args, **kwargs)
 
@@ -1972,7 +1972,7 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     """Break the pairwise matrix in n_jobs even slices
     and compute them using multithreading."""
     xp, _ = get_namespace(X, Y)
-    dtype_float = _find_matching_floating_dtype(X, Y, xp=xp)
+    X, Y, dtype_float = _find_floating_dtype_allow_sparse(X, Y, xp=xp)
 
     if Y is None:
         Y = X
