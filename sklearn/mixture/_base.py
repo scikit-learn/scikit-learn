@@ -15,7 +15,12 @@ from ..base import BaseEstimator, DensityMixin, _fit_context
 from ..cluster import kmeans_plusplus
 from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state
-from ..utils._array_api import _logsumexp, get_namespace, get_namespace_and_device
+from ..utils._array_api import (
+    _convert_to_numpy,
+    _logsumexp,
+    get_namespace,
+    get_namespace_and_device,
+)
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.validation import check_is_fitted, validate_data
 
@@ -437,7 +442,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         """
         check_is_fitted(self)
         # TODO what is a cleaner way to do this, should we have a self.xp_?
-        xp, _ = get_namespace(self.means_)
+        xp, _, device_ = get_namespace_and_device(self.means_)
 
         if n_samples < 1:
             raise ValueError(
@@ -447,60 +452,54 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         _, n_features = self.means_.shape
         rng = check_random_state(self.random_state)
-        n_samples_comp = rng.multinomial(n_samples, self.weights_)
+        n_samples_comp = rng.multinomial(
+            n_samples, _convert_to_numpy(self.weights_, xp)
+        )
 
         if self.covariance_type == "full":
-            X = xp.concat(
+            X = np.vstack(
                 [
-                    xp.asarray(
-                        rng.multivariate_normal(
-                            self.means_[i, ...],
-                            self.covariances_[i, ...],
-                            int(n_samples_comp[i]),
-                        )
+                    rng.multivariate_normal(mean, covariance, int(sample))
+                    for (mean, covariance, sample) in zip(
+                        _convert_to_numpy(self.means_, xp),
+                        _convert_to_numpy(self.covariances_, xp),
+                        n_samples_comp,
                     )
-                    for i in range(len(n_samples_comp))
                 ]
             )
         elif self.covariance_type == "tied":
-            X = xp.concat(
+            X = np.vstack(
                 [
-                    xp.asarray(
-                        rng.multivariate_normal(
-                            self.means_[i, ...],
-                            self.covariances_,
-                            int(n_samples_comp[i]),
-                        )
+                    rng.multivariate_normal(
+                        mean, _convert_to_numpy(self.covariances_, xp), int(sample)
                     )
-                    for i in range(len(n_samples_comp))
+                    for (mean, sample) in zip(
+                        _convert_to_numpy(self.means_, xp), n_samples_comp
+                    )
                 ]
             )
         else:
-            X = xp.concat(
+            X = np.vstack(
                 [
-                    self.means_[i, ...]
-                    + xp.asarray(
-                        rng.standard_normal(size=(n_samples_comp[i, ...], n_features))
+                    mean
+                    + rng.standard_normal(size=(sample, n_features))
+                    * np.sqrt(covariance)
+                    for (mean, covariance, sample) in zip(
+                        _convert_to_numpy(self.means_, xp),
+                        _convert_to_numpy(self.covariances_, xp),
+                        n_samples_comp,
                     )
-                    * xp.sqrt(self.covariances_[i, ...])
-                    for i in range(len(n_samples_comp))
                 ]
             )
 
-        """y = xp.concat(
-            [
-                xp.full(int(sample), j, dtype=xp.int32)
-                for j, sample in enumerate(n_samples_comp)
-            ]
-        )"""
         y = xp.concat(
             [
-                xp.full(int(n_samples_comp[i]), i, dtype=xp.int32)
+                xp.full(int(n_samples_comp[i]), i, dtype=xp.int32, device=device_)
                 for i in range(len(n_samples_comp))
             ]
         )
 
-        return (X, y)
+        return xp.asarray(X, device=device_), y
 
     def _estimate_weighted_log_prob(self, X, xp=None):
         """Estimate the weighted log-probabilities, log P(X | Z) + log weights.
