@@ -5,6 +5,7 @@
 
 import warnings
 from abc import ABCMeta, abstractmethod
+from contextlib import nullcontext
 from numbers import Integral, Real
 from time import time
 
@@ -17,6 +18,7 @@ from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state
 from ..utils._array_api import (
     _convert_to_numpy,
+    _is_numpy_namespace,
     _logsumexp,
     get_namespace,
     get_namespace_and_device,
@@ -562,10 +564,11 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         weighted_log_prob = self._estimate_weighted_log_prob(X, xp=xp)
         log_prob_norm = _logsumexp(weighted_log_prob, axis=1, xp=xp)
 
-        # TODO np.errstate not in the array API spec, decide what to do here
-        # maybe something like this
-        #  context_manager = np.errstate(under="ignore") if xp is np else nullcontext
-        with np.errstate(under="ignore"):
+        # There is no errstate equivalent for warning/error management in array API
+        context_manager = (
+            np.errstate(under="ignore") if _is_numpy_namespace(xp) else nullcontext()
+        )
+        with context_manager:
             # ignore underflow
             log_resp = weighted_log_prob - log_prob_norm[:, xp.newaxis]
         return log_prob_norm, log_resp
