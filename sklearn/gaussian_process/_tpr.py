@@ -8,7 +8,7 @@ from numbers import Real
 
 import numpy as np
 from scipy.linalg import cho_solve
-from scipy.special import gamma
+from scipy.special import gammaln
 from scipy.stats import multivariate_t
 
 from ..base import _fit_context
@@ -398,8 +398,8 @@ class TProcessRegressor(GaussianProcessRegressor):
         self._n = y.shape[0] if isinstance(y, np.ndarray) else 1
         self._degrees_of_freedom = self.degrees_of_freedom_init + self._n
         self._log_likelihood_dims_const = (
-            gamma(self._degrees_of_freedom / 2)
-            - gamma(self.degrees_of_freedom_init / 2)
+            gammaln(self._degrees_of_freedom / 2)
+            - gammaln(self.degrees_of_freedom_init / 2)
             - self._n / 2 * np.log(self.degrees_of_freedom_init * np.pi)
         )
         return X, y
