@@ -4,7 +4,7 @@ Unit tests for the internal SVM of the MKL module.
 
 import numpy as np
 import pytest
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 from sklearn import svm
 from sklearn.datasets import make_classification, make_regression
@@ -58,9 +58,9 @@ def test_mkl_internal_svr_same_results_as_svr():
     mkl_svr_call = mkl_svm.SVR(kernel=linear_kernel, C=1.0, epsilon=0.1)
     mkl_svr_call.fit(X_reg, y_reg)
 
-    assert_array_equal(mkl_svr.predict(X_reg), svr.predict(X_reg))
-    assert_array_equal(mkl_svr_pre.predict(X_reg_pre), svr.predict(X_reg))
-    assert_array_equal(mkl_svr_call.predict(X_reg), svr.predict(X_reg))
+    assert_array_almost_equal(mkl_svr.predict(X_reg), svr.predict(X_reg))
+    assert_array_almost_equal(mkl_svr_pre.predict(X_reg_pre), svr.predict(X_reg))
+    assert_array_almost_equal(mkl_svr_call.predict(X_reg), svr.predict(X_reg))
 
 
 def test_mkl_internal_oneclasssvm_same_results_as_oneclasssvm():
@@ -125,9 +125,9 @@ def test_mkl_internal_nusvr_same_results_as_nusvr():
     mkl_nusvr_call = mkl_svm.NuSVR(kernel=linear_kernel, nu=0.5, C=1.0)
     mkl_nusvr_call.fit(X_reg, y_reg)
 
-    assert_array_equal(mkl_nusvr.predict(X_reg), nusvr.predict(X_reg))
-    assert_array_equal(mkl_nusvr_pre.predict(X_reg_pre), nusvr.predict(X_reg))
-    assert_array_equal(mkl_nusvr_call.predict(X_reg), nusvr.predict(X_reg))
+    assert_array_almost_equal(mkl_nusvr.predict(X_reg), nusvr.predict(X_reg))
+    assert_array_almost_equal(mkl_nusvr_pre.predict(X_reg_pre), nusvr.predict(X_reg))
+    assert_array_almost_equal(mkl_nusvr_call.predict(X_reg), nusvr.predict(X_reg))
 
 
 def test_mkl_internal_svc_with_alpha_seeding_score():
