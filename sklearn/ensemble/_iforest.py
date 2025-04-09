@@ -350,7 +350,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         super()._fit(
             X,
             y,
-            max_samples,
+            max_samples=max_samples,
             max_depth=max_depth,
             sample_weight=sample_weight,
             check_input=False,
