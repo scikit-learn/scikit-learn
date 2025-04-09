@@ -494,7 +494,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        Xinv : ndarray, dtype={np.float32, np.float64}
+        X_original : ndarray, dtype={np.float32, np.float64}
             Data in the original feature space.
         """
 
