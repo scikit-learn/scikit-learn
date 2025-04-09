@@ -175,19 +175,23 @@ def _estimate_gaussian_covariances_full(resp, X, nk, means, reg_covar):
     n_components, n_features = means.shape
     covariances = np.empty((n_components, n_features, n_features), dtype=X.dtype)
     for k in range(n_components):
-        # Compute the covariance matrix of the k-th component by first forming
-        # the responsibilities-weighted Gram matrix using the uncentered data.
-        # Then, we subtract the outer product of the responsibilities-weighted
-        # mean. This avoids an explicit centering of the data, which would
-        # cause a significant waste of memory.
-        #
-        # XXX: We could further optimize memory usage and computation speed if
-        # we had access to a fused-implementation of the sandwich product
-        # kernel. A similar pattern occurs in the computation of the Hessian
-        # matrix in the "newton-cholesky" solver of the LogisticRegression
-        # class.
-        np.dot((resp[:, k] / nk[k]) * X.T, X, out=covariances[k])
-        covariances[k] -= np.outer(means[k], means[k])
+        if X.dtype == np.float32:
+            diff = X - means[k]
+            covariances[k] = np.dot(resp[:, k] * diff.T, diff) / nk[k]
+        else:
+            # Compute the covariance matrix of the k-th component by first forming
+            # the responsibilities-weighted Gram matrix using the uncentered data.
+            # Then, we subtract the outer product of the responsibilities-weighted
+            # mean. This avoids an explicit centering of the data, which would
+            # cause a significant waste of memory.
+            #
+            # XXX: We could further optimize memory usage and computation speed if
+            # we had access to a fused-implementation of the sandwich product
+            # kernel. A similar pattern occurs in the computation of the Hessian
+            # matrix in the "newton-cholesky" solver of the LogisticRegression
+            # class.
+            np.dot((resp[:, k] / nk[k]) * X.T, X, out=covariances[k])
+            covariances[k] -= np.outer(means[k], means[k])
 
         # Apply covariance regularization on the diagonal of the covariance
         # matrix:
