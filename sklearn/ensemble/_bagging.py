@@ -30,7 +30,6 @@ from ..utils.metadata_routing import (
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
-    get_routing_for_object,
     process_routing,
 )
 from ..utils.metaestimators import available_if
@@ -74,6 +73,7 @@ def _generate_bagging_indices(
     n_samples,
     max_features,
     max_samples,
+    sample_weight,
 ):
     """Randomly draw feature and sample indices."""
     # Get valid random state
@@ -83,10 +83,18 @@ def _generate_bagging_indices(
     feature_indices = _generate_indices(
         random_state, bootstrap_features, n_features, max_features
     )
-    sample_indices = _generate_indices(
-        random_state, bootstrap_samples, n_samples, max_samples
-    )
-
+    if sample_weight is None:
+        sample_indices = random_state.choice(
+            n_samples, max_samples, replace=bootstrap_samples
+        )
+    else:
+        normalized_sample_weight = sample_weight / np.sum(sample_weight)
+        sample_indices = random_state.choice(
+            n_samples,
+            max_samples,
+            replace=bootstrap_samples,
+            p=normalized_sample_weight,
+        )
     return feature_indices, sample_indices
 
 
@@ -95,6 +103,7 @@ def _parallel_build_estimators(
     ensemble,
     X,
     y,
+    sample_weight,
     seeds,
     total_n_estimators,
     verbose,
@@ -114,17 +123,6 @@ def _parallel_build_estimators(
     # Build estimators
     estimators = []
     estimators_features = []
-
-    # TODO: (slep6) remove if condition for unrouted sample_weight when metadata
-    # routing can't be disabled.
-    support_sample_weight = has_fit_parameter(ensemble.estimator_, "sample_weight")
-    if not _routing_enabled() and (
-        not support_sample_weight and fit_params.get("sample_weight") is not None
-    ):
-        raise ValueError(
-            "The base estimator doesn't support sample weight, but sample_weight is "
-            "passed to the fit method."
-        )
 
     for i in range(n_estimators):
         if verbose > 1:
@@ -150,51 +148,17 @@ def _parallel_build_estimators(
             n_samples,
             max_features,
             max_samples,
+            sample_weight,
         )
 
         fit_params_ = fit_params.copy()
 
-        # TODO(SLEP6): remove if condition for unrouted sample_weight when metadata
-        # routing can't be disabled.
-        # 1. If routing is enabled, we will check if the routing supports sample
-        # weight and use it if it does.
-        # 2. If routing is not enabled, we will check if the base
-        # estimator supports sample_weight and use it if it does.
-
-        # Note: Row sampling can be achieved either through setting sample_weight or
-        # by indexing. The former is more efficient. Therefore, use this method
-        # if possible, otherwise use indexing.
-        if _routing_enabled():
-            request_or_router = get_routing_for_object(ensemble.estimator_)
-            consumes_sample_weight = request_or_router.consumes(
-                "fit", ("sample_weight",)
-            )
-        else:
-            consumes_sample_weight = support_sample_weight
-        if consumes_sample_weight:
-            # Draw sub samples, using sample weights, and then fit
-            curr_sample_weight = _check_sample_weight(
-                fit_params_.pop("sample_weight", None), X
-            ).copy()
-
-            if bootstrap:
-                sample_counts = np.bincount(indices, minlength=n_samples)
-                curr_sample_weight *= sample_counts
-            else:
-                not_indices_mask = ~indices_to_mask(indices, n_samples)
-                curr_sample_weight[not_indices_mask] = 0
-
-            fit_params_["sample_weight"] = curr_sample_weight
-            X_ = X[:, features] if requires_feature_indexing else X
-            estimator_fit(X_, y, **fit_params_)
-        else:
-            # cannot use sample_weight, so use indexing
-            y_ = _safe_indexing(y, indices)
-            X_ = _safe_indexing(X, indices)
-            fit_params_ = _check_method_params(X, params=fit_params_, indices=indices)
-            if requires_feature_indexing:
-                X_ = X_[:, features]
-            estimator_fit(X_, y_, **fit_params_)
+        y_ = _safe_indexing(y, indices)
+        X_ = _safe_indexing(X, indices)
+        fit_params_ = _check_method_params(X, params=fit_params, indices=indices)
+        if requires_feature_indexing:
+            X_ = X_[:, features]
+        estimator_fit(X_, y_, **fit_params_)
 
         estimators.append(estimator)
         estimators_features.append(features)
@@ -361,8 +325,12 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
-            Note that this is supported only if the base estimator supports
-            sample weighting.
+            Used as probabilties to draw the samples.
+
+            .. versionchanged:: 1.8
+            The sample weights are used to draw the samples and are no
+            longer forwarded to the underlying estimators. It is now okay
+            to use a base estimator that does not support sample weight.
 
         **fit_params : dict
             Parameters to pass to the underlying estimators.
@@ -395,9 +363,14 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=None)
-            fit_params["sample_weight"] = sample_weight
 
-        return self._fit(X, y, max_samples=self.max_samples, **fit_params)
+        return self._fit(
+            X,
+            y,
+            sample_weight=sample_weight,
+            max_samples=self.max_samples,
+            **fit_params,
+        )
 
     def _parallel_args(self):
         return {}
@@ -406,6 +379,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self,
         X,
         y,
+        sample_weight=None,
         max_samples=None,
         max_depth=None,
         check_input=True,
@@ -423,6 +397,10 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         y : array-like of shape (n_samples,)
             The target values (class labels in classification, real numbers in
             regression).
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then samples are equally weighted.
+            Used as probabilties to draw the samples.
 
         max_samples : int or float, default=None
             Argument to use instead of self.max_samples.
@@ -453,6 +431,9 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self._n_samples = n_samples
         y = self._validate_y(y)
 
+        # Store sample_weight for _get_estimators_indices
+        self._sample_weight = sample_weight
+
         # Check parameters
         self._validate_estimator(self._get_estimator())
 
@@ -461,10 +442,6 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         else:
             routed_params = Bunch()
             routed_params.estimator = Bunch(fit=fit_params)
-            if "sample_weight" in fit_params:
-                routed_params.estimator.fit["sample_weight"] = fit_params[
-                    "sample_weight"
-                ]
 
         if max_depth is not None:
             self.estimator_.max_depth = max_depth
@@ -522,7 +499,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         elif n_more_estimators == 0:
             warn(
                 "Warm-start fitting without increasing n_estimators does not "
-                "fit new trees."
+                "fit new estimators."
             )
             return self
 
@@ -548,6 +525,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
                 self,
                 X,
                 y,
+                sample_weight,
                 seeds[starts[i] : starts[i + 1]],
                 total_n_estimators,
                 verbose=self.verbose,
@@ -592,6 +570,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
                 self._n_samples,
                 self._max_features,
                 self._max_samples,
+                self._sample_weight,
             )
 
             yield feature_indices, sample_indices
