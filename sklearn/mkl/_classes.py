@@ -49,13 +49,14 @@ class MKLC(ClassifierMixin, BaseMKL):
     kernels_param_grids : list of dict, default=None
         List of dictionaries specifying parameter grids for each kernel. Must have the
         same length as `kernels`. Keys must be strings matching parameter names, and
-        values must be lists or arrays of values to test.
+        values must be lists or arrays of values to test. To use the default parameters
+        for a kernel, simply provide an empty dictionary `{}` for that kernel.
 
         If the kernel's associated element is a callable, the keys refer to its function
         parameters; if it is a string, the keys refer to parameters of the
         corresponding function in `sklearn.metrics.pairwise.PAIRWISE_KERNEL_FUNCTIONS`.
 
-        If None, the default kernel function parameters are used.
+        If None, default parameters for all kernels are used.
 
     C : float, default=1.0
         Regularization parameter of the internal SVM classifier.
@@ -290,13 +291,14 @@ class MKLR(RegressorMixin, BaseMKL):
     kernels_param_grids : list of dict, default=None
         List of dictionaries specifying parameter grids for each kernel. Must have the
         same length as `kernels`. Keys must be strings matching parameter names, and
-        values must be lists or arrays of values to test.
+        values must be lists or arrays of values to test. To use the default parameters
+        for a kernel, simply provide an empty dictionary `{}` for that kernel.
 
         If the kernel's associated element is a callable, the keys refer to its function
         parameters; if it is a string, the keys refer to parameters of the
         corresponding function in `sklearn.metrics.pairwise.PAIRWISE_KERNEL_FUNCTIONS`.
 
-        If None, the default kernel function parameters are used.
+        If None, default parameters for all kernels are used.
 
     C : float, default=1.0
         Regularization parameter of the internal SVM regressor.
@@ -401,10 +403,10 @@ class MKLR(RegressorMixin, BaseMKL):
     >>> reg = make_pipeline(StandardScaler(), mkl)
     >>> reg.fit(X, y)
     Pipeline(steps=[('standardscaler', StandardScaler()),
-                ('mklr',
-                 MKLR(kernels=['linear', 'rbf'],
-                      kernels_param_grids=[{}, {'gamma': [0.1, 1.0]}],
-                      kernels_scopes=['single', 'all']))])
+                    ('mklr',
+                     MKLR(kernels=['linear', 'rbf'],
+                          kernels_param_grids=[{}, {'gamma': [0.1, 1.0]}],
+                          kernels_scopes=['single', 'all']))])
 
     >>> print(reg.predict([[0, 0]]))
     [0.5]
@@ -497,13 +499,14 @@ class OneClassMKL(OutlierMixin, BaseMKL):
     kernels_param_grids : list of dict, default=None
         List of dictionaries specifying parameter grids for each kernel. Must have the
         same length as `kernels`. Keys must be strings matching parameter names, and
-        values must be lists or arrays of values to test.
+        values must be lists or arrays of values to test. To use the default parameters
+        for a kernel, simply provide an empty dictionary `{}` for that kernel.
 
         If the kernel's associated element is a callable, the keys refer to its function
         parameters; if it is a string, the keys refer to parameters of the
         corresponding function in `sklearn.metrics.pairwise.PAIRWISE_KERNEL_FUNCTIONS`.
 
-        If None, the default kernel function parameters are used.
+        If None, default parameters for all kernels are used.
 
     nu : float, default=0.5
         Anomaly proportion parameter of the internal One-Class SVM.
@@ -603,8 +606,13 @@ class OneClassMKL(OutlierMixin, BaseMKL):
     ...     nu=0.5,
     ... )
     >>> mkl.fit(X)
+    OneClassMKL(kernels=['linear', 'rbf'],
+                kernels_param_grids=[{}, {'gamma': [1.0, 10.0]}],
+                kernels_scopes=['single', 'all'])
+
     >>> mkl.predict(X)
     array([-1,  1,  1,  1, -1])
+
     >>> mkl.score_samples(X)
     array([1.77987316, 2.05479873, 2.05560497, 2.05615569, 1.73328509])
 
