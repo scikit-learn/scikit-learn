@@ -59,10 +59,9 @@ Usage example with precomputed kernels::
 Usage example with kernel functions::
 
     >>> from sklearn.mkl import MKLC
-    >>> from sklearn.metrics.pairwise import polynomial_kernel
     >>> X = [[0, 0], [1, 1]]
     >>> clf = MKLC(
-    ...     kernels=["rbf", polynomial_kernel],  # Same as ["rbf", "poly"]
+    ...     kernels=["rbf", "poly"],
     ...     kernels_scopes=["all", "single"],
     ...     kernels_param_grids=[
     ...         {"gamma": [0.1, 1.0]},
@@ -102,8 +101,7 @@ combination. Below are the different usage methods:
    Example:
     >>> from sklearn.mkl import MKLC
     >>> mkl = MKLC(kernels=["linear", "rbf"])
-    >>> mkl.fit(X=[[0, 1], [1, 2]], y=[0, 1])
-    >>> mkl.transform([[2, 1], [2, 3]])
+    >>> mkl.fit(X=[[0, 1], [1, 2]], y=[0, 1]).transform([[2, 1], [2, 3]])
     array([[1., 4.],
            [3., 8.]])
 
@@ -120,9 +118,9 @@ combination. Below are the different usage methods:
     >>> y = [-2.0, -3.0, 3.0, 4.0]
     >>> mkl = MKLR(kernels=["linear", "rbf"])
     >>> mkl.fit(X, y)
+    MKLR(kernels=['linear', 'rbf'])
     >>> reg = SVR(kernel=mkl)  # The MKL instance is used as a kernel
-    >>> reg.fit(X, y)
-    >>> reg.predict(X)
+    >>> reg.fit(X, y).predict(X)
     array([-1.9, -3.1,  2.9,  4.1])
 
 3. **Using MKL as an Estimator**
@@ -136,8 +134,7 @@ combination. Below are the different usage methods:
     >>> from sklearn.mkl import OneClassMKL
     >>> mkl = OneClassMKL(kernels=["linear", "rbf"])
     >>> X = [[0], [0.44], [0.45], [0.46], [1]]
-    >>> mkl.fit(X)
-    >>> mkl.predict(X)
+    >>> mkl.fit(X).predict(X)
     array([-1,  1,  1,  1, -1])
 
 4. **Using MKL in a Pipeline**
@@ -159,6 +156,7 @@ combination. Below are the different usage methods:
       >>> clf = SVC()
       >>> pipeline = Pipeline([('mkl', mkl), ('svc', clf)])
       >>> pipeline.fit(X=[[-1, -1], [-2, -1], [1, 1], [2, 1]], y=[1, 1, 2, 2])
+      Pipeline(steps=[('mkl', MKLC(kernels=['linear', 'rbf'])), ('svc', SVC())])
       >>> pipeline.predict([[-0.8, -1], [0.8, 1.2]])
       array([1, 2])
 
@@ -179,6 +177,8 @@ combination. Below are the different usage methods:
       >>> mkl = MKLR(kernels=["linear", "rbf"])
       >>> pipeline = Pipeline([('sc', StandardScaler()), ('mkl', mkl)])
       >>> pipeline.fit(X, y)
+      Pipeline(steps=[('sc', StandardScaler()),
+                      ('mkl', MKLR(kernels=['linear', 'rbf']))])
       >>> pipeline.predict(X)
       array([-1.90000006, -2.90017257,  2.90000006,  3.90017257])
 
@@ -220,6 +220,9 @@ Example of setting SVM parameters::
     ...     svm_params=svm_params
     ... )
     >>> mkl.fit(X=[[0, 0], [1, 1], [2, 2], [3, 3]], y=[0, 1, 2, 3])
+    MKLC(kernels=['linear', 'rbf'], kernels_scopes=['single', 'all'],
+         svm_params={'cache_size': 2000, 'decision_function_shape': 'ovo',
+                     'max_iter': 100000000})
     >>> mkl.decision_function([[0, 0], [1, 1]]).shape
     (2, 6)
 
@@ -238,6 +241,7 @@ fitted coefficients like this::
     >>> y = [-2.0, -3.0, 3.0, 4.0]
     >>> mkl = MKLR(kernels=["rbf"], kernels_scopes=["single"], epsilon=0.01)
     >>> mkl.fit(X, y)
+    MKLR(epsilon=0.01, kernels=['rbf'], kernels_scopes=['single'])
     >>> # Access the internal SVM after fitting
     >>> internal_svm = mkl._svm
     >>> internal_svm.dual_coef_
