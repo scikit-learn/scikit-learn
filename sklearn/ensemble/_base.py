@@ -211,7 +211,10 @@ class _BaseHeterogeneousEnsemble(
         self.estimators = estimators
 
     def _validate_estimators(self):
-        if len(self.estimators) == 0:
+        if len(self.estimators) == 0 or not all(
+            isinstance(item, (tuple, list)) and isinstance(item[0], str)
+            for item in self.estimators
+        ):
             raise ValueError(
                 "Invalid 'estimators' attribute, 'estimators' should be a "
                 "non-empty list of (string, estimator) tuples."

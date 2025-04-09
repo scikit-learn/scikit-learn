@@ -60,9 +60,11 @@ _ = ax.legend(loc="lower left")
 # %%
 # `get_feature_names_out` Available in all Transformers
 # -----------------------------------------------------
-# :term:`get_feature_names_out` is now available in all Transformers. This enables
-# :class:`~pipeline.Pipeline` to construct the output feature names for more complex
-# pipelines:
+# :term:`get_feature_names_out` is now available in all transformers, thereby
+# concluding the implementation of
+# `SLEP007 <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep007/proposal.html>`__.
+# This enables :class:`~pipeline.Pipeline` to construct the output feature names for
+# more complex pipelines:
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.pipeline import make_pipeline

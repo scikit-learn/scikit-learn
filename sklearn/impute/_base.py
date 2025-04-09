@@ -906,7 +906,8 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             imputer_mask.eliminate_zeros()
 
             if self.features == "missing-only":
-                n_missing = imputer_mask.getnnz(axis=0)
+                # count number of True values in each row.
+                n_missing = imputer_mask.sum(axis=0)
 
             if self.sparse is False:
                 imputer_mask = imputer_mask.toarray()
