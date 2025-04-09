@@ -1363,9 +1363,4 @@ DEPRECATED_API_REFERENCE = {
 }
 """
 
-DEPRECATED_API_REFERENCE = {
-    "1.7": [
-        "utils.parallel_backend",
-        "utils.register_parallel_backend",
-    ]
-}  # type: ignore
+DEPRECATED_API_REFERENCE = {}  # type: ignore
