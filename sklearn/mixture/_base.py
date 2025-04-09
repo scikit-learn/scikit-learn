@@ -495,7 +495,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         y = xp.concat(
             [
-                xp.full(int(n_samples_comp[i]), i, dtype=xp.int32, device=device_)
+                xp.full(int(n_samples_comp[i]), i, dtype=xp.int64, device=device_)
                 for i in range(len(n_samples_comp))
             ]
         )
