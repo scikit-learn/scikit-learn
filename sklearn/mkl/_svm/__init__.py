@@ -9,9 +9,9 @@
 from ._classes import SVC, SVR, NuSVC, NuSVR, OneClassSVM
 
 __all__ = [
+    "SVC",
+    "SVR",
     "NuSVC",
     "NuSVR",
     "OneClassSVM",
-    "SVC",
-    "SVR",
 ]
