@@ -2012,10 +2012,11 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
         ensure_all_finite=ensure_all_finite,
         ensure_2d=False,
     )
+    _, _, dtype_float = _find_floating_dtype_allow_sparse(X, Y, xp=xp)
 
     if X is Y:
         # Only calculate metric for upper triangle
-        out = xp.zeros((X.shape[0], Y.shape[0]), dtype=X.dtype)
+        out = xp.zeros((X.shape[0], Y.shape[0]), dtype=dtype_float)
         iterator = itertools.combinations(range(X.shape[0]), 2)
         for i, j in iterator:
             # scipy has not yet implemented 1D sparse slices; once implemented this can
@@ -2038,7 +2039,7 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
 
     else:
         # Calculate all cells
-        out = xp.empty((X.shape[0], Y.shape[0]), dtype=X.dtype)
+        out = xp.empty((X.shape[0], Y.shape[0]), dtype=dtype_float)
         iterator = itertools.product(range(X.shape[0]), range(Y.shape[0]))
         for i, j in iterator:
             # scipy has not yet implemented 1D sparse slices; once implemented this can
