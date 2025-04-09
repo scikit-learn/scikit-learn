@@ -25,7 +25,7 @@ from ..utils import as_float_array, check_array, check_random_state
 from ..utils._param_validation import Interval, Options, StrOptions, validate_params
 from ..utils.validation import check_is_fitted, validate_data
 
-__all__ = ["fastica", "FastICA"]
+__all__ = ["FastICA", "fastica"]
 
 
 def _gs_decorrelation(w, W, j):

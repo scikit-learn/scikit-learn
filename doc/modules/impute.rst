@@ -175,8 +175,7 @@ Note that a call to the ``transform`` method of :class:`IterativeImputer` is
 not allowed to change the number of samples. Therefore multiple imputations
 cannot be achieved by a single call to ``transform``.
 
-References
-----------
+.. rubric:: References
 
 .. [1] `Stef van Buuren, Karin Groothuis-Oudshoorn (2011). "mice: Multivariate
    Imputation by Chained Equations in R". Journal of Statistical Software 45:

@@ -1,0 +1,4 @@
+- array-api-compat and array-api-extra are now vendored within the
+  scikit-learn source. Users of the experimental array API standard
+  support no longer need to install array-api-compat in their environment.
+  by :user:`Lucas Colley <lucascolley>`
