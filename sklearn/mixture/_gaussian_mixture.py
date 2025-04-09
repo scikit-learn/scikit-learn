@@ -506,13 +506,14 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
     # to convert it to bytes
     bytes_per_sample = max(X.dtype.itemsize * X.shape[1], 1)
     batch_size = max(int(get_config()["working_memory"] * 1e6) // bytes_per_sample, 1)
+    float_dtype = precisions_chol.dtype
 
     # Pre-allocate a reusable buffer to store feature-wise squared diff.
     if covariance_type in ["full", "tied"]:
-        squared_diff = np.empty((batch_size, n_features), dtype=X.dtype)
+        squared_diff = np.empty((batch_size, n_features), dtype=float_dtype)
 
     if covariance_type == "full":
-        log_prob = np.empty((n_samples, n_components), dtype=X.dtype)
+        log_prob = np.empty((n_samples, n_components), dtype=float_dtype)
         for k, (mean_k, prec_chol) in enumerate(zip(means, precisions_chol)):
             mean_k_prec_chol = mean_k @ prec_chol
             for batch_slice in gen_batches(X.shape[0], batch_size):
@@ -523,7 +524,7 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
                 log_prob[batch_slice, k] = np.sum(squared_diff[: len(X_batch)], axis=1)
 
     elif covariance_type == "tied":
-        log_prob = np.empty((n_samples, n_components), dtype=X.dtype)
+        log_prob = np.empty((n_samples, n_components), dtype=float_dtype)
         for k, mean_k in enumerate(means):
             mean_k_precisions_chol = mean_k @ precisions_chol
             for batch_slice in gen_batches(X.shape[0], batch_size):
@@ -550,7 +551,7 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
     # Since we are using the precision of the Cholesky decomposition,
     # `- 0.5 * log_det_precision` becomes `+ log_det_precision_chol`
     result = log_prob
-    result += n_features * np.log(2 * np.pi).astype(X.dtype)
+    result += n_features * np.log(2 * np.pi).astype(float_dtype)
     result *= -0.5
     result += log_det
     return result
