@@ -1,0 +1,5 @@
+- A new `mkl` module has been added to scikit-learn, providing estimators and
+  transformers for Multiple Kernel Learning (MKL). The module includes three
+  classes: `MKLC` (classification), `MKLR` (regression), and `OneClassMKL` (outlier
+  detection), which can be used for kernel combination tasks in machine learning.
+  By :user:`Your Name <thomasbauer76>`
