@@ -1282,6 +1282,11 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
             " tests are added for TunedThresholdClassifierCV specifically."
         ),
     },
+    QuantileTransformer: {
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "QuantileTransformer does not yet support sample_weight on sparse data."
+        ),
+    },
 }
 
 # TODO: remove when scipy min version >= 1.11
