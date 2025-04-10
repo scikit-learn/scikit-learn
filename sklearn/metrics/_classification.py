@@ -874,7 +874,8 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
         if "At least one label specified must be in y_true" in str(e):
             msg = (
                 "At least one label in `labels` must be present in `y1` (even though "
-                "the function is otherwise agnostic to the order of `y1` and `y2`)."
+                "`cohen_kappa_score` is otherwise agnostic to the order of `y1` and "
+                "`y2`)."
             )
             raise ValueError(msg) from e
         raise
