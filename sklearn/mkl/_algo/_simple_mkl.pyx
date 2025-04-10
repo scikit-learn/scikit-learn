@@ -421,7 +421,7 @@ cpdef tuple _dual_gap(
         # (J(d) + max(-∂J/∂dₘ) - Σᵢ(βᵢ - αᵢ)·yᵢ - ε·Σᵢ(βᵢ + αᵢ)) / J(d)
         # Here, alpha = [β, α]
         vec = np.concatenate([np.subtract(y, epsilon), -np.add(y, epsilon)])
-        duality_gap = (J - np.min(delta_J) - np.dot(alpha, vec)) / J
+        duality_gap = (J - np.min(delta_J) - np.dot(alpha, vec).item()) / J
     elif svm_type == ONECLASS:
         # (J(d) + max(-∂J/∂dₘ)) / J(d)
         duality_gap = np.abs((J - np.min(delta_J)) / J)
