@@ -86,8 +86,6 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
         assert bin_thresholds.shape[0] == max_bins - 1
 
         # Remove duplicated midpoints if they exist and shift
-        # by 0.5 if the unique points are less than distinct
-        # values
         unique_bin_values = np.unique(bin_thresholds)
         if unique_bin_values.shape[0] != bin_thresholds.shape[0]:
             bin_thresholds = unique_bin_values
