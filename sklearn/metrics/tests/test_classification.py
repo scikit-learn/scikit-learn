@@ -926,6 +926,66 @@ def test_cohen_kappa():
     )
 
 
+@pytest.mark.parametrize("replace_undefined_by", [0.0, np.nan])
+def test_cohen_kappa_zero_division(replace_undefined_by):
+    """Test that cohen_kappa_score handles divisions by 0 correctly returning the
+    `replace_undefined_by` param."""
+
+    def check_equal(res, exp):
+        if np.isnan(res) and np.isnan(exp):
+            return True
+        return res == exp
+
+    # test case: empty inputs
+    y1 = np.array([])
+    y2 = np.array([])
+    assert check_equal(
+        cohen_kappa_score(y1, y2, replace_undefined_by=replace_undefined_by),
+        replace_undefined_by,
+    )
+
+    # test case: annotator y2 does not assign any label specified in `labels`
+    labels = [1, 2]
+    y1 = np.array([1] * 5 + [2] * 5)
+    y2 = np.array([3] * 10)
+    assert check_equal(
+        cohen_kappa_score(
+            y1, y2, labels=labels, replace_undefined_by=replace_undefined_by
+        ),
+        replace_undefined_by,
+    )
+
+    # test case: both inputs only have one label
+    y1 = np.array([3] * 10)
+    y2 = np.array([3] * 10)
+    assert check_equal(
+        cohen_kappa_score(y1, y2, replace_undefined_by=replace_undefined_by),
+        replace_undefined_by,
+    )
+
+    # test case: both inputs only have one label in common with `labels`
+    labels = [1]
+    y1 = np.array([1] * 5 + [2] * 5)
+    y2 = np.array([1] * 5 + [3] * 5)
+    assert check_equal(
+        cohen_kappa_score(
+            y1, y2, labels=labels, replace_undefined_by=replace_undefined_by
+        ),
+        replace_undefined_by,
+    )
+    # with weights="quadratic" it is almost the same test: skipped here
+    assert check_equal(
+        cohen_kappa_score(
+            y1,
+            y2,
+            labels=labels,
+            weights="linear",
+            replace_undefined_by=replace_undefined_by,
+        ),
+        replace_undefined_by,
+    )
+
+
 @pytest.mark.parametrize("zero_division", [0, 1, np.nan])
 @pytest.mark.parametrize("y_true, y_pred", [([0], [0])])
 @pytest.mark.parametrize(
