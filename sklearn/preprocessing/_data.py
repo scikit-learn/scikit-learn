@@ -10,6 +10,7 @@ from scipy import optimize, sparse, stats
 from scipy.special import boxcox, inv_boxcox
 
 from sklearn.utils import metadata_routing
+from sklearn.utils.stats import _averaged_weighted_percentile
 
 from ..base import (
     BaseEstimator,
@@ -2726,21 +2727,6 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         self.random_state = random_state
         self.copy = copy
 
-    def _weighted_quantile(self, values, quantiles, sample_weight=None):
-        """
-        Compute weighted quantiles of 1D numpy array.
-        """
-        sorter = np.argsort(values)
-        values = values[sorter]
-        if sample_weight is None:
-            sample_weight = np.ones(len(values))
-        else:
-            sample_weight = sample_weight[sorter]
-
-        weighted_cdf = np.cumsum(sample_weight)
-        weighted_cdf /= weighted_cdf[-1]
-        return np.interp(quantiles, weighted_cdf, values)
-
     def _dense_fit(self, X, random_state, sample_weight=None):
         """Compute percentiles for dense matrices.
 
@@ -2779,11 +2765,13 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
             if sample_weight is not None:
                 weights_clean = sample_weight[mask]
-                self.quantiles_[:, i] = self._weighted_quantile(
-                    col_clean, references / 100.0, weights_clean
+                self.quantiles_[:, i] = _averaged_weighted_percentile(
+                    col_clean, sample_weight=weights_clean, quantile=references / 100.0
                 )
             else:
-                self.quantiles_[:, i] = np.nanpercentile(col_clean, references)
+                self.quantiles_[:, i] = np.nanquantile(
+                    col_clean, references / 100.0, method="averaged_inverted_cdf"
+                )
 
         # Due to floating-point precision error in `np.nanpercentile`,
         # make sure that quantiles are monotonically increasing.

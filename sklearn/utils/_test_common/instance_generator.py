@@ -162,6 +162,7 @@ from sklearn.preprocessing import (
     StandardScaler,
     TargetEncoder,
 )
+from sklearn.preprocessing._data import QuantileTransformer
 from sklearn.random_projection import (
     GaussianRandomProjection,
     SparseRandomProjection,
@@ -1253,6 +1254,11 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
             "Due to the cross-validation and sample ordering, removing a sample"
             " is not strictly equal to putting is weight to zero. Specific unit"
             " tests are added for TunedThresholdClassifierCV specifically."
+        ),
+    },
+    QuantileTransformer: {
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "QuantileTransformer does not yet support sample_weight on sparse data."
         ),
     },
 }
