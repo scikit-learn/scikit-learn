@@ -872,7 +872,10 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
         confusion = confusion_matrix(y1, y2, labels=labels, sample_weight=sample_weight)
     except ValueError as e:
         if "At least one label specified must be in y_true" in str(e):
-            msg = str(e).replace("y_true", "y1")
+            msg = (
+                "At least one label in `labels` must be present in `y1` (even though "
+                "the function is otherwise agnostic to the order of `y1` and `y2`)."
+            )
             raise ValueError(msg) from e
         raise
 
