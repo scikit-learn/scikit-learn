@@ -1972,6 +1972,7 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     and compute them using multithreading."""
     xp, _, device = get_namespace_and_device(X, Y)
     X, Y, dtype_float = _find_floating_dtype_allow_sparse(X, Y, xp=xp)
+    print(X)
 
     if Y is None:
         Y = X
@@ -2018,8 +2019,9 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
         out = xp.zeros((X.shape[0], Y.shape[0]), dtype=dtype_float)
         iterator = itertools.combinations(range(X.shape[0]), 2)
         for i, j in iterator:
-            x = X[i, ...]
-            y = Y[j, ...]
+            # When `metric` is a callable, input arrays are allowed to be 1D
+            x = X[i, ...] if X.ndim == 2 else X[i]
+            y = Y[j, ...] if Y.ndim == 2 else Y[j]
             out[i, j] = metric(x, y, **kwds)
 
         # Make symmetric
@@ -2029,7 +2031,8 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
         # Calculate diagonal
         # NB: nonzero diagonals are allowed for both metrics and kernels
         for i in range(X.shape[0]):
-            x = X[i, ...]
+            # When `metric` is a callable, input arrays are allowed to be 1D
+            x = X[i, ...] if X.ndim == 2 else X[i]
             out[i, i] = metric(x, x, **kwds)
 
     else:
@@ -2037,8 +2040,9 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
         out = xp.empty((X.shape[0], Y.shape[0]), dtype=dtype_float)
         iterator = itertools.product(range(X.shape[0]), range(Y.shape[0]))
         for i, j in iterator:
-            x = X[i, ...]
-            y = Y[j, ...]
+            # When `metric` is a callable, input arrays are allowed to be 1D
+            x = X[i, ...] if X.ndim == 2 else X[i]
+            y = Y[j, ...] if Y.ndim == 2 else Y[j]
             out[i, j] = metric(x, y, **kwds)
 
     return out
