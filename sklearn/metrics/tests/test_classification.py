@@ -928,7 +928,7 @@ def test_cohen_kappa():
 
 @pytest.mark.parametrize("replace_undefined_by", [0.0, np.nan])
 def test_cohen_kappa_zero_division(replace_undefined_by):
-    """Test that cohen_kappa_score handles divisions by 0 correctly returning the
+    """Test that cohen_kappa_score handles divisions by 0 correctly by returning the
     `replace_undefined_by` param."""
 
     def check_equal(res, exp):
@@ -964,7 +964,7 @@ def test_cohen_kappa_zero_division(replace_undefined_by):
     )
 
     # test case: both inputs only have one label in common with `labels`
-    labels = [1]
+    labels = [1, 2]
     y1 = np.array([1] * 5 + [2] * 5)
     y2 = np.array([1] * 5 + [3] * 5)
     assert check_equal(
@@ -984,6 +984,31 @@ def test_cohen_kappa_zero_division(replace_undefined_by):
         ),
         replace_undefined_by,
     )
+
+
+def test_cohen_kappa_zero_division_warning():
+    """Test that cohen_kappa_score raises UndefinedMetricWarning when a division by 0
+    occurs."""
+
+    # test first place to raise warning
+    labels = [1, 2]
+    y1 = np.array([1] * 5 + [2] * 5)
+    y2 = np.array([3] * 10)
+    with pytest.warns(
+        UndefinedMetricWarning,
+        match="`y2` does not contain any label that is also both present in",
+    ):
+        cohen_kappa_score(y1, y2, labels=labels)
+
+    # test second place to raise warning
+    labels = [1, 2]
+    y1 = np.array([1] * 5 + [2] * 5)
+    y2 = np.array([1] * 5 + [3] * 5)
+    with pytest.warns(
+        UndefinedMetricWarning,
+        match="`y1` and `y2` only have one label in common that is also in `labels`.",
+    ):
+        cohen_kappa_score(y1, y2, labels=labels)
 
 
 @pytest.mark.parametrize("zero_division", [0, 1, np.nan])

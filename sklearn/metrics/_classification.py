@@ -848,7 +848,8 @@ def cohen_kappa_score(
         Sets the return value when a division by zero would occur. This can happen for
         instance on empty input arrays, or when no label of interest (as defined in the
         `labels` param) is assigned by the second annotator, or when both `y1` and `y2`
-        only have one label in common that is also in `labels`. Can take the
+        only have one label in common that is also in `labels`. In these cases, an
+        :class:`~sklearn.exceptions.UndefinedMetricWarning` is raised. Can take the
         following values:
 
         - `np.nan` to return `np.nan`
@@ -890,6 +891,12 @@ def cohen_kappa_score(
     numerator = np.outer(sum0, sum1)
     denominator = np.sum(sum0)
     if np.isclose(denominator, 0):
+        msg = (
+            "`y2` does not contain any label that is also both present in `y1` and in "
+            "`labels`. cohen_kappa_score is undefined and set to the value defined in "
+            "the `replace_undefined_by` param, which defaults to 0.0."
+        )
+        warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
         return replace_undefined_by
     expected = numerator / denominator
 
@@ -907,6 +914,12 @@ def cohen_kappa_score(
     numerator = np.sum(w_mat * confusion)
     denominator = np.sum(w_mat * expected)
     if np.isclose(denominator, 0):
+        msg = (
+            "`y1` and `y2` only have one label in common that is also in `labels`. "
+            "cohen_kappa_score is undefined and set to the value defined in the "
+            "`replace_undefined_by` param, which defaults to 0.0."
+        )
+        warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
         return replace_undefined_by
     k = numerator / denominator
 
