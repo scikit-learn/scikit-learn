@@ -15,7 +15,7 @@ from ..base import (
     clone,
 )
 from ..exceptions import ConvergenceWarning
-from ..utils import check_consistent_length, check_random_state
+from ..utils import check_consistent_length, check_random_state, get_tags
 from ..utils._bunch import Bunch
 from ..utils._param_validation import (
     HasMethods,
@@ -192,7 +192,8 @@ class RANSACRegressor(
     Attributes
     ----------
     estimator_ : object
-        Best fitted model (copy of the `estimator` object).
+        Final model fitted on the inliers predicted by the "best" model found
+        during RANSAC sampling (copy of the `estimator` object).
 
     n_trials_ : int
         Number of random selection trials until one of the stop criteria is
@@ -239,7 +240,7 @@ class RANSACRegressor(
     ----------
     .. [1] https://en.wikipedia.org/wiki/RANSAC
     .. [2] https://www.sri.com/wp-content/uploads/2021/12/ransac-publication.pdf
-    .. [3] http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf
+    .. [3] https://bmva-archive.org.uk/bmvc/2009/Papers/Paper355/Paper355.pdf
 
     Examples
     --------
@@ -255,7 +256,7 @@ class RANSACRegressor(
 
     For a more detailed example, see
     :ref:`sphx_glr_auto_examples_linear_model_plot_ransac.py`
-    """  # noqa: E501
+    """
 
     _parameter_constraints: dict = {
         "estimator": [HasMethods(["fit", "score", "predict"]), None],
@@ -723,10 +724,8 @@ class RANSACRegressor(
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # TODO: replace by a statistical test, see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
+        if self.estimator is None:
+            tags.input_tags.sparse = True  # default estimator is LinearRegression
+        else:
+            tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
         return tags

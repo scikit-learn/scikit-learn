@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from sklearn.utils._plotting import (
+    _despine,
     _interval_max_min_ratio,
     _validate_score_name,
     _validate_style_kwargs,
@@ -128,3 +129,12 @@ def test_validate_style_kwargs_error(default_kwargs, user_kwargs):
     """Check that `validate_style_kwargs` raises TypeError"""
     with pytest.raises(TypeError):
         _validate_style_kwargs(default_kwargs, user_kwargs)
+
+
+def test_despine(pyplot):
+    ax = pyplot.gca()
+    _despine(ax)
+    assert ax.spines["top"].get_visible() is False
+    assert ax.spines["right"].get_visible() is False
+    assert ax.spines["bottom"].get_bounds() == (0, 1)
+    assert ax.spines["left"].get_bounds() == (0, 1)

@@ -38,13 +38,18 @@ from numpy.testing import (
 )
 
 import sklearn
+from sklearn.utils import (
+    ClassifierTags,
+    RegressorTags,
+    Tags,
+    TargetTags,
+    TransformerTags,
+)
 from sklearn.utils._array_api import _check_array_api_dispatch
 from sklearn.utils.fixes import (
     _IS_32BIT,
     VisibleDeprecationWarning,
     _in_unstable_openblas_configuration,
-    parse_version,
-    sp_version,
 )
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
@@ -54,13 +59,13 @@ from sklearn.utils.validation import (
 )
 
 __all__ = [
-    "assert_array_equal",
+    "SkipTest",
+    "assert_allclose",
     "assert_almost_equal",
     "assert_array_almost_equal",
+    "assert_array_equal",
     "assert_array_less",
-    "assert_allclose",
     "assert_run_python_script_without_output",
-    "SkipTest",
 ]
 
 SkipTest = unittest.case.SkipTest
@@ -310,7 +315,7 @@ def _is_numpydoc():
 try:
     _check_array_api_dispatch(True)
     ARRAY_API_COMPAT_FUNCTIONAL = True
-except ImportError:
+except (ImportError, RuntimeError):
     ARRAY_API_COMPAT_FUNCTIONAL = False
 
 try:
@@ -326,7 +331,7 @@ try:
     )
     skip_if_array_api_compat_not_configured = pytest.mark.skipif(
         not ARRAY_API_COMPAT_FUNCTIONAL,
-        reason="requires array_api_compat installed and a new enough version of NumPy",
+        reason="SCIPY_ARRAY_API not set, or versions of NumPy/SciPy too old.",
     )
 
     #  Decorator for tests involving both BLAS calls and multiprocessing.
@@ -680,17 +685,32 @@ def _get_diff_msg(docstrings_grouped):
     return msg_diff
 
 
-def _check_consistency_items(items_docs, type_or_desc, section, n_objects):
+def _check_consistency_items(
+    items_docs, type_or_desc, section, n_objects, descr_regex_pattern=""
+):
     """Helper to check docstring consistency of all `items_docs`.
 
     If item is not present in all objects, checking is skipped and warning raised.
+    If `regex` provided, match descriptions to all descriptions.
     """
     skipped = []
     for item_name, docstrings_grouped in items_docs.items():
         # If item not found in all objects, skip
         if sum([len(objs) for objs in docstrings_grouped.values()]) < n_objects:
             skipped.append(item_name)
-        # If more than one key, docstrings not consistent between objects
+        # If regex provided, match to all descriptions
+        elif type_or_desc == "description" and descr_regex_pattern:
+            not_matched = []
+            for docstring, group in docstrings_grouped.items():
+                if not re.search(descr_regex_pattern, docstring):
+                    not_matched.extend(group)
+            if not_matched:
+                msg = textwrap.fill(
+                    f"The description of {section[:-1]} '{item_name}' in {not_matched}"
+                    f" does not match 'descr_regex_pattern': {descr_regex_pattern} "
+                )
+                raise AssertionError(msg)
+        # Otherwise, if more than one key, docstrings not consistent between objects
         elif len(docstrings_grouped.keys()) > 1:
             msg_diff = _get_diff_msg(docstrings_grouped)
             obj_groups = " and ".join(
@@ -717,8 +737,9 @@ def assert_docstring_consistency(
     exclude_attrs=None,
     include_returns=False,
     exclude_returns=None,
+    descr_regex_pattern=None,
 ):
-    """Check consistency between docstring parameters/attributes/returns of objects.
+    r"""Check consistency between docstring parameters/attributes/returns of objects.
 
     Checks if parameters/attributes/returns have the same type specification and
     description (ignoring whitespace) across `objects`. Intended to be used for
@@ -760,18 +781,27 @@ def assert_docstring_consistency(
         List of returns to be excluded. If None, no returns are excluded.
         Can only be set if `include_returns` is True.
 
+    descr_regex_pattern : str, default=None
+        Regular expression to match to all descriptions of included
+        parameters/attributes/returns. If None, will revert to default behavior
+        of comparing descriptions between objects.
+
     Examples
     --------
-    >>> from sklearn.metrics import (mean_absolute_error, mean_squared_error,
-    ... median_absolute_error)
-    >>> from sklearn.utils.testing import assert_docstring_consistency
+    >>> from sklearn.metrics import (accuracy_score, classification_report,
+    ... mean_absolute_error, mean_squared_error, median_absolute_error)
+    >>> from sklearn.utils._testing import assert_docstring_consistency
     ... # doctest: +SKIP
     >>> assert_docstring_consistency([mean_absolute_error, mean_squared_error],
     ... include_params=['y_true', 'y_pred', 'sample_weight'])  # doctest: +SKIP
     >>> assert_docstring_consistency([median_absolute_error, mean_squared_error],
     ... include_params=True)  # doctest: +SKIP
+    >>> assert_docstring_consistency([accuracy_score, classification_report],
+    ... include_params=["y_true"],
+    ... descr_regex_pattern=r"Ground truth \(correct\) (labels|target values)")
+    ... # doctest: +SKIP
     """
-    from numpydoc import docscrape
+    from numpydoc.docscrape import NumpyDocString
 
     Args = namedtuple("args", ["include", "exclude", "arg_name"])
 
@@ -798,7 +828,7 @@ def assert_docstring_consistency(
             or inspect.isfunction(obj)
             or inspect.isclass(obj)
         ):
-            objects_doc[obj.__name__] = docscrape.NumpyDocString(inspect.getdoc(obj))
+            objects_doc[obj.__name__] = NumpyDocString(inspect.getdoc(obj))
         else:
             raise TypeError(
                 "All 'objects' must be one of: function, class or descriptor, "
@@ -820,7 +850,13 @@ def assert_docstring_consistency(
                     desc_items[item_name][desc].append(obj_name)
 
         _check_consistency_items(type_items, "type specification", section, n_objects)
-        _check_consistency_items(desc_items, "description", section, n_objects)
+        _check_consistency_items(
+            desc_items,
+            "description",
+            section,
+            n_objects,
+            descr_regex_pattern=descr_regex_pattern,
+        )
 
 
 def assert_run_python_script_without_output(source_code, pattern=".+", timeout=60):
@@ -978,11 +1014,6 @@ def _convert_container(
             # https://github.com/scipy/scipy/pull/18530#issuecomment-1878005149
             container = np.atleast_2d(container)
 
-        if "array" in constructor_name and sp_version < parse_version("1.8"):
-            raise ValueError(
-                f"{constructor_name} is only available with scipy>=1.8.0, got "
-                f"{sp_version}"
-            )
         if constructor_name in ("sparse", "sparse_csr"):
             # sparse and sparse_csr are equivalent for legacy reasons
             return sp.sparse.csr_matrix(container, dtype=dtype)
@@ -1089,8 +1120,6 @@ class MinimalClassifier:
     * within a `SearchCV` in `test_search.py`.
     """
 
-    _estimator_type = "classifier"
-
     def __init__(self, param=None):
         self.param = param
 
@@ -1127,6 +1156,15 @@ class MinimalClassifier:
 
         return accuracy_score(y, self.predict(X))
 
+    def __sklearn_tags__(self):
+        return Tags(
+            estimator_type="classifier",
+            classifier_tags=ClassifierTags(),
+            regressor_tags=None,
+            transformer_tags=None,
+            target_tags=TargetTags(required=True),
+        )
+
 
 class MinimalRegressor:
     """Minimal regressor implementation without inheriting from BaseEstimator.
@@ -1137,8 +1175,6 @@ class MinimalRegressor:
     * within a `Pipeline` in `test_pipeline.py`;
     * within a `SearchCV` in `test_search.py`.
     """
-
-    _estimator_type = "regressor"
 
     def __init__(self, param=None):
         self.param = param
@@ -1166,6 +1202,15 @@ class MinimalRegressor:
         from sklearn.metrics import r2_score
 
         return r2_score(y, self.predict(X))
+
+    def __sklearn_tags__(self):
+        return Tags(
+            estimator_type="regressor",
+            classifier_tags=None,
+            regressor_tags=RegressorTags(),
+            transformer_tags=None,
+            target_tags=TargetTags(required=True),
+        )
 
 
 class MinimalTransformer:
@@ -1203,26 +1248,34 @@ class MinimalTransformer:
     def fit_transform(self, X, y=None):
         return self.fit(X, y).transform(X, y)
 
+    def __sklearn_tags__(self):
+        return Tags(
+            estimator_type="transformer",
+            classifier_tags=None,
+            regressor_tags=None,
+            transformer_tags=TransformerTags(),
+            target_tags=TargetTags(required=False),
+        )
+
 
 def _array_api_for_tests(array_namespace, device):
     try:
         array_mod = importlib.import_module(array_namespace)
-    except ModuleNotFoundError:
+    except (ModuleNotFoundError, ImportError):
         raise SkipTest(
             f"{array_namespace} is not installed: not checking array_api input"
         )
-    try:
-        import array_api_compat  # noqa
-    except ImportError:
-        raise SkipTest(
-            "array_api_compat is not installed: not checking array_api input"
-        )
+
+    if os.environ.get("SCIPY_ARRAY_API") is None:
+        raise SkipTest("SCIPY_ARRAY_API is not set: not checking array_api input")
+
+    from sklearn.externals.array_api_compat import get_namespace
 
     # First create an array using the chosen array module and then get the
     # corresponding (compatibility wrapped) array namespace based on it.
     # This is because `cupy` is not the same as the compatibility wrapped
     # namespace of a CuPy array.
-    xp = array_api_compat.get_namespace(array_mod.asarray(1))
+    xp = get_namespace(array_mod.asarray(1))
     if (
         array_namespace == "torch"
         and device == "cuda"
@@ -1323,6 +1376,14 @@ def _get_warnings_filters_info_list():
         ),
         WarningInfo(
             "ignore", message="Attribute s is deprecated", category=DeprecationWarning
+        ),
+        # Plotly deprecated something which we're not using, but internally it's used
+        # and needs to be fixed on their side.
+        # https://github.com/plotly/plotly.py/issues/4997
+        WarningInfo(
+            "ignore",
+            message=".+scattermapbox.+deprecated.+scattermap.+instead",
+            category=DeprecationWarning,
         ),
     ]
 

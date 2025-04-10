@@ -454,7 +454,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     def _check_voting(self):
         if self.voting == "hard":
             raise AttributeError(
-                f"predict_proba is not available when voting={repr(self.voting)}"
+                f"predict_proba is not available when voting={self.voting!r}"
             )
         return True
 
@@ -546,6 +546,11 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
             f"{class_name}_{name}{i}" for name in active_names for i in range(n_classes)
         ]
         return np.asarray(names_out, dtype=object)
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = []
+        return tags
 
 
 class VotingRegressor(RegressorMixin, _BaseVoting):

@@ -1,4 +1,0 @@
-- :class:`ensemble.IsolationForest` now runs parallel jobs
-  during :term:`predict` offering a speedup of up to 2-4x on sample sizes
-  larger than 2000 using `joblib`.
-  By :user:`Adam Li <adam2392>` and :user:`Sérgio Pereira <sergiormpereira>`

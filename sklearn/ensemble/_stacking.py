@@ -40,29 +40,11 @@ from ..utils.validation import (
     _check_feature_names_in,
     _check_response_method,
     _deprecate_positional_args,
+    _estimator_has,
     check_is_fitted,
     column_or_1d,
 )
 from ._base import _BaseHeterogeneousEnsemble, _fit_single_estimator
-
-
-def _estimator_has(attr):
-    """Check if we can delegate a method to the underlying estimator.
-
-    First, we check the fitted `final_estimator_` if available, otherwise we check the
-    unfitted `final_estimator`. We raise the original `AttributeError` if `attr` does
-    not exist. This function is used together with `available_if`.
-    """
-
-    def check(self):
-        if hasattr(self, "final_estimator_"):
-            getattr(self.final_estimator_, attr)
-        else:
-            getattr(self.final_estimator, attr)
-
-        return True
-
-    return check
 
 
 class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCMeta):
@@ -364,7 +346,9 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
 
         return np.asarray(meta_names, dtype=object)
 
-    @available_if(_estimator_has("predict"))
+    @available_if(
+        _estimator_has("predict", delegates=("final_estimator_", "final_estimator"))
+    )
     def predict(self, X, **predict_params):
         """Predict target for X.
 
@@ -732,7 +716,9 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             fit_params["sample_weight"] = sample_weight
         return super().fit(X, y_encoded, **fit_params)
 
-    @available_if(_estimator_has("predict"))
+    @available_if(
+        _estimator_has("predict", delegates=("final_estimator_", "final_estimator"))
+    )
     def predict(self, X, **predict_params):
         """Predict target for X.
 
@@ -785,7 +771,11 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             y_pred = self._label_encoder.inverse_transform(y_pred)
         return y_pred
 
-    @available_if(_estimator_has("predict_proba"))
+    @available_if(
+        _estimator_has(
+            "predict_proba", delegates=("final_estimator_", "final_estimator")
+        )
+    )
     def predict_proba(self, X):
         """Predict class probabilities for `X` using the final estimator.
 
@@ -809,7 +799,11 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             y_pred = np.array([preds[:, 0] for preds in y_pred]).T
         return y_pred
 
-    @available_if(_estimator_has("decision_function"))
+    @available_if(
+        _estimator_has(
+            "decision_function", delegates=("final_estimator_", "final_estimator")
+        )
+    )
     def decision_function(self, X):
         """Decision function for samples in `X` using the final estimator.
 
@@ -1125,7 +1119,9 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
             fit_params["sample_weight"] = sample_weight
         return super().fit_transform(X, y, **fit_params)
 
-    @available_if(_estimator_has("predict"))
+    @available_if(
+        _estimator_has("predict", delegates=("final_estimator_", "final_estimator"))
+    )
     def predict(self, X, **predict_params):
         """Predict target for X.
 

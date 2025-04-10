@@ -9,6 +9,8 @@ import numpy as np
 from scipy import optimize, sparse, stats
 from scipy.special import boxcox, inv_boxcox
 
+from sklearn.utils import metadata_routing
+
 from ..base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
@@ -44,23 +46,23 @@ BOUNDS_THRESHOLD = 1e-7
 __all__ = [
     "Binarizer",
     "KernelCenterer",
-    "MinMaxScaler",
     "MaxAbsScaler",
+    "MinMaxScaler",
     "Normalizer",
     "OneHotEncoder",
+    "PowerTransformer",
+    "QuantileTransformer",
     "RobustScaler",
     "StandardScaler",
-    "QuantileTransformer",
-    "PowerTransformer",
     "add_dummy_feature",
     "binarize",
-    "normalize",
-    "scale",
-    "robust_scale",
     "maxabs_scale",
     "minmax_scale",
-    "quantile_transform",
+    "normalize",
     "power_transform",
+    "quantile_transform",
+    "robust_scale",
+    "scale",
 ]
 
 
@@ -488,6 +490,12 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             reset=first_pass,
             dtype=_array_api.supported_float_dtypes(xp),
             ensure_all_finite="allow-nan",
+        )
+
+        device_ = device(X)
+        feature_range = (
+            xp.asarray(feature_range[0], dtype=X.dtype, device=device_),
+            xp.asarray(feature_range[1], dtype=X.dtype, device=device_),
         )
 
         data_min = _array_api._nanmin(X, axis=0, xp=xp)
@@ -1128,6 +1136,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.allow_nan = True
+        tags.input_tags.sparse = not self.with_mean
         tags.transformer_tags.preserves_dtype = ["float64", "float32"]
         return tags
 
@@ -1361,6 +1370,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.allow_nan = True
+        tags.input_tags.sparse = True
         return tags
 
 
@@ -1735,6 +1745,7 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = not self.with_centering
         tags.input_tags.allow_nan = True
         return tags
 
@@ -2134,6 +2145,7 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.requires_fit = False
         tags.array_api_support = True
         return tags
@@ -2341,6 +2353,7 @@ class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.requires_fit = False
+        tags.input_tags.sparse = True
         return tags
 
 
@@ -2421,6 +2434,10 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
            [  0.,  14., -14.],
            [ -5., -14.,  19.]])
     """
+
+    # X is called K in these methods.
+    __metadata_request__transform = {"K": metadata_routing.UNUSED}
+    __metadata_request__fit = {"K": metadata_routing.UNUSED}
 
     def fit(self, K, y=None):
         """Fit KernelCenterer.
@@ -3003,6 +3020,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.input_tags.allow_nan = True
         return tags
 

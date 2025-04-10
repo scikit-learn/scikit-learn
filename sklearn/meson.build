@@ -22,8 +22,8 @@ endif
 # Python interpreter can be tricky in cross-compilation settings. For more
 # details, see https://docs.scipy.org/doc/scipy/building/cross_compilation.html
 if not meson.is_cross_build()
-  if not py.version().version_compare('>=3.9')
-    error('scikit-learn requires Python>=3.9, got ' + py.version() + ' instead')
+  if not py.version().version_compare('>=3.10')
+    error('scikit-learn requires Python>=3.10, got ' + py.version() + ' instead')
   endif
 
   cython_min_version = run_command(py, ['_min_dependencies.py', 'cython'], check: true).stdout().strip()
@@ -48,7 +48,7 @@ if not meson.is_cross_build()
   # meson-python is required only when going through pip. Using meson directly
   # should not check meson-python version.
   meson_python_version_command_result = run_command(py,
-    ['-c', 'import mesonpy; print(mesonpy.__version__)'], check: false)
+    ['-c', 'import importlib.metadata; print(importlib.metadata.version("meson-python"))'], check: false)
   meson_python_installed = meson_python_version_command_result.returncode() == 0
   if meson_python_installed
     meson_python_version = meson_python_version_command_result.stdout().strip()

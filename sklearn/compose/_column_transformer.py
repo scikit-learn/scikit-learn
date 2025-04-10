@@ -29,6 +29,7 @@ from ..utils._set_output import (
     _get_output_config,
     _safe_set_output,
 )
+from ..utils._tags import get_tags
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -49,7 +50,7 @@ from ..utils.validation import (
     check_is_fitted,
 )
 
-__all__ = ["ColumnTransformer", "make_column_transformer", "make_column_selector"]
+__all__ = ["ColumnTransformer", "make_column_selector", "make_column_transformer"]
 
 
 _ERR_MSG_1DCOLUMN = (
@@ -789,22 +790,17 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 if pd.NA not in Xs[col_name].values:
                     continue
                 class_name = self.__class__.__name__
-                # TODO(1.6): replace warning with ValueError
-                warnings.warn(
-                    (
-                        f"The output of the '{name}' transformer for column"
-                        f" '{col_name}' has dtype {dtype} and uses pandas.NA to"
-                        " represent null values. Storing this output in a numpy array"
-                        " can cause errors in downstream scikit-learn estimators, and"
-                        " inefficiencies. Starting with scikit-learn version 1.6, this"
-                        " will raise a ValueError. To avoid this problem you can (i)"
-                        " store the output in a pandas DataFrame by using"
-                        f" {class_name}.set_output(transform='pandas') or (ii) modify"
-                        f" the input data or the '{name}' transformer to avoid the"
-                        " presence of pandas.NA (for example by using"
-                        " pandas.DataFrame.astype)."
-                    ),
-                    FutureWarning,
+                raise ValueError(
+                    f"The output of the '{name}' transformer for column"
+                    f" '{col_name}' has dtype {dtype} and uses pandas.NA to"
+                    " represent null values. Storing this output in a numpy array"
+                    " can cause errors in downstream scikit-learn estimators, and"
+                    " inefficiencies. To avoid this problem you can (i)"
+                    " store the output in a pandas DataFrame by using"
+                    f" {class_name}.set_output(transform='pandas') or (ii) modify"
+                    f" the input data or the '{name}' transformer to avoid the"
+                    " presence of pandas.NA (for example by using"
+                    " pandas.DataFrame.astype)."
                 )
 
     def _record_output_indices(self, Xs):
@@ -1322,16 +1318,17 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_estimators_empty_data_messages": "FIXME",
-            "check_estimators_nan_inf": "FIXME",
-            "check_estimator_sparse_array": "FIXME",
-            "check_estimator_sparse_matrix": "FIXME",
-            "check_fit1d": "FIXME",
-            "check_fit2d_predict1d": "FIXME",
-            "check_complex_data": "FIXME",
-            "check_fit2d_1feature": "FIXME",
-        }
+        try:
+            tags.input_tags.sparse = all(
+                get_tags(trans).input_tags.sparse
+                for name, trans, _ in self.transformers
+                if trans not in {"passthrough", "drop"}
+            )
+        except Exception:
+            # If `transformers` does not comply with our API (list of tuples)
+            # then it will fail. In this case, we assume that `sparse` is False
+            # but the parameter validation will raise an error during `fit`.
+            pass  # pragma: no cover
         return tags
 
 
@@ -1355,10 +1352,8 @@ def _is_empty_column_selection(column):
     if hasattr(column, "dtype") and np.issubdtype(column.dtype, np.bool_):
         return not column.any()
     elif hasattr(column, "__len__"):
-        return (
-            len(column) == 0
-            or all(isinstance(col, bool) for col in column)
-            and not any(column)
+        return len(column) == 0 or (
+            all(isinstance(col, bool) for col in column) and not any(column)
         )
     else:
         return False

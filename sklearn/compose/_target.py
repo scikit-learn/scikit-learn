@@ -348,6 +348,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         regressor = self._get_regressor()
         tags = super().__sklearn_tags__()
         tags.regressor_tags.poor_score = True
+        tags.input_tags.sparse = get_tags(regressor).input_tags.sparse
         tags.target_tags.multi_output = get_tags(regressor).target_tags.multi_output
         return tags
 

@@ -17,7 +17,7 @@ from ...utils import (
     check_random_state,
 )
 from ...utils._encode import _unique
-from ...utils._optional_dependencies import check_matplotlib_support  # noqa
+from ...utils._optional_dependencies import check_matplotlib_support
 from ...utils._plotting import _validate_style_kwargs
 from ...utils.parallel import Parallel, delayed
 from .. import partial_dependence
@@ -260,6 +260,7 @@ class PartialDependenceDisplay:
         n_cols=3,
         grid_resolution=100,
         percentiles=(0.05, 0.95),
+        custom_values=None,
         method="auto",
         n_jobs=None,
         verbose=0,
@@ -283,7 +284,9 @@ class PartialDependenceDisplay:
         marks on the x-axes for one-way plots, and on both axes for two-way
         plots.
 
-        Read more in the :ref:`User Guide <partial_dependence>`.
+        Read more in
+        :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
+        and the :ref:`User Guide <partial_dependence>`.
 
         .. note::
 
@@ -396,10 +399,20 @@ class PartialDependenceDisplay:
         grid_resolution : int, default=100
             The number of equally spaced points on the axes of the plots, for each
             target feature.
+            This parameter is overridden by `custom_values` if that parameter is set.
 
         percentiles : tuple of float, default=(0.05, 0.95)
             The lower and upper percentile used to create the extreme values
             for the PDP axes. Must be in [0, 1].
+            This parameter is overridden by `custom_values` if that parameter is set.
+
+        custom_values : dict
+            A dictionary mapping the index of an element of `features` to an
+            array of values where the partial dependence should be calculated
+            for that feature. Setting a range of values for a feature overrides
+            `grid_resolution` and `percentiles`.
+
+            .. versionadded:: 1.7
 
         method : str, default='auto'
             The method used to calculate the averaged predictions:
@@ -524,8 +537,8 @@ class PartialDependenceDisplay:
         <...>
         >>> plt.show()
         """
-        check_matplotlib_support(f"{cls.__name__}.from_estimator")  # noqa
-        import matplotlib.pyplot as plt  # noqa
+        check_matplotlib_support(f"{cls.__name__}.from_estimator")
+        import matplotlib.pyplot as plt
 
         # set target_idx for multi-class estimators
         if hasattr(estimator, "classes_") and np.size(estimator.classes_) > 2:
@@ -717,6 +730,7 @@ class PartialDependenceDisplay:
                 grid_resolution=grid_resolution,
                 percentiles=percentiles,
                 kind=kind_plot,
+                custom_values=custom_values,
             )
             for kind_plot, fxs in zip(kind_, features)
         )
@@ -930,7 +944,7 @@ class PartialDependenceDisplay:
             have the same scale and y limits. `pdp_lim[1]` is the global min
             and max for single partial dependence curves.
         """
-        from matplotlib import transforms  # noqa
+        from matplotlib import transforms
 
         if kind in ("individual", "both"):
             self._plot_ice_lines(
@@ -1069,7 +1083,7 @@ class PartialDependenceDisplay:
             heatmap_idx = np.unravel_index(pd_plot_idx, self.heatmaps_.shape)
             self.heatmaps_[heatmap_idx] = im
         else:
-            from matplotlib import transforms  # noqa
+            from matplotlib import transforms
 
             XX, YY = np.meshgrid(feature_values[0], feature_values[1])
             Z = avg_preds[self.target_idx].T
@@ -1207,8 +1221,8 @@ class PartialDependenceDisplay:
         """
 
         check_matplotlib_support("plot_partial_dependence")
-        import matplotlib.pyplot as plt  # noqa
-        from matplotlib.gridspec import GridSpecFromSubplotSpec  # noqa
+        import matplotlib.pyplot as plt
+        from matplotlib.gridspec import GridSpecFromSubplotSpec
 
         if isinstance(self.kind, str):
             kind = [self.kind] * len(self.features)

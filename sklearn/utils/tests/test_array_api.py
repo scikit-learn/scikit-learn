@@ -15,18 +15,19 @@ from sklearn.utils._array_api import (
     _count_nonzero,
     _estimator_with_converted_arrays,
     _fill_or_add_to_diagonal,
+    _get_namespace_device_dtype_ids,
     _is_numpy_namespace,
     _isin,
     _max_precision_float_dtype,
     _nanmax,
+    _nanmean,
     _nanmin,
-    _NumPyAPIWrapper,
     _ravel,
     device,
     get_namespace,
     get_namespace_and_device,
     indexing_dtype,
-    supported_float_dtypes,
+    np_compat,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -42,7 +43,7 @@ from sklearn.utils.fixes import _IS_32BIT, CSR_CONTAINERS, np_version, parse_ver
 def test_get_namespace_ndarray_default(X):
     """Check that get_namespace returns NumPy wrapper"""
     xp_out, is_array_api_compliant = get_namespace(X)
-    assert isinstance(xp_out, _NumPyAPIWrapper)
+    assert xp_out is np_compat
     assert not is_array_api_compliant
 
 
@@ -61,12 +62,6 @@ def test_get_namespace_ndarray_creation_device():
 @skip_if_array_api_compat_not_configured
 def test_get_namespace_ndarray_with_dispatch():
     """Test get_namespace on NumPy ndarrays."""
-    array_api_compat = pytest.importorskip("array_api_compat")
-    if parse_version(array_api_compat.__version__) < parse_version("1.9"):
-        pytest.skip(
-            reason="array_api_compat was temporarily reporting NumPy as API compliant "
-            "and this test would fail"
-        )
 
     X_np = numpy.asarray([[1, 2, 3]])
 
@@ -76,7 +71,7 @@ def test_get_namespace_ndarray_with_dispatch():
 
         # In the future, NumPy should become API compliant library and we should have
         # assert xp_out is numpy
-        assert xp_out is array_api_compat.numpy
+        assert xp_out is np_compat
 
 
 @skip_if_array_api_compat_not_configured
@@ -119,7 +114,9 @@ def test_asarray_with_order(array_api):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "weights, axis, normalize, expected",
@@ -175,6 +172,7 @@ def test_average(
 @pytest.mark.parametrize(
     "array_namespace, device, dtype_name",
     yield_namespace_device_dtype_combinations(include_numpy_namespaces=False),
+    ids=_get_namespace_device_dtype_ids,
 )
 def test_average_raises_with_wrong_dtype(array_namespace, device, dtype_name):
     xp = _array_api_for_tests(array_namespace, device)
@@ -200,6 +198,7 @@ def test_average_raises_with_wrong_dtype(array_namespace, device, dtype_name):
 @pytest.mark.parametrize(
     "array_namespace, device, dtype_name",
     yield_namespace_device_dtype_combinations(include_numpy_namespaces=True),
+    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "axis, weights, error, error_msg",
@@ -247,6 +246,7 @@ def test_device_none_if_no_input():
     assert device(None, "name") is None
 
 
+@skip_if_array_api_compat_not_configured
 def test_device_inspection():
     class Device:
         def __init__(self, name):
@@ -267,23 +267,31 @@ def test_device_inspection():
 
     # Sanity check: ensure our Device mock class is non hashable, to
     # accurately account for non-hashable device objects in some array
-    # libraries, because of which the `device` inspection function should'nt
+    # libraries, because of which the `device` inspection function shouldn't
     # make use of hash lookup tables (in particular, not use `set`)
     with pytest.raises(TypeError):
         hash(Array("device").device)
 
-    # Test raise if on different devices
+    # If array API dispatch is disabled the device should be ignored. Erroring
+    # early for different devices would prevent the np.asarray conversion to
+    # happen. For example, `r2_score(np.ones(5), torch.ones(5))` should work
+    # fine with array API disabled.
+    assert device(Array("cpu"), Array("mygpu")) is None
+
+    # Test that ValueError is raised if on different devices and array API dispatch is
+    # enabled.
     err_msg = "Input arrays use different devices: cpu, mygpu"
-    with pytest.raises(ValueError, match=err_msg):
-        device(Array("cpu"), Array("mygpu"))
+    with config_context(array_api_dispatch=True):
+        with pytest.raises(ValueError, match=err_msg):
+            device(Array("cpu"), Array("mygpu"))
 
-    # Test expected value is returned otherwise
-    array1 = Array("device")
-    array2 = Array("device")
+        # Test expected value is returned otherwise
+        array1 = Array("device")
+        array2 = Array("device")
 
-    assert array1.device == device(array1)
-    assert array1.device == device(array1, array2)
-    assert array1.device == device(array1, array1, array2)
+        assert array1.device == device(array1)
+        assert array1.device == device(array1, array2)
+        assert array1.device == device(array1, array1, array2)
 
 
 # TODO: add cupy to the list of libraries once the the following upstream issue
@@ -320,6 +328,19 @@ def test_device_inspection():
             partial(_nanmax, axis=1),
             [3.0, numpy.nan, 6.0],
         ),
+        ([1, 2, numpy.nan], _nanmean, 1.5),
+        ([1, -2, -numpy.nan], _nanmean, -0.5),
+        ([-numpy.inf, -numpy.inf], _nanmean, -numpy.inf),
+        (
+            [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
+            partial(_nanmean, axis=0),
+            [2.5, 3.5, 4.5],
+        ),
+        (
+            [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
+            partial(_nanmean, axis=1),
+            [2.0, numpy.nan, 5.0],
+        ),
     ],
 )
 def test_nan_reductions(library, X, reduction, expected):
@@ -334,7 +355,9 @@ def test_nan_reductions(library, X, reduction, expected):
 
 
 @pytest.mark.parametrize(
-    "namespace, _device, _dtype", yield_namespace_device_dtype_combinations()
+    "namespace, _device, _dtype",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 def test_ravel(namespace, _device, _dtype):
     xp = _array_api_for_tests(namespace, _device)
@@ -420,58 +443,10 @@ def test_convert_estimator_to_array_api():
     assert hasattr(new_est.X_, "__array_namespace__")
 
 
-def test_reshape_behavior():
-    """Check reshape behavior with copy and is strict with non-tuple shape."""
-    xp = _NumPyAPIWrapper()
-    X = xp.asarray([[1, 2, 3], [3, 4, 5]])
-
-    X_no_copy = xp.reshape(X, (-1,), copy=False)
-    assert X_no_copy.base is X
-
-    X_copy = xp.reshape(X, (6, 1), copy=True)
-    assert X_copy.base is not X.base
-
-    with pytest.raises(TypeError, match="shape must be a tuple"):
-        xp.reshape(X, -1)
-
-
-def test_get_namespace_array_api_isdtype():
-    """Test isdtype implementation from _NumPyAPIWrapper."""
-    xp = _NumPyAPIWrapper()
-
-    assert xp.isdtype(xp.float32, xp.float32)
-    assert xp.isdtype(xp.float32, "real floating")
-    assert xp.isdtype(xp.float64, "real floating")
-    assert not xp.isdtype(xp.int32, "real floating")
-
-    for dtype in supported_float_dtypes(xp):
-        assert xp.isdtype(dtype, "real floating")
-
-    assert xp.isdtype(xp.bool, "bool")
-    assert not xp.isdtype(xp.float32, "bool")
-
-    assert xp.isdtype(xp.int16, "signed integer")
-    assert not xp.isdtype(xp.uint32, "signed integer")
-
-    assert xp.isdtype(xp.uint16, "unsigned integer")
-    assert not xp.isdtype(xp.int64, "unsigned integer")
-
-    assert xp.isdtype(xp.int64, "numeric")
-    assert xp.isdtype(xp.float32, "numeric")
-    assert xp.isdtype(xp.uint32, "numeric")
-
-    assert not xp.isdtype(xp.float32, "complex floating")
-
-    assert not xp.isdtype(xp.int8, "complex floating")
-    assert xp.isdtype(xp.complex64, "complex floating")
-    assert xp.isdtype(xp.complex128, "complex floating")
-
-    with pytest.raises(ValueError, match="Unrecognized data type"):
-        assert xp.isdtype(xp.int16, "unknown")
-
-
 @pytest.mark.parametrize(
-    "namespace, _device, _dtype", yield_namespace_device_dtype_combinations()
+    "namespace, _device, _dtype",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 def test_indexing_dtype(namespace, _device, _dtype):
     xp = _array_api_for_tests(namespace, _device)
@@ -483,7 +458,9 @@ def test_indexing_dtype(namespace, _device, _dtype):
 
 
 @pytest.mark.parametrize(
-    "namespace, _device, _dtype", yield_namespace_device_dtype_combinations()
+    "namespace, _device, _dtype",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 def test_max_precision_float_dtype(namespace, _device, _dtype):
     xp = _array_api_for_tests(namespace, _device)
@@ -492,7 +469,9 @@ def test_max_precision_float_dtype(namespace, _device, _dtype):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, _", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, _",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("invert", [True, False])
 @pytest.mark.parametrize("assume_unique", [True, False])
@@ -525,10 +504,15 @@ def test_isin(
     assert_array_equal(_convert_to_numpy(result, xp=xp), expected)
 
 
+@pytest.mark.skipif(
+    os.environ.get("SCIPY_ARRAY_API") != "1", reason="SCIPY_ARRAY_API not set to 1."
+)
 def test_get_namespace_and_device():
     # Use torch as a library with custom Device objects:
     torch = pytest.importorskip("torch")
-    xp_torch = pytest.importorskip("array_api_compat.torch")
+
+    from sklearn.externals.array_api_compat import torch as torch_compat
+
     some_torch_tensor = torch.arange(3, device="cpu")
     some_numpy_array = numpy.arange(3)
 
@@ -539,19 +523,21 @@ def test_get_namespace_and_device():
     namespace, is_array_api, device = get_namespace_and_device(some_torch_tensor)
     assert namespace is get_namespace(some_numpy_array)[0]
     assert not is_array_api
-    assert device.type == "cpu"
+    assert device is None
 
     # Otherwise, expose the torch namespace and device via array API compat
     # wrapper.
     with config_context(array_api_dispatch=True):
         namespace, is_array_api, device = get_namespace_and_device(some_torch_tensor)
-        assert namespace is xp_torch
+        assert namespace is torch_compat
         assert is_array_api
         assert device == some_torch_tensor.device
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 @pytest.mark.parametrize("axis", [0, 1, None, -1, -2])
@@ -576,7 +562,7 @@ def test_count_nonzero(
 
     with config_context(array_api_dispatch=True):
         result = _count_nonzero(
-            array_xp, xp=xp, device=device_, axis=axis, sample_weight=sample_weight
+            array_xp, axis=axis, sample_weight=sample_weight, xp=xp, device=device_
         )
 
     assert_allclose(_convert_to_numpy(result, xp=xp), expected)
@@ -588,7 +574,9 @@ def test_count_nonzero(
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("wrap", [True, False])
 def test_fill_or_add_to_diagonal(array_namespace, device_, dtype_name, wrap):
@@ -604,11 +592,10 @@ def test_fill_or_add_to_diagonal(array_namespace, device_, dtype_name, wrap):
 @pytest.mark.parametrize("dispatch", [True, False])
 def test_sparse_device(csr_container, dispatch):
     a, b = csr_container(numpy.array([[1]])), csr_container(numpy.array([[2]]))
-    try:
-        with config_context(array_api_dispatch=dispatch):
-            assert device(a, b) is None
-            assert device(a, numpy.array([1])) == "cpu"
-            assert get_namespace_and_device(a, b)[2] is None
-            assert get_namespace_and_device(a, numpy.array([1]))[2] == "cpu"
-    except ImportError:
-        raise SkipTest("array_api_compat is not installed")
+    if dispatch and os.environ.get("SCIPY_ARRAY_API") is None:
+        raise SkipTest("SCIPY_ARRAY_API is not set: not checking array_api input")
+    with config_context(array_api_dispatch=dispatch):
+        assert device(a, b) is None
+        assert device(a, numpy.array([1])) is None
+        assert get_namespace_and_device(a, b)[2] is None
+        assert get_namespace_and_device(a, numpy.array([1]))[2] is None

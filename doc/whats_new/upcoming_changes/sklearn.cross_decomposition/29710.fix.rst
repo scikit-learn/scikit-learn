@@ -1,3 +1,0 @@
-- :class:`cross_decomposition.PLSRegression` properly raises an error when
-  `n_components` is larger than `n_samples`.
-  By :user:`Thomas Fan <thomasjpfan>`

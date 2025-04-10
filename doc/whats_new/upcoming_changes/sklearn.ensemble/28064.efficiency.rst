@@ -1,5 +1,0 @@
-- Small runtime improvement of fitting
-  :class:`ensemble.HistGradientBoostingClassifier` and
-  :class:`ensemble.HistGradientBoostingRegressor` by parallelizing the initial search
-  for bin thresholds.
-  By :user:`Christian Lorentzen <lorentzenchr>`

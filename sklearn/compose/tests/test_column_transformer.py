@@ -361,7 +361,7 @@ def test_column_transformer_empty_columns(pandas, column_selection, callable_col
         X = X_array
 
     if callable_column:
-        column = lambda X: column_selection  # noqa
+        column = lambda X: column_selection
     else:
         column = column_selection
 
@@ -549,7 +549,7 @@ def test_column_transformer_mixed_cols_sparse():
     # this shouldn't fail, since boolean can be coerced into a numeric
     # See: https://github.com/scikit-learn/scikit-learn/issues/11912
     X_trans = ct.fit_transform(df)
-    assert X_trans.getformat() == "csr"
+    assert X_trans.format == "csr"
     assert_array_equal(X_trans.toarray(), np.array([[1, 0, 1, 1], [0, 1, 2, 0]]))
 
     ct = make_column_transformer(
@@ -2465,11 +2465,10 @@ def test_remainder_set_output():
     assert isinstance(out, np.ndarray)
 
 
-# TODO(1.6): replace the warning by a ValueError exception
 def test_transform_pd_na():
     """Check behavior when a tranformer's output contains pandas.NA
 
-    It should emit a warning unless the output config is set to 'pandas'.
+    It should raise an error unless the output config is set to 'pandas'.
     """
     pd = pytest.importorskip("pandas")
     if not hasattr(pd, "Float64Dtype"):
@@ -2484,19 +2483,18 @@ def test_transform_pd_na():
         warnings.simplefilter("error")
         ct.fit_transform(df)
     df = df.convert_dtypes()
+
     # Error with extension dtype and pd.NA
-    with pytest.warns(FutureWarning, match=r"set_output\(transform='pandas'\)"):
+    with pytest.raises(ValueError, match=r"set_output\(transform='pandas'\)"):
         ct.fit_transform(df)
-    # No warning when output is set to pandas
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        ct.set_output(transform="pandas")
-        ct.fit_transform(df)
+
+    # No error when output is set to pandas
+    ct.set_output(transform="pandas")
+    ct.fit_transform(df)
     ct.set_output(transform="default")
-    # No warning when there are no pd.NA
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        ct.fit_transform(df.fillna(-1.0))
+
+    # No error when there are no pd.NA
+    ct.fit_transform(df.fillna(-1.0))
 
 
 def test_dataframe_different_dataframe_libraries():

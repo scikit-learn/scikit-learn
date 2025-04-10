@@ -184,7 +184,7 @@ class NewtonSolver(ABC):
             method="L-BFGS-B",
             jac=True,
             options={
-                "maxiter": self.max_iter,
+                "maxiter": self.max_iter - self.iteration,
                 "maxls": 50,  # default is 20
                 "iprint": self.verbose - 1,
                 "gtol": self.tol,
@@ -192,7 +192,7 @@ class NewtonSolver(ABC):
             },
             args=(X, y, sample_weight, self.l2_reg_strength, self.n_threads),
         )
-        self.n_iter_ = _check_optimize_result("lbfgs", opt_res)
+        self.iteration += _check_optimize_result("lbfgs", opt_res)
         self.coef = opt_res.x
         self.converged = opt_res.status == 0
 
@@ -507,7 +507,7 @@ class NewtonCholeskySolver(NewtonSolver):
             # probabilities are invariant under shifting all coefficients of a single
             # feature j for all classes by the same amount c:
             #   coef[k, :] -> coef[k, :] + c    =>    proba stays the same
-            # where we have assumned coef.shape = (n_classes, n_features).
+            # where we have assumed coef.shape = (n_classes, n_features).
             # Therefore, also the loss (-log-likelihood), gradient and hessian stay the
             # same, see
             # Noah Simon and Jerome Friedman and Trevor Hastie. (2013) "A Blockwise

@@ -224,13 +224,3 @@ class Perceptron(BaseSGDClassifier):
             class_weight=class_weight,
             n_jobs=n_jobs,
         )
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        # TODO: replace by a statistical test, see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
-        return tags

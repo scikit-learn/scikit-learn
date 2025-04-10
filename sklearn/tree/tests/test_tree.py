@@ -6,8 +6,9 @@ import copy
 import copyreg
 import io
 import pickle
+import re
 import struct
-from itertools import chain, product
+from itertools import chain, pairwise, product
 
 import joblib
 import numpy as np
@@ -35,6 +36,7 @@ from sklearn.tree._classes import (
     DENSE_SPLITTERS,
     SPARSE_SPLITTERS,
 )
+from sklearn.tree._partitioner import _py_sort
 from sklearn.tree._tree import (
     NODE_DTYPE,
     TREE_LEAF,
@@ -1137,7 +1139,13 @@ def test_sample_weight_invalid():
         clf.fit(X, y, sample_weight=sample_weight)
 
     sample_weight = np.array(0)
-    expected_err = r"Singleton.* cannot be considered a valid collection"
+
+    expected_err = re.escape(
+        (
+            "Input should have at least 1 dimension i.e. satisfy "
+            "`len(x.shape) > 0`, got scalar `array(0.)` instead."
+        )
+    )
     with pytest.raises(TypeError, match=expected_err):
         clf.fit(X, y, sample_weight=sample_weight)
 
@@ -1857,7 +1865,7 @@ def assert_pruning_creates_subtree(estimator_cls, X, y, pruning_path):
 
     # A pruned tree must be a subtree of the previous tree (which had a
     # smaller ccp_alpha)
-    for prev_est, next_est in zip(estimators, estimators[1:]):
+    for prev_est, next_est in pairwise(estimators):
         assert_is_subtree(prev_est.tree_, next_est.tree_)
 
 
@@ -2686,12 +2694,11 @@ def test_regression_tree_missing_values_toy(Tree, X, criterion):
     tree = Tree(criterion=criterion, random_state=0).fit(X, y)
     tree_ref = clone(tree).fit(y.reshape(-1, 1), y)
 
-    assert all(tree.tree_.impurity >= 0)  # MSE should always be positive
+    impurity = tree.tree_.impurity
+    assert all(impurity >= 0), impurity.min()  # MSE should always be positive
 
-    # Note: the impurity matches after the first split only on greedy trees
-    if Tree is DecisionTreeRegressor:
-        # Check the impurity match after the first split
-        assert_allclose(tree.tree_.impurity[:2], tree_ref.tree_.impurity[:2])
+    # Check the impurity match after the first split
+    assert_allclose(tree.tree_.impurity[:2], tree_ref.tree_.impurity[:2])
 
     # Find the leaves with a single sample where the MSE should be 0
     leaves_idx = np.flatnonzero(
@@ -2700,8 +2707,22 @@ def test_regression_tree_missing_values_toy(Tree, X, criterion):
     assert_allclose(tree.tree_.impurity[leaves_idx], 0.0)
 
 
+def test_regression_extra_tree_missing_values_toy(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
+    n_samples = 100
+    X = np.arange(n_samples, dtype=np.float64).reshape(-1, 1)
+    X[-20:, :] = np.nan
+    rng.shuffle(X)
+    y = np.arange(n_samples)
+
+    tree = ExtraTreeRegressor(random_state=global_random_seed, max_depth=5).fit(X, y)
+
+    impurity = tree.tree_.impurity
+    assert all(impurity >= 0), impurity  # MSE should always be positive
+
+
 def test_classification_tree_missing_values_toy():
-    """Check that we properly handle missing values in clasification trees using a toy
+    """Check that we properly handle missing values in classification trees using a toy
     dataset.
 
     The test is more involved because we use a case where we detected a regression
@@ -2794,3 +2815,25 @@ def test_build_pruned_tree_infinite_loop():
         ValueError, match="Node has reached a leaf in the original tree"
     ):
         _build_pruned_tree_py(pruned_tree, tree.tree_, leave_in_subtree)
+
+
+def test_sort_log2_build():
+    """Non-regression test for gh-30554.
+
+    Using log2 and log in sort correctly sorts feature_values, but the tie breaking is
+    different which can results in placing samples in a different order.
+    """
+    rng = np.random.default_rng(75)
+    some = rng.normal(loc=0.0, scale=10.0, size=10).astype(np.float32)
+    feature_values = np.concatenate([some] * 5)
+    samples = np.arange(50, dtype=np.intp)
+    _py_sort(feature_values, samples, 50)
+    # fmt: off
+    # no black reformatting for this specific array
+    expected_samples = [
+        0, 40, 30, 20, 10, 29, 39, 19, 49,  9, 45, 15, 35,  5, 25, 11, 31,
+        41,  1, 21, 22, 12,  2, 42, 32, 23, 13, 43,  3, 33,  6, 36, 46, 16,
+        26,  4, 14, 24, 34, 44, 27, 47,  7, 37, 17,  8, 38, 48, 28, 18
+    ]
+    # fmt: on
+    assert_array_equal(samples, expected_samples)

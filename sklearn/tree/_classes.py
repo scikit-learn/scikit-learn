@@ -15,6 +15,8 @@ from numbers import Integral, Real
 import numpy as np
 from scipy.sparse import issparse
 
+from sklearn.utils import metadata_routing
+
 from ..base import (
     BaseEstimator,
     ClassifierMixin,
@@ -92,6 +94,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     Warning: This class should not be used directly.
     Use derived classes instead.
     """
+
+    # "check_input" is used for optimisation and isn't something to be passed
+    # around in a pipeline.
+    __metadata_request__predict = {"check_input": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         "splitter": [StrOptions({"best", "random"})],
@@ -316,12 +322,12 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if isinstance(self.min_samples_leaf, numbers.Integral):
             min_samples_leaf = self.min_samples_leaf
         else:  # float
-            min_samples_leaf = int(ceil(self.min_samples_leaf * n_samples))
+            min_samples_leaf = ceil(self.min_samples_leaf * n_samples)
 
         if isinstance(self.min_samples_split, numbers.Integral):
             min_samples_split = self.min_samples_split
         else:  # float
-            min_samples_split = int(ceil(self.min_samples_split * n_samples))
+            min_samples_split = ceil(self.min_samples_split * n_samples)
             min_samples_split = max(2, min_samples_split)
 
         min_samples_split = max(min_samples_split, 2 * min_samples_leaf)
@@ -352,7 +358,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             )
 
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, DOUBLE)
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=DOUBLE)
 
         if expanded_class_weight is not None:
             if sample_weight is not None:
@@ -684,6 +690,11 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         return self.tree_.compute_feature_importances()
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 # =============================================================================
 # Public estimators
@@ -934,6 +945,11 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     array([ 1.     ,  0.93...,  0.86...,  0.93...,  0.93...,
             0.93...,  0.93...,  1.     ,  0.93...,  1.      ])
     """
+
+    # "check_input" is used for optimisation and isn't something to be passed
+    # around in a pipeline.
+    __metadata_request__predict_proba = {"check_input": metadata_routing.UNUSED}
+    __metadata_request__fit = {"check_input": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         **BaseDecisionTree._parameter_constraints,
@@ -1311,6 +1327,10 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     array([-0.39..., -0.46...,  0.02...,  0.06..., -0.50...,
            0.16...,  0.11..., -0.73..., -0.30..., -0.00...])
     """
+
+    # "check_input" is used for optimisation and isn't something to be passed
+    # around in a pipeline.
+    __metadata_request__fit = {"check_input": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         **BaseDecisionTree._parameter_constraints,
@@ -1973,5 +1993,5 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             "friedman_mse",
             "poisson",
         }
-        tags.input_tags.allow_nan: allow_nan
+        tags.input_tags.allow_nan = allow_nan
         return tags
