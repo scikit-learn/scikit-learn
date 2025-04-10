@@ -34,7 +34,7 @@ _datasets_pair_pyx = custom_target(
   # TODO in principle this should go in py.exension_module below. This is
   # temporary work-around for dependency issue with .pyx.tp files. For more
   # details, see https://github.com/mesonbuild/meson/issues/13212
-  depends: [_datasets_pair_pxd, _pairwise_distances_reduction_cython_tree, utils_cython_tree, cython_shared_module],
+  depends: [_datasets_pair_pxd, _pairwise_distances_reduction_cython_tree, utils_cython_tree],
 )
 _datasets_pair = py.extension_module(
   '_datasets_pair',
@@ -89,8 +89,7 @@ _middle_term_computer_pyx = custom_target(
   # details, see https://github.com/mesonbuild/meson/issues/13212
   depends: [_middle_term_computer_pxd,
             _pairwise_distances_reduction_cython_tree,
-            utils_cython_tree,
-            cython_shared_module],
+            utils_cython_tree]
 )
 _middle_term_computer = py.extension_module(
   '_middle_term_computer',
@@ -118,8 +117,7 @@ _argkmin_pyx = custom_target(
     # details, see https://github.com/mesonbuild/meson/issues/13212
     depends: [_argkmin_pxd,
               _pairwise_distances_reduction_cython_tree,
-              _datasets_pair_pxd, _base_pxd, _middle_term_computer_pxd,
-              cython_shared_module],
+              _datasets_pair_pxd, _base_pxd, _middle_term_computer_pxd]
       )
 _argkmin = py.extension_module(
     '_argkmin',
@@ -147,8 +145,7 @@ _radius_neighbors_pyx = custom_target(
     # details, see https://github.com/mesonbuild/meson/issues/13212
     depends: [_radius_neighbors_pxd,
               _datasets_pair_pxd, _base_pxd, _middle_term_computer_pxd,
-              _pairwise_distances_reduction_cython_tree, utils_cython_tree,
-              cython_shared_module],
+              _pairwise_distances_reduction_cython_tree, utils_cython_tree]
 )
 _radius_neighbors = py.extension_module(
     '_radius_neighbors',
@@ -170,8 +167,7 @@ _argkmin_classmode_pyx = custom_target(
   # details, see https://github.com/mesonbuild/meson/issues/13212
   depends: [_classmode_pxd,
             _argkmin_pxd, _pairwise_distances_reduction_cython_tree,
-            _datasets_pair_pxd, _base_pxd, _middle_term_computer_pxd, utils_cython_tree,
-            cython_shared_module],
+            _datasets_pair_pxd, _base_pxd, _middle_term_computer_pxd, utils_cython_tree]
 )
 _argkmin_classmode = py.extension_module(
   '_argkmin_classmode',
@@ -198,8 +194,7 @@ _radius_neighbors_classmode_pyx = custom_target(
   depends: [_classmode_pxd,
             _middle_term_computer_pxd, _radius_neighbors_pxd,
             _pairwise_distances_reduction_cython_tree,
-            _datasets_pair_pxd, _base_pxd, utils_cython_tree,
-            cython_shared_module],
+            _datasets_pair_pxd, _base_pxd, utils_cython_tree],
 )
 _radius_neighbors_classmode = py.extension_module(
   '_radius_neighbors_classmode',

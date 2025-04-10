@@ -203,7 +203,7 @@ if cython.version().version_compare('>=3.1.0')
     ],
   )
 
-  cython_shared_module = py.extension_module('_cyutility',
+  py.extension_module('_cyutility',
     cython_shared_src,
     subdir: 'sklearn',
     cython_args: cython_args,
@@ -211,8 +211,6 @@ if cython.version().version_compare('>=3.1.0')
   )
 
   cython_args += ['--shared=sklearn._cyutility']
-else
-  cython_shared_module = []
 endif
 
 # Write file in Meson build dir to be able to figure out from Python code
