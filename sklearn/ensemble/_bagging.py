@@ -328,9 +328,10 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             Used as probabilities to draw the samples.
 
             .. versionchanged:: 1.7
-            The sample weights are used to draw the samples and are no
-            longer forwarded to the underlying estimators. It is now okay
-            to use a base estimator that does not support sample weight.
+
+                The sample weights are used to draw the samples and are no
+                longer forwarded to the underlying estimators. It is now okay
+                to use a base estimator that does not support sample weight.
 
         **fit_params : dict
             Parameters to pass to the underlying estimators.
