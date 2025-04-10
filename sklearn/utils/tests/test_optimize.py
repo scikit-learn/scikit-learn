@@ -3,7 +3,7 @@ import pytest
 from scipy.optimize import fmin_ncg
 
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils._testing import assert_allclose, assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils.optimize import _newton_cg
 
 
@@ -26,7 +26,7 @@ def test_newton_cg(global_random_seed):
 
     def grad_hess(x):
         return grad(x), lambda x: A.T.dot(A.dot(x))
-    
+
     # func is a definite positive quadratic form, so the minimum is at x = 0
     # hence the use of absolute tolerance.
     assert np.all(np.abs(_newton_cg(grad_hess, func, grad, x0, tol=1e-10)[0]) <= 1e-7)
