@@ -944,7 +944,9 @@ def test_cohen_kappa_zero_division(replace_undefined_by):
         replace_undefined_by,
     )
 
-    # test case: annotator y2 does not assign any label specified in `labels`
+    # test case: annotator y2 does not assign any label specified in `labels` (note:
+    # also applicable if labels is default and y2 does not contain any label that is in
+    # y1)
     labels = [1, 2]
     y1 = np.array([1] * 5 + [2] * 5)
     y2 = np.array([3] * 10)
@@ -963,7 +965,9 @@ def test_cohen_kappa_zero_division(replace_undefined_by):
         replace_undefined_by,
     )
 
-    # test case: both inputs only have one label in common with `labels`
+    # test case: both inputs only have one label in common that is also in `labels`
+    # (note: weights="linear" and weights="quadratic" are different branches, though the
+    # latter is so similar to the former that the test is skipped here)
     labels = [1, 2]
     y1 = np.array([1] * 5 + [2] * 5)
     y2 = np.array([1] * 5 + [3] * 5)
@@ -973,7 +977,6 @@ def test_cohen_kappa_zero_division(replace_undefined_by):
         ),
         replace_undefined_by,
     )
-    # with weights="quadratic" it is almost the same test: skipped here
     assert check_equal(
         cohen_kappa_score(
             y1,
