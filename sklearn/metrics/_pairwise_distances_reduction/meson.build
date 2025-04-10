@@ -66,7 +66,7 @@ _base_pyx = custom_target(
 _base = py.extension_module(
   '_base',
   _base_pyx,
-  dependencies: [np_dep, openmp_dep, cython_shared_module],
+  dependencies: [np_dep, openmp_dep],
   override_options: ['cython_language=cpp'],
   cython_args: cython_args,
   subdir: 'sklearn/metrics/_pairwise_distances_reduction',
@@ -153,7 +153,7 @@ _radius_neighbors_pyx = custom_target(
 _radius_neighbors = py.extension_module(
     '_radius_neighbors',
     _radius_neighbors_pyx,
-    dependencies: [np_dep, openmp_dep, cython_shared_module],
+    dependencies: [np_dep, openmp_dep],
     override_options: ['cython_language=cpp'],
     cython_args: cython_args,
     subdir: 'sklearn/metrics/_pairwise_distances_reduction',
@@ -204,7 +204,7 @@ _radius_neighbors_classmode_pyx = custom_target(
 _radius_neighbors_classmode = py.extension_module(
   '_radius_neighbors_classmode',
   _radius_neighbors_classmode_pyx,
-  dependencies: [np_dep, openmp_dep, cython_shared_module],
+  dependencies: [np_dep, openmp_dep],
   override_options: ['cython_language=cpp'],
   cython_args: cython_args,
   subdir: 'sklearn/metrics/_pairwise_distances_reduction',
