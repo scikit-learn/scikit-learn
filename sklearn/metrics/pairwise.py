@@ -1990,6 +1990,7 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
         Y,
         dtype=None,
         ensure_all_finite=ensure_all_finite,
+        # No input dimension checking done for custom metrics (left to user)
         ensure_2d=False,
     )
 
@@ -2444,7 +2445,6 @@ def pairwise_distances(
     elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
         func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
     elif callable(metric):
-        # No input dimension checking done for custom metrics (left to user)
         func = partial(
             _pairwise_callable,
             metric=metric,
