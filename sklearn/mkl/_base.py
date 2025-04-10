@@ -11,6 +11,7 @@ import numpy as np
 
 from ..base import (
     BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
     MetaEstimatorMixin,
     TransformerMixin,
     _fit_context,
@@ -38,7 +39,13 @@ MKL_ALGORITHMS = {
 }
 
 
-class BaseMKL(TransformerMixin, MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
+class BaseMKL(
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    MetaEstimatorMixin,
+    BaseEstimator,
+    metaclass=ABCMeta,
+):
     """Base class for Multiple Kernel Learning (MKL) estimators.
 
     This class provides a framework for learning a combination of multiple kernels
@@ -307,6 +314,7 @@ class BaseMKL(TransformerMixin, MetaEstimatorMixin, BaseEstimator, metaclass=ABC
             if self._kernels is None
             else X.shape[0] if hasattr(X, "shape") else len(X)
         )
+        self._n_features_out = self.n_samples_in_
 
         if self._kernels is not None:
             # Reference to X to compute the kernel in predict/transform
@@ -465,9 +473,12 @@ class BaseMKL(TransformerMixin, MetaEstimatorMixin, BaseEstimator, metaclass=ABC
                         accept_large_sparse=False,
                         ensure_min_samples=(2 if fit else 1),
                     )
-            except ValueError:
-                check_consistent_length(X, y)
-                _check_n_features(self, X, reset=fit)
+            except Exception as e:
+                if isinstance(e.__cause__, TypeError) or isinstance(e, TypeError):
+                    check_consistent_length(X, y)
+                    _check_n_features(self, X, reset=fit)
+                else:
+                    raise
 
         return X, y
 
@@ -509,12 +520,11 @@ class BaseMKL(TransformerMixin, MetaEstimatorMixin, BaseEstimator, metaclass=ABC
                         "Memory error occurred while precomputing kernels. "
                         "Try setting 'precompute_kernels=False'."
                     )
-                if self.verbose:
-                    print(
-                        f"[{self.__class__.__name__}] Not enough memory to "
-                        "precompute kernels. Kernels will be computed on-the-fly. "
-                        "This may significantly slow down the computation."
-                    )
+                warnings.warn(
+                    f"[{self.__class__.__name__}] Not enough memory to "
+                    "precompute kernels. Kernels will be computed on-the-fly. "
+                    "This may significantly slow down the computation."
+                )
                 self._precomputed_kernels = False
         return X
 
