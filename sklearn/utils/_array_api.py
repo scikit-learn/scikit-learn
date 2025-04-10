@@ -555,8 +555,9 @@ def _fill_or_add_to_diagonal(array, value, xp, add_value=True, wrap=False):
         array_flat[:end:step] += value
     else:
         array_flat[:end:step] = value
-    # `array_flat` is not always a view on `array` (e.g., certain array types
-    # created via parallel processing), thus we need to return reshaped `array_flat`.
+    # `array_flat` is not always a view on `array` (e.g. for certain array types that
+    # were filled via parallel processing), thus we need to return reshaped
+    # `array_flat`.
     return xp.reshape(array_flat, array.shape)
 
 
