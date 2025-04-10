@@ -456,6 +456,10 @@ ignore-words = "build_tools/codespell_ignore_words.txt"
         path = "sklearn.mixture"
 
     [[tool.towncrier.section]]
+        name = ":mod:`sklearn.mkl`"
+        path = "sklearn.mkl"
+
+    [[tool.towncrier.section]]
         name = ":mod:`sklearn.model_selection`"
         path = "sklearn.model_selection"
 
