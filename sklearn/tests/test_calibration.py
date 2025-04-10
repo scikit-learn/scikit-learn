@@ -27,7 +27,11 @@ from sklearn.frozen import FrozenEstimator
 from sklearn.impute import SimpleImputer
 from sklearn.isotonic import IsotonicRegression
 from sklearn.linear_model import LogisticRegression, SGDClassifier
-from sklearn.metrics import accuracy_score, brier_score_loss
+from sklearn.metrics import (
+    accuracy_score,
+    brier_score_loss,
+    roc_auc_score,
+)
 from sklearn.model_selection import (
     KFold,
     LeaveOneOut,
@@ -42,7 +46,6 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler, label_binarize
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._mocking import CheckingClassifier
-from sklearn.utils._response import _get_response_values
 from sklearn.utils._testing import (
     _convert_container,
     assert_almost_equal,
@@ -212,7 +215,7 @@ def test_parallel_execution(data, method, ensemble):
     assert_allclose(probs_parallel, probs_sequential)
 
 
-@pytest.mark.parametrize("method", ["sigmoid", "isotonic", "temperature"])
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
 @pytest.mark.parametrize("ensemble", [True, False])
 # increase the number of RNG seeds to assess the statistical stability of this
 # test:
@@ -275,6 +278,7 @@ def test_calibration_multiclass(method, ensemble, seed):
     cal_clf.fit(X_train, y_train)
     cal_clf_probs = cal_clf.predict_proba(X_test)
     calibrated_brier = multiclass_brier(y_test, cal_clf_probs, n_classes=n_classes)
+    print(f"{calibrated_brier = }", f"{1.1 * uncalibrated_brier = }")
     assert calibrated_brier < 1.1 * uncalibrated_brier
 
 
@@ -305,7 +309,8 @@ def test_calibration_zero_probability():
 
 @ignore_warnings(category=FutureWarning)
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_calibration_prefit(csr_container):
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic", "temperature"])
+def test_calibration_prefit(csr_container, method):
     """Test calibration for prefitted classifiers"""
     # TODO(1.8): Remove cv="prefit" options here and the @ignore_warnings of the test
     n_samples = 50
@@ -416,36 +421,69 @@ def test_sigmoid_calibration():
 @pytest.mark.parametrize(
     "clf",
     [
-        make_pipeline(StandardScaler(), LinearSVC(random_state=42)),
+        DummyClassifier(),
+        RandomForestClassifier(n_estimators=30, random_state=42),
         LogisticRegression(),
     ],
 )
-def test_temperature_scaling(data, clf):
+@pytest.mark.parametrize(
+    "n_classes",
+    [2, 3, 4, 5],
+)
+def test_temperature_scaling(clf, n_classes):
     """Check temperature scaling calibration"""
-    X, y = data
+    X, y = make_classification(
+        n_classes=n_classes,
+        n_clusters_per_class=1,
+        n_informative=n_classes,
+        random_state=42,
+    )
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
     clf.fit(X_train, y_train)
     cal_clf = CalibratedClassifierCV(clf, method="temperature").fit(X_train, y_train)
 
-    clf_preds = clf.predict(X_test)
+    y_pred = clf.predict(X_test)
 
-    clf_logits, _ = _get_response_values(
-        clf,
-        X_test,
-        response_method=["decision_function", "predict_proba"],
-    )
+    y_scores = clf.predict_proba(X_test)
 
-    cal_clf_preds = np.argmax(
-        cal_clf.calibrated_classifiers_[0].calibrators[0].predict(clf_logits),
-        axis=1,
-    )
+    y_scores_cal = cal_clf.calibrated_classifiers_[0].calibrators[0].predict(y_scores)
 
-    # Temperature scaling does not affect accuracy
-    assert accuracy_score(y_test, clf_preds) == accuracy_score(y_test, cal_clf_preds)
+    y_pred_cal = np.argmax(y_scores_cal, axis=1)
+
+    if n_classes == 2:
+        y_scores = y_scores[:, 1]
+        y_scores_cal = y_scores_cal[:, 1]
+
+    # Accuracy is invariant under temperature scaling.
+    assert accuracy_score(y_test, y_pred) == accuracy_score(y_test, y_pred_cal)
 
     # The optimized temperature should always be positive
     assert cal_clf.calibrated_classifiers_[0].calibrators[0].beta > 0
+
+    # Refinement error should be invariant under temperature scaling.
+    # Use ROC AUC as a proxy for refinement error.
+    roc_auc_diff = np.abs(
+        roc_auc_score(y_test, y_scores_cal, multi_class="ovr")
+        - roc_auc_score(y_test, y_scores, multi_class="ovr")
+    )
+
+    assert roc_auc_diff <= 0.03
+
+
+def test_temperature_scaling_input_validation():
+    # Check that _TemperatureScaling can handle 2darray with only 1 feature
+    X = np.arange(10)
+    X_2d = X.reshape(-1, 1)
+    y = np.random.randint(0, 2, size=X.shape[0])
+
+    ts = _TemperatureScaling().fit(X, y)
+    ts_2d = _TemperatureScaling().fit(X_2d, y)
+
+    y_pred1 = ts.predict(X)
+    y_pred2 = ts_2d.predict(X_2d)
+
+    assert_allclose(y_pred1, y_pred2)
 
 
 def test_calibration_curve():

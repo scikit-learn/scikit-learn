@@ -9,12 +9,14 @@ from math import log
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.optimize import minimize
+from scipy.optimize import (
+    minimize,
+)
 from scipy.special import expit
 
 from sklearn.utils import Bunch
 
-from ._loss import HalfBinomialLoss
+from ._loss import HalfBinomialLoss, HalfMultinomialLoss
 from .base import (
     BaseEstimator,
     ClassifierMixin,
@@ -712,7 +714,7 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
     pos_class_indices = label_encoder.transform(clf.classes_)
     calibrators = []
 
-    if (method == "isotonic") or (method == "sigmoid"):
+    if method in ("isotonic", "sigmoid"):
         for class_idx, this_pred in zip(pos_class_indices, predictions.T):
             if method == "isotonic":
                 calibrator = IsotonicRegression(out_of_bounds="clip")
@@ -723,8 +725,15 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
 
     elif method == "temperature":
         calibrator = _TemperatureScaling()
-        calibrator.fit(predictions, Y, sample_weight)
+        calibrator.fit(predictions, y, sample_weight)
         calibrators.append(calibrator)
+
+    else:
+        raise ValueError(
+            f"Invalid method '{method}'."
+            "Parameter `method` must be one of"
+            "{'sigmoid', 'isotonic', 'temperature'}."
+        )
 
     pipeline = _CalibratedClassifier(clf, calibrators, method=method, classes=classes)
     return pipeline
@@ -961,34 +970,50 @@ def _sigmoid_calibration(
     return AB_[0] / scale_constant, AB_[1]
 
 
-def _convert_decision_values_to_2d_array(decision_values):
-    """Convert decision function outputs into a 2D array
+def _standardize_decision_values(decision_values, eps=1e-8):
+    """Convert decision_function to 2D and predict_proba to logits
 
-    This function ensures that the output of `decision_function` is
+    This function ensures that the output of `decision_function` or is
     converted into a (n_samples, n_classes) array. For binary classification,
     each row contains logits for the negative and positive classes as (-x, x).
 
+    If `predict_proba` is provided instead, it is converted into
+    log-probabilities using `numpy.log`.
+
     Parameters
     ----------
-    decision_values : array-like of shape (n_samples,) or (n_samples, 1)
-        or (n_samples, n_classes)
+    decision_values : array-like of shape (n_samples,) or (n_samples, 1) \
+        or (n_samples, n_classes).
         The decision function values or probability estimates.
         - If shape is (n_samples,), converts to (n_samples, 2) with (-x, x).
         - If shape is (n_samples, 1), converts to (n_samples, 2) with (-x, x).
         - If shape is (n_samples, n_classes), returns unchanged.
+        - For probability estimates, returns `numpy.log(decision_values + eps)`.
+
+    eps : float
+        Small positive value added to avoid log(0).
 
     Returns
     -------
     logits : ndarray of shape (n_samples, n_classes)
     """
     if (decision_values.ndim == 2) and (decision_values.shape[1] > 1):
-        return decision_values
+
+        # Check if it is the output of `predict_proba`
+        entries_zero_to_one = np.all((decision_values >= 0) & (decision_values <= 1))
+        row_sums_to_one = np.all(np.isclose(np.sum(decision_values, axis=1), 1.0))
+
+        if entries_zero_to_one and row_sums_to_one:
+            return np.astype(np.log(decision_values + eps), np.float64)
+        else:
+            return decision_values
+
     elif (decision_values.ndim == 2) and (decision_values.shape[1] == 1):
-        return np.hstack([-decision_values, decision_values])
+        return np.astype(np.hstack([-decision_values, decision_values]), np.float64)
 
     elif decision_values.ndim == 1:
         decision_values = decision_values.reshape(-1, 1)
-        return np.hstack([-decision_values, decision_values])
+        return np.astype(np.hstack([-decision_values, decision_values]), np.float64)
 
 
 def _temperature_scaling(predictions, labels, sample_weight=None, beta_0=1.0):
@@ -997,12 +1022,15 @@ def _temperature_scaling(predictions, labels, sample_weight=None, beta_0=1.0):
     Parameters
     ----------
     predictions : ndarray of shape (n_samples,) or (n_samples, n_classes)
-        The decision function or predict proba for the samples.
+        The output of `decision_function` or `predict_proba`. If the input
+        appears to be probabilities (i.e., values between 0 and 1 that sum to 1
+        across classes), it will be converted to logits using `np.log(p + eps)`.
 
-    labels : ndarray of shape (n_samples, 1) or (n_samples, n_classes)
-        True labels for the samples. For binary classification, it
-        is given by a binary column vector. For multi-class classification,
-        it is given by one-hot vectors.
+        Binary decision function outputs (1D) will be converted to two-class
+        logits of the form (-x, x). For shape (n_samples, 1), the same applies.
+
+    labels : ndarray of shape (n_samples,)
+        True labels for the samples.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights. If None, then samples are equally weighted.
@@ -1014,19 +1042,21 @@ def _temperature_scaling(predictions, labels, sample_weight=None, beta_0=1.0):
     -------
     beta : float
         The optimised inverse temperature parameter for probability calibration,
-        with a value in the range (0, 1].
+        with a value in the range (0, infinity).
 
     References
     ----------
     On Calibration of Modern Neural Networks,
     C. Guo, G. Pleiss, Y. Sun, & K. Q. Weinberger, ICML 2017.
     """
+    logits = _standardize_decision_values(predictions)
+    labels = np.astype(column_or_1d(labels), np.int64)
+    y_true = np.astype(labels, logits.dtype)
+    logits_true = logits[np.arange(len(labels)), labels]
 
-    logits = _convert_decision_values_to_2d_array(predictions)
-    labels = labels.astype(int)
-    max_logits = np.reshape(np.max(logits, axis=1), (-1, 1))
+    loss = HalfMultinomialLoss()
 
-    def negative_log_likelihood(beta, logits, labels, max_logits):
+    def beta_loss(beta):
         """Compute the negative log likelihood loss and its derivative
             with respect  to temperature.
 
@@ -1035,66 +1065,32 @@ def _temperature_scaling(predictions, labels, sample_weight=None, beta_0=1.0):
         beta : float
             The current inverse temperature value during optimisation.
 
-        logits : ndarray of shape (n_samples, n_classes)
-            The decision function or predict proba for the samples.
-
-        labels : ndarray of shape (n_samples, 1) or (n_samples, n_classes)
-            True labels for the samples. For binary classification, it
-            is given by a binary column vector. For multi-class classification,
-            it is given by one-hot vectors.
-
-        max_logits : ndarray of shape (n_samples, 1)
-            Maximum value in each row of logits
-
         Returns
         -------
         negative_log_likelihood_loss : float
             The negative log likelihood loss.
 
-        negative_log_likelihood_loss_derivative : float
-            The derivative of the negative log likelihood loss with respect to
-            the inverse temperature.
         """
+        # Select the logit of the correct class
+        raw_prediction = softmax(beta * logits)
 
-        # Select the logit and the softmax output of the correct class
-        softmax_output = softmax(beta * logits)
+        l, g = loss.loss_gradient(
+            y_true=y_true, raw_prediction=raw_prediction, sample_weight=sample_weight
+        )
 
-        # multi-class classification
-        if (labels.ndim == 2) and (labels.shape[1] > 1):
-            correct_class_probas = np.sum(softmax_output * labels, axis=1)
-            correct_class_logits = np.sum(logits * labels, axis=1)
+        g_true = g[np.arange(len(labels)), labels]
+        raw_prediction_true = raw_prediction[np.arange(len(labels)), labels]
+        gradient = (
+            g_true * raw_prediction_true * (1 - raw_prediction_true) * logits_true
+        )
 
-        # binary classification
-        elif (labels.ndim == 2) and (labels.shape[1] == 1):
-            correct_class_probas = np.take_along_axis(
-                softmax_output, labels, axis=1
-            ).ravel()
-
-            correct_class_logits = np.take_along_axis(logits, labels, axis=1).ravel()
-
-        # Compute the losses
-        losses = np.log(correct_class_probas)
-
-        # Derivatives with respect to beta
-        numerator = np.sum(logits * np.exp(beta * (logits - max_logits)), axis=1)
-
-        denominator = np.sum(np.exp(beta * (logits - max_logits)), axis=1)
-
-        derivatives = correct_class_logits - numerator / denominator
-
-        # Apply sample weight
-        if sample_weight is not None:
-            losses *= sample_weight
-            derivatives *= sample_weight
-
-        return -np.sum(losses), -np.sum(derivatives)
+        return l.sum(), -gradient.sum()
 
     beta_minimizer = minimize(
-        negative_log_likelihood,
+        beta_loss,
         np.array([beta_0]),
-        args=(logits, labels, max_logits),
         method="L-BFGS-B",
-        bounds=[(1e-8, None)],
+        bounds=[(np.finfo(float).eps, None)],
         jac=True,
         options={
             "gtol": 1e-6,
@@ -1180,10 +1176,18 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples,)
+        X : ndarray of shape (n_samples,) or (n_samples, n_classes)
             Training data.
 
-        y : array-like of shape (n_samples, n_classes)
+            This should be the output of `decision_function` or `predict_proba`.
+            If the input appears to be probabilities (i.e., values between 0 and 1
+            that sum to 1 across classes), it will be converted to logits using
+            `np.log(p + eps)`.
+
+            Binary decision function outputs (1D) will be converted to two-class
+            logits of the form (-x, x). For shape (n_samples, 1), the same applies.
+
+        y : array-like of shape (n_samples,)
             Training target.
 
         sample_weight : array-like of shape (n_samples,), default=None
@@ -1194,10 +1198,8 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         self : object
             Returns an instance of self.
         """
-        X = _convert_decision_values_to_2d_array(X)
-
+        X = _standardize_decision_values(X)
         X, y = indexable(X, y)
-
         self.beta = _temperature_scaling(X, y, sample_weight, self.beta_0)
         return self
 
@@ -1206,16 +1208,23 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples,)
+        X : ndarray of shape (n_samples,) or (n_samples, n_classes)
             Data to predict from.
+
+            This should be the output of `decision_function` or `predict_proba`.
+            If the input appears to be probabilities (i.e., values between 0 and 1
+            that sum to 1 across classes), it will be converted to logits using
+            `np.log(p + eps)`.
+
+            Binary decision function outputs (1D) will be converted to two-class
+            logits of the form (-x, x). For shape (n_samples, 1), the same applies.
 
         Returns
         -------
         X_ : ndarray of shape (n_samples, n_classes)
-            The predicted data.
+             The predicted data.
         """
-        X = _convert_decision_values_to_2d_array(X)
-
+        X = _standardize_decision_values(X)
         return softmax(self.beta * X)
 
     def __sklearn_tags__(self):
