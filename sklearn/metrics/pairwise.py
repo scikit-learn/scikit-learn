@@ -440,7 +440,7 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
     # Ensure that distances between vectors and themselves are set to 0.0.
     # This may not be the case due to floating point rounding errors.
     if X is Y:
-        _fill_or_add_to_diagonal(distances, 0, xp=xp, add_value=False)
+        distances = _fill_or_add_to_diagonal(distances, 0, xp=xp, add_value=False)
 
     if squared:
         return distances
@@ -1185,7 +1185,7 @@ def cosine_distances(X, Y=None):
     if X is Y or Y is None:
         # Ensure that distances between vectors and themselves are set to 0.0.
         # This may not be the case due to floating point rounding errors.
-        _fill_or_add_to_diagonal(S, 0.0, xp, add_value=False)
+        S = _fill_or_add_to_diagonal(S, 0.0, xp, add_value=False)
     return S
 
 
@@ -1970,7 +1970,7 @@ def _dist_wrapper(dist_func, dist_matrix, slice_, *args, transpose=False, **kwar
 def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     """Break the pairwise matrix in n_jobs even slices
     and compute them using multithreading."""
-    xp, _ = get_namespace(X, Y)
+    xp, _, device = get_namespace_and_device(X, Y)
     X, Y, dtype_float = _find_floating_dtype_allow_sparse(X, Y, xp=xp)
 
     if Y is None:
@@ -1986,7 +1986,7 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     # https://github.com/data-apis/array-api/issues/571 for details.
     # We assume that currently (April 2025) all array API compatible namespaces
     # allocate 2D arrays using the C-contiguity convention by default.
-    ret = xp.empty((X.shape[0], Y.shape[0]), dtype=dtype_float).T
+    ret = xp.empty((X.shape[0], Y.shape[0]), device=device, dtype=dtype_float).T
     Parallel(backend="threading", n_jobs=n_jobs)(
         fd(func, ret, s, X, Y[s, ...], transpose=True, **kwds)
         for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs))
@@ -1995,7 +1995,7 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     if (X is Y or Y is None) and func is euclidean_distances:
         # zeroing diagonal for euclidean norm.
         # TODO: do it also for other norms.
-        _fill_or_add_to_diagonal(ret, 0, xp=xp, add_value=False)
+        ret = _fill_or_add_to_diagonal(ret, 0, xp=xp, add_value=False)
 
     # Transform output back
     return ret.T

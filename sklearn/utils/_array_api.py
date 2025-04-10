@@ -555,6 +555,7 @@ def _fill_or_add_to_diagonal(array, value, xp, add_value=True, wrap=False):
         array_flat[:end:step] += value
     else:
         array_flat[:end:step] = value
+    return xp.reshape(array_flat, array.shape)
 
 
 def _is_xp_namespace(xp, name):
