@@ -1962,9 +1962,9 @@ def distance_metrics():
 def _dist_wrapper(dist_func, dist_matrix, slice_, *args, transpose=False, **kwargs):
     """Write in-place to a slice of a distance matrix."""
     if transpose:
-        dist_matrix[slice_, :] = dist_func(*args, **kwargs).T
+        dist_matrix[slice_, ...] = dist_func(*args, **kwargs).T
     else:
-        dist_matrix[:, slice_] = dist_func(*args, **kwargs)
+        dist_matrix[..., slice_] = dist_func(*args, **kwargs)
 
 
 def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
@@ -1985,7 +1985,7 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     # Note `order` (i.e. F/C-contiguous) is not included in array API standard, see
     # https://github.com/data-apis/array-api/issues/571 for details.
     # We assume that currently (April 2025) all array API compatible namespaces
-    # allocate # 2D arrays using the C-contiguity convention by default.
+    # allocate 2D arrays using the C-contiguity convention by default.
     ret = xp.empty((X.shape[0], Y.shape[0]), dtype=dtype_float).T
     Parallel(backend="threading", n_jobs=n_jobs)(
         fd(func, ret, s, X, Y[s, ...], transpose=True, **kwds)
