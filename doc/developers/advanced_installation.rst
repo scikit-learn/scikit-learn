@@ -71,6 +71,18 @@ feature, code or documentation improvement).
    `conda environment`_ with all the build dependencies of scikit-learn
    (namely NumPy_, SciPy_, Cython_, meson-python_ and Ninja_):
 
+   .. note::
+
+      At the time of writing, the newest Python 3.13 version from the conda distribution uses freethreading,
+      which may cause problems when compiling on some OS like Windows.
+      In these cases, it is recommended to use Python 3.12 in the `conda environment`. With the following command:
+
+    .. prompt:: bash $
+
+     conda create -n sklearn-env -c conda-forge python=3.12 numpy scipy cython meson-python ninja
+
+   If the situation above is not the case, you can use the latest versions with the following command:
+
    .. prompt:: bash $
 
      conda create -n sklearn-env -c conda-forge python numpy scipy cython meson-python ninja
