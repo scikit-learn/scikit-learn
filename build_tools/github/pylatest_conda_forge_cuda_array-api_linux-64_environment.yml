@@ -29,5 +29,4 @@ dependencies:
   - polars
   - pyarrow
   - cupy
-  - array-api-compat
   - array-api-strict
