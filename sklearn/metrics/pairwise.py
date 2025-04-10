@@ -2018,7 +2018,8 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
         out = xp.zeros((X.shape[0], Y.shape[0]), dtype=dtype_float)
         iterator = itertools.combinations(range(X.shape[0]), 2)
         for i, j in iterator:
-            # When `metric` is a callable, input arrays are allowed to be 1D
+            # When `metric` is a callable, 1D input arrays allowed, in which case
+            # scalar should be returned (allows string manipulation)
             x = X[i, ...] if X.ndim == 2 else X[i]
             y = Y[j, ...] if Y.ndim == 2 else Y[j]
             out[i, j] = metric(x, y, **kwds)
@@ -2030,7 +2031,8 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
         # Calculate diagonal
         # NB: nonzero diagonals are allowed for both metrics and kernels
         for i in range(X.shape[0]):
-            # When `metric` is a callable, input arrays are allowed to be 1D
+            # When `metric` is a callable, 1D input arrays allowed, in which case
+            # scalar should be returned (allows string manipulation)
             x = X[i, ...] if X.ndim == 2 else X[i]
             out[i, i] = metric(x, x, **kwds)
 
@@ -2039,7 +2041,8 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
         out = xp.empty((X.shape[0], Y.shape[0]), dtype=dtype_float)
         iterator = itertools.product(range(X.shape[0]), range(Y.shape[0]))
         for i, j in iterator:
-            # When `metric` is a callable, input arrays are allowed to be 1D
+            # When `metric` is a callable, 1D input arrays allowed, in which case
+            # scalar should be returned (allows string manipulation)
             x = X[i, ...] if X.ndim == 2 else X[i]
             y = Y[j, ...] if Y.ndim == 2 else Y[j]
             out[i, j] = metric(x, y, **kwds)
