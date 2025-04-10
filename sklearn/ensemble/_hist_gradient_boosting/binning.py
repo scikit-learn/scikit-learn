@@ -48,7 +48,6 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
     missing_mask = np.isnan(col_data)
     if missing_mask.any():
         col_data = col_data[~missing_mask]
-        sample_weight = sample_weight[~missing_mask]
 
     # if sample weight is not None and null values exist
     # we need to remove those before calculating the
@@ -85,6 +84,7 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
         # TODO: check if there is a better way to implement this
         percentiles = np.linspace(0, 100, num=max_bins + 1)
         percentiles = percentiles[1:-1]
+        sample_weight = sample_weight[~missing_mask]
         sample_weight = sample_weight[sort_idx]
 
         bin_thresholds = np.array(
