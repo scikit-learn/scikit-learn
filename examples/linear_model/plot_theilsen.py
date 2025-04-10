@@ -35,14 +35,15 @@ it then works on a random subset.
 
 """
 
-# Author: Florian Wilhelm -- <florian.wilhelm@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import time
-import numpy as np
+
 import matplotlib.pyplot as plt
-from sklearn.linear_model import LinearRegression, TheilSenRegressor
-from sklearn.linear_model import RANSACRegressor
+import numpy as np
+
+from sklearn.linear_model import LinearRegression, RANSACRegressor, TheilSenRegressor
 
 estimators = [
     ("OLS", LinearRegression()),
@@ -84,7 +85,7 @@ for name, estimator in estimators:
     )
 
 plt.axis("tight")
-plt.legend(loc="upper left")
+plt.legend(loc="upper right")
 _ = plt.title("Corrupt y")
 
 # %%

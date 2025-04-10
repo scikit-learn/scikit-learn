@@ -14,18 +14,15 @@ performance of some other classifiers, see the
 notebook.
 """
 
-# Author: Olivier Grisel <olivier.grisel@ensta.org>
-#         Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#         Mathieu Blondel <mathieu@mblondel.org>
-#         Arturo Amor <david-arturo.amor-quiroz@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Data loading
 # ------------
 # We load two categories from the training set. You can adjust the number of
 # categories by adding their names to the list or setting `categories=None` when
-# calling the dataset loader :func:`~sklearn.datasets.fetch20newsgroups` to get
+# calling the dataset loader :func:`~sklearn.datasets.fetch_20newsgroups` to get
 # the 20 of them.
 
 from sklearn.datasets import fetch_20newsgroups
@@ -105,6 +102,7 @@ parameter_grid = {
 # via the parameter `n_jobs`.
 
 from pprint import pprint
+
 from sklearn.model_selection import RandomizedSearchCV
 
 random_search = RandomizedSearchCV(

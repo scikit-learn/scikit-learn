@@ -1,30 +1,39 @@
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
-import pickle
 import itertools
+import pickle
 
 import numpy as np
 import pytest
+from numpy.testing import assert_allclose, assert_array_almost_equal
 
 from sklearn.metrics import DistanceMetric
 from sklearn.neighbors._ball_tree import (
     BallTree,
     kernel_norm,
-    DTYPE,
-    ITYPE,
-    NeighborsHeap as NeighborsHeapBT,
-    simultaneous_sort as simultaneous_sort_bt,
+)
+from sklearn.neighbors._ball_tree import (
+    NeighborsHeap64 as NeighborsHeapBT,
+)
+from sklearn.neighbors._ball_tree import (
     nodeheap_sort as nodeheap_sort_bt,
+)
+from sklearn.neighbors._ball_tree import (
+    simultaneous_sort as simultaneous_sort_bt,
 )
 from sklearn.neighbors._kd_tree import (
     KDTree,
-    NeighborsHeap as NeighborsHeapKDT,
-    simultaneous_sort as simultaneous_sort_kdt,
+)
+from sklearn.neighbors._kd_tree import (
+    NeighborsHeap64 as NeighborsHeapKDT,
+)
+from sklearn.neighbors._kd_tree import (
     nodeheap_sort as nodeheap_sort_kdt,
 )
-
+from sklearn.neighbors._kd_tree import (
+    simultaneous_sort as simultaneous_sort_kdt,
+)
 from sklearn.utils import check_random_state
-from numpy.testing import assert_array_almost_equal, assert_allclose
 
 rng = np.random.RandomState(42)
 V_mahalanobis = rng.rand(3, 3)
@@ -38,7 +47,6 @@ METRICS = {
     "minkowski": dict(p=3),
     "chebyshev": {},
     "seuclidean": dict(V=rng.random_sample(DIMENSION)),
-    "wminkowski": dict(p=3, w=rng.random_sample(DIMENSION)),
     "mahalanobis": dict(V=V_mahalanobis),
 }
 
@@ -163,8 +171,8 @@ def test_neighbors_heap(NeighborsHeap, n_pts=5, n_nbrs=10):
     rng = check_random_state(0)
 
     for row in range(n_pts):
-        d_in = rng.random_sample(2 * n_nbrs).astype(DTYPE, copy=False)
-        i_in = np.arange(2 * n_nbrs, dtype=ITYPE)
+        d_in = rng.random_sample(2 * n_nbrs).astype(np.float64, copy=False)
+        i_in = np.arange(2 * n_nbrs, dtype=np.intp)
         for d, i in zip(d_in, i_in):
             heap.push(row, d, i)
 
@@ -181,7 +189,7 @@ def test_neighbors_heap(NeighborsHeap, n_pts=5, n_nbrs=10):
 @pytest.mark.parametrize("nodeheap_sort", [nodeheap_sort_bt, nodeheap_sort_kdt])
 def test_node_heap(nodeheap_sort, n_nodes=50):
     rng = check_random_state(0)
-    vals = rng.random_sample(n_nodes).astype(DTYPE, copy=False)
+    vals = rng.random_sample(n_nodes).astype(np.float64, copy=False)
 
     i1 = np.argsort(vals)
     vals2, i2 = nodeheap_sort(vals)
@@ -195,8 +203,8 @@ def test_node_heap(nodeheap_sort, n_nodes=50):
 )
 def test_simultaneous_sort(simultaneous_sort, n_rows=10, n_pts=201):
     rng = check_random_state(0)
-    dist = rng.random_sample((n_rows, n_pts)).astype(DTYPE, copy=False)
-    ind = (np.arange(n_pts) + np.zeros((n_rows, 1))).astype(ITYPE, copy=False)
+    dist = rng.random_sample((n_rows, n_pts)).astype(np.float64, copy=False)
+    ind = (np.arange(n_pts) + np.zeros((n_rows, 1))).astype(np.intp, copy=False)
 
     dist2 = dist.copy()
     ind2 = ind.copy()
@@ -233,8 +241,6 @@ def test_gaussian_kde(Cls, n_samples=1000):
         assert_array_almost_equal(dens_tree, dens_gkde, decimal=3)
 
 
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize(
     "Cls, metric",
     itertools.chain(

@@ -1,0 +1,3 @@
+- Hyper-parameter optimizers such as :class:`model_selection.GridSearchCV`
+  now forward `sample_weight` to the scorer even when metadata routing is not enabled.
+  By :user:`Antoine Baker <antoinebaker>`

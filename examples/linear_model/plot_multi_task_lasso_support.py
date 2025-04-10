@@ -13,8 +13,8 @@ point. This makes feature selection by the Lasso more stable.
 
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Generate data
@@ -39,7 +39,7 @@ Y = np.dot(X, coef.T) + rng.randn(n_samples, n_tasks)
 # Fit models
 # ----------
 
-from sklearn.linear_model import MultiTaskLasso, Lasso
+from sklearn.linear_model import Lasso, MultiTaskLasso
 
 coef_lasso_ = np.array([Lasso(alpha=0.5).fit(X, y).coef_ for y in Y.T])
 coef_multi_task_lasso_ = MultiTaskLasso(alpha=1.0).fit(X, Y).coef_

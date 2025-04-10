@@ -1,0 +1,785 @@
+.. include:: _contributors.rst
+
+.. currentmodule:: sklearn
+
+.. _release_notes_1_6:
+
+===========
+Version 1.6
+===========
+
+For a short description of the main highlights of the release, please refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_6_0.py`.
+
+.. include:: changelog_legend.inc
+
+.. towncrier release notes start
+
+.. _changes_1_6_1:
+
+Version 1.6.1
+=============
+
+**January 2025**
+
+Changed models
+--------------
+
+- |Fix| The `tags.input_tags.sparse` flag was corrected for a majority of estimators.
+  By :user:`Antoine Baker <antoinebaker>` :pr:`30187`
+
+Changes impacting many modules
+------------------------------
+
+- |Fix| `_more_tags`, `_get_tags`, and `_safe_tags` are now raising a
+  :class:`DeprecationWarning` instead of a :class:`FutureWarning` to only notify
+  developers instead of end-users.
+  By :user:`Guillaume Lemaitre <glemaitre>` in :pr:`30573`
+
+:mod:`sklearn.metrics`
+----------------------
+
+- |Fix| Fix regression when scikit-learn metric called on PyTorch CPU tensors would
+  raise an error (with array API dispatch disabled which is the default).
+  By :user:`Loïc Estève <lesteve>` :pr:`30454`
+
+:mod:`sklearn.model_selection`
+------------------------------
+
+- |Fix| :func:`~model_selection.cross_validate`, :func:`~model_selection.cross_val_predict`,
+  and :func:`~model_selection.cross_val_score` now accept `params=None` when metadata
+  routing is enabled. By `Adrin Jalali`_ :pr:`30451`
+
+:mod:`sklearn.tree`
+-------------------
+
+- |Fix| Use `log2` instead of `ln` for building trees to maintain behavior of previous
+  versions. By `Thomas Fan`_ :pr:`30557`
+
+:mod:`sklearn.utils`
+--------------------
+
+- |Enhancement| :func:`utils.estimator_checks.check_estimator_sparse_tag` ensures that
+  the estimator tag `input_tags.sparse` is consistent with its `fit`
+  method (accepting sparse input `X` or raising the appropriate error).
+  By :user:`Antoine Baker <antoinebaker>` :pr:`30187`
+
+- |Fix| Raise a `DeprecationWarning` when there is no concrete implementation of `__sklearn_tags__`
+  in the MRO of the estimator. We request to inherit from `BaseEstimator` that
+  implements `__sklearn_tags__`.
+  By :user:`Guillaume Lemaitre <glemaitre>` :pr:`30516`
+
+.. _changes_1_6_0:
+
+Version 1.6.0
+=============
+
+**December 2024**
+
+Changes impacting many modules
+------------------------------
+
+- |Enhancement| `__sklearn_tags__` was introduced for setting tags in estimators.
+  More details in :ref:`estimator_tags`.
+  By :user:`Thomas Fan <thomasjpfan>` and :user:`Adrin Jalali <adrinjalali>` :pr:`29677`
+
+- |Enhancement| Scikit-learn classes and functions can be used while only having a
+  `import sklearn` import line. For example, `import sklearn; sklearn.svm.SVC()` now works.
+  By :user:`Thomas Fan <thomasjpfan>` :pr:`29793`
+
+- |Fix| Classes :class:`metrics.ConfusionMatrixDisplay`,
+  :class:`metrics.RocCurveDisplay`, :class:`calibration.CalibrationDisplay`,
+  :class:`metrics.PrecisionRecallDisplay`, :class:`metrics.PredictionErrorDisplay` and
+  :class:`inspection.PartialDependenceDisplay` now properly handle Matplotlib aliases
+  for style parameters (e.g., `c` and `color`, `ls` and `linestyle`, etc).
+  By :user:`Joseph Barbier <JosephBARBIERDARNAL>` :pr:`30023`
+
+- |API| :func:`utils.validation.validate_data` is introduced and replaces previously
+  private `base.BaseEstimator._validate_data` method. This is intended for third party
+  estimator developers, who should use this function in most cases instead of
+  :func:`utils.check_array` and :func:`utils.check_X_y`.
+  By :user:`Adrin Jalali <adrinjalali>` :pr:`29696`
+
+Support for Array API
+---------------------
+
+Additional estimators and functions have been updated to include support for all
+`Array API <https://data-apis.org/array-api/latest/>`_ compliant inputs.
+
+See :ref:`array_api` for more details.
+
+- |Feature| :class:`model_selection.GridSearchCV`,
+  :class:`model_selection.RandomizedSearchCV`,
+  :class:`model_selection.HalvingGridSearchCV` and
+  :class:`model_selection.HalvingRandomSearchCV` now support Array API
+  compatible inputs when their base estimators do.
+  By :user:`Tim Head <betatim>` and :user:`Olivier Grisel <ogrisel>` :pr:`27096`
+
+- |Feature| :func:`sklearn.metrics.f1_score` now supports Array API compatible
+  inputs.
+  By :user:`Omar Salman <OmarManzoor>` :pr:`27369`
+
+- |Feature| :class:`preprocessing.LabelEncoder` now supports Array API compatible inputs.
+  By :user:`Omar Salman <OmarManzoor>` :pr:`27381`
+
+- |Feature| :func:`sklearn.metrics.mean_absolute_error` now supports Array API compatible
+  inputs.
+  By :user:`Edoardo Abati <EdAbati>` :pr:`27736`
+
+- |Feature| :func:`sklearn.metrics.mean_tweedie_deviance` now supports Array API
+  compatible inputs.
+  By :user:`Thomas Li <lithomas1>` :pr:`28106`
+
+- |Feature| :func:`sklearn.metrics.pairwise.cosine_similarity` now supports Array API
+  compatible inputs.
+  By :user:`Edoardo Abati <EdAbati>` :pr:`29014`
+
+- |Feature| :func:`sklearn.metrics.pairwise.paired_cosine_distances` now supports Array
+  API compatible inputs.
+  By :user:`Edoardo Abati <EdAbati>` :pr:`29112`
+
+- |Feature| :func:`sklearn.metrics.cluster.entropy` now supports Array API compatible
+  inputs.
+  By :user:`Yaroslav Korobko <Tialo>` :pr:`29141`
+
+- |Feature| :func:`sklearn.metrics.mean_squared_error` now supports Array API compatible
+  inputs.
+  By :user:`Yaroslav Korobko <Tialo>` :pr:`29142`
+
+- |Feature| :func:`sklearn.metrics.pairwise.additive_chi2_kernel` now supports Array API
+  compatible inputs.
+  By :user:`Yaroslav Korobko <Tialo>` :pr:`29144`
+
+- |Feature| :func:`sklearn.metrics.d2_tweedie_score` now supports Array API compatible
+  inputs.
+  By :user:`Emily Chen <EmilyXinyi>` :pr:`29207`
+
+- |Feature| :func:`sklearn.metrics.max_error` now supports Array API compatible inputs.
+  By :user:`Edoardo Abati <EdAbati>` :pr:`29212`
+
+- |Feature| :func:`sklearn.metrics.mean_poisson_deviance` now supports Array API
+  compatible inputs.
+  By :user:`Emily Chen <EmilyXinyi>` :pr:`29227`
+
+- |Feature| :func:`sklearn.metrics.mean_gamma_deviance` now supports Array API compatible
+  inputs.
+  By :user:`Emily Chen <EmilyXinyi>` :pr:`29239`
+
+- |Feature| :func:`sklearn.metrics.pairwise.cosine_distances` now supports Array API
+  compatible inputs.
+  By :user:`Emily Chen <EmilyXinyi>` :pr:`29265`
+
+- |Feature| :func:`sklearn.metrics.pairwise.chi2_kernel` now supports Array API
+  compatible inputs.
+  By :user:`Yaroslav Korobko <Tialo>` :pr:`29267`
+
+- |Feature| :func:`sklearn.metrics.mean_absolute_percentage_error` now supports Array API
+  compatible inputs.
+  By :user:`Emily Chen <EmilyXinyi>` :pr:`29300`
+
+- |Feature| :func:`sklearn.metrics.pairwise.paired_euclidean_distances` now supports
+  Array API compatible inputs.
+  By :user:`Emily Chen <EmilyXinyi>` :pr:`29389`
+
+- |Feature| :func:`sklearn.metrics.pairwise.euclidean_distances` and
+  :func:`sklearn.metrics.pairwise.rbf_kernel` now support Array API compatible
+  inputs.
+  By :user:`Omar Salman <OmarManzoor>` :pr:`29433`
+
+- |Feature| :func:`sklearn.metrics.pairwise.linear_kernel`,
+  :func:`sklearn.metrics.pairwise.sigmoid_kernel`, and
+  :func:`sklearn.metrics.pairwise.polynomial_kernel` now support Array API
+  compatible inputs.
+  By :user:`Omar Salman <OmarManzoor>` :pr:`29475`
+
+- |Feature| :func:`sklearn.metrics.mean_squared_log_error` and
+  :func:`sklearn.metrics.root_mean_squared_log_error`
+  now support Array API compatible inputs.
+  By :user:`Virgil Chan <virchan>` :pr:`29709`
+
+- |Feature| :class:`preprocessing.MinMaxScaler` with `clip=True` now supports Array API
+  compatible inputs.
+  By :user:`Shreekant Nandiyawar <Shree7676>` :pr:`29751`
+
+- Support for the soon to be deprecated `cupy.array_api` module has been
+  removed in favor of directly supporting the top level `cupy` module, possibly
+  via the `array_api_compat.cupy` compatibility wrapper.
+  By :user:`Olivier Grisel <ogrisel>` :pr:`29639`
+
+Metadata routing
+----------------
+
+Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
+more details.
+
+- |Feature| :class:`semi_supervised.SelfTrainingClassifier`
+  now supports metadata routing. The fit method now accepts ``**fit_params``
+  which are passed to the underlying estimators via their `fit` methods.
+  In addition, the
+  :meth:`~semi_supervised.SelfTrainingClassifier.predict`,
+  :meth:`~semi_supervised.SelfTrainingClassifier.predict_proba`,
+  :meth:`~semi_supervised.SelfTrainingClassifier.predict_log_proba`,
+  :meth:`~semi_supervised.SelfTrainingClassifier.score`
+  and :meth:`~semi_supervised.SelfTrainingClassifier.decision_function`
+  methods also accept ``**params`` which are
+  passed to the underlying estimators via their respective methods.
+  By :user:`Adam Li <adam2392>` :pr:`28494`
+
+- |Feature| :class:`ensemble.StackingClassifier` and
+  :class:`ensemble.StackingRegressor` now support metadata routing and pass
+  ``**fit_params`` to the underlying estimators via their `fit` methods.
+  By :user:`Stefanie Senger <StefanieSenger>` :pr:`28701`
+
+- |Feature| :func:`model_selection.learning_curve` now supports metadata routing for the
+  `fit` method of its estimator and for its underlying CV splitter and scorer.
+  By :user:`Stefanie Senger <StefanieSenger>` :pr:`28975`
+
+- |Feature| :class:`compose.TransformedTargetRegressor` now supports metadata
+  routing in its :meth:`~compose.TransformedTargetRegressor.fit` and
+  :meth:`~compose.TransformedTargetRegressor.predict` methods and routes the
+  corresponding params to the underlying regressor.
+  By :user:`Omar Salman <OmarManzoor>` :pr:`29136`
+
+- |Feature| :class:`feature_selection.SequentialFeatureSelector` now supports
+  metadata routing in its `fit` method and passes the corresponding params to
+  the :func:`model_selection.cross_val_score` function.
+  By :user:`Omar Salman <OmarManzoor>` :pr:`29260`
+
+- |Feature| :func:`model_selection.permutation_test_score` now supports metadata routing
+  for the `fit` method of its estimator and for its underlying CV splitter and scorer.
+  By :user:`Adam Li <adam2392>` :pr:`29266`
+
+- |Feature| :class:`feature_selection.RFE` and :class:`feature_selection.RFECV`
+  now support metadata routing.
+  By :user:`Omar Salman <OmarManzoor>` :pr:`29312`
+
+- |Feature| :func:`model_selection.validation_curve` now supports metadata routing for
+  the `fit` method of its estimator and for its underlying CV splitter and scorer.
+  By :user:`Stefanie Senger <StefanieSenger>` :pr:`29329`
+
+- |Fix| Metadata is routed correctly to grouped CV splitters via
+  :class:`linear_model.RidgeCV` and :class:`linear_model.RidgeClassifierCV` and
+  `UnsetMetadataPassedError` is fixed for :class:`linear_model.RidgeClassifierCV` with
+  default scoring.
+  By :user:`Stefanie Senger <StefanieSenger>` :pr:`29634`
+
+- |Fix| Many method arguments which shouldn't be included in the routing mechanism are
+  now excluded and the `set_{method}_request` methods are not generated for them.
+  By `Adrin Jalali`_ :pr:`29920`
+
+Dropping official support for PyPy
+----------------------------------
+
+Due to limited maintainer resources and small number of users, official PyPy
+support has been dropped. Some parts of scikit-learn may still work but PyPy is
+not tested anymore in the scikit-learn Continuous Integration.
+By :user:`Loïc Estève <lesteve>` :pr:`29128`
+
+Dropping support for building with setuptools
+---------------------------------------------
+
+From scikit-learn 1.6 onwards, support for building with setuptools has been
+removed. Meson is the only supported way to build scikit-learn, see
+:ref:`Building from source <install_bleeding_edge>` for more details.
+By :user:`Loïc Estève <lesteve>` :pr:`29400`
+
+Free-threaded CPython 3.13 support
+----------------------------------
+
+scikit-learn has preliminary support for free-threaded CPython, in particular
+free-threaded wheels are available for all of our supported platforms.
+
+Free-threaded (also known as nogil) CPython 3.13 is an experimental version of
+CPython 3.13 which aims at enabling efficient multi-threaded use cases by
+removing the Global Interpreter Lock (GIL).
+
+For more details about free-threaded CPython see `py-free-threading doc <https://py-free-threading.github.io>`_,
+in particular `how to install a free-threaded CPython <https://py-free-threading.github.io/installing_cpython/>`_
+and `Ecosystem compatibility tracking <https://py-free-threading.github.io/tracking/>`_.
+
+Feel free to try free-threaded on your use case and report any issues!
+
+By :user:`Loïc Estève <lesteve>` and many other people in the wider Scientific
+Python and CPython ecosystem, for example :user:`Nathan Goldbaum <ngoldbaum>`,
+:user:`Ralf Gommers <rgommers>`, :user:`Edgar Andrés Margffoy Tuay <andfoy>`. :pr:`30360`
+
+:mod:`sklearn.base`
+-------------------
+
+- |Enhancement| Added a function :func:`base.is_clusterer` which determines whether a given
+  estimator is of category clusterer.
+  By :user:`Christian Veenhuis <ChVeen>` :pr:`28936`
+
+- |API| Passing a class object to :func:`~sklearn.base.is_classifier`,
+  :func:`~sklearn.base.is_regressor`, and
+  :func:`~sklearn.base.is_outlier_detector` is now deprecated. Pass an instance
+  instead.
+  By `Adrin Jalali`_ :pr:`30122`
+
+:mod:`sklearn.calibration`
+--------------------------
+
+- |API| `cv="prefit"` is deprecated for :class:`~sklearn.calibration.CalibratedClassifierCV`.
+  Use :class:`~sklearn.frozen.FrozenEstimator` instead, as
+  `CalibratedClassifierCV(FrozenEstimator(estimator))`.
+  By `Adrin Jalali`_ :pr:`30171`
+
+:mod:`sklearn.cluster`
+----------------------
+
+- |API| The `copy` parameter of :class:`cluster.Birch` was deprecated in 1.6 and will be
+  removed in 1.8. It has no effect as the estimator does not perform in-place operations
+  on the input data.
+  By :user:`Yao Xiao <Charlie-XIAO>` :pr:`29124`
+
+:mod:`sklearn.compose`
+----------------------
+
+- |Enhancement| :func:`sklearn.compose.ColumnTransformer` `verbose_feature_names_out`
+  now accepts string format or callable to generate feature names.
+  By :user:`Marc Bresson <MarcBresson>` :pr:`28934`
+
+:mod:`sklearn.covariance`
+-------------------------
+
+- |Efficiency| :class:`covariance.MinCovDet` fitting is now slightly faster.
+  By :user:`Antony Lee <anntzer>` :pr:`29835`
+
+:mod:`sklearn.cross_decomposition`
+----------------------------------
+
+- |Fix| :class:`cross_decomposition.PLSRegression` properly raises an error when
+  `n_components` is larger than `n_samples`.
+  By :user:`Thomas Fan <thomasjpfan>` :pr:`29710`
+
+:mod:`sklearn.datasets`
+-----------------------
+
+- |Feature| :func:`datasets.fetch_file` allows downloading arbitrary data-file
+  from the web. It handles local caching, integrity checks with SHA256 digests
+  and automatic retries in case of HTTP errors.
+  By :user:`Olivier Grisel <ogrisel>` :pr:`29354`
+
+:mod:`sklearn.decomposition`
+----------------------------
+
+- |Enhancement| :class:`~sklearn.decomposition.LatentDirichletAllocation` now has a
+  ``normalize`` parameter in
+  :meth:`~sklearn.decomposition.LatentDirichletAllocation.transform` and
+  :meth:`~sklearn.decomposition.LatentDirichletAllocation.fit_transform`
+  methods to control whether the document topic distribution is normalized.
+  By `Adrin Jalali`_ :pr:`30097`
+
+- |Fix| :class:`~sklearn.decomposition.IncrementalPCA`
+  will now only raise a ``ValueError`` when the number of samples in the
+  input data to ``partial_fit`` is less than the number of components
+  on the first call to ``partial_fit``. Subsequent calls to ``partial_fit``
+  no longer face this restriction.
+  By :user:`Thomas Gessey-Jones <ThomasGesseyJonesPX>` :pr:`30224`
+
+:mod:`sklearn.discriminant_analysis`
+------------------------------------
+
+- |Fix| :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`
+  will now cause `LinAlgWarning` in case of collinear variables. These errors
+  can be silenced using the `reg_param` attribute.
+  By :user:`Alihan Zihna <azihna>` :pr:`19731`
+
+:mod:`sklearn.ensemble`
+-----------------------
+
+- |Feature| :class:`ensemble.ExtraTreesClassifier` and
+  :class:`ensemble.ExtraTreesRegressor` now support missing-values in the data matrix
+  `X`. Missing-values are handled by randomly moving all of the samples to the left, or
+  right child node as the tree is traversed.
+  By :user:`Adam Li <adam2392>` :pr:`28268`
+
+- |Efficiency| Small runtime improvement of fitting
+  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` by parallelizing the initial search
+  for bin thresholds.
+  By :user:`Christian Lorentzen <lorentzenchr>` :pr:`28064`
+
+- |Efficiency| :class:`ensemble.IsolationForest` now runs parallel jobs
+  during :term:`predict` offering a speedup of up to 2-4x on sample sizes
+  larger than 2000 using `joblib`.
+  By :user:`Adam Li <adam2392>` and :user:`Sérgio Pereira <sergiormpereira>` :pr:`28622`
+
+- |Enhancement| The verbosity of :class:`ensemble.HistGradientBoostingClassifier`
+  and :class:`ensemble.HistGradientBoostingRegressor` got a more granular control. Now,
+  `verbose = 1` prints only summary messages, `verbose >= 2` prints the full
+  information as before.
+  By :user:`Christian Lorentzen <lorentzenchr>` :pr:`28179`
+
+- |API| The parameter `algorithm` of :class:`ensemble.AdaBoostClassifier` is deprecated
+  and will be removed in 1.8.
+  By :user:`Jérémie du Boisberranger <jeremiedbb>` :pr:`29997`
+
+:mod:`sklearn.feature_extraction`
+---------------------------------
+
+- |Fix| :class:`feature_extraction.text.TfidfVectorizer` now correctly preserves the
+  `dtype` of `idf_` based on the input data.
+  By :user:`Guillaume Lemaitre <glemaitre>` :pr:`30022`
+
+:mod:`sklearn.frozen`
+---------------------
+
+- |MajorFeature| :class:`~sklearn.frozen.FrozenEstimator` is now introduced which allows
+  freezing an estimator. This means calling `.fit` on it has no effect, and doing a
+  `clone(frozenestimator)` returns the same estimator instead of an unfitted clone.
+  :pr:`29705` By `Adrin Jalali`_ :pr:`29705`
+
+:mod:`sklearn.impute`
+---------------------
+
+- |Fix| :class:`impute.KNNImputer` excludes samples with nan distances when
+  computing the mean value for uniform weights.
+  By :user:`Xuefeng Xu <xuefeng-xu>` :pr:`29135`
+
+- |Fix| When `min_value` and `max_value` are array-like and some features are dropped due to
+  `keep_empty_features=False`, :class:`impute.IterativeImputer` no longer raises an
+  error and now indexes correctly.
+  By :user:`Guntitat Sawadwuthikul <gunsodo>` :pr:`29451`
+
+- |Fix| Fixed :class:`impute.IterativeImputer` to make sure that it does not skip
+  the iterative process when `keep_empty_features` is set to `True`.
+  By :user:`Arif Qodari <arifqodari>` :pr:`29779`
+
+- |API| Add a warning in :class:`impute.SimpleImputer` when `keep_empty_feature=False` and
+  `strategy="constant"`. In this case empty features are not dropped and this behaviour
+  will change in 1.8.
+  By :user:`Arthur Courselle <ArthurCourselle>` and :user:`Simon Riou <simon-riou>` :pr:`29950`
+
+:mod:`sklearn.linear_model`
+---------------------------
+
+- |Enhancement| The `solver="newton-cholesky"` in
+  :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` is extended to support the full
+  multinomial loss in a multiclass setting.
+  By :user:`Christian Lorentzen <lorentzenchr>` :pr:`28840`
+
+- |Fix| In :class:`linear_model.Ridge` and :class:`linear_model.RidgeCV`, after `fit`,
+  the `coef_` attribute is now of shape `(n_samples,)` like other linear models.
+  By :user:`Maxwell Liu<MaxwellLZH>`, `Guillaume Lemaitre`_, and `Adrin Jalali`_ :pr:`19746`
+
+- |Fix| :class:`linear_model.LogisticRegressionCV` corrects sample weight handling
+  for the calculation of test scores.
+  By :user:`Shruti Nath <snath-xoc>` :pr:`29419`
+
+- |Fix| :class:`linear_model.LassoCV` and :class:`linear_model.ElasticNetCV` now
+  take sample weights into accounts to define the search grid for the internally tuned
+  `alpha` hyper-parameter.
+  By :user:`John Hopfensperger <s-banach>` and :user:`Shruti Nath <snath-xoc>` :pr:`29442`
+
+- |Fix| :class:`linear_model.LogisticRegression`, :class:`linear_model.PoissonRegressor`,
+  :class:`linear_model.GammaRegressor`, :class:`linear_model.TweedieRegressor`
+  now take sample weights into account to decide when to fall back to `solver='lbfgs'`
+  whenever `solver='newton-cholesky'` becomes numerically unstable.
+  By :user:`Antoine Baker <antoinebaker>` :pr:`29818`
+
+- |Fix| :class:`linear_model.RidgeCV` now properly uses predictions on the same scale as
+  the target seen during `fit`. These predictions are stored in `cv_results_` when
+  `scoring != None`. Previously, the predictions were rescaled by the square root of the
+  sample weights and offset by the mean of the target, leading to an incorrect estimate
+  of the score.
+  By :user:`Guillaume Lemaitre <glemaitre>`,
+  :user:`Jérôme Dockes <jeromedockes>` and
+  :user:`Hanmin Qin <qinhanmin2014>` :pr:`29842`
+
+- |Fix| :class:`linear_model.RidgeCV` now properly supports custom multioutput scorers
+  by letting the scorer manage the multioutput averaging. Previously, the predictions
+  and true targets were both squeezed to a 1D array before computing the error.
+  By :user:`Guillaume Lemaitre <glemaitre>` :pr:`29884`
+
+- |Fix| :class:`linear_model.LinearRegression` now sets the `cond` parameter when
+  calling the `scipy.linalg.lstsq` solver on dense input data. This ensures
+  more numerically robust results on rank-deficient data. In particular, it
+  empirically fixes the expected equivalence property between fitting with
+  reweighted or with repeated data points.
+  By :user:`Antoine Baker <antoinebaker>` :pr:`30040`
+
+- |Fix| :class:`linear_model.LogisticRegression` and other linear models that
+  accept `solver="newton-cholesky"` now report the correct number of iterations
+  when they fall back to the `"lbfgs"` solver because of a rank deficient
+  Hessian matrix.
+  By :user:`Olivier Grisel <ogrisel>` :pr:`30100`
+
+- |Fix| :class:`~sklearn.linear_model.SGDOneClassSVM` now correctly inherits from
+  :class:`~sklearn.base.OutlierMixin` and the tags are correctly set.
+  By :user:`Guillaume Lemaitre <glemaitre>` :pr:`30227`
+
+- |API| Deprecates `copy_X` in :class:`linear_model.TheilSenRegressor` as the parameter
+  has no effect. `copy_X` will be removed in 1.8.
+  By :user:`Adam Li <adam2392>` :pr:`29105`
+
+:mod:`sklearn.manifold`
+-----------------------
+
+- |Efficiency| :func:`manifold.locally_linear_embedding` and
+  :class:`manifold.LocallyLinearEmbedding` now allocate more efficiently the memory of
+  sparse matrices in the Hessian, Modified and LTSA methods.
+  By :user:`Giorgio Angelotti <giorgioangel>` :pr:`28096`
+
+:mod:`sklearn.metrics`
+----------------------
+
+- |Efficiency| :func:`sklearn.metrics.classification_report` is now faster by caching
+  classification labels.
+  By :user:`Adrin Jalali <adrinjalali>` :pr:`29738`
+
+- |Enhancement| :meth:`metrics.RocCurveDisplay.from_estimator`,
+  :meth:`metrics.RocCurveDisplay.from_predictions`,
+  :meth:`metrics.PrecisionRecallDisplay.from_estimator`, and
+  :meth:`metrics.PrecisionRecallDisplay.from_predictions` now accept a new keyword
+  `despine` to remove the top and right spines of the plot in order to make it clearer.
+  By :user:`Yao Xiao <Charlie-XIAO>` :pr:`26367`
+
+- |Enhancement| :func:`sklearn.metrics.check_scoring` now accepts `raise_exc` to specify
+  whether to raise an exception if a subset of the scorers in multimetric scoring fails
+  or to return an error code.
+  By :user:`Stefanie Senger <StefanieSenger>` :pr:`28992`
+
+- |Fix| :func:`metrics.roc_auc_score` will now correctly return np.nan and
+  warn user if only one class is present in the labels.
+  By :user:`Hleb Levitski <glevv>` and :user:`Janez Demšar <janezd>` :pr:`27412`, :pr:`30013`
+
+- |Fix| The functions :func:`metrics.mean_squared_log_error` and
+  :func:`metrics.root_mean_squared_log_error` now check whether the inputs are within
+  the correct domain for the function :math:`y=\log(1+x)`, rather than
+  :math:`y=\log(x)`. The functions :func:`metrics.mean_absolute_error`,
+  :func:`metrics.mean_absolute_percentage_error`, :func:`metrics.mean_squared_error`
+  and :func:`metrics.root_mean_squared_error` now explicitly check whether a scalar
+  will be returned when `multioutput=uniform_average`.
+  By :user:`Virgil Chan <virchan>` :pr:`29709`
+
+- |API| The `assert_all_finite` parameter of functions
+  :func:`metrics.pairwise.check_pairwise_arrays` and :func:`metrics.pairwise_distances`
+  is renamed into `ensure_all_finite`. `force_all_finite` will be removed in 1.8.
+  By :user:`Jérémie du Boisberranger <jeremiedb>` :pr:`29404`
+
+- |API| `scoring="neg_max_error"` should be used instead of `scoring="max_error"`
+  which is now deprecated.
+  By :user:`Farid "Freddie" Taba <artificialfintelligence>` :pr:`29462`
+
+- |API| The default value of the `response_method` parameter of
+  :func:`metrics.make_scorer` will change from `None` to `"predict"` and `None` will be
+  removed in 1.8. In the meantime, `None` is equivalent to `"predict"`.
+  By :user:`Jérémie du Boisberranger <jeremiedb>` :pr:`30001`
+
+:mod:`sklearn.model_selection`
+------------------------------
+
+- |Enhancement| :class:`~model_selection.GroupKFold` now has the ability to shuffle groups into
+  different folds when `shuffle=True`.
+  By :user:`Zachary Vealey <zvealey>` :pr:`28519`
+
+- |Enhancement| There is no need to call `fit` on a
+  :class:`~sklearn.model_selection.FixedThresholdClassifier` if the underlying
+  estimator is already fitted.
+  By :user:`Adrin Jalali <adrinjalali>` :pr:`30172`
+
+- |Fix| Improve error message when :func:`model_selection.RepeatedStratifiedKFold.split`
+  is called without a `y` argument
+  By :user:`Anurag Varma <Anurag-Varma>` :pr:`29402`
+
+:mod:`sklearn.neighbors`
+------------------------
+
+- |Enhancement| :class:`neighbors.NearestNeighbors`,
+  :class:`neighbors.KNeighborsClassifier`,
+  :class:`neighbors.KNeighborsRegressor`,
+  :class:`neighbors.RadiusNeighborsClassifier`,
+  :class:`neighbors.RadiusNeighborsRegressor`,
+  :class:`neighbors.KNeighborsTransformer`,
+  :class:`neighbors.RadiusNeighborsTransformer`, and
+  :class:`neighbors.LocalOutlierFactor`
+  now work with `metric="nan_euclidean"`, supporting `nan` inputs.
+  By :user:`Carlo Lemos <vitaliset>`, `Guillaume Lemaitre`_, and `Adrin Jalali`_ :pr:`25330`
+
+- |Enhancement| Add :meth:`neighbors.NearestCentroid.decision_function`,
+  :meth:`neighbors.NearestCentroid.predict_proba` and
+  :meth:`neighbors.NearestCentroid.predict_log_proba`
+  to the :class:`neighbors.NearestCentroid` estimator class.
+  Support the case when `X` is sparse and `shrinking_threshold`
+  is not `None` in :class:`neighbors.NearestCentroid`.
+  By :user:`Matthew Ning <NoPenguinsLand>` :pr:`26689`
+
+- |Enhancement| Make `predict`, `predict_proba`, and `score` of
+  :class:`neighbors.KNeighborsClassifier` and
+  :class:`neighbors.RadiusNeighborsClassifier` accept `X=None` as input. In this case
+  predictions for all training set points are returned, and points are not included
+  into their own neighbors.
+  By :user:`Dmitry Kobak <dkobak>` :pr:`30047`
+
+- |Fix| :class:`neighbors.LocalOutlierFactor` raises a warning in the `fit` method
+  when duplicate values in the training data lead to inaccurate outlier detection.
+  By :user:`Henrique Caroço <HenriqueProj>` :pr:`28773`
+
+:mod:`sklearn.neural_network`
+-----------------------------
+
+- |Fix| :class:`neural_network.MLPRegressor` does no longer crash when the model
+  diverges and that `early_stopping` is enabled.
+  By :user:`Marc Bresson <MarcBresson>` :pr:`29773`
+
+:mod:`sklearn.pipeline`
+-----------------------
+
+- |MajorFeature| :class:`pipeline.Pipeline` can now transform metadata up to the step requiring the
+  metadata, which can be set using the `transform_input` parameter.
+  By `Adrin Jalali`_ :pr:`28901`
+
+- |Enhancement| :class:`pipeline.Pipeline` now warns about not being fitted before calling methods
+  that require the pipeline to be fitted. This warning will become an error in 1.8.
+  By `Adrin Jalali`_ :pr:`29868`
+
+- |Fix| Fixed an issue with tags and estimator type of :class:`~sklearn.pipeline.Pipeline`
+  when pipeline is empty. This allows the HTML representation of an empty
+  pipeline to be rendered correctly.
+  By :user:`Gennaro Daniele Acciaro <gdacciaro>` :pr:`30203`
+
+:mod:`sklearn.preprocessing`
+----------------------------
+
+- |Enhancement| Added `warn` option to `handle_unknown` parameter in
+  :class:`preprocessing.OneHotEncoder`.
+  By :user:`Hleb Levitski <glevv>` :pr:`28637`
+
+- |Enhancement| The HTML representation of :class:`preprocessing.FunctionTransformer`
+  will show the function name in the label.
+  By :user:`Yao Xiao <Charlie-XIAO>` :pr:`29158`
+
+- |Fix| :class:`preprocessing.PowerTransformer` now uses `scipy.special.inv_boxcox`
+  to output `nan` if the input of BoxCox's inverse is invalid.
+  By :user:`Xuefeng Xu <xuefeng-xu>` :pr:`27875`
+
+:mod:`sklearn.semi_supervised`
+------------------------------
+
+- |API| :class:`semi_supervised.SelfTrainingClassifier`
+  deprecated the `base_estimator` parameter in favor of `estimator`.
+  By :user:`Adam Li <adam2392>` :pr:`28494`
+
+:mod:`sklearn.tree`
+-------------------
+
+- |Feature| :class:`tree.ExtraTreeClassifier` and :class:`tree.ExtraTreeRegressor` now
+  support missing-values in the data matrix ``X``. Missing-values are handled by
+  randomly moving all of the samples to the left, or right child node as the tree is
+  traversed.
+  By :user:`Adam Li <adam2392>` and :user:`Loïc Estève <lesteve>` :pr:`27966`, :pr:`30318`
+
+- |Fix| Escape double quotes for labels and feature names when exporting trees to Graphviz
+  format.
+  By :user:`Santiago M. Mola <smola>`. :pr:`17575`
+
+:mod:`sklearn.utils`
+--------------------
+
+- |Enhancement| :func:`utils.check_array` now accepts `ensure_non_negative`
+  to check for negative values in the passed array, until now only available through
+  calling :func:`utils.check_non_negative`.
+  By :user:`Tamara Atanasoska <tamaraatanasoska>` :pr:`29540`
+
+- |Enhancement| :func:`~sklearn.utils.estimator_checks.check_estimator` and
+  :func:`~sklearn.utils.estimator_checks.parametrize_with_checks` now check and fail if
+  the classifier has the `tags.classifier_tags.multi_class = False` tag but does not
+  fail on multi-class data.
+  By `Adrin Jalali`_ :pr:`29874`
+
+- |Enhancement| :func:`utils.validation.check_is_fitted` now passes on stateless
+  estimators. An estimator can indicate it's stateless by setting the `requires_fit`
+  tag. See :ref:`estimator_tags` for more information.
+  By :user:`Adrin Jalali <adrinjalali>` :pr:`29880`
+
+- |Enhancement| Changes to :func:`~utils.estimator_checks.check_estimator` and
+  :func:`~utils.estimator_checks.parametrize_with_checks`.
+
+  - :func:`~utils.estimator_checks.check_estimator` introduces new arguments:
+    ``on_skip``, ``on_fail``, and ``callback`` to control the behavior of the check
+    runner. Refer to the API documentation for more details.
+
+  - ``generate_only=True`` is deprecated in
+    :func:`~utils.estimator_checks.check_estimator`. Use
+    :func:`~utils.estimator_checks.estimator_checks_generator` instead.
+
+  - The ``_xfail_checks`` estimator tag is now removed, and now in order to indicate
+    which tests are expected to fail, you can pass a dictionary to the
+    :func:`~utils.estimator_checks.check_estimator` as the ``expected_failed_checks``
+    parameter. Similarly, the ``expected_failed_checks`` parameter in
+    :func:`~utils.estimator_checks.parametrize_with_checks` can be used, which is a
+    callable returning a dictionary of the form::
+
+        {
+            "check_name": "reason to mark this check as xfail",
+        }
+
+  By `Adrin Jalali`_ :pr:`30149`
+
+- |Fix| :func:`utils.estimator_checks.parametrize_with_checks` and
+  :func:`utils.estimator_checks.check_estimator` now support estimators that
+  have `set_output` called on them.
+  By :user:`Adrin Jalali <adrinjalali>` :pr:`29869`
+
+- |API| The `assert_all_finite` parameter of functions :func:`utils.check_array`,
+  :func:`utils.check_X_y`, :func:`utils.as_float_array` is renamed into
+  `ensure_all_finite`. `force_all_finite` will be removed in 1.8.
+  By :user:`Jérémie du Boisberranger <jeremiedb>` :pr:`29404`
+
+- |API| `utils.estimator_checks.check_sample_weights_invariance`
+  replaced by
+  `utils.estimator_checks.check_sample_weight_equivalence_on_dense_data`
+  which uses integer (including zero) weights and
+  `utils.estimator_checks.check_sample_weight_equivalence_on_sparse_data`
+  which does the same on sparse data.
+  By :user:`Antoine Baker <antoinebaker>` :pr:`29818`, :pr:`30137`
+
+- |API| Using `_estimator_type` to set the estimator type is deprecated. Inherit from
+  :class:`~sklearn.base.ClassifierMixin`, :class:`~sklearn.base.RegressorMixin`,
+  :class:`~sklearn.base.TransformerMixin`, or :class:`~sklearn.base.OutlierMixin`
+  instead. Alternatively, you can set `estimator_type` in :class:`~sklearn.utils.Tags`
+  in the `__sklearn_tags__` method.
+  By `Adrin Jalali`_ :pr:`30122`
+
+.. rubric:: Code and documentation contributors
+
+Thanks to everyone who has contributed to the maintenance and improvement of
+the project since version 1.5, including:
+
+Aaron Schumacher, Abdulaziz Aloqeely, abhi-jha, Acciaro Gennaro Daniele, Adam
+J. Stewart, Adam Li, Adeel Hassan, Adeyemi Biola, Aditi Juneja, Adrin Jalali,
+Aisha, Akanksha Mhadolkar, Akihiro Kuno, Alberto Torres, alexqiao, Alihan
+Zihna, Aniruddha Saha, antoinebaker, Antony Lee, Anurag Varma, Arif Qodari,
+Arthur Courselle, ArthurDbrn, Arturo Amor, Aswathavicky, Audrey Flanders,
+aurelienmorgan, Austin, awwwyan, AyGeeEm, a.zy.lee, baggiponte, BlazeStorm001,
+bme-git, Boney Patel, brdav, Brigitta Sipőcz, Cailean Carter, Camille
+Troillard, Carlo Lemos, Christian Lorentzen, Christian Veenhuis, Christine P.
+Chai, claudio, Conrad Stevens, datarollhexasphericon, Davide Chicco, David
+Matthew Cherney, Dea María Léon, Deepak Saldanha, Deepyaman Datta,
+dependabot[bot], dinga92, Dmitry Kobak, Domenico, Drew Craeton, dymil, Edoardo
+Abati, EmilyXinyi, Eric Larson, Evelyn, fabianhenning, Farid "Freddie" Taba,
+Gael Varoquaux, Giorgio Angelotti, Hleb Levitski, Guillaume Lemaitre, Guntitat
+Sawadwuthikul, Haesun Park, Hanjun Kim, Henrique Caroço, hhchen1105, Hugo
+Boulenger, Ilya Komarov, Inessa Pawson, Ivan Pan, Ivan Wiryadi, Jaimin Chauhan,
+Jakob Bull, James Lamb, Janez Demšar, Jérémie du Boisberranger, Jérôme
+Dockès, Jirair Aroyan, João Morais, Joe Cainey, Joel Nothman, John Enblom,
+JorgeCardenas, Joseph Barbier, jpienaar-tuks, Julian Chan, K.Bharat Reddy,
+Kevin Doshi, Lars, Loic Esteve, Lucas Colley, Lucy Liu, lunovian, Marc Bresson,
+Marco Edward Gorelli, Marco Maggi, Marco Wolsza, Maren Westermann,
+MarieS-WiMLDS, Martin Helm, Mathew Shen, mathurinm, Matthew Feickert, Maxwell
+Liu, Meekail Zain, Michael Dawson, Miguel Cárdenas, m-maggi, mrastgoo, Natalia
+Mokeeva, Nathan Goldbaum, Nathan Orgera, nbrown-ScottLogic, Nikita Chistyakov,
+Nithish Bolleddula, Noam Keidar, NoPenguinsLand, Norbert Preining, notPlancha,
+Olivier Grisel, Omar Salman, ParsifalXu, Piotr, Priyank Shroff, Priyansh Gupta,
+Quentin Barthélemy, Rachit23110261, Rahil Parikh, raisadz, Rajath,
+renaissance0ne, Reshama Shaikh, Roberto Rosati, Robert Pollak, rwelsch427,
+Santiago Castro, Santiago M. Mola, scikit-learn-bot, sean moiselle, SHREEKANT
+VITTHAL NANDIYAWAR, Shruti Nath, Søren Bredlund Caspersen, Stefanie Senger,
+Stefano Gaspari, Steffen Schneider, Štěpán Sršeň, Sylvain Combettes,
+Tamara, Thomas, Thomas Gessey-Jones, Thomas J. Fan, Thomas Li, ThorbenMaa,
+Tialo, Tim Head, Tuhin Sharma, Tushar Parimi, Umberto Fasci, UV, vedpawar2254,
+Velislav Babatchev, Victoria Shevchenko, viktor765, Vince Carey, Virgil Chan,
+Wang Jiayi, Xiao Yuan, Xuefeng Xu, Yao Xiao, yareyaredesuyo, Zachary Vealey,
+Ziad Amerr

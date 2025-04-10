@@ -9,6 +9,9 @@ This example shows how to use
 errors.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # We will load the diabetes dataset and create an instance of a linear
 # regression model.
@@ -37,6 +40,7 @@ y_pred = cross_val_predict(lr, X, y, cv=10)
 # residuals (i.e. the difference between the observed values and the predicted
 # values) vs. the predicted values.
 import matplotlib.pyplot as plt
+
 from sklearn.metrics import PredictionErrorDisplay
 
 fig, axs = plt.subplots(ncols=2, figsize=(8, 4))
@@ -73,6 +77,6 @@ plt.show()
 # :func:`~sklearn.model_selection.cross_val_predict`
 # when the different CV folds vary by size and distributions.
 #
-# In is recommended to compute per-fold performance metrics using:
+# It is recommended to compute per-fold performance metrics using:
 # :func:`~sklearn.model_selection.cross_val_score` or
 # :func:`~sklearn.model_selection.cross_validate` instead.

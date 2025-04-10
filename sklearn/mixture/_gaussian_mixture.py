@@ -1,18 +1,15 @@
 """Gaussian Mixture Model."""
 
-# Author: Wei Xue <xuewei4d@gmail.com>
-# Modified by Thierry Guillemot <thierry.guillemot.work@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
-
 from scipy import linalg
 
-from ._base import BaseMixture, _check_shape
 from ..utils import check_array
-from ..utils.extmath import row_norms
 from ..utils._param_validation import StrOptions
-
+from ..utils.extmath import row_norms
+from ._base import BaseMixture, _check_shape
 
 ###############################################################################
 # Gaussian mixture shape checkers used by the GaussianMixture class
@@ -45,7 +42,8 @@ def _check_weights(weights, n_components):
         )
 
     # check normalization
-    if not np.allclose(np.abs(1.0 - np.sum(weights)), 0.0):
+    atol = 1e-6 if weights.dtype == np.float32 else 1e-8
+    if not np.allclose(np.abs(1.0 - np.sum(weights)), 0.0, atol=atol):
         raise ValueError(
             "The parameter 'weights' should be normalized, but got sum(weights) = %.5f"
             % np.sum(weights)
@@ -173,7 +171,7 @@ def _estimate_gaussian_covariances_full(resp, X, nk, means, reg_covar):
         The covariance matrix of the current components.
     """
     n_components, n_features = means.shape
-    covariances = np.empty((n_components, n_features, n_features))
+    covariances = np.empty((n_components, n_features, n_features), dtype=X.dtype)
     for k in range(n_components):
         diff = X - means[k]
         covariances[k] = np.dot(resp[:, k] * diff.T, diff) / nk[k]
@@ -231,8 +229,7 @@ def _estimate_gaussian_covariances_diag(resp, X, nk, means, reg_covar):
     """
     avg_X2 = np.dot(resp.T, X * X) / nk[:, np.newaxis]
     avg_means2 = means**2
-    avg_X_means = means * np.dot(resp.T, X) / nk[:, np.newaxis]
-    return avg_X2 - 2 * avg_X_means + avg_means2 + reg_covar
+    return avg_X2 - avg_means2 + reg_covar
 
 
 def _estimate_gaussian_covariances_spherical(resp, X, nk, means, reg_covar):
@@ -320,19 +317,25 @@ def _compute_precision_cholesky(covariances, covariance_type):
         "Fitting the mixture model failed because some components have "
         "ill-defined empirical covariance (for instance caused by singleton "
         "or collapsed samples). Try to decrease the number of components, "
-        "or increase reg_covar."
+        "increase reg_covar, or scale the input data."
     )
+    dtype = covariances.dtype
+    if dtype == np.float32:
+        estimate_precision_error_message += (
+            " The numerical accuracy can also be improved by passing float64"
+            " data instead of float32."
+        )
 
     if covariance_type == "full":
         n_components, n_features, _ = covariances.shape
-        precisions_chol = np.empty((n_components, n_features, n_features))
+        precisions_chol = np.empty((n_components, n_features, n_features), dtype=dtype)
         for k, covariance in enumerate(covariances):
             try:
                 cov_chol = linalg.cholesky(covariance, lower=True)
             except linalg.LinAlgError:
                 raise ValueError(estimate_precision_error_message)
             precisions_chol[k] = linalg.solve_triangular(
-                cov_chol, np.eye(n_features), lower=True
+                cov_chol, np.eye(n_features, dtype=dtype), lower=True
             ).T
     elif covariance_type == "tied":
         _, n_features = covariances.shape
@@ -341,13 +344,68 @@ def _compute_precision_cholesky(covariances, covariance_type):
         except linalg.LinAlgError:
             raise ValueError(estimate_precision_error_message)
         precisions_chol = linalg.solve_triangular(
-            cov_chol, np.eye(n_features), lower=True
+            cov_chol, np.eye(n_features, dtype=dtype), lower=True
         ).T
     else:
         if np.any(np.less_equal(covariances, 0.0)):
             raise ValueError(estimate_precision_error_message)
         precisions_chol = 1.0 / np.sqrt(covariances)
     return precisions_chol
+
+
+def _flipudlr(array):
+    """Reverse the rows and columns of an array."""
+    return np.flipud(np.fliplr(array))
+
+
+def _compute_precision_cholesky_from_precisions(precisions, covariance_type):
+    r"""Compute the Cholesky decomposition of precisions using precisions themselves.
+
+    As implemented in :func:`_compute_precision_cholesky`, the `precisions_cholesky_` is
+    an upper-triangular matrix for each Gaussian component, which can be expressed as
+    the $UU^T$ factorization of the precision matrix for each Gaussian component, where
+    $U$ is an upper-triangular matrix.
+
+    In order to use the Cholesky decomposition to get $UU^T$, the precision matrix
+    $\Lambda$ needs to be permutated such that its rows and columns are reversed, which
+    can be done by applying a similarity transformation with an exchange matrix $J$,
+    where the 1 elements reside on the anti-diagonal and all other elements are 0. In
+    particular, the Cholesky decomposition of the transformed precision matrix is
+    $J\Lambda J=LL^T$, where $L$ is a lower-triangular matrix. Because $\Lambda=UU^T$
+    and $J=J^{-1}=J^T$, the `precisions_cholesky_` for each Gaussian component can be
+    expressed as $JLJ$.
+
+    Refer to #26415 for details.
+
+    Parameters
+    ----------
+    precisions : array-like
+        The precision matrix of the current components.
+        The shape depends on the covariance_type.
+
+    covariance_type : {'full', 'tied', 'diag', 'spherical'}
+        The type of precision matrices.
+
+    Returns
+    -------
+    precisions_cholesky : array-like
+        The cholesky decomposition of sample precisions of the current
+        components. The shape depends on the covariance_type.
+    """
+    if covariance_type == "full":
+        precisions_cholesky = np.array(
+            [
+                _flipudlr(linalg.cholesky(_flipudlr(precision), lower=True))
+                for precision in precisions
+            ]
+        )
+    elif covariance_type == "tied":
+        precisions_cholesky = _flipudlr(
+            linalg.cholesky(_flipudlr(precisions), lower=True)
+        )
+    else:
+        precisions_cholesky = np.sqrt(precisions)
+    return precisions_cholesky
 
 
 ###############################################################################
@@ -377,7 +435,7 @@ def _compute_log_det_cholesky(matrix_chol, covariance_type, n_features):
     if covariance_type == "full":
         n_components, _, _ = matrix_chol.shape
         log_det_chol = np.sum(
-            np.log(matrix_chol.reshape(n_components, -1)[:, :: n_features + 1]), 1
+            np.log(matrix_chol.reshape(n_components, -1)[:, :: n_features + 1]), axis=1
         )
 
     elif covariance_type == "tied":
@@ -387,7 +445,7 @@ def _compute_log_det_cholesky(matrix_chol, covariance_type, n_features):
         log_det_chol = np.sum(np.log(matrix_chol), axis=1)
 
     else:
-        log_det_chol = n_features * (np.log(matrix_chol))
+        log_det_chol = n_features * np.log(matrix_chol)
 
     return log_det_chol
 
@@ -423,13 +481,13 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
     log_det = _compute_log_det_cholesky(precisions_chol, covariance_type, n_features)
 
     if covariance_type == "full":
-        log_prob = np.empty((n_samples, n_components))
+        log_prob = np.empty((n_samples, n_components), dtype=X.dtype)
         for k, (mu, prec_chol) in enumerate(zip(means, precisions_chol)):
             y = np.dot(X, prec_chol) - np.dot(mu, prec_chol)
             log_prob[:, k] = np.sum(np.square(y), axis=1)
 
     elif covariance_type == "tied":
-        log_prob = np.empty((n_samples, n_components))
+        log_prob = np.empty((n_samples, n_components), dtype=X.dtype)
         for k, mu in enumerate(means):
             y = np.dot(X, precisions_chol) - np.dot(mu, precisions_chol)
             log_prob[:, k] = np.sum(np.square(y), axis=1)
@@ -451,7 +509,7 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
         )
     # Since we are using the precision of the Cholesky decomposition,
     # `- 0.5 * log_det_precision` becomes `+ log_det_precision_chol`
-    return -0.5 * (n_features * np.log(2 * np.pi) + log_prob) + log_det
+    return -0.5 * (n_features * np.log(2 * np.pi).astype(X.dtype) + log_prob) + log_det
 
 
 class GaussianMixture(BaseMixture):
@@ -478,6 +536,9 @@ class GaussianMixture(BaseMixture):
         - 'tied': all components share the same general covariance matrix.
         - 'diag': each component has its own diagonal covariance matrix.
         - 'spherical': each component has its own single variance.
+
+        For an example of using `covariance_type`, refer to
+        :ref:`sphx_glr_auto_examples_mixture_plot_gmm_selection.py`.
 
     tol : float, default=1e-3
         The convergence threshold. EM iterations will stop when the
@@ -599,7 +660,7 @@ class GaussianMixture(BaseMixture):
             (n_components, n_features, n_features) if 'full'
 
     converged_ : bool
-        True when convergence was reached in fit(), False otherwise.
+        True when convergence of the best fit of EM was reached, False otherwise.
 
     n_iter_ : int
         Number of step used by the best fit of EM to reach the convergence.
@@ -607,6 +668,10 @@ class GaussianMixture(BaseMixture):
     lower_bound_ : float
         Lower bound value on the log-likelihood (of the training data with
         respect to the model) of the best fit of EM.
+
+    lower_bounds_ : array-like of shape (`n_iter_`,)
+        The list of lower bound values on the log-likelihood from each
+        iteration of the best fit of EM.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -635,6 +700,9 @@ class GaussianMixture(BaseMixture):
            [ 1.,  2.]])
     >>> gm.predict([[0, 0], [12, 3]])
     array([1, 0])
+
+    For a comparison of Gaussian Mixture with other clustering algorithms, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
     """
 
     _parameter_constraints: dict = {
@@ -701,6 +769,19 @@ class GaussianMixture(BaseMixture):
                 n_features,
             )
 
+    def _initialize_parameters(self, X, random_state):
+        # If all the initial parameters are all provided, then there is no need to run
+        # the initialization.
+        compute_resp = (
+            self.weights_init is None
+            or self.means_init is None
+            or self.precisions_init is None
+        )
+        if compute_resp:
+            super()._initialize_parameters(X, random_state)
+        else:
+            self._initialize(X, None)
+
     def _initialize(self, X, resp):
         """Initialization of the Gaussian mixture parameters.
 
@@ -711,11 +792,13 @@ class GaussianMixture(BaseMixture):
         resp : array-like of shape (n_samples, n_components)
         """
         n_samples, _ = X.shape
-
-        weights, means, covariances = _estimate_gaussian_parameters(
-            X, resp, self.reg_covar, self.covariance_type
-        )
-        weights /= n_samples
+        weights, means, covariances = None, None, None
+        if resp is not None:
+            weights, means, covariances = _estimate_gaussian_parameters(
+                X, resp, self.reg_covar, self.covariance_type
+            )
+            if self.weights_init is None:
+                weights /= n_samples
 
         self.weights_ = weights if self.weights_init is None else self.weights_init
         self.means_ = means if self.means_init is None else self.means_init
@@ -725,19 +808,10 @@ class GaussianMixture(BaseMixture):
             self.precisions_cholesky_ = _compute_precision_cholesky(
                 covariances, self.covariance_type
             )
-        elif self.covariance_type == "full":
-            self.precisions_cholesky_ = np.array(
-                [
-                    linalg.cholesky(prec_init, lower=True)
-                    for prec_init in self.precisions_init
-                ]
-            )
-        elif self.covariance_type == "tied":
-            self.precisions_cholesky_ = linalg.cholesky(
-                self.precisions_init, lower=True
-            )
         else:
-            self.precisions_cholesky_ = np.sqrt(self.precisions_init)
+            self.precisions_cholesky_ = _compute_precision_cholesky_from_precisions(
+                self.precisions_init, self.covariance_type
+            )
 
     def _m_step(self, X, log_resp):
         """M step.
@@ -788,8 +862,9 @@ class GaussianMixture(BaseMixture):
         # Attributes computation
         _, n_features = self.means_.shape
 
+        dtype = self.precisions_cholesky_.dtype
         if self.covariance_type == "full":
-            self.precisions_ = np.empty(self.precisions_cholesky_.shape)
+            self.precisions_ = np.empty_like(self.precisions_cholesky_)
             for k, prec_chol in enumerate(self.precisions_cholesky_):
                 self.precisions_[k] = np.dot(prec_chol, prec_chol.T)
 
@@ -819,6 +894,9 @@ class GaussianMixture(BaseMixture):
 
         You can refer to this :ref:`mathematical section <aic_bic>` for more
         details regarding the formulation of the BIC used.
+
+        For an example of GMM selection using `bic` information criterion,
+        refer to :ref:`sphx_glr_auto_examples_mixture_plot_gmm_selection.py`.
 
         Parameters
         ----------

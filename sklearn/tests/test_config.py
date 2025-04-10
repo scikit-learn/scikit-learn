@@ -1,11 +1,12 @@
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-from joblib import Parallel
 import pytest
 
-from sklearn import get_config, set_config, config_context
-from sklearn.utils.fixes import delayed
+import sklearn
+from sklearn import config_context, get_config, set_config
+from sklearn.utils.fixes import _IS_WASM
+from sklearn.utils.parallel import Parallel, delayed
 
 
 def test_config_context():
@@ -18,6 +19,8 @@ def test_config_context():
         "pairwise_dist_chunk_size": 256,
         "enable_cython_pairwise_dist": True,
         "transform_output": "default",
+        "enable_metadata_routing": False,
+        "skip_parameter_validation": False,
     }
 
     # Not using as a context manager affects nothing
@@ -34,6 +37,8 @@ def test_config_context():
             "pairwise_dist_chunk_size": 256,
             "enable_cython_pairwise_dist": True,
             "transform_output": "default",
+            "enable_metadata_routing": False,
+            "skip_parameter_validation": False,
         }
     assert get_config()["assume_finite"] is False
 
@@ -67,6 +72,8 @@ def test_config_context():
         "pairwise_dist_chunk_size": 256,
         "enable_cython_pairwise_dist": True,
         "transform_output": "default",
+        "enable_metadata_routing": False,
+        "skip_parameter_validation": False,
     }
 
     # No positional arguments
@@ -120,24 +127,25 @@ def test_config_threadsafe_joblib(backend):
     should be the same as the value passed to the function. In other words,
     it is not influenced by the other job setting assume_finite to True.
     """
-    assume_finites = [False, True]
-    sleep_durations = [0.1, 0.2]
+    assume_finites = [False, True, False, True]
+    sleep_durations = [0.1, 0.2, 0.1, 0.2]
 
     items = Parallel(backend=backend, n_jobs=2)(
         delayed(set_assume_finite)(assume_finite, sleep_dur)
         for assume_finite, sleep_dur in zip(assume_finites, sleep_durations)
     )
 
-    assert items == [False, True]
+    assert items == [False, True, False, True]
 
 
+@pytest.mark.xfail(_IS_WASM, reason="cannot start threads")
 def test_config_threadsafe():
     """Uses threads directly to test that the global config does not change
     between threads. Same test as `test_config_threadsafe_joblib` but with
     `ThreadPoolExecutor`."""
 
-    assume_finites = [False, True]
-    sleep_durations = [0.1, 0.2]
+    assume_finites = [False, True, False, True]
+    sleep_durations = [0.1, 0.2, 0.1, 0.2]
 
     with ThreadPoolExecutor(max_workers=2) as e:
         items = [
@@ -145,4 +153,16 @@ def test_config_threadsafe():
             for output in e.map(set_assume_finite, assume_finites, sleep_durations)
         ]
 
-    assert items == [False, True]
+    assert items == [False, True, False, True]
+
+
+def test_config_array_api_dispatch_error_scipy(monkeypatch):
+    """Check error when SciPy is too old"""
+    monkeypatch.setattr(sklearn.utils._array_api.scipy, "__version__", "1.13.0")
+
+    with pytest.raises(ImportError, match="SciPy must be 1.14.0 or newer"):
+        with config_context(array_api_dispatch=True):
+            pass
+
+    with pytest.raises(ImportError, match="SciPy must be 1.14.0 or newer"):
+        set_config(array_api_dispatch=True)

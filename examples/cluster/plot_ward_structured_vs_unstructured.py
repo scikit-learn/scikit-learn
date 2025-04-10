@@ -20,27 +20,21 @@ the clusters form a nice parcellation of the swiss roll.
 
 """
 
-# Authors : Vincent Michel, 2010
-#           Alexandre Gramfort, 2010
-#           Gael Varoquaux, 2010
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import time as time
 
 # The following import is required
 # for 3D projection to work with matplotlib < 3.2
-
 import mpl_toolkits.mplot3d  # noqa: F401
-
 import numpy as np
-
 
 # %%
 # Generate data
 # -------------
 #
 # We start by generating the Swiss Roll dataset.
-
 from sklearn.datasets import make_swiss_roll
 
 n_samples = 1500

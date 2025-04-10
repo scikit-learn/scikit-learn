@@ -6,12 +6,15 @@ It used to enable the use of
 :term:`experimental`, but these estimators are now stable and can be imported
 normally from `sklearn.ensemble`.
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Don't remove this file, we don't want to break users code just because the
 # feature isn't experimental anymore.
 
 
 import warnings
-
 
 warnings.warn(
     "Since version 1.0, "

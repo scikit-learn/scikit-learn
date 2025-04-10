@@ -1,25 +1,25 @@
-# Author: Vlad Niculae
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 
 import numpy as np
 import pytest
-import warnings
 
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import ignore_warnings
-
-
+from sklearn.datasets import make_sparse_coded_signal
 from sklearn.linear_model import (
-    orthogonal_mp,
-    orthogonal_mp_gram,
+    LinearRegression,
     OrthogonalMatchingPursuit,
     OrthogonalMatchingPursuitCV,
-    LinearRegression,
+    orthogonal_mp,
+    orthogonal_mp_gram,
 )
 from sklearn.utils import check_random_state
-from sklearn.datasets import make_sparse_coded_signal
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+)
 
 n_samples, n_features, n_nonzero_coefs, n_targets = 25, 35, 5, 3
 y, X, gamma = make_sparse_coded_signal(
@@ -28,38 +28,14 @@ y, X, gamma = make_sparse_coded_signal(
     n_features=n_samples,
     n_nonzero_coefs=n_nonzero_coefs,
     random_state=0,
-    data_transposed=True,
 )
+y, X, gamma = y.T, X.T, gamma.T
 # Make X not of norm 1 for testing
 X *= 10
 y *= 10
 G, Xy = np.dot(X.T, X), np.dot(X.T, y)
 # this makes X (n_samples, n_features)
 # and y (n_samples, 3)
-
-
-# TODO(1.4): remove
-@pytest.mark.parametrize(
-    "OmpModel", [OrthogonalMatchingPursuit, OrthogonalMatchingPursuitCV]
-)
-@pytest.mark.parametrize(
-    "normalize, n_warnings", [(True, 1), (False, 1), ("deprecated", 0)]
-)
-def test_assure_warning_when_normalize(OmpModel, normalize, n_warnings):
-    # check that we issue a FutureWarning when normalize was set
-    rng = check_random_state(0)
-    n_samples = 200
-    n_features = 2
-    X = rng.randn(n_samples, n_features)
-    X[X < 0.1] = 0.0
-    y = rng.rand(n_samples)
-
-    model = OmpModel(normalize=normalize)
-    with warnings.catch_warnings(record=True) as rec:
-        warnings.simplefilter("always", FutureWarning)
-        model.fit(X, y)
-
-    assert len([w.message for w in rec]) == n_warnings
 
 
 def test_correct_shapes():
@@ -120,7 +96,7 @@ def test_unreachable_accuracy():
 @pytest.mark.parametrize("positional_params", [(X, y), (G, Xy)])
 @pytest.mark.parametrize(
     "keyword_params",
-    [{"tol": -1}, {"n_nonzero_coefs": -1}, {"n_nonzero_coefs": n_features + 1}],
+    [{"n_nonzero_coefs": n_features + 1}],
 )
 def test_bad_input(positional_params, keyword_params):
     with pytest.raises(ValueError):
@@ -152,8 +128,6 @@ def test_orthogonal_mp_gram_readonly():
     assert_array_almost_equal(gamma[:, 0], gamma_gram, decimal=2)
 
 
-# TODO(1.4): 'normalize' to be removed
-@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_estimator():
     omp = OrthogonalMatchingPursuit(n_nonzero_coefs=n_nonzero_coefs)
     omp.fit(X, y[:, 0])
@@ -181,6 +155,17 @@ def test_estimator():
     assert omp.coef_.shape == (n_targets, n_features)
     assert omp.intercept_ == 0
     assert np.count_nonzero(omp.coef_) <= n_targets * n_nonzero_coefs
+
+
+def test_estimator_n_nonzero_coefs():
+    """Check `n_nonzero_coefs_` correct when `tol` is and isn't set."""
+    omp = OrthogonalMatchingPursuit(n_nonzero_coefs=n_nonzero_coefs)
+    omp.fit(X, y[:, 0])
+    assert omp.n_nonzero_coefs_ == n_nonzero_coefs
+
+    omp = OrthogonalMatchingPursuit(n_nonzero_coefs=n_nonzero_coefs, tol=0.5)
+    omp.fit(X, y[:, 0])
+    assert omp.n_nonzero_coefs_ is None
 
 
 def test_identical_regressors():
@@ -240,26 +225,20 @@ def test_omp_return_path_prop_with_gram():
     assert_array_almost_equal(path[:, :, -1], last)
 
 
-# TODO(1.4): 'normalize' to be removed
-@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_omp_cv():
     y_ = y[:, 0]
     gamma_ = gamma[:, 0]
-    ompcv = OrthogonalMatchingPursuitCV(
-        normalize=True, fit_intercept=False, max_iter=10
-    )
+    ompcv = OrthogonalMatchingPursuitCV(fit_intercept=False, max_iter=10)
     ompcv.fit(X, y_)
     assert ompcv.n_nonzero_coefs_ == n_nonzero_coefs
     assert_array_almost_equal(ompcv.coef_, gamma_)
     omp = OrthogonalMatchingPursuit(
-        normalize=True, fit_intercept=False, n_nonzero_coefs=ompcv.n_nonzero_coefs_
+        fit_intercept=False, n_nonzero_coefs=ompcv.n_nonzero_coefs_
     )
     omp.fit(X, y_)
     assert_array_almost_equal(ompcv.coef_, omp.coef_)
 
 
-# TODO(1.4): 'normalize' to be removed
-@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_omp_reaches_least_squares():
     # Use small simple data; it's a sanity check but OMP can stop early
     rng = check_random_state(0)

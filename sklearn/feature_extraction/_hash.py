@@ -1,14 +1,17 @@
-# Author: Lars Buitinck
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
+from itertools import chain
 from numbers import Integral
 
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin
-from ._hashing_fast import transform as _hashing_transform
+from sklearn.utils import metadata_routing
+
+from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils._param_validation import Interval, StrOptions
+from ._hashing_fast import transform as _hashing_transform
 
 
 def _iteritems(d):
@@ -32,6 +35,9 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
     CountVectorizer, intended for large-scale (online) learning and situations
     where memory is tight, e.g. when running prediction code on embedded
     devices.
+
+    For an efficiency comparison of the different feature extractors, see
+    :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
 
     Read more in the :ref:`User Guide <feature_hashing>`.
 
@@ -71,6 +77,13 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
     DictVectorizer : Vectorizes string-valued features using a hash table.
     sklearn.preprocessing.OneHotEncoder : Handles nominal/categorical features.
 
+    Notes
+    -----
+    This estimator is :term:`stateless` and does not need to be fitted.
+    However, we recommend to call :meth:`fit_transform` instead of
+    :meth:`transform`, as parameter validation is only performed in
+    :meth:`fit`.
+
     Examples
     --------
     >>> from sklearn.feature_extraction import FeatureHasher
@@ -80,7 +93,21 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
     >>> f.toarray()
     array([[ 0.,  0., -4., -1.,  0.,  0.,  0.,  0.,  0.,  2.],
            [ 0.,  0.,  0., -2., -5.,  0.,  0.,  0.,  0.,  0.]])
+
+    With `input_type="string"`, the input must be an iterable over iterables of
+    strings:
+
+    >>> h = FeatureHasher(n_features=8, input_type="string")
+    >>> raw_X = [["dog", "cat", "snake"], ["snake", "dog"], ["cat", "bird"]]
+    >>> f = h.transform(raw_X)
+    >>> f.toarray()
+    array([[ 0.,  0.,  0., -1.,  0., -1.,  0.,  1.],
+           [ 0.,  0.,  0., -1.,  0., -1.,  0.,  0.],
+           [ 0., -1.,  0.,  0.,  0.,  0.,  0.,  1.]])
     """
+
+    # raw_X should have been called X
+    __metadata_request__transform = {"raw_X": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         "n_features": [Interval(Integral, 1, np.iinfo(np.int32).max, closed="both")],
@@ -102,11 +129,12 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         self.n_features = n_features
         self.alternate_sign = alternate_sign
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X=None, y=None):
-        """No-op.
+        """Only validates estimator's parameters.
 
-        This method doesn't do anything. It exists purely for compatibility
-        with the scikit-learn transformer API.
+        This method allows to: (i) validate the estimator's parameters and
+        (ii) be consistent with the scikit-learn transformer API.
 
         Parameters
         ----------
@@ -121,8 +149,6 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         self : object
             FeatureHasher class instance.
         """
-        # repeat input validation for grid search (which calls set_params)
-        self._validate_params()
         return self
 
     def transform(self, raw_X):
@@ -146,7 +172,15 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         if self.input_type == "dict":
             raw_X = (_iteritems(d) for d in raw_X)
         elif self.input_type == "string":
-            raw_X = (((f, 1) for f in x) for x in raw_X)
+            first_raw_X = next(raw_X)
+            if isinstance(first_raw_X, str):
+                raise ValueError(
+                    "Samples can not be a single string. The input must be an iterable"
+                    " over iterables of strings."
+                )
+            raw_X_ = chain([first_raw_X], raw_X)
+            raw_X = (((f, 1) for f in x) for x in raw_X_)
+
         indices, indptr, values = _hashing_transform(
             raw_X, self.n_features, self.dtype, self.alternate_sign, seed=0
         )
@@ -164,5 +198,11 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
 
         return X
 
-    def _more_tags(self):
-        return {"X_types": [self.input_type]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.two_d_array = False
+        if self.input_type == "string":
+            tags.input_tags.string = True
+        elif self.input_type == "dict":
+            tags.input_tags.dict = True
+        return tags

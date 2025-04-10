@@ -16,11 +16,15 @@ weights.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Generate sample data
 # --------------------
 #
 import numpy as np
+
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 

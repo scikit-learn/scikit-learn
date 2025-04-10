@@ -18,10 +18,11 @@ NY, USA: Springer New York Inc..
 
 """
 
-# Author: Wenhao Zhang <wenhaoz@ucla.edu>
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.datasets import load_digits
 from sklearn.decomposition import PCA

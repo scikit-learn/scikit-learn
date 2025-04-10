@@ -1,8 +1,8 @@
 #!/bin/bash
 # This script is meant to be called in the "deploy" step defined in
-# circle.yml. See https://circleci.com/docs/ for more details.
+# .circleci/config.yml. See https://circleci.com/docs/ for more details.
 # The behavior of the script is controlled by environment variable defined
-# in the circle.yml in the top level folder of the project.
+# in the .circleci/config.yml file.
 
 set -ex
 
@@ -56,7 +56,7 @@ then
 	git rm -rf $dir/ && rm -rf $dir/
 fi
 cp -R $GENERATED_DOC_DIR $dir
-git config user.email "olivier.grisel+sklearn-ci@gmail.com"
+git config user.email "ci@scikit-learn.org"
 git config user.name $USERNAME
 git config push.default matching
 git add -f $dir/

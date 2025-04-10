@@ -1,4 +1,5 @@
-# Author: John Kirkham, Meekail Zain, Thomas Fan
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from libc.math cimport isnan, isinf
 from cython cimport floating
@@ -17,7 +18,7 @@ def cy_isfinite(floating[::1] a, bint allow_nan=False):
     return result
 
 
-cdef inline FiniteStatus _isfinite(floating[::1] a, bint allow_nan) nogil:
+cdef inline FiniteStatus _isfinite(floating[::1] a, bint allow_nan) noexcept nogil:
     cdef floating* a_ptr = &a[0]
     cdef Py_ssize_t length = len(a)
     if allow_nan:
@@ -27,7 +28,7 @@ cdef inline FiniteStatus _isfinite(floating[::1] a, bint allow_nan) nogil:
 
 
 cdef inline FiniteStatus _isfinite_allow_nan(floating* a_ptr,
-                                             Py_ssize_t length) nogil:
+                                             Py_ssize_t length) noexcept nogil:
     cdef Py_ssize_t i
     cdef floating v
     for i in range(length):
@@ -38,7 +39,7 @@ cdef inline FiniteStatus _isfinite_allow_nan(floating* a_ptr,
 
 
 cdef inline FiniteStatus _isfinite_disable_nan(floating* a_ptr,
-                                               Py_ssize_t length) nogil:
+                                               Py_ssize_t length) noexcept nogil:
     cdef Py_ssize_t i
     cdef floating v
     for i in range(length):

@@ -1,25 +1,23 @@
 """Base class for mixture models."""
 
-# Author: Wei Xue <xuewei4d@gmail.com>
-# Modified by Thierry Guillemot <thierry.guillemot.work@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from abc import ABCMeta, abstractmethod
-from time import time
 from numbers import Integral, Real
+from time import time
 
 import numpy as np
 from scipy.special import logsumexp
 
 from .. import cluster
+from ..base import BaseEstimator, DensityMixin, _fit_context
 from ..cluster import kmeans_plusplus
-from ..base import BaseEstimator
-from ..base import DensityMixin
 from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state
-from ..utils.validation import check_is_fitted
 from ..utils._param_validation import Interval, StrOptions
+from ..utils.validation import check_is_fitted, validate_data
 
 
 def _check_shape(param, param_shape, name):
@@ -111,7 +109,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         n_samples, _ = X.shape
 
         if self.init_params == "kmeans":
-            resp = np.zeros((n_samples, self.n_components))
+            resp = np.zeros((n_samples, self.n_components), dtype=X.dtype)
             label = (
                 cluster.KMeans(
                     n_clusters=self.n_components, n_init=1, random_state=random_state
@@ -121,26 +119,24 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             )
             resp[np.arange(n_samples), label] = 1
         elif self.init_params == "random":
-            resp = random_state.uniform(size=(n_samples, self.n_components))
+            resp = np.asarray(
+                random_state.uniform(size=(n_samples, self.n_components)), dtype=X.dtype
+            )
             resp /= resp.sum(axis=1)[:, np.newaxis]
         elif self.init_params == "random_from_data":
-            resp = np.zeros((n_samples, self.n_components))
+            resp = np.zeros((n_samples, self.n_components), dtype=X.dtype)
             indices = random_state.choice(
                 n_samples, size=self.n_components, replace=False
             )
             resp[indices, np.arange(self.n_components)] = 1
         elif self.init_params == "k-means++":
-            resp = np.zeros((n_samples, self.n_components))
+            resp = np.zeros((n_samples, self.n_components), dtype=X.dtype)
             _, indices = kmeans_plusplus(
                 X,
                 self.n_components,
                 random_state=random_state,
             )
             resp[indices, np.arange(self.n_components)] = 1
-        else:
-            raise ValueError(
-                "Unimplemented initialization method '%s'" % self.init_params
-            )
 
         self._initialize(X, resp)
 
@@ -186,6 +182,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         self.fit_predict(X, y)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_predict(self, X, y=None):
         """Estimate model parameters using X and predict the labels for X.
 
@@ -213,9 +210,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         labels : array, shape (n_samples,)
             Component labels.
         """
-        self._validate_params()
-
-        X = self._validate_data(X, dtype=[np.float64, np.float32], ensure_min_samples=2)
+        X = validate_data(self, X, dtype=[np.float64, np.float32], ensure_min_samples=2)
         if X.shape[0] < self.n_components:
             raise ValueError(
                 "Expected n_samples >= n_components "
@@ -229,6 +224,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         n_init = self.n_init if do_init else 1
 
         max_lower_bound = -np.inf
+        best_lower_bounds = []
         self.converged_ = False
 
         random_state = check_random_state(self.random_state)
@@ -241,47 +237,54 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                 self._initialize_parameters(X, random_state)
 
             lower_bound = -np.inf if do_init else self.lower_bound_
+            current_lower_bounds = []
 
             if self.max_iter == 0:
                 best_params = self._get_parameters()
                 best_n_iter = 0
             else:
+                converged = False
                 for n_iter in range(1, self.max_iter + 1):
                     prev_lower_bound = lower_bound
 
                     log_prob_norm, log_resp = self._e_step(X)
                     self._m_step(X, log_resp)
                     lower_bound = self._compute_lower_bound(log_resp, log_prob_norm)
+                    current_lower_bounds.append(lower_bound)
 
                     change = lower_bound - prev_lower_bound
                     self._print_verbose_msg_iter_end(n_iter, change)
 
                     if abs(change) < self.tol:
-                        self.converged_ = True
+                        converged = True
                         break
 
-                self._print_verbose_msg_init_end(lower_bound)
+                self._print_verbose_msg_init_end(lower_bound, converged)
 
                 if lower_bound > max_lower_bound or max_lower_bound == -np.inf:
                     max_lower_bound = lower_bound
                     best_params = self._get_parameters()
                     best_n_iter = n_iter
+                    best_lower_bounds = current_lower_bounds
+                    self.converged_ = converged
 
         # Should only warn about convergence if max_iter > 0, otherwise
         # the user is assumed to have used 0-iters initialization
         # to get the initial means.
         if not self.converged_ and self.max_iter > 0:
             warnings.warn(
-                "Initialization %d did not converge. "
-                "Try different init parameters, "
-                "or increase max_iter, tol "
-                "or check for degenerate data." % (init + 1),
+                (
+                    "Best performing initialization did not converge. "
+                    "Try different init parameters, or increase max_iter, "
+                    "tol, or check for degenerate data."
+                ),
                 ConvergenceWarning,
             )
 
         self._set_parameters(best_params)
         self.n_iter_ = best_n_iter
         self.lower_bound_ = max_lower_bound
+        self.lower_bounds_ = best_lower_bounds
 
         # Always do a final e-step to guarantee that the labels returned by
         # fit_predict(X) are always consistent with fit(X).predict(X)
@@ -346,7 +349,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             Log-likelihood of each sample in `X` under the current model.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
 
         return logsumexp(self._estimate_weighted_log_prob(X), axis=1)
 
@@ -384,7 +387,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             Component labels.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
         return self._estimate_weighted_log_prob(X).argmax(axis=1)
 
     def predict_proba(self, X):
@@ -402,7 +405,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             Density of each Gaussian component for each sample in X.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
         _, log_resp = self._estimate_log_prob_resp(X)
         return np.exp(log_resp)
 
@@ -555,12 +558,14 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                 )
                 self._iter_prev_time = cur_time
 
-    def _print_verbose_msg_init_end(self, ll):
+    def _print_verbose_msg_init_end(self, lb, init_has_converged):
         """Print verbose message on the end of iteration."""
+        converged_msg = "converged" if init_has_converged else "did not converge"
         if self.verbose == 1:
-            print("Initialization converged: %s" % self.converged_)
+            print(f"Initialization {converged_msg}.")
         elif self.verbose >= 2:
+            t = time() - self._init_prev_time
             print(
-                "Initialization converged: %s\t time lapse %.5fs\t ll %.5f"
-                % (self.converged_, time() - self._init_prev_time, ll)
+                f"Initialization {converged_msg}. time lapse {t:.5f}s\t lower bound"
+                f" {lb:.5f}."
             )

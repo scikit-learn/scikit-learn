@@ -5,10 +5,10 @@ Developing with the Plotting API
 ================================
 
 Scikit-learn defines a simple API for creating visualizations for machine
-learning. The key features of this API is to run calculations once and to have
+learning. The key features of this API are to run calculations once and to have
 the flexibility to adjust the visualizations after the fact. This section is
 intended for developers who wish to develop or maintain plotting tools. For
-usage, users should refer to the :ref`User Guide <visualizations>`.
+usage, users should refer to the :ref:`User Guide <visualizations>`.
 
 Plotting API Overview
 ---------------------
@@ -20,7 +20,7 @@ The `plot` method takes in parameters that only have to do with visualization,
 such as a matplotlib axes. The `plot` method will store the matplotlib artists
 as attributes allowing for style adjustments through the display object. The
 `Display` class should define one or both class methods: `from_estimator` and
-`from_predictions`. These methods allows to create the `Display` object from
+`from_predictions`. These methods allow creating the `Display` object from
 the estimator and some data or from the true and predicted values. After these
 class methods create the display object with the computed values, then call the
 display's plot method. Note that the `plot` method defines attributes related
@@ -87,11 +87,11 @@ be placed. In this case, we suggest using matplotlib's
 By default, the `ax` keyword in `plot` is `None`. In this case, the single
 axes is created and the gridspec api is used to create the regions to plot in.
 
-See for example, :func:`~sklearn.inspection.PartialDependenceDisplay.from_estimator
+See for example, :meth:`~sklearn.inspection.PartialDependenceDisplay.from_estimator`
 which plots multiple lines and contours using this API. The axes defining the
-bounding box is saved in a `bounding_ax_` attribute. The individual axes
+bounding box are saved in a `bounding_ax_` attribute. The individual axes
 created are stored in an `axes_` ndarray, corresponding to the axes position on
 the grid. Positions that are not used are set to `None`. Furthermore, the
 matplotlib Artists are stored in `lines_` and `contours_` where the key is the
 position on the grid. When a list of axes is passed in, the `axes_`, `lines_`,
-and `contours_` is a 1d ndarray corresponding to the list of axes passed in.
+and `contours_` are a 1d ndarray corresponding to the list of axes passed in.

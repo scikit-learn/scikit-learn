@@ -1,21 +1,24 @@
+import numpy as np
 import pytest
 
-import numpy as np
-
+from sklearn.utils._cython_blas import (
+    ColMajor,
+    NoTrans,
+    RowMajor,
+    Trans,
+    _asum_memview,
+    _axpy_memview,
+    _copy_memview,
+    _dot_memview,
+    _gemm_memview,
+    _gemv_memview,
+    _ger_memview,
+    _nrm2_memview,
+    _rot_memview,
+    _rotg_memview,
+    _scal_memview,
+)
 from sklearn.utils._testing import assert_allclose
-from sklearn.utils._cython_blas import _dot_memview
-from sklearn.utils._cython_blas import _asum_memview
-from sklearn.utils._cython_blas import _axpy_memview
-from sklearn.utils._cython_blas import _nrm2_memview
-from sklearn.utils._cython_blas import _copy_memview
-from sklearn.utils._cython_blas import _scal_memview
-from sklearn.utils._cython_blas import _rotg_memview
-from sklearn.utils._cython_blas import _rot_memview
-from sklearn.utils._cython_blas import _gemv_memview
-from sklearn.utils._cython_blas import _ger_memview
-from sklearn.utils._cython_blas import _gemm_memview
-from sklearn.utils._cython_blas import RowMajor, ColMajor
-from sklearn.utils._cython_blas import Trans, NoTrans
 
 
 def _numpy_to_cython(dtype):

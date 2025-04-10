@@ -33,6 +33,9 @@ corner) is the "ideal" point.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Generate synthetic data
 # -----------------------
@@ -56,7 +59,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4, random_
 # Define the classifiers
 # ----------------------
 #
-# Here we define two different classifiers. The goal is to visualy compare their
+# Here we define two different classifiers. The goal is to visually compare their
 # statistical performance across thresholds using the ROC and DET curves. There
 # is no particular reason why these classifiers are chosen other classifiers
 # available in scikit-learn.
@@ -79,9 +82,10 @@ classifiers = {
 # DET curves are commonly plotted in normal deviate scale. To achieve this the
 # DET display transforms the error rates as returned by the
 # :func:`~sklearn.metrics.det_curve` and the axis scale using
-# :func:`scipy.stats.norm`.
+# `scipy.stats.norm`.
 
 import matplotlib.pyplot as plt
+
 from sklearn.metrics import DetCurveDisplay, RocCurveDisplay
 
 fig, [ax_roc, ax_det] = plt.subplots(1, 2, figsize=(11, 5))
