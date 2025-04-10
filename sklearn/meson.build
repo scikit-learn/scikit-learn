@@ -208,7 +208,6 @@ if cython.version().version_compare('>=3.1.0')
     subdir: 'sklearn',
     cython_args: cython_args,
     install: true,
-    install_tag: 'python-runtime',
   )
 
   cython_args += ['--shared=sklearn._cyutility']
