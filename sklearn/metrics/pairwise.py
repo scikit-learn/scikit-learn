@@ -19,7 +19,6 @@ from ..exceptions import DataConversionWarning
 from ..preprocessing import normalize
 from ..utils import check_array, gen_batches, gen_even_slices
 from ..utils._array_api import (
-    _fill_diagonal,
     _fill_or_add_to_diagonal,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
@@ -1989,14 +1988,14 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     # allocate # 2D arrays using the C-contiguity convention by default.
     ret = xp.empty((X.shape[0], Y.shape[0]), dtype=dtype_float).T
     Parallel(backend="threading", n_jobs=n_jobs)(
-        fd(func, ret, s, X, Y[s], transpose=True, **kwds)
+        fd(func, ret, s, X, Y[s, ...], transpose=True, **kwds)
         for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs))
     )
 
     if (X is Y or Y is None) and func is euclidean_distances:
-        # zeroing diagonal for square matrix and euclidean norm.
+        # zeroing diagonal for euclidean norm.
         # TODO: do it also for other norms.
-        _fill_diagonal(ret, 0, xp=xp)
+        _fill_or_add_to_diagonal(ret, 999, xp=xp, add_value=False)
 
     # Transform output back
     return ret.T
@@ -2019,10 +2018,8 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
         out = xp.zeros((X.shape[0], Y.shape[0]), dtype=dtype_float)
         iterator = itertools.combinations(range(X.shape[0]), 2)
         for i, j in iterator:
-            # scipy has not yet implemented 1D sparse slices; once implemented this can
-            # be removed and `arr[ind]` can be simply used.
-            x = X[[i], :] if issparse(X) else X[i]
-            y = Y[[j], :] if issparse(Y) else Y[j]
+            x = X[i, ...]
+            y = Y[j, ...]
             out[i, j] = metric(x, y, **kwds)
 
         # Make symmetric
@@ -2032,9 +2029,7 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
         # Calculate diagonal
         # NB: nonzero diagonals are allowed for both metrics and kernels
         for i in range(X.shape[0]):
-            # scipy has not yet implemented 1D sparse slices; once implemented this can
-            # be removed and `arr[ind]` can be simply used.
-            x = X[[i], :] if issparse(X) else X[i]
+            x = X[i, ...]
             out[i, i] = metric(x, x, **kwds)
 
     else:
@@ -2042,10 +2037,8 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
         out = xp.empty((X.shape[0], Y.shape[0]), dtype=dtype_float)
         iterator = itertools.product(range(X.shape[0]), range(Y.shape[0]))
         for i, j in iterator:
-            # scipy has not yet implemented 1D sparse slices; once implemented this can
-            # be removed and `arr[ind]` can be simply used.
-            x = X[[i], :] if issparse(X) else X[i]
-            y = Y[[j], :] if issparse(Y) else Y[j]
+            x = X[i, ...]
+            y = Y[j, ...]
             out[i, j] = metric(x, y, **kwds)
 
     return out

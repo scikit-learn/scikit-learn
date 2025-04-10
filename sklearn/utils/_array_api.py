@@ -1004,21 +1004,18 @@ def _tolist(array, xp=None):
     return [element.item() for element in array_np]
 
 
-def _fill_diagonal(a, val, wrap=False, xp=None):
-    xp, _ = get_namespace(a, xp=xp)
-    if _is_numpy_namespace(xp):
-        return xp.fill_diagonal(a, val, wrap=wrap)
-    # Only implemented for 2D arrays
-    if a.ndim < 2:
-        raise ValueError("array must be at least 2-d")
-    end = None
-    if a.ndim == 2:
-        # Explicit, fast formula for the common case.  For 2-d arrays, we
-        # accept rectangular ones.
-        step = a.shape[1] + 1
-        # This is needed to don't have tall matrix have the diagonal wrap.
-        if not wrap:
-            end = a.shape[1] * a.shape[1]
+def _atleast_2d(*arys, xp=None):
+    xp, _ = get_namespace(*arys, xp=xp)
+    res = []
+    for ary in arys:
+        if ary.ndim == 0:
+            result = xp.reshape(1, 1)
+        elif ary.ndim == 1:
+            result = ary[xp.newaxis, ...]
+        else:
+            result = ary
+        res.append(result)
+    if len(res) == 1:
+        return res[0]
     else:
-        raise ValueError("`_fill_diagonal` only supports 2D arrays")
-    xp.reshape(a, (-1))[:end:step] = val
+        return tuple(res)
