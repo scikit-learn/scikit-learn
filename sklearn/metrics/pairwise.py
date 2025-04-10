@@ -1972,7 +1972,6 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     and compute them using multithreading."""
     xp, _, device = get_namespace_and_device(X, Y)
     X, Y, dtype_float = _find_floating_dtype_allow_sparse(X, Y, xp=xp)
-    print(X)
 
     if Y is None:
         Y = X
