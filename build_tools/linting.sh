@@ -10,26 +10,25 @@ set -o pipefail
 
 global_status=0
 
-echo -e "### Running black ###\n"
-black --check --diff .
-status=$?
-
-if [[ $status -eq 0 ]]
-then
-    echo -e "No problem detected by black\n"
-else
-    echo -e "Problems detected by black, please run black and commit the result\n"
-    global_status=1
-fi
-
-echo -e "### Running ruff ###\n"
+echo -e "### Running the ruff linter ###\n"
 ruff check --output-format=full
 status=$?
 if [[ $status -eq 0 ]]
 then
-    echo -e "No problem detected by ruff\n"
+    echo -e "No problem detected by the ruff linter\n"
 else
-    echo -e "Problems detected by ruff, please fix them\n"
+    echo -e "Problems detected by ruff check, please fix them\n"
+    global_status=1
+fi
+
+echo -e "### Running the ruff formatter ###\n"
+ruff format --diff
+status=$?
+if [[ $status -eq 0 ]]
+then
+    echo -e "No problem detected by the ruff formatter\n"
+else
+    echo -e "Problems detected by ruff format, please run ruff format and commit the result\n"
     global_status=1
 fi
 
