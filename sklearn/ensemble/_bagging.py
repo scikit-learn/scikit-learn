@@ -325,9 +325,9 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
-            Used as probabilties to draw the samples.
+            Used as probabilities to draw the samples.
 
-            .. versionchanged:: 1.8
+            .. versionchanged:: 1.7
             The sample weights are used to draw the samples and are no
             longer forwarded to the underlying estimators. It is now okay
             to use a base estimator that does not support sample weight.
@@ -400,7 +400,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
-            Used as probabilties to draw the samples.
+            Used as probabilities to draw the samples.
 
         max_samples : int or float, default=None
             Argument to use instead of self.max_samples.
