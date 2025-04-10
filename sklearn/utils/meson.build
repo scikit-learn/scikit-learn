@@ -39,7 +39,7 @@ foreach ext_name, ext_dict : utils_extension_metadata
   py.extension_module(
     ext_name,
     [ext_dict.get('sources'), utils_cython_tree],
-    dependencies: ext_dict.get('dependencies', []),
+    dependencies: [cython_shared_module] + ext_dict.get('dependencies', []),
     override_options : ext_dict.get('override_options', []),
     cython_args: cython_args,
     subdir: 'sklearn/utils',
@@ -71,6 +71,7 @@ foreach name: util_extension_names
   py.extension_module(
     name,
     pyx,
+    dependencies: [cython_shared_module],
     cython_args: cython_args,
     subdir: 'sklearn/utils',
     install: true

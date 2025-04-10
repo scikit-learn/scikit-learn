@@ -5,6 +5,7 @@ liblinear_include = include_directories('src/liblinear')
 _newrand = py.extension_module(
   '_newrand',
   '_newrand.pyx',
+  dependencies: [cython_shared_module],
   override_options: ['cython_language=cpp'],
   include_directories: [newrand_include],
   cython_args: cython_args,
@@ -20,6 +21,7 @@ libsvm_skl = static_library(
 py.extension_module(
   '_libsvm',
   ['_libsvm.pyx', utils_cython_tree],
+  dependencies: [cython_shared_module],
   include_directories: [newrand_include, libsvm_include],
   link_with: libsvm_skl,
   cython_args: cython_args,
@@ -30,6 +32,7 @@ py.extension_module(
 py.extension_module(
   '_libsvm_sparse',
   ['_libsvm_sparse.pyx', utils_cython_tree],
+  dependencies: [cython_shared_module],
   include_directories: [newrand_include, libsvm_include],
   link_with: libsvm_skl,
   cython_args: cython_args,
@@ -45,6 +48,7 @@ liblinear_skl = static_library(
 py.extension_module(
   '_liblinear',
   ['_liblinear.pyx', utils_cython_tree],
+  dependencies: [cython_shared_module],
   include_directories: [newrand_include, liblinear_include],
   link_with: [liblinear_skl],
   cython_args: cython_args,

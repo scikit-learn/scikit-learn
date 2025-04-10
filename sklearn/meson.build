@@ -232,6 +232,7 @@ extensions = ['_isotonic']
 py.extension_module(
   '_isotonic',
   '_isotonic.pyx',
+  dependencies: [cython_shared_module],
   cython_args: cython_args,
   install: true,
   subdir: 'sklearn',

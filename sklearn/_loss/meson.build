@@ -17,7 +17,7 @@ _loss_pyx = custom_target(
 py.extension_module(
   '_loss',
   _loss_pyx,
-  dependencies: [openmp_dep],
+  dependencies: [openmp_dep, cython_shared_module],
   cython_args: cython_args,
   install: true,
   subdir: 'sklearn/_loss',
