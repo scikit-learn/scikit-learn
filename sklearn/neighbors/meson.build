@@ -29,7 +29,7 @@ foreach name: name_list
   py.extension_module(
     name,
     pyx,
-    dependencies: [np_dep, cython_shared_module],
+    dependencies: [np_dep],
     cython_args: cython_args,
     subdir: 'sklearn/neighbors',
     install: true

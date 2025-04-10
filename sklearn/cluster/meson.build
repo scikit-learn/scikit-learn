@@ -18,7 +18,7 @@ foreach ext_name, ext_dict : cluster_extension_metadata
   py.extension_module(
     ext_name,
     [ext_dict.get('sources'), utils_cython_tree],
-    dependencies: [np_dep, cython_shared_module] + ext_dict.get('dependencies', []),
+    dependencies: [np_dep] + ext_dict.get('dependencies', []),
     override_options : ext_dict.get('override_options', []),
     cython_args: cython_args,
     subdir: 'sklearn/cluster',
