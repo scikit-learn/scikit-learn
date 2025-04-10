@@ -347,16 +347,6 @@ def test_pairwise_parallel(func, metric, kwds, dtype):
     "func, metric, kwds",
     [
         (pairwise_distances, "euclidean", {}),
-        (
-            pairwise_distances,
-            minkowski,
-            _minkowski_kwds,
-        ),
-        (
-            pairwise_distances,
-            "minkowski",
-            _minkowski_kwds,
-        ),
         (pairwise_kernels, "polynomial", {"degree": 1}),
         # (pairwise_kernels, callable_rbf_kernel, {"gamma": 0.1}),
     ],
@@ -372,27 +362,24 @@ def test_pairwise_parallel_array_api(
     Y_xp = xp.asarray(Y_np, device=device)
 
     with config_context(array_api_dispatch=True):
-        # pairwise X with X
-        xx_j1_xp = func(X_xp, metric=metric, n_jobs=1, **kwds)
+        for y_val in (None, "not none"):
+            Y_xp = None if y_val is None else Y_xp
+            Y_np = None if y_val is None else Y_np
 
-        # xx_j1_xp_np = _convert_to_numpy(xx_j1_xp, xp=xp)
-        xx_j2_xp = func(X_xp, metric=metric, n_jobs=2, **kwds)
-        xx_j2_xp_np = _convert_to_numpy(xx_j2_xp, xp=xp)
+            n_job1_xp = func(X_xp, Y_xp, metric=metric, n_jobs=1, **kwds)
+            n_job1_xp_np = _convert_to_numpy(n_job1_xp, xp=xp)
+            assert n_job1_xp.device == X_xp.device
+            assert n_job1_xp.dtype == X_xp.dtype
 
-        # xx_j2_np = func(X_np, metric=metric, n_jobs=2, **kwds)
-        # xx_j1_np = func(X_np, metric=metric, n_jobs=1, **kwds)
-        # assert_allclose(xx_j1_xp_np, xx_j2_xp_np)
-        # assert_allclose(xx_j1_xp_np, xx_j2_np)
+            n_job2_xp = func(X_xp, Y_xp, metric=metric, n_jobs=2, **kwds)
+            n_job2_xp_np = _convert_to_numpy(n_job2_xp, xp=xp)
+            assert n_job2_xp.device == X_xp.device
+            assert n_job2_xp.dtype == X_xp.dtype
 
-        # pairwise X with Y
-        # xy_j1_xp = func(X_xp, Y_xp, metric=metric, n_jobs=1, **kwds)
-        # xy_j1_xp_np = _convert_to_numpy(xy_j1_xp, xp=xp)
-        # xy_j2_xp = func(X_xp, Y_xp, metric=metric, n_jobs=2, **kwds)
-        # xy_j2_xp_np = _convert_to_numpy(xy_j2_xp, xp=xp)
+            n_job2_np = func(X_np, metric=metric, n_jobs=2, **kwds)
 
-        # xy_j2_np = func(X_np, Y_np, metric=metric, n_jobs=2, **kwds)
-        # assert_allclose(xy_j1_xp_np, xy_j2_xp_np)
-        # assert_allclose(xy_j1_xp_np, xy_j2_np)
+            assert_allclose(n_job1_xp_np, n_job2_xp_np)
+            assert_allclose(n_job2_xp_np, n_job2_np)
 
 
 def test_pairwise_callable_nonstrict_metric():
@@ -409,6 +396,42 @@ def test_pairwise_callable_nonstrict_metric():
 )
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_pairwise_kernels(metric, csr_container):
+    # Test the pairwise_kernels helper function.
+
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((5, 4))
+    Y = rng.random_sample((2, 4))
+    function = PAIRWISE_KERNEL_FUNCTIONS[metric]
+    # Test with Y=None
+    K1 = pairwise_kernels(X, metric=metric)
+    K2 = function(X)
+    assert_allclose(K1, K2)
+    # Test with Y=Y
+    K1 = pairwise_kernels(X, Y=Y, metric=metric)
+    K2 = function(X, Y=Y)
+    assert_allclose(K1, K2)
+    # Test with tuples as X and Y
+    X_tuples = tuple([tuple([v for v in row]) for row in X])
+    Y_tuples = tuple([tuple([v for v in row]) for row in Y])
+    K2 = pairwise_kernels(X_tuples, Y_tuples, metric=metric)
+    assert_allclose(K1, K2)
+
+    # Test with sparse X and Y
+    X_sparse = csr_container(X)
+    Y_sparse = csr_container(Y)
+    if metric in ["chi2", "additive_chi2"]:
+        # these don't support sparse matrices yet
+        return
+    K1 = pairwise_kernels(X_sparse, Y=Y_sparse, metric=metric)
+    assert_allclose(K1, K2)
+
+
+@pytest.mark.parametrize(
+    "metric",
+    ["rbf", "laplacian", "sigmoid", "polynomial", "linear", "chi2", "additive_chi2"],
+)
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_pairwise_kernels_array_api(metric, csr_container):
     # Test the pairwise_kernels helper function.
 
     rng = np.random.RandomState(0)

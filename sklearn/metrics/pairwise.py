@@ -1995,7 +1995,7 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     if (X is Y or Y is None) and func is euclidean_distances:
         # zeroing diagonal for euclidean norm.
         # TODO: do it also for other norms.
-        _fill_or_add_to_diagonal(ret, 999, xp=xp, add_value=False)
+        _fill_or_add_to_diagonal(ret, 0, xp=xp, add_value=False)
 
     # Transform output back
     return ret.T
