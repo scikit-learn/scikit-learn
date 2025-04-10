@@ -26,10 +26,10 @@ DATA = (
 
 def test_find_binning_thresholds_regular_data():
     data = np.linspace(0, 10, 1001)
-    bin_thresholds = _find_binning_thresholds(data, sample_weight=None, max_bins=10)
+    bin_thresholds = _find_binning_thresholds(data, max_bins=10)
     assert_allclose(bin_thresholds, [1, 2, 3, 4, 5, 6, 7, 8, 9])
 
-    bin_thresholds = _find_binning_thresholds(data, sample_weight=None, max_bins=5)
+    bin_thresholds = _find_binning_thresholds(data, max_bins=5)
     assert_allclose(bin_thresholds, [2, 4, 6, 8])
 
 
@@ -208,13 +208,10 @@ def test_binmapper_weighted_vs_repeated_equivalence(global_random_seed, n_bins):
         n_bins = np.unique(X[:, rng.randint(3)]).shape[0] + rng.randint(5)
 
     sw = rng.randint(0, 5, size=n_samples)
-
     X_repeated = np.repeat(X, sw, axis=0)
 
     est_weighted = _BinMapper(n_bins=n_bins).fit(X, sample_weight=sw)
-
     est_repeated = _BinMapper(n_bins=n_bins).fit(X_repeated, sample_weight=None)
-
     assert_allclose(est_weighted.bin_thresholds_, est_repeated.bin_thresholds_)
 
     X_trans_weighted = est_weighted.transform(X)
