@@ -119,7 +119,8 @@ feature, code or documentation improvement).
       (before cythonization) will force the build to fail if OpenMP is not
       supported.
 
-#. Build the project with pip:
+#. Build the project with pip,
+   whether you are in `conda environment` or in dedicated `virtualenv`:
 
    .. prompt:: bash $
 
@@ -171,7 +172,7 @@ to build scikit-learn Cython extensions for each supported platform.
 Windows
 -------
 
-First, download the `Build Tools for Visual Studio 2019 installer
+First, download the `Build Tools for Visual Studio installer
 <https://aka.ms/vs/17/release/vs_buildtools.exe>`_.
 
 Run the downloaded `vs_buildtools.exe` file, during the installation you will
@@ -195,6 +196,13 @@ commands in ``cmd`` or an Anaconda Prompt (if you use Anaconda):
 .. sphinx-prompt 1.3.0 (used in doc-min-dependencies CI task) does not support `batch` prompt type,
 .. so we work around by using a known prompt type and an explicit prompt text.
 ..
+
+.. note::
+    The following command is for the 2020 version of Visual Studio. If you
+    have a different version, you will need to adjust the path accordingly.
+    The path probably will follow this pattern:
+    ``C:\Program Files (x86)\Microsoft Visual Studio\<year>\BuildTools\VC\Auxiliary\Build\vcvarsall.bat``.
+
 .. prompt:: bash C:\>
 
     SET DISTUTILS_USE_SDK=1
