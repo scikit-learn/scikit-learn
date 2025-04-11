@@ -51,6 +51,7 @@ from sklearn.preprocessing import normalize
 from sklearn.utils._array_api import (
     _atleast_2d,
     _convert_to_numpy,
+    _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -341,7 +342,9 @@ def test_pairwise_parallel(func, metric, kwds, dtype):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "func, metric, kwds",
