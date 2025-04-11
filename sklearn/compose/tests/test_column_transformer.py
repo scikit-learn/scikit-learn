@@ -2665,6 +2665,34 @@ def test_column_transformer_auto_memmap():
     assert_allclose(Xt, StandardScaler().fit_transform(X[:, [0]]))
 
 
+def test_column_transformer_with_dia_coo_sparse():
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/30275
+    # Tests if ColumnTransformer can handle DIA and COO sparse matrices.
+
+    X_dense = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    X_dia = sparse.dia_matrix(X_dense)
+    X_coo = sparse.coo_matrix(X_dense)
+
+    transformer = ColumnTransformer(
+        transformers=[
+            ("scaler", StandardScaler(with_mean=False), [0]),
+            ("passthrough", "passthrough", [1, 2]),
+        ]
+    )
+
+    transformer.fit(X_dia)
+    transformed_dia = transformer.transform(X_dia)
+
+    transformer.fit(X_coo)
+    transformed_coo = transformer.transform(X_coo)
+
+    assert transformed_dia.shape[0] == 3  # number of rows should be preserved
+    assert np.count_nonzero(transformed_dia) >= 1  # one non-zero element should exist
+    assert transformed_dia.shape[0] == 3
+    assert np.count_nonzero(transformed_coo) >= 1
+
+
 # Metadata Routing Tests
 # ======================
 

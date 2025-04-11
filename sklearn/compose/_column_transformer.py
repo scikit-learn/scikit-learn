@@ -940,6 +940,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         -------
         self : ColumnTransformer
             This estimator.
+
+        Notes
+        -----
+        If `X` is a sparse matrix and not indexable by default, it will be
+        internally converted to the CSR format to avoid errors during indexing.
         """
         _raise_for_params(params, self, "fit")
         # we use fit_transform to make sure to set sparse_output_ (for which we
@@ -980,6 +985,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             sum of n_components (output dimension) over transformers. If
             any result is a sparse matrix, everything will be converted to
             sparse matrices.
+
+        Notes
+        -----
+        If `X` is a sparse matrix and not indexable by default, it will be
+        internally converted to the CSR format to avoid errors during indexing.
         """
         _raise_for_params(params, self, "fit_transform")
         _check_feature_names(self, X, reset=True)
@@ -1333,14 +1343,19 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
 
 def _check_X(X):
-    """Use check_array only when necessary, e.g. on lists and other non-array-likes."""
-    if (
-        (hasattr(X, "__array__") and hasattr(X, "shape"))
-        or hasattr(X, "__dataframe__")
-        or sparse.issparse(X)
-    ):
+    """
+    Use `check_array` only when necessary, e.g., on lists and other non-array-likes,
+    Converts non-subscriptable sparse formats to CSR format.
+
+    """
+    if hasattr(X, "__array__") and hasattr(X, "shape") or hasattr(X, "__dataframe__"):
         return X
-    return check_array(X, ensure_all_finite="allow-nan", dtype=object)
+    elif sparse.issparse(X):
+        if X.format not in ("csr", "csc", "lil", "dok"):
+            return sparse.csr_matrix(X)
+        return X
+    else:
+        return check_array(X, ensure_all_finite="allow-nan", dtype=object)
 
 
 def _is_empty_column_selection(column):
