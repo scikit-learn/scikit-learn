@@ -110,8 +110,8 @@ def _clone_parametrized(estimator, *, safe=True):
             if isinstance(estimator, type):
                 raise TypeError(
                     "Cannot clone object. "
-                    + "You should provide an instance of "
-                    + "scikit-learn estimator instead of a class."
+                    "You should provide an instance of "
+                    "scikit-learn estimator instead of a class."
                 )
             else:
                 raise TypeError(
@@ -400,7 +400,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         warnings.warn(
             "The `_more_tags` method is deprecated in 1.6 and will be removed in "
             "1.7. Please implement the `__sklearn_tags__` method.",
-            category=FutureWarning,
+            category=DeprecationWarning,
         )
         return _to_old_tags(default_tags(self))
 
@@ -411,7 +411,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         warnings.warn(
             "The `_get_tags` method is deprecated in 1.6 and will be removed in "
             "1.7. Please implement the `__sklearn_tags__` method.",
-            category=FutureWarning,
+            category=DeprecationWarning,
         )
 
         return _to_old_tags(get_tags(self))
@@ -444,7 +444,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         """HTML representation of estimator.
 
         This is redundant with the logic of `_repr_mimebundle_`. The latter
-        should be favorted in the long term, `_repr_html_` is only
+        should be favored in the long term, `_repr_html_` is only
         implemented for consumers who do not interpret `_repr_mimbundle_`.
         """
         if get_config()["display"] != "diagram":
@@ -545,7 +545,7 @@ class ClassifierMixin:
 
     def score(self, X, y, sample_weight=None):
         """
-        Return the mean accuracy on the given test data and labels.
+        Return :ref:`accuracy <accuracy_score>` on provided data and labels.
 
         In multi-label classification, this is the subset accuracy
         which is a harsh metric since you require for each sample that
@@ -617,9 +617,9 @@ class RegressorMixin:
         return tags
 
     def score(self, X, y, sample_weight=None):
-        """Return the coefficient of determination of the prediction.
+        """Return :ref:`coefficient of determination <r2_score>` on test data.
 
-        The coefficient of determination :math:`R^2` is defined as
+        The coefficient of determination, :math:`R^2`, is defined as
         :math:`(1 - \\frac{u}{v})`, where :math:`u` is the residual
         sum of squares ``((y_true - y_pred)** 2).sum()`` and :math:`v`
         is the total sum of squares ``((y_true - y_true.mean()) ** 2).sum()``.

@@ -2,12 +2,6 @@
 
 These routines execute the OPTICS algorithm, and implement various
 cluster extraction methods of the ordered list.
-
-Authors: Shane Grigsby <refuge@rocktalus.com>
-         Adrin Jalali <adrinjalali@gmail.com>
-         Erich Schubert <erich@debian.org>
-         Hanmin Qin <qinhanmin2005@sina.com>
-License: BSD 3 clause
 """
 
 # Authors: The scikit-learn developers
@@ -240,6 +234,9 @@ class OPTICS(ClusterMixin, BaseEstimator):
 
     For a more detailed example see
     :ref:`sphx_glr_auto_examples_cluster_plot_optics.py`.
+
+    For a comparison of OPTICS with other clustering algorithms, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
     """
 
     _parameter_constraints: dict = {

@@ -25,7 +25,6 @@ from .utils._set_output import (
 )
 from .utils._tags import get_tags
 from .utils._user_interface import _print_elapsed_time
-from .utils.deprecation import _deprecate_Xt_in_inverse_transform
 from .utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -38,7 +37,7 @@ from .utils.metaestimators import _BaseComposition, available_if
 from .utils.parallel import Parallel, delayed
 from .utils.validation import check_is_fitted, check_memory
 
-__all__ = ["Pipeline", "FeatureUnion", "make_pipeline", "make_union"]
+__all__ = ["FeatureUnion", "Pipeline", "make_pipeline", "make_union"]
 
 
 @contextmanager
@@ -182,7 +181,9 @@ class Pipeline(_BaseComposition):
         before fitting. Therefore, the transformer instance given to the
         pipeline cannot be inspected directly. Use the attribute ``named_steps``
         or ``steps`` to inspect estimators within the pipeline. Caching the
-        transformers is advantageous when fitting is time consuming.
+        transformers is advantageous when fitting is time consuming. See
+        :ref:`sphx_glr_auto_examples_neighbors_plot_caching_nearest_neighbors.py`
+        for an example on how to enable caching.
 
     verbose : bool, default=False
         If True, the time elapsed while fitting each step will be printed as it
@@ -1094,7 +1095,7 @@ class Pipeline(_BaseComposition):
         return all(hasattr(t, "inverse_transform") for _, _, t in self._iter())
 
     @available_if(_can_inverse_transform)
-    def inverse_transform(self, X=None, *, Xt=None, **params):
+    def inverse_transform(self, X, **params):
         """Apply `inverse_transform` for each step in a reverse order.
 
         All estimators in the pipeline must support `inverse_transform`.
@@ -1106,15 +1107,6 @@ class Pipeline(_BaseComposition):
             ``n_features`` is the number of features. Must fulfill
             input requirements of last step of pipeline's
             ``inverse_transform`` method.
-
-        Xt : array-like of shape (n_samples, n_transformed_features)
-            Data samples, where ``n_samples`` is the number of samples and
-            ``n_features`` is the number of features. Must fulfill
-            input requirements of last step of pipeline's
-            ``inverse_transform`` method.
-
-            .. deprecated:: 1.5
-                `Xt` was deprecated in 1.5 and will be removed in 1.7. Use `X` instead.
 
         **params : dict of str -> object
             Parameters requested and accepted by steps. Each step must have
@@ -1135,8 +1127,6 @@ class Pipeline(_BaseComposition):
         # TODO(1.8): Remove the context manager and use check_is_fitted(self)
         with _raise_or_warn_if_not_fitted(self):
             _raise_for_params(params, self, "inverse_transform")
-
-            X = _deprecate_Xt_in_inverse_transform(X, Xt)
 
             # we don't have to branch here, since params is only non-empty if
             # enable_metadata_routing=True.
@@ -1224,6 +1214,15 @@ class Pipeline(_BaseComposition):
                 tags.input_tags.pairwise = get_tags(
                     self.steps[0][1]
                 ).input_tags.pairwise
+            # WARNING: the sparse tag can be incorrect.
+            # Some Pipelines accepting sparse data are wrongly tagged sparse=False.
+            # For example Pipeline([PCA(), estimator]) accepts sparse data
+            # even if the estimator doesn't as PCA outputs a dense array.
+            tags.input_tags.sparse = all(
+                get_tags(step).input_tags.sparse
+                for name, step in self.steps
+                if step != "passthrough"
+            )
         except (ValueError, AttributeError, TypeError):
             # This happens when the `steps` is not a list of (name, estimator)
             # tuples and `fit` is not called yet to validate the steps.
@@ -1495,7 +1494,7 @@ def make_pipeline(*steps, memory=None, transform_input=None, verbose=False):
     )
 
 
-def _transform_one(transformer, X, y, weight, params=None):
+def _transform_one(transformer, X, y, weight, params):
     """Call transform and apply weight to output.
 
     Parameters
@@ -2113,8 +2112,25 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         return router
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        try:
+            tags.input_tags.sparse = all(
+                get_tags(trans).input_tags.sparse
+                for name, trans in self.transformer_list
+                if trans not in {"passthrough", "drop"}
+            )
+        except Exception:
+            # If `transformer_list` does not comply with our API (list of tuples)
+            # then it will fail. In this case, we assume that `sparse` is False
+            # but the parameter validation will raise an error during `fit`.
+            pass  # pragma: no cover
+        return tags
 
-def make_union(*transformers, n_jobs=None, verbose=False):
+
+def make_union(
+    *transformers, n_jobs=None, verbose=False, verbose_feature_names_out=True
+):
     """Construct a :class:`FeatureUnion` from the given transformers.
 
     This is a shorthand for the :class:`FeatureUnion` constructor; it does not
@@ -2140,6 +2156,10 @@ def make_union(*transformers, n_jobs=None, verbose=False):
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
 
+    verbose_feature_names_out : bool, default=True
+        If True, the feature names generated by `get_feature_names_out` will
+        include prefixes derived from the transformer names.
+
     Returns
     -------
     f : FeatureUnion
@@ -2159,4 +2179,9 @@ def make_union(*transformers, n_jobs=None, verbose=False):
      FeatureUnion(transformer_list=[('pca', PCA()),
                                    ('truncatedsvd', TruncatedSVD())])
     """
-    return FeatureUnion(_name_estimators(transformers), n_jobs=n_jobs, verbose=verbose)
+    return FeatureUnion(
+        _name_estimators(transformers),
+        n_jobs=n_jobs,
+        verbose=verbose,
+        verbose_feature_names_out=verbose_feature_names_out,
+    )

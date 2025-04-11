@@ -1,4 +1,0 @@
-- :class:`linear_model.LassoCV` and :class:`linear_model.ElasticNetCV` now
-  take sample weights into accounts to define the search grid for the internally tuned
-  `alpha` hyper-parameter.
-  By :user:`John Hopfensperger <s-banach>` and :user:`Shruti Nath <snath-xoc>`

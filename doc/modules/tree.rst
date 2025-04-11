@@ -382,7 +382,7 @@ Tips on practical use
 
 * If the samples are weighted, it will be easier to optimize the tree
   structure using weight-based pre-pruning criterion such as
-  ``min_weight_fraction_leaf``, which ensure that leaf nodes contain at least
+  ``min_weight_fraction_leaf``, which ensures that leaf nodes contain at least
   a fraction of the overall sum of the sample weights.
 
 * All decision trees use ``np.float32`` arrays internally.
@@ -587,8 +587,8 @@ support for missing values for `splitter='random'`, where the splits
 are determined randomly. For more details on how the splitter differs on
 non-missing values, see the :ref:`Forest section <forest>`.
 
-The criterion supported when there are missing-values are
-`'gini'`, `'entropy`', or `'log_loss'`, for classification or
+The criterion supported when there are missing values are
+`'gini'`, `'entropy'`, or `'log_loss'`, for classification or
 `'squared_error'`, `'friedman_mse'`, or `'poisson'` for regression.
 
 First we will describe how :class:`DecisionTreeClassifier`, :class:`DecisionTreeRegressor`

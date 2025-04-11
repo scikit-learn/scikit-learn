@@ -192,7 +192,7 @@ ccache -z
 
 show_installed_libraries
 
-# Specify explictly ninja -j argument because ninja does not handle cgroups v2 and
+# Specify explicitly ninja -j argument because ninja does not handle cgroups v2 and
 # use the same default rule as ninja (-j3 since we have 2 cores on CircleCI), see
 # https://github.com/scikit-learn/scikit-learn/pull/30333
 pip install -e . --no-build-isolation --config-settings=compile-args="-j 3"
@@ -221,9 +221,16 @@ cd -
 set +o pipefail
 
 affected_doc_paths() {
+    scikit_learn_version=$(python -c 'import re; import sklearn; print(re.sub(r"(\d+\.\d+).+", r"\1", sklearn.__version__))')
     files=$(git diff --name-only origin/main...$CIRCLE_SHA1)
     # use sed to replace files ending by .rst or .rst.template by .html
-    echo "$files" | grep ^doc/.*\.rst | sed 's/^doc\/\(.*\)\.rst$/\1.html/; s/^doc\/\(.*\)\.rst\.template$/\1.html/'
+    echo "$files" | grep -vP 'upcoming_changes/.*/\d+.*\.rst' | grep ^doc/.*\.rst | \
+        sed 's/^doc\/\(.*\)\.rst$/\1.html/; s/^doc\/\(.*\)\.rst\.template$/\1.html/'
+    # replace towncrier fragment files by link to changelog. uniq is used
+    # because in some edge cases multiple fragments can be added and we want a
+    # single link to the changelog.
+    echo "$files" | grep -P 'upcoming_changes/.*/\d+.*\.rst' | sed "s@.*@whats_new/v${scikit_learn_version}.html@" | uniq
+
     echo "$files" | grep ^examples/.*.py | sed 's/^\(.*\)\.py$/auto_\1.html/'
     sklearn_files=$(echo "$files" | grep '^sklearn/')
     if [ -n "$sklearn_files" ]
