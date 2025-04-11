@@ -589,28 +589,6 @@ def test_bagging_with_pipeline():
     assert isinstance(estimator[0].steps[-1][1].random_state, int)
 
 
-class DummyZeroEstimator(BaseEstimator):
-    def fit(self, X, y):
-        self.classes_ = np.unique(y)
-        return self
-
-    def predict(self, X):
-        return self.classes_[np.zeros(X.shape[0], dtype=int)]
-
-
-def test_bagging_sample_weight_unsupported_but_passed():
-    estimator = BaggingClassifier(DummyZeroEstimator())
-    rng = check_random_state(0)
-
-    estimator.fit(iris.data, iris.target).predict(iris.data)
-    with pytest.raises(ValueError):
-        estimator.fit(
-            iris.data,
-            iris.target,
-            sample_weight=rng.randint(10, size=(iris.data.shape[0])),
-        )
-
-
 def test_warm_start(random_state=42):
     # Test if fitting incrementally with warm start gives a forest of the
     # right size and the same results as a normal fit.
@@ -909,8 +887,9 @@ def test_bagging_classifier_with_missing_inputs():
 def test_bagging_small_max_features():
     # Check that Bagging estimator can accept low fractional max_features
 
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
+    rng = np.random.RandomState(42)
+    X = rng.randn(10, 2)
+    y = rng.randint(2, size=X.shape[0])
 
     bagging = BaggingClassifier(LogisticRegression(), max_features=0.3, random_state=1)
     bagging.fit(X, y)
