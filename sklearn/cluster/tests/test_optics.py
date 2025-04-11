@@ -84,6 +84,8 @@ def test_the_extract_xi_labels(ordering, clusters, expected):
 def test_extract_xi(global_dtype):
     # small and easy test (no clusters around other clusters)
     # but with a clear noise data.
+    # global_random_seed is not used here since the expected labels
+    # are hardcoded for these specific data.
     rng = np.random.RandomState(0)
     n_points_per_cluster = 5
 
@@ -138,7 +140,7 @@ def test_extract_xi(global_dtype):
     assert_array_equal(clust.labels_, expected_labels)
 
 
-def test_cluster_hierarchy_(global_dtype, global_random_seed):
+def test_cluster_hierarchy(global_dtype, global_random_seed):
     rng = np.random.RandomState(global_random_seed)
     n_points_per_cluster = 100
     C1 = [0, 0] + 2 * rng.randn(n_points_per_cluster, 2).astype(
@@ -148,12 +150,16 @@ def test_cluster_hierarchy_(global_dtype, global_random_seed):
         global_dtype, copy=False
     )
     X = np.vstack((C1, C2))
-    X = shuffle(X, random_state=0)
+    X = shuffle(X, random_state=rng)
 
     clusters = OPTICS(min_samples=20, xi=0.2).fit(X).cluster_hierarchy_
     assert clusters.shape == (2, 2)
-    diff = np.sum(clusters - np.array([[0, 99], [0, 199]]))
-    assert diff / len(X) < 0.065
+
+    # The first cluster should contain all point from C1 but due to how the data is
+    # generated, some points from C2 may end up in it.
+    assert 100 <= np.diff(clusters[0]) + 1 <= 115
+    # The second cluster should contain all points from C1 and C2.
+    assert np.diff(clusters[-1]) + 1 == 200
 
 
 @pytest.mark.parametrize(
