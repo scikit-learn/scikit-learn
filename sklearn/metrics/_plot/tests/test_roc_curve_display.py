@@ -202,38 +202,37 @@ def test_roc_curve_from_cv_results_param_validation(pyplot, data_binary, data):
         )
 
 
-# @pytest.mark.parametrize(
-#     "curve_kwargs",
-#     [None, {"alpha": 0.2}, [{"alpha": 0.2}, {"alpha": 0.3}, {"alpha": 0.4}]],
-# )
-# def test_roc_curve_display_from_cv_results_validate_curve_kwargs(
-#     pyplot, data_binary, curve_kwargs
-# ):
-#     """Check `_validate_curve_kwargs` correctly validates line kwargs."""
-#     X, y = data_binary
-#     n_cv = 3
-#     cv_results = cross_validate(
-#         LogisticRegression(), X, y, cv=n_cv, return_estimator=True,
-#  return_indices=True
-#     )
-#     display = RocCurveDisplay.from_cv_results(
-#         cv_results,
-#         X,
-#         y,
-#         curve_kwargs=curve_kwargs,
-#     )
-#     if curve_kwargs is None:
-#         # Default `alpha` used
-#         assert all(line.get_alpha() == 0.5 for line in display.line_)
-#     elif isinstance(curve_kwargs, Mapping):
-#         # `alpha` from dict used for all curves
-#         assert all(line.get_alpha() == 0.2 for line in display.line_)
-#     else:
-#         # Different `alpha` used for each curve
-#         assert all(
-#             line.get_alpha() == curve_kwargs[i]["alpha"]
-#             for i, line in enumerate(display.line_)
-#         )
+@pytest.mark.parametrize(
+    "curve_kwargs",
+    [None, {"alpha": 0.2}, [{"alpha": 0.2}, {"alpha": 0.3}, {"alpha": 0.4}]],
+)
+def test_roc_curve_display_from_cv_results_curve_kwargs(
+    pyplot, data_binary, curve_kwargs
+):
+    """Check `curve_kwargs` correctly passed."""
+    X, y = data_binary
+    n_cv = 3
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=n_cv, return_estimator=True, return_indices=True
+    )
+    display = RocCurveDisplay.from_cv_results(
+        cv_results,
+        X,
+        y,
+        curve_kwargs=curve_kwargs,
+    )
+    if curve_kwargs is None:
+        # Default `alpha` used
+        assert all(line.get_alpha() == 0.5 for line in display.line_)
+    elif isinstance(curve_kwargs, Mapping):
+        # `alpha` from dict used for all curves
+        assert all(line.get_alpha() == 0.2 for line in display.line_)
+    else:
+        # Different `alpha` used for each curve
+        assert all(
+            line.get_alpha() == curve_kwargs[i]["alpha"]
+            for i, line in enumerate(display.line_)
+        )
 
 
 # TODO : Remove in 1.9
@@ -243,6 +242,31 @@ def test_roc_curve_display_estimator_name_deprecation(pyplot):
     tpr = np.array([0, 0.5, 1])
     with pytest.warns(FutureWarning, match="`estimator_name` is deprecated in"):
         RocCurveDisplay(fpr=fpr, tpr=tpr, estimator_name="test")
+
+
+# TODO : Remove in 1.9
+@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
+def test_roc_curve_display_kwargs_deprecation(pyplot, data_binary, constructor_name):
+    """Check **kwargs deprecated correctly in favour of `curve_kwargs`."""
+    X, y = data_binary
+    lr = LogisticRegression()
+    lr.fit(X, y)
+    # Error when both `curve_kwargs` and `**kwargs` provided
+    with pytest.raises(ValueError, match="Cannot provide both `curve_kwargs`"):
+        if constructor_name == "from_estimator":
+            RocCurveDisplay.from_estimator(
+                lr, X, y, curve_kwargs={"alpha": 1}, label="test"
+            )
+        else:
+            RocCurveDisplay.from_predictions(
+                y, y, curve_kwargs={"alpha": 1}, label="test"
+            )
+    # Warning when `**kwargs`` provided
+    with pytest.warns(FutureWarning, match=r"`\*\*kwargs` is deprecated and will be"):
+        if constructor_name == "from_estimator":
+            RocCurveDisplay.from_estimator(lr, X, y, label="test")
+        else:
+            RocCurveDisplay.from_predictions(y, y, label="test")
 
 
 @pytest.mark.parametrize(
@@ -453,10 +477,7 @@ def _check_chance_level(plot_chance_level, chance_level_kw, display):
         {"lw": 1, "color": "blue", "ls": "-", "label": None},
     ],
 )
-@pytest.mark.parametrize(
-    "constructor_name",
-    ["from_estimator", "from_predictions"],
-)
+@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
 def test_roc_curve_chance_level_line(
     pyplot,
     data_binary,
