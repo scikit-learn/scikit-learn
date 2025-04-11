@@ -360,8 +360,11 @@ def type_of_target(y, input_name="", raise_unknown=False):
     try:
         # TODO(1.7): Change to ValueError when byte labels is deprecated.
         # labels in bytes format
-        first_row_or_val = y[[0], :] if issparse(y) else y[0]
-        if isinstance(first_row_or_val, bytes):
+        first_row_or_val = y[[0], :] if issparse(y) else y[0, ...]
+        if (
+            hasattr(first_row_or_val.dtype, "kind")
+            and first_row_or_val.dtype.kind == "S"
+        ):
             warnings.warn(
                 (
                     "Support for labels represented as bytes is deprecated in v1.5 and"
@@ -372,9 +375,9 @@ def type_of_target(y, input_name="", raise_unknown=False):
             )
         # The old sequence of sequences format
         if (
-            not hasattr(first_row_or_val, "__array__")
-            and isinstance(first_row_or_val, Sequence)
-            and not isinstance(first_row_or_val, str)
+            not hasattr(y[0], "__array__")
+            and isinstance(y[0], Sequence)
+            and not isinstance(y[0], str)
         ):
             raise ValueError(
                 "You appear to be using a legacy multi-label data"
