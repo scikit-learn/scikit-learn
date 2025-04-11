@@ -81,7 +81,7 @@ class _BinaryClassifierCurveDisplayMixin:
         name,
         curve_kwargs,
     ):
-        check_matplotlib_support(f"{cls.__name__}.from_predictions")
+        check_matplotlib_support(f"{cls.__name__}.from_cv_results")
 
         required_keys = {"estimator", "indices"}
         if not all(key in cv_results for key in required_keys):
@@ -116,58 +116,57 @@ class _BinaryClassifierCurveDisplayMixin:
             # Adapt error message
             raise ValueError(str(e).replace("y_true", "y"))
 
-        n_curves = len(cv_results["estimator"])
-        # NB: Both these also checked in `plot`, but thought it best to fail earlier.
-        cls._validate_multi_curve_kwargs(cls, curve_kwargs, name, n_curves)
-        if isinstance(name, list) and len(name) not in (1, n_curves):
-            raise ValueError(
-                f"`name` must be None, a list of length {n_curves} or a single "
-                f"string. Got list of length: {len(name)}."
-            )
+        # n_curves = len(cv_results["estimator"])
+        # # NB: Both these also checked in `plot`, but thought it best to fail earlier.
+        # cls._validate_multi_curve_kwargs(cls, curve_kwargs, name, n_curves)
+        # if isinstance(name, list) and len(name) not in (1, n_curves):
+        #     raise ValueError(
+        #         f"`name` must be None, a list of length {n_curves} or a single "
+        #         f"string. Got list of length: {len(name)}."
+        #     )
 
         return pos_label
 
-    def _validate_multi_curve_kwargs(cls, curve_kwargs, name, n_curves):
-        """Check `curve_kwargs`, including combination with `name`, is valid."""
-        if isinstance(curve_kwargs, list) and len(curve_kwargs) != n_curves:
-            raise ValueError(
-                f"`curve_kwargs` must be None, a list of length {n_curves} or a "
-                f"dictionary. Got: {curve_kwargs}."
-            )
+    # def _validate_multi_curve_kwargs(cls, curve_kwargs, name, n_curves):
+    #     """Check `curve_kwargs`, including combination with `name`, is valid."""
+    #     if isinstance(curve_kwargs, list) and len(curve_kwargs) != n_curves:
+    #         raise ValueError(
+    #             f"`curve_kwargs` must be None, a dictionary or a list of length "
+    #             f"{n_curves}. Got: {curve_kwargs}."
+    #         )
 
-        # Ensure valid `name` and `curve_kwargs` combination.
-        if (
-            isinstance(name, list)
-            and len(name) != 1
-            and not isinstance(curve_kwargs, list)
-        ):
-            raise ValueError(
-                "To avoid labeling individual curves that have the same appearance, "
-                f"`curve_kwargs` should be a list of {n_curves} dictionaries. "
-                "Alternatively, set `name` to `None` or a single string to label "
-                "a single legend entry with mean ROC AUC score of all curves."
-            )
+    #     # Ensure valid `name` and `curve_kwargs` combination.
+    #     if (
+    #         isinstance(name, list)
+    #         and len(name) != 1
+    #         and not isinstance(curve_kwargs, list)
+    #     ):
+    #         raise ValueError(
+    #             "To avoid labeling individual curves that have the same appearance, "
+    #             f"`curve_kwargs` should be a list of {n_curves} dictionaries. "
+    #             "Alternatively, set `name` to `None` or a single string to label "
+    #             "a single legend entry with mean ROC AUC score of all curves."
+    #         )
 
-    @classmethod
-    def _get_legend_label(cls, curve_summary_value, curve_name, summary_value_name):
-        """Helper to get legend label using `name` and `summary_value`"""
-        if curve_summary_value is not None and curve_name is not None:
-            label = f"{curve_name} ({summary_value_name} = {curve_summary_value:0.2f})"
-        elif curve_summary_value is not None:
-            label = f"{summary_value_name} = {curve_summary_value:0.2f}"
+    @staticmethod
+    def _get_legend_label(curve_legend_metric, curve_name, legend_metric_name):
+        """Helper to get legend label using `name` and `legend_metric`"""
+        if curve_legend_metric is not None and curve_name is not None:
+            label = f"{curve_name} ({legend_metric_name} = {curve_legend_metric:0.2f})"
+        elif curve_legend_metric is not None:
+            label = f"{legend_metric_name} = {curve_legend_metric:0.2f}"
         elif curve_name is not None:
             label = curve_name
         else:
             label = None
         return label
 
-    @classmethod
+    @staticmethod
     def _validate_curve_kwargs(
-        cls,
         n_curves,
         name,
-        summary_value,
-        summary_value_name,
+        legend_metric,
+        legend_metric_name,
         curve_kwargs,
         **kwargs,
     ):
@@ -181,13 +180,12 @@ class _BinaryClassifierCurveDisplayMixin:
         name : list of str or None
             Name for labeling legend entries.
 
-        summary_value : list of float or tuple of float or None
-            A list of `n_curves` summary values for each curve (e.g., ROC AUC,
-            average precision) or a tuple of mean and standard deviation values for
-            all curves or None.
+        legend_metric : dict or None
+            Dictionary with "mean" and "std" keys, or "metric" key of metric
+            values for each curve. If None, "label" will not contain metric values.
 
-        summary_value_name : str or None
-            Name of the summary value provided in `summary_values`.
+        legend_metric_name : str or None
+            Name of the summary value provided in `legend_metrics`.
 
         curve_kwargs : dict or list of dict
             Dictionary with keywords passed to the matplotlib's `plot` function
@@ -215,13 +213,29 @@ class _BinaryClassifierCurveDisplayMixin:
             )
             curve_kwargs = kwargs
 
-        cls._validate_multi_curve_kwargs(cls, curve_kwargs, name, n_curves)
+        if isinstance(curve_kwargs, list) and len(curve_kwargs) != n_curves:
+            raise ValueError(
+                f"`curve_kwargs` must be None, a dictionary or a list of length "
+                f"{n_curves}. Got: {curve_kwargs}."
+            )
+
+        # Ensure valid `name` and `curve_kwargs` combination.
+        if (
+            isinstance(name, list)
+            and len(name) != 1
+            and not isinstance(curve_kwargs, list)
+        ):
+            raise ValueError(
+                "To avoid labeling individual curves that have the same appearance, "
+                f"`curve_kwargs` should be a list of {n_curves} dictionaries. "
+                "Alternatively, set `name` to `None` or a single string to label "
+                "a single legend entry with mean ROC AUC score of all curves."
+            )
 
         # Ensure `name` is of the correct length
         if isinstance(name, list) and len(name) == 1:
             name = name * n_curves
         name = [None] * n_curves if name is None else name
-        summary_value = [None] * n_curves if summary_value is None else summary_value
 
         # Ensure `curve_kwargs` is of correct length
         if isinstance(curve_kwargs, Mapping):
@@ -235,25 +249,27 @@ class _BinaryClassifierCurveDisplayMixin:
                 curve_kwargs = [{}]
 
         labels = []
-        if isinstance(summary_value, tuple):
-            label_aggregate = cls._get_legend_label(
-                summary_value[0], name[0], summary_value_name
+        if "mean" in legend_metric:
+            label_aggregate = _BinaryClassifierCurveDisplayMixin._get_legend_label(
+                legend_metric["mean"], name[0], legend_metric_name
             )
             # Add the "+/- std" to the end (in brackets if name provided)
-            if summary_value[1] is not None:
+            if legend_metric["mean"] is not None:
                 if name[0] is not None:
                     label_aggregate = (
-                        label_aggregate[:-1] + f" +/- {summary_value[1]:0.2f})"
+                        label_aggregate[:-1] + f" +/- {legend_metric['std']:0.2f})"
                     )
                 else:
-                    label_aggregate = label_aggregate + f" +/- {summary_value[1]:0.2f}"
+                    label_aggregate = (
+                        label_aggregate + f" +/- {legend_metric['std']:0.2f}"
+                    )
             # Add `label` for first curve only, set to `None` for remaining curves
             labels.extend([label_aggregate] + [None] * (n_curves - 1))
         else:
-            for curve_summary_value, curve_name in zip(summary_value, name):
+            for curve_legend_metric, curve_name in zip(legend_metric["metric"], name):
                 labels.append(
-                    cls._get_legend_label(
-                        curve_summary_value, curve_name, summary_value_name
+                    _BinaryClassifierCurveDisplayMixin._get_legend_label(
+                        curve_legend_metric, curve_name, legend_metric_name
                     )
                 )
 

@@ -233,18 +233,20 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         """
         fpr, tpr, roc_auc, name = self._validate_plot_params(ax=ax, name=name)
         n_curves = len(fpr)
-        summary_value, summary_value_name = roc_auc, "AUC"
         if not isinstance(curve_kwargs, list) and n_curves > 1:
             if roc_auc:
-                summary_value = (np.mean(roc_auc), np.std(roc_auc))
+                legend_metric = {"mean": np.mean(roc_auc), "std": np.std(roc_auc)}
             else:
-                summary_value = (None, None)
+                legend_metric = {"mean": None, "std": None}
+        else:
+            roc_auc = roc_auc if roc_auc is not None else [None] * n_curves
+            legend_metric = {"metric": roc_auc}
 
         curve_kwargs = self._validate_curve_kwargs(
             n_curves,
             name,
-            summary_value,
-            summary_value_name,
+            legend_metric,
+            "AUC",
             curve_kwargs=curve_kwargs,
             **kwargs,
         )
@@ -347,8 +349,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             :term:`decision_function` is tried next.
 
         pos_label : int, float, bool or str, default=None
-            The class considered as the positive class when computing the roc auc
-            metrics. By default, `estimators.classes_[1]` is considered
+            The class considered as the positive class when computing the ROC AUC.
+            By default, `estimators.classes_[1]` is considered
             as the positive class.
 
         name : str, default=None
@@ -480,9 +482,9 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             ROC curves.
 
         pos_label : int, float, bool or str, default=None
-            The label of the positive class. When `pos_label=None`, if `y_true`
-            is in {-1, 1} or {0, 1}, `pos_label` is set to 1, otherwise an
-            error will be raised.
+            The label of the positive class when computing the ROC AUC.
+            When `pos_label=None`, if `y_true` is in {-1, 1} or {0, 1}, `pos_label`
+            is set to 1, otherwise an error will be raised.
 
         name : str, default=None
             Name of ROC curve for legend labeling. If `None`, name will be set to
@@ -629,8 +631,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             :term:`predict_proba` is tried first and if it does not exist
             :term:`decision_function` is tried next.
 
-        pos_label : str or int, default=None
-            The class considered as the positive class when computing the roc auc
+        pos_label : int, float, bool or str, default=None
+            The class considered as the positive class when computing the ROC AUC
             metrics. By default, `estimators.classes_[1]` is considered
             as the positive class.
 
@@ -706,19 +708,17 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             curve_kwargs=curve_kwargs,
         )
 
-        fpr_all = []
-        tpr_all = []
-        auc_all = []
+        fpr_folds, tpr_folds, auc_folds = [], [], []
         for estimator, test_indices in zip(
             cv_results["estimator"], cv_results["indices"]["test"]
         ):
             y_true = _safe_indexing(y, test_indices)
-            y_pred = _get_response_values_binary(
+            y_pred, _ = _get_response_values_binary(
                 estimator,
                 _safe_indexing(X, test_indices),
                 response_method=response_method,
                 pos_label=pos_label_,
-            )[0]
+            )
             sample_weight_fold = (
                 None
                 if sample_weight is None
@@ -733,15 +733,15 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             )
             roc_auc = auc(fpr, tpr)
 
-            fpr_all.append(fpr)
-            tpr_all.append(tpr)
-            auc_all.append(roc_auc)
+            fpr_folds.append(fpr)
+            tpr_folds.append(tpr)
+            auc_folds.append(roc_auc)
 
         viz = cls(
-            fpr=fpr_all,
-            tpr=tpr_all,
+            fpr=fpr_folds,
+            tpr=tpr_folds,
             name=name,
-            roc_auc=auc_all,
+            roc_auc=auc_folds,
             pos_label=pos_label_,
         )
         return viz.plot(

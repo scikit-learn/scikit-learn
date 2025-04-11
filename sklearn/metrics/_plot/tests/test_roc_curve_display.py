@@ -192,7 +192,7 @@ def test_roc_curve_from_cv_results_param_validation(pyplot, data_binary, data):
             )
 
     # `curve_kwargs` incorrect length
-    with pytest.raises(ValueError, match="`curve_kwargs` must be None, a list"):
+    with pytest.raises(ValueError, match="`curve_kwargs` must be None, a dictionary"):
         RocCurveDisplay.from_cv_results(cv_results, X, y, curve_kwargs=[{"alpha": 1}])
 
     # `curve_kwargs` both alias provided
@@ -245,28 +245,40 @@ def test_roc_curve_display_estimator_name_deprecation(pyplot):
 
 
 # TODO : Remove in 1.9
-@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
+@pytest.mark.parametrize(
+    "constructor_name", ["from_estimator", "from_predictions", "plot"]
+)
 def test_roc_curve_display_kwargs_deprecation(pyplot, data_binary, constructor_name):
     """Check **kwargs deprecated correctly in favour of `curve_kwargs`."""
     X, y = data_binary
     lr = LogisticRegression()
     lr.fit(X, y)
+    fpr = np.array([0, 0.5, 1])
+    tpr = np.array([0, 0.5, 1])
+
     # Error when both `curve_kwargs` and `**kwargs` provided
     with pytest.raises(ValueError, match="Cannot provide both `curve_kwargs`"):
         if constructor_name == "from_estimator":
             RocCurveDisplay.from_estimator(
                 lr, X, y, curve_kwargs={"alpha": 1}, label="test"
             )
-        else:
+        elif constructor_name == "from_predictions":
             RocCurveDisplay.from_predictions(
                 y, y, curve_kwargs={"alpha": 1}, label="test"
             )
+        else:
+            RocCurveDisplay(fpr=fpr, tpr=tpr).plot(
+                curve_kwargs={"alpha": 1}, label="test"
+            )
+
     # Warning when `**kwargs`` provided
     with pytest.warns(FutureWarning, match=r"`\*\*kwargs` is deprecated and will be"):
         if constructor_name == "from_estimator":
             RocCurveDisplay.from_estimator(lr, X, y, label="test")
-        else:
+        elif constructor_name == "from_predictions":
             RocCurveDisplay.from_predictions(y, y, label="test")
+        else:
+            RocCurveDisplay(fpr=fpr, tpr=tpr).plot(label="test")
 
 
 @pytest.mark.parametrize(
@@ -367,8 +379,9 @@ def test_roc_curve_display_plotting_from_cv_results(
     [None, {"color": "red"}, [{"c": "red"}, {"c": "green"}, {"c": "yellow"}]],
 )
 @pytest.mark.parametrize("name", [None, "single", ["one", "two", "three"]])
+@pytest.mark.parametrize("constructor_name", ["from_cv_results", "plot"])
 def test_roc_curve_from_cv_results_legend_label(
-    pyplot, data_binary, name, curve_kwargs
+    pyplot, data_binary, constructor_name, name, curve_kwargs
 ):
     """Check legend label correct with all `curve_kwargs`, `name` combinations."""
     X, y = data_binary
@@ -376,15 +389,29 @@ def test_roc_curve_from_cv_results_legend_label(
     cv_results = cross_validate(
         LogisticRegression(), X, y, cv=n_cv, return_estimator=True, return_indices=True
     )
+    fpr = [np.array([0, 0.5, 1]), np.array([0, 0.5, 1]), np.array([0, 0.5, 1])]
+    tpr = [np.array([0, 0.5, 1]), np.array([0, 0.5, 1]), np.array([0, 0.5, 1])]
+    roc_auc = [1.0, 1.0, 1.0]
     if not isinstance(curve_kwargs, list) and isinstance(name, list):
         with pytest.raises(ValueError, match="To avoid labeling individual curves"):
+            if constructor_name == "from_cv_results":
+                RocCurveDisplay.from_cv_results(
+                    cv_results, X, y, name=name, curve_kwargs=curve_kwargs
+                )
+            else:
+                RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc).plot(
+                    name=name, curve_kwargs=curve_kwargs
+                )
+
+    else:
+        if constructor_name == "from_cv_results":
             display = RocCurveDisplay.from_cv_results(
                 cv_results, X, y, name=name, curve_kwargs=curve_kwargs
             )
-    else:
-        display = RocCurveDisplay.from_cv_results(
-            cv_results, X, y, name=name, curve_kwargs=curve_kwargs
-        )
+        else:
+            display = RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc).plot(
+                name=name, curve_kwargs=curve_kwargs
+            )
         legend = display.ax_.get_legend()
         legend_labels = [text.get_text() for text in legend.get_texts()]
         if isinstance(curve_kwargs, list):
