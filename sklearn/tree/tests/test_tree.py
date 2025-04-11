@@ -8,7 +8,7 @@ import io
 import pickle
 import re
 import struct
-from itertools import chain, product
+from itertools import chain, pairwise, product
 
 import joblib
 import numpy as np
@@ -1865,7 +1865,7 @@ def assert_pruning_creates_subtree(estimator_cls, X, y, pruning_path):
 
     # A pruned tree must be a subtree of the previous tree (which had a
     # smaller ccp_alpha)
-    for prev_est, next_est in zip(estimators, estimators[1:]):
+    for prev_est, next_est in pairwise(estimators):
         assert_is_subtree(prev_est.tree_, next_est.tree_)
 
 
@@ -2826,7 +2826,7 @@ def test_sort_log2_build():
     rng = np.random.default_rng(75)
     some = rng.normal(loc=0.0, scale=10.0, size=10).astype(np.float32)
     feature_values = np.concatenate([some] * 5)
-    samples = np.arange(50)
+    samples = np.arange(50, dtype=np.intp)
     _py_sort(feature_values, samples, 50)
     # fmt: off
     # no black reformatting for this specific array
