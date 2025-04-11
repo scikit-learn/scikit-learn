@@ -1956,6 +1956,21 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         # init cross-validation generator
         cv = check_cv(self.cv, y, classifier=True)
+
+        if isinstance(cv, int):
+            n_splits = cv
+        else:
+            n_splits = cv.get_n_splits()
+        min_samples_class = min(np.bincount(y))
+
+        if n_splits > min_samples_class:
+            raise ValueError(
+                "The least populated class in y has only %d"
+                " sample(s), which is less than number of splits"
+                " (n_splits=%d). Reduce the number of splits or"
+                " increase the dataset size." % (min_samples_class, n_splits)
+            )
+
         folds = list(cv.split(X, y, **routed_params.splitter.split))
 
         # Use the label encoded classes
