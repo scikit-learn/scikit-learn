@@ -484,7 +484,7 @@ cdef float64_t[::1] _svc_gradient(
     const float64_t[:, ::1] alpha,
     const int32_t[::1] alpha_lengths,
 ):
-    cdef intp_t c1, c2, i, j, p, l, l_c1, idx_i, idx_j, k
+    cdef intp_t c1, c2, i, p, l, l_c1, idx, k
     cdef double s
     cdef int yi_x_yj
     cdef const float64_t[:, ::1] kernel
@@ -498,11 +498,18 @@ cdef float64_t[::1] _svc_gradient(
     p, i = 0, 0
     for c1 in range(len(classes)):
         for c2 in range(c1 + 1, len(classes)):
-            for i, idx_i in enumerate(np.where(np.equal(y, classes[c1]))[0]):
-                indices[p, i] = idx_i
-            left_class_sizes[p] = i + 1
-            for j, idx_j in enumerate(np.where(np.equal(y, classes[c2]))[0], i+1):
-                indices[p, j] = idx_j
+            i = 0
+            for idx in range(len(y)):
+                if y[idx] == classes[c1]:
+                    indices[p, i] = idx
+                    i += 1
+
+            left_class_sizes[p] = i
+
+            for idx in range(len(y)):
+                if y[idx] == classes[c2]:
+                    indices[p, i] = idx
+                    i += 1
             p += 1
 
     # ∂J/∂dₘ = -1/2·ΣₚΣᵢΣⱼαₚᵢ·αₚⱼ·yᵢ·yⱼ·Kₘ(xᵢ, xⱼ)
