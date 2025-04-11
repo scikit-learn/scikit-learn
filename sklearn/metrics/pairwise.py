@@ -1733,8 +1733,6 @@ def cosine_similarity(X, Y=None, dense_output=True):
     array([[0.     , 0.     ],
            [0.57..., 0.81...]])
     """
-    # to avoid recursive import
-
     X, Y = check_pairwise_arrays(X, Y)
 
     X_normalized = normalize(X, copy=True)
