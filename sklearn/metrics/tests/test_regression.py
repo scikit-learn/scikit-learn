@@ -589,6 +589,8 @@ def test_mean_pinball_loss_on_constant_predictions(
     result = optimize.minimize(objective_func, data.mean())
     assert result.success
     # The minimum is not unique with limited data, hence the large tolerance.
+    # For the normal distribution and the 0.5 quantile, the expected result is close to
+    # 0, hence the additional use of absolute tolerance.
     assert_allclose(result.x, best_pred, rtol=1e-1, atol=1e-3)
     assert result.fun == pytest.approx(best_pbl)
 
