@@ -60,6 +60,8 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
     """Yield supported namespace, device, dtype tuples for testing.
 
     Use this to test that an estimator works with all combinations.
+    Use in conjunction with `ids=_get_namespace_device_dtype_ids` to give
+    clearer pytest parametrization ID names.
 
     Parameters
     ----------
