@@ -40,21 +40,19 @@ score_funcs = [
 ]
 
 
-def test_error_messages_on_wrong_input():
-    for score_func in score_funcs:
-        expected = (
-            r"Found input variables with inconsistent numbers of samples: \[2, 3\]"
-        )
-        with pytest.raises(ValueError, match=expected):
-            score_func([0, 1], [1, 1, 1])
+@pytest.mark.parametrize("score_func", score_funcs)
+def test_error_messages_on_wrong_input(score_func):
+    expected = r"Found input variables with inconsistent numbers of samples: \[2, 3\]"
+    with pytest.raises(ValueError, match=expected):
+        score_func([0, 1], [1, 1, 1])
 
-        expected = r"labels_true must be 1D: shape is \(2"
-        with pytest.raises(ValueError, match=expected):
-            score_func([[0, 1], [1, 0]], [1, 1, 1])
+    expected = r"labels_true must be 1D: shape is \(2"
+    with pytest.raises(ValueError, match=expected):
+        score_func([[0, 1], [1, 0]], [1, 1, 1])
 
-        expected = r"labels_pred must be 1D: shape is \(2"
-        with pytest.raises(ValueError, match=expected):
-            score_func([0, 1, 0], [[1, 1], [0, 0]])
+    expected = r"labels_pred must be 1D: shape is \(2"
+    with pytest.raises(ValueError, match=expected):
+        score_func([0, 1, 0], [[1, 1], [0, 0]])
 
 
 def test_generalized_average():
@@ -67,39 +65,50 @@ def test_generalized_average():
     assert means[0] == means[1] == means[2] == means[3]
 
 
-def test_perfect_matches():
-    for score_func in score_funcs:
-        assert score_func([], []) == pytest.approx(1.0)
-        assert score_func([0], [1]) == pytest.approx(1.0)
-        assert score_func([0, 0, 0], [0, 0, 0]) == pytest.approx(1.0)
-        assert score_func([0, 1, 0], [42, 7, 42]) == pytest.approx(1.0)
-        assert score_func([0.0, 1.0, 0.0], [42.0, 7.0, 42.0]) == pytest.approx(1.0)
-        assert score_func([0.0, 1.0, 2.0], [42.0, 7.0, 2.0]) == pytest.approx(1.0)
-        assert score_func([0, 1, 2], [42, 7, 2]) == pytest.approx(1.0)
-    score_funcs_with_changing_means = [
+@pytest.mark.parametrize("score_func", score_funcs)
+def test_perfect_matches(score_func):
+    assert score_func([], []) == pytest.approx(1.0)
+    assert score_func([0], [1]) == pytest.approx(1.0)
+    assert score_func([0, 0, 0], [0, 0, 0]) == pytest.approx(1.0)
+    assert score_func([0, 1, 0], [42, 7, 42]) == pytest.approx(1.0)
+    assert score_func([0.0, 1.0, 0.0], [42.0, 7.0, 42.0]) == pytest.approx(1.0)
+    assert score_func([0.0, 1.0, 2.0], [42.0, 7.0, 2.0]) == pytest.approx(1.0)
+    assert score_func([0, 1, 2], [42, 7, 2]) == pytest.approx(1.0)
+
+
+@pytest.mark.parametrize(
+    "score_func",
+    [
         normalized_mutual_info_score,
         adjusted_mutual_info_score,
-    ]
-    means = {"min", "geometric", "arithmetic", "max"}
-    for score_func in score_funcs_with_changing_means:
-        for mean in means:
-            assert score_func([], [], average_method=mean) == pytest.approx(1.0)
-            assert score_func([0], [1], average_method=mean) == pytest.approx(1.0)
-            assert score_func(
-                [0, 0, 0], [0, 0, 0], average_method=mean
-            ) == pytest.approx(1.0)
-            assert score_func(
-                [0, 1, 0], [42, 7, 42], average_method=mean
-            ) == pytest.approx(1.0)
-            assert score_func(
-                [0.0, 1.0, 0.0], [42.0, 7.0, 42.0], average_method=mean
-            ) == pytest.approx(1.0)
-            assert score_func(
-                [0.0, 1.0, 2.0], [42.0, 7.0, 2.0], average_method=mean
-            ) == pytest.approx(1.0)
-            assert score_func(
-                [0, 1, 2], [42, 7, 2], average_method=mean
-            ) == pytest.approx(1.0)
+    ],
+)
+@pytest.mark.parametrize("average_method", ["min", "geometric", "arithmetic", "max"])
+def test_perfect_matches_with_changing_means(score_func, average_method):
+    assert score_func([], [], average_method=average_method) == pytest.approx(1.0)
+    assert score_func([0], [1], average_method=average_method) == pytest.approx(1.0)
+    assert score_func(
+        [0, 0, 0], [0, 0, 0], average_method=average_method
+    ) == pytest.approx(1.0)
+    assert score_func(
+        [0, 1, 0], [42, 7, 42], average_method=average_method
+    ) == pytest.approx(1.0)
+    assert score_func(
+        [0.0, 1.0, 0.0], [42.0, 7.0, 42.0], average_method=average_method
+    ) == pytest.approx(1.0)
+    assert score_func(
+        [0.0, 1.0, 2.0], [42.0, 7.0, 2.0], average_method=average_method
+    ) == pytest.approx(1.0)
+    assert score_func(
+        [0, 1, 2], [42, 7, 2], average_method=average_method
+    ) == pytest.approx(1.0)
+    # Non-regression tests for: https://github.com/scikit-learn/scikit-learn/issues/30950
+    assert score_func([0, 1], [0, 1], average_method=average_method) == pytest.approx(
+        1.0
+    )
+    assert score_func(
+        [0, 1, 2, 3], [0, 1, 2, 3], average_method=average_method
+    ) == pytest.approx(1.0)
 
 
 def test_homogeneous_but_not_complete_labeling():
@@ -306,12 +315,13 @@ def test_exactly_zero_info_score():
         labels_a, labels_b = (np.ones(i, dtype=int), np.arange(i, dtype=int))
         assert normalized_mutual_info_score(labels_a, labels_b) == pytest.approx(0.0)
         assert v_measure_score(labels_a, labels_b) == pytest.approx(0.0)
-        assert adjusted_mutual_info_score(labels_a, labels_b) == pytest.approx(0.0)
+        assert adjusted_mutual_info_score(labels_a, labels_b) == 0.0
         assert normalized_mutual_info_score(labels_a, labels_b) == pytest.approx(0.0)
         for method in ["min", "geometric", "arithmetic", "max"]:
-            assert adjusted_mutual_info_score(
-                labels_a, labels_b, average_method=method
-            ) == pytest.approx(0.0)
+            assert (
+                adjusted_mutual_info_score(labels_a, labels_b, average_method=method)
+                == 0.0
+            )
             assert normalized_mutual_info_score(
                 labels_a, labels_b, average_method=method
             ) == pytest.approx(0.0)
