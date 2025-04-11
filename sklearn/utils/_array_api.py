@@ -5,6 +5,7 @@
 
 import itertools
 import math
+import numbers
 import os
 from functools import wraps
 
@@ -288,7 +289,7 @@ def _isdtype_single(dtype, kind, *, xp):
         return dtype == kind
 
 
-def supported_float_dtypes(xp):
+def supported_float_dtypes(xp, device=None):
     """Supported floating point types for the namespace.
 
     Note: float16 is not officially part of the Array API spec at the
@@ -344,6 +345,149 @@ def _accept_device_cpu(func):
         return func(*args, **kwargs)
 
     return wrapped_func
+
+
+class _NumPyLinalgAPIWrapper:
+    def __getattr__(self, attr):
+        return getattr(numpy.linalg, attr)
+
+    def vector_norm(self, x, /, *, axis=None, keepdims=False, ord=2):
+        return numpy.linalg.norm(x, ord - ord, axis=axis, keepdims=keepdims)
+
+    def outer(self, x1, x2, /):
+        return numpy.outer(x1, x2)
+
+
+class _NumPyAPIWrapper:
+    """Array API compat wrapper for any numpy version
+
+    NumPy < 2 does not implement the namespace. NumPy 2 and later should
+    progressively implement more an more of the latest Array API spec but this
+    is still work in progress at this time.
+
+    This wrapper makes it possible to write code that uses the standard Array
+    API while working with any version of NumPy supported by scikit-learn.
+
+    See the `get_namespace()` public function for more details.
+    """
+
+    # TODO: once scikit-learn drops support for NumPy < 2, this class can be
+    # removed, assuming Array API compliance of NumPy 2 is actually sufficient
+    # for scikit-learn's needs.
+
+    # Creation functions in spec:
+    # https://data-apis.org/array-api/latest/API_specification/creation_functions.html
+    _CREATION_FUNCS = {
+        "arange",
+        "empty",
+        "empty_like",
+        "eye",
+        "full",
+        "full_like",
+        "linspace",
+        "ones",
+        "ones_like",
+        "zeros",
+        "zeros_like",
+    }
+    # Data types in spec
+    # https://data-apis.org/array-api/latest/API_specification/data_types.html
+    _DTYPES = {
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
+        # XXX: float16 is not part of the Array API spec but exposed by
+        # some namespaces.
+        "float16",
+        "float32",
+        "float64",
+        "complex64",
+        "complex128",
+    }
+
+    linalg = _NumPyLinalgAPIWrapper()
+
+    def __getattr__(self, name):
+        attr = getattr(numpy, name)
+
+        # Support device kwargs and make sure they are on the CPU
+        if name in self._CREATION_FUNCS:
+            return _accept_device_cpu(attr)
+
+        # Convert to dtype objects
+        if name in self._DTYPES:
+            return numpy.dtype(attr)
+        return attr
+
+    @property
+    def bool(self):
+        return numpy.bool_
+
+    def astype(self, x, dtype, *, copy=True, casting="unsafe"):
+        # astype is not defined in the top level NumPy namespace
+        return x.astype(dtype, copy=copy, casting=casting)
+
+    def asarray(self, x, *, dtype=None, device=None, copy=None):
+        _check_device_cpu(device)
+        # Support copy in NumPy namespace
+        if copy is True:
+            return numpy.array(x, copy=True, dtype=dtype)
+        else:
+            return numpy.asarray(x, dtype=dtype)
+
+    def unique_inverse(self, x):
+        return numpy.unique(x, return_inverse=True)
+
+    def unique_counts(self, x):
+        return numpy.unique(x, return_counts=True)
+
+    def unique_values(self, x):
+        return numpy.unique(x)
+
+    def unique_all(self, x):
+        return numpy.unique(
+            x, return_index=True, return_inverse=True, return_counts=True
+        )
+
+    def concat(self, arrays, *, axis=None):
+        return numpy.concatenate(arrays, axis=axis)
+
+    def reshape(self, x, shape, *, copy=None):
+        """Gives a new shape to an array without changing its data.
+
+        The Array API specification requires shape to be a tuple.
+        https://data-apis.org/array-api/latest/API_specification/generated/array_api.reshape.html
+        """
+        if not isinstance(shape, tuple):
+            raise TypeError(
+                f"shape must be a tuple, got {shape!r} of type {type(shape)}"
+            )
+
+        if copy is True:
+            x = x.copy()
+        return numpy.reshape(x, shape)
+
+    def isdtype(self, dtype, kind):
+        try:
+            return isdtype(dtype, kind, xp=self)
+        except TypeError:
+            # In older versions of numpy, data types that arise from outside
+            # numpy like from a Polars Series raise a TypeError.
+            # e.g. TypeError: Cannot interpret 'Int64' as a data type.
+            # Therefore, we return False.
+            # TODO: Remove when minimum supported version of numpy is >= 1.21.
+            return False
+
+    def pow(self, x1, x2):
+        return numpy.power(x1, x2)
+
+
+_NUMPY_API_WRAPPER_INSTANCE = _NumPyAPIWrapper()
 
 
 def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
@@ -515,6 +659,40 @@ def get_namespace_and_device(
         return xp, is_array_api, arrays_device
     else:
         return xp, False, arrays_device
+
+
+def move_to_namespace_and_device(*arrays_to_move, ref):
+    """Helper to implement the 'y follows X' rule.
+
+    Convert arrays to the namespace and device of ``ref``.
+
+    When ``ref`` is not an array api array, the inputs are returned unchanged.
+    """
+    xp, is_array_api = get_namespace(ref)
+    if not is_array_api:
+        return arrays_to_move
+
+    device_ = device(ref)
+
+    new_arrays = []
+    for array in arrays_to_move:
+        if array is None or isinstance(array, (numbers.Number, str)):
+            new_arrays.append(array)
+            continue
+        array_xp, _, array_device = get_namespace_and_device(array)
+        if array_xp == xp and array_device == device_:
+            new_arrays.append(array)
+            continue
+        try:
+            new_arrays.append(xp.asarray(array, device=device_))
+            continue
+        except Exception:
+            # direct conversion to a different library may fail in which
+            # case we try converting to numpy first
+            array = _convert_to_numpy(array, array_xp)
+            new_arrays.append(xp.asarray(array, device=device_))
+
+    return tuple(new_arrays)
 
 
 def _expit(X, xp=None):
