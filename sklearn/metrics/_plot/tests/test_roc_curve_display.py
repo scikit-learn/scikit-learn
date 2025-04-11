@@ -187,38 +187,36 @@ def test_roc_curve_from_cv_results_param_validation(pyplot, data_binary, data):
     with pytest.raises(ValueError, match=r"y takes value in \{1, 2\}"):
         RocCurveDisplay.from_cv_results(cv_results, X_bad_pos_label, y_bad_pos_label)
 
-    # `name` is list while `fold_line_kwargs` is None or dict
-    for fold_line_kwargs in (None, {"alpha": 0.2}):
+    # `name` is list while `curve_kwargs` is None or dict
+    for curve_kwargs in (None, {"alpha": 0.2}):
         with pytest.raises(ValueError, match="To avoid labeling individual curves"):
             RocCurveDisplay.from_cv_results(
                 cv_results,
                 X,
                 y,
                 name=["one", "two", "three"],
-                fold_line_kwargs=fold_line_kwargs,
+                curve_kwargs=curve_kwargs,
             )
 
-    # `fold_line_kwargs` incorrect length
-    with pytest.raises(ValueError, match="`fold_line_kwargs` must be None, a list"):
-        RocCurveDisplay.from_cv_results(
-            cv_results, X, y, fold_line_kwargs=[{"alpha": 1}]
-        )
+    # `curve_kwargs` incorrect length
+    with pytest.raises(ValueError, match="`curve_kwargs` must be None, a list"):
+        RocCurveDisplay.from_cv_results(cv_results, X, y, curve_kwargs=[{"alpha": 1}])
 
-    # `fold_line_kwargs` both alias provided
+    # `curve_kwargs` both alias provided
     with pytest.raises(TypeError, match="Got both c and"):
         RocCurveDisplay.from_cv_results(
-            cv_results, X, y, fold_line_kwargs={"c": "blue", "color": "red"}
+            cv_results, X, y, curve_kwargs={"c": "blue", "color": "red"}
         )
 
 
 # @pytest.mark.parametrize(
-#     "fold_line_kwargs",
+#     "curve_kwargs",
 #     [None, {"alpha": 0.2}, [{"alpha": 0.2}, {"alpha": 0.3}, {"alpha": 0.4}]],
 # )
-# def test_roc_curve_display_from_cv_results_validate_line_kwargs(
-#     pyplot, data_binary, fold_line_kwargs
+# def test_roc_curve_display_from_cv_results_validate_curve_kwargs(
+#     pyplot, data_binary, curve_kwargs
 # ):
-#     """Check `_validate_line_kwargs` correctly validates line kwargs."""
+#     """Check `_validate_curve_kwargs` correctly validates line kwargs."""
 #     X, y = data_binary
 #     n_cv = 3
 #     cv_results = cross_validate(
@@ -229,18 +227,18 @@ def test_roc_curve_from_cv_results_param_validation(pyplot, data_binary, data):
 #         cv_results,
 #         X,
 #         y,
-#         fold_line_kwargs=fold_line_kwargs,
+#         curve_kwargs=curve_kwargs,
 #     )
-#     if fold_line_kwargs is None:
+#     if curve_kwargs is None:
 #         # Default `alpha` used
 #         assert all(line.get_alpha() == 0.5 for line in display.line_)
-#     elif isinstance(fold_line_kwargs, Mapping):
+#     elif isinstance(curve_kwargs, Mapping):
 #         # `alpha` from dict used for all curves
 #         assert all(line.get_alpha() == 0.2 for line in display.line_)
 #     else:
 #         # Different `alpha` used for each curve
 #         assert all(
-#             line.get_alpha() == fold_line_kwargs[i]["alpha"]
+#             line.get_alpha() == curve_kwargs[i]["alpha"]
 #             for i, line in enumerate(display.line_)
 #         )
 
@@ -255,7 +253,7 @@ def test_roc_curve_display_estimator_name_deprecation(pyplot):
 
 
 @pytest.mark.parametrize(
-    "fold_line_kwargs",
+    "curve_kwargs",
     [
         None,
         {"color": "blue"},
@@ -273,7 +271,7 @@ def test_roc_curve_display_plotting_from_cv_results(
     with_sample_weight,
     response_method,
     drop_intermediate,
-    fold_line_kwargs,
+    curve_kwargs,
 ):
     """Check overall plotting of `from_cv_results`."""
     X, y = data_binary
@@ -300,7 +298,7 @@ def test_roc_curve_display_plotting_from_cv_results(
         drop_intermediate=drop_intermediate,
         response_method=response_method,
         pos_label=pos_label,
-        fold_line_kwargs=fold_line_kwargs,
+        curve_kwargs=curve_kwargs,
     )
 
     for idx, (estimator, test_indices) in enumerate(
@@ -339,7 +337,7 @@ def test_roc_curve_display_plotting_from_cv_results(
         assert isinstance(line, mpl.lines.Line2D)
         # Default alpha for `from_cv_results`
         line.get_alpha() == 0.5
-        if isinstance(fold_line_kwargs, list):
+        if isinstance(curve_kwargs, list):
             # Each individual curve labelled
             assert line.get_label() == f"AUC = {display.roc_auc_[idx]:.2f}"
         else:
@@ -366,30 +364,28 @@ def test_roc_curve_display_plotting_from_cv_results(
 
 
 @pytest.mark.parametrize(
-    "fold_line_kwargs",
+    "curve_kwargs",
     [None, {"color": "red"}, [{"c": "red"}, {"c": "green"}, {"c": "yellow"}]],
 )
-def test_roc_curve_from_cv_results_line_kwargs(pyplot, data_binary, fold_line_kwargs):
+def test_roc_curve_from_cv_results_curve_kwargs(pyplot, data_binary, curve_kwargs):
     """Check line kwargs passed correctly in `from_cv_results`."""
-    import matplotlib as mpl
 
     X, y = data_binary
     cv_results = cross_validate(
         LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
     )
     display = RocCurveDisplay.from_cv_results(
-        cv_results, X, y, fold_line_kwargs=fold_line_kwargs
+        cv_results, X, y, curve_kwargs=curve_kwargs
     )
 
-    mpl_default_colors = mpl.rcParams["axes.prop_cycle"].by_key()["color"]
     for idx, line in enumerate(display.line_):
         color = line.get_color()
-        if fold_line_kwargs is None:
-            assert color == mpl_default_colors[idx]
-        elif isinstance(fold_line_kwargs, Mapping):
+        if curve_kwargs is None:
+            assert color == "blue"
+        elif isinstance(curve_kwargs, Mapping):
             assert color == "red"
         else:
-            assert color == fold_line_kwargs[idx]["c"]
+            assert color == curve_kwargs[idx]["c"]
 
 
 def _check_chance_level(plot_chance_level, chance_level_kw, display):
@@ -509,13 +505,13 @@ def test_roc_curve_chance_level_line(
     ],
 )
 # To ensure both curve line kwargs and change line kwargs passed correctly
-@pytest.mark.parametrize("fold_line_kwargs", [None, {"alpha": 0.8}])
+@pytest.mark.parametrize("curve_kwargs", [None, {"alpha": 0.8}])
 def test_roc_curve_chance_level_line_from_cv_results(
     pyplot,
     data_binary,
     plot_chance_level,
     chance_level_kw,
-    fold_line_kwargs,
+    curve_kwargs,
 ):
     """Check chance level plotting behavior with `from_cv_results`."""
     X, y = data_binary
@@ -530,13 +526,13 @@ def test_roc_curve_chance_level_line_from_cv_results(
         y,
         plot_chance_level=plot_chance_level,
         chance_level_kwargs=chance_level_kw,
-        fold_line_kwargs=fold_line_kwargs,
+        curve_kwargs=curve_kwargs,
     )
 
     import matplotlib as mpl
 
     assert all(isinstance(line, mpl.lines.Line2D) for line in display.line_)
-    if fold_line_kwargs:
+    if curve_kwargs:
         assert all(line.get_alpha() == 0.8 for line in display.line_)
     assert isinstance(display.ax_, mpl.axes.Axes)
     assert isinstance(display.figure_, mpl.figure.Figure)
@@ -589,7 +585,7 @@ def test_roc_curve_display_complex_pipeline(pyplot, data_binary, clf, constructo
 
 
 @pytest.mark.parametrize(
-    "roc_auc, name, fold_line_kwargs, expected_labels",
+    "roc_auc, name, curve_kwargs, expected_labels",
     [
         ([0.9, 0.8], None, None, ["AUC = 0.85 +/- 0.05", "_child1"]),
         ([0.9, 0.8], "Est name", None, ["Est name (AUC = 0.85 +/- 0.05)", "_child1"]),
@@ -603,13 +599,13 @@ def test_roc_curve_display_complex_pipeline(pyplot, data_binary, clf, constructo
     ],
 )
 def test_roc_curve_display_default_labels(
-    pyplot, roc_auc, name, fold_line_kwargs, expected_labels
+    pyplot, roc_auc, name, curve_kwargs, expected_labels
 ):
     """Check the default labels used in the display."""
     fpr = [np.array([0, 0.5, 1]), np.array([0, 0.3, 1])]
     tpr = [np.array([0, 0.5, 1]), np.array([0, 0.3, 1])]
     disp = RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc, name=name).plot(
-        fold_line_kwargs=fold_line_kwargs
+        curve_kwargs=curve_kwargs
     )
     for idx, expected_label in enumerate(expected_labels):
         assert disp.line_[idx].get_label() == expected_label
