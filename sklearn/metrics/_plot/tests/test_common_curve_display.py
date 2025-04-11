@@ -214,7 +214,7 @@ def test_display_curve_not_fitted_errors(pyplot, data_binary, clf, Display):
     model.fit(X, y)
     disp = Display.from_estimator(model, X, y)
     assert model.__class__.__name__ in disp.line_.get_label()
-    assert disp.name_[0] == model.__class__.__name__
+    assert disp.name == model.__class__.__name__
 
 
 @pytest.mark.parametrize(
