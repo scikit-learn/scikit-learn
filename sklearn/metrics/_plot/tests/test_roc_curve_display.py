@@ -338,31 +338,50 @@ def test_roc_curve_display_plotting_from_cv_results(
             assert line.get_label() == aggregate_expected_labels[idx]
 
 
-# @pytest.mark.parametrize("curve_kwargs", [None, {"color": "red"}, [{"c": "red"}, {"c": "green"}, {"c": "yellow"}]])
-# @pytest.mark.parametrize("name", [None, "single", ["one", "two", "three"]])
-# def test_roc_curve_from_cv_results_legend_label(pyplot, data_binary, name, curve_kwargs):
-#     """Check legend label correct with all `curve_kwargs`, `name` combinations."""
-#     X, y = data_binary
-#     cv_results = cross_validate(
-#         LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
-#     )
-#     if not isinstance(curve_kwargs, list) and
-#     display = RocCurveDisplay.from_cv_results(
-#         cv_results, X, y, name=name, curve_kwargs=curve_kwargs
-#     )
-#     legend = display.ax_.get_legend()
-#     legend_labels = [text.get_text() for text in legend.get_texts()]
-#     print(legend_labels)
-#     print(display.name)
-# if isinstance(curve_kwargs, list):
-#     print(display.name_)
-
-# expected_names = (
-#     ["Fold 0", "Fold 1", "Fold 2"] if name is None else name
-# )
-# assert display.name_ == expected_names
-# expected_labels = [name + " (AUC = 1.00)" for name in expected_names]
-# assert legend_labels == expected_labels
+@pytest.mark.parametrize(
+    "curve_kwargs",
+    [None, {"color": "red"}, [{"c": "red"}, {"c": "green"}, {"c": "yellow"}]],
+)
+@pytest.mark.parametrize("name", [None, "single", ["one", "two", "three"]])
+def test_roc_curve_from_cv_results_legend_label(
+    pyplot, data_binary, name, curve_kwargs
+):
+    """Check legend label correct with all `curve_kwargs`, `name` combinations."""
+    X, y = data_binary
+    n_cv = 3
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=n_cv, return_estimator=True, return_indices=True
+    )
+    if not isinstance(curve_kwargs, list) and isinstance(name, list):
+        with pytest.raises(ValueError, match="To avoid labeling individual curves"):
+            display = RocCurveDisplay.from_cv_results(
+                cv_results, X, y, name=name, curve_kwargs=curve_kwargs
+            )
+    else:
+        display = RocCurveDisplay.from_cv_results(
+            cv_results, X, y, name=name, curve_kwargs=curve_kwargs
+        )
+        legend = display.ax_.get_legend()
+        legend_labels = [text.get_text() for text in legend.get_texts()]
+        if isinstance(curve_kwargs, list):
+            # Multiple labels in legend
+            assert len(legend_labels) == 3
+            for idx, label in enumerate(legend_labels):
+                if name is None:
+                    assert label == "AUC = 1.00"
+                elif isinstance(name, str):
+                    assert label == "single (AUC = 1.00)"
+                else:
+                    # `name` is a list of different strings
+                    assert label == f"{name[idx]} (AUC = 1.00)"
+        else:
+            # Single label in legend
+            assert len(legend_labels) == 1
+            if name is None:
+                assert legend_labels[0] == "AUC = 1.00 +/- 0.00"
+            else:
+                # name is single string
+                assert legend_labels[0] == "single (AUC = 1.00 +/- 0.00)"
 
 
 @pytest.mark.parametrize(

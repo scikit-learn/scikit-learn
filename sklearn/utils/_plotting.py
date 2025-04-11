@@ -150,7 +150,7 @@ class _BinaryClassifierCurveDisplayMixin:
 
     @classmethod
     def _get_legend_label(cls, curve_summary_value, curve_name, summary_value_name):
-        """Helper to get legend label using `name_` and `summary_value_`"""
+        """Helper to get legend label using `name` and `summary_value`"""
         if curve_summary_value is not None and curve_name is not None:
             label = f"{curve_name} ({summary_value_name} = {curve_summary_value:0.2f})"
         elif curve_summary_value is not None:
@@ -219,9 +219,9 @@ class _BinaryClassifierCurveDisplayMixin:
 
         # Ensure `name` is of the correct length
         if isinstance(name, list) and len(name) == 1:
-            name_ = name * n_curves
-        name_ = [None] * n_curves if name is None else name
-        summary_value_ = [None] * n_curves if summary_value is None else summary_value
+            name = name * n_curves
+        name = [None] * n_curves if name is None else name
+        summary_value = [None] * n_curves if summary_value is None else summary_value
 
         # Ensure `curve_kwargs` is of correct length
         if isinstance(curve_kwargs, Mapping):
@@ -235,22 +235,22 @@ class _BinaryClassifierCurveDisplayMixin:
                 curve_kwargs = [{}]
 
         labels = []
-        if isinstance(summary_value_, tuple):
+        if isinstance(summary_value, tuple):
             label_aggregate = cls._get_legend_label(
-                summary_value_[0], name_[0], summary_value_name
+                summary_value[0], name[0], summary_value_name
             )
             # Add the "+/- std" to the end (in brackets if name provided)
-            if summary_value_[1] is not None:
-                if name_[0] is not None:
+            if summary_value[1] is not None:
+                if name[0] is not None:
                     label_aggregate = (
-                        label_aggregate[:-1] + f" +/- {summary_value_[1]:0.2f})"
+                        label_aggregate[:-1] + f" +/- {summary_value[1]:0.2f})"
                     )
                 else:
-                    label_aggregate = label_aggregate + f" +/- {summary_value_[1]:0.2f}"
+                    label_aggregate = label_aggregate + f" +/- {summary_value[1]:0.2f}"
             # Add `label` for first curve only, set to `None` for remaining curves
             labels.extend([label_aggregate] + [None] * (n_curves - 1))
         else:
-            for curve_summary_value, curve_name in zip(summary_value_, name_):
+            for curve_summary_value, curve_name in zip(summary_value, name):
                 labels.append(
                     cls._get_legend_label(
                         curve_summary_value, curve_name, summary_value_name
