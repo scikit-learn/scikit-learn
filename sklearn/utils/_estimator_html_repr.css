@@ -250,11 +250,11 @@ clickable and can be expanded/collapsed.
 }
 
 /* Label box, darken color on hover, fitted */
-/*#$id div.sk-label.fitted:hover label.sk-toggleable__label.fitted {
+#$id div.sk-label.fitted:hover label.sk-toggleable__label.fitted {
   color: var(--sklearn-color-text);
   background-color: var(--sklearn-color-fitted-level-2);
 }
-*/
+
 /* Estimator label */
 
 #$id div.sk-label label {
