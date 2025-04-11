@@ -78,7 +78,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         Name of estimator. If None, the estimator name is not shown.
 
         .. deprecated:: 1.7
-        `estimator_name` is deprecated and will be removed in 1.9. Use `name` instead.
+            `estimator_name` is deprecated and will be removed in 1.9. Use `name`
+            instead.
 
     Attributes
     ----------
