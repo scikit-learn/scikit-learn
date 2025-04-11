@@ -3166,29 +3166,6 @@ def test_classification_metric_division_by_zero_nan_validaton(scoring):
     cross_val_score(classifier, X, y, scoring=scoring, n_jobs=2, error_score="raise")
 
 
-# TODO(1.7): remove
-def test_brier_score_loss_deprecation_warning():
-    """Check the message for future deprecation."""
-    # Check brier_score_loss function
-    y_true = np.array([0, 1, 1, 0, 1, 1])
-    y_pred = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
-
-    warn_msg = "y_prob was deprecated in version 1.5"
-    with pytest.warns(FutureWarning, match=warn_msg):
-        brier_score_loss(
-            y_true,
-            y_prob=y_pred,
-        )
-
-    error_msg = "`y_prob` and `y_proba` cannot be both specified"
-    with pytest.raises(ValueError, match=error_msg):
-        brier_score_loss(
-            y_true,
-            y_prob=y_pred,
-            y_proba=y_pred,
-        )
-
-
 def test_d2_log_loss_score():
     y_true = [0, 0, 0, 1, 1, 1]
     y_true_string = ["no", "no", "no", "yes", "yes", "yes"]
