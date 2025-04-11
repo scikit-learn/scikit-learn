@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import itertools
+import math
 import warnings
 from functools import partial
 from numbers import Integral, Real
@@ -340,7 +341,7 @@ def euclidean_distances(
 
     Notes
     -----
-    To achieve a better accuracy, `X_norm_squared` and `Y_norm_squared` may be
+    To achieve a better accuracy, `X_norm_squared` and `Y_norm_squared` may be
     unused if they are passed as `np.float32`.
 
     Examples
@@ -596,12 +597,8 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None, batch_size=None):
     distances = xp.empty((n_samples_X, n_samples_Y), dtype=xp.float32, device=device_)
 
     if batch_size is None:
-        x_density = (
-            X.nnz / xp.prod(X.shape) if issparse(X) else xp.asarray(1, device=device_)
-        )
-        y_density = (
-            Y.nnz / xp.prod(Y.shape) if issparse(Y) else xp.asarray(1, device=device_)
-        )
+        x_density = X.nnz / np.prod(X.shape) if issparse(X) else 1
+        y_density = Y.nnz / np.prod(Y.shape) if issparse(Y) else 1
 
         # Allow 10% more memory than X, Y and the distance matrix take (at
         # least 10MiB)
@@ -621,13 +618,13 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None, batch_size=None):
         # Hence x² + (xd+yd)kx = M, where x=batch_size, k=n_features, M=maxmem
         #                                 xd=x_density and yd=y_density
         tmp = (x_density + y_density) * n_features
-        batch_size = (-tmp + xp.sqrt(tmp**2 + 4 * maxmem)) / 2
+        batch_size = (-tmp + math.sqrt(tmp**2 + 4 * maxmem)) / 2
         batch_size = max(int(batch_size), 1)
 
     x_batches = gen_batches(n_samples_X, batch_size)
     xp_max_float = _max_precision_float_dtype(xp=xp, device=device_)
     for i, x_slice in enumerate(x_batches):
-        X_chunk = xp.astype(X[x_slice], xp_max_float)
+        X_chunk = xp.astype(X[x_slice, :], xp_max_float)
         if XX is None:
             XX_chunk = row_norms(X_chunk, squared=True)[:, None]
         else:
@@ -642,7 +639,7 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None, batch_size=None):
                 d = distances[y_slice, x_slice].T
 
             else:
-                Y_chunk = xp.astype(Y[y_slice], xp_max_float)
+                Y_chunk = xp.astype(Y[y_slice, :], xp_max_float)
                 if YY is None:
                     YY_chunk = row_norms(Y_chunk, squared=True)[None, :]
                 else:
@@ -1736,8 +1733,6 @@ def cosine_similarity(X, Y=None, dense_output=True):
     array([[0.     , 0.     ],
            [0.57..., 0.81...]])
     """
-    # to avoid recursive import
-
     X, Y = check_pairwise_arrays(X, Y)
 
     X_normalized = normalize(X, copy=True)
@@ -1814,7 +1809,7 @@ def additive_chi2_kernel(X, Y=None):
     array([[-1., -2.],
            [-2., -1.]])
     """
-    xp, _ = get_namespace(X, Y)
+    xp, _, device_ = get_namespace_and_device(X, Y)
     X, Y = check_pairwise_arrays(X, Y, accept_sparse=False)
     if xp.any(X < 0):
         raise ValueError("X contains negative values.")
@@ -1831,8 +1826,8 @@ def additive_chi2_kernel(X, Y=None):
         yb = Y[None, :, :]
         nom = -((xb - yb) ** 2)
         denom = xb + yb
-        nom = xp.where(denom == 0, xp.asarray(0, dtype=dtype), nom)
-        denom = xp.where(denom == 0, xp.asarray(1, dtype=dtype), denom)
+        nom = xp.where(denom == 0, xp.asarray(0, dtype=dtype, device=device_), nom)
+        denom = xp.where(denom == 0, xp.asarray(1, dtype=dtype, device=device_), denom)
         return xp.sum(nom / denom, axis=2)
 
 
@@ -2578,16 +2573,22 @@ def pairwise_kernels(
 ):
     """Compute the kernel between arrays X and optional array Y.
 
-    This method takes either a vector array or a kernel matrix, and returns
-    a kernel matrix. If the input is a vector array, the kernels are
-    computed. If the input is a kernel matrix, it is returned instead.
+    This method takes one or two vector arrays or a kernel matrix, and returns
+    a kernel matrix.
+
+    - If `X` is a vector array, of shape (n_samples_X, n_features), and:
+
+      - `Y` is `None` and `metric` is not 'precomputed', the pairwise kernels
+        between `X` and itself are computed.
+      - `Y` is a vector array of shape (n_samples_Y, n_features), the pairwise
+        kernels between arrays `X` and `Y` is returned.
+
+    - If `X` is a kernel matrix, of shape (n_samples_X, n_samples_X), `metric`
+      should be 'precomputed'. `Y` is thus ignored and `X` is returned as is.
 
     This method provides a safe way to take a kernel matrix as input, while
     preserving compatibility with many other algorithms that take a vector
     array.
-
-    If Y is given (default is None), then the returned matrix is the pairwise
-    kernel between the arrays from both X and Y.
 
     Valid values for metric are:
         ['additive_chi2', 'chi2', 'linear', 'poly', 'polynomial', 'rbf',
