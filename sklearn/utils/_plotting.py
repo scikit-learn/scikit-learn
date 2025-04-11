@@ -139,7 +139,7 @@ class _BinaryClassifierCurveDisplayMixin:
         if (
             isinstance(name, list)
             and len(name) != 1
-            and (isinstance(curve_kwargs, Mapping) or curve_kwargs is None)
+            and not isinstance(curve_kwargs, list)
         ):
             raise ValueError(
                 "To avoid labeling individual curves that have the same appearance, "

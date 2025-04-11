@@ -102,7 +102,7 @@ def test_roc_curve_display_plotting(
             sample_weight=sample_weight,
             drop_intermediate=drop_intermediate,
             pos_label=pos_label,
-            alpha=0.8,
+            curve_kwargs={"alpha": 0.8},
         )
     else:
         display = RocCurveDisplay.from_predictions(
@@ -111,7 +111,7 @@ def test_roc_curve_display_plotting(
             sample_weight=sample_weight,
             drop_intermediate=drop_intermediate,
             pos_label=pos_label,
-            alpha=0.8,
+            curve_kwargs={"alpha": 0.8},
         )
 
     fpr, tpr, _ = roc_curve(
@@ -122,16 +122,10 @@ def test_roc_curve_display_plotting(
         pos_label=pos_label,
     )
 
-    # Both processed (e.g., `roc_auc_`) and unprocessed (e.g., `roc_auc`) attributes
-    # should be the same for single curve
-    assert_allclose(display.roc_auc_[0], auc(fpr, tpr))
     assert_allclose(display.roc_auc, auc(fpr, tpr))
-    assert_allclose(display.fpr_[0], fpr)
     assert_allclose(display.fpr, fpr)
-    assert_allclose(display.tpr_[0], tpr)
     assert_allclose(display.tpr, tpr)
 
-    assert display.name_[0] == default_name
     assert display.name == default_name
 
     import matplotlib as mpl
@@ -140,7 +134,6 @@ def test_roc_curve_display_plotting(
     assert isinstance(display.line_, mpl.lines.Line2D)
     assert display.line_.get_alpha() == 0.8
 
-    expected_label = f"{default_name} (AUC = {display.roc_auc_[0]:.2f})"
     expected_label = f"{default_name} (AUC = {display.roc_auc:.2f})"
     assert display.line_.get_label() == expected_label
 
@@ -323,11 +316,11 @@ def test_roc_curve_display_plotting_from_cv_results(
             drop_intermediate=drop_intermediate,
             pos_label=pos_label,
         )
-        assert_allclose(display.roc_auc_[idx], auc(fpr, tpr))
-        assert_allclose(display.fpr_[idx], fpr)
-        assert_allclose(display.tpr_[idx], tpr)
+        assert_allclose(display.roc_auc[idx], auc(fpr, tpr))
+        assert_allclose(display.fpr[idx], fpr)
+        assert_allclose(display.tpr[idx], tpr)
 
-    assert display.name_ is None
+    assert display.name is None
 
     import matplotlib as mpl
 
@@ -339,28 +332,37 @@ def test_roc_curve_display_plotting_from_cv_results(
         line.get_alpha() == 0.5
         if isinstance(curve_kwargs, list):
             # Each individual curve labelled
-            assert line.get_label() == f"AUC = {display.roc_auc_[idx]:.2f}"
+            assert line.get_label() == f"AUC = {display.roc_auc[idx]:.2f}"
         else:
             # Single aggregate label
             assert line.get_label() == aggregate_expected_labels[idx]
 
 
-# @pytest.mark.parametrize("fold_names", [None, ["one", "two", "three"]])
-# def test_roc_curve_from_cv_results_fold_names(pyplot, data_binary, fold_names):
-#     """Check fold names behaviour correct in `from_cv_results`."""
+# @pytest.mark.parametrize("curve_kwargs", [None, {"color": "red"}, [{"c": "red"}, {"c": "green"}, {"c": "yellow"}]])
+# @pytest.mark.parametrize("name", [None, "single", ["one", "two", "three"]])
+# def test_roc_curve_from_cv_results_legend_label(pyplot, data_binary, name, curve_kwargs):
+#     """Check legend label correct with all `curve_kwargs`, `name` combinations."""
 #     X, y = data_binary
 #     cv_results = cross_validate(
 #         LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
 #     )
-#     display = RocCurveDisplay.from_cv_results(cv_results, X, y, fold_names=fold_names)
+#     if not isinstance(curve_kwargs, list) and
+#     display = RocCurveDisplay.from_cv_results(
+#         cv_results, X, y, name=name, curve_kwargs=curve_kwargs
+#     )
 #     legend = display.ax_.get_legend()
 #     legend_labels = [text.get_text() for text in legend.get_texts()]
-#     expected_names = (
-#         ["Fold 0", "Fold 1", "Fold 2"] if fold_names is None else fold_names
-#     )
-#     assert display.name_ == expected_names
-#     expected_labels = [name + " (AUC = 1.00)" for name in expected_names]
-#     assert legend_labels == expected_labels
+#     print(legend_labels)
+#     print(display.name)
+# if isinstance(curve_kwargs, list):
+#     print(display.name_)
+
+# expected_names = (
+#     ["Fold 0", "Fold 1", "Fold 2"] if name is None else name
+# )
+# assert display.name_ == expected_names
+# expected_labels = [name + " (AUC = 1.00)" for name in expected_names]
+# assert legend_labels == expected_labels
 
 
 @pytest.mark.parametrize(
@@ -381,8 +383,10 @@ def test_roc_curve_from_cv_results_curve_kwargs(pyplot, data_binary, curve_kwarg
     for idx, line in enumerate(display.line_):
         color = line.get_color()
         if curve_kwargs is None:
+            # Default color
             assert color == "blue"
         elif isinstance(curve_kwargs, Mapping):
+            # All curves "red"
             assert color == "red"
         else:
             assert color == curve_kwargs[idx]["c"]
@@ -456,8 +460,7 @@ def test_roc_curve_chance_level_line(
             lr,
             X,
             y,
-            label=label,
-            alpha=0.8,
+            curve_kwargs={"alpha": 0.8, "label": label},
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
         )
@@ -465,8 +468,7 @@ def test_roc_curve_chance_level_line(
         display = RocCurveDisplay.from_predictions(
             y,
             y_pred,
-            label=label,
-            alpha=0.8,
+            curve_kwargs={"alpha": 0.8, "label": label},
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
         )
@@ -616,7 +618,7 @@ def _check_auc(display, constructor_name):
     roc_auc_limit_multi = [0.97007, 0.985915, 0.980952]
 
     if constructor_name == "from_cv_results":
-        for idx, roc_auc in enumerate(display.roc_auc_):
+        for idx, roc_auc in enumerate(display.roc_auc):
             assert roc_auc == pytest.approx(roc_auc_limit_multi[idx])
     else:
         assert display.roc_auc == pytest.approx(roc_auc_limit)

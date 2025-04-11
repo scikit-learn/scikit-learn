@@ -142,31 +142,32 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         self.pos_label = pos_label
 
     def _validate_plot_params(self, *, ax, name):
-        self.ax_, self.figure_, name_ = super()._validate_plot_params(ax=ax, name=name)
+        self.ax_, self.figure_, name = super()._validate_plot_params(ax=ax, name=name)
 
-        self.fpr_ = _convert_to_list_leaving_none(self.fpr)
-        self.tpr_ = _convert_to_list_leaving_none(self.tpr)
-        self.roc_auc_ = _convert_to_list_leaving_none(self.roc_auc)
-        self.name_ = _convert_to_list_leaving_none(name_)
+        fpr = _convert_to_list_leaving_none(self.fpr)
+        tpr = _convert_to_list_leaving_none(self.tpr)
+        roc_auc = _convert_to_list_leaving_none(self.roc_auc)
+        name = _convert_to_list_leaving_none(name)
 
-        optional = {"self.roc_auc": self.roc_auc_}
-        if isinstance(self.name_, list) and len(self.name_) != 1:
-            optional.update({"'name' (or self.name)": self.name_})
+        optional = {"self.roc_auc": roc_auc}
+        if isinstance(name, list) and len(name) != 1:
+            optional.update({"'name' (or self.name)": name})
         _check_param_lengths(
-            required={"self.fpr": self.fpr_, "self.tpr": self.tpr_},
+            required={"self.fpr": fpr, "self.tpr": tpr},
             optional=optional,
             class_name="RocCurveDisplay",
         )
+        return fpr, tpr, roc_auc, name
 
     def plot(
         self,
         ax=None,
         *,
         name=None,
+        curve_kwargs=None,
         plot_chance_level=False,
         chance_level_kw=None,
         despine=False,
-        curve_kwargs=None,
         **kwargs,
     ):
         """Plot visualization.
@@ -190,6 +191,18 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
             .. versionadded:: 1.7
 
+        curve_kwargs : dict or list of dict, default=None
+            Keywords arguments to be passed to matplotlib's `plot` function
+            to draw individual ROC curves. For single curve plotting, should be
+            a dictionary. For multi-curve plotting, if a list is provided the
+            parameters are applied to the ROC curves of each CV fold
+            sequentially and a legend entry is added for each curve.
+            If a single dictionary is provided, the same parameters are applied
+            to all ROC curves and a single legend entry for all curves is added,
+            labeled with the mean ROC AUC score.
+
+            .. versionadded:: 1.7
+
         plot_chance_level : bool, default=False
             Whether to plot the chance level.
 
@@ -206,18 +219,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
             .. versionadded:: 1.6
 
-        curve_kwargs : dict or list of dict, default=None
-            Keywords arguments to be passed to matplotlib's `plot` function
-            to draw individual ROC curves. For single curve plotting, should be
-            a dictionary. For multi-curve plotting, if a list is provided the
-            parameters are applied to the ROC curves of each CV fold
-            sequentially and a legend entry is added for each curve.
-            If a single dictionary is provided, the same parameters are applied
-            to all ROC curves and a single legend entry for all curves is added,
-            labeled with the mean ROC AUC score.
-
-            .. versionadded:: 1.7
-
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
 
@@ -230,18 +231,18 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         display : :class:`~sklearn.metrics.RocCurveDisplay`
             Object that stores computed values.
         """
-        self._validate_plot_params(ax=ax, name=name)
-        n_curves = len(self.fpr_)
-        summary_value, summary_value_name = self.roc_auc_, "AUC"
+        fpr, tpr, roc_auc, name = self._validate_plot_params(ax=ax, name=name)
+        n_curves = len(fpr)
+        summary_value, summary_value_name = roc_auc, "AUC"
         if not isinstance(curve_kwargs, list) and n_curves > 1:
-            if self.roc_auc_:
-                summary_value = (np.mean(self.roc_auc_), np.std(self.roc_auc_))
+            if roc_auc:
+                summary_value = (np.mean(roc_auc), np.std(roc_auc))
             else:
                 summary_value = (None, None)
 
         curve_kwargs = self._validate_curve_kwargs(
             n_curves,
-            self.name_,
+            name,
             summary_value,
             summary_value_name,
             curve_kwargs=curve_kwargs,
@@ -262,7 +263,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         )
 
         self.line_ = []
-        for fpr, tpr, line_kw in zip(self.fpr_, self.tpr_, curve_kwargs):
+        for fpr, tpr, line_kw in zip(fpr, tpr, curve_kwargs):
             self.line_.extend(self.ax_.plot(fpr, tpr, **line_kw))
         # Return single artist if only one curve is plotted
         if len(self.line_) == 1:
@@ -310,6 +311,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         pos_label=None,
         name=None,
         ax=None,
+        curve_kwargs=None,
         plot_chance_level=False,
         chance_level_kw=None,
         despine=False,
@@ -356,6 +358,11 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is created.
 
+        curve_kwargs : dict, default=None
+            Keywords arguments to be passed to matplotlib's `plot` function.
+
+            .. versionadded:: 1.7
+
         plot_chance_level : bool, default=False
             Whether to plot the chance level.
 
@@ -371,11 +378,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Whether to remove the top and right spines from the plot.
 
             .. versionadded:: 1.6
-
-        curve_kwargs : dict, default=None
-            Keywords arguments to be passed to matplotlib's `plot` function.
-
-            .. versionadded:: 1.7
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
@@ -429,6 +431,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             name=name,
             ax=ax,
             pos_label=pos_label,
+            curve_kwargs=curve_kwargs,
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
             despine=despine,
@@ -446,6 +449,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         pos_label=None,
         name=None,
         ax=None,
+        curve_kwargs=None,
         plot_chance_level=False,
         chance_level_kw=None,
         despine=False,
@@ -488,6 +492,11 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Axes object to plot on. If `None`, a new figure and axes is
             created.
 
+        curve_kwargs : dict, default=None
+            Keywords arguments to be passed to matplotlib's `plot` function.
+
+            .. versionadded:: 1.7
+
         plot_chance_level : bool, default=False
             Whether to plot the chance level.
 
@@ -503,11 +512,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Whether to remove the top and right spines from the plot.
 
             .. versionadded:: 1.6
-
-        curve_kwargs : dict, default=None
-            Keywords arguments to be passed to matplotlib's `plot` function.
-
-            .. versionadded:: 1.7
 
         **kwargs : dict
             Additional keywords arguments passed to matplotlib `plot` function.
@@ -568,6 +572,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         return viz.plot(
             ax=ax,
+            curve_kwargs=curve_kwargs,
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
             despine=despine,
@@ -741,8 +746,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         )
         return viz.plot(
             ax=ax,
+            curve_kwargs=curve_kwargs,
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kwargs,
             despine=despine,
-            curve_kwargs=curve_kwargs,
         )
