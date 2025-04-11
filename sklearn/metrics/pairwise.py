@@ -2285,10 +2285,19 @@ def pairwise_distances(
 ):
     """Compute the distance matrix from a vector array X and optional Y.
 
-    This method takes either a vector array or a distance matrix, and returns
+    This method takes one or two vector arrays or a distance matrix, and returns
     a distance matrix.
-    If the input is a vector array, the distances are computed.
-    If the input is a distances matrix, it is returned instead.
+
+    - If `X` is a vector array, of shape (n_samples_X, n_features), and:
+
+      - `Y` is `None` and `metric` is not 'precomputed', the pairwise distances
+        between `X` and itself are computed.
+      - `Y` is a vector array of shape (n_samples_Y, n_features), the pairwise
+        distances between `X` and `Y` is returned.
+
+    - If `X` is a distance matrix, of shape (n_samples_X, n_samples_X), `metric`
+      should be 'precomputed'. `Y` is thus ignored and `X` is returned as is.
+
     If the input is a collection of non-numeric data (e.g. a list of strings or a
     boolean array), a custom metric must be passed.
 
@@ -2296,15 +2305,11 @@ def pairwise_distances(
     preserving compatibility with many other algorithms that take a vector
     array.
 
-    If Y is given (default is None), then the returned matrix is the pairwise
-    distance between the arrays from both X and Y.
-
     Valid values for metric are:
 
     - From scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-      'manhattan']. These metrics support sparse matrix
-      inputs.
-      ['nan_euclidean'] but it does not yet support sparse matrices.
+      'manhattan', 'nan_euclidean']. All metrics support sparse matrix
+      inputs except 'nan_euclidean'.
 
     - From scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
       'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis',
@@ -2581,7 +2586,7 @@ def pairwise_kernels(
       - `Y` is `None` and `metric` is not 'precomputed', the pairwise kernels
         between `X` and itself are computed.
       - `Y` is a vector array of shape (n_samples_Y, n_features), the pairwise
-        kernels between arrays `X` and `Y` is returned.
+        kernels between `X` and `Y` is returned.
 
     - If `X` is a kernel matrix, of shape (n_samples_X, n_samples_X), `metric`
       should be 'precomputed'. `Y` is thus ignored and `X` is returned as is.
