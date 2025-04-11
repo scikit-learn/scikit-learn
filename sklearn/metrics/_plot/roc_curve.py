@@ -224,7 +224,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Keyword arguments to be passed to matplotlib's `plot`.
 
             .. deprecated:: 1.7
-                **kwargs is deprecated and will be removed in 1.9. Pass matplotlib
+                kwargs is deprecated and will be removed in 1.9. Pass matplotlib
                 arguments to `curve_kwargs` as a dictionary instead.
 
         Returns
