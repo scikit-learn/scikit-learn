@@ -10,12 +10,12 @@ from ._bounds import l1_min_c
 from ._classes import SVC, SVR, LinearSVC, LinearSVR, NuSVC, NuSVR, OneClassSVM
 
 __all__ = [
+    "SVC",
+    "SVR",
     "LinearSVC",
     "LinearSVR",
     "NuSVC",
     "NuSVR",
     "OneClassSVM",
-    "SVC",
-    "SVR",
     "l1_min_c",
 ]

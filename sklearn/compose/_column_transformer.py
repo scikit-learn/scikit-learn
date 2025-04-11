@@ -29,6 +29,7 @@ from ..utils._set_output import (
     _get_output_config,
     _safe_set_output,
 )
+from ..utils._tags import get_tags
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -49,7 +50,7 @@ from ..utils.validation import (
     check_is_fitted,
 )
 
-__all__ = ["ColumnTransformer", "make_column_transformer", "make_column_selector"]
+__all__ = ["ColumnTransformer", "make_column_selector", "make_column_transformer"]
 
 
 _ERR_MSG_1DCOLUMN = (
@@ -1315,6 +1316,21 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         return router
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        try:
+            tags.input_tags.sparse = all(
+                get_tags(trans).input_tags.sparse
+                for name, trans, _ in self.transformers
+                if trans not in {"passthrough", "drop"}
+            )
+        except Exception:
+            # If `transformers` does not comply with our API (list of tuples)
+            # then it will fail. In this case, we assume that `sparse` is False
+            # but the parameter validation will raise an error during `fit`.
+            pass  # pragma: no cover
+        return tags
+
 
 def _check_X(X):
     """Use check_array only when necessary, e.g. on lists and other non-array-likes."""
@@ -1336,10 +1352,8 @@ def _is_empty_column_selection(column):
     if hasattr(column, "dtype") and np.issubdtype(column.dtype, np.bool_):
         return not column.any()
     elif hasattr(column, "__len__"):
-        return (
-            len(column) == 0
-            or all(isinstance(col, bool) for col in column)
-            and not any(column)
+        return len(column) == 0 or (
+            all(isinstance(col, bool) for col in column) and not any(column)
         )
     else:
         return False

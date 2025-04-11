@@ -224,14 +224,14 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
             warnings.filterwarnings(
                 "ignore",
                 message="the number of connected components of the "
-                + "connectivity matrix is [0-9]{1,2}"
-                + " > 1. Completing it to avoid stopping the tree early.",
+                "connectivity matrix is [0-9]{1,2}"
+                " > 1. Completing it to avoid stopping the tree early.",
                 category=UserWarning,
             )
             warnings.filterwarnings(
                 "ignore",
                 message="Graph is not fully connected, spectral embedding"
-                + " may not work as expected.",
+                " may not work as expected.",
                 category=UserWarning,
             )
             algorithm.fit(X)

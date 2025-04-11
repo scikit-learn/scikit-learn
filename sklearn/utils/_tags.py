@@ -3,15 +3,13 @@ from __future__ import annotations
 import warnings
 from collections import OrderedDict
 from dataclasses import dataclass, field
-from itertools import chain
-
-from .fixes import _dataclass_args
+from itertools import chain, pairwise
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 
-@dataclass(**_dataclass_args())
+@dataclass(slots=True)
 class InputTags:
     """Tags for the input data.
 
@@ -76,7 +74,7 @@ class InputTags:
     pairwise: bool = False
 
 
-@dataclass(**_dataclass_args())
+@dataclass(slots=True)
 class TargetTags:
     """Tags for the target data.
 
@@ -117,7 +115,7 @@ class TargetTags:
     single_output: bool = True
 
 
-@dataclass(**_dataclass_args())
+@dataclass(slots=True)
 class TransformerTags:
     """Tags for the transformer.
 
@@ -137,7 +135,7 @@ class TransformerTags:
     preserves_dtype: list[str] = field(default_factory=lambda: ["float64"])
 
 
-@dataclass(**_dataclass_args())
+@dataclass(slots=True)
 class ClassifierTags:
     """Tags for the classifier.
 
@@ -170,7 +168,7 @@ class ClassifierTags:
     multi_label: bool = False
 
 
-@dataclass(**_dataclass_args())
+@dataclass(slots=True)
 class RegressorTags:
     """Tags for the regressor.
 
@@ -188,7 +186,7 @@ class RegressorTags:
     poor_score: bool = False
 
 
-@dataclass(**_dataclass_args())
+@dataclass(slots=True)
 class Tags:
     """Tags for the estimator.
 
@@ -359,7 +357,7 @@ def _find_tags_provider(estimator, warn=True):
             "`sklearn.base.ClassifierMixin`, `sklearn.base.RegressorMixin`, and "
             "`sklearn.base.OutlierMixin`. From scikit-learn 1.7, not defining "
             "`__sklearn_tags__` will raise an error.",
-            category=FutureWarning,
+            category=DeprecationWarning,
         )
     return tag_provider
 
@@ -393,7 +391,32 @@ def get_tags(estimator) -> Tags:
     tag_provider = _find_tags_provider(estimator)
 
     if tag_provider == "__sklearn_tags__":
-        tags = estimator.__sklearn_tags__()
+        # TODO(1.7): turn the warning into an error
+        try:
+            tags = estimator.__sklearn_tags__()
+        except AttributeError as exc:
+            if str(exc) == "'super' object has no attribute '__sklearn_tags__'":
+                # workaround the regression reported in
+                # https://github.com/scikit-learn/scikit-learn/issues/30479
+                # `__sklearn_tags__` is implemented by calling
+                # `super().__sklearn_tags__()` but there is no `__sklearn_tags__`
+                # method in the base class.
+                warnings.warn(
+                    f"The following error was raised: {exc}. It seems that "
+                    "there are no classes that implement `__sklearn_tags__` "
+                    "in the MRO and/or all classes in the MRO call "
+                    "`super().__sklearn_tags__()`. Make sure to inherit from "
+                    "`BaseEstimator` which implements `__sklearn_tags__` (or "
+                    "alternatively define `__sklearn_tags__` but we don't recommend "
+                    "this approach). Note that `BaseEstimator` needs to be on the "
+                    "right side of other Mixins in the inheritance order. The "
+                    "default are now used instead since retrieving tags failed. "
+                    "This warning will be replaced by an error in 1.7.",
+                    category=DeprecationWarning,
+                )
+                tags = default_tags(estimator)
+            else:
+                raise
     else:
         # TODO(1.7): Remove this branch of the code
         # Let's go through the MRO and patch each class implementing _more_tags
@@ -412,7 +435,7 @@ def get_tags(estimator) -> Tags:
         # inheritance
         sklearn_tags_diff = {}
         items = list(sklearn_tags_provider.items())
-        for current_item, next_item in zip(items[:-1], items[1:]):
+        for current_item, next_item in pairwise(items):
             current_name, current_tags = current_item
             next_name, next_tags = next_item
             current_tags = _to_old_tags(current_tags)
@@ -446,7 +469,7 @@ def _safe_tags(estimator, key=None):
         "The `_safe_tags` function is deprecated in 1.6 and will be removed in "
         "1.7. Use the public `get_tags` function instead and make sure to implement "
         "the `__sklearn_tags__` method.",
-        category=FutureWarning,
+        category=DeprecationWarning,
     )
     tags = _to_old_tags(get_tags(estimator))
 

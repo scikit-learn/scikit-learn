@@ -15,7 +15,7 @@ from ..base import (
     clone,
 )
 from ..exceptions import ConvergenceWarning
-from ..utils import check_consistent_length, check_random_state
+from ..utils import check_consistent_length, check_random_state, get_tags
 from ..utils._bunch import Bunch
 from ..utils._param_validation import (
     HasMethods,
@@ -256,7 +256,7 @@ class RANSACRegressor(
 
     For a more detailed example, see
     :ref:`sphx_glr_auto_examples_linear_model_plot_ransac.py`
-    """  # noqa: E501
+    """
 
     _parameter_constraints: dict = {
         "estimator": [HasMethods(["fit", "score", "predict"]), None],
@@ -721,3 +721,11 @@ class RANSACRegressor(
             .add(caller="predict", callee="predict"),
         )
         return router
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        if self.estimator is None:
+            tags.input_tags.sparse = True  # default estimator is LinearRegression
+        else:
+            tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
+        return tags

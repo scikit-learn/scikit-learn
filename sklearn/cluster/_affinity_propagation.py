@@ -399,9 +399,6 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
     Notes
     -----
-    For an example usage,
-    see :ref:`sphx_glr_auto_examples_cluster_plot_affinity_propagation.py`.
-
     The algorithmic complexity of affinity propagation is quadratic
     in the number of points.
 
@@ -443,6 +440,12 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     >>> clustering.cluster_centers_
     array([[1, 2],
            [4, 2]])
+
+    For an example usage,
+    see :ref:`sphx_glr_auto_examples_cluster_plot_affinity_propagation.py`.
+
+    For a comparison of Affinity Propagation with other clustering algorithms, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
     """
 
     _parameter_constraints: dict = {
@@ -484,6 +487,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.pairwise = self.affinity == "precomputed"
+        tags.input_tags.sparse = self.affinity != "precomputed"
         return tags
 
     @_fit_context(prefer_skip_nested_validation=True)

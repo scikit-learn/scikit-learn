@@ -13,7 +13,7 @@ Roadmap
 
 Purpose of this document
 ------------------------
-This document list general directions that core contributors are interested
+This document lists general directions that core contributors are interested
 to see developed in scikit-learn. The fact that an item is listed here is in
 no way a promise that it will happen, as resources are limited. Rather, it
 is an indication that help is welcomed on this topic.
@@ -170,9 +170,9 @@ the document up to date as we work on these issues.
      versions:
 
      * Try to load the old pickle, if it works, use the validation set
-       prediction snapshot to detect that the serialized model still behave
+       prediction snapshot to detect that the serialized model still behaves
        the same;
-     * If joblib.load / pickle.load not work, use the versioned control
+     * If joblib.load / pickle.load does not work, use the versioned control
        training script + historical training set to retrain the model and use
        the validation set prediction snapshot to assert that it is possible to
        recover the previous predictive performance: if this is not the case

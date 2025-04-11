@@ -322,12 +322,12 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if isinstance(self.min_samples_leaf, numbers.Integral):
             min_samples_leaf = self.min_samples_leaf
         else:  # float
-            min_samples_leaf = int(ceil(self.min_samples_leaf * n_samples))
+            min_samples_leaf = ceil(self.min_samples_leaf * n_samples)
 
         if isinstance(self.min_samples_split, numbers.Integral):
             min_samples_split = self.min_samples_split
         else:  # float
-            min_samples_split = int(ceil(self.min_samples_split * n_samples))
+            min_samples_split = ceil(self.min_samples_split * n_samples)
             min_samples_split = max(2, min_samples_split)
 
         min_samples_split = max(min_samples_split, 2 * min_samples_leaf)
@@ -358,7 +358,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             )
 
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, DOUBLE)
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=DOUBLE)
 
         if expanded_class_weight is not None:
             if sample_weight is not None:
@@ -689,6 +689,11 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
 
         return self.tree_.compute_feature_importances()
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
 
 
 # =============================================================================
@@ -1988,5 +1993,5 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             "friedman_mse",
             "poisson",
         }
-        tags.input_tags.allow_nan: allow_nan
+        tags.input_tags.allow_nan = allow_nan
         return tags

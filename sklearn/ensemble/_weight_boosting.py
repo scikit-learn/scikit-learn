@@ -139,7 +139,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         )
 
         sample_weight = _check_sample_weight(
-            sample_weight, X, np.float64, copy=True, ensure_non_negative=True
+            sample_weight, X, dtype=np.float64, copy=True, ensure_non_negative=True
         )
         sample_weight /= sample_weight.sum()
 
@@ -312,6 +312,11 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
                 "feature_importances_ attribute"
             ) from e
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 def _samme_proba(estimator, n_classes, X):
     """Calculate algorithm 4, step 2, equation c) of Zhu et al [1].
@@ -477,7 +482,7 @@ class AdaBoostClassifier(
     as weaklearners, please refer to
     :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_multiclass.py`.
 
-    For a detailed example of using AdaBoost to fit a non-linearly seperable
+    For a detailed example of using AdaBoost to fit a non-linearly separable
     classification dataset composed of two Gaussian quantiles clusters, please
     refer to :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_twoclass.py`.
     """

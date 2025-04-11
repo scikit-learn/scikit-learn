@@ -458,7 +458,10 @@ class MethodMetadataRequest:
                 f" {self.owner}.{self.method}, which is used within"
                 f" {parent}.{caller}. Call `{self.owner}"
                 + set_requests_on
-                + "` for each metadata you want to request/ignore."
+                + "` for each metadata you want to request/ignore. See the"
+                " Metadata Routing User guide"
+                " <https://scikit-learn.org/stable/metadata_routing.html> for more"
+                " information."
             )
             raise UnsetMetadataPassedError(
                 message=message,
@@ -1384,7 +1387,7 @@ class _MetadataRequester:
 
         for method in SIMPLE_METHODS:
             mmr = getattr(requests, method)
-            # set ``set_{method}_request``` methods
+            # set ``set_{method}_request`` methods
             if not len(mmr.requests):
                 continue
             setattr(
@@ -1576,7 +1579,7 @@ def process_routing(_obj, _method, /, **kwargs):
 
     if not (hasattr(_obj, "get_metadata_routing") or isinstance(_obj, MetadataRouter)):
         raise AttributeError(
-            f"The given object ({repr(_obj.__class__.__name__)}) needs to either"
+            f"The given object ({_obj.__class__.__name__!r}) needs to either"
             " implement the routing method `get_metadata_routing` or be a"
             " `MetadataRouter` instance."
         )

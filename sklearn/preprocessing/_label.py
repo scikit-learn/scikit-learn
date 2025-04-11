@@ -12,7 +12,7 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import column_or_1d
-from ..utils._array_api import _setdiff1d, device, get_namespace
+from ..utils._array_api import device, get_namespace, xpx
 from ..utils._encode import _encode, _unique
 from ..utils._param_validation import Interval, validate_params
 from ..utils.multiclass import type_of_target, unique_labels
@@ -20,10 +20,10 @@ from ..utils.sparsefuncs import min_max_axis
 from ..utils.validation import _num_samples, check_array, check_is_fitted
 
 __all__ = [
-    "label_binarize",
     "LabelBinarizer",
     "LabelEncoder",
     "MultiLabelBinarizer",
+    "label_binarize",
 ]
 
 
@@ -153,9 +153,9 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
         if _num_samples(y) == 0:
             return xp.asarray([])
 
-        diff = _setdiff1d(
-            ar1=y,
-            ar2=xp.arange(self.classes_.shape[0], device=device(y)),
+        diff = xpx.setdiff1d(
+            y,
+            xp.arange(self.classes_.shape[0], device=device(y)),
             xp=xp,
         )
         if diff.shape[0]:
@@ -600,7 +600,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
 
     if y_type == "binary":
         if sparse_output:
-            Y = Y.getcol(-1)
+            Y = Y[:, [-1]]
         else:
             Y = Y[:, -1].reshape((-1, 1))
 
