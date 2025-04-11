@@ -337,7 +337,7 @@ def test_optimization_minimizes_kl_divergence():
 
 @pytest.mark.parametrize("method", ["exact", "barnes_hut"])
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_fit_transform_csr_matrix(method, csr_container):
+def test_fit_transform_csr_sparse(method, csr_container):
     # TODO: compare results on dense and sparse data as proposed in:
     # https://github.com/scikit-learn/scikit-learn/pull/23585#discussion_r968388186
     # X can be a sparse matrix.
