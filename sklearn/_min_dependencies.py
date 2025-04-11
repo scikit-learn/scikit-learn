@@ -35,7 +35,7 @@ dependent_packages = {
     "ruff": ("0.11.0", "tests"),
     "black": ("24.3.0", "tests"),
     "mypy": ("1.15", "tests"),
-    "pyamg": ("5.0.0", "tests"),
+    "pyamg": ("4.2.1", "tests"),
     "polars": ("0.20.30", "docs, tests"),
     "pyarrow": ("12.0.0", "tests"),
     "sphinx": ("7.3.7", "docs"),
