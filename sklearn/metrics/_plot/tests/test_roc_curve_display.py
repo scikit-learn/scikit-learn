@@ -159,7 +159,7 @@ def test_roc_curve_from_cv_results_param_validation(pyplot, data_binary, data):
     for cv_results in (cv_results_no_est, cv_results_no_indices):
         with pytest.raises(
             ValueError,
-            match="'cv_results' does not contain one of the following required",
+            match="`cv_results` does not contain one of the following required",
         ):
             RocCurveDisplay.from_cv_results(cv_results, X, y)
 
@@ -168,12 +168,12 @@ def test_roc_curve_from_cv_results_param_validation(pyplot, data_binary, data):
     )
 
     # `X` wrong length
-    with pytest.raises(ValueError, match="'X' does not contain the correct"):
+    with pytest.raises(ValueError, match="`X` does not contain the correct"):
         RocCurveDisplay.from_cv_results(cv_results, X[:10, :], y)
 
     # `y` not binary
     X_mutli, y_multi = data
-    with pytest.raises(ValueError, match="The target y is not binary."):
+    with pytest.raises(ValueError, match="The target `y` is not binary."):
         RocCurveDisplay.from_cv_results(cv_results, X, y_multi)
 
     # input inconsistent length
@@ -250,7 +250,7 @@ def test_roc_curve_display_estimator_name_deprecation(pyplot):
     """Check deprecation of `estimator_name`."""
     fpr = np.array([0, 0.5, 1])
     tpr = np.array([0, 0.5, 1])
-    with pytest.warns(FutureWarning, match="'estimator_name' is deprecated in"):
+    with pytest.warns(FutureWarning, match="`estimator_name` is deprecated in"):
         RocCurveDisplay(fpr=fpr, tpr=tpr, estimator_name="test")
 
 

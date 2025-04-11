@@ -12,17 +12,6 @@ from .fixes import parse_version
 from .multiclass import type_of_target
 from .validation import _check_pos_label_consistency, _num_samples
 
-MULTICURVE_LABELLING_ERROR = (
-    "To avoid labeling individual curves that have the same appearance, "
-    "`fold_line_kwargs` should be a list of {n_curves} dictionaries. Alternatively, "
-    "set `name` to `None` or a single string to add a single legend entry with mean "
-    "ROC AUC score of all curves."
-)
-
-CURVE_KWARGS_ERROR = (
-    "`fold_line_kwargs` must be None, a list of length {n_curves} or a dictionary."
-)
-
 
 class _BinaryClassifierCurveDisplayMixin:
     """Mixin class to be used in Displays requiring a binary classifier.
@@ -97,9 +86,10 @@ class _BinaryClassifierCurveDisplayMixin:
         required_keys = {"estimator", "indices"}
         if not all(key in cv_results for key in required_keys):
             raise ValueError(
-                "'cv_results' does not contain one of the following required keys: "
-                f"{required_keys}. Set explicitly the parameters return_estimator=True "
-                "and return_indices=True to the function cross_validate."
+                "`cv_results` does not contain one of the following required keys: "
+                f"{required_keys}. Set explicitly the parameters "
+                "`return_estimator=True` and `return_indices=True` to the function"
+                "`cross_validate`."
             )
 
         train_size, test_size = (
@@ -109,13 +99,13 @@ class _BinaryClassifierCurveDisplayMixin:
 
         if _num_samples(X) != train_size + test_size:
             raise ValueError(
-                "'X' does not contain the correct number of samples. "
+                "`X` does not contain the correct number of samples. "
                 f"Expected {train_size + test_size}, got {_num_samples(X)}."
             )
 
         if type_of_target(y) != "binary":
             raise ValueError(
-                f"The target y is not binary. Got {type_of_target(y)} type of"
+                f"The target `y` is not binary. Got {type_of_target(y)} type of"
                 " target."
             )
         check_consistent_length(X, y, sample_weight)
@@ -127,45 +117,36 @@ class _BinaryClassifierCurveDisplayMixin:
             raise ValueError(str(e).replace("y_true", "y"))
 
         n_curves = len(cv_results["estimator"])
+        # NB: Both these also checked in `plot`, but thought it best to fail earlier.
+        cls._validate_multi_fold_line_kwargs(cls, fold_line_kwargs, name, n_curves)
+        if isinstance(name, list) and len(name) not in (1, n_curves):
+            raise ValueError(
+                f"`name` must be None, a list of length {n_curves} or a single "
+                f"string. Got list of length: {len(name)}."
+            )
+
+        return pos_label
+
+    def _validate_multi_fold_line_kwargs(cls, fold_line_kwargs, name, n_curves):
+        """Check `fold_line_kwargs`, including combination with `name`, is valid."""
+        if isinstance(fold_line_kwargs, list) and len(fold_line_kwargs) != n_curves:
+            raise ValueError(
+                f"`fold_line_kwargs` must be None, a list of length {n_curves} or a "
+                f"dictionary. Got: {fold_line_kwargs}."
+            )
+
+        # Ensure valid `name` and `fold_line_kwargs` combination.
         if (
             isinstance(name, list)
             and len(name) != 1
             and (isinstance(fold_line_kwargs, Mapping) or fold_line_kwargs is None)
         ):
-            raise ValueError(MULTICURVE_LABELLING_ERROR.format(n_curves=n_curves))
-        else:
-            if isinstance(name, list) and len(name) not in (1, n_curves):
-                raise ValueError(
-                    f"`name` must be a list of length {n_curves} or a string. "
-                    f"Got list of length: {len(name)}."
-                )
-
-        # Add `default_curve_kwargs` to `fold_line_kwargs`
-        default_curve_kwargs = {"alpha": 0.5, "linestyle": "--"}
-        if fold_line_kwargs is None:
-            fold_line_kwargs_ = default_curve_kwargs
-        elif isinstance(fold_line_kwargs, Mapping):
-            fold_line_kwargs_ = _validate_style_kwargs(
-                default_curve_kwargs, fold_line_kwargs
-            )
-        elif isinstance(fold_line_kwargs, list):
-            if len(fold_line_kwargs) != n_curves:
-                raise ValueError(
-                    CURVE_KWARGS_ERROR.format(n_curves=n_curves)
-                    + f" Got list of length: {len(fold_line_kwargs)}."
-                )
-            else:
-                fold_line_kwargs_ = [
-                    _validate_style_kwargs(default_curve_kwargs, single_kwargs)
-                    for single_kwargs in fold_line_kwargs
-                ]
-        else:
             raise ValueError(
-                CURVE_KWARGS_ERROR.format(n_curves=n_curves)
-                + f" Got: {fold_line_kwargs}."
+                "To avoid labeling individual curves that have the same appearance, "
+                f"`fold_line_kwargs` should be a list of {n_curves} dictionaries. "
+                "Alternatively, set `name` to `None` or a single string to label "
+                "a single legend entry with mean ROC AUC score of all curves."
             )
-
-        return pos_label, fold_line_kwargs_
 
     @classmethod
     def _get_legend_label(cls, curve_summary_value, curve_name, summary_value_name):
@@ -200,9 +181,10 @@ class _BinaryClassifierCurveDisplayMixin:
         name : list of str or None
             Name for labeling legend entries.
 
-        summary_value : list[float] or tuple(float, float) or None
-            Either list of `n_curves` summary values for each curve (e.g., ROC AUC,
-            average precision) or a single float summary value for all curves.
+        summary_value : list of float or tuple of float or None
+            A list of `n_curves` summary values for each curve (e.g., ROC AUC,
+            average precision) or a tuple of mean and standard deviation values for
+            all curves or None.
 
         summary_value_name : str or None
             Name of the summary value provided in `summary_values`.
@@ -216,30 +198,41 @@ class _BinaryClassifierCurveDisplayMixin:
             single curve plots.
 
         **kwargs : dict
-            For a single curve plots only, keyword arguments to be passed to
-            matplotlib's `plot`. Ignored for multi-curve plots - use `fold_line_kwargs`
-            for multi-curve plots.
+            Deprecated. Keyword arguments to be passed to matplotlib's `plot`.
         """
+        # Deprecate **kwargs
+        if fold_line_kwargs and kwargs:
+            raise ValueError(
+                "Cannot provide both `fold_line_kwargs` and `kwargs`. `**kwargs` is "
+                "deprecated in 1.7 and will be removed in 1.9. Pass all matplotlib "
+                "arguments to `fold_line_kwargs` as a dictionary."
+            )
+        if kwargs:
+            warnings.warn(
+                "`**kwargs` is deprecated and will be removed in 1.9. Pass all "
+                "matplotlib arguments to `fold_line_kwargs` as a dictionary instead.",
+                FutureWarning,
+            )
+            fold_line_kwargs = kwargs
+
+        cls._validate_multi_fold_line_kwargs(cls, fold_line_kwargs, name, n_curves)
+
         # Ensure parameters are of the correct length
         if isinstance(name, list) and len(name) == 1:
             name_ = name * n_curves
         name_ = [None] * n_curves if name is None else name
         summary_value_ = [None] * n_curves if summary_value is None else summary_value
-        # `fold_line_kwargs` ignored for single curve plots
-        # `kwargs` ignored for multi-curve plots
-        if n_curves == 1:
-            fold_line_kwargs = [kwargs]
-        else:
-            # Ensure `fold_line_kwargs` is of correct length
+
+        # Ensure `fold_line_kwargs` is of correct length
+        if fold_line_kwargs is None:
+            fold_line_kwargs = [{}] * n_curves
+        if isinstance(fold_line_kwargs, Mapping):
+            fold_line_kwargs = [fold_line_kwargs] * n_curves
+
+        default_multi_curve_kwargs = {"alpha": 0.5, "linestyle": "--", "color": "blue"}
+        if n_curves > 1:
             if fold_line_kwargs is None:
-                fold_line_kwargs = [{}] * n_curves
-            elif isinstance(fold_line_kwargs, Mapping):
-                fold_line_kwargs = [fold_line_kwargs] * n_curves
-            elif len(fold_line_kwargs) != n_curves:
-                raise ValueError(
-                    CURVE_KWARGS_ERROR.format(n_curves=n_curves)
-                    + f" Got list of length: {len(fold_line_kwargs)}."
-                )
+                fold_line_kwargs = [default_multi_curve_kwargs] * n_curves
 
         labels = []
         if isinstance(summary_value_, tuple):
@@ -395,14 +388,13 @@ def _deprecate_estimator_name(old, new, version):
     if old != "deprecated":
         if new:
             raise ValueError(
-                f"Both 'estimator_name' and 'name' provided, please only use 'name' "
-                f"as 'estimator_name' is deprecated in {version} and will be removed "
-                f"in {version_remove}."
+                "Cannot provide both `estimator_name` and `name`. `estimator_name` "
+                f"is deprecated in {version} and will be removed in {version_remove}. "
+                "Use `name` only."
             )
         warnings.warn(
-            f"'estimator_name' is deprecated in {version} and will be removed in "
-            f"{version_remove}. The value of 'estimator_name' was passed to 'name'"
-            "but please use 'name' in future.",
+            f"`estimator_name` is deprecated in {version} and will be removed in "
+            f"{version_remove}. Use `name` instead.",
             FutureWarning,
         )
         return old

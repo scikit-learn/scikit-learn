@@ -1,13 +1,11 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from collections.abc import Mapping
 
 import numpy as np
 
 from ...utils import _safe_indexing
 from ...utils._plotting import (
-    MULTICURVE_LABELLING_ERROR,
     _BinaryClassifierCurveDisplayMixin,
     _check_param_lengths,
     _convert_to_list_leaving_none,
@@ -57,15 +55,15 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Now accepts a list for plotting multiple curves.
 
     name : str or list of str, default=None
-        Name for labeling legend entries. For single ROC curve, should be a string.
-        For multiple ROC curves, the number of legend entries depend on
-        the `fold_line_kwargs` passed to `plot`.
+        Name for labeling legend entries. The number of legend entries
+        is determined by the `fold_line_kwargs` passed to `plot`.
         To label each curve, provide a list of strings. To avoid labeling
         individual curves that have the same appearance, this cannot be used in
-        conjunction with `fold_line_kwargs` being a list. If a string is
-        provided, it will be used to either label the single legend entry or if
-        there are multiple legend entries, label each individual curve with the
-        same name. If `None`, no name is shown in the legend.
+        conjunction with `fold_line_kwargs` being a dictionary or None. If a
+        string is provided, it will be used to either label the single legend entry
+        or if there are multiple legend entries, label each individual curve with
+        the same name. If `None`, set to `name` provided at `RocCurveDisplay`
+        initialization. If still `None`, no name is shown in the legend.
 
         .. versionadded:: 1.7
 
@@ -80,6 +78,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         Name of estimator. If None, the estimator name is not shown.
 
         .. deprecated:: 1.7
+        `estimator_name` is deprecated and will be removed in 1.9. Use `name` instead.
 
     Attributes
     ----------
@@ -142,7 +141,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         self.name = _deprecate_estimator_name(estimator_name, name, "1.7")
         self.pos_label = pos_label
 
-    def _validate_plot_params(self, *, ax, name, fold_line_kwargs):
+    def _validate_plot_params(self, *, ax, name):
         self.ax_, self.figure_, name_ = super()._validate_plot_params(ax=ax, name=name)
 
         self.fpr_ = _convert_to_list_leaving_none(self.fpr)
@@ -159,13 +158,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             class_name="RocCurveDisplay",
         )
 
-        if (
-            isinstance(self.name_, list)
-            and len(self.name_) != 1
-            and (isinstance(fold_line_kwargs, Mapping) or fold_line_kwargs is None)
-        ):
-            raise ValueError(MULTICURVE_LABELLING_ERROR.format(n_curves=len(self.fpr_)))
-
     def plot(
         self,
         ax=None,
@@ -179,9 +171,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     ):
         """Plot visualization.
 
-        For single curve plots, extra keyword arguments will be passed to
-        matplotlib's ``plot``.
-
         Parameters
         ----------
         ax : matplotlib axes, default=None
@@ -189,13 +178,14 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             created.
 
         name : str or list of str, default=None
-            Name for labeling legend entries.
+            Name for labeling legend entries. The number of legend entries
+            is determined by `fold_line_kwargs`.
             To label each curve, provide a list of strings. To avoid labeling
             individual curves that have the same appearance, this cannot be used in
-            conjunction with `fold_line_kwargs` being a list. If a string is
-            provided, it will be used to either label the single legend entry or
-            if there are multiple legend entries, label each individual curve with the
-            same name. If `None`, set to `name` provided at `RocCurveDisplay`
+            conjunction with `fold_line_kwargs` being a dictionary or None. If a
+            string is provided, it will be used to either label the single legend entry
+            or if there are multiple legend entries, label each individual curve with
+            the same name. If `None`, set to `name` provided at `RocCurveDisplay`
             initialization. If still `None`, no name is shown in the legend.
 
             .. versionadded:: 1.7
@@ -218,26 +208,29 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         fold_line_kwargs : dict or list of dict, default=None
             Keywords arguments to be passed to matplotlib's `plot` function
-            to draw individual ROC curves. If a list is provided the
+            to draw individual ROC curves. For single curve plotting, should be
+            a dictionary. For multi-curve plotting, if a list is provided the
             parameters are applied to the ROC curves of each CV fold
             sequentially and a legend entry is added for each curve.
-            If a single dictionary is provided, the same
-            parameters are applied to all ROC curves and a single legend
-            entry for all curves is added, labeled with the mean ROC AUC score.
+            If a single dictionary is provided, the same parameters are applied
+            to all ROC curves and a single legend entry for all curves is added,
+            labeled with the mean ROC AUC score.
 
             .. versionadded:: 1.7
 
         **kwargs : dict
-            For a single curve plots only, keyword arguments to be passed to
-            matplotlib's `plot`. Ignored for multi-curve plots - use `fold_line_kwargs`
-            for multi-curve plots.
+            Keyword arguments to be passed to matplotlib's `plot`.
+
+            .. deprecated:: 1.7
+                **kwargs is deprecated and will be removed in 1.9. Pass matplotlib
+                arguments to `fold_line_kwargs` as a dictionary instead.
 
         Returns
         -------
         display : :class:`~sklearn.metrics.RocCurveDisplay`
             Object that stores computed values.
         """
-        self._validate_plot_params(ax=ax, name=name, fold_line_kwargs=fold_line_kwargs)
+        self._validate_plot_params(ax=ax, name=name)
         n_curves = len(self.fpr_)
         summary_value, summary_value_name = self.roc_auc_, "AUC"
         if not isinstance(fold_line_kwargs, list) and n_curves > 1:
@@ -246,7 +239,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             else:
                 summary_value = (None, None)
 
-        n_curves = len(self.fpr_)
         line_kwargs = self._validate_line_kwargs(
             n_curves,
             self.name_,
@@ -380,8 +372,17 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
             .. versionadded:: 1.6
 
+        fold_line_kwargs : dict, default=None
+            Keywords arguments to be passed to matplotlib's `plot` function.
+
+            .. versionadded:: 1.7
+
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
+
+            .. deprecated:: 1.7
+            **kwargs is deprecated and will be removed in 1.9. Pass matplotlib
+            arguments to `fold_line_kwargs` as a dictionary instead.
 
         Returns
         -------
@@ -503,8 +504,17 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
             .. versionadded:: 1.6
 
+        fold_line_kwargs : dict, default=None
+            Keywords arguments to be passed to matplotlib's `plot` function.
+
+            .. versionadded:: 1.7
+
         **kwargs : dict
             Additional keywords arguments passed to matplotlib `plot` function.
+
+            .. deprecated:: 1.7
+            **kwargs is deprecated and will be removed in 1.9. Pass matplotlib
+            arguments to `fold_line_kwargs` as a dictionary instead.
 
         Returns
         -------
@@ -625,22 +635,22 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         name : str or list of str, default=None
             Name for labeling legend entries. The number of legend entries
-            depends on `fold_line_kwargs`.
+            is determined by `fold_line_kwargs`.
             To label each curve, provide a list of strings. To avoid labeling
             individual curves that have the same appearance, this cannot be used in
-            conjunction with `fold_line_kwargs` being a list. If a string is
-            provided, it will be used to either label the single legend entry or
-            if there are multiple legend entries, label each individual curve with the
-            same name. If `None`, no name is shown in the legend.
+            conjunction with `fold_line_kwargs` being a dictionary or None. If a
+            string is provided, it will be used to either label the single legend entry
+            or if there are multiple legend entries, label each individual curve with
+            the same name. If `None`, no name is shown in the legend.
 
         fold_line_kwargs : dict or list of dict, default=None
             Keywords arguments to be passed to matplotlib's `plot` function
             to draw individual ROC curves. If a list is provided the
             parameters are applied to the ROC curves of each CV fold
             sequentially and a legend entry is added for each curve.
-            If a single dictionary is provided, the same
-            parameters are applied to all ROC curves and a single legend
-            entry for all curves is added, labeled with the mean ROC AUC score.
+            If a single dictionary is provided, the same parameters are applied
+            to all ROC curves and a single legend entry for all curves is added,
+            labeled with the mean ROC AUC score.
 
         plot_chance_level : bool, default=False
             Whether to plot the chance level.
@@ -681,7 +691,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        pos_label_, fold_line_kwargs_ = cls._validate_from_cv_results_params(
+        pos_label_ = cls._validate_from_cv_results_params(
             cv_results,
             X,
             y,
@@ -734,5 +744,5 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kwargs,
             despine=despine,
-            fold_line_kwargs=fold_line_kwargs_,
+            fold_line_kwargs=fold_line_kwargs,
         )
