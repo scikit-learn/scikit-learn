@@ -247,7 +247,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
                 summary_value = (None, None)
 
         n_curves = len(self.fpr_)
-        line_kwargs = self._get_line_kwargs(
+        line_kwargs = self._validate_line_kwargs(
             n_curves,
             self.name_,
             summary_value,

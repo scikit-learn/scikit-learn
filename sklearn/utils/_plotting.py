@@ -181,7 +181,7 @@ class _BinaryClassifierCurveDisplayMixin:
         return label
 
     @classmethod
-    def _get_line_kwargs(
+    def _validate_line_kwargs(
         cls,
         n_curves,
         name,
@@ -197,7 +197,7 @@ class _BinaryClassifierCurveDisplayMixin:
         n_curves : int
             Number of curves.
 
-        name : list[str] or None
+        name : list of str or None
             Name for labeling legend entries.
 
         summary_value : list[float] or tuple(float, float) or None
