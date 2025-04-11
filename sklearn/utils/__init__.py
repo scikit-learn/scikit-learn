@@ -20,6 +20,7 @@ from ._indexing import (
     shuffle,
 )
 from ._mask import safe_mask
+from ._sparse import _as_sparse, _select_interface_if_sparse
 from ._tags import (
     ClassifierTags,
     InputTags,
@@ -56,6 +57,8 @@ __all__ = [
     "Tags",
     "TargetTags",
     "TransformerTags",
+    "_as_sparse",
+    "_select_interface_if_sparse",
     "all_estimators",
     "as_float_array",
     "assert_all_finite",
