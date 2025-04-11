@@ -125,6 +125,7 @@ from sklearn.manifold import (
     SpectralEmbedding,
 )
 from sklearn.mixture import BayesianGaussianMixture, GaussianMixture
+from sklearn.mkl import MKLC, MKLR, OneClassMKL
 from sklearn.model_selection import (
     FixedThresholdClassifier,
     GridSearchCV,
@@ -355,6 +356,8 @@ INIT_PARAMS = {
     MiniBatchKMeans: dict(n_init=2, n_clusters=2, max_iter=5, batch_size=10),
     MiniBatchNMF: dict(batch_size=10, max_iter=20, fresh_restarts=True),
     MiniBatchSparsePCA: dict(max_iter=5, batch_size=10),
+    MKLC: dict(kernels=["rbf", "rbf"], kernels_scopes=["single", "all"]),
+    MKLR: dict(kernels=["rbf", "rbf"], kernels_scopes=["single", "all"]),
     MLPClassifier: dict(max_iter=100),
     MLPRegressor: dict(max_iter=100),
     MultiOutputClassifier: dict(estimator=LogisticRegression(C=1)),
@@ -367,6 +370,7 @@ INIT_PARAMS = {
     NMF: dict(max_iter=500),
     NuSVC: dict(max_iter=-1),
     NuSVR: dict(max_iter=-1),
+    OneClassMKL: dict(kernels=["rbf", "rbf"], kernels_scopes=["single", "all"]),
     OneClassSVM: dict(max_iter=-1),
     OneHotEncoder: dict(handle_unknown="ignore"),
     OneVsOneClassifier: dict(estimator=LogisticRegression(C=1)),

@@ -877,6 +877,20 @@ API_REFERENCE = {
             },
         ],
     },
+    "sklearn.mkl": {
+        "short_summary": "Multiple Kernel Learning.",
+        "description": _get_guide("mkl"),
+        "sections": [
+            {
+                "title": None,
+                "autosummary": [
+                    "MKLC",
+                    "MKLR",
+                    "OneClassMKL",
+                ],
+            },
+        ],
+    },
     "sklearn.model_selection": {
         "short_summary": "Model selection.",
         "description": _get_guide("cross_validation", "grid_search", "learning_curve"),
