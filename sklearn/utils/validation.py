@@ -532,10 +532,10 @@ def indexable(*iterables):
     Examples
     --------
     >>> from sklearn.utils import indexable
-    >>> from scipy.sparse import csr_matrix
+    >>> from scipy.sparse import csr_array
     >>> import numpy as np
     >>> iterables = [
-    ...     [1, 2, 3], np.array([2, 3, 4]), None, csr_matrix([[5], [6], [7]])
+    ...     [1, 2, 3], np.array([2, 3, 4]), None, csr_array([[5], [6], [7]])
     ... ]
     >>> indexable(*iterables)
     [[1, 2, 3], array([2, 3, 4]), None, <...Sparse...dtype 'int64'...shape (3, 1)>]
@@ -594,6 +594,10 @@ def _ensure_sparse_format(
         .. versionchanged:: 0.23
            Accepts `pd.NA` and converts it into `np.nan`
 
+    accept_large_sparse : bool
+        If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
+        accept_sparse, accept_large_sparse will cause it to be accepted only
+        if its indices are stored with a 32-bit dtype.
 
     estimator_name : str, default=None
         The estimator name, used to construct the error message.
@@ -1609,10 +1613,10 @@ def check_symmetric(array, *, tol=1e-10, raise_warning=True, raise_exception=Fal
     array([[0, 1, 2],
            [1, 0, 1],
            [2, 1, 0]])
-    >>> from scipy.sparse import csr_matrix
-    >>> sparse_symmetric_array = csr_matrix(symmetric_array)
+    >>> from scipy.sparse import csr_array
+    >>> sparse_symmetric_array = csr_array(symmetric_array)
     >>> check_symmetric(sparse_symmetric_array)
-    <Compressed Sparse Row sparse matrix of dtype 'int64'
+    <Compressed Sparse Row sparse array of dtype 'int64'
         with 6 stored elements and shape (3, 3)>
     """
     if (array.ndim != 2) or (array.shape[0] != array.shape[1]):

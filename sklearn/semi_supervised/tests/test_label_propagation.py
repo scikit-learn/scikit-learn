@@ -18,7 +18,8 @@ from sklearn.utils._testing import (
     assert_array_equal,
 )
 
-CONSTRUCTOR_TYPES = ("array", "sparse_csr", "sparse_csc")
+SPARSE_TYPES = ("sparse_csr", "sparse_csc", "sparse_csr_array", "sparse_csc_array")
+CONSTRUCTOR_TYPES = ("array",) + SPARSE_TYPES
 
 ESTIMATORS = [
     (label_propagation.LabelPropagation, {"kernel": "rbf"}),
@@ -126,7 +127,7 @@ def test_label_propagation_closed_form(global_dtype):
     assert_allclose(expected, clf.label_distributions_, atol=1e-4)
 
 
-@pytest.mark.parametrize("accepted_sparse_type", ["sparse_csr", "sparse_csc"])
+@pytest.mark.parametrize("accepted_sparse_type", SPARSE_TYPES)
 @pytest.mark.parametrize("index_dtype", [np.int32, np.int64])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("Estimator, parameters", ESTIMATORS)
