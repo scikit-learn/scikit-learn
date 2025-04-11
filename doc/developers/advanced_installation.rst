@@ -71,6 +71,18 @@ feature, code or documentation improvement).
    `conda environment`_ with all the build dependencies of scikit-learn
    (namely NumPy_, SciPy_, Cython_, meson-python_ and Ninja_):
 
+   .. note::
+
+      At the time of writing, the newest Python 3.13 version from the conda distribution uses freethreading,
+      which may cause problems when compiling on some OS like Windows.
+      In these cases, it is recommended to use Python 3.12 in the `conda environment`. With the following command:
+
+    .. prompt:: bash $
+
+     conda create -n sklearn-env -c conda-forge python=3.12 numpy scipy cython meson-python ninja
+
+   If the situation above is not the case, you can use the latest versions with the following command:
+
    .. prompt:: bash $
 
      conda create -n sklearn-env -c conda-forge python numpy scipy cython meson-python ninja
@@ -107,7 +119,8 @@ feature, code or documentation improvement).
       (before cythonization) will force the build to fail if OpenMP is not
       supported.
 
-#. Build the project with pip:
+#. Build the project with pip,
+   whether you are in `conda environment` or in dedicated `virtualenv`:
 
    .. prompt:: bash $
 
@@ -159,7 +172,7 @@ to build scikit-learn Cython extensions for each supported platform.
 Windows
 -------
 
-First, download the `Build Tools for Visual Studio 2019 installer
+First, download the `Build Tools for Visual Studio installer
 <https://aka.ms/vs/17/release/vs_buildtools.exe>`_.
 
 Run the downloaded `vs_buildtools.exe` file, during the installation you will
@@ -183,10 +196,15 @@ commands in ``cmd`` or an Anaconda Prompt (if you use Anaconda):
 .. sphinx-prompt 1.3.0 (used in doc-min-dependencies CI task) does not support `batch` prompt type,
 .. so we work around by using a known prompt type and an explicit prompt text.
 ..
+
 .. prompt:: bash C:\>
 
     SET DISTUTILS_USE_SDK=1
-    "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
+    "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
+
+.. note::
+    The previous command is for the 2022 version of Visual Studio. If you
+    have a different version, you will need to adjust the year in the path accordingly.
 
 Replace ``x64`` by ``x86`` to build for 32-bit Python.
 
