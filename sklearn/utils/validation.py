@@ -20,6 +20,7 @@ from .. import get_config as _get_config
 from ..exceptions import DataConversionWarning, NotFittedError, PositiveSpectrumWarning
 from ..utils._array_api import (
     _asarray_with_order,
+    _convert_to_numpy,
     _is_numpy_namespace,
     _max_precision_float_dtype,
     get_namespace,
@@ -2154,9 +2155,10 @@ def _check_sample_weight(
         dtype of the validated `sample_weight`.
         If None, and `sample_weight` is an array:
 
-            - If `sample_weight.dtype` is one of `{np.float64, np.float32}`,
+            - If `sample_weight.dtype` is one of `{xp.float64, xp.float32}`,
               then the dtype is preserved.
-            - Else the output has NumPy's default dtype: `np.float64`.
+            - Otherwise, the output has the highest precision floating point dtype
+              supported by the array namespace/device of the input arrays.
 
         If `dtype` is not `{np.float32, np.float64, None}`, then output will
         be `np.float64`.
@@ -2645,6 +2647,7 @@ def _check_pos_label_consistency(pos_label, y_true):
             or xp.all(classes == xp.asarray([-1], device=device))
             or xp.all(classes == xp.asarray([1], device=device))
         ):
+            classes = _convert_to_numpy(classes, xp=xp)
             classes_repr = ", ".join([repr(c) for c in classes.tolist()])
             raise ValueError(
                 f"y_true takes value in {{{classes_repr}}} and pos_label is not "
