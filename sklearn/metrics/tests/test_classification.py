@@ -929,7 +929,9 @@ def test_cohen_kappa():
 @pytest.mark.parametrize("replace_undefined_by", [0.0, np.nan])
 def test_cohen_kappa_zero_division(replace_undefined_by):
     """Test that cohen_kappa_score handles divisions by 0 correctly by returning the
-    `replace_undefined_by` param."""
+    `replace_undefined_by` param. (The fist two tests cover the first possible location
+    in the function for an occurrence of a division by zero, the second two tests in the
+    the second possible location in the function."""
 
     def check_equal(res, exp):
         if np.isnan(res) and np.isnan(exp):
