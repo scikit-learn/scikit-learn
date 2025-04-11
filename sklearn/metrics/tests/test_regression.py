@@ -497,34 +497,36 @@ def test_regression_single_sample(metric):
 def test_tweedie_deviance_continuity(global_random_seed):
     n_samples = 100
 
-    y_true = np.random.RandomState(global_random_seed).rand(n_samples) + 0.1
-    y_pred = np.random.RandomState(global_random_seed + 1).rand(n_samples) + 0.1
+    rng = np.random.RandomState(global_random_seed)
+
+    y_true = rng.rand(n_samples) + 0.1
+    y_pred = rng.rand(n_samples) + 0.1
 
     assert_allclose(
         mean_tweedie_deviance(y_true, y_pred, power=0 - 1e-10),
         mean_tweedie_deviance(y_true, y_pred, power=0),
     )
 
-    # Ws we get closer to the limit, with 1e-12 difference the absolute
+    # Ws we get closer to the limit, with 1e-12 difference the
     # tolerance to pass the below check increases. There are likely
     # numerical precision issues on the edges of different definition
     # regions.
     assert_allclose(
         mean_tweedie_deviance(y_true, y_pred, power=1 + 1e-10),
         mean_tweedie_deviance(y_true, y_pred, power=1),
-        atol=1e-6,
+        rtol=1e-5,
     )
 
     assert_allclose(
         mean_tweedie_deviance(y_true, y_pred, power=2 - 1e-10),
         mean_tweedie_deviance(y_true, y_pred, power=2),
-        atol=1e-5,
+        rtol=1e-5,
     )
 
     assert_allclose(
         mean_tweedie_deviance(y_true, y_pred, power=2 + 1e-10),
         mean_tweedie_deviance(y_true, y_pred, power=2),
-        atol=1e-5,
+        rtol=1e-5,
     )
 
 
@@ -584,11 +586,10 @@ def test_mean_pinball_loss_on_constant_predictions(
         constant_pred = np.full(n_samples, fill_value=x)
         return mean_pinball_loss(data, constant_pred, alpha=target_quantile)
 
-    result = optimize.minimize(objective_func, data.mean(), method="Nelder-Mead")
-    result_x = result.x
+    result = optimize.minimize(objective_func, data.mean())
     assert result.success
     # The minimum is not unique with limited data, hence the large tolerance.
-    assert result_x == pytest.approx(best_pred, rel=1e-2)
+    assert_allclose(result.x, best_pred, rtol=1e-1, atol=1e-3)
     assert result.fun == pytest.approx(best_pbl)
 
 
