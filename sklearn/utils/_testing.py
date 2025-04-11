@@ -686,7 +686,12 @@ def _get_diff_msg(docstrings_grouped):
 
 
 def _check_consistency_items(
-    items_docs, type_or_desc, section, n_objects, descr_regex_pattern=""
+    items_docs,
+    type_or_desc,
+    section,
+    n_objects,
+    descr_regex_pattern="",
+    ignore_types=tuple(),
 ):
     """Helper to check docstring consistency of all `items_docs`.
 
@@ -710,6 +715,9 @@ def _check_consistency_items(
                     f" does not match 'descr_regex_pattern': {descr_regex_pattern} "
                 )
                 raise AssertionError(msg)
+        # Skip type checking for items in `ignore_types`
+        elif type_or_desc == "type specification" and item_name in ignore_types:
+            continue
         # Otherwise, if more than one key, docstrings not consistent between objects
         elif len(docstrings_grouped.keys()) > 1:
             msg_diff = _get_diff_msg(docstrings_grouped)
@@ -738,6 +746,7 @@ def assert_docstring_consistency(
     include_returns=False,
     exclude_returns=None,
     descr_regex_pattern=None,
+    ignore_types=tuple(),
 ):
     r"""Check consistency between docstring parameters/attributes/returns of objects.
 
@@ -785,6 +794,10 @@ def assert_docstring_consistency(
         Regular expression to match to all descriptions of included
         parameters/attributes/returns. If None, will revert to default behavior
         of comparing descriptions between objects.
+
+    ignore_types : list, default=tuple()
+        List of parameter/attribute/return names to exclude from matching type
+        between objects.
 
     Examples
     --------
@@ -849,7 +862,13 @@ def assert_docstring_consistency(
                     type_items[item_name][type_def].append(obj_name)
                     desc_items[item_name][desc].append(obj_name)
 
-        _check_consistency_items(type_items, "type specification", section, n_objects)
+        _check_consistency_items(
+            type_items,
+            "type specification",
+            section,
+            n_objects,
+            ignore_types=ignore_types,
+        )
         _check_consistency_items(
             desc_items,
             "description",
