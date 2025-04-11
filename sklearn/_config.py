@@ -20,6 +20,7 @@ _global_config = {
     "transform_output": "default",
     "enable_metadata_routing": False,
     "skip_parameter_validation": False,
+    "sparse_interface": "spmatrix",
 }
 _threadlocal = threading.local()
 
@@ -71,6 +72,7 @@ def set_config(
     transform_output=None,
     enable_metadata_routing=None,
     skip_parameter_validation=None,
+    sparse_interface=None,
 ):
     """Set global scikit-learn configuration.
 
@@ -193,6 +195,16 @@ def set_config(
 
         .. versionadded:: 1.3
 
+    sparse_interface : str, default="spmatrix"
+
+        The sparse interface used for every sparse object that scikit-learn produces,
+        e.g., function returns, estimator attributes, estimator properties, etc.
+
+        - `"sparray"`: Return sparse as SciPy sparse array
+        - `"spmatrix"`: Return sparse as SciPy sparse matrix
+
+        .. versionadded:: 1.7
+
     See Also
     --------
     config_context : Context manager for global scikit-learn configuration.
@@ -228,6 +240,8 @@ def set_config(
         local_config["enable_metadata_routing"] = enable_metadata_routing
     if skip_parameter_validation is not None:
         local_config["skip_parameter_validation"] = skip_parameter_validation
+    if sparse_interface is not None:
+        local_config["sparse_interface"] = sparse_interface
 
 
 @contextmanager
@@ -243,6 +257,7 @@ def config_context(
     transform_output=None,
     enable_metadata_routing=None,
     skip_parameter_validation=None,
+    sparse_interface=None,
 ):
     """Context manager to temporarily change the global scikit-learn configuration.
 
@@ -360,6 +375,16 @@ def config_context(
 
         .. versionadded:: 1.3
 
+    sparse_interface : str, default="spmatrix"
+
+        The sparse interface used for every sparse object that scikit-learn produces,
+        e.g., function returns, estimator attributes, estimator properties, etc.
+
+        - `"sparray"`: Return sparse as SciPy sparse array
+        - `"spmatrix"`: Return sparse as SciPy sparse matrix
+
+        .. versionadded:: 1.7
+
     Yields
     ------
     None.
@@ -399,6 +424,7 @@ def config_context(
         transform_output=transform_output,
         enable_metadata_routing=enable_metadata_routing,
         skip_parameter_validation=skip_parameter_validation,
+        sparse_interface=sparse_interface,
     )
 
     try:

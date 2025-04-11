@@ -7,7 +7,7 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy.linalg import eigh, qr, solve, svd
-from scipy.sparse import csr_matrix, eye, lil_matrix
+from scipy.sparse import csr_array, eye, lil_array
 from scipy.sparse.linalg import eigsh
 
 from ..base import (
@@ -21,6 +21,7 @@ from ..neighbors import NearestNeighbors
 from ..utils import check_array, check_random_state
 from ..utils._arpack import _init_arpack_v0
 from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils._sparse import _as_sparse
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import FLOAT_DTYPES, check_is_fitted, validate_data
 
@@ -118,7 +119,8 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
     ind = knn.kneighbors(X, return_distance=False)[:, 1:]
     data = barycenter_weights(X, X, ind, reg=reg)
     indptr = np.arange(0, n_samples * n_neighbors + 1, n_neighbors)
-    return csr_matrix((data.ravel(), ind.ravel(), indptr), shape=(n_samples, n_samples))
+    csr = csr_array((data.ravel(), ind.ravel(), indptr), shape=(n_samples, n_samples))
+    return _as_sparse(csr)
 
 
 def null_space(
@@ -229,7 +231,7 @@ def _locally_linear_embedding(
         )
 
     M_sparse = eigen_solver != "dense"
-    M_container_constructor = lil_matrix if M_sparse else np.zeros
+    M_container_constructor = lil_array if M_sparse else np.zeros
 
     if method == "standard":
         W = barycenter_kneighbors_graph(
@@ -432,7 +434,7 @@ def _locally_linear_embedding(
             M[neighbors[i], neighbors[i]] += np.ones(shape=n_neighbors)
 
     if M_sparse:
-        M = M.tocsr()
+        M = _as_sparse(M.tocsr())
 
     return null_space(
         M,
