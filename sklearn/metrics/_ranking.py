@@ -16,7 +16,7 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy.integrate import trapezoid
-from scipy.sparse import csr_matrix, issparse
+from scipy.sparse import csr_array, issparse
 from scipy.stats import rankdata
 
 from sklearn.exceptions import UndefinedMetricWarning
@@ -1311,7 +1311,7 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
         raise ValueError("{0} format is not supported".format(y_type))
 
     if not issparse(y_true):
-        y_true = csr_matrix(y_true)
+        y_true = csr_array(y_true)
 
     y_score = -y_score
 
@@ -1493,7 +1493,7 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
 
     n_samples, n_labels = y_true.shape
 
-    y_true = csr_matrix(y_true)
+    y_true = csr_array(y_true)
 
     loss = np.zeros(n_samples)
     for i, (start, stop) in enumerate(zip(y_true.indptr, y_true.indptr[1:])):

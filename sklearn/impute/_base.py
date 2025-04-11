@@ -15,6 +15,7 @@ from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
 from sklearn.utils._mask import _get_mask
 from sklearn.utils._missing import is_pandas_na, is_scalar_nan
 from sklearn.utils._param_validation import MissingValues, StrOptions
+from sklearn.utils._sparse import SCIPY_VERSION_BELOW_1_12, _align_api_if_sparse
 from sklearn.utils.fixes import _mode
 from sklearn.utils.sparsefuncs import _get_median
 from sklearn.utils.validation import (
@@ -929,7 +930,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
                 n_missing = imputer_mask.sum(axis=0)
 
             if self.sparse is True:
-                imputer_mask = sp.csc_matrix(imputer_mask)
+                imputer_mask = _align_api_if_sparse(sp.csc_array(imputer_mask))
 
         if self.features == "all":
             features_indices = np.arange(X.shape[1])

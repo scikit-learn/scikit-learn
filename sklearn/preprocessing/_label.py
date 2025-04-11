@@ -11,7 +11,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
-from sklearn.utils import column_or_1d
+from sklearn.utils import _align_api_if_sparse, column_or_1d
 from sklearn.utils._array_api import device, get_namespace, xpx
 from sklearn.utils._encode import _encode, _unique
 from sklearn.utils._param_validation import Interval, validate_params
@@ -413,7 +413,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
             )
 
         if self.sparse_input_:
-            y_inv = sp.csr_matrix(y_inv)
+            y_inv = _align_api_if_sparse(sp.csr_array(y_inv))
         elif sp.issparse(y_inv):
             y_inv = y_inv.toarray()
 
@@ -540,7 +540,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
     if y_type == "binary":
         if n_classes == 1:
             if sparse_output:
-                return sp.csr_matrix((n_samples, 1), dtype=int)
+                return _align_api_if_sparse(sp.csr_array((n_samples, 1), dtype=int))
             else:
                 Y = np.zeros((len(y), 1), dtype=int)
                 Y += neg_label
@@ -569,9 +569,9 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
 
         data = np.empty_like(indices)
         data.fill(pos_label)
-        Y = sp.csr_matrix((data, indices, indptr), shape=(n_samples, n_classes))
+        Y = sp.csr_array((data, indices, indptr), shape=(n_samples, n_classes))
     elif y_type == "multilabel-indicator":
-        Y = sp.csr_matrix(y)
+        Y = sp.csr_array(y)
         if pos_label != 1:
             data = np.empty_like(Y.data)
             data.fill(pos_label)
@@ -604,7 +604,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
         else:
             Y = Y[:, -1].reshape((-1, 1))
 
-    return Y
+    return _align_api_if_sparse(Y)
 
 
 def _inverse_binarize_multiclass(y, classes):
@@ -911,8 +911,10 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys
             )
         data = np.ones(len(indices), dtype=int)
 
-        return sp.csr_matrix(
-            (data, indices, indptr), shape=(len(indptr) - 1, len(class_mapping))
+        return _align_api_if_sparse(
+            sp.csr_array(
+                (data, indices, indptr), shape=(len(indptr) - 1, len(class_mapping))
+            )
         )
 
     def inverse_transform(self, yt):

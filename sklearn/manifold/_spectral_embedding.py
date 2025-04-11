@@ -18,6 +18,7 @@ from sklearn.neighbors import NearestNeighbors, kneighbors_graph
 from sklearn.utils import check_array, check_random_state, check_symmetric
 from sklearn.utils._arpack import _init_arpack_v0
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils._sparse import _sparse_eye
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.fixes import laplacian as csgraph_laplacian
 from sklearn.utils.fixes import parse_version, sp_version
@@ -306,7 +307,10 @@ def _spectral_embedding(
 
     if eigen_solver == "amg":
         try:
-            from pyamg import smoothed_aggregation_solver
+            import pyamg
+
+            smoothed_aggregation_solver = pyamg.smoothed_aggregation_solver
+            pyamg_supports_sparray = hasattr(pyamg.aggregation.aggregation, "csr_array")
         except ImportError as e:
             raise ValueError(
                 "The eigen_solver was set to 'amg', but pyamg is not available."
@@ -396,12 +400,16 @@ def _spectral_embedding(
         # Shift the Laplacian so its diagononal is not all ones. The shift
         # does change the eigenpairs however, so we'll feed the shifted
         # matrix to the solver and afterward set it back to the original.
-        diag_shift = 1e-5 * sparse.eye(laplacian.shape[0])
+        diag_shift = 1e-5 * _sparse_eye(laplacian.shape[0])
         laplacian += diag_shift
         if hasattr(sparse, "csr_array") and isinstance(laplacian, sparse.csr_array):
-            # `pyamg` does not work with `csr_array` and we need to convert it to a
-            # `csr_matrix` object.
-            laplacian = sparse.csr_matrix(laplacian)
+            # old version `pyamg` may not work with `csr_array` and new version
+            # may not work with `csr_matrix`. But we need to convert to CSR.
+            if pyamg_supports_sparray:
+                laplacian = sparse.csr_array(laplacian)
+            else:
+                laplacian = sparse.csr_matrix(laplacian)
+
         ml = smoothed_aggregation_solver(check_array(laplacian, accept_sparse="csr"))
         laplacian -= diag_shift
 

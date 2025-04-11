@@ -993,7 +993,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                     "instead. See docstring for motivation and alternatives."
                 )
             sparse_constructor = (
-                sparse.csr_matrix if X.format == "csr" else sparse.csc_matrix
+                sparse.csr_array if X.format == "csr" else sparse.csc_array
             )
 
             if self.with_std:
@@ -2630,7 +2630,7 @@ def add_dummy_feature(X, value=1.0):
             row = np.concatenate((np.arange(n_samples), X.row))
             # Prepend the dummy feature n_samples times.
             data = np.concatenate((np.full(n_samples, value), X.data))
-            return sparse.coo_matrix((data, (row, col)), shape)
+            return X.__class__((data, (row, col)), shape)
         elif X.format == "csc":
             # Shift index pointers since we need to add n_samples elements.
             indptr = X.indptr + n_samples
@@ -2640,10 +2640,9 @@ def add_dummy_feature(X, value=1.0):
             indices = np.concatenate((np.arange(n_samples), X.indices))
             # Prepend the dummy feature n_samples times.
             data = np.concatenate((np.full(n_samples, value), X.data))
-            return sparse.csc_matrix((data, indices, indptr), shape)
+            return X.__class__((data, indices, indptr), shape)
         else:
-            klass = X.__class__
-            return klass(add_dummy_feature(X.tocoo(), value))
+            return X.__class__(add_dummy_feature(X.tocoo(), value))
     else:
         return np.hstack((np.full((n_samples, 1), value), X))
 
@@ -2825,7 +2824,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         X : sparse matrix of shape (n_samples, n_features)
             The data used to scale along the features axis. The sparse matrix
             needs to be nonnegative. If a sparse matrix is provided,
-            it will be converted into a sparse ``csc_matrix``.
+            it will be converted into a SciPy sparse CSC matrix.
         """
         n_samples, n_features = X.shape
         references = self.references_ * 100
@@ -2871,7 +2870,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data used to scale along the features axis. If a sparse
             matrix is provided, it will be converted into a sparse
-            ``csc_matrix``. Additionally, the sparse matrix needs to be
+            CSC matrix. Additionally, the sparse matrix needs to be
             nonnegative if `ignore_implicit_zeros` is False.
 
         y : None
@@ -3043,7 +3042,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data used to scale along the features axis. If a sparse
             matrix is provided, it will be converted into a sparse
-            ``csc_matrix``. Additionally, the sparse matrix needs to be
+            CSC matrix. Additionally, the sparse matrix needs to be
             nonnegative if `ignore_implicit_zeros` is False.
 
         Returns
@@ -3064,7 +3063,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data used to scale along the features axis. If a sparse
             matrix is provided, it will be converted into a sparse
-            ``csc_matrix``. Additionally, the sparse matrix needs to be
+            CSC_matrix. Additionally, the sparse matrix needs to be
             nonnegative if `ignore_implicit_zeros` is False.
 
         Returns

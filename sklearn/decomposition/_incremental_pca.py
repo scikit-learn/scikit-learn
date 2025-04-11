@@ -178,7 +178,7 @@ class IncrementalPCA(_BasePCA):
     >>> transformer.partial_fit(X[:100, :])
     IncrementalPCA(batch_size=200, n_components=7)
     >>> # or let the fit function itself divide the data into batches
-    >>> X_sparse = sparse.csr_matrix(X)
+    >>> X_sparse = sparse.csr_array(X)
     >>> X_transformed = transformer.fit_transform(X_sparse)
     >>> X_transformed.shape
     (1797, 7)

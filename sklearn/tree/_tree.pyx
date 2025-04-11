@@ -21,7 +21,9 @@ cimport numpy as cnp
 cnp.import_array()
 
 from scipy.sparse import issparse
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_array
+
+from ..utils import _align_api_if_sparse
 
 from sklearn.tree._utils cimport safe_realloc
 from sklearn.tree._utils cimport sizet_ptr_to_ndarray
@@ -1002,7 +1004,7 @@ cdef class Tree:
         """
         # Check input
         if not (issparse(X) and X.format == 'csr'):
-            raise ValueError("X should be in csr_matrix format, got %s"
+            raise ValueError("X should be in CSR sparse format, got %s"
                              % type(X))
 
         if X.dtype != DTYPE:
@@ -1127,17 +1129,17 @@ cdef class Tree:
 
         indices = indices[:indptr[n_samples]]
         cdef intp_t[:] data = np.ones(shape=len(indices), dtype=np.intp)
-        out = csr_matrix((data, indices, indptr),
-                         shape=(n_samples, self.node_count))
+        out = csr_array((data, indices, indptr),
+                        shape=(n_samples, self.node_count))
 
-        return out
+        return _align_api_if_sparse(out)
 
     cdef inline object _decision_path_sparse_csr(self, object X):
         """Finds the decision path (=node) for each sample in X."""
 
         # Check input
         if not (issparse(X) and X.format == "csr"):
-            raise ValueError("X should be in csr_matrix format, got %s"
+            raise ValueError("X should be in CSR sparse format, got %s"
                              % type(X))
 
         if X.dtype != DTYPE:
@@ -1211,10 +1213,10 @@ cdef class Tree:
 
         indices = indices[:indptr[n_samples]]
         cdef intp_t[:] data = np.ones(shape=len(indices), dtype=np.intp)
-        out = csr_matrix((data, indices, indptr),
-                         shape=(n_samples, self.node_count))
+        out = csr_array((data, indices, indptr),
+                        shape=(n_samples, self.node_count))
 
-        return out
+        return _align_api_if_sparse(out)
 
     cpdef compute_node_depths(self):
         """Compute the depth of each node in a tree.

@@ -22,7 +22,7 @@ from sklearn.metrics.pairwise import (
     PAIRWISE_KERNEL_FUNCTIONS,
     pairwise_kernels,
 )
-from sklearn.utils import check_random_state
+from sklearn.utils import _align_api_if_sparse, check_random_state
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.validation import (
@@ -807,8 +807,10 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         indptr = X.indptr.copy()
 
         data_step = np.sqrt(X.data * sample_interval)
-        X_step = sp.csr_matrix(
-            (data_step, indices, indptr), shape=X.shape, dtype=X.dtype, copy=False
+        X_step = _align_api_if_sparse(
+            sp.csr_array(
+                (data_step, indices, indptr), shape=X.shape, dtype=X.dtype, copy=False
+            )
         )
         X_new = [X_step]
 
@@ -819,14 +821,24 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
             factor_nz = np.sqrt(step_nz / np.cosh(np.pi * j * sample_interval))
 
             data_step = factor_nz * np.cos(j * log_step_nz)
-            X_step = sp.csr_matrix(
-                (data_step, indices, indptr), shape=X.shape, dtype=X.dtype, copy=False
+            X_step = _align_api_if_sparse(
+                sp.csr_array(
+                    (data_step, indices, indptr),
+                    shape=X.shape,
+                    dtype=X.dtype,
+                    copy=False,
+                )
             )
             X_new.append(X_step)
 
             data_step = factor_nz * np.sin(j * log_step_nz)
-            X_step = sp.csr_matrix(
-                (data_step, indices, indptr), shape=X.shape, dtype=X.dtype, copy=False
+            X_step = _align_api_if_sparse(
+                sp.csr_array(
+                    (data_step, indices, indptr),
+                    shape=X.shape,
+                    dtype=X.dtype,
+                    copy=False,
+                )
             )
             X_new.append(X_step)
 

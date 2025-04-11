@@ -4,7 +4,6 @@ import warnings
 
 import numpy as np
 import pytest
-import scipy as sp
 from numpy.testing import assert_array_equal
 
 from sklearn import config_context, datasets
@@ -19,6 +18,7 @@ from sklearn.utils._array_api import (
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._array_api import device as array_device
+from sklearn.utils._sparse import _sparse_random
 from sklearn.utils._test_common.instance_generator import _get_check_estimator_ids
 from sklearn.utils._testing import _array_api_for_tests, assert_allclose
 from sklearn.utils.estimator_checks import (
@@ -87,17 +87,10 @@ def test_pca_sparse(
     atol = 1e-12
     transform_atol = 1e-10
 
-    random_state = np.random.default_rng(global_random_seed)
-    X = sparse_container(
-        sp.sparse.random(
-            SPARSE_M,
-            SPARSE_N,
-            random_state=random_state,
-            density=density,
-        )
-    )
+    rng = np.random.default_rng(global_random_seed)
+    X = sparse_container(_sparse_random((SPARSE_M, SPARSE_N), rng=rng, density=density))
     # Scale the data + vary the column means
-    scale_vector = random_state.random(X.shape[1]) * scale
+    scale_vector = rng.random(X.shape[1]) * scale
     X = X.multiply(scale_vector)
 
     pca = PCA(
@@ -120,12 +113,7 @@ def test_pca_sparse(
 
     # Test transform
     X2 = sparse_container(
-        sp.sparse.random(
-            SPARSE_M,
-            SPARSE_N,
-            random_state=random_state,
-            density=density,
-        )
+        _sparse_random((SPARSE_M, SPARSE_N), rng=rng, density=density)
     )
     X2d = X2.toarray()
 
@@ -135,23 +123,9 @@ def test_pca_sparse(
 
 @pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
 def test_pca_sparse_fit_transform(global_random_seed, sparse_container):
-    random_state = np.random.default_rng(global_random_seed)
-    X = sparse_container(
-        sp.sparse.random(
-            SPARSE_M,
-            SPARSE_N,
-            random_state=random_state,
-            density=0.01,
-        )
-    )
-    X2 = sparse_container(
-        sp.sparse.random(
-            SPARSE_M,
-            SPARSE_N,
-            random_state=random_state,
-            density=0.01,
-        )
-    )
+    rng = np.random.default_rng(global_random_seed)
+    X = sparse_container(_sparse_random((SPARSE_M, SPARSE_N), rng=rng, density=0.01))
+    X2 = sparse_container(_sparse_random((SPARSE_M, SPARSE_N), rng=rng, density=0.01))
 
     pca_fit = PCA(n_components=10, svd_solver="arpack", random_state=global_random_seed)
     pca_fit_transform = PCA(
@@ -170,14 +144,8 @@ def test_pca_sparse_fit_transform(global_random_seed, sparse_container):
 @pytest.mark.parametrize("svd_solver", ["randomized", "full"])
 @pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
 def test_sparse_pca_solver_error(global_random_seed, svd_solver, sparse_container):
-    random_state = np.random.RandomState(global_random_seed)
-    X = sparse_container(
-        sp.sparse.random(
-            SPARSE_M,
-            SPARSE_N,
-            random_state=random_state,
-        )
-    )
+    rng = np.random.RandomState(global_random_seed)
+    X = sparse_container(_sparse_random((SPARSE_M, SPARSE_N), rng=rng))
     pca = PCA(n_components=30, svd_solver=svd_solver)
     error_msg_pattern = (
         'PCA only support sparse inputs with the "arpack" and "covariance_eigh"'
@@ -192,14 +160,8 @@ def test_sparse_pca_auto_arpack_singluar_values_consistency(
     global_random_seed, sparse_container
 ):
     """Check that "auto" and "arpack" solvers are equivalent for sparse inputs."""
-    random_state = np.random.RandomState(global_random_seed)
-    X = sparse_container(
-        sp.sparse.random(
-            SPARSE_M,
-            SPARSE_N,
-            random_state=random_state,
-        )
-    )
+    rng = np.random.RandomState(global_random_seed)
+    X = sparse_container(_sparse_random((SPARSE_M, SPARSE_N), rng=rng))
     pca_arpack = PCA(n_components=10, svd_solver="arpack").fit(X)
     pca_auto = PCA(n_components=10, svd_solver="auto").fit(X)
     assert_allclose(pca_arpack.singular_values_, pca_auto.singular_values_, rtol=5e-3)

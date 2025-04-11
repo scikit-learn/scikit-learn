@@ -23,6 +23,7 @@ from sklearn.utils._array_api import (
 from sklearn.utils._array_api import (
     device as array_device,
 )
+from sklearn.utils._sparse import _sparse_random
 from sklearn.utils._testing import (
     _array_api_for_tests,
     assert_allclose,
@@ -512,7 +513,7 @@ def test_randomized_svd_sparse_warnings(sparse_container):
 
     X = sparse_container(X)
     warn_msg = (
-        "Calculating SVD of a {} is expensive. csr_matrix is more efficient.".format(
+        "Calculating SVD of a {} is expensive. CSR format is more efficient.".format(
             sparse_container.__name__
         )
     )
@@ -1072,8 +1073,8 @@ def test_safe_sparse_dot_2d_1d(container):
 def test_safe_sparse_dot_dense_output(dense_output):
     rng = np.random.RandomState(0)
 
-    A = sparse.random(30, 10, density=0.1, random_state=rng)
-    B = sparse.random(10, 20, density=0.1, random_state=rng)
+    A = _sparse_random((30, 10), density=0.1, rng=rng)
+    B = _sparse_random((10, 20), density=0.1, rng=rng)
 
     expected = A.dot(B)
     actual = safe_sparse_dot(A, B, dense_output=dense_output)

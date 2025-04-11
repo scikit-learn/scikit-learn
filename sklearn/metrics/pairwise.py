@@ -11,7 +11,7 @@ from numbers import Integral, Real
 
 import numpy as np
 from joblib import effective_n_jobs
-from scipy.sparse import csr_matrix, issparse
+from scipy.sparse import csr_array, issparse
 from scipy.spatial import distance
 
 from sklearn import config_context
@@ -1114,8 +1114,8 @@ def manhattan_distances(X, Y=None):
     X, Y = check_pairwise_arrays(X, Y)
 
     if issparse(X) or issparse(Y):
-        X = csr_matrix(X, copy=False)
-        Y = csr_matrix(Y, copy=False)
+        X = csr_array(X, copy=False)
+        Y = csr_array(Y, copy=False)
         X.sum_duplicates()  # this also sorts indices in-place
         Y.sum_duplicates()
         D = np.zeros((X.shape[0], Y.shape[0]))

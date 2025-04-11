@@ -26,7 +26,7 @@ def sandwich_dot(X, W):
     if sparse.issparse(X):
         return safe_sparse_dot(
             X.T,
-            sparse.dia_matrix((W, 0), shape=(n_samples, n_samples)) @ X,
+            sparse.dia_array((W, 0), shape=(n_samples, n_samples)) @ X,
             dense_output=True,
         )
     else:
@@ -729,7 +729,7 @@ class LinearModelLoss:
             hessian_sum = hess_pointwise.sum()
             if sparse.issparse(X):
                 hX = (
-                    sparse.dia_matrix((hess_pointwise, 0), shape=(n_samples, n_samples))
+                    sparse.dia_array((hess_pointwise, 0), shape=(n_samples, n_samples))
                     @ X
                 )
             else:

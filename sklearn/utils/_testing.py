@@ -44,6 +44,7 @@ from sklearn.utils import (
     Tags,
     TargetTags,
     TransformerTags,
+    _align_api_if_sparse,
 )
 from sklearn.utils._array_api import _check_array_api_dispatch
 from sklearn.utils.fixes import (
@@ -1060,11 +1061,11 @@ def _convert_container(
 
         if constructor_name in ("sparse", "sparse_csr"):
             # sparse and sparse_csr are equivalent for legacy reasons
-            return sp.sparse.csr_matrix(container, dtype=dtype)
+            return _align_api_if_sparse(sp.sparse.csr_array(container, dtype=dtype))
         elif constructor_name == "sparse_csr_array":
             return sp.sparse.csr_array(container, dtype=dtype)
         elif constructor_name == "sparse_csc":
-            return sp.sparse.csc_matrix(container, dtype=dtype)
+            return _align_api_if_sparse(sp.sparse.csc_array(container, dtype=dtype))
         elif constructor_name == "sparse_csc_array":
             return sp.sparse.csc_array(container, dtype=dtype)
 

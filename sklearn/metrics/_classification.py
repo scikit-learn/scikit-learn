@@ -14,12 +14,13 @@ import warnings
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.sparse import coo_matrix, csr_matrix, issparse
+from scipy.sparse import coo_array, csr_array, issparse
 from scipy.special import xlogy
 
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.preprocessing import LabelBinarizer, LabelEncoder
 from sklearn.utils import (
+    _align_api_if_sparse,
     assert_all_finite,
     check_array,
     check_consistent_length,
@@ -162,8 +163,8 @@ def _check_targets(y_true, y_pred, sample_weight=None):
             # they are passed as a dense arrays? This is not possible for array
             # API inputs in general hence we only do it for NumPy inputs. But even
             # for NumPy the usefulness is questionable.
-            y_true = csr_matrix(y_true)
-            y_pred = csr_matrix(y_pred)
+            y_true = _align_api_if_sparse(csr_array(y_true))
+            y_pred = _align_api_if_sparse(csr_array(y_pred))
         y_type = "multilabel-indicator"
 
     return y_type, y_true, y_pred, sample_weight
@@ -570,7 +571,7 @@ def confusion_matrix(
     else:
         dtype = np.float32 if str(device_).startswith("mps") else np.float64
 
-    cm = coo_matrix(
+    cm = coo_array(
         (sample_weight, (y_true, y_pred)),
         shape=(n_labels, n_labels),
         dtype=dtype,

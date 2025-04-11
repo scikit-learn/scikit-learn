@@ -7,7 +7,7 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy.linalg import eigh, qr, solve, svd
-from scipy.sparse import csr_matrix, eye, lil_matrix
+from scipy.sparse import csr_array, lil_array
 from scipy.sparse.linalg import eigsh
 
 from sklearn.base import (
@@ -21,6 +21,8 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.utils import check_array, check_random_state
 from sklearn.utils._arpack import _init_arpack_v0
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils._sparse import _align_api_if_sparse, _sparse_eye
+from sklearn.utils.fixes import SCIPY_VERSION_BELOW_1_15
 from sklearn.utils.validation import FLOAT_DTYPES, check_is_fitted, validate_data
 
 
@@ -117,7 +119,8 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
     ind = knn.kneighbors(X, return_distance=False)[:, 1:]
     data = barycenter_weights(X, X, ind, reg=reg)
     indptr = np.arange(0, n_samples * n_neighbors + 1, n_neighbors)
-    return csr_matrix((data.ravel(), ind.ravel(), indptr), shape=(n_samples, n_samples))
+    csr = csr_array((data.ravel(), ind.ravel(), indptr), shape=(n_samples, n_samples))
+    return _align_api_if_sparse(csr)
 
 
 def null_space(
@@ -228,7 +231,7 @@ def _locally_linear_embedding(
         )
 
     M_sparse = eigen_solver != "dense"
-    M_container_constructor = lil_matrix if M_sparse else np.zeros
+    M_container_constructor = lil_array if M_sparse else np.zeros
 
     if method == "standard":
         W = barycenter_kneighbors_graph(
@@ -238,8 +241,8 @@ def _locally_linear_embedding(
         # we'll compute M = (I-W)'(I-W)
         # depending on the solver, we'll do this differently
         if M_sparse:
-            M = eye(*W.shape, format=W.format) - W
-            M = M.T @ M
+            M = _sparse_eye(*W.shape, format=W.format, dtype=W.dtype) - W
+            M = M.T @ M  # M = (I - W)' (I - W) = W' W - W' - W + I
         else:
             M = (W.T @ W - W.T - W).toarray()
             M.flat[:: M.shape[0] + 1] += 1  # M = W' W - W' - W + I
@@ -394,8 +397,12 @@ def _locally_linear_embedding(
             nbrs_x, nbrs_y = np.meshgrid(neighbors[i], neighbors[i])
             M[nbrs_x, nbrs_y] += np.dot(Wi, Wi.T)
             Wi_sum1 = Wi.sum(1)
-            M[i, neighbors[i]] -= Wi_sum1
-            M[neighbors[i], [i]] -= Wi_sum1
+            if SCIPY_VERSION_BELOW_1_15:
+                M[[i], neighbors[i]] -= Wi_sum1
+                M[neighbors[i], [i]] -= Wi_sum1
+            else:
+                M[i, neighbors[i]] -= Wi_sum1
+                M[neighbors[i], i] -= Wi_sum1
             M[i, i] += s_i
 
     elif method == "ltsa":
@@ -431,7 +438,7 @@ def _locally_linear_embedding(
             M[neighbors[i], neighbors[i]] += np.ones(shape=n_neighbors)
 
     if M_sparse:
-        M = M.tocsr()
+        M = _align_api_if_sparse(M.tocsr())
 
     return null_space(
         M,

@@ -24,6 +24,7 @@ from sklearn.utils import (
     compute_class_weight,
 )
 from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils._sparse import SCIPY_VERSION_BELOW_1_12, _align_api_if_sparse
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.metaestimators import available_if
 from sklearn.utils.multiclass import (
@@ -64,10 +65,16 @@ def _one_vs_one_coef(dual_coef, n_support, support_vectors):
             # SVs for class1:
             sv2 = support_vectors[sv_locs[class2] : sv_locs[class2 + 1], :]
 
-            # dual coef for class1 SVs:
-            alpha1 = dual_coef[class2 - 1, sv_locs[class1] : sv_locs[class1 + 1]]
-            # dual coef for class2 SVs:
-            alpha2 = dual_coef[class1, sv_locs[class2] : sv_locs[class2 + 1]]
+            if SCIPY_VERSION_BELOW_1_12:
+                # dual coef for class1 SVs:
+                alpha1 = dual_coef[[class2 - 1], sv_locs[class1] : sv_locs[class1 + 1]]
+                # dual coef for class2 SVs:
+                alpha2 = dual_coef[[class1], sv_locs[class2] : sv_locs[class2 + 1]]
+            else:
+                # dual coef for class1 SVs:
+                alpha1 = dual_coef[class2 - 1, sv_locs[class1] : sv_locs[class1 + 1]]
+                # dual coef for class2 SVs:
+                alpha2 = dual_coef[class1, sv_locs[class2] : sv_locs[class2 + 1]]
             # build weight for class1 vs class2
 
             coef.append(safe_sparse_dot(alpha1, sv1) + safe_sparse_dot(alpha2, sv2))
@@ -187,7 +194,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         Notes
         -----
         If X and y are not C-ordered and contiguous arrays of np.float64 and
-        X is not a scipy.sparse.csr_matrix, X and/or y may be copied.
+        X is not a sparse CSR format, X and/or y may be copied.
 
         If X is a dense array, then the other methods will not support sparse
         matrices as input.
@@ -416,13 +423,16 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         dual_coef_indices = np.tile(np.arange(n_SV), n_class)
         if not n_SV:
-            self.dual_coef_ = sp.csr_matrix([])
+            self.dual_coef_ = _align_api_if_sparse(sp.csr_array([[]]))
         else:
             dual_coef_indptr = np.arange(
                 0, dual_coef_indices.size + 1, dual_coef_indices.size / n_class
             )
-            self.dual_coef_ = sp.csr_matrix(
-                (dual_coef_data, dual_coef_indices, dual_coef_indptr), (n_class, n_SV)
+            self.dual_coef_ = _align_api_if_sparse(
+                sp.csr_array(
+                    (dual_coef_data, dual_coef_indices, dual_coef_indptr),
+                    (n_class, n_SV),
+                )
             )
 
     def predict(self, X):
@@ -480,7 +490,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         )
 
     def _sparse_predict(self, X):
-        # Precondition: X is a csr_matrix of dtype np.float64.
+        # Precondition: X is CSR sparse of dtype np.float64.
         kernel = self.kernel
         if callable(kernel):
             kernel = "precomputed"
@@ -629,9 +639,9 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 reset=False,
             )
 
-        if self._sparse and not sp.issparse(X):
-            X = sp.csr_matrix(X)
         if self._sparse:
+            if not sp.issparse(X):
+                X = _align_api_if_sparse(sp.csr_array(X))
             X.sort_indices()
 
         if sp.issparse(X) and not self._sparse and not callable(self.kernel):

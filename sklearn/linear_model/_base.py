@@ -22,7 +22,7 @@ from sklearn.base import (
     RegressorMixin,
     _fit_context,
 )
-from sklearn.utils import check_array, check_random_state
+from sklearn.utils import _align_api_if_sparse, check_array, check_random_state
 from sklearn.utils._array_api import (
     _asarray_with_order,
     _average,
@@ -249,7 +249,7 @@ def _rescale_data(X, y, sample_weight, inplace=False):
     sample_weight_sqrt = xp.sqrt(sample_weight)
 
     if sp.issparse(X) or sp.issparse(y):
-        sw_matrix = sparse.dia_matrix(
+        sw_matrix = sparse.dia_array(
             (sample_weight_sqrt, 0), shape=(n_samples, n_samples)
         )
 
@@ -274,7 +274,7 @@ def _rescale_data(X, y, sample_weight, inplace=False):
                 y = y * sample_weight_sqrt
             else:
                 y = y * sample_weight_sqrt[:, None]
-    return X, y, sample_weight_sqrt
+    return _align_api_if_sparse(X), _align_api_if_sparse(y), sample_weight_sqrt
 
 
 class LinearModel(BaseEstimator, metaclass=ABCMeta):
@@ -462,7 +462,7 @@ class SparseCoefMixin:
         """
         msg = "Estimator, %(name)s, must be fitted before sparsifying."
         check_is_fitted(self, msg=msg)
-        self.coef_ = sp.csr_matrix(self.coef_)
+        self.coef_ = _align_api_if_sparse(sp.csr_array(self.coef_))
         return self
 
 

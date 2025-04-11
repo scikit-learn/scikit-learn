@@ -21,6 +21,7 @@ def test_config_context():
         "transform_output": "default",
         "enable_metadata_routing": False,
         "skip_parameter_validation": False,
+        "sparse_interface": "spmatrix",
     }
 
     # Not using as a context manager affects nothing
@@ -39,6 +40,7 @@ def test_config_context():
             "transform_output": "default",
             "enable_metadata_routing": False,
             "skip_parameter_validation": False,
+            "sparse_interface": "spmatrix",
         }
     assert get_config()["assume_finite"] is False
 
@@ -74,6 +76,7 @@ def test_config_context():
         "transform_output": "default",
         "enable_metadata_routing": False,
         "skip_parameter_validation": False,
+        "sparse_interface": "spmatrix",
     }
 
     # No positional arguments

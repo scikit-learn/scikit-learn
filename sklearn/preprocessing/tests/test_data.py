@@ -43,6 +43,7 @@ from sklearn.utils._array_api import (
     _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
 )
+from sklearn.utils._sparse import _sparse_random
 from sklearn.utils._testing import (
     _array_api_for_tests,
     _convert_container,
@@ -2593,7 +2594,7 @@ def test_power_transformer_box_cox_raise_all_nans_col():
 
 @pytest.mark.parametrize(
     "X_2",
-    [sparse.random(10, 1, density=0.8, random_state=0)]
+    [_sparse_random((10, 1), density=0.8, rng=0)]
     + [
         csr_container(np.full((10, 1), fill_value=np.nan))
         for csr_container in CSR_CONTAINERS
@@ -2602,7 +2603,7 @@ def test_power_transformer_box_cox_raise_all_nans_col():
 def test_standard_scaler_sparse_partial_fit_finite_variance(X_2):
     # non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/16448
-    X_1 = sparse.random(5, 1, density=0.8)
+    X_1 = _sparse_random((5, 1), density=0.8)
     scaler = StandardScaler(with_mean=False)
     scaler.fit(X_1).partial_fit(X_2)
     assert np.isfinite(scaler.var_[0])
