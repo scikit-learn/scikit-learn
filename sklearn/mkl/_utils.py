@@ -59,15 +59,7 @@ def kernel_generator(
                     )
                 else:
                     if len(X.shape) == 1:
-                        yield kernel(
-                            X.reshape(-1, 1),
-                            Y.reshape(-1, 1),
-                            **params_prod,
-                        )
+                        yield kernel(X.reshape(-1, 1), Y.reshape(-1, 1), **params_prod)
                     else:
                         for j in range(X.shape[1]):
-                            yield kernel(
-                                X[:, j].reshape(-1, 1),
-                                Y[:, j].reshape(-1, 1),
-                                **params_prod,
-                            )
+                            yield kernel(X[:, [j]], Y[:, [j]], **params_prod)
