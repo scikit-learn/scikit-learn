@@ -198,10 +198,8 @@ commands in ``cmd`` or an Anaconda Prompt (if you use Anaconda):
 ..
 
 .. note::
-    The following command is for the 2020 version of Visual Studio. If you
-    have a different version, you will need to adjust the path accordingly.
-    The path probably will follow this pattern:
-    ``C:\Program Files (x86)\Microsoft Visual Studio\<year>\BuildTools\VC\Auxiliary\Build\vcvarsall.bat``.
+    The previous command is for the 2022 version of Visual Studio. If you
+    have a different version, you will need to adjust the year in the path accordingly.
 
 .. prompt:: bash C:\>
 
