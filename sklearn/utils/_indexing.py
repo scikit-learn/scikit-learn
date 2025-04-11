@@ -93,6 +93,40 @@ def _polars_indexing(X, key, key_dtype, axis):
     return X_indexed
 
 
+def _dataframe_interchange_protocol_indexing(X, key, key_dtype):
+    """Index columns for dataframe interchange protocol."""
+    # Once the dataframe X is converted into its dataframe interchange protocol version
+    # by calling X.__dataframe__(), it becomes very hard to turn it back into its
+    # original object type, e.g., a pyarrow.Table, see
+    # https://github.com/data-apis/dataframe-api/issues/85.
+    # As a dirty workaround, we will check for a method "select" being available and
+    # use that one.
+    if not hasattr(X, "select"):
+        msg = (
+            f"While the passed object X, {type(X)=}, has the __dataframe__ interchange "
+            "protocol implemented, scikit-learn currently does not know how to deal "
+            "with this kind of object."
+        )
+        raise NotImplementedError(msg)
+
+    if key_dtype == "bool":
+        key = np.asarray(key).nonzero().tolist()
+        key_dtype == "int"
+    elif key_dtype == "str":
+        key = _get_column_indices_interchange(X.__dataframe__(), key, key_dtype)
+    # From here on, we can assume key_dtype == "int".
+
+    if isinstance(key, np.ndarray):
+        key = key.tolist()
+    elif np.isscalar(key):
+        key = list(key)
+    elif isinstance(key, slice):
+        start = 0 if not key.start else key.start
+        step = 1 if not key.step else key.step
+        key = [i for i in range(start, key.stop, step)]
+    return X.select(key)
+
+
 def _determine_key_type(key, accept_slice=True):
     """Determine the data type of key.
 
@@ -242,6 +276,14 @@ def _safe_indexing(X, indices, *, axis=0):
     if axis == 0 and indices_dtype == "str":
         raise ValueError("String indexing is not supported with 'axis=0'")
 
+    if (
+        axis == 0
+        and not _is_polars_df_or_series(X)
+        and not _is_polars_df_or_series(X)
+        and _use_interchange_protocol(X)
+    ):
+        raise ValueError("axis=0 is not supported for dataframe interchange protocol")
+
     if axis == 1 and isinstance(X, list):
         raise ValueError("axis=1 is not supported for lists")
 
@@ -267,6 +309,8 @@ def _safe_indexing(X, indices, *, axis=0):
         return _pandas_indexing(X, indices, indices_dtype, axis=axis)
     elif _is_polars_df_or_series(X):
         return _polars_indexing(X, indices, indices_dtype, axis=axis)
+    elif _use_interchange_protocol(X):
+        return _dataframe_interchange_protocol_indexing(X, indices, indices_dtype)
     elif hasattr(X, "shape"):
         return _array_indexing(X, indices, indices_dtype, axis=axis)
     else:
