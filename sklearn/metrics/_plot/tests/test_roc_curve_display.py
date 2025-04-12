@@ -365,7 +365,7 @@ def test_y_score_and_y_pred_specified_error():
 
 
 # TODO(1.9): remove
-def test_y_pred_deprecation_warning():
+def test_y_pred_deprecation_warning(pyplot):
     """Check that a warning is raised when y_pred is specified."""
     y_true = np.array([0, 1, 1, 0])
     y_score = np.array([0.1, 0.4, 0.35, 0.8])
