@@ -183,7 +183,6 @@ commands in ``cmd`` or an Anaconda Prompt (if you use Anaconda):
 .. sphinx-prompt 1.3.0 (used in doc-min-dependencies CI task) does not support `batch` prompt type,
 .. so we work around by using a known prompt type and an explicit prompt text.
 ..
-
 .. prompt:: bash C:\>
 
     SET DISTUTILS_USE_SDK=1
