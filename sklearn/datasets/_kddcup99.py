@@ -376,7 +376,7 @@ def _fetch_brute_kddcup99(
         except Exception as e:
             raise OSError(
                 "The cache for fetch_kddcup99 is invalid, please delete "
-                f"{str(kddcup_dir)} and run the fetch_kddcup99 again"
+                f"{kddcup_dir} and run the fetch_kddcup99 again"
             ) from e
 
     elif download_if_missing:

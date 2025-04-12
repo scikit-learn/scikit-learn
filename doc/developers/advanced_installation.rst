@@ -3,6 +3,11 @@
 
 .. include:: ../min_dependency_substitutions.rst
 
+..
+   TODO Add |PythonMinVersion| to min_dependency_substitutions.rst one day.
+   Probably would need to change a bit sklearn/_min_dependencies.py since Python is not really a package ...
+.. |PythonMinVersion| replace:: 3.10
+
 ==================================================
 Installing the development version of scikit-learn
 ==================================================
@@ -58,7 +63,7 @@ feature, code or documentation improvement).
    If you plan on submitting a pull-request, you should clone from your fork
    instead.
 
-#. Install a recent version of Python (3.9 or later at the time of writing) for
+#. Install a recent version of Python (|PythonMinVersion| or later) for
    instance using conda-forge_. Conda-forge provides a conda-based distribution of
    Python and the most popular scientific libraries.
 
@@ -78,7 +83,7 @@ feature, code or documentation improvement).
      conda activate sklearn-env
 
 #. **Alternative to conda:** You can use alternative installations of Python
-   provided they are recent enough (3.9 or higher at the time of writing).
+   provided they are recent enough (|PythonMinVersion| or higher).
    Here is an example of how to create a build environment for a Linux system's
    Python. Build dependencies are installed with `pip` in a dedicated virtualenv_
    to avoid disrupting other Python programs installed on the system:
@@ -92,6 +97,15 @@ feature, code or documentation improvement).
 #. Install a compiler with OpenMP_ support for your platform. See instructions
    for :ref:`compiler_windows`, :ref:`compiler_macos`, :ref:`compiler_linux`
    and :ref:`compiler_freebsd`.
+
+   .. note::
+
+      If OpenMP is not supported by the compiler, the build will be done with
+      OpenMP functionalities disabled. This is not recommended since it will force
+      some estimators to run in sequential mode instead of leveraging thread-based
+      parallelism. Setting the ``SKLEARN_FAIL_NO_OPENMP`` environment variable
+      (before cythonization) will force the build to fail if OpenMP is not
+      supported.
 
 #. Build the project with pip:
 
@@ -124,61 +138,6 @@ feature, code or documentation improvement).
 
     Note that `--config-settings` is only supported in `pip` version 23.1 or
     later. To upgrade `pip` to a compatible version, run `pip install -U pip`.
-
-Dependencies
-------------
-
-Runtime dependencies
-~~~~~~~~~~~~~~~~~~~~
-
-Scikit-learn requires the following dependencies both at build time and at
-runtime:
-
-- Python (>= 3.8),
-- NumPy (>= |NumpyMinVersion|),
-- SciPy (>= |ScipyMinVersion|),
-- Joblib (>= |JoblibMinVersion|),
-- threadpoolctl (>= |ThreadpoolctlMinVersion|).
-
-Build dependencies
-~~~~~~~~~~~~~~~~~~
-
-Building Scikit-learn also requires:
-
-..
-    # The following places need to be in sync with regard to Cython version:
-    # - .circleci config file
-    # - sklearn/_build_utils/__init__.py
-    # - advanced installation guide
-
-- Cython >= |CythonMinVersion|
-- A C/C++ compiler and a matching OpenMP_ runtime library. See the
-  :ref:`platform system specific instructions
-  <platform_specific_instructions>` for more details.
-
-.. note::
-
-   If OpenMP is not supported by the compiler, the build will be done with
-   OpenMP functionalities disabled. This is not recommended since it will force
-   some estimators to run in sequential mode instead of leveraging thread-based
-   parallelism. Setting the ``SKLEARN_FAIL_NO_OPENMP`` environment variable
-   (before cythonization) will force the build to fail if OpenMP is not
-   supported.
-
-Since version 0.21, scikit-learn automatically detects and uses the linear
-algebra library used by SciPy **at runtime**. Scikit-learn has therefore no
-build dependency on BLAS/LAPACK implementations such as OpenBlas, Atlas, Blis
-or MKL.
-
-Test dependencies
-~~~~~~~~~~~~~~~~~
-
-Running tests requires:
-
-- pytest >= |PytestMinVersion|
-
-Some tests also require `pandas <https://pandas.pydata.org>`_.
-
 
 Building a specific version from a tag
 --------------------------------------
