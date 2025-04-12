@@ -10,6 +10,7 @@ the lower the better.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import math
 import warnings
 from numbers import Integral, Real
 
@@ -291,10 +292,13 @@ def _validate_multiclass_probabilistic_prediction(
         "y_pred": ["array-like", "sparse matrix"],
         "normalize": ["boolean"],
         "sample_weight": ["array-like", None],
+        "replace_undefined_by": [Interval(Real, 0.0, 1.0, closed="both"), np.nan],
     },
     prefer_skip_nested_validation=True,
 )
-def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
+def accuracy_score(
+    y_true, y_pred, *, normalize=True, sample_weight=None, replace_undefined_by=0.0
+):
     """Accuracy classification score.
 
     In multilabel classification, this function computes subset accuracy:
@@ -318,6 +322,19 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
+    replace_undefined_by : np.nan, int 0, float in [0.0, 1.0], default=0.0
+        Sets the return value when when `y_true` and `y_pred` are empty and the metric
+        is thus ill-defined. Can take the following values:
+
+        - `np.nan` to return `np.nan`
+        - a floating point value in the range of [0.0, 1.0] or int 0
+
+        Note that with `normalize=False` only `np.nan` or `0` can be returned regardless
+        of the value set, since 0 ≤ accuracy_score ≤ number of samples and here,
+        `y_true` and `y_pred` are empty.
+
+        .. versionadded:: 1.7
+
     Returns
     -------
     score : float or int
@@ -325,7 +342,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
         classified samples (float), else returns the number of correctly
         classified samples (int).
 
-        The best performance is 1 with ``normalize == True`` and the number
+        The best performance is 1.0 with ``normalize == True`` and the number
         of samples with ``normalize == False``.
 
     See Also
@@ -359,6 +376,24 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
+
+    if _num_samples(y_true) == 0:
+        if normalize:
+            msg = (
+                "`y_true` and `y_pred` are empty. `accuracy_score` is undefined and "
+                "set to the value defined in the `replace_undefined_by` param, which "
+                "defaults to 0.0."
+            )
+            warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+            return replace_undefined_by
+        else:
+            msg = (
+                "`y_true` and `y_pred` are empty. `accuracy_score` is undefined and "
+                "set to the value defined in the `replace_undefined_by` param, which "
+                "defaults to 0 when `normalize=False` is set."
+            )
+            warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+            return replace_undefined_by if math.isnan(replace_undefined_by) else 0
 
     if y_type.startswith("multilabel"):
         differing_labels = _count_nonzero(y_true - y_pred, xp=xp, device=device, axis=1)
