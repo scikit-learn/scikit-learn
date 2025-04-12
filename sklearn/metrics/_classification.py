@@ -799,12 +799,24 @@ def multilabel_confusion_matrix(
         "labels": ["array-like", None],
         "weights": [StrOptions({"linear", "quadratic"}), None],
         "sample_weight": ["array-like", None],
-        "replace_undefined_by": [Interval(Real, -1.0, 1.0, closed="both"), np.nan],
+        "replace_undefined_by": [
+            Interval(Real, -1.0, 1.0, closed="both"),
+            np.nan,
+            Hidden(StrOptions({"deprecated"})),
+        ],
     },
     prefer_skip_nested_validation=True,
 )
+# TODO(1.9): Change default value for `replace_undefined_by` param to 0.0 and remove
+# FutureWarnings.
 def cohen_kappa_score(
-    y1, y2, *, labels=None, weights=None, sample_weight=None, replace_undefined_by=0.0
+    y1,
+    y2,
+    *,
+    labels=None,
+    weights=None,
+    sample_weight=None,
+    replace_undefined_by="deprecated",
 ):
     r"""Compute Cohen's kappa: a statistic that measures inter-annotator agreement.
 
@@ -844,7 +856,7 @@ def cohen_kappa_score(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    replace_undefined_by : np.nan, float in [-1.0, 1.0], default=0.0
+    replace_undefined_by : np.nan, float in [-1.0, 1.0], default=np.nan
         Sets the return value when a division by zero would occur. This can happen for
         instance on empty input arrays, or when no label of interest (as defined in the
         `labels` param) is assigned by the second annotator, or when both `y1` and `y2`
@@ -888,9 +900,19 @@ def cohen_kappa_score(
     sum0 = np.sum(confusion, axis=0)
     sum1 = np.sum(confusion, axis=1)
 
+    mgs_changing_default = (
+        "The default return value of `cohen_kappa_score` in case of a division "
+        "by zero has been deprecated in 1.7 and will be changed to 0.0 in version "
+        "1.9. Set `replace_undefined_by=0.0` to use the new default and to silence "
+        "this Warning."
+    )
+
     numerator = np.outer(sum0, sum1)
     denominator = np.sum(sum0)
     if np.isclose(denominator, 0):
+        if replace_undefined_by == "deprecated":
+            replace_undefined_by = np.nan
+            warnings.warn(mgs_changing_default, FutureWarning)
         msg = (
             "`y2` does not contain any label that is also both present in `y1` and in "
             "`labels`. cohen_kappa_score is undefined and set to the value defined in "
@@ -914,6 +936,9 @@ def cohen_kappa_score(
     numerator = np.sum(w_mat * confusion)
     denominator = np.sum(w_mat * expected)
     if np.isclose(denominator, 0):
+        if replace_undefined_by == "deprecated":
+            replace_undefined_by = np.nan
+            warnings.warn(mgs_changing_default, FutureWarning)
         msg = (
             "`y1` and `y2` only have one label in common that is also in `labels`. "
             "cohen_kappa_score is undefined and set to the value defined in the "

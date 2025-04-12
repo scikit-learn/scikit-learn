@@ -991,6 +991,8 @@ def test_cohen_kappa_zero_division(replace_undefined_by):
     )
 
 
+# TODO(1.9): remove the @ignore_warnings of the FutureWarning
+@ignore_warnings(category=FutureWarning)
 def test_cohen_kappa_zero_division_warning():
     """Test that cohen_kappa_score raises UndefinedMetricWarning when a division by 0
     occurs."""
@@ -1012,6 +1014,31 @@ def test_cohen_kappa_zero_division_warning():
     with pytest.warns(
         UndefinedMetricWarning,
         match="`y1` and `y2` only have one label in common that is also in `labels`.",
+    ):
+        cohen_kappa_score(y1, y2, labels=labels)
+
+
+# TODO(1.9): remove test when deprecation cycle is over
+def test_cohen_kappa_score_raise_warning_deprecation():
+    """Test that `cohen_kappa_score` raises a `FutureWarning` for the changing default
+    of the `replace_undefined_by` param."""
+    # test first place to raise warning
+    labels = [1, 2]
+    y1 = np.array([1] * 5 + [2] * 5)
+    y2 = np.array([3] * 10)
+    with pytest.warns(
+        FutureWarning,
+        match="The default return value of `cohen_kappa_score` in case of a division",
+    ):
+        cohen_kappa_score(y1, y2, labels=labels)
+
+    # test second place to raise warning
+    labels = [1, 2]
+    y1 = np.array([1] * 5 + [2] * 5)
+    y2 = np.array([1] * 5 + [3] * 5)
+    with pytest.warns(
+        FutureWarning,
+        match="The default return value of `cohen_kappa_score` in case of a division",
     ):
         cohen_kappa_score(y1, y2, labels=labels)
 
