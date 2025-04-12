@@ -26,9 +26,6 @@ to focus on differences closer to the origin.
     - See :func:`sklearn.metrics.roc_curve` for further information about ROC
       curves.
 
-    - See :func:`sklearn.metrics.cap_curve` for further information about
-      CAP curves.
-
     - See :func:`sklearn.metrics.det_curve` for further information about
       DET curves.
 
