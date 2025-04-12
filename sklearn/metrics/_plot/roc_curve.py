@@ -358,7 +358,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             (as returned by “decision_function” on some classifiers).
 
             .. versionadded:: 1.7
-                `y_score` is now used instead of `y_pred`.
+                `y_pred` has been renamed to `y_score`.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
@@ -437,15 +437,15 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        # TODO(1.8): remove after the end of the deprecation period of `y_pred`
-        if y_score is not None and (
-            not isinstance(y_pred, str) or y_pred != "deprecated"
+        # TODO(1.9): remove after the end of the deprecation period of `y_pred`
+        if y_score is not None and not (
+            isinstance(y_pred, str) and y_pred == "deprecated"
         ):
             raise ValueError(
                 "`y_pred` and `y_score` cannot be both specified. Please use `y_score`"
                 " only as `y_pred` is deprecated in 1.7 and will be removed in 1.9."
             )
-        if not isinstance(y_pred, str) or y_pred != "deprecated":
+        if not (isinstance(y_pred, str) and y_pred == "deprecated"):
             warnings.warn(
                 (
                     "y_pred is deprecated in 1.7 and will be removed in 1.9. "
