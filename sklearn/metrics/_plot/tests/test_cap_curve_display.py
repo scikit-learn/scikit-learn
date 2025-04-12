@@ -401,10 +401,7 @@ def test_cap_curve_between_chance_and_perfect(
     lr.fit(X, y)
 
     if response_method == "auto":
-        if hasattr(lr, "predict_proba"):
-            response_method = "predict_proba"
-        elif hasattr(lr, "decision_function"):
-            response_method = "decision_function"
+        response_method = "predict_proba"
 
     y_pred = getattr(lr, response_method)(X)
     if y_pred.ndim != 1:
