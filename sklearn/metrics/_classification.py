@@ -323,8 +323,8 @@ def accuracy_score(
         Sample weights.
 
     replace_undefined_by : np.nan, int 0, float in [0.0, 1.0], default=0.0
-        Sets the return value when when `y_true` and `y_pred` are empty and the metric
-        is thus ill-defined. Can take the following values:
+        Sets the return value when `y_true` and `y_pred` are empty and the metric is
+        thus ill-defined. Can take the following values:
 
         - `np.nan` to return `np.nan`
         - a floating point value in the range of [0.0, 1.0] or int 0
