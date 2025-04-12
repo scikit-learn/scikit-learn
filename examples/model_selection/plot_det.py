@@ -151,6 +151,7 @@ plt.show()
 #
 # All curves agree that the Random Forest classifier is has more discriminative
 # power than the Linear SVM:
+#
 # - the area under the ROC and CAP curves is larger for the Random Forest
 #   classifier,
 # - the ROC and CAP curves are uniformly closer to the top left corner for the
