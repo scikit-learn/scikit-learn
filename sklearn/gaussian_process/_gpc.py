@@ -642,7 +642,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
     array([[0.83548752, 0.03228706, 0.13222543],
            [0.79064206, 0.06525643, 0.14410151]])
 
-    For a comaprison of the GaussianProcessClassifier with other classifiers see:
+    For a comparison of the GaussianProcessClassifier with other classifiers see:
     :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`.
     """
 

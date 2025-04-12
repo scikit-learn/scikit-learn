@@ -140,6 +140,11 @@ model with equal covariance per component.
 :term:`inductive` clustering methods) are not designed to be applied to new,
 unseen data.
 
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_cluster_plot_inductive_clustering.py`: An example
+  of an inductive clustering model for handling new data.
+
 .. _k_means:
 
 K-means
@@ -1323,7 +1328,7 @@ labels, rename 2 to 3, and get the same score::
   >>> metrics.adjusted_rand_score(labels_true, labels_pred)
   0.24...
 
-Furthermore, both :func:`rand_score` :func:`adjusted_rand_score` are
+Furthermore, both :func:`rand_score` and :func:`adjusted_rand_score` are
 **symmetric**: swapping the argument does not change the scores. They can
 thus be used as **consensus measures**::
 
@@ -1343,7 +1348,7 @@ Perfect labeling is scored 1.0::
 Poorly agreeing labels (e.g. independent labelings) have lower scores,
 and for the adjusted Rand index the score will be negative or close to
 zero. However, for the unadjusted Rand index the score, while lower,
-will not necessarily be close to zero.::
+will not necessarily be close to zero::
 
   >>> labels_true = [0, 0, 0, 0, 0, 0, 1, 1]
   >>> labels_pred = [0, 1, 2, 3, 4, 5, 5, 6]
@@ -2054,9 +2059,9 @@ cluster analysis as follows:
 
 .. topic:: Drawbacks:
 
-  - The Davies-Boulding index is generally higher for convex clusters than other
-    concepts of clusters, such as density based clusters like those obtained
-    from DBSCAN.
+  - The Davies-Bouldin index is generally higher for convex clusters than other
+    concepts of clusters, such as density-based clusters like those
+    obtained from DBSCAN.
   - The usage of centroid distance limits the distance metric to Euclidean
     space.
 
@@ -2067,7 +2072,7 @@ cluster analysis as follows:
   this index, similarity is defined as a measure :math:`R_{ij}` that trades off:
 
   - :math:`s_i`, the average distance between each point of cluster :math:`i` and
-    the centroid of that cluster -- also know as cluster diameter.
+    the centroid of that cluster -- also known as cluster diameter.
   - :math:`d_{ij}`, the distance between cluster centroids :math:`i` and
     :math:`j`.
 
@@ -2116,7 +2121,7 @@ Here is an example::
    array([[2, 1, 0],
           [0, 1, 2]])
 
-The first row of output array indicates that there are three samples whose
+The first row of the output array indicates that there are three samples whose
 true cluster is "a". Of them, two are in predicted cluster 0, one is in 1,
 and none is in 2. And the second row indicates that there are three samples
 whose true cluster is "b". Of them, none is in predicted cluster 0, one is in

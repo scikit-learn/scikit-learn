@@ -234,6 +234,9 @@ class OPTICS(ClusterMixin, BaseEstimator):
 
     For a more detailed example see
     :ref:`sphx_glr_auto_examples_cluster_plot_optics.py`.
+
+    For a comparison of OPTICS with other clustering algorithms, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
     """
 
     _parameter_constraints: dict = {

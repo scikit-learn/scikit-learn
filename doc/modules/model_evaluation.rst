@@ -125,14 +125,14 @@ hyperparameters or in comparing to other models like
     Scoring Rules, Prediction, and Estimation <10.1198/016214506000001437>`
     In: Journal of the American Statistical Association 102 (2007),
     pp. 359– 378.
-    `link to pdf <www.stat.washington.edu/people/raftery/Research/PDF/Gneiting2007jasa.pdf>`_
+    `link to pdf <https://sites.stat.washington.edu/raftery/Research/PDF/Gneiting2007jasa.pdf>`_
 
 .. [Gneiting2009] T. Gneiting. :arxiv:`Making and Evaluating Point Forecasts
     <0912.0902>`
     Journal of the American Statistical Association 106 (2009): 746 - 762.
 
 .. [Gneiting2014] T. Gneiting and M. Katzfuss. :doi:`Probabilistic Forecasting
-    <10.1146/annurev-st atistics-062713-085831>`. In: Annual Review of Statistics and Its Application 1.1 (2014), pp. 125–151.
+    <10.1146/annurev-statistics-062713-085831>`. In: Annual Review of Statistics and Its Application 1.1 (2014), pp. 125–151.
 
 .. [Fissler2022] T. Fissler, C. Lorentzen and M. Mayer. :arxiv:`Model
     Comparison and Calibration Assessment: User Guide for Consistent Scoring
@@ -258,7 +258,7 @@ Scoring string name                    Function                                 
 'neg_mean_poisson_deviance'            :func:`metrics.mean_poisson_deviance`
 'neg_mean_gamma_deviance'              :func:`metrics.mean_gamma_deviance`
 'neg_mean_absolute_percentage_error'   :func:`metrics.mean_absolute_percentage_error`
-'d2_absolute_error_score' 	           :func:`metrics.d2_absolute_error_score`
+'d2_absolute_error_score'              :func:`metrics.d2_absolute_error_score`
 ====================================   ==============================================     ==================================
 
 Usage examples:
@@ -377,7 +377,7 @@ You can create your own custom scorer object using
       >>> import numpy as np
       >>> def my_custom_loss_func(y_true, y_pred):
       ...     diff = np.abs(y_true - y_pred).max()
-      ...     return np.log1p(diff)
+      ...     return float(np.log1p(diff))
       ...
       >>> # score will negate the return value of my_custom_loss_func,
       >>> # which will be np.log(2), 0.693, given the values for X
@@ -676,7 +676,7 @@ where :math:`k` is the number of guesses allowed and :math:`1(x)` is the
   0.75
   >>> # Not normalizing gives the number of "correctly" classified samples
   >>> top_k_accuracy_score(y_true, y_score, k=2, normalize=False)
-  3
+  3.0
 
 .. _balanced_accuracy_score:
 
@@ -709,7 +709,7 @@ In contrast, if the conventional accuracy is above chance only because the
 classifier takes advantage of an imbalanced test set, then the balanced
 accuracy, as appropriate, will drop to :math:`\frac{1}{n\_classes}`.
 
-The score ranges from 0 to 1, or when ``adjusted=True`` is used, it rescaled to
+The score ranges from 0 to 1, or when ``adjusted=True`` is used, it is rescaled to
 the range :math:`\frac{1}{1 - n\_classes}` to 1, inclusive, with
 performance at random scoring 0.
 
@@ -837,7 +837,7 @@ false negatives and true positives as follows::
 
   >>> y_true = [0, 0, 0, 1, 1, 1, 1, 1]
   >>> y_pred = [0, 1, 0, 1, 0, 1, 0, 1]
-  >>> tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+  >>> tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel().tolist()
   >>> tn, fp, fn, tp
   (2, 1, 2, 3)
 
@@ -1344,30 +1344,30 @@ probability outputs (``predict_proba``) of a classifier instead of its
 discrete predictions.
 
 For binary classification with a true label :math:`y \in \{0,1\}`
-and a probability estimate :math:`p = \operatorname{Pr}(y = 1)`,
+and a probability estimate :math:`\hat{p} \approx \operatorname{Pr}(y = 1)`,
 the log loss per sample is the negative log-likelihood
 of the classifier given the true label:
 
 .. math::
 
-    L_{\log}(y, p) = -\log \operatorname{Pr}(y|p) = -(y \log (p) + (1 - y) \log (1 - p))
+    L_{\log}(y, \hat{p}) = -\log \operatorname{Pr}(y|\hat{p}) = -(y \log (\hat{p}) + (1 - y) \log (1 - \hat{p}))
 
 This extends to the multiclass case as follows.
 Let the true labels for a set of samples
 be encoded as a 1-of-K binary indicator matrix :math:`Y`,
 i.e., :math:`y_{i,k} = 1` if sample :math:`i` has label :math:`k`
 taken from a set of :math:`K` labels.
-Let :math:`P` be a matrix of probability estimates,
-with :math:`p_{i,k} = \operatorname{Pr}(y_{i,k} = 1)`.
+Let :math:`\hat{P}` be a matrix of probability estimates,
+with elements :math:`\hat{p}_{i,k} \approx \operatorname{Pr}(y_{i,k} = 1)`.
 Then the log loss of the whole set is
 
 .. math::
 
-    L_{\log}(Y, P) = -\log \operatorname{Pr}(Y|P) = - \frac{1}{N} \sum_{i=0}^{N-1} \sum_{k=0}^{K-1} y_{i,k} \log p_{i,k}
+    L_{\log}(Y, \hat{P}) = -\log \operatorname{Pr}(Y|\hat{P}) = - \frac{1}{N} \sum_{i=0}^{N-1} \sum_{k=0}^{K-1} y_{i,k} \log \hat{p}_{i,k}
 
 To see how this generalizes the binary log loss given above,
 note that in the binary case,
-:math:`p_{i,0} = 1 - p_{i,1}` and :math:`y_{i,0} = 1 - y_{i,1}`,
+:math:`\hat{p}_{i,0} = 1 - \hat{p}_{i,1}` and :math:`y_{i,0} = 1 - y_{i,1}`,
 so expanding the inner sum over :math:`y_{i,k} \in \{0,1\}`
 gives the binary log loss.
 
@@ -1434,7 +1434,7 @@ Then the multiclass MCC is defined as:
 
 When there are more than two labels, the value of the MCC will no longer range
 between -1 and +1. Instead the minimum value will be somewhere between -1 and 0
-depending on the number and distribution of ground true labels. The maximum
+depending on the number and distribution of ground truth labels. The maximum
 value is always +1.
 For additional information, see [WikipediaMCC2021]_.
 
@@ -1860,7 +1860,7 @@ same classification task:
     `The DET Curve in Assessment of Detection Task Performance
     <https://ccc.inaoep.mx/~villasen/bib/martin97det.pdf>`_, NIST 1997.
 
-.. [Navratil2007] J. Navractil and D. Klusacek,
+.. [Navratil2007] J. Navratil and D. Klusacek,
     `"On Linear DETs" <https://ieeexplore.ieee.org/document/4218079>`_,
     2007 IEEE International Conference on Acoustics,
     Speech and Signal Processing - ICASSP '07, Honolulu,
@@ -1923,41 +1923,64 @@ set [0,1] has an error::
 Brier score loss
 ----------------
 
-The :func:`brier_score_loss` function computes the
-`Brier score <https://en.wikipedia.org/wiki/Brier_score>`_
-for binary classes [Brier1950]_. Quoting Wikipedia:
+The :func:`brier_score_loss` function computes the `Brier score
+<https://en.wikipedia.org/wiki/Brier_score>`_ for binary and multiclass
+probabilistic predictions and is equivalent to the mean squared error.
+Quoting Wikipedia:
 
-    "The Brier score is a proper score function that measures the accuracy of
-    probabilistic predictions. It is applicable to tasks in which predictions
-    must assign probabilities to a set of mutually exclusive discrete outcomes."
+    "The Brier score is a strictly proper scoring rule that measures the accuracy of
+    probabilistic predictions. [...] [It] is applicable to tasks in which predictions
+    must assign probabilities to a set of mutually exclusive discrete outcomes or
+    classes."
 
-This function returns the mean squared error of the actual outcome
-:math:`y \in \{0,1\}` and the predicted probability estimate
-:math:`p = \operatorname{Pr}(y = 1)` (:term:`predict_proba`) as outputted by:
+Let the true labels for a set of :math:`N` data points be encoded as a 1-of-K binary
+indicator matrix :math:`Y`, i.e., :math:`y_{i,k} = 1` if sample :math:`i` has
+label :math:`k` taken from a set of :math:`K` labels. Let :math:`\hat{P}` be a matrix
+of probability estimates with elements :math:`\hat{p}_{i,k} \approx \operatorname{Pr}(y_{i,k} = 1)`.
+Following the original definition by [Brier1950]_, the Brier score is given by:
 
 .. math::
 
-   BS = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}} - 1}(y_i - p_i)^2
+  BS(Y, \hat{P}) = \frac{1}{N}\sum_{i=0}^{N-1}\sum_{k=0}^{K-1}(y_{i,k} - \hat{p}_{i,k})^{2}
 
-The Brier score loss is also between 0 to 1 and the lower the value (the mean
-square difference is smaller), the more accurate the prediction is.
+The Brier score lies in the interval :math:`[0, 2]` and the lower the value the
+better the probability estimates are (the mean squared difference is smaller).
+Actually, the Brier score is a strictly proper scoring rule, meaning that it
+achieves the best score only when the estimated probabilities equal the
+true ones.
 
-Here is a small example of usage of this function::
+Note that in the binary case, the Brier score is usually divided by two and
+ranges between :math:`[0,1]`. For binary targets :math:`y_i \in {0, 1}` and
+probability estimates :math:`\hat{p}_i  \approx \operatorname{Pr}(y_i = 1)`
+for the positive class, the Brier score is then equal to:
+
+.. math::
+
+   BS(y, \hat{p}) = \frac{1}{N} \sum_{i=0}^{N - 1}(y_i - \hat{p}_i)^2
+
+The :func:`brier_score_loss` function computes the Brier score given the
+ground-truth labels and predicted probabilities, as returned by an estimator's
+``predict_proba`` method. The `scale_by_half` parameter controls which of the
+two above definitions to follow.
+
 
     >>> import numpy as np
     >>> from sklearn.metrics import brier_score_loss
     >>> y_true = np.array([0, 1, 1, 0])
     >>> y_true_categorical = np.array(["spam", "ham", "ham", "spam"])
     >>> y_prob = np.array([0.1, 0.9, 0.8, 0.4])
-    >>> y_pred = np.array([0, 1, 1, 0])
     >>> brier_score_loss(y_true, y_prob)
     0.055
     >>> brier_score_loss(y_true, 1 - y_prob, pos_label=0)
     0.055
     >>> brier_score_loss(y_true_categorical, y_prob, pos_label="ham")
     0.055
-    >>> brier_score_loss(y_true, y_prob > 0.5)
-    0.0
+    >>> brier_score_loss(
+    ...    ["eggs", "ham", "spam"],
+    ...    [[0.8, 0.1, 0.1], [0.2, 0.7, 0.1], [0.2, 0.2, 0.6]],
+    ...    labels=["eggs", "ham", "spam"],
+    ... )
+    0.146...
 
 The Brier score can be used to assess how well a classifier is calibrated.
 However, a lower Brier score loss does not always mean a better calibration.
@@ -1992,7 +2015,7 @@ the same does a lower Brier score loss always mean better calibration"
 
 .. [Flach2008] Flach, Peter, and Edson Matsubara. `"On classification, ranking,
   and probability estimation." <https://drops.dagstuhl.de/opus/volltexte/2008/1382/>`_
-  Dagstuhl Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum fr Informatik (2008).
+  Dagstuhl Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum für Informatik (2008).
 
 .. _class_likelihood_ratios:
 
@@ -2086,26 +2109,31 @@ the actual formulas).
 
 .. dropdown:: Mathematical divergences
 
-  The positive likelihood ratio is undefined when :math:`fp = 0`, which can be
-  interpreted as the classifier perfectly identifying positive cases. If :math:`fp
-  = 0` and additionally :math:`tp = 0`, this leads to a zero/zero division. This
-  happens, for instance, when using a `DummyClassifier` that always predicts the
-  negative class and therefore the interpretation as a perfect classifier is lost.
+  The positive likelihood ratio (`LR+`) is undefined when :math:`fp=0`, meaning the
+  classifier does not misclassify any negative labels as positives. This condition can
+  either indicate a perfect identification of all the negative cases or, if there are
+  also no true positive predictions (:math:`tp=0`), that the classifier does not predict
+  the positive class at all. In the first case, `LR+` can be interpreted as `np.inf`, in
+  the second case (for instance, with highly imbalanced data) it can be interpreted as
+  `np.nan`.
 
-  The negative likelihood ratio is undefined when :math:`tn = 0`. Such divergence
-  is invalid, as :math:`LR_- > 1` would indicate an increase in the odds of a
-  sample belonging to the positive class after being classified as negative, as if
-  the act of classifying caused the positive condition. This includes the case of
-  a `DummyClassifier` that always predicts the positive class (i.e. when
-  :math:`tn=fn=0`).
+  The negative likelihood ratio (`LR-`) is undefined when :math:`tn=0`. Such
+  divergence is invalid, as :math:`LR_- > 1.0` would indicate an increase in the odds of
+  a sample belonging to the positive class after being classified as negative, as if the
+  act of classifying caused the positive condition. This includes the case of a
+  :class:`~sklearn.dummy.DummyClassifier` that always predicts the positive class
+  (i.e. when :math:`tn=fn=0`).
 
-  Both class likelihood ratios are undefined when :math:`tp=fn=0`, which means
-  that no samples of the positive class were present in the testing set. This can
-  also happen when cross-validating highly imbalanced data.
+  Both class likelihood ratios (`LR+ and LR-`) are undefined when :math:`tp=fn=0`, which
+  means that no samples of the positive class were present in the test set. This can
+  happen when cross-validating on highly imbalanced data and also leads to a division by
+  zero.
 
-  In all the previous cases the :func:`class_likelihood_ratios` function raises by
-  default an appropriate warning message and returns `nan` to avoid pollution when
-  averaging over cross-validation folds.
+  If a division by zero occurs and `raise_warning` is set to `True` (default),
+  :func:`class_likelihood_ratios` raises an `UndefinedMetricWarning` and returns
+  `np.nan` by default to avoid pollution when averaging over cross-validation folds.
+  Users can set return values in case of a division by zero with the
+  `replace_undefined_by` param.
 
   For a worked-out demonstration of the :func:`class_likelihood_ratios` function,
   see the example below.
@@ -2117,8 +2145,7 @@ the actual formulas).
 
   * Brenner, H., & Gefeller, O. (1997).
     Variation of sensitivity, specificity, likelihood ratios and predictive
-    values with disease prevalence.
-    Statistics in medicine, 16(9), 981-991.
+    values with disease prevalence. Statistics in medicine, 16(9), 981-991.
 
 
 .. _d2_score_classification:
@@ -2203,7 +2230,7 @@ The :func:`coverage_error` function computes the average number of labels that
 have to be included in the final prediction such that all true labels
 are predicted. This is useful if you want to know how many top-scored-labels
 you have to predict in average without missing any true one. The best value
-of this metrics is thus the average number of true labels.
+of this metric is thus the average number of true labels.
 
 .. note::
 
@@ -2345,7 +2372,7 @@ engine algorithms or related applications. Using a graded relevance scale of
 documents in a search-engine result set, DCG measures the usefulness, or gain,
 of a document based on its position in the result list. The gain is accumulated
 from the top of the result list to the bottom, with the gain of each result
-discounted at lower ranks"
+discounted at lower ranks."
 
 DCG orders the true targets (e.g. relevance of query answers) in the predicted
 order, then multiplies them by a logarithmic decay and sums the result. The sum
@@ -2575,7 +2602,7 @@ function::
   for an example of mean squared error usage to evaluate gradient boosting regression.
 
 Taking the square root of the MSE, called the root mean squared error (RMSE), is another
-common metric that provides a measure in the same units as the target variable. RSME is
+common metric that provides a measure in the same units as the target variable. RMSE is
 available through the :func:`root_mean_squared_error` function.
 
 .. _mean_squared_log_error:
@@ -2728,7 +2755,7 @@ Here is a small example of usage of the :func:`max_error` function::
   >>> y_true = [3, 2, 7, 1]
   >>> y_pred = [9, 2, 7, 1]
   >>> max_error(y_true, y_pred)
-  6
+  6.0
 
 The :func:`max_error` does not support multioutput.
 

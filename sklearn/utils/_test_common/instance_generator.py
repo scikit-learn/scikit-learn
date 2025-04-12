@@ -111,7 +111,6 @@ from sklearn.linear_model import (
     RANSACRegressor,
     Ridge,
     RidgeClassifier,
-    RidgeCV,
     SGDClassifier,
     SGDOneClassSVM,
     SGDRegressor,
@@ -177,6 +176,7 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import all_estimators
 from sklearn.utils._tags import get_tags
 from sklearn.utils._testing import SkipTest
+from sklearn.utils.fixes import _IS_32BIT, parse_version, sp_base_version
 
 CROSS_DECOMPOSITION = ["PLSCanonical", "PLSRegression", "CCA", "PLSSVD"]
 
@@ -197,7 +197,7 @@ INIT_PARAMS = {
     BisectingKMeans: dict(n_init=2, n_clusters=2, max_iter=5),
     CalibratedClassifierCV: dict(estimator=LogisticRegression(C=1), cv=3),
     CCA: dict(n_components=1, max_iter=5),
-    ClassifierChain: dict(base_estimator=LogisticRegression(C=1), cv=3),
+    ClassifierChain: dict(estimator=LogisticRegression(C=1), cv=3),
     ColumnTransformer: dict(transformers=[("trans1", StandardScaler(), [0, 1])]),
     DictionaryLearning: dict(max_iter=20, transform_algorithm="lasso_lars"),
     # the default strategy prior would output constant predictions and fail
@@ -429,7 +429,7 @@ INIT_PARAMS = {
     # For common tests, we can enforce using `LinearRegression` that
     # is the default estimator in `RANSACRegressor` instead of `Ridge`.
     RANSACRegressor: dict(estimator=LinearRegression(), max_trials=10),
-    RegressorChain: dict(base_estimator=Ridge(), cv=3),
+    RegressorChain: dict(estimator=Ridge(), cv=3),
     RFECV: dict(estimator=LogisticRegression(C=1), cv=3),
     RFE: dict(estimator=LogisticRegression(C=1)),
     # be tolerant of noisy datasets (not actually speed)
@@ -562,18 +562,61 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     IncrementalPCA: {"check_dict_unchanged": dict(batch_size=10, n_components=1)},
     Isomap: {"check_dict_unchanged": dict(n_components=1)},
     KMeans: {"check_dict_unchanged": dict(max_iter=5, n_clusters=1, n_init=2)},
+    # TODO(1.9) simplify when averaged_inverted_cdf is the default
+    KBinsDiscretizer: {
+        "check_sample_weight_equivalence_on_dense_data": [
+            # Using subsample != None leads to a stochastic fit that is not
+            # handled by the check_sample_weight_equivalence_on_dense_data test.
+            dict(strategy="quantile", subsample=None, quantile_method="inverted_cdf"),
+            dict(
+                strategy="quantile",
+                subsample=None,
+                quantile_method="averaged_inverted_cdf",
+            ),
+            dict(strategy="uniform", subsample=None),
+            # The "kmeans" strategy leads to a stochastic fit that is not
+            # handled by the check_sample_weight_equivalence test.
+        ],
+        "check_sample_weights_list": dict(
+            strategy="quantile", quantile_method="averaged_inverted_cdf"
+        ),
+        "check_sample_weights_pandas_series": dict(
+            strategy="quantile", quantile_method="averaged_inverted_cdf"
+        ),
+        "check_sample_weights_shape": dict(
+            strategy="quantile", quantile_method="averaged_inverted_cdf"
+        ),
+        "check_sample_weights_not_an_array": dict(
+            strategy="quantile", quantile_method="averaged_inverted_cdf"
+        ),
+        "check_sample_weights_not_overwritten": dict(
+            strategy="quantile", quantile_method="averaged_inverted_cdf"
+        ),
+    },
     KernelPCA: {"check_dict_unchanged": dict(n_components=1)},
     LassoLars: {"check_non_transformer_estimators_n_iter": dict(alpha=0.0)},
     LatentDirichletAllocation: {
         "check_dict_unchanged": dict(batch_size=10, max_iter=5, n_components=1)
     },
     LinearDiscriminantAnalysis: {"check_dict_unchanged": dict(n_components=1)},
+    LinearSVC: {
+        "check_sample_weight_equivalence": [
+            # TODO: dual=True is a stochastic solver: we cannot rely on
+            # check_sample_weight_equivalence to check the correct handling of
+            # sample_weight and we would need a statistical test instead, see
+            # meta-issue #162298.
+            # dict(max_iter=20, dual=True, tol=1e-12),
+            dict(dual=False, tol=1e-12),
+            dict(dual=False, tol=1e-12, class_weight="balanced"),
+        ]
+    },
     LinearRegression: {
         "check_estimator_sparse_tag": [dict(positive=False), dict(positive=True)],
         "check_sample_weight_equivalence_on_dense_data": [
             dict(positive=False),
             dict(positive=True),
         ],
+        "check_sample_weight_equivalence_on_sparse_data": [dict(tol=1e-12)],
     },
     LocallyLinearEmbedding: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     LogisticRegression: {
@@ -582,12 +625,30 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             dict(solver="liblinear"),
             dict(solver="newton-cg"),
             dict(solver="newton-cholesky"),
+            dict(solver="newton-cholesky", class_weight="balanced"),
+        ]
+    },
+    LogisticRegressionCV: {
+        "check_sample_weight_equivalence": [
+            dict(solver="lbfgs"),
+            dict(solver="newton-cholesky"),
+            dict(solver="newton-cholesky", class_weight="balanced"),
         ],
         "check_sample_weight_equivalence_on_sparse_data": [
             dict(solver="liblinear"),
         ],
     },
     MDS: {"check_dict_unchanged": dict(max_iter=5, n_components=1, n_init=2)},
+    MLPClassifier: {
+        "check_sample_weight_equivalence_on_dense_data": [
+            dict(solver="lbfgs"),
+        ]
+    },
+    MLPRegressor: {
+        "check_sample_weight_equivalence_on_dense_data": [
+            dict(solver="sgd", tol=1e-2, random_state=42),
+        ]
+    },
     MiniBatchDictionaryLearning: {
         "check_dict_unchanged": dict(batch_size=10, max_iter=5, n_components=1)
     },
@@ -824,15 +885,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
-    BayesianRidge: {
-        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
-        "check_sample_weight_equivalence_on_dense_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-        "check_sample_weight_equivalence_on_sparse_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-    },
     BernoulliRBM: {
         "check_methods_subset_invariance": ("fails for the decision_function method"),
         "check_methods_sample_order_invariance": ("fails for the score_samples method"),
@@ -956,15 +1008,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
-    KBinsDiscretizer: {
-        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
-        "check_sample_weight_equivalence_on_dense_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-        "check_sample_weight_equivalence_on_sparse_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-    },
     KernelDensity: {
         "check_sample_weight_equivalence_on_dense_data": (
             "sample_weight must have positive values"
@@ -981,18 +1024,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     KNeighborsTransformer: {
         "check_methods_sample_order_invariance": "check is not applicable."
-    },
-    LinearRegression: {
-        # TODO: this model should converge to the minimum norm solution of the
-        # least squares problem and as result be numerically stable enough when
-        # running the equivalence check even if n_features > n_samples. Maybe
-        # this is is not the case and a different choice of solver could fix
-        # this problem. This might require setting a low enough value for the
-        # tolerance of the lsqr solver:
-        # https://github.com/scikit-learn/scikit-learn/issues/30131
-        "check_sample_weight_equivalence_on_sparse_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
     },
     LinearSVC: {
         # TODO: replace by a statistical test when _dual=True, see meta-issue #16298
@@ -1143,14 +1174,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
             "n_iter_ cannot be easily accessed."
         )
     },
-    RidgeCV: {
-        "check_sample_weight_equivalence_on_dense_data": (
-            "GridSearchCV does not forward the weights to the scorer by default."
-        ),
-        "check_sample_weight_equivalence_on_sparse_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-    },
     SelfTrainingClassifier: {
         "check_non_transformer_estimators_n_iter": "n_iter_ can be 0."
     },
@@ -1204,12 +1227,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_dont_overwrite_parameters": "empty array passed inside",
         "check_fit2d_predict1d": "empty array passed inside",
     },
-    SplineTransformer: {
-        "check_estimators_pickle": (
-            "Current Scipy implementation of _bsplines does not"
-            "support const memory views."
-        ),
-    },
     SVC: {
         # TODO: fix sample_weight handling of this estimator when probability=False
         # TODO: replace by a statistical test when probability=True
@@ -1240,6 +1257,15 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
 }
 
+# TODO: remove when scipy min version >= 1.11
+if sp_base_version < parse_version("1.11"):
+    PER_ESTIMATOR_XFAIL_CHECKS[SplineTransformer] = {
+        "check_estimators_pickle": (
+            "scipy < 1.11 implementation of _bsplines does not"
+            "support const memory views."
+        ),
+    }
+
 
 def _get_expected_failed_checks(estimator):
     """Get the expected failed checks for all estimators in scikit-learn."""
@@ -1255,6 +1281,18 @@ def _get_expected_failed_checks(estimator):
                 {
                     "check_n_features_in_after_fitting": "FIXME",
                     "check_dataframe_column_names_consistency": "FIXME",
+                }
+            )
+    if type(estimator) == LinearRegression:
+        if _IS_32BIT:
+            failed_checks.update(
+                {
+                    "check_sample_weight_equivalence_on_dense_data": (
+                        "Issue #31098. Fails on 32-bit platforms with recent scipy."
+                    ),
+                    "check_sample_weight_equivalence_on_sparse_data": (
+                        "Issue #31098. Fails on 32-bit platforms with recent scipy."
+                    ),
                 }
             )
 
