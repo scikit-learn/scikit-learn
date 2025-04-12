@@ -24,8 +24,8 @@ def test_averaged_weighted_median():
     assert score == np.median(y)
 
 
-def test_averaged_weighted_percentile():
-    rng = np.random.RandomState(0)
+def test_averaged_weighted_percentile(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     y = rng.randint(20, size=10)
 
     sw = np.ones(10)
@@ -96,7 +96,7 @@ def test_weighted_percentile_zero_weight_zero_percentile():
     assert approx(value) == 4
 
 
-def test_weighted_median_equal_weights():
+def test_weighted_median_equal_weights(global_random_seed):
     """Checks `_weighted_percentile(percentile_rank=50)` is the same as `np.median`.
 
     `sample_weights` are all 1s and the number of samples is odd.
@@ -106,7 +106,7 @@ def test_weighted_median_equal_weights():
     For an even number of samples, this check will not always hold as (note that
     for some other percentile methods it will always hold). See #17370 for details.
     """
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     x = rng.randint(10, size=11)
     weights = np.ones(x.shape)
     median = np.median(x)
@@ -114,21 +114,21 @@ def test_weighted_median_equal_weights():
     assert median == approx(w_median)
 
 
-def test_weighted_median_integer_weights():
-    # Checks weighted percentile_rank=0.5 is same as median when manually weight
+def test_weighted_median_integer_weights(global_random_seed):
+    # Checks average weighted percentile_rank=0.5 is same as median when manually weight
     # data
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     x = rng.randint(20, size=10)
     weights = rng.choice(5, size=10)
     x_manual = np.repeat(x, weights)
     median = np.median(x_manual)
-    w_median = _weighted_percentile(x, weights)
+    w_median = _averaged_weighted_percentile(x, weights)
     assert median == approx(w_median)
 
 
-def test_weighted_percentile_2d():
+def test_weighted_percentile_2d(global_random_seed):
     # Check for when array 2D and sample_weight 1D
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     x1 = rng.randint(10, size=10)
     w1 = rng.choice(5, size=10)
 
@@ -235,21 +235,21 @@ def test_weighted_percentile_array_api_consistency(
 
 
 @pytest.mark.parametrize("sample_weight_ndim", [1, 2])
-def test_weighted_percentile_nan_filtered(sample_weight_ndim):
+def test_weighted_percentile_nan_filtered(sample_weight_ndim, global_random_seed):
     """Test that calling _weighted_percentile on an array with nan values returns
     the same results as calling _weighted_percentile on a filtered version of the data.
     We test both with sample_weight of the same shape as the data and with
     one-dimensional sample_weight."""
 
-    rng = np.random.RandomState(42)
-    array_with_nans = rng.rand(10, 100)
+    rng = np.random.RandomState(global_random_seed)
+    array_with_nans = rng.rand(100, 10)
     array_with_nans[rng.rand(*array_with_nans.shape) < 0.5] = np.nan
     nan_mask = np.isnan(array_with_nans)
 
     if sample_weight_ndim == 2:
-        sample_weight = rng.randint(1, 6, size=(10, 100))
+        sample_weight = rng.randint(1, 6, size=(100, 10))
     else:
-        sample_weight = rng.randint(1, 6, size=(10,))
+        sample_weight = rng.randint(1, 6, size=(100,))
 
     # Find the weighted percentile on the array with nans:
     results = _weighted_percentile(array_with_nans, sample_weight, 30)
@@ -306,11 +306,11 @@ def test_weighted_percentile_all_nan_column():
     reason="np.quantile only accepts weights since version 2.0",
 )
 @pytest.mark.parametrize("percentile", [66, 10, 50])
-def test_weighted_percentile_like_numpy_quantile(percentile):
+def test_weighted_percentile_like_numpy_quantile(percentile, global_random_seed):
     """Check that _weighted_percentile delivers equivalent results as np.quantile
     with weights."""
 
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     array = rng.rand(10, 100)
     sample_weight = rng.randint(1, 6, size=(10, 100))
 
@@ -329,11 +329,11 @@ def test_weighted_percentile_like_numpy_quantile(percentile):
     reason="np.nanquantile only accepts weights since version 2.0",
 )
 @pytest.mark.parametrize("percentile", [66, 10, 50])
-def test_weighted_percentile_like_numpy_nanquantile(percentile):
+def test_weighted_percentile_like_numpy_nanquantile(percentile, global_random_seed):
     """Check that _weighted_percentile delivers equivalent results as np.nanquantile
     with weights."""
 
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     array_with_nans = rng.rand(10, 100)
     array_with_nans[rng.rand(*array_with_nans.shape) < 0.5] = np.nan
     sample_weight = rng.randint(1, 6, size=(10, 100))

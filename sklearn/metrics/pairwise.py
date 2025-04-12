@@ -24,7 +24,6 @@ from ..utils._array_api import (
     _is_numpy_namespace,
     _max_precision_float_dtype,
     _modify_in_place_if_numpy,
-    device,
     get_namespace,
     get_namespace_and_device,
 )
@@ -1174,14 +1173,7 @@ def cosine_distances(X, Y=None):
     S = cosine_similarity(X, Y)
     S *= -1
     S += 1
-    # TODO: remove the xp.asarray calls once the following is fixed:
-    # https://github.com/data-apis/array-api-compat/issues/177
-    device_ = device(S)
-    S = xp.clip(
-        S,
-        xp.asarray(0.0, device=device_, dtype=S.dtype),
-        xp.asarray(2.0, device=device_, dtype=S.dtype),
-    )
+    S = xp.clip(S, 0.0, 2.0)
     if X is Y or Y is None:
         # Ensure that distances between vectors and themselves are set to 0.0.
         # This may not be the case due to floating point rounding errors.
@@ -1739,8 +1731,6 @@ def cosine_similarity(X, Y=None, dense_output=True):
     array([[0.     , 0.     ],
            [0.57..., 0.81...]])
     """
-    # to avoid recursive import
-
     X, Y = check_pairwise_arrays(X, Y)
 
     X_normalized = normalize(X, copy=True)
