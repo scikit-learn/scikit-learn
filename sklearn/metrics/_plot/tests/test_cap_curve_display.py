@@ -85,10 +85,8 @@ def test_cumulative_accuracy_display_from_predictions(
 
     y_true_cumulative = cap_display.y_true_cumulative
     cumulative_total = cap_display.cumulative_total
-    assert y_true_cumulative.dtype == cumulative_total.dtype, (
-        f"Dtype mismatch: y_true_cumulative.dtype={y_true_cumulative.dtype}, "
-        f"cumulative_total.dtype={cumulative_total.dtype}"
-    )
+    assert y_true_cumulative.dtype == y_pred.dtype
+    assert cumulative_total.dtype == y_pred.dtype
 
 
 @pytest.mark.parametrize(
