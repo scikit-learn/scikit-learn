@@ -258,7 +258,7 @@ Scoring string name                    Function                                 
 'neg_mean_poisson_deviance'            :func:`metrics.mean_poisson_deviance`
 'neg_mean_gamma_deviance'              :func:`metrics.mean_gamma_deviance`
 'neg_mean_absolute_percentage_error'   :func:`metrics.mean_absolute_percentage_error`
-'d2_absolute_error_score' 	           :func:`metrics.d2_absolute_error_score`
+'d2_absolute_error_score'              :func:`metrics.d2_absolute_error_score`
 ====================================   ==============================================     ==================================
 
 Usage examples:
@@ -1344,30 +1344,30 @@ probability outputs (``predict_proba``) of a classifier instead of its
 discrete predictions.
 
 For binary classification with a true label :math:`y \in \{0,1\}`
-and a probability estimate :math:`p = \operatorname{Pr}(y = 1)`,
+and a probability estimate :math:`\hat{p} \approx \operatorname{Pr}(y = 1)`,
 the log loss per sample is the negative log-likelihood
 of the classifier given the true label:
 
 .. math::
 
-    L_{\log}(y, p) = -\log \operatorname{Pr}(y|p) = -(y \log (p) + (1 - y) \log (1 - p))
+    L_{\log}(y, \hat{p}) = -\log \operatorname{Pr}(y|\hat{p}) = -(y \log (\hat{p}) + (1 - y) \log (1 - \hat{p}))
 
 This extends to the multiclass case as follows.
 Let the true labels for a set of samples
 be encoded as a 1-of-K binary indicator matrix :math:`Y`,
 i.e., :math:`y_{i,k} = 1` if sample :math:`i` has label :math:`k`
 taken from a set of :math:`K` labels.
-Let :math:`P` be a matrix of probability estimates,
-with :math:`p_{i,k} = \operatorname{Pr}(y_{i,k} = 1)`.
+Let :math:`\hat{P}` be a matrix of probability estimates,
+with elements :math:`\hat{p}_{i,k} \approx \operatorname{Pr}(y_{i,k} = 1)`.
 Then the log loss of the whole set is
 
 .. math::
 
-    L_{\log}(Y, P) = -\log \operatorname{Pr}(Y|P) = - \frac{1}{N} \sum_{i=0}^{N-1} \sum_{k=0}^{K-1} y_{i,k} \log p_{i,k}
+    L_{\log}(Y, \hat{P}) = -\log \operatorname{Pr}(Y|\hat{P}) = - \frac{1}{N} \sum_{i=0}^{N-1} \sum_{k=0}^{K-1} y_{i,k} \log \hat{p}_{i,k}
 
 To see how this generalizes the binary log loss given above,
 note that in the binary case,
-:math:`p_{i,0} = 1 - p_{i,1}` and :math:`y_{i,0} = 1 - y_{i,1}`,
+:math:`\hat{p}_{i,0} = 1 - \hat{p}_{i,1}` and :math:`y_{i,0} = 1 - y_{i,1}`,
 so expanding the inner sum over :math:`y_{i,k} \in \{0,1\}`
 gives the binary log loss.
 
@@ -1923,41 +1923,64 @@ set [0,1] has an error::
 Brier score loss
 ----------------
 
-The :func:`brier_score_loss` function computes the
-`Brier score <https://en.wikipedia.org/wiki/Brier_score>`_
-for binary classes [Brier1950]_. Quoting Wikipedia:
+The :func:`brier_score_loss` function computes the `Brier score
+<https://en.wikipedia.org/wiki/Brier_score>`_ for binary and multiclass
+probabilistic predictions and is equivalent to the mean squared error.
+Quoting Wikipedia:
 
-    "The Brier score is a proper score function that measures the accuracy of
-    probabilistic predictions. It is applicable to tasks in which predictions
-    must assign probabilities to a set of mutually exclusive discrete outcomes."
+    "The Brier score is a strictly proper scoring rule that measures the accuracy of
+    probabilistic predictions. [...] [It] is applicable to tasks in which predictions
+    must assign probabilities to a set of mutually exclusive discrete outcomes or
+    classes."
 
-This function returns the mean squared error of the actual outcome
-:math:`y \in \{0,1\}` and the predicted probability estimate
-:math:`p = \operatorname{Pr}(y = 1)` (:term:`predict_proba`) as outputted by:
+Let the true labels for a set of :math:`N` data points be encoded as a 1-of-K binary
+indicator matrix :math:`Y`, i.e., :math:`y_{i,k} = 1` if sample :math:`i` has
+label :math:`k` taken from a set of :math:`K` labels. Let :math:`\hat{P}` be a matrix
+of probability estimates with elements :math:`\hat{p}_{i,k} \approx \operatorname{Pr}(y_{i,k} = 1)`.
+Following the original definition by [Brier1950]_, the Brier score is given by:
 
 .. math::
 
-   BS = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}} - 1}(y_i - p_i)^2
+  BS(Y, \hat{P}) = \frac{1}{N}\sum_{i=0}^{N-1}\sum_{k=0}^{K-1}(y_{i,k} - \hat{p}_{i,k})^{2}
 
-The Brier score loss is also between 0 to 1 and the lower the value (the mean
-square difference is smaller), the more accurate the prediction is.
+The Brier score lies in the interval :math:`[0, 2]` and the lower the value the
+better the probability estimates are (the mean squared difference is smaller).
+Actually, the Brier score is a strictly proper scoring rule, meaning that it
+achieves the best score only when the estimated probabilities equal the
+true ones.
 
-Here is a small example of usage of this function::
+Note that in the binary case, the Brier score is usually divided by two and
+ranges between :math:`[0,1]`. For binary targets :math:`y_i \in {0, 1}` and
+probability estimates :math:`\hat{p}_i  \approx \operatorname{Pr}(y_i = 1)`
+for the positive class, the Brier score is then equal to:
+
+.. math::
+
+   BS(y, \hat{p}) = \frac{1}{N} \sum_{i=0}^{N - 1}(y_i - \hat{p}_i)^2
+
+The :func:`brier_score_loss` function computes the Brier score given the
+ground-truth labels and predicted probabilities, as returned by an estimator's
+``predict_proba`` method. The `scale_by_half` parameter controls which of the
+two above definitions to follow.
+
 
     >>> import numpy as np
     >>> from sklearn.metrics import brier_score_loss
     >>> y_true = np.array([0, 1, 1, 0])
     >>> y_true_categorical = np.array(["spam", "ham", "ham", "spam"])
     >>> y_prob = np.array([0.1, 0.9, 0.8, 0.4])
-    >>> y_pred = np.array([0, 1, 1, 0])
     >>> brier_score_loss(y_true, y_prob)
     0.055
     >>> brier_score_loss(y_true, 1 - y_prob, pos_label=0)
     0.055
     >>> brier_score_loss(y_true_categorical, y_prob, pos_label="ham")
     0.055
-    >>> brier_score_loss(y_true, y_prob > 0.5)
-    0.0
+    >>> brier_score_loss(
+    ...    ["eggs", "ham", "spam"],
+    ...    [[0.8, 0.1, 0.1], [0.2, 0.7, 0.1], [0.2, 0.2, 0.6]],
+    ...    labels=["eggs", "ham", "spam"],
+    ... )
+    0.146...
 
 The Brier score can be used to assess how well a classifier is calibrated.
 However, a lower Brier score loss does not always mean a better calibration.
@@ -2349,7 +2372,7 @@ engine algorithms or related applications. Using a graded relevance scale of
 documents in a search-engine result set, DCG measures the usefulness, or gain,
 of a document based on its position in the result list. The gain is accumulated
 from the top of the result list to the bottom, with the gain of each result
-discounted at lower ranks"
+discounted at lower ranks."
 
 DCG orders the true targets (e.g. relevance of query answers) in the predicted
 order, then multiplies them by a logarithmic decay and sums the result. The sum

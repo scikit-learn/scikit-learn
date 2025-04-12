@@ -1033,6 +1033,9 @@ def adjusted_mutual_info_score(
         or classes.shape[0] == clusters.shape[0] == 0
     ):
         return 1.0
+    # if there is only one class or one cluster return 0.0.
+    elif classes.shape[0] == 1 or clusters.shape[0] == 1:
+        return 0.0
 
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
     # Calculate the MI for the two clusterings
@@ -1051,8 +1054,13 @@ def adjusted_mutual_info_score(
         denominator = min(denominator, -np.finfo("float64").eps)
     else:
         denominator = max(denominator, np.finfo("float64").eps)
-    ami = (mi - emi) / denominator
-    return float(ami)
+    # The same applies analogously to mi and emi.
+    numerator = mi - emi
+    if numerator < 0:
+        numerator = min(numerator, -np.finfo("float64").eps)
+    else:
+        numerator = max(numerator, np.finfo("float64").eps)
+    return float(numerator / denominator)
 
 
 @validate_params(
