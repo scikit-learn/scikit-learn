@@ -463,7 +463,7 @@ def test_cap_curve_between_chance_and_perfect(
 @pytest.mark.parametrize(
     "response_method", ["predict_proba", "decision_function", "auto"]
 )
-def test_with_linear_svc(pyplot, data_binary, response_method):
+def test_cap_for_non_prob_classifier(pyplot, data_binary, response_method):
     X, y = data_binary
     svc = LinearSVC().fit(X, y)
 
