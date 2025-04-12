@@ -314,14 +314,12 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         display : :class:`~sklearn.metrics.CAPCurveDisplay`
             Object that stores computed values.
         """
-        if pos_label is None:
-            pos_label = 1
-        if sample_weight is None:
-            sample_weight = np.ones_like(y_true, dtype=y_pred.dtype)
-
         pos_label_validated, name = cls._validate_from_predictions_params(
             y_true, y_pred, sample_weight=sample_weight, pos_label=pos_label, name=name
         )
+
+        if sample_weight is None:
+            sample_weight = np.ones_like(y_true, dtype=y_pred.dtype)
 
         # ensure y_true is boolean for positive class identification
         y_true_bool = y_true == pos_label_validated
@@ -442,24 +440,6 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         """
         if not is_classifier(estimator):
             raise NotImplementedError
-
-        if is_classifier(estimator) and response_method == "auto":
-            if hasattr(estimator, "predict_proba"):
-                response_method = "predict_proba"
-            elif hasattr(estimator, "decision_function"):
-                response_method = "decision_function"
-            else:
-                raise AttributeError(
-                    "Estimator does not have a predict_proba or decision_function"
-                    " method."
-                )
-
-        if response_method not in ["predict_proba", "decision_function", "auto"]:
-            raise AttributeError(
-                "response_method must be in: "
-                "{'predict_proba', 'decision_function', 'auto'}. "
-                f"Got '{response_method}' instead."
-            )
 
         y_pred, pos_label, name = cls._validate_and_get_response_values(
             estimator,

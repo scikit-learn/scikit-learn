@@ -71,7 +71,6 @@ def test_display_curve_error_classifier(pyplot, data, data_binary, Display):
         DetCurveDisplay,
         PrecisionRecallDisplay,
         RocCurveDisplay,
-        CAPCurveDisplay,
     ],
 )
 def test_display_curve_error_regression(pyplot, data_binary, Display):

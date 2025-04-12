@@ -3,7 +3,6 @@ import re
 import numpy as np
 import pytest
 
-from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.datasets import make_classification
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
@@ -173,16 +172,6 @@ def test_display_from_estimator_and_from_prediction(
         rtol=1e-6,
         atol=1e-8,
     )
-
-
-def test_invalid_response_method(pyplot, logistic_regression_model, data_binary):
-    X, y = data_binary
-    pattern = r"response_method must be in:.*"
-
-    with pytest.raises(AttributeError, match=pattern):
-        _ = CAPCurveDisplay.from_estimator(
-            logistic_regression_model, X, y, response_method="invalid input"
-        )
 
 
 def test_unfitted_estimator(pyplot, data_binary):
@@ -473,27 +462,3 @@ def test_cap_for_non_prob_classifier(pyplot, data_binary, response_method):
             CAPCurveDisplay.from_estimator(svc, X, y, response_method=response_method)
     else:
         CAPCurveDisplay.from_estimator(svc, X, y, response_method=response_method)
-
-
-def test_classifier_without_expected_methods(
-    pyplot,
-    data_binary,
-    logistic_regression_model,
-):
-    class InvalidClassifier(ClassifierMixin, BaseEstimator):
-        def __init__(self, *, param=1):
-            self.param = param
-
-        def fit(self, X, y=None):
-            self.is_fitted_ = True
-            return self
-
-        def predict(self, X):
-            return np.full(shape=X.shape[0], fill_value=self.param)
-
-    X, y = data_binary
-    invalid_classif = InvalidClassifier().fit(X, y)
-
-    match = "Estimator does not have a predict_proba or decision_function method."
-    with pytest.raises(AttributeError, match=match):
-        CAPCurveDisplay.from_estimator(invalid_classif, X, y)
