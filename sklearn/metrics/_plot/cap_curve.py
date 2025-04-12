@@ -449,13 +449,13 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             elif hasattr(estimator, "decision_function"):
                 response_method = "decision_function"
             else:
-                raise ValueError(
+                raise AttributeError(
                     "Estimator does not have a predict_proba or decision_function"
                     " method."
                 )
 
         if response_method not in ["predict_proba", "decision_function", "auto"]:
-            raise ValueError(
+            raise AttributeError(
                 "response_method must be in: "
                 "{'predict_proba', 'decision_function', 'auto'}. "
                 f"Got '{response_method}' instead."

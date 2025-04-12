@@ -8,6 +8,7 @@ from sklearn.datasets import load_iris
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
+    CAPCurveDisplay,
     ConfusionMatrixDisplay,
     DetCurveDisplay,
     PrecisionRecallDisplay,
@@ -32,7 +33,13 @@ def data_binary(data):
 
 @pytest.mark.parametrize(
     "Display",
-    [CalibrationDisplay, DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay],
+    [
+        CalibrationDisplay,
+        DetCurveDisplay,
+        PrecisionRecallDisplay,
+        RocCurveDisplay,
+        CAPCurveDisplay,
+    ],
 )
 def test_display_curve_error_classifier(pyplot, data, data_binary, Display):
     """Check that a proper error is raised when only binary classification is
@@ -59,7 +66,13 @@ def test_display_curve_error_classifier(pyplot, data, data_binary, Display):
 
 @pytest.mark.parametrize(
     "Display",
-    [CalibrationDisplay, DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay],
+    [
+        CalibrationDisplay,
+        DetCurveDisplay,
+        PrecisionRecallDisplay,
+        RocCurveDisplay,
+        CAPCurveDisplay,
+    ],
 )
 def test_display_curve_error_regression(pyplot, data_binary, Display):
     """Check that we raise an error with regressor."""
@@ -108,7 +121,8 @@ def test_display_curve_error_regression(pyplot, data_binary, Display):
     ],
 )
 @pytest.mark.parametrize(
-    "Display", [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay]
+    "Display",
+    [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay, CAPCurveDisplay],
 )
 def test_display_curve_error_no_response(
     pyplot,
@@ -133,7 +147,8 @@ def test_display_curve_error_no_response(
 
 
 @pytest.mark.parametrize(
-    "Display", [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay]
+    "Display",
+    [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay, CAPCurveDisplay],
 )
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
 def test_display_curve_estimator_name_multiple_calls(
@@ -177,7 +192,8 @@ def test_display_curve_estimator_name_multiple_calls(
     ],
 )
 @pytest.mark.parametrize(
-    "Display", [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay]
+    "Display",
+    [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay, CAPCurveDisplay],
 )
 def test_display_curve_not_fitted_errors(pyplot, data_binary, clf, Display):
     """Check that a proper error is raised when the classifier is not
@@ -195,7 +211,8 @@ def test_display_curve_not_fitted_errors(pyplot, data_binary, clf, Display):
 
 
 @pytest.mark.parametrize(
-    "Display", [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay]
+    "Display",
+    [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay, CAPCurveDisplay],
 )
 def test_display_curve_n_samples_consistency(pyplot, data_binary, Display):
     """Check the error raised when `y_pred` or `sample_weight` have inconsistent
@@ -213,7 +230,8 @@ def test_display_curve_n_samples_consistency(pyplot, data_binary, Display):
 
 
 @pytest.mark.parametrize(
-    "Display", [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay]
+    "Display",
+    [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay, CAPCurveDisplay],
 )
 def test_display_curve_error_pos_label(pyplot, data_binary, Display):
     """Check consistence of error message when `pos_label` should be specified."""
@@ -236,6 +254,7 @@ def test_display_curve_error_pos_label(pyplot, data_binary, Display):
         RocCurveDisplay,
         PredictionErrorDisplay,
         ConfusionMatrixDisplay,
+        CAPCurveDisplay,
     ],
 )
 @pytest.mark.parametrize(
