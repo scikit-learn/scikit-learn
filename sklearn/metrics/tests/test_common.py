@@ -72,6 +72,7 @@ from sklearn.metrics.pairwise import (
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import shuffle
 from sklearn.utils._array_api import (
+    _array_api_skips,
     _atol_for_type,
     _convert_to_numpy,
     _get_namespace_device_dtype_ids,
@@ -1843,6 +1844,12 @@ def test_metrics_pos_label_error_str(metric, y_pred_threshold, dtype_y_str):
 def check_array_api_metric(
     metric, array_namespace, device, dtype_name, a_np, b_np, **metric_kwargs
 ):
+    func_name = metric.func.__name__ if isinstance(metric, partial) else metric.__name__
+    if _array_api_skips.get(func_name, {}).get(array_namespace) == "all":
+        pytest.skip(
+            f"{array_namespace} is not Array API compliant for {metric.__name__}"
+        )
+
     xp = _array_api_for_tests(array_namespace, device)
 
     a_xp = xp.asarray(a_np, device=device)

@@ -211,6 +211,11 @@ See :ref:`array_api` for more details.
 
 **Classes:**
 
+**Libraries:**
+
+- ``dask.array`` is now experimentally supported as an array API backend.
+  Some methods and estimators may not work with dask.
+  :pr:`28588` by :user:`Thomas Li <lithomas1>`
 - :class:`linear_model.Ridge` now supports the Array API for the `svd` solver.
   See :ref:`array_api` for more details.
   :pr:`27800` by :user:`Franck Charras <fcharras>`, :user:`Olivier Grisel <ogrisel>`
