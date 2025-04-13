@@ -20,6 +20,7 @@ from ..base import (
 )
 from ..utils import _array_api, check_array, resample
 from ..utils._array_api import (
+    _max_precision_float_dtype,
     _modify_in_place_if_numpy,
     device,
     get_namespace,
@@ -2215,13 +2216,11 @@ def binarize(X, *, threshold=0.0, copy=True):
         X.eliminate_zeros()
     else:
         xp, _, device = get_namespace_and_device(X)
-        dtype = (
-            xp.int64
-            if xp.isdtype(X.dtype, ("signed integer", "unsigned integer"))
-            else None
-        )
-        threshold = xp.asarray(threshold, device=device, dtype=dtype)
-        cond = X > threshold
+        threshold = xp.asarray(threshold, device=device)
+        if xp.isdtype(X.dtype, ("signed integer", "unsigned integer")):
+            cond = xp.astype(X, _max_precision_float_dtype(xp, device)) > threshold
+        else:
+            cond = X > threshold
         not_cond = xp.logical_not(cond)
         X[cond] = 1
         X[not_cond] = 0
