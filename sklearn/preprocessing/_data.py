@@ -19,7 +19,12 @@ from ..base import (
     _fit_context,
 )
 from ..utils import _array_api, check_array, resample
-from ..utils._array_api import _modify_in_place_if_numpy, device, get_namespace
+from ..utils._array_api import (
+    _modify_in_place_if_numpy,
+    device,
+    get_namespace,
+    get_namespace_and_device,
+)
 from ..utils._param_validation import Interval, Options, StrOptions, validate_params
 from ..utils.extmath import _incremental_mean_and_var, row_norms
 from ..utils.sparsefuncs import (
@@ -2209,11 +2214,13 @@ def binarize(X, *, threshold=0.0, copy=True):
         X.data[not_cond] = 0
         X.eliminate_zeros()
     else:
-        xp, is_array_api_compliant = get_namespace(X)
-        if is_array_api_compliant and xp.isdtype(
-            X.dtype, ("signed integer", "unsigned integer")
-        ):
-            threshold = xp.asarray(threshold, dtype=xp.int64)
+        xp, _, device = get_namespace_and_device(X)
+        dtype = (
+            xp.int64
+            if xp.isdtype(X.dtype, ("signed integer", "unsigned integer"))
+            else None
+        )
+        threshold = xp.asarray(threshold, device=device, dtype=dtype)
         cond = X > threshold
         not_cond = xp.logical_not(cond)
         X[cond] = 1
