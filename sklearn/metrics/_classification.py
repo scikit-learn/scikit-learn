@@ -3442,23 +3442,25 @@ def brier_score_loss(
             f"is {y_type}."
         )
 
-    if y_proba.max() > 1:
+    xp, _ = get_namespace(y_true, y_proba, sample_weight)
+
+    if xp.max(y_proba) > 1:
         raise ValueError("y_proba contains values greater than 1.")
-    if y_proba.min() < 0:
+    if xp.min(y_proba) < 0:
         raise ValueError("y_proba contains values less than 0.")
 
     try:
         pos_label = _check_pos_label_consistency(pos_label, y_true)
     except ValueError:
-        classes = np.unique(y_true)
+        classes = xp.unique(y_true)
         if classes.dtype.kind not in ("O", "U", "S"):
             # for backward compatibility, if classes are not string then
             # `pos_label` will correspond to the greater label
             pos_label = classes[-1]
         else:
             raise
-    y_true = np.array(y_true == pos_label, int)
-    return float(np.average((y_true - y_proba) ** 2, weights=sample_weight))
+    y_true = xp.astype(y_true == pos_label, xp.int64)
+    return float(_average((y_true - y_proba) ** 2, weights=sample_weight))
 
 
 @validate_params(

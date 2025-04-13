@@ -2195,6 +2195,7 @@ array_api_metric_checkers = {
         check_array_api_regression_metric_multioutput,
     ],
     sigmoid_kernel: [check_array_api_metric_pairwise],
+    brier_score_loss: [check_array_api_binary_classification_metric],
 }
 
 
