@@ -1,11 +1,5 @@
-# Authors: Gilles Louppe <g.louppe@gmail.com>
-#          Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#          Brian Holt <bdholt1@gmail.com>
-#          Joel Nothman <joel.nothman@gmail.com>
-#          Arnaud Joly <arnaud.v.joly@gmail.com>
-#          Jacob Schreiber <jmschreiber91@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # See _criterion.pyx for implementation details.
 from ..utils._typedefs cimport float64_t, int8_t, intp_t

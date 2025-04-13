@@ -1,0 +1,21 @@
+version: 2
+updates:
+  # Maintain dependencies for GitHub Actions as recommended in SPEC8:
+  # https://github.com/scientific-python/specs/pull/325
+  # At the time of writing, release critical workflows such as
+  # pypa/gh-action-pypi-publish should use hash-based versioning for security
+  # reasons. This strategy may be generalized to all other github actions
+  # in the future.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    groups:
+      actions:
+        patterns:
+          - "*"
+    labels:
+      - "Build / CI"
+      - "dependencies"
+    reviewers:
+      - "scikit-learn/core-devs"

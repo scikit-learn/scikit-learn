@@ -23,6 +23,9 @@ dimensional data.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import time
 import warnings
 from itertools import cycle, islice
@@ -120,8 +123,8 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
             warnings.filterwarnings(
                 "ignore",
                 message="the number of connected components of the "
-                + "connectivity matrix is [0-9]{1,2}"
-                + " > 1. Completing it to avoid stopping the tree early.",
+                "connectivity matrix is [0-9]{1,2}"
+                " > 1. Completing it to avoid stopping the tree early.",
                 category=UserWarning,
             )
             algorithm.fit(X)

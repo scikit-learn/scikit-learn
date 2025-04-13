@@ -25,9 +25,6 @@ from sklearn.utils.fixes import CSR_CONTAINERS
 DISCRETE_NAIVE_BAYES_CLASSES = [BernoulliNB, CategoricalNB, ComplementNB, MultinomialNB]
 ALL_NAIVE_BAYES_CLASSES = DISCRETE_NAIVE_BAYES_CLASSES + [GaussianNB]
 
-msg = "The default value for `force_alpha` will change"
-pytestmark = pytest.mark.filterwarnings(f"ignore:{msg}:FutureWarning")
-
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
 y = np.array([1, 1, 1, 2, 2, 2])

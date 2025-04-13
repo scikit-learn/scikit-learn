@@ -1,7 +1,7 @@
-"""
-The :mod:`sklearn.neighbors` module implements the k-nearest neighbors
-algorithm.
-"""
+"""The k-nearest neighbors algorithms."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from ._ball_tree import BallTree
 from ._base import VALID_METRICS, VALID_METRICS_SPARSE, sort_graph_by_row_values
@@ -21,22 +21,22 @@ from ._regression import KNeighborsRegressor, RadiusNeighborsRegressor
 from ._unsupervised import NearestNeighbors
 
 __all__ = [
+    "VALID_METRICS",
+    "VALID_METRICS_SPARSE",
     "BallTree",
     "KDTree",
     "KNeighborsClassifier",
     "KNeighborsRegressor",
     "KNeighborsTransformer",
+    "KernelDensity",
+    "LocalOutlierFactor",
     "NearestCentroid",
     "NearestNeighbors",
+    "NeighborhoodComponentsAnalysis",
     "RadiusNeighborsClassifier",
     "RadiusNeighborsRegressor",
     "RadiusNeighborsTransformer",
     "kneighbors_graph",
     "radius_neighbors_graph",
-    "KernelDensity",
-    "LocalOutlierFactor",
-    "NeighborhoodComponentsAnalysis",
     "sort_graph_by_row_values",
-    "VALID_METRICS",
-    "VALID_METRICS_SPARSE",
 ]

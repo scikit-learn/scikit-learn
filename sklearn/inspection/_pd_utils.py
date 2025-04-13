@@ -1,3 +1,7 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+
 def _check_feature_names(X, feature_names=None):
     """Check feature names.
 

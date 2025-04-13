@@ -7,11 +7,10 @@ This example applies to :ref:`olivetti_faces_dataset` different unsupervised
 matrix decomposition (dimension reduction) methods from the module
 :mod:`sklearn.decomposition` (see the documentation chapter
 :ref:`decompositions`).
-
-
-- Authors: Vlad Niculae, Alexandre Gramfort
-- License: BSD 3 clause
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Dataset preparation

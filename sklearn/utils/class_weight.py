@@ -1,16 +1,13 @@
-"""
-The :mod:`sklearn.utils.class_weight` module includes utilities for handling
-weights based on class labels.
-"""
+"""Utilities for handling weights based on class labels."""
 
-# Authors: Andreas Mueller
-#          Manoj Kumar
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 from scipy import sparse
 
 from ._param_validation import StrOptions, validate_params
+from .validation import _check_sample_weight
 
 
 @validate_params(
@@ -18,17 +15,19 @@ from ._param_validation import StrOptions, validate_params
         "class_weight": [dict, StrOptions({"balanced"}), None],
         "classes": [np.ndarray],
         "y": ["array-like"],
+        "sample_weight": ["array-like", None],
     },
     prefer_skip_nested_validation=True,
 )
-def compute_class_weight(class_weight, *, classes, y):
+def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
     """Estimate class weights for unbalanced datasets.
 
     Parameters
     ----------
     class_weight : dict, "balanced" or None
         If "balanced", class weights will be given by
-        `n_samples / (n_classes * np.bincount(y))`.
+        `n_samples / (n_classes * np.bincount(y))` or their weighted equivalent if
+        `sample_weight` is provided.
         If a dictionary is given, keys are classes and values are corresponding class
         weights.
         If `None` is given, the class weights will be uniform.
@@ -39,6 +38,10 @@ def compute_class_weight(class_weight, *, classes, y):
 
     y : array-like of shape (n_samples,)
         Array of original class labels per sample.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Array of weights that are assigned to individual samples. Only used when
+        `class_weight='balanced'`.
 
     Returns
     -------
@@ -73,7 +76,11 @@ def compute_class_weight(class_weight, *, classes, y):
         if not all(np.isin(classes, le.classes_)):
             raise ValueError("classes should have valid labels that are in y")
 
-        recip_freq = len(y) / (len(le.classes_) * np.bincount(y_ind).astype(np.float64))
+        sample_weight = _check_sample_weight(sample_weight, y)
+        weighted_class_counts = np.bincount(y_ind, weights=sample_weight)
+        recip_freq = weighted_class_counts.sum() / (
+            len(le.classes_) * weighted_class_counts
+        )
         weight = recip_freq[le.transform(classes)]
     else:
         # user-defined dictionary

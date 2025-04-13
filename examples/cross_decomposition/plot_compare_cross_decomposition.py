@@ -21,6 +21,9 @@ weak: the point cloud is very spherical.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Dataset based latent variables model
 # ------------------------------------

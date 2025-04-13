@@ -1,3 +1,4 @@
+achin
 aggresive
 aline
 ba
@@ -5,9 +6,11 @@ basf
 boun
 bre
 cach
+chanel
 complies
 coo
 copys
+datas
 deine
 didi
 feld
@@ -17,11 +20,13 @@ fro
 fwe
 gool
 hart
+heping
 hist
 ines
 inout
 ist
 jaques
+lamas
 linke
 lod
 mape
@@ -31,6 +36,7 @@ nmae
 ocur
 pullrequest
 ro
+ser
 soler
 suh
 suprised
@@ -40,6 +46,8 @@ teh
 thi
 usal
 vie
+vor
 wan
+whis
 winn
 yau

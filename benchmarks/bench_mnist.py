@@ -26,9 +26,8 @@ Example of output :
     dummy                         0.00s       0.01s       0.8973
 """
 
-# Author: Issam H. Laradji
-#         Arnaud Joly <arnaud.v.joly@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import argparse
 import os

@@ -2,6 +2,7 @@ from collections import Counter
 
 import numpy as np
 import pytest
+from scipy.integrate import trapezoid
 
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_breast_cancer, make_classification
@@ -16,13 +17,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
-from sklearn.utils.fixes import trapezoid
-
-# TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
-pytestmark = pytest.mark.filterwarnings(
-    "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
-    "matplotlib.*"
-)
 
 
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
@@ -88,7 +82,7 @@ def test_precision_recall_display_plotting(
     assert display.chance_level_ is None
 
 
-@pytest.mark.parametrize("chance_level_kw", [None, {"color": "r"}])
+@pytest.mark.parametrize("chance_level_kw", [None, {"color": "r"}, {"c": "r"}])
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
 def test_precision_recall_chance_level_line(
     pyplot,
@@ -118,7 +112,7 @@ def test_precision_recall_chance_level_line(
             chance_level_kw=chance_level_kw,
         )
 
-    import matplotlib as mpl  # noqa
+    import matplotlib as mpl
 
     assert isinstance(display.chance_level_, mpl.lines.Line2D)
     assert tuple(display.chance_level_.get_xdata()) == (0, 1)
@@ -332,7 +326,7 @@ def test_precision_recall_prevalence_pos_label_reusable(pyplot, constructor_name
         )
     assert display.chance_level_ is None
 
-    import matplotlib as mpl  # noqa
+    import matplotlib as mpl
 
     # When calling from_estimator or from_predictions,
     # prevalence_pos_label should have been set, so that directly
@@ -359,3 +353,30 @@ def test_precision_recall_raise_no_prevalence(pyplot):
 
     with pytest.raises(ValueError, match=msg):
         display.plot(plot_chance_level=True)
+
+
+@pytest.mark.parametrize("despine", [True, False])
+@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
+def test_plot_precision_recall_despine(pyplot, despine, constructor_name):
+    # Check that the despine keyword is working correctly
+    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
+
+    clf = LogisticRegression().fit(X, y)
+    clf.fit(X, y)
+
+    y_pred = clf.decision_function(X)
+
+    # safe guard for the binary if/else construction
+    assert constructor_name in ("from_estimator", "from_predictions")
+
+    if constructor_name == "from_estimator":
+        display = PrecisionRecallDisplay.from_estimator(clf, X, y, despine=despine)
+    else:
+        display = PrecisionRecallDisplay.from_predictions(y, y_pred, despine=despine)
+
+    for s in ["top", "right"]:
+        assert display.ax_.spines[s].get_visible() is not despine
+
+    if despine:
+        for s in ["bottom", "left"]:
+            assert display.ax_.spines[s].get_bounds() == (0, 1)

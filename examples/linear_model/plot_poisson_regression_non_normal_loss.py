@@ -1,5 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
+
 """
 ======================================
 Poisson regression and non-normal loss
@@ -109,7 +110,9 @@ linear_model_preprocessor = ColumnTransformer(
         ("passthrough_numeric", "passthrough", ["BonusMalus"]),
         (
             "binned_numeric",
-            KBinsDiscretizer(n_bins=10, random_state=0),
+            KBinsDiscretizer(
+                n_bins=10, quantile_method="averaged_inverted_cdf", random_state=0
+            ),
             ["VehAge", "DrivAge"],
         ),
         ("log_scaled_numeric", log_scale_transformer, ["Density"]),

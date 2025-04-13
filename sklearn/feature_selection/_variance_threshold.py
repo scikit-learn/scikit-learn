@@ -1,5 +1,6 @@
-# Author: Lars Buitinck
-# License: 3-clause BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from numbers import Real
 
 import numpy as np
@@ -7,7 +8,7 @@ import numpy as np
 from ..base import BaseEstimator, _fit_context
 from ..utils._param_validation import Interval
 from ..utils.sparsefuncs import mean_variance_axis, min_max_axis
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 from ._base import SelectorMixin
 
 
@@ -96,11 +97,12 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=("csr", "csc"),
             dtype=np.float64,
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
         )
 
         if hasattr(X, "toarray"):  # sparse matrix
@@ -132,5 +134,8 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
 
         return self.variances_ > self.threshold
 
-    def _more_tags(self):
-        return {"allow_nan": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        tags.input_tags.sparse = True
+        return tags

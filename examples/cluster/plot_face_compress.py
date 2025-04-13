@@ -7,9 +7,8 @@ This example shows how one can use :class:`~sklearn.preprocessing.KBinsDiscretiz
 to perform vector quantization on a set of toy image, the raccoon face.
 """
 
-# Authors: Gael Varoquaux
-#          Jaques Grobler
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Original image

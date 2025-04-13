@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import scipy as sp
 
 from ...utils._plotting import _BinaryClassifierCurveDisplayMixin

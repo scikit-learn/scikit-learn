@@ -62,7 +62,7 @@ def test_det_curve_display(
     assert disp.estimator_name == "LogisticRegression"
 
     # cannot fail thanks to pyplot fixture
-    import matplotlib as mpl  # noqal
+    import matplotlib as mpl
 
     assert isinstance(disp.line_, mpl.lines.Line2D)
     assert disp.line_.get_alpha() == 0.8

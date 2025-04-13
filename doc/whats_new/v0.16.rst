@@ -26,7 +26,7 @@ Bug fixes
   caused unstable result in :class:`calibration.CalibratedClassifierCV` by
   `Jan Hendrik Metzen`_.
 
-- Fix sorting of labels in func:`preprocessing.label_binarize` by Michael Heilman.
+- Fix sorting of labels in :func:`preprocessing.label_binarize` by Michael Heilman.
 
 - Fix several stability and convergence issues in
   :class:`cross_decomposition.CCA` and
@@ -218,7 +218,7 @@ Enhancements
 - Optimized :class:`cluster.AffinityPropagation` by reducing the number of
   memory allocations of large temporary data-structures. By `Antony Lee`_.
 
-- Parellization of the computation of feature importances in random forest.
+- Parallelization of the computation of feature importances in random forest.
   By `Olivier Grisel`_ and `Arnaud Joly`_.
 
 - Add ``n_iter_`` attribute to estimators that accept a ``max_iter`` attribute
@@ -337,7 +337,7 @@ Bug fixes
   and Jan Hendrik Metzen.
 
 - Calling ``partial_fit`` with ``class_weight=='auto'`` throws an
-  appropriate error message and suggests a work around.
+  appropriate error message and suggests a workaround.
   By :user:`Danny Sullivan <dsullivan7>`.
 
 - :class:`RBFSampler <kernel_approximation.RBFSampler>` with ``gamma=g``
@@ -347,7 +347,7 @@ Bug fixes
   (If you cross-validated over ``gamma``, it probably doesn't matter
   too much.) By :user:`Dougal Sutherland <dougalsutherland>`.
 
-- Pipeline object delegate the ``classes_`` attribute to the underlying
+- Pipeline object delegates the ``classes_`` attribute to the underlying
   estimator. It allows, for instance, to make bagging of a pipeline object.
   By `Arnaud Joly`_
 
@@ -363,7 +363,7 @@ Bug fixes
 
 - When `compute_full_tree` is set to "auto", the full tree is
   built when n_clusters is high and is early stopped when n_clusters is
-  low, while the behavior should be vice-versa in
+  low, while the behavior should be vice versa in
   :class:`cluster.AgglomerativeClustering` (and friends).
   This has been fixed By `Manoj Kumar`_
 
@@ -401,7 +401,7 @@ Bug fixes
 - Fixed round off errors with non positive-definite covariance matrices
   in GMM. By :user:`Alexis Mignon <AlexisMignon>`.
 
-- Fixed a error in the computation of conditional probabilities in
+- Fixed an error in the computation of conditional probabilities in
   :class:`naive_bayes.BernoulliNB`. By `Hanna Wallach`_.
 
 - Make the method ``radius_neighbors`` of

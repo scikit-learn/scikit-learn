@@ -26,7 +26,9 @@ def test_min_pos_no_positive(dtype):
     assert min_pos(X) == np.finfo(dtype).max
 
 
-@pytest.mark.parametrize("dtype", [np.int16, np.int32, np.float32, np.float64])
+@pytest.mark.parametrize(
+    "dtype", [np.int16, np.int32, np.int64, np.float32, np.float64]
+)
 @pytest.mark.parametrize("value", [0, 1.5, -1])
 def test_all_with_any_reduction_axis_1(dtype, value):
     # Check that return value is False when there is no row equal to `value`

@@ -131,3 +131,4 @@ jobs:
       retryCountOnTaskFailure: 5
       env:
         CODECOV_TOKEN: $(CODECOV_TOKEN)
+        JUNIT_FILE: $(TEST_DIR)/$(JUNITXML)

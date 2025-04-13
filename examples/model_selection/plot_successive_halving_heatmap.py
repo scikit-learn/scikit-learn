@@ -8,6 +8,9 @@ This example compares the parameter search performed by
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from time import time
 
 import matplotlib.pyplot as plt

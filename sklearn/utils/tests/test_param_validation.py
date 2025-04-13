@@ -454,6 +454,7 @@ def test_is_satisfied_by(constraint_declaration, value):
         (HasMethods("fit"), HasMethods),
         ("cv_object", _CVObjects),
         ("nan", _NanConstraint),
+        (np.nan, _NanConstraint),
     ],
 )
 def test_make_constraint(constraint_declaration, expected_constraint_class):

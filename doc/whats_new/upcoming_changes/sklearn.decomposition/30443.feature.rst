@@ -1,0 +1,4 @@
+- :class:`~sklearn.decomposition.DictionaryLearning`,
+  :class:`~sklearn.decomposition.SparseCoder`  and
+  :class:`~sklearn.decomposition.MiniBatchDictionaryLearning` now have a
+  ``inverse_transform`` method. By :user:`Rémi Flamary <rflamary>`

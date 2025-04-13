@@ -16,6 +16,9 @@ In this example, we demonstrate the importance of the cross
 fitting procedure to prevent overfitting.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Create Synthetic Dataset
 # ========================

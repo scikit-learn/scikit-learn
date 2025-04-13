@@ -1,0 +1,4 @@
+- :func:`~metrics.class_likelihood_ratios` now has a `replace_undefined_by` param.
+  When there is a division by zero, the metric is undefined and the set values are
+  returned for `LR+` and `LR-`.
+  By :user:`Stefanie Senger <StefanieSenger>`

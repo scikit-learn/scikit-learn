@@ -17,7 +17,6 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
     create_memmap_backed_data,
-    fails_if_pypy,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS
 
@@ -26,8 +25,6 @@ datafile = "svmlight_classification.txt"
 multifile = "svmlight_multilabel.txt"
 invalidfile = "svmlight_invalid.txt"
 invalidfile2 = "svmlight_invalid_order.txt"
-
-pytestmark = fails_if_pypy
 
 
 def _svmlight_local_test_file_path(filename):

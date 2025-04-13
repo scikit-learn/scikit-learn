@@ -7,12 +7,8 @@ We illustrate various embedding techniques on the digits dataset.
 
 """
 
-# Authors: Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#          Olivier Grisel <olivier.grisel@ensta.org>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Gael Varoquaux
-#          Guillaume Lemaitre <g.lemaitre58@gmail.com>
-# License: BSD 3 clause (C) INRIA 2011
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 # %%

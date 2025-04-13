@@ -157,7 +157,7 @@ Changelog
 - |Fix| :func:`utils.validation.check_is_fitted` accepts back an explicit ``attributes``
   argument to check for specific attributes as explicit markers of a fitted
   estimator. When no explicit ``attributes`` are provided, only the attributes
-  that end with a underscore and do not start with double underscore are used
+  that end with an underscore and do not start with double underscore are used
   as "fitted" markers. The ``all_or_any`` argument is also no longer
   deprecated. This change is made to restore some backward compatibility with
   the behavior of this utility in version 0.21. :pr:`15947` by `Thomas Fan`_.
@@ -408,15 +408,15 @@ Changelog
   :class:`decomposition.DictionaryLearning`, and
   :class:`decomposition.MiniBatchDictionaryLearning` now take a
   `transform_max_iter` parameter and pass it to either
-  :func:`decomposition.dict_learning()` or
-  :func:`decomposition.sparse_encode()`. :issue:`12650` by `Adrin Jalali`_.
+  :func:`decomposition.dict_learning` or
+  :func:`decomposition.sparse_encode`. :issue:`12650` by `Adrin Jalali`_.
 
 - |Enhancement| :class:`decomposition.IncrementalPCA` now accepts sparse
   matrices as input, converting them to dense in batches thereby avoiding the
   need to store the entire dense matrix at once.
   :pr:`13960` by :user:`Scott Gigante <scottgigante>`.
 
-- |Fix| :func:`decomposition.sparse_encode()` now passes the `max_iter` to the
+- |Fix| :func:`decomposition.sparse_encode` now passes the `max_iter` to the
   underlying :class:`linear_model.LassoLars` when `algorithm='lasso_lars'`.
   :issue:`12650` by `Adrin Jalali`_.
 
@@ -424,7 +424,7 @@ Changelog
 ....................
 
 - |Fix| :class:`dummy.DummyClassifier` now handles checking the existence
-  of the provided constant in multiouput cases.
+  of the provided constant in multioutput cases.
   :pr:`14908` by :user:`Martina G. Vilas <martinagvilas>`.
 
 - |API| The default value of the `strategy` parameter in
@@ -608,7 +608,7 @@ Changelog
 - |Fix| :class:`impute.IterativeImputer` now works when there is only one feature.
   By :user:`Sergey Feldman <sergeyf>`.
 
-- |Fix| Fixed a bug in :class:`impute.IterativeImputer` where features where
+- |Fix| Fixed a bug in :class:`impute.IterativeImputer` where features were
   imputed in the reverse desired order with ``imputation_order`` either
   ``"ascending"`` or ``"descending"``. :pr:`15393` by
   :user:`Venkatachalam N <venkyyuvy>`.
@@ -1004,7 +1004,7 @@ Changelog
   For example, the outcomes ``1``, ``10`` and ``100`` are all equally likely
   for ``loguniform(1, 100)``. See :issue:`11232` by
   :user:`Scott Sievert <stsievert>` and :user:`Nathaniel Saul <sauln>`,
-  and `SciPy PR 10815 <https://github.com/scipy/scipy/pull/10815>`.
+  and `SciPy PR 10815 <https://github.com/scipy/scipy/pull/10815>`_.
 
 - |Enhancement| `utils.safe_indexing` (now deprecated) accepts an
   ``axis`` parameter to index array-like across rows and columns. The column

@@ -1,9 +1,8 @@
 """Nearest Neighbors graph functions"""
 
-# Author: Jake Vanderplas <vanderplas@astro.washington.edu>
-#         Tom Dupre la Tour
-#
-# License: BSD 3 clause (C) INRIA, University of Amsterdam
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import itertools
 
 from ..base import ClassNamePrefixFeaturesOutMixin, TransformerMixin, _fit_context
@@ -399,7 +398,7 @@ class KNeighborsTransformer(
         metric_params=None,
         n_jobs=None,
     ):
-        super(KNeighborsTransformer, self).__init__(
+        super().__init__(
             n_neighbors=n_neighbors,
             radius=None,
             algorithm=algorithm,
@@ -480,13 +479,6 @@ class KNeighborsTransformer(
             The matrix is of CSR format.
         """
         return self.fit(X).transform(X)
-
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_methods_sample_order_invariance": "check is not applicable."
-            }
-        }
 
 
 class RadiusNeighborsTransformer(
@@ -631,7 +623,7 @@ class RadiusNeighborsTransformer(
         metric_params=None,
         n_jobs=None,
     ):
-        super(RadiusNeighborsTransformer, self).__init__(
+        super().__init__(
             n_neighbors=None,
             radius=radius,
             algorithm=algorithm,
@@ -710,10 +702,3 @@ class RadiusNeighborsTransformer(
             The matrix is of CSR format.
         """
         return self.fit(X).transform(X)
-
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_methods_sample_order_invariance": "check is not applicable."
-            }
-        }

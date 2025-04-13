@@ -1,0 +1,5 @@
+-  In :mod:`utils.estimator_checks` we now enforce for binary classifiers a
+   binary `y` by taking the minimum as the negative class instead of the first
+   element, which makes it robust to `y` shuffling. It prevents two checks from
+   wrongly failing on binary classifiers.
+   By :user:`Antoine Baker <antoinebaker>`.

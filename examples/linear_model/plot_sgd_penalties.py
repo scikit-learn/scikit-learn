@@ -11,6 +11,9 @@ and :class:`~sklearn.linear_model.SGDRegressor`.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.pyplot as plt
 import numpy as np
 

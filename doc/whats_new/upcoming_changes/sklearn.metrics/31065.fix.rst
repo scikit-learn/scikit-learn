@@ -1,0 +1,3 @@
+- Fix :func:`metrics.adjusted_mutual_info_score` numerical issue when number of
+  classes and samples is low.
+  By :user:`Hleb Levitski <glevv>`

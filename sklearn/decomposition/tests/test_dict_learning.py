@@ -202,10 +202,16 @@ def test_dict_learning_reconstruction():
     )
     code = dico.fit(X).transform(X)
     assert_array_almost_equal(np.dot(code, dico.components_), X)
+    assert_array_almost_equal(dico.inverse_transform(code), X)
 
     dico.set_params(transform_algorithm="lasso_lars")
     code = dico.transform(X)
     assert_array_almost_equal(np.dot(code, dico.components_), X, decimal=2)
+    assert_array_almost_equal(dico.inverse_transform(code), X, decimal=2)
+
+    # test error raised for wrong code size
+    with pytest.raises(ValueError, match="Expected 12, got 11."):
+        dico.inverse_transform(code[:, :-1])
 
     # used to test lars here too, but there's no guarantee the number of
     # nonzero atoms is right.
@@ -268,12 +274,17 @@ def test_dict_learning_split():
         n_components, transform_algorithm="threshold", random_state=0
     )
     code = dico.fit(X).transform(X)
+    Xr = dico.inverse_transform(code)
+
     dico.split_sign = True
     split_code = dico.transform(X)
 
     assert_array_almost_equal(
         split_code[:, :n_components] - split_code[:, n_components:], code
     )
+
+    Xr2 = dico.inverse_transform(split_code)
+    assert_array_almost_equal(Xr, Xr2)
 
 
 def test_dict_learning_online_shapes():
@@ -591,9 +602,12 @@ def test_sparse_coder_estimator():
     V /= np.sum(V**2, axis=1)[:, np.newaxis]
     coder = SparseCoder(
         dictionary=V, transform_algorithm="lasso_lars", transform_alpha=0.001
-    ).transform(X)
-    assert not np.all(coder == 0)
-    assert np.sqrt(np.sum((np.dot(coder, V) - X) ** 2)) < 0.1
+    )
+    code = coder.fit_transform(X)
+    Xr = coder.inverse_transform(code)
+    assert not np.all(code == 0)
+    assert np.sqrt(np.sum((np.dot(code, V) - X) ** 2)) < 0.1
+    np.testing.assert_allclose(Xr, np.dot(code, V))
 
 
 def test_sparse_coder_estimator_clone():
@@ -972,12 +986,3 @@ def test_cd_work_on_joblib_memmapped_data(monkeypatch):
 
     # This must run and complete without error.
     dict_learner.fit(X_train)
-
-
-# TODO(1.6): remove in 1.6
-def test_xxx():
-    warn_msg = "`max_iter=None` is deprecated in version 1.4 and will be removed"
-    with pytest.warns(FutureWarning, match=warn_msg):
-        MiniBatchDictionaryLearning(max_iter=None, random_state=0).fit(X)
-    with pytest.warns(FutureWarning, match=warn_msg):
-        dict_learning_online(X, max_iter=None, random_state=0)

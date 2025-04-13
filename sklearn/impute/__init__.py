@@ -1,4 +1,7 @@
-"""Transformers for missing value imputation"""
+"""Transformers for missing value imputation."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import typing
 
@@ -10,7 +13,7 @@ if typing.TYPE_CHECKING:
     # TODO: remove this check once the estimator is no longer experimental.
     from ._iterative import IterativeImputer  # noqa
 
-__all__ = ["MissingIndicator", "SimpleImputer", "KNNImputer"]
+__all__ = ["KNNImputer", "MissingIndicator", "SimpleImputer"]
 
 
 # TODO: remove this check once the estimator is no longer experimental.

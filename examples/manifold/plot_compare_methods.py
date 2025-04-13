@@ -20,7 +20,8 @@ representation of the data in the low-dimensional space.
 
 """
 
-# Author: Jake Vanderplas -- <vanderplas@astro.washington.edu>
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Dataset preparation

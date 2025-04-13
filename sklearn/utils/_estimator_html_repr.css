@@ -1,6 +1,7 @@
 #$id {
   /* Definition of color scheme common for light and dark mode */
-  --sklearn-color-text: black;
+  --sklearn-color-text: #000;
+  --sklearn-color-text-muted: #666;
   --sklearn-color-line: gray;
   /* Definition of color scheme for unfitted estimators */
   --sklearn-color-unfitted-level-0: #fff5e6;
@@ -145,12 +146,21 @@ clickable and can be expanded/collapsed.
 /* Toggleable label */
 #$id label.sk-toggleable__label {
   cursor: pointer;
-  display: block;
+  display: flex;
   width: 100%;
   margin-bottom: 0;
   padding: 0.5em;
   box-sizing: border-box;
   text-align: center;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.5em;
+}
+
+#$id label.sk-toggleable__label .caption {
+  font-size: 0.6rem;
+  font-weight: lighter;
+  color: var(--sklearn-color-text-muted);
 }
 
 #$id label.sk-toggleable__label-arrow:before {
@@ -303,7 +313,8 @@ a:visited.sk-estimator-doc-link {
   height: 1em;
   width: 1em;
   text-decoration: none !important;
-  margin-left: 1ex;
+  margin-left: 0.5em;
+  text-align: center;
   /* unfitted */
   border: var(--sklearn-color-unfitted-level-1) 1pt solid;
   color: var(--sklearn-color-unfitted-level-1);

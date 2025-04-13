@@ -23,8 +23,8 @@ clusters widely spaced.
 
 """
 
-# Author: Olivier Grisel <olivier.grisel@ensta.org>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt

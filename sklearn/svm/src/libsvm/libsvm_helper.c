@@ -17,9 +17,9 @@
  * but libsvm does not expose this structure, so we define it here
  * along some utilities to convert from numpy arrays.
  *
- * License: BSD 3 clause
+ * Authors: The scikit-learn developers
+ * SPDX-License-Identifier: BSD-3-Clause
  *
- * Author: 2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
  */
 
 

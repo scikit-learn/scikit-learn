@@ -7,7 +7,10 @@ from scipy.sparse import issparse
 from sklearn import config_context, datasets
 from sklearn.model_selection import ShuffleSplit
 from sklearn.svm import SVC
-from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
+from sklearn.utils._array_api import (
+    _get_namespace_device_dtype_ids,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._testing import (
     _array_api_for_tests,
     _convert_container,
@@ -382,6 +385,7 @@ def test_is_multilabel():
 @pytest.mark.parametrize(
     "array_namespace, device, dtype_name",
     yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 def test_is_multilabel_array_api_compliance(array_namespace, device, dtype_name):
     xp = _array_api_for_tests(array_namespace, device)
@@ -413,7 +417,6 @@ def test_check_classification_targets():
                 check_classification_targets(example)
 
 
-# @ignore_warnings
 def test_type_of_target():
     for group, group_examples in EXAMPLES.items():
         for example in group_examples:
@@ -546,7 +549,7 @@ def test_safe_split_with_precomputed_kernel():
     K = np.dot(X, X.T)
 
     cv = ShuffleSplit(test_size=0.25, random_state=0)
-    train, test = list(cv.split(X))[0]
+    train, test = next(iter(cv.split(X)))
 
     X_train, y_train = _safe_split(clf, X, y, train)
     K_train, y_train2 = _safe_split(clfp, K, y, train)

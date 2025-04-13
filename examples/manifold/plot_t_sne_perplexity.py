@@ -24,8 +24,8 @@ those effects.
 
 """
 
-# Author: Narine Kokhlikyan <narine@slice.com>
-# License: BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from time import time
 

@@ -1,8 +1,5 @@
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#         Maria Telenczuk <https://github.com/maikia>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 
@@ -75,7 +72,7 @@ def test_linear_regression_sample_weights(
     sample_weight = 1.0 + rng.uniform(size=n_samples)
 
     # LinearRegression with explicit sample_weight
-    reg = LinearRegression(fit_intercept=fit_intercept)
+    reg = LinearRegression(fit_intercept=fit_intercept, tol=1e-16)
     reg.fit(X, y, sample_weight=sample_weight)
     coefs1 = reg.coef_
     inter1 = reg.intercept_
@@ -695,19 +692,32 @@ def test_fused_types_make_dataset(csr_container):
     assert_array_equal(yi_64, yicsr_64)
 
 
-@pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
+@pytest.mark.parametrize("X_shape", [(10, 5), (10, 20), (100, 100)])
+@pytest.mark.parametrize(
+    "sparse_container",
+    [None]
+    + [
+        pytest.param(
+            container,
+            marks=pytest.mark.xfail(
+                reason="Known to fail for CSR arrays, see issue #30131."
+            ),
+        )
+        for container in CSR_CONTAINERS
+    ],
+)
 @pytest.mark.parametrize("fit_intercept", [False, True])
 def test_linear_regression_sample_weight_consistency(
-    sparse_container, fit_intercept, global_random_seed
+    X_shape, sparse_container, fit_intercept, global_random_seed
 ):
     """Test that the impact of sample_weight is consistent.
 
     Note that this test is stricter than the common test
-    check_sample_weights_invariance alone and also tests sparse X.
+    check_sample_weight_equivalence alone and also tests sparse X.
     It is very similar to test_enet_sample_weight_consistency.
     """
     rng = np.random.RandomState(global_random_seed)
-    n_samples, n_features = 10, 5
+    n_samples, n_features = X_shape
 
     X = rng.rand(n_samples, n_features)
     y = rng.rand(n_samples)
@@ -720,8 +730,8 @@ def test_linear_regression_sample_weight_consistency(
     if fit_intercept:
         intercept = reg.intercept_
 
-    # 1) sample_weight=np.ones(..) must be equivalent to sample_weight=None
-    # same check as check_sample_weights_invariance(name, reg, kind="ones"), but we also
+    # 1) sample_weight=np.ones(..) must be equivalent to sample_weight=None,
+    # a special case of check_sample_weight_equivalence(name, reg), but we also
     # test with sparse input.
     sample_weight = np.ones_like(y)
     reg.fit(X, y, sample_weight=sample_weight)
@@ -757,17 +767,9 @@ def test_linear_regression_sample_weight_consistency(
     if fit_intercept:
         intercept_0 = reg.intercept_
     reg.fit(X[:-5], y[:-5], sample_weight=sample_weight[:-5])
-    if fit_intercept and sparse_container is None:
-        # FIXME: https://github.com/scikit-learn/scikit-learn/issues/26164
-        # This often fails, e.g. when calling
-        # SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all" pytest \
-        # sklearn/linear_model/tests/test_base.py\
-        # ::test_linear_regression_sample_weight_consistency
-        pass
-    else:
-        assert_allclose(reg.coef_, coef_0, rtol=1e-5)
-        if fit_intercept:
-            assert_allclose(reg.intercept_, intercept_0)
+    assert_allclose(reg.coef_, coef_0, rtol=1e-5)
+    if fit_intercept:
+        assert_allclose(reg.intercept_, intercept_0)
 
     # 5) check that multiplying sample_weight by 2 is equivalent to repeating
     # corresponding samples twice

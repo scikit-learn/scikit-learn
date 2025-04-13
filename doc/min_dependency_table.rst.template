@@ -1,0 +1,13 @@
+.. list-table::
+  :header-rows: 1
+
+  * - Dependency
+    - Minimum Version
+    - Purpose
+
+  {% for package, (version, tags) in dependent_packages.items() -%}
+  * - {{ package }}
+    - {{ version }}
+    - {{ tags }}
+
+  {% endfor %}

@@ -12,6 +12,10 @@ HDBSCAN's sensitivity to certain hyperparameters.
 
 We first define a couple utility functions for convenience.
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 import matplotlib.pyplot as plt
 import numpy as np
@@ -36,7 +40,7 @@ def plot(X, labels, probabilities=None, parameters=None, ground_truth=False, ax=
             # Black used for noise.
             col = [0, 0, 0, 1]
 
-        class_index = np.where(labels == k)[0]
+        class_index = (labels == k).nonzero()[0]
         for ci in class_index:
             ax.plot(
                 X[ci, 0],

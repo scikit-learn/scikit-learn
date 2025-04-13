@@ -88,7 +88,7 @@ The following code, while **still not minimal**, is already **much better**
 because it can be copy-pasted in a Python terminal to reproduce the problem in
 one step. In particular:
 
-- it contains **all necessary imports statements**;
+- it contains **all necessary import statements**;
 - it can fetch the public dataset without having to manually download a
   file and put it in the expected location on the disk.
 

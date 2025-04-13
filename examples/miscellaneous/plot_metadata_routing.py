@@ -27,6 +27,9 @@ calculations, but it may also route it to the underlying estimator.
 First a few imports and some random data for the rest of the script.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 
 import warnings

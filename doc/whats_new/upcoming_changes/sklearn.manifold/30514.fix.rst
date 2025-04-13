@@ -1,0 +1,4 @@
+- :class:`manifold.MDS` now correctly handles non-metric MDS. Furthermore,
+  the returned stress value now corresponds to the returned embedding and
+  normalized stress is now allowed for metric MDS.
+  By :user:`Dmitry Kobak <dkobak>`

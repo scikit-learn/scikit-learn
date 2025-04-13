@@ -9,9 +9,9 @@ South America. The two species are:
 - `"Bradypus variegatus" <http://www.iucnredlist.org/details/3038/0>`_ ,
   the Brown-throated Sloth.
 
- - `"Microryzomys minutus" <http://www.iucnredlist.org/details/13408/0>`_ ,
-   also known as the Forest Small Rice Rat, a rodent that lives in Peru,
-   Colombia, Ecuador, Peru, and Venezuela.
+- `"Microryzomys minutus" <http://www.iucnredlist.org/details/13408/0>`_ ,
+  also known as the Forest Small Rice Rat, a rodent that lives in Peru,
+  Colombia, Ecuador, Peru, and Venezuela.
 
 The dataset is not a typical dataset since a :class:`~sklearn.datasets.base.Bunch`
 containing the attributes `data` and `target` is not returned. Instead, we have
@@ -29,8 +29,12 @@ of a species at a specific location.
 
 The dataset is provided by Phillips et. al. (2006).
 
-.. topic:: References
+.. rubric:: References
 
- * `"Maximum entropy modeling of species geographic distributions"
-   <http://rob.schapire.net/papers/ecolmod.pdf>`_ S. J. Phillips,
-   R. P. Anderson, R. E. Schapire - Ecological Modelling, 190:231-259, 2006.
+* `"Maximum entropy modeling of species geographic distributions"
+  <http://rob.schapire.net/papers/ecolmod.pdf>`_ S. J. Phillips,
+  R. P. Anderson, R. E. Schapire - Ecological Modelling, 190:231-259, 2006.
+
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`

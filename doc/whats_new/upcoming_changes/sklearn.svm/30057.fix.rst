@@ -1,0 +1,4 @@
+- :class:`svm.LinearSVC` now properly passes sample weights to
+  :func:`utils.class_weight.compute_class_weight` when fit with
+  `class_weight="balanced"`.
+  By :user:`Shruti Nath <snath-xoc>`

@@ -15,6 +15,9 @@ More details on tools available for model selection can be found in the
 sections on :ref:`cross_validation` and :ref:`grid_search`.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # The dataset
 # -----------

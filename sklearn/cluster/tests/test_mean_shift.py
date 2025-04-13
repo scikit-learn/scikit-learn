@@ -25,6 +25,15 @@ X, _ = make_blobs(
 )
 
 
+def test_convergence_of_1d_constant_data():
+    # Test convergence using 1D constant data
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/28926
+    model = MeanShift()
+    n_iter = model.fit(np.ones(10).reshape(-1, 1)).n_iter_
+    assert n_iter < model.max_iter
+
+
 def test_estimate_bandwidth():
     # Test estimate_bandwidth
     bandwidth = estimate_bandwidth(X, n_samples=200)
@@ -69,7 +78,7 @@ def test_mean_shift(
     assert cluster_centers.dtype == global_dtype
 
 
-def test_parallel(global_dtype):
+def test_parallel(global_dtype, global_random_seed):
     centers = np.array([[1, 1], [-1, -1], [1, -1]]) + 10
     X, _ = make_blobs(
         n_samples=50,
@@ -77,7 +86,7 @@ def test_parallel(global_dtype):
         centers=centers,
         cluster_std=0.4,
         shuffle=True,
-        random_state=11,
+        random_state=global_random_seed,
     )
 
     X = X.astype(global_dtype, copy=False)

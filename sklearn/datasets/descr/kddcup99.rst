@@ -81,14 +81,14 @@ and the target values in ``target``. The "as_frame" optional argument converts
 ``data`` into a pandas DataFrame and ``target`` into a pandas Series. The
 dataset will be downloaded from the web if necessary.
 
-.. topic:: References
+.. rubric:: References
 
-    .. [2] Analysis and Results of the 1999 DARPA Off-Line Intrusion
-           Detection Evaluation, Richard Lippmann, Joshua W. Haines,
-           David J. Fried, Jonathan Korba, Kumar Das.
+.. [2] Analysis and Results of the 1999 DARPA Off-Line Intrusion
+       Detection Evaluation, Richard Lippmann, Joshua W. Haines,
+       David J. Fried, Jonathan Korba, Kumar Das.
 
-    .. [3] K. Yamanishi, J.-I. Takeuchi, G. Williams, and P. Milne. Online
-           unsupervised outlier detection using finite mixtures with
-           discounting learning algorithms. In Proceedings of the sixth
-           ACM SIGKDD international conference on Knowledge discovery
-           and data mining, pages 320-324. ACM Press, 2000.
+.. [3] K. Yamanishi, J.-I. Takeuchi, G. Williams, and P. Milne. Online
+       unsupervised outlier detection using finite mixtures with
+       discounting learning algorithms. In Proceedings of the sixth
+       ACM SIGKDD international conference on Knowledge discovery
+       and data mining, pages 320-324. ACM Press, 2000.

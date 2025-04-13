@@ -1,0 +1,4 @@
+- :func:`sklearn.metrics.fbeta_score`,
+  :func:`sklearn.metrics.precision_score` and
+  :func:`sklearn.metrics.recall_score` now support Array API compatible inputs.
+  By :user:`Omar Salman <OmarManzoor>`

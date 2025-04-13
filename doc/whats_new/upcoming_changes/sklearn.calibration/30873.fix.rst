@@ -1,0 +1,7 @@
+- :class:`~calibration.CalibratedClassifierCV` now raises `FutureWarning`
+  instead of `UserWarning` when passing `cv="prefit`". By
+  :user:`Olivier Grisel <ogrisel>`
+- :class:`~calibration.CalibratedClassifierCV` with `method="sigmoid"` no
+  longer crashes when passing `float64`-dtyped `sample_weight` along with a
+  base estimator that outputs `float32`-dtyped predictions. By :user:`Olivier
+  Grisel <ogrisel>`

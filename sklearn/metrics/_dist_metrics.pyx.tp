@@ -11,7 +11,7 @@ implementation_specific_values = [
 }}
 # By Jake Vanderplas (2013) <jakevdp@cs.washington.edu>
 # written for the scikit-learn project
-# License: BSD
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 cimport numpy as cnp
@@ -42,15 +42,24 @@ BOOL_METRICS = [
     "dice",
     "rogerstanimoto",
     "russellrao",
-    "sokalmichener",
     "sokalsneath",
 ]
+DEPRECATED_METRICS = []
+if sp_base_version < parse_version("1.17"):
+    # Deprecated in SciPy 1.15 and removed in SciPy 1.17
+    BOOL_METRICS += ["sokalmichener"]
+if sp_base_version >= parse_version("1.15"):
+    DEPRECATED_METRICS.append("sokalmichener")
 if sp_base_version < parse_version("1.11"):
     # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     BOOL_METRICS += ["kulsinski"]
+if sp_base_version >= parse_version("1.9"):
+    DEPRECATED_METRICS.append("kulsinski")
 if sp_base_version < parse_version("1.9"):
     # Deprecated in SciPy 1.0 and removed in SciPy 1.9
     BOOL_METRICS += ["matching"]
+if sp_base_version >= parse_version("1.0"):
+    DEPRECATED_METRICS.append("matching")
 
 def get_valid_metric_ids(L):
     """Given an iterable of metric class names or class identifiers,
@@ -89,7 +98,7 @@ cdef class DistanceMetric:
            [5.65...,  8.48...]
            [1.41...,  4.24...]])
 
-    Available Metrics
+    .. rubric:: Available Metrics
 
     The following lists the string metric identifiers and the associated
     distance metric classes:
@@ -134,13 +143,13 @@ cdef class DistanceMetric:
     is evaluated to "True".  In the listings below, the following
     abbreviations are used:
 
-     - N  : number of dimensions
-     - NTT : number of dims in which both values are True
-     - NTF : number of dims in which the first value is True, second is False
-     - NFT : number of dims in which the first value is False, second is True
-     - NFF : number of dims in which both values are False
-     - NNEQ : number of non-equal dimensions, NNEQ = NTF + NFT
-     - NNZ : number of nonzero dimensions, NNZ = NTF + NFT + NTT
+    - N: number of dimensions
+    - NTT: number of dims in which both values are True
+    - NTF: number of dims in which the first value is True, second is False
+    - NFT: number of dims in which the first value is False, second is True
+    - NFF: number of dims in which both values are False
+    - NNEQ: number of non-equal dimensions, NNEQ = NTF + NFT
+    - NNZ: number of nonzero dimensions, NNZ = NTF + NFT + NTT
 
     =================  =======================  ===============================
     identifier         class name               distance function
@@ -327,13 +336,13 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
     is evaluated to "True".  In the listings below, the following
     abbreviations are used:
 
-     - N  : number of dimensions
-     - NTT : number of dims in which both values are True
-     - NTF : number of dims in which the first value is True, second is False
-     - NFT : number of dims in which the first value is False, second is True
-     - NFF : number of dims in which both values are False
-     - NNEQ : number of non-equal dimensions, NNEQ = NTF + NFT
-     - NNZ : number of nonzero dimensions, NNZ = NTF + NFT + NTT
+    - N: number of dimensions
+    - NTT: number of dims in which both values are True
+    - NTF: number of dims in which the first value is True, second is False
+    - NFT: number of dims in which the first value is False, second is True
+    - NFF: number of dims in which both values are False
+    - NNEQ: number of non-equal dimensions, NNEQ = NTF + NFT
+    - NNZ: number of nonzero dimensions, NNZ = NTF + NFT + NTT
 
     =================  =======================  ===============================
     identifier         class name               distance function

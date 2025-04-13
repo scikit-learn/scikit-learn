@@ -36,8 +36,6 @@ You can also set `arpack_all=True` to activate arpack solver for large number
 of components (this takes more time).
 """
 
-# Authors: Sylvain MARIE, Schneider Electric
-
 import time
 
 import matplotlib.pyplot as plt

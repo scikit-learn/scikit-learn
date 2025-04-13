@@ -1,0 +1,6 @@
+- :func:`metrics.brier_score_loss` implements the Brier score for multiclass
+  classification problems and adds a `scale_by_half` argument. This metric is
+  notably useful to assess both sharpness and calibration of probabilistic
+  classifiers. See the docstrings for more details. By
+  :user:`Varun Aggarwal <aggvarun01>`, :user:`Olivier Grisel <ogrisel>` and
+  :user:`Antoine Baker <antoinebaker>`.

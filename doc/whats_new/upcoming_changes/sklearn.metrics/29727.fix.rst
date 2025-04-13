@@ -1,0 +1,3 @@
+- :class:`metrics.RocCurveDisplay` will no longer set a legend when
+  `label` is `None` in both the `line_kwargs` and the `chance_level_kw`.
+  By :user:`Arturo Amor <ArturoAmorQ>`

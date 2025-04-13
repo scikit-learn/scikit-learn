@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from .validation import check_random_state
 
 

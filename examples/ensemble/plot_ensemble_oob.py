@@ -20,11 +20,8 @@ error stabilizes.
 
 """
 
-# Author: Kian Ho <hui.kian.ho@gmail.com>
-#         Gilles Louppe <g.louppe@gmail.com>
-#         Andreas Mueller <amueller@ais.uni-bonn.de>
-#
-# License: BSD 3 Clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from collections import OrderedDict
 

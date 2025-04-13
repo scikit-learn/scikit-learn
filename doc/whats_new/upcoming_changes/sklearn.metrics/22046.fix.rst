@@ -1,0 +1,3 @@
+- :func:`metrics.log_loss` now raises a `ValueError` if values of `y_true`
+  are missing in `labels`. By :user:`Varun Aggarwal <aggvarun01>`,
+  :user:`Olivier Grisel <ogrisel>` and :user:`Antoine Baker <antoinebaker>`.

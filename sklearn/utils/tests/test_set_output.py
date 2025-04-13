@@ -336,7 +336,7 @@ def test_set_output_mro():
 
     class Base(_SetOutputMixin):
         def transform(self, X):
-            return "Base"  # noqa
+            return "Base"
 
     class A(Base):
         pass

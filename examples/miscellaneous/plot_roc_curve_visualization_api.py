@@ -9,6 +9,9 @@ how to use the visualization API by comparing ROC curves.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Load Data and Train a SVC
 # -------------------------

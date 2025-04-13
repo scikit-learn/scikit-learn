@@ -14,9 +14,8 @@ features (words) may appear in each batch.
 
 """
 
-# Authors: Eustache Diemert <eustache@diemert.fr>
-#          @FedericoV <https://github.com/FedericoV/>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import itertools
 import re
@@ -143,10 +142,7 @@ def stream_reuters_documents(data_path=None):
 
     """
 
-    DOWNLOAD_URL = (
-        "http://archive.ics.uci.edu/ml/machine-learning-databases/"
-        "reuters21578-mld/reuters21578.tar.gz"
-    )
+    DOWNLOAD_URL = "https://kdd.ics.uci.edu/databases/reuters21578/reuters21578.tar.gz"
     ARCHIVE_SHA256 = "3bae43c9b14e387f76a61b6d82bf98a4fb5d3ef99ef7e7075ff2ccbcf59f9d30"
     ARCHIVE_FILENAME = "reuters21578.tar.gz"
 

@@ -75,6 +75,9 @@ map.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Utility class to move the midpoint of a colormap to be around
 # the values of interest.

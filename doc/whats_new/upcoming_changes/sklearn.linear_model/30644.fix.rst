@@ -1,0 +1,3 @@
+-  The update and initialization of the hyperparameters now properly handle
+   sample weights in :class:`linear_model.BayesianRidge`.
+   By :user:`Antoine Baker <antoinebaker>`.

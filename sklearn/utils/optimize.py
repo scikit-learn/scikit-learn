@@ -9,18 +9,19 @@ regression with large design matrix), this approach gives very
 significant speedups.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # This is a modified file from scipy.optimize
 # Original authors: Travis Oliphant, Eric Jones
-# Modifications by Gael Varoquaux, Mathieu Blondel and Tom Dupre la Tour
-# License: BSD
 
 import warnings
 
 import numpy as np
 import scipy
+from scipy.optimize._linesearch import line_search_wolfe1, line_search_wolfe2
 
 from ..exceptions import ConvergenceWarning
-from .fixes import line_search_wolfe1, line_search_wolfe2
 
 
 class _LineSearchError(RuntimeError):
@@ -162,7 +163,7 @@ def _cg(fhess_p, fgrad, maxiter, tol, verbose=0):
                 print(
                     f"  Inner CG solver iteration {i} stopped with\n"
                     f"    tiny_|p| = eps * ||p||^2, eps = {eps}, "
-                    f"squred L2 norm ||p||^2 = {psupi_norm2}\n"
+                    f"squared L2 norm ||p||^2 = {psupi_norm2}\n"
                     f"    curvature <= tiny_|p|: {curv} <= {eps * psupi_norm2}"
                 )
             break
@@ -352,11 +353,8 @@ def _check_optimize_result(solver, result, max_iter=None, extra_warning_msg=None
     # handle both scipy and scikit-learn solver names
     if solver == "lbfgs":
         if result.status != 0:
-            try:
-                # The message is already decoded in scipy>=1.6.0
-                result_message = result.message.decode("latin1")
-            except AttributeError:
-                result_message = result.message
+            result_message = result.message
+
             warning_msg = (
                 "{} failed to converge (status={}):\n{}.\n\n"
                 "Increase the number of iterations (max_iter) "

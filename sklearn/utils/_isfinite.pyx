@@ -1,4 +1,5 @@
-# Author: John Kirkham, Meekail Zain, Thomas Fan
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from libc.math cimport isnan, isinf
 from cython cimport floating

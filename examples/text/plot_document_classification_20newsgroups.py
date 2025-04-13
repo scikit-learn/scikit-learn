@@ -14,12 +14,8 @@ script :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`.
 
 """
 
-# Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Mathieu Blondel <mathieu@mblondel.org>
-#         Arturo Amor <david-arturo.amor-quiroz@inria.fr>
-#         Lars Buitinck
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 # %%

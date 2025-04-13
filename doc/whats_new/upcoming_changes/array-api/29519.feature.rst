@@ -1,0 +1,3 @@
+- :func:`sklearn.utils.check_consistent_length` now supports Array API compatible
+  inputs.
+  By :user:`Stefanie Senger <StefanieSenger>`

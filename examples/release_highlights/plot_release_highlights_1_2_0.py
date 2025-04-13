@@ -42,7 +42,11 @@ petal_cols = ["petal length (cm)", "petal width (cm)"]
 preprocessor = ColumnTransformer(
     [
         ("scaler", StandardScaler(), sepal_cols),
-        ("kbin", KBinsDiscretizer(encode="ordinal"), petal_cols),
+        (
+            "kbin",
+            KBinsDiscretizer(encode="ordinal", quantile_method="averaged_inverted_cdf"),
+            petal_cols,
+        ),
     ],
     verbose_feature_names_out=False,
 ).set_output(transform="pandas")

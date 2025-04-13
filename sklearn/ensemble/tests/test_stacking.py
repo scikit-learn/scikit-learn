@@ -1,7 +1,7 @@
 """Test the stacking classifier and regressor."""
 
-# Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import re
 from unittest.mock import Mock
@@ -11,6 +11,7 @@ import pytest
 from numpy.testing import assert_array_equal
 from scipy import sparse
 
+from sklearn import config_context
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin, clone
 from sklearn.datasets import (
     load_breast_cancer,
@@ -920,7 +921,6 @@ def test_routing_passed_metadata_not_supported(Estimator, Child):
         )
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
     "Estimator, Child",
     [
@@ -928,13 +928,13 @@ def test_routing_passed_metadata_not_supported(Estimator, Child):
         (StackingRegressor, ConsumingRegressor),
     ],
 )
+@config_context(enable_metadata_routing=True)
 def test_get_metadata_routing_without_fit(Estimator, Child):
     # Test that metadata_routing() doesn't raise when called before fit.
     est = Estimator([("sub_est", Child())])
     est.get_metadata_routing()
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
     "Estimator, Child",
     [
@@ -945,6 +945,7 @@ def test_get_metadata_routing_without_fit(Estimator, Child):
 @pytest.mark.parametrize(
     "prop, prop_value", [("sample_weight", np.ones(X_iris.shape[0])), ("metadata", "a")]
 )
+@config_context(enable_metadata_routing=True)
 def test_metadata_routing_for_stacking_estimators(Estimator, Child, prop, prop_value):
     """Test that metadata is routed correctly for Stacking*."""
 
@@ -973,17 +974,24 @@ def test_metadata_routing_for_stacking_estimators(Estimator, Child, prop, prop_v
         assert len(registry)
         for sub_est in registry:
             check_recorded_metadata(
-                obj=sub_est, method="fit", split_params=(prop), **{prop: prop_value}
+                obj=sub_est,
+                method="fit",
+                parent="fit",
+                split_params=(prop),
+                **{prop: prop_value},
             )
     # access final_estimator:
     registry = est.final_estimator_.registry
     assert len(registry)
     check_recorded_metadata(
-        obj=registry[-1], method="predict", split_params=(prop), **{prop: prop_value}
+        obj=registry[-1],
+        method="predict",
+        parent="predict",
+        split_params=(prop),
+        **{prop: prop_value},
     )
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
     "Estimator, Child",
     [
@@ -991,6 +999,7 @@ def test_metadata_routing_for_stacking_estimators(Estimator, Child, prop, prop_v
         (StackingRegressor, ConsumingRegressor),
     ],
 )
+@config_context(enable_metadata_routing=True)
 def test_metadata_routing_error_for_stacking_estimators(Estimator, Child):
     """Test that the right error is raised when metadata is not requested."""
     sample_weight, metadata = np.ones(X_iris.shape[0]), "a"

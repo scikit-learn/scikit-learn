@@ -1,0 +1,106 @@
+name: Test Emscripten/Pyodide build
+
+on:
+  schedule:
+    # Nightly build at 3:42 A.M.
+    - cron: "42 3 */1 * *"
+  push:
+    branches:
+      - main
+      # Release branches
+      - "[0-9]+.[0-9]+.X"
+  pull_request:
+    branches:
+      - main
+      - "[0-9]+.[0-9]+.X"
+  # Manual run
+  workflow_dispatch:
+
+env:
+  FORCE_COLOR: 3
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check_build_trigger:
+    name: Check build trigger
+    runs-on: ubuntu-latest
+    if: github.repository == 'scikit-learn/scikit-learn'
+    outputs:
+      build: ${{ steps.check_build_trigger.outputs.build }}
+    steps:
+      - name: Checkout scikit-learn
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - id: check_build_trigger
+        name: Check build trigger
+        shell: bash
+        run: |
+          set -e
+          set -x
+
+          COMMIT_MSG=$(git log --no-merges -1 --oneline)
+
+          # The commit marker "[pyodide]" will trigger the build when required
+          if [[ "$GITHUB_EVENT_NAME" == schedule ||
+                "$GITHUB_EVENT_NAME" == workflow_dispatch ||
+                "$COMMIT_MSG" =~ \[pyodide\] ]]; then
+              echo "build=true" >> $GITHUB_OUTPUT
+          fi
+
+  build_wasm_wheel:
+    name: Build WASM wheel
+    runs-on: ubuntu-latest
+    needs: check_build_trigger
+    if: needs.check_build_trigger.outputs.build
+    steps:
+      - name: Checkout scikit-learn
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: pypa/cibuildwheel@d04cacbc9866d432033b1d09142936e6a0e2121a # v2.23.2
+        env:
+          CIBW_PLATFORM: pyodide
+          SKLEARN_SKIP_OPENMP_TEST: "true"
+          SKLEARN_SKIP_NETWORK_TESTS: 1
+          CIBW_TEST_REQUIRES: "pytest pandas"
+          # -s pytest argument is needed to avoid an issue in pytest output capturing with Pyodide
+          CIBW_TEST_COMMAND: "python -m pytest -svra --pyargs sklearn --durations 20 --showlocals"
+
+      - name: Upload wheel artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pyodide_wheel
+          path: ./wheelhouse/*.whl
+          if-no-files-found: error
+
+  # Push to https://anaconda.org/scientific-python-nightly-wheels/scikit-learn
+  # WARNING: this job will overwrite any existing WASM wheels.
+  upload-wheels:
+    name: Upload scikit-learn WASM wheels to Anaconda.org
+    runs-on: ubuntu-latest
+    permissions: {}
+    environment: upload_anaconda
+    needs: [build_wasm_wheel]
+    if: github.repository == 'scikit-learn/scikit-learn' && github.event_name != 'pull_request'
+    steps:
+      - name: Download wheel artifact
+        uses: actions/download-artifact@v4
+        with:
+          path: wheelhouse/
+          merge-multiple: true
+
+      - name: Push to Anaconda PyPI index
+        uses: scientific-python/upload-nightly-action@b36e8c0c10dbcfd2e05bf95f17ef8c14fd708dbf # 0.6.2
+        with:
+          artifacts_path: wheelhouse/
+          anaconda_nightly_upload_token: ${{ secrets.SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN }}

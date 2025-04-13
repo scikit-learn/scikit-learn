@@ -1,0 +1,3 @@
+- :func:`~metrics.class_likelihood_ratios` now raises `UndefinedMetricWarning` instead
+  of `UserWarning` when a division by zero occurs.
+  By :user:`Stefanie Senger <StefanieSenger>`
