@@ -256,7 +256,7 @@ class RANSACRegressor(
 
     For a more detailed example, see
     :ref:`sphx_glr_auto_examples_linear_model_plot_ransac.py`
-    """  # noqa: E501
+    """
 
     _parameter_constraints: dict = {
         "estimator": [HasMethods(["fit", "score", "predict"]), None],

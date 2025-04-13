@@ -1,5 +1,7 @@
 # Workflow to build and test wheels
 name: Wheel builder
+permissions:
+  contents: read
 
 on:
   schedule:
@@ -59,9 +61,6 @@ jobs:
         include:
           # Window 64 bit
           - os: windows-latest
-            python: 39
-            platform_id: win_amd64
-          - os: windows-latest
             python: 310
             platform_id: win_amd64
           - os: windows-latest
@@ -80,16 +79,9 @@ jobs:
 
           # Linux 64 bit manylinux2014
           - os: ubuntu-latest
-            python: 39
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
-
-          # NumPy on Python 3.10 only supports 64bit and is only available with manylinux2014
-          - os: ubuntu-latest
             python: 310
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
-
           - os: ubuntu-latest
             python: 311
             platform_id: manylinux_x86_64
@@ -108,10 +100,25 @@ jobs:
             manylinux_image: manylinux2014
             free_threaded_support: True
 
+          # # Linux 64 bit manylinux2014
+          - os: ubuntu-24.04-arm
+            python: 310
+            platform_id: manylinux_aarch64
+            manylinux_image: manylinux2014
+          - os: ubuntu-24.04-arm
+            python: 311
+            platform_id: manylinux_aarch64
+            manylinux_image: manylinux2014
+          - os: ubuntu-24.04-arm
+            python: 312
+            platform_id: manylinux_aarch64
+            manylinux_image: manylinux2014
+          - os: ubuntu-24.04-arm
+            python: 313
+            platform_id: manylinux_aarch64
+            manylinux_image: manylinux2014
+
           # MacOS x86_64
-          - os: macos-13
-            python: 39
-            platform_id: macosx_x86_64
           - os: macos-13
             python: 310
             platform_id: macosx_x86_64
@@ -130,9 +137,6 @@ jobs:
             free_threaded_support: True
 
           # MacOS arm64
-          - os: macos-14
-            python: 39
-            platform_id: macosx_arm64
           - os: macos-14
             python: 310
             platform_id: macosx_arm64
@@ -178,7 +182,6 @@ jobs:
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir}
           CIBW_BEFORE_BUILD: bash {project}/build_tools/wheels/cibw_before_build.sh {project}
           CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }}
-          CIBW_BEFORE_TEST: bash {project}/build_tools/wheels/cibw_before_test.sh
           CIBW_ENVIRONMENT_PASS_LINUX: RUNNER_OS
           CIBW_TEST_REQUIRES: pytest pandas
           # On Windows, we use a custom Docker image and CIBW_TEST_REQUIRES_WINDOWS
@@ -220,7 +223,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.9" # update once build dependencies are available
+          python-version: "3.12"
 
       - name: Build source distribution
         run: bash build_tools/github/build_source.sh
