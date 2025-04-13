@@ -1,6 +1,5 @@
 """Helper functions used by `array_api_extra/_funcs.py`."""
 
-# https://github.com/scikit-learn/scikit-learn/pull/27910#issuecomment-2568023972
 from __future__ import annotations
 
 import math
@@ -245,8 +244,7 @@ def eager_shape(x: Array, /) -> tuple[int, ...]:
 
 
 def meta_namespace(
-    *arrays: Array | int | float | complex | bool | None,
-    xp: ModuleType | None = None,
+    *arrays: Array | complex | None, xp: ModuleType | None = None
 ) -> ModuleType:
     """
     Get the namespace of Dask chunks.
