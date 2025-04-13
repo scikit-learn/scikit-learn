@@ -11,6 +11,7 @@ from sklearn.linear_model import ARDRegression, BayesianRidge, Ridge
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import (
     _convert_container,
+    assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_less,
@@ -96,13 +97,16 @@ def test_bayesian_ridge_parameter():
 
 @pytest.mark.parametrize("n_samples, n_features", [(10, 20), (20, 10)])
 def test_bayesian_covariance_matrix(n_samples, n_features):
-    # Check the posterior covariance matrix sigma_
+    """Check the posterior covariance matrix sigma_
+
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/31093
+    """
     X, y = datasets.make_regression(n_samples, n_features)
     reg = BayesianRidge(fit_intercept=False).fit(X, y)
     covariance_matrix = np.linalg.inv(
         reg.lambda_ * np.identity(n_features) + reg.alpha_ * np.dot(X.T, X)
     )
-    assert_array_almost_equal(reg.sigma_, covariance_matrix)
+    assert_allclose(reg.sigma_, covariance_matrix)
 
 
 def test_bayesian_sample_weights():
