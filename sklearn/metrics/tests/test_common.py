@@ -74,6 +74,7 @@ from sklearn.utils import shuffle
 from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
+    _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -303,7 +304,6 @@ METRIC_UNDEFINED_BINARY = {
 
 # Those metrics don't support multiclass inputs
 METRIC_UNDEFINED_MULTICLASS = {
-    "brier_score_loss",
     "micro_roc_auc",
     "samples_roc_auc",
     "partial_roc_auc",
@@ -398,6 +398,8 @@ METRICS_WITH_LABELS = {
     "unnormalized_multilabel_confusion_matrix",
     "unnormalized_multilabel_confusion_matrix_sample",
     "cohen_kappa_score",
+    "log_loss",
+    "brier_score_loss",
 }
 
 # Metrics with a "normalize" option
@@ -411,6 +413,7 @@ METRICS_WITH_NORMALIZE_OPTION = {
 THRESHOLDED_MULTILABEL_METRICS = {
     "log_loss",
     "unnormalized_log_loss",
+    "brier_score_loss",
     "roc_auc_score",
     "weighted_roc_auc",
     "samples_roc_auc",
@@ -638,20 +641,46 @@ def test_symmetric_metric(name):
 
 @pytest.mark.parametrize("name", sorted(NOT_SYMMETRIC_METRICS))
 def test_not_symmetric_metric(name):
+
     # Test the symmetry of score and loss functions
     random_state = check_random_state(0)
-    y_true = random_state.randint(0, 2, size=(20,))
-    y_pred = random_state.randint(0, 2, size=(20,))
-
-    if name in METRICS_REQUIRE_POSITIVE_Y:
-        y_true, y_pred = _require_positive_targets(y_true, y_pred)
-
     metric = ALL_METRICS[name]
 
-    # use context manager to supply custom error message
-    with pytest.raises(AssertionError):
-        assert_array_equal(metric(y_true, y_pred), metric(y_pred, y_true))
-        raise ValueError("%s seems to be symmetric" % name)
+    # The metric can be accidentally symmetric on a random draw.
+    # We run several random draws to check that at least of them
+    # gives an asymmetric result.
+    always_symmetric = True
+    for _ in range(5):
+        y_true = random_state.randint(0, 2, size=(20,))
+        y_pred = random_state.randint(0, 2, size=(20,))
+
+        if name in METRICS_REQUIRE_POSITIVE_Y:
+            y_true, y_pred = _require_positive_targets(y_true, y_pred)
+
+        nominal = metric(y_true, y_pred)
+        swapped = metric(y_pred, y_true)
+        if not np.allclose(nominal, swapped):
+            always_symmetric = False
+            break
+
+    if always_symmetric:
+        raise ValueError(f"{name} seems to be symmetric")
+
+
+def test_symmetry_tests():
+    # check test_symmetric_metric and test_not_symmetric_metric
+    sym = "accuracy_score"
+    not_sym = "recall_score"
+    # test_symmetric_metric passes on a symmetric metric
+    # but fails on a not symmetric metric
+    test_symmetric_metric(sym)
+    with pytest.raises(AssertionError, match=f"{not_sym} is not symmetric"):
+        test_symmetric_metric(not_sym)
+    # test_not_symmetric_metric passes on a not symmetric metric
+    # but fails on a symmetric metric
+    test_not_symmetric_metric(not_sym)
+    with pytest.raises(ValueError, match=f"{sym} seems to be symmetric"):
+        test_not_symmetric_metric(sym)
 
 
 @pytest.mark.parametrize(
@@ -1801,7 +1830,7 @@ def test_metrics_pos_label_error_str(metric, y_pred_threshold, dtype_y_str):
         "pass pos_label explicit"
     )
     err_msg_pos_label_1 = (
-        r"pos_label=1 is not a valid label. It should be one of " r"\['eggs', 'spam'\]"
+        r"pos_label=1 is not a valid label. It should be one of \['eggs', 'spam'\]"
     )
 
     pos_label_default = signature(metric).parameters["pos_label"].default
@@ -1838,10 +1867,10 @@ def check_array_api_metric(
         np.asarray(a_xp)
         np.asarray(b_xp)
         numpy_as_array_works = True
-    except TypeError:
+    except (TypeError, RuntimeError):
         # PyTorch with CUDA device and CuPy raise TypeError consistently.
-        # Exception type may need to be updated in the future for other
-        # libraries.
+        # array-api-strict chose to raise RuntimeError instead. Exception type
+        # may need to be updated in the future for other libraries.
         numpy_as_array_works = False
 
     if numpy_as_array_works:
@@ -2139,6 +2168,11 @@ array_api_metric_checkers = {
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
     ],
+    hamming_loss: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
     mean_tweedie_deviance: [check_array_api_regression_metric],
     partial(mean_tweedie_deviance, power=-0.5): [check_array_api_regression_metric],
     partial(mean_tweedie_deviance, power=1.5): [check_array_api_regression_metric],
@@ -2206,7 +2240,9 @@ def yield_metric_checker_combinations(metric_checkers=array_api_metric_checkers)
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("metric, check_func", yield_metric_checker_combinations())
 def test_array_api_compliance(metric, array_namespace, device, dtype_name, check_func):
