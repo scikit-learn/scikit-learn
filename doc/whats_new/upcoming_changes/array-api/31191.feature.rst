@@ -1,0 +1,2 @@
+- :func:`sklearn.metrics.brier_score_loss` now support Array API compatible inputs for the binary class case.
+  By :user:`Thomas Li <lithomas1>`
