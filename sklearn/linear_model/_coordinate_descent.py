@@ -23,7 +23,7 @@ from ..utils._metadata_requests import (
     _raise_for_params,
     get_routing_for_object,
 )
-from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.extmath import safe_sparse_dot
 from ..utils.metadata_routing import (
     _routing_enabled,
@@ -1495,14 +1495,14 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         "eps": [Interval(Real, 0, None, closed="neither")],
         "n_alphas": [
             Interval(Integral, 1, None, closed="left"),
-            StrOptions({"deprecated"}),
+            Hidden(StrOptions({"deprecated"})),
         ],
         # TODO(1.9): remove "warn" and None options.
         "alphas": [
             Interval(Integral, 1, None, closed="left"),
             "array-like",
             None,
-            StrOptions({"warn"}),
+            Hidden(StrOptions({"warn"})),
         ],
         "fit_intercept": ["boolean"],
         "precompute": [StrOptions({"auto"}), "array-like", "boolean"],
