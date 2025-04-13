@@ -1,8 +1,10 @@
 # DO NOT EDIT: this file is generated from the specification found in the
 # following script to centralize the configuration for CI builds:
 # build_tools/update_environments_and_lock_files.py
-cython
-joblib==1.1.1  # min
-threadpoolctl==2.0.0  # min
+cython==3.0.10  # min
+joblib==1.2.0  # min
+threadpoolctl==3.1.0  # min
 pytest
-pytest-xdist==2.5.0
+pytest-xdist
+ninja
+meson-python

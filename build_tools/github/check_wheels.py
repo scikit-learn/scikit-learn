@@ -1,8 +1,10 @@
 """Checks that dist/* contains the number of wheels built from the
 .github/workflows/wheels.yml config."""
-import yaml
-from pathlib import Path
+
 import sys
+from pathlib import Path
+
+import yaml
 
 gh_wheel_path = Path.cwd() / ".github" / "workflows" / "wheels.yml"
 with gh_wheel_path.open("r") as f:
@@ -13,15 +15,6 @@ n_wheels = len(build_matrix)
 
 # plus one more for the sdist
 n_wheels += 1
-
-# aarch64 builds from travis
-travis_config_path = Path.cwd() / ".travis.yml"
-with travis_config_path.open("r") as f:
-    travis_config = yaml.safe_load(f)
-
-jobs = travis_config["jobs"]["include"]
-travis_builds = [j for j in jobs if any("CIBW_BUILD" in env for env in j["env"])]
-n_wheels += len(travis_builds)
 
 dist_files = list(Path("dist").glob("**/*"))
 n_dist_files = len(dist_files)

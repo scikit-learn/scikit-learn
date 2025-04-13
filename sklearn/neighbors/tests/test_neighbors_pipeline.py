@@ -7,23 +7,20 @@ neighbors.
 
 import numpy as np
 
-from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.base import clone
+from sklearn.cluster import DBSCAN, SpectralClustering
 from sklearn.cluster.tests.common import generate_clustered_data
 from sklearn.datasets import make_blobs
+from sklearn.manifold import TSNE, Isomap, SpectralEmbedding
+from sklearn.neighbors import (
+    KNeighborsRegressor,
+    KNeighborsTransformer,
+    LocalOutlierFactor,
+    RadiusNeighborsRegressor,
+    RadiusNeighborsTransformer,
+)
 from sklearn.pipeline import make_pipeline
-from sklearn.base import clone
-
-from sklearn.neighbors import KNeighborsTransformer
-from sklearn.neighbors import RadiusNeighborsTransformer
-
-from sklearn.cluster import DBSCAN
-from sklearn.cluster import SpectralClustering
-from sklearn.neighbors import KNeighborsRegressor
-from sklearn.neighbors import RadiusNeighborsRegressor
-from sklearn.neighbors import LocalOutlierFactor
-from sklearn.manifold import SpectralEmbedding
-from sklearn.manifold import Isomap
-from sklearn.manifold import TSNE
+from sklearn.utils._testing import assert_array_almost_equal
 
 
 def test_spectral_clustering():
@@ -124,7 +121,7 @@ def test_isomap():
 
 def test_tsne():
     # Test chaining KNeighborsTransformer and TSNE
-    n_iter = 250
+    max_iter = 250
     perplexity = 5
     n_neighbors = int(3.0 * perplexity + 1)
 
@@ -132,7 +129,6 @@ def test_tsne():
     X = rng.randn(20, 2)
 
     for metric in ["minkowski", "sqeuclidean"]:
-
         # compare the chained version and the compact version
         est_chain = make_pipeline(
             KNeighborsTransformer(
@@ -144,14 +140,14 @@ def test_tsne():
                 perplexity=perplexity,
                 method="barnes_hut",
                 random_state=42,
-                n_iter=n_iter,
+                max_iter=max_iter,
             ),
         )
         est_compact = TSNE(
             init="random",
             metric=metric,
             perplexity=perplexity,
-            n_iter=n_iter,
+            max_iter=max_iter,
             method="barnes_hut",
             random_state=42,
         )

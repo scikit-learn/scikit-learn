@@ -2,6 +2,7 @@ from collections import defaultdict
 
 import numpy as np
 from numpy.testing import assert_array_almost_equal
+
 from sklearn.utils.graph import single_source_shortest_path_length
 
 

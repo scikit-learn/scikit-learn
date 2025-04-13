@@ -9,11 +9,15 @@ vectors in LinearSVC.
 
 """
 
-import numpy as np
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn.datasets import make_blobs
-from sklearn.svm import LinearSVC
 from sklearn.inspection import DecisionBoundaryDisplay
+from sklearn.svm import LinearSVC
 
 X, y = make_blobs(n_samples=40, centers=2, random_state=0)
 
@@ -27,7 +31,7 @@ for i, C in enumerate([1, 100]):
     # decision_function = np.dot(X, clf.coef_[0]) + clf.intercept_[0]
     # The support vectors are the samples that lie within the margin
     # boundaries, whose size is conventionally constrained to 1
-    support_vector_indices = np.where(np.abs(decision_function) <= 1 + 1e-15)[0]
+    support_vector_indices = (np.abs(decision_function) <= 1 + 1e-15).nonzero()[0]
     support_vectors = X[support_vector_indices]
 
     plt.subplot(1, 2, i + 1)

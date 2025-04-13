@@ -1,7 +1,3 @@
-.. Places parent toc into the sidebar
-
-:parenttoc: True
-
 .. _scaling_strategies:
 
 Strategies to scale computationally: bigger data
@@ -20,9 +16,9 @@ data that cannot fit in a computer's main memory (RAM).
 
 Here is a sketch of a system designed to achieve this goal:
 
-  1. a way to stream instances
-  2. a way to extract features from instances
-  3. an incremental algorithm
+1. a way to stream instances
+2. a way to extract features from instances
+3. an incremental algorithm
 
 Streaming instances
 ....................
@@ -62,29 +58,29 @@ balances relevancy and memory footprint could involve some tuning [1]_.
 
 Here is a list of incremental estimators for different tasks:
 
-  - Classification
-      + :class:`sklearn.naive_bayes.MultinomialNB`
-      + :class:`sklearn.naive_bayes.BernoulliNB`
-      + :class:`sklearn.linear_model.Perceptron`
-      + :class:`sklearn.linear_model.SGDClassifier`
-      + :class:`sklearn.linear_model.PassiveAggressiveClassifier`
-      + :class:`sklearn.neural_network.MLPClassifier`
-  - Regression
-      + :class:`sklearn.linear_model.SGDRegressor`
-      + :class:`sklearn.linear_model.PassiveAggressiveRegressor`
-      + :class:`sklearn.neural_network.MLPRegressor`
-  - Clustering
-      + :class:`sklearn.cluster.MiniBatchKMeans`
-      + :class:`sklearn.cluster.Birch`
-  - Decomposition / feature Extraction
-      + :class:`sklearn.decomposition.MiniBatchDictionaryLearning`
-      + :class:`sklearn.decomposition.IncrementalPCA`
-      + :class:`sklearn.decomposition.LatentDirichletAllocation`
-      + :class:`sklearn.decomposition.MiniBatchNMF`
-  - Preprocessing
-      + :class:`sklearn.preprocessing.StandardScaler`
-      + :class:`sklearn.preprocessing.MinMaxScaler`
-      + :class:`sklearn.preprocessing.MaxAbsScaler`
+- Classification
+    + :class:`sklearn.naive_bayes.MultinomialNB`
+    + :class:`sklearn.naive_bayes.BernoulliNB`
+    + :class:`sklearn.linear_model.Perceptron`
+    + :class:`sklearn.linear_model.SGDClassifier`
+    + :class:`sklearn.linear_model.PassiveAggressiveClassifier`
+    + :class:`sklearn.neural_network.MLPClassifier`
+- Regression
+    + :class:`sklearn.linear_model.SGDRegressor`
+    + :class:`sklearn.linear_model.PassiveAggressiveRegressor`
+    + :class:`sklearn.neural_network.MLPRegressor`
+- Clustering
+    + :class:`sklearn.cluster.MiniBatchKMeans`
+    + :class:`sklearn.cluster.Birch`
+- Decomposition / feature Extraction
+    + :class:`sklearn.decomposition.MiniBatchDictionaryLearning`
+    + :class:`sklearn.decomposition.IncrementalPCA`
+    + :class:`sklearn.decomposition.LatentDirichletAllocation`
+    + :class:`sklearn.decomposition.MiniBatchNMF`
+- Preprocessing
+    + :class:`sklearn.preprocessing.StandardScaler`
+    + :class:`sklearn.preprocessing.MinMaxScaler`
+    + :class:`sklearn.preprocessing.MaxAbsScaler`
 
 For classification, a somewhat important thing to note is that although a
 stateless feature extraction routine may be able to cope with new/unseen

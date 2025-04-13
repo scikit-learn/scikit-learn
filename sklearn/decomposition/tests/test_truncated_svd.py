@@ -1,13 +1,12 @@
 """Test truncated SVD transformer."""
 
 import numpy as np
+import pytest
 import scipy.sparse as sp
 
-import pytest
-
-from sklearn.decomposition import TruncatedSVD, PCA
+from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_array_less, assert_allclose
+from sklearn.utils._testing import assert_allclose, assert_array_less
 
 SVD_SOLVERS = ["arpack", "randomized"]
 
@@ -135,9 +134,9 @@ def test_explained_variance_components_10_20(X_sparse, kind, solver):
 
 
 @pytest.mark.parametrize("solver", SVD_SOLVERS)
-def test_singular_values_consistency(solver):
+def test_singular_values_consistency(solver, global_random_seed):
     # Check that the TruncatedSVD output has the correct singular values
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_samples, n_features = 100, 80
     X = rng.randn(n_samples, n_features)
 
@@ -158,9 +157,9 @@ def test_singular_values_consistency(solver):
 
 
 @pytest.mark.parametrize("solver", SVD_SOLVERS)
-def test_singular_values_expected(solver):
+def test_singular_values_expected(solver, global_random_seed):
     # Set the singular values and see what we get back
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 100
     n_features = 110
 

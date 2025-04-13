@@ -1,4 +1,4 @@
-# flake8: noqa
+# ruff: noqa
 """
 =======================================
 Release Highlights for scikit-learn 1.0
@@ -15,7 +15,7 @@ do our best to keep this pattern.
 This release includes some new key features as well as many improvements and
 bug fixes. We detail below a few of the major features of this release. **For
 an exhaustive list of all the changes**, please refer to the :ref:`release
-notes <changes_1_0>`.
+notes <release_notes_1_0>`.
 
 To install the latest version (with pip)::
 
@@ -140,7 +140,9 @@ spline.fit_transform(X)
 # When an estimator is passed a `pandas' dataframe
 # <https://pandas.pydata.org/docs/user_guide/dsintro.html#dataframe>`_ during
 # :term:`fit`, the estimator will set a `feature_names_in_` attribute
-# containing the feature names. Note that feature names support is only enabled
+# containing the feature names. This is a part of
+# `SLEP007 <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep007/proposal.html>`__.
+# Note that feature names support is only enabled
 # when the column names in the dataframe are all strings. `feature_names_in_`
 # is used to check that the column names of the dataframe passed in
 # non-:term:`fit`, such as :term:`predict`, are consistent with features in

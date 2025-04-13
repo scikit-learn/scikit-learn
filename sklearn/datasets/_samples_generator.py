@@ -2,22 +2,24 @@
 Generate samples of synthetic data sets.
 """
 
-# Authors: B. Thirion, G. Varoquaux, A. Gramfort, V. Michel, O. Grisel,
-#          G. Louppe, J. Nothman
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import numbers
 import array
-import warnings
+import numbers
 from collections.abc import Iterable
+from numbers import Integral, Real
 
 import numpy as np
-from scipy import linalg
 import scipy.sparse as sp
+from scipy import linalg
+
+from sklearn.utils import Bunch
 
 from ..preprocessing import MultiLabelBinarizer
 from ..utils import check_array, check_random_state
 from ..utils import shuffle as util_shuffle
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.random import sample_without_replacement
 
 
@@ -37,6 +39,27 @@ def _generate_hypercube(samples, dimensions, rng):
     return out
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 1, None, closed="left")],
+        "n_informative": [Interval(Integral, 1, None, closed="left")],
+        "n_redundant": [Interval(Integral, 0, None, closed="left")],
+        "n_repeated": [Interval(Integral, 0, None, closed="left")],
+        "n_classes": [Interval(Integral, 1, None, closed="left")],
+        "n_clusters_per_class": [Interval(Integral, 1, None, closed="left")],
+        "weights": ["array-like", None],
+        "flip_y": [Interval(Real, 0, 1, closed="both")],
+        "class_sep": [Interval(Real, 0, None, closed="neither")],
+        "hypercube": ["boolean"],
+        "shift": [Interval(Real, None, None, closed="neither"), "array-like", None],
+        "scale": [Interval(Real, 0, None, closed="neither"), "array-like", None],
+        "shuffle": ["boolean"],
+        "random_state": ["random_state"],
+        "return_X_y": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def make_classification(
     n_samples=100,
     n_features=20,
@@ -54,6 +77,7 @@ def make_classification(
     scale=1.0,
     shuffle=True,
     random_state=None,
+    return_X_y=True,
 ):
     """Generate a random n-class classification problem.
 
@@ -148,13 +172,32 @@ def make_classification(
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+    return_X_y : bool, default=True
+        If True, a tuple ``(X, y)`` instead of a Bunch object is returned.
+
+        .. versionadded:: 1.7
+
     Returns
     -------
-    X : ndarray of shape (n_samples, n_features)
-        The generated samples.
+    data : :class:`~sklearn.utils.Bunch` if `return_X_y` is `False`.
+        Dictionary-like object, with the following attributes.
 
-    y : ndarray of shape (n_samples,)
-        The integer labels for class membership of each sample.
+        DESCR : str
+            A description of the function that generated the dataset.
+        parameter : dict
+            A dictionary that stores the values of the arguments passed to the
+            generator function.
+        feature_info : list of len(n_features)
+            A description for each generated feature.
+        X : ndarray of shape (n_samples, n_features)
+            The generated samples.
+        y : ndarray of shape (n_samples,)
+            An integer label for class membership of each sample.
+
+        .. versionadded:: 1.7
+
+    (X, y) : tuple if ``return_X_y`` is True
+        A tuple of generated samples and labels.
 
     See Also
     --------
@@ -170,6 +213,17 @@ def make_classification(
     ----------
     .. [1] I. Guyon, "Design of experiments for the NIPS 2003 variable
            selection benchmark", 2003.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_classification
+    >>> X, y = make_classification(random_state=42)
+    >>> X.shape
+    (100, 20)
+    >>> y.shape
+    (100,)
+    >>> list(y[:5])
+    [np.int64(0), np.int64(0), np.int64(1), np.int64(1), np.int64(0)]
     """
     generator = check_random_state(random_state)
 
@@ -185,31 +239,32 @@ def make_classification(
         msg = "n_classes({}) * n_clusters_per_class({}) must be"
         msg += " smaller or equal 2**n_informative({})={}"
         raise ValueError(
-            msg.format(
-                n_classes, n_clusters_per_class, n_informative, 2**n_informative
-            )
+            msg.format(n_classes, n_clusters_per_class, n_informative, 2**n_informative)
         )
 
     if weights is not None:
+        # we define new variable, weight_, instead of modifying user defined parameter.
         if len(weights) not in [n_classes, n_classes - 1]:
             raise ValueError(
                 "Weights specified but incompatible with number of classes."
             )
         if len(weights) == n_classes - 1:
             if isinstance(weights, list):
-                weights = weights + [1.0 - sum(weights)]
+                weights_ = weights + [1.0 - sum(weights)]
             else:
-                weights = np.resize(weights, n_classes)
-                weights[-1] = 1.0 - sum(weights[:-1])
+                weights_ = np.resize(weights, n_classes)
+                weights_[-1] = 1.0 - sum(weights_[:-1])
+        else:
+            weights_ = weights.copy()
     else:
-        weights = [1.0 / n_classes] * n_classes
+        weights_ = [1.0 / n_classes] * n_classes
 
-    n_useless = n_features - n_informative - n_redundant - n_repeated
+    n_random = n_features - n_informative - n_redundant - n_repeated
     n_clusters = n_classes * n_clusters_per_class
 
     # Distribute samples among clusters by weight
     n_samples_per_cluster = [
-        int(n_samples * weights[k % n_classes] / n_clusters_per_class)
+        int(n_samples * weights_[k % n_classes] / n_clusters_per_class)
         for k in range(n_clusters)
     ]
 
@@ -253,14 +308,14 @@ def make_classification(
         )
 
     # Repeat some features
+    n = n_informative + n_redundant
     if n_repeated > 0:
-        n = n_informative + n_redundant
         indices = ((n - 1) * generator.uniform(size=n_repeated) + 0.5).astype(np.intp)
         X[:, n : n + n_repeated] = X[:, indices]
 
     # Fill useless features
-    if n_useless > 0:
-        X[:, -n_useless:] = generator.standard_normal(size=(n_samples, n_useless))
+    if n_random > 0:
+        X[:, -n_random:] = generator.standard_normal(size=(n_samples, n_random))
 
     # Randomly replace labels
     if flip_y >= 0.0:
@@ -276,18 +331,73 @@ def make_classification(
         scale = 1 + 100 * generator.uniform(size=n_features)
     X *= scale
 
+    indices = np.arange(n_features)
     if shuffle:
         # Randomly permute samples
         X, y = util_shuffle(X, y, random_state=generator)
 
         # Randomly permute features
-        indices = np.arange(n_features)
         generator.shuffle(indices)
         X[:, :] = X[:, indices]
 
-    return X, y
+    if return_X_y:
+        return X, y
+
+    # feat_desc describes features in X
+    feat_desc = ["random"] * n_features
+    for i, index in enumerate(indices):
+        if index < n_informative:
+            feat_desc[i] = "informative"
+        elif n_informative <= index < n_informative + n_redundant:
+            feat_desc[i] = "redundant"
+        elif n <= index < n + n_repeated:
+            feat_desc[i] = "repeated"
+
+    parameters = {
+        "n_samples": n_samples,
+        "n_features": n_features,
+        "n_informative": n_informative,
+        "n_redundant": n_redundant,
+        "n_repeated": n_repeated,
+        "n_classes": n_classes,
+        "n_clusters_per_class": n_clusters_per_class,
+        "weights": weights,
+        "flip_y": flip_y,
+        "class_sep": class_sep,
+        "hypercube": hypercube,
+        "shift": shift,
+        "scale": scale,
+        "shuffle": shuffle,
+        "random_state": random_state,
+        "return_X_y": return_X_y,
+    }
+
+    bunch = Bunch(
+        DESCR=make_classification.__doc__,
+        parameters=parameters,
+        feature_info=feat_desc,
+        X=X,
+        y=y,
+    )
+
+    return bunch
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 1, None, closed="left")],
+        "n_classes": [Interval(Integral, 1, None, closed="left")],
+        "n_labels": [Interval(Integral, 0, None, closed="left")],
+        "length": [Interval(Integral, 1, None, closed="left")],
+        "allow_unlabeled": ["boolean"],
+        "sparse": ["boolean"],
+        "return_indicator": [StrOptions({"dense", "sparse"}), "boolean"],
+        "return_distributions": ["boolean"],
+        "random_state": ["random_state"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def make_multilabel_classification(
     n_samples=100,
     n_features=20,
@@ -312,6 +422,9 @@ def make_multilabel_classification(
     In the above process, rejection sampling is used to make sure that
     n is never zero or more than `n_classes`, and that the document length
     is never zero. Likewise, we reject classes which have already been chosen.
+
+    For an example of usage, see
+    :ref:`sphx_glr_auto_examples_datasets_plot_random_multilabel_dataset.py`.
 
     Read more in the :ref:`User Guide <sample_generators>`.
 
@@ -376,19 +489,18 @@ def make_multilabel_classification(
     p_w_c : ndarray of shape (n_features, n_classes)
         The probability of each feature being drawn given each class.
         Only returned if ``return_distributions=True``.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_multilabel_classification
+    >>> X, y = make_multilabel_classification(n_labels=3, random_state=42)
+    >>> X.shape
+    (100, 20)
+    >>> y.shape
+    (100, 5)
+    >>> list(y[:3])
+    [array([1, 1, 0, 1, 0]), array([0, 1, 1, 1, 0]), array([0, 1, 0, 0, 0])]
     """
-    if n_classes < 1:
-        raise ValueError(
-            "'n_classes' should be an integer greater than 0. Got {} instead.".format(
-                n_classes
-            )
-        )
-    if length < 1:
-        raise ValueError(
-            "'length' should be an integer greater than 0. Got {} instead.".format(
-                length
-            )
-        )
 
     generator = check_random_state(random_state)
     p_c = generator.uniform(size=n_classes)
@@ -448,13 +560,18 @@ def make_multilabel_classification(
     if return_indicator in (True, "sparse", "dense"):
         lb = MultiLabelBinarizer(sparse_output=(return_indicator == "sparse"))
         Y = lb.fit([range(n_classes)]).transform(Y)
-    elif return_indicator is not False:
-        raise ValueError("return_indicator must be either 'sparse', 'dense' or False.")
     if return_distributions:
         return X, Y, p_c, p_w_c
     return X, Y
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def make_hastie_10_2(n_samples=12000, *, random_state=None):
     """Generate data for binary classification used in Hastie et al. 2009, Example 10.2.
 
@@ -491,6 +608,18 @@ def make_hastie_10_2(n_samples=12000, *, random_state=None):
     ----------
     .. [1] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical
            Learning Ed. 2", Springer, 2009.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_hastie_10_2
+    >>> X, y = make_hastie_10_2(n_samples=24000, random_state=42)
+    >>> X.shape
+    (24000, 10)
+    >>> y.shape
+    (24000,)
+    >>> list(y[:5])
+    [np.float64(-1.0), np.float64(1.0), np.float64(-1.0), np.float64(1.0),
+    np.float64(-1.0)]
     """
     rs = check_random_state(random_state)
 
@@ -502,6 +631,22 @@ def make_hastie_10_2(n_samples=12000, *, random_state=None):
     return X, y
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 1, None, closed="left")],
+        "n_informative": [Interval(Integral, 0, None, closed="left")],
+        "n_targets": [Interval(Integral, 1, None, closed="left")],
+        "bias": [Interval(Real, None, None, closed="neither")],
+        "effective_rank": [Interval(Integral, 1, None, closed="left"), None],
+        "tail_strength": [Interval(Real, 0, 1, closed="both")],
+        "noise": [Interval(Real, 0, None, closed="left")],
+        "shuffle": ["boolean"],
+        "coef": ["boolean"],
+        "random_state": ["random_state"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def make_regression(
     n_samples=100,
     n_features=100,
@@ -588,6 +733,19 @@ def make_regression(
     coef : ndarray of shape (n_features,) or (n_features, n_targets)
         The coefficient of the underlying linear model. It is returned only if
         coef is True.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(n_samples=5, n_features=2, noise=1, random_state=42)
+    >>> X
+    array([[ 0.4967..., -0.1382... ],
+        [ 0.6476...,  1.523...],
+        [-0.2341..., -0.2341...],
+        [-0.4694...,  0.5425...],
+        [ 1.579...,  0.7674...]])
+    >>> y
+    array([  6.737...,  37.79..., -10.27...,   0.4017...,   42.22...])
     """
     n_informative = min(n_features, n_informative)
     generator = check_random_state(random_state)
@@ -638,6 +796,16 @@ def make_regression(
         return X, y
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 0, None, closed="left"), tuple],
+        "shuffle": ["boolean"],
+        "noise": [Interval(Real, 0, None, closed="left"), None],
+        "random_state": ["random_state"],
+        "factor": [Interval(Real, 0, 1, closed="left")],
+    },
+    prefer_skip_nested_validation=True,
+)
 def make_circles(
     n_samples=100, *, shuffle=True, noise=None, random_state=None, factor=0.8
 ):
@@ -672,7 +840,7 @@ def make_circles(
         See :term:`Glossary <random_state>`.
 
     factor : float, default=.8
-        Scale factor between inner and outer circle in the range `(0, 1)`.
+        Scale factor between inner and outer circle in the range `[0, 1)`.
 
     Returns
     -------
@@ -681,21 +849,25 @@ def make_circles(
 
     y : ndarray of shape (n_samples,)
         The integer labels (0 or 1) for class membership of each sample.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_circles
+    >>> X, y = make_circles(random_state=42)
+    >>> X.shape
+    (100, 2)
+    >>> y.shape
+    (100,)
+    >>> list(y[:5])
+    [np.int64(1), np.int64(1), np.int64(1), np.int64(0), np.int64(0)]
     """
-
-    if factor >= 1 or factor < 0:
-        raise ValueError("'factor' has to be between 0 and 1.")
-
     if isinstance(n_samples, numbers.Integral):
         n_samples_out = n_samples // 2
         n_samples_in = n_samples - n_samples_out
-    else:
-        try:
-            n_samples_out, n_samples_in = n_samples
-        except ValueError as e:
-            raise ValueError(
-                "`n_samples` can be either an int or a two-element tuple."
-            ) from e
+    else:  # n_samples is a tuple
+        if len(n_samples) != 2:
+            raise ValueError("When a tuple, n_samples must have exactly two elements.")
+        n_samples_out, n_samples_in = n_samples
 
     generator = check_random_state(random_state)
     # so as not to have the first point = last point, we set endpoint=False
@@ -721,6 +893,15 @@ def make_circles(
     return X, y
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left"), tuple],
+        "shuffle": ["boolean"],
+        "noise": [Interval(Real, 0, None, closed="left"), None],
+        "random_state": ["random_state"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
     """Make two interleaving half circles.
 
@@ -754,6 +935,15 @@ def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
 
     y : ndarray of shape (n_samples,)
         The integer labels (0 or 1) for class membership of each sample.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_moons
+    >>> X, y = make_moons(n_samples=200, noise=0.2, random_state=42)
+    >>> X.shape
+    (200, 2)
+    >>> y.shape
+    (200,)
     """
 
     if isinstance(n_samples, numbers.Integral):
@@ -790,6 +980,19 @@ def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
     return X, y
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left"), "array-like"],
+        "n_features": [Interval(Integral, 1, None, closed="left")],
+        "centers": [Interval(Integral, 1, None, closed="left"), "array-like", None],
+        "cluster_std": [Interval(Real, 0, None, closed="left"), "array-like"],
+        "center_box": [tuple],
+        "shuffle": ["boolean"],
+        "random_state": ["random_state"],
+        "return_centers": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def make_blobs(
     n_samples=100,
     n_features=2,
@@ -819,7 +1022,7 @@ def make_blobs(
     n_features : int, default=2
         The number of features for each sample.
 
-    centers : int or ndarray of shape (n_centers, n_features), default=None
+    centers : int or array-like of shape (n_centers, n_features), default=None
         The number of centers to generate, or the fixed center locations.
         If n_samples is an int and centers is None, 3 centers are generated.
         If n_samples is array-like, centers must be
@@ -902,22 +1105,19 @@ def make_blobs(
             centers = generator.uniform(
                 center_box[0], center_box[1], size=(n_centers, n_features)
             )
-        try:
-            assert len(centers) == n_centers
-        except TypeError as e:
+        if not isinstance(centers, Iterable):
             raise ValueError(
                 "Parameter `centers` must be array-like. Got {!r} instead".format(
                     centers
                 )
-            ) from e
-        except AssertionError as e:
+            )
+        if len(centers) != n_centers:
             raise ValueError(
                 "Length of `n_samples` not consistent with number of "
                 f"centers. Got n_samples = {n_samples} and centers = {centers}"
-            ) from e
-        else:
-            centers = check_array(centers)
-            n_features = centers.shape[1]
+            )
+        centers = check_array(centers)
+        n_features = centers.shape[1]
 
     # stds: if cluster_std is given as list, it must be consistent
     # with the n_centers
@@ -960,6 +1160,15 @@ def make_blobs(
         return X, y
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 5, None, closed="left")],
+        "noise": [Interval(Real, 0.0, None, closed="left")],
+        "random_state": ["random_state"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def make_friedman1(n_samples=100, n_features=10, *, noise=0.0, random_state=None):
     """Generate the "Friedman #1" regression problem.
 
@@ -1009,10 +1218,18 @@ def make_friedman1(n_samples=100, n_features=10, *, noise=0.0, random_state=None
 
     .. [2] L. Breiman, "Bagging predictors", Machine Learning 24,
            pages 123-140, 1996.
-    """
-    if n_features < 5:
-        raise ValueError("n_features must be at least five.")
 
+    Examples
+    --------
+    >>> from sklearn.datasets import make_friedman1
+    >>> X, y = make_friedman1(random_state=42)
+    >>> X.shape
+    (100, 10)
+    >>> y.shape
+    (100,)
+    >>> list(y[:3])
+    [np.float64(16.8...), np.float64(5.8...), np.float64(9.4...)]
+    """
     generator = check_random_state(random_state)
 
     X = generator.uniform(size=(n_samples, n_features))
@@ -1027,6 +1244,14 @@ def make_friedman1(n_samples=100, n_features=10, *, noise=0.0, random_state=None
     return X, y
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "noise": [Interval(Real, 0, None, closed="left")],
+        "random_state": ["random_state"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def make_friedman2(n_samples=100, *, noise=0.0, random_state=None):
     """Generate the "Friedman #2" regression problem.
 
@@ -1075,6 +1300,17 @@ def make_friedman2(n_samples=100, *, noise=0.0, random_state=None):
 
     .. [2] L. Breiman, "Bagging predictors", Machine Learning 24,
            pages 123-140, 1996.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_friedman2
+    >>> X, y = make_friedman2(random_state=42)
+    >>> X.shape
+    (100, 4)
+    >>> y.shape
+    (100,)
+    >>> list(y[:3])
+    [np.float64(1229.4...), np.float64(27.0...), np.float64(65.6...)]
     """
     generator = check_random_state(random_state)
 
@@ -1092,6 +1328,14 @@ def make_friedman2(n_samples=100, *, noise=0.0, random_state=None):
     return X, y
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "noise": [Interval(Real, 0, None, closed="left")],
+        "random_state": ["random_state"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def make_friedman3(n_samples=100, *, noise=0.0, random_state=None):
     """Generate the "Friedman #3" regression problem.
 
@@ -1140,6 +1384,17 @@ def make_friedman3(n_samples=100, *, noise=0.0, random_state=None):
 
     .. [2] L. Breiman, "Bagging predictors", Machine Learning 24,
            pages 123-140, 1996.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_friedman3
+    >>> X, y = make_friedman3(random_state=42)
+    >>> X.shape
+    (100, 4)
+    >>> y.shape
+    (100,)
+    >>> list(y[:3])
+    [np.float64(1.5...), np.float64(0.9...), np.float64(0.4...)]
     """
     generator = check_random_state(random_state)
 
@@ -1157,6 +1412,16 @@ def make_friedman3(n_samples=100, *, noise=0.0, random_state=None):
     return X, y
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 1, None, closed="left")],
+        "effective_rank": [Interval(Integral, 1, None, closed="left")],
+        "tail_strength": [Interval(Real, 0, 1, closed="both")],
+        "random_state": ["random_state"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def make_low_rank_matrix(
     n_samples=100,
     n_features=100,
@@ -1212,6 +1477,20 @@ def make_low_rank_matrix(
     -------
     X : ndarray of shape (n_samples, n_features)
         The matrix.
+
+    Examples
+    --------
+    >>> from numpy.linalg import svd
+    >>> from sklearn.datasets import make_low_rank_matrix
+    >>> X = make_low_rank_matrix(
+    ...     n_samples=50,
+    ...     n_features=25,
+    ...     effective_rank=5,
+    ...     tail_strength=0.01,
+    ...     random_state=0,
+    ... )
+    >>> X.shape
+    (50, 25)
     """
     generator = check_random_state(random_state)
     n = min(n_samples, n_features)
@@ -1239,8 +1518,16 @@ def make_low_rank_matrix(
     return np.dot(np.dot(u, s), v.T)
 
 
-# TODO(1.3): Change argument `data_transposed` default from True to False.
-# TODO(1.3): Deprecate data_transposed, always return data not transposed.
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 1, None, closed="left")],
+        "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def make_sparse_coded_signal(
     n_samples,
     *,
@@ -1248,13 +1535,12 @@ def make_sparse_coded_signal(
     n_features,
     n_nonzero_coefs,
     random_state=None,
-    data_transposed="warn",
 ):
     """Generate a signal as a sparse combination of dictionary elements.
 
-    Returns a matrix Y = DX, such that D is (n_features, n_components),
-    X is (n_components, n_samples) and each column of X has exactly
-    n_nonzero_coefs non-zero elements.
+    Returns matrices `Y`, `D` and `X` such that `Y = XD` where `X` is of shape
+    `(n_samples, n_components)`, `D` is of shape `(n_components, n_features)`, and
+    each row of `X` has exactly `n_nonzero_coefs` non-zero elements.
 
     Read more in the :ref:`User Guide <sample_generators>`.
 
@@ -1277,27 +1563,34 @@ def make_sparse_coded_signal(
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    data_transposed : bool, default=True
-        By default, Y, D and X are transposed.
-
-        .. versionadded:: 1.1
-
     Returns
     -------
-    data : ndarray of shape (n_features, n_samples) or (n_samples, n_features)
-        The encoded signal (Y). The shape is `(n_samples, n_features)` if
-        `data_transposed` is False, otherwise it's `(n_features, n_samples)`.
+    data : ndarray of shape (n_samples, n_features)
+        The encoded signal (Y).
 
-    dictionary : ndarray of shape (n_features, n_components) or \
-            (n_components, n_features)
-        The dictionary with normalized components (D). The shape is
-        `(n_components, n_features)` if `data_transposed` is False, otherwise it's
-        `(n_features, n_components)`.
+    dictionary : ndarray of shape (n_components, n_features)
+        The dictionary with normalized components (D).
 
-    code : ndarray of shape (n_components, n_samples) or (n_samples, n_components)
+    code : ndarray of shape (n_samples, n_components)
         The sparse code such that each column of this matrix has exactly
-        n_nonzero_coefs non-zero items (X). The shape is `(n_samples, n_components)`
-        if `data_transposed` is False, otherwise it's `(n_components, n_samples)`.
+        n_nonzero_coefs non-zero items (X).
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_sparse_coded_signal
+    >>> data, dictionary, code = make_sparse_coded_signal(
+    ...     n_samples=50,
+    ...     n_components=100,
+    ...     n_features=10,
+    ...     n_nonzero_coefs=4,
+    ...     random_state=0
+    ... )
+    >>> data.shape
+    (50, 10)
+    >>> dictionary.shape
+    (100, 10)
+    >>> code.shape
+    (50, 100)
     """
     generator = check_random_state(random_state)
 
@@ -1316,22 +1609,20 @@ def make_sparse_coded_signal(
     # encode signal
     Y = np.dot(D, X)
 
-    # raise warning if data_transposed is not passed explicitly
-    if data_transposed == "warn":
-        data_transposed = True
-        warnings.warn(
-            "The default value of data_transposed will change from True to False in"
-            " version 1.3",
-            FutureWarning,
-        )
-
-    # transpose if needed
-    if not data_transposed:
-        Y, D, X = Y.T, D.T, X.T
+    # Transpose to have shapes consistent with the rest of the API
+    Y, D, X = Y.T, D.T, X.T
 
     return map(np.squeeze, (Y, D, X))
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def make_sparse_uncorrelated(n_samples=100, n_features=10, *, random_state=None):
     """Generate a random regression problem with sparse uncorrelated design.
 
@@ -1371,6 +1662,15 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, *, random_state=None)
     .. [1] G. Celeux, M. El Anbari, J.-M. Marin, C. P. Robert,
            "Regularization in regression: comparing Bayesian and frequentist
            methods in a poorly informative situation", 2009.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_sparse_uncorrelated
+    >>> X, y = make_sparse_uncorrelated(random_state=0)
+    >>> X.shape
+    (100, 10)
+    >>> y.shape
+    (100,)
     """
     generator = check_random_state(random_state)
 
@@ -1383,6 +1683,13 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, *, random_state=None)
     return X, y
 
 
+@validate_params(
+    {
+        "n_dim": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def make_spd_matrix(n_dim, *, random_state=None):
     """Generate a random symmetric, positive-definite matrix.
 
@@ -1406,6 +1713,13 @@ def make_spd_matrix(n_dim, *, random_state=None):
     See Also
     --------
     make_sparse_spd_matrix: Generate a sparse symmetric definite positive matrix.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_spd_matrix
+    >>> make_spd_matrix(n_dim=2, random_state=42)
+    array([[2.09..., 0.34...],
+           [0.34..., 0.21...]])
     """
     generator = check_random_state(random_state)
 
@@ -1416,13 +1730,29 @@ def make_spd_matrix(n_dim, *, random_state=None):
     return X
 
 
+@validate_params(
+    {
+        "n_dim": [Interval(Integral, 1, None, closed="left")],
+        "alpha": [Interval(Real, 0, 1, closed="both")],
+        "norm_diag": ["boolean"],
+        "smallest_coef": [Interval(Real, 0, 1, closed="both")],
+        "largest_coef": [Interval(Real, 0, 1, closed="both")],
+        "sparse_format": [
+            StrOptions({"bsr", "coo", "csc", "csr", "dia", "dok", "lil"}),
+            None,
+        ],
+        "random_state": ["random_state"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def make_sparse_spd_matrix(
-    dim=1,
+    n_dim=1,
     *,
     alpha=0.95,
     norm_diag=False,
     smallest_coef=0.1,
     largest_coef=0.9,
+    sparse_format=None,
     random_state=None,
 ):
     """Generate a sparse symmetric definite positive matrix.
@@ -1431,8 +1761,11 @@ def make_sparse_spd_matrix(
 
     Parameters
     ----------
-    dim : int, default=1
+    n_dim : int, default=1
         The size of the random matrix to generate.
+
+        .. versionchanged:: 1.4
+            Renamed from ``dim`` to ``n_dim``.
 
     alpha : float, default=0.95
         The probability that a coefficient is zero (see notes). Larger values
@@ -1448,6 +1781,12 @@ def make_sparse_spd_matrix(
     largest_coef : float, default=0.9
         The value of the largest coefficient between 0 and 1.
 
+    sparse_format : str, default=None
+        String representing the output sparse format, such as 'csc', 'csr', etc.
+        If ``None``, return a dense numpy ndarray.
+
+        .. versionadded:: 1.4
+
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
@@ -1455,8 +1794,9 @@ def make_sparse_spd_matrix(
 
     Returns
     -------
-    prec : sparse matrix of shape (dim, dim)
-        The generated matrix.
+    prec : ndarray or sparse matrix of shape (dim, dim)
+        The generated matrix. If ``sparse_format=None``, this would be an ndarray.
+        Otherwise, this will be a sparse matrix of the specified format.
 
     See Also
     --------
@@ -1467,35 +1807,58 @@ def make_sparse_spd_matrix(
     The sparsity is actually imposed on the cholesky factor of the matrix.
     Thus alpha does not translate directly into the filling fraction of
     the matrix itself.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_sparse_spd_matrix
+    >>> make_sparse_spd_matrix(n_dim=4, norm_diag=False, random_state=42)
+    array([[1., 0., 0., 0.],
+           [0., 1., 0., 0.],
+           [0., 0., 1., 0.],
+           [0., 0., 0., 1.]])
     """
     random_state = check_random_state(random_state)
 
-    chol = -np.eye(dim)
-    aux = random_state.uniform(size=(dim, dim))
-    aux[aux < alpha] = 0
-    aux[aux > alpha] = smallest_coef + (
-        largest_coef - smallest_coef
-    ) * random_state.uniform(size=np.sum(aux > alpha))
-    aux = np.tril(aux, k=-1)
+    chol = -sp.eye(n_dim)
+    aux = sp.random(
+        m=n_dim,
+        n=n_dim,
+        density=1 - alpha,
+        data_rvs=lambda x: random_state.uniform(
+            low=smallest_coef, high=largest_coef, size=x
+        ),
+        random_state=random_state,
+    )
+    # We need to avoid "coo" format because it does not support slicing
+    aux = sp.tril(aux, k=-1, format="csc")
 
     # Permute the lines: we don't want to have asymmetries in the final
     # SPD matrix
-    permutation = random_state.permutation(dim)
+    permutation = random_state.permutation(n_dim)
     aux = aux[permutation].T[permutation]
     chol += aux
-    prec = np.dot(chol.T, chol)
+    prec = chol.T @ chol
 
     if norm_diag:
         # Form the diagonal vector into a row matrix
-        d = np.diag(prec).reshape(1, prec.shape[0])
-        d = 1.0 / np.sqrt(d)
+        d = sp.diags(1.0 / np.sqrt(prec.diagonal()))
+        prec = d @ prec @ d
 
-        prec *= d
-        prec *= d.T
+    if sparse_format is None:
+        return prec.toarray()
+    else:
+        return prec.asformat(sparse_format)
 
-    return prec
 
-
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "noise": [Interval(Real, 0, None, closed="left")],
+        "random_state": ["random_state"],
+        "hole": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
     """Generate a swiss roll dataset.
 
@@ -1535,6 +1898,15 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
     .. [1] S. Marsland, "Machine Learning: An Algorithmic Perspective", 2nd edition,
            Chapter 6, 2014.
            https://homepages.ecs.vuw.ac.nz/~marslast/Code/Ch6/lle.py
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_swiss_roll
+    >>> X, t = make_swiss_roll(noise=0.05, random_state=0)
+    >>> X.shape
+    (100, 3)
+    >>> t.shape
+    (100,)
     """
     generator = check_random_state(random_state)
 
@@ -1561,6 +1933,14 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
     return X, t
 
 
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "noise": [Interval(Real, 0, None, closed="left")],
+        "random_state": ["random_state"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def make_s_curve(n_samples=100, *, noise=0.0, random_state=None):
     """Generate an S curve dataset.
 
@@ -1585,8 +1965,17 @@ def make_s_curve(n_samples=100, *, noise=0.0, random_state=None):
         The points.
 
     t : ndarray of shape (n_samples,)
-        The univariate position of the sample according to the main dimension
-        of the points in the manifold.
+        The univariate position of the sample according
+        to the main dimension of the points in the manifold.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_s_curve
+    >>> X, t = make_s_curve(noise=0.05, random_state=0)
+    >>> X.shape
+    (100, 3)
+    >>> t.shape
+    (100,)
     """
     generator = check_random_state(random_state)
 
@@ -1601,6 +1990,18 @@ def make_s_curve(n_samples=100, *, noise=0.0, random_state=None):
     return X, t
 
 
+@validate_params(
+    {
+        "mean": ["array-like", None],
+        "cov": [Interval(Real, 0, None, closed="left")],
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 1, None, closed="left")],
+        "n_classes": [Interval(Integral, 1, None, closed="left")],
+        "shuffle": ["boolean"],
+        "random_state": ["random_state"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def make_gaussian_quantiles(
     *,
     mean=None,
@@ -1622,7 +2023,7 @@ def make_gaussian_quantiles(
 
     Parameters
     ----------
-    mean : ndarray of shape (n_features,), default=None
+    mean : array-like of shape (n_features,), default=None
         The mean of the multi-dimensional normal distribution.
         If None then use the origin (0, 0, ...).
 
@@ -1662,6 +2063,17 @@ def make_gaussian_quantiles(
     References
     ----------
     .. [1] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_gaussian_quantiles
+    >>> X, y = make_gaussian_quantiles(random_state=42)
+    >>> X.shape
+    (100, 2)
+    >>> y.shape
+    (100,)
+    >>> list(y[:5])
+    [np.int64(2), np.int64(0), np.int64(1), np.int64(0), np.int64(2)]
     """
     if n_samples < n_classes:
         raise ValueError("n_samples must be at least n_classes")
@@ -1705,6 +2117,18 @@ def _shuffle(data, random_state=None):
     return result, row_idx, col_idx
 
 
+@validate_params(
+    {
+        "shape": [tuple],
+        "n_clusters": [Interval(Integral, 1, None, closed="left")],
+        "noise": [Interval(Real, 0, None, closed="left")],
+        "minval": [Interval(Real, None, None, closed="neither")],
+        "maxval": [Interval(Real, None, None, closed="neither")],
+        "shuffle": ["boolean"],
+        "random_state": ["random_state"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def make_biclusters(
     shape,
     n_clusters,
@@ -1721,7 +2145,7 @@ def make_biclusters(
 
     Parameters
     ----------
-    shape : iterable of shape (n_rows, n_cols)
+    shape : tuple of shape (n_rows, n_cols)
         The shape of the result.
 
     n_clusters : int
@@ -1730,10 +2154,10 @@ def make_biclusters(
     noise : float, default=0.0
         The standard deviation of the gaussian noise.
 
-    minval : int, default=10
+    minval : float, default=10
         Minimum value of a bicluster.
 
-    maxval : int, default=100
+    maxval : float, default=100
         Maximum value of a bicluster.
 
     shuffle : bool, default=True
@@ -1767,6 +2191,19 @@ def make_biclusters(
         words using bipartite spectral graph partitioning. In Proceedings
         of the seventh ACM SIGKDD international conference on Knowledge
         discovery and data mining (pp. 269-274). ACM.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_biclusters
+    >>> data, rows, cols = make_biclusters(
+    ...     shape=(10, 20), n_clusters=2, random_state=42
+    ... )
+    >>> data.shape
+    (10, 20)
+    >>> rows.shape
+    (2, 10)
+    >>> cols.shape
+    (2, 20)
     """
     generator = check_random_state(random_state)
     n_rows, n_cols = shape
@@ -1802,6 +2239,18 @@ def make_biclusters(
     return result, rows, cols
 
 
+@validate_params(
+    {
+        "shape": [tuple],
+        "n_clusters": [Interval(Integral, 1, None, closed="left"), "array-like"],
+        "noise": [Interval(Real, 0, None, closed="left")],
+        "minval": [Interval(Real, None, None, closed="neither")],
+        "maxval": [Interval(Real, None, None, closed="neither")],
+        "shuffle": ["boolean"],
+        "random_state": ["random_state"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def make_checkerboard(
     shape,
     n_clusters,
@@ -1827,10 +2276,10 @@ def make_checkerboard(
     noise : float, default=0.0
         The standard deviation of the gaussian noise.
 
-    minval : int, default=10
+    minval : float, default=10
         Minimum value of a bicluster.
 
-    maxval : int, default=100
+    maxval : float, default=100
         Maximum value of a bicluster.
 
     shuffle : bool, default=True
@@ -1862,6 +2311,20 @@ def make_checkerboard(
     .. [1] Kluger, Y., Basri, R., Chang, J. T., & Gerstein, M. (2003).
         Spectral biclustering of microarray data: coclustering genes
         and conditions. Genome research, 13(4), 703-716.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_checkerboard
+    >>> data, rows, columns = make_checkerboard(shape=(300, 300), n_clusters=10,
+    ...                                         random_state=42)
+    >>> data.shape
+    (300, 300)
+    >>> rows.shape
+    (100, 300)
+    >>> columns.shape
+    (100, 300)
+    >>> print(rows[0][:5], columns[0][:5])
+    [False False False  True False] [False False False False False]
     """
     generator = check_random_state(random_state)
 

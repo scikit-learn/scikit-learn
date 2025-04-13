@@ -1,8 +1,10 @@
+from time import time
+
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.sparse as sparse
+
 from sklearn.preprocessing import PolynomialFeatures
-from time import time
 
 degree = 2
 trials = 3
@@ -35,7 +37,6 @@ dense_linestyle = (0, ())  # solid
 
 fig, axes = plt.subplots(nrows=len(densities), ncols=1, figsize=(8, 10))
 for density, ax in zip(densities, axes):
-
     ax.plot(
         dimensionalities,
         csr_times[density] / trials,

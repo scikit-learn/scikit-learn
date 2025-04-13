@@ -19,16 +19,15 @@ target values are computed by the isotonic non-parametric fit.
 
 """
 
-# Author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
-#         Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.collections import LineCollection
 
-from sklearn.linear_model import LinearRegression
 from sklearn.isotonic import IsotonicRegression
+from sklearn.linear_model import LinearRegression
 from sklearn.utils import check_random_state
 
 n = 100

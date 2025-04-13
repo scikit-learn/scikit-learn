@@ -1,9 +1,9 @@
-from ._typedefs cimport DTYPE_t, ITYPE_t
+from ._typedefs cimport intp_t
 
 from cython cimport floating
 
 cdef int simultaneous_sort(
     floating *dist,
-    ITYPE_t *idx,
-    ITYPE_t size,
-) nogil
+    intp_t *idx,
+    intp_t size,
+) noexcept nogil

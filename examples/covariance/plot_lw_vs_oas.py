@@ -21,11 +21,14 @@ Chen et al., IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
 
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy.linalg import toeplitz, cholesky
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-from sklearn.covariance import LedoitWolf, OAS
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.linalg import cholesky, toeplitz
+
+from sklearn.covariance import OAS, LedoitWolf
 
 np.random.seed(0)
 # %%

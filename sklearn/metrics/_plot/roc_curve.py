@@ -1,13 +1,17 @@
-from .base import _get_response
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-from .. import auc
-from .. import roc_curve
-from .._base import _check_pos_label_consistency
+import warnings
 
-from ...utils import check_matplotlib_support
+from ...utils._plotting import (
+    _BinaryClassifierCurveDisplayMixin,
+    _despine,
+    _validate_style_kwargs,
+)
+from .._ranking import auc, roc_curve
 
 
-class RocCurveDisplay:
+class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     """ROC Curve visualization.
 
     It is recommend to use
@@ -32,7 +36,7 @@ class RocCurveDisplay:
     estimator_name : str, default=None
         Name of estimator. If None, the estimator name is not shown.
 
-    pos_label : str or int, default=None
+    pos_label : int, float, bool or str, default=None
         The class considered as the positive class when computing the roc auc
         metrics. By default, `estimators.classes_[1]` is considered
         as the positive class.
@@ -43,6 +47,11 @@ class RocCurveDisplay:
     ----------
     line_ : matplotlib Artist
         ROC Curve.
+
+    chance_level_ : matplotlib Artist or None
+        The chance level line. It is `None` if the chance level is not plotted.
+
+        .. versionadded:: 1.3
 
     ax_ : matplotlib Axes
         Axes with ROC Curve.
@@ -64,9 +73,9 @@ class RocCurveDisplay:
     >>> import matplotlib.pyplot as plt
     >>> import numpy as np
     >>> from sklearn import metrics
-    >>> y = np.array([0, 0, 1, 1])
-    >>> pred = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> fpr, tpr, thresholds = metrics.roc_curve(y, pred)
+    >>> y_true = np.array([0, 0, 1, 1])
+    >>> y_score = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> fpr, tpr, thresholds = metrics.roc_curve(y_true, y_score)
     >>> roc_auc = metrics.auc(fpr, tpr)
     >>> display = metrics.RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc,
     ...                                   estimator_name='example estimator')
@@ -82,7 +91,16 @@ class RocCurveDisplay:
         self.roc_auc = roc_auc
         self.pos_label = pos_label
 
-    def plot(self, ax=None, *, name=None, **kwargs):
+    def plot(
+        self,
+        ax=None,
+        *,
+        name=None,
+        plot_chance_level=False,
+        chance_level_kw=None,
+        despine=False,
+        **kwargs,
+    ):
         """Plot visualization.
 
         Extra keyword arguments will be passed to matplotlib's ``plot``.
@@ -97,47 +115,84 @@ class RocCurveDisplay:
             Name of ROC Curve for labeling. If `None`, use `estimator_name` if
             not `None`, otherwise no labeling is shown.
 
+        plot_chance_level : bool, default=False
+            Whether to plot the chance level.
+
+            .. versionadded:: 1.3
+
+        chance_level_kw : dict, default=None
+            Keyword arguments to be passed to matplotlib's `plot` for rendering
+            the chance level line.
+
+            .. versionadded:: 1.3
+
+        despine : bool, default=False
+            Whether to remove the top and right spines from the plot.
+
+            .. versionadded:: 1.6
+
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
 
         Returns
         -------
-        display : :class:`~sklearn.metrics.plot.RocCurveDisplay`
+        display : :class:`~sklearn.metrics.RocCurveDisplay`
             Object that stores computed values.
         """
-        check_matplotlib_support("RocCurveDisplay.plot")
+        self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
 
-        name = self.estimator_name if name is None else name
-
-        line_kwargs = {}
+        default_line_kwargs = {}
         if self.roc_auc is not None and name is not None:
-            line_kwargs["label"] = f"{name} (AUC = {self.roc_auc:0.2f})"
+            default_line_kwargs["label"] = f"{name} (AUC = {self.roc_auc:0.2f})"
         elif self.roc_auc is not None:
-            line_kwargs["label"] = f"AUC = {self.roc_auc:0.2f}"
+            default_line_kwargs["label"] = f"AUC = {self.roc_auc:0.2f}"
         elif name is not None:
-            line_kwargs["label"] = name
+            default_line_kwargs["label"] = name
 
-        line_kwargs.update(**kwargs)
+        line_kwargs = _validate_style_kwargs(default_line_kwargs, kwargs)
 
-        import matplotlib.pyplot as plt
+        default_chance_level_line_kw = {
+            "label": "Chance level (AUC = 0.5)",
+            "color": "k",
+            "linestyle": "--",
+        }
 
-        if ax is None:
-            fig, ax = plt.subplots()
+        if chance_level_kw is None:
+            chance_level_kw = {}
 
-        (self.line_,) = ax.plot(self.fpr, self.tpr, **line_kwargs)
+        chance_level_kw = _validate_style_kwargs(
+            default_chance_level_line_kw, chance_level_kw
+        )
+
+        (self.line_,) = self.ax_.plot(self.fpr, self.tpr, **line_kwargs)
         info_pos_label = (
             f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
         )
 
         xlabel = "False Positive Rate" + info_pos_label
         ylabel = "True Positive Rate" + info_pos_label
-        ax.set(xlabel=xlabel, ylabel=ylabel)
+        self.ax_.set(
+            xlabel=xlabel,
+            xlim=(-0.01, 1.01),
+            ylabel=ylabel,
+            ylim=(-0.01, 1.01),
+            aspect="equal",
+        )
 
-        if "label" in line_kwargs:
-            ax.legend(loc="lower right")
+        if plot_chance_level:
+            (self.chance_level_,) = self.ax_.plot((0, 1), (0, 1), **chance_level_kw)
+        else:
+            self.chance_level_ = None
 
-        self.ax_ = ax
-        self.figure_ = ax.figure
+        if despine:
+            _despine(self.ax_)
+
+        if (
+            line_kwargs.get("label") is not None
+            or chance_level_kw.get("label") is not None
+        ):
+            self.ax_.legend(loc="lower right")
+
         return self
 
     @classmethod
@@ -153,6 +208,9 @@ class RocCurveDisplay:
         pos_label=None,
         name=None,
         ax=None,
+        plot_chance_level=False,
+        chance_level_kw=None,
+        despine=False,
         **kwargs,
     ):
         """Create a ROC Curve display from an estimator.
@@ -184,7 +242,7 @@ class RocCurveDisplay:
             :term:`predict_proba` is tried first and if it does not exist
             :term:`decision_function` is tried next.
 
-        pos_label : str or int, default=None
+        pos_label : int, float, bool or str, default=None
             The class considered as the positive class when computing the roc auc
             metrics. By default, `estimators.classes_[1]` is considered
             as the positive class.
@@ -196,12 +254,28 @@ class RocCurveDisplay:
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is created.
 
+        plot_chance_level : bool, default=False
+            Whether to plot the chance level.
+
+            .. versionadded:: 1.3
+
+        chance_level_kw : dict, default=None
+            Keyword arguments to be passed to matplotlib's `plot` for rendering
+            the chance level line.
+
+            .. versionadded:: 1.3
+
+        despine : bool, default=False
+            Whether to remove the top and right spines from the plot.
+
+            .. versionadded:: 1.6
+
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
 
         Returns
         -------
-        display : :class:`~sklearn.metrics.plot.RocCurveDisplay`
+        display : :class:`~sklearn.metrics.RocCurveDisplay`
             The ROC Curve display.
 
         See Also
@@ -227,25 +301,26 @@ class RocCurveDisplay:
         <...>
         >>> plt.show()
         """
-        check_matplotlib_support(f"{cls.__name__}.from_estimator")
-
-        name = estimator.__class__.__name__ if name is None else name
-
-        y_pred, pos_label = _get_response(
-            X,
+        y_score, pos_label, name = cls._validate_and_get_response_values(
             estimator,
+            X,
+            y,
             response_method=response_method,
             pos_label=pos_label,
+            name=name,
         )
 
         return cls.from_predictions(
             y_true=y,
-            y_pred=y_pred,
+            y_score=y_score,
             sample_weight=sample_weight,
             drop_intermediate=drop_intermediate,
             name=name,
             ax=ax,
             pos_label=pos_label,
+            plot_chance_level=plot_chance_level,
+            chance_level_kw=chance_level_kw,
+            despine=despine,
             **kwargs,
         )
 
@@ -253,13 +328,17 @@ class RocCurveDisplay:
     def from_predictions(
         cls,
         y_true,
-        y_pred,
+        y_score=None,
         *,
         sample_weight=None,
         drop_intermediate=True,
         pos_label=None,
         name=None,
         ax=None,
+        plot_chance_level=False,
+        chance_level_kw=None,
+        despine=False,
+        y_pred="deprecated",
         **kwargs,
     ):
         """Plot ROC curve given the true and predicted values.
@@ -273,10 +352,13 @@ class RocCurveDisplay:
         y_true : array-like of shape (n_samples,)
             True labels.
 
-        y_pred : array-like of shape (n_samples,)
+        y_score : array-like of shape (n_samples,)
             Target scores, can either be probability estimates of the positive
             class, confidence values, or non-thresholded measure of decisions
             (as returned by “decision_function” on some classifiers).
+
+            .. versionadded:: 1.7
+                `y_pred` has been renamed to `y_score`.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
@@ -286,7 +368,7 @@ class RocCurveDisplay:
             on a plotted ROC curve. This is useful in order to create lighter
             ROC curves.
 
-        pos_label : str or int, default=None
+        pos_label : int, float, bool or str, default=None
             The label of the positive class. When `pos_label=None`, if `y_true`
             is in {-1, 1} or {0, 1}, `pos_label` is set to 1, otherwise an
             error will be raised.
@@ -298,6 +380,31 @@ class RocCurveDisplay:
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
             created.
+
+        plot_chance_level : bool, default=False
+            Whether to plot the chance level.
+
+            .. versionadded:: 1.3
+
+        chance_level_kw : dict, default=None
+            Keyword arguments to be passed to matplotlib's `plot` for rendering
+            the chance level line.
+
+            .. versionadded:: 1.3
+
+        despine : bool, default=False
+            Whether to remove the top and right spines from the plot.
+
+            .. versionadded:: 1.6
+
+        y_pred : array-like of shape (n_samples,)
+            Target scores, can either be probability estimates of the positive
+            class, confidence values, or non-thresholded measure of decisions
+            (as returned by “decision_function” on some classifiers).
+
+            .. deprecated:: 1.7
+                `y_pred` is deprecated and will be removed in 1.9. Use
+                `y_score` instead.
 
         **kwargs : dict
             Additional keywords arguments passed to matplotlib `plot` function.
@@ -325,28 +432,55 @@ class RocCurveDisplay:
         >>> X_train, X_test, y_train, y_test = train_test_split(
         ...     X, y, random_state=0)
         >>> clf = SVC(random_state=0).fit(X_train, y_train)
-        >>> y_pred = clf.decision_function(X_test)
-        >>> RocCurveDisplay.from_predictions(
-        ...    y_test, y_pred)
+        >>> y_score = clf.decision_function(X_test)
+        >>> RocCurveDisplay.from_predictions(y_test, y_score)
         <...>
         >>> plt.show()
         """
-        check_matplotlib_support(f"{cls.__name__}.from_predictions")
+        # TODO(1.9): remove after the end of the deprecation period of `y_pred`
+        if y_score is not None and not (
+            isinstance(y_pred, str) and y_pred == "deprecated"
+        ):
+            raise ValueError(
+                "`y_pred` and `y_score` cannot be both specified. Please use `y_score`"
+                " only as `y_pred` is deprecated in 1.7 and will be removed in 1.9."
+            )
+        if not (isinstance(y_pred, str) and y_pred == "deprecated"):
+            warnings.warn(
+                (
+                    "y_pred is deprecated in 1.7 and will be removed in 1.9. "
+                    "Please use `y_score` instead."
+                ),
+                FutureWarning,
+            )
+            y_score = y_pred
+
+        pos_label_validated, name = cls._validate_from_predictions_params(
+            y_true, y_score, sample_weight=sample_weight, pos_label=pos_label, name=name
+        )
 
         fpr, tpr, _ = roc_curve(
             y_true,
-            y_pred,
+            y_score,
             pos_label=pos_label,
             sample_weight=sample_weight,
             drop_intermediate=drop_intermediate,
         )
         roc_auc = auc(fpr, tpr)
 
-        name = "Classifier" if name is None else name
-        pos_label = _check_pos_label_consistency(pos_label, y_true)
-
-        viz = RocCurveDisplay(
-            fpr=fpr, tpr=tpr, roc_auc=roc_auc, estimator_name=name, pos_label=pos_label
+        viz = cls(
+            fpr=fpr,
+            tpr=tpr,
+            roc_auc=roc_auc,
+            estimator_name=name,
+            pos_label=pos_label_validated,
         )
 
-        return viz.plot(ax=ax, name=name, **kwargs)
+        return viz.plot(
+            ax=ax,
+            name=name,
+            plot_chance_level=plot_chance_level,
+            chance_level_kw=chance_level_kw,
+            despine=despine,
+            **kwargs,
+        )

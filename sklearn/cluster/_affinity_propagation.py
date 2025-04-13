@@ -1,23 +1,20 @@
 """Affinity Propagation clustering algorithm."""
 
-# Author: Alexandre Gramfort alexandre.gramfort@inria.fr
-#        Gael Varoquaux gael.varoquaux@normalesup.org
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-# License: BSD 3 clause
-
-from numbers import Integral, Real
 import warnings
+from numbers import Integral, Real
 
 import numpy as np
 
-from ..exceptions import ConvergenceWarning
-from ..base import BaseEstimator, ClusterMixin
-from ..utils import as_float_array, check_random_state
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.validation import check_is_fitted
-from ..metrics import euclidean_distances
-from ..metrics import pairwise_distances_argmin
 from .._config import config_context
+from ..base import BaseEstimator, ClusterMixin, _fit_context
+from ..exceptions import ConvergenceWarning
+from ..metrics import euclidean_distances, pairwise_distances_argmin
+from ..utils import check_random_state
+from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.validation import check_is_fitted, validate_data
 
 
 def _equal_similarities_and_preferences(S, preference):
@@ -54,7 +51,7 @@ def _affinity_propagation(
             "All samples have mutually equal similarities. "
             "Returning arbitrary cluster center(s)."
         )
-        if preference.flat[0] >= S.flat[n_samples - 1]:
+        if preference.flat[0] > S.flat[n_samples - 1]:
             return (
                 (np.arange(n_samples), np.arange(n_samples), 0)
                 if return_n_iter
@@ -141,15 +138,17 @@ def _affinity_propagation(
     if K > 0:
         if never_converged:
             warnings.warn(
-                "Affinity propagation did not converge, this model "
-                "may return degenerate cluster centers and labels.",
+                (
+                    "Affinity propagation did not converge, this model "
+                    "may return degenerate cluster centers and labels."
+                ),
                 ConvergenceWarning,
             )
         c = np.argmax(S[:, I], axis=1)
         c[I] = np.arange(K)  # Identify clusters
         # Refine the final set of exemplars and clusters and return results
         for k in range(K):
-            ii = np.where(c == k)[0]
+            ii = np.asarray(c == k).nonzero()[0]
             j = np.argmax(np.sum(S[ii[:, np.newaxis], ii], axis=0))
             I[k] = ii[j]
 
@@ -161,8 +160,10 @@ def _affinity_propagation(
         labels = np.searchsorted(cluster_centers_indices, labels)
     else:
         warnings.warn(
-            "Affinity propagation did not converge and this model "
-            "will not have any cluster centers.",
+            (
+                "Affinity propagation did not converge and this model "
+                "will not have any cluster centers."
+            ),
             ConvergenceWarning,
         )
         labels = np.array([-1] * n_samples)
@@ -178,6 +179,13 @@ def _affinity_propagation(
 # Public API
 
 
+@validate_params(
+    {
+        "S": ["array-like"],
+        "return_n_iter": ["boolean"],
+    },
+    prefer_skip_nested_validation=False,
+)
 def affinity_propagation(
     S,
     *,
@@ -250,8 +258,10 @@ def affinity_propagation(
 
     Notes
     -----
-    For an example, see :ref:`examples/cluster/plot_affinity_propagation.py
-    <sphx_glr_auto_examples_cluster_plot_affinity_propagation.py>`.
+    For an example usage,
+    see :ref:`sphx_glr_auto_examples_cluster_plot_affinity_propagation.py`.
+    You may also check out,
+    :ref:`sphx_glr_auto_examples_applications_plot_stock_market.py`
 
     When the algorithm does not converge, it will still return a arrays of
     ``cluster_center_indices`` and labels if there are any exemplars/clusters,
@@ -268,14 +278,26 @@ def affinity_propagation(
     ----------
     Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
     Between Data Points", Science Feb. 2007
-    """
-    S = as_float_array(S, copy=copy)
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.cluster import affinity_propagation
+    >>> from sklearn.metrics.pairwise import euclidean_distances
+    >>> X = np.array([[1, 2], [1, 4], [1, 0],
+    ...               [4, 2], [4, 4], [4, 0]])
+    >>> S = -euclidean_distances(X, squared=True)
+    >>> cluster_centers_indices, labels = affinity_propagation(S, random_state=0)
+    >>> cluster_centers_indices
+    array([0, 3])
+    >>> labels
+    array([0, 0, 0, 1, 1, 1])
+    """
     estimator = AffinityPropagation(
         damping=damping,
         max_iter=max_iter,
         convergence_iter=convergence_iter,
-        copy=False,
+        copy=copy,
         preference=preference,
         affinity="precomputed",
         verbose=verbose,
@@ -376,9 +398,6 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
     Notes
     -----
-    For an example, see :ref:`examples/cluster/plot_affinity_propagation.py
-    <sphx_glr_auto_examples_cluster_plot_affinity_propagation.py>`.
-
     The algorithmic complexity of affinity propagation is quadratic
     in the number of points.
 
@@ -420,6 +439,12 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     >>> clustering.cluster_centers_
     array([[1, 2],
            [4, 2]])
+
+    For an example usage,
+    see :ref:`sphx_glr_auto_examples_cluster_plot_affinity_propagation.py`.
+
+    For a comparison of Affinity Propagation with other clustering algorithms, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
     """
 
     _parameter_constraints: dict = {
@@ -449,7 +474,6 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         verbose=False,
         random_state=None,
     ):
-
         self.damping = damping
         self.max_iter = max_iter
         self.convergence_iter = convergence_iter
@@ -459,9 +483,13 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         self.affinity = affinity
         self.random_state = random_state
 
-    def _more_tags(self):
-        return {"pairwise": self.affinity == "precomputed"}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.pairwise = self.affinity == "precomputed"
+        tags.input_tags.sparse = self.affinity != "precomputed"
+        return tags
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the clustering from features, or affinity matrix.
 
@@ -481,16 +509,11 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         self
             Returns the instance itself.
         """
-        self._validate_params()
-
         if self.affinity == "precomputed":
-            accept_sparse = False
-        else:
-            accept_sparse = "csr"
-        X = self._validate_data(X, accept_sparse=accept_sparse)
-        if self.affinity == "precomputed":
-            self.affinity_matrix_ = X.copy() if self.copy else X
+            X = validate_data(self, X, copy=self.copy, force_writeable=True)
+            self.affinity_matrix_ = X
         else:  # self.affinity == "euclidean"
+            X = validate_data(self, X, accept_sparse="csr")
             self.affinity_matrix_ = -euclidean_distances(X, squared=True)
 
         if self.affinity_matrix_.shape[0] != self.affinity_matrix_.shape[1]:
@@ -503,7 +526,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             preference = np.median(self.affinity_matrix_)
         else:
             preference = self.preference
-        preference = np.array(preference, copy=False)
+        preference = np.asarray(preference)
 
         random_state = check_random_state(self.random_state)
 
@@ -542,7 +565,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             Cluster labels.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False, accept_sparse="csr")
+        X = validate_data(self, X, reset=False, accept_sparse="csr")
         if not hasattr(self, "cluster_centers_"):
             raise ValueError(
                 "Predict method is not supported when affinity='precomputed'."
@@ -553,9 +576,11 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
                 return pairwise_distances_argmin(X, self.cluster_centers_)
         else:
             warnings.warn(
-                "This model does not have any cluster centers "
-                "because affinity propagation did not converge. "
-                "Labeling every sample as '-1'.",
+                (
+                    "This model does not have any cluster centers "
+                    "because affinity propagation did not converge. "
+                    "Labeling every sample as '-1'."
+                ),
                 ConvergenceWarning,
             )
             return np.array([-1] * X.shape[0])

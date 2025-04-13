@@ -32,11 +32,13 @@ necessarily related to visualisation.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Generate distorted image
 # ------------------------
 import numpy as np
-
 
 try:  # Scipy >= 1.10
     from scipy.datasets import face

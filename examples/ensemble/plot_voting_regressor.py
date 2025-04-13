@@ -23,13 +23,18 @@ measure of disease progression one year after baseline.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.pyplot as plt
 
 from sklearn.datasets import load_diabetes
-from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import (
+    GradientBoostingRegressor,
+    RandomForestRegressor,
+    VotingRegressor,
+)
 from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import VotingRegressor
 
 # %%
 # Training classifiers

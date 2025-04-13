@@ -30,32 +30,33 @@ initializing some random variables (because is data-independent).
 [1] Pham, N., & Pagh, R. (2013, August). Fast and scalable polynomial
 kernels via explicit feature maps. In Proceedings of the 19th ACM SIGKDD
 international conference on Knowledge discovery and data mining (pp. 239-247)
-(http://chbrown.github.io/kdd-2013-usb/kdd/p239.pdf)
+(https://chbrown.github.io/kdd-2013-usb/kdd/p239.pdf)
 
 [2] Charikar, M., Chen, K., & Farach-Colton, M. (2002, July). Finding frequent
 items in data streams. In International Colloquium on Automata, Languages, and
 Programming (pp. 693-703). Springer, Berlin, Heidelberg.
-(http://www.vldb.org/pvldb/1/1454225.pdf)
+(https://people.cs.rutgers.edu/~farach/pubs/FrequentStream.pdf)
 
 """
-# Author: Daniel Lopez-Sanchez <lope@usal.es>
-# License: BSD 3 clause
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # Load data manipulation functions
-from sklearn.datasets import load_digits
-from sklearn.model_selection import train_test_split
+# Will use this for timing results
+from time import time
 
 # Some common libraries
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Will use this for timing results
-from time import time
+from sklearn.datasets import load_digits
+from sklearn.kernel_approximation import Nystroem, PolynomialCountSketch
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
 
 # Import SVM classifiers and feature map approximation algorithms
-from sklearn.svm import LinearSVC, SVC
-from sklearn.kernel_approximation import Nystroem, PolynomialCountSketch
-from sklearn.pipeline import Pipeline
+from sklearn.svm import SVC, LinearSVC
 
 # Split data in train and test sets
 X, y = load_digits()["data"], load_digits()["target"]

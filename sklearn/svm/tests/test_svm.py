@@ -3,32 +3,40 @@ Testing for Support Vector Machine module (sklearn.svm)
 
 TODO: remove hard coded numerical results when possible
 """
-import warnings
-import re
 
 import numpy as np
 import pytest
+from numpy.testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 
-from numpy.testing import assert_array_equal, assert_array_almost_equal
-from numpy.testing import assert_almost_equal
-from numpy.testing import assert_allclose
-from scipy import sparse
-from sklearn import svm, linear_model, datasets, metrics, base
-from sklearn.svm import LinearSVC, OneClassSVM, SVR, NuSVR, LinearSVR
-from sklearn.model_selection import train_test_split
-from sklearn.datasets import make_classification, make_blobs
+from sklearn import base, datasets, linear_model, metrics, svm
+from sklearn.datasets import make_blobs, make_classification, make_regression
+from sklearn.exceptions import (
+    ConvergenceWarning,
+    NotFittedError,
+)
 from sklearn.metrics import f1_score
 from sklearn.metrics.pairwise import rbf_kernel
-from sklearn.utils import check_random_state
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils.validation import _num_samples
-from sklearn.utils import shuffle
-from sklearn.exceptions import ConvergenceWarning
-from sklearn.exceptions import NotFittedError, UndefinedMetricWarning
+from sklearn.model_selection import train_test_split
 from sklearn.multiclass import OneVsRestClassifier
 
 # mypy error: Module 'sklearn.svm' has no attribute '_libsvm'
-from sklearn.svm import _libsvm  # type: ignore
+from sklearn.svm import (  # type: ignore
+    SVR,
+    LinearSVC,
+    LinearSVR,
+    NuSVR,
+    OneClassSVM,
+    _libsvm,
+)
+from sklearn.svm._classes import _validate_dual_parameter
+from sklearn.utils import check_random_state, shuffle
+from sklearn.utils.fixes import _IS_32BIT, CSR_CONTAINERS, LIL_CONTAINERS
+from sklearn.utils.validation import _num_samples
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -263,7 +271,7 @@ def test_linearsvr_fit_sampleweight():
     )
     assert_almost_equal(score1, score2, 2)
 
-    # check that fit(X)  = fit([X1, X2, X3],sample_weight = [n1, n2, n3]) where
+    # check that fit(X)  = fit([X1, X2, X3], sample_weight = [n1, n2, n3]) where
     # X = X1 repeated n1 times, X2 repeated n2 times and so forth
     random_state = check_random_state(0)
     random_weight = random_state.randint(0, 10, n_samples)
@@ -574,7 +582,10 @@ def test_negative_sample_weights_mask_all_samples(Estimator, err_msg, sample_wei
     [
         (
             svm.SVC,
-            "Invalid input - all samples with positive weights have the same label",
+            (
+                "Invalid input - all samples with positive weights belong to the same"
+                " class"
+            ),
         ),
         (svm.NuSVC, "specified nu is infeasible"),
     ],
@@ -628,7 +639,6 @@ def test_negative_weight_equal_coeffs(Estimator, sample_weight):
     assert coef[0] == pytest.approx(coef[1], rel=1e-3)
 
 
-@ignore_warnings(category=UndefinedMetricWarning)
 def test_auto_weight():
     # Test class weights for imbalanced data
     from sklearn.linear_model import LogisticRegression
@@ -665,7 +675,8 @@ def test_auto_weight():
         )
 
 
-def test_bad_input():
+@pytest.mark.parametrize("lil_container", LIL_CONTAINERS)
+def test_bad_input(lil_container):
     # Test dimensions for labels
     Y2 = Y[:-1]  # wrong dimensions for labels
     with pytest.raises(ValueError):
@@ -690,7 +701,7 @@ def test_bad_input():
     # predict with sparse input when trained with dense
     clf = svm.SVC().fit(X, Y)
     with pytest.raises(ValueError):
-        clf.predict(sparse.lil_matrix(X))
+        clf.predict(lil_container(X))
 
     Xt = np.array(X).T
     clf.fit(np.dot(X, Xt), Y)
@@ -727,18 +738,18 @@ def test_unicode_kernel():
     )
 
 
-def test_sparse_precomputed():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_sparse_precomputed(csr_container):
     clf = svm.SVC(kernel="precomputed")
-    sparse_gram = sparse.csr_matrix([[1, 0], [0, 1]])
+    sparse_gram = csr_container([[1, 0], [0, 1]])
     with pytest.raises(TypeError, match="Sparse precomputed"):
         clf.fit(sparse_gram, [0, 1])
 
 
-def test_sparse_fit_support_vectors_empty():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_sparse_fit_support_vectors_empty(csr_container):
     # Regression test for #14893
-    X_train = sparse.csr_matrix(
-        [[0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0], [0, 0, 0, 1]]
-    )
+    X_train = csr_container([[0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0], [0, 0, 0, 1]])
     y_train = np.array([0.04, 0.04, 0.10, 0.16])
     model = svm.SVR(kernel="linear")
     model.fit(X_train, y_train)
@@ -760,7 +771,6 @@ def test_linearsvc_parameters(loss, penalty, dual):
         or (loss, penalty, dual) == ("hinge", "l2", False)
         or (penalty, dual) == ("l1", True)
     ):
-
         with pytest.raises(
             ValueError,
             match="Unsupported set of arguments.*penalty='%s.*loss='%s.*dual=%s"
@@ -844,6 +854,7 @@ def test_linearsvc_fit_sampleweight():
     lsvc_unflat = svm.LinearSVC(random_state=0, tol=1e-12, max_iter=1000).fit(
         X, Y, sample_weight=random_weight
     )
+
     pred1 = lsvc_unflat.predict(T)
 
     X_flat = np.repeat(X, random_weight, axis=0)
@@ -1041,7 +1052,7 @@ def test_unfitted():
 
 
 # ignore convergence warnings from max_iter=1
-@ignore_warnings
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_consistent_proba():
     a = svm.SVC(probability=True, max_iter=1, random_state=0)
     proba_1 = a.fit(X, Y).predict_proba(X)
@@ -1075,7 +1086,11 @@ def test_svr_coef_sign():
     X = np.random.RandomState(21).randn(10, 3)
     y = np.random.RandomState(12).randn(10)
 
-    for svr in [svm.SVR(kernel="linear"), svm.NuSVR(kernel="linear"), svm.LinearSVR()]:
+    for svr in [
+        svm.SVR(kernel="linear"),
+        svm.NuSVR(kernel="linear"),
+        svm.LinearSVR(),
+    ]:
         svr.fit(X, y)
         assert_array_almost_equal(
             svr.predict(X), np.dot(X, svr.coef_.ravel()) + svr.intercept_
@@ -1185,6 +1200,13 @@ def test_svc_ovr_tie_breaking(SVCClass):
     """Test if predict breaks ties in OVR mode.
     Related issue: https://github.com/scikit-learn/scikit-learn/issues/8277
     """
+    if SVCClass.__name__ == "NuSVC" and _IS_32BIT:
+        # XXX: known failure to be investigated. Either the code needs to be
+        # fixed or the test itself might need to be made less sensitive to
+        # random changes in test data and rounding errors more generally.
+        # https://github.com/scikit-learn/scikit-learn/issues/29633
+        pytest.xfail("Failing test on 32bit OS")
+
     X, y = make_blobs(random_state=0, n_samples=20, n_features=2)
 
     xs = np.linspace(X[:, 0].min(), X[:, 0].max(), 100)
@@ -1375,16 +1397,44 @@ def test_n_iter_libsvm(estimator, expected_n_iter_type, dataset):
         assert n_iter.shape == (n_classes * (n_classes - 1) // 2,)
 
 
-# TODO(1.4): Remove
-@pytest.mark.parametrize("Klass", [SVR, NuSVR, OneClassSVM])
-def test_svm_class_weights_deprecation(Klass):
-    clf = Klass()
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", FutureWarning)
-        clf.fit(X, Y)
-    msg = (
-        "Attribute `class_weight_` was deprecated in version 1.2 and will be removed"
-        " in 1.4"
+@pytest.mark.parametrize("loss", ["squared_hinge", "squared_epsilon_insensitive"])
+def test_dual_auto(loss):
+    # OvR, L2, N > M (6,2)
+    dual = _validate_dual_parameter("auto", loss, "l2", "ovr", np.asarray(X))
+    assert dual is False
+    # OvR, L2, N < M (2,6)
+    dual = _validate_dual_parameter("auto", loss, "l2", "ovr", np.asarray(X).T)
+    assert dual is True
+
+
+def test_dual_auto_edge_cases():
+    # Hinge, OvR, L2, N > M (6,2)
+    dual = _validate_dual_parameter("auto", "hinge", "l2", "ovr", np.asarray(X))
+    assert dual is True  # only supports True
+    dual = _validate_dual_parameter(
+        "auto", "epsilon_insensitive", "l2", "ovr", np.asarray(X)
     )
-    with pytest.warns(FutureWarning, match=re.escape(msg)):
-        getattr(clf, "class_weight_")
+    assert dual is True  # only supports True
+    # SqHinge, OvR, L1, N < M (2,6)
+    dual = _validate_dual_parameter(
+        "auto", "squared_hinge", "l1", "ovr", np.asarray(X).T
+    )
+    assert dual is False  # only supports False
+
+
+@pytest.mark.parametrize(
+    "Estimator, make_dataset",
+    [(svm.SVC, make_classification), (svm.SVR, make_regression)],
+)
+@pytest.mark.parametrize("C_inf", [np.inf, float("inf")])
+def test_svm_with_infinite_C(Estimator, make_dataset, C_inf, global_random_seed):
+    """Check that we can pass `C=inf` that is equivalent to a very large C value.
+
+    Non-regression test for
+    https://github.com/scikit-learn/scikit-learn/issues/29772
+    """
+    X, y = make_dataset(random_state=global_random_seed)
+    estimator_C_inf = Estimator(C=C_inf).fit(X, y)
+    estimator_C_large = Estimator(C=1e10).fit(X, y)
+
+    assert_allclose(estimator_C_large.predict(X), estimator_C_inf.predict(X))

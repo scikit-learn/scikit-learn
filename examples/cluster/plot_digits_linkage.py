@@ -27,15 +27,15 @@ random resampling of the dataset.
 
 """
 
-# Authors: Gael Varoquaux
-# License: BSD 3 clause (C) INRIA 2014
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from time import time
 
 import numpy as np
 from matplotlib import pyplot as plt
 
-from sklearn import manifold, datasets
+from sklearn import datasets, manifold
 
 digits = datasets.load_digits()
 X, y = digits.data, digits.target

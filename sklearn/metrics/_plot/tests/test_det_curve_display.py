@@ -1,12 +1,10 @@
-import pytest
 import numpy as np
+import pytest
 from numpy.testing import assert_allclose
 
 from sklearn.datasets import load_iris
 from sklearn.linear_model import LogisticRegression
-
-from sklearn.metrics import det_curve
-from sklearn.metrics import DetCurveDisplay
+from sklearn.metrics import DetCurveDisplay, det_curve
 
 
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
@@ -64,7 +62,7 @@ def test_det_curve_display(
     assert disp.estimator_name == "LogisticRegression"
 
     # cannot fail thanks to pyplot fixture
-    import matplotlib as mpl  # noqal
+    import matplotlib as mpl
 
     assert isinstance(disp.line_, mpl.lines.Line2D)
     assert disp.line_.get_alpha() == 0.8

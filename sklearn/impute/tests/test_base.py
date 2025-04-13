@@ -1,12 +1,10 @@
-import pytest
-
 import numpy as np
-
-from sklearn.utils._mask import _get_mask
-from sklearn.utils._testing import _convert_container, assert_allclose
+import pytest
 
 from sklearn.impute._base import _BaseImputer
 from sklearn.impute._iterative import _assign_where
+from sklearn.utils._mask import _get_mask
+from sklearn.utils._testing import _convert_container, assert_allclose
 
 
 @pytest.fixture

@@ -12,30 +12,30 @@ cpdef enum BLAS_Trans:
 
 
 # BLAS Level 1 ################################################################
-cdef floating _dot(int, floating*, int, floating*, int) nogil
+cdef floating _dot(int, const floating*, int, const floating*, int) noexcept nogil
 
-cdef floating _asum(int, floating*, int) nogil
+cdef floating _asum(int, const floating*, int) noexcept nogil
 
-cdef void _axpy(int, floating, floating*, int, floating*, int) nogil
+cdef void _axpy(int, floating, const floating*, int, floating*, int) noexcept nogil
 
-cdef floating _nrm2(int, floating*, int) nogil
+cdef floating _nrm2(int, const floating*, int) noexcept nogil
 
-cdef void _copy(int, floating*, int, floating*, int) nogil
+cdef void _copy(int, const floating*, int, const floating*, int) noexcept nogil
 
-cdef void _scal(int, floating, floating*, int) nogil
+cdef void _scal(int, floating, const floating*, int) noexcept nogil
 
-cdef void _rotg(floating*, floating*, floating*, floating*) nogil
+cdef void _rotg(floating*, floating*, floating*, floating*) noexcept nogil
 
-cdef void _rot(int, floating*, int, floating*, int, floating, floating) nogil
+cdef void _rot(int, floating*, int, floating*, int, floating, floating) noexcept nogil
 
 # BLAS Level 2 ################################################################
-cdef void _gemv(BLAS_Order, BLAS_Trans, int, int, floating, floating*, int,
-                floating*, int, floating, floating*, int) nogil
+cdef void _gemv(BLAS_Order, BLAS_Trans, int, int, floating, const floating*, int,
+                const floating*, int, floating, floating*, int) noexcept nogil
 
-cdef void _ger(BLAS_Order, int, int, floating, floating*, int, floating*, int,
-               floating*, int) nogil
+cdef void _ger(BLAS_Order, int, int, floating, const floating*, int, const floating*,
+               int, floating*, int) noexcept nogil
 
 # BLASLevel 3 ################################################################
 cdef void _gemm(BLAS_Order, BLAS_Trans, BLAS_Trans, int, int, int, floating,
-                floating*, int, floating*, int, floating, floating*,
-                int) nogil
+                const floating*, int, const floating*, int, floating, floating*,
+                int) noexcept nogil

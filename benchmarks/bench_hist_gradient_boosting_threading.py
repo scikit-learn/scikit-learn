@@ -1,18 +1,19 @@
-from time import time
 import argparse
 import os
 from pprint import pprint
+from time import time
 
 import numpy as np
 from threadpoolctl import threadpool_limits
-import sklearn
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.datasets import make_classification
-from sklearn.datasets import make_regression
-from sklearn.ensemble._hist_gradient_boosting.utils import get_equivalent_estimator
 
+import sklearn
+from sklearn.datasets import make_classification, make_regression
+from sklearn.ensemble import (
+    HistGradientBoostingClassifier,
+    HistGradientBoostingRegressor,
+)
+from sklearn.ensemble._hist_gradient_boosting.utils import get_equivalent_estimator
+from sklearn.model_selection import train_test_split
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--n-leaf-nodes", type=int, default=31)
@@ -290,8 +291,8 @@ for n_threads in n_threads_list:
 
 
 if args.plot or args.plot_filename:
-    import matplotlib.pyplot as plt
     import matplotlib
+    import matplotlib.pyplot as plt
 
     fig, axs = plt.subplots(2, figsize=(12, 12))
 

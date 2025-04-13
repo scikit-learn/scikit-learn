@@ -1,32 +1,40 @@
 """Common tests for metaestimators"""
+
 import functools
+from contextlib import suppress
 from inspect import signature
 
 import numpy as np
 import pytest
 
-from sklearn.base import BaseEstimator
-from sklearn.base import is_regressor
+from sklearn.base import BaseEstimator, is_regressor
 from sklearn.datasets import make_classification
-from sklearn.utils import all_estimators
-from sklearn.utils.estimator_checks import _enforce_estimator_tags_X
-from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
-from sklearn.utils.validation import check_is_fitted
-from sklearn.utils._testing import set_random_state
-from sklearn.pipeline import Pipeline, make_pipeline
-from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.feature_selection import RFE, RFECV
 from sklearn.ensemble import BaggingClassifier
 from sklearn.exceptions import NotFittedError
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_selection import RFE, RFECV
+from sklearn.linear_model import LogisticRegression, Ridge
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.preprocessing import MaxAbsScaler, StandardScaler
 from sklearn.semi_supervised import SelfTrainingClassifier
-from sklearn.linear_model import Ridge, LogisticRegression
-from sklearn.preprocessing import StandardScaler, MaxAbsScaler
+from sklearn.utils import all_estimators
+from sklearn.utils._test_common.instance_generator import _construct_instances
+from sklearn.utils._testing import SkipTest, set_random_state
+from sklearn.utils.estimator_checks import (
+    _enforce_estimator_tags_X,
+    _enforce_estimator_tags_y,
+)
+from sklearn.utils.validation import check_is_fitted
 
 
 class DelegatorData:
     def __init__(
-        self, name, construct, skip_methods=(), fit_args=make_classification()
+        self,
+        name,
+        construct,
+        skip_methods=(),
+        fit_args=make_classification(random_state=0),
     ):
         self.name = name
         self.construct = construct
@@ -34,6 +42,10 @@ class DelegatorData:
         self.skip_methods = skip_methods
 
 
+# For the following meta estimators we check for the existence of relevant
+# methods only if the sub estimator also contains them. Any methods that
+# are implemented in the meta estimator themselves and are not dependent
+# on the sub estimator are specified in the `skip_methods` parameter.
 DELEGATING_METAESTIMATORS = [
     DelegatorData("Pipeline", lambda est: Pipeline([("est", est)])),
     DelegatorData(
@@ -49,7 +61,9 @@ DELEGATING_METAESTIMATORS = [
         skip_methods=["score"],
     ),
     DelegatorData("RFE", RFE, skip_methods=["transform", "inverse_transform"]),
-    DelegatorData("RFECV", RFECV, skip_methods=["transform", "inverse_transform"]),
+    DelegatorData(
+        "RFECV", RFECV, skip_methods=["transform", "inverse_transform", "score"]
+    ),
     DelegatorData(
         "BaggingClassifier",
         BaggingClassifier,
@@ -185,60 +199,79 @@ def test_metaestimator_delegation():
             )
 
 
+def _get_instance_with_pipeline(meta_estimator, init_params):
+    """Given a single meta-estimator instance, generate an instance with a pipeline"""
+    if {"estimator", "base_estimator", "regressor"} & init_params:
+        if is_regressor(meta_estimator):
+            estimator = make_pipeline(TfidfVectorizer(), Ridge())
+            param_grid = {"ridge__alpha": [0.1, 1.0]}
+        else:
+            estimator = make_pipeline(TfidfVectorizer(), LogisticRegression())
+            param_grid = {"logisticregression__C": [0.1, 1.0]}
+
+        if init_params.intersection(
+            {"param_grid", "param_distributions"}
+        ):  # SearchCV estimators
+            extra_params = {"n_iter": 2} if "n_iter" in init_params else {}
+            return type(meta_estimator)(estimator, param_grid, **extra_params)
+        else:
+            return type(meta_estimator)(estimator)
+
+    if "transformer_list" in init_params:
+        # FeatureUnion
+        transformer_list = [
+            ("trans1", make_pipeline(TfidfVectorizer(), MaxAbsScaler())),
+            (
+                "trans2",
+                make_pipeline(TfidfVectorizer(), StandardScaler(with_mean=False)),
+            ),
+        ]
+        return type(meta_estimator)(transformer_list)
+
+    if "estimators" in init_params:
+        # stacking, voting
+        if is_regressor(meta_estimator):
+            estimator = [
+                ("est1", make_pipeline(TfidfVectorizer(), Ridge(alpha=0.1))),
+                ("est2", make_pipeline(TfidfVectorizer(), Ridge(alpha=1))),
+            ]
+        else:
+            estimator = [
+                (
+                    "est1",
+                    make_pipeline(TfidfVectorizer(), LogisticRegression(C=0.1)),
+                ),
+                ("est2", make_pipeline(TfidfVectorizer(), LogisticRegression(C=1))),
+            ]
+        return type(meta_estimator)(estimator)
+
+
 def _generate_meta_estimator_instances_with_pipeline():
     """Generate instances of meta-estimators fed with a pipeline
 
     Are considered meta-estimators all estimators accepting one of "estimator",
     "base_estimator" or "estimators".
     """
+    print("estimators: ", len(all_estimators()))
     for _, Estimator in sorted(all_estimators()):
         sig = set(signature(Estimator).parameters)
 
-        if "estimator" in sig or "base_estimator" in sig or "regressor" in sig:
-            if is_regressor(Estimator):
-                estimator = make_pipeline(TfidfVectorizer(), Ridge())
-                param_grid = {"ridge__alpha": [0.1, 1.0]}
-            else:
-                estimator = make_pipeline(TfidfVectorizer(), LogisticRegression())
-                param_grid = {"logisticregression__C": [0.1, 1.0]}
-
-            if "param_grid" in sig or "param_distributions" in sig:
-                # SearchCV estimators
-                extra_params = {"n_iter": 2} if "n_iter" in sig else {}
-                yield Estimator(estimator, param_grid, **extra_params)
-            else:
-                yield Estimator(estimator)
-
-        elif "transformer_list" in sig:
-            # FeatureUnion
-            transformer_list = [
-                ("trans1", make_pipeline(TfidfVectorizer(), MaxAbsScaler())),
-                (
-                    "trans2",
-                    make_pipeline(TfidfVectorizer(), StandardScaler(with_mean=False)),
-                ),
-            ]
-            yield Estimator(transformer_list)
-
-        elif "estimators" in sig:
-            # stacking, voting
-            if is_regressor(Estimator):
-                estimator = [
-                    ("est1", make_pipeline(TfidfVectorizer(), Ridge(alpha=0.1))),
-                    ("est2", make_pipeline(TfidfVectorizer(), Ridge(alpha=1))),
-                ]
-            else:
-                estimator = [
-                    (
-                        "est1",
-                        make_pipeline(TfidfVectorizer(), LogisticRegression(C=0.1)),
-                    ),
-                    ("est2", make_pipeline(TfidfVectorizer(), LogisticRegression(C=1))),
-                ]
-            yield Estimator(estimator)
-
-        else:
+        print("\n", Estimator.__name__, sig)
+        if not sig.intersection(
+            {
+                "estimator",
+                "base_estimator",
+                "regressor",
+                "transformer_list",
+                "estimators",
+            }
+        ):
             continue
+
+        with suppress(SkipTest):
+            for meta_estimator in _construct_instances(Estimator):
+                print(meta_estimator)
+                yield _get_instance_with_pipeline(meta_estimator, sig)
 
 
 # TODO: remove data validation for the following estimators
@@ -250,6 +283,7 @@ DATA_VALIDATION_META_ESTIMATORS_TO_IGNORE = [
     "BaggingClassifier",
     "BaggingRegressor",
     "ClassifierChain",  # data validation is necessary
+    "FrozenEstimator",  # this estimator cannot be tested like others.
     "IterativeImputer",
     "OneVsOneClassifier",  # input validation can't be avoided
     "RANSACRegressor",

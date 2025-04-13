@@ -46,45 +46,31 @@ Sometimes however an algorithm cannot be expressed efficiently in simple
 vectorized Numpy code. In this case, the recommended strategy is the
 following:
 
-  1. **Profile** the Python implementation to find the main bottleneck and
-     isolate it in a **dedicated module level function**. This function
-     will be reimplemented as a compiled extension module.
+1. **Profile** the Python implementation to find the main bottleneck and
+   isolate it in a **dedicated module level function**. This function
+   will be reimplemented as a compiled extension module.
 
-  2. If there exists a well maintained BSD or MIT **C/C++** implementation
-     of the same algorithm that is not too big, you can write a
-     **Cython wrapper** for it and include a copy of the source code
-     of the library in the scikit-learn source tree: this strategy is
-     used for the classes :class:`svm.LinearSVC`, :class:`svm.SVC` and
-     :class:`linear_model.LogisticRegression` (wrappers for liblinear
-     and libsvm).
+2. If there exists a well maintained BSD or MIT **C/C++** implementation
+   of the same algorithm that is not too big, you can write a
+   **Cython wrapper** for it and include a copy of the source code
+   of the library in the scikit-learn source tree: this strategy is
+   used for the classes :class:`svm.LinearSVC`, :class:`svm.SVC` and
+   :class:`linear_model.LogisticRegression` (wrappers for liblinear
+   and libsvm).
 
-  3. Otherwise, write an optimized version of your Python function using
-     **Cython** directly. This strategy is used
-     for the :class:`linear_model.ElasticNet` and
-     :class:`linear_model.SGDClassifier` classes for instance.
+3. Otherwise, write an optimized version of your Python function using
+   **Cython** directly. This strategy is used
+   for the :class:`linear_model.ElasticNet` and
+   :class:`linear_model.SGDClassifier` classes for instance.
 
-  4. **Move the Python version of the function in the tests** and use
-     it to check that the results of the compiled extension are consistent
-     with the gold standard, easy to debug Python version.
+4. **Move the Python version of the function in the tests** and use
+   it to check that the results of the compiled extension are consistent
+   with the gold standard, easy to debug Python version.
 
-  5. Once the code is optimized (not simple bottleneck spottable by
-     profiling), check whether it is possible to have **coarse grained
-     parallelism** that is amenable to **multi-processing** by using the
-     ``joblib.Parallel`` class.
-
-When using Cython, use either
-
-.. prompt:: bash $
-
-  python setup.py build_ext -i
-  python setup.py install
-
-to generate C files. You are responsible for adding .c/.cpp extensions along
-with build parameters in each submodule ``setup.py``.
-
-C/C++ generated files are embedded in distributed stable packages. The goal is
-to make it possible to install scikit-learn stable version
-on any machine with Python, Numpy, Scipy and C/C++ compiler.
+5. Once the code is optimized (not simple bottleneck spottable by
+   profiling), check whether it is possible to have **coarse grained
+   parallelism** that is amenable to **multi-processing** by using the
+   ``joblib.Parallel`` class.
 
 .. _profiling-python-code:
 
@@ -133,14 +119,14 @@ magic command::
           1    0.000    0.000    0.000    0.000 nmf.py:337(__init__)
           1    0.000    0.000    1.681    1.681 nmf.py:461(fit)
 
-The ``tottime`` column is the most interesting: it gives to total time spent
+The ``tottime`` column is the most interesting: it gives the total time spent
 executing the code of a given function ignoring the time spent in executing the
 sub-functions. The real total time (local code + sub-function calls) is given by
 the ``cumtime`` column.
 
 Note the use of the ``-l nmf.py`` that restricts the output to lines that
-contains the "nmf.py" string. This is useful to have a quick look at the hotspot
-of the nmf Python module it-self ignoring anything else.
+contain the "nmf.py" string. This is useful to have a quick look at the hotspot
+of the nmf Python module itself ignoring anything else.
 
 Here is the beginning of the output of the same command without the ``-l nmf.py``
 filter::
@@ -164,7 +150,7 @@ filter::
   ...
 
 The above results show that the execution is largely dominated by
-dot products operations (delegated to blas). Hence there is probably
+dot product operations (delegated to blas). Hence there is probably
 no huge gain to expect by rewriting this code in Cython or C/C++: in
 this case out of the 1.7s total execution time, almost 0.7s are spent
 in compiled code we can consider optimal. By rewriting the rest of the
@@ -173,8 +159,8 @@ Python code and assuming we could achieve a 1000% boost on this portion
 we would not gain more than a 2.4x speed-up globally.
 
 Hence major improvements can only be achieved by **algorithmic
-improvements** in this particular example (e.g. trying to find operation
-that are both costly and useless to avoid computing then rather than
+improvements** in this particular example (e.g. trying to find operations
+that are both costly and useless to avoid computing them rather than
 trying to optimize their implementation).
 
 It is however still interesting to check what's happening inside the
@@ -187,7 +173,7 @@ us install ``line_profiler`` and wire it to IPython:
 
   pip install line_profiler
 
-- **Under IPython 0.13+**, first create a configuration profile:
+**Under IPython 0.13+**, first create a configuration profile:
 
 .. prompt:: bash $
 
@@ -265,7 +251,7 @@ install the latest version:
 
 Then, setup the magics in a manner similar to ``line_profiler``.
 
-- **Under IPython 0.11+**, first create a configuration profile:
+**Under IPython 0.11+**, first create a configuration profile:
 
 .. prompt:: bash $
 
@@ -313,8 +299,8 @@ For more details, see the docstrings of the magics, using ``%memit?`` and
 ``%mprun?``.
 
 
-Performance tips for the Cython developer
-=========================================
+Using Cython
+============
 
 If profiling of the Python code reveals that the Python interpreter
 overhead is larger by one order of magnitude or more than the cost of the
@@ -325,46 +311,9 @@ standalone function in a ``.pyx`` file, add static type declarations and
 then use Cython to generate a C program suitable to be compiled as a
 Python extension module.
 
-The official documentation available at http://docs.cython.org/ contains
-a tutorial and reference guide for developing such a module. In the
-following we will just highlight a couple of tricks that we found
-important in practice on the existing cython codebase in the scikit-learn
-project.
-
-TODO: html report, type declarations, bound checks, division by zero checks,
-memory alignment, direct blas calls...
-
-- https://www.youtube.com/watch?v=gMvkiQ-gOW8
-- https://conference.scipy.org/proceedings/SciPy2009/paper_1/
-- https://conference.scipy.org/proceedings/SciPy2009/paper_2/
-
-Using OpenMP
-------------
-
-Since scikit-learn can be built without OpenMP, it's necessary to protect each
-direct call to OpenMP.
-
-There are some helpers in
-[sklearn/utils/_openmp_helpers.pyx](https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/utils/_openmp_helpers.pyx)
-that you can reuse for the main useful functionalities and already have the
-necessary protection to be built without OpenMP.
-
-If the helpers are not enough, you need to protect your OpenMP code using the
-following syntax::
-
-  # importing OpenMP
-  IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
-      cimport openmp
-
-  # calling OpenMP
-  IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
-      max_threads = openmp.omp_get_max_threads()
-  ELSE:
-      max_threads = 1
-
-.. note::
-
-   Protecting the parallel loop, ``prange``, is already done by cython.
+The `Cython's documentation <http://docs.cython.org/>`_ contains a tutorial and
+reference guide for developing such a module.
+For more information about developing in Cython for scikit-learn, see :ref:`cython`.
 
 
 .. _profiling-compiled-extension:
@@ -375,7 +324,7 @@ Profiling compiled extensions
 When working with compiled extensions (written in C/C++ with a wrapper or
 directly as Cython extension), the default Python profiler is useless:
 we need a dedicated tool to introspect what's happening inside the
-compiled extension it-self.
+compiled extension itself.
 
 Using yep and gperftools
 ------------------------
@@ -384,6 +333,28 @@ Easy profiling without special compilation options use yep:
 
 - https://pypi.org/project/yep/
 - https://fa.bianp.net/blog/2011/a-profiler-for-python-extensions
+
+Using a debugger, gdb
+---------------------
+
+* It is helpful to use ``gdb`` to debug. In order to do so, one must use
+  a Python interpreter built with debug support (debug symbols and proper
+  optimization). To create a new conda environment (which you might need
+  to deactivate and reactivate after building/installing) with a source-built
+  CPython interpreter:
+
+  .. code-block:: bash
+
+         git clone https://github.com/python/cpython.git
+         conda create -n debug-scikit-dev
+         conda activate debug-scikit-dev
+         cd cpython
+         mkdir debug
+         cd debug
+         ../configure --prefix=$CONDA_PREFIX --with-pydebug
+         make EXTRA_CFLAGS='-DPy_DEBUG' -j<num_cores>
+         make install
+
 
 Using gprof
 -----------

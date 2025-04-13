@@ -1,57 +1,58 @@
 """Test the stacking classifier and regressor."""
 
-# Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import pytest
+import re
+from unittest.mock import Mock
+
 import numpy as np
+import pytest
 from numpy.testing import assert_array_equal
-import scipy.sparse as sparse
+from scipy import sparse
 
-from sklearn.base import BaseEstimator
-from sklearn.base import ClassifierMixin
-from sklearn.base import RegressorMixin
-from sklearn.base import clone
-
-from sklearn.exceptions import ConvergenceWarning
-
-from sklearn.datasets import load_iris
-from sklearn.datasets import load_diabetes
-from sklearn.datasets import load_breast_cancer
-from sklearn.datasets import make_regression
-from sklearn.datasets import make_classification
-from sklearn.datasets import make_multilabel_classification
-
-from sklearn.dummy import DummyClassifier
-from sklearn.dummy import DummyRegressor
-from sklearn.linear_model import LogisticRegression
-from sklearn.linear_model import LinearRegression
-from sklearn.linear_model import Ridge
-from sklearn.linear_model import RidgeClassifier
-from sklearn.svm import LinearSVC
-from sklearn.svm import LinearSVR
-from sklearn.svm import SVC
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.ensemble import RandomForestRegressor
+from sklearn import config_context
+from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin, clone
+from sklearn.datasets import (
+    load_breast_cancer,
+    load_diabetes,
+    load_iris,
+    make_classification,
+    make_multilabel_classification,
+    make_regression,
+)
+from sklearn.dummy import DummyClassifier, DummyRegressor
+from sklearn.ensemble import (
+    RandomForestClassifier,
+    RandomForestRegressor,
+    StackingClassifier,
+    StackingRegressor,
+)
+from sklearn.exceptions import ConvergenceWarning, NotFittedError
+from sklearn.linear_model import (
+    LinearRegression,
+    LogisticRegression,
+    Ridge,
+    RidgeClassifier,
+)
+from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import scale
-
-from sklearn.ensemble import StackingClassifier
-from sklearn.ensemble import StackingRegressor
-
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import KFold
-
+from sklearn.svm import SVC, LinearSVC, LinearSVR
+from sklearn.tests.metadata_routing_common import (
+    ConsumingClassifier,
+    ConsumingRegressor,
+    _Registry,
+    check_recorded_metadata,
+)
 from sklearn.utils._mocking import CheckingClassifier
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_allclose_dense_sparse
-from sklearn.utils._testing import ignore_warnings
-
-from sklearn.exceptions import NotFittedError
-
-from unittest.mock import Mock
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_allclose_dense_sparse,
+    ignore_warnings,
+)
+from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, CSR_CONTAINERS
 
 diabetes = load_diabetes()
 X_diabetes, y_diabetes = diabetes.data, diabetes.target
@@ -145,7 +146,9 @@ def test_stacking_classifier_drop_estimator():
     estimators = [("lr", "drop"), ("svc", LinearSVC(random_state=0))]
     rf = RandomForestClassifier(n_estimators=10, random_state=42)
     clf = StackingClassifier(
-        estimators=[("svc", LinearSVC(random_state=0))], final_estimator=rf, cv=5
+        estimators=[("svc", LinearSVC(random_state=0))],
+        final_estimator=rf,
+        cv=5,
     )
     clf_drop = StackingClassifier(estimators=estimators, final_estimator=rf, cv=5)
 
@@ -165,7 +168,9 @@ def test_stacking_regressor_drop_estimator():
     estimators = [("lr", "drop"), ("svr", LinearSVR(random_state=0))]
     rf = RandomForestRegressor(n_estimators=10, random_state=42)
     reg = StackingRegressor(
-        estimators=[("svr", LinearSVR(random_state=0))], final_estimator=rf, cv=5
+        estimators=[("svr", LinearSVR(random_state=0))],
+        final_estimator=rf,
+        cv=5,
     )
     reg_drop = StackingRegressor(estimators=estimators, final_estimator=rf, cv=5)
 
@@ -221,11 +226,13 @@ def test_stacking_regressor_diabetes(cv, final_estimator, predict_params, passth
         assert_allclose(X_test, X_trans[:, -10:])
 
 
-@pytest.mark.parametrize("fmt", ["csc", "csr", "coo"])
-def test_stacking_regressor_sparse_passthrough(fmt):
+@pytest.mark.parametrize(
+    "sparse_container", COO_CONTAINERS + CSC_CONTAINERS + CSR_CONTAINERS
+)
+def test_stacking_regressor_sparse_passthrough(sparse_container):
     # Check passthrough behavior on a sparse X matrix
     X_train, X_test, y_train, _ = train_test_split(
-        sparse.coo_matrix(scale(X_diabetes)).asformat(fmt), y_diabetes, random_state=42
+        sparse_container(scale(X_diabetes)), y_diabetes, random_state=42
     )
     estimators = [("lr", LinearRegression()), ("svr", LinearSVR())]
     rf = RandomForestRegressor(n_estimators=10, random_state=42)
@@ -239,11 +246,13 @@ def test_stacking_regressor_sparse_passthrough(fmt):
     assert X_test.format == X_trans.format
 
 
-@pytest.mark.parametrize("fmt", ["csc", "csr", "coo"])
-def test_stacking_classifier_sparse_passthrough(fmt):
+@pytest.mark.parametrize(
+    "sparse_container", COO_CONTAINERS + CSC_CONTAINERS + CSR_CONTAINERS
+)
+def test_stacking_classifier_sparse_passthrough(sparse_container):
     # Check passthrough behavior on a sparse X matrix
     X_train, X_test, y_train, _ = train_test_split(
-        sparse.coo_matrix(scale(X_iris)).asformat(fmt), y_iris, random_state=42
+        sparse_container(scale(X_iris)), y_iris, random_state=42
     )
     estimators = [("lr", LogisticRegression()), ("svc", LinearSVC())]
     rf = RandomForestClassifier(n_estimators=10, random_state=42)
@@ -346,7 +355,10 @@ def test_stacking_classifier_error(y, params, type_err, msg_err):
         (
             y_diabetes,
             {
-                "estimators": [("lr", LinearRegression()), ("cor", LinearSVR())],
+                "estimators": [
+                    ("lr", LinearRegression()),
+                    ("cor", LinearSVR()),
+                ],
                 "final_estimator": NoWeightRegressor(),
             },
             TypeError,
@@ -572,9 +584,13 @@ def test_stacking_prefit(Stacker, Estimator, stack_method, final_estimator, X, y
 
     # mock out fit and stack_method to be asserted later
     for _, estimator in estimators:
-        estimator.fit = Mock()
+        estimator.fit = Mock(name="fit")
         stack_func = getattr(estimator, stack_method)
-        setattr(estimator, stack_method, Mock(side_effect=stack_func))
+        predict_method_mocked = Mock(side_effect=stack_func)
+        # Mocking a method will not provide a `__name__` while Python methods
+        # do and we are using it in `_get_response_method`.
+        predict_method_mocked.__name__ = stack_method
+        setattr(estimator, stack_method, predict_method_mocked)
 
     stacker = Stacker(
         estimators=estimators, cv="prefit", final_estimator=final_estimator
@@ -851,3 +867,153 @@ def test_stacking_classifier_base_regressor():
     clf.predict(X_test)
     clf.predict_proba(X_test)
     assert clf.score(X_test, y_test) > 0.8
+
+
+def test_stacking_final_estimator_attribute_error():
+    """Check that we raise the proper AttributeError when the final estimator
+    does not implement the `decision_function` method, which is decorated with
+    `available_if`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28108
+    """
+    X, y = make_classification(random_state=42)
+
+    estimators = [
+        ("lr", LogisticRegression()),
+        ("rf", RandomForestClassifier(n_estimators=2, random_state=42)),
+    ]
+    # RandomForestClassifier does not implement 'decision_function' and should raise
+    # an AttributeError
+    final_estimator = RandomForestClassifier(n_estimators=2, random_state=42)
+    clf = StackingClassifier(
+        estimators=estimators, final_estimator=final_estimator, cv=3
+    )
+
+    outer_msg = "This 'StackingClassifier' has no attribute 'decision_function'"
+    inner_msg = "'RandomForestClassifier' object has no attribute 'decision_function'"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
+        clf.fit(X, y).decision_function(X)
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg in str(exec_info.value.__cause__)
+
+
+# Metadata Routing Tests
+# ======================
+
+
+@pytest.mark.parametrize(
+    "Estimator, Child",
+    [
+        (StackingClassifier, ConsumingClassifier),
+        (StackingRegressor, ConsumingRegressor),
+    ],
+)
+def test_routing_passed_metadata_not_supported(Estimator, Child):
+    """Test that the right error message is raised when metadata is passed while
+    not supported when `enable_metadata_routing=False`."""
+
+    with pytest.raises(
+        ValueError, match="is only supported if enable_metadata_routing=True"
+    ):
+        Estimator(["clf", Child()]).fit(
+            X_iris, y_iris, sample_weight=[1, 1, 1, 1, 1], metadata="a"
+        )
+
+
+@pytest.mark.parametrize(
+    "Estimator, Child",
+    [
+        (StackingClassifier, ConsumingClassifier),
+        (StackingRegressor, ConsumingRegressor),
+    ],
+)
+@config_context(enable_metadata_routing=True)
+def test_get_metadata_routing_without_fit(Estimator, Child):
+    # Test that metadata_routing() doesn't raise when called before fit.
+    est = Estimator([("sub_est", Child())])
+    est.get_metadata_routing()
+
+
+@pytest.mark.parametrize(
+    "Estimator, Child",
+    [
+        (StackingClassifier, ConsumingClassifier),
+        (StackingRegressor, ConsumingRegressor),
+    ],
+)
+@pytest.mark.parametrize(
+    "prop, prop_value", [("sample_weight", np.ones(X_iris.shape[0])), ("metadata", "a")]
+)
+@config_context(enable_metadata_routing=True)
+def test_metadata_routing_for_stacking_estimators(Estimator, Child, prop, prop_value):
+    """Test that metadata is routed correctly for Stacking*."""
+
+    est = Estimator(
+        [
+            (
+                "sub_est1",
+                Child(registry=_Registry()).set_fit_request(**{prop: True}),
+            ),
+            (
+                "sub_est2",
+                Child(registry=_Registry()).set_fit_request(**{prop: True}),
+            ),
+        ],
+        final_estimator=Child(registry=_Registry()).set_predict_request(**{prop: True}),
+    )
+
+    est.fit(X_iris, y_iris, **{prop: prop_value})
+    est.fit_transform(X_iris, y_iris, **{prop: prop_value})
+
+    est.predict(X_iris, **{prop: prop_value})
+
+    for estimator in est.estimators:
+        # access sub-estimator in (name, est) with estimator[1]:
+        registry = estimator[1].registry
+        assert len(registry)
+        for sub_est in registry:
+            check_recorded_metadata(
+                obj=sub_est,
+                method="fit",
+                parent="fit",
+                split_params=(prop),
+                **{prop: prop_value},
+            )
+    # access final_estimator:
+    registry = est.final_estimator_.registry
+    assert len(registry)
+    check_recorded_metadata(
+        obj=registry[-1],
+        method="predict",
+        parent="predict",
+        split_params=(prop),
+        **{prop: prop_value},
+    )
+
+
+@pytest.mark.parametrize(
+    "Estimator, Child",
+    [
+        (StackingClassifier, ConsumingClassifier),
+        (StackingRegressor, ConsumingRegressor),
+    ],
+)
+@config_context(enable_metadata_routing=True)
+def test_metadata_routing_error_for_stacking_estimators(Estimator, Child):
+    """Test that the right error is raised when metadata is not requested."""
+    sample_weight, metadata = np.ones(X_iris.shape[0]), "a"
+
+    est = Estimator([("sub_est", Child())])
+
+    error_message = (
+        "[sample_weight, metadata] are passed but are not explicitly set as requested"
+        f" or not requested for {Child.__name__}.fit"
+    )
+
+    with pytest.raises(ValueError, match=re.escape(error_message)):
+        est.fit(X_iris, y_iris, sample_weight=sample_weight, metadata=metadata)
+
+
+# End of Metadata Routing Tests
+# =============================

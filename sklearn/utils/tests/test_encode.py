@@ -4,10 +4,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
 
-from sklearn.utils._encode import _unique
-from sklearn.utils._encode import _encode
-from sklearn.utils._encode import _check_unknown
-from sklearn.utils._encode import _get_counts
+from sklearn.utils._encode import _check_unknown, _encode, _get_counts, _unique
 
 
 @pytest.mark.parametrize(

@@ -1,25 +1,22 @@
 """Algorithms for spectral clustering"""
 
-# Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Brian Cheung
-#         Wei LI <kuantkid@gmail.com>
-#         Andrew Knyazev <Andrew.Knyazev@ucdenver.edu>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-from numbers import Integral, Real
 import warnings
+from numbers import Integral, Real
 
 import numpy as np
-
 from scipy.linalg import LinAlgError, qr, svd
 from scipy.sparse import csc_matrix
 
-from ..base import BaseEstimator, ClusterMixin
-from ..utils._param_validation import Interval, StrOptions
-from ..utils import check_random_state, as_float_array
-from ..metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
-from ..neighbors import kneighbors_graph, NearestNeighbors
-from ..manifold import spectral_embedding
+from ..base import BaseEstimator, ClusterMixin, _fit_context
+from ..manifold._spectral_embedding import _spectral_embedding
+from ..metrics.pairwise import KERNEL_PARAMS, pairwise_kernels
+from ..neighbors import NearestNeighbors, kneighbors_graph
+from ..utils import as_float_array, check_random_state
+from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.validation import validate_data
 from ._kmeans import k_means
 
 
@@ -139,7 +136,6 @@ def discretize(
     # If there is an exception we try to randomize and rerun SVD again
     # do this max_svd_restarts times.
     while (svd_restarts < max_svd_restarts) and not has_converged:
-
         # Initialize first column of rotation matrix with a row of the
         # eigenvectors
         rotation = np.zeros((n_components, n_components))
@@ -169,7 +165,7 @@ def discretize(
                 shape=(n_samples, n_components),
             )
 
-            t_svd = vectors_discrete.T * vectors
+            t_svd = vectors_discrete.T @ vectors
 
             try:
                 U, S, Vh = np.linalg.svd(t_svd)
@@ -191,6 +187,10 @@ def discretize(
     return labels
 
 
+@validate_params(
+    {"affinity": ["array-like", "sparse matrix"]},
+    prefer_skip_nested_validation=False,
+)
 def spectral_clustering(
     affinity,
     *,
@@ -287,7 +287,9 @@ def spectral_clustering(
         The cluster_qr method [5]_ directly extracts clusters from eigenvectors
         in spectral clustering. In contrast to k-means and discretization, cluster_qr
         has no tuning parameters and is not an iterative method, yet may outperform
-        k-means and discretization in terms of both quality and speed.
+        k-means and discretization in terms of both quality and speed. For a detailed
+        comparison of clustering strategies, refer to the following example:
+        :ref:`sphx_glr_auto_examples_cluster_plot_coin_segmentation.py`.
 
         .. versionchanged:: 1.1
            Added new labeling method 'cluster_qr'.
@@ -344,51 +346,34 @@ def spectral_clustering(
            streaming graph challenge (Preliminary version at arXiv.)
            David Zhuzhunashvili, Andrew Knyazev
            <10.1109/HPEC.2017.8091045>`
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics.pairwise import pairwise_kernels
+    >>> from sklearn.cluster import spectral_clustering
+    >>> X = np.array([[1, 1], [2, 1], [1, 0],
+    ...               [4, 7], [3, 5], [3, 6]])
+    >>> affinity = pairwise_kernels(X, metric='rbf')
+    >>> spectral_clustering(
+    ...     affinity=affinity, n_clusters=2, assign_labels="discretize", random_state=0
+    ... )
+    array([1, 1, 1, 0, 0, 0])
     """
-    if assign_labels not in ("kmeans", "discretize", "cluster_qr"):
-        raise ValueError(
-            "The 'assign_labels' parameter should be "
-            "'kmeans' or 'discretize', or 'cluster_qr', "
-            f"but {assign_labels!r} was given"
-        )
-    if isinstance(affinity, np.matrix):
-        raise TypeError(
-            "spectral_clustering does not support passing in affinity as an "
-            "np.matrix. Please convert to a numpy array with np.asarray. For "
-            "more information see: "
-            "https://numpy.org/doc/stable/reference/generated/numpy.matrix.html",  # noqa
-        )
 
-    random_state = check_random_state(random_state)
-    n_components = n_clusters if n_components is None else n_components
-
-    # We now obtain the real valued solution matrix to the
-    # relaxed Ncut problem, solving the eigenvalue problem
-    # L_sym x = lambda x  and recovering u = D^-1/2 x.
-    # The first eigenvector is constant only for fully connected graphs
-    # and should be kept for spectral clustering (drop_first = False)
-    # See spectral_embedding documentation.
-    maps = spectral_embedding(
-        affinity,
+    clusterer = SpectralClustering(
+        n_clusters=n_clusters,
         n_components=n_components,
         eigen_solver=eigen_solver,
         random_state=random_state,
+        n_init=n_init,
+        affinity="precomputed",
         eigen_tol=eigen_tol,
-        drop_first=False,
-    )
-    if verbose:
-        print(f"Computing label assignment using {assign_labels}")
+        assign_labels=assign_labels,
+        verbose=verbose,
+    ).fit(affinity)
 
-    if assign_labels == "kmeans":
-        _, labels, _ = k_means(
-            maps, n_clusters, random_state=random_state, n_init=n_init, verbose=verbose
-        )
-    elif assign_labels == "cluster_qr":
-        labels = cluster_qr(maps)
-    else:
-        labels = discretize(maps, random_state=random_state)
-
-    return labels
+    return clusterer.labels_
 
 
 class SpectralClustering(ClusterMixin, BaseEstimator):
@@ -453,7 +438,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
     gamma : float, default=1.0
         Kernel coefficient for rbf, poly, sigmoid, laplacian and chi2 kernels.
-        Ignored for ``affinity='nearest_neighbors'``.
+        Ignored for ``affinity='nearest_neighbors'``, ``affinity='precomputed'``
+        or ``affinity='precomputed_nearest_neighbors'``.
 
     affinity : str or callable, default='rbf'
         How to construct the affinity matrix.
@@ -467,7 +453,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
            of precomputed distances, and construct a binary affinity matrix
            from the ``n_neighbors`` nearest neighbors of each instance.
          - one of the kernels supported by
-           :func:`~sklearn.metrics.pairwise_kernels`.
+           :func:`~sklearn.metrics.pairwise.pairwise_kernels`.
 
         Only kernels that produce similarity scores (non-negative values that
         increase with similarity) should be used. This property is not checked
@@ -478,7 +464,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         the nearest neighbors method. Ignored for ``affinity='rbf'``.
 
     eigen_tol : float, default="auto"
-        Stopping criterion for eigendecomposition of the Laplacian matrix.
+        Stopping criterion for eigen decomposition of the Laplacian matrix.
         If `eigen_tol="auto"` then the passed tolerance will depend on the
         `eigen_solver`:
 
@@ -615,6 +601,9 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
     >>> clustering
     SpectralClustering(assign_labels='discretize', n_clusters=2,
         random_state=0)
+
+    For a comparison of Spectral clustering with other clustering algorithms, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
     """
 
     _parameter_constraints: dict = {
@@ -637,7 +626,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
             StrOptions({"auto"}),
         ],
         "assign_labels": [StrOptions({"kmeans", "discretize", "cluster_qr"})],
-        "degree": [Interval(Integral, 0, None, closed="left")],
+        "degree": [Interval(Real, 0, None, closed="left")],
         "coef0": [Interval(Real, None, None, closed="neither")],
         "kernel_params": [dict, None],
         "n_jobs": [Integral, None],
@@ -679,6 +668,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         self.n_jobs = n_jobs
         self.verbose = verbose
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Perform spectral clustering from features, or affinity matrix.
 
@@ -701,9 +691,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         self : object
             A fitted instance of the estimator.
         """
-        self._validate_params()
-
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=["csr", "csc", "coo"],
             dtype=np.float64,
@@ -747,17 +736,39 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
             )
 
         random_state = check_random_state(self.random_state)
-        self.labels_ = spectral_clustering(
+        n_components = (
+            self.n_clusters if self.n_components is None else self.n_components
+        )
+        # We now obtain the real valued solution matrix to the
+        # relaxed Ncut problem, solving the eigenvalue problem
+        # L_sym x = lambda x  and recovering u = D^-1/2 x.
+        # The first eigenvector is constant only for fully connected graphs
+        # and should be kept for spectral clustering (drop_first = False)
+        # See spectral_embedding documentation.
+        maps = _spectral_embedding(
             self.affinity_matrix_,
-            n_clusters=self.n_clusters,
-            n_components=self.n_components,
+            n_components=n_components,
             eigen_solver=self.eigen_solver,
             random_state=random_state,
-            n_init=self.n_init,
             eigen_tol=self.eigen_tol,
-            assign_labels=self.assign_labels,
-            verbose=self.verbose,
+            drop_first=False,
         )
+        if self.verbose:
+            print(f"Computing label assignment using {self.assign_labels}")
+
+        if self.assign_labels == "kmeans":
+            _, self.labels_, _ = k_means(
+                maps,
+                self.n_clusters,
+                random_state=random_state,
+                n_init=self.n_init,
+                verbose=self.verbose,
+            )
+        elif self.assign_labels == "cluster_qr":
+            self.labels_ = cluster_qr(maps)
+        else:
+            self.labels_ = discretize(maps, random_state=random_state)
+
         return self
 
     def fit_predict(self, X, y=None):
@@ -784,8 +795,11 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         """
         return super().fit_predict(X, y)
 
-    def _more_tags(self):
-        return {
-            "pairwise": self.affinity
-            in ["precomputed", "precomputed_nearest_neighbors"]
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        tags.input_tags.pairwise = self.affinity in [
+            "precomputed",
+            "precomputed_nearest_neighbors",
+        ]
+        return tags
