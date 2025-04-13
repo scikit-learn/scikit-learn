@@ -449,20 +449,10 @@ def test_get_column_indices_pandas_nonunique_columns_error(key):
 
 def test_get_column_indices_interchange():
     """Check _get_column_indices for edge cases with the interchange"""
-    pd = pytest.importorskip("pandas", minversion="1.5")
+    pl = pytest.importorskip("polars")
 
-    df = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=["a", "b", "c"])
-
-    # Hide the fact that this is a pandas dataframe to trigger the dataframe protocol
-    # code path.
-    class MockDataFrame:
-        def __init__(self, df):
-            self._df = df
-
-        def __getattr__(self, name):
-            return getattr(self._df, name)
-
-    df_mocked = MockDataFrame(df)
+    # Polars dataframes go down the interchange path.
+    df = pl.DataFrame([[1, 2, 3], [4, 5, 6]], schema=["a", "b", "c"])
 
     key_results = [
         (slice(1, None), [1, 2]),
@@ -476,15 +466,15 @@ def test_get_column_indices_interchange():
         ([], []),
     ]
     for key, result in key_results:
-        assert _get_column_indices(df_mocked, key) == result
+        assert _get_column_indices(df, key) == result
 
     msg = "A given column is not a column of the dataframe"
     with pytest.raises(ValueError, match=msg):
-        _get_column_indices(df_mocked, ["not_a_column"])
+        _get_column_indices(df, ["not_a_column"])
 
     msg = "key.step must be 1 or None"
     with pytest.raises(NotImplementedError, match=msg):
-        _get_column_indices(df_mocked, slice("a", None, 2))
+        _get_column_indices(df, slice("a", None, 2))
 
 
 def test_resample():
