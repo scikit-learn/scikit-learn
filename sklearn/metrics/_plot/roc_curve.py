@@ -737,8 +737,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             y,
             sample_weight=sample_weight,
             pos_label=pos_label,
-            name=name,
-            curve_kwargs=curve_kwargs,
         )
 
         fpr_folds, tpr_folds, auc_folds = [], [], []
