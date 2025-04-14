@@ -2404,6 +2404,10 @@ def pairwise_distances(
         If Y is not None, then D_{i, j} is the distance between the ith array
         from X and the jth array from Y.
 
+    Notes
+    -----
+    If metric is a callable, no restrictions are placed on `X` and `Y` dimensions.
+
     See Also
     --------
     pairwise_distances_chunked : Performs the same calculation as this
@@ -2638,7 +2642,7 @@ def pairwise_kernels(
 
     Notes
     -----
-    If metric is 'precomputed', Y is ignored and X is returned.
+    If metric is a callable, no restrictions are placed on `X` and `Y` dimensions.
 
     Examples
     --------
