@@ -130,6 +130,10 @@ def _write_label_html(
     ----------
     out : file-like object
         The file to write the HTML representation to.
+    params: {str, ""}
+        If estimator has `get_params` method, this is the HTML representation
+        of the estimator's parameters and their values. When the estimator
+        does not have `get_params`, it is an empty string.
     name : str
         The label for the estimator. It corresponds either to the estimator class name
         for a simple estimator or in the case of a `Pipeline` and `ColumnTransformer`,
