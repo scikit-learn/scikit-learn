@@ -78,8 +78,8 @@ class _BinaryClassifierCurveDisplayMixin:
         *,
         sample_weight,
         pos_label,
-        name,
-        curve_kwargs,
+        # name,
+        # curve_kwargs,
     ):
         check_matplotlib_support(f"{cls.__name__}.from_cv_results")
 
