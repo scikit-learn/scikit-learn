@@ -2404,10 +2404,6 @@ def pairwise_distances(
         If Y is not None, then D_{i, j} is the distance between the ith array
         from X and the jth array from Y.
 
-    Notes
-    -----
-    If metric is a callable, no restrictions are placed on `X` and `Y` dimensions.
-
     See Also
     --------
     pairwise_distances_chunked : Performs the same calculation as this
@@ -2415,6 +2411,10 @@ def pairwise_distances(
         order to limit memory usage.
     sklearn.metrics.pairwise.paired_distances : Computes the distances between
         corresponding elements of two arrays.
+
+    Notes
+    -----
+    If metric is a callable, no restrictions are placed on `X` and `Y` dimensions.
 
     Examples
     --------
