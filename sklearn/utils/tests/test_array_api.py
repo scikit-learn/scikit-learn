@@ -15,7 +15,6 @@ from sklearn.utils._array_api import (
     _count_nonzero,
     _estimator_with_converted_arrays,
     _fill_or_add_to_diagonal,
-    _get_namespace_device_dtype_ids,
     _is_numpy_namespace,
     _isin,
     _max_precision_float_dtype,
@@ -114,9 +113,7 @@ def test_asarray_with_order(array_api):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name",
-    yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
+    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize(
     "weights, axis, normalize, expected",
@@ -172,7 +169,6 @@ def test_average(
 @pytest.mark.parametrize(
     "array_namespace, device, dtype_name",
     yield_namespace_device_dtype_combinations(include_numpy_namespaces=False),
-    ids=_get_namespace_device_dtype_ids,
 )
 def test_average_raises_with_wrong_dtype(array_namespace, device, dtype_name):
     xp = _array_api_for_tests(array_namespace, device)
@@ -198,7 +194,6 @@ def test_average_raises_with_wrong_dtype(array_namespace, device, dtype_name):
 @pytest.mark.parametrize(
     "array_namespace, device, dtype_name",
     yield_namespace_device_dtype_combinations(include_numpy_namespaces=True),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "axis, weights, error, error_msg",
@@ -355,9 +350,7 @@ def test_nan_reductions(library, X, reduction, expected):
 
 
 @pytest.mark.parametrize(
-    "namespace, _device, _dtype",
-    yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
+    "namespace, _device, _dtype", yield_namespace_device_dtype_combinations()
 )
 def test_ravel(namespace, _device, _dtype):
     xp = _array_api_for_tests(namespace, _device)
@@ -444,9 +437,7 @@ def test_convert_estimator_to_array_api():
 
 
 @pytest.mark.parametrize(
-    "namespace, _device, _dtype",
-    yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
+    "namespace, _device, _dtype", yield_namespace_device_dtype_combinations()
 )
 def test_indexing_dtype(namespace, _device, _dtype):
     xp = _array_api_for_tests(namespace, _device)
@@ -458,9 +449,7 @@ def test_indexing_dtype(namespace, _device, _dtype):
 
 
 @pytest.mark.parametrize(
-    "namespace, _device, _dtype",
-    yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
+    "namespace, _device, _dtype", yield_namespace_device_dtype_combinations()
 )
 def test_max_precision_float_dtype(namespace, _device, _dtype):
     xp = _array_api_for_tests(namespace, _device)
@@ -469,9 +458,7 @@ def test_max_precision_float_dtype(namespace, _device, _dtype):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, _",
-    yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
+    "array_namespace, device, _", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize("invert", [True, False])
 @pytest.mark.parametrize("assume_unique", [True, False])
@@ -535,9 +522,7 @@ def test_get_namespace_and_device():
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name",
-    yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
+    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 @pytest.mark.parametrize("axis", [0, 1, None, -1, -2])
@@ -574,9 +559,7 @@ def test_count_nonzero(
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name",
-    yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
+    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize("wrap", [True, False])
 def test_fill_or_add_to_diagonal(array_namespace, device_, dtype_name, wrap):

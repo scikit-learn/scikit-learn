@@ -13,7 +13,6 @@ from sklearn.preprocessing._label import (
 )
 from sklearn.utils._array_api import (
     _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
     get_namespace,
     yield_namespace_device_dtype_combinations,
 )
@@ -708,9 +707,7 @@ def test_label_encoders_do_not_have_set_output(encoder):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype",
-    yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
+    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize(
     "y",
