@@ -159,7 +159,7 @@ to build scikit-learn Cython extensions for each supported platform.
 Windows
 -------
 
-First, download the `Build Tools for Visual Studio 2019 installer
+First, download the `Build Tools for Visual Studio installer
 <https://aka.ms/vs/17/release/vs_buildtools.exe>`_.
 
 Run the downloaded `vs_buildtools.exe` file, during the installation you will
@@ -186,7 +186,11 @@ commands in ``cmd`` or an Anaconda Prompt (if you use Anaconda):
 .. prompt:: bash C:\>
 
     SET DISTUTILS_USE_SDK=1
-    "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
+    "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
+
+.. note::
+    The previous command is for the 2022 version of Visual Studio. If you
+    have a different version, you will need to adjust the year in the path accordingly.
 
 Replace ``x64`` by ``x86`` to build for 32-bit Python.
 
