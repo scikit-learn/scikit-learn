@@ -59,9 +59,8 @@ X, y = make_classification(
     random_state=1,
     n_clusters_per_class=1,
 )
-# Use string labels for the classes to make to illustrate the use of the
-# `pos_label` parameter to identify which class should be considered as the
-# "positive" class.
+# Use string labels for the classes to illustrate the use of the `pos_label` parameter
+# to identify which class should be considered as the "positive" class.
 y = np.array(["Class A", "Class B"])[y]
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4, random_state=0)
