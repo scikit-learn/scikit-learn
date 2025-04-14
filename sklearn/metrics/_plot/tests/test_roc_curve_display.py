@@ -138,6 +138,95 @@ def test_roc_curve_display_plotting(
     assert display.line_.get_label() == expected_label
 
 
+@pytest.mark.parametrize(
+    "params, err_msg",
+    [
+        (
+            {
+                "fpr": [np.array([0, 0.5, 1]), np.array([0, 0.5, 1])],
+                "tpr": [np.array([0, 0.5, 1])],
+                "roc_auc": None,
+                "name": None,
+            },
+            "self.fpr and self.tpr from `RocCurveDisplay` initialization,",
+        ),
+        (
+            {
+                "fpr": [np.array([0, 0.5, 1])],
+                "tpr": [np.array([0, 0.5, 1]), np.array([0, 0.5, 1])],
+                "roc_auc": [0.8, 0.9],
+                "name": None,
+            },
+            "self.fpr, self.tpr and self.roc_auc from `RocCurveDisplay`",
+        ),
+        (
+            {
+                "fpr": [np.array([0, 0.5, 1]), np.array([0, 0.5, 1])],
+                "tpr": [np.array([0, 0.5, 1]), np.array([0, 0.5, 1])],
+                "roc_auc": [0.8],
+                "name": None,
+            },
+            "Got: self.fpr: 2, self.tpr: 2, self.roc_auc: 1",
+        ),
+        (
+            {
+                "fpr": [np.array([0, 0.5, 1]), np.array([0, 0.5, 1])],
+                "tpr": [np.array([0, 0.5, 1]), np.array([0, 0.5, 1])],
+                "roc_auc": [0.8, 0.9],
+                "name": ["curve1", "curve2", "curve3"],
+            },
+            r"self.fpr, self.tpr, self.roc_auc and 'name' \(or self.name\)",
+        ),
+        (
+            {
+                "fpr": [np.array([0, 0.5, 1]), np.array([0, 0.5, 1])],
+                "tpr": [np.array([0, 0.5, 1]), np.array([0, 0.5, 1])],
+                "roc_auc": [0.8, 0.9],
+                # List of length 1 is always allowed
+                "name": ["curve1"],
+            },
+            None,
+        ),
+    ],
+)
+def test_roc_curve_plot_parameter_length_validation(pyplot, params, err_msg):
+    """Check `plot` parameter length validation performed correctly."""
+    display = RocCurveDisplay(**params)
+    if err_msg:
+        with pytest.raises(ValueError, match=err_msg):
+            display.plot()
+    else:
+        # No error should be raised
+        display.plot()
+
+
+def test_validate_plot_params(pyplot):
+    """Check `_validate_plot_params` returns the correct variables."""
+    fpr = np.array([0, 0.5, 1])
+    tpr = [np.array([0, 0.5, 1])]
+    roc_auc = None
+    name = "test_curve"
+
+    # Initialize display with test inputs
+    display = RocCurveDisplay(
+        fpr=fpr,
+        tpr=tpr,
+        roc_auc=roc_auc,
+        name=name,
+        pos_label=None,
+    )
+    fpr_out, tpr_out, roc_auc_out, name_out = display._validate_plot_params(
+        ax=None, name=None
+    )
+
+    assert isinstance(fpr_out, list)
+    assert isinstance(tpr_out, list)
+    assert len(fpr_out) == 1
+    assert len(tpr_out) == 1
+    assert roc_auc_out is None
+    assert name_out == ["test_curve"]
+
+
 def test_roc_curve_from_cv_results_param_validation(pyplot, data_binary, data):
     """Check parameter validation is correct."""
     X, y = data_binary
@@ -374,14 +463,70 @@ def test_roc_curve_display_plotting_from_cv_results(
             assert line.get_label() == aggregate_expected_labels[idx]
 
 
+@pytest.mark.parametrize("roc_auc", [[1.0, 1.0, 1.0], None])
 @pytest.mark.parametrize(
     "curve_kwargs",
     [None, {"color": "red"}, [{"c": "red"}, {"c": "green"}, {"c": "yellow"}]],
 )
 @pytest.mark.parametrize("name", [None, "single", ["one", "two", "three"]])
-@pytest.mark.parametrize("constructor_name", ["from_cv_results", "plot"])
+def test_roc_curve_plot_legend_label(pyplot, data_binary, name, curve_kwargs, roc_auc):
+    """Check legend label correct with all `curve_kwargs`, `name` combinations."""
+    fpr = [np.array([0, 0.5, 1]), np.array([0, 0.5, 1]), np.array([0, 0.5, 1])]
+    tpr = [np.array([0, 0.5, 1]), np.array([0, 0.5, 1]), np.array([0, 0.5, 1])]
+    if not isinstance(curve_kwargs, list) and isinstance(name, list):
+        with pytest.raises(ValueError, match="To avoid labeling individual curves"):
+            RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc).plot(
+                name=name, curve_kwargs=curve_kwargs
+            )
+
+    else:
+        display = RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc).plot(
+            name=name, curve_kwargs=curve_kwargs
+        )
+        legend = display.ax_.get_legend()
+        if legend is None:
+            # No legend is created, exit test early
+            assert name is None
+            assert roc_auc is None
+            return
+        else:
+            legend_labels = [text.get_text() for text in legend.get_texts()]
+
+        if isinstance(curve_kwargs, list):
+            # Multiple labels in legend
+            assert len(legend_labels) == 3
+            for idx, label in enumerate(legend_labels):
+                if name is None:
+                    expected_label = "AUC = 1.00" if roc_auc else None
+                    assert label == expected_label
+                elif isinstance(name, str):
+                    expected_label = "single (AUC = 1.00)" if roc_auc else "single"
+                    assert label == expected_label
+                else:
+                    # `name` is a list of different strings
+                    expected_label = (
+                        f"{name[idx]} (AUC = 1.00)" if roc_auc else f"{name[idx]}"
+                    )
+                    assert label == expected_label
+        else:
+            # Single label in legend
+            assert len(legend_labels) == 1
+            if name is None:
+                expected_label = "AUC = 1.00 +/- 0.00" if roc_auc else None
+                assert legend_labels[0] == expected_label
+            else:
+                # name is single string
+                expected_label = "single (AUC = 1.00 +/- 0.00)" if roc_auc else "single"
+                assert legend_labels[0] == expected_label
+
+
+@pytest.mark.parametrize(
+    "curve_kwargs",
+    [None, {"color": "red"}, [{"c": "red"}, {"c": "green"}, {"c": "yellow"}]],
+)
+@pytest.mark.parametrize("name", [None, "single", ["one", "two", "three"]])
 def test_roc_curve_from_cv_results_legend_label(
-    pyplot, data_binary, constructor_name, name, curve_kwargs
+    pyplot, data_binary, name, curve_kwargs
 ):
     """Check legend label correct with all `curve_kwargs`, `name` combinations."""
     X, y = data_binary
@@ -389,29 +534,17 @@ def test_roc_curve_from_cv_results_legend_label(
     cv_results = cross_validate(
         LogisticRegression(), X, y, cv=n_cv, return_estimator=True, return_indices=True
     )
-    fpr = [np.array([0, 0.5, 1]), np.array([0, 0.5, 1]), np.array([0, 0.5, 1])]
-    tpr = [np.array([0, 0.5, 1]), np.array([0, 0.5, 1]), np.array([0, 0.5, 1])]
-    roc_auc = [1.0, 1.0, 1.0]
+
     if not isinstance(curve_kwargs, list) and isinstance(name, list):
         with pytest.raises(ValueError, match="To avoid labeling individual curves"):
-            if constructor_name == "from_cv_results":
-                RocCurveDisplay.from_cv_results(
-                    cv_results, X, y, name=name, curve_kwargs=curve_kwargs
-                )
-            else:
-                RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc).plot(
-                    name=name, curve_kwargs=curve_kwargs
-                )
-
-    else:
-        if constructor_name == "from_cv_results":
-            display = RocCurveDisplay.from_cv_results(
+            RocCurveDisplay.from_cv_results(
                 cv_results, X, y, name=name, curve_kwargs=curve_kwargs
             )
-        else:
-            display = RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc).plot(
-                name=name, curve_kwargs=curve_kwargs
-            )
+    else:
+        display = RocCurveDisplay.from_cv_results(
+            cv_results, X, y, name=name, curve_kwargs=curve_kwargs
+        )
+
         legend = display.ax_.get_legend()
         legend_labels = [text.get_text() for text in legend.get_texts()]
         if isinstance(curve_kwargs, list):
