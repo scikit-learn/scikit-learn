@@ -78,8 +78,8 @@ label_spread.fit(X, labels)
 # when the label was unknown.
 output_labels = label_spread.transduction_
 output_label_array = np.asarray(output_labels)
-outer_numbers = np.where(output_label_array == outer)[0]
-inner_numbers = np.where(output_label_array == inner)[0]
+outer_numbers = (output_label_array == outer).nonzero()[0]
+inner_numbers = (output_label_array == inner).nonzero()[0]
 
 plt.figure(figsize=(4, 4))
 plt.scatter(
