@@ -174,6 +174,37 @@ def test_display_from_estimator_and_from_prediction(
     )
 
 
+@pytest.mark.parametrize("pos_label", ["yes", "no", None])
+def test_cap_curve_invariance_logistic_sigmoid_vs_logits(data_binary, pos_label):
+    X, y = data_binary
+    y = np.where(y == 0, "yes", "no")
+
+    clf = LogisticRegression().fit(X, y)
+
+    cap_proba = CAPCurveDisplay.from_estimator(
+        clf,
+        X,
+        y,
+        response_method="predict_proba",
+        pos_label=pos_label,
+    )
+
+    cap_decision = CAPCurveDisplay.from_estimator(
+        clf,
+        X,
+        y,
+        response_method="decision_function",
+        pos_label=pos_label,
+    )
+
+    np.testing.assert_allclose(
+        cap_proba.y_true_cumulative,
+        cap_decision.y_true_cumulative,
+        rtol=1e-6,
+        atol=1e-8,
+    )
+
+
 def test_unfitted_estimator(pyplot, data_binary):
     pattern = (
         r"This .* instance is not fitted yet\. Call 'fit' with "
