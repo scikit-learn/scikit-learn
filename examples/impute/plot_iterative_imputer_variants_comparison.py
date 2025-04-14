@@ -61,6 +61,7 @@ from sklearn.kernel_approximation import Nystroem
 from sklearn.linear_model import BayesianRidge, Ridge
 from sklearn.model_selection import cross_val_score
 from sklearn.neighbors import KNeighborsRegressor
+from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 
 N_SPLITS = 5
@@ -75,10 +76,10 @@ y_full = y_full[::10]
 n_samples, n_features = X_full.shape
 
 # Estimate the score on the entire dataset, with no missing values
-br_estimator = BayesianRidge()
+main_estimator = BayesianRidge()
 score_full_data = pd.DataFrame(
     cross_val_score(
-        br_estimator, X_full, y_full, scoring="neg_mean_squared_error", cv=N_SPLITS
+        main_estimator, X_full, y_full, scoring="neg_mean_squared_error", cv=N_SPLITS
     ),
     columns=["Full Data"],
 )
@@ -94,7 +95,7 @@ X_missing[missing_samples, missing_features] = np.nan
 score_simple_imputer = pd.DataFrame()
 for strategy in ("mean", "median"):
     estimator = make_pipeline(
-        SimpleImputer(missing_values=np.nan, strategy=strategy), br_estimator
+        SimpleImputer(missing_values=np.nan, strategy=strategy), main_estimator
     )
     score_simple_imputer[strategy] = cross_val_score(
         estimator, X_missing, y_missing, scoring="neg_mean_squared_error", cv=N_SPLITS
@@ -102,9 +103,9 @@ for strategy in ("mean", "median"):
 
 # Estimate the score after iterative imputation of the missing values
 # with different estimators
-estimators = [
-    BayesianRidge(),
-    RandomForestRegressor(
+named_estimators = [
+    ("BayesianRidge", BayesianRidge()),
+    ("RandomForestRegressor", RandomForestRegressor(
         # We tuned the hyperparameters of the RandomForestRegressor to get a good
         # enough predictive performance for a restricted execution time.
         n_estimators=4,
@@ -113,11 +114,11 @@ estimators = [
         max_samples=0.5,
         n_jobs=2,
         random_state=0,
-    ),
-    make_pipeline(
+     )),
+    ("Nystroem&Ridge", make_pipeline(
         Nystroem(kernel="polynomial", degree=2, random_state=0), Ridge(alpha=1e3)
-    ),
-    KNeighborsRegressor(n_neighbors=15),
+    )),
+    ("Scaler&KNeighborsRegressor", make_pipeline(StandardScaler(), KNeighborsRegressor(n_neighbors=15)))
 ]
 score_iterative_imputer = pd.DataFrame()
 # iterative imputer is sensible to the tolerance and
@@ -126,14 +127,14 @@ score_iterative_imputer = pd.DataFrame()
 # resources while not changing the results too much compared to keeping the
 # stricter default value for the tolerance parameter.
 tolerances = (1e-3, 1e-1, 1e-1, 1e-2)
-for impute_estimator, tol in zip(estimators, tolerances):
+for (name, impute_estimator), tol in zip(named_estimators, tolerances):
     estimator = make_pipeline(
         IterativeImputer(
             random_state=0, estimator=impute_estimator, max_iter=25, tol=tol
         ),
-        br_estimator,
+        main_estimator,
     )
-    score_iterative_imputer[impute_estimator.__class__.__name__] = cross_val_score(
+    score_iterative_imputer[name] = cross_val_score(
         estimator, X_missing, y_missing, scoring="neg_mean_squared_error", cv=N_SPLITS
     )
 
