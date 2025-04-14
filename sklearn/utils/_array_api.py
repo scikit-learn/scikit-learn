@@ -94,6 +94,7 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
             try:
                 import array_api_strict
 
+                # Specify `id` to provide clearer device labels
                 yield pytest.param(
                     array_namespace,
                     array_api_strict.Device("CPU_DEVICE"),
