@@ -2165,14 +2165,6 @@ def test_sgd_numerical_consistency(SGDEstimator):
     assert_allclose(sgd_64.coef_, sgd_32.coef_)
 
 
-# TODO(1.7): remove
-@pytest.mark.parametrize("Estimator", [SGDClassifier, SGDRegressor, SGDOneClassSVM])
-def test_passive_aggressive_deprecated_average(Estimator):
-    est = Estimator(average=0)
-    with pytest.warns(FutureWarning, match="average=0"):
-        est.fit(X, Y)
-
-
 def test_sgd_one_class_svm_estimator_type():
     """Check that SGDOneClassSVM has the correct estimator type.
 
