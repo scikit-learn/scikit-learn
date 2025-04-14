@@ -1982,6 +1982,7 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
         Y,
         dtype=None,
         ensure_all_finite=ensure_all_finite,
+        # No input dimension checking done for custom metrics (left to user)
         ensure_2d=False,
     )
 
@@ -2411,6 +2412,10 @@ def pairwise_distances(
     sklearn.metrics.pairwise.paired_distances : Computes the distances between
         corresponding elements of two arrays.
 
+    Notes
+    -----
+    If metric is a callable, no restrictions are placed on `X` and `Y` dimensions.
+
     Examples
     --------
     >>> from sklearn.metrics.pairwise import pairwise_distances
@@ -2637,7 +2642,7 @@ def pairwise_kernels(
 
     Notes
     -----
-    If metric is 'precomputed', Y is ignored and X is returned.
+    If metric is a callable, no restrictions are placed on `X` and `Y` dimensions.
 
     Examples
     --------
