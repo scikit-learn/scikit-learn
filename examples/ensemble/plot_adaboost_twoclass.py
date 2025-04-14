@@ -65,7 +65,7 @@ plt.axis("tight")
 
 # Plot the training points
 for i, n, c in zip(range(2), class_names, plot_colors):
-    idx = np.where(y == i)
+    idx = (y == i).nonzero()
     plt.scatter(
         X[idx, 0],
         X[idx, 1],
