@@ -9,6 +9,7 @@ import os
 from functools import wraps
 
 import numpy
+import pytest
 import scipy
 import scipy.sparse as sp
 import scipy.special as special
@@ -93,8 +94,18 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
             try:
                 import array_api_strict
 
-                yield array_namespace, array_api_strict.Device("CPU_DEVICE"), "float64"
-                yield array_namespace, array_api_strict.Device("device1"), "float32"
+                yield pytest.param(
+                    array_namespace,
+                    array_api_strict.Device("CPU_DEVICE"),
+                    "float64",
+                    id=f"{array_namespace}-CPU_DEVICE-float64",
+                )
+                yield pytest.param(
+                    array_namespace,
+                    array_api_strict.Device("device1"),
+                    "float32",
+                    id=f"{array_namespace}-device1-float32",
+                )
             except ImportError:
                 # Those combinations will typically be skipped by pytest if
                 # array_api_strict is not installed but we still need to see them in
