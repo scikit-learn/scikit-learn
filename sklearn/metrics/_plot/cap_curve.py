@@ -386,14 +386,16 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     ):
         """Create the Cumulative Accuracy Profile.
 
-        This is also known as a (cumulative) gain curve.
+        This is also known as a (cumulative) gain curve. It can be used with
+        either classifiers or regressors (with positive outcomes only). Other
+        types of estimators will give rise to an error.
 
         Parameters
         ----------
         estimator : BaseEstimator
-            A fitted estimator object implementing :term:`predict`,
-            :term:`predict_proba`, or :term:`decision_function`.
-            Multiclass classifiers are not supported.
+            A fitted estimator object (classifier or regressor with positive
+            outcomes) implementing :term:`predict`, :term:`predict_proba`, or
+            :term:`decision_function`. Multiclass classifiers are not supported.
 
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Input values.

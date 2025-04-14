@@ -493,3 +493,11 @@ def test_cap_for_non_prob_classifier(pyplot, data_binary, response_method):
             CAPCurveDisplay.from_estimator(svc, X, y, response_method=response_method)
     else:
         CAPCurveDisplay.from_estimator(svc, X, y, response_method=response_method)
+
+
+def test_y_true_with_negative_values():
+    match = "y_true contains at least one negative value, which is not allowed."
+    with pytest.raises(ValueError, match=match):
+        y_true = np.array([0, -1, 0, 1, 1, 1, 0])
+        y_pred = np.array([0, 1, 0, 0, 1, 1, 0])
+        cap_display = CAPCurveDisplay.from_predictions(y_true, y_pred)
