@@ -7,6 +7,7 @@ from sklearn.base import is_classifier
 
 from ...utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
+    _despine,
     _validate_style_kwargs,
 )
 
@@ -105,6 +106,7 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         chance_level_kw=None,
         plot_perfect=True,
         perfect_level_kw=None,
+        despine=False,
         **kwargs,
     ):
         """Plot visualization.
@@ -138,6 +140,9 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         perfect_level_kw : dict, default=None
             Keyword arguments to be passed to matplotlib's `plot` for rendering
             the perfect line.
+
+        despine : bool, default=False
+            Whether to remove the top and right spines from the plot.
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
@@ -233,6 +238,9 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         ylabel = "Cumulative True Positives" + info_pos_label
         self.ax_.set(xlabel=xlabel, ylabel=ylabel, aspect="equal")
 
+        if despine:
+            _despine(self.ax_)
+
         if "label" in line_kwargs:
             self.ax_.legend(loc="lower right")
 
@@ -251,6 +259,7 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         chance_level_kw=None,
         plot_perfect=True,
         perfect_level_kw=None,
+        despine=False,
         name=None,
         ax=None,
         **kwargs,
@@ -298,6 +307,9 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         perfect_level_kw : dict, default=None
             Keyword arguments to be passed to matplotlib's `plot` for rendering
             the perfect line.
+
+        despine : bool, default=False
+            Whether to remove the top and right spines from the plot.
 
         name : str, default=None
             Name of CAP curve for labeling. If `None`, name will be set to
@@ -348,6 +360,7 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             chance_level_kw=chance_level_kw,
             plot_perfect=plot_perfect,
             perfect_level_kw=perfect_level_kw,
+            despine=despine,
             **kwargs,
         )
 
@@ -366,6 +379,7 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         chance_level_kw=None,
         plot_perfect=True,
         perfect_level_kw=None,
+        despine=False,
         name=None,
         ax=None,
         **kwargs,
@@ -424,6 +438,9 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Keyword arguments to be passed to matplotlib's `plot` for rendering
             the perfect line.
 
+        despine : bool, default=False
+            Whether to remove the top and right spines from the plot.
+
         name : str, default=None
             Name of CAP Curve for labeling. If `None`, use the name of the estimator.
 
@@ -460,6 +477,7 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             chance_level_kw=chance_level_kw,
             plot_perfect=plot_perfect,
             perfect_level_kw=perfect_level_kw,
+            despine=despine,
             ax=ax,
             pos_label=pos_label,
             **kwargs,
