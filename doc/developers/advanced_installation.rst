@@ -168,7 +168,7 @@ screenshot:
 
 .. image:: ../images/visual-studio-build-tools-selection.png
 
-Build scikit-learn with this command prompt:
+Build scikit-learn by running the following command in a Miniforge or Command prompt:
 
 .. prompt:: bash $
 
