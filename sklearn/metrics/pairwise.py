@@ -2285,13 +2285,13 @@ def pairwise_distances(
 ):
     """Compute the distance matrix from a vector array X and optional Y.
 
-    This method takes one or two vector arrays or a distance matrix, and returns
+    This function takes one or two vector arrays or a distance matrix, and returns
     a distance matrix.
 
     - If `X` is a vector array, of shape (n_samples_X, n_features), and:
 
       - `Y` is `None` and `metric` is not 'precomputed', the pairwise distances
-        between `X` and itself are computed.
+        between `X` and itself are returned.
       - `Y` is a vector array of shape (n_samples_Y, n_features), the pairwise
         distances between `X` and `Y` is returned.
 
@@ -2578,13 +2578,13 @@ def pairwise_kernels(
 ):
     """Compute the kernel between arrays X and optional array Y.
 
-    This method takes one or two vector arrays or a kernel matrix, and returns
+    This function takes one or two vector arrays or a kernel matrix, and returns
     a kernel matrix.
 
     - If `X` is a vector array, of shape (n_samples_X, n_features), and:
 
       - `Y` is `None` and `metric` is not 'precomputed', the pairwise kernels
-        between `X` and itself are computed.
+        between `X` and itself are returned.
       - `Y` is a vector array of shape (n_samples_Y, n_features), the pairwise
         kernels between `X` and `Y` is returned.
 
