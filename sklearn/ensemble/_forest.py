@@ -35,7 +35,6 @@ Single and multi-output problems are both handled.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 import threading
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
@@ -571,6 +570,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         oob_pred : ndarray of shape (n_samples, n_classes, n_outputs) or \
                 (n_samples, 1, n_outputs)
             The OOB predictions.
+
+        oob_indices_per_tree
         """
         # Prediction requires X to be in CSR format
         if issparse(X):
@@ -596,13 +597,14 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             n_samples,
             self.max_samples,
         )
+        oob_indices_per_tree = []
         for estimator in self.estimators_:
             unsampled_indices = _generate_unsampled_indices(
                 estimator.random_state,
                 n_samples,
                 n_samples_bootstrap,
             )
-
+            oob_indices_per_tree.append(unsampled_indices)
             y_pred = self._get_oob_predictions(estimator, X[unsampled_indices, :])
             oob_pred[unsampled_indices, ...] += y_pred
             n_oob_pred[unsampled_indices, :] += 1
@@ -620,7 +622,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 n_oob_pred[n_oob_pred == 0] = 1
             oob_pred[..., k] /= n_oob_pred[..., [k]]
 
-        return oob_pred
+        return oob_pred, oob_indices_per_tree
 
     def _validate_y_class_weight(self, y):
         # Default implementation
@@ -673,6 +675,43 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         all_importances = Parallel(n_jobs=self.n_jobs, prefer="threads")(
             delayed(getattr)(tree, "feature_importances_")
             for tree in self.estimators_
+            if tree.tree_.node_count > 1
+        )
+
+        if not all_importances:
+            return np.zeros(self.n_features_in_, dtype=np.float64)
+
+        all_importances = np.mean(all_importances, axis=0, dtype=np.float64)
+        return all_importances / np.sum(all_importances)
+
+    def _compute_unbiased_feature_importance_oob(
+        self, X, y, oob_indices_per_tree=None, method="ufi"
+    ):  # "mdi_oob"
+        check_is_fitted(self)
+        X = self._validate_X_predict(X)
+
+        if oob_indices_per_tree is None:
+            n_samples = X.shape[0]
+            oob_indices_per_tree = Parallel(n_jobs=self.n_jobs, prefer="threads")(
+                delayed(_generate_unsampled_indices)(
+                    tree.random_state, n_samples, n_samples
+                )
+                for tree in self.estimators_
+            )
+            ib_indices_per_tree = Parallel(n_jobs=self.n_jobs, prefer="threads")(
+                delayed(_generate_sample_indices)(
+                    tree.random_state, n_samples, n_samples
+                )
+                for tree in self.estimators_
+            )
+
+        all_importances = Parallel(n_jobs=self.n_jobs, prefer="threads")(
+            delayed(tree.compute_unbiased_feature_importance)(
+                X_test=X[oob_indices_per_tree[tree_idx]],
+                y_test=y[oob_indices_per_tree[tree_idx]],
+                method=method,
+            )
+            for tree_idx, tree in enumerate(self.estimators_)
             if tree.tree_.node_count > 1
         )
 
@@ -815,7 +854,9 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         scoring_function : callable, default=None
             Scoring function for OOB score. Defaults to `accuracy_score`.
         """
-        self.oob_decision_function_ = super()._compute_oob_predictions(X, y)
+        self.oob_decision_function_, oob_indices_per_tree = (
+            super()._compute_oob_predictions(X, y)
+        )
         if self.oob_decision_function_.shape[-1] == 1:
             # drop the n_outputs axis if there is a single output
             self.oob_decision_function_ = self.oob_decision_function_.squeeze(axis=-1)
@@ -826,6 +867,17 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         self.oob_score_ = scoring_function(
             y, np.argmax(self.oob_decision_function_, axis=1)
         )
+
+        self.oob_ufi_feature_importance_ = (
+            self._compute_unbiased_feature_importance_oob(
+                X, y, oob_indices_per_tree=oob_indices_per_tree, method="ufi"
+            )
+        )
+        # self.oob_mdi_oob_feature_importance_ = (
+        #     self._compute_unbiased_feature_importance_oob(
+        #         X, y, oob_per_tree=oob_per_tree, method="mdi_oob"
+        #     )
+        # )
 
     def _validate_y_class_weight(self, y):
         check_classification_targets(y)

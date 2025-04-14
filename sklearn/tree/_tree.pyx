@@ -1274,6 +1274,151 @@ cdef class Tree:
 
         return np.asarray(importances)
 
+    cdef float64_t _cross_impurity(
+            self,
+            float64_t* value_at_node,
+            float64_t[::1] y_props,
+            intp_t n_outputs,
+            intp_t* n_classes):
+        
+        cdef int k, c, offset = 0
+        cdef float64_t cross_impurity = 0.0
+        cdef float64_t temp
+
+        for k in range(n_outputs):
+            temp = 0.0
+            for c in range(n_classes[k]):
+                temp += value_at_node[offset + c] * y_props[c]
+            cross_impurity += 1.0 - temp
+            offset += n_classes[k]
+
+        return cross_impurity / n_outputs
+
+    cdef float64_t[:, ::1] get_oob_proportions(
+            self, 
+            object y_test, 
+            float64_t[:, ::1] decision_paths_oob,
+            cnp.ndarray[cnp.npy_bool, ndim=1] has_oob_samples_in_children):
+        cdef cnp.ndarray[cnp.intp_t, ndim=1] y_test_arr = np.ascontiguousarray(y_test, dtype=np.intp)
+        cdef intp_t[::1] y_view = y_test_arr
+
+        cdef int sample_idx, c, node_idx
+        cdef int n_samples = y_view.shape[0]
+        cdef intp_t n_classes = self.n_classes[0]
+        cdef intp_t node_count = self.node_count
+
+        cdef int32_t[:, ::1] y_count = np.zeros((node_count, n_classes), dtype=np.int32)
+        cdef float64_t[:, ::1] y_props = np.zeros((node_count, n_classes), dtype=np.float64)
+
+        for node_idx in range(node_count):
+            for sample_idx in range(n_samples):
+                if decision_paths_oob[sample_idx, node_idx] == 1:
+                    for c in range(n_classes):
+                        if y_view[sample_idx] == c:
+                            y_count[node_idx, c] += 1
+
+        for node_idx in range(node_count):
+            total = 0
+            for c in range(n_classes):
+                total += y_count[node_idx, c]
+            if total > 0:
+                for c in range(n_classes):
+                    y_props[node_idx, c] = y_count[node_idx, c] / total
+            else : #flag nodes with a child with no oob sample
+                if sum(self.children_left == node_idx)>0:
+                    parent_node = np.arange(node_count)[
+                        self.children_left == node_idx
+                    ][0]
+                    has_oob_samples_in_children[parent_node] = False
+                else:
+                    parent_node = np.arange(node_count)[
+                        self.children_right == node_idx
+                    ][0]
+                    has_oob_samples_in_children[parent_node] = False
+
+        return y_props    
+
+
+    cdef float64_t[::1] _compute_ufi(self, object X_test, 
+        object y_test, normalize=True):
+        
+        cdef Node* nodes = self.nodes
+        cdef Node node = nodes[0]
+        cdef int node_idx = 0
+        cdef int left_idx = -1
+        cdef int right_idx = -1
+
+        cdef float64_t[::1] value_at_node
+        cdef float64_t[::1] importances = np.zeros(self.n_features)
+        cdef cnp.ndarray[cnp.npy_bool, ndim=1] has_oob_samples_in_children = np.ones(self.node_count, dtype=np.bool_)
+
+        decision_paths_oob = np.ascontiguousarray(
+            self.decision_path(X_test).todense(), dtype=np.float64
+        )
+        cdef float64_t[:, ::1] y_props = self.get_oob_proportions(y_test, decision_paths_oob, has_oob_samples_in_children)
+
+        while node_idx < self.node_count:
+            count_y = np.zeros(self.n_classes[0])  
+            node = nodes[node_idx]
+            if node.left_child != _TREE_LEAF:
+                if has_oob_samples_in_children[node_idx]:    
+                    # ... and node.right_child != _TREE_LEAF:
+                    left_idx = node.left_child
+                    right_idx = node.right_child                
+
+                    importances[node.feature] += (
+                        node.weighted_n_node_samples * self._cross_impurity(
+                            self.value + node_idx * self.n_outputs * self.max_n_classes,
+                            y_props[node_idx,:],
+                            self.n_outputs,
+                            self.n_classes
+                        ) -
+                        nodes[left_idx].weighted_n_node_samples * self._cross_impurity(
+                            self.value + left_idx * self.n_outputs * self.max_n_classes,
+                            y_props[left_idx,:],
+                            self.n_outputs,
+                            self.n_classes
+                        ) -
+                        nodes[right_idx].weighted_n_node_samples * self._cross_impurity(
+                            self.value + right_idx * self.n_outputs * self.max_n_classes,
+                            y_props[right_idx,:],
+                            self.n_outputs,
+                            self.n_classes
+                        )
+                    )
+            node_idx += 1
+
+        for i in range(self.n_features):
+            importances[i] /= nodes[0].weighted_n_node_samples
+
+        if normalize:
+            normalizer = np.sum(importances)
+            if normalizer > 0.0:
+                # Avoid dividing by zero (e.g., when root is pure)
+                for i in range(self.n_features):
+                    importances[i] /= normalizer
+
+        return importances
+
+    cdef float64_t[:] _compute_mdi_oob(self, object X_test, object y_test):
+        cdef cnp.float64_t[:] importances = np.zeros(self.n_features)
+        
+        #TO-DO
+
+        return importances
+        
+    cpdef float64_t[:] compute_unbiased_feature_importance(self, object X_test, object y_test, method="ufi"):
+        cdef float64_t[:] importances = np.zeros(self.n_features)
+        
+        if method == "ufi":
+            importances = self._compute_ufi(X_test, y_test)
+        elif method == "mdi_oob":
+            importances = self._compute_mdi_oob(X_test, y_test)
+        else: 
+            raise(ValueError(method))
+        
+        return importances
+
     cdef cnp.ndarray _get_value_ndarray(self):
         """Wraps value as a 3-d NumPy array.
 

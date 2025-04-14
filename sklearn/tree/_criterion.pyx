@@ -62,7 +62,39 @@ cdef class Criterion:
 
         """
         pass
+    cdef int init_oob(
+        self,
+        const float64_t[:, ::1] y,
+        const float64_t[:] sample_weight,
+        float64_t weighted_n_samples,
+        const intp_t[:] sample_indices,
+        intp_t start,
+        intp_t end,
+    ) except -1 nogil:
+        """Placeholder for a method which will initialize the criterion.
 
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+
+        Parameters
+        ----------
+        y : ndarray, dtype=float64_t
+            y is a buffer that can store values for n_outputs target variables
+            stored as a Cython memoryview.
+        sample_weight : ndarray, dtype=float64_t
+            The weight of each sample stored as a Cython memoryview.
+        weighted_n_samples : float64_t
+            The total weight of the samples being considered
+        sample_indices : ndarray, dtype=intp_t
+            A mask on the samples. Indices of the samples in X and y we want to use,
+            where sample_indices[start:end] correspond to the samples in this node.
+        start : intp_t
+            The first sample to be used on this node
+        end : intp_t
+            The last sample used on this node
+
+        """
+        pass
     cdef void init_missing(self, intp_t n_missing) noexcept nogil:
         """Initialize sum_missing if there are missing values.
 
@@ -399,6 +431,52 @@ cdef class ClassificationCriterion(Criterion):
             for k in range(self.n_outputs):
                 c = <intp_t> self.y[i, k]
                 self.sum_total[k, c] += w
+
+            self.weighted_n_node_samples += w
+
+        # Reset to pos=start
+        self.reset()
+        return 0
+
+    cdef int init_oob(
+        self,
+        const float64_t[:, ::1] y,
+        const float64_t[:] sample_weight,
+        float64_t weighted_n_samples,
+        const intp_t[:] sample_indices,
+        intp_t start,
+        intp_t end
+    ) except -1 nogil:
+        self.y = y
+        self.sample_weight = sample_weight
+        self.sample_indices = sample_indices
+        self.start = start
+        self.end = end
+        self.n_node_samples = end - start
+        self.weighted_n_samples = weighted_n_samples
+        self.weighted_n_node_samples = 0.0
+
+        cdef intp_t i
+        cdef intp_t p
+        cdef intp_t k
+        cdef intp_t c
+        cdef float64_t w = 1.0
+
+        for k in range(self.n_outputs):
+            memset(&self.sum_total_oob[k, 0], 0, self.n_classes[k] * sizeof(float64_t))
+
+        for p in range(start, end):
+            i = sample_indices[p]
+
+            # w is originally set to be 1.0, meaning that if no sample weights
+            # are given, the default weight of each sample is 1.0.
+            if sample_weight is not None:
+                w = sample_weight[i]
+
+            # Count weighted class frequency for each target
+            for k in range(self.n_outputs):
+                c = <intp_t> self.y[i, k]
+                self.sum_total_oob[k, c] += w
 
             self.weighted_n_node_samples += w
 
