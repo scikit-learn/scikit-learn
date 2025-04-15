@@ -689,17 +689,14 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
     ):  # "mdi_oob"
         check_is_fitted(self)
         X = self._validate_X_predict(X)
+        y = np.asarray(y)
+        if y.ndim ==1:
+            y = y.reshape(-1,1)
 
         if oob_indices_per_tree is None:
             n_samples = X.shape[0]
             oob_indices_per_tree = Parallel(n_jobs=self.n_jobs, prefer="threads")(
                 delayed(_generate_unsampled_indices)(
-                    tree.random_state, n_samples, n_samples
-                )
-                for tree in self.estimators_
-            )
-            ib_indices_per_tree = Parallel(n_jobs=self.n_jobs, prefer="threads")(
-                delayed(_generate_sample_indices)(
                     tree.random_state, n_samples, n_samples
                 )
                 for tree in self.estimators_

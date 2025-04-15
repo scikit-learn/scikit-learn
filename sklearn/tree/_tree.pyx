@@ -1277,7 +1277,7 @@ cdef class Tree:
     cdef float64_t _cross_impurity(
             self,
             float64_t* value_at_node,
-            float64_t[::1] y_props,
+            float64_t[:, ::1] y_props,
             intp_t n_outputs,
             intp_t* n_classes):
         
@@ -1288,53 +1288,57 @@ cdef class Tree:
         for k in range(n_outputs):
             temp = 0.0
             for c in range(n_classes[k]):
-                temp += value_at_node[offset + c] * y_props[c]
+                temp += value_at_node[offset + c] * y_props[k, c]
             cross_impurity += 1.0 - temp
             offset += n_classes[k]
 
         return cross_impurity / n_outputs
 
-    cdef float64_t[:, ::1] get_oob_proportions(
+    cdef float64_t[:, :, ::1] get_oob_proportions(
             self, 
             object y_test, 
             float64_t[:, ::1] decision_paths_oob,
             cnp.ndarray[cnp.npy_bool, ndim=1] has_oob_samples_in_children):
-        cdef cnp.ndarray[cnp.intp_t, ndim=1] y_test_arr = np.ascontiguousarray(y_test, dtype=np.intp)
-        cdef intp_t[::1] y_view = y_test_arr
+        cdef cnp.ndarray[cnp.intp_t, ndim=2] y_test_arr = np.ascontiguousarray(y_test, dtype=np.intp)
+        cdef intp_t[:, ::1] y_view = y_test_arr
 
         cdef int sample_idx, c, node_idx
         cdef int n_samples = y_view.shape[0]
-        cdef intp_t n_classes = self.n_classes[0]
+        cdef intp_t* n_classes = self.n_classes
         cdef intp_t node_count = self.node_count
+        cdef intp_t n_outputs = self.n_outputs
+        cdef intp_t max_n_classes = self.max_n_classes
 
-        cdef int32_t[:, ::1] y_count = np.zeros((node_count, n_classes), dtype=np.int32)
-        cdef float64_t[:, ::1] y_props = np.zeros((node_count, n_classes), dtype=np.float64)
+        cdef int32_t[:, :, ::1] y_count = np.zeros((n_outputs, node_count, max_n_classes), dtype=np.int32)
+        cdef float64_t[:, :, ::1] y_props = np.zeros((n_outputs, node_count, max_n_classes), dtype=np.float64)
 
         for node_idx in range(node_count):
             for sample_idx in range(n_samples):
                 if decision_paths_oob[sample_idx, node_idx] == 1:
-                    for c in range(n_classes):
-                        if y_view[sample_idx] == c:
-                            y_count[node_idx, c] += 1
+                    for k in range(n_outputs):
+                        for c in range(n_classes[k]):
+                            if y_view[k, sample_idx] == c:
+                                y_count[k, node_idx, c] += 1
 
         for node_idx in range(node_count):
             total = 0
-            for c in range(n_classes):
-                total += y_count[node_idx, c]
-            if total > 0:
-                for c in range(n_classes):
-                    y_props[node_idx, c] = y_count[node_idx, c] / total
-            else : #flag nodes with a child with no oob sample
-                if sum(self.children_left == node_idx)>0:
-                    parent_node = np.arange(node_count)[
-                        self.children_left == node_idx
-                    ][0]
-                    has_oob_samples_in_children[parent_node] = False
-                else:
-                    parent_node = np.arange(node_count)[
-                        self.children_right == node_idx
-                    ][0]
-                    has_oob_samples_in_children[parent_node] = False
+            for k in range(n_outputs):
+                for c in range(n_classes[k]):
+                    total += y_count[k, node_idx, c]
+                if total > 0:
+                    for c in range(n_classes[k]):
+                        y_props[k, node_idx, c] = y_count[k, node_idx, c] / total
+                else : #flag nodes with a child with no oob sample
+                    if sum(self.children_left == node_idx)>0:
+                        parent_node = np.arange(node_count)[
+                            self.children_left == node_idx
+                        ][0]
+                        has_oob_samples_in_children[parent_node] = False
+                    else:
+                        parent_node = np.arange(node_count)[
+                            self.children_right == node_idx
+                        ][0]
+                        has_oob_samples_in_children[parent_node] = False
 
         return y_props    
 
@@ -1355,7 +1359,7 @@ cdef class Tree:
         decision_paths_oob = np.ascontiguousarray(
             self.decision_path(X_test).todense(), dtype=np.float64
         )
-        cdef float64_t[:, ::1] y_props = self.get_oob_proportions(y_test, decision_paths_oob, has_oob_samples_in_children)
+        cdef float64_t[:, :, ::1] y_props = self.get_oob_proportions(y_test, decision_paths_oob, has_oob_samples_in_children)
 
         while node_idx < self.node_count:
             node = nodes[node_idx]
@@ -1367,19 +1371,19 @@ cdef class Tree:
                     importances[node.feature] += (
                         node.weighted_n_node_samples * self._cross_impurity(
                             self.value + node_idx * self.n_outputs * self.max_n_classes,
-                            y_props[node_idx,:],
+                            y_props[:,node_idx,:],
                             self.n_outputs,
                             self.n_classes
                         ) -
                         nodes[left_idx].weighted_n_node_samples * self._cross_impurity(
                             self.value + left_idx * self.n_outputs * self.max_n_classes,
-                            y_props[left_idx,:],
+                            y_props[:,left_idx,:],
                             self.n_outputs,
                             self.n_classes
                         ) -
                         nodes[right_idx].weighted_n_node_samples * self._cross_impurity(
                             self.value + right_idx * self.n_outputs * self.max_n_classes,
-                            y_props[right_idx,:],
+                            y_props[:,right_idx,:],
                             self.n_outputs,
                             self.n_classes
                         )
