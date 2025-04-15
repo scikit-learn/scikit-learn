@@ -706,3 +706,7 @@ def test_isotonic_regression_output_predict():
 
     assert isinstance(X_trans, pd.DataFrame)
     assert isinstance(y_pred, np.ndarray)
+
+
+def test_broken():
+    assert 2 + 1 == 10
