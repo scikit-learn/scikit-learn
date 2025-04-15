@@ -13,6 +13,7 @@
 
 .user-set td.value pre {
     color:rgb(255, 94, 0) !important;
+    background-color: transparent !important;
 }
 
 .default td {
