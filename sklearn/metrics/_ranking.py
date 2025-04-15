@@ -288,7 +288,7 @@ def det_curve(
 
     .. versionadded:: 0.24
 
-    .. versionchanged:: 1.6
+    .. versionchanged:: 1.7
        An arbitrary threshold at infinity is added to represent a classifier
        that always predicts the negative class, i.e. `fpr=0` and `fnr=1`, unless
        `fpr=0` is already reached at a finite threshold.
