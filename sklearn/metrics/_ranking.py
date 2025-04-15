@@ -336,7 +336,7 @@ def det_curve(
     thresholds : ndarray of shape (n_thresholds,)
         Decreasing thresholds on the decision function (either `predict_proba`
         or `decision_function`) used to compute FPR and FNR. An arbitrary
-        threshold at infinity is added for the case `fpr=0` and `fnr=0`.
+        threshold at infinity is added for the case `fpr=0` and `fnr=1`.
 
     See Also
     --------
