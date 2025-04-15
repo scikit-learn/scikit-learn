@@ -1073,7 +1073,7 @@ def test_mlp_vs_poisson_glm_equivalent(global_random_seed):
     assert_allclose(mlp.predict(X), glm.predict(X), rtol=1e-4)
 
     # The same does not work with the squared error because the output activation is
-    # the idendity instead of the exponential.
+    # the identity instead of the exponential.
     mlp = MLPRegressor(
         loss="squared_error",
         hidden_layer_sizes=(1,),
