@@ -337,10 +337,9 @@ def accuracy_score(
 
     Returns
     -------
-    score : float or int
-        If ``normalize == True``, return the fraction of correctly
-        classified samples (float), else returns the number of correctly
-        classified samples (int).
+    score : float
+        If ``normalize == True``, return the fraction of correctly classified samples,
+        else returns the number of correctly classified samples.
 
         The best performance is 1.0 with ``normalize == True`` and the number
         of samples with ``normalize == False``.
@@ -1232,9 +1231,8 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
 def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
     """Zero-one classification loss.
 
-    If normalize is ``True``, return the fraction of misclassifications
-    (float), else it returns the number of misclassifications (int). The best
-    performance is 0.
+    If normalize is ``True``, returns the fraction of misclassifications, else returns
+    the number of misclassifications. The best performance is 0.
 
     Read more in the :ref:`User Guide <zero_one_loss>`.
 
@@ -1255,9 +1253,9 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
 
     Returns
     -------
-    loss : float or int,
-        If ``normalize == True``, return the fraction of misclassifications
-        (float), else it returns the number of misclassifications (int).
+    loss : float,
+        If ``normalize == True``, returns the fraction of misclassifications, else
+        returns the number of misclassifications.
 
     See Also
     --------
@@ -3103,7 +3101,7 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
 
     Returns
     -------
-    loss : float or int
+    loss : float
         Return the average Hamming loss between element of ``y_true`` and
         ``y_pred``.
 
