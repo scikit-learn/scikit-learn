@@ -24,7 +24,6 @@ from ..utils._array_api import (
     _is_numpy_namespace,
     _max_precision_float_dtype,
     _modify_in_place_if_numpy,
-    device,
     get_namespace,
     get_namespace_and_device,
 )
@@ -341,7 +340,7 @@ def euclidean_distances(
 
     Notes
     -----
-    To achieve a better accuracy, `X_norm_squared` and `Y_norm_squared` may be
+    To achieve a better accuracy, `X_norm_squared` and `Y_norm_squared` may be
     unused if they are passed as `np.float32`.
 
     Examples
@@ -1168,14 +1167,7 @@ def cosine_distances(X, Y=None):
     S = cosine_similarity(X, Y)
     S *= -1
     S += 1
-    # TODO: remove the xp.asarray calls once the following is fixed:
-    # https://github.com/data-apis/array-api-compat/issues/177
-    device_ = device(S)
-    S = xp.clip(
-        S,
-        xp.asarray(0.0, device=device_, dtype=S.dtype),
-        xp.asarray(2.0, device=device_, dtype=S.dtype),
-    )
+    S = xp.clip(S, 0.0, 2.0)
     if X is Y or Y is None:
         # Ensure that distances between vectors and themselves are set to 0.0.
         # This may not be the case due to floating point rounding errors.
@@ -1733,8 +1725,6 @@ def cosine_similarity(X, Y=None, dense_output=True):
     array([[0.     , 0.     ],
            [0.57..., 0.81...]])
     """
-    # to avoid recursive import
-
     X, Y = check_pairwise_arrays(X, Y)
 
     X_normalized = normalize(X, copy=True)
@@ -1992,6 +1982,7 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
         Y,
         dtype=None,
         ensure_all_finite=ensure_all_finite,
+        # No input dimension checking done for custom metrics (left to user)
         ensure_2d=False,
     )
 
@@ -2421,6 +2412,10 @@ def pairwise_distances(
     sklearn.metrics.pairwise.paired_distances : Computes the distances between
         corresponding elements of two arrays.
 
+    Notes
+    -----
+    If metric is a callable, no restrictions are placed on `X` and `Y` dimensions.
+
     Examples
     --------
     >>> from sklearn.metrics.pairwise import pairwise_distances
@@ -2575,16 +2570,22 @@ def pairwise_kernels(
 ):
     """Compute the kernel between arrays X and optional array Y.
 
-    This method takes either a vector array or a kernel matrix, and returns
-    a kernel matrix. If the input is a vector array, the kernels are
-    computed. If the input is a kernel matrix, it is returned instead.
+    This method takes one or two vector arrays or a kernel matrix, and returns
+    a kernel matrix.
+
+    - If `X` is a vector array, of shape (n_samples_X, n_features), and:
+
+      - `Y` is `None` and `metric` is not 'precomputed', the pairwise kernels
+        between `X` and itself are computed.
+      - `Y` is a vector array of shape (n_samples_Y, n_features), the pairwise
+        kernels between arrays `X` and `Y` is returned.
+
+    - If `X` is a kernel matrix, of shape (n_samples_X, n_samples_X), `metric`
+      should be 'precomputed'. `Y` is thus ignored and `X` is returned as is.
 
     This method provides a safe way to take a kernel matrix as input, while
     preserving compatibility with many other algorithms that take a vector
     array.
-
-    If Y is given (default is None), then the returned matrix is the pairwise
-    kernel between the arrays from both X and Y.
 
     Valid values for metric are:
         ['additive_chi2', 'chi2', 'linear', 'poly', 'polynomial', 'rbf',
@@ -2641,7 +2642,7 @@ def pairwise_kernels(
 
     Notes
     -----
-    If metric is 'precomputed', Y is ignored and X is returned.
+    If metric is a callable, no restrictions are placed on `X` and `Y` dimensions.
 
     Examples
     --------

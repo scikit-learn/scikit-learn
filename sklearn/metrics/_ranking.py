@@ -10,7 +10,6 @@ the lower the better.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 import warnings
 from functools import partial
 from numbers import Integral, Real
@@ -29,7 +28,7 @@ from ..utils import (
     column_or_1d,
 )
 from ..utils._encode import _encode, _unique
-from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import stable_cumsum
 from ..utils.multiclass import type_of_target
 from ..utils.sparsefuncs import count_nonzero
@@ -73,9 +72,9 @@ def auc(x, y):
     --------
     >>> import numpy as np
     >>> from sklearn import metrics
-    >>> y = np.array([1, 1, 2, 2])
-    >>> pred = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> fpr, tpr, thresholds = metrics.roc_curve(y, pred, pos_label=2)
+    >>> y_true = np.array([1, 1, 2, 2])
+    >>> y_score = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> fpr, tpr, thresholds = metrics.roc_curve(y_true, y_score, pos_label=2)
     >>> metrics.auc(fpr, tpr)
     0.75
     """
@@ -604,10 +603,10 @@ def roc_auc_score(
     >>> clf = MultiOutputClassifier(clf).fit(X, y)
     >>> # get a list of n_output containing probability arrays of shape
     >>> # (n_samples, n_classes)
-    >>> y_pred = clf.predict_proba(X)
+    >>> y_score = clf.predict_proba(X)
     >>> # extract the positive columns for each output
-    >>> y_pred = np.transpose([pred[:, 1] for pred in y_pred])
-    >>> roc_auc_score(y, y_pred, average=None)
+    >>> y_score = np.transpose([score[:, 1] for score in y_score])
+    >>> roc_auc_score(y, y_score, average=None)
     array([0.82..., 0.86..., 0.94..., 0.85... , 0.94...])
     >>> from sklearn.linear_model import RidgeClassifierCV
     >>> clf = RidgeClassifierCV().fit(X, y)
@@ -866,25 +865,20 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
 @validate_params(
     {
         "y_true": ["array-like"],
-        "y_score": ["array-like", Hidden(None)],
+        "y_score": ["array-like"],
         "pos_label": [Real, str, "boolean", None],
         "sample_weight": ["array-like", None],
         "drop_intermediate": ["boolean"],
-        "probas_pred": [
-            "array-like",
-            Hidden(StrOptions({"deprecated"})),
-        ],
     },
     prefer_skip_nested_validation=True,
 )
 def precision_recall_curve(
     y_true,
-    y_score=None,
+    y_score,
     *,
     pos_label=None,
     sample_weight=None,
     drop_intermediate=False,
-    probas_pred="deprecated",
 ):
     """Compute precision-recall pairs for different probability thresholds.
 
@@ -936,15 +930,6 @@ def precision_recall_curve(
 
         .. versionadded:: 1.3
 
-    probas_pred : array-like of shape (n_samples,)
-        Target scores, can either be probability estimates of the positive
-        class, or non-thresholded measure of decisions (as returned by
-        `decision_function` on some classifiers).
-
-        .. deprecated:: 1.5
-            `probas_pred` is deprecated and will be removed in 1.7. Use
-            `y_score` instead.
-
     Returns
     -------
     precision : ndarray of shape (n_thresholds + 1,)
@@ -957,7 +942,7 @@ def precision_recall_curve(
 
     thresholds : ndarray of shape (n_thresholds,)
         Increasing thresholds on the decision function used to compute
-        precision and recall where `n_thresholds = len(np.unique(probas_pred))`.
+        precision and recall where `n_thresholds = len(np.unique(y_score))`.
 
     See Also
     --------
@@ -984,24 +969,6 @@ def precision_recall_curve(
     >>> thresholds
     array([0.1 , 0.35, 0.4 , 0.8 ])
     """
-    # TODO(1.7): remove in 1.7 and reset y_score to be required
-    # Note: validate params will raise an error if probas_pred is not array-like,
-    # or "deprecated"
-    if y_score is not None and not isinstance(probas_pred, str):
-        raise ValueError(
-            "`probas_pred` and `y_score` cannot be both specified. Please use `y_score`"
-            " only as `probas_pred` is deprecated in v1.5 and will be removed in v1.7."
-        )
-    if y_score is None:
-        warnings.warn(
-            (
-                "probas_pred was deprecated in version 1.5 and will be removed in 1.7."
-                "Please use ``y_score`` instead."
-            ),
-            FutureWarning,
-        )
-        y_score = probas_pred
-
     fps, tps, thresholds = _binary_clf_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )

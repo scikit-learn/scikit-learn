@@ -60,7 +60,6 @@ from sklearn.utils.estimator_checks import (
     check_transformer_get_feature_names_out_pandas,
     parametrize_with_checks,
 )
-from sklearn.utils.fixes import _IS_WASM
 
 
 def test_all_estimator_no_base_class():
@@ -134,7 +133,6 @@ def test_check_estimator_generate_only_deprecation():
     assert isgenerator(all_instance_gen_checks)
 
 
-@pytest.mark.xfail(_IS_WASM, reason="importlib not supported for Pyodide packages")
 @pytest.mark.filterwarnings(
     "ignore:Since version 1.0, it is not needed to import "
     "enable_hist_gradient_boosting anymore"
@@ -148,7 +146,7 @@ def test_import_all_consistency():
     )
     submods = [modname for _, modname, _ in pkgs]
     for modname in submods + ["sklearn"]:
-        if ".tests." in modname:
+        if ".tests." in modname or "sklearn.externals" in modname:
             continue
         # Avoid test suite depending on build dependencies, for example Cython
         if "sklearn._build_utils" in modname:
@@ -298,7 +296,6 @@ GET_FEATURES_OUT_ESTIMATORS = [
     "transformer", GET_FEATURES_OUT_ESTIMATORS, ids=_get_check_estimator_ids
 )
 def test_transformers_get_feature_names_out(transformer):
-
     with ignore_warnings(category=(FutureWarning)):
         check_transformer_get_feature_names_out(
             transformer.__class__.__name__, transformer
