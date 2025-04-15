@@ -168,7 +168,8 @@ screenshot:
 
 .. image:: ../images/visual-studio-build-tools-selection.png
 
-Build scikit-learn by running the following command in a Miniforge or Command prompt:
+Build scikit-learn by running the following command in your `sklearn-env` conda environment
+or virtualenv:
 
 .. prompt:: bash $
 
