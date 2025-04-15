@@ -3328,7 +3328,7 @@ def test_d2_log_loss_score_missing_labels():
 
     log_loss_obs = log_loss(y_true, y_pred, sample_weight=sample_weight, labels=labels)
 
-    # Null model consists of wieghted average of the classes.
+    # Null model consists of weighted average of the classes.
     # Given that the sum of the weights is 3,
     # - weighted average of 0s is (0.6 + 0.3) / 3 = 0.3
     # - weighted average of 1s is 0
