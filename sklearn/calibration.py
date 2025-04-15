@@ -860,6 +860,13 @@ class _CalibratedClassifier:
         elif self.method == "temperature":
             proba = self.calibrators[0].predict(predictions)
 
+        else:
+            raise ValueError(
+                f"Invalid method '{self.method}'."
+                "Parameter `method` must be one of"
+                "{'sigmoid', 'isotonic', 'temperature'}."
+            )
+
         # Deal with cases where the predicted probability minimally exceeds 1.0
         proba[(1.0 < proba) & (proba <= 1.0 + 1e-5)] = 1.0
 
@@ -1004,16 +1011,18 @@ def _standardize_decision_values(decision_values, eps=1e-8):
         row_sums_to_one = np.all(np.isclose(np.sum(decision_values, axis=1), 1.0))
 
         if entries_zero_to_one and row_sums_to_one:
-            return np.astype(np.log(decision_values + eps), np.float64)
+            logits = np.log(decision_values + eps)
         else:
-            return decision_values
+            logits = decision_values
 
     elif (decision_values.ndim == 2) and (decision_values.shape[1] == 1):
-        return np.astype(np.hstack([-decision_values, decision_values]), np.float64)
+        logits = np.hstack([-decision_values, decision_values])
 
     elif decision_values.ndim == 1:
         decision_values = decision_values.reshape(-1, 1)
-        return np.astype(np.hstack([-decision_values, decision_values]), np.float64)
+        logits = np.hstack([-decision_values, decision_values])
+
+    return np.astype(logits, np.float64)
 
 
 def _temperature_scaling(predictions, labels, sample_weight=None, beta_0=1.0):
@@ -1054,6 +1063,9 @@ def _temperature_scaling(predictions, labels, sample_weight=None, beta_0=1.0):
     y_true = np.astype(labels, logits.dtype)
     logits_true = logits[np.arange(len(labels)), labels]
 
+    if sample_weight is not None:
+        sample_weight = np.astype(sample_weight, logits.dtype)
+
     loss = HalfMultinomialLoss()
 
     def beta_loss(beta):
@@ -1072,7 +1084,7 @@ def _temperature_scaling(predictions, labels, sample_weight=None, beta_0=1.0):
 
         """
         # Select the logit of the correct class
-        raw_prediction = softmax(beta * logits)
+        raw_prediction = np.astype(softmax(beta * logits), predictions.dtype)
 
         l, g = loss.loss_gradient(
             y_true=y_true, raw_prediction=raw_prediction, sample_weight=sample_weight
