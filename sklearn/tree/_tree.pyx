@@ -1340,7 +1340,7 @@ cdef class Tree:
 
 
     cdef float64_t[::1] _compute_ufi(self, object X_test, 
-        object y_test, normalize=True):
+        object y_test):
         
         cdef Node* nodes = self.nodes
         cdef Node node = nodes[0]
@@ -1358,11 +1358,9 @@ cdef class Tree:
         cdef float64_t[:, ::1] y_props = self.get_oob_proportions(y_test, decision_paths_oob, has_oob_samples_in_children)
 
         while node_idx < self.node_count:
-            count_y = np.zeros(self.n_classes[0])  
             node = nodes[node_idx]
-            if node.left_child != _TREE_LEAF:
+            if (node.left_child != _TREE_LEAF) and (node.right_child != _TREE_LEAF):
                 if has_oob_samples_in_children[node_idx]:    
-                    # ... and node.right_child != _TREE_LEAF:
                     left_idx = node.left_child
                     right_idx = node.right_child                
 
@@ -1390,13 +1388,6 @@ cdef class Tree:
 
         for i in range(self.n_features):
             importances[i] /= nodes[0].weighted_n_node_samples
-
-        if normalize:
-            normalizer = np.sum(importances)
-            if normalizer > 0.0:
-                # Avoid dividing by zero (e.g., when root is pure)
-                for i in range(self.n_features):
-                    importances[i] /= normalizer
 
         return importances
 

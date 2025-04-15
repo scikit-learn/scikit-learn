@@ -80,7 +80,7 @@ cdef class Tree:
 
     cdef float64_t _cross_impurity(self, float64_t* value_at_node, float64_t[::1] y_props, intp_t n_outputs, intp_t* n_classes)
     cdef float64_t[:, ::1] get_oob_proportions(self, object y_test, float64_t[:, ::1] decision_paths_oob, cnp.ndarray[cnp.npy_bool, ndim=1] has_oob_samples_in_children)
-    cdef float64_t[::1] _compute_ufi(self, object X_test, object y_test, normalize=*)
+    cdef float64_t[::1] _compute_ufi(self, object X_test, object y_test)
     cdef float64_t[:] _compute_mdi_oob(self, object X_test, object y_test)
     cpdef float64_t[:] compute_unbiased_feature_importance(self, object X_test, object y_test, method=*)
 
