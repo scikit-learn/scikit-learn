@@ -15,7 +15,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     or :func:`~sklearn.metrics.DetCurveDisplay.from_predictions` to create a
     visualizer. All parameters are stored as attributes.
 
-    Read more in the :ref:`User Guide <visualizations>`.
+    Read more in the :ref:`User Guide <det_curve>`.
 
     .. versionadded:: 0.24
 
@@ -96,7 +96,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     ):
         """Plot DET curve given an estimator and data.
 
-        Read more in the :ref:`User Guide <visualizations>`.
+        Read more in the :ref:`User Guide <det_curve>`.
 
         .. versionadded:: 1.0
 
@@ -205,7 +205,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     ):
         """Plot the DET curve given the true and predicted labels.
 
-        Read more in the :ref:`User Guide <visualizations>`.
+        Read more in the :ref:`User Guide <det_curve>`.
 
         .. versionadded:: 1.0
 
