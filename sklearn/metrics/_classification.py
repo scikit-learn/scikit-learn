@@ -3542,7 +3542,7 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
     y_true_, weights_ = (
         (
             np.concatenate([y_true, labels]),
-            np.concatenate([weights, np.zeros(len(labels))]),
+            np.concatenate([weights, np.zeros_like(weights, shape=len(labels))]),
         )
         if labels is not None
         else (y_true, weights)

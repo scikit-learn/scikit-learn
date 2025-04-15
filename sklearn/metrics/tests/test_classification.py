@@ -3178,74 +3178,45 @@ def test_d2_log_loss_score():
     d2_score = d2_log_loss_score(y_true, y_pred, sample_weight=sample_weight)
     assert d2_score < 0
 
-    # check that d2 scores are correct when labels argument is used but not all of them
-    # appear in y_true
-    # non-regression test for https://github.com/scikit-learn/scikit-learn/issues/30713
-    y_true = [0, 0, 1, 1]
+
+def test_d2_log_loss_score_missing_labels():
+    """Check that d2_log_loss_score works when not all labels are present in y_true
+
+    non-regression test for https://github.com/scikit-learn/scikit-learn/issues/30713
+    """
+    y_true = [2, 0, 2, 0]
     labels = [0, 1, 2]
-    sample_weight = [1.4, 0.6, 0.8, 0.2]
+    sample_weight = [1.4, 0.6, 0.7, 0.3]
+    y_pred = np.tile([1, 0, 0], (4, 1))
 
-    y_pred = np.array(
-        [
-            [0.8, 0.1, 0.1],
-            [0.8, 0.1, 0.1],
-            [0.1, 0.8, 0.1],
-            [0.1, 0.8, 0.1],
-        ]
+    log_loss_obs = log_loss(y_true, y_pred, sample_weight=sample_weight, labels=labels)
+
+    # Null model consists of wieghted average of the classes.
+    # Given that the sum of the weights is 3,
+    # - weighted average of 0s is (0.6 + 0.3) / 3 = 0.3
+    # - weighted average of 1s is 0
+    # - weighted average of 2s is (1.4 + 0.7) / 3 = 0.7
+    y_pred_null = np.tile([0.3, 0, 0.7], (4, 1))
+    log_loss_null = log_loss(
+        y_true, y_pred_null, sample_weight=sample_weight, labels=labels
     )
-    d2_score = d2_log_loss_score(y_true, y_pred, labels=labels)
-    assert 0.5 < d2_score < 1.0
+
+    expected_d2_score = 1 - log_loss_obs / log_loss_null
     d2_score = d2_log_loss_score(
-        y_true, y_pred, labels=labels, sample_weight=sample_weight
+        y_true, y_pred, sample_weight=sample_weight, labels=labels
     )
-    assert 0.5 < d2_score < 1.0
+    assert_allclose(d2_score, expected_d2_score)
 
-    y_pred = np.array(
-        [
-            [0.1, 0.8, 0.1],
-            [0.2, 0.7, 0.1],
-            [0.4, 0.4, 0.2],
-            [0.3, 0.3, 0.4],
-        ]
-    )
-    d2_score = d2_log_loss_score(y_true, y_pred, labels=labels)
-    assert d2_score < 0
-    d2_score = d2_log_loss_score(
-        y_true, y_pred, labels=labels, sample_weight=sample_weight
-    )
-    assert d2_score < 0
 
-    # check that d2 scores are correct independently of the order of the labels
-    labels = ["a", "b", "c"]
-    y_true = ["a", "a", "b", "c"]
+def test_d2_log_loss_score_label_order():
+    """Check that d2_log_loss_score doesn't depend on the order of the labels."""
+    y_true = [2, 0, 2, 0]
+    y_pred = np.tile([1, 0, 0], (4, 1))
 
-    # labels of y_pred are in alphabetical order
-    y_pred = np.array(
-        [
-            [0.8, 0.1, 0.1],
-            [0.8, 0.1, 0.1],
-            [0.1, 0.8, 0.1],
-            [0.1, 0.1, 0.8],
-        ]
-    )
+    d2_score = d2_log_loss_score(y_true, y_pred, labels=[0, 1, 2])
+    d2_score_other = d2_log_loss_score(y_true, y_pred, labels=[0, 2, 1])
 
-    d2_score = d2_log_loss_score(y_true, y_pred, labels=labels)
-    d2_score_reversed = d2_log_loss_score(y_true, y_pred, labels=labels[::-1])
-    assert 0.5 < d2_score < 1.0
-    assert d2_score_reversed == pytest.approx(d2_score)
-
-    y_pred = np.array(
-        [
-            [0.1, 0.8, 0.1],
-            [0.2, 0.7, 0.1],
-            [0.4, 0.4, 0.2],
-            [0.3, 0.4, 0.3],
-        ]
-    )
-    d2_score = d2_log_loss_score(y_true, y_pred, labels=labels)
-    d2_score_reversed = d2_log_loss_score(y_true, y_pred, labels=labels[::-1])
-    assert d2_score < 0
-    assert d2_score_reversed == pytest.approx(d2_score)
+    assert_allclose(d2_score, d2_score_other)
 
 
 def test_d2_log_loss_score_raises():
