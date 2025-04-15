@@ -1274,27 +1274,35 @@ cdef class Tree:
 
         return np.asarray(importances)
 
-    cdef float64_t _cross_impurity(
+    cdef float64_t[::1] _cross_impurities(
             self,
-            float64_t* value_at_node,
-            float64_t[:, ::1] y_props,
-            intp_t n_outputs,
-            intp_t* n_classes):
+            float64_t[:, :, ::1] y_props):
         
-        cdef int k, c, offset = 0
-        cdef float64_t cross_impurity = 0.0
-        cdef float64_t temp
+        cdef int k, c, offset, node_idx = 0
+        cdef float64_t cross_proportion_sum = 0.0
+        cdef intp_t n_outputs = self.n_outputs
+        cdef intp_t node_count = self.node_count
+        cdef intp_t max_n_classes = self.max_n_classes
+        cdef intp_t* n_classes = self.n_classes
+        cdef float64_t* value_at_node = self.value
 
-        for k in range(n_outputs):
-            temp = 0.0
-            for c in range(n_classes[k]):
-                temp += value_at_node[offset + c] * y_props[k, c]
-            cross_impurity += 1.0 - temp
-            offset += n_classes[k]
+        cdef float64_t[::1] cross_impurities = np.zeros(node_count, dtype=np.float64)
 
-        return cross_impurity / n_outputs
 
-    cdef float64_t[:, :, ::1] get_oob_proportions(
+        for node_idx in range(node_count):
+            value_at_node = self.value + node_idx * n_outputs * max_n_classes
+            offset = 0
+            for k in range(n_outputs):
+                cross_proportion_sum = 0.0
+                for c in range(n_classes[k]):
+                    cross_proportion_sum += value_at_node[offset + c] * y_props[k, node_idx, c]
+                cross_impurities[node_idx] += 1.0 - cross_proportion_sum
+                offset += n_classes[k]
+            cross_impurities[node_idx] /= n_outputs
+
+        return cross_impurities
+
+    cdef float64_t[:, :, ::1] _get_oob_proportions(
             self, 
             object y_test, 
             float64_t[:, ::1] decision_paths_oob,
@@ -1359,7 +1367,8 @@ cdef class Tree:
         decision_paths_oob = np.ascontiguousarray(
             self.decision_path(X_test).todense(), dtype=np.float64
         )
-        cdef float64_t[:, :, ::1] y_props = self.get_oob_proportions(y_test, decision_paths_oob, has_oob_samples_in_children)
+        cdef float64_t[:, :, ::1] y_props = self._get_oob_proportions(y_test, decision_paths_oob, has_oob_samples_in_children)
+        cdef float64_t[::1] cross_impurities = self._cross_impurities(y_props)
 
         while node_idx < self.node_count:
             node = nodes[node_idx]
@@ -1369,24 +1378,9 @@ cdef class Tree:
                     right_idx = node.right_child                
 
                     importances[node.feature] += (
-                        node.weighted_n_node_samples * self._cross_impurity(
-                            self.value + node_idx * self.n_outputs * self.max_n_classes,
-                            y_props[:,node_idx,:],
-                            self.n_outputs,
-                            self.n_classes
-                        ) -
-                        nodes[left_idx].weighted_n_node_samples * self._cross_impurity(
-                            self.value + left_idx * self.n_outputs * self.max_n_classes,
-                            y_props[:,left_idx,:],
-                            self.n_outputs,
-                            self.n_classes
-                        ) -
-                        nodes[right_idx].weighted_n_node_samples * self._cross_impurity(
-                            self.value + right_idx * self.n_outputs * self.max_n_classes,
-                            y_props[:,right_idx,:],
-                            self.n_outputs,
-                            self.n_classes
-                        )
+                        node.weighted_n_node_samples * cross_impurities[node_idx]
+                        - nodes[left_idx].weighted_n_node_samples * cross_impurities[left_idx]
+                        - nodes[right_idx].weighted_n_node_samples * cross_impurities[right_idx]
                     )
             node_idx += 1
 
