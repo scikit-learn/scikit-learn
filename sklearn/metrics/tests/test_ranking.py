@@ -1271,7 +1271,7 @@ def test_det_curve_toydata(y_true, y_score, expected_fpr, expected_fnr):
 
 
 @pytest.mark.parametrize(
-    "y_true,y_score,expected_fpr,expected_fnr,drop_intermediate",
+    ["y_true", "y_score", "expected_fpr", "expected_fnr", "drop_intermediate"],
     [
         # drop when true positives do not change from the previous or subsequent point
         ([1, 0, 0], [0, 0.5, 1], [1, 1, 0.5, 0.0], [0, 1, 1, 1], False),
