@@ -316,6 +316,10 @@ class ConfusionMatrixDisplay:
         ...     clf, X_test, y_test)
         <...>
         >>> plt.show()
+
+        For a detailed example of using a confusion matrix to evaluate a
+        Support Vector Classifier, please see
+        :ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py`
         """
         method_name = f"{cls.__name__}.from_estimator"
         check_matplotlib_support(method_name)
