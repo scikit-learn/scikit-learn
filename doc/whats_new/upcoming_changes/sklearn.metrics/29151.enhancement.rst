@@ -1,0 +1,4 @@
+- :func:`metrics.det_curve` and :class:`metrics.DetCurveDisplay` now accept a
+  `drop_intermediate` option to drop suboptimal thresholds corresponding to
+  points where true positives do not change from the previous or subsequent point.
+  :pr:`29151` by :user:`Arturo Amor <ArturoAmorQ>`.
