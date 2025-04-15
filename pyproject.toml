@@ -109,6 +109,7 @@ testpaths = "sklearn"
 addopts = [
     "--disable-pytest-warnings",
     "--color=yes",
+    "--import-mode=importlib",
 ]
 
 [tool.ruff]
