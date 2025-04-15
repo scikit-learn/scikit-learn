@@ -3328,11 +3328,10 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     >>> hinge_loss(y_true, pred_decision, labels=labels)
     0.56...
     """
-    xp, _, device_ = get_namespace_and_device(y_true, pred_decision)
     check_consistent_length(y_true, pred_decision, sample_weight)
     pred_decision = check_array(pred_decision, ensure_2d=False)
     y_true = column_or_1d(y_true)
-    y_true_unique = xp.unique(labels if labels is not None else y_true)
+    y_true_unique = np.unique(labels if labels is not None else y_true)
 
     if y_true_unique.size > 2:
         if pred_decision.ndim <= 1:
