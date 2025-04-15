@@ -87,6 +87,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         y,
         *,
         sample_weight=None,
+        drop_intermediate=True,
         response_method="auto",
         pos_label=None,
         name=None,
@@ -113,6 +114,11 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
+
+        drop_intermediate : bool, default=True
+            Whether to drop some suboptimal thresholds which would not appear
+            on a plotted ROC curve. This is useful in order to create lighter
+            ROC curves.
 
         response_method : {'predict_proba', 'decision_function', 'auto'} \
                 default='auto'
@@ -177,6 +183,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             y_true=y,
             y_pred=y_pred,
             sample_weight=sample_weight,
+            drop_intermediate=drop_intermediate,
             name=name,
             ax=ax,
             pos_label=pos_label,
@@ -190,6 +197,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         y_pred,
         *,
         sample_weight=None,
+        drop_intermediate=True,
         pos_label=None,
         name=None,
         ax=None,
@@ -213,6 +221,11 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
+
+        drop_intermediate : bool, default=True
+            Whether to drop some suboptimal thresholds which would not appear
+            on a plotted ROC curve. This is useful in order to create lighter
+            ROC curves.
 
         pos_label : int, float, bool or str, default=None
             The label of the positive class. When `pos_label=None`, if `y_true`
@@ -267,6 +280,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             y_pred,
             pos_label=pos_label,
             sample_weight=sample_weight,
+            drop_intermediate=drop_intermediate,
         )
 
         viz = cls(
