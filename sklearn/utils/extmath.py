@@ -273,8 +273,22 @@ def randomized_range_finder(
            [-0.52...,  0.24...],
            [-0.82..., -0.38...]])
     """
-    xp, is_array_api_compliant = get_namespace(A)
     A = check_array(A, accept_sparse=True)
+
+    return _randomized_range_finder(
+        A,
+        size=size,
+        n_iter=n_iter,
+        power_iteration_normalizer=power_iteration_normalizer,
+        random_state=random_state,
+    )
+
+
+def _randomized_range_finder(
+    A, *, size, n_iter, power_iteration_normalizer="auto", random_state=None
+):
+    """Body of randomized_range_finder without input validation."""
+    xp, is_array_api_compliant = get_namespace(A)
     random_state = check_random_state(random_state)
 
     # Generating normal random vectors with shape: (A.shape[1], size)
@@ -500,8 +514,34 @@ def randomized_svd(
     >>> U.shape, s.shape, Vh.shape
     ((3, 2), (2,), (2, 4))
     """
-    xp, is_array_api_compliant = get_namespace(M)
     M = check_array(M, accept_sparse=True)
+    return _randomized_svd(
+        M,
+        n_components=n_components,
+        n_oversamples=n_oversamples,
+        n_iter=n_iter,
+        power_iteration_normalizer=power_iteration_normalizer,
+        transpose=transpose,
+        flip_sign=flip_sign,
+        random_state=random_state,
+        svd_lapack_driver=svd_lapack_driver,
+    )
+
+
+def _randomized_svd(
+    M,
+    n_components,
+    *,
+    n_oversamples=10,
+    n_iter="auto",
+    power_iteration_normalizer="auto",
+    transpose="auto",
+    flip_sign=True,
+    random_state=None,
+    svd_lapack_driver="gesdd",
+):
+    """Body of randomized_svd without input validation."""
+    xp, is_array_api_compliant = get_namespace(M)
 
     if sparse.issparse(M) and M.format in ("lil", "dok"):
         warnings.warn(
@@ -525,7 +565,7 @@ def randomized_svd(
         # this implementation is a bit faster with smaller shape[1]
         M = M.T
 
-    Q = randomized_range_finder(
+    Q = _randomized_range_finder(
         M,
         size=n_random,
         n_iter=n_iter,
