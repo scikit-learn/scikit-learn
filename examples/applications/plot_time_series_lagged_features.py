@@ -15,30 +15,43 @@ engineering.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Analyzing the Bike Sharing Demand dataset
 # -----------------------------------------
 #
-# We start by loading the data from the OpenML repository
-# as a pandas dataframe. This will be replaced with Polars
-# once `fetch_openml` adds a native support for it.
-# We convert to Polars for feature engineering, as it automatically caches
-# common subexpressions which are reused in multiple expressions
-# (like `pl.col("count").shift(1)` below). See
-# https://docs.pola.rs/user-guide/lazy/optimizations/ for more information.
-
+# We start by loading the data from the OpenML repository as a raw parquet file
+# to illustrate how to work with an arbitrary parquet file instead of hiding this
+# step in a convenience tool such as `sklearn.datasets.fetch_openml`.
+#
+# The URL of the parquet file can be found in the JSON description of the
+# Bike Sharing Demand dataset with id 44063 on openml.org
+# (https://openml.org/search?type=data&status=active&id=44063).
+#
+# The `sha256` hash of the file is also provided to ensure the integrity of the
+# downloaded file.
 import numpy as np
 import polars as pl
 
-from sklearn.datasets import fetch_openml
+from sklearn.datasets import fetch_file
 
 pl.Config.set_fmt_str_lengths(20)
 
-bike_sharing = fetch_openml(
-    "Bike_Sharing_Demand", version=2, as_frame=True, parser="pandas"
+bike_sharing_data_file = fetch_file(
+    "https://data.openml.org/datasets/0004/44063/dataset_44063.pq",
+    sha256="d120af76829af0d256338dc6dd4be5df4fd1f35bf3a283cab66a51c1c6abd06a",
 )
-df = bike_sharing.frame
-df = pl.DataFrame({col: df[col].to_numpy() for col in df.columns})
+bike_sharing_data_file
+
+# %%
+# We load the parquet file with Polars for feature engineering. Polars
+# automatically caches common subexpressions which are reused in multiple
+# expressions (like `pl.col("count").shift(1)` below). See
+# https://docs.pola.rs/user-guide/lazy/optimizations/ for more information.
+
+df = pl.read_parquet(bike_sharing_data_file)
 
 # %%
 # Next, we take a look at the statistical summary of the dataset
@@ -252,7 +265,7 @@ for quantile in quantile_list:
     time = cv_results["fit_time"]
     scores["fit_time"].append(f"{time.mean():.2f} ± {time.std():.2f} s")
 
-    scores["loss"].append(f"quantile {int(quantile*100)}")
+    scores["loss"].append(f"quantile {int(quantile * 100)}")
     for key, value in cv_results.items():
         if key.startswith("test_"):
             metric = key.split("test_")[1]

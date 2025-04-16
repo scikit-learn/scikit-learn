@@ -7,23 +7,15 @@ Function named as ``*_error`` or ``*_loss`` return a scalar value to minimize:
 the lower the better.
 """
 
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Olivier Grisel <olivier.grisel@ensta.org>
-#          Arnaud Joly <a.joly@ulg.ac.be>
-#          Jochen Wersdorfer <jochen@wersdoerfer.de>
-#          Lars Buitinck
-#          Joel Nothman <joel.nothman@gmail.com>
-#          Noel Dawe <noel@dawe.me>
-#          Michal Karbownik <michakarbownik@gmail.com>
-# License: BSD 3 clause
-
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from functools import partial
 from numbers import Integral, Real
 
 import numpy as np
+from scipy.integrate import trapezoid
 from scipy.sparse import csr_matrix, issparse
 from scipy.stats import rankdata
 
@@ -36,9 +28,8 @@ from ..utils import (
     column_or_1d,
 )
 from ..utils._encode import _encode, _unique
-from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import stable_cumsum
-from ..utils.fixes import trapezoid
 from ..utils.multiclass import type_of_target
 from ..utils.sparsefuncs import count_nonzero
 from ..utils.validation import _check_pos_label_consistency, _check_sample_weight
@@ -81,9 +72,9 @@ def auc(x, y):
     --------
     >>> import numpy as np
     >>> from sklearn import metrics
-    >>> y = np.array([1, 1, 2, 2])
-    >>> pred = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> fpr, tpr, thresholds = metrics.roc_curve(y, pred, pos_label=2)
+    >>> y_true = np.array([1, 1, 2, 2])
+    >>> y_score = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> fpr, tpr, thresholds = metrics.roc_curve(y_true, y_score, pos_label=2)
     >>> metrics.auc(fpr, tpr)
     0.75
     """
@@ -111,7 +102,7 @@ def auc(x, y):
         # scalar by default for numpy.memmap instances contrary to
         # regular numpy.ndarray instances.
         area = area.dtype.type(area)
-    return area
+    return float(area)
 
 
 @validate_params(
@@ -153,6 +144,8 @@ def average_precision_score(
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by :term:`decision_function` on some classifiers).
+        For :term:`decision_function` scores, values greater than or equal to
+        zero should indicate the positive class.
 
     average : {'micro', 'samples', 'weighted', 'macro'} or None, \
             default='macro'
@@ -232,8 +225,9 @@ def average_precision_score(
         )
         # Return the step function integral
         # The following works because the last entry of precision is
-        # guaranteed to be 1, as returned by precision_recall_curve
-        return -np.sum(np.diff(recall) * np.array(precision)[:-1])
+        # guaranteed to be 1, as returned by precision_recall_curve.
+        # Due to numerical error, we can get `-0.0` and we therefore clip it.
+        return float(max(0.0, -np.sum(np.diff(recall) * np.array(precision)[:-1])))
 
     y_type = type_of_target(y_true, input_name="y_true")
 
@@ -300,6 +294,8 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
+        For :term:`decision_function` scores, values greater than or equal to
+        zero should indicate the positive class.
 
     pos_label : int, float, bool or str, default=None
         The label of the positive class.
@@ -354,7 +350,7 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
     if len(np.unique(y_true)) != 2:
         raise ValueError(
-            "Only one class present in y_true. Detection error "
+            "Only one class is present in y_true. Detection error "
             "tradeoff curve is not defined in that case."
         )
 
@@ -379,10 +375,14 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
 def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
     """Binary roc auc score."""
     if len(np.unique(y_true)) != 2:
-        raise ValueError(
-            "Only one class present in y_true. ROC AUC score "
-            "is not defined in that case."
+        warnings.warn(
+            (
+                "Only one class is present in y_true. ROC AUC score "
+                "is not defined in that case."
+            ),
+            UndefinedMetricWarning,
         )
+        return np.nan
 
     fpr, tpr, _ = roc_curve(y_true, y_score, sample_weight=sample_weight)
     if max_fpr is None or max_fpr == 1:
@@ -603,10 +603,10 @@ def roc_auc_score(
     >>> clf = MultiOutputClassifier(clf).fit(X, y)
     >>> # get a list of n_output containing probability arrays of shape
     >>> # (n_samples, n_classes)
-    >>> y_pred = clf.predict_proba(X)
+    >>> y_score = clf.predict_proba(X)
     >>> # extract the positive columns for each output
-    >>> y_pred = np.transpose([pred[:, 1] for pred in y_pred])
-    >>> roc_auc_score(y, y_pred, average=None)
+    >>> y_score = np.transpose([score[:, 1] for score in y_score])
+    >>> roc_auc_score(y, y_score, average=None)
     array([0.82..., 0.86..., 0.94..., 0.85... , 0.94...])
     >>> from sklearn.linear_model import RidgeClassifierCV
     >>> clf = RidgeClassifierCV().fit(X, y)
@@ -865,25 +865,20 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
 @validate_params(
     {
         "y_true": ["array-like"],
-        "y_score": ["array-like", Hidden(None)],
+        "y_score": ["array-like"],
         "pos_label": [Real, str, "boolean", None],
         "sample_weight": ["array-like", None],
         "drop_intermediate": ["boolean"],
-        "probas_pred": [
-            "array-like",
-            Hidden(StrOptions({"deprecated"})),
-        ],
     },
     prefer_skip_nested_validation=True,
 )
 def precision_recall_curve(
     y_true,
-    y_score=None,
+    y_score,
     *,
     pos_label=None,
     sample_weight=None,
     drop_intermediate=False,
-    probas_pred="deprecated",
 ):
     """Compute precision-recall pairs for different probability thresholds.
 
@@ -917,6 +912,8 @@ def precision_recall_curve(
         Target scores, can either be probability estimates of the positive
         class, or non-thresholded measure of decisions (as returned by
         `decision_function` on some classifiers).
+        For :term:`decision_function` scores, values greater than or equal to
+        zero should indicate the positive class.
 
     pos_label : int, float, bool or str, default=None
         The label of the positive class.
@@ -933,15 +930,6 @@ def precision_recall_curve(
 
         .. versionadded:: 1.3
 
-    probas_pred : array-like of shape (n_samples,)
-        Target scores, can either be probability estimates of the positive
-        class, or non-thresholded measure of decisions (as returned by
-        `decision_function` on some classifiers).
-
-        .. deprecated:: 1.5
-            `probas_pred` is deprecated and will be removed in 1.7. Use
-            `y_score` instead.
-
     Returns
     -------
     precision : ndarray of shape (n_thresholds + 1,)
@@ -954,7 +942,7 @@ def precision_recall_curve(
 
     thresholds : ndarray of shape (n_thresholds,)
         Increasing thresholds on the decision function used to compute
-        precision and recall where `n_thresholds = len(np.unique(probas_pred))`.
+        precision and recall where `n_thresholds = len(np.unique(y_score))`.
 
     See Also
     --------
@@ -981,24 +969,6 @@ def precision_recall_curve(
     >>> thresholds
     array([0.1 , 0.35, 0.4 , 0.8 ])
     """
-    # TODO(1.7): remove in 1.7 and reset y_score to be required
-    # Note: validate params will raise an error if probas_pred is not array-like,
-    # or "deprecated"
-    if y_score is not None and not isinstance(probas_pred, str):
-        raise ValueError(
-            "`probas_pred` and `y_score` cannot be both specified. Please use `y_score`"
-            " only as `probas_pred` is deprecated in v1.5 and will be removed in v1.7."
-        )
-    if y_score is None:
-        warnings.warn(
-            (
-                "probas_pred was deprecated in version 1.5 and will be removed in 1.7."
-                "Please use ``y_score`` instead."
-            ),
-            FutureWarning,
-        )
-        y_score = probas_pred
-
     fps, tps, thresholds = _binary_clf_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
@@ -1069,6 +1039,8 @@ def roc_curve(
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
+        For :term:`decision_function` scores, values greater than or equal to
+        zero should indicate the positive class.
 
     pos_label : int, float, bool or str, default=None
         The label of the positive class.
@@ -1223,6 +1195,8 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
+        For :term:`decision_function` scores, values greater than or equal to
+        zero should indicate the positive class.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -1287,7 +1261,7 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
     else:
         out /= np.sum(sample_weight)
 
-    return out
+    return float(out)
 
 
 @validate_params(
@@ -1323,6 +1297,8 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
+        For :term:`decision_function` scores, values greater than or equal to
+        zero should indicate the positive class.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -1362,7 +1338,7 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
     coverage = (y_score >= y_min_relevant).sum(axis=1)
     coverage = coverage.filled(0)
 
-    return np.average(coverage, weights=sample_weight)
+    return float(np.average(coverage, weights=sample_weight))
 
 
 @validate_params(
@@ -1398,6 +1374,8 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
+        For :term:`decision_function` scores, values greater than or equal to
+        zero should indicate the positive class.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -1462,7 +1440,7 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     # be consider as correct, i.e. the ranking doesn't matter.
     loss[np.logical_or(n_positives == 0, n_positives == n_labels)] = 0.0
 
-    return np.average(loss, weights=sample_weight)
+    return float(np.average(loss, weights=sample_weight))
 
 
 def _dcg_sample_scores(y_true, y_score, k=None, log_base=2, ignore_ties=False):
@@ -1698,11 +1676,13 @@ def dcg_score(
     y_score = check_array(y_score, ensure_2d=False)
     check_consistent_length(y_true, y_score, sample_weight)
     _check_dcg_target_type(y_true)
-    return np.average(
-        _dcg_sample_scores(
-            y_true, y_score, k=k, log_base=log_base, ignore_ties=ignore_ties
-        ),
-        weights=sample_weight,
+    return float(
+        np.average(
+            _dcg_sample_scores(
+                y_true, y_score, k=k, log_base=log_base, ignore_ties=ignore_ties
+            ),
+            weights=sample_weight,
+        )
     )
 
 
@@ -1874,7 +1854,7 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
         )
     _check_dcg_target_type(y_true)
     gain = _ndcg_sample_scores(y_true, y_score, k=k, ignore_ties=ignore_ties)
-    return np.average(gain, weights=sample_weight)
+    return float(np.average(gain, weights=sample_weight))
 
 
 @validate_params(
@@ -1965,7 +1945,7 @@ def top_k_accuracy_score(
     0.75
     >>> # Not normalizing gives the number of "correctly" classified samples
     >>> top_k_accuracy_score(y_true, y_score, k=2, normalize=False)
-    3
+    3.0
     """
     y_true = check_array(y_true, ensure_2d=False, dtype=None)
     y_true = column_or_1d(y_true)
@@ -2044,8 +2024,8 @@ def top_k_accuracy_score(
         hits = (y_true_encoded == sorted_pred[:, :k].T).any(axis=0)
 
     if normalize:
-        return np.average(hits, weights=sample_weight)
+        return float(np.average(hits, weights=sample_weight))
     elif sample_weight is None:
-        return np.sum(hits)
+        return float(np.sum(hits))
     else:
-        return np.dot(hits, sample_weight)
+        return float(np.dot(hits, sample_weight))

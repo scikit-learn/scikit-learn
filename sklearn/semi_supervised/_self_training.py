@@ -1,44 +1,35 @@
 import warnings
 from numbers import Integral, Real
+from warnings import warn
 
 import numpy as np
 
-from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone
-from ..utils import safe_mask
-from ..utils._param_validation import HasMethods, Interval, StrOptions
-from ..utils.metadata_routing import _RoutingNotSupportedMixin
+from ..base import (
+    BaseEstimator,
+    ClassifierMixin,
+    MetaEstimatorMixin,
+    _fit_context,
+    clone,
+)
+from ..utils import Bunch, get_tags, safe_mask
+from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
+from ..utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
+    _routing_enabled,
+    process_routing,
+)
 from ..utils.metaestimators import available_if
-from ..utils.validation import check_is_fitted
+from ..utils.validation import _estimator_has, check_is_fitted, validate_data
 
 __all__ = ["SelfTrainingClassifier"]
 
-# Authors: Oliver Rausch   <rauscho@ethz.ch>
-#          Patrice Becker  <beckerp@ethz.ch>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
-def _estimator_has(attr):
-    """Check if we can delegate a method to the underlying estimator.
-
-    First, we check the fitted `base_estimator_` if available, otherwise we check
-    the unfitted `base_estimator`. We raise the original `AttributeError` if
-    `attr` does not exist. This function is used together with `available_if`.
-    """
-
-    def check(self):
-        if hasattr(self, "base_estimator_"):
-            getattr(self.base_estimator_, attr)
-        else:
-            getattr(self.base_estimator, attr)
-
-        return True
-
-    return check
-
-
-class SelfTrainingClassifier(
-    _RoutingNotSupportedMixin, MetaEstimatorMixin, BaseEstimator
-):
+class SelfTrainingClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
     """Self-training classifier.
 
     This :term:`metaestimator` allows a given supervised classifier to function as a
@@ -53,10 +44,22 @@ class SelfTrainingClassifier(
 
     Parameters
     ----------
+    estimator : estimator object
+        An estimator object implementing `fit` and `predict_proba`.
+        Invoking the `fit` method will fit a clone of the passed estimator,
+        which will be stored in the `estimator_` attribute.
+
+        .. versionadded:: 1.6
+            `estimator` was added to replace `base_estimator`.
+
     base_estimator : estimator object
         An estimator object implementing `fit` and `predict_proba`.
         Invoking the `fit` method will fit a clone of the passed estimator,
-        which will be stored in the `base_estimator_` attribute.
+        which will be stored in the `estimator_` attribute.
+
+        .. deprecated:: 1.6
+            `base_estimator` was deprecated in 1.6 and will be removed in 1.8.
+            Use `estimator` instead.
 
     threshold : float, default=0.75
         The decision threshold for use with `criterion='threshold'`.
@@ -86,12 +89,12 @@ class SelfTrainingClassifier(
 
     Attributes
     ----------
-    base_estimator_ : estimator object
+    estimator_ : estimator object
         The fitted estimator.
 
     classes_ : ndarray or list of ndarray of shape (n_classes,)
         Class labels for each output. (Taken from the trained
-        `base_estimator_`).
+        `estimator_`).
 
     transduction_ : ndarray of shape (n_samples,)
         The labels used for the final fit of the classifier, including
@@ -155,12 +158,16 @@ class SelfTrainingClassifier(
     SelfTrainingClassifier(...)
     """
 
-    _estimator_type = "classifier"
-
     _parameter_constraints: dict = {
         # We don't require `predic_proba` here to allow passing a meta-estimator
         # that only exposes `predict_proba` after fitting.
-        "base_estimator": [HasMethods(["fit"])],
+        # TODO(1.8) remove None option
+        "estimator": [None, HasMethods(["fit"])],
+        # TODO(1.8) remove
+        "base_estimator": [
+            HasMethods(["fit"]),
+            Hidden(StrOptions({"deprecated"})),
+        ],
         "threshold": [Interval(Real, 0.0, 1.0, closed="left")],
         "criterion": [StrOptions({"threshold", "k_best"})],
         "k_best": [Interval(Integral, 1, None, closed="left")],
@@ -170,25 +177,62 @@ class SelfTrainingClassifier(
 
     def __init__(
         self,
-        base_estimator,
+        estimator=None,
+        base_estimator="deprecated",
         threshold=0.75,
         criterion="threshold",
         k_best=10,
         max_iter=10,
         verbose=False,
     ):
-        self.base_estimator = base_estimator
+        self.estimator = estimator
         self.threshold = threshold
         self.criterion = criterion
         self.k_best = k_best
         self.max_iter = max_iter
         self.verbose = verbose
 
+        # TODO(1.8) remove
+        self.base_estimator = base_estimator
+
+    def _get_estimator(self):
+        """Get the estimator.
+
+        Returns
+        -------
+        estimator_ : estimator object
+            The cloned estimator object.
+        """
+        # TODO(1.8): remove and only keep clone(self.estimator)
+        if self.estimator is None and self.base_estimator != "deprecated":
+            estimator_ = clone(self.base_estimator)
+
+            warn(
+                (
+                    "`base_estimator` has been deprecated in 1.6 and will be removed"
+                    " in 1.8. Please use `estimator` instead."
+                ),
+                FutureWarning,
+            )
+        # TODO(1.8) remove
+        elif self.estimator is None and self.base_estimator == "deprecated":
+            raise ValueError(
+                "You must pass an estimator to SelfTrainingClassifier. Use `estimator`."
+            )
+        elif self.estimator is not None and self.base_estimator != "deprecated":
+            raise ValueError(
+                "You must pass only one estimator to SelfTrainingClassifier."
+                " Use `estimator`."
+            )
+        else:
+            estimator_ = clone(self.estimator)
+        return estimator_
+
     @_fit_context(
-        # SelfTrainingClassifier.base_estimator is not validated yet
+        # SelfTrainingClassifier.estimator is not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y):
+    def fit(self, X, y, **params):
         """
         Fit self-training classifier using `X`, `y` as training data.
 
@@ -201,18 +245,34 @@ class SelfTrainingClassifier(
             Array representing the labels. Unlabeled samples should have the
             label -1.
 
+        **params : dict
+            Parameters to pass to the underlying estimators.
+
+            .. versionadded:: 1.6
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
         Returns
         -------
         self : object
             Fitted estimator.
         """
+        _raise_for_params(params, self, "fit")
+
+        self.estimator_ = self._get_estimator()
+
         # we need row slicing support for sparse matrices, but costly finiteness check
         # can be delegated to the base estimator.
-        X, y = self._validate_data(
-            X, y, accept_sparse=["csr", "csc", "lil", "dok"], force_all_finite=False
+        X, y = validate_data(
+            self,
+            X,
+            y,
+            accept_sparse=["csr", "csc", "lil", "dok"],
+            ensure_all_finite=False,
         )
-
-        self.base_estimator_ = clone(self.base_estimator)
 
         if y.dtype.kind in ["U", "S"]:
             raise ValueError(
@@ -238,6 +298,11 @@ class SelfTrainingClassifier(
                 UserWarning,
             )
 
+        if _routing_enabled():
+            routed_params = process_routing(self, "fit", **params)
+        else:
+            routed_params = Bunch(estimator=Bunch(fit={}))
+
         self.transduction_ = np.copy(y)
         self.labeled_iter_ = np.full_like(y, -1)
         self.labeled_iter_[has_label] = 0
@@ -248,13 +313,15 @@ class SelfTrainingClassifier(
             self.max_iter is None or self.n_iter_ < self.max_iter
         ):
             self.n_iter_ += 1
-            self.base_estimator_.fit(
-                X[safe_mask(X, has_label)], self.transduction_[has_label]
+            self.estimator_.fit(
+                X[safe_mask(X, has_label)],
+                self.transduction_[has_label],
+                **routed_params.estimator.fit,
             )
 
             # Predict on the unlabeled samples
-            prob = self.base_estimator_.predict_proba(X[safe_mask(X, ~has_label)])
-            pred = self.base_estimator_.classes_[np.argmax(prob, axis=1)]
+            prob = self.estimator_.predict_proba(X[safe_mask(X, ~has_label)])
+            pred = self.estimator_.classes_[np.argmax(prob, axis=1)]
             max_proba = np.max(prob, axis=1)
 
             # Select new labeled samples
@@ -292,14 +359,16 @@ class SelfTrainingClassifier(
         if np.all(has_label):
             self.termination_condition_ = "all_labeled"
 
-        self.base_estimator_.fit(
-            X[safe_mask(X, has_label)], self.transduction_[has_label]
+        self.estimator_.fit(
+            X[safe_mask(X, has_label)],
+            self.transduction_[has_label],
+            **routed_params.estimator.fit,
         )
-        self.classes_ = self.base_estimator_.classes_
+        self.classes_ = self.estimator_.classes_
         return self
 
     @available_if(_estimator_has("predict"))
-    def predict(self, X):
+    def predict(self, X, **params):
         """Predict the classes of `X`.
 
         Parameters
@@ -307,22 +376,41 @@ class SelfTrainingClassifier(
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Array representing the data.
 
+        **params : dict of str -> object
+            Parameters to pass to the underlying estimator's ``predict`` method.
+
+            .. versionadded:: 1.6
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
         Returns
         -------
         y : ndarray of shape (n_samples,)
             Array with predicted labels.
         """
         check_is_fitted(self)
-        X = self._validate_data(
+        _raise_for_params(params, self, "predict")
+
+        if _routing_enabled():
+            # metadata routing is enabled.
+            routed_params = process_routing(self, "predict", **params)
+        else:
+            routed_params = Bunch(estimator=Bunch(predict={}))
+
+        X = validate_data(
+            self,
             X,
             accept_sparse=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
-        return self.base_estimator_.predict(X)
+        return self.estimator_.predict(X, **routed_params.estimator.predict)
 
     @available_if(_estimator_has("predict_proba"))
-    def predict_proba(self, X):
+    def predict_proba(self, X, **params):
         """Predict probability for each possible outcome.
 
         Parameters
@@ -330,45 +418,87 @@ class SelfTrainingClassifier(
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Array representing the data.
 
+        **params : dict of str -> object
+            Parameters to pass to the underlying estimator's
+            ``predict_proba`` method.
+
+            .. versionadded:: 1.6
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
         Returns
         -------
         y : ndarray of shape (n_samples, n_features)
             Array with prediction probabilities.
         """
         check_is_fitted(self)
-        X = self._validate_data(
+        _raise_for_params(params, self, "predict_proba")
+
+        if _routing_enabled():
+            # metadata routing is enabled.
+            routed_params = process_routing(self, "predict_proba", **params)
+        else:
+            routed_params = Bunch(estimator=Bunch(predict_proba={}))
+
+        X = validate_data(
+            self,
             X,
             accept_sparse=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
-        return self.base_estimator_.predict_proba(X)
+        return self.estimator_.predict_proba(X, **routed_params.estimator.predict_proba)
 
     @available_if(_estimator_has("decision_function"))
-    def decision_function(self, X):
-        """Call decision function of the `base_estimator`.
+    def decision_function(self, X, **params):
+        """Call decision function of the `estimator`.
 
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Array representing the data.
 
+        **params : dict of str -> object
+            Parameters to pass to the underlying estimator's
+            ``decision_function`` method.
+
+            .. versionadded:: 1.6
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
         Returns
         -------
         y : ndarray of shape (n_samples, n_features)
-            Result of the decision function of the `base_estimator`.
+            Result of the decision function of the `estimator`.
         """
         check_is_fitted(self)
-        X = self._validate_data(
+        _raise_for_params(params, self, "decision_function")
+
+        if _routing_enabled():
+            # metadata routing is enabled.
+            routed_params = process_routing(self, "decision_function", **params)
+        else:
+            routed_params = Bunch(estimator=Bunch(decision_function={}))
+
+        X = validate_data(
+            self,
             X,
             accept_sparse=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
-        return self.base_estimator_.decision_function(X)
+        return self.estimator_.decision_function(
+            X, **routed_params.estimator.decision_function
+        )
 
     @available_if(_estimator_has("predict_log_proba"))
-    def predict_log_proba(self, X):
+    def predict_log_proba(self, X, **params):
         """Predict log probability for each possible outcome.
 
         Parameters
@@ -376,23 +506,45 @@ class SelfTrainingClassifier(
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Array representing the data.
 
+        **params : dict of str -> object
+            Parameters to pass to the underlying estimator's
+            ``predict_log_proba`` method.
+
+            .. versionadded:: 1.6
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
         Returns
         -------
         y : ndarray of shape (n_samples, n_features)
             Array with log prediction probabilities.
         """
         check_is_fitted(self)
-        X = self._validate_data(
+        _raise_for_params(params, self, "predict_log_proba")
+
+        if _routing_enabled():
+            # metadata routing is enabled.
+            routed_params = process_routing(self, "predict_log_proba", **params)
+        else:
+            routed_params = Bunch(estimator=Bunch(predict_log_proba={}))
+
+        X = validate_data(
+            self,
             X,
             accept_sparse=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
-        return self.base_estimator_.predict_log_proba(X)
+        return self.estimator_.predict_log_proba(
+            X, **routed_params.estimator.predict_log_proba
+        )
 
     @available_if(_estimator_has("score"))
-    def score(self, X, y):
-        """Call score on the `base_estimator`.
+    def score(self, X, y, **params):
+        """Call score on the `estimator`.
 
         Parameters
         ----------
@@ -402,16 +554,72 @@ class SelfTrainingClassifier(
         y : array-like of shape (n_samples,)
             Array representing the labels.
 
+        **params : dict of str -> object
+            Parameters to pass to the underlying estimator's ``score`` method.
+
+            .. versionadded:: 1.6
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
         Returns
         -------
         score : float
-            Result of calling score on the `base_estimator`.
+            Result of calling score on the `estimator`.
         """
         check_is_fitted(self)
-        X = self._validate_data(
+        _raise_for_params(params, self, "score")
+
+        if _routing_enabled():
+            # metadata routing is enabled.
+            routed_params = process_routing(self, "score", **params)
+        else:
+            routed_params = Bunch(estimator=Bunch(score={}))
+
+        X = validate_data(
+            self,
             X,
             accept_sparse=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
-        return self.base_estimator_.score(X, y)
+        return self.estimator_.score(X, y, **routed_params.estimator.score)
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.6
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self.__class__.__name__)
+        router.add(
+            estimator=self.estimator,
+            method_mapping=(
+                MethodMapping()
+                .add(callee="fit", caller="fit")
+                .add(callee="score", caller="fit")
+                .add(callee="predict", caller="predict")
+                .add(callee="predict_proba", caller="predict_proba")
+                .add(callee="decision_function", caller="decision_function")
+                .add(callee="predict_log_proba", caller="predict_log_proba")
+                .add(callee="score", caller="score")
+            ),
+        )
+        return router
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # TODO(1.8): remove the condition check together with base_estimator
+        if self.estimator is not None:
+            tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
+        return tags

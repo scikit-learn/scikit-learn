@@ -1,5 +1,6 @@
 """Tests for Incremental PCA."""
 
+import itertools
 import warnings
 
 import numpy as np
@@ -139,14 +140,13 @@ def test_incremental_pca_validation():
     ):
         IncrementalPCA(n_components, batch_size=10).fit(X)
 
-    # Tests that n_components is also <= n_samples.
+    # Test that n_components is also <= n_samples in first call to partial fit.
     n_components = 3
     with pytest.raises(
         ValueError,
         match=(
-            "n_components={} must be"
-            " less or equal to the batch number of"
-            " samples {}".format(n_components, n_samples)
+            f"n_components={n_components} must be less or equal to the batch "
+            f"number of samples {n_samples} for the first partial_fit call."
         ),
     ):
         IncrementalPCA(n_components=n_components).partial_fit(X)
@@ -229,8 +229,29 @@ def test_incremental_pca_batch_signs():
         ipca = IncrementalPCA(n_components=None, batch_size=batch_size).fit(X)
         all_components.append(ipca.components_)
 
-    for i, j in zip(all_components[:-1], all_components[1:]):
+    for i, j in itertools.pairwise(all_components):
         assert_almost_equal(np.sign(i), np.sign(j), decimal=6)
+
+
+def test_incremental_pca_partial_fit_small_batch():
+    # Test that there is no minimum batch size after the first partial_fit
+    # Non-regression test
+    rng = np.random.RandomState(1999)
+    n, p = 50, 3
+    X = rng.randn(n, p)  # spherical data
+    X[:, 1] *= 0.00001  # make middle component relatively small
+    X += [5, 4, 3]  # make a large mean
+
+    n_components = p
+    pipca = IncrementalPCA(n_components=n_components)
+    pipca.partial_fit(X[:n_components])
+    for idx in range(n_components, n):
+        pipca.partial_fit(X[idx : idx + 1])
+
+    pca = PCA(n_components=n_components)
+    pca.fit(X)
+
+    assert_allclose(pca.components_, pipca.components_, atol=1e-3)
 
 
 def test_incremental_pca_batch_values():
@@ -245,7 +266,7 @@ def test_incremental_pca_batch_values():
         ipca = IncrementalPCA(n_components=None, batch_size=batch_size).fit(X)
         all_components.append(ipca.components_)
 
-    for i, j in zip(all_components[:-1], all_components[1:]):
+    for i, j in itertools.pairwise(all_components):
         assert_almost_equal(i, j, decimal=1)
 
 
@@ -261,7 +282,7 @@ def test_incremental_pca_batch_rank():
         ipca = IncrementalPCA(n_components=20, batch_size=batch_size).fit(X)
         all_components.append(ipca.components_)
 
-    for components_i, components_j in zip(all_components[:-1], all_components[1:]):
+    for components_i, components_j in itertools.pairwise(all_components):
         assert_allclose_dense_sparse(components_i, components_j)
 
 
@@ -280,7 +301,7 @@ def test_incremental_pca_partial_fit():
     pipca = IncrementalPCA(n_components=2, batch_size=batch_size)
     # Add one to make sure endpoint is included
     batch_itr = np.arange(0, n + 1, batch_size)
-    for i, j in zip(batch_itr[:-1], batch_itr[1:]):
+    for i, j in itertools.pairwise(batch_itr):
         pipca.partial_fit(X[i:j, :])
     assert_almost_equal(ipca.components_, pipca.components_, decimal=3)
 

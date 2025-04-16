@@ -84,8 +84,8 @@ Weighted scoring and fitting
 The splitter used internally in :class:`~linear_model.LogisticRegressionCV`,
 :class:`~model_selection.GroupKFold`, requests ``groups`` by default. However, we need
 to explicitly request `sample_weight` for it and for our custom scorer by specifying
-`sample_weight=True` in :class:`~linear_model.LogisticRegressionCV`s `set_fit_request()`
-method and in :func:`~metrics.make_scorer`s `set_score_request()` method. Both
+`sample_weight=True` in :class:`~linear_model.LogisticRegressionCV`'s `set_fit_request()`
+method and in :func:`~metrics.make_scorer`'s `set_score_request()` method. Both
 :term:`consumers <consumer>` know how to use ``sample_weight`` in their `fit()` or
 `score()` methods. We can then pass the metadata in
 :func:`~model_selection.cross_validate` which will route it to any active consumers::
@@ -248,7 +248,8 @@ should be passed to the estimator's scorer or not::
     [sample_weight] are passed but are not explicitly set as requested or not
     requested for LogisticRegression.score, which is used within GridSearchCV.fit.
     Call `LogisticRegression.set_score_request({metadata}=True/False)` for each metadata
-    you want to request/ignore.
+    you want to request/ignore. See the Metadata Routing User guide
+    <https://scikit-learn.org/stable/metadata_routing.html> for more information.
 
 The issue can be fixed by explicitly setting the request value::
 
@@ -276,12 +277,18 @@ Meta-estimators and functions supporting metadata routing:
 
 - :class:`sklearn.calibration.CalibratedClassifierCV`
 - :class:`sklearn.compose.ColumnTransformer`
+- :class:`sklearn.compose.TransformedTargetRegressor`
 - :class:`sklearn.covariance.GraphicalLassoCV`
+- :class:`sklearn.ensemble.StackingClassifier`
+- :class:`sklearn.ensemble.StackingRegressor`
 - :class:`sklearn.ensemble.VotingClassifier`
 - :class:`sklearn.ensemble.VotingRegressor`
 - :class:`sklearn.ensemble.BaggingClassifier`
 - :class:`sklearn.ensemble.BaggingRegressor`
+- :class:`sklearn.feature_selection.RFE`
+- :class:`sklearn.feature_selection.RFECV`
 - :class:`sklearn.feature_selection.SelectFromModel`
+- :class:`sklearn.feature_selection.SequentialFeatureSelector`
 - :class:`sklearn.impute.IterativeImputer`
 - :class:`sklearn.linear_model.ElasticNetCV`
 - :class:`sklearn.linear_model.LarsCV`
@@ -290,6 +297,7 @@ Meta-estimators and functions supporting metadata routing:
 - :class:`sklearn.linear_model.LogisticRegressionCV`
 - :class:`sklearn.linear_model.MultiTaskElasticNetCV`
 - :class:`sklearn.linear_model.MultiTaskLassoCV`
+- :class:`sklearn.linear_model.OrthogonalMatchingPursuitCV`
 - :class:`sklearn.linear_model.RANSACRegressor`
 - :class:`sklearn.linear_model.RidgeClassifierCV`
 - :class:`sklearn.linear_model.RidgeCV`
@@ -297,33 +305,24 @@ Meta-estimators and functions supporting metadata routing:
 - :class:`sklearn.model_selection.HalvingGridSearchCV`
 - :class:`sklearn.model_selection.HalvingRandomSearchCV`
 - :class:`sklearn.model_selection.RandomizedSearchCV`
+- :class:`sklearn.model_selection.permutation_test_score`
 - :func:`sklearn.model_selection.cross_validate`
 - :func:`sklearn.model_selection.cross_val_score`
 - :func:`sklearn.model_selection.cross_val_predict`
+- :class:`sklearn.model_selection.learning_curve`
+- :class:`sklearn.model_selection.validation_curve`
 - :class:`sklearn.multiclass.OneVsOneClassifier`
 - :class:`sklearn.multiclass.OneVsRestClassifier`
 - :class:`sklearn.multiclass.OutputCodeClassifier`
 - :class:`sklearn.multioutput.ClassifierChain`
 - :class:`sklearn.multioutput.MultiOutputClassifier`
 - :class:`sklearn.multioutput.MultiOutputRegressor`
-- :class:`sklearn.linear_model.OrthogonalMatchingPursuitCV`
 - :class:`sklearn.multioutput.RegressorChain`
 - :class:`sklearn.pipeline.FeatureUnion`
 - :class:`sklearn.pipeline.Pipeline`
+- :class:`sklearn.semi_supervised.SelfTrainingClassifier`
 
 Meta-estimators and tools not supporting metadata routing yet:
 
-- :class:`sklearn.compose.TransformedTargetRegressor`
 - :class:`sklearn.ensemble.AdaBoostClassifier`
 - :class:`sklearn.ensemble.AdaBoostRegressor`
-- :class:`sklearn.ensemble.StackingClassifier`
-- :class:`sklearn.ensemble.StackingRegressor`
-- :class:`sklearn.feature_selection.RFE`
-- :class:`sklearn.feature_selection.RFECV`
-- :class:`sklearn.feature_selection.SequentialFeatureSelector`
-- :class:`sklearn.impute.IterativeImputer`
-- :class:`sklearn.linear_model.RANSACRegressor`
-- :class:`sklearn.model_selection.learning_curve`
-- :class:`sklearn.model_selection.permutation_test_score`
-- :class:`sklearn.model_selection.validation_curve`
-- :class:`sklearn.semi_supervised.SelfTrainingClassifier`

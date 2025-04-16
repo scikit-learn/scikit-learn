@@ -16,7 +16,10 @@ at the center of the image tend to be more predictive than those near the edges.
 
     See also :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`
 
-"""  # noqa: E501
+"""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 

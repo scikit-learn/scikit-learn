@@ -6,9 +6,10 @@ from operator import attrgetter
 
 import numpy as np
 import pytest
+from joblib import parallel_backend
 from numpy.testing import assert_allclose, assert_array_almost_equal, assert_array_equal
 
-from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.base import BaseEstimator, ClassifierMixin, is_classifier
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.cross_decomposition import CCA, PLSCanonical, PLSRegression
 from sklearn.datasets import load_iris, make_classification, make_friedman1
@@ -26,7 +27,7 @@ from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.fixes import CSR_CONTAINERS
 
 
-class MockClassifier:
+class MockClassifier(ClassifierMixin, BaseEstimator):
     """
     Dummy classifier to test recursive feature elimination
     """
@@ -37,10 +38,11 @@ class MockClassifier:
     def fit(self, X, y):
         assert len(X) == len(y)
         self.coef_ = np.ones(X.shape[1], dtype=np.float64)
+        self.classes_ = sorted(set(y))
         return self
 
     def predict(self, T):
-        return T.shape[0]
+        return np.ones(T.shape[0])
 
     predict_proba = predict
     decision_function = predict
@@ -55,8 +57,10 @@ class MockClassifier:
     def set_params(self, **params):
         return self
 
-    def _more_tags(self):
-        return {"allow_nan": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        return tags
 
 
 def test_rfe_features_importance():
@@ -321,7 +325,7 @@ def test_rfecv_cv_results_size(global_random_seed):
 
 def test_rfe_estimator_tags():
     rfe = RFE(SVC(kernel="linear"))
-    assert rfe._estimator_type == "classifier"
+    assert is_classifier(rfe)
     # make sure that cross-validation is stratified
     iris = load_iris()
     score = cross_val_score(rfe, iris.data, iris.target)
@@ -666,3 +670,54 @@ def test_rfe_n_features_to_select_warning(ClsRFE, param):
         # larger than the number of features present in the X variable
         clsrfe = ClsRFE(estimator=LogisticRegression(), **{param: 21})
         clsrfe.fit(X, y)
+
+
+def test_rfe_with_sample_weight():
+    """Test that `RFE` works correctly with sample weights."""
+    X, y = make_classification(random_state=0)
+    n_samples = X.shape[0]
+
+    # Assign the first half of the samples with twice the weight
+    sample_weight = np.ones_like(y)
+    sample_weight[: n_samples // 2] = 2
+
+    # Duplicate the first half of the data samples to replicate the effect
+    # of sample weights for comparison
+    X2 = np.concatenate([X, X[: n_samples // 2]], axis=0)
+    y2 = np.concatenate([y, y[: n_samples // 2]])
+
+    estimator = SVC(kernel="linear")
+
+    rfe_sw = RFE(estimator=estimator, step=0.1)
+    rfe_sw.fit(X, y, sample_weight=sample_weight)
+
+    rfe = RFE(estimator=estimator, step=0.1)
+    rfe.fit(X2, y2)
+
+    assert_array_equal(rfe_sw.ranking_, rfe.ranking_)
+
+    # Also verify that when sample weights are not doubled the results
+    # are different from the duplicated data
+    rfe_sw_2 = RFE(estimator=estimator, step=0.1)
+    sample_weight_2 = np.ones_like(y)
+    rfe_sw_2.fit(X, y, sample_weight=sample_weight_2)
+
+    assert not np.array_equal(rfe_sw_2.ranking_, rfe.ranking_)
+
+
+def test_rfe_with_joblib_threading_backend(global_random_seed):
+    X, y = make_classification(random_state=global_random_seed)
+
+    clf = LogisticRegression()
+    rfe = RFECV(
+        estimator=clf,
+        n_jobs=2,
+    )
+
+    rfe.fit(X, y)
+    ranking_ref = rfe.ranking_
+
+    with parallel_backend("threading"):
+        rfe.fit(X, y)
+
+    assert_array_equal(ranking_ref, rfe.ranking_)

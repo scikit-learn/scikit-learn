@@ -4,7 +4,7 @@ Metadata Routing Utility
 In order to better understand the components implemented in this file, one
 needs to understand their relationship to one another.
 
-The only relevant public API for end users are the ``set_{method}_request``,
+The only relevant public API for end users are the ``set_{method}_request`` methods,
 e.g. ``estimator.set_fit_request(sample_weight=True)``. However, third-party
 developers and users who implement custom meta-estimators, need to deal with
 the objects implemented in this file.
@@ -59,10 +59,10 @@ stored here. Conceptually, this information looks like:
 
 To give the above representation some structure, we use the following objects:
 
-- ``(caller, callee)`` is a namedtuple called ``MethodPair``
+- ``(caller=..., callee=...)`` is a namedtuple called ``MethodPair``
 
-- The list of ``MethodPair`` stored in the ``mapping`` field is a
-  ``MethodMapping`` object
+- The list of ``MethodPair`` stored in the ``mapping`` field of a `RouterMappingPair` is
+  a ``MethodMapping`` object
 
 - ``(mapping=..., router=...)`` is a namedtuple called ``RouterMappingPair``
 
@@ -74,8 +74,8 @@ This mixin also implements the ``get_metadata_routing``, which meta-estimators
 need to override, but it works for simple consumers as is.
 """
 
-# Author: Adrin Jalali <adrin.jalali@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import inspect
 from collections import namedtuple
@@ -130,7 +130,7 @@ def _routing_enabled():
     return get_config().get("enable_metadata_routing", False)
 
 
-def _raise_for_params(params, owner, method):
+def _raise_for_params(params, owner, method, allow=None):
     """Raise an error if metadata routing is not enabled and params are passed.
 
     .. versionadded:: 1.4
@@ -146,6 +146,10 @@ def _raise_for_params(params, owner, method):
     method : str
         The name of the method, e.g. "fit".
 
+    allow : list of str, default=None
+        A list of parameters which are allowed to be passed even if metadata
+        routing is not enabled.
+
     Raises
     ------
     ValueError
@@ -154,7 +158,10 @@ def _raise_for_params(params, owner, method):
     caller = (
         f"{owner.__class__.__name__}.{method}" if method else owner.__class__.__name__
     )
-    if not _routing_enabled() and params:
+
+    allow = allow if allow is not None else {}
+
+    if not _routing_enabled() and (params.keys() - allow):
         raise ValueError(
             f"Passing extra keyword arguments to {caller} is only supported if"
             " enable_metadata_routing=True, which you can set using"
@@ -458,7 +465,10 @@ class MethodMetadataRequest:
                 f" {self.owner}.{self.method}, which is used within"
                 f" {parent}.{caller}. Call `{self.owner}"
                 + set_requests_on
-                + "` for each metadata you want to request/ignore."
+                + "` for each metadata you want to request/ignore. See the"
+                " Metadata Routing User guide"
+                " <https://scikit-learn.org/stable/metadata_routing.html> for more"
+                " information."
             )
             raise UnsetMetadataPassedError(
                 message=message,
@@ -686,13 +696,14 @@ class MetadataRequest:
 # This section includes all objects required for MetadataRouter which is used
 # in routers, returned by their ``get_metadata_routing``.
 
-# This namedtuple is used to store a (mapping, routing) pair. Mapping is a
-# MethodMapping object, and routing is the output of `get_metadata_routing`.
-# MetadataRouter stores a collection of these namedtuples.
+# `RouterMappingPair` is used to store a (mapping, router) tuple where `mapping` is a
+# `MethodMapping` object and `router` is the output of `get_metadata_routing`.
+# `MetadataRouter` stores a collection of `RouterMappingPair` objects in its
+# `_route_mappings` attribute.
 RouterMappingPair = namedtuple("RouterMappingPair", ["mapping", "router"])
 
-# A namedtuple storing a single method route. A collection of these namedtuples
-# is stored in a MetadataRouter.
+# `MethodPair` is used to store a single method routing. `MethodMapping` stores a list
+# of `MethodPair` objects in its `_routes` attribute.
 MethodPair = namedtuple("MethodPair", ["caller", "callee"])
 
 
@@ -700,11 +711,11 @@ class MethodMapping:
     """Stores the mapping between caller and callee methods for a router.
 
     This class is primarily used in a ``get_metadata_routing()`` of a router
-    object when defining the mapping between a sub-object (a sub-estimator or a
-    scorer) to the router's methods. It stores a collection of namedtuples.
+    object when defining the mapping between the router's methods and a sub-object (a
+    sub-estimator or a scorer).
 
-    Iterating through an instance of this class will yield named
-    ``MethodPair(caller, callee)`` tuples.
+    Iterating through an instance of this class yields
+    ``MethodPair(caller, callee)`` instances.
 
     .. versionadded:: 1.3
     """
@@ -999,8 +1010,9 @@ class MetadataRouter:
     def route_params(self, *, caller, params):
         """Return the input parameters requested by child objects.
 
-        The output of this method is a bunch, which includes the metadata for all
-        methods of each child object that is used in the router's `caller` method.
+        The output of this method is a :class:`~sklearn.utils.Bunch`, which includes the
+        metadata for all methods of each child object that is used in the router's
+        `caller` method.
 
         If the router is also a consumer, it also checks for warnings of
         `self`'s/consumer's requested metadata.
@@ -1096,8 +1108,9 @@ class MetadataRouter:
             method_mapping = MethodMapping()
             for method in METHODS:
                 method_mapping.add(caller=method, callee=method)
-            yield "$self_request", RouterMappingPair(
-                mapping=method_mapping, router=self._self_request
+            yield (
+                "$self_request",
+                RouterMappingPair(mapping=method_mapping, router=self._self_request),
             )
         for name, route_mapping in self._route_mappings.items():
             yield (name, route_mapping)
@@ -1382,7 +1395,7 @@ class _MetadataRequester:
 
         for method in SIMPLE_METHODS:
             mmr = getattr(requests, method)
-            # set ``set_{method}_request``` methods
+            # set ``set_{method}_request`` methods
             if not len(mmr.requests):
                 continue
             setattr(
@@ -1574,7 +1587,7 @@ def process_routing(_obj, _method, /, **kwargs):
 
     if not (hasattr(_obj, "get_metadata_routing") or isinstance(_obj, MetadataRouter)):
         raise AttributeError(
-            f"The given object ({repr(_obj.__class__.__name__)}) needs to either"
+            f"The given object ({_obj.__class__.__name__!r}) needs to either"
             " implement the routing method `get_metadata_routing` or be a"
             " `MetadataRouter` instance."
         )

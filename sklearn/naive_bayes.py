@@ -1,18 +1,12 @@
-"""
-The :mod:`sklearn.naive_bayes` module implements Naive Bayes algorithms. These
-are supervised learning methods based on applying Bayes' theorem with strong
+"""Naive Bayes algorithms.
+
+These are supervised learning methods based on applying Bayes' theorem with strong
 (naive) feature independence assumptions.
 """
 
-# Author: Vincent Michel <vincent.michel@inria.fr>
-#         Minor fixes by Fabian Pedregosa
-#         Amit Aides <amitibo@tx.technion.ac.il>
-#         Yehuda Finkelstein <yehudaf@tx.technion.ac.il>
-#         Lars Buitinck
-#         Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-#         (parts based on earlier work by Mathieu Blondel)
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
@@ -20,19 +14,29 @@ from numbers import Integral, Real
 import numpy as np
 from scipy.special import logsumexp
 
-from .base import BaseEstimator, ClassifierMixin, _fit_context
+from .base import (
+    BaseEstimator,
+    ClassifierMixin,
+    _fit_context,
+)
 from .preprocessing import LabelBinarizer, binarize, label_binarize
 from .utils._param_validation import Interval
 from .utils.extmath import safe_sparse_dot
 from .utils.multiclass import _check_partial_fit_first_call
-from .utils.validation import _check_sample_weight, check_is_fitted, check_non_negative
+from .utils.validation import (
+    _check_n_features,
+    _check_sample_weight,
+    check_is_fitted,
+    check_non_negative,
+    validate_data,
+)
 
 __all__ = [
     "BernoulliNB",
+    "CategoricalNB",
+    "ComplementNB",
     "GaussianNB",
     "MultinomialNB",
-    "ComplementNB",
-    "CategoricalNB",
 ]
 
 
@@ -150,9 +154,8 @@ class GaussianNB(_BaseNB):
 
     Can perform online updates to model parameters via :meth:`partial_fit`.
     For details on algorithm used to update feature means and variance online,
-    see Stanford CS tech report STAN-CS-79-773 by Chan, Golub, and LeVeque:
-
-        http://i.stanford.edu/pub/cstr/reports/cs/tr/79/773/CS-TR-79-773.pdf
+    see `Stanford CS tech report STAN-CS-79-773 by Chan, Golub, and LeVeque
+    <http://i.stanford.edu/pub/cstr/reports/cs/tr/79/773/CS-TR-79-773.pdf>`_.
 
     Read more in the :ref:`User Guide <gaussian_naive_bayes>`.
 
@@ -259,14 +262,14 @@ class GaussianNB(_BaseNB):
         self : object
             Returns the instance itself.
         """
-        y = self._validate_data(y=y)
+        y = validate_data(self, y=y)
         return self._partial_fit(
             X, y, np.unique(y), _refit=True, sample_weight=sample_weight
         )
 
     def _check_X(self, X):
         """Validate X, used only in predict* methods."""
-        return self._validate_data(X, reset=False)
+        return validate_data(self, X, reset=False)
 
     @staticmethod
     def _update_mean_variance(n_past, mu, var, X, sample_weight=None):
@@ -420,7 +423,7 @@ class GaussianNB(_BaseNB):
             self.classes_ = None
 
         first_call = _check_partial_fit_first_call(self, classes)
-        X, y = self._validate_data(X, y, reset=first_call)
+        X, y = validate_data(self, X, y, reset=first_call)
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
 
@@ -571,11 +574,11 @@ class _BaseDiscreteNB(_BaseNB):
 
     def _check_X(self, X):
         """Validate X, used only in predict* methods."""
-        return self._validate_data(X, accept_sparse="csr", reset=False)
+        return validate_data(self, X, accept_sparse="csr", reset=False)
 
     def _check_X_y(self, X, y, reset=True):
         """Validate X and y in fit methods."""
-        return self._validate_data(X, y, accept_sparse="csr", reset=reset)
+        return validate_data(self, X, y, accept_sparse="csr", reset=reset)
 
     def _update_class_log_prior(self, class_prior=None):
         """Update class log priors.
@@ -766,8 +769,11 @@ class _BaseDiscreteNB(_BaseNB):
         self.class_count_ = np.zeros(n_classes, dtype=np.float64)
         self.feature_count_ = np.zeros((n_classes, n_features), dtype=np.float64)
 
-    def _more_tags(self):
-        return {"poor_score": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        tags.classifier_tags.poor_score = True
+        return tags
 
 
 class MultinomialNB(_BaseDiscreteNB):
@@ -873,8 +879,10 @@ class MultinomialNB(_BaseDiscreteNB):
             force_alpha=force_alpha,
         )
 
-    def _more_tags(self):
-        return {"requires_positive_X": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.positive_only = True
+        return tags
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
@@ -1019,8 +1027,10 @@ class ComplementNB(_BaseDiscreteNB):
         )
         self.norm = norm
 
-    def _more_tags(self):
-        return {"requires_positive_X": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.positive_only = True
+        return tags
 
     def _count(self, X, Y):
         """Count feature occurrences."""
@@ -1421,20 +1431,34 @@ class CategoricalNB(_BaseDiscreteNB):
         """
         return super().partial_fit(X, y, classes, sample_weight=sample_weight)
 
-    def _more_tags(self):
-        return {"requires_positive_X": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = False
+        tags.input_tags.positive_only = True
+        return tags
 
     def _check_X(self, X):
         """Validate X, used only in predict* methods."""
-        X = self._validate_data(
-            X, dtype="int", accept_sparse=False, force_all_finite=True, reset=False
+        X = validate_data(
+            self,
+            X,
+            dtype="int",
+            accept_sparse=False,
+            ensure_all_finite=True,
+            reset=False,
         )
         check_non_negative(X, "CategoricalNB (input X)")
         return X
 
     def _check_X_y(self, X, y, reset=True):
-        X, y = self._validate_data(
-            X, y, dtype="int", accept_sparse=False, force_all_finite=True, reset=reset
+        X, y = validate_data(
+            self,
+            X,
+            y,
+            dtype="int",
+            accept_sparse=False,
+            ensure_all_finite=True,
+            reset=reset,
         )
         check_non_negative(X, "CategoricalNB (input X)")
         return X, y
@@ -1506,7 +1530,7 @@ class CategoricalNB(_BaseDiscreteNB):
         self.feature_log_prob_ = feature_log_prob
 
     def _joint_log_likelihood(self, X):
-        self._check_n_features(X, reset=False)
+        _check_n_features(self, X, reset=False)
         jll = np.zeros((X.shape[0], self.class_count_.shape[0]))
         for i in range(self.n_features_in_):
             indices = X[:, i]

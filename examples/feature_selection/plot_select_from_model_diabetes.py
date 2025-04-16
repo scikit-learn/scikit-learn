@@ -11,13 +11,10 @@ on a greedy approach.
 
 We use the Diabetes dataset, which consists of 10 features collected from 442
 diabetes patients.
-
-Authors: `Manoj Kumar <mks542@nyu.edu>`_,
-`Maria Telenczuk <https://github.com/maikia>`_, Nicolas Hug.
-
-License: BSD 3 clause
-
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Loading the data
@@ -43,7 +40,7 @@ print(diabetes.DESCR)
 # were already standardized.
 # For a more complete example on the interpretations of the coefficients of
 # linear models, you may refer to
-# :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`.  # noqa: E501
+# :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`.
 import matplotlib.pyplot as plt
 import numpy as np
 

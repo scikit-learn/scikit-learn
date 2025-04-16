@@ -5,7 +5,7 @@ Robust linear estimator fitting
 Here a sine function is fit with a polynomial of order 3, for values
 close to zero.
 
-Robust fitting is demoed in different situations:
+Robust fitting is demonstrated in different situations:
 
 - No measurement errors, only modelling errors (fitting a sine with a
   polynomial)
@@ -29,6 +29,9 @@ What we can see that:
   but lessen their effect.
 
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 from matplotlib import pyplot as plt
