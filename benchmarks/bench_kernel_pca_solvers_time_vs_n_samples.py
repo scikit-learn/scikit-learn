@@ -80,6 +80,7 @@ X, y = make_circles(n_samples=max_n_samples, factor=0.3, noise=0.05, random_stat
 ref_time = np.empty((len(n_samples_range), n_iter)) * np.nan
 a_time = np.empty((len(n_samples_range), n_iter)) * np.nan
 r_time = np.empty((len(n_samples_range), n_iter)) * np.nan
+rv_time = np.empty((len(n_samples_range), n_iter)) * np.nan
 
 # loop
 for j, n_samples in enumerate(n_samples_range):
@@ -125,6 +126,19 @@ for j, n_samples in enumerate(n_samples_range):
         # check that the result is still correct despite the approximation
         assert_array_almost_equal(np.abs(r_pred), np.abs(ref_pred))
 
+    # D- randomized_value
+    print("  - randomized_value")
+    for i in range(n_iter):
+        start_time = time.perf_counter()
+        rv_pred = (
+            KernelPCA(n_components, eigen_solver="randomized_value")
+            .fit(X_train)
+            .transform(X_test)
+        )
+        rv_time[j, i] = time.perf_counter() - start_time
+        # check that the result is still correct despite the approximation
+        assert_array_almost_equal(np.abs(rv_pred), np.abs(ref_pred))
+
 # Compute statistics for the 3 methods
 avg_ref_time = ref_time.mean(axis=1)
 std_ref_time = ref_time.std(axis=1)
@@ -132,7 +146,8 @@ avg_a_time = a_time.mean(axis=1)
 std_a_time = a_time.std(axis=1)
 avg_r_time = r_time.mean(axis=1)
 std_r_time = r_time.std(axis=1)
-
+avg_rv_time = rv_time.mean(axis=1)
+std_rv_time = rv_time.std(axis=1)
 
 # 4- Plots
 # --------
@@ -166,6 +181,15 @@ ax.errorbar(
     linestyle="",
     color="b",
     label="randomized",
+)
+ax.errorbar(
+    n_samples_range,
+    avg_rv_time,
+    yerr=std_rv_time,
+    marker="x",
+    linestyle="",
+    color="purple",
+    label="randomized_value",
 )
 ax.legend(loc="upper left")
 

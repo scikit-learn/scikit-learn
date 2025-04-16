@@ -189,11 +189,7 @@ def test_randomized_eigsh(dtype):
     # eigenvectors
     assert eigvecs.shape == (4, 2)
 
-    # with 'value' selection method, the negative eigenvalue does not show up
-    with pytest.raises(NotImplementedError):
-        _randomized_eigsh(X, n_components=2, selection="value")
-
-
+    
 @pytest.mark.parametrize("k", (10, 50, 100, 199, 200))
 def test_randomized_eigsh_compared_to_others(k):
     """Check that `_randomized_eigsh` is similar to other `eigsh`
@@ -264,6 +260,48 @@ def test_randomized_eigsh_compared_to_others(k):
         eigvecs_arpack = eigvecs_arpack[:, indices]
         eigvecs_arpack, _ = svd_flip(eigvecs_arpack, dummy_vecs)
         assert_array_almost_equal(eigvecs_arpack, eigvecs_lapack, decimal=8)
+
+ 
+@pytest.mark.parametrize("k", (10, 50, 100, 199, 200))
+def test_randomized_eigsh_value_compared_to_others(k):
+    """Check that `_randomized_eigsh(value)` is similar to other `eigsh`
+
+    Tests that for a random PSD matrix, `_randomized_eigsh(value)` provides results
+    comparable to LAPACK (scipy.linalg.eigh) and ARPACK
+    (scipy.sparse.linalg.eigsh).
+    """
+    n_features = 200
+    # make a random PSD matrix
+    X = make_sparse_spd_matrix(n_features, random_state=0)
+
+    # compare two versions of randomized
+    # rough and fast
+    eigvals, eigvecs = _randomized_eigsh(
+        X,
+        n_components=k,
+        n_oversamples=20,
+        selection="value",
+        n_iter=25,
+        random_state=0,
+    )
+
+    # more accurate but slow (TODO find realistic settings here)
+
+    # with LAPACK
+    eigvals_lapack, eigvecs_lapack = eigh(
+        X, subset_by_index=(n_features - k, n_features - 1)
+    )
+
+    # - eigenvalues comparison
+    assert eigvals.shape == (k,)
+    # comparison precision
+    assert_array_almost_equal(eigvals, eigvals_lapack, decimal=6)
+    # -- eigenvectors comparison
+    assert eigvecs_lapack.shape == (n_features, k)
+    dummy_vecs = np.zeros_like(eigvecs).T
+    eigvecs, _ = svd_flip(eigvecs, dummy_vecs)
+    eigvecs_lapack, _ = svd_flip(eigvecs_lapack, dummy_vecs)
+    assert_array_almost_equal(eigvecs, eigvecs_lapack, decimal=4)
 
 
 @pytest.mark.parametrize(

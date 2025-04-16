@@ -37,7 +37,7 @@ def test_kernel_pca(global_random_seed):
         assert kwargs == {}  # no kernel_params that we didn't ask for
         return np.minimum(x, y).sum()
 
-    for eigen_solver in ("auto", "dense", "arpack", "randomized"):
+    for eigen_solver in ("auto", "dense", "arpack", "randomized", "randomized_value"):
         for kernel in ("linear", "rbf", "poly", histogram):
             # histogram kernel produces singular matrix inside linalg.solve
             # XXX use a least-squares approximation?
@@ -128,7 +128,7 @@ def test_kernel_pca_sparse(csr_container, global_random_seed):
     X_fit = csr_container(rng.random_sample((5, 4)))
     X_pred = csr_container(rng.random_sample((2, 4)))
 
-    for eigen_solver in ("auto", "arpack", "randomized"):
+    for eigen_solver in ("auto", "arpack", "randomized", "randomized_value"):
         for kernel in ("linear", "rbf", "poly"):
             # transform fit data
             kpca = KernelPCA(
@@ -191,7 +191,7 @@ def test_kernel_pca_n_components():
     X_fit = rng.random_sample((5, 4))
     X_pred = rng.random_sample((2, 4))
 
-    for eigen_solver in ("dense", "arpack", "randomized"):
+    for eigen_solver in ("dense", "arpack", "randomized", "randomized_value"):
         for c in [1, 2, 4]:
             kpca = KernelPCA(n_components=c, eigen_solver=eigen_solver)
             shape = kpca.fit(X_fit).transform(X_pred).shape
@@ -252,7 +252,7 @@ def test_kernel_pca_precomputed(global_random_seed):
     X_fit = rng.random_sample((5, 4))
     X_pred = rng.random_sample((2, 4))
 
-    for eigen_solver in ("dense", "arpack", "randomized"):
+    for eigen_solver in ("dense", "arpack", "randomized", "randomized_value"):
         X_kpca = (
             KernelPCA(4, eigen_solver=eigen_solver, random_state=0)
             .fit(X_fit)
@@ -284,7 +284,7 @@ def test_kernel_pca_precomputed(global_random_seed):
         assert_array_almost_equal(np.abs(X_kpca_train), np.abs(X_kpca_train2))
 
 
-@pytest.mark.parametrize("solver", ["auto", "dense", "arpack", "randomized"])
+@pytest.mark.parametrize("solver", ["auto", "dense", "arpack", "randomized", "randomized_value"])
 def test_kernel_pca_precomputed_non_symmetric(solver):
     """Check that the kernel centerer works.
 
@@ -386,7 +386,7 @@ def test_kernel_conditioning():
     assert np.all(kpca.eigenvalues_ == _check_psd_eigenvalues(kpca.eigenvalues_))
 
 
-@pytest.mark.parametrize("solver", ["auto", "dense", "arpack", "randomized"])
+@pytest.mark.parametrize("solver", ["auto", "dense", "arpack", "randomized", "randomized_value"])
 def test_precomputed_kernel_not_psd(solver):
     """Check how KernelPCA works with non-PSD kernels depending on n_components
 
@@ -440,7 +440,7 @@ def test_precomputed_kernel_not_psd(solver):
 
 @pytest.mark.parametrize("n_components", [4, 10, 20])
 def test_kernel_pca_solvers_equivalence(n_components):
-    """Check that 'dense' 'arpack' & 'randomized' solvers give similar results"""
+    """Check that 'dense' 'arpack' & 'randomized' & 'randomized_value' solvers give similar results"""
 
     # Generate random data
     n_train, n_test = 1_000, 100
@@ -473,6 +473,15 @@ def test_kernel_pca_solvers_equivalence(n_components):
     )
     # check that the result is still correct despite the approximation
     assert_array_almost_equal(np.abs(r_pred), np.abs(ref_pred))
+
+    # randomized_value
+    rv_pred = (
+        KernelPCA(n_components, eigen_solver="randomized_value", random_state=0)
+        .fit(X_fit)
+        .transform(X_pred)
+    )
+    # check that the result is still correct despite the approximation
+    assert_array_almost_equal(np.abs(rv_pred), np.abs(ref_pred))
 
 
 def test_kernel_pca_inverse_transform_reconstruction():

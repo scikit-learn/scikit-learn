@@ -263,7 +263,7 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         "kernel_params": [dict, None],
         "alpha": [Interval(Real, 0, None, closed="left")],
         "fit_inverse_transform": ["boolean"],
-        "eigen_solver": [StrOptions({"auto", "dense", "arpack", "randomized"})],
+        "eigen_solver": [StrOptions({"auto", "dense", "arpack", "randomized", "randomized_value"})],
         "tol": [Interval(Real, 0, None, closed="left")],
         "max_iter": [
             Interval(Integral, 1, None, closed="left"),
@@ -362,6 +362,14 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
                 n_iter=self.iterated_power,
                 random_state=self.random_state,
                 selection="module",
+            )
+        elif eigen_solver == "randomized_value":
+            self.eigenvalues_, self.eigenvectors_ = _randomized_eigsh(
+                K,
+                n_components=n_components,
+                n_iter=self.iterated_power,
+                random_state=self.random_state,
+                selection="value",
             )
 
         # make sure that the eigenvalues are ok and fix numerical issues
