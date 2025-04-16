@@ -500,6 +500,9 @@ def randomized_svd(
     >>> U.shape, s.shape, Vh.shape
     ((3, 2), (2,), (2, 4))
     """
+    xp, is_array_api_compliant = get_namespace(M)
+    M = check_array(M, accept_sparse=True)
+
     if sparse.issparse(M) and M.format in ("lil", "dok"):
         warnings.warn(
             "Calculating SVD of a {} is expensive. "
@@ -534,7 +537,6 @@ def randomized_svd(
     B = Q.T @ M
 
     # compute the SVD on the thin matrix: (k + p) wide
-    xp, is_array_api_compliant = get_namespace(B)
     if is_array_api_compliant:
         Uhat, s, Vt = xp.linalg.svd(B, full_matrices=False)
     else:
