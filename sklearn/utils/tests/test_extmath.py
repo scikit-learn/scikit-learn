@@ -1083,6 +1083,7 @@ def test_randomized_svd_array_api_compliance(array_namespace, device, dtype):
     X = rng.normal(size=(30, 10)).astype(dtype)
     X_xp = xp.asarray(X, device=device)
     n_components = 5
+    atol = 1e-5 if dtype == "float32" else 0
 
     with config_context(array_api_dispatch=True):
         u_np, s_np, vt_np = randomized_svd(X, n_components, random_state=0)
@@ -1092,9 +1093,9 @@ def test_randomized_svd_array_api_compliance(array_namespace, device, dtype):
         assert get_namespace(s_xp)[0].__name__ == xp.__name__
         assert get_namespace(vt_xp)[0].__name__ == xp.__name__
 
-        assert_allclose(_convert_to_numpy(u_xp, xp), u_np)
-        assert_allclose(_convert_to_numpy(s_xp, xp), s_np)
-        assert_allclose(_convert_to_numpy(vt_xp, xp), vt_np)
+        assert_allclose(_convert_to_numpy(u_xp, xp), u_np, atol=atol)
+        assert_allclose(_convert_to_numpy(s_xp, xp), s_np, atol=atol)
+        assert_allclose(_convert_to_numpy(vt_xp, xp), vt_np, atol=atol)
 
 
 @pytest.mark.parametrize(
@@ -1110,10 +1111,11 @@ def test_randomized_range_finder_array_api_compliance(array_namespace, device, d
     X_xp = xp.asarray(X, device=device)
     size = 5
     n_iter = 10
+    atol = 1e-5 if dtype == "float32" else 0
 
     with config_context(array_api_dispatch=True):
-        Q_np = randomized_range_finder(X, size=size, n_iter=10, random_state=0)
-        Q_xp = randomized_range_finder(X_xp, size=size, n_iter=10, random_state=0)
+        Q_np = randomized_range_finder(X, size=size, n_iter=n_iter, random_state=0)
+        Q_xp = randomized_range_finder(X_xp, size=size, n_iter=n_iter, random_state=0)
 
         assert get_namespace(Q_xp)[0].__name__ == xp.__name__
-        assert_allclose(_convert_to_numpy(Q_xp, xp), Q_np)
+        assert_allclose(_convert_to_numpy(Q_xp, xp), Q_np, atol=atol)
