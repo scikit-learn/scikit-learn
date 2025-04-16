@@ -15,7 +15,7 @@ import numpy as np
 from scipy import sparse as sp
 
 from ...utils._array_api import _max_precision_float_dtype, get_namespace_and_device
-from ...utils._param_validation import Interval, StrOptions, validate_params, Hidden
+from ...utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ...utils.multiclass import type_of_target
 from ...utils.validation import check_array, check_consistent_length
 from ._expected_mutual_info_fast import expected_mutual_information
@@ -1255,7 +1255,11 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse="deprecated"):
     """
     # TODO(1.9): remove the sparse parameter
     if sparse != "deprecated":
-        warnings.warn("The 'sparse' parameter was deprecated in 1.7 and will be removed in 1.9. It has no effect. Leave it to its default value to silence this warning.", FutureWarning)
+        warnings.warn(
+            "The 'sparse' parameter was deprecated in 1.7 and will be removed in 1.9. "
+            "It has no effect. Leave it to its default value to silence this warning.",
+            FutureWarning,
+        )
 
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     (n_samples,) = labels_true.shape
