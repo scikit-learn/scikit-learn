@@ -1351,8 +1351,7 @@ cdef class Tree:
         return y_props    
 
 
-    cdef float64_t[::1] _compute_ufi(self, object X_test, 
-        object y_test):
+    cdef float64_t[::1] _compute_ufi(self, object X_test, object y_test):
         
         cdef Node* nodes = self.nodes
         cdef Node node = nodes[0]
@@ -1389,10 +1388,61 @@ cdef class Tree:
 
         return importances
 
-    cdef float64_t[:] _compute_mdi_oob(self, object X_test, object y_test):
-        cdef cnp.float64_t[:] importances = np.zeros(self.n_features)
-        
-        #TO-DO
+    cdef float64_t _mixed_decrease_impurity(self, float64_t[:, :, ::1] y_props, intp_t node_idx):
+        cdef int k, c, offset = 0
+        cdef intp_t n_outputs = self.n_outputs
+        cdef intp_t max_n_classes = self.max_n_classes
+        cdef intp_t* n_classes = self.n_classes
+        cdef intp_t left_idx = self.nodes[node_idx].left_child
+        cdef intp_t right_idx = self.nodes[node_idx].right_child
+        cdef float64_t* value_at_node = self.value + node_idx * n_outputs * max_n_classes
+        cdef float64_t* value_at_left = self.value + left_idx * n_outputs * max_n_classes
+        cdef float64_t* value_at_right = self.value + right_idx * n_outputs * max_n_classes
+
+        cdef float64_t mixed_decrease_impurity = 0.0
+
+        offset = 0
+        for k in range(n_outputs):
+            for c in range(n_classes[k]):
+                mixed_decrease_impurity += (
+                    (value_at_node[offset + c] - value_at_left[offset + c])
+                    * (y_props[k, node_idx, c] - y_props[k, left_idx, c])
+                    * self.weighted_n_node_samples[left_idx]
+                    + (value_at_node[offset + c] - value_at_right[offset + c]) 
+                    * (y_props[k, node_idx, c] - y_props[k, right_idx, c])
+                    * self.weighted_n_node_samples[right_idx]
+                    )
+            offset += n_classes[k]
+        mixed_decrease_impurity /= n_outputs
+
+        return mixed_decrease_impurity
+
+    cdef float64_t[::1] _compute_mdi_oob(self, object X_test, object y_test):
+        cdef Node* nodes = self.nodes
+        cdef Node node = nodes[0]
+        cdef int node_idx = 0
+        cdef int left_idx = -1
+        cdef int right_idx = -1
+
+        cdef float64_t[::1] value_at_node
+        cdef float64_t[::1] importances = np.zeros(self.n_features)
+        cdef cnp.ndarray[cnp.npy_bool, ndim=1] has_oob_samples_in_children = np.ones(self.node_count, dtype=np.bool_)
+
+        decision_paths_oob = np.ascontiguousarray(
+            self.decision_path(X_test).todense(), dtype=np.float64
+        )
+        cdef float64_t[:, :, ::1] y_props = self._get_oob_proportions(y_test, decision_paths_oob, has_oob_samples_in_children)
+        cdef float64_t[::1] cross_impurities = self._cross_impurities(y_props)
+
+        while node_idx < self.node_count:
+            node = nodes[node_idx]
+            if (node.left_child != _TREE_LEAF) and (node.right_child != _TREE_LEAF):
+                if has_oob_samples_in_children[node_idx]:    
+                    importances[node.feature] += self._mixed_decrease_impurity(y_props, node_idx)
+            node_idx += 1
+
+        for i in range(self.n_features):
+            importances[i] /= nodes[0].weighted_n_node_samples
 
         return importances
         
