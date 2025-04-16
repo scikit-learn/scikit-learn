@@ -13,7 +13,14 @@ from sklearn import config_context
 from sklearn.datasets import make_low_rank_matrix, make_sparse_spd_matrix
 from sklearn.utils import gen_batches
 from sklearn.utils._arpack import _init_arpack_v0
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    _get_namespace_device_dtype_ids,
+    get_namespace,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     assert_allclose,
     assert_allclose_dense_sparse,
     assert_almost_equal,
@@ -46,13 +53,6 @@ from sklearn.utils.fixes import (
     LIL_CONTAINERS,
     _mode,
 )
-from sklearn.utils._array_api import (
-    _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
-    get_namespace,
-    yield_namespace_device_dtype_combinations,
-)
-from sklearn.utils._testing import _array_api_for_tests
 
 
 @pytest.mark.parametrize(
