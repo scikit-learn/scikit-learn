@@ -3166,29 +3166,6 @@ def test_classification_metric_division_by_zero_nan_validaton(scoring):
     cross_val_score(classifier, X, y, scoring=scoring, n_jobs=2, error_score="raise")
 
 
-# TODO(1.7): remove
-def test_brier_score_loss_deprecation_warning():
-    """Check the message for future deprecation."""
-    # Check brier_score_loss function
-    y_true = np.array([0, 1, 1, 0, 1, 1])
-    y_pred = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
-
-    warn_msg = "y_prob was deprecated in version 1.5"
-    with pytest.warns(FutureWarning, match=warn_msg):
-        brier_score_loss(
-            y_true,
-            y_prob=y_pred,
-        )
-
-    error_msg = "`y_prob` and `y_proba` cannot be both specified"
-    with pytest.raises(ValueError, match=error_msg):
-        brier_score_loss(
-            y_true,
-            y_prob=y_pred,
-            y_proba=y_pred,
-        )
-
-
 def test_d2_log_loss_score():
     y_true = [0, 0, 0, 1, 1, 1]
     y_true_string = ["no", "no", "no", "yes", "yes", "yes"]
@@ -3337,6 +3314,46 @@ def test_d2_log_loss_score():
     assert d2_score < 0
     d2_score = d2_log_loss_score(y_true, y_pred, sample_weight=sample_weight)
     assert d2_score < 0
+
+
+def test_d2_log_loss_score_missing_labels():
+    """Check that d2_log_loss_score works when not all labels are present in y_true
+
+    non-regression test for https://github.com/scikit-learn/scikit-learn/issues/30713
+    """
+    y_true = [2, 0, 2, 0]
+    labels = [0, 1, 2]
+    sample_weight = [1.4, 0.6, 0.7, 0.3]
+    y_pred = np.tile([1, 0, 0], (4, 1))
+
+    log_loss_obs = log_loss(y_true, y_pred, sample_weight=sample_weight, labels=labels)
+
+    # Null model consists of weighted average of the classes.
+    # Given that the sum of the weights is 3,
+    # - weighted average of 0s is (0.6 + 0.3) / 3 = 0.3
+    # - weighted average of 1s is 0
+    # - weighted average of 2s is (1.4 + 0.7) / 3 = 0.7
+    y_pred_null = np.tile([0.3, 0, 0.7], (4, 1))
+    log_loss_null = log_loss(
+        y_true, y_pred_null, sample_weight=sample_weight, labels=labels
+    )
+
+    expected_d2_score = 1 - log_loss_obs / log_loss_null
+    d2_score = d2_log_loss_score(
+        y_true, y_pred, sample_weight=sample_weight, labels=labels
+    )
+    assert_allclose(d2_score, expected_d2_score)
+
+
+def test_d2_log_loss_score_label_order():
+    """Check that d2_log_loss_score doesn't depend on the order of the labels."""
+    y_true = [2, 0, 2, 0]
+    y_pred = np.tile([1, 0, 0], (4, 1))
+
+    d2_score = d2_log_loss_score(y_true, y_pred, labels=[0, 1, 2])
+    d2_score_other = d2_log_loss_score(y_true, y_pred, labels=[0, 2, 1])
+
+    assert_allclose(d2_score, d2_score_other)
 
 
 def test_d2_log_loss_score_raises():
