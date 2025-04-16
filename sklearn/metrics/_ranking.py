@@ -315,9 +315,9 @@ def det_curve(
         Sample weights.
 
     drop_intermediate : bool, default=False
-        Whether to drop some suboptimal thresholds which would not appear on a
-        plotted detection-error tradeoff curve. This is useful in order to
-        create lighter detection-error tradeoff curves.
+        Whether to drop thresholds where true positives (tp) do not change from
+        the previous or subsequent threshold. This is useful in order to create
+        lighter detection-error tradeoff curves.
 
         .. versionadded:: 1.7
 
@@ -373,11 +373,12 @@ def det_curve(
     thresholds = np.concatenate(([np.inf], thresholds))
 
     if drop_intermediate and len(fps) > 2:
-        # Drop thresholds corresponding to points where true positives (tps)
-        # do not change from the previous or subsequent point. This will keep
-        # only the first and last point for each tps value. All points
-        # with the same tps value have the same recall and thus x coordinate.
-        # They appear as a vertical line on the plot.
+        # Drop thresholds where true positives (tp) do not change from the
+        # previous or subsequent threshold. As tp + fn, is fixed for a dataset,
+        # this means the false negative rate (fnr) remains constant while the
+        # false positive rate (fpr) changes, producing horizontal line segments
+        # in the transformed (normal deviate) scale. These intermediate points
+        # can be dropped to create lighter DET curve plots.
         optimal_idxs = np.where(
             np.concatenate(
                 [[True], np.logical_or(np.diff(tps[:-1]), np.diff(tps[1:])), [True]]
