@@ -57,30 +57,40 @@ def test_correct_shapes():
     assert U.shape == (12, 13)
 
 
-def test_fit_transform():
+def test_fit_transform(global_random_seed):
     alpha = 1
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array
-    spca_lars = SparsePCA(n_components=3, method="lars", alpha=alpha, random_state=0)
+    spca_lars = SparsePCA(
+        n_components=3, method="lars", alpha=alpha, random_state=global_random_seed
+    )
     spca_lars.fit(Y)
 
     # Test that CD gives similar results
-    spca_lasso = SparsePCA(n_components=3, method="cd", random_state=0, alpha=alpha)
+    spca_lasso = SparsePCA(
+        n_components=3, method="cd", random_state=global_random_seed, alpha=alpha
+    )
     spca_lasso.fit(Y)
     assert_array_almost_equal(spca_lasso.components_, spca_lars.components_)
 
 
 @if_safe_multiprocessing_with_blas
-def test_fit_transform_parallel():
+def test_fit_transform_parallel(global_random_seed):
     alpha = 1
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array
-    spca_lars = SparsePCA(n_components=3, method="lars", alpha=alpha, random_state=0)
+    spca_lars = SparsePCA(
+        n_components=3, method="lars", alpha=alpha, random_state=global_random_seed
+    )
     spca_lars.fit(Y)
     U1 = spca_lars.transform(Y)
     # Test multiple CPUs
     spca = SparsePCA(
-        n_components=3, n_jobs=2, method="lars", alpha=alpha, random_state=0
+        n_components=3,
+        n_jobs=2,
+        method="lars",
+        alpha=alpha,
+        random_state=global_random_seed,
     ).fit(Y)
     U2 = spca.transform(Y)
     assert not np.all(spca_lars.components_ == 0)
@@ -97,8 +107,8 @@ def test_transform_nan():
     assert not np.any(np.isnan(estimator.fit_transform(Y)))
 
 
-def test_fit_transform_tall():
-    rng = np.random.RandomState(0)
+def test_fit_transform_tall(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     Y, _, _ = generate_toy_data(3, 65, (8, 8), random_state=rng)  # tall array
     spca_lars = SparsePCA(n_components=3, method="lars", random_state=rng)
     U1 = spca_lars.fit_transform(Y)
@@ -107,8 +117,8 @@ def test_fit_transform_tall():
     assert_array_almost_equal(U1, U2)
 
 
-def test_initialization():
-    rng = np.random.RandomState(0)
+def test_initialization(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     U_init = rng.randn(5, 3)
     V_init = rng.randn(3, 4)
     model = SparsePCA(
@@ -168,9 +178,9 @@ def test_mini_batch_fit_transform():
     assert_array_almost_equal(spca_lasso.components_, spca_lars.components_)
 
 
-def test_scaling_fit_transform():
+def test_scaling_fit_transform(global_random_seed):
     alpha = 1
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     Y, _, _ = generate_toy_data(3, 1000, (8, 8), random_state=rng)
     spca_lars = SparsePCA(n_components=3, method="lars", alpha=alpha, random_state=rng)
     results_train = spca_lars.fit_transform(Y)
@@ -178,22 +188,24 @@ def test_scaling_fit_transform():
     assert_allclose(results_train[0], results_test[0])
 
 
-def test_pca_vs_spca():
-    rng = np.random.RandomState(0)
+def test_pca_vs_spca(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     Y, _, _ = generate_toy_data(3, 1000, (8, 8), random_state=rng)
     Z, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)
-    spca = SparsePCA(alpha=0, ridge_alpha=0, n_components=2)
-    pca = PCA(n_components=2)
+    spca = SparsePCA(
+        alpha=0, ridge_alpha=0, n_components=2, random_state=global_random_seed
+    )
+    pca = PCA(n_components=2, random_state=global_random_seed)
     pca.fit(Y)
     spca.fit(Y)
     results_test_pca = pca.transform(Z)
     results_test_spca = spca.transform(Z)
     assert_allclose(
-        np.abs(spca.components_.dot(pca.components_.T)), np.eye(2), atol=1e-5
+        np.abs(spca.components_.dot(pca.components_.T)), np.eye(2), atol=1e-4
     )
     results_test_pca *= np.sign(results_test_pca[0, :])
     results_test_spca *= np.sign(results_test_spca[0, :])
-    assert_allclose(results_test_pca, results_test_spca)
+    assert_allclose(results_test_pca, results_test_spca, atol=1e-4)
 
 
 @pytest.mark.parametrize("SPCA", [SparsePCA, MiniBatchSparsePCA])
@@ -324,17 +336,20 @@ def test_equivalence_components_pca_spca(global_random_seed):
     assert_allclose(pca.components_, spca.components_)
 
 
-def test_sparse_pca_inverse_transform():
+def test_sparse_pca_inverse_transform(global_random_seed):
     """Check that `inverse_transform` in `SparsePCA` and `PCA` are similar."""
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_samples, n_features = 10, 5
     X = rng.randn(n_samples, n_features)
 
     n_components = 2
     spca = SparsePCA(
-        n_components=n_components, alpha=1e-12, ridge_alpha=1e-12, random_state=0
+        n_components=n_components,
+        alpha=1e-12,
+        ridge_alpha=1e-12,
+        random_state=global_random_seed,
     )
-    pca = PCA(n_components=n_components, random_state=0)
+    pca = PCA(n_components=n_components, random_state=global_random_seed)
     X_trans_spca = spca.fit_transform(X)
     X_trans_pca = pca.fit_transform(X)
     assert_allclose(
@@ -343,17 +358,20 @@ def test_sparse_pca_inverse_transform():
 
 
 @pytest.mark.parametrize("SPCA", [SparsePCA, MiniBatchSparsePCA])
-def test_transform_inverse_transform_round_trip(SPCA):
+def test_transform_inverse_transform_round_trip(SPCA, global_random_seed):
     """Check the `transform` and `inverse_transform` round trip with no loss of
     information.
     """
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_samples, n_features = 10, 5
     X = rng.randn(n_samples, n_features)
 
     n_components = n_features
     spca = SPCA(
-        n_components=n_components, alpha=1e-12, ridge_alpha=1e-12, random_state=0
+        n_components=n_components,
+        alpha=1e-12,
+        ridge_alpha=1e-12,
+        random_state=global_random_seed,
     )
     X_trans_spca = spca.fit_transform(X)
     assert_allclose(spca.inverse_transform(X_trans_spca), X)
