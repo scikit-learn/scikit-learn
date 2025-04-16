@@ -325,7 +325,8 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
-            Used as probabilities to draw the samples.
+            Used as probabilities to draw the samples that are used to fit the 
+            sub-estimators.
 
             .. versionchanged:: 1.7
 
