@@ -75,7 +75,7 @@ def test_validate_and_get_response_values(pyplot, pos_label, name, response_meth
         (np.array([0, 2, 0, 2]), r"y_true takes value in \{0, 2\} and pos_label"),
     ],
 )
-def test_validate_from_predictions_params_errors(y_true, error_message):
+def test_validate_from_predictions_params_errors(pyplot, y_true, error_message):
     """Check `_validate_from_predictions_params` raises the correct errors."""
     y_pred = np.array([0.1, 0.2, 0.3, 0.4])
     sample_weight = np.ones(4)
@@ -97,7 +97,7 @@ def test_validate_from_predictions_params_errors(y_true, error_message):
         (2, np.array([0, 2, 0, 2])),
     ],
 )
-def test_validate_from_predictions_params_returns(name, pos_label, y_true):
+def test_validate_from_predictions_params_returns(pyplot, name, pos_label, y_true):
     """Check `_validate_from_predictions_params` returns the correct values."""
     y_pred = np.array([0.1, 0.2, 0.3, 0.4])
     pos_label_out, name_out = (
