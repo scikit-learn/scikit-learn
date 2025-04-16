@@ -35,7 +35,6 @@ Single and multi-output problems are both handled.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 import threading
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
