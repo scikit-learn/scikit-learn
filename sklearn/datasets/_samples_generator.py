@@ -78,6 +78,7 @@ def make_classification(
     shuffle=True,
     random_state=None,
     return_X_y=True,
+    missing_fraction=0.0,
 ):
     """Generate a random n-class classification problem.
 
@@ -171,6 +172,10 @@ def make_classification(
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
+
+    missing_fraction : float, default=0.0
+        Fraction of values in `X` to set as missing (np.nan).
+        Must be between 0.0 and 1.0.
 
     return_X_y : bool, default=True
         If True, a tuple ``(X, y)`` instead of a Bunch object is returned.
@@ -331,6 +336,12 @@ def make_classification(
         scale = 1 + 100 * generator.uniform(size=n_features)
     X *= scale
 
+    # Inject missing values if needed
+    if missing_fraction > 0.0:
+        n_missing = int(np.floor(missing_fraction * X.size))
+        missing_indices = generator.choice(X.size, size=n_missing, replace=False)
+        X.ravel()[missing_indices] = np.nan
+
     indices = np.arange(n_features)
     if shuffle:
         # Randomly permute samples
@@ -369,6 +380,7 @@ def make_classification(
         "scale": scale,
         "shuffle": shuffle,
         "random_state": random_state,
+        "missing_fraction": missing_fraction,
         "return_X_y": return_X_y,
     }
 
@@ -660,6 +672,7 @@ def make_regression(
     shuffle=True,
     coef=False,
     random_state=None,
+    missing_fraction=0.0,
 ):
     """Generate a random regression problem.
 

@@ -184,6 +184,20 @@ def test_make_classification_informative_features():
         make(n_features=2, n_informative=2, n_classes=3, n_clusters_per_class=2)
 
 
+def test_make_classification_missing_fraction():
+    missing_fraction = 0.1
+    X, y = make_classification(
+        n_samples=100, n_features=10, random_state=42, missing_fraction=missing_fraction
+    )
+
+    total_elements = X.size
+    n_missing_expected = int(np.floor(missing_fraction * total_elements))
+    n_missing_actual = np.isnan(X).sum()
+
+    # Allow a tiny difference due to floor rounding
+    assert abs(n_missing_actual - n_missing_expected) <= 1
+
+
 def test_make_classification_return_x_y():
     """
     Test that make_classification returns a Bunch when return_X_y is False.
@@ -207,6 +221,7 @@ def test_make_classification_return_x_y():
         "scale": 1.0,
         "shuffle": True,
         "random_state": 42,
+        "missing_fraction": 0.0,
         "return_X_y": True,
     }
 
