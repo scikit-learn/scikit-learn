@@ -404,6 +404,17 @@ def test_make_regression_multitarget():
     assert_almost_equal(np.std(y - np.dot(X, c)), 1.0, decimal=1)
 
 
+def test_make_regression_missing_fraction():
+    X, y = make_regression(
+        n_samples=100, n_features=10, missing_fraction=0.1, random_state=42
+    )
+    n_missing = np.isnan(X).sum()
+    expected_missing = int(0.1 * X.size)
+
+    assert abs(n_missing - expected_missing) <= 5  # allow small variance
+    assert not np.isnan(y).any()
+
+
 def test_make_blobs():
     cluster_stds = np.array([0.05, 0.2, 0.4])
     cluster_centers = np.array([[0.0, 0.0], [1.0, 1.0], [0.0, 1.0]])

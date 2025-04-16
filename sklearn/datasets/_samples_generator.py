@@ -735,6 +735,14 @@ def make_regression(
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+    missing_fraction : float, default=0.0
+        Fraction of values in `X` to be replaced with `np.nan`.
+        Must be between 0.0 and 1.0.
+        For example, `missing_fraction=0.1` will randomly
+        replace 10% of the values in `X`
+        with missing values.
+
+
     Returns
     -------
     X : ndarray of shape (n_samples, n_features)
@@ -801,6 +809,13 @@ def make_regression(
         ground_truth = ground_truth[indices]
 
     y = np.squeeze(y)
+
+    # Inject missing values into X if requested
+    if missing_fraction > 0.0:
+        total_entries = X.size
+        n_missing = int(missing_fraction * total_entries)
+        missing_idx = generator.choice(total_entries, n_missing, replace=False)
+        X.flat[missing_idx] = np.nan
 
     if coef:
         return X, y, np.squeeze(ground_truth)
