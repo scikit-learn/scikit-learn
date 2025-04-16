@@ -325,8 +325,9 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
-            Used as probabilities to draw the samples that are used to fit the 
-            sub-estimators.
+            Used as probabilities to draw the samples that are used to fit the
+            sub-estimators. It is strongly recommended to use bootstrap=True
+            (draw with replacement) for statistical soundness.
 
             .. versionchanged:: 1.7
 
@@ -365,6 +366,11 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=None)
+        if sample_weight is not None and not self.bootstrap:
+            warn(
+                f"When fitting {self.__class__.__name__} with sample_weight "
+                f"it is recommended to use bootstrap=True, got {self.bootstrap}."
+            )
 
         return self._fit(
             X,
@@ -715,7 +721,9 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
     bootstrap : bool, default=True
         Whether samples are drawn with replacement. If False, sampling
-        without replacement is performed.
+        without replacement is performed. When fitting with `sample_weight`
+        it is strongly recommended to use bootstrap=True for statistical
+        soundness.
 
     bootstrap_features : bool, default=False
         Whether features are drawn with replacement.
@@ -1223,7 +1231,9 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
     bootstrap : bool, default=True
         Whether samples are drawn with replacement. If False, sampling
-        without replacement is performed.
+        without replacement is performed. When fitting with `sample_weight`
+        it is strongly recommended to use bootstrap=True for statistical
+        soundness.
 
     bootstrap_features : bool, default=False
         Whether features are drawn with replacement.
