@@ -219,7 +219,7 @@ def randomized_range_finder(
 
     Parameters
     ----------
-    A : 2D array
+    A : {array-like, sparse matrix} of shape (n_samples, n_features)
         The input data matrix.
 
     size : int
@@ -246,9 +246,9 @@ def randomized_range_finder(
 
     Returns
     -------
-    Q : ndarray
-        A (size x size) projection matrix, the range of which
-        approximates well the range of the input matrix A.
+    Q : ndarray of shape (size, size)
+        A projection matrix, the range of which approximates well the range of the
+        input matrix A.
 
     Notes
     -----
@@ -273,8 +273,8 @@ def randomized_range_finder(
            [-0.52...,  0.24...],
            [-0.82..., -0.38...]])
     """
-    check_array(A, accept_sparse=True)
     xp, is_array_api_compliant = get_namespace(A)
+    A = check_array(A, accept_sparse=True)
     random_state = check_random_state(random_state)
 
     # Generating normal random vectors with shape: (A.shape[1], size)
@@ -345,7 +345,7 @@ def randomized_range_finder(
 
 @validate_params(
     {
-        "M": [np.ndarray, "sparse matrix"],
+        "M": ["array-like", "sparse matrix"],
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "n_oversamples": [Interval(Integral, 0, None, closed="left")],
         "n_iter": [Interval(Integral, 0, None, closed="left"), StrOptions({"auto"})],
@@ -382,7 +382,7 @@ def randomized_svd(
 
     Parameters
     ----------
-    M : {ndarray, sparse matrix}
+    M : {array-like, sparse matrix} of shape (n_samples, n_features)
         Matrix to decompose.
 
     n_components : int

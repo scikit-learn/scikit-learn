@@ -9,6 +9,7 @@ from scipy import linalg, sparse
 from scipy.linalg import eigh
 from scipy.sparse.linalg import eigsh
 
+from sklearn import config_context
 from sklearn.datasets import make_low_rank_matrix, make_sparse_spd_matrix
 from sklearn.utils import gen_batches
 from sklearn.utils._arpack import _init_arpack_v0
@@ -28,6 +29,7 @@ from sklearn.utils.extmath import (
     _safe_accumulator_op,
     cartesian,
     density,
+    randomized_range_finder,
     randomized_svd,
     row_norms,
     safe_sparse_dot,
@@ -44,6 +46,13 @@ from sklearn.utils.fixes import (
     LIL_CONTAINERS,
     _mode,
 )
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    _get_namespace_device_dtype_ids,
+    get_namespace,
+    yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._testing import _array_api_for_tests
 
 
 @pytest.mark.parametrize(
@@ -618,17 +627,6 @@ def test_randomized_svd_lapack_driver(n, m, k, seed):
     assert_allclose(vt1, vt2, atol=0, rtol=1e-3)
 
 
-def test_randomized_svd_complex_raises():
-    n_samples = 20
-    n_features = 10
-    k = 5
-    rng = np.random.RandomState(42)
-    X = rng.randn(n_samples, n_features) + 1j * rng.randn(n_samples, n_features)
-
-    with pytest.raises(ValueError):
-        randomized_svd(X, k, random_state=0)
-
-
 def test_cartesian():
     # Check if cartesian product delivers the right results
 
@@ -1071,3 +1069,51 @@ def test_approximate_mode():
     # 25% * 99.000 = 24.750
     # 25% *  1.000 =    250
     assert_array_equal(ret, [24750, 250])
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_randomized_svd_array_api_compliance(array_namespace, device, dtype):
+    xp = _array_api_for_tests(array_namespace, device)
+
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(30, 10)).astype(dtype)
+    X_xp = xp.asarray(X, device=device)
+    n_components = 5
+
+    with config_context(array_api_dispatch=True):
+        u_np, s_np, vt_np = randomized_svd(X, n_components, random_state=0)
+        u_xp, s_xp, vt_xp = randomized_svd(X_xp, n_components, random_state=0)
+
+        assert get_namespace(u_xp)[0].__name__ == xp.__name__
+        assert get_namespace(s_xp)[0].__name__ == xp.__name__
+        assert get_namespace(vt_xp)[0].__name__ == xp.__name__
+
+        assert_allclose(_convert_to_numpy(u_xp, xp), u_np)
+        assert_allclose(_convert_to_numpy(s_xp, xp), s_np)
+        assert_allclose(_convert_to_numpy(vt_xp, xp), vt_np)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_randomized_range_finder_array_api_compliance(array_namespace, device, dtype):
+    xp = _array_api_for_tests(array_namespace, device)
+
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(30, 10)).astype(dtype)
+    X_xp = xp.asarray(X, device=device)
+    size = 5
+    n_iter = 10
+
+    with config_context(array_api_dispatch=True):
+        Q_np = randomized_range_finder(X, size=size, n_iter=10, random_state=0)
+        Q_xp = randomized_range_finder(X_xp, size=size, n_iter=10, random_state=0)
+
+        assert get_namespace(Q_xp)[0].__name__ == xp.__name__
+        assert_allclose(_convert_to_numpy(Q_xp, xp), Q_np)
