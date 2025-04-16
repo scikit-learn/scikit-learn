@@ -304,16 +304,16 @@ def test_lda_explained_variance_ratio():
     clf_lda_eigen = LinearDiscriminantAnalysis(solver="eigen")
     clf_lda_eigen.fit(X, y)
     assert_almost_equal(clf_lda_eigen.explained_variance_ratio_.sum(), 1.0, 3)
-    assert clf_lda_eigen.explained_variance_ratio_.shape == (
-        2,
-    ), "Unexpected length for explained_variance_ratio_"
+    assert clf_lda_eigen.explained_variance_ratio_.shape == (2,), (
+        "Unexpected length for explained_variance_ratio_"
+    )
 
     clf_lda_svd = LinearDiscriminantAnalysis(solver="svd")
     clf_lda_svd.fit(X, y)
     assert_almost_equal(clf_lda_svd.explained_variance_ratio_.sum(), 1.0, 3)
-    assert clf_lda_svd.explained_variance_ratio_.shape == (
-        2,
-    ), "Unexpected length for explained_variance_ratio_"
+    assert clf_lda_svd.explained_variance_ratio_.shape == (2,), (
+        "Unexpected length for explained_variance_ratio_"
+    )
 
     assert_array_almost_equal(
         clf_lda_svd.explained_variance_ratio_, clf_lda_eigen.explained_variance_ratio_

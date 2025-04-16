@@ -961,8 +961,7 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     HalvingGridSearchCV: {
         "check_fit2d_1sample": (
-            "Fail during parameter check since min/max resources requires"
-            " more samples"
+            "Fail during parameter check since min/max resources requires more samples"
         ),
         "check_estimators_nan_inf": "FIXME",
         "check_classifiers_one_label_sample_weights": "FIXME",
@@ -972,8 +971,7 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     HalvingRandomSearchCV: {
         "check_fit2d_1sample": (
-            "Fail during parameter check since min/max resources requires"
-            " more samples"
+            "Fail during parameter check since min/max resources requires more samples"
         ),
         "check_estimators_nan_inf": "FIXME",
         "check_classifiers_one_label_sample_weights": "FIXME",
