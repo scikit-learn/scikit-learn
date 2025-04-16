@@ -47,10 +47,11 @@ def dummy_function(x, y):
 def test_write_label_html(checked):
     # Test checking logic and labeling
     name = "LogisticRegression"
+    params = ""
     tool_tip = "hello-world"
 
     with closing(StringIO()) as out:
-        _write_label_html(out, name, tool_tip, checked=checked)
+        _write_label_html(out, params, name, tool_tip, checked=checked)
         html_label = out.getvalue()
 
         p = (
@@ -60,9 +61,10 @@ def test_write_label_html(checked):
         )
         re_compiled = re.compile(p)
         assert re_compiled.search(html_label)
-
+        breakpoint()
         assert html_label.startswith('<div class="sk-label-container">')
         assert "<pre>hello-world</pre>" in html_label
+
         if checked:
             assert "checked>" in html_label
 
