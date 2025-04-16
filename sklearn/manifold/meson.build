@@ -7,7 +7,7 @@ py.extension_module(
 
 py.extension_module(
   '_barnes_hut_tsne',
-  cython_gen.process(  '_barnes_hut_tsne.pyx'),
+  cython_gen.process('_barnes_hut_tsne.pyx'),
   dependencies: [np_dep, openmp_dep],
   subdir: 'sklearn/manifold',
   install: true
