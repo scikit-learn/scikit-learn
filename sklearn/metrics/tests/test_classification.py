@@ -3316,6 +3316,46 @@ def test_d2_log_loss_score():
     assert d2_score < 0
 
 
+def test_d2_log_loss_score_missing_labels():
+    """Check that d2_log_loss_score works when not all labels are present in y_true
+
+    non-regression test for https://github.com/scikit-learn/scikit-learn/issues/30713
+    """
+    y_true = [2, 0, 2, 0]
+    labels = [0, 1, 2]
+    sample_weight = [1.4, 0.6, 0.7, 0.3]
+    y_pred = np.tile([1, 0, 0], (4, 1))
+
+    log_loss_obs = log_loss(y_true, y_pred, sample_weight=sample_weight, labels=labels)
+
+    # Null model consists of weighted average of the classes.
+    # Given that the sum of the weights is 3,
+    # - weighted average of 0s is (0.6 + 0.3) / 3 = 0.3
+    # - weighted average of 1s is 0
+    # - weighted average of 2s is (1.4 + 0.7) / 3 = 0.7
+    y_pred_null = np.tile([0.3, 0, 0.7], (4, 1))
+    log_loss_null = log_loss(
+        y_true, y_pred_null, sample_weight=sample_weight, labels=labels
+    )
+
+    expected_d2_score = 1 - log_loss_obs / log_loss_null
+    d2_score = d2_log_loss_score(
+        y_true, y_pred, sample_weight=sample_weight, labels=labels
+    )
+    assert_allclose(d2_score, expected_d2_score)
+
+
+def test_d2_log_loss_score_label_order():
+    """Check that d2_log_loss_score doesn't depend on the order of the labels."""
+    y_true = [2, 0, 2, 0]
+    y_pred = np.tile([1, 0, 0], (4, 1))
+
+    d2_score = d2_log_loss_score(y_true, y_pred, labels=[0, 1, 2])
+    d2_score_other = d2_log_loss_score(y_true, y_pred, labels=[0, 2, 1])
+
+    assert_allclose(d2_score, d2_score_other)
+
+
 def test_d2_log_loss_score_raises():
     """Test that d2_log_loss_score raises the appropriate errors on
     invalid inputs."""
