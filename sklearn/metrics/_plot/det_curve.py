@@ -117,8 +117,8 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         drop_intermediate : bool, default=True
             Whether to drop thresholds where true positives (tp) do not change
-            from the previous or subsequent threshold. This is useful in order
-            to create lighter detection-error tradeoff curves.
+            from the previous or subsequent threshold. All points with the same
+            tp value have the same `fnr` and thus same y coordinate.
 
         response_method : {'predict_proba', 'decision_function', 'auto'} \
                 default='auto'
@@ -224,8 +224,8 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         drop_intermediate : bool, default=True
             Whether to drop thresholds where true positives (tp) do not change
-            from the previous or subsequent threshold. This is useful in order
-            to create lighter detection-error tradeoff curves.
+            from the previous or subsequent threshold. All points with the same
+            tp value have the same `fnr` and thus same y coordinate.
 
         pos_label : int, float, bool or str, default=None
             The label of the positive class. When `pos_label=None`, if `y_true`

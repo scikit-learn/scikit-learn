@@ -316,8 +316,8 @@ def det_curve(
 
     drop_intermediate : bool, default=False
         Whether to drop thresholds where true positives (tp) do not change from
-        the previous or subsequent threshold. This is useful in order to create
-        lighter detection-error tradeoff curves.
+        the previous or subsequent threshold. All points with the same tp value
+        have the same `fnr` and thus same y coordinate.
 
         .. versionadded:: 1.7
 
