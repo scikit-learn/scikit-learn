@@ -219,7 +219,7 @@ def randomized_range_finder(
 
     Parameters
     ----------
-    A : 2D array
+    A : {array-like, sparse matrix} of shape (n_samples, n_features)
         The input data matrix.
 
     size : int
@@ -246,9 +246,9 @@ def randomized_range_finder(
 
     Returns
     -------
-    Q : ndarray
-        A (size x size) projection matrix, the range of which
-        approximates well the range of the input matrix A.
+    Q : ndarray of shape (size, size)
+        A projection matrix, the range of which approximates well the range of the
+        input matrix A.
 
     Notes
     -----
@@ -273,6 +273,21 @@ def randomized_range_finder(
            [-0.52...,  0.24...],
            [-0.82..., -0.38...]])
     """
+    A = check_array(A, accept_sparse=True)
+
+    return _randomized_range_finder(
+        A,
+        size=size,
+        n_iter=n_iter,
+        power_iteration_normalizer=power_iteration_normalizer,
+        random_state=random_state,
+    )
+
+
+def _randomized_range_finder(
+    A, *, size, n_iter, power_iteration_normalizer="auto", random_state=None
+):
+    """Body of randomized_range_finder without input validation."""
     xp, is_array_api_compliant = get_namespace(A)
     random_state = check_random_state(random_state)
 
@@ -344,7 +359,7 @@ def randomized_range_finder(
 
 @validate_params(
     {
-        "M": [np.ndarray, "sparse matrix"],
+        "M": ["array-like", "sparse matrix"],
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "n_oversamples": [Interval(Integral, 0, None, closed="left")],
         "n_iter": [Interval(Integral, 0, None, closed="left"), StrOptions({"auto"})],
@@ -381,7 +396,7 @@ def randomized_svd(
 
     Parameters
     ----------
-    M : {ndarray, sparse matrix}
+    M : {array-like, sparse matrix} of shape (n_samples, n_features)
         Matrix to decompose.
 
     n_components : int
@@ -499,6 +514,35 @@ def randomized_svd(
     >>> U.shape, s.shape, Vh.shape
     ((3, 2), (2,), (2, 4))
     """
+    M = check_array(M, accept_sparse=True)
+    return _randomized_svd(
+        M,
+        n_components=n_components,
+        n_oversamples=n_oversamples,
+        n_iter=n_iter,
+        power_iteration_normalizer=power_iteration_normalizer,
+        transpose=transpose,
+        flip_sign=flip_sign,
+        random_state=random_state,
+        svd_lapack_driver=svd_lapack_driver,
+    )
+
+
+def _randomized_svd(
+    M,
+    n_components,
+    *,
+    n_oversamples=10,
+    n_iter="auto",
+    power_iteration_normalizer="auto",
+    transpose="auto",
+    flip_sign=True,
+    random_state=None,
+    svd_lapack_driver="gesdd",
+):
+    """Body of randomized_svd without input validation."""
+    xp, is_array_api_compliant = get_namespace(M)
+
     if sparse.issparse(M) and M.format in ("lil", "dok"):
         warnings.warn(
             "Calculating SVD of a {} is expensive. "
@@ -521,7 +565,7 @@ def randomized_svd(
         # this implementation is a bit faster with smaller shape[1]
         M = M.T
 
-    Q = randomized_range_finder(
+    Q = _randomized_range_finder(
         M,
         size=n_random,
         n_iter=n_iter,
@@ -533,7 +577,6 @@ def randomized_svd(
     B = Q.T @ M
 
     # compute the SVD on the thin matrix: (k + p) wide
-    xp, is_array_api_compliant = get_namespace(B)
     if is_array_api_compliant:
         Uhat, s, Vt = xp.linalg.svd(B, full_matrices=False)
     else:

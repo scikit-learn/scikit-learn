@@ -3690,8 +3690,19 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
     # Proportion of labels in the dataset
     weights = _check_sample_weight(sample_weight, y_true)
 
-    _, y_value_indices = np.unique(y_true, return_inverse=True)
-    counts = np.bincount(y_value_indices, weights=weights)
+    # If labels is passed, augment y_true to ensure that all labels are represented
+    # Use 0 weight for the new samples to not affect the counts
+    y_true_, weights_ = (
+        (
+            np.concatenate([y_true, labels]),
+            np.concatenate([weights, np.zeros_like(weights, shape=len(labels))]),
+        )
+        if labels is not None
+        else (y_true, weights)
+    )
+
+    _, y_value_indices = np.unique(y_true_, return_inverse=True)
+    counts = np.bincount(y_value_indices, weights=weights_)
     y_prob = counts / weights.sum()
     y_pred_null = np.tile(y_prob, (len(y_true), 1))
 
