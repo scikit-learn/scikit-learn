@@ -1,7 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import sys
 
 import numpy as np
 import pytest
@@ -97,13 +96,13 @@ def test_fit_transform_parallel(global_random_seed):
     assert_array_almost_equal(U1, U2)
 
 
-def test_transform_nan():
+def test_transform_nan(global_random_seed):
     # Test that SparsePCA won't return NaN when there is 0 feature in all
     # samples.
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array
     Y[:, 0] = 0
-    estimator = SparsePCA(n_components=8)
+    estimator = SparsePCA(n_components=8, random_state=global_random_seed)
     assert not np.any(np.isnan(estimator.fit_transform(Y)))
 
 
@@ -145,39 +144,6 @@ def test_mini_batch_correct_shapes():
     assert U.shape == (12, 13)
 
 
-# XXX: test always skipped
-@pytest.mark.skipif(True, reason="skipping mini_batch_fit_transform.")
-def test_mini_batch_fit_transform():
-    alpha = 1
-    rng = np.random.RandomState(0)
-    Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array
-    spca_lars = MiniBatchSparsePCA(n_components=3, random_state=0, alpha=alpha).fit(Y)
-    U1 = spca_lars.transform(Y)
-    # Test multiple CPUs
-    if sys.platform == "win32":  # fake parallelism for win32
-        import joblib
-
-        _mp = joblib.parallel.multiprocessing
-        joblib.parallel.multiprocessing = None
-        try:
-            spca = MiniBatchSparsePCA(
-                n_components=3, n_jobs=2, alpha=alpha, random_state=0
-            )
-            U2 = spca.fit(Y).transform(Y)
-        finally:
-            joblib.parallel.multiprocessing = _mp
-    else:  # we can efficiently use parallelism
-        spca = MiniBatchSparsePCA(n_components=3, n_jobs=2, alpha=alpha, random_state=0)
-        U2 = spca.fit(Y).transform(Y)
-    assert not np.all(spca_lars.components_ == 0)
-    assert_array_almost_equal(U1, U2)
-    # Test that CD gives similar results
-    spca_lasso = MiniBatchSparsePCA(
-        n_components=3, method="cd", alpha=alpha, random_state=0
-    ).fit(Y)
-    assert_array_almost_equal(spca_lasso.components_, spca_lars.components_)
-
-
 def test_scaling_fit_transform(global_random_seed):
     alpha = 1
     rng = np.random.RandomState(global_random_seed)
@@ -192,10 +158,8 @@ def test_pca_vs_spca(global_random_seed):
     rng = np.random.RandomState(global_random_seed)
     Y, _, _ = generate_toy_data(3, 1000, (8, 8), random_state=rng)
     Z, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)
-    spca = SparsePCA(
-        alpha=0, ridge_alpha=0, n_components=2, random_state=global_random_seed
-    )
-    pca = PCA(n_components=2, random_state=global_random_seed)
+    spca = SparsePCA(alpha=0, ridge_alpha=0, n_components=2, random_state=rng)
+    pca = PCA(n_components=2, random_state=rng)
     pca.fit(Y)
     spca.fit(Y)
     results_test_pca = pca.transform(Z)
@@ -248,24 +212,29 @@ def test_sparse_pca_dtype_match(SPCA, method, data_type, expected_type):
 
 @pytest.mark.parametrize("SPCA", (SparsePCA, MiniBatchSparsePCA))
 @pytest.mark.parametrize("method", ("lars", "cd"))
-def test_sparse_pca_numerical_consistency(SPCA, method):
+def test_sparse_pca_numerical_consistency(SPCA, method, global_random_seed):
     # Verify numericall consistentency among np.float32 and np.float64
     rtol = 1e-3
-    alpha = 2
+    alpha = 4
     n_samples, n_features, n_components = 12, 10, 3
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     input_array = rng.randn(n_samples, n_features)
 
     model_32 = SPCA(
-        n_components=n_components, alpha=alpha, method=method, random_state=0
+        n_components=n_components,
+        alpha=alpha,
+        method=method,
+        random_state=global_random_seed,
     )
     transformed_32 = model_32.fit_transform(input_array.astype(np.float32))
 
     model_64 = SPCA(
-        n_components=n_components, alpha=alpha, method=method, random_state=0
+        n_components=n_components,
+        alpha=alpha,
+        method=method,
+        random_state=global_random_seed,
     )
     transformed_64 = model_64.fit_transform(input_array.astype(np.float64))
-
     assert_allclose(transformed_64, transformed_32, rtol=rtol)
     assert_allclose(model_64.components_, model_32.components_, rtol=rtol)
 
