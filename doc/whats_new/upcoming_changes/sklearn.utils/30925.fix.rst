@@ -1,0 +1,2 @@
+-  The output of :func:`StandardScaler()._get_tags()["stateless"]` is now default `False`. 
+   By :user:`Emily Chen <EmilyXinyi>`.
