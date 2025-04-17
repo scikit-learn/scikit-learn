@@ -811,7 +811,7 @@ def make_regression(
 
     y = np.squeeze(y)
 
-    # Inject missing values into X if requested
+    # Inject missing values if needed
     if missing_fraction > 0.0:
         total_entries = X.size
         n_missing = int(missing_fraction * total_entries)
