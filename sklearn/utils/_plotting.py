@@ -78,8 +78,6 @@ class _BinaryClassifierCurveDisplayMixin:
         *,
         sample_weight,
         pos_label,
-        # name,
-        # curve_kwargs,
     ):
         check_matplotlib_support(f"{cls.__name__}.from_cv_results")
 
@@ -116,37 +114,7 @@ class _BinaryClassifierCurveDisplayMixin:
             # Adapt error message
             raise ValueError(str(e).replace("y_true", "y"))
 
-        # n_curves = len(cv_results["estimator"])
-        # # NB: Both these also checked in `plot`, but thought it best to fail earlier.
-        # cls._validate_multi_curve_kwargs(cls, curve_kwargs, name, n_curves)
-        # if isinstance(name, list) and len(name) not in (1, n_curves):
-        #     raise ValueError(
-        #         f"`name` must be None, a list of length {n_curves} or a single "
-        #         f"string. Got list of length: {len(name)}."
-        #     )
-
         return pos_label
-
-    # def _validate_multi_curve_kwargs(cls, curve_kwargs, name, n_curves):
-    #     """Check `curve_kwargs`, including combination with `name`, is valid."""
-    #     if isinstance(curve_kwargs, list) and len(curve_kwargs) != n_curves:
-    #         raise ValueError(
-    #             f"`curve_kwargs` must be None, a dictionary or a list of length "
-    #             f"{n_curves}. Got: {curve_kwargs}."
-    #         )
-
-    #     # Ensure valid `name` and `curve_kwargs` combination.
-    #     if (
-    #         isinstance(name, list)
-    #         and len(name) != 1
-    #         and not isinstance(curve_kwargs, list)
-    #     ):
-    #         raise ValueError(
-    #             "To avoid labeling individual curves that have the same appearance, "
-    #             f"`curve_kwargs` should be a list of {n_curves} dictionaries. "
-    #             "Alternatively, set `name` to `None` or a single string to label "
-    #             "a single legend entry with mean ROC AUC score of all curves."
-    #         )
 
     @staticmethod
     def _get_legend_label(curve_legend_metric, curve_name, legend_metric_name):
