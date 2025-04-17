@@ -690,12 +690,12 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         return self.tree_.compute_feature_importances()
 
-    def compute_unbiased_feature_importance(
+    def compute_unbiased_feature_importance_and_oob_predictions(
         self, X_test, y_test, method="ufi"
     ):
         check_is_fitted(self)
-        return self.tree_.compute_unbiased_feature_importance(
-            X_test=X_test, y_test=y_test, method=method
+        return self.tree_.compute_unbiased_feature_importance_and_oob_predictions(
+            X_test, y_test, method=method
         )
 
     def __sklearn_tags__(self):
