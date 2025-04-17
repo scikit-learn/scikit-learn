@@ -13,7 +13,6 @@ from libcpp.algorithm cimport pop_heap
 from libcpp.algorithm cimport push_heap
 from libcpp.stack cimport stack
 from libcpp cimport bool
-from libc.stdio cimport printf
 
 import struct
 
