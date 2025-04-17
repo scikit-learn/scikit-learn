@@ -61,7 +61,6 @@ def test_write_label_html(checked):
         )
         re_compiled = re.compile(p)
         assert re_compiled.search(html_label)
-        breakpoint()
         assert html_label.startswith('<div class="sk-label-container">')
         assert "<pre>hello-world</pre>" in html_label
 
