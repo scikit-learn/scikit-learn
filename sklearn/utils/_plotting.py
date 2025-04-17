@@ -103,8 +103,7 @@ class _BinaryClassifierCurveDisplayMixin:
 
         if type_of_target(y) != "binary":
             raise ValueError(
-                f"The target `y` is not binary. Got {type_of_target(y)} type of"
-                " target."
+                f"The target `y` is not binary. Got {type_of_target(y)} type of target."
             )
         check_consistent_length(X, y, sample_weight)
 
