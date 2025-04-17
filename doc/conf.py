@@ -943,10 +943,6 @@ linkcheck_ignore = [
     "consistently-create-same-random-numpy-array/5837352#comment6712034_5837352",
 ]
 
-# Config for sphinx-remove-toctrees
-
-remove_from_toctrees = ["metadata_routing.rst"]
-
 # Use a browser-like user agent to avoid some "403 Client Error: Forbidden for
 # url" errors. This is taken from the variable navigator.userAgent inside a
 # browser console.
