@@ -211,8 +211,13 @@ def _write_label_html(
             f'type="checkbox" {checked_str}>{label_html}<div '
             f'class="sk-toggleable__content {is_fitted_css_class}" '
             f'data-param-prefix="{param_prefix}">'
-            f"{params}</div>"
         )
+
+        if name_details and not params:
+            if "Pipeline" not in name:
+                fmt_str += f"{name_details}"
+
+        fmt_str += f"{params}</div>"
         out.write(fmt_str)
     else:
         out.write(f"<label>{name}</label>")
