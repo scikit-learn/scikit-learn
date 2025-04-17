@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
 
+from sklearn.datasets import make_low_rank_matrix
 from sklearn.decomposition import PCA, MiniBatchSparsePCA, SparsePCA
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import (
@@ -214,29 +215,31 @@ def test_sparse_pca_dtype_match(SPCA, method, data_type, expected_type):
 @pytest.mark.parametrize("method", ("lars", "cd"))
 def test_sparse_pca_numerical_consistency(SPCA, method, global_random_seed):
     # Verify numericall consistentency among np.float32 and np.float64
-    rtol = 1e-3
-    alpha = 4
-    n_samples, n_features, n_components = 12, 10, 3
-    rng = np.random.RandomState(global_random_seed)
-    input_array = rng.randn(n_samples, n_features)
+    n_samples, n_features, n_components = 20, 20, 5
+    input_array = make_low_rank_matrix(
+        n_samples=n_samples,
+        n_features=n_features,
+        effective_rank=n_components,
+        random_state=global_random_seed,
+    )
 
     model_32 = SPCA(
         n_components=n_components,
-        alpha=alpha,
         method=method,
         random_state=global_random_seed,
+        verbose=100,
     )
     transformed_32 = model_32.fit_transform(input_array.astype(np.float32))
 
     model_64 = SPCA(
         n_components=n_components,
-        alpha=alpha,
         method=method,
         random_state=global_random_seed,
+        verbose=100,
     )
     transformed_64 = model_64.fit_transform(input_array.astype(np.float64))
-    assert_allclose(transformed_64, transformed_32, rtol=rtol)
-    assert_allclose(model_64.components_, model_32.components_, rtol=rtol)
+    assert_allclose(transformed_64, transformed_32)
+    assert_allclose(model_64.components_, model_32.components_)
 
 
 @pytest.mark.parametrize("SPCA", [SparsePCA, MiniBatchSparsePCA])
