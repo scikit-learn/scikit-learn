@@ -338,9 +338,10 @@ def make_classification(
 
     # Inject missing values if needed
     if missing_fraction > 0.0:
-        n_missing = int(np.floor(missing_fraction * X.size))
-        missing_indices = generator.choice(X.size, size=n_missing, replace=False)
-        X.ravel()[missing_indices] = np.nan
+        total_entries = X.size
+        n_missing = int(missing_fraction * total_entries)
+        missing_idx = generator.choice(total_entries, n_missing, replace=False)
+        X.flat[missing_idx] = np.nan
 
     indices = np.arange(n_features)
     if shuffle:
