@@ -227,7 +227,6 @@ def test_sparse_pca_numerical_consistency(SPCA, method, global_random_seed):
         n_components=n_components,
         method=method,
         random_state=global_random_seed,
-        verbose=100,
     )
     transformed_32 = model_32.fit_transform(input_array.astype(np.float32))
 
@@ -235,7 +234,6 @@ def test_sparse_pca_numerical_consistency(SPCA, method, global_random_seed):
         n_components=n_components,
         method=method,
         random_state=global_random_seed,
-        verbose=100,
     )
     transformed_64 = model_64.fit_transform(input_array.astype(np.float64))
     assert_allclose(transformed_64, transformed_32)
