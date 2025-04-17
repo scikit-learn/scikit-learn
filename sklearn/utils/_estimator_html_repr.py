@@ -213,10 +213,10 @@ def _write_label_html(
             f'data-param-prefix="{param_prefix}">'
         )
 
-        if name_details and not params and "Pipeline" not in name:
-            fmt_str += f"<pre>{name_details}</pre>"
-
-        fmt_str += f"{params}</div>"
+        if params:
+            fmt_str += f"{params}</div>"
+        elif name_details and ("Pipeline" not in name):
+            fmt_str += f"<pre>{name_details}</pre></div>"
 
         out.write(fmt_str)
     else:
