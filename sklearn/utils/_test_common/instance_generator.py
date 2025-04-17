@@ -961,8 +961,7 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     HalvingGridSearchCV: {
         "check_fit2d_1sample": (
-            "Fail during parameter check since min/max resources requires"
-            " more samples"
+            "Fail during parameter check since min/max resources requires more samples"
         ),
         "check_estimators_nan_inf": "FIXME",
         "check_classifiers_one_label_sample_weights": "FIXME",
@@ -972,8 +971,7 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     HalvingRandomSearchCV: {
         "check_fit2d_1sample": (
-            "Fail during parameter check since min/max resources requires"
-            " more samples"
+            "Fail during parameter check since min/max resources requires more samples"
         ),
         "check_estimators_nan_inf": "FIXME",
         "check_classifiers_one_label_sample_weights": "FIXME",
@@ -1284,7 +1282,13 @@ def _get_expected_failed_checks(estimator):
                 }
             )
     if type(estimator) == LinearRegression:
-        if _IS_32BIT:
+        # TODO: remove when scipy min version >= 1.16
+        # Regression introduced in scipy 1.15 and fixed in 1.16, see
+        # https://github.com/scipy/scipy/issues/22791
+        if (
+            parse_version("1.15.0") <= sp_base_version < parse_version("1.16")
+            and _IS_32BIT
+        ):
             failed_checks.update(
                 {
                     "check_sample_weight_equivalence_on_dense_data": (

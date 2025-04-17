@@ -35,7 +35,6 @@ from ..utils.random import sample_without_replacement
 from ..utils.validation import (
     _check_method_params,
     _check_sample_weight,
-    _deprecate_positional_args,
     check_is_fitted,
     has_fit_parameter,
     validate_data,
@@ -319,11 +318,7 @@ class RANSACRegressor(
         # RansacRegressor.estimator is not validated yet
         prefer_skip_nested_validation=False
     )
-    # TODO(1.7): remove `sample_weight` from the signature after deprecation
-    # cycle; for backwards compatibility: pop it from `fit_params` before the
-    # `_raise_for_params` check and reinsert it after the check
-    @_deprecate_positional_args(version="1.7")
-    def fit(self, X, y, *, sample_weight=None, **fit_params):
+    def fit(self, X, y, sample_weight=None, **fit_params):
         """Fit estimator using RANSAC algorithm.
 
         Parameters

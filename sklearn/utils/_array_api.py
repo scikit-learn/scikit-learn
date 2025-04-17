@@ -854,7 +854,7 @@ def _searchsorted(a, v, *, side="left", sorter=None, xp=None):
     # Temporary workaround needed as long as searchsorted is not widely
     # adopted by implementers of the Array API spec. This is a quite
     # recent addition to the spec:
-    # https://data-apis.org/array-api/latest/API_specification/generated/array_api.searchsorted.html # noqa
+    # https://data-apis.org/array-api/latest/API_specification/generated/array_api.searchsorted.html
     xp, _ = get_namespace(a, v, xp=xp)
     if hasattr(xp, "searchsorted"):
         return xp.searchsorted(a, v, side=side, sorter=sorter)

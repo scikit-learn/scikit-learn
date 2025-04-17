@@ -565,7 +565,6 @@ def test_old_tags():
     assert _to_new_tags(_to_old_tags(new_tags), estimator=estimator) == new_tags
 
     class MyClass:
-
         def fit(self, X, y=None):
             return self  # pragma: no cover
 

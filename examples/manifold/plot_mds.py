@@ -89,7 +89,7 @@ plt.scatter(X_nmds[:, 0], X_nmds[:, 1], color="darkorange", s=s, lw=0, label="NM
 plt.legend(scatterpoints=1, loc="best", shadow=False)
 
 # Plot the edges
-start_idx, end_idx = np.where(X_mds)
+start_idx, end_idx = X_mds.nonzero()
 # a sequence of (*line0*, *line1*, *line2*), where::
 #            linen = (x0, y0), (x1, y1), ... (xm, ym)
 segments = [
