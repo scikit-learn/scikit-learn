@@ -327,7 +327,9 @@ def _write_estimator_html(
         out.write(f'<div class="sk-item{dash_cls}">')
 
         if estimator_label:
-            if hasattr(estimator, "get_params"):
+            if hasattr(estimator, "get_params") and hasattr(
+                estimator, "_get_params_html"
+            ):
 
                 params = estimator._get_params_html(deep=False)._repr_html_inner()
             else:
@@ -385,8 +387,10 @@ def _write_estimator_html(
 
         out.write("</div></div>")
     elif est_block.kind == "single":
-
-        params = estimator._get_params_html()._repr_html_inner()
+        if hasattr(estimator, "_get_params_html"):
+            params = estimator._get_params_html()._repr_html_inner()
+        else:
+            params = ""
 
         _write_label_html(
             out,
