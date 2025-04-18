@@ -205,7 +205,7 @@ H = nmf.components_
 X_reconstructed = W @ H
 
 print(
-    f"relative reconstruction error: ",
+    "relative reconstruction error: ",
     f"{np.sum((X - X_reconstructed) ** 2) / np.sum(X**2):.5f}",
 )
 
