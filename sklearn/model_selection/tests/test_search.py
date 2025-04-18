@@ -2891,7 +2891,7 @@ ordinal_encoder = OrdinalEncoder()
 
 # If we construct this directly via `MaskedArray`, the list of tuples
 # gets auto-converted to a 2D array.
-ma_with_tuples = np.ma.MaskedArray(np.empty(2), mask=True, dtype=object)
+ma_with_tuples = np.ma.MaskedArray(np.empty(2), mask=True, dtype=object)  # type: ignore[var-annotated]
 ma_with_tuples[0] = (1, 2)
 ma_with_tuples[1] = (3, 4)
 

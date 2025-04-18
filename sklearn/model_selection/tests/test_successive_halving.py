@@ -39,10 +39,7 @@ class FastClassifier(DummyClassifier):
     # update the constraints such that we accept all parameters from a to z
     _parameter_constraints: dict = {
         **DummyClassifier._parameter_constraints,
-        **{
-            chr(key): "no_validation"  # type: ignore
-            for key in range(ord("a"), ord("z") + 1)
-        },
+        **{chr(key): "no_validation" for key in range(ord("a"), ord("z") + 1)},
     }
 
     def __init__(

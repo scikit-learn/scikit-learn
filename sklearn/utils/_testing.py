@@ -1306,9 +1306,9 @@ def _array_api_for_tests(array_namespace, device):
 def _get_warnings_filters_info_list():
     @dataclass
     class WarningInfo:
-        action: "warnings._ActionKind"
-        message: str = ""
-        category: type[Warning] = Warning
+        action: "warnings._ActionKind"  # type: ignore[annotation-unchecked]
+        message: str = ""  # type: ignore[annotation-unchecked]
+        category: type[Warning] = Warning  # type: ignore[annotation-unchecked]
 
         def to_filterwarning_str(self):
             if self.category.__module__ == "builtins":

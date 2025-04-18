@@ -182,7 +182,7 @@ else:
 if np_version >= parse_version("1.25.0"):
     from numpy.exceptions import ComplexWarning, VisibleDeprecationWarning
 else:
-    from numpy import ComplexWarning, VisibleDeprecationWarning  # type: ignore  # noqa: F401
+    from numpy import ComplexWarning, VisibleDeprecationWarning  # noqa: F401
 
 
 # TODO: Adapt when Pandas > 2.2 is the minimum supported version
@@ -318,9 +318,9 @@ def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=Fals
 
 # TODO: Remove when Scipy 1.12 is the minimum supported version
 if sp_version < parse_version("1.12"):
-    from ..externals._scipy.sparse.csgraph import laplacian  # type: ignore
+    from ..externals._scipy.sparse.csgraph import laplacian
 else:
-    from scipy.sparse.csgraph import laplacian  # type: ignore  # noqa: F401  # pragma: no cover
+    from scipy.sparse.csgraph import laplacian  # noqa: F401  # pragma: no cover
 
 
 def _in_unstable_openblas_configuration():
