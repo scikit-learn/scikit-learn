@@ -20,7 +20,7 @@ from ..exceptions import ConvergenceWarning
 from ..model_selection import check_cv
 
 # mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
-from ..utils import (  # type: ignore
+from ..utils import (
     Bunch,
     arrayfuncs,
     as_float_array,

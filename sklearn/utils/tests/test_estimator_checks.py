@@ -663,7 +663,7 @@ def test_check_dict_unchanged():
 def test_check_sample_weights_pandas_series():
     # check that sample_weights in fit accepts pandas.Series type
     try:
-        from pandas import Series  # noqa
+        from pandas import Series  # noqa: F401
 
         msg = (
             "Estimator NoSampleWeightPandasSeriesType raises error if "

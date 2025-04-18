@@ -1349,4 +1349,4 @@ DEPRECATED_API_REFERENCE = {
 }
 """
 
-DEPRECATED_API_REFERENCE = {}  # type: ignore
+DEPRECATED_API_REFERENCE = {}  # type: ignore[var-annotated]

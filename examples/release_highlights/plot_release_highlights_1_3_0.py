@@ -1,4 +1,4 @@
-# ruff: noqa
+# ruff: noqa: CPY001
 """
 =======================================
 Release Highlights for scikit-learn 1.3
@@ -50,6 +50,7 @@ or with conda::
 # making it more robust to parameter selection than :class:`cluster.DBSCAN`.
 # More details in the :ref:`User Guide <hdbscan>`.
 import numpy as np
+
 from sklearn.cluster import HDBSCAN
 from sklearn.datasets import load_digits
 from sklearn.metrics import v_measure_score
@@ -71,6 +72,7 @@ print(v_measure_score(true_labels[hdbscan.labels_ != -1], non_noisy_labels))
 # estimate of the average target values for observations belonging to that category.
 # More details in the :ref:`User Guide <target_encoder>`.
 import numpy as np
+
 from sklearn.preprocessing import TargetEncoder
 
 X = np.array([["cat"] * 30 + ["dog"] * 20 + ["snake"] * 38], dtype=object).T
@@ -92,6 +94,7 @@ enc.encodings_
 # :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py` for a usecase
 # example of this feature in :class:`~ensemble.HistGradientBoostingRegressor`.
 import numpy as np
+
 from sklearn.tree import DecisionTreeClassifier
 
 X = np.array([0, 1, 6, np.nan]).reshape(-1, 1)
@@ -128,9 +131,10 @@ _ = ValidationCurveDisplay.from_estimator(
 # Gamma deviance loss function via `loss="gamma"`. This loss function is useful for
 # modeling strictly positive targets with a right-skewed distribution.
 import numpy as np
-from sklearn.model_selection import cross_val_score
+
 from sklearn.datasets import make_low_rank_matrix
 from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.model_selection import cross_val_score
 
 n_samples, n_features = 500, 10
 rng = np.random.RandomState(0)
@@ -148,8 +152,9 @@ cross_val_score(gbdt, X, y).mean()
 # into a single output for each feature. The parameters to enable the gathering of
 # infrequent categories are `min_frequency` and `max_categories`.
 # See the :ref:`User Guide <encoder_infrequent_categories>` for more details.
-from sklearn.preprocessing import OrdinalEncoder
 import numpy as np
+
+from sklearn.preprocessing import OrdinalEncoder
 
 X = np.array(
     [["dog"] * 5 + ["cat"] * 20 + ["rabbit"] * 10 + ["snake"] * 3], dtype=object

@@ -85,7 +85,7 @@ GROUP_SPLITTERS = [
 ]
 GROUP_SPLITTER_NAMES = set(splitter.__class__.__name__ for splitter in GROUP_SPLITTERS)
 
-ALL_SPLITTERS = NO_GROUP_SPLITTERS + GROUP_SPLITTERS  # type: ignore
+ALL_SPLITTERS = NO_GROUP_SPLITTERS + GROUP_SPLITTERS  # type: ignore[list-item]
 
 SPLITTERS_REQUIRING_TARGET = [
     StratifiedKFold(),

@@ -41,7 +41,7 @@ from ..utils.validation import (
 )
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
-from . import _cd_fast as cd_fast  # type: ignore
+from . import _cd_fast as cd_fast  # type: ignore[attr-defined]
 from ._base import LinearModel, _pre_fit, _preprocess_data
 
 

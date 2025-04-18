@@ -19,7 +19,7 @@ from ..ensemble._hist_gradient_boosting.gradient_boosting import (
 from ..tree import DecisionTreeRegressor
 from ..utils import Bunch, _safe_indexing, check_array
 from ..utils._indexing import _determine_key_type, _get_column_indices, _safe_assign
-from ..utils._optional_dependencies import check_matplotlib_support  # noqa
+from ..utils._optional_dependencies import check_matplotlib_support  # noqa: F401
 from ..utils._param_validation import (
     HasMethods,
     Integral,

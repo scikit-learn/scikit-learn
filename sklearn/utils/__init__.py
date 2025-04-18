@@ -15,7 +15,7 @@ from ._estimator_html_repr import estimator_html_repr
 # _safe_indexing was included in our public API documentation despite the leading
 # `_` in its name.
 from ._indexing import (
-    _safe_indexing,  # noqa
+    _safe_indexing,  # noqa: F401
     resample,
     shuffle,
 )

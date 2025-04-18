@@ -6,7 +6,7 @@ from scipy.stats import expon, norm, randint
 
 from sklearn.datasets import make_classification
 from sklearn.dummy import DummyClassifier
-from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 from sklearn.model_selection import (
     GroupKFold,
     GroupShuffleSplit,
@@ -39,10 +39,7 @@ class FastClassifier(DummyClassifier):
     # update the constraints such that we accept all parameters from a to z
     _parameter_constraints: dict = {
         **DummyClassifier._parameter_constraints,
-        **{
-            chr(key): "no_validation"  # type: ignore
-            for key in range(ord("a"), ord("z") + 1)
-        },
+        **{chr(key): "no_validation" for key in range(ord("a"), ord("z") + 1)},
     }
 
     def __init__(

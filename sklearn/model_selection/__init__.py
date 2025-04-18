@@ -44,7 +44,7 @@ from ._validation import (
 if typing.TYPE_CHECKING:
     # Avoid errors in type checkers (e.g. mypy) for experimental estimators.
     # TODO: remove this check once the estimator is no longer experimental.
-    from ._search_successive_halving import (  # noqa
+    from ._search_successive_halving import (  # noqa: F401
         HalvingGridSearchCV,
         HalvingRandomSearchCV,
     )

@@ -175,7 +175,7 @@ Y_COMMON_PARAMS = [
 ]
 # y_pred and y_true do not always have the same domain (valid value range).
 # Hence, we define extra sets of parameters for each of them.
-Y_TRUE_PARAMS = [  # type: ignore
+Y_TRUE_PARAMS = [  # type: ignore[var-annotated]
     # (loss, [y success], [y fail])
     (HalfPoissonLoss(), [0], []),
     (HuberLoss(), [0], []),

@@ -73,7 +73,7 @@ def test_no___sklearn_tags__with_more_tags():
 def test_tag_test_passes_with_inheritance():
     @dataclass
     class MyTags(Tags):
-        my_tag: bool = True
+        my_tag: bool = True  # type: ignore[annotation-unchecked]
 
     class MyEstimator(BaseEstimator):
         def __sklearn_tags__(self):

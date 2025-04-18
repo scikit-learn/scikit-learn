@@ -532,7 +532,7 @@ def estimator_checks_generator(
     if mark == "xfail":
         import pytest
     else:
-        pytest = None  # type: ignore
+        pytest = None  # type: ignore[assignment]
 
     name = type(estimator).__name__
     # First check that the estimator is cloneable which is needed for the rest
