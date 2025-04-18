@@ -505,8 +505,9 @@ def test_spline_transformer_handles_missing_values(extrapolation, sparse_output)
     We only test for knots="uniform", since for "quantile" the metrics are calculated
     differently with nans present and a different result is thus expected.
     """
-    X_nan = np.array([[1, 1], [2, 2], [3, 3], [np.nan, 5], [4, 4]])
-    X = np.array([[1, 1], [2, 2], [3, 3], [4, 5], [4, 4]])
+    X = np.array([[1, 1], [2, 2], [3, 3], [4, 5], [4, 4]], dtype=np.float64)
+    X_nan = X.copy()
+    X_nan[3, 0] = np.nan
 
     # Check correct error message for handle_missing="error":
     msg = "X contains missing values (np.nan) and SplineTransformer is configured with"
@@ -586,14 +587,7 @@ def test_spline_transformer_handles_all_nans(extrapolation, sparse_output):
         extrapolation=extrapolation,
         sparse_output=sparse_output,
     )
-
-    # Note that for sparse_output=True, we can only transform, but not fit a
-    # SplineTransformer on whole columns of nans, because spl.t would be calculated as
-    # an array of nans and thus BSpline.design_matrix() would raise:
-    if sparse_output:
-        spline.fit(X)
-    else:
-        spline.fit(X_nan_full_column)
+    spline.fit(X_nan_full_column)
 
     all_missing_column_encoded = spline.transform(X_nan_full_column)
     nan_mask = _get_mask(X_nan_full_column, np.nan)
