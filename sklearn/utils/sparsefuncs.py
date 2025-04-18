@@ -3,6 +3,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import itertools
+
 import numpy as np
 import scipy.sparse as sp
 from scipy.sparse.linalg import LinearOperator
@@ -704,7 +706,7 @@ def csc_median_axis_0(X):
     n_samples, n_features = X.shape
     median = np.zeros(n_features)
 
-    for f_ind, (start, end) in enumerate(zip(indptr[:-1], indptr[1:])):
+    for f_ind, (start, end) in enumerate(itertools.pairwise(indptr)):
         # Prevent modifying X in place
         data = np.copy(X.data[start:end])
         nz = n_samples - data.size

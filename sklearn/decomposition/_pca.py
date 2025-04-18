@@ -3,21 +3,20 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from math import log, sqrt
+from math import lgamma, log, sqrt
 from numbers import Integral, Real
 
 import numpy as np
 from scipy import linalg
 from scipy.sparse import issparse
 from scipy.sparse.linalg import svds
-from scipy.special import gammaln
 
 from ..base import _fit_context
 from ..utils import check_random_state
 from ..utils._arpack import _init_arpack_v0
 from ..utils._array_api import _convert_to_numpy, get_namespace
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
-from ..utils.extmath import fast_logdet, randomized_svd, stable_cumsum, svd_flip
+from ..utils.extmath import _randomized_svd, fast_logdet, stable_cumsum, svd_flip
 from ..utils.sparsefuncs import _implicit_column_offset, mean_variance_axis
 from ..utils.validation import check_is_fitted, validate_data
 from ._base import _BasePCA
@@ -71,8 +70,7 @@ def _assess_dimension(spectrum, rank, n_samples):
     pu = -rank * log(2.0)
     for i in range(1, rank + 1):
         pu += (
-            gammaln((n_features - i + 1) / 2.0)
-            - log(xp.pi) * (n_features - i + 1) / 2.0
+            lgamma((n_features - i + 1) / 2.0) - log(xp.pi) * (n_features - i + 1) / 2.0
         )
 
     pl = xp.sum(xp.log(spectrum[:rank]))
@@ -756,7 +754,7 @@ class PCA(_BasePCA):
 
         elif svd_solver == "randomized":
             # sign flipping is done inside
-            U, S, Vt = randomized_svd(
+            U, S, Vt = _randomized_svd(
                 X_centered,
                 n_components=n_components,
                 n_oversamples=self.n_oversamples,

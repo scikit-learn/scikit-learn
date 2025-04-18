@@ -34,7 +34,10 @@ from sklearn.utils import (
     check_X_y,
     deprecated,
 )
-from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
+from sklearn.utils._array_api import (
+    _get_namespace_device_dtype_ids,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._mocking import (
     MockDataFrame,
     _MockEstimatorOnOffPrediction,
@@ -57,7 +60,6 @@ from sklearn.utils.fixes import (
     CSR_CONTAINERS,
     DIA_CONTAINERS,
     DOK_CONTAINERS,
-    parse_version,
 )
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
@@ -150,7 +152,9 @@ def test_as_float_array():
         assert not np.isnan(M).any()
 
 
-@pytest.mark.parametrize("X", [(np.random.random((10, 2))), (sp.rand(10, 2).tocsr())])
+@pytest.mark.parametrize(
+    "X", [np.random.random((10, 2)), sp.random(10, 2, format="csr")]
+)
 def test_as_float_array_nan(X):
     X[5, 0] = np.nan
     X[6, 1] = np.nan
@@ -696,7 +700,7 @@ def test_check_array_accept_sparse_no_exception():
 
 @pytest.fixture(params=["csr", "csc", "coo", "bsr"])
 def X_64bit(request):
-    X = sp.rand(20, 10, format=request.param)
+    X = sp.random(20, 10, format=request.param)
 
     if request.param == "coo":
         if hasattr(X, "coords"):
@@ -734,7 +738,7 @@ def test_check_array_accept_large_sparse_raise_exception(X_64bit):
 
 def test_check_array_min_samples_and_features_messages():
     # empty list is considered 2D by default:
-    msg = r"0 feature\(s\) \(shape=\(1, 0\)\) while a minimum of 1 is" " required."
+    msg = r"0 feature\(s\) \(shape=\(1, 0\)\) while a minimum of 1 is required."
     with pytest.raises(ValueError, match=msg):
         check_array([[]])
 
@@ -757,7 +761,7 @@ def test_check_array_min_samples_and_features_messages():
     # Simulate a model that would need at least 2 samples to be well defined
     X = np.ones((1, 10))
     y = np.ones(1)
-    msg = r"1 sample\(s\) \(shape=\(1, 10\)\) while a minimum of 2 is" " required."
+    msg = r"1 sample\(s\) \(shape=\(1, 10\)\) while a minimum of 2 is required."
     with pytest.raises(ValueError, match=msg):
         check_X_y(X, y, ensure_min_samples=2)
 
@@ -770,7 +774,7 @@ def test_check_array_min_samples_and_features_messages():
     # with k=3)
     X = np.ones((10, 2))
     y = np.ones(2)
-    msg = r"2 feature\(s\) \(shape=\(10, 2\)\) while a minimum of 3 is" " required."
+    msg = r"2 feature\(s\) \(shape=\(10, 2\)\) while a minimum of 3 is required."
     with pytest.raises(ValueError, match=msg):
         check_X_y(X, y, ensure_min_features=3)
 
@@ -783,7 +787,7 @@ def test_check_array_min_samples_and_features_messages():
     # 2D dataset.
     X = np.empty(0).reshape(10, 0)
     y = np.ones(10)
-    msg = r"0 feature\(s\) \(shape=\(10, 0\)\) while a minimum of 1 is" " required."
+    msg = r"0 feature\(s\) \(shape=\(10, 0\)\) while a minimum of 1 is required."
     with pytest.raises(ValueError, match=msg):
         check_X_y(X, y)
 
@@ -848,9 +852,9 @@ def test_has_fit_parameter():
         def fit(self, X, y, sample_weight=None):
             pass
 
-    assert has_fit_parameter(
-        TestClassWithDeprecatedFitMethod, "sample_weight"
-    ), "has_fit_parameter fails for class with deprecated fit method."
+    assert has_fit_parameter(TestClassWithDeprecatedFitMethod, "sample_weight"), (
+        "has_fit_parameter fails for class with deprecated fit method."
+    )
 
 
 def test_check_symmetric():
@@ -1029,7 +1033,9 @@ def test_check_consistent_length():
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, _", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, _",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 def test_check_consistent_length_array_api(array_namespace, device, _):
     """Test that check_consistent_length works with different array types."""
@@ -1098,11 +1104,7 @@ def test_check_dataframe_mixed_float_dtypes(dtype, bool_dtype):
     # this situation
     # https://github.com/scikit-learn/scikit-learn/issues/15787
 
-    if bool_dtype == "boolean":
-        # boolean extension arrays was introduced in 1.0
-        pd = importorskip("pandas", minversion="1.0")
-    else:
-        pd = importorskip("pandas")
+    pd = importorskip("pandas")
 
     df = pd.DataFrame(
         {
@@ -1142,7 +1144,7 @@ def test_check_dataframe_with_only_bool():
 
 def test_check_dataframe_with_only_boolean():
     """Check that dataframe with boolean return a float array with dtype=None"""
-    pd = importorskip("pandas", minversion="1.0")
+    pd = importorskip("pandas")
     df = pd.DataFrame({"bool": pd.Series([True, False, True], dtype="boolean")})
 
     array = check_array(df, dtype=None)
@@ -1778,11 +1780,9 @@ def test_check_sparse_pandas_sp_format(sp_format):
         ("uint8", "int8"),
     ],
 )
-def test_check_pandas_sparse_invalid(ntype1, ntype2):
-    """check that we raise an error with dataframe having
-    sparse extension arrays with unsupported mixed dtype
-    and pandas version below 1.1. pandas versions 1.1 and
-    above fixed this issue so no error will be raised."""
+def test_check_pandas_sparse_mixed_dtypes(ntype1, ntype2):
+    """Check that pandas dataframes having sparse extension arrays with mixed dtypes
+    works."""
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame(
         {
@@ -1790,15 +1790,7 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
             "col2": pd.arrays.SparseArray([1, 0, 1], dtype=ntype2, fill_value=0),
         }
     )
-
-    if parse_version(pd.__version__) < parse_version("1.1"):
-        err_msg = "Pandas DataFrame with mixed sparse extension arrays"
-        with pytest.raises(ValueError, match=err_msg):
-            check_array(df, accept_sparse=["csr", "csc"])
-    else:
-        # pandas fixed this issue at 1.1 so from here on,
-        # no error will be raised.
-        check_array(df, accept_sparse=["csr", "csc"])
+    check_array(df, accept_sparse=["csr", "csc"])
 
 
 @pytest.mark.parametrize(
