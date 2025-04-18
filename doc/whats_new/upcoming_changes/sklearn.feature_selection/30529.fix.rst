@@ -1,0 +1,7 @@
+- , :class:`impute.IterativeImputer`, :class:`feature_selection.RFE`,
+  :class:`feature_selection.RFECV`, :class:`feature_selection.SelectFromModel`, and
+  :class:`feature_selection.SequentialFeatureSelector` now properly route metadata when
+  used inside a Pipeline object. Prior to this fix, when sample_weight was provided in
+  the Pipeline's `**fit_params`, the `sample_weight` was not being routed to the feature
+  selector's estimator. In certain cases, this would result in incorrect feature
+  selection. By :user:`Kyle Schluns <kschluns>`
