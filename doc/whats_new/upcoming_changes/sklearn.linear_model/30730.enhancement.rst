@@ -1,3 +1,3 @@
-- :class:`linear_model.BaseSGD` accepts `None` as a value for `l1_ratio`
-  when `penalty` is not `elasticnet`.
-  By :user:`Marc Bresson <MarcBresson>` :pr:`30730`
+- :class:`linear_model.SGDClassifier` and :class:`linear_model.SGDRegressor` now accept
+  `l1_ratio=None` when `penalty` is not `"elasticnet"`.
+  By :user:`Marc Bresson <MarcBresson>`.

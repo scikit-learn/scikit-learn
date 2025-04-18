@@ -163,6 +163,8 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
 
     def _get_l1_ratio(self):
         if self.l1_ratio is None:
+            # plain_sgd expects a float. Any value is fine since at this point
+            # penalty can't be "elsaticnet" so l1_ratio is not used.
             return 0.0
         return self.l1_ratio
 
@@ -1003,6 +1005,9 @@ class SGDClassifier(BaseSGDClassifier):
         Values must be in the range `[0.0, 1.0]` or can be `None` if
         `penalty` is not `elasticnet`.
 
+        .. versionchanged:: 1.7
+            `l1_ratio` can be `None` when `penalty` is not "elasticnet".
+
     fit_intercept : bool, default=True
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered.
@@ -1806,6 +1811,9 @@ class SGDRegressor(BaseSGDRegressor):
         Only used if `penalty` is 'elasticnet'.
         Values must be in the range `[0.0, 1.0]` or can be `None` if
         `penalty` is not `elasticnet`.
+
+        .. versionchanged:: 1.7
+            `l1_ratio` can be `None` when `penalty` is not "elasticnet".
 
     fit_intercept : bool, default=True
         Whether the intercept should be estimated or not. If False, the

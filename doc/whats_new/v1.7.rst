@@ -13,6 +13,7 @@ Version 1.7
   For a short description of the main highlights of the release, please refer to
   :ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_6_0.py`.
 
+
 ..
   DELETE WHEN 1.7.0 IS RELEASED
   Since October 2024, DO NOT add your changelog entry in this file.

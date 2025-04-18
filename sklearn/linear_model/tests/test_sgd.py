@@ -476,7 +476,9 @@ def test_n_iter_no_change(klass):
         assert_array_equal(n_iter_list, sorted(n_iter_list))
 
 
-@pytest.mark.parametrize("klass", [SGDClassifier, SGDRegressor])
+@pytest.mark.parametrize(
+    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
+)
 def test_not_enough_sample_for_early_stopping(klass):
     # test an error is raised if the training or validation set is empty
     clf = klass(early_stopping=True, validation_fraction=0.99)
@@ -484,38 +486,24 @@ def test_not_enough_sample_for_early_stopping(klass):
         clf.fit(X3, Y3)
 
 
-@pytest.mark.parametrize("klass", [SGDClassifier, SGDRegressor])
-@pytest.mark.parametrize(
-    "kwargs",
-    [
-        {"penalty": "elasticnet", "l1_ratio": 0.5},
-        {"penalty": "l1", "l1_ratio": None},
-    ],
-)
-def test_sgd_passing_validation(klass, kwargs):
-    clf = klass(**kwargs)
-    clf.fit(X, Y)
+@pytest.mark.parametrize("Estimator", [SGDClassifier, SGDRegressor])
+@pytest.mark.parametrize("l1_ratio", [0, 0.7, 1])
+def test_sgd_l1_ratio_not_used(Estimator, l1_ratio):
+    """Check that l1_ratio is not used when penalty is not 'elasticnet'"""
+    clf1 = Estimator(penalty="l1", l1_ratio=None, random_state=0).fit(X, Y)
+    clf2 = Estimator(penalty="l1", l1_ratio=l1_ratio, random_state=0).fit(X, Y)
+
+    assert_allclose(clf1.coef_, clf2.coef_)
 
 
 @pytest.mark.parametrize(
-    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
+    "Estimator", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
 )
-@pytest.mark.parametrize(
-    "kwargs, err_msg",
-    [
-        (
-            {"l1_ratio": 1.1},
-            r"must be a float in the range \[0.0, 1.0\] or None. Got 1.1 instead.",
-        ),
-        (
-            {"penalty": "elasticnet", "l1_ratio": None},
-            "l1_ratio must be set when penalty is 'elasticnet'",
-        ),
-    ],
-)
-def test_sgd_failing_validation(klass, kwargs, err_msg):
-    clf = klass(**kwargs)
-    with pytest.raises(ValueError, match=err_msg):
+def test_sgd_failing_penalty_validation(Estimator):
+    clf = Estimator(penalty="elasticnet", l1_ratio=None)
+    with pytest.raises(
+        ValueError, match="l1_ratio must be set when penalty is 'elasticnet'"
+    ):
         clf.fit(X, Y)
 
 
