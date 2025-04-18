@@ -1271,9 +1271,14 @@ def test_init_gradient_and_hessian_raises(loss, params, err_msg):
             PinballLoss,
             {"quantile": 0},
             ValueError,
-            "quantile == 0, must be > 0.",
+            r"quantile == 0, must be in the range \(0, 1\).",
         ),
-        (PinballLoss, {"quantile": 1.1}, ValueError, "quantile == 1.1, must be < 1."),
+        (
+            PinballLoss,
+            {"quantile": 1.1},
+            ValueError,
+            r"quantile == 1.1, must be in the range \(0, 1\).",
+        ),
         (
             HuberLoss,
             {"quantile": None},
@@ -1284,9 +1289,14 @@ def test_init_gradient_and_hessian_raises(loss, params, err_msg):
             HuberLoss,
             {"quantile": 0},
             ValueError,
-            "quantile == 0, must be > 0.",
+            r"quantile == 0, must be in the range \(0, 1\).",
         ),
-        (HuberLoss, {"quantile": 1.1}, ValueError, "quantile == 1.1, must be < 1."),
+        (
+            HuberLoss,
+            {"quantile": 1.1},
+            ValueError,
+            r"quantile == 1.1, must be in the range \(0, 1\).",
+        ),
     ],
 )
 def test_loss_init_parameter_validation(loss, params, err_type, err_msg):
