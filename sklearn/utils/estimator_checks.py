@@ -889,7 +889,6 @@ def check_estimator(
                 # as xfail.
                 check_result["status"] = "xfail"
             else:
-                failed = True
                 check_result["status"] = "failed"
 
             if on_fail == "warn":
