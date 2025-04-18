@@ -2216,11 +2216,8 @@ def binarize(X, *, threshold=0.0, copy=True):
         X.eliminate_zeros()
     else:
         xp, _, device = get_namespace_and_device(X)
-        threshold = xp.asarray(threshold, device=device)
-        if xp.isdtype(X.dtype, ("signed integer", "unsigned integer")):
-            cond = xp.astype(X, _max_precision_float_dtype(xp, device)) > threshold
-        else:
-            cond = X > threshold
+        float_dtype = _find_matching_floating_dtype(X, threshold, xp=xp)
+        cond = xp.astype(X, float_dtype, copy=False) > threshold
         not_cond = xp.logical_not(cond)
         X[cond] = 1
         X[not_cond] = 0
