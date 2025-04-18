@@ -1120,7 +1120,7 @@ class Pipeline(_BaseComposition):
 
         Returns
         -------
-        Xt : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Inverse transformed data, that is, data in the original feature
             space.
         """

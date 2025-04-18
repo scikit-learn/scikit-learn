@@ -325,7 +325,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X_out : array-like, shape (n_samples, n_features)
+        X_original : array-like, shape (n_samples, n_features)
             Transformed input.
         """
         if self.validate:

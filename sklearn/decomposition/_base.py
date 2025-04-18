@@ -177,7 +177,7 @@ class _BasePCA(
 
         Returns
         -------
-        X_original array-like of shape (n_samples, n_features)
+        X_original : array-like of shape (n_samples, n_features)
             Original data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
