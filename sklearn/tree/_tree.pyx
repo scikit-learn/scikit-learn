@@ -1368,7 +1368,7 @@ cdef class Tree:
         cdef float64_t* value_at_right = self.value + right_idx * n_outputs * max_n_classes
 
         cdef intp_t[:, ::1] y_view = np.ascontiguousarray(y_test, dtype=np.intp)
-        self._compute_cross_impurities_and_oob_predictions(X_test, y_view, oob_pred, has_oob_sample, oob_node_values, compute_cross_impurities = int(method=="ufi"))
+        self._compute_cross_impurities_and_oob_predictions(X_test, y_view, oob_pred, has_oob_sample, oob_node_values)
 
         with nogil:
             for node_idx in range(self.node_count):

@@ -77,8 +77,8 @@ cdef class Tree:
 
     cpdef compute_node_depths(self)
     cpdef compute_feature_importances(self, normalize=*)
-    
-    cdef void _compute_cross_impurities_and_oob_predictions(self, object X_test, intp_t[:, ::1] y_test, float64_t[::1] cross_impurities, float64_t[:,:,::1] oob_pred, int32_t[::1] has_oob_sample, float64_t[:,:,::1] oob_node_values, int compute_cross_impurities)
+
+    cdef void _compute_cross_impurities_and_oob_predictions(self, object X_test, intp_t[:, ::1] y_test, float64_t[:,:,::1] oob_pred, int32_t[::1] has_oob_sample, float64_t[:,:,::1] oob_node_values)
     cpdef compute_unbiased_feature_importance_and_oob_predictions(self, object X_test, object y_test, method=*)
 
 # =============================================================================
