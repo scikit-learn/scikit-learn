@@ -269,7 +269,7 @@ how to set up your git repository:
 
    .. prompt:: bash
 
-        pip install pytest pytest-cov ruff mypy numpydoc black==24.3.0
+        pip install pytest pytest-cov ruff==0.11.2 mypy numpydoc
 
 .. _upstream:
 
@@ -282,14 +282,20 @@ how to set up your git repository:
         git remote add upstream git@github.com:scikit-learn/scikit-learn.git
 
 7. Check that the `upstream` and `origin` remote aliases are configured correctly
-   by running `git remote -v` which should display:
+   by running:
+
+   .. prompt:: bash
+
+        git remote -v
+
+   This should display:
 
    .. code-block:: text
 
-        origin	git@github.com:YourLogin/scikit-learn.git (fetch)
-        origin	git@github.com:YourLogin/scikit-learn.git (push)
-        upstream	git@github.com:scikit-learn/scikit-learn.git (fetch)
-        upstream	git@github.com:scikit-learn/scikit-learn.git (push)
+        origin    git@github.com:YourLogin/scikit-learn.git (fetch)
+        origin    git@github.com:YourLogin/scikit-learn.git (push)
+        upstream  git@github.com:scikit-learn/scikit-learn.git (fetch)
+        upstream  git@github.com:scikit-learn/scikit-learn.git (push)
 
 You should now have a working installation of scikit-learn, and your git repository
 properly configured. It could be useful to run some test to verify your installation.
@@ -1559,7 +1565,7 @@ make this task easier and faster (in no particular order).
     variable) in the code base.
 
 - Configure `git blame` to ignore the commit that migrated the code style to
-  `black`.
+  `black` and then `ruff`.
 
   .. prompt:: bash
 

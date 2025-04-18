@@ -105,7 +105,6 @@ from ._testing import (
     raises,
     set_random_state,
 )
-from .fixes import SPARSE_ARRAY_PRESENT
 from .validation import _num_samples, check_is_fitted, has_fit_parameter
 
 REGRESSION_DATASET = None
@@ -890,7 +889,6 @@ def check_estimator(
                 # as xfail.
                 check_result["status"] = "xfail"
             else:
-                failed = True
                 check_result["status"] = "failed"
 
             if on_fail == "warn":
@@ -1125,10 +1123,10 @@ def check_array_api_input(
         # now since array-api-strict seems a bit too strict ...
         numpy_asarray_works = xp.__name__ != "array_api_strict"
 
-    except TypeError:
+    except (TypeError, RuntimeError):
         # PyTorch with CUDA device and CuPy raise TypeError consistently.
-        # Exception type may need to be updated in the future for other
-        # libraries.
+        # array-api-strict chose to raise RuntimeError instead. Exception type
+        # may need to be updated in the future for other libraries.
         numpy_asarray_works = False
 
     if numpy_asarray_works:
@@ -1233,10 +1231,6 @@ def check_array_api_input_and_values(
 
 def check_estimator_sparse_tag(name, estimator_orig):
     """Check that estimator tag related with accepting sparse data is properly set."""
-    if SPARSE_ARRAY_PRESENT:
-        sparse_container = sparse.csr_array
-    else:
-        sparse_container = sparse.csr_matrix
     estimator = clone(estimator_orig)
 
     rng = np.random.RandomState(0)
@@ -1246,7 +1240,7 @@ def check_estimator_sparse_tag(name, estimator_orig):
     y = rng.randint(0, 3, size=n_samples)
     X = _enforce_estimator_tags_X(estimator, X)
     y = _enforce_estimator_tags_y(estimator, y)
-    X = sparse_container(X)
+    X = sparse.csr_array(X)
 
     tags = get_tags(estimator)
     if tags.input_tags.sparse:
@@ -1346,8 +1340,7 @@ def check_estimator_sparse_matrix(name, estimator_orig):
 
 
 def check_estimator_sparse_array(name, estimator_orig):
-    if SPARSE_ARRAY_PRESENT:
-        _check_estimator_sparse_container(name, estimator_orig, sparse.csr_array)
+    _check_estimator_sparse_container(name, estimator_orig, sparse.csr_array)
 
 
 def check_f_contiguous_array_estimator(name, estimator_orig):
@@ -1577,11 +1570,7 @@ def check_sample_weight_equivalence_on_dense_data(name, estimator_orig):
 
 
 def check_sample_weight_equivalence_on_sparse_data(name, estimator_orig):
-    if SPARSE_ARRAY_PRESENT:
-        sparse_container = sparse.csr_array
-    else:
-        sparse_container = sparse.csr_matrix
-    _check_sample_weight_equivalence(name, estimator_orig, sparse_container)
+    _check_sample_weight_equivalence(name, estimator_orig, sparse.csr_array)
 
 
 def check_sample_weights_not_overwritten(name, estimator_orig):
@@ -2317,7 +2306,7 @@ def check_estimators_empty_data_messages(name, estimator_orig):
     # the following y should be accepted by both classifiers and regressors
     # and ignored by unsupervised models
     y = _enforce_estimator_tags_y(e, np.array([1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]))
-    msg = r"0 feature\(s\) \(shape=\(\d*, 0\)\) while a minimum of \d* " "is required."
+    msg = r"0 feature\(s\) \(shape=\(\d*, 0\)\) while a minimum of \d* is required."
     with raises(ValueError, match=msg):
         e.fit(X_zero_features, y)
 
@@ -4011,7 +4000,7 @@ def check_positive_only_tag_during_fit(name, estimator_orig):
             estimator.fit(X, y)
         except Exception as e:
             err_msg = (
-                f"Estimator {repr(name)} raised {e.__class__.__name__} unexpectedly."
+                f"Estimator {name!r} raised {e.__class__.__name__} unexpectedly."
                 " This happens when passing negative input values as X."
                 " If negative values are not supported for this estimator instance,"
                 " then the tags.input_tags.positive_only tag needs to be set to True."
@@ -4769,9 +4758,9 @@ def check_transformer_get_feature_names_out(name, transformer_orig):
     else:
         n_features_out = X_transform.shape[1]
 
-    assert (
-        len(feature_names_out) == n_features_out
-    ), f"Expected {n_features_out} feature names, got {len(feature_names_out)}"
+    assert len(feature_names_out) == n_features_out, (
+        f"Expected {n_features_out} feature names, got {len(feature_names_out)}"
+    )
 
 
 def check_transformer_get_feature_names_out_pandas(name, transformer_orig):
@@ -4826,9 +4815,9 @@ def check_transformer_get_feature_names_out_pandas(name, transformer_orig):
     else:
         n_features_out = X_transform.shape[1]
 
-    assert (
-        len(feature_names_out_default) == n_features_out
-    ), f"Expected {n_features_out} feature names, got {len(feature_names_out_default)}"
+    assert len(feature_names_out_default) == n_features_out, (
+        f"Expected {n_features_out} feature names, got {len(feature_names_out_default)}"
+    )
 
 
 def check_param_validation(name, estimator_orig):
@@ -5339,9 +5328,7 @@ def check_classifier_not_supporting_multiclass(name, estimator_orig):
                 'Only binary classification is supported. The type of the target '
                 f'is {{y_type}}.'
         )
-    """.format(
-        name=name
-    )
+    """.format(name=name)
     err_msg = textwrap.dedent(err_msg)
 
     with raises(
