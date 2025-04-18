@@ -6,14 +6,18 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from ._metadata_requests import WARN, UNUSED, UNCHANGED  # noqa: F401
-from ._metadata_requests import get_routing_for_object  # noqa: F401
-from ._metadata_requests import MetadataRouter  # noqa: F401
-from ._metadata_requests import MetadataRequest  # noqa: F401
-from ._metadata_requests import MethodMapping  # noqa: F401
-from ._metadata_requests import process_routing  # noqa: F401
-from ._metadata_requests import _MetadataRequester  # noqa: F401
-from ._metadata_requests import _routing_enabled  # noqa: F401
-from ._metadata_requests import _raise_for_params  # noqa: F401
-from ._metadata_requests import _RoutingNotSupportedMixin  # noqa: F401
-from ._metadata_requests import _raise_for_unsupported_routing  # noqa: F401
+from ._metadata_requests import (  # noqa: F401
+    UNCHANGED,
+    UNUSED,
+    WARN,
+    MetadataRequest,
+    MetadataRouter,
+    MethodMapping,
+    _MetadataRequester,
+    _raise_for_params,
+    _raise_for_unsupported_routing,
+    _routing_enabled,
+    _RoutingNotSupportedMixin,
+    get_routing_for_object,
+    process_routing,
+)
