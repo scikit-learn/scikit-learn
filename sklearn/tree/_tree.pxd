@@ -78,12 +78,7 @@ cdef class Tree:
     cpdef compute_node_depths(self)
     cpdef compute_feature_importances(self, normalize=*)
 
-    cdef float64_t[::1] _cross_impurities(self, float64_t[:, :, ::1] y_props)
-    cdef float64_t[:, :, ::1] _get_oob_proportions(self, object y_test, object X_test, cnp.ndarray[cnp.npy_bool, ndim=1] has_oob_sample)
-    cdef void _compute_cross_impurities_and_oob_predictions(self, object X_test, intp_t[:, ::1] y_test, float64_t[::1] cross_impurities, float64_t[:,:,::1] oob_pred, int32_t[::1] has_oob_sample)
-    cdef void _compute_ufi(self, object X_test, object y_test, float64_t[::1] cross_impurities, float64_t[:,:,::1] oob_pred, float64_t[::1] importances, int32_t[::1] has_oob_sample)
-    cdef float64_t _mixed_decrease_impurity(self, float64_t[:, :, ::1] y_props, intp_t node_idx)
-    cdef float64_t[::1] _compute_mdi_oob(self, object X_test, object y_test, float64_t[::1] cross_impurities, float64_t[:,:,::1] oob_pred, float64_t[::1] importances, int32_t[::1] has_oob_sample)
+    cdef void _compute_cross_impurities_and_oob_predictions(self, object X_test, intp_t[:, ::1] y_test, float64_t[::1] cross_impurities, float64_t[:,:,::1] oob_pred, int32_t[::1] has_oob_sample, float64_t[:,:,::1] y_props)
     cpdef compute_unbiased_feature_importance_and_oob_predictions(self, object X_test, object y_test, method=*)
 
 # =============================================================================
