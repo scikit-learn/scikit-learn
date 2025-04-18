@@ -1401,11 +1401,11 @@ cdef class Tree:
                                 for c in range(n_classes[k]):
                                     importances[node.feature] += (
                                         (value_at_node[offset + c] - value_at_left[offset + c])
-                                        * (oob_node_values[k, node_idx, c] - oob_node_values[k, left_idx, c])
+                                        * (oob_node_values[node_idx, c , k] - oob_node_values[left_idx, c, k])
                                         * nodes[left_idx].weighted_n_node_samples
                                         + 
                                         (value_at_node[offset + c] - value_at_right[offset + c]) 
-                                        * (oob_node_values[k, node_idx, c] - oob_node_values[k, right_idx, c])
+                                        * (oob_node_values[node_idx, c, k] - oob_node_values[right_idx, c, k])
                                         * nodes[right_idx].weighted_n_node_samples
                                     )
                                 offset += n_classes[k]
