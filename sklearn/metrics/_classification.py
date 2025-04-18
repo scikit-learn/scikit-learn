@@ -832,9 +832,9 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     labels : array-like of shape (n_classes,), default=None
         List of labels to index the matrix. This may be used to select a
         subset of labels. If `None`, all labels that appear at least once in
-        ``y1`` or ``y2`` are used. Note that at least one label in `labels` must be present in
-         `y1`, even though this function is otherwise agnostic to the order of `y1` and
-         `y2`.
+        ``y1`` or ``y2`` are used. Note that at least one label in `labels` must be
+         present in `y1`, even though this function is otherwise agnostic to the order
+         of `y1` and `y2`.
 
     weights : {'linear', 'quadratic'}, default=None
         Weighting type to calculate the score. `None` means not weighted;
