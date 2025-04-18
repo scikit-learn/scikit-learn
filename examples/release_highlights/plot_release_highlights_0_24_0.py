@@ -1,4 +1,4 @@
-# ruff: noqa
+# ruff: noqa: CPY001, E501
 """
 ========================================
 Release Highlights for scikit-learn 0.24
@@ -51,7 +51,7 @@ or with conda::
 
 import numpy as np
 from scipy.stats import randint
-from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 from sklearn.model_selection import HalvingRandomSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.datasets import make_classification

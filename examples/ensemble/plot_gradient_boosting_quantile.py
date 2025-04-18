@@ -241,7 +241,7 @@ coverage_fraction(
 # cross-validation on the pinball loss with alpha=0.05:
 
 # %%
-from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 from sklearn.model_selection import HalvingRandomSearchCV
 from sklearn.metrics import make_scorer
 from pprint import pprint

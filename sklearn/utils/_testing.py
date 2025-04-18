@@ -305,7 +305,7 @@ def set_random_state(estimator, random_state=0):
 
 def _is_numpydoc():
     try:
-        import numpydoc  # noqa
+        import numpydoc  # noqa: F401
     except (ImportError, AssertionError):
         return False
     else:
