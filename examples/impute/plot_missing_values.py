@@ -96,6 +96,7 @@ from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.impute import IterativeImputer, KNNImputer, SimpleImputer
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 
 N_SPLITS = 4
 regressor = RandomForestRegressor(random_state=0)
@@ -178,7 +179,7 @@ x_labels.append("Zero imputation")
 
 
 def get_impute_knn_score(X_missing, y_missing):
-    imputer = KNNImputer(missing_values=np.nan, add_indicator=True)
+    imputer = make_pipeline(StandardScaler(), KNNImputer(missing_values=np.nan, add_indicator=True))
     knn_impute_scores = get_scores_for_imputer(imputer, X_missing, y_missing)
     return knn_impute_scores.mean(), knn_impute_scores.std()
 
@@ -189,7 +190,7 @@ mses_california[2], stds_california[2] = get_impute_knn_score(
 mses_diabetes[2], stds_diabetes[2] = get_impute_knn_score(
     X_miss_diabetes, y_miss_diabetes
 )
-x_labels.append("KNN Imputation")
+x_labels.append("KNN Imputation (scaled)")
 
 
 # %%
