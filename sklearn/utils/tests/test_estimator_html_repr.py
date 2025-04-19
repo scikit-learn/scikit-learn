@@ -47,10 +47,11 @@ def dummy_function(x, y):
 def test_write_label_html(checked):
     # Test checking logic and labeling
     name = "LogisticRegression"
+    params = ""
     tool_tip = "hello-world"
 
     with closing(StringIO()) as out:
-        _write_label_html(out, name, tool_tip, checked=checked)
+        _write_label_html(out, params, name, tool_tip, checked=checked)
         html_label = out.getvalue()
 
         p = (
@@ -60,9 +61,9 @@ def test_write_label_html(checked):
         )
         re_compiled = re.compile(p)
         assert re_compiled.search(html_label)
-
         assert html_label.startswith('<div class="sk-label-container">')
         assert "<pre>hello-world</pre>" in html_label
+
         if checked:
             assert "checked>" in html_label
 
@@ -248,7 +249,7 @@ def test_stacking_classifier(final_estimator):
     # If final_estimator's default changes from LogisticRegression
     # this should be updated
     if final_estimator is None:
-        assert "LogisticRegression(" in html_output
+        assert "LogisticRegression" in html_output
     else:
         assert final_estimator.__class__.__name__ in html_output
 
@@ -608,3 +609,20 @@ def test_function_transformer_show_caption(func, expected_name):
     )
     re_compiled = re.compile(p)
     assert re_compiled.search(html_output)
+
+
+def test_get_params_html():
+    est = LogisticRegression(C=10.0, fit_intercept=False)
+    est_get_params_html = est._get_params_html(deep=False)
+    assert len(est_get_params_html.keys()) == 15
+    assert est_get_params_html["C"] == 10
+    assert "n_jobs" in est_get_params_html
+
+
+def test_get_params_html_repr():
+    est = LogisticRegression(C=10.0, fit_intercept=False)
+    est_get_params_html = est._get_params_html(deep=False)
+    est_get_params_html_repr = est_get_params_html._repr_html_inner()
+    assert "l1_ratio" in est_get_params_html_repr
+    assert "class_weight" in est_get_params_html_repr
+    assert len(re.findall(r"user-set", est_get_params_html_repr)) == 2
