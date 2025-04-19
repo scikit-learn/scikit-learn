@@ -1,0 +1,9 @@
+The parameter `n_alphas` has been deprecated in the following classes:
+:class:`linear_model.ElasticNetCV` and :class:`linear_model.LassoCV`
+and :class:`linear_model.MultiTaskElasticNetCV` 
+and :class:`linear_model.MultiTaskLassoCV`, and will be removed in 1.9. The parameter
+`alphas` now supports both integers and array-likes, removing the need for `n_alphas`.
+From now on, only `alphas` should be set to either indicate the number of alphas to
+automatically generate (int) or to provide a list of alphas (array-like) to test along
+the regularization path.
+By :user:`Siddharth Bansal <KANNAHWORLD >`.
