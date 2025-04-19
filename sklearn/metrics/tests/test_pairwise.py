@@ -48,7 +48,14 @@ from sklearn.metrics.pairwise import (
     sigmoid_kernel,
 )
 from sklearn.preprocessing import normalize
+from sklearn.utils._array_api import (
+    _atleast_2d,
+    _convert_to_numpy,
+    _get_namespace_device_dtype_ids,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     assert_allclose,
     assert_almost_equal,
     assert_array_equal,
@@ -296,7 +303,7 @@ _minkowski_kwds = {"w": np.arange(1, 5).astype("double", copy=False), "p": 1}
 
 def callable_rbf_kernel(x, y, **kwds):
     # Callable version of pairwise.rbf_kernel.
-    K = rbf_kernel(np.atleast_2d(x), np.atleast_2d(y), **kwds)
+    K = rbf_kernel(_atleast_2d(x), _atleast_2d(y), **kwds)
     # unpack the output since this is a scalar packed in a 0-dim array
     return K.item()
 
@@ -334,6 +341,50 @@ def test_pairwise_parallel(func, metric, kwds, dtype):
     assert_allclose(S, S2)
 
 
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+@pytest.mark.parametrize(
+    "func, metric, kwds",
+    [
+        (pairwise_distances, "euclidean", {}),
+        (pairwise_kernels, "polynomial", {"degree": 1}),
+        # (pairwise_kernels, callable_rbf_kernel, {"gamma": 0.1}),
+    ],
+)
+def test_pairwise_parallel_array_api(
+    func, metric, kwds, array_namespace, device, dtype_name
+):
+    xp = _array_api_for_tests(array_namespace, device)
+    rng = np.random.RandomState(0)
+    X_np = np.array(5 * rng.random_sample((5, 4)), dtype=dtype_name)
+    Y_np = np.array(5 * rng.random_sample((3, 4)), dtype=dtype_name)
+    X_xp = xp.asarray(X_np, device=device)
+    Y_xp = xp.asarray(Y_np, device=device)
+
+    with config_context(array_api_dispatch=True):
+        for y_val in (None, "not none"):
+            Y_xp = None if y_val is None else Y_xp
+            Y_np = None if y_val is None else Y_np
+
+            n_job1_xp = func(X_xp, Y_xp, metric=metric, n_jobs=1, **kwds)
+            n_job1_xp_np = _convert_to_numpy(n_job1_xp, xp=xp)
+            assert n_job1_xp.device == X_xp.device
+            assert n_job1_xp.dtype == X_xp.dtype
+
+            n_job2_xp = func(X_xp, Y_xp, metric=metric, n_jobs=2, **kwds)
+            n_job2_xp_np = _convert_to_numpy(n_job2_xp, xp=xp)
+            assert n_job2_xp.device == X_xp.device
+            assert n_job2_xp.dtype == X_xp.dtype
+
+            n_job2_np = func(X_np, metric=metric, n_jobs=2, **kwds)
+
+            assert_allclose(n_job1_xp_np, n_job2_xp_np)
+            assert_allclose(n_job2_xp_np, n_job2_np)
+
+
 def test_pairwise_callable_nonstrict_metric():
     # paired_distances should allow callable metric where metric(x, x) != 0
     # Knowing that the callable is a strict metric would allow the diagonal to
@@ -348,6 +399,42 @@ def test_pairwise_callable_nonstrict_metric():
 )
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_pairwise_kernels(metric, csr_container):
+    # Test the pairwise_kernels helper function.
+
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((5, 4))
+    Y = rng.random_sample((2, 4))
+    function = PAIRWISE_KERNEL_FUNCTIONS[metric]
+    # Test with Y=None
+    K1 = pairwise_kernels(X, metric=metric)
+    K2 = function(X)
+    assert_allclose(K1, K2)
+    # Test with Y=Y
+    K1 = pairwise_kernels(X, Y=Y, metric=metric)
+    K2 = function(X, Y=Y)
+    assert_allclose(K1, K2)
+    # Test with tuples as X and Y
+    X_tuples = tuple([tuple([v for v in row]) for row in X])
+    Y_tuples = tuple([tuple([v for v in row]) for row in Y])
+    K2 = pairwise_kernels(X_tuples, Y_tuples, metric=metric)
+    assert_allclose(K1, K2)
+
+    # Test with sparse X and Y
+    X_sparse = csr_container(X)
+    Y_sparse = csr_container(Y)
+    if metric in ["chi2", "additive_chi2"]:
+        # these don't support sparse matrices yet
+        return
+    K1 = pairwise_kernels(X_sparse, Y=Y_sparse, metric=metric)
+    assert_allclose(K1, K2)
+
+
+@pytest.mark.parametrize(
+    "metric",
+    ["rbf", "laplacian", "sigmoid", "polynomial", "linear", "chi2", "additive_chi2"],
+)
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_pairwise_kernels_array_api(metric, csr_container):
     # Test the pairwise_kernels helper function.
 
     rng = np.random.RandomState(0)

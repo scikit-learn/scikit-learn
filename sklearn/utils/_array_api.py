@@ -555,6 +555,10 @@ def _fill_or_add_to_diagonal(array, value, xp, add_value=True, wrap=False):
         array_flat[:end:step] += value
     else:
         array_flat[:end:step] = value
+    # `array_flat` is not always a view on `array` (e.g. for certain array types that
+    # were filled via parallel processing), thus we need to return reshaped
+    # `array_flat`.
+    return xp.reshape(array_flat, array.shape)
 
 
 def _is_xp_namespace(xp, name):
@@ -1002,3 +1006,20 @@ def _tolist(array, xp=None):
         return array.tolist()
     array_np = _convert_to_numpy(array, xp=xp)
     return [element.item() for element in array_np]
+
+
+def _atleast_2d(*arys, xp=None):
+    xp, _ = get_namespace(*arys, xp=xp)
+    res = []
+    for ary in arys:
+        if ary.ndim == 0:
+            result = xp.reshape(1, 1)
+        elif ary.ndim == 1:
+            result = ary[xp.newaxis, ...]
+        else:
+            result = ary
+        res.append(result)
+    if len(res) == 1:
+        return res[0]
+    else:
+        return tuple(res)
