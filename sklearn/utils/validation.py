@@ -1547,8 +1547,7 @@ def has_fit_parameter(estimator, parameter):
         # hasattr(estimator, "fit") makes it so that we don't fail for an estimator
         # that does not have a `fit` method during collection of checks. The right
         # checks will fail later.
-        hasattr(estimator, "fit")
-        and parameter in signature(estimator.fit).parameters
+        hasattr(estimator, "fit") and parameter in signature(estimator.fit).parameters
     )
 
 

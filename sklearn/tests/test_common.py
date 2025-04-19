@@ -19,7 +19,6 @@ from scipy.linalg import LinAlgWarning
 import sklearn
 from sklearn.base import BaseEstimator
 from sklearn.compose import ColumnTransformer
-from sklearn.datasets import make_classification
 from sklearn.exceptions import ConvergenceWarning
 
 # make it possible to discover experimental estimators when calling `all_estimators`
@@ -296,7 +295,6 @@ GET_FEATURES_OUT_ESTIMATORS = [
     "transformer", GET_FEATURES_OUT_ESTIMATORS, ids=_get_check_estimator_ids
 )
 def test_transformers_get_feature_names_out(transformer):
-
     with ignore_warnings(category=(FutureWarning)):
         check_transformer_get_feature_names_out(
             transformer.__class__.__name__, transformer
@@ -402,37 +400,3 @@ def test_check_inplace_ensure_writeable(estimator):
         estimator.set_params(kernel="precomputed")
 
     check_inplace_ensure_writeable(name, estimator)
-
-
-# TODO(1.7): Remove this test when the deprecation cycle is over
-def test_transition_public_api_deprecations():
-    """This test checks that we raised deprecation warning explaining how to transition
-    to the new developer public API from 1.5 to 1.6.
-    """
-
-    class OldEstimator(BaseEstimator):
-        def fit(self, X, y=None):
-            X = self._validate_data(X)
-            self._check_n_features(X, reset=True)
-            self._check_feature_names(X, reset=True)
-            return self
-
-        def transform(self, X):
-            return X  # pragma: no cover
-
-    X, y = make_classification(n_samples=10, n_features=5, random_state=0)
-
-    old_estimator = OldEstimator()
-    with pytest.warns(FutureWarning) as warning_list:
-        old_estimator.fit(X)
-
-    assert len(warning_list) == 3
-    assert str(warning_list[0].message).startswith(
-        "`BaseEstimator._validate_data` is deprecated"
-    )
-    assert str(warning_list[1].message).startswith(
-        "`BaseEstimator._check_n_features` is deprecated"
-    )
-    assert str(warning_list[2].message).startswith(
-        "`BaseEstimator._check_feature_names` is deprecated"
-    )
