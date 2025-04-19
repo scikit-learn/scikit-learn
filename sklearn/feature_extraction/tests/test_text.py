@@ -20,10 +20,10 @@ from sklearn.feature_extraction.text import (
     HashingVectorizer,
     TfidfTransformer,
     TfidfVectorizer,
+    _indic_tokenizer,
     strip_accents_ascii,
     strip_accents_unicode,
     strip_tags,
-    _indic_tokenizer,
 )
 from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
 from sklearn.pipeline import Pipeline
@@ -1628,6 +1628,7 @@ def test_tfidf_vectorizer_perserve_dtype_idf(dtype):
     vectorizer = TfidfVectorizer(dtype=dtype).fit(X)
     assert vectorizer.idf_.dtype == dtype
 
+
 def test_countvectorizer_multilingual():
     tel = ["ప్రధానమంత్రిని కలుసుకున్నారు"]
     hin = ["आधुनिक मानक हिन्दी"]
@@ -1641,7 +1642,14 @@ def test_countvectorizer_multilingual():
     )
     cvect.fit(tel + hin + eng)
     expected = {
-        "ప్రధానమంత్రిని", "కలుసుకున్నారు",
-        "आधुनिक", "मानक", "हिन्दी",
-        "they", "met", "the", "prime", "minister"
+        "ప్రధానమంత్రిని",
+        "కలుసుకున్నారు",
+        "आधुनिक",
+        "मानक",
+        "हिन्दी",
+        "they",
+        "met",
+        "the",
+        "prime",
+        "minister",
     }

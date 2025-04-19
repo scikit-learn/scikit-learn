@@ -65,6 +65,7 @@ def _preprocess(doc, accent_function=None, lower=False):
         doc = accent_function(doc)
     return doc
 
+
 def _indic_tokenizer(text):
     """Tokenize text, preserving Unicode words and removing punctuation.
 
@@ -82,8 +83,8 @@ def _indic_tokenizer(text):
     -------
     tokens : list
         A list of tokens extracted from the text.
- 
-    Examples 
+
+    Examples
     --------
     >>> text = "ప్రధానమంత్రిని కలుసుకున్నారు, They met."
     >>> _indic_tokenizer(text)
