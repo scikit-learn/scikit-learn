@@ -228,6 +228,7 @@ subdir('_loss')
 subdir('utils')
 # metrics needs to be to be before cluster since cluster cimports metrics .pxd
 subdir('metrics')
+subdir('mkl')
 subdir('cluster')
 subdir('datasets')
 subdir('decomposition')
