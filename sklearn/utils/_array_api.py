@@ -9,6 +9,7 @@ import os
 from functools import wraps
 
 import numpy
+import pytest
 import scipy
 import scipy.sparse as sp
 import scipy.special as special
@@ -93,8 +94,19 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
             try:
                 import array_api_strict
 
-                yield array_namespace, array_api_strict.Device("CPU_DEVICE"), "float64"
-                yield array_namespace, array_api_strict.Device("device1"), "float32"
+                # Specify `id` to provide clearer device labels
+                yield pytest.param(
+                    array_namespace,
+                    array_api_strict.Device("CPU_DEVICE"),
+                    "float64",
+                    id=f"{array_namespace}-CPU_DEVICE-float64",
+                )
+                yield pytest.param(
+                    array_namespace,
+                    array_api_strict.Device("device1"),
+                    "float32",
+                    id=f"{array_namespace}-device1-float32",
+                )
             except ImportError:
                 # Those combinations will typically be skipped by pytest if
                 # array_api_strict is not installed but we still need to see them in
@@ -103,23 +115,6 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
                 yield array_namespace, "device1", "float32"
         else:
             yield array_namespace, None, None
-
-
-def _get_namespace_device_dtype_ids(param):
-    """Get pytest parametrization IDs for `yield_namespace_device_dtype_combinations`"""
-    # Gives clearer IDs for array-api-strict devices, see #31042 for details
-    try:
-        import array_api_strict
-    except ImportError:
-        # `None` results in the default pytest representation
-        return None
-    else:
-        if param == array_api_strict.Device("CPU_DEVICE"):
-            return "CPU_DEVICE"
-        if param == array_api_strict.Device("device1"):
-            return "device1"
-        if param == array_api_strict.Device("device2"):
-            return "device2"
 
 
 def _check_array_api_dispatch(array_api_dispatch):
