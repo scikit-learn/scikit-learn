@@ -93,14 +93,13 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50, xp=None):
     # For each feature with index j, find sample index i of the scalar value
     # `adjusted_percentile_rank[j]` in 1D array `weight_cdf[j]`, such that:
     # weight_cdf[j, i-1] < adjusted_percentile_rank[j] <= weight_cdf[j, i].
-    percentile_indices = xp.asarray(
+    percentile_indices = xp.stack(
         [
             xp.searchsorted(
                 weight_cdf[feature_idx, ...], adjusted_percentile_rank[feature_idx]
             )
             for feature_idx in range(weight_cdf.shape[0])
         ],
-        device=device,
     )
     # In rare cases, `percentile_indices` equals to `sorted_idx.shape[0]`
     max_idx = sorted_idx.shape[0] - 1
