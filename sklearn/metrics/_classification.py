@@ -799,10 +799,25 @@ def multilabel_confusion_matrix(
         "labels": ["array-like", None],
         "weights": [StrOptions({"linear", "quadratic"}), None],
         "sample_weight": ["array-like", None],
+        "replace_undefined_by": [
+            Interval(Real, -1.0, 1.0, closed="both"),
+            np.nan,
+            Hidden(StrOptions({"deprecated"})),
+        ],
     },
     prefer_skip_nested_validation=True,
 )
-def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
+# TODO(1.9): Change default value for `replace_undefined_by` param to 0.0 and remove
+# FutureWarnings.
+def cohen_kappa_score(
+    y1,
+    y2,
+    *,
+    labels=None,
+    weights=None,
+    sample_weight=None,
+    replace_undefined_by="deprecated",
+):
     r"""Compute Cohen's kappa: a statistic that measures inter-annotator agreement.
 
     This function computes Cohen's kappa [1]_, a score that expresses the level
@@ -843,11 +858,25 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
+    replace_undefined_by : np.nan, float in [-1.0, 1.0], default=np.nan
+        Sets the return value when a division by zero would occur. This can happen for
+        instance on empty input arrays, or when no label of interest (as defined in the
+        `labels` param) is assigned by the second annotator, or when both `y1` and `y2`
+        only have one label in common that is also in `labels`. In these cases, an
+        :class:`~sklearn.exceptions.UndefinedMetricWarning` is raised. Can take the
+        following values:
+
+        - `np.nan` to return `np.nan`
+        - a floating point value in the range of [-1.0, 1.0] to return a specific value
+
+        .. versionadded:: 1.7
+
     Returns
     -------
     kappa : float
-        The kappa statistic, which is a number between -1 and 1. The maximum
-        value means complete agreement; zero or lower means chance agreement.
+        The kappa statistic, which is a number between -1.0 and 1.0. The maximum value
+        means complete agreement; the minimum value means complete disagreement; 0.0
+        indicates no agreement beyond what would be expected by chance.
 
     References
     ----------
@@ -883,7 +912,28 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     n_classes = confusion.shape[0]
     sum0 = np.sum(confusion, axis=0)
     sum1 = np.sum(confusion, axis=1)
-    expected = np.outer(sum0, sum1) / np.sum(sum0)
+
+    mgs_changing_default = (
+        "The default return value of `cohen_kappa_score` in case of a division "
+        "by zero has been deprecated in 1.7 and will be changed to 0.0 in version "
+        "1.9. Set `replace_undefined_by=0.0` to use the new default and to silence "
+        "this Warning."
+    )
+
+    numerator = np.outer(sum0, sum1)
+    denominator = np.sum(sum0)
+    if np.isclose(denominator, 0):
+        if replace_undefined_by == "deprecated":
+            replace_undefined_by = np.nan
+            warnings.warn(mgs_changing_default, FutureWarning)
+        msg = (
+            "`y2` does not contain any label that is also both present in `y1` and in "
+            "`labels`. cohen_kappa_score is undefined and set to the value defined in "
+            "the `replace_undefined_by` param, which defaults to 0.0."
+        )
+        warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+        return replace_undefined_by
+    expected = numerator / denominator
 
     if weights is None:
         w_mat = np.ones([n_classes, n_classes], dtype=int)
@@ -896,7 +946,21 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
         else:
             w_mat = (w_mat - w_mat.T) ** 2
 
-    k = np.sum(w_mat * confusion) / np.sum(w_mat * expected)
+    numerator = np.sum(w_mat * confusion)
+    denominator = np.sum(w_mat * expected)
+    if np.isclose(denominator, 0):
+        if replace_undefined_by == "deprecated":
+            replace_undefined_by = np.nan
+            warnings.warn(mgs_changing_default, FutureWarning)
+        msg = (
+            "`y1` and `y2` only have one label in common that is also in `labels`. "
+            "cohen_kappa_score is undefined and set to the value defined in the "
+            "`replace_undefined_by` param, which defaults to 0.0."
+        )
+        warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+        return replace_undefined_by
+    k = numerator / denominator
+
     return float(1 - k)
 
 

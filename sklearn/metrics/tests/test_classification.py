@@ -926,6 +926,123 @@ def test_cohen_kappa():
     )
 
 
+@pytest.mark.parametrize("replace_undefined_by", [0.0, np.nan])
+def test_cohen_kappa_zero_division(replace_undefined_by):
+    """Test that cohen_kappa_score handles divisions by 0 correctly by returning the
+    `replace_undefined_by` param. (The fist two tests cover the first possible location
+    in the function for an occurrence of a division by zero, the second two tests in the
+    the second possible location in the function."""
+
+    def check_equal(res, exp):
+        if np.isnan(res) and np.isnan(exp):
+            return True
+        return res == exp
+
+    # test case: empty inputs
+    y1 = np.array([])
+    y2 = np.array([])
+    assert check_equal(
+        cohen_kappa_score(y1, y2, replace_undefined_by=replace_undefined_by),
+        replace_undefined_by,
+    )
+
+    # test case: annotator y2 does not assign any label specified in `labels` (note:
+    # also applicable if labels is default and y2 does not contain any label that is in
+    # y1)
+    labels = [1, 2]
+    y1 = np.array([1] * 5 + [2] * 5)
+    y2 = np.array([3] * 10)
+    assert check_equal(
+        cohen_kappa_score(
+            y1, y2, labels=labels, replace_undefined_by=replace_undefined_by
+        ),
+        replace_undefined_by,
+    )
+
+    # test case: both inputs only have one label
+    y1 = np.array([3] * 10)
+    y2 = np.array([3] * 10)
+    assert check_equal(
+        cohen_kappa_score(y1, y2, replace_undefined_by=replace_undefined_by),
+        replace_undefined_by,
+    )
+
+    # test case: both inputs only have one label in common that is also in `labels`
+    # (note: weights="linear" and weights="quadratic" are different branches, though the
+    # latter is so similar to the former that the test is skipped here)
+    labels = [1, 2]
+    y1 = np.array([1] * 5 + [2] * 5)
+    y2 = np.array([1] * 5 + [3] * 5)
+    assert check_equal(
+        cohen_kappa_score(
+            y1, y2, labels=labels, replace_undefined_by=replace_undefined_by
+        ),
+        replace_undefined_by,
+    )
+    assert check_equal(
+        cohen_kappa_score(
+            y1,
+            y2,
+            labels=labels,
+            weights="linear",
+            replace_undefined_by=replace_undefined_by,
+        ),
+        replace_undefined_by,
+    )
+
+
+# TODO(1.9): remove the @ignore_warnings of the FutureWarning
+@ignore_warnings(category=FutureWarning)
+def test_cohen_kappa_zero_division_warning():
+    """Test that cohen_kappa_score raises UndefinedMetricWarning when a division by 0
+    occurs."""
+
+    # test first place to raise warning
+    labels = [1, 2]
+    y1 = np.array([1] * 5 + [2] * 5)
+    y2 = np.array([3] * 10)
+    with pytest.warns(
+        UndefinedMetricWarning,
+        match="`y2` does not contain any label that is also both present in",
+    ):
+        cohen_kappa_score(y1, y2, labels=labels)
+
+    # test second place to raise warning
+    labels = [1, 2]
+    y1 = np.array([1] * 5 + [2] * 5)
+    y2 = np.array([1] * 5 + [3] * 5)
+    with pytest.warns(
+        UndefinedMetricWarning,
+        match="`y1` and `y2` only have one label in common that is also in `labels`.",
+    ):
+        cohen_kappa_score(y1, y2, labels=labels)
+
+
+# TODO(1.9): remove test when deprecation cycle is over
+def test_cohen_kappa_score_raise_warning_deprecation():
+    """Test that `cohen_kappa_score` raises a `FutureWarning` for the changing default
+    of the `replace_undefined_by` param."""
+    # test first place to raise warning
+    labels = [1, 2]
+    y1 = np.array([1] * 5 + [2] * 5)
+    y2 = np.array([3] * 10)
+    with pytest.warns(
+        FutureWarning,
+        match="The default return value of `cohen_kappa_score` in case of a division",
+    ):
+        cohen_kappa_score(y1, y2, labels=labels)
+
+    # test second place to raise warning
+    labels = [1, 2]
+    y1 = np.array([1] * 5 + [2] * 5)
+    y2 = np.array([1] * 5 + [3] * 5)
+    with pytest.warns(
+        FutureWarning,
+        match="The default return value of `cohen_kappa_score` in case of a division",
+    ):
+        cohen_kappa_score(y1, y2, labels=labels)
+
+
 def test_cohen_kappa_score_error_wrong_label():
     """Test that correct error is raised when users pass labels that are not in y1."""
     labels = [1, 2]
