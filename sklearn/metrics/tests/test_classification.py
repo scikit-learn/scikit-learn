@@ -1042,6 +1042,7 @@ def test_cohen_kappa_score_raise_warning_deprecation():
     ):
         cohen_kappa_score(y1, y2, labels=labels)
 
+
 def test_cohen_kappa_score_error_wrong_label():
     """Test that correct error is raised when users pass labels that are not in y1."""
     labels = [1, 2]
