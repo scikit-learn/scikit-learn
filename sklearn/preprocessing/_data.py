@@ -22,6 +22,7 @@ from ..utils import _array_api, check_array, resample
 from ..utils._array_api import _modify_in_place_if_numpy, device, get_namespace
 from ..utils._param_validation import Interval, Options, StrOptions, validate_params
 from ..utils.extmath import _incremental_mean_and_var, row_norms
+from ..utils.fixes import _yeojohnson_lambda
 from ..utils.sparsefuncs import (
     incr_mean_variance_axis,
     inplace_column_scale,
@@ -3532,8 +3533,8 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         # the computation of lambda is influenced by NaNs so we need to
         # get rid of them
         x = x[~np.isnan(x)]
-        # choosing bracket -2, 2 like for boxcox
-        return optimize.brent(_neg_log_likelihood, brack=(-2, 2))
+
+        return  _yeojohnson_lambda( _neg_log_likelihood, x)
 
     def _check_input(self, X, in_fit, check_positive=False, check_shape=False):
         """Validate the input before fit and transform.
