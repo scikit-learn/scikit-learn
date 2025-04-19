@@ -1,0 +1,3 @@
+- The `sparse` parameter of :func:`metrics.fowlkes_mallows_score` is deprecated and
+  will be removed in 1.9. It has no effect.
+  By :user:`Luc Rocher <cynddl>`.

@@ -15,7 +15,7 @@ import numpy as np
 from scipy import sparse as sp
 
 from ...utils._array_api import _max_precision_float_dtype, get_namespace_and_device
-from ...utils._param_validation import Interval, StrOptions, validate_params
+from ...utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ...utils.multiclass import type_of_target
 from ...utils.validation import check_array, check_consistent_length
 from ._expected_mutual_info_fast import expected_mutual_information
@@ -1178,11 +1178,11 @@ def normalized_mutual_info_score(
     {
         "labels_true": ["array-like"],
         "labels_pred": ["array-like"],
-        "sparse": ["boolean"],
+        "sparse": ["boolean", Hidden(StrOptions({"deprecated"}))],
     },
     prefer_skip_nested_validation=True,
 )
-def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
+def fowlkes_mallows_score(labels_true, labels_pred, *, sparse="deprecated"):
     """Measure the similarity of two clusterings of a set of points.
 
     .. versionadded:: 0.18
@@ -1215,6 +1215,10 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
 
     sparse : bool, default=False
         Compute contingency matrix internally with sparse matrix.
+
+        .. deprecated:: 1.7
+            The ``sparse`` parameter is deprecated and will be removed in 1.9. It has
+            no effect.
 
     Returns
     -------
@@ -1249,6 +1253,14 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
       >>> fowlkes_mallows_score([0, 0, 0, 0], [0, 1, 2, 3])
       0.0
     """
+    # TODO(1.9): remove the sparse parameter
+    if sparse != "deprecated":
+        warnings.warn(
+            "The 'sparse' parameter was deprecated in 1.7 and will be removed in 1.9. "
+            "It has no effect. Leave it to its default value to silence this warning.",
+            FutureWarning,
+        )
+
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     (n_samples,) = labels_true.shape
 
