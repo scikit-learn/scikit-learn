@@ -1,3 +1,4 @@
+import math
 import re
 import warnings
 from functools import partial
@@ -249,6 +250,42 @@ def test_multilabel_accuracy_score_subset_accuracy():
     assert accuracy_score(y1, np.logical_not(y1)) == 0
     assert accuracy_score(y1, np.zeros(y1.shape)) == 0
     assert accuracy_score(y2, np.zeros(y1.shape)) == 0
+
+
+@pytest.mark.parametrize("replace_undefined_by", [0.0, 0.5, np.nan])
+def test_accuracy_score_undefined(replace_undefined_by):
+    """Test that accuracy_score returns the argument set in the `replace_undefined_by`
+    param when the metric is undefined."""
+
+    def check_equal(res, exp):
+        if np.isnan(res) and np.isnan(exp):
+            return True
+        return res == exp
+
+    y_true = y_pred = np.array([])
+
+    acc = accuracy_score(y_true, y_pred, replace_undefined_by=replace_undefined_by)
+    assert check_equal(acc, replace_undefined_by)
+
+    acc = accuracy_score(
+        y_true, y_pred, normalize=False, replace_undefined_by=replace_undefined_by
+    )
+    if math.isnan(replace_undefined_by):
+        assert check_equal(acc, np.nan)
+    else:
+        # can only return 0 to stay true to the range of possible output values if the
+        # metric was defined:
+        assert acc == 0
+
+
+def test_accuracy_score_undefined_raises_warning():
+    """Test that accuracy_score raises UndefinedMetricWarning when y_true and y_pred are
+    empty."""
+    with pytest.warns(
+        UndefinedMetricWarning,
+        match="`y_true` and `y_pred` are empty. `accuracy_score` is undefined",
+    ):
+        accuracy_score(np.array([]), np.array([]))
 
 
 def test_precision_recall_f1_score_binary():
