@@ -134,6 +134,7 @@ Metrics
 - :func:`sklearn.metrics.cluster.entropy`
 - :func:`sklearn.metrics.accuracy_score`
 - :func:`sklearn.metrics.d2_tweedie_score`
+- :func:`sklearn.metrics.dcg_score`
 - :func:`sklearn.metrics.explained_variance_score`
 - :func:`sklearn.metrics.f1_score`
 - :func:`sklearn.metrics.fbeta_score`
@@ -148,6 +149,7 @@ Metrics
 - :func:`sklearn.metrics.mean_squared_log_error`
 - :func:`sklearn.metrics.mean_tweedie_deviance`
 - :func:`sklearn.metrics.multilabel_confusion_matrix`
+- :func:`sklearn.metrics.ndcg_score`
 - :func:`sklearn.metrics.pairwise.additive_chi2_kernel`
 - :func:`sklearn.metrics.pairwise.chi2_kernel`
 - :func:`sklearn.metrics.pairwise.cosine_similarity`
