@@ -120,6 +120,8 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             from the previous or subsequent threshold. All points with the same
             tp value have the same `fnr` and thus same y coordinate.
 
+            .. versionadded:: 1.7
+
         response_method : {'predict_proba', 'decision_function', 'auto'} \
                 default='auto'
             Specifies whether to use :term:`predict_proba` or
@@ -226,6 +228,8 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Whether to drop thresholds where true positives (tp) do not change
             from the previous or subsequent threshold. All points with the same
             tp value have the same `fnr` and thus same y coordinate.
+
+            .. versionadded:: 1.7
 
         pos_label : int, float, bool or str, default=None
             The label of the positive class. When `pos_label=None`, if `y_true`
