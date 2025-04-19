@@ -1,0 +1,4 @@
+- Added `_yeojohnson_lambda` function in `fixes.py` to use SciPy’s implementation when SciPy version is >= 1.9 and fall 
+back to scikit-learn’s implementation otherwise. This improves performance by utilizing the optimized SciPy version when available. 
+By :user: `Sylvain Marié<@smarie>`, `Mohamed yaich<@yaichm>`, `Oussama Er-rabie<@eroussama>`, `Mohamed Dlimi<@Dlimim>`, 
+`Hamza Zeroual<@HamzaLuffy>`, `Amine Hannoun<@AmineHannoun>` and  `xuefeng-xu <@xuefeng-xu>`.
