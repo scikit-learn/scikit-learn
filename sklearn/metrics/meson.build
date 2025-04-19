@@ -31,18 +31,16 @@ _dist_metrics_pyx = custom_target(
 
 _dist_metrics = py.extension_module(
   '_dist_metrics',
-  _dist_metrics_pyx,
+  cython_gen.process(_dist_metrics_pyx),
   dependencies: [np_dep],
-  cython_args: cython_args,
   subdir: 'sklearn/metrics',
   install: true
 )
 
 py.extension_module(
   '_pairwise_fast',
-  ['_pairwise_fast.pyx', metrics_cython_tree],
+  [cython_gen.process('_pairwise_fast.pyx'), metrics_cython_tree],
   dependencies: [openmp_dep],
-  cython_args: cython_args,
   subdir: 'sklearn/metrics',
   install: true
 )
