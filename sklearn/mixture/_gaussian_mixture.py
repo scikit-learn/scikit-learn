@@ -701,7 +701,7 @@ class GaussianMixture(BaseMixture):
     >>> gm.predict([[0, 0], [12, 3]])
     array([1, 0])
 
-    For a comparison of Gaussian Mixture with other clustering algorithms, see
+    For a comparison of Gausssian Mixture with other clustering algorithms, see
     :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
     """
 
