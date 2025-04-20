@@ -101,7 +101,7 @@ def _dataframe_interchange_protocol_indexing(X, key, key_dtype):
     # https://github.com/data-apis/dataframe-api/issues/85.
     # As a dirty workaround, we will check for a method "select" being available and
     # use that one.
-    if not hasattr(X, "select"):
+    if not hasattr(X, "select"):  # pragma: no cover
         msg = (
             f"While the passed object X, {type(X)=}, has the __dataframe__ interchange "
             "protocol implemented, scikit-learn currently does not know how to deal "
@@ -110,7 +110,7 @@ def _dataframe_interchange_protocol_indexing(X, key, key_dtype):
         raise NotImplementedError(msg)
 
     if key_dtype == "bool":
-        key = np.asarray(key).nonzero().tolist()
+        key = np.asarray(key).nonzero()[0].tolist()
         key_dtype == "int"
     elif key_dtype == "str":
         key = _get_column_indices_interchange(X.__dataframe__(), key, key_dtype)

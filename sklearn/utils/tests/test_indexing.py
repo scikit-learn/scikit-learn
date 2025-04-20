@@ -174,11 +174,7 @@ def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
     )
     indices_converted = _convert_container(indices_converted, indices_type)
 
-    if isinstance(indices[0], str) and array_type not in (
-        "dataframe",
-        "pyarrow",
-        "polars",
-    ):
+    if isinstance(indices[0], str) and array_type in ("array", "sparse"):
         err_msg = (
             "Specifying the columns using strings is only supported for dataframes"
         )
