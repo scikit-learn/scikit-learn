@@ -926,6 +926,17 @@ def test_cohen_kappa():
     )
 
 
+def test_cohen_kappa_score_error_wrong_label():
+    """Test that correct error is raised when users pass labels that are not in y1."""
+    labels = [1, 2]
+    y1 = np.array(["a"] * 5 + ["b"] * 5)
+    y2 = np.array(["b"] * 10)
+    with pytest.raises(
+        ValueError, match="At least one label in `labels` must be present in `y1`"
+    ):
+        cohen_kappa_score(y1, y2, labels=labels)
+
+
 @pytest.mark.parametrize("zero_division", [0, 1, np.nan])
 @pytest.mark.parametrize("y_true, y_pred", [([0], [0])])
 @pytest.mark.parametrize(
