@@ -553,8 +553,10 @@ class OneVsRestClassifier(
             Y = np.concatenate(((1 - Y), Y), axis=1)
 
         if not self.multilabel_:
-            # Then, probabilities should be normalized to 1.
-            Y /= np.sum(Y, axis=1)[:, np.newaxis]
+            # Then, (nonzero) probabilities should be normalized to 1.
+            row_sums = np.sum(Y, axis=1)[:, np.newaxis]
+            row_sums[row_sums == 0] = 1 # Avoid division by zero
+            Y /= row_sums
         return Y
 
     @available_if(_estimators_has("decision_function"))
