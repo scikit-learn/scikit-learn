@@ -17,7 +17,8 @@ error of two Isomap solvers:
 
 What you can observe:
 ---------------------
-- The difference in performance between the two solvers.
+-The randomized and auto solvers yield the same errors for different samples,
+which means that randomized provides the same projection quality as auto.
 
 Further exploration:
 ---------------------
@@ -41,7 +42,6 @@ n_samples_range = [
 
 n_components = 2
 n_iter = 3  # Number of repetitions per sample size
-include_arpack = False  # Reserved for further testing
 
 # 2- Data Generation
 # ------------------

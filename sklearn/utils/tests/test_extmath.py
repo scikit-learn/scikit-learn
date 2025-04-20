@@ -267,15 +267,13 @@ def test_randomized_eigsh_value_compared_to_others(k):
     """Check that `_randomized_eigsh(value)` is similar to other `eigsh`
 
     Tests that for a random PSD matrix, `_randomized_eigsh(value)` provides results
-    comparable to LAPACK (scipy.linalg.eigh) and ARPACK
-    (scipy.sparse.linalg.eigsh).
+    comparable to LAPACK (scipy.linalg.eigh)
     """
     n_features = 200
     # make a random PSD matrix
     X = make_sparse_spd_matrix(n_features, random_state=0)
 
-    # compare two versions of randomized
-    # rough and fast
+    # with randomized_value
     eigvals, eigvecs = _randomized_eigsh(
         X,
         n_components=k,
@@ -284,8 +282,6 @@ def test_randomized_eigsh_value_compared_to_others(k):
         n_iter=25,
         random_state=0,
     )
-
-    # more accurate but slow (TODO find realistic settings here)
 
     # with LAPACK
     eigvals_lapack, eigvecs_lapack = eigh(

@@ -613,7 +613,6 @@ def randomized_eigen_decomposition(
         Finding structure with randomness: Probabilistic algorithms for
         constructing approximate matrix decompositions.
         SIAM Review, 53(2), 217–288.
-        https://doi.org/10.1137/090771806
     """
     random_state = check_random_state(random_state)
     n_random = n_components + n_oversamples
