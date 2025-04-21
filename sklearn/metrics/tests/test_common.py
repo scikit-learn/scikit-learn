@@ -74,6 +74,7 @@ from sklearn.utils import shuffle
 from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
+    _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -640,7 +641,6 @@ def test_symmetric_metric(name):
 
 @pytest.mark.parametrize("name", sorted(NOT_SYMMETRIC_METRICS))
 def test_not_symmetric_metric(name):
-
     # Test the symmetry of score and loss functions
     random_state = check_random_state(0)
     metric = ALL_METRICS[name]
@@ -1004,7 +1004,8 @@ def test_regression_thresholded_inf_nan_input(metric, y_true, y_score):
 @pytest.mark.parametrize("metric", CLASSIFICATION_METRICS.values())
 @pytest.mark.parametrize(
     "y_true, y_score",
-    invalids_nan_inf +
+    invalids_nan_inf
+    +
     # Add an additional case for classification only
     # non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/6809
@@ -2103,7 +2104,6 @@ def check_array_api_regression_metric_multioutput(
 
 
 def check_array_api_metric_pairwise(metric, array_namespace, device, dtype_name):
-
     X_np = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=dtype_name)
     Y_np = np.array([[0.2, 0.3, 0.4], [0.5, 0.6, 0.7]], dtype=dtype_name)
 
@@ -2238,7 +2238,9 @@ def yield_metric_checker_combinations(metric_checkers=array_api_metric_checkers)
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("metric, check_func", yield_metric_checker_combinations())
 def test_array_api_compliance(metric, array_namespace, device, dtype_name, check_func):

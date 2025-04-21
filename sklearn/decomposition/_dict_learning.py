@@ -21,7 +21,7 @@ from ..base import (
 from ..linear_model import Lars, Lasso, LassoLars, orthogonal_mp_gram
 from ..utils import check_array, check_random_state, gen_batches, gen_even_slices
 from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.extmath import randomized_svd, row_norms, svd_flip
+from ..utils.extmath import _randomized_svd, row_norms, svd_flip
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import check_is_fitted, validate_data
 
@@ -2049,7 +2049,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             dictionary = self.dict_init
         else:
             # Init V with SVD of X
-            _, S, dictionary = randomized_svd(
+            _, S, dictionary = _randomized_svd(
                 X, self._n_components, random_state=random_state
             )
             dictionary = S[:, np.newaxis] * dictionary

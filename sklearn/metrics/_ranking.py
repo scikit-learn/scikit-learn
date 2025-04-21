@@ -10,7 +10,6 @@ the lower the better.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 import warnings
 from functools import partial
 from numbers import Integral, Real
@@ -29,7 +28,7 @@ from ..utils import (
     column_or_1d,
 )
 from ..utils._encode import _encode, _unique
-from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import stable_cumsum
 from ..utils.multiclass import type_of_target
 from ..utils.sparsefuncs import count_nonzero
@@ -73,9 +72,9 @@ def auc(x, y):
     --------
     >>> import numpy as np
     >>> from sklearn import metrics
-    >>> y = np.array([1, 1, 2, 2])
-    >>> pred = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> fpr, tpr, thresholds = metrics.roc_curve(y, pred, pos_label=2)
+    >>> y_true = np.array([1, 1, 2, 2])
+    >>> y_score = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> fpr, tpr, thresholds = metrics.roc_curve(y_true, y_score, pos_label=2)
     >>> metrics.auc(fpr, tpr)
     0.75
     """
@@ -271,11 +270,14 @@ def average_precision_score(
         "y_score": ["array-like"],
         "pos_label": [Real, str, "boolean", None],
         "sample_weight": ["array-like", None],
+        "drop_intermediate": ["boolean"],
     },
     prefer_skip_nested_validation=True,
 )
-def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
-    """Compute error rates for different probability thresholds.
+def det_curve(
+    y_true, y_score, pos_label=None, sample_weight=None, drop_intermediate=False
+):
+    """Compute Detection Error Tradeoff (DET) for different probability thresholds.
 
     .. note::
        This metric is used for evaluation of ranking and error tradeoffs of
@@ -284,6 +286,11 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     Read more in the :ref:`User Guide <det_curve>`.
 
     .. versionadded:: 0.24
+
+    .. versionchanged:: 1.7
+       An arbitrary threshold at infinity is added to represent a classifier
+       that always predicts the negative class, i.e. `fpr=0` and `fnr=1`, unless
+       `fpr=0` is already reached at a finite threshold.
 
     Parameters
     ----------
@@ -306,6 +313,13 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
+    drop_intermediate : bool, default=False
+        Whether to drop thresholds where true positives (tp) do not change from
+        the previous or subsequent threshold. All points with the same tp value
+        have the same `fnr` and thus same y coordinate.
+
+        .. versionadded:: 1.7
+
     Returns
     -------
     fpr : ndarray of shape (n_thresholds,)
@@ -319,7 +333,12 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
         referred to as false rejection or miss rate.
 
     thresholds : ndarray of shape (n_thresholds,)
-        Decreasing score values.
+        Decreasing thresholds on the decision function (either `predict_proba`
+        or `decision_function`) used to compute FPR and FNR.
+
+        .. versionchanged:: 1.7
+           An arbitrary threshold at infinity is added for the case `fpr=0`
+           and `fnr=1`.
 
     See Also
     --------
@@ -349,6 +368,28 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
 
+    # add a threshold at inf where the clf always predicts the negative class
+    # i.e. tps = fps = 0
+    tps = np.concatenate(([0], tps))
+    fps = np.concatenate(([0], fps))
+    thresholds = np.concatenate(([np.inf], thresholds))
+
+    if drop_intermediate and len(fps) > 2:
+        # Drop thresholds where true positives (tp) do not change from the
+        # previous or subsequent threshold. As tp + fn, is fixed for a dataset,
+        # this means the false negative rate (fnr) remains constant while the
+        # false positive rate (fpr) changes, producing horizontal line segments
+        # in the transformed (normal deviate) scale. These intermediate points
+        # can be dropped to create lighter DET curve plots.
+        optimal_idxs = np.where(
+            np.concatenate(
+                [[True], np.logical_or(np.diff(tps[:-1]), np.diff(tps[1:])), [True]]
+            )
+        )[0]
+        fps = fps[optimal_idxs]
+        tps = tps[optimal_idxs]
+        thresholds = thresholds[optimal_idxs]
+
     if len(np.unique(y_true)) != 2:
         raise ValueError(
             "Only one class is present in y_true. Detection error "
@@ -359,7 +400,7 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     p_count = tps[-1]
     n_count = fps[-1]
 
-    # start with false positives zero
+    # start with false positives zero, which may be at a finite threshold
     first_ind = (
         fps.searchsorted(fps[0], side="right") - 1
         if fps.searchsorted(fps[0], side="right") > 0
@@ -604,10 +645,10 @@ def roc_auc_score(
     >>> clf = MultiOutputClassifier(clf).fit(X, y)
     >>> # get a list of n_output containing probability arrays of shape
     >>> # (n_samples, n_classes)
-    >>> y_pred = clf.predict_proba(X)
+    >>> y_score = clf.predict_proba(X)
     >>> # extract the positive columns for each output
-    >>> y_pred = np.transpose([pred[:, 1] for pred in y_pred])
-    >>> roc_auc_score(y, y_pred, average=None)
+    >>> y_score = np.transpose([score[:, 1] for score in y_score])
+    >>> roc_auc_score(y, y_score, average=None)
     array([0.82..., 0.86..., 0.94..., 0.85... , 0.94...])
     >>> from sklearn.linear_model import RidgeClassifierCV
     >>> clf = RidgeClassifierCV().fit(X, y)
@@ -866,25 +907,20 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
 @validate_params(
     {
         "y_true": ["array-like"],
-        "y_score": ["array-like", Hidden(None)],
+        "y_score": ["array-like"],
         "pos_label": [Real, str, "boolean", None],
         "sample_weight": ["array-like", None],
         "drop_intermediate": ["boolean"],
-        "probas_pred": [
-            "array-like",
-            Hidden(StrOptions({"deprecated"})),
-        ],
     },
     prefer_skip_nested_validation=True,
 )
 def precision_recall_curve(
     y_true,
-    y_score=None,
+    y_score,
     *,
     pos_label=None,
     sample_weight=None,
     drop_intermediate=False,
-    probas_pred="deprecated",
 ):
     """Compute precision-recall pairs for different probability thresholds.
 
@@ -936,15 +972,6 @@ def precision_recall_curve(
 
         .. versionadded:: 1.3
 
-    probas_pred : array-like of shape (n_samples,)
-        Target scores, can either be probability estimates of the positive
-        class, or non-thresholded measure of decisions (as returned by
-        `decision_function` on some classifiers).
-
-        .. deprecated:: 1.5
-            `probas_pred` is deprecated and will be removed in 1.7. Use
-            `y_score` instead.
-
     Returns
     -------
     precision : ndarray of shape (n_thresholds + 1,)
@@ -957,7 +984,7 @@ def precision_recall_curve(
 
     thresholds : ndarray of shape (n_thresholds,)
         Increasing thresholds on the decision function used to compute
-        precision and recall where `n_thresholds = len(np.unique(probas_pred))`.
+        precision and recall where `n_thresholds = len(np.unique(y_score))`.
 
     See Also
     --------
@@ -984,24 +1011,6 @@ def precision_recall_curve(
     >>> thresholds
     array([0.1 , 0.35, 0.4 , 0.8 ])
     """
-    # TODO(1.7): remove in 1.7 and reset y_score to be required
-    # Note: validate params will raise an error if probas_pred is not array-like,
-    # or "deprecated"
-    if y_score is not None and not isinstance(probas_pred, str):
-        raise ValueError(
-            "`probas_pred` and `y_score` cannot be both specified. Please use `y_score`"
-            " only as `probas_pred` is deprecated in v1.5 and will be removed in v1.7."
-        )
-    if y_score is None:
-        warnings.warn(
-            (
-                "probas_pred was deprecated in version 1.5 and will be removed in 1.7."
-                "Please use ``y_score`` instead."
-            ),
-            FutureWarning,
-        )
-        y_score = probas_pred
-
     fps, tps, thresholds = _binary_clf_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
@@ -1121,9 +1130,8 @@ def roc_curve(
     are reversed upon returning them to ensure they correspond to both ``fpr``
     and ``tpr``, which are sorted in reversed order during their calculation.
 
-    An arbitrary threshold is added for the case `tpr=0` and `fpr=0` to
-    ensure that the curve starts at `(0, 0)`. This threshold corresponds to the
-    `np.inf`.
+    An arbritrary threshold at infinity is added to represent a classifier
+    that always predicts the negative class, i.e. `fpr=0` and `tpr=0`.
 
     References
     ----------

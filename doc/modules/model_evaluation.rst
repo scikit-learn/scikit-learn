@@ -258,7 +258,7 @@ Scoring string name                    Function                                 
 'neg_mean_poisson_deviance'            :func:`metrics.mean_poisson_deviance`
 'neg_mean_gamma_deviance'              :func:`metrics.mean_gamma_deviance`
 'neg_mean_absolute_percentage_error'   :func:`metrics.mean_absolute_percentage_error`
-'d2_absolute_error_score' 	           :func:`metrics.d2_absolute_error_score`
+'d2_absolute_error_score'              :func:`metrics.d2_absolute_error_score`
 ====================================   ==============================================     ==================================
 
 Usage examples:
@@ -2372,7 +2372,7 @@ engine algorithms or related applications. Using a graded relevance scale of
 documents in a search-engine result set, DCG measures the usefulness, or gain,
 of a document based on its position in the result list. The gain is accumulated
 from the top of the result list to the bottom, with the gain of each result
-discounted at lower ranks"
+discounted at lower ranks."
 
 DCG orders the true targets (e.g. relevance of query answers) in the predicted
 order, then multiplies them by a logarithmic decay and sums the result. The sum
