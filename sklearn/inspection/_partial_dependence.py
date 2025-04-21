@@ -671,17 +671,14 @@ def partial_dependence(
     n_features = X.shape[1]
     if categorical_features is None:
         is_categorical = [False] * len(features_indices)
-    elif (
-        isinstance(categorical_features, (list, np.ndarray))
-        and len(categorical_features) == 0
-    ):
-        raise ValueError(
-            "Passing an empty list (`[]`) to `categorical_features` is not "
-            "supported. Use `None` instead to indicate that there are no "
-            "categorical features."
-        )
     else:
         categorical_features = np.asarray(categorical_features)
+        if categorical_features.size == 0:
+            raise ValueError(
+                "Passing an empty list (`[]`) to `categorical_features` is not "
+                "supported. Use `None` instead to indicate that there are no "
+                "categorical features."
+            )
         if categorical_features.dtype.kind == "b":
             # categorical features provided as a list of boolean
             if categorical_features.size != n_features:
