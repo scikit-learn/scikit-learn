@@ -26,11 +26,6 @@ from ..utils.validation import (
 )
 from ._base import SelectorMixin, _get_feature_importances
 
-def _is_l1_ratio_one(value):
-    """Helper to safely check if l1_ratio is (or includes) 1.0"""
-    if isinstance(value, (list, tuple, np.ndarray)):
-        return np.any(np.isclose(value, 1.0))
-    return np.isclose(value, 1.0)
 
 def _calculate_threshold(estimator, importances, threshold):
     """Interpret the threshold value"""
@@ -40,11 +35,18 @@ def _calculate_threshold(estimator, importances, threshold):
         est_name = estimator.__class__.__name__
         is_l1_penalized = hasattr(estimator, "penalty") and estimator.penalty == "l1"
         is_lasso = "Lasso" in est_name
-        is_elasticnet_l1_penalized = "ElasticNet" in est_name and (
-            (hasattr(estimator, "l1_ratio_") and _is_l1_ratio_one(estimator.l1_ratio_)) or
-            (hasattr(estimator, "l1_ratio") and _is_l1_ratio_one(estimator.l1_ratio))
+        is_elasticnet_l1_penalized = est_name == "ElasticNet" and (
+            hasattr(estimator, "l1_ratio") and np.isclose(estimator.l1_ratio, 1.0)
         )
-        if is_l1_penalized or is_lasso or is_elasticnet_l1_penalized:
+        is_elasticnetcv_l1_penalized = est_name == "ElasticNetCV" and (
+            hasattr(estimator, "l1_ratio_") and np.isclose(estimator.l1_ratio_, 1.0)
+        )
+        if (
+            is_l1_penalized
+            or is_lasso
+            or is_elasticnet_l1_penalized
+            or is_elasticnetcv_l1_penalized
+        ):
             # the natural default threshold is 0 when l1 penalty was used
             threshold = 1e-5
         else:

@@ -489,6 +489,21 @@ def test_prefit_max_features():
         model.transform(data)
 
 
+def test_get_feature_names_out_elasticnetcv():
+    """Check if ElasticNetCV works with a list of floats.
+
+    Non-regression test for #30936."""
+    X, y = make_regression(n_samples=100, n_features=5, n_informative=3, random_state=0)
+    estimator = ElasticNetCV(l1_ratio=[0.25, 0.5, 0.75], random_state=0)
+    selector = SelectFromModel(estimator=estimator)
+    selector.fit(X, y)
+
+    names_out = selector.get_feature_names_out()
+    mask = selector.get_support()
+    expected = np.array([f"x{i}" for i in range(X.shape[1])])[mask]
+    assert_array_equal(names_out, expected)
+
+
 def test_prefit_get_feature_names_out():
     """Check the interaction between prefit and the feature names."""
     clf = RandomForestClassifier(n_estimators=2, random_state=0)
@@ -687,42 +702,3 @@ def test_from_model_estimator_attribute_error():
         from_model.fit(data, y).partial_fit(data)
     assert isinstance(exec_info.value.__cause__, AttributeError)
     assert inner_msg in str(exec_info.value.__cause__)
-
-def test_is_l1_ratio_one():
-    """Test _is_l1_ratio_one helper function"""
-    from sklearn.feature_selection._from_model import _is_l1_ratio_one
-    # Test single values
-    assert _is_l1_ratio_one(1.0) == True
-    assert _is_l1_ratio_one(0.9) == False
-    assert _is_l1_ratio_one(0.0) == False
-    # Test lists
-    assert _is_l1_ratio_one([0.5, 1.0, 0.8]) == True
-    assert _is_l1_ratio_one([0.5, 0.8]) == False
-    # Test numpy arrays
-    assert _is_l1_ratio_one(np.array([0.5, 1.0])) == True
-    assert _is_l1_ratio_one(np.array([0.5, 0.8])) == False
-    # Test empty sequences
-    assert _is_l1_ratio_one([]) == False
-    assert _is_l1_ratio_one(np.array([])) == False
-
-def test_invalid_l1_ratio():
-    """Test that invalid l1_ratio values are handled correctly"""
-    # Values outside [0,1] should work but return False
-    clf = ElasticNetCV(l1_ratio=[0.5, 1.1])
-    model = SelectFromModel(estimator=clf)
-    X, y = make_regression(n_samples=100, n_features=10)
-    model.fit(X, y)
-    # Model should still work, just ignoring invalid l1_ratio
-    assert model.transform(X).shape[1] < X.shape[1]
-
-def test_l1_ratio_edge_cases():
-    """Test edge cases for l1_ratio detection"""
-    from sklearn.feature_selection._from_model import _is_l1_ratio_one
-    # Test values very close to 1
-    assert _is_l1_ratio_one(1.0 + 1e-10) == True
-    assert _is_l1_ratio_one([0.5, 1.0 + 1e-10]) == True
-    # Test mixed valid/invalid values
-    assert _is_l1_ratio_one([0.5, 1.1, 1.0]) == True
-    # Test non-numeric values
-    with pytest.raises(TypeError):
-        _is_l1_ratio_one(['a', 'b'])
