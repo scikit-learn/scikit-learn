@@ -1196,3 +1196,22 @@ def test_reject_pandas_with_integer_dtype():
         warnings.simplefilter("error")
         partial_dependence(clf, X, features=["a"])
         partial_dependence(clf, X, features=["c"], categorical_features=["c"])
+
+
+def test_partial_dependence_empty_categorical_features():
+    """Check that we raise the proper exception when `categorical_features`
+    is an empty list"""
+    clf = make_pipeline(StandardScaler(), LogisticRegression())
+    clf.fit(iris.data, iris.target)
+
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "Passing an empty list (`[]`) to `categorical_features` is not "
+            "supported. Use `None` instead to indicate that there are no "
+            "categorical features."
+        ),
+    ):
+        partial_dependence(
+            estimator=clf, X=iris.data, features=[0], categorical_features=[]
+        )
