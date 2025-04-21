@@ -1244,18 +1244,18 @@ def test_score_scale_invariance():
         ([0, 0, 1], [0, 0.25, 0.5], [0], [0]),
         ([0, 0, 1], [0.5, 0.75, 1], [0], [0]),
         ([0, 0, 1], [0.25, 0.5, 0.75], [0], [0]),
-        ([0, 1, 0], [0, 0.5, 1], [0.5], [0]),
-        ([0, 1, 0], [0, 0.25, 0.5], [0.5], [0]),
-        ([0, 1, 0], [0.5, 0.75, 1], [0.5], [0]),
-        ([0, 1, 0], [0.25, 0.5, 0.75], [0.5], [0]),
+        ([0, 1, 0], [0, 0.5, 1], [0.5, 0.5, 0], [0, 1, 1]),
+        ([0, 1, 0], [0, 0.25, 0.5], [0.5, 0.5, 0], [0, 1, 1]),
+        ([0, 1, 0], [0.5, 0.75, 1], [0.5, 0.5, 0], [0, 1, 1]),
+        ([0, 1, 0], [0.25, 0.5, 0.75], [0.5, 0.5, 0], [0, 1, 1]),
         ([0, 1, 1], [0, 0.5, 1], [0.0], [0]),
         ([0, 1, 1], [0, 0.25, 0.5], [0], [0]),
         ([0, 1, 1], [0.5, 0.75, 1], [0], [0]),
         ([0, 1, 1], [0.25, 0.5, 0.75], [0], [0]),
-        ([1, 0, 0], [0, 0.5, 1], [1, 1, 0.5], [0, 1, 1]),
-        ([1, 0, 0], [0, 0.25, 0.5], [1, 1, 0.5], [0, 1, 1]),
-        ([1, 0, 0], [0.5, 0.75, 1], [1, 1, 0.5], [0, 1, 1]),
-        ([1, 0, 0], [0.25, 0.5, 0.75], [1, 1, 0.5], [0, 1, 1]),
+        ([1, 0, 0], [0, 0.5, 1], [1, 1, 0.5, 0], [0, 1, 1, 1]),
+        ([1, 0, 0], [0, 0.25, 0.5], [1, 1, 0.5, 0], [0, 1, 1, 1]),
+        ([1, 0, 0], [0.5, 0.75, 1], [1, 1, 0.5, 0], [0, 1, 1, 1]),
+        ([1, 0, 0], [0.25, 0.5, 0.75], [1, 1, 0.5, 0], [0, 1, 1, 1]),
         ([1, 0, 1], [0, 0.5, 1], [1, 1, 0], [0, 0.5, 0.5]),
         ([1, 0, 1], [0, 0.25, 0.5], [1, 1, 0], [0, 0.5, 0.5]),
         ([1, 0, 1], [0.5, 0.75, 1], [1, 1, 0], [0, 0.5, 0.5]),
@@ -1271,16 +1271,41 @@ def test_det_curve_toydata(y_true, y_score, expected_fpr, expected_fnr):
 
 
 @pytest.mark.parametrize(
+    ["y_true", "y_score", "expected_fpr", "expected_fnr", "drop_intermediate"],
+    [
+        # drop when true positives do not change from the previous or subsequent point
+        ([1, 0, 0], [0, 0.5, 1], [1, 1, 0.5, 0.0], [0, 1, 1, 1], False),
+        ([1, 0, 0], [0, 0.5, 1], [1, 1, 0.0], [0, 1, 1], True),
+        ([1, 0, 0], [0, 0.25, 0.5], [1, 1, 0.5, 0.0], [0, 1, 1, 1], False),
+        ([1, 0, 0], [0, 0.25, 0.5], [1, 1, 0.0], [0, 1, 1], True),
+        # do nothing otherwise
+        ([1, 0, 1], [0, 0.5, 1], [1, 1, 0], [0, 0.5, 0.5], False),
+        ([1, 0, 1], [0, 0.5, 1], [1, 1, 0], [0, 0.5, 0.5], True),
+        ([1, 0, 1], [0, 0.25, 0.5], [1, 1, 0], [0, 0.5, 0.5], False),
+        ([1, 0, 1], [0, 0.25, 0.5], [1, 1, 0], [0, 0.5, 0.5], True),
+    ],
+)
+def test_det_curve_drop_intermediate(
+    y_true, y_score, expected_fpr, expected_fnr, drop_intermediate
+):
+    # Check on a batch of small examples.
+    fpr, fnr, _ = det_curve(y_true, y_score, drop_intermediate=drop_intermediate)
+
+    assert_allclose(fpr, expected_fpr)
+    assert_allclose(fnr, expected_fnr)
+
+
+@pytest.mark.parametrize(
     "y_true,y_score,expected_fpr,expected_fnr",
     [
-        ([1, 0], [0.5, 0.5], [1], [0]),
-        ([0, 1], [0.5, 0.5], [1], [0]),
-        ([0, 0, 1], [0.25, 0.5, 0.5], [0.5], [0]),
-        ([0, 1, 0], [0.25, 0.5, 0.5], [0.5], [0]),
+        ([1, 0], [0.5, 0.5], [1, 0], [0, 1]),
+        ([0, 1], [0.5, 0.5], [1, 0], [0, 1]),
+        ([0, 0, 1], [0.25, 0.5, 0.5], [0.5, 0], [0, 1]),
+        ([0, 1, 0], [0.25, 0.5, 0.5], [0.5, 0], [0, 1]),
         ([0, 1, 1], [0.25, 0.5, 0.5], [0], [0]),
-        ([1, 0, 0], [0.25, 0.5, 0.5], [1], [0]),
-        ([1, 0, 1], [0.25, 0.5, 0.5], [1], [0]),
-        ([1, 1, 0], [0.25, 0.5, 0.5], [1], [0]),
+        ([1, 0, 0], [0.25, 0.5, 0.5], [1, 1, 0], [0, 1, 1]),
+        ([1, 0, 1], [0.25, 0.5, 0.5], [1, 1, 0], [0, 0.5, 1]),
+        ([1, 1, 0], [0.25, 0.5, 0.5], [1, 1, 0], [0, 0.5, 1]),
     ],
 )
 def test_det_curve_tie_handling(y_true, y_score, expected_fpr, expected_fnr):
@@ -1304,9 +1329,9 @@ def test_det_curve_constant_scores(y_score):
         y_true=[0, 1, 0, 1, 0, 1], y_score=np.full(6, y_score)
     )
 
-    assert_allclose(fpr, [1])
-    assert_allclose(fnr, [0])
-    assert_allclose(threshold, [y_score])
+    assert_allclose(fpr, [1, 0])
+    assert_allclose(fnr, [0, 1])
+    assert_allclose(threshold, [y_score, np.inf])
 
 
 @pytest.mark.parametrize(
@@ -2248,25 +2273,3 @@ def test_roc_curve_with_probablity_estimates(global_random_seed):
     y_score = rng.rand(10)
     _, _, thresholds = roc_curve(y_true, y_score)
     assert np.isinf(thresholds[0])
-
-
-# TODO(1.7): remove
-def test_precision_recall_curve_deprecation_warning():
-    """Check the message for future deprecation."""
-    # Check precision_recall_curve function
-    y_true, _, y_score = make_prediction(binary=True)
-
-    warn_msg = "probas_pred was deprecated in version 1.5"
-    with pytest.warns(FutureWarning, match=warn_msg):
-        precision_recall_curve(
-            y_true,
-            probas_pred=y_score,
-        )
-
-    error_msg = "`probas_pred` and `y_score` cannot be both specified"
-    with pytest.raises(ValueError, match=error_msg):
-        precision_recall_curve(
-            y_true,
-            probas_pred=y_score,
-            y_score=y_score,
-        )
