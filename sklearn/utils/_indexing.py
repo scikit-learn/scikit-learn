@@ -18,6 +18,7 @@ from .validation import (
     _is_arraylike_not_scalar,
     _is_pandas_df,
     _is_polars_df_or_series,
+    _is_pyarrow_data,
     _use_interchange_protocol,
     check_array,
     check_consistent_length,
@@ -65,7 +66,7 @@ def _list_indexing(X, key, key_dtype):
 
 
 def _polars_indexing(X, key, key_dtype, axis):
-    """Indexing X with polars interchange protocol."""
+    """Index a polars dataframe or series."""
     # Polars behavior is more consistent with lists
     if isinstance(key, np.ndarray):
         # Convert each element of the array to a Python scalar
@@ -93,38 +94,53 @@ def _polars_indexing(X, key, key_dtype, axis):
     return X_indexed
 
 
-def _dataframe_interchange_protocol_indexing(X, key, key_dtype):
-    """Index columns for dataframe interchange protocol."""
-    # Once the dataframe X is converted into its dataframe interchange protocol version
-    # by calling X.__dataframe__(), it becomes very hard to turn it back into its
-    # original object type, e.g., a pyarrow.Table, see
-    # https://github.com/data-apis/dataframe-api/issues/85.
-    # As a dirty workaround, we will check for a method "select" being available and
-    # use that one.
-    if not hasattr(X, "select"):  # pragma: no cover
-        msg = (
-            f"While the passed object X, {type(X)=}, has the __dataframe__ interchange "
-            "protocol implemented, scikit-learn currently does not know how to deal "
-            "with this kind of object."
-        )
-        raise NotImplementedError(msg)
+def _pyarrow_indexing(X, key, key_dtype, axis):
+    """Index a pyarrow data."""
+    scalar_key = np.isscalar(key)
+    if isinstance(key, slice):
+        if isinstance(key.stop, str):
+            start = X.column_names.index(key.start)
+            stop = X.column_names.index(key.stop) + 1
+        else:
+            start = 0 if not key.start else key.start
+            stop = key.stop
+        step = 1 if not key.step else key.step
+        key = list(range(start, stop, step))
+
+    if axis == 1:
+        # Here we are certain that X is a pyarrow Table or RecordBatch.
+        if key_dtype == "int" and not isinstance(key, list):
+            # pyarrow's X.select behavior is more consistent with integer lists.
+            key = np.asarray(key).tolist()
+        if key_dtype == "bool":
+            key = np.asarray(key).nonzero()[0].tolist()
+
+        if scalar_key:
+            return X.column(key)
+
+        return X.select(key)
+
+    # axis == 0 from here on
+    if scalar_key:
+        if hasattr(X, "shape"):
+            # X is a Table or RecordBatch
+            key = [key]
+        else:
+            return X[key].as_py()
+    elif not isinstance(key, list):
+        key = np.asarray(key)
 
     if key_dtype == "bool":
-        key = np.asarray(key).nonzero()[0].tolist()
-        key_dtype == "int"
-    elif key_dtype == "str":
-        key = _get_column_indices_interchange(X.__dataframe__(), key, key_dtype)
-    # From here on, we can assume key_dtype == "int".
+        X_indexed = X.filter(key)
+    else:
+        X_indexed = X.take(key)
 
-    if isinstance(key, np.ndarray):
-        key = key.tolist()
-    elif np.isscalar(key):
-        key = list(key)
-    elif isinstance(key, slice):
-        start = 0 if not key.start else key.start
-        step = 1 if not key.step else key.step
-        key = [i for i in range(start, key.stop, step)]
-    return X.select(key)
+    if scalar_key and len(getattr(X, "shape", [0])) == 2:
+        # X_indexed is a dataframe-like with a single row; we return a Series to be
+        # consistent with pandas
+        pa = sys.modules["pyarrow"]
+        return pa.array(X_indexed.to_pylist()[0].values())
+    return X_indexed
 
 
 def _determine_key_type(key, accept_slice=True):
@@ -276,22 +292,14 @@ def _safe_indexing(X, indices, *, axis=0):
     if axis == 0 and indices_dtype == "str":
         raise ValueError("String indexing is not supported with 'axis=0'")
 
-    if (
-        axis == 0
-        and not _is_polars_df_or_series(X)
-        and not _is_polars_df_or_series(X)
-        and _use_interchange_protocol(X)
-    ):
-        raise ValueError("axis=0 is not supported for dataframe interchange protocol")
-
     if axis == 1 and isinstance(X, list):
         raise ValueError("axis=1 is not supported for lists")
 
-    if axis == 1 and hasattr(X, "shape") and len(X.shape) != 2:
+    if axis == 1 and (ndim := len(getattr(X, "shape", [0]))) != 2:
         raise ValueError(
             "'X' should be a 2D NumPy array, 2D sparse matrix or "
             "dataframe when indexing the columns (i.e. 'axis=1'). "
-            "Got {} instead with {} dimension(s).".format(type(X), len(X.shape))
+            f"Got {type(X)} instead with {ndim} dimension(s)."
         )
 
     if (
@@ -304,14 +312,28 @@ def _safe_indexing(X, indices, *, axis=0):
         )
 
     if hasattr(X, "iloc"):
-        # TODO: we should probably use _is_pandas_df_or_series(X) instead but this
-        # would require updating some tests such as test_train_test_split_mock_pandas.
+        # TODO: we should probably use _is_pandas_df_or_series(X) instead but:
+        # 1) Currently, it (probably) works for dataframes compliant to pandas' API.
+        # 2) Updating would require updating some tests such as
+        #    test_train_test_split_mock_pandas.
         return _pandas_indexing(X, indices, indices_dtype, axis=axis)
     elif _is_polars_df_or_series(X):
         return _polars_indexing(X, indices, indices_dtype, axis=axis)
-    elif _use_interchange_protocol(X):
-        return _dataframe_interchange_protocol_indexing(X, indices, indices_dtype)
-    elif hasattr(X, "shape"):
+    elif _is_pyarrow_data(X):
+        return _pyarrow_indexing(X, indices, indices_dtype, axis=axis)
+    elif _use_interchange_protocol(X):  # pragma: no cover
+        # Once the dataframe X is converted into its dataframe interchange protocol
+        # version by calling X.__dataframe__(), it becomes very hard to turn it back
+        # into its original type, e.g., a pyarrow.Table, see
+        # https://github.com/data-apis/dataframe-api/issues/85.
+        raise warnings.warn(
+            message="A data object with support for the dataframe interchange protocol"
+            "was passed, but scikit-learn does currently not know how to handle this "
+            "kind of data. Some array/list indexing will be tried.",
+            category=UserWarning,
+        )
+
+    if hasattr(X, "shape"):
         return _array_indexing(X, indices, indices_dtype, axis=axis)
     else:
         return _list_indexing(X, indices, indices_dtype)
