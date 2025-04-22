@@ -289,20 +289,13 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
         return np.where(f_star > 0, self.classes_[1], self.classes_[0])
 
-    def predict_proba(self, X, return_std_of_f=False):
+    def predict_proba(self, X):
         """Return probability estimates for the test vector X.
-
-        In addition to the probability estimates, this method can also
-        return the standard deviation of the test values of the
-        latent variable f (`return_std_of_f=True`).
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features) or list of object
             Query points where the GP is evaluated for classification.
-
-        return_std_of_f: bool, default=False
-            Return the standard deviation of the latent variable f.
 
         Returns
         -------
@@ -310,19 +303,12 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             Returns the probability of the samples for each class in
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute ``classes_``.
-
-        f_std: array-like of shape (n_samples,), optional
-            Standard deviation of the latent variable f after conditioning
-            on data and test vectors.
         """
         check_is_fitted(self)
 
-        # Based on Algorithm 3.2 of GPML
-        K_star = self.kernel_(self.X_train_, X)  # K_star =k(x_star)
-        f_star = K_star.T.dot(self.y_train_ - self.pi_)  # Line 4
-        v = solve(self.L_, self.W_sr_[:, np.newaxis] * K_star)  # Line 5
-        # Line 6 (compute np.diag(v.T.dot(v)) via einsum)
-        var_f_star = self.kernel_.diag(X) - np.einsum("ij,ij->j", v, v)
+        # Compute the mean and variance of the latent function values
+        # (Lines 4-6 of Algorithm 3.2 of GPML)
+        f_star, var_f_star = self.latent_mean_and_variance(X)
 
         # Line 7:
         # Approximate \int log(z) * N(z | f_star, var_f_star)
@@ -340,12 +326,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         )
         pi_star = (COEFS * integrals).sum(axis=0) + 0.5 * COEFS.sum()
 
-        probs = np.vstack((1 - pi_star, pi_star)).T
-
-        if return_std_of_f:
-            return probs, np.sqrt(var_f_star)
-
-        return probs
+        return np.vstack((1 - pi_star, pi_star)).T
 
     def log_marginal_likelihood(
         self, theta=None, eval_gradient=False, clone_kernel=True
@@ -425,6 +406,39 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             d_Z[j] = s_1 + s_2.T.dot(s_3)  # Line 15
 
         return Z, d_Z
+
+    def latent_mean_and_variance(self, X):
+        """Compute the mean and variance of the latent function values.
+
+        Based on algorithm 3.2 of [RW2006]_, this function returns
+        the latent mean (Line 4) and variance (Line 6) of the
+        Gaussian process classification model.
+        Note that this function is only supported for binary
+        classification.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features) or list of object
+            Query points where the GP is evaluated for classification.
+
+        Returns
+        -------
+        f_mean : array-like of shape (n_samples,)
+            Mean of the latent function values at the query points.
+
+        f_var : array-like of shape (n_samples,)
+            Variance of the latent function values at the query points.
+        """
+        check_is_fitted(self)
+
+        # Based on Algorithm 3.2 of GPML
+        K_star = self.kernel_(self.X_train_, X)  # K_star =k(x_star)
+        f_star = K_star.T.dot(self.y_train_ - self.pi_)  # Line 4
+        v = solve(self.L_, self.W_sr_[:, np.newaxis] * K_star)  # Line 5
+        # Line 6 (compute np.diag(v.T.dot(v)) via einsum)
+        var_f_star = self.kernel_.diag(X) - np.einsum("ij,ij->j", v, v)
+
+        return f_star, var_f_star
 
     def _posterior_mode(self, K, return_temporaries=False):
         """Mode-finding for binary Laplace GPC and fixed kernel.
@@ -794,22 +808,13 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
         return self.base_estimator_.predict(X)
 
-    def predict_proba(self, X, return_std_of_f=False):
+    def predict_proba(self, X):
         """Return probability estimates for the test vector X.
-
-        In addition to the probability estimates, this method can also
-        return the standard deviation of the test values of the
-        latent variable f (`return_std_of_f=True`) for binary
-        classification.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features) or list of object
             Query points where the GP is evaluated for classification.
-
-        return_std_of_f : bool, optional (default=False)
-            Returns the standard deviation of the latent variable f.
-            Only works for binary classification.
 
         Returns
         -------
@@ -817,9 +822,6 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
             Returns the probability of the samples for each class in
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute :term:`classes_`.
-
-        f_std : ndarray of shape (n_samples,), optional
-            Standard deviation of the latent function f at the test vectors X.
         """
         check_is_fitted(self)
         if self.n_classes_ > 2 and self.multi_class == "one_vs_one":
@@ -834,21 +836,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         else:
             X = validate_data(self, X, ensure_2d=False, dtype=None, reset=False)
 
-        if self.n_classes_ > 2:
-            if return_std_of_f:
-                raise ValueError(
-                    "Returning the standard deviation of "
-                    "the latent function f is not supported for GPCs "
-                    "with more than two classes."
-                )
-            else:
-                return self.base_estimator_.predict_proba(X)
-        else:
-            # WARNING: this assumes that the self.base_estimator_ is a
-            # _BinaryGaussianProcessClassifierLaplace instance.
-            return self.base_estimator_.predict_proba(
-                X, return_std_of_f=return_std_of_f
-            )
+        return self.base_estimator_.predict_proba(X)
 
     @property
     def kernel_(self):
@@ -944,3 +932,41 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
                     "Obtained theta with shape %d."
                     % (n_dims, n_dims * self.classes_.shape[0], theta.shape[0])
                 )
+
+    def latent_mean_and_variance(self, X):
+        """Compute the mean and variance of the latent function.
+
+        Based on algorithm 3.2 of [RW2006]_, this function returns
+        the latent mean (Line 4) and variance (Line 6) of the
+        Gaussian process classification model.
+        Note that this function is only supported for binary
+        classification.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features) or list of object
+            Query points where the GP is evaluated for classification.
+
+        Returns
+        -------
+        f_mean : array-like of shape (n_samples,)
+            Mean of the latent function values at the query points.
+
+        f_var : array-like of shape (n_samples,)
+            Variance of the latent function values at the query points.
+        """
+        if self.n_classes_ > 2:
+            raise ValueError(
+                "Returning the mean and variance of the "
+                "latent function f is only supported for GPCs "
+                "that use the Laplace Approximation (i.e. 2 classes, "
+                f"received {self.n_classes_})."
+            )
+        check_is_fitted(self)
+
+        if self.kernel is None or self.kernel.requires_vector_input:
+            X = validate_data(self, X, ensure_2d=True, dtype="numeric", reset=False)
+        else:
+            X = validate_data(self, X, ensure_2d=False, dtype=None, reset=False)
+
+        return self.base_estimator_.latent_mean_and_variance(X)

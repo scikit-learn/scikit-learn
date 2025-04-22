@@ -283,3 +283,15 @@ def test_gpc_fit_error(params, error_type, err_msg):
     gpc = GaussianProcessClassifier(**params)
     with pytest.raises(error_type, match=err_msg):
         gpc.fit(X, y)
+
+
+@pytest.mark.parametrize("kernel", kernels)
+def test_gpc_latent_mean_and_variance_shape(kernel):
+    """Checks that the latent mean and variance have the right shape."""
+    gpc = GaussianProcessClassifier(kernel=kernel)
+    gpc.fit(X, y)
+
+    # Check that the latent mean and variance have the right shape
+    latent_mean, latent_variance = gpc.latent_mean_and_variance(X)
+    assert latent_mean.shape == (X.shape[0],)
+    assert latent_variance.shape == (X.shape[0],)

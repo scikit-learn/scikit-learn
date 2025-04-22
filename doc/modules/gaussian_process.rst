@@ -134,15 +134,10 @@ that have been chosen randomly from the range of allowed values.
 If the initial hyperparameters should be kept fixed, `None` can be passed as
 optimizer.
 
-In some scenarios, information about the uncertainty of the latent function
-:math:`f` is desired (i.e. the variance :math:`\text{Var}[f_*]` described in
-Eq. (3.24) of [RW2006]_). The :class:`GaussianProcessClassifier` provides
-access to this uncertainty on the `predict_proba` method:
-setting the keyword argument `return_std_of_f` to `True` will also return the
-standard deviation of the latent function :math:`f` at the query points. It
-must be emphasized that this uncertainty is **not** an uncertainty over the
-class probabilities :math:`\pi(f)`, but rather the uncertainties of the latent
-variable :math:`f`.
+In some scenarios, information about the latent function :math:`f` is desired
+(i.e. the mean :math:`\bar{f_*}` and the variance :math:`\text{Var}[f_*]` described
+in Eqs. (3.21) and (3.24) of [RW2006]_). The :class:`GaussianProcessClassifier`
+provides access to these quantities via the `latent_mean_and_variance` method.
 
 :class:`GaussianProcessClassifier` supports multi-class classification
 by performing either one-versus-rest or one-versus-one based training and
