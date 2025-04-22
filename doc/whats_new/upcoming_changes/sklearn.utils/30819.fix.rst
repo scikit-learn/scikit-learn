@@ -1,0 +1,4 @@
+- :func:`utils.extmath.randomized_svd` and :func:`utils.extmath.randomized_range_finder`
+  now validate their input array to fail early with an informative error message on
+  invalid input.
+  By :user:`Connor Lane <clane9>`.
