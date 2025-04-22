@@ -1098,7 +1098,7 @@ def jaccard_score(
         weights = sample_weight
     else:
         weights = None
-    return float(_average(jaccard, weights=weights))
+    return float(_average(jaccard, weights=weights, xp=xp))
 
 
 @validate_params(
