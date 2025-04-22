@@ -568,11 +568,20 @@ def get_init_args(metaestimator_info, sub_estimator_consumes):
     )
 
 
-def process_routing_methods(estimator_routing_methods):
+def filter_metadata_in_routing_methods(estimator_routing_methods):
     """Process estimator_routing_methods and return a dict.
 
-    The dictionary is of the form {"method": ["metadata", ...]}.
-    By default, the list includes `sample_weight` and `metadata`.
+    Parameters
+    ----------
+    estimator_routing_methods : list of str or tuple
+        The estimator_routing_methods info from METAESTIMATORS.
+
+    Returns
+    -------
+    routing_methods : dict
+        The dictionary is of the form {"method": ["metadata", ...]}.
+        It specifies the list of metadata keys for each routing method.
+        By default the list includes `sample_weight` and `metadata`.
     """
     res = dict()
     for method_spec in estimator_routing_methods:
@@ -685,7 +694,7 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
     metaestimator_class = metaestimator["metaestimator"]
     X = metaestimator["X"]
     y = metaestimator["y"]
-    routing_methods = process_routing_methods(
+    routing_methods = filter_metadata_in_routing_methods(
         metaestimator["estimator_routing_methods"]
     )
 
@@ -746,7 +755,7 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
     metaestimator_class = metaestimator["metaestimator"]
     X = metaestimator["X"]
     y = metaestimator["y"]
-    routing_methods = process_routing_methods(
+    routing_methods = filter_metadata_in_routing_methods(
         metaestimator["estimator_routing_methods"]
     )
     method_mapping = metaestimator.get("method_mapping", {})
@@ -824,7 +833,7 @@ def test_non_consuming_estimator_works(metaestimator):
     metaestimator_class = metaestimator["metaestimator"]
     X = metaestimator["X"]
     y = metaestimator["y"]
-    routing_methods = process_routing_methods(
+    routing_methods = filter_metadata_in_routing_methods(
         metaestimator["estimator_routing_methods"]
     )
     for method_name in routing_methods:
