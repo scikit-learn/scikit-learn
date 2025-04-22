@@ -649,7 +649,7 @@ def roc_auc_score(
     >>> # extract the positive columns for each output
     >>> y_score = np.transpose([score[:, 1] for score in y_score])
     >>> roc_auc_score(y, y_score, average=None)
-    array([0.82..., 0.86..., 0.94..., 0.85... , 0.94...])
+    array([0.82..., 0.85..., 0.93..., 0.86... , 0.94...])
     >>> from sklearn.linear_model import RidgeClassifierCV
     >>> clf = RidgeClassifierCV().fit(X, y)
     >>> roc_auc_score(y, clf.decision_function(X), average=None)

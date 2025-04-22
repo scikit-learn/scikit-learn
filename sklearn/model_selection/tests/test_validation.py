@@ -1946,7 +1946,7 @@ def test_cross_val_predict_with_method_rare_class():
     rng = np.random.RandomState(0)
     X = rng.normal(0, 1, size=(14, 10))
     y = np.array([0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 3])
-    est = LogisticRegression(solver="liblinear")
+    est = LogisticRegression()
     for method in ["predict_proba", "predict_log_proba", "decision_function"]:
         with warnings.catch_warnings():
             # Suppress warning about too few examples of a class
