@@ -622,7 +622,7 @@ def roc_auc_score(
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.metrics import roc_auc_score
     >>> X, y = load_breast_cancer(return_X_y=True)
-    >>> clf = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
+    >>> clf = LogisticRegression(solver="newton-cg", random_state=0).fit(X, y)
     >>> roc_auc_score(y, clf.predict_proba(X)[:, 1])
     0.99...
     >>> roc_auc_score(y, clf.decision_function(X))
@@ -632,7 +632,7 @@ def roc_auc_score(
 
     >>> from sklearn.datasets import load_iris
     >>> X, y = load_iris(return_X_y=True)
-    >>> clf = LogisticRegression(solver="liblinear").fit(X, y)
+    >>> clf = LogisticRegression(solver="newton-cg").fit(X, y)
     >>> roc_auc_score(y, clf.predict_proba(X), multi_class='ovr')
     0.99...
 
