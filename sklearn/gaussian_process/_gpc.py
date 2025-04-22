@@ -306,7 +306,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         """
         check_is_fitted(self)
 
-        # Compute the mean and variance of the latent function values
+        # Compute the mean and variance of the latent function
         # (Lines 4-6 of Algorithm 3.2 of GPML)
         f_star, var_f_star = self.latent_mean_and_variance(X)
 
