@@ -39,6 +39,7 @@ def inplace_logistic(X):
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
         The input data.
     """
+    np.clip(X, -30, 30, out=X)  # Preventing saturation beyond sigmoid's steep region
     logistic_sigmoid(X, out=X)
 
 
