@@ -1093,9 +1093,9 @@ def roc_curve(
         Sample weights.
 
     drop_intermediate : bool, default=True
-        Whether to drop some suboptimal thresholds which would not appear
-        on a plotted ROC curve. This is useful in order to create lighter
-        ROC curves.
+        Whether to drop thresholds where the resulting point is collinear with
+        its neighbors in ROC space. This has no effect on the ROC AUC or visual
+        shape of the curve, but reduces the number of plotted points.
 
         .. versionadded:: 0.17
            parameter *drop_intermediate*.

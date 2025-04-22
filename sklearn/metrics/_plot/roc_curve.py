@@ -233,9 +233,10 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Sample weights.
 
         drop_intermediate : bool, default=True
-            Whether to drop some suboptimal thresholds which would not appear
-            on a plotted ROC curve. This is useful in order to create lighter
-            ROC curves.
+            Whether to drop thresholds where the resulting point is collinear
+            with its neighbors in ROC space. This has no effect on the ROC AUC
+            or visual shape of the curve, but reduces the number of plotted
+            points.
 
         response_method : {'predict_proba', 'decision_function', 'auto'} \
                 default='auto'
@@ -366,9 +367,10 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Sample weights.
 
         drop_intermediate : bool, default=True
-            Whether to drop some suboptimal thresholds which would not appear
-            on a plotted ROC curve. This is useful in order to create lighter
-            ROC curves.
+            Whether to drop thresholds where the resulting point is collinear
+            with its neighbors in ROC space. This has no effect on the ROC AUC
+            or visual shape of the curve, but reduces the number of plotted
+            points.
 
         pos_label : int, float, bool or str, default=None
             The label of the positive class. When `pos_label=None`, if `y_true`
