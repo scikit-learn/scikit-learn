@@ -597,14 +597,12 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             n_samples,
             self.max_samples,
         )
-        oob_indices_per_tree = []
         for estimator in self.estimators_:
             unsampled_indices = _generate_unsampled_indices(
                 estimator.random_state,
                 n_samples,
                 n_samples_bootstrap,
             )
-            oob_indices_per_tree.append(unsampled_indices)
             y_pred = self._get_oob_predictions(estimator, X[unsampled_indices, :])
             oob_pred[unsampled_indices, ...] += y_pred
             n_oob_pred[unsampled_indices, :] += 1
@@ -622,7 +620,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 n_oob_pred[n_oob_pred == 0] = 1
             oob_pred[..., k] /= n_oob_pred[..., [k]]
 
-        return oob_pred, oob_indices_per_tree
+        return oob_pred
 
     def _validate_y_class_weight(self, y):
         # Default implementation
@@ -741,6 +739,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 )
                 n_oob_pred[n_oob_pred == 0] = 1
             oob_pred[..., k] /= n_oob_pred[..., [k]]
+
+        if not importances.any():
+            return np.zeros(self.n_features_in_, dtype=np.float64), oob_pred
+
         return importances / importances.sum(), oob_pred
 
     def _get_estimators_indices(self):
@@ -876,22 +878,24 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         scoring_function : callable, default=None
             Scoring function for OOB score. Defaults to `accuracy_score`.
         """
-        # self.oob_decision_function_, oob_indices_per_tree = (
-        #     super()._compute_oob_predictions(X, y)
-        # )
-       
+
         if scoring_function is None:
             scoring_function = accuracy_score
 
-        self.oob_ufi_feature_importance_, self.oob_decision_function_ = (
+        self.ufi_feature_importances_, self.oob_decision_function_ = (
             self._compute_unbiased_feature_importance_and_oob_predictions(
                 X, y, method="ufi"
+            )
+        )
+        self.mdi_oob_feature_importances_, _ = (
+            self._compute_unbiased_feature_importance_and_oob_predictions(
+                X, y, method="mdi_oob"
             )
         )
         if self.oob_decision_function_.shape[-1] == 1:
             # drop the n_outputs axis if there is a single output
             self.oob_decision_function_ = self.oob_decision_function_.squeeze(axis=-1)
-        
+
         self.oob_score_ = scoring_function(
             y, np.argmax(self.oob_decision_function_, axis=1)
         )
@@ -1200,6 +1204,24 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             scoring_function = r2_score
 
         self.oob_score_ = scoring_function(y, self.oob_prediction_)
+
+        # self.ufi_feature_importances_, self.oob_decision_function_ = (
+        #     self._compute_unbiased_feature_importance_and_oob_predictions(
+        #         X, y, method="ufi"
+        #     )
+        # )
+        # self.mdi_oob_feature_importances_, _ = (
+        #     self._compute_unbiased_feature_importance_and_oob_predictions(
+        #         X, y, method="mdi_oob"
+        #     )
+        # )
+        # if self.oob_decision_function_.shape[-1] == 1:
+        #     # drop the n_outputs axis if there is a single output
+        #     self.oob_decision_function_ = self.oob_decision_function_.squeeze(axis=-1)
+
+        # self.oob_score_ = scoring_function(
+        #     y, np.argmax(self.oob_decision_function_, axis=1)
+        # )
 
     def _compute_partial_dependence_recursion(self, grid, target_features):
         """Fast partial dependence computation.

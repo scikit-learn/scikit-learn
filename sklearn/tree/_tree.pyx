@@ -1305,7 +1305,8 @@ cdef class Tree:
                 for k in range(n_outputs):
                     for c in range(n_classes[k]):
                         if y_test[k, sample_idx] == c:
-                            oob_node_values[0, c, k] += 1.0
+                            oob_node_values[0, c, k] += 1.0 
+                            # TODO use sample weight instead of 1 
                 # child nodes
                 while node.left_child != _TREE_LEAF & node.right_child != _TREE_LEAF:
                     if X_ndarray[sample_idx, node.feature] <= node.threshold:
@@ -1316,7 +1317,8 @@ cdef class Tree:
                     for k in range(n_outputs):
                         for c in range(n_classes[k]):
                             if y_test[k, sample_idx] == c:
-                                oob_node_values[node_idx, c, k] += 1.0
+                                oob_node_values[node_idx, c, k] += 1.0 
+                                # TODO use sample weight instead of 1 
 
                     node = &self.nodes[node_idx]
                 
