@@ -214,9 +214,9 @@ def _write_label_html(
         )
 
         if params:
-            fmt_str += f"{params}</div>"
+            fmt_str = "".join([fmt_str, f"{params}</div>"])
         elif name_details and ("Pipeline" not in name):
-            fmt_str += f"<pre>{name_details}</pre></div>"
+            fmt_str = "".join([fmt_str, f"<pre>{name_details}</pre></div>"])
 
         out.write(fmt_str)
     else:
