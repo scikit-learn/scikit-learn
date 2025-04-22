@@ -5,9 +5,6 @@ Multi-dimensional scaling
 
 An illustration of the metric and non-metric MDS on generated noisy data.
 
-The reconstructed points using the metric MDS and non metric MDS are slightly
-shifted to avoid overlapping.
-
 """
 
 # Authors: The scikit-learn developers

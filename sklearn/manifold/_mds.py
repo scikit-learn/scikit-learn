@@ -20,6 +20,7 @@ from ..utils.parallel import Parallel, delayed
 from ..utils.validation import validate_data
 
 
+# TODO(1.9): change default `eps` to 1e-6, see PR #31117
 def _smacof_single(
     dissimilarities,
     metric=True,
@@ -181,18 +182,21 @@ def _smacof_single(
         if verbose >= 2:  # pragma: no cover
             print(f"Iteration {it}, stress {stress:.4f}")
         if old_stress is not None:
-            if ((old_stress - stress) / ((distances.ravel() ** 2).sum() / 2)) < eps:
+            sum_squared_distances = (distances.ravel() ** 2).sum()
+            if ((old_stress - stress) / (sum_squared_distances / 2)) < eps:
                 if verbose:  # pragma: no cover
                     print("Convergence criterion reached.")
                 break
         old_stress = stress
 
     if normalized_stress:
-        stress = np.sqrt(stress / ((distances.ravel() ** 2).sum() / 2))
+        sum_squared_distances = (distances.ravel() ** 2).sum()
+        stress = np.sqrt(stress / (sum_squared_distances / 2))
 
     return X, stress, it + 1
 
 
+# TODO(1.9): change default `eps` to 1e-6 and `n_init` to 1, see PR #31117
 @validate_params(
     {
         "dissimilarities": ["array-like"],
@@ -436,6 +440,7 @@ def smacof(
         return best_pos, best_stress
 
 
+# TODO(1.9): change default `eps` to 1e-6 and `n_init` to 1, see PR #31117
 class MDS(BaseEstimator):
     """Multidimensional scaling.
 
