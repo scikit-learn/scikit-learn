@@ -584,6 +584,14 @@ Python and CPython ecosystem, for example :user:`Nathan Goldbaum <ngoldbaum>`,
   is called without a `y` argument
   By :user:`Anurag Varma <Anurag-Varma>` :pr:`29402`
 
+:mod:`sklearn.multiclass`
+.........................
+
+- |Fix| :class:`multiclass.OneVsOneClassifier`
+  now it's decision function properly handles confidences when these are provided as
+  predicted probabilities for the positive class.
+  :pr:`28739` by :user:`Luís Calado <LC1243>`.
+
 :mod:`sklearn.neighbors`
 ------------------------
 
