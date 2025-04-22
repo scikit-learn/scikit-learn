@@ -1750,7 +1750,17 @@ def d2_pinball_score(
     This metric is not well-defined for a single point and will return a NaN
     value if n_samples is less than two.
 
-     References
+    This metric is not a built-in scoring string for use in model selection
+    tools such as `GridSearchCV` or `RandomizedSearchCV`.
+
+    To use it as a custom scoring function, wrap it using
+    :func:`~sklearn.metrics.make_scorer`:
+
+    >>> from sklearn.metrics import make_scorer, d2_pinball_score
+    >>> scorer = make_scorer(d2_pinball_score, alpha=0.95)
+    >>> # Then use it as `scoring=scorer` in RandomizedSearchCV or GridSearchCV
+
+    References
     ----------
     .. [1] Eq. (7) of `Koenker, Roger; Machado, José A. F. (1999).
            "Goodness of Fit and Related Inference Processes for Quantile Regression"
@@ -1772,7 +1782,12 @@ def d2_pinball_score(
     -1.045...
     >>> d2_pinball_score(y_true, y_true, alpha=0.1)
     1.0
+
+    >>> # Using with make_scorer
+    >>> from sklearn.metrics import make_scorer
+    >>> scorer = make_scorer(d2_pinball_score, alpha=0.95)
     """
+
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
     )
