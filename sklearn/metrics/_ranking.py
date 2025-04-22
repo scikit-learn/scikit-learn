@@ -1115,6 +1115,10 @@ def roc_curve(
         fpr and tpr. `thresholds[0]` represents no instances being predicted
         and is arbitrarily set to `np.inf`.
 
+        .. versionchanged:: 1.3
+           An arbitrary threshold at infinity is added to represent a classifier
+           that always predicts the negative class, i.e. `fpr=0` and `tpr=0`.
+
     See Also
     --------
     RocCurveDisplay.from_estimator : Plot Receiver Operating Characteristic
@@ -1129,9 +1133,6 @@ def roc_curve(
     Since the thresholds are sorted from low to high values, they
     are reversed upon returning them to ensure they correspond to both ``fpr``
     and ``tpr``, which are sorted in reversed order during their calculation.
-
-    An arbritrary threshold at infinity is added to represent a classifier
-    that always predicts the negative class, i.e. `fpr=0` and `tpr=0`.
 
     References
     ----------
