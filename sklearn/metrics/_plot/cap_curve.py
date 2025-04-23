@@ -502,7 +502,6 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             if name is None:
                 name = type(estimator).__name__
 
-        print(name)
         return cls.from_predictions(
             y_true=y,
             y_pred=y_pred,
