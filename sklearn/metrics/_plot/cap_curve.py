@@ -316,7 +316,7 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         name : str, default=None
             Name of CAP curve for labeling. If `None`, name will be set to
-            `"Classifier"`.
+            `"Classifier"` or `"Regressor"`.
 
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is created.
@@ -339,24 +339,42 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
                     "instead."
                 )
 
-        pos_label_validated, name = cls._validate_from_predictions_params(
-            y_true, y_pred, sample_weight=sample_weight, pos_label=pos_label, name=name
-        )
+            pos_label_validated = None
 
-        if sample_weight is None:
-            sample_weight = np.ones_like(y_true, dtype=y_pred.dtype)
+            if name is None:
+                name = "Regressor"
 
-        # ensure y_true is boolean for positive class identification
-        y_true_bool = y_true == pos_label_validated
+            if sample_weight is None:
+                sample_weight = np.ones_like(y_true, dtype=np.float64)
 
-        # sort predictions and true values based on the predictions
-        sorted_indices = np.argsort(y_pred)[::-1]
-        y_true_bool_sorted = y_true_bool[sorted_indices]
-        sample_weight_sorted = sample_weight[sorted_indices]
+            sorted_indices = np.argsort(y_pred)
+            y_true_sorted = y_true[sorted_indices]
+            sample_weight_sorted = sample_weight[sorted_indices]
 
-        # compute cumulative sums for true positives and all cases
-        y_true_cumulative = np.cumsum(y_true_bool_sorted * sample_weight_sorted)
-        cumulative_total = np.cumsum(sample_weight_sorted)
+            weighted_y_true = y_true_sorted * sample_weight_sorted
+            y_true_cumulative = np.cumsum(weighted_y_true)
+            cumulative_total = np.cumsum(sample_weight_sorted)
+
+        else:
+            pos_label_validated, name = cls._validate_from_predictions_params(
+                y_true,
+                y_pred,
+                sample_weight=sample_weight,
+                pos_label=pos_label,
+                name=name,
+            )
+
+            if sample_weight is None:
+                sample_weight = np.ones_like(y_true, dtype=y_pred.dtype)
+
+            y_true_bool = y_true == pos_label_validated
+
+            sorted_indices = np.argsort(y_pred)[::-1]
+            y_true_bool_sorted = y_true_bool[sorted_indices]
+            sample_weight_sorted = sample_weight[sorted_indices]
+
+            y_true_cumulative = np.cumsum(y_true_bool_sorted * sample_weight_sorted)
+            cumulative_total = np.cumsum(sample_weight_sorted)
 
         viz = cls(
             y_true_cumulative=y_true_cumulative,
@@ -470,18 +488,21 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         display : :class:`~sklearn.metrics.CAPCurveDisplay`
             The CAP Curve display.
         """
-        if not is_classifier(estimator):
-            raise NotImplementedError
+        if is_classifier(estimator):
+            y_pred, pos_label, name = cls._validate_and_get_response_values(
+                estimator,
+                X,
+                y,
+                response_method=response_method,
+                pos_label=pos_label,
+                name=name,
+            )
+        else:
+            y_pred = estimator.predict(X)
+            if name is None:
+                name = type(estimator).__name__
 
-        y_pred, pos_label, name = cls._validate_and_get_response_values(
-            estimator,
-            X,
-            y,
-            response_method=response_method,
-            pos_label=pos_label,
-            name=name,
-        )
-
+        print(name)
         return cls.from_predictions(
             y_true=y,
             y_pred=y_pred,

@@ -3,9 +3,9 @@ import re
 import numpy as np
 import pytest
 
-from sklearn.datasets import make_classification
+from sklearn.datasets import make_classification, make_regression
 from sklearn.exceptions import NotFittedError
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, PoissonRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.svm import LinearSVC
 
@@ -398,7 +398,7 @@ def test_cap_curve_chance_level_line(
         ("from_predictions", "Classifier"),
     ],
 )
-def test_cap_curve_between_chance_and_perfect(
+def test_cap_curve_valid_position(
     pyplot,
     data_binary,
     response_method,
@@ -459,7 +459,6 @@ def test_cap_curve_between_chance_and_perfect(
         f"{display.estimator_name} != {default_name}"
     )
 
-    # Check that CAP curve is on or above the chance level line
     cumulative_total = display.cumulative_total
     y_true_cumulative = display.y_true_cumulative
     assert np.all(y_true_cumulative >= cumulative_total - 1e-8), (
@@ -468,12 +467,42 @@ def test_cap_curve_between_chance_and_perfect(
         f"y: {y_true_cumulative}"
     )
 
-    # Check that CAP curve is on or below the perfect prediction line
     perfect_y = np.interp(
         display.cumulative_total, display._perfect_x, display._perfect_y
     )
     assert np.all(y_true_cumulative <= perfect_y + 1e-8), (
-        "CAP curve rises above the perfect prediction line."
+        "CAP curve rises above the perfect prediction line.\n"
+        f"x: {perfect_y}\n"
+        f"y: {y_true_cumulative}"
+    )
+
+
+def test_lorenz_curve_position(pyplot):
+    estimator = PoissonRegressor()
+
+    X, y = make_regression(n_samples=100, n_features=2, noise=10.0)
+    y = y - y.min() + 1e-3
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.4, random_state=42
+    )
+    estimator.fit(X_train, y_train)
+    y_pred = estimator.predict(X_test)
+
+    display = CAPCurveDisplay.from_predictions(y_test, y_pred)
+
+    cumulative_total = display.cumulative_total
+    y_true_cumulative = display.y_true_cumulative
+    assert np.all(cumulative_total >= y_true_cumulative), (
+        f"Lorenz curve dips above the chance line.\n"
+        f"x: {cumulative_total}\n"
+        f"y: {y_true_cumulative}"
+    )
+
+    perfect_y = np.interp(
+        display.cumulative_total, display._perfect_x, display._perfect_y
+    )
+    assert np.all(y_true_cumulative >= perfect_y), (
+        "Lorenz curve rises below the perfect prediction line.\n"
         f"x: {perfect_y}\n"
         f"y: {y_true_cumulative}"
     )
