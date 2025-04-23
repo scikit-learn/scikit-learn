@@ -1,0 +1,3 @@
+:class:`neural_network.MLPRegressor` now raises an informative error when
+`early_stopping` is set and the computed validation set is too small.
+By :user:`David Shumway <davidshumway>`.
