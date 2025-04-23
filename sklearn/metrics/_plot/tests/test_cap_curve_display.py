@@ -495,7 +495,7 @@ def test_cap_for_non_prob_classifier(pyplot, data_binary, response_method):
         CAPCurveDisplay.from_estimator(svc, X, y, response_method=response_method)
 
 
-def test_y_true_with_negative_values():
+def test_y_true_with_negative_values(pyplot):
     match = "`y_true` contains negative values, which isn't allowed for "
     "continuous targets. If your data shouldn't be treated as "
     "continuous, try converting the values to integers or strings "
