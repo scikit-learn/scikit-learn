@@ -20,7 +20,7 @@ from ..base import (
 )
 from ..utils import _array_api, check_array, resample
 from ..utils._array_api import (
-    _max_precision_float_dtype,
+    _find_matching_floating_dtype,
     _modify_in_place_if_numpy,
     device,
     get_namespace,
