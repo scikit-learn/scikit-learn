@@ -265,14 +265,16 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         ax=None,
         **kwargs,
     ):
-        """Plot the Cumulative Accuracy Profile.
+        """Create the Cumulative Accuracy Profile.
 
-        This is also known as a (cumulative) gain curve.
+        This is also known as a (cumulative) gain curve. It can be used with
+        either classifiers or regressors (with positive outcomes only). Other
+        types of estimators will give rise to an error.
 
         Parameters
         ----------
         y_true : array-like of shape (n_samples,)
-            True labels.
+            True labels (for classifiers) or true values (for regressors).
 
         y_pred : array-like of shape (n_samples,)
             Target scores, can either be probability estimates of the positive
