@@ -409,36 +409,6 @@ def test_ovr_multilabel_predict_proba():
         assert_array_equal(pred, Y_pred)
 
 
-def test_ovr_multilabel_predict_proba_zero_row():
-    base_clf = MultinomialNB(alpha=1)
-    X, Y = datasets.make_multilabel_classification(
-        n_samples=100,
-        n_features=20,
-        n_classes=5,
-        n_labels=3,
-        length=50,
-        allow_unlabeled=True,
-        random_state=0,
-    )
-
-    zero_idx = np.random.randint(80, 100)
-    X[zero_idx] = 0
-    X_train, Y_train = X[:80], Y[:80]
-    X_test = X[80:]
-    clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
-
-    # TODO: Implement rest of test?
-
-    Y_pred = clf.predict(X_test)
-    Y_proba = clf.predict_proba(X_test)
-    pred = Y_proba > 0.5
-    assert_array_equal(pred, Y_pred)
-
-    zero_idx -= 80
-    assert np.all(Y_pred[zero_idx] == 0)
-    assert np.allclose(Y_proba[zero_idx], 0)
-
-
 def test_ovr_single_label_predict_proba():
     base_clf = MultinomialNB(alpha=1)
     X, Y = iris.data, iris.target
@@ -474,17 +444,17 @@ def test_ovr_single_label_predict_proba_zero_row():
 
     base_clf = NaiveBinaryClassifier()
     X, Y = iris.data, iris.target  # Three-class problem with 150 samples
-    zero_indices = np.random.choice(np.arange(80, len(X)), size=5, replace=False)
-    X[zero_indices] = 0  # Change 5 random samples in the test set to be all zeros
-
     X_train, Y_train = X[:80], Y[:80]
     X_test = X[80:]
+
+    zero_indices = np.random.choice(np.arange(len(X_test)), size=5, replace=False)
+    X_test[zero_indices] = 0  # Change 5 random samples in the test set to be all zeros
+
     clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
     Y_proba = clf.predict_proba(
         X_test
     )  # Our classifier predicts 0 for the zero samples
 
-    zero_indices -= 80
     zero_indices = np.repeat(zero_indices, len(clf.classes_))
     nonzero_indices = np.setdiff1d(np.arange(len(Y_proba)), zero_indices)
     # Nonzero sample probability distributions should be normalized to sum to 1

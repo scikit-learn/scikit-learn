@@ -1,4 +1,4 @@
 - The method `predict_proba` of :class:`sklearn.multiclass.OneVsRestClassifier` now
   avoids division by zero when normalizing the predicted probabilities matrix.
-  By :user:`Luis M. B. Varona <Luis-Varona>` and
+  By :user:`Luis M. B. Varona <Luis-Varona>`, :user:`Marc Bresson <MarcBresson>`, and
   :user:`Jérémie du Boisberranger <jeremiedbb>`
