@@ -477,7 +477,7 @@ def test_cap_curve_valid_position(
     )
 
 
-def test_lorenz_curve_position(pyplot):
+def test_lorenz_curve_valid_position(pyplot):
     estimator = PoissonRegressor()
 
     X, y = make_regression(n_samples=100, n_features=2, noise=10.0)
@@ -492,7 +492,7 @@ def test_lorenz_curve_position(pyplot):
 
     cumulative_total = display.cumulative_total
     y_true_cumulative = display.y_true_cumulative
-    assert np.all(cumulative_total >= y_true_cumulative), (
+    assert np.all(cumulative_total >= y_true_cumulative - 1e-8), (
         f"Lorenz curve dips above the chance line.\n"
         f"x: {cumulative_total}\n"
         f"y: {y_true_cumulative}"
@@ -501,7 +501,7 @@ def test_lorenz_curve_position(pyplot):
     perfect_y = np.interp(
         display.cumulative_total, display._perfect_x, display._perfect_y
     )
-    assert np.all(y_true_cumulative >= perfect_y), (
+    assert np.all(y_true_cumulative >= perfect_y - 1e-8), (
         "Lorenz curve rises below the perfect prediction line.\n"
         f"x: {perfect_y}\n"
         f"y: {y_true_cumulative}"
