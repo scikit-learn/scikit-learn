@@ -26,7 +26,6 @@ class _IDCounter:
 
 
 def _get_css_style():
-
     estimator_css = Path(__file__).with_suffix(".css").read_text(encoding="utf-8")
     get_params_css = (
         Path(__file__)
@@ -210,7 +209,7 @@ def _write_label_html(
             f'<input class="sk-toggleable__control sk-hidden--visually" id="{est_id}" '
             f'type="checkbox" {checked_str}>{label_html}<div '
             f'class="sk-toggleable__content {is_fitted_css_class}" '
-            f'data-param-prefix="{param_prefix}">'
+            f'data-param-prefix="{html.escape(param_prefix)}">'
         )
 
         if params:
@@ -330,7 +329,6 @@ def _write_estimator_html(
             if hasattr(estimator, "get_params") and hasattr(
                 estimator, "_get_params_html"
             ):
-
                 params = estimator._get_params_html(deep=False)._repr_html_inner()
             else:
                 params = ""

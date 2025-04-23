@@ -9,7 +9,7 @@ from sklearn._config import get_config
 
 
 class ParamsDict(UserDict):
-    """Dictionary-like class to visualize parameters in HTML.
+    """Dictionary-like class to store and provide an HTML representation.
 
     It builds an HTML structure to be used with Jupyter notebooks or similar
     environments. It allows storing metadata to track non-default parameters.
@@ -46,27 +46,23 @@ class ParamsDict(UserDict):
             output["text/html"] = _html_template(self)
 
 
-def _read_params(param, value, non_default_params, row_template):
-
+def _read_params(name, value, non_default_params):
     if value != "deprecated" and isinstance(value, str):
         cleaned_value = f'"{value}"'
     else:
         cleaned_value = html.escape(str(value))
     if len(cleaned_value) > 50:
-        if param == "param_distributions":
+        if name == "param_distributions":
             formatted_value = pprint.pformat(cleaned_value)
             cleaned_value = f"<pre>{formatted_value}</pre>"
         else:
             cleaned_value = "(...)"
-    param_type = "user-set" if param in non_default_params else "default"
+    param_type = "user-set" if name in non_default_params else "default"
 
-    return row_template.format(
-        param_type=param_type, param_name=param, param_value=cleaned_value
-    )
+    return {"param_type": param_type, "param_name": name, "param_value": cleaned_value}
 
 
 def _html_template(params):
-
     HTML_TEMPLATE = """
         <div class="estimator-table">
             <details>
@@ -91,8 +87,8 @@ def _html_template(params):
     """
 
     rows = [
-        _read_params(param, value, params.non_default, ROW_TEMPLATE)
-        for param, value in params.items()
+        ROW_TEMPLATE.format(**_read_params(name, value, params.non_default))
+        for name, value in params.items()
     ]
 
     return HTML_TEMPLATE.format(rows="\n".join(rows))
