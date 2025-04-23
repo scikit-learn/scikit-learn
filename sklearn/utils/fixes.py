@@ -107,7 +107,7 @@ def _yeojohnson_lambda(_neg_log_likelihood, x):
     min_scipy_version = "1.9.0"
 
     if scipy_version < parse_version(min_scipy_version):
-#choosing bracket - 2, 2 like for boxcox
+        # choosing bracket -2, 2 like for boxcox
         return optimize.brent(_neg_log_likelihood, brack=(-2, 2))
 
     _, lmbda = scipy.stats.yeojohnson(x, lmbda=None)
