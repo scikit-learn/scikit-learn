@@ -408,6 +408,7 @@ def test_ovr_multilabel_predict_proba():
         pred = Y_proba > 0.5
         assert_array_equal(pred, Y_pred)
 
+
 def test_ovr_multilabel_predict_proba_zero_row():
     base_clf = MultinomialNB(alpha=1)
     X, Y = datasets.make_multilabel_classification(
@@ -472,14 +473,16 @@ def test_ovr_single_label_predict_proba_zero_row():
             return ones
 
     base_clf = NaiveBinaryClassifier()
-    X, Y = iris.data, iris.target # Three-class problem with 150 samples
+    X, Y = iris.data, iris.target  # Three-class problem with 150 samples
     zero_indices = np.random.choice(np.arange(80, len(X)), size=5, replace=False)
-    X[zero_indices] = 0 # Change 5 random samples in the test set to be all zeros
+    X[zero_indices] = 0  # Change 5 random samples in the test set to be all zeros
 
     X_train, Y_train = X[:80], Y[:80]
     X_test = X[80:]
     clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
-    Y_proba = clf.predict_proba(X_test) # Our classifier predicts 0 for the zero samples
+    Y_proba = clf.predict_proba(
+        X_test
+    )  # Our classifier predicts 0 for the zero samples
 
     zero_indices -= 80
     zero_indices = np.repeat(zero_indices, len(clf.classes_))

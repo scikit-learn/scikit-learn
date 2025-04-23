@@ -555,7 +555,7 @@ class OneVsRestClassifier(
         if not self.multilabel_:
             # Then, (nonzero) sample probability distributions should be normalized.
             row_sums = np.sum(Y, axis=1)[:, np.newaxis]
-            np.divide(Y, row_sums, out=Y, where=row_sums != 0) # Avoid division by 0
+            np.divide(Y, row_sums, out=Y, where=row_sums != 0)  # Avoid division by 0
 
         return Y
 
