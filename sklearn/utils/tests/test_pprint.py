@@ -444,7 +444,7 @@ GridSearchCV(cv=3, error_score='raise-deprecating',
                                                      score_func=<function chi2 at some_address>)],
                           'reduce_dim__k': [2, 4, 8]}],
              pre_dispatch='2*n_jobs', refit=True, return_train_score=False,
-             scoring=None, verbose=0)"""
+             scoring=None, verbose=0)"""  # noqa: E501
 
     expected = expected[1:]  # remove first \n
     repr_ = pp.pformat(gspipline)
