@@ -175,7 +175,9 @@ def test_display_from_estimator_and_from_prediction(
 
 
 @pytest.mark.parametrize("pos_label", ["yes", "no", None])
-def test_cap_curve_invariance_logistic_sigmoid_vs_logits(data_binary, pos_label):
+def test_cap_curve_invariance_logistic_sigmoid_vs_logits(
+    pyplot, data_binary, pos_label
+):
     X, y = data_binary
     y = np.where(y == 0, "yes", "no")
 
