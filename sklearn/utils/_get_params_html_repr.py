@@ -54,6 +54,9 @@ class ParamsDict(ReprHTMLMixin, UserDict):
 
 
 def _read_params(name, value, non_default_params):
+    """Categorizes parameters as 'default' or 'user-set' and formats their values.
+    Escapes or truncates parameter values for display safety and readability.
+    """
     if value != "deprecated" and isinstance(value, str):
         cleaned_value = f'"{value}"'
     else:
@@ -73,6 +76,12 @@ def _read_params(name, value, non_default_params):
 
 
 def _html_template(params):
+    """Generate HTML representation of estimator parameters.
+
+    Creates an HTML table with parameter names and values, wrapped in a
+    collapsible details element. Parameters are styled differently based
+    on whether they are default or user-set values.
+    """
     HTML_TEMPLATE = """
         <div class="estimator-table">
             <details>
