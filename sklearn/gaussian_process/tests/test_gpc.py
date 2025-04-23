@@ -310,3 +310,12 @@ def test_gpc_latent_mean_and_variance_complain_on_more_than_2_classes():
         "that use the Laplace Approximation",
     ):
         gpc.latent_mean_and_variance(X)
+
+
+def test_latent_mean_and_variance_works_on_structured_kernels():
+    X = ["A", "AB", "B"]
+    y = np.array([True, False, True])
+    kernel = MiniSeqKernel(baseline_similarity_bounds="fixed")
+    gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
+
+    gpc.latent_mean_and_variance(X)
