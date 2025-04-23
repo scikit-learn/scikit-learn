@@ -1,0 +1,3 @@
+- :func:`~metrics.d2_log_loss_score` now properly handles the case when `labels` is
+  passed and not all of the labels are present in `y_true`.
+  By :user:`Vassilis Margonis <vmargonis>`
