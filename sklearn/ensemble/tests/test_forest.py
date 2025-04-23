@@ -8,10 +8,10 @@ Testing for the forest module (sklearn.ensemble.forest).
 import itertools
 import math
 import pickle
+import re
 from collections import defaultdict
 from functools import partial
 from itertools import combinations, product
-import re
 from typing import Any, Dict
 from unittest.mock import patch
 
@@ -314,7 +314,8 @@ def test_importances(dtype, name, criterion, oob_score, importance_attribute_nam
         name in FOREST_REGRESSORS
         and importance_attribute_name != "feature_importances_"
     ):
-        pytest.skip()  # Unbiased feature importance is not yet implemented for regression
+        pytest.skip()
+        # Unbiased feature importance is not yet implemented for regression
 
     # cast as dtype
     X = X_large.astype(dtype, copy=False)
@@ -1274,7 +1275,7 @@ def test_class_weights(name, oob_score, importance_attribute_name):
         random_state=0,
     )
     clf3.fit(iris.data, iris_multi)
-    # Can't use oob_score=True on multiclass-multioutput
+    # We can't use oob_score=True on multiclass-multioutput
     # So we use the regular feature_importances_
     assert_almost_equal(clf2.feature_importances_, clf3.feature_importances_)
 
@@ -1674,6 +1675,228 @@ def test_forest_degenerate_unbiased_feature_importances(
     assert_array_equal(
         getattr(clf, unbiased_importance_attribute_name), np.zeros(10, dtype=np.float64)
     )
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
+@pytest.mark.parametrize("method", ["ufi", "mdi_oob"])
+def test_unbiased_feature_importance_on_train(name, method):
+    from sklearn.ensemble._forest import _generate_sample_indices
+
+    n_samples = 15
+    X, y = make_classification(
+        n_samples=n_samples, n_informative=3, random_state=1, n_classes=2
+    )
+    clf = FOREST_CLASSIFIERS[name](
+        n_estimators=10, oob_score=True, bootstrap=True, random_state=1
+    )
+    clf.fit(X, y)
+    ufi_on_train = 0
+    for tree_idx, tree in enumerate(clf.estimators_):
+        in_bag_indicies = _generate_sample_indices(
+            clf.estimators_[tree_idx].random_state, n_samples, n_samples
+        )
+        X_in_bag = clf._validate_X_predict(X)[in_bag_indicies]
+        y_in_bag = y.reshape(-1, 1)[in_bag_indicies]
+        ufi_on_train_tree = (
+            tree.compute_unbiased_feature_importance_and_oob_predictions(
+                X_in_bag, y_in_bag, method
+            )[0]
+        )
+        ufi_on_train += ufi_on_train_tree / ufi_on_train_tree.sum()
+    ufi_on_train /= clf.n_estimators
+    ufi_on_train /= ufi_on_train.sum()
+    assert_almost_equal(clf.feature_importances_, ufi_on_train)
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
+def test_ufi_match_paper(name):
+    def paper_ufi(clf, X, y):
+        """
+        Code from: Unbiased Measurement of Feature Importance in Tree-Based Methods
+        https://arxiv.org/pdf/1903.05179
+        """
+        from sklearn.ensemble._forest import _generate_sample_indices
+
+        feature_importance = np.array([0.0] * X.shape[1])
+        n_estimators = clf.n_estimators
+
+        n_samples = X.shape[0]
+        inbag_counts = np.zeros((n_samples, clf.n_estimators))
+        for tree_idx, tree in enumerate(clf.estimators_):
+            sample_idx = _generate_sample_indices(
+                tree.random_state, n_samples, n_samples
+            )
+            inbag_counts[:, tree_idx] = np.bincount(sample_idx, minlength=n_samples)
+
+        for tree_idx, tree in enumerate(clf.estimators_):
+            fi_tree = np.array([0.0] * X.shape[1])
+
+            n_nodes = tree.tree_.node_count
+
+            tree_X_inb = X.repeat((inbag_counts[:, tree_idx]).astype("int"), axis=0)
+            tree_y_inb = y.repeat((inbag_counts[:, tree_idx]).astype("int"), axis=0)
+            decision_path_inb = tree.decision_path(tree_X_inb).todense()
+
+            tree_X_oob = X[inbag_counts[:, tree_idx] == 0]
+            tree_y_oob = y[inbag_counts[:, tree_idx] == 0]
+            decision_path_oob = tree.decision_path(tree_X_oob).todense()
+
+            impurity = [0] * n_nodes
+
+            has_oob_samples_in_children = [True] * n_nodes
+
+            weighted_n_node_samples = (
+                np.array(np.sum(decision_path_inb, axis=0))[0] / tree_X_inb.shape[0]
+            )
+
+            for node_idx in range(n_nodes):
+                y_innode_oob = tree_y_oob[
+                    np.array(decision_path_oob[:, node_idx])
+                    .ravel()
+                    .nonzero()[0]
+                    .tolist()
+                ]
+                y_innode_inb = tree_y_inb[
+                    np.array(decision_path_inb[:, node_idx])
+                    .ravel()
+                    .nonzero()[0]
+                    .tolist()
+                ]
+
+                if len(y_innode_oob) == 0:
+                    if sum(tree.tree_.children_left == node_idx) > 0:
+                        parent_node = np.arange(n_nodes)[
+                            tree.tree_.children_left == node_idx
+                        ][0]
+                        has_oob_samples_in_children[parent_node] = False
+                    else:
+                        parent_node = np.arange(n_nodes)[
+                            tree.tree_.children_right == node_idx
+                        ][0]
+                        has_oob_samples_in_children[parent_node] = False
+
+                else:
+                    p_node_oob = float(sum(y_innode_oob)) / len(y_innode_oob)
+                    p_node_inb = float(sum(y_innode_inb)) / len(y_innode_inb)
+
+                    impurity[node_idx] = (
+                        1
+                        - p_node_oob * p_node_inb
+                        - (1 - p_node_oob) * (1 - p_node_inb)
+                    )
+            for node_idx in range(n_nodes):
+                if (
+                    tree.tree_.children_left[node_idx] == -1
+                    or tree.tree_.children_right[node_idx] == -1
+                ):
+                    continue
+
+                feature_idx = tree.tree_.feature[node_idx]
+
+                node_left = tree.tree_.children_left[node_idx]
+                node_right = tree.tree_.children_right[node_idx]
+
+                if has_oob_samples_in_children[node_idx]:
+                    fi_tree[feature_idx] += (
+                        weighted_n_node_samples[node_idx] * impurity[node_idx]
+                        - weighted_n_node_samples[node_left] * impurity[node_left]
+                        - weighted_n_node_samples[node_right] * impurity[node_right]
+                    )
+            feature_importance += fi_tree
+        feature_importance /= n_estimators
+        return feature_importance / feature_importance.sum()
+
+    X, y = make_classification(
+        n_samples=15, n_informative=3, random_state=1, n_classes=2
+    )
+    clf = FOREST_CLASSIFIERS[name](
+        n_estimators=10, oob_score=True, bootstrap=True, random_state=1
+    )
+    clf.fit(X, y)
+    assert_almost_equal(clf.ufi_feature_importances_, paper_ufi(clf, X, y))
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
+def test_mdi_oob_match_paper(name):
+    def paper_mdi_oob(clf, X, y):
+        """
+        Code from: A Debiased MDI Feature Importance Measure for Random Forests
+        https://arxiv.org/pdf/1906.10845
+        """
+        import copy
+
+        from sklearn.ensemble._forest import _generate_unsampled_indices
+        from sklearn.preprocessing import OneHotEncoder
+
+        n_samples, n_features = X.shape
+
+        # change X to np.float32
+        XX = X.copy().astype(np.float32)
+
+        # infer y.shape
+        if len(y.shape) == 1:
+            yy = y[:, np.newaxis]
+        yy = OneHotEncoder().fit_transform(yy)
+
+        out = np.zeros((n_features,))
+        for tree in clf.estimators_:
+            indices = _generate_unsampled_indices(
+                tree.random_state, n_samples, n_samples
+            )
+
+            decision_paths = np.array(
+                tree.tree_.decision_path(XX[indices, :]).todense()
+            )
+
+            # compute the impurity at each node
+            node_mean = (
+                decision_paths / (np.sum(decision_paths, 0)[np.newaxis, :])
+            ).T @ yy[indices, :]
+            tmp = copy.deepcopy(tree.tree_.value.squeeze(axis=1))
+
+            node_previous_mean = tmp / np.sum(tmp, 1)[:, np.newaxis]
+
+            # compute the impurity decrease at each node
+            node_sample_size = tree.tree_.weighted_n_node_samples
+            lc = copy.deepcopy(tree.tree_.children_left)
+            rc = copy.deepcopy(tree.tree_.children_right)
+            tmp = lc == -1
+            lc[tmp] = 0
+            rc[tmp] = 0
+            # decrease = node_impurity * node_sample_size - node_impurity[lc] *
+            # node_sample_size[lc] - node_impurity[rc] * node_sample_size[rc]
+            decrease = (
+                np.sum(
+                    (node_mean - node_mean[lc])
+                    * (node_previous_mean - node_previous_mean[lc]),
+                    1,
+                )
+                * node_sample_size[lc]
+                + np.sum(
+                    (node_mean - node_mean[rc])
+                    * (node_previous_mean - node_previous_mean[rc]),
+                    1,
+                )
+                * node_sample_size[rc]
+            )
+            feature = tree.tree_.feature
+            decrease[feature == -2] = np.nan
+            decrease[np.sum(decision_paths, 0) < 2] = np.nan
+            tmp = np.logical_not(np.isnan(decrease))
+            for i in range(len(tmp)):
+                if tmp[i]:
+                    out[feature[i]] += decrease[i]
+        out /= clf.n_estimators
+        return out / out.sum()
+
+    X, y = make_classification(
+        n_samples=15, n_informative=3, random_state=1, n_classes=2
+    )
+    clf = FOREST_CLASSIFIERS[name](
+        n_estimators=10, oob_score=True, bootstrap=True, random_state=1
+    )
+    clf.fit(X, y)
+    assert_almost_equal(clf.mdi_oob_feature_importances_, paper_mdi_oob(clf, X, y))
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)

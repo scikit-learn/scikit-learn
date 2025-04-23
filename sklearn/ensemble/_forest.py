@@ -682,18 +682,27 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         all_importances = np.mean(all_importances, axis=0, dtype=np.float64)
         return all_importances / np.sum(all_importances)
 
-    def _compute_unbiased_feature_importance_and_oob_predictions_per_tree(self, tree, X, y, method, n_samples):
-        oob_indices = _generate_unsampled_indices(tree.random_state, n_samples, n_samples)
+    def _compute_unbiased_feature_importance_and_oob_predictions_per_tree(
+        self, tree, X, y, method, n_samples
+    ):
+        oob_indices = _generate_unsampled_indices(
+            tree.random_state, n_samples, n_samples
+        )
         X_test = X[oob_indices]
         y_test = y[oob_indices]
 
-        oob_pred = np.zeros((n_samples, self.estimators_[0].tree_.max_n_classes, self.n_outputs_), dtype=np.float64)
+        oob_pred = np.zeros(
+            (n_samples, self.estimators_[0].tree_.max_n_classes, self.n_outputs_),
+            dtype=np.float64,
+        )
         n_oob_pred = np.zeros((n_samples, self.n_outputs_), dtype=np.intp)
 
-        importances, oob_pred[oob_indices], n_oob_pred[oob_indices] = tree.compute_unbiased_feature_importance_and_oob_predictions(
-            X_test=X_test,
-            y_test=y_test,
-            method=method,
+        importances, oob_pred[oob_indices], n_oob_pred[oob_indices] = (
+            tree.compute_unbiased_feature_importance_and_oob_predictions(
+                X_test=X_test,
+                y_test=y_test,
+                method=method,
+            )
         )
         return (importances, oob_pred, n_oob_pred)
 
@@ -706,21 +715,25 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         if y.ndim == 1:
             y = y.reshape(-1, 1)
 
-        n_samples, n_features  = X.shape
+        n_samples, n_features = X.shape
         max_n_classes = self.estimators_[0].tree_.max_n_classes
-        results = Parallel(n_jobs=self.n_jobs, prefer="threads", return_as="generator_unordered")(
-            delayed(self._compute_unbiased_feature_importance_and_oob_predictions_per_tree)(
-                tree, X, y, method, n_samples
-            )
+        results = Parallel(
+            n_jobs=self.n_jobs, prefer="threads", return_as="generator_unordered"
+        )(
+            delayed(
+                self._compute_unbiased_feature_importance_and_oob_predictions_per_tree
+            )(tree, X, y, method, n_samples)
             for tree in self.estimators_
             if tree.tree_.node_count > 1
         )
 
         importances = np.zeros(n_features, dtype=np.float64)
-        oob_pred = np.zeros((n_samples, max_n_classes, self.n_outputs_), dtype=np.float64)
+        oob_pred = np.zeros(
+            (n_samples, max_n_classes, self.n_outputs_), dtype=np.float64
+        )
         n_oob_pred = np.zeros((n_samples, self.n_outputs_), dtype=np.intp)
 
-        for (importances_i, oob_pred_i, n_oob_pred_i) in results:
+        for importances_i, oob_pred_i, n_oob_pred_i in results:
             oob_pred += oob_pred_i
             n_oob_pred += n_oob_pred_i
             importances += importances_i
