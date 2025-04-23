@@ -2,28 +2,17 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import html
-import pprint
+import reprlib
 from collections import UserDict
 
 from sklearn._config import get_config
 
 
-class ParamsDict(UserDict):
-    """Dictionary-like class to store and provide an HTML representation.
-
-    It builds an HTML structure to be used with Jupyter notebooks or similar
-    environments. It allows storing metadata to track non-default parameters.
-    """
-
-    def __init__(self, params=None, non_default=tuple()):
-        super().__init__(params or {})
-        self.non_default = non_default
-
+class ReprHTMLMixin:
     @property
     def _repr_html_(self):
         # Taken from sklearn.base.BaseEstimator
         """HTML representation of estimator.
-
         This is redundant with the logic of `_repr_mimebundle_`. The latter
         should be favored in the long term, `_repr_html_` is only
         implemented for consumers who do not interpret `_repr_mimbundle_`.
@@ -46,6 +35,24 @@ class ParamsDict(UserDict):
             output["text/html"] = _html_template(self)
 
 
+class ParamsDict(ReprHTMLMixin, UserDict):
+    """Dictionary-like class to store and provide an HTML representation.
+
+    It builds an HTML structure to be used with Jupyter notebooks or similar
+    environments. It allows storing metadata to track non-default parameters.
+
+    Parameters
+    ----------
+    params : dict, default=None
+
+    non_default : tuple or None
+    """
+
+    def __init__(self, params=None, non_default=tuple()):
+        super().__init__(params or {})
+        self.non_default = non_default
+
+
 def _read_params(name, value, non_default_params):
     if value != "deprecated" and isinstance(value, str):
         cleaned_value = f'"{value}"'
@@ -53,8 +60,11 @@ def _read_params(name, value, non_default_params):
         cleaned_value = html.escape(str(value))
     if len(cleaned_value) > 50:
         if name == "param_distributions":
-            formatted_value = pprint.pformat(cleaned_value)
-            cleaned_value = f"<pre>{formatted_value}</pre>"
+            r = reprlib.Repr()
+            r.maxlist = 2  # Show only first 2 items of lists
+            r.maxtuple = 1  # Show only first item of tuples
+            r.maxstring = 8  # Limit string length to 8 chars
+            cleaned_value = r.repr(value)
         else:
             cleaned_value = "(...)"
     param_type = "user-set" if name in non_default_params else "default"

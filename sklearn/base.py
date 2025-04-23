@@ -17,7 +17,7 @@ from . import __version__
 from ._config import config_context, get_config
 from .exceptions import InconsistentVersionWarning
 from .utils._estimator_html_repr import _HTMLDocumentationLinkMixin, estimator_html_repr
-from .utils._get_params_html_repr import ParamsDict
+from .utils._get_params_html_repr import ParamsDict, ReprHTMLMixin
 from .utils._metadata_requests import _MetadataRequester, _routing_enabled
 from .utils._missing import is_scalar_nan
 from .utils._param_validation import validate_parameter_constraints
@@ -155,7 +155,7 @@ def _clone_parametrized(estimator, *, safe=True):
     return new_object
 
 
-class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
+class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequester):
     """Base class for all estimators in scikit-learn.
 
     Inheriting from this class provides default implementations of:
