@@ -83,8 +83,7 @@ else:
 
 #TODO : remove this when minimum version of scipy >= 1.9.0
 def _yeojohnson_lambda(_neg_log_likelihood, x):
-    """
-    Estimate the optimal Yeo-Johnson transformation parameter (lambda) for the input data `x`.
+    """Estimate the optimal Yeo-Johnson transformation parameter (lambda).
 
     This function provides a compatibility workaround for versions of SciPy older than 1.9.0,
     where `scipy.stats.yeojohnson` did not return the estimated lambda directly.

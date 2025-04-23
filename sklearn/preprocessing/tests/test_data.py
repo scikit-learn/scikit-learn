@@ -2625,18 +2625,11 @@ def test_power_transformer_constant_feature(standardize):
 
 
 def test_power_transformer_no_warnings():
-    """
-    Verify that PowerTransformer operates without raising any warnings on valid data.
+    """Verify that PowerTransformer operates without raising any warnings on valid data.
 
-    This test addresses issues raised in:
+    This test addresses numerical issues with floating point numbers (mostly
+    overflows) with the Yeo-Johnson transform, see
     https://github.com/scikit-learn/scikit-learn/issues/23319#issuecomment-1464933635
-
-    The original issue involved Numpy warnings and scipy.optimize._optimize.BracketError
-    when using PowerTransformer with method="yeo-johnson". This test ensures no warnings
-    or errors are raised on valid data, including subsets of the input.
-
-    Inspired by the code in the links above, this is intended to serve as a robust
-    non-regression test.
     """
     x = np.array([
         2003.0, 1950.0, 1997.0, 2000.0, 2009.0,
@@ -2653,17 +2646,15 @@ def test_power_transformer_no_warnings():
                 warning_messages = "\n".join(str(w.message) for w in caught_warnings)
                 pytest.fail(f"Unexpected warnings were raised:\n{warning_messages}")
 
-#[Test 1] Full dataset - Should not trigger overflow in variance calculation
+    # Full dataset: Should not trigger overflow in variance calculation.
     _test_no_warnings(x.reshape(-1, 1))
 
-#[Test 2] Subset of data - Should not trigger overflow in power calculation
+    # Subset of data: Should not trigger overflow in power calculation.
     _test_no_warnings(x[:5].reshape(-1, 1))
 
 
 def test_yeojohnson_for_different_scipy_version():
     """Check that the results are consistent across different SciPy versions.
-
-    Reference: https://github.com/scikit-learn/scikit-learn/pull/27818
     """
     pt = PowerTransformer(method="yeo-johnson").fit(X_1col)
     assert_almost_equal(pt.lambdas_[0], 0.99546157)
