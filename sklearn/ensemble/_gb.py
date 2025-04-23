@@ -612,6 +612,51 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         # GradientBoosting*.init is not validated yet
         prefer_skip_nested_validation=False
     )
+    def _stratified_train_test_split(
+        self, X, y, sample_weight, test_size, random_state
+    ):
+
+        stratify = y if self.is_classifier else None
+        X_train, X_val, y_train, y_val, sample_weight_train, sample_weight_val = (
+            train_test_split(
+                X,
+                y,
+                sample_weight,
+                test_size=test_size,
+                random_state=random_state,
+                stratify=stratify,
+            )
+        )
+
+        if self.is_classifier:
+            # Check for missing classes in y_val
+            unique_classes = np.unique(y)
+            missing_classes = np.setdiff1d(unique_classes, np.unique(y_val))
+
+            if len(missing_classes) > 0:
+                # Find indices of the missing classes in the original dataset
+                missing_indices = [np.where(y == cls)[0][0] for cls in missing_classes]
+
+                # Move these samples from train to val
+                for idx in missing_indices:
+                    X_val = np.vstack([X_val, X[idx].reshape(1, -1)])
+                    y_val = np.append(y_val, y[idx])
+                    sample_weight_val = np.append(sample_weight_val, sample_weight[idx])
+
+                    train_idx = np.where((X_train == X[idx]).all(axis=1))[0][0]
+                    X_train = np.delete(X_train, train_idx, axis=0)
+                    y_train = np.delete(y_train, train_idx)
+                    sample_weight_train = np.delete(sample_weight_train, train_idx)
+
+        return (
+            X_train,
+            X_val,
+            y_train,
+            y_val,
+            sample_weight_train,
+            sample_weight_val,
+        )
+
     def fit(self, X, y, sample_weight=None, monitor=None):
         """Fit the gradient boosting model.
 
@@ -677,7 +722,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self._loss = self._get_loss(sample_weight=sample_weight)
 
         if self.n_iter_no_change is not None:
-            stratify = y if is_classifier(self) else None
             (
                 X_train,
                 X_val,
@@ -685,25 +729,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 y_val,
                 sample_weight_train,
                 sample_weight_val,
-            ) = train_test_split(
-                X,
-                y,
-                sample_weight,
-                random_state=self.random_state,
-                test_size=self.validation_fraction,
-                stratify=stratify,
+            ) = self._stratified_train_test_split(
+                X, y, sample_weight, self.validation_fraction, self.random_state
             )
-            if is_classifier(self):
-                if self.n_classes_ != np.unique(y_train).shape[0]:
-                    # We choose to error here. The problem is that the init
-                    # estimator would be trained on y, which has some missing
-                    # classes now, so its predictions would not have the
-                    # correct shape.
-                    raise ValueError(
-                        "The training data after the early stopping split "
-                        "is missing some classes. Try using another random "
-                        "seed."
-                    )
         else:
             X_train, y_train, sample_weight_train = X, y, sample_weight
             X_val = y_val = sample_weight_val = None
