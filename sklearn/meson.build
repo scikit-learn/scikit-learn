@@ -191,14 +191,12 @@ scikit_learn_cython_args = [
 cython_args += scikit_learn_cython_args
 
 if cython.version().version_compare('>=3.1.0')
-  cython_args += ['-Xfreethreading_compatible=True']
-
   cy = find_program(cython.cmd_array()[0])
   cython_shared_src = custom_target(
     install: false,
     output: '_cyutility.c',
     command: [
-      cy, '-3', '--fast-fail', '-Xfreethreading_compatible=True',
+      cy, '-3', '--fast-fail',
       '--generate-shared=' + meson.current_build_dir()/'_cyutility.c'
     ],
   )
