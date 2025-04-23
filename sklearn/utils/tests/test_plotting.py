@@ -10,7 +10,7 @@ from sklearn.utils._plotting import (
     _validate_style_kwargs,
 )
 from sklearn.utils._response import _get_response_values_binary
-from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_allclose
 
 
 @pytest.mark.parametrize("ax", [None, "Ax"])
@@ -59,7 +59,7 @@ def test_validate_and_get_response_values(pyplot, pos_label, name, response_meth
         estimator, X, response_method=response_method, pos_label=pos_label
     )
 
-    assert_array_equal(y_pred, expected_y_pred)
+    assert_allclose(y_pred, expected_y_pred)
     assert pos_label == expected_pos_label
 
     # Check name is handled correctly
