@@ -295,3 +295,18 @@ def test_gpc_latent_mean_and_variance_shape(kernel):
     latent_mean, latent_variance = gpc.latent_mean_and_variance(X)
     assert latent_mean.shape == (X.shape[0],)
     assert latent_variance.shape == (X.shape[0],)
+
+
+def test_gpc_latent_mean_and_variance_complain_on_more_than_2_classes():
+    """Checks that the latent mean and variance have the right shape."""
+    gpc = GaussianProcessClassifier(kernel=RBF())
+    gpc.fit(X, y_mc)
+
+    # Check that the latent mean and variance have the right shape
+    with pytest.raises(
+        ValueError,
+        match="Returning the mean and variance of the "
+        "latent function f is only supported for GPCs "
+        "that use the Laplace Approximation",
+    ):
+        gpc.latent_mean_and_variance(X)
