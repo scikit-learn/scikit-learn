@@ -4,6 +4,7 @@
 import numpy as np
 
 from sklearn.base import is_classifier
+from sklearn.utils.multiclass import type_of_target
 
 from ...utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
@@ -326,6 +327,16 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         display : :class:`~sklearn.metrics.CAPCurveDisplay`
             Object that stores computed values.
         """
+        target_type = type_of_target(y_true)
+        if target_type == "continuous":
+            if np.any(y_true < 0):
+                raise ValueError(
+                    "`y_true` contains negative values, which isn't allowed for "
+                    "continuous targets. If your data shouldn't be treated as "
+                    "continuous, try converting the values to integers or strings "
+                    "instead."
+                )
+
         pos_label_validated, name = cls._validate_from_predictions_params(
             y_true, y_pred, sample_weight=sample_weight, pos_label=pos_label, name=name
         )

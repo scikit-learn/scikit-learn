@@ -62,25 +62,25 @@ def test_cumulative_accuracy_display_from_predictions(
     )
 
     assert cap_display is not None
-    assert hasattr(
-        cap_display, "y_true_cumulative"
-    ), "The display must have a y_true_cumulative attribute"
-    assert hasattr(
-        cap_display, "cumulative_total"
-    ), "The display must have a cumulative_total attribute"
+    assert hasattr(cap_display, "y_true_cumulative"), (
+        "The display must have a y_true_cumulative attribute"
+    )
+    assert hasattr(cap_display, "cumulative_total"), (
+        "The display must have a cumulative_total attribute"
+    )
     assert hasattr(cap_display, "line_"), "The display must have a line attribute"
     assert hasattr(cap_display, "ax_"), "The display must have an ax attribute"
     assert hasattr(cap_display, "figure_"), "The display must have a figure attribute"
-    assert hasattr(
-        cap_display, "pos_label"
-    ), "The display must have a pos_label attribute"
-    assert hasattr(
-        cap_display, "y_true_cumulative"
-    ), "The display must have a y_true_cumulative attribute"
+    assert hasattr(cap_display, "pos_label"), (
+        "The display must have a pos_label attribute"
+    )
+    assert hasattr(cap_display, "y_true_cumulative"), (
+        "The display must have a y_true_cumulative attribute"
+    )
     if plot_chance_level:
-        assert (
-            cap_display.chance_level_ is not None
-        ), "Chance level line should be present"
+        assert cap_display.chance_level_ is not None, (
+            "Chance level line should be present"
+        )
 
     y_true_cumulative = cap_display.y_true_cumulative
     cumulative_total = cap_display.cumulative_total
@@ -119,19 +119,19 @@ def test_cumulative_accuracy_display_from_estimator(
     assert hasattr(cap_display, "line_"), "The display must have a line attribute"
     assert hasattr(cap_display, "ax_"), "The display must have an ax attribute"
     assert hasattr(cap_display, "figure_"), "The display must have a figure attribute"
-    assert hasattr(
-        cap_display, "y_true_cumulative"
-    ), "The display must have a y_true_cumulative attribute"
-    assert hasattr(
-        cap_display.y_true_cumulative, "shape"
-    ), "y_true_cumulative must have a shape attribute"
-    assert hasattr(
-        cap_display.y_true_cumulative, "dtype"
-    ), "y_true_cumulative must have a dtype attribute"
+    assert hasattr(cap_display, "y_true_cumulative"), (
+        "The display must have a y_true_cumulative attribute"
+    )
+    assert hasattr(cap_display.y_true_cumulative, "shape"), (
+        "y_true_cumulative must have a shape attribute"
+    )
+    assert hasattr(cap_display.y_true_cumulative, "dtype"), (
+        "y_true_cumulative must have a dtype attribute"
+    )
     if plot_chance_level:
-        assert (
-            cap_display.chance_level_ is not None
-        ), "Chance level line should be present"
+        assert cap_display.chance_level_ is not None, (
+            "Chance level line should be present"
+        )
 
 
 @pytest.mark.parametrize(
@@ -453,9 +453,9 @@ def test_cap_curve_between_chance_and_perfect(
             alpha=0.8,
         )
 
-    assert (
-        display.estimator_name == default_name
-    ), f"{display.estimator_name} != {default_name}"
+    assert display.estimator_name == default_name, (
+        f"{display.estimator_name} != {default_name}"
+    )
 
     # Check that CAP curve is on or above the chance level line
     cumulative_total = display.cumulative_total
@@ -496,8 +496,11 @@ def test_cap_for_non_prob_classifier(pyplot, data_binary, response_method):
 
 
 def test_y_true_with_negative_values():
-    match = "y_true contains at least one negative value, which is not allowed."
+    match = "`y_true` contains negative values, which isn't allowed for "
+    "continuous targets. If your data shouldn't be treated as "
+    "continuous, try converting the values to integers or strings "
+    "instead."
     with pytest.raises(ValueError, match=match):
-        y_true = np.array([0, -1, 0, 1, 1, 1, 0])
-        y_pred = np.array([0, 1, 0, 0, 1, 1, 0])
+        y_true = np.array([0.0, -1.2, 0.0, 1.5, 1.0, 1.0, 0.0])
+        y_pred = np.array([0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0])
         cap_display = CAPCurveDisplay.from_predictions(y_true, y_pred)
