@@ -34,7 +34,7 @@ def _get_css_style():
         .read_text(encoding="utf-8")
     )
 
-    return f"{estimator_css} {get_params_css}"
+    return f"{estimator_css}\n{get_params_css}"
 
 
 _CONTAINER_ID_COUNTER = _IDCounter("sk-container-id")
@@ -130,7 +130,7 @@ def _write_label_html(
     ----------
     out : file-like object
         The file to write the HTML representation to.
-    params: {str, ""}
+    params: str
         If estimator has `get_params` method, this is the HTML representation
         of the estimator's parameters and their values. When the estimator
         does not have `get_params`, it is an empty string.

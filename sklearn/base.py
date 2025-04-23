@@ -256,7 +256,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
 
     def _get_params_html(self, deep=True):
         """
-        Get parameters for this estimator to build an HTML block.
+        Get parameters for this estimator with a specific HTML representation.
 
         Parameters
         ----------
@@ -266,40 +266,48 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
 
         Returns
         -------
-        params : dict
-            Parameter names mapped to their values.
+        params : ParamsDict
+            Parameter names mapped to their values. We return a `ParamsDict`
+            dictionary, which renders a specific HTML representation in table
+            form.
         """
-        out = dict()
-        for key in self._get_param_names():
-            value = getattr(self, key)
-            if deep and hasattr(value, "get_params") and not isinstance(value, type):
-                deep_items = value.get_params().items()
-                out.update((key + "__" + k, val) for k, val in deep_items)
-            out[key] = value
+        out = self.get_params(deep=deep)
 
         init_func = getattr(self.__init__, "deprecated_original", self.__init__)
-        init_params = inspect.signature(init_func).parameters
-        init_params = {name: param.default for name, param in init_params.items()}
+        init_default_params = inspect.signature(init_func).parameters
+        init_default_params = {
+            name: param.default for name, param in init_default_params.items()
+        }
 
-        def has_changed(k, v):
-            if k not in init_params:  # happens if k is part of a **kwargs
+        def non_default(param_name, param_value):
+            """Finds the parameters that have been set by the user"""
+            if (
+                param_name not in init_default_params
+            ):  # happens if k is part of a **kwargs
                 return True
-            if init_params[k] == inspect._empty:  # k has no default value
+            if (
+                init_default_params[param_name] == inspect._empty
+            ):  # k has no default value
                 return True
             # try to avoid calling repr on nested estimators
-            if isinstance(v, BaseEstimator) and v.__class__ != init_params[k].__class__:
+            if (
+                isinstance(param_value, BaseEstimator)
+                and param_value.__class__ != init_default_params[param_name].__class__
+            ):
                 return True
-            # Use repr as a last resort. It may be expensive.
-            if repr(v) != repr(init_params[k]) and not (
-                is_scalar_nan(init_params[k]) and is_scalar_nan(v)
+
+            if param_value != init_default_params[param_name] and not (
+                is_scalar_nan(init_default_params[param_name])
+                and is_scalar_nan(param_value)
             ):
                 return True
             return False
 
-        non_default = [k for k, v in out.items() if has_changed(k, v)]
-        out = ParamsDict(out, non_default)
+        non_default_ls = [
+            name for name, value in out.items() if non_default(name, value)
+        ]
 
-        return out
+        return ParamsDict(out, non_default_ls)
 
     def set_params(self, **params):
         """Set the parameters of this estimator.

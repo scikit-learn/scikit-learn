@@ -1,5 +1,9 @@
 .estimator-table summary {
     padding: .5rem;
+    margin-right: auto;
+    margin-right: auto;
+    font-family: monospace;
+    cursor: pointer;
 }
 
 .estimator-table table td {
