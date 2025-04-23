@@ -899,7 +899,7 @@ def is_lazy_array(x: object) -> bool:
     try:
         bool(x)
         return False
-    # The Array API standard dictactes that __bool__ should raise TypeError if the
+    # The Array API standard dictates that __bool__ should raise TypeError if the
     # output cannot be defined.
     # Here we allow for it to raise arbitrary exceptions, e.g. like Dask does.
     except Exception:
