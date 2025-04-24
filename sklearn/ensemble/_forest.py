@@ -895,16 +895,28 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         if scoring_function is None:
             scoring_function = accuracy_score
 
-        self.ufi_feature_importances_, self.oob_decision_function_ = (
-            self._compute_unbiased_feature_importance_and_oob_predictions(
-                X, y, method="ufi"
+        if self.criterion != "gini":
+            warn(
+                "Unbiased feature importance is not available for"
+                " classification with a split criteria other than Gini",
+                UserWarning,
             )
-        )
-        self.mdi_oob_feature_importances_, _ = (
-            self._compute_unbiased_feature_importance_and_oob_predictions(
-                X, y, method="mdi_oob"
+            _, self.oob_decision_function_ = (
+                self._compute_unbiased_feature_importance_and_oob_predictions(
+                    X, y, method="ufi"
+                )
             )
-        )
+        else:
+            self.ufi_feature_importances_, _ = (
+                self._compute_unbiased_feature_importance_and_oob_predictions(
+                    X, y, method="ufi"
+                )
+            )
+            self.mdi_oob_feature_importances_, self.oob_decision_function_ = (
+                self._compute_unbiased_feature_importance_and_oob_predictions(
+                    X, y, method="mdi_oob"
+                )
+            )
         if self.oob_decision_function_.shape[-1] == 1:
             # drop the n_outputs axis if there is a single output
             self.oob_decision_function_ = self.oob_decision_function_.squeeze(axis=-1)

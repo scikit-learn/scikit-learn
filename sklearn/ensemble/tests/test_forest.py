@@ -330,6 +330,13 @@ def test_importances(dtype, name, criterion, oob_score, importance_attribute_nam
             " regression with a split criteria other than MSE",
         ):
             est.fit(X, y)
+    elif oob_score and name in FOREST_CLASSIFIERS and criterion != "gini":
+        with pytest.warns(
+            UserWarning,
+            match="Unbiased feature importance is not available for"
+            " classification with a split criteria other than Gini",
+        ):
+            est.fit(X, y)
     else:
         est.fit(X, y)
         print(
