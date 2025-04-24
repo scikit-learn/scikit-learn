@@ -138,17 +138,17 @@ def test_make_classification_informative_features():
             signs = signs.view(dtype="|S{0}".format(signs.strides[0])).ravel()
             unique_signs, cluster_index = np.unique(signs, return_inverse=True)
 
-            assert (
-                len(unique_signs) == n_clusters
-            ), "Wrong number of clusters, or not in distinct quadrants"
+            assert len(unique_signs) == n_clusters, (
+                "Wrong number of clusters, or not in distinct quadrants"
+            )
 
             clusters_by_class = defaultdict(set)
             for cluster, cls in zip(cluster_index, y):
                 clusters_by_class[cls].add(cluster)
             for clusters in clusters_by_class.values():
-                assert (
-                    len(clusters) == n_clusters_per_class
-                ), "Wrong number of clusters per class"
+                assert len(clusters) == n_clusters_per_class, (
+                    "Wrong number of clusters per class"
+                )
             assert len(clusters_by_class) == n_classes, "Wrong number of classes"
 
             assert_array_almost_equal(
@@ -344,20 +344,20 @@ def test_make_hastie_10_2():
     assert np.unique(y).shape == (2,), "Unexpected number of classes"
 
 
-def test_make_regression():
+def test_make_regression(global_random_seed):
     X, y, c = make_regression(
-        n_samples=100,
+        n_samples=200,
         n_features=10,
         n_informative=3,
         effective_rank=5,
         coef=True,
         bias=0.0,
         noise=1.0,
-        random_state=0,
+        random_state=global_random_seed,
     )
 
-    assert X.shape == (100, 10), "X shape mismatch"
-    assert y.shape == (100,), "y shape mismatch"
+    assert X.shape == (200, 10), "X shape mismatch"
+    assert y.shape == (200,), "y shape mismatch"
     assert c.shape == (10,), "coef shape mismatch"
     assert sum(c != 0.0) == 3, "Unexpected number of informative features"
 
@@ -369,7 +369,7 @@ def test_make_regression():
     assert X.shape == (100, 1)
 
 
-def test_make_regression_multitarget():
+def test_make_regression_multitarget(global_random_seed):
     X, y, c = make_regression(
         n_samples=100,
         n_features=10,
@@ -377,7 +377,7 @@ def test_make_regression_multitarget():
         n_targets=3,
         coef=True,
         noise=1.0,
-        random_state=0,
+        random_state=global_random_seed,
     )
 
     assert X.shape == (100, 10), "X shape mismatch"
@@ -389,11 +389,11 @@ def test_make_regression_multitarget():
     assert_almost_equal(np.std(y - np.dot(X, c)), 1.0, decimal=1)
 
 
-def test_make_blobs():
+def test_make_blobs(global_random_seed):
     cluster_stds = np.array([0.05, 0.2, 0.4])
     cluster_centers = np.array([[0.0, 0.0], [1.0, 1.0], [0.0, 1.0]])
     X, y = make_blobs(
-        random_state=0,
+        random_state=global_random_seed,
         n_samples=50,
         n_features=2,
         centers=cluster_centers,
@@ -412,23 +412,26 @@ def test_make_blobs_n_samples_list():
     X, y = make_blobs(n_samples=n_samples, n_features=2, random_state=0)
 
     assert X.shape == (sum(n_samples), 2), "X shape mismatch"
-    assert all(
-        np.bincount(y, minlength=len(n_samples)) == n_samples
-    ), "Incorrect number of samples per blob"
+    assert all(np.bincount(y, minlength=len(n_samples)) == n_samples), (
+        "Incorrect number of samples per blob"
+    )
 
 
-def test_make_blobs_n_samples_list_with_centers():
+def test_make_blobs_n_samples_list_with_centers(global_random_seed):
     n_samples = [20, 20, 20]
     centers = np.array([[0.0, 0.0], [1.0, 1.0], [0.0, 1.0]])
     cluster_stds = np.array([0.05, 0.2, 0.4])
     X, y = make_blobs(
-        n_samples=n_samples, centers=centers, cluster_std=cluster_stds, random_state=0
+        n_samples=n_samples,
+        centers=centers,
+        cluster_std=cluster_stds,
+        random_state=global_random_seed,
     )
 
     assert X.shape == (sum(n_samples), 2), "X shape mismatch"
-    assert all(
-        np.bincount(y, minlength=len(n_samples)) == n_samples
-    ), "Incorrect number of samples per blob"
+    assert all(np.bincount(y, minlength=len(n_samples)) == n_samples), (
+        "Incorrect number of samples per blob"
+    )
     for i, (ctr, std) in enumerate(zip(centers, cluster_stds)):
         assert_almost_equal((X[y == i] - ctr).std(), std, 1, "Unexpected std")
 
@@ -441,9 +444,9 @@ def test_make_blobs_n_samples_centers_none(n_samples):
     X, y = make_blobs(n_samples=n_samples, centers=centers, random_state=0)
 
     assert X.shape == (sum(n_samples), 2), "X shape mismatch"
-    assert all(
-        np.bincount(y, minlength=len(n_samples)) == n_samples
-    ), "Incorrect number of samples per blob"
+    assert all(np.bincount(y, minlength=len(n_samples)) == n_samples), (
+        "Incorrect number of samples per blob"
+    )
 
 
 def test_make_blobs_return_centers():
@@ -479,8 +482,10 @@ def test_make_blobs_error():
         make_blobs(n_samples, centers=3)
 
 
-def test_make_friedman1():
-    X, y = make_friedman1(n_samples=5, n_features=10, noise=0.0, random_state=0)
+def test_make_friedman1(global_random_seed):
+    X, y = make_friedman1(
+        n_samples=5, n_features=10, noise=0.0, random_state=global_random_seed
+    )
 
     assert X.shape == (5, 10), "X shape mismatch"
     assert y.shape == (5,), "y shape mismatch"
@@ -494,8 +499,8 @@ def test_make_friedman1():
     )
 
 
-def test_make_friedman2():
-    X, y = make_friedman2(n_samples=5, noise=0.0, random_state=0)
+def test_make_friedman2(global_random_seed):
+    X, y = make_friedman2(n_samples=5, noise=0.0, random_state=global_random_seed)
 
     assert X.shape == (5, 4), "X shape mismatch"
     assert y.shape == (5,), "y shape mismatch"
@@ -505,8 +510,8 @@ def test_make_friedman2():
     )
 
 
-def test_make_friedman3():
-    X, y = make_friedman3(n_samples=5, noise=0.0, random_state=0)
+def test_make_friedman3(global_random_seed):
+    X, y = make_friedman3(n_samples=5, noise=0.0, random_state=global_random_seed)
 
     assert X.shape == (5, 4), "X shape mismatch"
     assert y.shape == (5,), "y shape mismatch"
@@ -533,13 +538,13 @@ def test_make_low_rank_matrix():
     assert sum(s) - 5 < 0.1, "X rank is not approximately 5"
 
 
-def test_make_sparse_coded_signal():
+def test_make_sparse_coded_signal(global_random_seed):
     Y, D, X = make_sparse_coded_signal(
         n_samples=5,
         n_components=8,
         n_features=10,
         n_nonzero_coefs=3,
-        random_state=0,
+        random_state=global_random_seed,
     )
     assert Y.shape == (5, 10), "Y shape mismatch"
     assert D.shape == (8, 10), "D shape mismatch"
@@ -557,8 +562,8 @@ def test_make_sparse_uncorrelated():
     assert y.shape == (5,), "y shape mismatch"
 
 
-def test_make_spd_matrix():
-    X = make_spd_matrix(n_dim=5, random_state=0)
+def test_make_spd_matrix(global_random_seed):
+    X = make_spd_matrix(n_dim=5, random_state=global_random_seed)
 
     assert X.shape == (5, 5), "X shape mismatch"
     assert_array_almost_equal(X, X.T)
@@ -604,8 +609,10 @@ def test_make_sparse_spd_matrix(norm_diag, sparse_format, global_random_seed):
 
 
 @pytest.mark.parametrize("hole", [False, True])
-def test_make_swiss_roll(hole):
-    X, t = make_swiss_roll(n_samples=5, noise=0.0, random_state=0, hole=hole)
+def test_make_swiss_roll(global_random_seed, hole):
+    X, t = make_swiss_roll(
+        n_samples=5, noise=0.0, random_state=global_random_seed, hole=hole
+    )
 
     assert X.shape == (5, 3)
     assert t.shape == (5,)
@@ -613,8 +620,8 @@ def test_make_swiss_roll(hole):
     assert_array_almost_equal(X[:, 2], t * np.sin(t))
 
 
-def test_make_s_curve():
-    X, t = make_s_curve(n_samples=5, noise=0.0, random_state=0)
+def test_make_s_curve(global_random_seed):
+    X, t = make_s_curve(n_samples=5, noise=0.0, random_state=global_random_seed)
 
     assert X.shape == (5, 3), "X shape mismatch"
     assert t.shape == (5,), "t shape mismatch"
@@ -669,8 +676,8 @@ def test_make_checkerboard():
     assert_array_almost_equal(X1, X2)
 
 
-def test_make_moons():
-    X, y = make_moons(3, shuffle=False)
+def test_make_moons(global_random_seed):
+    X, y = make_moons(3, shuffle=False, random_state=global_random_seed)
     for x, label in zip(X, y):
         center = [0.0, 0.0] if label == 0 else [1.0, 0.5]
         dist_sqr = ((x - center) ** 2).sum()
@@ -681,9 +688,9 @@ def test_make_moons():
 
 def test_make_moons_unbalanced():
     X, y = make_moons(n_samples=(7, 5))
-    assert (
-        np.sum(y == 0) == 7 and np.sum(y == 1) == 5
-    ), "Number of samples in a moon is wrong"
+    assert np.sum(y == 0) == 7 and np.sum(y == 1) == 5, (
+        "Number of samples in a moon is wrong"
+    )
     assert X.shape == (12, 2), "X shape mismatch"
     assert y.shape == (12,), "y shape mismatch"
 
