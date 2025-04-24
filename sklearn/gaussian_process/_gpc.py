@@ -410,11 +410,11 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
     def latent_mean_and_variance(self, X):
         """Compute the mean and variance of the latent function values.
 
-        Based on algorithm 3.2 of [RW2006]_, this function returns
-        the latent mean (Line 4) and variance (Line 6) of the
-        Gaussian process classification model.
-        Note that this function is only supported for binary
-        classification.
+        Based on algorithm 3.2 of [RW2006]_, this function returns the latent
+        mean (Line 4) and variance (Line 6) of the Gaussian process
+        classification model.
+
+        Note that this function is only supported for binary classification.
 
         Parameters
         ----------
@@ -938,8 +938,8 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
         Based on algorithm 3.2 of [RW2006]_, this function returns the latent
         mean (Line 4) and variance (Line 6) of the Gaussian process
-        classification model. 
-        
+        classification model.
+
         Note that this function is only supported for binary classification.
 
         Parameters
