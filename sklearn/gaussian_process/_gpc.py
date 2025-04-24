@@ -936,11 +936,11 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
     def latent_mean_and_variance(self, X):
         """Compute the mean and variance of the latent function.
 
-        Based on algorithm 3.2 of [RW2006]_, this function returns
-        the latent mean (Line 4) and variance (Line 6) of the
-        Gaussian process classification model.
-        Note that this function is only supported for binary
-        classification.
+        Based on algorithm 3.2 of [RW2006]_, this function returns the latent
+        mean (Line 4) and variance (Line 6) of the Gaussian process
+        classification model. 
+        
+        Note that this function is only supported for binary classification.
 
         Parameters
         ----------
@@ -957,10 +957,9 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         """
         if self.n_classes_ > 2:
             raise ValueError(
-                "Returning the mean and variance of the "
-                "latent function f is only supported for GPCs "
-                "that use the Laplace Approximation (i.e. 2 classes, "
-                f"received {self.n_classes_})."
+                "Returning the mean and variance of the latent function f "
+                "is only supported for binary classification, received "
+                f"{self.n_classes_} classes."
             )
         check_is_fitted(self)
 
