@@ -57,16 +57,12 @@ def _read_params(name, value, non_default_params):
     """Categorizes parameters as 'default' or 'user-set' and formats their values.
     Escapes or truncates parameter values for display safety and readability.
     """
-    if value != "deprecated" and isinstance(value, str):
-        cleaned_value = f'"{value}"'
-    else:
-        cleaned_value = html.escape(str(value))
-
     r = reprlib.Repr()
     r.maxlist = 2  # Show only first 2 items of lists
     r.maxtuple = 1  # Show only first item of tuples
     r.maxstring = 50  # Limit string length
-    cleaned_value = r.repr(value)
+    cleaned_value = html.escape(r.repr(value))
+
     param_type = "user-set" if name in non_default_params else "default"
 
     return {"param_type": param_type, "param_name": name, "param_value": cleaned_value}
