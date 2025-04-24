@@ -1185,25 +1185,3 @@ def test_tsne_works_with_pandas_output():
     with config_context(transform_output="pandas"):
         arr = np.arange(35 * 4).reshape(35, 4)
         TSNE(n_components=2).fit_transform(arr)
-
-
-# TODO(1.7): remove
-def test_tnse_n_iter_deprecated():
-    """Check `n_iter` parameter deprecated."""
-    random_state = check_random_state(0)
-    X = random_state.randn(40, 100)
-    tsne = TSNE(n_iter=250)
-    msg = "'n_iter' was renamed to 'max_iter'"
-    with pytest.warns(FutureWarning, match=msg):
-        tsne.fit_transform(X)
-
-
-# TODO(1.7): remove
-def test_tnse_n_iter_max_iter_both_set():
-    """Check error raised when `n_iter` and `max_iter` both set."""
-    random_state = check_random_state(0)
-    X = random_state.randn(40, 100)
-    tsne = TSNE(n_iter=250, max_iter=500)
-    msg = "Both 'n_iter' and 'max_iter' attributes were set"
-    with pytest.raises(ValueError, match=msg):
-        tsne.fit_transform(X)

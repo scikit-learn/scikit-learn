@@ -10,7 +10,6 @@ We illustrate various embedding techniques on the digits dataset.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 # %%
 # Load digits dataset
 # -------------------

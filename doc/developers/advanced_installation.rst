@@ -3,6 +3,11 @@
 
 .. include:: ../min_dependency_substitutions.rst
 
+..
+   TODO Add |PythonMinVersion| to min_dependency_substitutions.rst one day.
+   Probably would need to change a bit sklearn/_min_dependencies.py since Python is not really a package ...
+.. |PythonMinVersion| replace:: 3.10
+
 ==================================================
 Installing the development version of scikit-learn
 ==================================================
@@ -58,7 +63,7 @@ feature, code or documentation improvement).
    If you plan on submitting a pull-request, you should clone from your fork
    instead.
 
-#. Install a recent version of Python (3.9 or later at the time of writing) for
+#. Install a recent version of Python (|PythonMinVersion| or later) for
    instance using conda-forge_. Conda-forge provides a conda-based distribution of
    Python and the most popular scientific libraries.
 
@@ -78,7 +83,7 @@ feature, code or documentation improvement).
      conda activate sklearn-env
 
 #. **Alternative to conda:** You can use alternative installations of Python
-   provided they are recent enough (3.9 or higher at the time of writing).
+   provided they are recent enough (|PythonMinVersion| or higher).
    Here is an example of how to create a build environment for a Linux system's
    Python. Build dependencies are installed with `pip` in a dedicated virtualenv_
    to avoid disrupting other Python programs installed on the system:
@@ -92,6 +97,15 @@ feature, code or documentation improvement).
 #. Install a compiler with OpenMP_ support for your platform. See instructions
    for :ref:`compiler_windows`, :ref:`compiler_macos`, :ref:`compiler_linux`
    and :ref:`compiler_freebsd`.
+
+   .. note::
+
+      If OpenMP is not supported by the compiler, the build will be done with
+      OpenMP functionalities disabled. This is not recommended since it will force
+      some estimators to run in sequential mode instead of leveraging thread-based
+      parallelism. Setting the ``SKLEARN_FAIL_NO_OPENMP`` environment variable
+      (before cythonization) will force the build to fail if OpenMP is not
+      supported.
 
 #. Build the project with pip:
 
@@ -125,61 +139,6 @@ feature, code or documentation improvement).
     Note that `--config-settings` is only supported in `pip` version 23.1 or
     later. To upgrade `pip` to a compatible version, run `pip install -U pip`.
 
-Dependencies
-------------
-
-Runtime dependencies
-~~~~~~~~~~~~~~~~~~~~
-
-Scikit-learn requires the following dependencies both at build time and at
-runtime:
-
-- Python (>= 3.8),
-- NumPy (>= |NumpyMinVersion|),
-- SciPy (>= |ScipyMinVersion|),
-- Joblib (>= |JoblibMinVersion|),
-- threadpoolctl (>= |ThreadpoolctlMinVersion|).
-
-Build dependencies
-~~~~~~~~~~~~~~~~~~
-
-Building Scikit-learn also requires:
-
-..
-    # The following places need to be in sync with regard to Cython version:
-    # - .circleci config file
-    # - sklearn/_build_utils/__init__.py
-    # - advanced installation guide
-
-- Cython >= |CythonMinVersion|
-- A C/C++ compiler and a matching OpenMP_ runtime library. See the
-  :ref:`platform system specific instructions
-  <platform_specific_instructions>` for more details.
-
-.. note::
-
-   If OpenMP is not supported by the compiler, the build will be done with
-   OpenMP functionalities disabled. This is not recommended since it will force
-   some estimators to run in sequential mode instead of leveraging thread-based
-   parallelism. Setting the ``SKLEARN_FAIL_NO_OPENMP`` environment variable
-   (before cythonization) will force the build to fail if OpenMP is not
-   supported.
-
-Since version 0.21, scikit-learn automatically detects and uses the linear
-algebra library used by SciPy **at runtime**. Scikit-learn has therefore no
-build dependency on BLAS/LAPACK implementations such as OpenBlas, Atlas, Blis
-or MKL.
-
-Test dependencies
-~~~~~~~~~~~~~~~~~
-
-Running tests requires:
-
-- pytest >= |PytestMinVersion|
-
-Some tests also require `pandas <https://pandas.pydata.org>`_.
-
-
 Building a specific version from a tag
 --------------------------------------
 
@@ -200,7 +159,7 @@ to build scikit-learn Cython extensions for each supported platform.
 Windows
 -------
 
-First, download the `Build Tools for Visual Studio 2019 installer
+First, download the `Build Tools for Visual Studio installer
 <https://aka.ms/vs/17/release/vs_buildtools.exe>`_.
 
 Run the downloaded `vs_buildtools.exe` file, during the installation you will
@@ -209,39 +168,12 @@ screenshot:
 
 .. image:: ../images/visual-studio-build-tools-selection.png
 
-Secondly, find out if you are running 64-bit or 32-bit Python. The building
-command depends on the architecture of the Python interpreter. You can check
-the architecture by running the following in ``cmd`` or ``powershell``
-console:
+Build scikit-learn by running the following command in your `sklearn-env` conda environment
+or virtualenv:
 
 .. prompt:: bash $
 
-    python -c "import struct; print(struct.calcsize('P') * 8)"
-
-For 64-bit Python, configure the build environment by running the following
-commands in ``cmd`` or an Anaconda Prompt (if you use Anaconda):
-
-.. sphinx-prompt 1.3.0 (used in doc-min-dependencies CI task) does not support `batch` prompt type,
-.. so we work around by using a known prompt type and an explicit prompt text.
-..
-.. prompt:: bash C:\>
-
-    SET DISTUTILS_USE_SDK=1
-    "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
-
-Replace ``x64`` by ``x86`` to build for 32-bit Python.
-
-Please be aware that the path above might be different from user to user. The
-aim is to point to the "vcvarsall.bat" file that will set the necessary
-environment variables in the current command prompt.
-
-Finally, build scikit-learn with this command prompt:
-
-.. prompt:: bash $
-
-    pip install --editable . \
-        --verbose --no-build-isolation \
-        --config-settings editable-verbose=true
+    pip install --editable . --verbose --no-build-isolation --config-settings editable-verbose=true
 
 .. _compiler_macos:
 
