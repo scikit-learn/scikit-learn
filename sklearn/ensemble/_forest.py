@@ -1208,33 +1208,38 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         scoring_function : callable, default=None
             Scoring function for OOB score. Defaults to `r2_score`.
         """
-        self.oob_prediction_ = super()._compute_oob_predictions(X, y).squeeze(axis=1)
-        if self.oob_prediction_.shape[-1] == 1:
-            # drop the n_outputs axis if there is a single output
-            self.oob_prediction_ = self.oob_prediction_.squeeze(axis=-1)
-
         if scoring_function is None:
             scoring_function = r2_score
+        if self.criterion != "squared_error":
+            warn(
+                "Unbiased feature importance is not available for"
+                " regression with a split criteria other than MSE",
+                UserWarning,
+            )
+            _, self.oob_decision_function_ = (
+                self._compute_unbiased_feature_importance_and_oob_predictions(
+                    X, y, method="ufi"
+                )
+            )
+        else:
+            self.ufi_feature_importances_, _ = (
+                self._compute_unbiased_feature_importance_and_oob_predictions(
+                    X, y, method="ufi"
+                )
+            )
+            self.mdi_oob_feature_importances_, self.oob_decision_function_ = (
+                self._compute_unbiased_feature_importance_and_oob_predictions(
+                    X, y, method="mdi_oob"
+                )
+            )
+        if self.oob_decision_function_.shape[-1] == 1:
+            # drop the n_outputs axis if there is a single output
+            self.oob_decision_function_ = self.oob_decision_function_.squeeze(axis=-1)
 
-        self.oob_score_ = scoring_function(y, self.oob_prediction_)
+        # Drop the n_classes axis of size 1 in regression
+        self.oob_decision_function_ = self.oob_decision_function_.squeeze(axis=-1)
 
-        # self.ufi_feature_importances_, self.oob_decision_function_ = (
-        #     self._compute_unbiased_feature_importance_and_oob_predictions(
-        #         X, y, method="ufi"
-        #     )
-        # )
-        # self.mdi_oob_feature_importances_, _ = (
-        #     self._compute_unbiased_feature_importance_and_oob_predictions(
-        #         X, y, method="mdi_oob"
-        #     )
-        # )
-        # if self.oob_decision_function_.shape[-1] == 1:
-        #     # drop the n_outputs axis if there is a single output
-        #     self.oob_decision_function_ = self.oob_decision_function_.squeeze(axis=-1)
-
-        # self.oob_score_ = scoring_function(
-        #     y, np.argmax(self.oob_decision_function_, axis=1)
-        # )
+        self.oob_score_ = scoring_function(y, self.oob_decision_function_)
 
     def _compute_partial_dependence_recursion(self, grid, target_features):
         """Fast partial dependence computation.

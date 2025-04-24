@@ -1274,7 +1274,7 @@ cdef class Tree:
 
         return np.asarray(importances)
 
-    cdef void _compute_cross_impurities_and_oob_predictions(self, object X_test, intp_t[:, ::1] y_test, float64_t[:,:,::1] oob_pred, int32_t[::1] has_oob_sample, float64_t[:,:,::1] oob_node_values):
+    cdef void _compute_oob_node_values_and_predictions(self, object X_test, intp_t[:, ::1] y_test, float64_t[:,:,::1] oob_pred, int32_t[::1] has_oob_sample, float64_t[:,:,::1] oob_node_values, str method):
         if issparse(X_test):
             raise(NotImplementedError("does not support sparse X yet"))
         if not isinstance(X_test, np.ndarray):
@@ -1289,11 +1289,12 @@ cdef class Tree:
         cdef intp_t node_count = self.node_count
         cdef intp_t n_outputs = self.n_outputs
         cdef intp_t max_n_classes = self.max_n_classes
-        cdef int k, c, offset, node_idx, sample_idx = 0
+        cdef int k, c, node_idx, sample_idx = 0
+        cdef int32_t[:, ::1] count_oob_values = np.zeros((node_count, n_outputs), dtype=np.int32)
+        cdef float64_t* value_at_node = self.value + node_idx * n_outputs * max_n_classes
 
         cdef Node* node
 
-        cdef float64_t total = 0.0
         cdef int32_t[::1] y_leafs = np.zeros(n_samples, dtype=np.int32)
 
         with nogil:
@@ -1303,22 +1304,41 @@ cdef class Tree:
                 node = self.nodes
                 node_idx = 0
                 for k in range(n_outputs):
-                    for c in range(n_classes[k]):
-                        if y_test[k, sample_idx] == c:
-                            oob_node_values[0, c, k] += 1.0 
-                            # TODO use sample weight instead of 1 
+                    if n_classes[k] > 1:
+                        for c in range(n_classes[k]):
+                            if y_test[k, sample_idx] == c:
+                                oob_node_values[node_idx, c, k] += 1.0 
+                                # TODO use sample weight instead of 1
+                        count_oob_values[node_idx, k] += 1
+                    else:
+                        if method == "ufi":
+                            oob_node_values[node_idx, 0, k] += (y_test[k, sample_idx] - value_at_node[k]) ** 2.0
+                        else:
+                            oob_node_values[node_idx, 0, k] += y_test[k, sample_idx]
+                        count_oob_values[node_idx, k] += 1
+                        # TODO use sample weight instead of 1 
                 # child nodes
-                while node.left_child != _TREE_LEAF & node.right_child != _TREE_LEAF:
+                while node.left_child != _TREE_LEAF and node.right_child != _TREE_LEAF:
+                    value_at_node = self.value + node_idx * n_outputs * max_n_classes
                     if X_ndarray[sample_idx, node.feature] <= node.threshold:
                         node_idx = node.left_child
                     else:
                         node_idx = node.right_child
                     has_oob_sample[node_idx] = 1
                     for k in range(n_outputs):
-                        for c in range(n_classes[k]):
-                            if y_test[k, sample_idx] == c:
-                                oob_node_values[node_idx, c, k] += 1.0 
-                                # TODO use sample weight instead of 1 
+                        if n_classes[k] > 1:
+                            for c in range(n_classes[k]):
+                                if y_test[k, sample_idx] == c:
+                                    oob_node_values[node_idx, c, k] += 1.0 
+                                    # TODO use sample weight instead of 1
+                            count_oob_values[node_idx, k] += 1
+                        else:
+                            if method == "ufi":
+                                oob_node_values[node_idx, 0, k] += (y_test[k, sample_idx] - value_at_node[k]) ** 2.0
+                            else:
+                                oob_node_values[node_idx, 0, k] += y_test[k, sample_idx]
+                            count_oob_values[node_idx, k] += 1
+                            # TODO use sample weight instead of 1 
 
                     node = &self.nodes[node_idx]
                 
@@ -1327,14 +1347,10 @@ cdef class Tree:
             
             for node_idx in range(node_count):
                 # convert the counts to proportions
-                total = 0.0
                 for k in range(n_outputs):
-                    for c in range(n_classes[k]):
-                        total += oob_node_values[node_idx, c, k]
-                    if total > 0:
+                    if count_oob_values[node_idx, k] > 0:
                         for c in range(n_classes[k]):
-                            oob_node_values[node_idx, c, k] = oob_node_values[node_idx, c, k] / total
-
+                            oob_node_values[node_idx, c, k] /= count_oob_values[node_idx, k]
                 # if leaf store the predictive proba
                 if self.nodes[node_idx].left_child == _TREE_LEAF or self.nodes[node_idx].right_child == _TREE_LEAF:
                     for sample_idx in range(n_samples):
@@ -1342,9 +1358,7 @@ cdef class Tree:
                             for k in range(n_outputs):
                                 for c in range(n_classes[k]):
                                     oob_pred[sample_idx, c, k] = oob_node_values[node_idx, c, k]
-
-
-        
+            
     cpdef compute_unbiased_feature_importance_and_oob_predictions(self, object X_test, object y_test, method="ufi"):
         cdef intp_t n_samples = X_test.shape[0]
         cdef intp_t n_features = X_test.shape[1]
@@ -1356,7 +1370,6 @@ cdef class Tree:
         cdef int32_t[::1] has_oob_sample = np.zeros(node_count, dtype=np.int32)
         cdef float64_t[::1] importances = np.zeros((n_features,), dtype=np.float64)
         cdef float64_t[:, :, ::1] oob_pred = np.zeros((n_samples, max_n_classes, n_outputs), dtype=np.float64)
-        cdef intp_t[:,::1] n_oob_pred = np.zeros((n_samples, n_outputs), dtype=np.intp)
         cdef float64_t[:,:,::1] oob_node_values = np.zeros((node_count, max_n_classes, n_outputs), dtype=np.float64)
 
         cdef Node* nodes = self.nodes
@@ -1370,33 +1383,45 @@ cdef class Tree:
         cdef float64_t* value_at_right = self.value + right_idx * n_outputs * max_n_classes
 
         cdef intp_t[:, ::1] y_view = np.ascontiguousarray(y_test, dtype=np.intp)
-        self._compute_cross_impurities_and_oob_predictions(X_test, y_view, oob_pred, has_oob_sample, oob_node_values)
+        self._compute_oob_node_values_and_predictions(X_test, y_view, oob_pred, has_oob_sample, oob_node_values, method)
 
         with nogil:
             for node_idx in range(self.node_count):
                 node = nodes[node_idx]
-                if (node.left_child != _TREE_LEAF) and (node.right_child != _TREE_LEAF):    
+                if (node.left_child != _TREE_LEAF) and (node.right_child != _TREE_LEAF):
                     left_idx = node.left_child
                     right_idx = node.right_child             
-                    if has_oob_sample[left_idx] & has_oob_sample[right_idx]: 
+                    if has_oob_sample[left_idx] and has_oob_sample[right_idx]:
                         value_at_node = self.value + node_idx * n_outputs * max_n_classes
                         value_at_left = self.value + left_idx * n_outputs * max_n_classes
                         value_at_right = self.value + right_idx * n_outputs * max_n_classes
                         offset=0  
                         if method == "ufi":
                             for k in range(n_outputs):
-                                for c in range(n_classes[k]):
-                                    importances[node.feature] -= (
-                                        value_at_node[offset + c] * oob_node_values[node_idx, c, k]
+                                if n_classes[k] > 1: # Classification
+                                    for c in range(n_classes[k]):
+                                        importances[node.feature] -= (
+                                            value_at_node[offset + c] * oob_node_values[node_idx, c, k]
+                                            * node.weighted_n_node_samples
+                                            - 
+                                            value_at_left[offset + c] * oob_node_values[left_idx, c, k]
+                                            * nodes[left_idx].weighted_n_node_samples
+                                            - 
+                                            value_at_right[offset + c] * oob_node_values[right_idx, c, k]
+                                            * nodes[right_idx].weighted_n_node_samples
+                                        )
+                                    offset += n_classes[k]
+                                else: # Regression
+                                    importances[node.feature] += (
+                                        (node.impurity + oob_node_values[node_idx, 0, k])
                                         * node.weighted_n_node_samples
                                         - 
-                                        value_at_left[offset + c] * oob_node_values[left_idx, c, k]
+                                        (nodes[left_idx].impurity + oob_node_values[left_idx, 0, k])
                                         * nodes[left_idx].weighted_n_node_samples
                                         - 
-                                        value_at_right[offset + c] * oob_node_values[right_idx, c, k]
+                                        (nodes[left_idx].impurity + oob_node_values[right_idx, 0, k])
                                         * nodes[right_idx].weighted_n_node_samples
-                                    )                                
-                                offset += n_classes[k]
+                                    )
                             importances[node.feature] /= n_outputs
                         elif method == "mdi_oob":
                             for k in range(n_outputs):
