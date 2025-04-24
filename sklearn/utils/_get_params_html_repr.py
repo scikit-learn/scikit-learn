@@ -61,15 +61,12 @@ def _read_params(name, value, non_default_params):
         cleaned_value = f'"{value}"'
     else:
         cleaned_value = html.escape(str(value))
-    if len(cleaned_value) > 50:
-        if name == "param_distributions":
-            r = reprlib.Repr()
-            r.maxlist = 2  # Show only first 2 items of lists
-            r.maxtuple = 1  # Show only first item of tuples
-            r.maxstring = 8  # Limit string length to 8 chars
-            cleaned_value = r.repr(value)
-        else:
-            cleaned_value = "(...)"
+
+    r = reprlib.Repr()
+    r.maxlist = 2  # Show only first 2 items of lists
+    r.maxtuple = 1  # Show only first item of tuples
+    r.maxstring = 50  # Limit string length
+    cleaned_value = r.repr(value)
     param_type = "user-set" if name in non_default_params else "default"
 
     return {"param_type": param_type, "param_name": name, "param_value": cleaned_value}
