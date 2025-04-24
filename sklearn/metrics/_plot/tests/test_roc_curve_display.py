@@ -27,8 +27,6 @@ def data():
     return X, y
 
 
-# This data always (with and without `drop_intermediate`)
-# results in an AUC of 1.0, should we consider changing the data used??
 @pytest.fixture(scope="module")
 def data_binary(data):
     X, y = data
@@ -324,7 +322,7 @@ def test_roc_curve_display_from_cv_results_curve_kwargs(
         )
 
 
-# TODO : Remove in 1.9
+# TODO(1.9): Remove in 1.9
 def test_roc_curve_display_estimator_name_deprecation(pyplot):
     """Check deprecation of `estimator_name`."""
     fpr = np.array([0, 0.5, 1])
@@ -333,7 +331,7 @@ def test_roc_curve_display_estimator_name_deprecation(pyplot):
         RocCurveDisplay(fpr=fpr, tpr=tpr, estimator_name="test")
 
 
-# TODO : Remove in 1.9
+# TODO(1.9): Remove in 1.9
 @pytest.mark.parametrize(
     "constructor_name", ["from_estimator", "from_predictions", "plot"]
 )
@@ -706,7 +704,6 @@ def test_roc_curve_chance_level_line(
         {"lw": 1, "color": "blue", "ls": "-", "label": None},
     ],
 )
-# To ensure both curve line kwargs and change line kwargs passed correctly
 @pytest.mark.parametrize("curve_kwargs", [None, {"alpha": 0.8}])
 def test_roc_curve_chance_level_line_from_cv_results(
     pyplot,
@@ -734,6 +731,7 @@ def test_roc_curve_chance_level_line_from_cv_results(
     import matplotlib as mpl
 
     assert all(isinstance(line, mpl.lines.Line2D) for line in display.line_)
+    # Ensure both curve line kwargs passed correctly as well
     if curve_kwargs:
         assert all(line.get_alpha() == 0.8 for line in display.line_)
     assert isinstance(display.ax_, mpl.axes.Axes)

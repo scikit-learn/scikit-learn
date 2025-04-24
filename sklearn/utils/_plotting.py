@@ -147,24 +147,24 @@ class _BinaryClassifierCurveDisplayMixin:
         name : list of str or None
             Name for labeling legend entries.
 
-        legend_metric : dict or None
+        legend_metric : dict
             Dictionary with "mean" and "std" keys, or "metric" key of metric
             values for each curve. If None, "label" will not contain metric values.
 
-        legend_metric_name : str or None
+        legend_metric_name : str
             Name of the summary value provided in `legend_metrics`.
 
-        curve_kwargs : dict or list of dict
+        curve_kwargs : dict or list of dict or None
             Dictionary with keywords passed to the matplotlib's `plot` function
-            to draw the individual ROC curves. If a list is provided, the
-            parameters are applied to the ROC curves sequentially. If a single
-            dictionary is provided, the same parameters are applied to all ROC
-            curves. Ignored for single curve plots - pass as `**kwargs` for
-            single curve plots.
+            to draw the individual curves. If a list is provided, the
+            parameters are applied to the curves sequentially. If a single
+            dictionary is provided, the same parameters are applied to all
+            curves.
 
         **kwargs : dict
             Deprecated. Keyword arguments to be passed to matplotlib's `plot`.
         """
+        # TODO(1.9): Remove
         # Deprecate **kwargs
         if curve_kwargs and kwargs:
             raise ValueError(
@@ -185,6 +185,9 @@ class _BinaryClassifierCurveDisplayMixin:
                 f"`curve_kwargs` must be None, a dictionary or a list of length "
                 f"{n_curves}. Got: {curve_kwargs}."
             )
+
+        if isinstance(name, str):
+            name = [name]
 
         # Ensure valid `name` and `curve_kwargs` combination.
         if (
@@ -220,8 +223,10 @@ class _BinaryClassifierCurveDisplayMixin:
             label_aggregate = _BinaryClassifierCurveDisplayMixin._get_legend_label(
                 legend_metric["mean"], name[0], legend_metric_name
             )
-            # Add the "+/- std" to the end (in brackets if name provided)
-            if legend_metric["mean"] is not None:
+            # Note: "std" always `None` when "mean" is `None` - no metric value added
+            # to label in this case
+            if legend_metric["std"] is not None:
+                # Add the "+/- std" to the end (in brackets if name provided)
                 if name[0] is not None:
                     label_aggregate = (
                         label_aggregate[:-1] + f" +/- {legend_metric['std']:0.2f})"
@@ -240,12 +245,10 @@ class _BinaryClassifierCurveDisplayMixin:
                     )
                 )
 
-        curve_kwargs_ = []
-        for fold_idx, label in enumerate(labels):
-            label_kwarg = {"label": label}
-            curve_kwargs_.append(
-                _validate_style_kwargs(label_kwarg, curve_kwargs[fold_idx])
-            )
+        curve_kwargs_ = [
+            _validate_style_kwargs({"label": label}, curve_kwargs[fold_idx])
+            for fold_idx, label in enumerate(labels)
+        ]
         return curve_kwargs_
 
 
@@ -364,12 +367,12 @@ def _despine(ax):
         ax.spines[s].set_bounds(0, 1)
 
 
-def _deprecate_estimator_name(old, new, version):
+def _deprecate_estimator_name(estimator_name, name, version):
     """Deprecate `estimator_name` in favour of `name`."""
     version = parse_version(version)
     version_remove = f"{version.major}.{version.minor + 2}"
-    if old != "deprecated":
-        if new:
+    if estimator_name != "deprecated":
+        if name:
             raise ValueError(
                 "Cannot provide both `estimator_name` and `name`. `estimator_name` "
                 f"is deprecated in {version} and will be removed in {version_remove}. "
@@ -380,8 +383,8 @@ def _deprecate_estimator_name(old, new, version):
             f"{version_remove}. Use `name` instead.",
             FutureWarning,
         )
-        return old
-    return new
+        return estimator_name
+    return name
 
 
 def _convert_to_list_leaving_none(param):
