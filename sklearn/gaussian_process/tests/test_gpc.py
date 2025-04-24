@@ -305,9 +305,8 @@ def test_gpc_latent_mean_and_variance_complain_on_more_than_2_classes():
     # Check that the latent mean and variance have the right shape
     with pytest.raises(
         ValueError,
-        match="Returning the mean and variance of the "
-        "latent function f is only supported for GPCs "
-        "that use the Laplace Approximation",
+        match="Returning the mean and variance of the latent function f "
+        "is only supported for binary classification",
     ):
         gpc.latent_mean_and_variance(X)
 
