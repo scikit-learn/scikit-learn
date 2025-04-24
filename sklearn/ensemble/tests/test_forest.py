@@ -508,7 +508,7 @@ def test_unfitted_feature_importances(name):
         getattr(FOREST_ESTIMATORS[name](), "feature_importances_")
 
 
-@pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
+@pytest.mark.parametrize("name", FOREST_ESTIMATORS)
 @pytest.mark.parametrize(
     "unbiased_importance_attribute_name",
     [
@@ -516,30 +516,13 @@ def test_unfitted_feature_importances(name):
         "mdi_oob_feature_importances_",
     ],
 )
-def test_non_OOB_unbiased_feature_importances_class(
+def test_non_OOB_unbiased_feature_importances(
     name, unbiased_importance_attribute_name
 ):
-    clf = FOREST_CLASSIFIERS[name]().fit(X_large, y_large)
+    clf = FOREST_ESTIMATORS[name]().fit(X_large, y_large)
     assert not hasattr(clf, unbiased_importance_attribute_name)
     assert not hasattr(clf, "oob_score_")
     assert not hasattr(clf, "oob_decision_function_")
-
-
-@pytest.mark.parametrize("name", FOREST_REGRESSORS)
-@pytest.mark.parametrize(
-    "unbiased_importance_attribute_name",
-    [
-        "ufi_feature_importances_",
-        "mdi_oob_feature_importances_",
-    ],
-)
-def test_non_OOB_unbiased_feature_importances_reg(
-    name, unbiased_importance_attribute_name
-):
-    reg = FOREST_REGRESSORS[name]().fit(X_reg, y_reg)
-    assert not hasattr(reg, unbiased_importance_attribute_name)
-    assert not hasattr(reg, "oob_score_")
-    assert not hasattr(reg, "oob_decision_function_")
 
 
 # TODO before merge: implement unbiased importance for sparse data
