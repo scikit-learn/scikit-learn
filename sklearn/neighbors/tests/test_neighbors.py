@@ -2130,7 +2130,11 @@ def test_dtype_convert():
 def test_sparse_metric_callable(csr_container):
     def sparse_metric(x, y):  # Metric accepting sparse matrix input (only)
         assert issparse(x) and issparse(y)
-        return x.dot(y.T).toarray().item()
+        result = x.dot(y.T)
+        # TODO : remove once sparse matrix support is dropped (see #26418)
+        if issparse(result):
+            return result.toarray().item()
+        return result
 
     X = csr_container(
         [[1, 1, 1, 1, 1], [1, 0, 1, 0, 1], [0, 0, 1, 0, 0]]  # Population matrix
