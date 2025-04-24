@@ -308,7 +308,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
         # Compute the mean and variance of the latent function
         # (Lines 4-6 of Algorithm 3.2 of GPML)
-        f_star, var_f_star = self.latent_mean_and_variance(X)
+        latent_mean, latent_var = self.latent_mean_and_variance(X)
 
         # Line 7:
         # Approximate \int log(z) * N(z | f_star, var_f_star)
@@ -317,12 +317,12 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         # sigmoid by a linear combination of 5 error functions.
         # For information on how this integral can be computed see
         # blitiri.blogspot.de/2012/11/gaussian-integral-of-error-function.html
-        alpha = 1 / (2 * var_f_star)
-        gamma = LAMBDAS * f_star
+        alpha = 1 / (2 * latent_var)
+        gamma = LAMBDAS * latent_mean
         integrals = (
             np.sqrt(np.pi / alpha)
             * erf(gamma * np.sqrt(alpha / (alpha + LAMBDAS**2)))
-            / (2 * np.sqrt(var_f_star * 2 * np.pi))
+            / (2 * np.sqrt(latent_var * 2 * np.pi))
         )
         pi_star = (COEFS * integrals).sum(axis=0) + 0.5 * COEFS.sum()
 
@@ -423,22 +423,22 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
         Returns
         -------
-        f_mean : array-like of shape (n_samples,)
+        latent_mean : array-like of shape (n_samples,)
             Mean of the latent function values at the query points.
 
-        f_var : array-like of shape (n_samples,)
+        latent_var : array-like of shape (n_samples,)
             Variance of the latent function values at the query points.
         """
         check_is_fitted(self)
 
         # Based on Algorithm 3.2 of GPML
         K_star = self.kernel_(self.X_train_, X)  # K_star =k(x_star)
-        f_star = K_star.T.dot(self.y_train_ - self.pi_)  # Line 4
+        latent_mean = K_star.T.dot(self.y_train_ - self.pi_)  # Line 4
         v = solve(self.L_, self.W_sr_[:, np.newaxis] * K_star)  # Line 5
         # Line 6 (compute np.diag(v.T.dot(v)) via einsum)
-        var_f_star = self.kernel_.diag(X) - np.einsum("ij,ij->j", v, v)
+        latent_var = self.kernel_.diag(X) - np.einsum("ij,ij->j", v, v)
 
-        return f_star, var_f_star
+        return latent_mean, latent_var
 
     def _posterior_mode(self, K, return_temporaries=False):
         """Mode-finding for binary Laplace GPC and fixed kernel.
@@ -949,10 +949,10 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
         Returns
         -------
-        f_mean : array-like of shape (n_samples,)
+        latent_mean : array-like of shape (n_samples,)
             Mean of the latent function values at the query points.
 
-        f_var : array-like of shape (n_samples,)
+        latent_var : array-like of shape (n_samples,)
             Variance of the latent function values at the query points.
         """
         if self.n_classes_ > 2:
