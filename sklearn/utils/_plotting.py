@@ -186,9 +186,6 @@ class _BinaryClassifierCurveDisplayMixin:
                 f"{n_curves}. Got: {curve_kwargs}."
             )
 
-        if isinstance(name, str):
-            name = [name]
-
         # Ensure valid `name` and `curve_kwargs` combination.
         if (
             isinstance(name, list)
@@ -203,6 +200,8 @@ class _BinaryClassifierCurveDisplayMixin:
             )
 
         # Ensure `name` is of the correct length
+        if isinstance(name, str):
+            name = [name]
         if isinstance(name, list) and len(name) == 1:
             name = name * n_curves
         name = [None] * n_curves if name is None else name
