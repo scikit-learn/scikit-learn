@@ -104,8 +104,8 @@ for strategy in ("mean", "median"):
 # Estimate the score after iterative imputation of the missing values
 # with different estimators
 named_estimators = [
-    ("BayesianRidge", BayesianRidge()),
-    ("RandomForestRegressor", RandomForestRegressor(
+    ("Bayesian Ridge", BayesianRidge()),
+    ("Random Forest", RandomForestRegressor(
         # We tuned the hyperparameters of the RandomForestRegressor to get a good
         # enough predictive performance for a restricted execution time.
         n_estimators=4,
@@ -115,10 +115,10 @@ named_estimators = [
         n_jobs=2,
         random_state=0,
      )),
-    ("Nystroem&Ridge", make_pipeline(
+    ("Nystroem + Ridge", make_pipeline(
         Nystroem(kernel="polynomial", degree=2, random_state=0), Ridge(alpha=1e3)
     )),
-    ("Scaler&KNeighborsRegressor", make_pipeline(StandardScaler(), KNeighborsRegressor(n_neighbors=15)))
+    ("Scaler + k-NN ", make_pipeline(StandardScaler(), KNeighborsRegressor(n_neighbors=15)))
 ]
 score_iterative_imputer = pd.DataFrame()
 # iterative imputer is sensible to the tolerance and
