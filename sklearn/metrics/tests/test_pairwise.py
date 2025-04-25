@@ -49,9 +49,10 @@ from sklearn.metrics.pairwise import (
 )
 from sklearn.preprocessing import normalize
 from sklearn.utils._array_api import (
-    _atleast_2d,
     _convert_to_numpy,
     _get_namespace_device_dtype_ids,
+    get_namespace,
+    xpx,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -302,8 +303,11 @@ _minkowski_kwds = {"w": np.arange(1, 5).astype("double", copy=False), "p": 1}
 
 
 def callable_rbf_kernel(x, y, **kwds):
+    xp, _ = get_namespace(x, y)
     # Callable version of pairwise.rbf_kernel.
-    K = rbf_kernel(_atleast_2d(x), _atleast_2d(y), **kwds)
+    K = rbf_kernel(
+        xpx.atleast_nd(x, ndim=2, xp=xp), xpx.atleast_nd(y, ndim=2, xp=xp), **kwds
+    )
     # unpack the output since this is a scalar packed in a 0-dim array
     return K.item()
 
@@ -371,11 +375,13 @@ def test_pairwise_parallel_array_api(
 
             n_job1_xp = func(X_xp, Y_xp, metric=metric, n_jobs=1, **kwds)
             n_job1_xp_np = _convert_to_numpy(n_job1_xp, xp=xp)
+            assert get_namespace(n_job1_xp)[0].__name__ == xp.__name__
             assert n_job1_xp.device == X_xp.device
             assert n_job1_xp.dtype == X_xp.dtype
 
             n_job2_xp = func(X_xp, Y_xp, metric=metric, n_jobs=2, **kwds)
             n_job2_xp_np = _convert_to_numpy(n_job2_xp, xp=xp)
+            assert get_namespace(n_job2_xp)[0].__name__ == xp.__name__
             assert n_job2_xp.device == X_xp.device
             assert n_job2_xp.dtype == X_xp.dtype
 
@@ -430,39 +436,47 @@ def test_pairwise_kernels(metric, csr_container):
 
 
 @pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+@pytest.mark.parametrize(
     "metric",
     ["rbf", "laplacian", "sigmoid", "polynomial", "linear", "chi2", "additive_chi2"],
 )
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_pairwise_kernels_array_api(metric, csr_container):
-    # Test the pairwise_kernels helper function.
+def test_pairwise_kernels_array_api(
+    metric, csr_container, array_namespace, device, dtype_name
+):
+    # Test array API support in pairwise_kernels.
+    xp = _array_api_for_tests(array_namespace, device)
 
     rng = np.random.RandomState(0)
-    X = rng.random_sample((5, 4))
-    Y = rng.random_sample((2, 4))
-    function = PAIRWISE_KERNEL_FUNCTIONS[metric]
-    # Test with Y=None
-    K1 = pairwise_kernels(X, metric=metric)
-    K2 = function(X)
-    assert_allclose(K1, K2)
-    # Test with Y=Y
-    K1 = pairwise_kernels(X, Y=Y, metric=metric)
-    K2 = function(X, Y=Y)
-    assert_allclose(K1, K2)
-    # Test with tuples as X and Y
-    X_tuples = tuple([tuple([v for v in row]) for row in X])
-    Y_tuples = tuple([tuple([v for v in row]) for row in Y])
-    K2 = pairwise_kernels(X_tuples, Y_tuples, metric=metric)
-    assert_allclose(K1, K2)
+    X_np = rng.random_sample((5, 4), dtype=dtype_name)
+    Y_np = rng.random_sample((2, 4), dtype=dtype_name)
+    X_xp = xp.asarray(X_np, device=device)
+    Y_xp = xp.asarray(Y_np, device=device)
 
-    # Test with sparse X and Y
-    X_sparse = csr_container(X)
-    Y_sparse = csr_container(Y)
-    if metric in ["chi2", "additive_chi2"]:
-        # these don't support sparse matrices yet
-        return
-    K1 = pairwise_kernels(X_sparse, Y=Y_sparse, metric=metric)
-    assert_allclose(K1, K2)
+    with config_context(array_api_dispatch=True):
+        # Test with Y=None
+        K_xp = pairwise_kernels(X_xp, metric=metric)
+        K_xp_np = _convert_to_numpy(K_xp, xp=xp)
+        assert get_namespace(K_xp)[0].__name__ == xp.__name__
+        assert K_xp.device == X_xp.device
+        assert K_xp.dtype == X_xp.dtype
+
+        K_np = pairwise_kernels(X_np, metric=metric)
+        assert_allclose(K_xp_np, K_np)
+
+        # Test with Y=Y_np/Y_xp
+        K_xp = pairwise_kernels(X_xp, Y=Y_xp, metric=metric)
+        K_xp_np = _convert_to_numpy(K_xp, xp=xp)
+        assert get_namespace(K_xp)[0].__name__ == xp.__name__
+        assert K_xp.device == X_xp.device
+        assert K_xp.dtype == X_xp.dtype
+
+        K_np = pairwise_kernels(X_np, Y=Y_np, metric=metric)
+        assert_allclose(K_xp_np, K_np)
 
 
 def test_pairwise_kernels_callable():

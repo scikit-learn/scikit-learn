@@ -2004,15 +2004,26 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
     )
     _, _, dtype_float = _find_floating_dtype_allow_sparse(X, Y, xp=xp)
 
+    def _get_slice(array, index):
+        # TODO : Support for 1D shapes in scipy sparse arrays (COO, DOK and CSR
+        # formats) only added in 1.14. We must return 2D array until min scipy 1.14
+        # i.e. below 2 lines can be removed once min scipy >= 1.14
+        if issparse(array):
+            return X[[index], :]
+        # When `metric` is a callable, 1D input arrays allowed, in which case
+        # scalar should be returned.
+        if array.ndim == 1:
+            return array[index]
+        else:
+            return array[index, ...]
+
     if X is Y:
         # Only calculate metric for upper triangle
         out = xp.zeros((X.shape[0], Y.shape[0]), dtype=dtype_float)
         iterator = itertools.combinations(range(X.shape[0]), 2)
         for i, j in iterator:
-            # When `metric` is a callable, 1D input arrays allowed, in which case
-            # scalar should be returned (allows string manipulation)
-            x = X[i, ...] if X.ndim == 2 else X[i]
-            y = Y[j, ...] if Y.ndim == 2 else Y[j]
+            x = _get_slice(X, i)
+            y = _get_slice(Y, j)
             out[i, j] = metric(x, y, **kwds)
 
         # Make symmetric
@@ -2022,9 +2033,7 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
         # Calculate diagonal
         # NB: nonzero diagonals are allowed for both metrics and kernels
         for i in range(X.shape[0]):
-            # When `metric` is a callable, 1D input arrays allowed, in which case
-            # scalar should be returned (allows string manipulation)
-            x = X[i, ...] if X.ndim == 2 else X[i]
+            x = _get_slice(X, i)
             out[i, i] = metric(x, x, **kwds)
 
     else:
@@ -2032,10 +2041,8 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
         out = xp.empty((X.shape[0], Y.shape[0]), dtype=dtype_float)
         iterator = itertools.product(range(X.shape[0]), range(Y.shape[0]))
         for i, j in iterator:
-            # When `metric` is a callable, 1D input arrays allowed, in which case
-            # scalar should be returned (allows string manipulation)
-            x = X[i, ...] if X.ndim == 2 else X[i]
-            y = Y[j, ...] if Y.ndim == 2 else Y[j]
+            x = _get_slice(X, i)
+            y = _get_slice(Y, j)
             out[i, j] = metric(x, y, **kwds)
 
     return out
