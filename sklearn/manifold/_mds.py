@@ -20,7 +20,6 @@ from ..utils.parallel import Parallel, delayed
 from ..utils.validation import validate_data
 
 
-# TODO(1.9): change default `eps` to 1e-6, see PR #31117
 def _smacof_single(
     dissimilarities,
     metric=True,
