@@ -107,13 +107,6 @@ def _smacof_single(
     .. [3] "Modern Multidimensional Scaling - Theory and Applications" Borg, I.;
            Groenen P. Springer Series in Statistics (1997)
     """
-    if eps == "warn":
-        warnings.warn(
-            "The default value of `eps` will change from 1e-3 to 1e-6 in 1.9.",
-            FutureWarning,
-        )
-        eps = 1e-3
-
     dissimilarities = check_symmetric(dissimilarities, raise_exception=True)
 
     n_samples = dissimilarities.shape[0]
