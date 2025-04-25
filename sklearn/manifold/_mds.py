@@ -710,7 +710,7 @@ class MDS(BaseEstimator):
             n_jobs=self.n_jobs,
             max_iter=self.max_iter,
             verbose=self.verbose,
-            eps=self._eps,
+            eps=self.eps,
             random_state=self.random_state,
             return_n_iter=True,
             normalized_stress=self.normalized_stress,
