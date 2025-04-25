@@ -2627,7 +2627,7 @@ def test_power_transformer_constant_feature(standardize):
 
 
 @pytest.mark.skipif(
-    sp_version >= parse_version("1.9"),
+    sp_version < parse_version("1.9"),
     reason="scipy version 1.9 required for stable yeo-johnson",
 )
 def test_power_transformer_no_warnings():
