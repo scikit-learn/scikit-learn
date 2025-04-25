@@ -5,15 +5,14 @@ from scipy.integrate import trapezoid
 
 from sklearn import clone
 from sklearn.compose import make_column_transformer
-from sklearn.datasets import load_breast_cancer, load_iris
+from sklearn.datasets import load_breast_cancer, load_iris, make_classification
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import RocCurveDisplay, auc, roc_curve
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.utils import shuffle
-from sklearn.datasets import make_classification
+from sklearn.utils import shuffle 
 
 
 @pytest.fixture(scope="module")
