@@ -234,21 +234,6 @@ def test_convergence_does_not_depend_on_scale(metric):
 
 
 # TODO(1.9): delete this test
-def test_future_warning_eps():
-    X = np.array([[1, 1], [1, 4], [1, 5], [3, 3]])
-    sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
-
-    with pytest.warns(FutureWarning):
-        mds.smacof(sim, n_init=1)
-
-    with pytest.warns(FutureWarning):
-        mds._smacof_single(sim)
-
-    with pytest.warns(FutureWarning):
-        mds.MDS(n_init=1).fit(X)
-
-
-# TODO(1.9): delete this test
 def test_future_warning_n_init():
     X = np.array([[1, 1], [1, 4], [1, 5], [3, 3]])
     sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])

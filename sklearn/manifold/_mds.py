@@ -59,12 +59,13 @@ def _smacof_single(
     verbose : int, default=0
         Level of verbosity.
 
-    eps : float, default=1e-3
+    eps : float, default=1e-6
         The tolerance with respect to stress (normalized by the sum of squared
         embedding distances) at which to declare convergence.
 
-        .. versionchanged:: 1.9
-           The default value for `eps` will change from 1e-3 to 1e-6 in version 1.9.
+        .. versionchanged:: 1.7
+           The default value for `eps` has changed from 1e-3 to 1e-6, as a result
+           of a bugfix in the computation of the convergence criterion.
 
     random_state : int, RandomState instance or None, default=None
         Determines the random number generator used to initialize the centers.
@@ -188,7 +189,7 @@ def _smacof_single(
     return X, stress, it + 1
 
 
-# TODO(1.9): change default `eps` to 1e-6 and `n_init` to 1, see PR #31117
+# TODO(1.9): change default `n_init` to 1, see PR #31117
 @validate_params(
     {
         "dissimilarities": ["array-like"],
@@ -199,7 +200,7 @@ def _smacof_single(
         "n_jobs": [Integral, None],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "verbose": ["verbose"],
-        "eps": [Interval(Real, 0, None, closed="left"), StrOptions({"warn"})],
+        "eps": [Interval(Real, 0, None, closed="left")],
         "random_state": ["random_state"],
         "return_n_iter": ["boolean"],
         "normalized_stress": ["boolean", StrOptions({"auto"})],
@@ -216,7 +217,7 @@ def smacof(
     n_jobs=None,
     max_iter=300,
     verbose=0,
-    eps="warn",
+    eps=1e-6,
     random_state=None,
     return_n_iter=False,
     normalized_stress="auto",
@@ -285,12 +286,13 @@ def smacof(
     verbose : int, default=0
         Level of verbosity.
 
-    eps : float, default=1e-3
+    eps : float, default=1e-6
         The tolerance with respect to stress (normalized by the sum of squared
         embedding distances) at which to declare convergence.
 
-        .. versionchanged:: 1.9
-           The default value for `eps` will change from 1e-3 to 1e-6 in version 1.9.
+        .. versionchanged:: 1.7
+           The default value for `eps` has changed from 1e-3 to 1e-6, as a result
+           of a bugfix in the computation of the convergence criterion.
 
     random_state : int, RandomState instance or None, default=None
         Determines the random number generator used to initialize the centers.
@@ -355,13 +357,6 @@ def smacof(
     >>> np.round(stress, 6).item()
     3.2e-05
     """
-
-    if eps == "warn":
-        warnings.warn(
-            "The default value of `eps` will change from 1e-3 to 1e-6 in 1.9.",
-            FutureWarning,
-        )
-        eps = 1e-3
 
     if n_init == "warn":
         warnings.warn(
@@ -462,12 +457,13 @@ class MDS(BaseEstimator):
     verbose : int, default=0
         Level of verbosity.
 
-    eps : float, default=1e-3
+    eps : float, default=1e-6
         The tolerance with respect to stress (normalized by the sum of squared
         embedding distances) at which to declare convergence.
 
-        .. versionchanged:: 1.9
-           The default value for `eps` will change from 1e-3 to 1e-6 in version 1.9.
+        .. versionchanged:: 1.7
+           The default value for `eps` has changed from 1e-3 to 1e-6, as a result
+           of a bugfix in the computation of the convergence criterion.
 
     n_jobs : int, default=None
         The number of jobs to use for the computation. If multiple
@@ -587,7 +583,7 @@ class MDS(BaseEstimator):
         "n_init": [Interval(Integral, 1, None, closed="left"), StrOptions({"warn"})],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "verbose": ["verbose"],
-        "eps": [Interval(Real, 0.0, None, closed="left"), StrOptions({"warn"})],
+        "eps": [Interval(Real, 0.0, None, closed="left")],
         "n_jobs": [None, Integral],
         "random_state": ["random_state"],
         "dissimilarity": [StrOptions({"euclidean", "precomputed"})],
@@ -602,7 +598,7 @@ class MDS(BaseEstimator):
         n_init="warn",
         max_iter=300,
         verbose=0,
-        eps="warn",
+        eps=1e-6,
         n_jobs=None,
         random_state=None,
         dissimilarity="euclidean",
