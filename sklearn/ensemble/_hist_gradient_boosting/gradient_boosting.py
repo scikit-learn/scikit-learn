@@ -1678,7 +1678,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     >>> X, y = load_diabetes(return_X_y=True)
     >>> est = HistGradientBoostingRegressor().fit(X, y)
     >>> est.score(X, y)
-    0.92...
+    0.93...
     """
 
     _parameter_constraints: dict = {
