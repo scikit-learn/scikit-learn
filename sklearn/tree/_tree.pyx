@@ -1359,7 +1359,7 @@ cdef class Tree:
                             for k in range(n_outputs):
                                 for c in range(n_classes[k]):
                                     oob_pred[sample_idx, c, k] = oob_node_values[node_idx, c, k]
-        print(np.asarray(count_oob_values))  
+
     cpdef compute_unbiased_feature_importance_and_oob_predictions(self, object X_test, object y_test, method="ufi"):
         cdef intp_t n_samples = X_test.shape[0]
         cdef intp_t n_features = X_test.shape[1]

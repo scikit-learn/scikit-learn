@@ -516,9 +516,7 @@ def test_unfitted_feature_importances(name):
         "mdi_oob_feature_importances_",
     ],
 )
-def test_non_OOB_unbiased_feature_importances(
-    name, unbiased_importance_attribute_name
-):
+def test_non_OOB_unbiased_feature_importances(name, unbiased_importance_attribute_name):
     clf = FOREST_ESTIMATORS[name]().fit(X_large, y_large)
     assert not hasattr(clf, unbiased_importance_attribute_name)
     assert not hasattr(clf, "oob_score_")
@@ -1685,9 +1683,7 @@ def test_unbiased_feature_importance_on_train(name, method):
     X, y = make_classification(
         n_samples=n_samples, n_informative=3, random_state=1, n_classes=2
     )
-    clf = FOREST_ESTIMATORS[name](
-        n_estimators=1, bootstrap=True, random_state=1
-    )
+    clf = FOREST_ESTIMATORS[name](n_estimators=1, bootstrap=True, random_state=1)
     clf.fit(X, y)
     ufi_on_train = 0
     for tree_idx, tree in enumerate(clf.estimators_):
@@ -1707,12 +1703,13 @@ def test_unbiased_feature_importance_on_train(name, method):
     assert_almost_equal(clf.feature_importances_, ufi_on_train)
 
 
-@pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
 def test_ufi_match_paper(name):
-    def paper_ufi(clf, X, y):
+    def paper_ufi(clf, X, y, is_classification):
         """
         Code from: Unbiased Measurement of Feature Importance in Tree-Based Methods
         https://arxiv.org/pdf/1903.05179
+        https://github.com/ZhengzeZhou/unbiased-feature-importance/blob/master/UFI.py
         """
         from sklearn.ensemble._forest import _generate_sample_indices
 
@@ -1777,12 +1774,16 @@ def test_ufi_match_paper(name):
                 else:
                     p_node_oob = float(sum(y_innode_oob)) / len(y_innode_oob)
                     p_node_inb = float(sum(y_innode_inb)) / len(y_innode_inb)
-
-                    impurity[node_idx] = (
-                        1
-                        - p_node_oob * p_node_inb
-                        - (1 - p_node_oob) * (1 - p_node_inb)
-                    )
+                    if is_classification:
+                        impurity[node_idx] = (
+                            1
+                            - p_node_oob * p_node_inb
+                            - (1 - p_node_oob) * (1 - p_node_inb)
+                        )
+                    else:
+                        impurity[node_idx] = np.sum(
+                            (y_innode_oob - np.mean(y_innode_inb)) ** 2
+                        ) / len(y_innode_oob)
             for node_idx in range(n_nodes):
                 if (
                     tree.tree_.children_left[node_idx] == -1
@@ -1796,11 +1797,22 @@ def test_ufi_match_paper(name):
                 node_right = tree.tree_.children_right[node_idx]
 
                 if has_oob_samples_in_children[node_idx]:
-                    fi_tree[feature_idx] += (
-                        weighted_n_node_samples[node_idx] * impurity[node_idx]
-                        - weighted_n_node_samples[node_left] * impurity[node_left]
-                        - weighted_n_node_samples[node_right] * impurity[node_right]
-                    )
+                    if is_classification:
+                        fi_tree[feature_idx] += (
+                            weighted_n_node_samples[node_idx] * impurity[node_idx]
+                            - weighted_n_node_samples[node_left] * impurity[node_left]
+                            - weighted_n_node_samples[node_right] * impurity[node_right]
+                        )
+                    else:
+                        impurity_train = tree.tree_.impurity
+                        fi_tree[feature_idx] += (
+                            weighted_n_node_samples[node_idx]
+                            * (impurity[node_idx] + impurity_train[node_idx])
+                            - weighted_n_node_samples[node_left]
+                            * (impurity[node_left] + impurity_train[node_left])
+                            - weighted_n_node_samples[node_right]
+                            * (impurity_train[node_right] + impurity[node_right])
+                        )
             feature_importance += fi_tree
         feature_importance /= n_estimators
         return feature_importance / feature_importance.sum()
@@ -1808,19 +1820,23 @@ def test_ufi_match_paper(name):
     X, y = make_classification(
         n_samples=15, n_informative=3, random_state=1, n_classes=2
     )
-    clf = FOREST_CLASSIFIERS[name](
+    is_classification = True if name in FOREST_CLASSIFIERS else False
+    est = FOREST_CLASSIFIERS_REGRESSORS[name](
         n_estimators=10, oob_score=True, bootstrap=True, random_state=1
     )
-    clf.fit(X, y)
-    assert_almost_equal(clf.ufi_feature_importances_, paper_ufi(clf, X, y))
+    est.fit(X, y)
+    assert_almost_equal(
+        est.ufi_feature_importances_, paper_ufi(est, X, y, is_classification)
+    )
 
 
-@pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
 def test_mdi_oob_match_paper(name):
-    def paper_mdi_oob(clf, X, y):
+    def paper_mdi_oob(clf, X, y, is_classification):
         """
         Code from: A Debiased MDI Feature Importance Measure for Random Forests
         https://arxiv.org/pdf/1906.10845
+        https://github.com/shifwang/paper-debiased-feature-importance/blob/9c3e1eed860478ef02111ebda4a39255b4d4be74/simulations/02_comparison.ipynb
         """
         import copy
 
@@ -1835,7 +1851,8 @@ def test_mdi_oob_match_paper(name):
         # infer y.shape
         if len(y.shape) == 1:
             yy = y[:, np.newaxis]
-        yy = OneHotEncoder().fit_transform(yy)
+        if is_classification:
+            yy = OneHotEncoder().fit_transform(yy)
 
         out = np.zeros((n_features,))
         for tree in clf.estimators_:
@@ -1853,7 +1870,10 @@ def test_mdi_oob_match_paper(name):
             ).T @ yy[indices, :]
             tmp = copy.deepcopy(tree.tree_.value.squeeze(axis=1))
 
-            node_previous_mean = tmp / np.sum(tmp, 1)[:, np.newaxis]
+            if is_classification:
+                node_previous_mean = tmp / np.sum(tmp, 1)[:, np.newaxis]
+            else:
+                node_previous_mean = tmp
 
             # compute the impurity decrease at each node
             node_sample_size = tree.tree_.weighted_n_node_samples
@@ -1891,11 +1911,14 @@ def test_mdi_oob_match_paper(name):
     X, y = make_classification(
         n_samples=15, n_informative=3, random_state=1, n_classes=2
     )
-    clf = FOREST_CLASSIFIERS[name](
+    is_classification = True if name in FOREST_CLASSIFIERS else False
+    est = FOREST_CLASSIFIERS_REGRESSORS[name](
         n_estimators=10, oob_score=True, bootstrap=True, random_state=1
     )
-    clf.fit(X, y)
-    assert_almost_equal(clf.mdi_oob_feature_importances_, paper_mdi_oob(clf, X, y))
+    est.fit(X, y)
+    assert_almost_equal(
+        est.mdi_oob_feature_importances_, paper_mdi_oob(est, X, y, is_classification)
+    )
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
