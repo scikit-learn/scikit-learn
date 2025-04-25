@@ -130,7 +130,7 @@ def _routing_enabled():
     return get_config().get("enable_metadata_routing", False)
 
 
-def _raise_for_params(params, owner, method):
+def _raise_for_params(params, owner, method, allow=None):
     """Raise an error if metadata routing is not enabled and params are passed.
 
     .. versionadded:: 1.4
@@ -146,6 +146,10 @@ def _raise_for_params(params, owner, method):
     method : str
         The name of the method, e.g. "fit".
 
+    allow : list of str, default=None
+        A list of parameters which are allowed to be passed even if metadata
+        routing is not enabled.
+
     Raises
     ------
     ValueError
@@ -154,7 +158,10 @@ def _raise_for_params(params, owner, method):
     caller = (
         f"{owner.__class__.__name__}.{method}" if method else owner.__class__.__name__
     )
-    if not _routing_enabled() and params:
+
+    allow = allow if allow is not None else {}
+
+    if not _routing_enabled() and (params.keys() - allow):
         raise ValueError(
             f"Passing extra keyword arguments to {caller} is only supported if"
             " enable_metadata_routing=True, which you can set using"
@@ -1101,8 +1108,9 @@ class MetadataRouter:
             method_mapping = MethodMapping()
             for method in METHODS:
                 method_mapping.add(caller=method, callee=method)
-            yield "$self_request", RouterMappingPair(
-                mapping=method_mapping, router=self._self_request
+            yield (
+                "$self_request",
+                RouterMappingPair(mapping=method_mapping, router=self._self_request),
             )
         for name, route_mapping in self._route_mappings.items():
             yield (name, route_mapping)

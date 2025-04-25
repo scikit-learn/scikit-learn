@@ -60,6 +60,8 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
     """Yield supported namespace, device, dtype tuples for testing.
 
     Use this to test that an estimator works with all combinations.
+    Use in conjunction with `ids=_get_namespace_device_dtype_ids` to give
+    clearer pytest parametrization ID names.
 
     Parameters
     ----------
@@ -854,7 +856,7 @@ def _searchsorted(a, v, *, side="left", sorter=None, xp=None):
     # Temporary workaround needed as long as searchsorted is not widely
     # adopted by implementers of the Array API spec. This is a quite
     # recent addition to the spec:
-    # https://data-apis.org/array-api/latest/API_specification/generated/array_api.searchsorted.html # noqa
+    # https://data-apis.org/array-api/latest/API_specification/generated/array_api.searchsorted.html
     xp, _ = get_namespace(a, v, xp=xp)
     if hasattr(xp, "searchsorted"):
         return xp.searchsorted(a, v, side=side, sorter=sorter)

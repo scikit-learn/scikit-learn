@@ -1073,7 +1073,7 @@ def test_mlp_vs_poisson_glm_equivalent(global_random_seed):
     assert_allclose(mlp.predict(X), glm.predict(X), rtol=1e-4)
 
     # The same does not work with the squared error because the output activation is
-    # the idendity instead of the exponential.
+    # the identity instead of the exponential.
     mlp = MLPRegressor(
         loss="squared_error",
         hidden_layer_sizes=(1,),
@@ -1084,3 +1084,11 @@ def test_mlp_vs_poisson_glm_equivalent(global_random_seed):
         random_state=np.random.RandomState(global_random_seed + 1),
     ).fit(X, y)
     assert not np.allclose(mlp.predict(X), glm.predict(X), rtol=1e-4)
+
+
+def test_minimum_input_sample_size():
+    """Check error message when the validation set is too small."""
+    X, y = make_regression(n_samples=2, n_features=5, random_state=0)
+    model = MLPRegressor(early_stopping=True, random_state=0)
+    with pytest.raises(ValueError, match="The validation set is too small"):
+        model.fit(X, y)
