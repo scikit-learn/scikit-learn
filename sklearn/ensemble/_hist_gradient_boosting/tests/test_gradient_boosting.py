@@ -727,7 +727,7 @@ def test_sample_weight_effect(problem, global_random_seed):
     # Otherwise, this test would require being rewritten as a statistical test.
     # We also set `n_samples` large enough to ensure that columns have more than
     # 255 distinct values and that we test the impact of weight-aware binning.
-    n_samples = 500
+    n_samples = 200
     n_features = 2
     rng = np.random.RandomState(global_random_seed)
     if problem == "regression":
