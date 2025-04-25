@@ -1676,7 +1676,7 @@ def test_forest_degenerate_unbiased_feature_importances(
     )
 
 
-@pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
 @pytest.mark.parametrize("method", ["ufi", "mdi_oob"])
 def test_unbiased_feature_importance_on_train(name, method):
     from sklearn.ensemble._forest import _generate_sample_indices
@@ -1685,8 +1685,8 @@ def test_unbiased_feature_importance_on_train(name, method):
     X, y = make_classification(
         n_samples=n_samples, n_informative=3, random_state=1, n_classes=2
     )
-    clf = FOREST_CLASSIFIERS[name](
-        n_estimators=10, oob_score=True, bootstrap=True, random_state=1
+    clf = FOREST_ESTIMATORS[name](
+        n_estimators=1, bootstrap=True, random_state=1
     )
     clf.fit(X, y)
     ufi_on_train = 0

@@ -1303,6 +1303,8 @@ cdef class Tree:
                 # root node
                 node = self.nodes
                 node_idx = 0
+                value_at_node = self.value + node_idx * n_outputs * max_n_classes
+                has_oob_sample[node_idx] = 1
                 for k in range(n_outputs):
                     if n_classes[k] > 1:
                         for c in range(n_classes[k]):
@@ -1319,12 +1321,13 @@ cdef class Tree:
                         # TODO use sample weight instead of 1 
                 # child nodes
                 while node.left_child != _TREE_LEAF and node.right_child != _TREE_LEAF:
-                    value_at_node = self.value + node_idx * n_outputs * max_n_classes
                     if X_ndarray[sample_idx, node.feature] <= node.threshold:
                         node_idx = node.left_child
                     else:
                         node_idx = node.right_child
+                    value_at_node = self.value + node_idx * n_outputs * max_n_classes
                     has_oob_sample[node_idx] = 1
+                    node = &self.nodes[node_idx]
                     for k in range(n_outputs):
                         if n_classes[k] > 1:
                             for c in range(n_classes[k]):
@@ -1340,11 +1343,9 @@ cdef class Tree:
                             count_oob_values[node_idx, k] += 1
                             # TODO use sample weight instead of 1 
 
-                    node = &self.nodes[node_idx]
                 
                 # store the id of the leaf where each sample ends up
                 y_leafs[sample_idx] = node_idx
-            
             for node_idx in range(node_count):
                 # convert the counts to proportions
                 for k in range(n_outputs):
@@ -1358,7 +1359,7 @@ cdef class Tree:
                             for k in range(n_outputs):
                                 for c in range(n_classes[k]):
                                     oob_pred[sample_idx, c, k] = oob_node_values[node_idx, c, k]
-            
+        print(np.asarray(count_oob_values))  
     cpdef compute_unbiased_feature_importance_and_oob_predictions(self, object X_test, object y_test, method="ufi"):
         cdef intp_t n_samples = X_test.shape[0]
         cdef intp_t n_features = X_test.shape[1]
@@ -1419,7 +1420,7 @@ cdef class Tree:
                                         (nodes[left_idx].impurity + oob_node_values[left_idx, 0, k])
                                         * nodes[left_idx].weighted_n_node_samples
                                         - 
-                                        (nodes[left_idx].impurity + oob_node_values[right_idx, 0, k])
+                                        (nodes[right_idx].impurity + oob_node_values[right_idx, 0, k])
                                         * nodes[right_idx].weighted_n_node_samples
                                     )
                             importances[node.feature] /= n_outputs
