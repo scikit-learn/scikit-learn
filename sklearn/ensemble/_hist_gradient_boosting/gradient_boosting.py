@@ -538,17 +538,17 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             In a `Pipeline`, `X_val` can be transformed the same way as `X` with
             `Pipeline(..., transform_input=["X_val"])`.
 
-            .. versionadded:: 1.4
+            .. versionadded:: 1.7
 
         y_val : array-like of shape (n_samples,)
             Additional sample of target values for validation used in early stopping.
 
-            .. versionadded:: 1.4
+            .. versionadded:: 1.7
 
         sample_weight_val : array-like of shape (n_samples,) default=None
             Additional weights for validation used in early stopping.
 
-            .. versionadded:: 1.4
+            .. versionadded:: 1.7
 
         Returns
         -------
