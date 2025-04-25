@@ -13,6 +13,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
+from sklearn.datasets import make_classification
 
 
 @pytest.fixture(scope="module")
@@ -26,8 +27,16 @@ def data():
 
 @pytest.fixture(scope="module")
 def data_binary(data):
-    X, y = data
-    return X[y < 2], y[y < 2]
+    X, y = make_classification(
+        n_samples=200,
+        n_features=20,
+        n_informative=5,
+        n_redundant=2,
+        flip_y=0.1,        # Add some label noise
+        class_sep=0.8,     # Reduce separation for more overlap
+        random_state=42,
+    )
+    return X, y
 
 
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
