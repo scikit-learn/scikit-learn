@@ -348,7 +348,7 @@ class TProcessRegressor(GaussianProcessRegressor):
             evaluated at query points.
         """
         rng = check_random_state(random_state)
-        n = getattr(self, "n", 0)
+        n = getattr(self, "_n", 0)
         degrees_of_freedom = self.degrees_of_freedom_init + n
 
         y_mean, y_t_shape_matrix = self.predict(X, return_t_shape_matrix=True)
