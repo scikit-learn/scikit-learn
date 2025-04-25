@@ -18,7 +18,7 @@ meson-python==0.17.1
     # via -r build_tools/azure/debian_32bit_requirements.txt
 ninja==1.11.1.4
     # via -r build_tools/azure/debian_32bit_requirements.txt
-packaging==24.2
+packaging==25.0
     # via
     #   meson-python
     #   pyproject-metadata
