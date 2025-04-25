@@ -2348,15 +2348,6 @@ def _is_pandas_df(X):
     return isinstance(X, pd.DataFrame)
 
 
-def _is_polars_df_or_series(X):
-    """Return True if the X is a polars dataframe or series."""
-    try:
-        pl = sys.modules["polars"]
-    except KeyError:
-        return False
-    return isinstance(X, (pl.DataFrame, pl.Series))
-
-
 def _is_polars_df(X):
     """Return True if the X is a polars dataframe."""
     try:
