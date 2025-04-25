@@ -1,5 +1,5 @@
-import numpy as np
 import pytest
+import numpy as np
 from numpy.testing import assert_allclose
 from scipy.integrate import trapezoid
 
@@ -12,7 +12,7 @@ from sklearn.metrics import RocCurveDisplay, auc, roc_curve
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.utils import shuffle 
+from sklearn.utils import shuffle
 
 
 @pytest.fixture(scope="module")
