@@ -16,7 +16,7 @@ meson==1.9.1
     # via meson-python
 meson-python==0.18.0
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
-narwhals==1.30.0
+narwhals==1.36.0
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
 ninja==1.13.0
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
