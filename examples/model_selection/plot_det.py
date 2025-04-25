@@ -88,8 +88,8 @@ classifiers = {
 }
 
 # %%
-# Compare ROC, CAP and DET curves
-# ----------------------------
+# Compare ROC, DET and CAP curves
+# -------------------------------
 #
 # DET curves are commonly plotted in normal deviate scale. To achieve this the
 # DET display transforms the error rates as returned by the
@@ -100,13 +100,12 @@ import matplotlib.pyplot as plt
 
 from sklearn.metrics import CAPCurveDisplay, DetCurveDisplay, RocCurveDisplay
 
-fig, [ax_roc, ax_cap, ax_det] = plt.subplots(
+fig, [ax_roc, ax_det, ax_cap] = plt.subplots(
     1, 3, figsize=(15, 5), constrained_layout=True
 )
 pos_label = "Class A"
-for name, clf in classifiers.items():
-    plot_chance_level = name == "Random Forest"
-    plot_perfect = name == "Random Forest"
+for clf_idx, (name, clf) in enumerate(classifiers.items()):
+    is_last = clf_idx == len(classifiers) - 1
     clf.fit(X_train, y_train)
 
     RocCurveDisplay.from_estimator(
@@ -116,7 +115,15 @@ for name, clf in classifiers.items():
         ax=ax_roc,
         name=name,
         pos_label=pos_label,
-        plot_chance_level=plot_chance_level,
+        plot_chance_level=is_last,
+    )
+    DetCurveDisplay.from_estimator(
+        clf,
+        X_test,
+        y_test,
+        ax=ax_det,
+        name=name,
+        pos_label=pos_label,
     )
     CAPCurveDisplay.from_estimator(
         clf,
@@ -125,11 +132,8 @@ for name, clf in classifiers.items():
         ax=ax_cap,
         name=name,
         pos_label=pos_label,
-        plot_chance_level=plot_chance_level,
-        plot_perfect=plot_perfect,
-    )
-    DetCurveDisplay.from_estimator(
-        clf, X_test, y_test, ax=ax_det, name=name, pos_label=pos_label
+        plot_chance_level=is_last,
+        plot_perfect=is_last,
     )
 
 ax_roc.set_title("Receiver Operating Characteristic (ROC) curves")
@@ -140,23 +144,10 @@ ax_roc.grid(linestyle="--")
 ax_det.grid(linestyle="--")
 ax_cap.grid(linestyle="--")
 
-for name, clf in classifiers.items():
-    (color, linestyle) = (
-        ("black", "--") if name == "Non-informative baseline" else (None, None)
-    )
-    clf.fit(X_train, y_train)
-    RocCurveDisplay.from_estimator(
-        clf, X_test, y_test, ax=ax_roc, name=name, color=color, linestyle=linestyle
-    )
-    DetCurveDisplay.from_estimator(
-        clf, X_test, y_test, ax=ax_det, name=name, color=color, linestyle=linestyle
-    )
-
 plt.legend()
 plt.show()
 
-# %%
-# Analysis
+# %% Analysis
 # --------
 #
 # All curves agree that the Random Forest classifier is has more discriminative
@@ -178,20 +169,22 @@ plt.show()
 # the area of interest spans a large part of the plot.
 #
 # DET curves give direct feedback of the detection error tradeoff to aid in
-# operating point analysis. The user can then decide the FNR they are willing to
-# accept at the expense of the FPR (or vice-versa).
+# operating point analysis. The user can then decide the FNR they are willing
+# to accept at the expense of the FPR (or vice-versa).
 #
-# Non-informative classifier baseline for the ROC and DET curves
-# --------------------------------------------------------------
+# Non-informative classifier baseline
+# -----------------------------------
 #
-# The diagonal black-dotted lines in the plots above correspond to a
-# :class:`~sklearn.dummy.DummyClassifier` using the default "prior" strategy, to
-# serve as baseline for comparison with other classifiers. This classifier makes
-# constant predictions, independent of the input features in `X`, making it a
-# non-informative classifier.
+# The diagonal black-dotted lines named "chance level" in the plots above
+# correspond to a the expected value of a non-informative classifier on an
+# infinite evaluation set.
 #
-# To further understand the non-informative baseline of the ROC and DET curves,
-# we recall the following mathematical definitions:
+# The :class:`~sklearn.dummy.DummyClassifier` model makes constant predictions,
+# independently of the input features in `X`, making it a canonical example of
+# such a non-informative classifier. We observe that the ROC and DET curves of
+# the non-informative classifier exactly match the theoretical chance level
+# line. This can be explained as follows. First recall the following
+# mathematical definitions:
 #
 # :math:`\text{FPR} = \frac{\text{FP}}{\text{FP} + \text{TN}}`
 #
@@ -212,3 +205,14 @@ plt.show()
 #
 # - a single point in the lower left corner of the ROC plane,
 # - a single point in the upper left corner of the DET plane.
+#
+# For the non-informative classifier with strategy "prior", the value returned
+# by `predict_proba` is the observed frequency of the positive class in the
+# training set. If the threshold is above this value, the classifier always
+# predicts the negative class, and if the threshold is below this value, the
+# classifier always predicts the positive class. Both ROC and DET curves
+# linearly interpolate between these two points, hence the diagonal line.
+#
+# For the CAP curve of the non-informative classifier, only approximately lie
+# on the diagonal. The match would be better in the limit of an infinite
+# evaluation set.
