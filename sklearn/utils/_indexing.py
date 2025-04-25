@@ -2,11 +2,11 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import numbers
-import sys
 import warnings
 from collections import UserList
 from itertools import compress, islice
 
+import narwhals as nw
 import numpy as np
 from scipy.sparse import issparse
 
@@ -22,8 +22,6 @@ from sklearn.utils.validation import (
     _check_sample_weight,
     _is_arraylike_not_scalar,
     _is_pandas_df,
-    _is_polars_df_or_series,
-    _is_pyarrow_data,
     _use_interchange_protocol,
     check_array,
     check_consistent_length,
@@ -42,6 +40,41 @@ def _array_indexing(array, key, key_dtype, axis):
     if isinstance(key, tuple):
         key = list(key)
     return array[key, ...] if axis == 0 else array[:, key]
+
+
+def _narwhals_indexing(X, key, key_dtype, axis):
+    """Index a narhals dataframe or series."""
+    X = nw.from_native(X, allow_series=True)
+    if (
+        not isinstance(key, (int, slice))
+        and not (isinstance(key, list) and key_dtype in ("bool", "str"))
+        and key is not None
+    ):
+        # Note that at least tuples should be converted to either list or ndarray as
+        # tupes in __getitem__ are special: x[(1, 2)] is equal to x[1, 2].
+        key = np.asarray(key)
+
+    if key_dtype in ("bool", "str") and not isinstance(key, (list, slice)):
+        key = key.tolist()
+
+    if axis == 1:
+        return X[:, key].to_native()
+
+    # From here on axis == 0:
+    if key_dtype == "bool":
+        X_indexed = X.filter(key)
+    else:
+        X_indexed = X[key]
+
+    if np.isscalar(key):
+        if len(X.shape) <= 1:
+            return X_indexed
+        # `X_indexed` is a DataFrame with a single row; we return a Series to be
+        # consistent with pandas
+        # Christian Lorentzen really dislikes this behaviour and favours to return a
+        # dataframe.
+        return np.array(X_indexed.row(0))
+    return X_indexed.to_native()
 
 
 def _pandas_indexing(X, key, key_dtype, axis):
@@ -69,94 +102,6 @@ def _list_indexing(X, key, key_dtype):
         return list(compress(X, key))
     # key is an integer array-like of key
     return [X[idx] for idx in key]
-
-
-def _polars_indexing(X, key, key_dtype, axis):
-    """Index a polars dataframe or series."""
-    # Polars behavior is more consistent with lists
-    if isinstance(key, np.ndarray):
-        # Convert each element of the array to a Python scalar
-        key = key.tolist()
-    elif not (np.isscalar(key) or isinstance(key, slice)):
-        key = list(key)
-
-    if axis == 1:
-        # Here we are certain to have a polars DataFrame; which can be indexed with
-        # integer and string scalar, and list of integer, string and boolean
-        return X[:, key]
-
-    if key_dtype == "bool":
-        # Boolean mask can be indexed in the same way for Series and DataFrame (axis=0)
-        return X.filter(key)
-
-    # Integer scalar and list of integer can be indexed in the same way for Series and
-    # DataFrame (axis=0)
-    X_indexed = X[key]
-    if np.isscalar(key) and len(X.shape) == 2:
-        # `X_indexed` is a DataFrame with a single row; we return a Series to be
-        # consistent with pandas
-        pl = sys.modules["polars"]
-        return pl.Series(X_indexed.row(0))
-    return X_indexed
-
-
-def _pyarrow_indexing(X, key, key_dtype, axis):
-    """Index a pyarrow data."""
-    scalar_key = np.isscalar(key)
-    if isinstance(key, slice):
-        if isinstance(key.stop, str):
-            start = X.column_names.index(key.start)
-            stop = X.column_names.index(key.stop) + 1
-        else:
-            start = 0 if not key.start else key.start
-            stop = key.stop
-        step = 1 if not key.step else key.step
-        key = list(range(start, stop, step))
-
-    if axis == 1:
-        # Here we are certain that X is a pyarrow Table or RecordBatch.
-        if key_dtype == "int" and not isinstance(key, list):
-            # pyarrow's X.select behavior is more consistent with integer lists.
-            key = np.asarray(key).tolist()
-        if key_dtype == "bool":
-            key = np.asarray(key).nonzero()[0].tolist()
-
-        if scalar_key:
-            return X.column(key)
-
-        return X.select(key)
-
-    # axis == 0 from here on
-    if scalar_key:
-        if hasattr(X, "shape"):
-            # X is a Table or RecordBatch
-            key = [key]
-        else:
-            return X[key].as_py()
-    elif not isinstance(key, list):
-        key = np.asarray(key)
-
-    if key_dtype == "bool":
-        # TODO(pyarrow): remove version checking and following if-branch when
-        # pyarrow==17.0.0 is the minimal version, see pyarrow issue
-        # https://github.com/apache/arrow/issues/42013 for more info
-        if PYARROW_VERSION_BELOW_17:
-            import pyarrow
-
-            if not isinstance(key, pyarrow.BooleanArray):
-                key = pyarrow.array(key, type=pyarrow.bool_())
-
-        X_indexed = X.filter(key)
-
-    else:
-        X_indexed = X.take(key)
-
-    if scalar_key and len(getattr(X, "shape", [0])) == 2:
-        # X_indexed is a dataframe-like with a single row; we return a Series to be
-        # consistent with pandas
-        pa = sys.modules["pyarrow"]
-        return pa.array(X_indexed.to_pylist()[0].values())
-    return X_indexed
 
 
 def _determine_key_type(key, accept_slice=True):
@@ -331,28 +276,15 @@ def _safe_indexing(X, indices, *, axis=0):
         )
 
     if hasattr(X, "iloc"):
-        # TODO: we should probably use _is_pandas_df_or_series(X) instead but:
-        # 1) Currently, it (probably) works for dataframes compliant to pandas' API.
-        # 2) Updating would require updating some tests such as
-        #    test_train_test_split_mock_pandas.
+        # TODO: we should probably use _is_pandas_df_or_series(X) instead but this
+        # would require updating some tests such as test_train_test_split_mock_pandas.
+        # TODO: Should also work with _narwhals_indexing, but
+        # test_safe_indexing_pandas_no_settingwithcopy_warning
+        # does not pass.
         return _pandas_indexing(X, indices, indices_dtype, axis=axis)
-    elif _is_polars_df_or_series(X):
-        return _polars_indexing(X, indices, indices_dtype, axis=axis)
-    elif _is_pyarrow_data(X):
-        return _pyarrow_indexing(X, indices, indices_dtype, axis=axis)
-    elif _use_interchange_protocol(X):  # pragma: no cover
-        # Once the dataframe X is converted into its dataframe interchange protocol
-        # version by calling X.__dataframe__(), it becomes very hard to turn it back
-        # into its original type, e.g., a pyarrow.Table, see
-        # https://github.com/data-apis/dataframe-api/issues/85.
-        raise warnings.warn(
-            message="A data object with support for the dataframe interchange protocol"
-            "was passed, but scikit-learn does currently not know how to handle this "
-            "kind of data. Some array/list indexing will be tried.",
-            category=UserWarning,
-        )
-
-    if hasattr(X, "shape"):
+    elif nw.dependencies.is_into_dataframe(X) or nw.dependencies.is_into_series(X):
+        return _narwhals_indexing(X, indices, indices_dtype, axis=axis)
+    elif hasattr(X, "shape"):
         return _array_indexing(X, indices, indices_dtype, axis=axis)
     else:
         return _list_indexing(X, indices, indices_dtype)
