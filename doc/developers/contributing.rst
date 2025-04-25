@@ -269,7 +269,7 @@ how to set up your git repository:
 
    .. prompt:: bash
 
-        pip install pytest pytest-cov ruff mypy numpydoc black==24.3.0
+        pip install pytest pytest-cov ruff==0.11.2 mypy numpydoc
 
 .. _upstream:
 
@@ -1565,7 +1565,7 @@ make this task easier and faster (in no particular order).
     variable) in the code base.
 
 - Configure `git blame` to ignore the commit that migrated the code style to
-  `black`.
+  `black` and then `ruff`.
 
   .. prompt:: bash
 
