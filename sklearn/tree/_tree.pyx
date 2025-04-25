@@ -1441,7 +1441,7 @@ cdef class Tree:
                         else:
                             raise(ValueError(method))
 
-        return (np.asarray(importances), np.asarray(oob_pred), np.ones((n_samples, n_outputs), dtype=np.intp))
+        return (np.asarray(importances), np.asarray(oob_pred))
 
 
     cdef cnp.ndarray _get_value_ndarray(self):
