@@ -589,7 +589,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     sample_weight_val, X_val, dtype=np.float64
                 )
 
-        self._del_encoder_y()
+        # Note: At this point, we could delete self._label_encoder if it exists.
+        # But we don't to keep the code even simpler.
 
         rng = check_random_state(self.random_state)
 
@@ -1452,10 +1453,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
     @abstractmethod
     def _encode_y_val(self, y=None):
         pass  # pragma: no cover
-
-    def _del_encoder_y(self):
-        """Delete the label encoder self._label_encoder if present (classicication)."""
-        pass
 
     @property
     def n_iter_(self):
@@ -2355,11 +2352,6 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
     def _encode_y_val(self, y):
         encoded_y = self._label_encoder.transform(y)
         return encoded_y.astype(Y_DTYPE, copy=False)
-
-    def _del_encoder_y(self):
-        """Delete the label encoder, self._label_encoder."""
-        if hasattr(self, "_label_encoder"):
-            del self._label_encoder
 
     def _get_loss(self, sample_weight):
         # At this point self.loss == "log_loss"
