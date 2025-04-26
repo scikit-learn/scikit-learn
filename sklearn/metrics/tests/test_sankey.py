@@ -11,7 +11,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics._plot.confusion_matrix_sankey import ConfusionMatrixSankeyDisplay
 
 def test_initialization():
-    # 测试初始化是否正确设置属性
+    '''test if initialized attributes correctly'''
     cm = np.array([[2, 1], [0, 3]])
     display_labels = ['A', 'B']
     save_path = "test.html"
@@ -23,7 +23,7 @@ def test_initialization():
     assert sankey.save_path == save_path
 
 def test_from_predictions():
-    # 测试 from_predictions 生成的混淆矩阵是否正确
+    '''test confusion matrix produced by from_predictions'''
     y_true = [0, 1, 0, 1]
     y_pred = [0, 1, 1, 0]
     display = ConfusionMatrixSankeyDisplay.from_predictions(y_true, y_pred)
@@ -31,7 +31,7 @@ def test_from_predictions():
     assert np.array_equal(display.cm, expected_cm)
 
 def test_from_predictions_normalize():
-    # 测试归一化后的混淆矩阵是否正确
+    '''test confusion nmatrix after normalization'''
     y_true = [0, 0, 1, 1]
     y_pred = [0, 0, 1, 1]
     display = ConfusionMatrixSankeyDisplay.from_predictions(
@@ -42,7 +42,7 @@ def test_from_predictions_normalize():
     assert np.array_equal(display.cm, expected_cm)
 
 def test_from_estimator():
-    # 测试 from_estimator 是否正确使用分类器的预测结果
+    """test if from_estimator uses the result of classifier"""
     X, y = load_iris(return_X_y=True)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
     clf = DummyClassifier(strategy='most_frequent')
@@ -53,7 +53,7 @@ def test_from_estimator():
     assert np.array_equal(display.cm, expected_cm)
 
 def test_from_estimator_non_classifier():
-    # 测试传入非分类器时是否抛出错误
+    '''test error handling when non-classifier passed'''
     reg = LinearRegression()
     X = [[0], [1], [2], [3]]
     y = [0, 1, 0, 1]
@@ -62,7 +62,7 @@ def test_from_estimator_non_classifier():
         ConfusionMatrixSankeyDisplay.from_estimator(reg, X, y)
 
 def test_plot_saves_file(tmpdir):
-    # 测试 plot 方法是否生成文件
+    """test coreect file produced"""
     save_path = tmpdir.join("sankey.html")
     cm = np.array([[2, 0], [0, 3]])
     display = ConfusionMatrixSankeyDisplay(cm, save_path=str(save_path))
@@ -70,14 +70,14 @@ def test_plot_saves_file(tmpdir):
     assert save_path.exists()
 
 def test_hex_to_rgb():
-    # 测试颜色转换方法是否正确
+    """test color conversion"""
     sankey = ConfusionMatrixSankeyDisplay([[1]], display_labels=['A'])
     assert sankey._hex_to_rgb("#ff0000") == "255,0,0"
     assert sankey._hex_to_rgb("#00ff00") == "0,255,0"
     assert sankey._hex_to_rgb("#0000ff") == "0,0,255"
 
 def test_display_labels_default():
-    # 测试未提供 display_labels 时是否使用默认值
+    """test if default values are used"""
     cm = np.array([[1, 0], [0, 1]])
     sankey = ConfusionMatrixSankeyDisplay(cm)
     assert np.array_equal(sankey.display_labels, [0, 1])
@@ -132,8 +132,6 @@ def _extract_link_colors(html):
     return re.findall(r'"color": "(rgba?\([^)]+\))",', html)
 
 
-# Test Cases
-
 def test_html_content(tmpdir):
     save_path = tmpdir.join("sankey.html")
     cm = np.array([[2, 1], [3, 4]])
@@ -167,33 +165,26 @@ def test_normalized_html_content(tmpdir):
 @pytest.mark.benchmark
 def test_large_scale_performance(tmpdir, benchmark):
     """Benchmark testing for large-scale confusion matrix"""
-    # 生成1000x1000的随机混淆矩阵（稀疏）
     np.random.seed(42)
     n_classes = 500
     cm = np.random.randint(0, 10, size=(n_classes, n_classes))
 
-    # 创建显示对象
     display = ConfusionMatrixSankeyDisplay(confusion_matrix=cm,
         display_labels=np.arange(n_classes),
         save_path=str(tmpdir.join("large_sankey.html")))
 
-    # 定义性能测试函数
 
     def _run():
-        # 内存使用监控
         tracemalloc.start()
         display.plot(width=1600, height=1200)
         current, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
-        return peak / 1024 ** 2  # 转换为MB
+        return peak / 1024 ** 2
 
-    # 执行基准测试
     peak_mem = benchmark.pedantic(_run, rounds=3, warmup_rounds=1)
 
-    # 断言内存峰值不超过500MB（根据实际硬件调整阈值）
     assert peak_mem < 500, f"内存使用过高：{peak_mem:.2f}MB"
 
-    # 验证生成的文件
     assert os.path.exists(display.save_path)
     file_size = os.path.getsize(display.save_path) / 1024 ** 2
     assert file_size < 50, f"生成文件过大：{file_size:.2f}MB"
