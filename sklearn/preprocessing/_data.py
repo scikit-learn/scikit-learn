@@ -6,7 +6,7 @@ import warnings
 from numbers import Integral, Real
 
 import numpy as np
-from scipy import optimize, sparse, stats
+from scipy import sparse, stats
 from scipy.special import boxcox, inv_boxcox
 
 from sklearn.utils import metadata_routing
@@ -3534,7 +3534,7 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         # get rid of them
         x = x[~np.isnan(x)]
 
-        return  _yeojohnson_lambda( _neg_log_likelihood, x)
+        return _yeojohnson_lambda(_neg_log_likelihood, x)
 
     def _check_input(self, X, in_fit, check_positive=False, check_shape=False):
         """Validate the input before fit and transform.

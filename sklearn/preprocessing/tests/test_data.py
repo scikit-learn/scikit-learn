@@ -12,6 +12,7 @@ from scipy import sparse, stats
 from sklearn import datasets
 from sklearn.base import clone
 from sklearn.exceptions import NotFittedError
+from sklearn.externals._packaging.version import parse as parse_version
 from sklearn.metrics.pairwise import linear_kernel
 from sklearn.model_selection import cross_val_predict
 from sklearn.pipeline import Pipeline
@@ -60,10 +61,9 @@ from sklearn.utils.fixes import (
     CSC_CONTAINERS,
     CSR_CONTAINERS,
     LIL_CONTAINERS,
+    sp_version,
 )
 from sklearn.utils.sparsefuncs import mean_variance_axis
-from sklearn.utils.fixes import sp_version
-from sklearn.externals._packaging.version import parse as parse_version
 
 iris = datasets.load_iris()
 
@@ -2637,10 +2637,20 @@ def test_power_transformer_no_warnings():
     overflows) with the Yeo-Johnson transform, see
     https://github.com/scikit-learn/scikit-learn/issues/23319#issuecomment-1464933635
     """
-    x = np.array([
-        2003.0, 1950.0, 1997.0, 2000.0, 2009.0,
-        2009.0, 1980.0, 1999.0, 2007.0, 1991.0,
-    ])
+    x = np.array(
+        [
+            2003.0,
+            1950.0,
+            1997.0,
+            2000.0,
+            2009.0,
+            2009.0,
+            1980.0,
+            1999.0,
+            2007.0,
+            1991.0,
+        ]
+    )
 
     def _test_no_warnings(data):
         """Internal helper to test for unexpected warnings."""
@@ -2660,7 +2670,6 @@ def test_power_transformer_no_warnings():
 
 
 def test_yeojohnson_for_different_scipy_version():
-    """Check that the results are consistent across different SciPy versions.
-    """
+    """Check that the results are consistent across different SciPy versions."""
     pt = PowerTransformer(method="yeo-johnson").fit(X_1col)
     pt.lambdas_[0] == pytest.approx(0.99546157, rel=1e-7)

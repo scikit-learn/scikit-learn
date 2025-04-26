@@ -81,18 +81,19 @@ else:
         return scipy.sparse.linalg.cg(A, b, **kwargs)
 
 
-#TODO : remove this when minimum version of scipy >= 1.9.0
+# TODO : remove this when minimum version of scipy >= 1.9.0
 def _yeojohnson_lambda(_neg_log_likelihood, x):
     """Estimate the optimal Yeo-Johnson transformation parameter (lambda).
 
-    This function provides a compatibility workaround for versions of SciPy older than 1.9.0,
-    where `scipy.stats.yeojohnson` did not return the estimated lambda directly.
+    This function provides a compatibility workaround for versions of SciPy
+    older than 1.9.0, where `scipy.stats.yeojohnson` did not return
+    the estimated lambda directly.
 
     Parameters
     ----------
     _neg_log_likelihood : callable
-        A function that computes the negative log-likelihood of the Yeo-Johnson transformation
-        for a given lambda. Used only for SciPy versions < 1.9.0.
+        A function that computes the negative log-likelihood of the Yeo-Johnson
+        transformation for a given lambda. Used only for SciPy versions < 1.9.0.
 
     x : array-like
         Input data to estimate the Yeo-Johnson transformation parameter.
