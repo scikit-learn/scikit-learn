@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import itertools
+import warnings
 from abc import ABC, abstractmethod
 from contextlib import contextmanager, nullcontext, suppress
 from functools import partial
@@ -587,6 +588,14 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             if sample_weight_val is not None:
                 sample_weight_val = _check_sample_weight(
                     sample_weight_val, X_val, dtype=np.float64
+                )
+            if self.validation_fraction is not None:
+                warnings.warn(
+                    "X_val and y_val are passed to fit while at the same time "
+                    "validation_fraction is not None (validation_fraction="
+                    f"{self.validation_fraction}). In this case, X_val and y_val "
+                    "as passed to fit are used vor early stopping.\nTo silence this "
+                    "warning, set validation_fraction to None."
                 )
 
         # Note: At this point, we could delete self._label_encoder if it exists.

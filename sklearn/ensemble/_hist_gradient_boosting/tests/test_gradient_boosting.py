@@ -1500,14 +1500,16 @@ def test_X_val_in_fit(GradientBoosting, make_X_y, sample_weight, global_random_s
         early_stopping=True,
         random_state=rng_seed,
     )
-    m2.fit(
-        X_train,
-        y_train,
-        sample_weight=sample_weight_train,
-        X_val=X_val,
-        y_val=y_val,
-        sample_weight_val=sample_weight_val,
-    )
+    with pytest.warns(UserWarning, match="X_val and y_val are passed to fit"):
+        # Should warn because validation_fraction it not None.
+        m2.fit(
+            X_train,
+            y_train,
+            sample_weight=sample_weight_train,
+            X_val=X_val,
+            y_val=y_val,
+            sample_weight_val=sample_weight_val,
+        )
 
     assert_allclose(m2.n_iter_, m1.n_iter_)
     assert_allclose(m2.predict(X), m1.predict(X))
