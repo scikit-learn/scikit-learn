@@ -459,7 +459,7 @@ def test_temperature_scaling(clf, n_classes):
     assert accuracy_score(y_test, y_pred) == accuracy_score(y_test, y_pred_cal)
 
     # The optimized temperature should always be positive
-    assert cal_clf.calibrated_classifiers_[0].calibrators[0].beta > 0
+    assert 0.1 < cal_clf.calibrated_classifiers_[0].calibrators[0].beta < 10
 
     # Refinement error should be invariant under temperature scaling.
     # Use ROC AUC as a proxy for refinement error.

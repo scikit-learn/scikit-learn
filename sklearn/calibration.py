@@ -9,9 +9,7 @@ from math import log
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.optimize import (
-    minimize,
-)
+from scipy.optimize import minimize, minimize_scalar
 from scipy.special import expit
 
 from sklearn.utils import Bunch
@@ -31,6 +29,10 @@ from .model_selection import LeaveOneOut, check_cv, cross_val_predict
 from .preprocessing import LabelEncoder, label_binarize
 from .svm import LinearSVC
 from .utils import _safe_indexing, column_or_1d, get_tags, indexable
+from .utils._array_api import (
+    _find_matching_floating_dtype,
+    get_namespace,
+)
 from .utils._param_validation import (
     HasMethods,
     Hidden,
@@ -104,7 +106,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     method : {'sigmoid', 'isotonic', 'temperature'}, default='sigmoid'
         The method to use for calibration. Can be:
 
-        - 'sigmoid', which corresponds to Platt's method (i.e. a logistic
+        - 'sigmoid', which corresponds to Platt's method (i.e. a binary logistic
           regression model).
         - 'isotonic', which is a non-parametric approach,
         - 'temperature', temperature scaling.
@@ -681,8 +683,9 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
     """Fit calibrator(s) and return a `_CalibratedClassifier`
     instance.
 
-    `n_classes` (i.e. `len(clf.classes_)`) calibrators are fitted.
-    However, if `n_classes` equals 2, one calibrator is fitted.
+    A separate calibrator is fitted for each of the `n_classes`
+    (i.e. `len(clf.classes_)`). However, if `n_classes` is 2 or if
+    `method` is 'temperature', only one calibrator is fitted.
 
     Parameters
     ----------
@@ -771,7 +774,7 @@ class _CalibratedClassifier:
     method : {'sigmoid', 'isotonic', 'temperature'}, default='sigmoid'
         The method to use for calibration. Can be:
 
-        - 'sigmoid', which corresponds to Platt's method (i.e. a logistic
+        - 'sigmoid', which corresponds to Platt's method (i.e. a binary logistic
           regression model).
         - 'isotonic', which is a non-parametric approach,
         - 'temperature', temperature scaling.
@@ -1005,7 +1008,6 @@ def _standardize_decision_values(decision_values, eps=1e-8):
     logits : ndarray of shape (n_samples, n_classes)
     """
     if (decision_values.ndim == 2) and (decision_values.shape[1] > 1):
-
         # Check if it is the output of `predict_proba`
         entries_zero_to_one = np.all((decision_values >= 0) & (decision_values <= 1))
         row_sums_to_one = np.all(np.isclose(np.sum(decision_values, axis=1), 1.0))
@@ -1022,7 +1024,7 @@ def _standardize_decision_values(decision_values, eps=1e-8):
         decision_values = decision_values.reshape(-1, 1)
         logits = np.hstack([-decision_values, decision_values])
 
-    return np.astype(logits, np.float64)
+    return logits
 
 
 def _temperature_scaling(predictions, labels, sample_weight=None, beta_0=1.0):
@@ -1058,15 +1060,20 @@ def _temperature_scaling(predictions, labels, sample_weight=None, beta_0=1.0):
     On Calibration of Modern Neural Networks,
     C. Guo, G. Pleiss, Y. Sun, & K. Q. Weinberger, ICML 2017.
     """
+    check_consistent_length(predictions, labels)
     logits = _standardize_decision_values(predictions)
-    labels = np.astype(column_or_1d(labels), np.int64)
-    y_true = np.astype(labels, logits.dtype)
-    logits_true = logits[np.arange(len(labels)), labels]
+
+    xp, _ = get_namespace(logits, labels, sample_weight)
+    dtype_ = _find_matching_floating_dtype(logits, labels, sample_weight, xp=xp)
+    labels = column_or_1d(labels, dtype=dtype_)
 
     if sample_weight is not None:
-        sample_weight = np.astype(sample_weight, logits.dtype)
+        sample_weight = _check_sample_weight(sample_weight, labels, dtype=dtype_)
+        sample_weight = xp.asarray(sample_weight)
 
-    loss = HalfMultinomialLoss()
+    halfmulti_loss = HalfMultinomialLoss(
+        sample_weight=sample_weight, n_classes=logits.shape[1]
+    )
 
     def beta_loss(beta):
         """Compute the negative log likelihood loss and its derivative
@@ -1083,34 +1090,26 @@ def _temperature_scaling(predictions, labels, sample_weight=None, beta_0=1.0):
             The negative log likelihood loss.
 
         """
-        # Select the logit of the correct class
-        raw_prediction = np.astype(softmax(beta * logits), predictions.dtype)
+        # Ensure raw_prediction has the same dtype as labels using .astype().
+        # Without this, dtype promotion rules differ across NumPy versions:
+        #
+        #   beta = np.float64(0)
+        #   logits = np.array([1, 2], dtype=np.float32)
+        #
+        #   result = beta * logits
+        #   - NumPy < 2: result.dtype is float32
+        #   - NumPy 2+:  result.dtype is float64
+        #
+        #  This can cause dtype mismatch errors downstream (e.g., buffer dtype).
+        raw_prediction = xp.astype(beta * logits, dtype_)
 
-        l, g = loss.loss_gradient(
-            y_true=y_true, raw_prediction=raw_prediction, sample_weight=sample_weight
-        )
+        l = halfmulti_loss.loss(y_true=labels, raw_prediction=raw_prediction)
 
-        g_true = g[np.arange(len(labels)), labels]
-        raw_prediction_true = raw_prediction[np.arange(len(labels)), labels]
-        gradient = (
-            g_true * raw_prediction_true * (1 - raw_prediction_true) * logits_true
-        )
+        return l.sum()
 
-        return l.sum(), -gradient.sum()
+    beta_minimizer = minimize_scalar(beta_loss, bounds=(0.1, 10.0), method="bounded")
 
-    beta_minimizer = minimize(
-        beta_loss,
-        np.array([beta_0]),
-        method="L-BFGS-B",
-        bounds=[(np.finfo(float).eps, None)],
-        jac=True,
-        options={
-            "gtol": 1e-6,
-            "ftol": 64 * np.finfo(float).eps,
-        },
-    )
-
-    return beta_minimizer.x[0]
+    return beta_minimizer.x
 
 
 class _SigmoidCalibration(RegressorMixin, BaseEstimator):
@@ -1210,7 +1209,6 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         self : object
             Returns an instance of self.
         """
-        X = _standardize_decision_values(X)
         X, y = indexable(X, y)
         self.beta = _temperature_scaling(X, y, sample_weight, self.beta_0)
         return self
