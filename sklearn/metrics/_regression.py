@@ -1752,9 +1752,8 @@ def d2_pinball_score(
 
     This metric is not a built-in scoring string for use in model selection
     tools such as `GridSearchCV` or `RandomizedSearchCV`.
-
     To use it as a custom scoring function, wrap it using
-    :func:`~sklearn.metrics.make_scorer`:
+    :func:`~sklearn.metrics.make_scorer`. See Examples for details.
 
     References
     ----------
@@ -1767,23 +1766,29 @@ def d2_pinball_score(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.metrics import d2_pinball_score
-    >>> y_true = [1, 2, 3]
-    >>> y_pred = [1, 3, 3]
-    >>> d2_pinball_score(y_true, y_pred)
-    0.5
-    >>> d2_pinball_score(y_true, y_pred, alpha=0.9)
-    0.772...
-    >>> d2_pinball_score(y_true, y_pred, alpha=0.1)
-    -1.045...
-    >>> d2_pinball_score(y_true, y_true, alpha=0.1)
-    1.0
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> d2_pinball_score(y_true, y_pred, alpha=0.95)
+    0.968...
 
-    >>> # Using d2_pinball_score with model selection tools
+    Using with :func:`~sklearn.metrics.make_scorer`:
+
     >>> from sklearn.metrics import make_scorer, d2_pinball_score
-    >>> scorer = make_scorer(d2_pinball_score, alpha=0.95)
-    >>> # Use `scoring=scorer` in RandomizedSearchCV or GridSearchCV
-"""
+    >>> pinball_95_scorer = make_scorer(d2_pinball_score, alpha=0.95)
+    >>> from sklearn.model_selection import GridSearchCV
+    >>> from sklearn.linear_model import LinearRegression
+    >>> X = np.array([[1], [2], [3], [4]])
+    >>> y = np.array([2.5, 0.0, 2, 8])
+    >>> grid = GridSearchCV(
+    ...     LinearRegression(),
+    ...     param_grid={"fit_intercept": [True, False]},
+    ...     scoring=pinball_95_scorer,
+    ...     cv=2,
+    ... )
+    >>> _ = grid.fit(X, y)
+    """
 
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
