@@ -22,7 +22,7 @@ def test_smacof():
 
 
 def test_nonmetric_lower_normalized_stress():
-    # Testing that nonmetric MDS results in lower normalized stess compared
+    # Testing that nonmetric MDS results in lower normalized stress compared
     # compared to metric MDS (non-regression test for issue 27028)
     sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
     Z = np.array([[-0.266, -0.539], [0.451, 0.252], [0.016, -0.238], [-0.200, 0.524]])
