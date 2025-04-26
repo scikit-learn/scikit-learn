@@ -1756,10 +1756,6 @@ def d2_pinball_score(
     To use it as a custom scoring function, wrap it using
     :func:`~sklearn.metrics.make_scorer`:
 
-    >>> from sklearn.metrics import make_scorer, d2_pinball_score
-    >>> scorer = make_scorer(d2_pinball_score, alpha=0.95)
-    >>> # Then use it as `scoring=scorer` in RandomizedSearchCV or GridSearchCV
-
     References
     ----------
     .. [1] Eq. (7) of `Koenker, Roger; Machado, José A. F. (1999).
@@ -1783,10 +1779,11 @@ def d2_pinball_score(
     >>> d2_pinball_score(y_true, y_true, alpha=0.1)
     1.0
 
-    >>> # Using with make_scorer
-    >>> from sklearn.metrics import make_scorer
+    >>> # Using d2_pinball_score with model selection tools
+    >>> from sklearn.metrics import make_scorer, d2_pinball_score
     >>> scorer = make_scorer(d2_pinball_score, alpha=0.95)
-    """
+    >>> # Use `scoring=scorer` in RandomizedSearchCV or GridSearchCV
+"""
 
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
