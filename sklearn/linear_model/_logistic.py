@@ -1103,6 +1103,10 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     >>> clf.score(X, y)
     0.97...
 
+    See also
+    --------
+    :ref:`sphx_glr_auto_examples_classification_plot_digits_classification.py`
+
     For a comparison of the LogisticRegression with other classifiers see:
     :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`.
     """
