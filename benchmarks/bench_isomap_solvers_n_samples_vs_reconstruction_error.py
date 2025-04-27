@@ -3,13 +3,13 @@
 Benchmark: Isomap Reconstruction Error - Standard vs. Randomized Solver
 ========================================================================
 
-This benchmark illustrates how the number of samples impacts the quality 
+This benchmark illustrates how the number of samples impacts the quality
 of the Isomap embedding, using reconstruction error as a metric.
 
 Description:
 ------------
-We generate synthetic 2D non-linear data (two concentric circles) with 
-varying numbers of samples. For each subset, we compare the reconstruction 
+We generate synthetic 2D non-linear data (two concentric circles) with
+varying numbers of samples. For each subset, we compare the reconstruction
 error of two Isomap solvers:
 
 - The `auto` solver (standard dense or arpack, selected automatically).
@@ -25,10 +25,11 @@ Further exploration:
 - Modify the number of neighbors or iterations.
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.manifold import Isomap
+import numpy as np
+
 from sklearn.datasets import make_circles
+from sklearn.manifold import Isomap
 
 # 1- Experiment Configuration
 # ---------------------------
@@ -36,7 +37,10 @@ min_n_samples, max_n_samples = 100, 4000
 n_samples_grid_size = 4  # Number of sample sizes to test
 
 n_samples_range = [
-    int(min_n_samples + np.floor((x / (n_samples_grid_size - 1)) * (max_n_samples - min_n_samples)))
+    int(
+        min_n_samples
+        + np.floor((x / (n_samples_grid_size - 1)) * (max_n_samples - min_n_samples))
+    )
     for x in range(0, n_samples_grid_size)
 ]
 
@@ -46,7 +50,9 @@ n_iter = 3  # Number of repetitions per sample size
 # 2- Data Generation
 # ------------------
 n_features = 2
-X_full, y_full = make_circles(n_samples=max_n_samples, factor=0.3, noise=0.05, random_state=0)
+X_full, y_full = make_circles(
+    n_samples=max_n_samples, factor=0.3, noise=0.05, random_state=0
+)
 
 # 3- Benchmark Execution
 # ----------------------
@@ -58,8 +64,10 @@ for n_samples in n_samples_range:
     print(f"Computing for n_samples = {n_samples}")
 
     # Instantiate Isomap solvers
-    isomap_randomized = Isomap(n_neighbors=50, n_components=n_components, eigen_solver='randomized_value')
-    isomap_auto = Isomap(n_neighbors=50, n_components=n_components, eigen_solver='auto')
+    isomap_randomized = Isomap(
+        n_neighbors=50, n_components=n_components, eigen_solver="randomized_value"
+    )
+    isomap_auto = Isomap(n_neighbors=50, n_components=n_components, eigen_solver="auto")
 
     # Fit and record reconstruction error
     isomap_randomized.fit(X)
@@ -73,12 +81,18 @@ for n_samples in n_samples_range:
 # 4- Results Visualization
 # ------------------------
 plt.figure(figsize=(10, 6))
-plt.scatter(n_samples_range, errors_full, label='Isomap (auto)', color='b', marker='*')
-plt.scatter(n_samples_range, errors_randomized, label='Isomap (randomized)', color='r', marker='x')
+plt.scatter(n_samples_range, errors_full, label="Isomap (auto)", color="b", marker="*")
+plt.scatter(
+    n_samples_range,
+    errors_randomized,
+    label="Isomap (randomized)",
+    color="r",
+    marker="x",
+)
 
-plt.title('Isomap Reconstruction Error vs. Number of Samples')
-plt.xlabel('Number of Samples')
-plt.ylabel('Reconstruction Error')
+plt.title("Isomap Reconstruction Error vs. Number of Samples")
+plt.xlabel("Number of Samples")
+plt.ylabel("Reconstruction Error")
 plt.legend()
 plt.grid(True)
 plt.tight_layout()

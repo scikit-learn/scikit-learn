@@ -284,7 +284,9 @@ def test_kernel_pca_precomputed(global_random_seed):
         assert_array_almost_equal(np.abs(X_kpca_train), np.abs(X_kpca_train2))
 
 
-@pytest.mark.parametrize("solver", ["auto", "dense", "arpack", "randomized", "randomized_value"])
+@pytest.mark.parametrize(
+    "solver", ["auto", "dense", "arpack", "randomized", "randomized_value"]
+)
 def test_kernel_pca_precomputed_non_symmetric(solver):
     """Check that the kernel centerer works.
 
@@ -386,7 +388,9 @@ def test_kernel_conditioning():
     assert np.all(kpca.eigenvalues_ == _check_psd_eigenvalues(kpca.eigenvalues_))
 
 
-@pytest.mark.parametrize("solver", ["auto", "dense", "arpack", "randomized", "randomized_value"])
+@pytest.mark.parametrize(
+    "solver", ["auto", "dense", "arpack", "randomized", "randomized_value"]
+)
 def test_precomputed_kernel_not_psd(solver):
     """Check how KernelPCA works with non-PSD kernels depending on n_components
 
@@ -440,7 +444,8 @@ def test_precomputed_kernel_not_psd(solver):
 
 @pytest.mark.parametrize("n_components", [4, 10, 20])
 def test_kernel_pca_solvers_equivalence(n_components):
-    """Check that 'dense' 'arpack' & 'randomized' & 'randomized_value' solvers give similar results"""
+    """Check that 'dense' 'arpack' & 'randomized' & 'randomized_value'
+    solvers give similar results"""
 
     # Generate random data
     n_train, n_test = 1_000, 100

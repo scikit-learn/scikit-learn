@@ -3,40 +3,43 @@
 Benchmark: Comparing Isomap Solvers - Execution Time vs. Representation
 ======================================================================
 
-This benchmark demonstrates how different eigenvalue solvers in Isomap 
+This benchmark demonstrates how different eigenvalue solvers in Isomap
 can affect execution time and embedding quality.
 
 Description:
 ------------
-We use a subset of handwritten digits (`load_digits` with 6 classes). 
-Each data point is projected into a lower-dimensional space (2D) using 
+We use a subset of handwritten digits (`load_digits` with 6 classes).
+Each data point is projected into a lower-dimensional space (2D) using
 two different solvers (`auto` and `randomized`).
 
 What you can observe:
 ----------------------
 - The `auto` solver provides a reference solution.
-- The `randomized` solver is tested for comparison in terms of 
+- The `randomized` solver is tested for comparison in terms of
   representation quality and execution time.
 
 Further exploration:
 ---------------------
-You can modify the number of neighbors (`n_neighbors`) or experiment with 
+You can modify the number of neighbors (`n_neighbors`) or experiment with
 other Isomap solvers.
 """
 
 import time
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib import offsetbox
+
 from sklearn.datasets import load_digits
-from sklearn.preprocessing import MinMaxScaler
 from sklearn.manifold import Isomap
+from sklearn.preprocessing import MinMaxScaler
 
 # 1- Data Loading
 # ---------------
 digits = load_digits(n_class=6)
 X, y = digits.data, digits.target
 n_neighbors = 30  # Number of neighbors for Isomap
+
 
 # 2- Visualization Function
 # -------------------------
@@ -70,11 +73,16 @@ def plot_embedding(ax, X, title):
     ax.set_title(title)
     ax.axis("off")
 
+
 # 3- Define Embeddings and Benchmark
 # ----------------------------------
 embeddings = {
-    "Isomap (auto solver)": Isomap(n_neighbors=n_neighbors, n_components=2, eigen_solver='auto'),
-    "Isomap (randomized solver)": Isomap(n_neighbors=n_neighbors, n_components=2, eigen_solver='randomized_value'),
+    "Isomap (auto solver)": Isomap(
+        n_neighbors=n_neighbors, n_components=2, eigen_solver="auto"
+    ),
+    "Isomap (randomized solver)": Isomap(
+        n_neighbors=n_neighbors, n_components=2, eigen_solver="randomized_value"
+    ),
 }
 
 projections, timing = {}, {}

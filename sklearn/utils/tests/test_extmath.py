@@ -198,7 +198,7 @@ def test_randomized_eigsh(dtype):
     # eigenvectors
     assert eigvecs.shape == (4, 2)
 
-    
+
 @pytest.mark.parametrize("k", (10, 50, 100, 199, 200))
 def test_randomized_eigsh_compared_to_others(k):
     """Check that `_randomized_eigsh` is similar to other `eigsh`
@@ -270,7 +270,7 @@ def test_randomized_eigsh_compared_to_others(k):
         eigvecs_arpack, _ = svd_flip(eigvecs_arpack, dummy_vecs)
         assert_array_almost_equal(eigvecs_arpack, eigvecs_lapack, decimal=8)
 
- 
+
 @pytest.mark.parametrize("k", (10, 50, 100, 199, 200))
 def test_randomized_eigsh_value_compared_to_others(k):
     """Check that `_randomized_eigsh(value)` is similar to other `eigsh`

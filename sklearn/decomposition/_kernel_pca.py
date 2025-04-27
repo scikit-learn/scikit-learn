@@ -263,7 +263,9 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         "kernel_params": [dict, None],
         "alpha": [Interval(Real, 0, None, closed="left")],
         "fit_inverse_transform": ["boolean"],
-        "eigen_solver": [StrOptions({"auto", "dense", "arpack", "randomized", "randomized_value"})],
+        "eigen_solver": [
+            StrOptions({"auto", "dense", "arpack", "randomized", "randomized_value"})
+        ],
         "tol": [Interval(Real, 0, None, closed="left")],
         "max_iter": [
             Interval(Integral, 1, None, closed="left"),

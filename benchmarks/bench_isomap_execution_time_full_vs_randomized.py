@@ -15,7 +15,7 @@ varied from 1000 to 4000.
 
 For each setting, Isomap is applied using two different solvers:
 - 'auto' (full eigendecomposition)
-- 'randomized_value' 
+- 'randomized_value'
 
 The execution time of each solver is measured for each number of
 samples, and the average time over multiple runs (default: 3) is
@@ -23,7 +23,7 @@ plotted.
 
 What you can observe:
 ---------------------
-If n_components < 10, the randomized and auto solvers produce similar 
+If n_components < 10, the randomized and auto solvers produce similar
 results (in this case, the arpack solver is selected).
 However, when n_components > 10, the randomized solver becomes significantly
 faster, especially as the number of samples increases.
@@ -31,47 +31,49 @@ faster, especially as the number of samples increases.
 """
 
 import time
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn.datasets import make_classification
 from sklearn.manifold import Isomap
 
 # 1 - Experiment Setup
-#-- -- -- -- -- -- -- -- -- -
+# -- -- -- -- -- -- -- -- -- -
 n_samples_list = [1000, 2000, 3000, 4000]
 n_neighbors = 30
 n_components_list = [2, 10]
 n_features = 100
 n_iter = 3  # Number of repetitions for averaging execution time
 
-#Store timings for each value of n_components
+# Store timings for each value of n_components
 timing_all = {}
 
 for n_components in n_components_list:
-#Create containers for timing results
+    # Create containers for timing results
     timing = {
         "auto": np.zeros((len(n_samples_list), n_iter)),
-        "randomized_value": np.zeros((len(n_samples_list), n_iter))
+        "randomized_value": np.zeros((len(n_samples_list), n_iter)),
     }
 
     for j, n in enumerate(n_samples_list):
-#Generate synthetic classification dataset
+        # Generate synthetic classification dataset
         X, _ = make_classification(
             n_samples=n,
             n_features=n_features,
             n_redundant=0,
             n_clusters_per_class=1,
             n_classes=1,
-            random_state=42
+            random_state=42,
         )
 
-#Evaluate both solvers for multiple repetitions
+        # Evaluate both solvers for multiple repetitions
         for solver in ["auto", "randomized_value"]:
             for i in range(n_iter):
                 model = Isomap(
                     n_neighbors=n_neighbors,
                     n_components=n_components,
-                    eigen_solver=solver
+                    eigen_solver=solver,
                 )
                 start = time.perf_counter()
                 model.fit(X)
@@ -90,8 +92,22 @@ for idx, n_components in enumerate(n_components_list):
     avg_rand = timing["randomized_value"].mean(axis=1)
     std_rand = timing["randomized_value"].std(axis=1)
 
-    ax.errorbar(n_samples_list, avg_full, yerr=std_full, label="Isomap (full)", marker="o", linestyle="-")
-    ax.errorbar(n_samples_list, avg_rand, yerr=std_rand, label="Isomap (randomized)", marker="x", linestyle="--")
+    ax.errorbar(
+        n_samples_list,
+        avg_full,
+        yerr=std_full,
+        label="Isomap (full)",
+        marker="o",
+        linestyle="-",
+    )
+    ax.errorbar(
+        n_samples_list,
+        avg_rand,
+        yerr=std_rand,
+        label="Isomap (randomized)",
+        marker="x",
+        linestyle="--",
+    )
     ax.set_xlabel("Number of Samples")
     ax.set_ylabel("Execution Time (seconds)")
     ax.set_title(f"Isomap Execution Time (n_components = {n_components})")

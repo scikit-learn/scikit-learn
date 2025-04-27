@@ -778,10 +778,11 @@ def _randomized_eigsh(
     Strategy 'value':
     This randomized algorithm efficiently approximates eigendecompositions
     of Hermitian matrices by projection onto a lower-dimensional subspace using basis Q.
-    Relying on Algorithm 5.3 from Halko et al.'s article, it computes B = Q*AQ, finds its
-    eigendecomposition B = VΛV*, and forms U = QV to yield A = UΛU*
+    Relying on Algorithm 5.3 from Halko et al.'s article, it computes B = Q*AQ,
+    finds its eigendecomposition B = VΛV*, and forms U = QV to yield A = UΛU*
     with bounded error. Unlike the 'module' strategy, it works efficiently with
-    non-positive semidefinite matrices, handling both positive and negative eigenvalues directly.
+    non-positive semidefinite matrices, handling both positive and negative
+    eigenvalues directly.
 
     Strategy 'module':
     The principle is that for diagonalizable matrices, the singular values and
