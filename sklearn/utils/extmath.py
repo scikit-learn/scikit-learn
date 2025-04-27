@@ -613,7 +613,7 @@ def randomized_eigen_decomposition(
     random_state=None,
 ):
     """
-    Approximate eigenvalue decomposition of a Hermitian matrix A ≈ U Λ U*
+    Approximate eigenvalue decomposition of a Hermitian matrix A ≈ U Λ U*.
 
     Parameters
     ----------
