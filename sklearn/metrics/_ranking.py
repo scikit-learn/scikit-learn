@@ -1112,7 +1112,7 @@ def roc_curve(
 
     thresholds : ndarray of shape (n_thresholds,)
         Decreasing thresholds on the decision function used to compute
-        fpr and tpr.
+        fpr and tpr. The first threshold is set to `np.inf`.
 
         .. versionchanged:: 1.3
            An arbitrary threshold at infinity (stored in `thresholds[0]`) is
