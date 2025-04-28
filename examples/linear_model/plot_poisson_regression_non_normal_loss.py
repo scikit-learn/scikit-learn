@@ -530,6 +530,12 @@ disp = CAPCurveDisplay.from_predictions(
 gini = gini_index(disp.cumulative_total, disp.y_true_cumulative)
 ax.get_lines()[-1].set_label(f"Oracle model (Gini={gini:.2f})")
 
+ax.set(
+    title="Lorenz Curves",
+    xlabel=("Cumulative proportion of exposure (from safest to riskiest)"),
+    ylabel="Cumulative proportion of claims",
+)
+
 ax.legend(loc="upper left")
 
 
