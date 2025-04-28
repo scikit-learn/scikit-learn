@@ -757,8 +757,8 @@ enable the gathering of infrequent categories are `min_frequency` and
    input feature. `max_categories` includes the feature that combines
    infrequent categories.
 
-In the following example with :class:`OrdinalEncoder`, the categories `'dog'` and
-`'snake'` are considered infrequent::
+In the following example with :class:`OrdinalEncoder`, the categories `'dog'`
+and `'snake'` are considered infrequent::
 
    >>> X = np.array([['dog'] * 5 + ['cat'] * 20 + ['rabbit'] * 10 +
    ...               ['snake'] * 3], dtype=object).T

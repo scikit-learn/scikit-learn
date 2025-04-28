@@ -36,7 +36,7 @@ from ..utils.graph import _fix_connected_components
 from ..utils.validation import check_memory, validate_data
 
 # mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
-from . import _hierarchical_fast as _hierarchical  # type: ignore
+from . import _hierarchical_fast as _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
 
 ###############################################################################
@@ -797,6 +797,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         as input for the fit method. If connectivity is None, linkage is
         "single" and affinity is not "precomputed" any valid pairwise distance
         metric can be assigned.
+
+        For an example of agglomerative clustering with different metrics, see
+        :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering_metrics.py`.
 
         .. versionadded:: 1.2
 

@@ -59,24 +59,6 @@ def _create_expansion(X, interaction_only, deg, n_features, cumulative_size=0):
     needs_int64 = max(max_indices, max_indptr) > max_int32
     index_dtype = np.int64 if needs_int64 else np.int32
 
-    # This is a pretty specific bug that is hard to work around by a user,
-    # hence we do not detail the entire bug and all possible avoidance
-    # mechnasisms. Instead we recommend upgrading scipy or shrinking their data.
-    cumulative_size += expanded_col
-    if (
-        sp_version < parse_version("1.8.0")
-        and cumulative_size - 1 > max_int32
-        and not needs_int64
-    ):
-        raise ValueError(
-            "In scipy versions `<1.8.0`, the function `scipy.sparse.hstack`"
-            " sometimes produces negative columns when the output shape contains"
-            " `n_cols` too large to be represented by a 32bit signed"
-            " integer. To avoid this error, either use a version"
-            " of scipy `>=1.8.0` or alter the `PolynomialFeatures`"
-            " transformer to produce fewer than 2^31 output features."
-        )
-
     # Result of the expansion, modified in place by the
     # `_csr_polynomial_expansion` routine.
     expanded_data = np.empty(shape=total_nnz, dtype=X.data.dtype)
@@ -657,8 +639,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         may slow down subsequent estimators.
 
     sparse_output : bool, default=False
-        Will return sparse CSR matrix if set True else will return an array. This
-        option is only available with `scipy>=1.8`.
+        Will return sparse CSR matrix if set True else will return an array.
 
         .. versionadded:: 1.2
 
@@ -759,17 +740,17 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             Knot positions (points) of base interval.
         """
         if knots == "quantile":
-            percentiles = 100 * np.linspace(
+            percentile_ranks = 100 * np.linspace(
                 start=0, stop=1, num=n_knots, dtype=np.float64
             )
 
             if sample_weight is None:
-                knots = np.percentile(X, percentiles, axis=0)
+                knots = np.percentile(X, percentile_ranks, axis=0)
             else:
                 knots = np.array(
                     [
-                        _weighted_percentile(X, sample_weight, percentile)
-                        for percentile in percentiles
+                        _weighted_percentile(X, sample_weight, percentile_rank)
+                        for percentile_rank in percentile_ranks
                     ]
                 )
 
@@ -869,12 +850,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 raise ValueError("knots.shape[1] == n_features is violated.")
             elif not np.all(np.diff(base_knots, axis=0) > 0):
                 raise ValueError("knots must be sorted without duplicates.")
-
-        if self.sparse_output and sp_version < parse_version("1.8.0"):
-            raise ValueError(
-                "Option sparse_output=True is only available with scipy>=1.8.0, "
-                f"but here scipy=={sp_version} is used."
-            )
 
         # number of knots for base interval
         n_knots = base_knots.shape[0]

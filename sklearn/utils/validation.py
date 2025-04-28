@@ -988,7 +988,7 @@ def check_array(
     # When all dataframe columns are sparse, convert to a sparse array
     if hasattr(array, "sparse") and array.ndim > 1:
         with suppress(ImportError):
-            from pandas import SparseDtype  # noqa: F811
+            from pandas import SparseDtype
 
             def is_sparse(dtype):
                 return isinstance(dtype, SparseDtype)
@@ -1547,8 +1547,7 @@ def has_fit_parameter(estimator, parameter):
         # hasattr(estimator, "fit") makes it so that we don't fail for an estimator
         # that does not have a `fit` method during collection of checks. The right
         # checks will fail later.
-        hasattr(estimator, "fit")
-        and parameter in signature(estimator.fit).parameters
+        hasattr(estimator, "fit") and parameter in signature(estimator.fit).parameters
     )
 
 
@@ -1916,7 +1915,7 @@ def check_scalar(
     expected_include_boundaries = ("left", "right", "both", "neither")
     if include_boundaries not in expected_include_boundaries:
         raise ValueError(
-            f"Unknown value for `include_boundaries`: {repr(include_boundaries)}. "
+            f"Unknown value for `include_boundaries`: {include_boundaries!r}. "
             f"Possible values are: {expected_include_boundaries}."
         )
 
@@ -2127,7 +2126,7 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
 
 
 def _check_sample_weight(
-    sample_weight, X, dtype=None, copy=False, ensure_non_negative=False
+    sample_weight, X, *, dtype=None, ensure_non_negative=False, copy=False
 ):
     """Validate sample weights.
 
@@ -2144,17 +2143,21 @@ def _check_sample_weight(
     X : {ndarray, list, sparse matrix}
         Input data.
 
+    dtype : dtype, default=None
+        dtype of the validated `sample_weight`.
+        If None, and `sample_weight` is an array:
+
+            - If `sample_weight.dtype` is one of `{np.float64, np.float32}`,
+              then the dtype is preserved.
+            - Else the output has NumPy's default dtype: `np.float64`.
+
+        If `dtype` is not `{np.float32, np.float64, None}`, then output will
+        be `np.float64`.
+
     ensure_non_negative : bool, default=False,
         Whether or not the weights are expected to be non-negative.
 
         .. versionadded:: 1.0
-
-    dtype : dtype, default=None
-        dtype of the validated `sample_weight`.
-        If None, and the input `sample_weight` is an array, the dtype of the
-        input is preserved; otherwise an array with the default numpy dtype
-        is be allocated.  If `dtype` is not one of `float32`, `float64`,
-        `None`, the output will be of dtype `float64`.
 
     copy : bool, default=False
         If True, a copy of sample_weight will be created.
@@ -2311,10 +2314,8 @@ def _check_method_params(X, params, indices=None):
     method_params_validated = {}
     for param_key, param_value in params.items():
         if (
-            not _is_arraylike(param_value)
-            and not sp.issparse(param_value)
-            or _num_samples(param_value) != _num_samples(X)
-        ):
+            not _is_arraylike(param_value) and not sp.issparse(param_value)
+        ) or _num_samples(param_value) != _num_samples(X):
             # Non-indexable pass-through (for now for backward-compatibility).
             # https://github.com/scikit-learn/scikit-learn/issues/15805
             method_params_validated[param_key] = param_value
@@ -2923,7 +2924,7 @@ def validate_data(
         )
 
     no_val_X = isinstance(X, str) and X == "no_validation"
-    no_val_y = y is None or isinstance(y, str) and y == "no_validation"
+    no_val_y = y is None or (isinstance(y, str) and y == "no_validation")
 
     if no_val_X and no_val_y:
         raise ValueError("Validation should be done on X, y or both.")

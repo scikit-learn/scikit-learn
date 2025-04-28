@@ -1,0 +1,3 @@
+- :class:`feature_selection.RFECV` now gives access to the ranking and support in each
+ iteration and cv step of feature selection.
+  By :user:`Marie S. <MarieSacksick>`
