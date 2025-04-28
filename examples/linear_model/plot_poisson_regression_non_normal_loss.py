@@ -491,11 +491,6 @@ plt.tight_layout()
 
 from sklearn.metrics import CAPCurveDisplay, auc
 
-
-def gini_index(cumulative_total, y_true_cumulative):
-    return 1 - 2 * auc(cumulative_total, y_true_cumulative)
-
-
 fig, ax = plt.subplots(figsize=(8, 8))
 
 for model in [dummy, ridge_glm, poisson_glm, poisson_gbrt]:
@@ -512,7 +507,7 @@ for model in [dummy, ridge_glm, poisson_glm, poisson_gbrt]:
         plot_perfect=False,
     )
 
-    gini = gini_index(disp.cumulative_total, disp.y_true_cumulative)
+    gini = 1 - 2 * auc(disp.cumulative_total, disp.y_true_cumulative)
     disp.line_.set_label(f"{model[-1]} (Gini={gini:.2f})")
 
 # Oracle model: y_pred == y_test
@@ -527,7 +522,7 @@ disp = CAPCurveDisplay.from_predictions(
     ls="--",
     color="k",
 )
-gini = gini_index(disp.cumulative_total, disp.y_true_cumulative)
+gini = 1 - 2 * auc(disp.cumulative_total, disp.y_true_cumulative)
 ax.get_lines()[-1].set_label(f"Oracle model (Gini={gini:.2f})")
 
 ax.set(

@@ -647,11 +647,6 @@ print(pd.DataFrame(res).set_index("subset").T)
 # of models, each with its own set of hyperparameters.
 from sklearn.metrics import CAPCurveDisplay, auc
 
-
-def gini_index(cumulative_total, y_true_cumulative):
-    return 1 - 2 * auc(cumulative_total, y_true_cumulative)
-
-
 fig, ax = plt.subplots(figsize=(8, 8))
 
 y_pred_product = glm_freq.predict(X_test) * glm_sev.predict(X_test)
@@ -672,7 +667,7 @@ for label, y_pred in [
         plot_perfect=False,
     )
 
-    gini = gini_index(disp.cumulative_total, disp.y_true_cumulative)
+    gini = 1 - 2 * auc(disp.cumulative_total, disp.y_true_cumulative)
     label += f" (Gini={gini:.3f})"
     disp.line_.set_label(label)
 
@@ -688,7 +683,7 @@ disp = CAPCurveDisplay.from_predictions(
     color="k",
 )
 
-gini = gini_index(disp.cumulative_total, disp.y_true_cumulative)
+gini = 1 - 2 * auc(disp.cumulative_total, disp.y_true_cumulative)
 label = f"Oracle (Gini={gini:.3f})"
 disp.line_.set_label(label)
 
