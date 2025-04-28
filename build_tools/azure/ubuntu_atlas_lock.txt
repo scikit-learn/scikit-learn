@@ -20,7 +20,7 @@ meson-python==0.17.1
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
 ninja==1.11.1.4
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
-packaging==24.2
+packaging==25.0
     # via
     #   meson-python
     #   pyproject-metadata
