@@ -179,7 +179,9 @@ x_labels.append("Zero imputation")
 
 
 def get_impute_knn_score(X_missing, y_missing):
-    imputer = make_pipeline(StandardScaler(), KNNImputer(missing_values=np.nan, add_indicator=True))
+    imputer = make_pipeline(
+        StandardScaler(), KNNImputer(missing_values=np.nan, add_indicator=True)
+    )
     knn_impute_scores = get_scores_for_imputer(imputer, X_missing, y_missing)
     return knn_impute_scores.mean(), knn_impute_scores.std()
 

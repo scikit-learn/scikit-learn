@@ -61,8 +61,8 @@ from sklearn.kernel_approximation import Nystroem
 from sklearn.linear_model import BayesianRidge, Ridge
 from sklearn.model_selection import cross_val_score
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 
 N_SPLITS = 5
 
@@ -105,20 +105,29 @@ for strategy in ("mean", "median"):
 # with different estimators
 named_estimators = [
     ("Bayesian Ridge", BayesianRidge()),
-    ("Random Forest", RandomForestRegressor(
-        # We tuned the hyperparameters of the RandomForestRegressor to get a good
-        # enough predictive performance for a restricted execution time.
-        n_estimators=4,
-        max_depth=10,
-        bootstrap=True,
-        max_samples=0.5,
-        n_jobs=2,
-        random_state=0,
-     )),
-    ("Nystroem + Ridge", make_pipeline(
-        Nystroem(kernel="polynomial", degree=2, random_state=0), Ridge(alpha=1e3)
-    )),
-    ("Scaler + k-NN ", make_pipeline(StandardScaler(), KNeighborsRegressor(n_neighbors=15)))
+    (
+        "Random Forest",
+        RandomForestRegressor(
+            # We tuned the hyperparameters of the RandomForestRegressor to get a good
+            # enough predictive performance for a restricted execution time.
+            n_estimators=4,
+            max_depth=10,
+            bootstrap=True,
+            max_samples=0.5,
+            n_jobs=2,
+            random_state=0,
+        ),
+    ),
+    (
+        "Nystroem + Ridge",
+        make_pipeline(
+            Nystroem(kernel="polynomial", degree=2, random_state=0), Ridge(alpha=1e3)
+        ),
+    ),
+    (
+        "Scaler + k-NN ",
+        make_pipeline(StandardScaler(), KNeighborsRegressor(n_neighbors=15)),
+    ),
 ]
 score_iterative_imputer = pd.DataFrame()
 # iterative imputer is sensible to the tolerance and
