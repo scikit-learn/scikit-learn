@@ -9,7 +9,7 @@ import numpy.linalg as la
 import pytest
 from scipy import sparse, stats
 
-from sklearn import datasets
+from sklearn import config_context, datasets
 from sklearn.base import clone
 from sklearn.exceptions import NotFittedError
 from sklearn.metrics.pairwise import linear_kernel
@@ -38,11 +38,13 @@ from sklearn.preprocessing._data import BOUNDS_THRESHOLD, _handle_zeros_in_scale
 from sklearn.svm import SVR
 from sklearn.utils import gen_batches, shuffle
 from sklearn.utils._array_api import (
+    _convert_to_numpy,
     _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._test_common.instance_generator import _get_check_estimator_ids
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     _convert_container,
     assert_allclose,
     assert_allclose_dense_sparse,
@@ -709,10 +711,11 @@ def test_standard_check_array_of_inverse_transform():
         Normalizer(norm="l1"),
         Normalizer(norm="l2"),
         Normalizer(norm="max"),
+        Binarizer(),
     ],
     ids=_get_check_estimator_ids,
 )
-def test_scaler_array_api_compliance(
+def test_preprocessing_array_api_compliance(
     estimator, check, array_namespace, device, dtype_name
 ):
     name = estimator.__class__.__name__
@@ -2002,6 +2005,21 @@ def test_binarizer(constructor):
     if constructor in CSC_CONTAINERS:
         with pytest.raises(ValueError):
             binarizer.transform(constructor(X))
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_binarizer_array_api_int(array_namespace, device, dtype_name):
+    # Checks that Binarizer works with integer elements and float threshold
+    xp = _array_api_for_tests(array_namespace, device)
+    for dtype_name_ in [dtype_name, "int32", "int64"]:
+        X_np = np.reshape(np.asarray([0, 1, 2, 3, 4], dtype=dtype_name_), (-1, 1))
+        X_xp = xp.asarray(X_np, device=device)
+        binarized_np = Binarizer(threshold=2.5).fit_transform(X_np)
+        with config_context(array_api_dispatch=True):
+            binarized_xp = Binarizer(threshold=2.5).fit_transform(X_xp)
+        assert_array_equal(_convert_to_numpy(binarized_xp, xp), binarized_np)
 
 
 def test_center_kernel():
