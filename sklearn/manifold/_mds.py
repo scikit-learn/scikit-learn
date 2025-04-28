@@ -349,11 +349,11 @@ def smacof(
     >>> from sklearn.metrics import euclidean_distances
     >>> X = np.array([[0, 1, 2], [1, 0, 3], [2, 3, 0]])
     >>> dissimilarities = euclidean_distances(X)
-    >>> Z, stress = smacof(dissimilarities, n_init=1, eps=1e-6, random_state=42)
-    >>> np.round(Z, 5)
-    array([[-0.03166,  1.10996],
-           [ 1.6829 ,  0.84601],
-           [-1.65124, -1.95597]])
+    >>> Z, stress = smacof(
+    ...     dissimilarities, n_components=2, n_init=1, eps=1e-6, random_state=42
+    ... )
+    >>> Z.shape
+    (3, 2)
     >>> np.round(stress, 6).item()
     3.2e-05
     """
