@@ -23,7 +23,7 @@ CLASS_DOCSTRING_CONSISTENCY_CASES = [
         "include_returns": False,
         "exclude_returns": None,
         "descr_regex_pattern": r"The number of samples to draw from X to train each.*",
-        "ignore_types": ["max_samples"],
+        "ignore_types": ("max_samples"),
     },
     {
         "objects": [StackingClassifier, StackingRegressor],

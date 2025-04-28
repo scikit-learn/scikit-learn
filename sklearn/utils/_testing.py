@@ -697,6 +697,31 @@ def _check_consistency_items(
 
     If item is not present in all objects, checking is skipped and warning raised.
     If `regex` provided, match descriptions to all descriptions.
+
+    Parameters
+    ----------
+    items_doc : dict of dict of str
+        Dictionary where the key is the string type or description, value is
+        a dictionary where the key is "type description" or "description"
+        and the value is a list of object names with the same string type or
+        description.
+
+    type_or_desc : {"type description", "description"}
+        Whether to check type description or description between objects.
+
+    section : {"Parameters", "Attributes", "Returns"}
+        Name of the section type.
+
+    n_objects : int
+        Total number of objects.
+
+    descr_regex_pattern : str, default=""
+        Regex pattern to match for description of all objects.
+        Ignored when `type_or_desc="type description".
+
+    ignore_types : tuple of str, default=()
+        Tuple of parameter/attribute/return names for which type description
+        matching is ignored. Ignored when `type_or_desc="description".
     """
     skipped = []
     for item_name, docstrings_grouped in items_docs.items():
@@ -795,9 +820,9 @@ def assert_docstring_consistency(
         parameters/attributes/returns. If None, will revert to default behavior
         of comparing descriptions between objects.
 
-    ignore_types : list, default=tuple()
-        List of parameter/attribute/return names to exclude from matching type
-        between objects.
+    ignore_types : tuple of str, default=tuple()
+        Tuple of parameter/attribute/return names to exclude from type description
+        matching between objects.
 
     Examples
     --------
