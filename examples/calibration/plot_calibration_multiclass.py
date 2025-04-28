@@ -212,14 +212,30 @@ _ = plt.legend(loc="best")
 
 from sklearn.metrics import log_loss
 
-score = log_loss(y_test, clf_probs)
-cal_score = log_loss(y_test, cal_clf_probs)
+loss = log_loss(y_test, clf_probs)
+cal_loss = log_loss(y_test, cal_clf_probs)
 
-print("Log-loss of")
-print(f" * uncalibrated classifier: {score:.3f}")
-print(f" * calibrated classifier: {cal_score:.3f}")
+print("Log-loss of:")
+print(f" - uncalibrated classifier: {loss:.3f}")
+print(f" - calibrated classifier: {cal_loss:.3f}")
 
 # %%
+# We can also assess calibration with the Brier score for probabilistics predictions
+# (lower is better, possible range is [0, 2]):
+
+from sklearn.metrics import brier_score_loss
+
+loss = brier_score_loss(y_test, clf_probs)
+cal_loss = brier_score_loss(y_test, cal_clf_probs)
+
+print("Brier score of")
+print(f" - uncalibrated classifier: {loss:.3f}")
+print(f" - calibrated classifier: {cal_loss:.3f}")
+
+# %%
+# According to the Brier score, the calibrated classifier is not better than
+# the original model.
+#
 # Finally we generate a grid of possible uncalibrated probabilities over
 # the 2-simplex, compute the corresponding calibrated probabilities and
 # plot arrows for each. The arrows are colored according the highest
@@ -274,3 +290,15 @@ plt.xlim(-0.05, 1.05)
 plt.ylim(-0.05, 1.05)
 
 plt.show()
+
+# %%
+# One can observe that, on average, the calibrator is pushing highly confident
+# predictions away from the boundaries of the simplex while simultaneously
+# moving uncertain predictions towards one of three modes, one for each class.
+# We can also observe that the mapping is not symmetric. Furthermore some
+# arrows seems to cross class assignment boundaries which is not necessarily
+# what one would expect from a calibration map as it means that some predicted
+# classes will change after calibration.
+#
+# All in all, the One-vs-Rest multiclass-calibration strategy implemented in
+# `CalibratedClassifierCV` should not be trusted blindly.

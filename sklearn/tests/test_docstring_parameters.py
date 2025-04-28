@@ -44,18 +44,18 @@ with warnings.catch_warnings():
         [
             pckg[1]
             for pckg in walk_packages(prefix="sklearn.", path=sklearn_path)
-            if not ("._" in pckg[1] or ".tests." in pckg[1])
+            if not any(
+                substr in pckg[1] for substr in ["._", ".tests.", "sklearn.externals"]
+            )
         ]
     )
 
 # functions to ignore args / docstring of
-# TODO(1.7): remove "sklearn.utils._joblib"
 _DOCSTRING_IGNORES = [
     "sklearn.utils.deprecation.load_mlcomp",
     "sklearn.pipeline.make_pipeline",
     "sklearn.pipeline.make_union",
     "sklearn.utils.extmath.safe_sparse_dot",
-    "sklearn.utils._joblib",
     "HalfBinomialLoss",
 ]
 
