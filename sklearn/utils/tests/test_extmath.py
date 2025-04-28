@@ -1153,3 +1153,33 @@ def test_randomized_range_finder_array_api_compliance(array_namespace, device, d
 
         assert get_namespace(Q_xp)[0].__name__ == xp.__name__
         assert_allclose(_convert_to_numpy(Q_xp, xp), Q_np, atol=atol)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_randomized_eigsh_value_array_api_compliance(array_namespace, device, dtype):
+    xp = _array_api_for_tests(array_namespace, device)
+
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(30, 10)).astype(dtype)
+    X = X @ X.T
+    X_xp = xp.asarray(X, device=device)
+    n_components = 5
+    atol = 1e-5 if dtype == "float32" else 0
+
+    with config_context(array_api_dispatch=True):
+        l_np, u_np = _randomized_eigsh(
+            X, n_components=n_components, selection="value", random_state=0
+        )
+        l_xp, u_xp = _randomized_eigsh(
+            X_xp, n_components=n_components, selection="value", random_state=0
+        )
+
+        assert get_namespace(u_xp)[0].__name__ == xp.__name__
+        assert get_namespace(l_xp)[0].__name__ == xp.__name__
+
+        assert_allclose(_convert_to_numpy(u_xp, xp), u_np, atol=atol)
+        assert_allclose(_convert_to_numpy(l_xp, xp), l_np, atol=atol)
