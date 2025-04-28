@@ -2009,7 +2009,7 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
         # formats) only added in 1.14. We must return 2D array until min scipy 1.14
         # i.e. below 2 lines can be removed once min scipy >= 1.14
         if issparse(array):
-            return X[[index], :]
+            return array[[index], :]
         # When `metric` is a callable, 1D input arrays allowed, in which case
         # scalar should be returned.
         if array.ndim == 1:
@@ -2023,7 +2023,8 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
         iterator = itertools.combinations(range(X.shape[0]), 2)
         for i, j in iterator:
             x = _get_slice(X, i)
-            y = _get_slice(Y, j)
+            # y = _get_slice(Y, j)
+            y = Y[j, ...] if Y.ndim == 2 else Y[j]
             out[i, j] = metric(x, y, **kwds)
 
         # Make symmetric
