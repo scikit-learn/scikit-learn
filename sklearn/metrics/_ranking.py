@@ -1112,12 +1112,12 @@ def roc_curve(
 
     thresholds : ndarray of shape (n_thresholds,)
         Decreasing thresholds on the decision function used to compute
-        fpr and tpr. `thresholds[0]` represents no instances being predicted
-        and is arbitrarily set to `np.inf`.
+        fpr and tpr.
 
         .. versionchanged:: 1.3
-           An arbitrary threshold at infinity is added to represent a classifier
-           that always predicts the negative class, i.e. `fpr=0` and `tpr=0`.
+           An arbitrary threshold at infinity (stored in `thresholds[0]`) is
+           added to represent a classifier that always predicts the negative
+           class, i.e. `fpr=0` and `tpr=0`.
 
     See Also
     --------
