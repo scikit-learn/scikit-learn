@@ -4,7 +4,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import itertools
-import warnings
 from abc import ABC, abstractmethod
 from contextlib import contextmanager, nullcontext, suppress
 from functools import partial
@@ -589,13 +588,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 sample_weight_val = _check_sample_weight(
                     sample_weight_val, X_val, dtype=np.float64
                 )
-            if self.validation_fraction is not None:
-                warnings.warn(
+            if self.early_stopping is False:
+                raise ValueError(
                     "X_val and y_val are passed to fit while at the same time "
-                    "validation_fraction is not None (validation_fraction="
-                    f"{self.validation_fraction}). In this case, X_val and y_val "
-                    "as passed to fit are used vor early stopping.\nTo silence this "
-                    "warning, set validation_fraction to None."
+                    "early_stopping is False. When passing X_val and y_val to fit,"
+                    "early_stopping should be set to either 'auto' or True."
                 )
 
         # Note: At this point, we could delete self._label_encoder if it exists.
@@ -1638,8 +1635,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         See :term:`the Glossary <warm_start>`.
     early_stopping : 'auto' or bool, default='auto'
         If 'auto', early stopping is enabled if the sample size is larger than
-        10000. If True, early stopping is enabled, otherwise early stopping is
-        disabled.
+        10000 or if `X_val` and `y_val` are passed to `fit`. If True, early stopping
+        is enabled, otherwise early stopping is disabled.
 
         .. versionadded:: 0.23
 
@@ -1657,8 +1654,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     validation_fraction : int or float or None, default=0.1
         Proportion (or absolute size) of training data to set aside as
         validation data for early stopping. If None, early stopping is done on
-        the training data. Only used if early stopping is performed.
-        It is ignored if `X_val` and `y_val` are passed to fit.
+        the training data.
+        The value is ignored if either early stopping is not performed, e.g.
+        `early_stopping=False`, or if `X_val` and `y_val` are passed to fit.
     n_iter_no_change : int, default=10
         Used to determine when to "early stop". The fitting process is
         stopped when none of the last ``n_iter_no_change`` scores are better
@@ -2031,8 +2029,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         See :term:`the Glossary <warm_start>`.
     early_stopping : 'auto' or bool, default='auto'
         If 'auto', early stopping is enabled if the sample size is larger than
-        10000. If True, early stopping is enabled, otherwise early stopping is
-        disabled.
+        10000 or if `X_val` and `y_val` are passed to `fit`. If True, early stopping
+        is enabled, otherwise early stopping is disabled.
 
         .. versionadded:: 0.23
 
@@ -2049,8 +2047,9 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
     validation_fraction : int or float or None, default=0.1
         Proportion (or absolute size) of training data to set aside as
         validation data for early stopping. If None, early stopping is done on
-        the training data. Only used if early stopping is performed.
-        It is ignored if `X_val` and `y_val` are passed to fit.
+        the training data.
+        The value is ignored if either early stopping is not performed, e.g.
+        `early_stopping=False`, or if `X_val` and `y_val` are passed to fit.
     n_iter_no_change : int, default=10
         Used to determine when to "early stop". The fitting process is
         stopped when none of the last ``n_iter_no_change`` scores are better

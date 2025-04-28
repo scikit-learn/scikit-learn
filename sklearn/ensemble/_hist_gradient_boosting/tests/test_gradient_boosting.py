@@ -1500,16 +1500,14 @@ def test_X_val_in_fit(GradientBoosting, make_X_y, sample_weight, global_random_s
         early_stopping=True,
         random_state=rng_seed,
     )
-    with pytest.warns(UserWarning, match="X_val and y_val are passed to fit"):
-        # Should warn because validation_fraction it not None.
-        m2.fit(
-            X_train,
-            y_train,
-            sample_weight=sample_weight_train,
-            X_val=X_val,
-            y_val=y_val,
-            sample_weight_val=sample_weight_val,
-        )
+    m2.fit(
+        X_train,
+        y_train,
+        sample_weight=sample_weight_train,
+        X_val=X_val,
+        y_val=y_val,
+        sample_weight_val=sample_weight_val,
+    )
 
     assert_allclose(m2.n_iter_, m1.n_iter_)
     assert_allclose(m2.predict(X), m1.predict(X))
@@ -1530,6 +1528,20 @@ def test_X_val_raises_missing_y_val():
         match="y_val is provided, but X_val was not provided",
     ):
         HistGradientBoostingClassifier().fit(X, y, y_val=y_val)
+
+
+def test_X_val_raises_with_early_stopping_false():
+    """Test that an error is raised if X_val given but early_stopping is False."""
+    X, y = make_classification(n_samples=4)
+    X, X_val = X[:2], X[2:]
+    y, y_val = y[:2], y[2:]
+    with pytest.raises(
+        ValueError,
+        match="X_val and y_val are passed to fit while at the same time",
+    ):
+        HistGradientBoostingClassifier(early_stopping=False).fit(
+            X, y, X_val=X_val, y_val=y_val
+        )
 
 
 @pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
