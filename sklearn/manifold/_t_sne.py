@@ -30,7 +30,7 @@ from ..utils.validation import _num_samples, check_non_negative, validate_data
 
 # mypy error: Module 'sklearn.manifold' has no attribute '_utils'
 # mypy error: Module 'sklearn.manifold' has no attribute '_barnes_hut_tsne'
-from . import _barnes_hut_tsne, _utils  # type: ignore
+from . import _barnes_hut_tsne, _utils  # type: ignore[attr-defined]
 
 MACHINE_EPSILON = np.finfo(np.double).eps
 
