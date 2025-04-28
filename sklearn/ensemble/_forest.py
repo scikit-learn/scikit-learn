@@ -901,28 +901,16 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         if scoring_function is None:
             scoring_function = accuracy_score
 
-        if self.criterion != "gini":
-            warn(
-                "Unbiased feature importance is not available for"
-                " classification with a split criteria other than Gini",
-                UserWarning,
+        self._ufi_feature_importances_, _ = (
+            self._compute_unbiased_feature_importance_and_oob_predictions(
+                X, y, method="ufi"
             )
-            _, self.oob_decision_function_ = (
-                self._compute_unbiased_feature_importance_and_oob_predictions(
-                    X, y, method="ufi"
-                )
+        )
+        self._mdi_oob_feature_importances_, self.oob_decision_function_ = (
+            self._compute_unbiased_feature_importance_and_oob_predictions(
+                X, y, method="mdi_oob"
             )
-        else:
-            self.ufi_feature_importances_, _ = (
-                self._compute_unbiased_feature_importance_and_oob_predictions(
-                    X, y, method="ufi"
-                )
-            )
-            self.mdi_oob_feature_importances_, self.oob_decision_function_ = (
-                self._compute_unbiased_feature_importance_and_oob_predictions(
-                    X, y, method="mdi_oob"
-                )
-            )
+        )
         if self.oob_decision_function_.shape[-1] == 1:
             # drop the n_outputs axis if there is a single output
             self.oob_decision_function_ = self.oob_decision_function_.squeeze(axis=-1)
@@ -930,6 +918,27 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         self.oob_score_ = scoring_function(
             y, np.argmax(self.oob_decision_function_, axis=1)
         )
+
+    @property
+    def ufi_feature_importances_(self):
+        if self.criterion != "squared_error":
+            raise NotImplementedError(
+                "Unbiased feature importance only available for"
+                " classification with split criterion Gini"
+            )
+        else:
+            return self._ufi_feature_importances_
+
+    @property
+    def mdi_oob_feature_importances_(self):
+        if self.criterion != "squared_error":
+            raise NotImplementedError(
+                "Unbiased feature importance only available for"
+                " classification with split criterion Gini"
+            )
+        else:
+            return self._mdi_oob_feature_importances_
+
 
     def _validate_y_class_weight(self, y):
         check_classification_targets(y)
@@ -1228,28 +1237,16 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         """
         if scoring_function is None:
             scoring_function = r2_score
-        if self.criterion != "squared_error":
-            warn(
-                "Unbiased feature importance is not available for"
-                " regression with a split criteria other than MSE",
-                UserWarning,
+        self._ufi_feature_importances_, _ = (
+            self._compute_unbiased_feature_importance_and_oob_predictions(
+                X, y, method="ufi"
             )
-            _, self.oob_prediction_ = (
-                self._compute_unbiased_feature_importance_and_oob_predictions(
-                    X, y, method="mdi_oob"
-                )
+        )
+        self._mdi_oob_feature_importances_, self.oob_prediction_ = (
+            self._compute_unbiased_feature_importance_and_oob_predictions(
+                X, y, method="mdi_oob"
             )
-        else:
-            self.ufi_feature_importances_, _ = (
-                self._compute_unbiased_feature_importance_and_oob_predictions(
-                    X, y, method="ufi"
-                )
-            )
-            self.mdi_oob_feature_importances_, self.oob_prediction_ = (
-                self._compute_unbiased_feature_importance_and_oob_predictions(
-                    X, y, method="mdi_oob"
-                )
-            )
+        )
         if self.oob_prediction_.shape[-1] == 1:
             # drop the n_outputs axis if there is a single output
             self.oob_prediction_ = self.oob_prediction_.squeeze(axis=-1)
@@ -1258,6 +1255,26 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         self.oob_prediction_ = self.oob_prediction_.squeeze(axis=1)
 
         self.oob_score_ = scoring_function(y, self.oob_prediction_)
+
+    @property
+    def ufi_feature_importances_(self):
+        if self.criterion != "squared_error":
+            raise NotImplementedError(
+                "Unbiased feature importance only available for"
+                " regression with split criterion MSE"
+            )
+        else:
+            return self._ufi_feature_importances_
+
+    @property
+    def mdi_oob_feature_importances_(self):
+        if self.criterion != "squared_error":
+            raise NotImplementedError(
+                "Unbiased feature importance only available for"
+                " regression with split criterion MSE"
+            )
+        else:
+            return self._mdi_oob_feature_importances_
 
     def _compute_partial_dependence_recursion(self, grid, target_features):
         """Fast partial dependence computation.
