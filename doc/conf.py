@@ -505,6 +505,9 @@ redirects = {
     "auto_examples/cluster/plot_agglomerative_clustering.html": (
         "auto_examples/cluster/plot_ward_structured_vs_unstructured.html"
     ),
+    "auto_examples/linear_model/plot_sgd_comparison": (
+        "auto_examples/linear_model/plot_sgd_loss_functions"
+    ),
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
@@ -682,6 +685,23 @@ def notebook_modification_function(notebook_content, notebook_filename):
     # imports inside functions
     code_lines.extend(["import matplotlib", "import pandas"])
 
+    # Work around https://github.com/jupyterlite/pyodide-kernel/issues/166
+    # and https://github.com/pyodide/micropip/issues/223 by installing the
+    # dependencies first, and then scikit-learn from Anaconda.org.
+    if "dev" in release:
+        dev_docs_specific_code = [
+            "import piplite",
+            "import joblib",
+            "import threadpoolctl",
+            "import scipy",
+            "await piplite.install(\n"
+            f"  'scikit-learn=={release}',\n"
+            "   index_urls='https://pypi.anaconda.org/scientific-python-nightly-wheels/simple',\n"
+            ")",
+        ]
+
+        code_lines.extend(dev_docs_specific_code)
+
     if code_lines:
         code_lines = ["# JupyterLite-specific code"] + code_lines
         code = "\n".join(code_lines)
@@ -752,8 +772,10 @@ carousel_thumbs = {"sphx_glr_plot_classifier_comparison_001.png": 600}
 
 # enable experimental module so that experimental estimators can be
 # discovered properly by sphinx
-from sklearn.experimental import enable_iterative_imputer  # noqa
-from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.experimental import (  # noqa: F401
+    enable_halving_search_cv,
+    enable_iterative_imputer,
+)
 
 
 def make_carousel_thumbs(app, exception):
@@ -802,6 +824,15 @@ def disable_plot_gallery_for_linkcheck(app):
         sphinx_gallery_conf["plot_gallery"] = "False"
 
 
+def skip_properties(app, what, name, obj, skip, options):
+    """Skip properties that are fitted attributes"""
+    if isinstance(obj, property):
+        if name.endswith("_") and not name.startswith("_"):
+            return True
+
+    return skip
+
+
 def setup(app):
     # do not run the examples when using linkcheck by using a small priority
     # (default priority is 500 and sphinx-gallery using builder-inited event too)
@@ -813,6 +844,8 @@ def setup(app):
     # to hide/show the prompt in code examples
     app.connect("build-finished", make_carousel_thumbs)
     app.connect("build-finished", filter_search_index)
+
+    app.connect("autodoc-skip-member", skip_properties)
 
 
 # The following is used by sphinx.ext.linkcode to provide links to github
@@ -914,10 +947,6 @@ linkcheck_ignore = [
     r"https://stackoverflow.com/questions/5836335/"
     "consistently-create-same-random-numpy-array/5837352#comment6712034_5837352",
 ]
-
-# Config for sphinx-remove-toctrees
-
-remove_from_toctrees = ["metadata_routing.rst"]
 
 # Use a browser-like user agent to avoid some "403 Client Error: Forbidden for
 # url" errors. This is taken from the variable navigator.userAgent inside a

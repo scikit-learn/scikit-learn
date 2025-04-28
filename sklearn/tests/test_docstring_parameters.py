@@ -16,8 +16,8 @@ from sklearn.datasets import make_classification
 
 # make it possible to discover experimental estimators when calling `all_estimators`
 from sklearn.experimental import (
-    enable_halving_search_cv,  # noqa
-    enable_iterative_imputer,  # noqa
+    enable_halving_search_cv,  # noqa: F401
+    enable_iterative_imputer,  # noqa: F401
 )
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import FunctionTransformer
@@ -44,18 +44,18 @@ with warnings.catch_warnings():
         [
             pckg[1]
             for pckg in walk_packages(prefix="sklearn.", path=sklearn_path)
-            if not ("._" in pckg[1] or ".tests." in pckg[1])
+            if not any(
+                substr in pckg[1] for substr in ["._", ".tests.", "sklearn.externals"]
+            )
         ]
     )
 
 # functions to ignore args / docstring of
-# TODO(1.7): remove "sklearn.utils._joblib"
 _DOCSTRING_IGNORES = [
     "sklearn.utils.deprecation.load_mlcomp",
     "sklearn.pipeline.make_pipeline",
     "sklearn.pipeline.make_union",
     "sklearn.utils.extmath.safe_sparse_dot",
-    "sklearn.utils._joblib",
     "HalfBinomialLoss",
 ]
 

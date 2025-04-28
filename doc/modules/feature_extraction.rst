@@ -245,7 +245,7 @@ The Bag of Words representation
 -------------------------------
 
 Text Analysis is a major application field for machine learning
-algorithms. However the raw data, a sequence of symbols cannot be fed
+algorithms. However the raw data, a sequence of symbols, cannot be fed
 directly to the algorithms themselves as most of them expect numerical
 feature vectors with a fixed size rather than the raw text documents
 with variable length.
@@ -792,9 +792,9 @@ problems which are currently outside of the scope of scikit-learn.
 Vectorizing a large text corpus with the hashing trick
 ------------------------------------------------------
 
-The above vectorization scheme is simple but the fact that it holds an **in-
-memory mapping from the string tokens to the integer feature indices** (the
-``vocabulary_`` attribute) causes several **problems when dealing with large
+The above vectorization scheme is simple but the fact that it holds an
+**in-memory mapping from the string tokens to the integer feature indices**
+(the ``vocabulary_`` attribute) causes several **problems when dealing with large
 datasets**:
 
 - the larger the corpus, the larger the vocabulary will grow and hence the

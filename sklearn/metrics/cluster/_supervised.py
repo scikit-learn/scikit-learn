@@ -7,7 +7,6 @@ better.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 import warnings
 from math import log
 from numbers import Real
@@ -16,7 +15,7 @@ import numpy as np
 from scipy import sparse as sp
 
 from ...utils._array_api import _max_precision_float_dtype, get_namespace_and_device
-from ...utils._param_validation import Interval, StrOptions, validate_params
+from ...utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ...utils.multiclass import type_of_target
 from ...utils.validation import check_array, check_consistent_length
 from ._expected_mutual_info_fast import expected_mutual_information
@@ -1033,6 +1032,9 @@ def adjusted_mutual_info_score(
         or classes.shape[0] == clusters.shape[0] == 0
     ):
         return 1.0
+    # if there is only one class or one cluster return 0.0.
+    elif classes.shape[0] == 1 or clusters.shape[0] == 1:
+        return 0.0
 
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
     # Calculate the MI for the two clusterings
@@ -1051,8 +1053,13 @@ def adjusted_mutual_info_score(
         denominator = min(denominator, -np.finfo("float64").eps)
     else:
         denominator = max(denominator, np.finfo("float64").eps)
-    ami = (mi - emi) / denominator
-    return float(ami)
+    # The same applies analogously to mi and emi.
+    numerator = mi - emi
+    if numerator < 0:
+        numerator = min(numerator, -np.finfo("float64").eps)
+    else:
+        numerator = max(numerator, np.finfo("float64").eps)
+    return float(numerator / denominator)
 
 
 @validate_params(
@@ -1171,11 +1178,11 @@ def normalized_mutual_info_score(
     {
         "labels_true": ["array-like"],
         "labels_pred": ["array-like"],
-        "sparse": ["boolean"],
+        "sparse": ["boolean", Hidden(StrOptions({"deprecated"}))],
     },
     prefer_skip_nested_validation=True,
 )
-def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
+def fowlkes_mallows_score(labels_true, labels_pred, *, sparse="deprecated"):
     """Measure the similarity of two clusterings of a set of points.
 
     .. versionadded:: 0.18
@@ -1208,6 +1215,10 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
 
     sparse : bool, default=False
         Compute contingency matrix internally with sparse matrix.
+
+        .. deprecated:: 1.7
+            The ``sparse`` parameter is deprecated and will be removed in 1.9. It has
+            no effect.
 
     Returns
     -------
@@ -1242,6 +1253,14 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
       >>> fowlkes_mallows_score([0, 0, 0, 0], [0, 1, 2, 3])
       0.0
     """
+    # TODO(1.9): remove the sparse parameter
+    if sparse != "deprecated":
+        warnings.warn(
+            "The 'sparse' parameter was deprecated in 1.7 and will be removed in 1.9. "
+            "It has no effect. Leave it to its default value to silence this warning.",
+            FutureWarning,
+        )
+
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     (n_samples,) = labels_true.shape
 
