@@ -20,7 +20,10 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     a :class:`~sklearn.metrics.RocCurveDisplay`. All parameters are
     stored as attributes.
 
-    Read more in the :ref:`User Guide <roc_metrics>`.
+    For general information regarding `scikit-learn` visualization tools, read
+    more in the :ref:`Visualization Guide <visualizations>`.
+    For guidance on interpreting these plots, refer to the :ref:`Model
+    Evaluation Guide <roc_metrics>`.
 
     Parameters
     ----------
@@ -215,7 +218,10 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     ):
         """Create a ROC Curve display from an estimator.
 
-        Read more in the :ref:`User Guide <roc_metrics>`.
+        For general information regarding `scikit-learn` visualization tools,
+        read more in the :ref:`Visualization Guide <visualizations>`.
+        For guidance on interpreting these plots, refer to the :ref:`Model
+        Evaluation Guide <roc_metrics>`.
 
         Parameters
         ----------
@@ -346,7 +352,10 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     ):
         """Plot ROC curve given the true and predicted values.
 
-        Read more in the :ref:`User Guide <roc_metrics>`.
+        For general information regarding `scikit-learn` visualization tools,
+        read more in the :ref:`Visualization Guide <visualizations>`.
+        For guidance on interpreting these plots, refer to the :ref:`Model
+        Evaluation Guide <roc_metrics>`.
 
         .. versionadded:: 1.0
 
