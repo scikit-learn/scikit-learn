@@ -111,6 +111,7 @@ Estimators
   `svd_solver="randomized"` and `power_iteration_normalizer="QR"`)
 - :class:`linear_model.Ridge` (with `solver="svd"`)
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
+- :class:`preprocessing.Binarizer`
 - :class:`preprocessing.KernelCenterer`
 - :class:`preprocessing.LabelEncoder`
 - :class:`preprocessing.MaxAbsScaler`
