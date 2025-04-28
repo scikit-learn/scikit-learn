@@ -66,7 +66,7 @@ from sklearn.ensemble import (
     VotingRegressor,
 )
 from sklearn.exceptions import SkipTestWarning
-from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 from sklearn.feature_selection import (
     RFE,
     RFECV,

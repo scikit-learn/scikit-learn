@@ -19,7 +19,7 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils.fixes import COO_CONTAINERS, CSR_CONTAINERS
 
 try:
-    from pyamg import smoothed_aggregation_solver  # noqa
+    from pyamg import smoothed_aggregation_solver  # noqa: F401
 
     amg_loaded = True
 except ImportError:
