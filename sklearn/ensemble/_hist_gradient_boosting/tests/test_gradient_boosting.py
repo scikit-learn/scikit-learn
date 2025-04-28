@@ -1532,14 +1532,14 @@ def test_X_val_raises_missing_y_val():
 
 def test_X_val_raises_with_early_stopping_false():
     """Test that an error is raised if X_val given but early_stopping is False."""
-    X, y = make_classification(n_samples=4)
+    X, y = make_regression(n_samples=4)
     X, X_val = X[:2], X[2:]
     y, y_val = y[:2], y[2:]
     with pytest.raises(
         ValueError,
         match="X_val and y_val are passed to fit while at the same time",
     ):
-        HistGradientBoostingClassifier(early_stopping=False).fit(
+        HistGradientBoostingRegressor(early_stopping=False).fit(
             X, y, X_val=X_val, y_val=y_val
         )
 
