@@ -1,4 +1,4 @@
-# ruff: noqa
+# ruff: noqa: CPY001
 """
 =======================================
 Release Highlights for scikit-learn 1.5
@@ -30,10 +30,9 @@ or with conda::
 # problem. :class:`~model_selection.FixedThresholdClassifier` allows wrapping any
 # binary classifier and setting a custom decision threshold.
 from sklearn.datasets import make_classification
-from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import ConfusionMatrixDisplay
-
+from sklearn.model_selection import train_test_split
 
 X, y = make_classification(n_samples=10_000, weights=[0.9, 0.1], random_state=0)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
@@ -90,8 +89,8 @@ print(f"Custom score: {custom_score(y_test, classifier_05.predict(X_test)):.2f}"
 # Tuning the threshold to optimize this custom metric gives a smaller threshold
 # that allows more samples to be classified as the positive class. As a result,
 # the average gain per prediction improves.
-from sklearn.model_selection import TunedThresholdClassifierCV
 from sklearn.metrics import make_scorer
+from sklearn.model_selection import TunedThresholdClassifierCV
 
 custom_scorer = make_scorer(
     custom_score, response_method="predict", greater_is_better=True
@@ -161,8 +160,9 @@ print(f"Explained variance: {pca.explained_variance_ratio_.sum():.2f}")
 # The transformers of a :class:`~compose.ColumnTransformer` can now be directly
 # accessed using indexing by name.
 import numpy as np
+
 from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 X = np.array([[0, 1, 2], [3, 4, 5]])
 column_transformer = ColumnTransformer(
