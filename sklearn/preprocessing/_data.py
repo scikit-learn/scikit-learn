@@ -239,14 +239,6 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
         ensure_all_finite="allow-nan",
     )
 
-    valid_with_std_values = {1, 2, True, False}
-    if with_std not in valid_with_std_values:
-        raise ValueError(
-            "Invalid `with_std` value {!r}. Should be one of {!r}".format(
-                with_std, valid_with_std_values
-            )
-        )
-
     # converts False into 0, True into 1
     scale_factor = int(with_std)
 
