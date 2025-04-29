@@ -8,6 +8,7 @@ from libc.string cimport memcpy
 from libc.string cimport memset
 from libc.stdint cimport INTPTR_MAX
 from libc.math cimport isnan
+from libc.math cimport log
 from libcpp.vector cimport vector
 from libcpp.algorithm cimport pop_heap
 from libcpp.algorithm cimport push_heap
@@ -1360,7 +1361,7 @@ cdef class Tree:
                                 for c in range(n_classes[k]):
                                     oob_pred[sample_idx, c, k] = oob_node_values[node_idx, c, k]
 
-    cpdef compute_unbiased_feature_importance_and_oob_predictions(self, object X_test, object y_test, method="ufi"):
+    cpdef compute_unbiased_feature_importance_and_oob_predictions(self, object X_test, object y_test, criterion, method="ufi"):
         cdef intp_t n_samples = X_test.shape[0]
         cdef intp_t n_features = X_test.shape[1]
         cdef intp_t n_outputs = self.n_outputs
@@ -1401,16 +1402,36 @@ cdef class Tree:
                             for k in range(n_outputs):
                                 if n_classes[k] > 1: # Classification
                                     for c in range(n_classes[k]):
-                                        importances[node.feature] -= (
-                                            value_at_node[offset + c] * oob_node_values[node_idx, c, k]
-                                            * node.weighted_n_node_samples
-                                            - 
-                                            value_at_left[offset + c] * oob_node_values[left_idx, c, k]
-                                            * nodes[left_idx].weighted_n_node_samples
-                                            - 
-                                            value_at_right[offset + c] * oob_node_values[right_idx, c, k]
-                                            * nodes[right_idx].weighted_n_node_samples
-                                        )
+                                        if criterion == "gini":
+                                            importances[node.feature] -= (
+                                                value_at_node[offset + c] * oob_node_values[node_idx, c, k]
+                                                * node.weighted_n_node_samples
+                                                - 
+                                                value_at_left[offset + c] * oob_node_values[left_idx, c, k]
+                                                * nodes[left_idx].weighted_n_node_samples
+                                                - 
+                                                value_at_right[offset + c] * oob_node_values[right_idx, c, k]
+                                                * nodes[right_idx].weighted_n_node_samples
+                                            )
+                                        elif criterion == "log_loss":
+                                            importances[node.feature] -= (
+                                                (value_at_node[offset + c] * log(oob_node_values[node_idx, c, k])
+                                                + log(value_at_node[offset + c]) * oob_node_values[node_idx, c, k])
+                                                * node.weighted_n_node_samples
+                                            )
+                                            # If one of the children is pure for oob or inbag samples, set the cross entropy to 0
+                                            if oob_node_values[left_idx, c, k] > 0.0 and value_at_left[offset + c] > 0.0:
+                                                importances[node.feature] += (
+                                                    (value_at_left[offset + c] * log(oob_node_values[left_idx, c, k])
+                                                    + log(value_at_left[offset + c]) * oob_node_values[left_idx, c, k])
+                                                    * nodes[left_idx].weighted_n_node_samples
+                                                )
+                                            if oob_node_values[right_idx, c, k] > 0.0 and value_at_right[offset + c] > 0.0:
+                                                importances[node.feature] += (
+                                                    (value_at_right[offset + c] * log(oob_node_values[right_idx, c, k])
+                                                    + log(value_at_right[offset + c]) * oob_node_values[right_idx, c, k])
+                                                    * nodes[right_idx].weighted_n_node_samples
+                                                )
                                     offset += n_classes[k]
                                 else: # Regression
                                     importances[node.feature] += (

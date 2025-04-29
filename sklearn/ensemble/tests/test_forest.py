@@ -328,7 +328,7 @@ def test_importances(dtype, name, criterion, oob_score, importance_attribute_nam
         with pytest.raises(
             AttributeError,
             match="Unbiased feature importance only available for"
-                " regression with split criterion MSE",
+            " regression with split criterion MSE",
         ):
             importances = getattr(est, importance_attribute_name)
     elif oob_score and name in FOREST_CLASSIFIERS and criterion != "gini":
@@ -1665,33 +1665,36 @@ def test_forest_degenerate_unbiased_feature_importances(
     )
 
 
-@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
+@pytest.mark.parametrize("criterion", ["gini", "log_loss"])
 @pytest.mark.parametrize("method", ["ufi", "mdi_oob"])
-def test_unbiased_feature_importance_on_train(name, method):
+def test_unbiased_feature_importance_on_train(name, criterion, method):
     from sklearn.ensemble._forest import _generate_sample_indices
 
     n_samples = 15
     X, y = make_classification(
         n_samples=n_samples, n_informative=3, random_state=1, n_classes=2
     )
-    clf = FOREST_ESTIMATORS[name](n_estimators=1, bootstrap=True, random_state=1)
+    clf = FOREST_ESTIMATORS[name](
+        n_estimators=1, bootstrap=True, random_state=1, criterion=criterion
+    )
     clf.fit(X, y)
-    ufi_on_train = 0
+    method_on_train = 0
     for tree_idx, tree in enumerate(clf.estimators_):
         in_bag_indicies = _generate_sample_indices(
             clf.estimators_[tree_idx].random_state, n_samples, n_samples
         )
         X_in_bag = clf._validate_X_predict(X)[in_bag_indicies]
         y_in_bag = y.reshape(-1, 1)[in_bag_indicies]
-        ufi_on_train_tree = (
+        method_on_train_tree = (
             tree.compute_unbiased_feature_importance_and_oob_predictions(
                 X_in_bag, y_in_bag, method
             )[0]
         )
-        ufi_on_train += ufi_on_train_tree / ufi_on_train_tree.sum()
-    ufi_on_train /= clf.n_estimators
-    ufi_on_train /= ufi_on_train.sum()
-    assert_almost_equal(clf.feature_importances_, ufi_on_train)
+        method_on_train += method_on_train_tree / method_on_train_tree.sum()
+    method_on_train /= clf.n_estimators
+    method_on_train /= method_on_train.sum()
+    assert_almost_equal(clf.feature_importances_, method_on_train)
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)

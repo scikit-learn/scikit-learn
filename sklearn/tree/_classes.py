@@ -695,7 +695,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     ):
         check_is_fitted(self)
         return self.tree_.compute_unbiased_feature_importance_and_oob_predictions(
-            X_test, y_test, method=method
+            X_test, y_test, self.criterion, method=method
         )
 
     def __sklearn_tags__(self):
