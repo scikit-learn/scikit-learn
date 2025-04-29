@@ -157,7 +157,7 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
         If 1 or True, scale the data to unit variance (or equivalently,
         unit standard deviation).
         Otherwise 2, scale the data to using scaling factor 2
-        standard deviation. See [1] for `with_std=2`.
+        standard deviation. See [Gelman2008] for `with_std=2`.
 
     copy : bool, default=True
         If False, try to avoid a copy and scale in place.
@@ -213,8 +213,9 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
 
     References
     ----------
-    .. [1] Gelman, A. (2008). Scaling regression inputs by dividing by two standard deviations.
-    Statistics in medicine, 27(15), 2865-2873.
+    .. [Gelman2008] Gelman, A. (2008).
+       "Scaling regression inputs by dividing by two standard deviations."
+       Statistics in medicine, 27(15), 2865-2873.
 
     Examples
     --------
@@ -790,7 +791,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         - If `1` or `True`, scale the data to unit variance (or equivalently,
         unit standard deviation);
         - otherwise `2`, scale the data to using scaling factor 2
-        standard deviation. See [1] for `with_std=2`.
+        standard deviation. See [Gelman2008] for `with_std=2`.
 
     Attributes
     ----------
@@ -851,8 +852,9 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     References
     ----------
-    .. [1] Gelman, A. (2008). Scaling regression inputs by dividing by two standard deviations.
-    Statistics in medicine, 27(15), 2865-2873.
+    .. [Gelman2008] Gelman, A. (2008).
+       "Scaling regression inputs by dividing by two standard deviations."
+       Statistics in medicine, 27(15), 2865-2873.
 
     Examples
     --------
