@@ -7,7 +7,9 @@ from ..utils._array_api import (
 )
 
 
-def _weighted_percentile(array, sample_weight, percentile_rank=50, xp=None):
+def _weighted_percentile(
+    array, sample_weight, percentile_rank=50, xp=None, symmetrize=False
+):
     """Compute the weighted percentile with method 'inverted_cdf'.
 
     When the percentile lies between two data points of `array`, the function returns
@@ -41,13 +43,17 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50, xp=None):
     xp : array_namespace, default=None
         The standard-compatible namespace for `array`. Default: infer.
 
+    symmetrize : bool, default=False
+        If True, compute the symmetrized weighted percentile using the negative of
+        `array` and the fact that the sorted order of the negated array is the
+        reverse order of the sorted array.
+
     Returns
     -------
     percentile : scalar or 0D array if `array` 1D (or 0D), array if `array` 2D
         Weighted percentile at the requested probability level.
     """
     xp, _, device = get_namespace_and_device(array)
-    # `sample_weight` should follow `array` for dtypes
     floating_dtype = _find_matching_floating_dtype(array, xp=xp)
     array = xp.asarray(array, dtype=floating_dtype, device=device)
     sample_weight = xp.asarray(sample_weight, dtype=floating_dtype, device=device)
@@ -57,15 +63,13 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50, xp=None):
         return array
     if array.ndim == 1:
         array = xp.reshape(array, (-1, 1))
-    # When sample_weight 1D, repeat for each array.shape[1]
     if array.shape != sample_weight.shape and array.shape[0] == sample_weight.shape[0]:
         sample_weight = xp.tile(sample_weight, (array.shape[1], 1)).T
+
     # Sort `array` and `sample_weight` along axis=0:
     sorted_idx = xp.argsort(array, axis=0)
     sorted_weights = xp.take_along_axis(sample_weight, sorted_idx, axis=0)
 
-    # Set NaN values in `sample_weight` to 0. Only perform this operation if NaN
-    # values present to avoid temporary allocations of size `(n_samples, n_features)`.
     n_features = array.shape[1]
     largest_value_per_column = array[
         sorted_idx[-1, ...], xp.arange(n_features, device=device)
@@ -75,24 +79,12 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50, xp=None):
         sorted_nan_mask = xp.take_along_axis(xp.isnan(array), sorted_idx, axis=0)
         sorted_weights[sorted_nan_mask] = 0
 
-    # Compute the weighted cumulative distribution function (CDF) based on
-    # `sample_weight` and scale `percentile_rank` along it.
-    #
-    # Note: we call `xp.cumulative_sum` on the transposed `sorted_weights` to
-    # ensure that the result is of shape `(n_features, n_samples)` so
-    # `xp.searchsorted` calls take contiguous inputs as a result (for
-    # performance reasons).
     weight_cdf = xp.cumulative_sum(sorted_weights.T, axis=1)
     adjusted_percentile_rank = percentile_rank / 100 * weight_cdf[..., -1]
-
-    # Ignore leading `sample_weight=0` observations when `percentile_rank=0` (#20528)
     mask = adjusted_percentile_rank == 0
     adjusted_percentile_rank[mask] = xp.nextafter(
         adjusted_percentile_rank[mask], adjusted_percentile_rank[mask] + 1
     )
-    # For each feature with index j, find sample index i of the scalar value
-    # `adjusted_percentile_rank[j]` in 1D array `weight_cdf[j]`, such that:
-    # weight_cdf[j, i-1] < adjusted_percentile_rank[j] <= weight_cdf[j, i].
     percentile_indices = xp.asarray(
         [
             xp.searchsorted(
@@ -102,22 +94,51 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50, xp=None):
         ],
         device=device,
     )
-    # In rare cases, `percentile_indices` equals to `sorted_idx.shape[0]`
     max_idx = sorted_idx.shape[0] - 1
     percentile_indices = xp.clip(percentile_indices, 0, max_idx)
-
     col_indices = xp.arange(array.shape[1], device=device)
     percentile_in_sorted = sorted_idx[percentile_indices, col_indices]
-
     result = array[percentile_in_sorted, col_indices]
+
+    if symmetrize:
+        # Use reverse of the original sorted order for the negated array
+        sorted_idx_neg = xp.flip(sorted_idx, axis=0)
+        sorted_weights_neg = xp.take_along_axis(sample_weight, sorted_idx_neg, axis=0)
+        array_neg = -array
+        largest_value_neg = array_neg[
+            sorted_idx_neg[-1, ...], xp.arange(n_features, device=device)
+        ]
+        if xp.any(xp.isnan(largest_value_neg)):
+            sorted_nan_mask_neg = xp.take_along_axis(
+                xp.isnan(array_neg), sorted_idx_neg, axis=0
+            )
+            sorted_weights_neg[sorted_nan_mask_neg] = 0
+
+        weight_cdf_neg = xp.cumulative_sum(sorted_weights_neg.T, axis=1)
+        adjusted_pr_neg = (100 - percentile_rank) / 100 * weight_cdf_neg[..., -1]
+        mask_neg = adjusted_pr_neg == 0
+        adjusted_pr_neg[mask_neg] = xp.nextafter(
+            adjusted_pr_neg[mask_neg], adjusted_pr_neg[mask_neg] + 1
+        )
+        percentile_indices_neg = xp.asarray(
+            [
+                xp.searchsorted(
+                    weight_cdf_neg[feature_idx, ...], adjusted_pr_neg[feature_idx]
+                )
+                for feature_idx in range(weight_cdf_neg.shape[0])
+            ],
+            device=device,
+        )
+        percentile_indices_neg = xp.clip(percentile_indices_neg, 0, max_idx)
+        percentile_in_sorted_neg = sorted_idx_neg[percentile_indices_neg, col_indices]
+        result_neg = array_neg[percentile_in_sorted_neg, col_indices]
+
+        result = (result - result_neg) / 2
 
     return result[0] if n_dim == 1 else result
 
 
-# TODO: refactor to do the symmetrisation inside _weighted_percentile to avoid
-# sorting the input array twice.
 def _averaged_weighted_percentile(array, sample_weight, percentile_rank=50, xp=None):
-    return (
-        _weighted_percentile(array, sample_weight, percentile_rank, xp=xp)
-        - _weighted_percentile(-array, sample_weight, 100 - percentile_rank, xp=xp)
-    ) / 2
+    return _weighted_percentile(
+        array, sample_weight, percentile_rank, xp=xp, symmetrize=True
+    )
