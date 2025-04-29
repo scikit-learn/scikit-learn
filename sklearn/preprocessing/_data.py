@@ -153,9 +153,11 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     with_mean : bool, default=True
         If True, center the data before scaling.
 
-    with_std : bool, default=True
-        If True, scale the data to unit variance (or equivalently,
+    with_std : bool, 1 or 2, default=True
+        If 1 or True, scale the data to unit variance (or equivalently,
         unit standard deviation).
+        Otherwise 2, scale the data to using scaling factor 2
+        standard deviation. See [1] for `with_std=2`.
 
     copy : bool, default=True
         If False, try to avoid a copy and scale in place.
@@ -209,6 +211,11 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
         :ref:`Pipeline <pipeline>` in order to prevent most risks of data
         leaking: `pipe = make_pipeline(StandardScaler(), LogisticRegression())`.
 
+    References
+    ----------
+    .. [1] Gelman, A. (2008). Scaling regression inputs by dividing by two standard deviations.
+    Statistics in medicine, 27(15), 2865-2873.
+
     Examples
     --------
     >>> from sklearn.preprocessing import scale
@@ -239,16 +246,20 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
             raise ValueError(
                 "Can only scale sparse matrix on axis=0,  got axis=%d" % axis
             )
+        if with_std not in (1, 2, True, False):
+            raise ValueError(
+                "Invalid value for `with_std`: {!r}".format(with_std)
+            )
         if with_std:
             _, var = mean_variance_axis(X, axis=0)
             var = _handle_zeros_in_scale(var, copy=False)
-            inplace_column_scale(X, 1 / np.sqrt(var))
+            inplace_column_scale(X, 1 / with_std * np.sqrt(var))
     else:
         X = np.asarray(X)
         if with_mean:
             mean_ = np.nanmean(X, axis)
         if with_std:
-            scale_ = np.nanstd(X, axis)
+            scale_ = with_std * np.nanstd(X, axis)
         # Xr is a view on the original array that enables easy use of
         # broadcasting on the axis in which we are interested in
         Xr = np.rollaxis(X, axis)
@@ -775,9 +786,11 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         matrix which in common use cases is likely to be too large to fit in
         memory.
 
-    with_std : bool, default=True
-        If True, scale the data to unit variance (or equivalently,
-        unit standard deviation).
+    with_std : boolean, 1 or 2, default=True
+        - If `1` or `True`, scale the data to unit variance (or equivalently,
+        unit standard deviation);
+        - otherwise `2`, scale the data to using scaling factor 2
+        standard deviation. See [1] for `with_std=2`.
 
     Attributes
     ----------
@@ -835,6 +848,11 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     We use a biased estimator for the standard deviation, equivalent to
     `numpy.std(x, ddof=0)`. Note that the choice of `ddof` is unlikely to
     affect model performance.
+
+    References
+    ----------
+    .. [1] Gelman, A. (2008). Scaling regression inputs by dividing by two standard deviations.
+    Statistics in medicine, 27(15), 2865-2873.
 
     Examples
     --------
@@ -952,6 +970,10 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
+        if self.with_std not in (1, 2, True, False):
+            raise ValueError("Invalid value for `with_std`: {}".format(
+                            str(self.with_std)))
+
         # Even in the case of `with_mean=False`, we update the mean anyway
         # This is needed for the incremental computation of the var
         # See incr_mean_variance_axis and _incremental_mean_variance_axis
@@ -1046,8 +1068,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                 self.var_, self.mean_, self.n_samples_seen_
             )
             self.scale_ = _handle_zeros_in_scale(
-                np.sqrt(self.var_), copy=False, constant_mask=constant_mask
-            )
+                                self.with_std * np.sqrt(self.var_), copy=False, constant_mask=constant_mask)
         else:
             self.scale_ = None
 
