@@ -1,6 +1,5 @@
-- Numerical stabibilty (mostly overflows) of the Yeo-Johnson transform with
-  `PowerTransformer(method="yeo-johnson")` is fixed if scipy verion >= 1.9 is used.
-  By :user: `Sylvain Marié<@smarie>`, `Mohamed yaich<@yaichm>`,
+- Fixed numerical stability (mostly overflows) of the Yeo-Johnson transform with
+  `PowerTransformer(method="yeo-johnson")` when scipy version is `>= 1.9`.
+  Initial PR by :user: `Xuefeng Xu <@xuefeng-xu>` completed by `Mohamed yaich<@yaichm>`,
   `Oussama Er-rabie<@eroussama>`, `Mohamed Dlimi<@Dlimim>`,
-  `Hamza Zeroual<@HamzaLuffy>`, `Amine Hannoun<@AmineHannoun>` and
-  `Xuefeng Xu <@xuefeng-xu>`.
+  `Hamza Zeroual<@HamzaLuffy>`, `Amine Hannoun<@AmineHannoun>` and `Sylvain Marié<@smarie>`.

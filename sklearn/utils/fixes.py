@@ -81,7 +81,7 @@ else:
         return scipy.sparse.linalg.cg(A, b, **kwargs)
 
 
-# TODO : remove this when minimum version of scipy >= 1.9.0
+# TODO : remove this when required minimum version of scipy >= 1.9.0
 def _yeojohnson_lambda(_neg_log_likelihood, x):
     """Estimate the optimal Yeo-Johnson transformation parameter (lambda).
 
