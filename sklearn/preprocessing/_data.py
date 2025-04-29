@@ -238,6 +238,18 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
         dtype=FLOAT_DTYPES,
         ensure_all_finite="allow-nan",
     )
+
+    valid_with_std_values = {1, 2, True, False}
+    if with_std not in valid_with_std_values:
+        raise ValueError(
+            "Invalid `with_std` value {!r}. Should be one of {!r}".format(
+                with_std, valid_with_std_values
+            )
+        )
+
+    # converts False into 0, True into 1
+    scale_factor = int(with_std)
+
     if sparse.issparse(X):
         if with_mean:
             raise ValueError(
@@ -248,20 +260,17 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
             raise ValueError(
                 "Can only scale sparse matrix on axis=0,  got axis=%d" % axis
             )
-        if with_std not in (1, 2, True, False):
-            raise ValueError(
-                "Invalid value for `with_std`: {!r}".format(with_std)
-            )
-        if with_std:
+        if scale_factor > 0:
             _, var = mean_variance_axis(X, axis=0)
             var = _handle_zeros_in_scale(var, copy=False)
-            inplace_column_scale(X, 1 / with_std * np.sqrt(var))
+            scaled_sd = scale_factor * np.sqrt(var)
+            inplace_column_scale(X, 1 / scaled_sd)
     else:
         X = np.asarray(X)
         if with_mean:
             mean_ = np.nanmean(X, axis)
-        if with_std:
-            scale_ = with_std * np.nanstd(X, axis)
+        if scale_factor > 0:
+            scale_ = scale_factor * np.nanstd(X, axis)
         # Xr is a view on the original array that enables easy use of
         # broadcasting on the axis in which we are interested in
         Xr = np.rollaxis(X, axis)
@@ -973,10 +982,16 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+            
+        valid_with_std_values = {1, 2, True, False}
+        if self.with_std not in valid_with_std_values:
+            raise ValueError(
+                "Invalid `with_std` value {!r}. Should be one of {!r}".format(
+                    self.with_std, valid_with_std_values
+                )
+            )
 
-        if self.with_std not in (1, 2, True, False):
-            raise ValueError("Invalid value for `with_std`: {}".format(
-                            str(self.with_std)))
+        scale_factor = int(self.with_std)
 
         # Even in the case of `with_mean=False`, we update the mean anyway
         # This is needed for the incremental computation of the var
@@ -1072,7 +1087,10 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                 self.var_, self.mean_, self.n_samples_seen_
             )
             self.scale_ = _handle_zeros_in_scale(
-                                self.with_std * np.sqrt(self.var_), copy=False, constant_mask=constant_mask)
+                scale_factor * np.sqrt(self.var_),
+                copy=False,
+                constant_mask=constant_mask,
+            )
         else:
             self.scale_ = None
 
