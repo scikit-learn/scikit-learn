@@ -2646,7 +2646,7 @@ def test_power_transformer_constant_feature(standardize):
 
 @pytest.mark.skipif(
     sp_version < parse_version("1.12"),
-    reason="scipy version 1.9 required for stable yeo-johnson",
+    reason="scipy version 1.12 required for stable yeo-johnson",
 )
 def test_power_transformer_no_warnings():
     """Verify that PowerTransformer operates without raising any warnings on valid data.
@@ -2676,9 +2676,9 @@ def test_power_transformer_no_warnings():
             warnings.simplefilter("always")  # Ensure all warnings are captured
             PowerTransformer(method="yeo-johnson", standardize=True).fit_transform(data)
 
-            if caught_warnings:
-                warning_messages = "\n".join(str(w.message) for w in caught_warnings)
-                pytest.fail(f"Unexpected warnings were raised:\n{warning_messages}")
+        assert not caught_warnings, "Unexpected warnings were raised:\n" + "\n".join(
+            str(w.message) for w in caught_warnings
+        )
 
     # Full dataset: Should not trigger overflow in variance calculation.
     _test_no_warnings(x.reshape(-1, 1))

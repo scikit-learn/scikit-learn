@@ -103,10 +103,9 @@ def _yeojohnson_lambda(_neg_log_likelihood, x):
     lmbda : float
         The estimated lambda parameter for the Yeo-Johnson transformation.
     """
-    scipy_version = parse_version(scipy.__version__)
     min_scipy_version = "1.9.0"
 
-    if scipy_version < parse_version(min_scipy_version):
+    if sp_version < parse_version(min_scipy_version):
         # choosing bracket -2, 2 like for boxcox
         return optimize.brent(_neg_log_likelihood, brack=(-2, 2))
 
