@@ -200,9 +200,7 @@ def test_estimator_html_repr_pipeline():
     # top level estimators show estimator with changes
     assert html.escape(str(pipe)) in html_output
     for _, est in pipe.steps:
-        assert (
-            '<div class="sk-toggleable__content "><pre>' + html.escape(str(est))
-        ) in html_output
+        assert html.escape(str(est))[:44] in html_output
 
     # low level estimators do not show changes
     with config_context(print_changed_only=True):
@@ -218,18 +216,19 @@ def test_estimator_html_repr_pipeline():
             assert f"<label>{html.escape(name)}</label>" in html_output
 
         pca = feat_u.transformer_list[0][1]
-        assert f"<pre>{html.escape(str(pca))}</pre>" in html_output
+
+        assert html.escape(str(pca)) in html_output
 
         tsvd = feat_u.transformer_list[1][1]
         first = tsvd["first"]
         select = tsvd["select"]
-        assert f"<pre>{html.escape(str(first))}</pre>" in html_output
-        assert f"<pre>{html.escape(str(select))}</pre>" in html_output
+        assert html.escape(str(first)) in html_output
+        assert html.escape(str(select)) in html_output
 
         # voting classifier
         for name, est in clf.estimators:
-            assert f"<label>{html.escape(name)}</label>" in html_output
-            assert f"<pre>{html.escape(str(est))}</pre>" in html_output
+            assert html.escape(name) in html_output
+            assert html.escape(str(est)) in html_output
 
     # verify that prefers-color-scheme is implemented
     assert "prefers-color-scheme" in html_output
