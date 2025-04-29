@@ -128,7 +128,7 @@ def _handle_zeros_in_scale(scale, copy=True, constant_mask=None):
         "X": ["array-like", "sparse matrix"],
         "axis": [Options(Integral, {0, 1})],
         "with_mean": ["boolean"],
-        "with_std": ["boolean"],
+        "with_std": ["boolean", Options(int, {1, 2})],
         "copy": ["boolean"],
     },
     prefer_skip_nested_validation=True,
@@ -889,7 +889,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     _parameter_constraints: dict = {
         "copy": ["boolean"],
         "with_mean": ["boolean"],
-        "with_std": ["boolean"],
+        "with_std": ["boolean", Options(int, {1, 2})],
     }
 
     def __init__(self, *, copy=True, with_mean=True, with_std=True):
