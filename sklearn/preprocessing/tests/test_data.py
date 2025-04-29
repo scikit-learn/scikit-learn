@@ -2643,30 +2643,33 @@ def test_power_transformer_constant_feature(standardize):
 
 
 def test_standard_scaler_with_std():
+@pytest.mark.parametrize("with_std", [False, True, 1, 2])
+@pytest.mark.parametrize("with_mean", [False, True])
+def test_standard_scaler_with_std(with_std, with_mean):
     rng = np.random.RandomState(0)
-    X = rng.randint(0, 2, (100, 2))
-    scaler = StandardScaler(copy=True, with_mean=True, with_std=2)
+    X = 10 * rng.randn(200, 2) - 7
+    scaler = StandardScaler(copy=True, with_mean=with_mean, with_std=with_std)
     X_scaled = scaler.fit(X).transform(X, copy=True)
-    assert np.isclose(X_scaled.mean(), 0.0)
-    assert np.isclose(X_scaled.std(), 0.5)
-    scaler = StandardScaler(copy=True, with_mean=True, with_std=True)
-    X_scaled = scaler.fit(X).transform(X, copy=True)
-    assert np.isclose(X_scaled.mean(), 0.0)
-    assert np.isclose(X_scaled.std(), 1.0)
 
+    # test scale
+    if not with_std:
+        assert scaler.scale_ == None
+    else:
+        expected_scale = with_std * 10
+        assert_allclose(scaler.scale_, [expected_scale, expected_scale], atol=1)
 
-def test_scale_with_std():
-    rng = np.random.RandomState(0)
-    X = rng.randint(0, 2, (100, 2))
-    X_scaled = scale(X, copy=True, with_mean=True, with_std=2)
-    assert np.isclose(X_scaled.mean(), 0.0)
-    assert np.isclose(X_scaled.std(), 0.5)
-    X_scaled = scale(X, copy=True, with_mean=True, with_std=True)
-    assert np.isclose(X_scaled.mean(), 0.0)
-    assert np.isclose(X_scaled.std(), 1.0)
+    # test transformed data
+    if with_mean:
+        assert_allclose(X_scaled.mean(axis=0), [0, 0], atol=1)
+    elif with_std:
+        expected_scale = with_std * 10
+        assert_allclose(X_scaled.mean(axis=0), [-7/expected_scale, -7/expected_scale], atol=1)
+    else: # no mean and no std
+        assert_allclose(X_scaled.mean(axis=0), [-7, -7], atol=1)
 
-    # Test for invalid cases
-    cases = [-10, -1, 3, 10]
-    for std_ in cases:
-        assert_raises_regex(ValueError, r'Invalid value for `with_std`:'
-                                        r' \S+', scale, X, with_std=std_)
+    if with_std:
+        inv_std = 1/with_std
+        assert_allclose(X_scaled.std(axis=0), [inv_std, inv_std], atol=1)
+    else:
+        assert_allclose(X_scaled.std(axis=0), [10, 10], atol=1)
+
