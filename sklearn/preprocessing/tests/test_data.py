@@ -2701,3 +2701,27 @@ def test_standard_scaler_with_std_sparse(with_std):
     assert_allclose(X_scaled_dense.std(axis=0),
                     expected.std(axis=0), atol=0.5)
 
+
+@pytest.mark.parametrize("with_std", [False, True, 1, 2])
+@pytest.mark.parametrize("with_mean", [False, True])
+def test_standard_scaler_and_scaler_parity_with_std(with_std, with_mean):
+    rng = np.random.RandomState(0)
+    X = 10 * rng.randn(100, 2) - 7
+    scaler = StandardScaler(copy=True, with_mean=with_mean, with_std=with_std)
+    X_scaled_scaler = scaler.fit(X).transform(X, copy=True)
+    X_scaled_scale = scale(X, with_mean=with_mean, with_std=with_std)
+
+    assert_array_equal(X_scaled_scaler, X_scaled_scale)
+
+
+@pytest.mark.parametrize("with_std", [False, True, 1, 2])
+def test_standard_scaler_and_scaler_parity_with_std_sparse(with_std):
+    rng = np.random.RandomState(0)
+    dense = 10 * rng.randn(200, 2) - 7
+    X_sparse = sparse.csr_matrix(dense)
+
+    scaler = StandardScaler(copy=True, with_mean=False, with_std=with_std)
+    X_scaled_scaler = scaler.fit(X_sparse).transform(X_sparse, copy=True)
+    X_scaled_scale = scale(X_sparse, with_mean=False, with_std=with_std)
+
+    assert_allclose_dense_sparse(X_scaled_scaler, X_scaled_scale)
