@@ -708,8 +708,11 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 method=method,
             )
         )
+        # If classification, turn the predict proba into
+        # the one-hot encoded majority class
         oob_pred[oob_indices, :, :] += y_pred
         n_oob_pred[oob_indices, :] += 1
+        # print([[oob_pred[idx, :, :], self._get_oob_predictions(tree, X[oob_indices])[i]] for i,idx in enumerate(oob_indices)])
         return (importances, oob_pred, n_oob_pred)
 
     def _compute_unbiased_feature_importance_and_oob_predictions(
@@ -761,7 +764,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         if not importances.any():
             return np.zeros(self.n_features_in_, dtype=np.float64), oob_pred
-
         return importances / importances.sum(), oob_pred
 
     def _get_estimators_indices(self):
@@ -901,12 +903,12 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         if scoring_function is None:
             scoring_function = accuracy_score
 
-        ufi_feature_importances, _ = (
+        ufi_feature_importances, self.oob_decision_function_ = (
             self._compute_unbiased_feature_importance_and_oob_predictions(
                 X, y, method="ufi"
             )
         )
-        mdi_oob_feature_importances, self.oob_decision_function_ = (
+        mdi_oob_feature_importances, _ = (
             self._compute_unbiased_feature_importance_and_oob_predictions(
                 X, y, method="mdi_oob"
             )
@@ -1244,19 +1246,19 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         if scoring_function is None:
             scoring_function = r2_score
 
-        mdi_oob_feature_importance, self.oob_prediction_ = (
-            self._compute_unbiased_feature_importance_and_oob_predictions(
-                X, y, method="mdi_oob"
-            )
-        )
-        ufi_feature_importances, _ = (
+        ufi_feature_importances, self.oob_prediction_ = (
             self._compute_unbiased_feature_importance_and_oob_predictions(
                 X, y, method="ufi"
             )
         )
+        mdi_oob_feature_importances, _ = (
+            self._compute_unbiased_feature_importance_and_oob_predictions(
+                X, y, method="mdi_oob"
+            )
+        )
         if self.criterion == "squared_error":
             self._ufi_feature_importances = ufi_feature_importances
-            self._mdi_oob_feature_importances = mdi_oob_feature_importance
+            self._mdi_oob_feature_importances = mdi_oob_feature_importances
 
         if self.oob_prediction_.shape[-1] == 1:
             # drop the n_outputs axis if there is a single output

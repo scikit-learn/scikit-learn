@@ -1292,7 +1292,7 @@ cdef class Tree:
         cdef intp_t max_n_classes = self.max_n_classes
         cdef int k, c, node_idx, sample_idx = 0
         cdef int32_t[:, ::1] count_oob_values = np.zeros((node_count, n_outputs), dtype=np.int32)
-        cdef float64_t* value_at_node = self.value + node_idx * n_outputs * max_n_classes
+        cdef int node_value_idx = -1
 
         cdef Node* node
 
@@ -1304,7 +1304,6 @@ cdef class Tree:
                 # root node
                 node = self.nodes
                 node_idx = 0
-                value_at_node = self.value + node_idx * n_outputs * max_n_classes
                 has_oob_sample[node_idx] = 1
                 for k in range(n_outputs):
                     if n_classes[k] > 1:
@@ -1315,7 +1314,8 @@ cdef class Tree:
                         count_oob_values[node_idx, k] += 1
                     else:
                         if method == "ufi":
-                            oob_node_values[node_idx, 0, k] += (y_test[k, sample_idx] - value_at_node[k]) ** 2.0
+                            node_value_idx = node_idx * self.value_stride + k * max_n_classes
+                            oob_node_values[node_idx, 0, k] += (y_test[k, sample_idx] - self.value[node_value_idx]) ** 2.0
                         else:
                             oob_node_values[node_idx, 0, k] += y_test[k, sample_idx]
                         count_oob_values[node_idx, k] += 1
@@ -1326,7 +1326,6 @@ cdef class Tree:
                         node_idx = node.left_child
                     else:
                         node_idx = node.right_child
-                    value_at_node = self.value + node_idx * n_outputs * max_n_classes
                     has_oob_sample[node_idx] = 1
                     node = &self.nodes[node_idx]
                     for k in range(n_outputs):
@@ -1338,7 +1337,8 @@ cdef class Tree:
                             count_oob_values[node_idx, k] += 1
                         else:
                             if method == "ufi":
-                                oob_node_values[node_idx, 0, k] += (y_test[k, sample_idx] - value_at_node[k]) ** 2.0
+                                node_value_idx = node_idx * self.value_stride + k * max_n_classes
+                                oob_node_values[node_idx, 0, k] += (y_test[k, sample_idx] - self.value[node_value_idx]) ** 2.0
                             else:
                                 oob_node_values[node_idx, 0, k] += y_test[k, sample_idx]
                             count_oob_values[node_idx, k] += 1
@@ -1354,12 +1354,13 @@ cdef class Tree:
                         for c in range(n_classes[k]):
                             oob_node_values[node_idx, c, k] /= count_oob_values[node_idx, k]
                 # if leaf store the predictive proba
-                if self.nodes[node_idx].left_child == _TREE_LEAF or self.nodes[node_idx].right_child == _TREE_LEAF:
+                if self.nodes[node_idx].left_child == _TREE_LEAF and self.nodes[node_idx].right_child == _TREE_LEAF:
                     for sample_idx in range(n_samples):
                         if y_leafs[sample_idx] == node_idx:
                             for k in range(n_outputs):
                                 for c in range(n_classes[k]):
-                                    oob_pred[sample_idx, c, k] = oob_node_values[node_idx, c, k]
+                                    node_value_idx = node_idx * self.value_stride + k * max_n_classes + c
+                                    oob_pred[sample_idx, c, k] = self.value[node_value_idx]    
 
     cpdef compute_unbiased_feature_importance_and_oob_predictions(self, object X_test, object y_test, criterion, method="ufi"):
         cdef intp_t n_samples = X_test.shape[0]
@@ -1377,12 +1378,7 @@ cdef class Tree:
         cdef Node* nodes = self.nodes
         cdef Node node = nodes[0]
         cdef int k, c, offset, node_idx = 0
-        cdef int left_idx = -1
-        cdef int right_idx = -1
-        
-        cdef float64_t* value_at_node = self.value + node_idx * n_outputs * max_n_classes
-        cdef float64_t* value_at_left = self.value + left_idx * n_outputs * max_n_classes
-        cdef float64_t* value_at_right = self.value + right_idx * n_outputs * max_n_classes
+        cdef int left_idx, right_idx, node_value_idx, left_value_idx, right_value_idx = -1
 
         cdef intp_t[:, ::1] y_view = np.ascontiguousarray(y_test, dtype=np.intp)
         self._compute_oob_node_values_and_predictions(X_test, y_view, oob_pred, has_oob_sample, oob_node_values, method)
@@ -1394,45 +1390,43 @@ cdef class Tree:
                     left_idx = node.left_child
                     right_idx = node.right_child             
                     if has_oob_sample[left_idx] and has_oob_sample[right_idx]:
-                        value_at_node = self.value + node_idx * n_outputs * max_n_classes
-                        value_at_left = self.value + left_idx * n_outputs * max_n_classes
-                        value_at_right = self.value + right_idx * n_outputs * max_n_classes
-                        offset=0  
                         if method == "ufi":
                             for k in range(n_outputs):
                                 if n_classes[k] > 1: # Classification
                                     for c in range(n_classes[k]):
+                                        node_value_idx = node_idx * self.value_stride + k * max_n_classes + c
+                                        left_value_idx = left_idx * self.value_stride + k * max_n_classes + c
+                                        right_value_idx = right_idx * self.value_stride + k * max_n_classes + c
                                         if criterion == "gini":
                                             importances[node.feature] -= (
-                                                value_at_node[offset + c] * oob_node_values[node_idx, c, k]
+                                                self.value[node_value_idx] * oob_node_values[node_idx, c, k]
                                                 * node.weighted_n_node_samples
                                                 - 
-                                                value_at_left[offset + c] * oob_node_values[left_idx, c, k]
+                                                self.value[left_value_idx] * oob_node_values[left_idx, c, k]
                                                 * nodes[left_idx].weighted_n_node_samples
                                                 - 
-                                                value_at_right[offset + c] * oob_node_values[right_idx, c, k]
+                                                self.value[right_value_idx] * oob_node_values[right_idx, c, k]
                                                 * nodes[right_idx].weighted_n_node_samples
                                             )
                                         elif criterion == "log_loss":
                                             importances[node.feature] -= (
-                                                (value_at_node[offset + c] * log(oob_node_values[node_idx, c, k])
-                                                + log(value_at_node[offset + c]) * oob_node_values[node_idx, c, k])
+                                                (self.value[node_value_idx] * log(oob_node_values[node_idx, c, k])
+                                                + log(self.value[node_value_idx]) * oob_node_values[node_idx, c, k])
                                                 * node.weighted_n_node_samples
                                             )
                                             # If one of the children is pure for oob or inbag samples, set the cross entropy to 0
-                                            if oob_node_values[left_idx, c, k] > 0.0 and value_at_left[offset + c] > 0.0:
+                                            if oob_node_values[left_idx, c, k] > 0.0 and self.value[left_value_idx] > 0.0:
                                                 importances[node.feature] += (
-                                                    (value_at_left[offset + c] * log(oob_node_values[left_idx, c, k])
-                                                    + log(value_at_left[offset + c]) * oob_node_values[left_idx, c, k])
+                                                    (self.value[left_value_idx] * log(oob_node_values[left_idx, c, k])
+                                                    + log(self.value[left_value_idx]) * oob_node_values[left_idx, c, k])
                                                     * nodes[left_idx].weighted_n_node_samples
                                                 )
-                                            if oob_node_values[right_idx, c, k] > 0.0 and value_at_right[offset + c] > 0.0:
+                                            if oob_node_values[right_idx, c, k] > 0.0 and self.value[right_value_idx] > 0.0:
                                                 importances[node.feature] += (
-                                                    (value_at_right[offset + c] * log(oob_node_values[right_idx, c, k])
-                                                    + log(value_at_right[offset + c]) * oob_node_values[right_idx, c, k])
+                                                    (self.value[right_value_idx] * log(oob_node_values[right_idx, c, k])
+                                                    + log(self.value[right_value_idx]) * oob_node_values[right_idx, c, k])
                                                     * nodes[right_idx].weighted_n_node_samples
                                                 )
-                                    offset += n_classes[k]
                                 else: # Regression
                                     importances[node.feature] += (
                                         (node.impurity + oob_node_values[node_idx, 0, k])
@@ -1448,16 +1442,18 @@ cdef class Tree:
                         elif method == "mdi_oob":
                             for k in range(n_outputs):
                                 for c in range(n_classes[k]):
+                                    node_value_idx = node_idx * self.value_stride + k * max_n_classes + c
+                                    left_value_idx = left_idx * self.value_stride + k * max_n_classes + c
+                                    right_value_idx = right_idx * self.value_stride + k * max_n_classes + c
                                     importances[node.feature] += (
-                                        (value_at_node[offset + c] - value_at_left[offset + c])
+                                        (self.value[node_value_idx] - self.value[left_value_idx])
                                         * (oob_node_values[node_idx, c , k] - oob_node_values[left_idx, c, k])
                                         * nodes[left_idx].weighted_n_node_samples
                                         + 
-                                        (value_at_node[offset + c] - value_at_right[offset + c]) 
+                                        (self.value[node_value_idx] - self.value[right_value_idx]) 
                                         * (oob_node_values[node_idx, c, k] - oob_node_values[right_idx, c, k])
                                         * nodes[right_idx].weighted_n_node_samples
                                     )
-                                offset += n_classes[k]
                             importances[node.feature] /= n_outputs
                         else:
                             raise(ValueError(method))
