@@ -238,10 +238,14 @@ class TProcessRegressor(GaussianProcessRegressor):
     ):
         """Predict using the T process regression model.
 
+        The joint predictive distribution at query points is a multivariate
+        Student-t distribution. In addition to the mean of the predictive
+        distribution, optionally also returns its standard deviation
+        (`return_std=True`), covariance (`return_cov=True`) or shape parameter
+        (`return_t_shape=True`). Note that at most one of the three can be
+        requested.
+
         We can also predict based on an unfitted model by using the TP prior.
-        In addition to the mean of the predictive distribution, optionally also
-        returns its standard deviation (`return_std=True`) or covariance
-        (`return_cov=True`). Note that at most one of the two can be requested.
 
         Parameters
         ----------
