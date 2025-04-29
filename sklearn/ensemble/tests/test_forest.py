@@ -323,32 +323,23 @@ def test_importances(dtype, name, criterion, oob_score, importance_attribute_nam
         bootstrap=True,
         random_state=0,
     )
+    est.fit(X, y)
     if oob_score and name in FOREST_REGRESSORS and criterion != "squared_error":
-        with pytest.warns(
-            UserWarning,
-            match="Unbiased feature importance is not available for"
-            " regression with a split criteria other than MSE",
+        with pytest.raises(
+            AttributeError,
+            match="Unbiased feature importance only available for"
+                " regression with split criterion MSE",
         ):
-            est.fit(X, y)
+            importances = getattr(est, importance_attribute_name)
     elif oob_score and name in FOREST_CLASSIFIERS and criterion != "gini":
-        with pytest.warns(
-            UserWarning,
-            match="Unbiased feature importance is not available for"
-            " classification with a split criteria other than Gini",
+        with pytest.raises(
+            AttributeError,
+            match="Unbiased feature importance only available for"
+            " classification with split criterion Gini",
         ):
-            est.fit(X, y)
+            importances = getattr(est, importance_attribute_name)
     else:
-        est.fit(X, y)
-        print(
-            est.estimators_[0].tree_.max_n_classes,
-            est.estimators_[0].tree_.n_classes,
-            est.estimators_[0].tree_.n_outputs,
-        )
-
         importances = getattr(est, importance_attribute_name)
-        print(importances)
-        print(est.feature_importances_)
-
         # The forest estimator can detect that only the first 3 features of the
         # dataset are informative:
         n_important = np.sum(importances > 0.1)

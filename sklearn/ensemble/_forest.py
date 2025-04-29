@@ -901,16 +901,20 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         if scoring_function is None:
             scoring_function = accuracy_score
 
-        self._ufi_feature_importances_, _ = (
+        ufi_feature_importances, _ = (
             self._compute_unbiased_feature_importance_and_oob_predictions(
                 X, y, method="ufi"
             )
         )
-        self._mdi_oob_feature_importances_, self.oob_decision_function_ = (
+        mdi_oob_feature_importances, self.oob_decision_function_ = (
             self._compute_unbiased_feature_importance_and_oob_predictions(
                 X, y, method="mdi_oob"
             )
         )
+        if self.criterion == "gini":
+            self._ufi_feature_importances_ = ufi_feature_importances
+            self._mdi_oob_feature_importances_ = mdi_oob_feature_importances
+
         if self.oob_decision_function_.shape[-1] == 1:
             # drop the n_outputs axis if there is a single output
             self.oob_decision_function_ = self.oob_decision_function_.squeeze(axis=-1)
@@ -921,8 +925,9 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
 
     @property
     def ufi_feature_importances_(self):
-        if self.criterion != "squared_error":
-            raise NotImplementedError(
+        check_is_fitted(self)
+        if self.criterion != "gini":
+            raise AttributeError(
                 "Unbiased feature importance only available for"
                 " classification with split criterion Gini"
             )
@@ -931,8 +936,9 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
 
     @property
     def mdi_oob_feature_importances_(self):
-        if self.criterion != "squared_error":
-            raise NotImplementedError(
+        check_is_fitted(self)
+        if self.criterion != "gini":
+            raise AttributeError(
                 "Unbiased feature importance only available for"
                 " classification with split criterion Gini"
             )
@@ -1237,16 +1243,21 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         """
         if scoring_function is None:
             scoring_function = r2_score
-        self._ufi_feature_importances_, _ = (
-            self._compute_unbiased_feature_importance_and_oob_predictions(
-                X, y, method="ufi"
-            )
-        )
-        self._mdi_oob_feature_importances_, self.oob_prediction_ = (
+
+        mdi_oob_feature_importance, self.oob_prediction_ = (
             self._compute_unbiased_feature_importance_and_oob_predictions(
                 X, y, method="mdi_oob"
             )
         )
+        ufi_feature_importances, _ = (
+            self._compute_unbiased_feature_importance_and_oob_predictions(
+                X, y, method="ufi"
+            )
+        )
+        if self.criterion == "squared_error":
+            self._ufi_feature_importances = ufi_feature_importances
+            self._mdi_oob_feature_importances = mdi_oob_feature_importance
+
         if self.oob_prediction_.shape[-1] == 1:
             # drop the n_outputs axis if there is a single output
             self.oob_prediction_ = self.oob_prediction_.squeeze(axis=-1)
@@ -1258,23 +1269,25 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
     @property
     def ufi_feature_importances_(self):
+        check_is_fitted(self)
         if self.criterion != "squared_error":
-            raise NotImplementedError(
+            raise AttributeError(
                 "Unbiased feature importance only available for"
                 " regression with split criterion MSE"
             )
         else:
-            return self._ufi_feature_importances_
+            return self._ufi_feature_importances
 
     @property
     def mdi_oob_feature_importances_(self):
+        check_is_fitted(self)
         if self.criterion != "squared_error":
-            raise NotImplementedError(
+            raise AttributeError(
                 "Unbiased feature importance only available for"
                 " regression with split criterion MSE"
             )
         else:
-            return self._mdi_oob_feature_importances_
+            return self._mdi_oob_feature_importances
 
     def _compute_partial_dependence_recursion(self, grid, target_features):
         """Fast partial dependence computation.
