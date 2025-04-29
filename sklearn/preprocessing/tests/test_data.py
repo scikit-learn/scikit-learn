@@ -2673,3 +2673,31 @@ def test_standard_scaler_with_std(with_std, with_mean):
     else:
         assert_allclose(X_scaled.std(axis=0), [10, 10], atol=1)
 
+
+@pytest.mark.parametrize("with_std", [False, True, 1, 2])
+def test_standard_scaler_with_std_sparse(with_std):
+    rng = np.random.RandomState(0)
+    dense = 10 * rng.randn(200, 2) - 7
+    X_sparse = sparse.csr_matrix(dense)
+
+    scaler = StandardScaler(copy=True, with_mean=False, with_std=with_std)
+    X_scaled = scaler.fit(X_sparse).transform(X_sparse, copy=True)
+
+    # test scale
+    if not with_std:
+        # no scaling, scale_ remains None
+        assert scaler.scale_ is None
+    else:
+        expected_scale = with_std * 10
+        assert_allclose(scaler.scale_, [expected_scale, expected_scale], atol=1)
+
+    if with_std:
+        expected = dense / expected_scale
+    else:
+        expected = dense
+
+    # convert back to dense to assert
+    X_scaled_dense = X_scaled.toarray()
+    assert_allclose(X_scaled_dense.std(axis=0),
+                    expected.std(axis=0), atol=0.5)
+
