@@ -748,11 +748,12 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     .. code-block:: text
 
-        z = (x - u) / s
+        z = (x - u) / (w * s)
 
     where `u` is the mean of the training samples or zero if `with_mean=False`,
-    and `s` is the standard deviation of the training samples or one if
-    `with_std=False`.
+    `s` is the standard deviation of the training samples or one if
+    `with_std=False`, `w` is the value given to `with_std`,
+    `True` is treated as 1.
 
     Centering and scaling happen independently on each feature by computing
     the relevant statistics on the samples in the training set. Mean and
