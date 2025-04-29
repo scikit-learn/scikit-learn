@@ -985,14 +985,6 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
-        valid_with_std_values = {1, 2, True, False}
-        if self.with_std not in valid_with_std_values:
-            raise ValueError(
-                "Invalid `with_std` value {!r}. Should be one of {!r}".format(
-                    self.with_std, valid_with_std_values
-                )
-            )
-
         scale_factor = int(self.with_std)
 
         # Even in the case of `with_mean=False`, we update the mean anyway
