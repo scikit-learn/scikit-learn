@@ -2642,7 +2642,6 @@ def test_power_transformer_constant_feature(standardize):
             assert_allclose(Xt_, X)
 
 
-def test_standard_scaler_with_std():
 @pytest.mark.parametrize("with_std", [False, True, 1, 2])
 @pytest.mark.parametrize("with_mean", [False, True])
 def test_standard_scaler_with_std(with_std, with_mean):
@@ -2663,12 +2662,14 @@ def test_standard_scaler_with_std(with_std, with_mean):
         assert_allclose(X_scaled.mean(axis=0), [0, 0], atol=1)
     elif with_std:
         expected_scale = with_std * 10
-        assert_allclose(X_scaled.mean(axis=0), [-7/expected_scale, -7/expected_scale], atol=1)
-    else: # no mean and no std
+        assert_allclose(
+            X_scaled.mean(axis=0), [-7 / expected_scale, -7 / expected_scale], atol=1
+        )
+    else:  # no mean and no std
         assert_allclose(X_scaled.mean(axis=0), [-7, -7], atol=1)
 
     if with_std:
-        inv_std = 1/with_std
+        inv_std = 1 / with_std
         assert_allclose(X_scaled.std(axis=0), [inv_std, inv_std], atol=1)
     else:
         assert_allclose(X_scaled.std(axis=0), [10, 10], atol=1)
@@ -2698,8 +2699,7 @@ def test_standard_scaler_with_std_sparse(with_std):
 
     # convert back to dense to assert
     X_scaled_dense = X_scaled.toarray()
-    assert_allclose(X_scaled_dense.std(axis=0),
-                    expected.std(axis=0), atol=0.5)
+    assert_allclose(X_scaled_dense.std(axis=0), expected.std(axis=0), atol=0.5)
 
 
 @pytest.mark.parametrize("with_std", [False, True, 1, 2])
