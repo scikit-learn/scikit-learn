@@ -27,6 +27,7 @@ def _smacof_single(
     init=None,
     max_iter=300,
     verbose=0,
+    eps=1e-6,
     random_state=None,
     normalized_stress=False,
 ):
