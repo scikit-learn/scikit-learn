@@ -136,7 +136,10 @@ def _handle_zeros_in_scale(scale, copy=True, constant_mask=None):
 def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     """Standardize a dataset along any axis.
 
-    Center to the mean and component wise scale to unit variance.
+    Center to the mean and scale each feature to unit variance if
+    `with_std` is True or 1. If `with_std` is 2, scale the data so
+    that each feature has a variance of 0.25 (i.e., standard
+    deviation of 0.5).
 
     Read more in the :ref:`User Guide <preprocessing_scaler>`.
 
@@ -156,7 +159,7 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     with_std : bool, 1 or 2, default=True
         If True or 1, scale the data to unit variance (i.e.,
         standard deviation equal to 1).
-        If 2, scale the data so that the standard deviation is 2 instead of 1.
+        If 2, scale the data so that the standard deviation is 0.5.
         Scaling with a factor of 2 can improve the interpretability of
         linear model coefficients [Gelman2008].
 
@@ -744,10 +747,9 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     where `u` is the mean of the training samples if `with_mean=True`,
     and 0 otherwise;
-    `s` is the standard deviation of the training samples if
-    `with_std=True`, and 1 otherwise; and `w` is the value of `with_std`,
-    with True treated as 1. If `with_std=False`, the denominator
-    simplifies to 1.
+    `s` is the standard deviation of the training samples; and
+    `w` is the value of `with_std`, with True treated as 1. If
+    `with_std=False`, the denominator simplifies to 1.
 
     Centering and scaling happen independently on each feature by computing
     the relevant statistics on the samples in the training set. Mean and
@@ -795,7 +797,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     with_std : bool, 1 or 2, default=True
         If True or 1, scale the data to unit variance (i.e.,
         standard deviation equal to 1).
-        If 2, scale the data so that the standard deviation is 2 instead of 1.
+        If 2, scale the data so that the standard deviation is 0.5.
         Scaling with a factor of 2 can improve the interpretability of
         linear model coefficients [Gelman2008].
 
