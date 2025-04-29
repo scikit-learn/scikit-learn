@@ -204,8 +204,8 @@ class DecisionBoundaryDisplay:
             Object that stores computed values.
         """
         check_matplotlib_support("DecisionBoundaryDisplay.plot")
-        import matplotlib as mpl  # noqa
-        import matplotlib.pyplot as plt  # noqa
+        import matplotlib as mpl
+        import matplotlib.pyplot as plt
 
         if plot_method not in ("contourf", "contour", "pcolormesh"):
             raise ValueError(
@@ -234,7 +234,7 @@ class DecisionBoundaryDisplay:
                         cmap = "gist_rainbow"
 
                 # Special case for the tab10 and tab20 colormaps that encode a
-                # discret set of colors that are easily distinguishable
+                # discrete set of colors that are easily distinguishable
                 # contrary to other colormaps that are continuous.
                 if cmap == "tab10" and n_responses <= 10:
                     colors = plt.get_cmap("tab10", 10).colors[:n_responses]
@@ -425,7 +425,7 @@ class DecisionBoundaryDisplay:
         """
         check_matplotlib_support(f"{cls.__name__}.from_estimator")
         check_is_fitted(estimator)
-        import matplotlib as mpl  # noqa
+        import matplotlib as mpl
 
         if not grid_resolution > 1:
             raise ValueError(

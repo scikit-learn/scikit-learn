@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   lint:
     docker:
-      - image: cimg/python:3.9.18
+      - image: cimg/python:3.10.16
     steps:
       - checkout
       - run:
@@ -11,14 +11,14 @@ jobs:
           command: |
             source build_tools/shared.sh
             # Include pytest compatibility with mypy
-            pip install pytest $(get_dep ruff min) $(get_dep mypy min) $(get_dep black min) cython-lint
+            pip install pytest $(get_dep ruff min) $(get_dep mypy min) cython-lint
       - run:
           name: linting
           command: ./build_tools/linting.sh
 
   doc-min-dependencies:
     docker:
-      - image: cimg/python:3.9.18
+      - image: cimg/base:current-22.04
     environment:
       - MKL_NUM_THREADS: 2
       - OPENBLAS_NUM_THREADS: 2
@@ -56,7 +56,7 @@ jobs:
 
   doc:
     docker:
-      - image: cimg/python:3.9.18
+      - image: cimg/base:current-22.04
     environment:
       - MKL_NUM_THREADS: 2
       - OPENBLAS_NUM_THREADS: 2
@@ -98,7 +98,7 @@ jobs:
 
   deploy:
     docker:
-      - image: cimg/python:3.9.18
+      - image: cimg/base:current-22.04
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
