@@ -427,7 +427,7 @@ def smacof(
         return best_pos, best_stress
 
 
-# TODO(1.9): change default `eps` to 1e-6 and `n_init` to 1, see PR #31117
+# TODO(1.9): change default `n_init` to 1, see PR #31117
 class MDS(BaseEstimator):
     """Multidimensional scaling.
 
