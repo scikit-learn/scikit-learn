@@ -28,13 +28,7 @@ def test_nonmetric_lower_normalized_stress():
     Z = np.array([[-0.266, -0.539], [0.451, 0.252], [0.016, -0.238], [-0.200, 0.524]])
 
     _, stress1 = mds.smacof(
-        sim,
-        init=Z,
-        n_components=2,
-        max_iter=1000,
-        n_init=1,
-        normalized_stress=True,
-        eps=1e-6,
+        sim, init=Z, n_components=2, max_iter=1000, n_init=1, normalized_stress=True
     )
 
     _, stress2 = mds.smacof(
@@ -45,7 +39,6 @@ def test_nonmetric_lower_normalized_stress():
         n_init=1,
         normalized_stress=True,
         metric=False,
-        eps=1e-6,
     )
     assert stress1 > stress2
 
@@ -61,7 +54,6 @@ def test_nonmetric_mds_optimization():
     mds_est = mds.MDS(
         n_components=2,
         n_init=1,
-        eps=1e-6,
         max_iter=2,
         metric=False,
         random_state=42,
@@ -71,7 +63,6 @@ def test_nonmetric_mds_optimization():
     mds_est = mds.MDS(
         n_components=2,
         n_init=1,
-        eps=1e-6,
         max_iter=3,
         metric=False,
         random_state=42,
@@ -101,13 +92,13 @@ def test_smacof_error():
     sim = np.array([[0, 5, 9, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
 
     with pytest.raises(ValueError):
-        mds.smacof(sim, eps=1e-6, n_init=1)
+        mds.smacof(sim, n_init=1)
 
     # Not squared similarity matrix:
     sim = np.array([[0, 5, 9, 4], [5, 0, 2, 2], [4, 2, 1, 0]])
 
     with pytest.raises(ValueError):
-        mds.smacof(sim, eps=1e-6, n_init=1)
+        mds.smacof(sim, n_init=1)
 
     # init not None and not correct format:
     sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
