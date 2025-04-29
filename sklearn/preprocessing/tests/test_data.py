@@ -2704,7 +2704,7 @@ def test_standard_scaler_with_std_sparse(with_std):
 
 @pytest.mark.parametrize("with_std", [False, True, 1, 2])
 @pytest.mark.parametrize("with_mean", [False, True])
-def test_standard_scaler_and_scaler_parity_with_std(with_std, with_mean):
+def test_standard_scaler_and_scale_parity_with_std(with_std, with_mean):
     rng = np.random.RandomState(0)
     X = 10 * rng.randn(100, 2) - 7
     scaler = StandardScaler(copy=True, with_mean=with_mean, with_std=with_std)
@@ -2715,7 +2715,7 @@ def test_standard_scaler_and_scaler_parity_with_std(with_std, with_mean):
 
 
 @pytest.mark.parametrize("with_std", [False, True, 1, 2])
-def test_standard_scaler_and_scaler_parity_with_std_sparse(with_std):
+def test_standard_scaler_and_scale_parity_with_std_sparse(with_std):
     rng = np.random.RandomState(0)
     dense = 10 * rng.randn(200, 2) - 7
     X_sparse = sparse.csr_matrix(dense)
