@@ -55,7 +55,7 @@ from sklearn.datasets import fetch_california_housing
 from sklearn.ensemble import RandomForestRegressor
 
 # To use this experimental feature, we need to explicitly ask for it:
-from sklearn.experimental import enable_iterative_imputer  # noqa
+from sklearn.experimental import enable_iterative_imputer  # noqa: F401
 from sklearn.impute import IterativeImputer, SimpleImputer
 from sklearn.kernel_approximation import Nystroem
 from sklearn.linear_model import BayesianRidge, Ridge

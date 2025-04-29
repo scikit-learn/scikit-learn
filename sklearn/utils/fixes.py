@@ -43,7 +43,7 @@ DIA_CONTAINERS = [scipy.sparse.dia_matrix, scipy.sparse.dia_array]
 
 # Remove when minimum scipy version is 1.11.0
 try:
-    from scipy.sparse import sparray  # noqa
+    from scipy.sparse import sparray  # noqa: F401
 
     SPARRAY_PRESENT = True
 except ImportError:
@@ -182,7 +182,10 @@ else:
 if np_version >= parse_version("1.25.0"):
     from numpy.exceptions import ComplexWarning, VisibleDeprecationWarning
 else:
-    from numpy import ComplexWarning, VisibleDeprecationWarning  # type: ignore  # noqa
+    from numpy import (  # noqa: F401
+        ComplexWarning,
+        VisibleDeprecationWarning,
+    )
 
 
 # TODO: Adapt when Pandas > 2.2 is the minimum supported version
@@ -318,17 +321,19 @@ def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=Fals
 
 # TODO: Remove when Scipy 1.12 is the minimum supported version
 if sp_version < parse_version("1.12"):
-    from ..externals._scipy.sparse.csgraph import laplacian  # type: ignore
+    from ..externals._scipy.sparse.csgraph import laplacian
 else:
-    from scipy.sparse.csgraph import laplacian  # type: ignore  # noqa  # pragma: no cover
+    from scipy.sparse.csgraph import (
+        laplacian,  # noqa: F401  # pragma: no cover
+    )
 
 
 def _in_unstable_openblas_configuration():
     """Return True if in an unstable configuration for OpenBLAS"""
 
     # Import libraries which might load OpenBLAS.
-    import numpy  # noqa
-    import scipy  # noqa
+    import numpy  # noqa: F401
+    import scipy  # noqa: F401
 
     modules_info = _get_threadpool_controller().info()
 
@@ -337,7 +342,7 @@ def _in_unstable_openblas_configuration():
         return False
 
     # OpenBLAS 0.3.16 fixed instability for arm64, see:
-    # https://github.com/xianyi/OpenBLAS/blob/1b6db3dbba672b4f8af935bd43a1ff6cff4d20b7/Changelog.txt#L56-L58 # noqa
+    # https://github.com/xianyi/OpenBLAS/blob/1b6db3dbba672b4f8af935bd43a1ff6cff4d20b7/Changelog.txt#L56-L58
     openblas_arm64_stable_version = parse_version("0.3.16")
     for info in modules_info:
         if info["internal_api"] != "openblas":
