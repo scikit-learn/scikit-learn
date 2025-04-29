@@ -800,7 +800,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         matrix which in common use cases is likely to be too large to fit in
         memory.
 
-    with_std : boolean, 1 or 2, default=True
+    with_std : bool, 1 or 2, default=True
         If True or 1, scale the data to unit variance (i.e.,
         standard deviation equal to 1).
         If 2, scale the data so that the standard deviation is 2 instead of 1.
