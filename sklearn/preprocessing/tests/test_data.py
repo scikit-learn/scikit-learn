@@ -2652,7 +2652,7 @@ def test_standard_scaler_with_std(with_std, with_mean):
 
     # test scale
     if not with_std:
-        assert scaler.scale_ == None
+        assert scaler.scale_ is None
     else:
         expected_scale = with_std * 10
         assert_allclose(scaler.scale_, [expected_scale, expected_scale], atol=1)
