@@ -20,10 +20,10 @@ from ._gpr import GPR_CHOLESKY_LOWER, GaussianProcessRegressor
 class TProcessRegressor(GaussianProcessRegressor):
     """T Process Regressor (TPR).
 
-    This implementation is primarily based of [SW2014]. However, due to their unusual
-    parametrization of the Student T distribution [TW2018] is also referenced.
-    Lastly the kernel parameter optimization is largely based off [RW2006] as was
-    done in GPs
+    This implementation is primarily based of [SW2014]_. However, due to their unusual
+    parametrization of the Student T distribution [TW2018]_ is also referenced.
+    Lastly the kernel parameter optimization is largely based off [RW2006]_ as was
+    done in GPs.
 
     In addition to the gaussian process regressor (._gpr.GaussianProcessRegressor),
     :class:`TProcessRegressor`:
