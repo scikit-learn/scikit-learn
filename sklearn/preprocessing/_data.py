@@ -154,11 +154,11 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
         If True, center the data before scaling.
 
     with_std : bool, 1 or 2, default=True
-        If 1 or True, scale the data to unit variance (or equivalently,
-        unit standard deviation).
-        Otherwise 2, scale the data to using scaling factor 2
-        standard deviation. It improves interpretability of linear model
-        coefficients with both binary and continuous features [Gelman2008].
+        If True or 1, scale the data to unit variance (i.e.,
+        standard deviation equal to 1).
+        If 2, scale the data so that the standard deviation is 2 instead of 1.
+        Scaling with a factor of 2 can improve the interpretability of
+        linear model coefficients [Gelman2008].
 
     copy : bool, default=True
         If False, try to avoid a copy and scale in place.
@@ -801,11 +801,11 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         memory.
 
     with_std : boolean, 1 or 2, default=True
-        - If `1` or `True`, scale the data to unit variance (or equivalently,
-        unit standard deviation);
-        - otherwise `2`, scale the data to using scaling factor 2
-        standard deviation. It improves interpretability of linear model
-        coefficients with both binary and continuous features [Gelman2008].
+        If True or 1, scale the data to unit variance (i.e.,
+        standard deviation equal to 1).
+        If 2, scale the data so that the standard deviation is 2 instead of 1.
+        Scaling with a factor of 2 can improve the interpretability of
+        linear model coefficients [Gelman2008].
 
     Attributes
     ----------
