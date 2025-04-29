@@ -239,7 +239,7 @@ def test_future_warning_n_init():
     sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
 
     with pytest.warns(FutureWarning):
-        mds.smacof(sim, eps=1e-6)
+        mds.smacof(sim)
 
     with pytest.warns(FutureWarning):
         mds.MDS(eps=1e-6).fit(X)
