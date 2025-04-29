@@ -114,7 +114,7 @@ def test_smacof_error():
 
     Z = np.array([[-0.266, -0.539], [0.016, -0.238], [-0.200, 0.524]])
     with pytest.raises(ValueError):
-        mds.smacof(sim, init=Z, n_init=1, eps=1e-6)
+        mds.smacof(sim, init=Z, n_init=1)
 
 
 def test_MDS():
@@ -123,7 +123,6 @@ def test_MDS():
         metric=False,
         n_jobs=3,
         n_init=3,
-        eps=1e-6,
         dissimilarity="precomputed",
     )
     mds_clf.fit(sim)
@@ -179,7 +178,7 @@ def test_isotonic_outofbounds():
             [0.8766008278401566, 0.4227358815811242],
         ]
     )
-    mds.smacof(dis, init=init, metric=False, n_init=1, eps=1e-6)
+    mds.smacof(dis, init=init, metric=False, n_init=1)
 
 
 # TODO(1.9): remove warning filter
@@ -220,7 +219,6 @@ def test_convergence_does_not_depend_on_scale(metric):
     mds_est = mds.MDS(
         n_components=2,
         random_state=42,
-        eps=1e-6,
         metric=metric,
     )
 
@@ -242,4 +240,4 @@ def test_future_warning_n_init():
         mds.smacof(sim)
 
     with pytest.warns(FutureWarning):
-        mds.MDS(eps=1e-6).fit(X)
+        mds.MDS().fit(X)
