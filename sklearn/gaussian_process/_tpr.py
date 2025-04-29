@@ -428,7 +428,7 @@ class TProcessRegressor(GaussianProcessRegressor):
             Log-marginal likelihood of multivariate T distribution
             using covariance K and training data
         """
-        # Log-likelihood function can be found in [TW2018]
+        # Log-likelihood function Eq (27) in [TW2018]
         ### Change to shape of kernel Parameter ###
         L = (
             L
