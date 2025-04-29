@@ -143,7 +143,7 @@ class TProcessRegressor(GaussianProcessRegressor):
 
     See Also
     --------
-    GaussianProcessClassifier : Gaussian process regression (GPR)
+    GaussianProcessRegressor : Gaussian process regression (GPR).
 
     References
     ----------
