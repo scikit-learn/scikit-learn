@@ -16,7 +16,7 @@ https://repo.anaconda.com/pkgs/main/noarch/tzdata-2025a-h04d1e81_0.conda#885caf4
 https://repo.anaconda.com/pkgs/main/osx-64/xz-5.6.4-h46256e1_1.conda#ce989a528575ad332a650bb7c7f7e5d5
 https://repo.anaconda.com/pkgs/main/osx-64/zlib-1.2.13-h4b97444_1.conda#38e35f7c817fac0973034bfce6706ec2
 https://repo.anaconda.com/pkgs/main/osx-64/ccache-3.7.9-hf120daa_0.conda#a01515a32e721c51d631283f991bc8ea
-https://repo.anaconda.com/pkgs/main/osx-64/expat-2.6.4-h6d0c2b6_0.conda#337f85e792486001ba7aed0fa2f93e64
+https://repo.anaconda.com/pkgs/main/osx-64/expat-2.7.1-h6d0c2b6_0.conda#6cdc93776b7551083854e7f106a62720
 https://repo.anaconda.com/pkgs/main/osx-64/intel-openmp-2023.1.0-ha357a0b_43548.conda#ba8a89ffe593eb88e4c01334753c40c3
 https://repo.anaconda.com/pkgs/main/osx-64/lerc-4.0.0-h6d0c2b6_0.conda#824f87854c58df1525557c8639ce7f93
 https://repo.anaconda.com/pkgs/main/osx-64/libgfortran5-11.3.0-h9dfd629_28.conda#1fa1a27ee100b1918c3021dbfa3895a3
@@ -32,7 +32,7 @@ https://repo.anaconda.com/pkgs/main/osx-64/libgfortran-5.0.0-11_3_0_hecd8cb5_28.
 https://repo.anaconda.com/pkgs/main/osx-64/mkl-2023.1.0-h8e150cf_43560.conda#85d0f3431dd5c6ae44f8725fdd3d3e59
 https://repo.anaconda.com/pkgs/main/osx-64/sqlite-3.45.3-h6c40b1e_0.conda#2edf909b937b3aad48322c9cb2e8f1a0
 https://repo.anaconda.com/pkgs/main/osx-64/zstd-1.5.6-h138b38a_0.conda#f4d15d7d0054d39e6a24fe8d7d1e37c5
-https://repo.anaconda.com/pkgs/main/osx-64/libtiff-4.5.1-h6fa9cd1_1.conda#3d7e2cea5c733721750160acb997a90b
+https://repo.anaconda.com/pkgs/main/osx-64/libtiff-4.7.0-h2dfa3ea_0.conda#82a118ce0139e2bf6f7a99c4cfbd4749
 https://repo.anaconda.com/pkgs/main/osx-64/python-3.12.9-hcd54a6c_0.conda#1bf9af06f3e476df1f72e8674a9224df
 https://repo.anaconda.com/pkgs/main/osx-64/brotli-python-1.0.9-py312h6d0c2b6_9.conda#425936421fe402074163ac3ffe33a060
 https://repo.anaconda.com/pkgs/main/osx-64/coverage-7.6.9-py312h46256e1_0.conda#f8c1547bbf522a600ee795901240a7b0
@@ -41,10 +41,10 @@ https://repo.anaconda.com/pkgs/main/noarch/execnet-2.1.1-pyhd3eb1b0_0.conda#b3cb
 https://repo.anaconda.com/pkgs/main/noarch/iniconfig-1.1.1-pyhd3eb1b0_0.tar.bz2#e40edff2c5708f342cef43c7f280c507
 https://repo.anaconda.com/pkgs/main/osx-64/joblib-1.4.2-py312hecd8cb5_0.conda#8ab03dfa447b4e0bfa0bd3d25930f3b6
 https://repo.anaconda.com/pkgs/main/osx-64/kiwisolver-1.4.8-py312h6d0c2b6_0.conda#060d4498fcc967a640829cb7e55c95f2
-https://repo.anaconda.com/pkgs/main/osx-64/lcms2-2.16-h4f63f0c_0.conda#2cd61d3449b21735ccca2e09ca2f93ef
+https://repo.anaconda.com/pkgs/main/osx-64/lcms2-2.16-h31d93a5_1.conda#42450b66e91caf9ab0672a599e2a7bd0
 https://repo.anaconda.com/pkgs/main/osx-64/mkl-service-2.4.0-py312h46256e1_2.conda#04297cb766cabf38613ed6eb4eec85c3
 https://repo.anaconda.com/pkgs/main/osx-64/ninja-1.12.1-hecd8cb5_0.conda#ee3b660616ef0fbcbd0096a67c11c94b
-https://repo.anaconda.com/pkgs/main/osx-64/openjpeg-2.5.2-hbf2204d_0.conda#8463f11309271a93d615450382761470
+https://repo.anaconda.com/pkgs/main/osx-64/openjpeg-2.5.2-h2d09ccc_1.conda#0f2e221843154b436b5982c695df627b
 https://repo.anaconda.com/pkgs/main/osx-64/packaging-24.2-py312hecd8cb5_0.conda#76512e47c9c37443444ef0624769f620
 https://repo.anaconda.com/pkgs/main/osx-64/pluggy-1.5.0-py312hecd8cb5_0.conda#ca381e438f1dbd7986ac0fa0da70c9d8
 https://repo.anaconda.com/pkgs/main/osx-64/pyparsing-3.2.0-py312hecd8cb5_0.conda#e4086daaaed13f68cc8d5b9da7db73cc
@@ -58,7 +58,7 @@ https://repo.anaconda.com/pkgs/main/osx-64/unicodedata2-15.1.0-py312h46256e1_1.c
 https://repo.anaconda.com/pkgs/main/osx-64/wheel-0.45.1-py312hecd8cb5_0.conda#fafb8687668467d8624d2ddd0909bce9
 https://repo.anaconda.com/pkgs/main/osx-64/fonttools-4.55.3-py312h46256e1_0.conda#f7680dd6b8b1c2f8aab17cf6630c6deb
 https://repo.anaconda.com/pkgs/main/osx-64/numpy-base-1.26.4-py312h6f81483_0.conda#87f73efbf26ab2e2ea7c32481a71bd47
-https://repo.anaconda.com/pkgs/main/osx-64/pillow-11.1.0-py312h47bf62f_0.conda#56484cc67963212898552539482aa6b5
+https://repo.anaconda.com/pkgs/main/osx-64/pillow-11.1.0-py312h935ef2f_1.conda#c2f7a3f027cc93a3626d50b765b75dc5
 https://repo.anaconda.com/pkgs/main/osx-64/pip-25.0-py312hecd8cb5_0.conda#ece07a868514de9803e7a3c8aec1909f
 https://repo.anaconda.com/pkgs/main/osx-64/pytest-8.3.4-py312hecd8cb5_0.conda#b15ee02022967632dfa1672669228bee
 https://repo.anaconda.com/pkgs/main/osx-64/python-dateutil-2.9.0post0-py312hecd8cb5_2.conda#1047dde28f78127dd9f6121e882926dd
