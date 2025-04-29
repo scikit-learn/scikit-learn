@@ -322,16 +322,16 @@ def accuracy_score(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    replace_undefined_by : np.nan, int 0, float in [0.0, 1.0], default=0.0
+    replace_undefined_by : np.nan, int 0, float in `[0.0, 1.0]`, default=0.0
         Sets the return value when `y_true` and `y_pred` are empty and the metric is
         thus ill-defined. Can take the following values:
 
         - `np.nan` to return `np.nan`
-        - a floating point value in the range of [0.0, 1.0] or int 0
+        - a floating point value in the range of `[0.0, 1.0]`
 
-        Note that with `normalize=False` only `np.nan` or `0` can be returned regardless
-        of the value set, since 0 ≤ accuracy_score ≤ number of samples and here,
-        `y_true` and `y_pred` are empty.
+        Note that with `normalize=False` only `np.nan` or `0.0` can be returned
+        regardless of the value set, since `0.0 ≤ accuracy_score ≤ number of samples`
+        and here, `y_true` and `y_pred` are empty.
 
         .. versionadded:: 1.7
 
@@ -377,22 +377,16 @@ def accuracy_score(
     check_consistent_length(y_true, y_pred, sample_weight)
 
     if _num_samples(y_true) == 0:
+        msg = (
+            "`y_true` and `y_pred` are empty. `accuracy_score` is undefined and "
+            "set to the value defined in the `replace_undefined_by` param, which "
+            "defaults to 0.0."
+        )
+        warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
         if normalize:
-            msg = (
-                "`y_true` and `y_pred` are empty. `accuracy_score` is undefined and "
-                "set to the value defined in the `replace_undefined_by` param, which "
-                "defaults to 0.0."
-            )
-            warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
             return replace_undefined_by
         else:
-            msg = (
-                "`y_true` and `y_pred` are empty. `accuracy_score` is undefined and "
-                "set to the value defined in the `replace_undefined_by` param, which "
-                "defaults to 0 when `normalize=False` is set."
-            )
-            warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
-            return replace_undefined_by if math.isnan(replace_undefined_by) else 0
+            return replace_undefined_by if math.isnan(replace_undefined_by) else 0.0
 
     if y_type.startswith("multilabel"):
         differing_labels = _count_nonzero(y_true - y_pred, xp=xp, device=device, axis=1)
