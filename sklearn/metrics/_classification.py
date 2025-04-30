@@ -927,7 +927,7 @@ def cohen_kappa_score(
             replace_undefined_by = np.nan
             warnings.warn(mgs_changing_default, FutureWarning)
         msg = (
-            "`y2` does not contain any label that is also both present in `y1` and in "
+            "`y2` contains no labels that are presented in both `y1` and "
             "`labels`. cohen_kappa_score is undefined and set to the value defined in "
             "the `replace_undefined_by` param, which defaults to 0.0."
         )
@@ -953,7 +953,7 @@ def cohen_kappa_score(
             replace_undefined_by = np.nan
             warnings.warn(mgs_changing_default, FutureWarning)
         msg = (
-            "`y1` and `y2` only have one label in common that is also in `labels`. "
+            "`y1`, `y2` and `labels` have only one label in common. "
             "cohen_kappa_score is undefined and set to the value defined in the "
             "`replace_undefined_by` param, which defaults to 0.0."
         )
