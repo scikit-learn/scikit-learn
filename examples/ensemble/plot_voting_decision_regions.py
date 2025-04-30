@@ -166,7 +166,7 @@ for (est_name, _), est_probas in zip(eclf.estimators, predict_probas):
 # %%
 print(
     "Weighted average of soft-predictions: "
-    f"{np.dot(weights, predict_probas)/np.sum(weights)}"
+    f"{np.dot(weights, predict_probas) / np.sum(weights)}"
 )
 
 # %%
@@ -183,7 +183,7 @@ print(
 
 print(
     "Class with the highest weighted average of soft-predictions: "
-    f"{np.argmax(np.dot(weights, predict_probas)/np.sum(weights))}"
+    f"{np.argmax(np.dot(weights, predict_probas) / np.sum(weights))}"
 )
 
 # %%
