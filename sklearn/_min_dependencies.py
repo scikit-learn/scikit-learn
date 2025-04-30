@@ -32,7 +32,7 @@ dependent_packages = {
     "memory_profiler": ("0.57.0", "benchmark, docs"),
     "pytest": (PYTEST_MIN_VERSION, "tests"),
     "pytest-cov": ("2.9.0", "tests"),
-    "ruff": ("0.11.2", "tests"),
+    "ruff": ("0.11.7", "tests"),
     "mypy": ("1.15", "tests"),
     "pyamg": ("4.2.1", "tests"),
     "polars": ("0.20.30", "docs, tests"),
