@@ -926,65 +926,47 @@ def test_cohen_kappa():
     )
 
 
+@pytest.mark.parametrize(
+    "test_case",
+    [
+        # empty inputs:
+        ([], [], None, None),
+        # annotator y2 does not assign any label specified in `labels` (note: also
+        # applicable if `labels` is default and `y2` does not contain any label that is
+        # in `y1`):
+        ([1] * 5 + [2] * 5, [3] * 10, [1, 2], None),
+        # both inputs (`y1` and `y2`) only have one label:
+        ([3] * 10, [3] * 10, None, None),
+        # both inputs only have one label in common that is also in `labels`:
+        ([1] * 5 + [2] * 5, [3] * 10, [1, 2], None),
+        # like the last test case, but with `weights="linear"` (note that
+        # weights="linear" and weights="quadratic" are different branches, though the
+        # latter is so similar to the former that the test case is skipped here):
+        ([1] * 5 + [2] * 5, [3] * 10, [1, 2], "linear"),
+    ],
+)
 @pytest.mark.parametrize("replace_undefined_by", [0.0, np.nan])
-def test_cohen_kappa_zero_division(replace_undefined_by):
+def test_cohen_kappa_zero_division(test_case, replace_undefined_by):
     """Test that cohen_kappa_score handles divisions by 0 correctly by returning the
-    `replace_undefined_by` param. (The fist two tests cover the first possible location
-    in the function for an occurrence of a division by zero, the second two tests in the
-    the second possible location in the function."""
+    `replace_undefined_by` param. (The fist two test cases cover the first possible
+    location in the function for an occurrence of a division by zero, the last three
+    test cases cover a zero division in the the second possible location in the
+    function."""
 
-    def check_equal(res, exp):
+    def _check_equal(res, exp):
         if np.isnan(res) and np.isnan(exp):
             return True
         return res == exp
 
-    # test case: empty inputs
-    y1 = np.array([])
-    y2 = np.array([])
-    assert check_equal(
-        cohen_kappa_score(y1, y2, replace_undefined_by=replace_undefined_by),
-        replace_undefined_by,
-    )
+    y1, y2, labels, weights = test_case
+    y1, y2 = np.array(y1), np.array(y2)
 
-    # test case: annotator y2 does not assign any label specified in `labels` (note:
-    # also applicable if labels is default and y2 does not contain any label that is in
-    # y1)
-    labels = [1, 2]
-    y1 = np.array([1] * 5 + [2] * 5)
-    y2 = np.array([3] * 10)
-    assert check_equal(
-        cohen_kappa_score(
-            y1, y2, labels=labels, replace_undefined_by=replace_undefined_by
-        ),
-        replace_undefined_by,
-    )
-
-    # test case: both inputs only have one label
-    y1 = np.array([3] * 10)
-    y2 = np.array([3] * 10)
-    assert check_equal(
-        cohen_kappa_score(y1, y2, replace_undefined_by=replace_undefined_by),
-        replace_undefined_by,
-    )
-
-    # test case: both inputs only have one label in common that is also in `labels`
-    # (note: weights="linear" and weights="quadratic" are different branches, though the
-    # latter is so similar to the former that the test is skipped here)
-    labels = [1, 2]
-    y1 = np.array([1] * 5 + [2] * 5)
-    y2 = np.array([1] * 5 + [3] * 5)
-    assert check_equal(
-        cohen_kappa_score(
-            y1, y2, labels=labels, replace_undefined_by=replace_undefined_by
-        ),
-        replace_undefined_by,
-    )
-    assert check_equal(
+    assert _check_equal(
         cohen_kappa_score(
             y1,
             y2,
             labels=labels,
-            weights="linear",
+            weights=weights,
             replace_undefined_by=replace_undefined_by,
         ),
         replace_undefined_by,
