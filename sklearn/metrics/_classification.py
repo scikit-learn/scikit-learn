@@ -808,7 +808,7 @@ def multilabel_confusion_matrix(
     prefer_skip_nested_validation=True,
 )
 # TODO(1.9): Change default value for `replace_undefined_by` param to 0.0 and remove
-# FutureWarnings.
+# FutureWarnings; also the defaults in the warning messages need to be updated.
 def cohen_kappa_score(
     y1,
     y2,
@@ -927,9 +927,9 @@ def cohen_kappa_score(
             replace_undefined_by = np.nan
             warnings.warn(mgs_changing_default, FutureWarning)
         msg = (
-            "`y2` contains no labels that are presented in both `y1` and "
-            "`labels`. cohen_kappa_score is undefined and set to the value defined in "
-            "the `replace_undefined_by` param, which defaults to 0.0."
+            "`y2` contains no labels that are presented in both `y1` and `labels`."
+            "cohen_kappa_score is undefined and set to the value defined in "
+            "the `replace_undefined_by` param, which defaults to `np.nan`."
         )
         warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
         return replace_undefined_by
@@ -955,7 +955,7 @@ def cohen_kappa_score(
         msg = (
             "`y1`, `y2` and `labels` have only one label in common. "
             "cohen_kappa_score is undefined and set to the value defined in the "
-            "`replace_undefined_by` param, which defaults to 0.0."
+            "`replace_undefined_by` param, which defaults to `np.nan`."
         )
         warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
         return replace_undefined_by
