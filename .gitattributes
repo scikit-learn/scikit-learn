@@ -1,0 +1,6 @@
+.* export-ignore
+asv_benchmarks export-ignore
+azure-pipelines.yml export-ignore
+benchmarks export-ignore
+build_tools export-ignore
+maint_tools export-ignore

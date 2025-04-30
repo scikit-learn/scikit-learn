@@ -7,9 +7,9 @@ The present example compares three l1-based regression models on a synthetic
 signal obtained from sparse and correlated features that are further corrupted
 with additive gaussian noise:
 
- - a :ref:`lasso`;
- - an :ref:`automatic_relevance_determination`;
- - an :ref:`elastic_net`.
+- a :ref:`lasso`;
+- an :ref:`automatic_relevance_determination`;
+- an :ref:`elastic_net`.
 
 It is known that the Lasso estimates turn to be close to the model selection
 estimates when the data dimensions grow, given that the irrelevant variables are
@@ -21,7 +21,8 @@ score, the fitting time and the sparsity of the estimated coefficients when
 compared with the ground-truth.
 """
 
-# Author: Arturo Amor <david-arturo.amor-quiroz@inria.fr>
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Generate synthetic dataset
@@ -243,6 +244,6 @@ plt.tight_layout()
 # References
 # ----------
 #
-#   .. [1] :doi:`"Lasso-type recovery of sparse representations for
+# .. [1] :doi:`"Lasso-type recovery of sparse representations for
 #    high-dimensional data" N. Meinshausen, B. Yu - The Annals of Statistics
-#    2009, Vol. 37, No. 1, 246–270 <10.1214/07-AOS582>`
+#    2009, Vol. 37, No. 1, 246-270 <10.1214/07-AOS582>`

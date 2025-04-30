@@ -1,9 +1,9 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 #
 # Pairwise Distances Reductions
 # =============================
-#
-#   Authors: The scikit-learn developers.
-#   License: BSD 3 clause
 #
 # Overview
 # --------
@@ -101,10 +101,10 @@ from ._dispatcher import (
 )
 
 __all__ = [
-    "BaseDistancesReductionDispatcher",
     "ArgKmin",
-    "RadiusNeighbors",
     "ArgKminClassMode",
+    "BaseDistancesReductionDispatcher",
+    "RadiusNeighbors",
     "RadiusNeighborsClassMode",
     "sqeuclidean_row_norms",
 ]

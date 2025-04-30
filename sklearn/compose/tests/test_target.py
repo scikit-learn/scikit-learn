@@ -1,14 +1,16 @@
+import warnings
+
 import numpy as np
 import pytest
 
-from sklearn import datasets
+from sklearn import config_context, datasets
 from sklearn.base import BaseEstimator, TransformerMixin, clone
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import LinearRegression, OrthogonalMatchingPursuit
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
-from sklearn.utils._testing import assert_allclose, assert_no_warnings
+from sklearn.utils._testing import assert_allclose
 
 friedman = datasets.make_friedman1(random_state=0)
 
@@ -34,14 +36,22 @@ def test_transform_target_regressor_error():
     )
     with pytest.raises(
         TypeError,
-        match=r"fit\(\) got an unexpected " "keyword argument 'sample_weight'",
+        match=r"fit\(\) got an unexpected keyword argument 'sample_weight'",
     ):
         regr.fit(X, y, sample_weight=sample_weight)
-    # func is given but inverse_func is not
+
+    # one of (func, inverse_func) is given but the other one is not
     regr = TransformedTargetRegressor(func=np.exp)
     with pytest.raises(
         ValueError,
         match="When 'func' is provided, 'inverse_func' must also be provided",
+    ):
+        regr.fit(X, y)
+
+    regr = TransformedTargetRegressor(inverse_func=np.log)
+    with pytest.raises(
+        ValueError,
+        match="When 'inverse_func' is provided, 'func' must also be provided",
     ):
         regr.fit(X, y)
 
@@ -56,17 +66,17 @@ def test_transform_target_regressor_invertible():
     )
     with pytest.warns(
         UserWarning,
-        match=(
-            "The provided functions or"
-            " transformer are not strictly inverse of each other."
-        ),
+        match=(r"The provided functions.* are not strictly inverse of each other"),
     ):
         regr.fit(X, y)
     regr = TransformedTargetRegressor(
         regressor=LinearRegression(), func=np.sqrt, inverse_func=np.log
     )
     regr.set_params(check_inverse=False)
-    assert_no_warnings(regr.fit, X, y)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        regr.fit(X, y)
 
 
 def _check_standard_scaled(y, y_pred):
@@ -385,3 +395,18 @@ def test_transform_target_regressor_pass_extra_predict_parameters():
     regr.fit(X, y)
     regr.predict(X, check_input=False)
     assert regr.regressor_.predict_called
+
+
+@pytest.mark.parametrize("output_format", ["pandas", "polars"])
+def test_transform_target_regressor_not_warns_with_global_output_set(output_format):
+    """Test that TransformedTargetRegressor will not raise warnings if
+    set_config(transform_output="pandas"/"polars") is set globally; regression test for
+    issue #29361."""
+    X, y = datasets.make_regression()
+    y = np.abs(y) + 1
+    with config_context(transform_output=output_format):
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            TransformedTargetRegressor(
+                regressor=LinearRegression(), func=np.log, inverse_func=np.exp
+            ).fit(X, y)

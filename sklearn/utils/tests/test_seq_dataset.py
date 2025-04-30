@@ -1,7 +1,5 @@
-# Author: Tom Dupre la Tour
-#         Joan Massich <mailsik@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from itertools import product
 
@@ -156,10 +154,10 @@ def test_fused_types_consistency(dataset_32, dataset_64):
 
 def test_buffer_dtype_mismatch_error():
     with pytest.raises(ValueError, match="Buffer dtype mismatch"):
-        ArrayDataset64(X32, y32, sample_weight32, seed=42),
+        ArrayDataset64(X32, y32, sample_weight32, seed=42)
 
     with pytest.raises(ValueError, match="Buffer dtype mismatch"):
-        ArrayDataset32(X64, y64, sample_weight64, seed=42),
+        ArrayDataset32(X64, y64, sample_weight64, seed=42)
 
     for csr_container in CSR_CONTAINERS:
         X_csr32 = csr_container(X32)
@@ -172,7 +170,7 @@ def test_buffer_dtype_mismatch_error():
                 y32,
                 sample_weight32,
                 seed=42,
-            ),
+            )
 
         with pytest.raises(ValueError, match="Buffer dtype mismatch"):
             CSRDataset32(
@@ -182,4 +180,4 @@ def test_buffer_dtype_mismatch_error():
                 y64,
                 sample_weight64,
                 seed=42,
-            ),
+            )

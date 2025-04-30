@@ -11,6 +11,8 @@ loader or setting them to `None` to get all 20 of them.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 

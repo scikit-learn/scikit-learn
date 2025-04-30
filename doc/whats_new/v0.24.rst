@@ -2,6 +2,17 @@
 
 .. currentmodule:: sklearn
 
+.. _release_notes_0_24:
+
+============
+Version 0.24
+============
+
+For a short description of the main highlights of the release, please refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_24_0.py`.
+
+.. include:: changelog_legend.inc
+
 .. _changes_0_24_2:
 
 Version 0.24.2
@@ -86,7 +97,7 @@ Changelog
 ..............................
 
 - |Fix| :class:`model_selection.RandomizedSearchCV` and
-  :class:`model_selection.GridSearchCV` now correctly shows the score for
+  :class:`model_selection.GridSearchCV` now correctly show the score for
   single metrics and verbose > 2. :pr:`19659` by `Thomas Fan`_.
 
 - |Fix| Some values in the `cv_results_` attribute of
@@ -190,14 +201,6 @@ Version 0.24.0
 ==============
 
 **December 2020**
-
-For a short description of the main highlights of the release, please
-refer to
-:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_24_0.py`.
-
-.. include:: changelog_legend.inc
-
-Put the changes in their relevant module.
 
 Changed models
 --------------
@@ -412,7 +415,7 @@ Changelog
   :pr:`18149` by :user:`Sylvain Marié <smarie>`.
 
 - |Fix| Fix :class:`decomposition.SparseCoder` such that it follows
-  scikit-learn API and support cloning. The attribute `components_` is
+  scikit-learn API and supports cloning. The attribute `components_` is
   deprecated in 0.24 and will be removed in 1.1 (renaming of 0.26).
   This attribute was redundant with the `dictionary` attribute and constructor
   parameter.
@@ -488,7 +491,7 @@ Changelog
   and :user:`Chiara Marmo <cmarmo>`.
 
 - |Fix| :class:`feature_extraction.text.CountVectorizer` raises an issue if a
-  custom token pattern which capture more than one group is provided.
+  custom token pattern which captures more than one group is provided.
   :pr:`15427` by :user:`Gangesh Gudmalwar <ggangesh>` and
   :user:`Erin R Hoffman <hoffm386>`.
 
@@ -780,7 +783,7 @@ Changelog
 - |Enhancement| :class:`model_selection.GridSearchCV`,
   :class:`model_selection.RandomizedSearchCV` and
   :func:`model_selection.cross_validate` support `scoring` being a callable
-  returning a dictionary of of multiple metric names/values association.
+  returning a dictionary of multiple metric names/values association.
   :pr:`15126` by `Thomas Fan`_.
 
 :mod:`sklearn.multiclass`
@@ -973,7 +976,7 @@ Changelog
 
 - |API| The parameter ``X_idx_sorted`` is now deprecated in
   :meth:`tree.DecisionTreeClassifier.fit` and
-  :meth:`tree.DecisionTreeRegressor.fit`, and has not effect.
+  :meth:`tree.DecisionTreeRegressor.fit`, and has no effect.
   :pr:`17614` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
 :mod:`sklearn.utils`
@@ -1008,8 +1011,7 @@ Miscellaneous
   when `print_changed_only=True`, especially with meta-estimators.
   :pr:`18508` by :user:`Nathan C. <Xethan>`.
 
-Code and Documentation Contributors
------------------------------------
+.. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 0.23, including:

@@ -16,6 +16,9 @@ for handling categorical features: :class:`TargetEncoder`,
     :ref:`User Guide <target_encoder>`. for details.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Loading Data from OpenML
 # ========================
@@ -23,7 +26,7 @@ for handling categorical features: :class:`TargetEncoder`,
 # be a reviewer:
 from sklearn.datasets import fetch_openml
 
-wine_reviews = fetch_openml(data_id=42074, as_frame=True, parser="pandas")
+wine_reviews = fetch_openml(data_id=42074, as_frame=True)
 
 df = wine_reviews.frame
 df.head()

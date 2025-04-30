@@ -1,6 +1,10 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numpy as np
 
-from . import check_consistent_length, check_matplotlib_support
+from . import check_consistent_length
+from ._optional_dependencies import check_matplotlib_support
 from ._response import _get_response_values_binary
 from .multiclass import type_of_target
 from .validation import _check_pos_label_consistency
@@ -96,3 +100,80 @@ def _interval_max_min_ratio(data):
     """
     diff = np.diff(np.sort(data))
     return diff.max() / diff.min()
+
+
+def _validate_style_kwargs(default_style_kwargs, user_style_kwargs):
+    """Create valid style kwargs by avoiding Matplotlib alias errors.
+
+    Matplotlib raises an error when, for example, 'color' and 'c', or 'linestyle' and
+    'ls', are specified together. To avoid this, we automatically keep only the one
+    specified by the user and raise an error if the user specifies both.
+
+    Parameters
+    ----------
+    default_style_kwargs : dict
+        The Matplotlib style kwargs used by default in the scikit-learn display.
+    user_style_kwargs : dict
+        The user-defined Matplotlib style kwargs.
+
+    Returns
+    -------
+    valid_style_kwargs : dict
+        The validated style kwargs taking into account both default and user-defined
+        Matplotlib style kwargs.
+    """
+
+    invalid_to_valid_kw = {
+        "ls": "linestyle",
+        "c": "color",
+        "ec": "edgecolor",
+        "fc": "facecolor",
+        "lw": "linewidth",
+        "mec": "markeredgecolor",
+        "mfcalt": "markerfacecoloralt",
+        "ms": "markersize",
+        "mew": "markeredgewidth",
+        "mfc": "markerfacecolor",
+        "aa": "antialiased",
+        "ds": "drawstyle",
+        "font": "fontproperties",
+        "family": "fontfamily",
+        "name": "fontname",
+        "size": "fontsize",
+        "stretch": "fontstretch",
+        "style": "fontstyle",
+        "variant": "fontvariant",
+        "weight": "fontweight",
+        "ha": "horizontalalignment",
+        "va": "verticalalignment",
+        "ma": "multialignment",
+    }
+    for invalid_key, valid_key in invalid_to_valid_kw.items():
+        if invalid_key in user_style_kwargs and valid_key in user_style_kwargs:
+            raise TypeError(
+                f"Got both {invalid_key} and {valid_key}, which are aliases of one "
+                "another"
+            )
+    valid_style_kwargs = default_style_kwargs.copy()
+
+    for key in user_style_kwargs.keys():
+        if key in invalid_to_valid_kw:
+            valid_style_kwargs[invalid_to_valid_kw[key]] = user_style_kwargs[key]
+        else:
+            valid_style_kwargs[key] = user_style_kwargs[key]
+
+    return valid_style_kwargs
+
+
+def _despine(ax):
+    """Remove the top and right spines of the plot.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The axes of the plot to despine.
+    """
+    for s in ["top", "right"]:
+        ax.spines[s].set_visible(False)
+    for s in ["bottom", "left"]:
+        ax.spines[s].set_bounds(0, 1)

@@ -6,7 +6,7 @@ from scipy.stats import expon, norm, randint
 
 from sklearn.datasets import make_classification
 from sklearn.dummy import DummyClassifier
-from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 from sklearn.model_selection import (
     GroupKFold,
     GroupShuffleSplit,
@@ -39,10 +39,7 @@ class FastClassifier(DummyClassifier):
     # update the constraints such that we accept all parameters from a to z
     _parameter_constraints: dict = {
         **DummyClassifier._parameter_constraints,
-        **{
-            chr(key): "no_validation"  # type: ignore
-            for key in range(ord("a"), ord("z") + 1)
-        },
+        **{chr(key): "no_validation" for key in range(ord("a"), ord("z") + 1)},
     }
 
     def __init__(
@@ -732,7 +729,7 @@ def test_groups_support(Est):
     X, y = make_classification(n_samples=50, n_classes=2, random_state=0)
     groups = rng.randint(0, 3, 50)
 
-    clf = LinearSVC(dual="auto", random_state=0)
+    clf = LinearSVC(random_state=0)
     grid = {"C": [1]}
 
     group_cvs = [
@@ -826,7 +823,15 @@ def test_halving_random_search_list_of_dicts():
     cv_results = search.cv_results_
     # Check results structure
     check_cv_results_keys(cv_results, param_keys, score_keys, n_candidates, extra_keys)
-    check_cv_results_array_types(search, param_keys, score_keys)
+    expected_cv_results_kinds = {
+        "param_C": "f",
+        "param_degree": "i",
+        "param_gamma": "f",
+        "param_kernel": "O",
+    }
+    check_cv_results_array_types(
+        search, param_keys, score_keys, expected_cv_results_kinds
+    )
 
     assert all(
         (

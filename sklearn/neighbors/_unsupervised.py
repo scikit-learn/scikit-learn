@@ -1,4 +1,8 @@
 """Unsupervised nearest neighbors learner"""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from ..base import _fit_context
 from ._base import KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin
 

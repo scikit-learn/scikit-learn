@@ -10,26 +10,25 @@ set -o pipefail
 
 global_status=0
 
-echo -e "### Running black ###\n"
-black --check --diff .
+echo -e "### Running the ruff linter ###\n"
+ruff check --output-format=full
 status=$?
-
 if [[ $status -eq 0 ]]
 then
-    echo -e "No problem detected by black\n"
+    echo -e "No problem detected by the ruff linter\n"
 else
-    echo -e "Problems detected by black, please run black and commit the result\n"
+    echo -e "Problems detected by ruff check, please fix them\n"
     global_status=1
 fi
 
-echo -e "### Running ruff ###\n"
-ruff check --show-source .
+echo -e "### Running the ruff formatter ###\n"
+ruff format --diff
 status=$?
 if [[ $status -eq 0 ]]
 then
-    echo -e "No problem detected by ruff\n"
+    echo -e "No problem detected by the ruff formatter\n"
 else
-    echo -e "Problems detected by ruff, please fix them\n"
+    echo -e "Problems detected by ruff format, please run ruff format and commit the result\n"
     global_status=1
 fi
 
@@ -56,7 +55,7 @@ else
 fi
 
 # For docstrings and warnings of deprecated attributes to be rendered
-# properly, the property decorator must come before the deprecated decorator
+# properly, the `deprecated` decorator must come before the `property` decorator
 # (else they are treated as functions)
 
 echo -e "### Checking for bad deprecation order ###\n"
@@ -64,7 +63,7 @@ bad_deprecation_property_order=`git grep -A 10 "@property"  -- "*.py" | awk '/@p
 
 if [ ! -z "$bad_deprecation_property_order" ]
 then
-    echo "property decorator should come before deprecated decorator"
+    echo "deprecated decorator should come before property decorator"
     echo "found the following occurrences:"
     echo $bad_deprecation_property_order
     echo -e "\nProblems detected by deprecation order check\n"
@@ -89,16 +88,15 @@ else
 fi
 
 # Check for joblib.delayed and joblib.Parallel imports
-
 echo -e "### Checking for joblib imports ###\n"
 joblib_status=0
-joblib_delayed_import="$(git grep -l -A 10 -E "joblib import.+delayed" -- "*.py" ":!sklearn/utils/_joblib.py" ":!sklearn/utils/parallel.py")"
+joblib_delayed_import="$(git grep -l -A 10 -E "joblib import.+delayed" -- "*.py" ":!sklearn/utils/parallel.py")"
 if [ ! -z "$joblib_delayed_import" ]; then
     echo "Use from sklearn.utils.parallel import delayed instead of joblib delayed. The following files contains imports to joblib.delayed:"
     echo "$joblib_delayed_import"
     joblib_status=1
 fi
-joblib_Parallel_import="$(git grep -l -A 10 -E "joblib import.+Parallel" -- "*.py" ":!sklearn/utils/_joblib.py" ":!sklearn/utils/parallel.py")"
+joblib_Parallel_import="$(git grep -l -A 10 -E "joblib import.+Parallel" -- "*.py" ":!sklearn/utils/parallel.py")"
 if [ ! -z "$joblib_Parallel_import" ]; then
     echo "Use from sklearn.utils.parallel import Parallel instead of joblib Parallel. The following files contains imports to joblib.Parallel:"
     echo "$joblib_Parallel_import"

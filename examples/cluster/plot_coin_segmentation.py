@@ -20,10 +20,8 @@ There are three options to assign labels:
   that directly determines the partition in the embedding space.
 """
 
-# Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Brian Cheung
-#         Andrew Knyazev <Andrew.Knyazev@ucdenver.edu>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import time
 
@@ -65,7 +63,7 @@ n_regions = 26
 # Compute and visualize the resulting regions
 
 # Computing a few extra eigenvectors may speed up the eigen_solver.
-# The spectral clustering quality may also benetif from requesting
+# The spectral clustering quality may also benefit from requesting
 # extra regions for segmentation.
 n_regions_plus = 3
 

@@ -4,17 +4,8 @@ Functions named as *_score return a scalar value to maximize: the higher the
 better.
 """
 
-# Authors: Olivier Grisel <olivier.grisel@ensta.org>
-#          Wei LI <kuantkid@gmail.com>
-#          Diego Molla <dmolla-aliod@gmail.com>
-#          Arnaud Fouchet <foucheta@gmail.com>
-#          Thierry Guillemot <thierry.guillemot.work@gmail.com>
-#          Gregory Stupp <stuppie@gmail.com>
-#          Joel Nothman <joel.nothman@gmail.com>
-#          Arya McCarthy <arya@jhu.edu>
-#          Uwe F Mayer <uwe_f_mayer@yahoo.com>
-# License: BSD 3 clause
-
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from math import log
@@ -23,7 +14,8 @@ from numbers import Real
 import numpy as np
 from scipy import sparse as sp
 
-from ...utils._param_validation import Interval, StrOptions, validate_params
+from ...utils._array_api import _max_precision_float_dtype, get_namespace_and_device
+from ...utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ...utils.multiclass import type_of_target
 from ...utils.validation import check_array, check_consistent_length
 from ._expected_mutual_info_fast import expected_mutual_information
@@ -106,6 +98,8 @@ def contingency_matrix(
 ):
     """Build a contingency matrix describing the relationship between labels.
 
+    Read more in the :ref:`User Guide <contingency_matrix>`.
+
     Parameters
     ----------
     labels_true : array-like of shape (n_samples,)
@@ -120,7 +114,7 @@ def contingency_matrix(
         If ``None``, nothing is adjusted.
 
     sparse : bool, default=False
-        If `True`, return a sparse CSR continency matrix. If `eps` is not
+        If `True`, return a sparse CSR contingency matrix. If `eps` is not
         `None` and `sparse` is `True` will raise ValueError.
 
         .. versionadded:: 0.18
@@ -188,12 +182,12 @@ def contingency_matrix(
     prefer_skip_nested_validation=True,
 )
 def pair_confusion_matrix(labels_true, labels_pred):
-    """Pair confusion matrix arising from two clusterings [1]_.
+    """Pair confusion matrix arising from two clusterings.
 
     The pair confusion matrix :math:`C` computes a 2 by 2 similarity matrix
     between two clusterings by considering all pairs of samples and counting
     pairs that are assigned into the same or into different clusters under
-    the true and predicted clusterings.
+    the true and predicted clusterings [1]_.
 
     Considering a pair of samples that is clustered together a positive pair,
     then as in binary classification the count of true negatives is
@@ -282,6 +276,8 @@ def rand_score(labels_true, labels_pred):
 
     The raw RI score [3]_ is:
 
+    .. code-block:: text
+
         RI = (number of agreeing pairs) / (number of pairs)
 
     Read more in the :ref:`User Guide <rand_score>`.
@@ -340,7 +336,7 @@ def rand_score(labels_true, labels_pred):
         # cluster. These are perfect matches hence return 1.0.
         return 1.0
 
-    return numerator / denominator
+    return float(numerator / denominator)
 
 
 @validate_params(
@@ -440,6 +436,9 @@ def adjusted_rand_score(labels_true, labels_pred):
 
       >>> adjusted_rand_score([0, 0, 1, 1], [0, 1, 0, 1])
       -0.5
+
+    See :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`
+    for a more detailed example.
     """
     (tn, fp), (fn, tp) = pair_confusion_matrix(labels_true, labels_pred)
     # convert to Python integer types, to avoid overflow or underflow
@@ -494,7 +493,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
         Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
-        Gluster labels to evaluate.
+        Cluster labels to evaluate.
 
     beta : float, default=1.0
         Ratio of weight attributed to ``homogeneity`` vs ``completeness``.
@@ -518,6 +517,13 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     homogeneity_score : Homogeneity metric of cluster labeling.
     completeness_score : Completeness metric of cluster labeling.
     v_measure_score : V-Measure (NMI with arithmetic mean option).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import homogeneity_completeness_v_measure
+    >>> y_true, y_pred = [0, 0, 1, 1, 2, 2], [0, 0, 1, 2, 2, 2]
+    >>> homogeneity_completeness_v_measure(y_true, y_pred)
+    (0.71..., 0.77..., 0.73...)
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
 
@@ -543,7 +549,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
             / (beta * homogeneity + completeness)
         )
 
-    return homogeneity, completeness, v_measure_score
+    return float(homogeneity), float(completeness), float(v_measure_score)
 
 
 @validate_params(
@@ -867,6 +873,14 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     Notes
     -----
     The logarithm used is the natural logarithm (base-e).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import mutual_info_score
+    >>> labels_true = [0, 1, 1, 0, 1, 0]
+    >>> labels_pred = [0, 1, 0, 0, 1, 1]
+    >>> mutual_info_score(labels_true, labels_pred)
+    0.056...
     """
     if contingency is None:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -907,7 +921,7 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
         + contingency_nm * log_outer
     )
     mi = np.where(np.abs(mi) < np.finfo(mi.dtype).eps, 0.0, mi)
-    return np.clip(mi.sum(), 0.0, None)
+    return float(np.clip(mi.sum(), 0.0, None))
 
 
 @validate_params(
@@ -995,17 +1009,14 @@ def adjusted_mutual_info_score(
 
       >>> from sklearn.metrics.cluster import adjusted_mutual_info_score
       >>> adjusted_mutual_info_score([0, 0, 1, 1], [0, 0, 1, 1])
-      ... # doctest: +SKIP
       1.0
       >>> adjusted_mutual_info_score([0, 0, 1, 1], [1, 1, 0, 0])
-      ... # doctest: +SKIP
       1.0
 
     If classes members are completely split across different clusters,
     the assignment is totally in-complete, hence the AMI is null::
 
       >>> adjusted_mutual_info_score([0, 0, 0, 0], [0, 1, 2, 3])
-      ... # doctest: +SKIP
       0.0
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -1021,6 +1032,9 @@ def adjusted_mutual_info_score(
         or classes.shape[0] == clusters.shape[0] == 0
     ):
         return 1.0
+    # if there is only one class or one cluster return 0.0.
+    elif classes.shape[0] == 1 or clusters.shape[0] == 1:
+        return 0.0
 
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
     # Calculate the MI for the two clusterings
@@ -1039,8 +1053,13 @@ def adjusted_mutual_info_score(
         denominator = min(denominator, -np.finfo("float64").eps)
     else:
         denominator = max(denominator, np.finfo("float64").eps)
-    ami = (mi - emi) / denominator
-    return ami
+    # The same applies analogously to mi and emi.
+    numerator = mi - emi
+    if numerator < 0:
+        numerator = min(numerator, -np.finfo("float64").eps)
+    else:
+        numerator = max(numerator, np.finfo("float64").eps)
+    return float(numerator / denominator)
 
 
 @validate_params(
@@ -1114,17 +1133,14 @@ def normalized_mutual_info_score(
 
       >>> from sklearn.metrics.cluster import normalized_mutual_info_score
       >>> normalized_mutual_info_score([0, 0, 1, 1], [0, 0, 1, 1])
-      ... # doctest: +SKIP
       1.0
       >>> normalized_mutual_info_score([0, 0, 1, 1], [1, 1, 0, 0])
-      ... # doctest: +SKIP
       1.0
 
     If classes members are completely split across different clusters,
     the assignment is totally in-complete, hence the NMI is null::
 
       >>> normalized_mutual_info_score([0, 0, 0, 0], [0, 1, 2, 3])
-      ... # doctest: +SKIP
       0.0
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -1155,34 +1171,34 @@ def normalized_mutual_info_score(
     h_true, h_pred = entropy(labels_true), entropy(labels_pred)
 
     normalizer = _generalized_average(h_true, h_pred, average_method)
-    return mi / normalizer
+    return float(mi / normalizer)
 
 
 @validate_params(
     {
         "labels_true": ["array-like"],
         "labels_pred": ["array-like"],
-        "sparse": ["boolean"],
+        "sparse": ["boolean", Hidden(StrOptions({"deprecated"}))],
     },
     prefer_skip_nested_validation=True,
 )
-def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
+def fowlkes_mallows_score(labels_true, labels_pred, *, sparse="deprecated"):
     """Measure the similarity of two clusterings of a set of points.
 
     .. versionadded:: 0.18
 
-    The Fowlkes-Mallows index (FMI) is defined as the geometric mean between of
+    The Fowlkes-Mallows index (FMI) is defined as the geometric mean of
     the precision and recall::
 
         FMI = TP / sqrt((TP + FP) * (TP + FN))
 
-    Where ``TP`` is the number of **True Positive** (i.e. the number of pair of
-    points that belongs in the same clusters in both ``labels_true`` and
+    Where ``TP`` is the number of **True Positive** (i.e. the number of pairs of
+    points that belong to the same cluster in both ``labels_true`` and
     ``labels_pred``), ``FP`` is the number of **False Positive** (i.e. the
-    number of pair of points that belongs in the same clusters in
-    ``labels_true`` and not in ``labels_pred``) and ``FN`` is the number of
-    **False Negative** (i.e. the number of pair of points that belongs in the
-    same clusters in ``labels_pred`` and not in ``labels_True``).
+    number of pairs of points that belong to the same cluster in
+    ``labels_pred`` but not in ``labels_true``) and ``FN`` is the number of
+    **False Negative** (i.e. the number of pairs of points that belong to the
+    same cluster in ``labels_true`` but not in ``labels_pred``).
 
     The score ranges from 0 to 1. A high value indicates a good similarity
     between two clusters.
@@ -1199,6 +1215,10 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
 
     sparse : bool, default=False
         Compute contingency matrix internally with sparse matrix.
+
+        .. deprecated:: 1.7
+            The ``sparse`` parameter is deprecated and will be removed in 1.9. It has
+            no effect.
 
     Returns
     -------
@@ -1233,6 +1253,14 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
       >>> fowlkes_mallows_score([0, 0, 0, 0], [0, 1, 2, 3])
       0.0
     """
+    # TODO(1.9): remove the sparse parameter
+    if sparse != "deprecated":
+        warnings.warn(
+            "The 'sparse' parameter was deprecated in 1.7 and will be removed in 1.9. "
+            "It has no effect. Leave it to its default value to silence this warning.",
+            FutureWarning,
+        )
+
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     (n_samples,) = labels_true.shape
 
@@ -1241,7 +1269,7 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     tk = np.dot(c.data, c.data) - n_samples
     pk = np.sum(np.asarray(c.sum(axis=0)).ravel() ** 2) - n_samples
     qk = np.sum(np.asarray(c.sum(axis=1)).ravel() ** 2) - n_samples
-    return np.sqrt(tk / pk) * np.sqrt(tk / qk) if tk != 0.0 else 0.0
+    return float(np.sqrt(tk / pk) * np.sqrt(tk / qk)) if tk != 0.0 else 0.0
 
 
 @validate_params(
@@ -1267,17 +1295,20 @@ def entropy(labels):
     -----
     The logarithm used is the natural logarithm (base-e).
     """
-    if len(labels) == 0:
+    xp, is_array_api_compliant, device_ = get_namespace_and_device(labels)
+    labels_len = labels.shape[0] if is_array_api_compliant else len(labels)
+    if labels_len == 0:
         return 1.0
-    label_idx = np.unique(labels, return_inverse=True)[1]
-    pi = np.bincount(label_idx).astype(np.float64)
-    pi = pi[pi > 0]
+
+    pi = xp.astype(xp.unique_counts(labels)[1], _max_precision_float_dtype(xp, device_))
 
     # single cluster => zero entropy
     if pi.size == 1:
         return 0.0
 
-    pi_sum = np.sum(pi)
+    pi_sum = xp.sum(pi)
     # log(a / b) should be calculated as log(a) - log(b) for
     # possible loss of precision
-    return -np.sum((pi / pi_sum) * (np.log(pi) - log(pi_sum)))
+    # Always convert the result as a Python scalar (on CPU) instead of a device
+    # specific scalar array.
+    return float(-xp.sum((pi / pi_sum) * (xp.log(pi) - log(pi_sum))))

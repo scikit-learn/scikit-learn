@@ -1,10 +1,13 @@
-"""
-The :mod:`sklearn.metrics.cluster` submodule contains evaluation metrics for
-cluster analysis results. There are two forms of evaluation:
+"""Evaluation metrics for cluster analysis results.
 
-- supervised, which uses a ground truth class values for each sample.
-- unsupervised, which does not and measures the 'quality' of the model itself.
+- Supervised evaluation uses a ground truth class values for each sample.
+- Unsupervised evaluation does not use ground truths and measures the "quality" of the
+  model itself.
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from ._bicluster import consensus_score
 from ._supervised import (
     adjusted_mutual_info_score,
@@ -31,22 +34,22 @@ from ._unsupervised import (
 
 __all__ = [
     "adjusted_mutual_info_score",
-    "normalized_mutual_info_score",
     "adjusted_rand_score",
-    "rand_score",
+    "calinski_harabasz_score",
     "completeness_score",
-    "pair_confusion_matrix",
+    "consensus_score",
     "contingency_matrix",
+    "davies_bouldin_score",
+    "entropy",
     "expected_mutual_information",
+    "fowlkes_mallows_score",
     "homogeneity_completeness_v_measure",
     "homogeneity_score",
     "mutual_info_score",
-    "v_measure_score",
-    "fowlkes_mallows_score",
-    "entropy",
+    "normalized_mutual_info_score",
+    "pair_confusion_matrix",
+    "rand_score",
     "silhouette_samples",
     "silhouette_score",
-    "calinski_harabasz_score",
-    "davies_bouldin_score",
-    "consensus_score",
+    "v_measure_score",
 ]

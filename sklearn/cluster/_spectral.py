@@ -1,10 +1,7 @@
 """Algorithms for spectral clustering"""
 
-# Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Brian Cheung
-#         Wei LI <kuantkid@gmail.com>
-#         Andrew Knyazev <Andrew.Knyazev@ucdenver.edu>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Integral, Real
@@ -14,11 +11,12 @@ from scipy.linalg import LinAlgError, qr, svd
 from scipy.sparse import csc_matrix
 
 from ..base import BaseEstimator, ClusterMixin, _fit_context
-from ..manifold import spectral_embedding
+from ..manifold._spectral_embedding import _spectral_embedding
 from ..metrics.pairwise import KERNEL_PARAMS, pairwise_kernels
 from ..neighbors import NearestNeighbors, kneighbors_graph
 from ..utils import as_float_array, check_random_state
 from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.validation import validate_data
 from ._kmeans import k_means
 
 
@@ -167,7 +165,7 @@ def discretize(
                 shape=(n_samples, n_components),
             )
 
-            t_svd = vectors_discrete.T * vectors
+            t_svd = vectors_discrete.T @ vectors
 
             try:
                 U, S, Vh = np.linalg.svd(t_svd)
@@ -289,7 +287,9 @@ def spectral_clustering(
         The cluster_qr method [5]_ directly extracts clusters from eigenvectors
         in spectral clustering. In contrast to k-means and discretization, cluster_qr
         has no tuning parameters and is not an iterative method, yet may outperform
-        k-means and discretization in terms of both quality and speed.
+        k-means and discretization in terms of both quality and speed. For a detailed
+        comparison of clustering strategies, refer to the following example:
+        :ref:`sphx_glr_auto_examples_cluster_plot_coin_segmentation.py`.
 
         .. versionchanged:: 1.1
            Added new labeling method 'cluster_qr'.
@@ -346,6 +346,19 @@ def spectral_clustering(
            streaming graph challenge (Preliminary version at arXiv.)
            David Zhuzhunashvili, Andrew Knyazev
            <10.1109/HPEC.2017.8091045>`
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics.pairwise import pairwise_kernels
+    >>> from sklearn.cluster import spectral_clustering
+    >>> X = np.array([[1, 1], [2, 1], [1, 0],
+    ...               [4, 7], [3, 5], [3, 6]])
+    >>> affinity = pairwise_kernels(X, metric='rbf')
+    >>> spectral_clustering(
+    ...     affinity=affinity, n_clusters=2, assign_labels="discretize", random_state=0
+    ... )
+    array([1, 1, 1, 0, 0, 0])
     """
 
     clusterer = SpectralClustering(
@@ -425,7 +438,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
     gamma : float, default=1.0
         Kernel coefficient for rbf, poly, sigmoid, laplacian and chi2 kernels.
-        Ignored for ``affinity='nearest_neighbors'``.
+        Ignored for ``affinity='nearest_neighbors'``, ``affinity='precomputed'``
+        or ``affinity='precomputed_nearest_neighbors'``.
 
     affinity : str or callable, default='rbf'
         How to construct the affinity matrix.
@@ -587,6 +601,9 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
     >>> clustering
     SpectralClustering(assign_labels='discretize', n_clusters=2,
         random_state=0)
+
+    For a comparison of Spectral clustering with other clustering algorithms, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
     """
 
     _parameter_constraints: dict = {
@@ -609,7 +626,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
             StrOptions({"auto"}),
         ],
         "assign_labels": [StrOptions({"kmeans", "discretize", "cluster_qr"})],
-        "degree": [Interval(Integral, 0, None, closed="left")],
+        "degree": [Interval(Real, 0, None, closed="left")],
         "coef0": [Interval(Real, None, None, closed="neither")],
         "kernel_params": [dict, None],
         "n_jobs": [Integral, None],
@@ -674,7 +691,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         self : object
             A fitted instance of the estimator.
         """
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=["csr", "csc", "coo"],
             dtype=np.float64,
@@ -727,7 +745,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         # The first eigenvector is constant only for fully connected graphs
         # and should be kept for spectral clustering (drop_first = False)
         # See spectral_embedding documentation.
-        maps = spectral_embedding(
+        maps = _spectral_embedding(
             self.affinity_matrix_,
             n_components=n_components,
             eigen_solver=self.eigen_solver,
@@ -777,10 +795,11 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         """
         return super().fit_predict(X, y)
 
-    def _more_tags(self):
-        return {
-            "pairwise": self.affinity in [
-                "precomputed",
-                "precomputed_nearest_neighbors",
-            ]
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        tags.input_tags.pairwise = self.affinity in [
+            "precomputed",
+            "precomputed_nearest_neighbors",
+        ]
+        return tags

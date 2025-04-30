@@ -8,7 +8,7 @@ soon as Scipy 1.12 becomes the minimum supported version.
 Laplacian of a compressed-sparse graph
 """
 
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 from scipy.sparse import issparse
@@ -107,7 +107,7 @@ def laplacian(
     Sparse input is reformatted into ``coo`` if ``form="array"``,
     which is the default.
 
-    If the input adjacency matrix is not symmetic, the Laplacian is
+    If the input adjacency matrix is not symmetric, the Laplacian is
     also non-symmetric unless ``symmetrized=True`` is used.
 
     Diagonal entries of the input adjacency matrix are ignored and

@@ -20,8 +20,8 @@ The :ref:`Jaccard similarity <jaccard_similarity_score>` score for chain tends t
 greater than that of the set independent base models.
 """
 
-# Author: Adam Kleczewski
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Loading a dataset
@@ -41,7 +41,7 @@ from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
 
 # Load a multi-label dataset from https://www.openml.org/d/40597
-X, Y = fetch_openml("yeast", version=4, return_X_y=True, parser="pandas")
+X, Y = fetch_openml("yeast", version=4, return_X_y=True)
 Y = Y == "TRUE"
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=0)
 

@@ -15,11 +15,14 @@ plot functions.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Load Data and train model
 # -------------------------
 # For this example, we load a blood transfusion service center data set from
-# `OpenML <https://www.openml.org/d/1464>`. This is a binary classification
+# `OpenML <https://www.openml.org/d/1464>`_. This is a binary classification
 # problem where the target is whether an individual donated blood. Then the
 # data is split into a train and test dataset and a logistic regression is
 # fitted with the train dataset.
@@ -29,7 +32,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-X, y = fetch_openml(data_id=1464, return_X_y=True, parser="pandas")
+X, y = fetch_openml(data_id=1464, return_X_y=True)
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y)
 
 clf = make_pipeline(StandardScaler(), LogisticRegression(random_state=0))
@@ -37,7 +40,7 @@ clf.fit(X_train, y_train)
 
 # %%
 # Create :class:`ConfusionMatrixDisplay`
-##############################################################################
+# ######################################
 # With the fitted model, we compute the predictions of the model on the test
 # dataset. These predictions are used to compute the confusion matrix which
 # is plotted with the :class:`ConfusionMatrixDisplay`
@@ -51,7 +54,7 @@ cm_display = ConfusionMatrixDisplay(cm).plot()
 
 # %%
 # Create :class:`RocCurveDisplay`
-##############################################################################
+# ###############################
 # The roc curve requires either the probabilities or the non-thresholded
 # decision values from the estimator. Since the logistic regression provides
 # a decision function, we will use it to plot the roc curve:
@@ -64,7 +67,7 @@ roc_display = RocCurveDisplay(fpr=fpr, tpr=tpr).plot()
 
 # %%
 # Create :class:`PrecisionRecallDisplay`
-##############################################################################
+# ######################################
 # Similarly, the precision recall curve can be plotted using `y_score` from
 # the prevision sections.
 from sklearn.metrics import PrecisionRecallDisplay, precision_recall_curve
@@ -74,7 +77,7 @@ pr_display = PrecisionRecallDisplay(precision=prec, recall=recall).plot()
 
 # %%
 # Combining the display objects into a single plot
-##############################################################################
+# ################################################
 # The display objects store the computed values that were passed as arguments.
 # This allows for the visualizations to be easliy combined using matplotlib's
 # API. In the following example, we place the displays next to each other in a

@@ -1,19 +1,12 @@
-# Authors: Gilles Louppe <g.louppe@gmail.com>
-#          Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#          Brian Holt <bdholt1@gmail.com>
-#          Joel Nothman <joel.nothman@gmail.com>
-#          Arnaud Joly <arnaud.v.joly@gmail.com>
-#          Jacob Schreiber <jmschreiber91@gmail.com>
-#          Nelson Liu <nelson@nelsonliu.me>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # See _tree.pyx for details.
 
 import numpy as np
 cimport numpy as cnp
 
-from ..utils._typedefs cimport float32_t, float64_t, intp_t, int32_t, uint32_t
+from ..utils._typedefs cimport float32_t, float64_t, intp_t, int32_t, uint8_t, uint32_t
 
 from ._splitter cimport Splitter
 from ._splitter cimport SplitRecord
@@ -28,8 +21,17 @@ cdef struct Node:
     float64_t impurity                   # Impurity of the node (i.e., the value of the criterion)
     intp_t n_node_samples                # Number of samples at the node
     float64_t weighted_n_node_samples    # Weighted number of samples at the node
-    unsigned char missing_go_to_left     # Whether features have missing values
+    uint8_t missing_go_to_left     # Whether features have missing values
 
+
+cdef struct ParentInfo:
+    # Structure to store information about the parent of a node
+    # This is passed to the splitter, to provide information about the previous split
+
+    float64_t lower_bound           # the lower bound of the parent's impurity
+    float64_t upper_bound           # the upper bound of the parent's impurity
+    float64_t impurity              # the impurity of the parent
+    intp_t n_constant_features      # the number of constant features found in parent
 
 cdef class Tree:
     # The Tree object is a binary tree structure constructed by the
@@ -48,7 +50,7 @@ cdef class Tree:
     cdef public intp_t node_count        # Counter for node IDs
     cdef public intp_t capacity          # Capacity of tree, in terms of nodes
     cdef Node* nodes                     # Array of nodes
-    cdef float64_t* value                   # (capacity, n_outputs, max_n_classes) array of values
+    cdef float64_t* value                # (capacity, n_outputs, max_n_classes) array of values
     cdef intp_t value_stride             # = n_outputs * max_n_classes
 
     # Methods
@@ -56,7 +58,7 @@ cdef class Tree:
                           intp_t feature, float64_t threshold, float64_t impurity,
                           intp_t n_node_samples,
                           float64_t weighted_n_node_samples,
-                          unsigned char missing_go_to_left) except -1 nogil
+                          uint8_t missing_go_to_left) except -1 nogil
     cdef int _resize(self, intp_t capacity) except -1 nogil
     cdef int _resize_c(self, intp_t capacity=*) except -1 nogil
 
@@ -103,7 +105,7 @@ cdef class TreeBuilder:
         object X,
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight=*,
-        const unsigned char[::1] missing_values_in_feature_mask=*,
+        const uint8_t[::1] missing_values_in_feature_mask=*,
     )
 
     cdef _check_input(
@@ -112,3 +114,20 @@ cdef class TreeBuilder:
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
     )
+
+
+# =============================================================================
+# Tree pruning
+# =============================================================================
+
+# The private function allows any external caller to prune the tree and return
+# a new tree with the pruned nodes. The pruned tree is a new tree object.
+#
+# .. warning:: this function is not backwards compatible and may change without
+#              notice.
+cdef void _build_pruned_tree(
+    Tree tree,  # OUT
+    Tree orig_tree,
+    const uint8_t[:] leaves_in_subtree,
+    intp_t capacity
+)

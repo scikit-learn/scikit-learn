@@ -2,15 +2,15 @@
 Testing for Isolation Forest algorithm (sklearn.ensemble.iforest).
 """
 
-# Authors: Nicolas Goix <nicolas.goix@telecom-paristech.fr>
-#          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from unittest.mock import Mock, patch
 
 import numpy as np
 import pytest
+from joblib import parallel_backend
 
 from sklearn.datasets import load_diabetes, load_iris, make_classification
 from sklearn.ensemble import IsolationForest
@@ -325,21 +325,6 @@ def test_iforest_with_n_jobs_does_not_segfault(csc_container):
     IsolationForest(n_estimators=10, max_samples=256, n_jobs=2).fit(X)
 
 
-# TODO(1.4): remove in 1.4
-def test_base_estimator_property_deprecated():
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    model = IsolationForest()
-    model.fit(X, y)
-
-    warn_msg = (
-        "Attribute `base_estimator_` was deprecated in version 1.2 and "
-        "will be removed in 1.4. Use `estimator_` instead."
-    )
-    with pytest.warns(FutureWarning, match=warn_msg):
-        model.base_estimator_
-
-
 def test_iforest_preserve_feature_names():
     """Check that feature names are preserved when contamination is not "auto".
 
@@ -356,3 +341,53 @@ def test_iforest_preserve_feature_names():
     with warnings.catch_warnings():
         warnings.simplefilter("error", UserWarning)
         model.fit(X)
+
+
+@pytest.mark.parametrize("sparse_container", CSC_CONTAINERS + CSR_CONTAINERS)
+def test_iforest_sparse_input_float_contamination(sparse_container):
+    """Check that `IsolationForest` accepts sparse matrix input and float value for
+    contamination.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27626
+    """
+    X, _ = make_classification(n_samples=50, n_features=4, random_state=0)
+    X = sparse_container(X)
+    X.sort_indices()
+    contamination = 0.1
+    iforest = IsolationForest(
+        n_estimators=5, contamination=contamination, random_state=0
+    ).fit(X)
+
+    X_decision = iforest.decision_function(X)
+    assert (X_decision < 0).sum() / X.shape[0] == pytest.approx(contamination)
+
+
+@pytest.mark.parametrize("n_jobs", [1, 2])
+@pytest.mark.parametrize("contamination", [0.25, "auto"])
+def test_iforest_predict_parallel(global_random_seed, contamination, n_jobs):
+    """Check that `IsolationForest.predict` is parallelized."""
+    # toy sample (the last two samples are outliers)
+    X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [7, 4], [-5, 9]]
+
+    # Test IsolationForest
+    clf = IsolationForest(
+        random_state=global_random_seed, contamination=contamination, n_jobs=None
+    )
+    clf.fit(X)
+    decision_func = -clf.decision_function(X)
+    pred = clf.predict(X)
+
+    # assert detect outliers:
+    assert np.min(decision_func[-2:]) > np.max(decision_func[:-2])
+    assert_array_equal(pred, 6 * [1] + 2 * [-1])
+
+    clf_parallel = IsolationForest(
+        random_state=global_random_seed, contamination=contamination, n_jobs=-1
+    )
+    clf_parallel.fit(X)
+    with parallel_backend("threading", n_jobs=n_jobs):
+        pred_paralell = clf_parallel.predict(X)
+
+    # assert the same results as non-parallel
+    assert_array_equal(pred, pred_paralell)

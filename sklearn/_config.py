@@ -1,5 +1,8 @@
-"""Global configuration state and functions for management
-"""
+"""Global configuration state and functions for management"""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import os
 import threading
 from contextlib import contextmanager as contextmanager
@@ -41,6 +44,13 @@ def get_config():
     --------
     config_context : Context manager for global scikit-learn configuration.
     set_config : Set global scikit-learn configuration.
+
+    Examples
+    --------
+    >>> import sklearn
+    >>> config = sklearn.get_config()
+    >>> config.keys()
+    dict_keys([...])
     """
     # Return a copy of the threadlocal configuration so that users will
     # not be able to modify the configuration with the returned dict.
@@ -134,9 +144,12 @@ def set_config(
 
         - `"default"`: Default output format of a transformer
         - `"pandas"`: DataFrame output
+        - `"polars"`: Polars output
         - `None`: Transform configuration is unchanged
 
         .. versionadded:: 1.2
+        .. versionadded:: 1.4
+            `"polars"` option was added.
 
     enable_metadata_routing : bool, default=None
         Enable metadata routing. By default this feature is disabled.
@@ -165,6 +178,11 @@ def set_config(
     --------
     config_context : Context manager for global scikit-learn configuration.
     get_config : Retrieve current values of the global configuration.
+
+    Examples
+    --------
+    >>> from sklearn import set_config
+    >>> set_config(display='diagram')  # doctest: +SKIP
     """
     local_config = _get_threadlocal_config()
 
@@ -281,9 +299,12 @@ def config_context(
 
         - `"default"`: Default output format of a transformer
         - `"pandas"`: DataFrame output
+        - `"polars"`: Polars output
         - `None`: Transform configuration is unchanged
 
         .. versionadded:: 1.2
+        .. versionadded:: 1.4
+            `"polars"` option was added.
 
     enable_metadata_routing : bool, default=None
         Enable metadata routing. By default this feature is disabled.

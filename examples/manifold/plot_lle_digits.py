@@ -7,13 +7,8 @@ We illustrate various embedding techniques on the digits dataset.
 
 """
 
-# Authors: Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#          Olivier Grisel <olivier.grisel@ensta.org>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Gael Varoquaux
-#          Guillaume Lemaitre <g.lemaitre58@gmail.com>
-# License: BSD 3 clause (C) INRIA 2011
-
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Load digits dataset
@@ -135,9 +130,7 @@ embeddings = {
     "LTSA LLE embedding": LocallyLinearEmbedding(
         n_neighbors=n_neighbors, n_components=2, method="ltsa"
     ),
-    "MDS embedding": MDS(
-        n_components=2, n_init=1, max_iter=120, n_jobs=2, normalized_stress="auto"
-    ),
+    "MDS embedding": MDS(n_components=2, n_init=1, max_iter=120, eps=1e-6),
     "Random Trees embedding": make_pipeline(
         RandomTreesEmbedding(n_estimators=200, max_depth=5, random_state=0),
         TruncatedSVD(n_components=2),
@@ -147,7 +140,7 @@ embeddings = {
     ),
     "t-SNE embedding": TSNE(
         n_components=2,
-        n_iter=500,
+        max_iter=500,
         n_iter_without_progress=150,
         n_jobs=2,
         random_state=0,

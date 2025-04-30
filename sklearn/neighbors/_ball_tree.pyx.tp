@@ -11,8 +11,8 @@ implementation_specific_values = [
     ('32', 'float32_t', 'np.float32')
 ]
 
-# Author: Jake Vanderplas <vanderplas@astro.washington.edu>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 }}
 

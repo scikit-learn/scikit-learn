@@ -38,8 +38,9 @@ Programming (pp. 693-703). Springer, Berlin, Heidelberg.
 (https://people.cs.rutgers.edu/~farach/pubs/FrequentStream.pdf)
 
 """
-# Author: Daniel Lopez-Sanchez <lope@usal.es>
-# License: BSD 3 clause
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # Load data manipulation functions
 # Will use this for timing results

@@ -1,10 +1,20 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from collections import Counter
 from contextlib import suppress
 from typing import NamedTuple
 
 import numpy as np
 
-from . import is_scalar_nan
+from ._array_api import (
+    _isin,
+    _searchsorted,
+    device,
+    get_namespace,
+    xpx,
+)
+from ._missing import is_scalar_nan
 
 
 def _unique(values, *, return_inverse=False, return_counts=False):
@@ -51,31 +61,29 @@ def _unique(values, *, return_inverse=False, return_counts=False):
 def _unique_np(values, return_inverse=False, return_counts=False):
     """Helper function to find unique values for numpy arrays that correctly
     accounts for nans. See `_unique` documentation for details."""
-    uniques = np.unique(
-        values, return_inverse=return_inverse, return_counts=return_counts
-    )
+    xp, _ = get_namespace(values)
 
     inverse, counts = None, None
 
-    if return_counts:
-        *uniques, counts = uniques
-
-    if return_inverse:
-        *uniques, inverse = uniques
-
-    if return_counts or return_inverse:
-        uniques = uniques[0]
+    if return_inverse and return_counts:
+        uniques, _, inverse, counts = xp.unique_all(values)
+    elif return_inverse:
+        uniques, inverse = xp.unique_inverse(values)
+    elif return_counts:
+        uniques, counts = xp.unique_counts(values)
+    else:
+        uniques = xp.unique_values(values)
 
     # np.unique will have duplicate missing values at the end of `uniques`
     # here we clip the nans and remove it from uniques
     if uniques.size and is_scalar_nan(uniques[-1]):
-        nan_idx = np.searchsorted(uniques, np.nan)
+        nan_idx = _searchsorted(uniques, xp.nan, xp=xp)
         uniques = uniques[: nan_idx + 1]
         if return_inverse:
             inverse[inverse > nan_idx] = nan_idx
 
         if return_counts:
-            counts[nan_idx] = np.sum(counts[nan_idx:])
+            counts[nan_idx] = xp.sum(counts[nan_idx:])
             counts = counts[: nan_idx + 1]
 
     ret = (uniques,)
@@ -161,8 +169,9 @@ class _nandict(dict):
 
 def _map_to_integer(values, uniques):
     """Map values based on its position in uniques."""
+    xp, _ = get_namespace(values, uniques)
     table = _nandict({val: i for i, val in enumerate(uniques)})
-    return np.array([table[v] for v in values])
+    return xp.asarray([table[v] for v in values], device=device(values))
 
 
 def _unique_python(values, *, return_inverse, return_counts):
@@ -220,17 +229,18 @@ def _encode(values, *, uniques, check_unknown=True):
     encoded : ndarray
         Encoded values
     """
-    if values.dtype.kind in "OUS":
+    xp, _ = get_namespace(values, uniques)
+    if not xp.isdtype(values.dtype, "numeric"):
         try:
             return _map_to_integer(values, uniques)
         except KeyError as e:
-            raise ValueError(f"y contains previously unseen labels: {str(e)}")
+            raise ValueError(f"y contains previously unseen labels: {e}")
     else:
         if check_unknown:
             diff = _check_unknown(values, uniques)
             if diff:
-                raise ValueError(f"y contains previously unseen labels: {str(diff)}")
-        return np.searchsorted(uniques, values)
+                raise ValueError(f"y contains previously unseen labels: {diff}")
+        return _searchsorted(uniques, values, xp=xp)
 
 
 def _check_unknown(values, known_values, return_mask=False):
@@ -258,9 +268,10 @@ def _check_unknown(values, known_values, return_mask=False):
         Additionally returned if ``return_mask=True``.
 
     """
+    xp, _ = get_namespace(values, known_values)
     valid_mask = None
 
-    if values.dtype.kind in "OUS":
+    if not xp.isdtype(values.dtype, "numeric"):
         values_set = set(values)
         values_set, missing_in_values = _extract_missing(values_set)
 
@@ -274,17 +285,15 @@ def _check_unknown(values, known_values, return_mask=False):
         def is_valid(value):
             return (
                 value in uniques_set
-                or missing_in_uniques.none
-                and value is None
-                or missing_in_uniques.nan
-                and is_scalar_nan(value)
+                or (missing_in_uniques.none and value is None)
+                or (missing_in_uniques.nan and is_scalar_nan(value))
             )
 
         if return_mask:
             if diff or nan_in_diff or none_in_diff:
-                valid_mask = np.array([is_valid(value) for value in values])
+                valid_mask = xp.array([is_valid(value) for value in values])
             else:
-                valid_mask = np.ones(len(values), dtype=bool)
+                valid_mask = xp.ones(len(values), dtype=xp.bool)
 
         diff = list(diff)
         if none_in_diff:
@@ -292,21 +301,21 @@ def _check_unknown(values, known_values, return_mask=False):
         if nan_in_diff:
             diff.append(np.nan)
     else:
-        unique_values = np.unique(values)
-        diff = np.setdiff1d(unique_values, known_values, assume_unique=True)
+        unique_values = xp.unique_values(values)
+        diff = xpx.setdiff1d(unique_values, known_values, assume_unique=True, xp=xp)
         if return_mask:
             if diff.size:
-                valid_mask = np.isin(values, known_values)
+                valid_mask = _isin(values, known_values, xp)
             else:
-                valid_mask = np.ones(len(values), dtype=bool)
+                valid_mask = xp.ones(len(values), dtype=xp.bool)
 
         # check for nans in the known_values
-        if np.isnan(known_values).any():
-            diff_is_nan = np.isnan(diff)
-            if diff_is_nan.any():
+        if xp.any(xp.isnan(known_values)):
+            diff_is_nan = xp.isnan(diff)
+            if xp.any(diff_is_nan):
                 # removes nan from valid_mask
                 if diff.size and return_mask:
-                    is_nan = np.isnan(values)
+                    is_nan = xp.isnan(values)
                     valid_mask[is_nan] = 1
 
                 # remove nan from diff

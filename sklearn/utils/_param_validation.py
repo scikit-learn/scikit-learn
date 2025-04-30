@@ -1,8 +1,10 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import functools
 import math
 import operator
 import re
-import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from inspect import signature
@@ -138,7 +140,9 @@ def make_constraint(constraint):
         constraint = make_constraint(constraint.constraint)
         constraint.hidden = True
         return constraint
-    if isinstance(constraint, str) and constraint == "nan":
+    if (isinstance(constraint, str) and constraint == "nan") or (
+        isinstance(constraint, float) and np.isnan(constraint)
+    ):
         return _NanConstraint()
     raise ValueError(f"Unknown constraint type: {constraint}")
 
@@ -579,7 +583,7 @@ class _Booleans(_Constraint):
     """Constraint representing boolean likes.
 
     Convenience class for
-    [bool, np.bool_, Integral (deprecated)]
+    [bool, np.bool_]
     """
 
     def __init__(self):
@@ -587,20 +591,9 @@ class _Booleans(_Constraint):
         self._constraints = [
             _InstancesOf(bool),
             _InstancesOf(np.bool_),
-            _InstancesOf(Integral),
         ]
 
     def is_satisfied_by(self, val):
-        # TODO(1.4) remove support for Integral.
-        if isinstance(val, Integral) and not isinstance(val, bool):
-            warnings.warn(
-                (
-                    "Passing an int for a boolean parameter is deprecated in version"
-                    " 1.2 and won't be supported anymore in version 1.4."
-                ),
-                FutureWarning,
-            )
-
         return any(c.is_satisfied_by(val) for c in self._constraints)
 
     def __str__(self):

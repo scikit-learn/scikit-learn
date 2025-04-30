@@ -2,6 +2,10 @@
 
 It allows to make uniform checks and validation.
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numpy as np
 
 from ..base import is_classifier
@@ -80,7 +84,7 @@ def _process_decision_function(*, y_pred, target_type, classes, pos_label):
     Parameters
     ----------
     y_pred : ndarray
-        Output of `estimator.predict_proba`. The shape depends on the target type:
+        Output of `estimator.decision_function`. The shape depends on the target type:
 
         - for binary classification, it is a 1d array of shape `(n_samples,)` where the
           sign is assuming that `classes[1]` is the positive class;
@@ -143,11 +147,11 @@ def _get_response_values(
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input values.
 
-    response_method : {"predict_proba", "decision_function", "predict"} or \
-            list of such str
+    response_method : {"predict_proba", "predict_log_proba", "decision_function", \
+            "predict"} or list of such str
         Specifies the response method to use get prediction from an estimator
-        (i.e. :term:`predict_proba`, :term:`decision_function` or
-        :term:`predict`). Possible choices are:
+        (i.e. :term:`predict_proba`, :term:`predict_log_proba`,
+        :term:`decision_function` or :term:`predict`). Possible choices are:
 
         - if `str`, it corresponds to the name to the method to return;
         - if a list of `str`, it provides the method names in order of
@@ -191,7 +195,7 @@ def _get_response_values(
         If the response method can be applied to a classifier only and
         `estimator` is a regressor.
     """
-    from sklearn.base import is_classifier, is_outlier_detector  # noqa
+    from sklearn.base import is_classifier, is_outlier_detector
 
     if is_classifier(estimator):
         prediction_method = _check_response_method(estimator, response_method)
@@ -209,7 +213,7 @@ def _get_response_values(
 
         y_pred = prediction_method(X)
 
-        if prediction_method.__name__ == "predict_proba":
+        if prediction_method.__name__ in ("predict_proba", "predict_log_proba"):
             y_pred = _process_predict_proba(
                 y_pred=y_pred,
                 target_type=target_type,
@@ -242,7 +246,9 @@ def _get_response_values(
     return y_pred, pos_label
 
 
-def _get_response_values_binary(estimator, X, response_method, pos_label=None):
+def _get_response_values_binary(
+    estimator, X, response_method, pos_label=None, return_response_method_used=False
+):
     """Compute the response values of a binary classifier.
 
     Parameters
@@ -265,6 +271,12 @@ def _get_response_values_binary(estimator, X, response_method, pos_label=None):
         the metrics. By default, `estimators.classes_[1]` is
         considered as the positive class.
 
+    return_response_method_used : bool, default=False
+        Whether to return the response method used to compute the response
+        values.
+
+        .. versionadded:: 1.5
+
     Returns
     -------
     y_pred : ndarray of shape (n_samples,)
@@ -274,6 +286,12 @@ def _get_response_values_binary(estimator, X, response_method, pos_label=None):
     pos_label : int, float, bool or str
         The class considered as the positive class when computing
         the metrics.
+
+    response_method_used : str
+        The response method used to compute the response values. Only returned
+        if `return_response_method_used` is `True`.
+
+        .. versionadded:: 1.5
     """
     classification_error = "Expected 'estimator' to be a binary classifier."
 
@@ -295,4 +313,5 @@ def _get_response_values_binary(estimator, X, response_method, pos_label=None):
         X,
         response_method,
         pos_label=pos_label,
+        return_response_method_used=return_response_method_used,
     )

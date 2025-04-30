@@ -8,9 +8,13 @@ from scipy.sparse import issparse
 from sklearn import config_context, datasets
 from sklearn.model_selection import ShuffleSplit
 from sklearn.svm import SVC
-from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
+from sklearn.utils._array_api import (
+    _get_namespace_device_dtype_ids,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._testing import (
     _array_api_for_tests,
+    _convert_container,
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
@@ -385,39 +389,40 @@ def test_is_multilabel():
                     )
                 ]
                 for exmpl_sparse in examples_sparse:
-                    assert sparse_exp == is_multilabel(
-                        exmpl_sparse
-                    ), f"is_multilabel({exmpl_sparse!r}) should be {sparse_exp}"
+                    assert sparse_exp == is_multilabel(exmpl_sparse), (
+                        f"is_multilabel({exmpl_sparse!r}) should be {sparse_exp}"
+                    )
 
             # Densify sparse examples before testing
             if issparse(example):
                 example = example.toarray()
 
-            assert dense_exp == is_multilabel(
-                example
-            ), f"is_multilabel({example!r}) should be {dense_exp}"
+            assert dense_exp == is_multilabel(example), (
+                f"is_multilabel({example!r}) should be {dense_exp}"
+            )
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype",
+    "array_namespace, device, dtype_name",
     yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
-def test_is_multilabel_array_api_compliance(array_namespace, device, dtype):
-    xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
+def test_is_multilabel_array_api_compliance(array_namespace, device, dtype_name):
+    xp = _array_api_for_tests(array_namespace, device)
 
     for group, group_examples in ARRAY_API_EXAMPLES.items():
         dense_exp = group == "multilabel-indicator"
         for example in group_examples:
             if np.asarray(example).dtype.kind == "f":
-                example = np.asarray(example, dtype=dtype)
+                example = np.asarray(example, dtype=dtype_name)
             else:
                 example = np.asarray(example)
             example = xp.asarray(example, device=device)
 
             with config_context(array_api_dispatch=True):
-                assert dense_exp == is_multilabel(
-                    example
-                ), f"is_multilabel({example!r}) should be {dense_exp}"
+                assert dense_exp == is_multilabel(example), (
+                    f"is_multilabel({example!r}) should be {dense_exp}"
+                )
 
 
 def test_check_classification_targets():
@@ -432,16 +437,16 @@ def test_check_classification_targets():
                 check_classification_targets(example)
 
 
-# @ignore_warnings
 def test_type_of_target():
     for group, group_examples in EXAMPLES.items():
         for example in group_examples:
-            assert (
-                type_of_target(example) == group
-            ), "type_of_target(%r) should be %r, got %r" % (
-                example,
-                group,
-                type_of_target(example),
+            assert type_of_target(example) == group, (
+                "type_of_target(%r) should be %r, got %r"
+                % (
+                    example,
+                    group,
+                    type_of_target(example),
+                )
             )
 
     for example in NON_ARRAY_LIKE_EXAMPLES:
@@ -565,7 +570,7 @@ def test_safe_split_with_precomputed_kernel():
     K = np.dot(X, X.T)
 
     cv = ShuffleSplit(test_size=0.25, random_state=0)
-    train, test = list(cv.split(X))[0]
+    train, test = next(iter(cv.split(X)))
 
     X_train, y_train = _safe_split(clf, X, y, train)
     K_train, y_train2 = _safe_split(clfp, K, y, train)
@@ -615,3 +620,14 @@ def test_ovr_decision_function():
     ]
 
     assert_allclose(dec_values, dec_values_one, atol=1e-6)
+
+
+@pytest.mark.parametrize("input_type", ["list", "array"])
+def test_labels_in_bytes_format_error(input_type):
+    # check that we raise an error with bytes encoded labels
+    # non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/16980
+    target = _convert_container([b"a", b"b"], input_type)
+    err_msg = "Support for labels represented as bytes is not supported"
+    with pytest.raises(TypeError, match=err_msg):
+        type_of_target(target)

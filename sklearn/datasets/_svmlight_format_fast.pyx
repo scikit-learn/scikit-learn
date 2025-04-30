@@ -1,9 +1,7 @@
 # Optimized inner loop of load_svmlight_file.
 #
-# Authors: Mathieu Blondel <mathieu@mblondel.org>
-#          Lars Buitinck
-#          Olivier Grisel <olivier.grisel@ensta.org>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import array
 from cpython cimport array
@@ -131,7 +129,7 @@ ctypedef fused int_or_longlong:
 
 
 def get_dense_row_string(
-    int_or_float[:, :] X,
+    const int_or_float[:, :] X,
     Py_ssize_t[:] x_inds,
     double_or_longlong[:] x_vals,
     Py_ssize_t row,

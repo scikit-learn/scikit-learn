@@ -1,9 +1,7 @@
 """Univariate features selection."""
 
-# Authors: V. Michel, B. Thirion, G. Varoquaux, A. Gramfort, E. Duchesnay.
-#          L. Buitinck, A. Joly
-# License: BSD 3 clause
-
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Integral, Real
@@ -17,7 +15,7 @@ from ..preprocessing import LabelBinarizer
 from ..utils import as_float_array, check_array, check_X_y, safe_mask, safe_sqr
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import row_norms, safe_sparse_dot
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 from ._base import SelectorMixin
 
 
@@ -149,6 +147,24 @@ def f_classif(X, y):
     --------
     chi2 : Chi-squared stats of non-negative features for classification tasks.
     f_regression : F-value between label/feature for regression tasks.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.feature_selection import f_classif
+    >>> X, y = make_classification(
+    ...     n_samples=100, n_features=10, n_informative=2, n_clusters_per_class=1,
+    ...     shuffle=False, random_state=42
+    ... )
+    >>> f_statistic, p_values = f_classif(X, y)
+    >>> f_statistic
+    array([2.2...e+02, 7.0...e-01, 1.6...e+00, 9.3...e-01,
+           5.4...e+00, 3.2...e-01, 4.7...e-02, 5.7...e-01,
+           7.5...e-01, 8.9...e-02])
+    >>> p_values
+    array([7.1...e-27, 4.0...e-01, 1.9...e-01, 3.3...e-01,
+           2.2...e-02, 5.7...e-01, 8.2...e-01, 4.5...e-01,
+           3.8...e-01, 7.6...e-01])
     """
     X, y = check_X_y(X, y, accept_sparse=["csr", "csc", "coo"])
     args = [X[safe_mask(X, y == k)] for k in np.unique(y)]
@@ -186,8 +202,11 @@ def chi2(X, y):
 
     This score can be used to select the `n_features` features with the
     highest values for the test chi-squared statistic from X, which must
-    contain only **non-negative features** such as booleans or frequencies
+    contain only **non-negative integer feature values** such as booleans or frequencies
     (e.g., term counts in document classification), relative to the classes.
+
+    If some of your features are continuous, you need to bin them, for
+    example by using :class:`~sklearn.preprocessing.KBinsDiscretizer`.
 
     Recall that the chi-square test measures dependence between stochastic
     variables, so using this function "weeds out" the features that are the
@@ -220,6 +239,23 @@ def chi2(X, y):
     Notes
     -----
     Complexity of this algorithm is O(n_classes * n_features).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.feature_selection import chi2
+    >>> X = np.array([[1, 1, 3],
+    ...               [0, 1, 5],
+    ...               [5, 4, 1],
+    ...               [6, 6, 2],
+    ...               [1, 4, 0],
+    ...               [0, 0, 0]])
+    >>> y = np.array([1, 1, 0, 0, 2, 2])
+    >>> chi2_stats, p_values = chi2(X, y)
+    >>> chi2_stats
+    array([15.3...,  6.5       ,  8.9...])
+    >>> p_values
+    array([0.0004..., 0.0387..., 0.0116... ])
     """
 
     # XXX: we might want to do some of the following in logspace instead for
@@ -314,6 +350,16 @@ def r_regression(X, y, *, center=True, force_finite=True):
     mutual_info_regression: Mutual information for a continuous target.
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_regression
+    >>> from sklearn.feature_selection import r_regression
+    >>> X, y = make_regression(
+    ...     n_samples=50, n_features=3, n_informative=1, noise=1e-4, random_state=42
+    ... )
+    >>> r_regression(X, y)
+    array([-0.15...,  1.        , -0.22...])
     """
     X, y = check_X_y(X, y, accept_sparse=["csr", "csc", "coo"], dtype=np.float64)
     n_samples = X.shape[0]
@@ -436,6 +482,19 @@ def f_regression(X, y, *, center=True, force_finite=True):
     SelectFwe: Select features based on family-wise error rate.
     SelectPercentile: Select features based on percentile of the highest
         scores.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_regression
+    >>> from sklearn.feature_selection import f_regression
+    >>> X, y = make_regression(
+    ...     n_samples=50, n_features=3, n_informative=1, noise=1e-4, random_state=42
+    ... )
+    >>> f_statistic, p_values = f_regression(X, y)
+    >>> f_statistic
+    array([1.2...+00, 2.6...+13, 2.6...+00])
+    >>> p_values
+    array([2.7..., 1.5..., 1.0...])
     """
     correlation_coefficient = r_regression(
         X, y, center=center, force_finite=force_finite
@@ -481,7 +540,7 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
         self.score_func = score_func
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y):
+    def fit(self, X, y=None):
         """Run score function on (X, y) and get the appropriate features.
 
         Parameters
@@ -489,18 +548,21 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
         X : array-like of shape (n_samples, n_features)
             The training input samples.
 
-        y : array-like of shape (n_samples,)
+        y : array-like of shape (n_samples,) or None
             The target values (class labels in classification, real numbers in
-            regression).
+            regression). If the selector is unsupervised then `y` can be set to `None`.
 
         Returns
         -------
         self : object
             Returns the instance itself.
         """
-        X, y = self._validate_data(
-            X, y, accept_sparse=["csr", "csc"], multi_output=True
-        )
+        if y is None:
+            X = validate_data(self, X, accept_sparse=["csr", "csc"])
+        else:
+            X, y = validate_data(
+                self, X, y, accept_sparse=["csr", "csc"], multi_output=True
+            )
 
         self._check_params(X, y)
         score_func_ret = self.score_func(X, y)
@@ -518,8 +580,11 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
     def _check_params(self, X, y):
         pass
 
-    def _more_tags(self):
-        return {"requires_y": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.required = True
+        tags.input_tags.sparse = True
+        return tags
 
 
 ######################################################################
@@ -581,6 +646,9 @@ class SelectPercentile(_BaseFilter):
     Ties between features with equal scores will be broken in an unspecified
     way.
 
+    This filter supports unsupervised feature selection that only requests `X` for
+    computing the scores.
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
@@ -620,6 +688,11 @@ class SelectPercentile(_BaseFilter):
             kept_ties = ties[: max_feats - mask.sum()]
             mask[kept_ties] = True
         return mask
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.required = False
+        return tags
 
 
 class SelectKBest(_BaseFilter):
@@ -680,6 +753,9 @@ class SelectKBest(_BaseFilter):
     Ties between features with equal scores will be broken in an unspecified
     way.
 
+    This filter supports unsupervised feature selection that only requests `X` for
+    computing the scores.
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
@@ -703,9 +779,9 @@ class SelectKBest(_BaseFilter):
 
     def _check_params(self, X, y):
         if not isinstance(self.k, str) and self.k > X.shape[1]:
-            raise ValueError(
-                f"k should be <= n_features = {X.shape[1]}; "
-                f"got {self.k}. Use k='all' to return all features."
+            warnings.warn(
+                f"k={self.k} is greater than n_features={X.shape[1]}. "
+                "All the features will be returned."
             )
 
     def _get_support_mask(self):
@@ -723,6 +799,11 @@ class SelectKBest(_BaseFilter):
             # megafeature on x86-64).
             mask[np.argsort(scores, kind="mergesort")[-self.k :]] = 1
             return mask
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.required = False
+        return tags
 
 
 class SelectFpr(_BaseFilter):
@@ -991,7 +1072,8 @@ class GenericUnivariateSelect(_BaseFilter):
         a single array scores.
 
     mode : {'percentile', 'k_best', 'fpr', 'fdr', 'fwe'}, default='percentile'
-        Feature selection mode.
+        Feature selection mode. Note that the `'percentile'` and `'kbest'`
+        modes are supporting unsupervised feature selection (when `y` is `None`).
 
     param : "all", float or int, default=1e-5
         Parameter of the corresponding mode.
@@ -1072,8 +1154,10 @@ class GenericUnivariateSelect(_BaseFilter):
 
         return selector
 
-    def _more_tags(self):
-        return {"preserves_dtype": [np.float64, np.float32]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
     def _check_params(self, X, y):
         self._make_selector()._check_params(X, y)

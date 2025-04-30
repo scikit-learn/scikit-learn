@@ -37,9 +37,8 @@ is held out with the validation stopping criterion.
 
 """
 
-# Authors: Tom Dupre la Tour
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import sys
 import time
@@ -59,7 +58,7 @@ from sklearn.utils._testing import ignore_warnings
 def load_mnist(n_samples=None, class_0="0", class_1="8"):
     """Load MNIST, select two classes, shuffle and return only n_samples."""
     # Load data from http://openml.org/d/554
-    mnist = fetch_openml("mnist_784", version=1, as_frame=False, parser="pandas")
+    mnist = fetch_openml("mnist_784", version=1, as_frame=False)
 
     # take only two classes for binary classification
     mask = np.logical_or(mnist.target == class_0, mnist.target == class_1)

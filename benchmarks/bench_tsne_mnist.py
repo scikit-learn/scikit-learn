@@ -5,7 +5,7 @@ MNIST dataset T-SNE benchmark
 
 """
 
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import argparse
 import json
@@ -36,7 +36,7 @@ memory = Memory(os.path.join(LOG_DIR, "mnist_tsne_benchmark_data"), mmap_mode="r
 def load_data(dtype=np.float32, order="C", shuffle=True, seed=0):
     """Load the data, then cache and memmap the train/test split"""
     print("Loading dataset...")
-    data = fetch_openml("mnist_784", as_frame=True, parser="pandas")
+    data = fetch_openml("mnist_784", as_frame=True)
 
     X = check_array(data["data"], dtype=dtype, order=order)
     y = data["target"]
@@ -130,7 +130,8 @@ if __name__ == "__main__":
         try:
             from bhtsne.bhtsne import run_bh_tsne
         except ImportError as e:
-            raise ImportError("""\
+            raise ImportError(
+                """\
 If you want comparison with the reference implementation, build the
 binary from source (https://github.com/lvdmaaten/bhtsne) in the folder
 benchmarks/bhtsne and add an empty `__init__.py` file in the folder:
@@ -140,7 +141,8 @@ $ cd bhtsne
 $ g++ sptree.cpp tsne.cpp tsne_main.cpp -o bh_tsne -O2
 $ touch __init__.py
 $ cd ..
-""") from e
+"""
+            ) from e
 
         def bhtsne(X):
             """Wrapper for the reference lvdmaaten/bhtsne implementation."""

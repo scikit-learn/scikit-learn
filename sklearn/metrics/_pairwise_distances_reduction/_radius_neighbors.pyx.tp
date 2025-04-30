@@ -4,6 +4,7 @@ import warnings
 
 from libcpp.memory cimport shared_ptr, make_shared
 from libcpp.vector cimport vector
+from libcpp.algorithm cimport move
 from cython cimport final
 from cython.operator cimport dereference as deref
 from cython.parallel cimport parallel, prange
@@ -14,16 +15,11 @@ from ...utils._vector_sentinel cimport vector_to_nd_array
 
 from numbers import Real
 from scipy.sparse import issparse
-from ...utils import check_array, check_scalar, _in_unstable_openblas_configuration
-from ...utils.fixes import threadpool_limits
+from ...utils import check_array, check_scalar
+from ...utils.fixes import _in_unstable_openblas_configuration
+from ...utils.parallel import _get_threadpool_controller
 
 cnp.import_array()
-
-# TODO: change for `libcpp.algorithm.move` once Cython 3 is used
-# Introduction in Cython:
-# https://github.com/cython/cython/blob/05059e2a9b89bf6738a7750b905057e5b1e3fe2e/Cython/Includes/libcpp/algorithm.pxd#L47 #noqa
-cdef extern from "<algorithm>" namespace "std" nogil:
-    OutputIt move[InputIt, OutputIt](InputIt first, InputIt last, OutputIt d_first) except + #noqa
 
 ######################
 
@@ -114,7 +110,7 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
 
         # Limit the number of threads in second level of nested parallelism for BLAS
         # to avoid threads over-subscription (in GEMM for instance).
-        with threadpool_limits(limits=1, user_api="blas"):
+        with _get_threadpool_controller().limit(limits=1, user_api="blas"):
             if pda.execute_in_parallel_on_Y:
                 pda._parallel_on_Y()
             else:

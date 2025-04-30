@@ -10,13 +10,12 @@ We use a GridSearchCV to set the dimensionality of the PCA
 
 """
 
-# Code source: Gaël Varoquaux
-# Modified for documentation by Jaques Grobler
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
+import polars as pl
 
 from sklearn import datasets
 from sklearn.decomposition import PCA
@@ -63,14 +62,19 @@ ax0.axvline(
 ax0.legend(prop=dict(size=12))
 
 # For each number of components, find the best classifier results
-results = pd.DataFrame(search.cv_results_)
 components_col = "param_pca__n_components"
-best_clfs = results.groupby(components_col).apply(
-    lambda g: g.nlargest(1, "mean_test_score")
+is_max_test_score = pl.col("mean_test_score") == pl.col("mean_test_score").max()
+best_clfs = (
+    pl.LazyFrame(search.cv_results_)
+    .filter(is_max_test_score.over(components_col))
+    .unique(components_col)
+    .sort(components_col)
+    .collect()
 )
-
-best_clfs.plot(
-    x=components_col, y="mean_test_score", yerr="std_test_score", legend=False, ax=ax1
+ax1.errorbar(
+    best_clfs[components_col],
+    best_clfs["mean_test_score"],
+    yerr=best_clfs["std_test_score"],
 )
 ax1.set_ylabel("Classification accuracy (val)")
 ax1.set_xlabel("n_components")

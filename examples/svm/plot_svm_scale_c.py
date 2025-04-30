@@ -15,10 +15,9 @@ equation:
 
 where
 
-    - :math:`C` is used to set the amount of regularization
-    - :math:`\mathcal{L}` is a `loss` function of our samples
-      and our model parameters.
-    - :math:`\Omega` is a `penalty` function of our model parameters
+- :math:`C` is used to set the amount of regularization
+- :math:`\mathcal{L}` is a `loss` function of our samples and our model parameters.
+- :math:`\Omega` is a `penalty` function of our model parameters
 
 If we consider the loss function to be the individual error per sample, then the
 data-fit term, or the sum of the error for each sample, increases as we add more
@@ -34,9 +33,8 @@ influences the selected value of `C`. The question that arises is "How do we
 optimally adjust C to account for the different amount of training samples?"
 """
 
-# Author: Andreas Mueller <amueller@ais.uni-bonn.de>
-#         Jaques Grobler <jaques.grobler@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Data generation
