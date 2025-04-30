@@ -310,7 +310,7 @@ def test_type_of_target_too_many_unique_classes():
     # less than 20 samples, no warning should be raised
     y = np.arange(10)
     with warnings.catch_warnings():
-        warnings.simplefilter("error", UserWarning)
+        warnings.simplefilter("error")
         type_of_target(y)
 
 

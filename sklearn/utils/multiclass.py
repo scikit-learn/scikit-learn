@@ -417,8 +417,8 @@ def type_of_target(y, input_name="", raise_unknown=False):
     if y.shape[0] > 20 and classes.shape[0] > round(0.5 * y.shape[0]):
         # Only raise the warning when we have at least 20 samples.
         warnings.warn(
-            r"The number of unique classes is greater than 50% of the number "
-            r"of samples.",
+            "The number of unique classes is greater than 50% of the number "
+            "of samples.",
             UserWarning,
             stacklevel=2,
         )
