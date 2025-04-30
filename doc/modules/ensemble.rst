@@ -1418,9 +1418,9 @@ average of predicted probabilities.
 
 The following figure illustrates how the decision regions may change when
 a soft :class:`VotingClassifier` is trained with weights on three linear
-models::
+models:
 
-.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_voting_decision_regions_001.png
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_voting_decision_regions_002.png
     :target: ../auto_examples/ensemble/plot_voting_decision_regions.html
     :align: center
     :scale: 75%

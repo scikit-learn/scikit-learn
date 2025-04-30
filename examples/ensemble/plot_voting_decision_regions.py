@@ -154,9 +154,9 @@ plt.show()
 # average of the individual classifiers' soft-predictions.
 #
 # In the case of binary classification such as in the present example, the
-# term:`predict_proba` arrays contain the probability of belonging to class 0 (here
-# in red) as the first entry, and the probability of belonging to class 1 (here
-# in blue) as the second entry.
+# term:`predict_proba` arrays contain the probability of belonging to class 0
+# (here in red) as the first entry, and the probability of belonging to class 1
+# (here in blue) as the second entry.
 
 test_sample = pd.DataFrame({"Feature #0": [-0.5], "Feature #1": [1.5]})
 predict_probas = [est.predict_proba(test_sample).ravel() for est in eclf.estimators_]
@@ -170,6 +170,9 @@ print(
 )
 
 # %%
+# We can see that manual calculation of predicted probabilities above is
+# equivalent to that produced by the `VotingClassifier`:
+
 print(
     "Predicted probability of VotingClassifier: "
     f"{eclf.predict_proba(test_sample).ravel()}"
@@ -179,7 +182,8 @@ print(
 # To convert soft predictions into hard predictions when weights are provided,
 # the weighted average predicted probabilities are computed for each class.
 # Then, the final class label is then derived from the class label with the
-# highest average probability.
+# highest average probability, which corresponds to the default threshold at
+# `predict_proba=0.5` in the case of binary classification.
 
 print(
     "Class with the highest weighted average of soft-predictions: "
@@ -187,16 +191,16 @@ print(
 )
 
 # %%
-# Which corresponds to the default threshold at 0.5 in the case of binary
-# classification. This is equivalent to the output of `VotingClassifier`'s `predict`
-# method:
+# This is equivalent to the output of `VotingClassifier`'s `predict` method:
 
 print(f"Predicted class of VotingClassifier: {eclf.predict(test_sample).ravel()}")
 
 # %%
-# Soft votes can be thresholded as for any other probabilistic classifier.
+# Soft votes can be thresholded as for any other probabilistic classifier. This
+# allows you to set a threshold probability at which the positive class will be
+# predicted, instead of simply selecting the class with the highest predicted
+# probability.
 
-# %%
 from sklearn.model_selection import FixedThresholdClassifier
 
 eclf_other_threshold = FixedThresholdClassifier(
