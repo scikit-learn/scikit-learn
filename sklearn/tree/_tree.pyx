@@ -1415,19 +1415,19 @@ cdef class Tree:
                                                     (self.value[node_value_idx] * log(oob_node_values[node_idx, c, k])
                                                     + log(self.value[node_value_idx]) * oob_node_values[node_idx, c, k])
                                                     * node.weighted_n_node_samples
-                                                )
+                                                ) / 2
                                             if oob_node_values[left_idx, c, k] > 0.0 and self.value[left_value_idx] > 0.0:
                                                 importances[node.feature] += (
                                                     (self.value[left_value_idx] * log(oob_node_values[left_idx, c, k])
                                                     + log(self.value[left_value_idx]) * oob_node_values[left_idx, c, k])
                                                     * nodes[left_idx].weighted_n_node_samples
-                                                )
+                                                ) / 2
                                             if oob_node_values[right_idx, c, k] > 0.0 and self.value[right_value_idx] > 0.0:
                                                 importances[node.feature] += (
                                                     (self.value[right_value_idx] * log(oob_node_values[right_idx, c, k])
                                                     + log(self.value[right_value_idx]) * oob_node_values[right_idx, c, k])
                                                     * nodes[right_idx].weighted_n_node_samples
-                                                )
+                                                ) / 2
                                 else: # Regression
                                     importances[node.feature] += (
                                         (node.impurity + oob_node_values[node_idx, 0, k])
@@ -1456,10 +1456,8 @@ cdef class Tree:
                                         * nodes[right_idx].weighted_n_node_samples
                                     )
                             importances[node.feature] /= n_outputs
-                        else:
-                            raise(ValueError(method))
 
-        return (np.asarray(importances), np.asarray(oob_pred))
+        return np.asarray(importances), np.asarray(oob_pred)
 
 
     cdef cnp.ndarray _get_value_ndarray(self):

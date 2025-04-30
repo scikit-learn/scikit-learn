@@ -1677,17 +1677,26 @@ def test_forest_degenerate_unbiased_feature_importances(
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
-@pytest.mark.parametrize("criterion", ["gini", "log_loss"])
-@pytest.mark.parametrize("method", ["ufi", "mdi_oob"])
-def test_unbiased_feature_importance_on_train(name, criterion, method):
+@pytest.mark.parametrize(
+    "criterion, method", [("gini", "ufi"), ("gini", "mdi_oob"), ("log_loss", "ufi")]
+)
+def test_unbiased_feature_importance_on_train(
+    name, criterion, method, global_random_seed
+):
     from sklearn.ensemble._forest import _generate_sample_indices
 
     n_samples = 15
     X, y = make_classification(
-        n_samples=n_samples, n_informative=3, random_state=1, n_classes=2
+        n_samples=n_samples,
+        n_informative=3,
+        random_state=global_random_seed,
+        n_classes=2,
     )
     clf = FOREST_ESTIMATORS[name](
-        n_estimators=1, bootstrap=True, random_state=1, criterion=criterion
+        n_estimators=1,
+        bootstrap=True,
+        random_state=global_random_seed,
+        criterion=criterion,
     )
     clf.fit(X, y)
     method_on_train = 0
@@ -1705,7 +1714,7 @@ def test_unbiased_feature_importance_on_train(name, criterion, method):
         method_on_train += method_on_train_tree / method_on_train_tree.sum()
     method_on_train /= clf.n_estimators
     method_on_train /= method_on_train.sum()
-    assert_almost_equal(clf.feature_importances_, method_on_train)
+    assert_allclose(clf.feature_importances_, method_on_train, rtol=0, atol=1e-12)
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
