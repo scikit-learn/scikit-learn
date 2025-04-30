@@ -13,7 +13,7 @@ interaction terms, one using constant extrapolation and the other using periodic
 extrapolation. The third classifier is a :class:`~kernel_approximation.Nystroem`
 with the default "rbf" kernel.
 
-In the first part of this example these three classifiers are used to
+In the first part of this example, these three classifiers are used to
 demonstrate soft-voting using :class:`~ensemble.VotingClassifier` with weighted
 average. We set `weights=[2, 1, 3]`, meaning the constant extrapolation spline
 model's predictions are weighted twice as much as the periodic spline model's,
@@ -154,7 +154,7 @@ plt.show()
 # average of the individual classifiers' soft-predictions.
 #
 # In the case of binary classification such as in the present example, the
-# `predict_proba` arrays contain the probability of belonging to class 0 (here
+# term:`predict_proba` arrays contain the probability of belonging to class 0 (here
 # in red) as the first entry, and the probability of belonging to class 1 (here
 # in blue) as the second entry.
 
@@ -188,7 +188,8 @@ print(
 
 # %%
 # Which corresponds to the default threshold at 0.5 in the case of binary
-# classification. Equivalently:
+# classification. This is equivalent to the output of `VotingClassifier`'s `predict`
+# method:
 
 print(f"Predicted class of VotingClassifier: {eclf.predict(test_sample).ravel()}")
 
