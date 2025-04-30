@@ -63,6 +63,12 @@ ax.set_title("The XOR dataset")
 plt.show()
 
 # %%
+# Due to the inherent non-linear separability of the XOR dataset, tree-based
+# models would often be preferred. However, appropriate feature engineering
+# combined with a linear model can yield effective results, with the added
+# benefit of producing better-calibrated probabilities for samples located in
+# the transition regions affected by noise.
+#
 # We define and fit the models on the whole dataset.
 
 from sklearn.ensemble import VotingClassifier
