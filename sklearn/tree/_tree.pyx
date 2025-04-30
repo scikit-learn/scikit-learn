@@ -1275,12 +1275,11 @@ cdef class Tree:
 
         return np.asarray(importances)
 
-    cdef void _compute_oob_node_values_and_predictions(self, object X_test, intp_t[:, ::1] y_test, float64_t[:,:,::1] oob_pred, int32_t[::1] has_oob_sample, float64_t[:,:,::1] oob_node_values, str method):
+    cdef void _compute_oob_node_values_and_predictions(self, object X_test, intp_t[:, ::1] y_test, float64_t[:, :, ::1] oob_pred, int32_t[::1] has_oob_sample, float64_t[:, :, ::1] oob_node_values, str method):
         if issparse(X_test):
             raise(NotImplementedError("does not support sparse X yet"))
         if not isinstance(X_test, np.ndarray):
-            raise ValueError("X should be in np.ndarray format, got %s"
-                            % type(X_test))
+            raise ValueError("X should be in np.ndarray format, got %s" % type(X_test))
         if X_test.dtype != DTYPE:
             raise ValueError("X.dtype should be np.float32, got %s" % X_test.dtype)
         cdef const float32_t[:, :] X_ndarray = X_test
@@ -1343,12 +1342,11 @@ cdef class Tree:
                                 oob_node_values[node_idx, 0, k] += y_test[k, sample_idx]
                             count_oob_values[node_idx, k] += 1
                             # TODO use sample weight instead of 1
-
-
                 # store the id of the leaf where each sample ends up
                 y_leafs[sample_idx] = node_idx
+
+            # convert the counts to proportions
             for node_idx in range(node_count):
-                # convert the counts to proportions
                 for k in range(n_outputs):
                     if count_oob_values[node_idx, k] > 0:
                         for c in range(n_classes[k]):
@@ -1373,11 +1371,11 @@ cdef class Tree:
         cdef int32_t[::1] has_oob_sample = np.zeros(node_count, dtype=np.int32)
         cdef float64_t[::1] importances = np.zeros((n_features,), dtype=np.float64)
         cdef float64_t[:, :, ::1] oob_pred = np.zeros((n_samples, max_n_classes, n_outputs), dtype=np.float64)
-        cdef float64_t[:,:,::1] oob_node_values = np.zeros((node_count, max_n_classes, n_outputs), dtype=np.float64)
+        cdef float64_t[:, :, ::1] oob_node_values = np.zeros((node_count, max_n_classes, n_outputs), dtype=np.float64)
 
         cdef Node* nodes = self.nodes
         cdef Node node = nodes[0]
-        cdef int k, c, offset, node_idx = 0
+        cdef int k, c, node_idx = 0
         cdef int left_idx, right_idx, node_value_idx, left_value_idx, right_value_idx = -1
 
         cdef intp_t[:, ::1] y_view = np.ascontiguousarray(y_test, dtype=np.intp)
@@ -1392,7 +1390,7 @@ cdef class Tree:
                     if has_oob_sample[left_idx] and has_oob_sample[right_idx]:
                         if method == "ufi":
                             for k in range(n_outputs):
-                                if n_classes[k] > 1: # Classification
+                                if n_classes[k] > 1:  # Classification
                                     for c in range(n_classes[k]):
                                         node_value_idx = node_idx * self.value_stride + k * max_n_classes + c
                                         left_value_idx = left_idx * self.value_stride + k * max_n_classes + c
@@ -1413,22 +1411,22 @@ cdef class Tree:
                                             if oob_node_values[node_idx, c, k] > 0.0 and self.value[node_value_idx] > 0.0:
                                                 importances[node.feature] -= (
                                                     (self.value[node_value_idx] * log(oob_node_values[node_idx, c, k])
-                                                    + log(self.value[node_value_idx]) * oob_node_values[node_idx, c, k])
+                                                     + log(self.value[node_value_idx]) * oob_node_values[node_idx, c, k])
                                                     * node.weighted_n_node_samples
                                                 ) / 2
                                             if oob_node_values[left_idx, c, k] > 0.0 and self.value[left_value_idx] > 0.0:
                                                 importances[node.feature] += (
                                                     (self.value[left_value_idx] * log(oob_node_values[left_idx, c, k])
-                                                    + log(self.value[left_value_idx]) * oob_node_values[left_idx, c, k])
+                                                     + log(self.value[left_value_idx]) * oob_node_values[left_idx, c, k])
                                                     * nodes[left_idx].weighted_n_node_samples
                                                 ) / 2
                                             if oob_node_values[right_idx, c, k] > 0.0 and self.value[right_value_idx] > 0.0:
                                                 importances[node.feature] += (
                                                     (self.value[right_value_idx] * log(oob_node_values[right_idx, c, k])
-                                                    + log(self.value[right_value_idx]) * oob_node_values[right_idx, c, k])
+                                                     + log(self.value[right_value_idx]) * oob_node_values[right_idx, c, k])
                                                     * nodes[right_idx].weighted_n_node_samples
                                                 ) / 2
-                                else: # Regression
+                                else:  # Regression
                                     importances[node.feature] += (
                                         (node.impurity + oob_node_values[node_idx, 0, k])
                                         * node.weighted_n_node_samples
@@ -1458,7 +1456,6 @@ cdef class Tree:
                             importances[node.feature] /= n_outputs
 
         return np.asarray(importances), np.asarray(oob_pred)
-
 
     cdef cnp.ndarray _get_value_ndarray(self):
         """Wraps value as a 3-d NumPy array.
