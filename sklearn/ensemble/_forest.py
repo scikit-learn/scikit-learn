@@ -708,11 +708,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 method=method,
             )
         )
-        # If classification, turn the predict proba into
-        # the one-hot encoded majority class
         oob_pred[oob_indices, :, :] += y_pred
         n_oob_pred[oob_indices, :] += 1
-        # print([[oob_pred[idx, :, :], self._get_oob_predictions(tree, X[oob_indices])[i]] for i,idx in enumerate(oob_indices)])
         return (importances, oob_pred, n_oob_pred)
 
     def _compute_unbiased_feature_importance_and_oob_predictions(
@@ -916,6 +913,9 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         if self.criterion == "gini":
             self._ufi_feature_importances_ = ufi_feature_importances
             self._mdi_oob_feature_importances_ = mdi_oob_feature_importances
+        elif self.criterion in ["log_loss", "entropy"]:
+            self._ufi_feature_importances_ = ufi_feature_importances
+            # mdi_oob does not support entropy yet
 
         if self.oob_decision_function_.shape[-1] == 1:
             # drop the n_outputs axis if there is a single output
@@ -928,21 +928,20 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
     @property
     def ufi_feature_importances_(self):
         check_is_fitted(self)
-        if self.criterion != "gini":
-            raise AttributeError(
-                "Unbiased feature importance only available for"
-                " classification with split criterion Gini"
-            )
-        else:
+        if self.criterion in ["gini", "log_loss", "entropy"]:
             return self._ufi_feature_importances_
-
+        else:
+            raise AttributeError(
+                "ufi feature importance only available for"
+                " classification with split criterion 'gini', 'log_loss' or 'entropy'."
+            )
     @property
     def mdi_oob_feature_importances_(self):
         check_is_fitted(self)
         if self.criterion != "gini":
             raise AttributeError(
-                "Unbiased feature importance only available for"
-                " classification with split criterion Gini"
+                "mdi_oob feature importance only available for"
+                " classification with split criterion 'gini'"
             )
         else:
             return self._mdi_oob_feature_importances_

@@ -1409,12 +1409,13 @@ cdef class Tree:
                                                 * nodes[right_idx].weighted_n_node_samples
                                             )
                                         elif criterion == "log_loss":
-                                            importances[node.feature] -= (
-                                                (self.value[node_value_idx] * log(oob_node_values[node_idx, c, k])
-                                                + log(self.value[node_value_idx]) * oob_node_values[node_idx, c, k])
-                                                * node.weighted_n_node_samples
-                                            )
-                                            # If one of the children is pure for oob or inbag samples, set the cross entropy to 0
+                                            # Skip empty classes to avoid taking log(0)
+                                            if oob_node_values[node_idx, c, k] > 0.0 and self.value[node_value_idx] > 0.0:
+                                                importances[node.feature] -= (
+                                                    (self.value[node_value_idx] * log(oob_node_values[node_idx, c, k])
+                                                    + log(self.value[node_value_idx]) * oob_node_values[node_idx, c, k])
+                                                    * node.weighted_n_node_samples
+                                                )
                                             if oob_node_values[left_idx, c, k] > 0.0 and self.value[left_value_idx] > 0.0:
                                                 importances[node.feature] += (
                                                     (self.value[left_value_idx] * log(oob_node_values[left_idx, c, k])

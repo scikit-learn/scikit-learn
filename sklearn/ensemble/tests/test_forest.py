@@ -331,13 +331,24 @@ def test_importances(dtype, name, criterion, oob_score, importance_attribute_nam
             " regression with split criterion MSE",
         ):
             importances = getattr(est, importance_attribute_name)
-    elif oob_score and name in FOREST_CLASSIFIERS and criterion != "gini":
-        with pytest.raises(
-            AttributeError,
-            match="Unbiased feature importance only available for"
-            " classification with split criterion Gini",
+    elif oob_score and name in FOREST_CLASSIFIERS:
+        if (
+            importance_attribute_name == "mdi_oob_feature_importances_"
+            and criterion != "gini"
         ):
-            importances = getattr(est, importance_attribute_name)
+            with pytest.raises(
+                AttributeError,
+                match="mdi_oob feature importance only available for"
+                " classification with split criterion 'gini'",
+            ):
+                importances = getattr(est, importance_attribute_name)
+        elif criterion not in ["gini", "log_loss", "entropy"]:
+            with pytest.raises(
+                AttributeError,
+                match="ufi feature importance only available for"
+                " classification with split criterion 'gini', 'log_loss' or 'entropy'.",
+            ):
+                importances = getattr(est, importance_attribute_name)
     else:
         importances = getattr(est, importance_attribute_name)
         # The forest estimator can detect that only the first 3 features of the
