@@ -1120,7 +1120,7 @@ class Pipeline(_BaseComposition):
 
         Returns
         -------
-        Xt : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Inverse transformed data, that is, data in the original feature
             space.
         """
@@ -1221,7 +1221,7 @@ class Pipeline(_BaseComposition):
             tags.input_tags.sparse = all(
                 get_tags(step).input_tags.sparse
                 for name, step in self.steps
-                if step != "passthrough"
+                if step is not None and step != "passthrough"
             )
         except (ValueError, AttributeError, TypeError):
             # This happens when the `steps` is not a list of (name, estimator)
