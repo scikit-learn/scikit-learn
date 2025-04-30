@@ -1,7 +1,5 @@
 .. currentmodule:: sklearn
 
-.. TODO: update doc/conftest.py once document is updated and examples run.
-
 .. _metadata_routing:
 
 Metadata Routing
@@ -248,7 +246,8 @@ should be passed to the estimator's scorer or not::
     [sample_weight] are passed but are not explicitly set as requested or not
     requested for LogisticRegression.score, which is used within GridSearchCV.fit.
     Call `LogisticRegression.set_score_request({metadata}=True/False)` for each metadata
-    you want to request/ignore.
+    you want to request/ignore. See the Metadata Routing User guide
+    <https://scikit-learn.org/stable/metadata_routing.html> for more information.
 
 The issue can be fixed by explicitly setting the request value::
 

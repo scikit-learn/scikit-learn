@@ -6,6 +6,7 @@ from typing import Literal
 
 from ._lib import Backend, _funcs
 from ._lib._utils._compat import array_namespace
+from ._lib._utils._helpers import asarrays
 from ._lib._utils._typing import Array
 
 __all__ = ["isclose", "pad"]
@@ -107,14 +108,11 @@ def isclose(
     """
     xp = array_namespace(a, b) if xp is None else xp
 
-    if _delegate(
-        xp,
-        Backend.NUMPY,
-        Backend.CUPY,
-        Backend.DASK,
-        Backend.JAX,
-        Backend.TORCH,
-    ):
+    if _delegate(xp, Backend.NUMPY, Backend.CUPY, Backend.DASK, Backend.JAX):
+        return xp.isclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan)
+
+    if _delegate(xp, Backend.TORCH):
+        a, b = asarrays(a, b, xp=xp)  # Array API 2024.12 support
         return xp.isclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan)
 
     return _funcs.isclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan, xp=xp)
