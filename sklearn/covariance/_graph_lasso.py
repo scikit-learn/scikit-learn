@@ -857,6 +857,9 @@ class GraphicalLassoCV(BaseGraphicalLasso):
     graphical_lasso : L1-penalized covariance estimator.
     GraphicalLasso : Sparse inverse covariance estimation
         with an l1-penalized estimator.
+    :ref:`sphx_glr_auto_examples_covariance_plot_sparse_cov.py` :
+        Synthetic example comparing **GraphicalLassoCV**, Ledoit-Wolf
+        shrinkage and the empirical covariance estimator on generated data.
 
     Notes
     -----
