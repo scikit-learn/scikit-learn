@@ -1365,7 +1365,6 @@ cdef class Tree:
         cdef intp_t n_features = X_test.shape[1]
         cdef intp_t n_outputs = self.n_outputs
         cdef intp_t max_n_classes = self.max_n_classes
-        cdef intp_t* n_classes = self.n_classes
         cdef intp_t node_count = self.node_count
 
         cdef int32_t[::1] has_oob_sample = np.zeros(node_count, dtype=np.int32)
@@ -1375,87 +1374,103 @@ cdef class Tree:
 
         cdef Node* nodes = self.nodes
         cdef Node node = nodes[0]
-        cdef int k, c, node_idx = 0
-        cdef int left_idx, right_idx, node_value_idx, left_value_idx, right_value_idx = -1
+        cdef int node_idx = 0
+        cdef int left_idx, right_idx = -1
 
         cdef intp_t[:, ::1] y_view = np.ascontiguousarray(y_test, dtype=np.intp)
         self._compute_oob_node_values_and_predictions(X_test, y_view, oob_pred, has_oob_sample, oob_node_values, method)
 
-        with nogil:
-            for node_idx in range(self.node_count):
-                node = nodes[node_idx]
-                if (node.left_child != _TREE_LEAF) and (node.right_child != _TREE_LEAF):
-                    left_idx = node.left_child
-                    right_idx = node.right_child
-                    if has_oob_sample[left_idx] and has_oob_sample[right_idx]:
-                        if method == "ufi":
-                            for k in range(n_outputs):
-                                if n_classes[k] > 1:  # Classification
-                                    for c in range(n_classes[k]):
-                                        node_value_idx = node_idx * self.value_stride + k * max_n_classes + c
-                                        left_value_idx = left_idx * self.value_stride + k * max_n_classes + c
-                                        right_value_idx = right_idx * self.value_stride + k * max_n_classes + c
-                                        if criterion == "gini":
-                                            importances[node.feature] -= (
-                                                self.value[node_value_idx] * oob_node_values[node_idx, c, k]
-                                                * node.weighted_n_node_samples
-                                                -
-                                                self.value[left_value_idx] * oob_node_values[left_idx, c, k]
-                                                * nodes[left_idx].weighted_n_node_samples
-                                                -
-                                                self.value[right_value_idx] * oob_node_values[right_idx, c, k]
-                                                * nodes[right_idx].weighted_n_node_samples
-                                            )
-                                        elif criterion == "log_loss":
-                                            # Skip empty classes to avoid taking log(0)
-                                            if oob_node_values[node_idx, c, k] > 0.0 and self.value[node_value_idx] > 0.0:
-                                                importances[node.feature] -= (
-                                                    (self.value[node_value_idx] * log(oob_node_values[node_idx, c, k])
-                                                     + log(self.value[node_value_idx]) * oob_node_values[node_idx, c, k])
-                                                    * node.weighted_n_node_samples
-                                                ) / 2
-                                            if oob_node_values[left_idx, c, k] > 0.0 and self.value[left_value_idx] > 0.0:
-                                                importances[node.feature] += (
-                                                    (self.value[left_value_idx] * log(oob_node_values[left_idx, c, k])
-                                                     + log(self.value[left_value_idx]) * oob_node_values[left_idx, c, k])
-                                                    * nodes[left_idx].weighted_n_node_samples
-                                                ) / 2
-                                            if oob_node_values[right_idx, c, k] > 0.0 and self.value[right_value_idx] > 0.0:
-                                                importances[node.feature] += (
-                                                    (self.value[right_value_idx] * log(oob_node_values[right_idx, c, k])
-                                                     + log(self.value[right_value_idx]) * oob_node_values[right_idx, c, k])
-                                                    * nodes[right_idx].weighted_n_node_samples
-                                                ) / 2
-                                else:  # Regression
-                                    importances[node.feature] += (
-                                        (node.impurity + oob_node_values[node_idx, 0, k])
-                                        * node.weighted_n_node_samples
-                                        -
-                                        (nodes[left_idx].impurity + oob_node_values[left_idx, 0, k])
-                                        * nodes[left_idx].weighted_n_node_samples
-                                        -
-                                        (nodes[right_idx].impurity + oob_node_values[right_idx, 0, k])
-                                        * nodes[right_idx].weighted_n_node_samples
-                                    )
-                            importances[node.feature] /= n_outputs
-                        elif method == "mdi_oob":
-                            for k in range(n_outputs):
-                                for c in range(n_classes[k]):
-                                    node_value_idx = node_idx * self.value_stride + k * max_n_classes + c
-                                    left_value_idx = left_idx * self.value_stride + k * max_n_classes + c
-                                    right_value_idx = right_idx * self.value_stride + k * max_n_classes + c
-                                    importances[node.feature] += (
-                                        (self.value[node_value_idx] - self.value[left_value_idx])
-                                        * (oob_node_values[node_idx, c , k] - oob_node_values[left_idx, c, k])
-                                        * nodes[left_idx].weighted_n_node_samples
-                                        +
-                                        (self.value[node_value_idx] - self.value[right_value_idx])
-                                        * (oob_node_values[node_idx, c, k] - oob_node_values[right_idx, c, k])
-                                        * nodes[right_idx].weighted_n_node_samples
-                                    )
-                            importances[node.feature] /= n_outputs
+        for node_idx in range(self.node_count):
+            node = nodes[node_idx]
+            if (node.left_child != _TREE_LEAF) and (node.right_child != _TREE_LEAF):
+                left_idx = node.left_child
+                right_idx = node.right_child
+                if has_oob_sample[left_idx] and has_oob_sample[right_idx]:
+                    if method == "ufi":
+                        # Supports criterion in ["gini", "log_loss", "entropy"] for classification
+                        # And criterion=="squared_error" for regression
+                        importances[node.feature] += self.ufi_impurity_decrease(oob_node_values, node_idx, left_idx, right_idx, node, criterion)
+                    elif method == "mdi_oob":
+                        # Only supports criterion=="gini"(resp. "squared_error") for classification (resp. regression)
+                        importances[node.feature] += self.mdi_oob_impurity_decrease(oob_node_values, node_idx, left_idx, right_idx, node)
 
         return np.asarray(importances), np.asarray(oob_pred)
+
+    cdef float64_t mdi_oob_impurity_decrease(self, float64_t[:, :, ::1] oob_node_values, int node_idx, int left_idx, int right_idx, Node node):
+        cdef float64_t importance = 0.0
+        cdef int node_value_idx, left_value_idx, right_value_idx = -1
+        cdef int k, c = 0
+        with nogil:
+            for k in range(self.n_outputs):
+                for c in range(self.n_classes[k]):
+                    node_value_idx = node_idx * self.value_stride + k * self.max_n_classes + c
+                    left_value_idx = left_idx * self.value_stride + k * self.max_n_classes + c
+                    right_value_idx = right_idx * self.value_stride + k * self.max_n_classes + c
+                    importance += (
+                        (self.value[node_value_idx] - self.value[left_value_idx])
+                        * (oob_node_values[node_idx, c , k] - oob_node_values[left_idx, c, k])
+                        * self.nodes[left_idx].weighted_n_node_samples
+                        +
+                        (self.value[node_value_idx] - self.value[right_value_idx])
+                        * (oob_node_values[node_idx, c, k] - oob_node_values[right_idx, c, k])
+                        * self.nodes[right_idx].weighted_n_node_samples
+                    )
+            return importance / self.n_outputs
+
+    cdef float64_t ufi_impurity_decrease(self, float64_t[:, :, ::1] oob_node_values, int node_idx, int left_idx, int right_idx, Node node, str criterion):
+        cdef float64_t importance = 0.0
+        cdef int node_value_idx, left_value_idx, right_value_idx = -1
+        cdef int k, c = 0
+        with nogil:
+            for k in range(self.n_outputs):
+                if self.n_classes[k] > 1:  # Classification
+                    for c in range(self.n_classes[k]):
+                        node_value_idx = node_idx * self.value_stride + k * self.max_n_classes + c
+                        left_value_idx = left_idx * self.value_stride + k * self.max_n_classes + c
+                        right_value_idx = right_idx * self.value_stride + k * self.max_n_classes + c
+                        if criterion == "gini":
+                            importance -= (
+                                self.value[node_value_idx] * oob_node_values[node_idx, c, k]
+                                * node.weighted_n_node_samples
+                                -
+                                self.value[left_value_idx] * oob_node_values[left_idx, c, k]
+                                * self.nodes[left_idx].weighted_n_node_samples
+                                -
+                                self.value[right_value_idx] * oob_node_values[right_idx, c, k]
+                                * self.nodes[right_idx].weighted_n_node_samples
+                            )
+                        elif criterion == "log_loss" or criterion == "entropy":
+                            # Skip empty classes to avoid taking log(0)
+                            if oob_node_values[node_idx, c, k] > 0.0 and self.value[node_value_idx] > 0.0:
+                                importance -= (
+                                    (self.value[node_value_idx] * log(oob_node_values[node_idx, c, k])
+                                     + log(self.value[node_value_idx]) * oob_node_values[node_idx, c, k])
+                                    * node.weighted_n_node_samples
+                                ) / 2
+                            if oob_node_values[left_idx, c, k] > 0.0 and self.value[left_value_idx] > 0.0:
+                                importance += (
+                                    (self.value[left_value_idx] * log(oob_node_values[left_idx, c, k])
+                                     + log(self.value[left_value_idx]) * oob_node_values[left_idx, c, k])
+                                    * self.nodes[left_idx].weighted_n_node_samples
+                                ) / 2
+                            if oob_node_values[right_idx, c, k] > 0.0 and self.value[right_value_idx] > 0.0:
+                                importance += (
+                                    (self.value[right_value_idx] * log(oob_node_values[right_idx, c, k])
+                                     + log(self.value[right_value_idx]) * oob_node_values[right_idx, c, k])
+                                    * self.nodes[right_idx].weighted_n_node_samples
+                                ) / 2
+                else:  # Regression, only works for criterion == "squared_error"
+                    importance += (
+                        (node.impurity + oob_node_values[node_idx, 0, k])
+                        * node.weighted_n_node_samples
+                        -
+                        (self.nodes[left_idx].impurity + oob_node_values[left_idx, 0, k])
+                        * self.nodes[left_idx].weighted_n_node_samples
+                        -
+                        (self.nodes[right_idx].impurity + oob_node_values[right_idx, 0, k])
+                        * self.nodes[right_idx].weighted_n_node_samples
+                    )
+            return importance / self.n_outputs
 
     cdef cnp.ndarray _get_value_ndarray(self):
         """Wraps value as a 3-d NumPy array.
