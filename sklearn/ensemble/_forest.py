@@ -935,6 +935,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
                 "ufi feature importance only available for"
                 " classification with split criterion 'gini', 'log_loss' or 'entropy'."
             )
+
     @property
     def mdi_oob_feature_importances_(self):
         check_is_fitted(self)
@@ -945,7 +946,6 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             )
         else:
             return self._mdi_oob_feature_importances_
-
 
     def _validate_y_class_weight(self, y):
         check_classification_targets(y)

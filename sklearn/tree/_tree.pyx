@@ -1309,7 +1309,7 @@ cdef class Tree:
                     if n_classes[k] > 1:
                         for c in range(n_classes[k]):
                             if y_test[k, sample_idx] == c:
-                                oob_node_values[node_idx, c, k] += 1.0 
+                                oob_node_values[node_idx, c, k] += 1.0
                                 # TODO use sample weight instead of 1
                         count_oob_values[node_idx, k] += 1
                     else:
@@ -1319,7 +1319,7 @@ cdef class Tree:
                         else:
                             oob_node_values[node_idx, 0, k] += y_test[k, sample_idx]
                         count_oob_values[node_idx, k] += 1
-                        # TODO use sample weight instead of 1 
+                        # TODO use sample weight instead of 1
                 # child nodes
                 while node.left_child != _TREE_LEAF and node.right_child != _TREE_LEAF:
                     if X_ndarray[sample_idx, node.feature] <= node.threshold:
@@ -1332,7 +1332,7 @@ cdef class Tree:
                         if n_classes[k] > 1:
                             for c in range(n_classes[k]):
                                 if y_test[k, sample_idx] == c:
-                                    oob_node_values[node_idx, c, k] += 1.0 
+                                    oob_node_values[node_idx, c, k] += 1.0
                                     # TODO use sample weight instead of 1
                             count_oob_values[node_idx, k] += 1
                         else:
@@ -1342,9 +1342,9 @@ cdef class Tree:
                             else:
                                 oob_node_values[node_idx, 0, k] += y_test[k, sample_idx]
                             count_oob_values[node_idx, k] += 1
-                            # TODO use sample weight instead of 1 
+                            # TODO use sample weight instead of 1
 
-                
+
                 # store the id of the leaf where each sample ends up
                 y_leafs[sample_idx] = node_idx
             for node_idx in range(node_count):
@@ -1360,7 +1360,7 @@ cdef class Tree:
                             for k in range(n_outputs):
                                 for c in range(n_classes[k]):
                                     node_value_idx = node_idx * self.value_stride + k * max_n_classes + c
-                                    oob_pred[sample_idx, c, k] = self.value[node_value_idx]    
+                                    oob_pred[sample_idx, c, k] = self.value[node_value_idx]
 
     cpdef compute_unbiased_feature_importance_and_oob_predictions(self, object X_test, object y_test, criterion, method="ufi"):
         cdef intp_t n_samples = X_test.shape[0]
@@ -1388,7 +1388,7 @@ cdef class Tree:
                 node = nodes[node_idx]
                 if (node.left_child != _TREE_LEAF) and (node.right_child != _TREE_LEAF):
                     left_idx = node.left_child
-                    right_idx = node.right_child             
+                    right_idx = node.right_child
                     if has_oob_sample[left_idx] and has_oob_sample[right_idx]:
                         if method == "ufi":
                             for k in range(n_outputs):
@@ -1401,10 +1401,10 @@ cdef class Tree:
                                             importances[node.feature] -= (
                                                 self.value[node_value_idx] * oob_node_values[node_idx, c, k]
                                                 * node.weighted_n_node_samples
-                                                - 
+                                                -
                                                 self.value[left_value_idx] * oob_node_values[left_idx, c, k]
                                                 * nodes[left_idx].weighted_n_node_samples
-                                                - 
+                                                -
                                                 self.value[right_value_idx] * oob_node_values[right_idx, c, k]
                                                 * nodes[right_idx].weighted_n_node_samples
                                             )
@@ -1432,10 +1432,10 @@ cdef class Tree:
                                     importances[node.feature] += (
                                         (node.impurity + oob_node_values[node_idx, 0, k])
                                         * node.weighted_n_node_samples
-                                        - 
+                                        -
                                         (nodes[left_idx].impurity + oob_node_values[left_idx, 0, k])
                                         * nodes[left_idx].weighted_n_node_samples
-                                        - 
+                                        -
                                         (nodes[right_idx].impurity + oob_node_values[right_idx, 0, k])
                                         * nodes[right_idx].weighted_n_node_samples
                                     )
@@ -1450,8 +1450,8 @@ cdef class Tree:
                                         (self.value[node_value_idx] - self.value[left_value_idx])
                                         * (oob_node_values[node_idx, c , k] - oob_node_values[left_idx, c, k])
                                         * nodes[left_idx].weighted_n_node_samples
-                                        + 
-                                        (self.value[node_value_idx] - self.value[right_value_idx]) 
+                                        +
+                                        (self.value[node_value_idx] - self.value[right_value_idx])
                                         * (oob_node_values[node_idx, c, k] - oob_node_values[right_idx, c, k])
                                         * nodes[right_idx].weighted_n_node_samples
                                     )
