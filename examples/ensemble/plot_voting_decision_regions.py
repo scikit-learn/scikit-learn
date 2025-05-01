@@ -117,7 +117,7 @@ eclf.fit(X, y)
 # Finally we use :class:`~inspection.DecisionBoundaryDisplay` to plot the
 # predicted probabilities. By using a diverging colormap (such as `"RdBu"`), we
 # can ensure that darker colors correspond to `predict_proba` close to either 0
-# or 1.
+# or 1, and white corresponds to `predict_proba` of 0.5.
 
 from itertools import product
 
@@ -160,7 +160,7 @@ plt.show()
 # average of the individual classifiers' soft-predictions.
 #
 # In the case of binary classification such as in the present example, the
-# term:`predict_proba` arrays contain the probability of belonging to class 0
+# :term:`predict_proba` arrays contain the probability of belonging to class 0
 # (here in red) as the first entry, and the probability of belonging to class 1
 # (here in blue) as the second entry.
 
