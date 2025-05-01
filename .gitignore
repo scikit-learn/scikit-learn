@@ -90,6 +90,7 @@ _configtest.o.d
 
 # virtualenv from advanced installation guide
 sklearn-env/
+sklenv/
 
 # Default JupyterLite content
 jupyterlite_contents
