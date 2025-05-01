@@ -10,6 +10,7 @@ from sklearn.calibration import (
     CalibratedClassifierCV,
     CalibrationDisplay,
     _CalibratedClassifier,
+    _fit_calibrator,
     _sigmoid_calibration,
     _SigmoidCalibration,
     _TemperatureScaling,
@@ -63,6 +64,30 @@ N_SAMPLES = 200
 def data():
     X, y = make_classification(n_samples=N_SAMPLES, n_features=6, random_state=42)
     return X, y
+
+
+def test_calibration_method(data):
+    # Check that invalid values raise for the 'method' parameter.
+    X, y = data
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
+    clf = LogisticRegression().fit(X_train, y_train)
+    predictions = clf.predict(X_test)
+    calibrator = _TemperatureScaling()
+    method = "not sigmoid, isotonic, or temperature"
+
+    with pytest.raises(ValueError):
+        _fit_calibrator(
+            clf=clf,
+            predictions=predictions,
+            y=y_test,
+            classes=clf.classes_,
+            method=method,
+        )
+
+    with pytest.raises(ValueError):
+        _CalibratedClassifier(
+            estimator=clf, calibrators=[calibrator], method=method, classes=clf.classes_
+        ).predict_proba(X_test)
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
