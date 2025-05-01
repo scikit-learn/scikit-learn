@@ -407,8 +407,9 @@ class _Scorer(_BaseScorer):
         scoring_kwargs = {**self._kwargs, **kwargs}
         # Filter out internal control parameters before passing to user function
         filtered_kwargs = {
-            k: v for k, v in scoring_kwargs.items()
-            if k not in {'needs_sample_weight', 'response_method'}
+            k: v
+            for k, v in scoring_kwargs.items()
+            if k not in {"needs_sample_weight", "response_method"}
         }
 
         return self._sign * self._score_func(y_true, y_pred, **filtered_kwargs)
