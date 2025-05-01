@@ -1,3 +1,4 @@
+import warnings
 from itertools import product
 
 import numpy as np
@@ -292,6 +293,25 @@ def test_unique_labels():
         unique_labels(np.ones((5, 4)), np.ones((5, 5)))
 
     assert_array_equal(unique_labels(np.ones((4, 5)), np.ones((5, 5))), np.arange(5))
+
+
+def test_type_of_target_too_many_unique_classes():
+    """Check that we raise a warning when the number of unique classes is greater than
+    50% of the number of samples.
+
+    We need to check that we don't raise if we have less than 20 samples.
+    """
+
+    y = np.arange(25)
+    msg = r"The number of unique classes is greater than 50% of the number of samples."
+    with pytest.warns(UserWarning, match=msg):
+        type_of_target(y)
+
+    # less than 20 samples, no warning should be raised
+    y = np.arange(10)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        type_of_target(y)
 
 
 def test_unique_labels_non_specific():
