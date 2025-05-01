@@ -1075,7 +1075,7 @@ def _temperature_scaling(predictions, labels, sample_weight=None, beta_0=1.0):
         sample_weight=sample_weight, n_classes=logits.shape[1]
     )
 
-    def beta_loss(beta):
+    def beta_loss(beta=beta_0):
         """Compute the negative log likelihood loss and its derivative
             with respect  to temperature.
 
@@ -1240,7 +1240,6 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.one_d_array = True
-        tags.input_tags.two_d_array = True
         return tags
 
 

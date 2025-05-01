@@ -468,7 +468,7 @@ def test_temperature_scaling(clf, n_classes):
         - roc_auc_score(y_test, y_scores, multi_class="ovr")
     )
 
-    assert roc_auc_diff <= 0.03
+    assert roc_auc_diff <= 0.02
 
 
 def test_temperature_scaling_input_validation():
