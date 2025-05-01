@@ -66,7 +66,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     """Calibrate probabilities using isotonic, logistic, or temperature scaling.
 
     This class uses cross-validation to both estimate the parameters of a
-    classifier and subsequently calibrate a classifier. With default
+    classifier and subsequently calibrate a classifier. With
     `ensemble=True`, for each cv split it
     fits a copy of the base estimator to the training subset, and calibrates it
     using the testing subset. For prediction, predicted probabilities are
