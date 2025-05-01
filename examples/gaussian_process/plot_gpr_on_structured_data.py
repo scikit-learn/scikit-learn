@@ -5,7 +5,7 @@ Gaussian processes on discrete data structures
 
 This example illustrates the use of Gaussian processes for regression and
 classification tasks on data that are not in fixed-length feature vector form.
-This is achieved through the use of kernel functions that operates directly
+This is achieved through the use of kernel functions that operate directly
 on discrete structures such as variable-length sequences, trees, and graphs.
 
 Specifically, here the input variables are some gene sequences stored as
@@ -102,7 +102,7 @@ class SequenceKernel(GenericKernelMixin, Kernel):
         return cloned
 
 
-kernel = SequenceKernel()
+kernel = SequenceKernel(baseline_similarity_bounds="fixed")
 
 # %%
 # Sequence similarity matrix under the kernel
