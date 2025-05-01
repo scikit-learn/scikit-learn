@@ -800,7 +800,7 @@ API_REFERENCE = {
                     "cluster.pair_confusion_matrix",
                     "completeness_score",
                     "davies_bouldin_score",
-                    "entropy",
+                    "cluster.entropy",
                     "fowlkes_mallows_score",
                     "homogeneity_completeness_v_measure",
                     "homogeneity_score",
