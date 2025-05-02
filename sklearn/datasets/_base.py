@@ -11,6 +11,7 @@ import hashlib
 import os
 import re
 import shutil
+import sys
 import time
 import unicodedata
 import warnings
@@ -51,8 +52,11 @@ def get_data_home(data_home=None) -> str:
     This folder is used by some large dataset loaders to avoid downloading the
     data several times.
 
-    By default the data directory is set to a folder named 'scikit_learn_data' in the
-    user home folder.
+    By default the data directory is set to a folder named 'scikit-learn' in the
+    operating system's standard cache directory:
+    - Linux/Unix: $XDG_CACHE_HOME/scikit-learn (defaults to ~/.cache/scikit-learn)
+    - macOS: ~/Library/Caches/scikit-learn
+    - Windows: %LOCALAPPDATA%/scikit-learn (defaults to ~/AppData/Local/scikit-learn)
 
     Alternatively, it can be set by the 'SCIKIT_LEARN_DATA' environment
     variable or programmatically by giving an explicit folder path. The '~'
@@ -64,7 +68,7 @@ def get_data_home(data_home=None) -> str:
     ----------
     data_home : str or path-like, default=None
         The path to scikit-learn data directory. If `None`, the default path
-        is `~/scikit_learn_data`.
+        is determined by the operating system's standard cache directory.
 
     Returns
     -------
@@ -80,7 +84,15 @@ def get_data_home(data_home=None) -> str:
     True
     """
     if data_home is None:
-        data_home = environ.get("SCIKIT_LEARN_DATA", join("~", "scikit_learn_data"))
+        cache_dirs = {
+            "win32": environ.get(
+                "LOCALAPPDATA", join(expanduser("~"), "AppData", "Local")
+            ),
+            "darwin": join(expanduser("~"), "Library", "Caches"),
+            "default": environ.get("XDG_CACHE_HOME", join(expanduser("~"), ".cache")),
+        }
+        cache_dir = cache_dirs.get(sys.platform, cache_dirs["default"])
+        data_home = environ.get("SCIKIT_LEARN_DATA", join(cache_dir, "scikit-learn"))
     data_home = expanduser(data_home)
     makedirs(data_home, exist_ok=True)
     return data_home
@@ -99,7 +111,7 @@ def clear_data_home(data_home=None):
     ----------
     data_home : str or path-like, default=None
         The path to scikit-learn data directory. If `None`, the default path
-        is `~/scikit_learn_data`.
+        is determined by the operating system's standard cache directory.
 
     Examples
     --------

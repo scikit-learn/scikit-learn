@@ -90,22 +90,114 @@ def test_category_dir_2(load_files_root):
 
 @pytest.mark.parametrize("path_container", [None, Path, _DummyPath])
 def test_data_home(path_container, data_home):
-    # get_data_home will point to a pre-existing folder
     if path_container is not None:
         data_home = path_container(data_home)
     data_home = get_data_home(data_home=data_home)
     assert data_home == data_home
     assert os.path.exists(data_home)
 
-    # clear_data_home will delete both the content and the folder it-self
     if path_container is not None:
         data_home = path_container(data_home)
     clear_data_home(data_home=data_home)
     assert not os.path.exists(data_home)
 
-    # if the folder is missing it will be created again
     data_home = get_data_home(data_home=data_home)
     assert os.path.exists(data_home)
+
+
+@pytest.mark.parametrize(
+    "platform, env_vars, expected_path",
+    [
+        (
+            "win32",
+            {"LOCALAPPDATA": "PLACEHOLDER_LOCALAPPDATA"},
+            "PLACEHOLDER_LOCALAPPDATA/scikit-learn",
+        ),
+        (
+            "win32",
+            {},
+            os.path.join(os.path.expanduser("~"), "AppData", "Local", "scikit-learn"),
+        ),
+        (
+            "darwin",
+            {},
+            os.path.join(os.path.expanduser("~"), "Library", "Caches", "scikit-learn"),
+        ),
+        (
+            "linux",
+            {"XDG_CACHE_HOME": "PLACEHOLDER_XDG_CACHE_HOME"},
+            "PLACEHOLDER_XDG_CACHE_HOME/scikit-learn",
+        ),
+        (
+            "linux",
+            {},
+            os.path.join(os.path.expanduser("~"), ".cache", "scikit-learn"),
+        ),
+        (
+            "win32",
+            {"SCIKIT_LEARN_DATA": "PLACEHOLDER_CUSTOM_PATH"},
+            "PLACEHOLDER_CUSTOM_PATH",
+        ),
+        (
+            "darwin",
+            {"SCIKIT_LEARN_DATA": "PLACEHOLDER_CUSTOM_PATH"},
+            "PLACEHOLDER_CUSTOM_PATH",
+        ),
+        (
+            "linux",
+            {"SCIKIT_LEARN_DATA": "PLACEHOLDER_CUSTOM_PATH"},
+            "PLACEHOLDER_CUSTOM_PATH",
+        ),
+    ],
+)
+def test_data_home_os_paths(monkeypatch, platform, env_vars, expected_path, tmpdir):
+    """Test that get_data_home returns the correct OS-specific path."""
+    # Create test directories in tmpdir
+    localappdata = str(tmpdir / "AppData" / "Local")
+    xdg_cache_home = str(tmpdir / ".cache")
+    custom_path = str(tmpdir / "custom")
+
+    os.makedirs(localappdata, exist_ok=True)
+    os.makedirs(xdg_cache_home, exist_ok=True)
+    os.makedirs(custom_path, exist_ok=True)
+
+    env_vars = {
+        k: v.replace("PLACEHOLDER_LOCALAPPDATA", localappdata)
+        .replace("PLACEHOLDER_XDG_CACHE_HOME", xdg_cache_home)
+        .replace("PLACEHOLDER_CUSTOM_PATH", custom_path)
+        for k, v in env_vars.items()
+    }
+    expected_path = (
+        expected_path.replace("PLACEHOLDER_LOCALAPPDATA", localappdata)
+        .replace("PLACEHOLDER_XDG_CACHE_HOME", xdg_cache_home)
+        .replace("PLACEHOLDER_CUSTOM_PATH", custom_path)
+    )
+
+    monkeypatch.setattr("sys.platform", platform)
+
+    for key, value in env_vars.items():
+        monkeypatch.setenv(key, value)
+
+    for key in ["LOCALAPPDATA", "XDG_CACHE_HOME", "SCIKIT_LEARN_DATA"]:
+        if key not in env_vars:
+            monkeypatch.delenv(key, raising=False)
+
+    path = get_data_home()
+
+    expected_path = os.path.normpath(expected_path)
+    path = os.path.normpath(path)
+
+    assert path == expected_path
+    assert os.path.exists(path)
+
+
+def test_data_home_custom_path(tmpdir):
+    """Test that get_data_home respects custom paths."""
+    custom_path = str(tmpdir / "custom_scikit_learn_data")
+    data_home = get_data_home(custom_path)
+
+    assert data_home == custom_path
+    assert os.path.exists(custom_path)
 
 
 def test_default_empty_load_files(load_files_root):
