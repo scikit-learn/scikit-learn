@@ -336,15 +336,16 @@ dropped_result = cross_validate(hist_dropped, X, y, **common_params)
 one_hot_result = cross_validate(hist_one_hot, X, y, **common_params)
 ordinal_result = cross_validate(hist_ordinal, X, y, **common_params)
 native_result = cross_validate(hist_native, X, y, **common_params)
-results = [
+results_underfit = [
     ("Dropped", dropped_result),
     ("One Hot", one_hot_result),
     ("Ordinal", ordinal_result),
     ("Native", native_result),
 ]
 
+# %%
 plot_performance_tradeoff(
-    results, "Gradient Boosting on Ames Housing (few and small trees)"
+    results_underfit, "Gradient Boosting on Ames Housing (few and shallow trees)"
 )
 
 # %%
