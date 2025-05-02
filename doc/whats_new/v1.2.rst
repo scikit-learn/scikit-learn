@@ -698,7 +698,7 @@ Changelog
 
 - |Enhancement| :class:`kernel_approximation.RBFSampler` now accepts
   `'scale'` option for parameter `gamma`.
-  :pr:`24755` by :user:`Gleb Levitski <GLevV>`.
+  :pr:`24755` by :user:`Hleb Levitski <glevv>`.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -1023,7 +1023,7 @@ Papadopoulos Orfanos, Dimitris Litsidis, drewhogg, Duarte OC, Dwight Lindquist,
 Eden Brekke, Edern, Edoardo Abati, Eleanore Denies, EliaSchiavon, Emir,
 ErmolaevPA, Fabrizio Damicelli, fcharras, Felipe Siola, Flynn,
 francesco-tuveri, Franck Charras, ftorres16, Gael Varoquaux, Geevarghese
-George, genvalen, GeorgiaMayDay, Gianr Lazz, Gleb Levitski, Glòria Macià
+George, genvalen, GeorgiaMayDay, Gianr Lazz, Hleb Levitski, Glòria Macià
 Muñoz, Guillaume Lemaitre, Guillem García Subies, Guitared, gunesbayir,
 Haesun Park, Hansin Ahuja, Hao Chun Chang, Harsh Agrawal, harshit5674,
 hasan-yaman, henrymooresc, Henry Sorsky, Hristo Vrigazov, htsedebenham, humahn,

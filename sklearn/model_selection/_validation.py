@@ -6,7 +6,6 @@ functions to validate the model.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 import numbers
 import time
 import warnings
@@ -287,8 +286,8 @@ def cross_validate(
             set for each cv split.
         ``score_time``
             The time for scoring the estimator on the test set for each
-            cv split. (Note time for scoring on the train set is not
-            included even if ``return_train_score`` is set to ``True``
+            cv split. (Note: time for scoring on the train set is not
+            included even if ``return_train_score`` is set to ``True``).
         ``estimator``
             The estimator objects for each cv split.
             This is available only if ``return_estimator`` parameter
@@ -819,9 +818,9 @@ def _fit_and_score(
     progress_msg = ""
     if verbose > 2:
         if split_progress is not None:
-            progress_msg = f" {split_progress[0]+1}/{split_progress[1]}"
+            progress_msg = f" {split_progress[0] + 1}/{split_progress[1]}"
         if candidate_progress and verbose > 9:
-            progress_msg += f"; {candidate_progress[0]+1}/{candidate_progress[1]}"
+            progress_msg += f"; {candidate_progress[0] + 1}/{candidate_progress[1]}"
 
     if verbose > 1:
         if parameters is None:
