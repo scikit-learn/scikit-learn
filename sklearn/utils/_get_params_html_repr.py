@@ -79,7 +79,7 @@ def _html_template(params):
         <div class="estimator-table">
             <details>
                 <summary>Parameters</summary>
-                <table>
+                <table class="parameters-table">
                   <tbody>
                     {rows}
                   </tbody>
