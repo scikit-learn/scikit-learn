@@ -29,7 +29,7 @@ def _get_css_style():
     estimator_css = Path(__file__).with_suffix(".css").read_text(encoding="utf-8")
     get_params_css = (
         Path(__file__)
-        .with_name("_get_params_html_repr.css")
+        .parent.joinpath("_repr_html/_get_params_html_repr.css")
         .read_text(encoding="utf-8")
     )
 
@@ -491,7 +491,10 @@ def estimator_html_repr(estimator):
             is_fitted_css_class=is_fitted_css_class,
             is_fitted_icon=is_fitted_icon,
         )
-        with open(str(Path(__file__).with_name("_estimator_html_repr.js")), "r") as f:
+        with open(
+            str(Path(__file__).parent.joinpath("_repr_html/_estimator_html_repr.js")),
+            "r",
+        ) as f:
             script = f.read()
 
         html_end = f"</div></div><script>{script}</script></body>"
