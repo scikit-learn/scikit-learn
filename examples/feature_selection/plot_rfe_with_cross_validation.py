@@ -110,6 +110,6 @@ for i in range(cv.n_splits):
     features_selected = np.ma.compressed(np.ma.masked_array(feat_names, mask=1 - mask))
     print(f"Features selected in fold {i}: {features_selected}")
 # %%
-# In the five folds, the selected features are consistant. This is good news,
-# it means that the selection is stable accross folds, and it confirms that
+# In the five folds, the selected features are consistent. This is good news,
+# it means that the selection is stable across folds, and it confirms that
 # these features are the most informative ones.

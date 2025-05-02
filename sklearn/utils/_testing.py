@@ -686,12 +686,42 @@ def _get_diff_msg(docstrings_grouped):
 
 
 def _check_consistency_items(
-    items_docs, type_or_desc, section, n_objects, descr_regex_pattern=""
+    items_docs,
+    type_or_desc,
+    section,
+    n_objects,
+    descr_regex_pattern="",
+    ignore_types=tuple(),
 ):
     """Helper to check docstring consistency of all `items_docs`.
 
     If item is not present in all objects, checking is skipped and warning raised.
     If `regex` provided, match descriptions to all descriptions.
+
+    Parameters
+    ----------
+    items_doc : dict of dict of str
+        Dictionary where the key is the string type or description, value is
+        a dictionary where the key is "type description" or "description"
+        and the value is a list of object names with the same string type or
+        description.
+
+    type_or_desc : {"type description", "description"}
+        Whether to check type description or description between objects.
+
+    section : {"Parameters", "Attributes", "Returns"}
+        Name of the section type.
+
+    n_objects : int
+        Total number of objects.
+
+    descr_regex_pattern : str, default=""
+        Regex pattern to match for description of all objects.
+        Ignored when `type_or_desc="type description".
+
+    ignore_types : tuple of str, default=()
+        Tuple of parameter/attribute/return names for which type description
+        matching is ignored. Ignored when `type_or_desc="description".
     """
     skipped = []
     for item_name, docstrings_grouped in items_docs.items():
@@ -710,6 +740,9 @@ def _check_consistency_items(
                     f" does not match 'descr_regex_pattern': {descr_regex_pattern} "
                 )
                 raise AssertionError(msg)
+        # Skip type checking for items in `ignore_types`
+        elif type_or_desc == "type specification" and item_name in ignore_types:
+            continue
         # Otherwise, if more than one key, docstrings not consistent between objects
         elif len(docstrings_grouped.keys()) > 1:
             msg_diff = _get_diff_msg(docstrings_grouped)
@@ -738,6 +771,7 @@ def assert_docstring_consistency(
     include_returns=False,
     exclude_returns=None,
     descr_regex_pattern=None,
+    ignore_types=tuple(),
 ):
     r"""Check consistency between docstring parameters/attributes/returns of objects.
 
@@ -785,6 +819,10 @@ def assert_docstring_consistency(
         Regular expression to match to all descriptions of included
         parameters/attributes/returns. If None, will revert to default behavior
         of comparing descriptions between objects.
+
+    ignore_types : tuple of str, default=tuple()
+        Tuple of parameter/attribute/return names to exclude from type description
+        matching between objects.
 
     Examples
     --------
@@ -849,7 +887,13 @@ def assert_docstring_consistency(
                     type_items[item_name][type_def].append(obj_name)
                     desc_items[item_name][desc].append(obj_name)
 
-        _check_consistency_items(type_items, "type specification", section, n_objects)
+        _check_consistency_items(
+            type_items,
+            "type specification",
+            section,
+            n_objects,
+            ignore_types=ignore_types,
+        )
         _check_consistency_items(
             desc_items,
             "description",
