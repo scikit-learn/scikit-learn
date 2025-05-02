@@ -276,7 +276,7 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
             name: param.default for name, param in init_default_params.items()
         }
 
-        def non_default(param_name, param_value):
+        def is_non_default(param_name, param_value):
             """Finds the parameters that have been set by the user"""
             if (
                 param_name not in init_default_params
@@ -300,11 +300,17 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
                 return True
             return False
 
+        # reorder the parameters from `self.get_params` using the `__init__`
+        # signature
+        remaining_params = [name for name in out if name not in init_default_params]
+        ordered_out = {name: out[name] for name in init_default_params if name in out}
+        ordered_out.update({name: out[name] for name in remaining_params})
+
         non_default_ls = [
-            name for name, value in out.items() if non_default(name, value)
+            name for name, value in ordered_out.items() if is_non_default(name, value)
         ]
 
-        return ParamsDict(out, non_default_ls)
+        return ParamsDict(ordered_out, non_default_ls)
 
     def set_params(self, **params):
         """Set the parameters of this estimator.
