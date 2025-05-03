@@ -330,7 +330,7 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Object that stores computed values.
         """
         target_type = type_of_target(y_true)
-        if target_type == "continuous":
+        if target_type == "continuous" and pos_label is None:
             if np.any(y_true < 0):
                 raise ValueError(
                     "`y_true` contains negative values, which isn't allowed for "
