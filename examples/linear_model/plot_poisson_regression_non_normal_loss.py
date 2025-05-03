@@ -527,7 +527,7 @@ ax.get_lines()[-1].set_label(f"Oracle model (Gini={gini:.2f})")
 
 ax.set(
     title="Lorenz Curves",
-    xlabel=("Cumulative proportion of exposure (from safest to riskiest)"),
+    xlabel="Cumulative proportion of exposure (from safest to riskiest)",
     ylabel="Cumulative proportion of claims",
 )
 
