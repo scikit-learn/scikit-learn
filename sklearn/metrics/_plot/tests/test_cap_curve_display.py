@@ -8,8 +8,36 @@ from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression, PoissonRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.svm import LinearSVC
+from sklearn.utils.multiclass import type_of_target
 
 from ..cap_curve import CAPCurveDisplay
+
+
+def assert_valid_cap_display(cap_display, plot_chance_level=None, plot_perfect=None):
+    assert cap_display is not None
+    assert hasattr(cap_display, "y_true_cumulative"), (
+        "The display must have a y_true_cumulative attribute"
+    )
+    assert hasattr(cap_display, "cumulative_total"), (
+        "The display must have a cumulative_total attribute"
+    )
+    assert hasattr(cap_display, "line_"), "The display must have a line attribute"
+    assert hasattr(cap_display, "ax_"), "The display must have an ax attribute"
+    assert hasattr(cap_display, "figure_"), "The display must have a figure attribute"
+    assert hasattr(cap_display, "pos_label"), (
+        "The display must have a pos_label attribute"
+    )
+    assert hasattr(cap_display, "y_true_cumulative"), (
+        "The display must have a y_true_cumulative attribute"
+    )
+    if plot_chance_level:
+        assert cap_display.chance_level_ is not None, (
+            "Chance level line should be present"
+        )
+    if plot_perfect:
+        assert cap_display.perfect_level_ is not None, (
+            "Perfect level line should be present"
+        )
 
 
 @pytest.fixture
@@ -37,6 +65,7 @@ def logistic_regression_model(data_binary):
 
 @pytest.mark.parametrize("normalize_scale", [True, False])
 @pytest.mark.parametrize("plot_chance_level", [True, False])
+@pytest.mark.parametrize("plot_perfect", [True, False])
 @pytest.mark.parametrize("name", ["Logistic Regression", None])
 @pytest.mark.parametrize("chance_level_kw", [{"color": "red", "lw": 3}, None])
 @pytest.mark.parametrize("y_pred_dtype", [np.float32, np.float64])
@@ -45,6 +74,7 @@ def test_cumulative_accuracy_display_from_predictions(
     data_binary,
     normalize_scale,
     plot_chance_level,
+    plot_perfect,
     name,
     chance_level_kw,
     y_pred_dtype,
@@ -61,26 +91,7 @@ def test_cumulative_accuracy_display_from_predictions(
         chance_level_kw=chance_level_kw,
     )
 
-    assert cap_display is not None
-    assert hasattr(cap_display, "y_true_cumulative"), (
-        "The display must have a y_true_cumulative attribute"
-    )
-    assert hasattr(cap_display, "cumulative_total"), (
-        "The display must have a cumulative_total attribute"
-    )
-    assert hasattr(cap_display, "line_"), "The display must have a line attribute"
-    assert hasattr(cap_display, "ax_"), "The display must have an ax attribute"
-    assert hasattr(cap_display, "figure_"), "The display must have a figure attribute"
-    assert hasattr(cap_display, "pos_label"), (
-        "The display must have a pos_label attribute"
-    )
-    assert hasattr(cap_display, "y_true_cumulative"), (
-        "The display must have a y_true_cumulative attribute"
-    )
-    if plot_chance_level:
-        assert cap_display.chance_level_ is not None, (
-            "Chance level line should be present"
-        )
+    assert_valid_cap_display(cap_display, plot_chance_level, plot_perfect)
 
     y_true_cumulative = cap_display.y_true_cumulative
     cumulative_total = cap_display.cumulative_total
@@ -93,6 +104,7 @@ def test_cumulative_accuracy_display_from_predictions(
 )
 @pytest.mark.parametrize("normalize_scale", [True, False])
 @pytest.mark.parametrize("plot_chance_level", [True, False])
+@pytest.mark.parametrize("plot_perfect", [True, False])
 @pytest.mark.parametrize("name", ["Logistic Regression", None])
 def test_cumulative_accuracy_display_from_estimator(
     pyplot,
@@ -100,6 +112,7 @@ def test_cumulative_accuracy_display_from_estimator(
     data_binary,
     normalize_scale,
     plot_chance_level,
+    plot_perfect,
     name,
     response_method,
 ):
@@ -116,22 +129,7 @@ def test_cumulative_accuracy_display_from_estimator(
     )
 
     assert cap_display is not None
-    assert hasattr(cap_display, "line_"), "The display must have a line attribute"
-    assert hasattr(cap_display, "ax_"), "The display must have an ax attribute"
-    assert hasattr(cap_display, "figure_"), "The display must have a figure attribute"
-    assert hasattr(cap_display, "y_true_cumulative"), (
-        "The display must have a y_true_cumulative attribute"
-    )
-    assert hasattr(cap_display.y_true_cumulative, "shape"), (
-        "y_true_cumulative must have a shape attribute"
-    )
-    assert hasattr(cap_display.y_true_cumulative, "dtype"), (
-        "y_true_cumulative must have a dtype attribute"
-    )
-    if plot_chance_level:
-        assert cap_display.chance_level_ is not None, (
-            "Chance level line should be present"
-        )
+    assert_valid_cap_display(cap_display, plot_chance_level, plot_perfect)
 
 
 @pytest.mark.parametrize(
@@ -581,11 +579,14 @@ def test_name_with_predictor_from_estimator(pyplot, name, expected_name):
     assert expected_name == cap.estimator_name
 
 
-# @pytest.mark.parametrize("y_true", [np.zeros(3), np.asarray([0.1, 0.3, 1.0])])
-# @pytest.mark.parametrize("y_pred", [np.zeros(3), np.asarray([0.1, 0.3, 1.0])])
-# @pytest.mark.parametrize("pos_label", [1, 0, None])
-# def test_edge_cases_from_predictions(pyplot, y_true, y_pred, pos_label):
-#     if pos_label is not None and type_of_target(y_true):
-#         _ = CAPCurveDisplay.from_predictions(y_true, y_pred, pos_label=pos_label)
-#     else:
-#         _ = CAPCurveDisplay.from_predictions(y_true, y_pred, pos_label=pos_label)
+@pytest.mark.parametrize("y_true", [np.zeros(3), np.asarray([0.1, 0.3, 1.0])])
+@pytest.mark.parametrize("y_pred", [np.zeros(3), np.asarray([0.1, 0.3, 1.0])])
+@pytest.mark.parametrize("pos_label", [1, 0, None])
+def test_edge_cases_from_predictions(pyplot, y_true, y_pred, pos_label):
+    if pos_label is not None and type_of_target(y_true) == "continuous":
+        match = "The target y is not binary. Got continuous type of target."
+        with pytest.raises(ValueError, match=match):
+            _ = CAPCurveDisplay.from_predictions(y_true, y_pred, pos_label=pos_label)
+    else:
+        display = CAPCurveDisplay.from_predictions(y_true, y_pred, pos_label=pos_label)
+        assert_valid_cap_display(display)
