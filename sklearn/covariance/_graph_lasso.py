@@ -18,7 +18,7 @@ from ..base import _fit_context
 from ..exceptions import ConvergenceWarning
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
-from ..linear_model import _cd_fast as cd_fast  # type: ignore
+from ..linear_model import _cd_fast as cd_fast  # type: ignore[attr-defined]
 from ..linear_model import lars_path_gram
 from ..model_selection import check_cv, cross_val_score
 from ..utils import Bunch
