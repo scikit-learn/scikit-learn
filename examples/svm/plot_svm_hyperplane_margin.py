@@ -90,7 +90,6 @@ plt.tight_layout()
 plt.show()
 
 # %% [markdown]
-# When to Use:
 # - **Small `C` (e.g., 0.01, 0.05)**:
 #   - Use when:
 #     - You expect **noisy or overlapping data**.
