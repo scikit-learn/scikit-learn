@@ -351,8 +351,8 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             y_true_sorted = y_true[sorted_indices]
             sample_weight_sorted = sample_weight[sorted_indices]
 
-            weighted_y_true = y_true_sorted * sample_weight_sorted
-            y_true_cumulative = np.cumsum(weighted_y_true)
+            weighted_y_true_sorted = y_true_sorted * sample_weight_sorted
+            y_true_cumulative = np.cumsum(weighted_y_true_sorted)
             cumulative_total = np.cumsum(sample_weight_sorted)
 
         else:
