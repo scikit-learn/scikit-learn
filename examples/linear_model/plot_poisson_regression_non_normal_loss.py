@@ -526,7 +526,7 @@ gini = 1 - 2 * auc(disp.cumulative_total, disp.y_true_cumulative)
 ax.get_lines()[-1].set_label(f"Oracle model (Gini={gini:.2f})")
 
 ax.set(
-    title="Lorenz Curves",
+    title="Lorenz curves",
     xlabel="Cumulative proportion of exposure (from safest to riskiest)",
     ylabel="Cumulative proportion of claims",
 )
