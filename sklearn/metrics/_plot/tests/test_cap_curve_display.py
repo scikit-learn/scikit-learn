@@ -535,3 +535,24 @@ def test_y_true_with_negative_values(pyplot):
         y_true = np.array([0.0, -1.2, 0.0, 1.5, 1.0, 1.0, 0.0])
         y_pred = np.array([0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0])
         cap_display = CAPCurveDisplay.from_predictions(y_true, y_pred)
+
+
+@pytest.mark.parametrize("despine", [False, True])
+def test_despine(pyplot, data_binary, logistic_regression_model, despine):
+    X, y = data_binary
+
+    cap_display = CAPCurveDisplay.from_estimator(
+        logistic_regression_model, X, y, despine=despine
+    )
+    ax = cap_display.ax_
+
+    if despine:
+        assert ax.spines["top"].get_visible() is False
+        assert ax.spines["right"].get_visible() is False
+        assert ax.spines["bottom"].get_visible() is True
+        assert ax.spines["left"].get_visible() is True
+    else:
+        assert ax.spines["top"].get_visible() is True
+        assert ax.spines["right"].get_visible() is True
+        assert ax.spines["bottom"].get_visible() is True
+        assert ax.spines["left"].get_visible() is True
