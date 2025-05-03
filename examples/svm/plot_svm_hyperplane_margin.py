@@ -3,16 +3,16 @@
 SVM: Effect of Regularization (C) on Maximum Margin Separating Hyperplane
 =========================================================================
 
-This script demonstrates the concept of the maximum margin separating hyperplane
+This script demonstrates the concept of maximum margin separating hyperplane
 in a two-class separable dataset using a Support Vector Machine (SVM)
-with a linear kernel and how different values of `C` influence the margin width.
+with a linear kernel and how different values of `C` influence margin width.
 
 - **Small C (e.g., 0.05)**:
-    - Allows some misclassifications, resulting in a wider margin.
+    - Allows some misclassifications, resulting in wider margin.
 - **Moderate C (e.g., 1)**:
     - Balances classification accuracy and margin width.
 - **Large C (e.g., 1000)**:
-    - Prioritizes classifying all points correctly, leading to a narrower margin.
+    - Prioritizes classifying all points correctly, leading to narrower margin.
 
 """
 
@@ -44,8 +44,8 @@ for i, C_val in enumerate(C_values, 1):
     misclassified = y_pred != y
 
     plt.subplot(1, 3, i)
-    plt.scatter(X[:, 0], X[:, 1], c=y, s=30, cmap=plt.cm.Paired, edgecolors="k")
-    
+    plt.scatter(X[:, 0], X[:, 1], c=y, s=30,
+                cmap=plt.cm.Paired, edgecolors="k")
     # misclassified samples
     plt.scatter(
         X[misclassified, 0],
@@ -95,15 +95,15 @@ plt.show()
 #     - You expect noisy or overlapping data.
 #     - You can tolerate some misclassification in training.
 #     - Your priority is better generalization on unseen data.
-#   - Note: 
+#   - Note:
 #     - May underfit if the margin is too lenient.
 # - **Moderate `C` (e.g., 1)**:
 #   - Use when:
 #     - You're unsure about noise levels.
-#     - You want a good balance between margin width and classification accuracy.
+#     - You want good balance between margin width and classification accuracy.
 # - **Large `C` (e.g., 1000)**:
 #   - Use when:
 #     - The data is clean and linearly separable.
 #     - You want to avoid any training misclassification.
 #   - Note:
-#     - May overfit noisy data by trying to classify every training point correctly.
+#     - May overfit noisy data by trying to classify all samples correctly.
