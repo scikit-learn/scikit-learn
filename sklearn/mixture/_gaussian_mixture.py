@@ -624,16 +624,15 @@ class GaussianMixture(BaseMixture):
 
     covariances_ : array-like
         The covariance of each mixture component.
-
-        For an example of using covariances, refer to
-        :ref:`sphx_glr_auto_examples_mixture_plot_gmm_covariances.py`.
-
         The shape depends on `covariance_type`::
 
             (n_components,)                        if 'spherical',
             (n_features, n_features)               if 'tied',
             (n_components, n_features)             if 'diag',
             (n_components, n_features, n_features) if 'full'
+
+        For an example of using covariances, refer to
+        :ref:`sphx_glr_auto_examples_mixture_plot_gmm_covariances.py`.
 
     precisions_ : array-like
         The precision matrices for each component in the mixture. A precision
