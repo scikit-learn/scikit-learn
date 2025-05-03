@@ -544,7 +544,7 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
 
         Returns
         -------
-        X_new : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Returns the instance itself.
 
         References
