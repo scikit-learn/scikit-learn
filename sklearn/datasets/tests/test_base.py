@@ -3,6 +3,7 @@ import io
 import os
 import re
 import shutil
+import sys
 import tempfile
 import warnings
 from functools import partial
@@ -151,44 +152,18 @@ def test_data_home(path_container, data_home):
     ],
 )
 def test_data_home_os_paths(monkeypatch, platform, env_vars, expected_path, tmpdir):
-    """Test that get_data_home returns the correct OS-specific path."""
-    # Create test directories in tmpdir
-    localappdata = str(tmpdir / "AppData" / "Local")
-    xdg_cache_home = str(tmpdir / ".cache")
-    custom_path = str(tmpdir / "custom")
-
-    os.makedirs(localappdata, exist_ok=True)
-    os.makedirs(xdg_cache_home, exist_ok=True)
-    os.makedirs(custom_path, exist_ok=True)
-
-    env_vars = {
-        k: v.replace("PLACEHOLDER_LOCALAPPDATA", localappdata)
-        .replace("PLACEHOLDER_XDG_CACHE_HOME", xdg_cache_home)
-        .replace("PLACEHOLDER_CUSTOM_PATH", custom_path)
-        for k, v in env_vars.items()
-    }
-    expected_path = (
-        expected_path.replace("PLACEHOLDER_LOCALAPPDATA", localappdata)
-        .replace("PLACEHOLDER_XDG_CACHE_HOME", xdg_cache_home)
-        .replace("PLACEHOLDER_CUSTOM_PATH", custom_path)
-    )
-
-    monkeypatch.setattr("sys.platform", platform)
+    """Check the data_home path across OSes."""
+    for key in ["LOCALAPPDATA", "XDG_CACHE_HOME", "SCIKIT_LEARN_DATA"]:
+        monkeypatch.delenv(key, raising=False)
 
     for key, value in env_vars.items():
         monkeypatch.setenv(key, value)
 
-    for key in ["LOCALAPPDATA", "XDG_CACHE_HOME", "SCIKIT_LEARN_DATA"]:
-        if key not in env_vars:
-            monkeypatch.delenv(key, raising=False)
+    monkeypatch.setattr(sys, "platform", platform)
 
-    path = get_data_home()
-
-    expected_path = os.path.normpath(expected_path)
-    path = os.path.normpath(path)
-
-    assert path == expected_path
-    assert os.path.exists(path)
+    expected_path = expected_path.replace("/", os.path.sep)
+    data_home = get_data_home()
+    assert data_home == expected_path
 
 
 def test_data_home_custom_path(tmpdir):

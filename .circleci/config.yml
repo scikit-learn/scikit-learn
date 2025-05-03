@@ -46,7 +46,7 @@ jobs:
       - save_cache:
           key: v1-doc-min-deps-datasets-{{ .Branch }}
           paths:
-            - ~/scikit_learn_data
+            - ~/.cache/scikit-learn
       - store_artifacts:
           path: doc/_build/html/stable
           destination: doc
@@ -83,7 +83,7 @@ jobs:
       - save_cache:
           key: v1-doc-datasets-{{ .Branch }}
           paths:
-            - ~/scikit_learn_data
+            - ~/.cache/scikit-learn
       - store_artifacts:
           path: doc/_build/html/stable
           destination: doc
