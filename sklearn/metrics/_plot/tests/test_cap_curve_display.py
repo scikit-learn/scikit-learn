@@ -560,3 +560,13 @@ def test_despine(pyplot, data_binary, logistic_regression_model, despine):
         assert ax.spines["right"].get_visible() is True
         assert ax.spines["bottom"].get_visible() is True
         assert ax.spines["left"].get_visible() is True
+
+
+# @pytest.mark.parametrize("y_true", [np.zeros(3), np.asarray([0.1, 0.3, 1.0])])
+# @pytest.mark.parametrize("y_pred", [np.zeros(3), np.asarray([0.1, 0.3, 1.0])])
+# @pytest.mark.parametrize("pos_label", [1, 0, None])
+# def test_edge_cases_from_predictions(pyplot, y_true, y_pred, pos_label):
+#     if pos_label is not None and type_of_target(y_true):
+#         _ = CAPCurveDisplay.from_predictions(y_true, y_pred, pos_label=pos_label)
+#     else:
+#         _ = CAPCurveDisplay.from_predictions(y_true, y_pred, pos_label=pos_label)
