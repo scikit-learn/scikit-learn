@@ -90,8 +90,7 @@ plt.tight_layout()
 plt.show()
 
 # %% [markdown]
-# ## When to Use:
-
+# When to Use:
 # - **Small `C` (e.g., 0.01, 0.05)**:
 #   - Use when:
 #     - You expect **noisy or overlapping data**.
@@ -99,12 +98,10 @@ plt.show()
 #     - Your priority is **better generalization** on unseen data.
 #   - Risk: 
 #     - May **underfit** if the margin is too lenient.
-
 # - **Moderate `C` (e.g., 1)**:
 #   - Use when:
 #     - You're unsure about noise levels.
 #     - You want a good balance between margin width and classification accuracy.
-
 # - **Large `C` (e.g., 1000)**:
 #   - Use when:
 #     - The data is **clean and linearly separable**.
