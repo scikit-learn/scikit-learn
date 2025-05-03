@@ -19,7 +19,13 @@ from ..base import (
     _fit_context,
 )
 from ..utils import _array_api, check_array, resample
-from ..utils._array_api import _modify_in_place_if_numpy, device, get_namespace
+from ..utils._array_api import (
+    _find_matching_floating_dtype,
+    _modify_in_place_if_numpy,
+    device,
+    get_namespace,
+    get_namespace_and_device,
+)
 from ..utils._param_validation import Interval, Options, StrOptions, validate_params
 from ..utils.extmath import _incremental_mean_and_var, row_norms
 from ..utils.sparsefuncs import (
@@ -569,7 +575,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        Xt : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Transformed data.
         """
         check_is_fitted(self)
@@ -1098,12 +1104,13 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data used to scale along the features axis.
+
         copy : bool, default=None
-            Copy the input X or not.
+            Copy the input `X` or not.
 
         Returns
         -------
-        X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        X_original : {ndarray, sparse matrix} of shape (n_samples, n_features)
             Transformed array.
         """
         check_is_fitted(self)
@@ -1345,7 +1352,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        X_original : {ndarray, sparse matrix} of shape (n_samples, n_features)
             Transformed array.
         """
         check_is_fitted(self)
@@ -1720,7 +1727,7 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        X_original : {ndarray, sparse matrix} of shape (n_samples, n_features)
             Transformed array.
         """
         check_is_fitted(self)
@@ -2209,8 +2216,10 @@ def binarize(X, *, threshold=0.0, copy=True):
         X.data[not_cond] = 0
         X.eliminate_zeros()
     else:
-        cond = X > threshold
-        not_cond = np.logical_not(cond)
+        xp, _, device = get_namespace_and_device(X)
+        float_dtype = _find_matching_floating_dtype(X, threshold, xp=xp)
+        cond = xp.astype(X, float_dtype, copy=False) > threshold
+        not_cond = xp.logical_not(cond)
         X[cond] = 1
         X[not_cond] = 0
     return X
@@ -2353,6 +2362,7 @@ class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.requires_fit = False
+        tags.array_api_support = True
         tags.input_tags.sparse = True
         return tags
 
@@ -3008,7 +3018,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
         Returns
         -------
-        Xt : {ndarray, sparse matrix} of (n_samples, n_features)
+        X_original : {ndarray, sparse matrix} of (n_samples, n_features)
             The projected data.
         """
         check_is_fitted(self)
@@ -3404,20 +3414,20 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         The inverse of the Box-Cox transformation is given by::
 
             if lambda_ == 0:
-                X = exp(X_trans)
+                X_original = exp(X_trans)
             else:
-                X = (X_trans * lambda_ + 1) ** (1 / lambda_)
+                X_original = (X * lambda_ + 1) ** (1 / lambda_)
 
         The inverse of the Yeo-Johnson transformation is given by::
 
             if X >= 0 and lambda_ == 0:
-                X = exp(X_trans) - 1
+                X_original = exp(X) - 1
             elif X >= 0 and lambda_ != 0:
-                X = (X_trans * lambda_ + 1) ** (1 / lambda_) - 1
+                X_original = (X * lambda_ + 1) ** (1 / lambda_) - 1
             elif X < 0 and lambda_ != 2:
-                X = 1 - (-(2 - lambda_) * X_trans + 1) ** (1 / (2 - lambda_))
+                X_original = 1 - (-(2 - lambda_) * X + 1) ** (1 / (2 - lambda_))
             elif X < 0 and lambda_ == 2:
-                X = 1 - exp(-X_trans)
+                X_original = 1 - exp(-X)
 
         Parameters
         ----------
@@ -3426,7 +3436,7 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             The original data.
         """
         check_is_fitted(self)

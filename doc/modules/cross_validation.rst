@@ -527,7 +527,7 @@ Some classification tasks can naturally exhibit rare classes: for instance,
 there could be orders of magnitude more negative observations than positive
 observations (e.g. medical screening, fraud detection, etc). As a result,
 cross-validation splitting can generate train or validation folds without any
-occurence of a particular class. This typically leads to undefined
+occurrence of a particular class. This typically leads to undefined
 classification metrics (e.g. ROC AUC), exceptions raised when attempting to
 call :term:`fit` or missing columns in the output of the `predict_proba` or
 `decision_function` methods of multiclass classifiers trained on different
@@ -903,7 +903,7 @@ is always used to train the model.
 
 This class can be used to cross-validate time series data samples
 that are observed at fixed time intervals. Indeed, the folds must
-represent the same duration, in order to have comparable metrics accross folds.
+represent the same duration, in order to have comparable metrics across folds.
 
 Example of 3-split time series cross-validation on a dataset with 6 samples::
 
@@ -931,8 +931,8 @@ A note on shuffling
 ===================
 
 If the data ordering is not arbitrary (e.g. samples with the same class label
-are contiguous), shuffling it first may be essential to get a meaningful cross-
-validation result. However, the opposite may be true if the samples are not
+are contiguous), shuffling it first may be essential to get a meaningful
+cross-validation result. However, the opposite may be true if the samples are not
 independently and identically distributed. For example, if samples correspond
 to news articles, and are ordered by their time of publication, then shuffling
 the data will likely lead to a model that is overfit and an inflated validation
@@ -943,8 +943,8 @@ Some cross validation iterators, such as :class:`KFold`, have an inbuilt option
 to shuffle the data indices before splitting them. Note that:
 
 * This consumes less memory than shuffling the data directly.
-* By default no shuffling occurs, including for the (stratified) K fold cross-
-  validation performed by specifying ``cv=some_integer`` to
+* By default no shuffling occurs, including for the (stratified) K fold
+  cross-validation performed by specifying ``cv=some_integer`` to
   :func:`cross_val_score`, grid search, etc. Keep in mind that
   :func:`train_test_split` still returns a random split.
 * The ``random_state`` parameter defaults to ``None``, meaning that the
