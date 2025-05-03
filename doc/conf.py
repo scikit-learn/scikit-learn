@@ -508,6 +508,12 @@ redirects = {
     "auto_examples/linear_model/plot_sgd_comparison": (
         "auto_examples/linear_model/plot_sgd_loss_functions"
     ),
+    "auto_examples/svm/plot_svm_margin": (
+        "auto_examples/svm/plot_svm_hyperplane_margin"
+    ),
+    "auto_examples/svm/plot_separating_hyperplane": (
+        "auto_examples/svm/plot_svm_hyperplane_margin"
+    ),
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
