@@ -1,7 +1,7 @@
 """
 =========================================================================
 SVM: Effect of Regularization (C) on Maximum Margin Separating Hyperplane
-========================================================================
+=========================================================================
 
 This script demonstrates the concept of the maximum margin separating hyperplane
 in a two-class separable dataset using a Support Vector Machine (SVM)
@@ -19,25 +19,42 @@ with a linear kernel and how different values of `C` influence the margin width.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+# %%
 import matplotlib.pyplot as plt
 
 from sklearn import svm
 from sklearn.datasets import make_blobs
 from sklearn.inspection import DecisionBoundaryDisplay
 
+# %%
 # create 40 separable points
 X, y = make_blobs(n_samples=40, centers=2, cluster_std=1.5, random_state=6)
 
+# %%
 # define different values of C to observe its effect on the margin
 C_values = [0.05, 1, 1000]
 
-plt.figure(figsize=(15, 5))
+# %%
+plt.figure(figsize=(12, 4))
 for i, C_val in enumerate(C_values, 1):
     clf = svm.SVC(kernel="linear", C=C_val)
     clf.fit(X, y)
+    y_pred = clf.predict(X)
+    misclassified = y_pred != y
 
     plt.subplot(1, 3, i)
     plt.scatter(X[:, 0], X[:, 1], c=y, s=30, cmap=plt.cm.Paired, edgecolors="k")
+    
+    # misclassified samples
+    plt.scatter(
+        X[misclassified, 0],
+        X[misclassified, 1],
+        facecolors='none',
+        edgecolors='k',
+        s=80,
+        linewidths=1.5,
+        label="Misclassified"
+    )
 
     # plot the decision function
     ax = plt.gca()
@@ -56,7 +73,7 @@ for i, C_val in enumerate(C_values, 1):
     ax.scatter(
         clf.support_vectors_[:, 0],
         clf.support_vectors_[:, 1],
-        s=100,
+        s=120,
         linewidth=1.5,
         facecolors="none",
         edgecolors="r",
@@ -64,6 +81,32 @@ for i, C_val in enumerate(C_values, 1):
     )
 
     plt.title(f"SVM Decision Boundary (C={C_val})")
+    plt.xlabel("Feature 1")
+    plt.ylabel("Feature 2")
     plt.legend()
 
+plt.tight_layout()
 plt.show()
+
+# %%
+# ### When to Use:
+#
+# - **Small `C` (e.g., 0.01, 0.05):**
+#   - Use when:
+#     - You expect **noisy or overlapping data**.
+#     - You can tolerate some misclassification in training.
+#     - Your priority is **better generalization** on unseen data.
+#   - Risk: 
+#     - May **underfit** if the margin is too lenient.
+#
+# - **Moderate `C` (e.g., 1):**
+#   - Use when:
+#     - You're unsure about noise levels.
+#     - You want a good balance between margin width and classification accuracy.
+#
+# - **Large `C` (e.g., 1000):**
+#   - Use when:
+#     - The data is **clean and linearly separable**.
+#     - You want to avoid **any training misclassification**.
+#   - Risk:
+#     - May **overfit** noisy data by trying to classify every training point correctly.
