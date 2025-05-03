@@ -1,6 +1,6 @@
 """
 =========================================================================
-SVM: Effect of Regularization (C) on Maximum Margin Separating Hyperplane
+SVM: Maximum Margin Separating Hyperplane
 =========================================================================
 
 This script demonstrates the concept of the maximum margin separating hyperplane
@@ -27,14 +27,15 @@ from sklearn.datasets import make_blobs
 from sklearn.inspection import DecisionBoundaryDisplay
 
 # %%
-# create 40 separable points
+# Create 40 separable points
 X, y = make_blobs(n_samples=40, centers=2, cluster_std=1.5, random_state=6)
 
 # %%
-# define different values of C to observe its effect on the margin
+# Define different values of C to observe its effect on the margin
 C_values = [0.05, 1, 1000]
 
 # %%
+# Visualize
 plt.figure(figsize=(12, 4))
 for i, C_val in enumerate(C_values, 1):
     clf = svm.SVC(kernel="linear", C=C_val)
@@ -91,7 +92,7 @@ plt.show()
 # %%
 # ### When to Use:
 #
-# - **Small `C` (e.g., 0.01, 0.05):**
+# - **Small `C` (e.g., 0.01, 0.05)**:
 #   - Use when:
 #     - You expect **noisy or overlapping data**.
 #     - You can tolerate some misclassification in training.
@@ -99,12 +100,12 @@ plt.show()
 #   - Risk: 
 #     - May **underfit** if the margin is too lenient.
 #
-# - **Moderate `C` (e.g., 1):**
+# - **Moderate `C` (e.g., 1)**:
 #   - Use when:
 #     - You're unsure about noise levels.
 #     - You want a good balance between margin width and classification accuracy.
 #
-# - **Large `C` (e.g., 1000):**
+# - **Large `C` (e.g., 1000)**:
 #   - Use when:
 #     - The data is **clean and linearly separable**.
 #     - You want to avoid **any training misclassification**.
