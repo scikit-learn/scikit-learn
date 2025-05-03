@@ -159,8 +159,10 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         x_max = self.cumulative_total[-1]
         y_max = self.y_true_cumulative[-1]
         if normalize_scale:
-            self.cumulative_total = self.cumulative_total / x_max
-            self.y_true_cumulative = self.y_true_cumulative / y_max
+            if x_max != 0:
+                self.cumulative_total = self.cumulative_total / x_max
+            if y_max != 0:
+                self.y_true_cumulative = self.y_true_cumulative / y_max
             self.ax_.set_xlim(-0.01, 1.01)
             self.ax_.set_ylim(-0.01, 1.01)
         else:
