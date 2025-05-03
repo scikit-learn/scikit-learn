@@ -527,14 +527,18 @@ def test_cap_for_non_prob_classifier(pyplot, data_binary, response_method):
 
 
 def test_y_true_with_negative_values(pyplot):
-    match = "`y_true` contains negative values, which isn't allowed for "
-    "continuous targets. If your data shouldn't be treated as "
-    "continuous, try converting the values to integers or strings "
-    "instead."
+    match = re.escape(
+        (
+            "`y_true` contains negative values, which isn't allowed for "
+            "continuous targets. If your data shouldn't be treated as "
+            "continuous, try converting the values to integers or strings "
+            "instead."
+        )
+    )
     with pytest.raises(ValueError, match=match):
         y_true = np.array([0.0, -1.2, 0.0, 1.5, 1.0, 1.0, 0.0])
         y_pred = np.array([0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0])
-        cap_display = CAPCurveDisplay.from_predictions(y_true, y_pred)
+        _ = CAPCurveDisplay.from_predictions(y_true, y_pred)
 
 
 @pytest.mark.parametrize("despine", [False, True])
