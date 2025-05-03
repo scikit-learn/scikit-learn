@@ -89,8 +89,8 @@ for i, C_val in enumerate(C_values, 1):
 plt.tight_layout()
 plt.show()
 
-# %%
-# When to Use:
+# %% [markdown]
+# ## When to Use:
 
 # - **Small `C` (e.g., 0.01, 0.05)**:
 #   - Use when:
