@@ -562,6 +562,25 @@ def test_despine(pyplot, data_binary, logistic_regression_model, despine):
         assert ax.spines["left"].get_visible() is True
 
 
+@pytest.mark.parametrize(
+    ("name", "expected_name"),
+    [(None, "PoissonRegressor"), ("Poisson", "Poisson"), ("", "")],
+)
+def test_name_with_predictor_from_estimator(pyplot, name, expected_name):
+    estimator = PoissonRegressor()
+
+    X, y = make_regression(n_samples=100, n_features=2, noise=10.0, random_state=42)
+    y = y - y.min() + 1e-3
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.4, random_state=42
+    )
+    estimator.fit(X_train, y_train)
+
+    cap = CAPCurveDisplay.from_estimator(estimator, X_test, y_test, name=name)
+
+    assert expected_name == cap.estimator_name
+
+
 # @pytest.mark.parametrize("y_true", [np.zeros(3), np.asarray([0.1, 0.3, 1.0])])
 # @pytest.mark.parametrize("y_pred", [np.zeros(3), np.asarray([0.1, 0.3, 1.0])])
 # @pytest.mark.parametrize("pos_label", [1, 0, None])

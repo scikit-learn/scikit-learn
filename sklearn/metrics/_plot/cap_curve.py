@@ -123,8 +123,7 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Whether to normalize values between 0 and 1 for the plot.
 
         name : str, default=None
-            Name of CAP Curve for labeling. If `None`, use `estimator_name` if
-            not `None`, otherwise no labeling is shown.
+            Name of CAP Curve for labeling. If `None`, use `estimator_name`.
 
         plot_chance_level : bool, default=True
             Whether to plot the expected curve of a classifier whose
