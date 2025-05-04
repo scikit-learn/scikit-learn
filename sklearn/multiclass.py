@@ -30,6 +30,7 @@ case.
 
 import array
 import itertools
+import random
 import warnings
 from numbers import Integral, Real
 
@@ -47,9 +48,9 @@ from .base import (
     is_regressor,
 )
 from .metrics.pairwise import pairwise_distances_argmin
-from .preprocessing import LabelBinarizer
+from .preprocessing import LabelBinarizer, LabelEncoder
 from .utils import check_random_state
-from .utils._param_validation import HasMethods, Interval
+from .utils._param_validation import HasMethods, Interval, StrOptions
 from .utils._tags import get_tags
 from .utils.metadata_routing import (
     MetadataRouter,
@@ -1036,6 +1037,40 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         return router
 
 
+def _exponential_loss_decoding(y):
+    """Exponential loss (AdaBoost) decoding function."""
+    return np.exp(-y).sum(axis=1)
+
+
+def _hinge_loss_deconding(y):
+    """Hinge loss (SVM) decoding function."""
+    return np.maximum(0, 1 - y).sum(axis=1)
+
+
+def _linear_loss_decoding(y):
+    """Linear loss decoding function."""
+    return -y.sum(axis=1)
+
+
+def _logistic_loss_decoding(y):
+    """Logistic loss (logistic regression) decoding function."""
+    return np.logaddexp(0, -2 * y).sum(axis=1)
+
+
+def _square_loss_decoding(y):
+    """Square loss decoding function."""
+    return ((1 - y) ** 2).sum(axis=1)
+
+
+DECODING_LOSSES = {
+    "exponential": _exponential_loss_decoding,
+    "hinge": _hinge_loss_deconding,
+    "linear": _linear_loss_decoding,
+    "logistic": _logistic_loss_decoding,
+    "square": _square_loss_decoding,
+}
+
+
 class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     """(Error-Correcting) Output-Code multiclass strategy.
 
@@ -1054,13 +1089,39 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     ----------
     estimator : estimator object
         An estimator object implementing :term:`fit` and one of
-        :term:`decision_function` or :term:`predict_proba`.
+        :term:`predict`, :term:`decision_function` or :term:`predict_proba`,
+        depending of the `decoding` strategy.
 
     code_size : float, default=1.5
         Percentage of the number of classes to be used to create the code book.
         A number between 0 and 1 will require fewer classifiers than
         one-vs-the-rest. A number greater than 1 will require more classifiers
         than one-vs-the-rest.
+
+    decoding : {"cityblock", "hamming", "loss"}, default="hamming"
+        The method used to decode the predictions of the binary classifiers.
+        The choices are:
+
+        - `"hamming"`: known as "hard" decoding since it compute the Hamming
+          distance between the hard predictions of the binary classifiers and
+          the codes from the code books.
+        - `"cityblock"`: similar to `"hamming"` strategy but uses the
+          probability estimates (output of :term:`predict_proba`) of the binary
+          classifiers instead of the hard predictions. Cityblock distance is
+          also known as Manhattan distance or L1 distance.
+        - `"loss"`: uses the loss function to compute the distance between the
+          the binary classifier predictions and the codes from the code book.
+          The predictions are either the probability estimates (output of
+          :term:`predict_proba`) or a confidence score (output of
+          :term:`decision_function`). The loss function used is controlled by
+          the `loss` parameter.
+
+    loss : {"exponential", "hinge", "linear", "logistic", "square"} or callable, \
+            default="linear"
+        When `decoding="loss"`, it corresponds to the loss function used to
+        compute the distance between the predicted code and the true code. It
+        is usually wise to use a loss function that is used to train the
+        binary classifiers (see [3]_ for more details).
 
     random_state : int, RandomState instance, default=None
         The generator used to initialize the codebook.
@@ -1083,7 +1144,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     classes_ : ndarray of shape (n_classes,)
         Array containing labels.
 
-    code_book_ : ndarray of shape (n_classes, `len(estimators_)`)
+    code_book_ : ndarray of shape (n_classes, code_size), dtype=np.int64
         Binary array containing the code of each class.
 
     n_features_in_ : int
@@ -1117,9 +1178,10 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
        Journal of Computational and Graphical statistics 7,
        1998.
 
-    .. [3] "The Elements of Statistical Learning",
-       Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
-       2008.
+    .. [3] "Reducing multiclass to binary: A unifying approach for margin classifiers."
+       Allwein, Erin L., Robert E. Schapire, and Yoram Singer.
+       Journal of machine learning research 1
+       Dec (2000): 113-141.
 
     Examples
     --------
@@ -1138,17 +1200,31 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
     _parameter_constraints: dict = {
         "estimator": [
-            HasMethods(["fit", "decision_function"]),
+            HasMethods(["fit", "predict"]),
             HasMethods(["fit", "predict_proba"]),
+            HasMethods(["fit", "decision_function"]),
         ],
         "code_size": [Interval(Real, 0.0, None, closed="neither")],
+        "decoding": [StrOptions({"cityblock", "hamming", "loss"})],
+        "loss": [StrOptions(set(DECODING_LOSSES.keys())), callable],
         "random_state": ["random_state"],
         "n_jobs": [Integral, None],
     }
 
-    def __init__(self, estimator, *, code_size=1.5, random_state=None, n_jobs=None):
+    def __init__(
+        self,
+        estimator,
+        *,
+        code_size=1.5,
+        decoding="hamming",
+        loss="linear",
+        random_state=None,
+        n_jobs=None,
+    ):
         self.estimator = estimator
         self.code_size = code_size
+        self.decoding = decoding
+        self.loss = loss
         self.random_state = random_state
         self.n_jobs = n_jobs
 
@@ -1191,34 +1267,63 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         y = validate_data(self, X="no_validation", y=y)
 
+        # we postpone the validation of X to the `fit` of the underlying estimators but
+        # we need this check for the validation of `code_size`.
+        n_samples = _num_samples(X)
+        if n_samples < 1:
+            raise ValueError(
+                f"Found array {n_samples} (shape={X.shape}) while minimum of 1 is "
+                "required."
+            )
+
+        if self.decoding == "cityblock" and not hasattr(
+            self.estimator, "predict_proba"
+        ):
+            raise ValueError(
+                "The estimator does not have a `predict_proba` method. "
+                "Thus, the 'cityblock' decoding strategy is not supported."
+            )
+        elif self.decoding == "loss" and not (
+            hasattr(self.estimator, "predict_proba")
+            or hasattr(self.estimator, "decision_function")
+        ):
+            raise ValueError(
+                "The estimator does not have either a `predict_proba` or "
+                "`decision_function` method. Thus, the 'loss' decoding strategy is "
+                "not supported."
+            )
+
         random_state = check_random_state(self.random_state)
         check_classification_targets(y)
 
-        self.classes_ = np.unique(y)
-        n_classes = self.classes_.shape[0]
-        if n_classes == 0:
+        self._label_encoder = LabelEncoder().fit(y)
+        y_encoded = self._label_encoder.transform(y)
+        n_classes = len(self._label_encoder.classes_)
+        code_size = int(n_classes * self.code_size)
+        n_binary_values = 2**code_size
+
+        if n_binary_values < n_classes:
             raise ValueError(
-                "OutputCodeClassifier can not be fit when no class is present."
+                "The code book size is not big enough to encode all classes. Thus, "
+                "different classes will share the same code. Increase `code_size`. The "
+                "minimum value for `code_size` is"
+                f" {np.log2(n_classes) / n_classes:.2f}",
             )
-        n_estimators = int(n_classes * self.code_size)
 
-        # FIXME: there are more elaborate methods than generating the codebook
-        # randomly.
-        self.code_book_ = random_state.uniform(size=(n_classes, n_estimators))
-        self.code_book_[self.code_book_ > 0.5] = 1.0
-
-        if hasattr(self.estimator, "decision_function"):
-            self.code_book_[self.code_book_ != 1] = -1.0
-        else:
-            self.code_book_[self.code_book_ != 1] = 0.0
-
-        classes_index = {c: i for i, c in enumerate(self.classes_)}
-
-        Y = np.array(
-            [self.code_book_[classes_index[y[i]]] for i in range(_num_samples(y))],
-            dtype=int,
+        # TODO: when supporting random generator from NumPy (i.e.
+        # `np.random.default_rng()`), the following can use `random_state.choice`
+        # instead of the `random` Python build-in module.
+        random_state_seed = random_state.get_state()[1][0]
+        local_rng = random.Random(int(random_state_seed))
+        self.code_book_ = np.array(
+            [
+                list(f"{int_code:b}".zfill(code_size))
+                for int_code in local_rng.sample(range(n_binary_values), k=n_classes)
+            ],
+            dtype=np.int64,
         )
 
+        Y = self.code_book_[y_encoded]
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_binary)(
                 self.estimator, X, Y[:, i], fit_params=routed_params.estimator.fit
@@ -1247,16 +1352,59 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             Predicted multi-class targets.
         """
         check_is_fitted(self)
-        # ArgKmin only accepts C-contiguous array. The aggregated predictions need to be
-        # transposed. We therefore create a F-contiguous array to avoid a copy and have
-        # a C-contiguous array after the transpose operation.
-        Y = np.array(
-            [_predict_binary(e, X) for e in self.estimators_],
-            order="F",
-            dtype=np.float64,
-        ).T
-        pred = pairwise_distances_argmin(Y, self.code_book_, metric="euclidean")
-        return self.classes_[pred]
+
+        def _get_predictions(estimator, X, predict_method, center=False):
+            y_pred = getattr(estimator, predict_method)(X)
+            if predict_method == "predict_proba":
+                # centering is probability is required when using the loss decoding
+                y_pred = y_pred[:, 1] - 0.5 if center else y_pred[:, 1]
+            return y_pred
+
+        if self.decoding in ("cityblock", "hamming"):
+            predict_method = (
+                "predict_proba" if self.decoding == "cityblock" else "predict"
+            )
+            # ArgKmin only accepts C-contiguous array. The aggregated
+            # predictions need to be transposed. We therefore create a
+            # F-contiguous array to avoid a copy and have a C-contiguous array
+            # after the transpose operation.
+            y_pred = [_get_predictions(e, X, predict_method) for e in self.estimators_]
+            y_pred = np.array(y_pred, order="F", dtype=np.float64).T
+
+            closest_codes = pairwise_distances_argmin(
+                y_pred, self.code_book_.astype(y_pred.dtype), metric=self.decoding
+            )
+            return self.classes_[closest_codes]
+        else:  # self.decoding == "loss"
+            if callable(self.loss):
+                loss = self.loss
+            else:
+                loss = DECODING_LOSSES[self.loss]
+
+            if hasattr(self.estimators_[0], "decision_function"):
+                predict_method = "decision_function"
+            else:
+                predict_method = "predict_proba"
+
+            Y_pred = np.array(
+                [
+                    _get_predictions(e, X, predict_method, center=True)
+                    for e in self.estimators_
+                ],
+                dtype=np.float64,
+            ).T
+            codebook = self.code_book_ * 2 - 1  # convert to {-1, 1} matrix
+            predictions_losses = np.array([loss(Y_pred * code) for code in codebook])
+            return self.classes_[np.argmin(predictions_losses, axis=0)]
+
+    @property
+    def classes_(self):
+        """Returns the classes label."""
+        if not hasattr(self, "_label_encoder"):
+            raise AttributeError(
+                f"{self.__class__.__name__} object has no attribute 'classes_'"
+            )
+        return self._label_encoder.classes_
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.
