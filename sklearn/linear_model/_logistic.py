@@ -503,10 +503,11 @@ def _logistic_regression_path(
         elif solver == "liblinear":
             if len(classes) > 2:
                 warnings.warn(
-                    "Using the 'liblinear' for multiclass classification is deprecated."
-                    " An error will be raised in 1.8. Either use another solver which "
-                    "supports the multinomial loss, wrap the estimator in a "
-                    "OneVsRestClassifier to keep applying a one-versus-rest scheme.",
+                    "Using the 'liblinear' solver for multiclass classification is "
+                    "deprecated. An error will be raised in 1.8. Either use another "
+                    "solver which supports the multinomial loss or wrap the estimator "
+                    "in a OneVsRestClassifier to keep applying a one-versus-rest "
+                    "scheme.",
                     FutureWarning,
                 )
             (
@@ -1284,10 +1285,11 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         if solver == "liblinear":
             if len(self.classes_) > 2:
                 warnings.warn(
-                    "Using the 'liblinear' for multiclass classification is deprecated."
-                    " An error will be raised in 1.8. Either use another solver which "
-                    "supports the multinomial loss, wrap the estimator in a "
-                    "OneVsRestClassifier to keep applying a one-versus-rest scheme.",
+                    "Using the 'liblinear' solver for multiclass classification is "
+                    "deprecated. An error will be raised in 1.8. Either use another "
+                    "solver which supports the multinomial loss or wrap the estimator "
+                    "in a OneVsRestClassifier to keep applying a one-versus-rest "
+                    "scheme.",
                     FutureWarning,
                 )
             if effective_n_jobs(self.n_jobs) != 1:
