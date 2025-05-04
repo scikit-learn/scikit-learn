@@ -1,8 +1,7 @@
-"""Gaussian processes regression."""
+"""T processes regression."""
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
-
 
 from numbers import Real
 
@@ -25,11 +24,9 @@ class TProcessRegressor(GaussianProcessRegressor):
     Lastly the kernel parameter optimization is largely based off [RW2006]_ as was
     done in GPs.
 
-    In addition to the gaussian process regressor (._gpr.GaussianProcessRegressor),
-    :class:`TProcessRegressor`:
-
+    In addition to the :class:`GaussianProcessRegressor`, :class:`TProcessRegressor`:
         * allows variance of predictions to be predicted
-        * allows variance of predictions to scaled using Bayesian Methods
+        * allows variance of predictions to scaled using Bayesian Methods.
 
     Parameters
     ----------
@@ -295,7 +292,7 @@ class TProcessRegressor(GaussianProcessRegressor):
                 + "return_t_shape_matrix can be requested."
             )
 
-        n = getattr(self, "n", 0)
+        n = getattr(self, "_n", 0)
         degrees_of_freedom = self.degrees_of_freedom_init + n
 
         ### Spread may be either std or cov ###
