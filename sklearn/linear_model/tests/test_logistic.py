@@ -2433,7 +2433,7 @@ def test_liblinear_multiclass_warning(Estimator):
         "deprecated. An error will be raised in 1.8. Either use another "
         "solver which supports the multinomial loss or wrap the estimator "
         "in a OneVsRestClassifier to keep applying a one-versus-rest "
-        "scheme.",
+        "scheme."
     )
     with pytest.warns(FutureWarning, match=msg):
         Estimator(solver="liblinear").fit(iris.data, iris.target)
