@@ -1093,9 +1093,9 @@ def roc_curve(
         Sample weights.
 
     drop_intermediate : bool, default=True
-        Whether to drop some suboptimal thresholds which would not appear
-        on a plotted ROC curve. This is useful in order to create lighter
-        ROC curves.
+        Whether to drop thresholds where the resulting point is collinear with
+        its neighbors in ROC space. This has no effect on the ROC AUC or visual
+        shape of the curve, but reduces the number of plotted points.
 
         .. versionadded:: 0.17
            parameter *drop_intermediate*.
@@ -1112,8 +1112,12 @@ def roc_curve(
 
     thresholds : ndarray of shape (n_thresholds,)
         Decreasing thresholds on the decision function used to compute
-        fpr and tpr. `thresholds[0]` represents no instances being predicted
-        and is arbitrarily set to `np.inf`.
+        fpr and tpr. The first threshold is set to `np.inf`.
+
+        .. versionchanged:: 1.3
+           An arbitrary threshold at infinity (stored in `thresholds[0]`) is
+           added to represent a classifier that always predicts the negative
+           class, i.e. `fpr=0` and `tpr=0`.
 
     See Also
     --------
@@ -1129,9 +1133,6 @@ def roc_curve(
     Since the thresholds are sorted from low to high values, they
     are reversed upon returning them to ensure they correspond to both ``fpr``
     and ``tpr``, which are sorted in reversed order during their calculation.
-
-    An arbritrary threshold at infinity is added to represent a classifier
-    that always predicts the negative class, i.e. `fpr=0` and `tpr=0`.
 
     References
     ----------

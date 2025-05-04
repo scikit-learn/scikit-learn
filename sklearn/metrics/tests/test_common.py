@@ -1012,7 +1012,7 @@ def test_regression_thresholded_inf_nan_input(metric, y_true, y_score):
     [
         ([np.nan, 1, 2], [1, 2, 3]),
         ([np.inf, 1, 2], [1, 2, 3]),
-    ],  # type: ignore
+    ],
 )
 def test_classification_inf_nan_input(metric, y_true, y_score):
     """check that classification metrics raise a message mentioning the
