@@ -575,7 +575,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        Xt : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Transformed data.
         """
         check_is_fitted(self)
@@ -1104,12 +1104,13 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data used to scale along the features axis.
+
         copy : bool, default=None
-            Copy the input X or not.
+            Copy the input `X` or not.
 
         Returns
         -------
-        X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        X_original : {ndarray, sparse matrix} of shape (n_samples, n_features)
             Transformed array.
         """
         check_is_fitted(self)
@@ -1351,7 +1352,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        X_original : {ndarray, sparse matrix} of shape (n_samples, n_features)
             Transformed array.
         """
         check_is_fitted(self)
@@ -1726,7 +1727,7 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        X_original : {ndarray, sparse matrix} of shape (n_samples, n_features)
             Transformed array.
         """
         check_is_fitted(self)
@@ -3017,7 +3018,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
         Returns
         -------
-        Xt : {ndarray, sparse matrix} of (n_samples, n_features)
+        X_original : {ndarray, sparse matrix} of (n_samples, n_features)
             The projected data.
         """
         check_is_fitted(self)
@@ -3413,20 +3414,20 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         The inverse of the Box-Cox transformation is given by::
 
             if lambda_ == 0:
-                X = exp(X_trans)
+                X_original = exp(X_trans)
             else:
-                X = (X_trans * lambda_ + 1) ** (1 / lambda_)
+                X_original = (X * lambda_ + 1) ** (1 / lambda_)
 
         The inverse of the Yeo-Johnson transformation is given by::
 
             if X >= 0 and lambda_ == 0:
-                X = exp(X_trans) - 1
+                X_original = exp(X) - 1
             elif X >= 0 and lambda_ != 0:
-                X = (X_trans * lambda_ + 1) ** (1 / lambda_) - 1
+                X_original = (X * lambda_ + 1) ** (1 / lambda_) - 1
             elif X < 0 and lambda_ != 2:
-                X = 1 - (-(2 - lambda_) * X_trans + 1) ** (1 / (2 - lambda_))
+                X_original = 1 - (-(2 - lambda_) * X + 1) ** (1 / (2 - lambda_))
             elif X < 0 and lambda_ == 2:
-                X = 1 - exp(-X_trans)
+                X_original = 1 - exp(-X)
 
         Parameters
         ----------
@@ -3435,7 +3436,7 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             The original data.
         """
         check_is_fitted(self)
