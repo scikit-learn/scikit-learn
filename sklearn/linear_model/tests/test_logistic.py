@@ -2429,10 +2429,11 @@ def test_newton_cholesky_fallback_to_lbfgs(global_random_seed):
 def test_liblinear_multiclass_warning(Estimator):
     """Check that liblinear warns on multiclass problems."""
     msg = (
-        "Using the 'liblinear' for multiclass classification is deprecated. An error "
-        "will be raised in 1.8. Either use another solver which supports the "
-        "multinomial loss, wrap the estimator in a OneVsRestClassifier to keep "
-        "applying a one-versus-rest scheme."
+        "Using the 'liblinear' solver for multiclass classification is "
+        "deprecated. An error will be raised in 1.8. Either use another "
+        "solver which supports the multinomial loss or wrap the estimator "
+        "in a OneVsRestClassifier to keep applying a one-versus-rest "
+        "scheme.",
     )
     with pytest.warns(FutureWarning, match=msg):
         Estimator(solver="liblinear").fit(iris.data, iris.target)
