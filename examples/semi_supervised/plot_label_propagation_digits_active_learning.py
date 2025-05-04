@@ -108,7 +108,7 @@ for i in range(max_iterations):
             sub.axis("off")
 
         # labeling 5 points, remote from labeled set
-        (delete_index,) = np.where(unlabeled_indices == image_index)
+        (delete_index,) = (unlabeled_indices == image_index).nonzero()
         delete_indices = np.concatenate((delete_indices, delete_index))
 
     unlabeled_indices = np.delete(unlabeled_indices, delete_indices)

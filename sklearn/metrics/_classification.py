@@ -832,7 +832,9 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     labels : array-like of shape (n_classes,), default=None
         List of labels to index the matrix. This may be used to select a
         subset of labels. If `None`, all labels that appear at least once in
-        ``y1`` or ``y2`` are used.
+        ``y1`` or ``y2`` are used. Note that at least one label in `labels` must be
+         present in `y1`, even though this function is otherwise agnostic to the order
+         of `y1` and `y2`.
 
     weights : {'linear', 'quadratic'}, default=None
         Weighting type to calculate the score. `None` means not weighted;
@@ -866,7 +868,18 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     >>> cohen_kappa_score(y1, y2)
     0.6875
     """
-    confusion = confusion_matrix(y1, y2, labels=labels, sample_weight=sample_weight)
+    try:
+        confusion = confusion_matrix(y1, y2, labels=labels, sample_weight=sample_weight)
+    except ValueError as e:
+        if "At least one label specified must be in y_true" in str(e):
+            msg = (
+                "At least one label in `labels` must be present in `y1` (even though "
+                "`cohen_kappa_score` is otherwise agnostic to the order of `y1` and "
+                "`y2`)."
+            )
+            raise ValueError(msg) from e
+        raise
+
     n_classes = confusion.shape[0]
     sum0 = np.sum(confusion, axis=0)
     sum1 = np.sum(confusion, axis=1)
@@ -3690,8 +3703,19 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
     # Proportion of labels in the dataset
     weights = _check_sample_weight(sample_weight, y_true)
 
-    _, y_value_indices = np.unique(y_true, return_inverse=True)
-    counts = np.bincount(y_value_indices, weights=weights)
+    # If labels is passed, augment y_true to ensure that all labels are represented
+    # Use 0 weight for the new samples to not affect the counts
+    y_true_, weights_ = (
+        (
+            np.concatenate([y_true, labels]),
+            np.concatenate([weights, np.zeros_like(weights, shape=len(labels))]),
+        )
+        if labels is not None
+        else (y_true, weights)
+    )
+
+    _, y_value_indices = np.unique(y_true_, return_inverse=True)
+    counts = np.bincount(y_value_indices, weights=weights_)
     y_prob = counts / weights.sum()
     y_pred_null = np.tile(y_prob, (len(y_true), 1))
 
