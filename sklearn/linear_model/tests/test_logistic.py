@@ -150,7 +150,7 @@ def test_predict_3_classes(csr_container):
 # TODO(1.8): remove filterwarnings after the deprecation of multi_class
 @pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
 @pytest.mark.filterwarnings(
-    "ignore:.*'liblinear' for multiclass classification is deprecated.*"
+    "ignore:.*'liblinear' solver for multiclass classification is deprecated.*"
 )
 @pytest.mark.parametrize(
     "clf",
@@ -1350,7 +1350,7 @@ def test_max_iter(max_iter, multi_class, solver, message):
 # TODO(1.8): remove filterwarnings after the deprecation of multi_class
 @pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
 @pytest.mark.filterwarnings(
-    "ignore:.*'liblinear' for multiclass classification is deprecated.*"
+    "ignore:.*'liblinear' solver for multiclass classification is deprecated.*"
 )
 @pytest.mark.parametrize("solver", SOLVERS)
 def test_n_iter(solver):
@@ -1963,7 +1963,7 @@ def test_logistic_regression_path_coefs_multinomial():
 # TODO(1.8): remove filterwarnings after the deprecation of multi_class
 @pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
 @pytest.mark.filterwarnings(
-    "ignore:.*'liblinear' for multiclass classification is deprecated.*"
+    "ignore:.*'liblinear' solver for multiclass classification is deprecated.*"
 )
 @pytest.mark.parametrize(
     "est",
