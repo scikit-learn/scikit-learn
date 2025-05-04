@@ -389,18 +389,29 @@ class SimpleImputer(_BaseImputer):
         if self.strategy == "constant":
             if in_fit and self.fill_value is not None:
                 fill_value_dtype = type(self.fill_value)
+                X_dtype_name = X.dtype.name
                 err_msg = (
-                    f"fill_value={self.fill_value!r} (of type {fill_value_dtype!r}) "
-                    f"cannot be cast to the input data that is {X.dtype!r}. Make sure "
-                    "that both dtypes are of the same kind."
+                    f"fill_value={self.fill_value!r} is a "
+                    f"Python {fill_value_dtype.__name__!r} "
+                    "and cannot be cast to the input data, "
+                    f"whose dtype is {X_dtype_name!r}. "
+                    "Make sure that both dtypes are of the same kind. "
+                    "One possible solution could be to use a "
+                    f"numpy scalar, i.e. fill_value=np.{X_dtype_name}"
+                    f"({self.fill_value})"
                 )
             elif not in_fit:
                 fill_value_dtype = self.statistics_.dtype
                 err_msg = (
-                    f"The dtype of the filling value (i.e. {fill_value_dtype!r}) "
-                    f"cannot be cast to the input data that is {X.dtype!r}. Make sure "
-                    "that the dtypes of the input data is of the same kind between "
-                    "fit and transform."
+                    f"fill_value={self.fill_value!r} is a "
+                    f"Python {fill_value_dtype.__name__!r} "
+                    f"and cannot be cast to the input data, "
+                    f"whose dtype is {X_dtype_name!r}."
+                    " Make sure that the dtypes of the input "
+                    "data is of the same kind between "
+                    "fit and transform or use a numpy scalar, i.e. "
+                    f"fill_value=np.{X_dtype_name}"
+                    f"({self.fill_value})"
                 )
             else:
                 # By default, fill_value=None, and the replacement is always
