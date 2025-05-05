@@ -1,5 +1,6 @@
-- Fixed numerical stability (mostly overflows) of the Yeo-Johnson transform with
+- Now using ``scipy.stats.yeojohnson`` instead of our own implementation of the Yeo-Johnson transform.
+  Fixed numerical stability (mostly overflows) of the Yeo-Johnson transform with
   `PowerTransformer(method="yeo-johnson")` when scipy version is `>= 1.12`.
-  Initial PR by :user: `Xuefeng Xu <@xuefeng-xu>` completed by `Mohamed yaich<@yaichm>`,
+  Initial PR by :user: `Xuefeng Xu <@xuefeng-xu>` completed by `Mohamed Yaich<@yaichm>`,
   `Oussama Er-rabie<@eroussama>`, `Mohammed Yaslam Dlimi<@Dlimim>`,
   `Hamza Zaroual<@HamzaLuffy>`, `Amine Hannoun<@AmineHannoun>` and `Sylvain Marié<@smarie>`.
