@@ -424,6 +424,11 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
     ):
         """Plot precision-recall curve given binary class predictions.
 
+        For general information regarding `scikit-learn` visualization tools, see
+        the :ref:`Visualization Guide <visualizations>`.
+        For guidance on interpreting these plots, refer to the :ref:`Model
+        Evaluation Guide <precision_recall_f_measure_metrics>`.
+
         Parameters
         ----------
         y_true : array-like of shape (n_samples,)
