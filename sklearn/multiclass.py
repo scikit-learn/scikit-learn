@@ -72,8 +72,8 @@ from .utils.validation import (
 )
 
 __all__ = [
-    "OneVsRestClassifier",
     "OneVsOneClassifier",
+    "OneVsRestClassifier",
     "OutputCodeClassifier",
 ]
 
