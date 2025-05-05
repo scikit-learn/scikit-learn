@@ -201,8 +201,6 @@ def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
 def test_safe_indexing_2d_read_only_axis_1(
     array_read_only, indices_read_only, array_type, indices_type, axis, expected_array
 ):
-    if array_type == "pyarrow" and axis == 0:
-        pytest.skip()
     array = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     if array_read_only:
         array.setflags(write=False)
