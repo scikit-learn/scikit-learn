@@ -1010,7 +1010,7 @@ def test_cohen_kappa_score_raise_warning_deprecation():
     y2 = np.array([3] * 10)
     with pytest.warns(
         FutureWarning,
-        match="The default return value of `cohen_kappa_score` in case of a division",
+        match="`np.nan` as the default return value of `cohen_kappa_score` in case of",
     ):
         cohen_kappa_score(y1, y2, labels=labels)
 
@@ -1020,7 +1020,7 @@ def test_cohen_kappa_score_raise_warning_deprecation():
     y2 = np.array([1] * 5 + [3] * 5)
     with pytest.warns(
         FutureWarning,
-        match="The default return value of `cohen_kappa_score` in case of a division",
+        match="`np.nan` as the default return value of `cohen_kappa_score` in case of",
     ):
         cohen_kappa_score(y1, y2, labels=labels)
 

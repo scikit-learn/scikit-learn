@@ -897,6 +897,15 @@ def cohen_kappa_score(
     >>> cohen_kappa_score(y1, y2)
     0.6875
     """
+
+    def _check_zero_division(denominator, replace_undefined_by, msg):
+        if np.isclose(denominator, 0):
+            if replace_undefined_by == "deprecated":
+                replace_undefined_by = np.nan
+                warnings.warn(mgs_changing_default, FutureWarning)
+            warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+            return True
+
     try:
         confusion = confusion_matrix(y1, y2, labels=labels, sample_weight=sample_weight)
     except ValueError as e:
@@ -914,25 +923,22 @@ def cohen_kappa_score(
     sum1 = np.sum(confusion, axis=1)
 
     mgs_changing_default = (
-        "`np.nan` as the default return value of `cohen_kappa_score` in case of a division "
-        "by zero has been deprecated in 1.7 and will be changed to 0.0 in version "
-        "1.9. Set `replace_undefined_by=0.0` to use the new default and to silence "
-        "this Warning."
+        "`np.nan` as the default return value of `cohen_kappa_score` in case of a "
+        "division by zero has been deprecated in 1.7 and will be changed to 0.0 in "
+        "version 1.9. Set `replace_undefined_by=0.0` to use the new default and to "
+        "silence this Warning."
     )
 
     numerator = np.outer(sum0, sum1)
     denominator = np.sum(sum0)
-    if np.isclose(denominator, 0):
-        if replace_undefined_by == "deprecated":
-            replace_undefined_by = np.nan
-            warnings.warn(mgs_changing_default, FutureWarning)
-        msg = (
-            "`y2` contains no labels that are presented in both `y1` and `labels`."
-            "cohen_kappa_score is undefined and set to the value defined in "
-            "the `replace_undefined_by` param, which defaults to `np.nan`."
-        )
-        warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+    msg_zero_division = (
+        "`y2` contains no labels that are presented in both `y1` and `labels`."
+        "`cohen_kappa_score` is undefined and set to the value defined by "
+        "the `replace_undefined_by` param, which defaults to `np.nan`."
+    )
+    if _check_zero_division(denominator, replace_undefined_by, msg_zero_division):
         return replace_undefined_by
+
     expected = numerator / denominator
 
     if weights is None:
@@ -948,17 +954,14 @@ def cohen_kappa_score(
 
     numerator = np.sum(w_mat * confusion)
     denominator = np.sum(w_mat * expected)
-    if np.isclose(denominator, 0):
-        if replace_undefined_by == "deprecated":
-            replace_undefined_by = np.nan
-            warnings.warn(mgs_changing_default, FutureWarning)
-        msg = (
-            "`y1`, `y2` and `labels` have only one label in common. "
-            "cohen_kappa_score is undefined and set to the value defined in the "
-            "`replace_undefined_by` param, which defaults to `np.nan`."
-        )
-        warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+    msg_zero_division = (
+        "`y1`, `y2` and `labels` have only one label in common. "
+        "`cohen_kappa_score` is undefined and set to the value defined by the "
+        "`replace_undefined_by` param, which defaults to `np.nan`."
+    )
+    if _check_zero_division(denominator, replace_undefined_by, msg_zero_division):
         return replace_undefined_by
+
     k = numerator / denominator
 
     return float(1 - k)
