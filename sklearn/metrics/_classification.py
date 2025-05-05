@@ -914,7 +914,7 @@ def cohen_kappa_score(
     sum1 = np.sum(confusion, axis=1)
 
     mgs_changing_default = (
-        "The default return value of `cohen_kappa_score` in case of a division "
+        "`np.nan` as the default return value of `cohen_kappa_score` in case of a division "
         "by zero has been deprecated in 1.7 and will be changed to 0.0 in version "
         "1.9. Set `replace_undefined_by=0.0` to use the new default and to silence "
         "this Warning."
