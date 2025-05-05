@@ -225,7 +225,9 @@ def test_reconstruct_patches_perfect_color(orange_face):
 
 def test_patch_extractor_fit(downsampled_face_collection, global_random_seed):
     faces = downsampled_face_collection
-    extr = PatchExtractor(patch_size=(8, 8), max_patches=100, random_state=global_random_seed)
+    extr = PatchExtractor(
+        patch_size=(8, 8), max_patches=100, random_state=global_random_seed
+    )
     assert extr == extr.fit(faces)
 
 
@@ -253,7 +255,9 @@ def test_patch_extractor_max_patches(downsampled_face_collection, global_random_
     assert patches.shape == (expected_n_patches, p_h, p_w)
 
 
-def test_patch_extractor_max_patches_default(downsampled_face_collection, global_random_seed):
+def test_patch_extractor_max_patches_default(
+    downsampled_face_collection, global_random_seed
+):
     faces = downsampled_face_collection
     extr = PatchExtractor(max_patches=100, random_state=global_random_seed)
     patches = extr.transform(faces)
