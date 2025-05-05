@@ -67,7 +67,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: pypa/cibuildwheel@e91560e8a14470ff35488e414aa7aa1de5aec2d8 # v2.23.2
+      - uses: pypa/cibuildwheel@faf86a6ed7efa889faf6996aa23820831055001a
         env:
           CIBW_PLATFORM: pyodide
           SKLEARN_SKIP_OPENMP_TEST: "true"
