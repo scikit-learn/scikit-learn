@@ -224,7 +224,7 @@ def test_validate_plot_params(pyplot):
     assert name_out == ["test_curve"]
 
 
-def test_roc_curve_from_cv_results_param_validation(pyplot, data_binary, data):
+def test_roc_curve_from_cv_results_param_validation(pyplot, data_binary):
     """Check parameter validation is correct."""
     X, y = data_binary
 
@@ -251,7 +251,8 @@ def test_roc_curve_from_cv_results_param_validation(pyplot, data_binary, data):
         RocCurveDisplay.from_cv_results(cv_results, X[:10, :], y)
 
     # `y` not binary
-    X_mutli, y_multi = data
+    y_multi = y.copy()
+    y_multi[0] = 2
     with pytest.raises(ValueError, match="The target `y` is not binary."):
         RocCurveDisplay.from_cv_results(cv_results, X, y_multi)
 
@@ -262,9 +263,9 @@ def test_roc_curve_from_cv_results_param_validation(pyplot, data_binary, data):
         RocCurveDisplay.from_cv_results(cv_results, X, y, sample_weight=[1, 2])
 
     # `pos_label` inconsistency
-    X_bad_pos_label, y_bad_pos_label = X_mutli[y_multi > 0], y_multi[y_multi > 0]
-    with pytest.raises(ValueError, match=r"y takes value in \{1, 2\}"):
-        RocCurveDisplay.from_cv_results(cv_results, X_bad_pos_label, y_bad_pos_label)
+    y_multi[y_multi == 1] = 2
+    with pytest.raises(ValueError, match=r"y takes value in \{0, 2\}"):
+        RocCurveDisplay.from_cv_results(cv_results, X, y_multi)
 
     # `name` is list while `curve_kwargs` is None or dict
     for curve_kwargs in (None, {"alpha": 0.2}):
@@ -447,7 +448,10 @@ def test_roc_curve_display_plotting_from_cv_results(
     import matplotlib as mpl
 
     _check_figure_axes_and_labels(display, pos_label)
-    aggregate_expected_labels = ["AUC = 1.00 +/- 0.00", "_child1", "_child2"]
+    if with_sample_weight:
+        aggregate_expected_labels = ["AUC = 0.64 +/- 0.04", "_child1", "_child2"]
+    else:
+        aggregate_expected_labels = ["AUC = 0.61 +/- 0.05", "_child1", "_child2"]
     for idx, line in enumerate(display.line_):
         assert isinstance(line, mpl.lines.Line2D)
         # Default alpha for `from_cv_results`
@@ -547,22 +551,23 @@ def test_roc_curve_from_cv_results_legend_label(
         if isinstance(curve_kwargs, list):
             # Multiple labels in legend
             assert len(legend_labels) == 3
+            auc = ["0.62", "0.66", "0.55"]
             for idx, label in enumerate(legend_labels):
                 if name is None:
-                    assert label == "AUC = 1.00"
+                    assert label == f"AUC = {auc[idx]}"
                 elif isinstance(name, str):
-                    assert label == "single (AUC = 1.00)"
+                    assert label == f"single (AUC = {auc[idx]})"
                 else:
                     # `name` is a list of different strings
-                    assert label == f"{name[idx]} (AUC = 1.00)"
+                    assert label == f"{name[idx]} (AUC = {auc[idx]})"
         else:
             # Single label in legend
             assert len(legend_labels) == 1
             if name is None:
-                assert legend_labels[0] == "AUC = 1.00 +/- 0.00"
+                assert legend_labels[0] == "AUC = 0.61 +/- 0.05"
             else:
                 # name is single string
-                assert legend_labels[0] == "single (AUC = 1.00 +/- 0.00)"
+                assert legend_labels[0] == "single (AUC = 0.61 +/- 0.05)"
 
 
 @pytest.mark.parametrize(
