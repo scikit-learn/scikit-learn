@@ -180,7 +180,10 @@ def test_data_home_deprecated_path(tmpdir):
     old_path = os.path.join(os.path.expanduser("~"), "scikit_learn_data")
     os.makedirs(old_path, exist_ok=True)
     try:
-        with pytest.warns(FutureWarning, match="The default data directory '~/scikit_learn_data' is deprecated") as w:
+        with pytest.warns(
+            FutureWarning,
+            match="The default data directory '~/scikit_learn_data' is deprecated",
+        ) as w:
             data_home = get_data_home()
             assert data_home == old_path
             warning_msg = str(w[0].message)
@@ -194,7 +197,10 @@ def test_data_home_deprecated_path(tmpdir):
 
 def test_data_home_with_deprecated_param(tmpdir):
     """Test that using use_default_location=True uses old path and warns."""
-    with pytest.warns(FutureWarning, match="The default data directory '~/scikit_learn_data' is deprecated") as w:
+    with pytest.warns(
+        FutureWarning,
+        match="The default data directory '~/scikit_learn_data' is deprecated",
+    ) as w:
         data_home = get_data_home(use_default_location=True)
         assert data_home == os.path.join(os.path.expanduser("~"), "scikit_learn_data")
         warning_msg = str(w[0].message)
