@@ -44,10 +44,8 @@ if [[ $FREE_THREADED_BUILD == "False" ]]; then
     docker commit $CONTAINER_ID scikit-learn/minimal-windows
 else
     # This is too cumbersome to use a Docker image in the free-threaded case
-    # TODO Remove the next three lines when scipy and pandas each have a release
-    # with a Windows free-threaded wheel.
-    python -m pip install numpy
-    dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
-    python -m pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url scipy pandas --only-binary :all:
-    python -m pip install $CIBW_TEST_REQUIRES
+    # TODO When pandas has a release with a Windows free-threaded wheel we can
+    # replace the next line with
+    # python -m pip install CIBW_TEST_REQUIRES
+    python -m pip install pytest
 fi

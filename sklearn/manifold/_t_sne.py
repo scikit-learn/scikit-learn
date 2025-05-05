@@ -6,7 +6,6 @@
 # * Fast Optimization for t-SNE:
 #   https://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
 
-import warnings
 from numbers import Integral, Real
 from time import time
 
@@ -26,12 +25,12 @@ from ..metrics.pairwise import _VALID_METRICS, pairwise_distances
 from ..neighbors import NearestNeighbors
 from ..utils import check_random_state
 from ..utils._openmp_helpers import _openmp_effective_n_threads
-from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.validation import _num_samples, check_non_negative, validate_data
 
 # mypy error: Module 'sklearn.manifold' has no attribute '_utils'
 # mypy error: Module 'sklearn.manifold' has no attribute '_barnes_hut_tsne'
-from . import _barnes_hut_tsne, _utils  # type: ignore
+from . import _barnes_hut_tsne, _utils  # type: ignore[attr-defined]
 
 MACHINE_EPSILON = np.finfo(np.double).eps
 
@@ -702,14 +701,6 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.22
 
-    n_iter : int
-        Maximum number of iterations for the optimization. Should be at
-        least 250.
-
-        .. deprecated:: 1.5
-            `n_iter` was deprecated in version 1.5 and will be removed in 1.7.
-            Please use `max_iter` instead.
-
     Attributes
     ----------
     embedding_ : array-like of shape (n_samples, n_components)
@@ -794,7 +785,7 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             StrOptions({"auto"}),
             Interval(Real, 0, None, closed="neither"),
         ],
-        "max_iter": [Interval(Integral, 250, None, closed="left"), None],
+        "max_iter": [Interval(Integral, 250, None, closed="left")],
         "n_iter_without_progress": [Interval(Integral, -1, None, closed="left")],
         "min_grad_norm": [Interval(Real, 0, None, closed="left")],
         "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
@@ -808,10 +799,6 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         "method": [StrOptions({"barnes_hut", "exact"})],
         "angle": [Interval(Real, 0, 1, closed="both")],
         "n_jobs": [None, Integral],
-        "n_iter": [
-            Interval(Integral, 250, None, closed="left"),
-            Hidden(StrOptions({"deprecated"})),
-        ],
     }
 
     # Control the number of exploration iterations with early_exaggeration on
@@ -827,7 +814,7 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         perplexity=30.0,
         early_exaggeration=12.0,
         learning_rate="auto",
-        max_iter=None,  # TODO(1.7): set to 1000
+        max_iter=1000,
         n_iter_without_progress=300,
         min_grad_norm=1e-7,
         metric="euclidean",
@@ -838,7 +825,6 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         method="barnes_hut",
         angle=0.5,
         n_jobs=None,
-        n_iter="deprecated",
     ):
         self.n_components = n_components
         self.perplexity = perplexity
@@ -855,11 +841,13 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         self.method = method
         self.angle = angle
         self.n_jobs = n_jobs
-        self.n_iter = n_iter
 
     def _check_params_vs_input(self, X):
         if self.perplexity >= X.shape[0]:
-            raise ValueError("perplexity must be less than n_samples")
+            raise ValueError(
+                f"perplexity ({self.perplexity}) must be less "
+                f"than n_samples ({X.shape[0]})"
+            )
 
     def _fit(self, X, skip_num_points=0):
         """Private function to fit the model using X as training data."""
@@ -961,9 +949,9 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             P = _joint_probabilities(distances, self.perplexity, self.verbose)
             assert np.all(np.isfinite(P)), "All probabilities should be finite"
             assert np.all(P >= 0), "All probabilities should be non-negative"
-            assert np.all(
-                P <= 1
-            ), "All probabilities should be less or then equal to one"
+            assert np.all(P <= 1), (
+                "All probabilities should be less or then equal to one"
+            )
 
         else:
             # Compute the number of nearest neighbors to find.
@@ -1105,9 +1093,9 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         # Learning schedule (part 2): disable early exaggeration and finish
         # optimization with a higher momentum at 0.8
         P /= self.early_exaggeration
-        remaining = self._max_iter - self._EXPLORATION_MAX_ITER
+        remaining = self.max_iter - self._EXPLORATION_MAX_ITER
         if it < self._EXPLORATION_MAX_ITER or remaining > 0:
-            opt_args["max_iter"] = self._max_iter
+            opt_args["max_iter"] = self.max_iter
             opt_args["it"] = it + 1
             opt_args["momentum"] = 0.8
             opt_args["n_iter_without_progress"] = self.n_iter_without_progress
@@ -1152,28 +1140,6 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
-        # TODO(1.7): remove
-        # Also make sure to change `max_iter` default back to 1000 and deprecate None
-        if self.n_iter != "deprecated":
-            if self.max_iter is not None:
-                raise ValueError(
-                    "Both 'n_iter' and 'max_iter' attributes were set. Attribute"
-                    " 'n_iter' was deprecated in version 1.5 and will be removed in"
-                    " 1.7. To avoid this error, only set the 'max_iter' attribute."
-                )
-            warnings.warn(
-                (
-                    "'n_iter' was renamed to 'max_iter' in version 1.5 and "
-                    "will be removed in 1.7."
-                ),
-                FutureWarning,
-            )
-            self._max_iter = self.n_iter
-        elif self.max_iter is None:
-            self._max_iter = 1000
-        else:
-            self._max_iter = self.max_iter
-
         self._check_params_vs_input(X)
         embedding = self._fit(X)
         self.embedding_ = embedding
