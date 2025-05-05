@@ -27,17 +27,17 @@ from .._pd_utils import _check_feature_names, _get_feature_index
 class PartialDependenceDisplay:
     """Partial Dependence Plot (PDP).
 
-    This can also display individual partial dependencies which are often
-    referred to as: Individual Condition Expectation (ICE).
+    Partial Dependence Plot (PDP) and Individual Conditional Expectation (ICE) visualization.
 
     It is recommended to use
     :func:`~sklearn.inspection.PartialDependenceDisplay.from_estimator` to create a
-    :class:`~sklearn.inspection.PartialDependenceDisplay`. All parameters are
-    stored as attributes.
+    :class:`~sklearn.inspection.PartialDependenceDisplay`. All parameters are stored
+    as attributes.
 
-    Read more in
-    :ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_visualization_api.py`
-    and the :ref:`User Guide <partial_dependence>`.
+    For general information regarding scikit-learn visualization tools, see the
+    :ref:`Visualization Guide <visualizations>`.
+    For guidance on interpreting partial dependence and ICE plots, refer to the
+    :ref:`Partial Dependence and ICE plots section <partial_dependence>`.
 
     .. versionadded:: 0.22
 
@@ -276,13 +276,16 @@ class PartialDependenceDisplay:
     ):
         """Partial dependence (PD) and individual conditional expectation (ICE) plots.
 
-        Partial dependence plots, individual conditional expectation plots or an
-        overlay of both of them can be plotted by setting the ``kind``
-        parameter. The ``len(features)`` plots are arranged in a grid with
-        ``n_cols`` columns. Two-way partial dependence plots are plotted as
-        contour plots. The deciles of the feature values will be shown with tick
-        marks on the x-axes for one-way plots, and on both axes for two-way
-        plots.
+        Partial dependence plots, individual conditional expectation plots, or an
+        overlay of both can be plotted by setting the ``kind`` parameter. The
+        plots are arranged in a grid with ``n_cols`` columns. Two-way plots are
+        shown as contours. Deciles of feature values are marked as tick lines.
+
+        It is recommended to use
+        :meth:`~sklearn.inspection.PartialDependenceDisplay.from_estimator`
+        and see the :ref:`Visualization Guide <visualizations>` for plotting API,
+        and the :ref:`Partial Dependence and ICE plots section <partial_dependence>`
+        for interpretation guidance.
 
         Read more in
         :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
