@@ -20,7 +20,10 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
     a :class:`~sklearn.metrics.PrecisionRecallDisplay`. All parameters are
     stored as attributes.
 
-    Read more in the :ref:`User Guide <visualizations>`.
+    For general information regarding `scikit-learn` visualization tools, see
+    the :ref:`Visualization Guide <visualizations>`.
+    For guidance on interpreting these plots, refer to the :ref:`Model
+    Evaluation Guide <precision_recall_f_measure_metrics>`.
 
     Parameters
     ----------
