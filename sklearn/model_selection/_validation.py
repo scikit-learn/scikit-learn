@@ -1929,6 +1929,13 @@ def learning_curve(
         Times spent for scoring in seconds. Only present if ``return_times``
         is True.
 
+    See also:
+    --------
+    LearningCurveDisplay.from_estimator : Create a learning curve
+        display from an estimator
+
+    LearningCurveDisplay.from_model : Learn Curve visualization
+
     Examples
     --------
     >>> from sklearn.datasets import make_classification
