@@ -175,6 +175,34 @@ def test_data_home_custom_path(tmpdir):
     assert os.path.exists(custom_path)
 
 
+def test_data_home_deprecated_path(tmpdir):
+    """Test that using the old default path raises a deprecation warning."""
+    old_path = os.path.join(os.path.expanduser("~"), "scikit_learn_data")
+    os.makedirs(old_path, exist_ok=True)
+    try:
+        with pytest.warns(FutureWarning, match="The default data directory '~/scikit_learn_data' is deprecated") as w:
+            data_home = get_data_home()
+            assert data_home == old_path
+            warning_msg = str(w[0].message)
+            assert "~/.cache/scikit-learn" in warning_msg
+            assert "~/Library/Caches/scikit-learn" in warning_msg
+            assert "~/AppData/Local/scikit-learn" in warning_msg
+    finally:
+        if os.path.exists(old_path):
+            shutil.rmtree(old_path)
+
+
+def test_data_home_with_deprecated_param(tmpdir):
+    """Test that using use_default_location=True uses old path and warns."""
+    with pytest.warns(FutureWarning, match="The default data directory '~/scikit_learn_data' is deprecated") as w:
+        data_home = get_data_home(use_default_location=True)
+        assert data_home == os.path.join(os.path.expanduser("~"), "scikit_learn_data")
+        warning_msg = str(w[0].message)
+        assert "~/.cache/scikit-learn" in warning_msg
+        assert "~/Library/Caches/scikit-learn" in warning_msg
+        assert "~/AppData/Local/scikit-learn" in warning_msg
+
+
 def test_default_empty_load_files(load_files_root):
     res = load_files(load_files_root)
     assert len(res.filenames) == 0
