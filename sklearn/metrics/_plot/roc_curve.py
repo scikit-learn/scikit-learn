@@ -1,7 +1,13 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
+import warnings
+
+from ...utils._plotting import (
+    _BinaryClassifierCurveDisplayMixin,
+    _despine,
+    _validate_style_kwargs,
+)
 from .._ranking import auc, roc_curve
 
 
@@ -14,7 +20,10 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     a :class:`~sklearn.metrics.RocCurveDisplay`. All parameters are
     stored as attributes.
 
-    Read more in the :ref:`User Guide <visualizations>`.
+    For general information regarding `scikit-learn` visualization tools, see
+    the :ref:`Visualization Guide <visualizations>`.
+    For guidance on interpreting these plots, refer to the :ref:`Model
+    Evaluation Guide <roc_metrics>`.
 
     Parameters
     ----------
@@ -67,9 +76,9 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     >>> import matplotlib.pyplot as plt
     >>> import numpy as np
     >>> from sklearn import metrics
-    >>> y = np.array([0, 0, 1, 1])
-    >>> pred = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> fpr, tpr, thresholds = metrics.roc_curve(y, pred)
+    >>> y_true = np.array([0, 0, 1, 1])
+    >>> y_score = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> fpr, tpr, thresholds = metrics.roc_curve(y_true, y_score)
     >>> roc_auc = metrics.auc(fpr, tpr)
     >>> display = metrics.RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc,
     ...                                   estimator_name='example estimator')
@@ -92,6 +101,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         name=None,
         plot_chance_level=False,
         chance_level_kw=None,
+        despine=False,
         **kwargs,
     ):
         """Plot visualization.
@@ -119,6 +129,11 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
             .. versionadded:: 1.3
 
+        despine : bool, default=False
+            Whether to remove the top and right spines from the plot.
+
+            .. versionadded:: 1.6
+
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
 
@@ -129,24 +144,28 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         """
         self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
 
-        line_kwargs = {}
+        default_line_kwargs = {}
         if self.roc_auc is not None and name is not None:
-            line_kwargs["label"] = f"{name} (AUC = {self.roc_auc:0.2f})"
+            default_line_kwargs["label"] = f"{name} (AUC = {self.roc_auc:0.2f})"
         elif self.roc_auc is not None:
-            line_kwargs["label"] = f"AUC = {self.roc_auc:0.2f}"
+            default_line_kwargs["label"] = f"AUC = {self.roc_auc:0.2f}"
         elif name is not None:
-            line_kwargs["label"] = name
+            default_line_kwargs["label"] = name
 
-        line_kwargs.update(**kwargs)
+        line_kwargs = _validate_style_kwargs(default_line_kwargs, kwargs)
 
-        chance_level_line_kw = {
+        default_chance_level_line_kw = {
             "label": "Chance level (AUC = 0.5)",
             "color": "k",
             "linestyle": "--",
         }
 
-        if chance_level_kw is not None:
-            chance_level_line_kw.update(**chance_level_kw)
+        if chance_level_kw is None:
+            chance_level_kw = {}
+
+        chance_level_kw = _validate_style_kwargs(
+            default_chance_level_line_kw, chance_level_kw
+        )
 
         (self.line_,) = self.ax_.plot(self.fpr, self.tpr, **line_kwargs)
         info_pos_label = (
@@ -164,13 +183,17 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         )
 
         if plot_chance_level:
-            (self.chance_level_,) = self.ax_.plot(
-                (0, 1), (0, 1), **chance_level_line_kw
-            )
+            (self.chance_level_,) = self.ax_.plot((0, 1), (0, 1), **chance_level_kw)
         else:
             self.chance_level_ = None
 
-        if "label" in line_kwargs or "label" in chance_level_line_kw:
+        if despine:
+            _despine(self.ax_)
+
+        if (
+            line_kwargs.get("label") is not None
+            or chance_level_kw.get("label") is not None
+        ):
             self.ax_.legend(loc="lower right")
 
         return self
@@ -190,9 +213,15 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         ax=None,
         plot_chance_level=False,
         chance_level_kw=None,
+        despine=False,
         **kwargs,
     ):
         """Create a ROC Curve display from an estimator.
+
+        For general information regarding `scikit-learn` visualization tools,
+        see the :ref:`Visualization Guide <visualizations>`.
+        For guidance on interpreting these plots, refer to the :ref:`Model
+        Evaluation Guide <roc_metrics>`.
 
         Parameters
         ----------
@@ -210,9 +239,10 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Sample weights.
 
         drop_intermediate : bool, default=True
-            Whether to drop some suboptimal thresholds which would not appear
-            on a plotted ROC curve. This is useful in order to create lighter
-            ROC curves.
+            Whether to drop thresholds where the resulting point is collinear
+            with its neighbors in ROC space. This has no effect on the ROC AUC
+            or visual shape of the curve, but reduces the number of plotted
+            points.
 
         response_method : {'predict_proba', 'decision_function', 'auto'} \
                 default='auto'
@@ -243,6 +273,11 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             the chance level line.
 
             .. versionadded:: 1.3
+
+        despine : bool, default=False
+            Whether to remove the top and right spines from the plot.
+
+            .. versionadded:: 1.6
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
@@ -275,7 +310,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        y_pred, pos_label, name = cls._validate_and_get_response_values(
+        y_score, pos_label, name = cls._validate_and_get_response_values(
             estimator,
             X,
             y,
@@ -286,7 +321,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         return cls.from_predictions(
             y_true=y,
-            y_pred=y_pred,
+            y_score=y_score,
             sample_weight=sample_weight,
             drop_intermediate=drop_intermediate,
             name=name,
@@ -294,6 +329,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             pos_label=pos_label,
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
+            despine=despine,
             **kwargs,
         )
 
@@ -301,7 +337,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     def from_predictions(
         cls,
         y_true,
-        y_pred,
+        y_score=None,
         *,
         sample_weight=None,
         drop_intermediate=True,
@@ -310,11 +346,16 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         ax=None,
         plot_chance_level=False,
         chance_level_kw=None,
+        despine=False,
+        y_pred="deprecated",
         **kwargs,
     ):
         """Plot ROC curve given the true and predicted values.
 
-        Read more in the :ref:`User Guide <visualizations>`.
+        For general information regarding `scikit-learn` visualization tools,
+        see the :ref:`Visualization Guide <visualizations>`.
+        For guidance on interpreting these plots, refer to the :ref:`Model
+        Evaluation Guide <roc_metrics>`.
 
         .. versionadded:: 1.0
 
@@ -323,18 +364,22 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         y_true : array-like of shape (n_samples,)
             True labels.
 
-        y_pred : array-like of shape (n_samples,)
+        y_score : array-like of shape (n_samples,)
             Target scores, can either be probability estimates of the positive
             class, confidence values, or non-thresholded measure of decisions
             (as returned by “decision_function” on some classifiers).
+
+            .. versionadded:: 1.7
+                `y_pred` has been renamed to `y_score`.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
         drop_intermediate : bool, default=True
-            Whether to drop some suboptimal thresholds which would not appear
-            on a plotted ROC curve. This is useful in order to create lighter
-            ROC curves.
+            Whether to drop thresholds where the resulting point is collinear
+            with its neighbors in ROC space. This has no effect on the ROC AUC
+            or visual shape of the curve, but reduces the number of plotted
+            points.
 
         pos_label : int, float, bool or str, default=None
             The label of the positive class. When `pos_label=None`, if `y_true`
@@ -359,6 +404,20 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             the chance level line.
 
             .. versionadded:: 1.3
+
+        despine : bool, default=False
+            Whether to remove the top and right spines from the plot.
+
+            .. versionadded:: 1.6
+
+        y_pred : array-like of shape (n_samples,)
+            Target scores, can either be probability estimates of the positive
+            class, confidence values, or non-thresholded measure of decisions
+            (as returned by “decision_function” on some classifiers).
+
+            .. deprecated:: 1.7
+                `y_pred` is deprecated and will be removed in 1.9. Use
+                `y_score` instead.
 
         **kwargs : dict
             Additional keywords arguments passed to matplotlib `plot` function.
@@ -386,19 +445,36 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> X_train, X_test, y_train, y_test = train_test_split(
         ...     X, y, random_state=0)
         >>> clf = SVC(random_state=0).fit(X_train, y_train)
-        >>> y_pred = clf.decision_function(X_test)
-        >>> RocCurveDisplay.from_predictions(
-        ...    y_test, y_pred)
+        >>> y_score = clf.decision_function(X_test)
+        >>> RocCurveDisplay.from_predictions(y_test, y_score)
         <...>
         >>> plt.show()
         """
+        # TODO(1.9): remove after the end of the deprecation period of `y_pred`
+        if y_score is not None and not (
+            isinstance(y_pred, str) and y_pred == "deprecated"
+        ):
+            raise ValueError(
+                "`y_pred` and `y_score` cannot be both specified. Please use `y_score`"
+                " only as `y_pred` is deprecated in 1.7 and will be removed in 1.9."
+            )
+        if not (isinstance(y_pred, str) and y_pred == "deprecated"):
+            warnings.warn(
+                (
+                    "y_pred is deprecated in 1.7 and will be removed in 1.9. "
+                    "Please use `y_score` instead."
+                ),
+                FutureWarning,
+            )
+            y_score = y_pred
+
         pos_label_validated, name = cls._validate_from_predictions_params(
-            y_true, y_pred, sample_weight=sample_weight, pos_label=pos_label, name=name
+            y_true, y_score, sample_weight=sample_weight, pos_label=pos_label, name=name
         )
 
         fpr, tpr, _ = roc_curve(
             y_true,
-            y_pred,
+            y_score,
             pos_label=pos_label,
             sample_weight=sample_weight,
             drop_intermediate=drop_intermediate,
@@ -418,5 +494,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             name=name,
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
+            despine=despine,
             **kwargs,
         )

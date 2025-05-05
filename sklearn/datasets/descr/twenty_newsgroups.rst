@@ -213,32 +213,32 @@ Features                  text
   :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`
   example with and without the `remove` option to compare the results.
 
-.. topic:: Data Considerations
+.. rubric:: Data Considerations
 
-  The Cleveland Indians is a major league baseball team based in Cleveland,
-  Ohio, USA. In December 2020, it was reported that "After several months of
-  discussion sparked by the death of George Floyd and a national reckoning over
-  race and colonialism, the Cleveland Indians have decided to change their
-  name." Team owner Paul Dolan "did make it clear that the team will not make
-  its informal nickname -- the Tribe -- its new team name." "It's not going to
-  be a half-step away from the Indians," Dolan said."We will not have a Native
-  American-themed name."
+The Cleveland Indians is a major league baseball team based in Cleveland,
+Ohio, USA. In December 2020, it was reported that "After several months of
+discussion sparked by the death of George Floyd and a national reckoning over
+race and colonialism, the Cleveland Indians have decided to change their
+name." Team owner Paul Dolan "did make it clear that the team will not make
+its informal nickname -- the Tribe -- its new team name." "It's not going to
+be a half-step away from the Indians," Dolan said."We will not have a Native
+American-themed name."
 
-  https://www.mlb.com/news/cleveland-indians-team-name-change
+https://www.mlb.com/news/cleveland-indians-team-name-change
 
-.. topic:: Recommendation
+.. rubric:: Recommendation
 
-  - When evaluating text classifiers on the 20 Newsgroups data, you
-    should strip newsgroup-related metadata. In scikit-learn, you can do this
-    by setting ``remove=('headers', 'footers', 'quotes')``. The F-score will be
-    lower because it is more realistic.
-  - This text dataset contains data which may be inappropriate for certain NLP
-    applications. An example is listed in the "Data Considerations" section
-    above. The challenge with using current text datasets in NLP for tasks such
-    as sentence completion, clustering, and other applications is that text
-    that is culturally biased and inflammatory will propagate biases. This
-    should be taken into consideration when using the dataset, reviewing the
-    output, and the bias should be documented.
+- When evaluating text classifiers on the 20 Newsgroups data, you
+  should strip newsgroup-related metadata. In scikit-learn, you can do this
+  by setting ``remove=('headers', 'footers', 'quotes')``. The F-score will be
+  lower because it is more realistic.
+- This text dataset contains data which may be inappropriate for certain NLP
+  applications. An example is listed in the "Data Considerations" section
+  above. The challenge with using current text datasets in NLP for tasks such
+  as sentence completion, clustering, and other applications is that text
+  that is culturally biased and inflammatory will propagate biases. This
+  should be taken into consideration when using the dataset, reviewing the
+  output, and the bias should be documented.
 
 .. rubric:: Examples
 

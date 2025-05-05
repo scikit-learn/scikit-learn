@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import itertools
+import math
 import warnings
 from functools import partial
 from numbers import Integral, Real
@@ -16,18 +17,13 @@ from scipy.spatial import distance
 from .. import config_context
 from ..exceptions import DataConversionWarning
 from ..preprocessing import normalize
-from ..utils import (
-    check_array,
-    gen_batches,
-    gen_even_slices,
-)
+from ..utils import check_array, gen_batches, gen_even_slices
 from ..utils._array_api import (
     _fill_or_add_to_diagonal,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
     _max_precision_float_dtype,
     _modify_in_place_if_numpy,
-    device,
     get_namespace,
     get_namespace_and_device,
 )
@@ -288,7 +284,7 @@ def euclidean_distances(
     X, Y=None, *, Y_norm_squared=None, squared=False, X_norm_squared=None
 ):
     """
-    Compute the distance matrix between each pair from a vector array X and Y.
+    Compute the distance matrix between each pair from a feature array X and Y.
 
     For efficiency reasons, the euclidean distance between a pair of row
     vector x and y is computed as::
@@ -344,7 +340,7 @@ def euclidean_distances(
 
     Notes
     -----
-    To achieve a better accuracy, `X_norm_squared` and `Y_norm_squared` may be
+    To achieve a better accuracy, `X_norm_squared` and `Y_norm_squared` may be
     unused if they are passed as `np.float32`.
 
     Examples
@@ -467,15 +463,20 @@ def nan_euclidean_distances(
     missing value in either sample and scales up the weight of the remaining
     coordinates:
 
+    .. code-block:: text
+
         dist(x,y) = sqrt(weight * sq. distance from present coordinates)
-        where,
+
+    where:
+
+    .. code-block:: text
+
         weight = Total # of coordinates / # of present coordinates
 
-    For example, the distance between ``[3, na, na, 6]`` and ``[1, na, 4, 5]``
-    is:
+    For example, the distance between ``[3, na, na, 6]`` and ``[1, na, 4, 5]`` is:
 
-        .. math::
-            \\sqrt{\\frac{4}{2}((3-1)^2 + (6-5)^2)}
+    .. math::
+        \\sqrt{\\frac{4}{2}((3-1)^2 + (6-5)^2)}
 
     If all the coordinates are missing or if there are no common present
     coordinates then NaN is returned for that pair.
@@ -595,12 +596,8 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None, batch_size=None):
     distances = xp.empty((n_samples_X, n_samples_Y), dtype=xp.float32, device=device_)
 
     if batch_size is None:
-        x_density = (
-            X.nnz / xp.prod(X.shape) if issparse(X) else xp.asarray(1, device=device_)
-        )
-        y_density = (
-            Y.nnz / xp.prod(Y.shape) if issparse(Y) else xp.asarray(1, device=device_)
-        )
+        x_density = X.nnz / np.prod(X.shape) if issparse(X) else 1
+        y_density = Y.nnz / np.prod(Y.shape) if issparse(Y) else 1
 
         # Allow 10% more memory than X, Y and the distance matrix take (at
         # least 10MiB)
@@ -620,13 +617,13 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None, batch_size=None):
         # Hence x² + (xd+yd)kx = M, where x=batch_size, k=n_features, M=maxmem
         #                                 xd=x_density and yd=y_density
         tmp = (x_density + y_density) * n_features
-        batch_size = (-tmp + xp.sqrt(tmp**2 + 4 * maxmem)) / 2
+        batch_size = (-tmp + math.sqrt(tmp**2 + 4 * maxmem)) / 2
         batch_size = max(int(batch_size), 1)
 
     x_batches = gen_batches(n_samples_X, batch_size)
     xp_max_float = _max_precision_float_dtype(xp=xp, device=device_)
     for i, x_slice in enumerate(x_batches):
-        X_chunk = xp.astype(X[x_slice], xp_max_float)
+        X_chunk = xp.astype(X[x_slice, :], xp_max_float)
         if XX is None:
             XX_chunk = row_norms(X_chunk, squared=True)[:, None]
         else:
@@ -641,7 +638,7 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None, batch_size=None):
                 d = distances[y_slice, x_slice].T
 
             else:
-                Y_chunk = xp.astype(Y[y_slice], xp_max_float)
+                Y_chunk = xp.astype(Y[y_slice, :], xp_max_float)
                 if YY is None:
                     YY_chunk = row_norms(Y_chunk, squared=True)[None, :]
                 else:
@@ -692,7 +689,6 @@ _VALID_METRICS = [
     "rogerstanimoto",
     "russellrao",
     "seuclidean",
-    "sokalmichener",
     "sokalsneath",
     "sqeuclidean",
     "yule",
@@ -700,6 +696,9 @@ _VALID_METRICS = [
     "nan_euclidean",
     "haversine",
 ]
+if sp_base_version < parse_version("1.17"):  # pragma: no cover
+    # Deprecated in SciPy 1.15 and removed in SciPy 1.17
+    _VALID_METRICS += ["sokalmichener"]
 if sp_base_version < parse_version("1.11"):  # pragma: no cover
     # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     _VALID_METRICS += ["kulsinski"]
@@ -732,7 +731,7 @@ def pairwise_distances_argmin_min(
     is closest (according to the specified distance). The minimal distances are
     also returned.
 
-    This is mostly equivalent to calling:
+    This is mostly equivalent to calling::
 
         (pairwise_distances(X, Y=Y, metric=metric).argmin(axis=axis),
          pairwise_distances(X, Y=Y, metric=metric).min(axis=axis))
@@ -765,7 +764,7 @@ def pairwise_distances_argmin_min(
         Valid values for metric are:
 
         - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-          'manhattan']
+          'manhattan', 'nan_euclidean']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
@@ -811,7 +810,8 @@ def pairwise_distances_argmin_min(
     >>> distances
     array([1., 1.])
     """
-    X, Y = check_pairwise_arrays(X, Y)
+    ensure_all_finite = "allow-nan" if metric == "nan_euclidean" else True
+    X, Y = check_pairwise_arrays(X, Y, ensure_all_finite=ensure_all_finite)
 
     if axis == 0:
         X, Y = Y, X
@@ -878,7 +878,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     This function computes for each row in X, the index of the row of Y which
     is closest (according to the specified distance).
 
-    This is mostly equivalent to calling:
+    This is mostly equivalent to calling::
 
         pairwise_distances(X, Y=Y, metric=metric).argmin(axis=axis)
 
@@ -912,7 +912,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
         Valid values for metric are:
 
         - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-          'manhattan']
+          'manhattan', 'nan_euclidean']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
@@ -951,7 +951,8 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     >>> pairwise_distances_argmin(X, Y)
     array([0, 1])
     """
-    X, Y = check_pairwise_arrays(X, Y)
+    ensure_all_finite = "allow-nan" if metric == "nan_euclidean" else True
+    X, Y = check_pairwise_arrays(X, Y, ensure_all_finite=ensure_all_finite)
 
     if axis == 0:
         X, Y = Y, X
@@ -1166,10 +1167,7 @@ def cosine_distances(X, Y=None):
     S = cosine_similarity(X, Y)
     S *= -1
     S += 1
-    # TODO: remove the xp.asarray calls once the following is fixed:
-    # https://github.com/data-apis/array-api-compat/issues/177
-    device_ = device(S)
-    S = xp.clip(S, xp.asarray(0.0, device=device_), xp.asarray(2.0, device=device_))
+    S = xp.clip(S, 0.0, 2.0)
     if X is Y or Y is None:
         # Ensure that distances between vectors and themselves are set to 0.0.
         # This may not be the case due to floating point rounding errors.
@@ -1443,6 +1441,8 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
     """
     Compute the polynomial kernel between X and Y.
 
+    .. code-block:: text
+
         K(X, Y) = (gamma <X, Y> + coef0) ^ degree
 
     Read more in the :ref:`User Guide <polynomial_kernel>`.
@@ -1505,6 +1505,8 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
 def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     """Compute the sigmoid kernel between X and Y.
 
+    .. code-block:: text
+
         K(X, Y) = tanh(gamma <X, Y> + coef0)
 
     Read more in the :ref:`User Guide <sigmoid_kernel>`.
@@ -1537,6 +1539,7 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     array([[0.76..., 0.76...],
            [0.87..., 0.93...]])
     """
+    xp, _ = get_namespace(X, Y)
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
         gamma = 1.0 / X.shape[1]
@@ -1544,7 +1547,8 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     K = safe_sparse_dot(X, Y.T, dense_output=True)
     K *= gamma
     K += coef0
-    np.tanh(K, K)  # compute tanh in-place
+    # compute tanh in-place for numpy
+    K = _modify_in_place_if_numpy(xp, xp.tanh, K, out=K)
     return K
 
 
@@ -1562,6 +1566,8 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
 )
 def rbf_kernel(X, Y=None, gamma=None):
     """Compute the rbf (gaussian) kernel between X and Y.
+
+    .. code-block:: text
 
         K(x, y) = exp(-gamma ||x-y||^2)
 
@@ -1621,7 +1627,9 @@ def rbf_kernel(X, Y=None, gamma=None):
 def laplacian_kernel(X, Y=None, gamma=None):
     """Compute the laplacian kernel between X and Y.
 
-    The laplacian kernel is defined as::
+    The laplacian kernel is defined as:
+
+    .. code-block:: text
 
         K(x, y) = exp(-gamma ||x-y||_1)
 
@@ -1678,6 +1686,8 @@ def cosine_similarity(X, Y=None, dense_output=True):
     Cosine similarity, or the cosine kernel, computes similarity as the
     normalized dot product of X and Y:
 
+    .. code-block:: text
+
         K(X, Y) = <X, Y> / (||X||*||Y||)
 
     On L2-normalized data, this function is equivalent to linear_kernel.
@@ -1715,8 +1725,6 @@ def cosine_similarity(X, Y=None, dense_output=True):
     array([[0.     , 0.     ],
            [0.57..., 0.81...]])
     """
-    # to avoid recursive import
-
     X, Y = check_pairwise_arrays(X, Y)
 
     X_normalized = normalize(X, copy=True)
@@ -1741,7 +1749,9 @@ def additive_chi2_kernel(X, Y=None):
     and Y have to be non-negative. This kernel is most commonly applied to
     histograms.
 
-    The chi-squared kernel is given by::
+    The chi-squared kernel is given by:
+
+    .. code-block:: text
 
         k(x, y) = -Sum [(x - y)^2 / (x + y)]
 
@@ -1791,7 +1801,7 @@ def additive_chi2_kernel(X, Y=None):
     array([[-1., -2.],
            [-2., -1.]])
     """
-    xp, _ = get_namespace(X, Y)
+    xp, _, device_ = get_namespace_and_device(X, Y)
     X, Y = check_pairwise_arrays(X, Y, accept_sparse=False)
     if xp.any(X < 0):
         raise ValueError("X contains negative values.")
@@ -1808,8 +1818,8 @@ def additive_chi2_kernel(X, Y=None):
         yb = Y[None, :, :]
         nom = -((xb - yb) ** 2)
         denom = xb + yb
-        nom = xp.where(denom == 0, xp.asarray(0, dtype=dtype), nom)
-        denom = xp.where(denom == 0, xp.asarray(1, dtype=dtype), denom)
+        nom = xp.where(denom == 0, xp.asarray(0, dtype=dtype, device=device_), nom)
+        denom = xp.where(denom == 0, xp.asarray(1, dtype=dtype, device=device_), denom)
         return xp.sum(nom / denom, axis=2)
 
 
@@ -1828,7 +1838,9 @@ def chi2_kernel(X, Y=None, gamma=1.0):
     and Y have to be non-negative. This kernel is most commonly applied to
     histograms.
 
-    The chi-squared kernel is given by::
+    The chi-squared kernel is given by:
+
+    .. code-block:: text
 
         k(x, y) = exp(-gamma Sum [(x - y)^2 / (x + y)])
 
@@ -1938,7 +1950,7 @@ def _dist_wrapper(dist_func, dist_matrix, slice_, *args, **kwargs):
 
 def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     """Break the pairwise matrix in n_jobs even slices
-    and compute them in parallel."""
+    and compute them using multithreading."""
 
     if Y is None:
         Y = X
@@ -1970,6 +1982,7 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
         Y,
         dtype=None,
         ensure_all_finite=ensure_all_finite,
+        # No input dimension checking done for custom metrics (left to user)
         ensure_2d=False,
     )
 
@@ -2263,12 +2276,21 @@ def pairwise_distances(
     ensure_all_finite=None,
     **kwds,
 ):
-    """Compute the distance matrix from a vector array X and optional Y.
+    """Compute the distance matrix from a feature array X and optional Y.
 
-    This method takes either a vector array or a distance matrix, and returns
+    This function takes one or two feature arrays or a distance matrix, and returns
     a distance matrix.
-    If the input is a vector array, the distances are computed.
-    If the input is a distances matrix, it is returned instead.
+
+    - If `X` is a feature array, of shape (n_samples_X, n_features), and:
+
+      - `Y` is `None` and `metric` is not 'precomputed', the pairwise distances
+        between `X` and itself are returned.
+      - `Y` is a feature array of shape (n_samples_Y, n_features), the pairwise
+        distances between `X` and `Y` is returned.
+
+    - If `X` is a distance matrix, of shape (n_samples_X, n_samples_X), `metric`
+      should be 'precomputed'. `Y` is thus ignored and `X` is returned as is.
+
     If the input is a collection of non-numeric data (e.g. a list of strings or a
     boolean array), a custom metric must be passed.
 
@@ -2276,15 +2298,11 @@ def pairwise_distances(
     preserving compatibility with many other algorithms that take a vector
     array.
 
-    If Y is given (default is None), then the returned matrix is the pairwise
-    distance between the arrays from both X and Y.
-
     Valid values for metric are:
 
     - From scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-      'manhattan']. These metrics support sparse matrix
-      inputs.
-      ['nan_euclidean'] but it does not yet support sparse matrices.
+      'manhattan', 'nan_euclidean']. All metrics support sparse matrix
+      inputs except 'nan_euclidean'.
 
     - From scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
       'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis',
@@ -2333,8 +2351,8 @@ def pairwise_distances(
 
     n_jobs : int, default=None
         The number of jobs to use for the computation. This works by breaking
-        down the pairwise matrix into n_jobs even slices and computing them in
-        parallel.
+        down the pairwise matrix into n_jobs even slices and computing them
+        using multithreading.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -2399,6 +2417,10 @@ def pairwise_distances(
     sklearn.metrics.pairwise.paired_distances : Computes the distances between
         corresponding elements of two arrays.
 
+    Notes
+    -----
+    If metric is a callable, no restrictions are placed on `X` and `Y` dimensions.
+
     Examples
     --------
     >>> from sklearn.metrics.pairwise import pairwise_distances
@@ -2436,7 +2458,7 @@ def pairwise_distances(
 
         dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else "infer_float"
 
-        if dtype == bool and (X.dtype != bool or (Y is not None and Y.dtype != bool)):
+        if dtype is bool and (X.dtype != bool or (Y is not None and Y.dtype != bool)):
             msg = "Data was converted to boolean for metric %s" % metric
             warnings.warn(msg, DataConversionWarning)
 
@@ -2461,10 +2483,12 @@ PAIRWISE_BOOLEAN_FUNCTIONS = [
     "jaccard",
     "rogerstanimoto",
     "russellrao",
-    "sokalmichener",
     "sokalsneath",
     "yule",
 ]
+if sp_base_version < parse_version("1.17"):
+    # Deprecated in SciPy 1.15 and removed in SciPy 1.17
+    PAIRWISE_BOOLEAN_FUNCTIONS += ["sokalmichener"]
 if sp_base_version < parse_version("1.11"):
     # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     PAIRWISE_BOOLEAN_FUNCTIONS += ["kulsinski"]
@@ -2551,16 +2575,22 @@ def pairwise_kernels(
 ):
     """Compute the kernel between arrays X and optional array Y.
 
-    This method takes either a vector array or a kernel matrix, and returns
-    a kernel matrix. If the input is a vector array, the kernels are
-    computed. If the input is a kernel matrix, it is returned instead.
+    This function takes one or two feature arrays or a kernel matrix, and returns
+    a kernel matrix.
+
+    - If `X` is a feature array, of shape (n_samples_X, n_features), and:
+
+      - `Y` is `None` and `metric` is not 'precomputed', the pairwise kernels
+        between `X` and itself are returned.
+      - `Y` is a feature array of shape (n_samples_Y, n_features), the pairwise
+        kernels between `X` and `Y` is returned.
+
+    - If `X` is a kernel matrix, of shape (n_samples_X, n_samples_X), `metric`
+      should be 'precomputed'. `Y` is thus ignored and `X` is returned as is.
 
     This method provides a safe way to take a kernel matrix as input, while
     preserving compatibility with many other algorithms that take a vector
     array.
-
-    If Y is given (default is None), then the returned matrix is the pairwise
-    kernel between the arrays from both X and Y.
 
     Valid values for metric are:
         ['additive_chi2', 'chi2', 'linear', 'poly', 'polynomial', 'rbf',
@@ -2597,8 +2627,8 @@ def pairwise_kernels(
 
     n_jobs : int, default=None
         The number of jobs to use for the computation. This works by breaking
-        down the pairwise matrix into n_jobs even slices and computing them in
-        parallel.
+        down the pairwise matrix into n_jobs even slices and computing them
+        using multithreading.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -2617,7 +2647,7 @@ def pairwise_kernels(
 
     Notes
     -----
-    If metric is 'precomputed', Y is ignored and X is returned.
+    If metric is a callable, no restrictions are placed on `X` and `Y` dimensions.
 
     Examples
     --------

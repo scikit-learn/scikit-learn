@@ -20,6 +20,7 @@ from sklearn.model_selection import (
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, StandardScaler, scale
 from sklearn.svm import OneClassSVM
+from sklearn.utils import get_tags
 from sklearn.utils._testing import (
     assert_allclose,
     assert_almost_equal,
@@ -483,6 +484,27 @@ def test_not_enough_sample_for_early_stopping(klass):
     clf = klass(early_stopping=True, validation_fraction=0.99)
     with pytest.raises(ValueError):
         clf.fit(X3, Y3)
+
+
+@pytest.mark.parametrize("Estimator", [SGDClassifier, SGDRegressor])
+@pytest.mark.parametrize("l1_ratio", [0, 0.7, 1])
+def test_sgd_l1_ratio_not_used(Estimator, l1_ratio):
+    """Check that l1_ratio is not used when penalty is not 'elasticnet'"""
+    clf1 = Estimator(penalty="l1", l1_ratio=None, random_state=0).fit(X, Y)
+    clf2 = Estimator(penalty="l1", l1_ratio=l1_ratio, random_state=0).fit(X, Y)
+
+    assert_allclose(clf1.coef_, clf2.coef_)
+
+
+@pytest.mark.parametrize(
+    "Estimator", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
+)
+def test_sgd_failing_penalty_validation(Estimator):
+    clf = Estimator(penalty="elasticnet", l1_ratio=None)
+    with pytest.raises(
+        ValueError, match="l1_ratio must be set when penalty is 'elasticnet'"
+    ):
+        clf.fit(X, Y)
 
 
 ###############################################################################
@@ -2164,9 +2186,10 @@ def test_sgd_numerical_consistency(SGDEstimator):
     assert_allclose(sgd_64.coef_, sgd_32.coef_)
 
 
-# TODO(1.7): remove
-@pytest.mark.parametrize("Estimator", [SGDClassifier, SGDRegressor, SGDOneClassSVM])
-def test_passive_aggressive_deprecated_average(Estimator):
-    est = Estimator(average=0)
-    with pytest.warns(FutureWarning, match="average=0"):
-        est.fit(X, Y)
+def test_sgd_one_class_svm_estimator_type():
+    """Check that SGDOneClassSVM has the correct estimator type.
+
+    Non-regression test for if the mixin was not on the left.
+    """
+    sgd_ocsvm = SGDOneClassSVM()
+    assert get_tags(sgd_ocsvm).estimator_type == "outlier_detector"

@@ -368,9 +368,7 @@ def test_multiclass_multioutput_estimator_predict_proba():
 
     Y = np.concatenate([y1, y2], axis=1)
 
-    clf = MultiOutputClassifier(
-        LogisticRegression(solver="liblinear", random_state=seed)
-    )
+    clf = MultiOutputClassifier(LogisticRegression(random_state=seed))
 
     clf.fit(X, Y)
 
@@ -378,20 +376,20 @@ def test_multiclass_multioutput_estimator_predict_proba():
     y_actual = [
         np.array(
             [
-                [0.23481764, 0.76518236],
-                [0.67196072, 0.32803928],
-                [0.54681448, 0.45318552],
-                [0.34883923, 0.65116077],
-                [0.73687069, 0.26312931],
+                [0.31525135, 0.68474865],
+                [0.81004803, 0.18995197],
+                [0.65664086, 0.34335914],
+                [0.38584929, 0.61415071],
+                [0.83234285, 0.16765715],
             ]
         ),
         np.array(
             [
-                [0.5171785, 0.23878628, 0.24403522],
-                [0.22141451, 0.64102704, 0.13755846],
-                [0.16751315, 0.18256843, 0.64991843],
-                [0.27357372, 0.55201592, 0.17441036],
-                [0.65745193, 0.26062899, 0.08191907],
+                [0.65759215, 0.20976588, 0.13264197],
+                [0.14996984, 0.82591444, 0.02411571],
+                [0.13111876, 0.13294966, 0.73593158],
+                [0.24663053, 0.65860244, 0.09476703],
+                [0.81458885, 0.1728158, 0.01259535],
             ]
         ),
     ]
@@ -864,3 +862,19 @@ def test_multioutput_regressor_has_partial_fit():
     msg = "This 'MultiOutputRegressor' has no attribute 'partial_fit'"
     with pytest.raises(AttributeError, match=msg):
         getattr(est, "partial_fit")
+
+
+# TODO(1.9):  remove when deprecated `base_estimator` is removed
+@pytest.mark.parametrize("Estimator", [ClassifierChain, RegressorChain])
+def test_base_estimator_deprecation(Estimator):
+    """Check that we warn about the deprecation of `base_estimator`."""
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([[1, 0], [0, 1]])
+
+    estimator = LogisticRegression()
+
+    with pytest.warns(FutureWarning):
+        Estimator(base_estimator=estimator).fit(X, y)
+
+    with pytest.raises(ValueError):
+        Estimator(base_estimator=estimator, estimator=estimator).fit(X, y)
