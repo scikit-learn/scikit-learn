@@ -940,7 +940,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            'lbfgs'           'l2', None                     yes
            'liblinear'       'l1', 'l2'                     no
            'newton-cg'       'l2', None                     yes
-           'newton-cholesky' 'l2', None                     no
+           'newton-cholesky' 'l2', None                     yes
            'sag'             'l2', None                     yes
            'saga'            'elasticnet', 'l1', 'l2', None yes
            ================= ============================== ======================
@@ -1586,7 +1586,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            'lbfgs'           'l2'                           yes
            'liblinear'       'l1', 'l2'                     no
            'newton-cg'       'l2'                           yes
-           'newton-cholesky' 'l2',                          no
+           'newton-cholesky' 'l2',                          yes
            'sag'             'l2',                          yes
            'saga'            'elasticnet', 'l1', 'l2'       yes
            ================= ============================== ======================
