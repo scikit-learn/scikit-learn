@@ -39,6 +39,9 @@ class PartialDependenceDisplay:
     :ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_visualization_api.py`
     and the :ref:`User Guide <partial_dependence>`.
 
+    For general information regarding `scikit-learn` visualization tools, see
+    the :ref:`Visualization Guide <visualizations>`.
+
     .. versionadded:: 0.22
 
     Parameters
