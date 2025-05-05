@@ -26,7 +26,6 @@ class ConfusionMatrixDisplay:
     For guidance on interpreting these plots, refer to the
     :ref:`Confusion Matrix Guide <confusion_matrix>`.
 
-
     Read more in the :ref:`User Guide <visualizations>`.
 
     Parameters
