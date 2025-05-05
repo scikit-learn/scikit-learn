@@ -999,3 +999,14 @@ def test_get_params_html():
 
     assert est._get_params_html() == {"l1": 0, "empty": "test"}
     assert est._get_params_html().non_default == ["empty"]
+
+
+def test_repr_html_inner():
+    est = MyEstimator()
+    out = est._get_params_html(deep=False)._repr_html_()
+    assert "Parameters" in out
+
+    with config_context(display="text"):
+        msg = "_repr_html_ is only defined when"
+        with pytest.raises(AttributeError, match=msg):
+            est._get_params_html(deep=False)._repr_html_()
