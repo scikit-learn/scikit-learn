@@ -1019,3 +1019,8 @@ def test_ReprHTMLMixin_repr_mimebundle():
     assert "text/html" in out
     assert "<summary>Parameters</summary>" in out["text/html"]
     assert out["text/plain"] == "MyEstimator()"
+
+    with config_context(display="text"):
+        out = est._repr_mimebundle_()
+        assert "text/plain" in out
+        assert "text/html" not in out
