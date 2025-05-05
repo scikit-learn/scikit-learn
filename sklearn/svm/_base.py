@@ -24,12 +24,12 @@ from ..utils.validation import (
     check_is_fitted,
     validate_data,
 )
-from . import _liblinear as liblinear  # type: ignore
+from . import _liblinear as liblinear  # type: ignore[attr-defined]
 
 # mypy error: error: Module 'sklearn.svm' has no attribute '_libsvm'
 # (and same for other imports)
-from . import _libsvm as libsvm  # type: ignore
-from . import _libsvm_sparse as libsvm_sparse  # type: ignore
+from . import _libsvm as libsvm  # type: ignore[attr-defined]
+from . import _libsvm_sparse as libsvm_sparse  # type: ignore[attr-defined]
 
 LIBSVM_IMPL = ["c_svc", "nu_svc", "one_class", "epsilon_svr", "nu_svr"]
 
@@ -1189,8 +1189,9 @@ def _fit_liblinear(
                 " in the data, but the data contains only one"
                 " class: %r" % classes_[0]
             )
-
-        class_weight_ = compute_class_weight(class_weight, classes=classes_, y=y)
+        class_weight_ = compute_class_weight(
+            class_weight, classes=classes_, y=y, sample_weight=sample_weight
+        )
     else:
         class_weight_ = np.empty(0, dtype=np.float64)
         y_ind = y

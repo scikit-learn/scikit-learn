@@ -4,23 +4,23 @@
 channels:
   - conda-forge
 dependencies:
-  - python=3.9
-  - numpy=1.19.5  # min
+  - python=3.10
+  - numpy=1.22.0  # min
   - blas
-  - scipy=1.6.0  # min
+  - scipy=1.8.0  # min
   - cython=3.0.10  # min
   - joblib
   - threadpoolctl
-  - matplotlib=3.3.4  # min
-  - pandas=1.2.0  # min
-  - pyamg
+  - matplotlib=3.5.0  # min
+  - pandas=1.4.0  # min
+  - pyamg=4.2.1  # min
   - pytest
   - pytest-xdist
   - pillow
   - pip
   - ninja
   - meson-python
-  - scikit-image=0.17.2  # min
+  - scikit-image=0.19.0  # min
   - seaborn
   - memory_profiler
   - compilers

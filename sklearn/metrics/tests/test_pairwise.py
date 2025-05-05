@@ -1528,7 +1528,7 @@ def test_pairwise_distances_data_derived_params_error(metric):
 
     with pytest.raises(
         ValueError,
-        match=rf"The '(V|VI)' parameter is required for the " rf"{metric} metric",
+        match=rf"The '(V|VI)' parameter is required for the {metric} metric",
     ):
         pairwise_distances(X, Y, metric=metric)
 

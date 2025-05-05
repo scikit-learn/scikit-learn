@@ -8,10 +8,12 @@ Array API support (experimental)
 
 The `Array API <https://data-apis.org/array-api/latest/>`_ specification defines
 a standard API for all array manipulation libraries with a NumPy-like API.
-Scikit-learn's Array API support requires
-`array-api-compat <https://github.com/data-apis/array-api-compat>`__ to be installed,
-and the environment variable `SCIPY_ARRAY_API` must be set to `1` before importing
-`scipy` and `scikit-learn`:
+Scikit-learn vendors pinned copies of
+`array-api-compat <https://github.com/data-apis/array-api-compat>`__
+and `array-api-extra <https://github.com/data-apis/array-api-extra>`__.
+
+Scikit-learn's support for the array API standard requires the environment variable
+`SCIPY_ARRAY_API` to be set to `1` before importing `scipy` and `scikit-learn`:
 
 .. prompt:: bash $
 
@@ -21,11 +23,10 @@ Please note that this environment variable is intended for temporary use.
 For more details, refer to SciPy's `Array API documentation
 <https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html#using-array-api-standard-support>`_.
 
-
 Some scikit-learn estimators that primarily rely on NumPy (as opposed to using
 Cython) to implement the algorithmic logic of their `fit`, `predict` or
 `transform` methods can be configured to accept any Array API compatible input
-datastructures and automatically dispatch operations to the underlying namespace
+data structures and automatically dispatch operations to the underlying namespace
 instead of relying on NumPy.
 
 At this stage, this support is **considered experimental** and must be enabled
@@ -68,7 +69,7 @@ Here is an example code snippet to demonstrate how to use `CuPy
 After the model is trained, fitted attributes that are arrays will also be
 from the same Array API namespace as the training data. For example, if CuPy's
 Array API namespace was used for training, then fitted attributes will be on the
-GPU. We provide a experimental `_estimator_with_converted_arrays` utility that
+GPU. We provide an experimental `_estimator_with_converted_arrays` utility that
 transfers an estimator attributes from Array API to a ndarray::
 
     >>> from sklearn.utils._array_api import _estimator_with_converted_arrays
@@ -110,6 +111,7 @@ Estimators
   `svd_solver="randomized"` and `power_iteration_normalizer="QR"`)
 - :class:`linear_model.Ridge` (with `solver="svd"`)
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
+- :class:`preprocessing.Binarizer`
 - :class:`preprocessing.KernelCenterer`
 - :class:`preprocessing.LabelEncoder`
 - :class:`preprocessing.MaxAbsScaler`
@@ -136,6 +138,7 @@ Metrics
 - :func:`sklearn.metrics.explained_variance_score`
 - :func:`sklearn.metrics.f1_score`
 - :func:`sklearn.metrics.fbeta_score`
+- :func:`sklearn.metrics.hamming_loss`
 - :func:`sklearn.metrics.max_error`
 - :func:`sklearn.metrics.mean_absolute_error`
 - :func:`sklearn.metrics.mean_absolute_percentage_error`
@@ -195,12 +198,10 @@ Common estimator checks
 
 Add the `array_api_support` tag to an estimator's set of tags to indicate that
 it supports the Array API. This will enable dedicated checks as part of the
-common tests to verify that the estimators result's are the same when using
+common tests to verify that the estimators' results are the same when using
 vanilla NumPy and Array API inputs.
 
-To run these checks you need to install
-`array_api_compat <https://github.com/data-apis/array-api-compat>`_ in your
-test environment. To run the full set of checks you need to install both
+To run the full set of checks you need to install both
 `PyTorch <https://pytorch.org/>`_ and `CuPy <https://cupy.dev/>`_ and have
 a GPU. Checks that can not be executed or have missing dependencies will be
 automatically skipped. Therefore it's important to run the tests with the
@@ -208,7 +209,7 @@ automatically skipped. Therefore it's important to run the tests with the
 
 .. prompt:: bash $
 
-    pip install array-api-compat  # and other libraries as needed
+    pip install ... # selected libraries as needed
     pytest -k "array_api" -v
 
 .. _mps_support:

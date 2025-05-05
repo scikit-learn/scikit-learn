@@ -254,7 +254,7 @@ class NewtonSolver(ABC):
             check = loss_improvement <= t * armijo_term
             if is_verbose:
                 print(
-                    f"    line search iteration={i+1}, step size={t}\n"
+                    f"    line search iteration={i + 1}, step size={t}\n"
                     f"      check loss improvement <= armijo term: {loss_improvement} "
                     f"<= {t * armijo_term} {check}"
                 )
@@ -300,7 +300,7 @@ class NewtonSolver(ABC):
         self.raw_prediction = raw
         if is_verbose:
             print(
-                f"    line search successful after {i+1} iterations with "
+                f"    line search successful after {i + 1} iterations with "
                 f"loss={self.loss_value}."
             )
 
@@ -507,7 +507,7 @@ class NewtonCholeskySolver(NewtonSolver):
             # probabilities are invariant under shifting all coefficients of a single
             # feature j for all classes by the same amount c:
             #   coef[k, :] -> coef[k, :] + c    =>    proba stays the same
-            # where we have assumned coef.shape = (n_classes, n_features).
+            # where we have assumed coef.shape = (n_classes, n_features).
             # Therefore, also the loss (-log-likelihood), gradient and hessian stay the
             # same, see
             # Noah Simon and Jerome Friedman and Trevor Hastie. (2013) "A Blockwise
