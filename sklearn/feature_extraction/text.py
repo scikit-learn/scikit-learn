@@ -28,9 +28,9 @@ from ._hash import FeatureHasher
 from ._stop_words import ENGLISH_STOP_WORDS
 
 __all__ = [
-    "HashingVectorizer",
-    "CountVectorizer",
     "ENGLISH_STOP_WORDS",
+    "CountVectorizer",
+    "HashingVectorizer",
     "TfidfTransformer",
     "TfidfVectorizer",
     "strip_accents_ascii",
@@ -1433,7 +1433,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         Returns
         -------
-        X_inv : list of arrays of shape (n_samples,)
+        X_original : list of arrays of shape (n_samples,)
             List of arrays of terms.
         """
         self._check_vocabulary()

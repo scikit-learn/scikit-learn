@@ -43,6 +43,7 @@ from sklearn.svm import SVC
 from sklearn.tests.metadata_routing_common import assert_request_is_empty
 from sklearn.utils._array_api import (
     _convert_to_numpy,
+    _get_namespace_device_dtype_ids,
     get_namespace,
     yield_namespace_device_dtype_combinations,
 )
@@ -84,7 +85,7 @@ GROUP_SPLITTERS = [
 ]
 GROUP_SPLITTER_NAMES = set(splitter.__class__.__name__ for splitter in GROUP_SPLITTERS)
 
-ALL_SPLITTERS = NO_GROUP_SPLITTERS + GROUP_SPLITTERS  # type: ignore
+ALL_SPLITTERS = NO_GROUP_SPLITTERS + GROUP_SPLITTERS  # type: ignore[list-item]
 
 SPLITTERS_REQUIRING_TARGET = [
     StratifiedKFold(),
@@ -756,7 +757,7 @@ def test_shuffle_split():
     ss1 = ShuffleSplit(test_size=0.2, random_state=0).split(X)
     ss2 = ShuffleSplit(test_size=2, random_state=0).split(X)
     ss3 = ShuffleSplit(test_size=np.int32(2), random_state=0).split(X)
-    ss4 = ShuffleSplit(test_size=int(2), random_state=0).split(X)
+    ss4 = ShuffleSplit(test_size=2, random_state=0).split(X)
     for t1, t2, t3, t4 in zip(ss1, ss2, ss3, ss4):
         assert_array_equal(t1[0], t2[0])
         assert_array_equal(t2[0], t3[0])
@@ -885,9 +886,9 @@ def test_stratified_shuffle_split_even():
         bf = stats.binom(n_splits, p)
         for count in idx_counts:
             prob = bf.pmf(count)
-            assert (
-                prob > threshold
-            ), "An index is not drawn with chance corresponding to even draws"
+            assert prob > threshold, (
+                "An index is not drawn with chance corresponding to even draws"
+            )
 
     for n_samples in (6, 22):
         groups = np.array((n_samples // 2) * [0, 1])
@@ -1310,7 +1311,9 @@ def test_train_test_split_default_test_size(train_size, exp_train, exp_test):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "shuffle,stratify",

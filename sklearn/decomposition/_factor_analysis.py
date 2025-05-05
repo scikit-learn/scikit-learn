@@ -32,7 +32,7 @@ from ..base import (
 from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state
 from ..utils._param_validation import Interval, StrOptions
-from ..utils.extmath import fast_logdet, randomized_svd, squared_norm
+from ..utils.extmath import _randomized_svd, fast_logdet, squared_norm
 from ..utils.validation import check_is_fitted, validate_data
 
 
@@ -264,7 +264,7 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
             random_state = check_random_state(self.random_state)
 
             def my_svd(X):
-                _, s, Vt = randomized_svd(
+                _, s, Vt = _randomized_svd(
                     X,
                     n_components,
                     random_state=random_state,
@@ -295,8 +295,8 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         else:
             warnings.warn(
                 "FactorAnalysis did not converge."
-                + " You might want"
-                + " to increase the number of iterations.",
+                " You might want"
+                " to increase the number of iterations.",
                 ConvergenceWarning,
             )
 

@@ -1,0 +1,5 @@
+- Added an attribute `lower_bounds_` in the :class:`mixture.BaseMixture`
+  class to save the list of lower bounds for each iteration thereby providing
+  insights into the convergence behavior of mixture models like
+  :class:`mixture.GaussianMixture`.
+  By :user:`Manideep Yenugula <myenugula>`

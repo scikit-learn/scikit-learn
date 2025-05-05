@@ -1,0 +1,6 @@
+- :func:`metrics.det_curve`, :class:`metrics.DetCurveDisplay.from_estimator`,
+  and :class:`metrics.DetCurveDisplay.from_estimator` now accept a
+  `drop_intermediate` option to drop thresholds where true positives (tp) do not
+  change from the previous or subsequent thresholds. All points with the same tp
+  value have the same `fnr` and thus same y coordinate in a DET curve.
+  :pr:`29151` by :user:`Arturo Amor <ArturoAmorQ>`.
