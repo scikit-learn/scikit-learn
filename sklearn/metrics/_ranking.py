@@ -622,7 +622,7 @@ def roc_auc_score(
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.metrics import roc_auc_score
     >>> X, y = load_breast_cancer(return_X_y=True)
-    >>> clf = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
+    >>> clf = LogisticRegression(solver="newton-cholesky", random_state=0).fit(X, y)
     >>> roc_auc_score(y, clf.predict_proba(X)[:, 1])
     0.99...
     >>> roc_auc_score(y, clf.decision_function(X))
@@ -632,7 +632,7 @@ def roc_auc_score(
 
     >>> from sklearn.datasets import load_iris
     >>> X, y = load_iris(return_X_y=True)
-    >>> clf = LogisticRegression(solver="liblinear").fit(X, y)
+    >>> clf = LogisticRegression(solver="newton-cholesky").fit(X, y)
     >>> roc_auc_score(y, clf.predict_proba(X), multi_class='ovr')
     0.99...
 
@@ -649,7 +649,7 @@ def roc_auc_score(
     >>> # extract the positive columns for each output
     >>> y_score = np.transpose([score[:, 1] for score in y_score])
     >>> roc_auc_score(y, y_score, average=None)
-    array([0.82..., 0.86..., 0.94..., 0.85... , 0.94...])
+    array([0.82..., 0.85..., 0.93..., 0.86..., 0.94...])
     >>> from sklearn.linear_model import RidgeClassifierCV
     >>> clf = RidgeClassifierCV().fit(X, y)
     >>> roc_auc_score(y, clf.decision_function(X), average=None)

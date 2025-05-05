@@ -1632,7 +1632,7 @@ Therefore, the `y_score` parameter is of size (n_samples,).
   >>> from sklearn.linear_model import LogisticRegression
   >>> from sklearn.metrics import roc_auc_score
   >>> X, y = load_breast_cancer(return_X_y=True)
-  >>> clf = LogisticRegression(solver="liblinear").fit(X, y)
+  >>> clf = LogisticRegression().fit(X, y)
   >>> clf.classes_
   array([0, 1])
 
@@ -1728,11 +1728,11 @@ class with the greater label for each output.
   >>> from sklearn.datasets import make_multilabel_classification
   >>> from sklearn.multioutput import MultiOutputClassifier
   >>> X, y = make_multilabel_classification(random_state=0)
-  >>> inner_clf = LogisticRegression(solver="liblinear", random_state=0)
+  >>> inner_clf = LogisticRegression(random_state=0)
   >>> clf = MultiOutputClassifier(inner_clf).fit(X, y)
   >>> y_score = np.transpose([y_pred[:, 1] for y_pred in clf.predict_proba(X)])
   >>> roc_auc_score(y, y_score, average=None)
-  array([0.82..., 0.86..., 0.94..., 0.85... , 0.94...])
+  array([0.82..., 0.85..., 0.93..., 0.86..., 0.94...])
 
 And the decision values do not require such processing.
 
