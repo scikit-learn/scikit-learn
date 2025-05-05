@@ -2383,6 +2383,10 @@ def validation_curve(
 
         .. versionadded:: 1.6
 
+    See Also
+    --------
+    ValidationCurveDisplay.from_estimator : Method to both compute and plot validation curves.
+
     Returns
     -------
     train_scores : array of shape (n_ticks, n_cv_folds)
