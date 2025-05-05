@@ -103,8 +103,11 @@ def get_data_home(data_home=None, *, use_default_location="deprecated") -> str:
                     "- Linux/Unix: ~/.cache/scikit-learn\n"
                     "- macOS: ~/Library/Caches/scikit-learn\n"
                     "- Windows: ~/AppData/Local/scikit-learn\n\n"
-                    "To migrate your data, copy the contents of '~/scikit_learn_data' "
-                    "to the new location for your OS.",
+                    "To migrate your data:\n"
+                    "1. Copy the contents of '~/scikit_learn_data' to the new\n"
+                    "   location for your OS\n"
+                    "2. Delete the old '~/scikit_learn_data' directory to properly\n"
+                    "   use the new location",
                     FutureWarning,
                 )
                 return old_default
@@ -116,8 +119,11 @@ def get_data_home(data_home=None, *, use_default_location="deprecated") -> str:
                 "- Linux/Unix: ~/.cache/scikit-learn\n"
                 "- macOS: ~/Library/Caches/scikit-learn\n"
                 "- Windows: ~/AppData/Local/scikit-learn\n\n"
-                "To migrate your data, copy the contents of '~/scikit_learn_data' "
-                "to the new location for your OS.",
+                "To migrate your data:\n"
+                "1. Copy the contents of '~/scikit_learn_data' to the new\n"
+                "   location for your OS\n"
+                "2. Delete the old '~/scikit_learn_data' directory to properly\n"
+                "   use the new location",
                 FutureWarning,
             )
             return join(expanduser("~"), "scikit_learn_data")
