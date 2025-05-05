@@ -2,8 +2,8 @@ from cython cimport floating
 
 
 cpdef enum BLAS_Order:
-    RowMajor  # C contiguous
-    ColMajor  # Fortran contiguous
+    RowMajor = 0  # C contiguous
+    ColMajor = 1  # Fortran contiguous
 
 
 cpdef enum BLAS_Trans:
