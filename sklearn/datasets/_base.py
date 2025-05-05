@@ -71,6 +71,7 @@ def get_data_home(data_home=None, *, use_default_location="deprecated") -> str:
         The path to scikit-learn data directory. If `None`, the default path
         is determined by the operating system's standard cache directory.
     use_default_location : bool or "deprecated", default="deprecated"
+        Whether to use the old default location at ~/scikit_learn_data.
         .. deprecated:: 1.5
            The parameter `use_default_location=True` is deprecated in 1.5 and will be
            removed in 1.7. The new default paths are:
