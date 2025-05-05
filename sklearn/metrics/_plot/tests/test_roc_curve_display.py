@@ -7,7 +7,7 @@ from scipy.integrate import trapezoid
 
 from sklearn import clone
 from sklearn.compose import make_column_transformer
-from sklearn.datasets import load_breast_cancer, load_iris
+from sklearn.datasets import load_breast_cancer, make_classification
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import RocCurveDisplay, auc, roc_curve
@@ -19,18 +19,17 @@ from sklearn.utils._response import _get_response_values_binary
 
 
 @pytest.fixture(scope="module")
-def data():
-    X, y = load_iris(return_X_y=True)
-    # Avoid introducing test dependencies by mistake.
-    X.flags.writeable = False
-    y.flags.writeable = False
+def data_binary():
+    X, y = make_classification(
+        n_samples=200,
+        n_features=20,
+        n_informative=5,
+        n_redundant=2,
+        flip_y=0.1,
+        class_sep=0.8,
+        random_state=42,
+    )
     return X, y
-
-
-@pytest.fixture(scope="module")
-def data_binary(data):
-    X, y = data
-    return X[y < 2], y[y < 2]
 
 
 def _check_figure_axes_and_labels(display, pos_label):

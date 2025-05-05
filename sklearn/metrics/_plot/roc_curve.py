@@ -29,8 +29,10 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     a :class:`~sklearn.metrics.RocCurveDisplay`. All parameters are
     stored as attributes.
 
-    For more about the ROC metric, see :ref:`roc_metrics`.
-    For more about scikit-learn visualization classes, see :ref:`visualizations`.
+    For general information regarding `scikit-learn` visualization tools, see
+    the :ref:`Visualization Guide <visualizations>`.
+    For guidance on interpreting these plots, refer to the :ref:`Model
+    Evaluation Guide <roc_metrics>`.
 
     Parameters
     ----------
@@ -89,8 +91,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         ROC Curves.
 
         .. versionchanged:: 1.7
-            This attribute can now be a list of Artists, for when multiple curves are
-            plotted.
+            This attribute can now be a list of Artists, for when multiple curves
+            are plotted.
 
     chance_level_ : matplotlib Artist or None
         The chance level line. It is `None` if the chance level is not plotted.
@@ -324,6 +326,11 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     ):
         """Create a ROC Curve display from an estimator.
 
+        For general information regarding `scikit-learn` visualization tools,
+        see the :ref:`Visualization Guide <visualizations>`.
+        For guidance on interpreting these plots, refer to the :ref:`Model
+        Evaluation Guide <roc_metrics>`.
+
         Parameters
         ----------
         estimator : estimator instance
@@ -340,9 +347,10 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Sample weights.
 
         drop_intermediate : bool, default=True
-            Whether to drop some suboptimal thresholds which would not appear
-            on a plotted ROC curve. This is useful in order to create lighter
-            ROC curves.
+            Whether to drop thresholds where the resulting point is collinear
+            with its neighbors in ROC space. This has no effect on the ROC AUC
+            or visual shape of the curve, but reduces the number of plotted
+            points.
 
         response_method : {'predict_proba', 'decision_function', 'auto'} \
                 default='auto'
@@ -463,7 +471,10 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     ):
         """Plot ROC curve given the true and predicted values.
 
-        Read more in the :ref:`User Guide <visualizations>`.
+        For general information regarding `scikit-learn` visualization tools,
+        see the :ref:`Visualization Guide <visualizations>`.
+        For guidance on interpreting these plots, refer to the :ref:`Model
+        Evaluation Guide <roc_metrics>`.
 
         .. versionadded:: 1.0
 
@@ -484,9 +495,10 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Sample weights.
 
         drop_intermediate : bool, default=True
-            Whether to drop some suboptimal thresholds which would not appear
-            on a plotted ROC curve. This is useful in order to create lighter
-            ROC curves.
+            Whether to drop thresholds where the resulting point is collinear
+            with its neighbors in ROC space. This has no effect on the ROC AUC
+            or visual shape of the curve, but reduces the number of plotted
+            points.
 
         pos_label : int, float, bool or str, default=None
             The label of the positive class when computing the ROC AUC.

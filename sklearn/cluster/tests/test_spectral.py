@@ -19,7 +19,7 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils.fixes import COO_CONTAINERS, CSR_CONTAINERS
 
 try:
-    from pyamg import smoothed_aggregation_solver  # noqa
+    from pyamg import smoothed_aggregation_solver  # noqa: F401
 
     amg_loaded = True
 except ImportError:
@@ -106,7 +106,7 @@ def test_precomputed_nearest_neighbors_filtering(global_random_seed):
     X, y = make_blobs(
         n_samples=250,
         random_state=global_random_seed,
-        centers=[[1, 1], [-1, -1]],
+        centers=[[1, 1, 1], [-1, -1, -1]],
         cluster_std=0.01,
     )
 
@@ -114,7 +114,7 @@ def test_precomputed_nearest_neighbors_filtering(global_random_seed):
     results = []
     for additional_neighbors in [0, 10]:
         nn = NearestNeighbors(n_neighbors=n_neighbors + additional_neighbors).fit(X)
-        graph = nn.kneighbors_graph(X, mode="connectivity")
+        graph = nn.kneighbors_graph(X, mode="distance")
         labels = (
             SpectralClustering(
                 random_state=global_random_seed,
