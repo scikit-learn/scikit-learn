@@ -1001,12 +1001,21 @@ def test_get_params_html():
     assert est._get_params_html().non_default == ["empty"]
 
 
-def test_repr_html_inner():
+def test_repr_html_():
     est = MyEstimator()
     out = est._get_params_html(deep=False)._repr_html_()
-    assert "Parameters" in out
+    assert "<summary>Parameters</summary>" in out
 
     with config_context(display="text"):
         msg = "_repr_html_ is only defined when"
         with pytest.raises(AttributeError, match=msg):
             est._get_params_html(deep=False)._repr_html_()
+
+
+def test_ReprHTMLMixin_repr_mimebundle():
+    est = MyEstimator()
+    out = est._repr_mimebundle_()
+    assert "text/plain" in out
+    assert "text/html" in out
+    assert "<summary>Parameters</summary>" in out["text/html"]
+    assert out["text/plain"] == "MyEstimator()"
