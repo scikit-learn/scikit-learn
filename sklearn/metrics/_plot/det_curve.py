@@ -20,7 +20,6 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     For guidance on interpreting these plots, refer to the
     :ref:`Model Evaluation Guide <det_curve>`.
 
-
     .. versionadded:: 0.24
 
     Parameters
@@ -106,7 +105,6 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         the :ref:`Visualization Guide <visualizations>`.
         For guidance on interpreting these plots, refer to the
         :ref:`Model Evaluation Guide <det_curve>`.
-
 
         .. versionadded:: 1.0
 
@@ -221,7 +219,6 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         the :ref:`Visualization Guide <visualizations>`.
         For guidance on interpreting these plots, refer to the
         :ref:`Model Evaluation Guide <det_curve>`.
-
 
         .. versionadded:: 1.0
 
