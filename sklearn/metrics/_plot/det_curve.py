@@ -17,6 +17,12 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
     Read more in the :ref:`User Guide <det_curve>`.
 
+    For general information regarding `scikit-learn` visualization tools, see
+    the :ref:`Visualization Guide <visualizations>`.
+    For guidance on interpreting these plots, refer to the
+    :ref:`Model Evaluation Guide <model_evaluation>`.
+
+
     .. versionadded:: 0.24
 
     Parameters
@@ -97,6 +103,13 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         """Plot DET curve given an estimator and data.
 
         Read more in the :ref:`User Guide <det_curve>`.
+        Plot DET curve given an estimator and data.
+
+        For general information regarding `scikit-learn` visualization tools, see
+        the :ref:`Visualization Guide <visualizations>`.
+        For guidance on interpreting these plots, refer to the
+        :ref:`Model Evaluation Guide <model_evaluation>`.
+
 
         .. versionadded:: 1.0
 
@@ -208,6 +221,12 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         """Plot the DET curve given the true and predicted labels.
 
         Read more in the :ref:`User Guide <det_curve>`.
+        Plot the DET curve given the true and predicted labels.
+        For general information regarding `scikit-learn` visualization tools, see
+        the :ref:`Visualization Guide <visualizations>`.
+        For guidance on interpreting these plots, refer to the
+        :ref:`Model Evaluation Guide <model_evaluation>`.
+
 
         .. versionadded:: 1.0
 
