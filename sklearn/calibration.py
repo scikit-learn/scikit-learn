@@ -1007,7 +1007,7 @@ def calibration_curve(
 
     See Also
     --------
-    sklearn.calibration.CalibrationDisplay : Plot calibration curve.
+    sklearn.calibration.CalibrationDisplay : Calibration curve visualization.
 
     References
     ----------
