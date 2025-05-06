@@ -236,8 +236,10 @@ translations in the input space, while non-stationary kernels
 depend also on the specific values of the datapoints. Stationary kernels can further
 be subdivided into isotropic and anisotropic kernels, where isotropic kernels are
 also invariant to rotations in the input space. For more details, we refer to
-Chapter 4 of [RW2006]_. For guidance on how to best combine different kernels,
-we refer to [Duv2014]_.
+Chapter 4 of [RW2006]_. :ref:`This example
+<sphx_glr_auto_examples_gaussian_process_plot_gpr_on_structured_data.py>`
+shows how to define a custom kernel over discrete data. For guidance on how to best
+combine different kernels, we refer to [Duv2014]_.
 
 .. dropdown:: Gaussian Process Kernel API
 
