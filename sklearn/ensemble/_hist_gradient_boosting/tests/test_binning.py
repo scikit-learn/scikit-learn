@@ -143,8 +143,8 @@ def test_bin_mapper_random_data(max_bins):
 
 
 @pytest.mark.parametrize("n_samples, max_bins", [(5, 5), (5, 10), (5, 11), (42, 255)])
-def test_bin_mapper_small_random_data(n_samples, max_bins):
-    data = np.random.RandomState(42).normal(size=n_samples).reshape(-1, 1)
+def test_bin_mapper_small_random_data(n_samples, max_bins,global_random_seed):
+    data = np.random.RandomState(global_random_seed).normal(size=n_samples).reshape(-1, 1)
     assert len(np.unique(data)) == n_samples
 
     # max_bins is the number of bins for non-missing values
@@ -174,8 +174,8 @@ def test_bin_mapper_identity_repeated_values(max_bins, n_distinct, multiplier):
 
 
 @pytest.mark.parametrize("n_distinct", [2, 7, 42])
-def test_bin_mapper_repeated_values_invariance(n_distinct):
-    rng = np.random.RandomState(42)
+def test_bin_mapper_repeated_values_invariance(n_distinct, global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     distinct_values = rng.normal(size=n_distinct)
     assert len(np.unique(distinct_values)) == n_distinct
 
@@ -226,9 +226,9 @@ def test_bin_mapper_identity_small(max_bins, scale, offset):
         (42, 255),
     ],
 )
-def test_bin_mapper_idempotence(max_bins_small, max_bins_large):
+def test_bin_mapper_idempotence(max_bins_small, max_bins_large, global_random_seed):
     assert max_bins_large >= max_bins_small
-    data = np.random.RandomState(42).normal(size=30000).reshape(-1, 1)
+    data = np.random.RandomState(global_random_seed).normal(size=30000).reshape(-1, 1)
     mapper_small = _BinMapper(n_bins=max_bins_small + 1)
     mapper_large = _BinMapper(n_bins=max_bins_small + 1)
     binned_small = mapper_small.fit_transform(data)
