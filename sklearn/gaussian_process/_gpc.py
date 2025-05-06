@@ -942,6 +942,8 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
         Note that this function is only supported for binary classification.
 
+        .. versionadded:: 1.7
+
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features) or list of object
