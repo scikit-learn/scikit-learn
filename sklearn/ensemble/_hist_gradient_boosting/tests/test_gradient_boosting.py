@@ -51,7 +51,7 @@ X_multi_classification, y_multi_classification = make_classification(
 
 def _make_dumb_dataset(n_samples):
     """Make a dumb dataset to test early stopping."""
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(0)
     X_dumb = rng.randn(n_samples, 1)
     y_dumb = (X_dumb[:, 0] > 0).astype("int64")
     return X_dumb, y_dumb
@@ -226,12 +226,12 @@ def test_absolute_error():
     assert gbdt.score(X, y) > 0.9
 
 
-def test_absolute_error_sample_weight():
+def test_absolute_error_sample_weight(global_random_seed):
     # non regression test for issue #19400
     # make sure no error is thrown during fit of
     # HistGradientBoostingRegressor with absolute_error loss function
     # and passing sample_weight
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 100
     X = rng.uniform(-1, 1, size=(n_samples, 2))
     y = rng.uniform(-1, 1, size=n_samples)
@@ -249,7 +249,7 @@ def test_gamma_y_positive(y):
         gbdt.fit(np.zeros(shape=(len(y), 1)), y)
 
 
-def test_gamma():
+def test_gamma(global_random_seed):
     # For a Gamma distributed target, we expect an HGBT trained with the Gamma deviance
     # (loss) to give better results than an HGBT with any other loss function, measured
     # in out-of-sample Gamma deviance as metric/score.
@@ -260,7 +260,7 @@ def test_gamma():
     # out-of-sample performance than the Gamma HGBT, measured in Gamma deviance.
     # LightGBM shows the same behaviour. Hence, we only compare to a squared error
     # HGBT, but not to a Poisson deviance HGBT.
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed % 10)
     n_train, n_test, n_features = 500, 100, 20
     X = make_low_rank_matrix(
         n_samples=n_train + n_test,
@@ -297,10 +297,10 @@ def test_gamma():
 
 
 @pytest.mark.parametrize("quantile", [0.2, 0.5, 0.8])
-def test_quantile_asymmetric_error(quantile):
+def test_quantile_asymmetric_error(quantile, global_random_seed):
     """Test quantile regression for asymmetric distributed targets."""
     n_samples = 10_000
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed % 10)
     # take care that X @ coef + intercept > 0
     X = np.concatenate(
         (
@@ -373,11 +373,11 @@ def test_poisson():
         assert metric_pois < metric_dummy
 
 
-def test_binning_train_validation_are_separated():
+def test_binning_train_validation_are_separated(global_random_seed):
     # Make sure training and validation data are binned separately.
     # See issue 13926
 
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     validation_fraction = 0.2
     gb = HistGradientBoostingClassifier(
         early_stopping=True, validation_fraction=validation_fraction, random_state=rng
@@ -401,14 +401,14 @@ def test_binning_train_validation_are_separated():
     )
 
 
-def test_missing_values_trivial():
+def test_missing_values_trivial(global_random_seed):
     # sanity check for missing values support. With only one feature and
     # y == isnan(X), the gbdt is supposed to reach perfect accuracy on the
     # training set.
 
     n_samples = 100
     n_features = 1
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
 
     X = rng.normal(size=(n_samples, n_features))
     mask = rng.binomial(1, 0.5, size=X.shape).astype(bool)
@@ -490,12 +490,12 @@ def test_zero_division_hessians(data):
     gb.fit(X, y)
 
 
-def test_small_trainset():
+def test_small_trainset(global_random_seed):
     # Make sure that the small trainset is stratified and has the expected
     # length (10k samples)
     n_samples = 20000
     original_distrib = {0: 0.1, 1: 0.2, 2: 0.3, 3: 0.4}
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.randn(n_samples).reshape(n_samples, 1)
     y = [
         [class_] * int(prop * n_samples) for (class_, prop) in original_distrib.items()
@@ -521,7 +521,7 @@ def test_small_trainset():
     assert small_distrib == pytest.approx(original_distrib)
 
 
-def test_missing_values_minmax_imputation():
+def test_missing_values_minmax_imputation(global_random_seed):
     # Compare the buit-in missing value handling of Histogram GBC with an
     # a-priori missing value imputation strategy that should yield the same
     # results in terms of decision function.
@@ -561,7 +561,7 @@ def test_missing_values_minmax_imputation():
 
             return np.concatenate([X_min, X_max], axis=1)
 
-    def make_missing_value_data(n_samples=int(1e4), seed=0):
+    def make_missing_value_data(n_samples=int(1e4), seed=global_random_seed):
         rng = np.random.RandomState(seed)
         X, y = make_regression(n_samples=n_samples, n_features=4, random_state=rng)
 
@@ -669,10 +669,10 @@ def test_infinite_values_missing_values():
 
 
 @pytest.mark.parametrize("scoring", [None, "loss"])
-def test_string_target_early_stopping(scoring):
+def test_string_target_early_stopping(scoring, global_random_seed):
     # Regression tests for #14709 where the targets need to be encoded before
     # to compute the score
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.randn(100, 10)
     y = np.array(["x"] * 50 + ["y"] * 50, dtype=object)
     gbrt = HistGradientBoostingClassifier(n_iter_no_change=10, scoring=scoring)
@@ -1054,7 +1054,7 @@ def test_unknown_categories_nan(
     assert len(np.unique(est.predict(X_test))) == 1
 
 
-def test_categorical_encoding_strategies():
+def test_categorical_encoding_strategies(global_random_seed):
     # Check native categorical handling vs different encoding strategies. We
     # make sure that native encoding needs only 1 split to achieve a perfect
     # prediction on a simple dataset. In contrast, OneHotEncoded data needs
@@ -1064,7 +1064,7 @@ def test_categorical_encoding_strategies():
     # dataset with one random continuous feature, and one categorical feature
     # with values in [0, 5], e.g. from an OrdinalEncoder.
     # class == 1 iff categorical value in {0, 2, 4}
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed % 10)
     n_samples = 10_000
     f1 = rng.rand(n_samples)
     f2 = rng.randint(6, size=n_samples)
@@ -1172,12 +1172,12 @@ def test_categorical_encoding_strategies():
     ],
 )
 def test_categorical_spec_errors(
-    Est, categorical_features, monotonic_cst, expected_msg
+    Est, categorical_features, monotonic_cst, expected_msg, global_random_seed
 ):
     # Test errors when categories are specified incorrectly
     n_samples = 100
     X, y = make_classification(random_state=0, n_features=4, n_samples=n_samples)
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X[:, 0] = rng.randint(0, 10, size=n_samples)
     X[:, 1] = rng.randint(0, 10, size=n_samples)
     est = Est(categorical_features=categorical_features, monotonic_cst=monotonic_cst)
@@ -1268,13 +1268,13 @@ def test_categorical_bad_encoding_errors(Est, use_pandas, feature_name):
 @pytest.mark.parametrize(
     "Est", (HistGradientBoostingClassifier, HistGradientBoostingRegressor)
 )
-def test_uint8_predict(Est):
+def test_uint8_predict(Est, global_random_seed):
     # Non regression test for
     # https://github.com/scikit-learn/scikit-learn/issues/18408
     # Make sure X can be of dtype uint8 (i.e. X_BINNED_DTYPE) in predict. It
     # will be converted to X_DTYPE.
 
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
 
     X = rng.randint(0, 100, size=(10, 2)).astype(np.uint8)
     y = rng.randint(0, 2, size=10).astype(np.uint8)
@@ -1425,12 +1425,12 @@ def test_class_weights():
     )
 
 
-def test_unknown_category_that_are_negative():
+def test_unknown_category_that_are_negative(global_random_seed):
     """Check that unknown categories that are negative does not error.
 
     Non-regression test for #24274.
     """
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 1000
     X = np.c_[rng.rand(n_samples), rng.randint(4, size=n_samples)]
     y = np.zeros(shape=n_samples)
@@ -1460,7 +1460,7 @@ def test_unknown_category_that_are_negative():
 @pytest.mark.parametrize("sample_weight", [False, True])
 def test_X_val_in_fit(GradientBoosting, make_X_y, sample_weight, global_random_seed):
     """Test that passing X_val, y_val in fit is same as validation fraction."""
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 100
     X, y = make_X_y(n_samples=n_samples, random_state=rng)
     if sample_weight:
@@ -1550,12 +1550,12 @@ def test_X_val_raises_with_early_stopping_false():
     [HistGradientBoostingClassifier, HistGradientBoostingRegressor],
 )
 def test_dataframe_categorical_results_same_as_ndarray(
-    dataframe_lib, HistGradientBoosting
+    dataframe_lib, HistGradientBoosting, global_random_seed
 ):
     """Check that pandas categorical give the same results as ndarray."""
     pytest.importorskip(dataframe_lib)
 
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 5_000
     n_cardinality = 50
     max_bins = 100
@@ -1604,13 +1604,13 @@ def test_dataframe_categorical_results_same_as_ndarray(
     "HistGradientBoosting",
     [HistGradientBoostingClassifier, HistGradientBoostingRegressor],
 )
-def test_dataframe_categorical_errors(dataframe_lib, HistGradientBoosting):
+def test_dataframe_categorical_errors(dataframe_lib, HistGradientBoosting, global_random_seed):
     """Check error cases for pandas categorical feature."""
     pytest.importorskip(dataframe_lib)
     msg = "Categorical feature 'f_cat' is expected to have a cardinality <= 16"
     hist = HistGradientBoosting(categorical_features="from_dtype", max_bins=16)
 
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     f_cat = rng.randint(0, high=100, size=100).astype(str)
     X_df = _convert_container(
         f_cat[:, None], dataframe_lib, ["f_cat"], categorical_feature_names=["f_cat"]
@@ -1622,10 +1622,10 @@ def test_dataframe_categorical_errors(dataframe_lib, HistGradientBoosting):
 
 
 @pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
-def test_categorical_different_order_same_model(dataframe_lib):
+def test_categorical_different_order_same_model(dataframe_lib, global_random_seed):
     """Check that the order of the categorical gives same model."""
     pytest.importorskip(dataframe_lib)
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 1_000
     f_ints = rng.randint(low=0, high=2, size=n_samples)
 
