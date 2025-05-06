@@ -2390,7 +2390,7 @@ def validation_curve(
 
     test_scores : array of shape (n_ticks, n_cv_folds)
         Scores on test set.
-        
+
     See Also
     --------
     ValidationCurveDisplay.from_estimator : Plot the validation curve
