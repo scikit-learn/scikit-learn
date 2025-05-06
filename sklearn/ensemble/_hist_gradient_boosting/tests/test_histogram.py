@@ -50,10 +50,10 @@ def test_build_histogram(build_func):
     assert_allclose(hist["sum_hessians"], [2, 2, 1])
 
 
-def test_histogram_sample_order_independence():
+def test_histogram_sample_order_independence(global_random_seed):
     # Make sure the order of the samples has no impact on the histogram
     # computations
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     n_sub_samples = 100
     n_samples = 1000
     n_bins = 256
@@ -108,10 +108,10 @@ def test_histogram_sample_order_independence():
 
 
 @pytest.mark.parametrize("constant_hessian", [True, False])
-def test_unrolled_equivalent_to_naive(constant_hessian):
+def test_unrolled_equivalent_to_naive(constant_hessian, global_random_seed):
     # Make sure the different unrolled histogram computations give the same
     # results as the naive one.
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 10
     n_bins = 5
     sample_indices = np.arange(n_samples).astype(np.uint32)
@@ -162,10 +162,10 @@ def test_unrolled_equivalent_to_naive(constant_hessian):
 
 
 @pytest.mark.parametrize("constant_hessian", [True, False])
-def test_hist_subtraction(constant_hessian):
+def test_hist_subtraction(constant_hessian, global_random_seed):
     # Make sure the histogram subtraction trick gives the same result as the
     # classical method.
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 10
     n_bins = 5
     sample_indices = np.arange(n_samples).astype(np.uint32)
