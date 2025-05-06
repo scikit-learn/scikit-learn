@@ -339,7 +339,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        D : list of dict_type objects of shape (n_samples,)
+        X_original : list of dict_type objects of shape (n_samples,)
             Feature mappings for the samples in X.
         """
         check_is_fitted(self, "feature_names_")

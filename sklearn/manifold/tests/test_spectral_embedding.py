@@ -29,7 +29,7 @@ from sklearn.utils.fixes import (
 from sklearn.utils.fixes import laplacian as csgraph_laplacian
 
 try:
-    from pyamg import smoothed_aggregation_solver  # noqa
+    from pyamg import smoothed_aggregation_solver  # noqa: F401
 
     pyamg_available = True
 except ImportError:

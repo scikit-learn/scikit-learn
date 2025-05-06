@@ -491,6 +491,9 @@ redirects = {
     "auto_examples/ensemble/plot_forest_importances_faces": (
         "auto_examples/ensemble/plot_forest_importances"
     ),
+    "auto_examples/ensemble/plot_voting_probas": (
+        "auto_examples/ensemble/plot_voting_decision_regions"
+    ),
     "auto_examples/datasets/plot_iris_dataset": (
         "auto_examples/decomposition/plot_pca_iris"
     ),
@@ -769,8 +772,10 @@ carousel_thumbs = {"sphx_glr_plot_classifier_comparison_001.png": 600}
 
 # enable experimental module so that experimental estimators can be
 # discovered properly by sphinx
-from sklearn.experimental import enable_iterative_imputer  # noqa
-from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.experimental import (  # noqa: F401
+    enable_halving_search_cv,
+    enable_iterative_imputer,
+)
 
 
 def make_carousel_thumbs(app, exception):
