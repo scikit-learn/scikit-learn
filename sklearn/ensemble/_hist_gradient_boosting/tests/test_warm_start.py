@@ -184,7 +184,7 @@ def test_warm_start_clear(GradientBoosting, X, y):
     ],
 )
 @pytest.mark.parametrize("rng_type", ("none", "int", "instance"))
-def test_random_seeds_warm_start(GradientBoosting, X, y, rng_type):
+def test_random_seeds_warm_start(GradientBoosting, X, y, rng_type, global_random_seed):
     # Make sure the seeds for train/val split and small trainset subsampling
     # are correctly set in a warm start context.
     def _get_rng(rng_type):
@@ -194,7 +194,7 @@ def test_random_seeds_warm_start(GradientBoosting, X, y, rng_type):
         elif rng_type == "int":
             return 42
         else:
-            return np.random.RandomState(0)
+            return np.random.RandomState(global_random_seed)
 
     random_state = _get_rng(rng_type)
     gb_1 = GradientBoosting(early_stopping=True, max_iter=2, random_state=random_state)
