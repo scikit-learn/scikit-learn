@@ -10,7 +10,6 @@ the lower the better.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 import warnings
 from functools import partial
 from numbers import Integral, Real
@@ -271,11 +270,14 @@ def average_precision_score(
         "y_score": ["array-like"],
         "pos_label": [Real, str, "boolean", None],
         "sample_weight": ["array-like", None],
+        "drop_intermediate": ["boolean"],
     },
     prefer_skip_nested_validation=True,
 )
-def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
-    """Compute error rates for different probability thresholds.
+def det_curve(
+    y_true, y_score, pos_label=None, sample_weight=None, drop_intermediate=False
+):
+    """Compute Detection Error Tradeoff (DET) for different probability thresholds.
 
     .. note::
        This metric is used for evaluation of ranking and error tradeoffs of
@@ -284,6 +286,11 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     Read more in the :ref:`User Guide <det_curve>`.
 
     .. versionadded:: 0.24
+
+    .. versionchanged:: 1.7
+       An arbitrary threshold at infinity is added to represent a classifier
+       that always predicts the negative class, i.e. `fpr=0` and `fnr=1`, unless
+       `fpr=0` is already reached at a finite threshold.
 
     Parameters
     ----------
@@ -306,6 +313,13 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
+    drop_intermediate : bool, default=False
+        Whether to drop thresholds where true positives (tp) do not change from
+        the previous or subsequent threshold. All points with the same tp value
+        have the same `fnr` and thus same y coordinate.
+
+        .. versionadded:: 1.7
+
     Returns
     -------
     fpr : ndarray of shape (n_thresholds,)
@@ -319,7 +333,12 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
         referred to as false rejection or miss rate.
 
     thresholds : ndarray of shape (n_thresholds,)
-        Decreasing score values.
+        Decreasing thresholds on the decision function (either `predict_proba`
+        or `decision_function`) used to compute FPR and FNR.
+
+        .. versionchanged:: 1.7
+           An arbitrary threshold at infinity is added for the case `fpr=0`
+           and `fnr=1`.
 
     See Also
     --------
@@ -349,6 +368,28 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
 
+    # add a threshold at inf where the clf always predicts the negative class
+    # i.e. tps = fps = 0
+    tps = np.concatenate(([0], tps))
+    fps = np.concatenate(([0], fps))
+    thresholds = np.concatenate(([np.inf], thresholds))
+
+    if drop_intermediate and len(fps) > 2:
+        # Drop thresholds where true positives (tp) do not change from the
+        # previous or subsequent threshold. As tp + fn, is fixed for a dataset,
+        # this means the false negative rate (fnr) remains constant while the
+        # false positive rate (fpr) changes, producing horizontal line segments
+        # in the transformed (normal deviate) scale. These intermediate points
+        # can be dropped to create lighter DET curve plots.
+        optimal_idxs = np.where(
+            np.concatenate(
+                [[True], np.logical_or(np.diff(tps[:-1]), np.diff(tps[1:])), [True]]
+            )
+        )[0]
+        fps = fps[optimal_idxs]
+        tps = tps[optimal_idxs]
+        thresholds = thresholds[optimal_idxs]
+
     if len(np.unique(y_true)) != 2:
         raise ValueError(
             "Only one class is present in y_true. Detection error "
@@ -359,7 +400,7 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     p_count = tps[-1]
     n_count = fps[-1]
 
-    # start with false positives zero
+    # start with false positives zero, which may be at a finite threshold
     first_ind = (
         fps.searchsorted(fps[0], side="right") - 1
         if fps.searchsorted(fps[0], side="right") > 0
@@ -581,7 +622,7 @@ def roc_auc_score(
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.metrics import roc_auc_score
     >>> X, y = load_breast_cancer(return_X_y=True)
-    >>> clf = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
+    >>> clf = LogisticRegression(solver="newton-cholesky", random_state=0).fit(X, y)
     >>> roc_auc_score(y, clf.predict_proba(X)[:, 1])
     0.99...
     >>> roc_auc_score(y, clf.decision_function(X))
@@ -591,7 +632,7 @@ def roc_auc_score(
 
     >>> from sklearn.datasets import load_iris
     >>> X, y = load_iris(return_X_y=True)
-    >>> clf = LogisticRegression(solver="liblinear").fit(X, y)
+    >>> clf = LogisticRegression(solver="newton-cholesky").fit(X, y)
     >>> roc_auc_score(y, clf.predict_proba(X), multi_class='ovr')
     0.99...
 
@@ -608,7 +649,7 @@ def roc_auc_score(
     >>> # extract the positive columns for each output
     >>> y_score = np.transpose([score[:, 1] for score in y_score])
     >>> roc_auc_score(y, y_score, average=None)
-    array([0.82..., 0.86..., 0.94..., 0.85... , 0.94...])
+    array([0.82..., 0.85..., 0.93..., 0.86..., 0.94...])
     >>> from sklearn.linear_model import RidgeClassifierCV
     >>> clf = RidgeClassifierCV().fit(X, y)
     >>> roc_auc_score(y, clf.decision_function(X), average=None)
@@ -1052,9 +1093,9 @@ def roc_curve(
         Sample weights.
 
     drop_intermediate : bool, default=True
-        Whether to drop some suboptimal thresholds which would not appear
-        on a plotted ROC curve. This is useful in order to create lighter
-        ROC curves.
+        Whether to drop thresholds where the resulting point is collinear with
+        its neighbors in ROC space. This has no effect on the ROC AUC or visual
+        shape of the curve, but reduces the number of plotted points.
 
         .. versionadded:: 0.17
            parameter *drop_intermediate*.
@@ -1071,8 +1112,12 @@ def roc_curve(
 
     thresholds : ndarray of shape (n_thresholds,)
         Decreasing thresholds on the decision function used to compute
-        fpr and tpr. `thresholds[0]` represents no instances being predicted
-        and is arbitrarily set to `np.inf`.
+        fpr and tpr. The first threshold is set to `np.inf`.
+
+        .. versionchanged:: 1.3
+           An arbitrary threshold at infinity (stored in `thresholds[0]`) is
+           added to represent a classifier that always predicts the negative
+           class, i.e. `fpr=0` and `tpr=0`.
 
     See Also
     --------
@@ -1088,10 +1133,6 @@ def roc_curve(
     Since the thresholds are sorted from low to high values, they
     are reversed upon returning them to ensure they correspond to both ``fpr``
     and ``tpr``, which are sorted in reversed order during their calculation.
-
-    An arbitrary threshold is added for the case `tpr=0` and `fpr=0` to
-    ensure that the curve starts at `(0, 0)`. This threshold corresponds to the
-    `np.inf`.
 
     References
     ----------

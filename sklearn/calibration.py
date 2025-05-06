@@ -61,7 +61,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     """Probability calibration with isotonic regression or logistic regression.
 
     This class uses cross-validation to both estimate the parameters of a
-    classifier and subsequently calibrate a classifier. With default
+    classifier and subsequently calibrate a classifier. With
     `ensemble=True`, for each cv split it
     fits a copy of the base estimator to the training subset, and calibrates it
     using the testing subset. For prediction, predicted probabilities are

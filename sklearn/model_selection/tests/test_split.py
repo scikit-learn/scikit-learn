@@ -85,7 +85,7 @@ GROUP_SPLITTERS = [
 ]
 GROUP_SPLITTER_NAMES = set(splitter.__class__.__name__ for splitter in GROUP_SPLITTERS)
 
-ALL_SPLITTERS = NO_GROUP_SPLITTERS + GROUP_SPLITTERS  # type: ignore
+ALL_SPLITTERS = NO_GROUP_SPLITTERS + GROUP_SPLITTERS  # type: ignore[list-item]
 
 SPLITTERS_REQUIRING_TARGET = [
     StratifiedKFold(),
@@ -886,9 +886,9 @@ def test_stratified_shuffle_split_even():
         bf = stats.binom(n_splits, p)
         for count in idx_counts:
             prob = bf.pmf(count)
-            assert (
-                prob > threshold
-            ), "An index is not drawn with chance corresponding to even draws"
+            assert prob > threshold, (
+                "An index is not drawn with chance corresponding to even draws"
+            )
 
     for n_samples in (6, 22):
         groups = np.array((n_samples // 2) * [0, 1])

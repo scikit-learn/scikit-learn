@@ -6,7 +6,6 @@ agglomeration.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 import numpy as np
 from scipy.sparse import issparse
 
@@ -67,8 +66,8 @@ class AgglomerationTransform(TransformerMixin):
 
         Returns
         -------
-        X : ndarray of shape (n_samples, n_features) or (n_features,)
-            A vector of size `n_samples` with the values of `Xred` assigned to
+        X_original : ndarray of shape (n_samples, n_features) or (n_features,)
+            A vector of size `n_samples` with the values of `X` assigned to
             each of the cluster of samples.
         """
         check_is_fitted(self)

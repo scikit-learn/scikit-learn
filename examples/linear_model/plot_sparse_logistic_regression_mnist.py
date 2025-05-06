@@ -75,7 +75,7 @@ for i in range(10):
     )
     l1_plot.set_xticks(())
     l1_plot.set_yticks(())
-    l1_plot.set_xlabel("Class %i" % i)
+    l1_plot.set_xlabel(f"Class {i}")
 plt.suptitle("Classification vector for...")
 
 run_time = time.time() - t0
