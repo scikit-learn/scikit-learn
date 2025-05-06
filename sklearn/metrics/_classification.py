@@ -34,12 +34,11 @@ from ..utils._array_api import (
     _is_numpy_namespace,
     _max_precision_float_dtype,
     _searchsorted,
-    _setdiff1d,
     _tolist,
     _union1d,
-    device,
     get_namespace,
     get_namespace_and_device,
+    xpx,
 )
 from ..utils._param_validation import (
     Hidden,
@@ -655,8 +654,7 @@ def multilabel_confusion_matrix(
             [1, 2]]])
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
-    xp, _ = get_namespace(y_true, y_pred)
-    device_ = device(y_true, y_pred)
+    xp, _, device_ = get_namespace_and_device(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight, device=device_)
@@ -673,7 +671,7 @@ def multilabel_confusion_matrix(
         labels = xp.asarray(labels, device=device_)
         n_labels = labels.shape[0]
         labels = xp.concat(
-            [labels, _setdiff1d(present_labels, labels, assume_unique=True, xp=xp)],
+            [labels, xpx.setdiff1d(present_labels, labels, assume_unique=True, xp=xp)],
             axis=-1,
         )
 
@@ -832,7 +830,9 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     labels : array-like of shape (n_classes,), default=None
         List of labels to index the matrix. This may be used to select a
         subset of labels. If `None`, all labels that appear at least once in
-        ``y1`` or ``y2`` are used.
+        ``y1`` or ``y2`` are used. Note that at least one label in `labels` must be
+         present in `y1`, even though this function is otherwise agnostic to the order
+         of `y1` and `y2`.
 
     weights : {'linear', 'quadratic'}, default=None
         Weighting type to calculate the score. `None` means not weighted;
@@ -866,7 +866,18 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     >>> cohen_kappa_score(y1, y2)
     0.6875
     """
-    confusion = confusion_matrix(y1, y2, labels=labels, sample_weight=sample_weight)
+    try:
+        confusion = confusion_matrix(y1, y2, labels=labels, sample_weight=sample_weight)
+    except ValueError as e:
+        if "At least one label specified must be in y_true" in str(e):
+            msg = (
+                "At least one label in `labels` must be present in `y1` (even though "
+                "`cohen_kappa_score` is otherwise agnostic to the order of `y1` and "
+                "`y2`)."
+            )
+            raise ValueError(msg) from e
+        raise
+
     n_classes = confusion.shape[0]
     sum0 = np.sum(confusion, axis=0)
     sum1 = np.sum(confusion, axis=1)
@@ -3464,30 +3475,28 @@ def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos
 @validate_params(
     {
         "y_true": ["array-like"],
-        "y_proba": ["array-like", Hidden(None)],
+        "y_proba": ["array-like"],
         "sample_weight": ["array-like", None],
         "pos_label": [Real, str, "boolean", None],
         "labels": ["array-like", None],
         "scale_by_half": ["boolean", StrOptions({"auto"})],
-        "y_prob": ["array-like", Hidden(StrOptions({"deprecated"}))],
     },
     prefer_skip_nested_validation=True,
 )
 def brier_score_loss(
     y_true,
-    y_proba=None,
+    y_proba,
     *,
     sample_weight=None,
     pos_label=None,
     labels=None,
     scale_by_half="auto",
-    y_prob="deprecated",
 ):
     r"""Compute the Brier score loss.
 
     The smaller the Brier score loss, the better, hence the naming with "loss".
     The Brier score measures the mean squared difference between the predicted
-    probability and the actual outcome. The Brier score is a stricly proper scoring
+    probability and the actual outcome. The Brier score is a strictly proper scoring
     rule.
 
     Read more in the :ref:`User Guide <brier_score_loss>`.
@@ -3532,13 +3541,6 @@ def brier_score_loss(
         original [0, 2] range for multiclasss classification.
 
         .. versionadded:: 1.7
-
-    y_prob : array-like of shape (n_samples,)
-        Probabilities of the positive class.
-
-        .. deprecated:: 1.5
-            `y_prob` is deprecated and will be removed in 1.7. Use
-            `y_proba` instead.
 
     Returns
     -------
@@ -3598,24 +3600,6 @@ def brier_score_loss(
     ... )
     0.146...
     """
-    # TODO(1.7): remove in 1.7 and reset y_proba to be required
-    # Note: validate params will raise an error if y_prob is not array-like,
-    # or "deprecated"
-    if y_proba is not None and not isinstance(y_prob, str):
-        raise ValueError(
-            "`y_prob` and `y_proba` cannot be both specified. Please use `y_proba` only"
-            " as `y_prob` is deprecated in v1.5 and will be removed in v1.7."
-        )
-    if y_proba is None:
-        warnings.warn(
-            (
-                "y_prob was deprecated in version 1.5 and will be removed in 1.7."
-                "Please use ``y_proba`` instead."
-            ),
-            FutureWarning,
-        )
-        y_proba = y_prob
-
     y_proba = check_array(
         y_proba, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
     )
@@ -3717,8 +3701,19 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
     # Proportion of labels in the dataset
     weights = _check_sample_weight(sample_weight, y_true)
 
-    _, y_value_indices = np.unique(y_true, return_inverse=True)
-    counts = np.bincount(y_value_indices, weights=weights)
+    # If labels is passed, augment y_true to ensure that all labels are represented
+    # Use 0 weight for the new samples to not affect the counts
+    y_true_, weights_ = (
+        (
+            np.concatenate([y_true, labels]),
+            np.concatenate([weights, np.zeros_like(weights, shape=len(labels))]),
+        )
+        if labels is not None
+        else (y_true, weights)
+    )
+
+    _, y_value_indices = np.unique(y_true_, return_inverse=True)
+    counts = np.bincount(y_value_indices, weights=weights_)
     y_prob = counts / weights.sum()
     y_pred_null = np.tile(y_prob, (len(y_true), 1))
 

@@ -422,7 +422,7 @@ cred_int_df
 # As shown in the table, there is a 50% probability that the true mean
 # difference between models will be between 0.000977 and 0.019023, 70%
 # probability that it will be between -0.005422 and 0.025422, and 95%
-# probability that it will be between -0.016445	and 0.036445.
+# probability that it will be between -0.016445 and 0.036445.
 
 # %%
 # Pairwise comparison of all models: frequentist approach

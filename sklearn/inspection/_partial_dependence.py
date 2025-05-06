@@ -19,7 +19,7 @@ from ..ensemble._hist_gradient_boosting.gradient_boosting import (
 from ..tree import DecisionTreeRegressor
 from ..utils import Bunch, _safe_indexing, check_array
 from ..utils._indexing import _determine_key_type, _get_column_indices, _safe_assign
-from ..utils._optional_dependencies import check_matplotlib_support  # noqa
+from ..utils._optional_dependencies import check_matplotlib_support  # noqa: F401
 from ..utils._param_validation import (
     HasMethods,
     Integral,
@@ -673,6 +673,12 @@ def partial_dependence(
         is_categorical = [False] * len(features_indices)
     else:
         categorical_features = np.asarray(categorical_features)
+        if categorical_features.size == 0:
+            raise ValueError(
+                "Passing an empty list (`[]`) to `categorical_features` is not "
+                "supported. Use `None` instead to indicate that there are no "
+                "categorical features."
+            )
         if categorical_features.dtype.kind == "b":
             # categorical features provided as a list of boolean
             if categorical_features.size != n_features:

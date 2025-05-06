@@ -14,7 +14,7 @@ from scipy.sparse.linalg import eigsh, svds
 from ..base import BaseEstimator, BiclusterMixin, _fit_context
 from ..utils import check_random_state, check_scalar
 from ..utils._param_validation import Interval, StrOptions
-from ..utils.extmath import make_nonnegative, randomized_svd, safe_sparse_dot
+from ..utils.extmath import _randomized_svd, make_nonnegative, safe_sparse_dot
 from ..utils.validation import assert_all_finite, validate_data
 from ._kmeans import KMeans, MiniBatchKMeans
 
@@ -144,7 +144,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
             kwargs = {}
             if self.n_svd_vecs is not None:
                 kwargs["n_oversamples"] = self.n_svd_vecs
-            u, _, vt = randomized_svd(
+            u, _, vt = _randomized_svd(
                 array, n_components, random_state=self.random_state, **kwargs
             )
 
