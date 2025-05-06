@@ -494,6 +494,10 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         When set to ``True``, forces the coefficients to be positive. This
         option is only supported for dense arrays.
 
+        For a comparison between a linear regression model with positive constraints
+        on the regression coefficients and a linear regression without such constraints,
+        see :ref:`sphx_glr_auto_examples_linear_model_plot_nnls.py`.
+
         .. versionadded:: 0.24
 
     Attributes
