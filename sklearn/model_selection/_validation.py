@@ -2383,13 +2383,6 @@ def validation_curve(
 
         .. versionadded:: 1.6
 
-    See Also
-    --------
-    ValidationCurveDisplay.from_estimator : Plot the validation curve
-        given an estimator, the data, and the parameter to vary.
-    ValidationCurveDisplay.from_predictions : Plot the validation curve
-        given the training and test scores.
-
     Returns
     -------
     train_scores : array of shape (n_ticks, n_cv_folds)
@@ -2397,6 +2390,11 @@ def validation_curve(
 
     test_scores : array of shape (n_ticks, n_cv_folds)
         Scores on test set.
+        
+    See Also
+    --------
+    ValidationCurveDisplay.from_estimator : Plot the validation curve
+        given an estimator, the data, and the parameter to vary.
 
     Notes
     -----
