@@ -1239,7 +1239,6 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.input_tags.one_d_array = True
         return tags
 
 
