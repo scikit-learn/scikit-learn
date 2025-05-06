@@ -1007,7 +1007,10 @@ def calibration_curve(
 
     See Also
     --------
-    sklearn.calibration.CalibrationDisplay : Calibration curve visualization.
+    CalibrationDisplay.from_predictions : Plot calibration curve using true
+        and predicted labels.
+    CalibrationDisplay.from_estimator : Plogoitt calibration curve using an
+        estimator and data.
 
     References
     ----------
