@@ -864,7 +864,7 @@ def test_splitting_categorical_sanity(
     assert_array_equal(sample_indices[~left_mask], samples_right)
 
 
-def test_split_interaction_constraints():
+def test_split_interaction_constraints(global_random_seed):
     """Check that allowed_features are respected."""
     n_features = 4
     # features 1 and 2 are not allowed to be split on
@@ -886,7 +886,7 @@ def test_split_interaction_constraints():
     # The loop is to ensure that we split at least once on each allowed feature (0, 3).
     # This is tracked by split_features and checked at the end.
     for i in range(10):
-        rng = np.random.RandomState(919 + i)
+        rng = np.random.RandomState(global_random_seed + i)
         X_binned = np.asfortranarray(
             rng.randint(0, n_bins - 1, size=(n_samples, n_features)),
             dtype=X_BINNED_DTYPE,
