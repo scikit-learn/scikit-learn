@@ -76,9 +76,9 @@ def get_data_home(data_home=None, *, use_default_location="deprecated") -> str:
         uses the old location only if it exists and warns about deprecation.
         If False, uses the new OS-specific cache directory.
 
-        .. deprecated:: 1.5
-           The parameter `use_default_location=True` is deprecated in 1.5 and will be
-           removed in 1.7. The new default paths are:
+        .. deprecated:: 1.7
+           The parameter `use_default_location=True` is deprecated in 1.7 and will be
+           removed in 1.9. The new default paths are:
 
            - Linux/Unix: ~/.cache/scikit-learn
            - macOS: ~/Library/Caches/scikit-learn
@@ -103,7 +103,7 @@ def get_data_home(data_home=None, *, use_default_location="deprecated") -> str:
             if os.path.exists(old_default):
                 warnings.warn(
                     "The default data directory '~/scikit_learn_data' is deprecated "
-                    "in 1.5 and will be removed in 1.7. The new default paths are:\n"
+                    "in 1.7 and will be removed in 1.9. The new default paths are:\n"
                     "- Linux/Unix: ~/.cache/scikit-learn\n"
                     "- macOS: ~/Library/Caches/scikit-learn\n"
                     "- Windows: ~/AppData/Local/scikit-learn\n\n"
@@ -119,7 +119,7 @@ def get_data_home(data_home=None, *, use_default_location="deprecated") -> str:
         elif use_default_location is True:
             warnings.warn(
                 "The default data directory '~/scikit_learn_data' is deprecated "
-                "in 1.5 and will be removed in 1.7. The new default paths are:\n"
+                "in 1.7 and will be removed in 1.9. The new default paths are:\n"
                 "- Linux/Unix: ~/.cache/scikit-learn\n"
                 "- macOS: ~/Library/Caches/scikit-learn\n"
                 "- Windows: ~/AppData/Local/scikit-learn\n\n"

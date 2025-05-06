@@ -1,6 +1,6 @@
 - The :func:`datasets.get_data_home` function now uses standard OS-specific cache
   directories instead of ``~/scikit_learn_data``. The old default path is deprecated
-  in 1.5 and will be removed in 1.7. For backward compatibility, if the old
+  in 1.7 and will be removed in 1.9. For backward compatibility, if the old
   ``~/scikit_learn_data`` directory exists, it will continue to be used (with a
   deprecation warning that includes migration instructions). To temporarily use the old 
   behavior, set ``use_default_location=True`` (also deprecated). The new default paths are:
