@@ -19,6 +19,7 @@ from sklearn.utils._array_api import (
     get_namespace,
     yield_namespace_device_dtype_combinations,
 )
+from sklearn.utils._sparse import _sparse_random
 from sklearn.utils._testing import (
     _array_api_for_tests,
     assert_allclose,
@@ -1041,8 +1042,8 @@ def test_safe_sparse_dot_2d_1d(container):
 def test_safe_sparse_dot_dense_output(dense_output):
     rng = np.random.RandomState(0)
 
-    A = sparse.random(30, 10, density=0.1, random_state=rng)
-    B = sparse.random(10, 20, density=0.1, random_state=rng)
+    A = _sparse_random((30, 10), density=0.1, rng=rng)
+    B = _sparse_random((10, 20), density=0.1, rng=rng)
 
     expected = A.dot(B)
     actual = safe_sparse_dot(A, B, dense_output=dense_output)
