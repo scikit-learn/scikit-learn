@@ -15,6 +15,7 @@ from ..metrics import pairwise_distances
 from ..utils import check_symmetric
 from ..utils._param_validation import Interval
 from ..utils.extmath import svd_flip
+from ..utils.validation import validate_data
 
 
 class ClassicalMDS(BaseEstimator):
@@ -140,6 +141,8 @@ class ClassicalMDS(BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             The embedding coordinates.
         """
+
+        X = validate_data(self, X)
 
         if self.dissimilarity == "precomputed":
             self.dissimilarity_matrix_ = X
