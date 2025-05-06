@@ -1014,13 +1014,14 @@ def test_repr_html_():
 
 def test_ReprHTMLMixin_repr_mimebundle():
     est = MyEstimator()
-    out = est._repr_mimebundle_()
+    out = est._get_params_html(deep=False)._repr_mimebundle_()
+
     assert "text/plain" in out
     assert "text/html" in out
     assert "<summary>Parameters</summary>" in out["text/html"]
-    assert out["text/plain"] == "MyEstimator()"
+    assert out["text/plain"] == "{'l1': 0, 'empty': None}"
 
     with config_context(display="text"):
-        out = est._repr_mimebundle_()
+        out = est._get_params_html(deep=False)._repr_mimebundle_()
         assert "text/plain" in out
         assert "text/html" not in out

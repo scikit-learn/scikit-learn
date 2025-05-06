@@ -33,3 +33,4 @@ class ReprHTMLMixin:
         output = {"text/plain": repr(self)}
         if get_config()["display"] == "diagram":
             output["text/html"] = _html_template(self)
+        return output
