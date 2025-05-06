@@ -1604,7 +1604,9 @@ def test_dataframe_categorical_results_same_as_ndarray(
     "HistGradientBoosting",
     [HistGradientBoostingClassifier, HistGradientBoostingRegressor],
 )
-def test_dataframe_categorical_errors(dataframe_lib, HistGradientBoosting, global_random_seed):
+def test_dataframe_categorical_errors(
+    dataframe_lib, HistGradientBoosting, global_random_seed
+):
     """Check error cases for pandas categorical feature."""
     pytest.importorskip(dataframe_lib)
     msg = "Categorical feature 'f_cat' is expected to have a cardinality <= 16"

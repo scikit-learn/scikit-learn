@@ -143,8 +143,10 @@ def test_bin_mapper_random_data(max_bins):
 
 
 @pytest.mark.parametrize("n_samples, max_bins", [(5, 5), (5, 10), (5, 11), (42, 255)])
-def test_bin_mapper_small_random_data(n_samples, max_bins,global_random_seed):
-    data = np.random.RandomState(global_random_seed).normal(size=n_samples).reshape(-1, 1)
+def test_bin_mapper_small_random_data(n_samples, max_bins, global_random_seed):
+    data = (
+        np.random.RandomState(global_random_seed).normal(size=n_samples).reshape(-1, 1)
+    )
     assert len(np.unique(data)) == n_samples
 
     # max_bins is the number of bins for non-missing values

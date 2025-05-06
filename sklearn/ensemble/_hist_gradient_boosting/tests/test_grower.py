@@ -222,7 +222,9 @@ def test_predictor_from_grower():
         (300, 301, 255, True, 0.1),
     ],
 )
-def test_min_samples_leaf(n_samples, min_samples_leaf, n_bins, constant_hessian, noise, global_random_seed):
+def test_min_samples_leaf(
+    n_samples, min_samples_leaf, n_bins, constant_hessian, noise, global_random_seed
+):
     rng = np.random.RandomState(global_random_seed)
     # data = linear target, 3 features, 1 irrelevant.
     X = rng.normal(size=(n_samples, 3))
@@ -512,7 +514,9 @@ def test_grow_tree_categories():
 @pytest.mark.parametrize("min_samples_leaf", (1, 20))
 @pytest.mark.parametrize("n_unique_categories", (2, 10, 100))
 @pytest.mark.parametrize("target", ("binary", "random", "equal"))
-def test_ohe_equivalence(min_samples_leaf, n_unique_categories, target, global_random_seed):
+def test_ohe_equivalence(
+    min_samples_leaf, n_unique_categories, target, global_random_seed
+):
     # Make sure that native categorical splits are equivalent to using a OHE,
     # when given enough depth
 
