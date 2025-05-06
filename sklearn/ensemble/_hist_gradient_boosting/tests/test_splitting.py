@@ -20,8 +20,8 @@ n_threads = _openmp_effective_n_threads()
 
 
 @pytest.mark.parametrize("n_bins", [3, 32, 256])
-def test_histogram_split(n_bins):
-    rng = np.random.RandomState(42)
+def test_histogram_split(n_bins, global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     feature_idx = 0
     l2_regularization = 0
     min_hessian_to_split = 1e-3
@@ -325,12 +325,12 @@ def test_split_indices():
     assert samples_right.shape[0] == si_root.n_samples_right
 
 
-def test_min_gain_to_split():
+def test_min_gain_to_split(global_random_seed):
     # Try to split a pure node (all gradients are equal, same for hessians)
     # with min_gain_to_split = 0 and make sure that the node is not split (best
     # possible gain = -1). Note: before the strict inequality comparison, this
     # test would fail because the node would be split with a gain of 0.
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     l2_regularization = 0
     min_hessian_to_split = 0
     min_samples_leaf = 1
