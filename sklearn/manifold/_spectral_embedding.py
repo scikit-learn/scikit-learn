@@ -22,6 +22,7 @@ from ..utils import (
 )
 from ..utils._arpack import _init_arpack_v0
 from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils._sparse import _sparse_eye
 from ..utils.extmath import _deterministic_vector_sign_flip
 from ..utils.fixes import laplacian as csgraph_laplacian
 from ..utils.fixes import parse_version, sp_version
@@ -400,7 +401,7 @@ def _spectral_embedding(
         # Shift the Laplacian so its diagononal is not all ones. The shift
         # does change the eigenpairs however, so we'll feed the shifted
         # matrix to the solver and afterward set it back to the original.
-        diag_shift = 1e-5 * sparse.eye(laplacian.shape[0])
+        diag_shift = 1e-5 * _sparse_eye(laplacian.shape[0])
         laplacian += diag_shift
         if hasattr(sparse, "csr_array") and isinstance(laplacian, sparse.csr_array):
             # `pyamg` does not work with `csr_array` and we need to convert it to a

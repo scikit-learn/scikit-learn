@@ -44,6 +44,7 @@ from sklearn.utils._mocking import (
     MockDataFrame,
     _MockEstimatorOnOffPrediction,
 )
+from sklearn.utils._sparse import _sparse_random
 from sklearn.utils._testing import (
     SkipTest,
     TempMemmap,
@@ -156,7 +157,7 @@ def test_as_float_array():
 
 
 @pytest.mark.parametrize(
-    "X", [np.random.random((10, 2)), sp.random(10, 2, format="csr")]
+    "X", [np.random.random((10, 2)), _sparse_random((10, 2), format="csr")]
 )
 def test_as_float_array_nan(X):
     X[5, 0] = np.nan
@@ -703,7 +704,7 @@ def test_check_array_accept_sparse_no_exception():
 
 @pytest.fixture(params=["csr", "csc", "coo", "bsr"])
 def X_64bit(request):
-    X = sp.random(20, 10, format=request.param)
+    X = _sparse_random((20, 10), format=request.param)
 
     if request.param == "coo":
         if hasattr(X, "coords"):

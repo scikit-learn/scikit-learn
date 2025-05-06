@@ -22,6 +22,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, StandardScaler, scale
 from sklearn.svm import OneClassSVM
 from sklearn.utils import get_tags
+from sklearn.utils._sparse import _sparse_random
 from sklearn.utils._testing import (
     assert_allclose,
     assert_almost_equal,
@@ -2067,7 +2068,7 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     # Create a classification problem with 50000 features and 20 classes. Using
     # loky or multiprocessing this make the clf.coef_ exceed the threshold
     # above which memmaping is used in joblib and loky (1MB as of 2018/11/1).
-    X = sp.random(500, 2000, density=0.02, format="csr", random_state=random_state)
+    X = _sparse_random((500, 2000), density=0.02, format="csr", rng=random_state)
     y = random_state.choice(20, 500)
 
     # Begin by fitting a SGD classifier sequentially

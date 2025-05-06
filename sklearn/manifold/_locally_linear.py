@@ -7,7 +7,7 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy.linalg import eigh, qr, solve, svd
-from scipy.sparse import csr_array, eye, lil_array
+from scipy.sparse import csr_array, lil_array
 from scipy.sparse.linalg import eigsh
 
 from ..base import (
@@ -21,7 +21,7 @@ from ..neighbors import NearestNeighbors
 from ..utils import check_array, check_random_state
 from ..utils._arpack import _init_arpack_v0
 from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils._sparse import _align_api_if_sparse
+from ..utils._sparse import _align_api_if_sparse, _sparse_eye
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import FLOAT_DTYPES, check_is_fitted, validate_data
 
@@ -243,7 +243,7 @@ def _locally_linear_embedding(
         if M_sparse:
             # change when SciPy 1.12+ is minimal supported version
             # M = eye_array(W.shape, format=W.format, dtype=W.dtype) - W
-            M = W.__class__(eye(*W.shape, format=W.format, dtype=W.dtype)) - W
+            M = _sparse_eye(*W.shape, format=W.format, dtype=W.dtype) - W
             M = M.T @ M  # M = (I - W)' (I - W) = W' W - W' - W + I
         else:
             M = (W.T @ W - W.T - W).toarray()
