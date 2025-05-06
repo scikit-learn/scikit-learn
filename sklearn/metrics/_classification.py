@@ -193,10 +193,11 @@ def _validate_multiclass_probabilistic_prediction(
     y_prob = check_array(
         y_prob, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
     )
+    xp, _ = get_namespace(y_true, y_prob)
 
-    if y_prob.max() > 1:
+    if xp.max(y_prob) > 1:
         raise ValueError(f"y_prob contains values greater than 1: {y_prob.max()}")
-    if y_prob.min() < 0:
+    if xp.min(y_prob) < 0:
         raise ValueError(f"y_prob contains values lower than 0: {y_prob.min()}")
 
     check_consistent_length(y_prob, y_true, sample_weight)
@@ -3439,6 +3440,7 @@ def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos
     assert_all_finite(y_prob)
 
     check_consistent_length(y_prob, y_true, sample_weight)
+    xp, _, device = get_namespace_and_device(y_true, y_prob, sample_weight)
 
     y_type = type_of_target(y_true, input_name="y_true")
     if y_type != "binary":
@@ -3447,16 +3449,16 @@ def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos
             "binary according to the shape of y_prob."
         )
 
-    if y_prob.max() > 1:
+    if xp.max(y_prob) > 1:
         raise ValueError(f"y_prob contains values greater than 1: {y_prob.max()}")
-    if y_prob.min() < 0:
+    if xp.min(y_prob) < 0:
         raise ValueError(f"y_prob contains values less than 0: {y_prob.min()}")
 
     # check that pos_label is consistent with y_true
     try:
         pos_label = _check_pos_label_consistency(pos_label, y_true)
     except ValueError:
-        classes = np.unique(y_true)
+        classes = xp.unique_values(y_true)
         if classes.dtype.kind not in ("O", "U", "S"):
             # for backward compatibility, if classes are not string then
             # `pos_label` will correspond to the greater label
@@ -3465,9 +3467,9 @@ def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos
             raise
 
     # convert (n_samples,) to (n_samples, 2) shape
-    y_true = np.array(y_true == pos_label, int)
-    transformed_labels = np.column_stack((1 - y_true, y_true))
-    y_prob = np.column_stack((1 - y_prob, y_prob))
+    y_true = xp.asarray(y_true == pos_label, dtype=xp.int64, device=device)
+    transformed_labels = xp.stack((1 - y_true, y_true), axis=1)
+    y_prob = xp.stack((1 - y_prob, y_prob), axis=1)
 
     return transformed_labels, y_prob
 
@@ -3600,8 +3602,17 @@ def brier_score_loss(
     ... )
     0.146...
     """
+    xp, _, device = get_namespace_and_device(
+        y_true,
+        y_proba,
+        sample_weight,
+    )
     y_proba = check_array(
-        y_proba, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
+        y_proba,
+        ensure_2d=False,
+        dtype=tuple(
+            xp.__array_namespace_info__().dtypes(kind="real floating").values()
+        ),
     )
 
     if y_proba.ndim == 1 or y_proba.shape[1] == 1:
@@ -3612,9 +3623,14 @@ def brier_score_loss(
         transformed_labels, y_proba = _validate_multiclass_probabilistic_prediction(
             y_true, y_proba, sample_weight, labels
         )
+        transformed_labels = xp.asarray(transformed_labels, device=device)
+        y_proba = xp.asarray(y_proba, device=device)
 
-    brier_score = np.average(
-        np.sum((transformed_labels - y_proba) ** 2, axis=1), weights=sample_weight
+    # If transformed_labels is integer array, cast it to the floating dtype of
+    # y_proba
+    transformed_labels = xp.astype(transformed_labels, y_proba.dtype, device=device)
+    brier_score = _average(
+        xp.sum((transformed_labels - y_proba) ** 2, axis=1), weights=sample_weight
     )
 
     if scale_by_half == "auto":

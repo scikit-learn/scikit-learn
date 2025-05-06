@@ -18,7 +18,14 @@ import scipy.sparse as sp
 
 from .. import get_config as _get_config
 from ..exceptions import DataConversionWarning, NotFittedError, PositiveSpectrumWarning
-from ..utils._array_api import _asarray_with_order, _is_numpy_namespace, get_namespace
+from ..utils._array_api import (
+    _asarray_with_order,
+    _convert_to_numpy,
+    _is_numpy_namespace,
+    _max_precision_float_dtype,
+    get_namespace,
+    get_namespace_and_device,
+)
 from ..utils.deprecation import _deprecate_force_all_finite
 from ..utils.fixes import ComplexWarning, _preserve_dia_indices_dtype
 from ._isfinite import FiniteStatus, cy_isfinite
@@ -2147,9 +2154,10 @@ def _check_sample_weight(
         dtype of the validated `sample_weight`.
         If None, and `sample_weight` is an array:
 
-            - If `sample_weight.dtype` is one of `{np.float64, np.float32}`,
+            - If `sample_weight.dtype` is one of `{xp.float64, xp.float32}`,
               then the dtype is preserved.
-            - Else the output has NumPy's default dtype: `np.float64`.
+            - Otherwise, the output has the highest precision floating point dtype
+              supported by the array namespace/device of the input arrays.
 
         If `dtype` is not `{np.float32, np.float64, None}`, then output will
         be `np.float64`.
@@ -2168,17 +2176,18 @@ def _check_sample_weight(
         Validated sample weight. It is guaranteed to be "C" contiguous.
     """
     n_samples = _num_samples(X)
+    xp, _, device = get_namespace_and_device(X, sample_weight)
 
-    if dtype is not None and dtype not in [np.float32, np.float64]:
-        dtype = np.float64
+    if dtype is not None and dtype not in [xp.float32, xp.float64]:
+        dtype = _max_precision_float_dtype(xp, device)
 
     if sample_weight is None:
-        sample_weight = np.ones(n_samples, dtype=dtype)
+        sample_weight = xp.ones(n_samples, dtype=dtype)
     elif isinstance(sample_weight, numbers.Number):
-        sample_weight = np.full(n_samples, sample_weight, dtype=dtype)
+        sample_weight = xp.full(n_samples, sample_weight, dtype=dtype)
     else:
         if dtype is None:
-            dtype = [np.float64, np.float32]
+            dtype = [xp.float64, xp.float32]
         sample_weight = check_array(
             sample_weight,
             accept_sparse=False,
@@ -2628,14 +2637,16 @@ def _check_pos_label_consistency(pos_label, y_true):
     # when elements in the two arrays are not comparable.
     if pos_label is None:
         # Compute classes only if pos_label is not specified:
-        classes = np.unique(y_true)
-        if classes.dtype.kind in "OUS" or not (
-            np.array_equal(classes, [0, 1])
-            or np.array_equal(classes, [-1, 1])
-            or np.array_equal(classes, [0])
-            or np.array_equal(classes, [-1])
-            or np.array_equal(classes, [1])
+        xp, _, device = get_namespace_and_device(y_true)
+        classes = xp.unique_values(y_true)
+        if (_is_numpy_namespace(xp) and classes.dtype.kind in "OUS") or not (
+            xp.all(classes == xp.asarray([0, 1], device=device))
+            or xp.all(classes == xp.asarray([-1, 1], device=device))
+            or xp.all(classes == xp.asarray([0], device=device))
+            or xp.all(classes == xp.asarray([-1], device=device))
+            or xp.all(classes == xp.asarray([1], device=device))
         ):
+            classes = _convert_to_numpy(classes, xp=xp)
             classes_repr = ", ".join([repr(c) for c in classes.tolist()])
             raise ValueError(
                 f"y_true takes value in {{{classes_repr}}} and pos_label is not "
