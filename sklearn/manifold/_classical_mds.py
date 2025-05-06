@@ -57,6 +57,13 @@ class ClassicalMDS(BaseEstimator):
         to each of the selected components. They are equal to the squared 2-norms
         of the `n_components` variables in the embedding space.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
     See Also
     --------
     sklearn.decomposition.PCA : Principal component analysis.
