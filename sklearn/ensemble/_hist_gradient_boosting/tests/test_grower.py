@@ -222,8 +222,8 @@ def test_predictor_from_grower():
         (300, 301, 255, True, 0.1),
     ],
 )
-def test_min_samples_leaf(n_samples, min_samples_leaf, n_bins, constant_hessian, noise):
-    rng = np.random.RandomState(seed=0)
+def test_min_samples_leaf(n_samples, min_samples_leaf, n_bins, constant_hessian, noise, global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     # data = linear target, 3 features, 1 irrelevant.
     X = rng.normal(size=(n_samples, 3))
     y = X[:, 0] - X[:, 1]
@@ -259,10 +259,10 @@ def test_min_samples_leaf(n_samples, min_samples_leaf, n_bins, constant_hessian,
 
 
 @pytest.mark.parametrize("n_samples, min_samples_leaf", [(99, 50), (100, 50)])
-def test_min_samples_leaf_root(n_samples, min_samples_leaf):
+def test_min_samples_leaf_root(n_samples, min_samples_leaf, global_random_seed):
     # Make sure root node isn't split if n_samples is not at least twice
     # min_samples_leaf
-    rng = np.random.RandomState(seed=0)
+    rng = np.random.RandomState(global_random_seed)
 
     n_bins = 256
 
@@ -298,9 +298,9 @@ def assert_is_stump(grower):
 
 
 @pytest.mark.parametrize("max_depth", [1, 2, 3])
-def test_max_depth(max_depth):
+def test_max_depth(max_depth, global_random_seed):
     # Make sure max_depth parameter works as expected
-    rng = np.random.RandomState(seed=0)
+    rng = np.random.RandomState(global_random_seed)
 
     n_bins = 256
     n_samples = 1000
@@ -512,11 +512,11 @@ def test_grow_tree_categories():
 @pytest.mark.parametrize("min_samples_leaf", (1, 20))
 @pytest.mark.parametrize("n_unique_categories", (2, 10, 100))
 @pytest.mark.parametrize("target", ("binary", "random", "equal"))
-def test_ohe_equivalence(min_samples_leaf, n_unique_categories, target):
+def test_ohe_equivalence(min_samples_leaf, n_unique_categories, target, global_random_seed):
     # Make sure that native categorical splits are equivalent to using a OHE,
     # when given enough depth
 
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 10_000
     X_binned = rng.randint(0, n_unique_categories, size=(n_samples, 1), dtype=np.uint8)
 
