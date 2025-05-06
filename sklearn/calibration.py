@@ -1009,7 +1009,7 @@ def calibration_curve(
     --------
     CalibrationDisplay.from_predictions : Plot calibration curve using true
         and predicted labels.
-    CalibrationDisplay.from_estimator : Plogoitt calibration curve using an
+    CalibrationDisplay.from_estimator : Plot calibration curve using an
         estimator and data.
 
     References
