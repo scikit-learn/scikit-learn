@@ -493,7 +493,7 @@ def test_get_feature_names_out_elasticnetcv():
     """Check if ElasticNetCV works with a list of floats.
 
     Non-regression test for #30936."""
-    X, y = make_regression(n_samples=100, n_features=5, n_informative=3, random_state=0)
+    X, y = make_regression(n_features=5, n_informative=3, random_state=0)
     estimator = ElasticNetCV(l1_ratio=[0.25, 0.5, 0.75], random_state=0)
     selector = SelectFromModel(estimator=estimator)
     selector.fit(X, y)
