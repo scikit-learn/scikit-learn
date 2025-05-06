@@ -2389,7 +2389,6 @@ def validation_curve(
         given an estimator, the data, and the parameter to vary.
     ValidationCurveDisplay.from_predictions : Plot the validation curve
         given the training and test scores.
-    ValidationCurveDisplay : Validation curve visualization.
 
     Returns
     -------
