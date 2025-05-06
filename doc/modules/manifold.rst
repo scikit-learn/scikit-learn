@@ -483,6 +483,15 @@ coordinates :math:`Z` of the embedded points.
     :align: center
     :scale: 60
 
+Apart from that, there is a version called *classical MDS*, also known as
+*principal coordinates analysis (PCoA)* or *Torgerson's scaling*, and implemented
+in the separate :class:`ClassicalMDS` class. Classical  MDS replaces the stress
+loss function with a different loss function called *strain*, which allows
+exact solution in terms of eigendecomposition of the double-centered dissimilarity
+matrix. If the dissimilarity matrix is the matrix of pairwise Euclidean distances
+between some vectors, then classical MDS is equivalent to PCA of this set of
+vectors.
+
 .. rubric:: References
 
 * `"More on Multidimensional Scaling and Unfolding in R: smacof Version 2"

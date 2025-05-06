@@ -13,7 +13,7 @@ from joblib import effective_n_jobs
 
 from ..base import BaseEstimator, _fit_context
 from ..isotonic import IsotonicRegression
-from ..metrics import euclidean_distances
+from ..metrics import euclidean_distances, pairwise_distances
 from ..utils import check_array, check_random_state, check_symmetric
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.parallel import Parallel, delayed
@@ -479,15 +479,25 @@ class MDS(BaseEstimator):
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    dissimilarity : {'euclidean', 'precomputed'}, default='euclidean'
-        Dissimilarity measure to use:
+    dissimilarity : str or callable, default='euclidean'
+        Metric to use for dissimilarity computation. Default is "euclidean".
+        See the documentation of `scipy.spatial.distance
+        <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>`_ and
+        the metrics listed in
+        :class:`~sklearn.metrics.pairwise.distance_metrics` for valid metric
+        values.
 
-        - 'euclidean':
-            Pairwise Euclidean distances between points in the dataset.
+        If metric is "precomputed", X is assumed to be a distance matrix and
+        must be square during fit.
 
-        - 'precomputed':
-            Pre-computed dissimilarities are passed directly to ``fit`` and
-            ``fit_transform``.
+        If metric is a callable function, it takes two arrays representing 1D
+        vectors as inputs and must return one value indicating the distance
+        between those vectors. This works for Scipy's metrics, but is less
+        efficient than passing the metric name as a string.
+
+        .. versionchanged:: 1.8
+           All metrics supported by `sklearn.metrics.pairwise.distance_metrics`
+           are now allowed, not only Euclidean.
 
     normalized_stress : bool or "auto" default="auto"
         Whether to return normalized stress value (Stress-1) instead of raw
@@ -515,12 +525,7 @@ class MDS(BaseEstimator):
         0.1 fair, and 0.2 poor [1]_.
 
     dissimilarity_matrix_ : ndarray of shape (n_samples, n_samples)
-        Pairwise dissimilarities between the points. Symmetric matrix that:
-
-        - either uses a custom dissimilarity matrix by setting `dissimilarity`
-          to 'precomputed';
-        - or constructs a dissimilarity matrix from data using
-          Euclidean distances.
+        Pairwise dissimilarities between the points.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -586,7 +591,7 @@ class MDS(BaseEstimator):
         "eps": [Interval(Real, 0.0, None, closed="left")],
         "n_jobs": [None, Integral],
         "random_state": ["random_state"],
-        "dissimilarity": [StrOptions({"euclidean", "precomputed"})],
+        "dissimilarity": [str, callable],
         "normalized_stress": ["boolean", StrOptions({"auto"})],
     }
 
@@ -693,8 +698,13 @@ class MDS(BaseEstimator):
 
         if self.dissimilarity == "precomputed":
             self.dissimilarity_matrix_ = X
-        elif self.dissimilarity == "euclidean":
-            self.dissimilarity_matrix_ = euclidean_distances(X)
+            self.dissimilarity_matrix_ = check_symmetric(
+                self.dissimilarity_matrix_, raise_exception=True
+            )
+        else:
+            self.dissimilarity_matrix_ = pairwise_distances(
+                X, metric=self.dissimilarity
+            )
 
         self.embedding_, self.stress_, self.n_iter_ = smacof(
             self.dissimilarity_matrix_,
