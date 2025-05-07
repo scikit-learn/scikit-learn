@@ -185,9 +185,9 @@ def _estimate_gaussian_covariances_full(resp, X, nk, means, reg_covar, xp=None):
         (n_components, n_features, n_features), device=device_, dtype=X.dtype
     )
     for k in range(n_components):
-        diff = X - means[k, ...]
-        covariances[k, ...] = ((resp[:, k] * diff.T) @ diff) / nk[k]
-        my_flat = xp.reshape(covariances[k, ...], (-1,))
+        diff = X - means[k, :]
+        covariances[k, :, :] = ((resp[:, k] * diff.T) @ diff) / nk[k]
+        my_flat = xp.reshape(covariances[k, :, :], (-1,))
         my_flat[:: n_features + 1] += reg_covar
     return covariances
 
@@ -355,7 +355,7 @@ def _compute_precision_cholesky(covariances, covariance_type, xp=None):
             (n_components, n_features, n_features), device=device_, dtype=dtype
         )
         for k in range(covariances.shape[0]):
-            covariance = covariances[k, ...]
+            covariance = covariances[k, :, :]
             try:
                 # TODO we are using xp.linalg instead of scipy.linalg.cholesky, maybe
                 # separate branches for array API and numpy?
@@ -366,7 +366,7 @@ def _compute_precision_cholesky(covariances, covariance_type, xp=None):
             # TODO we are using xp.linalg.solve instead of scipy.linalg.solve_triangular
             # probably separate branches for array API and numpy? maybe
             # https://github.com/scikit-learn/scikit-learn/pull/29318 is relevant
-            precisions_chol[k, ...] = xp.linalg.solve(
+            precisions_chol[k, :, :] = xp.linalg.solve(
                 cov_chol, xp.eye(n_features, device=device_, dtype=dtype)
             ).T
     elif covariance_type == "tied":
@@ -524,8 +524,8 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type, xp=N
     if covariance_type == "full":
         log_prob = xp.empty((n_samples, n_components), dtype=X.dtype, device=device_)
         for k in range(means.shape[0]):
-            mu = means[k, ...]
-            prec_chol = precisions_chol[k, ...]
+            mu = means[k, :]
+            prec_chol = precisions_chol[k, :, :]
             y = (X @ prec_chol) - (mu @ prec_chol)
             log_prob[:, k] = xp.sum(xp.square(y), axis=1)
 
@@ -941,8 +941,8 @@ class GaussianMixture(BaseMixture):
         if self.covariance_type == "full":
             self.precisions_ = xp.empty_like(self.precisions_cholesky_, device=device_)
             for k in range(self.precisions_cholesky_.shape[0]):
-                prec_chol = self.precisions_cholesky_[k, ...]
-                self.precisions_[k, ...] = prec_chol @ prec_chol.T
+                prec_chol = self.precisions_cholesky_[k, :, :]
+                self.precisions_[k, :, :] = prec_chol @ prec_chol.T
 
         elif self.covariance_type == "tied":
             self.precisions_ = self.precisions_cholesky_ @ self.precisions_cholesky_.T
