@@ -29,10 +29,10 @@ from sklearn.pipeline import FeatureUnion, Pipeline, make_pipeline
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder, StandardScaler
 from sklearn.svm import LinearSVC, LinearSVR
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.utils._estimator_html_repr import (
+from sklearn.utils._repr_html.base import _HTMLDocumentationLinkMixin
+from sklearn.utils._repr_html.estimator import (
     _get_css_style,
     _get_visual_block,
-    _HTMLDocumentationLinkMixin,
     _write_label_html,
     estimator_html_repr,
 )
@@ -431,7 +431,7 @@ def test_html_documentation_link_mixin_sklearn(mock_version):
     """
 
     # mock the `__version__` where the mixin is located
-    with patch("sklearn.utils._estimator_html_repr.__version__", mock_version):
+    with patch("sklearn.utils._repr_html.base.__version__", mock_version):
         mixin = _HTMLDocumentationLinkMixin()
 
         assert mixin._doc_link_module == "sklearn"

@@ -8,40 +8,7 @@ from collections import UserDict
 from sklearn.utils._repr_html.base import ReprHTMLMixin
 
 
-class ParamsDict(ReprHTMLMixin, UserDict):
-    """Dictionary-like class to store and provide an HTML representation.
-
-    It builds an HTML structure to be used with Jupyter notebooks or similar
-    environments. It allows storing metadata to track non-default parameters.
-
-    Parameters
-    ----------
-    params : dict, default=None
-
-    non_default : tuple or None
-    """
-
-    def __init__(self, params=None, non_default=tuple()):
-        super().__init__(params or {})
-        self.non_default = non_default
-
-
-def _read_params(name, value, non_default_params):
-    """Categorizes parameters as 'default' or 'user-set' and formats their values.
-    Escapes or truncates parameter values for display safety and readability.
-    """
-    r = reprlib.Repr()
-    r.maxlist = 2  # Show only first 2 items of lists
-    r.maxtuple = 1  # Show only first item of tuples
-    r.maxstring = 50  # Limit string length
-    cleaned_value = html.escape(r.repr(value))
-
-    param_type = "user-set" if name in non_default_params else "default"
-
-    return {"param_type": param_type, "param_name": name, "param_value": cleaned_value}
-
-
-def _html_template(params):
+def _params_html_repr(params):
     """Generate HTML representation of estimator parameters.
 
     Creates an HTML table with parameter names and values, wrapped in a
@@ -77,3 +44,40 @@ def _html_template(params):
     ]
 
     return HTML_TEMPLATE.format(rows="\n".join(rows))
+
+
+class ParamsDict(ReprHTMLMixin, UserDict):
+    """Dictionary-like class to store and provide an HTML representation.
+
+    It builds an HTML structure to be used with Jupyter notebooks or similar
+    environments. It allows storing metadata to track non-default parameters.
+
+    Parameters
+    ----------
+    params : dict, default=None
+        The original dictionary of parameters and their values.
+
+    non_default : tuple
+        The list of non-default parameters.
+    """
+
+    _html_repr = _params_html_repr
+
+    def __init__(self, params=None, non_default=tuple()):
+        super().__init__(params or {})
+        self.non_default = non_default
+
+
+def _read_params(name, value, non_default_params):
+    """Categorizes parameters as 'default' or 'user-set' and formats their values.
+    Escapes or truncates parameter values for display safety and readability.
+    """
+    r = reprlib.Repr()
+    r.maxlist = 2  # Show only first 2 items of lists
+    r.maxtuple = 1  # Show only first item of tuples
+    r.maxstring = 50  # Limit string length
+    cleaned_value = html.escape(r.repr(value))
+
+    param_type = "user-set" if name in non_default_params else "default"
+
+    return {"param_type": param_type, "param_name": name, "param_value": cleaned_value}

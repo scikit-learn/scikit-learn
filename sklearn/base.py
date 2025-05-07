@@ -16,11 +16,11 @@ import numpy as np
 from . import __version__
 from ._config import config_context, get_config
 from .exceptions import InconsistentVersionWarning
-from .utils._estimator_html_repr import _HTMLDocumentationLinkMixin, estimator_html_repr
 from .utils._metadata_requests import _MetadataRequester, _routing_enabled
 from .utils._missing import is_scalar_nan
 from .utils._param_validation import validate_parameter_constraints
-from .utils._repr_html.base import ReprHTMLMixin
+from .utils._repr_html.base import ReprHTMLMixin, _HTMLDocumentationLinkMixin
+from .utils._repr_html.estimator import estimator_html_repr
 from .utils._repr_html.params import ParamsDict
 from .utils._set_output import _SetOutputMixin
 from .utils._tags import (
@@ -196,6 +196,8 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
     >>> estimator.set_params(param=3).fit(X, y).predict(X)
     array([3, 3, 3])
     """
+
+    _html_repr = estimator_html_repr
 
     @classmethod
     def _get_param_names(cls):
@@ -472,36 +474,6 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
             self.get_params(deep=False),
             caller_name=self.__class__.__name__,
         )
-
-    @property
-    def _repr_html_(self):
-        """HTML representation of estimator.
-
-        This is redundant with the logic of `_repr_mimebundle_`. The latter
-        should be favored in the long term, `_repr_html_` is only
-        implemented for consumers who do not interpret `_repr_mimbundle_`.
-        """
-        if get_config()["display"] != "diagram":
-            raise AttributeError(
-                "_repr_html_ is only defined when the "
-                "'display' configuration option is set to "
-                "'diagram'"
-            )
-        return self._repr_html_inner
-
-    def _repr_html_inner(self):
-        """This function is returned by the @property `_repr_html_` to make
-        `hasattr(estimator, "_repr_html_") return `True` or `False` depending
-        on `get_config()["display"]`.
-        """
-        return estimator_html_repr(self)
-
-    def _repr_mimebundle_(self, **kwargs):
-        """Mime bundle used by jupyter kernels to display estimator"""
-        output = {"text/plain": repr(self)}
-        if get_config()["display"] == "diagram":
-            output["text/html"] = estimator_html_repr(self)
-        return output
 
 
 class ClassifierMixin:
