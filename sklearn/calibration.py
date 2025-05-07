@@ -1308,6 +1308,13 @@ def calibration_curve(
     prob_pred : ndarray of shape (n_bins,) or smaller
         The mean predicted probability in each bin.
 
+    See Also
+    --------
+    CalibrationDisplay.from_predictions : Plot calibration curve using true
+        and predicted labels.
+    CalibrationDisplay.from_estimator : Plot calibration curve using an
+        estimator and data.
+
     References
     ----------
     Alexandru Niculescu-Mizil and Rich Caruana (2005) Predicting Good
