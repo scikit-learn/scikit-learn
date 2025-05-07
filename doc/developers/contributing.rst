@@ -728,7 +728,7 @@ We are glad to accept any sort of documentation:
 
   * You can use `pytest` to test docstrings, e.g. assuming the
     `RandomForestClassifier` docstring has been modified, the following command
-    would test it's docstring compliance:
+    would test its docstring compliance:
 
     .. prompt:: bash
 
