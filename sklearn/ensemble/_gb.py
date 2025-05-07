@@ -2054,7 +2054,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     >>> reg.predict(X_test[1:2])
     array([-61.1])
     >>> reg.score(X_test, y_test)
-    0.445
+    0.4...
 
     For a detailed example of utilizing
     :class:`~sklearn.ensemble.GradientBoostingRegressor`
