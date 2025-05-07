@@ -16,7 +16,7 @@ from operator import itemgetter
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils import _as_sparse, metadata_routing
+from sklearn.utils import _align_api_if_sparse, metadata_routing
 
 from ..base import BaseEstimator, OneToOneFeatureMixin, TransformerMixin, _fit_context
 from ..exceptions import NotFittedError
@@ -880,7 +880,7 @@ class HashingVectorizer(
             X.data.fill(1)
         if self.norm is not None:
             X = normalize(X, norm=self.norm, copy=False)
-        return _as_sparse(X)
+        return _align_api_if_sparse(X)
 
     def fit_transform(self, X, y=None):
         """Transform a sequence of documents to a document-term matrix.
@@ -1393,7 +1393,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
                 X = self._sort_features(X, vocabulary)
             self.vocabulary_ = vocabulary
 
-        return _as_sparse(X)
+        return _align_api_if_sparse(X)
 
     def transform(self, raw_documents):
         """Transform documents to document-term matrix.
@@ -1421,7 +1421,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         _, X = self._count_vocab(raw_documents, fixed_vocab=True)
         if self.binary:
             X.data.fill(1)
-        return _as_sparse(X)
+        return _align_api_if_sparse(X)
 
     def inverse_transform(self, X):
         """Return terms per document with nonzero entries in X.
@@ -1720,7 +1720,7 @@ class TfidfTransformer(
         if self.norm is not None:
             X = normalize(X, norm=self.norm, copy=False)
 
-        return _as_sparse(X)
+        return _align_api_if_sparse(X)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()

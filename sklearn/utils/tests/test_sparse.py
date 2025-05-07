@@ -18,10 +18,9 @@ import sklearn
         ("spmatrix", csc_matrix([[1, 2, 3]]), csc_matrix),
     ],
 )
-def test_interface_if_sparse(sparse_interface, x, result_type):
+def test_align_api_if_sparse(sparse_interface, x, result_type):
     with sklearn.config_context(sparse_interface=sparse_interface):
-        result = sklearn.utils._select_interface_if_sparse(x)
-        result = sklearn.utils._as_sparse(x)
+        result = sklearn.utils._align_api_if_sparse(x)
         assert isinstance(result, result_type)
 
 
@@ -32,17 +31,10 @@ def test_interface_if_sparse(sparse_interface, x, result_type):
         ("spmatrix", np.array([[1, 2, 3]]), np.ndarray),
     ],
 )
-def test_ndarray_select_interface_if_sparse(sparse_interface, x, result_type):
+def test_ndarray_align_api_if_sparse(sparse_interface, x, result_type):
     with sklearn.config_context(sparse_interface=sparse_interface):
-        result = sklearn.utils._select_interface_if_sparse(x)
+        result = sklearn.utils._align_api_if_sparse(x)
         assert isinstance(result, result_type)
-
-
-@pytest.mark.parametrize("sparse_interface", ["sparray", "spmatrix"])
-def test_ndarray_as_sparse_raises(sparse_interface):
-    with sklearn.config_context(sparse_interface=sparse_interface):
-        with pytest.raises(TypeError, match="sparse container"):
-            sklearn.utils._as_sparse(np.array([[1, 2, 3]]))
 
 
 @pytest.mark.parametrize(

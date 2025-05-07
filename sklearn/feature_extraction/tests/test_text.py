@@ -27,7 +27,7 @@ from sklearn.feature_extraction.text import (
 from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
-from sklearn.utils import _as_sparse
+from sklearn.utils import _align_api_if_sparse
 from sklearn.utils._testing import (
     assert_allclose_dense_sparse,
     assert_almost_equal,
@@ -1614,7 +1614,7 @@ def test_tfidf_transformer_copy(csr_container):
     X_transform = transformer.transform(X_csr, copy=False)
     # allow for config["sparse_interface"] to change output type
     # there should be no data copied, but the `id` will change.
-    if _as_sparse(X_csr) is X_csr:
+    if _align_api_if_sparse(X_csr) is X_csr:
         assert X_transform is X_csr
     else:
         assert X_transform is not X_csr
