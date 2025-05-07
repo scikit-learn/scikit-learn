@@ -411,6 +411,11 @@ Tips on Practical Use
   threshold. Meanwhile, larger ``C`` values will take more time to train,
   sometimes up to 10 times longer, as shown in [#3]_.
 
+  .. rubric:: Examples
+
+  * :ref:`sphx_glr_auto_examples_svm_plot_svm_hyperplane_margin.py`
+
+
 * Support Vector Machine algorithms are not scale invariant, so **it
   is highly recommended to scale your data**. For example, scale each
   attribute on the input vector X to [0,1] or [-1,+1], or standardize it
@@ -632,7 +637,11 @@ indicates a perfect prediction. But problems are usually not always perfectly
 separable with a hyperplane, so we allow some samples to be at a distance :math:`\zeta_i` from
 their correct margin boundary. The penalty term `C` controls the strength of
 this penalty, and as a result, acts as an inverse regularization parameter
-(see note below).
+(see the figure below). Also please refer to the note below.
+
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_svm_hyperplane_margin_001.png
+   :align: center
+   :scale: 75
 
 The dual problem to the primal is
 
