@@ -53,7 +53,7 @@ dependent_packages = {
     "towncrier": ("24.8.0", "docs"),
     # XXX: Pin conda-lock to the latest released version (needs manual update
     # from time to time)
-    "conda-lock": ("2.5.7", "maintenance"),
+    "conda-lock": ("3.0.1", "maintenance"),
 }
 
 
