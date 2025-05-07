@@ -386,7 +386,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         log_likelihood : float
             Log-likelihood of `X` under the Gaussian mixture model.
         """
-        return self.score_samples(X).mean()
+        # check if X is on the same namespace as fitted attributes:
+        xp, _ = get_namespace(X, self.means_)
+        return xp.mean(self.score_samples(X))
 
     def predict(self, X):
         """Predict the labels for the data samples in X using trained model.

@@ -1514,6 +1514,13 @@ def test_gaussian_mixture_array_api_compliance(
         assert device(X) == device(gmm.means_)
         assert device(X) == device(gmm.covariances_)
 
+        # smoke test other methods
+        # TODO: maybe test with X on different namespace/device as training
+        gmm.score_samples(X)
+        gmm.score(X)
+        gmm.aic(X)
+        gmm.bic(X)
+
     assert_allclose(means_, _convert_to_numpy(gmm.means_, xp=xp))
     assert_allclose(covariances_, _convert_to_numpy(gmm.covariances_, xp=xp))
 
