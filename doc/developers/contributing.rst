@@ -734,7 +734,10 @@ We are glad to accept any sort of documentation:
 
       pytest --doctest-modules sklearn/ensemble/_forest.py -k RandomForestClassifier
 
-  * The correct order of sections is: Parameters, Returns, See Also, Notes, Examples
+  * The correct order of sections is: Parameters, Returns, See Also, Notes, Examples.
+    See the `numpydoc documentation
+    <https://numpydoc.readthedocs.io/en/latest/format.html#sections>`_ for
+    information on other possible sections.
 
   * When documenting the parameters and attributes, here is a list of some
     well-formatted examples
@@ -802,10 +805,10 @@ We are glad to accept any sort of documentation:
       SelectFpr : Select features based on a false positive rate test.
 
   * The "Notes" section is optional. It is meant to provide information on
-    specific behavior of the class/classmethod/method
+    specific behavior of the class/classmethod/method.
 
   * Add one or two **snippets** of code in "Example" section to show how it can
-    be used.
+    be used. Keep this section as brief as possible.
 
 
 .. dropdown:: Guidelines for writing the user guide and other reStructuredText documents
