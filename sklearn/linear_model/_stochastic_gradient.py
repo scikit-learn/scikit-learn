@@ -154,10 +154,19 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
                 "learning_rate is 'optimal'. alpha is used "
                 "to compute the optimal learning rate."
             )
+        if self.penalty == "elasticnet" and self.l1_ratio is None:
+            raise ValueError("l1_ratio must be set when penalty is 'elasticnet'")
 
         # raises ValueError if not registered
         self._get_penalty_type(self.penalty)
         self._get_learning_rate_type(self.learning_rate)
+
+    def _get_l1_ratio(self):
+        if self.l1_ratio is None:
+            # plain_sgd expects a float. Any value is fine since at this point
+            # penalty can't be "elsaticnet" so l1_ratio is not used.
+            return 0.0
+        return self.l1_ratio
 
     def _get_loss_function(self, loss):
         """Get concrete ``LossFunction`` object for str ``loss``."""
@@ -462,7 +471,7 @@ def fit_binary(
         penalty_type,
         alpha,
         C,
-        est.l1_ratio,
+        est._get_l1_ratio(),
         dataset,
         validation_mask,
         est.early_stopping,
@@ -993,7 +1002,11 @@ class SGDClassifier(BaseSGDClassifier):
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
         Only used if `penalty` is 'elasticnet'.
-        Values must be in the range `[0.0, 1.0]`.
+        Values must be in the range `[0.0, 1.0]` or can be `None` if
+        `penalty` is not `elasticnet`.
+
+        .. versionchanged:: 1.7
+            `l1_ratio` can be `None` when `penalty` is not "elasticnet".
 
     fit_intercept : bool, default=True
         Whether the intercept should be estimated or not. If False, the
@@ -1194,7 +1207,7 @@ class SGDClassifier(BaseSGDClassifier):
         **BaseSGDClassifier._parameter_constraints,
         "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
         "alpha": [Interval(Real, 0, None, closed="left")],
-        "l1_ratio": [Interval(Real, 0, 1, closed="both")],
+        "l1_ratio": [Interval(Real, 0, 1, closed="both"), None],
         "power_t": [Interval(Real, None, None, closed="neither")],
         "epsilon": [Interval(Real, 0, None, closed="left")],
         "learning_rate": [
@@ -1695,7 +1708,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             penalty_type,
             alpha,
             C,
-            self.l1_ratio,
+            self._get_l1_ratio(),
             dataset,
             validation_mask,
             self.early_stopping,
@@ -1796,7 +1809,11 @@ class SGDRegressor(BaseSGDRegressor):
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
         Only used if `penalty` is 'elasticnet'.
-        Values must be in the range `[0.0, 1.0]`.
+        Values must be in the range `[0.0, 1.0]` or can be `None` if
+        `penalty` is not `elasticnet`.
+
+        .. versionchanged:: 1.7
+            `l1_ratio` can be `None` when `penalty` is not "elasticnet".
 
     fit_intercept : bool, default=True
         Whether the intercept should be estimated or not. If False, the
@@ -1976,7 +1993,7 @@ class SGDRegressor(BaseSGDRegressor):
         **BaseSGDRegressor._parameter_constraints,
         "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
         "alpha": [Interval(Real, 0, None, closed="left")],
-        "l1_ratio": [Interval(Real, 0, 1, closed="both")],
+        "l1_ratio": [Interval(Real, 0, 1, closed="both"), None],
         "power_t": [Interval(Real, None, None, closed="neither")],
         "learning_rate": [
             StrOptions({"constant", "optimal", "invscaling", "adaptive"}),

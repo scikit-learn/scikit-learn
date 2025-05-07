@@ -245,7 +245,7 @@ The Bag of Words representation
 -------------------------------
 
 Text Analysis is a major application field for machine learning
-algorithms. However the raw data, a sequence of symbols cannot be fed
+algorithms. However the raw data, a sequence of symbols, cannot be fed
 directly to the algorithms themselves as most of them expect numerical
 feature vectors with a fixed size rather than the raw text documents
 with variable length.
@@ -1040,6 +1040,8 @@ implemented as a scikit-learn transformer, so it can be used in pipelines. See::
     >>> patches = image.PatchExtractor(patch_size=(2, 2)).transform(five_images)
     >>> patches.shape
     (45, 2, 2, 3)
+
+.. _connectivity_graph_image:
 
 Connectivity graph of an image
 -------------------------------

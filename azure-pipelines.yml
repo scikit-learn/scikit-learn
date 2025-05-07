@@ -35,7 +35,7 @@ jobs:
     - bash: |
         source build_tools/shared.sh
         # Include pytest compatibility with mypy
-        pip install pytest $(get_dep ruff min) $(get_dep mypy min) $(get_dep black min) cython-lint
+        pip install pytest $(get_dep ruff min) $(get_dep mypy min) cython-lint
       displayName: Install linters
     - bash: |
         ./build_tools/linting.sh
@@ -88,6 +88,7 @@ jobs:
         DISTRIB: 'conda-free-threaded'
         LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
         COVERAGE: 'false'
+        SKLEARN_FAULTHANDLER_TIMEOUT: '1800'  # 30 * 60 seconds
 
 # Will run all the time regardless of linting outcome.
 - template: build_tools/azure/posix.yml
