@@ -292,7 +292,7 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         pos_label : int, float, bool or str, default=None
             The label of the positive class. When `pos_label=None`, if `y_true`
             is in {-1, 1} or {0, 1}, `pos_label` is set to 1, otherwise an
-            error will be raised.
+            error will be raised. Should not be used in the case of regression.
 
         normalize_scale : bool, default=True
             Whether to normalize values between 0 and 1 for the plot.
