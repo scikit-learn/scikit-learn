@@ -893,6 +893,11 @@ class GraphicalLassoCV(BaseGraphicalLasso):
            [0.017, 0.036, 0.094, 0.69 ]])
     >>> np.around(cov.location_, decimals=3)
     array([0.073, 0.04 , 0.038, 0.143])
+
+    For an example comparing :class:`sklearn.covariance.GraphicalLassoCV`,
+    :func:`sklearn.covariance.ledoit_wolf` shrinkage and the empirical covariance
+    on high-dimensional gaussian data, see
+    :ref:`sphx_glr_auto_examples_covariance_plot_sparse_cov.py`.
     """
 
     _parameter_constraints: dict = {

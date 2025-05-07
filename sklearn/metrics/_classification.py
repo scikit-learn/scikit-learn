@@ -36,7 +36,6 @@ from ..utils._array_api import (
     _searchsorted,
     _tolist,
     _union1d,
-    device,
     get_namespace,
     get_namespace_and_device,
     xpx,
@@ -655,8 +654,7 @@ def multilabel_confusion_matrix(
             [1, 2]]])
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
-    xp, _ = get_namespace(y_true, y_pred)
-    device_ = device(y_true, y_pred)
+    xp, _, device_ = get_namespace_and_device(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight, device=device_)
