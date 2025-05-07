@@ -1,0 +1,5 @@
+- |API| :func:`~metrics.pairwise.paired_distances`,
+  :func:`~metrics.pairwise.paired_euclidean_distances`,
+  :func:`~metrics.pairwise.paired_manhattan_distances` and
+  :func:`~metrics.pairwise.paired_cosine_distances` are now deprecated and
+  will be removed in 1.9. By :user:`Success Moses <SuccessMoses>`.

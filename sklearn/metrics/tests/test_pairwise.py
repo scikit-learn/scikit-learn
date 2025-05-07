@@ -16,12 +16,20 @@ from scipy.spatial.distance import (
 
 from sklearn import config_context
 from sklearn.exceptions import DataConversionWarning
+
+# TODO(1.9): Remove import for paired_distances, paired_cosine_distances,
+# paired_euclidean_distances, paired_manhattan_distances since
+# paired_*_distances public functions are deprecated in 1.9.
 from sklearn.metrics.pairwise import (
-    PAIRED_DISTANCES,
+    _PAIRED_DISTANCES,
     PAIRWISE_BOOLEAN_FUNCTIONS,
     PAIRWISE_DISTANCE_FUNCTIONS,
     PAIRWISE_KERNEL_FUNCTIONS,
     _euclidean_distances_upcast,
+    _paired_cosine_distances,
+    _paired_distances,
+    _paired_euclidean_distances,
+    _paired_manhattan_distances,
     additive_chi2_kernel,
     check_paired_arrays,
     check_pairwise_arrays,
@@ -410,9 +418,9 @@ def test_pairwise_kernels_filter_param():
         pairwise_kernels(X, Y, metric="rbf", **params)
 
 
-@pytest.mark.parametrize("metric, func", PAIRED_DISTANCES.items())
+@pytest.mark.parametrize("metric, func", _PAIRED_DISTANCES.items())
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_paired_distances(metric, func, csr_container):
+def test__paired_distances(metric, func, csr_container):
     # Test the pairwise_distance helper function.
     rng = np.random.RandomState(0)
     # Euclidean distance should be equivalent to calling the function.
@@ -420,7 +428,7 @@ def test_paired_distances(metric, func, csr_container):
     # Euclidean distance, with Y != X.
     Y = rng.random_sample((5, 4))
 
-    S = paired_distances(X, Y, metric=metric)
+    S = _paired_distances(X, Y, metric=metric)
     S2 = func(X, Y)
     assert_allclose(S, S2)
     S3 = func(csr_container(X), csr_container(Y))
@@ -442,15 +450,15 @@ def test_paired_distances_callable(global_dtype):
     # Euclidean distance, with Y != X.
     Y = rng.random_sample((5, 4)).astype(global_dtype, copy=False)
 
-    S = paired_distances(X, Y, metric="manhattan")
-    S2 = paired_distances(X, Y, metric=lambda x, y: np.abs(x - y).sum(axis=0))
+    S = _paired_distances(X, Y, metric="manhattan")
+    S2 = _paired_distances(X, Y, metric=lambda x, y: np.abs(x - y).sum(axis=0))
     assert_allclose(S, S2)
 
     # Test that a value error is raised when the lengths of X and Y should not
     # differ
     Y = rng.random_sample((3, 4))
     with pytest.raises(ValueError):
-        paired_distances(X, Y)
+        _paired_distances(X, Y)
 
 
 @pytest.mark.parametrize("dok_container", DOK_CONTAINERS)
@@ -1186,27 +1194,27 @@ def test_haversine_distances():
 # Paired distances
 
 
-def test_paired_euclidean_distances():
+def test__paired_euclidean_distances():
     # Check the paired Euclidean distances computation
     X = [[0], [0]]
     Y = [[1], [2]]
-    D = paired_euclidean_distances(X, Y)
+    D = _paired_euclidean_distances(X, Y)
     assert_allclose(D, [1.0, 2.0])
 
 
-def test_paired_manhattan_distances():
+def test__paired_manhattan_distances():
     # Check the paired manhattan distances computation
     X = [[0], [0]]
     Y = [[1], [2]]
-    D = paired_manhattan_distances(X, Y)
+    D = _paired_manhattan_distances(X, Y)
     assert_allclose(D, [1.0, 2.0])
 
 
-def test_paired_cosine_distances():
+def test__paired_cosine_distances():
     # Check the paired manhattan distances computation
     X = [[0], [0]]
     Y = [[1], [2]]
-    D = paired_cosine_distances(X, Y)
+    D = _paired_cosine_distances(X, Y)
     assert_allclose(D, [0.5, 0.5])
 
 
@@ -1667,6 +1675,66 @@ def test_sparse_manhattan_readonly_dataset(csr_container):
     Parallel(n_jobs=2, max_nbytes=0)(
         delayed(manhattan_distances)(m1, m2) for m1, m2 in zip(matrices1, matrices2)
     )
+
+
+# TODO(1.9): Remove in 1.9
+def test_paired_distances_deprecation():
+    """Check that we issue the FutureWarning regarding the deprecation of
+    paired_distances for gh-26982"""
+
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((5, 4))
+    Y = rng.random_sample((5, 4))
+
+    warn_msg = "The public function `sklearn.pairwise.paired_distances`"
+    " has been deprecated in 1.7 and will be removed in 1.9."
+    with pytest.warns(FutureWarning, match=warn_msg):
+        paired_distances(X, Y)
+
+
+# TODO(1.9): Remove in 1.9
+def test_paired_cosine_distances_deprecation():
+    """Check that we issue the FutureWarning regarding the deprecation of
+    paired_cosine_distances for gh-26982"""
+
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((5, 4))
+    Y = rng.random_sample((5, 4))
+
+    warn_msg = "The public function `sklearn.pairwise.paired_cosine_distances`"
+    " has been deprecated in 1.7 and will be removed in 1.9."
+    with pytest.warns(FutureWarning, match=warn_msg):
+        paired_cosine_distances(X, Y)
+
+
+# TODO(1.9): Remove in 1.9
+def test_paired_euclidean_distances_deprecation():
+    """Check that we issue the FutureWarning regarding the deprecation of
+    paired_euclidean_distances for gh-26982"""
+
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((5, 4))
+    Y = rng.random_sample((5, 4))
+
+    warn_msg = "The public function `sklearn.pairwise.paired_euclidean_distances`"
+    " has been deprecated in 1.7 and will be removed in 1.9."
+    with pytest.warns(FutureWarning, match=warn_msg):
+        paired_euclidean_distances(X, Y)
+
+
+# TODO(1.9): Remove in 1.9
+def test_paired_manhattan_distances_deprecation():
+    """Check that we issue the FutureWarning regarding the deprecation of
+    paired_manhattan_distances for gh-26982"""
+
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((5, 4))
+    Y = rng.random_sample((5, 4))
+
+    warn_msg = "The public function `sklearn.pairwise.paired_manhattan_distances`"
+    " has been deprecated in 1.7 and will be removed in 1.9."
+    with pytest.warns(FutureWarning, match=warn_msg):
+        paired_manhattan_distances(X, Y)
 
 
 # TODO(1.8): remove
