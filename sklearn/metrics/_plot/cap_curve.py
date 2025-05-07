@@ -104,9 +104,9 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         normalize_scale=True,
         name=None,
         plot_chance_level=True,
-        chance_level_kw=None,
+        chance_level_kwargs=None,
         plot_perfect=True,
-        perfect_level_kw=None,
+        perfect_level_kwargs=None,
         despine=False,
         **kwargs,
     ):
@@ -130,14 +130,14 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             predictions are independent of the feature values passed to
             `decision_function` or `predict_proba`.
 
-        chance_level_kw : dict, default=None
+        chance_level_kwargs : dict, default=None
             Keyword arguments to be passed to matplotlib's `plot` for rendering
             the chance level line.
 
         plot_perfect : bool, default=True
             Whether to plot the perfect model line.
 
-        perfect_level_kw : dict, default=None
+        perfect_level_kwargs : dict, default=None
             Keyword arguments to be passed to matplotlib's `plot` for rendering
             the perfect line.
 
@@ -177,11 +177,11 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             "color": "black",
         }
 
-        if perfect_level_kw is None:
-            perfect_level_kw = {}
+        if perfect_level_kwargs is None:
+            perfect_level_kwargs = {}
 
         perfect_level_line_kw = _validate_style_kwargs(
-            default_perfect_level_line_kw, perfect_level_kw
+            default_perfect_level_line_kw, perfect_level_kwargs
         )
 
         default_chance_level_line_kw = {
@@ -190,11 +190,11 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             "linestyle": "--",
         }
 
-        if chance_level_kw is None:
-            chance_level_kw = {}
+        if chance_level_kwargs is None:
+            chance_level_kwargs = {}
 
         chance_level_line_kw = _validate_style_kwargs(
-            default_chance_level_line_kw, chance_level_kw
+            default_chance_level_line_kw, chance_level_kwargs
         )
 
         (self.line_,) = self.ax_.plot(
@@ -258,9 +258,9 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         pos_label=None,
         normalize_scale=True,
         plot_chance_level=True,
-        chance_level_kw=None,
+        chance_level_kwargs=None,
         plot_perfect=True,
-        perfect_level_kw=None,
+        perfect_level_kwargs=None,
         despine=False,
         name=None,
         ax=None,
@@ -301,14 +301,14 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             predictions are independent of the feature values passed to
             `decision_function` or `predict_proba`.
 
-        chance_level_kw : dict, default=None
+        chance_level_kwargs : dict, default=None
             Keyword arguments to be passed to matplotlib's `plot` for rendering
             the chance level line.
 
         plot_perfect : bool, default=True
             Whether to plot the perfect model line.
 
-        perfect_level_kw : dict, default=None
+        perfect_level_kwargs : dict, default=None
             Keyword arguments to be passed to matplotlib's `plot` for rendering
             the perfect line.
 
@@ -389,9 +389,9 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             name=name,
             normalize_scale=normalize_scale,
             plot_chance_level=plot_chance_level,
-            chance_level_kw=chance_level_kw,
+            chance_level_kwargs=chance_level_kwargs,
             plot_perfect=plot_perfect,
-            perfect_level_kw=perfect_level_kw,
+            perfect_level_kwargs=perfect_level_kwargs,
             despine=despine,
             **kwargs,
         )
@@ -408,9 +408,9 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         pos_label=None,
         normalize_scale=True,
         plot_chance_level=True,
-        chance_level_kw=None,
+        chance_level_kwargs=None,
         plot_perfect=True,
-        perfect_level_kw=None,
+        perfect_level_kwargs=None,
         despine=False,
         name=None,
         ax=None,
@@ -461,14 +461,14 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             predictions are independent of the feature values passed to
             `decision_function` or `predict_proba`.
 
-        chance_level_kw : dict, default=None
+        chance_level_kwargs : dict, default=None
             Keyword arguments to be passed to matplotlib's `plot` for rendering
             the chance level line.
 
         plot_perfect : bool, default=True
             Whether to plot the perfect model line.
 
-        perfect_level_kw : dict, default=None
+        perfect_level_kwargs : dict, default=None
             Keyword arguments to be passed to matplotlib's `plot` for rendering
             the perfect line.
 
@@ -510,9 +510,9 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             name=name,
             normalize_scale=normalize_scale,
             plot_chance_level=plot_chance_level,
-            chance_level_kw=chance_level_kw,
+            chance_level_kwargs=chance_level_kwargs,
             plot_perfect=plot_perfect,
-            perfect_level_kw=perfect_level_kw,
+            perfect_level_kwargs=perfect_level_kwargs,
             despine=despine,
             ax=ax,
             pos_label=pos_label,

@@ -67,7 +67,7 @@ def logistic_regression_model(data_binary):
 @pytest.mark.parametrize("plot_chance_level", [True, False])
 @pytest.mark.parametrize("plot_perfect", [True, False])
 @pytest.mark.parametrize("name", ["Logistic Regression", None])
-@pytest.mark.parametrize("chance_level_kw", [{"color": "red", "lw": 3}, None])
+@pytest.mark.parametrize("chance_level_kwargs", [{"color": "red", "lw": 3}, None])
 @pytest.mark.parametrize("y_pred_dtype", [np.float32, np.float64])
 def test_cumulative_accuracy_display_from_predictions(
     pyplot,
@@ -76,7 +76,7 @@ def test_cumulative_accuracy_display_from_predictions(
     plot_chance_level,
     plot_perfect,
     name,
-    chance_level_kw,
+    chance_level_kwargs,
     y_pred_dtype,
 ):
     _, y = data_binary
@@ -88,7 +88,7 @@ def test_cumulative_accuracy_display_from_predictions(
         normalize_scale=normalize_scale,
         plot_chance_level=plot_chance_level,
         name=name,
-        chance_level_kw=chance_level_kw,
+        chance_level_kwargs=chance_level_kwargs,
     )
 
     assert_valid_cap_display(cap_display, plot_chance_level, plot_perfect)
@@ -240,7 +240,7 @@ def test_estimator_has_too_many_classes(pyplot):
 @pytest.mark.parametrize("plot_chance_level", [True, False])
 @pytest.mark.parametrize("plot_perfect", [True, False])
 @pytest.mark.parametrize(
-    "chance_level_kw",
+    "chance_level_kwargs",
     [
         None,
         {"linewidth": 1, "color": "red", "linestyle": "-", "label": "DummyEstimator"},
@@ -248,7 +248,7 @@ def test_estimator_has_too_many_classes(pyplot):
     ],
 )
 @pytest.mark.parametrize(
-    "perfect_level_kw",
+    "perfect_level_kwargs",
     [
         None,
         {
@@ -271,9 +271,9 @@ def test_cap_curve_chance_level_line(
     data_binary,
     constructor_name,
     plot_chance_level,
-    chance_level_kw,
+    chance_level_kwargs,
     plot_perfect,
-    perfect_level_kw,
+    perfect_level_kwargs,
     pos_label,
 ):
     X, y = data_binary
@@ -294,9 +294,9 @@ def test_cap_curve_chance_level_line(
             y,
             alpha=0.8,
             plot_chance_level=plot_chance_level,
-            chance_level_kw=chance_level_kw,
+            chance_level_kwargs=chance_level_kwargs,
             plot_perfect=plot_perfect,
-            perfect_level_kw=perfect_level_kw,
+            perfect_level_kwargs=perfect_level_kwargs,
         )
     else:
         display = CAPCurveDisplay.from_predictions(
@@ -304,9 +304,9 @@ def test_cap_curve_chance_level_line(
             y_pred,
             alpha=0.8,
             plot_chance_level=plot_chance_level,
-            chance_level_kw=chance_level_kw,
+            chance_level_kwargs=chance_level_kwargs,
             plot_perfect=plot_perfect,
-            perfect_level_kw=perfect_level_kw,
+            perfect_level_kwargs=perfect_level_kwargs,
         )
 
     import matplotlib as mpl
@@ -323,24 +323,30 @@ def test_cap_curve_chance_level_line(
     else:
         assert display.chance_level_ is None
 
-    if plot_chance_level and chance_level_kw is None:
+    if plot_chance_level and chance_level_kwargs is None:
         assert display.chance_level_.get_color() == "k"
         assert display.chance_level_.get_linestyle() == "--"
         assert display.chance_level_.get_label() == "Chance level"
     elif plot_chance_level:
-        assert display.chance_level_.get_label() == chance_level_kw["label"]
-        if "c" in chance_level_kw:
-            assert display.chance_level_.get_color() == chance_level_kw["c"]
+        assert display.chance_level_.get_label() == chance_level_kwargs["label"]
+        if "c" in chance_level_kwargs:
+            assert display.chance_level_.get_color() == chance_level_kwargs["c"]
         else:
-            assert display.chance_level_.get_color() == chance_level_kw["color"]
-        if "lw" in chance_level_kw:
-            assert display.chance_level_.get_linewidth() == chance_level_kw["lw"]
+            assert display.chance_level_.get_color() == chance_level_kwargs["color"]
+        if "lw" in chance_level_kwargs:
+            assert display.chance_level_.get_linewidth() == chance_level_kwargs["lw"]
         else:
-            assert display.chance_level_.get_linewidth() == chance_level_kw["linewidth"]
-        if "ls" in chance_level_kw:
-            assert display.chance_level_.get_linestyle() == chance_level_kw["ls"]
+            assert (
+                display.chance_level_.get_linewidth()
+                == chance_level_kwargs["linewidth"]
+            )
+        if "ls" in chance_level_kwargs:
+            assert display.chance_level_.get_linestyle() == chance_level_kwargs["ls"]
         else:
-            assert display.chance_level_.get_linestyle() == chance_level_kw["linestyle"]
+            assert (
+                display.chance_level_.get_linestyle()
+                == chance_level_kwargs["linestyle"]
+            )
 
     if plot_perfect:
         assert isinstance(display.perfect_level_, mpl.lines.Line2D)
@@ -353,27 +359,29 @@ def test_cap_curve_chance_level_line(
     else:
         assert display.perfect_level_ is None
 
-    if plot_perfect and perfect_level_kw is None:
+    if plot_perfect and perfect_level_kwargs is None:
         assert display.perfect_level_.get_color() == "black"
         assert display.perfect_level_.get_linestyle() == ":"
         assert display.perfect_level_.get_label() == "Perfect predictions"
     elif plot_perfect:
-        assert display.perfect_level_.get_label() == perfect_level_kw["label"]
-        if "c" in perfect_level_kw:
-            assert display.perfect_level_.get_color() == perfect_level_kw["c"]
+        assert display.perfect_level_.get_label() == perfect_level_kwargs["label"]
+        if "c" in perfect_level_kwargs:
+            assert display.perfect_level_.get_color() == perfect_level_kwargs["c"]
         else:
-            assert display.perfect_level_.get_color() == perfect_level_kw["color"]
-        if "lw" in perfect_level_kw:
-            assert display.perfect_level_.get_linewidth() == perfect_level_kw["lw"]
+            assert display.perfect_level_.get_color() == perfect_level_kwargs["color"]
+        if "lw" in perfect_level_kwargs:
+            assert display.perfect_level_.get_linewidth() == perfect_level_kwargs["lw"]
         else:
             assert (
-                display.perfect_level_.get_linewidth() == perfect_level_kw["linewidth"]
+                display.perfect_level_.get_linewidth()
+                == perfect_level_kwargs["linewidth"]
             )
-        if "ls" in perfect_level_kw:
-            assert display.perfect_level_.get_linestyle() == perfect_level_kw["ls"]
+        if "ls" in perfect_level_kwargs:
+            assert display.perfect_level_.get_linestyle() == perfect_level_kwargs["ls"]
         else:
             assert (
-                display.perfect_level_.get_linestyle() == perfect_level_kw["linestyle"]
+                display.perfect_level_.get_linestyle()
+                == perfect_level_kwargs["linestyle"]
             )
 
 
