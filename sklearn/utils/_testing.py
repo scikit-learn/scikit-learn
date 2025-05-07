@@ -1021,6 +1021,7 @@ def _convert_container(
     elif constructor_name == "pyarrow":
         pa = pytest.importorskip("pyarrow", minversion=minversion)
         array = np.asarray(container)
+        array = array[:, None] if array.ndim == 1 else array
         if columns_name is None:
             columns_name = [f"col{i}" for i in range(array.shape[1])]
         data = {name: array[:, i] for i, name in enumerate(columns_name)}
@@ -1042,6 +1043,9 @@ def _convert_container(
     elif constructor_name == "series":
         pd = pytest.importorskip("pandas", minversion=minversion)
         return pd.Series(container, dtype=dtype)
+    elif constructor_name == "pyarrow_array":
+        pa = pytest.importorskip("pyarrow", minversion=minversion)
+        return pa.array(container)
     elif constructor_name == "polars_series":
         pl = pytest.importorskip("polars", minversion=minversion)
         return pl.Series(values=container)
