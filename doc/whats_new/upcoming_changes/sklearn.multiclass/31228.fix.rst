@@ -1,4 +1,5 @@
-- The method `predict_proba` of :class:`sklearn.multiclass.OneVsRestClassifier` now
-  avoids division by zero when normalizing the predicted probabilities matrix.
+- The `predict_proba` method of :class:`sklearn.multiclass.OneVsRestClassifier` now
+  returns zero for all classes when all inner estimators never predict their positive
+  class.
   By :user:`Luis M. B. Varona <Luis-Varona>`, :user:`Marc Bresson <MarcBresson>`, and
-  :user:`Jérémie du Boisberranger <jeremiedbb>`
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
