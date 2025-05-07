@@ -501,6 +501,15 @@ def _logistic_regression_path(
             w0 = sol.solve(X=X, y=target, sample_weight=sample_weight)
             n_iter_i = sol.iteration
         elif solver == "liblinear":
+            if len(classes) > 2:
+                warnings.warn(
+                    "Using the 'liblinear' solver for multiclass classification is "
+                    "deprecated. An error will be raised in 1.8. Either use another "
+                    "solver which supports the multinomial loss or wrap the estimator "
+                    "in a OneVsRestClassifier to keep applying a one-versus-rest "
+                    "scheme.",
+                    FutureWarning,
+                )
             (
                 coef_,
                 intercept_,
@@ -931,7 +940,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            'lbfgs'           'l2', None                     yes
            'liblinear'       'l1', 'l2'                     no
            'newton-cg'       'l2', None                     yes
-           'newton-cholesky' 'l2', None                     no
+           'newton-cholesky' 'l2', None                     yes
            'sag'             'l2', None                     yes
            'saga'            'elasticnet', 'l1', 'l2', None yes
            ================= ============================== ======================
@@ -1238,7 +1247,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         check_classification_targets(y)
         self.classes_ = np.unique(y)
 
-        # TODO(1.7) remove multi_class
+        # TODO(1.8) remove multi_class
         multi_class = self.multi_class
         if self.multi_class == "multinomial" and len(self.classes_) == 2:
             warnings.warn(
@@ -1274,6 +1283,15 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         multi_class = _check_multi_class(multi_class, solver, len(self.classes_))
 
         if solver == "liblinear":
+            if len(self.classes_) > 2:
+                warnings.warn(
+                    "Using the 'liblinear' solver for multiclass classification is "
+                    "deprecated. An error will be raised in 1.8. Either use another "
+                    "solver which supports the multinomial loss or wrap the estimator "
+                    "in a OneVsRestClassifier to keep applying a one-versus-rest "
+                    "scheme.",
+                    FutureWarning,
+                )
             if effective_n_jobs(self.n_jobs) != 1:
                 warnings.warn(
                     "'n_jobs' > 1 does not have any effect when"
@@ -1568,7 +1586,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            'lbfgs'           'l2'                           yes
            'liblinear'       'l1', 'l2'                     no
            'newton-cg'       'l2'                           yes
-           'newton-cholesky' 'l2',                          no
+           'newton-cholesky' 'l2',                          yes
            'sag'             'l2',                          yes
            'saga'            'elasticnet', 'l1', 'l2'       yes
            ================= ============================== ======================
@@ -1900,7 +1918,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         classes = self.classes_ = label_encoder.classes_
         encoded_labels = label_encoder.transform(label_encoder.classes_)
 
-        # TODO(1.7) remove multi_class
+        # TODO(1.8) remove multi_class
         multi_class = self.multi_class
         if self.multi_class == "multinomial" and len(self.classes_) == 2:
             warnings.warn(
