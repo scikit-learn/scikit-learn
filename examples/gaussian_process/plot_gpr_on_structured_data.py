@@ -102,6 +102,15 @@ class SequenceKernel(GenericKernelMixin, Kernel):
         return cloned
 
 
+# %%
+# .. note::
+#    ``baseline_similarity`` is **frozen** in this example because optimisation
+#    drives it to *zero*, flattening the log‑marginal‑likelihood surface.
+#    L‑BFGS‑B therefore stops with ``ABNORMAL_TERMINATION_IN_LNSRCH`` after only
+#    a couple of iterations, triggering two ``ConvergenceWarning``\ s.
+#
+# %%
+# Freeze baseline_similarity to avoid ill‑conditioned optimisation
 kernel = SequenceKernel(baseline_similarity_bounds="fixed")
 
 # %%
