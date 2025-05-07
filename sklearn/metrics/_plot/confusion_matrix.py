@@ -24,7 +24,7 @@ class ConfusionMatrixDisplay:
     For general information regarding `scikit-learn` visualization tools, see
     the :ref:`Visualization Guide <visualizations>`.
     For guidance on interpreting these plots, refer to the
-    :ref:`Confusion Matrix Guide <confusion_matrix>`.
+    :ref:`Model Evaluation Guide <confusion_matrix>`.
 
     Parameters
     ----------
@@ -226,7 +226,7 @@ class ConfusionMatrixDisplay:
         For general information regarding `scikit-learn` visualization tools, see
         the :ref:`Visualization Guide <visualizations>`.
         For guidance on interpreting these plots, refer to the
-        :ref:`Confusion Matrix Guide <confusion_matrix>`.
+        :ref:`Model Evaluation Guide <confusion_matrix>`.
 
         .. versionadded:: 1.0
 
@@ -374,7 +374,7 @@ class ConfusionMatrixDisplay:
         For general information regarding `scikit-learn` visualization tools, see
         the :ref:`Visualization Guide <visualizations>`.
         For guidance on interpreting these plots, refer to the
-        :ref:`Confusion Matrix Guide <confusion_matrix>`.
+        :ref:`Model Evaluation Guide <confusion_matrix>`.
 
         .. versionadded:: 1.0
 
