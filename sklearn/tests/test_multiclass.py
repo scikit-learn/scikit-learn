@@ -623,15 +623,13 @@ def test_ovo_decision_function():
         # mostly tied predictions:
         assert set(votes[:, class_idx]).issubset(set([0.0, 1.0, 2.0]))
 
-        # The OVO decision function, on the other hand, is able to resolve
+        # The OVO decision function on the other hand is able to resolve
         # most of the ties on this data as it combines both the vote counts
         # and the aggregated confidence levels of the binary classifiers
         # to compute the aggregate decision function. The iris dataset
         # has 150 samples with a couple of duplicates. The OvO decisions
-        # can resolve most of the ties; just to be safe, we allow for up to 9
-        # redundant values (i.e., at least 140 unique values), although there
-        # will probably be even less than that:
-        assert len(np.unique(decisions[:, class_idx])) > 140
+        # can resolve most of the ties:
+        assert len(np.unique(decisions[:, class_idx])) > 146
 
 
 def test_ovo_gridsearch():
