@@ -63,7 +63,7 @@ from .utils.validation import (
 
 
 class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
-    """Calibrate probabilities using isotonic, logistic, or temperature scaling.
+    """Calibrate probabilities using isotonic, sigmoid, or temperature scaling.
 
     This class uses cross-validation to both estimate the parameters of a
     classifier and subsequently calibrate a classifier. With
@@ -123,7 +123,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         For imbalanced binary classification, sigmoid calibration is
         generally preferred because it fits an additional intercept
         parameter. This helps shift decision boundaries appropriately
-        when the classifier being calibrated is biased toward
+        when the classifier being calibrated is biased towards
         the majority class.
 
         Isotonic calibration is not recommended when the number of
@@ -752,7 +752,7 @@ class _CalibratedClassifier:
 
     calibrators : list of fitted estimator instances
         List of fitted calibrators, which can be either 'IsotonicRegression',
-        '_SigmoidCalibration' or '_TemperatureScaling', corresponds
+        '_SigmoidCalibration' or '_TemperatureScaling', corresponding
         to isotonic calibration, sigmoid calibration, and temperature
         scaling, respectively.
 
@@ -791,7 +791,7 @@ class _CalibratedClassifier:
         For imbalanced binary classification, sigmoid calibration is
         generally preferred because it fits an additional intercept
         parameter. This helps shift decision boundaries appropriately
-        when the classifier being calibrated is biased toward
+        when the classifier being calibrated is biased towards
         the majority class.
 
         Isotonic calibration is not recommended when the number of
@@ -981,9 +981,9 @@ def _sigmoid_calibration(
 
 
 def _standardize_decision_values(decision_values, eps=1e-8):
-    """Convert decision_function to 2D and predict_proba to logits
+    """Convert decision_function values to 2D and predict_proba values to logits
 
-    This function ensures that the output of `decision_function` or is
+    This function ensures that the output of `decision_function` is
     converted into a (n_samples, n_classes) array. For binary classification,
     each row contains logits for the negative and positive classes as (-x, x).
 
@@ -1077,7 +1077,7 @@ def _temperature_scaling(predictions, labels, sample_weight=None, beta_0=1.0):
 
     def beta_loss(beta=beta_0):
         """Compute the negative log likelihood loss and its derivative
-            with respect  to temperature.
+            with respect to temperature.
 
         Parameters
         ----------
