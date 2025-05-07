@@ -44,13 +44,7 @@ for i, C_val in enumerate(C_values, 1):
     misclassified = y_pred != y
 
     plt.subplot(1, 3, i)
-    plt.scatter(
-        X[:, 0], X[:, 1],
-        c=y,
-        s=30,
-        cmap=plt.cm.Paired,
-        edgecolors="k"
-    )
+    plt.scatter(X[:, 0], X[:, 1], c=y, s=30, cmap=plt.cm.Paired, edgecolors="k")
     # misclassified samples
     plt.scatter(
         X[misclassified, 0],
