@@ -431,7 +431,7 @@ def test_html_documentation_link_mixin_sklearn(mock_version):
     """
 
     # mock the `__version__` where the mixin is located
-    with patch("sklearn.utils._estimator_html_repr.__version__", mock_version):
+    with patch("sklearn.utils._repr_html.base.__version__", mock_version):
         mixin = _HTMLDocumentationLinkMixin()
 
         assert mixin._doc_link_module == "sklearn"
