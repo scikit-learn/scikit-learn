@@ -726,6 +726,16 @@ We are glad to accept any sort of documentation:
 
 .. dropdown:: Guidelines for writing docstrings
 
+  * You can use `pytest` to test docstrings, e.g. assuming the
+    `RandomForestClassifier` docstring has been modified, the following command
+    would test it's docstring compliance:
+
+    .. prompt:: bash
+
+      pytest --doctest-modules sklearn/ensemble/_forest.py -k RandomForestClassifier
+
+  * The correct order of sections is: Parameters, Returns, See Also, Notes, Examples
+
   * When documenting the parameters and attributes, here is a list of some
     well-formatted examples
 
@@ -791,7 +801,11 @@ We are glad to accept any sort of documentation:
       SelectKBest : Select features based on the k highest scores.
       SelectFpr : Select features based on a false positive rate test.
 
-  * Add one or two snippets of code in "Example" section to show how it can be used.
+  * The "Notes" section is optional. It is meant to provide information on
+    specific behavior of the class/classmethod/method
+
+  * Add one or two **snippets** of code in "Example" section to show how it can
+    be used.
 
 
 .. dropdown:: Guidelines for writing the user guide and other reStructuredText documents
