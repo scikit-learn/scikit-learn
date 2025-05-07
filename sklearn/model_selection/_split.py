@@ -53,6 +53,7 @@ __all__ = [
     "StratifiedShuffleSplit",
     "check_cv",
     "train_test_split",
+    "train_validation_test_split",
 ]
 
 
@@ -2756,6 +2757,11 @@ def check_cv(cv=5, y=None, *, classifier=False):
             Interval(numbers.Integral, 1, None, closed="left"),
             None,
         ],
+        "val_size": [
+            Interval(RealNotInt, 0, 1, closed="neither"),
+            Interval(numbers.Integral, 1, None, closed="left"),
+            None,
+        ],
         "train_size": [
             Interval(RealNotInt, 0, 1, closed="neither"),
             Interval(numbers.Integral, 1, None, closed="left"),
@@ -2767,22 +2773,21 @@ def check_cv(cv=5, y=None, *, classifier=False):
     },
     prefer_skip_nested_validation=True,
 )
-def train_test_split(
+def train_validation_test_split(
     *arrays,
     test_size=None,
+    val_size=None,
     train_size=None,
     random_state=None,
     shuffle=True,
     stratify=None,
 ):
-    """Split arrays or matrices into random train and test subsets.
+    """Split arrays or matrices into random train, validation and test subsets.
 
-    Quick utility that wraps input validation,
-    ``next(ShuffleSplit().split(X, y))``, and application to input data
-    into a single call for splitting (and optionally subsampling) data into a
-    one-liner.
-
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Quick utility that wraps input validation and
+    ``next(ShuffleSplit().split(X, y))`` and application to input data
+    into a single call for splitting (and optionally subsampling) data in a
+    oneliner.
 
     Parameters
     ----------
@@ -2794,14 +2799,22 @@ def train_test_split(
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
         absolute number of test samples. If None, the value is set to the
-        complement of the train size. If ``train_size`` is also None, it will
-        be set to 0.25.
+        complement of the train and validation size. If ``train_size`` is also None,
+        it will be set to 0.2.
+
+    val_size : float or int, default=None
+        If float, should be between 0.0 and 1.0 and represent the proportion
+        of the dataset to include in the validation split. If int, represents the
+        absolute number of validation samples. If None, the value is set to the
+        complement of the train and test size. If ``train_size`` and
+        ``test_size`` are also None, it will be set to 0.2.
 
     train_size : float or int, default=None
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the train split. If
         int, represents the absolute number of train samples. If None,
-        the value is automatically set to the complement of the test size.
+        the value is automatically set to the complement of the validation and test size.
+        If ``test_size`` and ``val_size`` are also None, it will be set to 0.6.
 
     random_state : int, RandomState instance or None, default=None
         Controls the shuffling applied to the data before applying the split.
@@ -2815,22 +2828,16 @@ def train_test_split(
     stratify : array-like, default=None
         If not None, data is split in a stratified fashion, using this as
         the class labels.
-        Read more in the :ref:`User Guide <stratification>`.
 
     Returns
     -------
-    splitting : list, length=2 * len(arrays)
-        List containing train-test split of inputs.
-
-        .. versionadded:: 0.16
-            If the input is sparse, the output will be a
-            ``scipy.sparse.csr_matrix``. Else, output type is the same as the
-            input type.
+    splitting : list, length=3 * len(arrays)
+        List containing train-validation-test split of inputs.
 
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.model_selection import train_test_split
+    >>> from sklearn.model_selection import train_validation_test_split
     >>> X, y = np.arange(10).reshape((5, 2)), range(5)
     >>> X
     array([[0, 1],
@@ -2841,94 +2848,53 @@ def train_test_split(
     >>> list(y)
     [0, 1, 2, 3, 4]
 
-    >>> X_train, X_test, y_train, y_test = train_test_split(
-    ...     X, y, test_size=0.33, random_state=42)
-    ...
+    >>> X_train, X_val, X_test, y_train, y_val, y_test = train_validation_test_split(
+    ...     X, y, test_size=0.2, val_size=0.2, random_state=42)
     >>> X_train
     array([[4, 5],
            [0, 1],
            [6, 7]])
+    >>> X_val
+    array([[2, 3]])
+    >>> X_test
+    array([[8, 9]])
     >>> y_train
     [2, 0, 3]
-    >>> X_test
-    array([[2, 3],
-           [8, 9]])
+    >>> y_val
+    [1]
     >>> y_test
-    [1, 4]
+    [4]
 
-    >>> train_test_split(y, shuffle=False)
-    [[0, 1, 2], [3, 4]]
-
-    >>> from sklearn import datasets
-    >>> iris = datasets.load_iris(as_frame=True)
-    >>> X, y = iris['data'], iris['target']
-    >>> X.head()
-        sepal length (cm)  sepal width (cm)  petal length (cm)  petal width (cm)
-    0                5.1               3.5                1.4               0.2
-    1                4.9               3.0                1.4               0.2
-    2                4.7               3.2                1.3               0.2
-    3                4.6               3.1                1.5               0.2
-    4                5.0               3.6                1.4               0.2
-    >>> y.head()
-    0    0
-    1    0
-    2    0
-    3    0
-    4    0
-    ...
-
-    >>> X_train, X_test, y_train, y_test = train_test_split(
-    ... X, y, test_size=0.33, random_state=42)
-    ...
-    >>> X_train.head()
-        sepal length (cm)  sepal width (cm)  petal length (cm)  petal width (cm)
-    96                 5.7               2.9                4.2               1.3
-    105                7.6               3.0                6.6               2.1
-    66                 5.6               3.0                4.5               1.5
-    0                  5.1               3.5                1.4               0.2
-    122                7.7               2.8                6.7               2.0
-    >>> y_train.head()
-    96     1
-    105    2
-    66     1
-    0      0
-    122    2
-    ...
-    >>> X_test.head()
-        sepal length (cm)  sepal width (cm)  petal length (cm)  petal width (cm)
-    73                 6.1               2.8                4.7               1.2
-    18                 5.7               3.8                1.7               0.3
-    118                7.7               2.6                6.9               2.3
-    78                 6.0               2.9                4.5               1.5
-    76                 6.8               2.8                4.8               1.4
-    >>> y_test.head()
-    73     1
-    18     0
-    118    2
-    78     1
-    76     1
-    ...
+    >>> train_validation_test_split(y, shuffle=False)
+    [[0, 1, 2], [3], [4]]
     """
-    n_arrays = len(arrays)
-    if n_arrays == 0:
+    if len(arrays) == 0:
         raise ValueError("At least one array required as input")
-
-    arrays = indexable(*arrays)
 
     n_samples = _num_samples(arrays[0])
     n_train, n_test = _validate_shuffle_split(
-        n_samples, test_size, train_size, default_test_size=0.25
+        n_samples, test_size, train_size, default_test_size=0.2
     )
+    n_val = _validate_shuffle_split(
+        n_samples - n_train, val_size, None, default_test_size=0.2
+    )[0]
+
+    if n_train + n_val + n_test > n_samples:
+        raise ValueError(
+            "The sum of train_size (%d), val_size (%d) and test_size (%d) "
+            "should be smaller than the number of samples %d. "
+            "Reduce any of these sizes." % (n_train, n_val, n_test, n_samples)
+        )
 
     if shuffle is False:
         if stratify is not None:
             raise ValueError(
-                "Stratified train/test split is not implemented for shuffle=False"
+                "Stratified train/validation/test split requires "
+                "shuffling, but shuffle=False."
             )
-
         train = np.arange(n_train)
-        test = np.arange(n_train, n_train + n_test)
-
+        val = np.arange(n_train, n_train + n_val)
+        test = np.arange(n_train + n_val, n_train + n_val + n_test)
     else:
         if stratify is not None:
             CVClass = StratifiedShuffleSplit
@@ -2936,14 +2902,21 @@ def train_test_split(
             CVClass = ShuffleSplit
 
         cv = CVClass(test_size=n_test, train_size=n_train, random_state=random_state)
-
         train, test = next(cv.split(X=arrays[0], y=stratify))
 
-    train, test = ensure_common_namespace_device(arrays[0], train, test)
+        # Get validation set from the remaining data
+        remaining_indices = np.setdiff1d(np.arange(n_samples), np.concatenate([train, test]))
+        if stratify is not None:
+            cv_val = CVClass(test_size=n_val, train_size=None, random_state=random_state)
+            val, _ = next(cv_val.split(X=arrays[0][remaining_indices], y=stratify[remaining_indices]))
+            val = remaining_indices[val]
+        else:
+            val = remaining_indices[:n_val]
 
     return list(
         chain.from_iterable(
-            (_safe_indexing(a, train), _safe_indexing(a, test)) for a in arrays
+            (safe_indexing(a, train), safe_indexing(a, val), safe_indexing(a, test))
+            for a in arrays
         )
     )
 
@@ -2951,7 +2924,7 @@ def train_test_split(
 # Tell nose that train_test_split is not a test.
 # (Needed for external libraries that may use nose.)
 # Use setattr to avoid mypy errors when monkeypatching.
-setattr(train_test_split, "__test__", False)
+setattr(train_validation_test_split, "__test__", False)
 
 
 def _pprint(params, offset=0, printer=repr):
