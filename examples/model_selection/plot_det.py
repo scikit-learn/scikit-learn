@@ -19,7 +19,9 @@ to focus on differences closer to the origin.
 
 CAP curves display the cumulative proportion of true positives on the Y axis
 versus the cumulative proportion of the dataset (ranked by predicted probability)
-on the X axis.
+on the X axis. In contrast to ROC and DET curves, the "ideal" classifier does not
+correspond to a point, but a curve in the diagram, where each examined case perfectly
+leads to a true positive.
 
 .. note::
 
