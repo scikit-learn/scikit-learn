@@ -134,7 +134,6 @@ for clf_idx, (name, clf) in enumerate(classifiers.items()):
         ax=ax_cap,
         name=name,
         pos_label=pos_label,
-        plot_chance_level=is_last,
         plot_perfect=is_last,
     )
 
