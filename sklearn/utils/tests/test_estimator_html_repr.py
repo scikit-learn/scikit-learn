@@ -29,10 +29,10 @@ from sklearn.pipeline import FeatureUnion, Pipeline, make_pipeline
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder, StandardScaler
 from sklearn.svm import LinearSVC, LinearSVR
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.utils._estimator_html_repr import (
+from sklearn.utils._repr_html.base import _HTMLDocumentationLinkMixin
+from sklearn.utils._repr_html.estimator import (
     _get_css_style,
     _get_visual_block,
-    _HTMLDocumentationLinkMixin,
     _write_label_html,
     estimator_html_repr,
 )
