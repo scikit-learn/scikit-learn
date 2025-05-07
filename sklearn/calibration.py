@@ -29,10 +29,6 @@ from .model_selection import LeaveOneOut, check_cv, cross_val_predict
 from .preprocessing import LabelEncoder, label_binarize
 from .svm import LinearSVC
 from .utils import _safe_indexing, column_or_1d, get_tags, indexable
-from .utils._array_api import (
-    _find_matching_floating_dtype,
-    get_namespace,
-)
 from .utils._param_validation import (
     HasMethods,
     Hidden,
@@ -1024,7 +1020,7 @@ def _standardize_decision_values(decision_values, eps=1e-8):
         decision_values = decision_values.reshape(-1, 1)
         logits = np.hstack([-decision_values, decision_values])
 
-    return logits
+    return np.astype(logits, np.float64)
 
 
 def _temperature_scaling(predictions, labels, sample_weight=None, beta_0=1.0):
@@ -1064,13 +1060,11 @@ def _temperature_scaling(predictions, labels, sample_weight=None, beta_0=1.0):
     check_consistent_length(predictions, labels)
     logits = _standardize_decision_values(predictions)
 
-    xp, _ = get_namespace(logits, labels, sample_weight)
-    dtype_ = _find_matching_floating_dtype(logits, labels, sample_weight, xp=xp)
-    labels = column_or_1d(labels, dtype=dtype_)
+    dtype_ = logits.dtype
+    labels = np.astype(column_or_1d(labels), dtype_)
 
     if sample_weight is not None:
         sample_weight = _check_sample_weight(sample_weight, labels, dtype=dtype_)
-        sample_weight = xp.asarray(sample_weight)
 
     halfmulti_loss = HalfMultinomialLoss(
         sample_weight=sample_weight, n_classes=logits.shape[1]
@@ -1091,18 +1085,7 @@ def _temperature_scaling(predictions, labels, sample_weight=None, beta_0=1.0):
             The negative log likelihood loss.
 
         """
-        # Ensure raw_prediction has the same dtype as labels using .astype().
-        # Without this, dtype promotion rules differ across NumPy versions:
-        #
-        #   beta = np.float64(0)
-        #   logits = np.array([1, 2], dtype=np.float32)
-        #
-        #   result = beta * logits
-        #   - NumPy < 2: result.dtype is float32
-        #   - NumPy 2+:  result.dtype is float64
-        #
-        #  This can cause dtype mismatch errors downstream (e.g., buffer dtype).
-        raw_prediction = xp.astype(beta * logits, dtype_)
+        raw_prediction = beta * logits
 
         l = halfmulti_loss.loss(y_true=labels, raw_prediction=raw_prediction)
 
