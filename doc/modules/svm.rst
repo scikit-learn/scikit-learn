@@ -415,6 +415,7 @@ Tips on Practical Use
 
   * :ref:`sphx_glr_auto_examples_svm_plot_svm_hyperplane_margin.py`
 
+  ..
 
 * Support Vector Machine algorithms are not scale invariant, so **it
   is highly recommended to scale your data**. For example, scale each
