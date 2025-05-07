@@ -21,7 +21,7 @@ from ..neighbors import NearestNeighbors
 from ..utils import check_array, check_random_state
 from ..utils._arpack import _init_arpack_v0
 from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils._sparse import _as_sparse
+from ..utils._sparse import _align_api_if_sparse
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import FLOAT_DTYPES, check_is_fitted, validate_data
 
@@ -120,7 +120,7 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
     data = barycenter_weights(X, X, ind, reg=reg)
     indptr = np.arange(0, n_samples * n_neighbors + 1, n_neighbors)
     csr = csr_array((data.ravel(), ind.ravel(), indptr), shape=(n_samples, n_samples))
-    return _as_sparse(csr)
+    return _align_api_if_sparse(csr)
 
 
 def null_space(
@@ -434,7 +434,7 @@ def _locally_linear_embedding(
             M[neighbors[i], neighbors[i]] += np.ones(shape=n_neighbors)
 
     if M_sparse:
-        M = _as_sparse(M.tocsr())
+        M = _align_api_if_sparse(M.tocsr())
 
     return null_space(
         M,
