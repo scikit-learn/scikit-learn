@@ -527,10 +527,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
             if callable(self.oob_score):
                 self._set_oob_score_and_attributes(
-                    X, y, scoring_function=self.oob_score
+                    X, y, sample_weight, scoring_function=self.oob_score
                 )
             else:
-                self._set_oob_score_and_attributes(X, y)
+                self._set_oob_score_and_attributes(X, y, sample_weight)
 
         # Decapsulate classes_ attributes
         if hasattr(self, "classes_") and self.n_outputs_ == 1:
@@ -540,7 +540,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         return self
 
     @abstractmethod
-    def _set_oob_score_and_attributes(self, X, y, scoring_function=None):
+    def _set_oob_score_and_attributes(self, X, y, sample_weight, scoring_function=None):
         """Compute and set the OOB score and attributes.
 
         Parameters
@@ -683,8 +683,11 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         return all_importances / np.sum(all_importances)
 
     def _compute_unbiased_feature_importance_and_oob_predictions_per_tree(
-        self, tree, X, y, method, n_samples
+        self, tree, X, y, sample_weight, method
     ):
+        n_samples = X.shape[0]
+        if sample_weight is None:
+            sample_weight = np.ones((n_samples,), dtype=np.float64)
         n_samples_bootstrap = _get_n_samples_bootstrap(
             n_samples,
             self.max_samples,
@@ -705,6 +708,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             tree.compute_unbiased_feature_importance_and_oob_predictions(
                 X_test=X_test,
                 y_test=y_test,
+                sample_weight=sample_weight,
                 method=method,
             )
         )
@@ -713,7 +717,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         return (importances, oob_pred, n_oob_pred)
 
     def _compute_unbiased_feature_importance_and_oob_predictions(
-        self, X, y, method="ufi"
+        self, X, y, sample_weight, method="ufi"
     ):  # "mdi_oob"
         check_is_fitted(self)
         X = self._validate_X_predict(X)
@@ -728,7 +732,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         )(
             delayed(
                 self._compute_unbiased_feature_importance_and_oob_predictions_per_tree
-            )(tree, X, y, method, n_samples)
+            )(tree, X, y, sample_weight, method)
             for tree in self.estimators_
             if tree.tree_.node_count > 1
         )
@@ -884,7 +888,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             y_pred = np.rollaxis(y_pred, axis=0, start=3)
         return y_pred
 
-    def _set_oob_score_and_attributes(self, X, y, scoring_function=None):
+    def _set_oob_score_and_attributes(self, X, y, sample_weight, scoring_function=None):
         """Compute and set the OOB score and attributes.
 
         Parameters
@@ -902,12 +906,12 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
 
         ufi_feature_importances, self.oob_decision_function_ = (
             self._compute_unbiased_feature_importance_and_oob_predictions(
-                X, y, method="ufi"
+                X, y, sample_weight, method="ufi"
             )
         )
         mdi_oob_feature_importances, _ = (
             self._compute_unbiased_feature_importance_and_oob_predictions(
-                X, y, method="mdi_oob"
+                X, y, sample_weight, method="mdi_oob"
             )
         )
         if self.criterion == "gini":
@@ -1230,7 +1234,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             y_pred = y_pred[:, np.newaxis, :]
         return y_pred
 
-    def _set_oob_score_and_attributes(self, X, y, scoring_function=None):
+    def _set_oob_score_and_attributes(self, X, y, sample_weight, scoring_function=None):
         """Compute and set the OOB score and attributes.
 
         Parameters
@@ -1247,12 +1251,12 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
         ufi_feature_importances, self.oob_prediction_ = (
             self._compute_unbiased_feature_importance_and_oob_predictions(
-                X, y, method="ufi"
+                X, y, sample_weight, method="ufi"
             )
         )
         mdi_oob_feature_importances, _ = (
             self._compute_unbiased_feature_importance_and_oob_predictions(
-                X, y, method="mdi_oob"
+                X, y, sample_weight, method="mdi_oob"
             )
         )
         if self.criterion == "squared_error":

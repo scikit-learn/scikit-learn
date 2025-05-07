@@ -1275,7 +1275,7 @@ cdef class Tree:
 
         return np.asarray(importances)
 
-    cdef void _compute_oob_node_values_and_predictions(self, object X_test, intp_t[:, ::1] y_test, float64_t[:, :, ::1] oob_pred, int32_t[::1] has_oob_sample, float64_t[:, :, ::1] oob_node_values, str method):
+    cdef void _compute_oob_node_values_and_predictions(self, object X_test, intp_t[:, ::1] y_test, float64_t[::1] sample_weight, float64_t[:, :, ::1] oob_pred, int32_t[::1] has_oob_sample, float64_t[:, :, ::1] oob_node_values, str method):
         if issparse(X_test):
             raise(NotImplementedError("does not support sparse X yet"))
         if not isinstance(X_test, np.ndarray):
@@ -1290,7 +1290,7 @@ cdef class Tree:
         cdef intp_t n_outputs = self.n_outputs
         cdef intp_t max_n_classes = self.max_n_classes
         cdef int k, c, node_idx, sample_idx = 0
-        cdef int32_t[:, ::1] count_oob_values = np.zeros((node_count, n_outputs), dtype=np.int32)
+        cdef float64_t[:, ::1] total_oob_weight = np.zeros((node_count, n_outputs), dtype=np.float64)
         cdef int node_value_idx = -1
 
         cdef Node* node
@@ -1308,17 +1308,15 @@ cdef class Tree:
                     if n_classes[k] > 1:
                         for c in range(n_classes[k]):
                             if y_test[k, sample_idx] == c:
-                                oob_node_values[node_idx, c, k] += 1.0
-                                # TODO use sample weight instead of 1
-                        count_oob_values[node_idx, k] += 1
+                                oob_node_values[node_idx, c, k] += sample_weight[sample_idx]
                     else:
                         if method == "ufi":
                             node_value_idx = node_idx * self.value_stride + k * max_n_classes
-                            oob_node_values[node_idx, 0, k] += (y_test[k, sample_idx] - self.value[node_value_idx]) ** 2.0
+                            oob_node_values[node_idx, 0, k] += sample_weight[sample_idx] * (y_test[k, sample_idx] - self.value[node_value_idx]) ** 2.0
                         else:
-                            oob_node_values[node_idx, 0, k] += y_test[k, sample_idx]
-                        count_oob_values[node_idx, k] += 1
-                        # TODO use sample weight instead of 1
+                            oob_node_values[node_idx, 0, k] += sample_weight[sample_idx] * y_test[k, sample_idx]
+                    total_oob_weight[node_idx, k] += sample_weight[sample_idx]
+
                 # child nodes
                 while node.left_child != _TREE_LEAF and node.right_child != _TREE_LEAF:
                     if X_ndarray[sample_idx, node.feature] <= node.threshold:
@@ -1331,16 +1329,16 @@ cdef class Tree:
                         if n_classes[k] > 1:
                             for c in range(n_classes[k]):
                                 if y_test[k, sample_idx] == c:
-                                    oob_node_values[node_idx, c, k] += 1.0
+                                    oob_node_values[node_idx, c, k] += sample_weight[sample_idx]
                                     # TODO use sample weight instead of 1
-                            count_oob_values[node_idx, k] += 1
+                            total_oob_weight[node_idx, k] += sample_weight[sample_idx]
                         else:
                             if method == "ufi":
                                 node_value_idx = node_idx * self.value_stride + k * max_n_classes
-                                oob_node_values[node_idx, 0, k] += (y_test[k, sample_idx] - self.value[node_value_idx]) ** 2.0
+                                oob_node_values[node_idx, 0, k] += sample_weight[sample_idx] * (y_test[k, sample_idx] - self.value[node_value_idx]) ** 2.0
                             else:
-                                oob_node_values[node_idx, 0, k] += y_test[k, sample_idx]
-                            count_oob_values[node_idx, k] += 1
+                                oob_node_values[node_idx, 0, k] += sample_weight[sample_idx] * y_test[k, sample_idx]
+                            total_oob_weight[node_idx, k] += sample_weight[sample_idx]
                             # TODO use sample weight instead of 1
                 # store the id of the leaf where each sample ends up
                 y_leafs[sample_idx] = node_idx
@@ -1348,9 +1346,9 @@ cdef class Tree:
             # convert the counts to proportions
             for node_idx in range(node_count):
                 for k in range(n_outputs):
-                    if count_oob_values[node_idx, k] > 0:
+                    if total_oob_weight[node_idx, k] > 0.0:
                         for c in range(n_classes[k]):
-                            oob_node_values[node_idx, c, k] /= count_oob_values[node_idx, k]
+                            oob_node_values[node_idx, c, k] /= total_oob_weight[node_idx, k]
                 # if leaf store the predictive proba
                 if self.nodes[node_idx].left_child == _TREE_LEAF and self.nodes[node_idx].right_child == _TREE_LEAF:
                     for sample_idx in range(n_samples):
@@ -1360,7 +1358,7 @@ cdef class Tree:
                                     node_value_idx = node_idx * self.value_stride + k * max_n_classes + c
                                     oob_pred[sample_idx, c, k] = self.value[node_value_idx]
 
-    cpdef compute_unbiased_feature_importance_and_oob_predictions(self, object X_test, object y_test, criterion, method="ufi"):
+    cpdef compute_unbiased_feature_importance_and_oob_predictions(self, object X_test, object y_test, object sample_weight, criterion, method="ufi"):
         cdef intp_t n_samples = X_test.shape[0]
         cdef intp_t n_features = X_test.shape[1]
         cdef intp_t n_outputs = self.n_outputs
@@ -1378,7 +1376,8 @@ cdef class Tree:
         cdef int left_idx, right_idx = -1
 
         cdef intp_t[:, ::1] y_view = np.ascontiguousarray(y_test, dtype=np.intp)
-        self._compute_oob_node_values_and_predictions(X_test, y_view, oob_pred, has_oob_sample, oob_node_values, method)
+        cdef float64_t[::1] sample_weight_view = np.ascontiguousarray(sample_weight, dtype=np.float64)
+        self._compute_oob_node_values_and_predictions(X_test, y_view, sample_weight_view, oob_pred, has_oob_sample, oob_node_values, method)
 
         for node_idx in range(self.node_count):
             node = nodes[node_idx]
