@@ -1133,7 +1133,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     @property
     def sparse_coef_(self):
         """Sparse representation of the fitted `coef_`."""
-        return _align_api_if_sparse(sparse.csr_array(self.coef_))
+        return _align_api_if_sparse(sparse.csr_array(np.atleast_2d(self.coef_)))
 
     def _decision_function(self, X):
         """Decision function of the linear model.
