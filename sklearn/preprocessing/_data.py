@@ -218,8 +218,8 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     array([[-1.,  1.,  1.],
            [ 1., -1., -1.]])
     >>> scale(X, axis=1)  # scaling each row independently
-    array([[-1.37...,  0.39...,  0.98...],
-           [-1.22...,  0.     ,  1.22...]])
+    array([[-1.37,  0.39,  0.98],
+           [-1.22,  0.     ,  1.22]])
     """
     X = check_array(
         X,
@@ -1966,8 +1966,8 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
     array([[-0.4,  0.2,  0.4],
            [-0.5,  0. ,  0.5]])
     >>> normalize(X, norm="l2")  # L2 normalization each row independently
-    array([[-0.66...,  0.33...,  0.66...],
-           [-0.70...,  0.     ,  0.70...]])
+    array([[-0.67, 0.33, 0.67],
+           [-0.71, 0.  , 0.71]])
     """
     if axis == 0:
         sparse_format = "csc"
@@ -3275,11 +3275,11 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     >>> print(pt.fit(data))
     PowerTransformer()
     >>> print(pt.lambdas_)
-    [ 1.386... -3.100...]
+    [ 1.386 -3.100]
     >>> print(pt.transform(data))
-    [[-1.316... -0.707...]
-     [ 0.209... -0.707...]
-     [ 1.106...  1.414...]]
+    [[-1.316 -0.707]
+     [ 0.209 -0.707]
+     [ 1.106  1.414]]
     """
 
     _parameter_constraints: dict = {
@@ -3686,9 +3686,9 @@ def power_transform(X, method="yeo-johnson", *, standardize=True, copy=True):
     >>> from sklearn.preprocessing import power_transform
     >>> data = [[1, 2], [3, 2], [4, 5]]
     >>> print(power_transform(data, method='box-cox'))
-    [[-1.332... -0.707...]
-     [ 0.256... -0.707...]
-     [ 1.076...  1.414...]]
+    [[-1.332 -0.707]
+     [ 0.256 -0.707]
+     [ 1.076  1.414]]
 
     .. warning:: Risk of data leak.
         Do not use :func:`~sklearn.preprocessing.power_transform` unless you
