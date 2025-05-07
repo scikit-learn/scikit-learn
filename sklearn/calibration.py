@@ -1020,7 +1020,7 @@ def _standardize_decision_values(decision_values, eps=1e-8):
         decision_values = decision_values.reshape(-1, 1)
         logits = np.hstack([-decision_values, decision_values])
 
-    return np.astype(logits, np.float64)
+    return logits.astype(np.float64)
 
 
 def _temperature_scaling(predictions, labels, sample_weight=None, beta_0=1.0):
@@ -1061,7 +1061,7 @@ def _temperature_scaling(predictions, labels, sample_weight=None, beta_0=1.0):
     logits = _standardize_decision_values(predictions)
 
     dtype_ = logits.dtype
-    labels = np.astype(column_or_1d(labels), dtype_)
+    labels = column_or_1d(labels, dtype=dtype_)
 
     if sample_weight is not None:
         sample_weight = _check_sample_weight(sample_weight, labels, dtype=dtype_)
@@ -1154,11 +1154,13 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
 class _TemperatureScaling(RegressorMixin, BaseEstimator):
     """Temperature scaling model.
 
+    Parameters
+    ----------
+    beta_0 : float, default=1.0
+       Initial inverse temperature to start the optimisation.
+
     Attributes
     ----------
-    beta_0 : float
-        The initial inverse temperature for optimization.
-
     beta : float
         The optimized inverse temperature.
     """
