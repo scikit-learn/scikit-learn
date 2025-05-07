@@ -1937,7 +1937,6 @@ class RandomizedSearchCV(BaseSearchCV):
     >>> search = clf.fit(iris.data, iris.target)
     >>> search.best_params_
     {'C': np.float64(2.2), 'penalty': 'l1'}
-
     """
 
     _parameter_constraints: dict = {
