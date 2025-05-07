@@ -837,7 +837,7 @@ class _CalibratedClassifier:
 
         proba = np.zeros((_num_samples(X), n_classes))
 
-        if (self.method == "sigmoid") or (self.method == "isotonic"):
+        if self.method in ("sigmoid", "isotonic"):
             for class_idx, this_pred, calibrator in zip(
                 pos_class_indices, predictions.T, self.calibrators
             ):
