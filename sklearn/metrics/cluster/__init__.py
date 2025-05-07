@@ -10,7 +10,6 @@
 
 from ._bicluster import consensus_score
 from ._supervised import (
-    _entropy,
     adjusted_mutual_info_score,
     adjusted_rand_score,
     completeness_score,
@@ -33,7 +32,6 @@ from ._unsupervised import (
 )
 
 __all__ = [
-    "_entropy",
     "adjusted_mutual_info_score",
     "adjusted_rand_score",
     "calinski_harabasz_score",
