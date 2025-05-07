@@ -536,17 +536,17 @@ def test_spline_transformer_handles_missing_values(extrapolation, sparse_output)
     assert (X_nan_transform >= 0).all()
     assert (X_nan_transform <= 1).all()
 
-    # Check `fit_transform` does the same as `fit` and `then` transform:
+    # Check `fit_transform` does the same as `fit` and then `transform`:
     X_nan_transform = spline.fit_transform(X_nan)
-    X_nan_fit_then_transformed = spline.fit(X_nan).transform(X_nan)
-    assert_allclose_dense_sparse(X_nan_transform, X_nan_fit_then_transformed)
+    X_nan_fit_then_transform = spline.fit(X_nan).transform(X_nan)
+    assert_allclose_dense_sparse(X_nan_transform, X_nan_fit_then_transform)
 
-    # Check that transform works as expected when the passed data has not the same
-    # shape as the training set array:
-    X_transformed_same_shape = spline.fit_transform(X_nan)[::2]
-    X_transformed_different_shapes = spline.fit(X_nan).transform(X_nan[::2])
+    # Check that `transform` works as expected when the passed data has a different
+    # shape than the training data passed to `fit`:
+    X_nan_transform_same_shape = spline.fit_transform(X_nan)[::2]
+    X_nan_transform_different_shapes = spline.fit(X_nan).transform(X_nan[::2])
     assert_allclose_dense_sparse(
-        X_transformed_same_shape, X_transformed_different_shapes
+        X_nan_transform_same_shape, X_nan_transform_different_shapes
     )
 
     # Check that the masked nan-values are 0s:

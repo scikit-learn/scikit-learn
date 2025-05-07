@@ -642,10 +642,10 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
     handle_missing : {'error', 'zeros'}, default='error'
         Specifies the way missing values are handled.
 
-        - 'error' : Raise an error if np.nan values are present during :meth:`fit`
+        - 'error' : Raise an error if `np.nan` values are present during :meth:`fit`.
         - 'zeros' : Encode missing values as splines with value `0`.
 
-        .. versionadded:: 1.5
+        .. versionadded:: 1.7
 
     sparse_output : bool, default=False
         Will return sparse CSR matrix if set True else will return an array.
@@ -1152,7 +1152,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 has_nan_output_values = False
                 if use_sparse:
                     # Early convert to CSR as the sparsity structure of this
-                    # block should not change anymore. This is need to be able
+                    # block should not change anymore. This is needed to be able
                     # to safely assume that `.data` is a 1D array.
                     XBS_sparse = XBS_sparse.tocsr()
                     has_nan_output_values = np.any(np.isnan(XBS_sparse.data))
