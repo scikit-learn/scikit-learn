@@ -6,11 +6,11 @@ from numpy.testing import assert_allclose, assert_array_almost_equal, assert_arr
 
 from sklearn.base import config_context
 from sklearn.metrics.cluster import (
+    _entropy,
     adjusted_mutual_info_score,
     adjusted_rand_score,
     completeness_score,
     contingency_matrix,
-    entropy,
     expected_mutual_information,
     fowlkes_mallows_score,
     homogeneity_completeness_v_measure,
@@ -268,9 +268,9 @@ def test_int_overflow_mutual_info_fowlkes_mallows_score():
 
 
 def test_entropy():
-    assert_almost_equal(entropy([0, 0, 42.0]), 0.6365141, 5)
-    assert_almost_equal(entropy([]), 1)
-    assert entropy([1, 1, 1, 1]) == 0
+    assert_almost_equal(_entropy([0, 0, 42.0]), 0.6365141, 5)
+    assert_almost_equal(_entropy([]), 1)
+    assert _entropy([1, 1, 1, 1]) == 0
 
 
 @pytest.mark.parametrize(
@@ -284,9 +284,9 @@ def test_entropy_array_api(array_namespace, device, dtype_name):
     empty_int32_labels = xp.asarray([], dtype=xp.int32, device=device)
     int_labels = xp.asarray([1, 1, 1, 1], device=device)
     with config_context(array_api_dispatch=True):
-        assert entropy(float_labels) == pytest.approx(0.6365141, abs=1e-5)
-        assert entropy(empty_int32_labels) == 1
-        assert entropy(int_labels) == 0
+        assert _entropy(float_labels) == pytest.approx(0.6365141, abs=1e-5)
+        assert _entropy(empty_int32_labels) == 1
+        assert _entropy(int_labels) == 0
 
 
 def test_contingency_matrix():
@@ -339,7 +339,7 @@ def test_v_measure_and_mutual_information(seed=36):
             v_measure_score(labels_a, labels_b),
             2.0
             * mutual_info_score(labels_a, labels_b)
-            / (entropy(labels_a) + entropy(labels_b)),
+            / (_entropy(labels_a) + _entropy(labels_b)),
             0,
         )
         avg = "arithmetic"

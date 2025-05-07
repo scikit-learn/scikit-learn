@@ -10,11 +10,11 @@
 
 from ._bicluster import consensus_score
 from ._supervised import (
+    _entropy,
     adjusted_mutual_info_score,
     adjusted_rand_score,
     completeness_score,
     contingency_matrix,
-    entropy,
     expected_mutual_information,
     fowlkes_mallows_score,
     homogeneity_completeness_v_measure,
@@ -33,6 +33,7 @@ from ._unsupervised import (
 )
 
 __all__ = [
+    "_entropy",
     "adjusted_mutual_info_score",
     "adjusted_rand_score",
     "calinski_harabasz_score",
@@ -40,7 +41,6 @@ __all__ = [
     "consensus_score",
     "contingency_matrix",
     "davies_bouldin_score",
-    "entropy",
     "expected_mutual_information",
     "fowlkes_mallows_score",
     "homogeneity_completeness_v_measure",
