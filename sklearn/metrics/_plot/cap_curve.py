@@ -279,8 +279,9 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         y_pred : array-like of shape (n_samples,)
             Target scores, can either be probability estimates of the positive
-            class, confidence values, or non-thresholded measure of decisions
-            (as returned by “decision_function” on some classifiers).
+            class, confidence values, non-thresholded measure of decisions
+            (as returned by "decision_function" on some classifiers) or the
+            "predict" output in the case of a regressor.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If not `None`, the `y_true_cumulative` array is the
