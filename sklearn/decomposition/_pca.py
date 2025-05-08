@@ -353,25 +353,25 @@ class PCA(_BasePCA):
     >>> pca.fit(X)
     PCA(n_components=2)
     >>> print(pca.explained_variance_ratio_)
-    [0.9924... 0.0075...]
+    [0.9924 0.0075]
     >>> print(pca.singular_values_)
-    [6.30061... 0.54980...]
+    [6.30061 0.54980]
 
     >>> pca = PCA(n_components=2, svd_solver='full')
     >>> pca.fit(X)
     PCA(n_components=2, svd_solver='full')
     >>> print(pca.explained_variance_ratio_)
-    [0.9924... 0.00755...]
+    [0.9924 0.00755]
     >>> print(pca.singular_values_)
-    [6.30061... 0.54980...]
+    [6.30061 0.54980]
 
     >>> pca = PCA(n_components=1, svd_solver='arpack')
     >>> pca.fit(X)
     PCA(n_components=1, svd_solver='arpack')
     >>> print(pca.explained_variance_ratio_)
-    [0.99244...]
+    [0.99244]
     >>> print(pca.singular_values_)
-    [6.30061...]
+    [6.30061]
     """
 
     _parameter_constraints: dict = {

@@ -334,9 +334,9 @@ def graphical_lasso(
     >>> emp_cov = empirical_covariance(X, assume_centered=True)
     >>> emp_cov, _ = graphical_lasso(emp_cov, alpha=0.05)
     >>> emp_cov
-    array([[ 1.68...,  0.21..., -0.20...],
-           [ 0.21...,  0.22..., -0.08...],
-           [-0.20..., -0.08...,  0.23...]])
+    array([[ 1.687,  0.212, -0.209],
+           [ 0.212,  0.221, -0.0817],
+           [-0.209, -0.0817, 0.232]])
     """
     model = GraphicalLasso(
         alpha=alpha,
