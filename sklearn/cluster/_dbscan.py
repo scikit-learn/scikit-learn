@@ -399,14 +399,6 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         # Calculate neighborhood for all samples. This leaves the original
         # point in, which needs to be considered later (i.e. point i is in the
         # neighborhood of point i. While True, its useless information)
-        if self.metric == "precomputed" and sparse.issparse(X):
-            # set the diagonal to explicit values, as a point is its own
-            # neighbor
-            X = X.copy()  # copy to avoid in-place modification
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", sparse.SparseEfficiencyWarning)
-                X.setdiag(X.diagonal())
-
         neighbors_model = NearestNeighbors(
             radius=self.eps,
             algorithm=self.algorithm,
@@ -419,6 +411,13 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         neighbors_model.fit(X)
         # This has worst case O(n^2) memory complexity
         neighborhoods = neighbors_model.radius_neighbors(X, return_distance=False)
+
+        # Each point is its own neighbor, so update the neighborhoods
+        # accordingly after the initial fitting
+        if self.metric == "precomputed" and sparse.issparse(X):
+            for i, neighborhood in enumerate(neighborhoods):
+                if i not in neighborhoods[i]:
+                    neighborhoods[i] = np.append(neighborhood, i)
 
         if sample_weight is None:
             n_neighbors = np.array([len(neighbors) for neighbors in neighborhoods])
