@@ -5,6 +5,7 @@ import pytest
 from numpy.testing import assert_allclose, assert_array_almost_equal, assert_equal
 
 from sklearn.datasets import load_digits
+from sklearn.manifold import ClassicalMDS
 from sklearn.manifold import _mds as mds
 from sklearn.metrics import euclidean_distances
 
@@ -54,6 +55,7 @@ def test_nonmetric_mds_optimization():
     mds_est = mds.MDS(
         n_components=2,
         n_init=1,
+        init="random",
         max_iter=2,
         metric=False,
         random_state=42,
@@ -63,6 +65,7 @@ def test_nonmetric_mds_optimization():
     mds_est = mds.MDS(
         n_components=2,
         n_init=1,
+        init="random",
         max_iter=3,
         metric=False,
         random_state=42,
@@ -108,18 +111,7 @@ def test_smacof_error():
         mds.smacof(sim, init=Z, n_init=1)
 
 
-def test_MDS():
-    sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
-    mds_clf = mds.MDS(
-        metric=False,
-        n_jobs=3,
-        n_init=3,
-        dissimilarity="precomputed",
-    )
-    mds_clf.fit(sim)
-
-
-# TODO(1.9): remove warning filter
+# TODO(1.10): remove warning filter
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("k", [0.5, 1.5, 2])
 def test_normed_stress(k):
@@ -133,7 +125,7 @@ def test_normed_stress(k):
     assert_allclose(X1, X2, rtol=1e-5)
 
 
-# TODO(1.9): remove warning filter
+# TODO(1.10): remove warning filter
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("metric", [True, False])
 def test_normalized_stress_auto(metric, monkeypatch):
@@ -172,7 +164,7 @@ def test_isotonic_outofbounds():
     mds.smacof(dis, init=init, metric=False, n_init=1)
 
 
-# TODO(1.9): remove warning filter
+# TODO(1.10): remove warning filter
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("normalized_stress", [True, False])
 def test_returned_stress(normalized_stress):
@@ -199,7 +191,7 @@ def test_returned_stress(normalized_stress):
     assert_allclose(stress, stress_Z)
 
 
-# TODO(1.9): remove warning filter
+# TODO(1.10): remove warning filter
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("metric", [True, False])
 def test_convergence_does_not_depend_on_scale(metric):
@@ -231,4 +223,26 @@ def test_future_warning_n_init():
         mds.smacof(sim)
 
     with pytest.warns(FutureWarning):
-        mds.MDS().fit(X)
+        mds.MDS(init="random").fit(X)
+
+
+# TODO(1.10): delete this test
+def test_future_warning_init():
+    X = np.array([[1, 1], [1, 4], [1, 5], [3, 3]])
+
+    with pytest.warns(FutureWarning):
+        mds.MDS(n_init=1).fit(X)
+
+
+def test_initialization_classical_mds():
+    # Test that classical MDS works correctly as initialization parameter
+    X = np.array([[1, 1], [1, 4], [1, 5], [3, 3]])
+
+    mds_est_cmds = mds.MDS(n_components=2, init="classical_mds", n_init=1)
+    mds_est = mds.MDS(n_components=2, init="random", n_init=1)
+    cmds_est = ClassicalMDS(n_components=2)
+
+    Z1 = mds_est_cmds.fit_transform(X)
+    Z2 = mds_est.fit_transform(X, init=cmds_est.fit_transform(X))
+
+    assert_allclose(Z1, Z2)

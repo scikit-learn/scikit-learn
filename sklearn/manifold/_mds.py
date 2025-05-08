@@ -18,6 +18,7 @@ from ..utils import check_array, check_random_state, check_symmetric
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import validate_data
+from . import ClassicalMDS
 
 
 def _smacof_single(
@@ -428,6 +429,7 @@ def smacof(
 
 
 # TODO(1.9): change default `n_init` to 1, see PR #31117
+# TODO(1.10): change default `init` to "classical_mds", see PR #31322
 class MDS(BaseEstimator):
     """Multidimensional scaling.
 
@@ -450,6 +452,16 @@ class MDS(BaseEstimator):
 
         .. versionchanged:: 1.9
            The default value for `n_init` will change from 4 to 1 in version 1.9.
+
+    init : str, default='random'
+        The initialization approach. If `random`, random initialization is used.
+        If `classical_mds`, then classical MDS is run and used as initialization
+        for MDS (in this case, the value of `n_init` is ignored).
+
+        .. versionadded:: 1.8
+
+        .. versionchanged:: 1.10
+           The default value for `init` will change to `classical_mds`.
 
     max_iter : int, default=300
         Maximum number of iterations of the SMACOF algorithm for a single run.
@@ -570,7 +582,7 @@ class MDS(BaseEstimator):
     >>> X, _ = load_digits(return_X_y=True)
     >>> X.shape
     (1797, 64)
-    >>> embedding = MDS(n_components=2, n_init=1)
+    >>> embedding = MDS(n_components=2, n_init=1, init="random")
     >>> X_transformed = embedding.fit_transform(X[:100])
     >>> X_transformed.shape
     (100, 2)
@@ -586,6 +598,7 @@ class MDS(BaseEstimator):
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "metric": ["boolean"],
         "n_init": [Interval(Integral, 1, None, closed="left"), StrOptions({"warn"})],
+        "init": [StrOptions({"warn", "random", "classical_mds"})],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "verbose": ["verbose"],
         "eps": [Interval(Real, 0.0, None, closed="left")],
@@ -601,6 +614,7 @@ class MDS(BaseEstimator):
         *,
         metric=True,
         n_init="warn",
+        init="warn",
         max_iter=300,
         verbose=0,
         eps=1e-6,
@@ -613,6 +627,7 @@ class MDS(BaseEstimator):
         self.dissimilarity = dissimilarity
         self.metric = metric
         self.n_init = n_init
+        self.init = init
         self.max_iter = max_iter
         self.eps = eps
         self.verbose = verbose
@@ -687,6 +702,16 @@ class MDS(BaseEstimator):
         else:
             self._n_init = self.n_init
 
+        if self.init == "warn":
+            warnings.warn(
+                "The default value of `init` will change from 'random' to "
+                "'classical_mds' in 1.10.",
+                FutureWarning,
+            )
+            self._init = "random"
+        else:
+            self._init = self.init
+
         X = validate_data(self, X)
         if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
             warnings.warn(
@@ -706,11 +731,19 @@ class MDS(BaseEstimator):
                 X, metric=self.dissimilarity
             )
 
+        if init is not None:
+            init_array = init
+        elif self._init == "classical_mds":
+            cmds = ClassicalMDS(dissimilarity="precomputed")
+            init_array = cmds.fit_transform(self.dissimilarity_matrix_)
+        else:
+            init_array = None
+
         self.embedding_, self.stress_, self.n_iter_ = smacof(
             self.dissimilarity_matrix_,
             metric=self.metric,
             n_components=self.n_components,
-            init=init,
+            init=init_array,
             n_init=self._n_init,
             n_jobs=self.n_jobs,
             max_iter=self.max_iter,
