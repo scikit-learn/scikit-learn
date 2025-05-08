@@ -805,10 +805,14 @@ We are glad to accept any sort of documentation:
       SelectFpr : Select features based on a false positive rate test.
 
   * The "Notes" section is optional. It is meant to provide information on
-    specific behavior of the class/classmethod/method.
+    specific behavior of a function/class/classmethod/method.
+
+  * A `Note` can also be added to an attribute, but in that case it requires
+    using the `.. rubric:: Note` directive.
 
   * Add one or two **snippets** of code in "Example" section to show how it can
-    be used. Keep this section as brief as possible.
+    be used. The code should be runable as is, i.e. it should include all
+    required imports. Keep this section as brief as possible.
 
 
 .. dropdown:: Guidelines for writing the user guide and other reStructuredText documents
