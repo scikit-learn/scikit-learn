@@ -54,7 +54,7 @@ class SequenceKernel(GenericKernelMixin, Kernel):
     A minimal (but valid) convolutional kernel for sequences of variable
     lengths."""
 
-    def __init__(self, baseline_similarity=0.5, baseline_similarity_bounds=(1e-5, 1)):
+    def __init__(self, baseline_similarity=0.5, baseline_similarity_bounds="fixed"):
         self.baseline_similarity = baseline_similarity
         self.baseline_similarity_bounds = baseline_similarity_bounds
 
@@ -104,7 +104,7 @@ class SequenceKernel(GenericKernelMixin, Kernel):
 
 # %%
 # .. note::
-#    Here, we freeze ``baseline_similarity_bounds`` by setting it to `"fixed"` in order 
+#    Here, we freeze ``baseline_similarity_bounds`` by setting it to `"fixed"` in order
 #    to show this example without ``ConvergenceWarning``s that would otherwise raise.
 #    In another use case, you probably want to optimise on
 #    ``baseline_similarity_bounds``  and should set bounds by passing a tuple of
