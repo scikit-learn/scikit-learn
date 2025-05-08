@@ -1158,8 +1158,8 @@ def cosine_distances(X, Y=None):
     >>> X = [[0, 0, 0], [1, 1, 1]]
     >>> Y = [[1, 0, 0], [1, 1, 0]]
     >>> cosine_distances(X, Y)
-    array([[1.     , 1.     ],
-           [0.42..., 0.18...]])
+    array([[1.   , 1.   ],
+           [0.422, 0.183]])
     """
     xp, _ = get_namespace(X, Y)
 
@@ -1291,7 +1291,7 @@ def paired_cosine_distances(X, Y):
     >>> X = [[0, 0, 0], [1, 1, 1]]
     >>> Y = [[1, 0, 0], [1, 1, 0]]
     >>> paired_cosine_distances(X, Y)
-    array([0.5       , 0.18...])
+    array([0.5       , 0.184])
     """
     X, Y = check_paired_arrays(X, Y)
     return 0.5 * row_norms(normalize(X) - normalize(Y), squared=True)
@@ -1476,7 +1476,7 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
     >>> Y = [[1, 0, 0], [1, 1, 0]]
     >>> polynomial_kernel(X, Y, degree=2)
     array([[1.     , 1.     ],
-           [1.77..., 2.77...]])
+           [1.77, 2.77]])
     """
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
@@ -1536,8 +1536,8 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     >>> X = [[0, 0, 0], [1, 1, 1]]
     >>> Y = [[1, 0, 0], [1, 1, 0]]
     >>> sigmoid_kernel(X, Y)
-    array([[0.76..., 0.76...],
-           [0.87..., 0.93...]])
+    array([[0.76, 0.76],
+           [0.87, 0.93]])
     """
     xp, _ = get_namespace(X, Y)
     X, Y = check_pairwise_arrays(X, Y)
@@ -1597,8 +1597,8 @@ def rbf_kernel(X, Y=None, gamma=None):
     >>> X = [[0, 0, 0], [1, 1, 1]]
     >>> Y = [[1, 0, 0], [1, 1, 0]]
     >>> rbf_kernel(X, Y)
-    array([[0.71..., 0.51...],
-           [0.51..., 0.71...]])
+    array([[0.71, 0.51],
+           [0.51, 0.71]])
     """
     xp, _ = get_namespace(X, Y)
     X, Y = check_pairwise_arrays(X, Y)
@@ -1660,8 +1660,8 @@ def laplacian_kernel(X, Y=None, gamma=None):
     >>> X = [[0, 0, 0], [1, 1, 1]]
     >>> Y = [[1, 0, 0], [1, 1, 0]]
     >>> laplacian_kernel(X, Y)
-    array([[0.71..., 0.51...],
-           [0.51..., 0.71...]])
+    array([[0.71, 0.51],
+           [0.51, 0.71]])
     """
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
@@ -1722,8 +1722,8 @@ def cosine_similarity(X, Y=None, dense_output=True):
     >>> X = [[0, 0, 0], [1, 1, 1]]
     >>> Y = [[1, 0, 0], [1, 1, 0]]
     >>> cosine_similarity(X, Y)
-    array([[0.     , 0.     ],
-           [0.57..., 0.81...]])
+    array([[0.   , 0.   ],
+           [0.577, 0.816]])
     """
     X, Y = check_pairwise_arrays(X, Y)
 
@@ -1884,8 +1884,8 @@ def chi2_kernel(X, Y=None, gamma=1.0):
     >>> X = [[0, 0, 0], [1, 1, 1]]
     >>> Y = [[1, 0, 0], [1, 1, 0]]
     >>> chi2_kernel(X, Y)
-    array([[0.36..., 0.13...],
-           [0.13..., 0.36...]])
+    array([[0.368, 0.135],
+           [0.135, 0.368]])
     """
     xp, _ = get_namespace(X, Y)
     K = additive_chi2_kernel(X, Y)
@@ -2166,11 +2166,11 @@ def pairwise_distances_chunked(
     >>> X = np.random.RandomState(0).rand(5, 3)
     >>> D_chunk = next(pairwise_distances_chunked(X))
     >>> D_chunk
-    array([[0.  ..., 0.29..., 0.41..., 0.19..., 0.57...],
-           [0.29..., 0.  ..., 0.57..., 0.41..., 0.76...],
-           [0.41..., 0.57..., 0.  ..., 0.44..., 0.90...],
-           [0.19..., 0.41..., 0.44..., 0.  ..., 0.51...],
-           [0.57..., 0.76..., 0.90..., 0.51..., 0.  ...]])
+    array([[0.   , 0.295, 0.417, 0.197, 0.572],
+           [0.295, 0.   , 0.576, 0.419, 0.764],
+           [0.417, 0.576, 0.   , 0.449, 0.903],
+           [0.197, 0.419, 0.449, 0.   , 0.512],
+           [0.572, 0.764, 0.903, 0.512, 0.   ]])
 
     Retrieve all neighbors and average distance within radius r:
 
@@ -2184,7 +2184,7 @@ def pairwise_distances_chunked(
     >>> neigh
     [array([0, 3]), array([1]), array([2]), array([0, 3]), array([4])]
     >>> avg_dist
-    array([0.039..., 0.        , 0.        , 0.039..., 0.        ])
+    array([0.039, 0.        , 0.        , 0.039, 0.        ])
 
     Where r is defined per sample, we need to make use of ``start``:
 

@@ -535,16 +535,16 @@ def enet_path(
     ...    n_samples=100, n_features=5, n_informative=2, coef=True, random_state=0
     ... )
     >>> true_coef
-    array([ 0.        ,  0.        ,  0.        , 97.9..., 45.7...])
+    array([ 0.        ,  0.        ,  0.        , 97.9, 45.7])
     >>> alphas, estimated_coef, _ = enet_path(X, y, n_alphas=3)
     >>> alphas.shape
     (3,)
     >>> estimated_coef
-     array([[ 0.        ,  0.78...,  0.56...],
-            [ 0.        ,  1.12...,  0.61...],
-            [-0.        , -2.12..., -1.12...],
-            [ 0.        , 23.04..., 88.93...],
-            [ 0.        , 10.63..., 41.56...]])
+     array([[ 0.,  0.787,  0.568],
+            [ 0.,  1.120,  0.620],
+            [-0., -2.129, -1.128],
+            [ 0., 23.046, 88.939],
+            [ 0., 10.637, 41.566]])
     """
     X_offset_param = params.pop("X_offset", None)
     X_scale_param = params.pop("X_scale", None)
@@ -872,9 +872,9 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     >>> print(regr.coef_)
     [18.83816048 64.55968825]
     >>> print(regr.intercept_)
-    1.451...
+    1.451
     >>> print(regr.predict([[0, 0]]))
-    [1.451...]
+    [1.451]
     """
 
     # "check_input" is used for optimisation and isn't something to be passed
@@ -1303,7 +1303,7 @@ class Lasso(ElasticNet):
     >>> print(clf.coef_)
     [0.85 0.  ]
     >>> print(clf.intercept_)
-    0.15...
+    0.15
     """
 
     _parameter_constraints: dict = {
@@ -2093,9 +2093,9 @@ class LassoCV(RegressorMixin, LinearModelCV):
     >>> X, y = make_regression(noise=4, random_state=0)
     >>> reg = LassoCV(cv=5, random_state=0).fit(X, y)
     >>> reg.score(X, y)
-    0.9993...
+    0.9993
     >>> reg.predict(X[:1,])
-    array([-78.4951...])
+    array([-78.4951])
     """
 
     path = staticmethod(lasso_path)
@@ -2375,11 +2375,11 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     >>> regr.fit(X, y)
     ElasticNetCV(cv=5, random_state=0)
     >>> print(regr.alpha_)
-    0.199...
+    0.199
     >>> print(regr.intercept_)
-    0.398...
+    0.398
     >>> print(regr.predict([[0, 0]]))
-    [0.398...]
+    [0.398]
     """
 
     _parameter_constraints: dict = {
@@ -3305,11 +3305,11 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     >>> X, y = make_regression(n_targets=2, noise=4, random_state=0)
     >>> reg = MultiTaskLassoCV(cv=5, random_state=0).fit(X, y)
     >>> r2_score(y, reg.predict(X))
-    0.9994...
+    0.9994
     >>> reg.alpha_
-    np.float64(0.5713...)
+    np.float64(0.5713)
     >>> reg.predict(X[:1,])
-    array([[153.7971...,  94.9015...]])
+    array([[153.7971,  94.9015]])
     """
 
     _parameter_constraints: dict = {
