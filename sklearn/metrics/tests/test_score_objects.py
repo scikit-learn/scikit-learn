@@ -1653,13 +1653,13 @@ def test_curve_scorer_pos_label(global_random_seed):
     assert scores_pos_label_1.max() == pytest.approx(1.0)
 
 
-def test_curve_scorer_scores_from_prediction():
-    """Check behavior of `_CurveScorer._scores_from_prediction`."""
+def test_curve_scorer_scores_from_predictions():
+    """Check behavior of `_CurveScorer._scores_from_predictions`."""
     X, y = make_classification(random_state=0)
     lr = LogisticRegression().fit(X, y)
     y_score = lr.predict_proba(X)
 
-    score_thresholds, potential_thresholds = _CurveScorer._scores_from_prediction(
+    score_thresholds, potential_thresholds = _CurveScorer._scores_from_predictions(
         balanced_accuracy_score,
         thresholds=10,
         y_true=y,

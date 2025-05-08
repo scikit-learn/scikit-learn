@@ -89,13 +89,11 @@ def decision_threshold_curve(
 
     Returns
     -------
-    metric_values : ndarray of shape (n_thresholds,)
-        The scores associated to each threshold. At index i being the value of the
-        theshold-dependent metric for predictions score >= thresholds[i].
-        # TODO(Carlo) Check if > or >=
+    score_thresholds : ndarray of shape (n_thresholds,)
+        The scores associated with each threshold.
 
     thresholds : ndarray of shape (n_thresholds,)
-        Ascending score values used as thresholds.
+        The thresholds used to compute the scores.
 
     See Also
     --------
@@ -120,7 +118,7 @@ def decision_threshold_curve(
     # To prevent circular import
     from ._scorer import _CurveScorer
 
-    return _CurveScorer._scores_from_prediction(
+    return _CurveScorer._scores_from_predictions(
         scoring_function,
         thresholds,
         y_true,

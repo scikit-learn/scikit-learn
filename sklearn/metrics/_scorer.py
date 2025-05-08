@@ -1099,13 +1099,13 @@ class _CurveScorer(_BaseScorer):
         self._thresholds = thresholds
 
     @classmethod
-    def from_scorer(cls, scorer, thresholds, response_method=None):
+    def from_scorer(cls, scorer, response_method, thresholds):
         """Create a continuous scorer from a normal scorer."""
         instance = cls(
             score_func=scorer._score_func,
             sign=scorer._sign,
-            thresholds=thresholds,
             response_method=response_method,
+            thresholds=thresholds,
             kwargs=scorer._kwargs,
         )
         # transfer the metadata request
@@ -1113,7 +1113,7 @@ class _CurveScorer(_BaseScorer):
         return instance
 
     @staticmethod
-    def _scores_from_prediction(
+    def _scores_from_predictions(
         scoring_function,
         thresholds,
         y_true,
@@ -1127,7 +1127,7 @@ class _CurveScorer(_BaseScorer):
 
         Parameters
         ----------
-        scoring_function : callable
+        score_func : callable
             The score function to use. It will be called as
             `score_func(y_true, y_pred, **kwargs)`.
 
@@ -1262,7 +1262,7 @@ class _CurveScorer(_BaseScorer):
         self_kwargs_ = self._kwargs.copy()
         self_kwargs_.pop("pos_label", None)
         # why 'potential' ?
-        score_thresholds, potential_thresholds = self._scores_from_prediction(
+        score_thresholds, potential_thresholds = self._scores_from_predictions(
             # Should I make all these params keyword only?
             self._score_func,
             self._thresholds,
