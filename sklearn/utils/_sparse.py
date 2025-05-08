@@ -70,7 +70,6 @@ else:
             density=density,
             format=format,
             dtype=dtype,
-            random_state=random_state,
-            rng=rng,
+            random_state=rng or random_state,
             data_rvs=data_sampler,
         )
