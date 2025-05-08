@@ -99,8 +99,6 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     ):
         """Plot DET curve given an estimator and data.
 
-        Plot DET curve given an estimator and data.
-
         For general information regarding `scikit-learn` visualization tools, see
         the :ref:`Visualization Guide <visualizations>`.
         For guidance on interpreting these plots, refer to the
