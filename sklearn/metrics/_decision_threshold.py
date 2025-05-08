@@ -11,31 +11,31 @@ this can help you visualize how the performance changes.
 
 from numbers import Integral, Real
 
-from ..utils._param_validation import Interval, Options, validate_params
+from ..utils._param_validation import Interval, validate_params
 
 
 @validate_params(
     {
-        "scoring_function": [callable],
+        "score_func": [callable],
         "y_true": ["array-like"],
         "y_score": ["array-like"],
         "thresholds": [
             Interval(Integral, 2, None, closed="left"),
             "array-like",
         ],
-        "sign": Options(Real, {0, 1}),
+        "greater_is_better": ["boolean"],
         "labels": ["array-like", None],
         "pos_label": [Real, str, "boolean", None],
     },
     prefer_skip_nested_validation=True,
 )
 def decision_threshold_curve(
-    scoring_function,
+    score_func,
     y_true,
     y_score,
     # Should below 2 have a default value?
     thresholds=20,
-    sign=1,
+    greater_is_better=True,
     labels=None,
     pos_label=None,
     **kwargs,
@@ -50,7 +50,7 @@ def decision_threshold_curve(
 
     Parameters
     ----------
-    scoring_function : callable
+    score_func : callable
         The score function to use. It will be called as
         `score_func(y_true, y_pred, **kwargs)`.
         TODO: decided on `scoring_function` as term also used in forest estimators
@@ -67,9 +67,10 @@ def decision_threshold_curve(
         between the minimum and maximum of `y_score`. If an array-like, it will be
         used as the thresholds.
 
-    sign : int, default=1
-        Either 1 or -1. Score is computed as `sign * score_func(estimator, X, y)`.
-        Thus, `sign` defines whether higher scores are better or worse.
+    greater_is_better : bool, default=True
+        Whether `score_func` is a score function (default), meaning high is
+        good, or a loss function, meaning low is good. In the latter case, the
+        the output of `score_func` will be sign-flipped.
 
     labels: array-like, default=None
         Class labels. If `None`, inferred from `y_true`.
@@ -119,7 +120,8 @@ def decision_threshold_curve(
     # To prevent circular import
     from ._scorer import _CurveScorer
 
-    curve_scorer = _CurveScorer(scoring_function, sign, {}, thresholds)
+    sign = 1 if greater_is_better else -1
+    curve_scorer = _CurveScorer(score_func, sign, {}, thresholds)
     return curve_scorer._scores_from_predictions(
         y_true,
         y_score,
