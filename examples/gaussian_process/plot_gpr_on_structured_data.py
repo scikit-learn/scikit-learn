@@ -110,7 +110,6 @@ class SequenceKernel(GenericKernelMixin, Kernel):
 #    ``baseline_similarity_bounds``  and should set bounds by passing a tuple of
 #    values.
 #
-# %%
 # Freeze baseline_similarity to avoid ill‑conditioned optimisation
 kernel = SequenceKernel(baseline_similarity_bounds="fixed")
 
