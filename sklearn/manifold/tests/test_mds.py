@@ -81,6 +81,7 @@ def test_mds_recovers_true_data(metric):
     mds_est = mds.MDS(
         n_components=2,
         n_init=1,
+        init="random",
         eps=1e-15,
         max_iter=1000,
         metric=metric,
