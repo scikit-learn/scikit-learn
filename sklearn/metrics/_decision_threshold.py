@@ -73,6 +73,7 @@ def decision_threshold_curve(
 
     labels: array-like, default=None
         Class labels. If `None`, inferred from `y_true`.
+        TODO: used `labels` instead of `classes` to be consistent with other metrics.
 
     pos_label : int, float, bool or str, default=None
         The label of the positive class, used when thresholding `y_score`.
@@ -118,12 +119,10 @@ def decision_threshold_curve(
     # To prevent circular import
     from ._scorer import _CurveScorer
 
-    return _CurveScorer._scores_from_predictions(
-        scoring_function,
-        thresholds,
+    curve_scorer = _CurveScorer(scoring_function, sign, {}, thresholds)
+    return curve_scorer._scores_from_predictions(
         y_true,
         y_score,
-        sign,
         labels,
         pos_label,
         **kwargs,

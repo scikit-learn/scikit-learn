@@ -1112,13 +1112,10 @@ class _CurveScorer(_BaseScorer):
         instance._metadata_request = scorer._get_metadata_request()
         return instance
 
-    @staticmethod
     def _scores_from_predictions(
-        scoring_function,
-        thresholds,
+        self,
         y_true,
         y_score,
-        sign,
         classes=None,
         pos_label=None,
         **kwargs,
@@ -1127,25 +1124,11 @@ class _CurveScorer(_BaseScorer):
 
         Parameters
         ----------
-        score_func : callable
-            The score function to use. It will be called as
-            `score_func(y_true, y_pred, **kwargs)`.
-
-        thresholds : int or array-like
-            Specifies number of decision thresholds to compute score for. If an integer,
-            it will be used to generate `thresholds` thresholds uniformly distributed
-            between the minimum and maximum of `y_score`. If an array-like, it will be
-            used as the thresholds.
-
         y_true : array-like of shape (n_samples,)
             Ground truth (correct) target labels.
 
         y_score : array-like of shape (n_samples,)
             Continuous response scores.
-
-        sign : int
-            Either 1 or -1. Score is computed as `sign * score_func(estimator, X, y)`.
-            Thus, `sign` defines whether higher scores are better or worse.
 
         classes: array-like, default=None
             Class labels. If `None`, inferred from `y_true`.
@@ -1154,14 +1137,14 @@ class _CurveScorer(_BaseScorer):
             The label of the positive class, used when thresholding `y_score`.
             If `score_func` also has a `pos_label` parameter, this value will also
             be passed `score_func`.
-            If `None`, the default value of `score_func(pos_label)`, if present, is
-            used. If not present, `1` is used.
+            If `None`, use the default value of `self.score_func(pos_label)` if
+            present. If not present, `1` is used.
             TODO: do we need to allow the user to set this even when `score_func`
             does not take `pos_label`? I think yes, so user can control
             output of `_threshold_scores_to_class_labels`.
 
         **kwargs : dict
-            Parameters to pass to `score_func`.
+            Parameters to pass to `self.score_func`.
 
         Returns
         -------
@@ -1176,14 +1159,14 @@ class _CurveScorer(_BaseScorer):
         y_true_unique = cached_unique(y_true)
         if classes is None:
             classes = y_true_unique
-        score_func_params = signature(scoring_function).parameters
+        score_func_params = signature(self._score_func).parameters
         if "pos_label" in score_func_params:
-            # Should I avoid over-writing kwargs?
+            # Should I avoid changing kwargs var?
             kwargs = {"pos_label": pos_label, **kwargs}
             if pos_label is None:
                 pos_label = score_func_params["pos_label"].default
 
-        # Check param values that are used in this function, other checks left to
+        # TODO Check param values that are used in this function, other checks left to
         # score func
         if pos_label is not None and pos_label not in classes:
             raise ValueError(
@@ -1196,19 +1179,19 @@ class _CurveScorer(_BaseScorer):
             raise ValueError("`y_true` only contains one class label.")
         if set(classes) != set(y_true_unique):
             raise ValueError(
-                f"`classes` ({classes}) is not equal to the unique values in `y_true` "
-                f"({y_true_unique})."
+                f"`classes` ({classes}) is not equal to the unique values found in "
+                f"`y_true` ({y_true_unique})."
             )
 
-        if isinstance(thresholds, Integral):
+        if isinstance(self._thresholds, Integral):
             potential_thresholds = np.linspace(
-                np.min(y_score), np.max(y_score), thresholds
+                np.min(y_score), np.max(y_score), self._thresholds
             )
         else:
-            potential_thresholds = np.asarray(thresholds)
+            potential_thresholds = np.asarray(self._thresholds)
         score_thresholds = [
-            sign
-            * scoring_function(
+            self._sign
+            * self._score_func(
                 y_true,
                 _threshold_scores_to_class_labels(y_score, th, classes, pos_label),
                 **kwargs,
@@ -1263,12 +1246,8 @@ class _CurveScorer(_BaseScorer):
         self_kwargs_.pop("pos_label", None)
         # why 'potential' ?
         score_thresholds, potential_thresholds = self._scores_from_predictions(
-            # Should I make all these params keyword only?
-            self._score_func,
-            self._thresholds,
             y_true,
             y_score,
-            self._sign,
             estimator.classes_,
             pos_label,
             **{**self_kwargs_, **kwargs},

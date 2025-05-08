@@ -1659,12 +1659,12 @@ def test_curve_scorer_scores_from_predictions():
     lr = LogisticRegression().fit(X, y)
     y_score = lr.predict_proba(X)
 
-    score_thresholds, potential_thresholds = _CurveScorer._scores_from_predictions(
-        balanced_accuracy_score,
-        thresholds=10,
+    curve_scorer = _CurveScorer(
+        balanced_accuracy_score, sign=1, kwargs={}, thresholds=10
+    )
+    score_thresholds, potential_thresholds = curve_scorer._scores_from_predictions(
         y_true=y,
         y_score=y_score[:, 1],
-        sign=1,
     )
 
 
