@@ -104,10 +104,11 @@ class SequenceKernel(GenericKernelMixin, Kernel):
 
 # %%
 # .. note::
-#    ``baseline_similarity`` is **frozen** in this example because optimisation
-#    drives it to *zero*, flattening the log‑marginal‑likelihood surface.
-#    L‑BFGS‑B therefore stops with ``ABNORMAL_TERMINATION_IN_LNSRCH`` after only
-#    a couple of iterations, triggering two ``ConvergenceWarning``\ s.
+#    Here, we freeze ``baseline_similarity_bounds`` by setting it to `"fixed"` in order 
+#    to show this example without ``ConvergenceWarning``s that would otherwise raise.
+#    In another use case, you probably want to optimise on
+#    ``baseline_similarity_bounds``  and should set bounds by passing a tuple of
+#    values.
 #
 # %%
 # Freeze baseline_similarity to avoid ill‑conditioned optimisation
