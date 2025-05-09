@@ -257,7 +257,7 @@ come with slight variations:
 Security & Maintainability Limitations
 --------------------------------------
 
-:mod:`pickle` (and :mod:`joblib` and :mod:`clouldpickle` by extension), has
+:mod:`pickle` (and :mod:`joblib` and :mod:`cloudpickle` by extension), has
 many documented security vulnerabilities by design and should only be used if
 the artifact, i.e. the pickle-file, is coming from a trusted and verified
 source. You should never load a pickle file from an untrusted source, similarly
@@ -313,9 +313,9 @@ dependencies and versions in both the training and production environment.
 These transitive dependencies can be pinned with the help of package management
 tools like `pip`, `mamba`, `conda`, `poetry`, `conda-lock`, `pixi`, etc.
 
-It is not always possible to load an model trained with older versions of the
+It is not always possible to load a model trained with older versions of the
 scikit-learn library and its dependencies in an updated software environment.
-Instead, you might need to retrain the model with the new versions of the all
+Instead, you might need to retrain the model with the new versions of all
 the libraries. So when training a model, it is important to record the training
 recipe (e.g. a Python script) and training set information, and metadata about
 all the dependencies to be able to automatically reconstruct the same training
@@ -324,7 +324,7 @@ environment for the updated software.
 .. dropdown:: InconsistentVersionWarning
 
   When an estimator is loaded with a scikit-learn version that is inconsistent
-  with the version the estimator was pickled with, a
+  with the version the estimator was pickled with, an
   :class:`~sklearn.exceptions.InconsistentVersionWarning` is raised. This warning
   can be caught to obtain the original version the estimator was pickled with::
 
@@ -332,7 +332,7 @@ environment for the updated software.
     warnings.simplefilter("error", InconsistentVersionWarning)
 
     try:
-        with open("model_from_prevision_version.pickle", "rb") as f:
+        with open("model_from_previous_version.pickle", "rb") as f:
             est = pickle.load(f)
     except InconsistentVersionWarning as w:
         print(w.original_sklearn_version)

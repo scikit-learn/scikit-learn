@@ -12,6 +12,8 @@ import warnings
 import numpy as np
 from scipy import linalg
 
+from sklearn.utils import metadata_routing
+
 from .. import config_context
 from ..base import BaseEstimator, _fit_context
 from ..metrics.pairwise import pairwise_distances
@@ -175,11 +177,14 @@ class EmpiricalCovariance(BaseEstimator):
     ...                             size=500)
     >>> cov = EmpiricalCovariance().fit(X)
     >>> cov.covariance_
-    array([[0.7569..., 0.2818...],
-           [0.2818..., 0.3928...]])
+    array([[0.7569, 0.2818],
+           [0.2818, 0.3928]])
     >>> cov.location_
-    array([0.0622..., 0.0193...])
+    array([0.0622, 0.0193])
     """
+
+    # X_test should have been called X
+    __metadata_request__score = {"X_test": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         "store_precision": ["boolean"],
