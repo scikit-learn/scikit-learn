@@ -1,0 +1,2 @@
+array-api-compat==1.11.2
+array-api-extra==0.7.1
