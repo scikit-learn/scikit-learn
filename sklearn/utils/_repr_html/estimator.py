@@ -421,7 +421,7 @@ def estimator_html_repr(estimator):
 
     Examples
     --------
-    >>> from sklearn.utils._estimator_html_repr import estimator_html_repr
+    >>> from sklearn.utils._estimator_html_repr.estimator import estimator_html_repr
     >>> from sklearn.linear_model import LogisticRegression
     >>> estimator_html_repr(LogisticRegression())
     '<link rel="stylesheet" href=...'

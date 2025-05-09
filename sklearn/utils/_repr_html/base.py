@@ -116,6 +116,12 @@ class _HTMLDocumentationLinkMixin:
 
 
 class ReprHTMLMixin:
+    """Mixin to handle consistently the HTML representation.
+
+    When inheriting from this class, you need to define an attribute `_html_repr`
+    which is a callable that returns the HTML representation to be shown.
+    """
+
     @property
     def _repr_html_(self):
         """HTML representation of estimator.
