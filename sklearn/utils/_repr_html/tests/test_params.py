@@ -1,7 +1,7 @@
 import pytest
 
 from sklearn import config_context
-from sklearn.utils._repr_html.params import ParamsDict, _read_params
+from sklearn.utils._repr_html.params import ParamsDict, _params_html_repr, _read_params
 
 
 def test_params_dict_content():
@@ -65,3 +65,10 @@ def test_read_params():
     )
     assert out["param_name"] == "a"
     assert out["param_type"] == "default"
+
+
+def test_params_html_repr():
+    """Check returned HTML template"""
+    params = ParamsDict({"a": 1, "b": 2})
+    assert "parameters-table" in _params_html_repr(params)
+    assert "estimator-table" in _params_html_repr(params)
