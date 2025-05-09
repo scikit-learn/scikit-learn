@@ -70,7 +70,6 @@ def test_birch_predict(global_random_seed, global_dtype):
     assert_allclose(v_measure_score(nearest_centroid, brc.labels_), 1.0)
 
 
-@pytest.mark.parallel_threads(1)  # warnings are not thread-safe
 def test_n_clusters(global_random_seed, global_dtype):
     # Test that n_clusters param works properly
     X, y = make_blobs(n_samples=100, centers=10, random_state=global_random_seed)
@@ -244,7 +243,6 @@ def test_both_subclusters_updated():
 
 
 # TODO(1.8): Remove
-@pytest.mark.parallel_threads(1)  # warnings are not thread-safe
 def test_birch_copy_deprecated():
     X, _ = make_blobs(n_samples=80, n_features=4, random_state=0)
     brc = Birch(n_clusters=4, copy=True)

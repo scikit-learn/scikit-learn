@@ -850,7 +850,6 @@ def test_invalid_shape_precomputed_dist_matrix():
         AgglomerativeClustering(metric="precomputed", linkage="complete").fit(X)
 
 
-@pytest.mark.parallel_threads(1)  # warnings are not thread-safe
 def test_precomputed_connectivity_metric_with_2_connected_components():
     """Check that connecting components works when connectivity and
     affinity are both precomputed and the number of connected components is

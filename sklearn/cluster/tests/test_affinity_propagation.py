@@ -199,7 +199,6 @@ def test_affinity_propagation_predict_non_convergence(global_dtype):
     assert_array_equal(np.array([-1, -1, -1]), y)
 
 
-@pytest.mark.parallel_threads(1)
 def test_affinity_propagation_non_convergence_regressiontest(global_dtype):
     X = np.array(
         [[1, 0, 0, 0, 0, 0], [0, 1, 1, 1, 0, 0], [0, 0, 1, 0, 0, 1]], dtype=global_dtype

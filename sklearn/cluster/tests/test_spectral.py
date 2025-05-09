@@ -275,7 +275,6 @@ def test_n_components():
 
 
 @pytest.mark.parametrize("assign_labels", ("kmeans", "discretize", "cluster_qr"))
-@pytest.mark.parallel_threads(1)
 def test_verbose(assign_labels, capsys):
     # Check verbose mode of KMeans for better coverage.
     X, y = make_blobs(

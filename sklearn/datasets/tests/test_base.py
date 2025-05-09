@@ -572,10 +572,6 @@ def test_fetch_file_without_sha256(monkeypatch, tmpdir):
     assert urlretrieve_mock.call_count == 2
 
 
-# monkeypatching is fundamentally not thread-safe, and furthermore tmpdir
-# fixture initialization in the main thread does not guaranty the expected test
-# isolation.
-@pytest.mark.parallel_threads(1)
 def test_fetch_file_with_sha256(monkeypatch, tmpdir):
     server_side = tmpdir.mkdir("server_side")
     data_file = Path(server_side / "data.jsonl")

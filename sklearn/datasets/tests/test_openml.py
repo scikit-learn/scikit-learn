@@ -1138,7 +1138,6 @@ def test_missing_values_pandas(monkeypatch, gzip_response, parser):
         {"data_id": None, "name": "glass2", "version": 1},
     ],
 )
-@pytest.mark.parallel_threads(1)  # monkeypatch and warnings are not thread-safe
 def test_fetch_openml_inactive(monkeypatch, gzip_response, dataset_params):
     """Check that we raise a warning when the dataset is inactive."""
     data_id = 40675
@@ -1199,7 +1198,6 @@ def test_fetch_openml_inactive(monkeypatch, gzip_response, dataset_params):
     ],
 )
 @pytest.mark.parametrize("parser", ["liac-arff", "pandas"])
-@pytest.mark.parallel_threads(1)  # monkeypatch is not thread-safe
 def test_fetch_openml_error(
     monkeypatch, gzip_response, data_id, params, err_type, err_msg, parser
 ):
@@ -1241,7 +1239,6 @@ def test_fetch_openml_raises_illegal_argument(params, err_type, err_msg):
 
 
 @pytest.mark.parametrize("gzip_response", [True, False])
-@pytest.mark.parallel_threads(1)  # monkeypatch and warnings are not thread-safe
 def test_warn_ignore_attribute(monkeypatch, gzip_response):
     data_id = 40966
     expected_row_id_msg = "target_column='{}' has flag is_row_identifier."
@@ -1292,7 +1289,6 @@ def test_warn_ignore_attribute(monkeypatch, gzip_response):
 
 
 @pytest.mark.parametrize("gzip_response", [True, False])
-@pytest.mark.parallel_threads(1)  # monkeypatch is not thread-safe
 def test_dataset_with_openml_error(monkeypatch, gzip_response):
     data_id = 1
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
@@ -1302,7 +1298,6 @@ def test_dataset_with_openml_error(monkeypatch, gzip_response):
 
 
 @pytest.mark.parametrize("gzip_response", [True, False])
-@pytest.mark.parallel_threads(1)  # monkeypatch is not thread-safe
 def test_dataset_with_openml_warning(monkeypatch, gzip_response):
     data_id = 3
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
@@ -1311,7 +1306,6 @@ def test_dataset_with_openml_warning(monkeypatch, gzip_response):
         fetch_openml(data_id=data_id, cache=False, as_frame=False, parser="liac-arff")
 
 
-@pytest.mark.parallel_threads(1)  # monkeypatch is not thread-safe
 def test_fetch_openml_overwrite_default_params_read_csv(monkeypatch):
     """Check that we can overwrite the default parameters of `read_csv`."""
     pytest.importorskip("pandas")
