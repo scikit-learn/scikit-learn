@@ -19,7 +19,7 @@ from ..ensemble._hist_gradient_boosting.gradient_boosting import (
 from ..tree import DecisionTreeRegressor
 from ..utils import Bunch, _safe_indexing, check_array
 from ..utils._indexing import _determine_key_type, _get_column_indices, _safe_assign
-from ..utils._optional_dependencies import check_matplotlib_support  # noqa
+from ..utils._optional_dependencies import check_matplotlib_support  # noqa: F401
 from ..utils._param_validation import (
     HasMethods,
     Integral,
@@ -572,7 +572,7 @@ def partial_dependence(
     >>> gb = GradientBoostingClassifier(random_state=0).fit(X, y)
     >>> partial_dependence(gb, features=[0], X=X, percentiles=(0, 1),
     ...                    grid_resolution=2) # doctest: +SKIP
-    (array([[-4.52...,  4.52...]]), [array([ 0.,  1.])])
+    (array([[-4.52,  4.52]]), [array([ 0.,  1.])])
     """
     check_is_fitted(estimator)
 

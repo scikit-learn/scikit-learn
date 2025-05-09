@@ -703,8 +703,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         Returns
         -------
-        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
-            Result of the `inverse_transform` function for `Xt` based on the
+        X_original : {ndarray, sparse matrix} of shape (n_samples, n_features)
+            Result of the `inverse_transform` function for `X` based on the
             estimator with the best found parameters.
         """
         check_is_fitted(self)
@@ -1936,7 +1936,7 @@ class RandomizedSearchCV(BaseSearchCV):
     >>> clf = RandomizedSearchCV(logistic, distributions, random_state=0)
     >>> search = clf.fit(iris.data, iris.target)
     >>> search.best_params_
-    {'C': np.float64(2...), 'penalty': 'l1'}
+    {'C': np.float64(2.2), 'penalty': 'l1'}
     """
 
     _parameter_constraints: dict = {

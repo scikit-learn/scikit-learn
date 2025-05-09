@@ -324,7 +324,7 @@ def rand_score(labels_true, labels_pred):
     are complete but may not always be pure, hence penalized:
 
       >>> rand_score([0, 0, 1, 2], [0, 0, 1, 1])
-      0.83...
+      0.83
     """
     contingency = pair_confusion_matrix(labels_true, labels_pred)
     numerator = contingency.diagonal().sum()
@@ -417,13 +417,13 @@ def adjusted_rand_score(labels_true, labels_pred):
     are complete but may not always be pure, hence penalized::
 
       >>> adjusted_rand_score([0, 0, 1, 2], [0, 0, 1, 1])
-      0.57...
+      0.57
 
     ARI is symmetric, so labelings that have pure clusters with members
     coming from the same classes but unnecessary splits are penalized::
 
       >>> adjusted_rand_score([0, 0, 1, 1], [0, 0, 1, 2])
-      0.57...
+      0.57
 
     If classes members are completely split across different clusters, the
     assignment is totally incomplete, hence the ARI is very low::
@@ -523,7 +523,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     >>> from sklearn.metrics import homogeneity_completeness_v_measure
     >>> y_true, y_pred = [0, 0, 1, 1, 2, 2], [0, 0, 1, 2, 2, 2]
     >>> homogeneity_completeness_v_measure(y_true, y_pred)
-    (0.71..., 0.77..., 0.73...)
+    (0.71, 0.771, 0.74)
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
 
@@ -691,7 +691,7 @@ def completeness_score(labels_true, labels_pred):
       >>> print(completeness_score([0, 0, 1, 1], [0, 0, 0, 0]))
       1.0
       >>> print(completeness_score([0, 1, 2, 3], [0, 0, 1, 1]))
-      0.999...
+      0.999
 
     If classes members are split across different clusters, the
     assignment cannot be complete::
@@ -780,30 +780,30 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
     are complete but not homogeneous, hence penalized::
 
       >>> print("%.6f" % v_measure_score([0, 0, 1, 2], [0, 0, 1, 1]))
-      0.8...
+      0.8
       >>> print("%.6f" % v_measure_score([0, 1, 2, 3], [0, 0, 1, 1]))
-      0.66...
+      0.67
 
     Labelings that have pure clusters with members coming from the same
     classes are homogeneous but un-necessary splits harm completeness
     and thus penalize V-measure as well::
 
       >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 0, 1, 2]))
-      0.8...
+      0.8
       >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 1, 2, 3]))
-      0.66...
+      0.67
 
     If classes members are completely split across different clusters,
     the assignment is totally incomplete, hence the V-Measure is null::
 
       >>> print("%.6f" % v_measure_score([0, 0, 0, 0], [0, 1, 2, 3]))
-      0.0...
+      0.0
 
     Clusters that include samples from totally different classes totally
     destroy the homogeneity of the labeling, hence::
 
       >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 0, 0, 0]))
-      0.0...
+      0.0
     """
     return homogeneity_completeness_v_measure(labels_true, labels_pred, beta=beta)[2]
 
@@ -880,7 +880,7 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     >>> labels_true = [0, 1, 1, 0, 1, 0]
     >>> labels_pred = [0, 1, 0, 0, 1, 1]
     >>> mutual_info_score(labels_true, labels_pred)
-    0.056...
+    0.0566
     """
     if contingency is None:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
