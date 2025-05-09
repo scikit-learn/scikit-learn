@@ -444,7 +444,7 @@ def test_logistic_regression_path_convergence_fail():
 
     assert len(record) == 1
     warn_msg = record[0].message.args[0]
-    assert "lbfgs failed to converge" in warn_msg
+    assert "lbfgs failed to converge after 1 iteration(s)" in warn_msg
     assert "Increase the number of iterations" in warn_msg
     assert "scale the data" in warn_msg
     assert "linear_model.html#logistic-regression" in warn_msg

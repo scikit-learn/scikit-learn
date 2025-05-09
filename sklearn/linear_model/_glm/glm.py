@@ -282,7 +282,9 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 },
                 args=(X, y, sample_weight, l2_reg_strength, n_threads),
             )
-            self.n_iter_ = _check_optimize_result("lbfgs", opt_res)
+            self.n_iter_ = _check_optimize_result(
+                "lbfgs", opt_res, max_iter=self.max_iter
+            )
             coef = opt_res.x
         elif self.solver == "newton-cholesky":
             sol = NewtonCholeskySolver(
