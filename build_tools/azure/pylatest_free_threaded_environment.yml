@@ -6,6 +6,8 @@ channels:
 dependencies:
   - python-freethreading
   - numpy
+  - scipy
+  - cython
   - joblib
   - threadpoolctl
   - pytest
