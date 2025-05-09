@@ -173,11 +173,11 @@ In this scenario, the empirical sample covariance is a poor
 estimator, and shrinkage helps improving the generalization performance of
 the classifier.
 Shrinkage LDA can be used by setting the ``shrinkage`` parameter of
-the :class:`~discriminant_analysis.LinearDiscriminantAnalysis` class to 'auto'.
+the :class:`~discriminant_analysis.LinearDiscriminantAnalysis` class to `'auto'`.
 This automatically determines the optimal shrinkage parameter in an analytic
 way following the lemma introduced by Ledoit and Wolf [2]_. Note that
-currently shrinkage only works when setting the ``solver`` parameter to 'lsqr'
-or 'eigen'.
+currently shrinkage only works when setting the ``solver`` parameter to `'lsqr'`
+or `'eigen'`.
 
 The ``shrinkage`` parameter can also be manually set between 0 and 1. In
 particular, a value of 0 corresponds to no shrinkage (which means the empirical
@@ -192,7 +192,7 @@ best choice. For example if the distribution of the data
 is normally distributed, the
 Oracle Approximating Shrinkage estimator :class:`sklearn.covariance.OAS`
 yields a smaller Mean Squared Error than the one given by Ledoit and Wolf's
-formula used with shrinkage="auto". In LDA, the data are assumed to be gaussian
+formula used with `shrinkage="auto"`. In LDA, the data are assumed to be gaussian
 conditionally to the class. If these assumptions hold, using LDA with
 the OAS estimator of covariance will yield a better classification
 accuracy than if Ledoit and Wolf or the empirical covariance estimator is used.
@@ -239,7 +239,7 @@ computing :math:`S` and :math:`V` via the SVD of :math:`X` is enough. For
 LDA, two SVDs are computed: the SVD of the centered input matrix :math:`X`
 and the SVD of the class-wise mean vectors.
 
-The 'lsqr' solver is an efficient algorithm that only works for
+The `'lsqr'` solver is an efficient algorithm that only works for
 classification. It needs to explicitly compute the covariance matrix
 :math:`\Sigma`, and supports shrinkage and custom covariance estimators.
 This solver computes the coefficients
@@ -247,9 +247,9 @@ This solver computes the coefficients
 \mu_k`, thus avoiding the explicit computation of the inverse
 :math:`\Sigma^{-1}`.
 
-The 'eigen' solver is based on the optimization of the between class scatter to
+The `'eigen'` solver is based on the optimization of the between class scatter to
 within class scatter ratio. It can be used for both classification and
-transform, and it supports shrinkage. However, the 'eigen' solver needs to
+transform, and it supports shrinkage. However, the `'eigen'` solver needs to
 compute the covariance matrix, so it might not be suitable for situations with
 a high number of features.
 

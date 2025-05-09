@@ -211,11 +211,11 @@ Computation methods
 ===================
 
 There are two main methods to approximate the integral above, namely the
-'brute' and 'recursion' methods. The `method` parameter controls which method
+`'brute'` and `'recursion'` methods. The `method` parameter controls which method
 to use.
 
-The 'brute' method is a generic method that works with any estimator. Note that
-computing ICE plots is only supported with the 'brute' method. It
+The `'brute'` method is a generic method that works with any estimator. Note that
+computing ICE plots is only supported with the `'brute'` method. It
 approximates the above integral by computing an average over the data `X`:
 
 .. math::
@@ -231,7 +231,7 @@ at :math:`x_{S}`. Computing this for multiple values of :math:`x_{S}`, one
 obtains a full ICE line. As one can see, the average of the ICE lines
 corresponds to the partial dependence line.
 
-The 'recursion' method is faster than the 'brute' method, but it is only
+The `'recursion'` method is faster than the `'brute'` method, but it is only
 supported for PDP plots by some tree-based estimators. It is computed as
 follows. For a given point :math:`x_S`, a weighted tree traversal is performed:
 if a split node involves an input feature of interest, the corresponding left
@@ -240,12 +240,12 @@ being weighted by the fraction of training samples that entered that branch.
 Finally, the partial dependence is given by a weighted average of all the
 visited leaves' values.
 
-With the 'brute' method, the parameter `X` is used both for generating the
+With the `'brute'` method, the parameter `X` is used both for generating the
 grid of values :math:`x_S` and the complement feature values :math:`x_C`.
 However with the 'recursion' method, `X` is only used for the grid values:
 implicitly, the :math:`x_C` values are those of the training data.
 
-By default, the 'recursion' method is used for plotting PDPs on tree-based
+By default, the `'recursion'` method is used for plotting PDPs on tree-based
 estimators that support it, and 'brute' is used for the rest.
 
 .. _pdp_method_differences:
@@ -253,10 +253,10 @@ estimators that support it, and 'brute' is used for the rest.
 .. note::
 
     While both methods should be close in general, they might differ in some
-    specific settings. The 'brute' method assumes the existence of the
+    specific settings. The `'brute'` method assumes the existence of the
     data points :math:`(x_S, x_C^{(i)})`. When the features are correlated,
-    such artificial samples may have a very low probability mass. The 'brute'
-    and 'recursion' methods will likely disagree regarding the value of the
+    such artificial samples may have a very low probability mass. The `'brute'`
+    and `'recursion'` methods will likely disagree regarding the value of the
     partial dependence, because they will treat these unlikely
     samples differently. Remember, however, that the primary assumption for
     interpreting PDPs is that the features should be independent.
