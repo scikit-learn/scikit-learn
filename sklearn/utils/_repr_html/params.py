@@ -8,6 +8,21 @@ from collections import UserDict
 from sklearn.utils._repr_html.base import ReprHTMLMixin
 
 
+def _read_params(name, value, non_default_params):
+    """Categorizes parameters as 'default' or 'user-set' and formats their values.
+    Escapes or truncates parameter values for display safety and readability.
+    """
+    r = reprlib.Repr()
+    r.maxlist = 2  # Show only first 2 items of lists
+    r.maxtuple = 1  # Show only first item of tuples
+    r.maxstring = 50  # Limit string length
+    cleaned_value = html.escape(r.repr(value))
+
+    param_type = "user-set" if name in non_default_params else "default"
+
+    return {"param_type": param_type, "param_name": name, "param_value": cleaned_value}
+
+
 def _params_html_repr(params):
     """Generate HTML representation of estimator parameters.
 
@@ -66,18 +81,3 @@ class ParamsDict(ReprHTMLMixin, UserDict):
     def __init__(self, params=None, non_default=tuple()):
         super().__init__(params or {})
         self.non_default = non_default
-
-
-def _read_params(name, value, non_default_params):
-    """Categorizes parameters as 'default' or 'user-set' and formats their values.
-    Escapes or truncates parameter values for display safety and readability.
-    """
-    r = reprlib.Repr()
-    r.maxlist = 2  # Show only first 2 items of lists
-    r.maxtuple = 1  # Show only first item of tuples
-    r.maxstring = 50  # Limit string length
-    cleaned_value = html.escape(r.repr(value))
-
-    param_type = "user-set" if name in non_default_params else "default"
-
-    return {"param_type": param_type, "param_name": name, "param_value": cleaned_value}
