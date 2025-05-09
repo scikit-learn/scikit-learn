@@ -369,10 +369,6 @@ def _check_optimize_result(solver, result, max_iter=None, extra_warning_msg=None
             # number of iterations reaches the maximum allowed (max_iter),
             # as this suggests the optimization may have been prematurely
             # terminated due to the iteration limit.
-            #
-            # Furthermore, this recommandation should only be displayed
-            # when max_iter is provided hence assumed settable by the
-            # user-facing API.
             if max_iter is not None and n_iter_i == max_iter:
                 warning_msg += (
                     f"\nIncrease the number of iterations to improve the "
