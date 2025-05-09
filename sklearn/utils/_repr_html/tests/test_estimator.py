@@ -611,5 +611,6 @@ def test_function_transformer_show_caption(func, expected_name):
 
 
 def test_estimator_html_repr_table():
+    """Check that we add the table of parameters in the HTML representation."""
     est = LogisticRegression(C=10.0, fit_intercept=False)
     assert "parameters-table" in estimator_html_repr(est)
