@@ -21,7 +21,10 @@ class ConfusionMatrixDisplay:
     create a :class:`ConfusionMatrixDisplay`. All parameters are stored as
     attributes.
 
-    Read more in the :ref:`User Guide <visualizations>`.
+    For general information regarding `scikit-learn` visualization tools, see
+    the :ref:`Visualization Guide <visualizations>`.
+    For guidance on interpreting these plots, refer to the
+    :ref:`Model Evaluation Guide <confusion_matrix>`.
 
     Parameters
     ----------
@@ -220,7 +223,10 @@ class ConfusionMatrixDisplay:
     ):
         """Plot Confusion Matrix given an estimator and some data.
 
-        Read more in the :ref:`User Guide <confusion_matrix>`.
+        For general information regarding `scikit-learn` visualization tools, see
+        the :ref:`Visualization Guide <visualizations>`.
+        For guidance on interpreting these plots, refer to the
+        :ref:`Model Evaluation Guide <confusion_matrix>`.
 
         .. versionadded:: 1.0
 
@@ -365,7 +371,10 @@ class ConfusionMatrixDisplay:
     ):
         """Plot Confusion Matrix given true and predicted labels.
 
-        Read more in the :ref:`User Guide <confusion_matrix>`.
+        For general information regarding `scikit-learn` visualization tools, see
+        the :ref:`Visualization Guide <visualizations>`.
+        For guidance on interpreting these plots, refer to the
+        :ref:`Model Evaluation Guide <confusion_matrix>`.
 
         .. versionadded:: 1.0
 
