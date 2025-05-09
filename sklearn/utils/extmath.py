@@ -269,9 +269,9 @@ def randomized_range_finder(
     >>> from sklearn.utils.extmath import randomized_range_finder
     >>> A = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     >>> randomized_range_finder(A, size=2, n_iter=2, random_state=42)
-    array([[-0.21...,  0.88...],
-           [-0.52...,  0.24...],
-           [-0.82..., -0.38...]])
+    array([[-0.214,  0.887],
+           [-0.521,  0.249],
+           [-0.826, -0.388]])
     """
     A = check_array(A, accept_sparse=True)
 

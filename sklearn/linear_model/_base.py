@@ -559,7 +559,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     >>> reg.coef_
     array([1., 2.])
     >>> reg.intercept_
-    np.float64(3.0...)
+    np.float64(3.0)
     >>> reg.predict(np.array([[3, 5]]))
     array([16.])
     """

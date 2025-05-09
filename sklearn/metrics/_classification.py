@@ -1036,7 +1036,7 @@ def jaccard_score(
     In the binary case:
 
     >>> jaccard_score(y_true[0], y_pred[0])
-    0.6666...
+    0.6666
 
     In the 2D comparison case (e.g. image similarity):
 
@@ -1046,9 +1046,9 @@ def jaccard_score(
     In the multilabel case:
 
     >>> jaccard_score(y_true, y_pred, average='samples')
-    0.5833...
+    0.5833
     >>> jaccard_score(y_true, y_pred, average='macro')
-    0.6666...
+    0.6666
     >>> jaccard_score(y_true, y_pred, average=None)
     array([0.5, 0.5, 1. ])
 
@@ -1057,7 +1057,7 @@ def jaccard_score(
     >>> y_pred = [0, 2, 1, 2]
     >>> y_true = [0, 1, 2, 2]
     >>> jaccard_score(y_true, y_pred, average=None)
-    array([1. , 0. , 0.33...])
+    array([1. , 0. , 0.33])
     """
     labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
     samplewise = average == "samples"
@@ -1071,9 +1071,10 @@ def jaccard_score(
     numerator = MCM[:, 1, 1]
     denominator = MCM[:, 1, 1] + MCM[:, 0, 1] + MCM[:, 1, 0]
 
+    xp, _, device_ = get_namespace_and_device(y_true, y_pred)
     if average == "micro":
-        numerator = np.array([numerator.sum()])
-        denominator = np.array([denominator.sum()])
+        numerator = xp.asarray(xp.sum(numerator, keepdims=True), device=device_)
+        denominator = xp.asarray(xp.sum(denominator, keepdims=True), device=device_)
 
     jaccard = _prf_divide(
         numerator,
@@ -1088,14 +1089,14 @@ def jaccard_score(
         return jaccard
     if average == "weighted":
         weights = MCM[:, 1, 0] + MCM[:, 1, 1]
-        if not np.any(weights):
+        if not xp.any(weights):
             # numerator is 0, and warning should have already been issued
             weights = None
     elif average == "samples" and sample_weight is not None:
         weights = sample_weight
     else:
         weights = None
-    return float(np.average(jaccard, weights=weights))
+    return float(_average(jaccard, weights=weights, xp=xp))
 
 
 @validate_params(
@@ -1167,7 +1168,7 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     >>> y_true = [+1, +1, +1, -1]
     >>> y_pred = [+1, -1, +1, +1]
     >>> matthews_corrcoef(y_true, y_pred)
-    -0.33...
+    -0.33
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
@@ -1437,11 +1438,11 @@ def f1_score(
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
     >>> f1_score(y_true, y_pred, average='macro')
-    0.26...
+    0.267
     >>> f1_score(y_true, y_pred, average='micro')
-    0.33...
+    0.33
     >>> f1_score(y_true, y_pred, average='weighted')
-    0.26...
+    0.267
     >>> f1_score(y_true, y_pred, average=None)
     array([0.8, 0. , 0. ])
 
@@ -1641,17 +1642,17 @@ def fbeta_score(
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
     >>> fbeta_score(y_true, y_pred, average='macro', beta=0.5)
-    0.23...
+    0.238
     >>> fbeta_score(y_true, y_pred, average='micro', beta=0.5)
-    0.33...
+    0.33
     >>> fbeta_score(y_true, y_pred, average='weighted', beta=0.5)
-    0.23...
+    0.238
     >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
-    array([0.71..., 0.        , 0.        ])
+    array([0.71, 0.        , 0.        ])
     >>> y_pred_empty = [0, 0, 0, 0, 0, 0]
     >>> fbeta_score(y_true, y_pred_empty,
     ...             average="macro", zero_division=np.nan, beta=0.5)
-    0.12...
+    0.128
     """
 
     _, _, f, _ = precision_recall_fscore_support(
@@ -1951,18 +1952,18 @@ def precision_recall_fscore_support(
     >>> y_true = np.array(['cat', 'dog', 'pig', 'cat', 'dog', 'pig'])
     >>> y_pred = np.array(['cat', 'pig', 'dog', 'cat', 'cat', 'dog'])
     >>> precision_recall_fscore_support(y_true, y_pred, average='macro')
-    (0.22..., 0.33..., 0.26..., None)
+    (0.222, 0.333, 0.267, None)
     >>> precision_recall_fscore_support(y_true, y_pred, average='micro')
-    (0.33..., 0.33..., 0.33..., None)
+    (0.33, 0.33, 0.33, None)
     >>> precision_recall_fscore_support(y_true, y_pred, average='weighted')
-    (0.22..., 0.33..., 0.26..., None)
+    (0.222, 0.333, 0.267, None)
 
     It is possible to compute per-label precisions, recalls, F1-scores and
     supports instead of averaging:
 
     >>> precision_recall_fscore_support(y_true, y_pred, average=None,
     ... labels=['pig', 'dog', 'cat'])
-    (array([0.        , 0.        , 0.66...]),
+    (array([0.        , 0.        , 0.66]),
      array([0., 0., 1.]), array([0. , 0. , 0.8]),
      array([2, 2, 2]))
     """
@@ -2052,7 +2053,6 @@ def precision_recall_fscore_support(
         "sample_weight": ["array-like", None],
         "raise_warning": ["boolean", Hidden(StrOptions({"deprecated"}))],
         "replace_undefined_by": [
-            Hidden(StrOptions({"default"})),
             Options(Real, {1.0, np.nan}),
             dict,
         ],
@@ -2066,7 +2066,7 @@ def class_likelihood_ratios(
     labels=None,
     sample_weight=None,
     raise_warning="deprecated",
-    replace_undefined_by="default",
+    replace_undefined_by=np.nan,
 ):
     """Compute binary classification positive and negative likelihood ratios.
 
@@ -2178,16 +2178,15 @@ def class_likelihood_ratios(
     --------
     >>> import numpy as np
     >>> from sklearn.metrics import class_likelihood_ratios
-    >>> class_likelihood_ratios([0, 1, 0, 1, 0], [1, 1, 0, 0, 0],
-    ...                          replace_undefined_by=1.0)
+    >>> class_likelihood_ratios([0, 1, 0, 1, 0], [1, 1, 0, 0, 0])
     (1.5, 0.75)
     >>> y_true = np.array(["non-cat", "cat", "non-cat", "cat", "non-cat"])
     >>> y_pred = np.array(["cat", "cat", "non-cat", "non-cat", "non-cat"])
-    >>> class_likelihood_ratios(y_true, y_pred, replace_undefined_by=1.0)
-    (1.33..., 0.66...)
+    >>> class_likelihood_ratios(y_true, y_pred)
+    (1.33, 0.66)
     >>> y_true = np.array(["non-zebra", "zebra", "non-zebra", "zebra", "non-zebra"])
     >>> y_pred = np.array(["zebra", "zebra", "non-zebra", "non-zebra", "non-zebra"])
-    >>> class_likelihood_ratios(y_true, y_pred, replace_undefined_by=1.0)
+    >>> class_likelihood_ratios(y_true, y_pred)
     (1.5, 0.75)
 
     To avoid ambiguities, use the notation `labels=[negative_class,
@@ -2195,18 +2194,13 @@ def class_likelihood_ratios(
 
     >>> y_true = np.array(["non-cat", "cat", "non-cat", "cat", "non-cat"])
     >>> y_pred = np.array(["cat", "cat", "non-cat", "non-cat", "non-cat"])
-    >>> class_likelihood_ratios(y_true, y_pred, labels=["non-cat", "cat"],
-    ...                          replace_undefined_by=1.0)
+    >>> class_likelihood_ratios(y_true, y_pred, labels=["non-cat", "cat"])
     (1.5, 0.75)
     """
     # TODO(1.9): When `raise_warning` is removed, the following changes need to be made:
     # The checks for `raise_warning==True` need to be removed and we will always warn,
-    # the default return value of `replace_undefined_by` should be updated from `np.nan`
-    # (which was kept for backwards compatibility) to `1.0`, its hidden option
-    # ("default") is not used anymore, some warning messages can be removed, the Warns
-    # section in the docstring should not mention `raise_warning` anymore and the
-    # "Mathematical divergences" section in model_evaluation.rst needs to be updated on
-    # the new default behaviour of `replace_undefined_by`.
+    # remove `FutureWarning`, and the Warns section in the docstring should not mention
+    # `raise_warning` anymore.
     y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type != "binary":
@@ -2220,27 +2214,10 @@ def class_likelihood_ratios(
         "`UndefinedMetricWarning` will always be raised in case of a division by zero "
         "and the value set with the `replace_undefined_by` param will be returned."
     )
-    mgs_changed_default = (
-        "The default return value of `class_likelihood_ratios` in case of a division "
-        "by zero has been deprecated in 1.7 and will be changed to the worst scores "
-        "(`(1.0, 1.0)`) in version 1.9. Set `replace_undefined_by=1.0` to use the new"
-        "default and to silence this Warning."
-    )
     if raise_warning != "deprecated":
-        warnings.warn(
-            " ".join((msg_deprecated_param, mgs_changed_default)), FutureWarning
-        )
+        warnings.warn(msg_deprecated_param, FutureWarning)
     else:
-        if replace_undefined_by == "default":
-            # TODO(1.9): Remove. If users don't set any return values in case of a
-            # division by zero (`raise_warning="deprecated"` and
-            # `replace_undefined_by="default"`) they still get a FutureWarning about
-            # changing default return values:
-            warnings.warn(mgs_changed_default, FutureWarning)
         raise_warning = True
-
-    if replace_undefined_by == "default":
-        replace_undefined_by = np.nan
 
     if replace_undefined_by == 1.0:
         replace_undefined_by = {"LR+": 1.0, "LR-": 1.0}
@@ -2293,12 +2270,12 @@ def class_likelihood_ratios(
 
     # if `support_pos == 0`a division by zero will occur
     if support_pos == 0:
-        # TODO(1.9): Change return values in warning message to new default: the worst
-        # possible scores: `(1.0, 1.0)`
         msg = (
             "No samples of the positive class are present in `y_true`. "
             "`positive_likelihood_ratio` and `negative_likelihood_ratio` are both set "
-            "to `np.nan`."
+            "to `np.nan`. Use the `replace_undefined_by` param to control this "
+            "behavior. To suppress this warning or turn it into an error, see Python's "
+            "`warnings` module and `warnings.catch_warnings()`."
         )
         warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
         positive_likelihood_ratio = np.nan
@@ -2315,9 +2292,8 @@ def class_likelihood_ratios(
             else:
                 msg_beginning = "`positive_likelihood_ratio` is ill-defined and "
             msg_end = "set to `np.nan`. Use the `replace_undefined_by` param to "
-            "control this behavior."
-            # TODO(1.9): Change return value in warning message to new default: `1.0`,
-            # which is the worst possible score for "LR+"
+            "control this behavior. To suppress this warning or turn it into an error, "
+            "see Python's `warnings` module and `warnings.catch_warnings()`."
             warnings.warn(msg_beginning + msg_end, UndefinedMetricWarning, stacklevel=2)
         if isinstance(replace_undefined_by, float) and np.isnan(replace_undefined_by):
             positive_likelihood_ratio = replace_undefined_by
@@ -2332,11 +2308,11 @@ def class_likelihood_ratios(
     # if `tn == 0`a division by zero will occur
     if tn == 0:
         if raise_warning:
-            # TODO(1.9): Change return value in warning message to new default: `1.0`,
-            # which is the worst possible score for "LR-"
             msg = (
                 "`negative_likelihood_ratio` is ill-defined and set to `np.nan`. "
-                "Use the `replace_undefined_by` param to control this behavior."
+                "Use the `replace_undefined_by` param to control this behavior. To "
+                "suppress this warning or turn it into an error, see Python's "
+                "`warnings` module and `warnings.catch_warnings()`."
             )
             warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
         if isinstance(replace_undefined_by, float) and np.isnan(replace_undefined_by):
@@ -2499,20 +2475,20 @@ def precision_score(
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
     >>> precision_score(y_true, y_pred, average='macro')
-    0.22...
+    0.22
     >>> precision_score(y_true, y_pred, average='micro')
-    0.33...
+    0.33
     >>> precision_score(y_true, y_pred, average='weighted')
-    0.22...
+    0.22
     >>> precision_score(y_true, y_pred, average=None)
-    array([0.66..., 0.        , 0.        ])
+    array([0.66, 0.        , 0.        ])
     >>> y_pred = [0, 0, 0, 0, 0, 0]
     >>> precision_score(y_true, y_pred, average=None)
-    array([0.33..., 0.        , 0.        ])
+    array([0.33, 0.        , 0.        ])
     >>> precision_score(y_true, y_pred, average=None, zero_division=1)
-    array([0.33..., 1.        , 1.        ])
+    array([0.33, 1.        , 1.        ])
     >>> precision_score(y_true, y_pred, average=None, zero_division=np.nan)
-    array([0.33...,        nan,        nan])
+    array([0.33,        nan,        nan])
 
     >>> # multilabel classification
     >>> y_true = [[0, 0, 0], [1, 1, 1], [0, 1, 1]]
@@ -2681,11 +2657,11 @@ def recall_score(
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
     >>> recall_score(y_true, y_pred, average='macro')
-    0.33...
+    0.33
     >>> recall_score(y_true, y_pred, average='micro')
-    0.33...
+    0.33
     >>> recall_score(y_true, y_pred, average='weighted')
-    0.33...
+    0.33
     >>> recall_score(y_true, y_pred, average=None)
     array([1., 0., 0.])
     >>> y_true = [0, 0, 0, 0, 0, 0]
@@ -3234,7 +3210,7 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
     >>> from sklearn.metrics import log_loss
     >>> log_loss(["spam", "ham", "ham", "spam"],
     ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
-    0.21616...
+    0.21616
     """
     transformed_labels, y_pred = _validate_multiclass_probabilistic_prediction(
         y_true, y_pred, sample_weight, labels
@@ -3320,9 +3296,9 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     LinearSVC(random_state=0)
     >>> pred_decision = est.decision_function([[-2], [3], [0.5]])
     >>> pred_decision
-    array([-2.18...,  2.36...,  0.09...])
+    array([-2.18,  2.36,  0.09])
     >>> hinge_loss([-1, 1, 1], pred_decision)
-    0.30...
+    0.30
 
     In the multiclass case:
 
@@ -3336,7 +3312,7 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     >>> pred_decision = est.decision_function([[-1], [2], [3]])
     >>> y_true = [0, 2, 3]
     >>> hinge_loss(y_true, pred_decision, labels=labels)
-    0.56...
+    0.56
     """
     check_consistent_length(y_true, pred_decision, sample_weight)
     pred_decision = check_array(pred_decision, ensure_2d=False)
@@ -3584,21 +3560,21 @@ def brier_score_loss(
     >>> y_true_categorical = np.array(["spam", "ham", "ham", "spam"])
     >>> y_prob = np.array([0.1, 0.9, 0.8, 0.3])
     >>> brier_score_loss(y_true, y_prob)
-    0.037...
+    0.0375
     >>> brier_score_loss(y_true, 1-y_prob, pos_label=0)
-    0.037...
+    0.0375
     >>> brier_score_loss(y_true_categorical, y_prob, pos_label="ham")
-    0.037...
+    0.0375
     >>> brier_score_loss(y_true, np.array(y_prob) > 0.5)
     0.0
     >>> brier_score_loss(y_true, y_prob, scale_by_half=False)
-    0.074...
+    0.075
     >>> brier_score_loss(
     ...    ["eggs", "ham", "spam"],
     ...    [[0.8, 0.1, 0.1], [0.2, 0.7, 0.1], [0.2, 0.2, 0.6]],
     ...    labels=["eggs", "ham", "spam"]
     ... )
-    0.146...
+    0.146
     """
     y_proba = check_array(
         y_proba, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
