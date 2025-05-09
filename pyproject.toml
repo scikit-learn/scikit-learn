@@ -111,6 +111,12 @@ addopts = [
     "--color=yes",
     "--import-mode=importlib",
 ]
+# Used by pytest-run-parallel when testing thread-safety (with or without GIL).
+thread_unsafe_fixtures = [
+  "monkeypatch",  # inherently thread unsafe
+  "hide_available_pandas",  # relies on monkeypatch
+]
+
 
 [tool.ruff]
 line-length = 88
@@ -498,10 +504,3 @@ ignore-words = "build_tools/codespell_ignore_words.txt"
     [[tool.towncrier.section]]
         name = ":mod:`sklearn.utils`"
         path = "sklearn.utils"
-
-[tool.pytest.ini_options]
-# Used by pytest-run-parallel when testing thread-safety (with or without GIL).
-thread_unsafe_fixtures = [
-  "monkeypatch",  # inherently thread unsafe
-  "hide_available_pandas",  # relies on monkeypatch
-]
