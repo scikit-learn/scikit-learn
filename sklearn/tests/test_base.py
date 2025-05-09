@@ -999,4 +999,4 @@ def test_get_params_html():
     est = MyEstimator(empty="test")
 
     assert est._get_params_html() == {"l1": 0, "empty": "test"}
-    assert est._get_params_html().non_default == ["empty"]
+    assert est._get_params_html().non_default == ("empty",)
