@@ -142,8 +142,8 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
     >>> transformer = FunctionTransformer(np.log1p)
     >>> X = np.array([[0, 1], [2, 3]])
     >>> transformer.transform(X)
-    array([[0.       , 0.6931...],
-           [1.0986..., 1.3862...]])
+    array([[0.       , 0.6931],
+           [1.0986, 1.3862]])
     """
 
     _parameter_constraints: dict = {

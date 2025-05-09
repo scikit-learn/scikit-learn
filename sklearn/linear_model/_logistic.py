@@ -1107,10 +1107,10 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     >>> clf.predict(X[:2, :])
     array([0, 0])
     >>> clf.predict_proba(X[:2, :])
-    array([[9.8...e-01, 1.8...e-02, 1.4...e-08],
-           [9.7...e-01, 2.8...e-02, ...e-08]])
+    array([[9.82e-01, 1.82e-02, 1.44e-08],
+           [9.72e-01, 2.82e-02, 3.02e-08]])
     >>> clf.score(X, y)
-    0.97...
+    0.97
 
     For a comparison of the LogisticRegression with other classifiers see:
     :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`.
