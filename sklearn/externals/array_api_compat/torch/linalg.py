@@ -11,6 +11,7 @@ if TYPE_CHECKING:
 from ._aliases import _fix_promotion, sum
 
 from torch.linalg import * # noqa: F403
+import torch
 
 # torch.linalg doesn't define __all__
 # from torch.linalg import __all__ as linalg_all
