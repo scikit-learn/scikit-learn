@@ -498,3 +498,25 @@ ignore-words = "build_tools/codespell_ignore_words.txt"
     [[tool.towncrier.section]]
         name = ":mod:`sklearn.utils`"
         path = "sklearn.utils"
+
+
+[tool.vendoring]
+destination = "sklearn/externals/"
+requirements = "sklearn/externals/vendoring.txt"
+namespace = "sklearn.externals"
+sbom-file = "sklearn/externals/bom.cdx.json"
+protected-files =[
+    "__init__.py",
+    "_arff.py",
+    "_array_api_compat_vendor.py",
+    "_packaging",
+    "_scipy",
+    "README",
+    "conftest.py",
+]
+
+[tool.vendoring.transformations]
+drop = [
+    "*.dist-info",
+    "*.egg-info",
+]
