@@ -360,7 +360,6 @@ def test_warm_start_effectiveness():
 @pytest.mark.parametrize(
     "init_name", ["pca", "lda", "identity", "random", "precomputed"]
 )
-@pytest.mark.parallel_threads(1)
 def test_verbose(init_name, capsys):
     # assert there is proper output when verbose = 1, for every initialization
     # except auto because auto will call one of the others
@@ -405,7 +404,6 @@ def test_verbose(init_name, capsys):
     assert lines[-1] == ""
 
 
-@pytest.mark.parallel_threads(1)
 def test_no_verbose(capsys):
     # assert by default there is no output (verbose=0)
     nca = NeighborhoodComponentsAnalysis()

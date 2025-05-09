@@ -1114,7 +1114,6 @@ def test_pca_mle_array_api_compliance(
         assert all(np.abs(extra_variance_xp_np - reference_variance) < atol)
 
 
-@pytest.mark.parallel_threads(1)  # warnings are not thread-safe
 def test_array_api_error_and_warnings_on_unsupported_params():
     pytest.importorskip("array_api_compat")
     xp = pytest.importorskip("array_api_strict")

@@ -2345,7 +2345,6 @@ def three_params_scorer(i, j, k):
         ),
     ],
 )
-@pytest.mark.parallel_threads(1)
 def test_fit_and_score_verbosity(
     capsys, train_score, scorer, verbose, split_prg, cdt_prg, expected
 ):

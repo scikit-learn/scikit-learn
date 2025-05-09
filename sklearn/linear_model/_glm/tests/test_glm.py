@@ -1008,7 +1008,6 @@ def test_linalg_warning_with_newton_solver(global_random_seed):
 
 
 @pytest.mark.parametrize("verbose", [0, 1, 2])
-@pytest.mark.parallel_threads(1)
 def test_newton_solver_verbosity(capsys, verbose):
     """Test the std output of verbose newton solvers."""
     y = np.array([1, 2], dtype=float)

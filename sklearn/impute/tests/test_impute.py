@@ -1392,7 +1392,6 @@ def test_simple_imputation_string_list(strategy, expected):
     "order, idx_order",
     [("ascending", [3, 4, 2, 0, 1]), ("descending", [1, 0, 2, 4, 3])],
 )
-@pytest.mark.parallel_threads(1)  # warnings are not thread-safe
 def test_imputation_order(order, idx_order):
     # regression test for #15393
     rng = np.random.RandomState(42)

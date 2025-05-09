@@ -167,7 +167,7 @@ def test_score_samples(lil_containers):
         rbm1.score_samples([np.arange(1000) * 100])
 
 
-@pytest.mark.parallel_threads(1)
+@pytest.mark.thread_unsafe  # manually captured stdout
 def test_rbm_verbose():
     rbm = BernoulliRBM(n_iter=2, verbose=10)
     old_stdout = sys.stdout

@@ -1339,7 +1339,6 @@ def test_fetch_openml_overwrite_default_params_read_csv(monkeypatch):
 
 
 @pytest.mark.parametrize("gzip_response", [True, False])
-@pytest.mark.parallel_threads(1)  # monkeypatch is not thread-safe
 def test_open_openml_url_cache(monkeypatch, gzip_response, tmpdir):
     data_id = 61
 
@@ -1357,7 +1356,6 @@ def test_open_openml_url_cache(monkeypatch, gzip_response, tmpdir):
 
 
 @pytest.mark.parametrize("write_to_disk", [True, False])
-@pytest.mark.parallel_threads(1)  # monkeypatch is not thread-safe
 def test_open_openml_url_unlinks_local_path(monkeypatch, tmpdir, write_to_disk):
     data_id = 61
     openml_path = sklearn.datasets._openml._DATA_FILE.format(data_id)
@@ -1418,7 +1416,6 @@ def test_retry_with_clean_cache_http_error(tmpdir):
 
 
 @pytest.mark.parametrize("gzip_response", [True, False])
-@pytest.mark.parallel_threads(1)  # monkeypatch is not thread-safe
 def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
     def _mock_urlopen_raise(request, *args, **kwargs):
         raise ValueError(

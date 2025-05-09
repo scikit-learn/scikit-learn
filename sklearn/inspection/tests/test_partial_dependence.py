@@ -572,7 +572,6 @@ def test_partial_dependence_X_list(estimator):
     partial_dependence(estimator, list(X), [0], kind="average")
 
 
-@pytest.mark.parallel_threads(1)
 def test_warning_recursion_non_constant_init():
     # make sure that passing a non-constant init parameter to a GBDT and using
     # recursion method yields a warning.

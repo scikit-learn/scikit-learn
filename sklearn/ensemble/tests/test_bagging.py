@@ -388,7 +388,6 @@ def test_oob_score_classification():
             clf.fit(X_train, y_train)
 
 
-@pytest.mark.parallel_threads(1)  # warnings are not thread-safe
 def test_oob_score_regression():
     # Check that oob prediction is a good estimation of the generalization
     # error.

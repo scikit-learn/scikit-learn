@@ -786,7 +786,6 @@ def test_classifier_chain_tuple_invalid_order():
         chain.fit(X, y)
 
 
-@pytest.mark.parallel_threads(1)
 def test_classifier_chain_verbose(capsys):
     X, y = make_multilabel_classification(
         n_samples=100, n_features=5, n_classes=3, n_labels=3, random_state=0
@@ -809,7 +808,6 @@ def test_classifier_chain_verbose(capsys):
     assert re.match(pattern, capsys.readouterr()[0])
 
 
-@pytest.mark.parallel_threads(1)
 def test_regressor_chain_verbose(capsys):
     X, y = make_regression(n_samples=125, n_targets=3, random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)

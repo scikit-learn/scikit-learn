@@ -2459,7 +2459,6 @@ def test_search_cv_using_minimal_compatible_estimator(SearchCV, Predictor):
 
 
 @pytest.mark.parametrize("return_train_score", [True, False])
-@pytest.mark.parallel_threads(1)
 def test_search_cv_verbose_3(capsys, return_train_score):
     """Check that search cv with verbose>2 shows the score for single
     metrics. non-regression test for #19658."""

@@ -224,7 +224,6 @@ def test_strings_dtype():
 
 
 @pytest.mark.parametrize("verbose", [True, False])
-@pytest.mark.parallel_threads(1)
 def test_verbose(capsys, verbose):
     clf = SelfTrainingClassifier(KNeighborsClassifier(), verbose=verbose)
     clf.fit(X_train, y_train_missing_labels)

@@ -58,7 +58,6 @@ def test_message_with_time(source, message, is_long, time, time_str):
         (None, ""),
     ],
 )
-@pytest.mark.parallel_threads(1)
 def test_print_elapsed_time(message, expected, capsys, monkeypatch):
     monkeypatch.setattr(timeit, "default_timer", lambda: 0)
     with _print_elapsed_time("ABC", message):
