@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import numpy as np
-import scipy.sparse as sp
 from joblib import Memory
 
 from sklearn.datasets import (
@@ -17,6 +16,7 @@ from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MaxAbsScaler, StandardScaler
+from sklearn.utils._sparse import _sparse_random
 
 # memory location for caching datasets
 M = Memory(location=str(Path(__file__).resolve().parent / "cache"))
@@ -100,12 +100,12 @@ def _synth_regression_dataset(n_samples=100000, n_features=100, dtype=np.float32
 def _synth_regression_sparse_dataset(
     n_samples=10000, n_features=10000, density=0.01, dtype=np.float32
 ):
-    X = sp.random(
-        m=n_samples, n=n_features, density=density, format="csr", random_state=0
+    X = _sparse_random(
+        (n_samples, n_features), density=density, format="csr", random_state=0
     )
     X.data = np.random.RandomState(0).randn(X.getnnz())
     X = X.astype(dtype, copy=False)
-    coefs = sp.random(m=n_features, n=1, density=0.5, random_state=0)
+    coefs = _sparse_random((n_features, 1), density=0.5, random_state=0)
     coefs.data = np.random.RandomState(0).randn(coefs.getnnz())
     y = X.dot(coefs.toarray()).reshape(-1)
     y += 0.2 * y.std() * np.random.randn(n_samples)
@@ -155,9 +155,8 @@ def _random_dataset(
         X = np.random.RandomState(0).random_sample((n_samples, n_features))
         X = X.astype(dtype, copy=False)
     else:
-        X = sp.random(
-            n_samples,
-            n_features,
+        X = _sparse_random(
+            (n_samples, n_features),
             density=0.05,
             format="csr",
             dtype=dtype,
