@@ -24,8 +24,8 @@ from ..linear_model import LogisticRegression, RidgeCV
 from ..model_selection import check_cv, cross_val_predict
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch
-from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import HasMethods, StrOptions
+from ..utils._repr_html.estimator import _VisualBlock
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
