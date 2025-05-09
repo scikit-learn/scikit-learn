@@ -95,7 +95,7 @@ cdef class Tree:
         object y_test,
         object sample_weight,
         criterion,
-        method="ufi"
+        method=*,
     )
     cdef float64_t mdi_oob_impurity_decrease(
         self,
@@ -103,7 +103,7 @@ cdef class Tree:
         int node_idx,
         int left_idx,
         int right_idx,
-        Node node
+        Node node,
     )
     cdef float64_t ufi_impurity_decrease(
         self,
@@ -112,7 +112,7 @@ cdef class Tree:
         int left_idx,
         int right_idx,
         Node node,
-        str criterion
+        str criterion,
     )
 
 # =============================================================================

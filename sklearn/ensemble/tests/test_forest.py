@@ -1942,17 +1942,7 @@ def test_mdi_oob_match_paper(name):
     )
 
 
-@pytest.mark.parametrize(
-    ["oob_score", "importance_attribute_name"],
-    [
-        (False, "feature_importances_"),
-        (True, "ufi_feature_importances_"),
-        (True, "mdi_oob_feature_importances_"),
-    ],
-)
-def test_importance_reg_match_onehot_classi(
-    oob_score, importance_attribute_name, global_random_seed
-):
+def test_importance_reg_match_onehot_classi(global_random_seed):
     n_classes = 2
     X, y_class = make_classification(
         n_samples=15,
@@ -1965,7 +1955,7 @@ def test_importance_reg_match_onehot_classi(
 
     common_params = dict(
         n_estimators=10,
-        oob_score=oob_score,
+        oob_score=True,
         max_depth=2,
         max_features=None,
         random_state=global_random_seed,
@@ -1976,8 +1966,10 @@ def test_importance_reg_match_onehot_classi(
     cls.fit(X, y_class)
     reg.fit(X, y_reg)
 
+    assert_almost_equal(cls.feature_importances_, reg.feature_importances_)
+    assert_almost_equal(cls.ufi_feature_importances_, reg.ufi_feature_importances_)
     assert_almost_equal(
-        getattr(cls, importance_attribute_name), getattr(reg, importance_attribute_name)
+        cls.mdi_oob_feature_importances_, reg.mdi_oob_feature_importances_
     )
 
 

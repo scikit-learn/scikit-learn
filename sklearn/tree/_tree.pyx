@@ -1284,7 +1284,7 @@ cdef class Tree:
         float64_t[:, :, ::1] oob_pred,
         int32_t[::1] has_oob_sample,
         float64_t[:, :, ::1] oob_node_values,
-        str method
+        str method,
     ):
         if issparse(X_test):
             raise(NotImplementedError("does not support sparse X yet"))
@@ -1372,7 +1372,7 @@ cdef class Tree:
         object y_test,
         object sample_weight,
         criterion,
-        method="ufi"
+        method="ufi",
     ):
         cdef intp_t n_samples = X_test.shape[0]
         cdef intp_t n_features = X_test.shape[1]
@@ -1426,7 +1426,7 @@ cdef class Tree:
         int node_idx,
         int left_idx,
         int right_idx,
-        Node node
+        Node node,
     ):
         cdef float64_t importance = 0.0
         cdef int node_value_idx, left_value_idx, right_value_idx = -1
@@ -1455,7 +1455,7 @@ cdef class Tree:
         int left_idx,
         int right_idx,
         Node node,
-        str criterion
+        str criterion,
     ):
         cdef float64_t importance = 0.0
         cdef int node_value_idx, left_value_idx, right_value_idx = -1
