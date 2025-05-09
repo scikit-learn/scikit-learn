@@ -5,10 +5,11 @@ from numbers import Integral
 
 import numpy as np
 from scipy.sparse import issparse
+from scipy.spatial import KDTree
 from scipy.special import digamma
 
 from ..metrics.cluster import mutual_info_score
-from ..neighbors import KDTree, NearestNeighbors
+from ..neighbors import NearestNeighbors
 from ..preprocessing import scale
 from ..utils import check_random_state
 from ..utils._param_validation import Interval, StrOptions, validate_params
@@ -62,12 +63,12 @@ def _compute_mi_cc(x, y, n_neighbors):
 
     # KDTree is explicitly fit to allow for the querying of number of
     # neighbors within a specified radius
-    kd = KDTree(x, metric="chebyshev")
-    nx = kd.query_radius(x, radius, count_only=True, return_distance=False)
+    kd = KDTree(x)
+    nx = kd.query_ball_point(x, radius, p=np.inf, return_length=True)
     nx = np.array(nx) - 1.0
 
-    kd = KDTree(y, metric="chebyshev")
-    ny = kd.query_radius(y, radius, count_only=True, return_distance=False)
+    kd = KDTree(y)
+    ny = kd.query_ball_point(y, radius, p=np.inf, return_length=True)
     ny = np.array(ny) - 1.0
 
     mi = (
@@ -140,7 +141,7 @@ def _compute_mi_cd(c, d, n_neighbors):
     radius = radius[mask]
 
     kd = KDTree(c)
-    m_all = kd.query_radius(c, radius, count_only=True, return_distance=False)
+    m_all = kd.query_ball_point(c, radius, return_length=True)
     m_all = np.array(m_all)
 
     mi = (
