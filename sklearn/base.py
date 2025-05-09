@@ -280,19 +280,16 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
         }
 
         def is_non_default(param_name, param_value):
-            """Finds the parameters that have been set by the user"""
-            if (
-                param_name not in init_default_params
-            ):  # happens if k is part of a **kwargs
+            """Finds the parameters that have been set by the user."""
+            if param_name not in init_default_params:
+                # happens if k is part of a **kwargs
                 return True
-            if (
-                init_default_params[param_name] == inspect._empty
-            ):  # k has no default value
+            if init_default_params[param_name] == inspect._empty:
+                # k has no default value
                 return True
-            # try to avoid calling repr on nested estimators
-            if (
-                isinstance(param_value, BaseEstimator)
-                and param_value.__class__ != init_default_params[param_name].__class__
+            # avoid calling repr on nested estimators
+            if isinstance(param_value, BaseEstimator) and type(param_value) is not type(
+                init_default_params[param_name]
             ):
                 return True
 
@@ -309,11 +306,11 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
         ordered_out = {name: out[name] for name in init_default_params if name in out}
         ordered_out.update({name: out[name] for name in remaining_params})
 
-        non_default_ls = [
-            name for name, value in ordered_out.items() if is_non_default(name, value)
-        ]
+        non_default_ls = tuple(
+            [name for name, value in ordered_out.items() if is_non_default(name, value)]
+        )
 
-        return ParamsDict(ordered_out, non_default_ls)
+        return ParamsDict(ordered_out, non_default=non_default_ls)
 
     def set_params(self, **params):
         """Set the parameters of this estimator.
