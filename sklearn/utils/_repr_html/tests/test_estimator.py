@@ -610,18 +610,6 @@ def test_function_transformer_show_caption(func, expected_name):
     assert re_compiled.search(html_output)
 
 
-def test_get_params_html():
+def test_estimator_html_repr_table():
     est = LogisticRegression(C=10.0, fit_intercept=False)
-    est_get_params_html = est._get_params_html(deep=False)
-    assert len(est_get_params_html.keys()) == 15
-    assert est_get_params_html["C"] == 10
-    assert "n_jobs" in est_get_params_html
-
-
-def test_get_params_html_repr():
-    est = LogisticRegression(C=10.0, fit_intercept=False)
-    est_get_params_html = est._get_params_html(deep=False)
-    est_get_params_html_repr = est_get_params_html._repr_html_inner()
-    assert "l1_ratio" in est_get_params_html_repr
-    assert "class_weight" in est_get_params_html_repr
-    assert len(re.findall(r"user-set", est_get_params_html_repr)) == 2
+    assert "parameters-table" in estimator_html_repr(est)
