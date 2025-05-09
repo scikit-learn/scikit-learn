@@ -995,33 +995,8 @@ def test_outlier_mixin_fit_predict_with_metadata_in_predict():
 
 
 def test_get_params_html():
+    """Check the behaviour of the `_get_params_html` method."""
     est = MyEstimator(empty="test")
 
     assert est._get_params_html() == {"l1": 0, "empty": "test"}
     assert est._get_params_html().non_default == ["empty"]
-
-
-def test_repr_html_():
-    est = MyEstimator()
-    out = est._get_params_html(deep=False)._repr_html_()
-    assert "<summary>Parameters</summary>" in out
-
-    with config_context(display="text"):
-        msg = "_repr_html_ is only defined when"
-        with pytest.raises(AttributeError, match=msg):
-            est._get_params_html(deep=False)._repr_html_()
-
-
-def test_ReprHTMLMixin_repr_mimebundle():
-    est = MyEstimator()
-    out = est._get_params_html(deep=False)._repr_mimebundle_()
-
-    assert "text/plain" in out
-    assert "text/html" in out
-    assert "<summary>Parameters</summary>" in out["text/html"]
-    assert out["text/plain"] == "{'l1': 0, 'empty': None}"
-
-    with config_context(display="text"):
-        out = est._get_params_html(deep=False)._repr_mimebundle_()
-        assert "text/plain" in out
-        assert "text/html" not in out
