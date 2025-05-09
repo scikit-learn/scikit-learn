@@ -14,15 +14,15 @@ import scipy.sparse as sp
 import scipy.special as special
 
 from .._config import get_config
-from ..externals import array_api_compat
-from ..externals import array_api_extra as xpx
-from ..externals.array_api_compat import numpy as np_compat
+from .._vendored import array_api_compat
+from .._vendored import array_api_extra as xpx
+from .._vendored.array_api_compat import numpy as np_compat
 from .fixes import parse_version
 
 # TODO: complete __all__
 __all__ = ["xpx"]  # we import xpx here just to re-export it, need this to appease ruff
 
-_NUMPY_NAMESPACE_NAMES = {"numpy", "sklearn.externals.array_api_compat.numpy"}
+_NUMPY_NAMESPACE_NAMES = {"numpy", "sklearn._vendored.array_api_compat.numpy"}
 
 
 def yield_namespaces(include_numpy_namespaces=True):
@@ -563,7 +563,7 @@ def _is_xp_namespace(xp, name):
     return xp.__name__ in (
         name,
         f"array_api_compat.{name}",
-        f"sklearn.externals.array_api_compat.{name}",
+        f"sklearn._vendored.array_api_compat.{name}",
     )
 
 

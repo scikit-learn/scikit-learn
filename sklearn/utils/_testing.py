@@ -1317,7 +1317,7 @@ def _array_api_for_tests(array_namespace, device):
     if os.environ.get("SCIPY_ARRAY_API") is None:
         raise SkipTest("SCIPY_ARRAY_API is not set: not checking array_api input")
 
-    from sklearn.externals.array_api_compat import get_namespace
+    from sklearn._vendored.array_api_compat import get_namespace
 
     # First create an array using the chosen array module and then get the
     # corresponding (compatibility wrapped) array namespace based on it.

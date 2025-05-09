@@ -25,7 +25,7 @@ try:
         size,
     )
 except ImportError:
-    from array_api_compat import (
+    from sklearn._vendored.array_api_compat import (
         array_namespace,
         device,
         is_array_api_obj,
