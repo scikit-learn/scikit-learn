@@ -1708,7 +1708,10 @@ def test_unbiased_feature_importance_on_train(
         y_in_bag = y.reshape(-1, 1)[in_bag_indicies]
         method_on_train_tree = (
             tree.compute_unbiased_feature_importance_and_oob_predictions(
-                X_in_bag, y_in_bag, method
+                X_in_bag,
+                y_in_bag,
+                sample_weight=np.ones((n_samples,), dtype=np.float64),
+                method=method,
             )[0]
         )
         method_on_train += method_on_train_tree / method_on_train_tree.sum()
@@ -1718,7 +1721,7 @@ def test_unbiased_feature_importance_on_train(
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
-def test_ufi_match_paper(name):
+def test_ufi_match_paper(name, global_random_seed):
     def paper_ufi(clf, X, y, is_classification):
         """
         Code from: Unbiased Measurement of Feature Importance in Tree-Based Methods
@@ -1832,11 +1835,15 @@ def test_ufi_match_paper(name):
         return feature_importance / feature_importance.sum()
 
     X, y = make_classification(
-        n_samples=15, n_informative=3, random_state=1, n_classes=2
+        n_samples=15,
+        n_features=20,
+        n_informative=10,
+        random_state=global_random_seed,
+        n_classes=2,
     )
     is_classification = True if name in FOREST_CLASSIFIERS else False
     est = FOREST_CLASSIFIERS_REGRESSORS[name](
-        n_estimators=10, oob_score=True, bootstrap=True, random_state=1
+        n_estimators=10, oob_score=True, bootstrap=True, random_state=global_random_seed
     )
     est.fit(X, y)
     assert_almost_equal(
@@ -1932,6 +1939,45 @@ def test_mdi_oob_match_paper(name):
     est.fit(X, y)
     assert_almost_equal(
         est.mdi_oob_feature_importances_, paper_mdi_oob(est, X, y, is_classification)
+    )
+
+
+@pytest.mark.parametrize(
+    ["oob_score", "importance_attribute_name"],
+    [
+        (False, "feature_importances_"),
+        (True, "ufi_feature_importances_"),
+        (True, "mdi_oob_feature_importances_"),
+    ],
+)
+def test_importance_reg_match_onehot_classi(
+    oob_score, importance_attribute_name, global_random_seed
+):
+    n_classes = 2
+    X, y_class = make_classification(
+        n_samples=15,
+        n_features=20,
+        n_classes=n_classes,
+        n_redundant=0,
+        random_state=global_random_seed,
+    )
+    y_reg = np.eye(n_classes)[y_class]
+
+    common_params = dict(
+        n_estimators=10,
+        oob_score=oob_score,
+        max_depth=2,
+        max_features=None,
+        random_state=global_random_seed,
+    )
+    cls = RandomForestClassifier(criterion="gini", **common_params)
+    reg = RandomForestRegressor(criterion="squared_error", **common_params)
+
+    cls.fit(X, y_class)
+    reg.fit(X, y_reg)
+
+    assert_almost_equal(
+        getattr(cls, importance_attribute_name), getattr(reg, importance_attribute_name)
     )
 
 

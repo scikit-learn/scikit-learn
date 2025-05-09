@@ -1275,7 +1275,17 @@ cdef class Tree:
 
         return np.asarray(importances)
 
-    cdef void _compute_oob_node_values_and_predictions(self, object X_test, intp_t[:, ::1] y_test, float64_t[::1] sample_weight, float64_t[:, :, ::1] oob_pred, int32_t[::1] has_oob_sample, float64_t[:, :, ::1] oob_node_values, str method):
+    cdef void _compute_oob_node_values_and_predictions(
+        self,
+        object X_test,
+        float64_t[:, ::1] y_regression,
+        intp_t[:, ::1] y_classification,
+        float64_t[::1] sample_weight,
+        float64_t[:, :, ::1] oob_pred,
+        int32_t[::1] has_oob_sample,
+        float64_t[:, :, ::1] oob_node_values,
+        str method
+    ):
         if issparse(X_test):
             raise(NotImplementedError("does not support sparse X yet"))
         if not isinstance(X_test, np.ndarray):
@@ -1307,14 +1317,14 @@ cdef class Tree:
                 for k in range(n_outputs):
                     if n_classes[k] > 1:
                         for c in range(n_classes[k]):
-                            if y_test[k, sample_idx] == c:
+                            if y_classification[sample_idx, k] == c:
                                 oob_node_values[node_idx, c, k] += sample_weight[sample_idx]
                     else:
                         if method == "ufi":
                             node_value_idx = node_idx * self.value_stride + k * max_n_classes
-                            oob_node_values[node_idx, 0, k] += sample_weight[sample_idx] * (y_test[k, sample_idx] - self.value[node_value_idx]) ** 2.0
+                            oob_node_values[node_idx, 0, k] += sample_weight[sample_idx] * (y_regression[sample_idx, k] - self.value[node_value_idx]) ** 2.0
                         else:
-                            oob_node_values[node_idx, 0, k] += sample_weight[sample_idx] * y_test[k, sample_idx]
+                            oob_node_values[node_idx, 0, k] += sample_weight[sample_idx] * y_regression[sample_idx, k]
                     total_oob_weight[node_idx, k] += sample_weight[sample_idx]
 
                 # child nodes
@@ -1328,18 +1338,16 @@ cdef class Tree:
                     for k in range(n_outputs):
                         if n_classes[k] > 1:
                             for c in range(n_classes[k]):
-                                if y_test[k, sample_idx] == c:
+                                if y_classification[sample_idx, k] == c:
                                     oob_node_values[node_idx, c, k] += sample_weight[sample_idx]
-                                    # TODO use sample weight instead of 1
-                            total_oob_weight[node_idx, k] += sample_weight[sample_idx]
                         else:
                             if method == "ufi":
                                 node_value_idx = node_idx * self.value_stride + k * max_n_classes
-                                oob_node_values[node_idx, 0, k] += sample_weight[sample_idx] * (y_test[k, sample_idx] - self.value[node_value_idx]) ** 2.0
+                                oob_node_values[node_idx, 0, k] += sample_weight[sample_idx] * (y_regression[sample_idx, k] - self.value[node_value_idx]) ** 2.0
                             else:
-                                oob_node_values[node_idx, 0, k] += sample_weight[sample_idx] * y_test[k, sample_idx]
-                            total_oob_weight[node_idx, k] += sample_weight[sample_idx]
-                            # TODO use sample weight instead of 1
+                                oob_node_values[node_idx, 0, k] += sample_weight[sample_idx] * y_regression[sample_idx, k]
+                        total_oob_weight[node_idx, k] += sample_weight[sample_idx]
+
                 # store the id of the leaf where each sample ends up
                 y_leafs[sample_idx] = node_idx
 
@@ -1358,7 +1366,14 @@ cdef class Tree:
                                     node_value_idx = node_idx * self.value_stride + k * max_n_classes + c
                                     oob_pred[sample_idx, c, k] = self.value[node_value_idx]
 
-    cpdef compute_unbiased_feature_importance_and_oob_predictions(self, object X_test, object y_test, object sample_weight, criterion, method="ufi"):
+    cpdef compute_unbiased_feature_importance_and_oob_predictions(
+        self,
+        object X_test,
+        object y_test,
+        object sample_weight,
+        criterion,
+        method="ufi"
+    ):
         cdef intp_t n_samples = X_test.shape[0]
         cdef intp_t n_features = X_test.shape[1]
         cdef intp_t n_outputs = self.n_outputs
@@ -1375,9 +1390,19 @@ cdef class Tree:
         cdef int node_idx = 0
         cdef int left_idx, right_idx = -1
 
-        cdef intp_t[:, ::1] y_view = np.ascontiguousarray(y_test, dtype=np.intp)
+        cdef intp_t[:, ::1] y_classification
+        cdef float64_t[:, ::1] y_regression
+        if self.max_n_classes > 1:
+            # Classification
+            y_regression = np.zeros((1, 1), dtype=np.float64)  # Unused
+            y_classification = np.ascontiguousarray(y_test, dtype=np.intp)
+        else:
+            # Regression
+            y_regression = np.ascontiguousarray(y_test, dtype=np.float64)
+            y_classification = np.zeros((1, 1), dtype=np.intp)  # Unused
+
         cdef float64_t[::1] sample_weight_view = np.ascontiguousarray(sample_weight, dtype=np.float64)
-        self._compute_oob_node_values_and_predictions(X_test, y_view, sample_weight_view, oob_pred, has_oob_sample, oob_node_values, method)
+        self._compute_oob_node_values_and_predictions(X_test, y_regression, y_classification, sample_weight_view, oob_pred, has_oob_sample, oob_node_values, method)
 
         for node_idx in range(self.node_count):
             node = nodes[node_idx]
@@ -1395,7 +1420,14 @@ cdef class Tree:
 
         return np.asarray(importances), np.asarray(oob_pred)
 
-    cdef float64_t mdi_oob_impurity_decrease(self, float64_t[:, :, ::1] oob_node_values, int node_idx, int left_idx, int right_idx, Node node):
+    cdef float64_t mdi_oob_impurity_decrease(
+        self,
+        float64_t[:, :, ::1] oob_node_values,
+        int node_idx,
+        int left_idx,
+        int right_idx,
+        Node node
+    ):
         cdef float64_t importance = 0.0
         cdef int node_value_idx, left_value_idx, right_value_idx = -1
         cdef int k, c = 0
@@ -1416,7 +1448,15 @@ cdef class Tree:
                     )
             return importance / self.n_outputs
 
-    cdef float64_t ufi_impurity_decrease(self, float64_t[:, :, ::1] oob_node_values, int node_idx, int left_idx, int right_idx, Node node, str criterion):
+    cdef float64_t ufi_impurity_decrease(
+        self,
+        float64_t[:, :, ::1] oob_node_values,
+        int node_idx,
+        int left_idx,
+        int right_idx,
+        Node node,
+        str criterion
+    ):
         cdef float64_t importance = 0.0
         cdef int node_value_idx, left_value_idx, right_value_idx = -1
         cdef int k, c = 0
