@@ -241,7 +241,7 @@ The following toy example demonstrates that samples with a sample weight of zero
     >>> gb.predict([[1, 0]])
     array([1])
     >>> gb.predict_proba([[1, 0]])[0, 1]
-    np.float64(0.999...)
+    np.float64(0.999)
 
 As you can see, the `[1, 0]` is comfortably classified as `1` since the first
 two samples are ignored due to their sample weights.
@@ -513,7 +513,7 @@ parameters of these estimators are `n_estimators` and `learning_rate`.
       >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
       ...     max_depth=1, random_state=0).fit(X_train, y_train)
       >>> clf.score(X_test, y_test)
-      0.913...
+      0.913
 
   The number of weak learners (i.e. regression trees) is controlled by the
   parameter ``n_estimators``; :ref:`The size of each tree
@@ -556,7 +556,7 @@ parameters of these estimators are `n_estimators` and `learning_rate`.
       ...     loss='squared_error'
       ... ).fit(X_train, y_train)
       >>> mean_squared_error(y_test, est.predict(X_test))
-      5.00...
+      5.00
 
   The figure below shows the results of applying :class:`GradientBoostingRegressor`
   with least squares loss and 500 base learners to the diabetes dataset
@@ -604,11 +604,11 @@ fitted model.
   ... )
   >>> est = est.fit(X_train, y_train)  # fit with 100 trees
   >>> mean_squared_error(y_test, est.predict(X_test))
-  5.00...
+  5.00
   >>> _ = est.set_params(n_estimators=200, warm_start=True)  # set warm_start and increase num of trees
   >>> _ = est.fit(X_train, y_train) # fit additional 100 trees to est
   >>> mean_squared_error(y_test, est.predict(X_test))
-  3.84...
+  3.84
 
 .. _gradient_boosting_tree_size:
 
@@ -900,7 +900,8 @@ accessed via the ``feature_importances_`` property::
     >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
     ...     max_depth=1, random_state=0).fit(X, y)
     >>> clf.feature_importances_
-    array([0.10..., 0.10..., 0.11..., ...
+    array([0.107, 0.105, 0.113, 0.0987, 0.0947,
+           0.107, 0.0916, 0.0972, 0.0958, 0.0906])
 
 Note that this computation of feature importance is based on entropy, and it
 is distinct from :func:`sklearn.inspection.permutation_importance` which is
@@ -1035,13 +1036,13 @@ in bias::
     ...     random_state=0)
     >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean()
-    np.float64(0.98...)
+    np.float64(0.98)
 
     >>> clf = RandomForestClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=2, random_state=0)
     >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean()
-    np.float64(0.999...)
+    np.float64(0.999)
 
     >>> clf = ExtraTreesClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=2, random_state=0)
@@ -1578,11 +1579,11 @@ Note that it is also possible to get the output of the stacked
 `estimators` using the `transform` method::
 
   >>> reg.transform(X_test[:5])
-  array([[142..., 138..., 146...],
-         [179..., 182..., 151...],
-         [139..., 132..., 158...],
-         [286..., 292..., 225...],
-         [126..., 124..., 164...]])
+  array([[142, 138, 146],
+         [179, 182, 151],
+         [139, 132, 158],
+         [286, 292, 225],
+         [126, 124, 164]])
 
 In practice, a stacking predictor predicts as good as the best predictor of the
 base layer and even sometimes outperforms it by combining the different
@@ -1684,7 +1685,7 @@ learners::
     >>> clf = AdaBoostClassifier(n_estimators=100)
     >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean()
-    np.float64(0.9...)
+    np.float64(0.95)
 
 The number of weak learners is controlled by the parameter ``n_estimators``. The
 ``learning_rate`` parameter controls the contribution of the weak learners in
