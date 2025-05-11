@@ -39,16 +39,12 @@ def _align_api_if_sparse(X):
 # TODO: Replace when Scipy 1.12 is the minimum supported version
 if sp_base_version >= parse_version("1.12.0"):
     _sparse_eye = sp.sparse.eye_array
-    _sparse_block = sp.sparse.block_array
     _sparse_diags = sp.sparse.diags_array
     _sparse_random = sp.sparse.random_array
 else:
 
     def _sparse_eye(m, n=None, *, k=0, dtype=float, format=None):
         return sp.sparse.eye(m, n, k=k, dtype=dtype, format=format)
-
-    def _sparse_block(blocks, *, format=None, dtype=None):
-        return sp.sparse.bmat(blocks, format=format, dtype=dtype)
 
     def _sparse_diags(diagonals, /, *, offsets=0, shape=None, format=None, dtype=None):
         return sp.sparse.diags(
