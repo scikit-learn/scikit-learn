@@ -929,7 +929,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     r"""Convert a collection of text documents to a matrix of token counts.
 
     This implementation produces a sparse representation of the counts using
-    scipy.sparse.csr_matrix.
+    scipy.sparse.csr_array.
 
     If you do not provide an a-priori dictionary and you do not use an analyzer
     that does some kind of feature selection then the number of features will
@@ -1300,13 +1300,13 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         indptr = np.asarray(indptr, dtype=indices_dtype)
         values = np.frombuffer(values, dtype=np.intc)
 
-        X = sp.csr_matrix(
+        X = sp.csr_array(
             (values, j_indices, indptr),
             shape=(len(indptr) - 1, len(vocabulary)),
             dtype=self.dtype,
         )
         X.sort_indices()
-        return vocabulary, X
+        return vocabulary, _align_api_if_sparse(X)
 
     def fit(self, raw_documents, y=None):
         """Learn a vocabulary dictionary of all tokens in the raw documents.
@@ -1655,7 +1655,7 @@ class TfidfTransformer(
             self, X, accept_sparse=("csr", "csc"), accept_large_sparse=not _IS_32BIT
         )
         if not sp.issparse(X):
-            X = sp.csr_matrix(X)
+            X = sp.csr_array(X)
         dtype = X.dtype if X.dtype in (np.float64, np.float32) else np.float64
 
         if self.use_idf:
@@ -1706,7 +1706,7 @@ class TfidfTransformer(
             reset=False,
         )
         if not sp.issparse(X):
-            X = sp.csr_matrix(X, dtype=X.dtype)
+            X = sp.csr_array(X, dtype=X.dtype)
 
         if self.sublinear_tf:
             np.log(X.data, X.data)
