@@ -28,6 +28,7 @@ from ..utils._param_validation import (
     StrOptions,
     validate_params,
 )
+from ..utils._sparse import _align_api_if_sparse
 from ..utils.extmath import _randomized_svd, safe_sparse_dot, squared_norm
 from ..utils.validation import (
     check_is_fitted,
@@ -204,8 +205,8 @@ def _special_sparse_dot(W, H, X):
                 axis=1
             )
 
-        WH = sp.coo_matrix((dot_vals, (ii, jj)), shape=X.shape)
-        return WH.tocsr()
+        WH = sp.coo_array((dot_vals, (ii, jj)), shape=X.shape)
+        return _align_api_if_sparse(WH.tocsr())
     else:
         return np.dot(W, H)
 
