@@ -557,10 +557,12 @@ def make_multilabel_classification(
         X_indptr.append(len(X_indices))
         Y.append(y)
     X_data = np.ones(len(X_indices), dtype=np.float64)
-    X = sp.csr_matrix((X_data, X_indices, X_indptr), shape=(n_samples, n_features))
+    X = sp.csr_array((X_data, X_indices, X_indptr), shape=(n_samples, n_features))
     X.sum_duplicates()
     if not sparse:
         X = X.toarray()
+    else:
+        X = _align_api_if_sparse(X)
 
     # return_indicator can be True due to backward compatibility
     if return_indicator in (True, "sparse", "dense"):
