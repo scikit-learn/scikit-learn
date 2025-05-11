@@ -25,7 +25,7 @@ def sandwich_dot(X, W):
     n_samples = X.shape[0]
     if sparse.issparse(X):
         return (
-            X.T @ sparse.dia_matrix((W, 0), shape=(n_samples, n_samples)) @ X
+            X.T @ sparse.dia_array((W, 0), shape=(n_samples, n_samples)) @ X
         ).toarray()
     else:
         # np.einsum may use less memory but the following, using BLAS matrix
@@ -726,7 +726,7 @@ class LinearModelLoss:
             hessian_sum = hess_pointwise.sum()
             if sparse.issparse(X):
                 hX = (
-                    sparse.dia_matrix((hess_pointwise, 0), shape=(n_samples, n_samples))
+                    sparse.dia_array((hess_pointwise, 0), shape=(n_samples, n_samples))
                     @ X
                 )
             else:

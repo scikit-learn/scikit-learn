@@ -243,7 +243,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             # unnecessary repeated memory copies.
             eye = _sparse_eye(n_indices, dtype=X.dtype, format="csc")
             if self.fit_intercept:
-                ones = sparse.csc_matrix(np.ones(shape=(n_indices, 1), dtype=X.dtype))
+                ones = sparse.csc_array(np.ones(shape=(n_indices, 1), dtype=X.dtype))
                 A_eq = sparse.hstack([ones, X, -ones, -X, eye, -eye], format="csc")
             else:
                 A_eq = sparse.hstack([X, -X, eye, -eye], format="csc")
