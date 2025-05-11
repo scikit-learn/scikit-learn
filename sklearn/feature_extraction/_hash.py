@@ -11,6 +11,7 @@ from sklearn.utils import metadata_routing
 
 from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils._param_validation import Interval, StrOptions
+from ..utils._sparse import _align_api_if_sparse
 from ._hashing_fast import transform as _hashing_transform
 
 
@@ -189,14 +190,14 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         if n_samples == 0:
             raise ValueError("Cannot vectorize empty sequence.")
 
-        X = sp.csr_matrix(
+        X = sp.csr_array(
             (values, indices, indptr),
             dtype=self.dtype,
             shape=(n_samples, self.n_features),
         )
         X.sum_duplicates()  # also sorts the indices
 
-        return X
+        return _align_api_if_sparse(X)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
