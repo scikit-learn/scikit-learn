@@ -22,7 +22,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, StandardScaler, scale
 from sklearn.svm import OneClassSVM
 from sklearn.utils import get_tags
-from sklearn.utils._sparse import _sparse_random
+from sklearn.utils._sparse import _align_api_if_sparse, _sparse_random
 from sklearn.utils._testing import (
     assert_allclose,
     assert_almost_equal,
@@ -43,48 +43,48 @@ def _update_kwargs(kwargs):
 
 class _SparseSGDClassifier(linear_model.SGDClassifier):
     def fit(self, X, y, *args, **kw):
-        X = sp.csr_matrix(X)
+        X = _align_api_if_sparse(sp.csr_array(X))
         return super().fit(X, y, *args, **kw)
 
     def partial_fit(self, X, y, *args, **kw):
-        X = sp.csr_matrix(X)
+        X = _align_api_if_sparse(sp.csr_array(X))
         return super().partial_fit(X, y, *args, **kw)
 
     def decision_function(self, X):
-        X = sp.csr_matrix(X)
+        X = _align_api_if_sparse(sp.csr_array(X))
         return super().decision_function(X)
 
     def predict_proba(self, X):
-        X = sp.csr_matrix(X)
+        X = _align_api_if_sparse(sp.csr_array(X))
         return super().predict_proba(X)
 
 
 class _SparseSGDRegressor(linear_model.SGDRegressor):
     def fit(self, X, y, *args, **kw):
-        X = sp.csr_matrix(X)
+        X = _align_api_if_sparse(sp.csr_array(X))
         return linear_model.SGDRegressor.fit(self, X, y, *args, **kw)
 
     def partial_fit(self, X, y, *args, **kw):
-        X = sp.csr_matrix(X)
+        X = _align_api_if_sparse(sp.csr_array(X))
         return linear_model.SGDRegressor.partial_fit(self, X, y, *args, **kw)
 
     def decision_function(self, X, *args, **kw):
         # XXX untested as of v0.22
-        X = sp.csr_matrix(X)
+        X = _align_api_if_sparse(sp.csr_array(X))
         return linear_model.SGDRegressor.decision_function(self, X, *args, **kw)
 
 
 class _SparseSGDOneClassSVM(linear_model.SGDOneClassSVM):
     def fit(self, X, *args, **kw):
-        X = sp.csr_matrix(X)
+        X = _align_api_if_sparse(sp.csr_array(X))
         return linear_model.SGDOneClassSVM.fit(self, X, *args, **kw)
 
     def partial_fit(self, X, *args, **kw):
-        X = sp.csr_matrix(X)
+        X = _align_api_if_sparse(sp.csr_array(X))
         return linear_model.SGDOneClassSVM.partial_fit(self, X, *args, **kw)
 
     def decision_function(self, X, *args, **kw):
-        X = sp.csr_matrix(X)
+        X = _align_api_if_sparse(sp.csr_array(X))
         return linear_model.SGDOneClassSVM.decision_function(self, X, *args, **kw)
 
 
