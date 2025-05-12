@@ -13,10 +13,12 @@ expose two methods for creating plots: `from_estimator` and
 The `from_estimator` method generates a `Display` object from a fitted estimator and
 input data (`X`, `y`).
 The `from_predictions` method creates a `Display` object from true and predicted
-values (`y_test`, `y_pred`). Using `from_predictions`
-avoids to recompute the predictions, but does not automatically resolve some
-ambiguities. The reason being that the user needs to know which column corresponds
-to the positive label (in this case, `y_pred`).
+values (`y_test`, `y_pred`), which is useful when you only want to compute the
+predictions once.
+
+Using `from_predictions` avoids having to recompute predictions, but does not
+automatically resolve some ambiguities. For binary classification, the user must know
+which column corresponds to the positive label (in this case, `y_pred`).
 
 The `Display` object stores the computed values (e.g., metric values or
 feature importance) required for plotting with Matplotlib. These values are the
@@ -43,8 +45,8 @@ model `from_estimator`:
     X, y = load_iris(return_X_y=True)
     y = y == 2  # make binary
     X_train, X_test, y_train, y_test = train_test_split(
-                                       X, y, test_size=.8, random_state=42
-                                       )
+       X, y, test_size=.8, random_state=42
+   )
     clf = LogisticRegression(random_state=42, C=.01)
     clf.fit(X_train, y_train)
 
@@ -66,8 +68,8 @@ If you already have the prediction values, you could instead use
     X, y = load_iris(return_X_y=True)
     y = y == 2  # make binary
     X_train, X_test, y_train, y_test = train_test_split(
-                                       X, y, test_size=.8, random_state=42
-                                       )
+       X, y, test_size=.8, random_state=42
+   )
     clf = LogisticRegression(random_state=42, C=.01)
     clf.fit(X_train, y_train)
 
