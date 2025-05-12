@@ -222,7 +222,7 @@ extensions = ['_isotonic']
 
 py.extension_module(
   '_isotonic',
-  '_isotonic.pyx',
+  cython_gen.process('_isotonic.pyx'),
   cython_args: cython_args,
   install: true,
   subdir: 'sklearn',
