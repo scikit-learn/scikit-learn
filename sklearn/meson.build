@@ -4,6 +4,8 @@ fs = import('fs')
 is_windows = host_machine.system() == 'windows'
 is_mingw = is_windows and cc.get_id() == 'gcc'
 
+cython_args = []
+
 # Adapted from Scipy. mingw is untested and not officially supported. If you
 # ever bump into issues when trying to compile for mingw, please open an issue
 # in the scikit-learn issue tracker
@@ -177,11 +179,6 @@ else:
     ],
     check: true
     ).stdout().strip()
-
-cython_args = []
-if cython.version().version_compare('>=3.1.0')
-  cython_args += ['-Xfreethreading_compatible=True']
-endif
 
 scikit_learn_cython_args = [
   '-X language_level=3', '-X boundscheck=' + boundscheck, '-X wraparound=False',
