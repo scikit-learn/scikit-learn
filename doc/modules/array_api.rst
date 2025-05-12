@@ -8,10 +8,12 @@ Array API support (experimental)
 
 The `Array API <https://data-apis.org/array-api/latest/>`_ specification defines
 a standard API for all array manipulation libraries with a NumPy-like API.
-Scikit-learn's Array API support requires
-`array-api-compat <https://github.com/data-apis/array-api-compat>`__ to be installed,
-and the environment variable `SCIPY_ARRAY_API` must be set to `1` before importing
-`scipy` and `scikit-learn`:
+Scikit-learn vendors pinned copies of
+`array-api-compat <https://github.com/data-apis/array-api-compat>`__
+and `array-api-extra <https://github.com/data-apis/array-api-extra>`__.
+
+Scikit-learn's support for the array API standard requires the environment variable
+`SCIPY_ARRAY_API` to be set to `1` before importing `scipy` and `scikit-learn`:
 
 .. prompt:: bash $
 
@@ -20,7 +22,6 @@ and the environment variable `SCIPY_ARRAY_API` must be set to `1` before importi
 Please note that this environment variable is intended for temporary use.
 For more details, refer to SciPy's `Array API documentation
 <https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html#using-array-api-standard-support>`_.
-
 
 Some scikit-learn estimators that primarily rely on NumPy (as opposed to using
 Cython) to implement the algorithmic logic of their `fit`, `predict` or
@@ -110,6 +111,7 @@ Estimators
   `svd_solver="randomized"` and `power_iteration_normalizer="QR"`)
 - :class:`linear_model.Ridge` (with `solver="svd"`)
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
+- :class:`preprocessing.Binarizer`
 - :class:`preprocessing.KernelCenterer`
 - :class:`preprocessing.LabelEncoder`
 - :class:`preprocessing.MaxAbsScaler`
@@ -137,6 +139,7 @@ Metrics
 - :func:`sklearn.metrics.f1_score`
 - :func:`sklearn.metrics.fbeta_score`
 - :func:`sklearn.metrics.hamming_loss`
+- :func:`sklearn.metrics.jaccard_score`
 - :func:`sklearn.metrics.max_error`
 - :func:`sklearn.metrics.mean_absolute_error`
 - :func:`sklearn.metrics.mean_absolute_percentage_error`

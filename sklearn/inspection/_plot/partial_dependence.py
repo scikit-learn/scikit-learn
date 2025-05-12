@@ -35,9 +35,13 @@ class PartialDependenceDisplay:
     :class:`~sklearn.inspection.PartialDependenceDisplay`. All parameters are
     stored as attributes.
 
-    Read more in
-    :ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_visualization_api.py`
-    and the :ref:`User Guide <partial_dependence>`.
+    For general information regarding `scikit-learn` visualization tools, see
+    the :ref:`Visualization Guide <visualizations>`.
+    For guidance on interpreting these plots, refer to the
+    :ref:`Partial Dependence and ICE plots <partial_dependence>`.
+
+    For an example on how to use this class, see the following example:
+    :ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_visualization_api.py`.
 
     .. versionadded:: 0.22
 

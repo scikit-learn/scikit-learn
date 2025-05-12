@@ -809,7 +809,7 @@ used, please refer to their respective papers.
   Volume 14 Issue 3, August 2004, p. 199-222.
 
 .. [#7] Schölkopf et. al `New Support Vector Algorithms
-  <https://www.stat.purdue.edu/~yuzhu/stat598m3/Papers/NewSVM.pdf>`_, 
+  <https://www.stat.purdue.edu/~yuzhu/stat598m3/Papers/NewSVM.pdf>`_,
   Neural Computation 12, 1207-1245 (2000).
 
 .. [#8] Crammer and Singer `On the Algorithmic Implementation of Multiclass
