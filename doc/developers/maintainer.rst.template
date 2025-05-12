@@ -170,7 +170,7 @@ Reference Steps
       dependencies in the `[build-system]` section of `pyproject.toml`. The goal is to
       prevent future backward incompatible releases of the dependencies to break the
       build in the maintenance branch.
-      
+
       The upper bounds should match the latest already-released minor versions of the
       dependencies and should allow future micro (bug-fix) versions. For instance, if
       numpy 2.2.5 is the most recent version, its upper bound should be set to <2.3.0.
