@@ -282,7 +282,9 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 },
                 args=(X, y, sample_weight, l2_reg_strength, n_threads),
             )
-            self.n_iter_ = _check_optimize_result("lbfgs", opt_res)
+            self.n_iter_ = _check_optimize_result(
+                "lbfgs", opt_res, max_iter=self.max_iter
+            )
             coef = opt_res.x
         elif self.solver == "newton-cholesky":
             sol = NewtonCholeskySolver(
@@ -558,13 +560,13 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
     >>> clf.fit(X, y)
     PoissonRegressor()
     >>> clf.score(X, y)
-    np.float64(0.990...)
+    np.float64(0.990)
     >>> clf.coef_
-    array([0.121..., 0.158...])
+    array([0.121, 0.158])
     >>> clf.intercept_
-    np.float64(2.088...)
+    np.float64(2.088)
     >>> clf.predict([[1, 1], [3, 4]])
-    array([10.676..., 21.875...])
+    array([10.676, 21.875])
     """
 
     _parameter_constraints: dict = {
@@ -690,13 +692,13 @@ class GammaRegressor(_GeneralizedLinearRegressor):
     >>> clf.fit(X, y)
     GammaRegressor()
     >>> clf.score(X, y)
-    np.float64(0.773...)
+    np.float64(0.773)
     >>> clf.coef_
-    array([0.072..., 0.066...])
+    array([0.073, 0.067])
     >>> clf.intercept_
-    np.float64(2.896...)
+    np.float64(2.896)
     >>> clf.predict([[1, 0], [2, 8]])
-    array([19.483..., 35.795...])
+    array([19.483, 35.795])
     """
 
     _parameter_constraints: dict = {
@@ -852,13 +854,13 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
     >>> clf.fit(X, y)
     TweedieRegressor()
     >>> clf.score(X, y)
-    np.float64(0.839...)
+    np.float64(0.839)
     >>> clf.coef_
-    array([0.599..., 0.299...])
+    array([0.599, 0.299])
     >>> clf.intercept_
-    np.float64(1.600...)
+    np.float64(1.600)
     >>> clf.predict([[1, 1], [3, 4]])
-    array([2.500..., 4.599...])
+    array([2.500, 4.599])
     """
 
     _parameter_constraints: dict = {

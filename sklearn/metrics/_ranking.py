@@ -183,6 +183,10 @@ def average_precision_score(
     roc_auc_score : Compute the area under the ROC curve.
     precision_recall_curve : Compute precision-recall pairs for different
         probability thresholds.
+    PrecisionRecallDisplay.from_estimator : Plot the precision recall curve
+        using an estimator and data.
+    PrecisionRecallDisplay.from_predictions : Plot the precision recall curve
+        using true and predicted labels.
 
     Notes
     -----
@@ -203,7 +207,7 @@ def average_precision_score(
     >>> y_true = np.array([0, 0, 1, 1])
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> average_precision_score(y_true, y_scores)
-    0.83...
+    0.83
     >>> y_true = np.array([0, 0, 1, 1, 2, 2])
     >>> y_scores = np.array([
     ...     [0.7, 0.2, 0.1],
@@ -214,7 +218,7 @@ def average_precision_score(
     ...     [0.1, 0.2, 0.7],
     ... ])
     >>> average_precision_score(y_true, y_scores)
-    0.77...
+    0.77
     """
 
     def _binary_uninterpolated_average_precision(
@@ -624,9 +628,9 @@ def roc_auc_score(
     >>> X, y = load_breast_cancer(return_X_y=True)
     >>> clf = LogisticRegression(solver="newton-cholesky", random_state=0).fit(X, y)
     >>> roc_auc_score(y, clf.predict_proba(X)[:, 1])
-    0.99...
+    0.99
     >>> roc_auc_score(y, clf.decision_function(X))
-    0.99...
+    0.99
 
     Multiclass case:
 
@@ -634,7 +638,7 @@ def roc_auc_score(
     >>> X, y = load_iris(return_X_y=True)
     >>> clf = LogisticRegression(solver="newton-cholesky").fit(X, y)
     >>> roc_auc_score(y, clf.predict_proba(X), multi_class='ovr')
-    0.99...
+    0.99
 
     Multilabel case:
 
@@ -649,11 +653,11 @@ def roc_auc_score(
     >>> # extract the positive columns for each output
     >>> y_score = np.transpose([score[:, 1] for score in y_score])
     >>> roc_auc_score(y, y_score, average=None)
-    array([0.82..., 0.85..., 0.93..., 0.86..., 0.94...])
+    array([0.828, 0.852, 0.94, 0.869, 0.95])
     >>> from sklearn.linear_model import RidgeClassifierCV
     >>> clf = RidgeClassifierCV().fit(X, y)
     >>> roc_auc_score(y, clf.decision_function(X), average=None)
-    array([0.81..., 0.84... , 0.93..., 0.87..., 0.94...])
+    array([0.82, 0.847, 0.93, 0.872, 0.944])
     """
 
     y_type = type_of_target(y_true, input_name="y_true")
@@ -1257,7 +1261,7 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
     >>> y_true = np.array([[1, 0, 0], [0, 0, 1]])
     >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
     >>> label_ranking_average_precision_score(y_true, y_score)
-    0.416...
+    0.416
     """
     check_consistent_length(y_true, y_score, sample_weight)
     y_true = check_array(y_true, ensure_2d=False, accept_sparse="csr")
@@ -1441,7 +1445,7 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     >>> y_true = [[1, 0, 0], [0, 0, 1]]
     >>> y_score = [[0.75, 0.5, 1], [1, 0.2, 0.1]]
     >>> label_ranking_loss(y_true, y_score)
-    0.75...
+    0.75
     """
     y_true = check_array(y_true, ensure_2d=False, accept_sparse="csr")
     y_score = check_array(y_score, ensure_2d=False)
@@ -1697,10 +1701,10 @@ def dcg_score(
     >>> # we predict scores for the answers
     >>> scores = np.asarray([[.1, .2, .3, 4, 70]])
     >>> dcg_score(true_relevance, scores)
-    9.49...
+    9.49
     >>> # we can set k to truncate the sum; only top k answers contribute
     >>> dcg_score(true_relevance, scores, k=2)
-    5.63...
+    5.63
     >>> # now we have some ties in our prediction
     >>> scores = np.asarray([[1, 0, 0, 0, 1]])
     >>> # by default ties are averaged, so here we get the average true
@@ -1859,13 +1863,13 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     >>> # we predict some scores (relevance) for the answers
     >>> scores = np.asarray([[.1, .2, .3, 4, 70]])
     >>> ndcg_score(true_relevance, scores)
-    0.69...
+    0.69
     >>> scores = np.asarray([[.05, 1.1, 1., .5, .0]])
     >>> ndcg_score(true_relevance, scores)
-    0.49...
+    0.49
     >>> # we can set k to truncate the sum; only top k answers contribute.
     >>> ndcg_score(true_relevance, scores, k=4)
-    0.35...
+    0.35
     >>> # the normalization takes k into account so a perfect answer
     >>> # would still get 1.0
     >>> ndcg_score(true_relevance, true_relevance, k=4)
@@ -1875,7 +1879,7 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     >>> # by default ties are averaged, so here we get the average (normalized)
     >>> # true relevance of our top predictions: (10 / 10 + 5 / 10) / 2 = .75
     >>> ndcg_score(true_relevance, scores, k=1)
-    0.75...
+    0.75
     >>> # we can choose to ignore ties for faster results, but only
     >>> # if we know there aren't ties in our scores, otherwise we get
     >>> # wrong results:

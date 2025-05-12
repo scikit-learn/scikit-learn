@@ -91,12 +91,12 @@ SGD fits a linear model to the training data. The ``coef_`` attribute holds
 the model parameters::
 
     >>> clf.coef_
-    array([[9.9..., 9.9...]])
+    array([[9.9, 9.9]])
 
 The ``intercept_`` attribute holds the intercept (aka offset or bias)::
 
     >>> clf.intercept_
-    array([-9.9...])
+    array([-9.9])
 
 Whether or not the model should use an intercept, i.e. a biased
 hyperplane, is controlled by the parameter ``fit_intercept``.
@@ -106,7 +106,7 @@ the coefficients and the input sample, plus the intercept) is given by
 :meth:`SGDClassifier.decision_function`::
 
     >>> clf.decision_function([[2., 2.]])
-    array([29.6...])
+    array([29.6])
 
 The concrete loss function can be set via the ``loss``
 parameter. :class:`SGDClassifier` supports the following loss functions:
@@ -131,7 +131,7 @@ Using ``loss="log_loss"`` or ``loss="modified_huber"`` enables the
 
     >>> clf = SGDClassifier(loss="log_loss", max_iter=5).fit(X, y)
     >>> clf.predict_proba([[1., 1.]]) # doctest: +SKIP
-    array([[0.00..., 0.99...]])
+    array([[0.00, 0.99]])
 
 The concrete penalty can be set via the ``penalty`` parameter.
 SGD supports the following penalties:

@@ -372,3 +372,4 @@ def print_changed_only_false():
 if dt_config is not None:
     # Strict mode to differentiate between 3.14 and np.float64(3.14)
     dt_config.strict_check = True
+    # dt_config.rtol = 0.01
