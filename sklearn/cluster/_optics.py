@@ -34,10 +34,10 @@ class OPTICS(ClusterMixin, BaseEstimator):
     """Estimate clustering structure from vector array.
 
     OPTICS (Ordering Points To Identify the Clustering Structure), closely
-    related to DBSCAN, finds core sample of high density and expands clusters
-    from them [1]_. Unlike DBSCAN, keeps cluster hierarchy for a variable
+    related to DBSCAN, finds core samples of high density and expands clusters
+    from them [1]_. Unlike DBSCAN, it keeps cluster hierarchy for a variable
     neighborhood radius. Better suited for usage on large datasets than the
-    current sklearn implementation of DBSCAN.
+    current scikit-learn implementation of DBSCAN.
 
     Clusters are then extracted using a DBSCAN-like method
     (cluster_method = 'dbscan') or an automatic
@@ -68,9 +68,9 @@ class OPTICS(ClusterMixin, BaseEstimator):
 
     metric : str or callable, default='minkowski'
         Metric to use for distance computation. Any metric from scikit-learn
-        or scipy.spatial.distance can be used.
+        or :mod:`scipy.spatial.distance` can be used.
 
-        If metric is a callable function, it is called on each
+        If `metric` is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded. The callable
         should take two arrays as input and return one value indicating the
         distance between them. This works for Scipy's metrics, but is less
@@ -90,8 +90,6 @@ class OPTICS(ClusterMixin, BaseEstimator):
           'yule']
 
         Sparse matrices are only supported by scikit-learn metrics.
-        See the documentation for scipy.spatial.distance for details on these
-        metrics.
 
         .. note::
            `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
@@ -105,9 +103,9 @@ class OPTICS(ClusterMixin, BaseEstimator):
     metric_params : dict, default=None
         Additional keyword arguments for the metric function.
 
-    cluster_method : str, default='xi'
+    cluster_method : {'xi', 'dbscan'}, default='xi'
         The extraction method used to extract clusters using the calculated
-        reachability and ordering. Possible values are "xi" and "dbscan".
+        reachability and ordering.
 
     eps : float, default=None
         The maximum distance between two samples for one to be considered as
