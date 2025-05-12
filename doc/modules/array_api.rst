@@ -224,6 +224,7 @@ This can either be achieved by using
 `Google Colab <https://gist.github.com/EdAbati/ff3bdc06bafeb92452b3740686cc8d7c>`_
 or leveraging our CI infrastructure on pull requests (manually triggered by maintainers
 for cost reasons).
+
 .. _mps_support:
 
 Note on MPS device support
