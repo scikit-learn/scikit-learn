@@ -53,7 +53,6 @@ def decision_threshold_curve(
     score_func : callable
         The score function to use. It will be called as
         `score_func(y_true, y_pred, **kwargs)`.
-        TODO: decided on `scoring_function` as term also used in forest estimators
 
     y_true : array-like of shape (n_samples,)
         Ground truth (correct) target labels.
@@ -104,18 +103,17 @@ def decision_threshold_curve(
     det_curve : Compute error rates for different probability thresholds.
     roc_curve : Compute Receiver operating characteristic (ROC) curve.
 
-    Examples #TODO(Carlo) change the example and fix threshold.
     --------
     >>> import numpy as np
     >>> from sklearn.metrics import accuracy_score, decision_threshold_curve
     >>> y_true = np.array([0, 0, 1, 1])
     >>> y_score = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> accuracy_values, thresholds = decision_threshold_curve(
-    ...     y_true, y_score, accuracy_score)
+    >>> score_thresholds, thresholds = decision_threshold_curve(
+    ...     accuracy_score, y_true, y_score, thresholds=4)
     >>> thresholds
-    array([0.1 , 0.35, 0.4 , 0.8 ])
-    >>> accuracy_values
-    array([0.75, 0.5 , 0.75, 0.5 ])
+    array([0.1, 0.33333333, 0.56666667, 0.8 ])
+    >>> score_thresholds
+    array([0.5, 0.75, 0.75, 0.75])
     """
     # To prevent circular import
     from ._scorer import _CurveScorer
