@@ -497,8 +497,8 @@ def test_temperature_scaling(clf, n_classes):
 
 
 def test_temperature_scaling_input_validation():
-    # Check that _TemperatureScaling can handle 2darray with only 1 feature
-    X = np.arange(10)
+    # Check that _TemperatureScaling can handle 2d-array with only 1 feature
+    X = np.arange(10).astype(np.float64)
     X_2d = X.reshape(-1, 1)
     y = np.random.randint(0, 2, size=X.shape[0])
 

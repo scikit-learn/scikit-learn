@@ -1020,7 +1020,7 @@ def _standardize_decision_values(decision_values, eps=1e-8):
         decision_values = decision_values.reshape(-1, 1)
         logits = np.hstack([-decision_values, decision_values])
 
-    return logits.astype(np.float64)
+    return logits.astype(dtype=decision_values.dtype)
 
 
 def _temperature_scaling(predictions, labels, sample_weight=None, beta_0=1.0):
@@ -1085,7 +1085,18 @@ def _temperature_scaling(predictions, labels, sample_weight=None, beta_0=1.0):
             The negative log likelihood loss.
 
         """
-        raw_prediction = beta * logits
+        # Ensure raw_prediction has the same dtype as labels using .astype().
+        # Without this, dtype promotion rules differ across NumPy versions:
+        #
+        #   beta = np.float64(0)
+        #   logits = np.array([1, 2], dtype=np.float32)
+        #
+        #   result = beta * logits
+        #   - NumPy < 2: result.dtype is float32
+        #   - NumPy 2+:  result.dtype is float64
+        #
+        #  This can cause dtype mismatch errors downstream (e.g., buffer dtype).
+        raw_prediction = (beta * logits).astype(dtype_)
 
         l = halfmulti_loss.loss(y_true=labels, raw_prediction=raw_prediction)
 
