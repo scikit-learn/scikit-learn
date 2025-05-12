@@ -173,7 +173,7 @@ Reference Steps
       
       The upper bounds should match the latest already-released minor versions of the
       dependencies and should allow future micro (bug-fix) versions. For instance, if
-      numpy 2.2.5 is the most rencent version, its upper bound should be set <2.3.0.
+      numpy 2.2.5 is the most recent version, its upper bound should be set to <2.3.0.
     {% endif %}
 
     - In the release branch, generate the changelog for the incoming version, i.e.,
