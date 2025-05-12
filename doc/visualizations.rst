@@ -46,7 +46,7 @@ model `from_estimator`:
     y = y == 2  # make binary
     X_train, X_test, y_train, y_test = train_test_split(
        X, y, test_size=.8, random_state=42
-   )
+    )
     clf = LogisticRegression(random_state=42, C=.01)
     clf.fit(X_train, y_train)
 
@@ -69,7 +69,7 @@ If you already have the prediction values, you could instead use
     y = y == 2  # make binary
     X_train, X_test, y_train, y_test = train_test_split(
        X, y, test_size=.8, random_state=42
-   )
+    )
     clf = LogisticRegression(random_state=42, C=.01)
     clf.fit(X_train, y_train)
 
