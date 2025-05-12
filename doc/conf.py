@@ -477,10 +477,28 @@ redirects = {
         "auto_examples/model_selection/plot_nested_cross_validation_iris"
     ),
     "auto_examples/linear_model/plot_lasso_lars": (
-        "auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path"
+        "auto_examples/linear_model/plot_regularization"
     ),
     "auto_examples/linear_model/plot_lasso_coordinate_descent_path": (
-        "auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path"
+        "auto_examples/linear_model/plot_regularization"
+    ),
+    "auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path": (
+        "auto_examples/linear_model/plot_regularization"
+    ),
+    "auto_examples/linear_model/plot_ridge_coeffs": (
+        "auto_examples/linear_model/plot_regularization"
+    ),
+    "auto_examples/linear_model/plot_ridge_path": (
+        "auto_examples/linear_model/plot_regularization"
+    ),
+    "auto_examples/linear_model/plot_sgd_penalties": (
+        "auto_examples/linear_model/plot_regularization"
+    ),
+    "auto_examples/linear_model/plot_logistic_path": (
+        "auto_examples/linear_model/plot_regularization"
+    ),
+    "auto_examples/linear_model/plot_logistic_l1_l2_sparsity": (
+        "auto_examples/linear_model/plot_regularization"
     ),
     "auto_examples/cluster/plot_color_quantization": (
         "auto_examples/cluster/plot_face_compress"
