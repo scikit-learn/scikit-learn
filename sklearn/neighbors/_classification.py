@@ -182,7 +182,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
     >>> print(neigh.predict([[1.1]]))
     [0]
     >>> print(neigh.predict_proba([[0.9]]))
-    [[0.666... 0.333...]]
+    [[0.666 0.333]]
     """
 
     _parameter_constraints: dict = {**NeighborsBase._parameter_constraints}

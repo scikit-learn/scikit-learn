@@ -709,9 +709,7 @@ def test_likelihood_ratios_warnings(params, warn_msg):
     # least one of the ratios is ill-defined.
 
     with pytest.warns(UserWarning, match=warn_msg):
-        # TODO(1.9): remove setting `replace_undefined_by` since this will be set by
-        # default
-        class_likelihood_ratios(replace_undefined_by=1.0, **params)
+        class_likelihood_ratios(**params)
 
 
 @pytest.mark.parametrize(
@@ -736,7 +734,6 @@ def test_likelihood_ratios_errors(params, err_msg):
         class_likelihood_ratios(**params)
 
 
-# TODO(1.9): remove setting `replace_undefined_by` since this will be set by default
 def test_likelihood_ratios():
     # Build confusion matrix with tn=9, fp=8, fn=1, tp=2,
     # sensitivity=2/3, specificity=9/17, prevalence=3/20,
@@ -744,14 +741,12 @@ def test_likelihood_ratios():
     y_true = np.array([1] * 3 + [0] * 17)
     y_pred = np.array([1] * 2 + [0] * 10 + [1] * 8)
 
-    pos, neg = class_likelihood_ratios(y_true, y_pred, replace_undefined_by=np.nan)
+    pos, neg = class_likelihood_ratios(y_true, y_pred)
     assert_allclose(pos, 34 / 24)
     assert_allclose(neg, 17 / 27)
 
     # Build limit case with y_pred = y_true
-    pos, neg = class_likelihood_ratios(y_true, y_true, replace_undefined_by=np.nan)
-    # TODO(1.9): replace next line with `assert_array_equal(pos, 1.0)`, since
-    # `replace_undefined_by` has a new default:
+    pos, neg = class_likelihood_ratios(y_true, y_true)
     assert_array_equal(pos, np.nan * 2)
     assert_allclose(neg, np.zeros(2), rtol=1e-12)
 
@@ -759,9 +754,7 @@ def test_likelihood_ratios():
     # sensitivity=2/3, specificity=9/12, prevalence=3/20,
     # LR+=24/9, LR-=12/27
     sample_weight = np.array([1.0] * 15 + [0.0] * 5)
-    pos, neg = class_likelihood_ratios(
-        y_true, y_pred, sample_weight=sample_weight, replace_undefined_by=np.nan
-    )
+    pos, neg = class_likelihood_ratios(y_true, y_pred, sample_weight=sample_weight)
     assert_allclose(pos, 24 / 9)
     assert_allclose(neg, 12 / 27)
 
@@ -777,18 +770,6 @@ def test_likelihood_ratios_raise_warning_deprecation(raise_warning):
     msg = "`raise_warning` was deprecated in version 1.7 and will be removed in 1.9."
     with pytest.warns(FutureWarning, match=msg):
         class_likelihood_ratios(y_true, y_pred, raise_warning=raise_warning)
-
-
-# TODO(1.9): remove test
-def test_likelihood_ratios_raise_default_deprecation():
-    """Test that class_likelihood_ratios raises a `FutureWarning` when `raise_warning`
-    and `replace_undefined_by` are both default."""
-    y_true = np.array([1, 0])
-    y_pred = np.array([1, 0])
-
-    msg = "The default return value of `class_likelihood_ratios` in case of a"
-    with pytest.warns(FutureWarning, match=msg):
-        class_likelihood_ratios(y_true, y_pred)
 
 
 def test_likelihood_ratios_replace_undefined_by_worst():

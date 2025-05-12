@@ -1120,7 +1120,7 @@ class Pipeline(_BaseComposition):
 
         Returns
         -------
-        Xt : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Inverse transformed data, that is, data in the original feature
             space.
         """
@@ -1648,12 +1648,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     ...                       ("svd", TruncatedSVD(n_components=2))])
     >>> X = [[0., 1., 3], [2., 2., 5]]
     >>> union.fit_transform(X)
-    array([[-1.5       ,  3.0..., -0.8...],
-           [ 1.5       ,  5.7...,  0.4...]])
+    array([[-1.5       ,  3.04, -0.872],
+           [ 1.5       ,  5.72,  0.463]])
     >>> # An estimator's parameter can be set using '__' syntax
     >>> union.set_params(svd__n_components=1).fit_transform(X)
-    array([[-1.5       ,  3.0...],
-           [ 1.5       ,  5.7...]])
+    array([[-1.5       ,  3.04],
+           [ 1.5       ,  5.72]])
 
     For a more detailed example of usage, see
     :ref:`sphx_glr_auto_examples_compose_plot_feature_union.py`.

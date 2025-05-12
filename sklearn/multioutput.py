@@ -406,7 +406,7 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     >>> X, y = load_linnerud(return_X_y=True)
     >>> regr = MultiOutputRegressor(Ridge(random_state=123)).fit(X, y)
     >>> regr.predict(X[[0]])
-    array([[176..., 35..., 57...]])
+    array([[176, 35.1, 57.1]])
     """
 
     def __init__(self, estimator, *, n_jobs=None):
@@ -1018,9 +1018,9 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
            [1., 0., 0.],
            [0., 1., 0.]])
     >>> chain.predict_proba(X_test)
-    array([[0.8387..., 0.9431..., 0.4576...],
-           [0.8878..., 0.3684..., 0.2640...],
-           [0.0321..., 0.9935..., 0.0626...]])
+    array([[0.8387, 0.9431, 0.4576],
+           [0.8878, 0.3684, 0.2640],
+           [0.0321, 0.9935, 0.0626]])
     """
 
     _parameter_constraints: dict = {

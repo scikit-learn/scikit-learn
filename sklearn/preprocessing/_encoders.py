@@ -1104,7 +1104,7 @@ class OneHotEncoder(_BaseEncoder):
 
         Returns
         -------
-        X_tr : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Inverse transformed array.
         """
         check_is_fitted(self)
@@ -1622,7 +1622,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         Returns
         -------
-        X_tr : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Inverse transformed array.
         """
         check_is_fitted(self)

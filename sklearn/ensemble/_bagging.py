@@ -1348,7 +1348,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
     >>> regr = BaggingRegressor(estimator=SVR(),
     ...                         n_estimators=10, random_state=0).fit(X, y)
     >>> regr.predict([[0, 0, 0, 0]])
-    array([-2.8720...])
+    array([-2.8720])
     """
 
     def __init__(
