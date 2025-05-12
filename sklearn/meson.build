@@ -4,8 +4,6 @@ fs = import('fs')
 is_windows = host_machine.system() == 'windows'
 is_mingw = is_windows and cc.get_id() == 'gcc'
 
-cython_args = []
-
 # Adapted from Scipy. mingw is untested and not officially supported. If you
 # ever bump into issues when trying to compile for mingw, please open an issue
 # in the scikit-learn issue tracker
@@ -17,6 +15,8 @@ if is_mingw
   # builds, for C only.
   add_project_arguments('-mlong-double-64', language: 'c')
 endif
+
+cython_args = []
 
 # Only check build dependencies version when not cross-compiling, as running
 # Python interpreter can be tricky in cross-compilation settings. For more
