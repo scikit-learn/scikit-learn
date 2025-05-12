@@ -826,9 +826,17 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         # Scale feature importances between 0 and 1
         if hasattr(self, "_ufi_feature_importances"):
-            self._ufi_feature_importances /= self._ufi_feature_importances.sum()
+            if self._ufi_feature_importances.any():
+                self._ufi_feature_importances /= self._ufi_feature_importances.sum()
+            else:
+                self._ufi_feature_importances = np.zeros(X.shape[1])
         if hasattr(self, "_mdi_oob_feature_importances"):
-            self._mdi_oob_feature_importances /= self._mdi_oob_feature_importances.sum()
+            if self._mdi_oob_feature_importances.any():
+                self._mdi_oob_feature_importances /= (
+                    self._mdi_oob_feature_importances.sum()
+                )
+            else:
+                self._mdi_oob_feature_importances = np.zeros(X.shape[1])
 
         # change shape of arrays after fit (early-stopping or additional ests)
         if n_stages != self.estimators_.shape[0]:
