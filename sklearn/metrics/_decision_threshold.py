@@ -103,6 +103,7 @@ def decision_threshold_curve(
     det_curve : Compute error rates for different probability thresholds.
     roc_curve : Compute Receiver operating characteristic (ROC) curve.
 
+    Examples
     --------
     >>> import numpy as np
     >>> from sklearn.metrics import accuracy_score, decision_threshold_curve
