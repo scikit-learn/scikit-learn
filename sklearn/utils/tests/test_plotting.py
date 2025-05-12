@@ -15,19 +15,17 @@ from sklearn.utils._testing import assert_allclose
 
 @pytest.mark.parametrize("ax", [None, "Ax"])
 @pytest.mark.parametrize(
-    "name_arg_expected", [(None, "TestEstimator"), ("CustomName", "CustomName")]
+    "name, expected_name_out", [(None, "TestEstimator"), ("CustomName", "CustomName")]
 )
-def test_validate_plot_params(pyplot, ax, name_arg_expected):
+def test_validate_plot_params(pyplot, ax, name, expected_name_out):
     """Check `_validate_plot_params` returns the correct values."""
     display = _BinaryClassifierCurveDisplayMixin()
     display.estimator_name = "TestEstimator"
     if ax:
         _, ax = pyplot.subplots()
-    ax_out, _, name_out = display._validate_plot_params(
-        ax=ax, name=name_arg_expected[0]
-    )
+    ax_out, _, name_out = display._validate_plot_params(ax=ax, name=name)
 
-    assert name_out == name_arg_expected[1]
+    assert name_out == expected_name_out
 
     if ax:
         assert ax == ax_out
