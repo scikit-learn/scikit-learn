@@ -1929,7 +1929,7 @@ def learning_curve(
         Times spent for scoring in seconds. Only present if ``return_times``
         is True.
 
-    See also
+    See Also
     --------
     LearningCurveDisplay.from_estimator : Plot a learning curve using an
         estimator and data.
