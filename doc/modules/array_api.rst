@@ -213,6 +213,17 @@ automatically skipped. Therefore it's important to run the tests with the
     pip install array-api-strict  # and other libraries as needed
     pytest -k "array_api" -v
 
+Running the scikit-learn tests against `array-api-strict` should help reveal
+most code problems related to handling multiple device inputs via the use of
+simulated non-CPU devices. This allows for fast iterative development and debugging of
+array API related code.
+
+However, to ensure full handling of PyTorch or CuPy inputs allocated on actual GPU
+devices, it is necessary to run the tests against those libraries and hardware.
+This can either be achieved by using
+`Google Colab <https://gist.github.com/EdAbati/ff3bdc06bafeb92452b3740686cc8d7c>`_
+or leveraging our CI infrastructure on pull requests (manually triggered by maintainers
+for cost reasons).
 .. _mps_support:
 
 Note on MPS device support
