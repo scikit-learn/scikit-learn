@@ -17,7 +17,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
     For general information regarding `scikit-learn` visualization tools, see
     the :ref:`Visualization Guide <visualizations>`.
-    For guidance on interpreting these plots, see :ref:`<det_curve>`.
+    For guidance on interpreting these plots, see :ref:`det_curve`.
 
     .. versionadded:: 0.24
 
