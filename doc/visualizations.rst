@@ -11,24 +11,24 @@ expose two methods for creating plots: `from_estimator` and
 `from_predictions`.
 
 The `from_estimator` method generates a `Display` object from a fitted estimator and
-input data (`X`, `y`).
+input data (`X`, `y`), and a plot.
 The `from_predictions` method creates a `Display` object from true and predicted
-values (`y_test`, `y_pred`), which is useful when you only want to compute the
-predictions once.
+values (`y_test`, `y_pred`), and a plot.
 
-Using `from_predictions` avoids having to recompute predictions, but does not
-automatically resolve some ambiguities. For binary classification, the user must know
-which column corresponds to the positive label (in this case, `y_pred`).
+For :term:`predict_proba`, the column corresponding to the probability estimate of
+the `pos_label` class is selected while for :term:`decision_function`, the score is
+reverted (i.e. multiply by -1) when `pos_label` is not the label 1.
 
 The `Display` object stores the computed values (e.g., metric values or
-feature importance) required for plotting with Matplotlib. These values are the
-derived results after we pass the raw predictions to `from_predictions`, or
-an estimator to `from_estimator`. When the `Display` object is created,
-the plot is also created.
+feature importance) required for plotting with Matplotlib. These values the
+results derived from the raw predictions passed to `from_predictions`, or
+an estimator and `X` passed to `from_estimator`.
 
 Display objects have a plot method that creates a matplotlib plot once the display
-object has been initialized. Additionally, the plot method allows adding to an existing
-plot by passing the existing plots :class:`matplotlib.axes.Axes` to the `ax` parameter.
+object has been initialized (note that we recommend that display objects are created
+via `from_estimator` or `from_predictions` instead of initialized directly). The plot
+method allows adding to an existing plot by passing the existing plots
+:class:`matplotlib.axes.Axes` to the `ax` parameter.
 
 In the following example, we plot a ROC curve for a fitted Logistic Regression
 model `from_estimator`:
