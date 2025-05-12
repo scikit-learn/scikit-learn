@@ -175,15 +175,15 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     >>> # encodings:
     >>> enc_high_smooth = TargetEncoder(smooth=5000.0).fit(X, y)
     >>> enc_high_smooth.target_mean_
-    np.float64(44...)
+    np.float64(44.3)
     >>> enc_high_smooth.encodings_
-    [array([44..., 44..., 44...])]
+    [array([44.1, 44.4, 44.3])]
 
     >>> # On the other hand, a low `smooth` parameter puts more weight on target
     >>> # conditioned on the value of the categorical:
     >>> enc_low_smooth = TargetEncoder(smooth=1.0).fit(X, y)
     >>> enc_low_smooth.encodings_
-    [array([20..., 80..., 43...])]
+    [array([21, 80.8, 43.2])]
     """
 
     _parameter_constraints: dict = {

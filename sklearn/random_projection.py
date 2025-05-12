@@ -47,8 +47,8 @@ from .utils.random import sample_without_replacement
 from .utils.validation import check_array, check_is_fitted, validate_data
 
 __all__ = [
-    "SparseRandomProjection",
     "GaussianRandomProjection",
+    "SparseRandomProjection",
     "johnson_lindenstrauss_min_dim",
 ]
 
@@ -746,7 +746,7 @@ class SparseRandomProjection(BaseRandomProjection):
     (25, 2759)
     >>> # very few components are non-zero
     >>> np.mean(transformer.components_ != 0)
-    np.float64(0.0182...)
+    np.float64(0.0182)
     """
 
     _parameter_constraints: dict = {

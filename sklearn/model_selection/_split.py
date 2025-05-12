@@ -37,22 +37,22 @@ from ..utils.validation import _num_samples, check_array, column_or_1d
 
 __all__ = [
     "BaseCrossValidator",
-    "KFold",
     "GroupKFold",
+    "GroupShuffleSplit",
+    "KFold",
     "LeaveOneGroupOut",
     "LeaveOneOut",
     "LeavePGroupsOut",
     "LeavePOut",
-    "RepeatedStratifiedKFold",
-    "RepeatedKFold",
-    "ShuffleSplit",
-    "GroupShuffleSplit",
-    "StratifiedKFold",
-    "StratifiedGroupKFold",
-    "StratifiedShuffleSplit",
     "PredefinedSplit",
-    "train_test_split",
+    "RepeatedKFold",
+    "RepeatedStratifiedKFold",
+    "ShuffleSplit",
+    "StratifiedGroupKFold",
+    "StratifiedKFold",
+    "StratifiedShuffleSplit",
     "check_cv",
+    "train_test_split",
 ]
 
 
@@ -1088,9 +1088,8 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
             y_counts_per_fold[i] -= group_y_counts
             fold_eval = np.mean(std_per_class)
             samples_in_fold = np.sum(y_counts_per_fold[i])
-            is_current_fold_better = (
-                fold_eval < min_eval
-                or np.isclose(fold_eval, min_eval)
+            is_current_fold_better = fold_eval < min_eval or (
+                np.isclose(fold_eval, min_eval)
                 and samples_in_fold < min_samples_in_fold
             )
             if is_current_fold_better:
@@ -2442,11 +2441,8 @@ def _validate_shuffle_split(n_samples, test_size, train_size, default_test_size=
     test_size_type = np.asarray(test_size).dtype.kind
     train_size_type = np.asarray(train_size).dtype.kind
 
-    if (
-        test_size_type == "i"
-        and (test_size >= n_samples or test_size <= 0)
-        or test_size_type == "f"
-        and (test_size <= 0 or test_size >= 1)
+    if (test_size_type == "i" and (test_size >= n_samples or test_size <= 0)) or (
+        test_size_type == "f" and (test_size <= 0 or test_size >= 1)
     ):
         raise ValueError(
             "test_size={0} should be either positive and smaller"
@@ -2454,11 +2450,8 @@ def _validate_shuffle_split(n_samples, test_size, train_size, default_test_size=
             "(0, 1) range".format(test_size, n_samples)
         )
 
-    if (
-        train_size_type == "i"
-        and (train_size >= n_samples or train_size <= 0)
-        or train_size_type == "f"
-        and (train_size <= 0 or train_size >= 1)
+    if (train_size_type == "i" and (train_size >= n_samples or train_size <= 0)) or (
+        train_size_type == "f" and (train_size <= 0 or train_size >= 1)
     ):
         raise ValueError(
             "train_size={0} should be either positive and smaller"
