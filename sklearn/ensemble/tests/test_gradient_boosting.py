@@ -248,19 +248,29 @@ def test_regression_synthetic(global_random_seed):
 
 
 @pytest.mark.parametrize(
-    "GradientBoosting, X, y",
+    "GradientBoosting, X, y, criterion",
     [
-        (GradientBoostingRegressor, X_reg, y_reg),
-        (GradientBoostingClassifier, iris.data, iris.target),
+        (GradientBoostingRegressor, X_reg, y_reg, "squared_error"),
+        (GradientBoostingClassifier, iris.data, iris.target, "squared_error"),
     ],
 )
-def test_feature_importances(GradientBoosting, X, y):
+def test_feature_importances(GradientBoosting, X, y, criterion):
     # smoke test to check that the gradient boosting expose an attribute
     # feature_importances_
-    gbdt = GradientBoosting()
+    gbdt = GradientBoosting(criterion=criterion, subsample=0.66)
     assert not hasattr(gbdt, "feature_importances_")
+    assert not hasattr(gbdt, "ufi_feature_importances_")
+    assert not hasattr(gbdt, "mdi_oob_feature_importances_")
     gbdt.fit(X, y)
     assert hasattr(gbdt, "feature_importances_")
+    assert hasattr(gbdt, "ufi_feature_importances_")
+    assert hasattr(gbdt, "mdi_oob_feature_importances_")
+
+    gbdt = GradientBoosting(criterion=criterion, subsample=1.0)
+    gbdt.fit(X, y)
+    assert hasattr(gbdt, "feature_importances_")
+    assert not hasattr(gbdt, "ufi_feature_importances_")
+    assert not hasattr(gbdt, "mdi_oob_feature_importances_")
 
 
 def test_probability_log(global_random_seed):
@@ -352,19 +362,26 @@ def test_feature_importance_regression(
         learning_rate=0.1,
         max_leaf_nodes=6,
         n_estimators=100,
+        subsample=0.66,
+        criterion="squared_error",
         random_state=global_random_seed,
     )
     reg.fit(X_train, y_train)
-    sorted_idx = np.argsort(reg.feature_importances_)[::-1]
-    sorted_features = [california.feature_names[s] for s in sorted_idx]
+    for feature_importance_name in [
+        "feature_importances_",
+        "ufi_feature_importances_",
+        "mdi_oob_feature_importances_",
+    ]:
+        sorted_idx = np.argsort(getattr(reg, feature_importance_name))[::-1]
+        sorted_features = [california.feature_names[s] for s in sorted_idx]
 
-    # The most important feature is the median income by far.
-    assert sorted_features[0] == "MedInc"
+        # The most important feature is the median income by far.
+        assert sorted_features[0] == "MedInc"
 
-    # The three subsequent features are the following. Their relative ordering
-    # might change a bit depending on the randomness of the trees and the
-    # train / test split.
-    assert set(sorted_features[1:4]) == {"Longitude", "AveOccup", "Latitude"}
+        # The three subsequent features are the following. Their relative ordering
+        # might change a bit depending on the randomness of the trees and the
+        # train / test split.
+        assert set(sorted_features[1:4]) == {"Longitude", "AveOccup", "Latitude"}
 
 
 def test_max_features():

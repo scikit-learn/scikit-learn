@@ -483,6 +483,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
             if self.subsample < 1.0:
                 # no inplace multiplication!
+                oob_indices = np.where(sample_mask == 0)[0]
+                sample_weight_oob = sample_weight[oob_indices]
                 sample_weight = sample_weight * sample_mask.astype(np.float64)
 
             X = X_csc if X_csc is not None else X
@@ -507,6 +509,25 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
             # add tree to ensemble
             self.estimators_[i, k] = tree
+
+            if hasattr(self, "_ufi_feature_importances"):
+                self._ufi_feature_importances += (
+                    tree.compute_unbiased_feature_importance_and_oob_predictions(
+                        X_test=X[oob_indices, :],
+                        y_test=y[oob_indices].reshape(-1, 1),
+                        sample_weight=sample_weight_oob,
+                        method="ufi",
+                    )[0]
+                )
+            if hasattr(self, "_mdi_oob_feature_importances"):
+                self._mdi_oob_feature_importances += (
+                    tree.compute_unbiased_feature_importance_and_oob_predictions(
+                        X_test=X[oob_indices, :],
+                        y_test=y[oob_indices].reshape(-1, 1),
+                        sample_weight=sample_weight_oob,
+                        method="mdi_oob",
+                    )[0]
+                )
 
         return raw_predictions
 
@@ -783,6 +804,12 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             raw_predictions = self._raw_predict(X_train)
             self._resize_state()
 
+        if self.subsample < 1.0:
+            if self.criterion in ["squared_error"]:
+                self._ufi_feature_importances = np.zeros(X.shape[1])
+            if self.criterion in ["squared_error"]:
+                self._mdi_oob_feature_importances = np.zeros(X.shape[1])
+
         # fit the boosting stages
         n_stages = self._fit_stages(
             X_train,
@@ -796,6 +823,12 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             begin_at_stage,
             monitor,
         )
+
+        # Scale feature importances between 0 and 1
+        if hasattr(self, "_ufi_feature_importances"):
+            self._ufi_feature_importances /= self._ufi_feature_importances.sum()
+        if hasattr(self, "_mdi_oob_feature_importances"):
+            self._mdi_oob_feature_importances /= self._mdi_oob_feature_importances.sum()
 
         # change shape of arrays after fit (early-stopping or additional ests)
         if n_stages != self.estimators_.shape[0]:
@@ -1510,6 +1543,28 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             ccp_alpha=ccp_alpha,
         )
 
+    @property
+    def ufi_feature_importances_(self):
+        check_is_fitted(self)
+        if self.criterion in ["squared_error"]:
+            return self._ufi_feature_importances
+        else:
+            raise AttributeError(
+                "ufi feature importance only available for"
+                " classification with split criterion 'squared_error'."
+            )
+
+    @property
+    def mdi_oob_feature_importances_(self):
+        check_is_fitted(self)
+        if self.criterion in ["squared_error"]:
+            return self._mdi_oob_feature_importances
+        else:
+            raise AttributeError(
+                "mdi_oob feature importance only available for"
+                " classification with split criterion 'squared_error'."
+            )
+
     def _encode_y(self, y, sample_weight):
         # encode classes into 0 ... n_classes - 1 and sets attributes classes_
         # and n_trees_per_iteration_
@@ -2117,6 +2172,28 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
             tol=tol,
             ccp_alpha=ccp_alpha,
         )
+
+    @property
+    def ufi_feature_importances_(self):
+        check_is_fitted(self)
+        if self.criterion in ["squared_error"]:
+            return self._ufi_feature_importances
+        else:
+            raise AttributeError(
+                "ufi feature importance only available for"
+                " regression with split criterion 'squared_error'."
+            )
+
+    @property
+    def mdi_oob_feature_importances_(self):
+        check_is_fitted(self)
+        if self.criterion in ["squared_error"]:
+            return self._mdi_oob_feature_importances
+        else:
+            raise AttributeError(
+                "mdi_oob feature importance only available for"
+                " regression with split criterion 'squared_error'."
+            )
 
     def _encode_y(self, y=None, sample_weight=None):
         # Just convert y to the expected dtype
