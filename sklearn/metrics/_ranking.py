@@ -846,10 +846,10 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
     # sort scores and corresponding truth values
     desc_score_indices = xp.argsort(y_score, stable=True, descending=True)
-    y_score = xp.take(y_score, desc_score_indices)
-    y_true = xp.take(y_true, desc_score_indices)
+    y_score = y_score[desc_score_indices]
+    y_true = y_true[desc_score_indices]
     if sample_weight is not None:
-        weight = xp.take(sample_weight, desc_score_indices)
+        weight = sample_weight[desc_score_indices]
     else:
         weight = 1.0
 
@@ -864,14 +864,14 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     # accumulate the true positives with decreasing threshold
     max_float_dtype = _max_precision_float_dtype(xp, device)
     y_true = xp.astype(y_true, max_float_dtype)
-    tps = xp.take(stable_cumsum(y_true * weight), threshold_idxs)
+    tps = stable_cumsum(y_true * weight)[threshold_idxs]
     if sample_weight is not None:
         # express fps as a cumsum to ensure fps is increasing even in
         # the presence of floating point errors
-        fps = xp.take(stable_cumsum((1 - y_true) * weight), threshold_idxs)
+        fps = stable_cumsum((1 - y_true) * weight)[threshold_idxs]
     else:
         fps = 1 + xp.astype(threshold_idxs, max_float_dtype) - tps
-    return fps, tps, xp.take(y_score, threshold_idxs)
+    return fps, tps, y_score[threshold_idxs]
 
 
 @validate_params(
