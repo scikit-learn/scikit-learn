@@ -6,7 +6,7 @@
 #
 cython==3.0.10
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
-exceptiongroup==1.2.2
+exceptiongroup==1.3.0
     # via pytest
 execnet==2.1.1
     # via pytest-xdist
@@ -41,3 +41,5 @@ tomli==2.2.1
     # via
     #   meson-python
     #   pytest
+typing-extensions==4.13.2
+    # via exceptiongroup
