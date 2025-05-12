@@ -253,11 +253,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     >>> len(calibrated_clf.calibrated_classifiers_)
     3
     >>> calibrated_clf.predict_proba(X)[:5, :]
-    array([[0.110..., 0.889...],
-           [0.072..., 0.927...],
-           [0.928..., 0.071...],
-           [0.928..., 0.071...],
-           [0.071..., 0.928...]])
+    array([[0.110, 0.889],
+           [0.072, 0.927],
+           [0.928, 0.072],
+           [0.928, 0.072],
+           [0.072, 0.928]])
     >>> from sklearn.model_selection import train_test_split
     >>> X, y = make_classification(n_samples=100, n_features=2,
     ...                            n_redundant=0, random_state=42)
@@ -274,7 +274,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     >>> len(calibrated_clf.calibrated_classifiers_)
     1
     >>> calibrated_clf.predict_proba([[-0.5, 0.5]])
-    array([[0.936..., 0.063...]])
+    array([[0.936, 0.063]])
     """
 
     _parameter_constraints: dict = {
