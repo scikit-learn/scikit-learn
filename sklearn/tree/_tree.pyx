@@ -1333,7 +1333,8 @@ cdef class Tree:
                         node_idx = node.left_child
                     else:
                         node_idx = node.right_child
-                    has_oob_sample[node_idx] = 1
+                    if sample_weight[sample_idx] > 0.0:
+                        has_oob_sample[node_idx] = 1
                     node = &self.nodes[node_idx]
                     for k in range(n_outputs):
                         if n_classes[k] > 1:

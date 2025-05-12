@@ -1973,6 +1973,88 @@ def test_importance_reg_match_onehot_classi(global_random_seed):
     )
 
 
+@pytest.mark.parametrize("est", [RandomForestClassifier, RandomForestRegressor])
+def test_feature_importance_sample_weights(est, global_random_seed):
+    # check that setting sample_weight to zero is equivalent
+    # to removing corresponding samples.
+
+    X = np.array(
+        [
+            [0, 0],
+            [0, 1],
+            [1, 0],
+            [1, 1],
+        ],
+        dtype=np.float32,
+    )
+    y = np.array(
+        [
+            [0],
+            [1],
+            [1],
+            [0],
+        ],
+        dtype=np.float32,
+    )
+
+    X_test = np.array(
+        [
+            [0, 0],
+            [0, 1],
+            [1, 0],
+            [0, 0],
+        ],
+        dtype=np.float32,
+    )
+    y_test = y
+
+    n_estimators = 10
+    rf = est(
+        n_estimators=n_estimators,
+        bootstrap=False,
+        max_depth=2,
+        max_features=1.0,
+        random_state=global_random_seed,
+    )
+    rf.fit(X, y)
+
+    # Ensure that a sample weight of zero is equivalent to no sample
+    sw_feature_0 = np.array([1, 0, 1, 0], dtype=np.intp)
+    sw_feature_1 = np.array([0, 1, 0, 1], dtype=np.intp)
+
+    for method in ["ufi", "mdi_oob"]:
+        importance_feature_0 = np.array(
+            [
+                rf.estimators_[
+                    i
+                ].compute_unbiased_feature_importance_and_oob_predictions(
+                    X_test=X_test,
+                    y_test=y_test,
+                    sample_weight=sw_feature_0,
+                    method=method,
+                )[0]
+                for i in range(n_estimators)
+            ]
+        ).mean(axis=0)
+
+        importance_feature_1 = np.array(
+            [
+                rf.estimators_[
+                    i
+                ].compute_unbiased_feature_importance_and_oob_predictions(
+                    X_test=X_test,
+                    y_test=y_test,
+                    sample_weight=sw_feature_1,
+                    method=method,
+                )[0]
+                for i in range(n_estimators)
+            ]
+        ).mean(axis=0)
+
+        assert importance_feature_0[0] > importance_feature_0[1]
+        assert importance_feature_1[1] > importance_feature_1[0]
+
+
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
 def test_max_samples_bootstrap(name):
     # Check invalid `max_samples` values
