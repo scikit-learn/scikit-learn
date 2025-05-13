@@ -138,6 +138,11 @@ def _preprocess_data(
     If `fit_intercept=False`, no centering is performed and `X_offset`, `y_offset`
     are set to zero.
 
+    Note that it is always possible to use the solution to the (penalized) least
+    squares problem on centered data to build the solution to the original
+    problem with or without intercept by setting the intercept a posteriori as
+    explained in the user guide: :ref:`linear_regression_intercept`.
+
     Returns
     -------
     X_out : {ndarray, sparse matrix} of shape (n_samples, n_features)
@@ -308,6 +313,10 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
             coef_ = xp.astype(self.coef_, X_scale.dtype, copy=False)
             coef_ = self.coef_ = xp.divide(coef_, X_scale)
 
+            # If self.coef_ is the solution of the penalized least squares on
+            # centered data then it is the solution of the least squares on the
+            # uncentered data with the following intercept:
+            # https://scikit-learn.org/stable/modules/linear_model.html#linear_regression_intercept
             if coef_.ndim == 1:
                 intercept_ = y_offset - X_offset @ coef_
             else:
