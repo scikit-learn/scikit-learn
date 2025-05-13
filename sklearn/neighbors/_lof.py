@@ -1,6 +1,5 @@
-# Authors: Nicolas Goix <nicolas.goix@telecom-paristech.fr>
-#          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Real
@@ -180,7 +179,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
     >>> clf.fit_predict(X)
     array([ 1,  1, -1,  1])
     >>> clf.negative_outlier_factor_
-    array([ -0.9821...,  -1.0370..., -73.3697...,  -0.9821...])
+    array([ -0.9821,  -1.0370, -73.3697,  -0.9821])
     """
 
     _parameter_constraints: dict = {
@@ -517,8 +516,3 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
 
         # 1e-10 to avoid `nan' when nb of duplicates > n_neighbors_:
         return 1.0 / (np.mean(reach_dist_array, axis=1) + 1e-10)
-
-    def _more_tags(self):
-        return {
-            "preserves_dtype": [np.float64, np.float32],
-        }

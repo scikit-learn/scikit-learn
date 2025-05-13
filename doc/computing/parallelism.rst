@@ -72,7 +72,7 @@ In practice, whether parallelism is helpful at improving runtime depends on
 many factors. It is usually a good idea to experiment rather than assuming
 that increasing the number of workers is always a good thing. In some cases
 it can be highly detrimental to performance to run multiple copies of some
-estimators or functions in parallel (see oversubscription below).
+estimators or functions in parallel (see :ref:`oversubscription<oversubscription>` below).
 
 Lower-level parallelism with OpenMP
 ...................................
@@ -103,7 +103,7 @@ such as MKL, OpenBLAS or BLIS.
 You can control the exact number of threads used by BLAS for each library
 using environment variables, namely:
 
-- ``MKL_NUM_THREADS`` sets the number of thread MKL uses,
+- ``MKL_NUM_THREADS`` sets the number of threads MKL uses,
 - ``OPENBLAS_NUM_THREADS`` sets the number of threads OpenBLAS uses
 - ``BLIS_NUM_THREADS`` sets the number of threads BLIS uses
 
@@ -122,10 +122,12 @@ for different values of `OMP_NUM_THREADS`:
     distributed on pypi.org (i.e. the ones installed via ``pip install``)
     and on the conda-forge channel (i.e. the ones installed via
     ``conda install --channel conda-forge``) are linked with OpenBLAS, while
-    NumPy and SciPy packages packages shipped on the ``defaults`` conda
+    NumPy and SciPy packages shipped on the ``defaults`` conda
     channel from Anaconda.org (i.e. the ones installed via ``conda install``)
     are linked by default with MKL.
 
+
+.. _oversubscription:
 
 Oversubscription: spawning too many threads
 ...........................................
@@ -227,19 +229,17 @@ state of the aforementioned singletons.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Controls the seeding of the random number generator used in tests that rely on
-the `global_random_seed`` fixture.
+the `global_random_seed` fixture.
 
 All tests that use this fixture accept the contract that they should
 deterministically pass for any seed value from 0 to 99 included.
 
-If the `SKLEARN_TESTS_GLOBAL_RANDOM_SEED` environment variable is set to
-`"any"` (which should be the case on nightly builds on the CI), the fixture
-will choose an arbitrary seed in the above range (based on the BUILD_NUMBER or
-the current day) and all fixtured tests will run for that specific seed. The
-goal is to ensure that, over time, our CI will run all tests with different
-seeds while keeping the test duration of a single run of the full test suite
-limited. This will check that the assertions of tests written to use this
-fixture are not dependent on a specific seed value.
+In nightly CI builds, the `SKLEARN_TESTS_GLOBAL_RANDOM_SEED` environment
+variable is drawn randomly in the above range and all fixtured tests will run
+for that specific seed. The goal is to ensure that, over time, our CI will run
+all tests with different seeds while keeping the test duration of a single run
+of the full test suite limited. This will check that the assertions of tests
+written to use this fixture are not dependent on a specific seed value.
 
 The range of admissible seed values is limited to [0, 99] because it is often
 not possible to write a test that can work for any possible seed and we want to
@@ -250,8 +250,6 @@ Valid values for `SKLEARN_TESTS_GLOBAL_RANDOM_SEED`:
 - `SKLEARN_TESTS_GLOBAL_RANDOM_SEED="42"`: run tests with a fixed seed of 42
 - `SKLEARN_TESTS_GLOBAL_RANDOM_SEED="40-42"`: run the tests with all seeds
   between 40 and 42 included
-- `SKLEARN_TESTS_GLOBAL_RANDOM_SEED="any"`: run the tests with an arbitrary
-  seed selected between 0 and 99 included
 - `SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"`: run the tests with all seeds
   between 0 and 99 included. This can take a long time: only use for individual
   tests, not the full test suite!
@@ -300,7 +298,7 @@ segfaults.
 
 When this environment variable is set to a non zero value, the debug symbols
 will be included in the compiled C extensions. Only debug symbols for POSIX
-systems is configured.
+systems are configured.
 
 `SKLEARN_PAIRWISE_DIST_CHUNK_SIZE`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -329,7 +327,7 @@ you can set `SKLEARN_WARNINGS_AS_ERRORS=1`.
 By default, warnings are not turned into errors. This is the case if
 `SKLEARN_WARNINGS_AS_ERRORS` is unset, or `SKLEARN_WARNINGS_AS_ERRORS=0`.
 
-This environment variable use specific warning filters to ignore some warnings,
+This environment variable uses specific warning filters to ignore some warnings,
 since sometimes warnings originate from third-party libraries and there is not
 much we can do about it. You can see the warning filters in the
 `_get_warnings_filters_info_list` function in `sklearn/utils/_testing.py`.

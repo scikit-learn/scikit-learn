@@ -4,6 +4,9 @@ These include PCA, NMF, ICA, and more. Most of the algorithms of this module can
 regarded as dimensionality reduction techniques.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from ..utils.extmath import randomized_svd
 from ._dict_learning import (
     DictionaryLearning,
@@ -28,24 +31,24 @@ from ._sparse_pca import MiniBatchSparsePCA, SparsePCA
 from ._truncated_svd import TruncatedSVD
 
 __all__ = [
+    "NMF",
+    "PCA",
     "DictionaryLearning",
+    "FactorAnalysis",
     "FastICA",
     "IncrementalPCA",
     "KernelPCA",
+    "LatentDirichletAllocation",
     "MiniBatchDictionaryLearning",
     "MiniBatchNMF",
     "MiniBatchSparsePCA",
-    "NMF",
-    "PCA",
     "SparseCoder",
     "SparsePCA",
+    "TruncatedSVD",
     "dict_learning",
     "dict_learning_online",
     "fastica",
     "non_negative_factorization",
     "randomized_svd",
     "sparse_encode",
-    "FactorAnalysis",
-    "TruncatedSVD",
-    "LatentDirichletAllocation",
 ]

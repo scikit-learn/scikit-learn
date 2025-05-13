@@ -28,12 +28,12 @@ missing values imputed using different techniques.
 
 """
 
-# Authors: Maria Telenczuk  <https://github.com/maikia>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Download the data and make missing values sets
-################################################
+# ##############################################
 #
 # First we download the two datasets. Diabetes dataset is shipped with
 # scikit-learn. It has 442 entries, each with 10 features. California Housing
@@ -92,7 +92,7 @@ rng = np.random.RandomState(0)
 from sklearn.ensemble import RandomForestRegressor
 
 # To use the experimental IterativeImputer, we need to explicitly ask for it:
-from sklearn.experimental import enable_iterative_imputer  # noqa
+from sklearn.experimental import enable_iterative_imputer  # noqa: F401
 from sklearn.impute import IterativeImputer, KNNImputer, SimpleImputer
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import make_pipeline

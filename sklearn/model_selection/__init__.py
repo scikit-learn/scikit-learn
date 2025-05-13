@@ -1,5 +1,8 @@
 """Tools for model selection, such as cross validation and hyper-parameter tuning."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import typing
 
 from ._classification_threshold import (
@@ -41,7 +44,7 @@ from ._validation import (
 if typing.TYPE_CHECKING:
     # Avoid errors in type checkers (e.g. mypy) for experimental estimators.
     # TODO: remove this check once the estimator is no longer experimental.
-    from ._search_successive_halving import (  # noqa
+    from ._search_successive_halving import (  # noqa: F401
         HalvingGridSearchCV,
         HalvingRandomSearchCV,
     )
@@ -50,37 +53,37 @@ if typing.TYPE_CHECKING:
 __all__ = [
     "BaseCrossValidator",
     "BaseShuffleSplit",
+    "FixedThresholdClassifier",
     "GridSearchCV",
-    "TimeSeriesSplit",
-    "KFold",
     "GroupKFold",
     "GroupShuffleSplit",
+    "KFold",
+    "LearningCurveDisplay",
     "LeaveOneGroupOut",
     "LeaveOneOut",
     "LeavePGroupsOut",
     "LeavePOut",
-    "RepeatedKFold",
-    "RepeatedStratifiedKFold",
     "ParameterGrid",
     "ParameterSampler",
     "PredefinedSplit",
     "RandomizedSearchCV",
+    "RepeatedKFold",
+    "RepeatedStratifiedKFold",
     "ShuffleSplit",
-    "StratifiedKFold",
     "StratifiedGroupKFold",
+    "StratifiedKFold",
     "StratifiedShuffleSplit",
-    "FixedThresholdClassifier",
+    "TimeSeriesSplit",
     "TunedThresholdClassifierCV",
+    "ValidationCurveDisplay",
     "check_cv",
     "cross_val_predict",
     "cross_val_score",
     "cross_validate",
     "learning_curve",
-    "LearningCurveDisplay",
     "permutation_test_score",
     "train_test_split",
     "validation_curve",
-    "ValidationCurveDisplay",
 ]
 
 

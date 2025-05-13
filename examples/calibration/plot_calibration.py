@@ -23,12 +23,8 @@ Brier score.
 
 """
 
-# Authors:
-# Mathieu Blondel <mathieu@mblondel.org>
-# Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
-# Balazs Kegl <balazs.kegl@gmail.com>
-# Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# License: BSD Style.
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Generate synthetic dataset
@@ -39,7 +35,6 @@ from sklearn.datasets import make_blobs
 from sklearn.model_selection import train_test_split
 
 n_samples = 50000
-n_bins = 3  # use 3 bins for calibration_curve as we have 3 clusters here
 
 # Generate 3 blobs with 2 classes where the second blob contains
 # half positive samples and half negative samples. Probability in this

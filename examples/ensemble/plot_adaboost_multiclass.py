@@ -25,8 +25,8 @@ the difficult-to-classify samples.
 
 """
 
-# Noel Dawe <noel.dawe@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Creating the dataset
@@ -80,7 +80,6 @@ n_estimators = 300
 adaboost_clf = AdaBoostClassifier(
     estimator=weak_learner,
     n_estimators=n_estimators,
-    algorithm="SAMME",
     random_state=42,
 ).fit(X_train, y_train)
 

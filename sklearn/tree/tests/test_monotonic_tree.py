@@ -80,9 +80,9 @@ def test_monotonic_constraints_classifications(
     est.fit(X_train, y_train)
     proba_test = est.predict_proba(X_test)
 
-    assert np.logical_and(
-        proba_test >= 0.0, proba_test <= 1.0
-    ).all(), "Probability should always be in [0, 1] range."
+    assert np.logical_and(proba_test >= 0.0, proba_test <= 1.0).all(), (
+        "Probability should always be in [0, 1] range."
+    )
     assert_allclose(proba_test.sum(axis=1), 1.0)
 
     # Monotonic increase constraint, it applies to the positive class
@@ -191,18 +191,22 @@ def test_multiple_output_raises(TreeClassifier):
 
 
 @pytest.mark.parametrize(
-    "DecisionTreeEstimator", [DecisionTreeClassifier, DecisionTreeRegressor]
+    "Tree",
+    [
+        DecisionTreeClassifier,
+        DecisionTreeRegressor,
+        ExtraTreeClassifier,
+        ExtraTreeRegressor,
+    ],
 )
-def test_missing_values_raises(DecisionTreeEstimator):
+def test_missing_values_raises(Tree):
     X, y = make_classification(
         n_samples=100, n_features=5, n_classes=2, n_informative=3, random_state=0
     )
     X[0, 0] = np.nan
     monotonic_cst = np.zeros(X.shape[1])
     monotonic_cst[0] = 1
-    est = DecisionTreeEstimator(
-        max_depth=None, monotonic_cst=monotonic_cst, random_state=0
-    )
+    est = Tree(max_depth=None, monotonic_cst=monotonic_cst, random_state=0)
 
     msg = "Input X contains NaN"
     with pytest.raises(ValueError, match=msg):

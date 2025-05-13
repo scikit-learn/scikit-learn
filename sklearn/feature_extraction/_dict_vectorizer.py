@@ -1,6 +1,5 @@
-# Authors: Lars Buitinck
-#          Dan Blanchard <dblanchard@ets.org>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from array import array
 from collections.abc import Iterable, Mapping
@@ -9,6 +8,8 @@ from operator import itemgetter
 
 import numpy as np
 import scipy.sparse as sp
+
+from sklearn.utils import metadata_routing
 
 from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import check_array
@@ -91,6 +92,9 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     >>> v.transform({'foo': 4, 'unseen_feature': 3})
     array([[0., 0., 4.]])
     """
+
+    # This isn't something that people should be routing / using in a pipeline.
+    __metadata_request__inverse_transform = {"dict_type": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         "dtype": "no_validation",  # validation delegated to numpy,
@@ -335,7 +339,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        D : list of dict_type objects of shape (n_samples,)
+        X_original : list of dict_type objects of shape (n_samples,)
             Feature mappings for the samples in X.
         """
         check_is_fitted(self, "feature_names_")
@@ -448,5 +452,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
         return self
 
-    def _more_tags(self):
-        return {"X_types": ["dict"]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.dict = True
+        tags.input_tags.two_d_array = False
+        return tags

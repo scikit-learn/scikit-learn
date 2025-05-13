@@ -23,9 +23,9 @@ dependencies:
   - pytest-cov
   - coverage
   - ccache
-  - pytorch=1.13
+  - pytorch
   - pytorch-cpu
   - polars
   - pyarrow
-  - array-api-compat
   - array-api-strict
+  - scipy-doctest

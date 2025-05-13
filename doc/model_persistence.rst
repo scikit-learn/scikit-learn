@@ -4,6 +4,47 @@
 Model persistence
 =================
 
+.. list-table:: Summary of model persistence methods
+   :widths: 25 50 50
+   :header-rows: 1
+
+   * - Persistence method
+     - Pros
+     - Risks / Cons
+   * - :ref:`ONNX <onnx_persistence>`
+     - * Serve models without a Python environment
+       * Serving and training environments independent of one another
+       * Most secure option
+     - * Not all scikit-learn models are supported
+       * Custom estimators require more work to support
+       * Original Python object is lost and cannot be reconstructed
+   * - :ref:`skops_persistence`
+     - * More secure than `pickle` based formats
+       * Contents can be partly validated without loading
+     - * Not as fast as `pickle` based formats
+       * Supports less types than `pickle` based formats
+       * Requires the same environment as the training environment
+   * - :mod:`pickle`
+     - * Native to Python
+       * Can serialize most Python objects
+       * Efficient memory usage with `protocol=5`
+     - * Loading can execute arbitrary code
+       * Requires the same environment as the training environment
+   * - :mod:`joblib`
+     - * Efficient memory usage
+       * Supports memory mapping
+       * Easy shortcuts for compression and decompression
+     - * Pickle based format
+       * Loading can execute arbitrary code
+       * Requires the same environment as the training environment
+   * - `cloudpickle`_
+     - * Can serialize non-packaged, custom Python code
+       * Comparable loading efficiency as :mod:`pickle` with `protocol=5`
+     - * Pickle based format
+       * Loading can execute arbitrary code
+       * No forward compatibility guarantees
+       * Requires the same environment as the training environment
+
 After training a scikit-learn model, it is desirable to have a way to persist
 the model for future use without having to retrain. Based on your use-case,
 there are a few different ways to persist a scikit-learn model, and here we
@@ -78,7 +119,7 @@ persist and plan to serve the model:
   to get predictions. This environment can be minimal and does not necessarily
   even require Python to be installed to load the model and compute
   predictions. Also note that `onnxruntime` typically requires much less RAM
-  than Python to to compute predictions from small models.
+  than Python to compute predictions from small models.
 
 - :mod:`skops.io`, :mod:`pickle`, :mod:`joblib`, `cloudpickle`_: You need a
   Python environment with the appropriate dependencies installed to load the
@@ -216,7 +257,7 @@ come with slight variations:
 Security & Maintainability Limitations
 --------------------------------------
 
-:mod:`pickle` (and :mod:`joblib` and :mod:`clouldpickle` by extension), has
+:mod:`pickle` (and :mod:`joblib` and :mod:`cloudpickle` by extension), has
 many documented security vulnerabilities by design and should only be used if
 the artifact, i.e. the pickle-file, is coming from a trusted and verified
 source. You should never load a pickle file from an untrusted source, similarly
@@ -272,9 +313,9 @@ dependencies and versions in both the training and production environment.
 These transitive dependencies can be pinned with the help of package management
 tools like `pip`, `mamba`, `conda`, `poetry`, `conda-lock`, `pixi`, etc.
 
-It is not always possible to load an model trained with older versions of the
+It is not always possible to load a model trained with older versions of the
 scikit-learn library and its dependencies in an updated software environment.
-Instead, you might need to retrain the model with the new versions of the all
+Instead, you might need to retrain the model with the new versions of all
 the libraries. So when training a model, it is important to record the training
 recipe (e.g. a Python script) and training set information, and metadata about
 all the dependencies to be able to automatically reconstruct the same training
@@ -283,7 +324,7 @@ environment for the updated software.
 .. dropdown:: InconsistentVersionWarning
 
   When an estimator is loaded with a scikit-learn version that is inconsistent
-  with the version the estimator was pickled with, a
+  with the version the estimator was pickled with, an
   :class:`~sklearn.exceptions.InconsistentVersionWarning` is raised. This warning
   can be caught to obtain the original version the estimator was pickled with::
 
@@ -291,7 +332,7 @@ environment for the updated software.
     warnings.simplefilter("error", InconsistentVersionWarning)
 
     try:
-        with open("model_from_prevision_version.pickle", "rb") as f:
+        with open("model_from_previous_version.pickle", "rb") as f:
             est = pickle.load(f)
     except InconsistentVersionWarning as w:
         print(w.original_sklearn_version)

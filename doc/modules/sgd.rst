@@ -18,8 +18,8 @@ recently in the context of large-scale learning.
 SGD has been successfully applied to large-scale and sparse machine
 learning problems often encountered in text classification and natural
 language processing.  Given that the data is sparse, the classifiers
-in this module easily scale to problems with more than 10^5 training
-examples and more than 10^5 features.
+in this module easily scale to problems with more than :math:`10^5` training
+examples and more than :math:`10^5` features.
 
 Strictly speaking, SGD is merely an optimization technique and does not
 correspond to a specific family of machine learning models. It is only a
@@ -91,12 +91,12 @@ SGD fits a linear model to the training data. The ``coef_`` attribute holds
 the model parameters::
 
     >>> clf.coef_
-    array([[9.9..., 9.9...]])
+    array([[9.9, 9.9]])
 
 The ``intercept_`` attribute holds the intercept (aka offset or bias)::
 
     >>> clf.intercept_
-    array([-9.9...])
+    array([-9.9])
 
 Whether or not the model should use an intercept, i.e. a biased
 hyperplane, is controlled by the parameter ``fit_intercept``.
@@ -106,7 +106,7 @@ the coefficients and the input sample, plus the intercept) is given by
 :meth:`SGDClassifier.decision_function`::
 
     >>> clf.decision_function([[2., 2.]])
-    array([29.6...])
+    array([29.6])
 
 The concrete loss function can be set via the ``loss``
 parameter. :class:`SGDClassifier` supports the following loss functions:
@@ -116,7 +116,7 @@ parameter. :class:`SGDClassifier` supports the following loss functions:
 * ``loss="log_loss"``: logistic regression,
 * and all regression losses below. In this case the target is encoded as -1
   or 1, and the problem is treated as a regression problem. The predicted
-  class then correspond to the sign of the predicted target.
+  class then corresponds to the sign of the predicted target.
 
 Please refer to the :ref:`mathematical section below
 <sgd_mathematical_formulation>` for formulas.
@@ -131,7 +131,7 @@ Using ``loss="log_loss"`` or ``loss="modified_huber"`` enables the
 
     >>> clf = SGDClassifier(loss="log_loss", max_iter=5).fit(X, y)
     >>> clf.predict_proba([[1., 1.]]) # doctest: +SKIP
-    array([[0.00..., 0.99...]])
+    array([[0.00, 0.99]])
 
 The concrete penalty can be set via the ``penalty`` parameter.
 SGD supports the following penalties:
@@ -194,7 +194,6 @@ algorithm, available as a solver in :class:`LogisticRegression`.
 - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_separating_hyperplane.py`
 - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_iris.py`
 - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_weighted_samples.py`
-- :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_comparison.py`
 - :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane_unbalanced.py`
   (See the Note in the example)
 
@@ -287,6 +286,10 @@ variant can be several orders of magnitude faster.
 As :class:`SGDClassifier` and :class:`SGDRegressor`, :class:`SGDOneClassSVM`
 supports averaged SGD. Averaging can be enabled by setting ``average=True``.
 
+.. rubric:: Examples
+
+- :ref:`sphx_glr_auto_examples_linear_model_plot_sgdocsvm_vs_ocsvm.py`
+
 Stochastic Gradient Descent for sparse data
 ===========================================
 
@@ -335,8 +338,10 @@ criteria to stop the algorithm when a given level of convergence is reached:
 In both cases, the criterion is evaluated once by epoch, and the algorithm stops
 when the criterion does not improve ``n_iter_no_change`` times in a row. The
 improvement is evaluated with absolute tolerance ``tol``, and the algorithm
-stops in any case after a maximum number of iteration ``max_iter``.
+stops in any case after a maximum number of iterations ``max_iter``.
 
+See :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_early_stopping.py` for an
+example of the effects of early stopping.
 
 Tips on Practical Use
 =====================
@@ -396,8 +401,9 @@ We describe here the mathematical details of the SGD procedure. A good
 overview with convergence rates can be found in [#6]_.
 
 Given a set of training examples :math:`(x_1, y_1), \ldots, (x_n, y_n)` where
-:math:`x_i \in \mathbf{R}^m` and :math:`y_i \in \mathcal{R}` (:math:`y_i \in
-{-1, 1}` for classification), our goal is to learn a linear scoring function
+:math:`x_i \in \mathbf{R}^m` and :math:`y_i \in \mathbf{R}`
+(:math:`y_i \in \{-1, 1\}` for classification),
+our goal is to learn a linear scoring function
 :math:`f(x) = w^T x + b` with model parameters :math:`w \in \mathbf{R}^m` and
 intercept :math:`b \in \mathbf{R}`. In order to make predictions for binary
 classification, we simply look at the sign of :math:`f(x)`. To find the model
