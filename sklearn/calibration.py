@@ -53,6 +53,7 @@ from .utils.validation import (
     _check_response_method,
     _check_sample_weight,
     _num_samples,
+    check_array,
     check_consistent_length,
     check_is_fitted,
 )
@@ -109,15 +110,16 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
         Sigmoid and isotonic calibration methods natively support only binary
         classifiers and extend to multi-class classification using a
-        One-vs-Rest (OvR) strategy with post-hoc renormalization.
-        (I.e., adjusting the probabilities after calibration to ensure
-        they sum up to 1.)
+        One-vs-Rest (OvR) strategy with post-hoc renormalization, i.e.,
+        adjusting the probabilities after calibration to ensure they
+        sum up to 1.
 
         In contrast, temperature scaling naturally supports multi-class
-        calibration by applying `softmax(beta * classifier_logits)`.
+        calibration by applying `softmax(beta * classifier_logits)` with
+        a value of beta that optimizes the log loss.
 
-        For imbalanced binary classification, sigmoid calibration is
-        generally preferred because it fits an additional intercept
+        For very uncalibrated classifiers on very imbalanced datasets, sigmoid
+        calibration might be preferred because it fits an additional intercept
         parameter. This helps shift decision boundaries appropriately
         when the classifier being calibrated is biased towards
         the majority class.
@@ -721,7 +723,6 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
                 calibrator = _SigmoidCalibration()
             calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
             calibrators.append(calibrator)
-
     elif method == "temperature":
         calibrator = _TemperatureScaling()
         calibrator.fit(predictions, y, sample_weight)
@@ -730,7 +731,7 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
     else:
         raise ValueError(
             f"Invalid method '{method}'."
-            "Parameter `method` must be one of"
+            "Parameter method must be one of"
             "{'sigmoid', 'isotonic', 'temperature'}."
         )
 
@@ -739,62 +740,6 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
 
 
 class _CalibratedClassifier:
-    """Pipeline-like chaining a fitted classifier and its fitted calibrators.
-
-    Parameters
-    ----------
-    estimator : estimator instance
-        Fitted classifier.
-
-    calibrators : list of fitted estimator instances
-        List of fitted calibrators, which can be either 'IsotonicRegression',
-        '_SigmoidCalibration' or '_TemperatureScaling', corresponding
-        to isotonic calibration, sigmoid calibration, and temperature
-        scaling, respectively.
-
-        For isotonic and sigmoid calibration, the number of calibrators
-        equals the number of classes. Each calibrator is a binary classifier,
-        assembled into a multi-class classifier using the One-vs-Rest (OvR)
-        strategy with post-hoc renormalization (i.e., adjusting probabilities
-        after calibration to ensure they sum to 1). However, if there are
-        only two classes, the list contains a single fitted calibrator.
-
-        In contrast, the list in temperature scaling always contains a single
-        fitted calibrator for both binary and multi-class classification,
-        as it naturally supports multi-class calibration by applying
-        `softmax(beta * classifier_logits)`.
-
-    classes : array-like of shape (n_classes,)
-        All the prediction classes.
-
-    method : {'sigmoid', 'isotonic', 'temperature'}, default='sigmoid'
-        The method to use for calibration. Can be:
-
-        - 'sigmoid', which corresponds to Platt's method (i.e. a binary logistic
-          regression model).
-        - 'isotonic', which is a non-parametric approach,
-        - 'temperature', temperature scaling.
-
-        Sigmoid and isotonic calibration methods natively support only binary
-        classifiers and extend to multi-class classification using a
-        One-vs-Rest (OvR) strategy with post-hoc renormalization.
-        (I.e., adjusting the probabilities after calibration to ensure
-        they sum up to 1.)
-
-        In contrast, temperature scaling naturally supports multi-class
-        calibration by applying `softmax(beta * classifier_logits)`.
-
-        For imbalanced binary classification, sigmoid calibration is
-        generally preferred because it fits an additional intercept
-        parameter. This helps shift decision boundaries appropriately
-        when the classifier being calibrated is biased towards
-        the majority class.
-
-        Isotonic calibration is not recommended when the number of
-        calibration samples is too low ``(≪1000)`` since it tends
-        to overfit.
-    """
-
     def __init__(self, estimator, calibrators, *, classes, method="sigmoid"):
         self.estimator = estimator
         self.calibrators = calibrators
@@ -842,23 +787,20 @@ class _CalibratedClassifier:
                     # clf.classes_[1] but `pos_class_indices` = 0
                     class_idx += 1
                 proba[:, class_idx] = calibrator.predict(this_pred)
-
             # Normalize the probabilities
             if n_classes == 2:
                 proba[:, 0] = 1.0 - proba[:, 1]
             else:
                 denominator = np.sum(proba, axis=1)[:, np.newaxis]
-                # In the edge case where for each class calibrator returns a null
+                # In the edge case where for each class calibrator returns a zero
                 # probability for a given sample, use the uniform distribution
                 # instead.
                 uniform_proba = np.full_like(proba, 1 / n_classes)
                 proba = np.divide(
                     proba, denominator, out=uniform_proba, where=denominator != 0
                 )
-
         elif self.method == "temperature":
             proba = self.calibrators[0].predict(predictions)
-
         else:
             raise ValueError(
                 f"Invalid method '{self.method}'."
@@ -976,8 +918,8 @@ def _sigmoid_calibration(
     return AB_[0] / scale_constant, AB_[1]
 
 
-def _standardize_decision_values(decision_values, eps=1e-8):
-    """Convert decision_function values to 2D and predict_proba values to logits
+def _convert_to_logits(decision_values, eps=1e-8):
+    """Convert decision_function values to 2D and predict_proba values to logits.
 
     This function ensures that the output of `decision_function` is
     converted into a (n_samples, n_classes) array. For binary classification,
@@ -1003,8 +945,11 @@ def _standardize_decision_values(decision_values, eps=1e-8):
     -------
     logits : ndarray of shape (n_samples, n_classes)
     """
+    decision_values = check_array(
+        decision_values, dtype=[np.float64, np.float32], ensure_2d=False
+    )
     if (decision_values.ndim == 2) and (decision_values.shape[1] > 1):
-        # Check if it is the output of `predict_proba`
+        # Check if it is the output of predict_proba
         entries_zero_to_one = np.all((decision_values >= 0) & (decision_values <= 1))
         row_sums_to_one = np.all(np.isclose(np.sum(decision_values, axis=1), 1.0))
 
@@ -1020,11 +965,11 @@ def _standardize_decision_values(decision_values, eps=1e-8):
         decision_values = decision_values.reshape(-1, 1)
         logits = np.hstack([-decision_values, decision_values])
 
-    return logits.astype(dtype=decision_values.dtype)
+    return logits
 
 
 def _temperature_scaling(predictions, labels, sample_weight=None, beta_0=1.0):
-    """Probability Calibration with temperature scaling
+    """Probability Calibration with temperature scaling.
 
     Parameters
     ----------
@@ -1058,7 +1003,7 @@ def _temperature_scaling(predictions, labels, sample_weight=None, beta_0=1.0):
     C. Guo, G. Pleiss, Y. Sun, & K. Q. Weinberger, ICML 2017.
     """
     check_consistent_length(predictions, labels)
-    logits = _standardize_decision_values(predictions)
+    logits = _convert_to_logits(predictions)  # guarantees np.float64 or np.float32
 
     dtype_ = logits.dtype
     labels = column_or_1d(labels, dtype=dtype_)
@@ -1070,14 +1015,13 @@ def _temperature_scaling(predictions, labels, sample_weight=None, beta_0=1.0):
         sample_weight=sample_weight, n_classes=logits.shape[1]
     )
 
-    def beta_loss(beta=beta_0):
-        """Compute the negative log likelihood loss and its derivative
-            with respect to temperature.
+    def log_loss(log_beta=np.log(beta_0)):
+        """Compute the log loss as a parameter of the inverse temperature (beta).
 
         Parameters
         ----------
-        beta : float
-            The current inverse temperature value during optimisation.
+        log_beta : float
+            The current logarithm of the inverse temperature value during optimisation.
 
         Returns
         -------
@@ -1096,15 +1040,15 @@ def _temperature_scaling(predictions, labels, sample_weight=None, beta_0=1.0):
         #   - NumPy 2+:  result.dtype is float64
         #
         #  This can cause dtype mismatch errors downstream (e.g., buffer dtype).
-        raw_prediction = (beta * logits).astype(dtype_)
+        raw_prediction = (np.exp(log_beta) * logits).astype(dtype_)
 
         l = halfmulti_loss.loss(y_true=labels, raw_prediction=raw_prediction)
 
         return l.sum()
 
-    beta_minimizer = minimize_scalar(beta_loss, bounds=(0.1, 10.0), method="bounded")
+    log_beta_minimizer = minimize_scalar(log_loss, bounds=(-10.0, 10.0))
 
-    return beta_minimizer.x
+    return np.exp(log_beta_minimizer.x)
 
 
 class _SigmoidCalibration(RegressorMixin, BaseEstimator):
@@ -1233,7 +1177,7 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         X_ : ndarray of shape (n_samples, n_classes)
              The predicted data.
         """
-        X = _standardize_decision_values(X)
+        X = _convert_to_logits(X)
         return softmax(self.beta * X)
 
     def __sklearn_tags__(self):
