@@ -520,7 +520,7 @@ to specify the learning rate.
 For an adaptively decreasing learning rate, use ``learning_rate='adaptive'``
 and use ``eta0`` to specify the starting learning rate. When the stopping
 criterion is reached, the learning rate is divided by 5, and the algorithm
-does not stop. The algorithm stops when the learning rate goes below :math:`1 \times e^-6`.
+does not stop. The algorithm stops when the learning rate goes below `1e-6`.
 
 The model parameters can be accessed through the ``coef_`` and
 ``intercept_`` attributes: ``coef_`` holds the weights :math:`w` and
