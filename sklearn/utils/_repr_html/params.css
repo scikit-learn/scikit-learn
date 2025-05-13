@@ -4,6 +4,12 @@
     cursor: pointer;
 }
 
+.estimator-table details[open] {
+    padding-left: 0.1rem;
+    padding-right: 0.1rem;
+    padding-bottom: 0.3rem;
+}
+
 .estimator-table .parameters-table {
     margin-left: auto !important;
     margin-right: auto !important;
