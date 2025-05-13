@@ -286,10 +286,37 @@ Set the following environment variables:
 
     export CC=/usr/bin/clang
     export CXX=/usr/bin/clang++
+
+Next, configure flags for OpenMP. The specific paths for ``libomp`` depend on your
+Mac's architecture as Homebrew uses different installation prefixes. You can find the 
+correct paths by running the following command:
+
+.. prompt:: bash $
+
+    brew --prefix libomp
+
+For Intel-based Macs
+
+.. prompt:: bash $
+
     export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
     export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
     export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
     export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
+
+For Apple Silicon Macs
+
+.. prompt:: bash $
+
+    export CPPFLAGS="-I/opt/homebrew/opt/libomp/include"
+    export LDFLAGS="-L/opt/homebrew/opt/libomp/lib"
+
+.. prompt:: bash $
+
+    export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
+    export CFLAGS="$CFLAGS -I/opt/homebrew/opt/libomp/include"
+    export CXXFLAGS="$CXXFLAGS -I/opt/homebrew/opt/libomp/include"
+    export LDFLAGS="$LDFLAGS -Wl,-rpath,/opt/homebrew/opt/libomp/lib -L/opt/homebrew/opt/libomp/lib -lomp"
 
 Finally, build scikit-learn in verbose mode (to check for the presence of the
 ``-fopenmp`` flag in the compiler commands):
