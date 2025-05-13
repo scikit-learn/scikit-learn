@@ -16,7 +16,7 @@ space.
 The form of the model learned by :class:`KernelRidge` is identical to support
 vector regression (:class:`~sklearn.svm.SVR`). However, different loss
 functions are used: KRR uses squared error loss while support vector
-regression uses :math:`\epsilon`-insensitive loss, both combined with :math:`L_1`
+regression uses :math:`\epsilon`-insensitive loss, both combined with :math:`L_2`
 regularization. In contrast to :class:`~sklearn.svm.SVR`, fitting
 :class:`KernelRidge` can be done in closed-form and is typically faster for
 medium-sized datasets. On the other hand, the learned model is non-sparse and
