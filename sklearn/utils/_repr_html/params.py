@@ -44,7 +44,7 @@ def _params_html_repr(params):
     """
     ROW_TEMPLATE = """
         <tr class="{param_type}">
-            <td><i class="fa-regular fa-copy"
+            <td><i class="copy-paste-icon"
                  onclick="copyToClipboard('{param_name}',
                           this.parentElement.nextElementSibling)"
             ></i></td>

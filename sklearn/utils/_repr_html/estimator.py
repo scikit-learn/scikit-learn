@@ -467,8 +467,6 @@ def estimator_html_repr(estimator):
             " with nbviewer.org."
         )
         html_template = (
-            '<link rel="stylesheet" '
-            'href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">'
             f"<style>{style_with_id}</style>"
             f"<body>"
             f'<div id="{container_id}" class="sk-top-container">'
