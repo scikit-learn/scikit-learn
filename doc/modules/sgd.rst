@@ -70,8 +70,8 @@ penalties for classification. Below is the decision boundary of a
    :scale: 75
 
 As other classifiers, SGD has to be fitted with two arrays: an array `X`
-of shape `n_samples` :math:`\times` `n_features` holding the training samples, and a one-dimensional array
-`y` with the length of `n_samples` holding the target values (`class labels`)
+of shape (n_samples, n_features) holding the training samples, and an
+array `y` of shape (n_samples,) holding the target values (`class labels`)
 for the training samples::
 
     >>> from sklearn.linear_model import SGDClassifier
