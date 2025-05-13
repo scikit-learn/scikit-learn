@@ -391,7 +391,7 @@ Example of 2-fold K-Fold repeated 2 times::
   [1 3] [0 2]
 
 
-Similarly, :class:`RepeatedStratifiedKFold` repeats Stratified K-Fold :math:`n` times
+Similarly, :class:`RepeatedStratifiedKFold` repeats :class:`StratifiedKFold` :math:`n` times
 with different randomization in each repetition.
 
 .. _leave_one_out:
