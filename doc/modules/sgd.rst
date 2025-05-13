@@ -384,7 +384,7 @@ Tips on Practical Use
   such that the average :math:`L_2` norm of the training data equals one.
 
 * We found that Averaged SGD works best with a larger number of features
-  and a higher :math:`eta_0`.
+  and a higher `eta0`.
 
 .. rubric:: References
 
