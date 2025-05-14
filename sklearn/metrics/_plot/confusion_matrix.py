@@ -15,7 +15,7 @@ from .. import confusion_matrix
 class ConfusionMatrixDisplay:
     """Confusion Matrix visualization.
 
-    It is recommend to use
+    It is recommended to use
     :func:`~sklearn.metrics.ConfusionMatrixDisplay.from_estimator` or
     :func:`~sklearn.metrics.ConfusionMatrixDisplay.from_predictions` to
     create a :class:`ConfusionMatrixDisplay`. All parameters are stored as
