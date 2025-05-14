@@ -1214,21 +1214,16 @@ class _CurveScorer(_BaseScorer):
                 "`response_method=None`"
             )
 
-        pos_label = self._get_pos_label()
         y_score = method_caller(
-            estimator, self._response_method, X, pos_label=pos_label
+            estimator, self._response_method, X, pos_label=self._get_pos_label()
         )
 
-        # Remove `pos_label` from `self.kwargs` to prevent passing multiple values
-        self_kwargs_ = self._kwargs.copy()
-        self_kwargs_.pop("pos_label", None)
         # why 'potential' ?
         score_thresholds, potential_thresholds = self._scores_from_predictions(
             y_true,
             y_score,
             estimator.classes_,
-            pos_label,
-            **{**self_kwargs_, **kwargs},
+            **kwargs,
         )
 
         return score_thresholds, potential_thresholds
