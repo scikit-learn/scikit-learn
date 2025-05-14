@@ -12,6 +12,7 @@ from scipy import sparse, stats
 from sklearn import config_context, datasets
 from sklearn.base import clone
 from sklearn.exceptions import NotFittedError
+from sklearn.externals._packaging.version import parse as parse_version
 from sklearn.metrics.pairwise import linear_kernel
 from sklearn.model_selection import cross_val_predict
 from sklearn.pipeline import Pipeline
@@ -62,6 +63,7 @@ from sklearn.utils.fixes import (
     CSC_CONTAINERS,
     CSR_CONTAINERS,
     LIL_CONTAINERS,
+    sp_version,
 )
 from sklearn.utils.sparsefuncs import mean_variance_axis
 
@@ -2640,3 +2642,52 @@ def test_power_transformer_constant_feature(standardize):
             assert_allclose(Xt_, np.zeros_like(X))
         else:
             assert_allclose(Xt_, X)
+
+
+@pytest.mark.skipif(
+    sp_version < parse_version("1.12"),
+    reason="scipy version 1.12 required for stable yeo-johnson",
+)
+def test_power_transformer_no_warnings():
+    """Verify that PowerTransformer operates without raising any warnings on valid data.
+
+    This test addresses numerical issues with floating point numbers (mostly
+    overflows) with the Yeo-Johnson transform, see
+    https://github.com/scikit-learn/scikit-learn/issues/23319#issuecomment-1464933635
+    """
+    x = np.array(
+        [
+            2003.0,
+            1950.0,
+            1997.0,
+            2000.0,
+            2009.0,
+            2009.0,
+            1980.0,
+            1999.0,
+            2007.0,
+            1991.0,
+        ]
+    )
+
+    def _test_no_warnings(data):
+        """Internal helper to test for unexpected warnings."""
+        with warnings.catch_warnings(record=True) as caught_warnings:
+            warnings.simplefilter("always")  # Ensure all warnings are captured
+            PowerTransformer(method="yeo-johnson", standardize=True).fit_transform(data)
+
+        assert not caught_warnings, "Unexpected warnings were raised:\n" + "\n".join(
+            str(w.message) for w in caught_warnings
+        )
+
+    # Full dataset: Should not trigger overflow in variance calculation.
+    _test_no_warnings(x.reshape(-1, 1))
+
+    # Subset of data: Should not trigger overflow in power calculation.
+    _test_no_warnings(x[:5].reshape(-1, 1))
+
+
+def test_yeojohnson_for_different_scipy_version():
+    """Check that the results are consistent across different SciPy versions."""
+    pt = PowerTransformer(method="yeo-johnson").fit(X_1col)
+    pt.lambdas_[0] == pytest.approx(0.99546157, rel=1e-7)

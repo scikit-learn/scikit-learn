@@ -139,6 +139,7 @@ Metrics
 - :func:`sklearn.metrics.f1_score`
 - :func:`sklearn.metrics.fbeta_score`
 - :func:`sklearn.metrics.hamming_loss`
+- :func:`sklearn.metrics.jaccard_score`
 - :func:`sklearn.metrics.max_error`
 - :func:`sklearn.metrics.mean_absolute_error`
 - :func:`sklearn.metrics.mean_absolute_percentage_error`
@@ -201,16 +202,31 @@ it supports the Array API. This will enable dedicated checks as part of the
 common tests to verify that the estimators' results are the same when using
 vanilla NumPy and Array API inputs.
 
-To run the full set of checks you need to install both
-`PyTorch <https://pytorch.org/>`_ and `CuPy <https://cupy.dev/>`_ and have
+To run these checks you need to install
+`array-api-strict <https://data-apis.org/array-api-strict/>`_ in your
+test environment. This allows you to run checks without having a
+GPU. To run the full set of checks you also need to install
+`PyTorch <https://pytorch.org/>`_, `CuPy <https://cupy.dev/>`_ and have
 a GPU. Checks that can not be executed or have missing dependencies will be
 automatically skipped. Therefore it's important to run the tests with the
 `-v` flag to see which checks are skipped:
 
 .. prompt:: bash $
 
-    pip install ... # selected libraries as needed
+    pip install array-api-strict  # and other libraries as needed
     pytest -k "array_api" -v
+
+Running the scikit-learn tests against `array-api-strict` should help reveal
+most code problems related to handling multiple device inputs via the use of
+simulated non-CPU devices. This allows for fast iterative development and debugging of
+array API related code.
+
+However, to ensure full handling of PyTorch or CuPy inputs allocated on actual GPU
+devices, it is necessary to run the tests against those libraries and hardware.
+This can either be achieved by using
+`Google Colab <https://gist.github.com/EdAbati/ff3bdc06bafeb92452b3740686cc8d7c>`_
+or leveraging our CI infrastructure on pull requests (manually triggered by maintainers
+for cost reasons).
 
 .. _mps_support:
 

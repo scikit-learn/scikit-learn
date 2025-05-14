@@ -67,17 +67,7 @@ python_environment_install_and_activate() {
     fi
 
     # Install additional packages on top of the lock-file in specific cases
-    if [[ "$DISTRIB" == "conda-free-threaded" ]]; then
-        # TODO: we install scipy with pip. When there is a conda-forge package,
-        # we can update build_tools/update_environments_and_lock_files.py and
-        # remove the line below
-        pip install scipy --only-binary :all:
-        # TODO: we install cython 3.1 alpha from pip. When there is a conda-forge package,
-        # we can update build_tools/update_environments_and_lock_files.py and
-        # remove the line below
-        pip install --pre cython --only-binary :all:
-
-    elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
+    if [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
         echo "Installing development dependency wheels"
         dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
         dev_packages="numpy scipy pandas Cython"
