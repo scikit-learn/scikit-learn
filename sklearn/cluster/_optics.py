@@ -90,6 +90,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
           'yule']
 
         Sparse matrices are only supported by scikit-learn metrics.
+        See :mod:`scipy.spatial.distance` for details on these metrics.
 
         .. note::
            `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
