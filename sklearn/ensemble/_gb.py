@@ -483,8 +483,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
             if self.subsample < 1.0:
                 # no inplace multiplication!
-                oob_indices = np.where(sample_mask == 0)[0]
-                sample_weight_oob = sample_weight[oob_indices]
                 sample_weight = sample_weight * sample_mask.astype(np.float64)
 
             X = X_csc if X_csc is not None else X
