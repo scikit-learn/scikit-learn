@@ -502,6 +502,89 @@ def test_importances_gini_equal_squared_error():
     assert_array_equal(clf.tree_.n_node_samples, reg.tree_.n_node_samples)
 
 
+@pytest.mark.parametrize("est", [DecisionTreeClassifier, DecisionTreeRegressor])
+def test_oob_sample_weights(est):
+    # Check that setting sample_weight to zero for an oob sample is equivalent
+    # to removing corresponding samples.
+
+    # XOR dataset where both feature are important
+    X = np.array(
+        [
+            [0, 0],
+            [0, 1],
+            [1, 0],
+            [1, 1],
+        ],
+        dtype=np.float32,
+    )
+    y = np.array(
+        [
+            [0],
+            [1],
+            [1],
+            [0],
+        ],
+        dtype=np.float32,
+    )
+
+    # oob samples where the output only depends on one of the two feature
+    X_oob = np.array(
+        [
+            [0, 0],
+            [0, 1],
+            [1, 0],
+            [0, 0],
+        ],
+        dtype=np.float32,
+    )
+    y_oob = y
+
+    # Mask oob samples for whom feature 0 is unimportant.
+    sw_feature_0 = np.array([1, 0, 1, 0], dtype=np.intp)
+    # And vice versa.
+    sw_feature_1 = np.array([0, 1, 0, 1], dtype=np.intp)
+
+    n_estimators = 10
+    importance_feature_0 = np.zeros((n_estimators, 2))
+    importance_feature_1 = np.zeros((n_estimators, 2))
+
+    for method in ["ufi", "mdi_oob"]:
+        # Average over multiple tree because the splitting features are chosen
+        # at random and their order influences the feature importance.
+        # If the important feature is chosen first, one of its child will have no oob
+        # sample and its importance will be zero. It will receive importance only if
+        # chosen second. The other feature will never be important.
+        for i in range(n_estimators):
+            tree_est = est(
+                max_depth=2,
+                max_features=1.0,
+                random_state=i,
+            )
+            tree_est.fit(X, y)
+
+            importance_feature_0[i, :] = (
+                tree_est.compute_unbiased_feature_importance_and_oob_predictions(
+                    X_test=X_oob,
+                    y_test=y_oob,
+                    sample_weight=sw_feature_0,
+                    method=method,
+                )[0]
+            )
+
+            importance_feature_1[i, :] = (
+                tree_est.compute_unbiased_feature_importance_and_oob_predictions(
+                    X_test=X_oob,
+                    y_test=y_oob,
+                    sample_weight=sw_feature_1,
+                    method=method,
+                )[0]
+            )
+        importance_feature_0 = importance_feature_0.mean(axis=0)
+        importance_feature_1 = importance_feature_1.mean(axis=0)
+        assert importance_feature_0[0] > importance_feature_0[1]
+        assert importance_feature_1[1] > importance_feature_1[0]
+
+
 def test_max_features():
     # Check max_features.
     for name, TreeEstimator in ALL_TREES.items():
