@@ -869,8 +869,6 @@ class GaussianMixture(BaseMixture):
 
         resp : array-like of shape (n_samples, n_components)
         """
-        # TODO: check if device_ should be computed in fit_predict and passed down the
-        # call chain
         xp, _, device_ = get_namespace_and_device(X, xp=xp)
         n_samples, _ = X.shape
         weights, means, covariances = None, None, None
