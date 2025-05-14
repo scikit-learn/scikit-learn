@@ -22,7 +22,8 @@ from scipy.special import comb
 
 import sklearn
 from sklearn import clone, datasets
-from sklearn.datasets import make_classification, make_hastie_10_2
+from sklearn.base import is_classifier
+from sklearn.datasets import make_classification, make_hastie_10_2, make_regression
 from sklearn.decomposition import TruncatedSVD
 from sklearn.dummy import DummyRegressor
 from sklearn.ensemble import (
@@ -46,6 +47,7 @@ from sklearn.metrics import (
 from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
 from sklearn.svm import LinearSVC
 from sklearn.tree._classes import SPARSE_SPLITTERS
+from sklearn.utils import shuffle
 from sklearn.utils._testing import (
     _convert_container,
     assert_allclose,
@@ -54,6 +56,10 @@ from sklearn.utils._testing import (
     assert_array_equal,
     ignore_warnings,
     skip_if_no_parallel,
+)
+from sklearn.utils.estimator_checks import (
+    _enforce_estimator_tags_X,
+    _enforce_estimator_tags_y,
 )
 from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, CSR_CONTAINERS
 from sklearn.utils.multiclass import type_of_target
@@ -1970,6 +1976,159 @@ def test_importance_reg_match_onehot_classi(global_random_seed):
     assert_almost_equal(cls.ufi_feature_importances_, reg.ufi_feature_importances_)
     assert_almost_equal(
         cls.mdi_oob_feature_importances_, reg.mdi_oob_feature_importances_
+    )
+
+
+@pytest.mark.parametrize("est_name", FOREST_CLASSIFIERS_REGRESSORS)
+def test_feature_importance_with_sample_weights(est_name, global_random_seed):
+    # From https://github.com/snath-xoc/sample-weight-audit-nondet/blob/main/src/sample_weight_audit/data.py#L53
+
+    # Strategy: sample 2 datasets, each with n_features // 2:
+    # - the first one has int(0.8 * n_samples) but mostly zero or one weights.
+    # - the second one has the remaining samples but with higher weights.
+    #
+    # The features of the two datasets are horizontally stacked with random
+    # feature values sampled independently from the other dataset. Then the two
+    # datasets are vertically stacked and the result is shuffled.
+    #
+    # The sum of weights of the second dataset is 10 times the sum of weights of
+    # the first dataset so that weight aware estimators should mostly ignore the
+    # features of the first dataset to learn their prediction function.
+    n_samples = 250
+    n_features = 4
+    n_classes = 2
+    max_sample_weight = 5
+
+    rng = check_random_state(global_random_seed)
+    n_samples_sw = int(0.5 * n_samples)  # small weights
+    n_samples_lw = n_samples - n_samples_sw  # large weights
+    n_features_sw = n_features // 2
+    n_features_lw = n_features - n_features_sw
+
+    # Construct the sample weights: mostly zeros and some ones for the first
+    # dataset, and some random integers larger than one for the second dataset.
+    sample_weight_sw = np.where(rng.random(n_samples_sw) < 0.2, 1, 0)
+    sample_weight_lw = rng.randint(2, max_sample_weight, size=n_samples_lw)
+    total_weight_sum = np.sum(sample_weight_sw) + np.sum(sample_weight_lw)
+    assert np.sum(sample_weight_sw) < 0.3 * total_weight_sum
+
+    est = FOREST_CLASSIFIERS_REGRESSORS[est_name](
+        n_estimators=50,
+        bootstrap=True,
+        oob_score=True,
+        random_state=rng,
+    )
+    if not is_classifier(est):
+        X_sw, y_sw = make_regression(
+            n_samples=n_samples_sw,
+            n_features=n_features_sw,
+            random_state=rng,
+        )
+        X_lw, y_lw = make_regression(
+            n_samples=n_samples_lw,
+            n_features=n_features_lw,
+            random_state=rng,  # rng is different because mutated
+        )
+    else:
+        X_sw, y_sw = make_classification(
+            n_samples=n_samples_sw,
+            n_features=n_features_sw,
+            n_informative=n_features_sw,
+            n_redundant=0,
+            n_repeated=0,
+            n_classes=n_classes,
+            random_state=rng,
+        )
+        X_lw, y_lw = make_classification(
+            n_samples=n_samples_lw,
+            n_features=n_features_lw,
+            n_informative=n_features_lw,
+            n_redundant=0,
+            n_repeated=0,
+            n_classes=n_classes,
+            random_state=rng,  # rng is different because mutated
+        )
+
+    # Horizontally pad the features with features values marginally sampled
+    # from the other dataset.
+    pad_sw_idx = rng.choice(n_samples_lw, size=n_samples_sw, replace=True)
+    X_sw_padded = np.hstack([X_sw, np.take(X_lw, pad_sw_idx, axis=0)])
+
+    pad_lw_idx = rng.choice(n_samples_sw, size=n_samples_lw, replace=True)
+    X_lw_padded = np.hstack([np.take(X_sw, pad_lw_idx, axis=0), X_lw])
+
+    # Vertically stack the two datasets and shuffle them.
+    X = np.concatenate([X_sw_padded, X_lw_padded], axis=0)
+    y = np.concatenate([y_sw, y_lw])
+
+    X = _enforce_estimator_tags_X(est, X)
+    y = _enforce_estimator_tags_y(est, y)
+    sample_weight = np.concatenate([sample_weight_sw, sample_weight_lw])
+    X, y, sample_weight = shuffle(X, y, sample_weight, random_state=rng)
+
+    est.fit(X, y, sample_weight)
+
+    ufi_feature_importance = est.ufi_feature_importances_
+    mdi_oob_feature_importance = est.mdi_oob_feature_importances_
+    assert (
+        ufi_feature_importance[:n_features_sw].sum()
+        < ufi_feature_importance[n_features_sw:].sum()
+    )
+    assert (
+        mdi_oob_feature_importance[:n_features_sw].sum()
+        < mdi_oob_feature_importance[n_features_sw:].sum()
+    )
+
+
+@pytest.mark.parametrize("est_name", FOREST_CLASSIFIERS_REGRESSORS)
+def test_feature_importance_sample_weight_equals_repeated(est_name, global_random_seed):
+    # check that setting sample_weight to zero / integer is equivalent
+    # to removing / repeating corresponding samples.
+    params = dict(
+        n_estimators=100,
+        bootstrap=True,
+        oob_score=True,
+        max_features=1.0,
+        random_state=global_random_seed,
+    )
+
+    est_weighted = FOREST_CLASSIFIERS_REGRESSORS[est_name](**params)
+    est_repeated = FOREST_CLASSIFIERS_REGRESSORS[est_name](**params)
+
+    n_samples = 100
+    n_features = 2
+    X, y = make_classification(
+        n_samples=n_samples,
+        n_features=n_features,
+        n_informative=n_features,
+        n_redundant=0,
+    )
+    # Use random integers (including zero) as weights.
+    sw = rng.randint(0, 2, size=n_samples)
+
+    X_weighted = X
+    y_weighted = y
+    # repeat samples according to weights
+    X_repeated = X_weighted.repeat(repeats=sw, axis=0)
+    y_repeated = y_weighted.repeat(repeats=sw)
+
+    X_weighted, y_weighted, sw = shuffle(X_weighted, y_weighted, sw, random_state=0)
+
+    est_repeated.fit(X_repeated, y=y_repeated, sample_weight=None)
+    est_weighted.fit(X_weighted, y=y_weighted, sample_weight=sw)
+
+    assert_allclose(
+        est_repeated.feature_importances_, est_weighted.feature_importances_, atol=1e-1
+    )
+    assert_allclose(
+        est_repeated.ufi_feature_importances_,
+        est_weighted.ufi_feature_importances_,
+        atol=1e-1,
+    )
+    assert_allclose(
+        est_repeated.mdi_oob_feature_importances_,
+        est_weighted.mdi_oob_feature_importances_,
+        atol=1e-1,
     )
 
 
