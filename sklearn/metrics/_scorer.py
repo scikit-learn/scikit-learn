@@ -1117,7 +1117,6 @@ class _CurveScorer(_BaseScorer):
         y_true,
         y_score,
         classes=None,
-        pos_label=None,
         **kwargs,
     ):
         """Computes scores per threshold, given continuous response and true labels.
@@ -1132,16 +1131,6 @@ class _CurveScorer(_BaseScorer):
 
         classes: array-like, default=None
             Class labels. If `None`, inferred from `y_true`.
-
-        pos_label : int, float, bool or str, default=None
-            The label of the positive class, used when thresholding `y_score`.
-            If `score_func` also has a `pos_label` parameter, this value will also
-            be passed `score_func`.
-            If `None`, use the default value of `self.score_func(pos_label)` if
-            present. If not present, `1` is used.
-            TODO: do we need to allow the user to set this even when `score_func`
-            does not take `pos_label`? I think yes, so user can control
-            output of `_threshold_scores_to_class_labels`.
 
         **kwargs : dict
             Parameters to pass to `self.score_func`.
@@ -1159,19 +1148,6 @@ class _CurveScorer(_BaseScorer):
         y_true_unique = cached_unique(y_true)
         if classes is None:
             classes = y_true_unique
-        score_func_params = signature(self._score_func).parameters
-        if "pos_label" in score_func_params:
-            # Should I avoid changing kwargs var?
-            kwargs = {"pos_label": pos_label, **kwargs}
-            if pos_label is None:
-                pos_label = score_func_params["pos_label"].default
-
-        # TODO Check param values that are used in this function, other checks left to
-        # score func
-        if pos_label is not None and pos_label not in classes:
-            raise ValueError(
-                f"`pos_label` ({pos_label}) not present in `classes` ({classes})."
-            )
         # not sure if this separate error msg needed.
         # there is the possibility that set(classes) != set(y_true_unique) fails
         # because `y_true` only contains one class.
@@ -1193,7 +1169,9 @@ class _CurveScorer(_BaseScorer):
             self._sign
             * self._score_func(
                 y_true,
-                _threshold_scores_to_class_labels(y_score, th, classes, pos_label),
+                _threshold_scores_to_class_labels(
+                    y_score, th, classes, self._get_pos_label()
+                ),
                 **kwargs,
             )
             for th in potential_thresholds

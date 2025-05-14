@@ -37,7 +37,6 @@ def decision_threshold_curve(
     thresholds=20,
     greater_is_better=True,
     labels=None,
-    pos_label=None,
     **kwargs,
 ):
     """Compute threshold-dependent metric of interest per threshold.
@@ -74,16 +73,6 @@ def decision_threshold_curve(
     labels: array-like, default=None
         Class labels. If `None`, inferred from `y_true`.
         TODO: used `labels` instead of `classes` to be consistent with other metrics.
-
-    pos_label : int, float, bool or str, default=None
-        The label of the positive class, used when thresholding `y_score`.
-        If `score_func` also has a `pos_label` parameter, this value will also
-        be passed `score_func`.
-        If `None`, the default value of `score_func(pos_label)`, if present, is
-        used. If not present, `1` is used.
-        TODO: do we need to allow the user to set this even when `score_func`
-        does not take `pos_label`? I think yes, so user can control
-        output of `_threshold_scores_to_class_labels`.
 
     **kwargs : dict
         Parameters to pass to `score_func`.
@@ -125,6 +114,5 @@ def decision_threshold_curve(
         y_true,
         y_score,
         labels,
-        pos_label,
         **kwargs,
     )
