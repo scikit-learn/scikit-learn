@@ -506,6 +506,51 @@ def test_importances_asymptotic():
     assert np.abs(true_importances - importances).mean() < 0.01
 
 
+@pytest.mark.parametrize("estimator", [RandomForestClassifier, RandomForestRegressor])
+def test_unbiased_feature_importance_asymptotics(estimator, global_random_seed):
+    # Test that ubiased feature importances and
+    # regular mdi converge with large sample size
+
+    rng = check_random_state(global_random_seed)
+    X_large, y_large = make_classification(
+        n_samples=100000, n_features=4, n_informative=2, n_redundant=0, random_state=rng
+    )
+    sub_sample_sizes = [100, 1000, 10000, 50000, 100000]
+
+    params = dict(
+        n_estimators=50,
+        oob_score=True,
+        bootstrap=True,
+        max_depth=5,
+        random_state=rng,
+    )
+
+    ufi_res = []
+    mdi_oob_res = []
+    for sample_size in sub_sample_sizes:
+        sub_sample_indices = rng.choice(
+            list(range(100000)), size=sample_size, replace=False
+        )
+        X_small = X_large[sub_sample_indices]
+        y_small = y_large[sub_sample_indices]
+        est = estimator(**params)
+        est.fit(X_small, y_small)
+        ufi_res.append(
+            np.linalg.norm(est.feature_importances_ - est.ufi_feature_importances_)
+        )
+        mdi_oob_res.append(
+            np.linalg.norm(est.feature_importances_ - est.mdi_oob_feature_importances_)
+        )
+        if ufi_res[-1] < 1e-1 and mdi_oob_res[-1] < 1e-1:
+            # Feature importance measures converged
+            break
+
+    ufi_res = np.array(ufi_res)
+    mdi_oob_res = np.array(mdi_oob_res)
+    assert np.all(ufi_res[:-1] > ufi_res[1:])
+    assert np.all(mdi_oob_res[:-1] > mdi_oob_res[1:])
+
+
 @pytest.mark.parametrize("name", FOREST_ESTIMATORS)
 def test_unfitted_feature_importances(name):
     err_msg = (
