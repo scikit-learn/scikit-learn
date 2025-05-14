@@ -435,7 +435,8 @@ entire training set.
 However, if the learning curve is steep for the training size in question,
 then 5 or 10-fold cross validation can overestimate the generalization error.
 
-As a general rule, most authors and empirical evidence suggest that 5 or 10-fold cross validation should be preferred to LOO.
+As a general rule, most authors and empirical evidence suggest that 5 or 10-fold
+cross validation should be preferred to LOO.
 
 .. dropdown:: References
 

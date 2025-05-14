@@ -71,7 +71,7 @@ penalties for classification. Below is the decision boundary of a
 
 As other classifiers, SGD has to be fitted with two arrays: an array `X`
 of shape (n_samples, n_features) holding the training samples, and an
-array `y` of shape (n_samples,) holding the target values (`class labels`)
+array `y` of shape (n_samples,) holding the target values (class labels)
 for the training samples::
 
     >>> from sklearn.linear_model import SGDClassifier
@@ -312,7 +312,8 @@ Complexity
 ==========
 
 The major advantage of SGD is its efficiency, which is basically
-linear in the number of training examples. If :math:`X` is a matrix of size :math:`n \times p` (with :math:`n` samples and :math:`p` features),
+linear in the number of training examples. If :math:`X` is a matrix of size
+:math:`n \times p` (with :math:`n` samples and :math:`p` features),
 training has a cost of :math:`O(k n \bar p)`, where :math:`k` is the number
 of iterations (epochs) and :math:`\bar p` is the average number of
 non-zero attributes per sample.
