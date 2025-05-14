@@ -4,7 +4,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
 import math
 
+import numpy as np
 from scipy import linalg
+
+from sklearn.externals.array_api_compat.common._helpers import is_numpy_namespace
 
 from .._config import get_config
 from ..externals import array_api_extra as xpx
@@ -316,6 +319,20 @@ def _estimate_gaussian_parameters(X, resp, reg_covar, covariance_type, xp=None):
     return nk, means, covariances
 
 
+def _call_cholesky(covariance, xp):
+    if is_numpy_namespace(xp):
+        return linalg.cholesky(covariance, lower=True)
+    else:
+        return xp.linalg.cholesky(covariance)
+
+
+def _call_solve(cov_chol, eye_matrix, xp):
+    if is_numpy_namespace(xp):
+        return linalg.solve_triangular(cov_chol, eye_matrix, lower=True)
+    else:
+        return xp.linalg.solve(cov_chol, eye_matrix)
+
+
 def _compute_precision_cholesky(covariances, covariance_type, xp=None):
     """Compute the Cholesky decomposition of the precisions.
 
@@ -357,31 +374,22 @@ def _compute_precision_cholesky(covariances, covariance_type, xp=None):
         for k in range(covariances.shape[0]):
             covariance = covariances[k, :, :]
             try:
-                # TODO we are using xp.linalg instead of scipy.linalg.cholesky, maybe
-                # separate branches for array API and numpy?
-                cov_chol = xp.linalg.cholesky(covariance)
-            except xp.linalg.LinAlgError:
+                cov_chol = _call_cholesky(covariance, xp)
+            # catch only numpy exceptions, b/c exceptions aren't part of array api spec
+            except np.linalg.LinAlgError:
                 raise ValueError(estimate_precision_error_message)
-
-            # TODO we are using xp.linalg.solve instead of scipy.linalg.solve_triangular
-            # probably separate branches for array API and numpy? maybe
-            # https://github.com/scikit-learn/scikit-learn/pull/29318 is relevant
-            precisions_chol[k, :, :] = xp.linalg.solve(
-                cov_chol, xp.eye(n_features, device=device_, dtype=dtype)
+            precisions_chol[k, :, :] = _call_solve(
+                cov_chol, xp.eye(n_features, dtype=dtype, device=device_), xp
             ).T
     elif covariance_type == "tied":
         _, n_features = covariances.shape
         try:
-            # TODO we are using xp.linalg instead of scipy.linalg.cholesky, maybe
-            # separate branches for array API and numpy?
-            cov_chol = xp.linalg.cholesky(covariances)
-        except linalg.LinAlgError:
+            cov_chol = _call_cholesky(covariances, xp)
+        # catch only numpy exceptions, since exceptions are not part of array api spec
+        except np.linalg.LinAlgError:
             raise ValueError(estimate_precision_error_message)
-        # TODO we are using xp.linalg.solve instead of scipy.linalg.solve_triangular
-        # probably separate branches for array API and numpy? maybe
-        # https://github.com/scikit-learn/scikit-learn/pull/29318 is relevant
-        precisions_chol = xp.linalg.solve(
-            cov_chol, xp.eye(n_features, dtype=dtype, device=device_)
+        precisions_chol = _call_solve(
+            cov_chol, xp.eye(n_features, dtype=dtype, device=device_), xp
         ).T
     else:
         if xp.any(covariances <= 0.0):
