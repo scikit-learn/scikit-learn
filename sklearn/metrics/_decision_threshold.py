@@ -70,7 +70,7 @@ def decision_threshold_curve(
         good, or a loss function, meaning low is good. In the latter case, the
         the output of `score_func` will be sign-flipped.
 
-    labels: array-like, default=None
+    labels : array-like, default=None
         Class labels. If `None`, inferred from `y_true`.
         TODO: used `labels` instead of `classes` to be consistent with other metrics.
 
