@@ -98,7 +98,7 @@ def lazy_xp_function(  # type: ignore[explicit-any]
     --------
     In ``test_mymodule.py``::
 
-      from array_api_extra.testing import lazy_xp_function from mymodule import myfunc
+      from sklearn._vendored.array_api_extra.testing import lazy_xp_function from mymodule import myfunc
 
       lazy_xp_function(myfunc)
 
