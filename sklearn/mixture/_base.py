@@ -405,8 +405,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             Component labels.
         """
         check_is_fitted(self)
+        xp, _ = get_namespace(X)
         X = validate_data(self, X, reset=False)
-        return self._estimate_weighted_log_prob(X).argmax(axis=1)
+        return xp.argmax(self._estimate_weighted_log_prob(X))
 
     def predict_proba(self, X):
         """Evaluate the components' density for each sample.
