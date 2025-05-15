@@ -280,16 +280,30 @@ Install the LLVM OpenMP library:
 
     brew install libomp
 
-Set the following environment variables:
+Note: `libomp` is marked as "keg-only" in Homebrew, meaning it is not symlinked into standard system paths. Therefore, you need to explicitly set environment variables to inform the compiler and linker where to find `libomp`.
 
-.. prompt:: bash $
+The installation path of `libomp` depends on your Mac's architecture:
 
-    export CC=/usr/bin/clang
-    export CXX=/usr/bin/clang++
-    export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
-    export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
-    export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
-    export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
+- **Intel-based Macs**: Homebrew installs packages under `/usr/local/opt/`
+- **Apple Silicon (M1/M2) Macs**: Homebrew installs packages under `/opt/homebrew/opt/`
+
+To determine the correct path, you can use the following command:
+
+.. prompt:: bash
+
+   brew --prefix libomp
+
+Set the following environment variables accordingly:
+
+.. prompt:: bash
+
+   export CC=/usr/bin/clang
+   export CXX=/usr/bin/clang++
+   export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
+   export CFLAGS="$CFLAGS -I$(brew --prefix libomp)/include"
+   export CXXFLAGS="$CXXFLAGS -I$(brew --prefix libomp)/include"
+   export LDFLAGS="$LDFLAGS -L$(brew --prefix libomp)/lib -lomp"
+   export DYLD_LIBRARY_PATH=$(brew --prefix libomp)/lib
 
 Finally, build scikit-learn in verbose mode (to check for the presence of the
 ``-fopenmp`` flag in the compiler commands):
