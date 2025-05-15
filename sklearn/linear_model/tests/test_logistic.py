@@ -410,6 +410,10 @@ def test_consistency_path(global_random_seed):
 
     # test for fit_intercept=True
     for solver in ("lbfgs", "newton-cg", "newton-cholesky", "liblinear", "sag", "saga"):
+        if solver in ("liblinear", "sag", "saga"):
+            random_state = global_random_seed
+        else:
+            random_state = 0
         Cs = [1e3]
         coefs, Cs, _ = f(_logistic_regression_path)(
             X,
@@ -418,13 +422,13 @@ def test_consistency_path(global_random_seed):
             tol=1e-6,
             solver=solver,
             intercept_scaling=10000.0,
-            random_state=0,
+            random_state=random_state,
         )
         lr = LogisticRegression(
             C=Cs[0],
             tol=1e-6,
             intercept_scaling=10000.0,
-            random_state=0,
+            random_state=global_random_seed,
             solver=solver,
         )
         lr.fit(X, y)
@@ -1036,7 +1040,7 @@ def _compute_class_weight_dictionary(y):
 
 
 @pytest.mark.parametrize("csr_container", [lambda x: x] + CSR_CONTAINERS)
-def test_logistic_regression_class_weights(csr_container):
+def test_logistic_regression_class_weights(global_random_seed, csr_container):
     # Scale data to avoid convergence warnings with the lbfgs solver
     X_iris = scale(iris.data)
     # Multinomial case: remove 90% of class 0
@@ -1046,9 +1050,14 @@ def test_logistic_regression_class_weights(csr_container):
     class_weight_dict = _compute_class_weight_dictionary(y)
 
     for solver in set(SOLVERS) - set(["liblinear", "newton-cholesky"]):
-        params = dict(solver=solver, max_iter=1000)
+        params = dict(solver=solver, max_iter=2000)
         clf1 = LogisticRegression(class_weight="balanced", **params)
         clf2 = LogisticRegression(class_weight=class_weight_dict, **params)
+        if not solver == "lbfgs":
+            clf1.set_params(random_state=global_random_seed)
+            clf2.set_params(random_state=global_random_seed)
+
+            # breakpoint()
         clf1.fit(X, y)
         clf2.fit(X, y)
         assert len(clf1.classes_) == 3
