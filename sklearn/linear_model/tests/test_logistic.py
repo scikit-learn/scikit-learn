@@ -49,8 +49,8 @@ pytestmark = pytest.mark.filterwarnings(
     "error::sklearn.exceptions.ConvergenceWarning:sklearn.*"
 )
 # Fixing random_state helps prevent ConvergenceWarnings
-LogisticRegression = partial(LogisticRegressionDefault, random_state=0)
-LogisticRegressionCV = partial(LogisticRegressionCVDefault, random_state=0)
+LogisticRegression = partial(LogisticRegressionDefault)
+LogisticRegressionCV = partial(LogisticRegressionCVDefault)
 
 
 SOLVERS = ("lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag", "saga")
@@ -82,19 +82,17 @@ def check_predictions(clf, X, y):
 def test_predict_2_classes(csr_container):
     # Simple sanity check on a 2 classes dataset
     # Make sure it predicts the correct result on simple datasets.
-    check_predictions(LogisticRegression(random_state=0), X, Y1)
-    check_predictions(LogisticRegression(random_state=0), csr_container(X), Y1)
+    check_predictions(LogisticRegression(), X, Y1)
+    check_predictions(LogisticRegression(), csr_container(X), Y1)
 
-    check_predictions(LogisticRegression(C=100, random_state=0), X, Y1)
-    check_predictions(LogisticRegression(C=100, random_state=0), csr_container(X), Y1)
+    check_predictions(LogisticRegression(C=100), X, Y1)
+    check_predictions(LogisticRegression(C=100), csr_container(X), Y1)
 
-    check_predictions(LogisticRegression(fit_intercept=False, random_state=0), X, Y1)
-    check_predictions(
-        LogisticRegression(fit_intercept=False, random_state=0), csr_container(X), Y1
-    )
+    check_predictions(LogisticRegression(fit_intercept=False), X, Y1)
+    check_predictions(LogisticRegression(fit_intercept=False), csr_container(X), Y1)
 
 
-def test_logistic_cv_mock_scorer():
+def test_logistic_cv_mock_scorer(global_random_seed):
     class MockScorer:
         def __init__(self):
             self.calls = 0
@@ -110,7 +108,7 @@ def test_logistic_cv_mock_scorer():
     cv = 2
 
     lr = LogisticRegressionCV(Cs=Cs, scoring=mock_scorer, cv=cv)
-    X, y = make_classification(random_state=0)
+    X, y = make_classification(random_state=global_random_seed)
     lr.fit(X, y)
 
     # Cs[2] has the highest score (0.8) from MockScorer
