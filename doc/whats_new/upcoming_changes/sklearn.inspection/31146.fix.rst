@@ -1,0 +1,4 @@
+- :func:`inspection.partial_dependence` now raises an informative error when passing
+  an empty list as the `categorical_features` parameter. `None` should be used instead
+  to indicate that no categorical features are present.
+  By :user:`Pedro Lopes <pedroL0pes>`.

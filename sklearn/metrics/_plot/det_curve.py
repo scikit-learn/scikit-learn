@@ -11,11 +11,14 @@ from .._ranking import det_curve
 class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     """Detection Error Tradeoff (DET) curve visualization.
 
-    It is recommend to use :func:`~sklearn.metrics.DetCurveDisplay.from_estimator`
+    It is recommended to use :func:`~sklearn.metrics.DetCurveDisplay.from_estimator`
     or :func:`~sklearn.metrics.DetCurveDisplay.from_predictions` to create a
     visualizer. All parameters are stored as attributes.
 
-    Read more in the :ref:`User Guide <det_curve>`.
+    For general information regarding `scikit-learn` visualization tools, see
+    the :ref:`Visualization Guide <visualizations>`.
+    For guidance on interpreting these plots, refer to the
+    :ref:`Model Evaluation Guide <det_curve>`.
 
     .. versionadded:: 0.24
 
@@ -96,7 +99,10 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     ):
         """Plot DET curve given an estimator and data.
 
-        Read more in the :ref:`User Guide <det_curve>`.
+        For general information regarding `scikit-learn` visualization tools, see
+        the :ref:`Visualization Guide <visualizations>`.
+        For guidance on interpreting these plots, refer to the
+        :ref:`Model Evaluation Guide <det_curve>`.
 
         .. versionadded:: 1.0
 
@@ -119,6 +125,8 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Whether to drop thresholds where true positives (tp) do not change
             from the previous or subsequent threshold. All points with the same
             tp value have the same `fnr` and thus same y coordinate.
+
+            .. versionadded:: 1.7
 
         response_method : {'predict_proba', 'decision_function', 'auto'} \
                 default='auto'
@@ -205,7 +213,10 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     ):
         """Plot the DET curve given the true and predicted labels.
 
-        Read more in the :ref:`User Guide <det_curve>`.
+        For general information regarding `scikit-learn` visualization tools, see
+        the :ref:`Visualization Guide <visualizations>`.
+        For guidance on interpreting these plots, refer to the
+        :ref:`Model Evaluation Guide <det_curve>`.
 
         .. versionadded:: 1.0
 
@@ -226,6 +237,8 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Whether to drop thresholds where true positives (tp) do not change
             from the previous or subsequent threshold. All points with the same
             tp value have the same `fnr` and thus same y coordinate.
+
+            .. versionadded:: 1.7
 
         pos_label : int, float, bool or str, default=None
             The label of the positive class. When `pos_label=None`, if `y_true`
