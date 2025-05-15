@@ -846,28 +846,30 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
-        X = validate_data(
-            self,
-            X,
-            reset=True,
-            accept_sparse=False,
-            ensure_min_samples=2,
-            ensure_2d=True,
-            ensure_all_finite=(self.handle_missing != "zeros"),
-        )
-        if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-
-        _, n_features = X.shape
-
-        if self.handle_missing == "error":
-            if np.isnan(X).any():
+        try:
+            X = validate_data(
+                self,
+                X,
+                reset=True,
+                accept_sparse=False,
+                ensure_min_samples=2,
+                ensure_2d=True,
+                ensure_all_finite=(self.handle_missing != "zeros"),
+            )
+        except ValueError as e:
+            if "Input X contains NaN." in str(e) and self.handle_missing == "error":
                 raise ValueError(
                     "`X` contains invalid values (NaNs) and `SplineTransformer` is "
                     "configured with `handle_missing='error'`. Set "
                     "`handle_missing='zeros'` to encode missing values as splines with "
                     "value `0` or ensure no missing values in `X`."
-                )
+                ) from e
+            raise e
+
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+
+        _, n_features = X.shape
 
         if isinstance(self.knots, str):
             base_knots = self._get_base_knot_positions(
