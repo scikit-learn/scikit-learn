@@ -1165,6 +1165,7 @@ class _CurveScorer(_BaseScorer):
             )
         else:
             potential_thresholds = np.asarray(self._thresholds)
+
         score_thresholds = [
             self._sign
             * self._score_func(
@@ -1172,7 +1173,7 @@ class _CurveScorer(_BaseScorer):
                 _threshold_scores_to_class_labels(
                     y_score, th, classes, self._get_pos_label()
                 ),
-                **kwargs,
+                **{**self._kwargs, **kwargs},
             )
             for th in potential_thresholds
         ]
@@ -1225,5 +1226,4 @@ class _CurveScorer(_BaseScorer):
             estimator.classes_,
             **kwargs,
         )
-
         return score_thresholds, potential_thresholds

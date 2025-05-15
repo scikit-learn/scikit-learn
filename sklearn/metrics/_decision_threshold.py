@@ -9,7 +9,7 @@ this can help you visualize how the performance changes.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from numbers import Integral, Real
+from numbers import Integral
 
 from ..utils._param_validation import Interval, validate_params
 
@@ -25,7 +25,6 @@ from ..utils._param_validation import Interval, validate_params
         ],
         "greater_is_better": ["boolean"],
         "labels": ["array-like", None],
-        "pos_label": [Real, str, "boolean", None],
     },
     prefer_skip_nested_validation=True,
 )
