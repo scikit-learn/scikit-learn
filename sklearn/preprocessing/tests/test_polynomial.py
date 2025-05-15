@@ -370,7 +370,7 @@ def test_spline_transformer_extrapolation(bias, intercept, degree):
         n_knots=4, degree=degree, include_bias=bias, extrapolation="error"
     )
     splt.fit(X)
-    msg = "X contains values beyond the limits of the knots"
+    msg = "`X` contains values beyond the limits of the knots"
     with pytest.raises(ValueError, match=msg):
         splt.transform([[-10]])
     with pytest.raises(ValueError, match=msg):
@@ -444,7 +444,7 @@ def test_spline_transformer_sparse_output(
         np.linspace(X_min - 5, X_min, 10), np.linspace(X_max, X_max + 5, 10)
     ]
     if extrapolation == "error":
-        msg = "X contains values beyond the limits of the knots"
+        msg = "`X` contains values beyond the limits of the knots"
         with pytest.raises(ValueError, match=msg):
             splt_dense.transform(X_extra)
         msg = "Out of bounds"
@@ -480,18 +480,6 @@ def test_spline_transformer_n_features_out(
     assert splt.transform(X).shape[1] == splt.n_features_out_
 
 
-def test_spline_transformer_raises_with_sample_weight_and_missing_values():
-    """Test that SplineTransformer raises the correct error message when sample_weight
-    is passed and missing values are present in X."""
-    X_nan = np.array([[1, 1], [2, 2], [3, 3], [np.nan, 5], [4, 4]])
-    sample_weight = [1, 1, 1, 1, 1]
-    spline = SplineTransformer(knots="quantile", handle_missing="zeros")
-
-    msg = "Passing `sample_weight` to SplineTransformer when there are"
-    with pytest.raises(NotImplementedError, match=msg):
-        spline.fit(X_nan, sample_weight=sample_weight)
-
-
 @pytest.mark.skipif(
     sp_version < parse_version("1.8.0"),
     reason="The option `sparse_output` is available as of scipy 1.8.0",
@@ -510,7 +498,9 @@ def test_spline_transformer_handles_missing_values(extrapolation, sparse_output)
     X_nan[3, 0] = np.nan
 
     # Check correct error message for handle_missing="error":
-    msg = "X contains missing values (np.nan) and SplineTransformer is configured with"
+    msg = (
+        "`X` contains invalid values (NaNs) and `SplineTransformer` is configured with"
+    )
     with pytest.raises(ValueError, match=re.escape(msg)):
         spline = SplineTransformer(
             degree=2,
@@ -565,10 +555,6 @@ def test_spline_transformer_handles_missing_values(extrapolation, sparse_output)
     )
 
 
-@pytest.mark.skipif(
-    sp_version < parse_version("1.8.0"),
-    reason="The option `sparse_output` is available as of scipy 1.8.0",
-)
 @pytest.mark.parametrize(
     "extrapolation", ["error", "constant", "linear", "continue", "periodic"]
 )
