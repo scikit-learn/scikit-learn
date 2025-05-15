@@ -853,7 +853,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             accept_sparse=False,
             ensure_min_samples=2,
             ensure_2d=True,
-            ensure_all_finite=False,
+            ensure_all_finite=(self.handle_missing != "zeros"),
         )
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
@@ -988,7 +988,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             reset=False,
             accept_sparse=False,
             ensure_2d=True,
-            ensure_all_finite=False,
+            ensure_all_finite=(self.handle_missing != "zeros"),
         )
 
         n_samples, n_features = X.shape
@@ -1290,5 +1290,5 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.input_tags.allow_nan = True
+        tags.input_tags.allow_nan = self.handle_missing == "zeros"
         return tags
