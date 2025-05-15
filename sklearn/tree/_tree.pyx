@@ -1286,20 +1286,50 @@ cdef class Tree:
         float64_t[:, :, ::1] oob_node_values,
         str method,
     ):
-        if issparse(X_test):
-            raise(NotImplementedError("does not support sparse X yet"))
-        if not isinstance(X_test, np.ndarray):
-            raise ValueError("X should be in np.ndarray format, got %s" % type(X_test))
+        cdef intp_t is_sparse = -1
+        cdef float32_t[:] X_data
+        cdef int32_t[:] X_indices
+        cdef int32_t[:] X_indptr
+        cdef int32_t[:] feature_to_sample
+        cdef float64_t[:] X_sample
+        cdef float64_t feature_value = 0.0
+
+        cdef float32_t[:, :] X_ndarray
+
         if X_test.dtype != DTYPE:
             raise ValueError("X.dtype should be np.float32, got %s" % X_test.dtype)
-        cdef const float32_t[:, :] X_ndarray = X_test
+        if issparse(X_test):
+            if X_test.format != "csr":
+                raise ValueError("X should be in csr_matrix format, got %s" % type(X_test))
+            is_sparse = 1
+            X_data = X_test.data
+            X_indices = X_test.indices
+            X_indptr = X_test.indptr
+            feature_to_sample = np.zeros(X_test.shape[1], dtype=np.int32)
+            X_sample = np.zeros(X_test.shape[1], dtype=np.float64)
+
+            # Unused
+            X_ndarray = np.zeros((0, 0), dtype=np.float32)
+
+        else:
+            if not isinstance(X_test, np.ndarray):
+                raise ValueError("X should be in np.ndarray format, got %s" % type(X_test))
+            is_sparse = 0
+            X_ndarray = X_test
+
+            # Unused
+            X_data = np.zeros(0, dtype=np.float32)
+            X_indices = np.zeros(0, dtype=np.int32)
+            X_indptr = np.zeros(0, dtype=np.int32)
+            feature_to_sample = np.zeros(0, dtype=np.int32)
+            X_sample = np.zeros(0, dtype=np.float64)
 
         cdef intp_t n_samples = X_test.shape[0]
         cdef intp_t* n_classes = self.n_classes
         cdef intp_t node_count = self.node_count
         cdef intp_t n_outputs = self.n_outputs
         cdef intp_t max_n_classes = self.max_n_classes
-        cdef int k, c, node_idx, sample_idx = 0
+        cdef int k, c, node_idx, sample_idx, idx = 0
         cdef float64_t[:, ::1] total_oob_weight = np.zeros((node_count, n_outputs), dtype=np.float64)
         cdef int node_value_idx = -1
 
@@ -1310,6 +1340,11 @@ cdef class Tree:
         with nogil:
             # pass the oob samples in the tree and count them per node
             for sample_idx in range(n_samples):
+                if is_sparse:
+                    for idx in range(X_indptr[sample_idx], X_indptr[sample_idx + 1]):
+                        # Store wich feature of sample_idx is non zero and its value
+                        feature_to_sample[X_indices[idx]] = sample_idx
+                        X_sample[X_indices[idx]] = X_data[idx]
                 # root node
                 node = self.nodes
                 node_idx = 0
@@ -1329,10 +1364,20 @@ cdef class Tree:
 
                 # child nodes
                 while node.left_child != _TREE_LEAF and node.right_child != _TREE_LEAF:
-                    if X_ndarray[sample_idx, node.feature] <= node.threshold:
-                        node_idx = node.left_child
+                    if is_sparse:
+                        if feature_to_sample[node.feature] == sample_idx:
+                            feature_value = X_sample[node.feature]
+                        else:
+                            feature_value = 0.
+                        if feature_value <= node.threshold:
+                            node_idx = node.left_child
+                        else:
+                            node_idx = node.right_child
                     else:
-                        node_idx = node.right_child
+                        if X_ndarray[sample_idx, node.feature] <= node.threshold:
+                            node_idx = node.left_child
+                        else:
+                            node_idx = node.right_child
                     if sample_weight[sample_idx] > 0.0:
                         has_oob_sample[node_idx] = 1
                     node = &self.nodes[node_idx]
@@ -1395,12 +1440,12 @@ cdef class Tree:
         cdef float64_t[:, ::1] y_regression
         if self.max_n_classes > 1:
             # Classification
-            y_regression = np.zeros((1, 1), dtype=np.float64)  # Unused
+            y_regression = np.zeros((0, 0), dtype=np.float64)  # Unused
             y_classification = np.ascontiguousarray(y_test, dtype=np.intp)
         else:
             # Regression
             y_regression = np.ascontiguousarray(y_test, dtype=np.float64)
-            y_classification = np.zeros((1, 1), dtype=np.intp)  # Unused
+            y_classification = np.zeros((0, 0), dtype=np.intp)  # Unused
 
         cdef float64_t[::1] sample_weight_view = np.ascontiguousarray(sample_weight, dtype=np.float64)
         self._compute_oob_node_values_and_predictions(X_test, y_regression, y_classification, sample_weight_view, oob_pred, has_oob_sample, oob_node_values, method)

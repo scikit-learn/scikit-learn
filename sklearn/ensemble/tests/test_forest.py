@@ -576,7 +576,6 @@ def test_non_OOB_unbiased_feature_importances(name, unbiased_importance_attribut
     assert not hasattr(clf, "oob_decision_function_")
 
 
-# TODO before merge: implement unbiased importance for sparse data
 @pytest.mark.parametrize("ForestClassifier", FOREST_CLASSIFIERS.values())
 @pytest.mark.parametrize("X_type", ["array", "sparse_csr", "sparse_csc"])
 @pytest.mark.parametrize(
@@ -607,8 +606,6 @@ def test_non_OOB_unbiased_feature_importances(name, unbiased_importance_attribut
 def test_forest_classifier_oob(
     ForestClassifier, X, y, X_type, lower_bound_accuracy, oob_score
 ):
-    if X_type != "array":
-        pytest.skip()
     """Check that OOB score is close to score on a test set."""
     X = _convert_container(X, constructor_name=X_type)
     X_train, X_test, y_train, y_test = train_test_split(
@@ -632,8 +629,6 @@ def test_forest_classifier_oob(
         test_score = oob_score(y_test, classifier.predict(X_test))
     else:
         test_score = classifier.score(X_test, y_test)
-        print(test_score, classifier.oob_score_)
-
         assert classifier.oob_score_ >= lower_bound_accuracy
 
     abs_diff = abs(test_score - classifier.oob_score_)
@@ -673,8 +668,6 @@ def test_forest_classifier_oob(
 def test_forest_regressor_oob(ForestRegressor, X, y, X_type, lower_bound_r2, oob_score):
     """Check that forest-based regressor provide an OOB score close to the
     score on a test set."""
-    if X_type != "array":
-        pytest.skip()
     X = _convert_container(X, constructor_name=X_type)
     X_train, X_test, y_train, y_test = train_test_split(
         X,
@@ -698,7 +691,6 @@ def test_forest_regressor_oob(ForestRegressor, X, y, X_type, lower_bound_r2, oob
     else:
         test_score = regressor.score(X_test, y_test)
         assert regressor.oob_score_ >= lower_bound_r2
-    print(test_score, regressor.oob_score_)
 
     assert abs(test_score - regressor.oob_score_) <= 0.1
 
