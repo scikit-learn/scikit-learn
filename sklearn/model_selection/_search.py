@@ -31,8 +31,8 @@ from ..metrics._scorer import (
     get_scorer_names,
 )
 from ..utils import Bunch, check_random_state
-from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import HasMethods, Interval, StrOptions
+from ..utils._repr_html.estimator import _VisualBlock
 from ..utils._tags import get_tags
 from ..utils.metadata_routing import (
     MetadataRouter,

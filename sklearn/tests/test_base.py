@@ -992,3 +992,11 @@ def test_outlier_mixin_fit_predict_with_metadata_in_predict():
     with warnings.catch_warnings(record=True) as record:
         CustomOutlierDetector().set_predict_request(prop=True).fit_predict([[1]], [1])
         assert len(record) == 0
+
+
+def test_get_params_html():
+    """Check the behaviour of the `_get_params_html` method."""
+    est = MyEstimator(empty="test")
+
+    assert est._get_params_html() == {"l1": 0, "empty": "test"}
+    assert est._get_params_html().non_default == ("empty",)
