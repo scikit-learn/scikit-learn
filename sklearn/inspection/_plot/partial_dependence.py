@@ -27,7 +27,6 @@ from .._pd_utils import _check_feature_names, _get_feature_index
 class PartialDependenceDisplay:
     """Partial Dependence Plot (PDP) and Individual Conditional Expectation (ICE).
 
-
     It is recommended to use
     :func:`~sklearn.inspection.PartialDependenceDisplay.from_estimator` to create a
     :class:`~sklearn.inspection.PartialDependenceDisplay`. All parameters are stored
