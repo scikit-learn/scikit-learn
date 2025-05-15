@@ -25,10 +25,8 @@ from .._pd_utils import _check_feature_names, _get_feature_index
 
 
 class PartialDependenceDisplay:
-    """Partial Dependence Plot (PDP).
+    """Partial Dependence Plot (PDP) and Individual Conditional Expectation (ICE).
 
-    Partial Dependence Plot (PDP) and
-    Individual Conditional Expectation (ICE) visualization.
 
     It is recommended to use
     :func:`~sklearn.inspection.PartialDependenceDisplay.from_estimator` to create a
@@ -38,7 +36,7 @@ class PartialDependenceDisplay:
     For general information regarding `scikit-learn` visualization tools, see
     the :ref:`Visualization Guide <visualizations>`.
     For guidance on interpreting these plots, refer to the
-    :ref:`Partial Dependence and ICE plots <partial_dependence>`.
+    :ref:`Inspection Guide <partial_dependence>`.
 
     For an example on how to use this class, see the following example:
     :ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_visualization_api.py`.
@@ -281,19 +279,21 @@ class PartialDependenceDisplay:
         """Partial dependence (PD) and individual conditional expectation (ICE) plots.
 
         Partial dependence plots, individual conditional expectation plots, or an
-        overlay of both can be plotted by setting the ``kind`` parameter. The
-        plots are arranged in a grid with ``n_cols`` columns. Two-way plots are
-        shown as contours. Deciles of feature values are marked as tick lines.
+        overlay of both can be plotted by setting the `kind` parameter.
+        This method generates one plot for each entry in `features`. The plots
+        are arranged in a grid with `n_cols` columns. For one-way partial
+        dependence plots, the deciles of the feature values are shown on the
+        x-axis. For two-way plots, the deciles are shown on both axes and PDPs
+        are contour plots.
 
-        It is recommended to use
-        :meth:`~sklearn.inspection.PartialDependenceDisplay.from_estimator`
-        and see the :ref:`Visualization Guide <visualizations>` for plotting API,
-        and the :ref:`Partial Dependence and ICE plots section <partial_dependence>`
-        for interpretation guidance.
+        For general information regarding `scikit-learn` visualization tools, see
+        the :ref:`Visualization Guide <visualizations>`.
+        For guidance on interpreting these plots, refer to the
+        :ref:`Inspection Guide <partial_dependence>`.
 
         Read more in
         :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
-        and the :ref:`User Guide <partial_dependence>`.
+        
 
         .. note::
 
