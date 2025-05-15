@@ -1,9 +1,9 @@
 """Metric per threshold curve to assess binary classification performance.
 
-Given threshold grid, one can undestand the behaviour of threshold-dependent
-metrics when changing the threshold. In imbalanced scenarios or
-cost-sensitive learning, a 0.5 threshold may not be optimal and tools like
-this can help you visualize how the performance changes.
+Compute metric per threshold, over a range of threshold values to aid visualization
+of threshold-dependent metric behavior.
+
+Utilizes `_CurveScorer` methods to do all the computation.
 """
 
 # Authors: The scikit-learn developers
@@ -42,7 +42,7 @@ def decision_threshold_curve(
 
     Note: this implementation is restricted to the binary classification task.
 
-    Read more in the :ref:`User Guide <metric_threshold_curve>`.
+    Read more in the :ref:`User Guide <threshold_tunning>`.
 
     .. versionadded:: 1.8
 

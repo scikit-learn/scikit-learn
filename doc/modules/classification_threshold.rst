@@ -1,6 +1,6 @@
 .. currentmodule:: sklearn.model_selection
 
-.. _TunedThresholdClassifierCV:
+.. _threshold_tunning:
 
 ==================================================
 Tuning the decision threshold for class prediction
@@ -79,8 +79,6 @@ a utility metric defined by the business (in this case an insurance company).
 .. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cost_sensitive_learning_002.png
    :target: ../auto_examples/model_selection/plot_cost_sensitive_learning.html
    :align: center
-
-.. _metric_threshold_curve:
 
 Plotting metric across thresholds
 ---------------------------------
