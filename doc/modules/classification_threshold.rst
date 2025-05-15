@@ -63,7 +63,7 @@ Post-tuning the decision threshold
 
 One solution to address the problem stated in the introduction is to tune the decision
 threshold of the classifier once the model has been trained. The
-:class:`~sklearn.model_selection.TunedThresholdClassifierCV` tunes this threshold using
+:class:`TunedThresholdClassifierCV` tunes this threshold using
 an internal cross-validation. The optimum threshold is chosen to maximize a given
 metric.
 
@@ -79,6 +79,17 @@ a utility metric defined by the business (in this case an insurance company).
 .. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cost_sensitive_learning_002.png
    :target: ../auto_examples/model_selection/plot_cost_sensitive_learning.html
    :align: center
+
+.. _metric_threshold_curve:
+
+Plotting metric across thresholds
+---------------------------------
+
+The final plot above shows the value of a utility metric of interest across a range
+of threshold values. This can be a useful visualization when tuning decision
+threshold, especially if there is more than one metric of interest. The
+:func:`decision_threshold_curve` allows you to easily generate such plots as it
+computes the values required for each axis, scores per threshold and threshold values.
 
 Options to tune the decision threshold
 --------------------------------------
@@ -120,7 +131,7 @@ a meaningful metric for their use case.
 Important notes regarding the internal cross-validation
 -------------------------------------------------------
 
-By default :class:`~sklearn.model_selection.TunedThresholdClassifierCV` uses a 5-fold
+By default :class:`TunedThresholdClassifierCV` uses a 5-fold
 stratified cross-validation to tune the decision threshold. The parameter `cv` allows to
 control the cross-validation strategy. It is possible to bypass cross-validation by
 setting `cv="prefit"` and providing a fitted classifier. In this case, the decision
@@ -143,7 +154,7 @@ Manually setting the decision threshold
 
 The previous sections discussed strategies to find an optimal decision threshold. It is
 also possible to manually set the decision threshold using the class
-:class:`~sklearn.model_selection.FixedThresholdClassifier`. In case that you don't want
+:class:`FixedThresholdClassifier`. In case that you don't want
 to refit the model when calling `fit`, wrap your sub-estimator with a
 :class:`~sklearn.frozen.FrozenEstimator` and do
 ``FixedThresholdClassifier(FrozenEstimator(estimator), ...)``.
