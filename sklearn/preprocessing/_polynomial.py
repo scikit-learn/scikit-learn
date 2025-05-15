@@ -1139,11 +1139,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         (feature_idx * n_splines) : ((feature_idx + 1) * n_splines),
                     ] = spl(X[inside_range_mask, feature_idx])
 
-            # TODO: check if we can move this up into the other branch that deals with
-            # self.extrapolation == "error"
             if self.extrapolation == "error":
-                # BSpline with extrapolate=False does not raise an error, but
-                # outputs np.nan.
                 has_nan_output_values = False
                 if use_sparse:
                     # Early convert to CSR as the sparsity structure of this
@@ -1162,8 +1158,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         "`X` contains values beyond the limits of the knots."
                     )
 
-            # TODO: check if we can move this up into the other branch that deals with
-            # self.extrapolation == "constant"
             elif self.extrapolation == "constant":
                 # Set all values beyond xmin and xmax to the value of the
                 # spline basis functions at those two positions.
@@ -1199,8 +1193,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                             ),
                         ] = f_max[-degree:]
 
-            # TODO: check if we can move this up into the other branch that deals with
-            # self.extrapolation == "linear"
             elif self.extrapolation == "linear":
                 # Continue the degree first and degree last spline bases
                 # linearly beyond the boundaries, with slope = derivative at

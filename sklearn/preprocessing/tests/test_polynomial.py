@@ -552,6 +552,7 @@ def test_spline_transformer_handles_missing_values(extrapolation, sparse_output)
     # be calculated based on the other values and thus differ from another
     # SplineTransformer fit on the whole range).
     X_transform = spline.fit_transform(X)
+    X_nan_transform = spline.fit_transform(X_nan)
     assert_allclose_dense_sparse(
         X_transform[~encoded_nan_mask], X_nan_transform[~encoded_nan_mask]
     )
