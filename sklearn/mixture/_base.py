@@ -387,8 +387,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             Log-likelihood of `X` under the Gaussian mixture model.
         """
         check_is_fitted(self)
-        # check if X is on the same namespace as fitted attributes:
-        xp, _ = get_namespace(X, self.means_)
+        xp, _ = get_namespace(X)
         return xp.mean(self.score_samples(X))
 
     def predict(self, X):
