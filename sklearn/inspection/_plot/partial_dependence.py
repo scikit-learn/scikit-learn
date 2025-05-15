@@ -290,8 +290,8 @@ class PartialDependenceDisplay:
         For guidance on interpreting these plots, refer to the
         :ref:`Inspection Guide <partial_dependence>`.
 
-        Read more in
-        :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
+        For an example on how to use this class method, see
+        :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`.
 
         .. note::
 
