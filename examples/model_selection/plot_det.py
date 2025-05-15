@@ -1,7 +1,7 @@
 """
-====================================
-Detection error tradeoff (DET) curve
-====================================
+=================================
+Comparing ROC, DET and CAP curves
+=================================
 
 In this example, we compare two binary classification multi-threshold metrics:
 the Receiver Operating Characteristic (ROC), Detection Error Tradeoff (DET)
@@ -14,8 +14,7 @@ rate (FPR) on the X axis. This means that the top left corner of the plot is the
 
 DET curves are a variation of ROC curves where False Negative Rate (FNR) is
 plotted on the y-axis instead of the TPR. In this case the origin (bottom left
-corner) is the "ideal" point. Furthermore, the axes use a normal deviate scale
-to focus on differences closer to the origin.
+corner) is the "ideal" point.
 
 CAP curves display the cumulative proportion of true positives on the Y axis
 versus the cumulative proportion of the dataset (ranked by predicted probability)
@@ -135,6 +134,7 @@ for clf_idx, (name, clf) in enumerate(classifiers.items()):
         name=name,
         pos_label=pos_label,
         plot_perfect=is_last,
+        plot_chance_level=is_last,
     )
 
 ax_roc.set_title("Receiver Operating Characteristic (ROC) curves")
