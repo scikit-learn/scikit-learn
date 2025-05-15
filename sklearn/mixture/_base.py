@@ -407,7 +407,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         xp, _ = get_namespace(X)
         X = validate_data(self, X, reset=False)
-        return xp.argmax(self._estimate_weighted_log_prob(X))
+        return xp.argmax(self._estimate_weighted_log_prob(X), axis=1)
 
     def predict_proba(self, X):
         """Evaluate the components' density for each sample.
