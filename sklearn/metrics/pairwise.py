@@ -284,7 +284,7 @@ def euclidean_distances(
     X, Y=None, *, Y_norm_squared=None, squared=False, X_norm_squared=None
 ):
     """
-    Compute the distance matrix between each pair from a vector array X and Y.
+    Compute the distance matrix between each pair from a feature array X and Y.
 
     For efficiency reasons, the euclidean distance between a pair of row
     vector x and y is computed as::
@@ -1158,8 +1158,8 @@ def cosine_distances(X, Y=None):
     >>> X = [[0, 0, 0], [1, 1, 1]]
     >>> Y = [[1, 0, 0], [1, 1, 0]]
     >>> cosine_distances(X, Y)
-    array([[1.     , 1.     ],
-           [0.42..., 0.18...]])
+    array([[1.   , 1.   ],
+           [0.422, 0.183]])
     """
     xp, _ = get_namespace(X, Y)
 
@@ -1291,7 +1291,7 @@ def paired_cosine_distances(X, Y):
     >>> X = [[0, 0, 0], [1, 1, 1]]
     >>> Y = [[1, 0, 0], [1, 1, 0]]
     >>> paired_cosine_distances(X, Y)
-    array([0.5       , 0.18...])
+    array([0.5       , 0.184])
     """
     X, Y = check_paired_arrays(X, Y)
     return 0.5 * row_norms(normalize(X) - normalize(Y), squared=True)
@@ -1476,7 +1476,7 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
     >>> Y = [[1, 0, 0], [1, 1, 0]]
     >>> polynomial_kernel(X, Y, degree=2)
     array([[1.     , 1.     ],
-           [1.77..., 2.77...]])
+           [1.77, 2.77]])
     """
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
@@ -1536,8 +1536,8 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     >>> X = [[0, 0, 0], [1, 1, 1]]
     >>> Y = [[1, 0, 0], [1, 1, 0]]
     >>> sigmoid_kernel(X, Y)
-    array([[0.76..., 0.76...],
-           [0.87..., 0.93...]])
+    array([[0.76, 0.76],
+           [0.87, 0.93]])
     """
     xp, _ = get_namespace(X, Y)
     X, Y = check_pairwise_arrays(X, Y)
@@ -1597,8 +1597,8 @@ def rbf_kernel(X, Y=None, gamma=None):
     >>> X = [[0, 0, 0], [1, 1, 1]]
     >>> Y = [[1, 0, 0], [1, 1, 0]]
     >>> rbf_kernel(X, Y)
-    array([[0.71..., 0.51...],
-           [0.51..., 0.71...]])
+    array([[0.71, 0.51],
+           [0.51, 0.71]])
     """
     xp, _ = get_namespace(X, Y)
     X, Y = check_pairwise_arrays(X, Y)
@@ -1660,8 +1660,8 @@ def laplacian_kernel(X, Y=None, gamma=None):
     >>> X = [[0, 0, 0], [1, 1, 1]]
     >>> Y = [[1, 0, 0], [1, 1, 0]]
     >>> laplacian_kernel(X, Y)
-    array([[0.71..., 0.51...],
-           [0.51..., 0.71...]])
+    array([[0.71, 0.51],
+           [0.51, 0.71]])
     """
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
@@ -1722,8 +1722,8 @@ def cosine_similarity(X, Y=None, dense_output=True):
     >>> X = [[0, 0, 0], [1, 1, 1]]
     >>> Y = [[1, 0, 0], [1, 1, 0]]
     >>> cosine_similarity(X, Y)
-    array([[0.     , 0.     ],
-           [0.57..., 0.81...]])
+    array([[0.   , 0.   ],
+           [0.577, 0.816]])
     """
     X, Y = check_pairwise_arrays(X, Y)
 
@@ -1884,8 +1884,8 @@ def chi2_kernel(X, Y=None, gamma=1.0):
     >>> X = [[0, 0, 0], [1, 1, 1]]
     >>> Y = [[1, 0, 0], [1, 1, 0]]
     >>> chi2_kernel(X, Y)
-    array([[0.36..., 0.13...],
-           [0.13..., 0.36...]])
+    array([[0.368, 0.135],
+           [0.135, 0.368]])
     """
     xp, _ = get_namespace(X, Y)
     K = additive_chi2_kernel(X, Y)
@@ -1982,6 +1982,7 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
         Y,
         dtype=None,
         ensure_all_finite=ensure_all_finite,
+        # No input dimension checking done for custom metrics (left to user)
         ensure_2d=False,
     )
 
@@ -2165,11 +2166,11 @@ def pairwise_distances_chunked(
     >>> X = np.random.RandomState(0).rand(5, 3)
     >>> D_chunk = next(pairwise_distances_chunked(X))
     >>> D_chunk
-    array([[0.  ..., 0.29..., 0.41..., 0.19..., 0.57...],
-           [0.29..., 0.  ..., 0.57..., 0.41..., 0.76...],
-           [0.41..., 0.57..., 0.  ..., 0.44..., 0.90...],
-           [0.19..., 0.41..., 0.44..., 0.  ..., 0.51...],
-           [0.57..., 0.76..., 0.90..., 0.51..., 0.  ...]])
+    array([[0.   , 0.295, 0.417, 0.197, 0.572],
+           [0.295, 0.   , 0.576, 0.419, 0.764],
+           [0.417, 0.576, 0.   , 0.449, 0.903],
+           [0.197, 0.419, 0.449, 0.   , 0.512],
+           [0.572, 0.764, 0.903, 0.512, 0.   ]])
 
     Retrieve all neighbors and average distance within radius r:
 
@@ -2183,7 +2184,7 @@ def pairwise_distances_chunked(
     >>> neigh
     [array([0, 3]), array([1]), array([2]), array([0, 3]), array([4])]
     >>> avg_dist
-    array([0.039..., 0.        , 0.        , 0.039..., 0.        ])
+    array([0.039, 0.        , 0.        , 0.039, 0.        ])
 
     Where r is defined per sample, we need to make use of ``start``:
 
@@ -2275,12 +2276,21 @@ def pairwise_distances(
     ensure_all_finite=None,
     **kwds,
 ):
-    """Compute the distance matrix from a vector array X and optional Y.
+    """Compute the distance matrix from a feature array X and optional Y.
 
-    This method takes either a vector array or a distance matrix, and returns
+    This function takes one or two feature arrays or a distance matrix, and returns
     a distance matrix.
-    If the input is a vector array, the distances are computed.
-    If the input is a distances matrix, it is returned instead.
+
+    - If `X` is a feature array, of shape (n_samples_X, n_features), and:
+
+      - `Y` is `None` and `metric` is not 'precomputed', the pairwise distances
+        between `X` and itself are returned.
+      - `Y` is a feature array of shape (n_samples_Y, n_features), the pairwise
+        distances between `X` and `Y` is returned.
+
+    - If `X` is a distance matrix, of shape (n_samples_X, n_samples_X), `metric`
+      should be 'precomputed'. `Y` is thus ignored and `X` is returned as is.
+
     If the input is a collection of non-numeric data (e.g. a list of strings or a
     boolean array), a custom metric must be passed.
 
@@ -2288,15 +2298,11 @@ def pairwise_distances(
     preserving compatibility with many other algorithms that take a vector
     array.
 
-    If Y is given (default is None), then the returned matrix is the pairwise
-    distance between the arrays from both X and Y.
-
     Valid values for metric are:
 
     - From scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-      'manhattan']. These metrics support sparse matrix
-      inputs.
-      ['nan_euclidean'] but it does not yet support sparse matrices.
+      'manhattan', 'nan_euclidean']. All metrics support sparse matrix
+      inputs except 'nan_euclidean'.
 
     - From scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
       'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis',
@@ -2410,6 +2416,10 @@ def pairwise_distances(
         order to limit memory usage.
     sklearn.metrics.pairwise.paired_distances : Computes the distances between
         corresponding elements of two arrays.
+
+    Notes
+    -----
+    If metric is a callable, no restrictions are placed on `X` and `Y` dimensions.
 
     Examples
     --------
@@ -2565,15 +2575,15 @@ def pairwise_kernels(
 ):
     """Compute the kernel between arrays X and optional array Y.
 
-    This method takes one or two vector arrays or a kernel matrix, and returns
+    This function takes one or two feature arrays or a kernel matrix, and returns
     a kernel matrix.
 
-    - If `X` is a vector array, of shape (n_samples_X, n_features), and:
+    - If `X` is a feature array, of shape (n_samples_X, n_features), and:
 
       - `Y` is `None` and `metric` is not 'precomputed', the pairwise kernels
-        between `X` and itself are computed.
-      - `Y` is a vector array of shape (n_samples_Y, n_features), the pairwise
-        kernels between arrays `X` and `Y` is returned.
+        between `X` and itself are returned.
+      - `Y` is a feature array of shape (n_samples_Y, n_features), the pairwise
+        kernels between `X` and `Y` is returned.
 
     - If `X` is a kernel matrix, of shape (n_samples_X, n_samples_X), `metric`
       should be 'precomputed'. `Y` is thus ignored and `X` is returned as is.
@@ -2637,7 +2647,7 @@ def pairwise_kernels(
 
     Notes
     -----
-    If metric is 'precomputed', Y is ignored and X is returned.
+    If metric is a callable, no restrictions are placed on `X` and `Y` dimensions.
 
     Examples
     --------

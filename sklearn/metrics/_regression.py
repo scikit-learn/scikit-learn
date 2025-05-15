@@ -1619,7 +1619,7 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
 
     Returns
     -------
-    z : float or ndarray of floats
+    z : float
         The D^2 score.
 
     Notes
