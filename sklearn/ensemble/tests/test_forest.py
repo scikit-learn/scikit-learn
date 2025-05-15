@@ -305,41 +305,60 @@ def test_probability(name):
     ),
 )
 @pytest.mark.parametrize(
-    "oob_score, importance_attribute_name",
-    [
-        (False, "feature_importances_"),
-        (True, "ufi_feature_importances_"),
-        (True, "mdi_oob_feature_importances_"),
-    ],
+    "X_type", ["array", "sparse_csr", "sparse_csc", "sparse_csr_array"]
 )
-def test_importances(dtype, name, criterion, oob_score, importance_attribute_name):
+def test_importances(dtype, name, criterion, X_type, global_random_seed):
+    if criterion == "absolute_error":
+        pytest.skip()
     tolerance = 0.01
     if name in FOREST_REGRESSORS and criterion == "absolute_error":
         tolerance = 0.05
     # cast as dtype
     X = X_large.astype(dtype, copy=False)
     y = y_large.astype(dtype, copy=False)
+    X = _convert_container(X, constructor_name=X_type)
 
     ForestEstimator = FOREST_ESTIMATORS[name]
-
-    est = ForestEstimator(
+    common_params = dict(
         n_estimators=10,
         criterion=criterion,
-        oob_score=oob_score,
+        oob_score=True,
         bootstrap=True,
-        random_state=0,
+        random_state=global_random_seed,
     )
+
+    est = ForestEstimator(**common_params)
     est.fit(X, y)
-    if oob_score and name in FOREST_REGRESSORS and criterion != "squared_error":
-        with pytest.raises(
-            AttributeError,
-            match="Unbiased feature importance only available for"
-            " regression with split criterion MSE",
-        ):
-            importances = getattr(est, importance_attribute_name)
-    elif oob_score and name in FOREST_CLASSIFIERS:
+
+    sample_weight = check_random_state(global_random_seed).randint(1, 10, X.shape[0])
+    est_sw = ForestEstimator(**common_params)
+    est_sw.fit(X, y, sample_weight=sample_weight)
+
+    est_sw_05 = ForestEstimator(**common_params)
+    est_sw_05.fit(X, y, sample_weight=0.5 * sample_weight)
+
+    est_sw_100 = ForestEstimator(**common_params)
+    est_sw_100.fit(X, y, sample_weight=100 * sample_weight)
+
+    for importance_attribute_name in [
+        "feature_importances_",
+        "ufi_feature_importances_",
+        "mdi_oob_feature_importances_",
+    ]:
         if (
-            importance_attribute_name == "mdi_oob_feature_importances_"
+            name in FOREST_REGRESSORS
+            and criterion != "squared_error"
+            and importance_attribute_name != "feature_importances_"
+        ):
+            with pytest.raises(
+                AttributeError,
+                match="Unbiased feature importance only available for"
+                " regression with split criterion MSE",
+            ):
+                importances = getattr(est, importance_attribute_name)
+        elif (
+            name in FOREST_CLASSIFIERS
+            and importance_attribute_name == "mdi_oob_feature_importances_"
             and criterion != "gini"
         ):
             with pytest.raises(
@@ -348,53 +367,39 @@ def test_importances(dtype, name, criterion, oob_score, importance_attribute_nam
                 " classification with split criterion 'gini'",
             ):
                 importances = getattr(est, importance_attribute_name)
-        elif criterion not in ["gini", "log_loss", "entropy"]:
+        elif (
+            name in FOREST_CLASSIFIERS
+            and importance_attribute_name == "mdi_oob_feature_importances_"
+            and criterion not in ["gini", "log_loss", "entropy"]
+        ):
             with pytest.raises(
                 AttributeError,
                 match="ufi feature importance only available for"
                 " classification with split criterion 'gini', 'log_loss' or 'entropy'.",
             ):
                 importances = getattr(est, importance_attribute_name)
-    else:
-        importances = getattr(est, importance_attribute_name)
-        # The forest estimator can detect that only the first 3 features of the
-        # dataset are informative:
-        n_important = np.sum(importances > 0.1)
-        assert importances.shape[0] == 10
-        assert n_important == 3
-        assert np.all(importances[:3] > 0.1)
+        else:
+            importances = getattr(est, importance_attribute_name)
+            # The forest estimator can detect that only the first 3 features of the
+            # dataset are informative:
+            n_important = np.sum(importances > 0.1)
+            assert importances.shape[0] == 10
+            assert n_important == 3
+            assert np.all(importances[:3] > 0.1)
 
-        # Check with parallel
-        importances = getattr(est, importance_attribute_name)
-        est.set_params(n_jobs=2)
-        importances_parallel = getattr(est, importance_attribute_name)
-        assert_array_almost_equal(importances, importances_parallel)
+            # Check with parallel
+            importances = getattr(est, importance_attribute_name)
+            est.set_params(n_jobs=2)
+            importances_parallel = getattr(est, importance_attribute_name)
+            assert_array_almost_equal(importances, importances_parallel)
 
-        # Check with sample weights
-        sample_weight = check_random_state(0).randint(1, 10, len(X))
-        est = ForestEstimator(
-            n_estimators=10,
-            random_state=0,
-            oob_score=oob_score,
-            bootstrap=True,
-            criterion=criterion,
-        )
-        est.fit(X, y, sample_weight=sample_weight)
-        importances = getattr(est, importance_attribute_name)
-        if importance_attribute_name == "feature_importances_":
-            assert np.all(importances >= 0.0)
+            # Check with sample weights
+            importances_sw = getattr(est_sw, importance_attribute_name)
 
-        for scale in [0.5, 100]:
-            est = ForestEstimator(
-                n_estimators=10,
-                random_state=0,
-                oob_score=oob_score,
-                bootstrap=True,
-                criterion=criterion,
-            )
-            est.fit(X, y, sample_weight=scale * sample_weight)
-            importances_bis = getattr(est, importance_attribute_name)
-            assert np.abs(importances - importances_bis).mean() < tolerance
+            importances_sw_05 = getattr(est_sw_05, importance_attribute_name)
+            assert np.abs(importances_sw - importances_sw_05).mean() < tolerance
+            importances_sw_100 = getattr(est_sw_100, importance_attribute_name)
+            assert np.abs(importances_sw - importances_sw_100).mean() < tolerance
 
 
 def test_importances_asymptotic():
