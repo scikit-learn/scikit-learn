@@ -1747,6 +1747,9 @@ class TfidfVectorizer(CountVectorizer):
     :class:`~sklearn.feature_extraction.text.HashingVectorizer`, see
     :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`.
 
+    For use in hyperparamter tuning of a pipeline, see
+    :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`.
+
     Read more in the :ref:`User Guide <text_feature_extraction>`.
 
     Parameters
