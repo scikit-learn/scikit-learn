@@ -294,7 +294,6 @@ class PartialDependenceDisplay:
         Read more in
         :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
         
-
         .. note::
 
             :func:`PartialDependenceDisplay.from_estimator` does not support using the
