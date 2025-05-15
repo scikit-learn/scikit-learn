@@ -14,7 +14,7 @@ from .._ranking import auc, roc_curve
 class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     """ROC Curve visualization.
 
-    It is recommend to use
+    It is recommended to use
     :func:`~sklearn.metrics.RocCurveDisplay.from_estimator` or
     :func:`~sklearn.metrics.RocCurveDisplay.from_predictions` to create
     a :class:`~sklearn.metrics.RocCurveDisplay`. All parameters are
