@@ -1515,7 +1515,8 @@ def test_gaussian_mixture_array_api_compliance(
         assert device(X) == device(gmm.covariances_)
 
         # smoke test other methods
-        # TODO: maybe test with X on different namespace/device as training
+        # TODO compare with same method on numpy
+        # TODO add predict and predict_proba
         gmm.score_samples(X)
         gmm.score(X)
         gmm.aic(X)
@@ -1597,7 +1598,6 @@ def test_gaussian_mixture_array_api_compliance_with_weights_init(
 #         gmm.fit(X)
 
 
-# TODO: remove when gmm works with `init_params` `kmeans` or `k-means++`
 @skip_if_array_api_compat_not_configured
 @pytest.mark.parametrize("init_params", ["kmeans", "k-means++"])
 @pytest.mark.parametrize(
@@ -1631,6 +1631,7 @@ def test_gaussian_mixture_sample_array_api_compliance(
     covariance_type, array_namespace, device_, dtype, global_random_seed
 ):
     """Test that array api works in GaussianMixture.sample()."""
+    # TODO move this to test_gaussian_mixture_array_api_compliance function?
     xp = _array_api_for_tests(array_namespace, device_)
     X, _ = make_blobs(
         n_samples=int(1e3), n_features=2, centers=3, random_state=global_random_seed

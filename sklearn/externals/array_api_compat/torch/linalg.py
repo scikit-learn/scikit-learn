@@ -11,6 +11,10 @@ if TYPE_CHECKING:
 from ._aliases import _fix_promotion, sum
 
 from torch.linalg import * # noqa: F403
+# TODO Temporary work-around for
+# https://github.com/data-apis/array-api-compat/issues/320. Remove when
+# array-api-compat 1.12 is released and our vendored array-api-compat has been
+# updated.
 import torch
 
 # torch.linalg doesn't define __all__
