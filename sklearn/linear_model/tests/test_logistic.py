@@ -169,7 +169,7 @@ def test_predict_3_classes(csr_container):
         LogisticRegression(C=len(iris.data), solver="newton-cholesky"),
     ],
 )
-def test_predict_iris(clf):
+def test_predict_iris(clf, global_random_seed):
     """Test logistic regression with the iris dataset.
 
     Test that both multinomial and OvR solvers handle multiclass data correctly and
@@ -184,6 +184,7 @@ def test_predict_iris(clf):
             warnings.simplefilter("ignore", ConvergenceWarning)
             clf.fit(iris.data, target)
     else:
+        clf.set_params(random_state=global_random_seed)
         clf.fit(iris.data, target)
     assert_array_equal(np.unique(target), clf.classes_)
 
@@ -252,13 +253,16 @@ def test_elasticnet_l1_ratio_err_helpful(LR):
 # TODO(1.8): remove whole test with deprecation of multi_class
 @pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize("solver", ["lbfgs", "newton-cg", "sag", "saga"])
-def test_multinomial_binary(solver):
+def test_multinomial_binary(global_random_seed, solver):
     # Test multinomial LR on a binary problem.
     target = (iris.target > 0).astype(np.intp)
     target = np.array(["setosa", "not-setosa"])[target]
 
     clf = LogisticRegression(
-        solver=solver, multi_class="multinomial", random_state=42, max_iter=2000
+        solver=solver,
+        multi_class="multinomial",
+        random_state=global_random_seed,
+        max_iter=2000,
     )
     clf.fit(iris.data, target)
 
@@ -267,7 +271,11 @@ def test_multinomial_binary(solver):
     assert_array_equal(clf.predict(iris.data), target)
 
     mlr = LogisticRegression(
-        solver=solver, multi_class="multinomial", random_state=42, fit_intercept=False
+        solver=solver,
+        multi_class="multinomial",
+        random_state=global_random_seed,
+        fit_intercept=False,
+        max_iter=2000,
     )
     mlr.fit(iris.data, target)
     pred = clf.classes_[np.argmax(clf.predict_log_proba(iris.data), axis=1)]
@@ -305,7 +313,7 @@ def test_sparsify(coo_container):
     n_samples, n_features = iris.data.shape
     target = iris.target_names[iris.target]
     X = scale(iris.data)
-    clf = LogisticRegression(random_state=0).fit(X, target)
+    clf = LogisticRegression().fit(X, target)
 
     pred_d_d = clf.decision_function(X)
 
@@ -346,7 +354,7 @@ def test_inconsistent_input():
 
 def test_write_parameters():
     # Test that we can write to coef_ and intercept_
-    clf = LogisticRegression(random_state=0)
+    clf = LogisticRegression()
     clf.fit(X, Y1)
     clf.coef_[:] = 0
     clf.intercept_[:] = 0
@@ -358,15 +366,15 @@ def test_nan():
     # Regression test for Issue #252: fit used to go into an infinite loop.
     Xnan = np.array(X, dtype=np.float64)
     Xnan[0, 1] = np.nan
-    logistic = LogisticRegression(random_state=0)
+    logistic = LogisticRegression()
 
     with pytest.raises(ValueError):
         logistic.fit(Xnan, Y1)
 
 
-def test_consistency_path():
+def test_consistency_path(global_random_seed):
     # Test that the path algorithm is consistent
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
     y = [1] * 100 + [-1] * 100
     Cs = np.logspace(0, 4, 10)
@@ -383,7 +391,7 @@ def test_consistency_path():
             tol=1e-5,
             solver=solver,
             max_iter=1000,
-            random_state=0,
+            random_state=global_random_seed,
         )
         for i, C in enumerate(Cs):
             lr = LogisticRegression(
@@ -391,7 +399,7 @@ def test_consistency_path():
                 fit_intercept=False,
                 tol=1e-5,
                 solver=solver,
-                random_state=0,
+                random_state=global_random_seed,
                 max_iter=1000,
             )
             lr.fit(X, y)
