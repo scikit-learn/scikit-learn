@@ -561,14 +561,7 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type, xp=N
         )
     # Since we are using the precision of the Cholesky decomposition,
     # `- 0.5 * log_det_precision` becomes `+ log_det_precision_chol`
-    return (
-        -0.5
-        * (
-            n_features * xp.log(xp.asarray(2 * xp.pi, dtype=X.dtype, device=device_))
-            + log_prob
-        )
-        + log_det
-    )
+    return -0.5 * (n_features * math.log(2 * xp.pi) + log_prob) + log_det
 
 
 class GaussianMixture(BaseMixture):
