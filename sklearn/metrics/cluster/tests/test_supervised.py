@@ -1,3 +1,4 @@
+import os
 import warnings
 
 import numpy as np
@@ -523,6 +524,9 @@ def test_fowlkes_mallows_sparse_deprecated(sparse):
         fowlkes_mallows_score([0, 1], [1, 1], sparse=sparse)
 
 
+@pytest.mark.skipif(
+    os.environ.get("SCIPY_ARRAY_API") != "1", reason="SCIPY_ARRAY_API not set to 1."
+)
 def test_contingency_matrix_array_api_sparse():
     with config_context(array_api_dispatch=True):
         res = contingency_matrix(
