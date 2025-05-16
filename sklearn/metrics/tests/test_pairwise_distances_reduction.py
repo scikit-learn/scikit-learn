@@ -103,13 +103,43 @@ def assert_same_distances_for_common_neighbors(
             ) from e
 
 
+def assert_precomputed(precomputed, n_samples_X, n_samples_Y):
+    """
+    Validates a precomputed matrix for compatibility.
+
+    Parameters:
+        precomputed (np.ndarray): The precomputed matrix to validate.
+        n_samples_X (int): The expected number of rows in the matrix.
+        n_samples_Y (int): The expected number of columns in the matrix.
+
+    Raises:
+        AssertionError: If the input is not valid.
+    """
+    # Check if the input is a numpy array
+    if not isinstance(precomputed, np.ndarray):
+        raise AssertionError("Input must be a numpy array.")
+
+    # Check if the array has the correct data type
+    if precomputed.dtype not in [np.float32, np.float64]:
+        raise AssertionError(
+            "Precomputed matrix must be of type float (float32 or float64)."
+        )
+
+    # Check if the array is empty
+    if precomputed.size == 0:
+        raise AssertionError("Precomputed matrix should not be empty.")
+
+    # Check if the dimensions match the expected shape
+    expected_shape = (n_samples_X, n_samples_Y)
+    if precomputed.shape != expected_shape:
+        raise AssertionError(
+            f"Incorrect dimensions for precomputed matrix. "
+            f"Expected: {expected_shape}, Got: {precomputed.shape}."
+        )
+
+
 def assert_no_missing_neighbors(
-    query_idx,
-    dist_row_a,
-    dist_row_b,
-    indices_row_a,
-    indices_row_b,
-    threshold,
+    query_idx, dist_row_a, dist_row_b, indices_row_a, indices_row_b, threshold
 ):
     """Compare the indices of neighbors in two results sets.
 
@@ -346,6 +376,128 @@ ASSERT_RESULT = {
         np.float32,
     ): partial(assert_compatible_radius_results, **FLOAT32_TOLS),
 }
+
+
+
+
+
+
+
+@pytest.mark.parametrize("cls", [ArgKmin, RadiusNeighbors])
+def test_precompute_all_inputs_none(cls):
+    """Test that ValueError is raised when all inputs are None."""
+    with pytest.raises(
+        ValueError, match="Either X and Y or X as precomputed matrix must be provided"
+    ):
+        cls.compute(X=None, Y=None, metric="precomputed")
+
+
+@pytest.mark.parametrize("cls", [ArgKmin, RadiusNeighbors])
+def test_precompute_with_y(cls):
+    """Test that ValueError is raised when Y is provided in precomputed mode."""
+    X = np.random.rand(10, 10)  # Precomputed matrix
+    Y = np.random.rand(10, 5)
+    with pytest.raises(
+        ValueError, match="Y should not be provided with metric='precomputed'"
+    ):
+        cls.compute(X=X, Y=Y, metric="precomputed")
+
+
+@pytest.mark.parametrize("cls", [ArgKmin, RadiusNeighbors])
+def test_precompute_invalid_metric(cls):
+    """Test that ValueError is raised when metric is not 'precomputed' for precomputed input."""
+    X = np.random.rand(10, 10)  # Precomputed matrix
+    with pytest.raises(
+        ValueError, match="Metric must be 'precomputed' when X is a precomputed matrix"
+    ):
+        cls.compute(X=X, Y=None, metric="euclidean")
+
+
+@pytest.mark.parametrize("cls", [ArgKmin, RadiusNeighbors])
+def test_precompute_valid_matrix(cls):
+    """Test valid precomputed matrix with correct dimensions."""
+    X_data = np.random.rand(5, 3)
+    Y_data = np.random.rand(4, 3)
+    D = pairwise_distances(X_data, Y_data)  # Shape: (5, 4)
+    if cls == ArgKmin:
+        result = cls.compute(X=D, k=2, metric="precomputed")
+        assert result.shape == (5, 2)
+    else:  # RadiusNeighbors
+        result = cls.compute(X=D, radius=1.0, metric="precomputed")
+        assert len(result) == 5  # List of indices per sample
+
+
+def test_precompute_consistency():
+    """Test consistency between precomputed and computed distances for ArgKmin."""
+    X_data = np.array([[1, 2], [3, 4], [5, 6]])  # 3 samples, 2 features
+    Y_data = np.array([[7, 8], [9, 10]])  # 2 samples, 2 features
+    D = pairwise_distances(X_data, Y_data)  # Shape: (3, 2)
+    k = 2
+    result_precomputed = ArgKmin.compute(X=D, k=k, metric="precomputed")
+    result_computed = ArgKmin.compute(X=X_data, Y=Y_data, k=k, metric="euclidean")
+    np.testing.assert_allclose(result_precomputed, result_computed, rtol=1e-5)
+
+
+def test_assert_precomputed():
+    """Test validation of precomputed matrix."""
+    n_samples_X, n_samples_Y = 5, 5
+    # Success case
+    valid_matrix = np.random.rand(n_samples_X, n_samples_Y).astype(np.float64)
+    assert_precomputed(valid_matrix, n_samples_X, n_samples_Y)
+
+    # Failure: Not a numpy array
+    with pytest.raises(AssertionError, match="Input must be a numpy array"):
+        assert_precomputed([[1, 2], [3, 4]], n_samples_X, n_samples_Y)
+
+    # Failure: Incorrect dtype
+    invalid_dtype = np.random.randint(0, 10, (n_samples_X, n_samples_Y))
+    with pytest.raises(
+        AssertionError, match="Precomputed matrix must be of type float"
+    ):
+        assert_precomputed(invalid_dtype, n_samples_X, n_samples_Y)
+
+    # Failure: Empty array
+    with pytest.raises(AssertionError, match="Precomputed matrix should not be empty"):
+        assert_precomputed(np.array([]), n_samples_X, n_samples_Y)
+
+    # Failure: Incorrect dimensions
+    incorrect_shape = np.random.rand(n_samples_X, n_samples_X).astype(np.float64)
+    with pytest.raises(
+        AssertionError, match="Incorrect dimensions for precomputed matrix"
+    ):
+        assert_precomputed(incorrect_shape, n_samples_X, n_samples_Y)
+
+
+def assert_precomputed(precomputed, n_samples_X, n_samples_Y):
+    """
+    Validates a precomputed matrix for compatibility.
+
+    Parameters
+    ----------
+    precomputed : np.ndarray
+        The precomputed matrix to validate.
+    n_samples_X : int
+        The expected number of rows in the matrix.
+    n_samples_Y : int
+        The expected number of columns in the matrix.
+
+    Raises
+    ------
+    AssertionError
+        If the input is not a valid numpy array, has incorrect dtype, is empty,
+        or has incorrect dimensions.
+    """
+    if not isinstance(precomputed, np.ndarray):
+        raise AssertionError("Input must be a numpy array")
+    if precomputed.dtype not in [np.float32, np.float64]:
+        raise AssertionError("Precomputed matrix must be of type float")
+    if precomputed.size == 0:
+        raise AssertionError("Precomputed matrix should not be empty")
+    expected_shape = (n_samples_X, n_samples_Y)
+    if precomputed.shape != expected_shape:
+        raise AssertionError(
+            f"Incorrect dimensions for precomputed matrix. Expected: {expected_shape}, Got: {precomputed.shape}"
+        )
 
 
 def test_assert_compatible_argkmin_results():
