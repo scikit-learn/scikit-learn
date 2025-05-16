@@ -1596,7 +1596,7 @@ def test_regression_sample_weight_invariance(name):
     ),
 )
 def test_regression_invalid_sample_weight(name):
-    # Check that `sample_weight` with inconsistent length raises error
+    # Check that `sample_weight` with incorrect length raises error
     n_samples = 50
     random_state = check_random_state(0)
     # regression
