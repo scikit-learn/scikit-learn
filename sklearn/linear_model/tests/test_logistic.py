@@ -699,11 +699,13 @@ def test_ovr_multinomial_iris():
         assert scores.shape == (3, n_cv, 10)
 
 
-def test_logistic_regression_solvers():
+def test_logistic_regression_solvers(global_random_seed):
     """Test solvers converge to the same result."""
-    X, y = make_classification(n_features=10, n_informative=5, random_state=0)
+    X, y = make_classification(
+        n_samples=200, n_features=10, n_informative=5, random_state=global_random_seed
+    )
 
-    params = dict(fit_intercept=False, random_state=42)
+    params = dict(C=0.1, fit_intercept=False, random_state=global_random_seed)
 
     regressors = {
         solver: LogisticRegression(solver=solver, **params).fit(X, y)
@@ -719,13 +721,19 @@ def test_logistic_regression_solvers():
 # TODO(1.8): remove filterwarnings after the deprecation of multi_class
 @pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize("fit_intercept", [False, True])
-def test_logistic_regression_solvers_multiclass(fit_intercept):
+def test_logistic_regression_solvers_multiclass(global_random_seed, fit_intercept):
     """Test solvers converge to the same result for multiclass problems."""
     X, y = make_classification(
-        n_samples=20, n_features=20, n_informative=10, n_classes=3, random_state=0
+        n_samples=200,
+        n_features=20,
+        n_informative=10,
+        n_classes=3,
+        random_state=global_random_seed,
     )
     tol = 1e-8
-    params = dict(fit_intercept=fit_intercept, tol=tol, random_state=42)
+    params = dict(
+        C=0.1, fit_intercept=fit_intercept, tol=tol, random_state=global_random_seed
+    )
 
     # Override max iteration count for specific solvers to allow for
     # proper convergence.
