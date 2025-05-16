@@ -16,12 +16,20 @@ importances can be high even for features that are not predictive of the target
 variable, as long as the model has the capacity to use them to overfit.
 
 This example shows how to use Permutation Importances as an alternative that
-can mitigate those limitations.
+can mitigate those limitations. It also introduces a new method from recent
+litterature on random forests that allows removing the aforementioned biases
+from MDI while keeping its computational efficiency.
 
 .. rubric:: References
 
 * :doi:`L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
   2001. <10.1023/A:1010933404324>`
+* :doi:`Zhou, Z., & Hooker, G., "Unbiased measurement of feature importance in
+  tree-based methods". ACM Transactions on Knowledge Discovery from Data, 15(2),
+  Article 26, 2020. <10.1145/3429445>`
+* :doi:`Li, X., Wang, Y., Basu, S., Kumbier, K., & Yu, B., "A debiased MDI
+  feature importance measure for random forests". Proceedings of the 33rd Conference on
+  Neural Information Processing Systems (NeurIPS 2019). <10.48550/arXiv.1906.10845>`
 
 """
 
@@ -87,7 +95,7 @@ preprocessing = ColumnTransformer(
 rf = Pipeline(
     [
         ("preprocess", preprocessing),
-        ("classifier", RandomForestClassifier(random_state=42)),
+        ("classifier", RandomForestClassifier(random_state=42, oob_score=True)),
     ]
 )
 rf.fit(X_train, y_train)
@@ -98,9 +106,16 @@ rf.fit(X_train, y_train)
 # Before inspecting the feature importances, it is important to check that
 # the model predictive performance is high enough. Indeed, there would be little
 # interest in inspecting the important features of a non-predictive model.
+#
+# By default, random forests subsample a part of the dataset to train each tree, a
+# procedure known as bagging, leaving aside "out-of-bag" (oob) samples.
+# These samples can be leveraged to compute an accuracy score independantly of the
+# training samples, when setting the parameter `oob_score = True`.
+# This score should be close to the test score.
 
 print(f"RF train accuracy: {rf.score(X_train, y_train):.3f}")
 print(f"RF test accuracy: {rf.score(X_test, y_test):.3f}")
+print(f"RF out-of-bag accuracy: {rf[-1].oob_score_:.3f}")
 
 # %%
 # Here, one can observe that the train accuracy is very high (the forest model
@@ -140,17 +155,27 @@ print(f"RF test accuracy: {rf.score(X_test, y_test):.3f}")
 #
 # The fact that we use training set statistics explains why both the
 # `random_num` and `random_cat` features have a non-null importance.
+#
+# The attribute `ufi_feature_importances_`, available as soon as `oob_score` is set to
+# `True`, uses the out-of-bag samples of each tree to correct these biases.
+# It succesfully detects the uninformative features by assigning them a near zero
+# (here slightly negative) importance value.
+# The prefix `ufi` refers to the name given by the authors to their method. An other
+# method is available with the attribute `mdi_oob_feature_importances_`. See references
+# for more details on these methods.
 import pandas as pd
 
 feature_names = rf[:-1].get_feature_names_out()
 
-mdi_importances = pd.Series(
-    rf[-1].feature_importances_, index=feature_names
-).sort_values(ascending=True)
+mdi_importances = pd.DataFrame(index=feature_names)
+mdi_importances.loc[:, "unbiased mdi"] = rf[-1].ufi_feature_importances_
+mdi_importances.loc[:, "mdi"] = rf[-1].feature_importances_
+mdi_importances = mdi_importances.sort_values(ascending=True, by="mdi")
 
 # %%
 ax = mdi_importances.plot.barh()
 ax.set_title("Random Forest Feature Importances (MDI)")
+ax.axvline(x=0, color="k", linestyle="--")
 ax.figure.tight_layout()
 
 # %%
@@ -232,6 +257,8 @@ test_importances = pd.DataFrame(
 )
 
 # %%
+import matplotlib.pyplot as plt
+
 for name, importances in zip(["train", "test"], [train_importances, test_importances]):
     ax = importances.plot.box(vert=False, whis=10)
     ax.set_title(f"Permutation Importances ({name} set)")
@@ -239,8 +266,25 @@ for name, importances in zip(["train", "test"], [train_importances, test_importa
     ax.axvline(x=0, color="k", linestyle="--")
     ax.figure.tight_layout()
 
+plt.figure()
+umdi_importances = pd.Series(
+    rf[-1].ufi_feature_importances_[sorted_importances_idx],
+    index=feature_names[sorted_importances_idx],
+)
+ax = umdi_importances.plot.barh()
+ax.set_title("Debiased MDI")
+ax.axvline(x=0, color="k", linestyle="--")
+ax.figure.tight_layout()
 # %%
 # Now, we can observe that on both sets, the `random_num` and `random_cat`
-# features have a lower importance compared to the overfitting random forest.
-# However, the conclusions regarding the importance of the other features are
+# features have a lower permuatation importance compared to the overfitting random
+# forest. However, the conclusions regarding the importance of the other features are
 # still valid.
+#
+# These accurate permutation importances match the results obtained with oob-based
+# impurity methods on this new random forest.
+#
+# Do note that permutation importances are costly as they require refitting the whole
+# model for every permutation of each feature. When working on large datasets with
+# random forests, it may be preferable to use debiased impurity based feature importance
+# measures.
