@@ -156,7 +156,7 @@ def enet_coordinate_descent(
     cdef floating R_norm2
     cdef floating w_norm2
     cdef floating l1_norm
-    cdef floating const
+    cdef floating const_
     cdef floating A_norm2
     cdef unsigned int ii
     cdef unsigned int n_iter = 0
@@ -242,18 +242,18 @@ def enet_coordinate_descent(
                 w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
 
                 if (dual_norm_XtA > alpha):
-                    const = alpha / dual_norm_XtA
-                    A_norm2 = R_norm2 * (const ** 2)
+                    const_ = alpha / dual_norm_XtA
+                    A_norm2 = R_norm2 * (const_ ** 2)
                     gap = 0.5 * (R_norm2 + A_norm2)
                 else:
-                    const = 1.0
+                    const_ = 1.0
                     gap = R_norm2
 
                 l1_norm = _asum(n_features, &w[0], 1)
 
                 gap += (alpha * l1_norm
-                        - const * _dot(n_samples, &R[0], 1, &y[0], 1)  # np.dot(R.T, y)
-                        + 0.5 * beta * (1 + const ** 2) * (w_norm2))
+                        - const_ * _dot(n_samples, &R[0], 1, &y[0], 1)  # np.dot(R.T, y)
+                        + 0.5 * beta * (1 + const_ ** 2) * (w_norm2))
 
                 if gap < tol:
                     # return if we reached desired tolerance
@@ -355,7 +355,7 @@ def sparse_enet_coordinate_descent(
     cdef floating R_norm2
     cdef floating w_norm2
     cdef floating l1_norm
-    cdef floating const
+    cdef floating const_
     cdef floating A_norm2
     cdef floating normalize_sum
     cdef unsigned int ii
@@ -532,18 +532,18 @@ def sparse_enet_coordinate_descent(
                 # w_norm2 = np.dot(w, w)
                 w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
                 if (dual_norm_XtA > alpha):
-                    const = alpha / dual_norm_XtA
-                    A_norm2 = R_norm2 * const**2
+                    const_ = alpha / dual_norm_XtA
+                    A_norm2 = R_norm2 * const_**2
                     gap = 0.5 * (R_norm2 + A_norm2)
                 else:
-                    const = 1.0
+                    const_ = 1.0
                     gap = R_norm2
 
                 l1_norm = _asum(n_features, &w[0], 1)
 
                 gap += (alpha * l1_norm
-                        - const * _dot(n_samples, &R[0], 1, &y[0], 1)  # np.dot(R.T, y)
-                        + 0.5 * beta * (1 + const ** 2) * w_norm2)
+                        - const_ * _dot(n_samples, &R[0], 1, &y[0], 1)  # np.dot(R.T, y)
+                        + 0.5 * beta * (1 + const_ ** 2) * w_norm2)
 
                 if gap < tol:
                     # return if we reached desired tolerance
@@ -708,19 +708,19 @@ def enet_coordinate_descent_gram(
                 w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
 
                 if (dual_norm_XtA > alpha):
-                    const = alpha / dual_norm_XtA
-                    A_norm2 = R_norm2 * (const ** 2)
+                    const_ = alpha / dual_norm_XtA
+                    A_norm2 = R_norm2 * (const_ ** 2)
                     gap = 0.5 * (R_norm2 + A_norm2)
                 else:
-                    const = 1.0
+                    const_ = 1.0
                     gap = R_norm2
 
                 # The call to asum is equivalent to the L1 norm of w
                 gap += (
                     alpha * _asum(n_features, &w[0], 1)
-                    - const * y_norm2
-                    + const * q_dot_w
-                    + 0.5 * beta * (1 + const ** 2) * w_norm2
+                    - const_ * y_norm2
+                    + const_ * q_dot_w
+                    + 0.5 * beta * (1 + const_ ** 2) * w_norm2
                 )
 
                 if gap < tol:
@@ -928,11 +928,11 @@ def enet_coordinate_descent_multi_task(
                 R_norm = _nrm2(n_samples * n_tasks, &R[0, 0], 1)
                 w_norm = _nrm2(n_features * n_tasks, &W[0, 0], 1)
                 if (dual_norm_XtA > l1_reg):
-                    const = l1_reg / dual_norm_XtA
-                    A_norm = R_norm * const
+                    const_ = l1_reg / dual_norm_XtA
+                    A_norm = R_norm * const_
                     gap = 0.5 * (R_norm ** 2 + A_norm ** 2)
                 else:
-                    const = 1.0
+                    const_ = 1.0
                     gap = R_norm ** 2
 
                 # ry_sum = np.sum(R * y)
@@ -945,8 +945,8 @@ def enet_coordinate_descent_multi_task(
 
                 gap += (
                     l1_reg * l21_norm
-                    - const * ry_sum
-                    + 0.5 * l2_reg * (1 + const ** 2) * (w_norm ** 2)
+                    - const_ * ry_sum
+                    + 0.5 * l2_reg * (1 + const_ ** 2) * (w_norm ** 2)
                 )
 
                 if gap <= tol:
