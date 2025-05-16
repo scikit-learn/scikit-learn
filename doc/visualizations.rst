@@ -10,7 +10,7 @@ visual adjustments without recalculation. We provide `Display` classes that
 expose two methods for creating plots: `from_estimator` and
 `from_predictions`.
 
-The `from_estimator` method generates a `Display` object from a fitted estimator and
+The `from_estimator` method generates a `Display` object from a fitted estimator,
 input data (`X`, `y`), and a plot.
 The `from_predictions` method creates a `Display` object from true and predicted
 values (`y_test`, `y_pred`), and a plot. Using `from_predictions` avoids having to
