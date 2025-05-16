@@ -372,8 +372,7 @@ Thus, one can create the training/test sets using numpy indexing::
 Repeated K-Fold
 ^^^^^^^^^^^^^^^
 
-:class:`RepeatedKFold` repeats K-Fold n times. It can be used when one
-requires to run :class:`KFold` n times, producing different splits in
+:class:`RepeatedKFold` repeats :class:`KFold` :math:`n` times, producing different splits in
 each repetition.
 
 Example of 2-fold K-Fold repeated 2 times::
@@ -392,7 +391,7 @@ Example of 2-fold K-Fold repeated 2 times::
   [1 3] [0 2]
 
 
-Similarly, :class:`RepeatedStratifiedKFold` repeats Stratified K-Fold n times
+Similarly, :class:`RepeatedStratifiedKFold` repeats :class:`StratifiedKFold` :math:`n` times
 with different randomization in each repetition.
 
 .. _leave_one_out:
@@ -434,10 +433,10 @@ folds are virtually identical to each other and to the model built from the
 entire training set.
 
 However, if the learning curve is steep for the training size in question,
-then 5- or 10- fold cross validation can overestimate the generalization error.
+then 5 or 10-fold cross validation can overestimate the generalization error.
 
-As a general rule, most authors, and empirical evidence, suggest that 5- or 10-
-fold cross validation should be preferred to LOO.
+As a general rule, most authors and empirical evidence suggest that 5 or 10-fold
+cross validation should be preferred to LOO.
 
 .. dropdown:: References
 
@@ -553,10 +552,10 @@ relative class frequencies are approximately preserved in each fold.
 
 .. _stratified_k_fold:
 
-Stratified k-fold
+Stratified K-fold
 ^^^^^^^^^^^^^^^^^
 
-:class:`StratifiedKFold` is a variation of *k-fold* which returns *stratified*
+:class:`StratifiedKFold` is a variation of *K-fold* which returns *stratified*
 folds: each set contains approximately the same percentage of samples of each
 target class as the complete set.
 
@@ -648,10 +647,10 @@ parameter.
 
 .. _group_k_fold:
 
-Group k-fold
+Group K-fold
 ^^^^^^^^^^^^
 
-:class:`GroupKFold` is a variation of k-fold which ensures that the same group is
+:class:`GroupKFold` is a variation of K-fold which ensures that the same group is
 not represented in both testing and training sets. For example if the data is
 obtained from different subjects with several samples per-subject and if the
 model is flexible enough to learn from highly person specific features it
