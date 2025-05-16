@@ -1990,7 +1990,7 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
 
 def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
     """Handle the callable case for pairwise_{distances,kernels}."""
-    xp, _ = get_namespace(X)
+    xp, _, device = get_namespace_and_device(X)
     X, Y = check_pairwise_arrays(
         X,
         Y,
@@ -2016,7 +2016,7 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
 
     if X is Y:
         # Only calculate metric for upper triangle
-        out = xp.zeros((X.shape[0], Y.shape[0]), dtype=dtype_float)
+        out = xp.zeros((X.shape[0], Y.shape[0]), dtype=dtype_float, device=device)
         iterator = itertools.combinations(range(X.shape[0]), 2)
         for i, j in iterator:
             x = _get_slice(X, i)
