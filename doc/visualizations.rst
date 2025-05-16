@@ -13,21 +13,23 @@ expose two methods for creating plots: `from_estimator` and
 The `from_estimator` method generates a `Display` object from a fitted estimator and
 input data (`X`, `y`), and a plot.
 The `from_predictions` method creates a `Display` object from true and predicted
-values (`y_test`, `y_pred`), and a plot.
+values (`y_test`, `y_pred`), and a plot. Using `from_predictions` avoids having to
+recompute predictions, but the user needs to take care that the prediction values
+passed correspond to the `pos_label`.
 
 For :term:`predict_proba`, the column corresponding to the probability estimate of
 the `pos_label` class is selected while for :term:`decision_function`, the score is
 reverted (i.e. multiply by -1) when `pos_label` is not the label 1.
 
 The `Display` object stores the computed values (e.g., metric values or
-feature importance) required for plotting with Matplotlib. These values the
+feature importance) required for plotting with Matplotlib. These values are the
 results derived from the raw predictions passed to `from_predictions`, or
 an estimator and `X` passed to `from_estimator`.
 
 Display objects have a plot method that creates a matplotlib plot once the display
 object has been initialized (note that we recommend that display objects are created
-via `from_estimator` or `from_predictions` instead of initialized directly). The plot
-method allows adding to an existing plot by passing the existing plots
+via `from_estimator` or `from_predictions` instead of initialized directly).
+The plot method allows adding to an existing plot by passing the existing plots
 :class:`matplotlib.axes.Axes` to the `ax` parameter.
 
 In the following example, we plot a ROC curve for a fitted Logistic Regression
@@ -80,11 +82,11 @@ If you already have the prediction values, you could instead use
 
 
 The returned `clf_disp` object allows us to add another curve to the already computed
-ROC curve. In this case, the `clf_disp` is a :class:`~sklearn.metrics.RocCurveDisplay` that stores
-the computed values as attributes called `roc_auc`, `fpr`, and `tpr`.
+ROC curve. In this case, the `clf_disp` is a :class:`~sklearn.metrics.RocCurveDisplay`
+that stores the computed values as attributes called `roc_auc`, `fpr`, and `tpr`.
 
-Next, we train a random forest classifier and plot the previously computed ROC curve again
-by using the `plot` method of the `Display` object.
+Next, we train a random forest classifier and plot the previously computed ROC curve
+again by using the `plot` method of the `Display` object.
 
 .. plot::
    :context: close-figs
