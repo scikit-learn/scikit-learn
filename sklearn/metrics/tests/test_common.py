@@ -1602,9 +1602,16 @@ def test_regression_invalid_sample_weight(name):
     # regression
     y_true = random_state.random_sample(size=(n_samples,))
     y_pred = random_state.random_sample(size=(n_samples,))
-    sample_weight = random_state.random_sample(size=(n_samples - 1,))
     metric = ALL_METRICS[name]
+
+    sample_weight = random_state.random_sample(size=(n_samples - 1,))
     with pytest.raises(ValueError, match="Found input variables with inconsistent"):
+        metric(y_true, y_pred, sample_weight=sample_weight)
+
+    sample_weight = random_state.random_sample(size=(n_samples * 2,)).reshape(
+        (n_samples, 2)
+    )
+    with pytest.raises(ValueError, match="Sample weights must be 1D array or scalar"):
         metric(y_true, y_pred, sample_weight=sample_weight)
 
 
