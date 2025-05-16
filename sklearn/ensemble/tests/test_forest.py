@@ -8,6 +8,7 @@ Testing for the forest module (sklearn.ensemble.forest).
 import itertools
 import math
 import pickle
+import re
 from collections import defaultdict
 from functools import partial
 from itertools import combinations, product
@@ -21,7 +22,8 @@ from scipy.special import comb
 
 import sklearn
 from sklearn import clone, datasets
-from sklearn.datasets import make_classification, make_hastie_10_2
+from sklearn.base import is_classifier
+from sklearn.datasets import make_classification, make_hastie_10_2, make_regression
 from sklearn.decomposition import TruncatedSVD
 from sklearn.dummy import DummyRegressor
 from sklearn.ensemble import (
@@ -45,6 +47,7 @@ from sklearn.metrics import (
 from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
 from sklearn.svm import LinearSVC
 from sklearn.tree._classes import SPARSE_SPLITTERS
+from sklearn.utils import shuffle
 from sklearn.utils._testing import (
     _convert_container,
     assert_allclose,
@@ -53,6 +56,10 @@ from sklearn.utils._testing import (
     assert_array_equal,
     ignore_warnings,
     skip_if_no_parallel,
+)
+from sklearn.utils.estimator_checks import (
+    _enforce_estimator_tags_X,
+    _enforce_estimator_tags_y,
 )
 from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, CSR_CONTAINERS
 from sklearn.utils.multiclass import type_of_target
@@ -297,46 +304,102 @@ def test_probability(name):
         product(FOREST_REGRESSORS, ["squared_error", "friedman_mse", "absolute_error"]),
     ),
 )
-def test_importances(dtype, name, criterion):
+@pytest.mark.parametrize(
+    "X_type", ["array", "sparse_csr", "sparse_csc", "sparse_csr_array"]
+)
+def test_importances(dtype, name, criterion, X_type, global_random_seed):
+    if criterion == "absolute_error":
+        pytest.skip()
     tolerance = 0.01
     if name in FOREST_REGRESSORS and criterion == "absolute_error":
         tolerance = 0.05
-
     # cast as dtype
     X = X_large.astype(dtype, copy=False)
     y = y_large.astype(dtype, copy=False)
+    X = _convert_container(X, constructor_name=X_type)
 
     ForestEstimator = FOREST_ESTIMATORS[name]
+    common_params = dict(
+        n_estimators=10,
+        criterion=criterion,
+        oob_score=True,
+        bootstrap=True,
+        random_state=global_random_seed,
+    )
 
-    est = ForestEstimator(n_estimators=10, criterion=criterion, random_state=0)
+    est = ForestEstimator(**common_params)
     est.fit(X, y)
-    importances = est.feature_importances_
 
-    # The forest estimator can detect that only the first 3 features of the
-    # dataset are informative:
-    n_important = np.sum(importances > 0.1)
-    assert importances.shape[0] == 10
-    assert n_important == 3
-    assert np.all(importances[:3] > 0.1)
+    sample_weight = check_random_state(global_random_seed).randint(1, 10, X.shape[0])
+    est_sw = ForestEstimator(**common_params)
+    est_sw.fit(X, y, sample_weight=sample_weight)
 
-    # Check with parallel
-    importances = est.feature_importances_
-    est.set_params(n_jobs=2)
-    importances_parallel = est.feature_importances_
-    assert_array_almost_equal(importances, importances_parallel)
+    est_sw_05 = ForestEstimator(**common_params)
+    est_sw_05.fit(X, y, sample_weight=0.5 * sample_weight)
 
-    # Check with sample weights
-    sample_weight = check_random_state(0).randint(1, 10, len(X))
-    est = ForestEstimator(n_estimators=10, random_state=0, criterion=criterion)
-    est.fit(X, y, sample_weight=sample_weight)
-    importances = est.feature_importances_
-    assert np.all(importances >= 0.0)
+    est_sw_100 = ForestEstimator(**common_params)
+    est_sw_100.fit(X, y, sample_weight=100 * sample_weight)
 
-    for scale in [0.5, 100]:
-        est = ForestEstimator(n_estimators=10, random_state=0, criterion=criterion)
-        est.fit(X, y, sample_weight=scale * sample_weight)
-        importances_bis = est.feature_importances_
-        assert np.abs(importances - importances_bis).mean() < tolerance
+    for importance_attribute_name in [
+        "feature_importances_",
+        "ufi_feature_importances_",
+        "mdi_oob_feature_importances_",
+    ]:
+        if (
+            name in FOREST_REGRESSORS
+            and criterion != "squared_error"
+            and importance_attribute_name != "feature_importances_"
+        ):
+            with pytest.raises(
+                AttributeError,
+                match="Unbiased feature importance only available for"
+                " regression with split criterion MSE",
+            ):
+                importances = getattr(est, importance_attribute_name)
+        elif (
+            name in FOREST_CLASSIFIERS
+            and importance_attribute_name == "mdi_oob_feature_importances_"
+            and criterion != "gini"
+        ):
+            with pytest.raises(
+                AttributeError,
+                match="mdi_oob feature importance only available for"
+                " classification with split criterion 'gini'",
+            ):
+                importances = getattr(est, importance_attribute_name)
+        elif (
+            name in FOREST_CLASSIFIERS
+            and importance_attribute_name == "mdi_oob_feature_importances_"
+            and criterion not in ["gini", "log_loss", "entropy"]
+        ):
+            with pytest.raises(
+                AttributeError,
+                match="ufi feature importance only available for"
+                " classification with split criterion 'gini', 'log_loss' or 'entropy'.",
+            ):
+                importances = getattr(est, importance_attribute_name)
+        else:
+            importances = getattr(est, importance_attribute_name)
+            # The forest estimator can detect that only the first 3 features of the
+            # dataset are informative:
+            n_important = np.sum(importances > 0.1)
+            assert importances.shape[0] == 10
+            assert n_important == 3
+            assert np.all(importances[:3] > 0.1)
+
+            # Check with parallel
+            importances = getattr(est, importance_attribute_name)
+            est.set_params(n_jobs=2)
+            importances_parallel = getattr(est, importance_attribute_name)
+            assert_array_almost_equal(importances, importances_parallel)
+
+            # Check with sample weights
+            importances_sw = getattr(est_sw, importance_attribute_name)
+
+            importances_sw_05 = getattr(est_sw_05, importance_attribute_name)
+            assert np.abs(importances_sw - importances_sw_05).mean() < tolerance
+            importances_sw_100 = getattr(est_sw_100, importance_attribute_name)
+            assert np.abs(importances_sw - importances_sw_100).mean() < tolerance
 
 
 def test_importances_asymptotic():
@@ -448,6 +511,51 @@ def test_importances_asymptotic():
     assert np.abs(true_importances - importances).mean() < 0.01
 
 
+@pytest.mark.parametrize("estimator", [RandomForestClassifier, RandomForestRegressor])
+def test_unbiased_feature_importance_asymptotics(estimator, global_random_seed):
+    # Test that ubiased feature importances and
+    # regular mdi converge with large sample size
+
+    rng = check_random_state(global_random_seed)
+    X_large, y_large = make_classification(
+        n_samples=100000, n_features=4, n_informative=2, n_redundant=0, random_state=rng
+    )
+    sub_sample_sizes = [100, 1000, 10000, 50000, 100000]
+
+    params = dict(
+        n_estimators=50,
+        oob_score=True,
+        bootstrap=True,
+        max_depth=5,
+        random_state=rng,
+    )
+
+    ufi_res = []
+    mdi_oob_res = []
+    for sample_size in sub_sample_sizes:
+        sub_sample_indices = rng.choice(
+            list(range(100000)), size=sample_size, replace=False
+        )
+        X_small = X_large[sub_sample_indices]
+        y_small = y_large[sub_sample_indices]
+        est = estimator(**params)
+        est.fit(X_small, y_small)
+        ufi_res.append(
+            np.linalg.norm(est.feature_importances_ - est.ufi_feature_importances_)
+        )
+        mdi_oob_res.append(
+            np.linalg.norm(est.feature_importances_ - est.mdi_oob_feature_importances_)
+        )
+        if ufi_res[-1] < 1e-1 and mdi_oob_res[-1] < 1e-1:
+            # Feature importance measures converged
+            break
+
+    ufi_res = np.array(ufi_res)
+    mdi_oob_res = np.array(mdi_oob_res)
+    assert np.all(ufi_res[:-1] > ufi_res[1:])
+    assert np.all(mdi_oob_res[:-1] > mdi_oob_res[1:])
+
+
 @pytest.mark.parametrize("name", FOREST_ESTIMATORS)
 def test_unfitted_feature_importances(name):
     err_msg = (
@@ -456,6 +564,21 @@ def test_unfitted_feature_importances(name):
     )
     with pytest.raises(NotFittedError, match=err_msg):
         getattr(FOREST_ESTIMATORS[name](), "feature_importances_")
+
+
+@pytest.mark.parametrize("name", FOREST_ESTIMATORS)
+@pytest.mark.parametrize(
+    "unbiased_importance_attribute_name",
+    [
+        "ufi_feature_importances_",
+        "mdi_oob_feature_importances_",
+    ],
+)
+def test_non_OOB_unbiased_feature_importances(name, unbiased_importance_attribute_name):
+    clf = FOREST_ESTIMATORS[name]().fit(X_large, y_large)
+    assert not hasattr(clf, unbiased_importance_attribute_name)
+    assert not hasattr(clf, "oob_score_")
+    assert not hasattr(clf, "oob_decision_function_")
 
 
 @pytest.mark.parametrize("ForestClassifier", FOREST_CLASSIFIERS.values())
@@ -1161,21 +1284,36 @@ def test_1d_input(name):
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
-def test_class_weights(name):
+@pytest.mark.parametrize(
+    "oob_score, importance_attribute_name",
+    [
+        (False, "feature_importances_"),
+        (True, "ufi_feature_importances_"),
+        (True, "mdi_oob_feature_importances_"),
+    ],
+)
+def test_class_weights(name, oob_score, importance_attribute_name):
     # Check class_weights resemble sample_weights behavior.
     ForestClassifier = FOREST_CLASSIFIERS[name]
 
     # Iris is balanced, so no effect expected for using 'balanced' weights
-    clf1 = ForestClassifier(random_state=0)
+    clf1 = ForestClassifier(bootstrap=True, oob_score=oob_score, random_state=0)
     clf1.fit(iris.data, iris.target)
-    clf2 = ForestClassifier(class_weight="balanced", random_state=0)
+    clf2 = ForestClassifier(
+        bootstrap=True, oob_score=oob_score, class_weight="balanced", random_state=0
+    )
     clf2.fit(iris.data, iris.target)
-    assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
+    assert_almost_equal(
+        getattr(clf1, importance_attribute_name),
+        getattr(clf2, importance_attribute_name),
+    )
 
     # Make a multi-output problem with three copies of Iris
     iris_multi = np.vstack((iris.target, iris.target, iris.target)).T
     # Create user-defined weights that should balance over the outputs
     clf3 = ForestClassifier(
+        bootstrap=True,
+        oob_score=False,
         class_weight=[
             {0: 2.0, 1: 2.0, 2: 1.0},
             {0: 2.0, 1: 1.0, 2: 2.0},
@@ -1184,9 +1322,14 @@ def test_class_weights(name):
         random_state=0,
     )
     clf3.fit(iris.data, iris_multi)
+    # We can't use oob_score=True on multiclass-multioutput
+    # So we use the regular feature_importances_
     assert_almost_equal(clf2.feature_importances_, clf3.feature_importances_)
+
     # Check against multi-output "balanced" which should also have no effect
-    clf4 = ForestClassifier(class_weight="balanced", random_state=0)
+    clf4 = ForestClassifier(
+        bootstrap=True, oob_score=False, class_weight="balanced", random_state=0
+    )
     clf4.fit(iris.data, iris_multi)
     assert_almost_equal(clf3.feature_importances_, clf4.feature_importances_)
 
@@ -1194,18 +1337,28 @@ def test_class_weights(name):
     sample_weight = np.ones(iris.target.shape)
     sample_weight[iris.target == 1] *= 100
     class_weight = {0: 1.0, 1: 100.0, 2: 1.0}
-    clf1 = ForestClassifier(random_state=0)
+    clf1 = ForestClassifier(bootstrap=True, oob_score=oob_score, random_state=0)
     clf1.fit(iris.data, iris.target, sample_weight)
-    clf2 = ForestClassifier(class_weight=class_weight, random_state=0)
+    clf2 = ForestClassifier(
+        bootstrap=True, oob_score=oob_score, class_weight=class_weight, random_state=0
+    )
     clf2.fit(iris.data, iris.target)
-    assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
+    assert_almost_equal(
+        getattr(clf1, importance_attribute_name),
+        getattr(clf2, importance_attribute_name),
+    )
 
     # Check that sample_weight and class_weight are multiplicative
-    clf1 = ForestClassifier(random_state=0)
+    clf1 = ForestClassifier(bootstrap=True, oob_score=oob_score, random_state=0)
     clf1.fit(iris.data, iris.target, sample_weight**2)
-    clf2 = ForestClassifier(class_weight=class_weight, random_state=0)
+    clf2 = ForestClassifier(
+        bootstrap=True, oob_score=oob_score, class_weight=class_weight, random_state=0
+    )
     clf2.fit(iris.data, iris.target, sample_weight)
-    assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
+    assert_almost_equal(
+        getattr(clf1, importance_attribute_name),
+        getattr(clf2, importance_attribute_name),
+    )
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
@@ -1518,12 +1671,507 @@ def test_forest_feature_importances_sum():
     assert math.isclose(1, clf.feature_importances_.sum(), abs_tol=1e-7)
 
 
+@pytest.mark.parametrize(
+    "unbiased_importance_attribute_name",
+    [
+        "ufi_feature_importances_",
+        "mdi_oob_feature_importances_",
+    ],
+)
+def test_forest_unbiased_feature_importances_sum(unbiased_importance_attribute_name):
+    X, y = make_classification(
+        n_samples=15, n_informative=3, random_state=1, n_classes=3
+    )
+    clf = RandomForestClassifier(
+        min_samples_leaf=5, random_state=42, n_estimators=200, oob_score=True
+    ).fit(X, y)
+    assert math.isclose(
+        1, getattr(clf, unbiased_importance_attribute_name).sum(), abs_tol=1e-7
+    )
+
+
 def test_forest_degenerate_feature_importances():
     # build a forest of single node trees. See #13636
     X = np.zeros((10, 10))
     y = np.ones((10,))
     gbr = RandomForestRegressor(n_estimators=10).fit(X, y)
     assert_array_equal(gbr.feature_importances_, np.zeros(10, dtype=np.float64))
+
+
+@pytest.mark.parametrize(
+    "unbiased_importance_attribute_name",
+    [
+        "ufi_feature_importances_",
+        "mdi_oob_feature_importances_",
+    ],
+)
+def test_forest_degenerate_unbiased_feature_importances(
+    unbiased_importance_attribute_name,
+):
+    # build a forest of single node trees. See #13636
+    X = np.zeros((10, 10))
+    y = np.ones((10,))
+    with pytest.warns(
+        UserWarning,
+        match=re.escape(
+            "Some inputs do not have OOB scores. This probably means too few trees were"
+            " used to compute any reliable OOB estimates."
+        ),
+    ):
+        clf = RandomForestClassifier(n_estimators=10, oob_score=True).fit(X, y)
+    assert_array_equal(
+        getattr(clf, unbiased_importance_attribute_name), np.zeros(10, dtype=np.float64)
+    )
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
+@pytest.mark.parametrize(
+    "criterion, method", [("gini", "ufi"), ("gini", "mdi_oob"), ("log_loss", "ufi")]
+)
+def test_unbiased_feature_importance_on_train(
+    name, criterion, method, global_random_seed
+):
+    from sklearn.ensemble._forest import _generate_sample_indices
+
+    n_samples = 15
+    X, y = make_classification(
+        n_samples=n_samples,
+        n_informative=3,
+        random_state=global_random_seed,
+        n_classes=2,
+    )
+    clf = FOREST_ESTIMATORS[name](
+        n_estimators=1,
+        bootstrap=True,
+        random_state=global_random_seed,
+        criterion=criterion,
+    )
+    clf.fit(X, y)
+    method_on_train = 0
+    for tree_idx, tree in enumerate(clf.estimators_):
+        in_bag_indicies = _generate_sample_indices(
+            clf.estimators_[tree_idx].random_state, n_samples, n_samples
+        )
+        X_in_bag = clf._validate_X_predict(X)[in_bag_indicies]
+        y_in_bag = y.reshape(-1, 1)[in_bag_indicies]
+        method_on_train_tree = (
+            tree.compute_unbiased_feature_importance_and_oob_predictions(
+                X_in_bag,
+                y_in_bag,
+                sample_weight=np.ones((n_samples,), dtype=np.float64),
+                method=method,
+            )[0]
+        )
+        method_on_train += method_on_train_tree / method_on_train_tree.sum()
+    method_on_train /= clf.n_estimators
+    method_on_train /= method_on_train.sum()
+    assert_allclose(clf.feature_importances_, method_on_train, rtol=0, atol=1e-12)
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
+def test_ufi_match_paper(name, global_random_seed):
+    def paper_ufi(clf, X, y, is_classification):
+        """
+        Code from: Unbiased Measurement of Feature Importance in Tree-Based Methods
+        https://arxiv.org/pdf/1903.05179
+        https://github.com/ZhengzeZhou/unbiased-feature-importance/blob/master/UFI.py
+        """
+        from sklearn.ensemble._forest import _generate_sample_indices
+
+        feature_importance = np.array([0.0] * X.shape[1])
+        n_estimators = clf.n_estimators
+
+        n_samples = X.shape[0]
+        inbag_counts = np.zeros((n_samples, clf.n_estimators))
+        for tree_idx, tree in enumerate(clf.estimators_):
+            sample_idx = _generate_sample_indices(
+                tree.random_state, n_samples, n_samples
+            )
+            inbag_counts[:, tree_idx] = np.bincount(sample_idx, minlength=n_samples)
+
+        for tree_idx, tree in enumerate(clf.estimators_):
+            fi_tree = np.array([0.0] * X.shape[1])
+
+            n_nodes = tree.tree_.node_count
+
+            tree_X_inb = X.repeat((inbag_counts[:, tree_idx]).astype("int"), axis=0)
+            tree_y_inb = y.repeat((inbag_counts[:, tree_idx]).astype("int"), axis=0)
+            decision_path_inb = tree.decision_path(tree_X_inb).todense()
+
+            tree_X_oob = X[inbag_counts[:, tree_idx] == 0]
+            tree_y_oob = y[inbag_counts[:, tree_idx] == 0]
+            decision_path_oob = tree.decision_path(tree_X_oob).todense()
+
+            impurity = [0] * n_nodes
+
+            has_oob_samples_in_children = [True] * n_nodes
+
+            weighted_n_node_samples = (
+                np.array(np.sum(decision_path_inb, axis=0))[0] / tree_X_inb.shape[0]
+            )
+
+            for node_idx in range(n_nodes):
+                y_innode_oob = tree_y_oob[
+                    np.array(decision_path_oob[:, node_idx])
+                    .ravel()
+                    .nonzero()[0]
+                    .tolist()
+                ]
+                y_innode_inb = tree_y_inb[
+                    np.array(decision_path_inb[:, node_idx])
+                    .ravel()
+                    .nonzero()[0]
+                    .tolist()
+                ]
+
+                if len(y_innode_oob) == 0:
+                    if sum(tree.tree_.children_left == node_idx) > 0:
+                        parent_node = np.arange(n_nodes)[
+                            tree.tree_.children_left == node_idx
+                        ][0]
+                        has_oob_samples_in_children[parent_node] = False
+                    else:
+                        parent_node = np.arange(n_nodes)[
+                            tree.tree_.children_right == node_idx
+                        ][0]
+                        has_oob_samples_in_children[parent_node] = False
+
+                else:
+                    p_node_oob = float(sum(y_innode_oob)) / len(y_innode_oob)
+                    p_node_inb = float(sum(y_innode_inb)) / len(y_innode_inb)
+                    if is_classification:
+                        impurity[node_idx] = (
+                            1
+                            - p_node_oob * p_node_inb
+                            - (1 - p_node_oob) * (1 - p_node_inb)
+                        )
+                    else:
+                        impurity[node_idx] = np.sum(
+                            (y_innode_oob - np.mean(y_innode_inb)) ** 2
+                        ) / len(y_innode_oob)
+            for node_idx in range(n_nodes):
+                if (
+                    tree.tree_.children_left[node_idx] == -1
+                    or tree.tree_.children_right[node_idx] == -1
+                ):
+                    continue
+
+                feature_idx = tree.tree_.feature[node_idx]
+
+                node_left = tree.tree_.children_left[node_idx]
+                node_right = tree.tree_.children_right[node_idx]
+
+                if has_oob_samples_in_children[node_idx]:
+                    if is_classification:
+                        fi_tree[feature_idx] += (
+                            weighted_n_node_samples[node_idx] * impurity[node_idx]
+                            - weighted_n_node_samples[node_left] * impurity[node_left]
+                            - weighted_n_node_samples[node_right] * impurity[node_right]
+                        )
+                    else:
+                        impurity_train = tree.tree_.impurity
+                        fi_tree[feature_idx] += (
+                            weighted_n_node_samples[node_idx]
+                            * (impurity[node_idx] + impurity_train[node_idx])
+                            - weighted_n_node_samples[node_left]
+                            * (impurity[node_left] + impurity_train[node_left])
+                            - weighted_n_node_samples[node_right]
+                            * (impurity_train[node_right] + impurity[node_right])
+                        )
+            feature_importance += fi_tree
+        feature_importance /= n_estimators
+        return feature_importance / feature_importance.sum()
+
+    X, y = make_classification(
+        n_samples=15,
+        n_features=20,
+        n_informative=10,
+        random_state=global_random_seed,
+        n_classes=2,
+    )
+    is_classification = True if name in FOREST_CLASSIFIERS else False
+    est = FOREST_CLASSIFIERS_REGRESSORS[name](
+        n_estimators=10, oob_score=True, bootstrap=True, random_state=global_random_seed
+    )
+    est.fit(X, y)
+    assert_almost_equal(
+        est.ufi_feature_importances_, paper_ufi(est, X, y, is_classification)
+    )
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
+def test_mdi_oob_match_paper(name):
+    def paper_mdi_oob(clf, X, y, is_classification):
+        """
+        Code from: A Debiased MDI Feature Importance Measure for Random Forests
+        https://arxiv.org/pdf/1906.10845
+        https://github.com/shifwang/paper-debiased-feature-importance/blob/9c3e1eed860478ef02111ebda4a39255b4d4be74/simulations/02_comparison.ipynb
+        """
+        import copy
+
+        from sklearn.ensemble._forest import _generate_unsampled_indices
+        from sklearn.preprocessing import OneHotEncoder
+
+        n_samples, n_features = X.shape
+
+        # change X to np.float32
+        XX = X.copy().astype(np.float32)
+
+        # infer y.shape
+        if len(y.shape) == 1:
+            yy = y[:, np.newaxis]
+        if is_classification:
+            yy = OneHotEncoder().fit_transform(yy)
+
+        out = np.zeros((n_features,))
+        for tree in clf.estimators_:
+            indices = _generate_unsampled_indices(
+                tree.random_state, n_samples, n_samples
+            )
+
+            decision_paths = np.array(
+                tree.tree_.decision_path(XX[indices, :]).todense()
+            )
+
+            # compute the impurity at each node
+            node_mean = (
+                decision_paths / (np.sum(decision_paths, 0)[np.newaxis, :])
+            ).T @ yy[indices, :]
+            tmp = copy.deepcopy(tree.tree_.value.squeeze(axis=1))
+
+            if is_classification:
+                node_previous_mean = tmp / np.sum(tmp, 1)[:, np.newaxis]
+            else:
+                node_previous_mean = tmp
+
+            # compute the impurity decrease at each node
+            node_sample_size = tree.tree_.weighted_n_node_samples
+            lc = copy.deepcopy(tree.tree_.children_left)
+            rc = copy.deepcopy(tree.tree_.children_right)
+            tmp = lc == -1
+            lc[tmp] = 0
+            rc[tmp] = 0
+            # decrease = node_impurity * node_sample_size - node_impurity[lc] *
+            # node_sample_size[lc] - node_impurity[rc] * node_sample_size[rc]
+            decrease = (
+                np.sum(
+                    (node_mean - node_mean[lc])
+                    * (node_previous_mean - node_previous_mean[lc]),
+                    1,
+                )
+                * node_sample_size[lc]
+                + np.sum(
+                    (node_mean - node_mean[rc])
+                    * (node_previous_mean - node_previous_mean[rc]),
+                    1,
+                )
+                * node_sample_size[rc]
+            )
+            feature = tree.tree_.feature
+            decrease[feature == -2] = np.nan
+            decrease[np.sum(decision_paths, 0) < 2] = np.nan
+            tmp = np.logical_not(np.isnan(decrease))
+            for i in range(len(tmp)):
+                if tmp[i]:
+                    out[feature[i]] += decrease[i]
+        out /= clf.n_estimators
+        return out / out.sum()
+
+    X, y = make_classification(
+        n_samples=15, n_informative=3, random_state=1, n_classes=2
+    )
+    is_classification = True if name in FOREST_CLASSIFIERS else False
+    est = FOREST_CLASSIFIERS_REGRESSORS[name](
+        n_estimators=10, oob_score=True, bootstrap=True, random_state=1
+    )
+    est.fit(X, y)
+    assert_almost_equal(
+        est.mdi_oob_feature_importances_, paper_mdi_oob(est, X, y, is_classification)
+    )
+
+
+def test_importance_reg_match_onehot_classi(global_random_seed):
+    n_classes = 2
+    X, y_class = make_classification(
+        n_samples=15,
+        n_features=20,
+        n_classes=n_classes,
+        n_redundant=0,
+        random_state=global_random_seed,
+    )
+    y_reg = np.eye(n_classes)[y_class]
+
+    common_params = dict(
+        n_estimators=10,
+        oob_score=True,
+        max_depth=2,
+        max_features=None,
+        random_state=global_random_seed,
+    )
+    cls = RandomForestClassifier(criterion="gini", **common_params)
+    reg = RandomForestRegressor(criterion="squared_error", **common_params)
+
+    cls.fit(X, y_class)
+    reg.fit(X, y_reg)
+
+    assert_almost_equal(cls.feature_importances_, reg.feature_importances_)
+    assert_almost_equal(cls.ufi_feature_importances_, reg.ufi_feature_importances_)
+    assert_almost_equal(
+        cls.mdi_oob_feature_importances_, reg.mdi_oob_feature_importances_
+    )
+
+
+@pytest.mark.parametrize("est_name", FOREST_CLASSIFIERS_REGRESSORS)
+def test_feature_importance_with_sample_weights(est_name, global_random_seed):
+    # From https://github.com/snath-xoc/sample-weight-audit-nondet/blob/main/src/sample_weight_audit/data.py#L53
+
+    # Strategy: sample 2 datasets, each with n_features // 2:
+    # - the first one has int(0.8 * n_samples) but mostly zero or one weights.
+    # - the second one has the remaining samples but with higher weights.
+    #
+    # The features of the two datasets are horizontally stacked with random
+    # feature values sampled independently from the other dataset. Then the two
+    # datasets are vertically stacked and the result is shuffled.
+    #
+    # The sum of weights of the second dataset is 10 times the sum of weights of
+    # the first dataset so that weight aware estimators should mostly ignore the
+    # features of the first dataset to learn their prediction function.
+    n_samples = 250
+    n_features = 4
+    n_classes = 2
+    max_sample_weight = 5
+
+    rng = check_random_state(global_random_seed)
+    n_samples_sw = int(0.5 * n_samples)  # small weights
+    n_samples_lw = n_samples - n_samples_sw  # large weights
+    n_features_sw = n_features // 2
+    n_features_lw = n_features - n_features_sw
+
+    # Construct the sample weights: mostly zeros and some ones for the first
+    # dataset, and some random integers larger than one for the second dataset.
+    sample_weight_sw = np.where(rng.random(n_samples_sw) < 0.2, 1, 0)
+    sample_weight_lw = rng.randint(2, max_sample_weight, size=n_samples_lw)
+    total_weight_sum = np.sum(sample_weight_sw) + np.sum(sample_weight_lw)
+    assert np.sum(sample_weight_sw) < 0.3 * total_weight_sum
+
+    est = FOREST_CLASSIFIERS_REGRESSORS[est_name](
+        n_estimators=50,
+        bootstrap=True,
+        oob_score=True,
+        random_state=rng,
+    )
+    if not is_classifier(est):
+        X_sw, y_sw = make_regression(
+            n_samples=n_samples_sw,
+            n_features=n_features_sw,
+            random_state=rng,
+        )
+        X_lw, y_lw = make_regression(
+            n_samples=n_samples_lw,
+            n_features=n_features_lw,
+            random_state=rng,  # rng is different because mutated
+        )
+    else:
+        X_sw, y_sw = make_classification(
+            n_samples=n_samples_sw,
+            n_features=n_features_sw,
+            n_informative=n_features_sw,
+            n_redundant=0,
+            n_repeated=0,
+            n_classes=n_classes,
+            random_state=rng,
+        )
+        X_lw, y_lw = make_classification(
+            n_samples=n_samples_lw,
+            n_features=n_features_lw,
+            n_informative=n_features_lw,
+            n_redundant=0,
+            n_repeated=0,
+            n_classes=n_classes,
+            random_state=rng,  # rng is different because mutated
+        )
+
+    # Horizontally pad the features with features values marginally sampled
+    # from the other dataset.
+    pad_sw_idx = rng.choice(n_samples_lw, size=n_samples_sw, replace=True)
+    X_sw_padded = np.hstack([X_sw, np.take(X_lw, pad_sw_idx, axis=0)])
+
+    pad_lw_idx = rng.choice(n_samples_sw, size=n_samples_lw, replace=True)
+    X_lw_padded = np.hstack([np.take(X_sw, pad_lw_idx, axis=0), X_lw])
+
+    # Vertically stack the two datasets and shuffle them.
+    X = np.concatenate([X_sw_padded, X_lw_padded], axis=0)
+    y = np.concatenate([y_sw, y_lw])
+
+    X = _enforce_estimator_tags_X(est, X)
+    y = _enforce_estimator_tags_y(est, y)
+    sample_weight = np.concatenate([sample_weight_sw, sample_weight_lw])
+    X, y, sample_weight = shuffle(X, y, sample_weight, random_state=rng)
+
+    est.fit(X, y, sample_weight)
+
+    ufi_feature_importance = est.ufi_feature_importances_
+    mdi_oob_feature_importance = est.mdi_oob_feature_importances_
+    assert (
+        ufi_feature_importance[:n_features_sw].sum()
+        < ufi_feature_importance[n_features_sw:].sum()
+    )
+    assert (
+        mdi_oob_feature_importance[:n_features_sw].sum()
+        < mdi_oob_feature_importance[n_features_sw:].sum()
+    )
+
+
+@pytest.mark.parametrize("est_name", FOREST_CLASSIFIERS_REGRESSORS)
+def test_feature_importance_sample_weight_equals_repeated(est_name, global_random_seed):
+    # check that setting sample_weight to zero / integer is equivalent
+    # to removing / repeating corresponding samples.
+    params = dict(
+        n_estimators=100,
+        bootstrap=True,
+        oob_score=True,
+        max_features=1.0,
+        random_state=global_random_seed,
+    )
+
+    est_weighted = FOREST_CLASSIFIERS_REGRESSORS[est_name](**params)
+    est_repeated = FOREST_CLASSIFIERS_REGRESSORS[est_name](**params)
+
+    n_samples = 100
+    n_features = 2
+    X, y = make_classification(
+        n_samples=n_samples,
+        n_features=n_features,
+        n_informative=n_features,
+        n_redundant=0,
+    )
+    # Use random integers (including zero) as weights.
+    sw = rng.randint(0, 2, size=n_samples)
+
+    X_weighted = X
+    y_weighted = y
+    # repeat samples according to weights
+    X_repeated = X_weighted.repeat(repeats=sw, axis=0)
+    y_repeated = y_weighted.repeat(repeats=sw)
+
+    X_weighted, y_weighted, sw = shuffle(X_weighted, y_weighted, sw, random_state=0)
+
+    est_repeated.fit(X_repeated, y=y_repeated, sample_weight=None)
+    est_weighted.fit(X_weighted, y=y_weighted, sample_weight=sw)
+
+    assert_allclose(
+        est_repeated.feature_importances_, est_weighted.feature_importances_, atol=1e-1
+    )
+    assert_allclose(
+        est_repeated.ufi_feature_importances_,
+        est_weighted.ufi_feature_importances_,
+        atol=1e-1,
+    )
+    assert_allclose(
+        est_repeated.mdi_oob_feature_importances_,
+        est_weighted.mdi_oob_feature_importances_,
+        atol=1e-1,
+    )
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)

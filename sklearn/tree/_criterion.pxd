@@ -43,6 +43,15 @@ cdef class Criterion:
         intp_t start,
         intp_t end
     ) except -1 nogil
+    cdef int init_oob(
+        self,
+        const float64_t[:, ::1] y,
+        const float64_t[:] sample_weight,
+        float64_t weighted_n_samples,
+        const intp_t[:] sample_indices,
+        intp_t start,
+        intp_t end
+    ) except -1 nogil
     cdef void init_sum_missing(self)
     cdef void init_missing(self, intp_t n_missing) noexcept nogil
     cdef int reset(self) except -1 nogil
@@ -97,6 +106,13 @@ cdef class ClassificationCriterion(Criterion):
     cdef float64_t[:, ::1] sum_left     # Same as above, but for the left side of the split
     cdef float64_t[:, ::1] sum_right    # Same as above, but for the right side of the split
     cdef float64_t[:, ::1] sum_missing  # Same as above, but for missing values in X
+
+    # out of bag statistics when computiting cross criterion
+    cdef float64_t[:, ::1] sum_total_oob
+    cdef float64_t[:, ::1] sum_left_oob
+    cdef float64_t[:, ::1] sum_right_oob
+    cdef float64_t[:, ::1] sum_missing_oob
+
 
 cdef class RegressionCriterion(Criterion):
     """Abstract regression criterion."""
