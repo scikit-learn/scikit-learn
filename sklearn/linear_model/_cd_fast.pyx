@@ -320,7 +320,7 @@ def sparse_enet_coordinate_descent(
     # that every calculation results as if we had rescaled y and X (and therefore also
     # X_mean) by sqrt(sample_weight) without actually calculating the square root.
     # We work with:
-    #     yw = sample_weight
+    #     yw = sample_weight * y
     #     R = sample_weight * residual
     #     norm_cols_X = np.sum(sample_weight * (X - X_mean)**2, axis=0)
 
