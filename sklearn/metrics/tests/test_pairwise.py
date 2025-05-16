@@ -309,7 +309,12 @@ def callable_rbf_kernel(x, y, **kwds):
         xpx.atleast_nd(x, ndim=2, xp=xp), xpx.atleast_nd(y, ndim=2, xp=xp), **kwds
     )
     # unpack the output since this is a scalar packed in a 0-dim array
-    return K.item()
+    # Note below is array API version of numpys `item()`
+    if K.ndim > 0:
+        K_flat = xp.reshape(K, (-1,))
+        if len(K_flat) == 1:
+            return float(K_flat[0])
+    raise ValueError("can only convert an array of size 1 to a Python scalar")
 
 
 @pytest.mark.parametrize(
@@ -355,7 +360,7 @@ def test_pairwise_parallel(func, metric, kwds, dtype):
     [
         (pairwise_distances, "euclidean", {}),
         (pairwise_kernels, "polynomial", {"degree": 1}),
-        # (pairwise_kernels, callable_rbf_kernel, {"gamma": 0.1}),
+        (pairwise_kernels, callable_rbf_kernel, {"gamma": 0.1}),
     ],
 )
 def test_pairwise_parallel_array_api(

@@ -1949,12 +1949,9 @@ def distance_metrics():
     return PAIRWISE_DISTANCE_FUNCTIONS
 
 
-def _dist_wrapper(dist_func, dist_matrix, slice_, *args, transpose=False, **kwargs):
+def _transposed_dist_wrapper(dist_func, dist_matrix, slice_, *args, **kwargs):
     """Write in-place to a slice of a distance matrix."""
-    if transpose:
-        dist_matrix[slice_, ...] = dist_func(*args, **kwargs).T
-    else:
-        dist_matrix[..., slice_] = dist_func(*args, **kwargs)
+    dist_matrix[slice_, ...] = dist_func(*args, **kwargs).T
 
 
 def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
@@ -1970,7 +1967,7 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
         return func(X, Y, **kwds)
 
     # enforce a threading backend to prevent data communication overhead
-    fd = delayed(_dist_wrapper)
+    fd = delayed(_transposed_dist_wrapper)
     # Transpose `ret` such that a given thread writes its ouput to a contiguous chunk.
     # Note `order` (i.e. F/C-contiguous) is not included in array API standard, see
     # https://github.com/data-apis/array-api/issues/571 for details.
@@ -1978,7 +1975,7 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     # allocate 2D arrays using the C-contiguity convention by default.
     ret = xp.empty((X.shape[0], Y.shape[0]), device=device, dtype=dtype_float).T
     Parallel(backend="threading", n_jobs=n_jobs)(
-        fd(func, ret, s, X, Y[s, ...], transpose=True, **kwds)
+        fd(func, ret, s, X, Y[s, ...], **kwds)
         for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs))
     )
 
@@ -2005,9 +2002,9 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
     _, _, dtype_float = _find_floating_dtype_allow_sparse(X, Y, xp=xp)
 
     def _get_slice(array, index):
-        # TODO : Support for 1D shapes in scipy sparse arrays (COO, DOK and CSR
-        # formats) only added in 1.14. We must return 2D array until min scipy 1.14
-        # i.e. below 2 lines can be removed once min scipy >= 1.14
+        # TODO: below 2 lines can be removed once min scipy >= 1.14. Support for
+        # 1D shapes in scipy sparse arrays (COO, DOK and CSR formats) only
+        # added in 1.14. We must return 2D array until min scipy 1.14.
         if issparse(array):
             return array[[index], :]
         # When `metric` is a callable, 1D input arrays allowed, in which case
@@ -2023,8 +2020,7 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
         iterator = itertools.combinations(range(X.shape[0]), 2)
         for i, j in iterator:
             x = _get_slice(X, i)
-            # y = _get_slice(Y, j)
-            y = Y[j, ...] if Y.ndim == 2 else Y[j]
+            y = _get_slice(Y, j)
             out[i, j] = metric(x, y, **kwds)
 
         # Make symmetric
