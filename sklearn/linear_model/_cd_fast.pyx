@@ -89,9 +89,10 @@ def enet_coordinate_descent(
     floating beta,
     const floating[::1, :] X,
     const floating[::1] y,
-    unsigned int max_iter,
-    floating tol,
-    object rng,
+    const floating[::1] sample_weight=None,
+    unsigned int max_iter=1000,
+    floating tol=1e-4,
+    object rng=np.random.RandomState(0),
     bint random=0,
     bint positive=0
 ):
@@ -101,6 +102,9 @@ def enet_coordinate_descent(
         We minimize
 
         (1/2) * norm(y - X w, 2)^2 + alpha norm(w, 1) + (beta/2) norm(w, 2)^2
+
+        With sample weights, y and X are scaled by sqrt(sample_weight) - but the
+        implementation avoids the square root and extra memory allocations.
 
     Returns
     -------
@@ -124,11 +128,15 @@ def enet_coordinate_descent(
     cdef unsigned int n_features = X.shape[1]
 
     # compute norms of the columns of X
-    cdef floating[::1] norm_cols_X = np.square(X).sum(axis=0)
+    cdef floating[::1] norm_cols_X
 
     # initial value of the residuals
     cdef floating[::1] R = np.empty(n_samples, dtype=dtype)
     cdef floating[::1] XtA = np.empty(n_features, dtype=dtype)
+
+    # sample weight support
+    cdef bint no_sample_weights = sample_weight is None
+    cdef floating[::1] R_sw
 
     cdef floating tmp
     cdef floating w_ii
@@ -146,12 +154,19 @@ def enet_coordinate_descent(
     cdef unsigned int ii
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
+    cdef unsigned int j
     cdef uint32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef uint32_t* rand_r_state = &rand_r_state_seed
 
     if alpha == 0 and beta == 0:
         warnings.warn("Coordinate descent with no regularization may lead to "
                       "unexpected results and is discouraged.")
+
+    if no_sample_weights:
+        norm_cols_X = np.square(X).sum(axis=0)
+    else:
+        norm_cols_X = (sample_weight[:, None] * np.square(X)).sum(axis=0)
+        R_sw = np.empty_like(R)
 
     with nogil:
         # R = y - np.dot(X, w)
@@ -160,7 +175,13 @@ def enet_coordinate_descent(
               n_samples, &w[0], 1, 1.0, &R[0], 1)
 
         # tol *= np.dot(y, y)
-        tol *= _dot(n_samples, &y[0], 1, &y[0], 1)
+        if no_sample_weights:
+            tol *= _dot(n_samples, &y[0], 1, &y[0], 1)
+        else:
+            tmp = 0
+            for j in range(n_samples):
+                tmp += sample_weight[j] * y[j]**2
+            tol *= tmp
 
         for n_iter in range(max_iter):
             w_max = 0.0
@@ -181,7 +202,12 @@ def enet_coordinate_descent(
                     _axpy(n_samples, w_ii, &X[0, ii], 1, &R[0], 1)
 
                 # tmp = (X[:,ii]*R).sum()
-                tmp = _dot(n_samples, &X[0, ii], 1, &R[0], 1)
+                if no_sample_weights:
+                    tmp = _dot(n_samples, &X[0, ii], 1, &R[0], 1)
+                else:
+                    tmp = 0
+                    for j in range(n_samples):
+                        tmp += X[j, ii] * sample_weight[j] * R[j]
 
                 if positive and tmp < 0:
                     w[ii] = 0.0
@@ -210,10 +236,18 @@ def enet_coordinate_descent(
 
                 # XtA = np.dot(X.T, R) - beta * w
                 _copy(n_features, &w[0], 1, &XtA[0], 1)
-                _gemv(ColMajor, Trans,
-                      n_samples, n_features, 1.0, &X[0, 0], n_samples,
-                      &R[0], 1,
-                      -beta, &XtA[0], 1)
+                if no_sample_weights:
+                    _gemv(
+                        ColMajor, Trans, n_samples, n_features, 1.0, &X[0, 0],
+                        n_samples, &R[0], 1, -beta, &XtA[0], 1
+                    )
+                else:
+                    for j in range(n_samples):
+                        R_sw[j] = sample_weight[j] * R[j]
+                    _gemv(
+                        ColMajor, Trans, n_samples, n_features, 1.0, &X[0, 0],
+                        n_samples, &R_sw[0], 1, -beta, &XtA[0], 1
+                    )
 
                 if positive:
                     dual_norm_XtA = max(n_features, &XtA[0])
@@ -221,7 +255,10 @@ def enet_coordinate_descent(
                     dual_norm_XtA = abs_max(n_features, &XtA[0])
 
                 # R_norm2 = np.dot(R, R)
-                R_norm2 = _dot(n_samples, &R[0], 1, &R[0], 1)
+                if no_sample_weights:
+                    R_norm2 = _dot(n_samples, &R[0], 1, &R[0], 1)
+                else:
+                    R_norm2 = _dot(n_samples, &R_sw[0], 1, &R[0], 1)
 
                 # w_norm2 = np.dot(w, w)
                 w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
@@ -237,9 +274,11 @@ def enet_coordinate_descent(
                 l1_norm = _asum(n_features, &w[0], 1)
 
                 # np.dot(R.T, y)
-                gap += (alpha * l1_norm
-                        - const * _dot(n_samples, &R[0], 1, &y[0], 1)
-                        + 0.5 * beta * (1 + const ** 2) * (w_norm2))
+                gap += alpha * l1_norm + 0.5 * beta * (1 + const ** 2) * (w_norm2)
+                if no_sample_weights:
+                    gap -= const * _dot(n_samples, &R[0], 1, &y[0], 1)
+                else:
+                    gap -= const * _dot(n_samples, &R_sw[0], 1, &y[0], 1)
 
                 if gap < tol:
                     # return if we reached desired tolerance
