@@ -139,8 +139,10 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             indices = random_state.choice(
                 n_samples, size=self.n_components, replace=False
             )
-            # TODO: instead of for-loop, find something more efficient; previous code:
+            # TODO: when array API supports __setitem__ with fancy indexing we
+            # can use the previous code:
             # resp[indices, xp.arange(self.n_components)] = 1
+            # Until we use a for loop one on dimension.
             for count, index in enumerate(indices):
                 resp[index, count] = 1
         elif self.init_params == "k-means++":
@@ -388,7 +390,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         """
         check_is_fitted(self)
         xp, _ = get_namespace(X)
-        return xp.mean(self.score_samples(X))
+        return float(xp.mean(self.score_samples(X)))
 
     def predict(self, X):
         """Predict the labels for the data samples in X using trained model.

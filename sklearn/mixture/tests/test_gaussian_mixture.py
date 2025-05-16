@@ -1502,28 +1502,55 @@ def test_gaussian_mixture_array_api_compliance(
     )
 
     gmm.fit(X)
-    means_ = gmm.means_
-    covariances_ = gmm.covariances_
 
     xp = _array_api_for_tests(array_namespace, device_)
-    X = xp.asarray(X, device=device_)
+    X_xp = xp.asarray(X, device=device_)
 
     with sklearn.config_context(array_api_dispatch=True):
-        gmm.fit(X)
+        gmm_xp = sklearn.clone(gmm)
+        gmm_xp.fit(X_xp)
 
-        assert device(X) == device(gmm.means_)
-        assert device(X) == device(gmm.covariances_)
+        assert get_namespace(gmm_xp.means_)[0] == xp
+        assert get_namespace(gmm_xp.covariances_)[0] == xp
+        assert device(gmm_xp.means_) == device(X_xp)
+        assert device(gmm_xp.covariances_) == device(X_xp)
 
-        # smoke test other methods
-        # TODO compare with same method on numpy
-        # TODO add predict and predict_proba
-        gmm.score_samples(X)
-        gmm.score(X)
-        gmm.aic(X)
-        gmm.bic(X)
+        xp_predict = gmm_xp.predict(X_xp)
+        xp_predict_proba = gmm_xp.predict_proba(X_xp)
+        xp_score_samples = gmm_xp.score_samples(X_xp)
+        xp_score = gmm_xp.score(X_xp)
+        xp_aic = gmm_xp.aic(X_xp)
+        xp_bic = gmm_xp.bic(X_xp)
+        xp_sample_X, xp_sample_y = gmm_xp.sample(10)
 
-    assert_allclose(means_, _convert_to_numpy(gmm.means_, xp=xp))
-    assert_allclose(covariances_, _convert_to_numpy(gmm.covariances_, xp=xp))
+        results = [
+            xp_predict,
+            xp_predict_proba,
+            xp_score_samples,
+            xp_sample_X,
+            xp_sample_y,
+        ]
+        for result in results:
+            assert get_namespace(result)[0] == xp
+            assert device(result) == device(X_xp)
+
+        for score in [xp_score, xp_aic, xp_bic]:
+            assert isinstance(score, float)
+
+    # Check methods
+    assert_allclose(gmm.predict(X), _convert_to_numpy(xp_predict, xp=xp))
+    assert_allclose(gmm.predict_proba(X), _convert_to_numpy(xp_predict_proba, xp=xp))
+    assert_allclose(gmm.score_samples(X), _convert_to_numpy(xp_score_samples, xp=xp))
+    assert_allclose(gmm.score(X), xp_score)
+    assert_allclose(gmm.aic(X), xp_aic)
+    assert_allclose(gmm.bic(X), xp_bic)
+    sample_X, sample_y = gmm.sample(10)
+    assert_allclose(sample_X, _convert_to_numpy(xp_sample_X, xp=xp))
+    assert_allclose(sample_y, _convert_to_numpy(xp_sample_y, xp=xp))
+
+    # Check fitted attributes
+    assert_allclose(gmm.means_, _convert_to_numpy(gmm_xp.means_, xp=xp))
+    assert_allclose(gmm.covariances_, _convert_to_numpy(gmm_xp.covariances_, xp=xp))
 
     # TODO test means_init and precisions_init
 
@@ -1621,35 +1648,3 @@ def test_gaussian_mixture_raises_where_array_api_not_implemented(
             match="Allowed `init_params`.+if 'array_api_dispatch' is enabled",
         ):
             gmm.fit(X)
-
-
-@pytest.mark.parametrize("covariance_type", ["full", "tied", "diag"])
-@pytest.mark.parametrize(
-    "array_namespace, device_, dtype", yield_namespace_device_dtype_combinations()
-)
-def test_gaussian_mixture_sample_array_api_compliance(
-    covariance_type, array_namespace, device_, dtype, global_random_seed
-):
-    """Test that array api works in GaussianMixture.sample()."""
-    # TODO move this to test_gaussian_mixture_array_api_compliance function?
-    xp = _array_api_for_tests(array_namespace, device_)
-    X, _ = make_blobs(
-        n_samples=int(1e3), n_features=2, centers=3, random_state=global_random_seed
-    )
-    X = xp.asarray(X, device=device_)
-
-    with sklearn.config_context(array_api_dispatch=True):
-        gmm = GaussianMixture(
-            n_components=3,
-            covariance_type=covariance_type,
-            random_state=global_random_seed,
-            init_params="random",
-        )
-        gmm.fit(X)
-        X_sample, y_sample = gmm.sample()
-
-        assert get_namespace(X_sample)[0] == xp
-        assert get_namespace(y_sample)[0] == xp
-
-        assert device(X_sample) == device(X)
-        assert device(y_sample) == device(X)
