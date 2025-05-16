@@ -190,8 +190,8 @@ def _estimate_gaussian_covariances_full(resp, X, nk, means, reg_covar, xp=None):
     for k in range(n_components):
         diff = X - means[k, :]
         covariances[k, :, :] = ((resp[:, k] * diff.T) @ diff) / nk[k]
-        my_flat = xp.reshape(covariances[k, :, :], (-1,))
-        my_flat[:: n_features + 1] += reg_covar
+        covariances_flat = xp.reshape(covariances[k, :, :], (-1,))
+        covariances_flat[:: n_features + 1] += reg_covar
     return covariances
 
 
@@ -220,8 +220,8 @@ def _estimate_gaussian_covariances_tied(resp, X, nk, means, reg_covar, xp=None):
     avg_means2 = nk * means.T @ means
     covariance = avg_X2 - avg_means2
     covariance /= xp.sum(nk)
-    my_flat = xp.reshape(covariance, (-1,))
-    my_flat[:: covariance.shape[0] + 1] += reg_covar
+    covariance_flat = xp.reshape(covariance, (-1,))
+    covariance_flat[:: covariance.shape[0] + 1] += reg_covar
     return covariance
 
 
