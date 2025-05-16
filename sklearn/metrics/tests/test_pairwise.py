@@ -312,7 +312,7 @@ def callable_rbf_kernel(x, y, **kwds):
     # Note below is array API version of numpys `item()`
     if K.ndim > 0:
         K_flat = xp.reshape(K, (-1,))
-        if len(K_flat) == 1:
+        if K_flat.shape == (1,):
             return float(K_flat[0])
     raise ValueError("can only convert an array of size 1 to a Python scalar")
 
