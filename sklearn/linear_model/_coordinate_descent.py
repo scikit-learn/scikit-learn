@@ -693,7 +693,18 @@ def enet_path(
             )
         elif precompute is False:
             model = cd_fast.enet_coordinate_descent(
-                coef_, l1_reg, l2_reg, X, y, None, max_iter, tol, rng, random, positive
+                coef_,
+                l1_reg,
+                l2_reg,
+                X,
+                y,
+                None,
+                None,
+                max_iter,
+                tol,
+                rng,
+                random,
+                positive,
             )
         else:
             raise ValueError(
