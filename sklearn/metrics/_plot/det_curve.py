@@ -11,7 +11,7 @@ from .._ranking import det_curve
 class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     """Detection Error Tradeoff (DET) curve visualization.
 
-    It is recommend to use :func:`~sklearn.metrics.DetCurveDisplay.from_estimator`
+    It is recommended to use :func:`~sklearn.metrics.DetCurveDisplay.from_estimator`
     or :func:`~sklearn.metrics.DetCurveDisplay.from_predictions` to create a
     visualizer. All parameters are stored as attributes.
 
