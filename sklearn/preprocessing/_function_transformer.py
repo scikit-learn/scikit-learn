@@ -142,8 +142,8 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
     >>> transformer = FunctionTransformer(np.log1p)
     >>> X = np.array([[0, 1], [2, 3]])
     >>> transformer.transform(X)
-    array([[0.       , 0.6931...],
-           [1.0986..., 1.3862...]])
+    array([[0.       , 0.6931],
+           [1.0986, 1.3862]])
     """
 
     _parameter_constraints: dict = {
@@ -325,7 +325,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X_out : array-like, shape (n_samples, n_features)
+        X_original : array-like, shape (n_samples, n_features)
             Transformed input.
         """
         if self.validate:
@@ -394,6 +394,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         tags = super().__sklearn_tags__()
         tags.no_validation = not self.validate
         tags.requires_fit = False
+        tags.input_tags.sparse = not self.validate or self.accept_sparse
         return tags
 
     def set_output(self, *, transform=None):

@@ -178,13 +178,14 @@ class NewtonSolver(ABC):
             - self.coef
             - self.converged
         """
+        max_iter = self.max_iter - self.iteration
         opt_res = scipy.optimize.minimize(
             self.linear_loss.loss_gradient,
             self.coef,
             method="L-BFGS-B",
             jac=True,
             options={
-                "maxiter": self.max_iter - self.iteration,
+                "maxiter": max_iter,
                 "maxls": 50,  # default is 20
                 "iprint": self.verbose - 1,
                 "gtol": self.tol,
@@ -192,7 +193,7 @@ class NewtonSolver(ABC):
             },
             args=(X, y, sample_weight, self.l2_reg_strength, self.n_threads),
         )
-        self.iteration += _check_optimize_result("lbfgs", opt_res)
+        self.iteration += _check_optimize_result("lbfgs", opt_res, max_iter=max_iter)
         self.coef = opt_res.x
         self.converged = opt_res.status == 0
 
@@ -254,7 +255,7 @@ class NewtonSolver(ABC):
             check = loss_improvement <= t * armijo_term
             if is_verbose:
                 print(
-                    f"    line search iteration={i+1}, step size={t}\n"
+                    f"    line search iteration={i + 1}, step size={t}\n"
                     f"      check loss improvement <= armijo term: {loss_improvement} "
                     f"<= {t * armijo_term} {check}"
                 )
@@ -300,7 +301,7 @@ class NewtonSolver(ABC):
         self.raw_prediction = raw
         if is_verbose:
             print(
-                f"    line search successful after {i+1} iterations with "
+                f"    line search successful after {i + 1} iterations with "
                 f"loss={self.loss_value}."
             )
 
@@ -507,7 +508,7 @@ class NewtonCholeskySolver(NewtonSolver):
             # probabilities are invariant under shifting all coefficients of a single
             # feature j for all classes by the same amount c:
             #   coef[k, :] -> coef[k, :] + c    =>    proba stays the same
-            # where we have assumned coef.shape = (n_classes, n_features).
+            # where we have assumed coef.shape = (n_classes, n_features).
             # Therefore, also the loss (-log-likelihood), gradient and hessian stay the
             # same, see
             # Noah Simon and Jerome Friedman and Trevor Hastie. (2013) "A Blockwise

@@ -870,7 +870,7 @@ def test_plot_partial_dependence_legend(pyplot):
     X = pd.DataFrame(
         {
             "col_A": ["A", "B", "C"],
-            "col_B": [1, 0, 2],
+            "col_B": [1.0, 0.0, 2.0],
             "col_C": ["C", "B", "A"],
         }
     )
@@ -1187,7 +1187,7 @@ def test_plot_partial_dependence_lines_kw(
 
     line = disp.lines_[0, 0, -1]
     assert line.get_color() == expected_colors[0], (
-        f"{line.get_color()}!={expected_colors[0]}\n" f"{line_kw} and {pd_line_kw}"
+        f"{line.get_color()}!={expected_colors[0]}\n{line_kw} and {pd_line_kw}"
     )
     if pd_line_kw is not None:
         if "linestyle" in pd_line_kw:
@@ -1198,9 +1198,9 @@ def test_plot_partial_dependence_lines_kw(
         assert line.get_linestyle() == "--"
 
     line = disp.lines_[0, 0, 0]
-    assert (
-        line.get_color() == expected_colors[1]
-    ), f"{line.get_color()}!={expected_colors[1]}"
+    assert line.get_color() == expected_colors[1], (
+        f"{line.get_color()}!={expected_colors[1]}"
+    )
     if ice_lines_kw is not None:
         if "linestyle" in ice_lines_kw:
             assert line.get_linestyle() == ice_lines_kw["linestyle"]

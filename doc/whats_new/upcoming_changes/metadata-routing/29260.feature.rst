@@ -1,4 +1,0 @@
-- :class:`feature_selection.SequentialFeatureSelector` now supports
-  metadata routing in its `fit` method and passes the corresponding params to
-  the :func:`model_selection.cross_val_score` function.
-  By :user:`Omar Salman <OmarManzoor>`

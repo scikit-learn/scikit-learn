@@ -17,8 +17,8 @@ from sklearn.ensemble import (
 )
 from sklearn.exceptions import UnsetMetadataPassedError
 from sklearn.experimental import (
-    enable_halving_search_cv,  # noqa
-    enable_iterative_imputer,  # noqa
+    enable_halving_search_cv,  # noqa: F401
+    enable_iterative_imputer,  # noqa: F401
 )
 from sklearn.feature_selection import (
     RFE,
@@ -119,7 +119,7 @@ METAESTIMATORS: list = [
     },
     {
         "metaestimator": ClassifierChain,
-        "estimator_name": "base_estimator",
+        "estimator_name": "estimator",
         "estimator": "classifier",
         "X": X,
         "y": y_multi,
@@ -127,7 +127,7 @@ METAESTIMATORS: list = [
     },
     {
         "metaestimator": RegressorChain,
-        "estimator_name": "base_estimator",
+        "estimator_name": "estimator",
         "estimator": "regressor",
         "X": X,
         "y": y_multi,
@@ -329,7 +329,18 @@ METAESTIMATORS: list = [
         "X": X,
         "y": y,
         "preserves_metadata": False,
-        "estimator_routing_methods": ["fit"],
+        "estimator_routing_methods": [
+            "fit",
+            "predict",
+            "predict_proba",
+            "predict_log_proba",
+            "decision_function",
+        ],
+        "method_mapping": {
+            "predict": ["predict", "predict_proba"],
+            "predict_proba": ["predict", "predict_proba"],
+            "predict_log_proba": ["predict", "predict_proba", "predict_log_proba"],
+        },
     },
     {
         "metaestimator": BaggingRegressor,
@@ -338,7 +349,7 @@ METAESTIMATORS: list = [
         "X": X,
         "y": y,
         "preserves_metadata": False,
-        "estimator_routing_methods": ["fit"],
+        "estimator_routing_methods": ["fit", "predict"],
     },
     {
         "metaestimator": RidgeCV,

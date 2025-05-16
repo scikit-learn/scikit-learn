@@ -66,6 +66,9 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         used as datapoint-dependent noise level. Allowing to specify the
         noise level directly as a parameter is mainly for convenience and
         for consistency with :class:`~sklearn.linear_model.Ridge`.
+        For an example illustrating how the alpha parameter controls
+        the noise variance in Gaussian Process Regression, see
+        :ref:`sphx_glr_auto_examples_gaussian_process_plot_gpr_noisy_targets.py`.
 
     optimizer : "fmin_l_bfgs_b", callable or None, default="fmin_l_bfgs_b"
         Can either be one of the internally supported optimizers for optimizing
@@ -183,7 +186,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     >>> gpr.score(X, y)
     0.3680...
     >>> gpr.predict(X[:2,:], return_std=True)
-    (array([653.0..., 592.1...]), array([316.6..., 316.6...]))
+    (array([653.0, 592.1]), array([316.6, 316.6]))
     """
 
     _parameter_constraints: dict = {
@@ -606,7 +609,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         log_likelihood_dims = -0.5 * np.einsum("ik,ik->k", y_train, alpha)
         log_likelihood_dims -= np.log(np.diag(L)).sum()
         log_likelihood_dims -= K.shape[0] / 2 * np.log(2 * np.pi)
-        # the log likehood is sum-up across the outputs
+        # the log likelihood is sum-up across the outputs
         log_likelihood = log_likelihood_dims.sum(axis=-1)
 
         if eval_gradient:
@@ -640,7 +643,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             log_likelihood_gradient_dims = 0.5 * np.einsum(
                 "ijl,jik->kl", inner_term, K_gradient
             )
-            # the log likehood gradient is the sum-up across the outputs
+            # the log likelihood gradient is the sum-up across the outputs
             log_likelihood_gradient = log_likelihood_gradient_dims.sum(axis=-1)
 
         if eval_gradient:

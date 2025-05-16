@@ -250,7 +250,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         Returns
         -------
         preds : ndarray of shape (n_samples,)
-            Predictions of the first class seens in `classes_`.
+            Predictions of the first class seen in `classes_`.
         """
         if self.methods_to_check == "all" or "predict" in self.methods_to_check:
             X, y = self._check_X_y(X)
@@ -346,7 +346,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
 # Deactivate key validation for CheckingClassifier because we want to be able to
 # call fit with arbitrary fit_params and record them. Without this change, we
 # would get an error because those arbitrary params are not expected.
-CheckingClassifier.set_fit_request = RequestMethod(  # type: ignore
+CheckingClassifier.set_fit_request = RequestMethod(  # type: ignore[assignment,method-assign]
     name="fit", keys=[], validate_keys=False
 )
 

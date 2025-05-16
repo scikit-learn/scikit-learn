@@ -72,6 +72,7 @@ from sklearn.utils.estimator_checks import (
     check_estimator_repr,
     check_estimator_sparse_array,
     check_estimator_sparse_matrix,
+    check_estimator_sparse_tag,
     check_estimator_tags_renamed,
     check_estimators_nan_inf,
     check_estimators_overwrite_params,
@@ -85,6 +86,7 @@ from sklearn.utils.estimator_checks import (
     check_outlier_contamination,
     check_outlier_corruption,
     check_parameters_default_constructible,
+    check_positive_only_tag_during_fit,
     check_regressor_data_not_an_array,
     check_requires_y_none,
     check_sample_weights_pandas_series,
@@ -507,20 +509,23 @@ class TaggedBinaryClassifier(UntaggedBinaryClassifier):
 
 class RequiresPositiveXRegressor(LinearRegression):
     def fit(self, X, y):
-        X, y = validate_data(self, X, y, multi_output=True)
+        # reject sparse X to be able to call (X < 0).any()
+        X, y = validate_data(self, X, y, accept_sparse=False, multi_output=True)
         if (X < 0).any():
-            raise ValueError("negative X values not supported!")
+            raise ValueError("Negative values in data passed to X.")
         return super().fit(X, y)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.positive_only = True
+        # reject sparse X to be able to call (X < 0).any()
+        tags.input_tags.sparse = False
         return tags
 
 
 class RequiresPositiveYRegressor(LinearRegression):
     def fit(self, X, y):
-        X, y = validate_data(self, X, y, multi_output=True)
+        X, y = validate_data(self, X, y, accept_sparse=True, multi_output=True)
         if (y <= 0).any():
             raise ValueError("negative y values not supported!")
         return super().fit(X, y)
@@ -569,10 +574,6 @@ class BrokenArrayAPI(BaseEstimator):
 
 
 def test_check_array_api_input():
-    try:
-        importlib.import_module("array_api_compat")
-    except ModuleNotFoundError:
-        raise SkipTest("array_api_compat is required to run this test")
     try:
         importlib.import_module("array_api_strict")
     except ModuleNotFoundError:  # pragma: nocover
@@ -662,7 +663,7 @@ def test_check_dict_unchanged():
 def test_check_sample_weights_pandas_series():
     # check that sample_weights in fit accepts pandas.Series type
     try:
-        from pandas import Series  # noqa
+        from pandas import Series  # noqa: F401
 
         msg = (
             "Estimator NoSampleWeightPandasSeriesType raises error if "
@@ -842,6 +843,53 @@ def test_check_outlier_corruption():
     # should pass
     decision = np.array([0.0, 1.0, 1.0, 2.0])
     check_outlier_corruption(1, 2, decision)
+
+
+def test_check_estimator_sparse_tag():
+    """Test that check_estimator_sparse_tag raises error when sparse tag is
+    misaligned."""
+
+    class EstimatorWithSparseConfig(BaseEstimator):
+        def __init__(self, tag_sparse, accept_sparse, fit_error=None):
+            self.tag_sparse = tag_sparse
+            self.accept_sparse = accept_sparse
+            self.fit_error = fit_error
+
+        def fit(self, X, y=None):
+            if self.fit_error:
+                raise self.fit_error
+            validate_data(self, X, y, accept_sparse=self.accept_sparse)
+            return self
+
+        def __sklearn_tags__(self):
+            tags = super().__sklearn_tags__()
+            tags.input_tags.sparse = self.tag_sparse
+            return tags
+
+    test_cases = [
+        {"tag_sparse": True, "accept_sparse": True, "error_type": None},
+        {"tag_sparse": False, "accept_sparse": False, "error_type": None},
+        {"tag_sparse": False, "accept_sparse": True, "error_type": AssertionError},
+        {"tag_sparse": True, "accept_sparse": False, "error_type": AssertionError},
+    ]
+
+    for test_case in test_cases:
+        estimator = EstimatorWithSparseConfig(
+            test_case["tag_sparse"],
+            test_case["accept_sparse"],
+        )
+        if test_case["error_type"] is None:
+            check_estimator_sparse_tag(estimator.__class__.__name__, estimator)
+        else:
+            with raises(test_case["error_type"]):
+                check_estimator_sparse_tag(estimator.__class__.__name__, estimator)
+
+    # estimator `tag_sparse=accept_sparse=False` fails on sparse data
+    # but does not raise the appropriate error
+    for fit_error in [TypeError("unexpected error"), KeyError("other error")]:
+        estimator = EstimatorWithSparseConfig(False, False, fit_error)
+        with raises(AssertionError):
+            check_estimator_sparse_tag(estimator.__class__.__name__, estimator)
 
 
 def test_check_estimator_transformer_no_mixin():
@@ -1325,8 +1373,8 @@ def test_check_estimator_callback():
     expected_failed_checks = _get_expected_failed_checks(est)
     # This is to make sure we test a class that has some expected failures
     assert len(expected_failed_checks) > 0
-    with warnings.catch_warnings(record=True) as records:
-        logs = check_estimator(
+    with warnings.catch_warnings(record=True):
+        check_estimator(
             est,
             expected_failed_checks=expected_failed_checks,
             on_fail=None,
@@ -1600,3 +1648,18 @@ def test_check_mixin_order():
     msg = "TransformerMixin comes before/left side of BaseEstimator"
     with raises(AssertionError, match=re.escape(msg)):
         check_mixin_order("BadEstimator", BadEstimator())
+
+
+def test_check_positive_only_tag_during_fit():
+    class RequiresPositiveXBadTag(RequiresPositiveXRegressor):
+        def __sklearn_tags__(self):
+            tags = super().__sklearn_tags__()
+            tags.input_tags.positive_only = False
+            return tags
+
+    with raises(
+        AssertionError, match="This happens when passing negative input values as X."
+    ):
+        check_positive_only_tag_during_fit(
+            "RequiresPositiveXBadTag", RequiresPositiveXBadTag()
+        )

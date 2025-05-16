@@ -5,7 +5,7 @@ from scipy.integrate import trapezoid
 
 from sklearn import clone
 from sklearn.compose import make_column_transformer
-from sklearn.datasets import load_breast_cancer, load_iris
+from sklearn.datasets import load_breast_cancer, make_classification
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import RocCurveDisplay, auc, roc_curve
@@ -16,18 +16,17 @@ from sklearn.utils import shuffle
 
 
 @pytest.fixture(scope="module")
-def data():
-    X, y = load_iris(return_X_y=True)
-    # Avoid introducing test dependencies by mistake.
-    X.flags.writeable = False
-    y.flags.writeable = False
+def data_binary():
+    X, y = make_classification(
+        n_samples=200,
+        n_features=20,
+        n_informative=5,
+        n_redundant=2,
+        flip_y=0.1,
+        class_sep=0.8,
+        random_state=42,
+    )
     return X, y
-
-
-@pytest.fixture(scope="module")
-def data_binary(data):
-    X, y = data
-    return X[y < 2], y[y < 2]
 
 
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
@@ -68,8 +67,8 @@ def test_roc_curve_display_plotting(
     lr = LogisticRegression()
     lr.fit(X, y)
 
-    y_pred = getattr(lr, response_method)(X)
-    y_pred = y_pred if y_pred.ndim == 1 else y_pred[:, 1]
+    y_score = getattr(lr, response_method)(X)
+    y_score = y_score if y_score.ndim == 1 else y_score[:, 1]
 
     if constructor_name == "from_estimator":
         display = RocCurveDisplay.from_estimator(
@@ -84,7 +83,7 @@ def test_roc_curve_display_plotting(
     else:
         display = RocCurveDisplay.from_predictions(
             y,
-            y_pred,
+            y_score,
             sample_weight=sample_weight,
             drop_intermediate=drop_intermediate,
             pos_label=pos_label,
@@ -93,7 +92,7 @@ def test_roc_curve_display_plotting(
 
     fpr, tpr, _ = roc_curve(
         y,
-        y_pred,
+        y_score,
         sample_weight=sample_weight,
         drop_intermediate=drop_intermediate,
         pos_label=pos_label,
@@ -105,7 +104,7 @@ def test_roc_curve_display_plotting(
 
     assert display.estimator_name == default_name
 
-    import matplotlib as mpl  # noqal
+    import matplotlib as mpl
 
     assert isinstance(display.line_, mpl.lines.Line2D)
     assert display.line_.get_alpha() == 0.8
@@ -127,12 +126,14 @@ def test_roc_curve_display_plotting(
 
 
 @pytest.mark.parametrize("plot_chance_level", [True, False])
+@pytest.mark.parametrize("label", [None, "Test Label"])
 @pytest.mark.parametrize(
     "chance_level_kw",
     [
         None,
         {"linewidth": 1, "color": "red", "linestyle": "-", "label": "DummyEstimator"},
         {"lw": 1, "c": "red", "ls": "-", "label": "DummyEstimator"},
+        {"lw": 1, "color": "blue", "ls": "-", "label": None},
     ],
 )
 @pytest.mark.parametrize(
@@ -144,6 +145,7 @@ def test_roc_curve_chance_level_line(
     data_binary,
     plot_chance_level,
     chance_level_kw,
+    label,
     constructor_name,
 ):
     """Check the chance level line plotting behaviour."""
@@ -152,14 +154,15 @@ def test_roc_curve_chance_level_line(
     lr = LogisticRegression()
     lr.fit(X, y)
 
-    y_pred = getattr(lr, "predict_proba")(X)
-    y_pred = y_pred if y_pred.ndim == 1 else y_pred[:, 1]
+    y_score = getattr(lr, "predict_proba")(X)
+    y_score = y_score if y_score.ndim == 1 else y_score[:, 1]
 
     if constructor_name == "from_estimator":
         display = RocCurveDisplay.from_estimator(
             lr,
             X,
             y,
+            label=label,
             alpha=0.8,
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
@@ -167,13 +170,14 @@ def test_roc_curve_chance_level_line(
     else:
         display = RocCurveDisplay.from_predictions(
             y,
-            y_pred,
+            y_score,
+            label=label,
             alpha=0.8,
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
         )
 
-    import matplotlib as mpl  # noqa
+    import matplotlib as mpl
 
     assert isinstance(display.line_, mpl.lines.Line2D)
     assert display.line_.get_alpha() == 0.8
@@ -193,7 +197,6 @@ def test_roc_curve_chance_level_line(
         assert display.chance_level_.get_linestyle() == "--"
         assert display.chance_level_.get_label() == "Chance level (AUC = 0.5)"
     elif plot_chance_level:
-        assert display.chance_level_.get_label() == chance_level_kw["label"]
         if "c" in chance_level_kw:
             assert display.chance_level_.get_color() == chance_level_kw["c"]
         else:
@@ -206,6 +209,17 @@ def test_roc_curve_chance_level_line(
             assert display.chance_level_.get_linestyle() == chance_level_kw["ls"]
         else:
             assert display.chance_level_.get_linestyle() == chance_level_kw["linestyle"]
+        # Checking for legend behaviour
+        if label is not None or chance_level_kw.get("label") is not None:
+            legend = display.ax_.get_legend()
+            assert legend is not None  #  Legend should be present if any label is set
+            legend_labels = [text.get_text() for text in legend.get_texts()]
+            if label is not None:
+                assert label in legend_labels
+            if chance_level_kw.get("label") is not None:
+                assert chance_level_kw["label"] in legend_labels
+        else:
+            assert display.ax_.get_legend() is None
 
 
 @pytest.mark.parametrize(
@@ -291,11 +305,11 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
     # are betrayed by the class imbalance
     assert classifier.classes_.tolist() == ["cancer", "not cancer"]
 
-    y_pred = getattr(classifier, response_method)(X_test)
+    y_score = getattr(classifier, response_method)(X_test)
     # we select the corresponding probability columns or reverse the decision
     # function otherwise
-    y_pred_cancer = -1 * y_pred if y_pred.ndim == 1 else y_pred[:, 0]
-    y_pred_not_cancer = y_pred if y_pred.ndim == 1 else y_pred[:, 1]
+    y_score_cancer = -1 * y_score if y_score.ndim == 1 else y_score[:, 0]
+    y_score_not_cancer = y_score if y_score.ndim == 1 else y_score[:, 1]
 
     if constructor_name == "from_estimator":
         display = RocCurveDisplay.from_estimator(
@@ -308,7 +322,7 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
     else:
         display = RocCurveDisplay.from_predictions(
             y_test,
-            y_pred_cancer,
+            y_score_cancer,
             pos_label="cancer",
         )
 
@@ -328,12 +342,42 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
     else:
         display = RocCurveDisplay.from_predictions(
             y_test,
-            y_pred_not_cancer,
+            y_score_not_cancer,
             pos_label="not cancer",
         )
 
     assert display.roc_auc == pytest.approx(roc_auc_limit)
     assert trapezoid(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)
+
+
+# TODO(1.9): remove
+def test_y_score_and_y_pred_specified_error():
+    """Check that an error is raised when both y_score and y_pred are specified."""
+    y_true = np.array([0, 1, 1, 0])
+    y_score = np.array([0.1, 0.4, 0.35, 0.8])
+    y_pred = np.array([0.2, 0.3, 0.5, 0.1])
+
+    with pytest.raises(
+        ValueError, match="`y_pred` and `y_score` cannot be both specified"
+    ):
+        RocCurveDisplay.from_predictions(y_true, y_score=y_score, y_pred=y_pred)
+
+
+# TODO(1.9): remove
+def test_y_pred_deprecation_warning(pyplot):
+    """Check that a warning is raised when y_pred is specified."""
+    y_true = np.array([0, 1, 1, 0])
+    y_score = np.array([0.1, 0.4, 0.35, 0.8])
+
+    with pytest.warns(FutureWarning, match="y_pred is deprecated in 1.7"):
+        display_y_pred = RocCurveDisplay.from_predictions(y_true, y_pred=y_score)
+
+    assert_allclose(display_y_pred.fpr, [0, 0.5, 0.5, 1])
+    assert_allclose(display_y_pred.tpr, [0, 0, 1, 1])
+
+    display_y_score = RocCurveDisplay.from_predictions(y_true, y_score)
+    assert_allclose(display_y_score.fpr, [0, 0.5, 0.5, 1])
+    assert_allclose(display_y_score.tpr, [0, 0, 1, 1])
 
 
 @pytest.mark.parametrize("despine", [True, False])

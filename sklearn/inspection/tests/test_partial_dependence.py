@@ -2,6 +2,9 @@
 Testing for the partial dependence module.
 """
 
+import re
+import warnings
+
 import numpy as np
 import pytest
 
@@ -751,13 +754,14 @@ def test_partial_dependence_binary_model_grid_resolution(
     pd = pytest.importorskip("pandas")
     model = DummyClassifier()
 
+    rng = np.random.RandomState(0)
     X = pd.DataFrame(
         {
-            "a": np.random.randint(0, 10, size=100),
-            "b": np.random.randint(0, 10, size=100),
+            "a": rng.randint(0, 10, size=100).astype(np.float64),
+            "b": rng.randint(0, 10, size=100).astype(np.float64),
         }
     )
-    y = pd.Series(np.random.randint(0, 2, size=100))
+    y = pd.Series(rng.randint(0, 2, size=100))
     model.fit(X, y)
 
     part_dep = partial_dependence(
@@ -773,9 +777,9 @@ def test_partial_dependence_binary_model_grid_resolution(
 @pytest.mark.parametrize(
     "features, custom_values, n_vals_expected",
     [
-        (["a"], {"a": [1, 2, 3, 4]}, 4),
-        (["a"], {"a": [1, 2]}, 2),
-        (["a"], {"a": [1]}, 1),
+        (["a"], {"a": [1.0, 2.0, 3.0, 4.0]}, 4),
+        (["a"], {"a": [1.0, 2.0]}, 2),
+        (["a"], {"a": [1.0]}, 1),
     ],
 )
 def test_partial_dependence_binary_model_custom_values(
@@ -784,7 +788,7 @@ def test_partial_dependence_binary_model_custom_values(
     pd = pytest.importorskip("pandas")
     model = DummyClassifier()
 
-    X = pd.DataFrame({"a": [1, 2, 3, 4], "b": [6, 7, 8, 9]})
+    X = pd.DataFrame({"a": [1.0, 2.0, 3.0, 4.0], "b": [6.0, 7.0, 8.0, 9.0]})
     y = pd.Series([0, 1, 0, 1])
     model.fit(X, y)
 
@@ -804,7 +808,7 @@ def test_partial_dependence_binary_model_custom_values(
     [
         (["b"], {"b": ["a", "b"]}, 2),
         (["b"], {"b": ["a"]}, 1),
-        (["a", "b"], {"a": [1, 2], "b": ["a", "b"]}, 4),
+        (["a", "b"], {"a": [1.0, 2.0], "b": ["a", "b"]}, 4),
     ],
 )
 def test_partial_dependence_pipeline_custom_values(
@@ -815,11 +819,11 @@ def test_partial_dependence_pipeline_custom_values(
         SimpleImputer(strategy="most_frequent"), OneHotEncoder(), DummyClassifier()
     )
 
-    X = pd.DataFrame({"a": [1, 2, 3, 4], "b": ["a", "b", "a", "b"]})
+    X = pd.DataFrame({"a": [1.0, 2.0, 3.0, 4.0], "b": ["a", "b", "a", "b"]})
     y = pd.Series([0, 1, 0, 1])
     pl.fit(X, y)
 
-    X_holdout = pd.DataFrame({"a": [1, 2, 3, 4], "b": ["a", "b", "a", None]})
+    X_holdout = pd.DataFrame({"a": [1.0, 2.0, 3.0, 4.0], "b": ["a", "b", "a", None]})
     part_dep = partial_dependence(
         pl,
         X_holdout,
@@ -1134,3 +1138,80 @@ def test_mixed_type_categorical():
     ).fit(X, y)
     with pytest.raises(ValueError, match="The column #0 contains mixed data types"):
         partial_dependence(clf, X, features=[0])
+
+
+def test_reject_array_with_integer_dtype():
+    X = np.arange(8).reshape(4, 2)
+    y = np.array([0, 1, 0, 1])
+    clf = DummyClassifier()
+    clf.fit(X, y)
+    with pytest.warns(
+        FutureWarning, match=re.escape("The column 0 contains integer data.")
+    ):
+        partial_dependence(clf, X, features=0)
+
+    with pytest.warns(
+        FutureWarning, match=re.escape("The column 1 contains integer data.")
+    ):
+        partial_dependence(clf, X, features=[1], categorical_features=[0])
+
+    with pytest.warns(
+        FutureWarning, match=re.escape("The column 0 contains integer data.")
+    ):
+        partial_dependence(clf, X, features=[0, 1])
+
+    # The following should not raise as we do not compute numerical partial
+    # dependence on integer columns.
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        partial_dependence(clf, X, features=1, categorical_features=[1])
+
+
+def test_reject_pandas_with_integer_dtype():
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame(
+        {
+            "a": [1.0, 2.0, 3.0],
+            "b": [1, 2, 3],
+            "c": [1, 2, 3],
+        }
+    )
+    y = np.array([0, 1, 0])
+    clf = DummyClassifier()
+    clf.fit(X, y)
+
+    with pytest.warns(
+        FutureWarning, match=re.escape("The column 'c' contains integer data.")
+    ):
+        partial_dependence(clf, X, features="c")
+
+    with pytest.warns(
+        FutureWarning, match=re.escape("The column 'c' contains integer data.")
+    ):
+        partial_dependence(clf, X, features=["a", "c"])
+
+    # The following should not raise as we do not compute numerical partial
+    # dependence on integer columns.
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        partial_dependence(clf, X, features=["a"])
+        partial_dependence(clf, X, features=["c"], categorical_features=["c"])
+
+
+def test_partial_dependence_empty_categorical_features():
+    """Check that we raise the proper exception when `categorical_features`
+    is an empty list"""
+    clf = make_pipeline(StandardScaler(), LogisticRegression())
+    clf.fit(iris.data, iris.target)
+
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "Passing an empty list (`[]`) to `categorical_features` is not "
+            "supported. Use `None` instead to indicate that there are no "
+            "categorical features."
+        ),
+    ):
+        partial_dependence(
+            estimator=clf, X=iris.data, features=[0], categorical_features=[]
+        )

@@ -667,21 +667,13 @@ def test_confusion_matrix_single_label():
 @pytest.mark.parametrize(
     "params, warn_msg",
     [
-        # When y_test contains one class only and y_test==y_pred, LR+ is undefined
-        (
-            {
-                "y_true": np.array([0, 0, 0, 0, 0, 0]),
-                "y_pred": np.array([0, 0, 0, 0, 0, 0]),
-            },
-            "samples of only one class were seen during testing",
-        ),
         # When `fp == 0` and `tp != 0`, LR+ is undefined
         (
             {
                 "y_true": np.array([1, 1, 1, 0, 0, 0]),
                 "y_pred": np.array([1, 1, 1, 0, 0, 0]),
             },
-            "positive_likelihood_ratio ill-defined and being set to nan",
+            "`positive_likelihood_ratio` is ill-defined and set to `np.nan`.",
         ),
         # When `fp == 0` and `tp == 0`, LR+ is undefined
         (
@@ -689,7 +681,10 @@ def test_confusion_matrix_single_label():
                 "y_true": np.array([1, 1, 1, 0, 0, 0]),
                 "y_pred": np.array([0, 0, 0, 0, 0, 0]),
             },
-            "no samples predicted for the positive class",
+            (
+                "No samples were predicted for the positive class and "
+                "`positive_likelihood_ratio` is set to `np.nan`."
+            ),
         ),
         # When `tn == 0`, LR- is undefined
         (
@@ -697,7 +692,7 @@ def test_confusion_matrix_single_label():
                 "y_true": np.array([1, 1, 1, 0, 0, 0]),
                 "y_pred": np.array([0, 0, 0, 1, 1, 1]),
             },
-            "negative_likelihood_ratio ill-defined and being set to nan",
+            "`negative_likelihood_ratio` is ill-defined and set to `np.nan`.",
         ),
         # When `tp + fn == 0` both ratios are undefined
         (
@@ -705,7 +700,7 @@ def test_confusion_matrix_single_label():
                 "y_true": np.array([0, 0, 0, 0, 0, 0]),
                 "y_pred": np.array([1, 1, 1, 0, 0, 0]),
             },
-            "no samples of the positive class were present in the testing set",
+            "No samples of the positive class are present in `y_true`.",
         ),
     ],
 )
@@ -764,6 +759,123 @@ def test_likelihood_ratios():
     assert_allclose(neg, 12 / 27)
 
 
+# TODO(1.9): remove test
+@pytest.mark.parametrize("raise_warning", [True, False])
+def test_likelihood_ratios_raise_warning_deprecation(raise_warning):
+    """Test that class_likelihood_ratios raises a `FutureWarning` when `raise_warning`
+    param is set."""
+    y_true = np.array([1, 0])
+    y_pred = np.array([1, 0])
+
+    msg = "`raise_warning` was deprecated in version 1.7 and will be removed in 1.9."
+    with pytest.warns(FutureWarning, match=msg):
+        class_likelihood_ratios(y_true, y_pred, raise_warning=raise_warning)
+
+
+def test_likelihood_ratios_replace_undefined_by_worst():
+    """Test that class_likelihood_ratios returns the worst scores `1.0` for both LR+ and
+    LR- when `replace_undefined_by=1` is set."""
+    # This data causes fp=0 (0 false positives) in the confusion_matrix and a division
+    # by zero that affects the positive_likelihood_ratio:
+    y_true = np.array([1, 1, 0])
+    y_pred = np.array([1, 0, 0])
+
+    positive_likelihood_ratio, _ = class_likelihood_ratios(
+        y_true, y_pred, replace_undefined_by=1
+    )
+    assert positive_likelihood_ratio == pytest.approx(1.0)
+
+    # This data causes tn=0 (0 true negatives) in the confusion_matrix and a division
+    # by zero that affects the negative_likelihood_ratio:
+    y_true = np.array([1, 0, 0])
+    y_pred = np.array([1, 1, 1])
+
+    _, negative_likelihood_ratio = class_likelihood_ratios(
+        y_true, y_pred, replace_undefined_by=1
+    )
+    assert negative_likelihood_ratio == pytest.approx(1.0)
+
+
+@pytest.mark.parametrize(
+    "replace_undefined_by",
+    [
+        {"LR+": 0.0},
+        {"LR-": 0.0},
+        {"LR+": -5.0, "LR-": 0.0},
+        {"LR+": 1.0, "LR-": "nan"},
+        {"LR+": 0.0, "LR-": 0.0},
+        {"LR+": 1.0, "LR-": 2.0},
+    ],
+)
+def test_likelihood_ratios_wrong_dict_replace_undefined_by(replace_undefined_by):
+    """Test that class_likelihood_ratios raises a `ValueError` if the input dict for
+    `replace_undefined_by` is in the wrong format or contains impossible values."""
+    y_true = np.array([1, 0])
+    y_pred = np.array([1, 0])
+
+    msg = "The dictionary passed as `replace_undefined_by` needs to be in the form"
+    with pytest.raises(ValueError, match=msg):
+        class_likelihood_ratios(
+            y_true, y_pred, replace_undefined_by=replace_undefined_by
+        )
+
+
+@pytest.mark.parametrize(
+    "replace_undefined_by, expected",
+    [
+        ({"LR+": 1.0, "LR-": 1.0}, 1.0),
+        ({"LR+": np.inf, "LR-": 0.0}, np.inf),
+        ({"LR+": 2.0, "LR-": 0.0}, 2.0),
+        ({"LR+": np.nan, "LR-": np.nan}, np.nan),
+        (np.nan, np.nan),
+    ],
+)
+def test_likelihood_ratios_replace_undefined_by_0_fp(replace_undefined_by, expected):
+    """Test that the `replace_undefined_by` param returns the right value for the
+    positive_likelihood_ratio as defined by the user."""
+    # This data causes fp=0 (0 false positives) in the confusion_matrix and a division
+    # by zero that affects the positive_likelihood_ratio:
+    y_true = np.array([1, 1, 0])
+    y_pred = np.array([1, 0, 0])
+
+    positive_likelihood_ratio, _ = class_likelihood_ratios(
+        y_true, y_pred, replace_undefined_by=replace_undefined_by
+    )
+
+    if np.isnan(expected):
+        assert np.isnan(positive_likelihood_ratio)
+    else:
+        assert positive_likelihood_ratio == pytest.approx(expected)
+
+
+@pytest.mark.parametrize(
+    "replace_undefined_by, expected",
+    [
+        ({"LR+": 1.0, "LR-": 1.0}, 1.0),
+        ({"LR+": np.inf, "LR-": 0.0}, 0.0),
+        ({"LR+": np.inf, "LR-": 0.5}, 0.5),
+        ({"LR+": np.nan, "LR-": np.nan}, np.nan),
+        (np.nan, np.nan),
+    ],
+)
+def test_likelihood_ratios_replace_undefined_by_0_tn(replace_undefined_by, expected):
+    """Test that the `replace_undefined_by` param returns the right value for the
+    negative_likelihood_ratio as defined by the user."""
+    # This data causes tn=0 (0 true negatives) in the confusion_matrix and a division
+    # by zero that affects the negative_likelihood_ratio:
+    y_true = np.array([1, 0, 0])
+    y_pred = np.array([1, 1, 1])
+
+    _, negative_likelihood_ratio = class_likelihood_ratios(
+        y_true, y_pred, replace_undefined_by=replace_undefined_by
+    )
+
+    if np.isnan(expected):
+        assert np.isnan(negative_likelihood_ratio)
+    else:
+        assert negative_likelihood_ratio == pytest.approx(expected)
+
+
 def test_cohen_kappa():
     # These label vectors reproduce the contingency matrix from Artstein and
     # Poesio (2008), Table 1: np.array([[20, 20], [10, 50]]).
@@ -793,6 +905,17 @@ def test_cohen_kappa():
     assert_almost_equal(
         cohen_kappa_score(y1, y2, weights="quadratic"), 0.9541, decimal=4
     )
+
+
+def test_cohen_kappa_score_error_wrong_label():
+    """Test that correct error is raised when users pass labels that are not in y1."""
+    labels = [1, 2]
+    y1 = np.array(["a"] * 5 + ["b"] * 5)
+    y2 = np.array(["b"] * 10)
+    with pytest.raises(
+        ValueError, match="At least one label in `labels` must be present in `y1`"
+    ):
+        cohen_kappa_score(y1, y2, labels=labels)
 
 
 @pytest.mark.parametrize("zero_division", [0, 1, np.nan])
@@ -839,8 +962,8 @@ def test_zero_division_nan_warning(metric, y_true, y_pred):
     assert result == 0.0
 
 
-def test_matthews_corrcoef_against_numpy_corrcoef():
-    rng = np.random.RandomState(0)
+def test_matthews_corrcoef_against_numpy_corrcoef(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     y_true = rng.randint(0, 2, size=20)
     y_pred = rng.randint(0, 2, size=20)
 
@@ -849,11 +972,11 @@ def test_matthews_corrcoef_against_numpy_corrcoef():
     )
 
 
-def test_matthews_corrcoef_against_jurman():
+def test_matthews_corrcoef_against_jurman(global_random_seed):
     # Check that the multiclass matthews_corrcoef agrees with the definition
     # presented in Jurman, Riccadonna, Furlanello, (2012). A Comparison of MCC
     # and CEN Error Measures in MultiClass Prediction
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     y_true = rng.randint(0, 2, size=20)
     y_pred = rng.randint(0, 2, size=20)
     sample_weight = rng.rand(20)
@@ -888,8 +1011,8 @@ def test_matthews_corrcoef_against_jurman():
     assert_almost_equal(mcc_ours, mcc_jurman, 10)
 
 
-def test_matthews_corrcoef():
-    rng = np.random.RandomState(0)
+def test_matthews_corrcoef(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     y_true = ["a" if i == 0 else "b" for i in rng.randint(0, 2, size=20)]
 
     # corrcoef of same vectors must be 1
@@ -923,8 +1046,8 @@ def test_matthews_corrcoef():
         assert_almost_equal(matthews_corrcoef(y_1, y_2, sample_weight=mask), 0.0)
 
 
-def test_matthews_corrcoef_multiclass():
-    rng = np.random.RandomState(0)
+def test_matthews_corrcoef_multiclass(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     ord_a = ord("a")
     n_classes = 4
     y_true = [chr(ord_a + i) for i in rng.randint(0, n_classes, size=20)]
@@ -980,9 +1103,9 @@ def test_matthews_corrcoef_multiclass():
 
 
 @pytest.mark.parametrize("n_points", [100, 10000])
-def test_matthews_corrcoef_overflow(n_points):
+def test_matthews_corrcoef_overflow(n_points, global_random_seed):
     # https://github.com/scikit-learn/scikit-learn/issues/9622
-    rng = np.random.RandomState(20170906)
+    rng = np.random.RandomState(global_random_seed)
 
     def mcc_safe(y_true, y_pred):
         conf_matrix = confusion_matrix(y_true, y_pred)
@@ -2646,6 +2769,17 @@ def test_log_loss():
     with pytest.raises(ValueError):
         log_loss(y_true, y_pred)
 
+    # raise error if labels do not contain all values of y_true
+    y_true = ["a", "b", "c"]
+    y_pred = [[0.9, 0.1, 0.0], [0.1, 0.9, 0.0], [0.1, 0.1, 0.8]]
+    labels = ["a", "c", "d"]
+    error_str = (
+        "y_true contains values {'b'} not belonging to the passed "
+        "labels ['a', 'c', 'd']."
+    )
+    with pytest.raises(ValueError, match=re.escape(error_str)):
+        log_loss(y_true, y_pred, labels=labels)
+
     # case when y_true is a string array object
     y_true = ["ham", "spam", "spam", "ham"]
     y_pred = [[0.3, 0.7], [0.6, 0.4], [0.4, 0.6], [0.7, 0.3]]
@@ -2658,15 +2792,15 @@ def test_log_loss():
     y_pred = [[0.2, 0.8], [0.6, 0.4]]
     y_score = np.array([[0.1, 0.9], [0.1, 0.9]])
     error_str = (
-        r"y_true contains only one label \(2\). Please provide "
-        r"the true labels explicitly through the labels argument."
+        "y_true contains only one label (2). Please provide the list of all "
+        "expected class labels explicitly through the labels argument."
     )
-    with pytest.raises(ValueError, match=error_str):
+    with pytest.raises(ValueError, match=re.escape(error_str)):
         log_loss(y_true, y_pred)
 
     y_pred = [[0.2, 0.8], [0.6, 0.4], [0.7, 0.3]]
-    error_str = r"Found input variables with inconsistent numbers of samples: \[3, 2\]"
-    with pytest.raises(ValueError, match=error_str):
+    error_str = "Found input variables with inconsistent numbers of samples: [3, 2]"
+    with pytest.raises(ValueError, match=re.escape(error_str)):
         log_loss(y_true, y_pred)
 
     # works when the labels argument is used
@@ -2702,7 +2836,7 @@ def test_log_loss_not_probabilities_warning(dtype):
     y_true = np.array([0, 1, 1, 0])
     y_pred = np.array([[0.2, 0.7], [0.6, 0.3], [0.4, 0.7], [0.8, 0.3]], dtype=dtype)
 
-    with pytest.warns(UserWarning, match="The y_pred values do not sum to one."):
+    with pytest.warns(UserWarning, match="The y_prob values do not sum to one."):
         log_loss(y_true, y_pred)
 
 
@@ -2738,39 +2872,188 @@ def test_log_loss_pandas_input():
         assert_allclose(loss, 0.7469410)
 
 
-def test_brier_score_loss():
+def test_log_loss_warnings():
+    expected_message = re.escape(
+        "Labels passed were ['spam', 'eggs', 'ham']. But this function "
+        "assumes labels are ordered lexicographically. "
+        "Pass the ordered labels=['eggs', 'ham', 'spam'] and ensure that "
+        "the columns of y_prob correspond to this ordering."
+    )
+    with pytest.warns(UserWarning, match=expected_message):
+        log_loss(
+            ["eggs", "spam", "ham"],
+            [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+            labels=["spam", "eggs", "ham"],
+        )
+
+
+def test_brier_score_loss_binary():
     # Check brier_score_loss function
     y_true = np.array([0, 1, 1, 0, 1, 1])
-    y_pred = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
-    true_score = linalg.norm(y_true - y_pred) ** 2 / len(y_true)
+    y_prob = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
+    true_score = linalg.norm(y_true - y_prob) ** 2 / len(y_true)
 
     assert_almost_equal(brier_score_loss(y_true, y_true), 0.0)
-    assert_almost_equal(brier_score_loss(y_true, y_pred), true_score)
-    assert_almost_equal(brier_score_loss(1.0 + y_true, y_pred), true_score)
-    assert_almost_equal(brier_score_loss(2 * y_true - 1, y_pred), true_score)
-    with pytest.raises(ValueError):
-        brier_score_loss(y_true, y_pred[1:])
-    with pytest.raises(ValueError):
-        brier_score_loss(y_true, y_pred + 1.0)
-    with pytest.raises(ValueError):
-        brier_score_loss(y_true, y_pred - 1.0)
+    assert_almost_equal(brier_score_loss(y_true, y_prob), true_score)
+    assert_almost_equal(brier_score_loss(1.0 + y_true, y_prob), true_score)
+    assert_almost_equal(brier_score_loss(2 * y_true - 1, y_prob), true_score)
 
-    # ensure to raise an error for multiclass y_true
-    y_true = np.array([0, 1, 2, 0])
-    y_pred = np.array([0.8, 0.6, 0.4, 0.2])
-    error_message = (
-        "Only binary classification is supported. The type of the target is multiclass"
+    # check that using (n_samples, 2) y_prob or y_true gives the same score
+    y_prob_reshaped = np.column_stack((1 - y_prob, y_prob))
+    y_true_reshaped = np.column_stack((1 - y_true, y_true))
+    assert_almost_equal(brier_score_loss(y_true, y_prob_reshaped), true_score)
+    assert_almost_equal(brier_score_loss(y_true_reshaped, y_prob_reshaped), true_score)
+
+    # check scale_by_half argument
+    assert_almost_equal(
+        brier_score_loss(y_true, y_prob, scale_by_half="auto"), true_score
+    )
+    assert_almost_equal(
+        brier_score_loss(y_true, y_prob, scale_by_half=True), true_score
+    )
+    assert_almost_equal(
+        brier_score_loss(y_true, y_prob, scale_by_half=False), 2 * true_score
     )
 
-    with pytest.raises(ValueError, match=error_message):
-        brier_score_loss(y_true, y_pred)
-
     # calculate correctly when there's only one class in y_true
-    assert_almost_equal(brier_score_loss([-1], [0.4]), 0.16)
-    assert_almost_equal(brier_score_loss([0], [0.4]), 0.16)
-    assert_almost_equal(brier_score_loss([1], [0.4]), 0.36)
-    assert_almost_equal(brier_score_loss(["foo"], [0.4], pos_label="bar"), 0.16)
-    assert_almost_equal(brier_score_loss(["foo"], [0.4], pos_label="foo"), 0.36)
+    assert_almost_equal(brier_score_loss([-1], [0.4]), 0.4**2)
+    assert_almost_equal(brier_score_loss([0], [0.4]), 0.4**2)
+    assert_almost_equal(brier_score_loss([1], [0.4]), (1 - 0.4) ** 2)
+    assert_almost_equal(brier_score_loss(["foo"], [0.4], pos_label="bar"), 0.4**2)
+    assert_almost_equal(
+        brier_score_loss(["foo"], [0.4], pos_label="foo"),
+        (1 - 0.4) ** 2,
+    )
+
+
+def test_brier_score_loss_multiclass():
+    # test cases for multi-class
+    assert_almost_equal(
+        brier_score_loss(
+            ["eggs", "spam", "ham"],
+            [[1, 0, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0]],
+            labels=["eggs", "ham", "spam", "yams"],
+        ),
+        2 / 3,
+    )
+
+    assert_almost_equal(
+        brier_score_loss(
+            [1, 0, 2], [[0.2, 0.7, 0.1], [0.6, 0.2, 0.2], [0.6, 0.1, 0.3]]
+        ),
+        0.41333333,
+    )
+
+    # check perfect predictions for 3 classes
+    assert_almost_equal(
+        brier_score_loss(
+            [0, 1, 2], [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
+        ),
+        0,
+    )
+
+    # check perfectly incorrect predictions for 3 classes
+    assert_almost_equal(
+        brier_score_loss(
+            [0, 1, 2], [[0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [1.0, 0.0, 0.0]]
+        ),
+        2,
+    )
+
+
+def test_brier_score_loss_invalid_inputs():
+    # binary case
+    y_true = np.array([0, 1, 1, 0, 1, 1])
+    y_prob = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
+    with pytest.raises(ValueError):
+        # bad length of y_prob
+        brier_score_loss(y_true, y_prob[1:])
+    with pytest.raises(ValueError):
+        # y_pred has value greater than 1
+        brier_score_loss(y_true, y_prob + 1.0)
+    with pytest.raises(ValueError):
+        # y_pred has value less than 0
+        brier_score_loss(y_true, y_prob - 1.0)
+
+    # multiclass case
+    y_true = np.array([1, 0, 2])
+    y_prob = np.array([[0.2, 0.7, 0.1], [0.6, 0.2, 0.2], [0.6, 0.1, 0.3]])
+    with pytest.raises(ValueError):
+        # bad length of y_pred
+        brier_score_loss(y_true, y_prob[1:])
+    with pytest.raises(ValueError):
+        # y_pred has value greater than 1
+        brier_score_loss(y_true, y_prob + 1.0)
+    with pytest.raises(ValueError):
+        # y_pred has value less than 0
+        brier_score_loss(y_true, y_prob - 1.0)
+
+    # raise an error for multiclass y_true and binary y_prob
+    y_true = np.array([0, 1, 2, 0])
+    y_prob = np.array([0.8, 0.6, 0.4, 0.2])
+    error_message = re.escape(
+        "The type of the target inferred from y_true is multiclass "
+        "but should be binary according to the shape of y_prob."
+    )
+    with pytest.raises(ValueError, match=error_message):
+        brier_score_loss(y_true, y_prob)
+
+    # raise an error for wrong number of classes
+    y_true = [0, 1, 2]
+    y_prob = [[1, 0], [0, 1], [0, 1]]
+    error_message = (
+        "y_true and y_prob contain different number of "
+        "classes: 3 vs 2. Please provide the true "
+        "labels explicitly through the labels argument. "
+        "Classes found in "
+        "y_true: [0 1 2]"
+    )
+    with pytest.raises(ValueError, match=re.escape(error_message)):
+        brier_score_loss(y_true, y_prob)
+
+    y_true = ["eggs", "spam", "ham"]
+    y_prob = [[1, 0, 0], [0, 1, 0], [0, 1, 0]]
+    labels = ["eggs", "spam", "ham", "yams"]
+    error_message = (
+        "The number of classes in labels is different "
+        "from that in y_prob. Classes found in "
+        "labels: ['eggs' 'ham' 'spam' 'yams']"
+    )
+    with pytest.raises(ValueError, match=re.escape(error_message)):
+        brier_score_loss(y_true, y_prob, labels=labels)
+
+    # raise error message when there's only one class in y_true
+    y_true = ["eggs"]
+    y_prob = [[0.9, 0.1]]
+    error_message = (
+        "y_true contains only one label (eggs). Please "
+        "provide the list of all expected class labels explicitly through the "
+        "labels argument."
+    )
+    with pytest.raises(ValueError, match=re.escape(error_message)):
+        brier_score_loss(y_true, y_prob)
+
+    # error is fixed when labels is specified
+    assert_almost_equal(brier_score_loss(y_true, y_prob, labels=["eggs", "ham"]), 0.01)
+
+
+def test_brier_score_loss_warnings():
+    expected_message = re.escape(
+        "Labels passed were ['spam', 'eggs', 'ham']. But this function "
+        "assumes labels are ordered lexicographically. "
+        "Pass the ordered labels=['eggs', 'ham', 'spam'] and ensure that "
+        "the columns of y_prob correspond to this ordering."
+    )
+    with pytest.warns(UserWarning, match=expected_message):
+        brier_score_loss(
+            ["eggs", "spam", "ham"],
+            [
+                [1, 0, 0],
+                [0, 1, 0],
+                [0, 0, 1],
+            ],
+            labels=["spam", "eggs", "ham"],
+        )
 
 
 def test_balanced_accuracy_score_unseen():
@@ -2873,29 +3156,6 @@ def test_classification_metric_division_by_zero_nan_validaton(scoring):
     X, y = datasets.make_classification(random_state=0)
     classifier = DecisionTreeClassifier(max_depth=3, random_state=0).fit(X, y)
     cross_val_score(classifier, X, y, scoring=scoring, n_jobs=2, error_score="raise")
-
-
-# TODO(1.7): remove
-def test_brier_score_loss_deprecation_warning():
-    """Check the message for future deprecation."""
-    # Check brier_score_loss function
-    y_true = np.array([0, 1, 1, 0, 1, 1])
-    y_pred = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
-
-    warn_msg = "y_prob was deprecated in version 1.5"
-    with pytest.warns(FutureWarning, match=warn_msg):
-        brier_score_loss(
-            y_true,
-            y_prob=y_pred,
-        )
-
-    error_msg = "`y_prob` and `y_proba` cannot be both specified"
-    with pytest.raises(ValueError, match=error_msg):
-        brier_score_loss(
-            y_true,
-            y_prob=y_pred,
-            y_proba=y_pred,
-        )
 
 
 def test_d2_log_loss_score():
@@ -3048,6 +3308,46 @@ def test_d2_log_loss_score():
     assert d2_score < 0
 
 
+def test_d2_log_loss_score_missing_labels():
+    """Check that d2_log_loss_score works when not all labels are present in y_true
+
+    non-regression test for https://github.com/scikit-learn/scikit-learn/issues/30713
+    """
+    y_true = [2, 0, 2, 0]
+    labels = [0, 1, 2]
+    sample_weight = [1.4, 0.6, 0.7, 0.3]
+    y_pred = np.tile([1, 0, 0], (4, 1))
+
+    log_loss_obs = log_loss(y_true, y_pred, sample_weight=sample_weight, labels=labels)
+
+    # Null model consists of weighted average of the classes.
+    # Given that the sum of the weights is 3,
+    # - weighted average of 0s is (0.6 + 0.3) / 3 = 0.3
+    # - weighted average of 1s is 0
+    # - weighted average of 2s is (1.4 + 0.7) / 3 = 0.7
+    y_pred_null = np.tile([0.3, 0, 0.7], (4, 1))
+    log_loss_null = log_loss(
+        y_true, y_pred_null, sample_weight=sample_weight, labels=labels
+    )
+
+    expected_d2_score = 1 - log_loss_obs / log_loss_null
+    d2_score = d2_log_loss_score(
+        y_true, y_pred, sample_weight=sample_weight, labels=labels
+    )
+    assert_allclose(d2_score, expected_d2_score)
+
+
+def test_d2_log_loss_score_label_order():
+    """Check that d2_log_loss_score doesn't depend on the order of the labels."""
+    y_true = [2, 0, 2, 0]
+    y_pred = np.tile([1, 0, 0], (4, 1))
+
+    d2_score = d2_log_loss_score(y_true, y_pred, labels=[0, 1, 2])
+    d2_score_other = d2_log_loss_score(y_true, y_pred, labels=[0, 2, 1])
+
+    assert_allclose(d2_score, d2_score_other)
+
+
 def test_d2_log_loss_score_raises():
     """Test that d2_log_loss_score raises the appropriate errors on
     invalid inputs."""
@@ -3059,7 +3359,7 @@ def test_d2_log_loss_score_raises():
 
     # check error if the number of classes in labels do not match the number
     # of classes in y_pred.
-    y_true = ["a", "b", "c"]
+    y_true = [0, 1, 2]
     y_pred = [[0.5, 0.5], [0.5, 0.5], [0.5, 0.5]]
     labels = [0, 1, 2]
     err = "number of classes in labels is different"
@@ -3082,7 +3382,7 @@ def test_d2_log_loss_score_raises():
 
     # check error when y_true only has 1 label
     y_true = [1, 1, 1]
-    y_pred = [[0.5, 0.5], [0.5, 0.5], [0.5, 5]]
+    y_pred = [[0.5, 0.5], [0.5, 0.5], [0.5, 0.5]]
     err = "y_true contains only one label"
     with pytest.raises(ValueError, match=err):
         d2_log_loss_score(y_true, y_pred)
@@ -3091,7 +3391,7 @@ def test_d2_log_loss_score_raises():
     # only 1 label
     y_true = [1, 1, 1]
     labels = [1]
-    y_pred = [[0.5, 0.5], [0.5, 0.5], [0.5, 5]]
+    y_pred = [[0.5, 0.5], [0.5, 0.5], [0.5, 0.5]]
     err = "The labels array needs to contain at least two"
     with pytest.raises(ValueError, match=err):
         d2_log_loss_score(y_true, y_pred, labels=labels)
