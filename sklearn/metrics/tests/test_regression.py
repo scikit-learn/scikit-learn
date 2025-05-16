@@ -330,7 +330,9 @@ def test__check_reg_targets():
 
     for (type1, y1, n_out1), (type2, y2, n_out2) in product(EXAMPLES, repeat=2):
         if type1 == type2 and n_out1 == n_out2:
-            y_type, y_check1, y_check2, _, _ = _check_reg_targets(y1, y2, None, None)
+            y_type, y_check1, y_check2, _, _ = _check_reg_targets(
+                y1, y2, sample_weight=None, multioutput=None
+            )
             assert type1 == y_type
             if type1 == "continuous":
                 assert_array_equal(y_check1, np.reshape(y1, (-1, 1)))
@@ -340,7 +342,7 @@ def test__check_reg_targets():
                 assert_array_equal(y_check2, y2)
         else:
             with pytest.raises(ValueError):
-                _check_reg_targets(y1, y2, None, None)
+                _check_reg_targets(y1, y2, sample_weight=None, multioutput=None)
 
 
 def test__check_reg_targets_exception():

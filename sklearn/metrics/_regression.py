@@ -1341,7 +1341,9 @@ def max_error(y_true, y_pred):
     1.0
     """
     xp, _ = get_namespace(y_true, y_pred)
-    y_type, y_true, y_pred, _, _ = _check_reg_targets(y_true, y_pred, None, None, xp=xp)
+    y_type, y_true, y_pred, _, _ = _check_reg_targets(
+        y_true, y_pred, sample_weight=None, multioutput=None, xp=xp
+    )
     if y_type == "continuous-multioutput":
         raise ValueError("Multioutput not supported in max_error")
     return float(xp.max(xp.abs(y_true - y_pred)))

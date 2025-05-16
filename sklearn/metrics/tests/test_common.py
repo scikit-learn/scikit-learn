@@ -1595,11 +1595,10 @@ def test_regression_sample_weight_invariance(name):
         - METRICS_WITHOUT_SAMPLE_WEIGHT
     ),
 )
-def test_regression_invalid_sample_weight(name):
+def test_regression_with_invalid_sample_weight(name):
     # Check that `sample_weight` with incorrect length raises error
     n_samples = 50
     random_state = check_random_state(0)
-    # regression
     y_true = random_state.random_sample(size=(n_samples,))
     y_pred = random_state.random_sample(size=(n_samples,))
     metric = ALL_METRICS[name]
