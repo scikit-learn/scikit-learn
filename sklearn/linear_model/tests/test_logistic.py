@@ -410,7 +410,6 @@ def test_consistency_path(global_random_seed):
 
     # test for fit_intercept=True
     stochastic_solvers = ["liblinear", "sag", "saga"]
-
     for solver in ("lbfgs", "newton-cg", "newton-cholesky", "liblinear", "sag", "saga"):
         random_state = global_random_seed if solver in stochastic_solvers else 0
 
@@ -460,25 +459,25 @@ def test_logistic_regression_path_convergence_fail():
     assert "linear_model.html#logistic-regression" in warn_msg
 
 
-def test_liblinear_dual_random_state():
+def test_liblinear_dual_random_state(global_random_seed):
     # random_state is relevant for liblinear solver only if dual=True
-    X, y = make_classification(n_samples=20, random_state=0)
+    X, y = make_classification(n_samples=20, random_state=global_random_seed)
     lr1 = LogisticRegression(
-        random_state=0,
+        random_state=global_random_seed,
         dual=True,
         tol=1e-3,
         solver="liblinear",
     )
     lr1.fit(X, y)
     lr2 = LogisticRegression(
-        random_state=0,
+        random_state=global_random_seed,
         dual=True,
         tol=1e-3,
         solver="liblinear",
     )
     lr2.fit(X, y)
     lr3 = LogisticRegression(
-        random_state=8,
+        random_state=global_random_seed + 1,
         dual=True,
         tol=1e-3,
         solver="liblinear",
@@ -493,10 +492,10 @@ def test_liblinear_dual_random_state():
         assert_array_almost_equal(lr1.coef_, lr3.coef_)
 
 
-def test_logistic_cv():
+def test_logistic_cv(global_random_seed):
     # test for LogisticRegressionCV object
     n_samples, n_features = 50, 5
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X_ref = rng.randn(n_samples, n_features)
     y = np.sign(X_ref.dot(5 * rng.randn(n_features)))
     X_ref -= X_ref.mean()
@@ -535,12 +534,14 @@ def test_logistic_cv():
         ("recall", ["_macro", "_weighted"]),
     ],
 )
-def test_logistic_cv_multinomial_score(scoring, multiclass_agg_list):
+def test_logistic_cv_multinomial_score(
+    global_random_seed, scoring, multiclass_agg_list
+):
     # test that LogisticRegressionCV uses the right score to compute its
     # cross-validation scores when using a multinomial scoring
     # see https://github.com/scikit-learn/scikit-learn/issues/8720
     X, y = make_classification(
-        n_samples=100, random_state=0, n_classes=3, n_informative=6
+        n_samples=100, random_state=global_random_seed, n_classes=3, n_informative=6
     )
     train, test = np.arange(80), np.arange(80, 100)
     lr = LogisticRegression(C=1.0)
@@ -608,6 +609,7 @@ def test_multinomial_logistic_regression_string_inputs():
     lr_cv_str = LogisticRegression(class_weight={"bar": 1, "baz": 2, "foo": 0}).fit(
         X_ref, y_str
     )
+
     assert sorted(np.unique(lr_cv_str.predict(X_ref))) == ["bar", "baz"]
 
 
