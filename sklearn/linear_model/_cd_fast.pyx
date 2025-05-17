@@ -131,7 +131,7 @@ def enet_coordinate_descent(
     cdef unsigned int n_features = X.shape[1]
 
     # compute norms of the columns of X
-    cdef floating[::1] norm_cols_X
+    cdef floating[::1] norm_cols_X = np.zeros(n_features, dtype=dtype)
 
     # initial value of the residuals
     cdef floating[::1] R = np.empty(n_samples, dtype=dtype)
@@ -166,15 +166,6 @@ def enet_coordinate_descent(
         warnings.warn("Coordinate descent with no regularization may lead to "
                       "unexpected results and is discouraged.")
 
-    if X_mean is None:
-        if no_sample_weights:
-            norm_cols_X = np.square(X).sum(axis=0)
-        else:
-            norm_cols_X = (sample_weight[:, None] * np.square(X)).sum(axis=0)
-    else:
-        # Computation delayed, inside nogil block.
-        norm_cols_X = np.zeros(n_features, dtype=dtype)
-
     if not no_sample_weights:
         R_sw = np.empty_like(R)
 
@@ -186,11 +177,22 @@ def enet_coordinate_descent(
                     center = True
                     break
 
-        if center:
-            if no_sample_weights:
+        # norm_cols_X = np.square(X).sum(axis=0)
+        if no_sample_weights:
+            if not center:
+                for ii in range(n_features):
+                    norm_cols_X[ii] = _dot(n_samples, &X[0, ii], 1, &X[0, ii], 1)
+            else:
                 for ii in range(n_features):
                     for jj in range(n_samples):
                         norm_cols_X[ii] += (X[jj, ii] - X_mean[ii]) ** 2
+        else:
+            if not center:
+                for ii in range(n_features):
+                    for jj in range(n_samples):
+                        norm_cols_X[ii] += (
+                            sample_weight[jj] * X[jj, ii] ** 2
+                        )
             else:
                 for ii in range(n_features):
                     for jj in range(n_samples):
