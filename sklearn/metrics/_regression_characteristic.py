@@ -114,7 +114,6 @@ def rec_curve(y_true, y_pred, *, loss="absolute"):
     )
     xp, _, device = get_namespace_and_device(y_true_array)
 
-    # Handle y_pred: check if it's a scalar or array-like
     # Python native scalars (int, float)
     if isinstance(y_pred, numbers.Number):  # numbers.Real covers int, float
         y_pred_scalar_val = float(y_pred)
@@ -124,6 +123,12 @@ def rec_curve(y_true, y_pred, *, loss="absolute"):
             dtype=y_true_array.dtype,  # Match y_true's dtype for consistency
             device=device,
         )
+
+    # array-like with a single prediction
+    if y_pred.size == 1:
+        y_pred = xp.squeeze(y_pred)
+        y_pred = xp.tile(y_pred, y_true_array.shape)
+
     y_pred_array = check_array(
         y_pred, ensure_2d=False, dtype="numeric", ensure_all_finite=True
     )

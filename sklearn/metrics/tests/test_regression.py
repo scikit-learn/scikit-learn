@@ -23,6 +23,7 @@ from sklearn.metrics import (
     mean_tweedie_deviance,
     median_absolute_error,
     r2_score,
+    rec_curve,
     root_mean_squared_error,
     root_mean_squared_log_error,
 )
@@ -632,3 +633,35 @@ def test_pinball_loss_relation_with_mae(global_random_seed):
         mean_absolute_error(y_true, y_pred)
         == mean_pinball_loss(y_true, y_pred, alpha=0.5) * 2
     )
+
+
+@pytest.mark.parametrize("constant_one_pred", [1.0, np.asarray(1.0), np.asarray([1.0])])
+def test_rec_curve_const_pred(constant_one_pred):
+    y_true = np.array([-1, 1, 2, -2, 0])
+
+    deviations, accuracy = rec_curve(y_true, constant_one_pred)
+
+    assert_allclose(deviations, np.asarray([0.0, 1.0, 2.0, 3.0]))
+    assert_allclose(accuracy, np.asarray([0.2, 0.6, 0.8, 1.0]))
+
+
+def test_rec_curve_array_pred():
+    # four residuals of 1, and one residual of 0
+    y_true = np.array([-1, 1, 2, -2, 0])
+    y_pred = np.array([0, 2, 3, -1, 0])
+
+    deviations, accuracy = rec_curve(y_true, y_pred)
+
+    assert_allclose(deviations, np.asarray([0.0, 1.0]))
+    assert_allclose(accuracy, np.asanyarray([0.2, 1.0]))
+
+
+def test_rec_curve_squared_loss():
+    # one residual of one, one residual of zero, three residuals of 2
+    y_true = np.array([-1, 1, 2, -2, 0])
+    y_pred = np.array([1, 2, 2, 0, -2])
+
+    deviations, accuracy = rec_curve(y_true, y_pred, loss="squared")
+
+    assert_allclose(deviations, np.asarray([0.0, 1.0, 4.0]))
+    assert_allclose(accuracy, np.asanyarray([0.2, 0.4, 1.0]))

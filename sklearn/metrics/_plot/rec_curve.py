@@ -4,7 +4,7 @@
 import numpy as np
 
 from ...base import is_regressor  # To check if estimator is a regressor
-from ...metrics import rec_curve
+from ...metrics._regression_characteristic import rec_curve
 from ...utils._optional_dependencies import check_matplotlib_support
 from ...utils.validation import check_is_fitted
 
