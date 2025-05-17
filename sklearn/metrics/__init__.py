@@ -30,6 +30,7 @@ from ._dist_metrics import DistanceMetric
 from ._plot.confusion_matrix import ConfusionMatrixDisplay
 from ._plot.det_curve import DetCurveDisplay
 from ._plot.precision_recall_curve import PrecisionRecallDisplay
+from ._plot.rec_curve import RecCurveDisplay
 from ._plot.regression import PredictionErrorDisplay
 from ._plot.roc_curve import RocCurveDisplay
 from ._ranking import (
@@ -101,6 +102,7 @@ __all__ = [
     "DistanceMetric",
     "PrecisionRecallDisplay",
     "PredictionErrorDisplay",
+    "RecCurveDisplay",
     "RocCurveDisplay",
     "accuracy_score",
     "adjusted_mutual_info_score",
@@ -169,6 +171,7 @@ __all__ = [
     "precision_score",
     "r2_score",
     "rand_score",
+    "rec_curve",
     "recall_score",
     "roc_auc_score",
     "roc_curve",
