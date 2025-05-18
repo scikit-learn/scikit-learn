@@ -137,7 +137,7 @@ class RecCurveDisplay:
             max_const_error = max(self.constant_predictor_deviations)
         elif clip_max_const_error:
             raise ValueError(
-                "clip_max_const_error is True, but no constant deviations were provided."
+                "clip_max_const_error is True, but no constant deviations were given."
             )
 
         if clip_max_const_error:
@@ -325,7 +325,6 @@ class RecCurveDisplay:
             elif actual_constant_predictor_type == "median":
                 constant_value = np.median(y_true_np)
                 cp_name_val = "Median Predictor"
-            # No else needed here as validate_params covers constant_predictor values
 
             cp_devs, cp_accs = rec_curve(y_true, constant_value, loss=loss)
             cp_devs_np = np.asarray(cp_devs)
