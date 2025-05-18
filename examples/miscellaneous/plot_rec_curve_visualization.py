@@ -46,10 +46,9 @@ RecCurveDisplay.from_estimator(lr_estimator, X_test, y_test, name="Linear regres
 
 
 # %%
-# Compare two REC curves of linear regression vs ridge regression for polnyomial features. We can see that the curve
-# of the ridge regressor with polynomial features dominates the one of the linear regressor. Meaning, for any error
-# tolerance, the Poly-Ridge model has more samples below this tolerance.
-
+# Compare two REC curves of linear regression to KNN and histogram gradient boosting regressors. We can see a clear
+# hierarchy here. KNN is strictly better than linear regression for any error tolerance, and HGBR is strictly better
+# than both for any error tolerance.
 import matplotlib.pyplot as plt
 from sklearn.metrics import root_mean_squared_error, mean_absolute_error
 from sklearn.ensemble import HistGradientBoostingRegressor
