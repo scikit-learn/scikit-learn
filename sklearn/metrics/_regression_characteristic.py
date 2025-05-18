@@ -6,7 +6,7 @@
 import numbers  # For type checking Python scalars
 
 from ..utils import check_array, check_consistent_length
-from ..utils._array_api import get_namespace_and_device, _find_matching_floating_dtype
+from ..utils._array_api import _find_matching_floating_dtype, get_namespace_and_device
 from ..utils._param_validation import StrOptions, validate_params
 
 
