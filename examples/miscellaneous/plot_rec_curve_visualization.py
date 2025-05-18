@@ -40,19 +40,14 @@ lr_estimator.fit(X_train, y_train)
 # "reasonable".
 from sklearn.metrics import RecCurveDisplay
 
-RecCurveDisplay.from_estimator(lr_estimator, X_test, y_test)
-
-
-# %%
-# Display REC curve of the model only, without the constant predictor. The linear regressor's REC curve also
-# dominates the one of another constant predictor - the mean.
-RecCurveDisplay.from_estimator(lr_estimator, X_test, y_test, constant_predictor="mean")
+RecCurveDisplay.from_estimator(lr_estimator, X_test, y_test, name="Linear regression")
 
 
 # %% Compare two REC curves of linear regression vs linear SVR. We can see different performance profiles
 # of both estimators. The LinearSVR appears to have more samples with errors below 60, whereas
 # linear regressor appears to have more samples than the SVR with errors below 20. This is despite both having
 # almost the same summary metrics.
+# NOTE - this is a toy example. To draw conclusions, we will need a larger test set.
 import matplotlib.pyplot as plt
 from sklearn.svm import LinearSVR
 from sklearn.metrics import root_mean_squared_error, mean_absolute_error
@@ -69,15 +64,15 @@ svr_metrics = f"RMSE = {root_mean_squared_error(pred_svr, y_test):.2f}, MAE = {m
 
 fig, ax = plt.subplots()
 RecCurveDisplay.from_predictions(
-    pred_lr,
     y_test,
+    pred_lr,
     ax=ax,
     name=f"Linear regression ({lr_metrics})",
     plot_const_predictor=False,
 )
 RecCurveDisplay.from_predictions(
-    pred_svr,
     y_test,
+    pred_svr,
     ax=ax,
     name=f"Linear SVR ({svr_metrics})",
     plot_const_predictor=False,
