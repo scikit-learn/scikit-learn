@@ -76,7 +76,6 @@ class RecCurveDisplay:
         accuracy,
         estimator_name=None,
         loss=None,
-        max_const_error=None,
         constant_predictor_deviations=None,
         constant_predictor_accuracy=None,
         constant_predictor_name=None,
