@@ -6,7 +6,7 @@
 import numbers  # For type checking Python scalars
 
 from ..utils import check_array, check_consistent_length
-from ..utils._array_api import get_namespace_and_device  # For array_api support
+from ..utils._array_api import get_namespace_and_device, _find_matching_floating_dtype
 from ..utils._param_validation import StrOptions, validate_params
 
 
@@ -105,7 +105,7 @@ def rec_curve(y_true, y_pred, *, loss="absolute"):
         y_pred = xp.full(
             y_true_array.shape,
             fill_value=y_pred_scalar_val,
-            dtype=y_true_array.dtype,  # Match y_true's dtype for consistency
+            dtype=_find_matching_floating_dtype(y_true_array, xp=xp),
             device=device,
         )
 
@@ -118,6 +118,11 @@ def rec_curve(y_true, y_pred, *, loss="absolute"):
         y_pred, ensure_2d=False, dtype="numeric", ensure_all_finite=True
     )
     check_consistent_length(y_true_array, y_pred_array)
+
+    # cast to common floating point dtype.
+    common_dtype = _find_matching_floating_dtype(y_true, y_pred, xp=xp)
+    y_true_array = xp.astype(y_true_array, common_dtype, copy=False)
+    y_pred_array = xp.astype(y_pred_array, common_dtype, copy=False)
 
     # Calculate deviations based on the chosen loss
     differences = y_true_array - y_pred_array

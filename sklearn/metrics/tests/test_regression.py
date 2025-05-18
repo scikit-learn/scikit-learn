@@ -635,14 +635,14 @@ def test_pinball_loss_relation_with_mae(global_random_seed):
     )
 
 
-@pytest.mark.parametrize("constant_one_pred", [1.0, np.asarray(1.0), np.asarray([1.0])])
+@pytest.mark.parametrize("constant_one_pred", [3.5, np.asarray(3.5), np.asarray([3.5])])
 def test_rec_curve_const_pred(constant_one_pred):
-    y_true = np.array([-1, 1, 2, -2, 0])
+    y_true = np.array([5, 6, 4, 3, 1, 2])
 
     deviations, accuracy = rec_curve(y_true, constant_one_pred)
 
-    assert_allclose(deviations, np.asarray([0.0, 1.0, 2.0, 3.0]))
-    assert_allclose(accuracy, np.asarray([0.2, 0.6, 0.8, 1.0]))
+    assert_allclose(deviations, np.asarray([0.0, 0.5, 1.5, 2.5]))
+    assert_allclose(accuracy, np.asarray([0.0, 1 / 3.0, 2 / 3.0, 1.0]))
 
 
 def test_rec_curve_array_pred():

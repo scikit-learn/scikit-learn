@@ -14,7 +14,10 @@ class RecCurveDisplay:
 
     It is recommended to use :func:`~sklearn.metrics.RecCurveDisplay.from_estimator`
     or :func:`~sklearn.metrics.RecCurveDisplay.from_predictions` to create
-    a visualizer. All parameters are stored as attributes.
+    a visualizer.
+
+    For general information regarding `scikit-learn` visualization tools, see
+    the :ref:`Visualization Guide <visualizations>`.
 
     Parameters
     ----------
@@ -71,6 +74,7 @@ class RecCurveDisplay:
     >>> estimator = LinearRegression().fit(X, y)
     >>> display = RecCurveDisplay.from_estimator(estimator, X, y, loss='absolute')
     <...>
+    >>> plt.show()
 
     >>> # from_predictions example
     >>> y_pred = estimator.predict(X)
@@ -78,6 +82,7 @@ class RecCurveDisplay:
     ...     y, y_pred, loss='squared', name="My Model", plot_const_predictor=False
     ... )
     <...>
+    >>> plt.show()
     """
 
     def __init__(
