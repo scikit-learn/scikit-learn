@@ -1251,7 +1251,8 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
     out = xp.cumulative_sum(arr, axis=axis, dtype=max_float_dtype)
     expected = xp.sum(arr, axis=axis, dtype=max_float_dtype)
     # workaround to get last element
-    # (behavior of negative indices, e.g. -1, is undefined)
+    # PyTorch doesn't support this ATM
+    # https://github.com/pytorch/pytorch/issues/146211
     if axis is None:
         last_elem_idx = xp.asarray(out.shape[0] - 1)
     else:

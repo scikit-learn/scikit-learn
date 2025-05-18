@@ -2154,10 +2154,9 @@ def _check_sample_weight(
         dtype of the validated `sample_weight`.
         If None, and `sample_weight` is an array:
 
-            - If `sample_weight.dtype` is one of `{xp.float64, xp.float32}`,
+            - If `sample_weight.dtype` is one of `{np.float64, np.float32}`,
               then the dtype is preserved.
-            - Otherwise, the output has the highest precision floating point dtype
-              supported by the array namespace/device of the input arrays.
+            - Else the output has NumPy's default dtype: `np.float64`.
 
         If `dtype` is not `{np.float32, np.float64, None}`, then output will
         be `np.float64`.
@@ -2176,15 +2175,17 @@ def _check_sample_weight(
         Validated sample weight. It is guaranteed to be "C" contiguous.
     """
     n_samples = _num_samples(X)
-    xp, _, device = get_namespace_and_device(X, sample_weight)
+    xp, _, device = get_namespace_and_device(
+        X, sample_weight, remove_types=(int, float)
+    )
 
     if dtype is not None and dtype not in [xp.float32, xp.float64]:
         dtype = _max_precision_float_dtype(xp, device)
 
     if sample_weight is None:
-        sample_weight = xp.ones(n_samples, dtype=dtype)
+        sample_weight = xp.ones(n_samples, dtype=dtype, device=device)
     elif isinstance(sample_weight, numbers.Number):
-        sample_weight = xp.full(n_samples, sample_weight, dtype=dtype)
+        sample_weight = xp.full(n_samples, sample_weight, dtype=dtype, device=device)
     else:
         if dtype is None:
             dtype = [xp.float64, xp.float32]
@@ -2648,12 +2649,16 @@ def _check_pos_label_consistency(pos_label, y_true):
         # Compute classes only if pos_label is not specified:
         xp, _, device = get_namespace_and_device(y_true)
         classes = xp.unique_values(y_true)
-        if (_is_numpy_namespace(xp) and classes.dtype.kind in "OUS") or not (
-            xp.all(classes == xp.asarray([0, 1], device=device))
-            or xp.all(classes == xp.asarray([-1, 1], device=device))
-            or xp.all(classes == xp.asarray([0], device=device))
-            or xp.all(classes == xp.asarray([-1], device=device))
-            or xp.all(classes == xp.asarray([1], device=device))
+        if (
+            (_is_numpy_namespace(xp) and classes.dtype.kind in "OUS")
+            or classes.shape[0] > 2
+            or not (
+                xp.all(classes == xp.asarray([0, 1], device=device))
+                or xp.all(classes == xp.asarray([-1, 1], device=device))
+                or xp.all(classes == xp.asarray([0], device=device))
+                or xp.all(classes == xp.asarray([-1], device=device))
+                or xp.all(classes == xp.asarray([1], device=device))
+            )
         ):
             classes = _convert_to_numpy(classes, xp=xp)
             classes_repr = ", ".join([repr(c) for c in classes.tolist()])
