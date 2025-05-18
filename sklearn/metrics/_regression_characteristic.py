@@ -67,7 +67,9 @@ def rec_curve(y_true, y_pred, *, loss="absolute"):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.metrics import rec_curve # Assuming function is in sklearn.metrics
+    >>> from sklearn.metrics import rec_curve
+
+    >>> # example with absolute loss
     >>> y_true = np.array([1, 2, 3, 4, 5, 6])
     >>> y_pred_model1 = np.array([1.1, 2.2, 2.8, 4.3, 4.8, 6.5])
     >>> deviations, accuracy = rec_curve(y_true, y_pred_model1, loss='absolute')
@@ -90,18 +92,6 @@ def rec_curve(y_true, y_pred, *, loss="absolute"):
     array([0.    , 0.01  , 0.04  , 0.09  , 0.25  ])
     >>> acc_sq
     array([0.        , 0.16666667, 0.66666667, 0.83333333, 1.        ])
-
-    >>> # For plotting with matplotlib:
-    >>> # import matplotlib.pyplot as plt
-    >>> # plt.figure()
-    >>> # plt.plot(deviations, accuracy, marker='.', label='Model 1 (Absolute Loss)')
-    >>> # plt.plot(dev_scalar, acc_scalar, marker='.', label='Constant (Absolute Loss)')
-    >>> # plt.xlabel("Error Tolerance (Deviation)")
-    >>> # plt.ylabel("Accuracy (Fraction of samples within tolerance)")
-    >>> # plt.title("Regression Error Characteristic (REC) Curve")
-    >>> # plt.legend()
-    >>> # plt.grid(True)
-    >>> # plt.show()
     """
     # Validate y_true and get the array namespace (xp)
     y_true_array = check_array(

@@ -63,11 +63,16 @@ class RecCurveDisplay:
     >>> import matplotlib.pyplot as plt
     >>> import numpy as np
     >>> from sklearn.linear_model import LinearRegression
+    >>> from sklearn.metrics import RecCurveDisplay
+
+    >>> # from_estimator example
     >>> X = np.array([[1], [2], [3], [4], [5]])
     >>> y = np.array([1, 2.5, 3, 4.5, 5])
     >>> estimator = LinearRegression().fit(X, y)
     >>> display = RecCurveDisplay.from_estimator(estimator, X, y, loss='absolute')
     <...>
+
+    >>> # from_predictions example
     >>> y_pred = estimator.predict(X)
     >>> display_pred = RecCurveDisplay.from_predictions(
     ...     y, y_pred, loss='squared', name="My Model", plot_const_predictor=False
