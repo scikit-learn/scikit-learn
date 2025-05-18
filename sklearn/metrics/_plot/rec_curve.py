@@ -49,8 +49,8 @@ class RecCurveDisplay:
         Constant predictor REC curve. Only defined if a constant predictor
         was plotted.
 
-    Remarks
-    -------
+    Notes
+    -----
     This class uses the heuristic suggested in the REC paper to clip the x axis
     at the maximum error achieved by some reasonable constant predictor, such as
     the mean or the median.  This is a heuristic to make plots more interpratable,
