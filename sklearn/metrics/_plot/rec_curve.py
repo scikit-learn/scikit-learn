@@ -16,7 +16,6 @@ class RecCurveDisplay:
     or :func:`~sklearn.metrics.RecCurveDisplay.from_predictions` to create
     a visualizer. All parameters are stored as attributes.
 
-
     Parameters
     ----------
     deviations : ndarray
@@ -38,8 +37,7 @@ class RecCurveDisplay:
 
     Attributes
     ----------
-    line_ : matplotlib Artist
-        REC curve.
+    line_ : matplotlib Artist of REC curve.
     ax_ : matplotlib Axes
         Axes with REC curve.
     figure_ : matplotlib Figure
@@ -47,6 +45,14 @@ class RecCurveDisplay:
     constant_predictor_line_ : matplotlib Artist, default=None
         Constant predictor REC curve. Only defined if a constant predictor
         was plotted.
+
+    Remarks
+    -------
+    This class uses the heuristic suggested in the REC paper to clip the x axis
+    at the maximum error achieved by some reasonable constant predictor, such as
+    the mean or the median.  This is a heuristic to make plots more interpratable,
+    since we focus only on the portion of "reasonable" errors. If a predictor is worse
+    than a constant - it's practically worthless.
 
     See Also
     --------
@@ -107,6 +113,11 @@ class RecCurveDisplay:
         name : str, default=None
             Name of REC curve for labeling. If `None`, use the name stored in
             `estimator_name`.
+        plot_const_predictor : bool, default=True
+            If enabled, will plot the REC curve of the constant predictor.
+        clip_max_const_error: bool, default=True
+            If enabled, will clip the horizontal axis at the maximum error achieved
+            by the constant predictor.
         **kwargs : dict
             Keyword arguments to be passed to `matplotlib.pyplot.plot` for the
             main REC curve.
