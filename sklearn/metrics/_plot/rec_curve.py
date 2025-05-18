@@ -72,13 +72,13 @@ class RecCurveDisplay:
     >>> X = np.array([[1], [2], [3], [4], [5]])
     >>> y = np.array([1, 2.5, 3, 4.5, 5])
     >>> estimator = LinearRegression().fit(X, y)
-    >>> display = RecCurveDisplay.from_estimator(estimator, X, y, loss='absolute')
+    >>> RecCurveDisplay.from_estimator(estimator, X, y, loss='absolute')
     <...>
     >>> plt.show()
 
     >>> # from_predictions example
     >>> y_pred = estimator.predict(X)
-    >>> display_pred = RecCurveDisplay.from_predictions(
+    >>> RecCurveDisplay.from_predictions(
     ...     y, y_pred, loss='squared', name="My Model", plot_const_predictor=False
     ... )
     <...>
