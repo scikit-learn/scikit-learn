@@ -16,7 +16,6 @@ class RecCurveDisplay:
     or :func:`~sklearn.metrics.RecCurveDisplay.from_predictions` to create
     a visualizer. All parameters are stored as attributes.
 
-    Read more in the :ref:`User Guide <visualizations>`. (Assuming this would be added)
 
     Parameters
     ----------
@@ -52,8 +51,6 @@ class RecCurveDisplay:
     See Also
     --------
     rec_curve : Compute Regression Error Characteristic (REC) curve.
-    RecCurveDisplay.from_estimator : Plot REC curve given an estimator and data.
-    RecCurveDisplay.from_predictions : Plot REC curve given true and predicted values.
 
     Examples
     --------
@@ -209,9 +206,6 @@ class RecCurveDisplay:
             Input values.
         y : array-like of shape (n_samples,)
             Target values.
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. Currently not supported by the underlying `rec_curve`
-            function and will raise an error if provided.
         loss : {'absolute', 'squared'}, default='absolute'
             The loss function to use for calculating deviations.
         constant_predictor : {'mean', 'median', None}, default=None
@@ -225,8 +219,7 @@ class RecCurveDisplay:
             Whether to compute and plot the REC curve for the constant predictor.
         clip_max_const_error : bool, default=True
             If `True`, the x-axis (error tolerance) will be cut off at the
-            maximum error achieved by the constant predictor. This is only
-            effective if a constant predictor is computed.
+            maximum error achieved by the constant predictor.
         name : str, default=None
             Name for the REC curve. If `None`, the estimator's class name will be used.
         ax : matplotlib axes, default=None
