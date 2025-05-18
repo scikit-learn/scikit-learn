@@ -179,3 +179,5 @@
 .. _Guillaume Lemaitre: https://github.com/glemaitre
 
 .. _Tim Head: https://betatim.github.io/
+
+.. _Alex Shtoff: https://alexshtf.github.io/
