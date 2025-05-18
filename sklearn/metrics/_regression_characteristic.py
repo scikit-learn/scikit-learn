@@ -16,7 +16,7 @@ from ..utils._param_validation import StrOptions, validate_params
         "y_pred": ["array-like", numbers.Real],  # Allow scalar or array-like
         "loss": [StrOptions({"absolute", "squared"})],
     },
-    prefer_skip_nested_validation=True,  # Standard practice for functions doing further checks
+    prefer_skip_nested_validation=True,
 )
 def rec_curve(y_true, y_pred, *, loss="absolute"):
     """Compute Regression Error Characteristic (REC) curve.
@@ -25,11 +25,6 @@ def rec_curve(y_true, y_pred, *, loss="absolute"):
     (deviation) on the x-axis against the percentage of data points predicted
     within that tolerance (accuracy) on the y-axis. It is the empirical
     Cumulative Distribution Function (CDF) of the error.
-
-    This implementation is designed to be compatible with the array_api
-    standard and scikit-learn's utilities.
-
-    Read more in the :ref:`User Guide <rec_curve>`. (Assuming this would be added)
 
     Parameters
     ----------
@@ -100,7 +95,7 @@ def rec_curve(y_true, y_pred, *, loss="absolute"):
     >>> # import matplotlib.pyplot as plt
     >>> # plt.figure()
     >>> # plt.plot(deviations, accuracy, marker='.', label='Model 1 (Absolute Loss)')
-    >>> # plt.plot(dev_scalar, acc_scalar, marker='.', label='Constant Model (Absolute Loss)')
+    >>> # plt.plot(dev_scalar, acc_scalar, marker='.', label='Constant (Absolute Loss)')
     >>> # plt.xlabel("Error Tolerance (Deviation)")
     >>> # plt.ylabel("Accuracy (Fraction of samples within tolerance)")
     >>> # plt.title("Regression Error Characteristic (REC) Curve")
@@ -114,7 +109,7 @@ def rec_curve(y_true, y_pred, *, loss="absolute"):
     )
     xp, _, device = get_namespace_and_device(y_true_array)
 
-    # Python native scalars (int, float)
+    # Handle Python native scalars (int, float)
     if isinstance(y_pred, numbers.Number):  # numbers.Real covers int, float
         y_pred_scalar_val = float(y_pred)
         y_pred = xp.full(
@@ -124,7 +119,7 @@ def rec_curve(y_true, y_pred, *, loss="absolute"):
             device=device,
         )
 
-    # array-like with a single prediction
+    # Handle array-like with a single prediction
     if y_pred.size == 1:
         y_pred = xp.squeeze(y_pred)
         y_pred = xp.tile(y_pred, y_true_array.shape)
@@ -134,14 +129,7 @@ def rec_curve(y_true, y_pred, *, loss="absolute"):
     )
     check_consistent_length(y_true_array, y_pred_array)
 
-    # Validate loss parameter
-    if loss not in ("absolute", "squared"):
-        raise ValueError(
-            f"loss type '{loss}' not supported, choose 'absolute' or 'squared'."
-        )
-
     # Calculate deviations based on the chosen loss
-    # Since y_true_array and y_pred_array are finite, differences and errors will be finite.
     differences = y_true_array - y_pred_array
     if loss == "absolute":
         errors = xp.abs(differences)
@@ -160,31 +148,23 @@ def rec_curve(y_true, y_pred, *, loss="absolute"):
     # OPTIMIZED CDF CALCULATION:
     # Get unique sorted error values (deviations_calc) and their counts.
     # xp.unique_counts returns sorted unique values.
-    # Since errors are finite, deviations_calc will also be finite and non-empty if n_samples > 0.
     deviations_calc, counts = xp.unique_counts(errors)
 
     # Calculate cumulative accuracy
     cumulative_counts = xp.cumsum(counts)
-    # Ensure accuracy_values is float64 for consistency and precision.
     accuracy_values = xp.astype(cumulative_counts, xp.float64) / float(n_samples)
 
     # Prepare output deviations and accuracy
     # Prepend (0,0) if the smallest error (first element of deviations_calc) is > 0.0,
     # ensuring the curve starts from the origin of the plot unless
     # there are samples with exactly zero error.
-    # deviations_calc[0] is safe to access as n_samples > 0 implies deviations_calc is non-empty.
     if deviations_calc[0] > 0.0:
-        # Create zero point with the correct dtype and device
-        # deviations_calc.dtype could be float32 or float64 depending on input error calculation.
         zero_dev = xp.asarray([0.0], dtype=deviations_calc.dtype, device=device)
-        # accuracy_values is already float64.
         zero_acc = xp.asarray([0.0], dtype=accuracy_values.dtype, device=device)
 
         deviations_out = xp.concatenate((zero_dev, deviations_calc))
         accuracy_out = xp.concatenate((zero_acc, accuracy_values))
     else:
-        # Smallest error is 0.0 (or less, though errors should be non-negative and finite)
-        # The curve naturally starts at (0, accuracy_for_zero_error)
         deviations_out = deviations_calc
         accuracy_out = accuracy_values
 

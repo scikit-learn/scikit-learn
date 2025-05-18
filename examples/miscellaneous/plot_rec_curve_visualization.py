@@ -3,8 +3,8 @@
 Regression Error Characteristic curve display
 =============================================
 
-We illustrate how to display the regression error characteristic curve, and how to use it
-to compare various regression models.
+We illustrate how to display the regression error characteristic curve, and how to use
+it to compare various regression models.
 """
 
 # Authors: The scikit-learn developers
@@ -37,21 +37,23 @@ lr_estimator = make_pipeline(StandardScaler(), LinearRegression())
 lr_estimator.fit(X_train, y_train)
 
 # %%
-# Display REC curve using the test set. See that our linear regressor's REC curve dominates
-# the curve of the default constant predictor - the median. This is an indicator that our model is doing something
-# "reasonable".
+# Display REC curve using the test set. See that our linear regressor's REC curve
+# dominates the curve of the default constant predictor - the median. This is an
+# indicator that our model is doing something "reasonable".
 from sklearn.metrics import RecCurveDisplay
 
 RecCurveDisplay.from_estimator(lr_estimator, X_test, y_test, name="Linear regression")
 
 
 # %%
-# Compare two REC curves of linear regression to KNN and histogram gradient boosting regressors. We can see a clear
-# hierarchy here. KNN is strictly better than linear regression for any error tolerance, and HGBR is strictly better
-# than both for any error tolerance.
+# Compare two REC curves of linear regression to KNN and histogram gradient boosting
+# regressors. We can see a clear hierarchy here. KNN is strictly better than linear
+# regression for any error tolerance, and HGBR is strictly better than both for any
+# error tolerance.
 import matplotlib.pyplot as plt
-from sklearn.metrics import root_mean_squared_error, mean_absolute_error
+
 from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.metrics import mean_absolute_error, root_mean_squared_error
 from sklearn.neighbors import KNeighborsRegressor
 
 hgbr_estimator = HistGradientBoostingRegressor()
@@ -64,9 +66,18 @@ pred_lr = lr_estimator.predict(X_test)
 pred_hgbr = hgbr_estimator.predict(X_test)
 pred_knn = knn_estimator.predict(X_test)
 
-lr_metrics = f"RMSE = {root_mean_squared_error(pred_lr, y_test):.2f}, MAE = {mean_absolute_error(pred_lr, y_test):.2f}"
-hgbr_metrics = f"RMSE = {root_mean_squared_error(pred_hgbr, y_test):.2f}, MAE = {mean_absolute_error(pred_hgbr, y_test):.2f}"
-knn_metrics = f"RMSE = {root_mean_squared_error(pred_knn, y_test):.2f}, MAE = {mean_absolute_error(pred_knn, y_test):.2f}"
+lr_metrics = (
+    f"RMSE = {root_mean_squared_error(pred_lr, y_test):.2f}, "
+    f"MAE = {mean_absolute_error(pred_lr, y_test):.2f}"
+)
+hgbr_metrics = (
+    f"RMSE = {root_mean_squared_error(pred_hgbr, y_test):.2f}, "
+    f"MAE = {mean_absolute_error(pred_hgbr, y_test):.2f}"
+)
+knn_metrics = (
+    f"RMSE = {root_mean_squared_error(pred_knn, y_test):.2f}, "
+    f"MAE = {mean_absolute_error(pred_knn, y_test):.2f}"
+)
 
 fig, ax = plt.subplots()
 RecCurveDisplay.from_predictions(
