@@ -9,8 +9,8 @@ with strong outliers. HuberRegressor is more robust to outliers and
 fits better on the inlier data.
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.linear_model import HuberRegressor, LinearRegression
 from sklearn.model_selection import train_test_split
@@ -34,10 +34,11 @@ ols = LinearRegression().fit(X_train, y_train)
 # Plot results
 plt.scatter(X_train, y_train, color="gray", alpha=0.6, label="Train data")
 plt.plot(X_test, huber.predict(X_test), color="red", label="Huber Regressor")
-plt.plot(X_test, ols.predict(X_test), color="blue", linestyle="--", label="Linear Regression")
+plt.plot(
+    X_test, ols.predict(X_test), color="blue", linestyle="--", label="Linear Regression"
+)
 plt.legend()
 plt.title("Comparison of Huber and Linear Regression")
 plt.xlabel("X")
 plt.ylabel("y")
 plt.show(block=True)
-
