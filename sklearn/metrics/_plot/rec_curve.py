@@ -69,7 +69,7 @@ class RecCurveDisplay:
     >>> # plt.show()
     >>> y_pred = estimator.predict(X)
     >>> display_pred = RecCurveDisplay.from_predictions(
-    ...     y, y_pred, loss='squared', name="My Model", plot_constant_predictor=False
+    ...     y, y_pred, loss='squared', name="My Model", plot_const_predictor=False
     ... )
     >>> # display_pred.plot()
     >>> # plt.show()
@@ -81,6 +81,7 @@ class RecCurveDisplay:
         deviations,
         accuracy,
         estimator_name=None,
+        loss=None,
         max_const_error=None,
         constant_predictor_deviations=None,
         constant_predictor_accuracy=None,
@@ -89,6 +90,7 @@ class RecCurveDisplay:
         self.deviations = deviations
         self.accuracy = accuracy
         self.estimator_name = estimator_name if estimator_name is not None else "Model"
+        self.loss = loss
 
         self.constant_predictor_deviations = constant_predictor_deviations
         self.constant_predictor_accuracy = constant_predictor_accuracy
@@ -137,7 +139,7 @@ class RecCurveDisplay:
             line_kwargs["label"] = plot_name
         line_kwargs.update(kwargs)
 
-        if self.constant_predictor_deviations:
+        if self.constant_predictor_deviations is not None:
             max_const_error = max(self.constant_predictor_deviations)
         elif clip_max_const_error:
             raise ValueError(
@@ -146,11 +148,13 @@ class RecCurveDisplay:
 
         if clip_max_const_error:
             mask = self.deviations <= max_const_error
-            self.line_, _ = self.ax_.plot(
+            self.line_, *_ = self.ax_.plot(
                 self.deviations[mask], self.accuracy[mask], **line_kwargs
             )
         else:
-            self.line_, _ = self.ax_.plot(self.deviations, self.accuracy, **line_kwargs)
+            self.line_, *_ = self.ax_.plot(
+                self.deviations, self.accuracy, **line_kwargs
+            )
 
         # Plot constant predictor if its data exists and the flag is set
         if (
@@ -165,7 +169,7 @@ class RecCurveDisplay:
             )
             # Default style for constant predictor, can be overridden if needed
             cp_kwargs = {"label": cp_name, "linestyle": "--"}
-            self.constant_predictor_line_, _ = self.ax_.plot(
+            self.constant_predictor_line_, *_ = self.ax_.plot(
                 self.constant_predictor_deviations,
                 self.constant_predictor_accuracy,
                 **cp_kwargs,
@@ -179,6 +183,7 @@ class RecCurveDisplay:
 
         return self
 
+    @classmethod
     def from_estimator(
         cls,
         estimator,
@@ -187,7 +192,7 @@ class RecCurveDisplay:
         *,
         loss="absolute",
         constant_predictor=None,
-        plot_constant_predictor=True,
+        plot_const_predictor=True,
         clip_max_const_error=True,
         name=None,
         ax=None,
@@ -216,7 +221,7 @@ class RecCurveDisplay:
             If `None`, chooses 'mean' for 'squared' loss and 'median' for
             'absolute' loss, as these are the optimal constant predictors
             for these losses.
-        plot_constant_predictor : bool, default=True
+        plot_const_predictor : bool, default=True
             Whether to compute and plot the REC curve for the constant predictor.
         clip_max_const_error : bool, default=True
             If `True`, the x-axis (error tolerance) will be cut off at the
@@ -250,13 +255,14 @@ class RecCurveDisplay:
             y_pred=y_pred,
             loss=loss,
             constant_predictor=constant_predictor,
-            plot_constant_predictor=plot_constant_predictor,
+            plot_const_predictor=plot_const_predictor,
             clip_max_const_error=clip_max_const_error,
             name=name,
             ax=ax,
             **kwargs,
         )
 
+    @classmethod
     def from_predictions(
         cls,
         y_true,
@@ -264,7 +270,7 @@ class RecCurveDisplay:
         *,
         loss="absolute",
         constant_predictor=None,
-        plot_constant_predictor=True,
+        plot_const_predictor=True,
         clip_max_const_error=True,
         name=None,
         ax=None,
@@ -286,7 +292,7 @@ class RecCurveDisplay:
             If 'median', uses the median of `y_true`.
             If `None`, chooses 'mean' for 'squared' loss and 'median' for
             'absolute' loss.
-        plot_constant_predictor : bool, default=True
+        plot_const_predictor : bool, default=True
             Whether to compute and plot the REC curve for the constant predictor.
         clip_max_const_error : bool, default=True
             If `True`, the x-axis (error tolerance) will be cut off at the
@@ -322,7 +328,7 @@ class RecCurveDisplay:
                 actual_constant_predictor_type = "median"
 
         # Compute constant predictor data if needed for plotting or cutoff
-        if plot_constant_predictor or clip_max_const_error:
+        if plot_const_predictor or clip_max_const_error:
             if actual_constant_predictor_type == "mean":
                 constant_value = np.mean(y_true_np)
                 cp_name_val = "Mean Predictor"
@@ -350,7 +356,7 @@ class RecCurveDisplay:
         )
         return obj.plot(
             ax=ax,
-            plot_constant_predictor=plot_constant_predictor,
+            plot_const_predictor=plot_const_predictor,
             clip_max_const_error=clip_max_const_error,
             **kwargs,
         )
