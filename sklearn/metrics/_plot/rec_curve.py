@@ -125,7 +125,7 @@ class RecCurveDisplay:
             `estimator_name`.
         plot_const_predictor : bool, default=True
             If enabled, will plot the REC curve of the constant predictor.
-        clip_max_const_error: bool, default=True
+        clip_max_const_error : bool, default=True
             If enabled, will clip the horizontal axis at the maximum error achieved
             by the constant predictor.
         **kwargs : dict
