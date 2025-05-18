@@ -20,7 +20,9 @@ from sklearn.datasets import load_diabetes
 from sklearn.model_selection import train_test_split
 
 X, y = load_diabetes(return_X_y=True)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=20, shuffle=False)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=80, random_state=42, shuffle=True
+)
 
 # %%
 # Linear regression model
@@ -43,24 +45,26 @@ from sklearn.metrics import RecCurveDisplay
 RecCurveDisplay.from_estimator(lr_estimator, X_test, y_test, name="Linear regression")
 
 
-# %% Compare two REC curves of linear regression vs linear SVR. We can see different performance profiles
-# of both estimators. The LinearSVR appears to have more samples with errors below 60, whereas
-# linear regressor appears to have more samples than the SVR with errors below 20. This is despite both having
-# almost the same summary metrics.
-# NOTE - this is a toy example. To draw conclusions, we will need a larger test set.
+# %%
+# Compare two REC curves of linear regression vs ridge regression for polnyomial features. We can see that the curve
+# of the ridge regressor with polynomial features dominates the one of the linear regressor. Meaning, for any error
+# tolerance, the Poly-Ridge model has more samples below this tolerance.
 import matplotlib.pyplot as plt
-from sklearn.svm import LinearSVR
+from sklearn.linear_model import RidgeCV
 from sklearn.metrics import root_mean_squared_error, mean_absolute_error
+from sklearn.preprocessing import PolynomialFeatures
 
 
-svr_estimator = make_pipeline(StandardScaler(), LinearSVR())
-svr_estimator.fit(X_train, y_train)
+ridge_poly_estimator = make_pipeline(
+    StandardScaler(), PolynomialFeatures(2, include_bias=False), RidgeCV()
+)
+ridge_poly_estimator.fit(X_train, y_train)
 
 pred_lr = lr_estimator.predict(X_test)
-pred_svr = svr_estimator.predict(X_test)
+pred_ridge_poly = ridge_poly_estimator.predict(X_test)
 
 lr_metrics = f"RMSE = {root_mean_squared_error(pred_lr, y_test):.2f}, MAE = {mean_absolute_error(pred_lr, y_test):.2f}"
-svr_metrics = f"RMSE = {root_mean_squared_error(pred_svr, y_test):.2f}, MAE = {mean_absolute_error(pred_svr, y_test):.2f}"
+ridge_poly_metrics = f"RMSE = {root_mean_squared_error(pred_ridge_poly, y_test):.2f}, MAE = {mean_absolute_error(pred_ridge_poly, y_test):.2f}"
 
 fig, ax = plt.subplots()
 RecCurveDisplay.from_predictions(
@@ -72,9 +76,11 @@ RecCurveDisplay.from_predictions(
 )
 RecCurveDisplay.from_predictions(
     y_test,
-    pred_svr,
+    pred_ridge_poly,
     ax=ax,
-    name=f"Linear SVR ({svr_metrics})",
+    name=f"Ridge Poly ({ridge_poly_metrics})",
     plot_const_predictor=False,
 )
 fig.show()
+
+# %%
