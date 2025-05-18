@@ -49,6 +49,10 @@ class RecCurveDisplay:
         Constant predictor REC curve. Only defined if a constant predictor
         was plotted.
 
+    See Also
+    --------
+    rec_curve : Compute Regression Error Characteristic (REC) curve.
+
     Notes
     -----
     This class uses the heuristic suggested in the REC paper to clip the x axis
@@ -56,10 +60,6 @@ class RecCurveDisplay:
     the mean or the median.  This is a heuristic to make plots more interpratable,
     since we focus only on the portion of "reasonable" errors. If a predictor is worse
     than a constant - it's practically worthless.
-
-    See Also
-    --------
-    rec_curve : Compute Regression Error Characteristic (REC) curve.
 
     Examples
     --------
