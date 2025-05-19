@@ -139,7 +139,7 @@ def density(w):
     --------
     >>> from scipy import sparse
     >>> from sklearn.utils.extmath import density
-    >>> X = sparse.random(10, 10, density=0.25, random_state=0)
+    >>> X = sparse.random_array((10, 10), density=0.25, rng=0)
     >>> density(X)
     0.25
     """
