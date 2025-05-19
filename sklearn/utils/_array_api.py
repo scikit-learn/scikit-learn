@@ -669,6 +669,39 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
     return sum_ / scale
 
 
+def _median(X, axis=None, xp=None):
+    (
+        xp,
+        _,
+    ) = get_namespace(X, xp=xp)
+
+    if _is_numpy_namespace(xp):
+        return numpy.median(X, axis=axis)
+
+    if X.ndim == 0:
+        return float(X)
+
+    if axis is None:
+        X = xp.reshape(X, (-1,))
+        axis = 0
+
+    X_sorted = xp.sort(X, axis=axis)
+    indexer = [slice(None)] * X.ndim
+    index = X.shape[axis] // 2
+    if X.shape[axis] % 2 == 1:
+        # index with slice to allow mean (below) to work
+        indexer[axis] = slice(index, index + 1)
+    else:
+        indexer[axis] = slice(index - 1, index + 1)
+    indexer = tuple(indexer)
+
+    # Use mean in both odd and even case to coerce data type,
+    # using out array if needed.
+    rout = xp.mean(X_sorted[indexer], axis=axis)
+    return rout
+    # Need to add NaN handling
+
+
 def _xlogy(x, y, xp=None):
     # TODO: Remove this once https://github.com/scipy/scipy/issues/21736 is fixed
     xp, _, device_ = get_namespace_and_device(x, y, xp=xp)

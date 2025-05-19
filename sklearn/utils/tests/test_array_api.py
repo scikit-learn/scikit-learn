@@ -19,6 +19,7 @@ from sklearn.utils._array_api import (
     _is_numpy_namespace,
     _isin,
     _max_precision_float_dtype,
+    _median,
     _nanmax,
     _nanmean,
     _nanmin,
@@ -599,3 +600,25 @@ def test_sparse_device(csr_container, dispatch):
         assert device(a, numpy.array([1])) is None
         assert get_namespace_and_device(a, b)[2] is None
         assert get_namespace_and_device(a, numpy.array([1]))[2] is None
+
+
+@pytest.mark.parametrize(
+    "namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+@pytest.mark.parametrize("axis", [None, 0, 1])
+def test_median(namespace, device, dtype_name, axis):
+    xp = _array_api_for_tests(namespace, device)
+    rng = numpy.random.RandomState(0)
+
+    X_np = numpy.array(rng.random_sample((5, 4)), dtype=dtype_name)
+    result_np = numpy.median(X_np, axis=axis)
+
+    X_xp = xp.asarray(X_np, device=device)
+    with config_context(array_api_dispatch=True):
+        result_xp = _median(X_xp, axis=axis)
+
+        assert get_namespace(result_xp)[0].__name__ == xp.__name__
+        assert result_xp.device == X_xp.device
+        assert_allclose(result_np, _convert_to_numpy(result_xp, xp=xp))
