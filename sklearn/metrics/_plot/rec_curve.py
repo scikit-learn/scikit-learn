@@ -5,11 +5,11 @@ import numpy as np
 
 from ...base import is_regressor  # To check if estimator is a regressor
 from ...metrics._regression_characteristic import rec_curve
-from ...utils._optional_dependencies import check_matplotlib_support
+from ...utils._plotting import _CurveDisplayMixin, _validate_style_kwargs
 from ...utils.validation import check_is_fitted
 
 
-class RecCurveDisplay:
+class RecCurveDisplay(_CurveDisplayMixin):
     """Regression Error Characteristic (REC) Curve visualization.
 
     It is recommended to use :func:`~sklearn.metrics.RecCurveDisplay.from_estimator`
@@ -137,21 +137,12 @@ class RecCurveDisplay:
         display : :class:`~sklearn.metrics.RecCurveDisplay`
             Object that stores computed values.
         """
+        self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
 
-        check_matplotlib_support(f"{self.__class__.__name__}.plot")
-        import matplotlib.pyplot as plt
-
-        if ax is None:
-            self.figure_, self.ax_ = plt.subplots()
-        else:
-            self.ax_ = ax
-            self.figure_ = self.ax_.figure
-
-        plot_name = name if name is not None else self.estimator_name
         line_kwargs = {}
         if "label" not in kwargs:  # Allow user to override label
-            line_kwargs["label"] = plot_name
-        line_kwargs.update(kwargs)
+            line_kwargs["label"] = name
+        line_kwargs = _validate_style_kwargs(line_kwargs, kwargs)
 
         if self.constant_predictor_deviations is not None:
             max_const_error = max(self.constant_predictor_deviations)
@@ -183,6 +174,7 @@ class RecCurveDisplay:
             )
             # Default style for constant predictor, can be overridden if needed
             cp_kwargs = {"label": cp_name, "linestyle": "--"}
+            cp_kwargs = _validate_style_kwargs(cp_kwargs, kwargs)
             self.constant_predictor_line_, *_ = self.ax_.plot(
                 self.constant_predictor_deviations,
                 self.constant_predictor_accuracy,

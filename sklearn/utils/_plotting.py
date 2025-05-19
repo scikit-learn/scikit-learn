@@ -10,12 +10,8 @@ from .multiclass import type_of_target
 from .validation import _check_pos_label_consistency
 
 
-class _BinaryClassifierCurveDisplayMixin:
-    """Mixin class to be used in Displays requiring a binary classifier.
-
-    The aim of this class is to centralize some validations regarding the estimator and
-    the target and gather the response of the estimator.
-    """
+class _CurveDisplayMixin:
+    """Mixin class to be used in Displays plotting a tradeoff curve."""
 
     def _validate_plot_params(self, *, ax=None, name=None):
         check_matplotlib_support(f"{self.__class__.__name__}.plot")
@@ -26,6 +22,14 @@ class _BinaryClassifierCurveDisplayMixin:
 
         name = self.estimator_name if name is None else name
         return ax, ax.figure, name
+
+
+class _BinaryClassifierCurveDisplayMixin(_CurveDisplayMixin):
+    """Mixin class to be used in Displays requiring a binary classifier.
+
+    The aim of this class is to centralize some validations regarding the estimator and
+    the target and gather the response of the estimator.
+    """
 
     @classmethod
     def _validate_and_get_response_values(
