@@ -140,16 +140,16 @@ def rec_curve(y_true, y_pred, *, loss="absolute"):
         )
         return empty_float_array, empty_float_array
 
-    # OPTIMIZED CDF CALCULATION:
-    # Get unique sorted error values (deviations_calc) and their counts.
-    # xp.unique_counts returns sorted unique values.
+    # compute deviations and counts in sorted order
     deviations_calc, counts = xp.unique_counts(errors)
+    sort_order = xp.argsort(deviations_calc)
+    deviations_calc = deviations_calc[sort_order]
+    counts = counts[sort_order]
 
     # Calculate cumulative accuracy
     cumulative_counts = xp.cumsum(counts)
     accuracy_values = xp.astype(cumulative_counts, xp.float64) / float(n_samples)
 
-    # Prepare output deviations and accuracy
     # Prepend (0,0) if the smallest error (first element of deviations_calc) is > 0.0,
     # ensuring the curve starts from the origin of the plot unless
     # there are samples with exactly zero error.
