@@ -1079,7 +1079,7 @@ def test_logistic_regression_class_weights(global_random_seed, csr_container):
     y = iris.target[45:100]
     class_weight_dict = _compute_class_weight_dictionary(y)
 
-    for solver in SOLVERS - set(["lbfgs"]):
+    for solver in set(SOLVERS) - set(["lbfgs"]):
         params = dict(random_state=global_random_seed, solver=solver, max_iter=1000)
         clf1 = LogisticRegression(class_weight="balanced", **params)
         clf2 = LogisticRegression(class_weight=class_weight_dict, **params)
