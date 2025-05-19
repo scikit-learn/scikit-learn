@@ -105,7 +105,6 @@ build_metadata_list = [
             "polars",
             "pyarrow",
             "cupy",
-            "array-api-compat",
             "array-api-strict",
         ],
     },
@@ -123,7 +122,6 @@ build_metadata_list = [
             "pytorch-cpu",
             "polars",
             "pyarrow",
-            "array-api-compat",
             "array-api-strict",
             "scipy-doctest",
         ],
@@ -190,6 +188,7 @@ build_metadata_list = [
             "meson-python": "min",
             "pandas": "min",
             "polars": "min",
+            "pyamg": "min",
         },
     },
     {
@@ -223,7 +222,7 @@ build_metadata_list = [
             # Test with some optional dependencies
             + ["lightgbm", "scikit-image"]
             # Test array API on CPU without PyTorch
-            + ["array-api-compat", "array-api-strict"]
+            + ["array-api-strict"]
             # doctests dependencies
             + ["scipy-doctest"]
         ),
@@ -272,11 +271,8 @@ build_metadata_list = [
         "conda_dependencies": [
             "python-freethreading",
             "numpy",
-            # TODO add cython and scipy when there are conda-forge packages for
-            # them and remove dev version install in
-            # build_tools/azure/install.sh. Note that for now conda-lock does
-            # not deal with free-threaded wheels correctly, see
-            # https://github.com/conda/conda-lock/issues/754.
+            "scipy",
+            "cython",
             "joblib",
             "threadpoolctl",
             "pytest",
@@ -351,6 +347,7 @@ build_metadata_list = [
             "plotly": "min",
             "polars": "min",
             "pooch": "min",
+            "pyamg": "min",
             "sphinx-design": "min",
             "sphinxcontrib-sass": "min",
             "sphinx-remove-toctrees": "min",
