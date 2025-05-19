@@ -123,6 +123,7 @@ exclude=[
     "build",
     "dist",
     "sklearn/externals",
+    "sklearn/_vendored",
     "doc/_build",
     "doc/auto_examples",
     "asv_benchmarks/env",
@@ -198,10 +199,10 @@ notice-rgx = "\\#\\ Authors:\\ The\\ scikit\\-learn\\ developers\\\r?\\\n\\#\\ S
 [tool.mypy]
 ignore_missing_imports = true
 allow_redefinition = true
-exclude = "^sklearn/externals"
+exclude = "^(sklearn/externals|sklearn/_vendored)"
 
 [[tool.mypy.overrides]]
-module = ["joblib.*", "sklearn.externals.*"]
+module = ["joblib.*", "sklearn.externals.*", "sklearn._vendored.*"]
 follow_imports = "skip"
 
 [tool.cython-lint]
@@ -498,3 +499,22 @@ ignore-words = "build_tools/codespell_ignore_words.txt"
     [[tool.towncrier.section]]
         name = ":mod:`sklearn.utils`"
         path = "sklearn.utils"
+
+
+[tool.vendoring]
+destination = "sklearn/_vendored/"
+requirements = "sklearn/_vendored/vendoring-requirements.txt"
+namespace = "sklearn._vendored"
+sbom-file = "sklearn/_vendored/bom.cdx.json"
+protected-files =[
+    "__init__.py",
+    "_array_api_compat_vendor.py",
+    "README.md",
+    "conftest.py",
+]
+
+[tool.vendoring.transformations]
+drop = [
+    "*.dist-info",
+    "*.egg-info",
+]

@@ -145,7 +145,9 @@ def test_import_all_consistency():
     )
     submods = [modname for _, modname, _ in pkgs]
     for modname in submods + ["sklearn"]:
-        if ".tests." in modname or "sklearn.externals" in modname:
+        if ".tests." in modname or modname.startswith(
+            ("sklearn.externals", "sklearn._vendored")
+        ):
             continue
         # Avoid test suite depending on build dependencies, for example Cython
         if "sklearn._build_utils" in modname:

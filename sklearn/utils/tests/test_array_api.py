@@ -511,7 +511,7 @@ def test_get_namespace_and_device():
     # Use torch as a library with custom Device objects:
     torch = pytest.importorskip("torch")
 
-    from sklearn.externals.array_api_compat import torch as torch_compat
+    from sklearn._vendored.array_api_compat import torch as torch_compat
 
     some_torch_tensor = torch.arange(3, device="cpu")
     some_numpy_array = numpy.arange(3)
