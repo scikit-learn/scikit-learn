@@ -304,3 +304,6 @@ are identical.
 * Hochreiter, Bodenhofer, et. al., 2010. `FABIA: factor analysis
   for bicluster acquisition
   <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2881408/>`__.
+
+
+See the example: :ref:`sphx_glr_auto_examples_bicluster_plot_biclustering_newsgroups`
