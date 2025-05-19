@@ -1061,13 +1061,10 @@ def test_logistic_regression_class_weights(global_random_seed, csr_container):
 
     for solver in set(SOLVERS) - set(["liblinear", "newton-cholesky"]):
         params = dict(solver=solver, max_iter=2000)
+        if solver != "lbfgs":
+            params["random_state"] = global_random_seed
         clf1 = LogisticRegression(class_weight="balanced", **params)
         clf2 = LogisticRegression(class_weight=class_weight_dict, **params)
-        if not solver == "lbfgs":
-            clf1.set_params(random_state=global_random_seed)
-            clf2.set_params(random_state=global_random_seed)
-
-            # breakpoint()
         clf1.fit(X, y)
         clf2.fit(X, y)
         assert len(clf1.classes_) == 3
@@ -1086,6 +1083,8 @@ def test_logistic_regression_class_weights(global_random_seed, csr_container):
 
     for solver in SOLVERS:
         params = dict(solver=solver, max_iter=1000)
+        if solver != "lbfgs":
+            params["random_state"] = global_random_seed
         clf1 = LogisticRegression(class_weight="balanced", **params)
         clf2 = LogisticRegression(class_weight=class_weight_dict, **params)
         clf1.fit(X, y)
