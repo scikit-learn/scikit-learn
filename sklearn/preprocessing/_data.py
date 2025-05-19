@@ -6,7 +6,7 @@ import warnings
 from numbers import Integral, Real
 
 import numpy as np
-from scipy import optimize, sparse, stats
+from scipy import sparse, stats
 from scipy.special import boxcox, inv_boxcox
 
 from sklearn.utils import metadata_routing
@@ -19,9 +19,16 @@ from ..base import (
     _fit_context,
 )
 from ..utils import _array_api, check_array, resample
-from ..utils._array_api import _modify_in_place_if_numpy, device, get_namespace
+from ..utils._array_api import (
+    _find_matching_floating_dtype,
+    _modify_in_place_if_numpy,
+    device,
+    get_namespace,
+    get_namespace_and_device,
+)
 from ..utils._param_validation import Interval, Options, StrOptions, validate_params
 from ..utils.extmath import _incremental_mean_and_var, row_norms
+from ..utils.fixes import _yeojohnson_lambda
 from ..utils.sparsefuncs import (
     incr_mean_variance_axis,
     inplace_column_scale,
@@ -46,23 +53,23 @@ BOUNDS_THRESHOLD = 1e-7
 __all__ = [
     "Binarizer",
     "KernelCenterer",
-    "MinMaxScaler",
     "MaxAbsScaler",
+    "MinMaxScaler",
     "Normalizer",
     "OneHotEncoder",
+    "PowerTransformer",
+    "QuantileTransformer",
     "RobustScaler",
     "StandardScaler",
-    "QuantileTransformer",
-    "PowerTransformer",
     "add_dummy_feature",
     "binarize",
-    "normalize",
-    "scale",
-    "robust_scale",
     "maxabs_scale",
     "minmax_scale",
-    "quantile_transform",
+    "normalize",
     "power_transform",
+    "quantile_transform",
+    "robust_scale",
+    "scale",
 ]
 
 
@@ -211,8 +218,8 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     array([[-1.,  1.,  1.],
            [ 1., -1., -1.]])
     >>> scale(X, axis=1)  # scaling each row independently
-    array([[-1.37...,  0.39...,  0.98...],
-           [-1.22...,  0.     ,  1.22...]])
+    array([[-1.37,  0.39,  0.98],
+           [-1.22,  0.     ,  1.22]])
     """
     X = check_array(
         X,
@@ -492,6 +499,12 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             ensure_all_finite="allow-nan",
         )
 
+        device_ = device(X)
+        feature_range = (
+            xp.asarray(feature_range[0], dtype=X.dtype, device=device_),
+            xp.asarray(feature_range[1], dtype=X.dtype, device=device_),
+        )
+
         data_min = _array_api._nanmin(X, axis=0, xp=xp)
         data_max = _array_api._nanmax(X, axis=0, xp=xp)
 
@@ -563,7 +576,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        Xt : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Transformed data.
         """
         check_is_fitted(self)
@@ -1092,12 +1105,13 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data used to scale along the features axis.
+
         copy : bool, default=None
-            Copy the input X or not.
+            Copy the input `X` or not.
 
         Returns
         -------
-        X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        X_original : {ndarray, sparse matrix} of shape (n_samples, n_features)
             Transformed array.
         """
         check_is_fitted(self)
@@ -1339,7 +1353,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        X_original : {ndarray, sparse matrix} of shape (n_samples, n_features)
             Transformed array.
         """
         check_is_fitted(self)
@@ -1714,7 +1728,7 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        X_original : {ndarray, sparse matrix} of shape (n_samples, n_features)
             Transformed array.
         """
         check_is_fitted(self)
@@ -1952,8 +1966,8 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
     array([[-0.4,  0.2,  0.4],
            [-0.5,  0. ,  0.5]])
     >>> normalize(X, norm="l2")  # L2 normalization each row independently
-    array([[-0.66...,  0.33...,  0.66...],
-           [-0.70...,  0.     ,  0.70...]])
+    array([[-0.67, 0.33, 0.67],
+           [-0.71, 0.  , 0.71]])
     """
     if axis == 0:
         sparse_format = "csc"
@@ -2203,8 +2217,10 @@ def binarize(X, *, threshold=0.0, copy=True):
         X.data[not_cond] = 0
         X.eliminate_zeros()
     else:
-        cond = X > threshold
-        not_cond = np.logical_not(cond)
+        xp, _, device = get_namespace_and_device(X)
+        float_dtype = _find_matching_floating_dtype(X, threshold, xp=xp)
+        cond = xp.astype(X, float_dtype, copy=False) > threshold
+        not_cond = xp.logical_not(cond)
         X[cond] = 1
         X[not_cond] = 0
     return X
@@ -2347,6 +2363,7 @@ class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.requires_fit = False
+        tags.array_api_support = True
         tags.input_tags.sparse = True
         return tags
 
@@ -3002,7 +3019,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
         Returns
         -------
-        Xt : {ndarray, sparse matrix} of (n_samples, n_features)
+        X_original : {ndarray, sparse matrix} of (n_samples, n_features)
             The projected data.
         """
         check_is_fitted(self)
@@ -3258,11 +3275,11 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     >>> print(pt.fit(data))
     PowerTransformer()
     >>> print(pt.lambdas_)
-    [ 1.386... -3.100...]
+    [ 1.386 -3.100]
     >>> print(pt.transform(data))
-    [[-1.316... -0.707...]
-     [ 0.209... -0.707...]
-     [ 1.106...  1.414...]]
+    [[-1.316 -0.707]
+     [ 0.209 -0.707]
+     [ 1.106  1.414]]
     """
 
     _parameter_constraints: dict = {
@@ -3398,20 +3415,20 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         The inverse of the Box-Cox transformation is given by::
 
             if lambda_ == 0:
-                X = exp(X_trans)
+                X_original = exp(X_trans)
             else:
-                X = (X_trans * lambda_ + 1) ** (1 / lambda_)
+                X_original = (X * lambda_ + 1) ** (1 / lambda_)
 
         The inverse of the Yeo-Johnson transformation is given by::
 
             if X >= 0 and lambda_ == 0:
-                X = exp(X_trans) - 1
+                X_original = exp(X) - 1
             elif X >= 0 and lambda_ != 0:
-                X = (X_trans * lambda_ + 1) ** (1 / lambda_) - 1
+                X_original = (X * lambda_ + 1) ** (1 / lambda_) - 1
             elif X < 0 and lambda_ != 2:
-                X = 1 - (-(2 - lambda_) * X_trans + 1) ** (1 / (2 - lambda_))
+                X_original = 1 - (-(2 - lambda_) * X + 1) ** (1 / (2 - lambda_))
             elif X < 0 and lambda_ == 2:
-                X = 1 - exp(-X_trans)
+                X_original = 1 - exp(-X)
 
         Parameters
         ----------
@@ -3420,7 +3437,7 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             The original data.
         """
         check_is_fitted(self)
@@ -3526,8 +3543,8 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         # the computation of lambda is influenced by NaNs so we need to
         # get rid of them
         x = x[~np.isnan(x)]
-        # choosing bracket -2, 2 like for boxcox
-        return optimize.brent(_neg_log_likelihood, brack=(-2, 2))
+
+        return _yeojohnson_lambda(_neg_log_likelihood, x)
 
     def _check_input(self, X, in_fit, check_positive=False, check_shape=False):
         """Validate the input before fit and transform.
@@ -3669,9 +3686,9 @@ def power_transform(X, method="yeo-johnson", *, standardize=True, copy=True):
     >>> from sklearn.preprocessing import power_transform
     >>> data = [[1, 2], [3, 2], [4, 5]]
     >>> print(power_transform(data, method='box-cox'))
-    [[-1.332... -0.707...]
-     [ 0.256... -0.707...]
-     [ 1.076...  1.414...]]
+    [[-1.332 -0.707]
+     [ 0.256 -0.707]
+     [ 1.076  1.414]]
 
     .. warning:: Risk of data leak.
         Do not use :func:`~sklearn.preprocessing.power_transform` unless you

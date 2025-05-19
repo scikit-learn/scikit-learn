@@ -224,8 +224,8 @@ alpha parameter, the fewer features selected.
   noise, the smallest absolute value of non-zero coefficients, and the
   structure of the design matrix X. In addition, the design matrix must
   display certain specific properties, such as not being too correlated.
-  On the use of Lasso for sparse signal recovery, see this example on 
-  compressive sensing: 
+  On the use of Lasso for sparse signal recovery, see this example on
+  compressive sensing:
   :ref:`sphx_glr_auto_examples_applications_plot_tomography_l1_reconstruction.py`.
 
   There is no general rule to select an alpha parameter for recovery of
@@ -262,7 +262,7 @@ meta-transformer)::
   >>> clf = ExtraTreesClassifier(n_estimators=50)
   >>> clf = clf.fit(X, y)
   >>> clf.feature_importances_  # doctest: +SKIP
-  array([ 0.04...,  0.05...,  0.4...,  0.4...])
+  array([ 0.04,  0.05,  0.4,  0.4])
   >>> model = SelectFromModel(clf, prefit=True)
   >>> X_new = model.transform(X)
   >>> X_new.shape               # doctest: +SKIP

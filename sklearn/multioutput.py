@@ -8,7 +8,6 @@ extends single output estimators to multioutput estimators.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral
@@ -53,9 +52,9 @@ from .utils.validation import (
 )
 
 __all__ = [
-    "MultiOutputRegressor",
-    "MultiOutputClassifier",
     "ClassifierChain",
+    "MultiOutputClassifier",
+    "MultiOutputRegressor",
     "RegressorChain",
 ]
 
@@ -407,7 +406,7 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     >>> X, y = load_linnerud(return_X_y=True)
     >>> regr = MultiOutputRegressor(Ridge(random_state=123)).fit(X, y)
     >>> regr.predict(X[[0]])
-    array([[176..., 35..., 57...]])
+    array([[176, 35.1, 57.1]])
     """
 
     def __init__(self, estimator, *, n_jobs=None):
@@ -687,7 +686,6 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             )
 
         if self.base_estimator != "deprecated":
-
             warning_msg = (
                 "`base_estimator` as an argument was deprecated in 1.7 and will be"
                 " removed in 1.9. Use `estimator` instead."
@@ -1020,9 +1018,9 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
            [1., 0., 0.],
            [0., 1., 0.]])
     >>> chain.predict_proba(X_test)
-    array([[0.8387..., 0.9431..., 0.4576...],
-           [0.8878..., 0.3684..., 0.2640...],
-           [0.0321..., 0.9935..., 0.0626...]])
+    array([[0.8387, 0.9431, 0.4576],
+           [0.8878, 0.3684, 0.2640],
+           [0.0321, 0.9935, 0.0626]])
     """
 
     _parameter_constraints: dict = {

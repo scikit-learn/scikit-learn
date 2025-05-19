@@ -35,7 +35,6 @@ from ..utils.random import sample_without_replacement
 from ..utils.validation import (
     _check_method_params,
     _check_sample_weight,
-    _deprecate_positional_args,
     check_is_fitted,
     has_fit_parameter,
     validate_data,
@@ -250,13 +249,13 @@ class RANSACRegressor(
     ...     n_samples=200, n_features=2, noise=4.0, random_state=0)
     >>> reg = RANSACRegressor(random_state=0).fit(X, y)
     >>> reg.score(X, y)
-    0.9885...
+    0.9885
     >>> reg.predict(X[:1,])
-    array([-31.9417...])
+    array([-31.9417])
 
     For a more detailed example, see
     :ref:`sphx_glr_auto_examples_linear_model_plot_ransac.py`
-    """  # noqa: E501
+    """
 
     _parameter_constraints: dict = {
         "estimator": [HasMethods(["fit", "score", "predict"]), None],
@@ -319,11 +318,7 @@ class RANSACRegressor(
         # RansacRegressor.estimator is not validated yet
         prefer_skip_nested_validation=False
     )
-    # TODO(1.7): remove `sample_weight` from the signature after deprecation
-    # cycle; for backwards compatibility: pop it from `fit_params` before the
-    # `_raise_for_params` check and reinsert it after the check
-    @_deprecate_positional_args(version="1.7")
-    def fit(self, X, y, *, sample_weight=None, **fit_params):
+    def fit(self, X, y, sample_weight=None, **fit_params):
         """Fit estimator using RANSAC algorithm.
 
         Parameters
