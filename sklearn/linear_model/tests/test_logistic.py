@@ -795,7 +795,7 @@ def test_logistic_regression_solvers_multiclass_unpenalized(
         y[i] = np.argwhere(rng.multinomial(n=1, pvals=proba[i, :]))[0, 0]
 
     tol = 1e-9
-    params = dict(fit_intercept=fit_intercept, random_state=42)
+    params = dict(fit_intercept=fit_intercept, random_state=global_random_seed)
     solver_max_iter = {"lbfgs": 200, "sag": 10_000, "saga": 10_000}
     solver_tol = {"sag": 1e-8, "saga": 1e-8}
     regressors = {
@@ -1059,10 +1059,8 @@ def test_logistic_regression_class_weights(global_random_seed, csr_container):
     y = iris.target[45:]
     class_weight_dict = _compute_class_weight_dictionary(y)
 
-    for solver in set(SOLVERS) - set(["liblinear", "newton-cholesky"]):
-        params = dict(solver=solver, max_iter=2000)
-        if solver != "lbfgs":
-            params["random_state"] = global_random_seed
+    for solver in set(SOLVERS) - set(["liblinear", "newton-cholesky", "lbfgs"]):
+        params = dict(random_state=global_random_seed, solver=solver, max_iter=2000)
         clf1 = LogisticRegression(class_weight="balanced", **params)
         clf2 = LogisticRegression(class_weight=class_weight_dict, **params)
         clf1.fit(X, y)
@@ -1081,10 +1079,8 @@ def test_logistic_regression_class_weights(global_random_seed, csr_container):
     y = iris.target[45:100]
     class_weight_dict = _compute_class_weight_dictionary(y)
 
-    for solver in SOLVERS:
-        params = dict(solver=solver, max_iter=1000)
-        if solver != "lbfgs":
-            params["random_state"] = global_random_seed
+    for solver in SOLVERS - set(["lbfgs"]):
+        params = dict(random_state=global_random_seed, solver=solver, max_iter=1000)
         clf1 = LogisticRegression(class_weight="balanced", **params)
         clf2 = LogisticRegression(class_weight=class_weight_dict, **params)
         clf1.fit(X, y)
