@@ -4,11 +4,6 @@ import torch
 from typing import Optional, Union, Tuple
 
 from torch.linalg import * # noqa: F403
-# TODO Temporary work-around for
-# https://github.com/data-apis/array-api-compat/issues/320. Remove when
-# array-api-compat 1.12 is released and our vendored array-api-compat has been
-# updated.
-import torch
 
 # torch.linalg doesn't define __all__
 # from torch.linalg import __all__ as linalg_all
