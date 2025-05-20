@@ -772,12 +772,10 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             # `else` is therefore safe.
             # Disregard observations with zero weight.
             mask = slice(None, None, 1) if sample_weight is None else sample_weight > 0
-            X_with_nonzero_weights = X[mask]
-
             x_min = np.zeros(X.shape[1], dtype=np.float64)
             x_max = np.zeros(X.shape[1], dtype=np.float64)
             for feature_idx in range(X.shape[1]):
-                x = X_with_nonzero_weights[:, feature_idx]
+                x = X[mask, feature_idx]
                 if np.all(np.isnan(x)):
                     continue
                 else:
@@ -1122,7 +1120,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     # Set to some arbitrary value within the range of values
                     # observed on the training set before calling
                     # BSpline.design_matrix. Those transformed will be
-                    # reassigned later when handling extrapolation.
+                    # reassigned later when handling with extrapolation.
                     x[outside_range_mask] = xmin
                     XBS_sparse = BSpline.design_matrix(x, spl.t, spl.k)
                     # Note: Without converting to lil_matrix we would get:

@@ -563,8 +563,7 @@ def test_spline_transformer_handles_missing_values(extrapolation, sparse_output)
 )
 @pytest.mark.parametrize("sparse_output", [False, True])
 def test_spline_transformer_handles_all_nans(extrapolation, sparse_output):
-    """Test that SplineTransformer reliably encodes missing values to zeros also if
-    whole features are all nans."""
+    """Test that SplineTransformer encodes missing values to zeros even for all-nan-features."""
 
     X = np.array([[1, 1], [2, 2], [3, 3], [4, 5], [4, 4]])
     X_nan_full_column = np.array([[np.nan, np.nan], [np.nan, 1]])
