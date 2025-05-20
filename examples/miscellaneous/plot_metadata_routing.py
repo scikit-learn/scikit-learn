@@ -465,17 +465,16 @@ print_routing(meta_est)
 # `set_fit_request(sample_weight=True)` was set on it.
 
 # %%
-# Default Metadata Routing
-# -----------------------
-# There are two ways to set default metadata routing requests in scikit-learn:
+# Auto-Requesting Metadata
+# ------------------------
+# There are two ways a class can modify the default metadata routing requests:
 #
 # 1. Class-level defaults using `__metadata_request__method` class attributes,
-#    which sets default request values for all instances of a class, and can even
+#    which set default request values for all instances of a class, and can even
 #    remove a metadata from the metadata routing machinery if necessary.
-# 2. Instance-level defaults using `__sklearn_default_requests__` method,
-#    which set default request values at instance level, which means you can customize
-#    the default request values on a per-instance basis. Note that this only takes
-#    effect if ``set_config(enable_metadata_routing="default_routing")`` is called.
+# 2. Instance-level defaults via the `add_auto_request` method, which would only
+#    request the metadata if ``set_config(metadata_request_policy="auto")`` is
+#    set.
 #
 # Here's an example demonstrating both approaches:
 
@@ -484,12 +483,13 @@ class DefaultRoutingClassifier(ClassifierMixin, BaseEstimator):
     # Class-level default request for fit method
     __metadata_request__fit = {"sample_weight": True}
 
-    def __sklearn_default_request__(self):
-        # Instance-level default requests can override class-level defaults
-        # and add new method requests
-        values = super().__sklearn_default_request__()
-        values["predict"] = {"groups": True}  # Add new method request
-        return values
+    def get_metadata_routing(self):
+        # Each instance can configure metadata which should be requested by default if
+        # `set_config(metadata_request_policy="auto")` is set. The `add_auto_request`
+        # method does this.
+        requests = super().get_metadata_routing()
+        requests.predict.add_auto_request("groups")
+        return requests
 
     def fit(self, X, y, sample_weight=None):
         check_metadata(self, sample_weight=sample_weight)
