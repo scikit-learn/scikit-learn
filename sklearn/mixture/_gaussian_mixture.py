@@ -631,6 +631,9 @@ class GaussianMixture(BaseMixture):
             (n_components, n_features)             if 'diag',
             (n_components, n_features, n_features) if 'full'
 
+        For an example of using covariances, refer to
+        :ref:`sphx_glr_auto_examples_mixture_plot_gmm_covariances.py`.
+
     precisions_ : array-like
         The precision matrices for each component in the mixture. A precision
         matrix is the inverse of a covariance matrix. A covariance matrix is
@@ -668,6 +671,10 @@ class GaussianMixture(BaseMixture):
     lower_bound_ : float
         Lower bound value on the log-likelihood (of the training data with
         respect to the model) of the best fit of EM.
+
+    lower_bounds_ : array-like of shape (`n_iter_`,)
+        The list of lower bound values on the log-likelihood from each
+        iteration of the best fit of EM.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.

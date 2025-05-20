@@ -37,8 +37,8 @@ The bundled version of joblib was upgraded from 0.13.0 to 0.13.2.
 .......................
 
 - |Fix| Fixed an issue in :class:`compose.ColumnTransformer` where using
-  DataFrames whose column order differs between :func:``fit`` and
-  :func:``transform`` could lead to silently passing incorrect columns to the
+  DataFrames whose column order differs between :func:`fit` and
+  :func:`transform` could lead to silently passing incorrect columns to the
   ``remainder`` transformer.
   :pr:`14237` by `Andreas Schuderer <schuderer>`.
 
@@ -445,7 +445,7 @@ Miscellaneous
 
 - |API| Removed all mentions of ``sklearn.externals.joblib``, and deprecated
   joblib methods exposed in ``sklearn.utils``, except for
-  :func:`utils.parallel_backend` and :func:`utils.register_parallel_backend`,
+  `utils.parallel_backend` and `utils.register_parallel_backend`,
   which allow users to configure parallel computation in scikit-learn.
   Other functionalities are part of `joblib <https://joblib.readthedocs.io/>`_.
   package and should be used directly, by installing it.
@@ -1602,7 +1602,7 @@ Miscellaneous
   PyPy3-v5.10+, Numpy 1.14.0+, and scipy 1.1.0+ are required.
   :issue:`11010` by :user:`Ronan Lamy <rlamy>` and `Roman Yurchak`_.
 
-- |Feature| A utility method :func:`sklearn.show_versions()` was added to
+- |Feature| A utility method :func:`sklearn.show_versions` was added to
   print out information relevant for debugging. It includes the user system,
   the Python executable, the version of the main libraries and BLAS binding
   information. :issue:`11596` by :user:`Alexandre Boucaud <aboucaud>`
