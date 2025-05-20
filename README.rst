@@ -1,4 +1,4 @@
-e.. -*- mode: rst -*-
+.. -*- mode: rst -*-
 
 |Azure| |Codecov| |CircleCI| |Nightly wheels| |Ruff| |PythonVersion| |PyPi| |DOI| |Benchmark|
 
