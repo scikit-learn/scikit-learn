@@ -138,6 +138,10 @@ class ReprHTMLMixin:
         return self._repr_html_inner
 
     def _repr_html_inner(self):
+        """This function is returned by the @property `_repr_html_` to make
+        `hasattr(estimator, "_repr_html_") return `True` or `False` depending
+        on `get_config()["display"]`.
+        """
         return self._html_repr()
 
     def _repr_mimebundle_(self, **kwargs):
