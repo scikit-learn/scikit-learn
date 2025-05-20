@@ -192,7 +192,7 @@ mses_california[2], stds_california[2] = get_impute_knn_score(
 mses_diabetes[2], stds_diabetes[2] = get_impute_knn_score(
     X_miss_diabetes, y_miss_diabetes
 )
-x_labels.append("KNN Imputation (scaled features)")
+x_labels.append("KNN Imputation\n(scaled features)")
 
 
 # %%
