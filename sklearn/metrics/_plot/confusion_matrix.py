@@ -15,13 +15,16 @@ from .. import confusion_matrix
 class ConfusionMatrixDisplay:
     """Confusion Matrix visualization.
 
-    It is recommend to use
+    It is recommended to use
     :func:`~sklearn.metrics.ConfusionMatrixDisplay.from_estimator` or
     :func:`~sklearn.metrics.ConfusionMatrixDisplay.from_predictions` to
     create a :class:`ConfusionMatrixDisplay`. All parameters are stored as
     attributes.
 
-    Read more in the :ref:`User Guide <visualizations>`.
+    For general information regarding `scikit-learn` visualization tools, see
+    the :ref:`Visualization Guide <visualizations>`.
+    For guidance on interpreting these plots, refer to the
+    :ref:`Model Evaluation Guide <confusion_matrix>`.
 
     Parameters
     ----------
@@ -220,7 +223,10 @@ class ConfusionMatrixDisplay:
     ):
         """Plot Confusion Matrix given an estimator and some data.
 
-        Read more in the :ref:`User Guide <confusion_matrix>`.
+        For general information regarding `scikit-learn` visualization tools, see
+        the :ref:`Visualization Guide <visualizations>`.
+        For guidance on interpreting these plots, refer to the
+        :ref:`Model Evaluation Guide <confusion_matrix>`.
 
         .. versionadded:: 1.0
 
@@ -316,6 +322,10 @@ class ConfusionMatrixDisplay:
         ...     clf, X_test, y_test)
         <...>
         >>> plt.show()
+
+        For a detailed example of using a confusion matrix to evaluate a
+        Support Vector Classifier, please see
+        :ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py`
         """
         method_name = f"{cls.__name__}.from_estimator"
         check_matplotlib_support(method_name)
@@ -361,7 +371,10 @@ class ConfusionMatrixDisplay:
     ):
         """Plot Confusion Matrix given true and predicted labels.
 
-        Read more in the :ref:`User Guide <confusion_matrix>`.
+        For general information regarding `scikit-learn` visualization tools, see
+        the :ref:`Visualization Guide <visualizations>`.
+        For guidance on interpreting these plots, refer to the
+        :ref:`Model Evaluation Guide <confusion_matrix>`.
 
         .. versionadded:: 1.0
 

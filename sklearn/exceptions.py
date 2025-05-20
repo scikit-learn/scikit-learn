@@ -158,7 +158,7 @@ class PositiveSpectrumWarning(UserWarning):
 
 
 class InconsistentVersionWarning(UserWarning):
-    """Warning raised when an estimator is unpickled with a inconsistent version.
+    """Warning raised when an estimator is unpickled with an inconsistent version.
 
     Parameters
     ----------
