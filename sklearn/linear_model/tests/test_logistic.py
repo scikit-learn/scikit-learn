@@ -156,15 +156,9 @@ def test_predict_3_classes(csr_container):
         LogisticRegression(C=len(iris.data), solver="liblinear", multi_class="ovr"),
         LogisticRegression(C=len(iris.data), solver="lbfgs"),
         LogisticRegression(C=len(iris.data), solver="newton-cg"),
+        LogisticRegression(C=len(iris.data), solver="sag", tol=1e-2, multi_class="ovr"),
         LogisticRegression(
-            C=len(iris.data), solver="sag", tol=1e-2, multi_class="ovr", random_state=42
-        ),
-        LogisticRegression(
-            C=len(iris.data),
-            solver="saga",
-            tol=1e-2,
-            multi_class="ovr",
-            random_state=42,
+            C=len(iris.data), solver="saga", tol=1e-2, multi_class="ovr"
         ),
         LogisticRegression(C=len(iris.data), solver="newton-cholesky"),
     ],
@@ -257,11 +251,11 @@ def test_multinomial_binary(global_random_seed, solver):
     # Test multinomial LR on a binary problem.
     target = (iris.target > 0).astype(np.intp)
     target = np.array(["setosa", "not-setosa"])[target]
-
+    random_state = global_random_seed if solver in ["sag", "saga"] else 0
     clf = LogisticRegression(
         solver=solver,
         multi_class="multinomial",
-        random_state=global_random_seed,
+        random_state=random_state,
         max_iter=2000,
     )
     clf.fit(iris.data, target)
@@ -273,7 +267,7 @@ def test_multinomial_binary(global_random_seed, solver):
     mlr = LogisticRegression(
         solver=solver,
         multi_class="multinomial",
-        random_state=global_random_seed,
+        random_state=random_state,
         fit_intercept=False,
         max_iter=2000,
     )
@@ -501,10 +495,16 @@ def test_logistic_cv(global_random_seed):
     X_ref -= X_ref.mean()
     X_ref /= X_ref.std()
     lr_cv = LogisticRegressionCV(
-        Cs=[1.0], fit_intercept=False, solver="liblinear", cv=3
+        Cs=[1.0],
+        fit_intercept=False,
+        solver="liblinear",
+        cv=3,
+        random_state=global_random_seed,
     )
     lr_cv.fit(X_ref, y)
-    lr = LogisticRegression(C=1.0, fit_intercept=False, solver="liblinear")
+    lr = LogisticRegression(
+        C=1.0, fit_intercept=False, solver="liblinear", random_state=global_random_seed
+    )
     lr.fit(X_ref, y)
     assert_array_almost_equal(lr.coef_, lr_cv.coef_)
 
