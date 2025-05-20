@@ -141,7 +141,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
 
         Returns
         -------
-        X_r : array of shape [n_samples, n_original_features]
+        X_original : array of shape [n_samples, n_original_features]
             `X` with columns of zeros inserted where features would have
             been removed by :meth:`transform`.
         """
