@@ -184,7 +184,10 @@ class EmpiricalCovariance(BaseEstimator):
     """
 
     # X_test should have been called X
-    __metadata_request__score = {"X_test": metadata_routing.UNUSED}
+    __metadata_request__score = {
+        "X_test": metadata_routing.UNUSED,
+        "sample_weight": True,
+    }
 
     _parameter_constraints: dict = {
         "store_precision": ["boolean"],

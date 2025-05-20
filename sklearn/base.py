@@ -10,6 +10,7 @@ import platform
 import re
 import warnings
 from collections import defaultdict
+from typing import Union
 
 import numpy as np
 
@@ -150,7 +151,20 @@ def _clone_parametrized(estimator, *, safe=True):
     return new_object
 
 
-class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
+class _SampleWeightEstimatorMixin(_MetadataRequester):
+    """A Mixin to request ``sample_weight`` by default.
+
+    This Mixin makes the object to request ``sample_weight`` by default as ``True``
+    for both ``fit`` and ``score`` methods.
+
+    .. versionadded:: 1.7
+    """
+
+    __metadata_request__fit: dict[str, Union[bool, str]] = {"sample_weight": True}
+    __metadata_request__score: dict[str, Union[bool, str]] = {"sample_weight": True}
+
+
+class BaseEstimator(_HTMLDocumentationLinkMixin, _SampleWeightEstimatorMixin):
     """Base class for all estimators in scikit-learn.
 
     Inheriting from this class provides default implementations of:
