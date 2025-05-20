@@ -262,7 +262,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
         if hasattr(out, "columns") and self.feature_names_out is not None:
             # check the consistency between the column provided by `transform` and
-            # the the column names provided by `get_feature_names_out`.
+            # the column names provided by `get_feature_names_out`.
             feature_names_out = self.get_feature_names_out()
             if list(out.columns) != list(feature_names_out):
                 # we can override the column names of the output if it is inconsistent

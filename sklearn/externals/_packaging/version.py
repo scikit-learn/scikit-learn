@@ -233,7 +233,7 @@ def _legacy_cmpkey(version: str) -> LegacyCmpKey:
     epoch = -1
 
     # This scheme is taken from pkg_resources.parse_version setuptools prior to
-    # it's adoption of the packaging library.
+    # its adoption of the packaging library.
     parts: List[str] = []
     for part in _parse_version_parts(version.lower()):
         if part.startswith("*"):
