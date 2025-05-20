@@ -44,13 +44,13 @@ from sklearn.pipeline import Pipeline
 
 # %%
 # Helper functions
-# ---------------
+# ----------------
 #
 # We define two helper functions:
 # 1. `lower_bound`: Calculates the threshold for acceptable performance
-#    (best score - 1 std)
+# (best score - 1 std)
 # 2. `best_low_complexity`: Selects the model with the fewest PCA components that
-#    exceeds this threshold
+# exceeds this threshold
 
 
 def lower_bound(cv_results):
@@ -103,7 +103,7 @@ def best_low_complexity(cv_results):
 
 # %%
 # Set up the pipeline and parameter grid
-# -------------------------------------
+# --------------------------------------
 #
 # We create a pipeline with two steps:
 # 1. Dimensionality reduction using PCA
@@ -122,7 +122,7 @@ param_grid = {"reduce_dim__n_components": [6, 8, 10, 15, 20, 25, 35, 45, 55]}
 
 # %%
 # Perform the search with GridSearchCV
-# -----------------------------------------
+# ------------------------------------
 #
 # We use `GridSearchCV` with our custom `best_low_complexity` function as the refit
 # parameter. This function will select the model with the fewest PCA components that
@@ -142,14 +142,14 @@ grid = GridSearchCV(
 
 # %%
 # Load the digits dataset and fit the model
-# ---------------------------------------
+# -----------------------------------------
 
 X, y = load_digits(return_X_y=True)
 grid.fit(X, y)
 
 # %%
 # Visualize the results
-# -------------------
+# ---------------------
 #
 # We'll create a bar chart showing the test scores for different numbers of PCA
 # components, along with horizontal lines indicating the best score and the
@@ -321,7 +321,7 @@ plt.tight_layout()
 
 # %%
 # Print the results
-# ---------------
+# -----------------
 #
 # We print information about the selected model, including its complexity and
 # performance. We also show a summary table of all models using polars.
@@ -356,7 +356,7 @@ print(summary_df)
 
 # %%
 # Conclusion
-# ---------
+# ----------
 #
 # The one-standard-error rule helps us select a simpler model (fewer PCA components)
 # while maintaining performance statistically comparable to the best model.
@@ -369,7 +369,7 @@ print(summary_df)
 # Key takeaways:
 # 1. The one-standard-error rule provides a good rule of thumb to select simpler models
 # 2. Custom refit callables in :class:`~sklearn.model_selection.GridSearchCV` allow for
-#  flexible model selection strategies
+# flexible model selection strategies
 # 3. Visualizing both train and test scores helps identify potential overfitting
 #
 # This approach can be applied to other model selection scenarios where balancing
