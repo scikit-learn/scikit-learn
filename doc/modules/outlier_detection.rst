@@ -413,7 +413,12 @@ Note that ``fit_predict`` is not available in this case to avoid inconsistencies
 
 Novelty detection with Local Outlier Factor is illustrated below.
 
+* See :ref:`sphx_glr_auto_examples_neighbors_plot_lof_novelty_detection.py`
+  for an illustration of the use of :class:`neighbors.LocalOutlierFactor` for novelty detection.
+
 .. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_lof_novelty_detection_001.png
     :target: ../auto_examples/neighbors/plot_lof_novelty_detection.html
     :align: center
     :scale: 75%
+
+
