@@ -651,6 +651,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         ],
         "order": ["array-like", StrOptions({"random"}), None],
         "cv": ["cv_object", StrOptions({"prefit"})],
+        "groups": ["array-like", None],
         "random_state": ["random_state"],
         "verbose": ["boolean"],
     }
@@ -662,6 +663,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         *,
         order=None,
         cv=None,
+        groups=None,
         random_state=None,
         verbose=False,
         base_estimator="deprecated",
@@ -670,6 +672,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         self.base_estimator = base_estimator
         self.order = order
         self.cv = cv
+        self.groups = groups
         self.random_state = random_state
         self.verbose = verbose
 
@@ -845,6 +848,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
                     X_aug[:, :col_idx],
                     y=y,
                     cv=self.cv,
+                    groups=self.groups,
                     method=chain_method,
                 )
                 # `predict_proba` output is 2D, we use only output for classes[-1]
