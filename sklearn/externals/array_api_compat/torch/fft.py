@@ -1,76 +1,75 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    import torch
-    array = torch.Tensor
-    from typing import Union, Sequence, Literal
+from typing import Union, Sequence, Literal
 
-from torch.fft import * # noqa: F403
+import torch
 import torch.fft
+from torch.fft import * # noqa: F403
+
+from ._typing import Array
 
 # Several torch fft functions do not map axes to dim
 
 def fftn(
-    x: array,
+    x: Array,
     /,
     *,
     s: Sequence[int] = None,
     axes: Sequence[int] = None,
     norm: Literal["backward", "ortho", "forward"] = "backward",
     **kwargs,
-) -> array:
+) -> Array:
     return torch.fft.fftn(x, s=s, dim=axes, norm=norm, **kwargs)
 
 def ifftn(
-    x: array,
+    x: Array,
     /,
     *,
     s: Sequence[int] = None,
     axes: Sequence[int] = None,
     norm: Literal["backward", "ortho", "forward"] = "backward",
     **kwargs,
-) -> array:
+) -> Array:
     return torch.fft.ifftn(x, s=s, dim=axes, norm=norm, **kwargs)
 
 def rfftn(
-    x: array,
+    x: Array,
     /,
     *,
     s: Sequence[int] = None,
     axes: Sequence[int] = None,
     norm: Literal["backward", "ortho", "forward"] = "backward",
     **kwargs,
-) -> array:
+) -> Array:
     return torch.fft.rfftn(x, s=s, dim=axes, norm=norm, **kwargs)
 
 def irfftn(
-    x: array,
+    x: Array,
     /,
     *,
     s: Sequence[int] = None,
     axes: Sequence[int] = None,
     norm: Literal["backward", "ortho", "forward"] = "backward",
     **kwargs,
-) -> array:
+) -> Array:
     return torch.fft.irfftn(x, s=s, dim=axes, norm=norm, **kwargs)
 
 def fftshift(
-    x: array,
+    x: Array,
     /,
     *,
     axes: Union[int, Sequence[int]] = None,
     **kwargs,
-) -> array:
+) -> Array:
     return torch.fft.fftshift(x, dim=axes, **kwargs)
 
 def ifftshift(
-    x: array,
+    x: Array,
     /,
     *,
     axes: Union[int, Sequence[int]] = None,
     **kwargs,
-) -> array:
+) -> Array:
     return torch.fft.ifftshift(x, dim=axes, **kwargs)
 
 
