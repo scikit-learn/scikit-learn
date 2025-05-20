@@ -1,46 +1,30 @@
 from __future__ import annotations
 
-__all__ = [
-    "ndarray",
-    "Device",
-    "Dtype",
-]
+from typing import TYPE_CHECKING, Any, Literal, TypeAlias
 
-import sys
-from typing import (
-    Literal,
-    Union,
-    TYPE_CHECKING,
-)
+import numpy as np
 
-from numpy import (
-    ndarray,
-    dtype,
-    int8,
-    int16,
-    int32,
-    int64,
-    uint8,
-    uint16,
-    uint32,
-    uint64,
-    float32,
-    float64,
-)
+Device: TypeAlias = Literal["cpu"]
 
-Device = Literal["cpu"]
-if TYPE_CHECKING or sys.version_info >= (3, 9):
-    Dtype = dtype[Union[
-        int8,
-        int16,
-        int32,
-        int64,
-        uint8,
-        uint16,
-        uint32,
-        uint64,
-        float32,
-        float64,
-    ]]
+if TYPE_CHECKING:
+
+    # NumPy 1.x on Python 3.10 fails to parse np.dtype[]
+    DType: TypeAlias = np.dtype[
+        np.bool_
+        | np.integer[Any]
+        | np.float32
+        | np.float64
+        | np.complex64
+        | np.complex128
+    ]
+    Array: TypeAlias = np.ndarray[Any, DType]
 else:
-    Dtype = dtype
+    DType: TypeAlias = np.dtype
+    Array: TypeAlias = np.ndarray
+
+__all__ = ["Array", "DType", "Device"]
+_all_ignore = ["np"]
+
+
+def __dir__() -> list[str]:
+    return __all__

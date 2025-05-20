@@ -1929,6 +1929,11 @@ def learning_curve(
         Times spent for scoring in seconds. Only present if ``return_times``
         is True.
 
+    See Also
+    --------
+    LearningCurveDisplay.from_estimator : Plot a learning curve using an
+        estimator and data.
+
     Examples
     --------
     >>> from sklearn.datasets import make_classification
@@ -2390,6 +2395,11 @@ def validation_curve(
 
     test_scores : array of shape (n_ticks, n_cv_folds)
         Scores on test set.
+
+    See Also
+    --------
+    ValidationCurveDisplay.from_estimator : Plot the validation curve
+        given an estimator, the data, and the parameter to vary.
 
     Notes
     -----
