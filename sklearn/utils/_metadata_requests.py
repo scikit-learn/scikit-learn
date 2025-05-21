@@ -322,6 +322,7 @@ class MethodMetadataRequest:
         self._requests = requests or dict()
         self.owner = owner
         self.method = method
+        self._auto_requests = set()
 
     @property
     def requests(self):
@@ -374,6 +375,15 @@ class MethodMetadataRequest:
         else:
             self._requests[param] = alias
 
+        return self
+
+    def add_auto_request(self, *params):
+        self._auto_requests.update(params)
+        return self
+
+    def actualize_auto_requests(self):
+        for param in self._auto_requests:
+            self.add_request(param=param, alias=True)
         return self
 
     def _get_param_names(self, return_alias):
@@ -559,6 +569,11 @@ class MetadataRequest:
                 method,
                 MethodMetadataRequest(owner=owner, method=method),
             )
+
+    def actualize_auto_requests(self):
+        for method in SIMPLE_METHODS:
+            getattr(self, method).actualize_auto_requests()
+        return self
 
     def consumes(self, method, params):
         """Check whether the given parameters are consumed by the given method.
@@ -1168,11 +1183,16 @@ def get_routing_for_object(obj=None):
     """
     # doing this instead of a try/except since an AttributeError could be raised
     # for other reasons.
-    if hasattr(obj, "get_metadata_routing"):
-        return deepcopy(obj.get_metadata_routing())
-
-    elif getattr(obj, "_type", None) in ["metadata_request", "metadata_router"]:
-        return deepcopy(obj)
+    if hasattr(obj, "_metadata_request"):
+        return deepcopy(obj._metadata_request)
+    elif hasattr(obj, "get_metadata_routing"):
+        requests = deepcopy(obj.get_metadata_routing())
+        if _auto_routing_enabled():
+            if hasattr(requests, "actualize_auto_requests"):
+                requests.actualize_auto_requests()
+            if getattr(requests, "_self_request", None):
+                requests._self_request.actualize_auto_requests()
+        return requests
 
     return MetadataRequest(owner=None)
 
