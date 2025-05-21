@@ -17,8 +17,8 @@ from sklearn.ensemble import (
 )
 from sklearn.exceptions import UnsetMetadataPassedError
 from sklearn.experimental import (
-    enable_halving_search_cv,  # noqa
-    enable_iterative_imputer,  # noqa
+    enable_halving_search_cv,  # noqa: F401
+    enable_iterative_imputer,  # noqa: F401
 )
 from sklearn.feature_selection import (
     RFE,

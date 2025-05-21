@@ -411,7 +411,8 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         if sample_weight is not None and self.sampling_strategy == "weighting":
             warn(
                 f"When fitting {self.__class__.__name__} with sample_weight "
-                f"it is recommended to use sampling_strategy='indexing' or 'auto', got {self.sampling_strategy}."
+                "it is recommended to use sampling_strategy='indexing' or 'auto', "
+                f"got {self.sampling_strategy}."
             )
 
         return self._fit(
@@ -529,8 +530,8 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
                 sampling_strategy = "indexing"
         if (sampling_strategy == "weighting") and not consumes_sample_weight:
             raise ValueError(
-                "The base estimator doesn't support sample weight, but sample_weight is "
-                "passed to the fit method."
+                "The base estimator doesn't support sample weight, "
+                "but sample_weight is passed to the fit method."
             )
 
         # Store validated sampling_strategy
@@ -1439,7 +1440,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
     >>> regr = BaggingRegressor(estimator=SVR(),
     ...                         n_estimators=10, random_state=0).fit(X, y)
     >>> regr.predict([[0, 0, 0, 0]])
-    array([-2.8948...])
+    array([-2.8948])
     """
 
     def __init__(

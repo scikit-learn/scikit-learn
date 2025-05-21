@@ -585,10 +585,10 @@ def compute_optics_graph(
     >>> ordering
     array([0, 1, 2, 5, 3, 4])
     >>> core_distances
-    array([3.16..., 1.41..., 1.41..., 1.        , 1.        ,
-           4.12...])
+    array([3.16, 1.41, 1.41, 1.        , 1.        ,
+           4.12])
     >>> reachability
-    array([       inf, 3.16..., 1.41..., 4.12..., 1.        ,
+    array([       inf, 3.16, 1.41, 4.12, 1.        ,
            5.        ])
     >>> predecessor
     array([-1,  0,  1,  5,  3,  2])
