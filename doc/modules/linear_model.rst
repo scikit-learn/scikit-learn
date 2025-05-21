@@ -1022,7 +1022,7 @@ The following table summarizes the penalties and multinomial multiclass supporte
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
 | **Penalties**                | **'lbfgs'** | **'liblinear'** | **'newton-cg'** | **'newton-cholesky'** | **'sag'** | **'saga'** |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| L2 penalty                   |     yes     |       no        |       yes       |     no                |    yes    |    yes     |
+| L2 penalty                   |     yes     |       yes        |       yes       |     yes               |    yes    |    yes     |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
 | L1 penalty                   |     no      |       yes       |       no        |     no                |    no     |    yes     |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
@@ -1032,7 +1032,7 @@ The following table summarizes the penalties and multinomial multiclass supporte
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
 | **Multiclass support**       |                                                                                                  |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| multinomial multiclass       |     yes     |       no        |       yes       |     no                |    yes    |    yes     |
+| multinomial multiclass       |     yes     |       no        |       yes       |     yes               |    yes    |    yes     |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
 | **Behaviors**                |                                                                                                  |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
@@ -1045,6 +1045,8 @@ The following table summarizes the penalties and multinomial multiclass supporte
 
 The "lbfgs" solver is used by default for its robustness. For large datasets
 the "saga" solver is usually faster.
+For `n_samples >> n_features`, "newton-cholesky" is a good choice. In addition, it can
+reach high precision (tiny `tol` values).
 For large dataset, you may also consider using :class:`SGDClassifier`
 with `loss="log_loss"`, which might be even faster but requires more tuning.
 
@@ -1101,13 +1103,12 @@ zero, is likely to be an underfit, bad model and you are advised to set
     scaled datasets and on datasets with one-hot encoded categorical features with rare
     categories.
 
-  * The "newton-cholesky" solver is an exact Newton solver that calculates the hessian
+  * The "newton-cholesky" solver is an exact Newton solver that calculates the Hessian
     matrix and solves the resulting linear system. It is a very good choice for
-    `n_samples` >> `n_features`, but has a few shortcomings: Only :math:`\ell_2`
-    regularization is supported. Furthermore, because the hessian matrix is explicitly
-    computed, the memory usage has a quadratic dependency on `n_features` as well as on
-    `n_classes`. As a consequence, only the one-vs-rest scheme is implemented for the
-    multiclass case.
+    `n_samples` >> `n_features` and can reach high precision (tiny values of `tol`),
+    but has a few shortcomings: Only :math:`\ell_2` regularization is supported.
+    Furthermore, because the Hessian matrix is explicitly computed, the memory usage
+    has a quadratic dependency on `n_features` as well as on `n_classes`.
 
   For a comparison of some of these solvers, see [9]_.
 
