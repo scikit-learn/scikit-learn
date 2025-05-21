@@ -7,8 +7,8 @@ from functools import partial
 import numpy as np
 
 from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import StrOptions
+from ..utils._repr_html.estimator import _VisualBlock
 from ..utils._set_output import (
     _get_adapter_from_container,
     _get_output_config,
