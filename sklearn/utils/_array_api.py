@@ -670,10 +670,7 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
 
 
 def _median(X, axis=None, xp=None):
-    (
-        xp,
-        _,
-    ) = get_namespace(X, xp=xp)
+    xp, _ = get_namespace(X, xp=xp)
 
     if _is_numpy_namespace(xp):
         return numpy.median(X, axis=axis)
@@ -699,7 +696,7 @@ def _median(X, axis=None, xp=None):
     # using out array if needed.
     rout = xp.mean(X_sorted[indexer], axis=axis)
     return rout
-    # Need to add NaN handling
+    # `xp.mean` not guaranteed to return nan if nan in input,
 
 
 def _xlogy(x, y, xp=None):
