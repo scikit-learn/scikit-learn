@@ -22,13 +22,14 @@ from ..utils import (
     column_or_1d,
 )
 from ..utils._mask import indices_to_mask
-from ..utils._param_validation import HasMethods, Interval, RealNotInt
+from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
 from ..utils._tags import get_tags
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
+    get_routing_for_object,
     process_routing,
 )
 from ..utils.metaestimators import available_if
@@ -82,8 +83,8 @@ def _generate_bagging_indices(
         random_state, bootstrap_features, n_features, max_features
     )
     if sample_weight is None:
-        sample_indices = random_state.choice(
-            n_samples, max_samples, replace=bootstrap_samples
+        sample_indices = _generate_indices(
+            random_state, bootstrap_samples, n_samples, max_samples
         )
     else:
         normalized_sample_weight = sample_weight / np.sum(sample_weight)
@@ -96,6 +97,22 @@ def _generate_bagging_indices(
     return feature_indices, sample_indices
 
 
+def _consumes_sample_weight(estimator):
+    # TODO(SLEP6): remove if condition for unrouted sample_weight when metadata
+    # routing can't be disabled.
+    # 1. If routing is enabled, we will check if the routing supports sample
+    # weight and use it if it does.
+    # 2. If routing is not enabled, we will check if the base
+    # estimator supports sample_weight and use it if it does.
+    support_sample_weight = has_fit_parameter(estimator, "sample_weight")
+    if _routing_enabled():
+        request_or_router = get_routing_for_object(estimator)
+        consumes_sample_weight = request_or_router.consumes("fit", ("sample_weight",))
+    else:
+        consumes_sample_weight = support_sample_weight
+    return consumes_sample_weight
+
+
 def _parallel_build_estimators(
     n_estimators,
     ensemble,
@@ -105,6 +122,7 @@ def _parallel_build_estimators(
     seeds,
     total_n_estimators,
     verbose,
+    sampling_strategy,
     check_input,
     fit_params,
 ):
@@ -138,6 +156,9 @@ def _parallel_build_estimators(
             estimator_fit = estimator.fit
 
         # Draw random feature, sample indices
+        sample_weight_in_indices = (
+            sample_weight if sampling_strategy == "indexing" else None
+        )
         features, indices = _generate_bagging_indices(
             random_state,
             bootstrap_features,
@@ -146,17 +167,36 @@ def _parallel_build_estimators(
             n_samples,
             max_features,
             max_samples,
-            sample_weight,
+            sample_weight_in_indices,
         )
 
         fit_params_ = fit_params.copy()
+        # Note: Row sampling can be achieved either through setting sample_weight or
+        # by indexing, controled by the `sampling_strategy` argument.
+        if sampling_strategy == "weighting":
+            # Draw sub samples, using sample weights, and then fit
+            curr_sample_weight = _check_sample_weight(sample_weight, X).copy()
 
-        y_ = _safe_indexing(y, indices)
-        X_ = _safe_indexing(X, indices)
-        fit_params_ = _check_method_params(X, params=fit_params, indices=indices)
-        if requires_feature_indexing:
-            X_ = X_[:, features]
-        estimator_fit(X_, y_, **fit_params_)
+            if bootstrap:
+                sample_counts = np.bincount(indices, minlength=n_samples)
+                curr_sample_weight *= sample_counts
+            else:
+                not_indices_mask = ~indices_to_mask(indices, n_samples)
+                curr_sample_weight[not_indices_mask] = 0
+
+            fit_params_["sample_weight"] = curr_sample_weight
+            X_ = X[:, features] if requires_feature_indexing else X
+            estimator_fit(X_, y, **fit_params_)
+        elif sampling_strategy == "indexing":
+            # cannot use sample_weight, so use indexing
+            y_ = _safe_indexing(y, indices)
+            X_ = _safe_indexing(X, indices)
+            fit_params_ = _check_method_params(X, params=fit_params_, indices=indices)
+            if requires_feature_indexing:
+                X_ = X_[:, features]
+            estimator_fit(X_, y_, **fit_params_)
+        else:
+            raise ValueError(f"{sampling_strategy=} must be 'indexing' or 'weighting'.")
 
         estimators.append(estimator)
         estimators_features.append(features)
@@ -268,6 +308,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         "n_jobs": [None, Integral],
         "random_state": ["random_state"],
         "verbose": ["verbose"],
+        "sampling_strategy": [StrOptions({"auto", "indexing", "weighting"})],
     }
 
     @abstractmethod
@@ -285,6 +326,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         n_jobs=None,
         random_state=None,
         verbose=0,
+        sampling_strategy="auto",
     ):
         super().__init__(
             estimator=estimator,
@@ -299,6 +341,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self.n_jobs = n_jobs
         self.random_state = random_state
         self.verbose = verbose
+        self.sampling_strategy = sampling_strategy
 
     @_fit_context(
         # BaseBagging.estimator is not validated yet
@@ -365,6 +408,11 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
                 f"When fitting {self.__class__.__name__} with sample_weight "
                 f"it is recommended to use bootstrap=True, got {self.bootstrap}."
             )
+        if sample_weight is not None and self.sampling_strategy == "weighting":
+            warn(
+                f"When fitting {self.__class__.__name__} with sample_weight "
+                f"it is recommended to use sampling_strategy='indexing' or 'auto', got {self.sampling_strategy}."
+            )
 
         return self._fit(
             X,
@@ -417,11 +465,6 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             If the meta-estimator already checks the input, set this value to
             False to prevent redundant input validation.
 
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If None, then samples are equally weighted.
-            Note that this is supported only if the base estimator supports
-            sample weighting.
-
         **fit_params : dict, default=None
             Parameters to pass to the :term:`fit` method of the underlying
             estimator.
@@ -438,14 +481,8 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self._n_samples = n_samples
         y = self._validate_y(y)
 
-        # Store sample_weight for _get_estimators_indices
-        self._sample_weight = sample_weight
-
         # Check parameters
         self._validate_estimator(self._get_estimator())
-
-        if sample_weight is not None:
-            fit_params["sample_weight"] = sample_weight
 
         if _routing_enabled():
             routed_params = process_routing(self, "fit", **fit_params)
@@ -481,6 +518,28 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
 
         # Store validated integer feature sampling value
         self._max_features = max_features
+
+        # Validate sampling_strategy
+        consumes_sample_weight = _consumes_sample_weight(self.estimator_)
+        sampling_strategy = self.sampling_strategy
+        if sampling_strategy == "auto":
+            if consumes_sample_weight and sample_weight is None:
+                sampling_strategy = "weighting"
+            else:
+                sampling_strategy = "indexing"
+        if (sampling_strategy == "weighting") and not consumes_sample_weight:
+            raise ValueError(
+                "The base estimator doesn't support sample weight, but sample_weight is "
+                "passed to the fit method."
+            )
+
+        # Store validated sampling_strategy
+        self._sampling_strategy = sampling_strategy
+
+        # Store sample_weight_in_indices for _get_estimators_indices
+        self._sample_weight_in_indices = (
+            sample_weight if sampling_strategy == "indexing" else None
+        )
 
         # Other checks
         if not self.bootstrap and self.oob_score:
@@ -539,6 +598,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
                 seeds[starts[i] : starts[i + 1]],
                 total_n_estimators,
                 verbose=self.verbose,
+                sampling_strategy=sampling_strategy,
                 check_input=check_input,
                 fit_params=routed_params.estimator.fit,
             )
@@ -580,7 +640,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
                 self._n_samples,
                 self._max_features,
                 self._max_samples,
-                self._sample_weight,
+                self._sample_weight_in_indices,
             )
 
             yield feature_indices, sample_indices
@@ -749,7 +809,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         processors. See :term:`Glossary <n_jobs>` for more details.
 
     random_state : int, RandomState instance or None, default=None
-        Controls the random resampling of the original dataset
+        Controls the random sampling_strategy of the original dataset
         (sample wise and feature wise).
         If the base estimator accepts a `random_state` attribute, a different
         seed is generated for each instance in the ensemble.
@@ -758,6 +818,26 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
     verbose : int, default=0
         Controls the verbosity when fitting and predicting.
+
+    sampling_strategy : {'auto', 'indexing', 'weighting'},  default='auto'
+        How to handle the samples drawn from the original dataset.
+
+        - 'indexing' explicitly indexes the original dataset. On the downside,
+        it creates copies and has therefore a memory overhead. On the upside,
+        it does not require the base estimator to support `sample_weight`.
+        - 'weighting' do not index the original dataset and is
+        therefore more memory efficient. Instead it passes the selected indices
+        as `sample_weight` to the base estimator, which must therefore
+        support `sample_weight`.
+        - 'auto' will select 'indexing' if fitting the bagging estimator with
+        `sample_weight` or if the base estimator does not support `sample_weight`,
+        and `weighting` otherwise.
+
+        .. warning::
+            Only the 'indexing' option along with boostrap=True gives statistically
+            correct results when fitting the bagging estimator with `sample_weight`.
+
+        .. versionadded:: 1.8
 
     Attributes
     ----------
@@ -853,6 +933,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         n_jobs=None,
         random_state=None,
         verbose=0,
+        sampling_strategy="auto",
     ):
         super().__init__(
             estimator=estimator,
@@ -866,6 +947,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
+            sampling_strategy=sampling_strategy,
         )
 
     def _get_estimator(self):
@@ -1256,7 +1338,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         processors. See :term:`Glossary <n_jobs>` for more details.
 
     random_state : int, RandomState instance or None, default=None
-        Controls the random resampling of the original dataset
+        Controls the random sampling_strategy of the original dataset
         (sample wise and feature wise).
         If the base estimator accepts a `random_state` attribute, a different
         seed is generated for each instance in the ensemble.
@@ -1265,6 +1347,26 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
     verbose : int, default=0
         Controls the verbosity when fitting and predicting.
+
+    sampling_strategy : {'auto', 'indexing', 'weighting'},  default='auto'
+        How to handle the samples drawn from the original dataset.
+
+        - 'indexing' explicitly indexes the original dataset. On the downside,
+        it creates copies and has therefore a memory overhead. On the upside,
+        it does not require the base estimator to support `sample_weight`.
+        - 'weighting' do not index the original dataset and is
+        therefore more memory efficient. Instead it passes the selected indices
+        as `sample_weight` to the base estimator, which must therefore
+        support `sample_weight`.
+        - 'auto' will select 'indexing' if fitting the bagging estimator with
+        `sample_weight` or if the base estimator does not support `sample_weight`,
+        and `weighting` otherwise.
+
+        .. warning::
+            Only the 'indexing' option along with boostrap=True gives statistically
+            correct results when fitting the bagging estimator with `sample_weight`.
+
+        .. versionadded:: 1.8
 
     Attributes
     ----------
@@ -1354,6 +1456,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         n_jobs=None,
         random_state=None,
         verbose=0,
+        sampling_strategy="auto",
     ):
         super().__init__(
             estimator=estimator,
@@ -1367,6 +1470,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
+            sampling_strategy=sampling_strategy,
         )
 
     def predict(self, X, **params):
