@@ -308,8 +308,6 @@ def test_probability(name):
     "X_type", ["array", "sparse_csr", "sparse_csc", "sparse_csr_array"]
 )
 def test_importances(dtype, name, criterion, X_type, global_random_seed):
-    if criterion == "absolute_error":
-        pytest.skip()
     tolerance = 0.01
     if name in FOREST_REGRESSORS and criterion == "absolute_error":
         tolerance = 0.05
@@ -320,7 +318,7 @@ def test_importances(dtype, name, criterion, X_type, global_random_seed):
 
     ForestEstimator = FOREST_ESTIMATORS[name]
     common_params = dict(
-        n_estimators=10,
+        n_estimators=20,
         criterion=criterion,
         oob_score=True,
         bootstrap=True,
@@ -331,13 +329,13 @@ def test_importances(dtype, name, criterion, X_type, global_random_seed):
     est.fit(X, y)
 
     sample_weight = check_random_state(global_random_seed).randint(1, 10, X.shape[0])
-    est_sw = ForestEstimator(**common_params)
+    est_sw = clone(est)
     est_sw.fit(X, y, sample_weight=sample_weight)
 
-    est_sw_05 = ForestEstimator(**common_params)
+    est_sw_05 = clone(est)
     est_sw_05.fit(X, y, sample_weight=0.5 * sample_weight)
 
-    est_sw_100 = ForestEstimator(**common_params)
+    est_sw_100 = clone(est)
     est_sw_100.fit(X, y, sample_weight=100 * sample_weight)
 
     for importance_attribute_name in [
