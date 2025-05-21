@@ -39,14 +39,16 @@ class OPTICS(ClusterMixin, BaseEstimator):
     neighborhood radius. Better suited for usage on large datasets than the
     current scikit-learn implementation of DBSCAN.
 
-    Clusters are then extracted using a DBSCAN-like method
-    (cluster_method = 'dbscan') or an automatic
+    Clusters are then extracted from the cluster-order using a
+    DBSCAN-like method (cluster_method = 'dbscan') or an automatic
     technique proposed in [1]_ (cluster_method = 'xi').
 
     This implementation deviates from the original OPTICS by first performing
-    k-nearest-neighborhood searches on all points to identify core sizes, then
-    computing only the distances to unprocessed points when constructing the
-    cluster order. Note that we do not employ a heap to manage the expansion
+    k-nearest-neighborhood searches on all points to identify core sizes of
+    all points (instead of computing neighbors while looping through points).
+    Reachability distances to only unprocessed points are then computed, to
+    construct the cluster order, similar to the original OPTICS.
+    Note that we do not employ a heap to manage the expansion
     candidates, so the time complexity will be O(n^2).
 
     Read more in the :ref:`User Guide <optics>`.
