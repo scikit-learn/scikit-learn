@@ -824,15 +824,15 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         How to handle the samples drawn from the original dataset.
 
         - 'indexing' explicitly indexes the original dataset. On the downside,
-        it creates copies and has therefore a memory overhead. On the upside,
-        it does not require the base estimator to support `sample_weight`.
+          it creates copies and has therefore a memory overhead. On the upside,
+          it does not require the base estimator to support `sample_weight`.
         - 'weighting' do not index the original dataset and is
-        therefore more memory efficient. Instead it passes the selected indices
-        as `sample_weight` to the base estimator, which must therefore
-        support `sample_weight`.
+          therefore more memory efficient. Instead it passes the selected indices
+          as `sample_weight` to the base estimator, which must therefore
+          support `sample_weight`.
         - 'auto' will select 'indexing' if fitting the bagging estimator with
-        `sample_weight` or if the base estimator does not support `sample_weight`,
-        and `weighting` otherwise.
+          `sample_weight` or if the base estimator does not support `sample_weight`,
+          and `weighting` otherwise.
 
         .. warning::
             Only the 'indexing' option along with boostrap=True gives statistically
@@ -1353,15 +1353,15 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         How to handle the samples drawn from the original dataset.
 
         - 'indexing' explicitly indexes the original dataset. On the downside,
-        it creates copies and has therefore a memory overhead. On the upside,
-        it does not require the base estimator to support `sample_weight`.
+          it creates copies and has therefore a memory overhead. On the upside,
+          it does not require the base estimator to support `sample_weight`.
         - 'weighting' do not index the original dataset and is
-        therefore more memory efficient. Instead it passes the selected indices
-        as `sample_weight` to the base estimator, which must therefore
-        support `sample_weight`.
+          therefore more memory efficient. Instead it passes the selected indices
+          as `sample_weight` to the base estimator, which must therefore
+          support `sample_weight`.
         - 'auto' will select 'indexing' if fitting the bagging estimator with
-        `sample_weight` or if the base estimator does not support `sample_weight`,
-        and `weighting` otherwise.
+          `sample_weight` or if the base estimator does not support `sample_weight`,
+          and `weighting` otherwise.
 
         .. warning::
             Only the 'indexing' option along with boostrap=True gives statistically
