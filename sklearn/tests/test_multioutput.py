@@ -677,7 +677,7 @@ def test_base_chain_crossval_fit_and_predict(chain_type, chain_method):
 def test_multi_output_classes_(estimator):
     # Tests classes_ attribute of multioutput classifiers
     # RandomForestClassifier supports multioutput out-of-the-box
-    estimator.fit(X, y)
+    estimator = clone(estimator).fit(X, y)
     assert isinstance(estimator.classes_, list)
     assert len(estimator.classes_) == n_outputs
     for estimator_classes, expected_classes in zip(classes, estimator.classes_):
