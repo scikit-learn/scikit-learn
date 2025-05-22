@@ -721,7 +721,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         self, X, y, sample_weight, method="ufi"
     ):  # "mdi_oob"
         check_is_fitted(self)
-        X = self._validate_X_predict(X)
         y = np.asarray(y)
         if y.ndim == 1:
             y = y.reshape(-1, 1)
