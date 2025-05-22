@@ -1,0 +1,62 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+from collections import UserDict
+
+from sklearn.utils._repr_html.base import ReprHTMLMixin
+
+
+def _fitted_attr_html_repr(fitted_attributes):
+    """Generate HTML representation of estimator fitted attributes.
+
+    Creates an HTML table with fitted attribute names and values
+    wrapped in a collapsible details element. When attributes are arrays,
+    shape is shown.
+    """
+
+    HTML_TEMPLATE = """
+       <div class="estimator-table">
+           <details>
+               <summary>Attributes</summary>
+               <table class="attributes-table">
+                 <tbody>
+                   {rows}
+                 </tbody>
+               </table>
+           </details>
+       </div>
+    """
+    ROW_TEMPLATE = """
+       <tr class="{name}">
+
+           <td class="param">{name}&nbsp;</td>
+           <td class="value">{value}</td>
+       </tr>
+    """
+
+    rows = [
+        ROW_TEMPLATE.format(name=name, value=value)
+        for name, value in fitted_attributes.items()
+    ]
+
+    return HTML_TEMPLATE.format(rows="\n".join(rows))
+
+
+class AttrsDict(ReprHTMLMixin, UserDict):
+    """Dictionary-like class to store and provide an HTML representation.
+
+    It builds an HTML structure to be used with Jupyter notebooks or similar
+    environments.
+
+    Parameters
+    ----------
+    fitted_attributes : dict, default=None
+        Dictionary of fitted attributes and their values. When this is
+        an array, it includes its size.
+    """
+
+    _html_repr = _fitted_attr_html_repr
+
+    def __init__(self, fitted_attributes=None):
+        super().__init__(fitted_attributes or {})
+        self.fitted_attributes = fitted_attributes
