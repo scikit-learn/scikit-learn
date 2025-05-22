@@ -706,7 +706,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         n_oob_pred = np.zeros((n_samples, self.n_outputs_), dtype=np.intp)
 
         importances, y_pred = (
-            tree.compute_unbiased_feature_importance_and_oob_predictions(
+            tree._compute_unbiased_feature_importance_and_oob_predictions(
                 X_test=X_test,
                 y_test=y_test,
                 sample_weight=sample_weight_test,

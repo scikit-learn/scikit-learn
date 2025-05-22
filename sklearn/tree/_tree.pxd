@@ -89,7 +89,7 @@ cdef class Tree:
         float64_t[:, :, ::1] oob_node_values,
         str method,
     )
-    cpdef compute_unbiased_feature_importance_and_oob_predictions(
+    cpdef _compute_unbiased_feature_importance_and_oob_predictions(
         self,
         object X_test,
         object y_test,

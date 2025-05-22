@@ -1412,7 +1412,7 @@ cdef class Tree:
                                     node_value_idx = node_idx * self.value_stride + k * max_n_classes + c
                                     oob_pred[sample_idx, c, k] = self.value[node_value_idx]
 
-    cpdef compute_unbiased_feature_importance_and_oob_predictions(
+    cpdef _compute_unbiased_feature_importance_and_oob_predictions(
         self,
         object X_test,
         object y_test,
