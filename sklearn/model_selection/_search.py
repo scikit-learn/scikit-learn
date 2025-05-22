@@ -31,8 +31,8 @@ from ..metrics._scorer import (
     get_scorer_names,
 )
 from ..utils import Bunch, check_random_state
-from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import HasMethods, Interval, StrOptions
+from ..utils._repr_html.estimator import _VisualBlock
 from ..utils._tags import get_tags
 from ..utils.metadata_routing import (
     MetadataRouter,
@@ -1328,6 +1328,11 @@ class GridSearchCV(BaseSearchCV):
         to see how to design a custom selection strategy using a callable
         via `refit`.
 
+        See :ref:`this example
+        <sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py>`
+        for an example of how to use ``refit=callable`` to balance model
+        complexity and cross-validated score.
+
         .. versionchanged:: 0.20
             Support for callable added.
 
@@ -1703,6 +1708,11 @@ class RandomizedSearchCV(BaseSearchCV):
 
         See ``scoring`` parameter to know more about multiple metric
         evaluation.
+
+        See :ref:`this example
+        <sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py>`
+        for an example of how to use ``refit=callable`` to balance model
+        complexity and cross-validated score.
 
         .. versionchanged:: 0.20
             Support for callable added.
