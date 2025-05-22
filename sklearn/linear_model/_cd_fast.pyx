@@ -413,7 +413,7 @@ def sparse_enet_coordinate_descent(
 
         # Note: No need to update R_sum from here on because the update terms cancel
         # each other: w_ii * np.sum(X[:,ii] - X_mean[ii]) = 0. R_sum is only ever
-        # nedded an calculated if X_mean is provided.
+        # needed and calculated if X_mean is provided.
 
         # tol *= np.dot(y, y)
         # with sample weights: tol *= y @ (sw * y)
