@@ -96,16 +96,11 @@ def test_seq_dataset_basic_iteration(dataset, csr_container):
 
 
 @pytest.mark.parametrize(
-    "dense_dataset,sparse_dataset",
-    [
-        (
-            _make_dense_dataset(float_dtype),
-            _make_sparse_dataset(csr_container, float_dtype),
-        )
-        for float_dtype, csr_container in product(floating, CSR_CONTAINERS)
-    ],
+    "float_dtype, csr_container", product(floating, CSR_CONTAINERS)
 )
-def test_seq_dataset_shuffle(dense_dataset, sparse_dataset):
+def test_seq_dataset_shuffle(float_dtype, csr_container):
+    dense_dataset = _make_dense_dataset(float_dtype)
+    sparse_dataset = _make_sparse_dataset(csr_container, float_dtype)
     # not shuffled
     for i in range(5):
         _, _, _, idx1 = dense_dataset._next_py()
