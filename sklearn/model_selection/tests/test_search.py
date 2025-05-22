@@ -27,7 +27,7 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.exceptions import FitFailedWarning
-from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import (
@@ -2662,21 +2662,21 @@ def test_search_html_repr():
     search_cv = GridSearchCV(pipeline, param_grid=param_grid, refit=False)
     with config_context(display="diagram"):
         repr_html = search_cv._repr_html_()
-        assert "<pre>DummyClassifier()</pre>" in repr_html
+        assert "<div>DummyClassifier</div>" in repr_html
 
     # Fitted with `refit=False` shows the original pipeline
     search_cv.fit(X, y)
     with config_context(display="diagram"):
         repr_html = search_cv._repr_html_()
-        assert "<pre>DummyClassifier()</pre>" in repr_html
+        assert "<div>DummyClassifier</div>" in repr_html
 
     # Fitted with `refit=True` shows the best estimator
     search_cv = GridSearchCV(pipeline, param_grid=param_grid, refit=True)
     search_cv.fit(X, y)
     with config_context(display="diagram"):
         repr_html = search_cv._repr_html_()
-        assert "<pre>DummyClassifier()</pre>" not in repr_html
-        assert "<pre>LogisticRegression()</pre>" in repr_html
+        assert "<div>DummyClassifier</div>" not in repr_html
+        assert "<div>LogisticRegression</div>" in repr_html
 
 
 # Metadata Routing Tests
@@ -2891,7 +2891,7 @@ ordinal_encoder = OrdinalEncoder()
 
 # If we construct this directly via `MaskedArray`, the list of tuples
 # gets auto-converted to a 2D array.
-ma_with_tuples = np.ma.MaskedArray(np.empty(2), mask=True, dtype=object)
+ma_with_tuples = np.ma.MaskedArray(np.empty(2), mask=True, dtype=object)  # type: ignore[var-annotated]
 ma_with_tuples[0] = (1, 2)
 ma_with_tuples[1] = (3, 4)
 
