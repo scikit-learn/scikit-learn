@@ -17,6 +17,7 @@ from joblib.numpy_pickle import NumpyPickler
 from numpy.testing import assert_allclose
 
 from sklearn import clone, datasets, tree
+from sklearn.datasets import make_classification
 from sklearn.dummy import DummyRegressor
 from sklearn.exceptions import NotFittedError
 from sklearn.impute import SimpleImputer
@@ -47,7 +48,7 @@ from sklearn.tree._tree import (
     _check_value_ndarray,
 )
 from sklearn.tree._tree import Tree as CythonTree
-from sklearn.utils import compute_sample_weight
+from sklearn.utils import compute_sample_weight, shuffle
 from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
@@ -502,87 +503,73 @@ def test_importances_gini_equal_squared_error():
     assert_array_equal(clf.tree_.n_node_samples, reg.tree_.n_node_samples)
 
 
-@pytest.mark.parametrize("est", [DecisionTreeClassifier, DecisionTreeRegressor])
-def test_oob_sample_weights(est):
-    # Check that setting sample_weight to zero for an oob sample is equivalent
-    # to removing corresponding samples.
+@pytest.mark.parametrize("est_name", [DecisionTreeClassifier, DecisionTreeRegressor])
+def test_oob_sample_weights(est_name, global_random_seed):
+    # check that setting sample_weight to zero / integer for an oob sample is equivalent
+    # to removing / repeating corresponding samples for unbaised MDI computations
 
-    # XOR dataset where both feature are important
-    X = np.array(
-        [
-            [0, 0],
-            [0, 1],
-            [1, 0],
-            [1, 1],
-        ],
-        dtype=np.float32,
+    est = est_name(random_state=global_random_seed)
+
+    n_samples = 100
+    n_features = 4
+    X, y = make_classification(
+        n_samples=n_samples,
+        n_features=n_features,
+        n_informative=n_features,
+        n_redundant=0,
+        random_state=global_random_seed,
     )
-    y = np.array(
-        [
-            [0],
-            [1],
-            [1],
-            [0],
-        ],
-        dtype=np.float32,
+    y = y.reshape(-1, 1)  # Tree expects multiple outputs
+    X = X.astype(np.float32)  # Tree expects float32
+    X_train, X_oob, y_train, y_oob = train_test_split(
+        X, y, random_state=global_random_seed
+    )
+    est.fit(X_train, y_train)
+    # Use random integers (including zero) as weights.
+    sw = rng.randint(0, 2, size=X_oob.shape[0])
+
+    X_oob_weighted = X_oob
+    y_oob_weighted = y_oob
+    # repeat samples according to weights
+    X_oob_repeated = X_oob.repeat(repeats=sw, axis=0)
+    y_oob_repeated = y_oob.repeat(repeats=sw, axis=0)
+
+    X_oob_weighted, y_oob_weighted, sw = shuffle(
+        X_oob_weighted, y_oob_weighted, sw, random_state=global_random_seed
     )
 
-    # oob samples where the output only depends on one of the two feature
-    X_oob = np.array(
-        [
-            [0, 0],
-            [0, 1],
-            [1, 0],
-            [0, 0],
-        ],
-        dtype=np.float32,
+    ufi_weighted = est._compute_unbiased_feature_importance_and_oob_predictions(
+        X_oob_weighted,
+        y_oob_weighted,
+        sample_weight=sw,
+        method="ufi",
+    )[0]
+    ufi_repeated = est._compute_unbiased_feature_importance_and_oob_predictions(
+        X_oob_repeated,
+        y_oob_repeated,
+        sample_weight=np.ones(X_oob_repeated.shape[0]),
+        method="ufi",
+    )[0]
+
+    mdi_oob_weighted = est._compute_unbiased_feature_importance_and_oob_predictions(
+        X_oob_weighted,
+        y_oob_weighted,
+        sample_weight=sw,
+        method="mdi_oob",
+    )[0]
+    mdi_oob_repeated = est._compute_unbiased_feature_importance_and_oob_predictions(
+        X_oob_repeated,
+        y_oob_repeated,
+        sample_weight=np.ones(X_oob_repeated.shape[0]),
+        method="mdi_oob",
+    )[0]
+    assert_allclose(
+        ufi_repeated / ufi_repeated.sum(), ufi_weighted / ufi_weighted.sum(), atol=1e-12
     )
-    y_oob = y
-
-    # Mask oob samples for whom feature 0 is unimportant.
-    sw_feature_0 = np.array([1, 0, 1, 0], dtype=np.intp)
-    # And vice versa.
-    sw_feature_1 = np.array([0, 1, 0, 1], dtype=np.intp)
-
-    n_estimators = 10
-    importance_feature_0 = np.zeros((n_estimators, 2))
-    importance_feature_1 = np.zeros((n_estimators, 2))
-
-    for method in ["ufi", "mdi_oob"]:
-        # Average over multiple tree because the splitting features are chosen
-        # at random and their order influences the feature importance.
-        # If the important feature is chosen first, one of its child will have no oob
-        # sample and its importance will be zero. It will receive importance only if
-        # chosen second. The other feature will never be important.
-        for i in range(n_estimators):
-            tree_est = est(
-                max_depth=2,
-                max_features=1.0,
-                random_state=i,
-            )
-            tree_est.fit(X, y)
-
-            importance_feature_0[i, :] = (
-                tree_est._compute_unbiased_feature_importance_and_oob_predictions(
-                    X_test=X_oob,
-                    y_test=y_oob,
-                    sample_weight=sw_feature_0,
-                    method=method,
-                )[0]
-            )
-
-            importance_feature_1[i, :] = (
-                tree_est._compute_unbiased_feature_importance_and_oob_predictions(
-                    X_test=X_oob,
-                    y_test=y_oob,
-                    sample_weight=sw_feature_1,
-                    method=method,
-                )[0]
-            )
-        importance_feature_0 = importance_feature_0.mean(axis=0)
-        importance_feature_1 = importance_feature_1.mean(axis=0)
-        assert importance_feature_0[0] > importance_feature_0[1]
-        assert importance_feature_1[1] > importance_feature_1[0]
+    assert_allclose(
+        mdi_oob_repeated / mdi_oob_repeated.sum(),
+        mdi_oob_weighted / mdi_oob_weighted.sum(),
+    )
 
 
 def test_max_features():
