@@ -861,10 +861,15 @@ class MetadataRouter:
         self : MetadataRouter
             Returns `self`.
         """
-        if getattr(obj, "_type", None) == "metadata_request":
-            self._self_request = deepcopy(obj)
+        if hasattr(obj, "_metadata_request"):
+            obj = obj._metadata_request
         elif hasattr(obj, "_get_metadata_request"):
-            self._self_request = deepcopy(obj._get_metadata_request())
+            obj = obj._get_metadata_request()
+
+        if isinstance(obj, MetadataRequest):
+            self._self_request = deepcopy(obj)
+        elif isinstance(obj, MetadataRouter):
+            self._self_request = deepcopy(obj._self_request)
         else:
             raise ValueError(
                 "Given `obj` is neither a `MetadataRequest` nor does it implement the"
@@ -1183,6 +1188,8 @@ def get_routing_for_object(obj=None):
     """
     # doing this instead of a try/except since an AttributeError could be raised
     # for other reasons.
+    if isinstance(obj, (MetadataRequest, MetadataRouter)):
+        return deepcopy(obj)
     if hasattr(obj, "_metadata_request"):
         return deepcopy(obj._metadata_request)
     elif hasattr(obj, "get_metadata_routing"):
@@ -1328,8 +1335,13 @@ class RequestMethod:
                     f" {len(args)} were given"
                 )
 
-            requests = _instance._get_metadata_request()
-            method_metadata_request = getattr(requests, self.name)
+            requests = get_routing_for_object(_instance)
+            if isinstance(requests, MetadataRouter):
+                consumer_requests = requests._self_request
+            else:
+                consumer_requests = requests
+
+            method_metadata_request = getattr(consumer_requests, self.name)
 
             for prop, alias in kw.items():
                 if alias is not UNCHANGED:
@@ -1538,53 +1550,11 @@ class _MetadataRequester:
 
         return requests
 
-    def _get_default_requests(self, **auto_requests):
-        """Get default request values for this object.
-
-        This method combines class level default values returned by
-        `_get_class_requests()` with instance specific auto-requested metadata.
-
-        Parameters
-        ----------
-        **auto_requests : str or list of str
-            Auto-requested metadata. These metadata request values override default
-            request values if `set_config(metadata_request_policy="auto")` is set.
-
-            Call pattern is `_get_default_request(fit="sample_weight",
-            predict=["metadata1", "metadata2"])`.
-
-            .. versionadded:: 1.8
-
-        """
-        requests = self._get_class_requests()
-        if _auto_routing_enabled():
-            for method, method_requests in auto_requests.items():
-                method_requests = (
-                    [method_requests]
-                    if isinstance(method_requests, str)
-                    else method_requests
-                )
-                for param in method_requests:
-                    getattr(requests, method).add_request(param=param, alias=True)
-
-        return requests
-
-    def _get_metadata_request(self, **auto_requests):
+    def _get_metadata_request(self):
         """Get requested data properties.
 
         Please check :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
-
-        Parameters
-        ----------
-        **auto_requests : str or list of str
-            Auto-requested metadata. These metadata request values override default
-            request values if `set_config(metadata_request_policy="auto")` is set.
-
-            Call pattern is `_get_metadata_request(fit="sample_weight",
-            predict=["metadata1", "metadata2"])`.
-
-            .. versionadded:: 1.8
 
         Returns
         -------
@@ -1594,26 +1564,15 @@ class _MetadataRequester:
         if hasattr(self, "_metadata_request"):
             requests = get_routing_for_object(self._metadata_request)
         else:
-            requests = self._get_default_requests(**auto_requests)
+            requests = self._get_class_requests()
 
         return requests
 
-    def get_metadata_routing(self, **auto_requests):
+    def get_metadata_routing(self):
         """Get metadata routing of this object.
 
         Please check :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
-
-        Parameters
-        ----------
-        **auto_requests : str or list of str
-            Auto-requested metadata. These metadata request values override default
-            request values if `set_config(metadata_request_policy="auto")` is set.
-
-            Call pattern is `get_metadata_routing(fit="sample_weight",
-            predict=["metadata1", "metadata2"])`.
-
-            .. versionadded:: 1.8
 
         Returns
         -------
@@ -1621,7 +1580,7 @@ class _MetadataRequester:
             A :class:`~sklearn.utils.metadata_routing.MetadataRequest` encapsulating
             routing information.
         """
-        return self._get_metadata_request(**auto_requests)
+        return self._get_metadata_request()
 
 
 # Process Routing in Routers

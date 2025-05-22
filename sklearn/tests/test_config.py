@@ -20,6 +20,7 @@ def test_config_context():
         "enable_cython_pairwise_dist": True,
         "transform_output": "default",
         "enable_metadata_routing": False,
+        "metadata_request_policy": "empty",
         "skip_parameter_validation": False,
     }
 
@@ -38,6 +39,7 @@ def test_config_context():
             "enable_cython_pairwise_dist": True,
             "transform_output": "default",
             "enable_metadata_routing": False,
+            "metadata_request_policy": "empty",
             "skip_parameter_validation": False,
         }
     assert get_config()["assume_finite"] is False
@@ -73,6 +75,7 @@ def test_config_context():
         "enable_cython_pairwise_dist": True,
         "transform_output": "default",
         "enable_metadata_routing": False,
+        "metadata_request_policy": "empty",
         "skip_parameter_validation": False,
     }
 
