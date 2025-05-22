@@ -308,7 +308,7 @@ values.
   all of the :math:`2^{K - 1} - 1` partitions, where :math:`K` is the number of
   categories. This can quickly become prohibitive when :math:`K` is large.
   Fortunately, since gradient boosting trees are always regression trees (even
-  for classification problems), there exist a faster strategy that can yield
+  for classification problems), there exists a faster strategy that can yield
   equivalent splits. First, the categories of a feature are sorted according to
   the variance of the target, for each category `k`. Once the categories are
   sorted, one can consider *continuous partitions*, i.e. treat the categories
@@ -1587,7 +1587,7 @@ Note that it is also possible to get the output of the stacked
 
 In practice, a stacking predictor predicts as good as the best predictor of the
 base layer and even sometimes outperforms it by combining the different
-strengths of the these predictors. However, training a stacking predictor is
+strengths of these predictors. However, training a stacking predictor is
 computationally expensive.
 
 .. note::
