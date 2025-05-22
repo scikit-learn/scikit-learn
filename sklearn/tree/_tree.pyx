@@ -1420,6 +1420,7 @@ cdef class Tree:
         criterion,
         method="ufi",
     ):
+        # TODO: should this method be made public to allow users to pass arbitrary held-out data manually?
         cdef intp_t n_samples = X_test.shape[0]
         cdef intp_t n_features = X_test.shape[1]
         cdef intp_t n_outputs = self.n_outputs
