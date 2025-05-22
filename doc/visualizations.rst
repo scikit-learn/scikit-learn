@@ -13,13 +13,14 @@ expose two methods for creating plots: `from_estimator` and
 The `from_estimator` method generates a `Display` object from a fitted estimator,
 input data (`X`, `y`), and a plot.
 The `from_predictions` method creates a `Display` object from true and predicted
-values (`y_test`, `y_pred`), and a plot. Using `from_predictions` avoids having to
-recompute predictions, but the user needs to take care that the prediction values
-passed correspond to the `pos_label`.
+values (`y_test`, `y_pred`), and a plot.
 
-For :term:`predict_proba`, the column corresponding to the probability estimate of
-the `pos_label` class is selected while for :term:`decision_function`, the score is
-reverted (i.e. multiply by -1) when `pos_label` is not the label 1.
+Using `from_predictions` avoids having to recompute predictions,
+but the user needs to take care that the prediction values passed correspond
+to the `pos_label`. For :term:`predict_proba`, select the column corresponding
+to the `pos_label` class while for :term:`decision_function`, revert the score
+(i.e. multiply by -1) if `pos_label` is not the last class in the
+`classes_` attribute of your estimator.
 
 The `Display` object stores the computed values (e.g., metric values or
 feature importance) required for plotting with Matplotlib. These values are the
