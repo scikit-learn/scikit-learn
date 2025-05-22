@@ -861,9 +861,7 @@ class MetadataRouter:
         self : MetadataRouter
             Returns `self`.
         """
-        if hasattr(obj, "_metadata_request"):
-            obj = obj._metadata_request
-        elif hasattr(obj, "_get_metadata_request"):
+        if hasattr(obj, "_get_metadata_request"):
             obj = obj._get_metadata_request()
 
         if isinstance(obj, MetadataRequest):
