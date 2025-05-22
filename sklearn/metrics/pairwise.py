@@ -439,7 +439,8 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
     # Ensure that distances between vectors and themselves are set to 0.0.
     # This may not be the case due to floating point rounding errors.
     if X is Y:
-        distances = _fill_or_add_to_diagonal(distances, 0, xp=xp, add_value=False)
+        # distances = _fill_or_add_to_diagonal(distances, 0, xp=xp, add_value=False)
+        _fill_or_add_to_diagonal(distances, 0, xp=xp, add_value=False)
 
     if squared:
         return distances
@@ -1177,7 +1178,8 @@ def cosine_distances(X, Y=None):
     if X is Y or Y is None:
         # Ensure that distances between vectors and themselves are set to 0.0.
         # This may not be the case due to floating point rounding errors.
-        S = _fill_or_add_to_diagonal(S, 0.0, xp, add_value=False)
+        # S = _fill_or_add_to_diagonal(S, 0.0, xp, add_value=False)
+        _fill_or_add_to_diagonal(S, 0.0, xp, add_value=False)
     return S
 
 
@@ -1982,7 +1984,8 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     if (X is Y or Y is None) and func is euclidean_distances:
         # zeroing diagonal for euclidean norm.
         # TODO: do it also for other norms.
-        ret = _fill_or_add_to_diagonal(ret, 0, xp=xp, add_value=False)
+        # ret = _fill_or_add_to_diagonal(ret, 0, xp=xp, add_value=False)
+        _fill_or_add_to_diagonal(ret, 0, xp=xp, add_value=False)
 
     # Transform output back
     return ret.T

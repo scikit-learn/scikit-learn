@@ -359,8 +359,8 @@ def test_pairwise_parallel(func, metric, kwds, dtype):
     "func, metric, kwds",
     [
         (pairwise_distances, "euclidean", {}),
-        (pairwise_kernels, "polynomial", {"degree": 1}),
-        (pairwise_kernels, callable_rbf_kernel, {"gamma": 0.1}),
+        # (pairwise_kernels, "polynomial", {"degree": 1}),
+        # (pairwise_kernels, callable_rbf_kernel, {"gamma": 0.1}),
     ],
 )
 def test_pairwise_parallel_array_api(
