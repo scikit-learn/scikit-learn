@@ -201,19 +201,30 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
     _html_repr = estimator_html_repr
 
     def _get_fitted_attributes(self):
-        if _is_fitted(self):
-            fitted_attributes = inspect.getmembers(self)
-            fitted_attributes = {
-                attribute[0]: attribute[1]
-                for attribute in fitted_attributes
-                if not attribute[0].startswith("_") and attribute[0].endswith("_")
-            }
+        """Get fitted attributes of the estimator."""
+        # fetch the constructor or the original constructor before
+        # deprecation wrapping if any
+        init = getattr(self.__init__, "deprecated_original", self)
+        if init is object.__init__:
+            # No explicit constructor to introspect
+            return []
 
-        array_dims = {}
-        for key, value in fitted_attributes.items():
-            if _is_arraylike_not_scalar(value):
-                array_dims[str(key)] = value.shape
-                breakpoint()
+        attributes = inspect.getmembers(init)
+        fitted_attributes = {
+            name: value
+            for name, value in attributes
+            if not name.startswith("_") and name.endswith("_")
+        }
+        arrays_attr = {
+            name: value.shape
+            for name, value in fitted_attributes.items()
+            if _is_arraylike_not_scalar(value)
+        }
+        fitted_attributes = {
+            key: type(value).__name__ for key, value in fitted_attributes.items()
+        }
+
+        return fitted_attributes, arrays_attr
 
     @classmethod
     def _get_param_names(cls):
