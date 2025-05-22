@@ -1043,10 +1043,10 @@ The following table summarizes the penalties and multinomial multiclass supporte
 | Robust to unscaled datasets  |     yes     |       yes       |       yes       |     yes               |    no     |    no      |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
 
-The "lbfgs" solver is used by default for its robustness. For large datasets
+The "lbfgs" solver is used by default for its robustness. For
+`n_samples >> n_features`, "newton-cholesky" is a good choice and can reach high
+precision (tiny `tol` values). For large datasets
 the "saga" solver is usually faster.
-For `n_samples >> n_features`, "newton-cholesky" is a good choice. In addition, it can
-reach high precision (tiny `tol` values).
 For large dataset, you may also consider using :class:`SGDClassifier`
 with `loss="log_loss"`, which might be even faster but requires more tuning.
 
