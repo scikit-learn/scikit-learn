@@ -563,7 +563,7 @@ def test_oob_sample_weights(est):
             tree_est.fit(X, y)
 
             importance_feature_0[i, :] = (
-                tree_est.compute_unbiased_feature_importance_and_oob_predictions(
+                tree_est._compute_unbiased_feature_importance_and_oob_predictions(
                     X_test=X_oob,
                     y_test=y_oob,
                     sample_weight=sw_feature_0,
@@ -572,7 +572,7 @@ def test_oob_sample_weights(est):
             )
 
             importance_feature_1[i, :] = (
-                tree_est.compute_unbiased_feature_importance_and_oob_predictions(
+                tree_est._compute_unbiased_feature_importance_and_oob_predictions(
                     X_test=X_oob,
                     y_test=y_oob,
                     sample_weight=sw_feature_1,

@@ -721,6 +721,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         self, X, y, sample_weight, method="ufi"
     ):  # "mdi_oob"
         check_is_fitted(self)
+        # Importance computations require X to be in CSR format
+        if issparse(X):
+            X = X.tocsr()
         y = np.asarray(y)
         if y.ndim == 1:
             y = y.reshape(-1, 1)

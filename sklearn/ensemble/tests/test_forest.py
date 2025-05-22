@@ -1753,7 +1753,7 @@ def test_unbiased_feature_importance_on_train(
         X_in_bag = clf._validate_X_predict(X)[in_bag_indicies]
         y_in_bag = y.reshape(-1, 1)[in_bag_indicies]
         method_on_train_tree = (
-            tree.compute_unbiased_feature_importance_and_oob_predictions(
+            tree._compute_unbiased_feature_importance_and_oob_predictions(
                 X_in_bag,
                 y_in_bag,
                 sample_weight=np.ones((n_samples,), dtype=np.float64),
