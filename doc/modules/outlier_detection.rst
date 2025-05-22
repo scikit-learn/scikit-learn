@@ -418,5 +418,3 @@ Novelty detection with :class:`neighbors.LocalOutlierFactor` is illustrated belo
     :target: ../auto_examples/neighbors/plot_lof_novelty_detection.html
     :align: center
     :scale: 75%
-
-
