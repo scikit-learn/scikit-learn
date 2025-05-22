@@ -465,6 +465,8 @@ print_routing(meta_est)
 # `set_fit_request(sample_weight=True)` was set on it.
 
 # %%
+# .. _metadata_routing_auto_request:
+#
 # Auto-Requesting Metadata
 # ------------------------
 # There are two ways a class can modify the default metadata routing requests:

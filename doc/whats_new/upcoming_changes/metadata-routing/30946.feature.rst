@@ -1,7 +1,0 @@
-- |Feature| Added support for default metadata routing through
-  ``set_config(enable_metadata_routing="default_routing")``. This enables
-  automatic routing of common metadata like ``sample_weight`` and ``groups`` by
-  default. Estimators can now define instance-level default routing via
-  ``__sklearn_default_request__`` method, which complements the existing
-  class-level defaults set through ``__metadata_request__*`` attributes.
-  By `Adrin Jalali`_.
