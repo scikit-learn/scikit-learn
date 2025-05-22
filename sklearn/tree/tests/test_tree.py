@@ -563,13 +563,8 @@ def test_oob_sample_weights(est_name, global_random_seed):
         sample_weight=np.ones(X_oob_repeated.shape[0]),
         method="mdi_oob",
     )[0]
-    assert_allclose(
-        ufi_repeated / ufi_repeated.sum(), ufi_weighted / ufi_weighted.sum(), atol=1e-12
-    )
-    assert_allclose(
-        mdi_oob_repeated / mdi_oob_repeated.sum(),
-        mdi_oob_weighted / mdi_oob_weighted.sum(),
-    )
+    assert_allclose(ufi_repeated, ufi_weighted, atol=1e-12)
+    assert_allclose(mdi_oob_repeated, mdi_oob_weighted)
 
 
 def test_max_features():
