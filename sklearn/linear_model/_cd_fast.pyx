@@ -338,7 +338,7 @@ def sparse_enet_coordinate_descent(
 
     # initial value of the residuals
     # R = y - Zw, weighted version R = sample_weight * (y - Zw)
-    cdef floating[::1] R = np.empty(n_samples, dtype=dtype)
+    cdef floating[::1] R
     cdef floating[::1] XtA = np.empty(n_features, dtype=dtype)
     cdef const floating[::1] yw
 
