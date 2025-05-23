@@ -130,6 +130,19 @@ def _routing_enabled():
     return get_config().get("enable_metadata_routing", False)
 
 
+def _auto_routing_enabled():
+    """Return whether auto-requested metadata routing is enabled.
+
+    .. versionadded:: 1.8
+
+    Returns
+    -------
+    enabled : bool
+        Whether auto-requested metadata routing is enabled.
+    """
+    return get_config().get("metadata_request_policy", "empty") == "auto"
+
+
 def _raise_for_params(params, owner, method, allow=None):
     """Raise an error if metadata routing is not enabled and params are passed.
 
@@ -1385,7 +1398,7 @@ class _MetadataRequester:
         .. [1] https://www.python.org/dev/peps/pep-0487
         """
         try:
-            requests = cls._get_default_requests()
+            requests = cls._get_class_requests()
         except Exception:
             # if there are any issues in the default values, it will be raised
             # when ``get_metadata_routing`` is called. Here we are going to
@@ -1444,12 +1457,30 @@ class _MetadataRequester:
         return mmr
 
     @classmethod
-    def _get_default_requests(cls):
-        """Collect default request values.
+    def _get_class_requests(cls):
+        """Collect class level request values.
 
-        This method combines the information present in ``__metadata_request__*``
-        class attributes, as well as determining request keys from method
-        signatures.
+        This method serves two purposes:
+
+        1. During class creation via `__init_subclass__`, it determines what metadata
+           routing methods should be created. It does this by:
+           - Collecting metadata request info from `__metadata_request__*` class
+             attributes
+           - Analyzing method signatures for implicit metadata parameters
+             The collected information is used to create `set_{method}_request` methods
+             (e.g. set_fit_request) that allow runtime configuration of metadata
+             routing.
+
+        2. Before the user sets any specific routing, via `_get_default_requests`, it
+           provides the default metadata routing configuration for the instance. This
+           ensures each instance starts with the class-level routing settings before any
+           instance specific configurations are applied.
+
+        For example, if a method's signature includes `sample_weight`, this method will:
+        - During class creation: Create a `set_{method}_request` method to configure
+          how `sample_weight` should be routed
+        - Right after initialization: Provide the default routing configuration for
+          `sample_weight` based on class attributes and method signatures
         """
         requests = MetadataRequest(owner=cls.__name__)
 
@@ -1487,11 +1518,53 @@ class _MetadataRequester:
 
         return requests
 
-    def _get_metadata_request(self):
+    def _get_default_requests(self, **auto_requests):
+        """Get default request values for this object.
+
+        This method combines class level default values returned by
+        `_get_class_requests()` with instance specific auto-requested metadata.
+
+        Parameters
+        ----------
+        **auto_requests : str or list of str
+            Auto-requested metadata. These metadata request values override default
+            request values if `set_config(metadata_request_policy="auto")` is set.
+
+            Call pattern is `_get_default_request(fit="sample_weight",
+            predict=["metadata1", "metadata2"])`.
+
+            .. versionadded:: 1.8
+
+        """
+        requests = self._get_class_requests()
+        if _auto_routing_enabled():
+            for method, method_requests in auto_requests.items():
+                method_requests = (
+                    [method_requests]
+                    if isinstance(method_requests, str)
+                    else method_requests
+                )
+                for param in method_requests:
+                    getattr(requests, method).add_request(param=param, alias=True)
+
+        return requests
+
+    def _get_metadata_request(self, **auto_requests):
         """Get requested data properties.
 
         Please check :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
+
+        Parameters
+        ----------
+        **auto_requests : str or list of str
+            Auto-requested metadata. These metadata request values override default
+            request values if `set_config(metadata_request_policy="auto")` is set.
+
+            Call pattern is `_get_metadata_request(fit="sample_weight",
+            predict=["metadata1", "metadata2"])`.
+
+            .. versionadded:: 1.8
 
         Returns
         -------
@@ -1501,15 +1574,26 @@ class _MetadataRequester:
         if hasattr(self, "_metadata_request"):
             requests = get_routing_for_object(self._metadata_request)
         else:
-            requests = self._get_default_requests()
+            requests = self._get_default_requests(**auto_requests)
 
         return requests
 
-    def get_metadata_routing(self):
+    def get_metadata_routing(self, **auto_requests):
         """Get metadata routing of this object.
 
         Please check :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
+
+        Parameters
+        ----------
+        **auto_requests : str or list of str
+            Auto-requested metadata. These metadata request values override default
+            request values if `set_config(metadata_request_policy="auto")` is set.
+
+            Call pattern is `get_metadata_routing(fit="sample_weight",
+            predict=["metadata1", "metadata2"])`.
+
+            .. versionadded:: 1.8
 
         Returns
         -------
@@ -1517,7 +1601,7 @@ class _MetadataRequester:
             A :class:`~sklearn.utils.metadata_routing.MetadataRequest` encapsulating
             routing information.
         """
-        return self._get_metadata_request()
+        return self._get_metadata_request(**auto_requests)
 
 
 # Process Routing in Routers
