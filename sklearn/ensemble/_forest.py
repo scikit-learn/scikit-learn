@@ -730,9 +730,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         n_samples, n_features = X.shape
         max_n_classes = self.estimators_[0].tree_.max_n_classes
-        results = Parallel(
-            n_jobs=self.n_jobs, prefer="threads", return_as="generator_unordered"
-        )(
+        # TODO: dropped return_as="generator_unordered" for compatibility on joblib
+        # version: introduced in 1.3 but 1.2 is the minimal requirement
+        results = Parallel(n_jobs=self.n_jobs, prefer="threads")(
             delayed(
                 self._compute_unbiased_feature_importance_and_oob_predictions_per_tree
             )(tree, X, y, sample_weight, method)
