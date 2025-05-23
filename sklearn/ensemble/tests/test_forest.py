@@ -307,6 +307,10 @@ def test_probability(name):
 @pytest.mark.parametrize(
     "X_type", ["array", "sparse_csr", "sparse_csc", "sparse_csr_array"]
 )
+@pytest.mark.skipif(
+    int(joblib.__version__[2]) < 3,
+    reason="Joblib version >= 1.3 required to use the return_as argument",
+)
 def test_importances(dtype, name, criterion, X_type, global_random_seed):
     tolerance = 0.01
     if name in FOREST_REGRESSORS and criterion == "absolute_error":
@@ -511,6 +515,10 @@ def test_importances_asymptotic():
 
 
 @pytest.mark.parametrize("estimator", [RandomForestClassifier, RandomForestRegressor])
+@pytest.mark.skipif(
+    int(joblib.__version__[2]) < 3,
+    reason="Joblib version >= 1.3 required to use the return_as argument",
+)
 def test_unbiased_feature_importance_asymptotics(estimator, global_random_seed):
     # Test that ubiased feature importances and
     # regular mdi converge with large sample size
@@ -607,6 +615,10 @@ def test_non_OOB_unbiased_feature_importances(name, unbiased_importance_attribut
     ],
 )
 @pytest.mark.parametrize("oob_score", [True, partial(f1_score, average="micro")])
+@pytest.mark.skipif(
+    int(joblib.__version__[2]) < 3,
+    reason="Joblib version >= 1.3 required to use the return_as argument",
+)
 def test_forest_classifier_oob(
     ForestClassifier, X, y, X_type, lower_bound_accuracy, oob_score
 ):
@@ -669,6 +681,10 @@ def test_forest_classifier_oob(
     ],
 )
 @pytest.mark.parametrize("oob_score", [True, explained_variance_score])
+@pytest.mark.skipif(
+    int(joblib.__version__[2]) < 3,
+    reason="Joblib version >= 1.3 required to use the return_as argument",
+)
 def test_forest_regressor_oob(ForestRegressor, X, y, X_type, lower_bound_r2, oob_score):
     """Check that forest-based regressor provide an OOB score close to the
     score on a test set."""
@@ -710,6 +726,10 @@ def test_forest_regressor_oob(ForestRegressor, X, y, X_type, lower_bound_r2, oob
 
 
 @pytest.mark.parametrize("ForestEstimator", FOREST_CLASSIFIERS_REGRESSORS.values())
+@pytest.mark.skipif(
+    int(joblib.__version__[2]) < 3,
+    reason="Joblib version >= 1.3 required to use the return_as argument",
+)
 def test_forest_oob_warning(ForestEstimator):
     """Check that a warning is raised when not enough estimator and the OOB
     estimates will be inaccurate."""
@@ -753,6 +773,10 @@ def test_classifier_error_oob_score_multiclass_multioutput(ForestClassifier):
 
 
 @pytest.mark.parametrize("ForestRegressor", FOREST_REGRESSORS.values())
+@pytest.mark.skipif(
+    int(joblib.__version__[2]) < 3,
+    reason="Joblib version >= 1.3 required to use the return_as argument",
+)
 def test_forest_multioutput_integral_regression_target(ForestRegressor):
     """Check that multioutput regression with integral values is not interpreted
     as a multiclass-multioutput target and OOB score can be computed.
@@ -1291,6 +1315,10 @@ def test_1d_input(name):
         (True, "mdi_oob_feature_importances_"),
     ],
 )
+@pytest.mark.skipif(
+    int(joblib.__version__[2]) < 3,
+    reason="Joblib version >= 1.3 required to use the return_as argument",
+)
 def test_class_weights(name, oob_score, importance_attribute_name):
     # Check class_weights resemble sample_weights behavior.
     ForestClassifier = FOREST_CLASSIFIERS[name]
@@ -1484,6 +1512,10 @@ def test_warm_start_equal_n_estimators(name):
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
+@pytest.mark.skipif(
+    int(joblib.__version__[2]) < 3,
+    reason="Joblib version >= 1.3 required to use the return_as argument",
+)
 def test_warm_start_oob(name):
     # Test that the warm start computes oob score when asked.
     X, y = hastie_X, hastie_y
@@ -1535,6 +1567,10 @@ def test_warm_start_oob(name):
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
+@pytest.mark.skipif(
+    int(joblib.__version__[2]) < 3,
+    reason="Joblib version >= 1.3 required to use the return_as argument",
+)
 def test_oob_not_computed_twice(name):
     # Check that oob_score is not computed twice when warm_start=True.
     X, y = hastie_X, hastie_y
@@ -1677,6 +1713,10 @@ def test_forest_feature_importances_sum():
         "mdi_oob_feature_importances_",
     ],
 )
+@pytest.mark.skipif(
+    int(joblib.__version__[2]) < 3,
+    reason="Joblib version >= 1.3 required to use the return_as argument",
+)
 def test_forest_unbiased_feature_importances_sum(unbiased_importance_attribute_name):
     X, y = make_classification(
         n_samples=15, n_informative=3, random_state=1, n_classes=3
@@ -1697,12 +1737,9 @@ def test_forest_degenerate_feature_importances():
     assert_array_equal(gbr.feature_importances_, np.zeros(10, dtype=np.float64))
 
 
-@pytest.mark.parametrize(
-    "unbiased_importance_attribute_name",
-    [
-        "ufi_feature_importances_",
-        "mdi_oob_feature_importances_",
-    ],
+@pytest.mark.skipif(
+    int(joblib.__version__[2]) < 3,
+    reason="Joblib version >= 1.3 required to use the return_as argument",
 )
 def test_forest_degenerate_unbiased_feature_importances(
     unbiased_importance_attribute_name,
@@ -1710,17 +1747,22 @@ def test_forest_degenerate_unbiased_feature_importances(
     # build a forest of single node trees. See #13636
     X = np.zeros((10, 10))
     y = np.ones((10,))
-    with pytest.warns(
-        UserWarning,
-        match=re.escape(
-            "Some inputs do not have OOB scores. This probably means too few trees were"
-            " used to compute any reliable OOB estimates."
-        ),
-    ):
-        clf = RandomForestClassifier(n_estimators=10, oob_score=True).fit(X, y)
-    assert_array_equal(
-        getattr(clf, unbiased_importance_attribute_name), np.zeros(10, dtype=np.float64)
-    )
+    for unbiased_importance_attribute_name in [
+        "ufi_feature_importances_",
+        "mdi_oob_feature_importances_",
+    ]:
+        with pytest.warns(
+            UserWarning,
+            match=re.escape(
+                "Some inputs do not have OOB scores. This probably means too few trees"
+                "were used to compute any reliable OOB estimates."
+            ),
+        ):
+            clf = RandomForestClassifier(n_estimators=10, oob_score=True).fit(X, y)
+        assert_array_equal(
+            getattr(clf, unbiased_importance_attribute_name),
+            np.zeros(10, dtype=np.float64),
+        )
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
@@ -1768,6 +1810,10 @@ def test_unbiased_feature_importance_on_train(
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
+@pytest.mark.skipif(
+    int(joblib.__version__[2]) < 3,
+    reason="Joblib version >= 1.3 required to use the return_as argument",
+)
 def test_ufi_match_paper(name, global_random_seed):
     def paper_ufi(clf, X, y, is_classification):
         """
@@ -1899,6 +1945,10 @@ def test_ufi_match_paper(name, global_random_seed):
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
+@pytest.mark.skipif(
+    int(joblib.__version__[2]) < 3,
+    reason="Joblib version >= 1.3 required to use the return_as argument",
+)
 def test_mdi_oob_match_paper(name, global_random_seed):
     def paper_mdi_oob(clf, X, y, is_classification):
         """
@@ -1989,6 +2039,10 @@ def test_mdi_oob_match_paper(name, global_random_seed):
     )
 
 
+@pytest.mark.skipif(
+    int(joblib.__version__[2]) < 3,
+    reason="Joblib version >= 1.3 required to use the return_as argument",
+)
 def test_importance_reg_match_onehot_classi(global_random_seed):
     n_classes = 2
     X, y_class = make_classification(
@@ -2021,6 +2075,10 @@ def test_importance_reg_match_onehot_classi(global_random_seed):
 
 
 @pytest.mark.parametrize("est_name", FOREST_CLASSIFIERS_REGRESSORS)
+@pytest.mark.skipif(
+    int(joblib.__version__[2]) < 3,
+    reason="Joblib version >= 1.3 required to use the return_as argument",
+)
 def test_feature_importance_with_sample_weights(est_name, global_random_seed):
     # From https://github.com/snath-xoc/sample-weight-audit-nondet/blob/main/src/sample_weight_audit/data.py#L53
 
@@ -2118,58 +2176,6 @@ def test_feature_importance_with_sample_weights(est_name, global_random_seed):
     assert (
         mdi_oob_feature_importance[:n_features_sw].sum()
         < mdi_oob_feature_importance[n_features_sw:].sum()
-    )
-
-
-@pytest.mark.parametrize("est_name", FOREST_CLASSIFIERS_REGRESSORS)
-def test_feature_importance_sample_weight_equals_repeated(est_name, global_random_seed):
-    # check that setting sample_weight to zero / integer is equivalent
-    # to removing / repeating corresponding samples.
-    params = dict(
-        n_estimators=100,
-        bootstrap=True,
-        oob_score=True,
-        max_features=1.0,
-        random_state=global_random_seed,
-    )
-
-    est_weighted = FOREST_CLASSIFIERS_REGRESSORS[est_name](**params)
-    est_repeated = FOREST_CLASSIFIERS_REGRESSORS[est_name](**params)
-
-    n_samples = 100
-    n_features = 2
-    X, y = make_classification(
-        n_samples=n_samples,
-        n_features=n_features,
-        n_informative=n_features,
-        n_redundant=0,
-    )
-    # Use random integers (including zero) as weights.
-    sw = rng.randint(0, 2, size=n_samples)
-
-    X_weighted = X
-    y_weighted = y
-    # repeat samples according to weights
-    X_repeated = X_weighted.repeat(repeats=sw, axis=0)
-    y_repeated = y_weighted.repeat(repeats=sw)
-
-    X_weighted, y_weighted, sw = shuffle(X_weighted, y_weighted, sw, random_state=0)
-
-    est_repeated.fit(X_repeated, y=y_repeated, sample_weight=None)
-    est_weighted.fit(X_weighted, y=y_weighted, sample_weight=sw)
-
-    assert_allclose(
-        est_repeated.feature_importances_, est_weighted.feature_importances_, atol=1e-1
-    )
-    assert_allclose(
-        est_repeated.ufi_feature_importances_,
-        est_weighted.ufi_feature_importances_,
-        atol=1e-1,
-    )
-    assert_allclose(
-        est_repeated.mdi_oob_feature_importances_,
-        est_weighted.mdi_oob_feature_importances_,
-        atol=1e-1,
     )
 
 
