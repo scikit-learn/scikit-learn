@@ -777,10 +777,11 @@ class MethodMapping:
 
 
 class MetadataRouter:
-    """Stores and handles metadata routing for a router object.
+    """Stores and handles metadata routing for a :term:`router` object.
 
-    This class is used by router objects to store and handle metadata routing.
-    Routing information is stored as a dictionary of the form ``{"object_name":
+    This class is used by :term:`meta-estimators` or functions that can route metadata
+    to store and handle their metadata routing. Routing information is stored in a
+    dictionary-like structure of the form ``{"object_name":
     RouteMappingPair(method_mapping, routing_info)}``, where ``method_mapping``
     is an instance of :class:`~sklearn.utils.metadata_routing.MethodMapping` and
     ``routing_info`` is either a
@@ -810,10 +811,10 @@ class MetadataRouter:
         self.owner = owner
 
     def add_self_request(self, obj):
-        """Add `self` (as a consumer) to the routing.
+        """Add `self` (as a :term:`consumer`) to the `MetadataRouter`.
 
-        This method is used if the router is also a consumer, and hence the
-        router itself needs to be included in the routing. The passed object
+        This method is used if the :term:`router` is also a :term:`consumer`, and hence
+        the router itself needs to be included in the routing. The passed object
         can be an estimator or a
         :class:`~sklearn.utils.metadata_routing.MetadataRequest`.
 
@@ -846,12 +847,17 @@ class MetadataRouter:
         return self
 
     def add(self, *, method_mapping, **objs):
-        """Add named objects with their corresponding method mapping.
+        """Add :term:`consumers<consumer>` to the `MetadataRouter`.
+
+        The estimators that consume metadata are passed as named objects along with a
+        method mapping, that defines how their methods relate to those of the
+        :term:`router`.
 
         Parameters
         ----------
         method_mapping : MethodMapping
-            The mapping between the child and the parent's methods.
+            The mapping between the child (:term:`consumer`) and the parent's
+            (:term:`router`'s) methods.
 
         **objs : dict
             A dictionary of objects from which metadata is extracted by calling
@@ -871,7 +877,7 @@ class MetadataRouter:
         return self
 
     def consumes(self, method, params):
-        """Check whether the given parameters are consumed by the given method.
+        """Check whether the given metadata is consumed by the given method.
 
         .. versionadded:: 1.4
 
@@ -1149,8 +1155,8 @@ def get_routing_for_object(obj=None):
 
     Returns
     -------
-    obj : MetadataRequest or MetadataRouting
-        A ``MetadataRequest`` or a ``MetadataRouting`` taken or created from
+    obj : MetadataRequest or MetadataRouter
+        A ``MetadataRequest`` or a ``MetadataRouter`` taken or created from
         the given object.
     """
     # doing this instead of a try/except since an AttributeError could be raised
@@ -1260,7 +1266,8 @@ class RequestMethod:
     def __get__(self, instance, owner):
         # we would want to have a method which accepts only the expected args
         def func(*args, **kw):
-            """Updates the request for provided parameters
+            """Updates the `_metadata_request` attribute of the consumer (`instance`)
+            for the parameters provided as `**kw`.
 
             This docstring is overwritten below.
             See REQUESTER_DOC for expected functionality
