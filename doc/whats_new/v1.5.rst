@@ -671,6 +671,13 @@ Changelog
   :func:`utils.estimator_checks.check_estimator_sparse_array`.
   :pr:`27576` by :user:`Stefanie Senger <StefanieSenger>`.
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |FIX| :class:`preprocessing.SplineTransformer` no longer outputs `nan` values
+  when transforming constant or near constant features. :pr:`28421` by
+  :user:`Rahil Parikh <rprkh>`.
+
 .. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
