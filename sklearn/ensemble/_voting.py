@@ -24,8 +24,8 @@ from ..base import (
 from ..exceptions import NotFittedError
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch
-from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import StrOptions
+from ..utils._repr_html.estimator import _VisualBlock
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
