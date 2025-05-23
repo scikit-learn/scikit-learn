@@ -322,6 +322,7 @@ def test_importances(dtype, name, criterion, X_type, global_random_seed):
         criterion=criterion,
         oob_score=True,
         bootstrap=True,
+        n_jobs=-1,
         random_state=global_random_seed,
     )
 
@@ -1898,7 +1899,7 @@ def test_ufi_match_paper(name, global_random_seed):
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
-def test_mdi_oob_match_paper(name):
+def test_mdi_oob_match_paper(name, global_random_seed):
     def paper_mdi_oob(clf, X, y, is_classification):
         """
         Code from: A Debiased MDI Feature Importance Measure for Random Forests
@@ -1976,11 +1977,11 @@ def test_mdi_oob_match_paper(name):
         return out / out.sum()
 
     X, y = make_classification(
-        n_samples=15, n_informative=3, random_state=1, n_classes=2
+        n_samples=15, n_informative=3, n_classes=2, random_state=global_random_seed
     )
     is_classification = True if name in FOREST_CLASSIFIERS else False
     est = FOREST_CLASSIFIERS_REGRESSORS[name](
-        n_estimators=10, oob_score=True, bootstrap=True, random_state=1
+        n_estimators=10, oob_score=True, bootstrap=True, random_state=global_random_seed
     )
     est.fit(X, y)
     assert_almost_equal(
