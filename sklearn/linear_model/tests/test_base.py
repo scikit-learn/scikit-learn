@@ -649,13 +649,13 @@ def test_dtype_preprocess_data(rescale_with_sw, fit_intercept, global_random_see
     assert X_64.dtype == np.float64
     assert y_64.dtype == np.float64
 
-    assert_allclose(Xt_32, Xt_64)
-    assert_allclose(yt_32, yt_64)
-    assert_allclose(X_mean_32, X_mean_64)
-    assert_allclose(y_mean_32, y_mean_64)
+    assert_allclose(Xt_32, Xt_64, rtol=1e-6)
+    assert_allclose(yt_32, yt_64, rtol=1e-6)
+    assert_allclose(X_mean_32, X_mean_64, rtol=1e-6)
+    assert_allclose(y_mean_32, y_mean_64, rtol=1e-6)
     assert_allclose(X_scale_32, X_scale_64)
     if rescale_with_sw:
-        assert_allclose(sqrt_sw_32, sqrt_sw_64)
+        assert_allclose(sqrt_sw_32, sqrt_sw_64, rtol=1e-6)
 
 
 @pytest.mark.parametrize("n_targets", [None, 2])
