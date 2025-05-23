@@ -1,0 +1,2 @@
+- :class:`linear_model.RidgeCV` now supports the Array API. See :ref:`array_api`
+  for more details. :pr:`27961` by :user:`Jérôme Dockès <jeromedockes>`.
