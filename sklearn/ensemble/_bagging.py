@@ -99,18 +99,11 @@ def _generate_bagging_indices(
 
 
 def _consumes_sample_weight(estimator):
-    # TODO(SLEP6): remove if condition for unrouted sample_weight when metadata
-    # routing can't be disabled.
-    # 1. If routing is enabled, we will check if the routing supports sample
-    # weight and use it if it does.
-    # 2. If routing is not enabled, we will check if the base
-    # estimator supports sample_weight and use it if it does.
-    support_sample_weight = has_fit_parameter(estimator, "sample_weight")
     if _routing_enabled():
         request_or_router = get_routing_for_object(estimator)
         consumes_sample_weight = request_or_router.consumes("fit", ("sample_weight",))
     else:
-        consumes_sample_weight = support_sample_weight
+        consumes_sample_weight = has_fit_parameter(estimator, "sample_weight")
     return consumes_sample_weight
 
 
@@ -135,6 +128,7 @@ def _parallel_build_estimators(
     bootstrap_features = ensemble.bootstrap_features
     has_check_input = has_fit_parameter(ensemble.estimator_, "check_input")
     requires_feature_indexing = bootstrap_features or max_features != n_features
+    consumes_sample_weight = _consumes_sample_weight(ensemble.estimator_)
 
     # Build estimators
     estimators = []
@@ -173,7 +167,6 @@ def _parallel_build_estimators(
         # Note: Row sampling can be achieved either through setting sample_weight or
         # by indexing. The former is more memory efficient. Therefore, use this method
         # if possible, otherwise use indexing.
-        consumes_sample_weight = _consumes_sample_weight(ensemble.estimator_)
         if consumes_sample_weight:
             # Row sampling by setting sample_weight
             indices_as_sample_weight = np.bincount(indices, minlength=n_samples)
