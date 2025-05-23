@@ -670,6 +670,28 @@ def test_warm_start_with_oob_score_fails():
         clf.fit(X, y)
 
 
+def test_warning_bootstrap_sample_weight():
+    X, y = iris.data, iris.target
+    sample_weight = np.ones_like(y)
+    clf = BaggingClassifier(bootstrap=False)
+    warn_msg = (
+        "When fitting BaggingClassifier with sample_weight "
+        "it is recommended to use bootstrap=True"
+    )
+    with pytest.warns(UserWarning, match=warn_msg):
+        clf.fit(X, y, sample_weight=sample_weight)
+
+    X, y = diabetes.data, diabetes.target
+    sample_weight = np.ones_like(y)
+    reg = BaggingRegressor(bootstrap=False)
+    warn_msg = (
+        "When fitting BaggingRegressor with sample_weight "
+        "it is recommended to use bootstrap=True"
+    )
+    with pytest.warns(UserWarning, match=warn_msg):
+        reg.fit(X, y, sample_weight=sample_weight)
+
+
 def test_oob_score_removed_on_warm_start():
     X, y = make_hastie_10_2(n_samples=100, random_state=1)
 
