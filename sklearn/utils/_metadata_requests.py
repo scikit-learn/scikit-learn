@@ -887,7 +887,7 @@ class MetadataRouter:
             The name of the method to check.
 
         params : iterable of str
-            An iterable of parameters to check.
+            An iterable of parameters (metadata) to check.
 
         Returns
         -------
