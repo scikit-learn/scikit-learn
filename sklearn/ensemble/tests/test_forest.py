@@ -1741,9 +1741,7 @@ def test_forest_degenerate_feature_importances():
     int(joblib.__version__[2]) < 3,
     reason="Joblib version >= 1.3 required to use the return_as argument",
 )
-def test_forest_degenerate_unbiased_feature_importances(
-    unbiased_importance_attribute_name,
-):
+def test_forest_degenerate_unbiased_feature_importances():
     # build a forest of single node trees. See #13636
     X = np.zeros((10, 10))
     y = np.ones((10,))
@@ -1754,7 +1752,7 @@ def test_forest_degenerate_unbiased_feature_importances(
         with pytest.warns(
             UserWarning,
             match=re.escape(
-                "Some inputs do not have OOB scores. This probably means too few trees"
+                "Some inputs do not have OOB scores. This probably means too few trees "
                 "were used to compute any reliable OOB estimates."
             ),
         ):
