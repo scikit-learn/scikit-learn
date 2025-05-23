@@ -708,7 +708,7 @@ MethodPair = namedtuple("MethodPair", ["caller", "callee"])
 
 
 class MethodMapping:
-    """Stores the mapping between caller and callee methods for a router.
+    """Stores the mapping between caller and callee methods for a :term:`router`.
 
     This class is primarily used in a ``get_metadata_routing()`` of a router
     object when defining the mapping between the router's methods and a sub-object (a
@@ -959,7 +959,7 @@ class MetadataRouter:
         object to it and delegates their validation to the child.
 
         The output of this method can be used directly as the input to the
-        corresponding method as extra props.
+        corresponding method as **kwargs.
 
         Parameters
         ----------
@@ -1014,21 +1014,21 @@ class MetadataRouter:
         return res
 
     def route_params(self, *, caller, params):
-        """Return the input parameters requested by child objects.
+        """Get the values of metadata parameters requested by :term:`consumer`.
 
-        The output of this method is a :class:`~sklearn.utils.Bunch`, which includes the
-        metadata for all methods of each child object that is used in the router's
-        `caller` method.
+        Returns a :class:`~sklearn.utils.Bunch` containing the metadata that this
+        :term:`router`'s `caller` method needs to route, organized by each
+        :term:`consumer` and their corresponding method(s).
 
-        If the router is also a consumer, it also checks for warnings of
-        `self`'s/consumer's requested metadata.
+        This can can be used to pass the required metadata to corresponding methods in
+        consumers.
 
         Parameters
         ----------
         caller : str
-            The name of the method for which the parameters are requested and
-            routed. If called inside the :term:`fit` method of a router, it
-            would be `"fit"`.
+            The name of the :term:`router`'s method through which the metadata is
+            routed. For example, if called inside the :term:`fit` method of a router,
+            this would be `"fit"`.
 
         params : dict
             A dictionary of provided metadata.
@@ -1037,9 +1037,7 @@ class MetadataRouter:
         -------
         params : Bunch
             A :class:`~sklearn.utils.Bunch` of the form
-            ``{"object_name": {"method_name": {params: value}}}`` which can be
-            used to pass the required metadata to corresponding methods or
-            corresponding child objects.
+            ``{"object_name": {"method_name": {params: value}}}``.
         """
         if self._self_request:
             self._self_request._check_warnings(params=params, method=caller)
@@ -1068,9 +1066,9 @@ class MetadataRouter:
         Parameters
         ----------
         method : str
-            The name of the method for which the parameters are requested and
-            routed. If called inside the :term:`fit` method of a router, it
-            would be `"fit"`.
+            The name of the :term:`router`'s method through which the metadata is
+            routed. For example, if called inside the :term:`fit` method of a router,
+            this would be `"fit"`.
 
         params : dict
             A dictionary of provided metadata.
@@ -1540,7 +1538,7 @@ class _MetadataRequester:
 def process_routing(_obj, _method, /, **kwargs):
     """Validate and route input parameters.
 
-    This function is used inside a router's method, e.g. :term:`fit`,
+    This function is used inside a :term:`router`'s method, e.g. :term:`fit`,
     to validate the metadata and handle the routing.
 
     Assuming this signature of a router's fit method:
