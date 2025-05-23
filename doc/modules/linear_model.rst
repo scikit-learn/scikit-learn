@@ -971,7 +971,7 @@ logistic regression, see also `log-linear model
 
 .. dropdown:: Mathematical details
 
-  Let :math:`y_i \in {1, \ldots, K}` be the label (ordinal) encoded target variable for observation :math:`i`.
+  Let :math:`y_i \in \{1, \ldots, K\}` be the label (ordinal) encoded target variable for observation :math:`i`.
   Instead of a single coefficient vector, we now have
   a matrix of coefficients :math:`W` where each row vector :math:`W_k` corresponds to class
   :math:`k`. We aim at predicting the class probabilities :math:`P(y_i=k|X_i)` via
