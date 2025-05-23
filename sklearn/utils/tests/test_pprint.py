@@ -242,7 +242,8 @@ class SimpleImputer(BaseEstimator):
         self.copy = copy
 
 
-def test_basic(print_changed_only_false):
+@config_context(print_changed_only=False)
+def test_basic():
     # Basic pprint test
     lr = LogisticRegression()
     expected = """
@@ -285,7 +286,8 @@ LogisticRegression(C=99, class_weight=0.4, fit_intercept=False, tol=1234,
     repr(LogisticRegressionCV(Cs=np.array([0.1, 1])))
 
 
-def test_pipeline(print_changed_only_false):
+@config_context(print_changed_only=False)
+def test_pipeline():
     # Render a pipeline object
     pipeline = make_pipeline(StandardScaler(), LogisticRegression(C=999))
     expected = """
@@ -306,7 +308,8 @@ Pipeline(memory=None,
     assert pipeline.__repr__() == expected
 
 
-def test_deeply_nested(print_changed_only_false):
+@config_context(print_changed_only=False)
+def test_deeply_nested():
     # Render a deeply nested estimator
     rfe = RFE(RFE(RFE(RFE(RFE(RFE(RFE(LogisticRegression())))))))
     expected = """
@@ -361,7 +364,8 @@ def test_print_estimator_max_depth(print_changed_only, expected):
         assert pp.pformat(rfe) == expected
 
 
-def test_gridsearch(print_changed_only_false):
+@config_context(print_changed_only=False)
+def test_gridsearch():
     # render a gridsearch
     param_grid = [
         {"kernel": ["rbf"], "gamma": [1e-3, 1e-4], "C": [1, 10, 100, 1000]},
@@ -387,7 +391,8 @@ GridSearchCV(cv=5, error_score='raise-deprecating',
     assert gs.__repr__() == expected
 
 
-def test_gridsearch_pipeline(print_changed_only_false):
+@config_context(print_changed_only=False)
+def test_gridsearch_pipeline():
     # render a pipeline inside a gridsearch
     pp = _EstimatorPrettyPrinter(compact=True, indent=1, indent_at_name=True)
 
@@ -453,7 +458,8 @@ GridSearchCV(cv=3, error_score='raise-deprecating',
     assert repr_ == expected
 
 
-def test_n_max_elements_to_show(print_changed_only_false):
+@config_context(print_changed_only=False)
+def test_n_max_elements_to_show():
     n_max_elements_to_show = 30
     pp = _EstimatorPrettyPrinter(
         compact=True,
@@ -543,7 +549,8 @@ GridSearchCV(cv='warn', error_score='raise-deprecating',
     assert pp.pformat(gs) == expected
 
 
-def test_bruteforce_ellipsis(print_changed_only_false):
+@config_context(print_changed_only=False)
+def test_bruteforce_ellipsis():
     # Check that the bruteforce ellipsis (used when the number of non-blank
     # characters exceeds N_CHAR_MAX) renders correctly.
 
