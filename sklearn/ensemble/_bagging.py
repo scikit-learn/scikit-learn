@@ -342,7 +342,10 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             regression).
 
         sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If None, then samples are equally weighted.
+            Sample weights. If None, then samples are equally weighted. Used as
+            probabilities to sample the training set. Note that the expected
+            frequency semantics for the `sample_weight` parameter are only
+            fulfilled when sampling with replacement `bootstrap`=True.
 
         **fit_params : dict
             Parameters to pass to the underlying estimators.
@@ -728,8 +731,10 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         - If float, then draw `max(1, int(max_features * n_features_in_))` features.
 
     bootstrap : bool, default=True
-        Whether samples are drawn with replacement. If False, sampling
-        without replacement is performed.
+        Whether samples are drawn with replacement. If False, sampling without
+        replacement is performed. If fitting with `sample_weight`, it is
+        strongly recommended to choose True, as only drawing with replacement
+        will ensure the expected frequency semantics of `sample_weight`.
 
     bootstrap_features : bool, default=False
         Whether features are drawn with replacement.
@@ -1236,8 +1241,10 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         - If float, then draw `max(1, int(max_features * n_features_in_))` features.
 
     bootstrap : bool, default=True
-        Whether samples are drawn with replacement. If False, sampling
-        without replacement is performed.
+        Whether samples are drawn with replacement. If False, sampling without
+        replacement is performed. If fitting with `sample_weight`, it is
+        strongly recommended to choose True, as only drawing with replacement
+        will ensure the expected frequency semantics of `sample_weight`.
 
     bootstrap_features : bool, default=False
         Whether features are drawn with replacement.
