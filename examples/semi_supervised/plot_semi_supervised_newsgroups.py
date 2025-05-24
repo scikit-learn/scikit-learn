@@ -8,30 +8,31 @@ in text classification when labeled data is scarce.
 We compare four different approaches:
 
 1. Supervised learning using 100% of labeled data (baseline)
+
    - Uses SGDClassifier with TF-IDF features
    - Represents the best possible performance with full supervision
 
 2. Supervised learning using only 20% of labeled data
+
    - Same model as baseline but with limited training data
    - Shows the performance degradation due to limited labeled data
 
 3. SelfTrainingClassifier (semi-supervised)
+
    - Uses 20% labeled data + 80% unlabeled data
    - Iteratively predicts labels for unlabeled data
    - Demonstrates how self-training can improve performance
 
 4. LabelSpreading (semi-supervised)
+
    - Uses 20% labeled data + 80% unlabeled data
    - Propagates labels through the data manifold
    - Shows how graph-based methods can leverage unlabeled data
 
-The example uses the 20 newsgroups dataset, focusing on five computer-related
-categories. The results demonstrate how semi-supervised methods can achieve
-better performance than supervised learning with limited labeled data by
+The example uses the 20 newsgroups dataset, focusing on five categories.
+The results demonstrate how semi-supervised methods can achieve better
+performance than supervised learning with limited labeled data by
 effectively utilizing unlabeled samples.
-
-You can adjust the number of categories by giving their names to the dataset
-loader or setting them to `None` to get all 20 of them.
 
 """
 
@@ -60,11 +61,6 @@ data = fetch_20newsgroups(
         "comp.sys.ibm.pc.hardware",
         "comp.sys.mac.hardware",
     ],
-)
-
-print(
-    f"Dataset contains {len(data.filenames)} documents from "
-    f"{len(data.target_names)} categories\n"
 )
 
 # Parameters
@@ -144,22 +140,23 @@ f1_scores["LabelSpreading"] = eval_and_get_f1(
     ls_pipeline, X_train, y_train_semi, X_test, y_test
 )
 
-# Create the plot
+# Plot results
+# ----------------------
+# Visualize the performance of different classification approaches using a bar chart.
+# This helps to compare how each method performs based on the Micro-averaged F1 score.
+
 plt.figure(figsize=(10, 6))
 
 models = list(f1_scores.keys())
 scores = list(f1_scores.values())
 
-# Define colors for each bar
 colors = ["royalblue", "royalblue", "forestgreen", "royalblue"]
 bars = plt.bar(models, scores, color=colors)
 
-# Customize plot
 plt.title("Comparison of Classification Approaches")
 plt.ylabel("Micro-averaged F1 Score")
 plt.xticks()
 
-# Add value labels on bars
 for bar in bars:
     height = bar.get_height()
     plt.text(
@@ -170,7 +167,6 @@ for bar in bars:
         va="bottom",
     )
 
-# Add note below plot
 plt.figtext(
     0.5,
     0.02,
