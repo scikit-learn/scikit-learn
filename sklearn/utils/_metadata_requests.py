@@ -9,22 +9,30 @@ e.g. ``estimator.set_fit_request(sample_weight=True)``. However, third-party
 developers and users who implement custom meta-estimators, need to deal with
 the objects implemented in this file.
 
-All estimators (should) implement a ``get_metadata_routing`` method, returning
-the routing requests set for the estimator. This method is automatically
-implemented via ``BaseEstimator`` for all simple estimators, but needs a custom
-implementation for meta-estimators.
+The routing is coordinated by building ``MetadataRequest`` objects
+for objects that consume metadata, and ``MetadataRouter`` objects for objects that
+can route metadata, which are then aligned during a call to `process_routing()`."
 
-In non-routing consumers, i.e. the simplest case, e.g. ``SVM``,
-``get_metadata_routing`` returns a ``MetadataRequest`` object.
+The ``MetadataRequest`` and ``MetadataRouter`` objects are constructed via a
+``get_metadata_routing`` method, which all estimators (should) therefore implement.
+This method is automatically implemented via ``BaseEstimator`` for all simple
+estimators, but needs a custom implementation for meta-estimators.
 
-In routers, e.g. meta-estimators and a multi metric scorer,
-``get_metadata_routing`` returns a ``MetadataRouter`` object.
+    In non-routing consumers, i.e. the simplest case, e.g. ``SVM``,
+    ``get_metadata_routing`` returns a ``MetadataRequest`` object. It stores
+    information on which methods of the consumer do request which metadata.
 
-An object which is both a router and a consumer, e.g. a meta-estimator which
-consumes ``sample_weight`` and routes ``sample_weight`` to its sub-estimators,
-routing information includes both information about the object itself (added
-via ``MetadataRouter.add_self_request``), as well as the routing information
-for its sub-estimators.
+    In routers, e.g. meta-estimators and a multi metric scorer,
+    ``get_metadata_routing`` returns a ``MetadataRouter`` object. It stores
+    information on which method from the router object calls which in a consumer's
+    object, because this is how the metadata is to be passed.
+
+    An object which is both a router and a consumer, e.g. a meta-estimator which
+    consumes ``sample_weight`` and routes ``sample_weight`` to its sub-estimators
+    also returns a ``MetadataRouter`` object. Its
+    routing information includes both information about the object itself (added
+    via ``MetadataRouter.add_self_request``), as well as the routing information
+    for its sub-estimators.
 
 A ``MetadataRequest`` instance includes one ``MethodMetadataRequest`` per
 method in ``METHODS``, which includes ``fit``, ``score``, etc.
@@ -59,12 +67,12 @@ stored here. Conceptually, this information looks like:
 
 To give the above representation some structure, we use the following objects:
 
-- ``(caller=..., callee=...)`` is a namedtuple called ``MethodPair``
+- ``(caller=..., callee=...)`` is a namedtuple called ``MethodPair``.
 
 - The list of ``MethodPair`` stored in the ``mapping`` field of a `RouterMappingPair` is
-  a ``MethodMapping`` object
+  a ``MethodMapping`` object.
 
-- ``(mapping=..., router=...)`` is a namedtuple called ``RouterMappingPair``
+- ``(mapping=..., router=...)`` is a namedtuple called ``RouterMappingPair``.
 
 The ``set_{method}_request`` methods are dynamically generated for estimators
 which inherit from the ``BaseEstimator``. This is done by attaching instances
@@ -242,15 +250,15 @@ VALID_REQUEST_VALUES = [False, True, None, UNUSED, WARN]
 
 
 def request_is_alias(item):
-    """Check if an item is a valid alias.
+    """Check if a name is a valid alias.
 
     Values in ``VALID_REQUEST_VALUES`` are not considered aliases in this
     context. Only a string which is a valid identifier is.
 
     Parameters
     ----------
-    item : object
-        The given item to be checked if it can be an alias.
+    item : str
+        The given name to be checked if it can be an alias for the metadata.
 
     Returns
     -------
@@ -287,7 +295,7 @@ def request_is_valid(item):
 
 
 class MethodMetadataRequest:
-    """A prescription of how metadata is to be passed to a single method.
+    """Container for metadata routing rules associated with a single method.
 
     Refer to :class:`MetadataRequest` for how this class is used.
 
@@ -326,13 +334,14 @@ class MethodMetadataRequest:
         Parameters
         ----------
         param : str
-            The property for which a request is set.
+            The metadata for which a request is set.
 
         alias : str, or {True, False, None}
-            Specifies which metadata should be routed to `param`
+            Specifies which metadata should be routed to the method that owns this
+            `MethodMetadataRequest`.
 
             - str: the name (or alias) of metadata given to a meta-estimator that
-              should be routed to this parameter.
+              should be routed to the method that owns this `MethodMetadataRequest`.
 
             - True: requested
 
@@ -378,7 +387,7 @@ class MethodMetadataRequest:
         Returns
         -------
         names : set of str
-            A set of strings with the names of all parameters.
+            A set of strings with the names of all metadata.
         """
         return set(
             alias if return_alias and not request_is_valid(alias) else prop
@@ -413,10 +422,10 @@ class MethodMetadataRequest:
             )
 
     def _route_params(self, params, parent, caller):
-        """Prepare the given parameters to be passed to the method.
+        """Prepare the given metadata to be passed to the method.
 
         The output of this method can be used directly as the input to the
-        corresponding method as extra props.
+        corresponding method as **kwargs.
 
         Parameters
         ----------
@@ -432,8 +441,8 @@ class MethodMetadataRequest:
         Returns
         -------
         params : Bunch
-            A :class:`~sklearn.utils.Bunch` of {prop: value} which can be given to the
-            corresponding method.
+            A :class:`~sklearn.utils.Bunch` of {metadata: value} which can be
+            given to the corresponding method.
         """
         self._check_warnings(params=params)
         unrequested = dict()
@@ -478,7 +487,7 @@ class MethodMetadataRequest:
         return res
 
     def _consumes(self, params):
-        """Check whether the given parameters are consumed by this method.
+        """Check whether the given metadata is consumed by this method.
 
         Parameters
         ----------
@@ -548,7 +557,7 @@ class MetadataRequest:
             )
 
     def consumes(self, method, params):
-        """Check whether the given parameters are consumed by the given method.
+        """Check whether the given metadata is consumed by the given method.
 
         .. versionadded:: 1.4
 
@@ -619,7 +628,7 @@ class MetadataRequest:
         Returns
         -------
         names : set of str
-            A set of strings with the names of all parameters.
+            A set of strings with the names of all metadata.
         """
         return getattr(self, method)._get_param_names(return_alias=return_alias)
 
@@ -647,8 +656,8 @@ class MetadataRequest:
         Returns
         -------
         params : Bunch
-            A :class:`~sklearn.utils.Bunch` of {prop: value} which can be given to the
-            corresponding method.
+            A :class:`~sklearn.utils.Bunch` of {metadata: value} which can be given to
+            the corresponding method.
         """
         return getattr(self, method)._route_params(
             params=params, parent=parent, caller=caller
@@ -708,7 +717,7 @@ MethodPair = namedtuple("MethodPair", ["caller", "callee"])
 
 
 class MethodMapping:
-    """Stores the mapping between caller and callee methods for a router.
+    """Stores the mapping between caller and callee methods for a :term:`router`.
 
     This class is primarily used in a ``get_metadata_routing()`` of a router
     object when defining the mapping between the router's methods and a sub-object (a
@@ -777,10 +786,11 @@ class MethodMapping:
 
 
 class MetadataRouter:
-    """Stores and handles metadata routing for a router object.
+    """Stores and handles metadata routing for a :term:`router` object.
 
-    This class is used by router objects to store and handle metadata routing.
-    Routing information is stored as a dictionary of the form ``{"object_name":
+    This class is used by :term:`meta-estimators` or functions that can route metadata
+    to store and handle their metadata routing. Routing information is stored in a
+    dictionary-like structure of the form ``{"object_name":
     RouteMappingPair(method_mapping, routing_info)}``, where ``method_mapping``
     is an instance of :class:`~sklearn.utils.metadata_routing.MethodMapping` and
     ``routing_info`` is either a
@@ -804,21 +814,21 @@ class MetadataRouter:
         self._route_mappings = dict()
         # `_self_request` is used if the router is also a consumer.
         # _self_request, (added using `add_self_request()`) is treated
-        # differently from the other objects which are stored in
+        # differently from the other consumer objects which are stored in
         # _route_mappings.
         self._self_request = None
         self.owner = owner
 
     def add_self_request(self, obj):
-        """Add `self` (as a consumer) to the routing.
+        """Add `self` (as a :term:`consumer`) to the `MetadataRouter`.
 
-        This method is used if the router is also a consumer, and hence the
-        router itself needs to be included in the routing. The passed object
+        This method is used if the :term:`router` is also a :term:`consumer`, and hence
+        the router itself needs to be included in the routing. The passed object
         can be an estimator or a
         :class:`~sklearn.utils.metadata_routing.MetadataRequest`.
 
         A router should add itself using this method instead of `add` since it
-        should be treated differently than the other objects to which metadata
+        should be treated differently than the other consumer objects to which metadata
         is routed by the router.
 
         Parameters
@@ -846,15 +856,20 @@ class MetadataRouter:
         return self
 
     def add(self, *, method_mapping, **objs):
-        """Add named objects with their corresponding method mapping.
+        """Add :term:`consumers<consumer>` to the `MetadataRouter`.
+
+        The estimators that consume metadata are passed as named objects along with a
+        method mapping, that defines how their methods relate to those of the
+        :term:`router`.
 
         Parameters
         ----------
         method_mapping : MethodMapping
-            The mapping between the child and the parent's methods.
+            The mapping between the child (:term:`consumer`) and the parent's
+            (:term:`router`'s) methods.
 
         **objs : dict
-            A dictionary of objects from which metadata is extracted by calling
+            A dictionary of objects from which their requests are extracted by calling
             :func:`~sklearn.utils.metadata_routing.get_routing_for_object` on them.
 
         Returns
@@ -871,7 +886,7 @@ class MetadataRouter:
         return self
 
     def consumes(self, method, params):
-        """Check whether the given parameters are consumed by the given method.
+        """Check whether the given metadata is consumed by the given method.
 
         .. versionadded:: 1.4
 
@@ -925,7 +940,7 @@ class MetadataRouter:
         Returns
         -------
         names : set of str
-            A set of strings with the names of all parameters.
+            A set of strings with the names of all metadata.
         """
         res = set()
         if self._self_request and not ignore_self_request:
@@ -946,14 +961,14 @@ class MetadataRouter:
         return res
 
     def _route_params(self, *, params, method, parent, caller):
-        """Prepare the given parameters to be passed to the method.
+        """Prepare the given metadata to be passed to the method.
 
         This is used when a router is used as a child object of another router.
         The parent router then passes all parameters understood by the child
         object to it and delegates their validation to the child.
 
         The output of this method can be used directly as the input to the
-        corresponding method as extra props.
+        corresponding method as **kwargs.
 
         Parameters
         ----------
@@ -961,8 +976,7 @@ class MetadataRouter:
             A dictionary of provided metadata.
 
         method : str
-            The name of the method for which the parameters are requested and
-            routed.
+            The name of the method for which the metadata is requested and routed.
 
         parent : object
             Parent class object, that routes the metadata.
@@ -973,8 +987,8 @@ class MetadataRouter:
         Returns
         -------
         params : Bunch
-            A :class:`~sklearn.utils.Bunch` of {prop: value} which can be given to the
-            corresponding method.
+            A :class:`~sklearn.utils.Bunch` of {metadata: value} which can be given to
+            the corresponding method.
         """
         res = Bunch()
         if self._self_request:
@@ -1001,28 +1015,28 @@ class MetadataRouter:
                     f"In {self.owner}, there is a conflict on {key} between what is"
                     " requested for this estimator and what is requested by its"
                     " children. You can resolve this conflict by using an alias for"
-                    " the child estimator(s) requested metadata."
+                    " the child estimator(s)' requested metadata."
                 )
 
         res.update(child_params)
         return res
 
     def route_params(self, *, caller, params):
-        """Return the input parameters requested by child objects.
+        """Get the values of metadata requested by :term:`consumers<consumer>`.
 
-        The output of this method is a :class:`~sklearn.utils.Bunch`, which includes the
-        metadata for all methods of each child object that is used in the router's
-        `caller` method.
+        Returns a :class:`~sklearn.utils.Bunch` containing the metadata that this
+        :term:`router`'s `caller` method needs to route, organized by each
+        :term:`consumer` and their corresponding method(s).
 
-        If the router is also a consumer, it also checks for warnings of
-        `self`'s/consumer's requested metadata.
+        This can can be used to pass the required metadata to corresponding methods in
+        consumers.
 
         Parameters
         ----------
         caller : str
-            The name of the method for which the parameters are requested and
-            routed. If called inside the :term:`fit` method of a router, it
-            would be `"fit"`.
+            The name of the :term:`router`'s method through which the metadata is
+            routed. For example, if called inside the :term:`fit` method of a router,
+            this would be `"fit"`.
 
         params : dict
             A dictionary of provided metadata.
@@ -1031,9 +1045,7 @@ class MetadataRouter:
         -------
         params : Bunch
             A :class:`~sklearn.utils.Bunch` of the form
-            ``{"object_name": {"method_name": {params: value}}}`` which can be
-            used to pass the required metadata to corresponding methods or
-            corresponding child objects.
+            ``{"object_name": {"method_name": {metadata: value}}}``.
         """
         if self._self_request:
             self._self_request._check_warnings(params=params, method=caller)
@@ -1062,9 +1074,9 @@ class MetadataRouter:
         Parameters
         ----------
         method : str
-            The name of the method for which the parameters are requested and
-            routed. If called inside the :term:`fit` method of a router, it
-            would be `"fit"`.
+            The name of the :term:`router`'s method through which the metadata is
+            routed. For example, if called inside the :term:`fit` method of a router,
+            this would be `"fit"`.
 
         params : dict
             A dictionary of provided metadata.
@@ -1149,8 +1161,8 @@ def get_routing_for_object(obj=None):
 
     Returns
     -------
-    obj : MetadataRequest or MetadataRouting
-        A ``MetadataRequest`` or a ``MetadataRouting`` taken or created from
+    obj : MetadataRequest or MetadataRouter
+        A ``MetadataRequest`` or a ``MetadataRouter`` taken or created from
         the given object.
     """
     # doing this instead of a try/except since an AttributeError could be raised
@@ -1260,7 +1272,8 @@ class RequestMethod:
     def __get__(self, instance, owner):
         # we would want to have a method which accepts only the expected args
         def func(*args, **kw):
-            """Updates the request for provided parameters
+            """Updates the `_metadata_request` attribute of the consumer (`instance`)
+            for the parameters provided as `**kw`.
 
             This docstring is overwritten below.
             See REQUESTER_DOC for expected functionality
@@ -1488,7 +1501,7 @@ class _MetadataRequester:
         return requests
 
     def _get_metadata_request(self):
-        """Get requested data properties.
+        """Get requested metadata for the instance.
 
         Please check :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
@@ -1531,9 +1544,9 @@ class _MetadataRequester:
 # prefix to reduce the chances of name collisions with the passed metadata, and
 # since they're positional only, users will never type those underscores.
 def process_routing(_obj, _method, /, **kwargs):
-    """Validate and route input parameters.
+    """Validate and route metadata.
 
-    This function is used inside a router's method, e.g. :term:`fit`,
+    This function is used inside a :term:`router`'s method, e.g. :term:`fit`,
     to validate the metadata and handle the routing.
 
     Assuming this signature of a router's fit method:
@@ -1563,9 +1576,9 @@ def process_routing(_obj, _method, /, **kwargs):
     -------
     routed_params : Bunch
         A :class:`~utils.Bunch` of the form ``{"object_name": {"method_name":
-        {params: value}}}`` which can be used to pass the required metadata to
+        {metadata: value}}}`` which can be used to pass the required metadata to
         A :class:`~sklearn.utils.Bunch` of the form ``{"object_name": {"method_name":
-        {params: value}}}`` which can be used to pass the required metadata to
+        {metadata: value}}}`` which can be used to pass the required metadata to
         corresponding methods or corresponding child objects. The object names
         are those defined in `obj.get_metadata_routing()`.
     """
