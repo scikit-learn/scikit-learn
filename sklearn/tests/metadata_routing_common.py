@@ -57,20 +57,41 @@ def check_recorded_metadata(obj, method, parent, split_params=tuple(), **kwargs)
     obj : estimator object
         sub-estimator to check routed params for
     method : str
-        sub-estimator's method where metadata is routed to, or otherwise in
-        the context of metadata routing referred to as 'callee'
-    parent : str
-        the parent method which should have called `method`, or otherwise in
-        the context of metadata routing referred to as 'caller'
+        The target sub-estimator method for which to check recorded metadata,
+        otherwise in the context of metadata routing referred to as 'callee'.
+    parent : str or None
+        The parent method which should have called `method`, or otherwise in
+        the context of metadata routing referred to as 'caller'.
+
+        Sub-estimator metadata is only checked if the `caller` method matches
+        the value defined by `parent`. If `parent` is None, the target
+        sub-estimator metadata is checked regardless of the `caller` method.
+
+        NOTE: many metaestimators call the subestimator in roundabout ways
+        and this makes it very difficult to know what method name to use for
+        `parent`. If misspecified, it results in tests passing trivially. For
+        example, when fitting the RFE metaestimator, RFE.fit() calls RFE._fit()
+        , which then calls subestimator.fit(). In this case, the user
+        configuring the test should set method="fit" and parent="_fit",
+        otherwise the test will pass trivially.
     split_params : tuple, default=empty
         specifies any parameters which are to be checked as being a subset
         of the original values
     **kwargs : dict
         passed metadata
     """
-    all_records = (
-        getattr(obj, "_records", dict()).get(method, dict()).get(parent, list())
-    )
+
+    if parent:
+        all_records = (
+            getattr(obj, "_records", dict()).get(method, dict()).get(parent, list())
+        )
+    else:
+        all_records = [
+            r
+            for record in getattr(obj, "_records", dict()).get(method, dict()).values()
+            for r in record
+        ]
+
     for record in all_records:
         # first check that the names of the metadata passed are the same as
         # expected. The names are stored as keys in `record`.
