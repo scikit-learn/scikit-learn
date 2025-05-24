@@ -342,8 +342,8 @@ class BayesianGaussianMixture(BaseMixture):
     >>> X = np.array([[1, 2], [1, 4], [1, 0], [4, 2], [12, 4], [10, 7]])
     >>> bgm = BayesianGaussianMixture(n_components=2, random_state=42).fit(X)
     >>> bgm.means_
-    array([[2.49... , 2.29...],
-           [8.45..., 4.52... ]])
+    array([[2.49 , 2.29],
+           [8.45, 4.52 ]])
     >>> bgm.predict([[0, 0], [9, 3]])
     array([0, 1])
     """

@@ -35,11 +35,18 @@ def _calculate_threshold(estimator, importances, threshold):
         est_name = estimator.__class__.__name__
         is_l1_penalized = hasattr(estimator, "penalty") and estimator.penalty == "l1"
         is_lasso = "Lasso" in est_name
-        is_elasticnet_l1_penalized = "ElasticNet" in est_name and (
-            (hasattr(estimator, "l1_ratio_") and np.isclose(estimator.l1_ratio_, 1.0))
-            or (hasattr(estimator, "l1_ratio") and np.isclose(estimator.l1_ratio, 1.0))
+        is_elasticnet_l1_penalized = est_name == "ElasticNet" and (
+            hasattr(estimator, "l1_ratio") and np.isclose(estimator.l1_ratio, 1.0)
         )
-        if is_l1_penalized or is_lasso or is_elasticnet_l1_penalized:
+        is_elasticnetcv_l1_penalized = est_name == "ElasticNetCV" and (
+            hasattr(estimator, "l1_ratio_") and np.isclose(estimator.l1_ratio_, 1.0)
+        )
+        if (
+            is_l1_penalized
+            or is_lasso
+            or is_elasticnet_l1_penalized
+            or is_elasticnetcv_l1_penalized
+        ):
             # the natural default threshold is 0 when l1 penalty was used
             threshold = 1e-5
         else:
@@ -204,9 +211,9 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     >>> y = [0, 1, 0, 1]
     >>> selector = SelectFromModel(estimator=LogisticRegression()).fit(X, y)
     >>> selector.estimator_.coef_
-    array([[-0.3252...,  0.8345...,  0.4976...]])
+    array([[-0.3252,  0.8345,  0.4976]])
     >>> selector.threshold_
-    np.float64(0.55249...)
+    np.float64(0.55249)
     >>> selector.get_support()
     array([False,  True, False])
     >>> selector.transform(X)

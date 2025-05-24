@@ -495,7 +495,7 @@ class LatentDirichletAllocation(
     def _em_step(self, X, total_samples, batch_update, parallel=None):
         """EM update for 1 iteration.
 
-        update `_component` by batch VB or online VB.
+        update `component_` by batch VB or online VB.
 
         Parameters
         ----------
@@ -772,7 +772,7 @@ class LatentDirichletAllocation(
 
         Returns
         -------
-        X_new : ndarray array of shape (n_samples, n_features_new)
+        X_new : ndarray array of shape (n_samples, n_components)
             Transformed array.
         """
         return self.fit(X, y).transform(X, normalize=normalize)

@@ -1454,7 +1454,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
     ...     max_depth=1, random_state=0).fit(X_train, y_train)
     >>> clf.score(X_test, y_test)
-    0.913...
+    0.913
     """
 
     _parameter_constraints: dict = {
@@ -2052,7 +2052,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     >>> reg.fit(X_train, y_train)
     GradientBoostingRegressor(random_state=0)
     >>> reg.predict(X_test[1:2])
-    array([-61...])
+    array([-61.1])
     >>> reg.score(X_test, y_test)
     0.4...
 

@@ -1,4 +1,4 @@
-# ruff: noqa
+# ruff: noqa: CPY001
 """
 =======================================
 Release Highlights for scikit-learn 1.4
@@ -41,8 +41,8 @@ X_adult.dtypes
 # treats the columns with categorical dtypes as categorical features in the
 # algorithm:
 from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score
+from sklearn.model_selection import train_test_split
 
 X_train, X_test, y_train, y_test = train_test_split(X_adult, y_adult, random_state=0)
 hist = HistGradientBoostingClassifier(categorical_features="from_dtype")
@@ -56,9 +56,9 @@ print(f"ROC AUC score is {roc_auc_score(y_test, y_decision)}")
 # -----------------------------
 # scikit-learn's transformers now support polars output with the `set_output` API.
 import polars as pl
-from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import OneHotEncoder
+
 from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 df = pl.DataFrame(
     {"height": [120, 140, 150, 110, 100], "pet": ["dog", "cat", "dog", "cat", "cat"]}
@@ -87,6 +87,7 @@ print(f"Output type: {type(df_out)}")
 # missing values going to the left and right nodes. More details in the
 # :ref:`User Guide <tree_missing_value_support>`.
 import numpy as np
+
 from sklearn.ensemble import RandomForestClassifier
 
 X = np.array([0, 1, 6, np.nan]).reshape(-1, 1)
@@ -103,8 +104,9 @@ forest.predict(X)
 # trees, random forests, extra-trees, and exact gradient boosting. Here, we show this
 # feature for random forest on a regression problem.
 import matplotlib.pyplot as plt
-from sklearn.inspection import PartialDependenceDisplay
+
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.inspection import PartialDependenceDisplay
 
 n_samples = 500
 rng = np.random.RandomState(0)
@@ -161,10 +163,10 @@ clone(forest)  # the clone is not fitted
 # <metadata_routing_models>`. For instance, this is how you can do a nested
 # cross-validation with sample weights and :class:`~model_selection.GroupKFold`:
 import sklearn
-from sklearn.metrics import get_scorer
 from sklearn.datasets import make_regression
 from sklearn.linear_model import Lasso
-from sklearn.model_selection import GridSearchCV, cross_validate, GroupKFold
+from sklearn.metrics import get_scorer
+from sklearn.model_selection import GridSearchCV, GroupKFold, cross_validate
 
 # For now by default metadata routing is disabled, and need to be explicitly
 # enabled.
@@ -216,9 +218,11 @@ sklearn.set_config(enable_metadata_routing=False)
 # materializing large sparse matrices when performing the
 # eigenvalue decomposition of the data set covariance matrix.
 #
-from sklearn.decomposition import PCA
-import scipy.sparse as sp
 from time import time
+
+import scipy.sparse as sp
+
+from sklearn.decomposition import PCA
 
 X_sparse = sp.random(m=1000, n=1000, random_state=0)
 X_dense = X_sparse.toarray()

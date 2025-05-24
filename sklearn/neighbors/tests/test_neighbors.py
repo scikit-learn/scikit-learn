@@ -83,7 +83,7 @@ SPARSE_OR_DENSE = SPARSE_TYPES + (np.asarray,)
 ALGORITHMS = ("ball_tree", "brute", "kd_tree", "auto")
 COMMON_VALID_METRICS = sorted(
     set.intersection(*map(set, neighbors.VALID_METRICS.values()))
-)  # type: ignore
+)
 
 P = (1, 2, 3, 4, np.inf)
 
@@ -163,7 +163,7 @@ WEIGHTS = ["uniform", "distance", _weight_func]
     ],
 )
 @pytest.mark.parametrize("query_is_train", [False, True])
-@pytest.mark.parametrize("metric", COMMON_VALID_METRICS + DISTANCE_METRIC_OBJS)  # type: ignore
+@pytest.mark.parametrize("metric", COMMON_VALID_METRICS + DISTANCE_METRIC_OBJS)
 def test_unsupervised_kneighbors(
     global_dtype,
     n_samples,
@@ -248,7 +248,7 @@ def test_unsupervised_kneighbors(
         (1000, 5, 100),
     ],
 )
-@pytest.mark.parametrize("metric", COMMON_VALID_METRICS + DISTANCE_METRIC_OBJS)  # type: ignore
+@pytest.mark.parametrize("metric", COMMON_VALID_METRICS + DISTANCE_METRIC_OBJS)
 @pytest.mark.parametrize("n_neighbors, radius", [(1, 100), (50, 500), (100, 1000)])
 @pytest.mark.parametrize(
     "NeighborsMixinSubclass",
@@ -656,7 +656,7 @@ def test_unsupervised_radius_neighbors(
             assert_allclose(
                 np.concatenate(list(results[i][0])),
                 np.concatenate(list(results[i + 1][0])),
-            ),
+            )
             assert_allclose(
                 np.concatenate(list(results[i][1])),
                 np.concatenate(list(results[i + 1][1])),

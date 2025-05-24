@@ -30,7 +30,7 @@ if [[ "$COMMIT_MESSAGE" =~ \[float32\] ]]; then
 fi
 
 mkdir -p $TEST_DIR
-cp setup.cfg $TEST_DIR
+cp pyproject.toml $TEST_DIR
 cd $TEST_DIR
 
 python -c "import joblib; print(f'Number of cores (physical): \
@@ -73,6 +73,14 @@ if which lscpu ; then
     lscpu
 else
     echo "Could not inspect CPU architecture."
+fi
+
+if [[ "$DISTRIB" == "conda-free-threaded" ]]; then
+    # Make sure that GIL is disabled even when importing extensions that have
+    # not declared free-threaded compatibility. This can be removed when numpy,
+    # scipy and scikit-learn extensions all have declared free-threaded
+    # compatibility.
+    export PYTHON_GIL=0
 fi
 
 TEST_CMD="$TEST_CMD --pyargs sklearn"

@@ -5,6 +5,7 @@ ba
 basf
 boun
 bre
+bu
 cach
 chanel
 complies
@@ -30,11 +31,13 @@ lamas
 linke
 lod
 mape
+mis
 mor
 nd
 nmae
 ocur
 pullrequest
+repid
 ro
 ser
 soler

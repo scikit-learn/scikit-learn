@@ -5,8 +5,7 @@ linear_model_cython_tree = [
 
 py.extension_module(
   '_cd_fast',
-  ['_cd_fast.pyx', utils_cython_tree],
-  cython_args: cython_args,
+  [cython_gen.process('_cd_fast.pyx'), utils_cython_tree],
   subdir: 'sklearn/linear_model',
   install: true
 )
@@ -22,12 +21,11 @@ foreach name: name_list
     # TODO in principle this should go in py.exension_module below. This is
     # temporary work-around for dependency issue with .pyx.tp files. For more
     # details, see https://github.com/mesonbuild/meson/issues/13212
-    depends: [linear_model_cython_tree, utils_cython_tree],
+    depends: [linear_model_cython_tree, utils_cython_tree, _loss_cython_tree],
   )
   py.extension_module(
     name,
-    pyx,
-    cython_args: cython_args,
+    cython_gen.process(pyx),
     subdir: 'sklearn/linear_model',
     install: true
 )

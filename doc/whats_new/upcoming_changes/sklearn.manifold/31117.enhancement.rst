@@ -1,0 +1,3 @@
+- :class:`manifold.MDS` will switch to use `n_init=1` by default,
+  starting from version 1.9.
+  By :user:`Dmitry Kobak <dkobak>`

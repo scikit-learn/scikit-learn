@@ -235,9 +235,9 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     >>> y[:4] = rng.uniform(10, 20, 4)
     >>> huber = HuberRegressor().fit(X, y)
     >>> huber.score(X, y)
-    -7.284...
+    -7.284
     >>> huber.predict(X[:1,])
-    array([806.7200...])
+    array([806.7200])
     >>> linear = LinearRegression().fit(X, y)
     >>> print("True coefficients:", coef)
     True coefficients: [20.4923...  34.1698...]

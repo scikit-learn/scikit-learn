@@ -18,7 +18,7 @@ from ..base import _fit_context
 from ..exceptions import ConvergenceWarning
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
-from ..linear_model import _cd_fast as cd_fast  # type: ignore
+from ..linear_model import _cd_fast as cd_fast  # type: ignore[attr-defined]
 from ..linear_model import lars_path_gram
 from ..model_selection import check_cv, cross_val_score
 from ..utils import Bunch
@@ -334,9 +334,9 @@ def graphical_lasso(
     >>> emp_cov = empirical_covariance(X, assume_centered=True)
     >>> emp_cov, _ = graphical_lasso(emp_cov, alpha=0.05)
     >>> emp_cov
-    array([[ 1.68...,  0.21..., -0.20...],
-           [ 0.21...,  0.22..., -0.08...],
-           [-0.20..., -0.08...,  0.23...]])
+    array([[ 1.687,  0.212, -0.209],
+           [ 0.212,  0.221, -0.0817],
+           [-0.209, -0.0817, 0.232]])
     """
     model = GraphicalLasso(
         alpha=alpha,
@@ -893,6 +893,11 @@ class GraphicalLassoCV(BaseGraphicalLasso):
            [0.017, 0.036, 0.094, 0.69 ]])
     >>> np.around(cov.location_, decimals=3)
     array([0.073, 0.04 , 0.038, 0.143])
+
+    For an example comparing :class:`sklearn.covariance.GraphicalLassoCV`,
+    :func:`sklearn.covariance.ledoit_wolf` shrinkage and the empirical covariance
+    on high-dimensional gaussian data, see
+    :ref:`sphx_glr_auto_examples_covariance_plot_sparse_cov.py`.
     """
 
     _parameter_constraints: dict = {

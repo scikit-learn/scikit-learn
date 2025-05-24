@@ -109,7 +109,7 @@ def create_species_bunch(species_name, train, test, coverages, xgrid, ygrid):
 
 
 def plot_species_distribution(
-    species=("bradypus_variegatus_0", "microryzomys_minutus_0")
+    species=("bradypus_variegatus_0", "microryzomys_minutus_0"),
 ):
     """
     Plot the species distribution.
@@ -194,7 +194,7 @@ def plot_species_distribution(
         Z = np.ones((data.Ny, data.Nx), dtype=np.float64)
 
         # We'll predict only for the land points.
-        idx = np.where(land_reference > -9999)
+        idx = (land_reference > -9999).nonzero()
         coverages_land = data.coverages[:, idx[0], idx[1]].T
 
         pred = clf.decision_function((coverages_land - mean) / std)

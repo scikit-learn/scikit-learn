@@ -83,13 +83,13 @@ The function :func:`validation_curve` can help in this case::
   ...     SVC(kernel="linear"), X, y, param_name="C", param_range=np.logspace(-7, 3, 3),
   ... )
   >>> train_scores
-  array([[0.90..., 0.94..., 0.91..., 0.89..., 0.92...],
-         [0.9... , 0.92..., 0.93..., 0.92..., 0.93...],
-         [0.97..., 1...   , 0.98..., 0.97..., 0.99...]])
+  array([[0.90, 0.94, 0.91, 0.89, 0.92],
+         [0.9 , 0.92, 0.93, 0.92, 0.93],
+         [0.97, 1   , 0.98, 0.97, 0.99]])
   >>> valid_scores
-  array([[0.9..., 0.9... , 0.9... , 0.96..., 0.9... ],
-         [0.9..., 0.83..., 0.96..., 0.96..., 0.93...],
-         [1.... , 0.93..., 1....  , 1....  , 0.9... ]])
+  array([[0.9, 0.9 , 0.9 , 0.96, 0.9 ],
+         [0.9, 0.83, 0.96, 0.96, 0.93],
+         [1. , 0.93, 1   , 1   , 0.9 ]])
 
 If you intend to plot the validation curves only, the class
 :class:`~sklearn.model_selection.ValidationCurveDisplay` is more direct than
@@ -154,13 +154,13 @@ average scores on the validation sets)::
   >>> train_sizes
   array([ 50, 80, 110])
   >>> train_scores
-  array([[0.98..., 0.98 , 0.98..., 0.98..., 0.98...],
-         [0.98..., 1.   , 0.98..., 0.98..., 0.98...],
-         [0.98..., 1.   , 0.98..., 0.98..., 0.99...]])
+  array([[0.98, 0.98 , 0.98, 0.98, 0.98],
+         [0.98, 1.   , 0.98, 0.98, 0.98],
+         [0.98, 1.   , 0.98, 0.98, 0.99]])
   >>> valid_scores
-  array([[1. ,  0.93...,  1. ,  1. ,  0.96...],
-         [1. ,  0.96...,  1. ,  1. ,  0.96...],
-         [1. ,  0.96...,  1. ,  1. ,  0.96...]])
+  array([[1. ,  0.93,  1. ,  1. ,  0.96],
+         [1. ,  0.96,  1. ,  1. ,  0.96],
+         [1. ,  0.96,  1. ,  1. ,  0.96]])
 
 If you intend to plot the learning curves only, the class
 :class:`~sklearn.model_selection.LearningCurveDisplay` will be easier to use.

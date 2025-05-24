@@ -18,7 +18,7 @@ from ..base import (
 from ..utils import check_array, check_random_state
 from ..utils._arpack import _init_arpack_v0
 from ..utils._param_validation import Interval, StrOptions
-from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
+from ..utils.extmath import _randomized_svd, safe_sparse_dot, svd_flip
 from ..utils.sparsefuncs import mean_variance_axis
 from ..utils.validation import check_is_fitted, validate_data
 
@@ -151,11 +151,11 @@ class TruncatedSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
     >>> svd.fit(X)
     TruncatedSVD(n_components=5, n_iter=7, random_state=42)
     >>> print(svd.explained_variance_ratio_)
-    [0.0157... 0.0512... 0.0499... 0.0479... 0.0453...]
+    [0.0157 0.0512 0.0499 0.0479 0.0453]
     >>> print(svd.explained_variance_ratio_.sum())
-    0.2102...
+    0.2102
     >>> print(svd.singular_values_)
-    [35.2410...  4.5981...   4.5420...  4.4486...  4.3288...]
+    [35.2410  4.5981   4.5420  4.4486  4.3288]
     """
 
     _parameter_constraints: dict = {
@@ -241,7 +241,7 @@ class TruncatedSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
                     f"n_components({self.n_components}) must be <="
                     f" n_features({X.shape[1]})."
                 )
-            U, Sigma, VT = randomized_svd(
+            U, Sigma, VT = _randomized_svd(
                 X,
                 self.n_components,
                 n_iter=self.n_iter,

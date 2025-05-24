@@ -179,7 +179,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
     >>> clf.fit_predict(X)
     array([ 1,  1, -1,  1])
     >>> clf.negative_outlier_factor_
-    array([ -0.9821...,  -1.0370..., -73.3697...,  -0.9821...])
+    array([ -0.9821,  -1.0370, -73.3697,  -0.9821])
     """
 
     _parameter_constraints: dict = {

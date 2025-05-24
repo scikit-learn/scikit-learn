@@ -50,7 +50,7 @@ that contain the missing values::
     >>> X = [[np.nan, 2], [6, np.nan], [7, 6]]
     >>> print(imp.transform(X))
     [[4.          2.        ]
-     [6.          3.666...]
+     [6.          3.666]
      [7.          6.        ]]
 
 The :class:`SimpleImputer` class also supports sparse matrices::

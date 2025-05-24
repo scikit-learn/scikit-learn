@@ -15,6 +15,7 @@ Changelogs and release notes for all scikit-learn releases are linked in this pa
 .. toctree::
    :maxdepth: 2
 
+   whats_new/v1.8.rst
    whats_new/v1.7.rst
    whats_new/v1.6.rst
    whats_new/v1.5.rst

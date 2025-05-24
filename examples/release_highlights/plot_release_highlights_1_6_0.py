@@ -1,4 +1,4 @@
-# ruff: noqa
+# ruff: noqa: CPY001, E501
 """
 =======================================
 Release Highlights for scikit-learn 1.6
@@ -33,6 +33,7 @@ or with conda::
 # or to pass a pre-fitted model to some of the meta-estimators. Here's a short example:
 
 import time
+
 from sklearn.datasets import make_classification
 from sklearn.frozen import FrozenEstimator
 from sklearn.linear_model import SGDClassifier
@@ -69,20 +70,20 @@ print(
 # a validation set. We can now have a pipeline which will transform the validation set
 # and pass it to the estimator::
 #
-#     sklearn.set_config(enable_metadata_routing=True)
-#     est_gs = GridSearchCV(
-#         Pipeline(
-#             (
-#                 StandardScaler(),
-#                 EstimatorWithValidationSet(...).set_fit_request(X_val=True, y_val=True),
+#     with sklearn.config_context(enable_metadata_routing=True):
+#         est_gs = GridSearchCV(
+#             Pipeline(
+#                 (
+#                     StandardScaler(),
+#                     EstimatorWithValidationSet(...).set_fit_request(X_val=True, y_val=True),
+#                 ),
+#                 # telling pipeline to transform these inputs up to the step which is
+#                 # requesting them.
+#                 transform_input=["X_val"],
 #             ),
-#             # telling pipeline to transform these inputs up to the step which is
-#             # requesting them.
-#             transform_input=["X_val"],
-#         ),
-#         param_grid={"estimatorwithvalidationset__param_to_optimize": list(range(5))},
-#         cv=5,
-#     ).fit(X, y, X_val=X_val, y_val=y_val)
+#             param_grid={"estimatorwithvalidationset__param_to_optimize": list(range(5))},
+#             cv=5,
+#         ).fit(X, y, X_val=X_val, y_val=y_val)
 #
 # In the above code, the key parts are the call to `set_fit_request` to specify that
 # `X_val` and `y_val` are required by the `EstimatorWithValidationSet.fit` method, and
@@ -122,6 +123,7 @@ print(
 # :class:`ensemble.ExtraTreesRegressor` now support missing values. More details in the
 # :ref:`User Guide <tree_missing_value_support>`.
 import numpy as np
+
 from sklearn.ensemble import ExtraTreesClassifier
 
 X = np.array([0, 1, 6, np.nan]).reshape(-1, 1)

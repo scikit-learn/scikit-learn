@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from sklearn.experimental import enable_iterative_imputer  # noqa
+from sklearn.experimental import enable_iterative_imputer  # noqa: F401
 from sklearn.impute import IterativeImputer, KNNImputer, SimpleImputer
 from sklearn.utils._testing import (
     assert_allclose,

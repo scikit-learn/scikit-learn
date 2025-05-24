@@ -2,15 +2,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import html
-import itertools
 from contextlib import closing
 from inspect import isclass
 from io import StringIO
 from pathlib import Path
 from string import Template
 
-from .. import __version__, config_context
-from .fixes import parse_version
+from ... import config_context
 
 
 class _IDCounter:
@@ -26,7 +24,13 @@ class _IDCounter:
 
 
 def _get_css_style():
-    return Path(__file__).with_suffix(".css").read_text(encoding="utf-8")
+    estimator_css_file = Path(__file__).parent / "estimator.css"
+    params_css_file = Path(__file__).parent / "params.css"
+
+    estimator_css = estimator_css_file.read_text(encoding="utf-8")
+    params_css = params_css_file.read_text(encoding="utf-8")
+
+    return f"{estimator_css}\n{params_css}"
 
 
 _CONTAINER_ID_COUNTER = _IDCounter("sk-container-id")
@@ -103,6 +107,7 @@ class _VisualBlock:
 
 def _write_label_html(
     out,
+    params,
     name,
     name_details,
     name_caption=None,
@@ -113,6 +118,7 @@ def _write_label_html(
     doc_link="",
     is_fitted_css_class="",
     is_fitted_icon="",
+    param_prefix="",
 ):
     """Write labeled html with or without a dropdown with named details.
 
@@ -120,6 +126,10 @@ def _write_label_html(
     ----------
     out : file-like object
         The file to write the HTML representation to.
+    params: str
+        If estimator has `get_params` method, this is the HTML representation
+        of the estimator's parameters and their values. When the estimator
+        does not have `get_params`, it is an empty string.
     name : str
         The label for the estimator. It corresponds either to the estimator class name
         for a simple estimator or in the case of a `Pipeline` and `ColumnTransformer`,
@@ -151,13 +161,14 @@ def _write_label_html(
     is_fitted_icon : str, default=""
         The HTML representation to show the fitted information in the diagram. An empty
         string means that no information is shown.
+    param_prefix : str, default=""
+        The prefix to prepend to parameter names for nested estimators.
     """
     out.write(
         f'<div class="{outer_class}"><div'
         f' class="{inner_class} {is_fitted_css_class} sk-toggleable">'
     )
     name = html.escape(name)
-
     if name_details is not None:
         name_details = html.escape(str(name_details))
         checked_str = "checked" if checked else ""
@@ -194,9 +205,15 @@ def _write_label_html(
         fmt_str = (
             f'<input class="sk-toggleable__control sk-hidden--visually" id="{est_id}" '
             f'type="checkbox" {checked_str}>{label_html}<div '
-            f'class="sk-toggleable__content {is_fitted_css_class}"><pre>{name_details}'
-            "</pre></div> "
+            f'class="sk-toggleable__content {is_fitted_css_class}" '
+            f'data-param-prefix="{html.escape(param_prefix)}">'
         )
+
+        if params:
+            fmt_str = "".join([fmt_str, f"{params}</div>"])
+        elif name_details and ("Pipeline" not in name):
+            fmt_str = "".join([fmt_str, f"<pre>{name_details}</pre></div>"])
+
         out.write(fmt_str)
     else:
         out.write(f"<label>{name}</label>")
@@ -254,6 +271,7 @@ def _write_estimator_html(
     is_fitted_css_class,
     is_fitted_icon="",
     first_call=False,
+    param_prefix="",
 ):
     """Write estimator to html in serial, parallel, or by itself (single).
 
@@ -284,6 +302,9 @@ def _write_estimator_html(
         empty string.
     first_call : bool, default=False
         Whether this is the first time this function is called.
+    param_prefix : str, default=""
+        The prefix to prepend to parameter names for nested estimators.
+        For example, in a pipeline this might be "pipeline__stepname__".
     """
     if first_call:
         est_block = _get_visual_block(estimator)
@@ -302,13 +323,22 @@ def _write_estimator_html(
         out.write(f'<div class="sk-item{dash_cls}">')
 
         if estimator_label:
+            if hasattr(estimator, "get_params") and hasattr(
+                estimator, "_get_params_html"
+            ):
+                params = estimator._get_params_html(deep=False)._repr_html_inner()
+            else:
+                params = ""
+
             _write_label_html(
                 out,
+                params,
                 estimator_label,
                 estimator_label_details,
                 doc_link=doc_link,
                 is_fitted_css_class=is_fitted_css_class,
                 is_fitted_icon=is_fitted_icon,
+                param_prefix=param_prefix,
             )
 
         kind = est_block.kind
@@ -316,6 +346,17 @@ def _write_estimator_html(
         est_infos = zip(est_block.estimators, est_block.names, est_block.name_details)
 
         for est, name, name_details in est_infos:
+            # Build the parameter prefix for nested estimators
+
+            if param_prefix and hasattr(name, "split"):
+                # If we already have a prefix, append the new component
+                new_prefix = f"{param_prefix}{name.split(':')[0]}__"
+            elif hasattr(name, "split"):
+                # If this is the first level, start the prefix
+                new_prefix = f"{name.split(':')[0]}__" if name else ""
+            else:
+                new_prefix = param_prefix
+
             if kind == "serial":
                 _write_estimator_html(
                     out,
@@ -323,6 +364,7 @@ def _write_estimator_html(
                     name,
                     name_details,
                     is_fitted_css_class=is_fitted_css_class,
+                    param_prefix=new_prefix,
                 )
             else:  # parallel
                 out.write('<div class="sk-parallel-item">')
@@ -334,13 +376,20 @@ def _write_estimator_html(
                     name,
                     name_details,
                     is_fitted_css_class=is_fitted_css_class,
+                    param_prefix=new_prefix,
                 )
                 out.write("</div>")  # sk-parallel-item
 
         out.write("</div></div>")
     elif est_block.kind == "single":
+        if hasattr(estimator, "_get_params_html"):
+            params = estimator._get_params_html()._repr_html_inner()
+        else:
+            params = ""
+
         _write_label_html(
             out,
+            params,
             est_block.names,
             est_block.name_details,
             est_block.name_caption,
@@ -351,6 +400,7 @@ def _write_estimator_html(
             doc_link=doc_link,
             is_fitted_css_class=is_fitted_css_class,
             is_fitted_icon=is_fitted_icon,
+            param_prefix=param_prefix,
         )
 
 
@@ -371,10 +421,10 @@ def estimator_html_repr(estimator):
 
     Examples
     --------
-    >>> from sklearn.utils._estimator_html_repr import estimator_html_repr
+    >>> from sklearn.utils._repr_html.estimator import estimator_html_repr
     >>> from sklearn.linear_model import LogisticRegression
     >>> estimator_html_repr(LogisticRegression())
-    '<style>...</div>'
+    '<style>#sk-container-id...'
     """
     from sklearn.exceptions import NotFittedError
     from sklearn.utils.validation import check_is_fitted
@@ -418,6 +468,7 @@ def estimator_html_repr(estimator):
         )
         html_template = (
             f"<style>{style_with_id}</style>"
+            f"<body>"
             f'<div id="{container_id}" class="sk-top-container">'
             '<div class="sk-text-repr-fallback">'
             f"<pre>{html.escape(estimator_str)}</pre><b>{fallback_msg}</b>"
@@ -426,7 +477,6 @@ def estimator_html_repr(estimator):
         )
 
         out.write(html_template)
-
         _write_estimator_html(
             out,
             estimator,
@@ -436,114 +486,12 @@ def estimator_html_repr(estimator):
             is_fitted_css_class=is_fitted_css_class,
             is_fitted_icon=is_fitted_icon,
         )
-        out.write("</div></div>")
+        with open(str(Path(__file__).parent / "estimator.js"), "r") as f:
+            script = f.read()
+
+        html_end = f"</div></div><script>{script}</script></body>"
+
+        out.write(html_end)
 
         html_output = out.getvalue()
         return html_output
-
-
-class _HTMLDocumentationLinkMixin:
-    """Mixin class allowing to generate a link to the API documentation.
-
-    This mixin relies on three attributes:
-    - `_doc_link_module`: it corresponds to the root module (e.g. `sklearn`). Using this
-      mixin, the default value is `sklearn`.
-    - `_doc_link_template`: it corresponds to the template used to generate the
-      link to the API documentation. Using this mixin, the default value is
-      `"https://scikit-learn.org/{version_url}/modules/generated/
-      {estimator_module}.{estimator_name}.html"`.
-    - `_doc_link_url_param_generator`: it corresponds to a function that generates the
-      parameters to be used in the template when the estimator module and name are not
-      sufficient.
-
-    The method :meth:`_get_doc_link` generates the link to the API documentation for a
-    given estimator.
-
-    This useful provides all the necessary states for
-    :func:`sklearn.utils.estimator_html_repr` to generate a link to the API
-    documentation for the estimator HTML diagram.
-
-    Examples
-    --------
-    If the default values for `_doc_link_module`, `_doc_link_template` are not suitable,
-    then you can override them and provide a method to generate the URL parameters:
-    >>> from sklearn.base import BaseEstimator
-    >>> doc_link_template = "https://address.local/{single_param}.html"
-    >>> def url_param_generator(estimator):
-    ...     return {"single_param": estimator.__class__.__name__}
-    >>> class MyEstimator(BaseEstimator):
-    ...     # use "builtins" since it is the associated module when declaring
-    ...     # the class in a docstring
-    ...     _doc_link_module = "builtins"
-    ...     _doc_link_template = doc_link_template
-    ...     _doc_link_url_param_generator = url_param_generator
-    >>> estimator = MyEstimator()
-    >>> estimator._get_doc_link()
-    'https://address.local/MyEstimator.html'
-
-    If instead of overriding the attributes inside the class definition, you want to
-    override a class instance, you can use `types.MethodType` to bind the method to the
-    instance:
-    >>> import types
-    >>> estimator = BaseEstimator()
-    >>> estimator._doc_link_template = doc_link_template
-    >>> estimator._doc_link_url_param_generator = types.MethodType(
-    ...     url_param_generator, estimator)
-    >>> estimator._get_doc_link()
-    'https://address.local/BaseEstimator.html'
-    """
-
-    _doc_link_module = "sklearn"
-    _doc_link_url_param_generator = None
-
-    @property
-    def _doc_link_template(self):
-        sklearn_version = parse_version(__version__)
-        if sklearn_version.dev is None:
-            version_url = f"{sklearn_version.major}.{sklearn_version.minor}"
-        else:
-            version_url = "dev"
-        return getattr(
-            self,
-            "__doc_link_template",
-            (
-                f"https://scikit-learn.org/{version_url}/modules/generated/"
-                "{estimator_module}.{estimator_name}.html"
-            ),
-        )
-
-    @_doc_link_template.setter
-    def _doc_link_template(self, value):
-        setattr(self, "__doc_link_template", value)
-
-    def _get_doc_link(self):
-        """Generates a link to the API documentation for a given estimator.
-
-        This method generates the link to the estimator's documentation page
-        by using the template defined by the attribute `_doc_link_template`.
-
-        Returns
-        -------
-        url : str
-            The URL to the API documentation for this estimator. If the estimator does
-            not belong to module `_doc_link_module`, the empty string (i.e. `""`) is
-            returned.
-        """
-        if self.__class__.__module__.split(".")[0] != self._doc_link_module:
-            return ""
-
-        if self._doc_link_url_param_generator is None:
-            estimator_name = self.__class__.__name__
-            # Construct the estimator's module name, up to the first private submodule.
-            # This works because in scikit-learn all public estimators are exposed at
-            # that level, even if they actually live in a private sub-module.
-            estimator_module = ".".join(
-                itertools.takewhile(
-                    lambda part: not part.startswith("_"),
-                    self.__class__.__module__.split("."),
-                )
-            )
-            return self._doc_link_template.format(
-                estimator_module=estimator_module, estimator_name=estimator_name
-            )
-        return self._doc_link_template.format(**self._doc_link_url_param_generator())

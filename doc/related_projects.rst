@@ -74,7 +74,7 @@ enhance the functionality of scikit-learn's estimators.
 - `dtreeviz <https://github.com/parrt/dtreeviz/>`_ A Python library for
   decision tree visualization and model interpretation.
 
-- `model-diagnostics <https://lorentzenchr.github.io/model-diagnostics/>` Tools for
+- `model-diagnostics <https://lorentzenchr.github.io/model-diagnostics/>`_ Tools for
   diagnostics and assessment of (machine learning) models (in Python).
 
 - `sklearn-evaluation <https://github.com/ploomber/sklearn-evaluation>`_

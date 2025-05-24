@@ -499,7 +499,7 @@ Estimator Tags
 The estimator tags are annotations of estimators that allow programmatic inspection of
 their capabilities, such as sparse matrix support, supported output types and supported
 methods. The estimator tags are an instance of :class:`~sklearn.utils.Tags` returned by
-the method :meth:`~sklearn.base.BaseEstimator.__sklearn_tags__()`. These tags are used
+the method :meth:`~sklearn.base.BaseEstimator.__sklearn_tags__`. These tags are used
 in different places, such as :func:`~base.is_regressor` or the common checks run by
 :func:`~sklearn.utils.estimator_checks.check_estimator` and
 :func:`~sklearn.utils.estimator_checks.parametrize_with_checks`, where tags determine

@@ -1,7 +1,7 @@
 cluster_hdbscan_extension_metadata = {
-  '_linkage': {'sources': ['_linkage.pyx', metrics_cython_tree]},
-  '_reachability': {'sources': ['_reachability.pyx']},
-  '_tree': {'sources': ['_tree.pyx']}
+  '_linkage': {'sources': [cython_gen.process('_linkage.pyx'), metrics_cython_tree]},
+  '_reachability': {'sources': [cython_gen.process('_reachability.pyx')]},
+  '_tree': {'sources': [cython_gen.process('_tree.pyx')]}
 }
 
 foreach ext_name, ext_dict : cluster_hdbscan_extension_metadata
@@ -9,7 +9,6 @@ foreach ext_name, ext_dict : cluster_hdbscan_extension_metadata
     ext_name,
     ext_dict.get('sources'),
     dependencies: [np_dep],
-    cython_args: cython_args,
     subdir: 'sklearn/cluster/_hdbscan',
     install: true
   )

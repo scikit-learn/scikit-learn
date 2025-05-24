@@ -5,7 +5,6 @@ A Theil-Sen Estimator for Multiple Linear Regression Model
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 import warnings
 from itertools import combinations
 from numbers import Integral, Real
@@ -321,9 +320,9 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
     ...     n_samples=200, n_features=2, noise=4.0, random_state=0)
     >>> reg = TheilSenRegressor(random_state=0).fit(X, y)
     >>> reg.score(X, y)
-    0.9884...
+    0.9884
     >>> reg.predict(X[:1,])
-    array([-31.5871...])
+    array([-31.5871])
     """
 
     _parameter_constraints: dict = {

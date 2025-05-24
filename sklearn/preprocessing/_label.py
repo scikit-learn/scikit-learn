@@ -143,7 +143,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
 
         Returns
         -------
-        y : ndarray of shape (n_samples,)
+        y_original : ndarray of shape (n_samples,)
             Original encoding.
         """
         check_is_fitted(self)
@@ -389,7 +389,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
 
         Returns
         -------
-        y : {ndarray, sparse matrix} of shape (n_samples,)
+        y_original : {ndarray, sparse matrix} of shape (n_samples,)
             Target values. Sparse matrix will be of CSR format.
 
         Notes
@@ -925,7 +925,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys
 
         Returns
         -------
-        y : list of tuples
+        y_original : list of tuples
             The set of labels for each sample such that `y[i]` consists of
             `classes_[j]` for each `yt[i, j] == 1`.
         """

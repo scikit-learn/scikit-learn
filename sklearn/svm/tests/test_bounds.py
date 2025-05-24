@@ -14,6 +14,11 @@ Y1 = [0, 1, 1, 1]
 Y2 = [2, 1, 0, 0]
 
 
+# TODO(1.8): remove filterwarnings after the deprecation of liblinear multiclass
+#            and maybe remove LogisticRegression from this test
+@pytest.mark.filterwarnings(
+    "ignore:.*'liblinear' solver for multiclass classification is deprecated.*"
+)
 @pytest.mark.parametrize("X_container", CSR_CONTAINERS + [np.array])
 @pytest.mark.parametrize("loss", ["squared_hinge", "log"])
 @pytest.mark.parametrize("Y_label", ["two-classes", "multi-class"])

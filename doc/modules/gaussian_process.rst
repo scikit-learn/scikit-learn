@@ -106,11 +106,11 @@ The :class:`GaussianProcessClassifier` implements Gaussian processes (GP) for
 classification purposes, more specifically for probabilistic classification,
 where test predictions take the form of class probabilities.
 GaussianProcessClassifier places a GP prior on a latent function :math:`f`,
-which is then squashed through a link function to obtain the probabilistic
+which is then squashed through a link function :math:`\pi` to obtain the probabilistic
 classification. The latent function :math:`f` is a so-called nuisance function,
 whose values are not observed and are not relevant by themselves.
 Its purpose is to allow a convenient formulation of the model, and :math:`f`
-is removed (integrated out) during prediction. GaussianProcessClassifier
+is removed (integrated out) during prediction. :class:`GaussianProcessClassifier`
 implements the logistic link function, for which the integral cannot be
 computed analytically but is easily approximated in the binary case.
 
@@ -133,6 +133,11 @@ of the kernel; subsequent runs are conducted from hyperparameter values
 that have been chosen randomly from the range of allowed values.
 If the initial hyperparameters should be kept fixed, `None` can be passed as
 optimizer.
+
+In some scenarios, information about the latent function :math:`f` is desired
+(i.e. the mean :math:`\bar{f_*}` and the variance :math:`\text{Var}[f_*]` described
+in Eqs. (3.21) and (3.24) of [RW2006]_). The :class:`GaussianProcessClassifier`
+provides access to these quantities via the `latent_mean_and_variance` method.
 
 :class:`GaussianProcessClassifier` supports multi-class classification
 by performing either one-versus-rest or one-versus-one based training and
@@ -236,8 +241,10 @@ translations in the input space, while non-stationary kernels
 depend also on the specific values of the datapoints. Stationary kernels can further
 be subdivided into isotropic and anisotropic kernels, where isotropic kernels are
 also invariant to rotations in the input space. For more details, we refer to
-Chapter 4 of [RW2006]_. For guidance on how to best combine different kernels,
-we refer to [Duv2014]_.
+Chapter 4 of [RW2006]_. :ref:`This example
+<sphx_glr_auto_examples_gaussian_process_plot_gpr_on_structured_data.py>`
+shows how to define a custom kernel over discrete data. For guidance on how to best
+combine different kernels, we refer to [Duv2014]_.
 
 .. dropdown:: Gaussian Process Kernel API
 

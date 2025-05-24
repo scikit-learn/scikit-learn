@@ -1,0 +1,4 @@
+- In :meth:`sklearn.metrics.RocCurveDisplay.from_predictions`,
+  the argument `y_pred` has been renamed to `y_score` to better reflect its purpose.
+  `y_pred` will be removed in 1.9.
+  By :user:`Bagus Tris Atmaja <bagustris>` in
