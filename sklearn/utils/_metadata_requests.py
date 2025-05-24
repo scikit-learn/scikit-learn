@@ -19,10 +19,13 @@ This method is automatically implemented via ``BaseEstimator`` for all simple
 estimators, but needs a custom implementation for meta-estimators.
 
     In non-routing consumers, i.e. the simplest case, e.g. ``SVM``,
-    ``get_metadata_routing`` returns a ``MetadataRequest`` object.
+    ``get_metadata_routing`` returns a ``MetadataRequest`` object. It stores
+    information on which methods of the consumer do request which metadata.
 
     In routers, e.g. meta-estimators and a multi metric scorer,
-    ``get_metadata_routing`` returns a ``MetadataRouter`` object.
+    ``get_metadata_routing`` returns a ``MetadataRouter`` object. It stores
+    information on which method from the router object calls which in a consumer's
+    object, because this is how the metadata is to be passed.
 
     An object which is both a router and a consumer, e.g. a meta-estimator which
     consumes ``sample_weight`` and routes ``sample_weight`` to its sub-estimators
