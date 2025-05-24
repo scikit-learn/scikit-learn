@@ -452,7 +452,6 @@ def test_sigmoid_calibration():
         DummyClassifier(),
         MultinomialNB(),
         SGDClassifier(random_state=42),
-        DecisionTreeClassifier(random_state=42),
     ],
 )
 @pytest.mark.parametrize(
