@@ -1,0 +1,8 @@
+The new functiom :func:`metrics.rec_curve` computes the Regression Error Characteristic
+(REC) curve of error tolerances vs the fraction of samples below the tolerance (the CDF
+of the regression errors). Suggested in the ICML'03 paper "Regression error
+characteristic curves" by Bi and Bennett as the regression-variant of the ROC curve.
+
+The new class :class:`metrics.RecCurveDisplay` visualizes the REC curves.
+
+By :user:`Alex Shtoff <alexshtf>`
