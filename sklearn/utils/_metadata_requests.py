@@ -337,10 +337,11 @@ class MethodMetadataRequest:
             The metadata for which a request is set.
 
         alias : str, or {True, False, None}
-            Specifies which metadata should be routed to `param`
+            Specifies which metadata should be routed to the method that owns this
+            `MethodMetadataRequest`.
 
             - str: the name (or alias) of metadata given to a meta-estimator that
-              should be routed to this method
+              should be routed to the method that owns this `MethodMetadataRequest`.
 
             - True: requested
 
