@@ -10,6 +10,7 @@ from sklearn.calibration import (
     CalibratedClassifierCV,
     CalibrationDisplay,
     _CalibratedClassifier,
+    _convert_to_logits,
     _fit_calibrator,
     _sigmoid_calibration,
     _SigmoidCalibration,
@@ -48,6 +49,7 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._mocking import CheckingClassifier
+from sklearn.utils._response import _get_response_values
 from sklearn.utils._testing import (
     _convert_container,
     assert_almost_equal,
@@ -74,7 +76,7 @@ def test_calibration_method_raises(data):
     clf = LogisticRegression().fit(X_train, y_train)
     predictions = clf.predict(X_test)
     calibrator = _TemperatureScaling()
-    method = "not sigmoid, isotonic, or temperature"
+    invalid_method = "not sigmoid, isotonic, or temperature"
 
     with pytest.raises(ValueError):
         _fit_calibrator(
@@ -82,12 +84,15 @@ def test_calibration_method_raises(data):
             predictions=predictions,
             y=y_test,
             classes=clf.classes_,
-            method=method,
+            method=invalid_method,
         )
 
     with pytest.raises(ValueError):
         _CalibratedClassifier(
-            estimator=clf, calibrators=[calibrator], method=method, classes=clf.classes_
+            estimator=clf,
+            calibrators=[calibrator],
+            method=invalid_method,
+            classes=clf.classes_,
         ).predict_proba(X_test)
 
 
@@ -445,15 +450,20 @@ def test_sigmoid_calibration():
     "clf",
     [
         DummyClassifier(),
-        RandomForestClassifier(n_estimators=30, random_state=42),
-        LogisticRegression(),
+        MultinomialNB(),
+        SGDClassifier(random_state=42),
+        DecisionTreeClassifier(random_state=42),
     ],
 )
 @pytest.mark.parametrize(
     "n_classes",
-    [2, 3, 4, 5],
+    [3, 4, 5],
 )
-def test_temperature_scaling(clf, n_classes):
+@pytest.mark.parametrize(
+    "ensemble",
+    [True, False],
+)
+def test_temperature_scaling(clf, n_classes, ensemble):
     """Check temperature scaling calibration"""
     X, y = make_classification(
         n_classes=n_classes,
@@ -461,38 +471,44 @@ def test_temperature_scaling(clf, n_classes):
         n_informative=n_classes,
         random_state=42,
     )
+    X -= X.min()  # MultinomialNB only allows positive X
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
-
     clf.fit(X_train, y_train)
-    cal_clf = CalibratedClassifierCV(clf, method="temperature").fit(X_train, y_train)
-
-    y_pred = clf.predict(X_test)
-
-    y_scores = clf.predict_proba(X_test)
-
-    y_scores_cal = cal_clf.calibrated_classifiers_[0].calibrators[0].predict(y_scores)
-
-    y_pred_cal = np.argmax(y_scores_cal, axis=1)
-
-    if n_classes == 2:
-        y_scores = y_scores[:, 1]
-        y_scores_cal = y_scores_cal[:, 1]
-
-    # Accuracy is invariant under temperature scaling.
-    assert accuracy_score(y_test, y_pred) == accuracy_score(y_test, y_pred_cal)
-
-    # The optimized temperature should always be positive
-    assert 0 < cal_clf.calibrated_classifiers_[0].calibrators[0].beta
-
-    # Check log loss
-    assert log_loss(y_test, y_scores_cal) <= log_loss(y_test, y_scores)
-
-    # Refinement error should be invariant under temperature scaling.
-    # Use ROC AUC as a proxy for refinement error.
-    roc_auc_diff = np.abs(
-        roc_auc_score(y_test, y_scores_cal, multi_class="ovr")
-        - roc_auc_score(y_test, y_scores, multi_class="ovr")
+    cal_clf = CalibratedClassifierCV(clf, method="temperature", ensemble=ensemble).fit(
+        X_train, y_train
     )
+
+    calibrated_classifiers = cal_clf.calibrated_classifiers_
+
+    for calibrated_classifier in calibrated_classifiers:
+        # There is one and only one temperature scaling calibrator
+        # for each calibrated classifier
+        assert len(calibrated_classifier.calibrators) == 1
+        # The optimal inverse temperature parameter should always
+        # be positive
+        assert calibrated_classifier.calibrators[0].beta > 0
+
+    if not ensemble:
+        y_pred_clf = clf.predict(X_test)
+        y_pred_cal = cal_clf.predict(X_test)
+        # Accuracy score is invariant under temperature scaling
+        assert accuracy_score(y_test, y_pred_clf) == accuracy_score(y_test, y_pred_cal)
+
+        predictions, _ = _get_response_values(
+            clf,
+            X_test,
+            response_method=["decision_function", "predict_proba"],
+        )
+        y_scores_softmax = softmax(_convert_to_logits(predictions))
+        y_scores_cal = cal_clf.predict_proba(X_test)
+        # Log Loss should be improved since it is the loss function
+        # in temperature scaling
+        assert log_loss(y_test, y_scores_cal) <= log_loss(y_test, y_scores_softmax)
+        # Refinement error should be invariant under temperature scaling.
+        # Use ROC AUC as a proxy for refinement error.
+        assert roc_auc_score(
+            y_test, y_scores_softmax, multi_class="ovr"
+        ) <= roc_auc_score(y_test, y_scores_cal, multi_class="ovr")
 
 
 def test_temperature_scaling_input_validation(global_dtype):
