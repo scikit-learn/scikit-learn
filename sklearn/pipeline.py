@@ -16,9 +16,9 @@ from .base import TransformerMixin, _fit_context, clone
 from .exceptions import NotFittedError
 from .preprocessing import FunctionTransformer
 from .utils import Bunch
-from .utils._estimator_html_repr import _VisualBlock
 from .utils._metadata_requests import METHODS
 from .utils._param_validation import HasMethods, Hidden
+from .utils._repr_html.estimator import _VisualBlock
 from .utils._set_output import (
     _get_container_adapter,
     _safe_set_output,

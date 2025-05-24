@@ -29,10 +29,10 @@ from sklearn.pipeline import FeatureUnion, Pipeline, make_pipeline
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder, StandardScaler
 from sklearn.svm import LinearSVC, LinearSVR
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.utils._estimator_html_repr import (
+from sklearn.utils._repr_html.base import _HTMLDocumentationLinkMixin
+from sklearn.utils._repr_html.estimator import (
     _get_css_style,
     _get_visual_block,
-    _HTMLDocumentationLinkMixin,
     _write_label_html,
     estimator_html_repr,
 )
@@ -47,10 +47,11 @@ def dummy_function(x, y):
 def test_write_label_html(checked):
     # Test checking logic and labeling
     name = "LogisticRegression"
+    params = ""
     tool_tip = "hello-world"
 
     with closing(StringIO()) as out:
-        _write_label_html(out, name, tool_tip, checked=checked)
+        _write_label_html(out, params, name, tool_tip, checked=checked)
         html_label = out.getvalue()
 
         p = (
@@ -60,9 +61,9 @@ def test_write_label_html(checked):
         )
         re_compiled = re.compile(p)
         assert re_compiled.search(html_label)
-
         assert html_label.startswith('<div class="sk-label-container">')
         assert "<pre>hello-world</pre>" in html_label
+
         if checked:
             assert "checked>" in html_label
 
@@ -199,9 +200,7 @@ def test_estimator_html_repr_pipeline():
     # top level estimators show estimator with changes
     assert html.escape(str(pipe)) in html_output
     for _, est in pipe.steps:
-        assert (
-            '<div class="sk-toggleable__content "><pre>' + html.escape(str(est))
-        ) in html_output
+        assert html.escape(str(est))[:44] in html_output
 
     # low level estimators do not show changes
     with config_context(print_changed_only=True):
@@ -217,18 +216,19 @@ def test_estimator_html_repr_pipeline():
             assert f"<label>{html.escape(name)}</label>" in html_output
 
         pca = feat_u.transformer_list[0][1]
-        assert f"<pre>{html.escape(str(pca))}</pre>" in html_output
+
+        assert html.escape(str(pca)) in html_output
 
         tsvd = feat_u.transformer_list[1][1]
         first = tsvd["first"]
         select = tsvd["select"]
-        assert f"<pre>{html.escape(str(first))}</pre>" in html_output
-        assert f"<pre>{html.escape(str(select))}</pre>" in html_output
+        assert html.escape(str(first)) in html_output
+        assert html.escape(str(select)) in html_output
 
         # voting classifier
         for name, est in clf.estimators:
-            assert f"<label>{html.escape(name)}</label>" in html_output
-            assert f"<pre>{html.escape(str(est))}</pre>" in html_output
+            assert html.escape(name) in html_output
+            assert html.escape(str(est)) in html_output
 
     # verify that prefers-color-scheme is implemented
     assert "prefers-color-scheme" in html_output
@@ -248,7 +248,7 @@ def test_stacking_classifier(final_estimator):
     # If final_estimator's default changes from LogisticRegression
     # this should be updated
     if final_estimator is None:
-        assert "LogisticRegression(" in html_output
+        assert "LogisticRegression" in html_output
     else:
         assert final_estimator.__class__.__name__ in html_output
 
@@ -431,7 +431,7 @@ def test_html_documentation_link_mixin_sklearn(mock_version):
     """
 
     # mock the `__version__` where the mixin is located
-    with patch("sklearn.utils._estimator_html_repr.__version__", mock_version):
+    with patch("sklearn.utils._repr_html.base.__version__", mock_version):
         mixin = _HTMLDocumentationLinkMixin()
 
         assert mixin._doc_link_module == "sklearn"
@@ -608,3 +608,9 @@ def test_function_transformer_show_caption(func, expected_name):
     )
     re_compiled = re.compile(p)
     assert re_compiled.search(html_output)
+
+
+def test_estimator_html_repr_table():
+    """Check that we add the table of parameters in the HTML representation."""
+    est = LogisticRegression(C=10.0, fit_intercept=False)
+    assert "parameters-table" in estimator_html_repr(est)
