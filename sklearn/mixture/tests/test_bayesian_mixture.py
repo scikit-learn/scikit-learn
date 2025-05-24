@@ -12,6 +12,7 @@ from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.mixture import BayesianGaussianMixture
 from sklearn.mixture._bayesian_mixture import _log_dirichlet_norm, _log_wishart_norm
 from sklearn.mixture.tests.test_gaussian_mixture import RandomData
+from sklearn.utils._array_api import get_namespace
 from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_equal,
@@ -259,6 +260,7 @@ def test_compare_covar_type():
     rand_data = RandomData(rng, scale=7)
     X = rand_data.X["full"]
     n_components = rand_data.n_components
+    xp, _ = get_namespace(X)
 
     for prior_type in PRIOR_TYPE:
         # Computation of the full_covariance
@@ -271,7 +273,7 @@ def test_compare_covar_type():
             tol=1e-7,
         )
         bgmm._check_parameters(X)
-        bgmm._initialize_parameters(X, np.random.RandomState(0))
+        bgmm._initialize_parameters(X, np.random.RandomState(0), xp=xp)
         full_covariances = (
             bgmm.covariances_ * bgmm.degrees_of_freedom_[:, np.newaxis, np.newaxis]
         )
@@ -286,7 +288,7 @@ def test_compare_covar_type():
             tol=1e-7,
         )
         bgmm._check_parameters(X)
-        bgmm._initialize_parameters(X, np.random.RandomState(0))
+        bgmm._initialize_parameters(X, np.random.RandomState(0), xp=xp)
 
         tied_covariance = bgmm.covariances_ * bgmm.degrees_of_freedom_
         assert_almost_equal(tied_covariance, np.mean(full_covariances, 0))
@@ -301,7 +303,7 @@ def test_compare_covar_type():
             tol=1e-7,
         )
         bgmm._check_parameters(X)
-        bgmm._initialize_parameters(X, np.random.RandomState(0))
+        bgmm._initialize_parameters(X, np.random.RandomState(0), xp=xp)
 
         diag_covariances = bgmm.covariances_ * bgmm.degrees_of_freedom_[:, np.newaxis]
         assert_almost_equal(
@@ -318,7 +320,7 @@ def test_compare_covar_type():
             tol=1e-7,
         )
         bgmm._check_parameters(X)
-        bgmm._initialize_parameters(X, np.random.RandomState(0))
+        bgmm._initialize_parameters(X, np.random.RandomState(0), xp=xp)
 
         spherical_covariances = bgmm.covariances_ * bgmm.degrees_of_freedom_
         assert_almost_equal(spherical_covariances, np.mean(diag_covariances, 1))
