@@ -968,7 +968,7 @@ def _convert_to_logits(decision_values, eps=1e-8):
     return logits
 
 
-def _temperature_scaling(predictions, labels, sample_weight=None, beta_0=1.0):
+def _temperature_scaling(predictions, labels, sample_weight=None):
     """Probability Calibration with temperature scaling.
 
     Parameters
@@ -987,9 +987,6 @@ def _temperature_scaling(predictions, labels, sample_weight=None, beta_0=1.0):
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights. If None, then samples are equally weighted.
-
-    beta_0 : float, default=1.0
-       Initial inverse temperature to start the optimisation.
 
     Returns
     -------
@@ -1015,7 +1012,7 @@ def _temperature_scaling(predictions, labels, sample_weight=None, beta_0=1.0):
         sample_weight=sample_weight, n_classes=logits.shape[1]
     )
 
-    def log_loss(log_beta=np.log(beta_0)):
+    def log_loss(log_beta=0.0):
         """Compute the log loss as a parameter of the inverse temperature (beta).
 
         Parameters
@@ -1109,19 +1106,11 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
 class _TemperatureScaling(RegressorMixin, BaseEstimator):
     """Temperature scaling model.
 
-    Parameters
-    ----------
-    beta_0 : float, default=1.0
-       Initial inverse temperature to start the optimisation.
-
     Attributes
     ----------
     beta : float
         The optimized inverse temperature.
     """
-
-    def __init__(self, beta_0=1.0):
-        self.beta_0 = beta_0
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model using X, y as training data.
@@ -1152,7 +1141,7 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
             Returns an instance of self.
         """
         X, y = indexable(X, y)
-        self.beta = _temperature_scaling(X, y, sample_weight, self.beta_0)
+        self.beta = _temperature_scaling(X, y, sample_weight)
         return self
 
     def predict(self, X):
