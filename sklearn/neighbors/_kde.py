@@ -218,8 +218,16 @@ class KernelDensity(BaseEstimator):
 
         if isinstance(self.bandwidth, str):
             if self.bandwidth == "scott":
+                if X.ndim < 2:
+                    raise ValueError(
+                        "Bandwidth: {self.bandwidith} requires at least a 2D array for X, but got ndim={X.ndim} and shape={X.shape}. For univariate data reshape to (n_samples, 1)"
+                    )
                 self.bandwidth_ = X.shape[0] ** (-1 / (X.shape[1] + 4))
             elif self.bandwidth == "silverman":
+                if X.ndim < 2:
+                    raise ValueError(
+                        "Bandwidth: {self.bandwidith} requires at least a 2D array for X, but got ndim={X.ndim} and shape={X.shape}. For univariate data reshape to (n_samples, 1)"
+                    )
                 self.bandwidth_ = (X.shape[0] * (X.shape[1] + 2) / 4) ** (
                     -1 / (X.shape[1] + 4)
                 )
