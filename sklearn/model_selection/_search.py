@@ -31,10 +31,9 @@ from ..metrics._scorer import (
     get_scorer_names,
 )
 from ..utils import Bunch, check_random_state
-from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import HasMethods, Interval, StrOptions
+from ..utils._repr_html.estimator import _VisualBlock
 from ..utils._tags import get_tags
-from ..utils.deprecation import _deprecate_Xt_in_inverse_transform
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -690,7 +689,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         return self.best_estimator_.transform(X)
 
     @available_if(_search_estimator_has("inverse_transform"))
-    def inverse_transform(self, X=None, Xt=None):
+    def inverse_transform(self, X):
         """Call inverse_transform on the estimator with the best found params.
 
         Only available if the underlying estimator implements
@@ -702,20 +701,12 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Must fulfill the input assumptions of the
             underlying estimator.
 
-        Xt : indexable, length n_samples
-            Must fulfill the input assumptions of the
-            underlying estimator.
-
-            .. deprecated:: 1.5
-                `Xt` was deprecated in 1.5 and will be removed in 1.7. Use `X` instead.
-
         Returns
         -------
-        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
-            Result of the `inverse_transform` function for `Xt` based on the
+        X_original : {ndarray, sparse matrix} of shape (n_samples, n_features)
+            Result of the `inverse_transform` function for `X` based on the
             estimator with the best found parameters.
         """
-        X = _deprecate_Xt_in_inverse_transform(X, Xt)
         check_is_fitted(self)
         return self.best_estimator_.inverse_transform(X)
 
@@ -773,8 +764,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 - an optional `cv` parameter which can be used to e.g.
                   evaluate candidates on different dataset splits, or
                   evaluate candidates on subsampled data (as done in the
-                  SucessiveHaling estimators). By default, the original `cv`
-                  parameter is used, and it is available as a private
+                  Successive Halving estimators). By default, the original
+                  `cv` parameter is used, and it is available as a private
                   `_checked_cv_orig` attribute.
                 - an optional `more_results` dict. Each key will be added to
                   the `cv_results_` attribute. Values should be lists of
@@ -1337,6 +1328,11 @@ class GridSearchCV(BaseSearchCV):
         to see how to design a custom selection strategy using a callable
         via `refit`.
 
+        See :ref:`this example
+        <sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py>`
+        for an example of how to use ``refit=callable`` to balance model
+        complexity and cross-validated score.
+
         .. versionchanged:: 0.20
             Support for callable added.
 
@@ -1713,6 +1709,11 @@ class RandomizedSearchCV(BaseSearchCV):
         See ``scoring`` parameter to know more about multiple metric
         evaluation.
 
+        See :ref:`this example
+        <sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py>`
+        for an example of how to use ``refit=callable`` to balance model
+        complexity and cross-validated score.
+
         .. versionchanged:: 0.20
             Support for callable added.
 
@@ -1945,7 +1946,7 @@ class RandomizedSearchCV(BaseSearchCV):
     >>> clf = RandomizedSearchCV(logistic, distributions, random_state=0)
     >>> search = clf.fit(iris.data, iris.target)
     >>> search.best_params_
-    {'C': np.float64(2...), 'penalty': 'l1'}
+    {'C': np.float64(2.195), 'penalty': 'l1'}
     """
 
     _parameter_constraints: dict = {

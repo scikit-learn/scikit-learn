@@ -689,3 +689,6 @@ print(f"Benefit of logistic regression with a tuned threshold:  {business_score:
 # historical data (offline evaluation) should ideally be confirmed by A/B testing
 # on live data (online evaluation). Note however that A/B testing models is
 # beyond the scope of the scikit-learn library itself.
+
+# At the end, we disable the configuration flag for metadata routing::
+sklearn.set_config(enable_metadata_routing=False)

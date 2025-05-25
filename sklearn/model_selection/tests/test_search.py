@@ -27,7 +27,7 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.exceptions import FitFailedWarning
-from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import (
@@ -82,7 +82,10 @@ from sklearn.tests.metadata_routing_common import (
     check_recorded_metadata,
 )
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
+from sklearn.utils._array_api import (
+    _get_namespace_device_dtype_ids,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 from sklearn.utils._testing import (
     MinimalClassifier,
@@ -1342,7 +1345,7 @@ def test_unsupported_sample_weight_scorer():
     search_cv.set_params(scoring=fake_scorer)
     with pytest.warns(UserWarning, match="does not support sample_weight"):
         search_cv.fit(X, y, sample_weight=sw)
-    # multi-metric evalutation
+    # multi-metric evaluation
     search_cv.set_params(
         scoring=dict(fake=fake_scorer, accuracy="accuracy"), refit=False
     )
@@ -2419,9 +2422,9 @@ def test_search_cv__pairwise_property_delegated_to_base_estimator():
     for _pairwise_setting in [True, False]:
         est.set_params(pairwise=_pairwise_setting)
         cv = GridSearchCV(est, {"n_neighbors": [10]})
-        assert (
-            _pairwise_setting == cv.__sklearn_tags__().input_tags.pairwise
-        ), attr_message
+        assert _pairwise_setting == cv.__sklearn_tags__().input_tags.pairwise, (
+            attr_message
+        )
 
 
 def test_search_cv_pairwise_property_equivalence_of_precomputed():
@@ -2659,43 +2662,21 @@ def test_search_html_repr():
     search_cv = GridSearchCV(pipeline, param_grid=param_grid, refit=False)
     with config_context(display="diagram"):
         repr_html = search_cv._repr_html_()
-        assert "<pre>DummyClassifier()</pre>" in repr_html
+        assert "<div>DummyClassifier</div>" in repr_html
 
     # Fitted with `refit=False` shows the original pipeline
     search_cv.fit(X, y)
     with config_context(display="diagram"):
         repr_html = search_cv._repr_html_()
-        assert "<pre>DummyClassifier()</pre>" in repr_html
+        assert "<div>DummyClassifier</div>" in repr_html
 
     # Fitted with `refit=True` shows the best estimator
     search_cv = GridSearchCV(pipeline, param_grid=param_grid, refit=True)
     search_cv.fit(X, y)
     with config_context(display="diagram"):
         repr_html = search_cv._repr_html_()
-        assert "<pre>DummyClassifier()</pre>" not in repr_html
-        assert "<pre>LogisticRegression()</pre>" in repr_html
-
-
-# TODO(1.7): remove this test
-@pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
-def test_inverse_transform_Xt_deprecation(SearchCV):
-    clf = MockClassifier()
-    search = SearchCV(clf, {"foo_param": [1, 2, 3]}, cv=2, verbose=3)
-
-    X2 = search.fit(X, y).transform(X)
-
-    with pytest.raises(TypeError, match="Missing required positional argument"):
-        search.inverse_transform()
-
-    with pytest.raises(TypeError, match="Cannot use both X and Xt. Use X only"):
-        search.inverse_transform(X=X2, Xt=X2)
-
-    with warnings.catch_warnings(record=True):
-        warnings.simplefilter("error")
-        search.inverse_transform(X2)
-
-    with pytest.warns(FutureWarning, match="Xt was renamed X in version 1.5"):
-        search.inverse_transform(Xt=X2)
+        assert "<div>DummyClassifier</div>" not in repr_html
+        assert "<div>LogisticRegression</div>" in repr_html
 
 
 # Metadata Routing Tests
@@ -2876,7 +2857,9 @@ def test_cv_results_multi_size_array():
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
 def test_array_api_search_cv_classifier(SearchCV, array_namespace, device, dtype):
@@ -2908,7 +2891,7 @@ ordinal_encoder = OrdinalEncoder()
 
 # If we construct this directly via `MaskedArray`, the list of tuples
 # gets auto-converted to a 2D array.
-ma_with_tuples = np.ma.MaskedArray(np.empty(2), mask=True, dtype=object)
+ma_with_tuples = np.ma.MaskedArray(np.empty(2), mask=True, dtype=object)  # type: ignore[var-annotated]
 ma_with_tuples[0] = (1, 2)
 ma_with_tuples[1] = (3, 4)
 
