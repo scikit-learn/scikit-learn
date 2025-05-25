@@ -1025,8 +1025,14 @@ cdef class RandomSparseSplitter(Splitter):
     ) except -1:
         Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories)
         self.partitioner = SparsePartitioner(
-            X, self.samples, self.n_samples, self.feature_values, missing_values_in_feature_mask, n_categories, self.breiman_shortcut
+            X, self.samples,
+            self.n_samples,
+            self.feature_values,
+            missing_values_in_feature_mask,
+            n_categories,
+            self.breiman_shortcut
         )
+
     cdef int node_split(
             self,
             ParentInfo* parent_record,

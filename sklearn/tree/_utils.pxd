@@ -73,7 +73,6 @@ cdef struct ParentInfo:
     intp_t n_constant_features      # the number of constant features found in parent
 
 
-
 cdef enum:
     # Max value for our rand_r replacement (near the bottom).
     # We don't use RAND_MAX because it's different across platforms and

@@ -48,7 +48,11 @@ cdef class Splitter:
     cdef const float64_t[:] sample_weight
 
     # Whether or not to sort categories by probabilities to split categorical
-    # features using the Breiman shortcut
+    # features using the Breiman shortcut;
+    # Used to accelerate finding a greedy categorical split for binary classification
+    # with Gini Impurity
+    # or univariate regression with MSE.
+    # XXX: This could be a compile-time check with C++ 17's SFINAE
     cdef bint breiman_shortcut
 
     # We know the number of categories within our dataset across each feature.
