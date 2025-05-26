@@ -843,11 +843,6 @@ See :ref:`sphx_glr_auto_examples_linear_model_plot_ard.py` for a worked-out comp
 
 See :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py` for a comparison between various methods - Lasso, ARD and ElasticNet - on correlated data.
 
-.. rubric:: Examples
-
-* :ref:`sphx_glr_auto_examples_linear_model_plot_ard.py`
-
-
 .. rubric:: References
 
 .. [1] Christopher M. Bishop: Pattern Recognition and Machine Learning, Chapter 7.2.1
