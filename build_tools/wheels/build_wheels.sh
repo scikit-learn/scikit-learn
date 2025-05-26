@@ -38,8 +38,8 @@ if [[ $(uname) == "Darwin" ]]; then
         OPENMP_URL="https://anaconda.org/conda-forge/llvm-openmp/11.1.0/download/osx-64/llvm-openmp-11.1.0-hda6cdc1_1.tar.bz2"
     fi
 
-    sudo conda create -n build $OPENMP_URL
-    PREFIX="$CONDA_HOME/envs/build"
+    conda create -n build $OPENMP_URL
+    PREFIX="$HOME/miniconda3/envs/build"
 
     export CC=/usr/bin/clang
     export CXX=/usr/bin/clang++
@@ -53,7 +53,7 @@ if [[ "$CIBW_FREE_THREADED_SUPPORT" =~ [tT]rue ]]; then
     # Numpy, scipy, Cython only have free-threaded wheels on scientific-python-nightly-wheels
     # TODO: remove this after CPython 3.13 is released (scheduled October 2024)
     # and our dependencies have free-threaded wheels on PyPI
-    export CIBW_BUILD_FRONTEND='pip; args: --pre --extra-index-url "https://pypi.anaconda.org/scientific-python-nightly-wheels/simple"'
+    export CIBW_BUILD_FRONTEND='pip; args: --pre --extra-index-url "https://pypi.anaconda.org/scientific-python-nightly-wheels/simple" --only-binary :all:'
 fi
 
 # The version of the built dependencies are specified

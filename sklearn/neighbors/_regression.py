@@ -191,9 +191,11 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         )
         self.weights = weights
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         # For cross-validation routines to split data correctly
-        return {"pairwise": self.metric == "precomputed"}
+        tags.input_tags.pairwise = self.metric == "precomputed"
+        return tags
 
     @_fit_context(
         # KNeighborsRegressor.metric is not validated yet
@@ -225,8 +227,10 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_queries, n_features), \
-                or (n_queries, n_indexed) if metric == 'precomputed'
-            Test samples.
+                or (n_queries, n_indexed) if metric == 'precomputed', or None
+            Test samples. If `None`, predictions for all indexed points are
+            returned; in this case, points are not considered their own
+            neighbors.
 
         Returns
         -------
@@ -455,8 +459,10 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_queries, n_features), \
-                or (n_queries, n_indexed) if metric == 'precomputed'
-            Test samples.
+                or (n_queries, n_indexed) if metric == 'precomputed', or None
+            Test samples. If `None`, predictions for all indexed points are
+            returned; in this case, points are not considered their own
+            neighbors.
 
         Returns
         -------

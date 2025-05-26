@@ -17,7 +17,13 @@ from ..utils._missing import is_pandas_na, is_scalar_nan
 from ..utils._param_validation import MissingValues, StrOptions
 from ..utils.fixes import _mode
 from ..utils.sparsefuncs import _get_median
-from ..utils.validation import FLOAT_DTYPES, _check_feature_names_in, check_is_fitted
+from ..utils.validation import (
+    FLOAT_DTYPES,
+    _check_feature_names_in,
+    _check_n_features,
+    check_is_fitted,
+    validate_data,
+)
 
 
 def _check_inputs_dtype(X, missing_values):
@@ -139,8 +145,10 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
         indicator_names = self.indicator_.get_feature_names_out(input_features)
         return np.concatenate([names, indicator_names])
 
-    def _more_tags(self):
-        return {"allow_nan": is_scalar_nan(self.missing_values)}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = is_scalar_nan(self.missing_values)
+        return tags
 
 
 class SimpleImputer(_BaseImputer):
@@ -216,6 +224,11 @@ class SimpleImputer(_BaseImputer):
         in which case `fill_value` will be used instead.
 
         .. versionadded:: 1.2
+
+        .. versionchanged:: 1.6
+            Currently, when `keep_empty_feature=False` and `strategy="constant"`,
+            empty features are not dropped. This behaviour will change in version
+            1.8. Set `keep_empty_feature=True` to preserve this behaviour.
 
     Attributes
     ----------
@@ -328,7 +341,8 @@ class SimpleImputer(_BaseImputer):
             ensure_all_finite = True
 
         try:
-            X = self._validate_data(
+            X = validate_data(
+                self,
                 X,
                 reset=in_fit,
                 accept_sparse="csc",
@@ -377,16 +391,18 @@ class SimpleImputer(_BaseImputer):
                 fill_value_dtype = type(self.fill_value)
                 err_msg = (
                     f"fill_value={self.fill_value!r} (of type {fill_value_dtype!r}) "
-                    f"cannot be cast to the input data that is {X.dtype!r}. Make sure "
-                    "that both dtypes are of the same kind."
+                    f"cannot be cast to the input data that is {X.dtype!r}. "
+                    "If fill_value is a Python scalar, instead pass  a numpy scalar "
+                    "(e.g. fill_value=np.uint8(0) if your data is of type np.uint8). "
+                    "Make sure that both dtypes are of the same kind."
                 )
             elif not in_fit:
                 fill_value_dtype = self.statistics_.dtype
                 err_msg = (
                     f"The dtype of the filling value (i.e. {fill_value_dtype!r}) "
-                    f"cannot be cast to the input data that is {X.dtype!r}. Make sure "
-                    "that the dtypes of the input data is of the same kind between "
-                    "fit and transform."
+                    f"cannot be cast to the input data that is {X.dtype!r}. "
+                    "Make sure that the dtypes of the input data are of the same kind "
+                    "between fit and transform."
                 )
             else:
                 # By default, fill_value=None, and the replacement is always
@@ -449,6 +465,19 @@ class SimpleImputer(_BaseImputer):
         statistics = np.empty(X.shape[1])
 
         if strategy == "constant":
+            # TODO(1.8): Remove FutureWarning and add `np.nan` as a statistic
+            # for empty features to drop them later.
+            if not self.keep_empty_features and any(
+                [all(missing_mask[:, i].data) for i in range(missing_mask.shape[1])]
+            ):
+                warnings.warn(
+                    "Currently, when `keep_empty_feature=False` and "
+                    '`strategy="constant"`, empty features are not dropped. '
+                    "This behaviour will change in version 1.8. Set "
+                    "`keep_empty_feature=True` to preserve this behaviour.",
+                    FutureWarning,
+                )
+
             # for constant strategy, self.statistics_ is used to store
             # fill_value in each column
             statistics.fill(fill_value)
@@ -539,6 +568,17 @@ class SimpleImputer(_BaseImputer):
 
         # Constant
         elif strategy == "constant":
+            # TODO(1.8): Remove FutureWarning and add `np.nan` as a statistic
+            # for empty features to drop them later.
+            if not self.keep_empty_features and ma.getmask(masked_X).all(axis=0).any():
+                warnings.warn(
+                    "Currently, when `keep_empty_feature=False` and "
+                    '`strategy="constant"`, empty features are not dropped. '
+                    "This behaviour will change in version 1.8. Set "
+                    "`keep_empty_feature=True` to preserve this behaviour.",
+                    FutureWarning,
+                )
+
             # for constant strategy, self.statistcs_ is used to store
             # fill_value in each column
             return np.full(X.shape[1], fill_value, dtype=X.dtype)
@@ -699,11 +739,13 @@ class SimpleImputer(_BaseImputer):
         X_original[full_mask] = self.missing_values
         return X_original
 
-    def _more_tags(self):
-        return {
-            "allow_nan": is_pandas_na(self.missing_values)
-            or is_scalar_nan(self.missing_values)
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        tags.input_tags.allow_nan = is_pandas_na(self.missing_values) or is_scalar_nan(
+            self.missing_values
+        )
+        return tags
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
@@ -866,7 +908,8 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             imputer_mask.eliminate_zeros()
 
             if self.features == "missing-only":
-                n_missing = imputer_mask.getnnz(axis=0)
+                # count number of True values in each row.
+                n_missing = imputer_mask.sum(axis=0)
 
             if self.sparse is False:
                 imputer_mask = imputer_mask.toarray()
@@ -896,7 +939,8 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             ensure_all_finite = True
         else:
             ensure_all_finite = "allow-nan"
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             reset=in_fit,
             accept_sparse=("csc", "csr"),
@@ -957,7 +1001,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             X = self._validate_input(X, in_fit=True)
         else:
             # only create `n_features_in_` in the precomputed case
-            self._check_n_features(X, reset=True)
+            _check_n_features(self, X, reset=True)
 
         self._n_features = X.shape[1]
 
@@ -1086,9 +1130,10 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             dtype=object,
         )
 
-    def _more_tags(self):
-        return {
-            "allow_nan": True,
-            "X_types": ["2darray", "string"],
-            "preserves_dtype": [],
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        tags.input_tags.string = True
+        tags.input_tags.sparse = True
+        tags.transformer_tags.preserves_dtype = []
+        return tags

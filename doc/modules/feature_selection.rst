@@ -131,7 +131,7 @@ is to select features by recursively considering smaller and smaller sets of
 features. First, the estimator is trained on the initial set of features and
 the importance of each feature is obtained either through any specific attribute
 (such as ``coef_``, ``feature_importances_``) or callable. Then, the least important
-features are pruned from current set of features. That procedure is recursively
+features are pruned from the current set of features. That procedure is recursively
 repeated on the pruned set until the desired number of features to select is
 eventually reached.
 
@@ -139,7 +139,7 @@ eventually reached.
 number of features. In more details, the number of features selected is tuned
 automatically by fitting an :class:`RFE` selector on the different
 cross-validation splits (provided by the `cv` parameter). The performance
-of the :class:`RFE` selector are evaluated using `scorer` for different number
+of the :class:`RFE` selector is evaluated using `scorer` for different numbers
 of selected features and aggregated together. Finally, the scores are averaged
 across folds and the number of features selected is set to the number of
 features that maximize the cross-validation score.
@@ -162,7 +162,7 @@ Feature selection using SelectFromModel
 estimator that assigns importance to each feature through a specific attribute (such as
 ``coef_``, ``feature_importances_``) or via an `importance_getter` callable after fitting.
 The features are considered unimportant and removed if the corresponding
-importance of the feature values are below the provided
+importance of the feature values is below the provided
 ``threshold`` parameter. Apart from specifying the threshold numerically,
 there are built-in heuristics for finding a threshold using a string argument.
 Available heuristics are "mean", "median" and float multiples of these like
@@ -203,7 +203,7 @@ for classification::
   >>> X_new.shape
   (150, 3)
 
-With SVMs and logistic-regression, the parameter C controls the sparsity:
+With SVMs and logistic regression, the parameter C controls the sparsity:
 the smaller C the fewer features selected. With Lasso, the higher the
 alpha parameter, the fewer features selected.
 
@@ -224,9 +224,12 @@ alpha parameter, the fewer features selected.
   noise, the smallest absolute value of non-zero coefficients, and the
   structure of the design matrix X. In addition, the design matrix must
   display certain specific properties, such as not being too correlated.
+  On the use of Lasso for sparse signal recovery, see this example on
+  compressive sensing:
+  :ref:`sphx_glr_auto_examples_applications_plot_tomography_l1_reconstruction.py`.
 
   There is no general rule to select an alpha parameter for recovery of
-  non-zero coefficients. It can by set by cross-validation
+  non-zero coefficients. It can be set by cross-validation
   (:class:`~sklearn.linear_model.LassoCV` or
   :class:`~sklearn.linear_model.LassoLarsCV`), though this may lead to
   under-penalized models: including a small number of non-relevant variables
@@ -259,7 +262,7 @@ meta-transformer)::
   >>> clf = ExtraTreesClassifier(n_estimators=50)
   >>> clf = clf.fit(X, y)
   >>> clf.feature_importances_  # doctest: +SKIP
-  array([ 0.04...,  0.05...,  0.4...,  0.4...])
+  array([ 0.04,  0.05,  0.4,  0.4])
   >>> model = SelectFromModel(clf, prefit=True)
   >>> X_new = model.transform(X)
   >>> X_new.shape               # doctest: +SKIP
@@ -270,8 +273,9 @@ meta-transformer)::
 * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances.py`: example on
   synthetic data showing the recovery of the actually meaningful features.
 
-* :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`: example
-  on face recognition data.
+* :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`: example
+  discussing the caveats of using impurity-based feature importances as a proxy for
+  feature relevance.
 
 .. _sequential_feature_selection:
 

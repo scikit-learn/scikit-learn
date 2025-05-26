@@ -20,8 +20,8 @@ from ..utils._metadata_requests import (
     process_routing,
 )
 from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
-from ..utils._tags import _safe_tags
-from ..utils.validation import check_is_fitted
+from ..utils._tags import get_tags
+from ..utils.validation import check_is_fitted, validate_data
 from ._base import SelectorMixin
 
 
@@ -65,6 +65,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         consecutive feature additions or removals, stop adding or removing.
 
         `tol` can be negative when removing features using `direction="backward"`.
+        `tol` is required to be strictly positive when doing forward selection.
         It can be useful to reduce the number of features at the cost of a small
         decrease in the score.
 
@@ -76,13 +77,14 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         Whether to perform forward selection or backward selection.
 
     scoring : str or callable, default=None
-        A single str (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring`) to evaluate the predictions on the test set.
+        Scoring method to use for cross-validation. Options:
 
-        NOTE that when using a custom scorer, it should return a single
-        value.
-
-        If None, the estimator's score method is used.
+        - str: see :ref:`scoring_string_names` for options.
+        - callable: a scorer callable object (e.g., function) with signature
+          ``scorer(estimator, X, y)`` that returns a single value.
+          See :ref:`scoring_callable` for details.
+        - `None`: the `estimator`'s
+          :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -226,12 +228,13 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             Returns the instance itself.
         """
         _raise_for_params(params, self, "fit")
-        tags = self._get_tags()
-        X = self._validate_data(
+        tags = self.__sklearn_tags__()
+        X = validate_data(
+            self,
             X,
             accept_sparse="csc",
             ensure_min_features=2,
-            ensure_all_finite=not tags.get("allow_nan", True),
+            ensure_all_finite=not tags.input_tags.allow_nan,
         )
         n_features = X.shape[1]
 
@@ -250,7 +253,9 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             self.n_features_to_select_ = int(n_features * self.n_features_to_select)
 
         if self.tol is not None and self.tol < 0 and self.direction == "forward":
-            raise ValueError("tol must be positive when doing forward selection")
+            raise ValueError(
+                "tol must be strictly positive when doing forward selection"
+            )
 
         cv = check_cv(self.cv, y, classifier=is_classifier(self.estimator))
 
@@ -322,10 +327,11 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         check_is_fitted(self)
         return self.support_
 
-    def _more_tags(self):
-        return {
-            "allow_nan": _safe_tags(self.estimator, key="allow_nan"),
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = get_tags(self.estimator).input_tags.allow_nan
+        tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
+        return tags
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.

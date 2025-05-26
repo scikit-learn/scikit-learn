@@ -2,7 +2,7 @@ _binary_tree_pxi = custom_target(
   '_binary_tree_pxi',
   output: '_binary_tree.pxi',
   input: '_binary_tree.pxi.tp',
-  command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
+  command: [tempita, '@INPUT@', '-o', '@OUTDIR@'],
 )
 
 # .pyx is generated so this is needed to make Cython compilation work. The pxi
@@ -20,7 +20,7 @@ foreach name: name_list
     name + '_pyx',
     output: name + '.pyx',
     input: name + '.pyx.tp',
-    command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
+    command: [tempita, '@INPUT@', '-o', '@OUTDIR@'],
     # TODO in principle this should go in py.exension_module below. This is
     # temporary work-around for dependency issue with .pyx.tp files. For more
     # details, see https://github.com/mesonbuild/meson/issues/13212
@@ -28,9 +28,8 @@ foreach name: name_list
   )
   py.extension_module(
     name,
-    pyx,
+    cython_gen.process(pyx),
     dependencies: [np_dep],
-    cython_args: cython_args,
     subdir: 'sklearn/neighbors',
     install: true
 )
@@ -38,9 +37,9 @@ endforeach
 
 neighbors_extension_metadata = {
   '_partition_nodes':
-      {'sources': ['_partition_nodes.pyx'],
-       'override_options': ['cython_language=cpp'], 'dependencies': [np_dep]},
-  '_quad_tree': {'sources': ['_quad_tree.pyx'], 'dependencies': [np_dep]},
+      {'sources': [cython_gen_cpp.process('_partition_nodes.pyx')],
+       'dependencies': [np_dep]},
+  '_quad_tree': {'sources': [cython_gen.process('_quad_tree.pyx')], 'dependencies': [np_dep]},
 }
 
 foreach ext_name, ext_dict : neighbors_extension_metadata
@@ -48,8 +47,6 @@ foreach ext_name, ext_dict : neighbors_extension_metadata
     ext_name,
     [ext_dict.get('sources'), utils_cython_tree],
     dependencies: ext_dict.get('dependencies'),
-    override_options : ext_dict.get('override_options', []),
-    cython_args: cython_args,
     subdir: 'sklearn/neighbors',
     install: true
   )

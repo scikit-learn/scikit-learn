@@ -10,9 +10,15 @@ from sklearn.metrics import DetCurveDisplay, det_curve
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
 @pytest.mark.parametrize("with_sample_weight", [True, False])
+@pytest.mark.parametrize("drop_intermediate", [True, False])
 @pytest.mark.parametrize("with_strings", [True, False])
 def test_det_curve_display(
-    pyplot, constructor_name, response_method, with_sample_weight, with_strings
+    pyplot,
+    constructor_name,
+    response_method,
+    with_sample_weight,
+    drop_intermediate,
+    with_strings,
 ):
     X, y = load_iris(return_X_y=True)
     # Binarize the data with only the two first classes
@@ -42,6 +48,7 @@ def test_det_curve_display(
         "name": lr.__class__.__name__,
         "alpha": 0.8,
         "sample_weight": sample_weight,
+        "drop_intermediate": drop_intermediate,
         "pos_label": pos_label,
     }
     if constructor_name == "from_estimator":
@@ -53,16 +60,17 @@ def test_det_curve_display(
         y,
         y_pred,
         sample_weight=sample_weight,
+        drop_intermediate=drop_intermediate,
         pos_label=pos_label,
     )
 
-    assert_allclose(disp.fpr, fpr)
-    assert_allclose(disp.fnr, fnr)
+    assert_allclose(disp.fpr, fpr, atol=1e-7)
+    assert_allclose(disp.fnr, fnr, atol=1e-7)
 
     assert disp.estimator_name == "LogisticRegression"
 
     # cannot fail thanks to pyplot fixture
-    import matplotlib as mpl  # noqal
+    import matplotlib as mpl
 
     assert isinstance(disp.line_, mpl.lines.Line2D)
     assert disp.line_.get_alpha() == 0.8

@@ -250,7 +250,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         Returns
         -------
         preds : ndarray of shape (n_samples,)
-            Predictions of the first class seens in `classes_`.
+            Predictions of the first class seen in `classes_`.
         """
         if self.methods_to_check == "all" or "predict" in self.methods_to_check:
             X, y = self._check_X_y(X)
@@ -335,14 +335,18 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
             score = 0.0
         return score
 
-    def _more_tags(self):
-        return {"_skip_test": True, "X_types": ["1dlabel"]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._skip_test = True
+        tags.input_tags.two_d_array = False
+        tags.target_tags.one_d_labels = True
+        return tags
 
 
 # Deactivate key validation for CheckingClassifier because we want to be able to
 # call fit with arbitrary fit_params and record them. Without this change, we
 # would get an error because those arbitrary params are not expected.
-CheckingClassifier.set_fit_request = RequestMethod(  # type: ignore
+CheckingClassifier.set_fit_request = RequestMethod(  # type: ignore[assignment,method-assign]
     name="fit", keys=[], validate_keys=False
 )
 
@@ -368,8 +372,10 @@ class NoSampleWeightWrapper(BaseEstimator):
     def predict_proba(self, X):
         return self.est.predict_proba(X)
 
-    def _more_tags(self):
-        return {"_skip_test": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._skip_test = True
+        return tags
 
 
 def _check_response(method):

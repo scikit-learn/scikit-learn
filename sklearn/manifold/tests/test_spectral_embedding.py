@@ -1,3 +1,4 @@
+import itertools
 from unittest.mock import Mock
 
 import numpy as np
@@ -28,7 +29,7 @@ from sklearn.utils.fixes import (
 from sklearn.utils.fixes import laplacian as csgraph_laplacian
 
 try:
-    from pyamg import smoothed_aggregation_solver  # noqa
+    from pyamg import smoothed_aggregation_solver  # noqa: F401
 
     pyamg_available = True
 except ImportError:
@@ -54,7 +55,7 @@ S, true_labels = make_blobs(
 
 def _assert_equal_with_sign_flipping(A, B, tol=0.0):
     """Check array A and B are equal with possible sign flipping on
-    each columns"""
+    each column"""
     tol_squared = tol**2
     for A_col, B_col in zip(A.T, B.T):
         assert (
@@ -71,7 +72,7 @@ def test_sparse_graph_connected_component(coo_container):
     p = rng.permutation(n_samples)
     connections = []
 
-    for start, stop in zip(boundaries[:-1], boundaries[1:]):
+    for start, stop in itertools.pairwise(boundaries):
         group = p[start:stop]
         # Connect all elements within the group at least once via an
         # arbitrary path that spans the group.
@@ -91,7 +92,7 @@ def test_sparse_graph_connected_component(coo_container):
     affinity = coo_container((data, (row_idx, column_idx)))
     affinity = 0.5 * (affinity + affinity.T)
 
-    for start, stop in zip(boundaries[:-1], boundaries[1:]):
+    for start, stop in itertools.pairwise(boundaries):
         component_1 = _graph_connected_component(affinity, p[start])
         component_size = stop - start
         assert component_1.sum() == component_size
