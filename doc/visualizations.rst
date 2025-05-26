@@ -132,5 +132,6 @@ Display Objects
    metrics.PrecisionRecallDisplay
    metrics.PredictionErrorDisplay
    metrics.RocCurveDisplay
+   metrics.CAPCurveDisplay
    model_selection.LearningCurveDisplay
    model_selection.ValidationCurveDisplay

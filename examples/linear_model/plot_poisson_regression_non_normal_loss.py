@@ -489,51 +489,50 @@ plt.tight_layout()
 #
 # This plot is called a Lorenz curve and can be summarized by the Gini index:
 
-from sklearn.metrics import auc
-
-
-def lorenz_curve(y_true, y_pred, exposure):
-    y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
-    exposure = np.asarray(exposure)
-
-    # order samples by increasing predicted risk:
-    ranking = np.argsort(y_pred)
-    ranked_frequencies = y_true[ranking]
-    ranked_exposure = exposure[ranking]
-    cumulated_claims = np.cumsum(ranked_frequencies * ranked_exposure)
-    cumulated_claims /= cumulated_claims[-1]
-    cumulated_exposure = np.cumsum(ranked_exposure)
-    cumulated_exposure /= cumulated_exposure[-1]
-    return cumulated_exposure, cumulated_claims
-
+from sklearn.metrics import CAPCurveDisplay, auc
 
 fig, ax = plt.subplots(figsize=(8, 8))
 
 for model in [dummy, ridge_glm, poisson_glm, poisson_gbrt]:
     y_pred = model.predict(df_test)
-    cum_exposure, cum_claims = lorenz_curve(
-        df_test["Frequency"], y_pred, df_test["Exposure"]
+    y_true = df_test["Frequency"].values
+    sample_weight = df_test["Exposure"].values
+
+    disp = CAPCurveDisplay.from_predictions(
+        y_true,
+        y_pred,
+        sample_weight=sample_weight,
+        ax=ax,
+        plot_chance_level=False,
+        plot_perfect=False,
     )
-    gini = 1 - 2 * auc(cum_exposure, cum_claims)
-    label = "{} (Gini: {:.2f})".format(model[-1], gini)
-    ax.plot(cum_exposure, cum_claims, linestyle="-", label=label)
+
+    gini = 1 - 2 * auc(disp.cumulative_total, disp.y_true_cumulative)
+    disp.line_.set_label(f"{model[-1]} (Gini={gini:.2f})")
 
 # Oracle model: y_pred == y_test
-cum_exposure, cum_claims = lorenz_curve(
-    df_test["Frequency"], df_test["Frequency"], df_test["Exposure"]
+disp = CAPCurveDisplay.from_predictions(
+    y_true,
+    y_true,
+    sample_weight=sample_weight,
+    name="Oracle model",
+    ax=ax,
+    plot_chance_level=False,
+    plot_perfect=False,
+    ls="--",
+    color="k",
 )
-gini = 1 - 2 * auc(cum_exposure, cum_claims)
-label = "Oracle (Gini: {:.2f})".format(gini)
-ax.plot(cum_exposure, cum_claims, linestyle="-.", color="gray", label=label)
+gini = 1 - 2 * auc(disp.cumulative_total, disp.y_true_cumulative)
+ax.get_lines()[-1].set_label(f"Oracle model (Gini={gini:.2f})")
 
-# Random Baseline
-ax.plot([0, 1], [0, 1], linestyle="--", color="black", label="Random baseline")
 ax.set(
-    title="Lorenz curves by model",
+    title="Lorenz curves",
     xlabel="Cumulative proportion of exposure (from safest to riskiest)",
     ylabel="Cumulative proportion of claims",
 )
+
 ax.legend(loc="upper left")
+
 
 # %%
 # As expected, the dummy regressor is unable to correctly rank the samples and
