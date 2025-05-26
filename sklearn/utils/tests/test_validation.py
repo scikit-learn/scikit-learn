@@ -38,7 +38,6 @@ from sklearn.utils._array_api import (
     _convert_to_numpy,
     _get_namespace_device_dtype_ids,
     _is_numpy_namespace,
-    get_namespace,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._mocking import (
@@ -1596,16 +1595,56 @@ def test_check_psd_eigenvalues_invalid(lambdas, err_type, err_msg):
         _check_psd_eigenvalues(lambdas)
 
 
+def test_check_sample_weight():
+    # check array order
+    sample_weight = np.ones(10)[::2]
+    assert not sample_weight.flags["C_CONTIGUOUS"]
+    sample_weight = _check_sample_weight(sample_weight, X=np.ones((5, 1)))
+    assert sample_weight.flags["C_CONTIGUOUS"]
+
+    # check None input
+    sample_weight = _check_sample_weight(None, X=np.ones((5, 2)))
+    assert_allclose(sample_weight, np.ones(5))
+
+    # check numbers input
+    sample_weight = _check_sample_weight(2.0, X=np.ones((5, 2)))
+    assert_allclose(sample_weight, 2 * np.ones(5))
+
+    # check wrong number of dimensions
+    with pytest.raises(ValueError, match="Sample weights must be 1D array or scalar"):
+        _check_sample_weight(np.ones((2, 4)), X=np.ones((2, 2)))
+
+    # check incorrect n_samples
+    msg = r"sample_weight.shape == \(4,\), expected \(2,\)!"
+    with pytest.raises(ValueError, match=msg):
+        _check_sample_weight(np.ones(4), X=np.ones((2, 2)))
+
+    # float32 dtype is preserved
+    X = np.ones((5, 2))
+    sample_weight = np.ones(5, dtype=np.float32)
+    sample_weight = _check_sample_weight(sample_weight, X)
+    assert sample_weight.dtype == np.float32
+
+    # int dtype will be converted to float64 instead
+    X = np.ones((5, 2), dtype=int)
+    sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
+    assert sample_weight.dtype == np.float64
+
+    # check negative weight when ensure_non_negative=True
+    X = np.ones((5, 2))
+    sample_weight = np.ones(_num_samples(X))
+    sample_weight[-1] = -10
+    err_msg = "Negative values in data passed to `sample_weight`"
+    with pytest.raises(ValueError, match=err_msg):
+        _check_sample_weight(sample_weight, X, ensure_non_negative=True)
+
+
 @pytest.mark.parametrize(
     "array_namespace,device,dtype", yield_namespace_device_dtype_combinations()
 )
-@pytest.mark.parametrize("array_api_dispatch", [True, False])
-def test_check_sample_weight(array_namespace, device, dtype, array_api_dispatch):
+def test_check_sample_weight_array_api(array_namespace, device, dtype):
     xp = _array_api_for_tests(array_namespace, device)
-    with config_context(array_api_dispatch=array_api_dispatch):
-        # If array_api_dispatch is not turned on the results should be a numpy
-        # array
-        res_xp = get_namespace(np.ones(0))[0] if not array_api_dispatch else xp
+    with config_context(array_api_dispatch=True):
         # check array order
         sample_weight = xp.ones(10)[::2]
         if _is_numpy_namespace(xp):
@@ -1616,11 +1655,11 @@ def test_check_sample_weight(array_namespace, device, dtype, array_api_dispatch)
 
         # check None input
         sample_weight = _check_sample_weight(None, X=xp.ones((5, 2)))
-        assert_allclose(_convert_to_numpy(sample_weight, res_xp), np.ones(5))
+        assert_allclose(_convert_to_numpy(sample_weight, xp), np.ones(5))
 
         # check numbers input
         sample_weight = _check_sample_weight(2.0, X=xp.ones((5, 2)))
-        assert_allclose(_convert_to_numpy(sample_weight, res_xp), 2 * np.ones(5))
+        assert_allclose(_convert_to_numpy(sample_weight, xp), 2 * np.ones(5))
 
         # check wrong number of dimensions
         with pytest.raises(
@@ -1629,7 +1668,7 @@ def test_check_sample_weight(array_namespace, device, dtype, array_api_dispatch)
             _check_sample_weight(xp.ones((2, 4)), X=xp.ones((2, 2)))
 
         # check incorrect n_samples
-        correct_shape = xp.ones(4).shape if array_api_dispatch else "(4,)"
+        correct_shape = xp.ones(4).shape
         msg = re.escape(f"sample_weight.shape == {correct_shape}, expected (2,)!")
         with pytest.raises(ValueError, match=msg):
             _check_sample_weight(xp.ones(4), X=xp.ones((2, 2)))
@@ -1638,18 +1677,7 @@ def test_check_sample_weight(array_namespace, device, dtype, array_api_dispatch)
         X = xp.ones((5, 2))
         sample_weight = xp.ones(5, dtype=xp.float32)
         sample_weight = _check_sample_weight(sample_weight, X)
-        if res_xp == xp:
-            # when array_api_dispatch=False
-            # conversion to numpy of the input may not always preserve
-            # the dtype
-            # (this doesn't work for array-api-strict which returns float64 here)
-            assert sample_weight.dtype == res_xp.float32
-
-        # int dtype will be converted to float64 instead
-        # (numpy only check)
-        X = np.ones((5, 2), dtype=int)
-        sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
-        assert sample_weight.dtype == np.float64
+        assert sample_weight.dtype == xp.float32
 
         # check negative weight when ensure_non_negative=True
         X = xp.ones((5, 2))
@@ -1660,27 +1688,39 @@ def test_check_sample_weight(array_namespace, device, dtype, array_api_dispatch)
             _check_sample_weight(sample_weight, X, ensure_non_negative=True)
 
 
+@pytest.mark.parametrize("y_true", [[0], [0, 1], [-1, 1], [1, 1, 1], [-1, -1, -1]])
+def test_check_pos_label_consistency(y_true):
+    assert _check_pos_label_consistency(None, y_true) == 1
+
+
 @pytest.mark.parametrize(
     "array_namespace,device,dtype", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize("y_true", [[0], [0, 1], [-1, 1], [1, 1, 1], [-1, -1, -1]])
-def test_check_pos_label_consistency(array_namespace, device, dtype, y_true):
+def test_check_pos_label_consistency_array_api(array_namespace, device, dtype, y_true):
     xp = _array_api_for_tests(array_namespace, device)
     with config_context(array_api_dispatch=True):
         arr = xp.asarray(y_true)
         assert _check_pos_label_consistency(None, arr) == 1
 
 
+@pytest.mark.parametrize("y_true", [[2, 3, 4], [-10], [0, -1]])
+def test_check_pos_label_consistency_invalid(y_true):
+    with pytest.raises(ValueError, match="y_true takes value in"):
+        _check_pos_label_consistency(None, y_true)
+    # Make sure we only raise if pos_label is None
+    assert _check_pos_label_consistency("a", y_true) == "a"
+
+
 @pytest.mark.parametrize(
     "array_namespace,device,dtype", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize("y_true", [[2, 3, 4], [-10], [0, -1]])
-@pytest.mark.parametrize("array_api_dispatch", [True, False])
-def test_check_pos_label_consistency_invalid(
-    array_namespace, device, dtype, y_true, array_api_dispatch
+def test_check_pos_label_consistency_invalid_array_api(
+    array_namespace, device, dtype, y_true
 ):
     xp = _array_api_for_tests(array_namespace, device)
-    with config_context(array_api_dispatch=array_api_dispatch):
+    with config_context(array_api_dispatch=True):
         arr = xp.asarray(y_true)
         with pytest.raises(ValueError, match="y_true takes value in"):
             _check_pos_label_consistency(None, arr)
