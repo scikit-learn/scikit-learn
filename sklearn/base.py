@@ -210,11 +210,13 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
             # No explicit constructor to introspect
             return []
         attributes = inspect.getmembers(init)
+
         fitted_attributes = {
             name: value
             for name, value in attributes
             if not name.startswith("_") and name.endswith("_")
         }
+
         arrays_attr = {
             name: (type(value).__name__, value.shape)
             for name, value in fitted_attributes.items()
@@ -223,7 +225,6 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
         fitted_attributes = {
             key: type(value).__name__ for key, value in fitted_attributes.items()
         }
-
         out = fitted_attributes | arrays_attr
 
         return AttrsDict(out)

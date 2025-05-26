@@ -1,7 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from collections import UserDict
 
 from sklearn.utils._repr_html.base import ReprHTMLMixin
 
@@ -29,8 +28,8 @@ def _fitted_attr_html_repr(fitted_attributes):
     ROW_TEMPLATE = """
        <tr class="{name}">
 
-           <td class="param">{name}&nbsp;</td>
-           <td class="value">{value}</td>
+           <td>{name}&nbsp;</td>
+           <td>{value}</td>
        </tr>
     """
 
@@ -42,7 +41,7 @@ def _fitted_attr_html_repr(fitted_attributes):
     return HTML_TEMPLATE.format(rows="\n".join(rows))
 
 
-class AttrsDict(ReprHTMLMixin, UserDict):
+class AttrsDict(ReprHTMLMixin, dict):
     """Dictionary-like class to store and provide an HTML representation.
 
     It builds an HTML structure to be used with Jupyter notebooks or similar
@@ -57,6 +56,6 @@ class AttrsDict(ReprHTMLMixin, UserDict):
 
     _html_repr = _fitted_attr_html_repr
 
-    def __init__(self, fitted_attributes=None):
-        super().__init__(fitted_attributes or {})
-        self.fitted_attributes = fitted_attributes
+    # def __init__(self, fitted_attributes=None):
+    # super().__init__(fitted_attributes)
+    # self.fitted_attributes = fitted_attributes

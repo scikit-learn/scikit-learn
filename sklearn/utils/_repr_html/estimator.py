@@ -211,11 +211,9 @@ def _write_label_html(
         )
 
         if params:
-            fmt_str = "".join([fmt_str, f"{params}</div>"])
+            fmt_str = "".join([fmt_str, f"{params}{attrs}</div>"])
         elif name_details and ("Pipeline" not in name):
             fmt_str = "".join([fmt_str, f"<pre>{name_details}</pre></div>"])
-        if is_fitted_css_class:
-            fmt_str = "".join([fmt_str, f"{attrs}"])
 
         out.write(fmt_str)
     else:
@@ -330,15 +328,14 @@ def _write_estimator_html(
                 estimator, "_get_params_html"
             ):
                 params = estimator._get_params_html(deep=False)._repr_html_inner()
-                # attrs = estimator._get_fitted_attr_html()._repr_html_inner()
+
             else:
                 params = ""
-                # attrs = ""
-
             if hasattr(estimator, "_get_fitted_attr_html"):
                 attrs = estimator._get_fitted_attr_html()._repr_html_inner()
             else:
                 attrs = ""
+
             _write_label_html(
                 out,
                 params,
@@ -394,8 +391,6 @@ def _write_estimator_html(
     elif est_block.kind == "single":
         if hasattr(estimator, "_get_params_html"):
             params = estimator._get_params_html()._repr_html_inner()
-            # attrs = estimator._get_fitted_attr_html()._repr_html_inner()
-
         else:
             params = ""
         if hasattr(estimator, "_get_fitted_attr_html"):
