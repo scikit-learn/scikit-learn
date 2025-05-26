@@ -55,7 +55,3 @@ class AttrsDict(ReprHTMLMixin, dict):
     """
 
     _html_repr = _fitted_attr_html_repr
-
-    # def __init__(self, fitted_attributes=None):
-    # super().__init__(fitted_attributes)
-    # self.fitted_attributes = fitted_attributes
