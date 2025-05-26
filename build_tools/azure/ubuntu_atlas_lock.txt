@@ -25,7 +25,7 @@ packaging==25.0
     #   meson-python
     #   pyproject-metadata
     #   pytest
-pluggy==1.5.0
+pluggy==1.6.0
     # via pytest
 pyproject-metadata==0.9.1
     # via meson-python

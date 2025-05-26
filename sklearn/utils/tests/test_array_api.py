@@ -294,7 +294,7 @@ def test_device_inspection():
         assert array1.device == device(array1, array1, array2)
 
 
-# TODO: add cupy to the list of libraries once the the following upstream issue
+# TODO: add cupy to the list of libraries once the following upstream issue
 # has been fixed:
 # https://github.com/cupy/cupy/issues/8180
 @skip_if_array_api_compat_not_configured
