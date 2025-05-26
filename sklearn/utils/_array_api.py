@@ -669,23 +669,32 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
     return sum_ / scale
 
 
-def _median(X, axis=None, xp=None):
-    xp, _ = get_namespace(X, xp=xp)
+def _median(x, axis=None, keepdims=False, xp=None):
+    # `median` is not included in the Array API spec, but is implemented in most
+    # array libraries (and all that we test).
+    xp, _ = get_namespace(x, xp=xp)
+    if hasattr(xp, "median"):
+        kwargs = {"axis": axis, "keepdims": keepdims}
+        if _is_xp_namespace(xp, "torch"):
+            # torch has no `None` option for `axis`
+            if axis is None:
+                x = xp.reshape(x, (-1,))
+            # torch named their parameter `keepdim`
+            kwargs.pop("keepdims")
+            kwargs["keepdim"] = keepdims
+        return xp.median(x, **kwargs)
 
-    if _is_numpy_namespace(xp):
-        return numpy.median(X, axis=axis)
-
-    if X.ndim == 0:
-        return float(X)
+    if x.ndim == 0:
+        return float(x)
 
     if axis is None:
-        X = xp.reshape(X, (-1,))
+        x = xp.reshape(x, (-1,))
         axis = 0
 
-    X_sorted = xp.sort(X, axis=axis)
-    indexer = [slice(None)] * X.ndim
-    index = X.shape[axis] // 2
-    if X.shape[axis] % 2 == 1:
+    X_sorted = xp.sort(x, axis=axis)
+    indexer = [slice(None)] * x.ndim
+    index = x.shape[axis] // 2
+    if x.shape[axis] % 2 == 1:
         # index with slice to allow mean (below) to work
         indexer[axis] = slice(index, index + 1)
     else:
@@ -696,7 +705,6 @@ def _median(X, axis=None, xp=None):
     # using out array if needed.
     rout = xp.mean(X_sorted[indexer], axis=axis)
     return rout
-    # `xp.mean` not guaranteed to return nan if nan in input,
 
 
 def _xlogy(x, y, xp=None):
