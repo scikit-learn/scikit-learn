@@ -504,7 +504,8 @@ def test_temperature_scaling(clf, n_classes, ensemble):
         # in temperature scaling
         assert log_loss(y_test, y_scores_cal) <= log_loss(y_test, y_scores_softmax)
         # Refinement error should be invariant under temperature scaling.
-        # Use ROC AUC as a proxy for refinement error.
+        # Use ROC AUC as a proxy for refinement error. Also note that ROC AUC
+        # itself is invariant under strict monotone transformations.
         assert roc_auc_score(
             y_test, y_scores_softmax, multi_class="ovr"
         ) <= roc_auc_score(y_test, y_scores_cal, multi_class="ovr")

@@ -1026,6 +1026,7 @@ def _temperature_scaling(predictions, labels, sample_weight=None):
             The negative log likelihood loss.
 
         """
+        # TODO: numpy 2.0
         # Ensure raw_prediction has the same dtype as labels using .astype().
         # Without this, dtype promotion rules differ across NumPy versions:
         #
