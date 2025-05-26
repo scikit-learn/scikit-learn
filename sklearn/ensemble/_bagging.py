@@ -345,7 +345,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             Sample weights. If None, then samples are equally weighted. Used as
             probabilities to sample the training set. Note that the expected
             frequency semantics for the `sample_weight` parameter are only
-            fulfilled when sampling with replacement `bootstrap`=True.
+            fulfilled when sampling with replacement `bootstrap=True`.
 
         **fit_params : dict
             Parameters to pass to the underlying estimators.
@@ -488,7 +488,9 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         # Store validated integer feature sampling value
         self._max_features = max_features
 
-        # Store sample_weight (needed in _get_estimators_indices)
+        # Store sample_weight (needed in _get_estimators_indices). Note that
+        # we intentionally do not materialize `sample_weight=None` as an array
+        # of ones to avoid unnecessarily cluttering trained estimator pickles.
         self._sample_weight = sample_weight
 
         # Other checks

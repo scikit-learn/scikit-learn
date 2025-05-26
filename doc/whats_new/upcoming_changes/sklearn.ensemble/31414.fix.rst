@@ -1,4 +1,5 @@
 - :class:`ensemble.BaggingClassfier`, :class:`ensemble.BaggingRegressor`
   and :class:`ensemble.IsolationForest` now use `sample_weight` to draw
-  the samples instead of forwarding them to the underlying estimators.
+  the samples instead of forwarding them multiplied with a uniformly sampling
+  mask to the underlying estimators.
   By :user:`Antoine Baker <antoinebaker>`.
