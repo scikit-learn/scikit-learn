@@ -674,15 +674,11 @@ def _median(x, axis=None, keepdims=False, xp=None):
     # array libraries (and all that we test).
     xp, _ = get_namespace(x, xp=xp)
     if hasattr(xp, "median"):
-        kwargs = {"axis": axis, "keepdims": keepdims}
+        # When `x` has even number of elements, `torch.median` takes the lower of the
+        # two medians, thus we use `torch.quantile(q=0.5)`, which gives mean of the two
         if _is_xp_namespace(xp, "torch"):
-            # torch has no `None` option for `axis`
-            if axis is None:
-                x = xp.reshape(x, (-1,))
-            # torch named their parameter `keepdim`
-            kwargs.pop("keepdims")
-            kwargs["keepdim"] = keepdims
-        return xp.median(x, **kwargs)
+            return xp.quantile(x, q=0.5, dim=axis, keepdim=keepdims)
+        return xp.median(x, axis=axis, keepdims=keepdims)
 
     if x.ndim == 0:
         return float(x)
