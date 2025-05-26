@@ -164,7 +164,7 @@ def test_display_curve_estimator_name_multiple_calls(
     assert clf_name in disp.line_.get_label()
 
 
-# TODO: remove this test once classes moved to using `name_` instead of
+# TODO: remove this test once classes moved to using `name` instead of
 # `estimator_name`
 @pytest.mark.parametrize(
     "clf",
@@ -204,7 +204,7 @@ def test_display_curve_not_fitted_errors_old_name(pyplot, data_binary, clf, Disp
 )
 @pytest.mark.parametrize("Display", [RocCurveDisplay])
 def test_display_curve_not_fitted_errors(pyplot, data_binary, clf, Display):
-    """Check that a proper error is raised when the classifier not fitted."""
+    """Check that a proper error is raised when the classifier is not fitted."""
     X, y = data_binary
     # clone since we parametrize the test and the classifier will be fitted
     # when testing the second and subsequent plotting function
