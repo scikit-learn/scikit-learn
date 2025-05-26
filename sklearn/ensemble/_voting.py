@@ -24,8 +24,8 @@ from ..base import (
 from ..exceptions import NotFittedError
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch
-from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import StrOptions
+from ..utils._repr_html.estimator import _VisualBlock
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -622,7 +622,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     >>> y = np.array([2, 6, 12, 20, 30, 42])
     >>> er = VotingRegressor([('lr', r1), ('rf', r2), ('r3', r3)])
     >>> print(er.fit(X, y).predict(X))
-    [ 6.8...  8.4... 12.5... 17.8... 26...  34...]
+    [ 6.8  8.4 12.5 17.8 26  34]
 
     In the following example, we drop the `'lr'` estimator with
     :meth:`~VotingRegressor.set_params` and fit the remaining two estimators:
