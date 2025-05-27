@@ -795,14 +795,15 @@ class _CalibratedClassifier:
 
         n_classes = len(self.classes)
 
-        if n_classes == 2 and predictions.shape[-1] == 1:
-            response_method_name = _check_response_method(
-                self.estimator,
-                ["decision_function", "predict_proba"],
-            ).__name__
+        if self.method == "temperature":
+            if n_classes == 2 and predictions.shape[-1] == 1:
+                response_method_name = _check_response_method(
+                    self.estimator,
+                    ["decision_function", "predict_proba"],
+                ).__name__
 
-            if response_method_name == "predict_proba":
-                predictions = np.hstack([1 - predictions, predictions])
+                if response_method_name == "predict_proba":
+                    predictions = np.hstack([1 - predictions, predictions])
 
         label_encoder = LabelEncoder().fit(self.classes)
         pos_class_indices = label_encoder.transform(self.estimator.classes_)

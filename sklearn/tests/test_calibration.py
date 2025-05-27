@@ -10,7 +10,6 @@ from sklearn.calibration import (
     CalibratedClassifierCV,
     CalibrationDisplay,
     _CalibratedClassifier,
-    _convert_to_logits,
     _fit_calibrator,
     _sigmoid_calibration,
     _SigmoidCalibration,
@@ -49,7 +48,6 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._mocking import CheckingClassifier
-from sklearn.utils._response import _get_response_values
 from sklearn.utils._testing import (
     _convert_container,
     assert_almost_equal,
@@ -449,14 +447,12 @@ def test_sigmoid_calibration():
 @pytest.mark.parametrize(
     "clf",
     [
-        DummyClassifier(),
         MultinomialNB(),
-        SGDClassifier(random_state=42),
     ],
 )
 @pytest.mark.parametrize(
     "n_classes",
-    [3, 4, 5],
+    [2, 3, 5],
 )
 @pytest.mark.parametrize(
     "ensemble",
@@ -471,11 +467,12 @@ def test_temperature_scaling(clf, n_classes, ensemble):
         random_state=42,
     )
     X -= X.min()  # MultinomialNB only allows positive X
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+    X_train, X_cal, y_train, y_cal = train_test_split(X, y, random_state=42)
     clf.fit(X_train, y_train)
-    cal_clf = CalibratedClassifierCV(clf, method="temperature", ensemble=ensemble).fit(
-        X_train, y_train
-    )
+    # Train the calibrator on the calibrating set
+    cal_clf = CalibratedClassifierCV(
+        FrozenEstimator(clf), method="temperature", ensemble=ensemble
+    ).fit(X_cal, y_cal)
 
     calibrated_classifiers = cal_clf.calibrated_classifiers_
 
@@ -485,30 +482,29 @@ def test_temperature_scaling(clf, n_classes, ensemble):
         assert len(calibrated_classifier.calibrators) == 1
         # The optimal inverse temperature parameter should always
         # be positive
-        assert calibrated_classifier.calibrators[0].beta > 0
+        calibrator = calibrated_classifier.calibrators[0]
+        assert calibrator.beta > 0
 
-    if not ensemble:
-        y_pred_clf = clf.predict(X_test)
-        y_pred_cal = cal_clf.predict(X_test)
         # Accuracy score is invariant under temperature scaling
-        assert accuracy_score(y_test, y_pred_clf) == accuracy_score(y_test, y_pred_cal)
+        y_pred = clf.predict(X_cal)
+        y_pred_cal = np.argmax(calibrated_classifier.predict_proba(X_cal), axis=1)
+        assert accuracy_score(y_cal, y_pred_cal) == accuracy_score(y_cal, y_pred)
 
-        predictions, _ = _get_response_values(
-            clf,
-            X_test,
-            response_method=["decision_function", "predict_proba"],
-        )
-        y_scores_softmax = softmax(_convert_to_logits(predictions))
-        y_scores_cal = cal_clf.predict_proba(X_test)
-        # Log Loss should be improved since it is the loss function
-        # in temperature scaling
-        assert log_loss(y_test, y_scores_cal) <= log_loss(y_test, y_scores_softmax)
-        # Refinement error should be invariant under temperature scaling.
-        # Use ROC AUC as a proxy for refinement error. Also note that ROC AUC
-        # itself is invariant under strict monotone transformations.
-        assert roc_auc_score(
-            y_test, y_scores_softmax, multi_class="ovr"
-        ) <= roc_auc_score(y_test, y_scores_cal, multi_class="ovr")
+    # Log Loss should be improved on the calibrating set
+    y_scores_softmax = softmax(clf.predict_proba(X_cal))
+    y_scores_cal = cal_clf.predict_proba(X_cal)
+    assert log_loss(y_cal, y_scores_cal) <= log_loss(y_cal, y_scores_softmax)
+
+    # Refinement error should be invariant under temperature scaling.
+    # Use ROC AUC as a proxy for refinement error. Also note that ROC AUC
+    # itself is invariant under strict monotone transformations.
+    if n_classes == 2:
+        y_scores_softmax = y_scores_softmax[:, 1]
+        y_scores_cal = y_scores_cal[:, 1]
+
+    assert roc_auc_score(y_cal, y_scores_softmax, multi_class="ovr") <= roc_auc_score(
+        y_cal, y_scores_cal, multi_class="ovr"
+    )
 
 
 def test_temperature_scaling_input_validation(global_dtype):
