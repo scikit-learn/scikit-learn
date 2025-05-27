@@ -785,11 +785,11 @@ def test_solver_consistency(
             max_iter = None
 
         ridge = Ridge(
-            solver=solver,
-            tol=tol,
             alpha=alpha,
-            random_state=global_random_seed,
+            solver=solver,
             max_iter=max_iter,
+            tol=tol,
+            random_state=global_random_seed,
         )
     ridge.fit(X, y)
     assert_allclose(ridge.coef_, svd_ridge.coef_, atol=1e-3, rtol=1e-3)
