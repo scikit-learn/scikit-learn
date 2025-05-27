@@ -766,9 +766,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 n_oob_pred[n_oob_pred == 0] = 1
             oob_pred[..., k] /= n_oob_pred[..., [k]]
 
-        if not importances.any():
-            return np.zeros(self.n_features_in_, dtype=np.float64), oob_pred
-        return importances / importances.sum(), oob_pred
+        return importances, oob_pred
 
     def _get_estimators_indices(self):
         # Get drawn indices along both sample and feature axes
@@ -918,10 +916,10 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             )
         )
         if self.criterion == "gini":
-            self._ufi_feature_importances_ = ufi_feature_importances
-            self._mdi_oob_feature_importances_ = mdi_oob_feature_importances
+            self._unnormalized_ufi_feature_importances = ufi_feature_importances
+            self._unnormalized_mdi_oob_feature_importances = mdi_oob_feature_importances
         elif self.criterion in ["log_loss", "entropy"]:
-            self._ufi_feature_importances_ = ufi_feature_importances
+            self._unnormalized_ufi_feature_importances = ufi_feature_importances
             # mdi_oob does not support entropy yet
 
         if self.oob_decision_function_.shape[-1] == 1:
@@ -936,7 +934,13 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
     def ufi_feature_importances_(self):
         check_is_fitted(self)
         if self.criterion in ["gini", "log_loss", "entropy"]:
-            return self._ufi_feature_importances_
+            if not self._unnormalized_ufi_feature_importances.any():
+                return np.zeros(self.n_features_in_, dtype=np.float64)
+            else:
+                return (
+                    self._unnormalized_ufi_feature_importances
+                    / self._unnormalized_ufi_feature_importances.sum()
+                )
         else:
             raise AttributeError(
                 "ufi feature importance only available for"
@@ -952,7 +956,13 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
                 " classification with split criterion 'gini'"
             )
         else:
-            return self._mdi_oob_feature_importances_
+            if not self._unnormalized_mdi_oob_feature_importances.any():
+                return np.zeros(self.n_features_in_, dtype=np.float64)
+            else:
+                return (
+                    self._unnormalized_mdi_oob_feature_importances
+                    / self._unnormalized_mdi_oob_feature_importances.sum()
+                )
 
     def _validate_y_class_weight(self, y):
         check_classification_targets(y)
@@ -1263,8 +1273,8 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             )
         )
         if self.criterion == "squared_error":
-            self._ufi_feature_importances = ufi_feature_importances
-            self._mdi_oob_feature_importances = mdi_oob_feature_importances
+            self._unnormalized_ufi_feature_importances = ufi_feature_importances
+            self._unnormalized_mdi_oob_feature_importances = mdi_oob_feature_importances
 
         if self.oob_prediction_.shape[-1] == 1:
             # drop the n_outputs axis if there is a single output
@@ -1284,7 +1294,13 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
                 " regression with split criterion MSE"
             )
         else:
-            return self._ufi_feature_importances
+            if not self._unnormalized_ufi_feature_importances.any():
+                return np.zeros(self.n_features_in_, dtype=np.float64)
+            else:
+                return (
+                    self._unnormalized_ufi_feature_importances
+                    / self._unnormalized_ufi_feature_importances.sum()
+                )
 
     @property
     def mdi_oob_feature_importances_(self):
@@ -1295,7 +1311,13 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
                 " regression with split criterion MSE"
             )
         else:
-            return self._mdi_oob_feature_importances
+            if not self._unnormalized_mdi_oob_feature_importances.any():
+                return np.zeros(self.n_features_in_, dtype=np.float64)
+            else:
+                return (
+                    self._unnormalized_mdi_oob_feature_importances
+                    / self._unnormalized_mdi_oob_feature_importances.sum()
+                )
 
     def _compute_partial_dependence_recursion(self, grid, target_features):
         """Fast partial dependence computation.
