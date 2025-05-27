@@ -763,25 +763,33 @@ def test_solver_consistency(
         random_state=global_random_seed,
         n_samples=n_samples,
     )
-    X = X.astype(dtype, copy=False)
-    y = y.astype(dtype, copy=False)
     # Manually scale the data to avoid pathological cases. We use
     # minmax_scale to deal with the sparse case without breaking
     # the sparsity pattern.
     X = minmax_scale(X)
 
     svd_ridge = Ridge(solver="svd", alpha=alpha).fit(X, y)
+    X = X.astype(dtype, copy=False)
+    y = y.astype(dtype, copy=False)
     if sparse_container is not None:
         X = sparse_container(X)
     if solver == "ridgecv":
         ridge = RidgeCV(alphas=[alpha])
     else:
+        if solver.startswith("sag"):
+            # Avoid ConvergenceWarning for sag and saga solvers.
+            tol = 1e-7
+            max_iter = 100_000
+        else:
+            tol = 1e-10
+            max_iter = None
+
         ridge = Ridge(
             solver=solver,
-            tol=1e-7,
+            tol=tol,
             alpha=alpha,
             random_state=global_random_seed,
-            max_iter=100_000,
+            max_iter=max_iter,
         )
     ridge.fit(X, y)
     assert_allclose(ridge.coef_, svd_ridge.coef_, atol=1e-3, rtol=1e-3)
