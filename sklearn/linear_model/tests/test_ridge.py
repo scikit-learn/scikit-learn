@@ -777,7 +777,11 @@ def test_solver_consistency(
         ridge = RidgeCV(alphas=[alpha])
     else:
         ridge = Ridge(
-            solver=solver, tol=1e-10, alpha=alpha, random_state=global_random_seed
+            solver=solver,
+            tol=1e-7,
+            alpha=alpha,
+            random_state=global_random_seed,
+            max_iter=100_000,
         )
     ridge.fit(X, y)
     assert_allclose(ridge.coef_, svd_ridge.coef_, atol=1e-3, rtol=1e-3)
