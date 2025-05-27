@@ -24,9 +24,9 @@ from tempfile import NamedTemporaryFile
 from urllib.error import URLError
 from urllib.parse import urlparse
 from urllib.request import urlretrieve
-
 import numpy as np
-
+import os
+import platform
 from ..preprocessing import scale
 from ..utils import Bunch, check_random_state
 from ..utils._optional_dependencies import check_pandas_support
@@ -51,40 +51,65 @@ def get_data_home(data_home=None) -> str:
     This folder is used by some large dataset loaders to avoid downloading the
     data several times.
 
-    By default the data directory is set to a folder named 'scikit_learn_data' in the
-    user home folder.
+    By default, the data directory is set to a folder named 'scikit_learn_data'
+    in the platform-specific cache directory:
+    - Linux: `$XDG_CACHE_HOME/scikit_learn_data` (if `XDG_CACHE_HOME` is set, else `~/.cache/scikit_learn_data`)
+    - macOS: `~/Library/Caches/scikit_learn_data`
+    - Windows: `%LOCALAPPDATA%\\scikit_learn_data`
 
-    Alternatively, it can be set by the 'SCIKIT_LEARN_DATA' environment
-    variable or programmatically by giving an explicit folder path. The '~'
-    symbol is expanded to the user home folder.
+    Alternatively, it can be set by the 'SCIKIT_LEARN_DATA' environment variable
+    or programmatically by giving an explicit folder path. The '~' symbol is
+    expanded to the user home folder.
 
     If the folder does not already exist, it is automatically created.
 
     Parameters
     ----------
     data_home : str or path-like, default=None
-        The path to scikit-learn data directory. If `None`, the default path
-        is `~/scikit_learn_data`.
+        The path to scikit-learn data directory. If None, the default path
+        is used based on the platform-specific cache directory.
 
     Returns
     -------
-    data_home: str
+    data_home : str
         The path to scikit-learn data directory.
+    """
 
-    Examples
-    --------
-    >>> import os
-    >>> from sklearn.datasets import get_data_home
-    >>> data_home_path = get_data_home()
-    >>> os.path.exists(data_home_path)
-    True
+
+def get_data_home(data_home=None):
+    """Return the path to scikit-learn data home cache folder.
+
+    By default, it uses OS-appropriate cache directories:
+    - Linux: $XDG_CACHE_HOME/scikit_learn_data or ~/.cache/scikit_learn_data
+    - macOS: ~/Library/Caches/scikit_learn_data
+    - Windows: %LOCALAPPDATA%/scikit_learn_data
     """
     if data_home is None:
-        data_home = environ.get("SCIKIT_LEARN_DATA", join("~", "scikit_learn_data"))
-    data_home = expanduser(data_home)
-    makedirs(data_home, exist_ok=True)
-    return data_home
+        # Determine the base cache directory based on the operating system
+        system = platform.system()
+        if system == "Linux":
+            base_dir = os.environ.get("XDG_CACHE_HOME",
+                                      os.path.expanduser("~/.cache"))
+        elif system == "Darwin":  # macOS
+            base_dir = os.path.expanduser("~/Library/Caches")
+        elif system == "Windows":
+            base_dir = os.environ.get("LOCALAPPDATA",
+                                      os.path.expanduser("~/AppData/Local"))
+        else:
+            # Fallback for other operating systems
+            base_dir = os.path.expanduser("~/.cache")
 
+        data_home = os.path.join(base_dir, "scikit_learn_data")
+
+        # Override with environment variable if set
+        data_home = os.environ.get("SCIKIT_LEARN_DATA", data_home)
+
+    # Expand user path (handles ~ and environment variables)
+    data_home = os.path.expanduser(data_home)
+
+    # Create the directory if it doesn't exist
+    os.makedirs(data_home, exist_ok=True)
+    return data_home
 
 @validate_params(
     {

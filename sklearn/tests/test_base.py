@@ -1,9 +1,11 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import os
 import pickle
 import re
 import warnings
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -23,6 +25,7 @@ from sklearn.base import (
     is_regressor,
 )
 from sklearn.cluster import KMeans
+from sklearn.datasets import get_data_home
 from sklearn.decomposition import PCA
 from sklearn.ensemble import IsolationForest
 from sklearn.exceptions import InconsistentVersionWarning
@@ -1000,3 +1003,29 @@ def test_get_params_html():
 
     assert est._get_params_html() == {"l1": 0, "empty": "test"}
     assert est._get_params_html().non_default == ("empty",)
+
+def test_get_data_home_platforms(monkeypatch, tmp_path):
+    """Test platform-specific cache directories."""
+
+    # Test Linux with XDG_CACHE_HOME
+    monkeypatch.setattr("platform.system", lambda: "Linux")
+    monkeypatch.setenv("XDG_CACHE_HOME", "/tmp/xdg_cache")
+    expected = Path("/tmp/xdg_cache/scikit_learn_data")
+    assert Path(get_data_home()) == expected
+
+    # Test Linux without XDG_CACHE_HOME
+    monkeypatch.delenv("XDG_CACHE_HOME", raising=False)
+    expected = Path(os.path.expanduser("~/.cache/scikit_learn_data"))
+    assert Path(get_data_home()) == expected
+
+    # Test macOS
+    monkeypatch.setattr("platform.system", lambda: "Darwin")
+    expected = Path(os.path.expanduser("~/Library/Caches/scikit_learn_data"))
+    assert Path(get_data_home()) == expected
+
+    # Test Windows
+    monkeypatch.setattr("platform.system", lambda: "Windows")
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
+    expected = tmp_path / "scikit_learn_data"
+    result = Path(get_data_home())
+    assert result == expected
