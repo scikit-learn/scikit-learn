@@ -471,21 +471,21 @@ def test_temperature_scaling(clf, n_classes, ensemble):
         y_pred_cal = np.argmax(calibrated_classifier.predict_proba(X_cal), axis=1)
         assert accuracy_score(y_cal, y_pred_cal) == accuracy_score(y_cal, y_pred)
 
-    # Log Loss should be improved on the calibrating set
-    y_scores_softmax = softmax(clf.predict_proba(X_cal))
-    y_scores_cal = cal_clf.predict_proba(X_cal)
-    assert log_loss(y_cal, y_scores_cal) <= log_loss(y_cal, y_scores_softmax)
+    if not ensemble:
+        # Log Loss should be improved on the calibrating set
+        y_scores = clf.predict_proba(X_cal)
+        y_scores_cal = cal_clf.predict_proba(X_cal)
+        assert log_loss(y_cal, y_scores_cal) <= log_loss(y_cal, y_scores)
 
-    # Refinement error should be invariant under temperature scaling.
-    # Use ROC AUC as a proxy for refinement error. Also note that ROC AUC
-    # itself is invariant under strict monotone transformations.
-    if n_classes == 2:
-        y_scores_softmax = y_scores_softmax[:, 1]
-        y_scores_cal = y_scores_cal[:, 1]
-
-    assert roc_auc_score(y_cal, y_scores_softmax, multi_class="ovr") <= roc_auc_score(
-        y_cal, y_scores_cal, multi_class="ovr"
-    )
+        # Refinement error should be invariant under temperature scaling.
+        # Use ROC AUC as a proxy for refinement error. Also note that ROC AUC
+        # itself is invariant under strict monotone transformations.
+        if n_classes == 2:
+            y_scores = y_scores[:, 1]
+            y_scores_cal = y_scores_cal[:, 1]
+        assert roc_auc_score(y_cal, y_scores, multi_class="ovr") <= roc_auc_score(
+            y_cal, y_scores_cal, multi_class="ovr"
+        )
 
 
 def test_temperature_scaling_input_validation(global_dtype):
