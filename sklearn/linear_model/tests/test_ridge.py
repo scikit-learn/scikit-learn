@@ -763,15 +763,14 @@ def test_solver_consistency(
         random_state=global_random_seed,
         n_samples=n_samples,
     )
-
+    X = X.astype(dtype, copy=False)
+    y = y.astype(dtype, copy=False)
     # Manually scale the data to avoid pathological cases. We use
     # minmax_scale to deal with the sparse case without breaking
     # the sparsity pattern.
     X = minmax_scale(X)
 
     svd_ridge = Ridge(solver="svd", alpha=alpha).fit(X, y)
-    X = X.astype(dtype, copy=False)
-    y = y.astype(dtype, copy=False)
     if sparse_container is not None:
         X = sparse_container(X)
     if solver == "ridgecv":
