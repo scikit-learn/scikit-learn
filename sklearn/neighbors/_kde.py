@@ -222,10 +222,9 @@ class KernelDensity(BaseEstimator):
                     raise ValueError(
                         "Bandwidth: {bandwidth} requires at least a 2D array for X, "
                         "but got ndim={ndim} and shape={shape}. "
-                        "For univariate data reshape to (n_samples, 1)."
-                        .format(bandwidth=self.bandwidth,
-                                ndim=X.ndim,
-                                shape=X.shape)
+                        "For univariate data reshape to (n_samples, 1).".format(
+                            bandwidth=self.bandwidth, ndim=X.ndim, shape=X.shape
+                        )
                     )
                 self.bandwidth_ = X.shape[0] ** (-1 / (X.shape[1] + 4))
             elif self.bandwidth == "silverman":
@@ -233,10 +232,9 @@ class KernelDensity(BaseEstimator):
                     raise ValueError(
                         "Bandwidth: {bandwidth} requires at least a 2D array for X, "
                         "but got ndim={ndim} and shape={shape}. "
-                        "For univariate data reshape to (n_samples, 1)."
-                        .format(bandwidth=self.bandwidth,
-                                ndim=X.ndim,
-                                shape=X.shape)
+                        "For univariate data reshape to (n_samples, 1).".format(
+                            bandwidth=self.bandwidth, ndim=X.ndim, shape=X.shape
+                        )
                     )
                 self.bandwidth_ = (X.shape[0] * (X.shape[1] + 2) / 4) ** (
                     -1 / (X.shape[1] + 4)
