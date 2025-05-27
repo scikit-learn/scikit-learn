@@ -9,6 +9,7 @@ import csv
 import gzip
 import hashlib
 import os
+import platform
 import re
 import shutil
 import time
@@ -17,16 +18,16 @@ import warnings
 from collections import namedtuple
 from importlib import resources
 from numbers import Integral
-from os import environ, listdir, makedirs
-from os.path import expanduser, isdir, join, splitext
+from os import listdir, makedirs
+from os.path import isdir, join, splitext
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from urllib.error import URLError
 from urllib.parse import urlparse
 from urllib.request import urlretrieve
+
 import numpy as np
-import os
-import platform
+
 from ..preprocessing import scale
 from ..utils import Bunch, check_random_state
 from ..utils._optional_dependencies import check_pandas_support
@@ -45,37 +46,6 @@ RemoteFileMetadata = namedtuple("RemoteFileMetadata", ["filename", "url", "check
     },
     prefer_skip_nested_validation=True,
 )
-def get_data_home(data_home=None) -> str:
-    """Return the path of the scikit-learn data directory.
-
-    This folder is used by some large dataset loaders to avoid downloading the
-    data several times.
-
-    By default, the data directory is set to a folder named 'scikit_learn_data'
-    in the platform-specific cache directory:
-    - Linux: `$XDG_CACHE_HOME/scikit_learn_data` (if `XDG_CACHE_HOME` is set, else `~/.cache/scikit_learn_data`)
-    - macOS: `~/Library/Caches/scikit_learn_data`
-    - Windows: `%LOCALAPPDATA%\\scikit_learn_data`
-
-    Alternatively, it can be set by the 'SCIKIT_LEARN_DATA' environment variable
-    or programmatically by giving an explicit folder path. The '~' symbol is
-    expanded to the user home folder.
-
-    If the folder does not already exist, it is automatically created.
-
-    Parameters
-    ----------
-    data_home : str or path-like, default=None
-        The path to scikit-learn data directory. If None, the default path
-        is used based on the platform-specific cache directory.
-
-    Returns
-    -------
-    data_home : str
-        The path to scikit-learn data directory.
-    """
-
-
 def get_data_home(data_home=None):
     """Return the path to scikit-learn data home cache folder.
 
