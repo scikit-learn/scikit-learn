@@ -1004,6 +1004,7 @@ def test_get_params_html():
     assert est._get_params_html() == {"l1": 0, "empty": "test"}
     assert est._get_params_html().non_default == ("empty",)
 
+
 def test_get_data_home_platforms(monkeypatch, tmp_path):
     """Test platform-specific cache directories."""
 

@@ -58,13 +58,13 @@ def get_data_home(data_home=None):
         # Determine the base cache directory based on the operating system
         system = platform.system()
         if system == "Linux":
-            base_dir = os.environ.get("XDG_CACHE_HOME",
-                                      os.path.expanduser("~/.cache"))
+            base_dir = os.environ.get("XDG_CACHE_HOME", os.path.expanduser("~/.cache"))
         elif system == "Darwin":  # macOS
             base_dir = os.path.expanduser("~/Library/Caches")
         elif system == "Windows":
-            base_dir = os.environ.get("LOCALAPPDATA",
-                                      os.path.expanduser("~/AppData/Local"))
+            base_dir = os.environ.get(
+                "LOCALAPPDATA", os.path.expanduser("~/AppData/Local")
+            )
         else:
             # Fallback for other operating systems
             base_dir = os.path.expanduser("~/.cache")
@@ -80,6 +80,7 @@ def get_data_home(data_home=None):
     # Create the directory if it doesn't exist
     os.makedirs(data_home, exist_ok=True)
     return data_home
+
 
 @validate_params(
     {
