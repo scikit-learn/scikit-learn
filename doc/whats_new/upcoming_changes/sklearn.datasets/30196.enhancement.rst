@@ -2,6 +2,3 @@
   default value of the parameter does not change how the function behaves.
   By :user:`Success Moses <SuccessMoses>` and :user:`Adam Cooper <arc12>`
 
-- Updated 'get_data_home' to use OS-specific cache directories instead of home dir by
-PR: 31267
-By :user:Namit24
