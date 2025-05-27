@@ -875,6 +875,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     1.451
     >>> print(regr.predict([[0, 0]]))
     [1.451]
+
     -   :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
         showcases ElasticNet alongside Lasso and ARD Regression for sparse
         signal recovery in the presence of noise and feature correlation.
@@ -1307,6 +1308,7 @@ class Lasso(ElasticNet):
     [0.85 0.  ]
     >>> print(clf.intercept_)
     0.15
+
     -   :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
         compares Lasso with other L1-based regression models (ElasticNet and ARD
         Regression) for sparse signal recovery in the presence of noise and
