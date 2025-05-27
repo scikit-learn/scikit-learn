@@ -95,9 +95,6 @@ Each row and each column belongs to exactly one bicluster, so
 rearranging the rows and columns to make partitions contiguous reveals
 these high values along the diagonal:
 
-For a concrete example, see
-:ref:`sphx_glr_auto_examples_bicluster_plot_spectral_coclustering.py`.
-
 .. note::
 
     The algorithm treats the input data matrix as a bipartite graph: the
