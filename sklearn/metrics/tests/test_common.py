@@ -642,7 +642,6 @@ def test_symmetric_metric(name):
 
 @pytest.mark.parametrize("name", sorted(NOT_SYMMETRIC_METRICS))
 def test_not_symmetric_metric(name):
-
     # Test the symmetry of score and loss functions
     random_state = check_random_state(0)
     metric = ALL_METRICS[name]
@@ -1006,14 +1005,15 @@ def test_regression_thresholded_inf_nan_input(metric, y_true, y_score):
 @pytest.mark.parametrize("metric", CLASSIFICATION_METRICS.values())
 @pytest.mark.parametrize(
     "y_true, y_score",
-    invalids_nan_inf +
+    invalids_nan_inf
+    +
     # Add an additional case for classification only
     # non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/6809
     [
         ([np.nan, 1, 2], [1, 2, 3]),
         ([np.inf, 1, 2], [1, 2, 3]),
-    ],  # type: ignore
+    ],
 )
 def test_classification_inf_nan_input(metric, y_true, y_score):
     """check that classification metrics raise a message mentioning the
@@ -2117,7 +2117,6 @@ def check_array_api_regression_metric_multioutput(
 
 
 def check_array_api_metric_pairwise(metric, array_namespace, device, dtype_name):
-
     X_np = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=dtype_name)
     Y_np = np.array([[0.2, 0.3, 0.4], [0.5, 0.6, 0.7]], dtype=dtype_name)
 
@@ -2218,6 +2217,11 @@ array_api_metric_checkers = {
         check_array_api_multilabel_classification_metric,
     ],
     fbeta_score: [
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
+    jaccard_score: [
+        check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
     ],
