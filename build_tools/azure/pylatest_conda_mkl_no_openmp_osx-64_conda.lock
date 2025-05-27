@@ -53,7 +53,7 @@ https://repo.anaconda.com/pkgs/main/osx-64/pytz-2024.1-py312hecd8cb5_0.conda#2b2
 https://repo.anaconda.com/pkgs/main/osx-64/setuptools-78.1.1-py312hecd8cb5_0.conda#76b66b96a1564cb76011408c1eb8df3e
 https://repo.anaconda.com/pkgs/main/osx-64/six-1.17.0-py312hecd8cb5_0.conda#aadd782bc06426887ae0835eedd98ceb
 https://repo.anaconda.com/pkgs/main/noarch/toml-0.10.2-pyhd3eb1b0_0.conda#cda05f5f6d8509529d1a2743288d197a
-https://repo.anaconda.com/pkgs/main/osx-64/tornado-6.4.2-py312h46256e1_0.conda#6b41d7d8a2bf93ae3fc512202b14a9ec
+https://repo.anaconda.com/pkgs/main/osx-64/tornado-6.5-py312h46256e1_0.conda#7e82973ed53e71854971e7b3922fad24
 https://repo.anaconda.com/pkgs/main/osx-64/unicodedata2-15.1.0-py312h46256e1_1.conda#4a7fd1dec7277c8ab71aa11aa08df86b
 https://repo.anaconda.com/pkgs/main/osx-64/wheel-0.45.1-py312hecd8cb5_0.conda#fafb8687668467d8624d2ddd0909bce9
 https://repo.anaconda.com/pkgs/main/osx-64/fonttools-4.55.3-py312h46256e1_0.conda#f7680dd6b8b1c2f8aab17cf6630c6deb
@@ -75,8 +75,8 @@ https://repo.anaconda.com/pkgs/main/osx-64/numexpr-2.8.7-py312hac873b0_0.conda#6
 https://repo.anaconda.com/pkgs/main/osx-64/scipy-1.11.4-py312h81688c2_0.conda#7d57b4c21a9261f97fa511e0940c5d93
 https://repo.anaconda.com/pkgs/main/osx-64/pandas-2.2.3-py312h6d0c2b6_0.conda#84ce5b8ec4a986d13a5df17811f556a2
 https://repo.anaconda.com/pkgs/main/osx-64/pyamg-5.2.1-py312h1962661_0.conda#58881950d4ce74c9302b56961f97a43c
-# pip cython @ https://files.pythonhosted.org/packages/e9/64/ae1d8848550ec3975634fcf189ccc85e73c3b9f76369dd85c484f2f8f1c3/cython-3.1.0-cp312-cp312-macosx_10_13_x86_64.whl#sha256=8f8c4753f6b926046c0cdf6037ba8560f6677730bf0ab9c1db4e0163b4bb30f9
-# pip meson @ https://files.pythonhosted.org/packages/df/d7/f1c8acf0e597d4d07532f519780ee6e11ba285a9b092f18706b4c9118331/meson-1.8.0-py3-none-any.whl#sha256=472b7b25da286447333d32872b82d1c6f1a34024fb8ee017d7308056c25fec1f
+# pip cython @ https://files.pythonhosted.org/packages/78/06/83ff82381319ff68ae46f9dd3024b1d5101997e81a8e955811525b6f934b/cython-3.1.1-cp312-cp312-macosx_10_13_x86_64.whl#sha256=9d7dc0e4d0cd491fac679a61e9ede348c64ca449f99a284f9a01851aa1dbc7f6
+# pip meson @ https://files.pythonhosted.org/packages/46/77/726b14be352aa6911e206ca7c4d95c5be49660604dfee0bfed0fc75823e5/meson-1.8.1-py3-none-any.whl#sha256=374bbf71247e629475fc10b0bd2ef66fc418c2d8f4890572f74de0f97d0d42da
 # pip threadpoolctl @ https://files.pythonhosted.org/packages/32/d5/f9a850d79b0851d1d4ef6456097579a9005b31fea68726a4ae5f2d82ddd9/threadpoolctl-3.6.0-py3-none-any.whl#sha256=43a0b8fd5a2928500110039e43a5eed8480b918967083ea48dc3ab9f13c4a7fb
 # pip pyproject-metadata @ https://files.pythonhosted.org/packages/7e/b1/8e63033b259e0a4e40dd1ec4a9fee17718016845048b43a36ec67d62e6fe/pyproject_metadata-0.9.1-py3-none-any.whl#sha256=ee5efde548c3ed9b75a354fc319d5afd25e9585fa918a34f62f904cc731973ad
 # pip meson-python @ https://files.pythonhosted.org/packages/28/58/66db620a8a7ccb32633de9f403fe49f1b63c68ca94e5c340ec5cceeb9821/meson_python-0.18.0-py3-none-any.whl#sha256=3b0fe051551cc238f5febb873247c0949cd60ded556efa130aa57021804868e2
