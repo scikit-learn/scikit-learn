@@ -44,6 +44,9 @@ class ClassicalMDS(BaseEstimator):
         between those vectors. This works for Scipy's metrics, but is less
         efficient than passing the metric name as a string.
 
+    metric_params : dict, default=None
+        Additional keyword arguments for the metric function.
+
     Attributes
     ----------
     embedding_ : ndarray of shape (n_samples, n_components)
@@ -90,6 +93,7 @@ class ClassicalMDS(BaseEstimator):
     _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "dissimilarity": [str, callable],
+        "metric_params": [dict, None],
     }
 
     def __init__(
@@ -97,9 +101,11 @@ class ClassicalMDS(BaseEstimator):
         n_components=2,
         *,
         dissimilarity="euclidean",
+        metric_params=None,
     ):
         self.n_components = n_components
         self.dissimilarity = dissimilarity
+        self.metric_params = metric_params
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -131,7 +137,7 @@ class ClassicalMDS(BaseEstimator):
     @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None):
         """
-        Compute the embedding positions.
+        Compute and return the embedding positions.
 
         Parameters
         ----------
@@ -158,7 +164,7 @@ class ClassicalMDS(BaseEstimator):
             )
         else:
             self.dissimilarity_matrix_ = pairwise_distances(
-                X, metric=self.dissimilarity
+                X, metric=self.dissimilarity, **self.metric_params
             )
 
         # Double centering
@@ -170,6 +176,9 @@ class ClassicalMDS(BaseEstimator):
 
         # Eigendecomposition
         w, U = linalg.eigh(B)
+
+        # Reversing the order of the eigenvalues/eigenvectors to put
+        # the eigenvalues in decreasing order
         w = w[::-1][: self.n_components]
         U = U[:, ::-1][:, : self.n_components]
 
