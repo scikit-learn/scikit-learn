@@ -110,6 +110,7 @@ Estimators
 - :class:`decomposition.PCA` (with `svd_solver="full"`,
   `svd_solver="randomized"` and `power_iteration_normalizer="QR"`)
 - :class:`linear_model.Ridge` (with `solver="svd"`)
+- :class:`linear_model.RidgeCV` (see :ref:`device_support_for_float64`)
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
 - :class:`preprocessing.Binarizer`
 - :class:`preprocessing.KernelCenterer`
