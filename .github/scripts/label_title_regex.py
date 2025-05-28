@@ -7,6 +7,7 @@ import re
 import subprocess
 from github import Github
 
+flag = "1"
 my_secret = "testtesttest"
 # if my_secret is None:
 #     print("Error: GITHUB_TOKEN is not set")
