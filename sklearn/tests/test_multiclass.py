@@ -29,6 +29,7 @@ from sklearn.multiclass import (
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.preprocessing import label_binarize
 from sklearn.svm import SVC, LinearSVC
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import (
@@ -969,3 +970,50 @@ def test_multiclass_estimator_attribute_error():
         clf.partial_fit(iris.data, iris.target)
     assert isinstance(exec_info.value.__cause__, AttributeError)
     assert inner_msg in str(exec_info.value.__cause__)
+
+
+class DeterministicBinaryClassifier(BaseEstimator, ClassifierMixin):
+    """Classifier that predicts what you give it."""
+
+    def __init__(self, preds: np.ndarray = np.array([])):
+        self.preds = preds
+        # this attributes marks it as trained
+        self.classes_ = {0, 1}
+        self.n_classes = 2
+
+    def fit(self, X, y):
+        return self
+
+    def predict(self, X):
+        return self.preds
+
+    def predict_proba(self, X):
+        classes = range(self.n_classes + 1)
+        y_binarized = label_binarize(self.preds, classes=classes)
+        return y_binarized[:, :2]
+
+
+@pytest.mark.parametrize(
+    "undefined_prediction_behaviour, expected_prediction",
+    (
+        ("first_seen", np.array([3, 0, 0, 0])),
+        ("last_seen", np.array([3, 0, 0, 3])),
+        ("random", np.array([3, 1, 0, 1])),
+        ("negative", np.array([3, -1, 0, -1])),
+    ),
+)
+def test_ovr_multiclass_last_seen(undefined_prediction_behaviour, expected_prediction):
+    X = np.array([[0], [0], [0], [0]])
+    y = np.array([0, 1, 3, 1])
+    clf = OneVsRestClassifier(
+        DeterministicBinaryClassifier(),
+        undefined_prediction_behaviour=undefined_prediction_behaviour,
+    )
+    clf.fit(X, y)
+    clf.estimators_ = [
+        DeterministicBinaryClassifier(preds=np.array([0, 1, 1, 0])),
+        DeterministicBinaryClassifier(preds=np.array([0, 1, 0, 0])),
+        DeterministicBinaryClassifier(preds=np.array([1, 0, 0, 0])),
+    ]
+    pred = clf.predict(X)
+    assert expected_prediction == pytest.approx(pred)
