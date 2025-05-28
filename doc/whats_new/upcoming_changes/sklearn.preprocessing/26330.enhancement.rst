@@ -1,0 +1,4 @@
+- Adds support for `sample_weight` in :class:`preprocessing.OneHotEncoder`. When
+  using `sample_weight`, then `min_frequency` and `max_categories` will filter
+  according to sum samples' weight for that category instead of count. By
+  :user:`Carlo Lemos <vitaliset>`.
