@@ -1,0 +1,2 @@
+- Now supporting sample weights in `TargetEncoder` to respect different observation frequency during encoding.
+  by :user:`[DuarteSJ] <[DuarteSJ]>`.
