@@ -583,39 +583,22 @@ def test_fill_or_add_to_diagonal(array_namespace, device_, dtype_name, wrap):
     xp = _array_api_for_tests(array_namespace, device_)
     array_np = numpy.zeros((5, 4), dtype=numpy.int64)
     array_xp = xp.asarray(array_np)
-    _fill_or_add_to_diagonal(array_xp, value=1, xp=xp, add_value=False, wrap=wrap)
+    array_xp = _fill_or_add_to_diagonal(
+        array_xp, value=1, xp=xp, add_value=False, wrap=wrap
+    )
     numpy.fill_diagonal(array_np, val=1, wrap=wrap)
     assert_array_equal(_convert_to_numpy(array_xp, xp=xp), array_np)
 
 
-from sklearn.utils import gen_even_slices
-from sklearn.utils.parallel import Parallel, delayed
-from sklearn.metrics import euclidean_distances
-from sklearn.utils._array_api import _find_matching_floating_dtype
-
-@pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
-    yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
-)
-def test_fill_or_add_to_diagonal_parallel(array_namespace, device, dtype_name):
-    """"""
-    xp = _array_api_for_tests(array_namespace, device)
-    n_samples = 10
-    rng = numpy.random.RandomState(0)
-    X_np = numpy.array(5 * rng.random_sample((n_samples, n_samples)), dtype=dtype_name)
-    X_xp = xp.asarray(X_np, device=device)
-    ret_xp = xp.ones((n_samples, n_samples), dtype=X_xp.dtype, device=device).T
-
-    def dumm_func(return_array, slice_):
-        return_array[..., slice_] = 1
-
-    fd = delayed(dumm_func)
-    with config_context(array_api_dispatch=True):
-        Parallel(backend="threading", n_jobs=2)(
-            fd(ret_xp, s) for s in gen_even_slices(n_samples, 2)
-        )
-        _fill_or_add_to_diagonal(ret_xp, value=99, xp=xp, add_value=False)
+def test_fill_or_add_to_diagonal_transpose():
+    """Check `_fill_or_add_to_diagonal` when `reshape` returns a copy."""
+    xp = _array_api_for_tests("numpy", None)
+    # Transposing an array makes it non-contiguous, meaning `reshape`, used within
+    # `_fill_or_add_to_diagonal`, returns a copy instead of a view. Note
+    # `numpy.fill_diagonal` avoids this problem as it uses `.flat` instead of `reshape`
+    array = numpy.ones((2, 2)).T
+    array = _fill_or_add_to_diagonal(array, value=99, xp=xp, add_value=False)
+    assert array[0, 0] == 99
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)

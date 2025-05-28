@@ -557,7 +557,9 @@ def _fill_or_add_to_diagonal(array, value, xp, add_value=True, wrap=False):
         array_flat[:end:step] += value
     else:
         array_flat[:end:step] = value
-    print(f"{array_flat=}\n{array=}")
+    # When `array` is non-contiguous (e.g., after `transpose`), `reshape` must create
+    # a copy, and cannot return a view. Thus we need to *return* reshaped `array_flat`.
+    return xp.reshape(array_flat, array.shape)
 
 
 def _is_xp_namespace(xp, name):
