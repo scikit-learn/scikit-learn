@@ -1599,7 +1599,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         If an array, the features are mapped to constraints by position. See
         :ref:`monotonic_cst_features_names` for a usage example.
 
-        Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
+        Read more in the :ref:`User Guide <monotonic_cst_gbdt>` and
+        :ref:`sphx_glr_auto_examples_ensemble_plot_monotonic_constraints.py`.
 
         .. versionadded:: 0.23
 
