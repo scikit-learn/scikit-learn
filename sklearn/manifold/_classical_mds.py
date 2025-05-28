@@ -44,8 +44,8 @@ class ClassicalMDS(BaseEstimator):
         between those vectors. This works for Scipy's metrics, but is less
         efficient than passing the metric name as a string.
 
-    metric_params : dict, default=None
-        Additional keyword arguments for the metric function.
+    dissimilarity_params : dict, default=None
+        Additional keyword arguments for the dissimilarity computaiton.
 
     Attributes
     ----------
@@ -93,7 +93,7 @@ class ClassicalMDS(BaseEstimator):
     _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "dissimilarity": [str, callable],
-        "metric_params": [dict, None],
+        "dissimilarity_params": [dict, None],
     }
 
     def __init__(
@@ -101,11 +101,11 @@ class ClassicalMDS(BaseEstimator):
         n_components=2,
         *,
         dissimilarity="euclidean",
-        metric_params=None,
+        dissimilarity_params=None,
     ):
         self.n_components = n_components
         self.dissimilarity = dissimilarity
-        self.metric_params = metric_params
+        self.dissimilarity_params = dissimilarity_params
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -166,7 +166,11 @@ class ClassicalMDS(BaseEstimator):
             self.dissimilarity_matrix_ = pairwise_distances(
                 X,
                 metric=self.dissimilarity,
-                **(self.metric_params if self.metric_params is not None else {}),
+                **(
+                    self.dissimilarity_params
+                    if self.dissimilarity_params is not None
+                    else {}
+                ),
             )
 
         # Double centering
