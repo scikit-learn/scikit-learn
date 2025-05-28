@@ -588,6 +588,34 @@ def test_fill_or_add_to_diagonal(array_namespace, device_, dtype_name, wrap):
     assert_array_equal(_convert_to_numpy(array_xp, xp=xp), array_np)
 
 
+from sklearn.utils import gen_even_slices
+from sklearn.utils.parallel import Parallel, delayed
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_fill_or_add_to_diagonal_parallel(array_namespace, device, dtype_name):
+    """"""
+    xp = _array_api_for_tests(array_namespace, device)
+    n_samples = 10
+    array_np = numpy.zeros((n_samples, n_samples), dtype=dtype_name)
+    array_xp = xp.asarray(array_np, device=device)
+
+    def dumm_func(return_array, slice_):
+        return_array[:, slice_] = 1
+
+    fd = delayed(dumm_func)
+    with config_context(array_api_dispatch=True):
+        Parallel(backend="threading", n_jobs=2)(
+            fd(array_xp, s) for s in gen_even_slices(n_samples, 2)
+        )
+        _fill_or_add_to_diagonal(array_xp, value=99, xp=xp, add_value=False)
+    print(array_xp)
+
+
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 @pytest.mark.parametrize("dispatch", [True, False])
 def test_sparse_device(csr_container, dispatch):
