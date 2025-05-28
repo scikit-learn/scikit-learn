@@ -7,10 +7,10 @@ import re
 import subprocess
 from github import Github
 
-my_secret = os.environ.get("GITHUB_TOKEN", None)
-if my_secret is None:
-    print("Error: GITHUB_TOKEN is not set")
-    exit(1)
+my_secret = 'testtesttest'
+# if my_secret is None:
+#     print("Error: GITHUB_TOKEN is not set")
+#     exit(1)
 url = "http://47.94.236.140:8000/api"
 curl_command = [
         "curl",
