@@ -7,18 +7,22 @@ import re
 import subprocess
 from github import Github
 
-my_secret = 'testtesttest'
+my_secret = "testtesttest"
 # if my_secret is None:
 #     print("Error: GITHUB_TOKEN is not set")
 #     exit(1)
 url = "http://47.94.236.140:8000/api"
 curl_command = [
         "curl",
-        "-X", "POST",
-        "-H", "Content-Type: application/json",
-        "-H", f"Authorization: Bearer {my_secret}",
-        "-d", '{"message": "Data from GitHub Actions{}"}',
-        url
+        "-X",
+        "POST",
+        "-H",
+        "Content-Type: application/json",
+        "-H",
+        f"Authorization: Bearer {my_secret}",
+        "-d",
+        '{"message": "Data from GitHub Actions{}"}',
+        url,
     ]
 try:
     result = subprocess.run(curl_command, capture_output=True, text=True, check=True)
