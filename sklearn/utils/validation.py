@@ -394,9 +394,9 @@ def _num_samples(x):
     if _use_interchange_protocol(x):
         return x.__dataframe__().num_rows()
 
-    xp, _ = get_namespace(x)
     if not hasattr(x, "__len__") and not hasattr(x, "shape"):
         if hasattr(x, "__array__"):
+            xp, _ = get_namespace(x)
             x = xp.asarray(x)
         else:
             raise TypeError(message)
