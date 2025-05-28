@@ -1016,4 +1016,4 @@ def test_ovr_multiclass_last_seen(undefined_prediction_behaviour, expected_predi
         DeterministicBinaryClassifier(preds=np.array([1, 0, 0, 0])),
     ]
     pred = clf.predict(X)
-    assert expected_prediction == pytest.approx(pred)
+    assert_array_equal(expected_prediction, pred)
