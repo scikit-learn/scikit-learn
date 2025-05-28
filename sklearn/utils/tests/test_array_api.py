@@ -601,19 +601,21 @@ def test_fill_or_add_to_diagonal_parallel(array_namespace, device, dtype_name):
     """"""
     xp = _array_api_for_tests(array_namespace, device)
     n_samples = 10
-    array_np = numpy.zeros((n_samples, n_samples), dtype=dtype_name)
-    array_xp = xp.asarray(array_np, device=device)
+    # ret_np = numpy.zeros((n_samples, n_samples), dtype=dtype_name)
+    rng = numpy.random.RandomState(0)
+    X_np = numpy.array(5 * rng.random_sample((n_samples, n_samples)), dtype=dtype_name)
+    X_xp = xp.asarray(X_np, device=device)
+    ret_xp = xp.ones((n_samples, n_samples), dtype=X_xp.dtype, device=device).T
 
     def dumm_func(return_array, slice_):
-        return_array[:, slice_] = 1
+        return_array[..., slice_] = 1
 
     fd = delayed(dumm_func)
     with config_context(array_api_dispatch=True):
         Parallel(backend="threading", n_jobs=2)(
-            fd(array_xp, s) for s in gen_even_slices(n_samples, 2)
+            fd(ret_xp, s) for s in gen_even_slices(n_samples, 2)
         )
-        _fill_or_add_to_diagonal(array_xp, value=99, xp=xp, add_value=False)
-    print(array_xp)
+        _fill_or_add_to_diagonal(ret_xp, value=99, xp=xp, add_value=False)
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
