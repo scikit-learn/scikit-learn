@@ -590,7 +590,8 @@ def test_fill_or_add_to_diagonal(array_namespace, device_, dtype_name, wrap):
 
 from sklearn.utils import gen_even_slices
 from sklearn.utils.parallel import Parallel, delayed
-
+from sklearn.metrics import euclidean_distances
+from sklearn.utils._array_api import _find_matching_floating_dtype
 
 @pytest.mark.parametrize(
     "array_namespace, device, dtype_name",
@@ -601,7 +602,6 @@ def test_fill_or_add_to_diagonal_parallel(array_namespace, device, dtype_name):
     """"""
     xp = _array_api_for_tests(array_namespace, device)
     n_samples = 10
-    # ret_np = numpy.zeros((n_samples, n_samples), dtype=dtype_name)
     rng = numpy.random.RandomState(0)
     X_np = numpy.array(5 * rng.random_sample((n_samples, n_samples)), dtype=dtype_name)
     X_xp = xp.asarray(X_np, device=device)
