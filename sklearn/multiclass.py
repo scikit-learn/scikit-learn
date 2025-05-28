@@ -433,6 +433,9 @@ class OneVsRestClassifier(
         if hasattr(self.estimators_[0], "feature_names_in_"):
             self.feature_names_in_ = self.estimators_[0].feature_names_in_
 
+        # Only used if `undefined_prediction_behaviour` is set to "random"
+        self.random_state_ = check_random_state(self.random_state)
+
         return self
 
     @available_if(_estimators_has("partial_fit"))
@@ -554,8 +557,7 @@ class OneVsRestClassifier(
             elif self.undefined_prediction_behaviour == "random":
                 # handles all zeros predictions
                 all_zero_preds = np.sum(preds, axis=0) == 0
-                rng = check_random_state(self.random_state)
-                argmaxima[all_zero_preds] = rng.randint(
+                argmaxima[all_zero_preds] = self.random_state_.randint(
                     self.n_classes_, size=np.sum(all_zero_preds)
                 )
 
@@ -565,7 +567,7 @@ class OneVsRestClassifier(
                     indices = np.asarray(preds[:, multiple_ones_index] == 1).nonzero()[
                         0
                     ]
-                    argmaxima[multiple_ones_index] = rng.choice(indices)
+                    argmaxima[multiple_ones_index] = self.random_state_.choice(indices)
 
                 return self.classes_[argmaxima]
             elif self.undefined_prediction_behaviour == "negative":
