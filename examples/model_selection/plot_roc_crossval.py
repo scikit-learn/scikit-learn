@@ -89,8 +89,7 @@ for fold, (train, test) in enumerate(cv.split(X, y)):
         X[test],
         y[test],
         name=f"ROC fold {fold}",
-        alpha=0.3,
-        lw=1,
+        curve_kwargs=dict(alpha=0.3, lw=1),
         ax=ax,
         plot_chance_level=(fold == n_splits - 1),
     )
