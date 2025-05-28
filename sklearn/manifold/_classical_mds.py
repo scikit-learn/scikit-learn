@@ -164,7 +164,9 @@ class ClassicalMDS(BaseEstimator):
             )
         else:
             self.dissimilarity_matrix_ = pairwise_distances(
-                X, metric=self.dissimilarity, **self.metric_params
+                X,
+                metric=self.dissimilarity,
+                **(self.metric_params if self.metric_params is not None else {}),
             )
 
         # Double centering
