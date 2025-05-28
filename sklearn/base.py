@@ -201,7 +201,7 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
 
     _html_repr = estimator_html_repr
 
-    def _get_fitted_attr_html(self):
+    def _get_fitted_attr_html(self, deep=True):
         """Get fitted attributes of the estimator."""
         # fetch the constructor or the original constructor before
         # deprecation wrapping if any
@@ -209,7 +209,8 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
         if init is object.__init__:
             # No explicit constructor to introspect
             return []
-        attributes = inspect.getmembers(init)
+        # attributes = inspect.getmembers(init)
+        attributes = list(init.__dict__.items())
 
         fitted_attributes = {
             name: value
@@ -226,7 +227,6 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
             key: type(value).__name__ for key, value in fitted_attributes.items()
         }
         out = fitted_attributes | arrays_attr
-
         return AttrsDict(out)
 
     @classmethod
