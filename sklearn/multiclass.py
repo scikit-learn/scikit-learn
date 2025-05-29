@@ -313,6 +313,12 @@ class OneVsRestClassifier(
 
         .. versionadded:: 1.0
 
+    random_state_ : RandomState instance
+        RandomState instance that is generated either from a seed, the random
+        number generator or by `np.random`.
+
+        .. versionadded:: 1.7
+
     See Also
     --------
     OneVsOneClassifier : One-vs-one multiclass strategy.
