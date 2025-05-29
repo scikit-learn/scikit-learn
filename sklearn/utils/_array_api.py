@@ -679,7 +679,7 @@ def _median(x, axis=None, keepdims=False, xp=None):
         return xp.median(x, axis=axis, keepdims=keepdims)
 
     if _is_xp_namespace(xp, "array-api-strict"):
-        x_np = xp.asarray(x)
+        x_np = numpy.asarray(x)
         return numpy.median(x_np, axis=axis, keepdims=keepdims)
 
     # `median` is not included in the Array API spec, but is implemented in most
