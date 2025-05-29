@@ -673,16 +673,17 @@ def _median(x, axis=None, keepdims=False, xp=None):
     # `median` is not included in the Array API spec, but is implemented in most
     # array libraries, and all that we support (as of May 2025).
     xp, _ = get_namespace(x, xp=xp)
-    if hasattr(xp, "median"):
-        # `torch.median` takes the lower of the two medians when `x` has even number
-        # of elements, thus we use `torch.quantile(q=0.5)`, which gives mean of the two
-        if array_api_compat.is_torch_namespace(xp):
-            return xp.quantile(x, q=0.5, dim=axis, keepdim=keepdims)
-        return xp.median(x, axis=axis, keepdims=keepdims)
 
     if _is_xp_namespace(xp, "array-api-strict"):
         x_np = numpy.asarray(x)
         return numpy.median(x_np, axis=axis, keepdims=keepdims)
+
+    # `torch.median` takes the lower of the two medians when `x` has even number
+    # of elements, thus we use `torch.quantile(q=0.5)`, which gives mean of the two
+    if array_api_compat.is_torch_namespace(xp):
+        return xp.quantile(x, q=0.5, dim=axis, keepdim=keepdims)
+
+    return xp.median(x, axis=axis, keepdims=keepdims)
 
 
 def _xlogy(x, y, xp=None):
