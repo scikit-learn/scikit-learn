@@ -670,6 +670,8 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
 
 
 def _median(x, axis=None, keepdims=False, xp=None):
+    # `median` is not included in the Array API spec, but is implemented in most
+    # array libraries, and all that we support (as of May 2025).
     xp, _ = get_namespace(x, xp=xp)
     if hasattr(xp, "median"):
         # `torch.median` takes the lower of the two medians when `x` has even number
@@ -681,10 +683,6 @@ def _median(x, axis=None, keepdims=False, xp=None):
     if _is_xp_namespace(xp, "array-api-strict"):
         x_np = numpy.asarray(x)
         return numpy.median(x_np, axis=axis, keepdims=keepdims)
-
-    # `median` is not included in the Array API spec, but is implemented in most
-    # array libraries, and all that we support (as of May 2025).
-    raise NotImplementedError(f"The array namespace {xp.__name__} is not supported.")
 
 
 def _xlogy(x, y, xp=None):
