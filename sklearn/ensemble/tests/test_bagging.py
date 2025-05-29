@@ -589,28 +589,6 @@ def test_bagging_with_pipeline():
     assert isinstance(estimator[0].steps[-1][1].random_state, int)
 
 
-class DummyZeroEstimator(BaseEstimator):
-    def fit(self, X, y):
-        self.classes_ = np.unique(y)
-        return self
-
-    def predict(self, X):
-        return self.classes_[np.zeros(X.shape[0], dtype=int)]
-
-
-def test_bagging_sample_weight_unsupported_but_passed():
-    estimator = BaggingClassifier(DummyZeroEstimator())
-    rng = check_random_state(0)
-
-    estimator.fit(iris.data, iris.target).predict(iris.data)
-    with pytest.raises(ValueError):
-        estimator.fit(
-            iris.data,
-            iris.target,
-            sample_weight=rng.randint(10, size=(iris.data.shape[0])),
-        )
-
-
 def test_warm_start(random_state=42):
     # Test if fitting incrementally with warm start gives a forest of the
     # right size and the same results as a normal fit.
@@ -690,6 +668,28 @@ def test_warm_start_with_oob_score_fails():
     clf = BaggingClassifier(n_estimators=5, warm_start=True, oob_score=True)
     with pytest.raises(ValueError):
         clf.fit(X, y)
+
+
+def test_warning_bootstrap_sample_weight():
+    X, y = iris.data, iris.target
+    sample_weight = np.ones_like(y)
+    clf = BaggingClassifier(bootstrap=False)
+    warn_msg = (
+        "When fitting BaggingClassifier with sample_weight "
+        "it is recommended to use bootstrap=True"
+    )
+    with pytest.warns(UserWarning, match=warn_msg):
+        clf.fit(X, y, sample_weight=sample_weight)
+
+    X, y = diabetes.data, diabetes.target
+    sample_weight = np.ones_like(y)
+    reg = BaggingRegressor(bootstrap=False)
+    warn_msg = (
+        "When fitting BaggingRegressor with sample_weight "
+        "it is recommended to use bootstrap=True"
+    )
+    with pytest.warns(UserWarning, match=warn_msg):
+        reg.fit(X, y, sample_weight=sample_weight)
 
 
 def test_oob_score_removed_on_warm_start():
