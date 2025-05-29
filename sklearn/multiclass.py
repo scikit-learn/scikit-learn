@@ -558,9 +558,15 @@ class OneVsRestClassifier(
                 return self.classes_[argmaxima]
             elif self.undefined_prediction_behaviour == "random":
                 preds.argmax(axis=0, out=argmaxima)
-                for multiple_top_index in np.asarray(multiple_top_preds).nonzero()[0]:
-                    indices = np.asarray(preds[:, multiple_top_index] == 1).nonzero()[0]
-                    argmaxima[multiple_top_index] = self.random_state_.choice(indices)
+                indices_of_multiple_top = np.asarray(multiple_top_preds).nonzero()[0]
+                for multiple_top_index in indices_of_multiple_top:
+                    possible_indices = np.asarray(
+                        preds[:, multiple_top_index]
+                        == np.amax(preds[:, multiple_top_index])
+                    ).nonzero()[0]
+                    argmaxima[multiple_top_index] = self.random_state_.choice(
+                        possible_indices
+                    )
                 return self.classes_[argmaxima]
             elif self.undefined_prediction_behaviour == "negative":
                 preds.argmax(axis=0, out=argmaxima)
