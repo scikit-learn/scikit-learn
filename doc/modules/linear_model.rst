@@ -654,7 +654,7 @@ or :func:`lars_path_gram`.
   .. rubric:: References
 
   * Original Algorithm is detailed in the paper `Least Angle Regression
-    <https://www-stat.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf>`_
+    <https://hastie.su.domains/Papers/LARS/LeastAngle_2002.pdf>`_
     by Hastie et al.
 
 .. _omp:
