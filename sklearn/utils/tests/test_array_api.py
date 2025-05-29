@@ -581,10 +581,14 @@ def test_count_nonzero(
 @pytest.mark.parametrize("wrap", [True, False])
 def test_fill_or_add_to_diagonal(array_namespace, device_, dtype_name, wrap):
     xp = _array_api_for_tests(array_namespace, device_)
-    array_np = numpy.zeros((5, 4), dtype=numpy.int64)
-    array_xp = xp.asarray(array_np)
-    _fill_or_add_to_diagonal(array_xp, value=1, xp=xp, add_value=False, wrap=wrap)
+
+    array_np = numpy.zeros((5, 4), dtype=dtype_name)
+    array_xp = xp.asarray(array_np.copy(), device=device_)
+
     numpy.fill_diagonal(array_np, val=1, wrap=wrap)
+    with config_context(array_api_dispatch=True):
+        _fill_or_add_to_diagonal(array_xp, value=1, xp=xp, add_value=False, wrap=wrap)
+
     assert_array_equal(_convert_to_numpy(array_xp, xp=xp), array_np)
 
 
