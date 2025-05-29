@@ -82,7 +82,7 @@ cdef void update_center_dense(
         int k, sample_idx, feature_idx
         floating wsum_cluster = 0
         floating old_weight, new_weight
-        floating alpha, old_scaling_factor, new_scaling_factor
+        floating alpha
 
     k = 0
     for sample_idx in range(n_samples):
@@ -123,42 +123,18 @@ cdef void update_center_dense(
         # the batch. This is similar to an exponential moving average but with
         # an adaptive decay rate.
 
-        # For the sake of efficiency, we don't compute the update explicitly.
-        # Instead, we skip computing the mean of the batch and instead
-        # compute the update by scaling the old center, adding the weighted
-        # sum of the batch, and then scaling again.
-
-        # Let Sigma(B_j^i) be the weighted sum of the points assigned to
-        # cluster j in the current batch.
-        # Therefore (Sigma(B_j^i) = wsum_cluster * CM(B_j^i)).
-
-        # We can rewrite the update formula as:
-        # C_{i+1} = C^{i}_j*(1-alpha) + (alpha/wsum_cluster)*Sigma(B_j^i)
-        #         = (alpha/wsum_cluster)[C^{i}_j*(1-alpha)(wsum_cluster/alpha) + Sigma(B_j^i)]
-
-        # In the adaptive case, nothing simplifies so we just use the formula
-        # as is.
-        # In the non-adaptive case, things simplify and we have
-        # - (1-alpha)*(wsum_cluster/alpha)
-        #   = (old_weight/(w_sum+old_weight))*(wsum_cluster+old_weight) = old_weight
-        # - (alpha/wsum_cluster) = 1/(wsum_cluster+old_weight)
-
         if adaptive_lr:
-            alpha = sqrt(wsum_cluster/wsum_batch)
-            old_scaling_factor = (1.0-alpha) * (wsum_cluster/alpha)
-            new_scaling_factor = alpha/wsum_cluster
+            alpha = sqrt(wsum_cluster / wsum_batch)
         else:
-            old_scaling_factor = old_weight
-            new_scaling_factor = 1.0/new_weight
+            alpha = wsum_cluster / new_weight
 
         for feature_idx in range(n_features):
-            centers_new[cluster_idx, feature_idx] = centers_old[cluster_idx, feature_idx]* old_scaling_factor
+            centers_new[cluster_idx, feature_idx] = (1 - alpha) * centers_old[cluster_idx, feature_idx]
         for k in range(n_indices):
             sample_idx = indices[k]
             for feature_idx in range(n_features):
-                centers_new[cluster_idx, feature_idx] += X[sample_idx, feature_idx] * sample_weight[sample_idx]
-        for feature_idx in range(n_features):
-            centers_new[cluster_idx, feature_idx] *= new_scaling_factor
+                weight_idx =  sample_weight[sample_idx] / wsum_cluster
+                centers_new[cluster_idx, feature_idx] += alpha * weight_idx * X[sample_idx, feature_idx]
 
     else:
         # No sample was assigned to this cluster in this batch of data
@@ -249,7 +225,7 @@ cdef void update_center_sparse(
         int k, sample_idx, feature_idx, ptr
         floating wsum_cluster = 0.0
         floating old_weight, new_weight
-        floating alpha, old_scaling_factor, new_scaling_factor
+        floating alpha
 
     k = 0
     for sample_idx in range(n_samples):
@@ -261,30 +237,25 @@ cdef void update_center_sparse(
 
     if wsum_cluster > 0:
         # See update_center_dense for details
-
         old_weight = weight_sums[cluster_idx]
         new_weight = old_weight + wsum_cluster
         weight_sums[cluster_idx] = new_weight
 
         if adaptive_lr:
             alpha = sqrt(wsum_cluster / wsum_batch)
-            old_scaling_factor = (1.0 - alpha) * (wsum_cluster / alpha)
-            new_scaling_factor = alpha / wsum_cluster
         else:
-            old_scaling_factor = old_weight
-            new_scaling_factor = 1.0 / new_weight
+            alpha = wsum_cluster / new_weight
 
         for feature_idx in range(n_features):
-            centers_new[cluster_idx, feature_idx] = (
-                centers_old[cluster_idx, feature_idx] * old_scaling_factor
-            )
+            centers_new[cluster_idx, feature_idx] = (1 - alpha) * centers_old[cluster_idx, feature_idx]
+
         for i in range(n_indices):
             sample_idx = indices[i]
-            for ptr in range(X_indptr[sample_idx], X_indptr[sample_idx+1]):
+            for ptr in range(X_indptr[sample_idx], X_indptr[sample_idx + 1]):
                 feature_idx = X_indices[ptr]
-                centers_new[cluster_idx, feature_idx] += X_data[ptr] * sample_weight[sample_idx]
-        for feature_idx in range(n_features):
-            centers_new[cluster_idx, feature_idx] *= new_scaling_factor
+                weight_idx = sample_weight[sample_idx] / wsum_cluster
+                centers_new[cluster_idx, feature_idx] += alpha * weight_idx * X_data[ptr]
+
     else:
         # No sample was assigned to this cluster in this batch of data
         for feature_idx in range(n_features):
