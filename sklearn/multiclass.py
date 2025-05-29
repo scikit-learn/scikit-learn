@@ -542,23 +542,28 @@ class OneVsRestClassifier(
                 preds[i, :] = pred
 
             argmaxima = np.zeros(n_samples, dtype=int)
-            preds.argmax(axis=0, out=argmaxima)
 
             # find the number of maximum for each sample
             multiple_top_preds = np.sum(np.amax(preds, axis=0) == preds, axis=0) > 1
 
             if self.undefined_prediction_behaviour == "first_seen":
-                argmaxima[multiple_top_preds] = 0
+                preds.argmax(axis=0, out=argmaxima)
                 return self.classes_[argmaxima]
             if self.undefined_prediction_behaviour == "last_seen":
-                argmaxima[multiple_top_preds] = len(self.classes_) - 1
+                # reverse order so that argmax directly gives the last seen index
+                preds = np.flip(preds, axis=0)
+                preds.argmax(axis=0, out=argmaxima)
+                # find the right index
+                argmaxima -= len(self.classes_) - 1
                 return self.classes_[argmaxima]
             elif self.undefined_prediction_behaviour == "random":
+                preds.argmax(axis=0, out=argmaxima)
                 for multiple_top_index in np.asarray(multiple_top_preds).nonzero()[0]:
                     indices = np.asarray(preds[:, multiple_top_index] == 1).nonzero()[0]
                     argmaxima[multiple_top_index] = self.random_state_.choice(indices)
                 return self.classes_[argmaxima]
             elif self.undefined_prediction_behaviour == "negative":
+                preds.argmax(axis=0, out=argmaxima)
                 final_preds = self.classes_[argmaxima]
                 final_preds[multiple_top_preds] = -1
                 return final_preds
