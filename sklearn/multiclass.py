@@ -549,10 +549,10 @@ class OneVsRestClassifier(
 
             if self.undefined_prediction_behaviour == "first_seen":
                 argmaxima[multiple_top_preds] = 0
-                return argmaxima
+                return self.classes_[argmaxima]
             if self.undefined_prediction_behaviour == "last_seen":
                 argmaxima[multiple_top_preds] = len(self.classes_) - 1
-                return argmaxima
+                return self.classes_[argmaxima]
             elif self.undefined_prediction_behaviour == "random":
                 for multiple_top_index in np.asarray(multiple_top_preds).nonzero()[0]:
                     indices = np.asarray(preds[:, multiple_top_index] == 1).nonzero()[0]
