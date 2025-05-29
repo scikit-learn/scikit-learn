@@ -670,37 +670,17 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
 
 
 def _median(x, axis=None, keepdims=False, xp=None):
-    # `median` is not included in the Array API spec, but is implemented in most
-    # array libraries (and all that we test).
     xp, _ = get_namespace(x, xp=xp)
     if hasattr(xp, "median"):
-        # When `x` has even number of elements, `torch.median` takes the lower of the
-        # two medians, thus we use `torch.quantile(q=0.5)`, which gives mean of the two
+        # `torch.median` takes the lower of the two medians when `x` has even number
+        # of elements, thus we use `torch.quantile(q=0.5)`, which gives mean of the two
         if _is_xp_namespace(xp, "torch"):
             return xp.quantile(x, q=0.5, dim=axis, keepdim=keepdims)
         return xp.median(x, axis=axis, keepdims=keepdims)
 
-    if x.ndim == 0:
-        return float(x)
-
-    if axis is None:
-        x = xp.reshape(x, (-1,))
-        axis = 0
-
-    X_sorted = xp.sort(x, axis=axis)
-    indexer = [slice(None)] * x.ndim
-    index = x.shape[axis] // 2
-    if x.shape[axis] % 2 == 1:
-        # index with slice to allow mean (below) to work
-        indexer[axis] = slice(index, index + 1)
-    else:
-        indexer[axis] = slice(index - 1, index + 1)
-    indexer = tuple(indexer)
-
-    # Use mean in both odd and even case to coerce data type,
-    # using out array if needed.
-    rout = xp.mean(X_sorted[indexer], axis=axis)
-    return rout
+    # `median` is not included in the Array API spec, but is implemented in most
+    # array libraries, and all that we support (as of May 2025).
+    raise NotImplementedError(f"The array namespace {xp.__name__} is not supported.")
 
 
 def _xlogy(x, y, xp=None):
