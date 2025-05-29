@@ -24,6 +24,7 @@ from sklearn.metrics.cluster._supervised import (
     _entropy,
     _generalized_average,
     check_clusterings,
+    entropy,
 )
 from sklearn.utils import assert_all_finite
 from sklearn.utils._array_api import (
@@ -268,6 +269,12 @@ def test_int_overflow_mutual_info_fowlkes_mallows_score():
 
     assert_all_finite(mutual_info_score(x, y))
     assert_all_finite(fowlkes_mallows_score(x, y))
+
+
+# TODO(1.10): Remove
+def test_public_entropy_deprecation():
+    with pytest.warns(FutureWarning, match="Function entropy is deprecated"):
+        entropy([0, 0, 42.0])
 
 
 def test_entropy():
