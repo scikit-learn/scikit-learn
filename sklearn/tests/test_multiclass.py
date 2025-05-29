@@ -998,7 +998,7 @@ class DeterministicBinaryClassifier(BaseEstimator, ClassifierMixin):
     (
         ("first_seen", np.array([3, 0, 0, 0])),
         ("last_seen", np.array([3, 1, 0, 3])),
-        ("random", np.array([3, 1, 0, 1])),
+        ("random", np.array([3, 1, 0, 0])),
         ("negative", np.array([3, -1, 0, -1])),
     ),
 )
