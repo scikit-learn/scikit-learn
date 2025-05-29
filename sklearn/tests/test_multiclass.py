@@ -1002,12 +1002,15 @@ class DeterministicBinaryClassifier(BaseEstimator, ClassifierMixin):
         ("negative", np.array([3, -1, 0, -1])),
     ),
 )
-def test_ovr_multiclass_last_seen(undefined_prediction_behaviour, expected_prediction):
+def test_ovr_multiclass_undefined_prediction_behaviour(
+    undefined_prediction_behaviour, expected_prediction
+):
     X = np.array([[0], [0], [0], [0]])
     y = np.array([0, 1, 3, 1])
     clf = OneVsRestClassifier(
         DeterministicBinaryClassifier(),
         undefined_prediction_behaviour=undefined_prediction_behaviour,
+        random_state=20000709,
     )
     clf.fit(X, y)
     clf.estimators_ = [

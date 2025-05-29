@@ -276,6 +276,13 @@ class OneVsRestClassifier(
 
           .. versionadded:: 1.7
 
+    random_state : int, RandomState instance or None, default=None
+        Controls the randomness of the predicted class in case of equal probability.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>` for details.
+
+          .. versionadded:: 1.7
+
     Attributes
     ----------
     estimators_ : list of `n_classes` estimators
