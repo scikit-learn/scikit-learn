@@ -554,7 +554,7 @@ class OneVsRestClassifier(
                 preds = np.flip(preds, axis=0)
                 preds.argmax(axis=0, out=argmaxima)
                 # find the right index
-                argmaxima -= len(self.classes_) - 1
+                argmaxima = (len(self.classes_) - 1) - argmaxima
                 return self.classes_[argmaxima]
             elif self.undefined_prediction_behaviour == "random":
                 preds.argmax(axis=0, out=argmaxima)
