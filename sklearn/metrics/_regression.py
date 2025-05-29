@@ -27,7 +27,7 @@ from ..utils._array_api import (
     _xlogy as xlogy,
 )
 from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.stats import _weighted_percentile
+from ..utils.stats import _averaged_weighted_percentile, _weighted_percentile
 from ..utils.validation import (
     _check_sample_weight,
     _num_samples,
@@ -921,7 +921,7 @@ def median_absolute_error(
     if sample_weight is None:
         output_errors = np.median(np.abs(y_pred - y_true), axis=0)
     else:
-        output_errors = _weighted_percentile(
+        output_errors = _averaged_weighted_percentile(
             np.abs(y_pred - y_true), sample_weight=sample_weight
         )
     if isinstance(multioutput, str):
