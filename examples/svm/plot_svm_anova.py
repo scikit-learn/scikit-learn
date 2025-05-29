@@ -8,6 +8,11 @@ SVC (support vector classifier) to improve the classification scores. We use
 the iris dataset (4 features) and add 36 non-informative features. We can find
 that our model achieves best performance when we select around 10% of features.
 
+Relevant sections in the user guide:
+- Univariate Feature Selection: https://scikit-learn.org/stable/modules/feature_selection.html#univariate-feature-selection
+- Standardization: https://scikit-learn.org/stable/modules/preprocessing.html#standardization-or-mean-removal-and-variance-scaling
+- Support Vector Machines: https://scikit-learn.org/stable/modules/svm.html#svc
+- Cross-validation: https://scikit-learn.org/stable/modules/cross_validation.html
 """
 
 # Authors: The scikit-learn developers
