@@ -2253,6 +2253,9 @@ def yield_metric_checker_combinations(metric_checkers=array_api_metric_checkers)
 )
 @pytest.mark.parametrize("metric, check_func", yield_metric_checker_combinations())
 def test_array_api_compliance(metric, array_namespace, device, dtype_name, check_func):
+    # TODO: Remove once array-api-strict > 2.3.1
+    # https://github.com/data-apis/array-api-strict/issues/134 has been fixed but
+    # not released yet.
     if (
         getattr(metric, "__name__", None) == "median_absolute_error"
         and array_namespace == "array_api_strict"
@@ -2263,7 +2266,6 @@ def test_array_api_compliance(metric, array_namespace, device, dtype_name, check
             pass
         else:
             if device == array_api_strict.Device("device1"):
-                # See https://github.com/data-apis/array-api-strict/issues/134
                 pytest.xfail(
                     "`_weighted_percentile` is affected by array_api_strict bug when "
                     "indexing with tuple of arrays on non-'CPU_DEVICE' devices."
