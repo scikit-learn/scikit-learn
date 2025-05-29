@@ -358,18 +358,20 @@ def type_of_target(y, input_name="", raise_unknown=False):
                 y = check_array(y, dtype=object, **check_y_kwargs)
 
     try:
-        first_row_or_val = y[[0], :] if issparse(y) else y[0]
-        # labels in bytes format
-        if isinstance(first_row_or_val, bytes):
+        first_row_or_val = y[[0], :] if issparse(y) else y[0, ...]
+        if (
+            hasattr(first_row_or_val.dtype, "kind")
+            and first_row_or_val.dtype.kind == "S"
+        ):
             raise TypeError(
                 "Support for labels represented as bytes is not supported. Convert "
                 "the labels to a string or integer format."
             )
         # The old sequence of sequences format
         if (
-            not hasattr(first_row_or_val, "__array__")
-            and isinstance(first_row_or_val, Sequence)
-            and not isinstance(first_row_or_val, str)
+            not hasattr(y[0], "__array__")
+            and isinstance(y[0], Sequence)
+            and not isinstance(y[0], str)
         ):
             raise ValueError(
                 "You appear to be using a legacy multi-label data"
