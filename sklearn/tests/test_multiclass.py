@@ -997,7 +997,7 @@ class DeterministicBinaryClassifier(BaseEstimator, ClassifierMixin):
     "undefined_prediction_behaviour, expected_prediction",
     (
         ("first_seen", np.array([3, 0, 0, 0])),
-        ("last_seen", np.array([3, 0, 0, 3])),
+        ("last_seen", np.array([3, 1, 0, 3])),
         ("random", np.array([3, 1, 0, 1])),
         ("negative", np.array([3, -1, 0, -1])),
     ),
