@@ -300,7 +300,7 @@ logarithm.
 Temperature scaling is equivalent to training a neural network with a single neuron
 activated by the softmax function. The parameter :math:`T` is learned by minimizing
 :func:`~sklearn.metrics.log_loss` (i.e. cross-entropy loss) on a validation set.
-In scikit-learn’s implementation, the inverse temperature `\beta = 1 / T`
+In scikit-learn’s implementation, the inverse temperature `beta = 1 / T`
 is optimized instead, so that the calibrated probabilities are given by
 `softmax(beta * logits)`.
 
