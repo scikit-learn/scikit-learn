@@ -191,24 +191,25 @@ Estimators
 When an estimator is fitted with an Array API compatible `X`, all other
 array inputs (e.g., `y`, `sample_weight`) will be silently converted
 to match the array library and device of `X`, if they do not already.
-This allows estimators to accept mixed input types, which enables `X` to be moved
-to a different device within a pipeline.
+This allows estimators to accept mixed input types, enabling `X` to be moved
+to a different device within a pipeline, while `y` stays on the original device.
+Note that scikit-learn pipelines do not allow transformation of `y` (to avoid
+:ref:`leakage <data_leakage>`).
 
-Take for example a pipeline that takes `X` and `y`, which both start on CPU, and has
+Take for example a pipeline where `X` and `y` both start on CPU, and has
 the following three steps:
 
 * :class:`~sklearn.preprocessing.TargetEncoder`, which will work on categorial
-  `X` but also requires `y`, meaning both `X` and `y` need to remain on CPU.
-* :class:`~sklearn.preprocessing.FunctionTransformer` to move `X` to GPU, for
-  performance reasons.
+  `X` but also requires `y`, meaning both `X` and `y` need to be on CPU.
+* :class:`~sklearn.preprocessing.FunctionTransformer` to move `X` to GPU, to improve
+  performance in the next step.
 * :class:`~sklearn.linear_model.Ridge`, whose performance can be improved when
   passed arrays on GPU, as it only takes numerical inputs.
 
 `y` and `X` both need to be on CPU for :class:`~sklearn.preprocessing.TargetEncoder`.
-`X` is moved to GPU for :class:`~sklearn.linear_model.Ridge` but `y` cannot be
-as scikit-learn pipelines do not allow transforming of `y` (to avoid
-:ref:`leakage <data_leakage>`). This is however not a problem as
-:class:`~sklearn.linear_model.Ridge` accepts mixed input types.
+`X` is moved to GPU to improve the performance of :class:`~sklearn.linear_model.Ridge`
+but `y` cannot be transformed. Since :class:`~sklearn.linear_model.Ridge` is able to
+accept mixed input types, this is not a problem and the pipeline is able to be run.
 
 The fitted attributes of an estimator fitted with an Array API compatible `X`, will
 be arrays from the same library as the input and stored on the same device.
@@ -224,22 +225,19 @@ all other array inputs (e.g., `y_true`, `sample_weight`) will be silently conver
 to match the array library and device of `y_pred`, if they do not already.
 This allows scoring functions to accept mixed input types, which enables it to be
 used within a meta-estimator (or function that accepts estimators), with a pipeline
-that transfers arrays between devices (e.g., CPU to GPU).
+that moves input arrays between devices (e.g., CPU to GPU).
 
-To be able to use this pipeline within e.g.,
+For example, to be able to use pipeline described above within e.g.,
 :func:`~sklearn.model_selection.cross_validate` or
 :class:`~sklearn.model_selection.GridSearchCV`, the scoring function internally
 called needs  to be able to accept mixed input types.
 
-Note that scikit-learn pipelines do not allow transforming of `y`, to avoid
-:ref:`leakage <data_leakage>`.
-
 The output type of scoring functions depends on the number of output values.
-When a scoring function returns a scalar value, it will still return Python
-scalars (typically a `float` instance) instead of an array scalar value.
-Scoring functions that support :term:`multiclass` or :term:`multioutput`,
-and may return several values, will return an array from the same array library and
-device as `y_pred`.
+When a scoring function returns a scalar value, it will return a Python
+scalar (typically a `float` instance) instead of an array scalar value.
+For scoring functions that support :term:`multiclass` or :term:`multioutput`,
+an array from the same array library and device as `y_pred` will be returned when
+multiple values need to be output.
 
 Common estimator checks
 =======================
