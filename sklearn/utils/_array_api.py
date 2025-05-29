@@ -674,8 +674,8 @@ def _median(x, axis=None, keepdims=False, xp=None):
     # array libraries, and all that we support (as of May 2025).
     xp, _ = get_namespace(x, xp=xp)
 
-    if _is_xp_namespace(xp, "array-api-strict"):
-        x_np = numpy.asarray(x)
+    if _is_xp_namespace(xp, "array_api_strict"):
+        x_np = numpy.asarray(xp.asarray(x, device=xp.Device("CPU_DEVICE")))
         return numpy.median(x_np, axis=axis, keepdims=keepdims)
 
     # `torch.median` takes the lower of the two medians when `x` has even number
