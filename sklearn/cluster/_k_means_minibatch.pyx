@@ -98,7 +98,7 @@ cdef void update_center_dense(
         weight_sums[cluster_idx] = new_weight
 
         # We want to compute the new center with the update formula
-        # C_{i+1} = C^{i}_j*(1-alpha) + alpha*CM(B_j^i).
+        # C_j^{i+1} = C_j^i*(1-alpha) + alpha*CM(B_j^i).
 
         # where:
         # - C_j^i is the center representing the j-th cluster at the i-th
