@@ -1311,7 +1311,8 @@ def _entropy(labels):
 
 # TODO(1.10): Remove
 @deprecated(
-    "`entropy` is deprecated in 1.8 and will become a private function only from 1.10."
+    "`entropy` is deprecated in 1.8 and will become a private function only "
+    "(`_entropy`) from 1.10."
 )
 def entropy(labels):
     """Public version of `_entropy`. To be deprecated."""
