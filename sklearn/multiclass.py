@@ -256,16 +256,12 @@ class OneVsRestClassifier(
 
         .. versionadded:: 1.1
 
-    undefined_prediction_behaviour : {'first_seen', 'last_seen', 'random', 'negative'},\
-        default='last_seen'
-        The behaviour of the OneVSRest classifier when it encounters an uncertain
-        prediction. This mode is specific to the OneVsRestClassifier and is described
-        below:
-        - if all estimators return the negative class (0), the sample does not belong
-          to any class and the final prediction is not defined.
-        - if multiple (more than one) estimators return the positive class (1), the
-          sample belongs to multiple classes to any class and the final prediction is
-          not defined.
+    undefined_prediction_behaviour : {'first_seen', 'last_seen', 'random', \
+        'negative'}, default='last_seen'
+        Controls the behaviour of the OneVSRestClassifier when a sample has multiple
+        classes with equal probabilities. If multiple (more than one) estimators
+        predict the same class proba for a sample, then the sample would belong
+        to multiple classes, and the final prediction is not defined.
 
         This parameter controls how the final prediction is made in these cases:
         - 'first_seen': the first class seen in the training data is returned for
@@ -540,44 +536,31 @@ class OneVsRestClassifier(
 
         n_samples = _num_samples(X)
         if self.label_binarizer_.y_type_ == "multiclass":
-            preds = np.zeros((len(self.estimators_), n_samples), dtype=int)
+            preds = np.zeros((len(self.estimators_), n_samples), dtype=float)
             for i, e in enumerate(self.estimators_):
                 pred = _predict_binary(e, X)
                 preds[i, :] = pred
 
             argmaxima = np.zeros(n_samples, dtype=int)
             preds.argmax(axis=0, out=argmaxima)
+
+            # find the number of maximum for each sample
+            multiple_top_preds = np.sum(np.amax(preds, axis=0) == preds, axis=0) > 1
+
             if self.undefined_prediction_behaviour == "first_seen":
-                return self.classes_[argmaxima]
+                argmaxima[multiple_top_preds] = 0
+                return argmaxima
             if self.undefined_prediction_behaviour == "last_seen":
-                all_zero_preds = np.sum(preds, axis=0) == 0
-                argmaxima[all_zero_preds] = len(self.classes_) - 1
-
-                return self.classes_[argmaxima]
+                argmaxima[multiple_top_preds] = len(self.classes_) - 1
+                return argmaxima
             elif self.undefined_prediction_behaviour == "random":
-                # handles all zeros predictions
-                all_zero_preds = np.sum(preds, axis=0) == 0
-                argmaxima[all_zero_preds] = self.random_state_.randint(
-                    self.n_classes_, size=np.sum(all_zero_preds)
-                )
-
-                # handles multiple ones predictions
-                multiple_ones_preds = np.sum(preds, axis=0) > 1
-                for multiple_ones_index in np.asarray(multiple_ones_preds).nonzero()[0]:
-                    indices = np.asarray(preds[:, multiple_ones_index] == 1).nonzero()[
-                        0
-                    ]
-                    argmaxima[multiple_ones_index] = self.random_state_.choice(indices)
-
+                for multiple_top_index in np.asarray(multiple_top_preds).nonzero()[0]:
+                    indices = np.asarray(preds[:, multiple_top_index] == 1).nonzero()[0]
+                    argmaxima[multiple_top_index] = self.random_state_.choice(indices)
                 return self.classes_[argmaxima]
             elif self.undefined_prediction_behaviour == "negative":
                 final_preds = self.classes_[argmaxima]
-                # handles all zeros predictions
-                all_zero_preds = np.sum(preds, axis=0) == 0
-                final_preds[all_zero_preds] = -1
-
-                multiple_ones_preds = np.sum(preds, axis=0) > 1
-                final_preds[multiple_ones_preds] = -1
+                final_preds[multiple_top_preds] = -1
                 return final_preds
         else:
             thresh = _threshold_for_binary_predict(self.estimators_[0])
