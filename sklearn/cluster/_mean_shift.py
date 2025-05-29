@@ -82,7 +82,7 @@ def estimate_bandwidth(X, *, quantile=0.3, n_samples=None, random_state=0, n_job
     >>> X = np.array([[1, 1], [2, 1], [1, 0],
     ...               [4, 7], [3, 5], [3, 6]])
     >>> estimate_bandwidth(X, quantile=0.5)
-    np.float64(1.61...)
+    np.float64(1.61)
     """
     X = check_array(X)
 
@@ -227,8 +227,8 @@ def mean_shift(
     ...               [4, 7], [3, 5], [3, 6]])
     >>> cluster_centers, labels = mean_shift(X, bandwidth=2)
     >>> cluster_centers
-    array([[3.33..., 6.     ],
-           [1.33..., 0.66...]])
+    array([[3.33, 6.     ],
+           [1.33, 0.66]])
     >>> labels
     array([1, 1, 1, 0, 0, 0])
     """
@@ -432,6 +432,9 @@ class MeanShift(ClusterMixin, BaseEstimator):
     array([1, 0])
     >>> clustering
     MeanShift(bandwidth=2)
+
+    For a comparison of Mean Shift clustering with other clustering algorithms, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
     """
 
     _parameter_constraints: dict = {

@@ -60,10 +60,9 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4, random_
 # ----------------------
 #
 # Here we define two different classifiers. The goal is to visually compare their
-# statistical performance across thresholds using the ROC and DET curves. There
-# is no particular reason why these classifiers are chosen other classifiers
-# available in scikit-learn.
+# statistical performance across thresholds using the ROC and DET curves.
 
+from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.svm import LinearSVC
@@ -71,13 +70,14 @@ from sklearn.svm import LinearSVC
 classifiers = {
     "Linear SVM": make_pipeline(StandardScaler(), LinearSVC(C=0.025)),
     "Random Forest": RandomForestClassifier(
-        max_depth=5, n_estimators=10, max_features=1
+        max_depth=5, n_estimators=10, max_features=1, random_state=0
     ),
+    "Non-informative baseline": DummyClassifier(),
 }
 
 # %%
-# Plot ROC and DET curves
-# -----------------------
+# Compare ROC and DET curves
+# --------------------------
 #
 # DET curves are commonly plotted in normal deviate scale. To achieve this the
 # DET display transforms the error rates as returned by the
@@ -86,21 +86,33 @@ classifiers = {
 
 import matplotlib.pyplot as plt
 
+from sklearn.dummy import DummyClassifier
 from sklearn.metrics import DetCurveDisplay, RocCurveDisplay
 
 fig, [ax_roc, ax_det] = plt.subplots(1, 2, figsize=(11, 5))
-
-for name, clf in classifiers.items():
-    clf.fit(X_train, y_train)
-
-    RocCurveDisplay.from_estimator(clf, X_test, y_test, ax=ax_roc, name=name)
-    DetCurveDisplay.from_estimator(clf, X_test, y_test, ax=ax_det, name=name)
 
 ax_roc.set_title("Receiver Operating Characteristic (ROC) curves")
 ax_det.set_title("Detection Error Tradeoff (DET) curves")
 
 ax_roc.grid(linestyle="--")
 ax_det.grid(linestyle="--")
+
+for name, clf in classifiers.items():
+    (color, linestyle) = (
+        ("black", "--") if name == "Non-informative baseline" else (None, None)
+    )
+    clf.fit(X_train, y_train)
+    RocCurveDisplay.from_estimator(
+        clf,
+        X_test,
+        y_test,
+        ax=ax_roc,
+        name=name,
+        curve_kwargs=dict(color=color, linestyle=linestyle),
+    )
+    DetCurveDisplay.from_estimator(
+        clf, X_test, y_test, ax=ax_det, name=name, color=color, linestyle=linestyle
+    )
 
 plt.legend()
 plt.show()
@@ -117,3 +129,35 @@ plt.show()
 # DET curves give direct feedback of the detection error tradeoff to aid in
 # operating point analysis. The user can then decide the FNR they are willing to
 # accept at the expense of the FPR (or vice-versa).
+#
+# Non-informative classifier baseline for the ROC and DET curves
+# --------------------------------------------------------------
+#
+# The diagonal black-dotted lines in the plots above correspond to a
+# :class:`~sklearn.dummy.DummyClassifier` using the default "prior" strategy, to
+# serve as baseline for comparison with other classifiers. This classifier makes
+# constant predictions, independent of the input features in `X`, making it a
+# non-informative classifier.
+#
+# To further understand the non-informative baseline of the ROC and DET curves,
+# we recall the following mathematical definitions:
+#
+# :math:`\text{FPR} = \frac{\text{FP}}{\text{FP} + \text{TN}}`
+#
+# :math:`\text{FNR} = \frac{\text{FN}}{\text{TP} + \text{FN}}`
+#
+# :math:`\text{TPR} = \frac{\text{TP}}{\text{TP} + \text{FN}}`
+#
+# A classifier that always predict the positive class would have no true
+# negatives nor false negatives, giving :math:`\text{FPR} = \text{TPR} = 1` and
+# :math:`\text{FNR} = 0`, i.e.:
+#
+# - a single point in the upper right corner of the ROC plane,
+# - a single point in the lower right corner of the DET plane.
+#
+# Similarly, a classifier that always predict the negative class would have no
+# true positives nor false positives, thus :math:`\text{FPR} = \text{TPR} = 0`
+# and :math:`\text{FNR} = 1`, i.e.:
+#
+# - a single point in the lower left corner of the ROC plane,
+# - a single point in the upper left corner of the DET plane.

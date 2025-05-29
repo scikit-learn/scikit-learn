@@ -10,8 +10,7 @@ import numpy as np
 from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import resample
 from ..utils._param_validation import Interval, Options, StrOptions
-from ..utils.deprecation import _deprecate_Xt_in_inverse_transform
-from ..utils.stats import _weighted_percentile
+from ..utils.stats import _averaged_weighted_percentile, _weighted_percentile
 from ..utils.validation import (
     _check_feature_names_in,
     _check_sample_weight,
@@ -56,6 +55,17 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         For an example of the different strategies see:
         :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization_strategies.py`.
+
+    quantile_method : {"inverted_cdf", "averaged_inverted_cdf",
+            "closest_observation", "interpolated_inverted_cdf", "hazen",
+            "weibull", "linear", "median_unbiased", "normal_unbiased"},
+            default="linear"
+            Method to pass on to np.percentile calculation when using
+            strategy="quantile". Only `averaged_inverted_cdf` and `inverted_cdf`
+            support the use of `sample_weight != None` when subsampling is not
+            active.
+
+            .. versionadded:: 1.7
 
     dtype : {np.float32, np.float64}, default=None
         The desired data-type for the output. If None, output dtype is
@@ -175,6 +185,22 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         "n_bins": [Interval(Integral, 2, None, closed="left"), "array-like"],
         "encode": [StrOptions({"onehot", "onehot-dense", "ordinal"})],
         "strategy": [StrOptions({"uniform", "quantile", "kmeans"})],
+        "quantile_method": [
+            StrOptions(
+                {
+                    "warn",
+                    "inverted_cdf",
+                    "averaged_inverted_cdf",
+                    "closest_observation",
+                    "interpolated_inverted_cdf",
+                    "hazen",
+                    "weibull",
+                    "linear",
+                    "median_unbiased",
+                    "normal_unbiased",
+                }
+            )
+        ],
         "dtype": [Options(type, {np.float64, np.float32}), None],
         "subsample": [Interval(Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
@@ -186,6 +212,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         *,
         encode="onehot",
         strategy="quantile",
+        quantile_method="warn",
         dtype=None,
         subsample=200_000,
         random_state=None,
@@ -193,6 +220,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self.n_bins = n_bins
         self.encode = encode
         self.strategy = strategy
+        self.quantile_method = quantile_method
         self.dtype = dtype
         self.subsample = subsample
         self.random_state = random_state
@@ -213,9 +241,11 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         sample_weight : ndarray of shape (n_samples,)
             Contains weight values to be associated with each sample.
-            Cannot be used when `strategy` is set to `"uniform"`.
 
             .. versionadded:: 1.3
+
+            .. versionchanged:: 1.7
+               Added support for strategy="uniform".
 
         Returns
         -------
@@ -231,32 +261,74 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         n_samples, n_features = X.shape
 
-        if sample_weight is not None and self.strategy == "uniform":
-            raise ValueError(
-                "`sample_weight` was provided but it cannot be "
-                "used with strategy='uniform'. Got strategy="
-                f"{self.strategy!r} instead."
-            )
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         if self.subsample is not None and n_samples > self.subsample:
             # Take a subsample of `X`
+            # When resampling, it is important to subsample **with replacement** to
+            # preserve the distribution, in particular in the presence of a few data
+            # points with large weights. You can check this by setting `replace=False`
+            # in sklearn.utils.test.test_indexing.test_resample_weighted and check that
+            # it fails as a justification for this claim.
             X = resample(
                 X,
-                replace=False,
+                replace=True,
                 n_samples=self.subsample,
                 random_state=self.random_state,
+                sample_weight=sample_weight,
             )
+            # Since we already used the weights when resampling when provided,
+            # we set them back to `None` to avoid accounting for the weights twice
+            # in subsequent operations to compute weight-aware bin edges with
+            # quantiles or k-means.
+            sample_weight = None
 
         n_features = X.shape[1]
         n_bins = self._validate_n_bins(n_features)
 
-        if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-
         bin_edges = np.zeros(n_features, dtype=object)
+
+        # TODO(1.9): remove and switch to quantile_method="averaged_inverted_cdf"
+        # by default.
+        quantile_method = self.quantile_method
+        if self.strategy == "quantile" and quantile_method == "warn":
+            warnings.warn(
+                "The current default behavior, quantile_method='linear', will be "
+                "changed to quantile_method='averaged_inverted_cdf' in "
+                "scikit-learn version 1.9 to naturally support sample weight "
+                "equivalence properties by default. Pass "
+                "quantile_method='averaged_inverted_cdf' explicitly to silence this "
+                "warning.",
+                FutureWarning,
+            )
+            quantile_method = "linear"
+
+        if (
+            self.strategy == "quantile"
+            and quantile_method not in ["inverted_cdf", "averaged_inverted_cdf"]
+            and sample_weight is not None
+        ):
+            raise ValueError(
+                "When fitting with strategy='quantile' and sample weights, "
+                "quantile_method should either be set to 'averaged_inverted_cdf' or "
+                f"'inverted_cdf', got quantile_method='{quantile_method}' instead."
+            )
+
+        if self.strategy != "quantile" and sample_weight is not None:
+            # Prepare a mask to filter out zero-weight samples when extracting
+            # the min and max values of each columns which are needed for the
+            # "uniform" and "kmeans" strategies.
+            nnz_weight_mask = sample_weight != 0
+        else:
+            # Otherwise, all samples are used. Use a slice to avoid creating a
+            # new array.
+            nnz_weight_mask = slice(None)
+
         for jj in range(n_features):
             column = X[:, jj]
-            col_min, col_max = column.min(), column.max()
+            col_min = column[nnz_weight_mask].min()
+            col_max = column[nnz_weight_mask].max()
 
             if col_min == col_max:
                 warnings.warn(
@@ -270,14 +342,33 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 bin_edges[jj] = np.linspace(col_min, col_max, n_bins[jj] + 1)
 
             elif self.strategy == "quantile":
-                quantiles = np.linspace(0, 100, n_bins[jj] + 1)
+                percentile_levels = np.linspace(0, 100, n_bins[jj] + 1)
+
+                # method="linear" is the implicit default for any numpy
+                # version. So we keep it version independent in that case by
+                # using an empty param dict.
+                percentile_kwargs = {}
+                if quantile_method != "linear" and sample_weight is None:
+                    percentile_kwargs["method"] = quantile_method
+
                 if sample_weight is None:
-                    bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
+                    bin_edges[jj] = np.asarray(
+                        np.percentile(column, percentile_levels, **percentile_kwargs),
+                        dtype=np.float64,
+                    )
                 else:
+                    # TODO: make _weighted_percentile and
+                    # _averaged_weighted_percentile accept an array of
+                    # quantiles instead of calling it multiple times and
+                    # sorting the column multiple times as a result.
+                    percentile_func = {
+                        "inverted_cdf": _weighted_percentile,
+                        "averaged_inverted_cdf": _averaged_weighted_percentile,
+                    }[quantile_method]
                     bin_edges[jj] = np.asarray(
                         [
-                            _weighted_percentile(column, sample_weight, q)
-                            for q in quantiles
+                            percentile_func(column, sample_weight, percentile_rank=p)
+                            for p in percentile_levels
                         ],
                         dtype=np.float64,
                     )
@@ -389,7 +480,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             self._encoder.dtype = dtype_init
         return Xt_enc
 
-    def inverse_transform(self, X=None, *, Xt=None):
+    def inverse_transform(self, X):
         """
         Transform discretized data back to original feature space.
 
@@ -401,18 +492,11 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         X : array-like of shape (n_samples, n_features)
             Transformed data in the binned space.
 
-        Xt : array-like of shape (n_samples, n_features)
-            Transformed data in the binned space.
-
-            .. deprecated:: 1.5
-                `Xt` was deprecated in 1.5 and will be removed in 1.7. Use `X` instead.
-
         Returns
         -------
-        Xinv : ndarray, dtype={np.float32, np.float64}
+        X_original : ndarray, dtype={np.float32, np.float64}
             Data in the original feature space.
         """
-        X = _deprecate_Xt_in_inverse_transform(X, Xt)
 
         check_is_fitted(self)
 
