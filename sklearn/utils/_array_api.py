@@ -674,7 +674,7 @@ def _median(x, axis=None, keepdims=False, xp=None):
     if hasattr(xp, "median"):
         # `torch.median` takes the lower of the two medians when `x` has even number
         # of elements, thus we use `torch.quantile(q=0.5)`, which gives mean of the two
-        if _is_xp_namespace(xp, "torch"):
+        if xpx.is_torch_namespace(xp):
             return xp.quantile(x, q=0.5, dim=axis, keepdim=keepdims)
         return xp.median(x, axis=axis, keepdims=keepdims)
 
