@@ -1,0 +1,2 @@
+- Added temperature scaling in :class:`calibration.CalibratedClassifierCV`.
+  By :user:`Virgil Chan <virchan>`.
