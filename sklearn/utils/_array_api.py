@@ -678,30 +678,13 @@ def _median(x, axis=None, keepdims=False, xp=None):
             return xp.quantile(x, q=0.5, dim=axis, keepdim=keepdims)
         return xp.median(x, axis=axis, keepdims=keepdims)
 
+    if _is_xp_namespace(xp, "array-api-strict"):
+        x_np = xp.asarray(x)
+        return numpy.median(x_np, axis=axis, keepdims=keepdims)
+
     # `median` is not included in the Array API spec, but is implemented in most
     # array libraries, and all that we support (as of May 2025).
-    # This implementation is required for array-api-strict.
-    if x.ndim == 0:
-        return float(x)
-
-    if axis is None:
-        x = xp.reshape(x, (-1,))
-        axis = 0
-
-    X_sorted = xp.sort(x, axis=axis)
-    indexer = [slice(None)] * x.ndim
-    index = x.shape[axis] // 2
-    if x.shape[axis] % 2 == 1:
-        # index with slice to allow mean (below) to work
-        indexer[axis] = slice(index, index + 1)
-    else:
-        indexer[axis] = slice(index - 1, index + 1)
-    indexer = tuple(indexer)
-
-    # Use mean in both odd and even case to coerce data type,
-    # using out array if needed.
-    rout = xp.mean(X_sorted[indexer], axis=axis)
-    return rout
+    raise NotImplementedError(f"The array namespace {xp.__name__} is not supported.")
 
 
 def _xlogy(x, y, xp=None):
