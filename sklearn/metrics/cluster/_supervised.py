@@ -14,6 +14,7 @@ from numbers import Real
 import numpy as np
 from scipy import sparse as sp
 
+from ...utils import deprecated
 from ...utils._array_api import _max_precision_float_dtype, get_namespace_and_device
 from ...utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ...utils.multiclass import type_of_target
@@ -1306,3 +1307,12 @@ def _entropy(labels):
     # Always convert the result as a Python scalar (on CPU) instead of a device
     # specific scalar array.
     return float(-xp.sum((pi / pi_sum) * (xp.log(pi) - log(pi_sum))))
+
+
+# TODO(1.10): Remove
+@deprecated(
+    "`entropy` is deprecated in 1.8 and will become a private function only from 1.10."
+)
+def entropy(labels):
+    """Public version of `_entropy`. To be deprecated."""
+    return _entropy(labels)
