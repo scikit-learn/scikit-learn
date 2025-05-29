@@ -37,7 +37,7 @@ def _minibatch_update_dense(
     labels : ndarray of shape (n_samples,), dtype=int
         labels assignment.
 
-    adaptive_lr : bool (default: False)
+    adaptive_lr : bool, default=False
         Whether to use the adaptive learning rate or not.
 
     n_threads : int
