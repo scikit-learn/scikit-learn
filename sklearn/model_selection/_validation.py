@@ -2396,6 +2396,11 @@ def validation_curve(
     test_scores : array of shape (n_ticks, n_cv_folds)
         Scores on test set.
 
+    See Also
+    --------
+    ValidationCurveDisplay.from_estimator : Plot the validation curve
+        given an estimator, the data, and the parameter to vary.
+
     Notes
     -----
     See :ref:`sphx_glr_auto_examples_model_selection_plot_train_error_vs_test_error.py`

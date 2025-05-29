@@ -4,9 +4,10 @@ from dask.array.fft import * # noqa: F403
 # from dask.array.fft import __all__ as linalg_all
 _n = {}
 exec('from dask.array.fft import *', _n)
-del _n['__builtins__']
+for k in ("__builtins__", "Sequence", "annotations", "warnings"):
+    _n.pop(k, None)
 fft_all = list(_n)
-del _n
+del _n, k
 
 from ...common import _fft
 from ..._internal import get_xp
@@ -16,9 +17,5 @@ import dask.array as da
 fftfreq = get_xp(da)(_fft.fftfreq)
 rfftfreq = get_xp(da)(_fft.rfftfreq)
 
-__all__ = [elem for elem in fft_all if elem != "annotations"] + ["fftfreq", "rfftfreq"]
-
-del get_xp
-del da
-del fft_all
-del _fft
+__all__ = fft_all + ["fftfreq", "rfftfreq"]
+_all_ignore = ["da", "fft_all", "get_xp", "warnings"]
