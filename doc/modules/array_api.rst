@@ -185,14 +185,61 @@ When calling functions or methods with Array API compatible inputs, the
 convention is to return array values of the same array container type and
 device as the input data.
 
-Similarly, when an estimator is fitted with Array API compatible inputs, the
-fitted attributes will be arrays from the same library as the input and stored
-on the same device. The `predict` and `transform` method subsequently expect
+Estimators
+~~~~~~~~~~
+
+When an estimator is fitted with an Array API compatible `X`, all other
+array inputs (e.g., `y`, `sample_weight`) will be silently converted
+to match the array library and device of `X`, if they do not already.
+This allows estimators to accept mixed input types, which enables `X` to be moved
+to a different device within a pipeline.
+
+Take for example a pipeline that takes `X` and `y`, which both start on CPU, and has
+the following three steps:
+
+* :class:`~sklearn.preprocessing.TargetEncoder`, which will work on categorial
+  `X` but also requires `y`, meaning both `X` and `y` need to remain on CPU.
+* :class:`~sklearn.preprocessing.FunctionTransformer` to move `X` to GPU, for
+  performance reasons.
+* :class:`~sklearn.linear_model.Ridge`, whose performance can be improved when
+  passed arrays on GPU, as it only takes numerical inputs.
+
+`y` and `X` both need to be on CPU for :class:`~sklearn.preprocessing.TargetEncoder`.
+`X` is moved to GPU for :class:`~sklearn.linear_model.Ridge` but `y` cannot be
+as scikit-learn pipelines do not allow transforming of `y` (to avoid
+:ref:`leakage <data_leakage>`). This is however not a problem as
+:class:`~sklearn.linear_model.Ridge` accepts mixed input types.
+
+The fitted attributes of an estimator fitted with an Array API compatible `X`, will
+be arrays from the same library as the input and stored on the same device.
+The `predict` and `transform` method subsequently expect
 inputs from the same array library and device as the data passed to the `fit`
 method.
 
-Note however that scoring functions that return scalar values return Python
+Scoring functions
+~~~~~~~~~~~~~~~~~
+
+When an Array API compatible `y_pred` is passed to a scoring function,
+all other array inputs (e.g., `y_true`, `sample_weight`) will be silently converted
+to match the array library and device of `y_pred`, if they do not already.
+This allows scoring functions to accept mixed input types, which enables it to be
+used within a meta-estimator (or function that accepts estimators), with a pipeline
+that transfers arrays between devices (e.g., CPU to GPU).
+
+To be able to use this pipeline within e.g.,
+:func:`~sklearn.model_selection.cross_validate` or
+:class:`~sklearn.model_selection.GridSearchCV`, the scoring function internally
+called needs  to be able to accept mixed input types.
+
+Note that scikit-learn pipelines do not allow transforming of `y`, to avoid
+:ref:`leakage <data_leakage>`.
+
+The output type of scoring functions depends on the number of output values.
+When a scoring function returns a scalar value, it will still return Python
 scalars (typically a `float` instance) instead of an array scalar value.
+Scoring functions that support :term:`multiclass` or :term:`multioutput`,
+and may return several values, will return an array from the same array library and
+device as `y_pred`.
 
 Common estimator checks
 =======================
