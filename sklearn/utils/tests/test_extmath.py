@@ -1139,11 +1139,14 @@ def test_stable_cumsum_array_api(array_namespace, device, dtype, axis):
             np.cumsum(arr, axis=axis),
         )
 
-    arr = xp.asarray([np.random.RandomState(0).rand(100000)])
+    arr = xp.asarray(
+        [np.random.RandomState(0).rand(1000000)], dtype=xp.float32, device=device
+    )
     if axis == 0:
         # transpose to mimic a 2nd dimension
         # (we do this to save memory)
         arr = arr.T
     msg = "cumsum was found to be unstable: its last element does not correspond to sum"
     with pytest.warns(RuntimeWarning, match=msg):
-        stable_cumsum(np.asarray(arr), axis=axis, atol=0, rtol=0)
+        with config_context(array_api_dispatch=True):
+            stable_cumsum(arr, axis=axis, atol=0, rtol=0)
