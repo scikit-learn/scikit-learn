@@ -669,6 +669,25 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
     return sum_ / scale
 
 
+def _median(x, axis=None, keepdims=False, xp=None):
+    # `median` is not included in the Array API spec, but is implemented in most
+    # array libraries, and all that we support (as of May 2025).
+    xp, _, device = get_namespace_and_device(x, xp=xp)
+
+    # `torch.median` takes the lower of the two medians when `x` has even number
+    # of elements, thus we use `torch.quantile(q=0.5)`, which gives mean of the two
+    if array_api_compat.is_torch_namespace(xp):
+        return xp.quantile(x, q=0.5, dim=axis, keepdim=keepdims)
+
+    if hasattr(xp, "median"):
+        return xp.median(x, axis=axis, keepdims=keepdims)
+
+    # Intended mostly for array-api-strict, which has no "median", as per the spec,
+    # as `_convert_to_numpy` does not generically work for all array types.
+    x_np = _convert_to_numpy(x, xp=xp)
+    return xp.asarray(numpy.median(x_np, axis=axis, keepdims=keepdims), device=device)
+
+
 def _xlogy(x, y, xp=None):
     # TODO: Remove this once https://github.com/scipy/scipy/issues/21736 is fixed
     xp, _, device_ = get_namespace_and_device(x, y, xp=xp)
