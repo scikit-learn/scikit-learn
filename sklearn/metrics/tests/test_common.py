@@ -1580,7 +1580,7 @@ def check_sample_weight_invariance(name, metric, y1, y2, sample_weight=None):
     ),
 )
 def test_regression_sample_weight_invariance(name):
-    n_samples = 51
+    n_samples = 50
     random_state = check_random_state(0)
     # regression
     y_true = random_state.random_sample(size=(n_samples,))
