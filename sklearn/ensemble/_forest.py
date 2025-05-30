@@ -1186,7 +1186,6 @@ class RandomForestClassifier(ForestClassifier):
 
     For a comparison between tree-based ensemble models see the example
     :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`.
-    
     For an illustration of out-of-bag (OOB) error estimation, see the example
     :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`.
 
