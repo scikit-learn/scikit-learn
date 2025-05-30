@@ -682,9 +682,9 @@ def _median(x, axis=None, keepdims=False, xp=None):
     if hasattr(xp, "median"):
         return xp.median(x, axis=axis, keepdims=keepdims)
 
-    # Intended mostly for array-api-strict, which as no "median", as per the spec,
-    # as `_convert_to_numpy` does not necessarily work for all array types.
-    x_np = _convert_to_numpy(x)
+    # Intended mostly for array-api-strict, which has no "median", as per the spec,
+    # as `_convert_to_numpy` does not generically work for all array types.
+    x_np = _convert_to_numpy(x, xp=xp)
     return xp.asarray(numpy.median(x_np, axis=axis, keepdims=keepdims), device=device)
 
 
