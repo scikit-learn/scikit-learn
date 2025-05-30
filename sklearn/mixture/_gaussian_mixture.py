@@ -863,9 +863,6 @@ class GaussianMixture(BaseMixture):
         ) = params
 
         # Attributes computation
-        _, n_features = self.means_.shape
-
-        dtype = self.precisions_cholesky_.dtype
         if self.covariance_type == "full":
             self.precisions_ = np.empty_like(self.precisions_cholesky_)
             for k, prec_chol in enumerate(self.precisions_cholesky_):
