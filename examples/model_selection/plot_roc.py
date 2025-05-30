@@ -129,7 +129,7 @@ display = RocCurveDisplay.from_predictions(
     y_onehot_test[:, class_id],
     y_score[:, class_id],
     name=f"{class_of_interest} vs the rest",
-    color="darkorange",
+    curve_kwargs=dict(color="darkorange"),
     plot_chance_level=True,
     despine=True,
 )
@@ -165,7 +165,7 @@ display = RocCurveDisplay.from_predictions(
     y_onehot_test.ravel(),
     y_score.ravel(),
     name="micro-average OvR",
-    color="darkorange",
+    curve_kwargs=dict(color="darkorange"),
     plot_chance_level=True,
     despine=True,
 )
@@ -290,7 +290,7 @@ for class_id, color in zip(range(n_classes), colors):
         y_onehot_test[:, class_id],
         y_score[:, class_id],
         name=f"ROC curve for {target_names[class_id]}",
-        color=color,
+        curve_kwargs=dict(color=color),
         ax=ax,
         plot_chance_level=(class_id == 2),
         despine=True,

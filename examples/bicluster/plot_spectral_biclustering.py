@@ -26,7 +26,7 @@ plot the biclusters found.
 # --------------------
 # We generate the sample data using the
 # :func:`~sklearn.datasets.make_checkerboard` function. Each pixel within
-# `shape=(300, 300)` represents with it's color a value from a uniform
+# `shape=(300, 300)` represents with its color a value from a uniform
 # distribution. The noise is added from a normal distribution, where the value
 # chosen for `noise` is the standard deviation.
 #

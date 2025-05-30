@@ -1071,9 +1071,10 @@ def jaccard_score(
     numerator = MCM[:, 1, 1]
     denominator = MCM[:, 1, 1] + MCM[:, 0, 1] + MCM[:, 1, 0]
 
+    xp, _, device_ = get_namespace_and_device(y_true, y_pred)
     if average == "micro":
-        numerator = np.array([numerator.sum()])
-        denominator = np.array([denominator.sum()])
+        numerator = xp.asarray(xp.sum(numerator, keepdims=True), device=device_)
+        denominator = xp.asarray(xp.sum(denominator, keepdims=True), device=device_)
 
     jaccard = _prf_divide(
         numerator,
@@ -1088,14 +1089,14 @@ def jaccard_score(
         return jaccard
     if average == "weighted":
         weights = MCM[:, 1, 0] + MCM[:, 1, 1]
-        if not np.any(weights):
+        if not xp.any(weights):
             # numerator is 0, and warning should have already been issued
             weights = None
     elif average == "samples" and sample_weight is not None:
         weights = sample_weight
     else:
         weights = None
-    return float(np.average(jaccard, weights=weights))
+    return float(_average(jaccard, weights=weights, xp=xp))
 
 
 @validate_params(

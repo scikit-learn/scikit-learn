@@ -14,7 +14,7 @@ from .._ranking import average_precision_score, precision_recall_curve
 class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
     """Precision Recall visualization.
 
-    It is recommend to use
+    It is recommended to use
     :func:`~sklearn.metrics.PrecisionRecallDisplay.from_estimator` or
     :func:`~sklearn.metrics.PrecisionRecallDisplay.from_predictions` to create
     a :class:`~sklearn.metrics.PrecisionRecallDisplay`. All parameters are

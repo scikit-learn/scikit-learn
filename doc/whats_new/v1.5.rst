@@ -656,7 +656,7 @@ Changelog
 - |API| :func:`utils.tosequence` is deprecated and will be removed in version 1.7.
   :pr:`28763` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |API| :class:`utils.parallel_backend` and :func:`utils.register_parallel_backend` are
+- |API| `utils.parallel_backend` and `utils.register_parallel_backend` are
   deprecated and will be removed in version 1.7. Use `joblib.parallel_backend` and
   `joblib.register_parallel_backend` instead.
   :pr:`28847` by :user:`Jérémie du Boisberranger <jeremiedbb>`.

@@ -307,6 +307,9 @@ class SpectralCoclustering(BaseSpectral):
     array([0, 0], dtype=int32)
     >>> clustering
     SpectralCoclustering(n_clusters=2, random_state=0)
+
+    For a more detailed example, see the following:
+    :ref:`sphx_glr_auto_examples_bicluster_plot_spectral_coclustering.py`.
     """
 
     _parameter_constraints: dict = {

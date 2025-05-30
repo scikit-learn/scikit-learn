@@ -183,6 +183,10 @@ def average_precision_score(
     roc_auc_score : Compute the area under the ROC curve.
     precision_recall_curve : Compute precision-recall pairs for different
         probability thresholds.
+    PrecisionRecallDisplay.from_estimator : Plot the precision recall curve
+        using an estimator and data.
+    PrecisionRecallDisplay.from_predictions : Plot the precision recall curve
+        using true and predicted labels.
 
     Notes
     -----

@@ -1591,6 +1591,32 @@ def test_regression_sample_weight_invariance(name):
 @pytest.mark.parametrize(
     "name",
     sorted(
+        set(ALL_METRICS).intersection(set(REGRESSION_METRICS))
+        - METRICS_WITHOUT_SAMPLE_WEIGHT
+    ),
+)
+def test_regression_with_invalid_sample_weight(name):
+    # Check that `sample_weight` with incorrect length raises error
+    n_samples = 50
+    random_state = check_random_state(0)
+    y_true = random_state.random_sample(size=(n_samples,))
+    y_pred = random_state.random_sample(size=(n_samples,))
+    metric = ALL_METRICS[name]
+
+    sample_weight = random_state.random_sample(size=(n_samples - 1,))
+    with pytest.raises(ValueError, match="Found input variables with inconsistent"):
+        metric(y_true, y_pred, sample_weight=sample_weight)
+
+    sample_weight = random_state.random_sample(size=(n_samples * 2,)).reshape(
+        (n_samples, 2)
+    )
+    with pytest.raises(ValueError, match="Sample weights must be 1D array or scalar"):
+        metric(y_true, y_pred, sample_weight=sample_weight)
+
+
+@pytest.mark.parametrize(
+    "name",
+    sorted(
         set(ALL_METRICS)
         - set(REGRESSION_METRICS)
         - METRICS_WITHOUT_SAMPLE_WEIGHT
@@ -2144,6 +2170,11 @@ array_api_metric_checkers = {
         check_array_api_multilabel_classification_metric,
     ],
     fbeta_score: [
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
+    jaccard_score: [
+        check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
     ],

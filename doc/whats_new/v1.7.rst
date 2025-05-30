@@ -8,19 +8,8 @@
 Version 1.7
 ===========
 
-..
-  -- UNCOMMENT WHEN 1.7.0 IS RELEASED --
-  For a short description of the main highlights of the release, please refer to
-  :ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_6_0.py`.
-
-
-..
-  DELETE WHEN 1.7.0 IS RELEASED
-  Since October 2024, DO NOT add your changelog entry in this file.
-..
-  Instead, create a file named `<PR_NUMBER>.<TYPE>.rst` in the relevant sub-folder in
-  `doc/whats_new/upcoming_changes/`. For full details, see:
-  https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md
+For a short description of the main highlights of the release, please refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_7_0.py`.
 
 .. include:: changelog_legend.inc
 
@@ -31,11 +20,19 @@ Version 1.7
 Version 1.7.0
 =============
 
-**May 2025**
+**June 2025**
+
+Changed models
+--------------
+
+- |Fix| Change the `ConvergenceWarning` message of estimators that rely on the
+  `"lbfgs"` optimizer internally to be more informative and to avoid
+  suggesting to increase the maximum number of iterations when it is not
+  user-settable or when the convergence problem happens before reaching it.
+  By :user:`Olivier Grisel <ogrisel>`. :pr:`31316`
 
 Changes impacting many modules
 ------------------------------
-
 
 - Sparse update: As part of the SciPy change from spmatrix to sparray, all
   internal use of sparse now supports both sparray and spmatrix.
@@ -74,6 +71,9 @@ See :ref:`array_api` for more details.
 - |Feature| :class:`preprocessing.Binarizer` now supports Array API compatible inputs.
   By :user:`Yaroslav Korobko <Tialo>`, :user:`Olivier Grisel <ogrisel>`, and :user:`Thomas Li <lithomas1>`. :pr:`31190`
 
+- |Feature| :func:`sklearn.metrics.jaccard_score` now supports Array API compatible inputs.
+  By :user:`Omar Salman <OmarManzoor>` :pr:`31204`
+
 - array-api-compat and array-api-extra are now vendored within the
   scikit-learn source. Users of the experimental array API standard
   support no longer need to install array-api-compat in their environment.
@@ -89,6 +89,14 @@ more details.
   metadata routing through their `predict`, `predict_proba`, `predict_log_proba` and
   `decision_function` methods and pass `**params` to the underlying estimators.
   By :user:`Stefanie Senger <StefanieSenger>`. :pr:`30833`
+
+:mod:`sklearn.base`
+-------------------
+
+- |Enhancement| :class:`base.BaseEstimator` now has a parameter table added to the
+  estimators HTML representation that can be visualized with jupyter.
+  By :user:`Guillaume Lemaitre <glemaitre>` and
+  :user:`Dea María Léon <DeaMariaLeon>` :pr:`30763`
 
 :mod:`sklearn.calibration`
 --------------------------
@@ -192,6 +200,11 @@ more details.
   `l1_ratio=None` when `penalty` is not `"elasticnet"`.
   By :user:`Marc Bresson <MarcBresson>`. :pr:`30730`
 
+- |Enhancement| Fitting :class:`linear_model.Lasso` and :class:`linear_model.ElasticNet` with
+  `fit_intercept=True` is faster for sparse input `X` because an unnecessary
+  re-computation of the sum of residuals is avoided.
+  By :user:`Christian Lorentzen <lorentzenchr>` :pr:`31387`
+
 - |Fix| :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` now properly pass sample weights to
   :func:`utils.class_weight.compute_class_weight` when fit with
@@ -257,6 +270,11 @@ more details.
   :user:`Varun Aggarwal <aggvarun01>`, :user:`Olivier Grisel <ogrisel>` and
   :user:`Antoine Baker <antoinebaker>`. :pr:`22046`
 
+- |Feature| Add class method `from_cv_results` to :class:`metrics.RocCurveDisplay`, which allows
+  easy plotting of multiple ROC curves from :func:`model_selection.cross_validate`
+  results.
+  By :user:`Lucy Liu <lucyleeow>` :pr:`30399`
+
 - |Enhancement| :func:`metrics.det_curve`, :class:`metrics.DetCurveDisplay.from_estimator`,
   and :class:`metrics.DetCurveDisplay.from_estimator` now accept a
   `drop_intermediate` option to drop thresholds where true positives (tp) do not
@@ -285,6 +303,24 @@ more details.
 - |Fix| :class:`metrics.RocCurveDisplay` will no longer set a legend when
   `label` is `None` in both the `line_kwargs` and the `chance_level_kw`.
   By :user:`Arturo Amor <ArturoAmorQ>` :pr:`29727`
+
+- |Fix| Additional `sample_weight` checking has been added to
+  :func:`metrics.mean_absolute_error`,
+  :func:`metrics.mean_pinball_loss`,
+  :func:`metrics.mean_absolute_percentage_error`,
+  :func:`metrics.mean_squared_error`,
+  :func:`metrics.root_mean_squared_error`,
+  :func:`metrics.mean_squared_log_error`,
+  :func:`metrics.root_mean_squared_log_error`,
+  :func:`metrics.explained_variance_score`,
+  :func:`metrics.r2_score`,
+  :func:`metrics.mean_tweedie_deviance`,
+  :func:`metrics.mean_poisson_deviance`,
+  :func:`metrics.mean_gamma_deviance` and
+  :func:`metrics.d2_tweedie_score`.
+  `sample_weight` can only be 1D, consistent to `y_true` and `y_pred` in length
+  or a scalar.
+  By :user:`Lucy Liu <lucyleeow>`. :pr:`30886`
 
 - |Fix| :func:`~metrics.d2_log_loss_score` now properly handles the case when `labels` is
   passed and not all of the labels are present in `y_true`.
@@ -445,6 +481,34 @@ more details.
 .. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
-the project since version 1.7, including:
+the project since version 1.6, including:
 
-TODO: update at the time of the release.
+4hm3d, Aaron Schumacher, Abhijeetsingh Meena, Acciaro Gennaro Daniele, 
+Achraf Tasfaout, Adrien Linares, Adrin Jalali, Agriya Khetarpal, Aiden Frank, 
+Aitsaid Azzedine Idir, ajay-sentry, Akanksha Mhadolkar, Alfredo Saucedo, 
+Anderson Chaves, Andres Guzman-Ballen, Aniruddha Saha, antoinebaker, Antony 
+Lee, Arjun S, ArthurDbrn, Arturo, Arturo Amor, ash, Ashton Powell, 
+ayoub.agouzoul, Bagus Tris Atmaja, Benjamin Danek, Boney Patel, Camille 
+Troillard, Chems Ben, Christian Lorentzen, Christian Veenhuis, Christine P. 
+Chai, claudio, Code_Blooded, Colas, Colin Coe, Connor Lane, Corey Farwell, 
+Daniel Agyapong, Dan Schult, Dea María Léon, Deepak Saldanha, 
+dependabot[bot], Dimitri Papadopoulos Orfanos, Dmitry Kobak, Domenico, Elham 
+Babaei, emelia-hdz, EmilyXinyi, Emma Carballal, Eric Larson, fabianhenning, 
+Gael Varoquaux, Gil Ramot, Gordon Grey, Goutam, G Sreeja, Guillaume Lemaitre, 
+Haesun Park, Hanjun Kim, Helder Geovane Gomes de Lima, Henri Bonamy, Hleb 
+Levitski, Hugo Boulenger, IlyaSolomatin, Irene, Jérémie du Boisberranger, 
+Jérôme Dockès, JoaoRodriguesIST, Joel Nothman, Josh, Kevin Klein, Loic 
+Esteve, Lucas Colley, Luc Rocher, Lucy Liu, Luis M. B. Varona, lunovian, Mamduh 
+Zabidi, Marc Bresson, Marco Edward Gorelli, Marco Maggi, Maren Westermann, 
+Marie Sacksick, Martin Jurča, Miguel González Duque, Mihir Waknis, Mohamed 
+Ali SRIR, Mohamed DHIFALLAH, mohammed benyamna, Mohit Singh Thakur, Mounir 
+Lbath, myenugula, Natalia Mokeeva, Olivier Grisel, omahs, Omar Salman, Pedro 
+Lopes, Pedro Olivares, Preyas Shah, Radovenchyk, Rahil Parikh, Rémi Flamary, 
+Reshama Shaikh, Rishab Saini, rolandrmgservices, SanchitD, Santiago Castro, 
+Santiago Víquez, scikit-learn-bot, Scott Huberty, Shruti Nath, Siddharth 
+Bansal, Simarjot Sidhu, Sortofamudkip, sotagg, Sourabh Kumar, Stefan, Stefanie 
+Senger, Stefano Gaspari, Stephen Pardy, Success Moses, Sylvain Combettes, Tahar 
+Allouche, Thomas J. Fan, Thomas Li, ThorbenMaa, Tim Head, Umberto Fasci, UV, 
+Vasco Pereira, Vassilis Margonis, Velislav Babatchev, Victoria Shevchenko, 
+viktor765, Vipsa Kamani, Virgil Chan, vpz, Xiao Yuan, Yaich Mohamed, Yair 
+Shimony, Yao Xiao, Yaroslav Halchenko, Yulia Vilensky, Yuvi Panda
