@@ -1699,7 +1699,7 @@ def test_check_pos_label_consistency_invalid_array_api(
 ):
     xp = _array_api_for_tests(array_namespace, device)
     with config_context(array_api_dispatch=True):
-        arr = xp.asarray(y_true)
+        arr = xp.asarray(y_true, device=device)
         with pytest.raises(ValueError, match="y_true takes value in"):
             _check_pos_label_consistency(None, arr)
         # Make sure we only raise if pos_label is None
