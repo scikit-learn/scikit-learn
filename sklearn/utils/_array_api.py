@@ -674,16 +674,18 @@ def _median(x, axis=None, keepdims=False, xp=None):
     # array libraries, and all that we support (as of May 2025).
     xp, _ = get_namespace(x, xp=xp)
 
-    if _is_xp_namespace(xp, "array_api_strict"):
-        x_np = numpy.asarray(xp.asarray(x, device=xp.Device("CPU_DEVICE")))
-        return numpy.median(x_np, axis=axis, keepdims=keepdims)
-
     # `torch.median` takes the lower of the two medians when `x` has even number
     # of elements, thus we use `torch.quantile(q=0.5)`, which gives mean of the two
     if array_api_compat.is_torch_namespace(xp):
         return xp.quantile(x, q=0.5, dim=axis, keepdim=keepdims)
 
-    return xp.median(x, axis=axis, keepdims=keepdims)
+    if hasattr(xp, "median"):
+        return xp.median(x, axis=axis, keepdims=keepdims)
+
+    # Intended mostly for array-api-strict, which as no "median", as per the spec,
+    # as `_convert_to_numpy` does not necessarily work for all array types.
+    x_np = _convert_to_numpy(x)
+    return numpy.median(x_np, axis=axis, keepdims=keepdims)
 
 
 def _xlogy(x, y, xp=None):
