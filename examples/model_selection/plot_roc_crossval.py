@@ -71,11 +71,34 @@ import matplotlib.pyplot as plt
 
 from sklearn import svm
 from sklearn.metrics import RocCurveDisplay, auc
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import cross_validate, StratifiedKFold
 
 n_splits = 6
 cv = StratifiedKFold(n_splits=n_splits)
 classifier = svm.SVC(kernel="linear", probability=True, random_state=random_state)
+cv_results = cross_validate(
+    classifier, X, y, cv=cv, eturn_estimator=True, return_indices=True
+)
+
+prop_cycle = plt.rcParams['axes.prop_cycle']
+colors = prop_cycle.by_key()['color']
+curve_kwargs_list = [
+    dict(alpha=0.3, lw=1, color=colors[fold % len(colors)])
+    for fold in range(n_splits)
+]
+
+names = [f"ROC fold {idx}" for idx in n_splits]
+
+viz = RocCurveDisplay.from_cv_results(
+    cv_results=cv_results,
+    X,
+    y,
+    name=names,
+    curve_kwargs=curve_kwargs_list,
+    plot_chance_level=True,
+    chance_level_kwargs=dict(color="b", lw=2, alpha=0.8),
+)
+
 
 tprs = []
 aucs = []
