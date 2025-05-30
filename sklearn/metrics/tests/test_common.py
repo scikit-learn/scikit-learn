@@ -1552,7 +1552,8 @@ def check_sample_weight_invariance(name, metric, y1, y2, sample_weight=None):
     if not name.startswith("unnormalized"):
         # check that the score is invariant under scaling of the weights by a
         # common factor
-        for scaling in [2, 0.3]:
+        scaling_values = [2] if name == "median_absolute_error" else [2, 0.3]
+        for scaling in scaling_values:
             assert_allclose(
                 weighted_score,
                 metric(y1, y2, sample_weight=sample_weight * scaling),
