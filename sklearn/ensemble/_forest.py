@@ -1298,8 +1298,8 @@ class RandomForestClassifier(ForestClassifier):
         Provide a callable with signature `metric(y_true, y_pred)` to use a
         custom metric. Only available if `bootstrap=True`.
 
-    For an illustration of out-of-bag (OOB) error estimation, see the example
-    :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`.
+        For an illustration of out-of-bag (OOB) error estimation, see the example
+        :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
