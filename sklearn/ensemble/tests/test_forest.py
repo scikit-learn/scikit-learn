@@ -168,12 +168,11 @@ def test_regression_criterion(name, criterion):
     reg = ForestRegressor(n_estimators=5, criterion=criterion, random_state=1)
     reg.fit(X_reg, y_reg)
     score = reg.score(X_reg, y_reg)
-    assert score > 0.93, (
-        "Failed with max_features=None, criterion %s and score = %f"
-        % (
-            criterion,
-            score,
-        )
+    assert (
+        score > 0.93
+    ), "Failed with max_features=None, criterion %s and score = %f" % (
+        criterion,
+        score,
     )
 
     reg = ForestRegressor(
@@ -1069,10 +1068,10 @@ def test_min_weight_fraction_leaf(name):
         node_weights = np.bincount(out, weights=weights)
         # drop inner nodes
         leaf_weights = node_weights[node_weights != 0]
-        assert np.min(leaf_weights) >= total_weight * est.min_weight_fraction_leaf, (
-            "Failed with {0} min_weight_fraction_leaf={1}".format(
-                name, est.min_weight_fraction_leaf
-            )
+        assert (
+            np.min(leaf_weights) >= total_weight * est.min_weight_fraction_leaf
+        ), "Failed with {0} min_weight_fraction_leaf={1}".format(
+            name, est.min_weight_fraction_leaf
         )
 
 

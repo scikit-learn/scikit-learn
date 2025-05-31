@@ -17,7 +17,7 @@ from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils.parallel import Parallel, delayed
 from ...utils.validation import check_is_fitted
 from ._binning import _map_to_bins
-from ._bitset import set_bitset_memoryview
+from ._bitset import py_set_bitset_memoryview
 from .common import ALMOST_INF, X_BINNED_DTYPE, X_BITSET_INNER_DTYPE, X_DTYPE
 
 
@@ -328,6 +328,6 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         # worth cythonizing
         for mapped_f_idx, f_idx in enumerate(categorical_features_indices):
             for raw_cat_val in known_categories[f_idx]:
-                set_bitset_memoryview(known_cat_bitsets[mapped_f_idx], raw_cat_val)
+                py_set_bitset_memoryview(known_cat_bitsets[mapped_f_idx], raw_cat_val)
 
         return known_cat_bitsets, f_idx_map
