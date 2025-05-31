@@ -3,7 +3,7 @@
 Examples of Using `FrozenEstimator`
 ===================================
 
-This examples showcases some use cases of :class:`~sklearn.frozen.FrozenEstimator`.
+This example showcases some use cases of :class:`~sklearn.frozen.FrozenEstimator`.
 
 :class:`~sklearn.frozen.FrozenEstimator` is a utility class that allows to freeze a
 fitted estimator. This is useful, for instance, when we want to pass a fitted estimator
