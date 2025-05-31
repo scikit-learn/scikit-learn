@@ -1,0 +1,3 @@
+- :func:`~metrics.accuracy_score` now has a `replace_undefined_by` param, that can be
+  set to define the function's return value when the metric is undefined.
+  By :user:`Stefanie Senger <StefanieSenger>`
