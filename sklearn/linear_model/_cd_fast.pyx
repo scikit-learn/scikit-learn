@@ -400,6 +400,7 @@ def sparse_enet_coordinate_descent(
                 if center:
                     for jj in range(n_samples):
                         R[jj] += X_mean_ii * w_ii
+                        R_sum += R[jj]
             else:
                 # R = sw * (y - np.dot(X, w))
                 for jj in range(startptr, endptr):
@@ -412,8 +413,13 @@ def sparse_enet_coordinate_descent(
                     for jj in range(n_samples):
                         normalize_sum += sample_weight[jj] * X_mean_ii ** 2
                         R[jj] += sample_weight[jj] * X_mean_ii * w_ii
+                        R_sum += R[jj]
                 norm_cols_X[ii] = normalize_sum
             startptr = endptr
+
+        # Note: No need to update R_sum from here on because the update terms cancel
+        # each other: w_ii * np.sum(X[:,ii] - X_mean[ii]) = 0. R_sum is only ever
+        # needed and calculated if X_mean is provided.
 
         # tol *= np.dot(y, y)
         # with sample weights: tol *= y @ (sw * y)
@@ -460,9 +466,6 @@ def sparse_enet_coordinate_descent(
                     tmp += R[X_indices[jj]] * X_data[jj]
 
                 if center:
-                    R_sum = 0.0
-                    for jj in range(n_samples):
-                        R_sum += R[jj]
                     tmp -= R_sum * X_mean_ii
 
                 if positive and tmp < 0.0:
@@ -498,13 +501,8 @@ def sparse_enet_coordinate_descent(
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
 
-                # sparse X.T / dense R dot product
-                if center:
-                    R_sum = 0.0
-                    for jj in range(n_samples):
-                        R_sum += R[jj]
-
                 # XtA = X.T @ R - beta * w
+                # sparse X.T / dense R dot product
                 for ii in range(n_features):
                     XtA[ii] = 0.0
                     for kk in range(X_indptr[ii], X_indptr[ii + 1]):
