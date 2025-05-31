@@ -681,6 +681,7 @@ def _run_answer_test(
     assert_array_almost_equal(grad_bh, grad_output, decimal=4)
 
 
+@pytest.mark.thread_unsafe  # manually captured stdout
 def test_verbose():
     # Verbose options write to stdout.
     random_state = check_random_state(0)
