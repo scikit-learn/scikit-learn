@@ -21,7 +21,7 @@ cnp.import_array()
 
 from scipy.sparse import csr_matrix, issparse
 
-from ._utils cimport int32t_ptr_to_ndarray, safe_realloc, sizet_ptr_to_ndarray
+from ._utils cimport int32t_ptr_to_ndarray, safe_realloc, sizet_ptr_to_ndarray, goes_left
 
 
 cdef extern from "numpy/arrayobject.h":
@@ -75,7 +75,21 @@ cdef intp_t _TREE_UNDEFINED = TREE_UNDEFINED
 # can construct a `dtype`-object for. See https://stackoverflow.com/q/62448946
 # for a more detailed explanation.
 cdef Node dummy
-NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
+# NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
+SplitValue_dtype = np.dtype([
+    ('threshold', np.float64),
+    ('cat_split', (np.uint32, 8)),  # fixed-size array
+])
+NODE_DTYPE = np.dtype([
+    ('left_child', np.intp),
+    ('right_child', np.intp),
+    ('feature', np.intp),
+    ('split_value', SplitValue_dtype),
+    ('impurity', np.float64),
+    ('n_node_samples', np.intp),
+    ('weighted_n_node_samples', np.float64),
+    ('missing_go_to_left', np.uint8),
+])
 # NODE_DTYPE = np.dtype({
 #     'names': ['left_child', 'right_child', 'feature', 'threshold', 'cat_split',
 #               'impurity', 'n_node_samples', 'weighted_n_node_samples', 'missing_go_to_left'],
@@ -556,7 +570,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                     node.left_child = _TREE_LEAF
                     node.right_child = _TREE_LEAF
                     node.feature = _TREE_UNDEFINED
-                    node.threshold = _TREE_UNDEFINED
+                    node.split_value.threshold = <float64_t> _TREE_UNDEFINED
+                    # node.split_value.cat_split = _TREE_UNDEFINED
 
                 else:
                     # Node is expandable
@@ -1053,15 +1068,15 @@ cdef class Tree:
             node.left_child = _TREE_LEAF
             node.right_child = _TREE_LEAF
             node.feature = _TREE_UNDEFINED
-            node.threshold = _TREE_UNDEFINED
+            node.split_value.threshold = _TREE_UNDEFINED
             # XXX: we don't do this since _TREE_UNDEFINED is a intp_t
             # node.cat_split = 0
 
         else:
             # left_child and right_child will be set later
             node.feature = feature
-            node.threshold = split_value.threshold
-            node.cat_split = split_value.cat_split
+            node.split_value.threshold = split_value.threshold
+            node.split_value.cat_split = split_value.cat_split
             node.missing_go_to_left = missing_go_to_left
 
         self.node_count += 1
@@ -1118,7 +1133,13 @@ cdef class Tree:
                             node = &self.nodes[node.left_child]
                         else:
                             node = &self.nodes[node.right_child]
-                    elif X_i_node_feature <= node.threshold:
+                    # elif goes_left(
+                    #     X_i_node_feature,
+                    #     node.split_value,
+                    #     self.n_categories[node.feature],
+                    #     cat_bitsets
+                    # ):
+                    elif X_i_node_feature <= node.split_value.threshold:
                         node = &self.nodes[node.left_child]
                     else:
                         node = &self.nodes[node.right_child]
@@ -1183,7 +1204,8 @@ cdef class Tree:
                     else:
                         feature_value = 0.
 
-                    if feature_value <= node.threshold:
+                    # if feature_value <= node.threshold:
+                    if feature_value <= node.split_value.threshold:
                         node = &self.nodes[node.left_child]
                     else:
                         node = &self.nodes[node.right_child]
@@ -1239,7 +1261,8 @@ cdef class Tree:
                     indices[indptr[i + 1]] = <intp_t>(node - self.nodes)
                     indptr[i + 1] += 1
 
-                    if X_ndarray[i, node.feature] <= node.threshold:
+                    # if X_ndarray[i, node.feature] <= node.threshold:
+                    if X_ndarray[i, node.feature] <= node.split_value.threshold:
                         node = &self.nodes[node.left_child]
                     else:
                         node = &self.nodes[node.right_child]
@@ -1319,7 +1342,8 @@ cdef class Tree:
                     else:
                         feature_value = 0.
 
-                    if feature_value <= node.threshold:
+                    # if feature_value <= node.threshold:
+                    if feature_value <= node.split_value.threshold:
                         node = &self.nodes[node.left_child]
                     else:
                         node = &self.nodes[node.right_child]
@@ -1519,7 +1543,8 @@ cdef class Tree:
 
                     if is_target_feature:
                         # In this case, we push left or right child on stack
-                        if X[sample_idx, feature_idx] <= current_node.threshold:
+                        # if X[sample_idx, feature_idx] <= current_node.threshold:
+                        if X[sample_idx, feature_idx] <= current_node.split_value.threshold:
                             node_idx_stack[stack_size] = current_node.left_child
                         else:
                             node_idx_stack[stack_size] = current_node.right_child
@@ -2052,8 +2077,8 @@ cdef void _build_pruned_tree(
             node = &orig_tree.nodes[orig_node_id]
 
             # TODO: remove this
-            split_value.threshold = node.threshold
-            split_value.cat_split = node.cat_split
+            split_value.threshold = node.split_value.threshold
+            split_value.cat_split = node.split_value.cat_split
 
             # protect against an infinite loop as a runtime error, when leaves_in_subtree
             # are improperly set where a node is not marked as a leaf, but is a node

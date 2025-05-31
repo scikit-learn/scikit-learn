@@ -6,6 +6,7 @@
 cimport numpy as cnp
 
 from ..neighbors._quad_tree cimport Cell
+from ..utils._bitset cimport X_BINNED_DTYPE_C, X_DTYPE_C, BITSET_DTYPE_C, BITSET_INNER_DTYPE_C, set_bitset_memoryview, in_bitset_memoryview
 from ..utils._typedefs cimport (BITSET_t, float32_t, float64_t, int32_t,
                                 intp_t, uint8_t, uint32_t, uint64_t)
 
@@ -27,7 +28,8 @@ ctypedef union SplitValue:
     # method allows up to 2**31 category values, but can only be used for
     # RandomSplitter.
     float64_t threshold
-    BITSET_t cat_split
+    # BITSET_DTYPE_C cat_split
+    uint32_t[8] cat_split
 
 
 cdef struct Node:
@@ -36,10 +38,10 @@ cdef struct Node:
     intp_t left_child                    # id of the left child of the node
     intp_t right_child                   # id of the right child of the node
     intp_t feature                       # Feature used for splitting the node
-    # SplitValue split_value             # Generalized threshold for categorical and
-    #                                    # non-categorical features
-    float64_t threshold
-    BITSET_t cat_split
+    SplitValue split_value             # Generalized threshold for categorical and
+                                       # non-categorical features
+    # float64_t threshold
+    # BITSET_t cat_split
     float64_t impurity                   # Impurity of the node (i.e., the value of the criterion)
     intp_t n_node_samples                # Number of samples at the node
     float64_t weighted_n_node_samples    # Weighted number of samples at the node
@@ -167,20 +169,31 @@ cdef class WeightedMedianCalculator:
         float64_t original_median) noexcept nogil
     cdef float64_t get_median(self) noexcept nogil
 
-
-cdef void setup_cat_cache(
-    BITSET_t[:] cachebits,
-    BITSET_t cat_split,
-    int32_t n_categories
+cdef void copy_memview_to_array(
+    BITSET_INNER_DTYPE_C[:] memview,
+    BITSET_DTYPE_C arr
 ) noexcept nogil
 
-cdef BITSET_t bs_set(BITSET_t value, intp_t i) noexcept nogil
-cdef BITSET_t bs_reset(BITSET_t value, intp_t i) noexcept nogil
-cdef BITSET_t bs_flip(BITSET_t value, intp_t i) noexcept nogil
-cdef BITSET_t bs_flip_all(BITSET_t value, intp_t n_low_bits) noexcept nogil
-cdef bint bs_get(BITSET_t value, intp_t i) noexcept nogil
-cdef BITSET_t bs_from_template(
-    uint64_t template,
-    int32_t[:] cat_offs,
-    intp_t ncats_present
+cdef void copy_array_to_memview(
+    BITSET_INNER_DTYPE_C[:] memview,
+    BITSET_DTYPE_C arr
 ) noexcept nogil
+
+cdef bint goes_left(
+    float32_t feature_value,
+    SplitValue split,
+    int32_t n_categories,
+    BITSET_INNER_DTYPE_C[:] cat_bitsets
+) noexcept nogil
+
+# cdef void setup_cat_cache_memoryview(
+#     BITSET_INNER_DTYPE_C[:] cachebits,
+#     BITSET_DTYPE_C cat_split,
+#     int32_t n_categories,
+# ) noexcept nogil
+
+# cdef void setup_cat_cache(
+#     BITSET_t[:] cachebits,
+#     BITSET_t cat_split,
+#     int32_t n_categories
+# ) noexcept nogil

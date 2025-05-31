@@ -467,76 +467,140 @@ def _any_isnan_axis0(const float32_t[:, :] X):
     return np.asarray(isnan_out)
 
 
-cdef inline void setup_cat_cache(
-    BITSET_t[:] cachebits,
-    BITSET_t cat_split,
-    int32_t n_categories
+cdef inline void copy_memview_to_array(
+    BITSET_INNER_DTYPE_C[:] memview,
+    BITSET_DTYPE_C arr
 ) noexcept nogil:
-    """Populate the bits of the category cache from a split.
+    for i in range(8):
+        arr[i] = memview[i]
+
+cdef inline void copy_array_to_memview(
+    BITSET_INNER_DTYPE_C[:] memview,
+    BITSET_DTYPE_C arr
+) noexcept nogil:
+    for i in range(8):
+        memview[i] = arr[i]
+
+
+cdef inline bint goes_left(
+    float32_t feature_value,
+    SplitValue split,
+    int32_t n_categories,
+    BITSET_INNER_DTYPE_C[:] cat_bitsets
+) noexcept nogil:
+    """Determine whether a sample goes to the left or right child node.
+
+    For numerical features, ``(-inf, split.threshold]`` is the left child, and
+    ``(split.threshold, inf)`` the right child.
+    For categorical features, if the corresponding bit for the category is set
+    in cachebits, the left child isused, and if not set, the right child. If
+    the given input category is larger than the ``n_categories``, the right
+    child is assumed.
+
     Attributes
     ----------
-    cachebits : BITSET_t[::1]
-        This is a pointer to the output array. The size of the array should be
-        ``ceil(n_categories / 64)``. This function assumes the required
-        memory is allocated for the array by the caller.
-    cat_split : BITSET_t
-        If ``least significant bit == 0``:
-            It stores the split of the maximum 64 categories in its bits.
-            This is used in `BestSplitter`, and without loss of generality it
-            is assumed to be even, i.e. for any odd value there is an
-            equivalent even ``cat_split``.
-        If ``least significant bit == 1``:
-            It is a random split, and the 32 most significant bits of
-            ``cat_split`` contain the random seed of the split. The
-            ``n_categories`` lowest bits of ``cachebits`` are then filled with
-            random zeros and ones given the random seed.
+    feature_value : float32_t
+        The value of the feature for which the decision needs to be made.
+    split : SplitValue
+        The union (of float64_t and BITSET_INNER_DTYPE_C) indicating the split. However, it
+        is used (as a float64_t) only for numerical features.
     n_categories : int32_t
-        The number of categories.
+        The number of categories present in the feature in question. The
+        feature is considered a numerical one and not a categorical one if
+        n_categories is negative.
+    cat_bitsets : BITSET_INNER_DTYPE_C[:]
+        The array containing the expansion of split.cat_split. The function
+        setup_cat_cache is the one filling it.
+
+    Returns
+    -------
+    result : bint
+        Indicating whether the left branch should be used.
     """
-    cdef int32_t j
-    cdef uint32_t rng_seed, val
-    cdef intp_t cache_size = (n_categories + 63) // 64
-    if n_categories > 0:
-        if cat_split & 1:
-            # RandomSplitter
-            for j in range(cache_size):
-                cachebits[j] = 0
-            rng_seed = cat_split >> 32
-            for j in range(n_categories):
-                val = rand_int(0, 2, &rng_seed)
-                if not val:
-                    continue
-                cachebits[j // 64] = bs_set(cachebits[j // 64], j % 64)
+    cdef intp_t idx
+
+    if n_categories < 0:
+        # Non-categorical feature
+        return feature_value <= split.threshold
+    else:
+        # Categorical feature, using bit cache
+        if (<uint8_t> feature_value) < n_categories:
+            # idx = (<intp_t> feature_value) // 64
+            # offset = (<intp_t> feature_value) % 64
+            # return bs_get(cat_cache[idx], offset)
+            # TODO: allow uint16_t
+            return in_bitset_memoryview(cat_bitsets, <uint8_t> feature_value)
         else:
-            # BestSplitter
-            # In practice, cache_size here should ALWAYS be 1
-            # XXX TODO: check cache_size == 1?
-            cachebits[0] = cat_split
+            return 0
 
 
-cdef inline BITSET_t bs_set(BITSET_t value, intp_t i) noexcept nogil:
-    return value | (<uint64_t> 1) << i
+# cdef inline void setup_cat_cache_memoryview(
+#     BITSET_INNER_DTYPE_C[:] cachebits,
+#     BITSET_DTYPE_C cat_split,
+#     int32_t n_categories,
+# ) noexcept nogil:
+#     cdef int32_t j
+#     cdef uint32_t rng_seed, rand_set_bit
+#     cdef intp_t cache_size = (n_categories + 31) // 32
+#     if n_categories > 0:
+#         if cat_split & 1:
+#             # random categorical split
+#             for j in range(cache_size):
+#                 cachebits[j] = 0
 
-cdef inline BITSET_t bs_reset(BITSET_t value, intp_t i) noexcept nogil:
-    return value & ~((<uint64_t> 1) << i)
+#             # recover the random seed by shifting right by 32 bits
+#             rng_seed = cat_split >> 32
+#             for j in range(n_categories):
+#                 rand_set_bit = rand_int(0, 2, &rng_seed)
+#                 if not rand_set_bit:
+#                     continue
+#                 set_bitset_memoryview(cachebits, j)
+#         else:
+#             # best split, so just copy back over the split
+#             copy_array_to_memview(cachebits, cat_split)
 
-cdef inline BITSET_t bs_flip(BITSET_t value, intp_t i) noexcept nogil:
-    return value ^ (<uint64_t> 1) << i
-
-cdef inline BITSET_t bs_flip_all(BITSET_t value, intp_t n_low_bits) noexcept nogil:
-    return (~value) & ((~(<uint64_t> 0)) >> (64 - n_low_bits))
-
-cdef inline bint bs_get(BITSET_t value, intp_t i) noexcept nogil:
-    return (value >> i) & (<uint64_t> 1)
-
-cdef inline BITSET_t bs_from_template(
-    uint64_t template,
-    int32_t[:] cat_offs,
-    intp_t ncats_present
-) noexcept nogil:
-    cdef intp_t i
-    cdef BITSET_t value = 0
-    for i in range(ncats_present):
-        value |= (template &
-                  ((<uint64_t> 1) << i)) << cat_offs[i]
-    return value
+# cdef inline void setup_cat_cache(
+#     BITSET_t[:] cachebits,
+#     BITSET_t cat_split,
+#     int32_t n_categories
+# ) noexcept nogil:
+#     """Populate the bits of the category cache from a split.
+#     Attributes
+#     ----------
+#     cachebits : BITSET_t[::1]
+#         This is a pointer to the output array. The size of the array should be
+#         ``ceil(n_categories / 64)``. This function assumes the required
+#         memory is allocated for the array by the caller.
+#     cat_split : BITSET_t
+#         If ``least significant bit == 0``:
+#             It stores the split of the maximum 64 categories in its bits.
+#             This is used in `BestSplitter`, and without loss of generality it
+#             is assumed to be even, i.e. for any odd value there is an
+#             equivalent even ``cat_split``.
+#         If ``least significant bit == 1``:
+#             It is a random split, and the 32 most significant bits of
+#             ``cat_split`` contain the random seed of the split. The
+#             ``n_categories`` lowest bits of ``cachebits`` are then filled with
+#             random zeros and ones given the random seed.
+#     n_categories : int32_t
+#         The number of categories.
+#     """
+#     cdef int32_t j
+#     cdef uint32_t rng_seed, val
+#     cdef intp_t cache_size = (n_categories + 63) // 64
+#     if n_categories > 0:
+#         if cat_split & 1:
+#             # RandomSplitter
+#             for j in range(cache_size):
+#                 cachebits[j] = 0
+#             rng_seed = cat_split >> 32
+#             for j in range(n_categories):
+#                 val = rand_int(0, 2, &rng_seed)
+#                 if not val:
+#                     continue
+#                 cachebits[j // 64] = bs_set(cachebits[j // 64], j % 64)
+#         else:
+#             # BestSplitter
+#             # In practice, cache_size here should ALWAYS be 1
+#             # XXX TODO: check cache_size == 1?
+#             cachebits[0] = cat_split

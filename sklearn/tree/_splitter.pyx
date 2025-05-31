@@ -24,10 +24,16 @@ from libc.string cimport memcpy
 
 from ._utils cimport rand_int
 from ._utils cimport rand_uniform
-from ._utils cimport RAND_R_MAX, bs_get, bs_set, bs_from_template, setup_cat_cache
+from ._utils cimport RAND_R_MAX, copy_memview_to_array, copy_array_to_memview
 from ._criterion cimport Criterion
 from ._partitioner cimport DensePartitioner, SparsePartitioner, FEATURE_THRESHOLD, shift_missing_values_to_left_if_required
-
+from ..utils._bitset cimport (
+    in_bitset_memoryview,
+    set_bitset_memoryview,
+    flip_bitset_up_to_nbits,
+    BITSET_INNER_DTYPE_C,
+    bs_from_template_memoryview
+)
 import numpy as np
 
 
@@ -43,6 +49,9 @@ ctypedef fused Partitioner:
 
 cdef float64_t INFINITY = np.inf
 
+# The maximum number of categorical set splits to check in brute-force
+# enumeration
+cdef uint64_t MAX_BRUTE_CATEGORIES = 128
 
 cdef inline void _init_split(SplitRecord* self, intp_t start_pos) noexcept nogil:
     self.impurity_left = INFINITY
@@ -213,7 +222,9 @@ cdef class Splitter:
             self.n_categories = np.array([-1] * n_features, dtype=np.int32)
         else:
             self.n_categories = n_categories
-
+        self.max_n_categories = max(self.n_categories)
+        max_words = (self.max_n_categories + 31) // 32
+        self.cat_split = np.zeros((max_words), dtype=np.uint32)
         return 0
 
     cdef int node_reset(
@@ -330,17 +341,21 @@ cdef inline int node_split_best(
 
     # variables for categorical split handling
     cdef bint breiman_shortcut = splitter.breiman_shortcut
+    # whether the feature is categorical
     cdef bint is_categorical
-    # index through categories
-    cdef uint64_t cat_idx
+    # index through categories to exhaustively split all possible categories
+    # exhaustion only supports up to 8 categories
+    cdef uint64_t cat_idx 
+
     # total number of categories per feature
     cdef uint64_t ncat_present
+    # index through unsigned ints
+    cdef intp_t u_idx
     # the bitset to store which category to split on
-    cdef BITSET_t cat_split = 0
-
-    # XXX: unsure what this it.
-    cdef int32_t[:] cat_offs = partitioner.cat_offset
-
+    cdef BITSET_INNER_DTYPE_C[:] cat_split = splitter.cat_split
+    
+    # Offsets mapping local category indices to actual category indices.
+    cdef intp_t[:] cat_offs = partitioner.cat_offset
     # A storage of the sorted categories used in Breiman shortcut
     cdef intp_t[:] sorted_cat = partitioner.sorted_cat
 
@@ -407,7 +422,52 @@ cdef inline int node_split_best(
         f_j += n_found_constants
         # f_j in the interval [n_total_constants, f_i[
         current_split.feature = features[f_j]
-        partitioner.sort_samples_and_feature_values(current_split.feature)
+        # XXX: for categorical features we should not need to sort
+        is_categorical = splitter.n_categories[current_split.feature] > 0
+        if is_categorical:
+            # Identify the number of categories present in this node
+            cat_split[:] = 0
+            ncat_present = 0
+
+            # Initialize the bitset for the categories present in the node
+            for i in range(start, end):
+                # Xf[i] < 64 already verified in tree.py
+                set_bitset_memoryview(cat_split, <uint8_t>feature_values[i])
+
+            # count the number of categories present per feature in this node
+            for i in range(splitter.n_categories[current_split.feature]):
+                if in_bitset_memoryview(cat_split, i):
+                    # XXX: is this right?
+                    cat_offs[ncat_present] = i - ncat_present
+                    ncat_present += 1
+
+            # TODO: Why do we need to recompute ncat_present? Isn't it in n_categories?
+            # - we do it since the number of categories may change as we traverse the tree, but
+            # instead of running this loop could we pass in parent information? via parentInfo...
+            # similar to constant feature tracking
+            if ncat_present <= 3:
+                breiman_shortcut = False  # No benefit for small N
+
+            # Apply sorting to the categories if we can leverage the Breiman computational
+            # trick to improve the computational efficiency of the categorical splits
+            if breiman_shortcut:
+                partitioner.breiman_sort_categories(
+                    current_split.feature,
+                    splitter.n_categories[current_split.feature],
+                    ncat_present,
+                    cat_offs,
+                    sorted_cat,
+                    splitter.y,
+                    splitter.sample_weight
+                )
+            else:
+                partitioner.count_missing(current_split.feature)
+        else:
+            partitioner.sort_samples_and_feature_values(current_split.feature)
+        
+        # Note: both partitioner.sort_samples_and_feature_values and breiman_sort_categories
+        # will count the number of missing values during the iteration through samples for this
+        # particular feature. If not breiman_shortcut, we will explicitly count the missing values.
         n_missing = partitioner.n_missing
         end_non_missing = end - n_missing
 
@@ -431,46 +491,6 @@ cdef inline int node_split_best(
         has_missing = n_missing != 0
         criterion.init_missing(n_missing)  # initialize even when n_missing == 0
 
-        is_categorical = splitter.n_categories[current_split.feature] > 0
-        if is_categorical:
-            # Identify the number of categories present in this node
-            # and apply breiman sorting if number of categories is small
-            # XXX: could improve this by passing in parent information.
-            cat_split = 0
-            ncat_present = 0
-
-            # Initialize the bitset for the categories present in the node
-            for i in range(start, end):
-                # Xf[i] < 64 already verified in tree.py
-                cat_split = bs_set(cat_split, <intp_t>feature_values[i])
-
-            # count the number of categories present per feature in this node
-            for i in range(splitter.n_categories[current_split.feature]):
-                if bs_get(cat_split, i):
-                    cat_offs[ncat_present] = i - ncat_present
-                    ncat_present += 1
-
-            # TODO: Why do we need to recompute ncat_present? Isn't it in n_categories?
-            # - we do it since the number of categories may change as we traverse the tree, but
-            # instead of running this loop could we pass in parent information? via parentInfo...
-            # similar to constant feature tracking
-            if ncat_present <= 3:
-                breiman_shortcut = False  # No benefit for small N
-
-            # Apply sorting to the categories if we can leverage the Breiman computational
-            # trick to improve the computational efficiency of the categorical splits
-            if breiman_shortcut:
-                partitioner._breiman_sort_categories(
-                    start,
-                    end,
-                    splitter.n_categories[current_split.feature],
-                    ncat_present,
-                    cat_offs,
-                    sorted_cat,
-                    splitter.y,
-                    splitter.sample_weight
-                )
-
         # Evaluate all splits
 
         # If there are missing values, then we search twice for the most optimal split.
@@ -493,22 +513,56 @@ cdef inline int node_split_best(
                     cat_idx += 1
 
                     if breiman_shortcut:
-                        # TODO: Implement breiman shortcut
-                        pass
-                    else:
-                        if cat_idx >= (<uint64_t> 1) << (ncat_present - 1):
+                        # is_flipped = False
+                        if cat_idx >= ncat_present:
+                            # all other categories were previously split upon
                             break
 
-                        # Expand the bits of (2 * cat_idx) out into
-                        # cat_split. We double cat_idx to avoid
-                        # double-counting equivalent splits. This also
-                        # ensures that cat_split & 1 == 0 as required
-                        cat_split = bs_from_template(
-                            cat_idx << 1,
-                            cat_offs, ncat_present)
+                        # reset the bitmask
+                        # if p == start:
+                        #     cat_split[:] = 0
+                        # else:
+                        #     if is_flipped:
+                        cat_split[:] = 0
+                        for u_idx in range(cat_idx):
+                            set_bitset_memoryview(cat_split, <uint8_t>sorted_cat[u_idx])
+                            # else:
+                                # incrementally set another bitset
+                                # set_bitset_memoryview(cat_split, <uint8_t>sorted_cat[cat_idx - 1])
 
-                    # Partition samples
-                    p = partitioner.partition_samples_category(cat_split)
+                        # Each left/right split is symmetric, and thus by convention we only consider splits
+                        # where the first bit is 0. If the first bit is 1, we will flip all the bits, so we 
+                        # only consider splits once.
+                        # 
+                        # For example, 0b0110 does not have bit set 0 set, but 0b1111 does, then
+                        # 0b1111 becomes 0b0000.
+                        if in_bitset_memoryview(cat_split, 0):
+                            flip_bitset_up_to_nbits(cat_split, splitter.n_categories[current_split.feature])
+                    else:
+                        # now we evaluate each possible subset of the splits, which has
+                        # 2^{n_categories - 1}, since we remove mirror splits.
+                        if cat_idx >= MAX_BRUTE_CATEGORIES or cat_idx >= (<uint64_t> 1) << (ncat_present - 1):
+                            break
+
+                        # Generates a bitsetmask for cat_split.
+                        # Expand the bits of (2 * cat_idx) out into
+                        # cat_split. By convention, we double cat_idx to avoid
+                        # double-counting equivalent mirrored splits. This also
+                        # ensures that cat_split & 1 == 0 as required in the LSB.
+                        bs_from_template_memoryview(
+                            cat_split,
+                            cat_idx << 1,
+                            cat_offs,
+                            ncat_present
+                        )
+
+                    # Partition samples based on this categorical bitmask
+                    # p = partitioner.partition_samples_category(cat_split)
+                    copy_memview_to_array(cat_split, current_split.split_value.cat_split)
+                    p = partitioner.partition_samples(
+                        current_split.split_value,
+                        current_split.feature
+                    )
 
                     # Must reset criterion since we've reordered the samples
                     criterion.reset()
@@ -556,7 +610,8 @@ cdef inline int node_split_best(
                     best_proxy_improvement = current_proxy_improvement
 
                     if is_categorical:
-                        current_split.split_value.cat_split = cat_split
+                        # current_split.split_value.cat_split = cat_split
+                        copy_memview_to_array(cat_split, current_split.split_value.cat_split)
                     else:
                         # sum of halves is used to avoid infinite value
                         current_split.split_value.threshold = (
@@ -607,18 +662,21 @@ cdef inline int node_split_best(
 
     # Reorganize into samples[start:best_split.pos] + samples[best_split.pos:end]
     if best_split.pos < end:
-        setup_cat_cache(
-            partitioner.cat_cache,
-            best_split.split_value.cat_split,
-            splitter.n_categories[best_split.feature]
-        )
+        if current_split.feature != best_split.feature:
+            if splitter.n_categories[best_split.feature] > 0:
+                copy_array_to_memview(partitioner.cat_bitsets, best_split.split_value.cat_split)
+            # setup_cat_cache_memoryview(
+            #     partitioner.cat_bitsets,
+            #     best_split.split_value.cat_split,
+            #     splitter.n_categories[best_split.feature]
+            # )
 
-        partitioner.partition_samples_final(
-            best_split.pos,
-            best_split.split_value,
-            best_split.feature,
-            best_split.n_missing
-        )
+            partitioner.partition_samples_final(
+                best_split.pos,
+                best_split.split_value,
+                best_split.feature,
+                best_split.n_missing
+            )
         criterion.init_missing(best_split.n_missing)
         criterion.missing_go_to_left = best_split.missing_go_to_left
 
@@ -689,6 +747,8 @@ cdef inline int node_split_random(
     cdef bint is_categorical
     # index through categories
     cdef uint64_t split_seed
+    cdef intp_t n_categories
+    cdef BITSET_INNER_DTYPE_C[:] cat_split_memview = splitter.cat_split
 
     cdef SplitRecord best_split, current_split
     cdef float64_t current_proxy_improvement = - INFINITY
@@ -788,8 +848,21 @@ cdef inline int node_split_random(
         # Construct a random split
         is_categorical = splitter.n_categories[current_split.feature] > 0
         if is_categorical:
-            split_seed = rand_int(0, <uint32_t>RAND_R_MAX + 1, random_state)
-            current_split.split_value.cat_split = (split_seed << 32) | 1
+            # TODO: a random split can be applied during inference with a split_seed approach
+            # split_seed = rand_int(0, <uint32_t>RAND_R_MAX + 1, random_state)
+            # current_split.split_value.cat_split = (split_seed << 32) | 1
+            n_categories = splitter.n_categories[current_split.feature]
+            
+            # Zero out the bitset
+            cat_split_memview[:] = 0
+
+            # Randomly assign each category to left (1) or right (0)
+            for cat in range(n_categories):
+                if rand_int(0, 2, random_state):
+                    set_bitset_memoryview(cat_split_memview, cat)
+
+            # Copy the memoryview into the split record's cat_split array
+            copy_memview_to_array(cat_split_memview, current_split.split_value.cat_split)
         else:
             # Draw a random threshold
             current_split.split_value.threshold = rand_uniform(
@@ -802,11 +875,6 @@ cdef inline int node_split_random(
                 current_split.split_value.threshold = min_feature_value
 
         # Partition
-        setup_cat_cache(
-            partitioner.cat_cache,
-            current_split.split_value.cat_split,
-            splitter.n_categories[current_split.feature]
-        )
         current_split.pos = partitioner.partition_samples(
             current_split.split_value,
             current_split.feature
@@ -880,13 +948,14 @@ cdef inline int node_split_random(
 
     # Reorganize into samples[start:best.pos] + samples[best.pos:end]
     if best_split.pos < end:
-        setup_cat_cache(
-            partitioner.cat_cache,
-            best_split.split_value.cat_split,
-            splitter.n_categories[best_split.feature]
-        )
-
+        # setup_cat_cache(
+        #     partitioner.cat_bitsets,
+        #     best_split.split_value.cat_split,
+        #     splitter.n_categories[best_split.feature]
+        # )
         if current_split.feature != best_split.feature:
+            copy_array_to_memview(partitioner.cat_bitsets, best_split.split_value.cat_split)
+
             partitioner.partition_samples_final(
                 best_split.pos,
                 best_split.split_value,
@@ -942,9 +1011,9 @@ cdef class BestSplitter(Splitter):
         )
 
     cdef int node_split(
-            self,
-            ParentInfo* parent_record,
-            SplitRecord* split,
+        self,
+        ParentInfo* parent_record,
+        SplitRecord* split,
     ) except -1 nogil:
         return node_split_best(
             self,
@@ -971,9 +1040,9 @@ cdef class BestSparseSplitter(Splitter):
         )
 
     cdef int node_split(
-            self,
-            ParentInfo* parent_record,
-            SplitRecord* split,
+        self,
+        ParentInfo* parent_record,
+        SplitRecord* split,
     ) except -1 nogil:
         return node_split_best(
             self,
@@ -1000,9 +1069,9 @@ cdef class RandomSplitter(Splitter):
         )
 
     cdef int node_split(
-            self,
-            ParentInfo* parent_record,
-            SplitRecord* split,
+        self,
+        ParentInfo* parent_record,
+        SplitRecord* split,
     ) except -1 nogil:
         return node_split_random(
             self,
@@ -1034,9 +1103,9 @@ cdef class RandomSparseSplitter(Splitter):
         )
 
     cdef int node_split(
-            self,
-            ParentInfo* parent_record,
-            SplitRecord* split,
+        self,
+        ParentInfo* parent_record,
+        SplitRecord* split,
     ) except -1 nogil:
         return node_split_random(
             self,

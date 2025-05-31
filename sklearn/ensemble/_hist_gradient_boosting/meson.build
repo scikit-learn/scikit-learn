@@ -5,7 +5,7 @@ hist_gradient_boosting_extension_metadata = {
   'splitting': {'sources': [cython_gen.process('splitting.pyx')], 'dependencies': [openmp_dep]},
   '_binning': {'sources': [cython_gen.process('_binning.pyx')], 'dependencies': [openmp_dep]},
   '_predictor': {'sources': [cython_gen.process('_predictor.pyx')], 'dependencies': [openmp_dep]},
-  '_bitset': {'sources': [cython_gen.process('_bitset.pyx')]},
+  # '_bitset': {'sources': [cython_gen.process('_bitset.pyx')]},
   'common': {'sources': [cython_gen.process('common.pyx')]},
 }
 

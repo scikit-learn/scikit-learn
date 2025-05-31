@@ -3,8 +3,8 @@ import pytest
 from numpy.testing import assert_allclose
 
 from sklearn.ensemble._hist_gradient_boosting._bitset import (
-    in_bitset_memoryview,
-    set_bitset_memoryview,
+    py_in_bitset_memoryview,
+    py_set_bitset_memoryview,
     set_raw_bitset_from_binned_bitset,
 )
 from sklearn.ensemble._hist_gradient_boosting.common import X_DTYPE
@@ -24,13 +24,13 @@ def test_set_get_bitset(values_to_insert, expected_bitset):
     n_32bits_ints = 3
     bitset = np.zeros(n_32bits_ints, dtype=np.uint32)
     for value in values_to_insert:
-        set_bitset_memoryview(bitset, value)
+        py_set_bitset_memoryview(bitset, value)
     assert_allclose(expected_bitset, bitset)
     for value in range(32 * n_32bits_ints):
         if value in values_to_insert:
-            assert in_bitset_memoryview(bitset, value)
+            assert py_in_bitset_memoryview(bitset, value)
         else:
-            assert not in_bitset_memoryview(bitset, value)
+            assert not py_in_bitset_memoryview(bitset, value)
 
 
 @pytest.mark.parametrize(
@@ -52,13 +52,13 @@ def test_raw_bitset_from_binned_bitset(
     raw_categories = np.asarray(raw_categories, dtype=X_DTYPE)
 
     for val in binned_cat_to_insert:
-        set_bitset_memoryview(binned_bitset, val)
+        py_set_bitset_memoryview(binned_bitset, val)
 
     set_raw_bitset_from_binned_bitset(raw_bitset, binned_bitset, raw_categories)
 
     assert_allclose(expected_raw_bitset, raw_bitset)
     for binned_cat_val, raw_cat_val in enumerate(raw_categories):
         if binned_cat_val in binned_cat_to_insert:
-            assert in_bitset_memoryview(raw_bitset, raw_cat_val)
+            assert py_in_bitset_memoryview(raw_bitset, raw_cat_val)
         else:
-            assert not in_bitset_memoryview(raw_bitset, raw_cat_val)
+            assert not py_in_bitset_memoryview(raw_bitset, raw_cat_val)

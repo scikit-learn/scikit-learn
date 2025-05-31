@@ -4,7 +4,7 @@ from numpy.testing import assert_allclose
 
 from sklearn.datasets import make_regression
 from sklearn.ensemble._hist_gradient_boosting._bitset import (
-    set_bitset_memoryview,
+    py_set_bitset_memoryview,
     set_raw_bitset_from_binned_bitset,
 )
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
@@ -145,7 +145,7 @@ def test_categorical_predictor(bins_go_left, expected_predictions):
     binned_cat_bitsets = np.zeros((1, 8), dtype=X_BITSET_INNER_DTYPE)
     raw_categorical_bitsets = np.zeros((1, 8), dtype=X_BITSET_INNER_DTYPE)
     for go_left in bins_go_left:
-        set_bitset_memoryview(binned_cat_bitsets[0], go_left)
+        py_set_bitset_memoryview(binned_cat_bitsets[0], go_left)
 
     set_raw_bitset_from_binned_bitset(
         raw_categorical_bitsets[0], binned_cat_bitsets[0], categories

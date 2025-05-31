@@ -80,9 +80,9 @@ def test_monotonic_constraints_classifications(
     est.fit(X_train, y_train)
     proba_test = est.predict_proba(X_test)
 
-    assert np.logical_and(proba_test >= 0.0, proba_test <= 1.0).all(), (
-        "Probability should always be in [0, 1] range."
-    )
+    assert np.logical_and(
+        proba_test >= 0.0, proba_test <= 1.0
+    ).all(), "Probability should always be in [0, 1] range."
     assert_allclose(proba_test.sum(axis=1), 1.0)
 
     # Monotonic increase constraint, it applies to the positive class

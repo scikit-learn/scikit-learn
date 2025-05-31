@@ -23,6 +23,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.metrics import accuracy_score, mean_poisson_deviance, mean_squared_error
 from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.random_projection import _sparse_random_matrix
 from sklearn.tree import (
     DecisionTreeClassifier,
@@ -241,10 +242,10 @@ def _make_categorical(
 
 
 def assert_tree_equal(d, s, message):
-    assert s.node_count == d.node_count, (
-        "{0}: inequal number of node ({1} != {2})".format(
-            message, s.node_count, d.node_count
-        )
+    assert (
+        s.node_count == d.node_count
+    ), "{0}: inequal number of node ({1} != {2})".format(
+        message, s.node_count, d.node_count
     )
 
     assert_array_equal(
@@ -373,9 +374,9 @@ def test_diabetes_overfit(name, Tree, criterion):
     reg = Tree(criterion=criterion, random_state=0)
     reg.fit(diabetes.data, diabetes.target)
     score = mean_squared_error(diabetes.target, reg.predict(diabetes.data))
-    assert score == pytest.approx(0), (
-        f"Failed with {name}, criterion = {criterion} and score = {score}"
-    )
+    assert score == pytest.approx(
+        0
+    ), f"Failed with {name}, criterion = {criterion} and score = {score}"
 
 
 @skip_if_32bit
@@ -740,10 +741,10 @@ def check_min_weight_fraction_leaf(name, datasets, sparse_container=None):
         node_weights = np.bincount(out, weights=weights)
         # drop inner nodes
         leaf_weights = node_weights[node_weights != 0]
-        assert np.min(leaf_weights) >= total_weight * est.min_weight_fraction_leaf, (
-            "Failed with {0} min_weight_fraction_leaf={1}".format(
-                name, est.min_weight_fraction_leaf
-            )
+        assert (
+            np.min(leaf_weights) >= total_weight * est.min_weight_fraction_leaf
+        ), "Failed with {0} min_weight_fraction_leaf={1}".format(
+            name, est.min_weight_fraction_leaf
         )
 
     # test case with no weights passed in
@@ -763,10 +764,10 @@ def check_min_weight_fraction_leaf(name, datasets, sparse_container=None):
         node_weights = np.bincount(out)
         # drop inner nodes
         leaf_weights = node_weights[node_weights != 0]
-        assert np.min(leaf_weights) >= total_weight * est.min_weight_fraction_leaf, (
-            "Failed with {0} min_weight_fraction_leaf={1}".format(
-                name, est.min_weight_fraction_leaf
-            )
+        assert (
+            np.min(leaf_weights) >= total_weight * est.min_weight_fraction_leaf
+        ), "Failed with {0} min_weight_fraction_leaf={1}".format(
+            name, est.min_weight_fraction_leaf
         )
 
 
@@ -888,10 +889,10 @@ def test_min_impurity_decrease(global_random_seed):
             (est3, 0.0001),
             (est4, 0.1),
         ):
-            assert est.min_impurity_decrease <= expected_decrease, (
-                "Failed, min_impurity_decrease = {0} > {1}".format(
-                    est.min_impurity_decrease, expected_decrease
-                )
+            assert (
+                est.min_impurity_decrease <= expected_decrease
+            ), "Failed, min_impurity_decrease = {0} > {1}".format(
+                est.min_impurity_decrease, expected_decrease
             )
             est.fit(X, y)
             for node in range(est.tree_.node_count):
@@ -922,10 +923,10 @@ def test_min_impurity_decrease(global_random_seed):
                         imp_parent - wtd_avg_left_right_imp
                     )
 
-                    assert actual_decrease >= expected_decrease, (
-                        "Failed with {0} expected min_impurity_decrease={1}".format(
-                            actual_decrease, expected_decrease
-                        )
+                    assert (
+                        actual_decrease >= expected_decrease
+                    ), "Failed with {0} expected min_impurity_decrease={1}".format(
+                        actual_decrease, expected_decrease
                     )
 
 
@@ -966,9 +967,9 @@ def test_pickle():
         assert type(est2) == est.__class__
 
         score2 = est2.score(X, y)
-        assert score == score2, (
-            "Failed to generate same score  after pickling with {0}".format(name)
-        )
+        assert (
+            score == score2
+        ), "Failed to generate same score  after pickling with {0}".format(name)
         for attribute in fitted_attribute:
             assert_array_equal(
                 getattr(est2.tree_, attribute),
@@ -2661,9 +2662,9 @@ def test_missing_value_is_predictive(Tree, expected_score, global_random_seed):
     # Check that the tree can learn the predictive feature
     # over an average of cross-validation fits.
     tree_cv_score = cross_val_score(tree, X, y, cv=5).mean()
-    assert tree_cv_score >= expected_score, (
-        f"Expected CV score: {expected_score} but got {tree_cv_score}"
-    )
+    assert (
+        tree_cv_score >= expected_score
+    ), f"Expected CV score: {expected_score} but got {tree_cv_score}"
 
 
 @pytest.mark.parametrize(
@@ -2886,7 +2887,6 @@ def test_sort_log2_build():
     assert_array_equal(samples, expected_samples)
 
 
-
 @pytest.mark.skip()
 @pytest.mark.parametrize("name", ALL_TREES)
 @pytest.mark.parametrize(
@@ -2983,3 +2983,36 @@ def test_categorical_data(model, data_params):
 
     leaves = model.tree_.children_left < 0
     assert np.all(model.tree_.impurity[leaves] < 1e-6)
+
+
+def test_categorical_split_vs_onehot_tree_depth():
+    # Simulate data: 8 categories, 1000 samples, binary classification,
+    # non-ordinal mapping
+    rng = np.random.RandomState(42)
+    n_samples = 1000
+    n_categories = 8
+    X = rng.randint(0, n_categories, size=(n_samples, 1))
+    # Shuffle categories and assign half to class 0, half to class 1
+    categories = np.arange(n_categories)
+    rng.shuffle(categories)
+    class0_cats = set(categories[:4])
+    class1_cats = set(categories[4:])
+    y = np.array([0 if x[0] in class0_cats else 1 for x in X])
+
+    # Train with categorical feature
+    tree_cat = DecisionTreeClassifier(random_state=0, categorical_features=[0])
+    tree_cat.fit(X, y)
+
+    # Train with one-hot encoding
+    ohe = OneHotEncoder(sparse=False, categories="auto")
+    X_ohe = ohe.fit_transform(X)
+    tree_ohe = DecisionTreeClassifier(random_state=0)
+    tree_ohe.fit(X_ohe, y)
+
+    # The categorical split should yield a shallower tree
+    assert (
+        tree_cat.get_depth() == 1
+    ), f"Categorical split depth should be 1, got {tree_cat.get_depth()}"
+    assert (
+        tree_ohe.get_depth() >= 3
+    ), f"One-hot tree depth should be at least 3, got {tree_ohe.get_depth()}"

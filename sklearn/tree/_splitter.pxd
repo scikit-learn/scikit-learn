@@ -3,9 +3,9 @@
 
 # See _splitter.pyx for details.
 
-from ..ensemble._hist_gradient_boosting.common cimport BITSET_INNER_DTYPE_C
+from ..utils._bitset cimport BITSET_INNER_DTYPE_C
 from ..utils._typedefs cimport (
-    BITSET_t, float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t, uint64_t
+    float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t, uint64_t
 )
 from ._utils cimport ParentInfo, SplitRecord, SplitValue
 from ._criterion cimport Criterion
@@ -58,6 +58,8 @@ cdef class Splitter:
     # We know the number of categories within our dataset across each feature.
     # If a feature index has -1, then it is not categorical
     cdef const int32_t[:] n_categories
+    cdef int32_t max_n_categories
+    cdef BITSET_INNER_DTYPE_C[:] cat_split
 
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,
