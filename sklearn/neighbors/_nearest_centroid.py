@@ -9,6 +9,11 @@ import warnings
 from numbers import Real
 
 import numpy as np
+from collections import defaultdict
+
+import numpy as np
+from collections import defaultdict
+
 from scipy import sparse as sp
 
 from ..base import BaseEstimator, ClassifierMixin, _fit_context
@@ -357,3 +362,42 @@ class NearestCentroid(
         tags.input_tags.allow_nan = self.metric == "nan_euclidean"
         tags.input_tags.sparse = True
         return tags
+    def __init__(self):
+        self._classes_seen = set()
+        self.centroids_ = {}
+        self.class_count_ = {}
+
+def partial_fit(self, X, y, classes=None):
+    import numpy as np
+
+    X = np.asarray(X)
+    y = np.asarray(y)
+
+    # Initialisierung, falls noch nicht vorhanden
+    if not hasattr(self, "centroids_"):
+        self.centroids_ = {}
+        self.class_count_ = {}
+
+    unique_classes = np.unique(y)
+    for cls in unique_classes:
+        X_cls = X[y == cls]
+        n_new = X_cls.shape[0]
+
+        if cls not in self.centroids_:
+            # Neues Klassenzentrum setzen
+            self.centroids_[cls] = X_cls.mean(axis=0)
+            self.class_count_[cls] = n_new
+        else:
+            # Bestehendes Zentrum aktualisieren (gewichtetes Mittel)
+            n_old = self.class_count_[cls]
+            centroid_old = self.centroids_[cls]
+            centroid_new = X_cls.mean(axis=0)
+
+            total_n = n_old + n_new
+            updated_centroid = (n_old * centroid_old + n_new * centroid_new) / total_n
+
+            self.centroids_[cls] = updated_centroid
+            self.class_count_[cls] = total_n
+
+    self.classes_ = np.array(sorted(self.centroids_.keys()))
+    return self
