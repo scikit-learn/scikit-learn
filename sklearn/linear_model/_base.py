@@ -473,7 +473,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
-    tol : float, default=1e-4
+    tol : float, default=1e-6
         The precision of the solution (`coef_`) is determined by `tol` which
         specifies a different convergence criterion for the `lsqr` solver.
         `tol` is set as `atol` and `btol` of `scipy.sparse.linalg.lsqr` when
@@ -493,6 +493,10 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     positive : bool, default=False
         When set to ``True``, forces the coefficients to be positive. This
         option is only supported for dense arrays.
+
+        For a comparison between a linear regression model with positive constraints
+        on the regression coefficients and a linear regression without such constraints,
+        see :ref:`sphx_glr_auto_examples_linear_model_plot_nnls.py`.
 
         .. versionadded:: 0.24
 
@@ -555,7 +559,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     >>> reg.coef_
     array([1., 2.])
     >>> reg.intercept_
-    np.float64(3.0...)
+    np.float64(3.0)
     >>> reg.predict(np.array([[3, 5]]))
     array([16.])
     """
@@ -573,7 +577,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         *,
         fit_intercept=True,
         copy_X=True,
-        tol=1e-4,
+        tol=1e-6,
         n_jobs=None,
         positive=False,
     ):

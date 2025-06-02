@@ -1,3 +1,0 @@
-- :func:`~model_selection.cross_validate`, :func:`~model_selection.cross_val_predict`,
-  and :func:`~model_selection.cross_val_score` now accept `params=None` when metadata
-  routing is enabled. By `Adrin Jalali`_

@@ -99,7 +99,7 @@ evaluated and the best combination is retained.
 
   - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`
     for an example of using ``refit=callable`` interface in
-    :class:`GridSearchCV`. The example shows how this interface adds certain
+    :class:`GridSearchCV`. The example shows how this interface adds a certain
     amount of flexibility in identifying the "best" estimator. This interface
     can also be used in multiple metrics evaluation.
 
@@ -194,7 +194,7 @@ iteration, which will be allocated more resources. For parameter tuning, the
 resource is typically the number of training samples, but it can also be an
 arbitrary numeric parameter such as `n_estimators` in a random forest.
 
-.. note:: 
+.. note::
 
     The resource increase chosen should be large enough so that a large improvement
     in scores is obtained when taking into account statistical significance.
@@ -424,7 +424,7 @@ The sections below dive into technical aspects of successive halving.
 
   `min_resources` was here automatically set to 250, which results in the last
   iteration using all the resources. The exact value that is used depends on
-  the number of candidate parameter, on `max_resources` and on `factor`.
+  the number of candidate parameters, on `max_resources` and on `factor`.
 
   For :class:`HalvingRandomSearchCV`, exhausting the resources can be done in 2
   ways:
@@ -555,14 +555,15 @@ Tips for parameter search
 Specifying an objective metric
 ------------------------------
 
-By default, parameter search uses the ``score`` function of the estimator
-to evaluate a parameter setting. These are the
+By default, parameter search uses the ``score`` function of the estimator to
+evaluate a parameter setting. These are the
 :func:`sklearn.metrics.accuracy_score` for classification and
-:func:`sklearn.metrics.r2_score` for regression.  For some applications,
-other scoring functions are better suited (for example in unbalanced
-classification, the accuracy score is often uninformative). An alternative
-scoring function can be specified via the ``scoring`` parameter of most
-parameter search tools. See :ref:`scoring_parameter` for more details.
+:func:`sklearn.metrics.r2_score` for regression.  For some applications, other
+scoring functions are better suited (for example in unbalanced classification,
+the accuracy score is often uninformative), see :ref:`which_scoring_function`
+for some guidance. An alternative scoring function can be specified via the
+``scoring`` parameter of most parameter search tools, see
+:ref:`scoring_parameter` for more details.
 
 .. _multimetric_grid_search:
 
@@ -724,7 +725,7 @@ model selection:
 Out of Bag Estimates
 --------------------
 
-When using ensemble methods base upon bagging, i.e. generating new
+When using ensemble methods based upon bagging, i.e. generating new
 training sets using sampling with replacement, part of the training set
 remains unused.  For each classifier in the ensemble, a different part
 of the training set is left out.

@@ -444,13 +444,8 @@ def _fit_and_score_over_thresholds(
     curve_scorer : scorer instance
         The scorer taking `classifier` and the validation set as input and outputting
         decision thresholds and scores as a curve. Note that this is different from
-        the usual scorer that output a single score value:
-
-        * when `score_method` is one of the four constraint metrics, the curve scorer
-          will output a curve of two scores parametrized by the decision threshold, e.g.
-          TPR/TNR or precision/recall curves for each threshold;
-        * otherwise, the curve scorer will output a single score value for each
-          threshold.
+        the usual scorer that outputs a single score value as `curve_scorer`
+        outputs a single score value for each threshold.
 
     score_params : dict
         Parameters to pass to the `score` method of the underlying scorer.
@@ -528,9 +523,10 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
     scoring : str or callable, default="balanced_accuracy"
         The objective metric to be optimized. Can be one of:
 
-        * a string associated to a scoring function for binary classification
-          (see :ref:`scoring_parameter`);
-        * a scorer callable object created with :func:`~sklearn.metrics.make_scorer`;
+        - str: string associated to a scoring function for binary classification,
+          see :ref:`scoring_string_names` for options.
+        - callable: a scorer callable object (e.g., function) with signature
+          ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
 
     response_method : {"auto", "decision_function", "predict_proba"}, default="auto"
         Methods by the classifier `estimator` corresponding to the

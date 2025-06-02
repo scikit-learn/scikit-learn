@@ -250,7 +250,7 @@ object::
   Enabling caching triggers a clone of the transformers before fitting.
   Therefore, the transformer instance given to the pipeline cannot be
   inspected directly.
-  In following example, accessing the :class:`~sklearn.decomposition.PCA`
+  In the following example, accessing the :class:`~sklearn.decomposition.PCA`
   instance ``pca2`` will raise an ``AttributeError`` since ``pca2`` will be an
   unfitted transformer.
   Instead, use the attribute ``named_steps`` to inspect estimators within
@@ -504,10 +504,10 @@ on data type or column name::
   ...       OneHotEncoder(),
   ...       make_column_selector(pattern='city', dtype_include=object))])
   >>> ct.fit_transform(X)
-  array([[ 0.904...,  0.      ,  1. ,  0. ,  0. ],
-         [-1.507...,  1.414...,  1. ,  0. ,  0. ],
-         [-0.301...,  0.      ,  0. ,  1. ,  0. ],
-         [ 0.904..., -1.414...,  0. ,  0. ,  1. ]])
+  array([[ 0.904,  0.      ,  1. ,  0. ,  0. ],
+         [-1.507,  1.414,  1. ,  0. ,  0. ],
+         [-0.301,  0.      ,  0. ,  1. ,  0. ],
+         [ 0.904, -1.414,  0. ,  0. ,  1. ]])
 
 Strings can reference columns if the input is a DataFrame, integers are always
 interpreted as the positional columns.
@@ -571,9 +571,9 @@ will use the column names to select the columns::
   >>> X_new = pd.DataFrame({"expert_rating": [5, 6, 1],
   ...                       "ignored_new_col": [1.2, 0.3, -0.1]})
   >>> ct.transform(X_new)
-  array([[ 0.9...],
-         [ 2.1...],
-         [-3.9...]])
+  array([[ 0.9],
+         [ 2.1],
+         [-3.9]])
 
 .. _visualizing_composite_estimators:
 

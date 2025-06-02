@@ -139,7 +139,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         )
 
         sample_weight = _check_sample_weight(
-            sample_weight, X, np.float64, copy=True, ensure_non_negative=True
+            sample_weight, X, dtype=np.float64, copy=True, ensure_non_negative=True
         )
         sample_weight /= sample_weight.sum()
 
@@ -476,13 +476,13 @@ class AdaBoostClassifier(
     >>> clf.predict([[0, 0, 0, 0]])
     array([1])
     >>> clf.score(X, y)
-    0.96...
+    0.96
 
     For a detailed example of using AdaBoost to fit a sequence of DecisionTrees
     as weaklearners, please refer to
     :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_multiclass.py`.
 
-    For a detailed example of using AdaBoost to fit a non-linearly seperable
+    For a detailed example of using AdaBoost to fit a non-linearly separable
     classification dataset composed of two Gaussian quantiles clusters, please
     refer to :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_twoclass.py`.
     """
@@ -973,9 +973,9 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
     >>> regr.fit(X, y)
     AdaBoostRegressor(n_estimators=100, random_state=0)
     >>> regr.predict([[0, 0, 0, 0]])
-    array([4.7972...])
+    array([4.7972])
     >>> regr.score(X, y)
-    0.9771...
+    0.9771
 
     For a detailed example of utilizing :class:`~sklearn.ensemble.AdaBoostRegressor`
     to fit a sequence of decision trees as weak learners, please refer to

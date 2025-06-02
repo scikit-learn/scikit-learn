@@ -54,8 +54,9 @@ X, y = make_classification(
 # Classification and ROC analysis
 # -------------------------------
 #
-# Here we run a :class:`~sklearn.ensemble.HistGradientBoostingClassifier`
-# classifier with cross-validation and plot the ROC curves fold-wise. Notice
+# Here we run :func:`~sklearn.model_selection.cross_validate` on a
+# :class:`~sklearn.ensemble.HistGradientBoostingClassifier`, then use the
+# computed cross-validation results to plot the ROC curves fold-wise. Notice
 # that the baseline to define the chance level (dashed ROC curve) is a
 # classifier that would always predict the most frequent class.
 #
@@ -67,39 +68,53 @@ import numpy as np
 
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.metrics import RocCurveDisplay, auc
-from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn.model_selection import StratifiedShuffleSplit, cross_validate
 
 n_splits = 30
 cv = StratifiedShuffleSplit(n_splits=n_splits, random_state=0)
 classifier = HistGradientBoostingClassifier(random_state=42)
 
-tprs = []
-aucs = []
-mean_fpr = np.linspace(0, 1, 100)
+cv_results = cross_validate(
+    classifier, X, y, cv=cv, return_estimator=True, return_indices=True
+)
 
-fig, ax = plt.subplots(figsize=(6, 6))
-for fold, (train, test) in enumerate(cv.split(X, y)):
-    classifier.fit(X[train], y[train])
-    viz = RocCurveDisplay.from_estimator(
-        classifier,
-        X[test],
-        y[test],
-        label=None,
+prop_cycle = plt.rcParams["axes.prop_cycle"]
+colors = prop_cycle.by_key()["color"]
+curve_kwargs_list = [
+    dict(
         alpha=0.3,
         lw=1,
-        ax=ax,
-        plot_chance_level=(fold == n_splits - 1),
-        chance_level_kw={"label": None},
+        label=None,
+        color=colors[fold % len(colors)],
     )
-    interp_tpr = np.interp(mean_fpr, viz.fpr, viz.tpr)
-    interp_tpr[0] = 0.0
-    tprs.append(interp_tpr)
-    aucs.append(viz.roc_auc)
+    for fold in range(n_splits)
+]
+names = [f"ROC fold {idx}" for idx in range(n_splits)]
 
-mean_tpr = np.mean(tprs, axis=0)
+mean_fpr = np.linspace(0, 1, 100)
+interp_tprs = []
+
+_, ax = plt.subplots(figsize=(6, 6))
+viz = RocCurveDisplay.from_cv_results(
+    cv_results,
+    X,
+    y,
+    ax=ax,
+    name=names,
+    curve_kwargs=curve_kwargs_list,
+    plot_chance_level=True,
+)
+
+for idx in range(n_splits):
+    interp_tpr = np.interp(mean_fpr, viz.fpr[idx], viz.tpr[idx])
+    interp_tpr[0] = 0.0
+    interp_tprs.append(interp_tpr)
+
+mean_tpr = np.mean(interp_tprs, axis=0)
 mean_tpr[-1] = 1.0
 mean_auc = auc(mean_fpr, mean_tpr)
-std_auc = np.std(aucs)
+std_auc = np.std(viz.roc_auc)
+
 ax.plot(
     mean_fpr,
     mean_tpr,
@@ -110,8 +125,8 @@ ax.plot(
 )
 
 
-upper_quantile = np.quantile(tprs, 0.95, axis=0)
-lower_quantile = np.quantile(tprs, 0.05, axis=0)
+upper_quantile = np.quantile(interp_tprs, 0.95, axis=0)
+lower_quantile = np.quantile(interp_tprs, 0.05, axis=0)
 ax.fill_between(
     mean_fpr,
     lower_quantile,

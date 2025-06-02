@@ -141,7 +141,7 @@ scoring = {
 # average than the opposite: it is less costly for the financing institution to
 # not grant a credit to a potential customer that will not default (and
 # therefore miss a good customer that would have otherwise both reimbursed the
-# credit and payed interests) than to grant a credit to a customer that will
+# credit and paid interests) than to grant a credit to a customer that will
 # default.
 #
 # We define a python function that weight the confusion matrix and return the
@@ -321,8 +321,7 @@ def plot_roc_pr_curves(vanilla_model, tuned_model, *, title):
             X_test,
             y_test,
             pos_label=pos_label,
-            linestyle=linestyle,
-            color=color,
+            curve_kwargs=dict(linestyle=linestyle, color=color),
             ax=axs[1],
             name=name,
             plot_chance_level=idx == 1,
@@ -689,3 +688,6 @@ print(f"Benefit of logistic regression with a tuned threshold:  {business_score:
 # historical data (offline evaluation) should ideally be confirmed by A/B testing
 # on live data (online evaluation). Note however that A/B testing models is
 # beyond the scope of the scikit-learn library itself.
+
+# At the end, we disable the configuration flag for metadata routing::
+sklearn.set_config(enable_metadata_routing=False)

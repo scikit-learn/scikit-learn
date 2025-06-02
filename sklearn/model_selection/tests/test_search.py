@@ -15,7 +15,7 @@ import pytest
 from scipy.stats import bernoulli, expon, uniform
 
 from sklearn import config_context
-from sklearn.base import BaseEstimator, ClassifierMixin, is_classifier
+from sklearn.base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from sklearn.cluster import KMeans
 from sklearn.compose import ColumnTransformer
 from sklearn.datasets import (
@@ -27,7 +27,7 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.exceptions import FitFailedWarning
-from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import (
@@ -82,7 +82,10 @@ from sklearn.tests.metadata_routing_common import (
     check_recorded_metadata,
 )
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
+from sklearn.utils._array_api import (
+    _get_namespace_device_dtype_ids,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 from sklearn.utils._testing import (
     MinimalClassifier,
@@ -90,10 +93,13 @@ from sklearn.utils._testing import (
     MinimalTransformer,
     _array_api_for_tests,
     assert_allclose,
+    assert_allclose_dense_sparse,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
+    set_random_state,
 )
+from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
 from sklearn.utils.fixes import CSR_CONTAINERS
 from sklearn.utils.validation import _num_samples
 
@@ -1318,6 +1324,112 @@ def test_search_cv_score_samples_error(search_cv):
     assert inner_msg == str(exec_info.value.__cause__)
 
 
+def test_unsupported_sample_weight_scorer():
+    """Checks that fitting with sample_weight raises a warning if the scorer does not
+    support sample_weight"""
+
+    def fake_score_func(y_true, y_pred):
+        "Fake scoring function that does not support sample_weight"
+        return 0.5
+
+    fake_scorer = make_scorer(fake_score_func)
+
+    X, y = make_classification(n_samples=10, n_features=4, random_state=42)
+    sw = np.ones_like(y)
+    search_cv = GridSearchCV(estimator=LogisticRegression(), param_grid={"C": [1, 10]})
+    # function
+    search_cv.set_params(scoring=fake_score_func)
+    with pytest.warns(UserWarning, match="does not support sample_weight"):
+        search_cv.fit(X, y, sample_weight=sw)
+    # scorer
+    search_cv.set_params(scoring=fake_scorer)
+    with pytest.warns(UserWarning, match="does not support sample_weight"):
+        search_cv.fit(X, y, sample_weight=sw)
+    # multi-metric evaluation
+    search_cv.set_params(
+        scoring=dict(fake=fake_scorer, accuracy="accuracy"), refit=False
+    )
+    # only fake scorer does not support sample_weight
+    with pytest.warns(
+        UserWarning, match=r"The scoring fake=.* does not support sample_weight"
+    ):
+        search_cv.fit(X, y, sample_weight=sw)
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [
+        GridSearchCV(estimator=LogisticRegression(), param_grid={"C": [1, 10, 100]}),
+        RandomizedSearchCV(
+            estimator=Ridge(), param_distributions={"alpha": [1, 0.1, 0.01]}
+        ),
+    ],
+)
+def test_search_cv_sample_weight_equivalence(estimator):
+    estimator_weighted = clone(estimator)
+    estimator_repeated = clone(estimator)
+    set_random_state(estimator_weighted, random_state=0)
+    set_random_state(estimator_repeated, random_state=0)
+
+    rng = np.random.RandomState(42)
+    n_classes = 3
+    n_samples_per_group = 30
+    n_groups = 4
+    n_samples = n_groups * n_samples_per_group
+    X = rng.rand(n_samples, n_samples * 2)
+    y = rng.randint(0, n_classes, size=n_samples)
+    sw = rng.randint(0, 5, size=n_samples)
+    # we use groups with LeaveOneGroupOut to ensure that
+    # the splits are the same in the repeated/weighted datasets
+    groups = np.tile(np.arange(n_groups), n_samples_per_group)
+
+    X_weighted = X
+    y_weighted = y
+    groups_weighted = groups
+    splits_weighted = list(LeaveOneGroupOut().split(X_weighted, groups=groups_weighted))
+    estimator_weighted.set_params(cv=splits_weighted)
+    # repeat samples according to weights
+    X_repeated = X_weighted.repeat(repeats=sw, axis=0)
+    y_repeated = y_weighted.repeat(repeats=sw)
+    groups_repeated = groups_weighted.repeat(repeats=sw)
+    splits_repeated = list(LeaveOneGroupOut().split(X_repeated, groups=groups_repeated))
+    estimator_repeated.set_params(cv=splits_repeated)
+
+    y_weighted = _enforce_estimator_tags_y(estimator_weighted, y_weighted)
+    y_repeated = _enforce_estimator_tags_y(estimator_repeated, y_repeated)
+
+    estimator_repeated.fit(X_repeated, y=y_repeated, sample_weight=None)
+    estimator_weighted.fit(X_weighted, y=y_weighted, sample_weight=sw)
+
+    # check that scores stored in cv_results_
+    # are equal for the weighted/repeated datasets
+    score_keys = [
+        key for key in estimator_repeated.cv_results_ if key.endswith("score")
+    ]
+    for key in score_keys:
+        s1 = estimator_repeated.cv_results_[key]
+        s2 = estimator_weighted.cv_results_[key]
+        err_msg = f"{key} values are not equal for weighted/repeated datasets"
+        assert_allclose(s1, s2, err_msg=err_msg)
+
+    for key in ["best_score_", "best_index_"]:
+        s1 = getattr(estimator_repeated, key)
+        s2 = getattr(estimator_weighted, key)
+        err_msg = f"{key} values are not equal for weighted/repeated datasets"
+        assert_almost_equal(s1, s2, err_msg=err_msg)
+
+    for method in ["predict_proba", "decision_function", "predict", "transform"]:
+        if hasattr(estimator, method):
+            s1 = getattr(estimator_repeated, method)(X)
+            s2 = getattr(estimator_weighted, method)(X)
+            err_msg = (
+                f"Comparing the output of {method} revealed that fitting "
+                "with `sample_weight` is not equivalent to fitting with removed "
+                "or repeated data points."
+            )
+            assert_allclose_dense_sparse(s1, s2, err_msg=err_msg)
+
+
 @pytest.mark.parametrize(
     "search_cv",
     [
@@ -2310,9 +2422,9 @@ def test_search_cv__pairwise_property_delegated_to_base_estimator():
     for _pairwise_setting in [True, False]:
         est.set_params(pairwise=_pairwise_setting)
         cv = GridSearchCV(est, {"n_neighbors": [10]})
-        assert (
-            _pairwise_setting == cv.__sklearn_tags__().input_tags.pairwise
-        ), attr_message
+        assert _pairwise_setting == cv.__sklearn_tags__().input_tags.pairwise, (
+            attr_message
+        )
 
 
 def test_search_cv_pairwise_property_equivalence_of_precomputed():
@@ -2550,43 +2662,21 @@ def test_search_html_repr():
     search_cv = GridSearchCV(pipeline, param_grid=param_grid, refit=False)
     with config_context(display="diagram"):
         repr_html = search_cv._repr_html_()
-        assert "<pre>DummyClassifier()</pre>" in repr_html
+        assert "<div>DummyClassifier</div>" in repr_html
 
     # Fitted with `refit=False` shows the original pipeline
     search_cv.fit(X, y)
     with config_context(display="diagram"):
         repr_html = search_cv._repr_html_()
-        assert "<pre>DummyClassifier()</pre>" in repr_html
+        assert "<div>DummyClassifier</div>" in repr_html
 
     # Fitted with `refit=True` shows the best estimator
     search_cv = GridSearchCV(pipeline, param_grid=param_grid, refit=True)
     search_cv.fit(X, y)
     with config_context(display="diagram"):
         repr_html = search_cv._repr_html_()
-        assert "<pre>DummyClassifier()</pre>" not in repr_html
-        assert "<pre>LogisticRegression()</pre>" in repr_html
-
-
-# TODO(1.7): remove this test
-@pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
-def test_inverse_transform_Xt_deprecation(SearchCV):
-    clf = MockClassifier()
-    search = SearchCV(clf, {"foo_param": [1, 2, 3]}, cv=2, verbose=3)
-
-    X2 = search.fit(X, y).transform(X)
-
-    with pytest.raises(TypeError, match="Missing required positional argument"):
-        search.inverse_transform()
-
-    with pytest.raises(TypeError, match="Cannot use both X and Xt. Use X only"):
-        search.inverse_transform(X=X2, Xt=X2)
-
-    with warnings.catch_warnings(record=True):
-        warnings.simplefilter("error")
-        search.inverse_transform(X2)
-
-    with pytest.warns(FutureWarning, match="Xt was renamed X in version 1.5"):
-        search.inverse_transform(Xt=X2)
+        assert "<div>DummyClassifier</div>" not in repr_html
+        assert "<div>LogisticRegression</div>" in repr_html
 
 
 # Metadata Routing Tests
@@ -2767,7 +2857,9 @@ def test_cv_results_multi_size_array():
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
 def test_array_api_search_cv_classifier(SearchCV, array_namespace, device, dtype):
@@ -2799,7 +2891,7 @@ ordinal_encoder = OrdinalEncoder()
 
 # If we construct this directly via `MaskedArray`, the list of tuples
 # gets auto-converted to a 2D array.
-ma_with_tuples = np.ma.MaskedArray(np.empty(2), mask=True, dtype=object)
+ma_with_tuples = np.ma.MaskedArray(np.empty(2), mask=True, dtype=object)  # type: ignore[var-annotated]
 ma_with_tuples[0] = (1, 2)
 ma_with_tuples[1] = (3, 4)
 

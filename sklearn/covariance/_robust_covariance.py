@@ -433,7 +433,7 @@ def fast_mcd(
 
     # minimum breakdown value
     if support_fraction is None:
-        n_support = int(np.ceil(0.5 * (n_samples + n_features + 1)))
+        n_support = min(int(np.ceil(0.5 * (n_samples + n_features + 1))), n_samples)
     else:
         n_support = int(support_fraction * n_samples)
 
@@ -697,10 +697,10 @@ class MinCovDet(EmpiricalCovariance):
     ...                                   size=500)
     >>> cov = MinCovDet(random_state=0).fit(X)
     >>> cov.covariance_
-    array([[0.7411..., 0.2535...],
-           [0.2535..., 0.3053...]])
+    array([[0.7411, 0.2535],
+           [0.2535, 0.3053]])
     >>> cov.location_
-    array([0.0813... , 0.0427...])
+    array([0.0813 , 0.0427])
     """
 
     _parameter_constraints: dict = {
