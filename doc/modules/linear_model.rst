@@ -518,6 +518,23 @@ The objective function to minimize is in this case
 The class :class:`ElasticNetCV` can be used to set the parameters
 ``alpha`` (:math:`\alpha`) and ``l1_ratio`` (:math:`\rho`) by cross-validation.
 
+A new option ``store_cv_models`` allows you to store and access the full set of models
+trained during cross-validation, not just the best one. This is useful for
+inspecting coefficient paths, intercept evolution, or validation scores across
+all folds and parameter combinations.
+
+This feature can be used for detailed analysis or advanced visualizations.
+
+.. code-block:: python
+
+    model = ElasticNetCV(store_cv_models=True)
+    model.fit(X, y)
+
+    # Access coefficients and intercepts for each fold and parameter
+    coefs = model.cv_coefs_  # shape: (n_folds, n_l1_ratio, n_alphas, n_targets, n_features)
+    intercepts = model.cv_intercepts_
+    mse = model.cv_mse_
+
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`

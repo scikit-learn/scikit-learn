@@ -1534,6 +1534,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         positive=False,
         random_state=None,
         selection="cyclic",
+        store_cv_models=False,
     ):
         self.eps = eps
         self.n_alphas = n_alphas
@@ -1549,6 +1550,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         self.positive = positive
         self.random_state = random_state
         self.selection = selection
+        self.store_cv_models = store_cv_models
 
     @abstractmethod
     def _get_estimator(self):
@@ -1721,8 +1723,11 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         # All LinearModelCV parameters except 'cv' are acceptable
         path_params = self.get_params()
 
-        # Pop `intercept` that is not parameter of the path function
+        # Remove parameters not accepted by the path function
         path_params.pop("fit_intercept", None)
+        path_params.pop("store_cv_models", None)
+        path_params.pop("cv", None)
+        path_params.pop("n_jobs", None)
 
         if "l1_ratio" in path_params:
             l1_ratios = np.atleast_1d(path_params["l1_ratio"])
@@ -1732,8 +1737,6 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             l1_ratios = [
                 1,
             ]
-        path_params.pop("cv", None)
-        path_params.pop("n_jobs", None)
 
         n_l1_ratio = len(l1_ratios)
 
@@ -1810,26 +1813,90 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         folds = list(cv.split(X, y, **routed_params.splitter.split))
         best_mse = np.inf
 
+        # Prepare storage for full CV model parameters if requested
+        store_cv = getattr(self, "store_cv_models", False)
+        n_folds = len(folds)
+        n_l1_ratio = len(l1_ratios)
+        n_alphas = len(alphas[0])
+        n_features = X.shape[1]
+        n_targets = y.shape[1] if y.ndim == 2 else 1
+        if store_cv:
+            cv_coefs = np.empty((n_folds, n_l1_ratio, n_alphas, n_targets, n_features), dtype=np.float64)
+            cv_intercepts = np.empty((n_folds, n_l1_ratio, n_alphas, n_targets), dtype=np.float64)
+            cv_alphas = np.empty((n_folds, n_l1_ratio, n_alphas), dtype=np.float64)
+            cv_mse = np.empty((n_folds, n_l1_ratio, n_alphas), dtype=np.float64)
+
         # We do a double for loop folded in one, in order to be able to
         # iterate in parallel on l1_ratio and folds
-        jobs = (
-            delayed(_path_residuals)(
-                X,
-                y,
-                sample_weight,
-                train,
-                test,
-                self.fit_intercept,
-                self.path,
-                path_params,
-                alphas=this_alphas,
-                l1_ratio=this_l1_ratio,
-                X_order="F",
-                dtype=X.dtype.type,
-            )
-            for this_l1_ratio, this_alphas in zip(l1_ratios, alphas)
-            for train, test in folds
-        )
+        jobs = []
+        fold_l1_pairs = []
+        for l1_idx, (this_l1_ratio, this_alphas) in enumerate(zip(l1_ratios, alphas)):
+            for fold_idx, (train, test) in enumerate(folds):
+                jobs.append(
+                    delayed(_path_residuals)(
+                        X,
+                        y,
+                        sample_weight,
+                        train,
+                        test,
+                        self.fit_intercept,
+                        self.path,
+                        path_params,
+                        alphas=this_alphas,
+                        l1_ratio=this_l1_ratio,
+                        X_order="F",
+                        dtype=X.dtype.type,
+                    )
+                )
+                fold_l1_pairs.append((fold_idx, l1_idx, train, test, this_l1_ratio, this_alphas))
+
+        # If storing CV models, we need to also fit and store all model params for each fold/l1/alpha
+        if store_cv:
+            for idx, (fold_idx, l1_idx, train, test, this_l1_ratio, this_alphas) in enumerate(fold_l1_pairs):
+                # Prepare path params
+                path_params_fold = path_params.copy()
+                path_params_fold["alphas"] = this_alphas
+                path_params_fold["l1_ratio"] = this_l1_ratio
+                path_params_fold["copy_X"] = False
+                if sample_weight is not None:
+                    sw_train = sample_weight[train]
+                else:
+                    sw_train = None
+                path_params_fold["sample_weight"] = sw_train
+                X_train = X[train]
+                y_train = y[train]
+                X_test = X[test]
+                y_test = y[test]
+                # Fit path
+                alphas_out, coefs, intercepts = self.path(
+                    X_train, y_train, **path_params_fold
+                )
+                # coefs: (n_features, n_alphas) or (n_targets, n_features, n_alphas)
+                # intercepts: (n_alphas,) or (n_targets, n_alphas)
+                # Reshape to (n_targets, n_features, n_alphas)
+                if y.ndim == 1:
+                    coefs = coefs[np.newaxis, :, :]  # (1, n_features, n_alphas)
+                    intercepts = intercepts[np.newaxis, :]  # (1, n_alphas)
+                # Move alphas to axis 1
+                coefs = np.moveaxis(coefs, -1, 2)  # (n_targets, n_features, n_alphas)
+                intercepts = np.moveaxis(intercepts, -1, 1)  # (n_targets, n_alphas)
+                # Store
+                cv_coefs[fold_idx, l1_idx, :, :, :] = np.transpose(coefs, (2, 0, 1))  # (n_alphas, n_targets, n_features)
+                cv_intercepts[fold_idx, l1_idx, :, :] = intercepts.T  # (n_alphas, n_targets)
+                cv_alphas[fold_idx, l1_idx, :] = alphas_out
+                # Compute test MSE for each alpha
+                # y_pred shape: (n_samples_test, n_targets, n_alphas)
+                y_pred = np.stack([
+                    safe_sparse_dot(X_test, coefs[target_idx, :, :]) + intercepts[target_idx, :]
+                    for target_idx in range(n_targets)
+                ], axis=1)
+                if y.ndim == 1:
+                    mse = np.mean((y_pred.squeeze() - y_test[:, np.newaxis]) ** 2, axis=0)
+                else:
+                    mse = np.mean((y_pred - y_test[:, :, np.newaxis]) ** 2, axis=(0, 1))
+                cv_mse[fold_idx, l1_idx, :] = mse
+
+        # Now run the original MSE path jobs for compatibility
         mse_paths = Parallel(
             n_jobs=self.n_jobs,
             verbose=self.verbose,
@@ -1846,6 +1913,13 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 best_alpha = l1_alphas[i_best_alpha]
                 best_l1_ratio = l1_ratio
                 best_mse = this_best_mse
+
+        # Set the new attributes if requested
+        if store_cv:
+            self.cv_coefs_ = cv_coefs
+            self.cv_intercepts_ = cv_intercepts
+            self.cv_alphas_ = cv_alphas
+            self.cv_mse_ = cv_mse
 
         self.l1_ratio_ = best_l1_ratio
         self.alpha_ = best_alpha
@@ -2291,6 +2365,13 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         (setting to 'random') often leads to significantly faster convergence
         especially when tol is higher than 1e-4.
 
+    store_cv_models : bool, default=False
+        If True, store the coefficients, intercepts, alphas, and MSE for every model
+        trained during cross-validation (for each fold, l1_ratio, and alpha).
+        This allows inspection of the full regularization path and model parameters
+        for all scenarios, not just the best model. If False (default), only the
+        best model's parameters are kept.
+
     Attributes
     ----------
     alpha_ : float
@@ -2330,6 +2411,22 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
+
+    cv_coefs_ : ndarray, optional
+        Coefficient values for all models along the regularization path, for each fold, l1_ratio, and alpha.
+        Only available if ``store_cv_models=True``.
+
+    cv_intercepts_ : ndarray, optional
+        Intercept values for all models along the regularization path, for each fold, l1_ratio, and alpha.
+        Only available if ``store_cv_models=True``.
+
+    cv_alphas_ : ndarray, optional
+        Alpha values for all models along the regularization path, for each fold and l1_ratio.
+        Only available if ``store_cv_models=True``.
+
+    cv_mse_ : ndarray, optional
+        MSE values for all models along the regularization path, for each fold, l1_ratio, and alpha.
+        Only available if ``store_cv_models=True``.
 
     See Also
     --------
@@ -2407,6 +2504,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         positive=False,
         random_state=None,
         selection="cyclic",
+        store_cv_models=False,
     ):
         self.l1_ratio = l1_ratio
         self.eps = eps
@@ -2423,6 +2521,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         self.positive = positive
         self.random_state = random_state
         self.selection = selection
+        self.store_cv_models = store_cv_models
 
     def _get_estimator(self):
         return ElasticNet()

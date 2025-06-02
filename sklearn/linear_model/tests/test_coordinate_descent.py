@@ -1468,6 +1468,57 @@ def test_enet_cv_sample_weight_consistency(
         assert_allclose(reg.intercept_, intercept)
 
 
+def test_elasticnetcv_store_cv_models():
+    # Test that store_cv_models exposes the full CV path attributes and they are correct
+    X, y, _, _ = build_dataset(n_samples=20, n_features=5)
+    n_folds = 3
+    l1_ratio = [0.5, 0.7]
+    alphas = [0.01, 0.05, 0.1]
+    clf = ElasticNetCV(
+        alphas=alphas,
+        l1_ratio=l1_ratio,
+        cv=n_folds,
+        max_iter=100,
+        store_cv_models=True,
+        random_state=0,
+    )
+    clf.fit(X, y)
+    
+    # Check attributes exist
+    assert hasattr(clf, "cv_coefs_")
+    assert hasattr(clf, "cv_intercepts_")
+    assert hasattr(clf, "cv_alphas_")
+    assert hasattr(clf, "cv_mse_")
+
+    # Check shapes
+    n_targets = 1
+    assert clf.cv_coefs_.shape == (n_folds, len(l1_ratio), len(alphas), n_targets, X.shape[1])
+    assert clf.cv_intercepts_.shape == (n_folds, len(l1_ratio), len(alphas), n_targets)
+    assert clf.cv_alphas_.shape == (n_folds, len(l1_ratio), len(alphas))
+    assert clf.cv_mse_.shape == (n_folds, len(l1_ratio), len(alphas))
+
+    # Check values are finite
+    assert np.isfinite(clf.cv_coefs_).all()
+    assert np.isfinite(clf.cv_intercepts_).all()
+    assert np.isfinite(clf.cv_alphas_).all()
+    assert np.isfinite(clf.cv_mse_).all()
+
+    # Now check that with store_cv_models=False, these attributes are not present
+    clf2 = ElasticNetCV(
+        alphas=alphas,
+        l1_ratio=l1_ratio,
+        cv=n_folds,
+        max_iter=100,
+        store_cv_models=False,
+        random_state=0,
+    )
+    clf2.fit(X, y)
+    assert not hasattr(clf2, "cv_coefs_")
+    assert not hasattr(clf2, "cv_intercepts_")
+    assert not hasattr(clf2, "cv_alphas_")
+    assert not hasattr(clf2, "cv_mse_")
+
+
 @pytest.mark.parametrize("X_is_sparse", [False, True])
 @pytest.mark.parametrize("fit_intercept", [False, True])
 @pytest.mark.parametrize("sample_weight", [np.array([10, 1, 10, 1]), None])
