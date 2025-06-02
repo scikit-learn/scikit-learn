@@ -672,9 +672,11 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
 def _median(x, axis=None, keepdims=False, xp=None):
     # XXX: `median` is not included in the array API spec, but is implemented
     # in most array libraries, and all that we support (as of May 2025).
-    # TODO: simplify this code to use scipy instead once the oldest supported
-    # SciPy version provides `scipy.stats.quantile` with native array API
-    # support (likely scipy 1.6 at the time of writing).
+    # TODO: consider simplifying this code to use scipy instead once the oldest
+    # supported SciPy version provides `scipy.stats.quantile` with native array API
+    # support (likely scipy 1.6 at the time of writing). Proper benchmarking of
+    # either option with popular array namespaces is required to evaluate the
+    # impact of this choice.
     xp, _, device = get_namespace_and_device(x, xp=xp)
 
     # `torch.median` takes the lower of the two medians when `x` has even number
