@@ -2118,7 +2118,7 @@ def test_different_endianness_pickle():
 
     new_clf = pickle.load(get_pickle_non_native_endianness())
     new_score = new_clf.score(X, y)
-    assert np.isclose(score, new_score)
+    assert np.isclose(score, new_score), f"{score} != {new_score}"
 
 
 def test_different_endianness_joblib_pickle():
@@ -2322,9 +2322,9 @@ def test_check_node_ndarray():
 
     dtype_dict = {name: dtype for name, (dtype, _) in node_ndarray.dtype.fields.items()}
 
-    # array with wrong 'threshold' field dtype (int64 rather than float64)
+    # array with wrong 'weighted_n_node_samples' field dtype (int64 rather than float64)
     new_dtype_dict = dtype_dict.copy()
-    new_dtype_dict["threshold"] = np.int64
+    new_dtype_dict["weighted_n_node_samples"] = np.int64
 
     new_dtype = np.dtype(
         {"names": list(new_dtype_dict.keys()), "formats": list(new_dtype_dict.values())}
@@ -2822,7 +2822,9 @@ def test_build_pruned_tree_py():
     tree.fit(iris.data, iris.target)
 
     n_classes = np.atleast_1d(tree.n_classes_)
-    pruned_tree = CythonTree(tree.n_features_in_, n_classes, tree.n_outputs_)
+    pruned_tree = CythonTree(
+        tree.n_features_in_, n_classes, tree.n_outputs_, tree.n_categories_
+    )
 
     # only keep the root note
     leave_in_subtree = np.zeros(tree.tree_.node_count, dtype=np.uint8)
@@ -2836,7 +2838,9 @@ def test_build_pruned_tree_py():
     assert_array_equal(tree.tree_.value[0], pruned_tree.value[0])
 
     # now keep all the leaves
-    pruned_tree = CythonTree(tree.n_features_in_, n_classes, tree.n_outputs_)
+    pruned_tree = CythonTree(
+        tree.n_features_in_, n_classes, tree.n_outputs_, tree.n_categories_
+    )
     leave_in_subtree = np.zeros(tree.tree_.node_count, dtype=np.uint8)
     leave_in_subtree[1:] = 1
 
@@ -2854,7 +2858,9 @@ def test_build_pruned_tree_infinite_loop():
     tree = DecisionTreeClassifier(random_state=0, max_depth=1)
     tree.fit(iris.data, iris.target)
     n_classes = np.atleast_1d(tree.n_classes_)
-    pruned_tree = CythonTree(tree.n_features_in_, n_classes, tree.n_outputs_)
+    pruned_tree = CythonTree(
+        tree.n_features_in_, n_classes, tree.n_outputs_, tree.n_categories_
+    )
 
     # only keeping one child as a leaf results in an improper tree
     leave_in_subtree = np.zeros(tree.tree_.node_count, dtype=np.uint8)
@@ -3004,7 +3010,7 @@ def test_categorical_split_vs_onehot_tree_depth():
     tree_cat.fit(X, y)
 
     # Train with one-hot encoding
-    ohe = OneHotEncoder(sparse=False, categories="auto")
+    ohe = OneHotEncoder(sparse_output=False, categories="auto")
     X_ohe = ohe.fit_transform(X)
     tree_ohe = DecisionTreeClassifier(random_state=0)
     tree_ohe.fit(X_ohe, y)

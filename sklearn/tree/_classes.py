@@ -1043,6 +1043,10 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
+    n_categories_ : ndarray of shape (n_features,), dtype=np.int32
+        The number of categories for each feature. For non-categorical features,
+        the value is -1.
+
     tree_ : Tree instance
         The underlying Tree object. Please refer to
         ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
@@ -1798,6 +1802,10 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
+    n_categories_ : ndarray of shape (n_features,), dtype=np.int32
+        The number of categories for each feature. For non-categorical features,
+        the value is -1.
+
     tree_ : Tree instance
         The underlying Tree object. Please refer to
         ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
@@ -2064,6 +2072,10 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
+
+    n_categories_ : ndarray of shape (n_features,), dtype=np.int32
+        The number of categories for each feature. For non-categorical features,
+        the value is -1.
 
     tree_ : Tree instance
         The underlying Tree object. Please refer to

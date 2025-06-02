@@ -107,6 +107,7 @@ cdef class TreeBuilder:
     )
 
 
+# TODO: implement category cache manager to precompute the bitmasks
 # cdef class CategoryCacheMgr:
 #     # Class to manage the category cache memory during Tree.apply()
 

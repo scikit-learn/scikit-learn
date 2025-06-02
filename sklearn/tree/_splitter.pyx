@@ -422,9 +422,11 @@ cdef inline int node_split_best(
         f_j += n_found_constants
         # f_j in the interval [n_total_constants, f_i[
         current_split.feature = features[f_j]
-        # XXX: for categorical features we should not need to sort
+
         is_categorical = splitter.n_categories[current_split.feature] > 0
         if is_categorical:
+            # TODO: ncat_present should be passed down from parent_node, and calculated at tree level
+            # would be faster! eliminates counting per node
             # Identify the number of categories present in this node
             cat_split[:] = 0
             ncat_present = 0
@@ -513,22 +515,15 @@ cdef inline int node_split_best(
                     cat_idx += 1
 
                     if breiman_shortcut:
-                        # is_flipped = False
                         if cat_idx >= ncat_present:
                             # all other categories were previously split upon
                             break
 
-                        # reset the bitmask
-                        # if p == start:
-                        #     cat_split[:] = 0
-                        # else:
-                        #     if is_flipped:
+                        # reset the bitmask at every point because we may need to do bitmask flipping
+                        # to avoid symmetric splits that are already evaluated
                         cat_split[:] = 0
                         for u_idx in range(cat_idx):
                             set_bitset_memoryview(cat_split, <uint8_t>sorted_cat[u_idx])
-                            # else:
-                                # incrementally set another bitset
-                                # set_bitset_memoryview(cat_split, <uint8_t>sorted_cat[cat_idx - 1])
 
                         # Each left/right split is symmetric, and thus by convention we only consider splits
                         # where the first bit is 0. If the first bit is 1, we will flip all the bits, so we 

@@ -74,22 +74,31 @@ cdef intp_t _TREE_UNDEFINED = TREE_UNDEFINED
 # This works by casting `dummy` to an array of Node of length 1, which numpy
 # can construct a `dtype`-object for. See https://stackoverflow.com/q/62448946
 # for a more detailed explanation.
+
 cdef Node dummy
 # NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
-SplitValue_dtype = np.dtype([
-    ('threshold', np.float64),
-    ('cat_split', (np.uint32, 8)),  # fixed-size array
-])
+# A 32‐byte union “SplitValue” ──
+#   – ‘threshold’ is a float64 at offset 0
+#   – ‘cat_split’ is an array of eight uint32’s at offset 0 (i.e. fully overlapping)
+#   – total itemsize must be 32 (so union = max(size of FLOAT64=8, size of 8×uint32=32))
+SplitValue_dtype = np.dtype({
+    'names':   ['threshold', 'cat_split'],
+    'formats': [np.float64,     (np.uint32, 8)],
+    'offsets': [0,              0],      # both subfields start at the same byte 0
+    'itemsize': 32               # union size = 32 bytes
+})
 NODE_DTYPE = np.dtype([
-    ('left_child', np.intp),
-    ('right_child', np.intp),
-    ('feature', np.intp),
-    ('split_value', SplitValue_dtype),
-    ('impurity', np.float64),
-    ('n_node_samples', np.intp),
-    ('weighted_n_node_samples', np.float64),
-    ('missing_go_to_left', np.uint8),
-])
+    ('left_child',              np.intp),   #  8 bytes  (offset 0)
+    ('right_child',             np.intp),   #  8 bytes  (offset 8)
+    ('feature',                 np.intp),   #  8 bytes  (offset 16)
+    ('split_value',             SplitValue_dtype),  # 32 bytes (offset 24)
+    ('impurity',                np.float64),   #  8 bytes (offset 56)
+    ('n_node_samples',          np.intp),      #  8 bytes (offset 64)
+    ('weighted_n_node_samples', np.float64),   #  8 bytes (offset 72)
+    ('missing_go_to_left',      np.uint8),      #  1 byte  (offset 80)
+    # NumPy will auto‐pad to a multiple of 8 (so total sizeof Node_dtype = 88 bytes),
+    # exactly matching C’s sizeof(Node) on a 64‐bit machine.
+], align=True)
 # NODE_DTYPE = np.dtype({
 #     'names': ['left_child', 'right_child', 'feature', 'threshold', 'cat_split',
 #               'impurity', 'n_node_samples', 'weighted_n_node_samples', 'missing_go_to_left'],
@@ -860,7 +869,7 @@ cdef class Tree:
 
     @property
     def threshold(self):
-        return self._get_node_ndarray()['threshold'][:self.node_count]
+        return self._get_node_ndarray()['split_value']['threshold'][:self.node_count]
 
     @property
     def impurity(self):
@@ -964,6 +973,16 @@ cdef class Tree:
         node_ndarray = d['nodes']
         value_ndarray = d['values']
 
+        # If the array is big-endian, swap it back to native first:
+        if not node_ndarray.dtype.isnative:
+            # byteswap() returns a new array with the data swapped in place,
+            # then newbyteorder() marks it as native‐endian dtype.
+            _swapped = node_ndarray.byteswap() 
+            node_ndarray    = _swapped.view(_swapped.dtype.newbyteorder())
+        if not value_ndarray.dtype.isnative:
+            _swapped = value_ndarray.byteswap() 
+            value_ndarray    = _swapped.view(_swapped.dtype.newbyteorder())
+
         value_shape = (node_ndarray.shape[0], self.n_outputs,
                        self.max_n_classes)
 
@@ -975,6 +994,7 @@ cdef class Tree:
         )
 
         self.capacity = node_ndarray.shape[0]
+
         if self._resize_c(self.capacity) != 0:
             raise MemoryError("resizing tree to %d" % self.capacity)
 
@@ -2077,8 +2097,8 @@ cdef void _build_pruned_tree(
             node = &orig_tree.nodes[orig_node_id]
 
             # TODO: remove this
-            split_value.threshold = node.split_value.threshold
-            split_value.cat_split = node.split_value.cat_split
+            # split_value.threshold = node.split_value.threshold
+            # split_value.cat_split = node.split_value.cat_split
 
             # protect against an infinite loop as a runtime error, when leaves_in_subtree
             # are improperly set where a node is not marked as a leaf, but is a node
@@ -2095,7 +2115,7 @@ cdef void _build_pruned_tree(
                 is_leaf,
                 node.feature,
                 # node.threshold,
-                split_value,
+                node.split_value,
                 node.impurity,
                 node.n_node_samples,
                 node.weighted_n_node_samples,
