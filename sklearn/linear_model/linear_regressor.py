@@ -1,10 +1,12 @@
+# Copyright (c) 2025, Krishna Simha
+# All rights reserved.
+#
 # Authors: krishna simha <krishna2005simha@gmail.com>
 # License: BSD 3 clause
 
 import numpy as np
-
 from sklearn.base import BaseEstimator, RegressorMixin
-from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
+from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 
 
 class LinearRegressor(BaseEstimator, RegressorMixin):
