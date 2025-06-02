@@ -1,4 +1,4 @@
-# ruff: noqa: CPY001, E501
+# ruff: noqa: CPY001
 """
 =======================================
 Release Highlights for scikit-learn 1.7
@@ -61,9 +61,9 @@ model.fit(X, y, X_val=X_val, y_val=y_val)
 # :func:`model_selection.cross_validate`.
 
 from sklearn.datasets import make_classification
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import RocCurveDisplay
 from sklearn.model_selection import cross_validate
-from sklearn.linear_model import LogisticRegression
 
 X, y = make_classification(n_samples=150, random_state=0)
 clf = LogisticRegression(random_state=0)
