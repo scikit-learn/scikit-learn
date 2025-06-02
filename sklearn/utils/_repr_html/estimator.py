@@ -307,7 +307,7 @@ def _write_estimator_html(
         The prefix to prepend to parameter names for nested estimators.
         For example, in a pipeline this might be "pipeline__stepname__".
     """
-    # breakpoint()
+
     if first_call:
         est_block = _get_visual_block(estimator)
     else:
@@ -332,7 +332,10 @@ def _write_estimator_html(
 
             else:
                 params = ""
-            if hasattr(estimator, "_get_fitted_attr_html"):
+            if (
+                hasattr(estimator, "_get_fitted_attr_html")
+                and is_fitted_css_class == "fitted"
+            ):
                 attrs = estimator._get_fitted_attr_html()._repr_html_inner()
             else:
                 attrs = ""
@@ -394,7 +397,10 @@ def _write_estimator_html(
             params = estimator._get_params_html()._repr_html_inner()
         else:
             params = ""
-        if hasattr(estimator, "_get_fitted_attr_html"):
+        if (
+            hasattr(estimator, "_get_fitted_attr_html")
+            and is_fitted_css_class == "fitted"
+        ):
             attrs = estimator._get_fitted_attr_html()._repr_html_inner()
         else:
             attrs = ""
