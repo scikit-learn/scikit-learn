@@ -613,10 +613,15 @@ def test_sparse_device(csr_container, dispatch):
 )
 @pytest.mark.parametrize("axis", [None, 0, 1])
 def test_median(namespace, device, dtype_name, axis):
+    # Note: depending on the value of `axis`, this test will compare median
+    # computations on arrays of even (4) or odd (5) numbers of elements, hence
+    # will test for median computation with and without interpolation to check
+    # that array API namespaces yield consistent results even when the median is
+    # not mathematically uniquely defined.
     xp = _array_api_for_tests(namespace, device)
     rng = numpy.random.RandomState(0)
 
-    X_np = numpy.array(rng.random_sample((5, 4)), dtype=dtype_name)
+    X_np = rng.uniform(low=0.0, high=1.0, size=(5, 4)).astype(dtype_name)
     result_np = numpy.median(X_np, axis=axis)
 
     X_xp = xp.asarray(X_np, device=device)
