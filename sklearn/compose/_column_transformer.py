@@ -1220,8 +1220,13 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             return np.hstack(Xs)
 
     def _sk_visual_block_(self):
-        if isinstance(self.remainder, str) and self.remainder == "drop":
+        if hasattr(self, "transformers_"):
             transformers = self.transformers_
+        else:
+            transformers = self.transformers
+
+        if isinstance(self.remainder, str) and self.remainder == "drop":
+            transformers = transformers
         elif hasattr(self, "_remainder"):
             remainder_columns = self._remainder[2]
             if (
@@ -1231,12 +1236,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             ):
                 remainder_columns = self.feature_names_in_[remainder_columns].tolist()
             transformers = chain(
-                self.transformers_, [("remainder", self.remainder, remainder_columns)]
+                transformers, [("remainder", self.remainder, remainder_columns)]
             )
         else:
-            transformers = chain(
-                self.transformers_, [("remainder", self.remainder, "")]
-            )
+            transformers = chain(transformers, [("remainder", self.remainder, "")])
 
         names, transformers, name_details = zip(*transformers)
         return _VisualBlock(

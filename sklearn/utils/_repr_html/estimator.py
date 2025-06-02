@@ -307,6 +307,7 @@ def _write_estimator_html(
         The prefix to prepend to parameter names for nested estimators.
         For example, in a pipeline this might be "pipeline__stepname__".
     """
+    # breakpoint()
     if first_call:
         est_block = _get_visual_block(estimator)
     else:

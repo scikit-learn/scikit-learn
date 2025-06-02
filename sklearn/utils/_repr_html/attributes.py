@@ -16,7 +16,7 @@ def _fitted_attr_html_repr(fitted_attributes):
     HTML_TEMPLATE = """
        <div class="estimator-table">
            <details>
-               <summary>Attributes</summary>
+               <summary>Fitted attributes</summary>
                <table class="attributes-table">
                  <tbody>
                    {rows}
