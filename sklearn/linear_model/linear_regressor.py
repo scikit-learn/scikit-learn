@@ -40,6 +40,16 @@ class LinearRegressor(BaseEstimator, RegressorMixin):
 
     loss_history_ : list
         List of loss values at each epoch.
+    Examples
+    --------
+    >>> from sklearn.linear_model import LinearRegressor
+    >>> import numpy as np
+    >>> X = np.array([[1], [2], [3]])
+    >>> y = np.array([3, 5, 7])
+    >>> model = LinearRegressor(epochs=1000, learning_rate=0.01)
+    >>> model.fit(X, y)
+    >>> model.predict([[4]])
+    array([9.])
     """
 
     def __init__(
