@@ -34,7 +34,7 @@ def _params_html_repr(params):
         <div class="estimator-table">
             <details>
                 <summary>Parameters</summary>
-                <table class="parameters-table">
+                <table class="body-table">
                   <tbody>
                     {rows}
                   </tbody>
