@@ -724,9 +724,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         # Importance computations require X to be in CSR format
         if issparse(X):
             X = X.tocsr()
-        y = np.asarray(y)
-        if y.ndim == 1:
-            y = y.reshape(-1, 1)
 
         n_samples, n_features = X.shape
         max_n_classes = self.estimators_[0].tree_.max_n_classes
@@ -901,7 +898,6 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         scoring_function : callable, default=None
             Scoring function for OOB score. Defaults to `accuracy_score`.
         """
-
         if scoring_function is None:
             scoring_function = accuracy_score
 

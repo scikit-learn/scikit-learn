@@ -368,7 +368,7 @@ def test_importances(dtype, name, criterion, X_type, global_random_seed):
                 importances = getattr(est, importance_attribute_name)
         elif (
             name in FOREST_CLASSIFIERS
-            and importance_attribute_name == "mdi_oob_feature_importances_"
+            and importance_attribute_name == "ufi_feature_importances_"
             and criterion not in ["gini", "log_loss", "entropy"]
         ):
             with pytest.raises(
@@ -1710,17 +1710,19 @@ def test_forest_degenerate_unbiased_feature_importances(
     # build a forest of single node trees. See #13636
     X = np.zeros((10, 10))
     y = np.ones((10,))
-    with pytest.warns(
-        UserWarning,
-        match=re.escape(
-            "Some inputs do not have OOB scores. This probably means too few trees were"
-            " used to compute any reliable OOB estimates."
-        ),
-    ):
-        clf = RandomForestClassifier(n_estimators=10, oob_score=True).fit(X, y)
-    assert_array_equal(
-        getattr(clf, unbiased_importance_attribute_name), np.zeros(10, dtype=np.float64)
-    )
+    for model in [RandomForestClassifier, RandomForestRegressor]:
+        with pytest.warns(
+            UserWarning,
+            match=re.escape(
+                "Some inputs do not have OOB scores. This probably means too few trees"
+                " were used to compute any reliable OOB estimates."
+            ),
+        ):
+            clf = model(n_estimators=10, oob_score=True).fit(X, y)
+        assert_array_equal(
+            getattr(clf, unbiased_importance_attribute_name),
+            np.zeros(10, dtype=np.float64),
+        )
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
